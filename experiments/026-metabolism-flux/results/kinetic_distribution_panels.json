@@ -1,0 +1,34 @@
+{
+  "a_dlkcat_k_cat": {
+    "ours_n": 7351,
+    "ours_median_log10": 0.6033198619868096
+  },
+  "b_unikp_k_cat": {
+    "ours_n": 7351,
+    "ours_median_log10": 0.6074988364940848
+  },
+  "c_eitlem_k_cat": {
+    "ours_n": 7456,
+    "ours_median_log10": 0.600016713142395
+  },
+  "d_turnup_k_cat": {
+    "ours_n": 5143,
+    "ours_median_log10": 1.0341988830803577
+  },
+  "e_deepenzyme_k_cat": {
+    "ours_n": 7300,
+    "ours_median_log10": 0.6197792819443549
+  },
+  "f_boost_km_K_M": {
+    "ours_n": 7157,
+    "ours_median_log10": -0.850694876605947
+  },
+  "g_unikp_K_M": {
+    "ours_n": 7351,
+    "ours_median_log10": -1.0988371763330604
+  },
+  "h_eitlem_K_M": {
+    "ours_n": 7456,
+    "ours_median_log10": -1.1008601784706116
+  }
+}

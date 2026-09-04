@@ -1,0 +1,11 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_pooled.yaml
+# [[experiments.027-betaxanthin-metabolic]]
+#
+# CONTROL: the metabolic module OFF. The CGT reads the pooled gene tokens through an MLP
+# scalar head, which is the architecture the 020_v4 Delta runs used and the one whose test
+# Spearman on these same 639 genes is already measured (mean 0.0779, sd 0.0492 over 10 cells).
+#
+# This is the "same everything else" comparator: identical encoder, identical optimizer,
+# identical split, identical epoch budget, identical scoring rule. Only the readout differs.
+base_arm: pooled
+permute_train_targets: false

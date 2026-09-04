@@ -1,0 +1,217 @@
+{
+  "cell": {
+    "arm": "flux_anchored",
+    "base_arm": "flux_anchored",
+    "seed": 0,
+    "permute_train_targets": false,
+    "epochs": 6,
+    "hidden": 32,
+    "layers": 2,
+    "batch_size": 128,
+    "num_workers": 0,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5
+  },
+  "select_epoch": 2,
+  "select_rule": "centered_ma_5",
+  "select_val_pearson": -0.07584568858146667,
+  "test": {
+    "pinned": {
+      "n": 629,
+      "spearman": 0.06013295533877536,
+      "pearson": 0.025897212326526642,
+      "top10": {
+        "hits": 0.0,
+        "enrichment": 0.0
+      },
+      "top25": {
+        "hits": 1.0,
+        "enrichment": 0.39936507936507937
+      },
+      "top50": {
+        "hits": 4.0,
+        "enrichment": 0.7987301587301587
+      }
+    },
+    "all": {
+      "n": 905,
+      "spearman": 0.04568922949067601,
+      "pearson": 0.02475702203810215,
+      "top10": {
+        "hits": 0.0,
+        "enrichment": 0.0
+      },
+      "top25": {
+        "hits": 0.0,
+        "enrichment": 0.0
+      },
+      "top50": {
+        "hits": 1.0,
+        "enrichment": 0.20111111111111113
+      }
+    },
+    "dump_path": "/home/michaelvolk/.claude/jobs/7a6382f2/tmp/preds/flux_anchored_s0.json"
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 395.07850646972656,
+      "val_pearson": -0.00982804037630558,
+      "n_val": 270,
+      "c_box": 0.0,
+      "feas_box_violation_frac": 0.0,
+      "c_balance": 2.386843278490264,
+      "feas_balance_median": 1.7087844116934414,
+      "c_thermo": 0.3885807466918024,
+      "feas_thermo_violation_frac": 0.3807938777167222,
+      "g_diss": 767311.6443965518,
+      "c_dissipation": 206.38153391870958,
+      "protein_used": 0.08040494202026005,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.22972841637915578,
+      "c_parsimony": 0.11870611433325143,
+      "c_thermo_prior": 1.2254900970301097e-05
+    },
+    {
+      "epoch": 1,
+      "train_loss": 34.96474348265549,
+      "val_pearson": -0.036702968180179596,
+      "n_val": 270,
+      "c_box": 0.0,
+      "feas_box_violation_frac": 0.0,
+      "c_balance": 2.6006324537869157,
+      "feas_balance_median": 1.8720490685824691,
+      "c_thermo": 0.40122362354706076,
+      "feas_thermo_violation_frac": 0.3565137078022135,
+      "g_diss": 722744.9956896552,
+      "c_dissipation": 194.33648997339708,
+      "protein_used": 0.03173205539070327,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.09066301738393717,
+      "c_parsimony": 0.09172160512414472,
+      "c_thermo_prior": 8.120047327949954e-05
+    },
+    {
+      "epoch": 2,
+      "train_loss": 38.216599036907326,
+      "val_pearson": -0.07584568858146667,
+      "n_val": 270,
+      "c_box": 0.0,
+      "feas_box_violation_frac": 0.0,
+      "c_balance": 2.6333843510726402,
+      "feas_balance_median": 1.8851156563594424,
+      "c_thermo": 0.3941191630116824,
+      "feas_thermo_violation_frac": 0.3407026611525437,
+      "g_diss": 674398.5862068966,
+      "c_dissipation": 181.26989325161637,
+      "protein_used": 0.022570111628236442,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.06448603485678804,
+      "c_parsimony": 0.08892519772052765,
+      "c_thermo_prior": 0.00017990750322873094
+    },
+    {
+      "epoch": 3,
+      "train_loss": 37.1581916809082,
+      "val_pearson": -0.07769586145877838,
+      "n_val": 270,
+      "c_box": 0.0,
+      "feas_box_violation_frac": 0.0,
+      "c_balance": 2.676736099966641,
+      "feas_balance_median": 1.90713946161599,
+      "c_thermo": 0.38607776781608316,
+      "feas_thermo_violation_frac": 0.33265192241504277,
+      "g_diss": 664007.2025862068,
+      "c_dissipation": 178.4614115747912,
+      "protein_used": 0.01740509326216476,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.04972883879110731,
+      "c_parsimony": 0.08570943567259558,
+      "c_thermo_prior": 0.0002689995147600963
+    },
+    {
+      "epoch": 4,
+      "train_loss": 24.881188754377693,
+      "val_pearson": -0.04248654097318649,
+      "n_val": 270,
+      "c_box": 0.0,
+      "feas_box_violation_frac": 0.0,
+      "c_balance": 2.6976880205088647,
+      "feas_balance_median": 1.9167581796646118,
+      "c_thermo": 0.3774094108877511,
+      "feas_thermo_violation_frac": 0.32396998179369957,
+      "g_diss": 641902.5280172414,
+      "c_dissipation": 172.48717051538927,
+      "protein_used": 0.01395299404474168,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.03986569840846391,
+      "c_parsimony": 0.08490508409409687,
+      "c_thermo_prior": 0.00039711699154677577
+    },
+    {
+      "epoch": 5,
+      "train_loss": 15.510315171603498,
+      "val_pearson": -0.04039475694298744,
+      "n_val": 270,
+      "c_box": 0.0,
+      "feas_box_violation_frac": 0.0,
+      "c_balance": 2.6373907204332023,
+      "feas_balance_median": 1.904599933788694,
+      "c_thermo": 0.3657052784130491,
+      "feas_thermo_violation_frac": 0.3123034331305274,
+      "g_diss": 567776.6831896552,
+      "c_dissipation": 152.45316341005523,
+      "protein_used": 0.014474610219998607,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.0413560304662277,
+      "c_parsimony": 0.09385161153201399,
+      "c_thermo_prior": 0.0005574024960816164
+    }
+  ],
+  "flux_meta": {
+    "coverage": {
+      "n_reactions": 4131,
+      "n_metabolites": 2806,
+      "n_catalytic_units": 3728,
+      "n_gem_genes": 1161,
+      "n_gem_genes_in_model_universe": 1161,
+      "n_constitutive_genes": 0,
+      "n_reactions_with_gpr": 2709,
+      "n_independent_balance_rows": 2593,
+      "n_reactions_second_law_applied": 3276,
+      "n_reactions_second_law_exempt": 274,
+      "n_reactions_delta_g_known": 3505,
+      "frac_reactions_delta_g_known": 0.8484628200531006,
+      "n_metabolites_delta_f_g_known": 2389,
+      "frac_metabolites_delta_f_g_known": 0.8513898849487305,
+      "kcat_is_default_for_all_units": false,
+      "mw_is_default_for_all_genes": false,
+      "n_transport_terms_sourced": 0,
+      "transport_term_is_zero": true,
+      "thermo_mode": "anchored"
+    },
+    "kcat_experimental_fraction": 0.03969957081545064,
+    "mw_experimental_fraction": 1.0
+  },
+  "pinned_split": {
+    "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "requested": 639,
+    "found": 639,
+    "absent": [],
+    "records": 639,
+    "fraction_of_dataset": 0.12961460446247464
+  },
+  "n_parameters": {
+    "gene_embedding": 211424,
+    "embedding_preprocessor": 0,
+    "cls_token": 32,
+    "transformer_layers": 25408,
+    "perturbation_transform": 12704,
+    "perturbation_head": 2113,
+    "betaxanthin_head": 4136,
+    "total": 255817
+  },
+  "wall_time_s": 420.1316010951996
+}

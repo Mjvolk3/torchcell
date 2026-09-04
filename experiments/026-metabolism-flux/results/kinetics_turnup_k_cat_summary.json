@@ -1,0 +1,19 @@
+{
+  "predictor": "turnup",
+  "parameter": "k_cat",
+  "n_rows": 5143,
+  "n_units": 2056,
+  "n_units_total": 3728,
+  "n_genes": 980,
+  "n_substrates": 1176,
+  "coverage_frac": 0.5515021459227468,
+  "value_median": 10.819293022155762,
+  "value_p05": 1.5945769548416138,
+  "value_p95": 64.56199645996094,
+  "n_failed": 2313,
+  "failure_reasons": {
+    "metabolite_without_smiles": 2313
+  },
+  "weights_sha256": "095b27dcd3c845a427cae9ec1030bdc5de905f840abb692a00a2fb37476b67b0",
+  "built_at": "2026-09-04T05:00:33.232161+00:00"
+}

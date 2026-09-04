@@ -1,0 +1,24 @@
+{
+  "resolution_tiers": {
+    "metanetx": 2265,
+    "chebi": 191,
+    "kegg": 5,
+    "bigg": 11,
+    "inchi": 2,
+    "unresolved": 332
+  },
+  "dgf_median": -35.27171323305146,
+  "drg_median": -1.3120723593451658,
+  "n_estimable": 1673,
+  "n_sigma_nonzero": 785,
+  "n_sigma_zero_transport": 888,
+  "sigma_median_nonzero": 2.2950045364657696,
+  "vs_shipped_n": 1391,
+  "vs_shipped_n_chemical": 551,
+  "vs_shipped_n_transport": 840,
+  "vs_shipped_median_abs_diff_all": 5.6,
+  "vs_shipped_median_abs_diff_chemical": 10.110316397627557,
+  "compartment_ph_n_moved": 1309,
+  "compartment_ph_median_shift": 42.20558565845545,
+  "validation_max_abs_diff": 9.094947017729282e-13
+}

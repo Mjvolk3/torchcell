@@ -1,0 +1,115 @@
+{
+  "cell": {
+    "arm": "null_pooled",
+    "base_arm": "pooled",
+    "seed": 0,
+    "permute_train_targets": true,
+    "epochs": 6,
+    "hidden": 32,
+    "layers": 2,
+    "batch_size": 128,
+    "num_workers": 0,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5
+  },
+  "select_epoch": 2,
+  "select_rule": "centered_ma_5",
+  "select_val_pearson": 0.04550836980342865,
+  "test": {
+    "pinned": {
+      "n": 629,
+      "spearman": -0.05915410477167064,
+      "pearson": 0.004400020930916071,
+      "top10": {
+        "hits": 2.0,
+        "enrichment": 1.9968253968253968
+      },
+      "top25": {
+        "hits": 4.0,
+        "enrichment": 1.5974603174603175
+      },
+      "top50": {
+        "hits": 4.0,
+        "enrichment": 0.7987301587301587
+      }
+    },
+    "all": {
+      "n": 905,
+      "spearman": -0.03337206168273725,
+      "pearson": 0.045207224786281586,
+      "top10": {
+        "hits": 3.0,
+        "enrichment": 3.0166666666666666
+      },
+      "top25": {
+        "hits": 6.0,
+        "enrichment": 2.4133333333333336
+      },
+      "top50": {
+        "hits": 12.0,
+        "enrichment": 2.4133333333333336
+      }
+    },
+    "dump_path": "/home/michaelvolk/.claude/jobs/7a6382f2/tmp/preds/null_pooled_s0.json"
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 1.0099977110994274,
+      "val_pearson": 0.10870072990655899,
+      "n_val": 270
+    },
+    {
+      "epoch": 1,
+      "train_loss": 1.0036660946648697,
+      "val_pearson": 0.09755738079547882,
+      "n_val": 270
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.0001769106963585,
+      "val_pearson": 0.04550836980342865,
+      "n_val": 270
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.0019455654867764,
+      "val_pearson": 0.09275542944669724,
+      "n_val": 270
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.0041892713513867,
+      "val_pearson": 0.06748665869235992,
+      "n_val": 270
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.0004372247334183,
+      "val_pearson": -0.037375569343566895,
+      "n_val": 270
+    }
+  ],
+  "flux_meta": {},
+  "pinned_split": {
+    "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "requested": 639,
+    "found": 639,
+    "absent": [],
+    "records": 639,
+    "fraction_of_dataset": 0.12961460446247464
+  },
+  "n_parameters": {
+    "gene_embedding": 211424,
+    "embedding_preprocessor": 0,
+    "cls_token": 32,
+    "transformer_layers": 25408,
+    "perturbation_transform": 12704,
+    "perturbation_head": 2113,
+    "betaxanthin_head": 3137,
+    "total": 254818
+  },
+  "wall_time_s": 376.52316784858704
+}

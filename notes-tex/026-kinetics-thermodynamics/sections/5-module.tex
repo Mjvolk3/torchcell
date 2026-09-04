@@ -1,0 +1,38 @@
+%% notes-tex/026-kinetics-thermodynamics/sections/5-module.tex
+%% [[torchcell.models.equivariant_cell_graph_transformer.mermaid.metabolic-module]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/026-kinetics-thermodynamics/sections/5-module.tex
+
+\section{Where these tables enter the model\secstatus{todo}}
+
+Figure~\ref{fig:cgt-module} places the flux module inside the cell graph transformer. The
+module is neither of the two instrument classes the architecture previously had: a Type I
+instrument maps a representation to a representation and a Type II instrument maps a
+representation to a measured output, while the flux module maps a representation to a
+\emph{flux vector}, a latent physical state from which phenotypes are then read. It sits
+between them.
+
+Three of its inputs are parameter tables rather than learned weights, and those three are
+what this document builds. The $k_{cat}$ table sets the upper bound of the box that the
+flux is parameterized inside, so it fixes what fluxes are reachable at all. The formation
+energies set the reaction potential whose sign the second-law penalty acts on, which is
+what makes that penalty a physical statement rather than a regularizer. The $K_M$ table is
+built and not yet enabled, for the reason Section~\ref{sec:limits} gives.
+
+The heterologous cassette enters as a typed perturbation on the genome-scale model, which
+is what puts a betaxanthin pathway and a gene deletion inside the same object rather than
+in two parallel code paths.
+
+\tcfigfit[1.0]{figures/cgt_metabolic_module.pdf}{The cell graph transformer with the
+  enzyme-constrained thermodynamic flux module. Purple marks inputs and the hash-pinned
+  parameter tables built here; orange the embeddings and the Type I perturbation operators;
+  red the transformer layers and the outputs; yellow the graph regularization, the
+  invariant readouts and the soft constraints; blue the metabolic module, whose color slot
+  was unused in the previous version of this diagram so the new content separates at a
+  glance. Every hard constraint is either exact by construction, as the box and the
+  capacity bound are, or relaxed to a smooth penalty; nothing is enforced by a binary
+  variable, which is what makes the layer differentiable and what removes the mixed-integer
+  cost a per-genotype thermodynamic program pays. The dashed $K_M$ edge marks a table that
+  exists but is not yet consumed. Scaled to the text block: the source renders at 211.7 mm
+  wide against a 182 mm block, so this is not shown at true print size. Source:
+  \texttt{notes/torchcell.models.equivariant\_cell\_graph\_transformer.mermaid.metabolic-module.md},
+  rendered by \texttt{notes/assets/publish/scripts/mermaid\_pdf.sh}.}{fig:cgt-module}

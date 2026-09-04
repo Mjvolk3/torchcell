@@ -1,0 +1,33 @@
+{
+  "parameter": "k_cat",
+  "predictors": [
+    "deepenzyme",
+    "dlkcat",
+    "eitlem",
+    "turnup",
+    "unikp"
+  ],
+  "n_genes_any": 1151,
+  "n_genes_all_predictors": 980,
+  "spread_median_decades": 1.2325851210799015,
+  "spread_p90_decades": 2.1897359959907683,
+  "spread_frac_above_1_decade": 0.6724489795918367,
+  "central_p10_p90_range_decades": 0.9363828136415604,
+  "spread_over_signal": 1.3163260827977188,
+  "gene_level_spearman": {
+    "deepenzyme|dlkcat": 0.2648588373953965,
+    "deepenzyme|eitlem": 0.04944233238125067,
+    "deepenzyme|turnup": 0.05878337144152679,
+    "deepenzyme|unikp": 0.03601762222324039,
+    "dlkcat|eitlem": 0.1532337440133381,
+    "dlkcat|turnup": 0.15186330728764907,
+    "dlkcat|unikp": 0.2592798250706484,
+    "eitlem|turnup": 0.30900422021980284,
+    "eitlem|unikp": 0.48050954842886406,
+    "turnup|unikp": 0.4204587979879932
+  },
+  "cassette_genes_absent_from_all_predictors": [
+    "CYP76AD1",
+    "DOD"
+  ]
+}

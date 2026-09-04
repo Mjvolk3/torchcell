@@ -1,0 +1,19 @@
+{
+  "predictor": "dlkcat",
+  "parameter": "k_cat",
+  "n_rows": 7351,
+  "n_units": 3552,
+  "n_units_total": 3728,
+  "n_genes": 1151,
+  "n_substrates": 1345,
+  "coverage_frac": 0.9527896995708155,
+  "value_median": 4.0116206850107945,
+  "value_p05": 0.22472550125055646,
+  "value_p95": 74.5889516757362,
+  "n_failed": 105,
+  "failure_reasons": {
+    "multi_component_smiles": 105
+  },
+  "weights_sha256": "df5f6ab139b7a73557c6b1ba84e06dc28a120315409328631fc0887d364f786b",
+  "built_at": "2026-09-04T03:36:24.497626+00:00"
+}

@@ -1,0 +1,24 @@
+{
+  "parameter": "K_M",
+  "predictors": [
+    "boost_km",
+    "eitlem",
+    "unikp"
+  ],
+  "n_genes_any": 1151,
+  "n_genes_all_predictors": 1150,
+  "spread_median_decades": 0.6986731514942552,
+  "spread_p90_decades": 1.585961633223829,
+  "spread_frac_above_1_decade": 0.3,
+  "central_p10_p90_range_decades": 1.3446686733615758,
+  "spread_over_signal": 0.5195875871396797,
+  "gene_level_spearman": {
+    "boost_km|eitlem": 0.340889999088386,
+    "boost_km|unikp": 0.7470676945058173,
+    "eitlem|unikp": 0.362057570903341
+  },
+  "cassette_genes_absent_from_all_predictors": [
+    "CYP76AD1",
+    "DOD"
+  ]
+}

@@ -1,0 +1,128 @@
+%% notes-tex/026-kinetics-thermodynamics/sections/7-sources.tex
+%% [[experiments.026-metabolism-flux.kinetic-and-thermodynamic-parameter-datasets]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/026-kinetics-thermodynamics/sections/7-sources.tex
+
+\section{Every source, for citation and for the mirror\secstatus{todo}}
+\label{sec:sources}
+
+Each predictor is a published method, a code repository at a pinned commit, and a weights
+archive, and the three are cited differently. The tables below carry all of them so a
+reference can be added to the library and a manifest field filled without re-deriving the
+provenance. Every commit and \texttt{sha256} comes from
+\texttt{\$DATA\_ROOT/models/kinetics/<name>/manifest.json} or from
+\texttt{mirror\_kinetic\_models.py}; the DOIs were verified against Crossref rather than
+recalled.
+
+\subsection{Papers\secstatus{todo}}
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Papers to cite]{The publication behind each artifact used in this document.}
+  \label{tab:papers}
+  %% SOURCE: manifest.json per mirror + Crossref verification; see notes for the audit.
+  \begin{tabular}{@{}p{0.15\textwidth}p{0.46\textwidth}p{0.31\textwidth}@{}}
+    \hline
+    Tool & Paper & DOI \\
+    \hline
+    DLKcat & Li et al., Deep learning-based $k_{cat}$ prediction enables improved
+      enzyme-constrained model reconstruction. \emph{Nat Catal} 5:662--672, 2022
+      & \texttt{10.1038/s41929-022-00798-z} \\
+    UniKP & Yu et al., UniKP: a unified framework for the prediction of enzyme kinetic
+      parameters. \emph{Nat Commun} 14:8211, 2023
+      & \texttt{10.1038/s41467-023-44113-1} \\
+    EITLEM & Shen et al., EITLEM-Kinetics: a deep-learning framework for kinetic parameter
+      prediction of mutant enzymes. \emph{Chem Catal} 4:101094, 2024
+      & \texttt{10.1016/j.checat.2024.101094} \\
+    TurNuP & Kroll et al., Turnover number predictions for kinetically uncharacterized
+      enzymes using machine and deep learning. \emph{Nat Commun} 14:4139, 2023
+      & \texttt{10.1038/s41467-023-39840-4} \\
+    DeepEnzyme & Wang et al., DeepEnzyme: a robust deep learning model for improved enzyme
+      turnover number prediction. \emph{Brief Bioinform} 25(5):bbae409, 2024
+      & \texttt{10.1093/bib/bbae409} \\
+    Boost\_KM & Kroll et al., Deep learning allows genome-scale prediction of Michaelis
+      constants from structural features. \emph{PLoS Biol} 19:e3001402, 2021
+      & \texttt{10.1371/journal.pbio.3001402} \\
+    eQuilibrator & Beber et al., eQuilibrator 3.0: a database solution for thermodynamic
+      constant estimation. \emph{Nucleic Acids Res} 50:D603--D609, 2022
+      & \texttt{10.1093/nar/gkab1106} \\
+    Component contribution & Noor et al., Consistent estimation of Gibbs energy using
+      component contributions. \emph{PLoS Comput Biol} 9:e1003098, 2013
+      & \texttt{10.1371/journal.pcbi.1003098} \\
+    Yeast-MetaTwin & Wu et al., Systematically exploring yeast metabolism through
+      retrobiosynthesis and deep learning. \emph{Nat Catal} 9:434--447, 2026
+      & \texttt{10.1038/s41929-026-01523-w} \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Code and weights\secstatus{todo}}
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Code repositories and weight archives]{What was mirrored, at which revision.
+  A commit is given in full because a short hash is not a pin.}
+  \label{tab:code}
+  %% SOURCE: $DATA_ROOT/models/kinetics/<name>/manifest.json (per-file sha256 + revision).
+  \begin{tabular}{@{}p{0.14\textwidth}p{0.40\textwidth}p{0.38\textwidth}@{}}
+    \hline
+    Tool & Repository, at commit & Weights \\
+    \hline
+    DLKcat & \texttt{SysBioChalmers/DLKcat} \newline
+      \texttt{7c15d0d4a7ac029f9d75564d9f2a93874aeaaec7} & in repo, extensionless
+      \texttt{state\_dict} \\
+    UniKP & \texttt{Luo-SynBioLab/UniKP} \newline
+      \texttt{3ad5576aaa2c8c0dd0e0b6c283c1d365ab23c6ea} &
+      HuggingFace \texttt{HanselYu/UniKP} \\
+    EITLEM & \texttt{XvesS/EITLEM-Kinetics} \newline
+      \texttt{7bb9d6668d86263f17dddc1915fccff5712fd511} &
+      Zenodo \texttt{10.5281/zenodo.16153803}, 12.3 GB \\
+    TurNuP & \texttt{AlexanderKroll/kcat\_prediction} \newline
+      \texttt{98d88a37b66f64381086b5492f315e763c528fa0} &
+      Zenodo \texttt{10.5281/zenodo.8367052} and
+      \texttt{10.5281/zenodo.8038678} \\
+    DeepEnzyme & \texttt{hongzhonglu/DeepEnzyme} \newline
+      \texttt{d225ec31a1079177eea38fcf44c5c4b7afe516d8} &
+      figshare \texttt{10.6084/m9.figshare.25771062.v2} \\
+    Boost\_KM & \texttt{AlexanderKroll/KM\_prediction} \newline
+      \texttt{432a4fc02afa20fcb8296fb96ce035a99ae33e85} &
+      in repo; the ESM-1b variant is vendored in the Yeast-MetaTwin release \\
+    ESM-1b & Meta \texttt{fair-esm}, base checkpoint &
+      \texttt{esm1b\_t33\_650M\_UR50S.pt}, sha256 \texttt{0569754e\ldots83a8b1} \\
+    Yeast-MetaTwin & \texttt{LiLabTsinghua/Yeast-MetaTwin} \newline
+      \texttt{de1268eea271a67ffb0581aab51b3549c8020950} &
+      Zenodo \texttt{10.5281/zenodo.13911783}, 6.6 GB \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Four provenance defects to repair\secstatus{todo}}
+
+These are recorded rather than fixed silently, because each one breaks the rebuild
+guarantee in a different way.
+
+\begin{itemize}\setlength{\itemsep}{2pt}
+  \item \textbf{EITLEM's recorded source URL is dead.} The manifest holds
+    \texttt{XvQiao/EITLEM-Kinetics}, which now returns 404; the repository was renamed to
+    \texttt{XvesS/EITLEM-Kinetics}. The pinned commit still resolves there, so the mirrored
+    bytes are fine and only the retrieval command needs updating.
+  \item \textbf{DeepEnzyme's retrieval command is a placeholder.} It contains the literal
+    text \texttt{<figshare 10.6084/m9.figshare.25771062.v2>} rather than a URL, so that one
+    file cannot be re-fetched by running the record.
+  \item \textbf{eQuilibrator and Yeast-MetaTwin have no manifest.} Both sit outside
+    \texttt{models/kinetics/}. The MetaTwin commit had to be read out of \texttt{.git}, and
+    \texttt{metatwin.rar} is pinned by size alone with no \texttt{sha256}.
+  \item \textbf{All six kinetics manifests carry \texttt{citation\_key: null}.} Once these
+    papers are in the mirror, that field joins each weight file to its publication, which is
+    what makes a predicted value citable rather than merely traceable.
+\end{itemize}
+
+One extraction hazard is worth recording alongside them. \texttt{bsdtar} reading
+\texttt{esm1b\_t33\_650M\_UR50S.pt} out of the 6.6 GB RAR \textbf{exited 0 and wrote
+649{,}783{,}100 bytes} where the archive's own listing says 7{,}828{,}576{,}466. The
+truncation is silent, and a checkpoint that short still opens far enough to look like a
+file. It was caught by comparing against the listed size and then confirmed by
+\texttt{torch.load} refusing it. The bytes finally used were fetched from the published
+\texttt{fair-esm} URL and verified to the recorded \texttt{sha256}, which is the general
+lesson: a size or hash check is what makes an extractor's exit code mean anything.

@@ -1,0 +1,18 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_anchored.yaml
+# [[experiments.027-betaxanthin-metabolic]]
+#
+# THE TREATMENT: the full enzyme-constrained thermodynamic flux module -- tabulated
+# delta_f G', enzyme capacity from resolved kcat, a protein budget, and a dissipation limit.
+#
+# The betaxanthin head reads turnover at the pathway's own precursors (cytosolic tyrosine
+# s_1051, the shikimate intermediate s_0188 that Cachera's feedback-resistant ARO4/ARO7
+# alleles act on, and phenylalanine s_1032), so a prediction is a statement about flux
+# through the route the cassette actually uses.
+#
+# The kcat table resolves only 3.97% of catalytic units experimentally on the mirrored Open
+# Enzyme Database slice. That is REPORTED, not hidden, and the trainer aborts a flux arm
+# whose measured fraction falls below the floor in base.yaml -- because the silent failure
+# mode is a missing mirror turning every kcat into the organism default while the run still
+# completes and reports a plausible number.
+base_arm: flux_anchored
+permute_train_targets: false

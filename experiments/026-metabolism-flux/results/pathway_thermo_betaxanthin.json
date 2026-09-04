@@ -1,0 +1,74 @@
+{
+  "pathway": "betaxanthin (DeLoache et al. 2015)",
+  "n_compounds": 5,
+  "n_resolved": 2,
+  "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+  },
+  "compounds": [
+    {
+      "name": "L-DOPA",
+      "role": "CYP76AD1 hydroxylation product",
+      "expected_formula": "C9H11NO4",
+      "pubchem_formula": "C9H11NO4",
+      "formula_matches": true,
+      "smiles": "C1=CC(=C(C=C1C[C@@H](C(=O)O)N)O)O",
+      "in_equilibrator_cache": true,
+      "dgf_prime_kj_per_mol": -157.6752222753641,
+      "sigma_kj_per_mol": 4.299756956538888,
+      "blocker": null
+    },
+    {
+      "name": "dopaquinone",
+      "role": "CYP76AD1 oxidase side activity",
+      "expected_formula": "C9H9NO4",
+      "pubchem_formula": "C9H9NO4",
+      "formula_matches": true,
+      "smiles": "C1=CC(=O)C(=O)C=C1C[C@@H](C(=O)O)N",
+      "in_equilibrator_cache": true,
+      "dgf_prime_kj_per_mol": -168.3098119030892,
+      "sigma_kj_per_mol": 7.536891188614665,
+      "blocker": null
+    },
+    {
+      "name": "leucodopachrome",
+      "role": "cyclo-DOPA, spontaneous cyclization",
+      "expected_formula": "C9H9NO4",
+      "pubchem_formula": "C9H9NO4",
+      "formula_matches": true,
+      "smiles": "C1[C@H](NC2=CC(=C(C=C21)O)O)C(=O)O",
+      "in_equilibrator_cache": false,
+      "dgf_prime_kj_per_mol": null,
+      "sigma_kj_per_mol": null,
+      "blocker": "absent_from_cache_needs_cxcalc_chemaxon_license"
+    },
+    {
+      "name": "betanidin",
+      "role": "violet pigment, competing branch",
+      "expected_formula": "C18H16N2O8",
+      "pubchem_formula": "C18H16N2O8",
+      "formula_matches": true,
+      "smiles": "C1[C@H](N=C(C=C1/C=C/N2[C@@H](CC3=CC(=C(C=C32)O)O)C(=O)O)C(=O)O)C(=O)O",
+      "in_equilibrator_cache": false,
+      "dgf_prime_kj_per_mol": null,
+      "sigma_kj_per_mol": null,
+      "blocker": "absent_from_cache_needs_cxcalc_chemaxon_license"
+    },
+    {
+      "name": "betalamic acid",
+      "role": "DOD product, the reactive aldehyde",
+      "expected_formula": "C9H9NO5",
+      "pubchem_formula": "C9H9NO5",
+      "formula_matches": true,
+      "smiles": "C\\1[C@H](NC(=C/C1=C/C=O)C(=O)O)C(=O)O",
+      "in_equilibrator_cache": false,
+      "dgf_prime_kj_per_mol": null,
+      "sigma_kj_per_mol": null,
+      "blocker": "absent_from_cache_needs_cxcalc_chemaxon_license"
+    }
+  ],
+  "built_at": "2026-09-04T03:27:43.641472+00:00"
+}

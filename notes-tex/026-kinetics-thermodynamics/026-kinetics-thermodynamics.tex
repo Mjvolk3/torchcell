@@ -1,0 +1,89 @@
+%% notes-tex/026-kinetics-thermodynamics/026-kinetics-thermodynamics.tex
+%% [[experiments.026-metabolism-flux.kinetic-and-thermodynamic-parameter-datasets]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/026-kinetics-thermodynamics/026-kinetics-thermodynamics.tex
+%%
+%% Typeset counterpart of
+%% notes/experiments.026-metabolism-flux.kinetic-and-thermodynamic-parameter-datasets.md.
+%%
+%% Build:  make            -> 026-kinetics-thermodynamics.pdf   (draft: status chips)
+%%         make clean-view -> ...-clean.pdf                     (share view)
+%%         make check      -> formatting / provenance / style gate
+%%         make plots      -> re-convert the matplotlib panels from ASSET_IMAGES_DIR
+%%
+%% Every number is produced by a committed script under
+%% experiments/026-metabolism-flux/scripts/ and read back from
+%% experiments/026-metabolism-flux/results/ or from the parquet builds under
+%% $DATA_ROOT/data/torchcell/. Nothing here is recalled.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+%% Long \texttt paths in prose cannot hyphenate, so give TeX room to stretch a
+%% line rather than run it past the text block.
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}Kinetic and Thermodynamic Parameters\\for the Flux Module\\
+  {\large Five predictors run, and formation energies\\
+   recomputed with uncertainty}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+The enzyme-constrained flux layer needs three parameter tables and had almost none of
+them. Measured $k_{cat}$ covered 148 of 3{,}728 catalytic units, 4.0 percent, with the
+other 96 percent running on a single flat default of 10.3 s$^{-1}$; $K_M$ had no table at
+all; and the thermodynamics came from a shipped file of point values with no covariance,
+usable only for this organism. All three are now built, and every value carries the
+\texttt{sha256} of the weights or the model version that produced it.
+
+Six kinetic predictors were mirrored into a standard location with per-file hashes,
+retrieval commands and git commits, and five were run over the enzyme-substrate pairs of
+yeast-GEM 9.0.2, with protein sequences taken from the genome object rather than from the
+table the model bundles. Validating each against its own authors' published examples paid
+for itself: \textbf{two of these models exponentiate base 2 and two base 10}, and reading
+either wrong yields turnover numbers that still look credible. Two entries in an earlier
+readiness audit were reversed by reading files rather than filenames, in both directions,
+and a third blocker dissolved entirely once its dependency was checked.
+
+The five predictors agree on the median $k_{cat}$ and disagree per pair. On identical
+enzyme-substrate pairs their rank correlation ranges from \textbf{0.015 to 0.509}, with a
+typical disagreement of 0.4 to 0.7 decades. Since almost none of these pairs has a measured
+value, that spread, and not any published accuracy figure, is the honest uncertainty on a
+single predicted turnover number.
+
+Formation energies were recomputed from eQuilibrator's component contribution, which
+returns a covariance and applies to any organism because it works from structure. Summing
+the resulting table reproduces eQuilibrator's own reaction call to
+$9.1\times10^{-13}$ kJ\,mol$^{-1}$, so the table is correct; on the chemical reactions both
+tables cover it agrees with the shipped file to a median of 10.11 kJ\,mol$^{-1}$, which is
+about as well as the shipped file agrees with itself. The gain is 785 reactions with a
+real standard error, median 2.30 kJ\,mol$^{-1}$, and the rank-590 covariance factor the
+flux layer had recorded as unavailable. The cost is reaction coverage, 42.5 percent against
+77.7. Compartment-specific pH is implemented and not trusted: it moves 1{,}309 reactions by
+a median 42 kJ\,mol$^{-1}$, which is not credible.
+
+The predictors agree with each other far less than either agrees with its own training
+data, and that gap is the honest uncertainty on any single predicted value.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-mirrors}
+\input{sections/2-predictors}
+\input{sections/3-thermodynamics}
+\input{sections/4-reproduction}
+\input{sections/5-module}
+\input{sections/6-limits}
+\input{sections/7-sources}
+
+\end{document}

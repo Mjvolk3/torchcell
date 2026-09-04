@@ -1,0 +1,19 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_null_anchored.yaml
+# [[experiments.027-betaxanthin-metabolic]]
+#
+# PERMUTED-LABEL NULL for `flux_anchored`, and the single most decisive cell in the design.
+#
+# A null measured on one architecture DOES NOT TRANSFER to another: the width of a
+# selected-epoch statistic depends on how much the model can chase the validation set, and
+# the flux arm has more capacity to chase it. 026 measured exactly that and it is the
+# finding that invalidated its headline. On the val-peak statistic:
+#
+#     paired (flux_anchored - pooled), real labels      +0.0735  (sd 0.0303, n=10)
+#     paired (flux_anchored - pooled), PERMUTED labels  +0.0302  (sd 0.0722, n=12)
+#
+# So more than 40% of the apparent "flux helps" gap is reproduced with the labels destroyed.
+# Comparing the real gap against ZERO would have been a 7.7 sigma result; comparing it
+# against its own permuted gap leaves +0.0433 at 1.9 sigma. That difference of two nulls is
+# the entire content of this arm.
+base_arm: flux_anchored
+permute_train_targets: true

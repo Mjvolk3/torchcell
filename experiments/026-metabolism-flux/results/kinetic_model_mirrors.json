@@ -1,0 +1,56 @@
+[
+  {
+    "name": "boost_km",
+    "emits": "K_M",
+    "inputs": "sequence,substrate_smiles",
+    "runnable": false,
+    "blocked_by": "The 18 shipped weight files are the UniRep 1900 mLSTM FEATURIZER, not a fitted K_M model. The repository ships training notebooks and the BRENDA/Sabio training data, so the gradient-boosting model has to be refit before any prediction exists.",
+    "n_files": 99567,
+    "weight_bytes": 145757000
+  },
+  {
+    "name": "deepenzyme",
+    "emits": "k_cat",
+    "inputs": "sequence,substrate_smiles,structure",
+    "runnable": true,
+    "blocked_by": "",
+    "n_files": 973,
+    "weight_bytes": 110506725
+  },
+  {
+    "name": "dlkcat",
+    "emits": "k_cat",
+    "inputs": "sequence,substrate_smiles",
+    "runnable": true,
+    "blocked_by": "",
+    "n_files": 224,
+    "weight_bytes": 1663686
+  },
+  {
+    "name": "eitlem",
+    "emits": "k_cat,K_M",
+    "inputs": "sequence,substrate_smiles",
+    "runnable": true,
+    "blocked_by": "",
+    "n_files": 61,
+    "weight_bytes": 13363963166
+  },
+  {
+    "name": "turnup",
+    "emits": "k_cat",
+    "inputs": "sequence,reaction_smiles",
+    "runnable": true,
+    "blocked_by": "",
+    "n_files": 63,
+    "weight_bytes": 10448066880
+  },
+  {
+    "name": "unikp",
+    "emits": "k_cat,K_M",
+    "inputs": "sequence,substrate_smiles",
+    "runnable": true,
+    "blocked_by": "",
+    "n_files": 37,
+    "weight_bytes": 387065355
+  }
+]

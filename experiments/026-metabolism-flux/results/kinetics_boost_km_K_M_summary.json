@@ -1,0 +1,20 @@
+{
+  "predictor": "boost_km",
+  "parameter": "K_M",
+  "n_rows": 7157,
+  "n_units": 3468,
+  "n_units_total": 3728,
+  "n_genes": 1150,
+  "n_substrates": 1253,
+  "coverage_frac": 0.9302575107296137,
+  "value_median": 0.14102792739868164,
+  "value_p05": 0.016077909618616104,
+  "value_p95": 2.317873477935791,
+  "n_failed": 299,
+  "failure_reasons": {
+    "too_many_atoms": 194,
+    "multi_component_smiles": 105
+  },
+  "weights_sha256": "1b29c04c47c56c49ddc419d14a9f6261c53ff034f96ffc10664e9f58a7ca5661",
+  "built_at": "2026-09-04T05:51:26.244638+00:00"
+}

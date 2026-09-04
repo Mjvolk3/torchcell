@@ -1,0 +1,86 @@
+%% notes-tex/026-kinetics-thermodynamics/sections/1-mirrors.tex
+%% [[experiments.026-metabolism-flux.kinetic-and-thermodynamic-parameter-datasets]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/026-kinetics-thermodynamics/sections/1-mirrors.tex
+
+\section{Where the parameters were, and where they are now\secstatus{todo}}
+\label{sec:mirrors}
+
+\subsection{The starting state\secstatus{todo}}
+
+Before this work, yeast-GEM 9.0.2 had 3{,}728 catalytic units and one turnover number for
+almost none of them. Measured $k_{cat}$ covered 148 units, 4.0 percent, drawn from the Open
+Enzyme Database's 1{,}126 \emph{S. cerevisiae} rows, which between them name only 106
+distinct UniProt accessions. The other 3{,}580 units, 96 percent of the model, ran on a
+single flat default of 10.3 s$^{-1}$, the median of the values that did resolve. $K_M$ had
+no table at all: the parameter existed as an enum member and a protocol flag with nothing
+behind either.
+
+Thermodynamics was in better shape and worse than it looked, which
+Section~\ref{sec:thermo} takes up.
+
+\subsection{A standard place for a model, with provenance\secstatus{todo}}
+
+The predictors arrived as ad-hoc git clones in a scratch directory, which is not something
+a result can be rebuilt from: nothing recorded which commit was cloned, and nothing would
+detect an upstream force-push. They now live at
+\texttt{\$DATA\_ROOT/models/kinetics/<name>/}, beside the existing \texttt{mineru} mirror,
+each with a \texttt{manifest.json} pinning every file by \texttt{sha256} and recording the
+source URL, the exact retrieval command, and the git commit.
+
+Two trees are kept deliberately apart. \texttt{\$DATA\_ROOT/models/\ldots} holds
+\emph{the model}: weights, vocabularies, dictionaries, written once and verified
+thereafter. \texttt{\$DATA\_ROOT/data/torchcell/\ldots} holds \emph{what the model
+produced}, regenerable from a mirror plus code, and every row carries the
+\texttt{sha256} of the weight file that produced it. Deleting a build is routine; deleting
+a mirror invalidates the provenance of every build made from it, so a mirror is only ever
+added.
+
+The reason to pay this cost is that a predicted $k_{cat}$ is a model output, not a
+measurement, and the difference has to survive into the table. A value with no provenance
+becomes indistinguishable from a measured one within two steps, and the flux layer's
+coverage gate has to tell an experimental value, a predicted value and a filled default
+apart.
+
+\subsection{Two corrections to the readiness audit\secstatus{todo}}
+
+An earlier audit of these six repositories recorded which ship weights. Reading the files
+rather than the filenames reversed two of its entries, and both reversals matter.
+
+\textbf{DLKcat does ship its trained model.} It is
+\texttt{Results/output/all-\/-radius2-\/-\ldots-\/-iteration50}, a PyTorch
+\texttt{state\_dict} with no file extension, which is why a scan for
+\texttt{*.pt}/\texttt{*.pkl} missed it. On the strength of that miss an 18 GB Zenodo
+download had been queued that was never needed.
+
+\textbf{Boost\_KM ships two fitted models, and the citation points at the wrong one.} Its
+18 ``weight'' files are the UniRep 1900 mLSTM \emph{featurizer}, and reading only those
+supports the conclusion that no regressor was released. Beside them sit
+\texttt{xgboost\_model.dat} and \texttt{xgboost\_model\_full.dat}, which are the fitted
+$K_M$ regressors, and the repository's own README says the pretrained weights can be
+loaded rather than retrained. Nothing needed refitting.
+
+What Wu et al. ran is a third model again. Their Methods cite
+\texttt{AlexanderKroll/KM\_prediction}, the repository for the published paper, but the
+notebook in their release vendors \texttt{KM\_prediction\_function}, whose enzyme
+representation is ESM-1b rather than UniRep and whose regressor,
+\texttt{xgboost\_model\_new\_KM\_esm1b.dat}, takes 1{,}332 features rather than 1{,}952.
+Kroll's README states the substitution plainly: ``the model provided in the repository
+`KM\_prediction\_function' is slighly different to the one presented in our paper: Instead
+of the UniRep model, we are using the ESM-1b model.'' The substrate encoder is common to
+both, and its three checkpoint files are byte-identical across the two repositories, so
+only the enzyme half and the regressor differ. Reproducing Fig.~3f means following the
+code rather than the citation.
+
+\subsection{One environment per predictor\secstatus{todo}}
+
+A released predictor is a frozen artifact, and several of them pin dependencies that cannot
+coexist. UniKP's regressors were pickled before scikit-learn 1.3 added
+\texttt{missing\_go\_to\_left} to the decision-tree node dtype, and scikit-learn 1.7
+refuses to load them. Refusing is correct: reinterpreting a tree's node array under a
+changed dtype would yield numbers that are not UniKP's predictions.
+
+So UniKP runs in an environment pinned to scikit-learn 1.2.2, invoked as a subprocess with
+parquet as the interface, and the torchcell-side dataset class calls it rather than
+importing it. Treating that as an accident to be patched around would be a mistake; it is
+the shape this has to take, and DeepEnzyme additionally wants NVIDIA apex and an old numpy
+for the same reason.

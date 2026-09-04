@@ -1,0 +1,12 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_free.yaml
+# [[experiments.027-betaxanthin-metabolic]]
+#
+# + a LEARNED chemical potential: loop-freedom is enforced, but from a potential the model
+# fits rather than from tabulated formation energies.
+#
+# `flux_free` -> `flux_anchored` is the contrast that decides whether the eQuilibrator
+# delta_f G' table earns its place. Any potential at all buys thermodynamic loop-freedom;
+# only the MEASURED one buys energies. If the two arms are level, the thermodynamic dataset
+# is not carrying information into this phenotype and we should say so.
+base_arm: flux_free
+permute_train_targets: false

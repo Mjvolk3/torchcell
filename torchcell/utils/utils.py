@@ -138,6 +138,22 @@ PAPER_RC: dict[str, object] = {
     # A fixed-figsize panel must NOT be recropped, or the strict width in
     # PANEL_WIDTHS_MM stops holding and panels no longer tile across the page.
     "savefig.bbox": None,
+    # Math is set in Arial too. Without this, ``font.family`` governs only the plain
+    # text and matplotlib renders every $...$ span in DejaVu Sans, whose larger
+    # x-height and wider glyphs make an axis label like
+    # ``$\sigma(\Delta_r G'^\circ)$ (kJ mol$^{-1}$)`` read as two different type
+    # sizes in two different faces inside one label. Greek, primes and \circ all
+    # exist in Arial, so nothing falls back to a missing-glyph box.
+    "mathtext.fontset": "custom",
+    "mathtext.rm": "Arial",
+    "mathtext.it": "Arial:italic",
+    "mathtext.bf": "Arial:bold",
+    "mathtext.sf": "Arial",
+    "mathtext.cal": "Arial",
+    "mathtext.tt": "Arial",
+    # Upright rather than matplotlib's italic default, so a symbol keeps the same
+    # weight and slant as the words beside it in the same label.
+    "mathtext.default": "regular",
 }
 
 

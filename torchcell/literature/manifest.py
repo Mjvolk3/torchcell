@@ -70,6 +70,7 @@ class RetrievalMethod(StrEnum):
     pmc_oa_api = "pmc_oa_api"
     direct_url = "direct_url"
     zenodo = "zenodo"
+    git_clone = "git_clone"
     radiant_endpoint = "radiant_endpoint"
     pubchem_api = "pubchem_api"
 

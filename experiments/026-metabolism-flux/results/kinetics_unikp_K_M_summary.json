@@ -1,0 +1,19 @@
+{
+  "predictor": "unikp",
+  "parameter": "K_M",
+  "n_rows": 7351,
+  "n_units": 3552,
+  "n_units_total": 3728,
+  "n_genes": 1151,
+  "n_substrates": 1345,
+  "coverage_frac": 0.9527896995708155,
+  "value_median": 0.07964578987391452,
+  "value_p05": 0.02564816996019519,
+  "value_p95": 1.2374257097367256,
+  "n_failed": 105,
+  "failure_reasons": {
+    "multi_component_smiles": 105
+  },
+  "weights_sha256": "fe90811273401698a2c25ab32959f13c0087a14feb8ca310cf4b44dcad819fd5",
+  "built_at": "2026-09-04T03:37:59.759674+00:00"
+}

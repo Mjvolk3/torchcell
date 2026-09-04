@@ -1,0 +1,273 @@
+{
+  "n_candidates": 618,
+  "n_compared": 40,
+  "max_abs_diff": 9.094947017729282e-13,
+  "median_abs_diff": 1.1368683772161603e-13,
+  "conditions": {
+    "temperature_k": 303.15,
+    "ionic_strength_m": 0.25,
+    "p_mg": 3.0,
+    "p_h": "per compartment"
+  },
+  "reference_reactions": {
+    "ATP hydrolysis": {
+      "value_kj_per_mol": -28.9337511639878,
+      "error_kj_per_mol": 0.3042778553577672
+    },
+    "phosphoglucose isomerase": {
+      "value_kj_per_mol": 2.6603058740062693,
+      "error_kj_per_mol": 0.382665782433602
+    },
+    "fumarase": {
+      "value_kj_per_mol": -3.426227207441741,
+      "error_kj_per_mol": 0.27824312134037205
+    },
+    "triosephosphate isomerase": {
+      "value_kj_per_mol": 5.605608094137921,
+      "error_kj_per_mol": 0.5486662102928137
+    }
+  },
+  "reactions": [
+    {
+      "reaction_id": "r_2816",
+      "compartment": "mm",
+      "ours": -3.4680221832302323,
+      "api": -3.468022183230005
+    },
+    {
+      "reaction_id": "r_1729",
+      "compartment": "c",
+      "ours": 3.0743173416628906,
+      "api": 3.074317341662777
+    },
+    {
+      "reaction_id": "r_0683",
+      "compartment": "p",
+      "ours": -10.367621678293744,
+      "api": -10.367621678293688
+    },
+    {
+      "reaction_id": "r_0353",
+      "compartment": "m",
+      "ours": -36.928320926276,
+      "api": -36.92832092627599
+    },
+    {
+      "reaction_id": "r_0915",
+      "compartment": "c",
+      "ours": -62.46059429129622,
+      "api": -62.46059429129656
+    },
+    {
+      "reaction_id": "r_0066",
+      "compartment": "c",
+      "ours": -17.95504376665633,
+      "api": -17.955043766656445
+    },
+    {
+      "reaction_id": "r_0609",
+      "compartment": "er",
+      "ours": -251.21111531677434,
+      "api": -251.21111531677502
+    },
+    {
+      "reaction_id": "r_2302",
+      "compartment": "p",
+      "ours": 0.0004601098994498898,
+      "api": 0.0004601098994498898
+    },
+    {
+      "reaction_id": "r_0703",
+      "compartment": "c",
+      "ours": 25.83313543572831,
+      "api": 25.83313543572848
+    },
+    {
+      "reaction_id": "r_4581",
+      "compartment": "c",
+      "ours": -2.676514630913971,
+      "api": -2.6765146309137435
+    },
+    {
+      "reaction_id": "r_0723",
+      "compartment": "c",
+      "ours": -0.49417211138052153,
+      "api": -0.49417211138052153
+    },
+    {
+      "reaction_id": "r_0104",
+      "compartment": "m",
+      "ours": 24.958212350042913,
+      "api": 24.958212350042913
+    },
+    {
+      "reaction_id": "r_2467",
+      "compartment": "mm",
+      "ours": -14.065309284363593,
+      "api": -14.065309284363366
+    },
+    {
+      "reaction_id": "r_2216",
+      "compartment": "lp",
+      "ours": -12.288663221773731,
+      "api": -12.288663221773731
+    },
+    {
+      "reaction_id": "r_2962",
+      "compartment": "erm",
+      "ours": -6.726879277139915,
+      "api": -6.726879277139915
+    },
+    {
+      "reaction_id": "r_0562",
+      "compartment": "c",
+      "ours": -29.80452847614515,
+      "api": -29.804528476144924
+    },
+    {
+      "reaction_id": "r_2399",
+      "compartment": "erm",
+      "ours": -10.197564259949559,
+      "api": -10.19756425995007
+    },
+    {
+      "reaction_id": "r_0955",
+      "compartment": "c",
+      "ours": -113.82830691811625,
+      "api": -113.82830691811625
+    },
+    {
+      "reaction_id": "r_1071",
+      "compartment": "c",
+      "ours": -2.163225678249546,
+      "api": -2.163225678249546
+    },
+    {
+      "reaction_id": "r_0342",
+      "compartment": "er",
+      "ours": 1.775701652020416,
+      "api": 1.7757016520201887
+    },
+    {
+      "reaction_id": "r_0373",
+      "compartment": "c",
+      "ours": -79.88687630262507,
+      "api": -79.88687630262531
+    },
+    {
+      "reaction_id": "r_4485",
+      "compartment": "c",
+      "ours": -549.4353910158329,
+      "api": -549.4353910158329
+    },
+    {
+      "reaction_id": "r_2206",
+      "compartment": "p",
+      "ours": -11.149073298228814,
+      "api": -11.149073298227904
+    },
+    {
+      "reaction_id": "r_0295",
+      "compartment": "lp",
+      "ours": -79.88687630262666,
+      "api": -79.8868763026259
+    },
+    {
+      "reaction_id": "r_4204",
+      "compartment": "v",
+      "ours": -5.986169055933942,
+      "api": -5.986169055933885
+    },
+    {
+      "reaction_id": "r_4630",
+      "compartment": "m",
+      "ours": -9.922263812797155,
+      "api": -9.922263812797212
+    },
+    {
+      "reaction_id": "r_4357",
+      "compartment": "c",
+      "ours": -13.872545609731958,
+      "api": -13.872545609731787
+    },
+    {
+      "reaction_id": "r_0087",
+      "compartment": "c",
+      "ours": -10.100454003526238,
+      "api": -10.100454003526238
+    },
+    {
+      "reaction_id": "r_2169",
+      "compartment": "erm",
+      "ours": -0.43229831984922384,
+      "api": -0.43229831984899647
+    },
+    {
+      "reaction_id": "r_1024",
+      "compartment": "e",
+      "ours": -23.381118332461142,
+      "api": -23.381118332461085
+    },
+    {
+      "reaction_id": "r_4649",
+      "compartment": "m",
+      "ours": -18.849455604659568,
+      "api": -18.849455604659568
+    },
+    {
+      "reaction_id": "r_0058",
+      "compartment": "c",
+      "ours": -247.86532898507883,
+      "api": -247.86532898507883
+    },
+    {
+      "reaction_id": "r_3011",
+      "compartment": "erm",
+      "ours": -6.726879277140824,
+      "api": -6.726879277140142
+    },
+    {
+      "reaction_id": "r_2200",
+      "compartment": "lp",
+      "ours": -12.288116952035125,
+      "api": -12.28811695203558
+    },
+    {
+      "reaction_id": "r_0992",
+      "compartment": "c",
+      "ours": -6.395295783404094,
+      "api": -6.395295783403867
+    },
+    {
+      "reaction_id": "r_0467",
+      "compartment": "c",
+      "ours": 6.99867373711686,
+      "api": 6.998673737116803
+    },
+    {
+      "reaction_id": "r_2427",
+      "compartment": "lp",
+      "ours": -10.19688215301494,
+      "api": -10.196882153015565
+    },
+    {
+      "reaction_id": "r_4754",
+      "compartment": "m",
+      "ours": -191.0205464900488,
+      "api": -191.02054649004867
+    },
+    {
+      "reaction_id": "r_2196",
+      "compartment": "erm",
+      "ours": -11.88945544975627,
+      "api": -11.889455449756667
+    },
+    {
+      "reaction_id": "r_0144",
+      "compartment": "c",
+      "ours": 36.63487602428614,
+      "api": 36.634876024286086
+    }
+  ],
+  "checked_at": "2026-09-04T04:00:23.574135+00:00"
+}

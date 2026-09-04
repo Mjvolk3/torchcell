@@ -1,0 +1,15 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_null_pooled.yaml
+# [[experiments.027-betaxanthin-metabolic]]
+#
+# PERMUTED-LABEL NULL for `pooled`.
+#
+# Each training batch's betaxanthin target and its observation mask are permuted TOGETHER,
+# which destroys the genotype-to-phenotype association while leaving the target distribution,
+# the missingness rate, the batch composition and every other moving part identical.
+# Validation and test targets are untouched, so this arm's test Spearman is one draw from the
+# null distribution of the EXACT statistic the real arms are reported with.
+#
+# Permuting the target without the mask would pair a value with another row's observed flag
+# and produce a null that is easier than the real task rather than equivalent to it.
+base_arm: pooled
+permute_train_targets: true

@@ -1,0 +1,106 @@
+# experiments/027-betaxanthin-metabolic/conf/base.yaml
+# [[experiments.027-betaxanthin-metabolic]]
+#
+# Everything the six arms hold CONSTANT. An arm file adds `base_arm` and
+# `permute_train_targets` and nothing else, so any difference between two arms is
+# attributable to the metabolic module rather than to a hyperparameter that moved with it.
+#
+# The hyperparameters are the 026 incumbent (lr 1e-3, wd 1e-4, hidden 32, L 2, batch 128).
+# They are NOT swept here. 026's `reg` grid crossed lr x wd x hidden at n=2 per cell and
+# every cell sat inside one null width of every other, so a search cannot resolve them at
+# this sample size; replication can. See README.md, "Why no hyperparameter search".
+
+# ---- SCORING RULE, FIXED BEFORE ANY 027 RUN. Do not edit after the first launch. ----
+scoring:
+  # PRIMARY ENDPOINT: Spearman between predicted and measured betaxanthin over the pinned
+  # Merzbacher test genes, at the epoch selected on VALIDATION. Selection set and reporting
+  # set are disjoint, which is the whole point -- 026 selected and reported on the same
+  # validation curve, making its headline number a max over 30 epochs of a statistic whose
+  # null width is 0.0535.
+  primary: test_spearman
+  # Epoch selection: argmax over a CENTERED 5-epoch moving average of validation Pearson.
+  # Smoothing is not cosmetic. The raw argmax of a 200-point noisy curve is itself a max
+  # order statistic, so it lands on a spike and selects a checkpoint that was lucky on the
+  # validation draw. A 5-window costs two epochs of latency (handled by a 5-deep state-dict
+  # ring in the trainer) and removes most of that.
+  select_metric: val_pearson
+  select_smoothing_window: 5
+  # NEVER a max over seeds or arms. An arm's result is the MEAN over seeds with its
+  # across-seed SD and n, both written to the results JSON.
+  aggregate: mean_over_seeds
+
+# ---- BASELINES the decision is made against. Measured, not quoted from prose. ----
+# Source: experiments/020-cachera-betaxanthin/results/merzbacher_comparison_figures.json,
+# written by plot_merzbacher_comparison.py on the same run that drew the figures.
+baselines:
+  fcl_rf_test_spearman: 0.039064257838781265
+  fcl_rf_test_auc_high: 0.5695547309833024
+  # The ten 020_v4 CGT cells, for context on the spread this endpoint carries.
+  cgt_020_v4_test_spearman_mean: 0.0779
+  cgt_020_v4_test_spearman_sd: 0.0492
+
+data:
+  # The dataset is ALREADY BUILT on both machines and is never rebuilt by this experiment.
+  # It carries betaxanthin and the Mulleder 19 amino acids; 027 supervises the betaxanthin
+  # head ONLY, so Mulleder-only genotypes arrive with mask=False and contribute no loss.
+  # Reusing it rather than building a betaxanthin-only tree avoids a Neo4j-dependent build
+  # on a compute node, which is the failure the 019 preflight exists to catch.
+  dataset_subdir: data/torchcell/experiments/019-simb-multimodal/fig6_pigment_transfer
+  query_path: 019-simb-multimodal/queries/fig6_pigment_transfer.cql
+  # Merzbacher 2025's own 639-ORF test list, forced into OUR test split. Without this the
+  # CGT-vs-FCL comparison is invalid, not merely imprecise: an 80/10/10 random split puts
+  # ~511 of their 639 test genes into our TRAIN set. 629 of the 639 resolve in the current
+  # build; the 10 absent are listed in the split file and are reported, never dropped
+  # silently.
+  pinned_test_split_file: 020-cachera-betaxanthin/results/merzbacher_nested_split.json
+  # PIN THE PARTITION. `seed` then varies weight INITIALIZATION ONLY.
+  #
+  # 026 let one knob do both, and that is a large part of why it could not decide anything:
+  # its paired (flux_anchored - pooled) gap had an across-seed SD of 0.0303 and its
+  # PERMUTED-label counterpart 0.0722, both inflated by the split moving underneath the
+  # contrast. 019 measured the same effect directly -- between-seed SD 0.0444 against a
+  # within-seed across-arm SD of 0.0058, so the nuisance axis was 7.7x the signal axis.
+  #
+  # WHAT IT COSTS, stated plainly: the absolute level belongs to ONE train/val draw. Arm
+  # RANKINGS transfer; the absolute number does not. The pinned TEST set is unaffected --
+  # it is the same 639 genes for every seed and every arm.
+  split_seed: 0
+
+model:
+  hidden: 32
+  layers: 2
+  batch_size: 128
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+
+train:
+  # 200 epochs, and this is a CEILING rather than a target.
+  #
+  # 026 measured its validation peak at a median epoch of 3.5-17 out of 30 and never ran
+  # longer, so "the curve is finished by epoch 20" is an extrapolation from a budget that
+  # never tested it. 019 measured the opposite shape on expression: smoothed validation
+  # Pearson peaked ~0.14 at epoch 85-136, FELL to 0.08-0.11 by epoch 200-300, then rose to
+  # a project best 0.198 at epoch 1367. 200 is the smallest budget that can tell those two
+  # shapes apart on this phenotype.
+  #
+  # The extra epochs cannot inflate the reported number, because the number is a TEST score
+  # at a validation-selected epoch. More epochs widen the selection search, they do not
+  # widen the reported statistic.
+  epochs: 200
+  # OFF, deliberately. Any patience small enough to be useful stops inside the 019 dip
+  # above. Nothing is lost: the 5-deep checkpoint ring already retains the best-by-smoothed-
+  # validation model, so a run that peaks early and decays still yields its peak, and the
+  # decay becomes DATA about the curve's shape rather than a reason to stop.
+  early_stopping: false
+  # 0 on Delta. Set by the launcher; see delta_bxfx_common.sh for the 38-minute measurement
+  # that forces it.
+  num_workers: 0
+
+flux:
+  # Preflight assertion, not a preference. `resolve_kcat_table` catches FileNotFoundError on
+  # a missing Open Enzyme Database mirror and returns an EMPTY record list, which silently
+  # replaces every measured kcat with the organism default -- i.e. the "enzyme-constrained"
+  # arm would run with no enzyme constraints and report a plausible number. The GilaHyper
+  # mirror resolves 4.0% of catalytic units experimentally; a flux arm that reports 0.0
+  # aborts.
+  min_kcat_experimental_fraction: 0.02

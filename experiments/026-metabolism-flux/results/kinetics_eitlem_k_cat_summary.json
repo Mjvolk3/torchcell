@@ -1,0 +1,17 @@
+{
+  "predictor": "eitlem",
+  "parameter": "k_cat",
+  "n_rows": 7456,
+  "n_units": 3552,
+  "n_units_total": 3728,
+  "n_genes": 1151,
+  "n_substrates": 1350,
+  "coverage_frac": 0.9527896995708155,
+  "value_median": 3.9812249137873437,
+  "value_p05": 0.07046996564107301,
+  "value_p95": 108.85593723065533,
+  "n_failed": 0,
+  "failure_reasons": {},
+  "weights_sha256": "264d52bd96fcab546982dbe764d664a91625ad7d18325d2a3837136b01cf498d",
+  "built_at": "2026-09-04T04:56:12.879674+00:00"
+}

@@ -1,0 +1,80 @@
+%% notes-tex/026-kinetics-thermodynamics/sections/6-limits.tex
+%% [[experiments.026-metabolism-flux.kinetic-and-thermodynamic-parameter-datasets]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/026-kinetics-thermodynamics/sections/6-limits.tex
+
+\section{What these tables cannot support\secstatus{todo}}
+\label{sec:limits}
+
+\subsection{A predicted turnover number is not a measured one\secstatus{todo}}
+
+Every row in the $k_{cat}$ and $K_M$ builds is a model output. The tables record that in a
+provenance column beside the value, because a number with no provenance becomes
+indistinguishable from a measurement within two steps, and the coverage gate has to be able
+to separate an experimental value, a predicted value and a filled default.
+
+The size of the distinction is measurable. Two predictors trained on overlapping data,
+applied to the same 7{,}351 pairs, disagree by a median factor of about three. Neither
+model's own reported error is that large. The disagreement is the honest uncertainty on any
+single value, and it is wider than any published accuracy figure would suggest, because
+those figures are computed on held-out data drawn from the same corpus rather than on a
+genome-scale application.
+
+\subsection{Accuracy against the Open Enzyme Database is memorization, not generalization\secstatus{todo}}
+
+Comparing predictions to the Open Enzyme Database looks like validation and is not. The
+database aggregates BRENDA and Sabio-RK, which is what these models were trained on, so a
+matched enzyme-substrate pair is almost certainly inside their training sets. Numbers from
+that comparison are reported here explicitly as memorization checks.
+
+The join also has to be on the \emph{pair}. Joining on enzyme alone compares a prediction
+for one substrate against a measurement for another, and doing so moves one of these
+correlations from 0.98 to 0.82 and another from 0.62 to 0.12. The looser join is the one
+that is easy to write by accident.
+
+\subsection{$K_M$ is built and deliberately not consumed\secstatus{todo}}
+
+The flux layer does not use $K_M$. The parameter enters only through a saturation factor
+$\eta_{\mathrm{sat}} = \prod_i c_i/(K_{M,i} + c_i)$, which needs intracellular metabolite
+concentrations, and those are measured for 191 of 2{,}806 metabolites, 6.8 percent. Adding
+$K_M$ today would add a parameter and a free variable per reaction with no anchor for
+either.
+
+The measured argument for adding it anyway is promiscuity: underground reactions show
+roughly twice the $K_M$ at indistinguishable $k_{cat}$, so a $k_{cat}$-only model cannot
+tell a promiscuous side activity from a native one. The measured argument against is that
+the $K_M$ predictions here are the least reliable of the set, and treating them as constants
+rather than as order-of-magnitude priors would put that unreliability directly into a
+constraint.
+
+\subsection{The thermodynamic gaps\secstatus{todo}}
+
+Three, in order of how much they bind.
+
+\textbf{Novel compounds need a licensed tool.} Adding a compound eQuilibrator has never
+seen requires pKa estimates from ChemAxon's \texttt{cxcalc}. Without the license the
+compound cache is read-only, so the betaxanthin intermediates that are not already in it
+cannot be priced at all. This is the binding constraint on applying the method to
+heterologous pathways, which is exactly where it is most wanted.
+
+\textbf{Coverage fell.} Reaction coverage went from 77.7 percent to 42.5 percent, because a
+reaction needs every participant resolved. The unresolved metabolites are dominated by
+acyl-CoA isomers and combinatorial lipid species, which are chemically ordinary and merely
+un-indexed under the names the model uses.
+
+\textbf{Compartment pH is not validated.} It is implemented, it produces shifts too large
+to believe, and the pH table is assumed rather than sourced. Until that is diagnosed the
+uniform build is the one to use, which means transport thermodynamics is set to zero by
+construction and the proton motive force is absent from the model.
+
+\subsection{What the mirror records when a predictor cannot run\secstatus{todo}}
+
+All six now run. Where a predictor could not be run at all, the mirror records
+\texttt{runnable: false} with the specific blocker, so that a gap in coverage is never
+mistaken for a modeling choice.
+
+Boost\_KM carried that flag until its weights were read rather than its filenames, and the
+correction is recorded in Section~\ref{sec:mirrors} rather than quietly dropped: the
+repository does ship fitted regressors, and the obstacle was never a missing model. It was
+that UniRep is a TensorFlow~1 mLSTM stepping one residue at a time on CPU, which on a first
+attempt occupied roughly 85 cores. The ESM-1b variant Wu et al. actually used replaces that
+stage with a transformer that embeds all 887 enzymes on one GPU in four minutes.

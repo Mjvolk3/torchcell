@@ -1,0 +1,105 @@
+%% notes-tex/026-kinetics-thermodynamics/sections/2-predictors.tex
+%% [[experiments.026-metabolism-flux.kinetic-and-thermodynamic-parameter-datasets]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/026-kinetics-thermodynamics/sections/2-predictors.tex
+
+\section{The predictors, and what running them taught\secstatus{todo}}
+
+\subsection{One module per model, on the node-embedding pattern\secstatus{todo}}
+
+Which predictor feeds the flux layer is a design choice to experiment over, not a pipeline
+detail to settle once, so the kinetic predictors copy the shape the sequence-embedding
+datasets already use: an abstract base, one module per model, and a name-to-class registry
+that a config string selects.
+
+One structural difference drives everything else. A node embedding is keyed by
+\emph{gene}; a kinetic parameter is keyed by a \emph{pair}, because a turnover number is a
+property of one enzyme acting on one substrate. The key is
+$(\textrm{uniprot}, \textrm{substrate}, \textrm{predictor}, \textrm{parameter})$.
+Collapsing to one row per gene would silently pick a substrate, and collapsing to one row
+per catalytic unit would silently pick a subunit, so the store holds pairs and aggregation
+lives in the resolver. The dataset records what was predicted; the caller decides what the
+layer sees.
+
+\subsection{Sequences come from the genome, not from the model's bundled table\secstatus{todo}}
+
+yeast-GEM ships a \texttt{swissprot.tsv} with a sequence column, and it sits conveniently
+beside the model. It is the wrong source. Protein sequences are read from
+\texttt{SCerevisiaeGenome} through \texttt{genome[orf].protein.seq}, the same path the ESM2
+embedding dataset uses, so everything stays on the derivation chain from the S288C
+reference FASTA plus the GAF. The difference is provenance rather than content: a sequence
+from a third-party table is a claim by that table's compiler, while the same sequence from
+the genome is the one the perturbation ontology edits, so a strain's genotype and the
+protein a predictor sees cannot silently disagree.
+
+All 1{,}161 yeast-GEM genes resolve as \texttt{current} through the shared gene-name
+reconciler, and all 1{,}161 have a protein sequence, so nothing is lost by the switch.
+Rebuilding DLKcat on genome sequences moved the median $k_{cat}$ from 4.0125 to 4.0116
+s$^{-1}$, which says the two sources agree on content and differ on provenance.
+
+Two failures are worth recording because both are silent. \texttt{orf in genome} looks
+safer than indexing and is not: the genome defines no \texttt{\_\_contains\_\_}, so Python
+falls back to integer indexing and calls \texttt{genome[0]}, raising before the real lookup
+happens. And \texttt{go\_root} is a separate constructor argument defaulting to a relative
+path; left unset it misses and the constructor tries to fetch \texttt{go.obo} from
+\texttt{current.geneontology.org}, which answers 403.
+
+\subsection{Validation caught a log base\secstatus{todo}}
+
+The DLKcat implementation reproduces the authors' three released example values to four
+decimal places. That check was worth more than its cost, because it caught two defects that
+would otherwise have been invisible in a plausible-looking table.
+
+\textbf{The output is $\log_2$, not $\log_{10}$.} The authors exponentiate with
+\texttt{math.pow(2, \ldots)}. Reading it as base 10 inflates every turnover number by a
+power of roughly 3.3 and still produces numbers that look like credible turnover numbers.
+
+\textbf{Multi-component SMILES are refused by the model itself.} Its fingerprint pass
+indexes a node list built only from bonded atoms, so a disconnected fragment, such as the
+lone \texttt{[Fe+2]} in the heme SMILES yeast-GEM gives for ferricytochrome $c$, walks off
+the end of the list. Excluding them is what the model does, so the exclusion is recorded
+rather than worked around.
+
+\subsection{Embedding on four GPUs\secstatus{todo}}
+
+UniKP's protein half is ProtT5-XL, a 3-billion-parameter encoder, and its pinned
+environment holds CPU-only torch. The embedding is therefore produced once on GPU and
+handed across as a content-addressed cache, keyed by a hash of the sequence so that any
+predictor wanting a ProtT5 representation can reuse it and two ORFs with one sequence
+resolve to one vector.
+
+Sequences are split by index across the four GPUs and merged; within a shard they are
+sorted by length and batched, which is where most of the gain comes from, and a
+per-sequence masked mean keeps the result identical to unbatched inference. The 1{,}154
+distinct sequences finish in under 40 seconds.
+
+The genome is read exactly once, by a dump step, and the shards read that dump. Four
+processes opening the same gffutils SQLite database concurrently raced and made it briefly
+unreadable; since the shards need the genome for nothing but a sequence lookup, the
+dependency was removed rather than serialized.
+
+\subsection{What each predictor cost to run\secstatus{todo}}
+
+%% SOURCE: hand-authored from the mirror manifests written by
+%% experiments/026-metabolism-flux/scripts/mirror_kinetic_models.py; the machine
+%% readable form is experiments/026-metabolism-flux/results/kinetic_model_mirrors.json
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Predictor status]{The six predictors named in Wu et al.'s Methods, what each
+  emits, and what it took to run here. ``Ships weights'' refers to the repository as
+  cloned; UniKP's fitted regressors are released separately on HuggingFace and are
+  mirrored alongside it.}
+  \label{tab:predictors}
+  \begin{tabular}{llll}
+    \hline
+    Predictor & Emits & Ships weights & Note \\
+    \hline
+    DLKcat & $k_{cat}$ & yes, extensionless & output is $\log_2$ \\
+    UniKP & $k_{cat}$, $K_M$ & regressors on HuggingFace & needs scikit-learn 1.2.2 \\
+    TurNuP & $k_{cat}$ & Zenodo archive & takes full reaction SMILES \\
+    EITLEM-Kinetics & $k_{cat}$, $K_M$ & Zenodo, 12.3 GB & many checkpoints \\
+    Boost\_KM & $K_M$ & yes, two regressors & ESM-1b variant is the one Wu ran \\
+    DeepEnzyme & $k_{cat}$ & figshare & uses AlphaFold structures \\
+    \hline
+  \end{tabular}
+\end{table}

@@ -1,0 +1,191 @@
+{
+  "model_vs_model": {
+    "note": "All shared pairs. Almost none has a measured value, so this is the only comparison available on the population the flux layer consumes. The disagreement here is the uncertainty on any single predicted value.",
+    "k_cat": [
+      {
+        "left": "deepenzyme",
+        "right": "dlkcat",
+        "median_left": 4.166575750623067,
+        "median_right": 4.0116206850107945,
+        "n": 7300,
+        "pearson_log10": 0.2699441535742513,
+        "spearman": 0.2836482838531497,
+        "median_abs_error_decades": 0.4040543505917197
+      },
+      {
+        "left": "deepenzyme",
+        "right": "eitlem",
+        "median_left": 4.166575750623067,
+        "median_right": 4.121710321197906,
+        "n": 7300,
+        "pearson_log10": 0.08988461981564971,
+        "spearman": 0.025021363979674843,
+        "median_abs_error_decades": 0.6797658446293651
+      },
+      {
+        "left": "deepenzyme",
+        "right": "turnup",
+        "median_left": 4.473722892027432,
+        "median_right": 10.719831466674805,
+        "n": 5035,
+        "pearson_log10": 0.11139096309366835,
+        "spearman": 0.09369532908676709,
+        "median_abs_error_decades": 0.5123901653991765
+      },
+      {
+        "left": "deepenzyme",
+        "right": "unikp",
+        "median_left": 4.166575750623067,
+        "median_right": 4.0794152479141275,
+        "n": 7300,
+        "pearson_log10": 0.10891152465819957,
+        "spearman": 0.014612112709844744,
+        "median_abs_error_decades": 0.403269919720592
+      },
+      {
+        "left": "dlkcat",
+        "right": "eitlem",
+        "median_left": 4.0116206850107945,
+        "median_right": 4.091729787119771,
+        "n": 7351,
+        "pearson_log10": 0.24813382366719539,
+        "spearman": 0.16895236054055995,
+        "median_abs_error_decades": 0.6968959072055977
+      },
+      {
+        "left": "dlkcat",
+        "right": "turnup",
+        "median_left": 4.260171881310111,
+        "median_right": 10.719831466674805,
+        "n": 5038,
+        "pearson_log10": 0.14222655029928744,
+        "spearman": 0.08423875725470055,
+        "median_abs_error_decades": 0.5639850404924385
+      },
+      {
+        "left": "dlkcat",
+        "right": "unikp",
+        "median_left": 4.0116206850107945,
+        "median_right": 4.050408600016654,
+        "n": 7351,
+        "pearson_log10": 0.33687927912611954,
+        "spearman": 0.2244906941899339,
+        "median_abs_error_decades": 0.464608963094846
+      },
+      {
+        "left": "eitlem",
+        "right": "turnup",
+        "median_left": 4.573079608667036,
+        "median_right": 10.819293022155762,
+        "n": 5143,
+        "pearson_log10": 0.36122168988345554,
+        "spearman": 0.3302061039896988,
+        "median_abs_error_decades": 0.6354418667901811
+      },
+      {
+        "left": "eitlem",
+        "right": "unikp",
+        "median_left": 4.091729787119771,
+        "median_right": 4.050408600016654,
+        "n": 7351,
+        "pearson_log10": 0.5603529532581728,
+        "spearman": 0.5093446303460839,
+        "median_abs_error_decades": 0.506106164078437
+      },
+      {
+        "left": "turnup",
+        "right": "unikp",
+        "median_left": 10.719831466674805,
+        "median_right": 4.433053615936527,
+        "n": 5038,
+        "pearson_log10": 0.45814124012743884,
+        "spearman": 0.4329012571424175,
+        "median_abs_error_decades": 0.43672021477026335
+      }
+    ],
+    "K_M": [
+      {
+        "left": "boost_km",
+        "right": "eitlem",
+        "median_left": 0.14102792739868164,
+        "median_right": 0.07894104405711838,
+        "n": 7157,
+        "pearson_log10": 0.35855413702956745,
+        "spearman": 0.344835884131893,
+        "median_abs_error_decades": 0.5422233324307479
+      },
+      {
+        "left": "boost_km",
+        "right": "unikp",
+        "median_left": 0.14102792739868164,
+        "median_right": 0.08369996924092415,
+        "n": 7157,
+        "pearson_log10": 0.7640867540717092,
+        "spearman": 0.7891205416584289,
+        "median_abs_error_decades": 0.2898592649228011
+      },
+      {
+        "left": "eitlem",
+        "right": "unikp",
+        "median_left": 0.07870196999122571,
+        "median_right": 0.07964578987391452,
+        "n": 7351,
+        "pearson_log10": 0.4628036041121973,
+        "spearman": 0.4057343621254463,
+        "median_abs_error_decades": 0.5035097454565671
+      }
+    ]
+  },
+  "vs_measured": {
+    "note": "NOT held out. The Open Enzyme Database aggregates BRENDA and Sabio-RK, which both models trained on, so these pairs are almost certainly inside their training sets. This measures memorization, joined on the (enzyme, substrate) pair with canonicalized SMILES.",
+    "n_measured_pairs_available": 228,
+    "deepenzyme_k_cat": {
+      "n": 19,
+      "pearson_log10": 0.20327227261944206,
+      "spearman": 0.32098765432098764,
+      "median_abs_error_decades": 0.6439297459786952
+    },
+    "dlkcat_k_cat": {
+      "n": 19,
+      "pearson_log10": 0.734116524785653,
+      "spearman": 0.7848324514991181,
+      "median_abs_error_decades": 0.31119043669485436
+    },
+    "eitlem_k_cat": {
+      "n": 19,
+      "pearson_log10": 0.9213536968227186,
+      "spearman": 0.9137338104643773,
+      "median_abs_error_decades": 0.20742796374432926
+    },
+    "turnup_k_cat": {
+      "n": 19,
+      "pearson_log10": 0.481842216789621,
+      "spearman": 0.4656084656084655,
+      "median_abs_error_decades": 1.078831971057236
+    },
+    "unikp_k_cat": {
+      "n": 19,
+      "pearson_log10": 0.98151557167732,
+      "spearman": 0.9400352733686066,
+      "median_abs_error_decades": 0.2709667648158067
+    },
+    "boost_km_K_M": {
+      "n": 19,
+      "pearson_log10": 0.5522539959666489,
+      "spearman": 0.6067019400352733,
+      "median_abs_error_decades": 1.462110647163762
+    },
+    "eitlem_K_M": {
+      "n": 19,
+      "pearson_log10": 0.5544307642029656,
+      "spearman": 0.6481731767325244,
+      "median_abs_error_decades": 0.6137788427352291
+    },
+    "unikp_K_M": {
+      "n": 19,
+      "pearson_log10": 0.6187327315013817,
+      "spearman": 0.6631393298059964,
+      "median_abs_error_decades": 1.0028948821166606
+    }
+  }
+}

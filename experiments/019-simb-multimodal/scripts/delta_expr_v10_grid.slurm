@@ -24,13 +24,19 @@
 #   # from a checkout it OWNS. The clone is made once with:
 #   #   git clone --branch multimodal-phenotype-retrospective \
 #   #       /projects/bbub/mjvolk3/torchcell /work/hdd/bbub/mjvolk3/torchcell-v10
-#   sbatch --array=0-7 \
+#   # --account is passed explicitly so this round charges a DIFFERENT project from whatever
+#   # else is queued. Two jobs on one account share a fairshare pool and hold each other back;
+#   # on 2026-09-04 this grid and an unrelated 027 array both sat on bfjt and one read
+#   # "(Priority)" purely because of the other. Balances that day: bfjt 12,788 h, bflt 4,845,
+#   # bgcg 4,760, bbub 3,738, bbhh OVERDRAWN. This round wants ~1,500 GPU-hours.
+#   sbatch --array=0-7 --account=bflt-delta-gpu \
 #       --export=ALL,V10_STAGE=grid,V10_PROJECT_ROOT=/work/hdd/bbub/mjvolk3/torchcell-v10 \
 #       /work/hdd/bbub/mjvolk3/torchcell-v10/experiments/019-simb-multimodal/scripts/delta_expr_v10_grid.slurm
 #
 # ONE-TIME SETUP: Slurm opens --output BEFORE this script's own mkdir runs, so the log
-# directory must already exist or every task fails in 0 s with no log at all.
-#   mkdir -p /projects/bbub/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output
+# directory must already exist or every task fails in 0 s with no log at all. See the
+# --output directive below for why this path deliberately sits outside every git checkout.
+#   mkdir -p /work/hdd/bbub/mjvolk3/slurm-logs/019-expr-v10
 #
 # ACCOUNT. `bbtp-delta-gpu` (CHM230022), which the older delta_joint_expr_morph.slurm names,
 # is NO LONGER in this user's associations, and a submit under it returns
@@ -74,13 +80,29 @@
 #SBATCH --time=2-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
-#SBATCH --output=/projects/bbub/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output/%x_%A_%a.out
-#SBATCH --error=/projects/bbub/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output/%x_%A_%a.out
+# LOGS LIVE OUTSIDE EVERY GIT CHECKOUT, and that is the whole point of the path. #SBATCH
+# directives are STATIC: Slurm parses them at submit time and opens the output file BEFORE
+# the script body runs, so they cannot read V10_PROJECT_ROOT and the script's own mkdir is
+# far too late. Grid 21813317 pointed here at the SHARED checkout's slurm/output, which had
+# ceased to exist when that checkout moved to another branch, and all 8 tasks died in 8
+# seconds with exit 128 and NO LOG AT ALL, before any gate in this file could run. Pointing
+# at the job-owned checkout instead would only narrow the window, since a clone is still
+# something a git operation can rewrite. A plain directory under /work/hdd that no checkout
+# owns cannot be removed by any branch switch, reset or clean.
+#
+# THIS DIRECTORY MUST EXIST BEFORE SUBMIT. Nothing in this script can create it in time:
+#   mkdir -p /work/hdd/bbub/mjvolk3/slurm-logs/019-expr-v10
+#SBATCH --output=/work/hdd/bbub/mjvolk3/slurm-logs/019-expr-v10/%x_%A_%a.out
+#SBATCH --error=/work/hdd/bbub/mjvolk3/slurm-logs/019-expr-v10/%x_%A_%a.out
 
 set -euo pipefail
 
 PROJECT_ROOT="${V10_PROJECT_ROOT:-/projects/bbub/mjvolk3/torchcell}"
-OUT_DIR="$PROJECT_ROOT/experiments/019-simb-multimodal/slurm/output"
+# PER-RUN LOGS SIT WITH THE SLURM LOGS, outside every checkout, for the same reason the
+# --output directive does: a run's log is evidence about the run and must not be something a
+# git operation on the source tree can delete. This defaults to the same directory --output
+# names, so both halves of a task's output land together.
+OUT_DIR="${V10_LOG_DIR:-/work/hdd/bbub/mjvolk3/slurm-logs/019-expr-v10}"
 mkdir -p "$OUT_DIR"
 if [ ! -d "$PROJECT_ROOT/torchcell" ]; then
   echo "FATAL: PROJECT_ROOT=$PROJECT_ROOT has no torchcell/ package dir." >&2

@@ -44,6 +44,36 @@ rather than avoiding it, the reverse of inference_1 where the tail concentrated 
 single-screen genes and collapsed 9.6x once they were gated. 476 of the top 500
 are positive under all three checkpoints.
 
+### What survives consensus
+
+Counts, not rates, because a fraction of 41.9 million is not holdable.
+
+| cut | ensemble mean | all three above |
+|---|---|---|
+| +0.08 | 43,663 | 2,906 |
+| +0.12 | 10,518 | 831 |
+| +0.16 | 4,495 | **432** |
+| +0.20 | 2,284 | 272 |
+| +0.30 | 739 | 152 |
+
+432 triples clear the strong tier at +0.16 on all three checkpoints, and 152 clear
++0.30. That is the only pool a panel should be drawn from.
+
+### The head is regulatory, not metabolic
+
+Triple composition says nothing: 2-metabolic triples are 71.2 percent of the space
+and 70.4 percent of the top 500. The compositional constraint is satisfied
+identically inside and outside the head.
+
+The genes carrying the head do differ. Of the 79 genes appearing in the top 500,
+46 are metabolic, 32 regulator, 1 both. Against a roster of 661 metabolic, 258
+regulator and 15 both, regulators are **1.47x enriched** among head genes, 40.5
+percent against 27.6 percent.
+
+So the ranking is not preferring metabolic triples over regulatory ones. It is
+picking particular regulators to pair with metabolism, and which ones is the
+concern below.
+
 ### Two reasons not to build from the list
 
 **The head is a clique.** 79 distinct genes carry the top 500 out of a 934-gene

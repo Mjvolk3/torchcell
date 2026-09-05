@@ -74,3 +74,10 @@ prose and live here (and in the `tab-dango-string-versions` caption for the run 
   `determine_lambda_values()` keys are `string9_1_*` and `DangoLoss` uses `.get(edge_type, 1.0)`) is
   read from the code, not measured; the same script (`experiments/006-kuzmin-tmi/scripts/dango.py`)
   trained the full-dataset runs of `note:dango-full`, so it applies there too.
+
+## 2026.09.04 - Legend on an opaque white box
+
+Author review: the legend of the decreased-zeros panel was hard to read over the gridlines and the
+neighborhood bars. It now draws with `frameon=True`, white face, no edge (`framealpha=1`), same
+position. Re-rendered with `--from-csv`; no value changed. The panel is now (c) of
+`FigS-dango-reproduction` (was b).

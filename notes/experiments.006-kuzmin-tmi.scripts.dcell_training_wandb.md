@@ -78,3 +78,24 @@ The two reruns of the bf16 configuration (99-119 s/step vs 20 s/step) show day-t
 Author review of `FigS-dcell-training`: the `+`-prefixed stage labels in panel d were inconsistent. Every bar is now a numbered stage whose label is the complete configuration of that run (`stage_label` in `panel_stages`; batch 256 per GPU and 8 loader workers unless stated): 1 fp32, duplicate forward; 2 fp32, single forward; 3 fp32, single forward, cached strata; 4 fp16-mixed, single forward, cached strata; 5 bf16-mixed, single forward, cached strata; 6 stage 5 rerun on a later day; 7 stage 5 with 12 loader workers; 8 and 9 stage 5 with `torch.compile` at batch 500 and 600. The caption spells out what each stage adds; the measured seconds per step are unchanged (`speedup_stages.csv` untouched). The label column takes 56% of the 88 mm panel; the x label is shortened to "Training samples per second (4 GPUs)".
 
 Panel c follows the house rule for bar charts with replicate points: bar = mean over runs, replicates as open circles (black edge, white face; previously filled dots); no whisker is drawn because DCell has one run, and the caption says so. No statistic changed. `--from-csv` re-rendered all four panels; `cost.csv` and `checkpoints.csv` were rewritten byte-identical.
+
+## 2026.09.04 - Second author review: panel d as a table, the Kuzmin 2018-only run as a data-effect panel
+
+### Panel d redesigned as an explanatory table
+
+The stage bars were still confusing. `panel_stages()` now draws two axes on one row grid (88 x 50 mm): left, a frameless table with the stage number, what changed relative to the previous stage in 3-5 words (`STAGE_CHANGE`), the batch per GPU, and the resulting samples per second; right, seconds per optimizer step as horizontal bars aligned to the rows, boxed, linear axis 0-160 s. Down-arrows between rows 1-5 mark the cumulative chain (each stage keeps every earlier change) with a rotated "cumulative" label; a bracket spans rows 6-9 ("variants of 5": a later-day rerun, 12 loader workers, `torch.compile` at batch 500 and 600), and a thin rule separates the two groups. Numbers are read from `speedup_stages.csv` unchanged. Panel c is re-rendered at 50 mm so rows 2 and 3 of the figure fit under 170 mm.
+
+### The 005 project and the data-effect panel (`kuzmin2018_runs.csv`, `data_effect.csv`)
+
+`pull_kuzmin2018_runs()` (`--pull-kuzmin2018`, also part of the full pull) freezes every run of `zhao-group/torchcell_005-kuzmin2018-tmi_dcell` (31 runs) with the config fields that decide whether it trained on the full build: `is_perturbation_subset`, subset size, batch, devices, precision, `max_epochs`, GO filters, auxiliary-loss flag, plus the summary `val/gene_interaction/Pearson`. The rule for the panel is `full_build_run = not is_perturbation_subset and val Pearson logged`, which admits exactly one run: `biucpv7p`, rank 0 of SLURM job 1811673 (batch 256 per GPU, four GPUs, fp32, auxiliary losses OFF, 258 epochs, 29.2 days). The other three ranks of that job (`4ipeq1qh`, `cy3j49sj`, `dxa1fngh`) log no validation metrics; the 27 Mac runs of May 2025 are perturbation-subset debugging runs (100 or 1,000 records), 21 of them failed or crashed. `data_effect_table()` takes the maximum validation Pearson over epochs per run on each build and writes `data_effect_runs.csv` (per run) and `data_effect.csv` (per build: n, mean, SD, SEM where n > 1, run ids, best epochs; the 005 record count is read from `experiments/005-kuzmin2018-tmi/results/dango_dataset_split.csv`).
+
+| build | records | run | best val Pearson | best epoch | epochs | batch/GPU | precision | aux. losses |
+|---|---|---|---|---|---|---|---|---|
+| 005 (Kuzmin 2018 only) | 91,050 | biucpv7p (job 1811673) | 0.259 | 227 | 258 | 256 | fp32 | off |
+| 006 (Kuzmin 2018 + 2020 deletions) | 332,313 | eni948by (job 1922684) | 0.173 | 150 | 333 | 600 | bf16-mixed | on |
+
+`panel_data_effect()` (88 x 48 mm): bar = mean over runs, whisker = SEM where n > 1 (none drawn, n = 1 each), open circle = the run, value and best epoch above each bar, gridlines every 0.1 labelled every 0.2. Caveats stated in the caption: the builds are split separately, and the two runs differ in auxiliary losses, precision, and batch, so the gap is not a controlled data-size ablation.
+
+![](./assets/images/006-kuzmin-tmi/dcell_training_stages.svg)
+
+![](./assets/images/006-kuzmin-tmi/dcell_training_data_effect.svg)

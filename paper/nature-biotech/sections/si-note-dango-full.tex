@@ -3,7 +3,9 @@
 %% (wandb pull of zhao-group/torchcell_006-kuzmin2018-tmi_dango and the three CGT replicate
 %% training runs of zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer,
 %% frozen to experiments/010-kuzmin-tmi/results/dango_full_dataset_*.csv; also writes
-%% tab-dango-full-runs.tex). The figure is composed by
+%% tab-dango-full-runs.tex; the data-effect panel d reads the frozen 005 sweep,
+%% experiments/005-kuzmin2018-tmi/results/dango_string_version_sweep.csv, and writes
+%% results/dango_full_dataset_data_effect.csv). The figure is composed by
 %% experiments/010-kuzmin-tmi/scripts/dango_full_dataset_compose_figure.py. Rerun those, not this file.
 %% Dataset sizes: notes/experiments.011-kuzmin-tmi.scripts.query-comparison-006-009-010-011.md
 %% (006 = 332,313; 009 = 299,146; 010 = 376,732). CGT on 009 (0.396) and 010 (0.454):
@@ -52,9 +54,11 @@ three CGT replicates reach $0.4537 \pm 0.0043$ at epochs 24 to 25.
 \notesec{Release and dataset effects} Every DANGO run reaches $r \ge 0.35$ within 16 to 23
 epochs with v9.1 and 25 to 30 with v11.0 or v12.0 (\suppfig{fig:dango-full}a,\,c); what the
 release changes is the plateau, a later and lower maximum rather than a slower initial rise.
-Against the Kuzmin 2018 screen alone (\supptab{tab:dango-string-versions}), dataset size,
-the split, and the addition of the Kuzmin 2020 screen change at once, and the drop from
-$0.42$ to $0.36$ is not attributed to any one of them here. Hypothesis (untested): the
+Against the Kuzmin 2018 screen alone (\suppfig{fig:dango-full}d;
+\supptab{tab:dango-string-versions}), the only measured data-size comparison for DANGO, the
+two builds are split separately, so no like-for-like split can be claimed; dataset size,
+split membership, and the addition of the Kuzmin 2020 screen change at once, and the drop
+from $0.42$ to $0.36$ is not attributed to any one of them here. Hypothesis (untested): the
 Kuzmin 2020 triples, screened around duplicated gene pairs, are the harder part of the
 union, given that the CGT scores $0.396$ on the deletion-only experiment-009 build and
 $0.454$ on the experiment-010 build. Whether DANGO trained on the experiment-010 build would
@@ -72,10 +76,20 @@ a gain of 0.002 to 0.006, while the two-GPU v12.0 run peaks at epoch 60 and decl
 and SEM over runs; filled markers are the runs averaged in Fig.~\ref{fig:ggi}d; the axis is
 zoomed to 0.30 to 0.50. (c)~For each DANGO run, the first epoch at which validation Pearson
 reaches 0.35 (filled) and the epoch of its maximum (open); circles are four-GPU jobs, squares
-two-GPU jobs. (d)--(f)~Reserved: predicted against measured interaction, absolute error
-against $|\tau|$, and per-channel meta-embedding weights need a trained checkpoint and
-inference on the validation split; each box states the checkpoint and script that fill it.
-Source: \texttt{experiments/010-kuzmin-tmi/scripts/dango\_full\_dataset\_si.py}.}{fig:dango-full}
+two-GPU jobs. The release moves the epoch of the maximum (98 to 140 with v9.1, up to 608 with
+v12.0), not the epoch of the rise (16 to 30 in every run). (d)~Best validation Pearson $r$
+(maximum over epochs) of the same implementation on the Kuzmin 2018-only build of
+\suppnoteref{note:dango-repro} (91,050 records, 19 runs pooled over the three loss
+schedules) and on the experiment-006 build of this Note (332,313 records, 14 runs), by
+STRING release; bar, mean over runs; whisker, SEM; open circles, runs; the axis is zoomed to
+0.30 to 0.45. The two builds are split separately, so the validation sets differ in
+membership as well as in size, and the 005 runs used batch 32 on one GPU where the 006 runs
+used batch 64 per GPU on two to four; this is the only measured data-size comparison for
+DANGO, not a controlled ablation. (e)--(g)~Reserved: predicted against measured interaction,
+absolute error against $|\tau|$, and per-channel meta-embedding weights need a trained
+checkpoint and inference on the validation split; each box states the checkpoint and script
+that fill it. Source: \texttt{experiments/010-kuzmin-tmi/scripts/dango\_full\_dataset\_si.py}
+(d also reads \texttt{experiments/005-kuzmin2018-tmi/results/dango\_string\_version\_sweep.csv}).}{fig:dango-full}
 \end{figure*}
 
 \input{sections/tab-dango-full-runs}

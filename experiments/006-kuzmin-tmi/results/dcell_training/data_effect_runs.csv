@@ -1,0 +1,3 @@
+build,run_id,best_val_pearson,best_epoch,epochs_logged,batch_size_per_gpu,devices,precision,use_auxiliary_losses
+005,biucpv7p,0.2588725686073303,227,258,256,4,32-true,False
+006,eni948by,0.1732101738452911,150,333,600,4,bf16-mixed,True

@@ -90,10 +90,12 @@ mean position of their parents. The perturbation enters as data: the bottom row 
 gene-state vector $s$ over the 6,607 genes, present $=1$, and a strain with deleted set $p$
 has $s_i=0$ for $g_i\in p$; the loader copies the reference's table of 59,986 (term, gene)
 annotation rows per strain and zeros the rows of the deleted genes, so each strain is a
-rebuilt input rather than an operator on a shared encoding. One triple deletion is drawn,
-Q0140, YJL171C, YPR204W (three genes with the median eight direct annotations, chosen by
-rule): dashed red, the zeroed gene states entering the subsystems that annotate them (open
-circles); solid red, every hierarchy edge from those subsystems up to the root, the
+rebuilt input rather than an operator on a shared encoding. One measured strain of the
+Kuzmin 2018 screen is drawn, the triple deletion YKL191W, YLR172C, YNL051W (record 4 of the
+91,050-record Kuzmin 2018-only build, chosen by rule: the first record whose three
+perturbations are all deletions and whose genes each carry 5 to 12 direct annotations; here
+5, 5 and 9): dashed blue, the zeroed gene states entering the subsystems that annotate them
+(open circles); solid red, every hierarchy edge from those subsystems up to the root, the
 subsystems the zeroed rows reach. Subsystems run stratum by stratum from the deepest term to
 the root. Right: the gene-state rule, the subsystem of Eq.~\ref{eq:dcell-subsystem}, the root
 readout, the per-term auxiliary heads, and the loss of Eq.~\ref{eq:dcell-loss}; weights are

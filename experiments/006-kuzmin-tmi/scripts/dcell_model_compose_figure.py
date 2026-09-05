@@ -148,8 +148,12 @@ def svg_size(path: str) -> tuple[float, float]:
     return w, h
 
 
-def equations(c: Canvas, x0: float, y0: float, w: float) -> float:
-    """The model in the shared notation, as a column of boxes to the right of the DAG. Returns the bottom."""
+def equations(c: Canvas, x0: float, y0: float, w: float, total_h: float) -> float:
+    """The model in the shared notation, as a column of boxes to the right of the DAG.
+
+    The column is exactly ``total_h`` tall (the DAG panel's height): the last box, the loss,
+    takes whatever remains, so the column's top and bottom edges align with panel a.
+    """
     pad = 4
     iw = w - 2 * pad
     y = y0
@@ -186,11 +190,13 @@ def equations(c: Canvas, x0: float, y0: float, w: float) -> float:
     c.math(r"\hat y_t = w_t^{\top} O_t + b_t", x0 + pad, y + 13, iw, 16)
     y += h + 6
 
-    # -- loss
-    h = 52
+    # -- loss: one line, alpha stated on it, so the box ends exactly at the DAG's bottom edge.
+    h = y0 + total_h - y
+    if h < 36:
+        raise SystemExit(f"loss box would be {h:.0f} units tall; the column no longer fits panel a")
     c.box("Loss", x0, y, w, h, color=GRAY, align="left", valign="top", bold=True)
-    c.math(r"\mathcal{L} = \mathrm{MSE}(\hat y, y) + \alpha \operatorname*{mean}_{t \neq r} \mathrm{MSE}(\hat y_t, y)", x0 + pad, y + 15, iw, 22)
-    c.math(r"\alpha = 0.3", x0 + pad, y + 37, iw, 14)
+    c.math(r"\mathcal{L} = \mathrm{MSE}(\hat y, y) + \alpha \operatorname*{mean}_{t \neq r} \mathrm{MSE}(\hat y_t, y),\quad \alpha = 0.3",
+           x0 + pad, y + 13, iw, h - 15)
     return y + h
 
 
@@ -203,8 +209,9 @@ def main():
     c.letter("a", 0, row_top)
     w_dag, h_dag = c.image(dag, 0, y1)
     x_eq = w_dag + COL_GAP
-    bottom_eq = equations(c, x_eq, y1, FULL_WIDTH - x_eq)
-    bottom1 = max(y1 + h_dag, bottom_eq)
+    bottom_eq = equations(c, x_eq, y1, FULL_WIDTH - x_eq, h_dag)
+    assert abs(bottom_eq - (y1 + h_dag)) < 1e-6, "equations column must end at the DAG's bottom edge"
+    bottom1 = y1 + h_dag
 
     # Row 2: panels (b)-(d), three third-width panels across the page.
     row_top = bottom1 + (ROW_GAP - TOP_STRIP)

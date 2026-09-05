@@ -65,3 +65,12 @@ The `tab-dango-string-versions` caption now states the optimizer (AdamW, learnin
 1e-6, batch 32), hidden width 64, four attention heads, and the 72,841 / 9,105 / 9,104 split, which left
 the Note prose during the SI reconciliation. Regenerated with `--from-csv`; every value in the table is
 unchanged.
+
+## 2026.09.04 - Panels re-lettered; the frozen run table feeds the full-dataset data-effect panel
+
+No change to the script or its outputs. In `FigS-dango-reproduction` the sweep panel is now (d)
+and the curves panel (e), after the STRING-release panel (a) and the schematic (b).
+`experiments/010-kuzmin-tmi/scripts/dango_full_dataset_si.py` reads
+`results/dango_string_version_sweep.csv` (19 runs) for its data-effect panel, pooling the three
+schedules per release: v9.1 n = 4, mean 0.4216 +/- 0.0009 (SEM); v11.0 n = 5, 0.4225 +/- 0.0013;
+v12.0 n = 10, 0.4213 +/- 0.0011 ([[experiments.010-kuzmin-tmi.scripts.dango_full_dataset_si]]).

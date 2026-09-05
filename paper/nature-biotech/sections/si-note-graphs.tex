@@ -2,6 +2,8 @@
 %% Every number here is emitted by experiments/010-kuzmin-tmi/scripts/graph_statistics.py (also
 %% writes tab-graphs.tex + tab-string-versions.tex); the figures are composed by
 %% experiments/010-kuzmin-tmi/scripts/compose_graph_si_figures.py. Rerun those, not this file.
+%% The STRING-release panel (graphs_string_releases.svg) is embedded as panel a of
+%% fig:dango-repro by experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py.
 %% MISSING BIB KEYS (curation decision; not added here): SGD, TFLink, STRING. See REF-TO-ADD below.
 \clearpage
 \suppnote{note:graphs}{gene--gene graphs used as attention priors\secstatus{todo}}
@@ -9,10 +11,13 @@
 Nine gene--gene graphs regularize the cell encoder's attention in the trigenic experiment, one
 head per graph, and each enters the model only through the soft prior $\Omega_k$ of
 Eq.~\ref{eq:graphreg}: none is used for message passing and none is imposed as a hard mask.
-\supptab{tab:databases} and \suppfig{fig:graph-priors} report their size, overlap, and relation
-to the other components of the cell representation; \suppfig{fig:graph-priors-2} their hubs,
-the agreement of the two transcription-factor graphs, the drift of the STRING channels across
-releases (\supptab{tab:string-versions}), and their neighborhood structure.
+\supptab{tab:databases} and \suppfig{fig:graph-priors} describe each graph on its own: size and
+coverage, degree distribution, neighborhood structure, hubs, and its relation to the other
+components of the cell representation. \suppfig{fig:graph-priors-2} describes how the graphs
+relate to each other: overlap, containment, shared pairs, multiplicity, and the agreement of the
+two transcription-factor graphs. The drift of the STRING channels across releases is in
+\supptab{tab:string-versions} and, because it motivates DANGO's release-based channel weights, in
+\suppfig{fig:dango-repro}a.
 
 %% REF-TO-ADD: cherrySGDSaccharomycesGenome1998 (SGD)
 %% REF-TO-ADD: liskaTFLinkIntegratedGateway2022 (TFLink)
@@ -24,73 +29,89 @@ and \emph{regulatory}, SGD's regulation annotations as directed regulator$\to$ta
 The remaining six are the evidence channels STRING v12.0 (Szklarczyk et al.\ 2023) scores
 separately for \emph{S.\ cerevisiae}: neighborhood, fusion, co-occurrence, co-expression,
 experimental, and database; an edge is any gene pair with a nonzero channel score, the cut
-DANGO trains on. Every graph is restricted to the 6,607-gene S288C reference.
+DANGO trains on. Every graph is restricted to the 6,607-gene S288C reference; the SGD
+regulation records also name 35 protein-complex regulators and 405 non-coding features, and the
+1,869 of 39,636 records that involve them are dropped, as they are when the graph is converted to
+gene indices for training.
 
-\notesec{Size, overlap, and structure} The graphs differ by a factor of three in the genes they
-reach (2,191 to 6,474, leaving 133 to 4,416 genes of the reference without an edge) and by two
-orders of magnitude in edges (11,085 to 996,199) (\suppfig{fig:graph-priors}a,\,b;
-\supptab{tab:databases}). They are complementary rather than redundant: the Jaccard index of
-edge sets exceeds 0.12 for a single pair, co-expression against experimental (0.44), and 52\%
-of the 1,515,940 distinct pairs appear in exactly one graph, none in more than seven
-(\suppfig{fig:graph-priors}c,\,e). Containment is asymmetric (\suppfig{fig:graph-priors}d):
-76\% of physical and 82\% of neighborhood edges lie inside a dense STRING channel, and 43\% of
-regulatory edges lie inside TFLink whereas 8\% of TFLink edges are regulatory. Since the prior
-pulls a gene's attention toward its neighbors, what a graph exposes to the model is its
-neighborhoods (\suppfig{fig:graph-priors-2}e): eight graphs are essentially one connected
-component, co-occurrence splits into 486 near-clique components, and the mean number of genes
+\notesec{Size, coverage, and structure} The graphs differ by a factor of three in the genes they
+reach (2,191 to 6,474, leaving 133 to 4,416 genes of the reference without an edge; together they
+reach 6,562 genes and leave 45) and by two orders of magnitude in edges (11,085 to 996,199;
+1,514,071 distinct pairs in all) (\suppfig{fig:graph-priors}a; \supptab{tab:databases}). Since
+the prior pulls a gene's attention toward its neighbors, what a graph exposes to the model is its
+neighborhoods (\suppfig{fig:graph-priors}b,\,c): fusion and co-occurrence have no gene above
+degree 100 while TFLink carries the heaviest tail; eight graphs are essentially one connected
+component, co-occurrence splits into 486 near-clique components; and the mean number of genes
 within two edges of a gene spans three orders of magnitude, from 5,038 (TFLink) to 22
-(co-occurrence).
+(co-occurrence). The highest-degree gene differs in every graph, and of the 74 genes in the nine
+top-ten lists only 14 recur (\suppfig{fig:graph-priors}d).
 
-\notesec{Other components} \suppfig{fig:graph-priors}f relates each graph to the metabolic
+\notesec{Other components} \suppfig{fig:graph-priors}e relates each graph to the metabolic
 network, the gene ontology, the essentiality labels, and the trigenic training genes of the same
 cell representation. The three genome-context STRING channels and the database channel are
 enriched for Yeast9 metabolic genes (26\% to 39\% of their covered genes, against 18\% of the
 reference); the other five stay within five points of the reference, and the share of essential
 genes stays within 16\% to 24\% for every graph. The five graphs that reach over 5,000 genes
-cover 96\% to 100\% of the 1,400 Kuzmin 2018 trigenic genes and 82\% to 99\% of the 4,308
-Kuzmin 2020 genes; database covers 77\% and 65\%, and neighborhood, fusion, and co-occurrence
-34\% to 53\%. Against a degree-preserving random graph, physical, database, and co-occurrence
+give an edge to 96\% to 100\% of the 1,400 Kuzmin 2018 trigenic genes and to 82\% to 99\% of the
+4,308 Kuzmin 2020 genes; database to 77\% and 65\%, and neighborhood, fusion, and co-occurrence
+to 34\% to 53\%. Against a degree-preserving random graph, physical, database, and co-occurrence
 edges share a Yeast9 reaction 24 to 150 times more often than chance (0.3\%, 0.9\%, and 4.2\%
 of edges), and every STRING channel and the physical graph share a GO biological process 2.7 to
 7.5 times more often (15\% to 67\% of edges). The two transcription-factor graphs are the
 exception on every pair-level measure: their regulator--target pairs share a reaction, a
-subsystem, or a process no more often than the random reference (6\% to 7\% of edges share a
-process, against 10\% at random).
+subsystem, or a process no more often than the random reference (7\% of edges share a process,
+against 10\% to 11\% at random).
 
-\notesec{Hubs and the two transcription-factor graphs} The highest-degree gene differs in every
-graph, and of the 74 genes in the nine top-ten lists only 12 recur
-(\suppfig{fig:graph-priors-2}b). Regulatory and TFLink share 200 of their 628 regulators and
-4,963 of 6,657 targets but only 16,817 of 223,620 directed edges (7.5\%), and the median
-Jaccard index between a shared regulator's two target sets is 0.03
-(\suppfig{fig:graph-priors-2}c); they are kept as separate priors.
+\notesec{Overlap} The graphs are complementary rather than redundant: the Jaccard index of edge
+sets is at most 0.12 for every pair but one, co-expression against experimental (0.44)
+(\suppfig{fig:graph-priors-2}a), and 52\% of the 1,514,071 distinct pairs appear in exactly one
+graph, none in more than seven (\suppfig{fig:graph-priors-2}d). Containment is asymmetric
+(\suppfig{fig:graph-priors-2}b): 76\% of physical and 82\% of neighborhood edges lie inside a
+dense STRING channel, and 45\% of regulatory edges lie inside TFLink whereas 8\% of TFLink edges
+are regulatory. Regulatory and TFLink share 200 of their 590 regulators and 4,963 of 6,252
+targets but only 16,817 of 221,751 directed edges (7.6\%), and the median Jaccard index between
+a shared regulator's two target sets is 0.03 (\suppfig{fig:graph-priors-2}e); they are kept as
+separate priors.
 
 \notesec{STRING releases} DANGO was built on STRING v9.1 and set its per-channel weights from
 the change to v11.0; the CGT experiment uses v12.0. Every channel grows at each release and
-loses part of what it had (\suppfig{fig:graph-priors-2}d; \supptab{tab:string-versions}): a
-channel retains 42\% to 72\% of its pairs from v9.1 to v11.0 and 51\% to 75\% from v11.0 to
-v12.0, and only 17\% (fusion) to 45\% (neighborhood) of a v12.0 channel's pairs were already
-in v11.0. Whether that difference moves DANGO is tested in \suppnoteref{note:dango-repro}.
+loses part of what it had (\suppfig{fig:dango-repro}a; \supptab{tab:string-versions}): a channel
+retains 42\% to 72\% of its pairs from v9.1 to v11.0 and 51\% to 75\% from v11.0 to v12.0, and
+only 17\% (fusion) to 45\% (neighborhood) of a v12.0 channel's pairs were already in v11.0.
+Whether that difference moves DANGO is tested in \suppnoteref{note:dango-repro}.
 
 %% Figure source: notes/assets/drawio/FigS-graph-attention-priors.drawio (compose script above)
 %%   -> figures/FigS-graph-attention-priors.pdf (auto-exported by `make fig`/`make paper`).
 \begin{figure*}[t]
-\tcfig{figures/FigS-graph-attention-priors.pdf}{\textbf{Gene--gene graphs used as attention
-priors in the trigenic experiment.} Directed graphs (regulatory, TFLink) are compared as
-undirected gene pairs; matrix axes in (c,\,d) drop the STRING prefix. (a)~Genes with at least
-one edge, the hatched remainder to the 6,607-gene reference (dotted line) being the uncovered
-genes, counted at right; distinct gene pairs; and the fraction of each graph's pairs found in no
-other graph. (b)~Complementary cumulative degree distribution: fusion and co-occurrence have no
-gene above degree 100, the two dense STRING channels fall off past degree $10^{3}$, and TFLink
-carries the heaviest tail. (c)~Jaccard index of edge sets. (d)~Containment: the fraction of the
-row graph's pairs present in the column graph. (e)~Distinct gene pairs supported by exactly $n$
-graphs (52\% in one, 37\% in two, none in more than seven); the nine edge sets sum to
-2,437,196 pairs, 1,515,940 distinct, 6.9\% of the 21.8 million pairs the vocabulary allows.
-(f)~Relation to the other components of the cell representation: share of covered genes that
+\tcfig{figures/FigS-graph-attention-priors.pdf}{\textbf{Each gene--gene graph used as an
+attention prior in the trigenic experiment, on its own.} Directed graphs (regulatory, TFLink)
+are compared as undirected gene pairs; every graph is restricted to the 6,607-gene reference;
+matrix axes in (d) drop the STRING prefix. (a)~Per graph and, in the last row, for the union of
+all nine: genes with at least one edge (dotted line, the 6,607-gene reference); genes with no
+edge, counted at right (45 genes have an edge in no graph); distinct gene pairs; and the fraction
+of each graph's pairs found in no other graph (undefined for the union). (b)~Complementary
+cumulative degree distribution: fusion and co-occurrence have no gene above degree 100, the two
+dense STRING channels fall off past degree $10^{3}$, and TFLink carries the heaviest tail.
+(c)~Per graph: fraction of covered genes in the largest connected component, mean clustering
+coefficient, degree assortativity, and mean number of genes within two edges of a gene (dotted
+line, the 6,607-gene reference); the four dense graphs place over 70\% of the vocabulary within
+two edges of a typical gene, fusion and co-occurrence under 2\%. (d)~The three highest-degree
+genes of every graph (26 genes; NAB2 is third in physical and first in experimental), grouped by
+the graph they top, in the order of (a), and by degree within a group, colored by degree
+percentile in each graph (dash, absent from the graph); at right, the leading phrase of the
+gene's SGD description (first clause, parentheticals removed, cut at a phrase boundary within 50
+characters). Top-degree gene per graph: DHH1 in physical (3,606 partners), FKH1 in regulatory
+(2,787), GCN4 in TFLink (4,908), DUR12 in neighborhood (936), CDC28 in fusion (84), SPS1 and
+KSP1 tied in co-occurrence (97; ties are ordered by systematic name), SSA1 in co-expression
+(1,770), NAB2 in experimental (2,696), HFD1 in database (374); at the top 1\% (66 genes per
+graph), 357 genes are hubs of one graph, 77 of two, 22 of three, 3 of four, and CDC28 of five.
+(e)~Relation to the other components of the cell representation: share of covered genes that
 are Yeast9 (yeast-GEM 9.0.2) metabolic genes, that is, genes of a gene--reaction rule (1,161),
 or essential, an SGD null-mutant \emph{inviable} phenotype in S288C (1,140), the dotted line
-being the same share over the 6,607-gene reference; share of the Kuzmin 2018 (solid) and 2020
-(hatched) trigenic gene panels the graph covers; and, on logarithmic axes, share of the graph's
-gene pairs whose genes share a Yeast9 reaction, a Yeast9 subsystem (107 subsystems), or a GO
+being the same share over the 6,607-gene reference; node coverage of the Kuzmin 2018 (graph
+color) and Kuzmin 2020 (its pale fill) trigenic gene panels, that is, the fraction of the panel's
+genes with at least one edge in the graph; and, on logarithmic axes, share of the graph's gene
+pairs whose genes share a Yeast9 reaction, a Yeast9 subsystem (107 subsystems), or a GO
 biological-process term (direct SGD annotations, root excluded, at most 500 genes per term;
 1,944 terms), the open circle being the same share in a degree-preserving random graph
 (configuration model, seed 0). Source:
@@ -100,30 +121,21 @@ biological-process term (direct SGD annotations, root excluded, at most 500 gene
 %% Figure source: notes/assets/drawio/FigS-graph-attention-priors-2.drawio (same composer)
 %%   -> figures/FigS-graph-attention-priors-2.pdf (auto-exported by `make fig`/`make paper`).
 \begin{figure*}[t]
-\tcfig{figures/FigS-graph-attention-priors-2.pdf}{\textbf{Shared pairs, hubs,
-transcription-factor graphs, STRING releases, and neighborhood structure.} Matrix axes in
-(a,\,b) drop the STRING prefix. (a)~Gene pairs shared by each pair of graphs (diagonal, the
-graph's own count; logarithmic color): co-expression and experimental share 556,106 pairs,
-physical and experimental 104,771, neighborhood and co-expression 119,758, the two
-transcription-factor graphs 16,885. (b)~Genes among the ten highest-degree genes of at least
-two graphs, colored by degree percentile in each graph (dash, absent from the graph); at right,
-the opening words of the gene's SGD description. Top-degree gene per graph: DHH1 in physical
-(3,606 partners), FKH1 in regulatory (2,991), GCN4 in TFLink (4,908), DUR12 in neighborhood
-(936), CDC28 in fusion (84), SPS1 and KSP1 tied in co-occurrence (97), SSA1 in co-expression
-(1,770), NAB2 in experimental (2,696), HFD1 in database (374); at the top 1\% (66 genes per
-graph), 353 genes are hubs of one graph, 79 of two, 22 of three, 3 of four, and CDC28 of five.
-(c)~Top: regulators, targets, and directed regulator$\to$target edges of the SGD regulatory
-graph (511 regulators, 39,636 records) and TFLink (317 regulators), split into one-graph-only
-(22,819 regulatory, 183,984 TFLink edges) and both. Bottom: for the 200 shared regulators, the
-Jaccard index between the regulator's two target sets; the best case is FKH1 at 0.53 (1,747
-shared targets). (d)~Per STRING channel, gene pairs per release in time order: pale bar the
-release, solid part the pairs already in the previous release, hatched bar below zero the pairs
-the previous release lost; the channels grow 2.2$\times$ (database) to 8.7$\times$ (fusion)
-over the three releases. (e)~Per graph: fraction of covered genes in the largest connected
-component, mean clustering coefficient, degree assortativity, and mean number of genes within
-two edges of a gene (dotted line, the 6,607-gene reference); the four dense graphs place over
-70\% of the vocabulary within two edges of a typical gene, fusion and co-occurrence under 2\%.
-Source: \texttt{experiments/010-kuzmin-tmi/scripts/graph\_statistics.py}.}{fig:graph-priors-2}
+\tcfig{figures/FigS-graph-attention-priors-2.pdf}{\textbf{How the nine attention-prior graphs
+relate to each other.} Directed graphs are compared as undirected gene pairs; matrix axes in
+(a)--(c) drop the STRING prefix. (a)~Jaccard index of edge sets. (b)~Containment: the fraction
+of the row graph's pairs present in the column graph. (c)~Gene pairs shared by each pair of
+graphs, in thousands (diagonal, the graph's own count; logarithmic color): co-expression and
+experimental share 556,106 pairs, neighborhood and co-expression 119,758, physical and
+experimental 104,771, the two transcription-factor graphs 16,885. (d)~Distinct gene pairs
+supported by exactly $n$ graphs (52\% in one, 37\% in two, none in more than seven); the nine
+edge sets sum to 2,435,327 pairs, 1,514,071 distinct, 6.9\% of the 21.8 million pairs the
+vocabulary allows. (e)~Top: regulators, targets, and directed regulator$\to$target edges of the
+SGD regulatory graph (473 regulators, 37,767 edges) and TFLink (317 regulators, 200,801 edges),
+split into one-graph-only (20,950 regulatory, 183,984 TFLink edges) and both (16,817). Bottom:
+for the 200 shared regulators, the Jaccard index between the regulator's two target sets; the
+best case is FKH1 at 0.56 (1,747 shared targets). Source:
+\texttt{experiments/010-kuzmin-tmi/scripts/graph\_statistics.py}.}{fig:graph-priors-2}
 \end{figure*}
 
 \input{sections/tab-graphs}

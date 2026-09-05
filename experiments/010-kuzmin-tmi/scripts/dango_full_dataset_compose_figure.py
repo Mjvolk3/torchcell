@@ -3,12 +3,16 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/010-kuzmin-tmi/scripts/dango_full_dataset_compose_figure
 """Compose the DANGO full-dataset SI figure as a draw.io file from the true-size panel SVGs.
 
-Panels a--c come from ``dango_full_dataset_si.py`` (this folder). Panels d--f need a trained
+Panels a--d come from ``dango_full_dataset_si.py`` (this folder): (a) validation curves and
+(b) best validation Pearson per run at half width; (c) the convergence epochs at third width
+beside (d) the data-effect panel (Kuzmin 2018-only build against the experiment-006 build,
+by STRING release) at the "wide" width, the two tiling one row. Panels e--g need a trained
 DANGO checkpoint and inference on the validation split, which cannot run on this machine;
-each is reserved as an empty lettered box whose label states exactly what fills it. Each
-panel SVG declares its size in draw.io units (100 per inch, via ``savefig_true_size_svg``),
-so the image cells are placed at exact physical size and the figure is WYSIWYG when
-``make -C paper/nature-biotech fig`` exports it to ``figures/FigS-dango-full-dataset.pdf``.
+each is reserved as an empty lettered box at third width whose label states exactly what
+fills it. Each panel SVG declares its size in draw.io units (100 per inch, via
+``savefig_true_size_svg``), so the image cells are placed at exact physical size and the
+figure is WYSIWYG when ``make -C paper/nature-biotech fig`` exports it to
+``figures/FigS-dango-full-dataset.pdf``.
 
 Panel letters are 8 pt bold lowercase (draw.io fontSize 11.1); placeholder labels are 6 pt
 (fontSize 8.3). Rerun after regenerating any panel; the draw.io file is overwritten, never
@@ -60,20 +64,20 @@ P010 = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi")
 
 # What each reserved panel needs, stated so it can be filled on the cluster later.
 PLACEHOLDERS = {
-    "d": (
+    "e": (
         "[placeholder: predicted vs measured trigenic interaction on the validation split, "
         "DANGO STRING v9.1 run 014mprap. Needs the run's best checkpoint "
         "(DATA_ROOT/models/checkpoints/compute-3-3-1941704_ff85…/014mprap-best-*.ckpt), "
         "the 006 dataset LMDB, and experiments/006-kuzmin-tmi/scripts/dango.py with "
         "regression_task.execution_mode=inference]"
     ),
-    "e": (
+    "f": (
         "[placeholder: absolute error vs |τ| on the validation split, DANGO (014mprap) beside "
         "CGT (c7671wgj best-pearson-epoch=24 checkpoint). Needs both checkpoints, the 006 and "
         "010 dataset LMDBs, and the prediction dumps from dango.py inference and "
         "equivariant_cell_graph_transformer_eval.py]"
     ),
-    "f": (
+    "g": (
         "[placeholder: per-STRING-channel weight of DANGO's meta-embedding attention on the "
         "validation split, STRING v9.1 vs v12.0 checkpoints (014mprap, 9jpfy547). Needs both "
         "checkpoints and a forward hook on torchcell.models.dango.Dango meta-embedding]"
@@ -117,18 +121,24 @@ def main():
     curves = osp.join(P010, "dango_full_dataset_curves.svg")
     best = osp.join(P010, "dango_full_dataset_best.svg")
     conv = osp.join(P010, "dango_full_dataset_convergence.svg")
+    effect = osp.join(P010, "dango_full_dataset_data_effect.svg")
 
     half = svg_size(curves)[0]
+    third = svg_size(conv)[0]
     col2 = half + COL_GAP
+    # Row 1: (a) curves and (b) best per run, two half-width panels.
     row1_top = 0
     y1 = row1_top + TOP_STRIP
     row1_h = max(svg_size(curves)[1], svg_size(best)[1])
+    # Row 2: (c) convergence at third width beside (d) the data effect at wide width.
     row2_top = y1 + row1_h + (ROW_GAP - TOP_STRIP)
     y2 = row2_top + TOP_STRIP
-    row2_h = svg_size(conv)[1]
+    row2_h = max(svg_size(conv)[1], svg_size(effect)[1])
+    x_effect = third + COL_GAP
+    # Row 3: (e)-(g) reserved boxes, three third-width panels.
     row3_top = y2 + row2_h + (ROW_GAP - TOP_STRIP)
     y3 = row3_top + TOP_STRIP
-    row3_h = row2_h
+    row3_h = 140.0
 
     cells, cid = [], 2
 
@@ -141,11 +151,12 @@ def main():
     add(image_cell(cid, curves, 0, y1), "a", 0, row1_top)
     add(image_cell(cid, best, col2, y1), "b", col2, row1_top)
     add(image_cell(cid, conv, 0, y2), "c", 0, row2_top)
-    add(placeholder_cell(cid, PLACEHOLDERS["d"], col2, y2, half, row2_h), "d", col2, row2_top)
-    add(placeholder_cell(cid, PLACEHOLDERS["e"], 0, y3, half, row3_h), "e", 0, row3_top)
-    add(placeholder_cell(cid, PLACEHOLDERS["f"], col2, y3, half, row3_h), "f", col2, row3_top)
+    add(image_cell(cid, effect, x_effect, y2), "d", x_effect, row2_top)
+    for k, letter in enumerate("efg"):
+        x = k * (third + COL_GAP)
+        add(placeholder_cell(cid, PLACEHOLDERS[letter], x, y3, third, row3_h), letter, x, row3_top)
 
-    extent_w = col2 + max(svg_size(best)[0], half)
+    extent_w = max(col2 + svg_size(best)[0], x_effect + svg_size(effect)[0], 3 * third + 2 * COL_GAP)
     extent_h = y3 + row3_h
     xml = (
         '<mxfile host="dango_full_dataset_compose_figure.py">'

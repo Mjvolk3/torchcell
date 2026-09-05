@@ -10,9 +10,10 @@ are the curated SGD graphs; TFLink and the six STRING~v12.0 evidence channels ad
 remaining rows. \emph{Edges} is the native count (directed for Regulatory and TFLink),
 \emph{Pairs} the distinct unordered gene pairs used for overlap, \emph{Unique} the share of
 those pairs found in no other graph. The nine graphs together cover
-1,515,940 distinct gene pairs; relative to the SGD-native baseline (Physical\,$+$\,Regulatory),
-the sum over graphs is 3.39$\times$ in nodes and
-13.63$\times$ in edges.
+1,514,071 distinct gene pairs and 6,562 of the 6,607 genes (45 genes have
+an edge in no graph); relative to the SGD-native baseline (Physical\,$+$\,Regulatory),
+the sum over graphs is 3.48$\times$ in nodes and
+13.76$\times$ in edges.
 (STRING~v9.1 and v11.0 are in \supptab{tab:string-versions}.)}
 \label{tab:databases}
 \begin{tabular}{@{}l r r r r r@{}}
@@ -20,7 +21,7 @@ the sum over graphs is 3.39$\times$ in nodes and
 \textbf{Graph} & \textbf{Nodes} & \textbf{Edges} & \textbf{Pairs} & \textbf{Mean degree} & \textbf{Unique}\\
 \midrule
 Physical (SGD) & 5,721 & 139,463 & 137,604 & 48.1 & 23\%\\
-Regulatory (SGD) & 6,582 & 39,636 & 39,546 & 12.0 & 51\%\\
+Regulatory (SGD) & 6,147 & 37,767 & 37,677 & 12.3 & 49\%\\
 TFLink & 5,074 & 200,801 & 199,551 & 78.7 & 80\%\\
 STRING neighborhood & 2,191 & 146,713 & 146,713 & 133.9 & 10\%\\
 STRING fusion & 3,081 & 11,787 & 11,787 & 7.7 & 14\%\\
@@ -29,9 +30,9 @@ STRING co-expression & 6,474 & 996,199 & 996,199 & 307.8 & 35\%\\
 STRING experimental & 6,016 & 822,094 & 822,094 & 273.3 & 25\%\\
 STRING database & 4,027 & 72,617 & 72,617 & 36.1 & 8\%\\
 \midrule
-Sum (all graphs) & 41,767 & 2,440,395 & 2,437,196 & & \\
-Union of pairs & & & 1,515,940 & & \\
-Sum (Physical, Regulatory) & 12,303 & 179,099 & 177,150 & & \\
+Sum (all graphs) & 41,332 & 2,438,526 & 2,435,327 & & \\
+Union (all nine) & 6,562 & & 1,514,071 & & \\
+Sum (Physical, Regulatory) & 11,868 & 177,230 & 175,281 & & \\
 \bottomrule
 \end{tabular}
 \end{table}

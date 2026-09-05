@@ -361,6 +361,37 @@ if [ ! -d "$DATA_ROOT/data/torchcell/experiments/019-simb-multimodal/fig3_core/p
   echo "       Set DELTA_DATA_ROOT at submit time; do not let the loader try to rebuild." >&2
   exit 1
 fi
+
+# THE JOB CARRIES ITS OWN ENVIRONMENT INSTEAD OF INHERITING A `.env`, and grid 21814726 is
+# why. `.env` is gitignored, so it exists in the long-lived shared checkout as an untracked
+# file and does NOT exist in a fresh clone. Every run of that grid loaded the dataset for
+# half an hour and then died on `KeyError: 'EXPERIMENT_ROOT'`. Copying the file into the
+# clone would work once and rot silently, and the shared copy is already wrong for this job
+# in two ways: it pins DATA_ROOT to /work/hdd rather than the /scratch build this round
+# uses, and it points EXPERIMENT_ROOT and ASSET_IMAGES_DIR back into the shared checkout,
+# which is the very tree a branch switch was allowed to move out from under a running job.
+# Deriving all of it from PROJECT_ROOT keeps the job self-contained. `load_dotenv` does not
+# override variables that are already set, so a `.env` appearing later cannot silently
+# change any of these.
+#
+# W&B runs ONLINE here (Delta compute has outbound network, unlike IGB) and authenticates
+# from ~/.netrc in $HOME, which no clone or branch switch touches.
+export EXPERIMENT_ROOT="$PROJECT_ROOT/experiments"
+export ASSET_IMAGES_DIR="$PROJECT_ROOT/notes/assets/images"
+export MPLSTYLE_PATH="$PROJECT_ROOT/torchcell/torchcell.mplstyle"
+export WANDB_MODE=online
+mkdir -p "$ASSET_IMAGES_DIR"
+for v in EXPERIMENT_ROOT ASSET_IMAGES_DIR MPLSTYLE_PATH; do
+  p="${!v}"
+  if [ ! -e "$p" ]; then
+    echo "FATAL: $v=$p does not exist." >&2
+    exit 1
+  fi
+done
+if ! grep -q "api.wandb.ai" "$HOME/.netrc" 2>/dev/null; then
+  echo "FATAL: no api.wandb.ai entry in ~/.netrc and WANDB_MODE=online; run 'wandb login'." >&2
+  exit 1
+fi
 # THE CONFIG MUST EXIST BEFORE ANY GPU IS TOUCHED. Hydra resolves --config-name inside each
 # per-run python process, so a missing config surfaces as 64 separate late failures across 8
 # nodes rather than as one refused submit. That is exactly how grid 21796128 died: the shared

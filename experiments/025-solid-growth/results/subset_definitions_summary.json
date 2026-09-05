@@ -1,0 +1,27 @@
+{
+  "n_singles": 5694,
+  "n_doubles": 13142648,
+  "n_triples": 376732,
+  "n_closure_pairs": 739315,
+  "n_closure_doubles_found": 739219,
+  "subset_sizes": {
+    "S0": 376732,
+    "S2": 382426,
+    "S3": 1121645,
+    "S4": 1121645
+  },
+  "q_split": {
+    "n_recurring_pairs": 420,
+    "records": {
+      "train": 301236,
+      "val": 37705,
+      "test": 37791
+    },
+    "pairs": {
+      "train": 331,
+      "val": 43,
+      "test": 46
+    }
+  },
+  "q_strict_excluded_train_doubles": 85
+}

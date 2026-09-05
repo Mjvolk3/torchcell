@@ -3,8 +3,8 @@
 # [[experiments.019-simb-multimodal.scripts.delta_expr_v10_grid]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/scripts/delta_expr_v10_grid
 #
-# THE GENERALIZATION-GAP ROUND on Delta: a 2^4 factorial, 16 cells x 4 replicates = 64 runs,
-# two runs per A40 across 32 single-GPU array tasks, which Slurm packs onto 8 nodes.
+# THE GENERALIZATION-GAP ROUND on Delta: a 2^4 factorial, 16 cells x 2 replicates = 32 runs,
+# ONE run per A40 for the whole job, four per node, across 8 whole-node array tasks.
 #
 #   # PRE-FLIGHT, four corner cells at fast_dev_run. Minutes of COMPUTE, but see the wall.
 #   # OVERRIDE THE WALLTIME DOWN, BUT NOT TO AN HOUR. The #SBATCH block asks 2 days because
@@ -16,8 +16,17 @@
 #       experiments/019-simb-multimodal/scripts/delta_expr_v10_grid.slurm
 #
 #   # THE ROUND.
-#   sbatch --array=0-31 --export=ALL,V10_STAGE=grid \
-#       experiments/019-simb-multimodal/scripts/delta_expr_v10_grid.slurm
+#   # V10_PROJECT_ROOT IS NOT OPTIONAL, and grid 21796128 is why. It ran from the SHARED
+#   # checkout /projects/bbub/mjvolk3/torchcell, which was switched to another branch at
+#   # 01:11 for unrelated 027 work while the job was live. Every one of the 64 runs died on
+#   # "Cannot find primary config 'cgt_expr_v10_grid'", and the tasks still looked alive in
+#   # squeue because they were sitting in the launch stagger loop. A multi-day job must run
+#   # from a checkout it OWNS. The clone is made once with:
+#   #   git clone --branch multimodal-phenotype-retrospective \
+#   #       /projects/bbub/mjvolk3/torchcell /work/hdd/bbub/mjvolk3/torchcell-v10
+#   sbatch --array=0-7 \
+#       --export=ALL,V10_STAGE=grid,V10_PROJECT_ROOT=/work/hdd/bbub/mjvolk3/torchcell-v10 \
+#       /work/hdd/bbub/mjvolk3/torchcell-v10/experiments/019-simb-multimodal/scripts/delta_expr_v10_grid.slurm
 #
 # ONE-TIME SETUP: Slurm opens --output BEFORE this script's own mkdir runs, so the log
 # directory must already exist or every task fails in 0 s with no log at all.
@@ -40,13 +49,19 @@
 # `--constraint="scratch"` is deliberately absent -- the older delta_joint template carries
 # it, the recently successful jobs do not, and an unsatisfiable constraint pends silently.
 #
-# ONE RUN PER GPU, TWO ROUNDS, rather than two runs per GPU in one round. Packing eight runs
-# onto a node's 32 CPUs leaves 3 dataloader workers each, and 3 workers is the measured
-# starvation point: IGB submission 2324287 ran 3 runs/GPU at 3 workers and sat at epoch 1-2
-# while an unpacked run reached 23, with the GPUs reading 0% utilization, i.e. idle waiting
-# on data. Solo runs get 7 workers, which is the configuration every healthy run in this
-# campaign has used. Two sequential rounds of four fit the wall: at the measured ~128
-# epochs/h solo, 2,000 epochs is ~15.6 h, so two rounds plus startup is ~33 h against 48.
+# ONE RUN PER GPU, ONE ROUND. Packing several runs onto a node's 32 CPUs is what this avoids:
+# IGB submission 2324287 ran 3 runs/GPU and sat at epoch 1-2 while an unpacked run reached 23,
+# with the GPUs reading 0% utilization, i.e. idle waiting on data. On Delta the packing
+# argument is moot anyway, since dataloader workers are 0 here (spawn workers re-importing the
+# stack off Lustre is worse than no workers at all, see delta_grid_common.sh).
+#
+# THE ROUND COUNT IS SET BY MEASUREMENT, and it changed. An earlier version ran TWO sequential
+# rounds of four, sized against an assumed ~128 epochs/h carried over from IGB. The timing
+# stage measured 33.6 epochs/h, at which two rounds afford only 700 epochs each. Extending
+# short_budget_spread.py down to 350 showed 700 is the noisiest point on the budget grid
+# (sd 0.0166, against 0.0058 at 500 and 0.0117 at 1,500) and that one long round of 32 runs
+# resolves the same main effect, 0.0117, as two short rounds of 64. One round it is: 46.2 h of
+# training after a 1.75 h startup is ~1,552 epochs, and the config asks for 1,400.
 #
 #SBATCH --job-name=019-expr-v10
 #SBATCH --partition=gpuA40x4
@@ -156,9 +171,22 @@ case "$STAGE" in
   # the real runs pay for, rather than a clean number the round will never see.
   timing) CELLS=(0 3 12 15); REPS=1; ROUNDS=1
           EXTRA_OV="trainer.max_epochs=60 trainer.train_eval_every=10" ;;
-  # THE ROUND. 16 cells x 4 replicates = 64 runs over 8 array tasks, each a whole node
-  # running 8 runs as TWO sequential rounds of four, one run per GPU.
-  grid)   CELLS=($(seq 0 15)); REPS=4; ROUNDS=2
+  # THE ROUND. 16 cells x 2 replicates = 32 runs over 8 array tasks, each a whole node
+  # running four runs in ONE round, one run per GPU.
+  #
+  # WHY ONE ROUND AND NOT TWO, which is a change from 64 runs at 700 epochs. Two sequential
+  # rounds per GPU is what forced the 700-epoch budget: 48 h of wall, minus a startup per
+  # round, halved. Measuring the replicate spread at 700 (short_budget_spread.py, extended
+  # down to 350) showed that trade is a bad one. The spread is 0.0166 at 700 against 0.0117
+  # at 1,500, so halving the replicate count costs sqrt(2) in the standard error while the
+  # longer budget returns almost exactly that same factor in sd. The smallest detectable
+  # main effect is 0.0117 either way, and one round buys 2.3x the training budget for it.
+  # 700 epochs is also the least stable point on the whole budget grid (sd 0.0058 at 500,
+  # 0.0166 at 700, 0.0099 at 1,000), which is what a curve caught mid-rise at different
+  # rates produces, and it leaves every cell at a mean of 0.1411 against an incumbent of
+  # 0.2433. What is lost is per-cell resolution, which weakens from 16v16 to 8v8; main
+  # effects are what this round exists to measure.
+  grid)   CELLS=($(seq 0 15)); REPS=2; ROUNDS=1
           EXTRA_OV="" ;;
   *) echo "unknown V10_STAGE '$STAGE' (expected canary|timing|grid)" >&2; exit 1 ;;
 esac
@@ -172,22 +200,65 @@ esac
 # slow, hot or otherwise unlucky node would show up as a weight-decay effect and there would
 # be no way to tell the two apart after the fact.
 #
-# THE FIX. Split the sixteen cells by the PARITY of their four bits. The even-parity half
-# {0,3,5,6,9,10,12,15} contains exactly four cells at each level of each of the four factors,
-# and so does its complement. Giving one node each half means a node-level effect lands
-# equally on both levels of every factor and cancels out of every main effect. This is the
-# standard resolution-IV half-fraction, used here for physical blocking rather than to
-# shrink the design.
+# WHY PARITY HALVES ARE NO LONGER THE FIX. The even-parity half {0,3,5,6,9,10,12,15} is
+# balanced four-and-four on every factor, so it blocked correctly when a node took EIGHT
+# runs. At one round a node takes FOUR, which splits that half again, and the split is not
+# innocent: the first four are {0,3,5,6}, every one of them weight decay 1e-8, and the next
+# four are {9,10,12,15}, every one 1e-4. That is the original defect exactly, reintroduced
+# by the smaller block. A slow or hot node would read out as a weight-decay effect.
+#
+# THE FIX AT BLOCK SIZE FOUR. Group by the two INTERACTION bits, g = (b0^b1) + 2*(b2^b3),
+# which partitions the sixteen cells into four groups of four:
+#   g=0 {0,3,12,15}   g=1 {1,2,13,14}   g=2 {4,7,8,11}   g=3 {5,6,9,10}
+# Each group holds exactly two cells at each level of each of the four factors, so a
+# node-level effect lands equally on both levels of every factor and cancels out of every
+# main effect. Verified by the balance assertion below rather than trusted.
+#
+# WHAT IT COSTS, because blocking is never free. The block is defined BY the two-factor
+# interactions embedding x trunk and readout x weight-decay, so those two interactions are
+# confounded with node and cannot be estimated. Main effects, which is what this round
+# exists to measure, are clean. Spending the interactions is the standard price and it is
+# the right one here.
+
+# GPU COUNT COMES FROM THE ALLOCATION, not a constant. Slurm sets SLURM_GPUS_ON_NODE to
+# what this task actually got, so the same script is correct whether it is handed a whole
+# 4-GPU node for the grid or a single card for a short canary. Hardcoding 4 meant a canary
+# submitted with --gpus-per-node=1 would have tried to pin runs to cards 1-3 that it does
+# not own, and every one of those would have failed on an invalid device.
+GPUS_PER_NODE="${SLURM_GPUS_ON_NODE:-4}"
+PER_TASK=$((GPUS_PER_NODE * ROUNDS))
+
 if [[ "$STAGE" == "grid" ]]; then
-  EVEN=(); ODD=()
-  for c in "${CELLS[@]}"; do
-    par=$(( (c & 1) ^ ((c >> 1) & 1) ^ ((c >> 2) & 1) ^ ((c >> 3) & 1) ))
-    if [[ "$par" -eq 0 ]]; then EVEN+=("$c"); else ODD+=("$c"); fi
-  done
+  if [[ "$PER_TASK" -ne 4 ]]; then
+    echo "FATAL: grid blocking assumes 4 runs per task, got PER_TASK=$PER_TASK" >&2
+    echo "       (GPUS_PER_NODE=$GPUS_PER_NODE x ROUNDS=$ROUNDS)" >&2
+    exit 1
+  fi
   JOBS=()
   for rep in $(seq 0 $((REPS - 1))); do
-    for c in "${EVEN[@]}"; do JOBS+=("$c:$rep"); done
-    for c in "${ODD[@]}";  do JOBS+=("$c:$rep"); done
+    for g in 0 1 2 3; do
+      for c in "${CELLS[@]}"; do
+        gc=$(( (((c & 1) ^ ((c >> 1) & 1))) + 2 * ((((c >> 2) & 1) ^ ((c >> 3) & 1))) ))
+        [[ "$gc" -eq "$g" ]] && JOBS+=("$c:$rep")
+      done
+    done
+  done
+  # BALANCE ASSERTION. Every block of PER_TASK consecutive jobs must be split two-and-two on
+  # each of the four bits. Checked rather than asserted in a comment, because the failure is
+  # silent: a confounded round still produces a full set of numbers and a clean-looking
+  # leaderboard, and nothing downstream can recover the design after the fact.
+  for (( b = 0; b < ${#JOBS[@]}; b += PER_TASK )); do
+    for bit in 0 1 2 3; do
+      ones=0
+      for (( k = b; k < b + PER_TASK; k++ )); do
+        cell="${JOBS[k]%%:*}"
+        ones=$(( ones + (((cell >> bit) & 1)) ))
+      done
+      if [[ "$ones" -ne 2 ]]; then
+        echo "FATAL: block at $b is $ones/4 on bit $bit, not 2/4; blocking is broken." >&2
+        exit 1
+      fi
+    done
   done
 else
   JOBS=()
@@ -197,14 +268,6 @@ else
     done
   done
 fi
-
-# GPU COUNT COMES FROM THE ALLOCATION, not a constant. Slurm sets SLURM_GPUS_ON_NODE to
-# what this task actually got, so the same script is correct whether it is handed a whole
-# 4-GPU node for the grid or a single card for a short canary. Hardcoding 4 meant a canary
-# submitted with --gpus-per-node=1 would have tried to pin runs to cards 1-3 that it does
-# not own, and every one of those would have failed on an invalid device.
-GPUS_PER_NODE="${SLURM_GPUS_ON_NODE:-4}"
-PER_TASK=$((GPUS_PER_NODE * ROUNDS))
 
 TASK="${SLURM_ARRAY_TASK_ID:?this script must be submitted with --array}"
 START=$((TASK * PER_TASK))

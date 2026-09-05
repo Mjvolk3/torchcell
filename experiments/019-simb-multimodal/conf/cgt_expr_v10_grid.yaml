@@ -60,16 +60,25 @@ trainer:
   # with seven workers. That 3.8x is the price of the fix for the Lustre stall: batches are
   # assembled in the main process instead of by seven prefetching workers.
   #
-  # At 33.6 ep/h a 2,000-epoch round needs 59 h against a 48 h wall, so ROUND 0 ALONE would
-  # overrun and round 1 would never start, leaving 8 of the 16 cells with zero runs and no
-  # factorial at all. 700 gives 2 x (1.75 h startup + 20.8 h training) = 45.1 h, so both
-  # rounds complete with margin and all 64 runs exist.
+  # At 33.6 ep/h a 2,000-epoch round needs 59 h against a 48 h wall, so a two-round structure
+  # could afford only 700 epochs per run. THAT TRADE WAS MEASURED AND REJECTED. The round now
+  # runs ONE round of 4 runs per node, 16 cells x 2 replicates, so a run owns its GPU for the
+  # whole job and pays one startup instead of two: 48 h - 1.75 h startup = 46.2 h of training,
+  # which is 1,552 epochs at the measured rate. 1,400 leaves margin for a slower cell.
   #
-  # A shorter budget COSTS ALMOST NOTHING HERE and is measured too: short_budget_spread.json
-  # puts the replicate sd at 0.0099 at 1,000 epochs against 0.0222 at 9,900, so a shorter
-  # window is the quieter regime, and every contrast in the design resolves better rather
-  # than worse. The mean sits lower, equally for every cell, which a contrast removes.
-  max_epochs: 700
+  # WHY LONGER BEATS MORE REPLICATES HERE, from short_budget_spread.json (extended down to
+  # 350 for exactly this question). The replicate sd is 0.0166 at 700 and 0.0117 at 1,500, so
+  # halving the replicate count costs sqrt(2) in the standard error while the longer budget
+  # returns almost exactly that factor back in sd. The smallest detectable main effect is
+  # 0.0117 at 1,500 with 2 replicates against 0.0116 at 700 with 4: statistically the same
+  # round, at 2.3x the training budget.
+  #
+  # AN EARLIER VERSION OF THIS COMMENT ARGUED A SHORT BUDGET IS THE QUIETER REGIME AND SO
+  # COSTS ALMOST NOTHING. That was read off a budget grid whose lowest point was 1,000, and
+  # it does not survive measuring below it. sd is NOT monotone in the budget: 0.0058 at 500,
+  # 0.0166 at 700, 0.0099 at 1,000. 700 is the noisiest point on the grid, not the quietest,
+  # which is what a curve caught mid-rise at different rates produces.
+  max_epochs: 1400
   # Matches the incumbent's own long run so the eval-mode train curve stays comparable, and
   # it is what makes the train-versus-validation gap readable per cell, which is the
   # quantity this round exists to move.

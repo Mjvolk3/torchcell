@@ -218,12 +218,32 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         pre_filter: Callable[..., Any] | None = None,
+        phenotype_labels: list[str] | None = None,
     ) -> None:
-        """Configure data sources, processing pipeline, and load or build the dataset."""
+        """Configure data sources, processing pipeline, and load or build the dataset.
+
+        ``phenotype_labels`` selects and ORDERS the phenotypes each item carries, by
+        ``label_name`` (e.g. ``["gene_interaction"]``). It exists for two reasons, both
+        of which bite on a multi-phenotype build such as 025 and neither of which existed
+        on the single-phenotype 010 build:
+
+        - **Selection.** A record's ``phenotype_values`` is the concatenation over every
+          phenotype in ``phenotype_info``, so a 025 triple carrying fitness AND
+          gene_interaction yields two values where 010 yielded one. A single-task trainer
+          reading ``phenotype_values`` as its target then sees 2B values for B records.
+        - **Order.** ``_load_phenotype_info`` returns ``list(set_of_classes)``, whose order
+          is the set's iteration order over type objects and is not guaranteed to agree
+          between processes. ``phenotype_type_indices`` is positional, so under DDP two
+          ranks could disagree about which index means fitness, with no error anywhere.
+
+        ``None`` keeps the unordered full set, which is the pre-existing behavior and is
+        unambiguous whenever the build has one phenotype.
+        """
         self.env: Any = None
         self.root = root
         # get item processor
         self.process_graph = graph_processor
+        self.phenotype_labels = phenotype_labels
 
         # self loops, transform base graph
         self.add_remaining_gene_self_loops = add_remaining_gene_self_loops
@@ -382,7 +402,19 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                 phenotype_class = experiment_class.__annotations__["phenotype"]
                 phenotype_classes.add(phenotype_class)
 
-            return list(phenotype_classes)
+            if self.phenotype_labels is None:
+                return list(phenotype_classes)
+
+            by_label = {
+                cls.model_fields["label_name"].default: cls for cls in phenotype_classes
+            }
+            missing = [n for n in self.phenotype_labels if n not in by_label]
+            if missing:
+                raise ValueError(
+                    f"phenotype_labels {missing} are not in this build "
+                    f"(available: {sorted(by_label)})"
+                )
+            return [by_label[name] for name in self.phenotype_labels]
         else:
             raise FileNotFoundError(
                 "experiment_types.json not found. Please process the dataset first."

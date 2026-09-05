@@ -1,0 +1,225 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_000.yaml
+#
+# ARM S0/R/KL -- the REPLICATION. Reproduce 010's trigenic result on the 025 build,
+# so that everything the ladder later reports rests on a data path known to give the
+# same answer as the build it replaces.
+#
+# The model half is `experiments/010-kuzmin-tmi/conf/equivariant_cell_graph_transformer_cabbi_002.yaml`
+# copied VERBATIM. Nothing about the architecture, loss, optimizer, schedule, or
+# regularization is improved here, including two things that are known to be wrong (see
+# graph_regularization below). Changing any of them would make a disagreement with 010
+# uninterpretable, which is the one thing this arm exists to rule out.
+#
+# What is new is the arm definition, because 025 is 13,525,071 records over three
+# perturbation orders and two labels where 010 was 376,732 records over one of each:
+#   subset.indices    -> the 376,732 trigenic triples (S0)
+#   subset.split_file -> 010's own train/val/test, carried across by genotype identity
+#   phenotype_labels  -> gene_interaction alone
+#   fit_on_subset     -> normalize by the triples' sd 0.0633, which is what 010 used
+#
+# Reference to beat, from the three 010 checkpoints: val Pearson 0.4520 / 0.4472 / 0.4619.
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_025-solid-growth_equivariant_cell_graph_transformer
+  tags: [s0, split_R, graph_reg_kl, replication_010]
+
+# === Arm: which records train, and how they split ===
+# Artifacts are committed under experiments/025-solid-growth/results/ and are read by
+# `load_index_artifact`; `split_key` names the field holding the three lists because the
+# R and Q artifacts store them under different names.
+subset:
+  indices: subset_S0_indices.json.gz
+  split_file: pinned_splits_from_010_seed_42.json.gz
+  split_key: pinned
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+  # Transformer uses learned gene embeddings, not pre-computed
+  node_embeddings: []
+
+  # 025 carries fitness AND gene_interaction; 010 carried only the latter. Without this
+  # selection a triple yields two values and a batch of B records carries 2B targets,
+  # which the single-task RegressionTask reads as its label vector.
+  phenotype_labels: [gene_interaction]
+
+# Transform configuration
+transforms:
+  use_transforms: true
+  fit_on_subset: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard" # Options: standard, minmax, robust
+
+profiler:
+  enabled: false
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  batch_size: 256  # Limited by transformer memory requirements
+  num_workers: 16
+  pin_memory: true
+  prefetch: false
+  prefetch_factor: 4
+  persistent_workers: true
+
+trainer:
+  max_epochs: 600  # 010's budget; the 12 h wall clock is what actually ends this run
+  strategy: ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: "bf16-mixed"
+
+compile_mode: null
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  hidden_channels: 180
+  num_transformer_layers: 8
+  num_attention_heads: 9
+  dropout: 0.1
+
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+
+  # Hard graph masking is OFF in this arm. It is the intended replacement for the KL
+  # (see cgt_s0_r_mask_001), but a replication that swapped the graph mechanism would be
+  # comparing two changes at once.
+  attention_mask:
+    enabled: false
+
+  # === Graph regularization: COPIED FROM 010, INCLUDING ITS TWO DEFECTS ===
+  #
+  # (1) `physical` and `regulatory` do NOT match any relation in cell_graph, which names
+  #     them `physical_interaction` and `regulatory_interaction`. compute_graph_regularization_loss
+  #     skips an unmatched name with a bare `continue`, so heads 0 and 1 carry NO graph
+  #     prior. Verified against this build: the nine gene-gene relations are
+  #     physical_interaction, regulatory_interaction, tflink, and the six string12_0_*.
+  # (2) All nine heads of layer 1 are assigned, so that layer has no free head.
+  #
+  # Both are kept ON PURPOSE. 010's 0.4520 / 0.4472 / 0.4619 were produced by a model
+  # regularized on 7 of 9 graphs, and a corrected config would be a different model whose
+  # disagreement with those numbers could not be read as a data-path problem.
+  graph_regularization:
+    graph_reg_lambda: 0.001
+    graph_reg_layer: 1 # python indexed
+
+    row_sampling_rate: 1.0
+
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      tflink:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 2
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_neighborhood:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 3
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_fusion:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 4
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_cooccurence:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 5
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_coexpression:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 6
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_experimental:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 7
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_database:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 8
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+
+  perturbation_head:
+    num_heads: 9  # Must divide hidden_channels (180/9=20)
+    dropout: 0.1
+
+regression_task:
+  loss:
+    type: "point_dist_graph_reg"
+
+    point_estimator:
+      type: "mse"
+      lambda: 1.0
+
+    distribution_loss:
+      type: "wasserstein"
+      lambda: 0.1
+
+      wasserstein_blur: 0.05
+      wasserstein_p: 2
+      wasserstein_scaling: 0.9
+      min_samples_for_wasserstein: 512
+
+    graph_regularization:
+      lambda: 1.0
+
+    supervised_contrastive:
+      lambda: 0.0
+
+    buffer:
+      use_buffer: false
+
+    ddp:
+      use_ddp_gather: false
+
+  execution_mode: "training"
+
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4
+    weight_decay: 1e-8
+
+  lr_scheduler:
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 30
+    cycle_mult: 1.0
+    max_lr: 5e-4
+    min_lr: 1e-7
+    warmup_steps: 1
+    gamma: 0.70
+
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 1
+  plot_transformer_diagnostics_every_n_epochs: 10
+  plot_edge_recovery_every_n_epochs: 10

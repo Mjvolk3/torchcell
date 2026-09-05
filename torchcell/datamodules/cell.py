@@ -234,6 +234,7 @@ class CellDataModule(L.LightningDataModule):
         val_batch_size: int | None = None,
         pinned_test_indices: Iterable[int] | None = None,
         pinned_split_indices: Mapping[str, Iterable[int]] | None = None,
+        index_subset: Iterable[int] | None = None,
     ) -> None:
         """Store dataloader/split configuration and compute the split indices.
 
@@ -251,6 +252,18 @@ class CellDataModule(L.LightningDataModule):
         identity -- so a comparison across datasets is computed on identical splits of
         the shared records while everything new is seed-assigned around them. A record
         may appear in at most one pinned split; overlap raises at construction.
+
+        ``index_subset`` restricts the RECORD POOL before any splitting, so a record
+        outside it lands in no split at all. Pinning assigns but never excludes, which is
+        why it cannot express a subset on its own: 025 holds 13,525,071 records of which
+        376,732 are the trigenic triples, and an arm training on triples only needs the
+        other 13.1M gone, not placed somewhere. The subset is intersected into each split
+        index key BEFORE shuffling rather than filtered out afterwards, so an arm over
+        376k records costs 376k of work on a 13.5M-record dataset.
+
+        Both the pinned splits and the subset are hashed into the split-cache filename, so
+        changing either selects a different cache file rather than silently loading the
+        previous arm's index.
         """
         super().__init__()
         self.dataset = dataset
@@ -270,6 +283,12 @@ class CellDataModule(L.LightningDataModule):
         self.val_ratio = 0.1
         self.pinned_test_indices: set[int] = (
             set(pinned_test_indices) if pinned_test_indices is not None else set()
+        )
+        self.index_subset: set[int] | None = (
+            set(index_subset) if index_subset is not None else None
+        )
+        assert self.index_subset is None or self.index_subset, (
+            "index_subset is empty; pass None to use every record"
         )
         self.pinned_split_indices: dict[str, set[int]] = {
             split: set(indices)
@@ -336,15 +355,38 @@ class CellDataModule(L.LightningDataModule):
         payload = "|".join(parts).encode()
         return f"_pin{n_pinned}-{hashlib.sha256(payload).hexdigest()[:8]}"
 
+    def _subset_tag(self) -> str:
+        """Cache-key suffix identifying the record subset, empty when there is none.
+
+        Separate from ``_pin_tag`` because the two vary independently: the 025 ladder holds
+        the split fixed (R or Q) while the training pool changes S0 -> S2 -> S3, and holds
+        the pool fixed while the split regime changes. Without this an S2 run would load
+        S0's cached index and train on 376,732 records while reporting 382,426.
+        """
+        if self.index_subset is None:
+            return ""
+        payload = ",".join(map(str, sorted(self.index_subset))).encode()
+        return f"_sub{len(self.index_subset)}-{hashlib.sha256(payload).hexdigest()[:8]}"
+
+    def _cache_files(self) -> tuple[str, str]:
+        """Paths of the cached index and index-details files for this configuration."""
+        tag = f"{self._pin_tag()}{self._subset_tag()}"
+        return (
+            osp.join(self.cache_dir, f"index_seed_{self.random_seed}{tag}.json"),
+            osp.join(
+                self.cache_dir, f"index_details_seed_{self.random_seed}{tag}.json"
+            ),
+        )
+
+    def _restrict(self, indices: Iterable[int]) -> list[int]:
+        """Drop indices outside ``index_subset``; a no-op when no subset is configured."""
+        if self.index_subset is None:
+            return list(indices)
+        return [i for i in indices if i in self.index_subset]
+
     def _load_or_compute_index(self) -> None:
         os.makedirs(self.cache_dir, exist_ok=True)
-        tag = self._pin_tag()
-        index_file = osp.join(
-            self.cache_dir, f"index_seed_{self.random_seed}{tag}.json"
-        )
-        details_file = osp.join(
-            self.cache_dir, f"index_details_seed_{self.random_seed}{tag}.json"
-        )
+        index_file, details_file = self._cache_files()
         if osp.exists(index_file) and osp.exists(details_file):
             try:
                 with open(index_file) as f:
@@ -366,6 +408,17 @@ class CellDataModule(L.LightningDataModule):
         random.seed(self.random_seed)
 
         all_indices = set(range(len(self.dataset)))
+        if self.index_subset is not None:
+            outside = len(self.index_subset - all_indices)
+            assert not outside, (
+                f"index_subset names {outside} indices outside the "
+                f"{len(self.dataset)}-record dataset"
+            )
+            all_indices = set(self.index_subset)
+            log.info(
+                f"index_subset restricts the pool to {len(all_indices)} of "
+                f"{len(self.dataset)} records before splitting."
+            )
         split_data: dict[str, defaultdict[str, set[int]]] = {
             "train": defaultdict(set),
             "val": defaultdict(set),
@@ -376,7 +429,13 @@ class CellDataModule(L.LightningDataModule):
         for index_name in self.split_indices:
             original_index = getattr(self.dataset, index_name)
             for key, indices in original_index.items():
-                indices = list(indices)
+                # Narrow to the subset HERE, not after assignment. Filtering afterwards
+                # would still shuffle and ratio-split all 13.5M records of the 025 build
+                # to keep 376k of them, and would draw the 80/10/10 boundaries on the full
+                # key rather than on the part of it the arm actually trains on.
+                indices = self._restrict(indices)
+                if not indices:
+                    continue
                 random.shuffle(indices)
                 num_samples = len(indices)
                 num_train = int(self.train_ratio * num_samples)
@@ -442,12 +501,13 @@ class CellDataModule(L.LightningDataModule):
         for index_name in self.split_indices:
             original_index = getattr(self.dataset, index_name)
             for key, indices in original_index.items():
-                key_remaining = set(indices) & remaining
+                key_indices = set(self._restrict(indices))
+                key_remaining = key_indices & remaining
                 if not key_remaining:
                     continue
 
                 current_counts = {
-                    split: len(set(indices) & final_splits[split])
+                    split: len(key_indices & final_splits[split])
                     for split in ["train", "val", "test"]
                 }
                 total_count = sum(current_counts.values()) + len(key_remaining)
@@ -484,7 +544,7 @@ class CellDataModule(L.LightningDataModule):
             final_splits["test"] |= pinned
             log.info(
                 f"Pinned {len(pinned)} records into test "
-                f"({missing} requested indices are outside the dataset). "
+                f"({missing} requested indices are outside the record pool). "
                 f"Splits: train={len(final_splits['train'])} "
                 f"val={len(final_splits['val'])} test={len(final_splits['test'])}"
             )
@@ -503,7 +563,7 @@ class CellDataModule(L.LightningDataModule):
                 log.info(
                     f"Pinned {len(pinned)} records into {split_name} "
                     f"({len(requested) - len(pinned)} requested indices are outside "
-                    "the dataset)."
+                    "the record pool)."
                 )
             log.info(
                 f"Splits after full pinning: train={len(final_splits['train'])} "
@@ -523,7 +583,9 @@ class CellDataModule(L.LightningDataModule):
                 original_index = getattr(self.dataset, index_name)
                 split_index_data: dict[str | int, IndexSplit] = {}
                 for key, indices in original_index.items():
-                    intersect = sorted(list(set(indices) & final_splits[split]))
+                    intersect = sorted(
+                        set(self._restrict(indices)) & final_splits[split]
+                    )
                     split_index_data[key] = IndexSplit(
                         indices=intersect, count=len(intersect)
                     )
@@ -545,13 +607,7 @@ class CellDataModule(L.LightningDataModule):
             json.dump(self._index_details.model_dump(), f, indent=2)
 
     def _cached_files_exist(self) -> bool:
-        tag = self._pin_tag()
-        index_file = osp.join(
-            self.cache_dir, f"index_seed_{self.random_seed}{tag}.json"
-        )
-        details_file = osp.join(
-            self.cache_dir, f"index_details_seed_{self.random_seed}{tag}.json"
-        )
+        index_file, details_file = self._cache_files()
         return osp.exists(index_file) and osp.exists(details_file)
 
     def setup(self, stage: str | None = None) -> None:

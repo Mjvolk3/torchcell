@@ -213,3 +213,113 @@ rule removes 85 training doubles whose pair is a held-out query pair
 
 Next implementation steps (unchanged order): `CellDataModule.index_subset`, S0/S1
 configs + trainer port, baselines on the same subsets, launch at 3 seeds.
+
+## 2026.09.04 - Trainer, Configs, and Where the Free Attention Goes
+
+Steps 4 and 5 of the ordered execution are implemented: `CellDataModule.index_subset`
+plus the three pieces the 010 trainer needed to run on a multi-order, multi-label build,
+and three arm configs. The first arm launches tonight.
+
+### The three arms, and why in this order
+
+| config | subset | split | graph prior | question |
+|---|---|---|---|---|
+| `cgt_s0_r_kl_000` | S0 | R (010's) | KL, 010 verbatim | does the 025 data path reproduce 010's 0.4520 / 0.4472 / 0.4619 |
+| `cgt_s0_r_mask_001` | S0 | R | hard mask | what does swapping KL for masking cost or gain |
+| `cgt_s0_q_mask_002` | S0 | Q (disjoint) | hard mask | the honest generalization number, against the additive 0.127 |
+
+The replication runs first and alone because it is the only arm whose answer is already
+known. If 025 + the new subset machinery gives 0.45 on the R split, every later number
+rests on a data path that has been checked against an independent build. If it does not,
+nothing further is interpretable and the gap is the thing to chase.
+
+Running the mask swap on R before Q is what keeps a Q result readable: Q changes the
+split AND the graph mechanism relative to 010, so a drop there has two candidate causes
+unless the mask has been priced on a split where a reference exists.
+
+### Four ways the 025 build silently breaks a ported 010 trainer
+
+Each of these was measured on this build, not assumed, and each produces a plausible run
+rather than an error:
+
+1. **Two labels per record.** 025's `experiment_types.json` holds `gene interaction` and
+   `fitness`, so `phenotype_values` is the concatenation over both and a batch of B
+   records carries 2B targets. `RegressionTask` reads that tensor as its label vector.
+   Fixed by `Neo4jCellDataset(phenotype_labels=["gene_interaction"])`, which also fixes
+   the ORDER: `_load_phenotype_info` returned `list(set_of_classes)`, whose iteration
+   order over type objects is not guaranteed to agree between DDP ranks, and
+   `phenotype_type_indices` is positional.
+2. **Pinning cannot express a subset.** `pinned_split_indices` assigns records but never
+   excludes them, so pinning the 376,732 triples still leaves 13,142,648 doubles and
+   5,694 singles seed-assigned into train. `index_subset` restricts the pool before any
+   splitting, and is hashed into the split-cache filename separately from the pin tag
+   because the ladder varies pool and split independently.
+3. **Normalization fitted on the wrong population.** `gene_interaction` has sd 0.0444
+   over all 13,525,071 records and **0.0633 over the 376,732 triples**, which is the value
+   010 normalized by (its min/max, -1.0816 / +1.1280, match the triples exactly). Fitting
+   on the whole column divides every trigenic target by a constant 1.43x too small and
+   raises the effective learning rate with it. `COOLabelNormalizationTransform` now takes
+   `fit_indices`, resolved through `label_df`'s `index` COLUMN since its rows are not
+   positional.
+4. **Relation names.** `cell_graph` names the nine gene-gene relations
+   `physical_interaction`, `regulatory_interaction`, `tflink`, and six `string12_0_*`.
+   010's config regularizes `physical` and `regulatory`, and
+   `compute_graph_regularization_loss` skips an unmatched name with a bare `continue`, so
+   **two of nine heads carried no graph prior in every 010 run**. The replication config
+   keeps the mismatch on purpose: 0.4520 / 0.4472 / 0.4619 were produced by a model
+   regularized on seven graphs, and correcting it would make a disagreement
+   uninterpretable. The mask arms use the true names and raise on a mismatch.
+
+Measured together end to end (`probe_025_datamodule.py`, kept in scratch): dataset opens
+in 10.5 s at 5.5 GB RSS, splits realize as 301,386 / 37,673 / 37,673 exactly matching the
+pinned artifact, every split record is a triple, and a batch of 8 carries 8 labels and 24
+perturbation indices.
+
+### Free heads: separate rows, not parallel heads in one layer
+
+The open design question was whether unconstrained attention should sit BESIDE the
+graph-carrying heads inside the same layer, or in layers of its own. The concern with the
+parallel form is that both paths write into the same residual stream at the same depth
+and the unconstrained one is strictly easier to fit, so the gradient could route around
+the graph entirely.
+
+`_build_head_mask` allows either: heads with no assigned graph stay fully free, and
+`attention_mask.layers` chooses which layers are masked at all. The configs take the
+vertical form, **SSMMMMSS**: layers 0-1 and 6-7 fully unmasked, layers 2-5 fully masked
+with all nine heads carrying a graph.
+
+The evidence is Buterez et al. 2024, whose entire architectural claim is that masked and
+unmasked attention combine vertically rather than horizontally. Their Table 8 ablation
+over layer orderings reports that "the top configurations tend to include self-attention
+layers at the front, with masked attention layers in the middle and self-attention layers
+at the end, surrounding the PMA readout", and that "naive configurations such as
+all-masked layers or simply alternating masked and self-attention layers do not tend to
+be optimal". The horizontal form is SAN's, mixing masked and unmasked scores inside one
+layer by a weight gamma, and ESA outperforms it across their 70 tasks.
+
+Two limits on that transfer, both worth stating because neither is settled by their work:
+
+- The gradient-bypass mechanism is a **hypothesis (untested)**. Buterez et al. measure
+  which orderings score best; they do not measure why a horizontal mix underperforms, and
+  neither does any arm here.
+- Their tokens are edge sets on molecular, vision, and social graphs. Ours are 6,607 gene
+  tokens plus a CLS, and the mask is a gene-gene adjacency rather than an edge-adjacency.
+  The ordering is being carried across domains as a prior.
+
+Note also that 010's KL arrangement was already vertical in effect: all nine heads of
+layer 1 were assigned, leaving seven of eight layers unconstrained. The mask configs
+widen the constrained band from one layer to four while keeping half the depth free.
+
+### Mechanics
+
+- Launcher: `experiments/025-solid-growth/scripts/gh_cgt.slurm <config-name>`, 4 GPUs,
+  12 h, 250 GB. Twelve hours rather than 010's seven days because these arms are read at
+  a checkpoint; the val-Pearson callback keeps the best epoch, so a truncated run still
+  answers its question.
+- `pinned_splits_from_010_seed_42.json` is now written gzipped (3.7 MB to 0.85 MB) so it
+  is a committed artifact beside the subset and Q-split indices rather than a large
+  untracked file the configs depend on.
+- The masked arms set `graph_reg_lambda: 0.0`, which stops the model requesting attention
+  weights and lets the fused SDPA kernel run, so the `[batch, 9, 6608, 6608]` score
+  matrix is never formed. 019 measured 1.5-1.7x faster per epoch from this; the ACCURACY
+  of mask against KL is unmeasured, which is what `cgt_s0_r_mask_001` is for.

@@ -273,3 +273,112 @@ def test_full_pin_out_of_range_indices_ignored(tmp_path: Any) -> None:
     idx = dm.index
     assert {0, 1} <= set(idx.test)
     assert 5000 not in set(idx.train) | set(idx.val) | set(idx.test)
+
+
+def _build_subset(
+    tmp_path: Any,
+    subset: set[int] | None,
+    pinned_splits: dict[str, set[int]] | None = None,
+    seed: int = 42,
+) -> CellDataModule:
+    return CellDataModule(
+        dataset=_FakeDataset(),
+        cache_dir=str(tmp_path / "cache"),
+        split_indices=["phenotype_label_index"],
+        random_seed=seed,
+        index_subset=subset,
+        pinned_split_indices=pinned_splits,
+    )
+
+
+def test_subset_restricts_the_pool_and_nothing_else_appears(tmp_path: Any) -> None:
+    """THE load-bearing property: no record outside the subset reaches any split.
+
+    Pinning assigns but never excludes, so a subset is the only way to say "train on the
+    376,732 triples of a 13,525,071-record build". A subset that silently failed would
+    train on 36x the intended data while every log line still named the arm.
+    """
+    subset = set(range(0, 60))
+    idx = _build_subset(tmp_path, subset).index
+    placed = set(idx.train) | set(idx.val) | set(idx.test)
+    assert placed == subset
+    assert len(idx.train) + len(idx.val) + len(idx.test) == 60
+
+
+def test_subset_still_splits_by_ratio_within_the_subset(tmp_path: Any) -> None:
+    """The 80/10/10 is drawn on the subset, not inherited from the full pool."""
+    idx = _build_subset(tmp_path, set(range(0, 100))).index
+    assert 75 <= len(idx.train) <= 85
+    assert len(idx.val) > 0 and len(idx.test) > 0
+
+
+def test_subset_changes_the_cache_key(tmp_path: Any) -> None:
+    """An S0 arm must not load the full-pool cached index left by an earlier run.
+
+    Separate from the pin tag because the 025 ladder varies the two independently: the
+    split regime stays fixed while the training pool grows S0 -> S2 -> S3.
+    """
+    full = _build_subset(tmp_path, None)
+    sub = _build_subset(tmp_path, set(range(0, 60)))
+    assert full._subset_tag() == ""
+    assert sub._subset_tag().startswith("_sub60-")
+    cache = tmp_path / "cache"
+    assert (cache / "index_seed_42.json").exists()
+    assert any("_sub60-" in p.name for p in cache.iterdir())
+    assert set(sub.index.train) | set(sub.index.val) | set(sub.index.test) == set(
+        range(0, 60)
+    )
+
+
+def test_two_subsets_of_equal_size_get_different_cache_keys(tmp_path: Any) -> None:
+    """The tag hashes the membership, not just the count."""
+    a = _build_subset(tmp_path, set(range(0, 60)))
+    b = _build_subset(tmp_path, set(range(60, 120)))
+    assert a._subset_tag() != b._subset_tag()
+
+
+def test_subset_composes_with_pinned_splits(tmp_path: Any) -> None:
+    """The 025 replication arm: subset = the triples, pinned splits = 010's assignment."""
+    subset = set(range(0, 60))
+    pinned = {
+        "train": set(range(0, 40)),
+        "val": set(range(40, 50)),
+        "test": set(range(50, 60)),
+    }
+    idx = _build_subset(tmp_path, subset, pinned_splits=pinned).index
+    assert set(idx.train) == pinned["train"]
+    assert set(idx.val) == pinned["val"]
+    assert set(idx.test) == pinned["test"]
+
+
+def test_pinned_records_outside_the_subset_are_not_placed(tmp_path: Any) -> None:
+    """A pin cannot smuggle a record back into a split the subset excluded.
+
+    This is the leak that would matter in 025: the R and Q splits are pinned over all
+    376,732 triples, so an arm that subsets to a smaller pool must drop the rest rather
+    than honor the pin.
+    """
+    idx = _build_subset(
+        tmp_path, set(range(0, 30)), pinned_splits={"test": {5, 6, 100, 101}}
+    ).index
+    placed = set(idx.train) | set(idx.val) | set(idx.test)
+    assert {5, 6} <= set(idx.test)
+    assert not ({100, 101} & placed)
+    assert placed == set(range(0, 30))
+
+
+def test_empty_subset_raises(tmp_path: Any) -> None:
+    """An empty subset is a config mistake, not a request to train on nothing."""
+    with pytest.raises(AssertionError, match="index_subset is empty"):
+        _build_subset(tmp_path, set())
+
+
+def test_subset_outside_the_dataset_raises(tmp_path: Any) -> None:
+    """Unlike a pin, an out-of-range subset index is fatal.
+
+    A pin naming a missing record is a benign no-op, but a subset naming one means the
+    index artifact was built against a DIFFERENT dataset than the one being trained on,
+    and the arm would then train on whichever indices happened to overlap.
+    """
+    with pytest.raises(AssertionError, match="outside the"):
+        _build_subset(tmp_path, {1, 2, 5000})

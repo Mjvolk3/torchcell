@@ -6,6 +6,7 @@
 """Transforms converting COO-format regression labels to classification targets."""
 
 from abc import ABC
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -25,6 +26,7 @@ class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # Ba
         dataset: "Neo4jCellDataset",
         label_configs: dict[str, dict[str, Any]],
         eps: float = 1e-8,
+        fit_indices: Iterable[int] | None = None,
     ):
         """Compute per-label normalization statistics from the dataset.
 
@@ -38,6 +40,22 @@ class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # Ba
                     }
                 }
             eps: Small constant to avoid division by zero
+            fit_indices: Record indices the statistics are computed over. ``None`` uses
+                every record, which is right when the dataset IS the arm's data and was
+                the only behavior before.
+
+                It stops mattering only on a single-population build. On 025 the same
+                ``gene_interaction`` column holds 13,142,648 digenic and 376,732 trigenic
+                values with different spreads: sd 0.0444 over the whole column against
+                0.0633 over the triples alone. A trigenic arm fitted on the whole column
+                divides its targets by the wrong constant, inflating every normalized
+                label by 1.43x and with it the effective learning rate, so its loss curve
+                is not comparable to a run whose statistics came from the triples. Nothing
+                errors; the run simply is not the experiment it is labeled as.
+
+                Indices name RECORDS, and ``label_df`` carries them in its ``index``
+                COLUMN rather than positionally (row 2 is record 10), so they are resolved
+                through that column.
         """
         super().__init__()
         self.label_configs = label_configs
@@ -46,6 +64,14 @@ class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # Ba
 
         # Calculate statistics for each label
         df = dataset.label_df.replace([np.inf, -np.inf], np.nan)
+        if fit_indices is not None:
+            wanted = set(fit_indices)
+            df = df[df["index"].isin(wanted)]
+            missing = len(wanted) - len(df)
+            if missing:
+                raise ValueError(
+                    f"fit_indices names {missing} record indices absent from label_df"
+                )
         for label, config in label_configs.items():
             if label not in df.columns:
                 raise ValueError(f"Label {label} not found in dataset")

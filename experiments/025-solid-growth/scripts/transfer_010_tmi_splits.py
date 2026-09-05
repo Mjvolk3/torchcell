@@ -16,7 +16,7 @@ on the first transfer attempt while the gene-set population matched exactly.
 
 Phase 1 reads 010's split cache + processed LMDB and maps identity -> split.
 Phase 2 reads 025's processed LMDB (run AFTER query.py builds it) and emits
-``pinned_splits_from_010_seed_42.json``: 025 indices per split, for CellDataModule's
+``pinned_splits_from_010_seed_42.json.gz``: 025 indices per split, for CellDataModule's
 ``pinned_split_indices``. Every 010 identity must resolve in 025 -- the tmi blocks of
 025's query select the same record population -- so an unmatched identity is reported
 as an error, not silently dropped.
@@ -24,6 +24,7 @@ as an error, not silently dropped.
     python experiments/025-solid-growth/scripts/transfer_010_tmi_splits.py
 """
 
+import gzip
 import json
 import os
 import os.path as osp
@@ -112,9 +113,14 @@ def main() -> None:
     }
     print(json.dumps(report, indent=2))
 
+    # Gzipped so the artifact is committable beside the subset/split indices (3.7 MB
+    # raw, 0.85 MB compressed) rather than being a large untracked file the training
+    # configs depend on.
     out_dir = "experiments/025-solid-growth/results"
     os.makedirs(out_dir, exist_ok=True)
-    with open(osp.join(out_dir, "pinned_splits_from_010_seed_42.json"), "w") as f:
+    with gzip.open(
+        osp.join(out_dir, "pinned_splits_from_010_seed_42.json.gz"), "wt"
+    ) as f:
         json.dump({"report": report, "pinned": pinned}, f)
 
     if unmatched:

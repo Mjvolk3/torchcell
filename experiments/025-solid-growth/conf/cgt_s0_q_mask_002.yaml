@@ -1,0 +1,221 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_mask_002.yaml
+#
+# ARM S0/Q/MASK -- the honest generalization regime, and the destination of this ladder.
+# Identical to cgt_s0_r_mask_001 except for the split: whole recurring query pairs go to
+# train, val, or test, so no held-out triple shares a query double with a trained one.
+#
+# Why the split is the point. On the random-over-records split the additive per-gene
+# ridge reaches test Pearson 0.400 against the transformer's 0.443-0.455, so most of what
+# either model scores is reachable without a three-way term. On the query-pair-disjoint
+# split that same additive null COLLAPSES to 0.127 +/- 0.033 over 5-fold CV, and the
+# embedding MLP, the only baseline able to represent a three-way term, inverts BELOW it
+# at 0.058. The transformer has never been refit here, so no trigenic claim in the 010
+# report is yet supported in the regime where the additive shortcut is unavailable.
+#
+# Read this arm against 0.127, not against 0.454. They are different questions, and a
+# number here that lands between them is the informative outcome rather than a failure.
+#
+# The split is exact by construction: every 025 triple carries exactly one recurring
+# query pair (420 pairs, matching 010's count), and whole pairs are assigned. Sizes are
+# 301,236 / 37,705 / 37,791 over 331 / 43 / 46 pairs.
+#
+# ONE CAVEAT ON READING IT NEXT TO 010. Both the split AND the graph mechanism differ
+# from the 010 reference, so a gap against 0.454 cannot be attributed to either alone.
+# cgt_s0_r_mask_001 is the arm that separates them, and it should be run first or beside
+# this one.
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_025-solid-growth_equivariant_cell_graph_transformer
+  tags: [s0, split_Q, graph_mask, query_pair_disjoint]
+
+# === Arm: which records train, and how they split ===
+# Artifacts are committed under experiments/025-solid-growth/results/ and are read by
+# `load_index_artifact`; `split_key` names the field holding the three lists because the
+# R and Q artifacts store them under different names -- here `splits`, beside the
+# per-pair assignment that produced it.
+subset:
+  indices: subset_S0_indices.json.gz
+  split_file: query_pair_disjoint_splits_025.json.gz
+  split_key: splits
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+  # Transformer uses learned gene embeddings, not pre-computed
+  node_embeddings: []
+
+  # 025 carries fitness AND gene_interaction; 010 carried only the latter. Without this
+  # selection a triple yields two values and a batch of B records carries 2B targets,
+  # which the single-task RegressionTask reads as its label vector.
+  phenotype_labels: [gene_interaction]
+
+# Transform configuration
+transforms:
+  use_transforms: true
+  fit_on_subset: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard" # Options: standard, minmax, robust
+
+profiler:
+  enabled: false
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  batch_size: 256  # Limited by transformer memory requirements
+  num_workers: 16
+  pin_memory: true
+  prefetch: false
+  prefetch_factor: 4
+  persistent_workers: true
+
+trainer:
+  max_epochs: 600  # 010's budget; the 12 h wall clock is what actually ends this run
+  strategy: ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: "bf16-mixed"
+
+compile_mode: null
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  hidden_channels: 180
+  num_transformer_layers: 8
+  num_attention_heads: 9
+  dropout: 0.1
+
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+
+  # === Hard graph masking: SEPARATE LAYERS, not parallel heads ===
+  #
+  # WHERE THE FREE ATTENTION LIVES is the design choice, and it is made vertically:
+  # layers 0-1 and 6-7 are entirely unmasked, layers 2-5 are entirely masked, and inside
+  # a masked layer every one of the nine heads carries a graph. The alternative,
+  # unassigned heads sitting beside masked heads in the SAME layer, is what
+  # `_build_head_mask` allows by leaving unassigned heads fully free, and it is not used
+  # here.
+  #
+  # The evidence is Buterez et al. 2024 (`buterezEndtoendAttentionbasedApproach2024`),
+  # whose whole contribution is that masked and unmasked attention combine VERTICALLY
+  # rather than horizontally. Their Table 8 ablation over layer orderings reports that
+  # "the top configurations tend to include self-attention layers at the front, with
+  # masked attention layers in the middle and self-attention layers at the end,
+  # surrounding the PMA readout", and that "naive configurations such as all-masked
+  # layers or simply alternating masked and self-attention layers do not tend to be
+  # optimal". The horizontal form is SAN's: masked and unmasked scores mixed inside one
+  # layer by a weight gamma, which ESA outperforms. So SSMMMMSS below, not a mixed layer.
+  #
+  # Hypothesis (untested here): a free head placed alongside masked heads in the same
+  # layer lets the gradient route around the graph, since both paths write into the same
+  # residual stream at the same depth and the unconstrained one is strictly easier to
+  # fit. Buterez et al. measure the ordering, not the gradient; that mechanism is not
+  # tested by their work or by this arm.
+  #
+  # Their setting is edge-set tokens on molecular, vision, and social graphs. Ours is
+  # 6,607 gene tokens plus a CLS. The ordering result is being carried across domains and
+  # is a prior, not a measurement on this data.
+  attention_mask:
+    enabled: true
+    layers: [2, 3, 4, 5]
+    # Relation names are cell_graph's, verified against this build. A name that is not a
+    # gene-gene relation raises at construction.
+    head_graphs:
+      0: physical_interaction
+      1: regulatory_interaction
+      2: tflink
+      3: string12_0_neighborhood
+      4: string12_0_fusion
+      5: string12_0_cooccurence
+      6: string12_0_coexpression
+      7: string12_0_experimental
+      8: string12_0_database
+
+  # KL off: the graph prior is now structural. `graph_reg_lambda: 0.0` also keeps the
+  # model from requesting attention weights, which is what unlocks the fused kernel.
+  graph_regularization:
+    graph_reg_lambda: 0.0
+    graph_reg_layer: 1
+    row_sampling_rate: 1.0
+    regularized_heads: {}
+
+  perturbation_head:
+    num_heads: 9  # Must divide hidden_channels (180/9=20)
+    dropout: 0.1
+
+regression_task:
+  loss:
+    type: "point_dist_graph_reg"
+
+    point_estimator:
+      type: "mse"
+      lambda: 1.0
+
+    distribution_loss:
+      type: "wasserstein"
+      lambda: 0.1
+
+      wasserstein_blur: 0.05
+      wasserstein_p: 2
+      wasserstein_scaling: 0.9
+      min_samples_for_wasserstein: 512
+
+    graph_regularization:
+      lambda: 0.0  # nothing to weight: the prior is structural
+
+    supervised_contrastive:
+      lambda: 0.0
+
+    buffer:
+      use_buffer: false
+
+    ddp:
+      use_ddp_gather: false
+
+  execution_mode: "training"
+
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4
+    weight_decay: 1e-8
+
+  lr_scheduler:
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 30
+    cycle_mult: 1.0
+    max_lr: 5e-4
+    min_lr: 1e-7
+    warmup_steps: 1
+    gamma: 0.70
+
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 1
+  plot_transformer_diagnostics_every_n_epochs: 10
+  plot_edge_recovery_every_n_epochs: 0  # the mask IS the adjacency; recovery is vacuous

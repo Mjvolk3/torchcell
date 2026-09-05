@@ -1,0 +1,15 @@
+{
+  "n_010": 376732,
+  "n_matched": 376732,
+  "gene_interaction": {
+    "n": 376732,
+    "identical": 376526,
+    "pearson": 1.0,
+    "max_abs_diff": 5.551115123125783e-17,
+    "mean_abs_diff": 3.7875659709939455e-21,
+    "frac_within_1e-6": 1.0
+  },
+  "fitness": {
+    "n": 0
+  }
+}

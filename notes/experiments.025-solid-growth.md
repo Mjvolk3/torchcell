@@ -99,3 +99,10 @@ genotype that aggregated 23 `SmfKuzmin2020` experiments (dedup identity may be f
 than intended); optionally reclaim 1.87 T of pipeline intermediates on /db
 (conversion + dedup + aggregation stage copies; raw 839 G is refetch insurance, only
 `processed/` 517 G is required at train time).
+
+## 2026.09.04 - Training Campaign Plan
+
+The revised subset-ladder, split, and model plan lives in
+[[experiments.025-solid-growth.training-plan]]; the recapitulation gate (can 025's own
+fitness reproduce its tmi labels) in
+[[experiments.025-solid-growth.scripts.recapitulate_tmi_from_fitness]].

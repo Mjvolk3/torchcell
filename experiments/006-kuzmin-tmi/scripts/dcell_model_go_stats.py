@@ -19,6 +19,8 @@ Reported (CSV under results/dcell_model/):
   go_genes_final.csv          per-gene: number of terms it is annotated to (0 = uncovered)
   go_edges_final.csv          the 3,208 hierarchy edges of the final DAG (child, parent)
   go_annotations_final.csv    the 59,986 direct (term, gene) annotation rows of the final DAG
+  example_triple.csv          the real Kuzmin 2018 trigenic record drawn in the DAG panel
+                              (picked by rule from the local 005 build; see pick_example_triple)
   go_evidence_codes.csv       annotation evidence codes retained in the final DAG
   dcell_model_size.csv        parameter count implied by the widths, vs the wandb-logged
                               ``model/params_*`` of the trigenic runs (frozen pull)
@@ -37,9 +39,12 @@ Run from the repo root:
     python experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py --dag-only
         (rebuild the DAG without the wandb pull, check it against the frozen
         go_terms_final.csv, and freeze go_edges_final.csv + go_annotations_final.csv)
+    python experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py --pick-triple
+        (re-pick the example triple from the local 005 LMDB, freeze example_triple.csv, render)
 """
 
 import argparse
+import json
 import math
 import os
 import os.path as osp
@@ -129,8 +134,14 @@ NAMESPACE_LABEL = {
     "cellular_component": "Cellular component",
     "super_root": "GO:ROOT",
 }
-HIGHLIGHT = PLOT_PALETTE[1]  # red: the perturbation, as in every DCell panel
+HIGHLIGHT = PLOT_PALETTE[1]  # red: the perturbation and its paths to the root
+FEED = PLOT_PALETTE[4]  # blue: the zeroed gene states entering their subsystems (dashed)
 NAMESPACE_ROOTS = ("GO:0008150", "GO:0003674", "GO:0005575")
+
+# The example strain drawn in the DAG panel is a real Kuzmin 2018 trigenic record from the
+# local experiment-005 build (Kuzmin 2018 only, 91,050 records).
+KUZMIN2018_LMDB = "data/torchcell/experiments/005-kuzmin2018-tmi/001-small-build/processed/lmdb"
+TRIPLE_ANNOTATIONS = (5, 12)  # each gene must carry this many direct annotations, inclusive
 
 
 # --------------------------------------------------------------------------- graph stats
@@ -261,6 +272,7 @@ def build_dag_only() -> None:
         raise SystemExit("rebuilt edge count differs from go_terms_final.csv")
     freeze_structure(G4, gene_set)
     print(f"froze {G4.number_of_edges()} edges and {len(annotation_pairs(G4, gene_set))} annotation rows (GO {release})")
+    pick_example_triple(pd.read_csv(osp.join(RESULTS_DIR, "go_genes_final.csv")))
 
 
 def build_and_measure() -> None:
@@ -319,6 +331,7 @@ def build_and_measure() -> None:
     genes["n_terms"] = [per_gene.get(g, 0) for g in genes["gene"]]
     genes.to_csv(osp.join(RESULTS_DIR, "go_genes_final.csv"), index=False)
     freeze_structure(G4, gene_set)
+    pick_example_triple(genes)
 
     ev = Counter()
     dates = []
@@ -418,16 +431,52 @@ def save(fig, name: str) -> None:
     plt.close(fig)
 
 
-def example_triple(genes: pd.DataFrame) -> list[str]:
-    """Three genes for the highlighted deletion, chosen by rule rather than by hand.
+def pick_example_triple(genes: pd.DataFrame) -> pd.DataFrame:
+    """The strain drawn in the DAG panel: a real Kuzmin 2018 trigenic record, chosen by rule.
 
-    Among the genes annotated to exactly the median number of subsystems, sorted by
-    systematic name, take the first, the middle, and the last: three genes with a
-    typical number of subsystems, spread across the genome.
+    Walk the records of the local experiment-005 build (the Kuzmin 2018-only LMDB, keys
+    ``"0"`` .. ``"n-1"`` in ascending order) and take the FIRST record whose three
+    perturbations are all deletions (no allele or temperature-sensitive allele, so every
+    gene is a nuclear deletion target) and whose three genes each carry between 5 and 12
+    direct annotations in the final DAG (typical genes, neither the ND-only tail nor the
+    hubs). The record index, genes, annotation counts, and measured interaction are frozen
+    to ``example_triple.csv`` so ``--from-csv`` renders without the LMDB.
     """
-    med = int(genes["n_terms"].median())
-    pool = sorted(genes.loc[genes["n_terms"] == med, "gene"])
-    return [pool[0], pool[len(pool) // 2], pool[-1]]
+    import lmdb
+
+    n_terms = dict(zip(genes["gene"], genes["n_terms"]))
+    lo, hi = TRIPLE_ANNOTATIONS
+    env = lmdb.open(osp.join(DATA_ROOT, KUZMIN2018_LMDB), readonly=True, lock=False, readahead=False)
+    with env.begin() as txn:
+        n_records = txn.stat()["entries"]
+        for i in range(n_records):
+            rec = json.loads(txn.get(str(i).encode()))[0]["experiment"]
+            perts = rec["genotype"]["perturbations"]
+            if len(perts) != 3 or any(p["perturbation_type"] != "deletion" for p in perts):
+                continue
+            gs = [p["systematic_gene_name"] for p in perts]
+            if all(lo <= n_terms.get(g, 0) <= hi for g in gs):
+                break
+        else:
+            raise SystemExit("no all-deletion triple with the required annotation counts")
+    env.close()
+    df = pd.DataFrame(
+        {
+            "record_index": i,
+            "n_records": n_records,
+            "dataset_name": rec["dataset_name"],
+            "gene": gs,
+            "perturbed_gene_name": [p["perturbed_gene_name"] for p in perts],
+            "perturbation_type": [p["perturbation_type"] for p in perts],
+            "n_terms": [n_terms[g] for g in gs],
+            "gene_interaction": rec["phenotype"]["gene_interaction"],
+            "gene_interaction_p_value": rec["phenotype"]["gene_interaction_p_value"],
+            "rule": f"first record (ascending LMDB key) with three deletions, each gene {lo}-{hi} direct annotations",
+        }
+    )
+    df.to_csv(osp.join(RESULTS_DIR, "example_triple.csv"), index=False)
+    print(f"example triple: record {i} of {n_records}: {gs} (annotations {df['n_terms'].tolist()})")
+    return df
 
 
 def layout_dag(terms: pd.DataFrame, edges: pd.DataFrame) -> dict[str, tuple[float, float]]:
@@ -472,13 +521,14 @@ def layout_dag(terms: pd.DataFrame, edges: pd.DataFrame) -> dict[str, tuple[floa
     return pos
 
 
-def panel_go_dag(terms: pd.DataFrame, edges: pd.DataFrame, ann: pd.DataFrame, genes: pd.DataFrame) -> list[str]:
-    """The whole filtered DAG with one triple deletion propagating to the root. Returns the triple."""
+def panel_go_dag(terms: pd.DataFrame, edges: pd.DataFrame, ann: pd.DataFrame, genes: pd.DataFrame, triple: list[str]) -> None:
+    """The whole filtered DAG with one real triple deletion propagating to the root."""
     pos = layout_dag(terms, edges)
     ns = dict(zip(terms["term"], terms["namespace"]))
     n_strata = int(terms["stratum"].max()) + 1
-    triple = example_triple(genes)
     gene_index = {g: i for i, g in enumerate(sorted(genes["gene"]))}
+    if any(g not in gene_index for g in triple):
+        raise SystemExit(f"example triple {triple} is not in the 6,607-gene reference")
     hit_terms = sorted(set(ann.loc[ann["gene"].isin(triple), "term"]))
     # Every hierarchy edge on a path from a hit term up to the root: what the zeroed rows
     # touch, since each subsystem feeds all of its parents.
@@ -509,9 +559,10 @@ def panel_go_dag(terms: pd.DataFrame, edges: pd.DataFrame, ann: pd.DataFrame, ge
     ax.add_collection(LineCollection(cold, colors="#C8C8C8", linewidths=0.12, zorder=1))
     hot = [(xy(c), xy(p)) for c, p in hot_edges]
     ax.add_collection(LineCollection(hot, colors=HIGHLIGHT, linewidths=0.45, alpha=0.85, zorder=3))
-    # Gene states of the deleted genes entering the subsystems that annotate them.
+    # Gene states of the deleted genes entering the subsystems that annotate them (blue,
+    # dashed) so they read apart from the red solid paths to the root.
     feed = [((gene_index[g] / len(gene_index), gene_row), xy(t)) for t, g in zip(ann["term"], ann["gene"]) if g in triple]
-    ax.add_collection(LineCollection(feed, colors=HIGHLIGHT, linewidths=0.35, linestyles=(0, (2, 1.5)), alpha=0.85, zorder=3))
+    ax.add_collection(LineCollection(feed, colors=FEED, linewidths=0.4, linestyles=(0, (2, 1.5)), zorder=3))
 
     for space, color in NAMESPACE_COLOR.items():
         sel = [t for t in terms["term"] if ns[t] == space and t not in hit_terms]
@@ -524,17 +575,32 @@ def panel_go_dag(terms: pd.DataFrame, edges: pd.DataFrame, ann: pd.DataFrame, ge
 
     # The strain row: 6,607 gene states, present in gray, the deleted three in red.
     ax.plot([0, 1], [gene_row, gene_row], color="#9A9A9A", lw=2.2, solid_capstyle="butt", zorder=2)
-    for g in triple:
-        x = gene_index[g] / len(gene_index)
+    # Gene labels "<gene> = 0" under their ticks; a label is about LABEL_W of the axis wide,
+    # so neighbors closer than that are pushed to opposite sides of their ticks.
+    LABEL_W = 0.115
+    xs_genes = sorted((gene_index[g] / len(gene_index), g) for g in triple)
+    prev_right = -1.0
+    for i, (x, g) in enumerate(xs_genes):
         ax.plot([x, x], [gene_row - 0.32, gene_row + 0.32], color=HIGHLIGHT, lw=0.9, zorder=4)
-        ha = "left" if x < 0.08 else "right" if x > 0.92 else "center"
-        ax.text(x, gene_row + 0.42, f"{g} = 0", ha=ha, va="top", color=HIGHLIGHT, fontsize=6)
+        next_close = i + 1 < len(xs_genes) and xs_genes[i + 1][0] - x < LABEL_W
+        if next_close and x - LABEL_W - 0.006 > prev_right:
+            ha, x_text = "right", x - 0.006
+        elif x - LABEL_W / 2 > prev_right and x + LABEL_W / 2 < 1:
+            ha, x_text = "center", x
+        else:
+            ha, x_text = "left", x + 0.006
+        ax.text(x_text, gene_row + 0.42, f"{g} = 0", ha=ha, va="top", color=HIGHLIGHT, fontsize=6)
+        prev_right = {"right": x - 0.006, "center": x + LABEL_W / 2, "left": x + 0.006 + LABEL_W}[ha]
     ax.text(0.5, gene_row + 1.0, "gene-state vector s over the 6,607 genes: present = 1, deleted = 0",
             ha="center", va="top", fontsize=6)
+    # Namespace and root labels sit ABOVE their node on a white box, clear of every edge:
+    # the MF root is directly under GO:ROOT, so its label steps right of that vertical edge.
+    label_box = dict(boxstyle="square,pad=0.15", facecolor="white", edgecolor="none")
     for t, name in zip(NAMESPACE_ROOTS, ("BP", "MF", "CC")):
         x, s = pos[t]
-        ax.text(x + 0.012, s, name, ha="left", va="center", fontsize=6)
-    ax.text(0.512, 0, "GO:ROOT", ha="left", va="center", fontsize=6)
+        dx, ha = (0.012, "left") if name == "MF" else (0.0, "center")
+        ax.text(x + dx, s - 0.42, name, ha=ha, va="center", fontsize=6, bbox=label_box, zorder=6)
+    ax.text(0.5, -0.42, "GO:ROOT", ha="center", va="center", fontsize=6, bbox=label_box, zorder=6)
 
     ax.set_xlim(-0.005, 1.005)
     ax.set_ylim(gene_row + 1.8, -0.7)  # root at the top, strain row at the bottom
@@ -549,7 +615,7 @@ def panel_go_dag(terms: pd.DataFrame, edges: pd.DataFrame, ann: pd.DataFrame, ge
     ] + [
         Line2D([], [], marker="o", ls="", ms=3, markerfacecolor="white", markeredgecolor=HIGHLIGHT, label="Annotated to a deleted gene"),
         Line2D([], [], color=HIGHLIGHT, lw=0.8, label="Path to GO:ROOT"),
-        Line2D([], [], color=HIGHLIGHT, lw=0.8, ls=(0, (2, 1.5)), label="Gene state into subsystem"),
+        Line2D([], [], color=FEED, lw=0.8, ls=(0, (2, 1.5)), label="Gene state into subsystem"),
     ]
     ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(-0.02, -0.005), frameon=False, ncol=3,
               handlelength=1.4, handletextpad=0.5, borderpad=0.0, labelspacing=0.25, columnspacing=1.2)
@@ -558,7 +624,6 @@ def panel_go_dag(terms: pd.DataFrame, edges: pd.DataFrame, ann: pd.DataFrame, ge
     for s in ax.spines.values():
         s.set_linewidth(0.5)
     save(fig, "dcell_model_go_dag")
-    return triple
 
 
 def panel_terms_per_stratum(strata_df: pd.DataFrame) -> None:
@@ -656,8 +721,10 @@ def render() -> None:
     genes = pd.read_csv(osp.join(RESULTS_DIR, "go_genes_final.csv"))
     edges = pd.read_csv(osp.join(RESULTS_DIR, "go_edges_final.csv"))
     ann = pd.read_csv(osp.join(RESULTS_DIR, "go_annotations_final.csv"))
-    triple = panel_go_dag(terms, edges, ann, genes)
-    print(f"highlighted triple deletion: {triple}")
+    ex = pd.read_csv(osp.join(RESULTS_DIR, "example_triple.csv"))
+    triple = list(ex["gene"])
+    panel_go_dag(terms, edges, ann, genes, triple)
+    print(f"highlighted triple deletion: record {int(ex['record_index'].iloc[0])}: {triple}")
     panel_terms_per_stratum(strata_df)
     panel_genes_per_term(terms)
     panel_terms_per_gene(genes)
@@ -671,9 +738,13 @@ def main() -> None:
     g.add_argument("--from-csv", action="store_true", help="re-render panels and table from the frozen CSVs")
     g.add_argument("--dag-only", action="store_true",
                    help="rebuild the DAG (no wandb), verify it against go_terms_final.csv, freeze edges + annotations, render")
+    g.add_argument("--pick-triple", action="store_true",
+                   help="re-pick the example triple from the local 005 LMDB, freeze example_triple.csv, render")
     args = ap.parse_args()
     if args.dag_only:
         build_dag_only()
+    elif args.pick_triple:
+        pick_example_triple(pd.read_csv(osp.join(RESULTS_DIR, "go_genes_final.csv")))
     elif not args.from_csv:
         build_and_measure()
     render()

@@ -71,3 +71,38 @@ fall-through of `note:dango-repro` applies to the v11.0/v12.0 runs here too, rea
 `experiments/006-kuzmin-tmi/scripts/dango.py` (line ~258) + `torchcell/losses/dango.py`
 (`lambda_values.get(edge_type, 1.0)`) + the `string11_0_*`/`string12_0_*` graph names in the configs;
 not measured in training.
+
+## 2026.09.04 - Data-effect panel and a narrower convergence panel
+
+Author review asked for a measured data-size comparison. New `panel_data_effect` (wide width,
+118.9 mm): best validation Pearson (max over epochs) of the same DANGO implementation on the
+Kuzmin 2018-only build of experiment 005 (91,050 records, from `results/dango_dataset_split.csv`)
+against the experiment-006 build (332,313 records, count from
+[[experiments.011-kuzmin-tmi.scripts.query-comparison-006-009-010-011]]), grouped by build with one
+bar per STRING release; bar = mean, whisker = SEM where n > 1, open circles = runs; y zoomed to
+0.30 to 0.45 like panel b. The 005 runs are read from
+`experiments/005-kuzmin2018-tmi/results/dango_string_version_sweep.csv` (no new wandb pull) and
+pool the three loss schedules. Frozen to `results/dango_full_dataset_data_effect.csv` (one row per
+build x release with n, mean, SD, SEM, range, run ids):
+
+| build | records | STRING | n | best val Pearson, mean +/- SEM | range | runs |
+| --- | --- | --- | --- | --- | --- | --- |
+| 005 | 91,050 | v9.1 | 4 | 0.4216 +/- 0.0009 | 0.4197 to 0.4239 | jpckzn4x, zzbcgu54, q67k56m4, ytkjmgvs |
+| 005 | 91,050 | v11.0 | 5 | 0.4225 +/- 0.0013 | 0.4193 to 0.4268 | mx8kt0p1, 8pxowi2e, mbyn8rim, xo6uq9sa, g34rn9ti |
+| 005 | 91,050 | v12.0 | 10 | 0.4213 +/- 0.0011 | 0.4149 to 0.4267 | qea56nbl, sv0fsgng, ekebm9y1, ltspf20w, 5me1tgmt, 6m5wqiju, pfm9qtlj, d0i1sbc6, r0zhujxc, 26tx2hj1 |
+| 006 | 332,313 | v9.1 | 5 | 0.3664 +/- 0.0004 | 0.3652 to 0.3676 | 6q08iign, x3savllr, 014mprap, cbi441o8, p6urax0a |
+| 006 | 332,313 | v11.0 | 4 | 0.3557 +/- 0.0012 | 0.3536 to 0.3592 | ok8k5e6z, mj7paqg8, jo24cfpf, 3f9sh91s |
+| 006 | 332,313 | v12.0 | 5 | 0.3581 +/- 0.0010 | 0.3545 to 0.3602 | vqnrz2le, 5akd0qwt, 9jpfy547, xxtxdu3y, jww4tblb |
+
+What this is and is not: the two builds are split separately (same splitter and seed, different
+membership), the 005 runs used batch 32 on one GPU and the 006 runs batch 64 per GPU on 2 to 4 GPUs
+with the linear-to-uniform schedule only, so it is the only measured data-size comparison for
+DANGO and not a controlled ablation; no like-for-like split can be claimed. The drop (0.42 to
+0.36) is the same for every release.
+
+The convergence panel (c) is now third width (57.8 mm x 52 mm) with short release tick labels and a
+one-column legend; its caption states the message explicitly: the release moves the epoch of the
+maximum (98 to 140 with v9.1, up to 608 with v12.0), not the epoch of the rise (16 to 30 in every
+run). Values unchanged.
+
+![](./assets/images/010-kuzmin-tmi/dango_full_dataset_data_effect.svg)

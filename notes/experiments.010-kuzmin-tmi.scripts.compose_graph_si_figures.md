@@ -64,3 +64,25 @@ the letters inside them:
 
 The height gate is `MAX_HEIGHT + HEIGHT_GRACE` = 669 + 8 units; both figures pass it,
 `check-figures.sh`, and `drawio_font_band.py --check`.
+
+## 2026.09.04 - Regrouped by theme; STRING releases handed to the DANGO figure
+
+Author feedback: the two figures read as undifferentiated piles of statistics, and the heatmaps'
+top-mounted column labels broke row alignment. The composer now groups by theme, with the same
+white-cross constants (`COL_GAP = 12`, `ROW_GAP = 22`, `TOP_STRIP = 16`, letters in the gutter):
+
+- `FigS-graph-attention-priors.drawio`, each graph on its own: (a) sizes with the union row,
+  (b) degree CCDF (half + half, 48 mm); (c) structure, (d) three highest-degree genes per graph
+  (half + half, 60 mm); (e) other components (full, 44 mm); 705 x 658 units (179.0 x 167.2 mm;
+  export 179.2 x 167.6 mm, inside the 170 + 2 mm gate).
+- `FigS-graph-attention-priors-2.drawio`, how the graphs relate: (a) Jaccard, (b) containment,
+  (c) shared pairs (three thirds, 44 mm); (d) edge multiplicity (third) + (e) regulatory vs
+  TFLink (wide, 58 mm); 708 x 440 units (179.7 x 111.7 mm; export 179.9 x 112.2 mm). Third +
+  gap + wide = 227.6 + 12 + 468.1 = 707.7 units, so the asymmetric row tiles the page at the
+  same 3 mm gap as the thirds above it.
+
+Every heatmap now carries its column labels below the matrix, so all panels of a row share their
+top edge; the STRING-release panel (`graphs_string_releases.svg`, unchanged in size) is embedded
+by `experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py` as panel a of
+`FigS-dango-reproduction`. Paths resolve from the script file, so it runs from any directory.
+Both figures pass `check-figures.sh` and `drawio_font_band.py --check` (only the 11.1 letters).

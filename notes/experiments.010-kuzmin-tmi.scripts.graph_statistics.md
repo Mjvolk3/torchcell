@@ -244,3 +244,99 @@ second run leaves `results/graphs/` unchanged (verified with `git status` after 
 ![](./assets/images/010-kuzmin-tmi/graphs_tf_overlap.svg)
 
 ![](./assets/images/010-kuzmin-tmi/graphs_structure.svg)
+
+## 2026.09.04 - Thematic regrouping, union row, top-three hubs, and the regulatory graph restricted to the vocabulary
+
+Second author review. The two figures are regrouped by theme (each graph on its own; how the
+graphs relate), the STRING-release panel leaves them for the DANGO reproduction figure, and four
+panels changed. Rerunning also exposed a counting error in every previous section of this note.
+
+**Correction: the regulatory graph was not restricted to the 6,607-gene vocabulary.** The cached
+`G_regulatory.pkl` keeps every feature an SGD regulation record names: 35 regulators are protein
+complexes (`CPX-` ids) and 405 targets are non-coding RNAs, LTRs, and Ty ORFs (`YNC...`,
+`YARWdelta7`, ...), 435 nodes and 1,869 of the 39,636 directed records in all. The other eight
+graphs are entirely within the vocabulary (checked per graph). The script now drops those nodes at
+load (`restrict_to_vocab`; no gene is left isolated), which is also what training does:
+`torchcell/data/cell_data.py::to_cell_data` keeps an edge only when both endpoints are in the base
+gene set, so the attention prior the model saw is the restricted graph. The wandb
+`graph_regularization_info/summary` counts quoted in the first section (regulatory 6,582/39,636)
+are the raw pickle's counts, not the prior's. Regulatory therefore changes from 6,582 nodes,
+39,636 edges, 39,546 pairs, 51% unique to **6,147 nodes, 37,767 edges, 37,677 pairs, 49% unique**
+(460 uncovered genes instead of 25); its clustering 0.26 -> 0.25, assortativity -0.37 -> -0.38,
+two-hop reach 3,365 -> 3,252; FKH1 2,991 -> 2,787, SFP1 2,142 -> 2,132, FKH2 1,832 -> 1,612. The
+transcription-factor comparison changes with it: regulators 511 -> 473 (273 regulatory-only, 200
+shared, 117 TFLink-only; union 590), targets 6,546 -> 6,141 (1,178 / 4,963 / 111; union 6,252),
+directed edges 39,636 -> 37,767 (20,950 / 16,817 / 183,984; union 221,751; Jaccard 0.076); FKH1's
+target-set Jaccard 0.53 -> 0.56 (1,747 shared targets unchanged); the median stays 0.03. The
+union of pairs changes from 1,515,940 to **1,514,071** (786,878 in exactly one graph, 52.0%;
+560,763 in two, 37.0%; none in more than seven), and regulatory-in-TFLink containment from 43%
+to 45%. Nothing else moved: the other eight rows of every table are byte-identical.
+
+**Union row** (`graph_union.csv`, new): genes with an edge in any graph 6,562, genes with an edge
+in no graph **45**, distinct pairs 1,514,071 (asserted equal to the sum of
+`edge_multiplicity.csv`), mean degree 461.5, density 0.069. Panel a now has four axes (genes with
+an edge, genes with no edge as its own bar with the count at right, gene pairs on a log axis, unique
+fraction) and the union as a white tenth row; `tab-graphs.tex` gained the union's node count.
+
+**Hub panel rule.** The panel shows the three highest-degree genes of every graph (`HUB_TOP_N`),
+ties broken by systematic name (`by_degree`), the union ordered by the first graph in config order
+whose top three contains the gene, then by degree in that graph: 26 genes, NAB2 being third in
+physical and first in experimental. `hub_matrix.csv` gained `top_of_graph` and `top_of_rank`;
+`hub_genes.csv` (top ten per graph) and `hub_recurrence.csv` are unchanged in meaning (74 genes in
+the nine top-ten lists, 60 in one, 12 in two, 2 in three; the SI prose said "12 recur" and now
+says 14). The old panel's "top-10 hub of at least two graphs" selection is gone.
+
+**Description rule** (`short_description`, deterministic from `locus.description` alone): first
+semicolon-delimited clause, parentheticals removed, split at phrase boundaries (before
+prepositions, conjunctions, relative pronouns, and the participles involved / required /
+associated), whole segments kept while the label stays within `DESC_MAX_CHARS = 50`; a cut that
+would land inside a coordination ("transcription of ribosomal protein [and biogenesis genes]")
+also drops the conjunct already kept, unless it is the head; trailing function words are stripped.
+The author asked for a cap of four words at a word boundary; that cap gives CCR4 "Component" and
+YAP1 "Basic leucine zipper transcription", so the cap is on characters at phrase boundaries
+instead, which the wider description column (the colorbar moved under it) allows. Results: GDE1
+"Glycerophosphocholine phosphodiesterase", CCR4 "Component of the CCR4-NOT transcriptional
+complex", SSA1 "ATPase" and HFD1 "Dehydrogenase" (coordination rule), SFP1 "Regulates
+transcription". PUF3 is no longer in the panel (rank 6 in physical and experimental).
+
+**Other panel changes.** Panel e (components): the Kuzmin 2018 bar is the graph's line color and
+the 2020 bar its `PLOT_PALETTE_FILL`, no hatching (house two-level convention), the legend is one
+line under the panel, and the axis reads "Panel genes with an edge" (node coverage of the panel).
+Heatmaps (Jaccard, containment, shared pairs, hubs) carry their column labels below the matrix at
+45 degrees, anchored right, so every panel of a row shares its top edge at `TOP_MM`. Shared pairs
+are printed in thousands (`_thousands_label`, at most three characters: 556, 2.1, .9, .07) with a
+log colorbar in thousands, so the matrix fits a third-width panel. The structure panel is half
+width with two-line axis labels. The transcription-factor panel is wide (118.9 mm) with 2.9 mm
+bars (0.8 of a 2.2-unit axis in an 8 mm strip, 2.1x the old 1.4 mm); only "111" (TFLink-only
+targets, 1.6 mm wide) is labeled outside, on a white box. Row heights: `F1_ROW1_H, F1_ROW2_H,
+F1_ROW3_H = 48, 60, 44` mm; `F2_ROW1_H, F2_ROW2_H = 44, 58` mm; `STRING_RELEASES_H = 52` mm keeps
+`graphs_string_releases.svg` at its previous size for the DANGO figure (byte-identical after the
+rerun). Paths are resolved from the script file, so both scripts run from any working directory.
+
+Determinism: a second run with `PYTHONHASHSEED=12345` left every file in `results/graphs/` and
+both generated tables byte-identical (`diff -r` against a snapshot of the first run), and
+recomposing from the second run's SVGs reproduced both `.drawio` files unchanged.
+
+Panels in figure order:
+
+![](./assets/images/010-kuzmin-tmi/graphs_sizes.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_degree_ccdf.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_structure.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_hubs.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_components.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_jaccard.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_containment.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_shared_pairs.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_edge_multiplicity.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_tf_overlap.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_string_releases.svg)

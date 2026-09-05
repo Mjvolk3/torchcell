@@ -35,6 +35,11 @@ down while the training loss kept falling by an order of magnitude
 (\suppfig{fig:dcell-training}a,\,b), overfitting under a constant learning rate; whether a
 decaying schedule would have stabilized the run is untested.
 
+As for DANGO (\suppnoteref{note:dango-full}), the run on the larger build scored lower: the
+one DCell run on the Kuzmin 2018-only build peaked at $r=0.259$ against 0.173 on the
+experiment-006 build (\suppfig{fig:dcell-training}f; one run each, differently split, with
+auxiliary losses and precision also differing, so the gap is not attributed to data size).
+
 \notesec{Cost and where the time goes} DCell reached its best validation epoch after 1,340
 GPU-hours, against 97--101 GPU-hours for each CGT replicate (best at epoch 24--25) and 8--12
 for the two DANGO runs on the same build (\supptab{tab:dcell-training-cost};
@@ -43,18 +48,20 @@ for the CGT and about 1,200 for DANGO, and six times as many epochs as the CGT t
 replicate runs of the same length would cost about 8,900 GPU-hours at the observed rate,
 which is why one run is reported and labeled as such. The forward pass visits the 2,655
 subsystems one at a time in a Python loop ordered by stratum, so every step launches
-thousands of small kernels irrespective of batch size; the speed-up work on a shared four-GPU
+hundreds of thousands of small kernels, more as the batch grows; the speed-up work on a shared four-GPU
 workstation (\suppfig{fig:dcell-training}d) took a step from 128~s to 20~s, and day-to-day
-reruns of one configuration varied by as much as several of the optimizations. Hypothesis
-(untested): the step is bound by kernel launches in the per-term loop rather than by data
-loading, which these measurements cannot separate; if so, one grouped matrix multiply per
-stratum and CUDA graphs for the fixed per-stratum shapes would remove most of the launch
-overhead. The per-operation profile in \suppfig{fig:dcell-training}e requires a GPU run and
-is left as a placeholder.
+reruns of one configuration varied by as much as several of the optimizations. A CPU
+profile of one step of the same architecture (\suppfig{fig:dcell-training}e) counts 644,603
+kernel-level ops at batch 8, about 13,600 more per added strain, because the gene-state
+gather runs once per term and per strain; no GPU profile exists. Hypothesis (untested): the
+GPU step is bound by those launches rather than by data loading, which the cluster
+measurements cannot separate; if so, one grouped matrix multiply per stratum and CUDA
+graphs for the fixed per-stratum shapes would remove most of the launch overhead.
 
 %% Figure: notes/assets/drawio/FigS-dcell-training.drawio (composed by
 %% experiments/006-kuzmin-tmi/scripts/dcell_training_compose_figure.py from the panels of
-%% dcell_training_wandb.py) -> figures/FigS-dcell-training.pdf.
+%% dcell_training_wandb.py (a-d, f) and dcell_training_cpu_profile.py (e))
+%% -> figures/FigS-dcell-training.pdf.
 \begin{figure*}[t]
 \tcfig{figures/FigS-dcell-training.pdf}{\textbf{DCell training on the trigenic interaction
 task: one run, its checkpoint statistic, and its cost.} (a)~Validation Pearson~$r$ per epoch
@@ -69,25 +76,41 @@ the three evaluations. The learning rate was constant. (c)~GPU-hours from the st
 training to the best validation epoch (left) and training samples per second (right) for
 DCell, DANGO (two runs on the same build) and CGT (three replicate runs); bars are the mean
 over runs and open circles the individual runs; no whisker is drawn because DCell has one
-run (\supptab{tab:dcell-training-cost}). (d)~Samples per second at each numbered stage of
-the DCell speed-up work on a four-GPU workstation, from the progress-bar logs (elapsed time
-divided by steps completed, an upper bound on the steady-state step time); bar labels give
-seconds per optimizer step. Each stage label is the complete configuration of that run
-(batch 256 per GPU and 8 loader workers unless stated): stage 1, the first working
-implementation, which ran the forward pass twice per step, 128~s; stage 2, the duplicate
-forward removed, 82~s; stage 3, the GO strata tensors cached instead of rebuilt every step,
-23~s; stage 4, stage 3 in fp16 mixed precision, 23~s; stage 5, stage 3 in bf16 mixed
-precision, 20~s; stage 6, stage 5 rerun on a later day, 119~s; stage 7, stage 5 with 12
-loader workers, 99~s; stages 8 and 9, stage 5 with \texttt{torch.compile} (recompilation
-limit 64) at batch 500 and 600 per GPU, 49 and 59~s, 40 samples per second against 50
-uncompiled. Stages 6 and 7 show day-to-day variation on the shared machine as large as
-several of the optimizations. A rewrite that spreads a
-stratum's per-term calls over four CUDA streams (\texttt{dcell\_opt}), still one module call
-per term, ran at 13\% GPU utilization and 80--100~W of 300~W at 1~h~40~min per epoch, slower
-than the loop, and was not used. The cluster run's 72~s per step at global batch 2,400 sits
-in the range of the workstation measurements at batch 2,000--2,400 (40 samples per second).
-(e)~Placeholder for the per-operation profiler breakdown of a DCell training step, which
-requires a GPU run.}{fig:dcell-training}
+run (\supptab{tab:dcell-training-cost}). (d)~The DCell speed-up work on a four-GPU
+workstation as a table of stages: what each stage changed relative to the one before it,
+its batch per GPU (8 loader workers throughout; the fp32 stages 1 to 3, mixed precision from
+stage 4), the resulting training samples per second, and, as bars, seconds per optimizer
+step from the progress-bar logs (elapsed time divided by steps completed, an upper bound on
+the steady-state step time). Arrows mark the cumulative chain 1 to 5, each stage keeping
+every earlier change; the bracket groups 6 to 9, reruns or one-setting variants of stage 5
+(a later day; 12 loader workers; \texttt{torch.compile} with recompilation limit 64 at batch
+500 and 600). Stages 6 and 7 show day-to-day variation on the shared machine as large as
+several of the optimizations, and compilation gave 40 samples per second against 50
+uncompiled. A rewrite that spreads a stratum's per-term calls over four CUDA streams
+(\texttt{dcell\_opt}), still one module call per term, ran at 13\% GPU utilization and
+80--100~W of 300~W at 1~h~40~min per epoch, slower than the loop, and was not used. The
+cluster run's 72~s per step at global batch 2,400 sits in the range of the workstation
+measurements at batch 2,000--2,400 (40 samples per second).
+(e)~Where one training step spends its time, measured on a CPU (Apple M1 Max, torch
+2.14.0, fp32, batch 8; \texttt{dcell\_training\_cpu\_profile.py}), not on the cluster GPUs:
+the trained architecture rebuilt from the frozen DAG (20,613,037 parameters, equal to the
+logged count), a synthetic batch in the training script's layout, one forward, loss,
+backward, clipping, and AdamW step under \texttt{torch.profiler}, split into exclusive
+phases; purple, the forward pass. The absolute times are CPU times and do not transfer; the
+structure does: the step issues 644,603 leaf ops (67 distinct), of which 205,057 in the
+forward, growing by about 13,600 per added strain because the gene-state gather indexes each
+term separately for each strain in the batch, and on the CPU that gather (17\%) and the
+2,655 BatchNorm calls (15\% of the step, most of the subsystem time) cost more than the
+matrix multiplies (1.5\%). Each leaf op is one kernel launch on a GPU.
+(f)~Best validation Pearson~$r$ (maximum over epochs) of the same DCell implementation on
+the Kuzmin 2018-only build of \suppnoteref{note:dango-repro} (91,050 records; wandb
+\texttt{biucpv7p}, job 1811673, 258 epochs, best at epoch 227) and on the experiment-006
+build (332,313 records; \texttt{eni948by}, best at epoch 150); bar, mean over runs; open
+circle, the run; no whisker because each build has one run. The two builds are split
+separately, so the validation sets differ in membership as well as in size, and the 005 run
+trained without auxiliary losses in fp32 at batch 256 per GPU where the 006 run used
+auxiliary losses in bf16 at batch 600; the comparison is the only measured data-size
+comparison for DCell, not a controlled ablation.}{fig:dcell-training}
 \end{figure*}
 
 \input{sections/tab-dcell-training-checkpoints}

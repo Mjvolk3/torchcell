@@ -4,7 +4,9 @@
 %% results/dango_dataset_split.csv) and experiments/005-kuzmin2018-tmi/scripts/dango_string_version_sweep.py
 %% (wandb pull of zhao-group/torchcell_005-kuzmin2018-tmi_dango; results/dango_string_version_{sweep,curves}.csv;
 %% writes tab-dango-string-versions.tex). The figure is composed by
-%% experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py. Rerun those, not this file.
+%% experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py; its panel a is the STRING
+%% release panel of experiments/010-kuzmin-tmi/scripts/graph_statistics.py (owned by note:graphs),
+%% and panel b is draw.io cells with MathJax equations. Rerun those, not this file.
 %% DANGO paper quotes are verbatim from the bioRxiv preprint (doi:10.1101/2020.11.26.400739), read from
 %% the Zotero PDF. Detail cut from the prose on 2026.09.03 (the verbatim lambda-rule quotes, the
 %% Fig. 2c cutoff value, the query conditions, per-run epochs) lives in the two scripts' Dendron notes
@@ -22,7 +24,7 @@ perturbed genes. It was rebuilt inside TorchCell rather than run from its releas
 the Kuzmin 2018 trigenic screen alone~\cite{kuzminSystematicAnalysisComplex2018a} the
 rebuilt model reaches a best validation Pearson $r$ (maximum over epochs) of $0.42$ in every
 one of 19 runs, whichever STRING release supplies the channels and whichever schedule hands
-over from pretraining to the interaction loss (\suppfig{fig:dango-repro}c,\,d;
+over from pretraining to the interaction loss (\suppfig{fig:dango-repro}d,\,e;
 \supptab{tab:dango-string-versions}). That plateau is close to the published value and cannot
 be equated with it, for the reasons given below; it is the baseline that
 \suppnoteref{note:dango-full} retrains on the full trigenic dataset.
@@ -30,7 +32,7 @@ be equated with it, for the reasons given below; it is the baseline that
 \notesec{Model in the manuscript's notation} DANGO reads the six channels as adjacencies
 $A^{(k)}\in\{0,1\}^{N\times N}$ over the same $N=6607$ vocabulary as the CGT
 (\suppnoteref{note:graphs}), but as message-passing edges rather than attention priors
-(\suppfig{fig:dango-repro}a): a shared lookup $\mathbf{E}\in\mathbb{R}^{N\times d}$, $d=64$,
+(\suppfig{fig:dango-repro}b): a shared lookup $\mathbf{E}\in\mathbb{R}^{N\times d}$, $d=64$,
 feeds one two-layer GraphSAGE encoder per channel, $H^{(k)}=F^{(k)}(\mathbf{E},A^{(k)})$,
 whose linear head $\hat A^{(k)}=H^{(k)}W_k$ reconstructs the channel under a mean squared
 error with zero entries weighted by a per-channel $\lambda_k$,
@@ -46,12 +48,14 @@ $\mathcal{L}_{\mathrm{int}}=\operatorname{mean}\log\cosh(\hat y_{\mathrm{int}}-y
 TorchCell folds DANGO's pretraining and end-to-end stages into one run,
 $\mathcal{L}=\alpha_e\mathcal{L}_{\mathrm{rec}}+(1-\alpha_e)\mathcal{L}_{\mathrm{int}}$, with
 $\alpha_e$ following one of three schedules over the first ten epochs
-(\suppfig{fig:dango-repro}a, strip).
+(\suppfig{fig:dango-repro}b, bottom).
 
 \notesec{Per-channel zero weights} DANGO sets $\lambda_k=0.1$ where a channel's
 ``percentage of decreased zeroes'' from STRING v9.1 to v11.0 exceeds 1\% and $\lambda_k=1$
 otherwise, reporting 0.02\% (co-occurrence) to 2.42\% (co-expression) without defining the
-computation. TorchCell fixes one (\suppfig{fig:dango-repro}b): over the genes present in both
+computation. The rule responds to the release drift of \suppfig{fig:dango-repro}a, where every
+channel gains pairs at each release and loses part of what it had. TorchCell fixes one
+computation (\suppfig{fig:dango-repro}c): over the genes present in both
 releases, the pairs that were non-edges in the older release and edges in the newer, divided
 by the older release's non-edge pairs. Neighborhood, co-expression, and experimental exceed
 1\% (4.60\%, 2.50\%, 1.58\%; $\lambda_k=0.1$) and the other three do not (0.20\%, 0.35\%,
@@ -65,7 +69,7 @@ Whether that matters is not measured.
 into 91,050 triple-mutant instances over 1,400 genes; no test-split metric was logged. Across
 the 19 runs the best validation $r$ spans $0.415$ to $0.427$ (release-by-schedule means
 $0.420$ to $0.424$, SEM at most $0.003$), peaks between epochs 106 and 439, and declines to
-$0.32$ by epoch 1,000 while training $r$ climbs to $0.55$--$0.74$ (\suppfig{fig:dango-repro}d):
+$0.32$ by epoch 1,000 while training $r$ climbs to $0.55$--$0.74$ (\suppfig{fig:dango-repro}e):
 a generalization limit, not an optimization failure, with no release or schedule separating
 from the others beyond the run-to-run spread. DANGO reports about $r=0.47$ on this screen
 under a random split (its Fig.~2b, read from the bar) and a replicate ceiling of about 0.59
@@ -80,26 +84,36 @@ split and the selection rule alone could account for; the record supports no str
 statement in either direction.
 
 %% Figure source: notes/assets/drawio/FigS-dango-reproduction.drawio (written by
-%%   experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py; panel a is draw.io cells,
-%%   panel b from dango_construction_si.py, panels c and d from dango_string_version_sweep.py)
+%%   experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py; panel a from
+%%   experiments/010-kuzmin-tmi/scripts/graph_statistics.py, panel b is draw.io cells with MathJax
+%%   equations, panel c from dango_construction_si.py, panels d and e from dango_string_version_sweep.py)
 %%   -> figures/FigS-dango-reproduction.pdf (auto-exported by `make fig`/`make paper`).
 \begin{figure*}[t]
 \tcfig{figures/FigS-dango-reproduction.pdf}{\textbf{DANGO rebuilt in TorchCell and trained on
-the Kuzmin 2018 trigenic screen.} (a)~The model in the manuscript's notation: the six STRING
-channels $A^{(k)}$ are message-passing edges for one GraphSAGE encoder each, a reconstruction
-head with zero weight $\lambda_k$ gives the pretraining loss, a meta-embedding merges the
-channels into $H$, the perturbation selects rows of $H$ with no operator, and the Hyper-SAGNN
-head scores the triple under a log-cosh loss; the strip gives the objective and the three
-pretraining-to-main schedules (transition epoch 10). (b)~Percentage of decreased zeros per
+the Kuzmin 2018 trigenic screen.} (a)~Gene pairs per STRING channel in releases v9.1, v11.0,
+and v12.0: the solid part of a bar was already in the previous release, the pale part is new,
+and the hatched bar below zero is what the previous release lost. (b)~The model in the
+manuscript's notation, one box per stage. The six channels $A^{(k)}$ are the message-passing
+edges of one two-layer GraphSAGE encoder each over a shared lookup $\mathbf{E}$ ($N=6607$,
+$d=64$); the reconstruction head $\hat A^{(k)}=H^{(k)}W_k$ gives the pretraining loss
+$\mathcal{L}_{\mathrm{rec}}$ of Eq.~\ref{eq:dango-rec}, in which $\lambda_k$ weights the zero
+entries; the meta-embedding weights $a_{ik}$ merge the channels into $H$; a strain selects
+rows of $H$ with no perturbation operator $T_\psi$; the Hyper-SAGNN readout scores the
+triple from its static ($s_t$) and dynamic ($d_t$, two self-attention layers over $p$)
+embeddings under a log-cosh loss. The objective mixes the two losses with a weight
+$\alpha_e$ that follows one of three schedules with transition epoch 10: pretrain then main
+($\alpha_e=1$ for $e<10$, then 0), linear to uniform ($1\to0.5$ by epoch 10, then 0.5), and
+linear to flipped ($1\to0$ by epoch 10, then 0). (c)~Percentage of decreased zeros per
 channel for v9.1 to v11.0 and v11.0 to v12.0 with the resulting $\lambda_k$ printed over each
 bar; dashed line, the 1\% rule; open circles, the two values the DANGO paper prints; the
-same rule on v11.0 to v12.0 gives the same assignment. (c)~Best validation Pearson~$r$
+same rule on v11.0 to v12.0 gives the same assignment. (d)~Best validation Pearson~$r$
 (maximum over epochs) by loss schedule and STRING release; bar, mean over runs; whisker, SEM
-where $n>1$; circle, one run (19 runs). (d)~Training and validation Pearson~$r$ per epoch
+where $n>1$; circle, one run (19 runs). (e)~Training and validation Pearson~$r$ per epoch
 for the same runs; color, STRING release; line style, schedule. Validation $r$ reaches $0.4$
 within 50 epochs; training $r$ at the selected epoch spans $0.49$ to $0.55$. Sources:
-\texttt{experiments/005-kuzmin2018-tmi/scripts/dango\_construction\_si.py} (b) and
-\texttt{dango\_string\_version\_sweep.py} (c,~d).}{fig:dango-repro}
+\texttt{experiments/010-kuzmin-tmi/scripts/graph\_statistics.py} (a),
+\texttt{experiments/005-kuzmin2018-tmi/scripts/dango\_construction\_si.py} (c) and
+\texttt{dango\_string\_version\_sweep.py} (d,~e).}{fig:dango-repro}
 \end{figure*}
 
 \input{sections/tab-dango-string-versions}

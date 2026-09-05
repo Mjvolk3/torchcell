@@ -8,18 +8,18 @@ size in draw.io units (100 per inch, via ``savefig_true_size_svg``), so the imag
 are placed at exact physical size and the figure is WYSIWYG when exported to
 ``paper/nature-biotech/figures/FigS-dcell-training.pdf``.
 
-Layout (180 mm wide): (a) validation Pearson vs epoch, (b) losses; (c) cost comparison,
-(d) speed-up stages; (e) a lettered placeholder for the per-operation profiler breakdown
-of a DCell training step, which needs a GPU run on the cluster.
+Layout (180 mm wide, three rows of two half-width panels): (a) validation Pearson vs
+epoch, (b) losses; (c) cost comparison, (d) speed-up stages as a table with bars; (e) the
+CPU per-phase profile of one training step from ``dcell_training_cpu_profile.py``, (f) best
+validation Pearson on the Kuzmin 2018-only build against the experiment-006 build.
 
 Layout convention shared by every composed SI figure (the "white cross"): COL_GAP = 12
 units (3 mm) between columns, ROW_GAP = 22 units (5.5 mm) between rows, a TOP_STRIP of 16
 units above every row, and each panel letter in that strip at the panel's top-left
 (x = panel_x, y = row_top), so no letter sits over an axis label or a neighbor's title.
 
-Panel letters are 8 pt bold lowercase (draw.io fontSize 11.1); the placeholder label is
-fontSize 8.3 (6 pt). Rerun after regenerating any panel; the draw.io file is overwritten,
-never edited by hand. Export with
+Panel letters are 8 pt bold lowercase (draw.io fontSize 11.1). Rerun after regenerating
+any panel; the draw.io file is overwritten, never edited by hand. Export with
 
     "/Applications/draw.io.app/Contents/MacOS/draw.io" -x -f pdf --crop \
         -o paper/nature-biotech/figures/FigS-dcell-training.pdf \
@@ -33,7 +33,7 @@ import base64
 import os
 import os.path as osp
 import re
-from xml.sax.saxutils import escape, quoteattr
+from xml.sax.saxutils import quoteattr
 
 from dotenv import load_dotenv
 
@@ -60,17 +60,6 @@ IMAGE_STYLE = (
     "shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;"
     "verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,{b64};"
 )
-PLACEHOLDER_STYLE = (
-    "rounded=0;whiteSpace=wrap;html=1;strokeColor=#666666;fillColor=none;dashed=1;"
-    "fontFamily=Arial;fontSize=8.3;fontColor=#666666;align=center;verticalAlign=middle;"
-)
-PLACEHOLDER_TEXT = (
-    "[placeholder: per-operation profiler breakdown of one DCell training step "
-    "(per-term subsystem forward, gene-state gather, backward, optimizer, DataLoader wait); "
-    "requires a torch.profiler run of dcell.py on a cluster GPU node]"
-)
-
-
 def svg_size(path: str) -> tuple[float, float]:
     head = open(path, encoding="utf-8").read(2000)
     w = float(re.search(r'width="([0-9.]+)"', head).group(1))
@@ -96,46 +85,28 @@ def letter_cell(cid: int, letter: str, x: float, row_top: float) -> str:
     )
 
 
-def placeholder_cell(cid: int, text: str, x: float, y: float, w: float, h: float) -> str:
-    return (
-        f'<mxCell id="{cid}" value={quoteattr(escape(text))} style={quoteattr(PLACEHOLDER_STYLE)} vertex="1" parent="1">'
-        f'<mxGeometry x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" as="geometry"/></mxCell>'
-    )
-
-
 def main():
-    a = osp.join(PANELS, "dcell_training_val_pearson.svg")
-    b = osp.join(PANELS, "dcell_training_loss.svg")
-    c = osp.join(PANELS, "dcell_training_cost.svg")
-    d = osp.join(PANELS, "dcell_training_stages.svg")
-    half_w = svg_size(a)[0]
-    col2 = half_w + COL_GAP
-    extent_w = col2 + max(svg_size(b)[0], svg_size(d)[0])
-
-    row1_top = 0
-    y1 = row1_top + TOP_STRIP
-    row1_h = max(svg_size(a)[1], svg_size(b)[1])
-    row2_top = y1 + row1_h + (ROW_GAP - TOP_STRIP)
-    y2 = row2_top + TOP_STRIP
-    row2_h = max(svg_size(c)[1], svg_size(d)[1])
-    row3_top = y2 + row2_h + (ROW_GAP - TOP_STRIP)
-    y3 = row3_top + TOP_STRIP
-    ph_h = 70
-
+    rows = [
+        ("ab", ["dcell_training_val_pearson", "dcell_training_loss"]),
+        ("cd", ["dcell_training_cost", "dcell_training_stages"]),
+        ("ef", ["dcell_training_cpu_profile", "dcell_training_data_effect"]),
+    ]
     cells, cid = [], 2
-    for letter, path, x, y, row_top in [
-        ("a", a, 0, y1, row1_top),
-        ("b", b, col2, y1, row1_top),
-        ("c", c, 0, y2, row2_top),
-        ("d", d, col2, y2, row2_top),
-    ]:
-        cells.append(image_cell(cid, path, x, y))
-        cells.append(letter_cell(cid + 1, letter, x, row_top))
-        cid += 2
-    cells.append(placeholder_cell(cid, PLACEHOLDER_TEXT, 0, y3, extent_w, ph_h))
-    cells.append(letter_cell(cid + 1, "e", 0, row3_top))
-
-    extent_h = y3 + ph_h
+    row_top, extent_w, extent_h = 0, 0.0, 0.0
+    for letters, names in rows:
+        y = row_top + TOP_STRIP
+        x, row_h = 0.0, 0.0
+        for letter, name in zip(letters, names):
+            path = osp.join(PANELS, f"{name}.svg")
+            w, h = svg_size(path)
+            cells.append(image_cell(cid, path, x, y))
+            cells.append(letter_cell(cid + 1, letter, x, row_top))
+            cid += 2
+            x += w + COL_GAP
+            row_h = max(row_h, h)
+        extent_w = max(extent_w, x - COL_GAP)
+        extent_h = y + row_h
+        row_top = extent_h + (ROW_GAP - TOP_STRIP)
     xml = (
         '<mxfile host="dcell_training_compose_figure.py">'
         '<diagram id="FigS-dcell-training" name="Page-1">'

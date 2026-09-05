@@ -38,3 +38,27 @@ column is 147 wide instead of 148 so the objective strip ends at the same edge).
 705 x 630 units = 179.1 x 160.0 mm; exported PDF 179.6 x 160.2 mm; `check-figures.sh` and
 `drawio_font_band.py --check` pass. Panel placement in `editing.pdf` is for the author to
 review.
+
+## 2026.09.04 - Second author review: STRING releases first, MathJax schematic, curves kept
+
+Re-lettered to a STRING releases, b schematic, c decreased zeros, d sweep, e curves, all five
+within 170 mm (705 x 651 units = 179.1 x 165.2 mm; exported PDF 179.6 x 165.4 mm).
+
+- (a) is `notes/assets/images/010-kuzmin-tmi/graphs_string_releases.svg` from
+  `experiments/010-kuzmin-tmi/scripts/graph_statistics.py` (owned by the graphs note), embedded at
+  its declared half width; it motivates the lambda rule of (c), and the graphs note references it as
+  `\suppfig{fig:dango-repro}a`.
+- (b) is now a half-width vertical pipeline (346 x 205 units, the size of panel a) of six stage
+  boxes, each a plain-text bold heading (Arial 8.3) over one line of real LaTeX: the model sets
+  `math="1"` and every equation is a `$$...$$` label at fontSize 7 (MathJax renders about 1.19x, so
+  ~6 pt on the page; `drawio_font_band.py` reads it as 5.04 pt, on the ladder). Rows B and E split
+  into two boxes (encoder -> reconstruction head; readout -> interaction loss). Every `\sum` is
+  prefixed `\textstyle` so limits stay inline; box height 29.1, heading strip 13, gap 6. The words
+  that used to overflow the gray boxes (lookup size, GraphSAGE layers, what lambda weights, the
+  static/dynamic embeddings, the three schedules) moved to the caption. MathJax rendered in the
+  headless PDF export (glyphs as vector paths; verified by rendering the PDF and reading it).
+- (c) legend now sits in an opaque white box (see
+  [[experiments.005-kuzmin2018-tmi.scripts.dango_construction_si]]).
+- (d), (e) unchanged panels.
+
+`check-figures.sh` and `drawio_font_band.py --check` pass (sizes 7 / 8.3 / 11.1 only).

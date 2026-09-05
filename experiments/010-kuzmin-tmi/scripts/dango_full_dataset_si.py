@@ -23,11 +23,22 @@ runs sharing a name gives the GPU count of the job.
 
 Outputs
 -------
-results : experiments/010-kuzmin-tmi/results/dango_full_dataset_runs.csv     (one row per run)
-          experiments/010-kuzmin-tmi/results/dango_full_dataset_history.csv  (val metrics per epoch)
-          experiments/010-kuzmin-tmi/results/dango_full_dataset_summary.csv  (per group)
-panels  : $ASSET_IMAGES_DIR/010-kuzmin-tmi/dango_full_dataset_{curves,best,convergence}.{svg,png}
+results : experiments/010-kuzmin-tmi/results/dango_full_dataset_runs.csv         (one row per run)
+          experiments/010-kuzmin-tmi/results/dango_full_dataset_history.csv      (val metrics per epoch)
+          experiments/010-kuzmin-tmi/results/dango_full_dataset_summary.csv      (per group)
+          experiments/010-kuzmin-tmi/results/dango_full_dataset_data_effect.csv  (per build x release)
+panels  : $ASSET_IMAGES_DIR/010-kuzmin-tmi/dango_full_dataset_{curves,best,convergence,data_effect}.{svg,png}
 table   : paper/nature-biotech/sections/tab-dango-full-runs.tex
+
+The data-effect panel sets these runs beside the Kuzmin 2018-only replication of
+``experiments/005-kuzmin2018-tmi`` (wandb ``zhao-group/torchcell_005-kuzmin2018-tmi_dango``,
+frozen in ``experiments/005-kuzmin2018-tmi/results/dango_string_version_sweep.csv`` by
+``dango_string_version_sweep.py``): the same implementation and scoring rule on 91,050 records
+against 332,313. The two builds are split separately (same splitter and seed, different
+membership), the 005 runs pool the three loss schedules (which do not separate there) at batch
+32 on one GPU while the 006 runs use linear-to-uniform at batch 64 per GPU on 2 to 4 GPUs, so
+this is a comparison of two training campaigns, not a controlled data-size ablation. It is the
+only measured data-size comparison for DANGO.
 
 Run from the repo root (``--from-csv`` re-renders offline from the frozen CSVs):
     python experiments/010-kuzmin-tmi/scripts/dango_full_dataset_si.py [--from-csv]
@@ -85,6 +96,16 @@ HIST_CSV = osp.join(RESULTS_DIR, "dango_full_dataset_history.csv")
 SUMMARY_CSV = osp.join(RESULTS_DIR, "dango_full_dataset_summary.csv")
 IMG_DIR = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi")
 TEX_PATH = "paper/nature-biotech/sections/tab-dango-full-runs.tex"
+
+# The Kuzmin 2018-only replication (experiment 005), frozen by dango_string_version_sweep.py.
+SWEEP_005_CSV = "experiments/005-kuzmin2018-tmi/results/dango_string_version_sweep.csv"
+SPLIT_005_CSV = "experiments/005-kuzmin2018-tmi/results/dango_dataset_split.csv"
+DATA_EFFECT_CSV = osp.join(RESULTS_DIR, "dango_full_dataset_data_effect.csv")
+# Records in the experiment-006 build (TmiKuzmin2018, any perturbation type, + TmiKuzmin2020
+# deletions), from notes/experiments.011-kuzmin-tmi.scripts.query-comparison-006-009-010-011.md;
+# the 005 count is read from SPLIT_005_CSV.
+RECORDS_006 = 332_313
+BUILD_LABEL = {"005": "Kuzmin 2018", "006": "Kuzmin 2018 + Kuzmin 2020 deletions"}
 
 METRIC = "val/gene_interaction/Pearson"
 MSE = "val/gene_interaction/MSE"
@@ -332,10 +353,11 @@ def panel_best(runs: pd.DataFrame, summary: pd.DataFrame):
 def panel_convergence(runs: pd.DataFrame):
     """Two epochs per DANGO run, by STRING release, on a log axis: the epoch at which the
     run first reaches validation Pearson r >= LEVEL (filled) and the epoch of its maximum
-    (open). Marker shape gives the GPU count of the job."""
-    w, h = PANEL_WIDTHS_MM["half"], 45.0
+    (open). Marker shape gives the GPU count of the job. Third width: the message is that
+    the release moves the epoch of the maximum, not the epoch of the rise."""
+    w, h = PANEL_WIDTHS_MM["third"], 52.0
     fig, ax = plt.subplots(figsize=(mm_to_in(w), mm_to_in(h)))
-    fig.subplots_adjust(left=0.13, right=0.98, top=0.97, bottom=0.2)
+    fig.subplots_adjust(left=0.2, right=0.97, top=0.97, bottom=0.17)
     dango = [g for g in GROUPS if g != "cgt"]
     rng = np.random.default_rng(1)
     for i, g in enumerate(dango):
@@ -354,8 +376,8 @@ def panel_convergence(runs: pd.DataFrame):
     ax.yaxis.set_minor_formatter(NullFormatter())
     ax.set_xticks(np.arange(len(dango)))
     ax.set_xlim(-0.5, len(dango) - 0.5)
-    ax.set_xticklabels(["STRING v9.1", "STRING v11.0", "STRING v12.0"])
-    ax.set_xlabel("DANGO by STRING release")
+    ax.set_xticklabels(["v9.1", "v11.0", "v12.0"])
+    ax.set_xlabel("STRING release")
     ax.set_ylabel("Epoch (log scale)")
     ax.grid(axis="y", which="major", color="#CACACA", linewidth=0.4)
     ax.set_axisbelow(True)
@@ -365,10 +387,96 @@ def panel_convergence(runs: pd.DataFrame):
                label="epoch of best r")
     ax.scatter([], [], s=9, marker="o", facecolor="white", edgecolor="black", linewidth=0.4, label="4 GPUs")
     ax.scatter([], [], s=9, marker="s", facecolor="white", edgecolor="black", linewidth=0.4, label="2 GPUs")
-    ax.legend(frameon=False, loc="upper left", ncol=2, handlelength=1.0, columnspacing=1.0,
-              handletextpad=0.4)
+    ax.legend(frameon=False, loc="upper left", ncol=1, handlelength=1.0, handletextpad=0.4,
+              labelspacing=0.25, borderaxespad=0.3)
     style_axes(ax)
     save(fig, "dango_full_dataset_convergence")
+
+
+def data_effect_runs(runs: pd.DataFrame) -> pd.DataFrame:
+    """One row per DANGO run on either build: the 005 runs (Kuzmin 2018 only, frozen by
+    dango_string_version_sweep.py) and the 006 runs of this note, with build, record count,
+    STRING release and best validation Pearson (the same max-over-epochs rule in both)."""
+    r005 = pd.read_csv(SWEEP_005_CSV)
+    records_005 = int(pd.read_csv(SPLIT_005_CSV)["records"].item())
+    a = pd.DataFrame(
+        {"build": "005", "records": records_005, "string_version": r005["string_version"],
+         "run_id": r005["run_id"], "best_val_pearson": r005["best_val_pearson"]}
+    )
+    r006 = runs[runs["group"] != "cgt"]
+    b = pd.DataFrame(
+        {"build": "006", "records": RECORDS_006, "string_version": r006["group"].astype(str),
+         "run_id": r006["run_id"], "best_val_pearson": r006["best_val_pearson"]}
+    )
+    return pd.concat([a, b], ignore_index=True)
+
+
+def data_effect_table(per_run: pd.DataFrame) -> pd.DataFrame:
+    """Per build x STRING release: n, mean, SD, SEM, range and the run ids, so the panel and
+    the prose numbers trace to the frozen run tables."""
+    rows = []
+    for (build, v), x in per_run.groupby(["build", "string_version"], sort=False):
+        vals = x["best_val_pearson"]
+        sd = vals.std(ddof=1) if len(vals) > 1 else np.nan
+        rows.append(
+            {
+                "build": build,
+                "records": int(x["records"].iloc[0]),
+                "string_version": v,
+                "n": len(vals),
+                "mean": vals.mean(),
+                "sd": sd,
+                "sem": sd / np.sqrt(len(vals)) if len(vals) > 1 else np.nan,
+                "min": vals.min(),
+                "max": vals.max(),
+                "run_ids": ";".join(x["run_id"]),
+            }
+        )
+    order = {"9_1": 0, "11_0": 1, "12_0": 2}
+    df = pd.DataFrame(rows)
+    return df.sort_values(["build", "string_version"], key=lambda c: c.map(order) if c.name == "string_version" else c).reset_index(drop=True)
+
+
+def panel_data_effect(per_run: pd.DataFrame, effect: pd.DataFrame):
+    """Wide panel: best validation Pearson (max over epochs) on the Kuzmin 2018-only build
+    against the experiment-006 build, grouped by build with one bar per STRING release;
+    bar = mean over runs, whisker = SEM where n > 1, open circles = runs. The y-axis is
+    zoomed to 0.30 to 0.45, as in the best-per-run panel, so the SEM whiskers are visible."""
+    w, h = PANEL_WIDTHS_MM["wide"], 52.0
+    fig, ax = plt.subplots(figsize=(mm_to_in(w), mm_to_in(h)))
+    fig.subplots_adjust(left=0.1, right=0.98, top=0.97, bottom=0.2)
+    builds = ["005", "006"]
+    versions = ["9_1", "11_0", "12_0"]
+    labels = {"9_1": "STRING v9.1", "11_0": "STRING v11.0", "12_0": "STRING v12.0"}
+    bw = 0.22
+    rng = np.random.default_rng(0)
+    for i, v in enumerate(versions):
+        for j, build in enumerate(builds):
+            row = effect[(effect["build"] == build) & (effect["string_version"] == v)].iloc[0]
+            xi = j + (i - 1) * bw
+            ax.bar(xi, row["mean"], bw, color=GROUP_COLOR[v], edgecolor="black", linewidth=0.4,
+                   label=labels[v] if j == 0 else None)
+            if row["n"] > 1:
+                ax.errorbar(xi, row["mean"], yerr=row["sem"], fmt="none", ecolor="black",
+                            elinewidth=0.6, capsize=1.5, capthick=0.6)
+            vals = per_run[(per_run["build"] == build) & (per_run["string_version"] == v)]["best_val_pearson"]
+            ax.scatter(xi + rng.uniform(-0.05, 0.05, len(vals)), vals, s=6, facecolor="white",
+                       edgecolor="black", linewidth=0.4, zorder=5)
+    ax.set_xticks(np.arange(len(builds)))
+    ax.set_xticklabels([f"{BUILD_LABEL[b]}\n{int(effect[effect['build'] == b]['records'].iloc[0]):,} records" for b in builds])
+    ax.set_xlim(-0.6, len(builds) - 0.4)
+    ax.set_xlabel("Trigenic dataset build")
+    ax.set_ylabel("Best validation Pearson r")
+    ax.set_ylim(0.3, 0.45)
+    ax.yaxis.set_major_locator(FixedLocator([0.3, 0.35, 0.4, 0.45]))
+    ax.yaxis.set_minor_locator(FixedLocator(np.arange(0.31, 0.45, 0.01)))
+    ax.tick_params(which="minor", length=0)
+    ax.grid(axis="y", which="major", color="#CACACA", linewidth=0.4)
+    ax.set_axisbelow(True)
+    ax.legend(frameon=False, loc="upper right", ncol=3, handlelength=1.0, columnspacing=1.0,
+              handletextpad=0.4)
+    style_axes(ax)
+    save(fig, "dango_full_dataset_data_effect")
 
 
 def save(fig, stem: str):
@@ -442,9 +550,14 @@ def main():
     print(summary.to_string(index=False))
     print(runs[["group", "run_id", "cluster", "n_ranks", "epochs_logged", "wall_h", "best_val_pearson",
                 "best_epoch", "epoch_to_level", "epoch_to_99pct", "main_text"]].to_string(index=False))
+    per_run = data_effect_runs(runs)
+    effect = data_effect_table(per_run)
+    effect.to_csv(DATA_EFFECT_CSV, index=False)
+    print(effect.to_string(index=False))
     panel_curves(runs, history)
     panel_best(runs, summary)
     panel_convergence(runs)
+    panel_data_effect(per_run, effect)
     write_tex(runs)
 
 

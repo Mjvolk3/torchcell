@@ -44,3 +44,13 @@ Author review asked for a real rendering of the filtered ontology in place of th
 - Namespace counts in the final DAG: BP 1,490, MF 674, CC 490, plus `GO:ROOT`.
 
 ![](./assets/images/006-kuzmin-tmi/dcell_model_go_dag.svg)
+
+## 2026.09.04 - Second author review: a real strain, labels above the roots, blue feeds
+
+Author review of `FigS-dcell-model` panel a (three points):
+
+- The drawn triple was `Q0140`, a mitochondrially encoded gene never deleted in the screens. The example is now a REAL Kuzmin 2018 record, picked by rule from the local experiment-005 build (`$DATA_ROOT/data/torchcell/experiments/005-kuzmin2018-tmi/001-small-build/processed/lmdb`, 91,050 records): `pick_example_triple()` walks the LMDB keys `"0"` .. `"91049"` in ascending order and takes the first record whose three perturbations are all `deletion` (no allele or ts-allele, so every gene is a nuclear deletion target) and whose genes each carry 5 to 12 direct annotations in the final DAG. Result: record 4, `YKL191W` (dph2, 5 annotations), `YLR172C` (dph5, 5), `YNL051W` (cog5, 9); measured interaction -0.0042 (p = 0.35). Frozen to `results/dcell_model/example_triple.csv` (record index, genes, perturbation types, annotation counts, the rule), read by `render()`, so `--from-csv` needs no LMDB; `--pick-triple` re-picks, and the full and `--dag-only` runs re-pick too.
+- `BP`, `MF`, `CC` and `GO:ROOT` labels sit above their node on a white box (`bbox`, zorder above the edges); the MF label steps right of the vertical MF-to-root edge so nothing crosses it.
+- The dashed "gene state into subsystem" lines are palette blue (`PLOT_PALETTE[4]`, `#6C8EBF`) so they read apart from the solid red paths to the root; the legend follows. Gene labels under the strain row are staggered by rule (`LABEL_W = 0.115` of the axis): a label whose right neighbor is closer than a label width is right-aligned at its tick, the neighbor left-aligned.
+
+`--from-csv` re-rendered all four panels; every CSV other than the new `example_triple.csv` is unchanged.

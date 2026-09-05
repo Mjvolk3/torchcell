@@ -16,8 +16,11 @@ the cached ``SCerevisiaeGraph`` pickles, plus the STRING v9.1 and v11.0 channels
 * degree distributions;
 * per-graph structure: largest-component fraction, mean clustering coefficient, degree
   assortativity, and two-hop reach (genes within two edges of a gene, averaged);
-* hub genes: the top-degree genes of each graph and how often a hub recurs across graphs,
-  with a short SGD description per recurring hub;
+* hub genes: the top-degree genes of each graph and how often a hub recurs across graphs;
+  the three highest-degree genes of every graph, with their degree percentile in all nine
+  graphs and a short SGD description each;
+* the union of the nine graphs: genes with an edge in any graph, genes with an edge in
+  none, and the distinct gene pairs;
 * the two directed transcription-factor graphs (SGD regulatory, TFLink): shared regulators,
   targets, and directed edges, and the per-regulator agreement of target sets;
 * STRING release drift: per-channel nodes/edges for v9.1, v11.0, v12.0 and, per consecutive
@@ -40,7 +43,7 @@ results  : experiments/010-kuzmin-tmi/results/graphs/*.csv
 panels   : $ASSET_IMAGES_DIR/010-kuzmin-tmi/graphs_*.{svg,png}   (true-size, draw.io-ready)
 tables   : paper/nature-biotech/sections/tab-graphs.tex, tab-string-versions.tex
 
-Run from the repo root:
+Paths are resolved from this file, so the script runs from any working directory:
     python experiments/010-kuzmin-tmi/scripts/graph_statistics.py
 """
 
@@ -99,9 +102,10 @@ load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 
-RESULTS_DIR = "experiments/010-kuzmin-tmi/results/graphs"
+REPO_ROOT = osp.abspath(osp.join(osp.dirname(__file__), "..", "..", ".."))
+RESULTS_DIR = osp.join(REPO_ROOT, "experiments/010-kuzmin-tmi/results/graphs")
 IMG_DIR = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi")
-TEX_DIR = "paper/nature-biotech/sections"
+TEX_DIR = osp.join(REPO_ROOT, "paper/nature-biotech/sections")
 
 # The nine attention-prior graphs of experiment 010, in config order. The palette index is
 # fixed per graph so every panel colors a graph the same way.
@@ -119,7 +123,11 @@ CGT_GRAPHS = [
 ]
 KEYS = [k for k, _, _ in CGT_GRAPHS]
 GRAPH_COLOR = {key: PLOT_PALETTE[i] for i, (key, _, _) in enumerate(CGT_GRAPHS)}
+# The pale companion of each graph's color: the lighter member of a two-level bar (house
+# convention: one series in the line color, the other in its fill; no hatching).
+GRAPH_FILL = {key: PLOT_PALETTE_FILL[i] for i, (key, _, _) in enumerate(CGT_GRAPHS)}
 LABEL = {key: lbl for key, lbl, _ in CGT_GRAPHS}
+UNION_LABEL = "Union (all nine)"
 # Short labels for the 9 x 9 matrix axes (third-width heatmaps); the STRING prefix is
 # dropped and the captions say so.
 SHORT_LABEL = {
@@ -156,11 +164,14 @@ CHANNEL_LABEL = {
 # Sequential colormap for the heatmaps: white to the dark red slot (green-free).
 HEAT_CMAP = LinearSegmentedColormap.from_list("tc_heat", ["#FFFFFF", PLOT_PALETTE[7]])
 
-# Hub panel: a gene counts as a hub of a graph when it is among the graph's TOP_K highest-degree
-# genes; hubs recurring in at least two graphs are shown. Recurrence is also counted at the
-# top 1% of the vocabulary (66 genes per graph).
+# Hub tables: a gene counts as a hub of a graph when it is among the graph's TOP_K highest-degree
+# genes (hub_genes.csv); recurrence is counted at TOP_K and at the top 1% of the vocabulary
+# (66 genes per graph). The hub PANEL shows the HUB_TOP_N highest-degree genes of every graph
+# (ties broken by systematic name), the union ordered by the first graph (config order) whose
+# top HUB_TOP_N contains the gene, then by degree in that graph.
 TOP_K = 10
 TOP_FRAC = 0.01
+HUB_TOP_N = 3
 
 # Other components of the cell representation (panel f of figure 1). GO co-annotation uses
 # biological_process terms, the root excluded, with at most GO_MAX_GENES directly annotated
@@ -173,15 +184,19 @@ RANDOM_SEED = 0
 YEAST_GEM_VERSION = "9.0.2"
 PAIR_SHARE_MIN = 1e-6  # left edge of the logarithmic pair-share axes of panel f
 
-# Shared panel geometry (mm). Panels in one row use the same height and the same top and
-# bottom margins so their axes tops and bottoms align in the composed figure. Figure 1:
-# row 1 (sizes, degree), row 2 (three third-width panels), row 3 (full-width components).
-# Figure 2: two rows of half-width panels and a full-width structure row.
+# Shared panel geometry (mm). Panels in one row use the same height and the same top margin
+# (TOP_MM) so their axes tops align in the composed figure; heatmaps carry their column
+# labels BELOW the matrix for the same reason. Figure 1 ("each graph on its own"): row 1
+# sizes + degree (half + half), row 2 structure + hubs (half + half), row 3 other components
+# (full). Figure 2 ("how the graphs relate"): row 1 Jaccard, containment, shared pairs
+# (three thirds), row 2 multiplicity (third) + transcription-factor graphs (wide).
 TOP_MM = 1.5
 LABEL_LEFT_MM = 32.0  # axes left for panels with graph names on the y-axis
 SHORT_LEFT_MM = 14.5  # axes left for the third-width matrices with SHORT_LABEL rows
-F1_ROW1_H, F1_ROW2_H, F1_ROW3_H = 54.0, 44.0, 50.0
-F2_ROW_H, F2_ROW3_H = 52.0, 40.0
+HEAT_BOTTOM_MM = 11.5  # room under a matrix for its 45-degree column labels
+F1_ROW1_H, F1_ROW2_H, F1_ROW3_H = 48.0, 60.0, 44.0
+F2_ROW1_H, F2_ROW2_H = 44.0, 58.0
+STRING_RELEASES_H = 52.0  # graphs_string_releases.svg, embedded by the DANGO figure; keep fixed
 TEXT_BBOX = {"facecolor": "white", "edgecolor": "none", "pad": 1}  # numbers over gridlines
 
 
@@ -207,6 +222,28 @@ def standard_names(genome: SCerevisiaeGenome) -> dict[str, str]:
         for i in ids:
             out[i] = std
     return out
+
+
+def restrict_to_vocab(G: nx.Graph, vocab, key: str) -> nx.Graph:
+    """The graph over the gene vocabulary only. The cached SGD regulatory graph keeps every
+    feature a regulation record names: 35 regulators are SGD protein complexes (``CPX-``
+    ids) and 405 targets are non-coding RNAs, LTRs, and Ty ORFs outside the 6,607
+    protein-coding genes (435 nodes, 1,869 of 39,636 directed edges); the other eight
+    graphs are already within the vocabulary. Every statistic is over the vocabulary, so
+    those nodes and their edges are dropped here; genes left without an edge are dropped
+    with them (none in practice)."""
+    vocab = set(vocab)
+    out = [n for n in G.nodes if n not in vocab]
+    H = G.subgraph([n for n in G.nodes if n in vocab]).copy()
+    isolated = [n for n in H.nodes if H.degree(n) == 0]
+    H.remove_nodes_from(isolated)
+    if out:
+        print(
+            f"{key}: dropped {len(out)} nodes outside the vocabulary "
+            f"({G.number_of_edges() - H.number_of_edges():,} of {G.number_of_edges():,} edges), "
+            f"{len(isolated)} genes left isolated"
+        )
+    return H
 
 
 def undirected_pairs(G: nx.Graph) -> set[tuple[str, str]]:
@@ -241,6 +278,27 @@ def size_table(graphs: dict[str, nx.Graph], pairs: dict[str, set], n_vocab: int)
             }
         )
     return pd.DataFrame(rows)
+
+
+def union_table(graphs: dict[str, nx.Graph], pairs: dict[str, set], n_vocab: int) -> pd.DataFrame:
+    """One row for the union of the nine graphs: genes with an edge in any graph, genes with
+    an edge in none, and the distinct gene pairs (the sum of edge_multiplicity.csv)."""
+    nodes = set().union(*(set(G.nodes) for G in graphs.values()))
+    E = set().union(*pairs.values())
+    return pd.DataFrame(
+        [
+            {
+                "graph": "union",
+                "label": UNION_LABEL,
+                "nodes": len(nodes),
+                "uncovered": n_vocab - len(nodes),
+                "node_coverage": len(nodes) / n_vocab,
+                "edges_pairs": len(E),
+                "mean_degree": 2 * len(E) / len(nodes),
+                "density_vocab": 2 * len(E) / (n_vocab * (n_vocab - 1)),
+            }
+        ]
+    )
 
 
 def pairwise_table(pairs: dict[str, set]) -> pd.DataFrame:
@@ -335,7 +393,9 @@ def structure_table(pairs: dict[str, set], n_vocab: int) -> tuple[pd.DataFrame, 
 
 def hub_tables(degrees: dict[str, pd.Series], std: dict[str, str], n_vocab: int):
     """Top-degree genes per graph, hub recurrence at TOP_K and at the top 1%, and the
-    percentile-rank matrix of the hubs that recur in at least two graphs."""
+    percentile-rank matrix (gene x graph) of the HUB_TOP_N highest-degree genes of every
+    graph. Rows of the matrix are ordered by the first graph, in config order, whose top
+    HUB_TOP_N contains the gene, then by degree in that graph (ties by systematic name)."""
     ranks = {k: s.rank(ascending=False, method="min").astype(int) for k, s in degrees.items()}
 
     def by_degree(s: pd.Series) -> pd.Series:
@@ -360,17 +420,25 @@ def hub_tables(degrees: dict[str, pd.Series], std: dict[str, str], n_vocab: int)
     recurrence = pd.DataFrame(rec_rows)
 
     cnt_k = hubs["gene"].value_counts()
-    recurring = cnt_k[cnt_k >= 2]
-    order = sorted(recurring.index, key=lambda g: (-recurring[g], std.get(g, g)))
+    top_of: dict[str, tuple[int, int, int]] = {}  # gene -> (graph index, rank, degree)
+    for gi, k in enumerate(KEYS):
+        s = by_degree(degrees[k])
+        for r, (g, dv) in enumerate(s.iloc[:HUB_TOP_N].items(), start=1):
+            if g not in top_of:
+                top_of[g] = (gi, r, int(dv))
+    order = sorted(top_of, key=lambda g: (top_of[g][0], -top_of[g][2], g))
     mat_rows = []
     for g in order:
+        gi, r, _ = top_of[g]
         for k in KEYS:
             present = g in degrees[k].index
             mat_rows.append(
                 {
                     "gene": g,
                     "name": std.get(g, g),
-                    "n_graphs_top_k": int(recurring[g]),
+                    "top_of_graph": KEYS[gi],
+                    "top_of_rank": r,
+                    "n_graphs_top_k": int(cnt_k[g]),
                     "graph": k,
                     "degree": int(degrees[k][g]) if present else 0,
                     "rank": int(ranks[k][g]) if present else np.nan,
@@ -430,42 +498,44 @@ def tf_overlap_tables(graphs: dict[str, nx.Graph], std: dict[str, str]) -> tuple
     return overlap, per_tf
 
 
-_DESC_BREAK = re.compile(r"\s+(?=(?:of|in|with|by|to|for|and|that|from|at|on)\b)")
-_DESC_STOP = {"of", "in", "with", "by", "to", "for", "and", "that", "from", "at", "on", "the", "a", "an", "is"}
-DESC_MAX_CHARS = 34
+# Phrase boundaries of an SGD description: a new segment starts at a preposition, a
+# conjunction, a relative pronoun, or a participle ("involved in", "associated with").
+_DESC_FUNCTION_WORDS = (
+    "of", "in", "with", "by", "to", "for", "and", "or", "that", "which", "from", "at", "on",
+    "involved", "required", "associated",
+)
+_DESC_BREAK = re.compile(r"\s+(?=(?:" + "|".join(_DESC_FUNCTION_WORDS) + r")\b)")
+_DESC_STRIP = set(_DESC_FUNCTION_WORDS) | {"the", "a", "an", "is"}
+_DESC_PAREN = re.compile(r"\s*\([^)]*\)")
+DESC_MAX_CHARS = 50  # about the description column of the hub panel at 5 pt
 
 
 def short_description(description: str) -> str:
-    """A few words of an SGD locus description for a figure label. The first
-    semicolon-delimited clause is split before prepositions and conjunctions and whole
-    segments are kept while the text stays within DESC_MAX_CHARS; when that leaves fewer
-    than two words, the longest word prefix within the cap is used with trailing stop
-    words stripped."""
-    clause = description.split(";")[0].strip()
+    """The leading phrase of an SGD locus description for a figure label, deterministic
+    from the description alone: the first semicolon-delimited clause with parentheticals
+    removed, split at phrase boundaries (before prepositions, conjunctions, relative
+    pronouns, and participles), whole segments kept while the text stays within
+    DESC_MAX_CHARS. A cut that would fall inside a coordination ("X of A and B" cut after
+    A) also drops the conjunct already kept, unless it is the head segment, so a label
+    never misstates the source. Trailing function words are stripped."""
+    clause = _DESC_PAREN.sub("", description.split(";")[0])
+    clause = re.sub(r"\s+", " ", clause).strip()
     segments = _DESC_BREAK.split(clause)
-    out = ""
+    kept: list[str] = []
     for seg in segments:
-        cand = f"{out} {seg}".strip() if out else seg
-        if len(cand) > DESC_MAX_CHARS:
+        if len(" ".join(kept + [seg])) > DESC_MAX_CHARS:
+            if seg.split()[0] in ("and", "or") and len(kept) > 1:
+                kept.pop()
             break
-        out = cand
-    if len(out.split()) < 2:
-        words = clause.split()
-        out = ""
-        for wd in words:
-            cand = f"{out} {wd}".strip() if out else wd
-            if len(cand) > DESC_MAX_CHARS:
-                break
-            out = cand
-        kept = out.split()
-        while kept and kept[-1].lower().strip(",") in _DESC_STOP:
-            kept.pop()
-        out = " ".join(kept)
-    return out.rstrip(",")
+        kept.append(seg)
+    words = " ".join(kept).split()
+    while words and words[-1].lower().strip(",") in _DESC_STRIP:
+        words.pop()
+    return " ".join(words).rstrip(",")
 
 
 def hub_description_table(matrix: pd.DataFrame, std: dict[str, str]) -> pd.DataFrame:
-    """Short SGD description per recurring hub, read from the per-gene SGD JSON
+    """Short SGD description per hub of the panel, read from the per-gene SGD JSON
     (``locus.description``); the full first clause and the source file are kept."""
     rows = []
     for g in dict.fromkeys(matrix["gene"]):
@@ -716,44 +786,56 @@ def _named_barh_row(fig, w_mm, h_mm, n_axes, widths, bottom_mm):
     return axes
 
 
-def panel_sizes(sizes: pd.DataFrame, n_vocab: int):
-    """Half-width panel, one bar per graph: covered genes (the hatched remainder to the
-    6,607-gene reference is the uncovered part, its count printed at right), edges (log
-    axis), and the share of a graph's edges found in no other graph."""
+def panel_sizes(sizes: pd.DataFrame, union: pd.DataFrame, n_vocab: int):
+    """Half-width panel, one bar per graph plus a final row for the union of all nine:
+    genes with at least one edge (dotted line, the 6,607-gene reference), genes with no
+    edge (its own bar, the count printed at right), distinct gene pairs (log axis), and the
+    share of a graph's pairs found in no other graph (empty for the union)."""
     w, h = PANEL_WIDTHS_MM["half"], F1_ROW1_H
     fig = _fig(w, h)
-    ax_n, ax_e, ax_u = _named_barh_row(fig, w, h, 3, [1.3, 1.2, 1], bottom_mm=8.5)
-    y = np.arange(len(sizes))[::-1]
-    colors = [GRAPH_COLOR[k] for k in sizes["graph"]]
-    ax_n.barh(y, sizes["nodes"], color=colors, edgecolor="black", linewidth=0.4, height=0.7)
-    ax_n.barh(y, sizes["uncovered"], left=sizes["nodes"], color="white", edgecolor="black",
-              linewidth=0.4, height=0.7, hatch="////")
+    bottom = 11.0  # two-line x labels
+    ax_n, ax_u, ax_e, ax_f = _named_barh_row(fig, w, h, 4, [1.1, 1.15, 1.35, 0.75], bottom_mm=bottom)
+    n = len(sizes)
+    # Graph rows at 9.5 .. 1.5, the union row at 0 with a wider gap above it.
+    y = np.concatenate([np.arange(n)[::-1] + 1.5, [0.0]])
+    nodes = np.concatenate([sizes["nodes"], union["nodes"]])
+    uncovered = np.concatenate([sizes["uncovered"], union["uncovered"]])
+    edges = np.concatenate([sizes["edges_pairs"], union["edges_pairs"]])
+    labels = list(sizes["label"]) + list(union["label"])
+    colors = [GRAPH_COLOR[k] for k in sizes["graph"]] + ["white"]
+    bar = {"edgecolor": "black", "linewidth": 0.4, "height": 0.7}
+    ax_n.barh(y, nodes, color=colors, **bar)
     ax_n.axvline(n_vocab, color="black", linewidth=0.5, linestyle=":")
-    for yi, u in zip(y, sizes["uncovered"]):
-        ax_n.text(n_vocab + 250, yi, f"{u:,}", ha="left", va="center", fontsize=5, bbox=TEXT_BBOX)
-    ax_n.set_xlim(0, 9800)
+    ax_n.set_xlim(0, 7400)
     ax_n.set_xticks([0, 3000, 6000])
     ax_n.set_xticklabels(["0", "3k", "6k"])
-    ax_n.set_xlabel("Genes (right: uncovered)")
+    ax_n.set_xlabel("Genes with\nan edge")
     ax_n.set_yticks(y)
-    ax_n.set_yticklabels(sizes["label"])
-    ax_e.barh(y, sizes["edges_pairs"], color=colors, edgecolor="black", linewidth=0.4, height=0.7)
+    ax_n.set_yticklabels(labels)
+    ax_u.barh(y, uncovered, color=colors, **bar)
+    for yi, u in zip(y, uncovered):
+        ax_u.text(u + 180, yi, f"{u:,}", ha="left", va="center", fontsize=5, bbox=TEXT_BBOX)
+    ax_u.set_xlim(0, 7800)
+    ax_u.set_xticks([0, 2000, 4000])
+    ax_u.set_xticklabels(["0", "2k", "4k"])
+    ax_u.set_xlabel("Genes with\nno edge")
+    ax_e.barh(y, edges, color=colors, **bar)
     ax_e.set_xscale("log")
     ax_e.set_xlim(1e3, 3e6)
-    ax_e.set_xticks([1e3, 1e4, 1e5, 1e6])
-    ax_e.set_xticklabels(["$10^3$", "$10^4$", "$10^5$", "$10^6$"])
-    ax_e.xaxis.set_minor_locator(LogLocator(base=10, subs=np.arange(2, 10) * 0.1, numticks=20))
+    ax_e.set_xticks([1e4, 1e5, 1e6])  # the smallest graph has 11,085 pairs; 10^3 stays a minor tick
+    ax_e.set_xticklabels(["$10^4$", "$10^5$", "$10^6$"])
+    ax_e.xaxis.set_minor_locator(LogLocator(base=10, subs=np.arange(1, 10) * 0.1, numticks=20))
     ax_e.xaxis.set_minor_formatter(NullFormatter())
-    ax_e.set_xlabel("Edges")
-    ax_u.barh(y, sizes["unique_frac"], color=colors, edgecolor="black", linewidth=0.4, height=0.7)
-    ax_u.set_xlim(0, 1)
-    ax_u.set_xticks([0, 0.5, 1.0])
-    ax_u.set_xticklabels(["0", "0.5", "1"])
-    ax_u.xaxis.set_minor_locator(FixedLocator(np.arange(0.1, 1.0, 0.1)))
-    ax_u.tick_params(which="minor", length=0)
-    ax_u.set_xlabel("Unique fraction")
-    for ax in (ax_n, ax_e, ax_u):
-        ax.set_ylim(-0.6, len(sizes) - 0.4)
+    ax_e.set_xlabel("Gene pairs")
+    ax_f.barh(y[:n], sizes["unique_frac"], color=colors[:n], **bar)
+    ax_f.set_xlim(0, 1)
+    ax_f.set_xticks([0, 0.5, 1.0])
+    ax_f.set_xticklabels(["0", "0.5", "1"])
+    ax_f.xaxis.set_minor_locator(FixedLocator(np.arange(0.1, 1.0, 0.1)))
+    ax_f.set_xlabel("Unique\nfraction")
+    for ax in (ax_n, ax_u, ax_e, ax_f):
+        ax.tick_params(which="minor", length=0)
+        ax.set_ylim(-0.6, n + 1.1)
         if ax is not ax_n:
             ax.set_yticks(y)
             ax.set_yticklabels([])
@@ -793,14 +875,16 @@ def panel_degree(deg: pd.DataFrame):
 
 def _heatmap(matrix: np.ndarray, labels: list[str], name: str, fmt, cbar_label: str,
              tri: str | None, norm=None, vmax: float | None = None, dark_above: float = 0.6,
-             width: str = "third", h: float = F1_ROW2_H):
-    """Square heatmap with in-cell annotations, explicit geometry: rows labeled with the
-    short graph names at SHORT_LEFT_MM, columns labeled on top at 45 degrees, colorbar on the
-    right. ``width`` is a PANEL_WIDTHS_MM key; the matrix side follows the height."""
+             width: str = "third", h: float = F2_ROW1_H):
+    """Square heatmap with in-cell annotations, explicit geometry: matrix top at TOP_MM so
+    the panel aligns with its row, rows labeled with the short graph names at
+    SHORT_LEFT_MM, columns labeled BELOW the matrix at 45 degrees (anchored right),
+    colorbar on the right. ``width`` is a PANEL_WIDTHS_MM key; the matrix side follows
+    the height."""
     w = PANEL_WIDTHS_MM[width]
     fig = _fig(w, h)
-    top_labels, bottom = 11.0, 1.0
-    side = h - top_labels - bottom
+    bottom = HEAT_BOTTOM_MM
+    side = h - TOP_MM - bottom
     ax = _axes_mm(fig, w, h, SHORT_LEFT_MM, bottom, side, side)
     M = matrix.astype(float).copy()
     if tri == "lower":
@@ -818,9 +902,8 @@ def _heatmap(matrix: np.ndarray, labels: list[str], name: str, fmt, cbar_label: 
                     color="white" if frac > dark_above else "black")
     ax.set_xticks(range(n))
     ax.set_yticks(range(n))
-    ax.set_xticklabels(labels, rotation=45, ha="left", rotation_mode="anchor")
+    ax.set_xticklabels(labels, rotation=45, ha="right", rotation_mode="anchor")
     ax.set_yticklabels(labels)
-    ax.xaxis.tick_top()
     ax.tick_params(length=0, pad=1.5)
     ax.set_xticks(np.arange(-0.5, n, 1), minor=True)
     ax.set_yticks(np.arange(-0.5, n, 1), minor=True)
@@ -843,6 +926,18 @@ def _frac_label(v: float) -> str:
     return f"{v:.2f}"[1:]
 
 
+def _thousands_label(v_k: float) -> str:
+    """A count given in thousands, at most three characters: '556', '2.1', '.9', '.07'
+    (fits a third-width cell at 5 pt)."""
+    if v_k >= 10:
+        return f"{v_k:.0f}"
+    if v_k >= 1:
+        return f"{v_k:.1f}"
+    if v_k >= 0.1:
+        return f"{v_k:.1f}"[1:]
+    return f"{v_k:.2f}"[1:]
+
+
 def panel_overlap(pw: pd.DataFrame, sizes: pd.DataFrame):
     labels = [SHORT_LABEL[k] for k in KEYS]
     n = len(KEYS)
@@ -859,15 +954,17 @@ def panel_overlap(pw: pd.DataFrame, sizes: pd.DataFrame):
              cbar_label="Jaccard index", tri="lower")
     _heatmap(C, labels, "graphs_containment", fmt=_frac_label, vmax=1.0,
              cbar_label="Row edges in column graph", tri=None)
-    S[S < 1] = 1.0
-    _heatmap(S, labels, "graphs_shared_pairs", fmt=_knum, norm=LogNorm(vmin=1e2, vmax=1e6),
-             cbar_label="Shared gene pairs", tri="lower", dark_above=0.7, width="half", h=F2_ROW_H)
+    # Shared pairs in thousands so every cell label has at most three characters; the
+    # smallest counts (23 to 74 pairs) sit below the color floor and print as '.02' to '.07'.
+    _heatmap(S / 1e3, labels, "graphs_shared_pairs", fmt=_thousands_label,
+             norm=LogNorm(vmin=0.1, vmax=1e3), cbar_label="Shared gene pairs (thousands)",
+             tri="lower", dark_above=0.7)
 
 
 def panel_multiplicity(mult: pd.DataFrame, sizes: pd.DataFrame):
     """Third-width panel: distinct gene pairs supported by exactly n of the nine graphs; the
     x-axis stops at the largest observed multiplicity."""
-    w, h = PANEL_WIDTHS_MM["third"], F1_ROW2_H
+    w, h = PANEL_WIDTHS_MM["third"], F2_ROW2_H
     fig = _fig(w, h)
     bottom = 8.5
     ax = _axes_mm(fig, w, h, 11.0, bottom, w - 11.0 - 1.5, h - TOP_MM - bottom)
@@ -889,18 +986,18 @@ def panel_multiplicity(mult: pd.DataFrame, sizes: pd.DataFrame):
 
 
 def panel_structure(struct: pd.DataFrame, n_vocab: int):
-    """Full-width panel (figure 2), one bar per graph: largest-component fraction, mean
-    clustering coefficient, degree assortativity, and mean two-hop reach."""
-    w, h = PANEL_WIDTHS_MM["full"], F2_ROW3_H
+    """Half-width panel, one bar per graph: largest-component fraction, mean clustering
+    coefficient, degree assortativity, and mean two-hop reach."""
+    w, h = PANEL_WIDTHS_MM["half"], F1_ROW2_H
     fig = _fig(w, h)
-    axes = _named_barh_row(fig, w, h, 4, [1, 1, 1.15, 1], bottom_mm=8.5)
+    axes = _named_barh_row(fig, w, h, 4, [1, 1, 1.2, 1], bottom_mm=11.0)
     y = np.arange(len(struct))[::-1]
     colors = [GRAPH_COLOR[k] for k in struct["graph"]]
     cols = [
-        ("lcc_frac", "Largest component", (0, 1.0), [0, 0.5, 1.0], ["0", "0.5", "1"]),
-        ("mean_clustering", "Mean clustering", (0, 1.0), [0, 0.5, 1.0], ["0", "0.5", "1"]),
-        ("degree_assortativity", "Degree assortativity", (-0.6, 1.0), [-0.5, 0, 0.5, 1.0], ["−0.5", "0", "0.5", "1"]),
-        ("mean_two_hop_reach", "Two-hop reach (genes)", (0, 7000), [0, 3000, 6000], ["0", "3k", "6k"]),
+        ("lcc_frac", "Largest\ncomponent", (0, 1.0), [0, 0.5, 1.0], ["0", "0.5", "1"]),
+        ("mean_clustering", "Mean\nclustering", (0, 1.0), [0, 0.5, 1.0], ["0", "0.5", "1"]),
+        ("degree_assortativity", "Degree\nassortativity", (-0.6, 1.0), [-0.5, 0, 0.5, 1.0], ["−0.5", "0", "0.5", "1"]),
+        ("mean_two_hop_reach", "Two-hop\nreach (genes)", (0, 7000), [0, 3000, 6000], ["0", "3k", "6k"]),
     ]
     for ax, (col, xlabel, xlim, ticks, ticklabels) in zip(axes, cols):
         ax.barh(y, struct[col], color=colors, edgecolor="black", linewidth=0.4, height=0.7)
@@ -928,19 +1025,23 @@ def panel_structure(struct: pd.DataFrame, n_vocab: int):
 
 
 def panel_hubs(matrix: pd.DataFrame, desc: pd.DataFrame):
-    """Half-width heatmap: hubs recurring in at least two graphs (rows) by graph (columns),
-    colored by the gene's degree percentile in that graph (a dash marks a gene absent from
-    the graph); the short SGD description of each hub is printed right of the matrix."""
-    w, h = PANEL_WIDTHS_MM["half"], F2_ROW_H
+    """Half-width heatmap: the HUB_TOP_N highest-degree genes of every graph (rows, grouped
+    by the graph they top, a thicker white rule between groups) by graph (columns), colored
+    by the gene's degree percentile in that graph (a dash marks a gene absent from the
+    graph); the short SGD description of each hub is printed right of the matrix, the
+    column labels sit below it, and the colorbar lies under the description column."""
+    w, h = PANEL_WIDTHS_MM["half"], F1_ROW2_H
     genes = list(dict.fromkeys(matrix["gene"]))
-    names = [matrix[matrix["gene"] == g]["name"].iloc[0] for g in genes]
+    first = matrix.drop_duplicates("gene").set_index("gene")
+    names = [first.loc[g, "name"] for g in genes]
+    groups = [first.loc[g, "top_of_graph"] for g in genes]
     short = desc.set_index("gene")["short_description"]
     P = matrix.pivot(index="gene", columns="graph", values="percentile").loc[genes, KEYS].to_numpy()
     fig = _fig(w, h)
-    top_labels, bottom = 11.0, 1.0
-    left, cell_w = 12.0, 3.1
+    bottom = 10.5  # 45-degree column labels
+    left, cell_w = 11.0, 3.0
     mat_w = cell_w * len(KEYS)
-    ax = _axes_mm(fig, w, h, left, bottom, mat_w, h - top_labels - bottom)
+    ax = _axes_mm(fig, w, h, left, bottom, mat_w, h - TOP_MM - bottom)
     im = ax.imshow(P, cmap=HEAT_CMAP, vmin=0, vmax=100, aspect="auto")
     for i in range(len(genes)):
         for j in range(len(KEYS)):
@@ -948,9 +1049,10 @@ def panel_hubs(matrix: pd.DataFrame, desc: pd.DataFrame):
                 ax.text(j, i, "–", ha="center", va="center", fontsize=5, color="#888888")
         ax.text(len(KEYS) - 0.5 + 0.3, i, short[genes[i]], ha="left", va="center", fontsize=5,
                 clip_on=False)
+        if i > 0 and groups[i] != groups[i - 1]:
+            ax.axhline(i - 0.5, color="white", linewidth=1.6)
     ax.set_xticks(range(len(KEYS)))
-    ax.set_xticklabels([SHORT_LABEL[k] for k in KEYS], rotation=45, ha="left", rotation_mode="anchor")
-    ax.xaxis.tick_top()
+    ax.set_xticklabels([SHORT_LABEL[k] for k in KEYS], rotation=45, ha="right", rotation_mode="anchor")
     ax.set_yticks(range(len(genes)))
     ax.set_yticklabels(names)
     ax.tick_params(length=0, pad=1.5)
@@ -959,52 +1061,54 @@ def panel_hubs(matrix: pd.DataFrame, desc: pd.DataFrame):
     ax.grid(which="minor", color="white", linewidth=0.6)
     ax.tick_params(which="minor", length=0)
     _box(ax)
-    side = h - top_labels - bottom
-    cax = _axes_mm(fig, w, h, w - 12.5, bottom + 0.1 * side, 2.0, 0.8 * side)
-    cb = fig.colorbar(im, cax=cax)
-    cb.set_label("Degree percentile\nin graph", labelpad=2)
+    cb_left = left + mat_w + 6.0
+    cax = _axes_mm(fig, w, h, cb_left, 3.0, 26.0, 1.8)
+    cb = fig.colorbar(im, cax=cax, orientation="horizontal")
+    cb.set_ticks([0, 50, 100])
     cb.outline.set_linewidth(0.5)
     cb.ax.tick_params(length=2, width=0.5, pad=1)
+    fig.text(cb_left / w, 5.4 / h, "Degree percentile in graph", ha="left", va="bottom")
     _save(fig, "graphs_hubs")
 
 
 def panel_tf_overlap(overlap: pd.DataFrame, per_tf: pd.DataFrame):
-    """Half-width panel. Top: regulators, targets, and directed edges split into
-    regulatory-only / both / TFLink-only. Bottom: per shared regulator, Jaccard of its two
-    target sets."""
-    w, h = PANEL_WIDTHS_MM["half"], F2_ROW_H
+    """Wide panel. Top: regulators, targets, and directed edges split into regulatory-only
+    / both / TFLink-only, bars 2.9 mm thick so the in-bar counts have clearance. Bottom:
+    per shared regulator, Jaccard of its two target sets."""
+    w, h = PANEL_WIDTHS_MM["wide"], F2_ROW2_H
     fig = _fig(w, h)
     seg_color = [PLOT_PALETTE[1], PLOT_PALETTE[5], PLOT_PALETTE[2]]
     seg_label = ["Regulatory (SGD) only", "Both", "TFLink only"]
     rows = [("regulators", "Regulators"), ("targets", "Targets"), ("directed_edges", "Directed edges")]
     left, right = 22.0, 1.5
-    bar_h, bar_gap = 5.4, 1.0
+    bar_h, bar_gap = 8.0, 1.2  # axes height per bar (mm); the bar fills 0.8 / 2.2 of it
+    bar_len = w - left - right
+    label_min_mm = 6.5  # a segment narrower than this is labeled outside the bar
     top_block = TOP_MM + 4.0  # legend row
     for i, (ent, lbl) in enumerate(rows):
         r = overlap[overlap["entity"] == ent].iloc[0]
         y0 = h - top_block - (i + 1) * bar_h - i * bar_gap
-        ax = _axes_mm(fig, w, h, left, y0, w - left - right, bar_h)
+        ax = _axes_mm(fig, w, h, left, y0, bar_len, bar_h)
         total = r["union"]
         x = 0.0
         prev_small = False
-        # Bars span y in [-0.35, 0.35]; outside labels sit at |y| = 0.62, clear of the edge.
+        # Bars span y in [-0.4, 0.4]; outside labels sit at |y| = 0.6, clear of the edge.
         for val, c, lab in zip([r["regulatory_only"], r["both"], r["tflink_only"]], seg_color, seg_label):
-            ax.barh(0, val, left=x, color=c, edgecolor="black", linewidth=0.4, height=0.7,
+            ax.barh(0, val, left=x, color=c, edgecolor="black", linewidth=0.4, height=0.8,
                     label=lab if i == 0 else None)
-            frac = val / total
             txt = f"{int(val):,}"
-            if frac >= 0.11:
+            if val / total * bar_len >= label_min_mm:
                 ax.text(x + val / 2, 0, txt, ha="center", va="center", fontsize=5, color="white")
                 prev_small = False
             elif prev_small:  # two narrow segments in a row: label the second below the bar
-                ax.text(x + val / 2, -0.62, txt, ha="center", va="top", fontsize=5)
+                ax.text(x + val / 2, -0.6, txt, ha="center", va="top", fontsize=5, bbox=TEXT_BBOX)
                 prev_small = False
             else:
-                ax.text(x + val / 2, 0.62, txt, ha="center", va="bottom", fontsize=5)
+                ax.text(x + val / 2, 0.6, txt, ha="center", va="bottom", fontsize=5, bbox=TEXT_BBOX)
                 prev_small = True
             x += val
         ax.set_xlim(0, total)
-        ax.set_ylim(-1.35, 1.35)
+        ax.set_ylim(-1.1, 1.1)
         ax.set_xticks([])
         ax.set_yticks([0])
         ax.set_yticklabels([f"{lbl}\n(n = {int(total):,})"])
@@ -1042,8 +1146,10 @@ def panel_tf_overlap(overlap: pd.DataFrame, per_tf: pd.DataFrame):
 def panel_string_releases(sizes: pd.DataFrame, drift: pd.DataFrame):
     """Half-width panel, one small axes per channel, releases in time order. Each release's bar
     is the pairs in that release; the solid part is what the previous release already had, the
-    pale part is new; the hatched bar below zero is what the previous release lost."""
-    w, h = PANEL_WIDTHS_MM["half"], F2_ROW_H
+    pale part is new; the hatched bar below zero is what the previous release lost. This
+    panel is embedded read-only in the DANGO reproduction figure (compose_dango_si_figures.py),
+    so its size is fixed by STRING_RELEASES_H and must stay stable."""
+    w, h = PANEL_WIDTHS_MM["half"], STRING_RELEASES_H
     fig = _fig(w, h)
     ncol, nrow = 3, 2
     left, right, top, bottom = 11.0, 1.5, 6.5, 7.5
@@ -1093,17 +1199,18 @@ def panel_string_releases(sizes: pd.DataFrame, drift: pd.DataFrame):
 def panel_components(comp: pd.DataFrame):
     """Full-width panel, one bar per graph and six axes: the share of covered genes that are
     Yeast9 metabolic or SGD-essential genes (dotted line, the same share over the 6,607-gene
-    reference), the share of the Kuzmin 2018 (solid) and 2020 (hatched) trigenic gene panels
-    the graph covers, and the share of the graph's gene pairs that share a Yeast9 reaction,
-    a Yeast9 subsystem, or a GO biological-process term (open circle, the degree-preserving
-    random graph)."""
+    reference), the share of the Kuzmin 2018 (graph color) and 2020 (its pale fill) trigenic
+    panel genes that have an edge in the graph, and the share of the graph's gene pairs that
+    share a Yeast9 reaction, a Yeast9 subsystem, or a GO biological-process term (open
+    circle, the degree-preserving random graph). The legend is one line under the panel."""
     ref = comp.attrs["reference"]
     w, h = PANEL_WIDTHS_MM["full"], F1_ROW3_H
     fig = _fig(w, h)
-    bottom = 16.0  # two-line x labels + two legend rows
+    bottom = 13.5  # two-line x labels + one legend row
     axes = _named_barh_row(fig, w, h, 6, [1] * 6, bottom_mm=bottom)
     y = np.arange(len(comp))[::-1]
     colors = [GRAPH_COLOR[k] for k in comp["graph"]]
+    fills = [GRAPH_FILL[k] for k in comp["graph"]]
     gene_cols = [
         ("metabolic_frac", "Metabolic genes\n(Yeast9)", ref["metabolic_frac_vocab"]),
         ("essential_frac", "Essential genes\n(SGD)", ref["essential_frac_vocab"]),
@@ -1120,9 +1227,9 @@ def panel_components(comp: pd.DataFrame):
     ax = axes[2]
     ax.barh(y + 0.19, comp["kuzmin2018_covered_frac"], color=colors, edgecolor="black", linewidth=0.4,
             height=0.36)
-    ax.barh(y - 0.19, comp["kuzmin2020_covered_frac"], color=colors, edgecolor="black", linewidth=0.4,
-            height=0.36, hatch="////")
-    ax.set_xlabel("Trigenic panel\ncovered")
+    ax.barh(y - 0.19, comp["kuzmin2020_covered_frac"], color=fills, edgecolor="black", linewidth=0.4,
+            height=0.36)
+    ax.set_xlabel("Panel genes\nwith an edge")
     # The pair-level shares span four orders of magnitude across graphs (reaction sharing
     # 5e-6 in TFLink to 0.04 in co-occurrence), so these three axes are logarithmic.
     for ax, (col, xlabel) in zip(axes[3:], pair_cols):
@@ -1154,27 +1261,31 @@ def panel_components(comp: pd.DataFrame):
     axes[0].set_yticklabels(comp["label"])
     for ax in axes[1:]:
         ax.set_yticklabels([])
+    # Two-level legend keys in neutral gray (the classical-ML convention): the darker key
+    # is the series drawn in each graph's line color, the paler key its fill.
     handles = [
         plt.Line2D([], [], color="black", linewidth=0.5, linestyle=":",
                    label=f"Share over the {ref['n_vocab']:,}-gene reference"),
-        plt.Rectangle((0, 0), 1, 1, facecolor="white", edgecolor="black", linewidth=0.4,
-                      label=f"Kuzmin 2018 ({ref['n_kuzmin2018']:,} genes)"),
-        plt.Rectangle((0, 0), 1, 1, facecolor="white", edgecolor="black", linewidth=0.4, hatch="////",
-                      label=f"Kuzmin 2020 ({ref['n_kuzmin2020']:,} genes)"),
+        plt.Rectangle((0, 0), 1, 1, facecolor="#7F7F7F", edgecolor="black", linewidth=0.4,
+                      label=f"Kuzmin 2018 panel ({ref['n_kuzmin2018']:,} genes)"),
+        plt.Rectangle((0, 0), 1, 1, facecolor="#E3E3E3", edgecolor="black", linewidth=0.4,
+                      label=f"Kuzmin 2020 panel ({ref['n_kuzmin2020']:,} genes)"),
         plt.Line2D([], [], linestyle="none", marker="o", markersize=2.6, markerfacecolor="white",
                    markeredgecolor="black", markeredgewidth=0.5,
                    label=f"Degree-preserving random graph (seed {RANDOM_SEED})"),
     ]
-    fig.legend(handles=handles, frameon=False, loc="lower left", ncol=2, handlelength=1.4,
-               columnspacing=1.5, handletextpad=0.5, labelspacing=0.25,
-               bbox_to_anchor=(LABEL_LEFT_MM / w, 0.0), borderaxespad=0.2)
+    fig.legend(handles=handles, frameon=False, loc="lower left", ncol=4, handlelength=1.4,
+               columnspacing=1.2, handletextpad=0.5, bbox_to_anchor=(0.0, 0.0), borderaxespad=0.2)
     _save(fig, "graphs_components")
 
 
 # ------------------------------------------------------------------------------ tables
-def write_tex_tables(sizes: pd.DataFrame, mult: pd.DataFrame, sv: pd.DataFrame, drift: pd.DataFrame):
+def write_tex_tables(sizes: pd.DataFrame, union_row: pd.DataFrame, mult: pd.DataFrame,
+                     sv: pd.DataFrame, drift: pd.DataFrame, n_vocab: int):
     src = "experiments/010-kuzmin-tmi/scripts/graph_statistics.py"
     union = int(mult["n_pairs"].sum())
+    assert union == int(union_row["edges_pairs"].iloc[0])
+    u_nodes, u_uncov = int(union_row["nodes"].iloc[0]), int(union_row["uncovered"].iloc[0])
     sgd = sizes[sizes["family"] == "SGD"]
     lines = [
         f"%% SOURCE: {src} -- AUTO-GENERATED, do not hand-edit; rerun the script.",
@@ -1189,7 +1300,8 @@ def write_tex_tables(sizes: pd.DataFrame, mult: pd.DataFrame, sv: pd.DataFrame, 
         "remaining rows. \\emph{Edges} is the native count (directed for Regulatory and TFLink),",
         "\\emph{Pairs} the distinct unordered gene pairs used for overlap, \\emph{Unique} the share of",
         "those pairs found in no other graph. The nine graphs together cover",
-        f"{union:,} distinct gene pairs; relative to the SGD-native baseline (Physical\\,$+$\\,Regulatory),",
+        f"{union:,} distinct gene pairs and {u_nodes:,} of the {n_vocab:,} genes ({u_uncov} genes have",
+        "an edge in no graph); relative to the SGD-native baseline (Physical\\,$+$\\,Regulatory),",
         f"the sum over graphs is {sizes['nodes'].sum() / sgd['nodes'].sum():.2f}$\\times$ in nodes and",
         f"{sizes['edges_native'].sum() / sgd['edges_native'].sum():.2f}$\\times$ in edges.",
         "(STRING~v9.1 and v11.0 are in \\supptab{tab:string-versions}.)}",
@@ -1207,7 +1319,7 @@ def write_tex_tables(sizes: pd.DataFrame, mult: pd.DataFrame, sv: pd.DataFrame, 
     lines += [
         "\\midrule",
         f"Sum (all graphs) & {sizes['nodes'].sum():,} & {sizes['edges_native'].sum():,} & {sizes['edges_pairs'].sum():,} & & \\\\",
-        f"Union of pairs & & & {union:,} & & \\\\",
+        f"{UNION_LABEL} & {u_nodes:,} & & {union:,} & & \\\\",
         f"Sum (Physical, Regulatory) & {sgd['nodes'].sum():,} & {sgd['edges_native'].sum():,} & {sgd['edges_pairs'].sum():,} & & \\\\",
         "\\bottomrule",
         "\\end{tabular}",
@@ -1274,12 +1386,13 @@ def main():
     std = standard_names(builder.genome)
     print(f"gene vocabulary: {n_vocab}")
 
-    graphs = {key: getattr(builder, f"G_{key}").graph for key in KEYS}
+    graphs = {key: restrict_to_vocab(getattr(builder, f"G_{key}").graph, builder.genome.gene_set, key) for key in KEYS}
     pairs = {key: undirected_pairs(G) for key, G in graphs.items()}
     for key, G in graphs.items():
         print(f"{key:26s} nodes={G.number_of_nodes():5d} edges={G.number_of_edges():9,d} pairs={len(pairs[key]):9,d}")
 
     sizes = size_table(graphs, pairs, n_vocab)
+    union = union_table(graphs, pairs, n_vocab)
     pw = pairwise_table(pairs)
     mult = multiplicity_table(pairs)
     deg = degree_table(pairs)
@@ -1291,6 +1404,7 @@ def main():
     comp = components_table(graphs, pairs, load_components(builder))
 
     sizes.to_csv(osp.join(RESULTS_DIR, "graph_sizes.csv"), index=False)
+    union.to_csv(osp.join(RESULTS_DIR, "graph_union.csv"), index=False)
     comp.to_csv(osp.join(RESULTS_DIR, "graph_components.csv"), index=False, float_format="%.10g")
     with open(osp.join(RESULTS_DIR, "graph_components_reference.json"), "w") as f:
         json.dump(comp.attrs["reference"], f, indent=2)
@@ -1311,6 +1425,7 @@ def main():
     sv_drift.to_csv(osp.join(RESULTS_DIR, "string_version_drift.csv"), index=False)
     print(f"wrote CSVs to {RESULTS_DIR}")
     print(sizes[["label", "nodes", "edges_native", "edges_pairs", "mean_degree", "unique_frac"]].to_string(index=False))
+    print(union.to_string(index=False))
     print(mult.to_string(index=False))
     print(struct[["label", "lcc_frac", "mean_clustering", "degree_assortativity", "mean_two_hop_reach"]].to_string(index=False))
     print(recurrence.to_string(index=False))
@@ -1324,7 +1439,7 @@ def main():
     print(comp.attrs["reference"])
     print(hub_desc[["name", "short_description"]].to_string(index=False))
 
-    panel_sizes(sizes, n_vocab)
+    panel_sizes(sizes, union, n_vocab)
     panel_degree(deg)
     panel_overlap(pw, sizes)
     panel_multiplicity(mult, sizes)
@@ -1333,7 +1448,7 @@ def main():
     panel_hubs(hub_matrix, hub_desc)
     panel_tf_overlap(tf_overlap, per_tf)
     panel_string_releases(sv_sizes, sv_drift)
-    write_tex_tables(sizes, mult, sv_sizes, sv_drift)
+    write_tex_tables(sizes, union, mult, sv_sizes, sv_drift, n_vocab)
 
 
 if __name__ == "__main__":

@@ -15,8 +15,12 @@ wandb sources (entity ``zhao-group``; every run id below is recorded in ``runs.c
   rank 0 = ``eni948by``; job 1921740 (``mmli_000``, auxiliary losses off, stopped after
   10 epochs), rank 0 = ``x69dyevg``. Each DDP rank is a separate wandb run; only rank 0
   logs the validation metrics.
-* DCell, experiment 005 build ``torchcell_005-kuzmin2018-tmi_dcell``: job 1811673,
-  rank 0 = ``biucpv7p`` (earlier dataset build, context only).
+* DCell, experiment 005 build ``torchcell_005-kuzmin2018-tmi_dcell`` (Kuzmin 2018 only,
+  91,050 records): every run of the project is frozen to ``kuzmin2018_runs.csv`` with its
+  config; the data-effect panel keeps the runs that trained on the full build (not a
+  perturbation subset) and logged validation Pearson, which is one: job 1811673, rank 0 =
+  ``biucpv7p`` (the other three ranks, e.g. ``4ipeq1qh``, log no validation metrics). The
+  Mac runs of May 2025 are perturbation-subset debugging runs of 100 or 1,000 records.
 * CGT, ``torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer``: the three
   training jobs whose best-Pearson checkpoints were re-evaluated for Fig. 2 (eval runs
   tagged ``evaluation``/``full_dataset`` record the checkpoint path).
@@ -26,14 +30,17 @@ Outputs
 -------
 results : experiments/006-kuzmin-tmi/results/dcell_training/
           runs.csv, history_<run>.csv (epoch level), history_full_eni948by.csv,
-          checkpoints.csv, cost.csv, speedup_stages.csv
-panels  : $ASSET_IMAGES_DIR/006-kuzmin-tmi/dcell_training_{val_pearson,loss,cost,stages}.{svg,png}
+          checkpoints.csv, cost.csv, speedup_stages.csv, kuzmin2018_runs.csv,
+          data_effect.csv (best validation Pearson per build)
+panels  : $ASSET_IMAGES_DIR/006-kuzmin-tmi/dcell_training_{val_pearson,loss,cost,stages,data_effect}.{svg,png}
 tables  : paper/nature-biotech/sections/tab-dcell-training-checkpoints.tex,
           tab-dcell-training-cost.tex
 
 Run from the repo root:
     python experiments/006-kuzmin-tmi/scripts/dcell_training_wandb.py            # pull + render
     python experiments/006-kuzmin-tmi/scripts/dcell_training_wandb.py --from-csv # re-render only
+    python experiments/006-kuzmin-tmi/scripts/dcell_training_wandb.py --pull-kuzmin2018
+        # re-pull only the 005 project (kuzmin2018_runs.csv + its histories), then render
 """
 
 import argparse
@@ -52,7 +59,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.ticker import MultipleLocator
 
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, PLOT_PALETTE_FILL, mm_to_in, savefig_true_size_svg
 
 # Set AFTER the torchcell imports: the repo mplstyle is applied on import by some
 # torchcell modules and would override these.
@@ -98,7 +105,11 @@ MODEL_COLOR = {"DCell": PURPLE, "CGT": RED, "DANGO": ORANGE}
 # notes/experiments.011-kuzmin-tmi.scripts.query-comparison-006-009-010-011.md (006: 332,313;
 # 010: 376,732) and notes/experiments.010-kuzmin-tmi.performance-diff-010-009.md
 # (010 train split 301,386). Samples per epoch below are MEASURED from optimizer steps.
+# The 005 count (Kuzmin 2018 only) is read from the frozen split table of that experiment.
 BUILD_RECORDS = {"006": 332_313, "010": 376_732}
+SPLIT_005_CSV = osp.join(REPO_ROOT, "experiments", "005-kuzmin2018-tmi", "results", "dango_dataset_split.csv")
+KUZMIN2018_PROJECT = "torchcell_005-kuzmin2018-tmi_dcell"
+BUILD_LABEL = {"005": "Kuzmin 2018 only", "006": "Kuzmin 2018 + 2020 deletions"}
 
 # The three DCell validation Pearson values hardcoded in
 # experiments/010-kuzmin-tmi/scripts/trigenic_tau_model_comparison.py (Fig. 2d).
@@ -200,6 +211,48 @@ def pull_history(api, project: str, rid: str) -> pd.DataFrame:
     return df[cols].sort_values("_step").reset_index(drop=True)
 
 
+def pull_kuzmin2018_runs(api) -> pd.DataFrame:
+    """Freeze every run of the 005 DCell project with the config fields that decide whether
+    it is a full-build training run, and the epoch-level history of each run that is."""
+    rows = []
+    for r in api.runs(f"{ENTITY}/{KUZMIN2018_PROJECT}"):
+        c, s = r.config, r.summary
+        dm, tr, m = c.get("data_module", {}), c.get("trainer", {}), c.get("model", {})
+        rows.append(
+            {
+                "project": KUZMIN2018_PROJECT,
+                "run_id": r.id,
+                "name": r.name,
+                "state": r.state,
+                "created_at": r.created_at,
+                "host": r.name.split("_")[1].rsplit("-", 1)[0] if "_" in r.name else "",
+                "is_perturbation_subset": dm.get("is_perturbation_subset"),
+                "perturbation_subset_size": dm.get("perturbation_subset_size"),
+                "batch_size_per_gpu": dm.get("batch_size"),
+                "devices": tr.get("devices"),
+                "precision": tr.get("precision", "32-true"),
+                "max_epochs": tr.get("max_epochs"),
+                "go_min_genes": m.get("go_min_genes", 4),
+                "go_date_filter": m.get("go_date_filter"),
+                "use_auxiliary_losses": c.get("regression_task", {}).get("dcell_loss", {}).get("use_auxiliary_losses"),
+                "lr": c.get("regression_task", {}).get("optimizer", {}).get("lr"),
+                "num_go_terms": s.get("model/num_go_terms"),
+                "params_total": s.get("model/params_total"),
+                "last_epoch": s.get("epoch"),
+                "runtime_s": s.get("_runtime"),
+                "summary_val_pearson": s.get("val/gene_interaction/Pearson"),
+            }
+        )
+    df = pd.DataFrame(rows).sort_values("created_at").reset_index(drop=True)
+    df["full_build_run"] = (df["is_perturbation_subset"] == False) & df["summary_val_pearson"].notna()  # noqa: E712
+    for rid in df.loc[df["full_build_run"], "run_id"]:
+        full = pull_history(api, KUZMIN2018_PROJECT, rid)
+        epoch_level(full).to_csv(osp.join(RESULTS, f"history_{rid}.csv"), index=False)
+        print(f"froze history for {rid}: {len(full)} rows")
+    df.to_csv(osp.join(RESULTS, "kuzmin2018_runs.csv"), index=False)
+    return df
+
+
 def epoch_level(full: pd.DataFrame) -> pd.DataFrame:
     """One row per validation evaluation, plus the mean train loss over that epoch."""
     v = full.dropna(subset=["val/gene_interaction/Pearson"]).copy()
@@ -283,6 +336,37 @@ def run_cost(hist: pd.DataFrame, meta: pd.Series, samples_per_epoch: float) -> d
         "total_gpu_hours": float(v["_runtime"].max()) / 3600 * int(meta["devices"]),
         "final_val_pearson": float(v["val/gene_interaction/Pearson"].iloc[-1]),
     }
+
+
+def data_effect_table(k2018: pd.DataFrame, runs: pd.DataFrame, hist: dict[str, pd.DataFrame]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Best validation Pearson (maximum over epochs) per DCell run on each build, and the
+    per-build statistic: n, mean, SD, SEM (NaN when n = 1), run ids, epochs logged."""
+    per_run = []
+    for _, r in k2018[k2018["full_build_run"]].iterrows():
+        v = hist[r["run_id"]]
+        best = v.loc[v["val/gene_interaction/Pearson"].idxmax()]
+        per_run.append({"build": "005", "run_id": r["run_id"], "best_val_pearson": float(best["val/gene_interaction/Pearson"]),
+                        "best_epoch": int(best["epoch"]), "epochs_logged": int(v["epoch"].max()) + 1,
+                        "batch_size_per_gpu": int(r["batch_size_per_gpu"]), "devices": int(r["devices"]),
+                        "precision": r["precision"], "use_auxiliary_losses": bool(r["use_auxiliary_losses"])})
+    for rid in ["eni948by"]:  # the single full run on the 006 build (job 1921740 stopped at 10 epochs: partial)
+        r = runs[runs["run_id"] == rid].iloc[0]
+        v = hist[rid]
+        best = v.loc[v["val/gene_interaction/Pearson"].idxmax()]
+        per_run.append({"build": "006", "run_id": rid, "best_val_pearson": float(best["val/gene_interaction/Pearson"]),
+                        "best_epoch": int(best["epoch"]), "epochs_logged": int(v["epoch"].max()) + 1,
+                        "batch_size_per_gpu": int(r["batch_size_per_gpu"]), "devices": int(r["devices"]),
+                        "precision": r["precision"], "use_auxiliary_losses": bool(r["use_auxiliary_losses"])})
+    per_run = pd.DataFrame(per_run)
+    records = {"005": int(pd.read_csv(SPLIT_005_CSV)["records"].item()), "006": BUILD_RECORDS["006"]}
+    rows = []
+    for build, x in per_run.groupby("build", sort=True):
+        vals = x["best_val_pearson"]
+        sd = vals.std(ddof=1) if len(vals) > 1 else np.nan
+        rows.append({"build": build, "records": records[build], "n": len(vals), "mean": vals.mean(), "sd": sd,
+                     "sem": sd / np.sqrt(len(vals)) if len(vals) > 1 else np.nan, "min": vals.min(), "max": vals.max(),
+                     "run_ids": ";".join(x["run_id"]), "best_epochs": ";".join(map(str, x["best_epoch"]))})
+    return per_run, pd.DataFrame(rows)
 
 
 def checkpoint_table(hist: pd.DataFrame) -> pd.DataFrame:
@@ -460,8 +544,8 @@ def panel_loss(hist: pd.DataFrame, full: pd.DataFrame, ck: pd.DataFrame):
 
 def panel_cost(cost: pd.DataFrame):
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
-    fig, axes = plt.subplots(1, 2, figsize=(w, mm_to_in(52)))
-    fig.subplots_adjust(left=0.14, right=0.98, bottom=0.17, top=0.9, wspace=0.55)
+    fig, axes = plt.subplots(1, 2, figsize=(w, mm_to_in(50)))
+    fig.subplots_adjust(left=0.14, right=0.98, bottom=0.18, top=0.9, wspace=0.55)
     order = ["DCell", "DANGO", "CGT"]
     labels = {"DCell": "DCell", "DANGO": "DANGO", "CGT": "TorchCell\n(CGT)"}
     for ax, col, ylab in [
@@ -487,42 +571,114 @@ def panel_cost(cost: pd.DataFrame):
     save(fig, "dcell_training_cost")
 
 
+# Panel d: what each speed-up stage changed relative to the one before it (3-5 words).
+# Stages 1-5 are cumulative (each keeps every earlier change); 6-9 are reruns or variants
+# of stage 5 (same code and precision, one setting changed). Values come from
+# speedup_stages.csv unchanged.
+STAGE_CHANGE = {
+    "Before Duplicate Forward": "forward pass run twice",
+    "After Removing Duplicate Forward": "duplicate forward removed",
+    "After Caching GO Strata": "GO strata tensors cached",
+    "16-Mixed Precision": "fp16 mixed precision",
+    "BF16-Mixed Precision": "bf16 mixed precision",
+    "BF16-Mixed Precision Regress": "stage 5 rerun, later day",
+    "BF16-Mixed Precison - 12 workers": "stage 5, 12 loader workers",
+    "BF16-Mixed Precison - 8 Workers - Compile - batch size 500": "stage 5 + torch.compile",
+    "BF16-Mixed Precison - 8 Workers - Compile - batch size 600": "stage 5 + torch.compile",
+}
+
+
 def panel_stages(st: pd.DataFrame):
+    """Panel d as an explanatory table: left, stage number, what changed, batch per GPU and
+    the resulting samples per second; right, seconds per optimizer step as bars on the same
+    rows. Down-arrows link the cumulative stages 1 -> 5; a bracket groups 6-9 as variants
+    of stage 5."""
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
-    fig, ax = plt.subplots(figsize=(w, mm_to_in(52)))
-    fig.subplots_adjust(left=0.56, right=0.97, bottom=0.17, top=0.95)
-    # Numbered stages; every label is the COMPLETE configuration of that run (stages 6-9
-    # keep stage 5's code and precision and change one thing). Spelled out in the caption.
-    stage_label = {
-        "Before Duplicate Forward": "1: fp32, duplicate forward",
-        "After Removing Duplicate Forward": "2: fp32, single forward",
-        "After Caching GO Strata": "3: fp32, single forward, cached strata",
-        "16-Mixed Precision": "4: fp16-mixed, single forward, cached strata",
-        "BF16-Mixed Precision": "5: bf16-mixed, single forward, cached strata",
-        "BF16-Mixed Precision Regress": "6: stage 5, rerun on a later day",
-        "BF16-Mixed Precison - 12 workers": "7: stage 5 with 12 loader workers",
-        "BF16-Mixed Precison - 8 Workers - Compile - batch size 500": "8: stage 5 with torch.compile, batch 500",
-        "BF16-Mixed Precison - 8 Workers - Compile - batch size 600": "9: stage 5 with torch.compile, batch 600",
-    }
-    y = np.arange(len(st))[::-1]
-    ax.barh(y, st["samples_per_s"], color=PURPLE, edgecolor="black", lw=0.5, height=0.65, zorder=3)
-    for yi, (_, r) in zip(y, st.iterrows()):
-        ax.text(r["samples_per_s"] * 1.08, yi, f"{r['s_per_step']:.0f} s/step", va="center", fontsize=6)
-    ax.set_yticks(y)
-    ax.set_yticklabels([stage_label[s] for s in st["stage"]])
-    ax.set_xscale("log")
-    ax.set_xlim(3, 300)
-    ax.set_xlabel("Training samples per second (4 GPUs)")
-    ax.grid(axis="x", color="#D0D0D0", lw=0.4, which="major")
+    fig = plt.figure(figsize=(w, mm_to_in(50)))
+    n = len(st)
+    rows = np.arange(n)[::-1]  # stage 1 at the top
+    ylim = (-0.6, n - 0.4)
+    # Two axes on one row grid: the text table (no frame) and the bar chart (boxed).
+    tab = fig.add_axes([0.0, 0.16, 0.63, 0.64])
+    bars = fig.add_axes([0.64, 0.16, 0.33, 0.64])
+    tab.set_xlim(0, 1)
+    tab.set_ylim(*ylim)
+    tab.axis("off")
+    X_LABEL, X_ARROW, X_NUM, X_CHANGE, X_BATCH, X_RATE = 0.03, 0.075, 0.12, 0.21, 0.75, 1.0
+    hdr_y = n - 0.4 + 0.25
+    for x, txt, ha in [(X_NUM, "Stage", "center"), (X_CHANGE, "What changed", "left"),
+                       (X_BATCH, "Batch\nper GPU", "center"), (X_RATE, "Samples\nper s", "right")]:
+        tab.text(x, hdr_y, txt, ha=ha, va="bottom", fontsize=6, fontweight="bold", clip_on=False, linespacing=1.1)
+    for yi, (_, r) in zip(rows, st.iterrows()):
+        tab.text(X_NUM, yi, f"{n - yi}", ha="center", va="center", fontsize=6)
+        tab.text(X_CHANGE, yi, STAGE_CHANGE[r["stage"]], ha="left", va="center", fontsize=6)
+        tab.text(X_BATCH, yi, f"{int(r['batch_size_per_gpu'])}", ha="center", va="center", fontsize=6)
+        tab.text(X_RATE, yi, f"{r['samples_per_s']:.0f}", ha="right", va="center", fontsize=6)
+    # Cumulative chain 1 -> 5: a down-arrow between consecutive rows, left of the numbers.
+    for k in range(4):
+        y_from, y_to = rows[k] - 0.3, rows[k + 1] + 0.3
+        tab.annotate("", xy=(X_ARROW, y_to), xytext=(X_ARROW, y_from),
+                     arrowprops=dict(arrowstyle="-|>", color="black", lw=0.6, mutation_scale=5, shrinkA=0, shrinkB=0))
+    tab.text(X_LABEL, (rows[0] + rows[4]) / 2, "cumulative", rotation=90, ha="center", va="center", fontsize=6)
+    # Variants of stage 5: a bracket spanning rows 6-9.
+    y_top, y_bot = rows[5] + 0.35, rows[8] - 0.35
+    tab.plot([X_ARROW + 0.015, X_ARROW, X_ARROW, X_ARROW + 0.015], [y_top, y_top, y_bot, y_bot], color="black", lw=0.6, clip_on=False)
+    tab.text(X_LABEL, (y_top + y_bot) / 2, "variants of 5", rotation=90, ha="center", va="center", fontsize=6)
+    tab.axhline(rows[4] - 0.5, xmin=0.0, xmax=1.0, color="#B0B0B0", lw=0.4)
+
+    bars.barh(rows, st["s_per_step"], color=PURPLE, edgecolor="black", lw=0.5, height=0.65, zorder=3)
+    for yi, (_, r) in zip(rows, st.iterrows()):
+        bars.text(r["s_per_step"] + 3, yi, f"{r['s_per_step']:.0f}", va="center", ha="left", fontsize=6)
+    bars.set_ylim(*ylim)
+    bars.set_yticks([])
+    bars.set_xlim(0, 160)
+    bars.xaxis.set_major_locator(MultipleLocator(50))
+    bars.set_xlabel("Seconds per optimizer step")
+    bars.grid(axis="x", color="#D0D0D0", lw=0.4)
+    bars.set_axisbelow(True)
+    bars.axhline(rows[4] - 0.5, color="#B0B0B0", lw=0.4, zorder=2)
+    box(bars)
+    save(fig, "dcell_training_stages")
+
+
+def panel_data_effect(per_run: pd.DataFrame, effect: pd.DataFrame):
+    """Best validation Pearson (maximum over epochs) of DCell on the Kuzmin 2018-only build
+    against the experiment-006 build: bar = mean over runs, whisker = SEM where n > 1, open
+    circles = runs. Both builds have one run, so no whisker is drawn."""
+    w = mm_to_in(PANEL_WIDTHS_MM["half"])
+    fig, ax = plt.subplots(figsize=(w, mm_to_in(48)))
+    fig.subplots_adjust(left=0.16, right=0.97, bottom=0.2, top=0.95)
+    builds = ["005", "006"]
+    for i, b in enumerate(builds):
+        row = effect[effect["build"] == b].iloc[0]
+        ax.bar(i, row["mean"], 0.55, color=PURPLE, edgecolor="black", linewidth=0.5, zorder=3)
+        if row["n"] > 1:
+            ax.errorbar(i, row["mean"], yerr=row["sem"], fmt="none", ecolor="black", elinewidth=0.6, capsize=1.5, capthick=0.6, zorder=4)
+        vals = per_run[per_run["build"] == b]
+        ax.scatter([i] * len(vals), vals["best_val_pearson"], s=9, facecolor="white", edgecolor="black", linewidth=0.5, zorder=5)
+        ax.text(i, row["max"] + 0.012, f"{row['mean']:.3f}\n(n = {int(row['n'])}, epoch {row['best_epochs']})",
+                ha="center", va="bottom", fontsize=6)
+    ax.set_xticks(range(len(builds)))
+    ax.set_xticklabels([f"{BUILD_LABEL[b]}\n{int(effect[effect['build'] == b]['records'].iloc[0]):,} records" for b in builds])
+    ax.set_xlim(-0.6, len(builds) - 0.4)
+    ax.set_xlabel("Trigenic dataset build")
+    ax.set_ylabel("Best validation Pearson r")
+    ax.set_ylim(0, 0.35)
+    ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(which="minor", length=0)
+    ax.grid(axis="y", which="both", color="#D0D0D0", lw=0.4)
     ax.set_axisbelow(True)
     box(ax)
-    save(fig, "dcell_training_stages")
+    save(fig, "dcell_training_data_effect")
 
 
 # ----------------------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--from-csv", action="store_true", help="re-render from the frozen CSVs, no wandb access")
+    g = ap.add_mutually_exclusive_group()
+    g.add_argument("--from-csv", action="store_true", help="re-render from the frozen CSVs, no wandb access")
+    g.add_argument("--pull-kuzmin2018", action="store_true", help="re-pull only the 005 DCell project, then render")
     args = ap.parse_args()
     os.makedirs(RESULTS, exist_ok=True)
 
@@ -530,19 +686,24 @@ def main():
         import wandb
 
         api = wandb.Api()
-        runs = pull_runs(api)
-        runs.to_csv(osp.join(RESULTS, "runs.csv"), index=False)
-        for rid in HISTORY_RUNS:
-            project = runs.loc[runs["run_id"] == rid, "project"].iloc[0]
-            full = pull_history(api, project, rid)
-            if rid == "eni948by":
-                full.to_csv(osp.join(RESULTS, "history_full_eni948by.csv"), index=False)
-            epoch_level(full).to_csv(osp.join(RESULTS, f"history_{rid}.csv"), index=False)
-            print(f"froze history for {rid}: {len(full)} rows")
-        parse_speedup_note(SPEEDUP_NOTE).to_csv(osp.join(RESULTS, "speedup_stages.csv"), index=False)
+        if not args.pull_kuzmin2018:
+            runs = pull_runs(api)
+            runs.to_csv(osp.join(RESULTS, "runs.csv"), index=False)
+            for rid in HISTORY_RUNS:
+                project = runs.loc[runs["run_id"] == rid, "project"].iloc[0]
+                full = pull_history(api, project, rid)
+                if rid == "eni948by":
+                    full.to_csv(osp.join(RESULTS, "history_full_eni948by.csv"), index=False)
+                epoch_level(full).to_csv(osp.join(RESULTS, f"history_{rid}.csv"), index=False)
+                print(f"froze history for {rid}: {len(full)} rows")
+            parse_speedup_note(SPEEDUP_NOTE).to_csv(osp.join(RESULTS, "speedup_stages.csv"), index=False)
+        pull_kuzmin2018_runs(api)
 
     runs = pd.read_csv(osp.join(RESULTS, "runs.csv"), dtype={"dataset_build": str})
+    k2018 = pd.read_csv(osp.join(RESULTS, "kuzmin2018_runs.csv"))
     hist = {rid: pd.read_csv(osp.join(RESULTS, f"history_{rid}.csv")) for rid in HISTORY_RUNS}
+    for rid in k2018.loc[k2018["full_build_run"], "run_id"]:
+        hist[rid] = pd.read_csv(osp.join(RESULTS, f"history_{rid}.csv"))
     full = pd.read_csv(osp.join(RESULTS, "history_full_eni948by.csv"))
     stages = pd.read_csv(osp.join(RESULTS, "speedup_stages.csv"))
 
@@ -565,6 +726,10 @@ def main():
           f"SD {vals.std(ddof=1):.4f}, SEM {vals.std(ddof=1)/np.sqrt(len(vals)):.4f}")
     print(cost.to_string())
     print(stages.to_string())
+    per_run, effect = data_effect_table(k2018, runs, hist)
+    per_run.to_csv(osp.join(RESULTS, "data_effect_runs.csv"), index=False)
+    effect.to_csv(osp.join(RESULTS, "data_effect.csv"), index=False)
+    print(effect.to_string())
 
     dcell_cost = cost[cost["run_id"] == "eni948by"].iloc[0].to_dict()
     h = hist["eni948by"].sort_values("epoch").reset_index(drop=True)
@@ -576,6 +741,7 @@ def main():
     panel_loss(hist["eni948by"], full, ck)
     panel_cost(cost)
     panel_stages(stages)
+    panel_data_effect(per_run, effect)
 
 
 if __name__ == "__main__":

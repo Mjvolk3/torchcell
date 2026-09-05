@@ -1,0 +1,4 @@
+record_index,n_records,dataset_name,gene,perturbed_gene_name,perturbation_type,n_terms,gene_interaction,gene_interaction_p_value,rule
+4,91050,TmiKuzmin2018Dataset,YKL191W,dph2_delta,deletion,5,-0.004208,0.3505,"first record (ascending LMDB key) with three deletions, each gene 5-12 direct annotations"
+4,91050,TmiKuzmin2018Dataset,YLR172C,dph5_delta,deletion,5,-0.004208,0.3505,"first record (ascending LMDB key) with three deletions, each gene 5-12 direct annotations"
+4,91050,TmiKuzmin2018Dataset,YNL051W,cog5_delta,deletion,9,-0.004208,0.3505,"first record (ascending LMDB key) with three deletions, each gene 5-12 direct annotations"

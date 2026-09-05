@@ -1,0 +1,2 @@
+graph,label,nodes,uncovered,node_coverage,edges_pairs,mean_degree,density_vocab
+union,Union (all nine),6562,45,0.9931890419252308,1514071,461.46632124352334,0.0693798506625213

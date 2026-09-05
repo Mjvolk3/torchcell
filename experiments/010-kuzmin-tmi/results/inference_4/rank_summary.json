@@ -54,5 +54,30 @@
   "top_gene": "YPL181W",
   "top_gene_share_of_head": 0.242,
   "share_of_head_covered_by_top6_genes": 0.764,
-  "n_roster_genes": 934
+  "n_roster_genes": 934,
+  "head_gene_roles": {
+    "metabolic": 46,
+    "regulator": 32,
+    "both": 1
+  },
+  "roster_gene_roles": {
+    "metabolic": 661,
+    "regulator": 258,
+    "both": 15
+  },
+  "metabolic_composition_of_top500": {
+    "2": 352,
+    "1": 148
+  },
+  "metabolic_composition_of_space": {
+    "2": 29797689,
+    "1": 12079543
+  },
+  "consensus_counts": {
+    "0.08": 2906,
+    "0.12": 831,
+    "0.16": 432,
+    "0.2": 272,
+    "0.3": 152
+  }
 }

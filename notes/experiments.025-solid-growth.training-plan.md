@@ -323,3 +323,33 @@ widen the constrained band from one layer to four while keeping half the depth f
   weights and lets the fused SDPA kernel run, so the `[batch, 9, 6608, 6608]` score
   matrix is never formed. 019 measured 1.5-1.7x faster per epoch from this; the ACCURACY
   of mask against KL is unmeasured, which is what `cgt_s0_r_mask_001` is for.
+
+## 2026.09.05 - First Launch OOM-Killed at Worker Spawn
+
+Job 1597 (`cgt_s0_r_kl_000`, 4 GPUs, `--mem=250g`) was OOM-killed after 4 m 56 s. All
+four ranks had built the dataset and realized the split correctly
+(`train=301386 val=37673 test=37673` on every rank) and the sanity check passed; it died
+starting the training dataloader, surfacing as `_pickle.UnpicklingError: pickle data was
+truncated` inside `spawn_main` when the killer took a process mid-transfer.
+
+**Cause, measured.** DataLoader workers are spawned, so each receives the whole dataset
+object as a pickle. On this build that pickle is 0.65 GB, of which 0.62 GB is six
+lazily-loaded caches: `_label_df` 0.30, `_phenotype_label_index` 0.13,
+`_dataset_name_index` 0.13, `_perturbation_count_index` 0.06, and the two `_is_any_*`
+indices unset. Four ranks at 14 workers is 56 copies, and the unpickled objects are
+larger than the wire format. 010 never hit this because its build was 376,732 records
+rather than 13,525,071.
+
+**Fix.** `Neo4jCellDataset.__getstate__` now drops those six alongside the LMDB env,
+taking the worker pickle to **0.04 GB**. Nothing in `get()` reads them: an item needs the
+LMDB record, `cell_graph`, and `phenotype_info`. They are consumed once, in the parent,
+by `CellDataModule._compute_and_save_index` at datamodule construction. The index
+properties also re-read their JSON on every access rather than returning the cached
+attribute, so these fields were not serving as caches on the read path to begin with.
+
+The parent keeps them: `__getstate__` copies `__dict__` before clearing, which is
+asserted in `tests/torchcell/data/test_neo4j_cell.py` because clearing in place would
+work once and then strip the process that actually uses them.
+
+`--mem` stays at 250 g. Measured need after the fix is roughly 50 GB (4 ranks at 5.6 GB
+plus 56 worker interpreters), so the allocation is not the thing that was marginal.

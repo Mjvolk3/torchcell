@@ -1027,12 +1027,48 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         self._write_json_with_lock(cache_path, result)
         return result
 
+    #: Lazily-loaded caches dropped when the dataset is pickled to a worker. Each is
+    #: rebuilt on access from ``processed/`` by its own property, so a worker that
+    #: touches one still gets the right answer, just not for free.
+    _WORKER_DROPPED_CACHES = (
+        "_phenotype_label_index",
+        "_dataset_name_index",
+        "_perturbation_count_index",
+        "_is_any_perturbed_gene_index",
+        "_is_any_deletion_gene_index_cache",
+        "_label_df",
+    )
+
     # HACK
     def __getstate__(self) -> dict[str, Any]:
-        """Return picklable state, excluding the open LMDB environment."""
+        """Return picklable state, excluding the LMDB env and the bulk index caches.
+
+        A spawned DataLoader worker receives this pickle whole, and on a large build the
+        caches ARE the pickle. MEASURED on the 13.5M-record 025 build: 0.65 GB pickled, of
+        which 0.62 GB is the six attributes below (label_df 0.30, phenotype_label_index
+        0.13, dataset_name_index 0.13, perturbation_count_index 0.06). Dropping them takes
+        the pickle to 0.04 GB.
+
+        That difference decides whether a run starts. Four DDP ranks at 14 workers each is
+        56 copies, and the unpickled objects are larger than the wire format, so job 1597
+        was OOM-killed on a 250 GB allocation during worker spawn, surfacing as
+        `_pickle.UnpicklingError: pickle data was truncated` inside `spawn_main` when the
+        killer took a process mid-transfer.
+
+        Nothing in `get()` reads any of them: an item needs the LMDB record, `cell_graph`,
+        and `phenotype_info`. They are consumed once, in the parent, by
+        `CellDataModule._compute_and_save_index`, which runs at datamodule construction
+        and writes its result to the split cache long before a loader exists. Note also
+        that the index properties re-read their JSON on EVERY access rather than returning
+        the cached attribute, so these fields were already not serving as caches on the
+        read path.
+        """
         state = self.__dict__.copy()
         # Remove the unpicklable lmdb environment.
         state["env"] = None
+        for name in self._WORKER_DROPPED_CACHES:
+            if name in state:
+                state[name] = None
         return state
 
     def __setstate__(self, state: dict[str, Any]) -> None:

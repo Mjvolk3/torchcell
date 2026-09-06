@@ -17,7 +17,9 @@ distributional facts the note states, (2) loads the same yeast-GEM 9.0.2 SBML th
 default ``model.medium``, which the run never modified) and to verify that the wild-type
 growth rate matches the frozen ``wt_growth.csv``, (3) writes the frozen inputs of the note
 to ``results/fba_baseline_si/`` (``stats.json``, ``yeast9_default_medium.csv``,
-``triples_matched.parquet``, ``growth_bands.csv``, ``coverage.csv``), (4) writes
+``triples_matched.parquet``, ``growth_bands.csv``, ``coverage.csv``,
+``measured_landscape.csv``, the last from the MEASURED tau and P-value of the raw Kuzmin 2018
+Data S1 table by the paper's |tau| > 0.08, P < 0.05 convention), (4) writes
 ``paper/nature-biotech/sections/tab-fba-medium.tex``, and (5) draws the data panels of
 ``FigS-yeast9-fba`` as true-size SVGs (plus PNG fallbacks) into
 ``ASSET_IMAGES_DIR/007-kuzmin-tm/``. ``fba_baseline_compose_figure.py`` (this folder) then
@@ -98,6 +100,16 @@ ORANGE_F, RED_F, PURPLE_F, YELLOW_F = PLOT_PALETTE_FILL[:4]
 LETHAL = 0.01
 WT_LIKE = 1e-3
 TAU_ZERO = 1e-3
+# Kuzmin 2018's "intermediate score cutoff" for a significant interaction.
+SIG_TAU = 0.08
+SIG_P = 0.05
+RAW_ZIP = osp.join(REPO_ROOT, "data", "host", "kuzmin2018", "aao1729_data_s1.zip")
+#: Kuzmin 2020 Table S1 (the main screens) and Table S3 (the pilot screens); the
+#: TmiKuzmin2020Dataset loader ingests both.
+RAW_2020_XLSX = [
+    osp.join(os.getenv("DATA_ROOT"), "data", "torchcell", "tmi_kuzmin2020", "raw", f"aaz5667-Table-{t}.xlsx")
+    for t in ("S1", "S3")
+]
 
 
 def box(ax):
@@ -224,6 +236,102 @@ def consistency(model_genes, singles, doubles, triples) -> dict:
     }
 
 
+def raw_labels() -> tuple[pd.DataFrame, dict]:
+    """The measured labels of every triple, keyed by its sorted gene set, from the raw tables.
+
+    The triples of the build are the trigenic records of Kuzmin 2018 and Kuzmin 2020 (the
+    query ``queries/001_small_build.cql`` unions ``TmiKuzmin2018Dataset`` and
+    ``TmiKuzmin2020Dataset``). The raw tables the loaders ingest are Kuzmin 2018 Data S1
+    (``data/host/kuzmin2018/aao1729_data_s1.zip``) and Kuzmin 2020 Tables S1 and S3 (main and
+    pilot screens, ``$DATA_ROOT/data/torchcell/tmi_kuzmin2020/raw/aaz5667-Table-S{1,3}.xlsx``),
+    all in the same 12-column layout; the ``trigenic`` rows are used. Per gene set: the mean
+    adjusted interaction score (tau) and the mean triple-mutant fitness over its records,
+    which is what ``MeanExperimentDeduplicator`` produces for a duplicated genotype, and the
+    smallest P-value. These raw-derived labels are the ones used for every correlation and
+    classification, because the ``experimental`` column of the frozen
+    ``matched_fba_experimental_fixed.parquet`` is misaligned with its gene sets (see
+    ``correlations``). The parquet cache in ``results/fba_baseline_si/`` is rebuilt when
+    absent; the raw files' sha256 are recorded either way.
+    """
+    import hashlib
+    import zipfile
+
+    def sha256(path):
+        with open(path, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+
+    cache = osp.join(OUT, "raw_trigenic_labels.parquet")
+    if osp.exists(cache):
+        grp = pd.read_parquet(cache)
+    else:
+        with zipfile.ZipFile(RAW_ZIP) as z:
+            with z.open("aao1729_data_s1.tsv") as f:
+                raw18 = pd.read_csv(f, sep="\t")
+        raw18 = raw18.rename(columns={"Combined mutant fitness": "fitness"})
+        raw20 = pd.concat([pd.read_excel(p, skiprows=1) for p in RAW_2020_XLSX], ignore_index=True)
+        raw20 = raw20.rename(columns={"Double/triple mutant fitness": "fitness"})
+        raw18["source"] = "kuzmin2018"
+        raw20["source"] = "kuzmin2020"
+        raw = pd.concat([raw18, raw20], ignore_index=True)
+        raw = raw[raw["Combined mutant type"] == "trigenic"].copy()
+        q = raw["Query strain ID"].str.split("+", expand=True)
+        q1 = q[0]
+        q2 = q[1].str.split("_", expand=True)[0]
+        arr = raw["Array strain ID"].str.split("_", expand=True)[0]
+        raw["genes"] = [",".join(sorted(t)) for t in zip(q1, q2, arr)]
+        grp = raw.groupby("genes").agg(
+            n_raw_records=("P-value", "size"),
+            p_min=("P-value", "min"),
+            tau_measured=("Adjusted genetic interaction score (epsilon or tau)", "mean"),
+            fitness_measured=("fitness", "mean"),
+            in_kuzmin2018=("source", lambda s: bool((s == "kuzmin2018").any())),
+            in_kuzmin2020=("source", lambda s: bool((s == "kuzmin2020").any())),
+        ).reset_index()
+        grp.to_parquet(cache, index=False)
+    meta = {
+        "raw_kuzmin2018": osp.relpath(RAW_ZIP, REPO_ROOT),
+        "raw_kuzmin2018_sha256": sha256(RAW_ZIP),
+        "raw_kuzmin2020": [osp.relpath(p, os.getenv("DATA_ROOT")) for p in RAW_2020_XLSX],
+        "raw_kuzmin2020_sha256": [sha256(p) for p in RAW_2020_XLSX],
+        "n_raw_trigenic_gene_sets": int(len(grp)),
+    }
+    return grp, meta
+
+
+def measured_landscape(frozen: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """Classify the MEASURED tau of every triple by the Kuzmin 2018 convention, split by how
+    many of the triple's genes Yeast9 carries.
+
+    Significant: |tau| > 0.08 and P < 0.05 (Kuzmin 2018, "intermediate score cutoff"), on
+    the raw-derived labels of ``raw_labels``. "Not significant" holds everything else,
+    including |tau| > 0.08 at P >= 0.05.
+    """
+    df = frozen
+    sig = (df.tau_measured.abs() > SIG_TAU) & (df.p_min < SIG_P)
+    df["class"] = np.where(sig & (df.tau_measured < 0), "sig_negative", np.where(sig, "sig_positive", "not_significant"))
+    df["coverage"] = pd.cut(df.n_in_model, [-1, 0, 2, 3], labels=["uncovered", "partial", "full"]).astype(str)
+    rows = []
+    for cov_key, label in [("full", "All 3 genes"), ("partial", "1 or 2 genes"), ("uncovered", "No gene")]:
+        sub = df[df.coverage == cov_key]
+        row = {"coverage": cov_key, "coverage_label": label, "n": int(len(sub))}
+        for c in ("sig_negative", "not_significant", "sig_positive"):
+            row[f"n_{c}"] = int((sub["class"] == c).sum())
+            row[f"frac_{c}"] = float((sub["class"] == c).mean())
+        row["n_abs_tau_above_0.08"] = int((sub.tau_measured.abs() > SIG_TAU).sum())
+        row["n_p_below_0.05"] = int((sub.p_min < SIG_P).sum())
+        rows.append(row)
+    land = pd.DataFrame(rows)
+    meta = {
+        "n_triples_in_kuzmin2018": int(df.in_kuzmin2018.sum()),
+        "n_triples_in_kuzmin2020": int(df.in_kuzmin2020.sum()),
+        "n_triples_in_both": int((df.in_kuzmin2018 & df.in_kuzmin2020).sum()),
+        "n_triples_with_duplicate_records": int((df.n_raw_records > 1).sum()),
+        "sig_tau": SIG_TAU,
+        "sig_p": SIG_P,
+    }
+    return land, meta, df[["genes", "class", "coverage"]]
+
+
 def growth_bands(singles, doubles, triples) -> pd.DataFrame:
     rows = []
     for order, df in [("single", singles), ("double", doubles), ("triple", triples)]:
@@ -247,52 +355,78 @@ def growth_bands(singles, doubles, triples) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def correlations(matched) -> dict:
+def correlations(frozen: pd.DataFrame) -> dict:
+    """Predicted against measured, on the raw-derived labels, plus the same statistics on
+    the labels as stored in the frozen matched file, and the evidence that the stored labels
+    are a permutation of the true ones.
+
+    The stored ``experimental`` column was written by ``match_fba_to_experiments.py``, which
+    paired ``dataset[i]``'s gene set with ``dataset.label_df.iloc[i]``; the two orders do not
+    agree. Measured here: the sorted stored values and the sorted raw-derived values coincide
+    (a permutation), while row by row they agree for about 1% of triples.
+    """
     out = {}
-    for pt, key in [("gene_interaction", "tau"), ("fitness", "fitness")]:
-        sub = matched[matched.phenotype_type == pt].dropna(subset=["experimental", "fba_predicted"])
-        r, p = stats.pearsonr(sub.fba_predicted, sub.experimental)
-        rho, _ = stats.spearmanr(sub.fba_predicted, sub.experimental)
+    for key, pred, meas, stored in [
+        ("tau", "tau_fba", "tau_measured", "tau_stored"),
+        ("fitness", "fitness_fba", "fitness_measured", "fitness_stored"),
+    ]:
+        sub = frozen.dropna(subset=[pred, meas])
+        r, p = stats.pearsonr(sub[pred], sub[meas])
+        rho, _ = stats.spearmanr(sub[pred], sub[meas])
+        st = frozen.dropna(subset=[pred, stored])
+        r_st, _ = stats.pearsonr(st[pred], st[stored])
+        both = frozen.dropna(subset=[meas, stored])
+        a = np.sort(both[meas].to_numpy())
+        b = np.sort(both[stored].to_numpy())
         out[key] = {
             "n": int(len(sub)),
-            "n_total_rows": int((matched.phenotype_type == pt).sum()),
             "pearson_r": float(r),
             "pearson_p": float(p),
             "spearman_rho": float(rho),
-            "pred_mean": float(sub.fba_predicted.mean()),
-            "pred_sd": float(sub.fba_predicted.std(ddof=1)),
-            "exp_mean": float(sub.experimental.mean()),
-            "exp_sd": float(sub.experimental.std(ddof=1)),
+            "pred_mean": float(sub[pred].mean()),
+            "pred_sd": float(sub[pred].std(ddof=1)),
+            "meas_mean": float(sub[meas].mean()),
+            "meas_sd": float(sub[meas].std(ddof=1)),
+            "as_stored": {
+                "n": int(len(st)),
+                "pearson_r": float(r_st),
+                "n_stored_and_raw": int(len(both)),
+                "frac_rows_stored_equals_raw_1e-3": float((np.abs(both[meas] - both[stored]) < 1e-3).mean()),
+                "frac_sorted_stored_equals_sorted_raw_1e-3": float((np.abs(a - b) < 1e-3).mean()),
+                "pearson_r_stored_vs_raw_rowwise": float(stats.pearsonr(both[meas], both[stored])[0]),
+            },
         }
-    fi = matched[matched.phenotype_type == "fitness"]
-    fvc = pd.Series(np.round(fi.fba_predicted.to_numpy(), 3)).value_counts()
+    fvc = pd.Series(np.round(frozen.fitness_fba.to_numpy(), 3)).value_counts()
     out["fitness"]["value_counts_round3"] = {str(k): int(v) for k, v in fvc.head(8).items()}
     out["fitness"]["n_distinct_round3"] = int(len(fvc))
-    gi = matched[matched.phenotype_type == "gene_interaction"]
-    tau = gi.fba_predicted.to_numpy()
+    tau = frozen.tau_fba.to_numpy()
     out["tau"]["frac_abs_below_1e-6"] = float((np.abs(tau) < 1e-6).mean())
     out["tau"]["frac_abs_below_1e-3"] = float((np.abs(tau) < TAU_ZERO).mean())
     out["tau"]["n_abs_above_1e-3"] = int((np.abs(tau) > TAU_ZERO).sum())
     nz = pd.Series(np.round(tau[np.abs(tau) > TAU_ZERO], 2)).value_counts()
     out["tau"]["nonzero_value_counts"] = {str(k): int(v) for k, v in nz.head(8).items()}
-    sub = gi[np.abs(gi.fba_predicted) > TAU_ZERO]
-    r_nz, _ = stats.pearsonr(sub.fba_predicted, sub.experimental)
+    sub = frozen[np.abs(frozen.tau_fba) > TAU_ZERO]
+    r_nz, _ = stats.pearsonr(sub.tau_fba, sub.tau_measured)
     out["tau"]["pearson_r_nonzero_only"] = float(r_nz)
     out["tau"]["n_nonzero_only"] = int(len(sub))
+    # Fitness correlation within the triples the model can act on at all.
+    cov = frozen[frozen.n_in_model > 0]
+    out["fitness"]["pearson_r_triples_with_model_gene"] = float(stats.pearsonr(cov.fitness_fba, cov.fitness_measured)[0])
+    out["fitness"]["n_triples_with_model_gene"] = int(len(cov))
     return out
 
 
 # ----------------------------------------------------------------------------- panels
-def panel_tau(matched, corr):
+def panel_tau(frozen, corr):
     """Predicted vs measured tau as a hexbin with log counts."""
-    gi = matched[matched.phenotype_type == "gene_interaction"]
+    gi = frozen
     w = mm_to_in(PANEL_WIDTHS_MM["third"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(50)))
     fig.subplots_adjust(left=0.2, right=0.82, bottom=0.17, top=0.95)
     cmap = LinearSegmentedColormap.from_list("amber", ["#FFFFFF", ORANGE_F, ORANGE, PLOT_PALETTE[6]])
     hb = ax.hexbin(
-        gi.fba_predicted,
-        gi.experimental,
+        gi.tau_fba,
+        gi.tau_measured,
         gridsize=(36, 24),
         extent=(-2.1, 2.1, -1.15, 1.15),
         norm=LogNorm(vmin=1, vmax=max(1, len(gi))),
@@ -326,16 +460,16 @@ def panel_tau(matched, corr):
     save(fig, "fba_baseline_tau")
 
 
-def panel_fitness(matched, corr):
+def panel_fitness(frozen, corr):
     """Predicted vs measured triple-mutant fitness as a hexbin with log counts."""
-    fi = matched[matched.phenotype_type == "fitness"].dropna(subset=["experimental", "fba_predicted"])
+    fi = frozen.dropna(subset=["fitness_measured", "fitness_fba"])
     w = mm_to_in(PANEL_WIDTHS_MM["third"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(50)))
     fig.subplots_adjust(left=0.2, right=0.82, bottom=0.17, top=0.95)
     cmap = LinearSegmentedColormap.from_list("lilac", ["#FFFFFF", PURPLE_F, PURPLE, PLOT_PALETTE[8]])
     hb = ax.hexbin(
-        fi.fba_predicted,
-        fi.experimental,
+        fi.fitness_fba,
+        fi.fitness_measured,
         gridsize=(30, 24),
         extent=(-0.05, 1.05, -0.05, 1.55),
         norm=LogNorm(vmin=1, vmax=max(1, len(fi))),
@@ -386,26 +520,67 @@ def panel_growth_bands(bands: pd.DataFrame):
     save(fig, "fba_baseline_growth_bands")
 
 
-def panel_coverage(cov: pd.DataFrame):
-    """Triples by how many of their three genes Yeast9 carries, and how many have a nonzero tau."""
+def panel_evaluable(cov: pd.DataFrame, n_in: dict, n_genes: int, n_doubles: int):
+    """How much of the screen Yeast9 can score: genes and doubles with every member in the
+    model, and triples by how many of their three genes are in the model."""
     w = mm_to_in(PANEL_WIDTHS_MM["third"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(50)))
-    fig.subplots_adjust(left=0.2, right=0.97, bottom=0.17, top=0.95)
-    x = cov.n_in_model.to_numpy()
-    ax.bar(x, cov.frac_triples, 0.6, color=PURPLE, edgecolor="black", linewidth=0.4)
-    for xi, f, n, nz in zip(x, cov.frac_triples, cov.n_triples, cov.n_tau_nonzero):
-        ax.text(xi, f + 0.02, f"{n:,}\n$|\\tau|>10^{{-3}}$: {nz:,}", ha="center", va="bottom", fontsize=5)
+    fig.subplots_adjust(left=0.2, right=0.97, bottom=0.24, top=0.95)
+    n_tri = int(cov.n_triples.sum())
+    labels = ["Genes", "Doubles", "0", "1", "2", "3"]
+    counts = [n_in["singles"], n_in["doubles"]] + [int(cov.loc[cov.n_in_model == k, "n_triples"].iloc[0]) for k in range(4)]
+    denoms = [n_genes, n_doubles] + [n_tri] * 4
+    fracs = [c / d for c, d in zip(counts, denoms)]
+    colors = [GRAY, GRAY, PURPLE, PURPLE, PURPLE, PURPLE]
+    x = np.array([0, 1.2, 2.7, 3.7, 4.7, 5.7])
+    ax.bar(x, fracs, 0.7, color=colors, edgecolor="black", linewidth=0.4)
+    for xi, f, c in zip(x, fracs, counts):
+        ax.text(xi, f + 0.02, f"{c:,}", ha="center", va="bottom", fontsize=5, rotation=90)
     ax.set_xticks(x)
-    ax.set_xlabel("Genes of the triple in Yeast9")
-    ax.set_ylabel("Fraction of triples")
-    ax.set_ylim(0, 0.9)
+    ax.set_xticklabels(labels)
+    xlo, xhi = -0.6, 6.3
+    ax.set_xlim(xlo, xhi)
+    xa = lambda v: (v - xlo) / (xhi - xlo)  # data x -> axes fraction
+    ax.text(xa(0.6), -0.17, "all members\nin Yeast9", ha="center", va="top", fontsize=6, transform=ax.transAxes)
+    ax.text(xa(4.2), -0.17, "Triples, by genes\nin Yeast9", ha="center", va="top", fontsize=6, transform=ax.transAxes)
+    ax.set_ylabel("Fraction of the set")
+    ax.set_ylim(0, 1.0)
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(axis="y", which="minor", length=0)
     ax.grid(axis="y", which="both", color="0.85", lw=0.4)
     ax.set_axisbelow(True)
     box(ax)
-    save(fig, "fba_baseline_coverage")
+    save(fig, "fba_baseline_evaluable")
+
+
+def panel_landscape(land: pd.DataFrame):
+    """Measured trigenic interactions of the screen, by how much of the triple Yeast9 covers."""
+    w = mm_to_in(PANEL_WIDTHS_MM["third"])
+    fig, ax = plt.subplots(figsize=(w, mm_to_in(50)))
+    fig.subplots_adjust(left=0.2, right=0.97, bottom=0.24, top=0.95)
+    groups = list(land.coverage)
+    cats = [("sig_negative", "Negative", RED), ("not_significant", "Not significant", GRAY), ("sig_positive", "Positive", ORANGE)]
+    x = np.arange(len(groups))
+    bw = 0.26
+    base = 0.5  # log axis: bars rise from 0.5, so a count of 1 is visible
+    for k, (col, label, color) in enumerate(cats):
+        cnt = land[f"n_{col}"].to_numpy()
+        ax.bar(x + (k - 1) * bw, np.maximum(cnt, base), bw, bottom=base, color=color, edgecolor="black", linewidth=0.4, label=label)
+        for xi, c in zip(x + (k - 1) * bw, cnt):
+            ax.text(xi, max(c, base) * 1.4, f"{c:,}", ha="center", va="bottom", fontsize=5, rotation=90)
+    ax.set_yscale("log")
+    ax.set_ylim(base, 1e9)
+    ax.set_yticks([1, 10, 100, 1e3, 1e4, 1e5, 1e6])
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"{g}\n$n$ = {n:,}" for g, n in zip(land.coverage_label, land.n)])
+    ax.set_ylabel("Triples")
+    ax.grid(axis="y", which="major", color="0.85", lw=0.4)
+    ax.set_axisbelow(True)
+    ax.legend(loc="upper center", frameon=False, ncol=3, columnspacing=0.6, handlelength=0.8, handletextpad=0.3,
+              handleheight=0.8, borderaxespad=0.2, title=r"Measured $\tau_{ijk}$: $|\tau|>0.08$ and $P<0.05$", title_fontsize=6)
+    box(ax)
+    save(fig, "fba_baseline_landscape")
 
 
 # ----------------------------------------------------------------------------- tables
@@ -482,18 +657,30 @@ def main():
     cov.to_csv(osp.join(OUT, "coverage.csv"), index=False)
     bands = growth_bands(singles, doubles, triples)
     bands.to_csv(osp.join(OUT, "growth_bands.csv"), index=False)
-    corr = correlations(matched)
     consist = consistency(model_genes, singles, doubles, triples)
 
-    # Frozen per-triple table: measured and predicted fitness and tau, model coverage.
+    # Frozen per-triple table: predicted tau and fitness (from the run), the stored labels
+    # of the matched file, the raw-derived labels, and model coverage.
     gi = matched[matched.phenotype_type == "gene_interaction"][["genes", "experimental", "fba_predicted"]]
-    gi = gi.rename(columns={"experimental": "tau_measured", "fba_predicted": "tau_fba"})
+    gi = gi.rename(columns={"experimental": "tau_stored", "fba_predicted": "tau_fba"})
     fi = matched[matched.phenotype_type == "fitness"][["genes", "experimental", "fba_predicted"]]
-    fi = fi.rename(columns={"experimental": "fitness_measured", "fba_predicted": "fitness_fba"})
+    fi = fi.rename(columns={"experimental": "fitness_stored", "fba_predicted": "fitness_fba"})
     tri["genes"] = tri.gene1 + "," + tri.gene2 + "," + tri.gene3
-    frozen = gi.merge(fi, on="genes", how="left").merge(tri[["genes", "n_in_model"]], on="genes", how="left")
+    labels, raw_meta = raw_labels()
+    frozen = (
+        gi.merge(fi, on="genes", how="left")
+        .merge(tri[["genes", "n_in_model"]], on="genes", how="left")
+        .merge(labels, on="genes", how="left")
+    )
     assert len(frozen) == len(gi) == meta["n_triples"], (len(frozen), len(gi), meta["n_triples"])
+    n_unmatched = int(frozen.p_min.isna().sum())
+    assert n_unmatched == 0, f"{n_unmatched} triples have no raw record in Kuzmin 2018 or 2020"
+    corr = correlations(frozen)
+    land, land_meta, land_rows = measured_landscape(frozen)
+    land_meta = {**raw_meta, **land_meta}
+    frozen = frozen.merge(land_rows, on="genes", how="left")
     frozen.to_parquet(osp.join(OUT, "triples_matched.parquet"), index=False)
+    land.to_csv(osp.join(OUT, "measured_landscape.csv"), index=False)
 
     stats_out = {
         "frozen_dir": osp.relpath(FROZEN, REPO_ROOT),
@@ -519,16 +706,18 @@ def main():
         "thresholds": {"lethal": LETHAL, "wt_like": WT_LIKE, "tau_zero": TAU_ZERO},
         "correlations": corr,
         "consistency": consist,
+        "measured_landscape": {"meta": land_meta, "by_coverage": land.to_dict(orient="records")},
         "fig2d_value_in_manuscript": 0.0006,
     }
     json.dump(stats_out, open(osp.join(OUT, "stats.json"), "w"), indent=2)
     print(json.dumps(stats_out, indent=2))
 
     write_medium_table(med, model_stats, osp.join(TEX_DIR, "tab-fba-medium.tex"))
-    panel_tau(matched, corr)
-    panel_fitness(matched, corr)
+    panel_tau(frozen, corr)
+    panel_fitness(frozen, corr)
     panel_growth_bands(bands)
-    panel_coverage(cov)
+    panel_evaluable(cov, n_in, len(perts["singles"]), len(perts["doubles"]))
+    panel_landscape(land)
 
 
 if __name__ == "__main__":

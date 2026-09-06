@@ -89,14 +89,21 @@
   "correlations": {
     "tau": {
       "n": 332313,
-      "n_total_rows": 332313,
-      "pearson_r": 0.0019143512521787147,
-      "pearson_p": 0.2697861394678864,
-      "spearman_rho": -0.0006854028348577618,
+      "pearson_r": 0.0018745278074905362,
+      "pearson_p": 0.27987581606233913,
+      "spearman_rho": 0.0029137202132126163,
       "pred_mean": 0.0006658000265125773,
       "pred_sd": 0.034580348981254186,
-      "exp_mean": -0.009886621474332934,
-      "exp_sd": 0.06205482054577088,
+      "meas_mean": -0.009884821509440396,
+      "meas_sd": 0.06205095550094878,
+      "as_stored": {
+        "n": 332313,
+        "pearson_r": 0.0019143512521787147,
+        "n_stored_and_raw": 332313,
+        "frac_rows_stored_equals_raw_1e-3": 0.011717868395157578,
+        "frac_sorted_stored_equals_sorted_raw_1e-3": 0.9998405118066401,
+        "pearson_r_stored_vs_raw_rowwise": -0.0316428062461622
+      },
       "frac_abs_below_1e-6": 0.9764589408178435,
       "frac_abs_below_1e-3": 0.9993048722138466,
       "n_abs_above_1e-3": 231,
@@ -110,19 +117,26 @@
         "-0.01": 3,
         "-0.07": 2
       },
-      "pearson_r_nonzero_only": 0.029207865440535143,
+      "pearson_r_nonzero_only": 0.020382917007059524,
       "n_nonzero_only": 231
     },
     "fitness": {
-      "n": 299146,
-      "n_total_rows": 332313,
-      "pearson_r": -0.004643716180283494,
-      "pearson_p": 0.011090052823832665,
-      "spearman_rho": -0.003418890951357104,
-      "pred_mean": 0.9470769714719245,
-      "pred_sd": 0.2218846528946617,
-      "exp_mean": 0.8554793433641098,
-      "exp_sd": 0.1764570291596748,
+      "n": 332313,
+      "pearson_r": 0.1508572469039994,
+      "pearson_p": 0.0,
+      "spearman_rho": 0.03048842125100796,
+      "pred_mean": 0.9473652464386811,
+      "pred_sd": 0.22124705039525178,
+      "meas_mean": 0.8439693019532789,
+      "meas_sd": 0.1803135731467273,
+      "as_stored": {
+        "n": 299146,
+        "pearson_r": -0.004643716180283494,
+        "n_stored_and_raw": 299146,
+        "frac_rows_stored_equals_raw_1e-3": 0.0038041625159621053,
+        "frac_sorted_stored_equals_sorted_raw_1e-3": 3.0085643799348814e-05,
+        "pearson_r_stored_vs_raw_rowwise": -0.003850909436997416
+      },
       "value_counts_round3": {
         "1.0": 308363,
         "0.0": 16276,
@@ -133,7 +147,9 @@
         "0.367": 563,
         "0.998": 505
       },
-      "n_distinct_round3": 38
+      "n_distinct_round3": 38,
+      "pearson_r_triples_with_model_gene": 0.25386714810442335,
+      "n_triples_with_model_gene": 111921
     }
   },
   "consistency": {
@@ -147,6 +163,68 @@
       "YGR144W": 246,
       "YPL214C": 7
     }
+  },
+  "measured_landscape": {
+    "meta": {
+      "raw_kuzmin2018": "data/host/kuzmin2018/aao1729_data_s1.zip",
+      "raw_kuzmin2018_sha256": "702f7eb64e4afeb2761bf8baafce7c4c1253a9633a37963f4ba60e2c52de9041",
+      "raw_kuzmin2020": [
+        "data/torchcell/tmi_kuzmin2020/raw/aaz5667-Table-S1.xlsx",
+        "data/torchcell/tmi_kuzmin2020/raw/aaz5667-Table-S3.xlsx"
+      ],
+      "raw_kuzmin2020_sha256": [
+        "4180577d53d5012c6c747227cbeca8a2d09f59bd8028d3bb2f5fd84601c77def",
+        "625420bed5de3563c9f1b4f1909a627aa4d8dd1b629c3f8a3596eb99e132c54f"
+      ],
+      "n_raw_trigenic_gene_sets": 378342,
+      "n_triples_in_kuzmin2018": 91050,
+      "n_triples_in_kuzmin2020": 241746,
+      "n_triples_in_both": 483,
+      "n_triples_with_duplicate_records": 10331,
+      "sig_tau": 0.08,
+      "sig_p": 0.05
+    },
+    "by_coverage": [
+      {
+        "coverage": "full",
+        "coverage_label": "All 3 genes",
+        "n": 7419,
+        "n_sig_negative": 48,
+        "frac_sig_negative": 0.00646987464617873,
+        "n_not_significant": 7338,
+        "frac_not_significant": 0.9890820865345734,
+        "n_sig_positive": 33,
+        "frac_sig_positive": 0.004448038819247877,
+        "n_abs_tau_above_0.08": 860,
+        "n_p_below_0.05": 214
+      },
+      {
+        "coverage": "partial",
+        "coverage_label": "1 or 2 genes",
+        "n": 104502,
+        "n_sig_negative": 1404,
+        "frac_sig_negative": 0.013435149566515474,
+        "n_not_significant": 102691,
+        "frac_not_significant": 0.9826701881303707,
+        "n_sig_positive": 407,
+        "frac_sig_positive": 0.003894662303113816,
+        "n_abs_tau_above_0.08": 12997,
+        "n_p_below_0.05": 4788
+      },
+      {
+        "coverage": "uncovered",
+        "coverage_label": "No gene",
+        "n": 220392,
+        "n_sig_negative": 3742,
+        "frac_sig_negative": 0.016978837707357797,
+        "n_not_significant": 215410,
+        "frac_not_significant": 0.9773948237685578,
+        "n_sig_positive": 1240,
+        "frac_sig_positive": 0.005626338524084359,
+        "n_abs_tau_above_0.08": 28490,
+        "n_p_below_0.05": 12781
+      }
+    ]
   },
   "fig2d_value_in_manuscript": 0.0006
 }

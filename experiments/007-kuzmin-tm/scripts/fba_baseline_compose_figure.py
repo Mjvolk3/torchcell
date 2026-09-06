@@ -9,9 +9,10 @@ reactions, the deletion sets taken from the screen, the FBA growth optimum, the 
 proxy, and the trigenic interaction of Fig. 2a. Every number in the boxes is read from
 ``results/fba_baseline_si/stats.json``, written by ``fba_baseline_si.py`` (this folder), and
 the equations are real LaTeX typeset by MathJax (``math="1"`` on the model, ``$$...$$``
-labels; math cells at ``fontSize=7`` print at ~6 pt). Panels (b)-(e) are the true-size SVGs
-from the same script, placed at exact physical size (100 draw.io units per inch). Panel (f)
-is a lettered placeholder for the rerun on the screen's own medium, which has not been run.
+labels; math cells at ``fontSize=7`` print at ~6 pt). Panels (b)-(f) are the true-size SVGs
+from the same script, placed at exact physical size (100 draw.io units per inch). Panel (g)
+is a lettered placeholder for the rerun on the screen's own medium, which has not been run;
+its first line, in the palette red, states that the rerun is required.
 
 Layout convention shared by every composed SI figure (the "white cross"): COL_GAP = 12
 units (3 mm) between columns, ROW_GAP = 22 units (5.5 mm) between rows, a TOP_STRIP of 16
@@ -201,7 +202,7 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
     c.box("Deletion sets", x0, y0, w, h, color=ROLE_COLOR["perturbation"], align="left", valign="top", bold=True)
     c.text(
         f"{run['n_singles']:,} singles, {run['n_doubles']:,} doubles, {run['n_triples']:,} triples: the gene sets "
-        f"of the Kuzmin 2018 triples and their sub-collections. "
+        f"of the Kuzmin 2018 and 2020 triples and their sub-collections. "
         f"{cov['n_screened_genes_in_model']:,} of {cov['n_screened_genes']:,} genes are in Yeast9; "
         f"{cov['triples_by_n_in_model']['3']:,} triples have all three genes in the model, "
         f"{cov['triples_by_n_in_model']['0']:,} have none.",
@@ -245,12 +246,14 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
 
 
 def placeholder(c: Canvas, x, y, w, h):
+    """The rerun notice: first line in the palette red (as FigS-dcell-training panel e), rest black."""
     c.box(
-        "[placeholder: rerun with corrected medium]<br>The same pipeline on the medium of the screen's final "
+        f'<font color="{RED[0]}">Rerun required: FBA used the model\'s default ammonium minimal medium; '
+        "the screen used SD/MSG with amino-acid supplement at 26 &deg;C.</font><br>"
+        "[placeholder: rerun with corrected medium] The same pipeline on the medium of the screen's final "
         "selection plates (Kuzmin 2018 SI: SD/MSG synthetic medium, monosodium glutamate as nitrogen source, "
-        "0.2% amino-acid supplement lacking His, Arg, Lys and Ura, 2% glucose, 26 &deg;C), in place of the "
-        "model's default ammonium minimal medium. Not run; this space is reserved for panels b and c "
-        "recomputed on that medium.",
+        "0.2% amino-acid supplement lacking His, Arg, Lys and Ura, 2% glucose, 26 &deg;C). Not run; this "
+        "space is reserved for panels b and c recomputed on that medium.",
         x, y, w, h, color=GRAY, fill=False, dashed=True, align="left", valign="top",
     )
 
@@ -277,14 +280,17 @@ def main():
     extent_w = x - COL_GAP
     bottom2 = y2 + h2
 
-    # Row 3: panel e (coverage) and the lettered placeholder f for the medium rerun.
+    # Row 3: panels e (evaluable set), f (measured landscape), and the lettered placeholder g.
     row_top = bottom2 + (ROW_GAP - TOP_STRIP)
     y3 = row_top + TOP_STRIP
-    w, h3 = c.image(osp.join(IMG_DIR, "fba_baseline_coverage.svg"), 0, y3)
-    c.letter("e", 0, row_top)
-    xf = w + COL_GAP
-    c.letter("f", xf, row_top)
-    placeholder(c, xf, y3, FULL_WIDTH - xf, h3)
+    x, h3 = 0.0, 0.0
+    for letter, name in zip("ef", ["fba_baseline_evaluable", "fba_baseline_landscape"]):
+        w, h = c.image(osp.join(IMG_DIR, f"{name}.svg"), x, y3)
+        c.letter(letter, x, row_top)
+        x += w + COL_GAP
+        h3 = max(h3, h)
+    c.letter("g", x, row_top)
+    placeholder(c, x, y3, FULL_WIDTH - x, h3)
     extent_h = y3 + h3
 
     xml = (

@@ -2,9 +2,10 @@
 %% Every number below is produced by experiments/007-kuzmin-tm/scripts/fba_baseline_si.py
 %% from the frozen run in experiments/007-kuzmin-tm/results/cobra-fba-growth_backup_20250923_134447/
 %% (the only committed record of the Fig. 2d "Yeast9 FBA" baseline; run 2025-09-15 by
-%% targeted_fba_growth_fast.py + match_fba_to_experiments.py, slurm gh_cobra-fba-growth.slurm).
-%% Its outputs: results/fba_baseline_si/stats.json (all numbers), the panels of
-%% FigS-yeast9-fba (composed by fba_baseline_compose_figure.py), and tab-fba-medium.tex.
+%% targeted_fba_growth_fast.py + match_fba_to_experiments.py, slurm gh_cobra-fba-growth.slurm)
+%% and the raw Kuzmin 2018 Data S1 / Kuzmin 2020 Tables S1+S3 (measured tau, fitness, P-value,
+%% sha256 in stats.json). Its outputs: results/fba_baseline_si/stats.json (all numbers), the
+%% panels of FigS-yeast9-fba (composed by fba_baseline_compose_figure.py), and tab-fba-medium.tex.
 %% The Kuzmin 2018 medium quotes come from the local OCR of the SI (kuzmin2018_SI.mmd in the
 %% primary checkout root); the tc-lit key in .env was rejected (401) on 2026.09.05, so the
 %% quotes are NOT yet checked against the sha256-pinned mirror. Verify before promotion.
@@ -12,11 +13,11 @@
 \suppnote{note:fba}{The Yeast9 flux-balance baseline for trigenic interactions\secstatus{todo}}
 
 The Yeast9 value in Fig.~\ref{fig:ggi}d is a mechanistic baseline with no fitted parameter:
-each deletion set of the trigenic screen is imposed on the yeast-GEM~9.0.2 metabolic
+each deletion set of the trigenic screens is imposed on the yeast-GEM~9.0.2 metabolic
 reconstruction, growth is computed by flux-balance analysis (FBA), and the interaction of
 Fig.~\ref{fig:ggi}a is formed from the predicted growth rates exactly as it is from the
 measured colony sizes (\suppfig{fig:fba}a). The run was made once, on 2025-09-15, and every
-number here is recomputed from its frozen output files.
+number here is recomputed from its frozen output files and the screens' raw tables.
 
 \notesec{Model and medium} The model is yeast-GEM 9.0.2 as distributed
 (\texttt{yeast-GEM.xml}: 4,131 reactions, 2,806 metabolites, 1,161 genes, 271 exchange
@@ -39,44 +40,53 @@ reaction's gene-reaction rule, a Boolean expression in which isozymes are joined
 complex subunits by AND, and sets the flux bounds of every reaction whose rule evaluates
 false to zero; single, double, and triple deletions differ only in how many genes are set to
 zero before the rules are evaluated. A gene absent from the model changes no rule, so its
-deletion leaves growth at the wild-type value. The 4,036 deletion sets of one gene, 651,181 of
-two, and 332,313 of three are the Kuzmin~2018 triples and all of their sub-collections; 736
-of the 4,036 genes are in Yeast9, 7,419 triples (2.2\%) have all three genes in the model,
-and 220,392 (66.3\%) have none (\suppfig{fig:fba}e).
+deletion leaves growth at the wild-type value. The deletion sets are the 332,313 triples of
+the dataset build, the trigenic records of Kuzmin~2018 (91,050) and Kuzmin~2020 (241,746;
+483 in both), and all of their sub-collections (651,181 doubles, 4,036 singles). Yeast9
+covers 736 of the 4,036 genes, 18,565 of the doubles, and 7,419 triples (2.2\%) in full;
+220,392 triples (66.3\%) contain no model gene (\suppfig{fig:fba}e).
 
 \notesec{From growth to interaction} Fitness is the growth ratio $f=\mu/\mu_{\mathrm{WT}}$,
 with a non-optimal or timed-out solve counted as $f=0$. Digenic and trigenic interactions
 are then the definitions of Fig.~\ref{fig:ggi}a, $\varepsilon_{ij}=f_{ij}-f_if_j$ and
 $\tau_{ijk}=f_{ijk}-f_if_jf_k-\varepsilon_{ij}f_k-\varepsilon_{ik}f_j-\varepsilon_{jk}f_i$,
 computed from the predicted fitness of the triple and of its singles and doubles. The
-predicted $\tau_{ijk}$ of each triple is compared with the measured $\tau_{ijk}$ of the same
-gene set by Pearson correlation over all 332,313 triples; no split, threshold, or fit enters.
+predicted $\tau_{ijk}$ of each triple is compared by Pearson correlation with the measured
+$\tau_{ijk}$ of the same gene set, taken from the screens' raw tables as the mean adjusted
+score over the gene set's records (the dataset's deduplication rule); no split, threshold, or
+fit enters.
 
-\notesec{Result} The frozen files give $r=0.0019$ between predicted and measured
-$\tau_{ijk}$ ($n=332{,}313$, $P=0.27$; Spearman $\rho=-0.0007$; \suppfig{fig:fba}b), and
-$r=-0.0046$ between predicted and measured triple-mutant fitness ($n=299{,}146$ triples with
-a fitness label; \suppfig{fig:fba}c). The value printed in Fig.~\ref{fig:ggi}d, 0.0006, was
-transcribed from the pipeline's output at the time and does not reproduce from the frozen
-files; whether it came from a different subset or a different run is not recorded, and the
-scripted value is the one to carry. The correlation is near zero because the prediction is
-nearly constant: 97.6\% of the predicted $\tau_{ijk}$ lie within $10^{-6}$ of zero and
-99.93\% within $10^{-3}$, leaving 231 triples with a nonzero prediction, whose values are
-almost all $+1$ (122), $+2$ (62), or $-1$ (19). The constancy has two measured sources. First,
-the deletions rarely change the optimum: 97.7\% of single, 97.0\% of double, and 93.1\% of
-triple deletions grow at the wild-type rate to within $10^{-3}$, and the rest fall almost
-entirely into no growth (1.6\%, 2.2\%, 4.9\%) or one of a few discrete bands (predicted
-triple-mutant fitness takes 1, 0, and values near 0.15, 0.37, and 0.98--0.99;
-\suppfig{fig:fba}c,d), so $f_{ijk}$ almost always equals $f_if_jf_k$ exactly. Second, the
-model covers few of the screened genes: two-thirds of the triples contain no model gene and
-so have $\tau_{ijk}=0$ by construction (\suppfig{fig:fba}e). The nonzero predictions are
-mostly artifacts: 164 of the 231 arise in triples with only one gene in the model, where
+\notesec{Result} Predicted against measured $\tau_{ijk}$ gives $r=0.0019$ ($n=332{,}313$,
+$P=0.28$; Spearman $\rho=0.003$; \suppfig{fig:fba}b), and predicted against measured
+triple-mutant fitness $r=0.151$ ($n=332{,}313$; 0.254 within the 111,921 triples that
+contain a model gene; \suppfig{fig:fba}c). The value printed in Fig.~\ref{fig:ggi}d, 0.0006,
+was transcribed from the pipeline's output at the time and does not reproduce; whether it
+came from a different subset or a different run is not recorded, and the scripted value is
+the one to carry. The pipeline's own matched file cannot be used for either number: its
+\texttt{experimental} column is the true label set in the wrong row order (the sorted stored
+and raw values coincide for 99.98\% of triples, row by row they agree for 1.2\%), which left
+the interaction correlation unchanged, since the prediction is nearly constant, but reported
+the fitness correlation as $-0.005$. The interaction correlation is near zero because the
+prediction is nearly constant: 97.6\% of the predicted $\tau_{ijk}$ lie within $10^{-6}$ of
+zero and 99.93\% within $10^{-3}$, leaving 231 triples with a nonzero prediction, almost all
+$+1$ (122), $+2$ (62), or $-1$ (19). The constancy has two measured sources. First, the
+deletions rarely change the optimum: 97.7\% of single, 97.0\% of double, and 93.1\% of triple
+deletions grow at the wild-type rate to within $10^{-3}$, and the rest fall almost entirely
+into no growth (1.6\%, 2.2\%, 4.9\%) or one of a few discrete bands (predicted triple-mutant
+fitness takes 1, 0, and values near 0.15, 0.37, and 0.98--0.99; \suppfig{fig:fba}c,d), so
+$f_{ijk}$ almost always equals $f_if_jf_k$ exactly. Second, two-thirds of the triples contain
+no model gene and so have $\tau_{ijk}=0$ by construction. The nonzero predictions are mostly
+artifacts: 164 of the 231 arise in triples with only one gene in the model, where
 $\tau_{ijk}$ must be zero, and tracing them shows 253 of 632,616 checkable doubles and 52 of
 285,606 checkable triples whose growth contradicts their own single-deletion result (246 of
 the doubles contain \texttt{YGR144W}, whose single deletion grows at the wild-type rate while
 these doubles return zero growth with status \texttt{optimal}), together with 173 triples
 that grow faster than the least of their three doubles, which FBA cannot produce. The cause
 of these solver failures was not determined. Within the 7,419 fully covered triples, 48 have
-a nonzero prediction.
+a nonzero prediction, and the measured landscape there is as sparse as elsewhere: by the
+screens' convention ($\lvert\tau\rvert>0.08$, $P<0.05$) 48 are negative and 33 positive
+(1.1\%), against 1,404 and 407 among the partly covered and 3,742 and 1,240 among the
+uncovered triples (2.1\% overall; \suppfig{fig:fba}f).
 
 \notesec{Caveats} The medium is the principal open question. The FBA ran on the model's
 default ammonium minimal medium, whereas the screen's final triple-mutant selection plates
@@ -84,22 +94,23 @@ were, from the Kuzmin~2018 Supplementary Materials, ``SD$_{\text{MSG}}$ - His/Ar
 canavanine/thialysine/G418/clonNAT (0.17\% yeast nitrogen base without amino acids and
 ammonium sulfate, 0.1\% monosodium glutamic acid, 0.2\% amino acid supplement, 2\% agar, 2\%
 glucose, 50 $\mu$g/mL of each analog \ldots)'', with ``The incubation temperature for all the
-selection steps was 26$^{\circ}$C''. The screen therefore supplied glutamate as the nitrogen
-source and an amino-acid supplement, neither of which the simulated medium contains, and was
-grown at 26$^{\circ}$C rather than the 30$^{\circ}$C the model's biomass equation is
-parameterized for. Whether these differences change the prediction is untested: the baseline
-has not been rerun on the screen's medium (\suppfig{fig:fba}f), and a later attempt to
-approximate rich media by opening vitamin and amino-acid exchanges at 5\% of the glucose
-uptake rate (\texttt{setup\_media\_conditions.py}) produced no committed result and is not
-reported. Two further discrepancies are visible in the code rather than in the data. The
-knowledge-graph records of these experiments carry the environment YEPD at 30$^{\circ}$C, the
-filter of the query that built the dataset (\texttt{queries/001\_small\_build.cql}), which
-does not match the selection medium quoted above and should be corrected at the source. And
-the 33,167 triples that have a measured interaction but no measured fitness in the matched
-file reflect the label table of the dataset build, not the screen. The prediction's
-constancy, not the medium, sets the ceiling here: with 93\% of triple deletions at
-wild-type growth and 66\% of triples outside the model's gene set, no medium change can
-raise the correlation far unless it also spreads the predicted growth rates.
+selection steps was 26$^{\circ}$C'' (the 2020 screen's medium was not checked). The screen
+therefore supplied glutamate as the nitrogen source and an amino-acid supplement, neither of
+which the simulated medium contains, and was grown at 26$^{\circ}$C rather than the
+30$^{\circ}$C the model's biomass equation is parameterized for. Whether these differences
+change the prediction is untested: the baseline has not been rerun on the screen's medium
+(\suppfig{fig:fba}g), and a later attempt to approximate rich media by opening vitamin and
+amino-acid exchanges at 5\% of the glucose uptake rate (\texttt{setup\_media\_conditions.py})
+produced no committed result and is not reported. Two further discrepancies are visible in
+the code rather than in the data. The knowledge-graph records of these experiments carry the
+environment YEPD at 30$^{\circ}$C, the filter of the query that built the dataset
+(\texttt{queries/001\_small\_build.cql}), which does not match the selection medium quoted
+above and should be corrected at the source. And the row misalignment of the matched file
+(\texttt{match\_fba\_to\_experiments.py} pairs \texttt{dataset[i]} with
+\texttt{label\_df.iloc[i]}) affects any other analysis built on that file. The prediction's
+constancy, not the medium, sets the ceiling here: with 93\% of triple deletions at wild-type
+growth and 66\% of triples outside the model's gene set, no medium change can raise the
+correlation far unless it also spreads the predicted growth rates.
 
 %% Figure: notes/assets/drawio/FigS-yeast9-fba.drawio (composed by
 %% experiments/007-kuzmin-tm/scripts/fba_baseline_compose_figure.py from stats.json and the
@@ -109,24 +120,30 @@ raise the correlation far unless it also spreads the predicted growth rates.
 Fig.~\ref{fig:ggi}d.} \textbf{a},~The pipeline: yeast-GEM 9.0.2 on its default ammonium
 minimal medium (\supptab{tab:fba-medium}); a deletion set zeroes the state of its genes and
 blocks every reaction whose gene-reaction rule evaluates false; the deletion sets are the
-Kuzmin 2018 triples and their sub-collections; FBA maximizes the growth pseudoreaction
-(GLPK, 60~s limit); fitness is the growth ratio to the wild type; the interaction is that of
-Fig.~\ref{fig:ggi}a, compared with the measured value of the same triple by Pearson
-correlation. Every number in the boxes is read from \texttt{stats.json}.
+Kuzmin 2018 and 2020 triples and their sub-collections; FBA maximizes the growth
+pseudoreaction (GLPK, 60~s limit); fitness is the growth ratio to the wild type; the
+interaction is that of Fig.~\ref{fig:ggi}a, compared with the measured value of the same
+triple by Pearson correlation. Every number in the boxes is read from \texttt{stats.json}.
 \textbf{b},~Predicted against measured $\tau_{ijk}$ for all 332,313 triples, as hexagonal
-bins with a logarithmic count scale; the vertical band at zero holds 99.93\% of the triples.
-\textbf{c},~Predicted against measured triple-mutant fitness for the 299,146 triples with a
-fitness label, same binning; the dotted line is $y=x$. The prediction takes a handful of
-values (1, 0, and bands near 0.15 and 0.37). \textbf{d},~Fraction of the single, double, and
-triple deletion sets whose predicted growth equals the wild type's to within $10^{-3}$
-(gray), is reduced (orange), or is zero (fitness below 0.01, the pipeline's lethality cut;
-red); numbers are percentages. \textbf{e},~Triples by how many of their three genes are in
-Yeast9, as a fraction of all triples, with the count of triples in each class and the number
-of them whose predicted $\lvert\tau_{ijk}\rvert$ exceeds $10^{-3}$. A triple with at most
-one model gene has $\tau_{ijk}=0$ by construction, so the 164 nonzero predictions in the
-one-gene class are solver artifacts. \textbf{f},~Placeholder for the rerun on the screen's
-own selection medium (SD/MSG synthetic medium with glutamate nitrogen and an amino-acid
-supplement, 26$^{\circ}$C), which has not been run.}{fig:fba}
+bins with a logarithmic count scale; the vertical band at zero holds the 99.93\% of triples
+whose predicted $\lvert\tau_{ijk}\rvert$ is below $10^{-3}$, and the 231 others sit almost
+entirely at $+1$, $+2$, and $-1$. Measured values are the mean adjusted score over the gene
+set's raw records. \textbf{c},~Predicted against measured triple-mutant fitness for the same
+triples, same binning; the dotted line is $y=x$. The prediction takes a handful of values (1,
+0, and bands near 0.15 and 0.37). \textbf{d},~Fraction of the single, double, and triple
+deletion sets whose predicted growth equals the wild type's to within $10^{-3}$ (gray), is
+reduced (orange), or is zero (fitness below 0.01, the pipeline's lethality cut; red); numbers
+are percentages. \textbf{e},~How much of the screens Yeast9 can score: the fraction of the
+4,036 genes and of the 651,181 doubles with every member in the model (gray), and the
+332,313 triples by how many of their three genes are in the model (purple), with counts; a
+triple with at most one model gene has $\tau_{ijk}=0$ by construction, so 7,419 triples can
+be scored in full. \textbf{f},~The measured interactions of the same triples, grouped as in
+\textbf{e} (all three, one or two, or no gene in the model), split by the screens' convention
+into significant negative ($\tau<-0.08$, $P<0.05$; red), not significant (gray), and
+significant positive ($\tau>0.08$, $P<0.05$; orange), with counts on a logarithmic axis. $P$
+is the smallest over the gene set's raw records. \textbf{g},~Placeholder for the rerun on the
+screen's own selection medium (SD/MSG synthetic medium with glutamate nitrogen and an
+amino-acid supplement, 26$^{\circ}$C), which has not been run.}{fig:fba}
 \end{figure*}
 
 \input{sections/tab-fba-medium}

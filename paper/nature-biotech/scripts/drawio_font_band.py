@@ -156,6 +156,31 @@ def audit(xml: str) -> collections.Counter:
     return c
 
 
+def undersized_panel_letters(xml: str) -> list[tuple[str, float]]:
+    """Panel letters typed at body size rather than at 8 pt.
+
+    A size-only audit cannot catch these. Fig 8's a/b/c sat at 5.76 pt, which is
+    legal for figure TEXT and so reported clean, while Fig 7's were at 7.99 pt --
+    two adjacent SI figures whose panel letters differed by 28%. What is wrong is
+    not the size on its own but the size given what the label IS, so the check has
+    to look at the label.
+    """
+    out = []
+    for m in re.finditer(r"<mxCell\b[^>]*?>", xml):
+        tag = m.group(0)
+        v = re.search(r'value="([^"]*)"', tag)
+        if not v or not _is_panel_letter(v.group(1)):
+            continue
+        raw = html.unescape(tag)
+        il = re.search(r"font-size:\s*([0-9.]+)px", raw)
+        fs = re.search(r"fontSize=([0-9.]+)", tag)
+        units = float(il.group(1)) if il else (float(fs.group(1)) if fs else 12.0)
+        if abs(units * UNITS_TO_PT - PANEL_LETTER_PT) >= 0.06:
+            txt = re.sub(r"<[^>]+>", "", html.unescape(v.group(1))).strip()
+            out.append((txt, units))
+    return out
+
+
 def fix(xml: str, grow_pt: float, shrink_pt: float, letter_pt: float) -> tuple[str, int]:
     """Retype every out-of-band size. Returns the new XML and a change count."""
     n = 0
@@ -292,6 +317,15 @@ def main() -> None:
             print(f"  {where:6} {units:<6g} -> {pt:5.2f} pt  x{k:<4} {v}{mark}")
             if v in ("under", "over"):
                 bad_total += k
+
+        # Size alone cannot catch a panel letter typed at body size: it is legal
+        # for text and wrong for a letter. Report it against the label.
+        for xml in d.xmls:
+            for txt, units in undersized_panel_letters(xml):
+                print(f"  panel letter {txt!r} at {units:g} -> {units*UNITS_TO_PT:.2f} pt"
+                      f"; should be {PANEL_LETTER_UNITS:g} ({PANEL_LETTER_PT:.0f} pt)"
+                      "   <-- out of band")
+                bad_total += 1
 
         if args.fix:
             new_xmls, total = [], 0

@@ -1,0 +1,54 @@
+%% AUTO-GENERATED -- do not hand-edit.
+%% SOURCE: experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py
+%%         published column: verbatim quotes from the OCR text of the mirror key
+%%         maUsingDeepLearning2018 (paper.md, sha256 ac837bc358ea4969a72789e66e31380bfdcbd7b8aea98dec47b108ee21d2070c), listed in
+%%         results/dcell_model/dcell_vs_paper.csv; TorchCell column: go_filter_stages.csv,
+%%         go_terms_final.csv, go_strata.csv, go_genes_final.csv, go_edges_final.csv, dcell_model_size.csv.
+%% GO release: [Introduction; reference 9] the Gene Ontology (GO), a literature-curated reference database from which we extracted 2,526 cellular subsystems (intracellular components, processes or functions)9 [...] 9. The Gene Ontology Consortium. Expansion of the Gene Ontology knowledgebase and resources. Nucleic Acids Res. 45, D331–D338 (2016).
+%% Annotation source: [Online Methods, Preparation of ontologies] a biological ontology consisting of terms representing cellular subsystems, child–parent relations representing containment of one term by another, and gene-to-term annotations
+%% Genes: [Online Methods, DCell architecture and training algorithm (OCR of the inline math kept as is); Preparation of ontologies] For each sample i, $X _ { i } \in \ : R ^ { M }$ denotes the genotype, represented as a binary vector of states on $M$ genes $\mathbf { \nabla } \cdot \mathbf { 1 } =$ disrupted; $0 =$ wild type) [...] 2. Terms containing fewer than six yeast genes disrupted in the available genotypes
+%% Evidence filter: [Online Methods, Preparation of ontologies] 1. Terms with the evidence code ‘inferred by genetic interaction’ (IGI), to avoid potential circularity in predicting genetic interactions in the genotype–phenotype samples.
+%% Redundancy filter: [Online Methods, Preparation of ontologies] 3. Terms that are redundant with respect to their children terms in the ontology.
+%% Containment threshold: [Online Methods, Preparation of ontologies] 2. Terms containing fewer than six yeast genes disrupted in the available genotypes (with ‘containment’ defined as all genes annotated to that term or its descendants).
+%% Filter order: [Online Methods, Preparation of ontologies] We used the following criteria to filter (remove) terms from GO: 1. Terms with the evidence code ‘inferred by genetic interaction’ (IGI), to avoid potential circularity in predicting genetic interactions in the genotype–phenotype samples. 2. Terms containing fewer than six yeast genes disrupted in the available genotypes (with ‘containment’ defined as all genes annotated to that term or its descendants). 3. Terms that are redundant with respect to their children terms in the ontology.
+%% Removed-term rewiring: [Online Methods, Preparation of ontologies] When a term was removed, all children were connected directly to all parent terms to maintain the hierarchical structure.
+%% Subsystems: [Online Methods, Preparation of ontologies] The remaining 2,526 terms were used to define the hierarchy of DCell subsystems.
+%% Hierarchy edges: not stated in the paper
+%% Depth: [Results, DCell design] The depth of both networks is 12 layers, on par with deep neural networks in other fields7.
+%% Leaves: not stated in the paper
+%% Width rule: [Online Methods, equation (2) (OCR of the display math kept as is)] L _ { o } ^ { ( t ) } = \operatorname* { m a x } \left( 2 0 , \left\lceil 0 . 3 * \mathrm { n u m b e r ~ o f ~ g e n e s ~ c o n t a i n e d ~ b y ~ } t \right\rceil \right)
+%% Root readout: [Results, DCell design; Online Methods, equation (3)] the output layer, or root, is a single neuron representing cell phenotype [...] Linear in equation (3) denotes linear functions transforming multidimensional vector $O _ { i } ^ { ( t ) }$ into a scalar.
+%% Hidden units: [Results, DCell design] The use of multiple neurons (ranging from 20 to 1,075 per system; see Online Methods) acknowledges that cellular components are often multifunctional [...] By this design, the VNN embedded in GO includes 97,181 neurons; the corresponding model for CliXO includes 22,167 neurons.
+%% Parameters: not stated in the paper
+%% Auxiliary loss: [Online Methods, equation (3) (OCR of the inline math kept as is)] the parameter $\alpha$ $_ { ( = 0 . 3 ) }$ balances these two contributions. $\lambda$ is an $l _ { 2 }$ norm regularization factor determined by four-fold cross-validation.
+%% Training data: [Online Methods, Training genotype-phenotype data (OCR of the inline math kept as is)] Several forms of the model were employed in this study, trained on either Costanzo et al.16 (\~3 million training examples) or a more recently published update in 2016 ( ${ \sim } 8$ million training examples)15.
+\begin{table}[!htbp]
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.17\linewidth}p{0.38\linewidth}p{0.39\linewidth}@{}}
+\toprule
+& \textbf{Published DCell} & \textbf{TorchCell DCell} \\
+\midrule
+GO release & not reported; cites the GO Consortium (ref.~9, \emph{Nucleic Acids Res.} 2016) & 2025-03-16 (\texttt{go.obo} data-version) \\
+Annotation source & not reported (``gene-to-term annotations'') & SGD \texttt{go\_details} over the 6,607-gene S288C reference \\
+Genes & the genes disrupted in the training genotypes; count not reported & 6,607 reference genes, all covered \\
+Evidence filter & terms with evidence code IGI removed & IGI annotations removed (1,921); a term goes only when emptied (119 terms) \\
+Redundancy filter & terms redundant with respect to their children & terms whose gene set equals a parent's (106 terms) \\
+Containment threshold & fewer than six disrupted genes, counted over the term and its descendants & fewer than four of the 6,607 reference genes, counted over the term and its descendants (2,780 terms) \\
+Filter order & IGI, containment, redundancy (as listed) & IGI, redundancy, containment \\
+Removed-term rewiring & children connected to all parents & children connected to all parents \\
+Subsystems & 2,526 & 2,655 \\
+Hierarchy edges & not reported & 3,208 \\
+Depth & 12 layers & 13 strata (\texttt{GO:ROOT} plus 12) \\
+Leaves & not reported & 1,527 \\
+Width rule & $\max(20,\lceil 0.3\times\text{genes contained by }t\rceil)$ & $\max(20,\lceil 0.3\,\lvert\mathrm{genes}(t)\rvert\rceil)$, direct annotations \\
+Root readout & one output neuron; root width not reported & one output; \texttt{GO:ROOT} has 0 direct genes, so $L_r=20$ \\
+Hidden units & 97,181 (20 to 1,075 per subsystem) & 61,429 (20 to 734 per subsystem; 2,521 subsystems at the floor of 20) \\
+Parameters & not reported & 20,613,037 \\
+Auxiliary loss & $\alpha=0.3$, summed over $t\neq r$, plus $\lambda\lVert W\rVert_2$ ($\lambda$ by four-fold CV) & $\alpha=0.3$, averaged over $t\neq r$; AdamW weight decay \\
+Training data & Costanzo 2010 ($\sim$3 M examples) or Costanzo 2016 ($\sim$8 M), single and double deletions & the trigenic dataset of the CGT experiment (\suppnoteref{note:dcell-training}) \\
+\bottomrule
+\end{tabular}
+\caption{The published DCell ontology and model (Ma et al.\ 2018) against the TorchCell rebuild. Published values are quoted from the paper's text and Online Methods (the OCR text of the mirrored paper, sha256-pinned in the generating script); ``not reported'' marks a quantity the paper does not state. TorchCell values are measured on the frozen DAG of \supptab{tab:dcell-go-filter}; counts in parentheses are the terms or annotations each filter removed. Depth counts strata of the longest path from \texttt{GO:ROOT}; the paper's ``12 layers'' does not say whether the root is counted. Hidden units are the sum of subsystem widths $L_t$.}
+\label{tab:dcell-vs-paper}
+\end{table}

@@ -1,8 +1,10 @@
 %% ---- Supplementary Note [note:dcell-model]: DCell in TorchCell -- the model and its GO DAG ----
 %% Every number here is emitted by experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py
 %% (rebuilds the filtered GO DAG as experiments/006-kuzmin-tmi/scripts/dcell.py does; writes
-%% results/dcell_model/*.csv, the three panels, and tab-dcell-model-go-filter.tex; freezes the
-%% wandb model/params_* fields of the DCell runs to dcell_wandb_model_size.csv). The figure is
+%% results/dcell_model/*.csv, the four panels, tab-dcell-model-go-filter.tex, and
+%% tab-dcell-model-vs-paper.tex, whose published column quotes the sha256-pinned OCR text of
+%% the mirror key maUsingDeepLearning2018; freezes the wandb model/params_* fields of the
+%% DCell runs to dcell_wandb_model_size.csv). The figure is
 %% composed by experiments/006-kuzmin-tmi/scripts/dcell_model_compose_figure.py (panel a is
 %% authored there as draw.io XML). Rerun those, not this file. Detail cut from the prose on
 %% 2026.09.03 (per-filter term counts, stratum scheduling, annotation-date range, per-term
@@ -60,25 +62,51 @@ other subsystem carries a head $\hat y_t=w_t^{\top}O_t+b_t$, and the loss
 averages the auxiliary terms where the original summed them; AdamW weight decay replaces the
 published $\lambda\lVert W\rVert_2$ penalty.
 
-\notesec{Building and measuring the ontology} The published 2,526 subsystems came from a
-2017-era GO after three filters: terms with evidence code IGI (inferred from genetic
-interaction, a circularity), terms containing fewer than six of the training genes, and
-terms redundant with their children. TorchCell rebuilds that recipe on GO release 2025-03-16
-with SGD annotations (\supptab{tab:dcell-go-filter}), with four deviations: IGI removal acts
-on annotations (1,921 dropped) and a term goes only when that empties it; redundancy is
-judged against parents; containment counts genes over the whole reference with a threshold
-of four, chosen so that the retained 2,655 subsystems approximate the published 2,526; and
-no date cutoff is applied, so the ontology carries annotations that postdate the screens it
-is trained on (a 2017-07-19 cutoff is implemented and would leave 1,408 subsystems, but was
-not used). The result has 2,655 subsystems on 3,208 hierarchy edges in 13 strata with 59,986
+\notesec{Building and measuring the ontology} The published subsystems are the GO terms
+left after three filters: terms with evidence code IGI (inferred from genetic interaction, a
+circularity), terms containing fewer than six of the training genes, and terms redundant
+with their children. TorchCell rebuilds that recipe on GO release 2025-03-16 with SGD
+annotations (\supptab{tab:dcell-go-filter}): IGI-evidence annotations are removed (1,921) and
+a term goes only when that empties it; a term whose gene set equals a parent's is removed;
+a term containing fewer than four of the 6,607 reference genes is removed, the threshold
+chosen so that the retained 2,655 subsystems approximate the published 2,526; and no date
+cutoff is applied, so the ontology carries annotations that postdate the screens it is
+trained on (a 2017-07-19 cutoff is implemented and would leave 1,408 subsystems, but was not
+used). The result has 2,655 subsystems on 3,208 hierarchy edges in 13 strata with 59,986
 annotations covering all 6,607 genes (\suppfig{fig:dcell-model}b--d). Coverage is complete
 for a specific reason: 5,487 annotations with evidence code ND (no biological data) attach
 genes of unknown function directly to the three namespace roots, so every gene sits in at
 least two subsystems (median 8, maximum 38) and the roots are the widest subsystems
-(molecular function: 2,444 direct genes, $L_t=734$). The network has 61,429 hidden units
-(97,181 in the published model) and 20,613,037 parameters, which equals the
-\texttt{model/params\_total} logged by every DCell training run in both wandb projects (15
-runs, one value), so the DAG measured here is the one the baseline was trained on.
+(molecular function: 2,444 direct genes, $L_t=734$). The network has 61,429 hidden units and
+20,613,037 parameters, which equals the \texttt{model/params\_total} logged by every DCell
+training run in both wandb projects (15 runs, one value), so the DAG measured here is the
+one the baseline was trained on.
+
+\notesec{Against the published ontology} \supptab{tab:dcell-vs-paper} sets the rebuild
+beside every quantity the paper states about its ontology and model, each quoted from the
+paper's text; the two are not the same graph. The paper reports 2,526 subsystems in ``12
+layers'' with 97,181 neurons ``ranging from 20 to 1,075 per system''; the rebuild has 2,655
+subsystems in 13 strata with 61,429 hidden units from 20 to 734. The paper reports neither
+hierarchy edges, nor leaves, nor a parameter count, so the 3,208 edges, 1,527 leaves, and
+20,613,037 parameters here have no published counterpart. Four causes are identifiable, one
+of them measured. The GO release differs: the paper names none (it cites the 2016 Consortium
+paper) and the rebuild uses the 2025-03-16 release, whose retained annotations are dated up
+to 2023-10-04; under the same three filters, keeping only annotations dated on or before
+2017-07-19 leaves 1,408 subsystems rather than 2,655 (\supptab{tab:dcell-go-filter}), so
+release drift alone moves the count by more than the gap to 2,526. The containment filter
+differs in threshold and in population: the paper drops terms ``containing fewer than six
+yeast genes disrupted in the available genotypes'', the rebuild terms containing fewer than
+four of all 6,607 reference genes, a threshold chosen to land near 2,526 on the newer
+release. The filter semantics and order differ: IGI removal acts on annotations rather than
+terms, redundancy is judged against a parent rather than the children, and the rebuild
+applies redundancy before containment where the paper lists containment second. The width
+rule counts direct annotations rather than contained genes, which is why the rebuild has
+more subsystems but fewer hidden units: 2,521 of the 2,655 subsystems sit at the floor of
+20, and \texttt{GO:ROOT}, which carries no direct annotation, is 20 wide, whereas the
+published rule makes the widest subsystem 1,075 neurons, a term containing 3,581 to 3,583
+genes by that rule. Whether the published ``12 layers'' counts the root is not stated. A
+term-by-term comparison would need the published term list, which the paper does not
+print; it was not made.
 
 \begin{figure*}[t]
 \tcfig{figures/FigS-dcell-model.pdf}{\textbf{DCell as implemented in TorchCell.} (a)~The
@@ -111,3 +139,5 @@ composed by \texttt{dcell\_model\_compose\_figure.py}.}{fig:dcell-model}
 \end{figure*}
 
 \input{sections/tab-dcell-model-go-filter}
+
+\input{sections/tab-dcell-model-vs-paper}

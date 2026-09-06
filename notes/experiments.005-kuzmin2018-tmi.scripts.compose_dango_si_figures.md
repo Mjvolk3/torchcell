@@ -62,3 +62,23 @@ within 170 mm (705 x 651 units = 179.1 x 165.2 mm; exported PDF 179.6 x 165.4 mm
 - (d), (e) unchanged panels.
 
 `check-figures.sh` and `drawio_font_band.py --check` pass (sizes 7 / 8.3 / 11.1 only).
+
+## 2026.09.05 - Third author review: letter b clear of the schematic, rows aligned on ink, e as 2 x 3
+
+- The schematic (b) is inset inside its row: `SCHEMATIC_INSET_TOP = 6`, `SCHEMATIC_INSET_BOTTOM = 3`
+  units, so its first box starts 22 units below the row top instead of 16 and the letter b has the
+  same white gap above it as a. The numbers come from rasterizing panel a (`rsvg-convert`) and
+  measuring its ink: a matplotlib SVG carries 4.7 units of white above its ink and 2.7 below, the
+  schematic none. Box height drops from 29.1 to 27.6; colors and styles unchanged (the DCell figure
+  copies them).
+- Rows stay on `ROW_GAP = 22`; the gutters were made equal on ink rather than on SVG boxes by trimming
+  panel margins in the plot scripts (c and d now 46 mm tall; the curves panel `top = 0.98`). In the
+  exported PDF the white bands between rows measure 4.4 mm (row 1 to 2) and 4.9 mm (row 2 to 3),
+  against 4.4 and 5.3 before.
+- (c) legend now sits in headroom (y-axis to 8.5%); (e) is the 2 x 3 small-multiples panel of
+  [[experiments.005-kuzmin2018-tmi.scripts.dango_string_version_sweep]] at 56 mm, with its right
+  margin widened so the last `1000` tick label is inside the canvas (ink right margin 1.5 units,
+  was 0.0).
+
+Figure 705 x 666 units = 179.1 x 169.2 mm; exported PDF 179.6 x 169.7 mm, inside the 170 mm box
+with 0.3 mm to spare; `check-figures.sh` and `drawio_font_band.py --check` pass.

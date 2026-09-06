@@ -29,3 +29,12 @@ weights; unchanged text, re-lettered from d-f) at third width, 140 units tall. S
 constants. Figure 708 x 609 units = 179.7 x 154.8 mm; exported PDF 180.3 x 155.2 mm (the
 third + wide row is 707.9 units, inside the 709 cap and the +2 mm grace); `check-figures.sh` and
 `drawio_font_band.py --check` pass.
+
+## 2026.09.05 - Data-effect panel at third width; reserved boxes re-flowed
+
+Author review: (d) was too big. It is now third width (57.8 mm, from
+[[experiments.010-kuzmin-tmi.scripts.dango_full_dataset_si]]), so row 2 is (c) convergence, (d) data
+effect, and (e) the first reserved box, three thirds; row 3 holds (f) and (g) at half width (140 units
+tall, same text). The script refuses a data-effect SVG that is not third width. Same white-cross
+constants; every letter in its strip. Figure 707 x 609 units = 179.5 x 154.8 mm; exported PDF
+179.9 x 155.2 mm; `check-figures.sh` and `drawio_font_band.py --check` pass.

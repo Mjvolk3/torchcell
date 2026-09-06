@@ -81,3 +81,10 @@ Author review: the legend of the decreased-zeros panel was hard to read over the
 neighborhood bars. It now draws with `frameon=True`, white face, no edge (`framealpha=1`), same
 position. Re-rendered with `--from-csv`; no value changed. The panel is now (c) of
 `FigS-dango-reproduction` (was b).
+
+## 2026.09.05 - Legend in headroom, panel 46 mm tall
+
+Author review: the legend still covered the co-expression bars and their lambda labels. The y-axis
+now runs to 8.5% (tallest bar 4.6%, major ticks every 2%) so the four-entry legend in the upper right
+sits above every bar and label; the panel is 46 mm tall (was 52) so the taller curves panel of
+`FigS-dango-reproduction` fits under 170 mm. Re-rendered with `--from-csv`; no value changed.

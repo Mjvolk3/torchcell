@@ -105,7 +105,7 @@ DATA_EFFECT_CSV = osp.join(RESULTS_DIR, "dango_full_dataset_data_effect.csv")
 # deletions), from notes/experiments.011-kuzmin-tmi.scripts.query-comparison-006-009-010-011.md;
 # the 005 count is read from SPLIT_005_CSV.
 RECORDS_006 = 332_313
-BUILD_LABEL = {"005": "Kuzmin 2018", "006": "Kuzmin 2018 + Kuzmin 2020 deletions"}
+BUILD_LABEL = {"005": "Kuzmin 2018", "006": "Kuzmin 2018 + 2020"}  # 006 adds the Kuzmin 2020 deletions
 
 METRIC = "val/gene_interaction/Pearson"
 MSE = "val/gene_interaction/MSE"
@@ -438,17 +438,18 @@ def data_effect_table(per_run: pd.DataFrame) -> pd.DataFrame:
 
 
 def panel_data_effect(per_run: pd.DataFrame, effect: pd.DataFrame):
-    """Wide panel: best validation Pearson (max over epochs) on the Kuzmin 2018-only build
-    against the experiment-006 build, grouped by build with one bar per STRING release;
+    """Third-width panel: best validation Pearson (max over epochs) on the Kuzmin 2018-only
+    build against the experiment-006 build, grouped by build with one bar per STRING release;
     bar = mean over runs, whisker = SEM where n > 1, open circles = runs. The y-axis is
-    zoomed to 0.30 to 0.45, as in the best-per-run panel, so the SEM whiskers are visible."""
-    w, h = PANEL_WIDTHS_MM["wide"], 52.0
+    zoomed to 0.30 to 0.45, as in the best-per-run panel, so the SEM whiskers are visible;
+    the one-column legend sits over the lower 006 bars' headroom."""
+    w, h = PANEL_WIDTHS_MM["third"], 52.0
     fig, ax = plt.subplots(figsize=(mm_to_in(w), mm_to_in(h)))
-    fig.subplots_adjust(left=0.1, right=0.98, top=0.97, bottom=0.2)
+    fig.subplots_adjust(left=0.2, right=0.97, top=0.97, bottom=0.2)
     builds = ["005", "006"]
     versions = ["9_1", "11_0", "12_0"]
     labels = {"9_1": "STRING v9.1", "11_0": "STRING v11.0", "12_0": "STRING v12.0"}
-    bw = 0.22
+    bw = 0.26
     rng = np.random.default_rng(0)
     for i, v in enumerate(versions):
         for j, build in enumerate(builds):
@@ -464,7 +465,7 @@ def panel_data_effect(per_run: pd.DataFrame, effect: pd.DataFrame):
                        edgecolor="black", linewidth=0.4, zorder=5)
     ax.set_xticks(np.arange(len(builds)))
     ax.set_xticklabels([f"{BUILD_LABEL[b]}\n{int(effect[effect['build'] == b]['records'].iloc[0]):,} records" for b in builds])
-    ax.set_xlim(-0.6, len(builds) - 0.4)
+    ax.set_xlim(-0.55, len(builds) - 0.45)
     ax.set_xlabel("Trigenic dataset build")
     ax.set_ylabel("Best validation Pearson r")
     ax.set_ylim(0.3, 0.45)
@@ -473,8 +474,8 @@ def panel_data_effect(per_run: pd.DataFrame, effect: pd.DataFrame):
     ax.tick_params(which="minor", length=0)
     ax.grid(axis="y", which="major", color="#CACACA", linewidth=0.4)
     ax.set_axisbelow(True)
-    ax.legend(frameon=False, loc="upper right", ncol=3, handlelength=1.0, columnspacing=1.0,
-              handletextpad=0.4)
+    ax.legend(frameon=False, loc="upper right", ncol=1, handlelength=1.0, handletextpad=0.4,
+              labelspacing=0.3, borderaxespad=0.3)
     style_axes(ax)
     save(fig, "dango_full_dataset_data_effect")
 

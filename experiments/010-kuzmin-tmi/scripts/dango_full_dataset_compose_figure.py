@@ -4,12 +4,12 @@
 """Compose the DANGO full-dataset SI figure as a draw.io file from the true-size panel SVGs.
 
 Panels a--d come from ``dango_full_dataset_si.py`` (this folder): (a) validation curves and
-(b) best validation Pearson per run at half width; (c) the convergence epochs at third width
-beside (d) the data-effect panel (Kuzmin 2018-only build against the experiment-006 build,
-by STRING release) at the "wide" width, the two tiling one row. Panels e--g need a trained
-DANGO checkpoint and inference on the validation split, which cannot run on this machine;
-each is reserved as an empty lettered box at third width whose label states exactly what
-fills it. Each panel SVG declares its size in draw.io units (100 per inch, via
+(b) best validation Pearson per run at half width; (c) the convergence epochs and (d) the
+data-effect panel (Kuzmin 2018-only build against the experiment-006 build, by STRING
+release), both at third width. Panels e--g need a trained DANGO checkpoint and inference on
+the validation split, which cannot run on this machine; each is reserved as an empty
+lettered box whose label states exactly what fills it: (e) completes row 2 at third width,
+(f) and (g) share row 3 at half width. Each panel SVG declares its size in draw.io units (100 per inch, via
 ``savefig_true_size_svg``), so the image cells are placed at exact physical size and the
 figure is WYSIWYG when ``make -C paper/nature-biotech fig`` exports it to
 ``figures/FigS-dango-full-dataset.pdf``.
@@ -125,17 +125,20 @@ def main():
 
     half = svg_size(curves)[0]
     third = svg_size(conv)[0]
+    if abs(svg_size(effect)[0] - third) > 0.5:
+        raise SystemExit("the data-effect panel must be third width to tile row 2 with c and e")
     col2 = half + COL_GAP
     # Row 1: (a) curves and (b) best per run, two half-width panels.
     row1_top = 0
     y1 = row1_top + TOP_STRIP
     row1_h = max(svg_size(curves)[1], svg_size(best)[1])
-    # Row 2: (c) convergence at third width beside (d) the data effect at wide width.
+    # Row 2: (c) convergence, (d) the data effect, (e) the first reserved box, three thirds.
     row2_top = y1 + row1_h + (ROW_GAP - TOP_STRIP)
     y2 = row2_top + TOP_STRIP
     row2_h = max(svg_size(conv)[1], svg_size(effect)[1])
     x_effect = third + COL_GAP
-    # Row 3: (e)-(g) reserved boxes, three third-width panels.
+    x_e = 2 * (third + COL_GAP)
+    # Row 3: (f) and (g) reserved boxes at half width.
     row3_top = y2 + row2_h + (ROW_GAP - TOP_STRIP)
     y3 = row3_top + TOP_STRIP
     row3_h = 140.0
@@ -152,11 +155,11 @@ def main():
     add(image_cell(cid, best, col2, y1), "b", col2, row1_top)
     add(image_cell(cid, conv, 0, y2), "c", 0, row2_top)
     add(image_cell(cid, effect, x_effect, y2), "d", x_effect, row2_top)
-    for k, letter in enumerate("efg"):
-        x = k * (third + COL_GAP)
-        add(placeholder_cell(cid, PLACEHOLDERS[letter], x, y3, third, row3_h), letter, x, row3_top)
+    add(placeholder_cell(cid, PLACEHOLDERS["e"], x_e, y2, third, row2_h), "e", x_e, row2_top)
+    add(placeholder_cell(cid, PLACEHOLDERS["f"], 0, y3, half, row3_h), "f", 0, row3_top)
+    add(placeholder_cell(cid, PLACEHOLDERS["g"], col2, y3, half, row3_h), "g", col2, row3_top)
 
-    extent_w = max(col2 + svg_size(best)[0], x_effect + svg_size(effect)[0], 3 * third + 2 * COL_GAP)
+    extent_w = max(col2 + svg_size(best)[0], x_e + third, col2 + half)
     extent_h = y3 + row3_h
     xml = (
         '<mxfile host="dango_full_dataset_compose_figure.py">'

@@ -17,7 +17,9 @@ Panels, in reading order:
   c  ``dango_decreased_zeros.svg`` from ``dango_construction_si.py`` (decreased zeros and
      lambda per channel).
   d  ``dango_string_version_sweep.svg`` and
-  e  ``dango_string_version_curves.svg`` from ``dango_string_version_sweep.py``.
+  e  ``dango_string_version_curves.svg`` (2 x 3 small multiples: the pretraining weight
+     alpha_e, the validation reconstruction and interaction losses, training and validation
+     Pearson, validation MSE) from ``dango_string_version_sweep.py``.
 
 Each SVG declares its size in draw.io units (100 per inch), so the image cells are placed
 at exact physical size and the figure is WYSIWYG when ``make -C paper/nature-biotech fig``
@@ -58,6 +60,7 @@ COL_GAP = 12  # 3 mm between columns
 ROW_GAP = 22  # 5.5 mm between rows; the next row's TOP_STRIP is the lower part of it
 TOP_STRIP = 16  # the letter strip above every row
 LETTER_W, LETTER_H = 18, 14
+SCHEMATIC_INSET_TOP, SCHEMATIC_INSET_BOTTOM = 6.0, 3.0  # see the row-1 comment in main()
 BODY = 8.3  # ladder value: prints at 5.98 pt
 LETTER = 11.1  # ladder value: prints at 7.99 pt, panel letters only
 MATH = 7  # MathJax renders ~1.19x the cell size: 7 units -> ~6 pt on the page (measured)
@@ -155,7 +158,7 @@ def schematic(c: Cells, x0: float, y0: float, w: float, h: float):
     branch (encoder -> reconstruction head; readout -> loss) reads left to right.
     """
     n_rows, gap = 6, 6.0
-    bh = (h - (n_rows - 1) * gap) / n_rows  # box height (29.1 at the 204.7-unit panel height)
+    bh = (h - (n_rows - 1) * gap) / n_rows  # box height (27.6 at the 195.7-unit inset panel height)
     head_h = 13.0  # heading line; the math line is centered in the rest of the box
     math_y, math_h = head_h, bh - head_h
 
@@ -225,12 +228,16 @@ def main():
     c = Cells()
     half = svg_size(releases)[0]
     col2 = half + COL_GAP
-    # Row 1: (a) STRING release drift, (b) the schematic at the same size as panel a.
+    # Row 1: (a) STRING release drift, (b) the schematic beside it. A matplotlib SVG carries
+    # its own white margin (panel a's ink starts 4.7 units below its top edge and ends 2.7
+    # above its bottom, measured by rasterizing it), while the schematic's boxes fill their
+    # extent exactly; the schematic is therefore inset by SCHEMATIC_INSET_TOP / _BOTTOM so
+    # its ink lines up with panel a's and the letter b has the same white gap above it as a.
     row_top = 0
     y1 = row_top + TOP_STRIP
     wa, ha = c.image(releases, 0, y1)
     c.letter("a", 0, row_top)
-    schematic(c, col2, y1, wa, ha)
+    schematic(c, col2, y1 + SCHEMATIC_INSET_TOP, wa, ha - SCHEMATIC_INSET_TOP - SCHEMATIC_INSET_BOTTOM)
     c.letter("b", col2, row_top)
     # Row 2: (c) decreased zeros, (d) best validation Pearson by release and schedule.
     row_top = y1 + ha + (ROW_GAP - TOP_STRIP)

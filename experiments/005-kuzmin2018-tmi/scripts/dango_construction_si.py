@@ -184,8 +184,11 @@ def dataset_split() -> pd.DataFrame:
 def panel(df: pd.DataFrame):
     """Half-width panel: percent decreased zeros per channel for the two release transitions,
     the 1% rule as a dashed line, the resulting lambda printed over each bar, and the two
-    values the DANGO paper reports as open markers."""
-    w, h = PANEL_WIDTHS_MM["half"], 52.0
+    values the DANGO paper reports as open markers. The y-axis runs to 8.5% (the tallest bar
+    is 4.6%) so the legend in the upper right sits in headroom above every bar and label
+    (author review 2026.09.05: it used to cover the co-expression bars). 46 mm tall, with
+    the sweep panel beside it, so the curves panel below fits the 170 mm figure."""
+    w, h = PANEL_WIDTHS_MM["half"], 46.0
     fig, ax = plt.subplots(figsize=(mm_to_in(w), mm_to_in(h)))
     fig.subplots_adjust(left=0.11, right=0.98, top=0.97, bottom=0.28)
     x = np.arange(len(CHANNELS))
@@ -205,9 +208,9 @@ def panel(df: pd.DataFrame):
     ax.set_xticklabels([CHANNEL_LABEL[c] for c in CHANNELS], rotation=25, ha="right", rotation_mode="anchor")
     ax.set_xlabel("STRING channel")
     ax.set_ylabel("Decreased zeros (%)")
-    ax.set_ylim(0, 6.3)
-    ax.yaxis.set_major_locator(MultipleLocator(1))
-    ax.yaxis.set_minor_locator(MultipleLocator(0.5))
+    ax.set_ylim(0, 8.5)
+    ax.yaxis.set_major_locator(MultipleLocator(2))
+    ax.yaxis.set_minor_locator(MultipleLocator(1))
     ax.tick_params(which="minor", length=0)
     ax.tick_params(length=2, width=0.5)
     ax.grid(axis="y", which="both", color="#CACACA", linewidth=0.4)
@@ -221,11 +224,11 @@ def panel(df: pd.DataFrame):
                           label="1% rule: above, λ = 0.1; below, λ = 1"))
     handles.append(Line2D([], [], marker="o", markersize=3, markerfacecolor="white",
                           markeredgecolor="black", linestyle="none", label="DANGO paper (v9.1 to v11.0)"))
-    # Opaque white box so the legend reads over the gridlines and the neighborhood bars
-    # (author review 2026.09.04); no edge, so it is a clearing rather than a frame.
+    # Opaque white box so the legend reads over the gridlines (author review 2026.09.04); no
+    # edge, so it is a clearing rather than a frame. It sits in the headroom above the bars.
     ax.legend(handles=handles, frameon=True, facecolor="white", edgecolor="none", framealpha=1.0,
               loc="upper right", handlelength=1.4, handletextpad=0.5, labelspacing=0.3,
-              borderpad=0.4)
+              borderpad=0.3, borderaxespad=0.2)
     for s in ax.spines.values():
         s.set_visible(True)
         s.set_linewidth(0.5)

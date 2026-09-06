@@ -25,13 +25,18 @@ Reported (CSV under results/dcell_model/):
   dcell_model_size.csv        parameter count implied by the widths, vs the wandb-logged
                               ``model/params_*`` of the trigenic runs (frozen pull)
   dcell_wandb_model_size.csv  the frozen wandb pull (one row per run)
+  dcell_vs_paper.csv          the published DCell ontology and model (Ma et al. 2018, every
+                              value a verbatim quote from the sha256-pinned OCR text of the
+                              mirror key maUsingDeepLearning2018) against the same quantities
+                              measured on the frozen DAG above (see PUBLISHED)
 
 Panels (true-size SVG + PNG under $ASSET_IMAGES_DIR/006-kuzmin-tmi/):
   dcell_model_go_dag (the whole filtered DAG, strata as layers, one triple deletion
   highlighted), dcell_model_terms_per_stratum, dcell_model_genes_per_term,
   dcell_model_terms_per_gene
 
-Table: paper/nature-biotech/sections/tab-dcell-model-go-filter.tex
+Tables: paper/nature-biotech/sections/tab-dcell-model-go-filter.tex
+        paper/nature-biotech/sections/tab-dcell-model-vs-paper.tex
 
 Run from the repo root:
     python experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py
@@ -61,6 +66,7 @@ from dotenv import load_dotenv
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
+from pydantic import BaseModel
 
 from torchcell.data.cell_data import compute_strata
 from torchcell.graph import (
@@ -102,6 +108,7 @@ TEX_DIR = "paper/nature-biotech/sections"
 
 # The trigenic DCell configuration (conf/dcell_kuzmin2018_tmi*.yaml + scripts/dcell.py).
 MIN_GENES = 4  # scripts/dcell.py: wandb.config.model.get("go_min_genes", 4)
+MIN_GENES_WORD = {4: "four", 6: "six"}[MIN_GENES]  # prose form for the comparison table
 DATE_FILTER = None  # scripts/dcell.py: wandb.config.model.get("go_date_filter", None)
 SUBSYSTEM_MIN = 20  # model.subsystem_output_min
 SUBSYSTEM_RATIO = 0.3  # model.subsystem_output_max_mult
@@ -120,7 +127,126 @@ WANDB_FIELDS = [
 PANEL_W_MM = PANEL_WIDTHS_MM["third"]
 PANEL_H_MM = 44.0
 DAG_W_MM = PANEL_WIDTHS_MM["wide"]  # the DAG panel; the equations column fills the rest of 180 mm
-DAG_H_MM = 69.0  # matches the equations column beside it in FigS-dcell-model
+# The DAG panel's height sets the height of the equations column beside it in FigS-dcell-model
+# (dcell_model_compose_figure.py reads the SVG and sizes the column to it). Its visible
+# content is flush with the image: the axes frame at the top edge, the legend at the bottom.
+DAG_H_MM = 80.0
+DAG_TOP = 0.997  # axes frame 0.24 mm below the image's top edge (the frame stroke)
+DAG_BOTTOM_CLEAR = 0.006  # legend's lower edge ~0.5 mm above the image's bottom edge
+
+# --------------------------------------------------------------------------- the published model
+# Ma et al. 2018 (Nat. Methods 15, 290-298), mirror key maUsingDeepLearning2018, pulled over
+# tc-lit on 2026.09.05 and verified against the manifest: paper.md (MinerU OCR of the paper
+# and its Online Methods) sha256 below. Every published value in the comparison table is a
+# verbatim quote from that text; what the text does not state is "not reported".
+PAPER_KEY = "maUsingDeepLearning2018"
+PAPER_MD_SHA256 = "ac837bc358ea4969a72789e66e31380bfdcbd7b8aea98dec47b108ee21d2070c"
+
+
+class PublishedValue(BaseModel):
+    """One row of the published-vs-TorchCell table: the published value with its evidence."""
+
+    row: str
+    published: str  # the table cell (LaTeX)
+    quote: str | None  # verbatim from paper.md, or None when the paper does not state it
+    where: str  # section of the paper the quote is from
+
+
+PUBLISHED = [
+    PublishedValue(
+        row="GO release",
+        published="not reported; cites the GO Consortium (ref.~9, \\emph{Nucleic Acids Res.} 2016)",
+        quote="the Gene Ontology (GO), a literature-curated reference database from which we extracted 2,526 cellular subsystems (intracellular components, processes or functions)9 [...] 9. The Gene Ontology Consortium. Expansion of the Gene Ontology knowledgebase and resources. Nucleic Acids Res. 45, D331–D338 (2016).",
+        where="Introduction; reference 9",
+    ),
+    PublishedValue(
+        row="Annotation source",
+        published="not reported (``gene-to-term annotations'')",
+        quote="a biological ontology consisting of terms representing cellular subsystems, child–parent relations representing containment of one term by another, and gene-to-term annotations",
+        where="Online Methods, Preparation of ontologies",
+    ),
+    PublishedValue(
+        row="Genes",
+        published="the genes disrupted in the training genotypes; count not reported",
+        quote=r"For each sample i, $X _ { i } \in \ : R ^ { M }$ denotes the genotype, represented as a binary vector of states on $M$ genes $\mathbf { \nabla } \cdot \mathbf { 1 } =$ disrupted; $0 =$ wild type) [...] 2. Terms containing fewer than six yeast genes disrupted in the available genotypes",
+        where="Online Methods, DCell architecture and training algorithm (OCR of the inline math kept as is); Preparation of ontologies",
+    ),
+    PublishedValue(
+        row="Evidence filter",
+        published="terms with evidence code IGI removed",
+        quote="1. Terms with the evidence code ‘inferred by genetic interaction’ (IGI), to avoid potential circularity in predicting genetic interactions in the genotype–phenotype samples.",
+        where="Online Methods, Preparation of ontologies",
+    ),
+    PublishedValue(
+        row="Redundancy filter",
+        published="terms redundant with respect to their children",
+        quote="3. Terms that are redundant with respect to their children terms in the ontology.",
+        where="Online Methods, Preparation of ontologies",
+    ),
+    PublishedValue(
+        row="Containment threshold",
+        published="fewer than six disrupted genes, counted over the term and its descendants",
+        quote="2. Terms containing fewer than six yeast genes disrupted in the available genotypes (with ‘containment’ defined as all genes annotated to that term or its descendants).",
+        where="Online Methods, Preparation of ontologies",
+    ),
+    PublishedValue(
+        row="Filter order",
+        published="IGI, containment, redundancy (as listed)",
+        quote="We used the following criteria to filter (remove) terms from GO: 1. Terms with the evidence code ‘inferred by genetic interaction’ (IGI), to avoid potential circularity in predicting genetic interactions in the genotype–phenotype samples. 2. Terms containing fewer than six yeast genes disrupted in the available genotypes (with ‘containment’ defined as all genes annotated to that term or its descendants). 3. Terms that are redundant with respect to their children terms in the ontology.",
+        where="Online Methods, Preparation of ontologies",
+    ),
+    PublishedValue(
+        row="Removed-term rewiring",
+        published="children connected to all parents",
+        quote="When a term was removed, all children were connected directly to all parent terms to maintain the hierarchical structure.",
+        where="Online Methods, Preparation of ontologies",
+    ),
+    PublishedValue(
+        row="Subsystems",
+        published="2,526",
+        quote="The remaining 2,526 terms were used to define the hierarchy of DCell subsystems.",
+        where="Online Methods, Preparation of ontologies",
+    ),
+    PublishedValue(row="Hierarchy edges", published="not reported", quote=None, where=""),
+    PublishedValue(
+        row="Depth",
+        published="12 layers",
+        quote="The depth of both networks is 12 layers, on par with deep neural networks in other fields7.",
+        where="Results, DCell design",
+    ),
+    PublishedValue(row="Leaves", published="not reported", quote=None, where=""),
+    PublishedValue(
+        row="Width rule",
+        published="$\\max(20,\\lceil 0.3\\times\\text{genes contained by }t\\rceil)$",
+        quote=r"L _ { o } ^ { ( t ) } = \operatorname* { m a x } \left( 2 0 , \left\lceil 0 . 3 * \mathrm { n u m b e r ~ o f ~ g e n e s ~ c o n t a i n e d ~ b y ~ } t \right\rceil \right)",
+        where="Online Methods, equation (2) (OCR of the display math kept as is)",
+    ),
+    PublishedValue(
+        row="Root readout",
+        published="one output neuron; root width not reported",
+        quote=r"the output layer, or root, is a single neuron representing cell phenotype [...] Linear in equation (3) denotes linear functions transforming multidimensional vector $O _ { i } ^ { ( t ) }$ into a scalar.",
+        where="Results, DCell design; Online Methods, equation (3)",
+    ),
+    PublishedValue(
+        row="Hidden units",
+        published="97,181 (20 to 1,075 per subsystem)",
+        quote="The use of multiple neurons (ranging from 20 to 1,075 per system; see Online Methods) acknowledges that cellular components are often multifunctional [...] By this design, the VNN embedded in GO includes 97,181 neurons; the corresponding model for CliXO includes 22,167 neurons.",
+        where="Results, DCell design",
+    ),
+    PublishedValue(row="Parameters", published="not reported", quote=None, where=""),
+    PublishedValue(
+        row="Auxiliary loss",
+        published="$\\alpha=0.3$, summed over $t\\neq r$, plus $\\lambda\\lVert W\\rVert_2$ ($\\lambda$ by four-fold CV)",
+        quote=r"the parameter $\alpha$ $_ { ( = 0 . 3 ) }$ balances these two contributions. $\lambda$ is an $l _ { 2 }$ norm regularization factor determined by four-fold cross-validation.",
+        where="Online Methods, equation (3) (OCR of the inline math kept as is)",
+    ),
+    PublishedValue(
+        row="Training data",
+        published="Costanzo 2010 ($\\sim$3 M examples) or Costanzo 2016 ($\\sim$8 M), single and double deletions",
+        quote=r"Several forms of the model were employed in this study, trained on either Costanzo et al.16 (\~3 million training examples) or a more recently published update in 2016 ( ${ \sim } 8$ million training examples)15.",
+        where="Online Methods, Training genotype-phenotype data (OCR of the inline math kept as is)",
+    ),
+]
 
 NAMESPACE_COLOR = {
     "biological_process": PLOT_PALETTE[0],  # orange
@@ -548,7 +674,7 @@ def panel_go_dag(terms: pd.DataFrame, edges: pd.DataFrame, ann: pd.DataFrame, ge
             stack.append(p)
 
     fig, ax = plt.subplots(figsize=(mm_to_in(DAG_W_MM), mm_to_in(DAG_H_MM)))
-    fig.subplots_adjust(left=0.075, right=0.995, bottom=0.135, top=0.985)
+    fig.subplots_adjust(left=0.075, right=0.995, bottom=0.135, top=DAG_TOP)
     gene_row = n_strata + 0.9  # the strain row sits one layer below the deepest stratum
 
     def xy(t: str) -> tuple[float, float]:
@@ -617,12 +743,19 @@ def panel_go_dag(terms: pd.DataFrame, edges: pd.DataFrame, ann: pd.DataFrame, ge
         Line2D([], [], color=HIGHLIGHT, lw=0.8, label="Path to GO:ROOT"),
         Line2D([], [], color=FEED, lw=0.8, ls=(0, (2, 1.5)), label="Gene state into subsystem"),
     ]
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(-0.02, -0.005), frameon=False, ncol=3,
-              handlelength=1.4, handletextpad=0.5, borderpad=0.0, labelspacing=0.25, columnspacing=1.2)
+    legend_gap = 0.005  # legend hangs this fraction of the axes height below the frame
+    leg = ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(-0.02, -legend_gap), frameon=False, ncol=3,
+                    handlelength=1.4, handletextpad=0.5, borderpad=0.0, labelspacing=0.25, columnspacing=1.2)
     ax.text(0.995, 0.985, f"{len(terms):,} subsystems, {len(edges):,} edges, {n_strata} strata",
             transform=ax.transAxes, ha="right", va="top", fontsize=6)
     for s in ax.spines.values():
         s.set_linewidth(0.5)
+    # Flush bottom: measure the legend and set the bottom margin so its lower edge sits
+    # DAG_BOTTOM_CLEAR above the image's bottom edge (the figure is composed edge to edge).
+    fig.canvas.draw()
+    h_leg = leg.get_window_extent().transformed(fig.transFigure.inverted()).height
+    bottom = h_leg + DAG_BOTTOM_CLEAR + legend_gap * (DAG_TOP - 0.135)
+    fig.subplots_adjust(bottom=bottom)
     save(fig, "dcell_model_go_dag")
 
 
@@ -714,6 +847,90 @@ def write_table(stages: pd.DataFrame) -> None:
         fh.write("\n".join(lines) + "\n")
 
 
+def torchcell_values(stages: pd.DataFrame, terms: pd.DataFrame, strata_df: pd.DataFrame, genes: pd.DataFrame,
+                     edges: pd.DataFrame, size: pd.Series) -> dict[str, str]:
+    """The TorchCell column of the comparison, every value read off the frozen DAG."""
+    st = stages.set_index("stage")
+    raw, igi, red, fin = st.loc["raw"], st.loc["drop IGI annotations"], st.loc["drop redundant terms"], st.loc[f"contained genes >= {MIN_GENES}"]
+    root = terms.set_index("term").loc["GO:ROOT"]
+    n_strata = int(strata_df["stratum"].max()) + 1
+    if len(edges) != int(fin["edges"]) or len(terms) != int(fin["terms"]):
+        raise SystemExit("go_edges_final.csv / go_terms_final.csv disagree with go_filter_stages.csv")
+    if int(terms["width"].sum()) != int(size["neurons"]):
+        raise SystemExit("hidden units in go_terms_final.csv disagree with dcell_model_size.csv")
+    release = raw["go_release"].replace("releases/", "")
+    return {
+        "GO release": f"{release} (\\texttt{{go.obo}} data-version)",
+        "Annotation source": "SGD \\texttt{go\\_details} over the 6,607-gene S288C reference",
+        "Genes": f"{len(genes):,} reference genes, all covered",
+        "Evidence filter": f"IGI annotations removed ({int(raw['annotations'] - igi['annotations']):,}); a term goes only when emptied ({int(raw['terms'] - igi['terms'])} terms)",
+        "Redundancy filter": f"terms whose gene set equals a parent's ({int(igi['terms'] - red['terms'])} terms)",
+        "Containment threshold": f"fewer than {MIN_GENES_WORD} of the 6,607 reference genes, counted over the term and its descendants ({int(red['terms'] - fin['terms']):,} terms)",
+        "Filter order": "IGI, redundancy, containment",
+        "Removed-term rewiring": "children connected to all parents",
+        "Subsystems": f"{int(fin['terms']):,}",
+        "Hierarchy edges": f"{int(fin['edges']):,}",
+        "Depth": f"{n_strata} strata (\\texttt{{GO:ROOT}} plus {n_strata - 1})",
+        "Leaves": f"{int(fin['leaves']):,}",
+        "Width rule": "$\\max(20,\\lceil 0.3\\,\\lvert\\mathrm{genes}(t)\\rvert\\rceil)$, direct annotations",
+        "Root readout": f"one output; \\texttt{{GO:ROOT}} has {int(root['direct_genes'])} direct genes, so $L_r={int(root['width'])}$",
+        "Hidden units": f"{int(size['neurons']):,} ({int(size['width_min'])} to {int(size['width_max']):,} per subsystem; {int((terms['width'] == SUBSYSTEM_MIN).sum()):,} subsystems at the floor of {SUBSYSTEM_MIN})",
+        "Parameters": f"{int(size['params_total']):,}",
+        "Auxiliary loss": "$\\alpha=0.3$, averaged over $t\\neq r$; AdamW weight decay",
+        "Training data": "the trigenic dataset of the CGT experiment (\\suppnoteref{note:dcell-training})",
+    }
+
+
+def write_vs_paper_table(stages: pd.DataFrame, terms: pd.DataFrame, strata_df: pd.DataFrame, genes: pd.DataFrame,
+                         edges: pd.DataFrame, size: pd.Series) -> None:
+    """Published DCell (verbatim from the paper) against the TorchCell rebuild, CSV + LaTeX."""
+    tc = torchcell_values(stages, terms, strata_df, genes, edges, size)
+    if set(tc) != {p.row for p in PUBLISHED}:
+        raise SystemExit(f"row mismatch between PUBLISHED and torchcell_values: {set(tc) ^ {p.row for p in PUBLISHED}}")
+    rows = [
+        {"row": p.row, "published": p.published, "torchcell": tc[p.row], "quote": p.quote or "", "where": p.where,
+         "citation_key": PAPER_KEY, "paper_md_sha256": PAPER_MD_SHA256}
+        for p in PUBLISHED
+    ]
+    pd.DataFrame(rows).to_csv(osp.join(RESULTS_DIR, "dcell_vs_paper.csv"), index=False)
+    lines = [
+        "%% AUTO-GENERATED -- do not hand-edit.",
+        "%% SOURCE: experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py",
+        "%%         published column: verbatim quotes from the OCR text of the mirror key",
+        f"%%         {PAPER_KEY} (paper.md, sha256 {PAPER_MD_SHA256}), listed in",
+        "%%         results/dcell_model/dcell_vs_paper.csv; TorchCell column: go_filter_stages.csv,",
+        "%%         go_terms_final.csv, go_strata.csv, go_genes_final.csv, go_edges_final.csv, dcell_model_size.csv.",
+    ]
+    for p in PUBLISHED:
+        lines.append(f"%% {p.row}: " + (f"[{p.where}] {p.quote}" if p.quote else "not stated in the paper"))
+    lines += [
+        r"\begin{table}[!htbp]",
+        r"\centering",
+        r"\footnotesize",
+        r"\begin{tabular}{@{}p{0.17\linewidth}p{0.38\linewidth}p{0.39\linewidth}@{}}",
+        r"\toprule",
+        r"& \textbf{Published DCell} & \textbf{TorchCell DCell} \\",
+        r"\midrule",
+    ]
+    for p in PUBLISHED:
+        lines.append(f"{p.row} & {p.published} & {tc[p.row]} \\\\")
+    lines += [
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\caption{The published DCell ontology and model (Ma et al.\ 2018) against the TorchCell rebuild."
+        r" Published values are quoted from the paper's text and Online Methods (the OCR text of the mirrored"
+        r" paper, sha256-pinned in the generating script); ``not reported'' marks a quantity the paper does not"
+        r" state. TorchCell values are measured on the frozen DAG of \supptab{tab:dcell-go-filter}; counts in"
+        r" parentheses are the terms or annotations each filter removed. Depth counts strata of the longest path"
+        r" from \texttt{GO:ROOT}; the paper's ``12 layers'' does not say whether the root is counted."
+        r" Hidden units are the sum of subsystem widths $L_t$.}",
+        r"\label{tab:dcell-vs-paper}",
+        r"\end{table}",
+    ]
+    with open(osp.join(TEX_DIR, "tab-dcell-model-vs-paper.tex"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+
+
 def render() -> None:
     stages = pd.read_csv(osp.join(RESULTS_DIR, "go_filter_stages.csv"))
     terms = pd.read_csv(osp.join(RESULTS_DIR, "go_terms_final.csv"))
@@ -722,6 +939,7 @@ def render() -> None:
     edges = pd.read_csv(osp.join(RESULTS_DIR, "go_edges_final.csv"))
     ann = pd.read_csv(osp.join(RESULTS_DIR, "go_annotations_final.csv"))
     ex = pd.read_csv(osp.join(RESULTS_DIR, "example_triple.csv"))
+    size = pd.read_csv(osp.join(RESULTS_DIR, "dcell_model_size.csv")).iloc[0]
     triple = list(ex["gene"])
     panel_go_dag(terms, edges, ann, genes, triple)
     print(f"highlighted triple deletion: record {int(ex['record_index'].iloc[0])}: {triple}")
@@ -729,7 +947,8 @@ def render() -> None:
     panel_genes_per_term(terms)
     panel_terms_per_gene(genes)
     write_table(stages)
-    print(f"panels -> {IMG_DIR}/dcell_model_*.svg; table -> {TEX_DIR}/tab-dcell-model-go-filter.tex")
+    write_vs_paper_table(stages, terms, strata_df, genes, edges, size)
+    print(f"panels -> {IMG_DIR}/dcell_model_*.svg; tables -> {TEX_DIR}/tab-dcell-model-go-filter.tex, tab-dcell-model-vs-paper.tex")
 
 
 def main() -> None:

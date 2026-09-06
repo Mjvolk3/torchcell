@@ -20,7 +20,12 @@ Layout convention shared by every composed SI figure (the "white cross"): COL_GA
 units (3 mm) between columns, ROW_GAP = 22 units (5.5 mm) between rows, a TOP_STRIP of 16
 units above every row, and each panel letter in that strip at the panel's top-left
 (x = panel_x, y = row_top), so no letter sits over an axis label or a neighbor's title
-and clear white gutters cross the figure both ways. The figure stays <= 709 x 669 units.
+and clear white gutters cross the figure both ways. Nothing but a letter may enter the
+strip (``Canvas.box``/``image`` refuse). Panel a's DAG image is flush with its content
+(axes frame at the top edge, legend at the bottom), and the equations column is sized to
+exactly its height, so the two share top and bottom edges under one letter strip. Box
+colors follow ``ROLE_COLOR``, the DANGO schematic's role-to-color scheme. The figure stays
+<= 709 x 669 units.
 
 Export (also done by ``make -C paper/nature-biotech fig``):
     /Applications/draw.io.app/Contents/MacOS/draw.io -x -f pdf --crop \\
@@ -51,13 +56,28 @@ ROW_GAP = 22  # 5.5 mm between rows; the next row's TOP_STRIP is the lower part 
 TOP_STRIP = 16  # the letter strip above every row
 LETTER_W, LETTER_H = 18, 14
 
-# Palette (PLOT_PALETTE / PLOT_PALETTE_FILL slots 1-6).
+# Palette (PLOT_PALETTE / PLOT_PALETTE_FILL slots 1-6), (stroke, fill).
 ORANGE = ("#D79B00", "#FFE6CC")
 RED = ("#B85450", "#F8CECC")
 PURPLE = ("#9673A6", "#E1D5E7")
 YELLOW = ("#D6B656", "#FFF2CC")
 BLUE = ("#6C8EBF", "#DAE8FC")
 GRAY = ("#666666", "#F5F5F5")
+
+# Box color by role, the scheme of the DANGO schematic (FigS-dango-reproduction panel b,
+# experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py): there the STRING
+# channels and the channel encoder are orange, the meta-embedding purple, the perturbation's
+# entry yellow, the Hyper-SAGNN readout blue, the reconstruction head and the interaction loss
+# red, and the combined loss gray. The same roles take the same colors here.
+ROLE_COLOR = {
+    "input": ORANGE,  # data the model reads (DANGO: the STRING channels)
+    "encoder": ORANGE,  # a learned stage that builds the representation (DANGO: channel encoder)
+    "embedding": PURPLE,  # the merged representation (DANGO: meta-embedding); unused by DCell
+    "perturbation": YELLOW,  # how the perturbation enters (DANGO: row selection)
+    "readout": BLUE,  # the prediction head on the representation (DANGO: Hyper-SAGNN)
+    "head_loss": RED,  # an extra head with its own loss (DANGO: reconstruction head, interaction loss)
+    "total_loss": GRAY,  # the objective that combines the terms
+}
 
 FS = 8.3  # 6 pt
 FS_HEAD = 9.7  # 7 pt
@@ -84,12 +104,14 @@ class Canvas:
         return f"c{self.n}"
 
     def box(self, value, x, y, w, h, color=GRAY, fs=FS, bold=False, rounded=0, align="center", valign="middle", dashed=False, fill=True):
+        if y < TOP_STRIP:
+            raise SystemExit(f"box {value!r} at y={y} intrudes into the letter strip")
         style = (
             f"rounded={rounded};whiteSpace=wrap;html=1;fontFamily=Arial;fontSize={fs};align={align};verticalAlign={valign};"
             f"strokeColor={color[0]};fillColor={color[1] if fill else 'none'};strokeWidth=0.75;"
             + ("fontStyle=1;" if bold else "")
             + ("dashed=1;" if dashed else "")
-            + ("spacingLeft=3;" if align == "left" else "")
+            + ("spacingLeft=3;spacingRight=3;" if align == "left" else "")
             + ("spacingTop=1;" if valign == "top" else "")
         )
         self.cells.append(
@@ -125,6 +147,8 @@ class Canvas:
         )
 
     def image(self, path, x, y):
+        if y < TOP_STRIP:
+            raise SystemExit(f"image {osp.basename(path)} at y={y} intrudes into the letter strip")
         w, h = svg_size(path)
         b64 = base64.b64encode(open(path, "rb").read()).decode("ascii")
         self.cells.append(
@@ -148,19 +172,30 @@ def svg_size(path: str) -> tuple[float, float]:
     return w, h
 
 
+BOX_GAP = 6  # between the boxes of the equations column
+BOX_NATURAL_H = {"perturbation": 74, "encoder": 62, "readout": 30, "head_loss": 30, "total_loss": 36}
+
+
 def equations(c: Canvas, x0: float, y0: float, w: float, total_h: float) -> float:
     """The model in the shared notation, as a column of boxes to the right of the DAG.
 
-    The column is exactly ``total_h`` tall (the DAG panel's height): the last box, the loss,
-    takes whatever remains, so the column's top and bottom edges align with panel a.
+    The column is exactly ``total_h`` tall (the DAG panel's height, whose visible content is
+    flush with its image edges): the height beyond the boxes' natural sizes is shared equally
+    among the five boxes, so the column's top and bottom edges align with panel a. Colors are
+    ``ROLE_COLOR``, the DANGO schematic's scheme.
     """
     pad = 4
     iw = w - 2 * pad
+    natural = sum(BOX_NATURAL_H.values()) + BOX_GAP * (len(BOX_NATURAL_H) - 1)
+    if total_h < natural:
+        raise SystemExit(f"panel a is {total_h:.0f} units tall; the equations column needs {natural}")
+    extra = (total_h - natural) / len(BOX_NATURAL_H)
+    hh = {k: v + extra for k, v in BOX_NATURAL_H.items()}
     y = y0
 
-    # -- gene-state input: the strain row, as a small visual with minimal words.
-    h = 74
-    c.box("Perturbation enters as data", x0, y, w, h, color=GRAY, align="left", valign="top", bold=True)
+    # -- the perturbation enters as data: the strain row, as a small visual with minimal words.
+    h = hh["perturbation"]
+    c.box("Perturbation enters as data", x0, y, w, h, color=ROLE_COLOR["perturbation"], align="left", valign="top", bold=True)
     chips = [1, 1, 0, 1, 1, 0, 1, 0, 1, 1]
     cw, cg = 13, 3
     cx0 = x0 + pad + (iw - (len(chips) * (cw + cg) - cg)) / 2
@@ -168,33 +203,31 @@ def equations(c: Canvas, x0: float, y0: float, w: float, total_h: float) -> floa
         c.box(str(s), cx0 + i * (cw + cg), y + 18, cw, 11, color=(RED if s == 0 else GRAY), fs=FS)
     c.math(r"s_i = 0 \text{ if } g_i \in p, \text{ else } 1", x0 + pad, y + 32, iw, 14)
     c.text("(term, gene) rows copied per strain; rows of deleted genes zeroed", x0 + pad, y + 47, iw, 24)
-    y += h + 6
+    y += h + BOX_GAP
 
-    # -- subsystem
-    h = 62
-    c.box("Subsystem t, one per GO term", x0, y, w, h, color=YELLOW, align="left", valign="top", bold=True)
+    # -- subsystem: the learned stage, one per term (the DANGO channel encoder's color)
+    h = hh["encoder"]
+    c.box("Subsystem t, one per GO term", x0, y, w, h, color=ROLE_COLOR["encoder"], align="left", valign="top", bold=True)
     c.math(r"I_t = \big[\, \Vert_{c \in \mathrm{ch}(t)} O_c \ \big\Vert\ s_{\mathrm{genes}(t)} \big]", x0 + pad, y + 13, iw, 16)
     c.math(r"O_t = \tanh\big(\mathrm{BN}(W_t I_t + b_t)\big) \in [-1,1]^{L_t}", x0 + pad, y + 29, iw, 16)
     c.math(r"L_t = \max\big(20,\, \lceil 0.3\,\lvert \mathrm{genes}(t) \rvert \rceil\big)", x0 + pad, y + 45, iw, 16)
-    y += h + 6
+    y += h + BOX_GAP
 
     # -- readout
-    h = 30
-    c.box("Root readout: trigenic interaction", x0, y, w, h, color=ORANGE, align="left", valign="top", bold=True)
+    h = hh["readout"]
+    c.box("Root readout: trigenic interaction", x0, y, w, h, color=ROLE_COLOR["readout"], align="left", valign="top", bold=True)
     c.math(r"\hat y = w_r^{\top} O_{\mathrm{ROOT}} + b_r", x0 + pad, y + 13, iw, 16)
-    y += h + 6
+    y += h + BOX_GAP
 
-    # -- auxiliary heads
-    h = 30
-    c.box("Auxiliary head on every t &#8800; r", x0, y, w, h, color=PURPLE, align="left", valign="top", bold=True)
+    # -- auxiliary heads: extra heads with their own loss (the DANGO reconstruction head's color)
+    h = hh["head_loss"]
+    c.box("Auxiliary head on every t &#8800; r", x0, y, w, h, color=ROLE_COLOR["head_loss"], align="left", valign="top", bold=True)
     c.math(r"\hat y_t = w_t^{\top} O_t + b_t", x0 + pad, y + 13, iw, 16)
-    y += h + 6
+    y += h + BOX_GAP
 
-    # -- loss: one line, alpha stated on it, so the box ends exactly at the DAG's bottom edge.
+    # -- loss: one line, alpha stated on it; the box ends exactly at the DAG's bottom edge.
     h = y0 + total_h - y
-    if h < 36:
-        raise SystemExit(f"loss box would be {h:.0f} units tall; the column no longer fits panel a")
-    c.box("Loss", x0, y, w, h, color=GRAY, align="left", valign="top", bold=True)
+    c.box("Loss", x0, y, w, h, color=ROLE_COLOR["total_loss"], align="left", valign="top", bold=True)
     c.math(r"\mathcal{L} = \mathrm{MSE}(\hat y, y) + \alpha \operatorname*{mean}_{t \neq r} \mathrm{MSE}(\hat y_t, y),\quad \alpha = 0.3",
            x0 + pad, y + 13, iw, h - 15)
     return y + h

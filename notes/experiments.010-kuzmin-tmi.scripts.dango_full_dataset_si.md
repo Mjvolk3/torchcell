@@ -106,3 +106,12 @@ maximum (98 to 140 with v9.1, up to 608 with v12.0), not the epoch of the rise (
 run). Values unchanged.
 
 ![](./assets/images/010-kuzmin-tmi/dango_full_dataset_data_effect.svg)
+
+## 2026.09.05 - Data-effect panel at third width
+
+Author review: the wide panel was too big for what it shows. `panel_data_effect` is now third width
+(57.8 x 52 mm): bars 0.26 wide, a one-column legend in the upper right over the headroom of the lower
+006 bars, and the build tick labels shortened to `Kuzmin 2018 / 91,050 records` and
+`Kuzmin 2018 + 2020 / 332,313 records` (the caption spells out that 006 adds the Kuzmin 2020
+deletions). Re-rendered with `--from-csv`; no value changed; the frozen
+`dango_full_dataset_data_effect.csv` is the same.

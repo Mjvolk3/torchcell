@@ -74,7 +74,20 @@ DIST_TO_MODE: dict[str, str] = {
     "laplace_crps": "laplace",
     "nll": "nll_gaussian",
     "energy": "energy",
+    # Metric-aligned objectives: the training loss IS (one minus) the per-feature Pearson
+    # the leaderboard scores, so the objective cannot disagree with the metric on when to
+    # stop. `pearson_mse` adds a weighted MSE term to pin the scale that Pearson ignores.
+    # Both are point-shaped heads (param_dim 1).
+    "pearson": "pearson",
+    "pearson_mse": "pearson",
 }
+
+# Weight of the MSE anchor in `pearson_mse`. 1.0 puts the two terms on the same footing
+# at initialization: on z-scored targets a random head has MSE ~ 2 and 1 - r ~ 1.
+DEFAULT_PEARSON_MSE_WEIGHT = 1.0
+# A feature column needs at least this many scored rows for its correlation to be an
+# estimate rather than an identity (two points always correlate at +/-1).
+PEARSON_MIN_ROWS = 3
 
 # Default quantile grid: K=19 evenly spaced tau in [0.05, 0.95] (step 0.05, 0.5 included).
 # Evenly spaced is the *robust* choice -- no kernel, no bandwidth to tune.
@@ -388,6 +401,82 @@ def masked_mean(elem: torch.Tensor, feature_mask: torch.Tensor | None) -> torch.
     return (elem * w).sum() / denom
 
 
+def masked_per_feature_pearson(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    feature_mask: torch.Tensor | None = None,
+    min_rows: int = PEARSON_MIN_ROWS,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    r"""Per-FEATURE Pearson over the rows ``feature_mask`` selects, differentiable.
+
+    The training-side twin of the metric ``per_feature_pearson`` in the harness: each
+    feature's column is correlated ACROSS the rows of the batch, and each column uses only
+    the entries the mask selects, so under the masked-label objective a gene's correlation
+    is taken over the strains where that gene is still hidden. Column means and norms are
+    masked sums, not a sub-selection, so the result is one dense ``[F]`` tensor and the
+    graph stays intact.
+
+    A column is VALID when it has at least ``min_rows`` scored entries and neither its
+    prediction nor its target is constant over them (``denom > 1e-8``). Invalid columns
+    carry ``r = 0`` and ``valid = False``; the caller drops them from the mean rather than
+    counting them as zero, exactly as the metric does.
+
+    Args:
+        pred: Predictions ``[B, F]``.
+        target: Targets ``[B, F]``.
+        feature_mask: Optional bool ``[B, F]``; ``None`` scores every entry.
+        min_rows: Minimum scored rows per column.
+
+    Returns:
+        ``(r, valid)`` -- correlations ``[F]`` and the bool validity mask ``[F]``.
+    """
+    assert pred.shape == target.shape and pred.ndim == 2, (
+        f"per-feature Pearson needs [B, F] pred and target; got {tuple(pred.shape)} "
+        f"and {tuple(target.shape)}"
+    )
+    if feature_mask is None:
+        w = torch.ones_like(pred)
+    else:
+        w = feature_mask.to(pred.dtype)
+    n = w.sum(dim=0)
+    n_safe = n.clamp_min(1.0)
+    p_mean = (pred * w).sum(dim=0) / n_safe
+    t_mean = (target * w).sum(dim=0) / n_safe
+    pc = (pred - p_mean) * w
+    tc = (target - t_mean) * w
+    num = (pc * tc).sum(dim=0)
+    denom = torch.sqrt((pc * pc).sum(dim=0) * (tc * tc).sum(dim=0))
+    valid = (n >= float(min_rows)) & (denom.detach() > 1e-8)
+    r = torch.where(valid, num / denom.clamp_min(1e-8), torch.zeros_like(num))
+    return r, valid
+
+
+def pearson_loss(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    feature_mask: torch.Tensor | None = None,
+    mse_weight: float = 0.0,
+) -> torch.Tensor:
+    r"""``1 - mean_f r_f`` over valid features, plus ``mse_weight`` times the masked MSE.
+
+    With ``mse_weight = 0`` the loss is invariant to any per-feature affine map of the
+    prediction, which is the point (the metric is too) and the hazard (nothing pins the
+    output scale, so ``mse``/``nmse`` of such a head are not comparable to a point head's).
+    ``mse_weight > 0`` restores a scale anchor.
+
+    Returns a graph-connected zero when no feature column is valid, so DDP find-unused
+    stays happy on a degenerate batch.
+    """
+    r, valid = masked_per_feature_pearson(pred, target, feature_mask)
+    if not bool(valid.any()):
+        loss = pred.sum() * 0.0
+    else:
+        loss = 1.0 - r[valid].mean()
+    if mse_weight > 0.0:
+        loss = loss + mse_weight * masked_mean((pred - target) ** 2, feature_mask)
+    return loss
+
+
 def _quantile_pit(
     quantiles: torch.Tensor, target: torch.Tensor, taus: torch.Tensor
 ) -> torch.Tensor:
@@ -603,7 +692,17 @@ class DistHead(nn.Module):
     head still emits ``(mu, sigma)``, i.e. ``P=2``, and only the head owns ``V``.
     """
 
-    VALID_MODES = ("point", "gaussian", "quantile", "laplace", "nll_gaussian", "energy")
+    VALID_MODES = (
+        "point",
+        "gaussian",
+        "quantile",
+        "laplace",
+        "nll_gaussian",
+        "energy",
+        "pearson",
+    )
+    # Modes with no predictive distribution: identity point(), no PIT, no calibration.
+    POINT_MODES = ("point", "pearson")
 
     def __init__(
         self,
@@ -614,12 +713,15 @@ class DistHead(nn.Module):
         rank: int = DEFAULT_ENERGY_RANK,
         num_samples: int = DEFAULT_ENERGY_SAMPLES,
         v_init: float = DEFAULT_ENERGY_V_INIT,
+        mse_weight: float = 0.0,
     ) -> None:
         """Build the head.
 
         Args:
             mode: One of ``point`` / ``gaussian`` / ``quantile`` / ``laplace`` /
-                ``nll_gaussian`` / ``energy``.
+                ``nll_gaussian`` / ``energy`` / ``pearson``.
+            mse_weight: ``pearson`` mode only -- weight of the MSE anchor added to
+                ``1 - mean per-feature Pearson`` (``0`` = the pure, scale-free loss).
             quantiles: ``quantile`` mode only -- the ``tau`` grid (defaults to K=19 evenly
                 spaced in ``[0.05, 0.95]``). Ignored otherwise.
             sigma_floor: additive floor on ``softplus(raw)`` so the scale (``sigma``, or the
@@ -639,7 +741,12 @@ class DistHead(nn.Module):
         """
         super().__init__()
         assert mode in self.VALID_MODES, f"unknown DistHead mode {mode!r}"
+        assert mse_weight >= 0.0, f"mse_weight must be >= 0; got {mse_weight}"
+        assert mse_weight == 0.0 or mode == "pearson", (
+            f"mse_weight is a pearson-mode option; got {mse_weight} for mode {mode!r}"
+        )
         self.mode = mode
+        self.mse_weight = float(mse_weight)
         self.sigma_floor = float(sigma_floor)
         self.num_samples = int(num_samples)
         # Declared once so every mode has the same attribute type; only `energy` with
@@ -694,11 +801,16 @@ class DistHead(nn.Module):
         ``energy`` is 2 as well -- its extra state is the GLOBAL ``V``, owned by this head,
         not per-feature output of the structural head.
         """
-        if self.mode == "point":
+        if self.mode in self.POINT_MODES:
             return 1
         if self.mode == "quantile":
             return int(self.taus.numel())
         return 2
+
+    @property
+    def has_pit(self) -> bool:
+        """Whether this head has a predictive CDF (so :meth:`pit` and calibration apply)."""
+        return self.mode not in self.POINT_MODES
 
     def _sigma(self, raw: torch.Tensor) -> torch.Tensor:
         """Map a raw scale param to a strictly-positive scale via softplus + floor.
@@ -715,7 +827,7 @@ class DistHead(nn.Module):
         which is the predictive MEAN for gaussian / nll_gaussian / energy and the predictive
         MEDIAN for laplace.
         """
-        if self.mode == "point":
+        if self.mode in self.POINT_MODES:
             return params
         if self.mode == "quantile":
             return params[..., self.median_index]
@@ -787,6 +899,8 @@ class DistHead(nn.Module):
             return zero
         if self.mode == "point":
             return masked_mean((params - target) ** 2, feature_mask)
+        if self.mode == "pearson":
+            return pearson_loss(params, target, feature_mask, self.mse_weight)
         if self.mode == "quantile":
             return masked_mean(
                 pinball(params, target, self.taus.to(params.device)), feature_mask
@@ -833,6 +947,8 @@ class DistHead(nn.Module):
         Returns:
             PIT values ``[B, F]`` in ``[0, 1]``.
         """
+        if not self.has_pit:
+            raise ValueError(f"mode {self.mode!r} has no predictive CDF, so no PIT")
         if mask is not None:
             params = params[mask]
             target = target[mask]
@@ -860,6 +976,8 @@ def dist_param_dim(dist: str, num_quantiles: int = DEFAULT_NUM_QUANTILES) -> int
         "laplace_crps": 2,
         "nll": 2,
         "energy": 2,
+        "pearson": 1,
+        "pearson_mse": 1,
     }[dist]
 
 
@@ -869,16 +987,20 @@ def make_dist_head(
     num_features: int | None = None,
     rank: int = DEFAULT_ENERGY_RANK,
     num_samples: int = DEFAULT_ENERGY_SAMPLES,
+    pearson_mse_weight: float = DEFAULT_PEARSON_MSE_WEIGHT,
 ) -> DistHead:
     """Build a :class:`DistHead` from a config ``dist`` value.
 
     Args:
         dist: One of ``point`` / ``crps`` / ``quantile`` / ``laplace_crps`` / ``nll`` /
-            ``energy`` (the keys of :data:`DIST_TO_MODE`).
+            ``energy`` / ``pearson`` / ``pearson_mse`` (the keys of :data:`DIST_TO_MODE`).
         num_quantiles: ``quantile`` only -- size of the ``tau`` grid.
         num_features: ``energy`` only -- ``F``; REQUIRED there to allocate ``V [F, rank]``.
         rank: ``energy`` only -- ``k`` (``0`` = the diagonal-only ablation).
         num_samples: ``energy`` only -- ``m`` predictive samples per score.
+        pearson_mse_weight: ``pearson_mse`` only -- weight of the MSE anchor. ``pearson``
+            always uses 0 (the pure loss); the two names exist so a run's ``dist`` value
+            alone says which objective it trained under.
 
     Returns:
         The configured head.
@@ -890,4 +1012,9 @@ def make_dist_head(
         return DistHead(
             mode, num_features=num_features, rank=rank, num_samples=num_samples
         )
+    if dist == "pearson_mse":
+        assert pearson_mse_weight > 0.0, (
+            f"pearson_mse needs a positive MSE weight; got {pearson_mse_weight}"
+        )
+        return DistHead(mode, mse_weight=pearson_mse_weight)
     return DistHead(mode)

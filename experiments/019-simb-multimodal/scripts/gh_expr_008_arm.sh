@@ -418,6 +418,26 @@ case "$ARM" in
   # arm is therefore the head switch alone.
   Q_point)           OVERRIDES=(multitask.dist=point)
                      ARM_TAGS=(mech-objective dist-point xfer-yes stage-launch) ;;
+  # ==================== METRIC-ALIGNED OBJECTIVE (2026.09.06), config cgt_expr_v9_mask
+  # The objective round showed every head's val/loss bottoming out at a few hundred epochs
+  # and rising thereafter while val Pearson keeps climbing for thousands more (script
+  # loss_min_vs_pearson_peak.py: median loss minimum epoch 481, median Pearson peak 2,488,
+  # loss +11% above its minimum at the end). The objective and the metric disagree on when
+  # to stop. These arms make them the SAME quantity: the training loss is 1 minus the mean
+  # per-feature Pearson over the genes still hidden at the current unmasking step, i.e. the
+  # leaderboard metric restricted exactly as the pinball loss is. point() is the identity,
+  # so the metric path is unchanged.
+  #
+  # Q_pearson is the pure, scale-free loss. Its mse / nmse / pred_sd_ratio are NOT
+  # comparable to any other arm's: nothing pins the output scale, and the loss is invariant
+  # to any per-gene affine map of the prediction. Q_pearson_mse adds the MSE at weight 1.0
+  # (DEFAULT_PEARSON_MSE_WEIGHT) as a scale anchor, so it is the arm whose calibration
+  # numbers mean something. lr stays at the pinned 3e-4; the gradient scale of 1 - r differs
+  # from pinball's and no lr was tuned for it -- a confound this round accepts and records.
+  Q_pearson)         OVERRIDES=(multitask.dist=pearson)
+                     ARM_TAGS=(mech-objective dist-pearson xfer-yes stage-pearson) ;;
+  Q_pearson_mse)     OVERRIDES=(multitask.dist=pearson_mse)
+                     ARM_TAGS=(mech-objective dist-pearson_mse xfer-yes stage-pearson) ;;
   # ==================== MECHANISM ROUND (2026.09.01), config cgt_expr_v9_mask
   # The pair-term ladder was already run in wave 6 (V_* above) at ~4,100 epochs, but at ONE
   # seed per arm and on cgt_expr_012 / project v8. Its eight arms span 0.1925 to 0.2276, a

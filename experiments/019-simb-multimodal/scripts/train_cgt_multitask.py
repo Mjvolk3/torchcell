@@ -1449,9 +1449,9 @@ class MultitaskCGTTask(L.LightningModule):
             cache["pred_norm"].append(p_norm.float().cpu())
             cache["target_norm"].append(t_norm.float().cpu())
             # Part C: cache PIT for the calibration metrics. Eval stages only (see
-            # `_calib_cache`), and `point` has no predictive CDF so it has no PIT at all --
-            # a `point` arm simply logs no calib/* keys, which is the honest answer.
-            if stage != "train" and dist_head is not None and dist_head.mode != "point":
+            # `_calib_cache`), and `point` / `pearson` have no predictive CDF so no PIT at
+            # all -- such an arm simply logs no calib/* keys, which is the honest answer.
+            if stage != "train" and dist_head is not None and dist_head.has_pit:
                 with torch.no_grad():
                     self._calib_cache.setdefault(stage, {}).setdefault(name, []).append(
                         dist_head.pit(pred, targets[name], m).float().cpu()
@@ -1971,7 +1971,7 @@ def run_dry_run(cfg: DictConfig) -> None:
     # returns finite scalars for THIS mode.
     for k, v in head_outputs.items():
         dh = dist_heads.get(k)
-        if dh is None or dh.mode == "point":
+        if dh is None or not dh.has_pit:
             continue
         with torch.no_grad():
             pit = dh.pit(v.detach(), targets[k])

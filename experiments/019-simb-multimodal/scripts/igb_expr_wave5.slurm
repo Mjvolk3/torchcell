@@ -181,6 +181,23 @@ case "$STAGE" in
   launch) ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0 1 2)
           RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.max_epochs=9900 trainer.train_eval_every=10" ;;
+  # ---------------------------------------------------------------- PEARSON (2026.09.06)
+  # The metric-aligned objective: train on 1 - per-feature Pearson (Q_pearson) or on that
+  # plus an MSE anchor (Q_pearson_mse). Two arms x 2 seeds = 4 runs at 2/GPU = 2 tasks, sized
+  # to the two cabbi cards free on 2026-09-06. Same budget, packing and scoring window as
+  # `launch` so the runs are read against the same n=8 quantile baseline (roll_max over
+  # epochs <= 9,000). Why this exists is in gh_expr_008_arm.sh at the Q_pearson arm.
+  #
+  #   sbatch -p cabbi --gres=gpu:1 --cpus-per-task=8 --mem=60g --time=5-00:00:00 \
+  #       --array=0-1 --export=ALL,W5_STAGE=pearson,TORCHCELL_SOURCE_GIT_HASH=$H,\
+  #   TORCHCELL_SOURCE_DIFF_SHA256=$D experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  pearson) ARMS=(Q_pearson Q_pearson_mse); SEEDS=(0 1)
+          RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.max_epochs=9900 trainer.train_eval_every=10" ;;
+  canary_pearson)
+          ARMS=(Q_pearson Q_pearson_mse); SEEDS=(0)
+          RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.fast_dev_run=true" ;;
   # RESUME -- the incumbent past its own 9,900. Not an arm: one run, one GPU pair, testing
   # only whether THIS draw's curve turns. With sd 0.0222 a single continuation cannot
   # establish saturation, and the plan says so.
@@ -268,7 +285,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|h2|probe|long|wave6|launch|resume|resume_many|mech)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|h2|probe|long|wave6|launch|pearson|resume|resume_many|mech)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

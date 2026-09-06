@@ -15,13 +15,24 @@ from torchcell.losses.distributional import (
     gaussian_nll,
     laplace_crps,
     make_dist_head,
+    masked_per_feature_pearson,
+    pearson_loss,
     pinball,
     pit_ks,
     pit_values,
 )
 
 # Every `dist` config value, and the F the `energy` head needs to size its global V.
-ALL_DISTS = ["point", "crps", "quantile", "laplace_crps", "nll", "energy"]
+ALL_DISTS = [
+    "point",
+    "crps",
+    "quantile",
+    "laplace_crps",
+    "nll",
+    "energy",
+    "pearson",
+    "pearson_mse",
+]
 PROBABILISTIC_DISTS = ["crps", "quantile", "laplace_crps", "nll", "energy"]
 NUM_FEATURES = 6
 
@@ -92,6 +103,8 @@ def test_pinball_asymmetry() -> None:
         ("laplace_crps", 2),
         ("nll", 2),
         ("energy", 2),
+        ("pearson", 1),
+        ("pearson_mse", 1),
     ],
 )
 def test_dist_param_dim_and_head_width(dist: str, expected_p: int) -> None:
@@ -717,6 +730,155 @@ def test_laplace_and_nll_head_losses_match_the_free_functions() -> None:
 # ---------------------------------------------------------------------------
 # pit_ks -- the scalar calibration summary
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Metric-aligned objective: pearson / pearson_mse
+# ---------------------------------------------------------------------------
+
+
+def _reference_per_feature_pearson(
+    pred: torch.Tensor, target: torch.Tensor
+) -> torch.Tensor:
+    """The harness metric, re-derived column by column with torch.corrcoef."""
+    return torch.stack(
+        [
+            torch.corrcoef(torch.stack([pred[:, j], target[:, j]]))[0, 1]
+            for j in range(pred.shape[1])
+        ]
+    )
+
+
+def test_pearson_loss_is_one_minus_the_metric_when_unmasked() -> None:
+    """With no feature mask the loss is exactly 1 - mean per-feature Pearson."""
+    torch.manual_seed(3)
+    pred = torch.randn(16, NUM_FEATURES)
+    target = torch.randn(16, NUM_FEATURES)
+    r, valid = masked_per_feature_pearson(pred, target)
+    assert bool(valid.all())
+    ref = _reference_per_feature_pearson(pred, target)
+    assert torch.allclose(r, ref, atol=1e-5)
+    assert pearson_loss(pred, target).item() == pytest.approx(
+        1.0 - ref.mean().item(), abs=1e-5
+    )
+
+
+def test_pearson_loss_scores_only_the_masked_entries() -> None:
+    """Each column's correlation is taken over the rows its mask selects, and only those."""
+    torch.manual_seed(4)
+    b = 12
+    pred = torch.randn(b, NUM_FEATURES)
+    target = torch.randn(b, NUM_FEATURES)
+    mask = torch.rand(b, NUM_FEATURES) > 0.4
+    mask[:5, 0] = True  # column 0 certainly has >= 3 rows
+    r, valid = masked_per_feature_pearson(pred, target, mask)
+    for j in range(NUM_FEATURES):
+        rows = mask[:, j]
+        if int(rows.sum()) < 3:
+            assert not bool(valid[j])
+            continue
+        ref = torch.corrcoef(torch.stack([pred[rows, j], target[rows, j]]))[0, 1]
+        assert bool(valid[j])
+        assert r[j].item() == pytest.approx(ref.item(), abs=1e-5)
+    # Perturbing an UNSCORED entry must not move the loss.
+    base = pearson_loss(pred, target, mask)
+    i, j = (~mask).nonzero()[0].tolist()
+    pred2 = pred.clone()
+    pred2[i, j] += 10.0
+    assert pearson_loss(pred2, target, mask).item() == pytest.approx(
+        base.item(), abs=1e-6
+    )
+
+
+def test_pearson_loss_is_affine_invariant_and_the_mse_anchor_is_not() -> None:
+    """Pure Pearson ignores a per-feature affine map of the prediction; pearson_mse does not."""
+    torch.manual_seed(5)
+    pred = torch.randn(10, NUM_FEATURES)
+    target = torch.randn(10, NUM_FEATURES)
+    scaled = pred * 3.0 - 1.5
+    assert pearson_loss(scaled, target).item() == pytest.approx(
+        pearson_loss(pred, target).item(), abs=1e-5
+    )
+    assert pearson_loss(scaled, target, mse_weight=1.0).item() != pytest.approx(
+        pearson_loss(pred, target, mse_weight=1.0).item(), abs=1e-3
+    )
+    # A perfect prediction scores 0 under both.
+    assert pearson_loss(target, target).item() == pytest.approx(0.0, abs=1e-6)
+    assert pearson_loss(target, target, mse_weight=1.0).item() == pytest.approx(
+        0.0, abs=1e-6
+    )
+
+
+def test_pearson_loss_drops_constant_columns_and_survives_a_degenerate_batch() -> None:
+    """A constant prediction or target column is dropped, not counted as r = 0; an all-constant
+    batch returns a connected zero rather than NaN.
+    """
+    torch.manual_seed(6)
+    pred = torch.randn(8, 3)
+    target = torch.randn(8, 3)
+    pred[:, 1] = 0.7  # constant prediction column
+    r, valid = masked_per_feature_pearson(pred, target)
+    assert valid.tolist() == [True, False, True]
+    assert r[1].item() == 0.0
+    expected = 1.0 - r[valid].mean().item()
+    assert pearson_loss(pred, target).item() == pytest.approx(expected, abs=1e-6)
+
+    flat = torch.full((8, 3), 2.0, requires_grad=True)
+    loss = pearson_loss(flat, target)
+    assert loss.item() == 0.0
+    loss.backward()
+    assert flat.grad is not None and torch.isfinite(flat.grad).all()
+
+
+def test_pearson_loss_gradient_ascends_the_metric() -> None:
+    """One gradient step on the pure loss raises the mean per-feature Pearson."""
+    torch.manual_seed(7)
+    target = torch.randn(32, NUM_FEATURES)
+    pred = torch.randn(32, NUM_FEATURES, requires_grad=True)
+    before = _reference_per_feature_pearson(pred.detach(), target).mean().item()
+    loss = pearson_loss(pred, target)
+    loss.backward()
+    assert pred.grad is not None
+    with torch.no_grad():
+        stepped = pred - 0.5 * pred.grad
+    after = _reference_per_feature_pearson(stepped, target).mean().item()
+    assert after > before
+
+
+@pytest.mark.parametrize("dist", ["pearson", "pearson_mse"])
+def test_pearson_heads_are_point_shaped_and_have_no_pit(dist: str) -> None:
+    """point() is the identity, param_dim is 1, and pit() refuses like `point` does."""
+    dh = build_head(dist)
+    assert dh.param_dim == 1 and not dh.has_pit
+    assert dh.mse_weight == (0.0 if dist == "pearson" else 1.0)
+    params = torch.randn(4, NUM_FEATURES)
+    assert torch.equal(dh.point(params), params)
+    with pytest.raises(ValueError):
+        dh.pit(params, torch.randn(4, NUM_FEATURES))
+    assert not make_dist_head("point").has_pit
+    assert make_dist_head("crps").has_pit
+
+
+def test_pearson_head_loss_matches_the_free_function_with_masks() -> None:
+    """DistHead.loss routes the row mask and the feature mask to pearson_loss unchanged."""
+    torch.manual_seed(8)
+    b = 9
+    params = torch.randn(b, NUM_FEATURES)
+    target = torch.randn(b, NUM_FEATURES)
+    rows = torch.tensor([True, True, False, True, True, True, False, True, True])
+    feat = torch.rand(b, NUM_FEATURES) > 0.3
+    for dist, w in (("pearson", 0.0), ("pearson_mse", 1.0)):
+        got = build_head(dist).loss(params, target, rows, feat)
+        want = pearson_loss(params[rows], target[rows], feat[rows], mse_weight=w)
+        assert got.item() == pytest.approx(want.item(), abs=1e-6)
+
+
+def test_mse_weight_is_a_pearson_only_option() -> None:
+    """A non-pearson head rejects mse_weight, and pearson_mse needs a positive weight."""
+    with pytest.raises(AssertionError):
+        DistHead("point", mse_weight=1.0)
+    with pytest.raises(AssertionError):
+        make_dist_head("pearson_mse", pearson_mse_weight=0.0)
 
 
 def test_pit_ks_is_zero_on_an_exactly_uniform_sample() -> None:

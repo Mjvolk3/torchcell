@@ -1,0 +1,94 @@
+{
+  "project": "torchcell_019_expr_v9",
+  "n_runs": 34,
+  "n_collapsed": 4,
+  "n_short": 7,
+  "min_epochs": 1000,
+  "n_live": 23,
+  "n_skipped": 20,
+  "skipped": {
+    "1h21uhl9": "no plain Pearson or no val/loss in summary",
+    "23kaqywv": "no plain Pearson or no val/loss in summary",
+    "8kwl5p4f": "no plain Pearson or no val/loss in summary",
+    "m10ns9mn": "no plain Pearson or no val/loss in summary",
+    "npi26er1": "no plain Pearson or no val/loss in summary",
+    "9s9kzd0m": "no plain Pearson or no val/loss in summary",
+    "fj56wrb4": "no plain Pearson or no val/loss in summary",
+    "0fymu4py": "resume, starts at epoch 10000",
+    "f1ezkzvq": "no plain Pearson or no val/loss in summary",
+    "bcqz3i4e": "no plain Pearson or no val/loss in summary",
+    "y8ex71vn": "resume, starts at epoch 2580",
+    "d94cy5az": "resume, starts at epoch 12230",
+    "g69wskm0": "resume, starts at epoch 2033",
+    "eiu664kx": "resume, starts at epoch 2033",
+    "1xa3x8uc": "resume, starts at epoch 1996",
+    "m6utaeu8": "resume, starts at epoch 1996",
+    "djgkdzol": "resume, starts at epoch 2040",
+    "8gklzy7n": "resume, starts at epoch 2040",
+    "7v9l6ett": "resume, starts at epoch 2040",
+    "yrs7x07y": "resume, starts at epoch 2040"
+  },
+  "n_rows_short": 0,
+  "roll_window": 5,
+  "live": {
+    "epoch_loss_min_median": 481.0,
+    "epoch_loss_min_max": 3097,
+    "n_loss_min_within_100": 0,
+    "epoch_pearson_peak_median": 2488.0,
+    "n_pearson_peak_within_100": 0,
+    "pearson_gain_after_loss_min_median": 0.05392119139432908,
+    "loss_rel_excess_at_100_median": 0.0424547030872051,
+    "loss_final_rel_excess_median": 0.11356024690683568,
+    "loss_at_pearson_peak_rel_excess_median": 0.07096089803928825
+  },
+  "by_dist": {
+    "crps": {
+      "n": 2,
+      "epoch_loss_min_median": 1051.0,
+      "epoch_loss_min_range": [
+        318,
+        1784
+      ],
+      "epoch_pearson_peak_median": 1080.0,
+      "epoch_pearson_peak_range": [
+        193,
+        1967
+      ],
+      "pearson_roll_at_loss_min_mean": 0.053654962095323146,
+      "pearson_roll_max_mean": 0.09227786869741976,
+      "loss_final_rel_excess_median": 0.03363508978403962
+    },
+    "laplace_crps": {
+      "n": 3,
+      "epoch_loss_min_median": 787.0,
+      "epoch_loss_min_range": [
+        284,
+        894
+      ],
+      "epoch_pearson_peak_median": 1990.0,
+      "epoch_pearson_peak_range": [
+        1410,
+        2027
+      ],
+      "pearson_roll_at_loss_min_mean": 0.14981779257456462,
+      "pearson_roll_max_mean": 0.19268473585446674,
+      "loss_final_rel_excess_median": 0.06663099904889934
+    },
+    "quantile": {
+      "n": 18,
+      "epoch_loss_min_median": 477.0,
+      "epoch_loss_min_range": [
+        203,
+        3097
+      ],
+      "epoch_pearson_peak_median": 3269.5,
+      "epoch_pearson_peak_range": [
+        1198,
+        9682
+      ],
+      "pearson_roll_at_loss_min_mean": 0.14264008204142253,
+      "pearson_roll_max_mean": 0.1940350275900629,
+      "loss_final_rel_excess_median": 0.12535286412593394
+    }
+  }
+}

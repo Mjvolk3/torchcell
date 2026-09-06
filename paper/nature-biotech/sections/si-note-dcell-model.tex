@@ -109,7 +109,7 @@ term-by-term comparison would need the published term list, which the paper does
 print; it was not made.
 
 \begin{figure*}[t]
-\tcfig{figures/FigS-dcell-model.pdf}{\textbf{DCell as implemented in TorchCell.} (a)~The
+\tcfig{figures/FigS-dcell-model.pdf}{\textbf{DCell as implemented in TorchCell.} \textbf{a},~The
 filtered GO DAG that structures the model, drawn whole: 2,655 subsystems as points in 13
 strata (stratum $0$ is \texttt{GO:ROOT}, stratum $1$ the three namespace roots BP, MF, CC;
 the deepest terms at the bottom), colored by namespace, with the 3,208 hierarchy edges
@@ -127,11 +127,11 @@ perturbations are all deletions and whose genes each carry 5 to 12 direct annota
 subsystems the zeroed rows reach. Subsystems run stratum by stratum from the deepest term to
 the root. Right: the gene-state rule, the subsystem of Eq.~\ref{eq:dcell-subsystem}, the root
 readout, the per-term auxiliary heads, and the loss of Eq.~\ref{eq:dcell-loss}; weights are
-initialized uniformly in $[-0.001,0.001]$ as published. (b)~Subsystems per stratum of the
-filtered DAG; 1,527 of the 2,655 subsystems are leaves. (c)~Genes per subsystem: direct annotations, which set
+initialized uniformly in $[-0.001,0.001]$ as published. \textbf{b},~Subsystems per stratum of the
+filtered DAG; 1,527 of the 2,655 subsystems are leaves. \textbf{c},~Genes per subsystem: direct annotations, which set
 the width $L_t$, and genes contained by the term or its descendants, the quantity the
 published model sized subsystems by; the median subsystem has 6 direct and 10 contained
-genes. (d)~Number of subsystems each of the 6,607 genes is annotated to; 675 genes are in the
+genes. \textbf{d},~Number of subsystems each of the 6,607 genes is annotated to; 675 genes are in the
 hierarchy through ND-evidence annotations to the namespace roots alone. The DAG in a and
 panels b--d are measured by
 \texttt{experiments/006-kuzmin-tmi/scripts/dcell\_model\_go\_stats.py}; the figure is

@@ -51,9 +51,13 @@ FULL_WIDTH = 709  # 180 mm in draw.io units (100 per inch)
 MAX_HEIGHT = 669  # 170 mm
 HEIGHT_GRACE = 8  # units of export rounding the size gate tolerates
 COL_GAP = 12  # 3 mm of white between columns
-ROW_GAP = 22  # 5.5 mm of white between rows; the next row's letters sit in it
+ROW_GAP = 16  # 4 mm of white between rows; the next row's letters sit in it
 TOP_STRIP = 16  # 4 mm above the first row for its letters
 LETTER_STRIP = 16  # a letter's top edge sits this far above its panel's top edge
+# ROW_GAP == LETTER_STRIP: a letter's cell starts at the bottom edge of the row above, and
+# the glyph itself (verticalAlign=top, ~2 mm cap height) sits in the lower part of the gap.
+# The bottom-left corner of every panel that has a row below it is blank (the graph-name
+# y-axis begins 14.5 or 32 mm in), so the strip is white at every letter.
 LETTER_W, LETTER_H = 18, 14
 LETTER_STYLE = (
     "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;"

@@ -66,18 +66,18 @@ close any of the gap to the CGT is likewise not measured.
 
 \begin{figure*}[t]
 \tcfig{figures/FigS-dango-full-dataset.pdf}{\textbf{DANGO on the full trigenic dataset.}
-(a)~Validation Pearson $r$ against epoch for every DANGO run on the experiment-006 build,
+\textbf{a},~Validation Pearson $r$ against epoch for every DANGO run on the experiment-006 build,
 colored by STRING release, and the three CGT replicates of Fig.~\ref{fig:ggi}d on the
 experiment-010 build; the epoch axis is logarithmic. With v9.1 the maximum comes at epoch 98
 to 140 and the curve then declines (the 1,000-epoch run ends at 0.297); with v12.0 the
 four-GPU runs creep from 0.354 to 0.355 at epoch 100 to their maxima at epochs 336 to 608,
 a gain of 0.002 to 0.006, while the two-GPU v12.0 run peaks at epoch 60 and declines.
-(b)~Best validation Pearson $r$ (maximum over epochs) per run; bar and whisker are the mean
+\textbf{b},~Best validation Pearson $r$ (maximum over epochs) per run; bar and whisker are the mean
 and SEM over runs; filled markers are the runs averaged in Fig.~\ref{fig:ggi}d; the axis is
-zoomed to 0.30 to 0.50. (c)~For each DANGO run, the first epoch at which validation Pearson
+zoomed to 0.30 to 0.50. \textbf{c},~For each DANGO run, the first epoch at which validation Pearson
 reaches 0.35 (filled) and the epoch of its maximum (open); circles are four-GPU jobs, squares
 two-GPU jobs. The release moves the epoch of the maximum (98 to 140 with v9.1, up to 608 with
-v12.0), not the epoch of the rise (16 to 30 in every run). (d)~Best validation Pearson $r$
+v12.0), not the epoch of the rise (16 to 30 in every run). \textbf{d},~Best validation Pearson $r$
 (maximum over epochs) of the same implementation on the Kuzmin 2018-only build of
 \suppnoteref{note:dango-repro} (Kuzmin 2018 only, 91,050 records, 19 runs pooled over the
 three loss schedules) and on the experiment-006 build of this Note (Kuzmin 2018 plus the
@@ -86,7 +86,7 @@ whisker, SEM; open circles, runs; the axis is zoomed to 0.30 to 0.45. The two bu
 split separately, so the validation sets differ in membership as well as in size, and the
 005 runs used batch 32 on one GPU where the 006 runs used batch 64 per GPU on two to four;
 this is the only measured data-size comparison for DANGO, not a controlled ablation.
-(e)--(g)~Reserved: predicted against measured interaction, absolute error against $|\tau|$,
+\textbf{e}--\textbf{g}Reserved: predicted against measured interaction, absolute error against $|\tau|$,
 and per-channel meta-embedding weights need a trained checkpoint and inference on the
 validation split; each box states the checkpoint and script that fill it. Source:
 \texttt{experiments/010-kuzmin-tmi/scripts/dango\_full\_dataset\_si.py}

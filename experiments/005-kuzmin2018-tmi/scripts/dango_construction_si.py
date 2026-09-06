@@ -224,11 +224,14 @@ def panel(df: pd.DataFrame):
                           label="1% rule: above, λ = 0.1; below, λ = 1"))
     handles.append(Line2D([], [], marker="o", markersize=3, markerfacecolor="white",
                           markeredgecolor="black", linestyle="none", label="DANGO paper (v9.1 to v11.0)"))
-    # Opaque white box so the legend reads over the gridlines (author review 2026.09.04); no
-    # edge, so it is a clearing rather than a frame. It sits in the headroom above the bars.
-    ax.legend(handles=handles, frameon=True, facecolor="white", edgecolor="none", framealpha=1.0,
-              loc="upper right", handlelength=1.4, handletextpad=0.5, labelspacing=0.3,
-              borderpad=0.3, borderaxespad=0.2)
+    # Opaque white box so the legend reads over the gridlines (author review 2026.09.04), with a
+    # thin black frame so the box has its own edge and does not read as part of the dashed 1%
+    # line (author review 2026.09.05). It sits in the headroom above the bars; the 1% line at
+    # y = 1 runs well below its bottom edge (about y = 5.3).
+    leg = ax.legend(handles=handles, frameon=True, fancybox=False, facecolor="white",
+                    edgecolor="black", framealpha=1.0, loc="upper right", handlelength=1.4, handletextpad=0.5,
+                    labelspacing=0.3, borderpad=0.3, borderaxespad=0.2)
+    leg.get_frame().set_linewidth(0.5)
     for s in ax.spines.values():
         s.set_visible(True)
         s.set_linewidth(0.5)

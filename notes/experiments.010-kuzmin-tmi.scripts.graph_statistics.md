@@ -317,6 +317,30 @@ Determinism: a second run with `PYTHONHASHSEED=12345` left every file in `result
 both generated tables byte-identical (`diff -r` against a snapshot of the first run), and
 recomposing from the second run's SVGs reproduced both `.drawio` files unchanged.
 
+## 2026.09.05 - Author pass on panels a and e: union bar, legend band, tighter axes
+
+Three changes to figure 1 after author review of the composed figures; the statistics, the
+`results/graphs/` CSVs, and the two generated tables are untouched (a rerun left `results/graphs/`
+byte-identical to the committed files, and only `graphs_sizes` and `graphs_components` changed
+among the panels; `graphs_string_releases.svg` keeps its sha256 `d2e4e3dd...` for the DANGO
+figure).
+
+- Panel a: the union row was drawn white and read as a gap. It now takes `UNION_FILL =
+  PLOT_PALETTE_FILL[5]` (`#F5F5F5`, the gray slot's pale fill) with the same black edge, so it
+  reads as a bar that belongs to no graph. No other white bar remains in figure 1: the Kuzmin
+  2020 series of panel e uses each graph's `PLOT_PALETTE_FILL` color, and the co-occurrence
+  member is that same `#F5F5F5`, pale but not white.
+- Panel e legend: moved to the bottom edge of the panel (`borderaxespad=0`) and spread across
+  the full width (`mode="expand"` over a full-width anchor box), with the axes bottom raised from
+  13.5 to 15.0 mm so a clear band separates the legend from the two-line x-axis titles. The panel
+  grew from 44 to 46 mm (`F1_ROW3_H`) so the axes keep their height.
+- Panel e axes: the six sub-axes sit `COMP_GAP_MM = 1.8` mm apart instead of 2.5 (`_named_barh_row`
+  takes a `gap_mm` argument, default 2.5, so panels a and c are unchanged). The tightest neighbors
+  are the "1" and "0" tick labels across the first two gaps, about 0.6 mm apart at 6 pt.
+
+Everything else in both figures is as it was; the row spacing of the composed figures is in
+[[experiments.010-kuzmin-tmi.scripts.compose_graph_si_figures]].
+
 Panels in figure order:
 
 ![](./assets/images/010-kuzmin-tmi/graphs_sizes.svg)

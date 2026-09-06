@@ -93,9 +93,9 @@ statement in either direction.
 %%   -> figures/FigS-dango-reproduction.pdf (auto-exported by `make fig`/`make paper`).
 \begin{figure*}[t]
 \tcfig{figures/FigS-dango-reproduction.pdf}{\textbf{DANGO rebuilt in TorchCell and trained on
-the Kuzmin 2018 trigenic screen.} (a)~Gene pairs per STRING channel in releases v9.1, v11.0,
+the Kuzmin 2018 trigenic screen.} \textbf{a},~Gene pairs per STRING channel in releases v9.1, v11.0,
 and v12.0: the solid part of a bar was already in the previous release, the pale part is new,
-and the hatched bar below zero is what the previous release lost. (b)~The model in the
+and the hatched bar below zero is what the previous release lost. \textbf{b},~The model in the
 manuscript's notation, one box per stage. The six channels $A^{(k)}$ are the message-passing
 edges of one two-layer GraphSAGE encoder each over a shared lookup $\mathbf{E}$ ($N=6607$,
 $d=64$); the reconstruction head $\hat A^{(k)}=H^{(k)}W_k$ gives the pretraining loss
@@ -106,12 +106,12 @@ triple from its static ($s_t$) and dynamic ($d_t$, two self-attention layers ove
 embeddings under a log-cosh loss. The objective mixes the two losses with a weight
 $\alpha_e$ that follows one of three schedules with transition epoch 10: pretrain then main
 ($\alpha_e=1$ for $e<10$, then 0), linear to uniform ($1\to0.5$ by epoch 10, then 0.5), and
-linear to flipped ($1\to0$ by epoch 10, then 0). (c)~Percentage of decreased zeros per
+linear to flipped ($1\to0$ by epoch 10, then 0). \textbf{c},~Percentage of decreased zeros per
 channel for v9.1 to v11.0 and v11.0 to v12.0 with the resulting $\lambda_k$ printed over each
 bar; dashed line, the 1\% rule; open circles, the two values the DANGO paper prints; the
-same rule on v11.0 to v12.0 gives the same assignment. (d)~Best validation Pearson~$r$
+same rule on v11.0 to v12.0 gives the same assignment. \textbf{d},~Best validation Pearson~$r$
 (maximum over epochs) by loss schedule and STRING release; bar, mean over runs; whisker, SEM
-where $n>1$; circle, one run (19 runs). (e)~Training curves of the same runs; color, STRING
+where $n>1$; circle, one run (19 runs). \textbf{e},~Training curves of the same runs; color, STRING
 release; line style, schedule. Top row, on a logarithmic epoch axis: the pretraining weight
 $\alpha_e$ of the three schedules, then the reconstruction and interaction losses on the
 validation split. Pretrain-then-main leaves the interaction loss at its initial value for
@@ -125,7 +125,7 @@ validation MSE; dashed line, the variance of the interaction label over all 91,0
 50 epochs; training $r$ at the selected epoch spans $0.49$ to $0.55$; validation MSE crosses
 the label variance at epochs 669 and 771 in the two runs that reach 1,000 epochs. Sources:
 \texttt{experiments/010-kuzmin-tmi/scripts/graph\_statistics.py} (a),
-\texttt{experiments/005-kuzmin2018-tmi/scripts/dango\_construction\_si.py} (c) and
+\texttt{experiments/005-kuzmin2018-tmi/scripts/dango\_construction\_si.py} \textbf{c}, and
 \texttt{dango\_string\_version\_sweep.py} (d,~e).}{fig:dango-repro}
 \end{figure*}
 

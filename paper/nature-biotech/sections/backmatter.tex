@@ -205,11 +205,11 @@ small models trained on identical data, features, and splits: a data-perturbing 
 rebuilds $G_p$ and re-encodes ($\hat y=\Phi(G_p)$) vs.\ a representation-perturbing CGT that
 encodes the wildtype once and applies the operator
 ($\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$).
-(a) predicted vs.\ actual fitness for both models;
-(b) held-out accuracy (Pearson $r$ / MSE), expected near-equal;
-(c) agreement of the two models' predictions ($\hat y_{\mathrm{GNN}}$ vs.\ $\hat y_{\mathrm{CGT}}$,
+\textbf{a}, predicted vs.\ actual fitness for both models;
+\textbf{b}, held-out accuracy (Pearson $r$ / MSE), expected near-equal;
+\textbf{c}, agreement of the two models' predictions ($\hat y_{\mathrm{GNN}}$ vs.\ $\hat y_{\mathrm{CGT}}$,
 near the identity line);
-(d) compute cost: per-strain rebuild$+$encode (GNN) vs.\ encode-once$+$operator (CGT),
+\textbf{d}, compute cost: per-strain rebuild$+$encode (GNN) vs.\ encode-once$+$operator (CGT),
 with the growth of \suppnoteref{note:static-graph}, \supptab{tab:compute}.
 \textit{[placeholder: run the experiment, then compose.]}}
 \caption{Empirical functional equivalence of the perturbation operator on single-gene
@@ -346,14 +346,14 @@ construction, which is the empirical face of the strict inclusion.
 Idealized test of \suppnoteref{note:graph-attention}. One cell-encoder head aligned to a single gene--gene
 graph, trained on held-out fitness with the graph-prior weight $\lambda$ swept from $0$ (free
 attention) to the hard-mask limit.
-(a) attention-to-adjacency divergence $D_{\mathrm{KL}}(\tilde A_{i,:}\,\|\,\alpha_{i,:})$ and
+\textbf{a}, attention-to-adjacency divergence $D_{\mathrm{KL}}(\tilde A_{i,:}\,\|\,\alpha_{i,:})$ and
 support overlap with $\mathcal{N}(i)$ vs.\ $\lambda$, decreasing to $0$ as $\lambda\!\to\!\infty$
 (the masked graph-attention limit of Prop.~\ref{prop:gat-limit});
-(b) held-out accuracy (Pearson $r$) vs.\ $\lambda$, peaked at intermediate $\lambda$, above both
+\textbf{b}, held-out accuracy (Pearson $r$) vs.\ $\lambda$, peaked at intermediate $\lambda$, above both
 the free head ($\lambda=0$) and the hard mask;
-(c) discovery: precision--recall of recovering held-out interactions from the top off-graph
+\textbf{c}, discovery: precision--recall of recovering held-out interactions from the top off-graph
 attention entries, against a hard-masked control that cannot place off-graph mass;
-(d) overruling: catalogued edges the head down-weights, enriched for label-contradicted pairs
+\textbf{d}, overruling: catalogued edges the head down-weights, enriched for label-contradicted pairs
 relative to a null.
 \textit{[placeholder: run the $\lambda$ sweep, then compose.]}}
 \caption{Empirical relevance of graph-regularized attention: the finite-$\lambda$ soft prior
@@ -593,13 +593,13 @@ loss of flexibility.
 \figph{58mm}{\textbf{[Suppl. Fig. -- do gene interactions emerge from fitness?]}\\[3pt]
 Idealized test of \suppnoteref{note:gi-from-fitness}. One model predicts sub-genotype fitness $f_S$ and the
 trigenic interaction $\tau_{ijk}$ jointly.
-(a) predicted vs.\ measured $\tau_{ijk}$ for three routes: direct $\tau$ supervision, the
+\textbf{a}, predicted vs.\ measured $\tau_{ijk}$ for three routes: direct $\tau$ supervision, the
 algebraic readout $g(\hat f)$ from the fitness heads, and a separate $\tau$-head trained jointly
 but with $g$ absent from the loss;
-(b) agreement between the $\tau$-head and $g(\hat f)$ over training, testing whether consistency
+\textbf{b}, agreement between the $\tau$-head and $g(\hat f)$ over training, testing whether consistency
 emerges on its own (Prop.~\ref{prop:sufficiency});
-(c) data efficiency: $\tau$ accuracy vs.\ number of interaction labels, factored vs.\ direct;
-(d) error propagation: $\tau$ error vs.\ fitness error $\delta$, against the bound $C\delta$ of
+\textbf{c}, data efficiency: $\tau$ accuracy vs.\ number of interaction labels, factored vs.\ direct;
+\textbf{d}, error propagation: $\tau$ error vs.\ fitness error $\delta$, against the bound $C\delta$ of
 Prop.~\ref{prop:conditioning}, showing the accuracy bar.
 \textit{[placeholder: run the multitask fitness$+$GI experiment, then compose.]}}
 \caption{Emergent recovery of gene interactions from fitness: whether a jointly trained model
@@ -891,19 +891,19 @@ baseline, and it is meant to be one.
 \begin{figure*}[t]
 \centering
 \tcfig{figures/Fig7-Traditional-ML-justification-of-CGT.pdf}{\textbf{Classical machine-learning
-baselines: fitness is saturable, interactions are not.} (a)~Featurization. Each strain is reduced
+baselines: fitness is saturable, interactions are not.} \textbf{a},~Featurization. Each strain is reduced
 to a single fixed-length vector by mapping its genes through a per-gene encoder and pooling: the
 bag is taken over either the perturbed (deleted) genes or the intact genome and aggregated by sum
-or mean. (b)~The seventeen gene representations, grouped as identity (one-hot), random projections
+or mean. \textbf{b},~The seventeen gene representations, grouped as identity (one-hot), random projections
 ($d{=}1$--$1000$), hand-crafted (codon frequency, chromosome/pathway features), and pretrained
 biological encoders (CaLM, a species-aware DNA language
 model~\cite{karollusSpeciesawareDNALanguage2024}, nucleotide-transformer windows, ProtT5, ESM2).
-(c)~Perturbation composition of the two datasets: knockout fitness (001; single/double/triple
+\textbf{c},~Perturbation composition of the two datasets: knockout fitness (001; single/double/triple
 deletions) and the digenic/trigenic interaction mixture (002). (d,e)~Validation and test
 Pearson~$r$ at $n{=}10^{5}$ for random forest across all representations and the four pooling
 variants (perturbed/intact $\times$ sum/mean), hyperparameters selected on validation MSE;
 Spearman and MSE views, and the support-vector and elastic-net baselines, are tabulated in
-\supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson}. (f)~Stratified 80/10/10
+\supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson}. \textbf{f},~Stratified 80/10/10
 train/validation/test splits at each dataset size. (g,h)~Best test Pearson per representation as
 dataset size grows $n{=}10^{3}$--$10^{5}$; the dashed line and shaded band mark the limit of
 experimental reproducibility (fitness $r{\approx}0.89$; interactions $r{\approx}0.81$--$0.86$).
@@ -930,19 +930,19 @@ type -- perturbed vs intact gene bag, sum vs mean pooling -- is a consistent, se
 design choice.} Every record is the best run by validation $R^{2}$ for one (task, model,
 dataset size, embedding, representation type) combination, scored as held-out test
 Pearson~$r$ (the same selection rule as \suppfig{fig:classical-ml}).
-(a)~Variance decomposition, computed separately for fitness ($n{=}384$ records) and gene
+\textbf{a},~Variance decomposition, computed separately for fitness ($n{=}384$ records) and gene
 interactions ($n{=}350$): type-II ANOVA over main effects, reporting
 $\eta^{2}=\mathrm{SS}_{\mathrm{factor}}/\mathrm{SS}_{\mathrm{total}}$; parenthetical
 counts are each factor's number of levels, and the residual absorbs factor interactions
 and run-to-run noise. For interactions, representation type (11.3\%) explains more
 variance than embedding identity (7.3\%), whereas the large fitness embedding share
 (36.8\%) restates the one-hot saturation of \suppfig{fig:classical-ml}.
-(b)~Average rank of the four representation types across the 11 complete
+\textbf{b},~Average rank of the four representation types across the 11 complete
 task$\times$model$\times$scale configurations (dot = one configuration's rank, colored by
 task; diamond = mean rank; 1 = best). Friedman omnibus $p{=}0.016$; the ruler is the
 Nemenyi critical difference (CD${=}1.41$, $\alpha{=}0.05$), which formally separates only
 the extremes, intact\_sum (mean rank 1.82) vs intact\_mean (3.36).
-(c)~Gene-interaction detail: test Pearson by representation type for random forest and
+\textbf{c},~Gene-interaction detail: test Pearson by representation type for random forest and
 SVR at each dataset size; faint line = one embedding (17 total), diamond = mean with
 95\% bootstrap CI. Letters are a compact letter display -- types sharing a letter are not
 significantly different (pairwise Wilcoxon, BH-FDR corrected), shown only when that
@@ -1022,7 +1022,7 @@ FitDb & $\sim$6,000 & 1,144 & smf & global & growth rate & in prog.\\
 
 \begin{figure}[htbp]
 \tcfig{figures/TorchCell-Supervised-Learning-and-Teacher-Forcing-Generic-Phenotypes.pdf}{TorchCell: ontology-unified knowledge graph and the
-perturbation-operator cell representation. Panels (a)--(d).}{fig:overview}
+perturbation-operator cell representation. Panels \textbf{a}--\textbf{d}.}{fig:overview}
 \end{figure}
 
 \begin{figure*}[t]
@@ -1080,11 +1080,11 @@ Large-scale inference pipeline over ${\sim}10^{6}$ candidate perturbations
 %   add (g) the new GO annotations produced by the guilt-by-association transfer.
 %   Pull all content inside the 180x170 mm boundary box (currently overflows to ~214 mm wide).
 \tcfig{figures/uncharacterized-genes-profile-enricment.pdf}{Guilt-by-association annotation of
-uncharacterized genes. (a)--(e) Triple-interaction profiles $p$ are correlated (Pearson, PCC)
+uncharacterized genes. \textbf{a}--\textbf{e} Triple-interaction profiles $p$ are correlated (Pearson, PCC)
 across all gene pairs; pairs with PCC $>0.6$ are linked, and GO enrichment over the
 resulting network transfers annotations ($\mathrm{GO}_{g_i}=\mathrm{GO}_{g_j}$).
-(f) Total quantification of triple interactions across the remaining yeast genome
-(coverage of uncharacterized genes). (g) The resulting new annotations transferred to
+\textbf{f}, Total quantification of triple interactions across the remaining yeast genome
+(coverage of uncharacterized genes). \textbf{g}, The resulting new annotations transferred to
 previously uncharacterized genes.}{fig:profile-enrichment}
 \end{figure*}
 

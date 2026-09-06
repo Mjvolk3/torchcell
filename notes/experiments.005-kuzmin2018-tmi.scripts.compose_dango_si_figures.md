@@ -82,3 +82,27 @@ within 170 mm (705 x 651 units = 179.1 x 165.2 mm; exported PDF 179.6 x 165.4 mm
 
 Figure 705 x 666 units = 179.1 x 169.2 mm; exported PDF 179.6 x 169.7 mm, inside the 170 mm box
 with 0.3 mm to spare; `check-figures.sh` and `drawio_font_band.py --check` pass.
+
+## 2026.09.05 - Fourth author review: arrows with shafts, legend framed
+
+Author review: the arrows of the schematic (b) were squished. At the previous 6-unit gap with
+`endSize=3` the head alone (draw.io draws a classic head about `endSize + strokeWidth` units
+long, 3.75 there) filled the gap and no shaft showed.
+
+- Every arrow now crosses `ARROW_GAP = 10` units (2.5 mm), vertically between rows and
+  horizontally between the two boxes of the split rows B and E, with draw.io's default classic
+  head at `endSize=4` (4.75 units), so each arrow has a shaft of about 5 units. The two side
+  arrows (encoder to reconstruction head, readout to interaction loss) stay straight horizontal
+  across that same gap; the right-hand boxes narrow by 4 units to pay for it (140 and 160 wide).
+- The gap is paid for by box height, not the panel extent: box height 24.3 (was 27.6), inset
+  unchanged. To keep the math line clear of the heading at that height, the box style drops
+  draw.io's default inner padding (`spacing=0;spacingTop=-1`, with `spacingLeft/Right=5` so the
+  text keeps its indent), which pulls the heading ink to the box top; the heading strip is 11
+  units (was 13) and the math line is centered in the remaining 13.3. Before that change the
+  heading ink started 8 units below the box top and the math superscripts touched it.
+- Colors, equations, and the 8.3 / 7 / 11.1 sizes are unchanged. (c) is the re-rendered
+  decreased-zeros panel with a framed legend
+  ([[experiments.005-kuzmin2018-tmi.scripts.dango_construction_si]]).
+
+Figure 705 x 666 units, exported PDF 179.6 x 169.7 mm; `check-figures.sh` and
+`drawio_font_band.py --check` pass. Verified by rasterizing the PDF at 300 dpi and reading it.

@@ -99,3 +99,19 @@ The stage bars were still confusing. `panel_stages()` now draws two axes on one 
 ![](./assets/images/006-kuzmin-tmi/dcell_training_stages.svg)
 
 ![](./assets/images/006-kuzmin-tmi/dcell_training_data_effect.svg)
+
+## 2026.09.05 - Third author review: hours per epoch in panel c, the later-day reruns as a range in panel d
+
+### Panel c: hours per epoch replaces samples per second
+
+Time per epoch is the quantity that matters, so the right sub-panel of `panel_cost()` now plots `epoch_time_h_median` from `cost.csv` (the median over the run's epoch-to-epoch wall-clock differences; the `h/epoch` column of `tab-dcell-training-cost.tex`) on a log axis from 0.01 to 10 h: DCell 2.2 h (four GPUs), CGT 0.94 h (mean of three, four GPUs), DANGO 0.062 h (mean of two, two GPUs). GPU-hours to the best epoch stays on the left. Both sub-panels: bar = mean over runs, open circles = runs, whisker = SEM where n > 1 (CGT, DANGO; the DANGO whisker is visible, the CGT one is inside the marker); DCell has one run and no whisker. Value labels use two significant figures. No statistic changed.
+
+### Panel d: only the within-day chain and the compile variants as bars
+
+Stage 6 ("rerun on a later day", 119 s/step) drawn as a bar under stage 5 read as a regression. `panel_stages()` now draws bars for the cumulative chain 1 to 5 and the two `torch.compile` variants 8 and 9 only (`CHAIN_STAGES`, `COMPILE_STAGES`); rows 6 and 7 of `speedup_stages.csv` (`RERUN_STAGES`: the stage-5 configuration rerun on later days, row 7 with 12 loader workers; 119 and 99 s/step) are a dashed, lilac-filled range from 99 to 119 s on the stage-5 row, labelled "99-119" at its right and "6, 7: reruns on the shared workstation, later days" in a 1.4-row gap beneath (`RERUN_GAP`). Stage numbers stay the 1-based rows of the CSV, so the table reads 1-5, 8, 9 and the label accounts for 6 and 7. The "variants of 5" bracket is gone (two rows are too short for a rotated label; the "What changed" text already says "stage 5 + torch.compile"); the rule now separates the chain plus its rerun label from the compile rows. The x axis runs to 165 s so the range label fits. The caption says which rows are omitted from the bars and why: the workstation was shared, absolute step times drift day to day by more than several of the optimizations, and only stages measured in one sitting are comparable; the compiled stages (49 and 59 s/step) fall between the chain value and the reruns, so no gain from compilation is established. Numbers are unchanged from `speedup_stages.csv`.
+
+![](./assets/images/006-kuzmin-tmi/dcell_training_cost.svg)
+
+![](./assets/images/006-kuzmin-tmi/dcell_training_stages.svg)
+
+`--from-csv` re-rendered all five panels; `cost.csv`, `checkpoints.csv`, `data_effect_runs.csv` and `data_effect.csv` were rewritten byte-identical (sha256 checked against the pre-run hashes of all 18 result files), and the two generated tables did not change.

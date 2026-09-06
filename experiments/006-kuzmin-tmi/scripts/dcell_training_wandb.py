@@ -543,22 +543,29 @@ def panel_loss(hist: pd.DataFrame, full: pd.DataFrame, ck: pd.DataFrame):
 
 
 def panel_cost(cost: pd.DataFrame):
+    """Panel c: GPU-hours to the best validation epoch (left) and wall-clock hours per epoch
+    (right, the ``epoch_time_h_median`` column of cost.csv), both on log axes. Bar = mean
+    over runs, open circles = runs, whisker = SEM where a model has more than one run."""
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
     fig, axes = plt.subplots(1, 2, figsize=(w, mm_to_in(50)))
     fig.subplots_adjust(left=0.14, right=0.98, bottom=0.18, top=0.9, wspace=0.55)
     order = ["DCell", "DANGO", "CGT"]
     labels = {"DCell": "DCell", "DANGO": "DANGO", "CGT": "TorchCell\n(CGT)"}
-    for ax, col, ylab in [
-        (axes[0], "gpu_hours_to_best", "GPU-hours to best validation epoch"),
-        (axes[1], "samples_per_s", "Training samples per second"),
+    for ax, col, ylab, fmt_ in [
+        (axes[0], "gpu_hours_to_best", "GPU-hours to best validation epoch", "{:,.0f}"),
+        (axes[1], "epoch_time_h_median", "Wall-clock hours per epoch", "{:.2g}"),
     ]:
         for i, m in enumerate(order):
-            sub = cost[cost["model"] == m]
-            # House rule: bar = mean over runs, replicates as open circles (one DCell run, so no whisker).
-            ax.bar(i, sub[col].mean(), width=0.6, color=MODEL_COLOR[m], edgecolor="black", lw=0.5, zorder=3)
-            ax.scatter([i] * len(sub), sub[col], s=9, facecolor="white", edgecolor="black", lw=0.5, zorder=4)
-            top = sub[col].max()
-            ax.text(i, top * 1.25, f"{sub[col].mean():,.0f}", ha="center", va="bottom", fontsize=6)
+            vals = cost.loc[cost["model"] == m, col]
+            mean = vals.mean()
+            ax.bar(i, mean, width=0.6, color=MODEL_COLOR[m], edgecolor="black", lw=0.5, zorder=3)
+            top = vals.max()
+            if len(vals) > 1:
+                sem = vals.std(ddof=1) / np.sqrt(len(vals))
+                ax.errorbar(i, mean, yerr=sem, fmt="none", ecolor="black", elinewidth=0.6, capsize=1.5, capthick=0.6, zorder=4)
+                top = max(top, mean + sem)
+            ax.scatter([i] * len(vals), vals, s=9, facecolor="white", edgecolor="black", lw=0.5, zorder=5)
+            ax.text(i, top * 1.25, fmt_.format(mean), ha="center", va="bottom", fontsize=6)
         ax.set_yscale("log")
         ax.set_xticks(range(len(order)))
         ax.set_xticklabels([labels[m] for m in order])
@@ -567,14 +574,16 @@ def panel_cost(cost: pd.DataFrame):
         ax.set_axisbelow(True)
         box(ax)
     axes[0].set_ylim(1, 1e4)
-    axes[1].set_ylim(10, 1e4)
+    axes[1].set_ylim(0.01, 10)
     save(fig, "dcell_training_cost")
 
 
 # Panel d: what each speed-up stage changed relative to the one before it (3-5 words).
-# Stages 1-5 are cumulative (each keeps every earlier change); 6-9 are reruns or variants
-# of stage 5 (same code and precision, one setting changed). Values come from
-# speedup_stages.csv unchanged.
+# Stage numbers are the 1-based rows of speedup_stages.csv. Stages 1-5 are the cumulative
+# chain measured on one day (each keeps every earlier change); 6 and 7 are the same
+# configuration as stage 5 rerun on later days (7 with 12 loader workers) and are drawn as a
+# shaded range on the stage-5 row, not as bars; 8 and 9 are stage 5 with torch.compile at
+# batch 500 and 600. Values come from speedup_stages.csv unchanged.
 STAGE_CHANGE = {
     "Before Duplicate Forward": "forward pass run twice",
     "After Removing Duplicate Forward": "duplicate forward removed",
@@ -586,18 +595,33 @@ STAGE_CHANGE = {
     "BF16-Mixed Precison - 8 Workers - Compile - batch size 500": "stage 5 + torch.compile",
     "BF16-Mixed Precison - 8 Workers - Compile - batch size 600": "stage 5 + torch.compile",
 }
+CHAIN_STAGES = [1, 2, 3, 4, 5]  # the within-day cumulative chain, drawn as bars
+RERUN_STAGES = [6, 7]  # later-day reruns of stage 5, drawn as a range on the stage-5 row
+COMPILE_STAGES = [8, 9]  # torch.compile variants of stage 5, drawn as bars
+RERUN_GAP = 1.4  # rows of space under stage 5 for the range label
 
 
 def panel_stages(st: pd.DataFrame):
     """Panel d as an explanatory table: left, stage number, what changed, batch per GPU and
     the resulting samples per second; right, seconds per optimizer step as bars on the same
-    rows. Down-arrows link the cumulative stages 1 -> 5; a bracket groups 6-9 as variants
-    of stage 5."""
+    rows. Down-arrows link the cumulative stages 1 -> 5. Stages 6 and 7 (reruns of stage 5
+    on later days) are the shaded range on the stage-5 row with its label in the gap below;
+    stages 8 and 9 (torch.compile) follow under a rule."""
+    st = st.reset_index(drop=True)
+    st["stage_no"] = np.arange(1, len(st) + 1)
+    assert list(st["stage_no"]) == CHAIN_STAGES + RERUN_STAGES + COMPILE_STAGES
+    by_no = st.set_index("stage_no")
+    # Row positions: chain rows from the top, a gap for the range label, then the compile rows.
+    y_pos, y = {}, len(CHAIN_STAGES) + len(COMPILE_STAGES) - 1 + RERUN_GAP
+    for sn in CHAIN_STAGES + COMPILE_STAGES:
+        if sn == COMPILE_STAGES[0]:
+            y -= RERUN_GAP
+        y_pos[sn] = y
+        y -= 1
+    ylim = (-0.6, y_pos[CHAIN_STAGES[0]] + 0.6)
+    y_rule = y_pos[COMPILE_STAGES[0]] + 0.55
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
     fig = plt.figure(figsize=(w, mm_to_in(50)))
-    n = len(st)
-    rows = np.arange(n)[::-1]  # stage 1 at the top
-    ylim = (-0.6, n - 0.4)
     # Two axes on one row grid: the text table (no frame) and the bar chart (boxed).
     tab = fig.add_axes([0.0, 0.16, 0.63, 0.64])
     bars = fig.add_axes([0.64, 0.16, 0.33, 0.64])
@@ -605,38 +629,45 @@ def panel_stages(st: pd.DataFrame):
     tab.set_ylim(*ylim)
     tab.axis("off")
     X_LABEL, X_ARROW, X_NUM, X_CHANGE, X_BATCH, X_RATE = 0.03, 0.075, 0.12, 0.21, 0.75, 1.0
-    hdr_y = n - 0.4 + 0.25
+    hdr_y = ylim[1] + 0.25
     for x, txt, ha in [(X_NUM, "Stage", "center"), (X_CHANGE, "What changed", "left"),
                        (X_BATCH, "Batch\nper GPU", "center"), (X_RATE, "Samples\nper s", "right")]:
         tab.text(x, hdr_y, txt, ha=ha, va="bottom", fontsize=6, fontweight="bold", clip_on=False, linespacing=1.1)
-    for yi, (_, r) in zip(rows, st.iterrows()):
-        tab.text(X_NUM, yi, f"{n - yi}", ha="center", va="center", fontsize=6)
+    for sn, yi in y_pos.items():
+        r = by_no.loc[sn]
+        tab.text(X_NUM, yi, f"{sn}", ha="center", va="center", fontsize=6)
         tab.text(X_CHANGE, yi, STAGE_CHANGE[r["stage"]], ha="left", va="center", fontsize=6)
         tab.text(X_BATCH, yi, f"{int(r['batch_size_per_gpu'])}", ha="center", va="center", fontsize=6)
         tab.text(X_RATE, yi, f"{r['samples_per_s']:.0f}", ha="right", va="center", fontsize=6)
     # Cumulative chain 1 -> 5: a down-arrow between consecutive rows, left of the numbers.
-    for k in range(4):
-        y_from, y_to = rows[k] - 0.3, rows[k + 1] + 0.3
-        tab.annotate("", xy=(X_ARROW, y_to), xytext=(X_ARROW, y_from),
+    for a, b in zip(CHAIN_STAGES[:-1], CHAIN_STAGES[1:]):
+        tab.annotate("", xy=(X_ARROW, y_pos[b] + 0.3), xytext=(X_ARROW, y_pos[a] - 0.3),
                      arrowprops=dict(arrowstyle="-|>", color="black", lw=0.6, mutation_scale=5, shrinkA=0, shrinkB=0))
-    tab.text(X_LABEL, (rows[0] + rows[4]) / 2, "cumulative", rotation=90, ha="center", va="center", fontsize=6)
-    # Variants of stage 5: a bracket spanning rows 6-9.
-    y_top, y_bot = rows[5] + 0.35, rows[8] - 0.35
-    tab.plot([X_ARROW + 0.015, X_ARROW, X_ARROW, X_ARROW + 0.015], [y_top, y_top, y_bot, y_bot], color="black", lw=0.6, clip_on=False)
-    tab.text(X_LABEL, (y_top + y_bot) / 2, "variants of 5", rotation=90, ha="center", va="center", fontsize=6)
-    tab.axhline(rows[4] - 0.5, xmin=0.0, xmax=1.0, color="#B0B0B0", lw=0.4)
+    tab.text(X_LABEL, (y_pos[CHAIN_STAGES[0]] + y_pos[CHAIN_STAGES[-1]]) / 2, "cumulative", rotation=90,
+             ha="center", va="center", fontsize=6)
+    tab.axhline(y_rule, xmin=0.0, xmax=1.0, color="#B0B0B0", lw=0.4)
 
-    bars.barh(rows, st["s_per_step"], color=PURPLE, edgecolor="black", lw=0.5, height=0.65, zorder=3)
-    for yi, (_, r) in zip(rows, st.iterrows()):
-        bars.text(r["s_per_step"] + 3, yi, f"{r['s_per_step']:.0f}", va="center", ha="left", fontsize=6)
+    ys = [y_pos[sn] for sn in y_pos]
+    vals = [by_no.loc[sn, "s_per_step"] for sn in y_pos]
+    bars.barh(ys, vals, color=PURPLE, edgecolor="black", lw=0.5, height=0.65, zorder=3)
+    for yi, v in zip(ys, vals):
+        bars.text(v + 3, yi, f"{v:.0f}", va="center", ha="left", fontsize=6)
+    # Later-day reruns of stage 5 (rows 6, 7): a shaded range on the stage-5 row, labelled below.
+    lo, hi = by_no.loc[RERUN_STAGES, "s_per_step"].min(), by_no.loc[RERUN_STAGES, "s_per_step"].max()
+    y5 = y_pos[CHAIN_STAGES[-1]]
+    bars.add_patch(plt.Rectangle((lo, y5 - 0.325), hi - lo, 0.65, facecolor=PLOT_PALETTE_FILL[2],
+                                 edgecolor="black", lw=0.5, ls=(0, (2, 1.5)), zorder=3))
+    bars.text(hi + 3, y5, f"{lo:.0f}–{hi:.0f}", va="center", ha="left", fontsize=6)
+    bars.text(162, y5 - 0.5, f"{RERUN_STAGES[0]}, {RERUN_STAGES[1]}: reruns on the shared\nworkstation, later days",
+              va="top", ha="right", fontsize=6, linespacing=1.1, clip_on=False)
     bars.set_ylim(*ylim)
     bars.set_yticks([])
-    bars.set_xlim(0, 160)
+    bars.set_xlim(0, 165)
     bars.xaxis.set_major_locator(MultipleLocator(50))
     bars.set_xlabel("Seconds per optimizer step")
     bars.grid(axis="x", color="#D0D0D0", lw=0.4)
     bars.set_axisbelow(True)
-    bars.axhline(rows[4] - 0.5, color="#B0B0B0", lw=0.4, zorder=2)
+    bars.axhline(y_rule, color="#B0B0B0", lw=0.4, zorder=2)
     box(bars)
     save(fig, "dcell_training_stages")
 

@@ -41,3 +41,9 @@ Op counts (`dcell_training_cpu_profile_ops.csv`): batch 2 / 8 / 32 give 564,316 
 What transfers to the GPU: each leaf op is one kernel launch, and the launch count grows linearly with the batch, so the cluster's batch of 600 per GPU launches millions of kernels per step irrespective of the arithmetic. Hypothesis (untested, stated as such in the note): the GPU step is launch-bound. The CPU-specific findings (BatchNorm over 2,655 small tensors costing ten times the matrix multiplies; AdamW at 22%) are not claimed for the GPU.
 
 ![](./assets/images/006-kuzmin-tmi/dcell_training_cpu_profile.svg)
+
+## 2026.09.05 - Stand-in notice on the panel
+
+Third author review: the panel must say it is a stand-in. `panel_cpu_profile()` now writes a first line at the top of the panel in `PLOT_PALETTE` red (`#B85450`, 6 pt): "GPU profile pending: to be run on gilahyper". The three-line black header moves down one line (figure y 0.935) and the axes top drops from 0.82 to 0.77; the bars and every number are unchanged, and the panel stays 88 x 48 mm. The caption states the same: a `torch.profiler` run of the training step on the cluster GPUs is pending and will replace the CPU measurement. `--from-csv` re-rendered the panel from `dcell_training_cpu_profile.csv` and `dcell_training_cpu_profile_ops.csv` without touching them.
+
+![](./assets/images/006-kuzmin-tmi/dcell_training_cpu_profile.svg)

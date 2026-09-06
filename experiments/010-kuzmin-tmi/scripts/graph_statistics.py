@@ -128,6 +128,7 @@ GRAPH_COLOR = {key: PLOT_PALETTE[i] for i, (key, _, _) in enumerate(CGT_GRAPHS)}
 GRAPH_FILL = {key: PLOT_PALETTE_FILL[i] for i, (key, _, _) in enumerate(CGT_GRAPHS)}
 LABEL = {key: lbl for key, lbl, _ in CGT_GRAPHS}
 UNION_LABEL = "Union (all nine)"
+UNION_FILL = PLOT_PALETTE_FILL[5]  # the gray slot's pale fill (#F5F5F5): a neutral bar, not white
 # Short labels for the 9 x 9 matrix axes (third-width heatmaps); the STRING prefix is
 # dropped and the captions say so.
 SHORT_LABEL = {
@@ -183,6 +184,7 @@ GO_MAX_GENES = 500
 RANDOM_SEED = 0
 YEAST_GEM_VERSION = "9.0.2"
 PAIR_SHARE_MIN = 1e-6  # left edge of the logarithmic pair-share axes of panel f
+COMP_GAP_MM = 1.8  # white between the six axes of the components panel (2.5 elsewhere)
 
 # Shared panel geometry (mm). Panels in one row use the same height and the same top margin
 # (TOP_MM) so their axes tops align in the composed figure; heatmaps carry their column
@@ -194,7 +196,7 @@ TOP_MM = 1.5
 LABEL_LEFT_MM = 32.0  # axes left for panels with graph names on the y-axis
 SHORT_LEFT_MM = 14.5  # axes left for the third-width matrices with SHORT_LABEL rows
 HEAT_BOTTOM_MM = 11.5  # room under a matrix for its 45-degree column labels
-F1_ROW1_H, F1_ROW2_H, F1_ROW3_H = 48.0, 60.0, 44.0
+F1_ROW1_H, F1_ROW2_H, F1_ROW3_H = 48.0, 60.0, 46.0
 F2_ROW1_H, F2_ROW2_H = 44.0, 58.0
 STRING_RELEASES_H = 52.0  # graphs_string_releases.svg, embedded by the DANGO figure; keep fixed
 TEXT_BBOX = {"facecolor": "white", "edgecolor": "none", "pad": 1}  # numbers over gridlines
@@ -771,10 +773,10 @@ def _knum(v: float) -> str:
     return f"{v:.0f}"
 
 
-def _named_barh_row(fig, w_mm, h_mm, n_axes, widths, bottom_mm):
-    """A row of barh axes sharing the graph-name y-axis at LABEL_LEFT_MM, top at TOP_MM."""
+def _named_barh_row(fig, w_mm, h_mm, n_axes, widths, bottom_mm, gap_mm=2.5):
+    """A row of barh axes sharing the graph-name y-axis at LABEL_LEFT_MM, top at TOP_MM,
+    ``gap_mm`` of white between neighboring axes."""
     right_mm = 1.5
-    gap_mm = 2.5
     avail = w_mm - LABEL_LEFT_MM - right_mm - gap_mm * (n_axes - 1)
     unit = avail / sum(widths)
     axes, x = [], LABEL_LEFT_MM
@@ -790,7 +792,9 @@ def panel_sizes(sizes: pd.DataFrame, union: pd.DataFrame, n_vocab: int):
     """Half-width panel, one bar per graph plus a final row for the union of all nine:
     genes with at least one edge (dotted line, the 6,607-gene reference), genes with no
     edge (its own bar, the count printed at right), distinct gene pairs (log axis), and the
-    share of a graph's pairs found in no other graph (empty for the union)."""
+    share of a graph's pairs found in no other graph (empty for the union). The union bar
+    takes the palette's neutral light fill (the gray slot), so it reads as a bar rather than
+    a gap while belonging to no graph."""
     w, h = PANEL_WIDTHS_MM["half"], F1_ROW1_H
     fig = _fig(w, h)
     bottom = 11.0  # two-line x labels
@@ -802,7 +806,7 @@ def panel_sizes(sizes: pd.DataFrame, union: pd.DataFrame, n_vocab: int):
     uncovered = np.concatenate([sizes["uncovered"], union["uncovered"]])
     edges = np.concatenate([sizes["edges_pairs"], union["edges_pairs"]])
     labels = list(sizes["label"]) + list(union["label"])
-    colors = [GRAPH_COLOR[k] for k in sizes["graph"]] + ["white"]
+    colors = [GRAPH_COLOR[k] for k in sizes["graph"]] + [UNION_FILL]
     bar = {"edgecolor": "black", "linewidth": 0.4, "height": 0.7}
     ax_n.barh(y, nodes, color=colors, **bar)
     ax_n.axvline(n_vocab, color="black", linewidth=0.5, linestyle=":")
@@ -1202,12 +1206,15 @@ def panel_components(comp: pd.DataFrame):
     reference), the share of the Kuzmin 2018 (graph color) and 2020 (its pale fill) trigenic
     panel genes that have an edge in the graph, and the share of the graph's gene pairs that
     share a Yeast9 reaction, a Yeast9 subsystem, or a GO biological-process term (open
-    circle, the degree-preserving random graph). The legend is one line under the panel."""
+    circle, the degree-preserving random graph). The legend is one line at the bottom edge
+    of the panel, its four entries spread across the full width, with a clear band between it
+    and the x-axis titles; the six axes sit COMP_GAP_MM apart, tighter than the four-axes
+    rows of (a) and (c)."""
     ref = comp.attrs["reference"]
     w, h = PANEL_WIDTHS_MM["full"], F1_ROW3_H
     fig = _fig(w, h)
-    bottom = 13.5  # two-line x labels + one legend row
-    axes = _named_barh_row(fig, w, h, 6, [1] * 6, bottom_mm=bottom)
+    bottom = 15.0  # two-line x labels, a clear band, then the legend row at the bottom edge
+    axes = _named_barh_row(fig, w, h, 6, [1] * 6, bottom_mm=bottom, gap_mm=COMP_GAP_MM)
     y = np.arange(len(comp))[::-1]
     colors = [GRAPH_COLOR[k] for k in comp["graph"]]
     fills = [GRAPH_FILL[k] for k in comp["graph"]]
@@ -1274,8 +1281,11 @@ def panel_components(comp: pd.DataFrame):
                    markeredgecolor="black", markeredgewidth=0.5,
                    label=f"Degree-preserving random graph (seed {RANDOM_SEED})"),
     ]
+    # mode="expand" over the full-width anchor box spreads the four entries evenly from the
+    # left edge to the right edge; borderaxespad=0 puts the row on the panel's bottom edge.
     fig.legend(handles=handles, frameon=False, loc="lower left", ncol=4, handlelength=1.4,
-               columnspacing=1.2, handletextpad=0.5, bbox_to_anchor=(0.0, 0.0), borderaxespad=0.2)
+               handletextpad=0.5, bbox_to_anchor=(0.0, 0.0, 1.0, 1.0), mode="expand",
+               borderaxespad=0.0)
     _save(fig, "graphs_components")
 
 

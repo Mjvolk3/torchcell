@@ -86,16 +86,16 @@ Whether that difference moves DANGO is tested in \suppnoteref{note:dango-repro}.
 \tcfig{figures/FigS-graph-attention-priors.pdf}{\textbf{Each gene--gene graph used as an
 attention prior in the trigenic experiment, on its own.} Directed graphs (regulatory, TFLink)
 are compared as undirected gene pairs; every graph is restricted to the 6,607-gene reference;
-matrix axes in (d) drop the STRING prefix. (a)~Per graph and, in the last row, for the union of
+matrix axes in \textbf{d}, drop the STRING prefix. \textbf{a},~Per graph and, in the last row, for the union of
 all nine: genes with at least one edge (dotted line, the 6,607-gene reference); genes with no
 edge, counted at right (45 genes have an edge in no graph); distinct gene pairs; and the fraction
-of each graph's pairs found in no other graph (undefined for the union). (b)~Complementary
+of each graph's pairs found in no other graph (undefined for the union). \textbf{b},~Complementary
 cumulative degree distribution: fusion and co-occurrence have no gene above degree 100, the two
 dense STRING channels fall off past degree $10^{3}$, and TFLink carries the heaviest tail.
-(c)~Per graph: fraction of covered genes in the largest connected component, mean clustering
+\textbf{c},~Per graph: fraction of covered genes in the largest connected component, mean clustering
 coefficient, degree assortativity, and mean number of genes within two edges of a gene (dotted
 line, the 6,607-gene reference); the four dense graphs place over 70\% of the vocabulary within
-two edges of a typical gene, fusion and co-occurrence under 2\%. (d)~The three highest-degree
+two edges of a typical gene, fusion and co-occurrence under 2\%. \textbf{d},~The three highest-degree
 genes of every graph (26 genes; NAB2 is third in physical and first in experimental), grouped by
 the graph they top, in the order of (a), and by degree within a group, colored by degree
 percentile in each graph (dash, absent from the graph); at right, the leading phrase of the
@@ -105,7 +105,7 @@ characters). Top-degree gene per graph: DHH1 in physical (3,606 partners), FKH1 
 KSP1 tied in co-occurrence (97; ties are ordered by systematic name), SSA1 in co-expression
 (1,770), NAB2 in experimental (2,696), HFD1 in database (374); at the top 1\% (66 genes per
 graph), 357 genes are hubs of one graph, 77 of two, 22 of three, 3 of four, and CDC28 of five.
-(e)~Relation to the other components of the cell representation: share of covered genes that
+\textbf{e},~Relation to the other components of the cell representation: share of covered genes that
 are Yeast9 (yeast-GEM 9.0.2) metabolic genes, that is, genes of a gene--reaction rule (1,161),
 or essential, an SGD null-mutant \emph{inviable} phenotype in S288C (1,140), the dotted line
 being the same share over the 6,607-gene reference; node coverage of the Kuzmin 2018 (graph
@@ -123,14 +123,14 @@ biological-process term (direct SGD annotations, root excluded, at most 500 gene
 \begin{figure*}[t]
 \tcfig{figures/FigS-graph-attention-priors-2.pdf}{\textbf{How the nine attention-prior graphs
 relate to each other.} Directed graphs are compared as undirected gene pairs; matrix axes in
-(a)--(c) drop the STRING prefix. (a)~Jaccard index of edge sets. (b)~Containment: the fraction
-of the row graph's pairs present in the column graph. (c)~Gene pairs shared by each pair of
+\textbf{a}--\textbf{c} drop the STRING prefix. \textbf{a},~Jaccard index of edge sets. \textbf{b},~Containment: the fraction
+of the row graph's pairs present in the column graph. \textbf{c},~Gene pairs shared by each pair of
 graphs, in thousands (diagonal, the graph's own count; logarithmic color): co-expression and
 experimental share 556,106 pairs, neighborhood and co-expression 119,758, physical and
-experimental 104,771, the two transcription-factor graphs 16,885. (d)~Distinct gene pairs
+experimental 104,771, the two transcription-factor graphs 16,885. \textbf{d},~Distinct gene pairs
 supported by exactly $n$ graphs (52\% in one, 37\% in two, none in more than seven); the nine
 edge sets sum to 2,435,327 pairs, 1,514,071 distinct, 6.9\% of the 21.8 million pairs the
-vocabulary allows. (e)~Top: regulators, targets, and directed regulator$\to$target edges of the
+vocabulary allows. \textbf{e},~Top: regulators, targets, and directed regulator$\to$target edges of the
 SGD regulatory graph (473 regulators, 37,767 edges) and TFLink (317 regulators, 200,801 edges),
 split into one-graph-only (20,950 regulatory, 183,984 TFLink edges) and both (16,817). Bottom:
 for the 200 shared regulators, the Jaccard index between the regulator's two target sets; the

@@ -395,7 +395,7 @@ def panel_cpu_profile(prof: pd.DataFrame, ops: pd.DataFrame):
     batch, share labels at the bar ends, the environment and op count in the panel."""
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(48)))
-    fig.subplots_adjust(left=0.47, right=0.97, bottom=0.18, top=0.82)
+    fig.subplots_adjust(left=0.47, right=0.97, bottom=0.18, top=0.77)
     main = prof[prof["subphase"] == ""].reset_index(drop=True)
     y = np.arange(len(main))[::-1]
     colors = [PURPLE if k in ("gather", "concat", "subsystem", "heads", "loop") else GRAY for k in main["phase"]]
@@ -414,8 +414,10 @@ def panel_cpu_profile(prof: pd.DataFrame, ops: pd.DataFrame):
     # Leaf ops per added strain: the slope of leaf ops against batch over the sweep (the
     # per-strain gather loop is the only batch-dependent op count).
     slope = np.polyfit(ops["batch_size"], ops["aten_leaf"], 1)[0]
+    # Stand-in notice: the GPU profile of the cluster run has not been measured yet.
+    fig.text(0.01, 0.985, "GPU profile pending: to be run on gilahyper", ha="left", va="top", fontsize=6, color=RED)
     fig.text(
-        0.01, 0.985,
+        0.01, 0.935,
         f"CPU profile, not the GPU run: {m['cpu_model']}, torch {m['torch_version']}, {m['dtype']}, batch {int(m['batch_size'])}\n"
         f"{int(head['aten_leaf']):,} leaf ops per step ({int(head['distinct_ops'])} distinct), "
         f"+{slope:,.0f} per added strain (batch {ops['batch_size'].min()} to {ops['batch_size'].max()})\n"

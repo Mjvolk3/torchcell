@@ -130,6 +130,10 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
 - **Bar charts with replicate points:** bar = mean, whisker = SD or SEM named in the
   caption, replicates as open circles; when a group has one run, say so instead of drawing
   a whisker.
+- **Panel letters in captions are bold, no parentheses** (Nature form): `\textbf{a},~Text.
+  \textbf{b},~Text.` and ranges `\textbf{a}--\textbf{e}`. Never `(a)` in a caption. Applied
+  2026.09.05 across every figure caption (main and SI); cross-references in prose keep the
+  plain suffix form (`\suppfig{fig:x}a`).
 - **Axis-label style: sentence case, first word capitalized, proper nouns/initialisms
   keep their capitals.** Nature's spec gives the exemplar "All axes to be labelled with
   units in parentheses, e.g. Data (unit)" -- sentence case; unitless metrics omit the

@@ -13,7 +13,8 @@ Panels, in reading order:
      box per stage with a plain-text heading (Arial, ladder size 8.3) and one line of real
      LaTeX typeset by MathJax (``math="1"`` on the model, ``$$...$$`` labels, fontSize 7,
      which MathJax renders at about 6 pt; see the style guide). Explanations live in the
-     caption, not in the boxes.
+     caption, not in the boxes. Boxes are ARROW_GAP (10 units) apart wherever an arrow
+     crosses, so each arrow has a visible shaft beyond its endSize-4 head.
   c  ``dango_decreased_zeros.svg`` from ``dango_construction_si.py`` (decreased zeros and
      lambda per channel).
   d  ``dango_string_version_sweep.svg`` and
@@ -61,6 +62,7 @@ ROW_GAP = 22  # 5.5 mm between rows; the next row's TOP_STRIP is the lower part 
 TOP_STRIP = 16  # the letter strip above every row
 LETTER_W, LETTER_H = 18, 14
 SCHEMATIC_INSET_TOP, SCHEMATIC_INSET_BOTTOM = 6.0, 3.0  # see the row-1 comment in main()
+ARROW_GAP = 10.0  # units between boxes wherever an arrow crosses (2.5 mm); see schematic()
 BODY = 8.3  # ladder value: prints at 5.98 pt
 LETTER = 11.1  # ladder value: prints at 7.99 pt, panel letters only
 MATH = 7  # MathJax renders ~1.19x the cell size: 7 units -> ~6 pt on the page (measured)
@@ -117,7 +119,7 @@ class Cells:
         style = (
             f"rounded=0;whiteSpace=wrap;html=1;fillColor={fill};strokeColor={stroke};"
             f"fontFamily=Arial;fontSize={BODY};fontStyle=1;align=left;verticalAlign=top;"
-            f"spacingLeft=3;spacingRight=3;spacingTop=0;strokeWidth=0.75;"
+            f"spacing=0;spacingLeft=5;spacingRight=5;spacingTop=-1;strokeWidth=0.75;"
         )
         self.cells.append(
             f'<mxCell id="{self._id()}" value={quoteattr(heading)} style={quoteattr(style)} vertex="1" parent="1">'
@@ -136,7 +138,10 @@ class Cells:
         )
 
     def arrow(self, x1, y1, x2, y2, color="#666666"):
-        style = f"endArrow=classic;html=1;strokeWidth=0.75;strokeColor={color};endSize=3;"
+        """A straight arrow between two points: draw.io's default (classic) head at endSize 4.
+        draw.io draws the head about endSize + strokeWidth units long (4.75 here), so the gap
+        it crosses must be wider than that for the shaft to show."""
+        style = f"endArrow=classic;html=1;strokeWidth=0.75;strokeColor={color};endSize=4;"
         self.cells.append(
             f'<mxCell id="{self._id()}" style={quoteattr(style)} edge="1" parent="1">'
             f'<mxGeometry relative="1" as="geometry"><mxPoint x="{x1:.1f}" y="{y1:.1f}" as="sourcePoint"/>'
@@ -156,10 +161,16 @@ def schematic(c: Cells, x0: float, y0: float, w: float, h: float):
 
     Six rows of equal height fill exactly (w x h); rows B and E split into two boxes so the
     branch (encoder -> reconstruction head; readout -> loss) reads left to right.
+
+    Every arrow crosses a gap of ARROW_GAP units, vertically between rows and horizontally
+    between the two boxes of a split row, so the 4.75-unit head leaves a shaft of about 5
+    units (author review 2026.09.05: at a 6-unit gap the arrows were squished to their heads).
+    The gap is paid for by box height, not by the panel's extent.
     """
-    n_rows, gap = 6, 6.0
-    bh = (h - (n_rows - 1) * gap) / n_rows  # box height (27.6 at the 195.7-unit inset panel height)
-    head_h = 13.0  # heading line; the math line is centered in the rest of the box
+    n_rows, gap = 6, ARROW_GAP
+    bh = (h - (n_rows - 1) * gap) / n_rows  # box height (24.3 at the 195.7-unit inset panel height)
+    head_h = 11.0  # heading line (spacing 0, spacingTop -1 pull its ink to the box top); the
+    # math line is centered in the rest of the box
     math_y, math_h = head_h, bh - head_h
 
     def stage(x, y, bw, heading, latex, color):
@@ -194,7 +205,8 @@ def schematic(c: Cells, x0: float, y0: float, w: float, h: float):
     # Row F: the scheduled objective.
     stage(x0, rows[5], w, "Objective; the pretraining weight follows one of three schedules over epochs 1 to 10",
           r"\mathcal{L}=\alpha_e\,\mathcal{L}_{\mathrm{rec}}+(1-\alpha_e)\,\mathcal{L}_{\mathrm{int}}", GRAY)
-    # Flow arrows: down the left column through the gaps, and across the two split rows.
+    # Flow arrows: straight down through the row gaps (under the left box on the split rows,
+    # under the center otherwise) and straight across the same-width gap of the split rows.
     xa = x0 + wl / 2
     c.arrow(xa, rows[0] + bh, xa, rows[1])
     c.arrow(x0 + wl, rows[1] + bh / 2, x0 + wl + gap, rows[1] + bh / 2)

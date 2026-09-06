@@ -88,3 +88,12 @@ Author review: the legend still covered the co-expression bars and their lambda 
 now runs to 8.5% (tallest bar 4.6%, major ticks every 2%) so the four-entry legend in the upper right
 sits above every bar and label; the panel is 46 mm tall (was 52) so the taller curves panel of
 `FigS-dango-reproduction` fits under 170 mm. Re-rendered with `--from-csv`; no value changed.
+
+## 2026.09.05 - Legend framed in black
+
+Author review: the legend's edgeless white box read as part of the dashed 1% line. The legend
+now has a thin black frame (`edgecolor="black"`, frame linewidth 0.5, `fancybox=False` for
+square corners matching the boxed axes) on the same opaque white face, same upper-right
+position. In the rendered panel the 1% line at y = 1 runs well below the frame's bottom edge
+(about y = 5.3), so the line passes outside the box and no repositioning was needed.
+Re-rendered with `--from-csv`; no value changed.

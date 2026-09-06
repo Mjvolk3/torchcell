@@ -86,3 +86,24 @@ top edge; the STRING-release panel (`graphs_string_releases.svg`, unchanged in s
 by `experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py` as panel a of
 `FigS-dango-reproduction`. Paths resolve from the script file, so it runs from any directory.
 Both figures pass `check-figures.sh` and `drawio_font_band.py --check` (only the 11.1 letters).
+
+## 2026.09.05 - Spacing pass after author review: rows 4 mm apart
+
+Author feedback on the composed figures: in `FigS-graph-attention-priors-2` panels d and e should
+come up a hair, and in `FigS-graph-attention-priors` the three rows should sit closer, both while
+keeping a clear letter strip. `ROW_GAP` drops from 22 to 16 units (5.5 to 4 mm) for both figures;
+`COL_GAP`, `TOP_STRIP`, and `LETTER_STRIP` are unchanged. With `ROW_GAP == LETTER_STRIP` a
+letter's cell starts exactly at the bottom edge of the row above; the glyph (verticalAlign=top,
+about 2 mm cap height) sits in the lower part of the 4 mm gap, and the bottom-left corner of every
+panel with a row below it is blank (the y-axis names begin 32 mm in for the bar rows, 14.5 mm in
+for the matrices), so every letter is in white.
+
+- `FigS-graph-attention-priors.drawio`: 705 x 654 units (179.0 x 166.2 mm; export 179.2 x 166.5
+  mm). Row 3 (`graphs_components.svg`) grew from 44 to 46 mm for its legend band, so the figure
+  is 4 units shorter than before rather than 12.
+- `FigS-graph-attention-priors-2.drawio`: 708 x 434 units (179.7 x 110.1 mm; export 179.9 x
+  110.4 mm), 6 units shorter.
+
+Both pass `check-figures.sh` and `drawio_font_band.py --check`; the composer was rerun from the
+regenerated panels (see [[experiments.010-kuzmin-tmi.scripts.graph_statistics]] for the panel
+changes of the same pass).

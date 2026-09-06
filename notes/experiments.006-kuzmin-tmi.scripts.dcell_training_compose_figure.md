@@ -22,3 +22,7 @@ Author review: panel letters must never sit over a y-axis label or a neighbor's 
 ## 2026.09.04 - Three rows: the placeholder becomes the CPU profile, plus a data-effect panel
 
 Second author review. The layout is now a loop over three rows of two half-width panels: (a, b) as before at 52 mm; (c, d) at 50 mm, with d the redesigned stage table of [[experiments.006-kuzmin-tmi.scripts.dcell_training_wandb]]; (e) `dcell_training_cpu_profile.svg` from [[experiments.006-kuzmin-tmi.scripts.dcell_training_cpu_profile]] and (f) `dcell_training_data_effect.svg`, both 48 mm. The placeholder cell and its style are gone. Same constants (`COL_GAP = 12`, `ROW_GAP = 22`, `TOP_STRIP = 16`, letters at `(panel_x, row_top)`). Figure 705 x 651 units = 179.0 x 165.2 mm; exported PDF 179.2 x 165.4 mm, under the 170 mm cap; `check-figures.sh` and `drawio_font_band.py --check` pass (six letters at 11.1, no other text cells).
+
+## 2026.09.05 - Recomposed after the third author review
+
+Panels c, d (hours per epoch; the later-day reruns as a range, [[experiments.006-kuzmin-tmi.scripts.dcell_training_wandb]]) and e (the red stand-in line, [[experiments.006-kuzmin-tmi.scripts.dcell_training_cpu_profile]]) were regenerated at their previous sizes, so the layout and the script are unchanged: 705 x 651 units = 179.0 x 165.2 mm; exported PDF 179.2 x 165.4 mm; `check-figures.sh` and `drawio_font_band.py --check` pass.

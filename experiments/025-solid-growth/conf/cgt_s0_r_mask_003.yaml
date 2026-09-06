@@ -1,0 +1,207 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_mask_003.yaml
+#
+# ARM S0/R/MASK-L1 -- hard masking placed EXACTLY where 010 put its KL, so the only
+# difference between this arm and the replication is soft penalty versus hard mask.
+#
+# WHY THE PATTERN CHANGED FROM cgt_s0_r_mask_001. That config masked layers 2-5,
+# SSMMMMSS, four consecutive hard-masked layers. 010's KL sits on layer 1 alone, all nine
+# heads, which in the same notation is S M S S S S S S. Masking four layers where 010
+# regularized one made the arm differ from the reference in two ways at once, width and
+# hardness, and job 1602 collapsed: train Pearson -0.0027 with `transformed MSE` 0.9998,
+# a model predicting the label mean.
+#
+# WHAT 1602 DID NOT SHOW. The collapse was NOT information starvation. Measured on this
+# build, the nine graphs union to median degree 345 and a token reaches 93.6 percent of
+# all genes after two masked layers, so the SSMMMMSS band still moved information freely.
+#
+# THE STANDING RISK, and it is not addressed here. The 010 additive-baselines report
+# measured that the graph penalty carried 99.986 percent of the training loss, and that a
+# matched pair at weight 0.0 reached validation Pearson -0.007, -0.031 and one divergence
+# with training Pearson around 0.002. That is 1602's signature exactly. If the penalty was
+# load-bearing for OPTIMIZATION rather than for supplying graph structure, this arm
+# collapses too, since `graph_reg_lambda` is 0 here as well. The 010 pair kept this
+# schedule, so a retuned schedule for a point-only objective has never been tried.
+#
+# Read the first two epochs: the KL arm reached validation Pearson 0.3882 at epoch 1.
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_025-solid-growth_equivariant_cell_graph_transformer
+  tags: [s0, split_R, graph_mask, mask_layer1, mask_vs_kl]
+
+# === Arm: which records train, and how they split ===
+# Artifacts are committed under experiments/025-solid-growth/results/ and are read by
+# `load_index_artifact`; `split_key` names the field holding the three lists because the
+# R and Q artifacts store them under different names.
+subset:
+  indices: subset_S0_indices.json.gz
+  split_file: pinned_splits_from_010_seed_42.json.gz
+  split_key: pinned
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+  # Transformer uses learned gene embeddings, not pre-computed
+  node_embeddings: []
+
+  # 025 carries fitness AND gene_interaction; 010 carried only the latter. Without this
+  # selection a triple yields two values and a batch of B records carries 2B targets,
+  # which the single-task RegressionTask reads as its label vector.
+  phenotype_labels: [gene_interaction]
+
+# Transform configuration
+transforms:
+  use_transforms: true
+  fit_on_subset: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard" # Options: standard, minmax, robust
+
+profiler:
+  enabled: false
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  batch_size: 256  # Limited by transformer memory requirements
+  num_workers: 16
+  pin_memory: true
+  prefetch: false
+  prefetch_factor: 4
+  persistent_workers: true
+
+trainer:
+  max_epochs: 600  # 010's budget; the 12 h wall clock is what actually ends this run
+  strategy: ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: "bf16-mixed"
+
+compile_mode: null
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  hidden_channels: 180
+  num_transformer_layers: 8
+  num_attention_heads: 9
+  dropout: 0.1
+
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+
+  # === Hard graph masking, at 010's regularized layer ===
+  #
+  # One masked layer, all nine heads carrying a graph, seven free layers around it. Free
+  # attention lives in whole LAYERS rather than in unassigned heads beside masked ones,
+  # which `_build_head_mask` would also allow; Buterez et al. 2024 combine masked and
+  # unmasked attention vertically rather than horizontally, and the horizontal form is
+  # SAN's, which they outperform. Here the vertical choice is settled anyway by matching
+  # 010 rather than by that paper.
+  #
+  # Verified against this build before launch: the mask is [9, 6608, 6608] bool, every
+  # real edge of each head's own graph is allowed, and attention probability on
+  # non-edges is exactly 0.000e+00 under the mask against roughly 0.99 per row without
+  # it. The heads are tight, allowing between 0.066 percent (cooccurence) and 4.58
+  # percent (coexpression) of the matrix.
+  attention_mask:
+    enabled: true
+    # 010's KL layer, python indexed, and nothing else. S M S S S S S S.
+    layers: [1]
+    # Relation names are cell_graph's, verified against this build. A name that is not a
+    # gene-gene relation raises at construction.
+    head_graphs:
+      0: physical_interaction
+      1: regulatory_interaction
+      2: tflink
+      3: string12_0_neighborhood
+      4: string12_0_fusion
+      5: string12_0_cooccurence
+      6: string12_0_coexpression
+      7: string12_0_experimental
+      8: string12_0_database
+
+  # KL off: the graph prior is now structural. `graph_reg_lambda: 0.0` also keeps the
+  # model from requesting attention weights, which is what unlocks the fused kernel.
+  graph_regularization:
+    graph_reg_lambda: 0.0
+    graph_reg_layer: 1
+    row_sampling_rate: 1.0
+    regularized_heads: {}
+
+  perturbation_head:
+    num_heads: 9  # Must divide hidden_channels (180/9=20)
+    dropout: 0.1
+
+regression_task:
+  loss:
+    type: "point_dist_graph_reg"
+
+    point_estimator:
+      type: "mse"
+      lambda: 1.0
+
+    distribution_loss:
+      type: "wasserstein"
+      lambda: 0.1
+
+      wasserstein_blur: 0.05
+      wasserstein_p: 2
+      wasserstein_scaling: 0.9
+      min_samples_for_wasserstein: 512
+
+    graph_regularization:
+      lambda: 0.0  # nothing to weight: the prior is structural
+
+    supervised_contrastive:
+      lambda: 0.0
+
+    buffer:
+      use_buffer: false
+
+    ddp:
+      use_ddp_gather: false
+
+  execution_mode: "training"
+
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4
+    weight_decay: 1e-8
+
+  lr_scheduler:
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 30
+    cycle_mult: 1.0
+    max_lr: 5e-4
+    min_lr: 1e-7
+    warmup_steps: 1
+    gamma: 0.70
+
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 1
+  plot_transformer_diagnostics_every_n_epochs: 10
+  plot_edge_recovery_every_n_epochs: 0  # the mask IS the adjacency; recovery is vacuous

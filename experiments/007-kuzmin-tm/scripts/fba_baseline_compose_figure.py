@@ -248,12 +248,11 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
 def placeholder(c: Canvas, x, y, w, h):
     """The rerun notice: first line in the palette red (as FigS-dcell-training panel e), rest black."""
     c.box(
-        f'<font color="{RED[0]}">Rerun required: FBA used the model\'s default ammonium minimal medium; '
-        "the screen used SD/MSG with amino-acid supplement at 26 &deg;C.</font><br>"
-        "[placeholder: rerun with corrected medium] The same pipeline on the medium of the screen's final "
-        "selection plates (Kuzmin 2018 SI: SD/MSG synthetic medium, monosodium glutamate as nitrogen source, "
-        "0.2% amino-acid supplement lacking His, Arg, Lys and Ura, 2% glucose, 26 &deg;C). Not run; this "
-        "space is reserved for panels b and c recomputed on that medium.",
+        f'<font color="{RED[0]}">Rerun required: the FBA medium does not match the screen. '
+        "The run used yeast-GEM's default ammonium minimal medium as distributed.</font><br>"
+        "[placeholder: rerun with the screen's medium] The same pipeline with the exchange bounds set to "
+        "the medium the trigenic screens were scored on. Not run; this space is reserved for panels b, c "
+        "and f recomputed on that medium.",
         x, y, w, h, color=GRAY, fill=False, dashed=True, align="left", valign="top",
     )
 

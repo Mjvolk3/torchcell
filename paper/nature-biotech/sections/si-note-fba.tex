@@ -94,11 +94,10 @@ were, from the Kuzmin~2018 Supplementary Materials, ``SD$_{\text{MSG}}$ - His/Ar
 canavanine/thialysine/G418/clonNAT (0.17\% yeast nitrogen base without amino acids and
 ammonium sulfate, 0.1\% monosodium glutamic acid, 0.2\% amino acid supplement, 2\% agar, 2\%
 glucose, 50 $\mu$g/mL of each analog \ldots)'', with ``The incubation temperature for all the
-selection steps was 26$^{\circ}$C'' (the 2020 screen's medium was not checked). The screen
-therefore supplied glutamate as the nitrogen source and an amino-acid supplement, neither of
-which the simulated medium contains, and was grown at 26$^{\circ}$C rather than the
-30$^{\circ}$C the model's biomass equation is parameterized for. Whether these differences
-change the prediction is untested: the baseline has not been rerun on the screen's medium
+selection steps was 26$^{\circ}$C'' (the 2020 screen's medium was not checked). The
+simulated medium contains neither the glutamate nitrogen source nor the amino-acid
+supplement. Whether the difference changes the prediction is untested: the baseline has not
+been rerun on the screen's medium
 (\suppfig{fig:fba}g), and a later attempt to approximate rich media by opening vitamin and
 amino-acid exchanges at 5\% of the glucose uptake rate (\texttt{setup\_media\_conditions.py})
 produced no committed result and is not reported. Two further discrepancies are visible in
@@ -142,8 +141,7 @@ be scored in full. \textbf{f},~The measured interactions of the same triples, gr
 into significant negative ($\tau<-0.08$, $P<0.05$; red), not significant (gray), and
 significant positive ($\tau>0.08$, $P<0.05$; orange), with counts on a logarithmic axis. $P$
 is the smallest over the gene set's raw records. \textbf{g},~Placeholder for the rerun on the
-screen's own selection medium (SD/MSG synthetic medium with glutamate nitrogen and an
-amino-acid supplement, 26$^{\circ}$C), which has not been run.}{fig:fba}
+screen's own medium, which has not been run.}{fig:fba}
 \end{figure*}
 
 \input{sections/tab-fba-medium}

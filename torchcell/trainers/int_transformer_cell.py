@@ -607,6 +607,22 @@ class RegressionTask(L.LightningModule):
                 dummy_loss = dummy_loss + 0.0 * param.sum()
         return dummy_loss
 
+    def _is_scheduled(self, freq: int | None) -> bool:
+        """Is this epoch one of every ``freq``, with a non-positive freq meaning never.
+
+        ``0`` is the natural way to switch a diagnostic off in config, and one of the two
+        edge-recovery call sites already read it that way (`is not None and > 0`). The
+        other five sites went straight into ``(epoch + 1) % freq``, so
+        ``plot_edge_recovery_every_n_epochs: 0`` raised ZeroDivisionError from
+        ``_shared_step`` on the first VALIDATION batch. That is 3 minutes into a run,
+        after the model, the dataset and the sanity check have all succeeded, and it
+        killed a 12 h 4-GPU job (1599) that was otherwise correct.
+
+        Routing every site through here makes 0 mean "never" everywhere rather than
+        "never in one place and crash in five".
+        """
+        return freq is not None and freq > 0 and (self.current_epoch + 1) % freq == 0
+
     def _shared_step(
         self, batch: HeteroData, batch_idx: int, stage: str = "train"
     ) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor | None]:
@@ -659,16 +675,11 @@ class RegressionTask(L.LightningModule):
         # Get model outputs - only request attention weights during validation on diagnostic epochs
         if stage == "val":
             # Check if ANY diagnostic tier is scheduled for this epoch
-            plot_transformer_freq = self.hparams.get(
-                "plot_transformer_diagnostics_every_n_epochs", 10
+            is_diagnostic_epoch = self._is_scheduled(
+                self.hparams.get("plot_transformer_diagnostics_every_n_epochs", 10)
+            ) or self._is_scheduled(
+                self.hparams.get("plot_edge_recovery_every_n_epochs", 10)
             )
-            plot_edge_freq = self.hparams.get("plot_edge_recovery_every_n_epochs", 10)
-
-            is_diagnostic_epoch = (
-                self.current_epoch + 1
-            ) % plot_transformer_freq == 0 or (
-                self.current_epoch + 1
-            ) % plot_edge_freq == 0
             return_attention = is_diagnostic_epoch
 
             # Debug: Log attention storage decision (only on rank 0, once per epoch)
@@ -694,19 +705,17 @@ class RegressionTask(L.LightningModule):
                 attention_weights_list = representations["attention_weights"]
 
                 # TIER 1: Cheap transformer diagnostics (attention stats, entropy, residual ratios)
-                plot_transformer_freq = self.hparams.get(
-                    "plot_transformer_diagnostics_every_n_epochs", 10
-                )
-                if (self.current_epoch + 1) % plot_transformer_freq == 0:
+                if self._is_scheduled(
+                    self.hparams.get("plot_transformer_diagnostics_every_n_epochs", 10)
+                ):
                     self._accumulate_attention_diagnostics(
                         attention_weights_list, batch_idx
                     )
 
                 # TIER 2: Edge recovery (already has separate frequency control)
-                plot_edge_freq = self.hparams.get(
-                    "plot_edge_recovery_every_n_epochs", 10
-                )
-                if (self.current_epoch + 1) % plot_edge_freq == 0:
+                if self._is_scheduled(
+                    self.hparams.get("plot_edge_recovery_every_n_epochs", 10)
+                ):
                     self._accumulate_edge_recovery_metrics(
                         attention_weights_list, batch_idx
                     )
@@ -1022,10 +1031,7 @@ class RegressionTask(L.LightningModule):
             )
 
         # Collect samples for visualization
-        if (
-            stage == "train"
-            and (self.current_epoch + 1) % self.hparams["plot_every_n_epochs"] == 0
-        ):
+        if stage == "train" and self._is_scheduled(self.hparams["plot_every_n_epochs"]):
             current_count = sum(t.size(0) for t in self.train_samples["true_values"])
             if current_count < self.hparams["plot_sample_ceiling"]:
                 remaining = self.hparams["plot_sample_ceiling"] - current_count
@@ -1082,10 +1088,7 @@ class RegressionTask(L.LightningModule):
                         self.train_samples["latents"]["H_pooled"].append(
                             H_pooled.detach().cpu()
                         )
-        elif (
-            stage == "val"
-            and (self.current_epoch + 1) % self.hparams["plot_every_n_epochs"] == 0
-        ):
+        elif stage == "val" and self._is_scheduled(self.hparams["plot_every_n_epochs"]):
             # Only collect validation samples on epochs we'll plot, respecting ceiling
             current_count = sum(t.size(0) for t in self.val_samples["true_values"])
             if current_count < self.hparams["plot_sample_ceiling"]:
@@ -1348,9 +1351,10 @@ class RegressionTask(L.LightningModule):
         self.train_transformed_metrics.reset()
 
         # Plot training samples
-        if (self.current_epoch + 1) % self.hparams[
-            "plot_every_n_epochs"
-        ] == 0 and self.train_samples["true_values"]:
+        if (
+            self._is_scheduled(self.hparams["plot_every_n_epochs"])
+            and self.train_samples["true_values"]
+        ):
             self._plot_samples(self.train_samples, "train_sample")
             # Reset the sample containers
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -1459,25 +1463,15 @@ class RegressionTask(L.LightningModule):
                     )
 
         # TIER 1: Plot basic transformer diagnostics (cheap - controlled by separate frequency)
-        plot_transformer_freq = self.hparams.get(
-            "plot_transformer_diagnostics_every_n_epochs", 10
-        )
-        if (
-            not self.trainer.sanity_checking
-            and (self.current_epoch + 1) % plot_transformer_freq == 0
+        if not self.trainer.sanity_checking and self._is_scheduled(
+            self.hparams.get("plot_transformer_diagnostics_every_n_epochs", 10)
         ):
             if self.attention_stats_accumulators:
                 self._plot_attention_diagnostics()
 
         # TIER 2: Plot edge recovery + degree-bias (medium cost - less frequent)
-        if (
-            not self.trainer.sanity_checking
-            and hasattr(self.hparams, "plot_edge_recovery_every_n_epochs")
-            and self.hparams["plot_edge_recovery_every_n_epochs"] is not None
-            and self.hparams["plot_edge_recovery_every_n_epochs"] > 0
-            and (self.current_epoch + 1)
-            % self.hparams["plot_edge_recovery_every_n_epochs"]
-            == 0
+        if not self.trainer.sanity_checking and self._is_scheduled(
+            self.hparams.get("plot_edge_recovery_every_n_epochs", 10)
         ):
             if self.edge_recovery_accumulators:
                 self._plot_edge_recovery_metrics()  # Includes degree-bias
@@ -1493,7 +1487,7 @@ class RegressionTask(L.LightningModule):
         # Plot validation samples
         if (
             not self.trainer.sanity_checking
-            and (self.current_epoch + 1) % self.hparams["plot_every_n_epochs"] == 0
+            and self._is_scheduled(self.hparams["plot_every_n_epochs"])
             and self.val_samples["true_values"]
         ):
             self._plot_samples(self.val_samples, "val_sample")

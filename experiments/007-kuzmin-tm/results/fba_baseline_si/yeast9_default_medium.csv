@@ -1,0 +1,17 @@
+reaction_id,reaction_name,metabolite,uptake_bound_mmol_gDW_h,lower_bound,upper_bound
+r_1654,ammonium exchange,ammonium,1000.0,-1000.0,1000.0
+r_1714,D-glucose exchange,D-glucose,1.0,-1.0,1000.0
+r_1832,H+ exchange,H+,1000.0,-1000.0,1000.0
+r_1861,iron(2+) exchange,iron(2+),1000.0,-1000.0,1000.0
+r_1992,oxygen exchange,oxygen,1000.0,-1000.0,1000.0
+r_2005,phosphate exchange,phosphate,1000.0,-1000.0,1000.0
+r_2020,potassium exchange,potassium,1000.0,-1000.0,1000.0
+r_2049,sodium exchange,sodium,1000.0,-1000.0,1000.0
+r_2060,sulphate exchange,sulphate,1000.0,-1000.0,1000.0
+r_2100,water exchange,H2O,1000.0,-1000.0,1000.0
+r_4593,chloride exchange,chloride,1000.0,-1000.0,1000.0
+r_4594,Cu2(+) exchange,Cu2(+),1000.0,-1000.0,1000.0
+r_4595,Mn(2+) exchange,Mn(2+),1000.0,-1000.0,1000.0
+r_4596,Zn(2+) exchange,Zn(2+),1000.0,-1000.0,1000.0
+r_4597,Mg(2+) exchange,Mg(2+),1000.0,-1000.0,1000.0
+r_4600,Ca(2+) exchange,Ca(2+),1000.0,-1000.0,1000.0

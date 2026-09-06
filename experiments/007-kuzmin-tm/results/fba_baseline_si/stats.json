@@ -1,0 +1,152 @@
+{
+  "frozen_dir": "experiments/007-kuzmin-tm/results/cobra-fba-growth_backup_20250923_134447",
+  "run": {
+    "timestamp": "2025-09-15T17:50:09.825348",
+    "runtime_seconds": 608.644092,
+    "n_processes": 128,
+    "n_singles": 4036,
+    "n_doubles": 651181,
+    "n_triples": 332313,
+    "solver_timeout_s": 60,
+    "n_time_limit_status": 0
+  },
+  "model": {
+    "version": "9.0.2",
+    "model_id": "yeastGEM_v9__46__0__46__2",
+    "sbml_path": "data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+    "n_reactions": 4131,
+    "n_metabolites": 2806,
+    "n_genes": 1161,
+    "n_exchange_reactions": 271,
+    "n_medium_exchanges_open": 16,
+    "glucose_uptake_bound": 1.0,
+    "objective_id": "r_2111",
+    "objective_name": "growth",
+    "ngam_id": "r_4046",
+    "ngam_name": "non-growth associated maintenance reaction",
+    "ngam_lb": 0.7,
+    "solver": "optlang.glpk_interface",
+    "wt_growth": 0.0858439697264682,
+    "wt_growth_recomputed": 0.0858440229457521
+  },
+  "coverage": {
+    "n_screened_genes": 4036,
+    "n_screened_genes_in_model": 736,
+    "n_doubles_both_in_model": 18565,
+    "triples_by_n_in_model": {
+      "0": 220392,
+      "1": 65214,
+      "2": 39288,
+      "3": 7419
+    },
+    "tau_nonzero_by_n_in_model": {
+      "0": 0,
+      "1": 164,
+      "2": 19,
+      "3": 48
+    }
+  },
+  "growth_bands": [
+    {
+      "order": "single",
+      "n": 4036,
+      "n_wt_like": 3943,
+      "n_intermediate": 27,
+      "n_lethal": 66,
+      "frac_wt_like": 0.9769573835480674,
+      "frac_intermediate": 0.006689791873141724,
+      "frac_lethal": 0.01635282457879088,
+      "n_status_optimal": 4036
+    },
+    {
+      "order": "double",
+      "n": 651181,
+      "n_wt_like": 631368,
+      "n_intermediate": 5624,
+      "n_lethal": 14189,
+      "frac_wt_like": 0.9695737437056671,
+      "frac_intermediate": 0.008636615626070172,
+      "frac_lethal": 0.021789640668262743,
+      "n_status_optimal": 651181
+    },
+    {
+      "order": "triple",
+      "n": 332313,
+      "n_wt_like": 309526,
+      "n_intermediate": 6511,
+      "n_lethal": 16276,
+      "frac_wt_like": 0.9314291044888403,
+      "frac_intermediate": 0.019592974093700817,
+      "frac_lethal": 0.04897792141745884,
+      "n_status_optimal": 332313
+    }
+  ],
+  "thresholds": {
+    "lethal": 0.01,
+    "wt_like": 0.001,
+    "tau_zero": 0.001
+  },
+  "correlations": {
+    "tau": {
+      "n": 332313,
+      "n_total_rows": 332313,
+      "pearson_r": 0.0019143512521787147,
+      "pearson_p": 0.2697861394678864,
+      "spearman_rho": -0.0006854028348577618,
+      "pred_mean": 0.0006658000265125773,
+      "pred_sd": 0.034580348981254186,
+      "exp_mean": -0.009886621474332934,
+      "exp_sd": 0.06205482054577088,
+      "frac_abs_below_1e-6": 0.9764589408178435,
+      "frac_abs_below_1e-3": 0.9993048722138466,
+      "n_abs_above_1e-3": 231,
+      "nonzero_value_counts": {
+        "1.0": 122,
+        "2.0": 62,
+        "-1.0": 19,
+        "-0.0": 6,
+        "0.01": 4,
+        "-0.17": 4,
+        "-0.01": 3,
+        "-0.07": 2
+      },
+      "pearson_r_nonzero_only": 0.029207865440535143,
+      "n_nonzero_only": 231
+    },
+    "fitness": {
+      "n": 299146,
+      "n_total_rows": 332313,
+      "pearson_r": -0.004643716180283494,
+      "pearson_p": 0.011090052823832665,
+      "spearman_rho": -0.003418890951357104,
+      "pred_mean": 0.9470769714719245,
+      "pred_sd": 0.2218846528946617,
+      "exp_mean": 0.8554793433641098,
+      "exp_sd": 0.1764570291596748,
+      "value_counts_round3": {
+        "1.0": 308363,
+        "0.0": 16276,
+        "0.994": 2028,
+        "0.983": 1530,
+        "0.999": 1182,
+        "0.15": 888,
+        "0.367": 563,
+        "0.998": 505
+      },
+      "n_distinct_round3": 38
+    }
+  },
+  "consistency": {
+    "doubles_checkable": 632616,
+    "doubles_inconsistent_with_single": 253,
+    "triples_checkable": 285606,
+    "triples_inconsistent_with_single": 52,
+    "triples_above_min_double": 173,
+    "doubles_above_min_single": 8,
+    "inconsistent_doubles_model_gene_counts": {
+      "YGR144W": 246,
+      "YPL214C": 7
+    }
+  },
+  "fig2d_value_in_manuscript": 0.0006
+}

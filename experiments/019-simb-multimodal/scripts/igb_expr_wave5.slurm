@@ -191,8 +191,22 @@ case "$STAGE" in
   #   sbatch -p cabbi --gres=gpu:1 --cpus-per-task=8 --mem=60g --time=5-00:00:00 \
   #       --array=0-1 --export=ALL,W5_STAGE=pearson,TORCHCELL_SOURCE_GIT_HASH=$H,\
   #   TORCHCELL_SOURCE_DIFF_SHA256=$D experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
-  pearson) ARMS=(Q_pearson Q_pearson_mse); SEEDS=(0 1)
+  # SEED 2 ADDED 2026-09-06 after tasks 0-1 (seeds 0-1, job 2378262) were already running:
+  # a third cabbi card freed up. JOBS is seed-major, so tasks 0-1 are unchanged and task 2
+  # is exactly (Q_pearson:2, Q_pearson_mse:2). Submit it alone with --array=2.
+  pearson) ARMS=(Q_pearson Q_pearson_mse); SEEDS=(0 1 2)
           RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.max_epochs=9900 trainer.train_eval_every=10" ;;
+  # PEARSON_B64 -- the same pure loss with each gene's per-batch correlation estimated over
+  # 64 strains instead of 32. ONE run per card: batch 64 roughly doubles activation memory
+  # over the measured ~20 GB at batch 32, and 2 x ~40 GB does not fit a 48 GB Ada. Two seeds
+  # on the two remaining free cabbi cards (2026-09-06).
+  #
+  #   sbatch -p cabbi --gres=gpu:1 --cpus-per-task=8 --mem=60g --time=5-00:00:00 \
+  #       --array=0-1 --export=ALL,W5_STAGE=pearson_b64,... igb_expr_wave5.slurm
+  pearson_b64)
+          ARMS=(Q_pearson_b64); SEEDS=(0 1)
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.max_epochs=9900 trainer.train_eval_every=10" ;;
   canary_pearson)
           ARMS=(Q_pearson Q_pearson_mse); SEEDS=(0)
@@ -285,7 +299,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|h2|probe|long|wave6|launch|pearson|resume|resume_many|mech)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|h2|probe|long|wave6|launch|pearson|pearson_b64|resume|resume_many|mech)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

@@ -438,6 +438,11 @@ case "$ARM" in
                      ARM_TAGS=(mech-objective dist-pearson xfer-yes stage-pearson) ;;
   Q_pearson_mse)     OVERRIDES=(multitask.dist=pearson_mse)
                      ARM_TAGS=(mech-objective dist-pearson_mse xfer-yes stage-pearson) ;;
+  # Q_pearson at batch 64: a gene's training correlation is estimated over 64 strains per
+  # step instead of 32 (fewer at k > 0, where revealed genes drop out of the score). Halves
+  # the optimizer steps per epoch at the same lr, which is a confound this arm accepts.
+  Q_pearson_b64)     OVERRIDES=(multitask.dist=pearson data_module.batch_size=64)
+                     ARM_TAGS=(mech-objective dist-pearson batch64 xfer-yes stage-pearson_b64) ;;
   # ==================== MECHANISM ROUND (2026.09.01), config cgt_expr_v9_mask
   # The pair-term ladder was already run in wave 6 (V_* above) at ~4,100 epochs, but at ONE
   # seed per arm and on cgt_expr_012 / project v8. Its eight arms span 0.1925 to 0.2276, a

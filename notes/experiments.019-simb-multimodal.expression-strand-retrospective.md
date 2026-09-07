@@ -47,7 +47,8 @@ per-gene mean on squared error at its Pearson peak.
 | Delta `bflt-delta-gpu` | `21830323_0-7` (`019-expr-v10`) | v10 grid, 16 cells x 2 seeds = 32 runs, 4 per node, 1,400 epochs | all 32 alive, no tracebacks, epochs 150 to 400, val Pearson 0.003 to 0.12 (partial) |
 
 Everything else on IGB has ended: mmli `2369693_0`/`_3` and cabbi `2369697_1` finished
-2026-09-05 and their final epochs are synced. 16 of 18 IGB GPUs are idle.
+2026-09-05 and their final epochs are synced. Later the same day the metric-aligned round
+took 5 cabbi cards (`2378262`, `2378267`, `2378268`, next section).
 
 ### Objective round (launched 2026-08-31, IGB jobs 2368333 / 2368337 / 2368339)
 
@@ -124,7 +125,27 @@ had switched branch), `21813317` (log directory inside the vanished checkout), `
 `2877aafa`, `a4b77001`, `3b33830c`: isolated clone at `/work/hdd/bbub/mjvolk3/torchcell-v10`,
 logs at `/work/hdd/bbub/mjvolk3/slurm-logs/019-expr-v10`, environment exported by the job.
 
-### Metric-aligned objective round, PREPARED 2026-09-06, not yet submitted
+### Metric-aligned objective round, SUBMITTED 2026-09-06 (cabbi, 8 runs)
+
+Canary `2375312` (fast-dev-run of both arms in the container) completed clean in 14 min 48 s
+with train losses matching the GilaHyper fast-dev-run to five decimals. Submitted at source
+`c99c1a9a` (seeds 0-1) and `e16b55ae` (seed 2 and batch 64), all on compute-3-3:
+
+| job | stage | runs | packing |
+|---|---|---|---|
+| `2378262_0`, `_1` | `pearson` seeds 0, 1 | `Q_pearson`, `Q_pearson_mse` x 2 seeds = 4 | 2 per card |
+| `2378267_2` | `pearson` seed 2 | `Q_pearson`, `Q_pearson_mse` = 2 | 2 per card |
+| `2378268_0`, `_1` | `pearson_b64` seeds 0, 1 | `Q_pearson_b64` = 2 | 1 per card |
+
+So 3 replicates per arm for the two main arms (detects about 0.042 against the n=8 baseline,
+the same power as the objective round) plus a 2-seed batch-64 variant of the pure loss.
+The three extra runs were added after the first two tasks had started, when the other
+user's cabbi array cleared and three cards freed; `gpu` and mmli were fully allocated at
+that moment and were not touched. Canary observation: at initialization the `pearson_mse`
+gradient norm is 17.1 (clipped) against 1.2 for `pearson`, so the MSE term dominates the
+early gradient at weight 1.0.
+
+Design as prepared:
 
 Question: what happens when the objective stops fighting the metric? The loss-versus-Pearson
 result above says every proper-scoring head bottoms out on `val/loss` at a few hundred

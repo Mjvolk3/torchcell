@@ -182,8 +182,11 @@ case "$ARM" in
   # SAME case branch that sets the overrides means the arm's identity and its properties cannot
   # drift apart. `xfer-no` marks a mechanism that needs curated yeast graphs and therefore
   # cannot be part of the organism-general story no matter how well it scores.
-  R_ref)             OVERRIDES=()
-                     ARM_TAGS=(mech-baseline xfer-yes stage-wave4b) ;;
+  # R_ref's wave-4b branch used to sit here. A `case` takes its FIRST match, so it shadowed
+  # the wave-5 R_ref below and every mechanism-round reference run went out tagged
+  # `stage-wave4b` (seen 2026-09-08 when the round was read out; mech_round_readout.py
+  # selects by arm plus config tag for that reason). The single definition is now the
+  # wave-5 one.
 
   # ------------------------------------------------------------------ WAVE 5 (cgt_expr_011)
   # Launch with TORCHCELL_CONFIG=cgt_expr_011, which pins the PARTITION (split_seed 0) so

@@ -233,6 +233,14 @@
   },
   "expression_masked": {
     "by_project": {
+      "torchcell_019_expr_v10": {
+        "n_runs": 68,
+        "best_roll_max": 0.16664957404136657,
+        "best_run_id": "l4uw0g1e",
+        "n_train_supervised": 1244.0,
+        "epochs": 1399.0,
+        "runtime_h": 42.0975
+      },
       "torchcell_019_expr_v9": {
         "n_runs": 54,
         "best_roll_max": 0.2430203974246979,
@@ -242,10 +250,10 @@
         "runtime_h": 54.53916666666667
       }
     },
-    "n_projects": 1,
+    "n_projects": 2,
     "project": "torchcell_019_expr_v9",
     "metric": "val/expression/pearson_per_feature",
-    "n_runs": 54,
+    "n_runs": 122,
     "n_collapsed": 0,
     "epochs_min": 3.0,
     "epochs_max": 18990.0,
@@ -253,7 +261,7 @@
     "best_run_id": "d94cy5az",
     "best_run_epochs": 18990.0,
     "best_epoch_at_roll_max": 16785.0,
-    "median_roll_max": 0.17350129783153534
+    "median_roll_max": 0.06331632435321807
   },
   "expression_morphology_joint": {
     "by_project": {

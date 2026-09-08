@@ -95,6 +95,9 @@ STRANDS: list[tuple[str, str, list[str], list[str]]] = [
     ("expression", "torchcell_019_expr_v8", ["val/expression/pearson_per_feature"], []),
     ("expression_masked", "torchcell_019_expr_v9",
      ["val/expression/pearson_per_feature"], []),
+    # The v10 generalization-gap grid on Delta (2^4 factorial, 1,400 epochs, 2 seeds).
+    ("expression_masked", "torchcell_019_expr_v10",
+     ["val/expression/pearson_per_feature"], []),
     # --- morphology ---------------------------------------------------------
     ("morphology", "torchcell_019_morph_v2", ["val/global/pearson_per_gene"], []),
     ("morphology", "torchcell_019_morph_v3", ["val/morphology/pearson_per_feature"], []),
@@ -249,6 +252,7 @@ PROJECT_SIZE_HINT = {
     "torchcell_019_expr_v3": 60, "torchcell_019_expr_v5": 35,
     "torchcell_019_expr_v6": 158, "torchcell_019_expr_v7": 295,
     "torchcell_019_expr_v8": 163, "torchcell_019_expr_v9": 16,
+    "torchcell_019_expr_v10": 32,
     "torchcell_019_morph_v2": 71, "torchcell_019_morph_v3": 89,
     "torchcell_019_morph_v5": 23, "torchcell_019_expr_morph": 21,
     "torchcell_019_expr_morph_v2": 80, "torchcell_019_expr_morph_v3": 77,

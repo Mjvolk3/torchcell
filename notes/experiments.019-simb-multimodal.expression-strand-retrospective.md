@@ -26,7 +26,7 @@ Leaderboard (`experiments/019-simb-multimodal/results/round_leaderboards.csv`, p
 | `d94cy5az` | quantile | 0 | 18,990 | 0.2430 | resume of `0fymu4py` |
 | `0fymu4py` | quantile | 0 | 12,229 | 0.2393 | resume of `hx8pxdic` |
 | `hx8pxdic` | quantile | 0 | 9,900 | 0.2382 | fresh run |
-| `vqek7ali` | quantile | 1 | 5,328 | 0.2183 | still running on IGB |
+| `vqek7ali` | quantile | 1 | 5,328 | 0.2183 | `R_pergene` seed 1 of the mechanism round, not a plain replicate (corrected 2026-09-08, see below) |
 | `ia6312dv` | laplace_crps | 1 | 2,039 | 0.2154 | |
 
 The three leaders are one lineage, not three runs, and their spread of 0.005 is inside the
@@ -191,8 +191,85 @@ exists.
 - What, if anything, goes on the 16 idle IGB GPUs before the v10 grid reads out (about
   2026-09-08 at 33.6 epochs/h).
 
+## 2026.09.08 - Three readouts: the v10 grid, the mechanism round, the Pearson round at day two
+
+Delta's queue is empty and IGB holds only the five Pearson-round tasks. Everything below
+was synced from the IGB login node (`igb_login_wandb_sync.sh`, 12 runs, 2026-09-08 16:40 CT)
+or read from the online Delta project.
+
+### Corrections to the 2026-09-06 record
+
+- `vqek7ali` and `3qy1rh0o` were described above as "quantile seed 1 replicates". They are
+  `R_pergene` seed 1 and `R_pergene_basis64` seed 1 of the mechanism round; the leaderboard's
+  `dist` column reads `quantile` for every mechanism arm because all of them use the
+  quantile head. The IGB `gpu` jobs `2371531_2/_3` were the seed-1 half of that round, not
+  extra replicates of the incumbent.
+- Every `R_ref` run of the mechanism round is tagged `stage-wave4b`, not `stage-mech`: the
+  arm script's `case` had an older `R_ref` branch first and took it. Fixed in
+  `gh_expr_008_arm.sh`; the readout selects by arm plus config tag.
+
+### Every packed five-day task on IGB has died of host memory
+
+`sacct`: `2369697_0/_1` (mechanism seed 0, cabbi) and `2371531_2/_3` (seed 1, A40) all
+ended `OUT_OF_MEMORY` with `MaxRSS` 61.4 and 61.1 GB against `ReqMem` 60 GB, after 3.5, 4.2,
+4.5 and 4.6 days. In each task the cgroup handler killed one of the two packed runs and the
+other finished its 8,500 epochs. The Pearson-round packed tasks `2378262_0/_1` and
+`2378267_2` read 21.3 GB `MaxRSS` at 1.9 days (`sstat`), the solo batch-64 tasks 17.2 GB.
+Hypothesis (untested): host RSS grows roughly linearly through a run, so the packed
+Pearson tasks reach the 60 GB line near day five, on the edge of their wall. Memory of a
+running job cannot be raised; nothing to do but watch. Whatever grows has not been
+identified; the `file_system` sharing-strategy change of `f1bfa95b` is the obvious suspect
+and is unverified.
+
+### The v10 grid on Delta: embedding content is the only large factor
+
+`21830323` finished: five tasks completed 1,400 epochs, three timed out at the two-day wall
+between epochs 990 and 1,198. Readout in
+[[experiments.019-simb-multimodal.scripts.v10_grid_factorial]] at the matched budget of
+epochs <= 990, `roll_max`, 32 runs, pooled within-cell replicate sd 0.0246 (16 df):
+
+| factor | level 0 -> level 1 | effect | t |
+|---|---|--:|--:|
+| embedding | random_1024 -> prot_T5_all | +0.068 | +7.8 |
+| trunk | L=6 h=90 -> L=2 h=45 | -0.012 | -1.4 |
+| readout | MLP -> linear | +0.007 | +0.8 |
+| weight decay | 1e-8 -> 1e-4 | +0.005 | +0.5 |
+
+Embedding x trunk +0.017 (t +2.0); every other interaction |t| < 1.3. One run
+(`te8272kk`, cell 1 seed 0) never left the chance band (0.019) while its seed-1 twin is the
+grid's best run (0.169 full-run); without it the pooled sd is 0.0122 and the trunk effect
+firms to -0.018 (t -4.0). Readout width and weight decay are measured nulls at about 0.02.
+The best cell by mean is 13 (prot_T5, L=6, linear, wd 1e-4) at 0.143; the incumbent's eight
+replicates score 0.161 +/- 0.010 at 1,000 epochs with `calm` embeddings, which is not a
+level of the grid (the factor was built as a content contrast at matched width 1024). So
+the grid does not rank calm against ProtT5; the one healthy draw of the incumbent-with-
+ProtT5 cell at 0.141 is not a resolved gap against 0.161.
+
+### The mechanism round: per-gene readout +0.03, below the round's resolution
+
+Readout in [[experiments.019-simb-multimodal.scripts.mech_round_readout]] at the matched
+budget of epochs <= 4,079 (set by the killed `R_pergene_basis64` seed 0):
+
+| arm | seed 0 | seed 1 | paired diff vs `R_ref` (s0 / s1) | mean |
+|---|--:|--:|--:|--:|
+| `R_ref` | 0.1881 | 0.1693 | | |
+| `R_basis64` | 0.1746 | 0.1996 | -0.014 / +0.030 | +0.008 |
+| `R_pergene` | 0.1888 | 0.2237 | +0.001 / +0.054 | +0.028 |
+| `R_pergene_basis64` | 0.2136 | 0.1985 | +0.026 / +0.029 | +0.027 |
+
+Both `R_ref` draws sit inside the incumbent band at 4,000 epochs (0.1883 +/- 0.0171). The
+pair term alone is a null with sign-disagreeing pairs. The per-gene readout arms average
++0.027, the combined arm positive at both seeds, against a design resolution of about 0.06:
+a direction, not a result. Visible in every curve: the per-gene arms peak early (epochs
+1,200 to 2,600) and give part of it back by 8,500 (`R_pergene` ends at 0.137 and 0.170
+against peaks of 0.189 and 0.224), while the reference and basis arms are flat or still
+rising.
+
 ### Scripts
 
+- [[experiments.019-simb-multimodal.scripts.v10_grid_factorial]]
+- [[experiments.019-simb-multimodal.scripts.mech_round_readout]]
+- [[experiments.019-simb-multimodal.scripts.pearson_round_readout]]
 - [[experiments.019-simb-multimodal.scripts.pull_round_leaderboards]]
 - [[experiments.019-simb-multimodal.scripts.short_budget_spread]]
 - [[experiments.019-simb-multimodal.scripts.budget_rank_preservation]]

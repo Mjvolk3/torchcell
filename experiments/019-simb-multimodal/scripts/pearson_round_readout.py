@@ -79,15 +79,26 @@ FULL_HISTORY_SAMPLES = 50_000
 # The canary (job 2375312) was a one-batch fast_dev_run of the same arms; this excludes it.
 MIN_EPOCHS = 100
 COLLAPSE_EPS = 1e-6
+# A smoothed validation Pearson under this is the chance band: the per-gene mean baseline
+# scores 0.0000 and the healthiest early curve in this round sits above 0.06 by epoch 10.
+FLOOR = 0.02
 
 
 def roll_mean(values: np.ndarray, window: int) -> np.ndarray:
     return pd.Series(values).rolling(window, center=True, min_periods=1).mean().to_numpy()
 
 
-def collapse_epoch(h: pd.DataFrame) -> int | None:
-    """First epoch from which |Pearson| < COLLAPSE_EPS holds to the end, or None."""
-    zero = np.abs(h[METRIC].to_numpy()) < COLLAPSE_EPS
+def collapse_epoch(h: pd.DataFrame, tol: float, smoothed: bool = False) -> int | None:
+    """First epoch from which |Pearson| < tol holds to the end, or None.
+
+    `smoothed` tests the ROLL_WINDOW rolling mean instead of the raw value: a collapsed run's
+    raw metric keeps flickering to 1e-3 for thousands of epochs, so the raw test dates the
+    collapse thousands of epochs after the curve actually fell to the floor.
+    """
+    v = h[METRIC].to_numpy()
+    if smoothed:
+        v = roll_mean(v, ROLL_WINDOW)
+    zero = np.abs(v) < tol
     if not zero[-1]:
         return None
     alive = np.nonzero(~zero)[0]
@@ -108,6 +119,10 @@ def fetch(api: wandb.Api) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
             continue
         h = run.history(keys=["epoch", METRIC, LOSS, NMSE, SD_RATIO],
                         samples=FULL_HISTORY_SAMPLES)
+        # W&B hands back a non-finite value as the string "NaN" in an otherwise float column
+        # (seen on val/loss of the collapsed runs), which breaks every reduction below.
+        for col in (METRIC, LOSS, NMSE, SD_RATIO):
+            h[col] = pd.to_numeric(h[col], errors="coerce")
         h = h.dropna(subset=["epoch", METRIC]).sort_values("epoch")
         h = h.drop_duplicates("epoch", keep="last").reset_index(drop=True)
         roll = roll_mean(h[METRIC].to_numpy(), ROLL_WINDOW)
@@ -119,7 +134,10 @@ def fetch(api: wandb.Api) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
             "rows_short_by": int(h.epoch.max() + 1 - len(h)),
             "roll_max": float(roll[j]), "epoch_at_roll_max": int(h.epoch.iloc[j]),
             "pearson_last": float(h[METRIC].iloc[-1]),
-            "collapse_epoch": collapse_epoch(h),
+            # The strict test is the leaderboard's. `floor_from` is when the smoothed curve
+            # fell under FLOOR for good, which is the epoch a reader would call the collapse.
+            "collapse_epoch": collapse_epoch(h, COLLAPSE_EPS),
+            "floor_from": collapse_epoch(h, FLOOR, smoothed=True),
             "loss_last": float(h[LOSS].iloc[-1]),
             "loss_min": float(h[LOSS].min()),
             "loss_min_epoch": int(h.epoch.iloc[int(h[LOSS].idxmin())]),
@@ -158,7 +176,7 @@ def figure(t: pd.DataFrame, curves: dict[str, pd.DataFrame], inc: pd.DataFrame) 
                 ls=style[r.seed], lw=0.6, label=f"{r.arm} seed {r.seed}")
     ax.set_xscale("log")
     ax.set_xlim(10, 10_000)
-    ax.set_ylim(-0.02, 0.25)
+    ax.set_ylim(-0.02, 0.32)
     ax.yaxis.set_major_locator(MultipleLocator(0.05))
     ax.set_xlabel("epoch")
     ax.set_ylabel(f"val Pearson, {ROLL_WINDOW}-epoch rolling mean")
@@ -224,8 +242,8 @@ def main() -> None:
         print(f"  {r.run_id} {r.arm:15s} seed{r.seed} ep {r.n_epochs:>5} roll_max "
               f"{r.roll_max:.4f}@{r.epoch_at_roll_max:<5} incumbent@{int(b.budget_epochs)} "
               f"{b['mean']:.4f}+/-{b['sd']:.4f}"
-              + (f"  COLLAPSED at epoch {r.collapse_epoch}" if pd.notna(r.collapse_epoch)
-                 else ""))
+              + (f"  COLLAPSED, on the floor from epoch {int(r.floor_from)}"
+                 if pd.notna(r.floor_from) else ""))
     stem = figure(t, curves, inc)
     print(f"figure: {stem}.svg")
     with open(osp.join(RESULTS, "pearson_round_readout.json"), "w") as fh:

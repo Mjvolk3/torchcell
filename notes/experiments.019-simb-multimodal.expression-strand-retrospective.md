@@ -265,6 +265,31 @@ a direction, not a result. Visible in every curve: the per-gene arms peak early 
 against peaks of 0.189 and 0.224), while the reference and basis arms are flat or still
 rising.
 
+### The Pearson round at day two: collapse is the rule at batch 32
+
+Readout in [[experiments.019-simb-multimodal.scripts.pearson_round_readout]], runs at 1.9 of
+5 days, every number partial. Of six packed batch-32 runs, five are on the floor: all three
+`Q_pearson` (peaks of 0.13 to 0.145 at epochs 150 to 240, then predicted spread falls to
+1e-7 and the metric to 0 by epochs 584 to 680, seed 1 flickering until 2,203) and two of
+three `Q_pearson_mse` (seed 2 by epoch 14, seed 0 by 360). The loss does not see it: it
+drops constant columns as invalid and keeps reading about 0.56 on whatever still varies.
+`Q_pearson_mse` seed 1 is alive at 0.194 and rising. The two solo batch-64 `Q_pearson` runs
+are alive at 6,050 epochs, `roll_max` 0.194 and 0.186 (peaks near 1,900 to 2,400, drifting
+down since), on the incumbent band of 0.1917 +/- 0.0177 at 6,000 and not above it. Batch
+size and solo packing are confounded in the b64 arm, so why it survives is not measured.
+Nothing in this round beats the quantile head at any budget read so far.
+
+### Open decisions, 2026-09-08
+
+- The Pearson round: let it run to the wall (the b64 runs and `pearson_mse` seed 1 are the
+  only informative survivors) or free the three cabbi cards holding collapsed runs now. The
+  packed tasks cannot be partially cancelled without killing their live sibling.
+- Whether the packed-run memory growth is worth chasing before any further five-day packed
+  submission; the alternative is solo runs or a 48 GB-per-run budget.
+- What the v10 result changes: ProtT5 content is worth 0.07 over random at 1,000 epochs, and
+  calm against ProtT5 is unmeasured at any budget. A two-arm calm-vs-ProtT5 replicate set at
+  the incumbent config is the cheapest next contrast.
+
 ### Scripts
 
 - [[experiments.019-simb-multimodal.scripts.v10_grid_factorial]]

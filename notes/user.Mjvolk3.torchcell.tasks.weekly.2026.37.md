@@ -1,0 +1,17 @@
+---
+id: 91hbba8c1ug487r4q0wtoh0
+title: '37'
+desc: ''
+updated: 1788904951158
+created: 1788904951158
+---
+
+## 2026.09.08
+
+- [x] **The v10 generalization-gap grid on Delta is read out: embedding content is the only factor that moves the score, +0.068 at three times the replicate spread; trunk, readout and weight decay are nulls at about 0.02.** 32 runs at a matched budget of epochs <= 990, three of eight array tasks having hit the two-day wall. Neither grid level is the incumbent's `calm` embedding, by design, so the grid ranks content and not the incumbent's choice [[experiments.019-simb-multimodal.scripts.v10_grid_factorial]]
+- [x] One grid run in 32 never learned (cell 1 seed 0 at 0.019 while its twin is the best run at 0.169); its cause is not measured and both readings, with and without it, are recorded [[experiments.019-simb-multimodal.scripts.v10_grid_factorial]]
+- [x] **The mechanism round is read out at epochs <= 4,079: the pair term alone is a null with sign-disagreeing pairs, the per-gene readout arms average +0.027 over `R_ref` with the combined arm positive at both seeds, under the round's ~0.06 resolution.** The per-gene arms peak early and give part of it back by 8,500 [[experiments.019-simb-multimodal.scripts.mech_round_readout]]
+- [x] All four packed five-day mechanism tasks died in the cgroup out-of-memory handler at 61 GB host RSS against 60 GB requested, one run per task; the Pearson-round packed tasks read 21 GB at day 1.9. Cause not identified; the `file_system` sharing strategy is the unverified suspect [[experiments.019-simb-multimodal.expression-strand-retrospective]]
+- [x] Corrected the strand record: `vqek7ali` and `3qy1rh0o` are `R_pergene` and `R_pergene_basis64` seed 1, not quantile replicates; every mechanism-round `R_ref` run is tagged `stage-wave4b` because a wave-4b `case` branch shadowed the wave-5 one, now removed [[experiments.019-simb-multimodal.expression-strand-retrospective]]
+- [x] **The metric-aligned round at day two: five of six batch-32 runs collapsed to constant outputs (pure Pearson by epochs 584 to 680 at every seed, the MSE-anchored arm at two of three), while the loss kept reading 0.56 because it drops constant columns as invalid.** The two solo batch-64 pure-Pearson runs are alive at 6,050 epochs on the incumbent band (0.194, 0.186 vs 0.192 +/- 0.018), not above it; batch size and packing are confounded there [[experiments.019-simb-multimodal.scripts.pearson_round_readout]]
+- [x] notes-tex 019 gained section 11 with both readouts and the memory deaths; `make check` clean [[experiments.019-simb-multimodal.phenotype-strand-retrospective]]

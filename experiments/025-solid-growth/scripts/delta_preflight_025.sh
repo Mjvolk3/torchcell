@@ -8,6 +8,9 @@
 #
 #   cd /scratch/bbub/mjvolk3/torchcell && git pull && bash experiments/025-solid-growth/scripts/delta_preflight_025.sh
 set -uo pipefail
+# The Taiga export is the LOWERCASE path (NCSA SUP-29573, verified 2026-09-09); the
+# capitalized spelling in the ticket does not exist on the server.
+TAIGA_ZHAO5="/taiga/illinois/eng/chbe/zhao5"
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/scratch/bbub/mjvolk3/torchcell}"
@@ -63,10 +66,14 @@ for p in models/checkpoints wandb-experiments; do
 done
 
 echo; echo "-- 6. Taiga (informational; the sweep does not depend on it)"
-if [[ -d /taiga/Illinois/eng/chbe/zhao5 ]]; then
-  ok "/taiga/Illinois/eng/chbe/zhao5" "$(df -h /taiga/Illinois/eng/chbe/zhao5 2>/dev/null | tail -1 | awk '{print $4" free"}')"
+if [[ -d "$TAIGA_ZHAO5" ]]; then
+  ok "$TAIGA_ZHAO5" "$(df -h "$TAIGA_ZHAO5" 2>/dev/null | tail -1 | awk '{print $4" free"}')"
+  b025="$DELTA_DATA_ROOT/data/torchcell/experiments/025-solid-growth/001-full-build"
+  [[ -e "$b025/processed/lmdb/data.mdb" ]] \
+    && ok "$b025 -> $(readlink -f "$b025")" "$(stat -c %s "$b025/processed/lmdb/data.mdb") B" \
+    || note "$b025" "025 full build not linked; sync_taiga_025_build.sh + symlink"
 else
-  note "/taiga/Illinois/eng/chbe/zhao5" "not visible from this node"
+  note "$TAIGA_ZHAO5" "not visible from this node"
 fi
 
 echo; echo "-- 7. accounts"

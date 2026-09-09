@@ -47,3 +47,34 @@ First full pass 2026.09.09 from GilaHyper: about 111 MB/s over the campus link f
 seconds of the transfer starting. Whether LMDB random reads over the Taiga NFS mount from
 a Delta compute node are fast enough to train on is not measured; the first Delta job on
 this path is the measurement.
+
+Landed 13:47 CDT: 554,075,586,560 B, second pass no transfers, 1 h 19 m end to end.
+
+### Delta launch, 2026.09.09
+
+From the branch worktree `/scratch/bbub/mjvolk3/torchcell.worktrees/025-fitness-joint-head`
+(added from the `/projects` clone with `git worktree add`, so the sweep's own checkout at
+`/scratch/bbub/mjvolk3/torchcell-sweep` is never touched under its running jobs), after
+`delta_preflight_025.sh` reported OK:
+
+```bash
+for s in 1 2; do
+  sbatch --account=bfjt-delta-gpu --time=48:00:00 -J 025-kl-fit1-s$s \
+    experiments/025-solid-growth/scripts/delta_cgt.slurm cgt_s0_r_kl_fit_008 +seed=$s
+  sbatch --account=bfjt-delta-gpu --time=48:00:00 -J 025-kl-ctrl-s$s \
+    experiments/025-solid-growth/scripts/delta_cgt.slurm cgt_s0_r_kl_000 +seed=$s
+done
+```
+
+| job | arm | seed |
+|---|---|---|
+| 21919310 | `cgt_s0_r_kl_fit_008`, fitness weight 1.0 | 1 |
+| 21919311 | `cgt_s0_r_kl_000`, control | 1 |
+| 21919312 | `cgt_s0_r_kl_fit_008`, fitness weight 1.0 | 2 |
+| 21919313 | `cgt_s0_r_kl_000`, control | 2 |
+
+`+seed=` because neither config declares a seed key (the 010b sweep configs do). Together
+with IGB's seed-42 set ([[experiments.025-solid-growth.scripts.igb_mmli_cgt]]) this gives
+three seeds each of the weight-1.0 arm and the control, and one of weight 0.1. Delta
+compute has internet, so these runs log online to the 025 W&B project with tags `seed_1`
+/ `seed_2` and `build_025-full`.

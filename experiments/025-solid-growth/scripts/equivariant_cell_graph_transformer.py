@@ -166,12 +166,21 @@ def main(cfg: DictConfig) -> None:
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
 
+    # Tags that make a sweep filterable in W&B without decoding the config hash: the
+    # penalty weight, the seed and the build. Read from the resolved config so a Hydra
+    # override on the command line is what gets tagged.
+    lam = wandb_cfg["model"]["graph_regularization"]["graph_reg_lambda"]
+    sweep_tags = [
+        f"lambda_{lam:g}",
+        f"seed_{wandb_cfg.get('seed', 42)}",
+        "build_" + wandb_cfg.get("dataset", {}).get("root_rel", "025-full").split("/")[-1],
+    ]
     run = wandb.init(
         mode=WANDB_MODE,
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
-        tags=wandb_cfg["wandb"]["tags"],
+        tags=list(wandb_cfg["wandb"]["tags"]) + sweep_tags,
         dir=experiment_dir,
         name=f"run_{group}",
     )
@@ -262,9 +271,17 @@ def main(cfg: DictConfig) -> None:
         "r",
     ) as f:
         query = f.read()
+    # Which build the arm reads. The 025 full build is the default; the graph-regularization
+    # sweep on Delta runs on the 010 build (1.5 GB against 3.2 TB), whose 376,732 records are
+    # the S0 subset with bit-identical labels (results/label_parity_010_vs_025.json). A
+    # config names the build, with its index artifacts, so the two never mix silently.
     dataset_root = osp.join(
-        DATA_ROOT, "data/torchcell/experiments/025-solid-growth/001-full-build"
+        DATA_ROOT,
+        wandb.config.get("dataset", {}).get(
+            "root_rel", "data/torchcell/experiments/025-solid-growth/001-full-build"
+        ),
     )
+    print(f"dataset_root: {dataset_root}")
 
     # === Arm definition: which records train, and how they are split ===
     subset_cfg = wandb.config.subset
@@ -393,7 +410,11 @@ def main(cfg: DictConfig) -> None:
         )
     print(f"Dataset Length: {len(dataset)}")
 
-    seed = 42
+    # Replicates differ by this seed only. It feeds the data module's shuffling and
+    # torch's RNG; the split itself is pinned by artifact and does not depend on it.
+    seed = int(wandb.config.get("seed", 42))
+    L.seed_everything(seed, workers=True)
+    print(f"seed: {seed}")
 
     # For Perturbation processor, need to track perturbation_indices for batch assignment
     follow_batch = ["perturbation_indices"]

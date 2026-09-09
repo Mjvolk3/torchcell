@@ -393,3 +393,18 @@ far died of host memory between days 3.5 and 4.6, and the Pearson peaks came by 
 
 Cards at 19:35 CT: cabbi 2 free of 8 (3 mine, 3 another user), `gpu` 6 A40 idle on three
 nodes, mmli 4 A100 idle (not to be touched). Submission waits for approval.
+
+### ListMLE round, SUBMITTED 2026-09-08 20:05 CT
+
+Approved with the batch-64 arm added, two seeds. Container canary `2385788` completed clean
+in 9 min 23 s with first-epoch numbers matching the GilaHyper fast-dev-run to five
+decimals. Source `39703f5c`, clean diff.
+
+| job | partition | stage | runs | packing | max_epochs |
+|---|---|---|---|---|--:|
+| `2385807_0`, `_1` | cabbi (compute-3-3) | `listmle` seeds 0, 1 | `Q_listmle`, `Q_listmle_mse` x 2 = 4 | 2 per card | 6,000 |
+| `2385808_0`, `_1` | gpu (compute-0-0, A40) | `listmle_b64` seeds 0, 1 | `Q_listmle_b64` x 2 | 1 per card | 6,000 |
+
+Six runs. Scored by `roll_max` and by per-feature Spearman (the quantity the objective
+targets) at matched budgets against the Pearson round and the v9 long-budget arms. All
+four tasks were RUNNING 20 s after submission.

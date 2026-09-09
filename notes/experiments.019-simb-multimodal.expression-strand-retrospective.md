@@ -408,3 +408,27 @@ decimals. Source `39703f5c`, clean diff.
 Six runs. Scored by `roll_max` and by per-feature Spearman (the quantity the objective
 targets) at matched budgets against the Pearson round and the v9 long-budget arms. All
 four tasks were RUNNING 20 s after submission.
+
+### ListMLE round at 7.5 hours (2026-09-09 03:35 CT)
+
+| run | epoch | val Pearson | val Spearman | pred/true spread | val loss |
+|---|--:|--:|--:|--:|--:|
+| `Q_listmle_b64` seed 0 | 1,000 | 0.095 | 0.088 | 0.42 | 3.002 |
+| `Q_listmle_b64` seed 1 | 1,000 | 0.082 | 0.085 | 0.47 | 3.015 |
+| `Q_listmle` seed 0 | 636 | 0.091 | 0.099 | 0.43 | 2.444 |
+| `Q_listmle` seed 1 | 480 | 0.077 | 0.077 | 0.30 | 2.437 |
+| `Q_listmle_mse` seed 0 | 636 | 0.000 | 0.000 | 0.00000 | 3.529 |
+| `Q_listmle_mse` seed 1 | 480 | -0.033 | -0.032 | 0.00002 | 3.520 |
+
+The anchored arm sat at the mean predictor from epoch 160 on at both seeds (zero spread,
+loss flat at 3.52; the MSE gradient is 50x the ranking gradient at initialization and
+finds its own optimum). Both `Q_listmle_mse` processes were killed by PID at 03:40 CT, the
+same way as the dead `Q_pearson` seed 1; their pure siblings continue on whole cards. The
+pure arms learn, slowly: the quantile head read 0.12 at epoch 350 and 0.16 at 600, so
+ListMLE is behind by about 0.07 at matched epochs, with predicted spread growing from 0.05
+to 0.47 as the loss rewards larger gaps. Hypothesis (untested): the ranking gradient is
+small in absolute terms (norm 0.3 at initialization) and the pinned lr 3e-4 is low for it.
+
+Surviving Pearson runs at the same check: `Q_pearson_mse` seed 1 at epoch 5,273 reads
+0.176 and is still rising (0.159 at 4,077); `Q_pearson_b64` at 7,700 read 0.157 and 0.149,
+past their peaks of 0.194 and 0.186.

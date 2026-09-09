@@ -17,8 +17,10 @@ ROLL_WINDOW-epoch rolling mean of `val/expression/pearson_per_feature`) over epo
 a set of budgets B, from the FULL per-epoch history. The matched budget is the smallest
 final epoch across the eight runs, computed, not assumed. Contrasts are PAIRED within seed
 against `R_ref`, which is the in-round reference the round was designed around, and every
-arm is also placed against the eight identical-config incumbent runs from
-short_budget_spread.json at the nearest tabulated budget.
+arm is also placed against the eight long-budget v9 runs of short_budget_spread.json at
+the nearest tabulated budget. Those eight are the arms of the v9 mask-schedule round, not
+replicates (found 2026-09-08), so that band is an arm spread and only bounds the
+replicate spread from above; the paired contrasts within seed do not depend on it.
 
 WHAT IT CANNOT SAY. Two seeds resolve a paired gap of about 0.06 (the design note's own
 figure); anything smaller is "not resolved", not "null". Runs shorter than MIN_EPOCHS are
@@ -187,7 +189,7 @@ def figure(t: pd.DataFrame, curves: dict[str, pd.DataFrame], matched: int,
                alpha=0.25, lw=0, zorder=0)
     ax.axhline(inc["mean"], color=PLOT_PALETTE[3], lw=0.8, zorder=0)
     ax.text(-0.4, inc["mean"] - inc["sd"] - 0.003,
-            f"incumbent, {inc['n']} replicates at {inc['budget_epochs']:,} ep",
+            f"v9 long-budget arms, n={inc['n']} at {inc['budget_epochs']:,} ep",
             fontsize=5, color=PLOT_PALETTE[9], ha="left", va="top")
     ax.set_xticks(range(len(ARMS)))
     ax.set_xticklabels(ARMS, rotation=20, fontsize=5)

@@ -38,8 +38,9 @@ the `cgt_expr_v9_mask` config tag. The shadowing branch is removed in the same c
 | `R_pergene` | 0.1888 | 0.2237 | 0.2063 | +0.0007 / +0.0544 | +0.0276 |
 | `R_pergene_basis64` | 0.2136 | 0.1985 | 0.2061 | +0.0255 / +0.0292 | +0.0274 |
 
-Incumbent band at 4,000 epochs (`short_budget_spread.json`, 8 identical runs, 500-sample
-curves): 0.1883 +/- 0.0171. Both `R_ref` draws sit inside it, as they should.
+Long-budget band at 4,000 epochs (`short_budget_spread.json`, the eight v9 mask-schedule
+arms, not replicates, corrected 2026-09-08; 500-sample curves): 0.1883 +/- 0.0171. Both
+`R_ref` draws sit inside it.
 
 **Reading.** The pair term alone is a null at this resolution: its two paired differences
 disagree in sign. Both per-gene readout arms average +0.027 over the reference, and the

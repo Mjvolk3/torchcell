@@ -29,9 +29,13 @@ THE STATISTICS. Main effect of a factor = mean of its level-1 cells minus mean o
 level-0 cells, 16 runs a side. Two-way interactions the same way on the product of the
 centered factor codes. The error is the pooled within-cell replicate standard deviation
 (16 cells, 2 seeds each, 16 degrees of freedom), so every effect has the same standard
-error sd_pooled * sqrt(1/16 + 1/16). The within-cell spread is the same quantity the eight
-identical incumbent runs measured at this budget in short_budget_spread.json, and that
-value is printed beside it for comparison.
+error sd_pooled * sqrt(1/16 + 1/16). The reference band drawn beside it comes from
+short_budget_spread.json, the eight long-budget v9 runs at the nearest budget. THOSE EIGHT
+ARE NOT REPLICATES (found 2026-09-08): they are the arms of the v9 mask-schedule round
+(M_sched, M_lo, M_hi, M_fine, M_coarse, M_nomix, M_off, M_gate_rezero), differing in mask
+schedule, mixing and gate, so their spread is an arm spread plus nondeterminism and only
+bounds the replicate spread from above. The pooled within-cell sd computed HERE is a true
+replicate spread.
 
 WHAT THIS CANNOT SAY. The scoring rule is a rolling max, so every score is an upward-biased
 order statistic; it is the SAME rule for every cell and the bias cancels in a contrast but
@@ -273,7 +277,7 @@ def figure(t: pd.DataFrame, curves: dict[str, pd.DataFrame], budget: int,
                alpha=0.25, lw=0, zorder=0)
     ax.axhline(inc["mean"], color=PLOT_PALETTE[3], lw=0.8, zorder=0)
     ax.text(len(order) - 0.6, inc["mean"] + inc["sd"] + 0.004,
-            f"incumbent (calm emb.), {inc['n']} replicates at {inc['budget_epochs']:,} ep",
+            f"v9 long-budget arms (calm emb.), n={inc['n']} at {inc['budget_epochs']:,} ep",
             fontsize=5, color=PLOT_PALETTE[9], va="bottom", ha="right")
     ax.set_xticks(range(len(order)))
     ax.set_xticklabels(

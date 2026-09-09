@@ -47,6 +47,25 @@ following six thousand epochs, so budget raises the maximum draw rather than eve
 \label{tab:launch-replicates}
 \end{table}
 
+\notesec{Correction, 2026-09-08: the eight runs are not identical, and the spread is not a
+replicate spread} The configuration columns the leaderboard carries (head, learning rate,
+dropout, depth, width, prior, decoder, seed) are identical across the eight, and the
+assertion above checks only those. Their W\&B configs differ in what the leaderboard does
+not carry: they are the eight arms of the v9 mask-schedule round, \texttt{M\_sched}
+(schedule $[0, 10, 100, 1000]$), \texttt{M\_lo}, \texttt{M\_hi}, \texttt{M\_fine},
+\texttt{M\_coarse} (other schedules), \texttt{M\_nomix} (post-perturbation mixing off),
+\texttt{M\_gate\_rezero} (conditioning gate closed) and \texttt{M\_off} (no mask schedule
+at all). The $0.2382$ headline is the \texttt{M\_fine} arm, one draw of one schedule, and
+the $0.0222$ is an arm spread plus nondeterminism, which bounds the replicate spread from
+above and does not measure it. Every use of ``$n = 8$ replicates'' in this document and
+in the launch sizing reads as ``the eight long-budget v9 arms''. Replicate spread measured
+since, on runs that do share a configuration: pooled within-cell sd $0.0246$ over 16 cells
+at epochs $\le 990$ in the v10 grid ($0.0122$ without one stuck run), and $0.019$ between
+the two \texttt{R\_ref} seeds of the mechanism round at epochs $\le 4{,}079$
+(\file{notes-tex/019-simb-multimodal-expression/}). The power arithmetic that follows is
+therefore conservative rather than wrong, and the resolution figures stand as upper
+bounds on what each round could miss.
+
 \subsection{Evidence 2: what that spread costs in replicates\secstatus{todo}}
 
 \begin{table}[htbp]

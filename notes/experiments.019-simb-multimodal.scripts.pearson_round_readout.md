@@ -27,8 +27,9 @@ the JSON's `read_at` is the read time and the CSV's `n_epochs` is the epoch reac
 | `wb2xocf2` | `Q_pearson_b64` | 1 | 6,049 | 0.186 @ 2,419 | 0.138 | alive | 0.73 |
 
 "On the floor" is the first epoch from which the 5-epoch rolling mean of the validation
-Pearson stays under 0.02. Incumbent band (8 identical quantile runs): 0.1883 +/- 0.0171 at
-4,000 epochs, 0.1917 +/- 0.0177 at 6,000.
+Pearson stays under 0.02. Long-budget band (the eight v9 mask-schedule arms, not
+replicates, corrected 2026-09-08): 0.1883 +/- 0.0171 at 4,000 epochs, 0.1917 +/- 0.0177 at
+6,000.
 
 **What collapsed and how.** All three batch-32 pure-Pearson runs peak at epochs 150 to 240
 between 0.13 and 0.145, then fall to the floor within a few hundred epochs; their predicted

@@ -26,10 +26,20 @@ runs scored the same way.
 
 The incumbent is the quantile head under the pinball loss, learning rate $3 \times 10^{-4}$,
 dropout $0.1$, six transformer layers at hidden width 90, the nine-graph attention mask,
-\file{calm} gene embeddings, batch 32, 9{,}900 epochs. Eight identical-config runs of it
-score $\mathbf{0.1965 \pm 0.0222}$; the three highest leaderboard entries, $0.238$ to
-$0.243$, are one resumed lineage of that configuration continued to 19{,}000 epochs and
-are the maximum of those eight draws, not a different model. Baselines that need no GPU
+\file{calm} gene embeddings, batch 32, 9{,}900 epochs, and the reveal schedule
+$[0, 10, 100, 1000]$. Eight runs at that budget share every one of those settings the
+leaderboard records and score $\mathbf{0.1965 \pm 0.0222}$; they were read as
+identical-config replicates until 2026-09-08, when their W\&B configs showed them to be the
+eight arms of the v9 mask-schedule round (\texttt{M\_sched}, the incumbent schedule;
+\texttt{M\_lo}, \texttt{M\_hi}, \texttt{M\_fine}, \texttt{M\_coarse}, other schedules;
+\texttt{M\_nomix}, mixing off; \texttt{M\_gate\_rezero}, gate closed; \texttt{M\_off}, no
+schedule). So $0.1965 \pm 0.0222$ is a mean and spread across arms, the spread bounding
+nondeterminism from above; the incumbent schedule itself is one draw at $0.1824$, and the
+three highest leaderboard entries, $0.238$ to $0.243$, are the \texttt{M\_fine} arm and its
+resumed lineage to 19{,}000 epochs, one draw of one schedule. Replicate spread measured on
+runs that do share a configuration is $0.0246$ pooled within cell at epochs $\le 990$
+(\cref{sec:readouts-factorial}) and $0.019$ between two seeds of the mechanism-round
+reference at epochs $\le 4{,}079$ (\cref{sec:readouts-mech}). Baselines that need no GPU
 (\file{expression_baselines.py}): per-gene mean $0.0000$, bilinear on ProtT5 $0.1040$,
 embedding-neighbor $0.0908$. The incumbent clears the bilinear by $0.093$, about $4.2$
 standard deviations. On squared error no live run beats the per-gene mean at its Pearson
@@ -59,7 +69,8 @@ head & $n$ & collapsed & live mean & live sd & live max & min \file{nmse} at pea
 \caption[]{The objective round. Collapse is a final Pearson numerically zero: the network
 emits one constant per gene. The point head collapses every time, CRPS two times in three,
 the Laplace-CRPS and quantile heads never. Between the two that survive the gap is $0.0005$
-against a detectable gap of about $0.042$ at three replicates versus eight.}
+against a detectable gap of about $0.042$ at three replicates versus the eight long-budget
+arms at their spread of $0.0222$, an upper bound on the replicate spread.}
 \label{tab:findings-head}
 \end{table}
 
@@ -68,11 +79,13 @@ choice was never load-bearing, and the round was sized so that only a large effe
 have shown; the honest statement is that the heads are indistinguishable at any budget
 that can be afforded.
 
-\subsection{Replicate spread is a function of budget, and not a monotone one\secstatus{todo}}
+\subsection{Spread across the long-budget arms is a function of budget, and not a
+monotone one\secstatus{todo}}
 \label{sec:findings-spread}
 
-The same eight identical-config runs, rescored on the prefix of their own curves
-(\file{short_budget_spread.py}):
+The same eight long-budget arms, rescored on the prefix of their own curves
+(\file{short_budget_spread.py}). Read every spread below as an arm spread plus
+nondeterminism, an upper bound on the replicate spread at that budget:
 
 \begin{table}[htbp]
 \centering\small
@@ -94,7 +107,7 @@ epochs & mean & sd & main effect, 32 v 32 & cell, 16 v 16 & arm, 8 v 8 \\
  9{,}900 & $0.1965$ & $0.0222$ & & & \\
 \bottomrule
 \end{tabular}
-\caption[]{Mean and spread of the incumbent's eight replicates at truncated budgets, from
+\caption[]{Mean and spread of the eight long-budget v9 arms at truncated budgets, from
 500-sample curves. The spread is not monotone in budget: 700 epochs is the noisiest point
 below 2{,}000. The last three columns are the detectable gap at the 350-epoch spread for
 the three contrast sizes a $2^4$ grid affords, the same arithmetic that sized the v10 grid
@@ -114,9 +127,10 @@ value.
 
 Spearman between the 700-epoch and 3{,}000-epoch \file{roll_max} of the same run
 (\file{budget_rank_preservation.py}): $-0.139$, $p = 0.53$, $n = 23$; top-3 overlap one of
-three, top-5 one of five. After resume exclusion the corpus is essentially one
-configuration, so this measures within-config persistence only: a run's early rank among
-its own replicates says nothing about its late rank. Whether a short screen orders
+three, top-5 one of five. After resume exclusion the corpus is the eight mask-schedule arms
+plus the objective round, so this measures persistence among near-identical
+configurations: a run's early rank among them says nothing about its late rank. Whether a
+short screen orders
 different configurations correctly is answerable only on a multi-config corpus, and the
 v10 grid (\cref{sec:readouts-factorial}) is the first one.
 
@@ -145,6 +159,14 @@ against the epoch of the Pearson peak; every point lies above the diagonal. Gene
 \file{loss_min_vs_pearson_peak.py}.}
 \label{fig:findings-lossmin}
 \end{figure}
+
+\subsection{Every run behind these numbers\secstatus{todo}}
+\label{sec:findings-runs}
+
+\Cref{tab:wandb-runs-019} links every run this document draws a number from to its W\&B
+page, generated by \file{wandb_run_index.py} from the same result files the sections read.
+
+\input{tables/wandb_runs_019.tex}
 
 \subsection{Training on the metric does not resolve it\secstatus{todo}}
 \label{sec:findings-pearson}

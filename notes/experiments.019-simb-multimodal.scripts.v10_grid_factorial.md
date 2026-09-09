@@ -39,7 +39,9 @@ That one pair contributes most of the pooled variance: dropping it, the within-c
 -0.0175 (t -4.0), and embedding x trunk +0.0127 (t +2.9). Readout and weight decay stay
 null either way (|effect| < 0.008).
 
-**Against the incumbent.** The eight identical-config incumbent runs (calm embeddings,
+**Against the incumbent.** (Corrected 2026-09-08: the eight runs below are the v9
+mask-schedule arms, not replicates; their band is an arm spread. See the strand note.) The
+eight long-budget v9 runs (calm embeddings,
 `short_budget_spread.json`, read from 500-sample curves) score 0.1609 +/- 0.0099 at 1,000
 epochs. The best v10 cell by mean is cell 13 (prot_T5 / L=6 / linear / wd 1e-4) at 0.1426,
 and the best single run 0.1527 (cell 9 seed 1, at 990). Neither grid level of the embedding

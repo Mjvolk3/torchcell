@@ -71,3 +71,15 @@ It also fits in about one day at the measured packed throughput rather than two.
 - W&B history is downsampled to 500 points per run, so a truncated curve carries fewer
   samples and the rolling window spans more epochs per step. This is why the budget grid is
   coarse.
+
+## 2026.09.08 - Correction: the eight runs are the v9 mask-schedule arms, not replicates
+
+The config assertion in this script checks the leaderboard columns (head, lr, dropout, L,
+hidden, prior, decoder, seed) and cannot see `multitask.mask_schedule`,
+`model.post_perturbation_mixing.enabled` or `model.observed_labels.gate_mode`. The eight
+runs it admits are `M_sched`, `M_lo`, `M_hi`, `M_fine`, `M_coarse`, `M_nomix`,
+`M_gate_rezero` and `M_off`, verified in their W&B configs. Every spread in this note is
+therefore an arm spread plus nondeterminism and bounds the replicate spread from above;
+the numbers stand, their label does not. Detail and consequences in
+[[experiments.019-simb-multimodal.expression-strand-retrospective]]. The script docstring,
+assertion comment and figure title now say so.

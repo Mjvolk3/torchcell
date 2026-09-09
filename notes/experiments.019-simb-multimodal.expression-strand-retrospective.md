@@ -315,3 +315,45 @@ Nothing in this round beats the quantile head at any budget read so far.
 - [[experiments.019-simb-multimodal.scripts.loss_min_vs_pearson_peak]]
 - [[experiments.019-simb-multimodal.scripts.igb_expr_wave5]]
 - [[experiments.019-simb-multimodal.scripts.igb_login_wandb_sync]]
+
+## 2026.09.08 - Correction: the eight "identical-config replicates" are the eight v9 mask-schedule arms
+
+Found while indexing every run for the W&B table. The eight long-budget runs that
+`short_budget_spread.py` treats as replicates (`8r5ewoaq`, `da5g4o9v`, `ebkzn1ao`,
+`f2wf23oy`, `hx8pxdic`, `rb3bhryq`, `tow1z48n`, `u1vuznme`) share every leaderboard config
+column (head, lr, dropout, L, hidden, prior, decoder, seed 0) and differ in what the
+leaderboard does not carry. Their W&B configs, read 2026-09-08:
+
+| run | arm | mask_schedule | mixing | gate | roll_max |
+|---|---|---|---|---|--:|
+| `hx8pxdic` | `M_fine` | [0,10,30,100,300,1000] | on | on | 0.2382 |
+| `ebkzn1ao` | `M_coarse` | [0,100,1000] | on | on | 0.2091 |
+| `rb3bhryq` | `M_nomix` | [0,10,100,1000] | off | on | 0.2057 |
+| `tow1z48n` | `M_off` | none | on | on | 0.2008 |
+| `da5g4o9v` | `M_hi` | [0,1000,3000] | on | on | 0.1887 |
+| `8r5ewoaq` | `M_sched` | [0,10,100,1000] | on | on | 0.1824 |
+| `f2wf23oy` | `M_lo` | [0,5,10,30] | on | on | 0.1804 |
+| `u1vuznme` | `M_gate_rezero` | [0,10,100,1000] | on | rezero | 0.1663 |
+
+Consequences, stated plainly:
+
+- 0.1965 +/- 0.0222 is the mean and spread ACROSS the eight mask-schedule arms, not a
+  replicate estimate of the incumbent. The incumbent schedule proper (`M_sched`) is one
+  draw at 0.1824; the 0.2382 headline is the `M_fine` arm, one draw of one schedule.
+- The spread-by-budget table, the power arithmetic (detects ~0.042 at 3 vs 8) and every
+  "incumbent band" in the readout figures are arm spread plus nondeterminism. They bound
+  the replicate spread from above, so the resolution claims are conservative, not wrong.
+- Replicate spread measured on runs that DO share a config: v10 pooled within-cell sd
+  0.0246 at epochs <= 990 (0.0122 without the stuck run); mechanism-round `R_ref` seeds
+  differ by 0.019 at epochs <= 4,079; objective-round `crps` live sd 0.0094.
+- Within-round contrasts (v10 main effects, mechanism paired differences) are unaffected.
+- The rank-preservation Spearman (n = 23, "essentially one config") also spans these arms.
+- Interesting in its own right, and unmeasured until now: `M_off` (no masked objective)
+  scores 0.2008, inside the spread of the schedules, so at k = 0 scoring the masked-label
+  objective has not been shown to help. One draw per arm; a hypothesis until replicated.
+
+Fixed today: figure labels and docstrings of the three readout scripts, the spread
+script, both notes-tex documents (the SIMB launch section carries a dated correction
+paragraph; the expression document is rewritten where it said replicates), and the memory
+record. The `short_budget_spread.py` config assertion now names the columns it can see
+and says what it cannot.

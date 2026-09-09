@@ -1,0 +1,676 @@
+{
+  "entity": "zhao-group",
+  "projects": {
+    "torchcell_019_expr_v9": "https://wandb.ai/zhao-group/torchcell_019_expr_v9",
+    "torchcell_019_expr_v10": "https://wandb.ai/zhao-group/torchcell_019_expr_v10"
+  },
+  "n_runs": 74,
+  "runs": [
+    {
+      "round": "incumbent",
+      "arm": "M_coarse",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "ebkzn1ao",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/ebkzn1ao",
+      "epochs": 9900
+    },
+    {
+      "round": "incumbent",
+      "arm": "M_fine",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "hx8pxdic",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/hx8pxdic",
+      "epochs": 9900
+    },
+    {
+      "round": "incumbent",
+      "arm": "M_gate_rezero",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "u1vuznme",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/u1vuznme",
+      "epochs": 9900
+    },
+    {
+      "round": "incumbent",
+      "arm": "M_hi",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "da5g4o9v",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/da5g4o9v",
+      "epochs": 9900
+    },
+    {
+      "round": "incumbent",
+      "arm": "M_lo",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "f2wf23oy",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/f2wf23oy",
+      "epochs": 9900
+    },
+    {
+      "round": "incumbent",
+      "arm": "M_nomix",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "rb3bhryq",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/rb3bhryq",
+      "epochs": 9900
+    },
+    {
+      "round": "incumbent",
+      "arm": "M_off",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "tow1z48n",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/tow1z48n",
+      "epochs": 9900
+    },
+    {
+      "round": "incumbent",
+      "arm": "M_sched",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "8r5ewoaq",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/8r5ewoaq",
+      "epochs": 9900
+    },
+    {
+      "round": "objective",
+      "arm": "Q_point",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "8gklzy7n",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/8gklzy7n",
+      "epochs": 9895
+    },
+    {
+      "round": "objective",
+      "arm": "Q_point",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "iiqohck6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/iiqohck6",
+      "epochs": 2039
+    },
+    {
+      "round": "objective",
+      "arm": "Q_point",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "yrs7x07y",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/yrs7x07y",
+      "epochs": 9895
+    },
+    {
+      "round": "objective",
+      "arm": "Q_point",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "qplil73c",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/qplil73c",
+      "epochs": 2039
+    },
+    {
+      "round": "objective",
+      "arm": "Q_point",
+      "seed": 2,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "y8ex71vn",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/y8ex71vn",
+      "epochs": 9863
+    },
+    {
+      "round": "objective",
+      "arm": "Q_point",
+      "seed": 2,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "he2vb4qr",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/he2vb4qr",
+      "epochs": 2577
+    },
+    {
+      "round": "objective",
+      "arm": "Q_crps",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "m6utaeu8",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/m6utaeu8",
+      "epochs": 9526
+    },
+    {
+      "round": "objective",
+      "arm": "Q_crps",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "lljkhhck",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/lljkhhck",
+      "epochs": 1995
+    },
+    {
+      "round": "objective",
+      "arm": "Q_crps",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "djgkdzol",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/djgkdzol",
+      "epochs": 9895
+    },
+    {
+      "round": "objective",
+      "arm": "Q_crps",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "nx5dwhp8",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/nx5dwhp8",
+      "epochs": 2039
+    },
+    {
+      "round": "objective",
+      "arm": "Q_crps",
+      "seed": 2,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "eiu664kx",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/eiu664kx",
+      "epochs": 9777
+    },
+    {
+      "round": "objective",
+      "arm": "Q_crps",
+      "seed": 2,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "hzumvs8y",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/hzumvs8y",
+      "epochs": 2031
+    },
+    {
+      "round": "objective",
+      "arm": "Q_laplace",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "1xa3x8uc",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/1xa3x8uc",
+      "epochs": 9526
+    },
+    {
+      "round": "objective",
+      "arm": "Q_laplace",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "c981k5n1",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/c981k5n1",
+      "epochs": 1995
+    },
+    {
+      "round": "objective",
+      "arm": "Q_laplace",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "7v9l6ett",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/7v9l6ett",
+      "epochs": 9895
+    },
+    {
+      "round": "objective",
+      "arm": "Q_laplace",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "ia6312dv",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/ia6312dv",
+      "epochs": 2039
+    },
+    {
+      "round": "objective",
+      "arm": "Q_laplace",
+      "seed": 2,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "g69wskm0",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/g69wskm0",
+      "epochs": 9777
+    },
+    {
+      "round": "objective",
+      "arm": "Q_laplace",
+      "seed": 2,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "lz8gq5ui",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/lz8gq5ui",
+      "epochs": 2031
+    },
+    {
+      "round": "mechanism",
+      "arm": "R_ref",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "i63dbvha",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/i63dbvha",
+      "epochs": 4139
+    },
+    {
+      "round": "mechanism",
+      "arm": "R_ref",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "r2s57bvt",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/r2s57bvt",
+      "epochs": 8499
+    },
+    {
+      "round": "mechanism",
+      "arm": "R_basis64",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "h9l8aguy",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/h9l8aguy",
+      "epochs": 8499
+    },
+    {
+      "round": "mechanism",
+      "arm": "R_basis64",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "4gtnrja7",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/4gtnrja7",
+      "epochs": 7018
+    },
+    {
+      "round": "mechanism",
+      "arm": "R_pergene",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "4u0txt3s",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/4u0txt3s",
+      "epochs": 8499
+    },
+    {
+      "round": "mechanism",
+      "arm": "R_pergene",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "vqek7ali",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/vqek7ali",
+      "epochs": 8499
+    },
+    {
+      "round": "mechanism",
+      "arm": "R_pergene_basis64",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "nrkorko0",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/nrkorko0",
+      "epochs": 4079
+    },
+    {
+      "round": "mechanism",
+      "arm": "R_pergene_basis64",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "3qy1rh0o",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/3qy1rh0o",
+      "epochs": 6589
+    },
+    {
+      "round": "pearson",
+      "arm": "Q_pearson",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "zaul43n1",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/zaul43n1",
+      "epochs": 4091
+    },
+    {
+      "round": "pearson",
+      "arm": "Q_pearson",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "kspeoljg",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/kspeoljg",
+      "epochs": 4074
+    },
+    {
+      "round": "pearson",
+      "arm": "Q_pearson",
+      "seed": 2,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "p2qq2525",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/p2qq2525",
+      "epochs": 3166
+    },
+    {
+      "round": "pearson",
+      "arm": "Q_pearson_mse",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "hsauh7al",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/hsauh7al",
+      "epochs": 4089
+    },
+    {
+      "round": "pearson",
+      "arm": "Q_pearson_mse",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "ppc2pyv5",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/ppc2pyv5",
+      "epochs": 4077
+    },
+    {
+      "round": "pearson",
+      "arm": "Q_pearson_mse",
+      "seed": 2,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "4ei42tb1",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/4ei42tb1",
+      "epochs": 3169
+    },
+    {
+      "round": "pearson",
+      "arm": "Q_pearson_b64",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "7ylecrjz",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/7ylecrjz",
+      "epochs": 6345
+    },
+    {
+      "round": "pearson",
+      "arm": "Q_pearson_b64",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "wb2xocf2",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/wb2xocf2",
+      "epochs": 6339
+    },
+    {
+      "round": "v10",
+      "arm": "c0_rand_big_mlp_wd0",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "dd26f5nw",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/dd26f5nw",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c0_rand_big_mlp_wd0",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "nxrpgwca",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/nxrpgwca",
+      "epochs": 1176
+    },
+    {
+      "round": "v10",
+      "arm": "c1_ptt5_big_mlp_wd0",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "te8272kk",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/te8272kk",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c1_ptt5_big_mlp_wd0",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "l4uw0g1e",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/l4uw0g1e",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c2_rand_small_mlp_wd0",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "j5oc0kbf",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/j5oc0kbf",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c2_rand_small_mlp_wd0",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "zu0mp0ly",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/zu0mp0ly",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c3_ptt5_small_mlp_wd0",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "lnoei9xt",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/lnoei9xt",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c3_ptt5_small_mlp_wd0",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "wv0qlp4n",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/wv0qlp4n",
+      "epochs": 1192
+    },
+    {
+      "round": "v10",
+      "arm": "c4_rand_big_lin_wd0",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "0htrkihg",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/0htrkihg",
+      "epochs": 1119
+    },
+    {
+      "round": "v10",
+      "arm": "c4_rand_big_lin_wd0",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "59a4xytq",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/59a4xytq",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c5_ptt5_big_lin_wd0",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "6ee07w1j",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/6ee07w1j",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c5_ptt5_big_lin_wd0",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "7ue6aduu",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/7ue6aduu",
+      "epochs": 990
+    },
+    {
+      "round": "v10",
+      "arm": "c6_rand_small_lin_wd0",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "6ktjsou6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/6ktjsou6",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c6_rand_small_lin_wd0",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "ujbunglx",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/ujbunglx",
+      "epochs": 1020
+    },
+    {
+      "round": "v10",
+      "arm": "c7_ptt5_small_lin_wd0",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "dcx8l9z6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/dcx8l9z6",
+      "epochs": 1148
+    },
+    {
+      "round": "v10",
+      "arm": "c7_ptt5_small_lin_wd0",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "ts735yhp",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/ts735yhp",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c8_rand_big_mlp_wd2",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "fk6luj3g",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/fk6luj3g",
+      "epochs": 1119
+    },
+    {
+      "round": "v10",
+      "arm": "c8_rand_big_mlp_wd2",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "7n0ohmht",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/7n0ohmht",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c9_ptt5_big_mlp_wd2",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "5ivl9nat",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/5ivl9nat",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c9_ptt5_big_mlp_wd2",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "iyvyd7c3",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/iyvyd7c3",
+      "epochs": 990
+    },
+    {
+      "round": "v10",
+      "arm": "c10_rand_small_mlp_wd2",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "p2dj91nf",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/p2dj91nf",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c10_rand_small_mlp_wd2",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "yecoyfgc",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/yecoyfgc",
+      "epochs": 1029
+    },
+    {
+      "round": "v10",
+      "arm": "c11_ptt5_small_mlp_wd2",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "oe77kyf6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/oe77kyf6",
+      "epochs": 1148
+    },
+    {
+      "round": "v10",
+      "arm": "c11_ptt5_small_mlp_wd2",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "hhvof18w",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/hhvof18w",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c12_rand_big_lin_wd2",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "kt9tezrk",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/kt9tezrk",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c12_rand_big_lin_wd2",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "rd64e6kx",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/rd64e6kx",
+      "epochs": 1170
+    },
+    {
+      "round": "v10",
+      "arm": "c13_ptt5_big_lin_wd2",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "r9w7i1fw",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/r9w7i1fw",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c13_ptt5_big_lin_wd2",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "c3xrtsr7",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/c3xrtsr7",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c14_rand_small_lin_wd2",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "jrwpcoxd",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/jrwpcoxd",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c14_rand_small_lin_wd2",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "4ity6oib",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/4ity6oib",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c15_ptt5_small_lin_wd2",
+      "seed": 0,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "a6mmvj8i",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/a6mmvj8i",
+      "epochs": 1399
+    },
+    {
+      "round": "v10",
+      "arm": "c15_ptt5_small_lin_wd2",
+      "seed": 1,
+      "project": "torchcell_019_expr_v10",
+      "wandb_run_id": "04204r3z",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v10/runs/04204r3z",
+      "epochs": 1198
+    }
+  ]
+}

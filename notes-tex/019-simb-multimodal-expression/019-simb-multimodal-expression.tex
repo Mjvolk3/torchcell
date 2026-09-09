@@ -35,8 +35,10 @@ the campaign that followed it: four rounds on IGB and Delta between 2026-08-31 a
 2026-09-08, all under the masked-label objective of project \file{torchcell_019_expr_v9}.
 Every score is one statistic, the maximum of a centered 5-epoch rolling mean of the
 per-gene validation Pearson, read from the full history of every run and placed against
-eight identical-config replicates of the incumbent, whose spread at the full budget is
-$0.0222$ around a mean of $0.1965$.
+the eight long-budget runs of the v9 mask-schedule round, which spread $0.0222$ around a
+mean of $0.1965$ at the full budget. Those eight were taken for identical-config
+replicates until 2026-09-08; they are eight arms, and their spread bounds the replicate
+spread from above rather than measuring it.
 
 What is established. The distributional head is not load-bearing: a point head collapses,
 the CRPS head collapses two times in three, and the Laplace-CRPS head ties the quantile
@@ -44,9 +46,10 @@ head to $0.0005$. The validation loss bottoms out at a few hundred epochs in eve
 while the metric keeps rising to beyond 19,000, so the long budget buys Pearson on a rising
 objective. Training on the metric itself does not escape that: pure Pearson at batch 32
 collapses to constant outputs at every seed, and the batch-64 variant that survives sits on
-the incumbent band rather than above it. The one factor that moves the score by more than
-the replicate spread is the content of the gene embedding, ProtT5 over random by $0.07$ at
-1,000 epochs; trunk depth, readout width and weight decay do not. The per-gene readout is
+the long-budget band rather than above it. The one factor that moves the score by more
+than the replicate spread is the content of the gene embedding, ProtT5 over random by
+$0.07$ at 1,000 epochs against a within-cell replicate sd of $0.025$; trunk depth, readout
+width and weight decay do not. The per-gene readout is
 $+0.03$ over its in-round reference at two seeds, under the resolution of that round, and
 the pair term alone is a null. Four of four packed five-day tasks died of host memory.
 

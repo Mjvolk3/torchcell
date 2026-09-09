@@ -20,8 +20,10 @@ WHAT IS READ, per run, from the FULL per-epoch history:
   - `val/expression/pred_sd_ratio` (predicted over true spread), because pure Pearson is
     scale-free and a scale blow-up is invisible in the loss;
   - `val/loss`, comparable only WITHIN an arm (pearson_mse adds a masked MSE at weight 1).
-The eight identical-config incumbent runs (quantile head) at the tabulated budgets of
-short_budget_spread.json are the reference band, drawn at every budget the file holds.
+The eight long-budget quantile-head runs of short_budget_spread.json are the reference
+band, drawn at every budget the file holds. They are the eight arms of the v9
+mask-schedule round, not replicates (found 2026-09-08): the band is an arm spread plus
+nondeterminism and bounds the replicate spread from above.
 
 THE RUNS ARE IN FLIGHT when this is first run (five-day wall from 2026-09-06 19:45 CT), so
 every number is partial and the JSON records the epoch reached. Re-run after the wall.
@@ -169,7 +171,7 @@ def figure(t: pd.DataFrame, curves: dict[str, pd.DataFrame], inc: pd.DataFrame) 
     ax.fill_between(inc.budget_epochs, inc["mean"] - inc["sd"], inc["mean"] + inc["sd"],
                     color=PLOT_PALETTE[3], alpha=0.25, lw=0, zorder=0)
     ax.plot(inc.budget_epochs, inc["mean"], color=PLOT_PALETTE[3], lw=0.8, zorder=0,
-            label="incumbent quantile, 8 replicates")
+            label="v9 long-budget quantile arms, n=8")
     for _, r in t.iterrows():
         h = curves[r.run_id]
         ax.plot(h.epoch, roll_mean(h[METRIC].to_numpy(), ROLL_WINDOW), color=color[r.arm],

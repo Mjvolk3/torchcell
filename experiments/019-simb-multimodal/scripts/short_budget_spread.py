@@ -3,9 +3,18 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/scripts/short_budget_spread
 """What is the run-to-run spread at a SHORT budget, and what does it cost in power?
 
+CORRECTION, 2026-09-08. THE EIGHT RUNS ARE NOT REPLICATES. They share every leaderboard
+config column (REPLICATE_CONFIG below), which is all this script can assert, but their W&B
+configs differ in what the leaderboard does not carry: they are the eight arms of the v9
+mask-schedule round (M_sched, M_lo, M_hi, M_fine, M_coarse with different
+`multitask.mask_schedule`; M_nomix with post-perturbation mixing off; M_gate_rezero with
+the conditioning gate closed; M_off with no mask schedule). Every "replicate" below reads
+as "long-budget v9 arm", every spread as an ARM spread plus nondeterminism, which bounds
+the replicate spread from above. The numbers are unchanged; their meaning is.
+
 WHY THIS EXISTS. Every power number in the launch plan rests on one measurement: the
-replicate spread of 0.0222, taken from the eight identical-config runs at 9,900 epochs
-(sec:launch, Evidence 1). A Delta round cannot reach 9,900 epochs, because that partition
+spread of 0.0222 across the eight long-budget runs at 9,900 epochs (sec:launch,
+Evidence 1, and its dated correction). A Delta round cannot reach 9,900 epochs, because that partition
 caps a job at two days, so the design has to assume the spread holds at roughly 3,000.
 That assumption is testable for free: those eight runs each logged a full validation curve,
 so their scores at ANY truncated budget can be recomputed from history that already exists.
@@ -90,9 +99,12 @@ LEADERBOARD = osp.join(RESULTS, "round_leaderboards.csv")
 # the bottom of the old grid.
 BUDGETS = [350, 500, 700, 1000, 1500, 2000, 2800, 4000, 6000, 9900]
 
-# The config the eight replicates share. Asserted, not assumed -- if the leaderboard ever
-# admits a different run to this filter, the spread stops being a replicate spread and the
-# whole power argument silently changes.
+# The leaderboard config columns the eight runs share. Asserted so that a run with a
+# different HEAD, LR, DEPTH, WIDTH, PRIOR, DECODER or SEED cannot enter. This assertion
+# cannot see `multitask.mask_schedule`, `model.post_perturbation_mixing.enabled` or
+# `model.observed_labels.gate_mode`, which is exactly where the eight differ (see the
+# correction in the module docstring). It is a necessary condition for a replicate set,
+# not a sufficient one.
 REPLICATE_CONFIG = {
     "dist": "quantile",
     "lr": 0.0003,
@@ -128,13 +140,19 @@ RESUME_START_EPOCH = 100
 
 
 def replicate_runs(df: pd.DataFrame) -> pd.DataFrame:
-    """Long identical-config expression runs. Resumes are dropped later, by curve start."""
+    """Long expression runs sharing the leaderboard config columns (the eight v9 mask arms).
+
+    Resumes are dropped later, by curve start.
+    """
     e = df[df.strand.astype(str).str.contains("expr", case=False, na=False)]
     n = e[e.epochs >= 9000].copy()
+    # A FILTER, not an assertion over every long run: since 2026-09-07 the objective
+    # round's crps, laplace_crps and point arms also pass 9,000 epochs, and they are not
+    # part of this set. Runs matching every column are kept; the count is checked below.
     for col, want in REPLICATE_CONFIG.items():
-        vals = set(n[col])
-        if vals != {want}:
-            raise ValueError(f"9,000+ epoch runs are not one config: {col}={vals}")
+        n = n[n[col] == want]
+    if n.empty:
+        raise ValueError(f"no 9,000+ epoch expression run matches {REPLICATE_CONFIG}")
     return n
 
 
@@ -228,7 +246,7 @@ def main() -> None:
     ax.set_ylabel("val pearson per feature")
     ax.set_xscale("log")
     ax.legend(frameon=False, loc="lower right", handlelength=1.4, borderpad=0.2)
-    ax.set_title("eight identical configs, truncated", fontsize=6, pad=3)
+    ax.set_title("eight v9 mask-schedule arms, truncated", fontsize=6, pad=3)
     for s in ax.spines.values():
         s.set_visible(True)
     panel_label(ax, "a")

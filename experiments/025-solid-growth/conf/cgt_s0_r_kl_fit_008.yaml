@@ -1,0 +1,64 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_fit_008.yaml
+#
+# ARM S0/R/KL + FITNESS -- the replication arm with a second, jointly trained head that
+# predicts the triple's FITNESS. Everything else is cgt_s0_r_kl_000 by composition:
+# same records, same pinned 010 split, same 010-verbatim model, loss, optimizer and
+# schedule, including the two graph-regularization defects that arm keeps on purpose.
+#
+# THE QUESTION. The trigenic interaction score is a residual of the triple mutant fitness
+# against the fitness of its subsets, so a model that has to predict the fitness as well
+# should hold a representation the interaction head can use. Whether that raises the
+# interaction score at all is what this arm measures, against the replication run
+# (GilaHyper job 1598, W&B 0yw7moue: val Pearson 0.4463 at epoch 14, 36 epochs in 12 h)
+# and against cgt_s0_r_kl_000 itself re-run on the IGB node with this seed.
+#
+# THE HEAD. `model.heads.global` builds GlobalHead, the whole-cell readout: an MLP on
+# [h_CLS || mean_i H_genes_pert[b, i]] to one scalar. h_CLS is the class token of the
+# encoder run on the WILD-TYPE graph, so it is the same vector for every strain in the
+# batch; the strain enters through the mean pool over the perturbed gene embeddings
+# (use_gene_pool: true, which is therefore not optional here). The interaction head is
+# untouched: the same PerturbationHead MLP on [h_CLS || sum over the deleted genes].
+#
+# THE LOSS. L = L_010(gene_interaction) + fitness_lambda * MSE(global_head, fitness), both
+# on the standardized scale, fitted over the S0 triples like the interaction label. The
+# fitness term is plain MSE, not the point+Wasserstein+graph bundle, so the interaction
+# objective is exactly the 010 one and the ONLY change is the added term.
+#
+# Logged per epoch, next to the existing gene_interaction metrics:
+#   {train,val,test}/fitness/{MSE,RMSE,Pearson}               label scale
+#   {train,val,test}/transformed/fitness/{MSE,RMSE,Pearson}   standardized scale
+#   {train,val,test}/fitness_loss                             the weighted term's input
+# Checkpointing still follows val/gene_interaction/{MSE,Pearson}: the interaction score
+# is the outcome, fitness is the auxiliary.
+#
+# Launch (IGB mmli, 4x A100, from the login node after `git fetch`):
+#   sbatch -J 025-kl-fit1 experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_r_kl_fit_008
+defaults:
+  - cgt_s0_r_kl_000
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, fitness_joint, igb_mmli]
+
+cell_dataset:
+  # Both labels; order fixes the COO type index (fitness 0, gene_interaction 1).
+  phenotype_labels: [fitness, gene_interaction]
+
+transforms:
+  forward_transform:
+    normalization:
+      fitness:
+        strategy: "standard"
+      gene_interaction:
+        strategy: "standard"
+
+model:
+  heads:
+    global:
+      decoder: s1_pool
+      output_dim: 1
+      use_gene_pool: true
+
+regression_task:
+  # Weight of the fitness MSE term. 1.0 = the two heads' point losses count equally.
+  fitness_lambda: 1.0

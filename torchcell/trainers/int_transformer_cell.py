@@ -55,12 +55,25 @@ class RegressionTask(L.LightningModule):
         device: str = "cuda",
         inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
+        fitness_lambda: float | None = None,
     ):
-        """Set up the model, cloned cell graph, loss, metrics, and execution mode."""
+        """Set up the model, cloned cell graph, loss, metrics, and execution mode.
+
+        ``fitness_lambda`` switches on the JOINT fitness objective. ``None`` (the
+        default) is the single-label path, bit-for-bit what 010 and the 025
+        replication trained: ``phenotype_values`` IS the gene-interaction vector.
+        A float means the batch carries two scalar labels per record in COO form
+        (``phenotype_labels: [fitness, gene_interaction]``), the model was built with a
+        ``global`` head (``heads_config``), and the loss becomes
+        ``L_gi + fitness_lambda * MSE(global_head, fitness)`` on the normalized
+        scale. Requires ``follow_batch=["phenotype_values"]`` in the data module so the
+        COO values carry their batch row.
+        """
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
         self.execution_mode = execution_mode
+        self.fitness_lambda = fitness_lambda
         # Clone cell_graph to avoid modifying the dataset's original cell_graph
         # This is necessary for pin_memory compatibility in DataLoader
         self.cell_graph = cell_graph.clone()
@@ -94,6 +107,20 @@ class RegressionTask(L.LightningModule):
             )
             setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
 
+            # Fitness metrics exist only on the joint path, so a single-label run's
+            # module list and checkpoint are unchanged.
+            if fitness_lambda is not None:
+                setattr(
+                    self,
+                    f"{stage}_fitness_metrics",
+                    reg_metrics.clone(prefix=f"{stage}/fitness/"),
+                )
+                setattr(
+                    self,
+                    f"{stage}_transformed_fitness_metrics",
+                    reg_metrics.clone(prefix=f"{stage}/transformed/fitness/"),
+                )
+
         # Separate accumulators for train, validation, and test samples
         self.train_samples: dict[str, Any] = {
             "true_values": [],
@@ -126,6 +153,89 @@ class RegressionTask(L.LightningModule):
         self.residual_update_accumulators: dict[
             int, dict[str, float | int]
         ] = {}  # {layer_idx: {"sum_ratio": float, "count": int}}
+
+    def _coo_label(
+        self, batch: HeteroData, label: str, batch_size: int, original: bool
+    ) -> torch.Tensor:
+        """One value per batch row for ``label`` from the COO phenotype fields.
+
+        Returns ``[batch_size, 1]`` with NaN where a row carries no value of that
+        label. Rows come from ``phenotype_values_batch`` (``follow_batch``), NOT from
+        ``phenotype_sample_indices``, which indexes experiments WITHIN a genotype and
+        is not offset across the batch. A row carrying two values of one label raises
+        rather than silently keeping the last one written.
+        """
+        gene = batch["gene"]
+        types = gene.phenotype_types
+        if isinstance(types[0], list):
+            types = types[0]
+        values = gene.phenotype_values_original if original else gene.phenotype_values
+        sel = gene.phenotype_type_indices == types.index(label)
+        rows = gene.phenotype_values_batch[sel]
+        vals = values[sel]
+        if rows.unique().numel() != rows.numel():
+            raise ValueError(f"{label}: a batch row carries more than one value")
+        out = torch.full(
+            (batch_size,), float("nan"), device=vals.device, dtype=vals.dtype
+        )
+        out[rows] = vals
+        return out.unsqueeze(1)
+
+    def _inverse_scalar(self, predictions: torch.Tensor, label: str) -> torch.Tensor:
+        """Map ``[B, 1]`` normalized predictions of ``label`` back to the label scale."""
+        if self.inverse_transform is None:
+            return predictions
+        batch_size = predictions.size(0)
+        temp_data = HeteroData()
+        temp_data["gene"].phenotype_values = predictions.squeeze(1)
+        temp_data["gene"].phenotype_type_indices = torch.zeros(
+            batch_size, dtype=torch.long, device=predictions.device
+        )
+        temp_data["gene"].phenotype_sample_indices = torch.arange(
+            batch_size, device=predictions.device
+        )
+        temp_data["gene"].phenotype_types = [label]
+        inv = self.inverse_transform(temp_data)["gene"]["phenotype_values"]
+        return cast(torch.Tensor, inv).reshape(batch_size, 1)
+
+    def _fitness_step(
+        self,
+        batch: HeteroData,
+        representations: dict[str, Any],
+        batch_size: int,
+        stage: str,
+    ) -> torch.Tensor:
+        """Weighted fitness MSE on the ``global`` head; also feeds the fitness metrics."""
+        fit_pred = representations["head_outputs"]["global"]  # [B, 1]
+        fit_vals = self._coo_label(batch, "fitness", batch_size, original=False)
+        mask = ~torch.isnan(fit_vals)
+        fitness_loss = nn.functional.mse_loss(fit_pred[mask], fit_vals[mask])
+        self.log(
+            f"{stage}/fitness_loss", fitness_loss, batch_size=batch_size, sync_dist=True
+        )
+        getattr(self, f"{stage}_transformed_fitness_metrics").update(
+            fit_pred[mask].view(-1), fit_vals[mask].view(-1)
+        )
+        fit_orig = self._coo_label(batch, "fitness", batch_size, original=True)
+        inv_fit = self._inverse_scalar(fit_pred.detach(), "fitness")
+        getattr(self, f"{stage}_fitness_metrics").update(
+            inv_fit[mask].view(-1), fit_orig[mask].view(-1)
+        )
+        assert self.fitness_lambda is not None
+        return self.fitness_lambda * fitness_loss
+
+    def _log_fitness_epoch_metrics(self, stage: str) -> None:
+        """Compute, log and reset the two fitness metric collections of ``stage``."""
+        if self.fitness_lambda is None:
+            return
+        for name in (
+            f"{stage}_fitness_metrics",
+            f"{stage}_transformed_fitness_metrics",
+        ):
+            collection = getattr(self, name)
+            for key, value in self._compute_metrics_safely(collection).items():
+                self.log(key, value, sync_dist=True)
+            collection.reset()
 
     def _get_batch_size(self, batch: HeteroData) -> int:
         """Get batch size from batch, handling different batch structures."""
@@ -779,20 +889,33 @@ class RegressionTask(L.LightningModule):
         batch_size = predictions.size(0)
 
         # Get target values - now in COO format
-        # For gene interaction dataset, phenotype_values directly contains the values
-        gene_interaction_vals = batch["gene"].phenotype_values
+        if self.fitness_lambda is not None:
+            # Joint path: two labels per record, so phenotype_values is [2B] and the
+            # gene-interaction column has to be picked out by type. The fitness column
+            # is read in _fitness_step below.
+            gene_interaction_vals = self._coo_label(
+                batch, "gene_interaction", batch_size, original=False
+            )
+            gene_interaction_orig = (
+                self._coo_label(batch, "gene_interaction", batch_size, original=True)
+                if hasattr(batch["gene"], "phenotype_values_original")
+                else gene_interaction_vals
+            )
+        else:
+            # For gene interaction dataset, phenotype_values directly contains the values
+            gene_interaction_vals = batch["gene"].phenotype_values
+
+            # For original values, check if there's a phenotype_values_original
+            if hasattr(batch["gene"], "phenotype_values_original"):
+                gene_interaction_orig = batch["gene"].phenotype_values_original
+            else:
+                gene_interaction_orig = gene_interaction_vals
 
         # Handle tensor shape
         if gene_interaction_vals.dim() == 0:
             gene_interaction_vals = gene_interaction_vals.unsqueeze(0).unsqueeze(0)
         elif gene_interaction_vals.dim() == 1:
             gene_interaction_vals = gene_interaction_vals.unsqueeze(1)
-
-        # For original values, check if there's a phenotype_values_original
-        if hasattr(batch["gene"], "phenotype_values_original"):
-            gene_interaction_orig = batch["gene"].phenotype_values_original
-        else:
-            gene_interaction_orig = gene_interaction_vals
 
         # Handle tensor shape
         if gene_interaction_orig.dim() == 0:
@@ -946,6 +1069,10 @@ class RegressionTask(L.LightningModule):
                 batch_size=batch_size,
                 sync_dist=True,
             )
+
+        # Joint fitness objective on the global head (opt-in, see __init__).
+        if self.fitness_lambda is not None:
+            loss = loss + self._fitness_step(batch, representations, batch_size, stage)
 
         # Add dummy loss for unused parameters
         dummy_loss = self._ensure_no_unused_params_loss()
@@ -1349,6 +1476,7 @@ class RegressionTask(L.LightningModule):
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
         self.train_transformed_metrics.reset()
+        self._log_fitness_epoch_metrics("train")
 
         # Plot training samples
         if (
@@ -1440,6 +1568,7 @@ class RegressionTask(L.LightningModule):
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
         self.val_transformed_metrics.reset()
+        self._log_fitness_epoch_metrics("val")
 
         # Log edge recovery metrics (now includes layer and head info)
         for metric_key, acc in self.edge_recovery_accumulators.items():
@@ -1509,6 +1638,7 @@ class RegressionTask(L.LightningModule):
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
         self.test_transformed_metrics.reset()
+        self._log_fitness_epoch_metrics("test")
 
         # Plot test samples
         if self.test_samples["true_values"]:

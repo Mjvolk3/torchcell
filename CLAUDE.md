@@ -614,6 +614,19 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   top/right-despined look).
 - **Type:** Arial, 6 pt everywhere (Nature minimum); set `svg.fonttype: "none"` so
   text stays real/editable in the SVG.
+- **Panel letters at the panel's outer top-left corner** (`torchcell.utils.panel_label`,
+  called LAST for each panel, after the y label and ticks are set): the letter's left
+  edge is flush with the y-axis label column and its bottom is 12 pt above the axes top
+  edge, one text line above the title. It is never against the spine corner, never inside
+  the axes, and never beside the title. This is the author-approved look (2026.09.09).
+- **White-cross rule: no line touches any text.** For every panel letter, legend entry,
+  and annotation, a white cross the width of the text box laid over it must intersect no
+  curve, spine, bar, or gridline-crossing data. Colored text never sits on a shaded fill.
+  Numbers compared across series go in aligned columns, not prose legend labels. Legends
+  are framed (white face, 0.5 pt black edge, square corners) and still sit in a clear
+  region. No mathtext `\hat` in SVG output (renders as a detached glyph); verify the
+  SVG with `rsvg-convert`, not the PNG. Broken only in extraordinary circumstances.
+  Details in [[paper.nature-biotech.style-guide]].
 - **Export true-size SVG** via `torchcell.utils.savefig_true_size_svg(fig, path)` so it
   imports at true mm in draw.io (it rescales matplotlib's 72-dpi points to draw.io's
   100-units/inch). Do NOT pass `bbox_inches="tight"` on a fixed-width panel — it

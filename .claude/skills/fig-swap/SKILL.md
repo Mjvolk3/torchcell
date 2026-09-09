@@ -91,10 +91,22 @@ make -C paper/nature-biotech editing
 1. `--identify` again: every swapped cell must now print `CURRENT <expected file>`.
 2. Render + look: `qlmanage -t -s 1200 -o <scratchpad-dir> <FIG>.drawio.svg`, then
    Read the PNG and visually confirm the panels (right plot, right labels, nothing
-   clipped).
-3. If the paper build ran: check `editing.log` for LaTeX errors
+   clipped). Render the SVG, never trust a matplotlib PNG: the PNG bakes text in, the
+   SVG lays it out in the viewer (on Linux `rsvg-convert -w 2400 -o out.png <svg>`).
+3. **Text-collision pass (the white-cross rule, [[paper.nature-biotech.style-guide]]
+   Figures).** For every panel letter, legend entry, and annotation in the render, a
+   white cross the width of the text box laid over it must meet no curve, spine, bar,
+   or other text. Panel letters sit at the panel's outer top-left corner: left edge
+   flush with the y-axis label column, bottom one text line above the title
+   (`torchcell.utils.panel_label`, called last for each panel). Legends are framed
+   (white face, 0.5 pt black edge, square corners) and still sit in a clear region.
+   Colored text never sits on a shaded fill. Numbers compared across series are in
+   aligned columns. Mathtext `\hat` renders as a detached glyph in SVG: if you see one,
+   the source script must drop it. A failure here means regenerate the panel (Step 2),
+   not accept the swap.
+4. If the paper build ran: check `editing.log` for LaTeX errors
    (`grep -iE '! LaTeX Error|Undefined' ... | grep -iv warning`).
-4. Report figure page size if it changed (parse the exported PDF MediaBox). Width
+5. Report figure page size if it changed (parse the exported PDF MediaBox). Width
    over the slot is a blocker; height overage is currently advisory (author policy,
    see [[paper.nature-biotech.style-guide]] Figures).
 

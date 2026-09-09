@@ -76,6 +76,40 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   upright (not italic) and lowercase a, b, c"; do not outline text. **Our stance:
   WIDTH is enforced strictly** (panels on the `PANEL_WIDTHS_MM` grid); height warnings
   are advisory for now and resolved before submission.
+- **Panel letters top-left, outside the axes box** (`torchcell.utils.panel_label`), never
+  inside the plotting area. The letter's LEFT edge is flush with the panel's outer left
+  edge (the y-axis label column, measured from the axes' tight bounding box, so call
+  `panel_label` after the y label and ticks are set) and it is raised
+  `PANEL_LABEL_RAISE_PT` (12 pt) above the axes top edge, one text line above the title
+  band. A cross the width of the letter laid over it then meets no title, spine, tick
+  label, or axis label. The old placement (1.5 pt off the axes corner) fails: the
+  downward arm crosses the topmost tick label and the rightward arm crosses any title
+  that starts near the left edge.
+- **The white-cross rule for text: no line may touch a label.** Every piece of text in a
+  panel (panel letter, legend entry, annotation, in-panel caption) must sit on clear
+  background: lay a white cross the width of the text box over it and no data line, curve,
+  spine, or bar may intersect it. A legend that a curve passes under, an annotation that a
+  fitted line runs through, or region text that touches a spine all fail. Move the text,
+  widen an axis limit, or shorten the label. Broken only in extraordinary circumstances,
+  and then said in the caption.
+- **Legends are framed.** White face, 0.5 pt black edge, square corners
+  (`legend.frameon: True`, `legend.fancybox: False`, `legend.framealpha: 1`). The frame
+  still sits in a clear region; it is a border, not a license to cover data.
+- **No mathtext accents in SVG panels.** With `svg.fonttype: none`, `\hat{y}` and
+  `\hat F` render as a detached dotted glyph in every SVG viewer (VS Code, rsvg). Write
+  the precomposed character (`\u0177` for y-hat) or drop the hat and name the object in
+  words (`predictive CDF F`). Plain `\tau`, `\alpha`, `\rho`, `\log_2` are fine.
+- **Check the SVG render, not the PNG.** The PNG is rasterized by matplotlib with the
+  text baked in; the SVG is what the note shows and what goes into draw.io, and its text
+  is laid out by the viewer. Verify with `rsvg-convert -w 2400 -o out.png panel.svg`
+  and look at that.
+- **Colored text sits on white, not on a fill.** Red text on a purple band, or any text
+  over a shaded region, is unreadable at 6 pt. Shaded regions carry no text; label them
+  from a legend entry or from text placed in an unshaded part of the panel.
+- **Aligned columns for compared numbers.** When a legend compares the same statistic
+  across series (coverage per arm, a score per model), lay the numbers out as aligned
+  columns (a small `ax.text` table in axes coordinates), not as prose inside legend labels,
+  where proportional Arial defeats alignment.
 - **Axis-label style: sentence case, first word capitalized, proper nouns/initialisms
   keep their capitals.** Nature's spec gives the exemplar "All axes to be labelled with
   units in parentheses, e.g. Data (unit)" -- sentence case; unitless metrics omit the

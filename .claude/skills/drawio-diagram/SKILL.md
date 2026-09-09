@@ -53,6 +53,20 @@ Reference to match: `notes/assets/drawio/Fig1-torchcell-overview.drawio.svg` is 
 
 - Spend the four warm primaries before blue/gray. Past 6 categories, disambiguate with
   dashes or `strokeWidth`, not new colours.
+- **Panel letters at the panel's outer top-left corner.** 8 pt bold lowercase Arial
+  (`fontSize=11.1`, `fontStyle=1`). The letter's left edge is flush with the panel's
+  outermost left element (a placed matplotlib panel's y-axis label column, or the
+  leftmost shape) and its bottom sits one text line above the panel's title band.
+  Never against a box corner, never inside a plot area, never beside a title. Placed
+  matplotlib panels already carry their letter from `torchcell.utils.panel_label`; do not
+  add a second one.
+- **White-cross rule: no line touches any text.** For every letter, label, legend
+  entry, and annotation, a white cross the width of the text box laid over it must meet
+  no edge, arrow, box border, or other text. Legends are framed (white fill, 0.5 pt black
+  stroke, `rounded=0`) and still sit in a clear region. Coloured text never sits on a
+  filled shape; label a filled region from outside it. Numbers compared across series
+  go in aligned columns, not in prose. Full rule: [[paper.nature-biotech.style-guide]]
+  Figures.
 
 ## Step 2: Write the XML
 
@@ -117,6 +131,9 @@ blocks overrunning into the row below.
   re-lay-out every row beneath it. Two or three iterations is normal.
 - If the re-layout busts the height cap, **cut prose**. In a paper figure, long
   explanation belongs in the caption anyway.
+- **Text-collision pass.** Apply the white-cross rule (Step 1) to every letter, label,
+  and legend in the render: any edge, arrow, or border touching text is a failure, fixed
+  by moving the text or shortening it, never by shrinking the font.
 
 Report done only after a render you have looked at.
 

@@ -67,8 +67,10 @@ load_dotenv()
 from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
     experiment_results_dir,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
@@ -106,7 +108,12 @@ LEVELS = {
     "readout": ("mlp", "linear"),
     "weight_decay": ("1e-8", "1e-4"),
 }
-SHORT = {"embedding": "emb", "trunk": "trunk", "readout": "readout", "weight_decay": "wd"}
+SHORT = {
+    "embedding": "emb",
+    "trunk": "trunk",
+    "readout": "readout",
+    "weight_decay": "wd",
+}
 
 
 def decode_cell(cell: int) -> dict[str, int]:
@@ -119,13 +126,15 @@ def decode_cell(cell: int) -> dict[str, int]:
 
 
 def roll_mean(values: np.ndarray, window: int) -> np.ndarray:
-    return pd.Series(values).rolling(window, center=True, min_periods=1).mean().to_numpy()
+    return (
+        pd.Series(values).rolling(window, center=True, min_periods=1).mean().to_numpy()
+    )
 
 
 def tag_int(tags: list[str], prefix: str) -> int:
     hits = [t for t in tags if re.fullmatch(prefix + r"\d+", t)]
     assert len(hits) == 1, (prefix, tags)
-    return int(hits[0][len(prefix):])
+    return int(hits[0][len(prefix) :])
 
 
 def fetch(api: wandb.Api) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
@@ -140,7 +149,9 @@ def fetch(api: wandb.Api) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
         if final_epoch is None or final_epoch < MIN_EPOCHS:
             continue
         tags = list(run.tags)
-        h = run.history(keys=["epoch", METRIC, LOSS, NMSE], samples=FULL_HISTORY_SAMPLES)
+        h = run.history(
+            keys=["epoch", METRIC, LOSS, NMSE], samples=FULL_HISTORY_SAMPLES
+        )
         h = h.dropna(subset=["epoch", METRIC]).sort_values("epoch")
         h = h.drop_duplicates("epoch", keep="last").reset_index(drop=True)
         cell = tag_int(tags, "cell")
@@ -162,11 +173,18 @@ def fetch(api: wandb.Api) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
     return t, curves
 
 
-def score(t: pd.DataFrame, curves: dict[str, pd.DataFrame], budget: int) -> pd.DataFrame:
+def score(
+    t: pd.DataFrame, curves: dict[str, pd.DataFrame], budget: int
+) -> pd.DataFrame:
     t = t.copy()
     for col in (
-        "roll_max_matched", "epoch_at_matched", "roll_max_full", "epoch_at_full",
-        "pearson_last", "nmse_at_matched_peak", "loss_min_epoch",
+        "roll_max_matched",
+        "epoch_at_matched",
+        "roll_max_full",
+        "epoch_at_full",
+        "pearson_last",
+        "nmse_at_matched_peak",
+        "loss_min_epoch",
     ):
         t[col] = np.nan
     for i, rid in enumerate(t.run_id):
@@ -208,8 +226,11 @@ def effects(t: pd.DataFrame, col: str) -> dict[str, object]:
         "main": {},
         "interaction": {},
         "cell_means": {
-            int(c): {"mean": float(g.mean()), "n": int(len(g)),
-                     "seeds": [float(x) for x in g]}
+            int(c): {
+                "mean": float(g.mean()),
+                "n": int(len(g)),
+                "seeds": [float(x) for x in g],
+            }
             for c, g in cells
         },
     }
@@ -219,12 +240,15 @@ def effects(t: pd.DataFrame, col: str) -> dict[str, object]:
         lo = t[t[f] == 0][col]
         eff = float(hi.mean() - lo.mean())
         out["main"][f] = {
-            "level0": LEVELS[f][0], "level1": LEVELS[f][1],
-            "mean_level0": float(lo.mean()), "mean_level1": float(hi.mean()),
-            "effect": eff, "t": eff / se,
+            "level0": LEVELS[f][0],
+            "level1": LEVELS[f][1],
+            "mean_level0": float(lo.mean()),
+            "mean_level1": float(hi.mean()),
+            "effect": eff,
+            "t": eff / se,
         }
     for i, a in enumerate(FACTORS):
-        for b in FACTORS[i + 1:]:
+        for b in FACTORS[i + 1 :]:
             prod = coded[a] * coded[b]
             eff = float(t[col][prod == 1].mean() - t[col][prod == -1].mean())
             out["interaction"][f"{a}x{b}"] = {"effect": eff, "t": eff / se}
@@ -232,13 +256,17 @@ def effects(t: pd.DataFrame, col: str) -> dict[str, object]:
 
 
 def print_effects(title: str, e: dict[str, object]) -> None:
-    print(f"\n=== {title}: n={e['n_runs']}, grand mean {e['grand_mean']:.4f}, "
-          f"pooled within-cell sd {e['sd_pooled_within_cell']:.4f} (df {e['df']}), "
-          f"se per effect {e['se_effect']:.4f} ===")
+    print(
+        f"\n=== {title}: n={e['n_runs']}, grand mean {e['grand_mean']:.4f}, "
+        f"pooled within-cell sd {e['sd_pooled_within_cell']:.4f} (df {e['df']}), "
+        f"se per effect {e['se_effect']:.4f} ==="
+    )
     for f, m in e["main"].items():
-        print(f"  {f:13s} {m['level0']:>12s} {m['mean_level0']:.4f}  "
-              f"{m['level1']:>12s} {m['mean_level1']:.4f}   effect {m['effect']:+.4f}  "
-              f"t {m['t']:+.2f}")
+        print(
+            f"  {f:13s} {m['level0']:>12s} {m['mean_level0']:.4f}  "
+            f"{m['level1']:>12s} {m['mean_level1']:.4f}   effect {m['effect']:+.4f}  "
+            f"t {m['t']:+.2f}"
+        )
     for k, m in e["interaction"].items():
         print(f"  {k:24s} effect {m['effect']:+.4f}  t {m['t']:+.2f}")
 
@@ -248,17 +276,43 @@ def incumbent_at(budget: int) -> dict[str, float]:
         d = json.load(fh)
     rows = sorted(d["by_budget"], key=lambda r: abs(r["budget_epochs"] - budget))
     r = rows[0]
-    return {"budget_epochs": r["budget_epochs"], "mean": r["mean"], "sd": r["sd"],
-            "n": r["n"], "history_samples": d["history_samples"]}
+    return {
+        "budget_epochs": r["budget_epochs"],
+        "mean": r["mean"],
+        "sd": r["sd"],
+        "n": r["n"],
+        "history_samples": d["history_samples"],
+    }
 
 
-def figure(t: pd.DataFrame, curves: dict[str, pd.DataFrame], budget: int,
-           e_all: dict[str, object], inc: dict[str, float]) -> str:
-    plt.rcParams.update({"font.family": "Arial", "font.size": 6, "svg.fonttype": "none",
-                         "axes.linewidth": 0.5})
-    fig, axes = plt.subplots(1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(66)),
-                             gridspec_kw={"width_ratios": [1.35, 1.0, 1.15], "wspace": 0.5})
-    fig.subplots_adjust(left=0.065, right=0.99, top=0.9, bottom=0.27)
+def figure(
+    t: pd.DataFrame,
+    curves: dict[str, pd.DataFrame],
+    budget: int,
+    e_all: dict[str, object],
+    inc: dict[str, float],
+) -> str:
+    plt.rcParams.update(
+        {
+            "font.family": "Arial",
+            "font.size": 6,
+            "svg.fonttype": "none",
+            "axes.linewidth": 0.5,
+            "legend.frameon": True,
+            "legend.fancybox": False,
+            "legend.framealpha": 1.0,
+            "legend.edgecolor": "black",
+            "legend.facecolor": "white",
+            "patch.linewidth": 0.5,
+        }
+    )
+    fig, axes = plt.subplots(
+        1,
+        3,
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(66)),
+        gridspec_kw={"width_ratios": [1.35, 1.0, 1.15], "wspace": 0.5},
+    )
+    fig.subplots_adjust(left=0.065, right=0.99, top=0.87, bottom=0.27)
     col_emb = {0: PLOT_PALETTE[5], 1: PLOT_PALETTE[0]}
     marker_seed = {0: "o", 1: "s"}
 
@@ -270,41 +324,91 @@ def figure(t: pd.DataFrame, curves: dict[str, pd.DataFrame], budget: int,
         sub = t[t.cell == c]
         ax.plot([pos[c]] * 2, sub.roll_max_matched, color="black", lw=0.5, zorder=1)
         for _, r in sub.iterrows():
-            ax.scatter(pos[c], r.roll_max_matched, s=12, marker=marker_seed[int(r.seed)],
-                       facecolor=col_emb[int(r.embedding)], edgecolor="black", lw=0.4,
-                       zorder=3)
-    ax.axhspan(inc["mean"] - inc["sd"], inc["mean"] + inc["sd"], color=PLOT_PALETTE[3],
-               alpha=0.25, lw=0, zorder=0)
+            ax.scatter(
+                pos[c],
+                r.roll_max_matched,
+                s=12,
+                marker=marker_seed[int(r.seed)],
+                facecolor=col_emb[int(r.embedding)],
+                edgecolor="black",
+                lw=0.4,
+                zorder=3,
+            )
+    # Band in the solid pale fill (no alpha); its label is a legend entry, not text on it.
+    ax.axhspan(
+        inc["mean"] - inc["sd"],
+        inc["mean"] + inc["sd"],
+        color=PLOT_PALETTE_FILL[3],
+        lw=0,
+        zorder=0,
+        label=f"v9 arms (calm), n={inc['n']}, {inc['budget_epochs']:,} ep",
+    )
     ax.axhline(inc["mean"], color=PLOT_PALETTE[3], lw=0.8, zorder=0)
-    ax.text(len(order) - 0.6, inc["mean"] + inc["sd"] + 0.004,
-            f"v9 long-budget arms (calm emb.), n={inc['n']} at {inc['budget_epochs']:,} ep",
-            fontsize=5, color=PLOT_PALETTE[9], va="bottom", ha="right")
     ax.set_xticks(range(len(order)))
     ax.set_xticklabels(
-        [t[t.cell == c].cell_name.iloc[0].split("_", 1)[1].replace("_", " ") for c in order],
-        rotation=90, fontsize=5,
+        [
+            t[t.cell == c].cell_name.iloc[0].split("_", 1)[1].replace("_", " ")
+            for c in order
+        ],
+        rotation=90,
+        fontsize=5,
     )
     ax.set_ylabel(f"val Pearson roll_max, epochs <= {budget:,}")
-    ax.set_ylim(0, 0.2)
+    # Headroom above the band (top ~0.17) so the framed legend sits on clear white.
+    ax.set_ylim(0, 0.27)
     ax.yaxis.set_major_locator(MultipleLocator(0.05))
     ax.grid(axis="y", lw=0.3, alpha=0.35)
     for lvl, lab in ((0, "random_1024"), (1, "prot_T5_all")):
-        ax.scatter([], [], s=12, marker="o", facecolor=col_emb[lvl], edgecolor="black",
-                   lw=0.4, label=lab)
-    ax.scatter([], [], s=12, marker="o", facecolor="white", edgecolor="black", lw=0.4,
-               label="seed 0")
-    ax.scatter([], [], s=12, marker="s", facecolor="white", edgecolor="black", lw=0.4,
-               label="seed 1")
-    ax.legend(frameon=False, loc="lower right", fontsize=5, handlelength=1.0, borderpad=0.2,
-              ncol=2, columnspacing=0.8)
+        ax.scatter(
+            [],
+            [],
+            s=12,
+            marker="o",
+            facecolor=col_emb[lvl],
+            edgecolor="black",
+            lw=0.4,
+            label=lab,
+        )
+    ax.scatter(
+        [],
+        [],
+        s=12,
+        marker="o",
+        facecolor="white",
+        edgecolor="black",
+        lw=0.4,
+        label="seed 0",
+    )
+    ax.scatter(
+        [],
+        [],
+        s=12,
+        marker="s",
+        facecolor="white",
+        edgecolor="black",
+        lw=0.4,
+        label="seed 1",
+    )
+    ax.legend(
+        loc="upper left",
+        fontsize=5,
+        handlelength=1.0,
+        borderpad=0.3,
+        ncol=2,
+        columnspacing=0.8,
+    )
     ax.set_title("sixteen cells, two seeds each", fontsize=6, pad=3)
-    ax.text(-0.14, 1.04, "a", transform=ax.transAxes, fontsize=8, fontweight="bold")
+    panel_label(ax, "a")
 
     # (b) main effects and interactions with 2 se bars
     ax = axes[1]
     names, vals = [], []
-    contrast = {"embedding": "ptt5 - rand", "trunk": "small - big",
-                "readout": "linear - mlp", "weight_decay": "1e-4 - 1e-8"}
+    contrast = {
+        "embedding": "ptt5 - rand",
+        "trunk": "small - big",
+        "readout": "linear - mlp",
+        "weight_decay": "1e-4 - 1e-8",
+    }
     for f, m in e_all["main"].items():
         names.append(f"{SHORT[f]}: {contrast[f]}")
         vals.append(m["effect"])
@@ -316,22 +420,29 @@ def figure(t: pd.DataFrame, curves: dict[str, pd.DataFrame], budget: int,
     se = e_all["se_effect"]
     colors = [PLOT_PALETTE[1]] * 4 + [PLOT_PALETTE[2]] * 6
     ax.barh(y, vals, color=colors, edgecolor="black", lw=0.5, height=0.7)
-    ax.errorbar(vals, y, xerr=2 * se, fmt="none", ecolor="black", elinewidth=0.6, capsize=1.5)
+    ax.errorbar(
+        vals, y, xerr=2 * se, fmt="none", ecolor="black", elinewidth=0.6, capsize=1.5
+    )
     ax.axvline(0, color="black", lw=0.5)
     ax.set_yticks(y)
     ax.set_yticklabels(names, fontsize=5)
     ax.set_xlabel("effect on roll_max (bars: +/- 2 se)")
     ax.grid(axis="x", lw=0.3, alpha=0.35)
-    ax.set_title(f"pooled within-cell sd {e_all['sd_pooled_within_cell']:.4f}",
-                 fontsize=6, pad=3)
-    ax.text(-0.5, 1.04, "b", transform=ax.transAxes, fontsize=8, fontweight="bold")
+    ax.set_title(
+        f"pooled within-cell sd {e_all['sd_pooled_within_cell']:.4f}", fontsize=6, pad=3
+    )
+    panel_label(ax, "b")
 
     # (c) every curve, colored by embedding
     ax = axes[2]
     for _, r in t.iterrows():
         h = curves[r.run_id]
-        ax.plot(h.epoch, roll_mean(h[METRIC].to_numpy(), ROLL_WINDOW),
-                color=col_emb[int(r.embedding)], lw=0.5, alpha=0.8)
+        ax.plot(
+            h.epoch,
+            roll_mean(h[METRIC].to_numpy(), ROLL_WINDOW),
+            color=col_emb[int(r.embedding)],
+            lw=0.5,
+        )
     ax.axvline(budget, color="black", lw=0.5, ls="--")
     ax.set_xscale("log")
     ax.set_xlim(10, 1500)
@@ -341,7 +452,7 @@ def figure(t: pd.DataFrame, curves: dict[str, pd.DataFrame], budget: int,
     ax.set_ylabel(f"val Pearson, {ROLL_WINDOW}-epoch rolling mean")
     ax.grid(lw=0.3, alpha=0.35)
     ax.set_title("all 32 curves; dashed = matched budget", fontsize=6, pad=3)
-    ax.text(-0.22, 1.04, "c", transform=ax.transAxes, fontsize=8, fontweight="bold")
+    panel_label(ax, "c")
 
     for a in axes:
         for s in a.spines.values():
@@ -360,17 +471,30 @@ def main() -> None:
     api = wandb.Api(timeout=120)
     t, curves = fetch(api)
     budget = int(t.n_epochs.min())
-    print(f"matched budget = min final epoch = {budget}; final epochs: "
-          f"{sorted(t.n_epochs.unique().tolist())}")
+    print(
+        f"matched budget = min final epoch = {budget}; final epochs: "
+        f"{sorted(t.n_epochs.unique().tolist())}"
+    )
     t = score(t, curves, budget)
     t = t.sort_values(["cell", "seed"]).reset_index(drop=True)
     csv_path = osp.join(RESULTS, "v10_grid_factorial.csv")
     t.to_csv(csv_path, index=False)
     print(f"wrote {csv_path}")
 
-    cols = ["run_id", "cell", "cell_name", "seed", "n_epochs", "roll_max_matched",
-            "epoch_at_matched", "roll_max_full", "pearson_last", "nmse_at_matched_peak",
-            "loss_min_epoch", "chance_band"]
+    cols = [
+        "run_id",
+        "cell",
+        "cell_name",
+        "seed",
+        "n_epochs",
+        "roll_max_matched",
+        "epoch_at_matched",
+        "roll_max_full",
+        "pearson_last",
+        "nmse_at_matched_peak",
+        "loss_min_epoch",
+        "chance_band",
+    ]
     with pd.option_context("display.width", 220, "display.max_rows", 100):
         print(t[cols].to_string(index=False, float_format=lambda x: f"{x:.4f}"))
 
@@ -378,22 +502,33 @@ def main() -> None:
     print_effects(f"matched budget (epochs <= {budget}), all 32 runs", e_all)
     healthy = t[~t.chance_band].reset_index(drop=True)
     e_healthy = effects(healthy, "roll_max_matched")
-    print_effects(f"matched budget, {len(healthy)} runs above the chance band", e_healthy)
+    print_effects(
+        f"matched budget, {len(healthy)} runs above the chance band", e_healthy
+    )
     e_full = effects(t, "roll_max_full")
-    print_effects("UNMATCHED full-run roll_max (budget differs by run; not for contrast)",
-                  e_full)
+    print_effects(
+        "UNMATCHED full-run roll_max (budget differs by run; not for contrast)", e_full
+    )
 
     inc = incumbent_at(budget)
-    print(f"\nincumbent replicate reference from short_budget_spread.json: "
-          f"{inc['n']} runs at {inc['budget_epochs']} epochs, mean {inc['mean']:.4f} "
-          f"sd {inc['sd']:.4f} (its curve was read at {inc['history_samples']} samples)")
+    print(
+        f"\nincumbent replicate reference from short_budget_spread.json: "
+        f"{inc['n']} runs at {inc['budget_epochs']} epochs, mean {inc['mean']:.4f} "
+        f"sd {inc['sd']:.4f} (its curve was read at {inc['history_samples']} samples)"
+    )
     best_cell = max(e_all["cell_means"].items(), key=lambda kv: kv[1]["mean"])
-    print(f"best cell by mean: c{best_cell[0]} "
-          f"{t[t.cell == best_cell[0]].cell_name.iloc[0]} mean {best_cell[1]['mean']:.4f} "
-          f"seeds {best_cell[1]['seeds']}")
+    print(
+        f"best cell by mean: c{best_cell[0]} "
+        f"{t[t.cell == best_cell[0]].cell_name.iloc[0]} mean {best_cell[1]['mean']:.4f} "
+        f"seeds {best_cell[1]['seeds']}"
+    )
     chance = t[t.chance_band]
-    print(f"{len(chance)} run(s) never left the chance band (< {CHANCE_BAND}): "
-          + ", ".join(f"{r.run_id} {r.cell_name} seed{r.seed}" for _, r in chance.iterrows()))
+    print(
+        f"{len(chance)} run(s) never left the chance band (< {CHANCE_BAND}): "
+        + ", ".join(
+            f"{r.run_id} {r.cell_name} seed{r.seed}" for _, r in chance.iterrows()
+        )
+    )
 
     stem = figure(t, curves, budget, e_all, inc)
     print(f"figure: {stem}.svg")
@@ -410,8 +545,12 @@ def main() -> None:
         "n_rows_short": int((t.rows_short_by > 0).sum()),
         "chance_band": CHANCE_BAND,
         "chance_band_runs": [
-            {"run_id": r.run_id, "cell_name": r.cell_name, "seed": int(r.seed),
-             "roll_max_matched": float(r.roll_max_matched)}
+            {
+                "run_id": r.run_id,
+                "cell_name": r.cell_name,
+                "seed": int(r.seed),
+                "roll_max_matched": float(r.roll_max_matched),
+            }
             for _, r in chance.iterrows()
         ],
         "incumbent_reference": inc,

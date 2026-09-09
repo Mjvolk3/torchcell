@@ -463,6 +463,11 @@ case "$ARM" in
                      ARM_TAGS=(mech-objective dist-listmle xfer-yes stage-listmle) ;;
   Q_listmle_mse)     OVERRIDES=(multitask.dist=listmle_mse)
                      ARM_TAGS=(mech-objective dist-listmle_mse xfer-yes stage-listmle) ;;
+  # Q_listmle at batch 64: each gene's list is 64 strains per step instead of 32 (fewer at
+  # k > 0). Halves the optimizer steps per epoch at the same lr, as Q_pearson_b64 did. Solo
+  # on its card (batch 64 is ~40 GB), so batch size and packing are confounded here too.
+  Q_listmle_b64)     OVERRIDES=(multitask.dist=listmle data_module.batch_size=64)
+                     ARM_TAGS=(mech-objective dist-listmle batch64 xfer-yes stage-listmle_b64) ;;
   # ==================== MECHANISM ROUND (2026.09.01), config cgt_expr_v9_mask
   # The pair-term ladder was already run in wave 6 (V_* above) at ~4,100 epochs, but at ONE
   # seed per arm and on cgt_expr_012 / project v8. Its eight arms span 0.1925 to 0.2276, a

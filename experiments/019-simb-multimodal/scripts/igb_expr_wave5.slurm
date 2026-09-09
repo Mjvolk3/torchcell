@@ -225,6 +225,16 @@ case "$STAGE" in
   listmle) ARMS=(Q_listmle Q_listmle_mse); SEEDS=(0 1)
           RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.max_epochs=6000 trainer.train_eval_every=10" ;;
+  # LISTMLE_B64 -- the pure ranking loss with 64-strain lists, one run per card, on the
+  # idle A40s of the `gpu` partition (2026-09-08; cabbi had two free cards, taken by the
+  # packed stage above).
+  #
+  #   sbatch -p gpu --gres=gpu:1 --cpus-per-task=8 --mem=60g --time=5-00:00:00 \
+  #       --array=0-1 --export=ALL,W5_STAGE=listmle_b64,... igb_expr_wave5.slurm
+  listmle_b64)
+          ARMS=(Q_listmle_b64); SEEDS=(0 1)
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.max_epochs=6000 trainer.train_eval_every=10" ;;
   canary_listmle)
           ARMS=(Q_listmle Q_listmle_mse); SEEDS=(0)
           RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
@@ -316,7 +326,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|resume|resume_many|mech)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

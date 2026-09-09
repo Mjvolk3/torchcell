@@ -8,7 +8,7 @@ created: 1787795214616
 
 ## 2026.08.26 - Retrospective across all six phenotype strands
 
-Typeset deliverable: `notes-tex/019-simb-multimodal/main.pdf`
+Typeset deliverable: `notes-tex/019-simb-multimodal/019-simb-multimodal.pdf` (renamed from `main.pdf` on 2026-09-08, documents are named for their directory)
 (`make -C notes-tex/019-simb-multimodal` to rebuild, `make check` for the gate).
 This note is the working index; the PDF is the document.
 

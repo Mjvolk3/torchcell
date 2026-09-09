@@ -2,7 +2,7 @@
 # [[experiments.019-simb-multimodal.phenotype-strand-retrospective]]
 # https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/019-simb-multimodal/Makefile
 
-DOC := main
+DOC := 019-simb-multimodal
 
 # No Zotero collection is set. Every work this document refers to is named inline
 # with its DOI rather than cited, because the document's subject is our own runs

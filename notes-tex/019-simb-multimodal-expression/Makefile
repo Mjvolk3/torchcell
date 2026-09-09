@@ -2,7 +2,7 @@
 # [[experiments.019-simb-multimodal.expression-strand-retrospective]]
 # https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/019-simb-multimodal-expression/Makefile
 
-DOC := main
+DOC := 019-simb-multimodal-expression
 
 # No Zotero collection: the document's subject is our own runs, and the outside
 # literature enters only through the SIMB retrospective it continues, which names

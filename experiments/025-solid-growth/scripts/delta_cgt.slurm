@@ -56,7 +56,17 @@ DELTA_PY="$DELTA_CONDA_BASE/envs/$DELTA_CONDA_ENV/bin/python"
 # torch + PyG + torchcell from Lustre, which held a sanity check for 38 minutes in July 2026.
 NUM_WORKERS="${NUM_WORKERS:-0}"
 
-BUILD_REL="data/torchcell/experiments/010-kuzmin-tmi/001-small-build-schema-v2"
+# Which build the preflight checks. The 010b configs (cgt_010b_*) read the 010 build on
+# /scratch; every other 025 config reads the 025 FULL build, which on Delta is a symlink
+# /scratch/.../025-solid-growth/001-full-build -> the Taiga copy at
+# /taiga/illinois/eng/chbe/zhao5/mjvolk3/projects/torchcell/... (sync_taiga_025_build.sh,
+# 2026-09-09; no Duo, GilaHyper -> Radiant -> Taiga -> Delta). The symlink keeps
+# DATA_ROOT on /scratch, where genome/GO/STRING/TFLink already live.
+if [[ "$CONFIG_NAME" == cgt_010b_* ]]; then
+  BUILD_REL="data/torchcell/experiments/010-kuzmin-tmi/001-small-build-schema-v2"
+else
+  BUILD_REL="data/torchcell/experiments/025-solid-growth/001-full-build"
+fi
 
 echo "=========================================================="
 echo "job         : $SLURM_JOB_ID  name=$SLURM_JOB_NAME  host=$(hostname)"
@@ -74,7 +84,8 @@ echo "=========================================================="
 for d in "$BUILD_REL/processed/lmdb" data/sgd/genome data/go data/string data/tflink; do
   [[ -e "$DELTA_DATA_ROOT/$d" ]] || {
     echo "ERROR: missing $DELTA_DATA_ROOT/$d" >&2
-    echo "       The 010 build is 1.5 GB; ship it with sync_delta_010_build.sh from GilaHyper." >&2
+    echo "       010 build: sync_delta_010_build.sh (Duo). 025 build: sync_taiga_025_build.sh" >&2
+    echo "       from GilaHyper, then the /scratch symlink to the Taiga copy (see above)." >&2
     echo "       A missing processed/ makes Neo4jCellDataset try to REBUILD from a database" >&2
     echo "       this node cannot reach." >&2
     exit 1; }

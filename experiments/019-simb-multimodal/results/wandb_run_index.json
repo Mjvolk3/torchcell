@@ -4,7 +4,7 @@
     "torchcell_019_expr_v9": "https://wandb.ai/zhao-group/torchcell_019_expr_v9",
     "torchcell_019_expr_v10": "https://wandb.ai/zhao-group/torchcell_019_expr_v10"
   },
-  "n_runs": 74,
+  "n_runs": 80,
   "runs": [
     {
       "round": "incumbent",
@@ -139,7 +139,7 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "m6utaeu8",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/m6utaeu8",
-      "epochs": 9526
+      "epochs": 9896
     },
     {
       "round": "objective",
@@ -175,7 +175,7 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "eiu664kx",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/eiu664kx",
-      "epochs": 9777
+      "epochs": 9888
     },
     {
       "round": "objective",
@@ -193,7 +193,7 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "1xa3x8uc",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/1xa3x8uc",
-      "epochs": 9526
+      "epochs": 9896
     },
     {
       "round": "objective",
@@ -229,7 +229,7 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "g69wskm0",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/g69wskm0",
-      "epochs": 9777
+      "epochs": 9888
     },
     {
       "round": "objective",
@@ -319,7 +319,7 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "zaul43n1",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/zaul43n1",
-      "epochs": 4091
+      "epochs": 4298
     },
     {
       "round": "pearson",
@@ -328,7 +328,7 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "kspeoljg",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/kspeoljg",
-      "epochs": 4074
+      "epochs": 4291
     },
     {
       "round": "pearson",
@@ -346,7 +346,7 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "hsauh7al",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/hsauh7al",
-      "epochs": 4089
+      "epochs": 4298
     },
     {
       "round": "pearson",
@@ -355,7 +355,7 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "ppc2pyv5",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/ppc2pyv5",
-      "epochs": 4077
+      "epochs": 6576
     },
     {
       "round": "pearson",
@@ -373,7 +373,7 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "7ylecrjz",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/7ylecrjz",
-      "epochs": 6345
+      "epochs": 9118
     },
     {
       "round": "pearson",
@@ -382,7 +382,61 @@
       "project": "torchcell_019_expr_v9",
       "wandb_run_id": "wb2xocf2",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/wb2xocf2",
-      "epochs": 6339
+      "epochs": 9114
+    },
+    {
+      "round": "listmle",
+      "arm": "Q_listmle",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "teaeym0k",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/teaeym0k",
+      "epochs": 1959
+    },
+    {
+      "round": "listmle",
+      "arm": "Q_listmle",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "g755dzhn",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/g755dzhn",
+      "epochs": 1792
+    },
+    {
+      "round": "listmle",
+      "arm": "Q_listmle_mse",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "dhqpktod",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/dhqpktod",
+      "epochs": 637
+    },
+    {
+      "round": "listmle",
+      "arm": "Q_listmle_mse",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "j6m31tov",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/j6m31tov",
+      "epochs": 480
+    },
+    {
+      "round": "listmle",
+      "arm": "Q_listmle_b64",
+      "seed": 0,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "k79hvcqe",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/k79hvcqe",
+      "epochs": 2438
+    },
+    {
+      "round": "listmle",
+      "arm": "Q_listmle_b64",
+      "seed": 1,
+      "project": "torchcell_019_expr_v9",
+      "wandb_run_id": "6b33ftkt",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_019_expr_v9/runs/6b33ftkt",
+      "epochs": 2437
     },
     {
       "round": "v10",

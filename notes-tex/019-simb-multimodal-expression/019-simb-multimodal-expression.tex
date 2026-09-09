@@ -3,8 +3,9 @@
 %% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/019-simb-multimodal-expression/019-simb-multimodal-expression.tex
 %%
 %% Typeset counterpart of notes/experiments.019-simb-multimodal.expression-strand-retrospective.md,
-%% the running record of the EXPRESSION strand after the SIMB sprint. The six-strand
-%% retrospective (notes-tex/019-simb-multimodal/) stays as reviewed; everything that
+%% the running record of the EXPRESSION strand. The six-strand retrospective
+%% (notes-tex/019-simb-multimodal/) stays as reviewed; its expression material is carried
+%% over into section 0 here so this document is self-contained, and everything that
 %% happened to expression after its launch section lives here.
 %%
 %% Build:  make            -> 019-simb-multimodal-expression.pdf         (draft: status chips + provenance flags)
@@ -18,9 +19,9 @@
 \documentclass[10pt,a4paper]{article}
 \usepackage[draft]{tcdoc}
 
-\title{\vspace{-1.5em}Expression After SIMB\\
-  {\large The Knockout-Expression Strand: What the Campaign Established,\\
-   Read Round by Round}}
+\title{\vspace{-1.5em}Knockout Expression\\
+  {\large The Genotype-to-Expression Strand: the Task, the Model, What the Campaign\\
+   Established Round by Round, and What to Run Next}}
 \author{Michael Volk}
 \date{\today}
 
@@ -30,42 +31,50 @@
 
 \begin{abstract}
 \noindent
-One strand of the SIMB retrospective, knockout expression on Kemmeren and Sameith, became
-the campaign that followed it: four rounds on IGB and Delta between 2026-08-31 and
-2026-09-08, all under the masked-label objective of project \file{torchcell_019_expr_v9}.
-Every score is one statistic, the maximum of a centered 5-epoch rolling mean of the
-per-gene validation Pearson, read from the full history of every run and placed against
-the eight long-budget runs of the v9 mask-schedule round, which spread $0.0222$ around a
-mean of $0.1965$ at the full budget. Those eight were taken for identical-config
-replicates until 2026-09-08; they are eight arms, and their spread bounds the replicate
-spread from above rather than measuring it.
+The task is to predict the $\log_2$ expression ratio of every measured gene in a
+single-deletion strain from the deletion alone, on the Kemmeren and Sameith compendia,
+scored by the per-gene Pearson across held-out strains against a replicate ceiling of
+$0.775$. The incumbent, a graph-masked transformer whose encoder runs once on the
+wild-type graph and whose perturbation enters afterward through a one-key cross-attention,
+sits at $0.1965 \pm 0.0222$ across the eight long-budget arms of the v9 mask-schedule
+round, 25\,\% of the ceiling. Every score in this document is one statistic, the maximum
+of a centered 5-epoch rolling mean of the validation Pearson, read from the full history
+of every run and placed against those eight, whose spread bounds the replicate spread
+from above rather than measuring it. The campaign that followed the SIMB retrospective ran
+five rounds on IGB and Delta between 2026-08-31 and 2026-09-09.
 
 What is established. The distributional head is not load-bearing: a point head collapses,
 the CRPS head collapses two times in three, and the Laplace-CRPS head ties the quantile
-head to $0.0005$. The validation loss bottoms out at a few hundred epochs in every run
-while the metric keeps rising to beyond 19,000, so the long budget buys Pearson on a rising
+head to $0.0005$. Every decoder family tried before the campaign, the GEARS-style
+cross-gene readout among them, was stopped inside the first 300 epochs and was never
+compared. The validation loss bottoms out at a few hundred epochs in every run while the
+metric keeps rising to beyond 19,000, so the long budget buys Pearson on a rising
 objective. Training on the metric itself does not escape that: pure Pearson at batch 32
-collapses to constant outputs at every seed, and the batch-64 variant that survives sits on
-the long-budget band rather than above it. The one factor that moves the score by more
-than the replicate spread is the content of the gene embedding, ProtT5 over random by
-$0.07$ at 1,000 epochs against a within-cell replicate sd of $0.025$; trunk depth, readout
-width and weight decay do not. The per-gene readout is
-$+0.03$ over its in-round reference at two seeds, under the resolution of that round, and
-the pair term alone is a null. Four of four packed five-day tasks died of host memory.
+collapses to constant outputs at every seed, the batch-64 variant that survives peaks by
+epoch 2,400 on the long-budget band and gives part of it back, and a ranking objective
+(ListMLE) learns without collapsing but sits below the band at matched epochs so far. The
+one factor that moves the score by more than the replicate spread is the content of the
+gene embedding, ProtT5 over random by $0.07$ at 1,000 epochs against a within-cell
+replicate sd of $0.025$; trunk depth, readout width and weight decay do not. The per-gene
+readout is $+0.03$ over its in-round reference at two seeds, under the resolution of that
+round, and the pair term alone is a null. Four of four packed five-day tasks died of host
+memory.
 
-What is not. Nothing measured beats the incumbent's replicate mean at any budget; the
-incumbent's own embedding, \file{calm}, has not been placed against ProtT5; and no design
-run so far resolves a gap under about $0.04$ at the full budget.
+What is not. Nothing measured beats the incumbent's mean at any budget; the incumbent's
+own embedding, \file{calm}, has not been placed against ProtT5; the CLS state is
+wild-type for every strain and no arm has yet put the perturbation inside the encoder;
+and no design run so far resolves a gap under about $0.04$ at the full budget.
 \end{abstract}
 
 \vspace{0.5em}
 {\small\color{tcgray}
-\textbf{How to read this.} \cref{sec:findings} is the state of the strand: every claim with
-its script, its statistic and its sample size, in the order the evidence arrived.
-\cref{sec:readouts} is the readout of the three rounds that returned on 2026-09-08.
-\cref{sec:next} is what the evidence leaves open. The design and launch of the rounds,
-and the retrospective they grew out of, are in \file{notes-tex/019-simb-multimodal/}
-(sections 9 and 10 there), which is not repeated here.\par\smallskip
+\textbf{How to read this.} \cref{sec:strand} is the strand as it stood before the
+campaign: the task, the model and where strain identity enters it, the heads and decoder
+families already tried, the published operators, and the imputation signal, carried over
+from the SIMB retrospective so nothing here needs that document. \cref{sec:findings} is
+the state of the strand claim by claim, with script, statistic and sample size.
+\cref{sec:readouts} is the readout of the campaign's rounds. \cref{sec:next} is what the
+evidence leaves open and what fits the hardware now free.\par\smallskip
 
 Working note: \file{notes/experiments.019-simb-multimodal.expression-strand-retrospective.md}\par
 Generating scripts: \file{experiments/019-simb-multimodal/scripts/}\par
@@ -75,6 +84,7 @@ Leaderboard: \file{experiments/019-simb-multimodal/results/round_leaderboards.cs
 \tccontents
 
 \clearpage
+\input{sections/0-strand}
 \input{sections/1-findings}
 \input{sections/2-readouts}
 \input{sections/3-next}

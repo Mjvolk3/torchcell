@@ -43,3 +43,10 @@ are earned on a rising validation loss. Which of the two is the target is a deci
 measurement; this table sizes the gap. Note `val/loss` is the pinball loss for `quantile`,
 CRPS for the others, and mse for `point`, so only the epoch structure is comparable across
 `dist`, never the value.
+
+## 2026.09.09 - Figure height
+
+58 mm tall with a 0.17 bottom margin; at 55 mm and 0.14 the "epoch + 1" x labels were
+clipped off the bottom of the exported panel, visible in the SVG render. Rerun with the
+four ListMLE runs included: 27 live runs, medians unchanged (loss minimum at epoch 481,
+Pearson peak at 2,433, +0.057 between them, final loss 9.0 % above its minimum).

@@ -1,0 +1,22 @@
+arm,wave,override,mechanism,n_seeds,epochs_min,epochs_max,smoothed_mean,smoothed_best
+A0_baseline,wave1,,"additive reference, $g(h_i + c_b)$",3,80,120,0.0807496502995491,0.1526544600725174
+A1_free16,wave1,multitask.free_gene_dim=16,free per-gene lookup of 16 dims,1,139,139,0.1522716373205185,0.1522716373205185
+A2_self,wave1,"""$PROP=true"" model.perturbation_propagation.hops=0",self-indicator only (hop 0),1,123,123,0.151651445031166,0.151651445031166
+A4_prop_h2,wave1,"""$PROP=true"" model.perturbation_propagation.hops=2","random-walk propagation, 2 hops",3,70,140,0.10024996399879454,0.1724246799945831
+A6_prop_sparse,wave1,"""$PROP=true"" model.perturbation_propagation.hops=2 ""model.perturbation_propagation.graphs=[regulatory_interaction,tflink,physical_interaction]""","propagation, 2 hops, sparse",1,140,140,0.1750558316707611,0.1750558316707611
+B0_protT5,wave1,"""cell_dataset.node_embeddings=[prot_T5_all]""",ProtT5 gene embeddings,1,70,70,0.0889143660664558,0.0889143660664558
+A6_prop_sparse,wave2,"""$PROP=true"" model.perturbation_propagation.hops=2 ""model.perturbation_propagation.graphs=[regulatory_interaction,tflink,physical_interaction]""","propagation, 2 hops, sparse",2,76,88,0.06828486435115336,0.0901378899812698
+C0_concat,wave2,multitask.concat_context=true,head sees $[h_{\mathrm{pert}}; h_i; c_b]$,1,140,140,0.1610332906246185,0.1610332906246185
+D1_bilinear32,wave2,multitask.bilinear_rank=32,rank-32 bilinear pair term,1,123,123,0.1520950108766555,0.1520950108766555
+E0_perceiver32,wave2,model.post_perturbation_mixing.enabled=true model.post_perturbation_mixing.num_latents=32,Perceiver mixing after the perturbation,1,114,114,0.157191264629364,0.157191264629364
+A0_baseline,wave3,,"additive reference, $g(h_i + c_b)$",1,196,196,0.1575953185558319,0.1575953185558319
+A1_ref,wave3,,"additive reference, $g(h_i + c_b)$",4,242,250,0.07613746002316471,0.1575953185558319
+A2_prop_sparse,wave3,"""$PROP=true"" model.perturbation_propagation.hops=2 ""model.perturbation_propagation.graphs=[regulatory_interaction,tflink,physical_interaction]""","propagation, 2 hops, sparse",4,50,51,0.07911215070635076,0.1304763868451118
+A4_nullsink,wave3,model.perturbation_head.null_sink=true model.perturbation_head.null_sink_bias_init=-4.0 model.perturbation_head.null_sink_trainable=true,null-sink gated attention,4,186,189,0.07586490483954543,0.1493340820074081
+D1_bilinear32,wave3,multitask.bilinear_rank=32,rank-32 bilinear pair term,1,175,175,0.1479223027825355,0.1479223027825355
+D2_mask,wave3,model.attention_mask.enabled=true model.graph_regularization.graph_reg_lambda=0.0,hard graph mask replaces the KL,1,235,235,0.1494003057479858,0.1494003057479858
+E0_perceiver_on,wave3,model.post_perturbation_mixing.enabled=true model.post_perturbation_mixing.num_latents=32 'model.post_perturbation_mixing.gate_mode=on',Perceiver mixing after the perturbation,1,181,181,0.1273722171783447,0.1273722171783447
+F1_attn4,wave3,model.perturbation_head.num_layers=4 model.perturbation_head.extra_layer_ffn_mult=0,deeper perturbation head,1,222,222,0.155009576678276,0.155009576678276
+F1_deep2,wave3,model.perturbation_head.num_layers=2,deeper perturbation head,1,202,202,0.1677793800830841,0.1677793800830841
+GEARS_crossgene,wave3,model.cross_gene.enabled=true model.cross_gene.rank=64,"GEARS-style cross-gene readout, rank 64",1,168,168,0.1333132624626159,0.1333132624626159
+H0_factor,wave3,multitask.response_basis_rank=32,rank-32 response basis (factored readout),1,276,276,0.1548797637224197,0.1548797637224197

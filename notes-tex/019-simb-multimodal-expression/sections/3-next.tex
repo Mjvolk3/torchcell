@@ -1,49 +1,104 @@
 %% notes-tex/019-simb-multimodal-expression/sections/3-next.tex
 %% SOURCE: the open-decision entries of
-%% notes/experiments.019-simb-multimodal.expression-strand-retrospective.md (2026-09-06 and
-%% 2026-09-08); the power figures from results/short_budget_spread.json.
+%% notes/experiments.019-simb-multimodal.expression-strand-retrospective.md (2026-09-06 to
+%% 2026-09-09); the power figures from results/short_budget_spread.json and
+%% results/v10_grid_factorial.json; cluster state from squeue/sinfo on IGB and the Delta
+%% `accounts` listing, both read 2026-09-09 18:10 CT.
 
-\section{What the evidence leaves open\secstatus{todo}}
+\section{What the evidence leaves open, and what fits the hardware\secstatus{todo}}
 \label{sec:next}
 
 Each item is a decision the measurements above do not make, stated with the measurement
-that would.
+that would. The hardware they have to fit, as of 2026-09-09 18:10 CT: on IGB, all eight
+cabbi RTX 6000 cards are allocated (three to another user, five to this campaign's
+surviving runs), the two batch-64 Pearson tasks free two cards when they reach 9{,}900 in
+about six hours, the packed anchored-Pearson task frees one about a day later, and the
+ranking round holds two cabbi cards and two A40s for one to two more days; four A40s on
+the \file{gpu} partition are idle; the mmli A100s are not to be touched. On Delta the
+\file{bbub} allocation holds 3{,}738 GPU-hours under a 48-hour wall, which at the v10
+grid's measured rate of 990 to 1{,}400 epochs per task fits every 1{,}000-epoch design
+below and none of the 9{,}900-epoch ones.
 
-\pfstep{Which number is the target.} Stopping on the validation loss says every run is done
+\pfstep{Which number is the target} Stopping on the validation loss says every run is done
 by epoch 300 to 700 and the long-budget campaign is over; stopping on Pearson says the
 curves have not turned at 19,000 (\cref{sec:findings-lossmin}). The manuscript reports
-Pearson and the objective is the pinball loss, and the metric-aligned round shows the
-naive resolution, training on Pearson, is unstable at batch 32 and no better than the
-incumbent at batch 64 (\cref{sec:readouts-pearson}). The decision is about what the paper
-claims, not about what to run.
+Pearson and the objective is the pinball loss, and the two metric-aligned rounds show the
+naive resolution is unstable at batch 32 under Pearson, no better than the incumbent at
+batch 64, and slow under ListMLE (\cref{sec:readouts-pearson},
+\cref{sec:readouts-listmle}). The decision is about what the paper claims, not about what
+to run.
 
-\pfstep{The incumbent's embedding against ProtT5.} The grid measured content against
-random at width 1{,}024 and did not include \file{calm}
-(\cref{sec:readouts-factorial}). A two-arm replicate set at the incumbent configuration,
-\file{calm} against \file{prot_T5_all}, three seeds each at 1{,}000 epochs, resolves a gap
-of about $0.03$ at the within-cell replicate sd of $0.012$ to $0.025$ measured in the v10
-grid, and is the cheapest contrast left on the table: six runs of under a day each. It
-would also give the first true replicate spread of the incumbent configuration, which the
-eight long-budget arms only bound.
+\pfstep{The incumbent's embedding against ProtT5: the cheapest contrast on the table, and
+it fits Delta} The grid measured content against random at width 1{,}024 and did not
+include \file{calm} (\cref{sec:readouts-factorial}). A two-arm replicate set at the
+incumbent configuration, \file{calm} against \file{prot_T5_all}, three seeds each at
+1{,}000 epochs, resolves a gap of about $0.03$ at the within-cell replicate sd of $0.012$
+to $0.025$, and is six runs of under 48 hours each: one Delta array on \file{bbub}, about
+300 GPU-hours. It also gives the first true replicate spread of the incumbent
+configuration, which the eight long-budget arms only bound, and that spread is what every
+later design is sized by.
 
-\pfstep{The per-gene readout at a resolving replicate count.} $+0.027$ at two pairs against a
-resolution of $0.06$ (\cref{sec:readouts-mech}). Detecting $0.03$ at the 4{,}000-epoch
-spread of $0.0171$ needs about six pairs; at 1{,}000 epochs and $0.0099$ it needs three.
-Whether the arm's early peak and give-back survive a shorter budget is what a 1{,}000-epoch
-replicate would also show.
+\pfstep{The per-gene readout at a resolving replicate count, also on Delta} $+0.027$ at
+two pairs against a resolution of $0.06$ (\cref{sec:readouts-mech}). Detecting $0.03$ at
+the 4{,}000-epoch spread of $0.0171$ needs about six pairs; at 1{,}000 epochs and
+$0.0099$ it needs three, which is six runs, \texttt{R\_ref} against \texttt{R\_pergene},
+and a second 48-hour Delta array. Whether the arm's early peak and give-back survive a
+shorter budget is what the same runs show.
 
-\pfstep{The Pearson round.} The three cabbi cards holding collapsed batch-32 runs can be
-freed now or left to the wall on 2026-09-11; the packed tasks cannot be partially
-canceled without killing their live sibling, and the live \file{pearson_mse} seed sits in
-one of them. The batch-64 runs are the only informative survivors and are solo.
+\pfstep{The batch-32 solo Pearson run that separates batch size from placement} The
+batch-64 pair are the round's only informative survivors and batch size is confounded
+with solo placement in that arm (\cref{sec:readouts-pearson}). One batch-32 solo seed of
+the pure objective is the run that separates the two; it needs the 9{,}900-epoch budget,
+so it takes one cabbi card for 3.5 days when the batch-64 tasks free theirs.
 
-\pfstep{Packing.} Four of four packed five-day tasks died of host memory
+\pfstep{The ranking round, when it ends} The four surviving runs reach 6{,}000 epochs in
+one to two days. The readout then is the matched-budget Spearman and Pearson against the
+long-budget arms at 6{,}000 ($0.192 \pm 0.018$) and against the Pearson-objective
+survivors, and the one follow-up the current curves motivate is a learning-rate arm,
+since the slow start is the only thing separating ListMLE from the band so far and the
+rate was inherited from the pinball loss. That is a hypothesis until the round reads out.
+
+\pfstep{The perturbation never touches the encoder, and the CLS state is wild-type} This
+is the structural fact of \cref{sec:strand-model}: the encoder runs once on the unperturbed
+graph, $h_{\mathrm{CLS}}$ is byte-identical across strains, and the deletion is applied to
+finished gene states through a one-key cross-attention. Every mechanism arm so far has
+been a different way of applying the perturbation after the encoder, and none puts it
+inside. Three designs would, none of them trained here, listed by how much they change:
+\begin{itemize}
+\item \textbf{Perturb the CLS as well as the genes.} Run the existing perturbation
+  operator on $h_{\mathrm{CLS}}$ too, cross-attending it to the deleted set, so the
+  whole-cell summary becomes strain-specific at the cost of one more query. Cheapest,
+  restores a strain-dependent global state, and leaves the pair-term degeneracy exactly
+  where it is.
+\item \textbf{Edit the token before the encoder.} Remove or flag the deleted gene's token
+  in the encoder input (Geneformer's in-silico deletion, scGPT's perturbation flag), so the
+  graph-masked self-attention carries the deletion outward to every gene and to CLS along
+  the interaction graphs, and the one-key degeneracy never arises. This is the design that
+  uses the graphs for the perturbation rather than only for the wild-type state. Its cost
+  is one encoder pass per strain instead of one per batch; hypothesis (untested), at 39
+  batches per epoch and 17 to 31 s/epoch that is a wall-clock multiplier near the batch
+  size unless a shallow strain-specific encoder is stacked on frozen wild-type layer
+  outputs.
+\item \textbf{Perturbation tokens, typed by what is known.} The token-edit design works
+  because a deletion names its node. An environmental perturbation, an antifungal added to
+  the medium, names no gene, so it cannot be an edit; the generic form is a set of typed
+  perturbation tokens entering the encoder beside the gene tokens, a gene-edit token that
+  attends to its gene and an environment token that attends to CLS or to every gene, with
+  the encoder deciding which genes an environment token reaches. That covers deletions
+  and environments in one mechanism and makes CLS strain-specific by construction, and it
+  is the same encoder-per-strain cost as the token edit.
+\end{itemize}
+None of these is launchable this week: the first is a small change to the model file, the
+other two restructure the forward pass, and all three are hypotheses about mechanism until
+run at a matched budget against the incumbent.
+
+\pfstep{Packing} Four of four packed five-day tasks died of host memory
 (\cref{sec:readouts-oom}). Until the growth is identified, a five-day arm is either solo on
 its card or budgeted at 48~GB per run rather than 30, and either choice halves the slots
-the launch arithmetic assumed.
+the launch arithmetic assumed. Delta's 48-hour wall sidesteps it for the short designs.
 
-\pfstep{The per-gene mean on squared error.} No live run beats \file{nmse} $= 1$ at its
-Pearson peak (\cref{sec:findings-state}). The retrospective's one-parameter rescale
-argument has not been applied to any run of the campaign; it costs nothing and would say
-whether the campaign's models are, like the sprint's, spread $1.8\times$ wider than their
-correlation justifies.
+\pfstep{The per-gene mean on squared error} No live run beats \file{nmse} $= 1$ at its
+Pearson peak (\cref{sec:findings-state}). The one-parameter rescale argument of
+\cref{sec:strand-model}'s source, multiplying every prediction by $r/s$ estimated on
+train, changes no correlation and takes \file{nmse} to $1 - r^2$; it has not been applied
+to any run of the campaign, costs nothing, and belongs at the point a figure is drawn.

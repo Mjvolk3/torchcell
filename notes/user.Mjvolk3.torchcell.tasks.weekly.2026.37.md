@@ -19,3 +19,13 @@ created: 1788904951158
 - [x] `wandb_run_index.py` links all 74 runs behind the expression document to their W&B pages, generated from the same result files the sections read [[experiments.019-simb-multimodal.scripts.wandb_run_index]]
 - [x] Both 019 notes-tex documents renamed for their directory (`019-simb-multimodal.pdf`, `019-simb-multimodal-expression.pdf`), matching main's convention [[experiments.019-simb-multimodal.expression-strand-retrospective]]
 - [x] `loss_min_vs_pearson_peak.py` now writes a stable figure name and excludes the Pearson-objective arms, whose loss and metric coincide by construction; the 23-run medians are unchanged (loss minimum at 481, Pearson peak at 2,488) [[experiments.019-simb-multimodal.scripts.loss_min_vs_pearson_peak]]
+
+## 2026.09.09
+
+- [x] **Expression document retitled "Knockout Expression" and made self-contained**: new section 0 carries the task, model, pair-term degeneracy, head and decoder-family tables, baselines, GEARS/State/benchmark reading, oracle and campaign arithmetic over from the SIMB retrospective; SIMB document untouched [[experiments.019-simb-multimodal.expression-strand-retrospective]]
+- [x] Answered "did we compare heads / GEARS": distributional heads yes (objective round); decoder families (GEARS cross-gene, bilinear, Perceiver, basis, concat) only at 50 to 276 epochs in v8, never a comparison; new generated table [[experiments.019-simb-multimodal.scripts.decoder_arms_table]]
+- [x] Correction: W&B `finished` on offline-synced runs means synced, not ended; all seven surviving Pearson/ListMLE runs still RUNNING at 18:10 CT, document and note corrected [[experiments.019-simb-multimodal.expression-strand-retrospective]]
+- [x] ListMLE round day-one readout (`--round listmle`, Spearman columns): no collapse in pure arms, 0.150 to 0.168 at 1,800 to 2,400 epochs, one seed inside the band [[experiments.019-simb-multimodal.scripts.pearson_round_readout]]
+- [x] CLS is wild-type for every strain (measured sd 0.0 in the code comment); three encoder-side perturbation designs written up as untested options, incl. typed perturbation tokens for environmental perturbations [[experiments.019-simb-multimodal.expression-strand-retrospective]]
+- [x] Loss-minimum figure: clipped x labels fixed (58 mm); ListMLE figure on the standard; document 17 pages, `make check` clean [[experiments.019-simb-multimodal.scripts.loss_min_vs_pearson_peak]]
+- [ ] Launch discussion: Delta `bbub` 1,000-epoch arrays (calm vs ProtT5; R_ref vs R_pergene, 3 seeds each), one batch-32 solo Pearson seed on cabbi when the batch-64 tasks end

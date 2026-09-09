@@ -432,3 +432,84 @@ small in absolute terms (norm 0.3 at initialization) and the pinned lr 3e-4 is l
 Surviving Pearson runs at the same check: `Q_pearson_mse` seed 1 at epoch 5,273 reads
 0.176 and is still rising (0.159 at 4,077); `Q_pearson_b64` at 7,700 read 0.157 and 0.149,
 past their peaks of 0.194 and 0.186.
+
+## 2026.09.09 - The expression document made self-contained; ListMLE at day one; W&B "finished" is not "ended"
+
+### Correction
+
+An earlier read today called all eight Pearson-round runs finished because W&B showed
+state `finished`. They are offline runs synced from the IGB login node, and every sync
+stamps the snapshot `finished`; `squeue` at 18:10 CT showed `2378262_1`, `2378268_0`,
+`2378268_1` and all four ListMLE tasks RUNNING. The batch-64 pair was at 9,114 and 9,118
+of 9,900 (about six hours from the end), the anchored seed-1 run at 6,576 (about 1.3
+days), ListMLE at 1,792 to 2,438 of 6,000. All eight cabbi cards are allocated (three to
+another user), four A40s on `gpu` idle. The document and this note now say "running, at
+epoch N" wherever they said "finished".
+
+### The document, retitled and self-contained
+
+`notes-tex/019-simb-multimodal-expression/` is now "Knockout Expression: the
+genotype-to-expression strand". A new section 0 carries the expression material of the
+SIMB retrospective over so nothing there is needed: the task and ceiling (0.7746 from 82
+shared deletions), the model and the one place strain identity enters it, the pair-term
+degeneracy and rank ladder, the distributional-head table the incumbent rested on, the
+decoder-family arms of v8 waves 1 to 3 (new generated table, `decoder_arms_table.py`),
+the four baselines, the GEARS/State/CPA operators and the Ahlmann-Eltze benchmark, the
+imputation oracle, and the campaign arithmetic. Every number keeps its result-file
+source. The SIMB document is untouched.
+
+Answer to "did we do the heads comparison, GEARS etc.": the distributional-head
+comparison is the objective round (done, heads indistinguishable). The decoder-family
+comparison (GEARS-style cross-gene readout `GEARS_crossgene`, `D1_bilinear32`,
+`E0_perceiver32`, `H0_factor`, `C0_concat`, propagation, null sink) was run in v8 waves
+1 to 3, 35 runs, every one stopped between epochs 50 and 276, one seed for most, so it
+was never a comparison. Of those families only the response basis and the per-gene
+readout have since been trained at a resolving budget (mechanism round). GEARS-style
+cross-gene, bilinear, Perceiver alone and FiLM have not.
+
+### CLS is wild-type for every strain
+
+Confirmed in the model file: the encoder runs once on the unperturbed graph per batch;
+`h_CLS` has measured across-strain sd 0.0 against 0.973 for `z_S` (code comment at the
+PerGeneHead construction), which is why the FiLM conditioner was rewired to `z_S` alone.
+The perturbation never enters the graph-masked attention. Three untested designs are in
+the document's next section: perturb CLS with the existing operator (cheap, no pair
+term), edit the gene token before the encoder (one encoder pass per strain), or typed
+perturbation tokens entering the encoder (gene-edit token attends to its gene, an
+environment token, e.g. an antifungal, attends to CLS or all genes), which is the only
+one of the three that covers environmental perturbations.
+
+### ListMLE round at day one (18:15 CT)
+
+| run | epoch | roll_max @ epoch | Spearman roll_max | last | spread ratio |
+|---|--:|--:|--:|--:|--:|
+| `Q_listmle` seed 0 | 1,959 | 0.168 @ 1,920 | 0.173 | 0.167 | 0.80 |
+| `Q_listmle` seed 1 | 1,792 | 0.150 @ 1,488 | 0.154 | 0.140 | 0.75 |
+| `Q_listmle_b64` seed 0 | 2,438 | 0.144 @ 2,433 | 0.134 | 0.137 | 0.67 |
+| `Q_listmle_b64` seed 1 | 2,437 | 0.150 @ 2,057 | 0.138 | 0.144 | 0.67 |
+
+Long-budget arms: 0.1745 +/- 0.0151 at 2,000, 0.1821 +/- 0.0175 at 2,800. So one seed
+inside the band, three below, every curve still rising, none peaked. No collapse in any
+pure run; spread ratio climbing toward 1 as a shift-invariant objective should make it;
+leaderboard `nmse` 74.7 is the free per-gene location, not a fit failure. On Spearman the
+batch-32 seed 0 reads 0.173 at 1,920 where the Pearson-objective survivors read 0.171 to
+0.178 at 6,500 to 9,100. Hypothesis (untested): lr 3e-4 inherited from the pinball loss
+is low for the ranking gradient (norm 0.3 at init).
+
+### What fits the hardware (proposal, for discussion)
+
+Delta `bbub` has 3,738 GPU-hours at a 48-hour wall; the v10 grid reached 990 to 1,400
+epochs per 48-hour task, so 1,000-epoch designs fit and 9,900-epoch ones do not. (a)
+`calm` vs `prot_T5_all` at the incumbent config, 3 seeds each, 1,000 epochs: 6 runs,
+about 300 GPU-hours, resolves about 0.03 and gives the first true replicate spread of the
+incumbent. (b) `R_ref` vs `R_pergene` at 1,000 epochs, 3 pairs: 6 runs, resolves 0.03 at
+the 1,000-epoch sd of 0.0099. (c) one batch-32 solo pure-Pearson seed, 9,900 epochs, on
+cabbi when the batch-64 tasks free their cards (about 6 h). (d) ListMLE learning-rate arm
+after the round reads out. The encoder-side perturbation designs need implementation
+first.
+
+Scripts: `pearson_round_readout.py --round listmle` (new mode; Spearman columns;
+`wandb_state`), `decoder_arms_table.py` (new), `wandb_run_index.py` (ranking round; 80
+runs), `loss_min_vs_pearson_peak.py` (58 mm, labels no longer clipped). Leaderboard v9
+refreshed with `--full-history --refresh`. Document builds to 17 pages, `make check`
+clean.

@@ -58,3 +58,19 @@ question the round was launched for, whether the metric's late rise is generaliz
 or objective disagreement, is answerable only on the live runs and only after the wall.
 
 ![](./assets/images/019-simb-multimodal/pearson_round_readout.svg)
+
+## 2026.09.09 - One script, two rounds; Spearman; W&B state is not job state
+
+`--round {pearson,listmle}` selects the stage tags, arms, figure stem and panel titles
+from a `ROUNDS` table; the ListMLE round writes `listmle_round_readout.{csv,json,svg}`.
+Every row now carries the per-feature Spearman (`spearman_roll_max`,
+`spearman_at_roll_max`, `spearman_last`), the quantity ListMLE targets. The `state`
+column is renamed `wandb_state` and the JSON carries a note: these runs train offline on
+IGB and every `wandb sync` stamps the snapshot `finished`, so `finished` means synced,
+not ended. Read at 18:15 CT with all seven surviving runs still RUNNING in `squeue`:
+`pearson_b64` at 9,114 and 9,118 of 9,900 (roll_max 0.194, 0.186; Spearman 0.175,
+0.171), `pearson_mse` seed 1 at 6,576 (0.194; Spearman 0.178); `listmle` batch 32 at
+1,959 and 1,792 (0.168, 0.150; Spearman 0.173, 0.154; spread ratio 0.80, 0.75),
+`listmle_b64` at 2,438 and 2,437 (0.144, 0.150), both `listmle_mse` collapsed by epoch
+250 and killed. The leaderboard's `nmse` at peak for the ListMLE runs is 74.7: the
+objective is shift-invariant, so each gene's location drifts while its ordering does not.

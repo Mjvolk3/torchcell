@@ -17,3 +17,12 @@ seed and its run id linked to the run page, final epoch in brackets). 74 runs: t
 mask-schedule arms, 18 objective-round runs (fresh plus resume), 8 mechanism, 8
 metric-aligned, 32 v10 grid. Building this table is what exposed the eight "replicates"
 as eight arms; see [[experiments.019-simb-multimodal.expression-strand-retrospective]].
+
+## 2026.09.09 - Ranking round added
+
+Reads `results/listmle_round_readout.csv` as round `listmle` (label "ranking", arms
+`Q_listmle`, `Q_listmle_mse`, `Q_listmle_b64`). 80 runs indexed after a full-history
+refresh of the v9 leaderboard (`pull_round_leaderboards.py --projects
+torchcell_019_expr_v9 --full-history --refresh`); the plain refresh without
+`--full-history` fetches history for a bounded candidate set only and left the
+objective-round epochs blank, which is what the leaderboard puller's docstring warns of.

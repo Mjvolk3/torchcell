@@ -1,10 +1,10 @@
 {
   "project": "torchcell_019_expr_v9",
-  "n_runs": 34,
-  "n_collapsed": 4,
-  "n_short": 7,
+  "n_runs": 40,
+  "n_collapsed": 5,
+  "n_short": 9,
   "min_epochs": 1000,
-  "n_live": 23,
+  "n_live": 27,
   "n_skipped": 30,
   "skipped": {
     "1h21uhl9": "no plain Pearson or no val/loss in summary",
@@ -44,12 +44,12 @@
     "epoch_loss_min_median": 481.0,
     "epoch_loss_min_max": 3097,
     "n_loss_min_within_100": 0,
-    "epoch_pearson_peak_median": 2488.0,
+    "epoch_pearson_peak_median": 2433.0,
     "n_pearson_peak_within_100": 0,
-    "pearson_gain_after_loss_min_median": 0.05392119139432908,
-    "loss_rel_excess_at_100_median": 0.0424547030872051,
-    "loss_final_rel_excess_median": 0.11535189013296306,
-    "loss_at_pearson_peak_rel_excess_median": 0.07096089803928825
+    "pearson_gain_after_loss_min_median": 0.05656986385583879,
+    "loss_rel_excess_at_100_median": 0.0411600820761118,
+    "loss_final_rel_excess_median": 0.08968039245722567,
+    "loss_at_pearson_peak_rel_excess_median": 0.06821515695417023
   },
   "by_dist": {
     "crps": {
@@ -83,6 +83,22 @@
       "pearson_roll_at_loss_min_mean": 0.14981779257456462,
       "pearson_roll_max_mean": 0.19268473585446674,
       "loss_final_rel_excess_median": 0.06663099904889934
+    },
+    "listmle": {
+      "n": 4,
+      "epoch_loss_min_median": 488.0,
+      "epoch_loss_min_range": [
+        291,
+        633
+      ],
+      "epoch_pearson_peak_median": 1988.5,
+      "epoch_pearson_peak_range": [
+        1488,
+        2433
+      ],
+      "pearson_roll_at_loss_min_mean": 0.04776317505165935,
+      "pearson_roll_max_mean": 0.15302882939577103,
+      "loss_final_rel_excess_median": 0.03239003597463016
     },
     "quantile": {
       "n": 18,

@@ -1,0 +1,47 @@
+%% notes-tex/019-simb-multimodal-expression/sections/3-next.tex
+%% SOURCE: the open-decision entries of
+%% notes/experiments.019-simb-multimodal.expression-strand-retrospective.md (2026-09-06 and
+%% 2026-09-08); the power figures from results/short_budget_spread.json.
+
+\section{What the evidence leaves open\secstatus{todo}}
+\label{sec:next}
+
+Each item is a decision the measurements above do not make, stated with the measurement
+that would.
+
+\pfstep{Which number is the target.} Stopping on the validation loss says every run is done
+by epoch 300 to 700 and the long-budget campaign is over; stopping on Pearson says the
+curves have not turned at 19,000 (\cref{sec:findings-lossmin}). The manuscript reports
+Pearson and the objective is the pinball loss, and the metric-aligned round shows the
+naive resolution, training on Pearson, is unstable at batch 32 and no better than the
+incumbent at batch 64 (\cref{sec:readouts-pearson}). The decision is about what the paper
+claims, not about what to run.
+
+\pfstep{The incumbent's embedding against ProtT5.} The grid measured content against
+random at width 1{,}024 and did not include \file{calm}
+(\cref{sec:readouts-factorial}). A two-arm replicate set at the incumbent configuration,
+\file{calm} against \file{prot_T5_all}, three seeds each at 1{,}000 epochs where the
+replicate spread is $0.0099$, resolves a gap of about $0.02$ and is the cheapest contrast
+left on the table: six runs of under a day each.
+
+\pfstep{The per-gene readout at a resolving replicate count.} $+0.027$ at two pairs against a
+resolution of $0.06$ (\cref{sec:readouts-mech}). Detecting $0.03$ at the 4{,}000-epoch
+spread of $0.0171$ needs about six pairs; at 1{,}000 epochs and $0.0099$ it needs three.
+Whether the arm's early peak and give-back survive a shorter budget is what a 1{,}000-epoch
+replicate would also show.
+
+\pfstep{The Pearson round.} The three cabbi cards holding collapsed batch-32 runs can be
+freed now or left to the wall on 2026-09-11; the packed tasks cannot be partially
+canceled without killing their live sibling, and the live \file{pearson_mse} seed sits in
+one of them. The batch-64 runs are the only informative survivors and are solo.
+
+\pfstep{Packing.} Four of four packed five-day tasks died of host memory
+(\cref{sec:readouts-oom}). Until the growth is identified, a five-day arm is either solo on
+its card or budgeted at 48~GB per run rather than 30, and either choice halves the slots
+the launch arithmetic assumed.
+
+\pfstep{The per-gene mean on squared error.} No live run beats \file{nmse} $= 1$ at its
+Pearson peak (\cref{sec:findings-state}). The retrospective's one-parameter rescale
+argument has not been applied to any run of the campaign; it costs nothing and would say
+whether the campaign's models are, like the sprint's, spread $1.8\times$ wider than their
+correlation justifies.

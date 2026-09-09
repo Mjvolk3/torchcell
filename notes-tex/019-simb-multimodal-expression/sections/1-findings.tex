@@ -1,0 +1,162 @@
+%% notes-tex/019-simb-multimodal-expression/sections/1-findings.tex
+%% SOURCE: experiments/019-simb-multimodal/results/round_leaderboards.csv and
+%% round_leaderboards_summary.json (pull_round_leaderboards.py); short_budget_spread.json
+%% (short_budget_spread.py); budget_rank_preservation.json (budget_rank_preservation.py);
+%% loss_min_vs_pearson_peak.json (loss_min_vs_pearson_peak.py); expression_baselines
+%% (expression_baselines.py); the objective-round table as read on 2026-09-06 and recorded
+%% in notes/experiments.019-simb-multimodal.expression-strand-retrospective.md. The ceiling
+%% is the replicate-based figure of the SIMB retrospective (section 2 there).
+
+\section{The state of the strand, claim by claim\secstatus{todo}}
+\label{sec:findings}
+
+The task is the one the SIMB retrospective defined: predict the log-ratio expression of
+every measured gene in a deletion strain from the deletion, on the Kemmeren and Sameith
+compendia under a fixed partition, scored by the per-gene Pearson across held-out strains
+and averaged over genes. The replicate ceiling for that score is $0.775$. Everything below
+is read from the leaderboard puller (\file{pull_round_leaderboards.py}) over project
+\file{torchcell_019_expr_v9}, which is the masked-label objective, or from a script named
+in the paragraph. The statistic throughout is \file{roll_max}: the maximum of a centered
+5-epoch rolling mean of \file{val/expression/pearson_per_feature}, an upward-biased order
+statistic whose bias grows with the epochs run, and which cancels in a contrast between
+runs scored the same way.
+
+\subsection{The incumbent and its spread\secstatus{todo}}
+\label{sec:findings-state}
+
+The incumbent is the quantile head under the pinball loss, learning rate $3 \times 10^{-4}$,
+dropout $0.1$, six transformer layers at hidden width 90, the nine-graph attention mask,
+\file{calm} gene embeddings, batch 32, 9{,}900 epochs. Eight identical-config runs of it
+score $\mathbf{0.1965 \pm 0.0222}$; the three highest leaderboard entries, $0.238$ to
+$0.243$, are one resumed lineage of that configuration continued to 19{,}000 epochs and
+are the maximum of those eight draws, not a different model. Baselines that need no GPU
+(\file{expression_baselines.py}): per-gene mean $0.0000$, bilinear on ProtT5 $0.1040$,
+embedding-neighbor $0.0908$. The incumbent clears the bilinear by $0.093$, about $4.2$
+standard deviations. On squared error no live run beats the per-gene mean at its Pearson
+peak: the best \file{nmse} at peak is $1.005$.
+
+\subsection{The head is not load-bearing\secstatus{todo}}
+\label{sec:findings-head}
+
+The objective round (IGB, launched 2026-08-31, jobs \texttt{2368333}, \texttt{2368337},
+\texttt{2368339}; three replicates per challenger at the incumbent's budget) asked whether
+the quantile head does anything a point head or another proper scoring head would not.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: round_leaderboards.csv, runs >= 1,000 epochs, read 2026-09-06; the n counts
+%% include the 2026-09-05 resumes of the same runs, so fresh runs per arm are 3, not 6.
+\begin{tabular}{lrrrrrr}
+\toprule
+head & $n$ & collapsed & live mean & live sd & live max & min \file{nmse} at peak \\
+\midrule
+\file{point}        &  6 & 6 & --      & --      & --      & -- \\
+\file{crps}         &  6 & 4 & $0.1697$ & $0.0094$ & $0.1764$ & $1.075$ \\
+\file{laplace_crps} &  6 & 0 & $0.1947$ & $0.0167$ & $0.2154$ & $1.025$ \\
+\file{quantile}     & 20 & 0 & $0.1952$ & $0.0258$ & $0.2430$ & $1.005$ \\
+\bottomrule
+\end{tabular}
+\caption[]{The objective round. Collapse is a final Pearson numerically zero: the network
+emits one constant per gene. The point head collapses every time, CRPS two times in three,
+the Laplace-CRPS and quantile heads never. Between the two that survive the gap is $0.0005$
+against a detectable gap of about $0.042$ at three replicates versus eight.}
+\label{tab:findings-head}
+\end{table}
+
+What the head buys is not collapsing. Between the two heads that do not collapse the
+choice was never load-bearing, and the round was sized so that only a large effect could
+have shown; the honest statement is that the heads are indistinguishable at any budget
+that can be afforded.
+
+\subsection{Replicate spread is a function of budget, and not a monotone one\secstatus{todo}}
+\label{sec:findings-spread}
+
+The same eight identical-config runs, rescored on the prefix of their own curves
+(\file{short_budget_spread.py}):
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/short_budget_spread.json, by_budget; the power columns follow from sd at
+%% alpha 0.05 and power 0.8 (z_sum 2.8016) for a two-sample contrast.
+\begin{tabular}{rrrrrr}
+\toprule
+epochs & mean & sd & main effect, 32 v 32 & cell, 16 v 16 & arm, 8 v 8 \\
+\midrule
+   350 & $0.1198$ & $0.0096$ & $0.0067$ & $0.0095$ & $0.0135$ \\
+   500 & $0.1223$ & $0.0058$ & & & \\
+   700 & $0.1411$ & $0.0166$ & & & \\
+ 1{,}000 & $0.1609$ & $0.0099$ & & & \\
+ 1{,}500 & $0.1670$ & $0.0117$ & & & \\
+ 2{,}000 & $0.1745$ & $0.0151$ & & & \\
+ 2{,}800 & $0.1821$ & $0.0175$ & & & \\
+ 4{,}000 & $0.1883$ & $0.0171$ & & & \\
+ 6{,}000 & $0.1917$ & $0.0177$ & & & \\
+ 9{,}900 & $0.1965$ & $0.0222$ & & & \\
+\bottomrule
+\end{tabular}
+\caption[]{Mean and spread of the incumbent's eight replicates at truncated budgets, from
+500-sample curves. The spread is not monotone in budget: 700 epochs is the noisiest point
+below 2{,}000. The last three columns are the detectable gap at the 350-epoch spread for
+the three contrast sizes a $2^4$ grid affords, the same arithmetic that sized the v10 grid
+at 1{,}400 epochs and two seeds rather than 700 and four.}
+\label{tab:findings-power}
+\end{table}
+
+Two traps were hit measuring this and are recorded so the next reader does not hit them:
+a resumed run passes an epoch filter and inherits its parent's config, so it masquerades
+as a replicate and is identified only by where its curve starts; and a whole-curve-maximum
+collapse test reads a run that collapses late as healthy, so collapse is tested on the last
+value.
+
+\subsection{A short screen does not rank like a long run, within one configuration
+\secstatus{todo}}
+\label{sec:findings-rank}
+
+Spearman between the 700-epoch and 3{,}000-epoch \file{roll_max} of the same run
+(\file{budget_rank_preservation.py}): $-0.139$, $p = 0.53$, $n = 23$; top-3 overlap one of
+three, top-5 one of five. After resume exclusion the corpus is essentially one
+configuration, so this measures within-config persistence only: a run's early rank among
+its own replicates says nothing about its late rank. Whether a short screen orders
+different configurations correctly is answerable only on a multi-config corpus, and the
+v10 grid (\cref{sec:readouts-factorial}) is the first one.
+
+\subsection{The validation loss bottoms out early and the metric keeps rising
+\secstatus{todo}}
+\label{sec:findings-lossmin}
+
+Full per-epoch history of every live v9 run with a proper-scoring head, 23 runs of
+1{,}000 epochs or more that neither collapsed nor resumed, read 2026-09-08
+(\file{loss_min_vs_pearson_peak.py}, \cref{fig:findings-lossmin}). The median epoch of
+the \file{val/loss} minimum is 481 (range 203 to 3{,}097) and no run bottoms out by epoch
+100. The median final loss sits $11.5\,\%$ above its minimum. Every run's Pearson peak
+(median epoch 2{,}488) comes after its loss minimum, at a loss already $7.1\,\%$ above the
+floor, and the median Pearson gained between the two is $+0.054$. The long budget buys
+Pearson on a rising validation objective, which is the fact the metric-aligned round was
+built to confront. The eight Pearson-objective runs are excluded here by construction,
+since their loss and metric coincide on train.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/loss_min_vs_pearson_peak.pdf}
+\caption[]{\textbf{Where the loss bottoms out and where the Pearson peaks.} \textbf{a},
+validation loss relative to its minimum, one curve per run, colored by head. \textbf{b},
+the 5-epoch rolling mean of validation Pearson. \textbf{c}, the epoch of the loss minimum
+against the epoch of the Pearson peak; every point lies above the diagonal. Generated by
+\file{loss_min_vs_pearson_peak.py}.}
+\label{fig:findings-lossmin}
+\end{figure}
+
+\subsection{Training on the metric does not resolve it\secstatus{todo}}
+\label{sec:findings-pearson}
+
+Two heads were added to \file{torchcell/losses/distributional.py} on 2026-09-06:
+\file{pearson}, whose loss is one minus the mean per-feature Pearson over the genes hidden
+at the current unmasking step, each gene's correlation taken over the strains in the batch
+where it is hidden, with columns of fewer than three scored rows or constant prediction or
+target dropped as the metric drops them; and \file{pearson_mse}, the same plus the masked
+squared error at unit weight as a scale anchor. Both are point-shaped, carry no PIT and
+no calibration keys, and the pure loss is scale-free, so its \file{mse}, \file{nmse} and
+spread ratio are not comparable to any other arm's. Eighty-six unit tests and a container
+canary (\texttt{2375312}) preceded the launch. The readout at day two is
+\cref{sec:readouts-pearson}: collapse at every batch-32 seed of the pure loss, at two of
+three seeds of the anchored one, and parity with the incumbent for the batch-64 survivors.

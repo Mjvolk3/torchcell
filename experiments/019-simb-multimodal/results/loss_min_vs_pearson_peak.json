@@ -5,7 +5,7 @@
   "n_short": 7,
   "min_epochs": 1000,
   "n_live": 23,
-  "n_skipped": 20,
+  "n_skipped": 30,
   "skipped": {
     "1h21uhl9": "no plain Pearson or no val/loss in summary",
     "23kaqywv": "no plain Pearson or no val/loss in summary",
@@ -26,7 +26,17 @@
     "djgkdzol": "resume, starts at epoch 2040",
     "8gklzy7n": "resume, starts at epoch 2040",
     "7v9l6ett": "resume, starts at epoch 2040",
-    "yrs7x07y": "resume, starts at epoch 2040"
+    "yrs7x07y": "resume, starts at epoch 2040",
+    "kspeoljg": "metric-aligned head pearson",
+    "ppc2pyv5": "metric-aligned head pearson_mse",
+    "hsauh7al": "metric-aligned head pearson_mse",
+    "zaul43n1": "metric-aligned head pearson",
+    "p2qq2525": "metric-aligned head pearson",
+    "4ei42tb1": "metric-aligned head pearson_mse",
+    "wb2xocf2": "metric-aligned head pearson",
+    "7ylecrjz": "metric-aligned head pearson",
+    "r4jhzqo4": "no plain Pearson or no val/loss in summary",
+    "ekukvwy1": "no plain Pearson or no val/loss in summary"
   },
   "n_rows_short": 0,
   "roll_window": 5,
@@ -38,7 +48,7 @@
     "n_pearson_peak_within_100": 0,
     "pearson_gain_after_loss_min_median": 0.05392119139432908,
     "loss_rel_excess_at_100_median": 0.0424547030872051,
-    "loss_final_rel_excess_median": 0.11356024690683568,
+    "loss_final_rel_excess_median": 0.11535189013296306,
     "loss_at_pearson_peak_rel_excess_median": 0.07096089803928825
   },
   "by_dist": {
@@ -87,8 +97,8 @@
         9682
       ],
       "pearson_roll_at_loss_min_mean": 0.14264008204142253,
-      "pearson_roll_max_mean": 0.1940350275900629,
-      "loss_final_rel_excess_median": 0.12535286412593394
+      "pearson_roll_max_mean": 0.19499727504120934,
+      "loss_final_rel_excess_median": 0.13404753491434668
     }
   }
 }

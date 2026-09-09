@@ -191,6 +191,20 @@ exists.
 - What, if anything, goes on the 16 idle IGB GPUs before the v10 grid reads out (about
   2026-09-08 at 33.6 epochs/h).
 
+## 2026.09.08 - Typeset counterpart: notes-tex/019-simb-multimodal-expression
+
+This note now has its own notes-tex document, `notes-tex/019-simb-multimodal-expression/`
+(build with `make`, gate with `make check`, figures via `make plots`). It carries the
+consolidated state of the strand claim by claim (section 1), the readouts of 2026-09-08
+(section 2, moved out of the six-strand retrospective's former section 11 so that document
+stays as reviewed), and the open decisions (section 3). The design and launch sections
+(9 and 10) stay in `notes-tex/019-simb-multimodal/`, since sections 1 to 8 there reference
+them thirteen times and both review rounds covered them. Figures used by the document are
+written under stable names: `v10_grid_factorial`, `mech_round_readout`,
+`pearson_round_readout`, `loss_min_vs_pearson_peak` (the last renamed from its timestamped
+form today; its numbers are unchanged, and the Pearson-objective arms are now excluded from
+that audit by construction).
+
 ## 2026.09.08 - Three readouts: the v10 grid, the mechanism round, the Pearson round at day two
 
 Delta's queue is empty and IGB holds only the five Pearson-round tasks. Everything below

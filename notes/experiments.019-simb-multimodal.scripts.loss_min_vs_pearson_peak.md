@@ -17,7 +17,7 @@ from `pull_round_leaderboards.py`); the loss minimum is the raw argmin.
 
 Outputs: `experiments/019-simb-multimodal/results/loss_min_vs_pearson_peak.{csv,json}`.
 
-![](./assets/images/019-simb-multimodal/loss_min_vs_pearson_peak_2026-09-06-12-12-34.svg)
+![](./assets/images/019-simb-multimodal/loss_min_vs_pearson_peak.svg)
 
 **a** `val/loss` divided by its own minimum, marker at the minimum. **b** validation Pearson
 per feature, 5-epoch mean. **c** epoch of the loss minimum against epoch of the Pearson peak;

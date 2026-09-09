@@ -47,7 +47,6 @@ from matplotlib.ticker import LogLocator
 
 load_dotenv()
 
-from torchcell.timestamp import timestamp  # noqa: E402
 from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
@@ -82,6 +81,8 @@ COLLAPSE_EPS = 1e-6
 # Their "loss minimum" is just their last epoch. They stay in the CSV and are excluded from
 # every summary statistic and from the figure.
 MIN_EPOCHS = 1000
+# The Pearson-objective arms (2026-09-06) share the project but not the question.
+METRIC_ALIGNED_DISTS = ("pearson", "pearson_mse")
 
 # Fixed epochs at which the loss's excess over its minimum is tabulated. 100 is the user's
 # stated threshold; the rest bracket it.
@@ -111,6 +112,11 @@ def main() -> None:
     for run in runs:
         if METRIC not in run.summary or LOSS not in run.summary:
             skipped[run.id] = "no plain Pearson or no val/loss in summary"
+            continue
+        if run.config.get("dist") in METRIC_ALIGNED_DISTS:
+            # These heads train on 1 - r, so their loss minimum and Pearson peak coincide
+            # by construction on train and the question this script asks is empty for them.
+            skipped[run.id] = f"metric-aligned head {run.config.get('dist')}"
             continue
         h = run.history(keys=["epoch", LOSS, METRIC], samples=FULL_HISTORY_SAMPLES)
         h = h.dropna(subset=["epoch", LOSS, METRIC]).sort_values("epoch")
@@ -313,7 +319,8 @@ def plot(t: pd.DataFrame, curves: dict[str, pd.DataFrame]) -> None:
     ]
     ax_pear.legend(handles=handles, fontsize=5, frameon=False, loc="upper left")
     fig.subplots_adjust(left=0.06, right=0.99, bottom=0.14, top=0.92, wspace=0.32)
-    stem = osp.join(IMAGE_DIR, f"loss_min_vs_pearson_peak_{timestamp()}")
+    # Stable name, no timestamp: notes-tex's `make plots` converts figures by name.
+    stem = osp.join(IMAGE_DIR, "loss_min_vs_pearson_peak")
     fig.savefig(stem + ".png", dpi=300)
     savefig_true_size_svg(fig, stem + ".svg")
     print(f"wrote {stem}.png\nwrote {stem}.svg")

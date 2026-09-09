@@ -277,3 +277,11 @@ averages the informative direction with the uninformative one back to chance.
 network-distance pair term on a network that does not carry the relationship. Phase B goes
 from four arms to three, plus a new free-the-heads arm `P_free`. The evidence-backed repair
 is to stop symmetrizing the two directed relations, which is a mask-builder change.
+
+## 2026.09.08 - The expression readouts moved to their own document
+
+The former section 11 of `notes-tex/019-simb-multimodal/` (the v10 grid, the mechanism
+round and the Pearson-objective round, read 2026-09-08) now lives in
+`notes-tex/019-simb-multimodal-expression/`, the typeset counterpart of
+[[experiments.019-simb-multimodal.expression-strand-retrospective]]. Sections 1 to 10 here
+are unchanged; the six-strand retrospective stays as reviewed.

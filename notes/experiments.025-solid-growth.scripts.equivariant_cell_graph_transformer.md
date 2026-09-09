@@ -125,3 +125,32 @@ Hypothesis (untested): the trigenic interaction score is a residual of the tripl
 fitness against its subsets, so the fitness target should shape a representation the
 interaction head can use. The three IGB runs (weight 1.0, control, weight 0.1, all seed
 42) are what measures it.
+
+## 2026.09.09 - Normalizer Fit on the Training Split Only
+
+The additive-baselines report (`notes-tex/010-additive-baselines`, Table 4 row 6 and
+Section 5.4) measured that the transformer's standardization constants were fit on all
+376,732 records, train + val + test: the logged mean -0.008024324 and sd 0.063263549 are
+the all-record values, where the train-only values are -0.007688739 and 0.063186255. The
+025 port had the same leak under `fit_on_subset`, which passed the whole S0 subset as
+`fit_indices`; the 2026.09.08 smoke printed exactly those all-record constants. Two
+scalars, an effect of order 1e-4 in each, in the model's favor, and the baselines do not
+have it.
+
+Fixed here: `fit_indices` is now the pinned train list intersected with the subset,
+which is the set the data module places in train (the realized-split assertion still
+runs). `normalization/n_fit` is logged. Every run from this commit on trains with
+train-only constants, so its standardized loss is not bit-comparable to job 1598 or the
+010 checkpoints; raw-unit metrics are computed through the matching inverse transform
+and are the numbers to compare across the boundary.
+
+Runs that carried the leak and were cancelled today: GilaHyper 1609 (soft KL, disjoint,
+had not started), Delta canary 21895901 (cosine schedule, 19 h in) and the 26 pending
+sweep jobs 21917113 to 21917138. Runs kept pending for the fixed code: IGB 2385828 to
+2385830 (the launcher checks out the branch tip at start) and Delta 21919310 to
+21919313 (worktree advanced by hand). Job 1598 and the 010 checkpoints keep their
+all-record constants; they are read in raw units.
+
+`gh_cgt.slurm` now runs from the submitting checkout (`SLURM_SUBMIT_DIR`) and accepts
+Hydra overrides after the config name, like `delta_cgt.slurm`, so a branch can be
+launched on GilaHyper before it lands.

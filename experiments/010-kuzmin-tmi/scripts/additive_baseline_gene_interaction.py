@@ -81,6 +81,7 @@ from scipy.stats import pearsonr, spearmanr
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -353,8 +354,19 @@ def main() -> None:
         default="",
         help="suffix for every output file, e.g. query_pair_disjoint",
     )
+    ap.add_argument(
+        "--plot-only",
+        action="store_true",
+        help="redraw the figure from the CSV this script already wrote; no refit",
+    )
     args = ap.parse_args()
     suffix = f"_{args.tag}" if args.tag else ""
+    out_csv = osp.join(
+        RESULTS_DIR, f"additive_baseline_gene_interaction{suffix}.csv"
+    )
+    if args.plot_only:
+        plot(pd.read_csv(out_csv), suffix)
+        return
     # Transformer rows are wandb runs trained on the random split. Emitting them
     # beside baselines fit on a different split would compare across splits.
     include_cgt = args.split_json == DEFAULT_SPLIT_JSON
@@ -496,9 +508,6 @@ def main() -> None:
             "so a number for this split needs retraining"
         )
 
-    out_csv = osp.join(
-        RESULTS_DIR, f"additive_baseline_gene_interaction{suffix}.csv"
-    )
     df.to_csv(out_csv, index=False)
     print(f"\nwrote {out_csv}")
     print(df.to_string(index=False))
@@ -528,17 +537,13 @@ def plot(df: pd.DataFrame, suffix: str = "") -> None:
     val = val.sort_values("order")
     val["label"] = val["model"].map(labels)
 
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-        }
-    )
+    apply_paper_style()
     fig, ax = plt.subplots(
         figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(55.0))
     )
+    # One palette slot per model tier, in palette order: the three that can carry
+    # gene content but no interaction take the warm primaries, the nonlinear model
+    # the purple, the transformer runs the blue, and the two no-content rows gray.
     tier = {
         "B0_train_mean": PLOT_PALETTE[5],
         "B4_query_pair_only": PLOT_PALETTE[5],
@@ -571,7 +576,8 @@ def plot(df: pd.DataFrame, suffix: str = "") -> None:
     ax.set_axisbelow(True)
     for spine in ax.spines.values():
         spine.set_visible(True)
-    fig.tight_layout()
+        spine.set_linewidth(0.5)
+    fig.tight_layout(pad=0.4)
 
     stem = osp.join(
         ASSET_IMAGES_DIR,

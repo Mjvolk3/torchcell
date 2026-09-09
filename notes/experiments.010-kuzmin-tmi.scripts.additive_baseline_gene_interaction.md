@@ -32,3 +32,13 @@ scripts), per-model prediction arrays, and the test-Pearson bar panel.
 
 Findings and interpretation:
 [[experiments.010-kuzmin-tmi.additive-baseline-analysis]]
+
+## 2026.09.09 - Panel Restyled to the Repo Figure Standard
+
+The rcParams now come from `torchcell.utils.apply_paper_style` (which also frames
+legends), and a `--plot-only` flag redraws the panel from the CSV without
+refitting any baseline:
+
+```bash
+python experiments/010-kuzmin-tmi/scripts/additive_baseline_gene_interaction.py --plot-only
+```

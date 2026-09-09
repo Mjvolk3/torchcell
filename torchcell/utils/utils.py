@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING, Any
 import matplotlib
 
 if TYPE_CHECKING:
+    from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from matplotlib.text import Text
 
 # --- Repo-wide figure/plotting standards. See CLAUDE.md "Figure & Plotting
 # Standards" and the palette notes/assets/images/color-palette.svg. -----------
@@ -135,6 +137,15 @@ PAPER_RC: dict[str, object] = {
     "figure.titlesize": 6.5,
     "axes.linewidth": 0.5,
     "svg.fonttype": "none",
+    # Legends are framed: white face, 0.5 pt black edge, square corners
+    # ([[paper.nature-biotech.style-guide]], Figures). The frame is a border, not a
+    # license to cover data; the legend still has to sit in a clear region.
+    "legend.frameon": True,
+    "legend.fancybox": False,
+    "legend.framealpha": 1.0,
+    "legend.edgecolor": "black",
+    "legend.facecolor": "white",
+    "patch.linewidth": 0.5,
     # A fixed-figsize panel must NOT be recropped, or the strict width in
     # PANEL_WIDTHS_MM stops holding and panels no longer tile across the page.
     "savefig.bbox": None,
@@ -160,6 +171,81 @@ def apply_paper_style() -> None:
     import matplotlib.pyplot as plt
 
     plt.rcParams.update(PAPER_RC)
+
+
+PANEL_LABEL_PT = 8.0  # Nature: panel letters only, the one size above figure text
+PANEL_LABEL_PAD_PT = 1.5
+# Vertical raise of the letter above the axes top edge. A 6 pt title at pad 3 occupies
+# 3 to 9 pt above the spine and the topmost tick label reaches ~3 pt above it, so a letter
+# whose bottom is 12 pt up clears both by at least one letter width -- the white-cross
+# rule ([[paper.nature-biotech.style-guide]]): a cross the width of the letter box laid
+# over the letter meets no title, spine, or tick label.
+PANEL_LABEL_RAISE_PT = 12.0
+
+
+def panel_label(
+    ax: "Axes",
+    letter: str,
+    x: float | None = None,
+    y: float = 1.0,
+    pad_pt: float = PANEL_LABEL_PAD_PT,
+    raise_pt: float = PANEL_LABEL_RAISE_PT,
+    fontsize: float = PANEL_LABEL_PT,
+) -> "Text":
+    """Draw a panel letter at the panel's top-left corner, in the repo standard.
+
+    Nature's band for figure text is 5 to 7 pt, with 8 pt bold lowercase reserved for
+    panel letters. The letter sits OUTSIDE the axes box, at the top-left of the PANEL --
+    its left edge flush with the outermost y-axis decoration (the y label, or the tick
+    labels when there is no y label) -- and carries an opaque white patch, so the letter
+    survives being cropped out of a composed figure with whatever sits behind it.
+
+    Placement follows the white-cross rule ([[paper.nature-biotech.style-guide]]): a cross
+    the width of the letter box laid over the letter meets no title, spine, tick label, or
+    axis label. The letter is raised ``raise_pt`` points above the axes top edge (one text
+    line above the title band, clear of the topmost tick label) and pushed left to the
+    panel's outer edge, which is measured from the axes' tight bounding box, so call this
+    AFTER the y label and tick formatting are set. ``x`` (axes fraction) overrides the
+    measured left edge; ``pad_pt`` is then the offset left of that anchor.
+    """
+    from matplotlib.transforms import ScaledTranslation
+
+    # An Axes always belongs to a figure by the time it can be drawn on, but the
+    # accessor is typed as optional, so fail loudly rather than on an attribute.
+    fig = ax.get_figure()
+    if fig is None:
+        raise ValueError("panel_label: the axes is not attached to a figure")
+    if x is None:
+        # Outer left edge of the panel: axes box minus everything hanging off its left
+        # (tick labels, y label), measured in points so it survives tight_layout.
+        # No renderer argument: matplotlib >= 3.6 resolves the figure's own renderer,
+        # which keeps this independent of the backend the script happens to run on.
+        tight = ax.get_tightbbox()
+        if tight is None:
+            raise ValueError(
+                "panel_label: the axes has no tight bounding box to measure"
+            )
+        left_pt = (ax.bbox.x0 - tight.x0) / fig.dpi * 72.0
+        offset = ScaledTranslation(
+            -left_pt / 72.0, raise_pt / 72.0, fig.dpi_scale_trans
+        )
+        ha = "left"
+        x = 0.0
+    else:
+        offset = ScaledTranslation(-pad_pt / 72.0, raise_pt / 72.0, fig.dpi_scale_trans)
+        ha = "right"
+    return ax.text(
+        x,
+        y,
+        letter.lower(),
+        transform=ax.transAxes + offset,
+        fontsize=fontsize,
+        fontweight="bold",
+        fontfamily="Arial",
+        ha=ha,
+        va="bottom",
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0},
+    )
 
 
 def savefig_true_size_svg(

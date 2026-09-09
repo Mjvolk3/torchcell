@@ -14,7 +14,9 @@ from torchcell.losses.distributional import (
     gaussian_crps,
     gaussian_nll,
     laplace_crps,
+    listmle_loss,
     make_dist_head,
+    masked_per_feature_listmle,
     masked_per_feature_pearson,
     pearson_loss,
     pinball,
@@ -32,6 +34,8 @@ ALL_DISTS = [
     "energy",
     "pearson",
     "pearson_mse",
+    "listmle",
+    "listmle_mse",
 ]
 PROBABILISTIC_DISTS = ["crps", "quantile", "laplace_crps", "nll", "energy"]
 NUM_FEATURES = 6
@@ -105,6 +109,8 @@ def test_pinball_asymmetry() -> None:
         ("energy", 2),
         ("pearson", 1),
         ("pearson_mse", 1),
+        ("listmle", 1),
+        ("listmle_mse", 1),
     ],
 )
 def test_dist_param_dim_and_head_width(dist: str, expected_p: int) -> None:
@@ -941,3 +947,149 @@ def test_pit_ks_quantile_grid_has_a_structural_floor() -> None:
     assert d_quantile == pytest.approx(0.05, abs=0.015)
     assert d_gaussian < 0.03
     assert d_quantile > d_gaussian
+
+
+# ---------------------------------------------------------------------------
+# Ranking objective: listmle / listmle_mse
+# ---------------------------------------------------------------------------
+
+
+def _reference_listmle_column(pred: torch.Tensor, target: torch.Tensor) -> float:
+    """Plackett-Luce NLL of the target ordering, written out term by term."""
+    order = torch.argsort(target, descending=True)
+    s = pred[order]
+    total = 0.0
+    for i in range(len(s)):
+        total += (torch.logsumexp(s[i:], dim=0) - s[i]).item()
+    return total / len(s)
+
+
+def test_listmle_matches_the_term_by_term_definition_when_unmasked() -> None:
+    """Per-feature ListMLE equals the explicit Plackett-Luce sum, normalized by n."""
+    torch.manual_seed(11)
+    pred = torch.randn(12, NUM_FEATURES)
+    target = torch.randn(12, NUM_FEATURES)
+    loss_f, valid = masked_per_feature_listmle(pred, target)
+    assert bool(valid.all())
+    ref = torch.tensor(
+        [
+            _reference_listmle_column(pred[:, j], target[:, j])
+            for j in range(NUM_FEATURES)
+        ]
+    )
+    assert torch.allclose(loss_f, ref, atol=1e-5)
+    assert listmle_loss(pred, target).item() == pytest.approx(
+        ref.mean().item(), abs=1e-5
+    )
+
+
+def test_listmle_scores_only_the_masked_entries() -> None:
+    """Masked rows drop out of every suffix sum, and a column with one row is invalid."""
+    torch.manual_seed(12)
+    pred = torch.randn(10, 3)
+    target = torch.randn(10, 3)
+    mask = torch.ones(10, 3, dtype=torch.bool)
+    mask[5:, 0] = False  # column 0 keeps rows 0-4
+    mask[1:, 1] = False  # column 1 keeps one row: no ordering to learn
+    loss_f, valid = masked_per_feature_listmle(pred, target, mask)
+    assert valid.tolist() == [True, False, True]
+    assert loss_f[1].item() == 0.0
+    assert loss_f[0].item() == pytest.approx(
+        _reference_listmle_column(pred[:5, 0], target[:5, 0]), abs=1e-5
+    )
+    # Changing a masked entry changes nothing.
+    pred2 = pred.clone()
+    pred2[7, 0] = 50.0
+    assert listmle_loss(pred2, target, mask).item() == pytest.approx(
+        listmle_loss(pred, target, mask).item(), abs=1e-6
+    )
+
+
+def test_listmle_prefers_the_true_order_and_rewards_larger_gaps() -> None:
+    """The loss is lowest for a correctly ordered prediction, falls further as its gaps
+    grow (not scale-free upward), is shift-invariant, and rises when the order is
+    scrambled. The MSE anchor removes the scale freedom.
+    """
+    torch.manual_seed(13)
+    target = torch.randn(16, NUM_FEATURES)
+    ordered = listmle_loss(target, target).item()
+    sharper = listmle_loss(3.0 * target, target).item()
+    shifted = listmle_loss(target + 5.0, target).item()
+    scrambled = listmle_loss(target[torch.randperm(16)], target).item()
+    assert sharper < ordered < scrambled
+    assert shifted == pytest.approx(ordered, abs=1e-5)
+    assert (
+        listmle_loss(3.0 * target, target, mse_weight=1.0).item()
+        > listmle_loss(target, target, mse_weight=1.0).item()
+    )
+
+
+def test_listmle_keeps_a_gradient_on_a_constant_column() -> None:
+    """Unlike the Pearson loss, a constant prediction column is scored (at log(n!)/n)
+    and receives a non-zero gradient, so a collapsed column can still be pulled apart.
+    """
+    n = 8
+    target = torch.randn(n, 2)
+    flat = torch.zeros(n, 2, requires_grad=True)
+    loss = listmle_loss(flat, target)
+    expected = sum(math.log(k) for k in range(1, n + 1)) / n
+    assert loss.item() == pytest.approx(expected, abs=1e-5)
+    loss.backward()
+    assert flat.grad is not None and flat.grad.abs().sum().item() > 0.0
+    # The Pearson loss, on the same input, drops both columns and has nothing to say.
+    _, valid = masked_per_feature_pearson(flat.detach(), target)
+    assert not bool(valid.any())
+
+
+def test_listmle_survives_a_degenerate_batch() -> None:
+    """Every column masked to fewer than two rows returns a connected zero, not NaN."""
+    pred = torch.randn(4, 3, requires_grad=True)
+    target = torch.randn(4, 3)
+    mask = torch.zeros(4, 3, dtype=torch.bool)
+    mask[0, :] = True
+    loss = listmle_loss(pred, target, mask)
+    assert loss.item() == 0.0
+    loss.backward()
+    assert pred.grad is not None and torch.isfinite(pred.grad).all()
+
+
+def test_listmle_gradient_raises_the_rank_correlation() -> None:
+    """Gradient steps on the pure loss raise the mean per-feature Spearman."""
+    torch.manual_seed(14)
+    target = torch.randn(32, NUM_FEATURES)
+    pred = (0.1 * torch.randn(32, NUM_FEATURES)).requires_grad_(True)
+
+    def spearman(p: torch.Tensor) -> float:
+        rp = torch.argsort(torch.argsort(p, dim=0), dim=0).float()
+        rt = torch.argsort(torch.argsort(target, dim=0), dim=0).float()
+        return _reference_per_feature_pearson(rp, rt).mean().item()
+
+    before = spearman(pred.detach())
+    for _ in range(20):
+        loss = listmle_loss(pred, target)
+        loss.backward()
+        assert pred.grad is not None
+        with torch.no_grad():
+            pred -= 0.5 * pred.grad
+        pred.grad = None
+    assert spearman(pred.detach()) > before
+
+
+@pytest.mark.parametrize("dist", ["listmle", "listmle_mse"])
+def test_listmle_heads_are_point_shaped_and_have_no_pit(dist: str) -> None:
+    """point() is the identity, param_dim is 1, pit() refuses, and the anchor weight
+    follows the name.
+    """
+    dh = build_head(dist)
+    assert dh.param_dim == 1 and not dh.has_pit
+    assert dh.mse_weight == (0.0 if dist == "listmle" else 1.0)
+    params = torch.randn(4, NUM_FEATURES)
+    assert torch.equal(dh.point(params), params)
+    with pytest.raises(ValueError):
+        dh.pit(params, torch.randn(4, NUM_FEATURES))
+    target = torch.randn(4, NUM_FEATURES)
+    assert dh.loss(params, target).item() == pytest.approx(
+        listmle_loss(params, target, mse_weight=dh.mse_weight).item(), abs=1e-6
+    )
+    with pytest.raises(AssertionError):
+        make_dist_head("listmle_mse", listmle_mse_weight=0.0)

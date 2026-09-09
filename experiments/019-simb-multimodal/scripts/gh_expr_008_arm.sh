@@ -446,6 +446,23 @@ case "$ARM" in
   # the optimizer steps per epoch at the same lr, which is a confound this arm accepts.
   Q_pearson_b64)     OVERRIDES=(multitask.dist=pearson data_module.batch_size=64)
                      ARM_TAGS=(mech-objective dist-pearson batch64 xfer-yes stage-pearson_b64) ;;
+  # ---------------------------------------------------------------- LISTMLE (2026.09.08)
+  # The RANKING objective. The question is not "predict each gene's value" but "given a set
+  # of knockouts, which strain will express gene g highest": per gene, the Plackett-Luce
+  # likelihood of the true ordering of the strains in the batch (ListMLE), over the genes
+  # still hidden at the current unmasking step. It trains what per-feature Spearman scores.
+  # Two things it does that the Pearson loss does not: a constant output column still gets
+  # a gradient (the Pearson loss drops it, which is how five of six batch-32 Pearson runs
+  # died), and it is NOT scale-free upward: the loss keeps falling as the score gaps grow,
+  # so Q_listmle's output scale is expected to drift and its mse / nmse / pred_sd_ratio are
+  # not comparable to other arms. Q_listmle_mse adds the MSE at weight 1.0
+  # (DEFAULT_LISTMLE_MSE_WEIGHT) to pin it. The list is the batch, so batch size is part of
+  # the objective; 32 here, the incumbent's, and read against the Pearson round's batch-32
+  # arms. lr stays the pinned 3e-4, untuned for this loss, as for the Pearson arms.
+  Q_listmle)         OVERRIDES=(multitask.dist=listmle)
+                     ARM_TAGS=(mech-objective dist-listmle xfer-yes stage-listmle) ;;
+  Q_listmle_mse)     OVERRIDES=(multitask.dist=listmle_mse)
+                     ARM_TAGS=(mech-objective dist-listmle_mse xfer-yes stage-listmle) ;;
   # ==================== MECHANISM ROUND (2026.09.01), config cgt_expr_v9_mask
   # The pair-term ladder was already run in wave 6 (V_* above) at ~4,100 epochs, but at ONE
   # seed per arm and on cgt_expr_012 / project v8. Its eight arms span 0.1925 to 0.2276, a

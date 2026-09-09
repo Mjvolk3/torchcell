@@ -80,6 +80,13 @@ DIST_TO_MODE: dict[str, str] = {
     # Both are point-shaped heads (param_dim 1).
     "pearson": "pearson",
     "pearson_mse": "pearson",
+    # Listwise ranking objective: per gene, the Plackett-Luce negative log-likelihood of
+    # the true ordering of the strains in the batch (ListMLE, Xia et al. 2008). Trains the
+    # ACROSS-STRAIN ranking of each gene, the quantity per-feature Spearman scores. Also
+    # point-shaped; `listmle_mse` adds the MSE anchor, because the pure loss is not
+    # scale-free in the other direction: it keeps improving as the score gaps grow.
+    "listmle": "listmle",
+    "listmle_mse": "listmle",
 }
 
 # Weight of the MSE anchor in `pearson_mse`. 1.0 puts the two terms on the same footing
@@ -88,6 +95,11 @@ DEFAULT_PEARSON_MSE_WEIGHT = 1.0
 # A feature column needs at least this many scored rows for its correlation to be an
 # estimate rather than an identity (two points always correlate at +/-1).
 PEARSON_MIN_ROWS = 3
+# Weight of the MSE anchor in `listmle_mse`. At initialization the per-row ListMLE term is
+# ~ log(n)/2 (about 1.7 at n = 32) against MSE ~ 2, so 1.0 again puts them level.
+DEFAULT_LISTMLE_MSE_WEIGHT = 1.0
+# A list of one strain has exactly one ordering and no information; two is the minimum.
+LISTMLE_MIN_ROWS = 2
 
 # Default quantile grid: K=19 evenly spaced tau in [0.05, 0.95] (step 0.05, 0.5 included).
 # Evenly spaced is the *robust* choice -- no kernel, no bandwidth to tune.
@@ -477,6 +489,87 @@ def pearson_loss(
     return loss
 
 
+def masked_per_feature_listmle(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    feature_mask: torch.Tensor | None = None,
+    min_rows: int = LISTMLE_MIN_ROWS,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    r"""Per-FEATURE ListMLE over the rows ``feature_mask`` selects, differentiable.
+
+    For feature ``f`` with scored rows sorted by TARGET descending, ``t_(1) >= ... >=
+    t_(n)``, and the predictions ``s_(i)`` in that order, the Plackett-Luce negative
+    log-likelihood of the true ordering is
+
+        L_f = (1/n) * sum_i [ logsumexp_{j >= i} s_(j) - s_(i) ]
+
+    (Xia et al., ICML 2008), normalized by ``n`` so columns with different row counts are
+    on one scale. It is minimized when the predictions order the strains as the targets
+    do and the gaps between them are large; it is invariant to a per-feature SHIFT of the
+    prediction but not to its scale, and a column whose prediction is constant scores
+    ``log(n!)/n > 0`` with a NON-ZERO gradient, which is what separates it from the
+    Pearson loss (a constant column is dropped there and receives no gradient).
+
+    Masked rows are handled by giving them a sort key below every real target and a score
+    of ``-inf`` (a large finite negative, so the cumulative logsumexp stays finite), which
+    removes them from every suffix sum; their own terms are then excluded. Ties in the
+    target take the sorter's order, which is arbitrary among tied rows.
+
+    Args:
+        pred: Predictions ``[B, F]``.
+        target: Targets ``[B, F]``.
+        feature_mask: Optional bool ``[B, F]``; ``None`` scores every entry.
+        min_rows: Minimum scored rows per column for the ordering to carry information.
+
+    Returns:
+        ``(loss, valid)`` -- per-feature losses ``[F]`` (``0`` where invalid) and the bool
+        validity mask ``[F]``.
+    """
+    assert pred.shape == target.shape and pred.ndim == 2, (
+        f"per-feature ListMLE needs [B, F] pred and target; got {tuple(pred.shape)} "
+        f"and {tuple(target.shape)}"
+    )
+    if feature_mask is None:
+        w = torch.ones_like(pred, dtype=torch.bool)
+    else:
+        w = feature_mask.bool()
+    neg = torch.finfo(pred.dtype).min / 4
+    key = torch.where(w, target, torch.full_like(target, neg))
+    order = torch.argsort(key, dim=0, descending=True)
+    s_sorted = torch.gather(torch.where(w, pred, torch.full_like(pred, neg)), 0, order)
+    w_sorted = torch.gather(w, 0, order)
+    # Suffix logsumexp along the rows: lse[i] = logsumexp(s_sorted[i:]).
+    lse = torch.flip(
+        torch.logcumsumexp(torch.flip(s_sorted, dims=[0]), dim=0), dims=[0]
+    )
+    terms = torch.where(w_sorted, lse - s_sorted, torch.zeros_like(s_sorted))
+    n = w.sum(dim=0)
+    loss = terms.sum(dim=0) / n.clamp_min(1).to(pred.dtype)
+    valid = n >= min_rows
+    return torch.where(valid, loss, torch.zeros_like(loss)), valid
+
+
+def listmle_loss(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    feature_mask: torch.Tensor | None = None,
+    mse_weight: float = 0.0,
+) -> torch.Tensor:
+    r"""Mean per-feature ListMLE over valid features, plus ``mse_weight`` times masked MSE.
+
+    Returns a graph-connected zero when no feature column is valid, so DDP find-unused
+    stays happy on a degenerate batch.
+    """
+    per_feature, valid = masked_per_feature_listmle(pred, target, feature_mask)
+    if not bool(valid.any()):
+        loss = pred.sum() * 0.0
+    else:
+        loss = per_feature[valid].mean()
+    if mse_weight > 0.0:
+        loss = loss + mse_weight * masked_mean((pred - target) ** 2, feature_mask)
+    return loss
+
+
 def _quantile_pit(
     quantiles: torch.Tensor, target: torch.Tensor, taus: torch.Tensor
 ) -> torch.Tensor:
@@ -700,9 +793,12 @@ class DistHead(nn.Module):
         "nll_gaussian",
         "energy",
         "pearson",
+        "listmle",
     )
     # Modes with no predictive distribution: identity point(), no PIT, no calibration.
-    POINT_MODES = ("point", "pearson")
+    POINT_MODES = ("point", "pearson", "listmle")
+    # Modes that accept the MSE anchor.
+    ANCHORED_MODES = ("pearson", "listmle")
 
     def __init__(
         self,
@@ -719,9 +815,9 @@ class DistHead(nn.Module):
 
         Args:
             mode: One of ``point`` / ``gaussian`` / ``quantile`` / ``laplace`` /
-                ``nll_gaussian`` / ``energy`` / ``pearson``.
-            mse_weight: ``pearson`` mode only -- weight of the MSE anchor added to
-                ``1 - mean per-feature Pearson`` (``0`` = the pure, scale-free loss).
+                ``nll_gaussian`` / ``energy`` / ``pearson`` / ``listmle``.
+            mse_weight: ``pearson`` and ``listmle`` modes only -- weight of the MSE anchor
+                added to the ranking loss (``0`` = the pure loss).
             quantiles: ``quantile`` mode only -- the ``tau`` grid (defaults to K=19 evenly
                 spaced in ``[0.05, 0.95]``). Ignored otherwise.
             sigma_floor: additive floor on ``softplus(raw)`` so the scale (``sigma``, or the
@@ -742,8 +838,8 @@ class DistHead(nn.Module):
         super().__init__()
         assert mode in self.VALID_MODES, f"unknown DistHead mode {mode!r}"
         assert mse_weight >= 0.0, f"mse_weight must be >= 0; got {mse_weight}"
-        assert mse_weight == 0.0 or mode == "pearson", (
-            f"mse_weight is a pearson-mode option; got {mse_weight} for mode {mode!r}"
+        assert mse_weight == 0.0 or mode in self.ANCHORED_MODES, (
+            f"mse_weight is a pearson/listmle option; got {mse_weight} for mode {mode!r}"
         )
         self.mode = mode
         self.mse_weight = float(mse_weight)
@@ -901,6 +997,8 @@ class DistHead(nn.Module):
             return masked_mean((params - target) ** 2, feature_mask)
         if self.mode == "pearson":
             return pearson_loss(params, target, feature_mask, self.mse_weight)
+        if self.mode == "listmle":
+            return listmle_loss(params, target, feature_mask, self.mse_weight)
         if self.mode == "quantile":
             return masked_mean(
                 pinball(params, target, self.taus.to(params.device)), feature_mask
@@ -978,6 +1076,8 @@ def dist_param_dim(dist: str, num_quantiles: int = DEFAULT_NUM_QUANTILES) -> int
         "energy": 2,
         "pearson": 1,
         "pearson_mse": 1,
+        "listmle": 1,
+        "listmle_mse": 1,
     }[dist]
 
 
@@ -988,12 +1088,16 @@ def make_dist_head(
     rank: int = DEFAULT_ENERGY_RANK,
     num_samples: int = DEFAULT_ENERGY_SAMPLES,
     pearson_mse_weight: float = DEFAULT_PEARSON_MSE_WEIGHT,
+    listmle_mse_weight: float = DEFAULT_LISTMLE_MSE_WEIGHT,
 ) -> DistHead:
     """Build a :class:`DistHead` from a config ``dist`` value.
 
     Args:
         dist: One of ``point`` / ``crps`` / ``quantile`` / ``laplace_crps`` / ``nll`` /
-            ``energy`` / ``pearson`` / ``pearson_mse`` (the keys of :data:`DIST_TO_MODE`).
+            ``energy`` / ``pearson`` / ``pearson_mse`` / ``listmle`` / ``listmle_mse``
+            (the keys of :data:`DIST_TO_MODE`).
+        listmle_mse_weight: ``listmle_mse`` only -- weight of the MSE anchor; ``listmle``
+            always uses 0, on the same naming rule as the Pearson pair.
         num_quantiles: ``quantile`` only -- size of the ``tau`` grid.
         num_features: ``energy`` only -- ``F``; REQUIRED there to allocate ``V [F, rank]``.
         rank: ``energy`` only -- ``k`` (``0`` = the diagonal-only ablation).
@@ -1017,4 +1121,9 @@ def make_dist_head(
             f"pearson_mse needs a positive MSE weight; got {pearson_mse_weight}"
         )
         return DistHead(mode, mse_weight=pearson_mse_weight)
+    if dist == "listmle_mse":
+        assert listmle_mse_weight > 0.0, (
+            f"listmle_mse needs a positive MSE weight; got {listmle_mse_weight}"
+        )
+        return DistHead(mode, mse_weight=listmle_mse_weight)
     return DistHead(mode)

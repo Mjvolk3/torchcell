@@ -357,3 +357,39 @@ script, both notes-tex documents (the SIMB launch section carries a dated correc
 paragraph; the expression document is rewritten where it said replicates), and the memory
 record. The `short_budget_spread.py` config assertion now names the columns it can see
 and says what it cannot.
+
+## 2026.09.08 - Pearson round pruned; ListMLE ranking objective prepared
+
+### Pruned at day 2.1
+
+From the 19:01 CT sync, five of eight Pearson-round runs were constant-output (validation
+Pearson 0, predicted spread 1e-7). `2378262_0` (`Q_pearson` s0 + `Q_pearson_mse` s0) and
+`2378267_2` (both seed-2 runs) held only dead runs and were cancelled at 19:30 CT; two cabbi
+cards freed. `2378262_1` holds the live `Q_pearson_mse` seed 1 beside the dead `Q_pearson`
+seed 1; the dead process (PID 2893629, identified by its `Q_pearson,seed1` tag) was sent
+SIGTERM through an overlapping step and the sibling kept training on the whole card. The
+two solo `Q_pearson_b64` tasks are untouched. Left running: `2378262_1`, `2378268_0`,
+`2378268_1`.
+
+### ListMLE: rank the strains per gene
+
+Question: given a set of knockouts, which strain expresses gene g highest? That is a
+ranking across strains per gene, the quantity per-feature Spearman scores, and it is what
+the Pearson loss also targets but through a scale-free correlation that drops constant
+columns. ListMLE (Plackett-Luce likelihood of the true ordering of the strains in the
+batch, per hidden gene, Xia et al. 2008) keeps a gradient on a constant column and is
+shift- but not scale-invariant (the loss keeps falling as score gaps grow), so the pure arm
+is expected to drift in output scale and the anchored arm pins it. The list is the batch,
+so batch size is part of the objective, as for Pearson.
+
+Implementation (commit pending): `listmle` and `listmle_mse` in
+`torchcell/losses/distributional.py` (`masked_per_feature_listmle`, `listmle_loss`,
+`DEFAULT_LISTMLE_MSE_WEIGHT = 1.0`, `LISTMLE_MIN_ROWS = 2`; masked rows sorted last with a
+large-negative score so they leave every suffix logsumexp), point-shaped, no PIT. Tests:
+98 passing, mypy strict clean. Arms `Q_listmle`, `Q_listmle_mse` in `gh_expr_008_arm.sh`;
+stages `listmle` (2 arms x seeds 0-1, 2 per card, `max_epochs` 6,000) and `canary_listmle`
+in `igb_expr_wave5.slurm`. 6,000 rather than 9,900 because every packed five-day task so
+far died of host memory between days 3.5 and 4.6, and the Pearson peaks came by 3,200.
+
+Cards at 19:35 CT: cabbi 2 free of 8 (3 mine, 3 another user), `gpu` 6 A40 idle on three
+nodes, mmli 4 A100 idle (not to be touched). Submission waits for approval.

@@ -45,3 +45,10 @@ The models agree about the bulk and disagree about the tail.
 ![](assets/images/010-kuzmin-tmi/paired_prediction_agreement.svg)
 
 Findings: [[experiments.010-kuzmin-tmi.additive-baseline-analysis]]
+
+## 2026.09.09 - Panels Restyled to the Repo Figure Standard
+
+Panel letters a to c at the outer top-left (`torchcell.utils.panel_label`), the
+density ramp is now the purple palette slot (white, fill, line, dark) instead of
+`magma_r`, all three panels share one extent and one log-count colorbar, and the
+identity line is black. Numbers are unchanged; the script was rerun in full.

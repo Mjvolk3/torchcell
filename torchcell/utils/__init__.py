@@ -15,6 +15,7 @@ from .utils import (
     display_label,
     format_scientific_notation,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
@@ -36,4 +37,5 @@ __all__ = [
     "PAPER_RC",
     "apply_paper_style",
     "display_label",
+    "panel_label",
 ]

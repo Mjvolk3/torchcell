@@ -32,12 +32,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+from matplotlib.colors import LinearSegmentedColormap, LogNorm
 from scipy.stats import pearsonr, spearmanr
 
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
+    apply_paper_style,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
@@ -211,34 +215,68 @@ def main() -> None:
 
 
 def plot(y: np.ndarray, preds: dict[str, np.ndarray]) -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-        }
-    )
+    """Three hexbin panels, one shared log-count colorbar, letters a to c."""
+    apply_paper_style()
+    # Constrained layout rather than tight_layout: the shared colorbar is a fourth
+    # axes that tight_layout does not lay out, and the panel letters sit outside the
+    # axes boxes, which constrained layout reserves room for.
     fig, axes = plt.subplots(
-        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58.0))
+        1,
+        3,
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58.0)),
+        layout="constrained",
     )
     panels = [
         ("B1_additive", "CGT_M03", "Additive ridge", "Transformer M03"),
         ("B5_mlp", "CGT_M03", "Nonlinear MLP", "Transformer M03"),
         ("CGT_M01", "CGT_M03", "Transformer M01", "Transformer M03"),
     ]
+    # Sequential ramp through the purple slot, white -> fill -> line -> dark, so the
+    # density map stays inside the repo palette (same construction as the 007 FBA
+    # baseline hexbins).
+    cmap = LinearSegmentedColormap.from_list(
+        "lilac", ["#FFFFFF", PLOT_PALETTE_FILL[2], PLOT_PALETTE[2], PLOT_PALETTE[8]]
+    )
+    # One extent for every panel: the union range of all six prediction vectors, so
+    # the identity line runs corner to corner and the three panels read on one scale.
+    lo = float(min(v.min() for v in preds.values()))
+    hi = float(max(v.max() for v in preds.values()))
+    pad = 0.04 * (hi - lo)
+    lo, hi = lo - pad, hi + pad
+    vmax = 1
+    hexes = []
     for ax, (a, b, la, lb) in zip(axes, panels):
-        ax.hexbin(preds[a], preds[b], gridsize=60, bins="log", cmap="magma_r", linewidths=0)
-        lo = float(min(preds[a].min(), preds[b].min()))
-        hi = float(max(preds[a].max(), preds[b].max()))
-        ax.plot([lo, hi], [lo, hi], color=PLOT_PALETTE[5], linewidth=0.5, linestyle="--")
+        hb = ax.hexbin(
+            preds[a],
+            preds[b],
+            gridsize=60,
+            extent=(lo, hi, lo, hi),
+            norm=LogNorm(vmin=1),
+            cmap=cmap,
+            mincnt=1,
+            linewidths=0,
+        )
+        hexes.append(hb)
+        vmax = max(vmax, int(hb.get_array().max()))
+        ax.plot([lo, hi], [lo, hi], color="black", linewidth=0.5, linestyle="--")
         r = pearsonr(preds[a], preds[b])[0]
+        ax.set_xlim(lo, hi)
+        ax.set_ylim(lo, hi)
         ax.set_xlabel(la)
         ax.set_ylabel(lb)
-        ax.set_title(f"r = {r:.3f}", fontsize=6, pad=2)
+        ax.set_title(f"r = {r:.3f}", fontsize=6, pad=3)
         for spine in ax.spines.values():
             spine.set_visible(True)
-    fig.tight_layout()
+            spine.set_linewidth(0.5)
+    # Every panel is scored on the same records, so one count scale serves all three.
+    for hb in hexes:
+        hb.set_norm(LogNorm(vmin=1, vmax=vmax))
+    cb = fig.colorbar(hexes[-1], ax=axes.tolist(), pad=0.01, fraction=0.03)
+    cb.set_label("Records", labelpad=1)
+    cb.outline.set_linewidth(0.5)
+    cb.ax.tick_params(width=0.5, length=2)
+    for ax, letter in zip(axes, "abc"):
+        panel_label(ax, letter)
 
     stem = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi", "paired_prediction_agreement")
     os.makedirs(osp.dirname(stem), exist_ok=True)

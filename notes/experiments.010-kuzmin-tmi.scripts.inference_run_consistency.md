@@ -1,3 +1,10 @@
+---
+id: 7k2mxq9vbt4nc1pfhs8dwle
+title: Inference_run_consistency
+desc: ''
+updated: 1788994031900
+created: 1788312489542
+---
 
 ## 2026.09.01 - The Same Checkpoint Disagrees With Itself Across Inference Runs
 
@@ -27,3 +34,10 @@ are self-consistent yet detached from gene identity, but that is a hypothesis an
 has not been verified.
 
 Findings: [[experiments.010-kuzmin-tmi.additive-baseline-analysis]]
+
+## 2026.09.09 - Panels Restyled to the Repo Figure Standard
+
+Panel letters a to c at the outer top-left (`torchcell.utils.panel_label`), the
+rcParams from `torchcell.utils.apply_paper_style`, and each title now carries the
+gene count behind its correlation. Numbers are unchanged; the script was rerun in
+full.

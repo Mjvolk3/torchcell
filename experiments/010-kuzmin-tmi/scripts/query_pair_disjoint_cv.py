@@ -98,7 +98,16 @@ def main() -> None:
         action="store_true",
         help="linear baselines only; B5 needs a GPU and dominates the runtime",
     )
+    ap.add_argument(
+        "--plot-only",
+        action="store_true",
+        help="redraw the figure from the CSV this script already wrote; no refit",
+    )
     args = ap.parse_args()
+    out_csv = osp.join(RESULTS_DIR, "query_pair_disjoint_cv.csv")
+    if args.plot_only:
+        plot(pd.read_csv(out_csv))
+        return
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
     row_genes, y, _, gene_names = load_records()
@@ -189,7 +198,6 @@ def main() -> None:
                 )
 
     df = pd.DataFrame(rows)
-    out_csv = osp.join(RESULTS_DIR, "query_pair_disjoint_cv.csv")
     df.to_csv(out_csv, index=False)
 
     summary = (
@@ -243,6 +251,7 @@ def plot(df: pd.DataFrame) -> None:
     from torchcell.utils import (
         PANEL_WIDTHS_MM,
         PLOT_PALETTE,
+        apply_paper_style,
         mm_to_in,
         savefig_true_size_svg,
     )
@@ -258,22 +267,16 @@ def plot(df: pd.DataFrame) -> None:
     x = np.arange(len(models))
     width = 0.38
 
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-        }
-    )
+    apply_paper_style()
     fig, ax = plt.subplots(
         figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(58.0))
     )
+    # Two series take the first two palette slots, in order.
     ax.bar(
         x - width / 2,
         [rnd[m] for m in models],
         width,
-        color=PLOT_PALETTE[5],
+        color=PLOT_PALETTE[0],
         edgecolor="black",
         linewidth=0.5,
         label="Random over records",
@@ -284,7 +287,7 @@ def plot(df: pd.DataFrame) -> None:
         width,
         yerr=[np.nan_to_num(cv.loc[m, "std"]) for m in models],
         error_kw={"elinewidth": 0.5, "capthick": 0.5, "capsize": 1.5},
-        color=PLOT_PALETTE[0],
+        color=PLOT_PALETTE[1],
         edgecolor="black",
         linewidth=0.5,
         label="Query-pair disjoint, 5 folds",
@@ -298,10 +301,12 @@ def plot(df: pd.DataFrame) -> None:
     ax.tick_params(which="minor", length=0)
     ax.grid(axis="y", which="both", linewidth=0.3, color="0.85")
     ax.set_axisbelow(True)
-    ax.legend(frameon=False, loc="upper left")
+    # Upper left is clear: the first two models are zero on both splits.
+    ax.legend(loc="upper left", handlelength=1.4, borderpad=0.4, labelspacing=0.3)
     for spine in ax.spines.values():
         spine.set_visible(True)
-    fig.tight_layout()
+        spine.set_linewidth(0.5)
+    fig.tight_layout(pad=0.4)
 
     stem = osp.join(
         os.environ["ASSET_IMAGES_DIR"],

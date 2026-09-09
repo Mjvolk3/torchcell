@@ -40,7 +40,9 @@ from dotenv import load_dotenv
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
@@ -190,14 +192,8 @@ def main() -> None:
 
 
 def plot(anchor: dict[str, tuple[pd.DataFrame, float]]) -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-        }
-    )
+    """One scatter per inference run against the additive anchor, letters a to c."""
+    apply_paper_style()
     fig, axes = plt.subplots(
         1,
         len(anchor),
@@ -214,11 +210,20 @@ def plot(anchor: dict[str, tuple[pd.DataFrame, float]]) -> None:
             linewidth=0.2,
         )
         ax.set_xlabel("Additive ridge coefficient")
-        ax.set_title(f"{run.replace('_', ' ')}, r = {r:.3f}", fontsize=6)
+        ax.set_title(
+            f"{run.replace('_', ' ')}, r = {r:.3f}, n = {len(j):,} genes",
+            fontsize=6,
+            pad=3,
+        )
         for spine in ax.spines.values():
             spine.set_visible(True)
+            spine.set_linewidth(0.5)
     axes[0].set_ylabel("Mean predicted interaction for the gene")
-    fig.tight_layout()
+    # Letters last, after the y label and ticks exist, so the measured outer edge
+    # of each panel is the one that prints.
+    for ax, letter in zip(axes, "abc"):
+        panel_label(ax, letter)
+    fig.tight_layout(pad=0.4)
 
     stem = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi", "inference_run_consistency")
     os.makedirs(osp.dirname(stem), exist_ok=True)

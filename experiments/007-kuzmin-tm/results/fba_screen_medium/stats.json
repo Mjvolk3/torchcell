@@ -1,0 +1,642 @@
+{
+  "arms": {
+    "frozen_baseline": {
+      "arm": "frozen_baseline",
+      "label": "Yeast9 default (frozen run, 2025-09-15)",
+      "medium": {
+        "n_open_exchanges": 16,
+        "glucose_uptake_bound": 1.0,
+        "glutamate_uptake_bound": 0.0,
+        "ammonium_uptake_bound": 1000.0,
+        "n_amino_acid_exchanges_open": 0
+      },
+      "wt": {
+        "growth": 0.0858439697264682
+      },
+      "growth_bands": [
+        {
+          "order": "single",
+          "n": 4036,
+          "n_wt_like": 3943,
+          "n_intermediate": 27,
+          "n_lethal": 66,
+          "frac_wt_like": 0.9769573835480674,
+          "frac_intermediate": 0.006689791873141724,
+          "frac_lethal": 0.01635282457879088,
+          "n_status_optimal": 4036
+        },
+        {
+          "order": "double",
+          "n": 651181,
+          "n_wt_like": 631368,
+          "n_intermediate": 5624,
+          "n_lethal": 14189,
+          "frac_wt_like": 0.9695737437056671,
+          "frac_intermediate": 0.008636615626070172,
+          "frac_lethal": 0.021789640668262743,
+          "n_status_optimal": 651181
+        },
+        {
+          "order": "triple",
+          "n": 332313,
+          "n_wt_like": 309526,
+          "n_intermediate": 6511,
+          "n_lethal": 16276,
+          "frac_wt_like": 0.9314291044888403,
+          "frac_intermediate": 0.019592974093700817,
+          "frac_lethal": 0.04897792141745884,
+          "n_status_optimal": 332313
+        }
+      ],
+      "tau": {
+        "n": 332313,
+        "pearson_r": 0.0018745278074905362,
+        "pearson_p": 0.27987581606233913,
+        "spearman_rho": 0.0029137202132126163,
+        "pred_mean": 0.0006658000265125773,
+        "pred_sd": 0.034580348981254186,
+        "meas_mean": -0.009884821509440396,
+        "meas_sd": 0.06205095550094878,
+        "as_stored": {
+          "n": 332313,
+          "pearson_r": 0.0019143512521787147,
+          "n_stored_and_raw": 332313,
+          "frac_rows_stored_equals_raw_1e-3": 0.011717868395157578,
+          "frac_sorted_stored_equals_sorted_raw_1e-3": 0.9998405118066401,
+          "pearson_r_stored_vs_raw_rowwise": -0.0316428062461622
+        },
+        "frac_abs_below_1e-6": 0.9764589408178435,
+        "frac_abs_below_1e-3": 0.9993048722138466,
+        "n_abs_above_1e-3": 231,
+        "nonzero_value_counts": {
+          "1.0": 122,
+          "2.0": 62,
+          "-1.0": 19,
+          "-0.0": 6,
+          "0.01": 4,
+          "-0.17": 4,
+          "-0.01": 3,
+          "-0.07": 2
+        },
+        "pearson_r_nonzero_only": 0.020382917007059524,
+        "n_nonzero_only": 231
+      },
+      "fitness": {
+        "n": 332313,
+        "pearson_r": 0.1508572469039994,
+        "pearson_p": 0.0,
+        "spearman_rho": 0.03048842125100796,
+        "pred_mean": 0.9473652464386811,
+        "pred_sd": 0.22124705039525178,
+        "meas_mean": 0.8439693019532789,
+        "meas_sd": 0.1803135731467273,
+        "as_stored": {
+          "n": 299146,
+          "pearson_r": -0.004643716180283494,
+          "n_stored_and_raw": 299146,
+          "frac_rows_stored_equals_raw_1e-3": 0.0038041625159621053,
+          "frac_sorted_stored_equals_sorted_raw_1e-3": 3.0085643799348814e-05,
+          "pearson_r_stored_vs_raw_rowwise": -0.003850909436997416
+        },
+        "value_counts_round3": {
+          "1.0": 308363,
+          "0.0": 16276,
+          "0.994": 2028,
+          "0.983": 1530,
+          "0.999": 1182,
+          "0.15": 888,
+          "0.367": 563,
+          "0.998": 505
+        },
+        "n_distinct_round3": 38,
+        "pearson_r_triples_with_model_gene": 0.25386714810442335,
+        "n_triples_with_model_gene": 111921
+      },
+      "consistency": {
+        "doubles_checkable": 632616,
+        "doubles_inconsistent_with_single": 253,
+        "triples_checkable": 285606,
+        "triples_inconsistent_with_single": 52,
+        "triples_above_min_double": 173,
+        "doubles_above_min_single": 8,
+        "inconsistent_doubles_model_gene_counts": {
+          "YGR144W": 246,
+          "YPL214C": 7
+        }
+      }
+    },
+    "yeast9_default": {
+      "arm": "yeast9_default",
+      "label": "Yeast9 default (rerun)",
+      "description": "yeast-GEM 9.0.2 model.medium as distributed (glucose 1, ammonium), unchanged",
+      "run": {
+        "timestamp": "2026-09-10T14:42:54.180479",
+        "torchcell_commit": "c7c8626328555b55d27cad74aca500580fe98607",
+        "cobra_version": "0.30.0",
+        "optlang_version": "1.8.3",
+        "solver": "optlang.glpk_interface",
+        "n_processes": 96,
+        "fba_runtime_seconds": 734.514392,
+        "total_runtime_seconds": 772.416719,
+        "solver_status_counts": {
+          "optimal": 987530
+        },
+        "perturbations_sha256": "7f427c5b68669d9ab38b708b9e0ba7c47b83443b9dbf8bbcd46fc55bac22487a"
+      },
+      "medium": {
+        "n_open_exchanges": 16,
+        "glucose_uptake_bound": 1.0,
+        "glutamate_uptake_bound": 0.0,
+        "ammonium_uptake_bound": 1000.0,
+        "n_amino_acid_exchanges_open": 0,
+        "excluded_by_role": [],
+        "unresolved": []
+      },
+      "wt": {
+        "growth": 0.0858439710016899,
+        "glucose_uptake": 1.0,
+        "oxygen_uptake": 2.3260598541899418,
+        "ammonium_exchange": -0.5493199652789668,
+        "glutamate_exchange": 0.0
+      },
+      "growth_bands": [
+        {
+          "order": "single",
+          "n": 4036,
+          "n_wt_like": 3944,
+          "n_intermediate": 27,
+          "n_lethal": 65,
+          "frac_wt_like": 0.977205153617443,
+          "frac_intermediate": 0.006689791873141724,
+          "frac_lethal": 0.016105054509415264,
+          "n_status_optimal": 4036
+        },
+        {
+          "order": "double",
+          "n": 651181,
+          "n_wt_like": 631475,
+          "n_intermediate": 5625,
+          "n_lethal": 14081,
+          "frac_wt_like": 0.9697380605392356,
+          "frac_intermediate": 0.008638151297411934,
+          "frac_lethal": 0.021623788163352434,
+          "n_status_optimal": 651181
+        },
+        {
+          "order": "triple",
+          "n": 332313,
+          "n_wt_like": 309539,
+          "n_intermediate": 6512,
+          "n_lethal": 16262,
+          "frac_wt_like": 0.9314682242343815,
+          "frac_intermediate": 0.019595983304896286,
+          "frac_lethal": 0.04893579246072227,
+          "n_status_optimal": 332313
+        }
+      ],
+      "tau": {
+        "n": 332313,
+        "pearson_r": 0.003394169271060816,
+        "pearson_p": 0.05039200725087887,
+        "spearman_rho": -0.004125746932463269,
+        "frac_abs_below_1e-6": 0.983124343615808,
+        "frac_abs_below_1e-3": 0.9994523235624245,
+        "n_abs_above_1e-3": 182,
+        "nonzero_value_counts": {
+          "1.0": 123,
+          "-1.0": 17,
+          "2.0": 17,
+          "-0.0": 6,
+          "-0.17": 4,
+          "-0.01": 3,
+          "0.01": 3,
+          "-0.07": 2
+        },
+        "n_nonzero_with_one_model_gene": 125,
+        "pred_sd": 0.02504767102541704
+      },
+      "fitness": {
+        "pearson_r": 0.15105945318831887,
+        "pearson_r_triples_with_model_gene": 0.25421078038858624,
+        "n_triples_with_model_gene": 111921,
+        "n_distinct_round3": 38,
+        "value_counts_round3": {
+          "1.0": 308376,
+          "0.0": 16262,
+          "0.994": 2029,
+          "0.983": 1530,
+          "0.999": 1182,
+          "0.15": 888,
+          "0.367": 563,
+          "0.998": 505
+        },
+        "pred_sd": 0.22116183679185136
+      },
+      "coverage": {
+        "triples_by_n_in_model": {
+          "0": 220392,
+          "1": 65214,
+          "2": 39288,
+          "3": 7419
+        },
+        "tau_nonzero_by_n_in_model": {
+          "0": 0,
+          "1": 125,
+          "2": 9,
+          "3": 48
+        }
+      },
+      "consistency": {
+        "doubles_checkable": 632616,
+        "doubles_inconsistent_with_single": 157,
+        "triples_checkable": 285606,
+        "triples_inconsistent_with_single": 41,
+        "triples_above_min_double": 127,
+        "doubles_above_min_single": 0,
+        "inconsistent_doubles_model_gene_counts": {
+          "YGR144W": 146,
+          "YPL214C": 11
+        }
+      }
+    },
+    "sm_glucose_3.3": {
+      "arm": "sm_glucose_3.3",
+      "label": "SM: ammonium, glucose 3.3",
+      "description": "SM (ammonium + YNB vitamins + glucose 3.3), SM_FBA, default UptakePolicy",
+      "run": {
+        "timestamp": "2026-09-10T14:30:00.949330",
+        "torchcell_commit": "c7c8626328555b55d27cad74aca500580fe98607",
+        "cobra_version": "0.30.0",
+        "optlang_version": "1.8.3",
+        "solver": "optlang.glpk_interface",
+        "n_processes": 96,
+        "fba_runtime_seconds": 675.471819,
+        "total_runtime_seconds": 714.077502,
+        "solver_status_counts": {
+          "optimal": 987530
+        },
+        "perturbations_sha256": "7f427c5b68669d9ab38b708b9e0ba7c47b83443b9dbf8bbcd46fc55bac22487a"
+      },
+      "medium": {
+        "n_open_exchanges": 25,
+        "glucose_uptake_bound": 3.3,
+        "glutamate_uptake_bound": 0.0,
+        "ammonium_uptake_bound": 1000.0,
+        "n_amino_acid_exchanges_open": 0,
+        "excluded_by_role": [],
+        "unresolved": []
+      },
+      "wt": {
+        "growth": 0.3137814574016433,
+        "glucose_uptake": 3.3,
+        "oxygen_uptake": 7.805535153548554,
+        "ammonium_exchange": -1.839565986808268,
+        "glutamate_exchange": 0.0
+      },
+      "growth_bands": [
+        {
+          "order": "single",
+          "n": 4036,
+          "n_wt_like": 3959,
+          "n_intermediate": 30,
+          "n_lethal": 47,
+          "frac_wt_like": 0.9809217046580773,
+          "frac_intermediate": 0.007433102081268583,
+          "frac_lethal": 0.011645193260654113,
+          "n_status_optimal": 4036
+        },
+        {
+          "order": "double",
+          "n": 651181,
+          "n_wt_like": 633512,
+          "n_intermediate": 6221,
+          "n_lethal": 11448,
+          "frac_wt_like": 0.9728662230624051,
+          "frac_intermediate": 0.009553411417102158,
+          "frac_lethal": 0.017580365520492768,
+          "n_status_optimal": 651181
+        },
+        {
+          "order": "triple",
+          "n": 332313,
+          "n_wt_like": 310116,
+          "n_intermediate": 7693,
+          "n_lethal": 14504,
+          "frac_wt_like": 0.9332045390941672,
+          "frac_intermediate": 0.023149861726745567,
+          "frac_lethal": 0.04364559917908718,
+          "n_status_optimal": 332313
+        }
+      ],
+      "tau": {
+        "n": 332313,
+        "pearson_r": -0.0005078113372165916,
+        "pearson_p": 0.7697248171836909,
+        "spearman_rho": 0.007592183873418369,
+        "frac_abs_below_1e-6": 0.9998254657506628,
+        "frac_abs_below_1e-3": 0.9999187512977223,
+        "n_abs_above_1e-3": 27,
+        "nonzero_value_counts": {
+          "-0.0": 6,
+          "0.01": 5,
+          "-0.16": 4,
+          "-0.01": 3,
+          "-0.06": 2,
+          "-0.34": 2,
+          "0.12": 2,
+          "-0.03": 2
+        },
+        "n_nonzero_with_one_model_gene": 0,
+        "pred_sd": 0.0011652023420574062
+      },
+      "fitness": {
+        "pearson_r": 0.1602978398683295,
+        "pearson_r_triples_with_model_gene": 0.26907098017429476,
+        "n_triples_with_model_gene": 111921,
+        "n_distinct_round3": 40,
+        "value_counts_round3": {
+          "1.0": 309813,
+          "0.0": 14504,
+          "0.994": 2035,
+          "0.983": 1541,
+          "0.999": 1202,
+          "0.211": 890,
+          "0.416": 564,
+          "0.998": 507
+        },
+        "pred_sd": 0.20926656655805745
+      },
+      "coverage": {
+        "triples_by_n_in_model": {
+          "0": 220392,
+          "1": 65214,
+          "2": 39288,
+          "3": 7419
+        },
+        "tau_nonzero_by_n_in_model": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 27
+        }
+      },
+      "consistency": {
+        "doubles_checkable": 632616,
+        "doubles_inconsistent_with_single": 0,
+        "triples_checkable": 285606,
+        "triples_inconsistent_with_single": 0,
+        "triples_above_min_double": 0,
+        "doubles_above_min_single": 0,
+        "inconsistent_doubles_model_gene_counts": {}
+      }
+    },
+    "screen_medium": {
+      "arm": "screen_medium",
+      "label": "Screen medium: SD/MSG -His/Arg/Lys/Ura",
+      "description": "SGA triple-mutant selection medium (SD/MSG -His/Arg/Lys/Ura), SGA_TM_SELECTION_FBA, default UptakePolicy",
+      "run": {
+        "timestamp": "2026-09-10T14:18:05.985942",
+        "torchcell_commit": "c7c8626328555b55d27cad74aca500580fe98607",
+        "cobra_version": "0.30.0",
+        "optlang_version": "1.8.3",
+        "solver": "optlang.glpk_interface",
+        "n_processes": 96,
+        "fba_runtime_seconds": 701.529201,
+        "total_runtime_seconds": 739.219291,
+        "solver_status_counts": {
+          "optimal": 987530
+        },
+        "perturbations_sha256": "7f427c5b68669d9ab38b708b9e0ba7c47b83443b9dbf8bbcd46fc55bac22487a"
+      },
+      "medium": {
+        "n_open_exchanges": 42,
+        "glucose_uptake_bound": 3.3,
+        "glutamate_uptake_bound": 0.165,
+        "ammonium_uptake_bound": 0.0,
+        "n_amino_acid_exchanges_open": 17,
+        "excluded_by_role": [
+          "agar",
+          "L-canavanine",
+          "thialysine (S-(2-aminoethyl)-L-cysteine)",
+          "G418 (geneticin)",
+          "nourseothricin (clonNAT)"
+        ],
+        "unresolved": []
+      },
+      "wt": {
+        "growth": 0.4966052056276385,
+        "glucose_uptake": 3.3,
+        "oxygen_uptake": 12.162251346120952,
+        "ammonium_exchange": 0.3707209664738706,
+        "glutamate_exchange": -0.165
+      },
+      "growth_bands": [
+        {
+          "order": "single",
+          "n": 4036,
+          "n_wt_like": 3975,
+          "n_intermediate": 39,
+          "n_lethal": 22,
+          "frac_wt_like": 0.9848860257680873,
+          "frac_intermediate": 0.009663032705649157,
+          "frac_lethal": 0.005450941526263627,
+          "n_status_optimal": 4036
+        },
+        {
+          "order": "double",
+          "n": 651181,
+          "n_wt_like": 638168,
+          "n_intermediate": 7796,
+          "n_lethal": 5217,
+          "frac_wt_like": 0.9800163088296495,
+          "frac_intermediate": 0.011972093780377498,
+          "frac_lethal": 0.008011597389972987,
+          "n_status_optimal": 651181
+        },
+        {
+          "order": "triple",
+          "n": 332313,
+          "n_wt_like": 313433,
+          "n_intermediate": 7413,
+          "n_lethal": 11467,
+          "frac_wt_like": 0.943186092629539,
+          "frac_intermediate": 0.022307282592014154,
+          "frac_lethal": 0.03450662477844683,
+          "n_status_optimal": 332313
+        }
+      ],
+      "tau": {
+        "n": 332313,
+        "pearson_r": -0.0007028070051054648,
+        "pearson_p": 0.6853725187396705,
+        "spearman_rho": 0.02648231849047804,
+        "frac_abs_below_1e-6": 0.9998615762850084,
+        "frac_abs_below_1e-3": 0.9999097236641359,
+        "n_abs_above_1e-3": 30,
+        "nonzero_value_counts": {
+          "0.01": 5,
+          "0.02": 4,
+          "-0.13": 4,
+          "0.0": 3,
+          "0.04": 3,
+          "-0.09": 2,
+          "0.03": 2,
+          "-0.39": 2
+        },
+        "n_nonzero_with_one_model_gene": 0,
+        "pred_sd": 0.0012603296056157957
+      },
+      "fitness": {
+        "pearson_r": 0.17318968770784318,
+        "pearson_r_triples_with_model_gene": 0.28939224224072996,
+        "n_triples_with_model_gene": 111921,
+        "n_distinct_round3": 43,
+        "value_counts_round3": {
+          "1.0": 312567,
+          "0.0": 11467,
+          "0.955": 2047,
+          "0.999": 1633,
+          "0.987": 1196,
+          "0.178": 945,
+          "0.959": 594,
+          "0.349": 563
+        },
+        "pred_sd": 0.18898500390427697
+      },
+      "coverage": {
+        "triples_by_n_in_model": {
+          "0": 220392,
+          "1": 65214,
+          "2": 39288,
+          "3": 7419
+        },
+        "tau_nonzero_by_n_in_model": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 30
+        }
+      },
+      "consistency": {
+        "doubles_checkable": 632616,
+        "doubles_inconsistent_with_single": 0,
+        "triples_checkable": 285606,
+        "triples_inconsistent_with_single": 0,
+        "triples_above_min_double": 0,
+        "doubles_above_min_single": 0,
+        "inconsistent_doubles_model_gene_counts": {}
+      }
+    }
+  },
+  "summary": [
+    {
+      "arm": "frozen_baseline",
+      "label": "Yeast9 default (frozen run, 2025-09-15)",
+      "open_exchanges": 16,
+      "glucose_bound": 1.0,
+      "amino_acid_exchanges": 0,
+      "wt_growth": 0.0858439697264682,
+      "frac_wt_like_single": 0.9769573835480674,
+      "frac_wt_like_double": 0.9695737437056671,
+      "frac_wt_like_triple": 0.9314291044888403,
+      "frac_lethal_triple": 0.04897792141745884,
+      "n_tau_nonzero": 231,
+      "pearson_r_tau": 0.0018745278074905362,
+      "spearman_rho_tau": 0.0029137202132126163,
+      "pearson_r_fitness": 0.1508572469039994,
+      "pearson_r_fitness_covered": 0.25386714810442335,
+      "doubles_inconsistent": 253,
+      "triples_above_min_double": 173
+    },
+    {
+      "arm": "yeast9_default",
+      "label": "Yeast9 default (rerun)",
+      "open_exchanges": 16,
+      "glucose_bound": 1.0,
+      "amino_acid_exchanges": 0,
+      "wt_growth": 0.0858439710016899,
+      "frac_wt_like_single": 0.977205153617443,
+      "frac_wt_like_double": 0.9697380605392356,
+      "frac_wt_like_triple": 0.9314682242343815,
+      "frac_lethal_triple": 0.04893579246072227,
+      "n_tau_nonzero": 182,
+      "pearson_r_tau": 0.003394169271060816,
+      "spearman_rho_tau": -0.004125746932463269,
+      "pearson_r_fitness": 0.15105945318831887,
+      "pearson_r_fitness_covered": 0.25421078038858624,
+      "doubles_inconsistent": 157,
+      "triples_above_min_double": 127
+    },
+    {
+      "arm": "sm_glucose_3.3",
+      "label": "SM: ammonium, glucose 3.3",
+      "open_exchanges": 25,
+      "glucose_bound": 3.3,
+      "amino_acid_exchanges": 0,
+      "wt_growth": 0.3137814574016433,
+      "frac_wt_like_single": 0.9809217046580773,
+      "frac_wt_like_double": 0.9728662230624051,
+      "frac_wt_like_triple": 0.9332045390941672,
+      "frac_lethal_triple": 0.04364559917908718,
+      "n_tau_nonzero": 27,
+      "pearson_r_tau": -0.0005078113372165916,
+      "spearman_rho_tau": 0.007592183873418369,
+      "pearson_r_fitness": 0.1602978398683295,
+      "pearson_r_fitness_covered": 0.26907098017429476,
+      "doubles_inconsistent": 0,
+      "triples_above_min_double": 0
+    },
+    {
+      "arm": "screen_medium",
+      "label": "Screen medium: SD/MSG -His/Arg/Lys/Ura",
+      "open_exchanges": 42,
+      "glucose_bound": 3.3,
+      "amino_acid_exchanges": 17,
+      "wt_growth": 0.4966052056276385,
+      "frac_wt_like_single": 0.9848860257680873,
+      "frac_wt_like_double": 0.9800163088296495,
+      "frac_wt_like_triple": 0.943186092629539,
+      "frac_lethal_triple": 0.03450662477844683,
+      "n_tau_nonzero": 30,
+      "pearson_r_tau": -0.0007028070051054648,
+      "spearman_rho_tau": 0.02648231849047804,
+      "pearson_r_fitness": 0.17318968770784318,
+      "pearson_r_fitness_covered": 0.28939224224072996,
+      "doubles_inconsistent": 0,
+      "triples_above_min_double": 0
+    }
+  ],
+  "rerun_reproduces_frozen": {
+    "rerun_vs_frozen_wt_growth_abs_diff": 1.2752217060096882e-09,
+    "rerun_vs_frozen_pearson_r_tau_abs_diff": 0.0015196414635702798,
+    "rerun_vs_frozen_n_tau_nonzero": [
+      182,
+      231
+    ],
+    "rerun_vs_frozen_triples_wt_like": [
+      309539,
+      309526
+    ]
+  },
+  "raw_labels": {
+    "raw_kuzmin2018": "data/host/kuzmin2018/aao1729_data_s1.zip",
+    "raw_kuzmin2018_sha256": "702f7eb64e4afeb2761bf8baafce7c4c1253a9633a37963f4ba60e2c52de9041",
+    "raw_kuzmin2020": [
+      "data/torchcell/tmi_kuzmin2020/raw/aaz5667-Table-S1.xlsx",
+      "data/torchcell/tmi_kuzmin2020/raw/aaz5667-Table-S3.xlsx"
+    ],
+    "raw_kuzmin2020_sha256": [
+      "4180577d53d5012c6c747227cbeca8a2d09f59bd8028d3bb2f5fd84601c77def",
+      "625420bed5de3563c9f1b4f1909a627aa4d8dd1b629c3f8a3596eb99e132c54f"
+    ],
+    "n_raw_trigenic_gene_sets": 378342
+  },
+  "thresholds": {
+    "wt_like": 0.001,
+    "tau_zero": 0.001
+  },
+  "model": {
+    "version": "9.0.2",
+    "id": "yeastGEM_v9__46__0__46__2"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "n_open_exchanges": 16,
+  "open_exchanges": {
+    "r_1654": {
+      "metabolite": "ammonium",
+      "uptake_bound": 1000.0
+    },
+    "r_1714": {
+      "metabolite": "D-glucose",
+      "uptake_bound": 1.0
+    },
+    "r_1832": {
+      "metabolite": "H+",
+      "uptake_bound": 1000.0
+    },
+    "r_1861": {
+      "metabolite": "iron(2+)",
+      "uptake_bound": 1000.0
+    },
+    "r_1992": {
+      "metabolite": "oxygen",
+      "uptake_bound": 1000.0
+    },
+    "r_2005": {
+      "metabolite": "phosphate",
+      "uptake_bound": 1000.0
+    },
+    "r_2020": {
+      "metabolite": "potassium",
+      "uptake_bound": 1000.0
+    },
+    "r_2049": {
+      "metabolite": "sodium",
+      "uptake_bound": 1000.0
+    },
+    "r_2060": {
+      "metabolite": "sulphate",
+      "uptake_bound": 1000.0
+    },
+    "r_2100": {
+      "metabolite": "H2O",
+      "uptake_bound": 1000.0
+    },
+    "r_4593": {
+      "metabolite": "chloride",
+      "uptake_bound": 1000.0
+    },
+    "r_4594": {
+      "metabolite": "Cu2(+)",
+      "uptake_bound": 1000.0
+    },
+    "r_4595": {
+      "metabolite": "Mn(2+)",
+      "uptake_bound": 1000.0
+    },
+    "r_4596": {
+      "metabolite": "Zn(2+)",
+      "uptake_bound": 1000.0
+    },
+    "r_4597": {
+      "metabolite": "Mg(2+)",
+      "uptake_bound": 1000.0
+    },
+    "r_4600": {
+      "metabolite": "Ca(2+)",
+      "uptake_bound": 1000.0
+    }
+  },
+  "media_bounds": null
+}

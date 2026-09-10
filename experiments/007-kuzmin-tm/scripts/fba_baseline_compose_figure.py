@@ -11,8 +11,8 @@ proxy, and the trigenic interaction of Fig. 2a. Every number in the boxes is rea
 the equations are real LaTeX typeset by MathJax (``math="1"`` on the model, ``$$...$$``
 labels; math cells at ``fontSize=7`` print at ~6 pt). Panels (b)-(f) are the true-size SVGs
 from the same script, placed at exact physical size (100 draw.io units per inch). Panel (g)
-is a lettered placeholder for the rerun on the screen's own medium, which has not been run;
-its first line, in the palette red, states that the rerun is required.
+is the same comparison as (b) for the rerun on the screen's own medium
+(``fba_screen_medium_tau.svg`` from ``fba_screen_medium_si.py``, this folder).
 
 Layout convention shared by every composed SI figure (the "white cross"): COL_GAP = 12
 units (3 mm) between columns, ROW_GAP = 22 units (5.5 mm) between rows, a TOP_STRIP of 16
@@ -245,18 +245,6 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
     return y0 + h
 
 
-def placeholder(c: Canvas, x, y, w, h):
-    """The rerun notice: first line in the palette red (as FigS-dcell-training panel e), rest black."""
-    c.box(
-        f'<font color="{RED[0]}">Rerun required: the FBA medium does not match the screen. '
-        "The run used yeast-GEM's default ammonium minimal medium as distributed.</font><br>"
-        "[placeholder: rerun with the screen's medium] The same pipeline with the exchange bounds set to "
-        "the medium the trigenic screens were scored on. Not run; this space is reserved for panels b, c "
-        "and f recomputed on that medium.",
-        x, y, w, h, color=GRAY, fill=False, dashed=True, align="left", valign="top",
-    )
-
-
 def main():
     st = json.load(open(STATS))
     c = Canvas()
@@ -288,8 +276,11 @@ def main():
         c.letter(letter, x, row_top)
         x += w + COL_GAP
         h3 = max(h3, h)
+    w, h = c.image(osp.join(IMG_DIR, "fba_screen_medium_tau.svg"), x, y3)
     c.letter("g", x, row_top)
-    placeholder(c, x, y3, FULL_WIDTH - x, h3)
+    x += w
+    h3 = max(h3, h)
+    extent_w = max(extent_w, x)
     extent_h = y3 + h3
 
     xml = (

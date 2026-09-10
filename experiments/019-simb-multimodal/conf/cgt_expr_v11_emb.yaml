@@ -11,29 +11,36 @@
 # width, weight decay, trunk, pair-term mechanisms) sits inside the noise. The incumbent
 # reads ONE embedding, calm (codon language model over the ORF). This round stacks
 # embeddings that plausibly carry different information about the same gene, so the token
-# covers the whole locus: promoter (nucleotide transformer, 1,003 bp 5'), terminator (300 bp
-# 3'), ORF (calm) and protein (ProtT5).
+# covers the whole locus: promoter (species-aware fungal LM, 5' window), terminator (same
+# model, 3' window), ORF (calm) and protein (ProtT5).
+#
+# WHY THE SPECIES-AWARE MODEL AND NOT THE NUCLEOTIDE TRANSFORMER for the cis windows. It
+# was trained on yeast and related fungi, its embeddings are 768-d per region against the
+# nucleotide transformer's 2,560, and on the parameter-free neighbor probe its 3' and 5'
+# embeddings read 0.036 and 0.020 against 0.005 to 0.012 for the NT windows
+# (knn_embedding_probe.json; random floor 0.011 to 0.033). The 3' file was rebuilt on
+# 2026-07-27 to cover all 6,607 genes (backfill_fudt_downstream.py); the earlier build
+# lacked the 28 mitochondrial Q0* genes.
 #
 # THE ARMS, set by the launcher rather than here (cell_dataset.node_embeddings):
 #   E_calm       [calm]                                              the incumbent, 768-d
 #   E_ptt5       [prot_T5_all]                                       1,024-d
 #   E_calm_ptt5  [calm, prot_T5_all]                                 1,792-d
-#   E_full       [nt_window_five_prime_1003, nt_window_three_prime_300, calm, prot_T5_all]
-#                                                                    6,912-d
+#   E_full       [fudt_upstream, calm, prot_T5_all, fudt_downstream] 3,328-d, locus order
 # E_calm against E_ptt5 is the contrast the v10 grid could not make (calm was not a level).
 # E_full against E_calm_ptt5 is the question of the round: do the cis-regulatory windows
-# add or degrade. On the deletion side alone those windows sit at the random floor in the
-# parameter-free neighbor probe (knn_embedding_probe.json: 0.005 to 0.012 against a floor
-# of 0.011 to 0.033), but that probe only asks whether similar promoters give similar
-# deletion responses; in the model the same embedding is every REPORTER's query, and
-# whether a reporter responds is plausibly a promoter property. Hypothesis, and this round
-# is its test.
+# add or degrade. On the deletion side alone they sit near the random floor in the neighbor
+# probe, but that probe only asks whether similar promoters give similar deletion
+# responses; in the model the same embedding is every REPORTER's query, and whether a
+# reporter responds is plausibly a promoter property. Hypothesis, and this round is its
+# test.
 #
-# THE WIDTH CONFOUND IS ACCEPTED AND NAMED. Stacking changes the preprocessor's input
-# width along with its content, so E_full differs from E_calm_ptt5 in both. v10 measured
-# width against content at 1,024 and found content is what matters (random_1024 sits at
-# 0.061 against ProtT5's 0.129); a random filler of matching width would separate the two
-# here and is not in this round.
+# THE WIDTH CONFOUND IS ACCEPTED AND NAMED. The input projection's hidden layer is sized
+# (input + 90) / 2, so E_full carries about 5.9M preprocessor parameters against the
+# incumbent's 0.37M, and differs from E_calm_ptt5 in capacity as well as content. v10
+# measured width against content at 1,024 and found content is what matters (random_1024
+# sits at 0.061 against ProtT5's 0.129); a random filler of matching width would separate
+# the two here and is not in this round.
 #
 # EVERYTHING ELSE IS PINNED to the v9 incumbent through v9_mask: quantile head, pinball
 # loss, the layer-1 attention mask over nine graphs, L=6, hidden 90, dropout 0.1, lr 3e-4,

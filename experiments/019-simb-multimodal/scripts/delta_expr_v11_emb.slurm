@@ -24,7 +24,7 @@
 #       --export=ALL,V11_STAGE=round,V11_PROJECT_ROOT=/work/hdd/bbub/mjvolk3/torchcell-v11,TORCHCELL_SOURCE_GIT_HASH=$H,TORCHCELL_SOURCE_DIFF_SHA256=$D \
 #       /work/hdd/bbub/mjvolk3/torchcell-v11/experiments/019-simb-multimodal/scripts/delta_expr_v11_emb.slurm
 #
-# NO DELTA CANARY. The widest stack (E_full, 6,912-d input) is proven to compose, build and
+# NO DELTA CANARY. The widest stack (E_full, 3,328-d input) is proven to compose, build and
 # step by a fast_dev_run on GilaHyper against the same embedding files before submission,
 # which is what a Delta canary would test at the price of a 3 h backfill slot and a 43 min
 # startup. The arms differ from v10 only in `cell_dataset.node_embeddings`.
@@ -67,8 +67,11 @@ ARM_EMB=(
   "[calm]"
   "[prot_T5_all]"
   "[calm,prot_T5_all]"
-  "[nt_window_five_prime_1003,nt_window_three_prime_300,calm,prot_T5_all]"
+  "[fudt_upstream,calm,prot_T5_all,fudt_downstream]"
 )
+# E_full is written in locus order, 5' window, ORF, protein, 3' window. The order is
+# legibility only: the blocks feed one linear layer, so any permutation is the same model
+# up to a permutation of that layer's weight columns.
 
 case "$STAGE" in
   # PRE-FLIGHT on Delta, kept for the case where the GilaHyper smoke test is not enough:
@@ -141,8 +144,8 @@ fi
 # EVERY EMBEDDING FILE THE ROUND READS, checked before a GPU is touched. The v10 grid found
 # a width mismatch only at model construction; a missing .pt would surface the same way,
 # 43 minutes into each run.
-for f in nucleotide_transformer_embedding/processed/nt_window_five_prime_1003.pt \
-         nucleotide_transformer_embedding/processed/nt_window_three_prime_300.pt \
+for f in fudt_embedding/processed/species_upstream.pt \
+         fudt_embedding/processed/species_downstream.pt \
          calm_embedding/processed/calm.pt \
          protT5_embedding/processed/prot_t5_xl_uniref50_all.pt; do
   if [ ! -f "$DATA_ROOT/data/scerevisiae/$f" ]; then

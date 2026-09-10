@@ -1,0 +1,27 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_ctrl_012.yaml
+#
+# THE CONTROL FOR THE FITNESS EXPERIMENT. `cgt_s0_r_kl_000` with one key changed,
+# `transforms.fit_on: train`, so it standardizes by the same population as the fitness
+# arms (`cgt_s0_r_kl_fit_008` through `_011`). Interaction only: no second label, no
+# global head, no fitness term.
+#
+# WHY THIS EXISTS RATHER THAN A COMMAND-LINE OVERRIDE. The replication arm must keep
+# `fit_on: subset`, since reproducing 010 means reproducing 010's two constants, and the
+# fitness arms must not. A control that differs from its treatment arms by the normalizer
+# as well as the head answers nothing, and an override typed at launch is invisible in the
+# config and easy to omit on a rerun. Naming it makes the arm reproducible from the config
+# alone.
+#
+# Read against: the fitness arms at the same seed, and (in raw units only, since the
+# constants differ) GilaHyper job 1598, validation Pearson 0.4463 at epoch 14.
+#
+#   sbatch -J 025-kl-ctrl experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_r_kl_ctrl_012
+defaults:
+  - cgt_s0_r_kl_000
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, fitness_control, fit_on_train, igb_mmli]
+
+transforms:
+  fit_on: train

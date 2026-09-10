@@ -126,30 +126,28 @@ fitness against its subsets, so the fitness target should shape a representation
 interaction head can use. The three IGB runs (weight 1.0, control, weight 0.1, all seed
 42) are what measures it.
 
-## 2026.09.09 - Normalizer Fit on the Training Split Only
+## 2026.09.09 - Which Fit Population the Fitness Arms Use, and What Was Cancelled
 
-The additive-baselines report (`notes-tex/010-additive-baselines`, Table 4 row 6 and
-Section 5.4) measured that the transformer's standardization constants were fit on all
-376,732 records, train + val + test: the logged mean -0.008024324 and sd 0.063263549 are
-the all-record values, where the train-only values are -0.007688739 and 0.063186255. The
-025 port had the same leak under `fit_on_subset`, which passed the whole S0 subset as
-`fit_indices`; the 2026.09.08 smoke printed exactly those all-record constants. Two
-scalars, an effect of order 1e-4 in each, in the model's favor, and the baselines do not
-have it.
+The leak is the one the section above fixes, and the fix landed on main from the
+additive-baselines side while this branch was open: `transforms.fit_on: subset | train`,
+with the replication arm deliberately keeping `subset` so it still reproduces 010's two
+constants. This branch had briefly forced train-only on every arm, which would have
+broken exactly that replication; main's version is the one that survived the rebase.
 
-Fixed here: `fit_indices` is now the pinned train list intersected with the subset,
-which is the set the data module places in train (the realized-split assertion still
-runs). `normalization/n_fit` is logged. Every run from this commit on trains with
-train-only constants, so its standardized loss is not bit-comparable to job 1598 or the
-010 checkpoints; raw-unit metrics are computed through the matching inverse transform
-and are the numbers to compare across the boundary.
+The fitness arms take `fit_on: train` (set in `cgt_s0_r_kl_fit_008`, inherited by `_009`
+through `_011`), and the experiment's control is `cgt_s0_r_kl_ctrl_012`, which is
+`cgt_s0_r_kl_000` with the same key changed and nothing else. A named control rather
+than a launch-time override, because a control that differs from its treatment arms by
+the normalizer as well as the head answers nothing, and an override typed at launch is
+invisible in the config on a rerun. All four arms therefore standardize by the same
+301,386 training records; against job 1598 and the 010 checkpoints they are comparable in
+raw units only.
 
-Runs that carried the leak and were cancelled today: GilaHyper 1609 (soft KL, disjoint,
-had not started), Delta canary 21895901 (cosine schedule, 19 h in) and the 26 pending
-sweep jobs 21917113 to 21917138. Runs kept pending for the fixed code: IGB 2385828 to
-2385830 (the launcher checks out the branch tip at start) and Delta 21919310 to
-21919313 (worktree advanced by hand). Job 1598 and the 010 checkpoints keep their
-all-record constants; they are read in raw units.
+Cancelled for carrying the all-record constants: GilaHyper 1609 (soft KL, disjoint, had
+not started; resubmitted as 1640 from main, which has both the fix and the config), the
+Delta canary 21895901 at 19 h, and the 26 pending sweep jobs 21917113 to 21917138. The
+Delta fitness replicates 21919310 to 21919313 are still queued and still run the `_008`
+pool-readout design.
 
 `gh_cgt.slurm` now runs from the submitting checkout (`SLURM_SUBMIT_DIR`) and accepts
 Hydra overrides after the config name, like `delta_cgt.slurm`, so a branch can be
@@ -185,5 +183,6 @@ fitness gradient reaches the interaction prediction only through the shared trun
 `perturbed` setting is the follow-up arm. Logged: `{stage}/cls_pert_strain_sd`.
 
 Queued on IGB mmli in place of the `_008`/`_009` pair (cancelled before starting):
-`cgt_s0_r_kl_fit_010`, `cgt_s0_r_kl_000`, `cgt_s0_r_kl_fit_011`, seed 42. The Delta
-replicates 21919310 to 21919313 still run `_008` and the control.
+`cgt_s0_r_kl_fit_010`, `cgt_s0_r_kl_ctrl_012`, `cgt_s0_r_kl_fit_011`, seed 42. The Delta
+replicates 21919310 to 21919313 still run `_008` and `cgt_s0_r_kl_000`, so they answer
+the same question with the pool readout and the replication's normalizer.

@@ -3,7 +3,7 @@
 # ARM S0/R/KL + FITNESS -- the replication arm with a second, jointly trained head that
 # predicts the triple's FITNESS. Everything else is cgt_s0_r_kl_000 by composition:
 # same records, same pinned 010 split, same 010-verbatim model, loss, optimizer and
-# schedule, including the two graph-regularization defects that arm keeps on purpose.
+# schedule, including its graph regularization, is inherited from that arm unchanged.
 #
 # THE QUESTION. The trigenic interaction score is a residual of the triple mutant fitness
 # against the fitness of its subsets, so a model that has to predict the fitness as well
@@ -45,6 +45,12 @@ cell_dataset:
   phenotype_labels: [fitness, gene_interaction]
 
 transforms:
+  # TRAIN, not `subset`. The replication arm keeps `subset` because reproducing 010
+  # requires 010's two constants; these arms are new, so no validation or test label
+  # reaches the normalizer. The control is launched with the same override
+  # (`transforms.fit_on=train`, see cgt_s0_r_kl_ctrl_012), so all four arms of the
+  # fitness experiment standardize by the same population and only the head differs.
+  fit_on: train
   forward_transform:
     normalization:
       fitness:

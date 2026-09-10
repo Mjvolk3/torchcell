@@ -1,0 +1,60 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v11_emb.yaml
+# THE INPUT-RICHNESS ROUND -- project v11, embedding stacks on Delta.
+#
+# WHY A NEW PROJECT. v9 is the long-budget objective campaign and v10 the 2^4 generalization
+# grid; this round asks whether a richer per-gene INPUT moves the score, at v10's budget,
+# and pooling it with either would compare runs whose question and budget differ.
+#
+# WHAT THIS ROUND IS FOR. The one factor measured to move the score by more than the
+# replicate spread is the CONTENT of the gene embedding: ProtT5 over width-matched random by
+# +0.068 at epochs <= 990 (v10_grid_factorial.json). Every other lever tried (head, readout
+# width, weight decay, trunk, pair-term mechanisms) sits inside the noise. The incumbent
+# reads ONE embedding, calm (codon language model over the ORF). This round stacks
+# embeddings that plausibly carry different information about the same gene, so the token
+# covers the whole locus: promoter (nucleotide transformer, 1,003 bp 5'), terminator (300 bp
+# 3'), ORF (calm) and protein (ProtT5).
+#
+# THE ARMS, set by the launcher rather than here (cell_dataset.node_embeddings):
+#   E_calm       [calm]                                              the incumbent, 768-d
+#   E_ptt5       [prot_T5_all]                                       1,024-d
+#   E_calm_ptt5  [calm, prot_T5_all]                                 1,792-d
+#   E_full       [nt_window_five_prime_1003, nt_window_three_prime_300, calm, prot_T5_all]
+#                                                                    6,912-d
+# E_calm against E_ptt5 is the contrast the v10 grid could not make (calm was not a level).
+# E_full against E_calm_ptt5 is the question of the round: do the cis-regulatory windows
+# add or degrade. On the deletion side alone those windows sit at the random floor in the
+# parameter-free neighbor probe (knn_embedding_probe.json: 0.005 to 0.012 against a floor
+# of 0.011 to 0.033), but that probe only asks whether similar promoters give similar
+# deletion responses; in the model the same embedding is every REPORTER's query, and
+# whether a reporter responds is plausibly a promoter property. Hypothesis, and this round
+# is its test.
+#
+# THE WIDTH CONFOUND IS ACCEPTED AND NAMED. Stacking changes the preprocessor's input
+# width along with its content, so E_full differs from E_calm_ptt5 in both. v10 measured
+# width against content at 1,024 and found content is what matters (random_1024 sits at
+# 0.061 against ProtT5's 0.129); a random filler of matching width would separate the two
+# here and is not in this round.
+#
+# EVERYTHING ELSE IS PINNED to the v9 incumbent through v9_mask: quantile head, pinball
+# loss, the layer-1 attention mask over nine graphs, L=6, hidden 90, dropout 0.1, lr 3e-4,
+# batch 32, split_seed 0, weight decay 1e-8, two-layer readout.
+defaults:
+  - cgt_expr_v9_mask
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v11
+  tags: [embedding-stack, v11]
+
+multitask:
+  # Declared so Hydra's struct mode accepts it in this lineage (see cgt_expr_v10_grid.yaml);
+  # the value is the incumbent's.
+  linear_readout: false
+
+trainer:
+  # v10's budget and the reason for it (cgt_expr_v10_grid.yaml): 33.6 epochs/h at zero
+  # dataloader workers on Delta, 48 h wall minus a 1.75 h startup is ~1,552 epochs, 1,400
+  # leaves margin. The v9 long-budget arms spread 0.0099 at 1,000 epochs and the v10 grid's
+  # within-cell sd is 0.012 to 0.025, so three seeds per arm resolve about 0.03.
+  max_epochs: 1400
+  train_eval_every: 10

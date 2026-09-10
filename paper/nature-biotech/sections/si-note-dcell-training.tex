@@ -50,17 +50,24 @@ which is why one run is reported and labeled as such. The forward pass visits th
 subsystems one at a time in a Python loop ordered by stratum, so every step launches
 hundreds of thousands of small kernels, more as the batch grows; the speed-up work on a shared four-GPU
 workstation (\suppfig{fig:dcell-training}d) took a step from 128~s to 20~s, and day-to-day
-reruns of one configuration varied by as much as several of the optimizations. A CPU
-profile of one step of the same architecture (\suppfig{fig:dcell-training}e) counts 644,603
-kernel-level ops at batch 8, about 13,600 more per added strain, because the gene-state
-gather runs once per term and per strain; no GPU profile exists. Hypothesis (untested): the
-GPU step is bound by those launches rather than by data loading, which the cluster
-measurements cannot separate; if so, one grouped matrix multiply per stratum and CUDA
-graphs for the fixed per-stratum shapes would remove most of the launch overhead.
+reruns of one configuration varied by as much as several of the optimizations. One
+training step of the same architecture, profiled on one GPU at the cluster's batch of
+600 and precision with the epoch-142 checkpoint loaded as the architecture check
+(\suppfig{fig:dcell-training}e), is launch-bound: it issues 1.73 million kernel launches,
+about 2,700 per added strain, and takes 30.6~s, of which the GPU runs kernels for 3.1~s
+(10\%), while peak memory is 1.2~GB of 44. The gene-state gather, which indexes each
+term's rows separately for each strain, is 92\% of the host time and 88\% of the kernel
+time; the subsystem arithmetic is under 2\% of either. That step contains no data
+loading, so it accounts for 31 of the cluster's 72~s per optimizer step; the remainder is
+loading, collation, the DDP all-reduce and the cluster's GPUs, which the profile does not
+separate. Hypothesis (untested): one batched gather per stratum over the flattened state
+table, for all terms and strains at once, would remove most of the launches, and at 10\%
+kernel utilization the step could shrink several-fold before the arithmetic showed.
 
 %% Figure: notes/assets/drawio/FigS-dcell-training.drawio (composed by
 %% experiments/006-kuzmin-tmi/scripts/dcell_training_compose_figure.py from the panels of
-%% dcell_training_wandb.py (a-d, f) and dcell_training_cpu_profile.py (e))
+%% dcell_training_wandb.py (a-d, f) and dcell_training_gpu_profile.py (e; gilahyper job 1675,
+%% results/dcell_training/dcell_training_gpu_profile{,_ops}.csv))
 %% -> figures/FigS-dcell-training.pdf.
 \begin{figure*}[t]
 \tcfig{figures/FigS-dcell-training.pdf}{\textbf{DCell training on the trigenic interaction
@@ -79,11 +86,15 @@ optimizer step as bars. Arrows mark the cumulative chain 1 to 5, measured in one
 stages 8 and 9 add \texttt{torch.compile} at batch 500 and 600; rows 6 and 7 (stage 5 rerun
 on later days, 99 and 119~s) are the dashed range, because the shared machine drifts from
 day to day by more than several optimizations and only same-sitting stages compare.
-\textbf{e},~Where one training step spends its time on a CPU (Apple M1 Max, fp32, batch 8), a
-stand-in until the pending GPU profile on gilahyper replaces it. The step issues 644,603
-leaf ops (67 distinct), each a kernel launch on a GPU, growing by about 13,600 per added
-strain; the per-term gene-state gather and 2,655 BatchNorm calls cost more than the matrix
-multiplies. \textbf{f},~Best validation Pearson~$r$ (maximum over epochs) of the same DCell on
+\textbf{e},~Where one training step spends its time on one GPU (RTX 6000 Ada, torch 2.11,
+bf16-mixed, batch 600, the cluster's per-GPU batch; the epoch-142 checkpoint of
+\texttt{eni948by} loaded strictly into the rebuilt model before profiling). Light bars,
+share of the step's host time (Python plus kernel launches) per phase; dark bars, share of
+the GPU kernel time; the phases partition the step. The step issues 1.73 million kernel
+launches, 2,700 more per added strain, and the GPU runs kernels for 10\% of its 30.6~s;
+the per-term, per-strain gene-state gather is 92\% of the host time and 88\% of the kernel
+time. The batch is built once and held on the GPU, so no data loading is in the step.
+\textbf{f},~Best validation Pearson~$r$ (maximum over epochs) of the same DCell on
 the Kuzmin 2018-only build (91,050 records; \texttt{biucpv7p}, best at epoch 227) and the
 experiment-006 build (332,313; \texttt{eni948by}, best at epoch 150), one run each, splits
 and training settings differing; the only measured data-size comparison for DCell.}{fig:dcell-training}

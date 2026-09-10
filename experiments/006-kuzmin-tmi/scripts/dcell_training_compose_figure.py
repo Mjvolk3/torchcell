@@ -10,7 +10,8 @@ are placed at exact physical size and the figure is WYSIWYG when exported to
 
 Layout (180 mm wide, three rows of two half-width panels): (a) validation Pearson vs
 epoch, (b) losses; (c) cost comparison, (d) speed-up stages as a table with bars; (e) the
-CPU per-phase profile of one training step from ``dcell_training_cpu_profile.py``, (f) best
+GPU per-phase profile of one training step from ``dcell_training_gpu_profile.py`` (the CPU
+stand-in of ``dcell_training_cpu_profile.py`` stays in the note only), (f) best
 validation Pearson on the Kuzmin 2018-only build against the experiment-006 build.
 
 Layout convention shared by every composed SI figure (the "white cross"): COL_GAP = 12
@@ -89,7 +90,7 @@ def main():
     rows = [
         ("ab", ["dcell_training_val_pearson", "dcell_training_loss"]),
         ("cd", ["dcell_training_cost", "dcell_training_stages"]),
-        ("ef", ["dcell_training_cpu_profile", "dcell_training_data_effect"]),
+        ("ef", ["dcell_training_gpu_profile", "dcell_training_data_effect"]),
     ]
     cells, cid = [], 2
     row_top, extent_w, extent_h = 0, 0.0, 0.0

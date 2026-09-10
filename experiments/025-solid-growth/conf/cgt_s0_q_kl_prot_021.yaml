@@ -1,0 +1,25 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_prot_021.yaml
+#
+# ORF AS PROTEIN ALONE. cgt_s0_q_kl_emb_017 with the composite reduced to ProtT5-XL
+# UniRef50 (1,024 dims over the translated ORF), through the same 2-layer preprocessor at
+# hidden width 985 so the embedding side carries 1,189,435 parameters against the learnable
+# table's 1,189,260. ProtT5 is the one embedding with a large measured effect anywhere in
+# the repo (+0.068 Pearson over a random 1024-vector on expression, 019 v10 grid) and the
+# strongest sequence embedding in the 019 kNN probe; nothing has measured it on
+# interactions.
+#
+#   sbatch -J 025-q-prot-const experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_prot_021
+defaults:
+  - cgt_s0_q_kl_emb_017
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, seq_embedding, prot_t5_only, param_matched, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, igb_mmli]
+
+cell_dataset:
+  node_embeddings: [prot_T5_all]
+
+model:
+  learnable_embedding:
+    preprocessor:
+      hidden_dim: 985

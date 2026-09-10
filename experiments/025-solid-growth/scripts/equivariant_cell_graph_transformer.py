@@ -565,6 +565,9 @@ def main(cfg: DictConfig) -> None:
     wandb.log(
         {
             "model/params_gene_embedding": param_counts.get("gene_embedding", 0),
+            "model/params_embedding_preprocessor": param_counts.get(
+                "embedding_preprocessor", 0
+            ),
             "model/params_cls_token": param_counts.get("cls_token", 0),
             "model/params_transformer_layers": param_counts.get(
                 "transformer_layers", 0

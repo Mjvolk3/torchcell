@@ -347,7 +347,24 @@ a5fd743e with the worktree prepared on the login node:
 
 Readings: `_017` against `_016` is the sequence-information question; `_017` against
 `_018` separates content from a fixed identity; `_019` against `_017` says whether a free
-row still adds anything once the gene has a sequence vector. All four are read at epoch
+row still adds anything once the gene has a sequence vector. All arms are read at epoch
 30 and at the best validation epoch. Run one at a time on the IGB mmli node (4 x A100,
 58 min/epoch measured for the KL arm on the 025 build), about 29 h each. The launcher's
 preflight now checks the four embedding builds on IGB scratch.
+
+### Revised chain (13:45): composite first, single regions next, control last
+
+The random-vector control (`_018`) and the composite-plus-table arm (`_019`) are held
+until an embedding arm moves the disjoint number. Two single-region arms take their
+place, parameter-matched the same way:
+
+| config | gene vector | preprocessor hidden | embedding-side params |
+|---|---|---:|---:|
+| `cgt_s0_q_kl_calm_020` | CaLM alone, 768 | 1,250 | 1,189,290 |
+| `cgt_s0_q_kl_prot_021` | ProtT5 alone, 1,024 | 985 | 1,189,435 |
+
+The chain runs in reverse of the first design, so the full-gene vector is the first
+result: composite (`_017`), CaLM (`_020`), ProtT5 (`_021`), then the learnable control
+(`_016`). Chain 2390616 to 2390619 was cancelled (the control had run 10 minutes). The
+run script now also logs `model/params_embedding_preprocessor`, so the parameter match is
+visible in W&B beside `model/params_gene_embedding`.

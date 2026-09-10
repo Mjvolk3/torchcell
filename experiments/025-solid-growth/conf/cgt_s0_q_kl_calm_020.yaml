@@ -1,0 +1,24 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_calm_020.yaml
+#
+# ORF AS CODONS ALONE. cgt_s0_q_kl_emb_017 with the composite reduced to CaLM (768 dims,
+# the codon language model over the CDS), through the same 2-layer preprocessor at hidden
+# width 1,250 so the embedding side carries 1,189,290 parameters against the learnable
+# table's 1,189,260. Single-region arm: read against the composite (_017) to see what the
+# other three regions add, and against ProtT5 alone (_021) for codon versus protein views
+# of the same ORF.
+#
+#   sbatch -J 025-q-calm-const experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_calm_020
+defaults:
+  - cgt_s0_q_kl_emb_017
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, seq_embedding, calm_only, param_matched, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, igb_mmli]
+
+cell_dataset:
+  node_embeddings: [calm]
+
+model:
+  learnable_embedding:
+    preprocessor:
+      hidden_dim: 1250

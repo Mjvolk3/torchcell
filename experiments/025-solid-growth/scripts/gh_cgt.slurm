@@ -27,7 +27,12 @@
 #SBATCH --output=/home/michaelvolk/Documents/projects/torchcell/experiments/025-solid-growth/slurm/output/%x_%j.out
 #SBATCH --error=/home/michaelvolk/Documents/projects/torchcell/experiments/025-solid-growth/slurm/output/%x_%j.out
 
-CONFIG_NAME="${1:-cgt_s0_r_kl_000}"
+# REQUIRED, with no default. It used to default to `cgt_s0_r_kl_000`, which turned a
+# mis-quoted submission into three plausible runs of the wrong arm: a zsh `for a in "name
+# config"; do set -- $a` loop does NOT word-split, so `-J $1` swallowed both words and the
+# script received no argument at all. The jobs would have trained the replication arm
+# under the CLS arms' names. Failing here costs a queue slot; the default cost a day.
+CONFIG_NAME="${1:?usage: sbatch gh_cgt.slurm <config_name> [hydra overrides...]}"
 shift
 OVERRIDES=("$@")
 # The checkout this job runs: the directory sbatch was run from, so a worktree branch can

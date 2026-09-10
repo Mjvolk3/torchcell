@@ -66,6 +66,8 @@ GO_ISOPRENOID_BIOSYNTHESIS = "GO:0008299"
 
 
 class EnrichmentRow(BaseModel):
+    """One query gene scored against one gene set in one graph."""
+
     query_gene: str
     query_systematic: str
     graph: str

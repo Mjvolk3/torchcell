@@ -62,7 +62,9 @@ HMG-CoA reductase paralogs, which is the committed and rate-controlling step of 
 pathway.
 
 Across the whole design, 4 genes times 10 graphs times 3 sets is 120 tests, so the
-Bonferroni threshold is 4.2e-4. Only HXK2 clears it, in three of its rows.
+Bonferroni threshold is 4.2e-4. Five rows clear it and all five are HXK2: the union and
+STRING coexpression rows for both mevalonate sets, plus the union GO-isoprenoid row at
+1.9e-4.
 
 | query gene | best p over all graphs and sets | verdict |
 |---|---|---|
@@ -102,6 +104,33 @@ Every neighbor-level hit:
 GEA1 and VPS1 have zero neighbors in the mevalonate backbone in every one of the nine
 graphs. Their only contact with any carotenoid-relevant set is a single GO-isoprenoid gene
 in STRING experimental, which for VPS1 is fewer hits than its degree of 685 predicts.
+
+### Which graph carries the HXK2 signal
+
+Two of the nine, and only one of them clears correction alone. Every graph against the
+mevalonate-to-GGPP backbone:
+
+| graph | HXK2 degree | neighbors in backbone | p |
+|---|---|---|---|
+| string12_0_coexpression | 571 | 6 | 7.1e-5 |
+| string12_0_fusion | 18 | 2 | 1.4e-3 |
+| string12_0_experimental | 289 | 0 | 1.0 |
+| tflink | 69 | 0 | 1.0 |
+| physical | 55 | 0 | 1.0 |
+| string12_0_database | 49 | 0 | 1.0 |
+| regulatory | 12 | 0 | 1.0 |
+| string12_0_cooccurence | 3 | 0 | 1.0 |
+| string12_0_neighborhood | 3 | 0 | 1.0 |
+| union_of_9 | 711 | 7 | 1.0e-5 |
+
+STRING coexpression is the graph. It contributes six of the union's seven backbone
+neighbors (ERG10, ERG13, HMG1, ERG12, MVD1, ERG20) and is the only single graph under the
+4.2e-4 threshold. STRING fusion contributes the seventh, HMG2, and is the more striking
+result per edge at 34-fold on a degree of 18, but two hits do not clear correction.
+
+The zeros matter as much. HXK2 is well connected in STRING experimental (degree 289) and
+in the physical graph (degree 55), and has no backbone contact in either. The union row is
+those two channels combined, not a tenth source.
 
 ### Two cautions on reading this
 

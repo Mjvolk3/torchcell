@@ -41,6 +41,15 @@
 #   SYNC_PAUSE_S   seconds between runs (default 2)
 #   SYNC_LIMIT     stop after this many runs this pass (default 0 = all)
 #   DRY_RUN        1 to list what would be synced and exit
+#   INCLUDE_SYNCED 1 to re-sync runs that already carry a `.wandb.synced` marker
+#
+# INCLUDE_SYNCED IS FOR RUNS STILL TRAINING. The marker means "uploaded once", not
+# "finished": an offline directory belonging to a live job keeps growing after it is
+# synced, and the default pass then skips it forever, so the W&B history stops at whatever
+# epoch the first sync caught while the job runs on for days. That is exactly how the
+# Pearson round looked finished on W&B while `squeue` still listed it RUNNING. Pass
+# INCLUDE_SYNCED=1 whenever any run in the base directory is still in the queue; leave it
+# off for a backlog of finished runs, where skipping is what makes the pass cheap.
 
 set -euo pipefail
 
@@ -74,13 +83,18 @@ echo "found ${#RUNS[@]} offline run directories"
 
 pending=()
 for run in "${RUNS[@]}"; do
-  # wandb drops a `.wandb.synced` marker beside the run once it has been uploaded.
-  if compgen -G "$run/*.wandb.synced" >/dev/null; then
+  # wandb drops a `.wandb.synced` marker beside the run once it has been uploaded. A run
+  # that is still training keeps writing after that, so INCLUDE_SYNCED ignores the marker.
+  if [[ "${INCLUDE_SYNCED:-0}" != "1" ]] && compgen -G "$run/*.wandb.synced" >/dev/null; then
     continue
   fi
   pending+=("$run")
 done
-echo "${#pending[@]} not yet synced"
+if [[ "${INCLUDE_SYNCED:-0}" == "1" ]]; then
+  echo "${#pending[@]} to sync (INCLUDE_SYNCED=1, re-syncing already-marked runs)"
+else
+  echo "${#pending[@]} not yet synced"
+fi
 
 if [[ "${DRY_RUN:-0}" == "1" ]]; then
   printf '%s\n' "${pending[@]}"
@@ -97,7 +111,10 @@ for run in "${pending[@]}"; do
   echo "[$n/${#pending[@]}] $(basename "$run")"
   # ONE run per process. `|| true` so a single corrupt run does not abort the backlog;
   # it stays unsynced and is retried on the next pass, which the marker check makes cheap.
-  nice -n 19 wandb sync "$run" || echo "  FAILED, left for the next pass: $run"
+  SYNC_ARGS=()
+  [[ "${INCLUDE_SYNCED:-0}" == "1" ]] && SYNC_ARGS+=(--include-synced)
+  nice -n 19 wandb sync ${SYNC_ARGS[@]+"${SYNC_ARGS[@]}"} "$run" \
+    || echo "  FAILED, left for the next pass: $run"
   sleep "$PAUSE"
 done
 

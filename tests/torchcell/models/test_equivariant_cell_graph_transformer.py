@@ -73,7 +73,7 @@ def _full_heads_config() -> dict[str, Any]:
 
 
 def _make_model(
-    heads_config: dict[str, Any] | None, seed: int = 0
+    heads_config: dict[str, Any] | None, seed: int = 0, **kwargs: Any
 ) -> CellGraphTransformer:
     torch.manual_seed(seed)
     return CellGraphTransformer(
@@ -83,6 +83,7 @@ def _make_model(
         num_attention_heads=NUM_HEADS,
         cell_graph=_make_cell_graph(),
         heads_config=heads_config,
+        **kwargs,
     )
 
 
@@ -215,3 +216,69 @@ def test_per_metabolite_head_requires_incidence() -> None:
             cell_graph=cg,
             heads_config={"per_metabolite": {}},
         )
+
+
+def test_perturb_cls_moves_only_the_cls() -> None:
+    """perturb_cls adds no parameters, leaves every gene row and the 010 interaction
+    prediction bit-identical, and makes the CLS strain-specific.
+
+    The CLS rides through the perturbation operator as one more query over the same
+    deleted-gene keys; a cross-attention query's output depends on that query and the
+    keys only, so the gene rows cannot change. The wild-type CLS is byte-identical
+    across strains (the fact that motivates the flag); the perturbed one must not be.
+    """
+    cls_only_linear = {
+        "global": {"output_dim": 1, "use_gene_pool": False, "linear": True}
+    }
+    base = _make_model(cls_only_linear, seed=7)
+    pert = _make_model(cls_only_linear, seed=7, perturb_cls=True)
+    assert set(base.state_dict()) == set(pert.state_dict())
+
+    base.eval()
+    pert.eval()
+    cg = _make_cell_graph()
+    batch = _make_batch()
+    with torch.no_grad():
+        pred_base, reps_base = base(cg, batch)
+        pred_pert, reps_pert = pert(cg, batch)
+
+    # 010's interaction path is untouched (perturbation_head_cls defaults to wildtype).
+    assert torch.allclose(pred_base, pred_pert, atol=1e-6)
+    assert torch.allclose(
+        reps_base["H_genes_pert"], reps_pert["H_genes_pert"], atol=1e-6
+    )
+    assert reps_base["h_CLS_pert"] is None
+
+    h_cls_pert = reps_pert["h_CLS_pert"]
+    assert h_cls_pert.shape == (BATCH_SIZE, HIDDEN)
+    # Three different deletion sets -> three different CLS states.
+    assert h_cls_pert.std(dim=0).mean().item() > 1e-4
+    # Without the flag a CLS-only readout is one number for every strain; with it the
+    # readout is a linear probe of a strain-specific token.
+    g_base = reps_base["head_outputs"]["global"]
+    g_pert = reps_pert["head_outputs"]["global"]
+    assert g_base.shape == g_pert.shape == (BATCH_SIZE, 1)
+    assert g_base.std().item() < 1e-6
+    assert g_pert.std().item() > 1e-6
+
+
+def test_perturbation_head_cls_perturbed_changes_interaction_input() -> None:
+    """Feeding the interaction head the perturbed CLS is a real change, and is refused
+    when there is no perturbed CLS to feed.
+    """
+    heads = {"global": {"output_dim": 1, "use_gene_pool": False}}
+    wild = _make_model(heads, seed=3, perturb_cls=True)
+    both = _make_model(
+        heads, seed=3, perturb_cls=True, perturbation_head_cls="perturbed"
+    )
+    wild.eval()
+    both.eval()
+    cg = _make_cell_graph()
+    batch = _make_batch()
+    with torch.no_grad():
+        pred_wild, _ = wild(cg, batch)
+        pred_both, _ = both(cg, batch)
+    assert not torch.allclose(pred_wild, pred_both, atol=1e-6)
+
+    with pytest.raises(ValueError, match="needs perturb_cls"):
+        _make_model(heads, seed=3, perturbation_head_cls="perturbed")

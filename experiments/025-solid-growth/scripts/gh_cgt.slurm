@@ -28,9 +28,18 @@
 #SBATCH --error=/home/michaelvolk/Documents/projects/torchcell/experiments/025-solid-growth/slurm/output/%x_%j.out
 
 CONFIG_NAME="${1:-cgt_s0_r_kl_000}"
+shift
+OVERRIDES=("$@")
+# The checkout this job runs: the directory sbatch was run from, so a worktree branch can
+# be launched without landing it first (2026-09-09, the train-only normalizer fix). The
+# --output path above stays on the main checkout so every 025 log lands in one place.
+PROJECT_ROOT="${PROJECT_ROOT:-$SLURM_SUBMIT_DIR}"
 echo "job=$SLURM_JOB_ID name=$SLURM_JOB_NAME config=$CONFIG_NAME host=$(hostname)"
+echo "project=$PROJECT_ROOT ($(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2>/dev/null)) overrides=${OVERRIDES[*]:-none}"
+[[ -f "$PROJECT_ROOT/experiments/025-solid-growth/conf/$CONFIG_NAME.yaml" ]] || {
+  echo "ERROR: config not found in $PROJECT_ROOT: $CONFIG_NAME" >&2; exit 1; }
 
-cd /home/michaelvolk/Documents/projects/torchcell/experiments || exit 1
+cd "$PROJECT_ROOT/experiments" || exit 1
 
 # DDP rendezvous -- pin to loopback. GilaHyper's bare hostname does not route (errno
 # 113), and torchrun's --local-addr defaults to that hostname, so set it explicitly along
@@ -43,7 +52,8 @@ export MASTER_PORT=$(shuf -i 10000-65500 -n 1)
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 
-export PYTHONPATH="/home/michaelvolk/Documents/projects/torchcell:$PYTHONPATH"
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
+export EXPERIMENT_ROOT="$PROJECT_ROOT/experiments"
 
 # CUDA optimizations
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
@@ -63,6 +73,6 @@ export NUM_WORKERS=$((SLURM_CPUS_PER_TASK - 2))
 torchrun --nnodes=1 --nproc_per_node=4 \
   --rdzv-backend=c10d --rdzv-endpoint=127.0.0.1:$MASTER_PORT \
   --rdzv-id=$SLURM_JOB_ID --local-addr=127.0.0.1 \
-  /home/michaelvolk/Documents/projects/torchcell/experiments/025-solid-growth/scripts/equivariant_cell_graph_transformer.py \
+  "$PROJECT_ROOT/experiments/025-solid-growth/scripts/equivariant_cell_graph_transformer.py" \
   --config-name "$CONFIG_NAME" \
-  data_module.num_workers=$NUM_WORKERS
+  data_module.num_workers=$NUM_WORKERS "${OVERRIDES[@]}"

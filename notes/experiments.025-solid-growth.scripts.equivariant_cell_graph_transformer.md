@@ -74,3 +74,115 @@ change say `subset`, so they still describe the runs they produced; `cgt_s0_q_kl
 batch of two records under the 004 config: the normalizer reports 301,236 records,
 mean -0.007844, sd 0.063776, matching
 [[experiments.025-solid-growth.scripts.label_normalization_constants]].
+
+## 2026.09.08 - Joint Fitness Head (opt-in)
+
+### Where the arms stand on GilaHyper
+
+Read from W&B on 2026.09.08 (project `torchcell_025-solid-growth_equivariant_cell_graph_transformer`):
+
+| job | config | run | val Pearson | note |
+|---|---|---|---|---|
+| 1598 | `cgt_s0_r_kl_000` (KL, 010 verbatim) | `0yw7moue` | best 0.4463 at epoch 14; 0.4425 at epoch 35 when the 12 h clock ended it | train Pearson 0.5555 at the end; the working reference |
+| 1606 | `cgt_s0_r_mask_003` (mask layer 1) | `7f1yrsq9` | 0.3066 at epoch 1, then 0.00 +/- 0.01 through epoch 49 | collapsed; train Pearson -0.002 |
+| 1607 | `cgt_s0_r_mask_001` (mask layers 2-5) | `4qmgkcgn` | 0.00 +/- 0.01 for 17 epochs, 0.2537 at epoch 17 (in flight) | partial; train Pearson 0.0004 |
+
+"Best" is a max over epochs, an upward-biased order statistic. The replication is the
+only arm that trains, so the joint-fitness arms build on it.
+
+### What the head is
+
+The interaction head (`PerturbationHead`) is a two-layer MLP, 360 to 180 to 1 with ReLU
+and dropout 0.1, on `[h_CLS || z_S]`: `h_CLS` is the class token of the encoder run on
+the wild-type graph, identical for every strain in the batch, and `z_S` is the sum of the
+perturbed-gene embeddings of the strain's deleted genes after the equivariant
+perturbation transform. All strain dependence enters through `z_S`.
+
+The fitness head is `GlobalHead` (`model.heads.global`), the existing whole-cell readout:
+the same shape of MLP on `[h_CLS || mean_i H_genes_pert[b, i]]`, a mean over all 6,607
+perturbed gene embeddings. Predicting fitness from the class token alone is not possible
+in this architecture, since that vector carries no strain; `use_gene_pool: true` is what
+makes the head strain-dependent.
+
+### What changed
+
+- `RegressionTask(fitness_lambda=...)` in `torchcell/trainers/int_transformer_cell.py`.
+  `None` is the single-label path, unchanged. A float decodes both labels from the COO
+  fields by type (`_coo_label`, rows from `phenotype_values_batch`), adds
+  `fitness_lambda * MSE(global_head, fitness)` on the standardized scale to the 010
+  objective, and logs `{stage}/fitness/{MSE,RMSE,Pearson}`,
+  `{stage}/transformed/fitness/...` and `{stage}/fitness_loss` beside the existing
+  gene_interaction metrics. Checkpoints still follow `val/gene_interaction/*`.
+- The script reads `regression_task.fitness_lambda` and `model.heads`, passes
+  `heads_config` to the model, appends `phenotype_values` to `follow_batch` on the joint
+  path, and refuses a joint config whose labels or heads are incomplete.
+- Configs `cgt_s0_r_kl_fit_008` (weight 1.0) and `cgt_s0_r_kl_fit_009` (weight 0.1)
+  compose on top of `cgt_s0_r_kl_000`, so the diff to the replication is the label list,
+  the fitness normalizer, the head, and the weight.
+- Launcher [[experiments.025-solid-growth.scripts.igb_mmli_cgt]].
+
+Hypothesis (untested): the trigenic interaction score is a residual of the triple's
+fitness against its subsets, so the fitness target should shape a representation the
+interaction head can use. The three IGB runs (weight 1.0, control, weight 0.1, all seed
+42) are what measures it.
+
+## 2026.09.09 - Which Fit Population the Fitness Arms Use, and What Was Cancelled
+
+The leak is the one the section above fixes, and the fix landed on main from the
+additive-baselines side while this branch was open: `transforms.fit_on: subset | train`,
+with the replication arm deliberately keeping `subset` so it still reproduces 010's two
+constants. This branch had briefly forced train-only on every arm, which would have
+broken exactly that replication; main's version is the one that survived the rebase.
+
+The fitness arms take `fit_on: train` (set in `cgt_s0_r_kl_fit_008`, inherited by `_009`
+through `_011`), and the experiment's control is `cgt_s0_r_kl_ctrl_012`, which is
+`cgt_s0_r_kl_000` with the same key changed and nothing else. A named control rather
+than a launch-time override, because a control that differs from its treatment arms by
+the normalizer as well as the head answers nothing, and an override typed at launch is
+invisible in the config on a rerun. All four arms therefore standardize by the same
+301,386 training records; against job 1598 and the 010 checkpoints they are comparable in
+raw units only.
+
+Cancelled for carrying the all-record constants: GilaHyper 1609 (soft KL, disjoint, had
+not started; resubmitted as 1640 from main, which has both the fix and the config), the
+Delta canary 21895901 at 19 h, and the 26 pending sweep jobs 21917113 to 21917138. The
+Delta fitness replicates 21919310 to 21919313 are still queued and still run the `_008`
+pool-readout design.
+
+`gh_cgt.slurm` now runs from the submitting checkout (`SLURM_SUBMIT_DIR`) and accepts
+Hydra overrides after the config name, like `delta_cgt.slurm`, so a branch can be
+launched on GilaHyper before it lands.
+
+## 2026.09.09 - Fitness from the Perturbed CLS
+
+The `_008` arm read fitness from `[h_CLS || mean pool over genes]`, and the CLS half of
+that is the same vector for every strain: the encoder runs once on the wild-type graph and
+the token is sliced off before the perturbation operator (across-strain sd 0.0 against
+0.973 for z_S, measured in the 019 expression strand). The 019 review of perturbation
+operators (see the note on `perturb_cls` in
+[[torchcell.models.equivariant_cell_graph_transformer]]) found nothing pre-encoder had
+ever been run and that the cheapest of the three designs in
+`notes-tex/019-simb-multimodal-expression/sections/3-next.tex` is to run the existing
+operator on the CLS too.
+
+That is `model.perturb_cls: true`: the CLS is query row 0 of the same cross-attention,
+over the same deleted-gene keys, so 010's operator is unchanged, the gene rows are
+bit-identical (test `test_perturb_cls_moves_only_the_cls`), and `h_CLS_pert` is
+strain-specific. The one-key degeneracy the expression strand fought does not arise here:
+every 025 record is a triple, so the softmax has three keys.
+
+Arms, both composing on `_008` and read against the same control:
+
+| config | fitness head | weight |
+|---|---|---|
+| `cgt_s0_r_kl_fit_010` | linear probe of `h_CLS_pert`, no gene pool | 1.0 |
+| `cgt_s0_r_kl_fit_011` | same | 0.1 |
+
+The interaction head keeps the wild-type CLS (`perturbation_head_cls: wildtype`), so the
+fitness gradient reaches the interaction prediction only through the shared trunk. The
+`perturbed` setting is the follow-up arm. Logged: `{stage}/cls_pert_strain_sd`.
+
+Queued on IGB mmli in place of the `_008`/`_009` pair (cancelled before starting):
+`cgt_s0_r_kl_fit_010`, `cgt_s0_r_kl_ctrl_012`, `cgt_s0_r_kl_fit_011`, seed 42. The Delta
+replicates 21919310 to 21919313 still run `_008` and `cgt_s0_r_kl_000`, so they answer
+the same question with the pool readout and the replication's normalizer.

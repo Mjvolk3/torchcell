@@ -452,6 +452,24 @@ def main(cfg: DictConfig) -> None:
     # For Perturbation processor, need to track perturbation_indices for batch assignment
     follow_batch = ["perturbation_indices"]
 
+    # === Joint fitness objective (opt-in) ===
+    # `regression_task.fitness_lambda` set -> the record carries BOTH labels, the model
+    # grows a `global` head (model.heads), and the task adds
+    # fitness_lambda * MSE(global_head, fitness) to the 010 objective. The COO values
+    # then need their batch row (`phenotype_values_batch`), which follow_batch supplies.
+    fitness_lambda = wandb_cfg["regression_task"].get("fitness_lambda")
+    heads_config = wandb_cfg["model"].get("heads")
+    if fitness_lambda is not None:
+        if "fitness" not in phenotype_labels or "gene_interaction" not in phenotype_labels:
+            raise ValueError(
+                "fitness_lambda needs cell_dataset.phenotype_labels to carry both "
+                f"fitness and gene_interaction, got {phenotype_labels}"
+            )
+        if not heads_config or "global" not in heads_config:
+            raise ValueError("fitness_lambda needs model.heads.global (the fitness head)")
+        follow_batch.append("phenotype_values")
+    print(f"fitness_lambda: {fitness_lambda}  heads: {heads_config}")
+
     data_module = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
@@ -533,6 +551,12 @@ def main(cfg: DictConfig) -> None:
         node_embeddings=node_embeddings,
         learnable_embedding_config=wandb.config["model"].get("learnable_embedding"),
         attention_mask_config=wandb.config["model"].get("attention_mask"),
+        heads_config=heads_config,
+        # CLS through the perturbation operator (off = 010's strain-constant CLS).
+        perturb_cls=bool(wandb_cfg["model"].get("perturb_cls", False)),
+        perturbation_head_cls=str(
+            wandb_cfg["model"].get("perturbation_head_cls", "wildtype")
+        ),
     ).to(device)
 
     # Log parameter counts
@@ -549,6 +573,7 @@ def main(cfg: DictConfig) -> None:
                 "perturbation_transform", 0
             ),
             "model/params_perturbation_head": param_counts.get("perturbation_head", 0),
+            "model/params_global_head": param_counts.get("global_head", 0),
             "model/params_total": param_counts.get("total", 0),
         }
     )
@@ -649,6 +674,7 @@ def main(cfg: DictConfig) -> None:
                 "plot_transformer_diagnostics_every_n_epochs"
             ],
             execution_mode=execution_mode,
+            fitness_lambda=fitness_lambda,
         )
 
     # Try to compile the model for better performance (PyTorch 2.0+)

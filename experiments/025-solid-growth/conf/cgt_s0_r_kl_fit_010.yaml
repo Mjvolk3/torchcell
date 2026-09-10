@@ -1,0 +1,51 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_fit_010.yaml
+#
+# ARM S0/R/KL + FITNESS FROM THE PERTURBED CLS. cgt_s0_r_kl_fit_008 with the fitness read
+# from the class token instead of from a mean pool over genes, which needs the class token
+# to see the perturbation first.
+#
+# WHAT CHANGES FROM _008, and only this:
+#   model.perturb_cls: true   The CLS token goes through the SAME cross-attention operator
+#                             as the gene tokens, as one more query over the same three
+#                             deleted-gene keys. 010's operator is unchanged, the gene rows
+#                             come out identical (a query's output depends on that query
+#                             and the keys only), and h_CLS becomes strain-specific. Today
+#                             it is sliced off before the operator and is byte-identical
+#                             across strains (measured across-strain sd 0.0, against 0.973
+#                             for z_S; notes-tex/019-simb-multimodal-expression 0-strand).
+#   heads.global: linear on the CLS alone, no gene pool: fitness = w . h_CLS_pert + b.
+#                             A linear probe of the cell state, so the trunk has to carry
+#                             the phenotype rather than a head reconstructing it from a
+#                             pool. 019's v10 factorial measured the readout nonlinearity
+#                             at +0.0072 (t = 0.83, n = 32): not where the signal is.
+#
+# WHAT STAYS 010's: the interaction head reads the WILD-TYPE CLS (perturbation_head_cls:
+# wildtype), so its input is exactly the replication's [h_CLS || z_S]. The fitness gradient
+# reaches the interaction path only through the shared trunk (gene embeddings, encoder,
+# perturbation operator), which is the hypothesis under test. Flip
+# perturbation_head_cls: perturbed for the arm where the interaction head reads the
+# strain-specific token too.
+#
+# Logged beside the _008 metrics: {stage}/cls_pert_strain_sd, the across-strain sd of the
+# perturbed CLS; 0.0 would mean the operator did not move it.
+#
+#   sbatch -J 025-kl-clsfit1 experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_r_kl_fit_010
+defaults:
+  - cgt_s0_r_kl_fit_008
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, fitness_joint, perturb_cls, cls_linear_readout, igb_mmli]
+
+model:
+  perturb_cls: true
+  perturbation_head_cls: wildtype
+  heads:
+    global:
+      decoder: s1_pool
+      output_dim: 1
+      use_gene_pool: false
+      linear: true
+
+regression_task:
+  fitness_lambda: 1.0

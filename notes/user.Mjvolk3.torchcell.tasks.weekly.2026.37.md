@@ -29,3 +29,5 @@ created: 1788904951158
 - [x] CLS is wild-type for every strain (measured sd 0.0 in the code comment); three encoder-side perturbation designs written up as untested options, incl. typed perturbation tokens for environmental perturbations [[experiments.019-simb-multimodal.expression-strand-retrospective]]
 - [x] Loss-minimum figure: clipped x labels fixed (58 mm); ListMLE figure on the standard; document 17 pages, `make check` clean [[experiments.019-simb-multimodal.scripts.loss_min_vs_pearson_peak]]
 - [ ] Launch discussion: Delta `bbub` 1,000-epoch arrays (calm vs ProtT5; R_ref vs R_pergene, 3 seeds each), one batch-32 solo Pearson seed on cabbi when the batch-64 tasks end
+- [x] Per-gene readout replicate stage SUBMITTED to cabbi: `2389901_0/_1` (`RR_ref` vs `RR_pergene`, seeds 2-3, 1,000 epochs, one pair per card), source `4db2fbc8` clean; task 2 (seed 4) when the third card frees [[experiments.019-simb-multimodal.expression-strand-retrospective]]
+- [ ] CPU probe of stacked embeddings (ProtT5 + calm / codon frequency / chrom pathways) and a reporter-side promoter probe before spending cards on the embedding arm

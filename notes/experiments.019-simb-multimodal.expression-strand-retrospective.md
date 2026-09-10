@@ -513,3 +513,22 @@ Scripts: `pearson_round_readout.py --round listmle` (new mode; Spearman columns;
 runs), `loss_min_vs_pearson_peak.py` (58 mm, labels no longer clipped). Leaderboard v9
 refreshed with `--full-history --refresh`. Document builds to 17 pages, `make check`
 clean.
+
+### Per-gene readout replicates, SUBMITTED 2026-09-09 22:55 CT
+
+Approved without a canary. Job `2389901_0`, `_1` on cabbi (compute-3-3), stage
+`pergene_rep`: `RR_ref` vs `RR_pergene` (same configs as `R_ref` / `R_pergene`, tags
+`stage-pergene-rep`, `round-pergene-rep`), seeds 2 and 3, 1,000 epochs, one pair per card
+(2 runs per card, `train_eval_every=10`), 30-hour wall. Source `4db2fbc8`, clean diff
+(`e3b0c442`), IGB checkout fast-forwarded to the pushed branch before submission. Task 2
+(seed 4) waits for the third cabbi card, freed when `2378262_1` reaches 9,900 (about a
+day). Readout: three new pairs plus the two mechanism-round pairs at epochs <= 1,000,
+resolving about 0.03 at the 1,000-epoch spread of 0.0099. Both tasks RUNNING 20 s after
+submission.
+
+Batch-64 Pearson tasks `2378268_0`, `_1` COMPLETED at 3 d 01 h 45 m; final readout after
+the sync. Embedding arm (calm vs ProtT5, or a stack) held until a CPU probe of stacked
+embeddings (ProtT5 + calm / codon frequency / chrom pathways, plus a reporter-side promoter
+probe) says which contrast is worth cards; the neighbor probe puts NT and species-LM
+promoter/terminator embeddings at the random floor on the deletion side (0.005 to 0.036
+against a floor of 0.011 to 0.033).

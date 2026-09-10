@@ -255,6 +255,30 @@ with the second job held until 30 minutes after the first starts:
 | 21934082 | `cgt_s0_r_kl_ctrl_013` | 1 | running |
 | 21934084 | `cgt_s0_r_kl_ctrl_013` | 2 | running |
 
-The GilaHyper set runs one at a time on the local build and is unaffected: 1640
-(`cgt_s0_q_kl_004`, cosine) timed out at 12 h having reached epoch 36; 1659 (`fit_014`)
-started at 11:09 as it ended, with 1660 (`ctrl_013`) and 1661 (`fit_015`) queued behind.
+The GilaHyper set ran one at a time on the local build: 1640 (`cgt_s0_q_kl_004`,
+cosine) timed out at 12 h having reached epoch 36; 1659 (`fit_014`) started at 11:09 as
+it ended, with 1660 (`ctrl_013`) and 1661 (`fit_015`) queued behind.
+
+### 12:52 - GilaHyper cleared for development; the whole protocol moves to Delta
+
+1659 was cancelled at 1 h 42 m (a partial run, no result) and 1660 / 1661 before
+starting, to free the GilaHyper GPU. The protocol now runs entirely on Delta at three
+seeds per arm, nine jobs, each 48 h, submitted as one chain in which every job is held
+until 30 minutes after the previous one starts, so no two are in dataset init on the
+Taiga build at once (the lock timeout above):
+
+| Delta job | config | seed | dependency |
+|---|---|---|---|
+| 21934082 | `cgt_s0_r_kl_ctrl_013` | 1 | running |
+| 21934084 | `cgt_s0_r_kl_ctrl_013` | 2 | running |
+| 21947151 | `cgt_s0_r_kl_fit_014` | 1 | none |
+| 21947152 | `cgt_s0_r_kl_fit_014` | 2 | after 21947151 + 30 min |
+| 21947958 | `cgt_s0_r_kl_fit_015` | 1 | after 21947152 + 30 min |
+| 21947959 | `cgt_s0_r_kl_fit_015` | 2 | after 21947958 + 30 min |
+| 21947960 | `cgt_s0_r_kl_fit_014` | 3 | after 21947959 + 30 min |
+| 21947961 | `cgt_s0_r_kl_ctrl_013` | 3 | after 21947960 + 30 min |
+| 21947962 | `cgt_s0_r_kl_fit_015` | 3 | after 21947961 + 30 min |
+
+Seed 42 is no longer part of the design; the GilaHyper 1659 partial is discarded. The
+readout is unchanged: `val/gene_interaction/Pearson` per arm at epoch 30 and at the best
+epoch, three seeds each, `val/fitness/Pearson` and `val/cls_pert_strain_sd` alongside.

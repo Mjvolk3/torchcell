@@ -86,6 +86,8 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import Field
 
 from torchcell.datamodels.media import SC as _ONTOLOGY_SC
+from torchcell.datamodels.media import SGA_DM_SELECTION as _ONTOLOGY_SGA_DM
+from torchcell.datamodels.media import SGA_TM_SELECTION as _ONTOLOGY_SGA_TM
 from torchcell.datamodels.media import YNB as _ONTOLOGY_YNB
 from torchcell.datamodels.pydant import ModelStrict
 from torchcell.datamodels.schema import (
@@ -140,8 +142,17 @@ class UptakePolicy(ModelStrict):
         description="uptake magnitude for species assumed in excess (water, oxygen, "
         "bulk salts, trace metals); the conventional cobra 'open' bound",
     )
+    organic_nitrogen_uptake: float = Field(
+        default=0.165,
+        description="uptake magnitude for a nitrogen source that is itself an amino "
+        "acid (monosodium glutamate in the SGA selection media), mmol/gDW/h; the "
+        "supplement rate, because an open (1000) bound would make it the carbon "
+        "source (measured on yeast-GEM 9.0.2: growth 9.8/h on 299 mmol/gDW/h of "
+        "glutamate); 0.165 also equals the SD/MSG molar ratio of MSG to glucose "
+        "(1 g/L over 20 g/L, 0.053) scaled to the 3.3 glucose uptake (0.176)",
+    )
 
-    def source_for(self, role: MediaComponentRole) -> str:
+    def source_for(self, role: MediaComponentRole, name: str = "") -> str:
         """Provenance string recorded on every bound this policy produces."""
         if role in _CARBON_ROLES:
             return (
@@ -154,18 +165,46 @@ class UptakePolicy(ModelStrict):
                 f"{self.supplement_uptake} {FLUX_UNIT} (absolute; 5% of the default "
                 "3.3 carbon uptake, not rescaled with carbon_uptake)"
             )
+        if role is MediaComponentRole.nitrogen_source and _is_organic_nitrogen(name):
+            return (
+                f"torchcell convention: amino-acid nitrogen source bounded at the "
+                f"{SUTHERS_2020} supplement rate {self.organic_nitrogen_uptake} "
+                f"{FLUX_UNIT}, not opened, so it cannot become the carbon source"
+            )
         return (
             f"cobra convention: species assumed in excess, opened to "
             f"{self.unlimited_uptake} {FLUX_UNIT}"
         )
 
-    def bound_for(self, role: MediaComponentRole) -> float:
+    def bound_for(self, role: MediaComponentRole, name: str = "") -> float:
         """Uptake magnitude (positive) for a component in this functional role."""
         if role in _CARBON_ROLES:
             return self.carbon_uptake
         if role in _SUPPLEMENT_ROLES:
             return self.supplement_uptake
+        if role is MediaComponentRole.nitrogen_source and _is_organic_nitrogen(name):
+            return self.organic_nitrogen_uptake
         return self.unlimited_uptake
+
+
+#: Nitrogen sources that carry carbon. Ammonium and nitrate are pure nitrogen and are
+#: opened like any species in excess; an amino acid used as the nitrogen source is
+#: also a carbon substrate, and opening it swaps the medium's carbon source silently.
+_ORGANIC_NITROGEN_SOURCES = frozenset(
+    {
+        "monosodium l-glutamate",
+        "monosodium glutamate",
+        "l-glutamic acid",
+        "l-glutamate",
+        "l-glutamine",
+        "l-proline",
+        "urea",
+    }
+)
+
+
+def _is_organic_nitrogen(name: str) -> bool:
+    return _normalize(name) in _ORGANIC_NITROGEN_SOURCES
 
 
 _CARBON_ROLES = frozenset({MediaComponentRole.carbon_source})
@@ -628,8 +667,8 @@ def media_to_bounds(
         resolutions.append(resolution)
         if resolution.outcome != "resolved":
             continue
-        magnitude = resolved_policy.bound_for(component.role)
-        source = resolved_policy.source_for(component.role)
+        magnitude = resolved_policy.bound_for(component.role, component.compound.name)
+        source = resolved_policy.source_for(component.role, component.compound.name)
         for exchange_id in resolution.exchange_ids:
             metabolite_id, metabolite_name = resolved_index.metabolite_of[exchange_id]
             existing = bounds.get(exchange_id)
@@ -829,11 +868,63 @@ its two nucleobases; the separate name exists because the two objects assert dif
 things about the bench.
 """
 
-#: The four media our datasets actually need, keyed by the medium NAME the dataset
-#: loaders emit, so an audit can join a loader's ``Media`` to the recipe it should use.
+
+def _sga_selection_fba(ontology: Media) -> Media:
+    """Expand an ontology SGA selection medium into a resolvable FBA recipe.
+
+    The ontology records the bench recipe (Tong & Boone 2006 #16): two of its components
+    name mixtures a resolver cannot place on one exchange, ``yeast nitrogen base``
+    (``composition_deferred``) and the ``SC amino-acid supplement powder`` (one defined
+    line whose per-ingredient grams sit in its provenance quote). Each is expanded here
+    into the same species lists the SM and SC recipes use, with the medium's dropouts
+    removed from the supplement, so the expansion cannot drift from the ontology. Every
+    other component (glucose, monosodium glutamate, agar, the four selection agents) is
+    carried through unchanged, so agar and the selection agents come back as
+    ``excluded_by_role`` in the resolution record rather than disappearing.
+
+    Two modeling statements, neither in the source: leucine is supplemented at 10 g per
+    55.2 g of powder against 2 g for the other amino acids, and the policy gives every
+    supplement the same 0.165 uptake; and monosodium glutamate, the nitrogen source, is
+    bounded at that same supplement rate (``UptakePolicy.organic_nitrogen_uptake``).
+    """
+    dropouts = {c.name for c in ontology.dropouts}
+    supplement = [c for c in _SC_AMINO_ACIDS if c.compound.name not in dropouts]
+    for nucleobase in (_ADENINE, _URACIL):
+        if nucleobase.compound.name not in dropouts:
+            supplement.append(nucleobase)
+    expanded: list[MediaComponent] = list(MINERAL_BASE)
+    for component in ontology.components:
+        name = component.compound.name
+        if name.startswith("yeast nitrogen base"):
+            expanded.extend(_YNB_VITAMINS)
+        elif name.startswith("SC amino-acid supplement powder"):
+            expanded.extend(supplement)
+        else:
+            expanded.append(component)
+    return Media(
+        name=ontology.name + " [FBA expansion]",
+        state="liquid",
+        is_synthetic=True,
+        base_medium=ontology.base_medium,
+        components=expanded,
+        dropouts=list(ontology.dropouts),
+        provenance=list(ontology.provenance),
+    )
+
+
+SGA_DM_SELECTION_FBA = _sga_selection_fba(_ONTOLOGY_SGA_DM)
+"""Costanzo 2016 digenic SGA scoring medium, SD/MSG -His/Arg/Lys, as exchange bounds."""
+
+SGA_TM_SELECTION_FBA = _sga_selection_fba(_ONTOLOGY_SGA_TM)
+"""Kuzmin 2018 / 2020 trigenic SGA scoring medium, SD/MSG -His/Arg/Lys/Ura, as bounds."""
+
+#: The media our datasets actually need, keyed by the medium NAME the dataset loaders
+#: emit, so an audit can join a loader's ``Media`` to the recipe it should use.
 FBA_MEDIA: dict[str, Media] = {
     "SM": SM_FBA,
     "SC": SC_FBA,
     "SC-URA": SC_URA_FBA,
     "YPD": YPD_APPROX_FBA,
+    "SGA_DM": SGA_DM_SELECTION_FBA,
+    "SGA_TM": SGA_TM_SELECTION_FBA,
 }

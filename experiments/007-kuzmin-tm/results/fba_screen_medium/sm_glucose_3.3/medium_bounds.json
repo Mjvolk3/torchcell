@@ -1,0 +1,699 @@
+{
+  "n_open_exchanges": 25,
+  "open_exchanges": {
+    "r_1548": {
+      "metabolite": "(R)-pantothenate",
+      "uptake_bound": 0.165
+    },
+    "r_1604": {
+      "metabolite": "4-aminobenzoate",
+      "uptake_bound": 0.165
+    },
+    "r_1654": {
+      "metabolite": "ammonium",
+      "uptake_bound": 1000.0
+    },
+    "r_1671": {
+      "metabolite": "biotin",
+      "uptake_bound": 0.165
+    },
+    "r_1714": {
+      "metabolite": "D-glucose",
+      "uptake_bound": 3.3
+    },
+    "r_1792": {
+      "metabolite": "folate",
+      "uptake_bound": 0.165
+    },
+    "r_1832": {
+      "metabolite": "H+",
+      "uptake_bound": 1000.0
+    },
+    "r_1861": {
+      "metabolite": "iron(2+)",
+      "uptake_bound": 1000.0
+    },
+    "r_1947": {
+      "metabolite": "myo-inositol",
+      "uptake_bound": 0.165
+    },
+    "r_1967": {
+      "metabolite": "nicotinate",
+      "uptake_bound": 0.165
+    },
+    "r_1992": {
+      "metabolite": "oxygen",
+      "uptake_bound": 1000.0
+    },
+    "r_2005": {
+      "metabolite": "phosphate",
+      "uptake_bound": 1000.0
+    },
+    "r_2020": {
+      "metabolite": "potassium",
+      "uptake_bound": 1000.0
+    },
+    "r_2028": {
+      "metabolite": "pyridoxine",
+      "uptake_bound": 0.165
+    },
+    "r_2038": {
+      "metabolite": "riboflavin",
+      "uptake_bound": 0.165
+    },
+    "r_2049": {
+      "metabolite": "sodium",
+      "uptake_bound": 1000.0
+    },
+    "r_2060": {
+      "metabolite": "sulphate",
+      "uptake_bound": 1000.0
+    },
+    "r_2067": {
+      "metabolite": "thiamine",
+      "uptake_bound": 0.165
+    },
+    "r_2100": {
+      "metabolite": "H2O",
+      "uptake_bound": 1000.0
+    },
+    "r_4593": {
+      "metabolite": "chloride",
+      "uptake_bound": 1000.0
+    },
+    "r_4594": {
+      "metabolite": "Cu2(+)",
+      "uptake_bound": 1000.0
+    },
+    "r_4595": {
+      "metabolite": "Mn(2+)",
+      "uptake_bound": 1000.0
+    },
+    "r_4596": {
+      "metabolite": "Zn(2+)",
+      "uptake_bound": 1000.0
+    },
+    "r_4597": {
+      "metabolite": "Mg(2+)",
+      "uptake_bound": 1000.0
+    },
+    "r_4600": {
+      "metabolite": "Ca(2+)",
+      "uptake_bound": 1000.0
+    }
+  },
+  "media_bounds": {
+    "media_name": "SM (synthetic minimal): YNB vitamins + ammonium sulfate + D-glucose",
+    "model_id": "yeastGEM_v9__46__0__46__2",
+    "policy": {
+      "carbon_uptake": 3.3,
+      "supplement_uptake": 0.165,
+      "unlimited_uptake": 1000.0,
+      "organic_nitrogen_uptake": 0.165
+    },
+    "bounds": {
+      "r_2100": {
+        "exchange_id": "r_2100",
+        "metabolite_id": "s_0805",
+        "metabolite_name": "H2O",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: water]"
+      },
+      "r_1992": {
+        "exchange_id": "r_1992",
+        "metabolite_id": "s_1277",
+        "metabolite_name": "oxygen",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: oxygen]"
+      },
+      "r_1832": {
+        "exchange_id": "r_1832",
+        "metabolite_id": "s_0796",
+        "metabolite_name": "H+",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: H+]"
+      },
+      "r_2005": {
+        "exchange_id": "r_2005",
+        "metabolite_id": "s_1324",
+        "metabolite_name": "phosphate",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: phosphate]"
+      },
+      "r_2060": {
+        "exchange_id": "r_2060",
+        "metabolite_id": "s_1468",
+        "metabolite_name": "sulphate",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: sulfate]"
+      },
+      "r_2049": {
+        "exchange_id": "r_2049",
+        "metabolite_id": "s_1438",
+        "metabolite_name": "sodium",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: sodium]"
+      },
+      "r_2020": {
+        "exchange_id": "r_2020",
+        "metabolite_id": "s_1374",
+        "metabolite_name": "potassium",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: potassium]"
+      },
+      "r_4593": {
+        "exchange_id": "r_4593",
+        "metabolite_id": "s_4200",
+        "metabolite_name": "chloride",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: chloride]"
+      },
+      "r_1861": {
+        "exchange_id": "r_1861",
+        "metabolite_id": "s_0925",
+        "metabolite_name": "iron(2+)",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: iron(2+)]"
+      },
+      "r_4594": {
+        "exchange_id": "r_4594",
+        "metabolite_id": "s_4201",
+        "metabolite_name": "Cu2(+)",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: copper(2+)]"
+      },
+      "r_4595": {
+        "exchange_id": "r_4595",
+        "metabolite_id": "s_4202",
+        "metabolite_name": "Mn(2+)",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: manganese(2+)]"
+      },
+      "r_4596": {
+        "exchange_id": "r_4596",
+        "metabolite_id": "s_4203",
+        "metabolite_name": "Zn(2+)",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: zinc(2+)]"
+      },
+      "r_4597": {
+        "exchange_id": "r_4597",
+        "metabolite_id": "s_4204",
+        "metabolite_name": "Mg(2+)",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: magnesium(2+)]"
+      },
+      "r_4600": {
+        "exchange_id": "r_4600",
+        "metabolite_id": "s_4199",
+        "metabolite_name": "Ca(2+)",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: calcium(2+)]"
+      },
+      "r_1714": {
+        "exchange_id": "r_1714",
+        "metabolite_id": "s_0565",
+        "metabolite_name": "D-glucose",
+        "uptake_bound": 3.3,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 default carbon substrate uptake 3.3 mmol/gDW/h [component: D-glucose]"
+      },
+      "r_1654": {
+        "exchange_id": "r_1654",
+        "metabolite_id": "s_0420",
+        "metabolite_name": "ammonium",
+        "uptake_bound": 1000.0,
+        "unit": "mmol/gDW/h",
+        "source": "cobra convention: species assumed in excess, opened to 1000.0 mmol/gDW/h [component: ammonium sulfate]"
+      },
+      "r_1671": {
+        "exchange_id": "r_1671",
+        "metabolite_id": "s_0452",
+        "metabolite_name": "biotin",
+        "uptake_bound": 0.165,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 supplementary compound uptake 0.165 mmol/gDW/h (absolute; 5% of the default 3.3 carbon uptake, not rescaled with carbon_uptake) [component: biotin]"
+      },
+      "r_1548": {
+        "exchange_id": "r_1548",
+        "metabolite_id": "s_0032",
+        "metabolite_name": "(R)-pantothenate",
+        "uptake_bound": 0.165,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 supplementary compound uptake 0.165 mmol/gDW/h (absolute; 5% of the default 3.3 carbon uptake, not rescaled with carbon_uptake) [component: calcium pantothenate]"
+      },
+      "r_1792": {
+        "exchange_id": "r_1792",
+        "metabolite_id": "s_0720",
+        "metabolite_name": "folate",
+        "uptake_bound": 0.165,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 supplementary compound uptake 0.165 mmol/gDW/h (absolute; 5% of the default 3.3 carbon uptake, not rescaled with carbon_uptake) [component: folic acid]"
+      },
+      "r_1947": {
+        "exchange_id": "r_1947",
+        "metabolite_id": "s_1154",
+        "metabolite_name": "myo-inositol",
+        "uptake_bound": 0.165,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 supplementary compound uptake 0.165 mmol/gDW/h (absolute; 5% of the default 3.3 carbon uptake, not rescaled with carbon_uptake) [component: myo-inositol]"
+      },
+      "r_1967": {
+        "exchange_id": "r_1967",
+        "metabolite_id": "s_1220",
+        "metabolite_name": "nicotinate",
+        "uptake_bound": 0.165,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 supplementary compound uptake 0.165 mmol/gDW/h (absolute; 5% of the default 3.3 carbon uptake, not rescaled with carbon_uptake) [component: niacin]"
+      },
+      "r_1604": {
+        "exchange_id": "r_1604",
+        "metabolite_id": "s_0272",
+        "metabolite_name": "4-aminobenzoate",
+        "uptake_bound": 0.165,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 supplementary compound uptake 0.165 mmol/gDW/h (absolute; 5% of the default 3.3 carbon uptake, not rescaled with carbon_uptake) [component: 4-aminobenzoic acid]"
+      },
+      "r_2028": {
+        "exchange_id": "r_2028",
+        "metabolite_id": "s_1397",
+        "metabolite_name": "pyridoxine",
+        "uptake_bound": 0.165,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 supplementary compound uptake 0.165 mmol/gDW/h (absolute; 5% of the default 3.3 carbon uptake, not rescaled with carbon_uptake) [component: pyridoxine hydrochloride]"
+      },
+      "r_2038": {
+        "exchange_id": "r_2038",
+        "metabolite_id": "s_1406",
+        "metabolite_name": "riboflavin",
+        "uptake_bound": 0.165,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 supplementary compound uptake 0.165 mmol/gDW/h (absolute; 5% of the default 3.3 carbon uptake, not rescaled with carbon_uptake) [component: riboflavin]"
+      },
+      "r_2067": {
+        "exchange_id": "r_2067",
+        "metabolite_id": "s_1490",
+        "metabolite_name": "thiamine",
+        "uptake_bound": 0.165,
+        "unit": "mmol/gDW/h",
+        "source": "suthersGenomescaleMetabolicReconstruction2020 sec2.5 supplementary compound uptake 0.165 mmol/gDW/h (absolute; 5% of the default 3.3 carbon uptake, not rescaled with carbon_uptake) [component: thiamine hydrochloride]"
+      }
+    },
+    "resolutions": [
+      {
+        "component_name": "water",
+        "role": "other",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_2100"
+        ],
+        "match_channel": "name:h2o",
+        "reason": null,
+        "candidates_tried": [
+          "water",
+          "h2o",
+          "l-water",
+          "l-h2o"
+        ]
+      },
+      {
+        "component_name": "oxygen",
+        "role": "other",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1992"
+        ],
+        "match_channel": "name:oxygen",
+        "reason": null,
+        "candidates_tried": [
+          "oxygen",
+          "l-oxygen"
+        ]
+      },
+      {
+        "component_name": "H+",
+        "role": "buffer",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1832"
+        ],
+        "match_channel": "name:h+",
+        "reason": null,
+        "candidates_tried": [
+          "h+",
+          "l-h+"
+        ]
+      },
+      {
+        "component_name": "phosphate",
+        "role": "bulk_salt",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_2005"
+        ],
+        "match_channel": "name:phosphate",
+        "reason": null,
+        "candidates_tried": [
+          "phosphate",
+          "l-phosphate"
+        ]
+      },
+      {
+        "component_name": "sulfate",
+        "role": "bulk_salt",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_2060"
+        ],
+        "match_channel": "name:sulphate",
+        "reason": null,
+        "candidates_tried": [
+          "sulfate",
+          "sulphate",
+          "l-sulfate",
+          "l-sulphate"
+        ]
+      },
+      {
+        "component_name": "sodium",
+        "role": "bulk_salt",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_2049"
+        ],
+        "match_channel": "name:sodium",
+        "reason": null,
+        "candidates_tried": [
+          "sodium",
+          "l-sodium"
+        ]
+      },
+      {
+        "component_name": "potassium",
+        "role": "bulk_salt",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_2020"
+        ],
+        "match_channel": "name:potassium",
+        "reason": null,
+        "candidates_tried": [
+          "potassium",
+          "l-potassium"
+        ]
+      },
+      {
+        "component_name": "chloride",
+        "role": "bulk_salt",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_4593"
+        ],
+        "match_channel": "name:chloride",
+        "reason": null,
+        "candidates_tried": [
+          "chloride",
+          "l-chloride"
+        ]
+      },
+      {
+        "component_name": "iron(2+)",
+        "role": "trace_element",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1861"
+        ],
+        "match_channel": "name:iron(2+)",
+        "reason": null,
+        "candidates_tried": [
+          "iron(2+)",
+          "l-iron(2+)"
+        ]
+      },
+      {
+        "component_name": "copper(2+)",
+        "role": "trace_element",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_4594"
+        ],
+        "match_channel": "name:cu2(+)",
+        "reason": null,
+        "candidates_tried": [
+          "copper(2+)",
+          "cu2(+)",
+          "l-copper(2+)",
+          "l-cu2(+)"
+        ]
+      },
+      {
+        "component_name": "manganese(2+)",
+        "role": "trace_element",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_4595"
+        ],
+        "match_channel": "name:mn(2+)",
+        "reason": null,
+        "candidates_tried": [
+          "manganese(2+)",
+          "mn(2+)",
+          "l-manganese(2+)",
+          "l-mn(2+)"
+        ]
+      },
+      {
+        "component_name": "zinc(2+)",
+        "role": "trace_element",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_4596"
+        ],
+        "match_channel": "name:zn(2+)",
+        "reason": null,
+        "candidates_tried": [
+          "zinc(2+)",
+          "zn(2+)",
+          "l-zinc(2+)",
+          "l-zn(2+)"
+        ]
+      },
+      {
+        "component_name": "magnesium(2+)",
+        "role": "trace_element",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_4597"
+        ],
+        "match_channel": "name:mg(2+)",
+        "reason": null,
+        "candidates_tried": [
+          "magnesium(2+)",
+          "mg(2+)",
+          "l-magnesium(2+)",
+          "l-mg(2+)"
+        ]
+      },
+      {
+        "component_name": "calcium(2+)",
+        "role": "trace_element",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_4600"
+        ],
+        "match_channel": "name:ca(2+)",
+        "reason": null,
+        "candidates_tried": [
+          "calcium(2+)",
+          "ca(2+)",
+          "l-calcium(2+)",
+          "l-ca(2+)"
+        ]
+      },
+      {
+        "component_name": "D-glucose",
+        "role": "carbon_source",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1714"
+        ],
+        "match_channel": "name:d-glucose",
+        "reason": null,
+        "candidates_tried": [
+          "d-glucose"
+        ]
+      },
+      {
+        "component_name": "ammonium sulfate",
+        "role": "nitrogen_source",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1654",
+          "r_2060"
+        ],
+        "match_channel": "name:dissociation(ammonium sulfate)",
+        "reason": null,
+        "candidates_tried": [
+          "ammonium",
+          "l-ammonium",
+          "sulfate",
+          "sulphate",
+          "l-sulfate",
+          "l-sulphate"
+        ]
+      },
+      {
+        "component_name": "biotin",
+        "role": "vitamin",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1671"
+        ],
+        "match_channel": "name:biotin",
+        "reason": null,
+        "candidates_tried": [
+          "biotin",
+          "l-biotin"
+        ]
+      },
+      {
+        "component_name": "calcium pantothenate",
+        "role": "vitamin",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1548"
+        ],
+        "match_channel": "name:(r)-pantothenate",
+        "reason": null,
+        "candidates_tried": [
+          "calcium pantothenate",
+          "(r)-pantothenate",
+          "l-calcium pantothenate",
+          "l-(r)-pantothenate"
+        ]
+      },
+      {
+        "component_name": "folic acid",
+        "role": "vitamin",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1792"
+        ],
+        "match_channel": "name:folate",
+        "reason": null,
+        "candidates_tried": [
+          "folic acid",
+          "folate",
+          "folicate",
+          "l-folic acid"
+        ]
+      },
+      {
+        "component_name": "myo-inositol",
+        "role": "vitamin",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1947"
+        ],
+        "match_channel": "name:myo-inositol",
+        "reason": null,
+        "candidates_tried": [
+          "myo-inositol",
+          "l-myo-inositol"
+        ]
+      },
+      {
+        "component_name": "niacin",
+        "role": "vitamin",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1967"
+        ],
+        "match_channel": "name:nicotinate",
+        "reason": null,
+        "candidates_tried": [
+          "niacin",
+          "nicotinate",
+          "l-niacin",
+          "l-nicotinate"
+        ]
+      },
+      {
+        "component_name": "4-aminobenzoic acid",
+        "role": "vitamin",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_1604"
+        ],
+        "match_channel": "name:4-aminobenzoate",
+        "reason": null,
+        "candidates_tried": [
+          "4-aminobenzoic acid",
+          "4-aminobenzoate",
+          "4-aminobenzoicate",
+          "l-4-aminobenzoic acid"
+        ]
+      },
+      {
+        "component_name": "pyridoxine hydrochloride",
+        "role": "vitamin",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_2028"
+        ],
+        "match_channel": "name:pyridoxine",
+        "reason": null,
+        "candidates_tried": [
+          "pyridoxine hydrochloride",
+          "pyridoxine",
+          "l-pyridoxine hydrochloride",
+          "l-pyridoxine"
+        ]
+      },
+      {
+        "component_name": "riboflavin",
+        "role": "vitamin",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_2038"
+        ],
+        "match_channel": "name:riboflavin",
+        "reason": null,
+        "candidates_tried": [
+          "riboflavin",
+          "l-riboflavin"
+        ]
+      },
+      {
+        "component_name": "thiamine hydrochloride",
+        "role": "vitamin",
+        "outcome": "resolved",
+        "exchange_ids": [
+          "r_2067"
+        ],
+        "match_channel": "name:thiamine",
+        "reason": null,
+        "candidates_tried": [
+          "thiamine hydrochloride",
+          "thiamine",
+          "l-thiamine hydrochloride",
+          "l-thiamine"
+        ]
+      }
+    ]
+  }
+}

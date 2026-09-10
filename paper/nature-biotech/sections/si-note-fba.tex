@@ -9,6 +9,11 @@
 %% The Kuzmin 2018 medium quotes come from the local OCR of the SI (kuzmin2018_SI.mmd in the
 %% primary checkout root); the tc-lit key in .env was rejected (401) on 2026.09.05, so the
 %% quotes are NOT yet checked against the sha256-pinned mirror. Verify before promotion.
+%% The rerun on the screen's medium (2026.09.10, gilahyper job 1671) is
+%% experiments/007-kuzmin-tm/scripts/fba_screen_medium.py (three arms under
+%% results/fba_screen_medium/), scored by fba_screen_medium_si.py into
+%% results/fba_screen_medium/stats.json, which is the source of every number in the
+%% "Rerun on the screen's medium" paragraph, panel g, and tab-fba-screen-medium.tex.
 \clearpage
 \suppnote{note:fba}{The Yeast9 flux-balance baseline for trigenic interactions\secstatus{todo}}
 
@@ -16,8 +21,10 @@ The Yeast9 value in Fig.~\ref{fig:ggi}d is a mechanistic baseline with no fitted
 each deletion set of the trigenic screens is imposed on the yeast-GEM~9.0.2 metabolic
 reconstruction, growth is computed by flux-balance analysis (FBA), and the interaction of
 Fig.~\ref{fig:ggi}a is formed from the predicted growth rates exactly as it is from the
-measured colony sizes (\suppfig{fig:fba}a). The run was made once, on 2025-09-15, and every
-number here is recomputed from its frozen output files and the screens' raw tables.
+measured colony sizes (\suppfig{fig:fba}a). The run behind the printed value was made
+once, on 2025-09-15, and every number here is recomputed from its frozen output files and
+the screens' raw tables; the rerun on the screen's own medium (2026-09-10) is reported at
+the end of the note.
 
 \notesec{Model and medium} The model is yeast-GEM 9.0.2 as distributed
 (\texttt{yeast-GEM.xml}: 4,131 reactions, 2,806 metabolites, 1,161 genes, 271 exchange
@@ -88,28 +95,62 @@ screens' convention ($\lvert\tau\rvert>0.08$, $P<0.05$) 48 are negative and 33 p
 (1.1\%), against 1,404 and 407 among the partly covered and 3,742 and 1,240 among the
 uncovered triples (2.1\% overall; \suppfig{fig:fba}f).
 
-\notesec{Caveats} The medium is the principal open question. The FBA ran on the model's
-default ammonium minimal medium, whereas the screen's final triple-mutant selection plates
-were, from the Kuzmin~2018 Supplementary Materials, ``SD$_{\text{MSG}}$ - His/Arg/Lys/Ura +
+\notesec{Rerun on the screen's medium} The FBA above ran on the model's default ammonium
+minimal medium, whereas the screen's final triple-mutant selection plates were, from the
+Kuzmin~2018 Supplementary Materials, ``SD$_{\text{MSG}}$ - His/Arg/Lys/Ura +
 canavanine/thialysine/G418/clonNAT (0.17\% yeast nitrogen base without amino acids and
 ammonium sulfate, 0.1\% monosodium glutamic acid, 0.2\% amino acid supplement, 2\% agar, 2\%
 glucose, 50 $\mu$g/mL of each analog \ldots)'', with ``The incubation temperature for all the
-selection steps was 26$^{\circ}$C'' (the 2020 screen's medium was not checked). The
-simulated medium contains neither the glutamate nitrogen source nor the amino-acid
-supplement. Whether the difference changes the prediction is untested: the baseline has not
-been rerun on the screen's medium
-(\suppfig{fig:fba}g), and a later attempt to approximate rich media by opening vitamin and
-amino-acid exchanges at 5\% of the glucose uptake rate (\texttt{setup\_media\_conditions.py})
-produced no committed result and is not reported. Two further discrepancies are visible in
-the code rather than in the data. The knowledge-graph records of these experiments carry the
-environment YEPD at 30$^{\circ}$C, the filter of the query that built the dataset
-(\texttt{queries/001\_small\_build.cql}), which does not match the selection medium quoted
-above and should be corrected at the source. And the row misalignment of the matched file
+selection steps was 26$^{\circ}$C'' (the 2020 screen's medium was not checked). The same
+pipeline was therefore rerun on that medium (\supptab{tab:fba-screen-medium};
+\suppfig{fig:fba}g), with the same deletion sets, solver, and 60~s limit, and with two
+controls: the model's default medium again, which reproduces the frozen wild-type growth
+to $10^{-9}$, and a synthetic minimal medium with ammonium nitrogen and glucose opened to
+3.3~mmol\,gDW$^{-1}$\,h$^{-1}$, which separates the change of carbon rate from the change
+of nitrogen source and supplements. The screen medium is the ontology's record of the
+selection recipe mapped onto 42 exchange reactions: glucose at 3.3, the YNB vitamins, and
+the 17 amino acids and adenine of the supplement minus the His/Arg/Lys/Ura dropouts, each
+supplement at 0.165~mmol\,gDW$^{-1}$\,h$^{-1}$ (the rich-medium rate of Suthers et
+al.\ 2020), agar and the four selection agents excluded because a constraint-based model
+cannot represent them. Monosodium glutamate, the nitrogen source, is bounded at the same
+0.165 rather than opened: opened, the optimum is 9.8~h$^{-1}$ on 299~mmol\,gDW$^{-1}$\,h$^{-1}$
+of glutamate, which makes glutamate the carbon source; at 0.165, which is also the
+medium's MSG-to-glucose molar ratio scaled to the glucose uptake, the wild type grows at
+$\mu_{\mathrm{WT}}=0.497$~h$^{-1}$ on glucose. Every one of the 987,530 solves returned
+\texttt{optimal}, in 12~min on 96 processes.
+
+The medium moves the growth rates without moving the interaction correlation. On the
+screen medium 98.5\% of single, 98.0\% of double, and 94.3\% of triple deletions grow at
+the wild-type rate (against 97.7, 97.0, and 93.1\% on the default medium), and no growth
+falls from 4.9\% to 3.5\% of triples. Predicted against measured $\tau_{ijk}$ gives
+$r=-0.0007$ ($n=332{,}313$, $P=0.69$; Spearman $\rho=0.026$), predicted against measured
+triple-mutant fitness $r=0.173$ (0.289 within the 111,921 triples that contain a model
+gene, from 0.151 and 0.254 on the default medium). The nonzero predictions change character
+rather than number: 30 triples have $\lvert\tau_{ijk}\rvert>10^{-3}$, all 30 among the
+7,419 fully covered triples, with values between $-0.39$ and $0.04$, and the internal
+checks that fail on the default medium (doubles contradicting their own single-deletion
+result, triples growing faster than their slowest double) pass with zero violations. On
+the default medium the rerun reproduces the wild-type growth and the growth bands of the
+frozen run but not its solver failures: 157 inconsistent doubles (146 containing
+\texttt{YGR144W}) against 253, 127 triples above their slowest double against 173, and
+182 nonzero $\tau_{ijk}$ against 231, so the $\pm 1$ and $+2$ values of
+\suppfig{fig:fba}b are solver artifacts of that medium at glucose 1 and are not
+reproducible solve to solve. The ammonium control at glucose 3.3 sits between the two
+(93.3\% of triples at wild-type growth, 27 nonzero $\tau_{ijk}$, all in fully covered
+triples, no violations, $r=-0.0005$), so most of the change in growth bands comes from the
+carbon rate and the remainder from the supplements.
+
+\notesec{Caveats} Two discrepancies are visible in the code rather than in the data. The
+knowledge-graph records of these experiments carry the environment YEPD at 30$^{\circ}$C,
+the filter of the query that built the dataset (\texttt{queries/001\_small\_build.cql}),
+which does not match the selection medium quoted above and should be corrected at the
+source. And the row misalignment of the matched file
 (\texttt{match\_fba\_to\_experiments.py} pairs \texttt{dataset[i]} with
 \texttt{label\_df.iloc[i]}) affects any other analysis built on that file. The prediction's
-constancy, not the medium, sets the ceiling here: with 93\% of triple deletions at wild-type
-growth and 66\% of triples outside the model's gene set, no medium change can raise the
-correlation far unless it also spreads the predicted growth rates.
+constancy, not the medium, sets the ceiling: with 93 to 94\% of triple deletions at
+wild-type growth on every medium tried and 66\% of triples outside the model's gene set,
+the medium correction removed the solver artifacts and raised the fitness correlation by
+0.02 while leaving the interaction correlation at zero.
 
 %% Figure: notes/assets/drawio/FigS-yeast9-fba.drawio (composed by
 %% experiments/007-kuzmin-tm/scripts/fba_baseline_compose_figure.py from stats.json and the
@@ -140,8 +181,12 @@ be scored in full. \textbf{f},~The measured interactions of the same triples, gr
 \textbf{e} (all three, one or two, or no gene in the model), split by the screens' convention
 into significant negative ($\tau<-0.08$, $P<0.05$; red), not significant (gray), and
 significant positive ($\tau>0.08$, $P<0.05$; orange), with counts on a logarithmic axis. $P$
-is the smallest over the gene set's raw records. \textbf{g},~Placeholder for the rerun on the
-screen's own medium, which has not been run.}{fig:fba}
+is the smallest over the gene set's raw records. \textbf{g},~As \textbf{b}, for the rerun on
+the screen's own medium (SD/MSG -His/Arg/Lys/Ura mapped onto 42 exchange reactions;
+\supptab{tab:fba-screen-medium}): the 30 triples with a nonzero prediction all lie among the
+7,419 fully covered triples and within $\lvert\tau_{ijk}\rvert<0.4$; the $\pm 1$ and $+2$
+values of \textbf{b} do not recur.}{fig:fba}
 \end{figure*}
 
 \input{sections/tab-fba-medium}
+\input{sections/tab-fba-screen-medium}

@@ -58,3 +58,7 @@ So 81 of the 7,419 fully evaluable triples (1.1%) carry a significant measured i
 ![fba_baseline_evaluable](assets/images/007-kuzmin-tm/fba_baseline_evaluable.svg)
 
 ![fba_baseline_landscape](assets/images/007-kuzmin-tm/fba_baseline_landscape.svg)
+
+## 2026.09.10 - The rerun on the screen's medium
+
+The "not run" placeholder of panel g is replaced by the rerun of [[experiments.007-kuzmin-tm.scripts.fba_screen_medium]], scored by [[experiments.007-kuzmin-tm.scripts.fba_screen_medium_si]]. One consequence for the numbers above: the 231 nonzero predictions of the frozen run are not reproducible (the same medium and code give 182 today, with the same YGR144W signature), so they are GLPK failures at glucose 1 rather than modeled interactions; at glucose 3.3 the consistency checks pass with zero violations.

@@ -1,0 +1,17 @@
+%% SOURCE: experiments/007-kuzmin-tm/scripts/fba_screen_medium_si.py -- AUTO-GENERATED, do not hand-edit; rerun the script.
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{The Yeast9 flux-balance baseline on four media. Open, exchange reactions open for uptake (glucose bound in mmol\,gDW$^{-1}$\,h$^{-1}$ in parentheses); $\mu_{\mathrm{WT}}$, wild-type growth (h$^{-1}$); WT-like, the percentage of single / double / triple deletion sets whose predicted growth is within $10^{-3}$ of the wild type's; None, triples with no growth (fitness below 0.01); $n_{\tau\neq 0}$, triples with predicted $\lvert\tau_{ijk}\rvert>10^{-3}$; $r(\tau)$ and $r(f)$, Pearson $r$ of predicted against measured $\tau_{ijk}$ and triple-mutant fitness over all 332,313 triples ($r(f)$ within the 111,921 triples that contain a model gene in parentheses). The frozen run is the value of Fig.~\ref{fig:ggi}d and its medium is \supptab{tab:fba-medium}; the rerun repeats it with the current cobrapy; SM is ammonium nitrogen, the YNB vitamins, and glucose at 3.3 with no amino acid; the screen medium is the SGA triple-mutant selection medium, 17 amino acids and adenine at 0.165 and monosodium glutamate at 0.165.}
+\label{tab:fba-screen-medium}
+\begin{tabular}{@{}l r r l r r r r@{}}
+\toprule
+\textbf{Medium} & \textbf{Open} & $\mu_{\mathrm{WT}}$ & \textbf{WT-like 1 / 2 / 3} & \textbf{None} & $n_{\tau\neq 0}$ & $r(\tau)$ & $r(f)$\\
+\midrule
+Default, frozen run & 16 (1) & 0.0858 & 97.7 / 97.0 / 93.1\% & 4.9\% & 231 & 0.0019 & 0.151 (0.254)\\
+Default, rerun & 16 (1) & 0.0858 & 97.7 / 97.0 / 93.1\% & 4.9\% & 182 & 0.0034 & 0.151 (0.254)\\
+SM, glucose 3.3 & 25 (3.3) & 0.3138 & 98.1 / 97.3 / 93.3\% & 4.4\% & 27 & -0.0005 & 0.160 (0.269)\\
+Screen medium & 42 (3.3) & 0.4966 & 98.5 / 98.0 / 94.3\% & 3.5\% & 30 & -0.0007 & 0.173 (0.289)\\
+\bottomrule
+\end{tabular}
+\end{table}

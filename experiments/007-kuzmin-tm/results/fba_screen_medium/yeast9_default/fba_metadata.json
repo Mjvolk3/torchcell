@@ -1,0 +1,31 @@
+{
+  "arm": "yeast9_default",
+  "description": "yeast-GEM 9.0.2 model.medium as distributed (glucose 1, ammonium), unchanged",
+  "timestamp": "2026-09-10T14:42:54.180479",
+  "host": "gilahyper",
+  "torchcell_commit": "c7c8626328555b55d27cad74aca500580fe98607",
+  "cobra_version": "0.30.0",
+  "optlang_version": "1.8.3",
+  "solver": "optlang.glpk_interface",
+  "solver_timeout_s": 60,
+  "model_id": "yeastGEM_v9__46__0__46__2",
+  "wt_growth": 0.08584397100168999,
+  "perturbations_file": "results/cobra-fba-growth_backup_20250923_134447/unique_perturbations.json",
+  "perturbations_sha256": "7f427c5b68669d9ab38b708b9e0ba7c47b83443b9dbf8bbcd46fc55bac22487a",
+  "limit": null,
+  "n_singles": 4036,
+  "n_doubles": 651181,
+  "n_triples": 332313,
+  "n_processes": 96,
+  "solver_status_counts": {
+    "optimal": 987530
+  },
+  "fba_runtime_seconds": 734.514392,
+  "total_runtime_seconds": 772.416719,
+  "lethal_fraction": {
+    "singles": 0.016105054509415264,
+    "doubles": 0.021623788163352434,
+    "triples": 0.04893579246072227
+  },
+  "tau_abs_above_1e-3": 182
+}

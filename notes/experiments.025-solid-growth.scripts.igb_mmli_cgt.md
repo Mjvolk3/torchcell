@@ -37,6 +37,30 @@ the main clone's `.env`; the exports in the script win over it since `load_doten
 overrides a set variable, and `EXPERIMENT_ROOT` points at the worktree so the index
 artifacts under `results/` are the branch's own.
 
+## 2026.09.10 - The compute nodes have no git; the worktree is prepared on the login node
+
+The design above never ran. The first chain submitted through it (2390540 to 2390543,
+the Q-split embedding arms) died in 12 seconds at `git: command not found` on
+compute-5-7, and `rockylinux_9.sif` carries no git either, which the 019 wave-5 launcher
+had already recorded from its own canary (2324270). With the chain on `afterany`, all
+four failed in sequence.
+
+The launcher now expects the worktree to exist and only verifies it: it reads
+`gitdir:` from the worktree's `.git` file and prints the SHA from that directory's
+`HEAD` (a detached HEAD holds the SHA directly). The checkout moves to the login node,
+which is what the 019 launchers do:
+
+```bash
+git -C ~/projects/torchcell fetch origin feat/025-fitness-joint-head
+git -C ~/projects/torchcell worktree add --detach \
+    ~/projects/torchcell.worktrees/025-fitness-joint-head origin/feat/025-fitness-joint-head   # first time
+git -C ~/projects/torchcell.worktrees/025-fitness-joint-head checkout --detach origin/feat/025-fitness-joint-head  # afterwards
+```
+
+A job reads whatever the worktree holds when it starts, so the checkout is advanced
+only between jobs, never under a running one. The preflight also checks the four
+sequence-embedding builds (`fudt`, `calm`, `protT5`, `random`) on IGB scratch.
+
 ### Budget
 
 The weekly note measured the KL arm at ~58 min per epoch on this node against 19.4 on

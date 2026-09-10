@@ -332,16 +332,18 @@ never appear in training (they are held-out query-pair members).
 Counts are the model's own `Parameter counts` line from the CPU smokes of 2026-09-10; the
 three matched arms sit within 0.03 percent of each other on the total.
 
-Submitted from commit 6b69399c on IGB mmli (4 x A100, one job at a time, each held
-until the previous one ends, 4-day clock; W&B offline there, sync with
-`igb_login_wandb_sync.sh`):
+Submitted on IGB mmli (4 x A100, one job at a time, each held until the previous one
+ends, 4-day clock; W&B offline there, sync with `igb_login_wandb_sync.sh`). The first
+chain, 2390540 to 2390543 from 6b69399c, died at preflight because the compute nodes
+have no git ([[experiments.025-solid-growth.scripts.igb_mmli_cgt]]); resubmitted from
+a5fd743e with the worktree prepared on the login node:
 
 | IGB job | config | dependency |
 |---|---|---|
-| 2390540 | `cgt_s0_q_kl_ctrl_016` | first |
-| 2390541 | `cgt_s0_q_kl_emb_017` | afterany 2390540 |
-| 2390542 | `cgt_s0_q_kl_rand_018` | afterany 2390541 |
-| 2390543 | `cgt_s0_q_kl_embtab_019` | afterany 2390542 |
+| 2390616 | `cgt_s0_q_kl_ctrl_016` | first |
+| 2390617 | `cgt_s0_q_kl_emb_017` | afterany 2390616 |
+| 2390618 | `cgt_s0_q_kl_rand_018` | afterany 2390617 |
+| 2390619 | `cgt_s0_q_kl_embtab_019` | afterany 2390618 |
 
 Readings: `_017` against `_016` is the sequence-information question; `_017` against
 `_018` separates content from a fixed identity; `_019` against `_017` says whether a free

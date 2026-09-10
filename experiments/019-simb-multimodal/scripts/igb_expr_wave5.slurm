@@ -314,6 +314,27 @@ case "$STAGE" in
           ARMS=(R_pergene R_pergene_basis64); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
+  # ---------------------------------------------------------- PER-GENE REPLICATES (2026.09.09)
+  # RR_ref vs RR_pergene (same configs as R_ref / R_pergene, see gh_expr_008_arm.sh), fresh
+  # seeds 2-4 at 1,000 epochs, 2 runs per card so each task is one seed's PAIR on one card:
+  # the contrast is paired within task, and the card is a block. 1,000 epochs is 12 h for
+  # the reference and about 16 h for the per-gene arm at the packed rates measured in the
+  # mechanism round (84 and 64 epochs per hour), so a 30-hour wall clears it and the host
+  # memory growth that killed the five-day packed tasks (61 GB by day 3.5) is not reached.
+  # Three tasks: two on the cabbi cards freed by the batch-64 Pearson runs (2026-09-09), the
+  # third when the anchored-Pearson task ends. Submit task 2 alone with --array=2.
+  #
+  #   sbatch -p cabbi --gres=gpu:1 --cpus-per-task=8 --mem=60g --time=1-06:00:00 \
+  #       --array=0-1 --export=ALL,W5_STAGE=pergene_rep,TORCHCELL_SOURCE_GIT_HASH=$H,\
+  #   TORCHCELL_SOURCE_DIFF_SHA256=$D experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  pergene_rep)
+          ARMS=(RR_ref RR_pergene); SEEDS=(2 3 4)
+          RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.max_epochs=1000 trainer.train_eval_every=10" ;;
+  canary_pergene_rep)
+          ARMS=(RR_ref RR_pergene); SEEDS=(2)
+          RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.fast_dev_run=true" ;;
   # CANARY -- one fast_dev_run to prove container + conda + PYTHONPATH + LMDB path before a
   # wave is committed to the queue. Exits in minutes.
   canary) ARMS=(X_mix); SEEDS=(0)
@@ -326,7 +347,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

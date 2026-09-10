@@ -496,6 +496,21 @@ case "$ARM" in
   R_pergene_basis64) OVERRIDES=(multitask.per_gene_weight=true
                                 multitask.response_basis_rank=64)
                      ARM_TAGS=(mech-pergene-readout mech-basis pair-rank64 xfer-yes stage-mech) ;;
+  # ======================= PER-GENE READOUT REPLICATES (2026.09.09) =======================
+  # The mechanism round read the per-gene readout at +0.028 over R_ref at two pairs
+  # (epochs <= 4,079), against a resolution of about 0.06: a direction, not a result. These
+  # arms are the SAME configurations as R_ref / R_pergene under new names, so a readout can
+  # select this round by arm tag without disturbing the mechanism round's selection (which
+  # keeps the longest run per arm and seed). Fresh seeds (2, 3, 4) at a 1,000-epoch budget:
+  # the v9 long-budget arms spread 0.0099 at 1,000 epochs and the v10 grid's within-cell sd
+  # is 0.012 to 0.025, so three new pairs plus the two mechanism-round pairs read at the
+  # same budget resolve about 0.03. Whether the arm's early peak and give-back (peaks at
+  # epochs 1,200 to 2,600 in the mechanism round) survive a short budget is what the same
+  # curves show.
+  RR_ref)            OVERRIDES=()
+                     ARM_TAGS=(mech-baseline pair-rank0 xfer-yes stage-pergene-rep round-pergene-rep) ;;
+  RR_pergene)        OVERRIDES=(multitask.per_gene_weight=true)
+                     ARM_TAGS=(mech-pergene-readout xfer-yes stage-pergene-rep round-pergene-rep) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

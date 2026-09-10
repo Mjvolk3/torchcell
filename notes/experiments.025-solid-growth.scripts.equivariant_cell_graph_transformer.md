@@ -220,9 +220,13 @@ min/epoch, 30 epochs is 40 h.
 | GilaHyper job | config | arm |
 |---|---|---|
 | 1640 (running, cosine) | `cgt_s0_q_kl_004` | soft KL, disjoint split, the additive-baselines report's run |
-| pending | `cgt_s0_r_kl_fit_014` | fitness from the perturbed CLS, weight 1.0, constant rate |
-| pending | `cgt_s0_r_kl_ctrl_013` | control, constant rate |
-| pending | `cgt_s0_r_kl_fit_015` | fitness from the perturbed CLS, weight 0.1, constant rate |
+| 1659 | `cgt_s0_r_kl_fit_014` | fitness from the perturbed CLS, weight 1.0, constant rate |
+| 1660 | `cgt_s0_r_kl_ctrl_013` | control, constant rate |
+| 1661 | `cgt_s0_r_kl_fit_015` | fitness from the perturbed CLS, weight 0.1, constant rate |
 
 Job 1640 keeps the cosine on purpose: the report reads it against job 1598 and the 010
-band, which share that schedule.
+band, which share that schedule. On Delta the four `_008` / `kl_000` replicates
+(21919310 to 21919313, cosine, old commit) were cancelled and replaced by 21934081
+(`fit_014`, seed 1), 21934082 (`ctrl_013`, seed 1), 21934083 (`fit_014`, seed 2) and
+21934084 (`ctrl_013`, seed 2), 48 h each so 30 epochs fit at the canary's 79 min/epoch.
+With GilaHyper's seed 42 that is three seeds of the weight-1.0 arm and its control.

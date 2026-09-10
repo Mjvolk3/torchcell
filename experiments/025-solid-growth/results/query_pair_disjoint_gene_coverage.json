@@ -1,0 +1,46 @@
+{
+  "Q": {
+    "n_train_records": 301236,
+    "n_train_genes": 4340,
+    "val": {
+      "n_records": 37705,
+      "n_genes": 4021,
+      "n_genes_in_a_training_triple": 4013,
+      "frac_genes_in_a_training_triple": 0.9980104451628948,
+      "frac_records_all_three_genes_in_training": 0.8129425805596074,
+      "frac_records_with_a_gene_never_in_training": 0.18705741944039253,
+      "n_genes_never_in_training": 8
+    },
+    "test": {
+      "n_records": 37791,
+      "n_genes": 1243,
+      "n_genes_in_a_training_triple": 1239,
+      "frac_genes_in_a_training_triple": 0.996781979082864,
+      "frac_records_all_three_genes_in_training": 0.9144505305496018,
+      "frac_records_with_a_gene_never_in_training": 0.08554946945039825,
+      "n_genes_never_in_training": 4
+    }
+  },
+  "R": {
+    "n_train_records": 301386,
+    "n_train_genes": 4352,
+    "val": {
+      "n_records": 37673,
+      "n_genes": 3435,
+      "n_genes_in_a_training_triple": 3435,
+      "frac_genes_in_a_training_triple": 1.0,
+      "frac_records_all_three_genes_in_training": 1.0,
+      "frac_records_with_a_gene_never_in_training": 0.0,
+      "n_genes_never_in_training": 0
+    },
+    "test": {
+      "n_records": 37673,
+      "n_genes": 3377,
+      "n_genes_in_a_training_triple": 3377,
+      "frac_genes_in_a_training_triple": 1.0,
+      "frac_records_all_three_genes_in_training": 1.0,
+      "frac_records_with_a_gene_never_in_training": 0.0,
+      "n_genes_never_in_training": 0
+    }
+  }
+}

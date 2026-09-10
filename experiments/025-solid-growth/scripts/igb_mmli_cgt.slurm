@@ -91,6 +91,13 @@ echo "commit      : $(git -C "$PROJECT_ROOT" rev-parse HEAD)"
 for d in "$BUILD_REL/processed/lmdb/data.mdb" "$BUILD_REL/raw/lmdb" data/sgd/genome data/go/go.obo data/string data/tflink; do
   [[ -e "$IGB_DATA_ROOT/$d" ]] || { echo "ERROR: missing $IGB_DATA_ROOT/$d" >&2; exit 1; }
 done
+# The sequence-embedding arms (cgt_s0_q_kl_emb_017 and after) read pre-computed per-gene
+# vectors; the builds must be on IGB scratch, since the compute node cannot download.
+for d in fudt_embedding/processed/species_upstream.pt fudt_embedding/processed/species_downstream.pt \
+         calm_embedding/processed/calm.pt protT5_embedding/processed/prot_t5_xl_uniref50_all.pt \
+         random_embedding/processed/random_1000.pt; do
+  [[ -e "$IGB_DATA_ROOT/data/scerevisiae/$d" ]] || { echo "ERROR: missing embedding build $IGB_DATA_ROOT/data/scerevisiae/$d" >&2; exit 1; }
+done
 mkdir -p "$IGB_DATA_ROOT/experiments/025-solid-growth/slurm/output"
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 

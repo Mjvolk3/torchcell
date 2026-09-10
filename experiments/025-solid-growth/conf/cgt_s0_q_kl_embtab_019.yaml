@@ -1,0 +1,21 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_embtab_019.yaml
+#
+# SEQUENCE COMPOSITE PLUS THE LEARNABLE TABLE. NOT parameter-matched: cgt_s0_q_kl_emb_017
+# with the 6,607 x 180 table switched back on and concatenated to the 3,328-dim composite
+# (3,508 in), through the same hidden-339 preprocessor. Carries the table's 1,189,260
+# parameters plus a 1,251,789 preprocessor, 2,441,049 on the embedding side (model total
+# 6,026,650 against 4,776,370 for _017). Answers whether a free
+# per-gene row still helps once the gene has a sequence vector, on a split where the
+# held-out pairs' genes may or may not be perturbed in training.
+#
+#   sbatch -J 025-q-embtab-const experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_embtab_019
+defaults:
+  - cgt_s0_q_kl_emb_017
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, seq_embedding, full_gene_composite, learnable_embedding, not_param_matched, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, igb_mmli]
+
+model:
+  learnable_embedding:
+    enabled: true

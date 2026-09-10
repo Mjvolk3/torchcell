@@ -1,0 +1,24 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_rand_018.yaml
+#
+# CONTENT CONTROL FOR THE EMBEDDING ARM. cgt_s0_q_kl_emb_017 with the 3,328-dim sequence
+# composite replaced by a fixed random 1,000-vector per gene (random_1000), through the same
+# 2-layer preprocessor at hidden width 1,005 so the embedding side again carries 1,189,455
+# parameters. A fixed random vector is a gene identity the model cannot update; the
+# learnable table is one it can. If _017 beats _018, the sequence content did it; if _018
+# matches _016, the free table was never needed on the disjoint split.
+#
+#   sbatch -J 025-q-rand-const experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_rand_018
+defaults:
+  - cgt_s0_q_kl_emb_017
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, random_embedding, content_control, param_matched, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, igb_mmli]
+
+cell_dataset:
+  node_embeddings: [random_1000]
+
+model:
+  learnable_embedding:
+    preprocessor:
+      hidden_dim: 1005

@@ -2034,6 +2034,14 @@ class CellGraphTransformer(nn.Module):
             )
             num_layers = preprocessor_config.get("num_layers", 2)
             dropout_rate = preprocessor_config.get("dropout", dropout)
+            # Width of the hidden layers. Default is the midpoint between the input and
+            # the model width; set it explicitly to parameter-match a pre-computed
+            # embedding arm against the learnable table it replaces (a 6,607 x 180 table
+            # is 1,189,260 parameters; a 3,328-dim composite through a 2-layer MLP of
+            # hidden width 339 is 1,190,769).
+            hidden_dim = preprocessor_config.get(
+                "hidden_dim", (total_input_dim + hidden_channels) // 2
+            )
 
             # Build MLP with LayerNorm and GELU activation
             layers: list[nn.Module] = []
@@ -2041,11 +2049,7 @@ class CellGraphTransformer(nn.Module):
 
             for i in range(num_layers):
                 # Linear layer
-                next_dim = (
-                    hidden_channels
-                    if i == num_layers - 1
-                    else (total_input_dim + hidden_channels) // 2
-                )
+                next_dim = hidden_channels if i == num_layers - 1 else hidden_dim
                 layers.append(nn.Linear(current_dim, next_dim))
 
                 # LayerNorm

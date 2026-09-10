@@ -282,3 +282,59 @@ Taiga build at once (the lock timeout above):
 Seed 42 is no longer part of the design; the GilaHyper 1659 partial is discarded. The
 readout is unchanged: `val/gene_interaction/Pearson` per arm at epoch 30 and at the best
 epoch, three seeds each, `val/fitness/Pearson` and `val/cls_pert_strain_sd` alongside.
+
+## 2026.09.10 - Sequence embeddings against the learnable table on the disjoint split (IGB mmli)
+
+Job 1640 put the soft-KL model on the query-pair-disjoint split inside the additive band
+(0.199 max over epochs, 0.131 at epoch 35; ridge 0.185, MLP 0.141). The model's only
+per-gene information is a free 180-vector shaped by the triples the gene appeared in,
+plus the nine graphs. The next round replaces that vector with a fixed sequence
+embedding of the whole gene and asks whether the disjoint number moves.
+
+**Protocol.** The constant-rate protocol of `cgt_s0_r_kl_ctrl_013` on the Q split: AdamW
+at 2.5e-4, no schedule, 30 epochs, normalizer fit on train, `perturb_cls: true` (inert
+for the interaction prediction without a fitness head; logged), interaction head only,
+one seed. Everything after the gene embedding is identical across arms.
+
+**Parameter matching.** The learnable table is 6,607 x 180 = 1,189,260 parameters and
+feeds the transformer directly (no preprocessor at width 180). A pre-computed embedding
+enters through the model's 2-layer preprocessor MLP, whose hidden width is now a config
+key (`model.learnable_embedding.preprocessor.hidden_dim`; the default stays the midpoint
+between input and model width). The width is chosen so the embedding side matches the
+table: for a 3,328-dim input, `3511 h + 540 = 1,189,260` gives h = 339 (1,190,769); for
+the 1,000-dim random control, h = 1,005 (1,189,455). The trunk, perturbation operator and
+heads are unchanged, so the arms differ only in what the gene vector holds.
+
+**The composite** (`cell_dataset.node_embeddings: [fudt_upstream, calm, prot_T5_all,
+fudt_downstream]`) reads each functional region once: promoter (1,003 bp 5', species
+fungal UTR transformer, 768), ORF as codons (CaLM, 768), ORF as protein (ProtT5-XL, 1024),
+terminator (300 bp 3', 768). The Nucleotide Transformer windows are left out (2,560 dims
+each, at zero in the 019 kNN probe) and ESM2 duplicates ProtT5's region. Measured
+elsewhere, not on interactions: ProtT5 minus a random 1024-vector was +0.068 on
+expression (019 v10 grid); the two flanking models sat near the probe's noise floor. They
+stay in so the same gene vector can later carry promoter and terminator choices.
+
+**Whether the table is cold on Q.** Counted by
+[[experiments.025-solid-growth.scripts.query_pair_disjoint_gene_coverage]]: 99.8 percent
+of val genes and 99.7 percent of test genes appear in a training triple, so unlike the
+019 expression setting the table is trained for nearly every held-out gene. The
+learnable-versus-sequence contrast on Q is about what the vector can contain, not
+whether it was trained. 18.7 percent of val records do carry one of the 8 genes that
+never appear in training (they are held-out query-pair members).
+
+| config | gene vector | learnable table | embedding-side params | model total | role |
+|---|---|---|---:|---:|---|
+| `cgt_s0_q_kl_ctrl_016` | none | on (180) | 1,189,260 | 4,774,861 | Q baseline under the protocol |
+| `cgt_s0_q_kl_emb_017` | composite 3,328 | off | 1,190,769 (h 339) | 4,776,370 | the question, parameter-matched |
+| `cgt_s0_q_kl_rand_018` | `random_1000` | off | 1,189,455 (h 1,005) | 4,775,056 | content control, parameter-matched |
+| `cgt_s0_q_kl_embtab_019` | composite 3,328 | on (180) | 2,441,049 | 6,026,650 | table on top of the composite; not matched |
+
+Counts are the model's own `Parameter counts` line from the CPU smokes of 2026-09-10; the
+three matched arms sit within 0.03 percent of each other on the total.
+
+Readings: `_017` against `_016` is the sequence-information question; `_017` against
+`_018` separates content from a fixed identity; `_019` against `_017` says whether a free
+row still adds anything once the gene has a sequence vector. All four are read at epoch
+30 and at the best validation epoch. Run one at a time on the IGB mmli node (4 x A100,
+58 min/epoch measured for the KL arm on the 025 build), about 29 h each. The launcher's
+preflight now checks the four embedding builds on IGB scratch.

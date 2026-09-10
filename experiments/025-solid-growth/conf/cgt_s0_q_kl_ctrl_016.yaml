@@ -1,0 +1,28 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_ctrl_016.yaml
+#
+# QUERY-PAIR-DISJOINT CONTROL UNDER THE CONSTANT-RATE PROTOCOL. cgt_s0_r_kl_ctrl_013 with the
+# split swapped for the 420-pair query-pair-disjoint partition of cgt_s0_q_kl_004, so the
+# disjoint number is read under the same protocol as the Delta random-split arms: AdamW at
+# 2.5e-4, no schedule, 30 epochs, normalizer fit on the training split, the CLS run through
+# the perturbation operator (inert for the interaction prediction without a fitness head,
+# logged as cls_pert_strain_sd). Learnable gene table, 6,607 x 180 = 1,189,260 parameters,
+# which the embedding arms _017 / _018 are sized to match.
+#
+# Job 1640 (cgt_s0_q_kl_004, cosine, 36 epochs) is the only disjoint run so far: 0.199 max
+# over epochs, 0.131 at epoch 35, against the additive ridge 0.185 and MLP 0.141.
+#
+#   sbatch -J 025-q-ctrl-const experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_ctrl_016
+defaults:
+  - cgt_s0_r_kl_ctrl_013
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, learnable_embedding, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, igb_mmli]
+
+subset:
+  split_file: query_pair_disjoint_splits_025.json.gz
+  split_key: splits
+
+model:
+  perturb_cls: true
+  perturbation_head_cls: wildtype

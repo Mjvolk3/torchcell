@@ -425,8 +425,9 @@ the transformer is retrained on experiment 025's build, which holds the same
 arm R on 010's own split, carried across by genotype identity, and arm Q on a
 query-pair-disjoint split of 331, 43 and 46 query pairs. Arm R has run (job
 1598) and reproduces 010, validation Pearson 0.4463 at epoch 14 against 0.4472
-to 0.4619 for the three 010 checkpoints. Arm Q is job 1609 and starts after
-this build. The baselines are refit on exactly the record pool and splits those
+to 0.4619 for the three 010 checkpoints. Arm Q has now run too (job 1640), and
+the 12 hour wall clock stopped it partway through epoch 36. The baselines are
+refit on exactly the record pool and splits those
 two arms read, from the same committed index artifacts the trainer loads, so the
 transformer number from either arm has a null on the same data.
 
@@ -448,7 +449,7 @@ B4 query pair only & 0.390 & 0.390 & 0.000 \\
 B5 embedding MLP, 3 seeds & $0.426 \pm 0.001$ & $0.432 \pm 0.005$ & $0.141 \pm 0.007$ \\
 CGT, three 010 checkpoints & 0.438 to 0.455 & & \\
 CGT, job 1598, val at best epoch & & 0.446 & \\
-CGT, job 1609 & & & pending \\
+CGT, job 1640, val at best epoch & & & 0.199 \\
 \hline
 \end{tabular}
 \caption{Test Pearson on the 025 build under the two splits the transformer arms
@@ -456,21 +457,36 @@ use, beside the 010 numbers of Table~\ref{tab:heldout}. Arm R on the two builds
 agrees for every closed-form model to $3 \times 10^{-13}$, which follows from
 the record-level label and split identity rather than testing it; B5 is a
 stochastic fit and its run here was on CPU where 010's was on GPU. Arm Q is
-one split, not the five folds of Table~\ref{tab:disjoint}, and it is the exact
-partition job 1609 will report on. Job 1598's number is a maximum over 36
-validation epochs and has no test evaluation yet.}
+one split, not the five folds of Table~\ref{tab:disjoint}. The two transformer
+rows are not test numbers and are not comparable to the rows above them without
+that caveat: each is a maximum of validation Pearson over the run's logged
+epochs, 36 for both, and neither checkpoint has been scored on test. Job 1640
+reached its maximum at epoch 7 and was at 0.131 by epoch 35.}
 \label{tab:disjoint025}
 \end{table}
 
 \tcfigfit[0.80]{figures/additive_baselines_025_ladder.pdf}{Held-out Pearson on
-the 025 build for each baseline under arm R and arm Q, with the transformer rows
-that exist: the three 010 checkpoints and the arm R replication. This is
-Figure~\ref{fig:ladder} redrawn with the disjoint arm beside it. As there, only
-B5 carries an error bar, the standard deviation across its three seeds; B0
-through B4 are deterministic fits on a fixed split. Each arm is one split and
-not the five folds of Figure~\ref{fig:disjoint}, so the arm Q bars have no fold
-spread to show. The hatched bar is a validation maximum, not a test number, and
-the arm Q transformer slot waits on job 1609.}{fig:ladder025}
+the 025 build for each baseline under arm R and arm Q, with the transformer runs
+of both arms. This is Figure~\ref{fig:ladder} redrawn with the disjoint arm
+beside it. As there, only B5 carries an error bar, the standard deviation across
+its three seeds; B0 through B4 are deterministic fits on a fixed split. Each arm
+is one split and not the five folds of Figure~\ref{fig:disjoint}, so the arm Q
+bars have no fold spread to show. The two hatched bars are validation maxima
+over 36 logged epochs, not test numbers, so they sit on a different footing from
+every solid bar.}{fig:ladder025}
+
+%% SOURCE: experiments/025-solid-growth/scripts/additive_baselines_025.py ->
+%% results/additive_baselines_025_arm_val_history.csv, cached from the two runs'
+%% wandb histories; the null lines are the val rows of additive_baselines_025.csv.
+\tcfigfit[0.80]{figures/additive_baselines_025_val_curves.pdf}{Validation Pearson
+per epoch for the two arms, each against its own additive ridge fit on the same
+split. The arms share a build, a model and a schedule, so the gap between them is
+what the split costs. Arm R passes its null in epoch 2 and holds above it. Arm Q
+peaks at 0.199 in epoch 7, marked, then falls back through its null around epoch
+17 and ends at 0.131. Open circles mark each run's best epoch, the value the
+hatched bars of Figure~\ref{fig:ladder025} carry. Job 1640 stopped at the 12 hour
+wall clock, so the decline is what the run showed, not a converged
+result.}{fig:curves025}
 
 %% SOURCE: experiments/025-solid-growth/scripts/label_parity_010_vs_025.py ->
 %% results/label_parity_010_vs_025.json.
@@ -488,13 +504,25 @@ it differs by 0.006 against a three-seed standard deviation of 0.005 on the 025
 fit. That run was on CPU where 010's was on GPU, and the cause has not been
 traced.
 
-\notesec{What arm Q is asking}
-On the partition job 1609 will report on, the additive ridge reaches 0.185 and
-the nonlinear baseline 0.141, and B4 is structurally zero. A transformer number
-above 0.185 says the model carries something about held-out screens that
-per-gene additivity does not; one at or below it says the $+0.04$ margin of
-Table~\ref{tab:heldout} was screen identity, like most of what the random split
-measured. The single-split reference here is higher than the five-fold mean of
+\notesec{What arm Q asked, and how far job 1640 answers it}
+On this partition the additive ridge reaches 0.185 on test and the nonlinear
+baseline 0.141, and B4 is structurally zero. A transformer above 0.185 would say
+the model carries something about held-out screens that per-gene additivity does
+not; one at or below it would say the $+0.04$ margin of Table~\ref{tab:heldout}
+was screen identity, like most of what the random split measured. The
+single-split reference is higher than the five-fold mean of
 Table~\ref{tab:disjoint}, $0.127 \pm 0.033$, for the reason that table gives:
 one draw of 46 held-out screens is a small sample of screens, so the comparison
-to make is on this split, against these numbers, not against the fold mean.
+belongs on this split against these numbers, not against the fold mean.
+
+Job 1640 does not settle it, because it has no test evaluation. On validation,
+where it does have a number, its best epoch reaches 0.199 against the additive
+ridge's 0.150 and the nonlinear baseline's 0.157 on the same split. Two things
+keep that from being an answer. The 0.199 is a maximum over 36 epochs, so it is
+biased upward by an amount that grows with the number of epochs, while the
+baselines are single fits. And it is not where the run stayed: Pearson falls back
+through the ridge near epoch 17 and ends at 0.131, below every null but B3
+(Figure~\ref{fig:curves025}). Read together, the arm holds a margin early and
+loses it, which is the opposite of arm R, where the margin appears in epoch 2 and
+persists. Scoring the epoch 7 checkpoint on the arm Q test set is what would turn
+this into a comparison; that has not been run.

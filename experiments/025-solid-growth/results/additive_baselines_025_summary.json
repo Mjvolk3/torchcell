@@ -20,7 +20,7 @@
           "n": 1
         },
         "B3_hierarchical_mean": {
-          "mean": 0.39009834061394316,
+          "mean": 0.3900983406139431,
           "sd": null,
           "n": 1
         },
@@ -31,7 +31,7 @@
         },
         "B5_gene_embedding_mlp": {
           "mean": 0.432239392225182,
-          "sd": 0.005289839975950307,
+          "sd": 0.005289839975950339,
           "n": 3
         }
       }
@@ -46,7 +46,7 @@
           "n": 1
         },
         "B1_additive_gene": {
-          "mean": 0.18530589019381333,
+          "mean": 0.1853058901938133,
           "sd": null,
           "n": 1
         },
@@ -56,7 +56,7 @@
           "n": 1
         },
         "B3_hierarchical_mean": {
-          "mean": 0.14199072196008145,
+          "mean": 0.1419907219600814,
           "sd": null,
           "n": 1
         },
@@ -66,7 +66,7 @@
           "n": 1
         },
         "B5_gene_embedding_mlp": {
-          "mean": 0.1413295597611381,
+          "mean": 0.14132955976113803,
           "sd": 0.006788440975805624,
           "n": 3
         }
@@ -81,14 +81,28 @@
         "CGT_M03_c7671wgj": 0.4551418423652649
       },
       "job_1598_replication": {
+        "job": "job 1598",
         "run": "0yw7moue",
         "n_epochs_logged": 36,
         "best_epoch": 14,
         "val_pearson_best_epoch": 0.4463026821613312,
+        "last_epoch": 35,
+        "val_pearson_last_epoch": 0.442504733800888,
         "note": "max over logged validation epochs, an upward-biased order statistic; no test evaluation of this checkpoint exists"
       }
     },
-    "Q": "pending job 1609 (cgt_s0_q_kl_004, starts 2026-09-09 23:00)"
+    "Q": {
+      "job_1640_disjoint": {
+        "job": "job 1640",
+        "run": "327csnlk",
+        "n_epochs_logged": 36,
+        "best_epoch": 7,
+        "val_pearson_best_epoch": 0.1993194222450256,
+        "last_epoch": 35,
+        "val_pearson_last_epoch": 0.1305623948574066,
+        "note": "max over logged validation epochs, an upward-biased order statistic; no test evaluation of this checkpoint exists"
+      }
+    }
   },
   "n_records": 376732,
   "n_genes": 4352,

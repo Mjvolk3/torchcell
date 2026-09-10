@@ -48,11 +48,15 @@ measured, so the B5 column should be read as one draw.
 \notesec{The transformer has not been measured on the disjoint split}
 Table~\ref{tab:disjoint} has no transformer row. Its checkpoints trained on the
 random split, so scoring them on held-out query pairs would measure memorization.
-Whether the transformer's $+0.04$ margin survives a disjoint split is not
-measured, in either direction. The run that measures it is queued: job 1609 on
-GilaHyper trains the replication configuration on the 025 query-pair-disjoint
-split (Section~\ref{sec:disjoint025}), and the baselines it will be read
-against are already in Table~\ref{tab:disjoint025}.
+Whether the transformer's $+0.04$ margin survives a disjoint split is still not
+measured on test, in either direction. Job 1640 trained the replication
+configuration on the 025 query-pair-disjoint split and gives a validation
+trajectory (Section~\ref{sec:disjoint025}), but the 12 hour wall clock ended it
+before any test evaluation, and its best checkpoint has not been scored since.
+So the disjoint comparison rests on validation, where the margin appears at
+epoch 7 and is gone by epoch 17. What closes the gap is one scoring pass over
+the arm Q test split, against the baselines already in
+Table~\ref{tab:disjoint025}.
 
 \notesec{Whether the graphs carry information is separate from whether they are
 load-bearing}

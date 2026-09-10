@@ -6,7 +6,7 @@
 The transformer arms of experiment 025 train on the 376,732 trigenic records (subset S0)
 under two splits: R, 010's random-over-records partition carried across by genotype
 identity (job 1598), and Q, a query-pair-disjoint partition in which no Kuzmin query
-double appears in more than one part (job 1609). Every baseline here is fit on exactly
+double appears in more than one part (job 1640). Every baseline here is fit on exactly
 the record pool and split those runs read, from the same committed index artifacts the
 trainer loads, so a transformer number from either arm sits next to a null on the same
 data.
@@ -26,10 +26,12 @@ Inputs (read exactly as the trainer reads them):
     $DATA_ROOT/.../025-solid-growth/recapitulation/recapitulation_per_triple.csv.gz
         (025 triple index -> its three systematic gene names)
 
-Transformer reference rows: the three 010 checkpoints' test metrics from the 010 CSV,
-and job 1598's validation Pearson at its best epoch read from the run's wandb history
-(no test evaluation of that checkpoint exists yet). Arm Q has no transformer number
-until job 1609 finishes; the summary carries a placeholder, not a number.
+Transformer reference rows: the three 010 checkpoints' test metrics from the 010 CSV, and
+each arm's validation Pearson at its best logged epoch, read from the run's wandb history
+and cached to results/. Neither 1598 nor 1640 has a test evaluation, so those two numbers
+are validation maxima over the logged epochs, an upward-biased order statistic, and the
+ladder hatches them to say so. Job 1640 was killed by the 12 h wall clock partway through
+epoch 36.
 
 Arm R on 025 against the same model on the 010 build is the end-to-end check that the
 025 build and the pinned split reproduce 010: same labels, same records, same partition
@@ -104,7 +106,13 @@ WANDB_PROJECT = (
     "zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer"
 )
 JOB_1598_RUN = "0yw7moue"
-JOB_1609 = "pending job 1609 (cgt_s0_q_kl_004, starts 2026-09-09 23:00)"
+# Job 1640 = cgt_s0_q_kl_004, the Q-arm disjoint run; rank-0 run of the DDP job. It was
+# killed by the 12 h wall clock partway through epoch 36, so it has 36 logged validation
+# epochs and no test evaluation, the same standing as 1598.
+JOB_1640_RUN = "327csnlk"
+ARM_RUNS = {"R": ("job 1598", JOB_1598_RUN), "Q": ("job 1640", JOB_1640_RUN)}
+VAL_HISTORY_CSV = "additive_baselines_025_arm_val_history.csv"
+VAL_KEY = "val/gene_interaction/Pearson"
 
 LABELS = {
     "B0_train_mean": "Train mean",
@@ -282,27 +290,51 @@ def fit_arm(
     return rows
 
 
-def job_1598_best_val() -> dict[str, object]:
-    """Validation Pearson at the best epoch of the R-arm replication, from wandb."""
+def fetch_val_history() -> pd.DataFrame:
+    """Per-epoch validation Pearson for both arms' transformer runs, cached to results.
+
+    Cached so ``--plot-only`` redraws without wandb, the same arrangement
+    graph_penalty_vs_loss.py uses. Delete the csv to refetch.
+    """
+    path = osp.join(RESULTS_DIR, VAL_HISTORY_CSV)
+    if osp.exists(path):
+        return pd.read_csv(path)
     import wandb
 
-    run = wandb.Api(timeout=120).run(f"{WANDB_PROJECT}/{JOB_1598_RUN}")
-    hist = pd.DataFrame(
-        run.scan_history(keys=["epoch", "val/gene_interaction/Pearson"])
-    )
-    hist = hist.dropna()
-    i = int(hist["val/gene_interaction/Pearson"].idxmax())
+    api = wandb.Api(timeout=120)
+    frames = []
+    for arm, (job, run_id) in ARM_RUNS.items():
+        run = api.run(f"{WANDB_PROJECT}/{run_id}")
+        hist = pd.DataFrame(run.scan_history(keys=["epoch", VAL_KEY])).dropna()
+        hist["arm"] = arm
+        hist["job"] = job
+        hist["run"] = run_id
+        frames.append(hist)
+    out = pd.concat(frames, ignore_index=True)
+    out.to_csv(path, index=False)
+    print(f"wrote {path}")
+    return out
+
+
+def best_val(history: pd.DataFrame, arm: str) -> dict[str, object]:
+    """Validation Pearson at the best logged epoch of one arm's transformer run."""
+    job, run_id = ARM_RUNS[arm]
+    hist = history[history["arm"] == arm].reset_index(drop=True)
+    i = int(hist[VAL_KEY].idxmax())
     return {
-        "run": JOB_1598_RUN,
+        "job": job,
+        "run": run_id,
         "n_epochs_logged": int(hist["epoch"].nunique()),
         "best_epoch": int(hist.loc[i, "epoch"]),
-        "val_pearson_best_epoch": float(hist.loc[i, "val/gene_interaction/Pearson"]),
+        "val_pearson_best_epoch": float(hist.loc[i, VAL_KEY]),
+        "last_epoch": int(hist["epoch"].max()),
+        "val_pearson_last_epoch": float(hist.loc[hist["epoch"].idxmax(), VAL_KEY]),
         "note": "max over logged validation epochs, an upward-biased order statistic; "
         "no test evaluation of this checkpoint exists",
     }
 
 
-def summarize(df: pd.DataFrame, ref_1598: dict[str, object]) -> dict[str, object]:
+def summarize(df: pd.DataFrame, refs: dict[str, dict[str, object]]) -> dict[str, object]:
     test = df[df["split"] == "test"]
     out: dict[str, object] = {"arms": {}, "transformer": {}}
     for arm in ARMS:
@@ -331,9 +363,9 @@ def summarize(df: pd.DataFrame, ref_1598: dict[str, object]) -> dict[str, object
         "010_checkpoints_test_pearson": {
             r["model"]: float(r["pearson"]) for _, r in cgt010.iterrows()
         },
-        "job_1598_replication": ref_1598,
+        "job_1598_replication": refs["R"],
     }
-    out["transformer"]["Q"] = JOB_1609
+    out["transformer"]["Q"] = {"job_1640_disjoint": refs["Q"]}
     return out
 
 
@@ -347,12 +379,13 @@ def plot_ladder(df: pd.DataFrame, summary: dict[str, object]) -> None:
     models = list(LABELS)
     cgt010 = summary["transformer"]["R"]["010_checkpoints_test_pearson"]
     ref = summary["transformer"]["R"]["job_1598_replication"]
+    ref_q = summary["transformer"]["Q"]["job_1640_disjoint"]
 
-    cats = models + list(CGT_010) + ["CGT_025_1598", "CGT_025_1609"]
+    cats = models + list(CGT_010) + ["CGT_025_1598", "CGT_025_1640"]
     ticklabels = (
         [LABELS[m] for m in models]
         + list(CGT_010.values())
-        + ["CGT 025 R\njob 1598", "CGT 025 Q\njob 1609"]
+        + ["CGT 025 R\njob 1598", "CGT 025 Q\njob 1640"]
     )
     x = np.arange(len(cats))
     w = 0.38
@@ -404,17 +437,14 @@ def plot_ladder(df: pd.DataFrame, summary: dict[str, object]) -> None:
         linewidth=0.5,
         hatch="///",
     )
-    # The Q-arm transformer slot stays empty until job 1609 reports; the word stands
-    # upright over its own tick, inside the axes, touching no spine or bar.
-    ax.text(
+    ax.bar(
         x[-1],
-        0.015,
-        "pending",
-        ha="center",
-        va="bottom",
-        rotation=90,
-        fontsize=6,
+        ref_q["val_pearson_best_epoch"],
+        w,
         color=PLOT_PALETTE[1],
+        edgecolor="black",
+        linewidth=0.5,
+        hatch="///",
     )
 
     ax.set_xticks(x)
@@ -460,6 +490,80 @@ def plot_ladder(df: pd.DataFrame, summary: dict[str, object]) -> None:
         spine.set_linewidth(0.5)
     fig.tight_layout(pad=0.4)
     stem = osp.join(IMAGES_DIR, "additive_baselines_025_ladder")
+    fig.savefig(stem + ".png", dpi=300)
+    savefig_true_size_svg(fig, stem + ".svg")
+    print(f"wrote {stem}.svg")
+
+
+def plot_val_curves(df: pd.DataFrame, history: pd.DataFrame) -> None:
+    """Validation Pearson per epoch for both arms, against each arm's additive null.
+
+    The two arms share a build, a model and a schedule and differ only in which records
+    are held out, so putting their curves on one axis isolates what the split costs. The
+    null lines are validation, not test, because validation is the only surface on which
+    the transformer has a number: neither run has a test evaluation.
+    """
+    apply_paper_style()
+    val = df[df["split"] == "val"]
+    nulls = {
+        arm: float(
+            val[(val["arm"] == arm) & (val["model"] == "B1_additive_gene")][
+                "pearson"
+            ].mean()
+        )
+        for arm in ARMS
+    }
+    colors = {"R": PLOT_PALETTE[0], "Q": PLOT_PALETTE[1]}
+
+    fig, ax = plt.subplots(
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(58.0))
+    )
+    for arm in ARMS:
+        job, _ = ARM_RUNS[arm]
+        h = history[history["arm"] == arm].sort_values("epoch")
+        ax.plot(
+            h["epoch"],
+            h[VAL_KEY],
+            color=colors[arm],
+            linewidth=0.9,
+            label=f"CGT arm {arm}, {job}",
+        )
+        ax.axhline(
+            nulls[arm],
+            color=colors[arm],
+            linewidth=0.7,
+            linestyle=(0, (4, 2)),
+            label=f"Additive ridge, arm {arm}",
+        )
+        i = int(h[VAL_KEY].idxmax())
+        ax.plot(
+            h.loc[i, "epoch"],
+            h.loc[i, VAL_KEY],
+            marker="o",
+            markersize=2.5,
+            markerfacecolor="white",
+            markeredgecolor=colors[arm],
+            markeredgewidth=0.7,
+            linestyle="none",
+        )
+
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Validation Pearson r")
+    ax.set_ylim(0, 0.55)
+    ax.set_xlim(left=0)
+    ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(which="minor", length=0)
+    ax.grid(axis="y", which="both", linewidth=0.3, color="0.85")
+    ax.set_axisbelow(True)
+    # Center right: the band between the two arms is empty at every epoch, so the frame
+    # crosses neither curve nor either null line.
+    ax.legend(loc="center right", fontsize=5, handlelength=1.6, labelspacing=0.3)
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_linewidth(0.5)
+    fig.tight_layout(pad=0.4)
+    stem = osp.join(IMAGES_DIR, "additive_baselines_025_val_curves")
     fig.savefig(stem + ".png", dpi=300)
     savefig_true_size_svg(fig, stem + ".svg")
     print(f"wrote {stem}.svg")
@@ -583,8 +687,18 @@ def main() -> None:
     if args.plot_only:
         df = pd.read_csv(out_csv)
         with open(out_json) as f:
-            summary = json.load(f)
+            previous = json.load(f)
+        # The baselines are not refit, but the transformer rows are rebuilt from the
+        # cached wandb history, so a finished arm reaches the figures without a refit.
+        history = fetch_val_history()
+        summary = summarize(df, {arm: best_val(history, arm) for arm in ARMS})
+        for k in ("n_records", "n_genes", "wall_time_s"):
+            summary[k] = previous[k]
+        with open(out_json, "w") as f:
+            json.dump(summary, f, indent=2)
+        print(f"refreshed {out_json}")
         plot_ladder(df, summary)
+        plot_val_curves(df, history)
         plot_parity(df)
         return
 
@@ -601,9 +715,11 @@ def main() -> None:
     df.to_csv(out_csv, index=False)
     print(f"\nwrote {out_csv}")
 
-    ref_1598 = job_1598_best_val()
-    print(f"job 1598 {ref_1598}")
-    summary = summarize(df, ref_1598)
+    history = fetch_val_history()
+    refs = {arm: best_val(history, arm) for arm in ARMS}
+    for arm, ref in refs.items():
+        print(f"arm {arm} {ref['job']}: {ref}")
+    summary = summarize(df, refs)
     summary["n_records"] = int(record_ids.size)
     summary["n_genes"] = len(gene_names)
     summary["wall_time_s"] = round(time.time() - t0, 1)
@@ -617,6 +733,7 @@ def main() -> None:
         .to_string()
     )
     plot_ladder(df, summary)
+    plot_val_curves(df, history)
     plot_parity(df)
     print(f"wall time {time.time() - t0:.0f} s")
 

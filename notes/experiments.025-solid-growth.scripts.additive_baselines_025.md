@@ -76,3 +76,45 @@ split and have nothing to average. The three transformer bars in the 010 ladder 
 individually because they are not seed replicates, the seed being fixed at 42, with M01 and
 M02 differing only in run-to-run nondeterminism and M03 also changing the scheduler's first
 cycle length. Both ladder captions now state this.
+
+## 2026.09.10 - The disjoint arm has a number, and the report has its figures
+
+Job 1640 (`cgt_s0_q_kl_004`, rank-0 run `327csnlk`) ran the arm Q disjoint split overnight
+and was killed by the 12 hour wall clock partway through epoch 36. It read
+`query_pair_disjoint_splits_025.json.gz` with `fit_on: train`, so it is on the same
+partition these baselines are fit on.
+
+Validation Pearson, arm Q, the only surface where the run has a number:
+
+| Model | Validation Pearson |
+| --- | --- |
+| CGT job 1640, best epoch 7 | 0.1993 |
+| CGT job 1640, last epoch 35 | 0.1306 |
+| B5 embedding MLP, 3 seeds | 0.1573 |
+| B1 additive ridge | 0.1499 |
+| B2 additive plus pair | 0.1442 |
+| B3 hierarchical mean | 0.1286 |
+
+The best epoch clears every null, and the run does not stay there: it falls back through
+the ridge near epoch 17. The 0.1993 is a maximum over 36 logged epochs and so is biased
+upward, while the baselines are single fits, which is why the figures hatch it and the
+report says it is not a test number. No test evaluation exists. The best-Pearson checkpoint
+from epoch 7 does survive under
+`$DATA_ROOT/models/checkpoints/gilahyper-1640_.../327csnlk-best-pearson-epoch=07-val`, so
+one scoring pass would turn this into a real comparison against B1 0.185 and B5 0.141.
+
+Two script changes support this. `job_1598_best_val` is replaced by `fetch_val_history`,
+which pulls both arms' per-epoch validation Pearson and caches it to
+`results/additive_baselines_025_arm_val_history.csv` so `--plot-only` redraws offline,
+matching what `graph_penalty_vs_loss.py` does; `best_val` then reads either arm out of it.
+`--plot-only` also rebuilds the transformer block of the summary from that cache rather
+than trusting the stored JSON, which is what let the finished arm reach the figures with no
+refit of the baselines.
+
+New figure `additive_baselines_025_val_curves.svg`: both arms' validation Pearson per epoch
+against each arm's own additive ridge, with the best epoch circled. The arms share build,
+model and schedule, so the vertical gap is what the split costs. It is Figure 6 of the
+report. The ladder figure now fills the arm Q transformer bar, hatched, in place of the
+word pending.
+
+![](assets/images/025-solid-growth/additive_baselines_025_val_curves.svg)

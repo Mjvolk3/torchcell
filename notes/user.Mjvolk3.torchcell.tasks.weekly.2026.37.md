@@ -29,3 +29,9 @@ created: 1788913645350
 - [ ] Decide: cancel job 1608 (hard mask on the disjoint split; the mask arm already collapses on the random split, so 1608 cannot answer the split question) and queue `cgt_s0_q_kl_004` (soft KL on the disjoint split) in its place
 - [ ] Delta canary before the sweep: one KL run to measure minutes per epoch with zero dataloader workers (GH RTX 6000 Ada: 19.4 min/epoch KL, 14 min mask; IGB: 58 min/epoch KL, 18 min λ = 0)
 - [x] Delta disjoint arm was reading 010's own query-pair-disjoint split (285/67/68 pairs, B1 0.174) instead of arm Q's (331/43/46, B1 0.185), so its result would have compared to neither the arm Q nulls nor the GilaHyper disjoint run; the artifact builder now carries arm Q's partition into 010-build index space by query pair name and asserts the fold sizes reproduce exactly, and `gh_cgt.slurm` no longer falls back to the random-split config when an argument is dropped [[experiments.025-solid-growth.scripts.make_010build_index_artifacts]]
+
+## 2026.09.10
+
+- [x] Job 1640 ran the arm Q disjoint split overnight and hit the 12 h wall clock at epoch 36; on validation its best epoch reaches 0.199 against the additive ridge's 0.150, but it falls back through the ridge by epoch 17 and ends at 0.131, so the margin appears and is lost rather than holding as arm R's does [[experiments.025-solid-growth.scripts.additive_baselines_025]]
+- [x] Additive-baselines report gained a per-epoch validation figure for both arms and filled the arm Q transformer bar in the ladder; both transformer bars are hatched because neither run has a test evaluation [[experiments.025-solid-growth.scripts.additive_baselines_025]]
+- [ ] Score the surviving epoch 7 checkpoint of job 1640 on the arm Q test split, which is what turns the disjoint comparison against B1 0.185 and B5 0.141 into a real one

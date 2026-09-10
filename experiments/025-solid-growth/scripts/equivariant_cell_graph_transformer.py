@@ -552,6 +552,11 @@ def main(cfg: DictConfig) -> None:
         learnable_embedding_config=wandb.config["model"].get("learnable_embedding"),
         attention_mask_config=wandb.config["model"].get("attention_mask"),
         heads_config=heads_config,
+        # CLS through the perturbation operator (off = 010's strain-constant CLS).
+        perturb_cls=bool(wandb_cfg["model"].get("perturb_cls", False)),
+        perturbation_head_cls=str(
+            wandb_cfg["model"].get("perturbation_head_cls", "wildtype")
+        ),
     ).to(device)
 
     # Log parameter counts

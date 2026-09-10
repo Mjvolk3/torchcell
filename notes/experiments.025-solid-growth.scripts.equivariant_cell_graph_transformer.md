@@ -154,3 +154,36 @@ all-record constants; they are read in raw units.
 `gh_cgt.slurm` now runs from the submitting checkout (`SLURM_SUBMIT_DIR`) and accepts
 Hydra overrides after the config name, like `delta_cgt.slurm`, so a branch can be
 launched on GilaHyper before it lands.
+
+## 2026.09.09 - Fitness from the Perturbed CLS
+
+The `_008` arm read fitness from `[h_CLS || mean pool over genes]`, and the CLS half of
+that is the same vector for every strain: the encoder runs once on the wild-type graph and
+the token is sliced off before the perturbation operator (across-strain sd 0.0 against
+0.973 for z_S, measured in the 019 expression strand). The 019 review of perturbation
+operators (see the note on `perturb_cls` in
+[[torchcell.models.equivariant_cell_graph_transformer]]) found nothing pre-encoder had
+ever been run and that the cheapest of the three designs in
+`notes-tex/019-simb-multimodal-expression/sections/3-next.tex` is to run the existing
+operator on the CLS too.
+
+That is `model.perturb_cls: true`: the CLS is query row 0 of the same cross-attention,
+over the same deleted-gene keys, so 010's operator is unchanged, the gene rows are
+bit-identical (test `test_perturb_cls_moves_only_the_cls`), and `h_CLS_pert` is
+strain-specific. The one-key degeneracy the expression strand fought does not arise here:
+every 025 record is a triple, so the softmax has three keys.
+
+Arms, both composing on `_008` and read against the same control:
+
+| config | fitness head | weight |
+|---|---|---|
+| `cgt_s0_r_kl_fit_010` | linear probe of `h_CLS_pert`, no gene pool | 1.0 |
+| `cgt_s0_r_kl_fit_011` | same | 0.1 |
+
+The interaction head keeps the wild-type CLS (`perturbation_head_cls: wildtype`), so the
+fitness gradient reaches the interaction prediction only through the shared trunk. The
+`perturbed` setting is the follow-up arm. Logged: `{stage}/cls_pert_strain_sd`.
+
+Queued on IGB mmli in place of the `_008`/`_009` pair (cancelled before starting):
+`cgt_s0_r_kl_fit_010`, `cgt_s0_r_kl_000`, `cgt_s0_r_kl_fit_011`, seed 42. The Delta
+replicates 21919310 to 21919313 still run `_008` and the control.

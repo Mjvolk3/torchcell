@@ -944,6 +944,18 @@ class RegressionTask(L.LightningModule):
                 sync_dist=True,
             )
 
+        # Perturbed CLS: across-strain spread of the token the whole-cell head reads. The
+        # wild-type token measures 0.0 here by construction; this is the number that says
+        # the operator actually moved the CLS per strain.
+        h_CLS_pert = representations.get("h_CLS_pert")
+        if h_CLS_pert is not None and h_CLS_pert.shape[0] > 1:
+            self.log(
+                f"{stage}/cls_pert_strain_sd",
+                h_CLS_pert.detach().float().std(dim=0).mean(),
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+
         # Residual Update Ratio: Measure how much the transformer changes the embeddings
         if stage == "val" and H_genes is not None and H_genes_pert is not None:
             # Compute the ratio of update magnitude to input magnitude

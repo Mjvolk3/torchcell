@@ -230,3 +230,31 @@ band, which share that schedule. On Delta the four `_008` / `kl_000` replicates
 (`fit_014`, seed 1), 21934082 (`ctrl_013`, seed 1), 21934083 (`fit_014`, seed 2) and
 21934084 (`ctrl_013`, seed 2), 48 h each so 30 epochs fit at the canary's 79 min/epoch.
 With GilaHyper's seed 42 that is three seeds of the weight-1.0 arm and its control.
+
+## 2026.09.10 - Delta fitness arms lost to a file-lock timeout, resubmitted staggered
+
+Measured. 21934081 and 21934083 (`fit_014`, seeds 1 and 2) both exited FAILED at
+06:12:41 after 30 and 28 minutes, one rank of each raising
+`filelock._error.Timeout` on `processed/phenotype_label_index.json.lock` under the
+Taiga-backed 025 build (`FileLockHelper.default_timeout` is 60 s; the index file is
+248,745,547 B, read under the lock by every rank). The two control jobs 21934082 and
+21934084 (`ctrl_013`, same code path through the index) survived and stood at epoch 7
+after 6 h 26 m and 6 h 06 m, about 50 min/epoch, faster than the canary's 79. GilaHyper
+1659 (`fit_014`, local disk) passed the same step and was at epoch 2 after 57 min.
+
+Hypothesis (untested): four jobs, sixteen ranks, reached the index read within the same
+few minutes, and a rank whose 60 s wait outlasted the holders' NFS reads of the 248 MB
+JSON timed out; the fitness arms lost because of where their ranks landed in that queue,
+not because of anything in the fitness code. Resubmitted from the same commit (33802c10)
+with the second job held until 30 minutes after the first starts:
+
+| Delta job | config | seed | note |
+|---|---|---|---|
+| 21947151 | `cgt_s0_r_kl_fit_014` | 1 | replaces 21934081 |
+| 21947152 | `cgt_s0_r_kl_fit_014` | 2 | replaces 21934083; `--dependency=after:21947151+30` |
+| 21934082 | `cgt_s0_r_kl_ctrl_013` | 1 | running |
+| 21934084 | `cgt_s0_r_kl_ctrl_013` | 2 | running |
+
+The GilaHyper set runs one at a time on the local build and is unaffected: 1640
+(`cgt_s0_q_kl_004`, cosine) timed out at 12 h having reached epoch 36; 1659 (`fit_014`)
+started at 11:09 as it ended, with 1660 (`ctrl_013`) and 1661 (`fit_015`) queued behind.

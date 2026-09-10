@@ -367,4 +367,11 @@ The chain runs in reverse of the first design, so the full-gene vector is the fi
 result: composite (`_017`), CaLM (`_020`), ProtT5 (`_021`), then the learnable control
 (`_016`). Chain 2390616 to 2390619 was cancelled (the control had run 10 minutes). The
 run script now also logs `model/params_embedding_preprocessor`, so the parameter match is
-visible in W&B beside `model/params_gene_embedding`.
+visible in W&B beside `model/params_gene_embedding`. Submitted from cf5fee7a:
+
+| IGB job | config | dependency |
+|---|---|---|
+| 2391132 | `cgt_s0_q_kl_emb_017` (composite) | first |
+| 2391133 | `cgt_s0_q_kl_calm_020` | afterany 2391132 |
+| 2391134 | `cgt_s0_q_kl_prot_021` | afterany 2391133 |
+| 2391135 | `cgt_s0_q_kl_ctrl_016` | afterany 2391134 |

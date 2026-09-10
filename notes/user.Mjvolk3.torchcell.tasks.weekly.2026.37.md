@@ -31,3 +31,8 @@ created: 1788904951158
 - [ ] Launch discussion: Delta `bbub` 1,000-epoch arrays (calm vs ProtT5; R_ref vs R_pergene, 3 seeds each), one batch-32 solo Pearson seed on cabbi when the batch-64 tasks end
 - [x] Per-gene readout replicate stage SUBMITTED to cabbi: `2389901_0/_1` (`RR_ref` vs `RR_pergene`, seeds 2-3, 1,000 epochs, one pair per card), source `4db2fbc8` clean; task 2 (seed 4) when the third card frees [[experiments.019-simb-multimodal.expression-strand-retrospective]]
 - [ ] CPU probe of stacked embeddings (ProtT5 + calm / codon frequency / chrom pathways) and a reporter-side promoter probe before spending cards on the embedding arm
+
+## 2026.09.10
+
+- [x] v11 input-richness round SUBMITTED on Delta: `21948711_[0-2]`, bbub, four embedding stacks (calm / ProtT5 / calm+ProtT5 / SpeciesLM 5' + calm + ProtT5 + SpeciesLM 3') x 3 seeds, 1,400 epochs, one run per A40; source `bc0b6497` clean; smoke-tested on GilaHyper CPU [[experiments.019-simb-multimodal.expression-strand-retrospective]]
+- [ ] When 21948711 lands: `v11` readout script (paired within node), fold into the expression document's readouts and next sections; width-matched random filler arm if E_full leads

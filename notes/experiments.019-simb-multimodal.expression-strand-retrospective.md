@@ -532,3 +532,36 @@ embeddings (ProtT5 + calm / codon frequency / chrom pathways, plus a reporter-si
 probe) says which contrast is worth cards; the neighbor probe puts NT and species-LM
 promoter/terminator embeddings at the random floor on the deletion side (0.005 to 0.036
 against a floor of 0.011 to 0.033).
+
+## 2026.09.10 - Input-richness round SUBMITTED on Delta (v11)
+
+Job `21948711_[0-2]` on Delta `gpuA40x4`, account `bbub-delta-gpu`, submitted 13:39 CT,
+PENDING (Resources) behind the bfjt 025 jobs. Project `torchcell_019_expr_v11`, config
+`cgt_expr_v11_emb.yaml` (v9 incumbent through v9_mask, `max_epochs` 1,400,
+`train_eval_every` 10), launcher `delta_expr_v11_emb.slurm`, job-owned shallow clone
+`/work/hdd/bbub/mjvolk3/torchcell-v11` at `bc0b6497`, clean diff, hash and diff sha
+exported into every run. Four arms x seeds 0-2, one run per A40, one seed per node:
+
+| arm | `cell_dataset.node_embeddings` | input width | preprocessor params |
+|---|---|---|--:|
+| E_calm | [calm] | 768 | 369,639 |
+| E_ptt5 | [prot_T5_all] | 1,024 | |
+| E_calm_ptt5 | [calm, prot_T5_all] | 1,792 | |
+| E_full | [fudt_upstream, calm, prot_T5_all, fudt_downstream] | 3,328 | 5,846,759 |
+
+Species-aware fungal LM (SpeciesLM, registry `fudt_*`) for the cis windows rather than
+the nucleotide transformer: yeast-trained, 768-d per region against NT's 2,560, neighbor
+probe 0.036 / 0.020 against NT's 0.005 to 0.012. Both files cover 6,607 genes (the 3'
+rebuild of 2026-07-27 restored the 28 Q0 mitochondrial genes; verified by loading the
+.pt) and Delta's copies match GilaHyper's sha256 (`ae196f34`, `5ee64676`). E_full's
+block order is locus order and is legibility only; the blocks feed one linear layer.
+Width confound named in the config: the projection's hidden layer is (input + 90) / 2,
+so E_full carries 16x the incumbent's preprocessor parameters (total 6.56M vs 1.19M); a
+width-matched random filler arm is the control if E_full leads. No Delta canary: the
+E_full list was proven by a CPU `fast_dev_run` on GilaHyper (exit 0, one train batch plus
+validation) in the submitted order. `sbatch --test-only` accepted the array. About 576
+GPU-hours of bbub's 3,738. Logs: `/work/hdd/bbub/mjvolk3/slurm-logs/019-expr-v11/`.
+
+Readout plan: `roll_max` at a matched budget (smallest final epoch across the 12) with
+paired within-node contrasts, E_ptt5 - E_calm (the contrast v10 could not make),
+E_calm_ptt5 - E_ptt5, E_full - E_calm_ptt5; three seeds resolve about 0.03.

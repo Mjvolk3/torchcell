@@ -1,5 +1,5 @@
-%% SOURCE: experiments/010-kuzmin-tmi/scripts/positive_interaction_retrieval.py -- values read from experiments/010-kuzmin-tmi/results/positive_interaction_retrieval.csv; calibration from review_inference_1_top_triples.py and inference_1_training_overlap.py
-\section{Whether the model can pick positives\secstatus{todo}}
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/positive_interaction_retrieval.py -- values read from experiments/010-kuzmin-tmi/results/positive_interaction_retrieval.csv; calibration from calibration_on_test_split.py, results/test_split_calibration.{csv,json}; prediction range from results/inference_1_validity.json
+\section{Whether the model can pick positives\secstatus{todo}}\label{sec:positives}
 
 Nominating positive interactions had not been tested. The earlier retrieval
 measurement used the Kuzmin 2018 call, which is one-sided by construction:
@@ -48,7 +48,7 @@ The margin over a model that cannot represent interaction is proportionally
 larger on positives than on negatives, which is the opposite of what the
 one-sided published call would suggest.
 
-\subsection{Large predictions are calibrated\secstatus{todo}}
+\subsection{Large predictions are calibrated on this split\secstatus{todo}}
 
 The previous panel's collapsed doubles scored near $0.71$, more than ten label
 standard deviations above the mean, and that inflation was the signature of the
@@ -56,12 +56,32 @@ bug. A top prediction on \texttt{inference\_1} is $+0.690$, so the same check is
 owed here.
 
 Binning the held-out test predictions against actual $\tau$: the 18 records
-predicted above $+0.20$ have mean actual $\tau$ of $+0.312$ and 66.7 percent are
-real calls at $\tau > +0.08$; the 5 predicted above $+0.30$ have mean actual
-$\tau$ of $+0.802$ and all are real. A regression of actual on predicted has
-slope $0.877$ and intercept $-0.0018$. Test-split predictions themselves span
-$-0.576$ to $+0.631$, so a prediction near $+0.65$ is inside the range the model
-demonstrably emits on labeled data rather than outside it.
+predicted above $+0.20$ have mean actual $\tau$ of $+0.312$, and the 5 predicted
+above $+0.30$ have mean actual $\tau$ of $+0.802$. Over the whole split a
+regression of actual on predicted has slope $0.877$. Test-split predictions
+themselves span $-0.576$ to $+0.631$, so a prediction near $+0.65$ is inside the
+range the model demonstrably emits on labeled data rather than outside it.
+
+Two qualifications belong with those numbers, and both were missing from an
+earlier draft.
+
+\pfstep{Magnitude is not a call} Of the 18 records predicted above $+0.20$, 12
+exceed $\tau > +0.08$ in magnitude but only \textbf{2} also clear $p < 0.05$, and
+of the 5 predicted above $+0.30$ all five exceed the magnitude while
+\textbf{none} clears the significance half. The enrichment is real either way,
+$66.7$ percent against a magnitude base rate of $5.27$ percent and $11.1$ percent
+against a called base rate of $0.53$ percent. But the Kuzmin 2020 call is the
+conjunction, it is what the retrieval table above scores, and a magnitude-only
+share must not be reported as a real call.
+
+\pfstep{A whole-split slope is not the operating point} The $0.877$ is computed
+over all 37{,}673 test records and is carried by the bulk near zero. Inside the
+predicted head the same regression gives $1.59$ at the top 100 and $1.19$ at the
+top 500, so on this split the model under-predicts where it ranks highest rather
+than inflating. That is the opposite of what the same checkpoints do on the
+\texttt{inference\_4} space, where the held-out slope is $0.24$.
+Section~\ref{sec:panel20} reconciles the two, and the resolution decides how a
+predicted $\tau$ may be read.
 
 \subsection{Confidence now tracks presence of evidence\secstatus{todo}}
 

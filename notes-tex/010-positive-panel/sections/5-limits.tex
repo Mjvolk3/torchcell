@@ -6,19 +6,42 @@ The model retrieves published positive trigenic interactions well above base rat
 on the held-out split, and its margin over a model that cannot represent
 interaction is proportionally wider there than on negatives: average precision
 $0.0352$ against $0.0110$ at the Kuzmin 2020 call, and $0.111$ against $0.0109$
-at $\tau > +0.20$.
+at $\tau > +0.20$. This is a statement about ordering and it survives everything
+below.
 
-Predictions of the size this panel rests on are calibrated on labeled data.
-Records predicted above $+0.20$ have mean actual $\tau$ of $+0.312$, the
-regression of actual on predicted has slope $0.877$, and the model emits the same
-range on the test split that it emits here.
+Closing $\tau$ within 20 constructed strains admits at most 6 interactions, on 5
+genes with 9 of the 10 doubles built, and the bound is proved rather than
+searched for.
 
-Confidence tracks the presence of training evidence rather than its absence,
-reversing the previous panel's relationship, and the leading gene's positive
-enrichment is visible in the labels at 3.0 times base rate.
+Greedy stacking cannot reach most of the wins. In the Kuzmin corpus 32{,}195 of
+the 44{,}462 triples that beat wild type sit behind a step that lowers fitness,
+and in the free-fatty-acid panel 2 of 720 measured deletion orders never drop
+below the chassis. Both come from measurements and neither depends on the
+transformer.
 
-The design closes $\tau$ on 20 triples with 20 doubles and 51 strains against the
-previous 33 and 65, and holds every gene at 6 of 20 triples by construction.
+The model fails the rungs below the order it was trained on. Five singles average
+a predicted interaction of $+0.0714$ where the truth is zero by definition, and
+all nine doubles are predicted above their measured $\varepsilon$, a sign test at
+$p = 0.004$.
+
+\subsection{Withdrawn\secstatus{todo}}
+
+Two claims made earlier in this document do not survive it, and they are listed
+here because the sections that make them are left standing as the record of how
+the design moved.
+
+\textbf{The 10-gene two-block panel of Sections~\ref{sec:design}
+and~\ref{sec:panel10}.} Its support gate
+counted training records rather than distinct screens. \texttt{YER059W}'s 1{,}097
+records come from one query double, and re-running the selection with a 50-screen
+floor drops the best available triple from $+0.662$ to $+0.069$, a factor of
+$9.6$. Section~\ref{sec:panel20}'s panel replaces it.
+
+\textbf{That predictions of this size are calibrated.} The slope of $0.877$ is
+real and is now reproducible, but it is a whole-split statistic. On the
+\texttt{inference\_4} held-out triples the same checkpoints give $0.24$, and the
+head of that space runs far outside the range the model emits on labeled data.
+Predicted $\tau$ is a rank, not an estimate.
 
 \subsection{Not established\secstatus{todo}}
 
@@ -29,12 +52,19 @@ disjoint, and the transformer has not been refit there. Since only 22 of the 420
 query doubles are representable in the 526-gene space, this panel sits in that
 unmeasured regime almost entirely.
 
-\textbf{Whether tier A is an interaction claim or a gene claim.} That is the
-question the panel is built to answer, and it is open until it is measured.
+\textbf{Whether tier A is an interaction claim or a gene claim.} Open, and now
+mostly of historical interest since the panel it belongs to is withdrawn.
 \texttt{YER059W} is enriched for strong interactions in both directions,
 $16.3$ percent above $+0.08$ and $14.1$ percent below $-0.08$, so a large
 measured effect of either sign is consistent with it being a high-variance gene
-rather than with the specific triples being right.
+rather than with the specific triples being right. The same question recurs in
+sharper form for the 20-strain panel, where \gene{LAT1} alone scores $+0.2441$
+and outranks five of the six triples it appears in.
+
+\textbf{Whether the nominated tail carries anything.} The window a panel is drawn
+from holds 6 held-out measured triples, so nothing in this document validates it.
+The enrichment that is measurable sits two orders of magnitude lower in the
+ranking and rests on 2 positive calls.
 
 \textbf{Whether the assay can report $\tau$ at all yet.} On the previous round
 singles reproduced Costanzo fitness at $r = 0.706$ but doubles did not
@@ -66,4 +96,10 @@ what packing more strains costs.
     gene set as a constant, which is how the previous basis silently went stale.
   \item Record every cross attempt with a date and an outcome, including
     failures.
+  \item Settle the tied optimum in the 20-strain design. Three panels reach the
+    same median at the same cost and differ in their weakest member, $+0.020$
+    against $+0.081$, and the objective cannot choose between them.
+  \item Score the free-fatty-acid panel with the same checkpoints. It already has
+    the structure this panel is built to create and all 720 orders are measured,
+    so it costs one inference pass and no strains.
 \end{enumerate}

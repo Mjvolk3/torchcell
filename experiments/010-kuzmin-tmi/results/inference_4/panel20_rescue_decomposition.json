@@ -1,0 +1,31 @@
+{
+  "chassis_pair": [
+    "LAT1",
+    "PDC1"
+  ],
+  "f_ab": 0.8593,
+  "measured_offset_spread": 0.17769917310000005,
+  "model_tau_spread": 0.0380859375,
+  "rescue_spread": 0.21578511060000016,
+  "measured_share_of_separation": 0.8235006234021409,
+  "adjacent_gaps": [
+    {
+      "above": "CUP9",
+      "below": "CAD1",
+      "intercept_measured": 0.03753936773000033,
+      "slope_model": 0.0343017578125
+    },
+    {
+      "above": "CAD1",
+      "below": "TOS8",
+      "intercept_measured": 0.14015980536999972,
+      "slope_model": 0.0037841796875
+    }
+  ],
+  "ordering_robust_to_any_tau_shrinkage": true,
+  "ordering": [
+    "CUP9",
+    "CAD1",
+    "TOS8"
+  ]
+}

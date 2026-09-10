@@ -1,0 +1,85 @@
+gene,name,subsystems
+YAL054C,ACS1,Pyruvate metabolism
+YBL015W,ACH1,Pyruvate metabolism
+YBL068W,PRS4,Pentose phosphate pathway
+YBR019C,GAL10,Glycolysis / gluconeogenesis
+YBR117C,TKL2,Pentose phosphate pathway
+YBR145W,ADH5,Glycolysis / gluconeogenesis
+YBR218C,PYC2,Pyruvate metabolism
+YCL040W,GLK1,Glycolysis / gluconeogenesis
+YCR005C,CIT2,Citrate cycle (TCA cycle)
+YCR036W,RBK1,Pentose phosphate pathway
+YDL066W,IDP1,Citrate cycle (TCA cycle)
+YDL078C,MDH3,Citrate cycle (TCA cycle)
+YDL131W,LYS21,Pyruvate metabolism
+YDL174C,DLD1,Pyruvate metabolism
+YDL178W,DLD2,Pyruvate metabolism
+YDL182W,LYS20,Pyruvate metabolism
+YDR148C,KGD2,Citrate cycle (TCA cycle)
+YDR178W,SDH4,Citrate cycle (TCA cycle)
+YDR248C,YDR248C,Pentose phosphate pathway
+YDR272W,GLO2,Pyruvate metabolism
+YDR516C,EMI2,Glycolysis / gluconeogenesis
+YDR533C,HSP31,Pyruvate metabolism
+YEL047C,FRD1,Citrate cycle (TCA cycle)
+YER073W,ALD5,Glycolysis / gluconeogenesis; Pyruvate metabolism
+YER099C,PRS2,Pentose phosphate pathway
+YFR049W,YMR31,Citrate cycle (TCA cycle)
+YFR053C,HXK1,Glycolysis / gluconeogenesis
+YGL062W,PYC1,Pyruvate metabolism
+YGL256W,ADH4,Glycolysis / gluconeogenesis
+YGR043C,NQM1,Pentose phosphate pathway
+YGR087C,PDC6,Glycolysis / gluconeogenesis
+YGR193C,PDX1,Glycolysis / gluconeogenesis
+YGR244C,LSC2,Citrate cycle (TCA cycle)
+YGR248W,SOL4,Pentose phosphate pathway
+YGR254W,ENO1,Glycolysis / gluconeogenesis
+YGR256W,GND2,Pentose phosphate pathway
+YHR104W,GRE3,Pyruvate metabolism
+YHR163W,SOL3,Pentose phosphate pathway
+YIL125W,KGD1,Citrate cycle (TCA cycle)
+YIR031C,DAL7,Pyruvate metabolism
+YJL045W,SDH9,Citrate cycle (TCA cycle)
+YJL052W,TDH1,Glycolysis / gluconeogenesis
+YJL121C,RPE1,Pentose phosphate pathway
+YJR009C,TDH2,Glycolysis / gluconeogenesis
+YJR048W,CYC1,Pyruvate metabolism
+YKL029C,MAE1,Pyruvate metabolism
+YKL085W,MDH1,Citrate cycle (TCA cycle)
+YKL127W,PGM1,Pentose phosphate pathway
+YKL148C,SDH1,Citrate cycle (TCA cycle)
+YKR043C,SHB17,Glycolysis / gluconeogenesis
+YKR097W,PCK1,Glycolysis / gluconeogenesis
+YLL041C,SDH2,Citrate cycle (TCA cycle)
+YLR044C,PDC1,Glycolysis / gluconeogenesis
+YLR134W,PDC5,Glycolysis / gluconeogenesis
+YLR164W,SHH4,Citrate cycle (TCA cycle)
+YLR174W,IDP2,Citrate cycle (TCA cycle)
+YLR354C,TAL1,Pentose phosphate pathway
+YLR377C,FBP1,Glycolysis / gluconeogenesis
+YLR446W,NGK1,Glycolysis / gluconeogenesis
+YML004C,GLO1,Pyruvate metabolism
+YML054C,CYB2,Pyruvate metabolism
+YMR099C,YMR099C,Glycolysis / gluconeogenesis
+YMR105C,PGM2,Pentose phosphate pathway
+YMR110C,HFD1,Glycolysis / gluconeogenesis
+YMR170C,ALD2,Glycolysis / gluconeogenesis
+YMR278W,PRM15,Pentose phosphate pathway
+YMR303C,ADH2,Glycolysis / gluconeogenesis
+YMR322C,SNO4,Pyruvate metabolism
+YNL009W,IDP3,Citrate cycle (TCA cycle)
+YNL071W,LAT1,Glycolysis / gluconeogenesis
+YNR001C,CIT1,Citrate cycle (TCA cycle)
+YOL061W,PRS5,Pentose phosphate pathway
+YOL086C,ADH1,Glycolysis / gluconeogenesis
+YOL126C,MDH2,Citrate cycle (TCA cycle)
+YOL151W,GRE2,Pyruvate metabolism
+YOR040W,GLO4,Pyruvate metabolism
+YOR283W,YOR283W,Glycolysis / gluconeogenesis
+YOR347C,PYK2,Glycolysis / gluconeogenesis
+YOR374W,ALD4,Glycolysis / gluconeogenesis; Pyruvate metabolism
+YOR393W,ERR1,Glycolysis / gluconeogenesis
+YPL061W,ALD6,Glycolysis / gluconeogenesis
+YPL280W,HSP32,Pyruvate metabolism
+YPR001W,CIT3,Citrate cycle (TCA cycle)
+YPR074C,TKL1,Pentose phosphate pathway

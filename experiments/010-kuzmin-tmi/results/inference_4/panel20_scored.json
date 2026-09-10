@@ -1,0 +1,84 @@
+{
+  "n_strains": 20,
+  "n_known": 14,
+  "n_unknown": 6,
+  "training_orders": {
+    "3": 376732
+  },
+  "singles_zero_shot": {
+    "mean_abs_prediction": 0.07140186028555036,
+    "max_abs_prediction": 0.24412978688875833,
+    "label_sd": 0.06326
+  },
+  "doubles_zero_shot": {
+    "n": 9,
+    "measured_epsilon_range": [
+      -0.06235579999999996,
+      0.07237609999999994
+    ],
+    "predicted_range": [
+      0.03725317772477865,
+      0.34591052929560345
+    ],
+    "mean_abs_error": 0.13808843856631048,
+    "mean_signed_error": 0.13808843856631048,
+    "n_over_predicted": 9,
+    "sign_test_p": 0.00390625,
+    "n_measured_negative": 6,
+    "n_predicted_negative": 0,
+    "pearson_r": 0.25893045964246286,
+    "pearson_p": 0.5011004201624631,
+    "spearman_rho": 0.19999999999999998,
+    "spearman_p": 0.6059012741795533
+  },
+  "epsilon_reconstruction_check": {
+    "n_with_published": 3,
+    "max_abs_difference": 0.006616344000000149
+  },
+  "mean_prediction_by_order": {
+    "1": 0.07140186028555036,
+    "2": 0.13685034812186603,
+    "3": 0.2311275239206023
+  },
+  "rescue_vs_single": {
+    "chassis": [
+      "LAT1",
+      "PDC1"
+    ],
+    "chassis_double_fitness": 0.8593,
+    "rows": [
+      {
+        "gene": "CUP9",
+        "rescue_over_chassis_double": 0.24572570783750014,
+        "single_gene_prediction": 0.03889642531673113
+      },
+      {
+        "gene": "CAD1",
+        "rescue_over_chassis_double": 0.1738845822949997,
+        "single_gene_prediction": 0.01710510129729907
+      },
+      {
+        "gene": "TOS8",
+        "rescue_over_chassis_double": 0.029940597237499977,
+        "single_gene_prediction": 0.05316087479392687
+      }
+    ],
+    "order_by_rescue": [
+      "CUP9",
+      "CAD1",
+      "TOS8"
+    ],
+    "order_by_single_gene": [
+      "TOS8",
+      "CUP9",
+      "CAD1"
+    ],
+    "orders_agree": false
+  },
+  "single_vs_triples": {
+    "top_single": "LAT1",
+    "top_single_prediction": 0.24412978688875833,
+    "n_triples_below_top_single": 5,
+    "n_triples": 6
+  }
+}

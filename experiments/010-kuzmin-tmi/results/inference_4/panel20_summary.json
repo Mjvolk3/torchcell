@@ -1,0 +1,349 @@
+{
+  "engineering_subsystems": [
+    "Citrate cycle (TCA cycle)",
+    "Glycolysis / gluconeogenesis",
+    "Pentose phosphate pathway",
+    "Pyruvate metabolism"
+  ],
+  "n_engineering_axis_genes_in_gem": 118,
+  "n_engineering_axis_genes_in_roster": 84,
+  "n_roster_genes": 934,
+  "strata": [
+    {
+      "n_engineering_genes": 0,
+      "triples": 33318318,
+      "share": 0.7956189176973302,
+      "best_mean": 2.3274738788604736,
+      "best_worst": 2.078125,
+      "consensus_0.08": 2255,
+      "consensus_0.12": 686,
+      "consensus_0.16": 349,
+      "consensus_0.2": 216,
+      "consensus_0.3": 120
+    },
+    {
+      "n_engineering_genes": 1,
+      "triples": 8094624,
+      "share": 0.19329415086460347,
+      "best_mean": 2.1500651836395264,
+      "best_worst": 1.951171875,
+      "consensus_0.08": 623,
+      "consensus_0.12": 142,
+      "consensus_0.16": 82,
+      "consensus_0.2": 56,
+      "consensus_0.3": 32
+    },
+    {
+      "n_engineering_genes": 2,
+      "triples": 464290,
+      "share": 0.011086931438066393,
+      "best_mean": 0.5154215693473816,
+      "best_worst": 0.1644287109375,
+      "consensus_0.08": 28,
+      "consensus_0.12": 3,
+      "consensus_0.16": 1,
+      "consensus_0.2": 0,
+      "consensus_0.3": 0
+    }
+  ],
+  "head_overlap": {
+    "n_head_genes": 79,
+    "n_head_genes_on_axis": 3,
+    "axis_share_of_head_genes": 0.0379746835443038,
+    "axis_share_of_roster": 0.08993576017130621,
+    "head_axis_genes": [
+      {
+        "gene": "YNL071W",
+        "name": "LAT1",
+        "top500_triples": 80
+      },
+      {
+        "gene": "YGR193C",
+        "name": "PDX1",
+        "top500_triples": 19
+      },
+      {
+        "gene": "YLR044C",
+        "name": "PDC1",
+        "top500_triples": 1
+      }
+    ]
+  },
+  "consensus_cut": 0.08,
+  "n_pool_triples": 28,
+  "shortlist": [
+    {
+      "gene": "YLR044C",
+      "name": "PDC1",
+      "engineering_axis": true,
+      "pool_triples": 22
+    },
+    {
+      "gene": "YDR423C",
+      "name": "CAD1",
+      "engineering_axis": false,
+      "pool_triples": 16
+    },
+    {
+      "gene": "YNL071W",
+      "name": "LAT1",
+      "engineering_axis": true,
+      "pool_triples": 9
+    },
+    {
+      "gene": "YGR193C",
+      "name": "PDX1",
+      "engineering_axis": true,
+      "pool_triples": 5
+    },
+    {
+      "gene": "YPL177C",
+      "name": "CUP9",
+      "engineering_axis": false,
+      "pool_triples": 4
+    },
+    {
+      "gene": "YIL125W",
+      "name": "KGD1",
+      "engineering_axis": true,
+      "pool_triples": 2
+    },
+    {
+      "gene": "YJL052W",
+      "name": "TDH1",
+      "engineering_axis": true,
+      "pool_triples": 2
+    },
+    {
+      "gene": "YJR009C",
+      "name": "TDH2",
+      "engineering_axis": true,
+      "pool_triples": 2
+    },
+    {
+      "gene": "YGL096W",
+      "name": "TOS8",
+      "engineering_axis": false,
+      "pool_triples": 2
+    },
+    {
+      "gene": "YDL182W",
+      "name": "LYS20",
+      "engineering_axis": true,
+      "pool_triples": 2
+    },
+    {
+      "gene": "YDL131W",
+      "name": "LYS21",
+      "engineering_axis": true,
+      "pool_triples": 2
+    },
+    {
+      "gene": "YEL047C",
+      "name": "FRD1",
+      "engineering_axis": true,
+      "pool_triples": 1
+    },
+    {
+      "gene": "YDR148C",
+      "name": "KGD2",
+      "engineering_axis": true,
+      "pool_triples": 1
+    },
+    {
+      "gene": "YOL086C",
+      "name": "ADH1",
+      "engineering_axis": true,
+      "pool_triples": 1
+    }
+  ],
+  "chassis": [
+    {
+      "gene": "YLR044C",
+      "name": "PDC1",
+      "subsystems": [
+        "Glycolysis / gluconeogenesis"
+      ]
+    },
+    {
+      "gene": "YNL071W",
+      "name": "LAT1",
+      "subsystems": [
+        "Glycolysis / gluconeogenesis"
+      ]
+    }
+  ],
+  "chassis_pool_triples": 4,
+  "max_strains": 20,
+  "n_feasible_designs": 166,
+  "chosen": {
+    "genes": "YDR423C+YGL096W+YLR044C+YNL071W+YPL177C",
+    "n_triples": 6,
+    "strains": 20,
+    "n_pairs": 9,
+    "median_worst": 0.12823486328125,
+    "n_chassis_pair_triples": 3
+  },
+  "n_singles_already_measured": 5,
+  "n_doubles_already_measured": 9,
+  "n_doubles_needed": 9,
+  "label_sd": 0.06326,
+  "panel": [
+    {
+      "triple": "YGL096W+YNL071W+YPL177C",
+      "gene1": "YGL096W",
+      "gene2": "YNL071W",
+      "gene3": "YPL177C",
+      "name1": "TOS8",
+      "name2": "LAT1",
+      "name3": "CUP9",
+      "arm": "one chassis gene",
+      "worst": 0.228759765625,
+      "mean": 0.5074055790901184,
+      "M01": 0.7109375,
+      "M02": 0.58251953125,
+      "M03": 0.228759765625,
+      "n_supported": 1,
+      "f_a": 1.0204,
+      "f_b": 0.9145,
+      "f_c": 0.9402,
+      "f_ab": 0.8708,
+      "f_ac": 0.93235,
+      "f_bc": 0.9284,
+      "f_expected": 0.8639934286799997,
+      "f_triple_predicted_worst": 1.0927531943049997,
+      "f_triple_predicted_mean": 1.3713990077701181,
+      "rescue_over_worst_double": 0.2219531943049997
+    },
+    {
+      "triple": "YLR044C+YNL071W+YPL177C",
+      "gene1": "YLR044C",
+      "gene2": "YNL071W",
+      "gene3": "YPL177C",
+      "name1": "PDC1",
+      "name2": "LAT1",
+      "name3": "CUP9",
+      "arm": "chassis pair",
+      "worst": 0.1644287109375,
+      "mean": 0.2230224609375,
+      "M01": 0.1644287109375,
+      "M02": 0.174072265625,
+      "M03": 0.33056640625,
+      "n_supported": 2,
+      "f_a": 0.9695,
+      "f_b": 0.9145,
+      "f_c": 0.9402,
+      "f_ab": 0.8593,
+      "f_ac": 0.9839,
+      "f_bc": 0.9284,
+      "f_expected": 0.9405969968999999,
+      "f_triple_predicted_worst": 1.1050257078374999,
+      "f_triple_predicted_mean": 1.1636194578374999,
+      "rescue_over_worst_double": 0.24572570783749992
+    },
+    {
+      "triple": "YDR423C+YLR044C+YNL071W",
+      "gene1": "YDR423C",
+      "gene2": "YLR044C",
+      "gene3": "YNL071W",
+      "name1": "CAD1",
+      "name2": "PDC1",
+      "name3": "LAT1",
+      "arm": "chassis pair",
+      "worst": 0.130126953125,
+      "mean": 0.2098795622587204,
+      "M01": 0.130126953125,
+      "M02": 0.34033203125,
+      "M03": 0.1591796875,
+      "n_supported": 2,
+      "f_a": 0.99786,
+      "f_b": 0.9695,
+      "f_c": 0.9145,
+      "f_ab": 0.9551,
+      "f_ac": 0.9712,
+      "f_bc": 0.8593,
+      "f_expected": 0.9030576291699997,
+      "f_triple_predicted_worst": 1.0331845822949997,
+      "f_triple_predicted_mean": 1.11293719142872,
+      "rescue_over_worst_double": 0.1738845822949997
+    },
+    {
+      "triple": "YGL096W+YLR044C+YNL071W",
+      "gene1": "YGL096W",
+      "gene2": "YLR044C",
+      "gene3": "YNL071W",
+      "name1": "TOS8",
+      "name2": "PDC1",
+      "name3": "LAT1",
+      "arm": "chassis pair",
+      "worst": 0.1263427734375,
+      "mean": 0.1715494841337204,
+      "M01": 0.1561279296875,
+      "M02": 0.232177734375,
+      "M03": 0.1263427734375,
+      "n_supported": 2,
+      "f_a": 1.0204,
+      "f_b": 0.9695,
+      "f_c": 0.9145,
+      "f_ab": 0.9308,
+      "f_ac": 0.8708,
+      "f_bc": 0.8593,
+      "f_expected": 0.7628978237999999,
+      "f_triple_predicted_worst": 0.8892405972374999,
+      "f_triple_predicted_mean": 0.9344473079337203,
+      "rescue_over_worst_double": 0.029940597237499977
+    },
+    {
+      "triple": "YDR423C+YGL096W+YLR044C",
+      "gene1": "YDR423C",
+      "gene2": "YGL096W",
+      "gene3": "YLR044C",
+      "name1": "CAD1",
+      "name2": "TOS8",
+      "name3": "PDC1",
+      "arm": "one chassis gene",
+      "worst": 0.0811767578125,
+      "mean": 0.1942545622587204,
+      "M01": 0.0811767578125,
+      "M02": 0.367919921875,
+      "M03": 0.1336669921875,
+      "n_supported": 1,
+      "f_a": 0.99786,
+      "f_b": 1.0204,
+      "f_c": 0.9695,
+      "f_ab": 0.99495,
+      "f_ac": 0.9551,
+      "f_bc": 0.9308,
+      "f_expected": 0.8936746619839995,
+      "f_triple_predicted_worst": 0.9748514197964995,
+      "f_triple_predicted_mean": 1.0879292242427199,
+      "rescue_over_worst_double": 0.044051419796499514
+    },
+    {
+      "triple": "YDR423C+YGL096W+YNL071W",
+      "gene1": "YDR423C",
+      "gene2": "YGL096W",
+      "gene3": "YNL071W",
+      "name1": "CAD1",
+      "name2": "TOS8",
+      "name3": "LAT1",
+      "arm": "one chassis gene",
+      "worst": 0.0201873779296875,
+      "mean": 0.0814768448472023,
+      "M01": 0.0732421875,
+      "M02": 0.1510009765625,
+      "M03": 0.0201873779296875,
+      "n_supported": 1,
+      "f_a": 0.99786,
+      "f_b": 1.0204,
+      "f_c": 0.9145,
+      "f_ab": 0.99495,
+      "f_ac": 0.9712,
+      "f_bc": 0.8708,
+      "f_expected": 0.9075130498239998,
+      "f_triple_predicted_worst": 0.9277004277536873,
+      "f_triple_predicted_mean": 0.9889898946712021,
+      "rescue_over_worst_double": 0.05690042775368731
+    }
+  ]
+}

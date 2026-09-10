@@ -1,0 +1,152 @@
+{
+  "min_screens": 50,
+  "min_supported": 1,
+  "n_roster_genes": 934,
+  "class_sizes": {
+    "BH": 5,
+    "BL": 10,
+    "MH": 119,
+    "ML": 542,
+    "RH": 67,
+    "RL": 191
+  },
+  "n_valid_class_multisets": 17,
+  "n_triples": 41877232,
+  "lmdb_path": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/010-kuzmin-tmi/inference_4/processed/lmdb",
+  "lmdb_size_gb": 173.63,
+  "index_path": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/010-kuzmin-tmi/inference_4/triple_index.parquet",
+  "elapsed_s": 928.4,
+  "records_per_s": 45106.1,
+  "template_record": [
+    {
+      "experiment": {
+        "experiment_type": "inference",
+        "dataset_name": "inference_4",
+        "genotype": {
+          "perturbations": [
+            {
+              "systematic_gene_name": "YPR192W",
+              "perturbed_gene_name": "YPR192W",
+              "provenance": "engineered",
+              "state": "absent",
+              "mechanism_so_id": "SO:0000159",
+              "mechanism_so_name": "deletion",
+              "description": "Deletion via KanMX or NatMX gene replacement",
+              "perturbation_type": "sga_kanmx_deletion",
+              "deletion_description": "Deletion via KanMX gene replacement.",
+              "deletion_type": "KanMX",
+              "kan_mx_description": "KanMX Deletion Perturbation information specific to SGA experiments.",
+              "strain_id": "YPR192W_deletion",
+              "kanmx_deletion_type": "SGA"
+            },
+            {
+              "systematic_gene_name": "YPR199C",
+              "perturbed_gene_name": "YPR199C",
+              "provenance": "engineered",
+              "state": "absent",
+              "mechanism_so_id": "SO:0000159",
+              "mechanism_so_name": "deletion",
+              "description": "Deletion via KanMX or NatMX gene replacement",
+              "perturbation_type": "sga_kanmx_deletion",
+              "deletion_description": "Deletion via KanMX gene replacement.",
+              "deletion_type": "KanMX",
+              "kan_mx_description": "KanMX Deletion Perturbation information specific to SGA experiments.",
+              "strain_id": "YPR199C_deletion",
+              "kanmx_deletion_type": "SGA"
+            },
+            {
+              "systematic_gene_name": "YPL015C",
+              "perturbed_gene_name": "YPL015C",
+              "provenance": "engineered",
+              "state": "absent",
+              "mechanism_so_id": "SO:0000159",
+              "mechanism_so_name": "deletion",
+              "description": "Deletion via KanMX or NatMX gene replacement",
+              "perturbation_type": "sga_kanmx_deletion",
+              "deletion_description": "Deletion via KanMX gene replacement.",
+              "deletion_type": "KanMX",
+              "kan_mx_description": "KanMX Deletion Perturbation information specific to SGA experiments.",
+              "strain_id": "YPL015C_deletion",
+              "kanmx_deletion_type": "SGA"
+            }
+          ]
+        },
+        "environment": {
+          "provenance_gaps": [],
+          "media": {
+            "name": "YEPD",
+            "state": "solid",
+            "is_synthetic": false,
+            "base_medium": null,
+            "components": [],
+            "dropouts": [],
+            "provenance": []
+          },
+          "temperature": {
+            "value": 30.0,
+            "unit": "Celsius"
+          },
+          "perturbations": [],
+          "aerobicity": "aerobic",
+          "duration_hours": null,
+          "duration_generations": null
+        },
+        "phenotype": {
+          "provenance_gaps": [],
+          "graph_level": "global",
+          "label_name": "fitness",
+          "label_statistic_name": "fitness_se",
+          "fitness": null,
+          "fitness_se": null,
+          "fitness_std": null,
+          "n_samples": null,
+          "fitness_uncertainty": null,
+          "fitness_uncertainty_type": null,
+          "sample_unit": null
+        }
+      },
+      "experiment_reference": {
+        "experiment_reference_type": "inference",
+        "dataset_name": "inference_4",
+        "genome_reference": {
+          "species": "Saccharomyces cerevisiae",
+          "strain": "S288C",
+          "ploidy": "haploid"
+        },
+        "environment_reference": {
+          "provenance_gaps": [],
+          "media": {
+            "name": "YEPD",
+            "state": "solid",
+            "is_synthetic": false,
+            "base_medium": null,
+            "components": [],
+            "dropouts": [],
+            "provenance": []
+          },
+          "temperature": {
+            "value": 30.0,
+            "unit": "Celsius"
+          },
+          "perturbations": [],
+          "aerobicity": "aerobic",
+          "duration_hours": null,
+          "duration_generations": null
+        },
+        "phenotype_reference": {
+          "provenance_gaps": [],
+          "graph_level": "global",
+          "label_name": "fitness",
+          "label_statistic_name": "fitness_se",
+          "fitness": 1.0,
+          "fitness_se": null,
+          "fitness_std": null,
+          "n_samples": null,
+          "fitness_uncertainty": null,
+          "fitness_uncertainty_type": null,
+          "sample_unit": null
+        }
+      }
+    }
+  ]
+}

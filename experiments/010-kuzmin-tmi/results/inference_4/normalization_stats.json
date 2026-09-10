@@ -1,0 +1,14 @@
+{
+  "source_label_df": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/010-kuzmin-tmi/001-small-build/processed/label_df.parquet",
+  "stats": {
+    "gene_interaction": {
+      "mean": -0.008024323598529866,
+      "std": 0.06326354851937385,
+      "min": -1.0816,
+      "max": 1.128043,
+      "q25": -0.036898,
+      "q75": 0.022975,
+      "strategy": "standard"
+    }
+  }
+}

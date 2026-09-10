@@ -1,8 +1,9 @@
 %% SOURCE: experiments/010-kuzmin-tmi/scripts/screen_diversity_audit.py -- per-gene counts from results/screen_diversity_per_gene.csv, panel verdict from results/screen_diversity_panel.csv, correlations from results/screen_diversity_summary.json; corrected panel from positive_panel_selection.py with the screen gate
 
-\section{Correction: a record count is not support\secstatus{todo}}
+\section{Correction: a record count is not support\secstatus{todo}}\label{sec:screens}
 
-The support gate in Section~3 counted trigenic training records and set the floor
+The support gate in Section~\ref{sec:design} counted trigenic training records
+and set the floor
 at 200. \texttt{YER059W} passes it at 1{,}097. Every one of those records comes
 from a single screen, and once that is corrected the positive signal in
 \texttt{inference\_1} does not survive.
@@ -158,7 +159,7 @@ would have caught it.
 \subsection{What this changes\secstatus{todo}}
 
 The selection now carries \texttt{MIN\_DISTINCT\_SCREENS}, so the panel in
-Section~4 is superseded by the gated one. The honest reading of the gated result
+Section~\ref{sec:panel10} is superseded by the gated one. The honest reading of the gated result
 is that this model has no strong positive prediction on \texttt{inference\_1}
 that does not rest on a gene measured under one or a few screens.
 

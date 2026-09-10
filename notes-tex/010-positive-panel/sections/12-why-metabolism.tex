@@ -1,0 +1,125 @@
+%% SOURCE: marquez-zavalaDatabase15000Strain2026 in the library mirror (paper.md sha256 952805b4205164dbf43d350eacf48e1c02f9aaad8fe9bc5529d4da358e1d8c68, DOI 10.1016/j.ymben.2026.03.017); free-fatty-acid counts from experiments/008-xue-ffa/results/ffa_epistatic_path_accessibility.csv; Kuzmin corpus counts from experiments/010-kuzmin-tmi/scripts/kuzmin_ladder_census.py; inference_4 strata from experiments/010-kuzmin-tmi/scripts/inference_4_panel_design.py
+
+\section{Why regulation acting on metabolism\secstatus{todo}}
+
+The \texttt{inference\_4} axes were named before this argument was written, so the
+argument is owed rather than assumed. Four claims support it, three of them
+measured and one of them explicitly a hypothesis.
+
+\subsection{Strain design converges on a small set of metabolic genes\secstatus{todo}}
+
+Marquez-Zavala 2026 (DOI \texttt{10.1016/j.ymben.2026.03.017}) text-mined over
+15{,}000 strain-design articles spanning 25 years, extracted gene-level
+interventions from 8{,}885 of them, and normalized every gene to a KEGG ortholog
+and a BiGG reaction. \org{S. cerevisiae} and \org{E. coli} together account for
+34.6 percent of the database, and the target genes concentrate sharply:
+
+\begin{quote}\footnotesize
+``We can observe that the vast majority of frequently targeted genes are
+associated with reactions in central carbon metabolism (Fig. 4). Not
+surprisingly, the most frequently targeted area revolves around the pyruvate
+node, a key branching point of metabolism, distributing flux towards respiratory
+and fermentative pathways. \dots{} Another commonly targeted area is the
+branching point between upper glycolysis and the pentose-phosphate pathway,
+which can control the production of NADPH, an essential cofactor for
+biosynthetic pathways, and is an entry point for the production of aromatic
+amino acids, which are precursors of many commercially relevant compounds.''
+\end{quote}
+
+Their sharper finding is about direction rather than identity: ``The most
+distinguishing feature among strain design strategies seems not to be which genes
+are targeted, but rather the direction in which they are modified (increased or
+decreased expression).'' So the field returns to the same few dozen loci across
+products and across hosts, and turns them up or down.
+
+Two consequences follow. A fitness liability created at one of those loci is not
+a one-off, it is a recurring cost paid again by every campaign that touches the
+same branch point. And the pathway areas the survey names are enumerable in
+yeast-GEM, so ``a gene strain engineering actually deletes'' can be defined by
+subsystem membership rather than by hand. That definition is what the
+\term{engineering axis} means in the next section: the roster genes yeast-GEM
+9.0.2 assigns to glycolysis and gluconeogenesis, the pentose phosphate pathway,
+the citric acid cycle, or pyruvate metabolism.
+
+\subsection{Rechanneling flux costs growth, and growth is the binding constraint\secstatus{todo}}
+
+Deleting a branch to redirect carbon removes a redox sink or a precursor drain
+that the cell was using. In a fed-batch process the growth rate sets volumetric
+productivity, so a design that raises yield while lowering growth can lose on
+titer per hour. The question a strain engineer faces is therefore not only
+whether a deletion redirects flux, but what restores the growth it cost.
+
+\subsection{The rescue is plausibly regulatory, and it cannot be additive\secstatus{todo}}
+
+\textbf{Hypothesis (untested here):} when a flux-rechanneling deletion leaves the
+regulatory network still driving the removed branch, or failing to relieve a now
+limiting one, deleting the responsible regulator restores growth without
+restoring the competing flux.
+
+The structural half of that hypothesis is already measured. The free-fatty-acid
+panel of \protect\file{experiments/008-xue-ffa} is an in-house unpublished design
+on the standard three-deletion chassis \gene{pox1}$\Delta$ \gene{faa1}$\Delta$
+\gene{faa4}$\Delta$, whose chassis anchor is DOI
+\protect\file{10.1016/j.ymben.2013.07.003}, crossed combinatorially against ten
+transcription-factor deletions. Its best triple reaches $2.045$ times the chassis
+titer. Regulator deletions stacked on a flux chassis therefore produce large
+effects, and the effects are not additive.
+
+What makes such an effect invisible to any lower-order experiment is that neither
+part shows it alone. The regulator deletion by itself does nothing, because the
+regulon it controls is not yet stressed, and the chassis deletions by themselves
+are costly. Only the combination pays. That is the quantity $\tau$ measures, and
+it is the reason a trigenic predictor is the relevant tool rather than a pair of
+digenic screens.
+
+\subsection{The combination cannot be reached by walking to it\secstatus{todo}}
+
+Two independent measurements say a greedy stack-and-keep search does not arrive
+at these strains, and both are already in this document.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\begin{tabular}{llrr}
+\toprule
+Screen & Readout & Reachable greedily & Total \\
+\midrule
+Kuzmin trigenic corpus & growth, beats wild type & 12{,}267 (27.6\%) & 44{,}462 \\
+Free-fatty-acid panel  & titer, monotone path    & 2 (1.7\%)         & 120 \\
+\bottomrule
+\end{tabular}
+\caption{How much of the win a greedy search can see. In the Kuzmin corpus
+32{,}195 of the triples that beat wild type sit behind a step that lowers
+fitness. In the free-fatty-acid panel every one of the 720 deletion orders is
+measured rather than predicted, and only 2 of them never step below the chassis;
+allowing each step 1 standard error of slack raises that to 9 of 120 triples.
+Sources are \protect\file{experiments/010-kuzmin-tmi/scripts/kuzmin_ladder_census.py}
+and \protect\file{experiments/008-xue-ffa/results/ffa_epistatic_path_accessibility.csv}.}
+\end{table}
+
+The free-fatty-acid result is the stronger of the two, because the destination is
+real and large while the route is not: the best triple sits at twice the chassis
+titer, and 648 of the 720 orders drop below the chassis at the first deletion.
+The endpoint has to be predicted, since no sequence of local improvements finds
+it.
+
+\subsection{Why cross the two axes rather than stay inside one\secstatus{todo}}
+
+An all-metabolic triple mostly restates flux balance, which a constraint-based
+model already supplies without a learned predictor, and the previous space says
+the model has nothing to add there either: not one of the 1{,}183{,}337
+all-metabolic \texttt{inference\_1} triples clears the positive call, their best
+prediction being $+0.073$. An all-regulatory triple is not a strain design.
+
+The cross is also close to a genuine partition, 15 of the 934 roster genes
+carrying both roles, so a triple mixes two kinds of biology rather than three
+members of one pathway. And it is the shape a design already has, a metabolic
+chassis with regulatory tuning on top.
+
+\subsection{What this panel can and cannot show\secstatus{todo}}
+
+The assay reads colony growth on rich medium. It can therefore test whether a
+regulator deletion rescues the growth cost of flux-rechanneling deletions, the
+recurring cost every campaign at these loci pays. It cannot test titer. The titer
+half of the argument rests on the free-fatty-acid panel, a different screen in a
+different background with a different readout.

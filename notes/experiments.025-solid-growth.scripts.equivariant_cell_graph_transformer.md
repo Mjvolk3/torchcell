@@ -58,3 +58,19 @@ train on fewer records than its name claims.
 (M02, `yv4r30bi`) and 0.4619 (M03, `c7671wgj`). Their best-Pearson checkpoints sit at
 epochs 24 and 25, and the cosine schedule's first cycle is 30 epochs, so the 12 h wall
 clock is being spent in the range where 010 peaked rather than truncating a long climb.
+
+## 2026.09.09 - The Normalizer's Fit Population Is Named, Not Assumed
+
+`transforms.fit_on_subset: true` became `transforms.fit_on: subset | train`. `subset`
+is the old behavior, the mean and sd of every record in the arm, which is what 010 did
+and what the replication arm must keep. `train` fits on the pinned training split
+intersected with the subset, so no validation or test label reaches the two constants.
+Any other value raises. The run logs `arm/norm_fit_on`, `arm/norm_fit_records` and the
+resulting mean and sd to W&B so the population is on the record.
+
+Every 025 config carries the key: the seven that had run or been queued before this
+change say `subset`, so they still describe the runs they produced; `cgt_s0_q_kl_004`
+(job 1609, the query-pair-disjoint KL arm) says `train`. Smoke-tested on CPU with one
+batch of two records under the 004 config: the normalizer reports 301,236 records,
+mean -0.007844, sd 0.063776, matching
+[[experiments.025-solid-growth.scripts.label_normalization_constants]].

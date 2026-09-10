@@ -26,7 +26,7 @@
 #   subset.indices    -> the 376,732 trigenic triples (S0)
 #   subset.split_file -> 010's own train/val/test, carried across by genotype identity
 #   phenotype_labels  -> gene_interaction alone
-#   fit_on_subset     -> normalize by the triples' sd 0.0633, which is what 010 used
+#   fit_on: subset    -> normalize by the triples' sd 0.0633 over ALL of them, as 010 did
 #
 # Reference to beat, from the three 010 checkpoints: val Pearson 0.4520 / 0.4472 / 0.4619.
 defaults:
@@ -77,7 +77,7 @@ cell_dataset:
 # Transform configuration
 transforms:
   use_transforms: true
-  fit_on_subset: true
+  fit_on: subset
   forward_transform:
     normalization:
       gene_interaction:
@@ -129,18 +129,20 @@ model:
   attention_mask:
     enabled: false
 
-  # === Graph regularization: COPIED FROM 010, INCLUDING ITS TWO DEFECTS ===
+  # === Graph regularization: COPIED FROM 010 ===
   #
-  # (1) `physical` and `regulatory` do NOT match any relation in cell_graph, which names
-  #     them `physical_interaction` and `regulatory_interaction`. compute_graph_regularization_loss
-  #     skips an unmatched name with a bare `continue`, so heads 0 and 1 carry NO graph
-  #     prior. Verified against this build: the nine gene-gene relations are
-  #     physical_interaction, regulatory_interaction, tflink, and the six string12_0_*.
-  # (2) All nine heads of layer 1 are assigned, so that layer has no free head.
+  # `physical` and `regulatory` are the graph builder's names; `to_cell_data` emits
+  # `physical_interaction` and `regulatory_interaction`. Since 2026-07-31 the model keys
+  # every adjacency by both the suffixed relation and its bare stem, and RAISES on a name
+  # it cannot match, so all nine heads of layer 1 carry their graph here (an earlier
+  # comment claiming heads 0 and 1 went unregularized was wrong for this code). That
+  # layer has no free head, as in 010.
   #
-  # Both are kept ON PURPOSE. 010's 0.4520 / 0.4472 / 0.4619 were produced by a model
-  # regularized on 7 of 9 graphs, and a corrected config would be a different model whose
-  # disagreement with those numbers could not be read as a data-path problem.
+  # What differs from the 010 runs is the SIZE of the penalty, not its coverage: the 010
+  # edge normalization summed `len(A.nonzero()[0])` to 18 and multiplied the per-graph
+  # weight by 367, so the graph term was 99.99 percent of the objective; that was fixed
+  # before these arms ran and job 1598 shows the term at about a third of the objective
+  # (notes-tex/010-additive-baselines, the penalty-versus-loss figure).
   graph_regularization:
     graph_reg_lambda: 0.001
     graph_reg_layer: 1 # python indexed

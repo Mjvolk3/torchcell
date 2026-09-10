@@ -404,6 +404,75 @@ The transformer has no row in Table~\ref{tab:disjoint}. Its checkpoints were
 trained on the random split, so every record of a disjoint test set was
 potentially in their training data, and scoring them there would measure
 memorization. A transformer number for this split requires retraining, which
-Section~\ref{sec:modernize} makes possible and which has not been run. Nothing
-here says the transformer's margin over B1 does or does not survive; it says the
-quantity all the random-split rows were competing on was mostly screen identity.
+Section~\ref{sec:modernize} makes possible and which is now queued on the
+replacement build (Section~\ref{sec:disjoint025}). Nothing here says the
+transformer's margin over B1 does or does not survive; it says the quantity all
+the random-split rows were competing on was mostly screen identity.
+
+\subsection{The same ladder on the replacement build\secstatus{todo}}
+\label{sec:disjoint025}
+
+The 010 build is frozen and no longer loads (Section~\ref{sec:modernize}), so
+the transformer is retrained on experiment 025's build, which holds the same
+376{,}732 triples among 13.5 million records. Two arms train on those triples:
+arm R on 010's own split, carried across by genotype identity, and arm Q on a
+query-pair-disjoint split of 331, 43 and 46 query pairs. Arm R has run (job
+1598) and reproduces 010, validation Pearson 0.4463 at epoch 14 against 0.4472
+to 0.4619 for the three 010 checkpoints. Arm Q is job 1609 and starts after
+this build. The baselines are refit on exactly the record pool and splits those
+two arms read, from the same committed index artifacts the trainer loads, so the
+transformer number from either arm has a null on the same data.
+
+%% SOURCE: experiments/025-solid-growth/scripts/additive_baselines_025.py ->
+%% results/additive_baselines_025.csv and additive_baselines_025_summary.json;
+%% the 010 column repeats Table~\ref{tab:heldout}; job 1598 from its W&B history.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrrr}
+\hline
+& \multicolumn{2}{c}{Arm R, random over records} & Arm Q, query-pair disjoint \\
+Model & 010 build & 025 build & 025 build \\
+\hline
+B0 train mean & 0.000 & 0.000 & 0.000 \\
+B1 additive per-gene ridge & 0.400 & 0.400 & 0.185 \\
+B2 additive plus pair ridge & 0.406 & 0.406 & 0.180 \\
+B3 hierarchical mean & 0.390 & 0.390 & 0.142 \\
+B4 query pair only & 0.390 & 0.390 & 0.000 \\
+B5 embedding MLP, 3 seeds & $0.426 \pm 0.001$ & $0.432 \pm 0.005$ & $0.141 \pm 0.007$ \\
+CGT, three 010 checkpoints & 0.438 to 0.455 & & \\
+CGT, job 1598, val at best epoch & & 0.446 & \\
+CGT, job 1609 & & & pending \\
+\hline
+\end{tabular}
+\caption{Test Pearson on the 025 build under the two splits the transformer arms
+use, beside the 010 numbers of Table~\ref{tab:heldout}. Arm R on the two builds
+agrees for every closed-form model to $3 \times 10^{-13}$, which is the
+end-to-end check that the 025 labels and the pinned split are the 010 ones; B5
+is a stochastic fit and its run here was on CPU where 010's was on GPU. Arm Q is
+one split, not the five folds of Table~\ref{tab:disjoint}, and it is the exact
+partition job 1609 will report on. Job 1598's number is a maximum over 36
+validation epochs and has no test evaluation yet.}
+\label{tab:disjoint025}
+\end{table}
+
+\tcfigfit[0.80]{figures/additive_baselines_025_ladder.pdf}{Held-out Pearson on
+the 025 build for each baseline under arm R and arm Q, with the transformer rows
+that exist: the three 010 checkpoints and the arm R replication. The hatched bar
+is a validation maximum, not a test number, and the arm Q transformer slot
+waits on job 1609.}{fig:ladder025}
+
+\tcfigfit[0.42]{figures/additive_baselines_025_vs_010.pdf}{Arm R test Pearson
+on the 025 build against the same model on the 010 build. Every closed-form
+model lies on the identity line to numerical precision; the nonlinear baseline
+sits 0.006 above it, inside its own three-seed spread.}{fig:parity025}
+
+\notesec{What arm Q is asking}
+On the partition job 1609 will report on, the additive ridge reaches 0.185 and
+the nonlinear baseline 0.141, and B4 is structurally zero. A transformer number
+above 0.185 says the model carries something about held-out screens that
+per-gene additivity does not; one at or below it says the $+0.04$ margin of
+Table~\ref{tab:heldout} was screen identity, like most of what the random split
+measured. The single-split reference here is higher than the five-fold mean of
+Table~\ref{tab:disjoint}, $0.127 \pm 0.033$, for the reason that table gives:
+one draw of 46 held-out screens is a small sample of screens, so the comparison
+to make is on this split, against these numbers, not against the fold mean.

@@ -64,7 +64,7 @@ cell_dataset:
 # Transform configuration
 transforms:
   use_transforms: true
-  fit_on_subset: true
+  fit_on: subset
   forward_transform:
     normalization:
       gene_interaction:

@@ -27,13 +27,17 @@ verdict on each; the subsections that follow give the evidence.
 5 & matches & \textbf{Information available.} The identity of the three
     perturbed genes, and nothing else, for every model
     (Section~\ref{sec:sees}). \\
-6 & \textbf{does not} & \textbf{Label normalization.} The transformer's
-    standardization constants are fit on all 376{,}732 records rather than on
-    the training split. The baselines use the training mean only. \\
+6 & \textbf{does not} & \textbf{Label normalization.} The transformer trains on
+    z-scored labels whose mean and standard deviation were computed once, before
+    the split, from all 376{,}732 records; the baselines use the training mean
+    only. Pearson is invariant to the two constants, so this cannot move the
+    reported metric (Section~\ref{sec:normleak}). \\
 \hline
 \end{tabular}
 \caption{What has to match for the comparison to be fair. Row 6 is the one
-mismatch, and it runs in the transformer's favor.}
+mismatch. It is a hygiene defect in the 010 runs rather than a source of
+advantage, and the 025 arms from the disjoint run onward fit on the training
+split.}
 \label{tab:comparability}
 \end{table}
 
@@ -92,21 +96,39 @@ information it never received.
 
 \subsection{Where the comparison is not clean\secstatus{todo}}
 
-\notesec{Label normalization leaks}
-The transformer trains on standardized labels, and the standardization
-statistics are fit on \emph{all} 376{,}732 records rather than on the training
-split. The transform is constructed from \texttt{dataset.label\_df}, which
-iterates every record in the LMDB with no split filter, and it is constructed
-before the data module splits the data. The logged constants confirm it: mean
-$-0.008024324$ and standard deviation $0.063263549$ match the all-record
-statistics to nine digits and do not match the train-only values
-$-0.007688739$ and $0.063186255$.
+\notesec{Label normalization: what it is, when it happens, and what it can move}
+\label{sec:normleak}
+The transformer is trained on the z-scored label $(y - \mu) / \sigma$, the
+\texttt{standard} strategy of \texttt{COOLabelNormalizationTransform}. The two
+constants are computed once, at start-up, from \texttt{dataset.label\_df}, and
+the transform is built before the data module splits the records, so in 010 the
+population is every record in the build. The logged constants confirm it:
+$\mu = -0.008024324$ and $\sigma = 0.063263549$ are the all-record statistics to
+nine digits, where the training split alone gives $-0.007688739$ and
+$0.063186255$. The inverse transform is applied to every prediction before a
+metric is computed, so all reported numbers are in raw $\tau$ units.
 
-The leak is two global scalars, and the train and all-record values differ by
-about $3 \times 10^{-4}$ in the mean and $10^{-4}$ in the standard deviation, so
-the effect is small. It is nonetheless real, it runs in the transformer's favor,
-and the baselines do not have it: they use the training mean only. No correction
-is applied here, and no attempt is made to estimate the size of the advantage.
+What the choice of population can and cannot do. Pearson and Spearman are
+invariant to an affine map of the labels, so no choice of $\mu$ and $\sigma$
+changes the correlation a given model would reach; the two validation and test
+scalars that reach training this way carry no information a model could turn
+into held-out correlation. What the constants do set is the scale of the point
+loss relative to the two other terms of Eq.~\ref{eq:loss}: a different $\sigma$
+multiplies the standardized mean squared error by $(\sigma_{\mathrm{all}} /
+\sigma_{\mathrm{train}})^2 = 1.0024$, a quarter of a percent, and a different
+$\mu$ is a constant offset the readout bias absorbs. Against a graph term that is
+99.99 percent of the objective (Section~\ref{sec:graphs}) that is nothing. So
+row 6 of Table~\ref{tab:comparability} is a discipline defect, held-out labels
+touching a training-time constant, and not a mechanism for the transformer's
+margin.
+
+It is corrected from the disjoint run onward. The 025 trainer now names the
+fit population, \texttt{transforms.fit\_on}, and the query-pair-disjoint arm
+fits on its 301{,}236 training records, where the constants are
+$\mu = -0.007843739$ and $\sigma = 0.063776418$; the 025 replication arm keeps
+\texttt{fit\_on: subset} because reproducing 010 requires 010's constants.
+Both sets are written by
+\texttt{experiments/025-solid-growth/scripts/label\_normalization\_constants.py}.
 
 \notesec{The loss functions differ, deliberately}
 The baselines minimize squared error. The transformer minimizes

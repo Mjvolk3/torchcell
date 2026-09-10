@@ -88,10 +88,21 @@ all reductions are read.
   \label{eq:b1}
 \end{equation}
 %
-with $\beta_0$ unpenalized and set to $\bar{y}_{\mathrm{train}}$. Substituting
-Eq.~\ref{eq:b1} into Eq.~\ref{eq:delta2} gives $\Delta_{gh}\hat{y} = 0$ and hence
-$\Delta_{ghk}\hat{y} = 0$ identically. B1 is the direct analog of the additive
-null in the DeWitt preprint.
+with $\beta_0$ unpenalized and set to $\bar{y}_{\mathrm{train}}$. Writing $X$
+for the $n_{\mathrm{train}} \times |G|$ matrix whose rows are the $x_n$ and
+$\tilde{y} = y - \bar{y}_{\mathrm{train}}$ for the centered labels, the
+minimizer is the ridge normal equation
+%
+\begin{equation}
+  \hat{\beta} \;=\; \bigl(X^{\top} X + \alpha I\bigr)^{-1} X^{\top} \tilde{y} ,
+  \label{eq:b1closed}
+\end{equation}
+%
+which the script evaluates by LSQR on the augmented system
+$[X;\, \sqrt{\alpha}\, I]\,\beta = [\tilde{y};\, 0]$ rather than by forming the
+inverse. Substituting Eq.~\ref{eq:b1} into Eq.~\ref{eq:delta2} gives
+$\Delta_{gh}\hat{y} = 0$ and hence $\Delta_{ghk}\hat{y} = 0$ identically. B1 is
+the direct analog of the additive null in the Visani preprint.
 
 The design is well conditioned despite having 4{,}352 coefficients: with three
 ones per row and 301{,}386 training rows there are 904{,}158 gene observations,
@@ -117,24 +128,86 @@ B2 therefore has second-order capacity on observed pairs. It still has
 label is itself a third-order residual, B2 remains a null with respect to the
 quantity being predicted.
 
-\subsection{B3 and B4, the screen-structure baselines\secstatus{todo}}
+The fit is the same ridge as B1 on the wider design $X = [X_G \;\; X_P]$, where
+$X_P$ is the $n_{\mathrm{train}} \times |P|$ pair-incidence matrix, so
+$(\hat{\beta}, \hat{\gamma})$ is Eq.~\ref{eq:b1closed} with $X$ replaced by
+$[X_G \;\; X_P]$ and one penalty $\alpha$ on both blocks. The pair block has a
+closed form of its own that says what B2 learns. Every record contains exactly
+one recurring pair (Section~\ref{sec:disjoint}), so the stationarity condition
+of the ridge objective in $\gamma_{gh}$ involves only that pair's records, and
+%
+\begin{equation}
+  \hat{\gamma}_{gh} \;=\; \frac{\sum_{n \in \mathrm{train},\; \{g,h\} \subseteq S_n}
+  \bigl(y_n - \beta_0 - x_n^{\top}\hat{\beta}\bigr)}{n_{gh} + \alpha} ,
+  \label{eq:b2gamma}
+\end{equation}
+%
+with $n_{gh}$ the number of training triples carrying the pair. Each pair
+coefficient is the mean residual of the additive model over that query double's
+screen, shrunk toward zero by $\alpha / (n_{gh} + \alpha)$. With $n_{gh}$ in the
+hundreds to thousands and the selected $\alpha$ in the units, the shrinkage is
+at most a few percent, so B2 is B1 plus one nearly unshrunk offset per screen.
+
+\subsection{B3, the empirical screen mean\secstatus{todo}}
+\label{sec:b3}
+
+B3 has no fitted parameters. Its per-gene and per-pair quantities are means of
+the training label over the records that contain the gene or the pair,
+%
+\begin{equation}
+  \bar{y}_g \;=\; \frac{\sum_{n \in \mathrm{train}} x_{n,g}\, y_n}{\sum_{n \in \mathrm{train}} x_{n,g}},
+  \qquad
+  \bar{y}_{gh} \;=\; \frac{\sum_{n \in \mathrm{train}} x_{n,g}\, x_{n,h}\, y_n}{\sum_{n \in \mathrm{train}} x_{n,g}\, x_{n,h}} ,
+  \label{eq:b3means}
+\end{equation}
+%
+so $\bar{y}_g$ averages $y$ over exactly the training triples in which gene $g$
+is one of the three deletions, and $\bar{y}_{gh}$ over those carrying both $g$
+and $h$. The prediction backs off through three levels,
+%
+\begin{equation}
+  \hat{y}(S) \;=\;
+  \begin{cases}
+    \operatorname{mean}\{\bar{y}_{gh} : \{g,h\} \subseteq S,\; n_{gh} \ge 5\}
+      & \text{if any pair in } S \text{ recurs,} \\
+    \operatorname{mean}\{\bar{y}_{g} : g \in S,\; n_g \ge 5\}
+      & \text{otherwise, if any gene in } S \text{ has 5 training records,} \\
+    \bar{y}_{\mathrm{train}} & \text{otherwise,}
+  \end{cases}
+  \label{eq:b3}
+\end{equation}
+%
+with $n_g$ and $n_{gh}$ the training counts. On the random split every test
+record carries a recurring pair, so the first case always fires and B3 is the
+per-screen mean of the label. On a query-pair-disjoint split no test record
+carries a recurring pair, the first case never fires, and B3 becomes the mean of
+its three gene means.
+
+\subsection{B4, the screen indicator\secstatus{todo}}
+\label{sec:b4}
 
 B4 drops the per-gene terms from Eq.~\ref{eq:b2} and keeps only the pair terms,
 %
 \begin{equation}
-  \hat{y}(S) \;=\; \beta_0 + \sum_{\{g,h\} \subseteq S,\; \{g,h\} \in P} \gamma_{gh} .
+  \hat{y}(S) \;=\; \beta_0 + \sum_{\{g,h\} \subseteq S,\; \{g,h\} \in P} \gamma_{gh} ,
+  \qquad
+  \hat{\gamma}_{gh} \;=\; \frac{\sum_{n \in \mathrm{train},\; \{g,h\} \subseteq S_n}
+  \bigl(y_n - \bar{y}_{\mathrm{train}}\bigr)}{n_{gh} + \alpha} ,
   \label{eq:b4}
 \end{equation}
 %
-Because the recurring pairs are the Kuzmin query doubles, B4 is close to a
-per-query-batch offset. For a triple made of a query pair and an array gene, the
-array gene contributes nothing at all to Eq.~\ref{eq:b4}. Whatever B4 achieves is
-therefore an upper bound on how much of the metric is explained by knowing which
-screen a record came from.
+where the second expression is Eq.~\ref{eq:b2gamma} with no gene block. Because
+the recurring pairs are the Kuzmin query doubles, B4 is a per-screen offset: for
+a triple made of a query pair and an array gene, the array gene contributes
+nothing at all. Whatever B4 achieves is therefore an upper bound on how much of
+the metric is explained by knowing which screen a record came from.
 
-B3 is the unregularized empirical counterpart: predict the mean training label
-over triples sharing each recurring pair, backing off to the mean over triples
-containing each gene, and then to the global mean.
+Eq.~\ref{eq:b4} at $\alpha \to 0$ is $\bar{y}_{gh}$ of Eq.~\ref{eq:b3means},
+so on the random split, where the first case of Eq.~\ref{eq:b3} always fires,
+B3 and B4 are the same predictor up to the shrinkage $\alpha/(n_{gh}+\alpha)$,
+which Pearson does not see. Table~\ref{tab:heldout} reports them equal to three
+decimals for that reason. On a disjoint split they part company: B4 is
+structurally zero and B3 falls back to gene means.
 
 \subsection{B5, nonlinearity on the same features\secstatus{todo}}
 
@@ -164,25 +237,28 @@ seeds, B5 reports a spread rather than a single number.
 
 \subsection{Summary of capacity\secstatus{todo}}
 
-%% SOURCE: structural, derived above from Eqs. 4-9; no data involved
+%% SOURCE: structural, derived above from the model equations; no data involved
 \begin{table}[htbp]
 \centering
-\begin{tabular}{lllcc}
+\footnotesize
+\begin{tabular}{lp{0.22\textwidth}p{0.24\textwidth}lcc}
 \hline
-Model & Per-gene representation & Set aggregation & $\Delta_{gh} \not\equiv 0$ & $\Delta_{ghk} \not\equiv 0$ \\
+Model & Per-gene quantity & Set aggregation & Fit by & $\Delta_{gh} \not\equiv 0$ & $\Delta_{ghk} \not\equiv 0$ \\
 \hline
-B0 & none & none & no & no \\
-B4 & none & recurring pair indicators & yes & no \\
-B3 & scalar mean & pair mean, backing off & yes & no \\
-B1 & free scalar & sum & no & no \\
-B2 & free scalar & sum plus pair terms & yes & no \\
-B5 & free 128-vector & sum, then MLP & yes & yes \\
-CGT & free 180-vector via $T(E)$ & attention over $S$, mean, MLP & yes & yes \\
+B0 & none & none & train mean & no & no \\
+B1 & free scalar $\beta_g$ & sum & ridge, Eq.~\ref{eq:b1closed} & no & no \\
+B2 & free scalar $\beta_g$ & sum, plus $\gamma_{gh}$ per recurring pair & ridge, Eq.~\ref{eq:b2gamma} & yes & no \\
+B3, pair case & none & mean of $\bar{y}_{gh}$ over the recurring pairs in $S$ & label means, Eq.~\ref{eq:b3means} & yes & no \\
+B3, gene case & $\bar{y}_g$, the label mean over training triples containing $g$ & mean over $S$ & label means, Eq.~\ref{eq:b3means} & no & no \\
+B4 & none & $\gamma_{gh}$ per recurring pair & ridge, Eq.~\ref{eq:b4} & yes & no \\
+B5 & free 128-vector $e_g$ & sum, then MLP & gradient descent & yes & yes \\
+CGT & free 180-vector via $T(E)$ & attention over $S$, mean, MLP & gradient descent & yes & yes \\
 \hline
 \end{tabular}
-\caption{What each model can represent. The last two columns are structural
-properties of the hypothesis class, not fitted results. Only B5 and the cell
-graph transformer can express a three-way interaction, which is what the label
-is.}
+\caption{What each model can represent. B3 is listed by the case of
+Eq.~\ref{eq:b3} that fires: the pair case on the random split, the gene case on
+a query-pair-disjoint split. The last two columns are structural properties of
+the hypothesis class, not fitted results. Only B5 and the cell graph transformer
+can express a three-way interaction, which is what the label is.}
 \label{tab:capacity}
 \end{table}

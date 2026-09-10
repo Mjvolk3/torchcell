@@ -1,0 +1,96 @@
+{
+  "arms": {
+    "R": {
+      "split": "pinned_splits_from_010_seed_42.json.gz",
+      "description": "random over records",
+      "test_pearson": {
+        "B0_train_mean": {
+          "mean": 0.0,
+          "sd": null,
+          "n": 1
+        },
+        "B1_additive_gene": {
+          "mean": 0.4003985938982024,
+          "sd": null,
+          "n": 1
+        },
+        "B2_additive_plus_pair": {
+          "mean": 0.4056615095787174,
+          "sd": null,
+          "n": 1
+        },
+        "B3_hierarchical_mean": {
+          "mean": 0.39009834061394316,
+          "sd": null,
+          "n": 1
+        },
+        "B4_query_pair_only": {
+          "mean": 0.3900994117552536,
+          "sd": null,
+          "n": 1
+        },
+        "B5_gene_embedding_mlp": {
+          "mean": 0.432239392225182,
+          "sd": 0.005289839975950307,
+          "n": 3
+        }
+      }
+    },
+    "Q": {
+      "split": "query_pair_disjoint_splits_025.json.gz",
+      "description": "query-pair disjoint",
+      "test_pearson": {
+        "B0_train_mean": {
+          "mean": 0.0,
+          "sd": null,
+          "n": 1
+        },
+        "B1_additive_gene": {
+          "mean": 0.18530589019381333,
+          "sd": null,
+          "n": 1
+        },
+        "B2_additive_plus_pair": {
+          "mean": 0.1800017433823052,
+          "sd": null,
+          "n": 1
+        },
+        "B3_hierarchical_mean": {
+          "mean": 0.14199072196008145,
+          "sd": null,
+          "n": 1
+        },
+        "B4_query_pair_only": {
+          "mean": 0.0,
+          "sd": null,
+          "n": 1
+        },
+        "B5_gene_embedding_mlp": {
+          "mean": 0.1413295597611381,
+          "sd": 0.006788440975805624,
+          "n": 3
+        }
+      }
+    }
+  },
+  "transformer": {
+    "R": {
+      "010_checkpoints_test_pearson": {
+        "CGT_M01_lzs9pcj3": 0.4434486627578735,
+        "CGT_M02_yv4r30bi": 0.4379381537437439,
+        "CGT_M03_c7671wgj": 0.4551418423652649
+      },
+      "job_1598_replication": {
+        "run": "0yw7moue",
+        "n_epochs_logged": 36,
+        "best_epoch": 14,
+        "val_pearson_best_epoch": 0.4463026821613312,
+        "note": "max over logged validation epochs, an upward-biased order statistic; no test evaluation of this checkpoint exists"
+      }
+    },
+    "Q": "pending job 1609 (cgt_s0_q_kl_004, starts 2026-09-09 23:00)"
+  },
+  "n_records": 376732,
+  "n_genes": 4352,
+  "wall_time_s": 131.4
+}

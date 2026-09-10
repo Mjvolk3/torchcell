@@ -186,3 +186,43 @@ Queued on IGB mmli in place of the `_008`/`_009` pair (cancelled before starting
 `cgt_s0_r_kl_fit_010`, `cgt_s0_r_kl_ctrl_012`, `cgt_s0_r_kl_fit_011`, seed 42. The Delta
 replicates 21919310 to 21919313 still run `_008` and `cgt_s0_r_kl_000`, so they answer
 the same question with the pool readout and the replication's normalizer.
+
+Later the same evening the IGB set was torn down, the same three arms were queued on
+GilaHyper as jobs 1656 to 1658 behind the disjoint arm 1640, and then replaced by the
+constant-rate versions below before any of them started.
+
+## 2026.09.09 - Constant-Rate Protocol (`ctrl_013`, `fit_014`, `fit_015`)
+
+Under CosineAnnealingWarmupRestarts (peak 5e-4, floor 1e-7, 30-epoch cycle, 0.7 per
+restart) the learning rate is a function of the epoch, so a best-validation epoch is
+partly a statement about where the rate was, and arms stopped at different epochs are
+read at different rates. The cosine runs all peak inside the first cycle: job 1598 at
+epoch 14, the 010 checkpoints at 24 and 25, the Delta canary at 8. Consistent with the
+schedule shaping the curve; not proof of it.
+
+`cgt_s0_r_kl_ctrl_013` removes the schedule: `regression_task.lr_scheduler: null`, so
+`RegressionTask.configure_optimizers` returns the bare AdamW at `lr: 2.5e-4`, and
+`trainer.max_epochs: 30` inside the 12 h clock. The rate is a choice, not a measurement:
+the mean of the cosine over its first cycle, so the 30-epoch rate integral matches the
+run it replaces. No 025 or 010 model has trained at a constant rate before; the first
+three runs are the measurement, and a collapse or a crawl points at the rate first.
+Every arm under the protocol is read twice, at epoch 30 (fixed) and at its best
+validation epoch (an upward-biased max), and the two are reported together.
+
+`ctrl_013` is written to be the graph-regularization sweep's lambda 1e-3 point on the
+random split: no penalty, the lambda ladder, the hard mask and the random-graph control
+are this config with one key changed each. The 010 checkpoints and job 1598 stop being
+the figure's anchors, since their schedule and normalizer differ. The figure's design
+strip (`notes/assets/drawio/FigS-graph-regularization-sweep.gen.py`) still describes the
+cosine, 24 h, Delta design and needs regenerating for this protocol; on Delta A40s at 79
+min/epoch, 30 epochs is 40 h.
+
+| GilaHyper job | config | arm |
+|---|---|---|
+| 1640 (running, cosine) | `cgt_s0_q_kl_004` | soft KL, disjoint split, the additive-baselines report's run |
+| pending | `cgt_s0_r_kl_fit_014` | fitness from the perturbed CLS, weight 1.0, constant rate |
+| pending | `cgt_s0_r_kl_ctrl_013` | control, constant rate |
+| pending | `cgt_s0_r_kl_fit_015` | fitness from the perturbed CLS, weight 0.1, constant rate |
+
+Job 1640 keeps the cosine on purpose: the report reads it against job 1598 and the 010
+band, which share that schedule.

@@ -1,0 +1,58 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_ctrl_013.yaml
+#
+# THE CONSTANT-RATE PROTOCOL, and the control of the fitness experiment under it.
+# cgt_s0_r_kl_ctrl_012 (the replication model, KL lambda 1e-3, 010's random split,
+# normalizer fit on the training split) with the schedule removed: plain AdamW at one
+# rate for a fixed number of epochs inside a 12 h clock.
+#
+# WHY. Under CosineAnnealingWarmupRestarts (peak 5e-4, floor 1e-7, 30-epoch cycle, 0.7 per
+# restart) the rate at epoch e is a function of e, so "best validation epoch" is partly a
+# statement about where the rate happened to be, and two arms stopped at different epochs
+# are read at different rates. Consistent with that, the cosine runs peak inside the first
+# cycle: job 1598 at epoch 14, 010's checkpoints at 24 and 25, the Delta canary at 8. A
+# constant rate makes every epoch the same optimization problem, so a fixed-epoch readout
+# and a best-epoch readout can both be reported and mean what they say.
+#
+# THE RATE, 2.5e-4, is a choice, not a measurement. It is the mean of the cosine over its
+# first cycle ((5e-4 + 1e-7) / 2, the schedule spends its cycle symmetrically around it),
+# so the total rate integral over 30 epochs matches the cosine run this replaces; a run at
+# 1e-4 (the optimizer's declared lr, which the schedule overrode) would take about 2.5x
+# the steps for the same displacement, and 5e-4 held for 30 epochs has never been tried.
+# No 025 or 010 model has trained at any constant rate; the first three runs under this
+# config are the measurement. If they collapse or crawl, the rate is the first suspect.
+#
+# THE BUDGET, 30 epochs, is what the 12 h clock holds on GilaHyper at the KL arm's 19.4
+# min/epoch (job 1598: 36 epochs in 12 h), with room for the slower joint arms. Every arm
+# under this protocol reads at epoch 30 (fixed-epoch) and at its best validation epoch
+# (best-epoch, an upward-biased max), and the two are reported together. On Delta A40s at
+# 79 min/epoch (canary) 30 epochs is 40 h, so a Delta launch of this protocol needs a 48 h
+# clock, not this file's assumption.
+#
+# THE SWEEP COMPOSES ON THIS FILE. The graph-regularization figure
+# (notes/assets/drawio/FigS-graph-regularization-sweep.drawio: no penalty, the lambda
+# ladder, hard mask, random-graph control) is this config with ONE key changed per arm:
+#   no penalty      model.graph_regularization.graph_reg_lambda=0  (+ loss graph lambda 0)
+#   lambda ladder   model.graph_regularization.graph_reg_lambda=<1e-5 .. 1>
+#   hard mask       model.attention_mask.enabled=true (+ lambda 0), as cgt_s0_r_mask_003
+#   random graphs   the degree-matched rewiring, when that arm exists
+# and this run IS the ladder's lambda 1e-3 point. The 010 checkpoints and job 1598 are no
+# longer the anchors of that figure; their schedule and normalizer differ.
+#
+#   sbatch -J 025-ctrl-const experiments/025-solid-growth/scripts/gh_cgt.slurm cgt_s0_r_kl_ctrl_013
+defaults:
+  - cgt_s0_r_kl_ctrl_012
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, fitness_control, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30]
+
+trainer:
+  max_epochs: 30
+
+regression_task:
+  optimizer:
+    type: "AdamW"
+    lr: 2.5e-4
+    weight_decay: 1e-8
+  # No schedule: RegressionTask.configure_optimizers returns the bare optimizer.
+  lr_scheduler: null

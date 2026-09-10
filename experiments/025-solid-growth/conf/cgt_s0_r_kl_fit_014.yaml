@@ -1,0 +1,29 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_fit_014.yaml
+#
+# FITNESS FROM THE PERTURBED CLS, CONSTANT RATE. cgt_s0_r_kl_fit_010 (perturb_cls, linear
+# probe of h_CLS_pert, fitness weight 1.0, interaction head on the wild-type CLS) under
+# the constant-rate protocol of cgt_s0_r_kl_ctrl_013: AdamW at 2.5e-4, no schedule, 30
+# epochs, 12 h clock. Its control is ctrl_013; the two differ by the fitness objective and
+# the one query row the CLS adds to the perturbation operator, nothing else.
+#
+# The three keys below are ctrl_013's, repeated rather than composed, because a config
+# cannot inherit from two parents whose own defaults lists disagree on the head.
+#
+#   sbatch -J 025-clsfit1-const experiments/025-solid-growth/scripts/gh_cgt.slurm cgt_s0_r_kl_fit_014
+defaults:
+  - cgt_s0_r_kl_fit_010
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, fitness_joint, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_30]
+
+trainer:
+  max_epochs: 30
+
+regression_task:
+  fitness_lambda: 1.0
+  optimizer:
+    type: "AdamW"
+    lr: 2.5e-4
+    weight_decay: 1e-8
+  lr_scheduler: null

@@ -48,7 +48,7 @@ for p in data/sgd/genome data/go data/string data/tflink; do
 done
 
 echo; echo "-- 4. index artifacts and configs in this checkout"
-for a in subset_010build_all_indices.json.gz pinned_splits_010build_seed_42.json.gz query_pair_disjoint_splits_010build_seed_42.json.gz; do
+for a in subset_010build_all_indices.json.gz pinned_splits_010build_seed_42.json.gz query_pair_disjoint_splits_010build_armq.json.gz; do
   [[ -f "$PROJECT_ROOT/experiments/025-solid-growth/results/$a" ]] && ok "results/$a" || bad "results/$a" "git pull, or run make_010build_index_artifacts.py"
 done
 for c in cgt_010b_r_kl_005 cgt_010b_r_mask_006 cgt_010b_q_kl_007; do

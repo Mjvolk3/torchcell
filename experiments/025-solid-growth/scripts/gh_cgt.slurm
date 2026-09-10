@@ -27,7 +27,14 @@
 #SBATCH --output=/home/michaelvolk/Documents/projects/torchcell/experiments/025-solid-growth/slurm/output/%x_%j.out
 #SBATCH --error=/home/michaelvolk/Documents/projects/torchcell/experiments/025-solid-growth/slurm/output/%x_%j.out
 
-CONFIG_NAME="${1:-cgt_s0_r_kl_000}"
+# No default config. A launcher that falls back to one turns a dropped argument into a
+# silently different experiment: the old default was the RANDOM-split arm, so a disjoint job
+# whose argument failed to word-split would have trained on the wrong partition under a job
+# name saying otherwise, and nothing in the log would look wrong. delta_cgt.slurm already
+# refuses this way. The config must also exist, checked here rather than after the job starts.
+CONFIG_NAME="${1:?usage: sbatch gh_cgt.slurm <config_name> [hydra overrides...]}"
+CONFIG_PATH="/home/michaelvolk/Documents/projects/torchcell/experiments/025-solid-growth/conf/$CONFIG_NAME.yaml"
+[[ -f "$CONFIG_PATH" ]] || { echo "ERROR: config not found: $CONFIG_PATH" >&2; exit 1; }
 echo "job=$SLURM_JOB_ID name=$SLURM_JOB_NAME config=$CONFIG_NAME host=$(hostname)"
 
 cd /home/michaelvolk/Documents/projects/torchcell/experiments || exit 1

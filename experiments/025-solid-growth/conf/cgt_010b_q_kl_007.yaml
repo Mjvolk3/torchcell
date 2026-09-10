@@ -1,8 +1,15 @@
 # experiments/025-solid-growth/conf/cgt_010b_q_kl_007.yaml
 #
-# ARM 010b/Q/KL -- soft KL prior on 010's QUERY-PAIR-DISJOINT split, the partition behind
-# Table 10 of the additive-baselines report (285/67/68 query pairs). Fills that table's
-# empty transformer row; read against B1 ridge 0.174 on this split.
+# ARM 010b/Q/KL -- soft KL prior on the QUERY-PAIR-DISJOINT split, and it is ARM Q's
+# partition (331/43/46 query pairs, 301,236/37,705/37,791 records), carried into 010-build
+# index space by query pair name. Read against the arm Q nulls: B1 ridge 0.185, B5 0.141.
+#
+# NOT 010's own disjoint split. That one (285/67/68 pairs) sits behind the cross-validated
+# table of the additive-baselines report and has its own reference, B1 ridge 0.174. Both
+# partition the same 420 recurring pairs, so a result on the wrong one compares to nothing:
+# not to the arm Q nulls, and not to the GilaHyper disjoint run, which reads
+# query_pair_disjoint_splits_025.json.gz. Keeping this arm on arm Q's partition is what makes
+# the Delta and GilaHyper disjoint numbers one comparison.
 #
 # SAME MODEL AND SCHEDULE AS cgt_s0_r_kl_000, ON THE 010 BUILD. The 025 full build is 3.2 TB and
 # stays on GilaHyper; the 010 build (1.5 GB) holds the same 376,732 records with
@@ -25,7 +32,7 @@
 # What is new is the arm definition, because 025 is 13,525,071 records over three
 # perturbation orders and two labels where 010 was 376,732 records over one of each:
 #   subset.indices    -> the 376,732 trigenic triples (S0)
-#   subset.split_file -> 010's own train/val/test, carried across by genotype identity
+#   subset.split_file -> arm Q's query-pair-disjoint train/val/test, carried by query pair name
 #   phenotype_labels  -> gene_interaction alone
 #   fit_on: subset    -> normalize by the triples' sd 0.0633 over ALL of them, as 010 did
 #
@@ -51,7 +58,7 @@ seed: 42
 
 subset:
   indices: subset_010build_all_indices.json.gz
-  split_file: query_pair_disjoint_splits_010build_seed_42.json.gz
+  split_file: query_pair_disjoint_splits_010build_armq.json.gz
   split_key: splits
 
 cell_dataset:

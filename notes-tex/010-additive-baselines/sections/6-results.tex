@@ -34,9 +34,16 @@ selected on validation. Test was not consulted by any of them.}
 \end{table}
 
 \tcfigfit[0.72]{figures/additive_baseline_test_pearson.pdf}{Test Pearson for
-every model. Error bars on the nonlinear baseline are the standard deviation
-across three seeds; the transformer bars are three separate training runs shown
-individually.}{fig:ladder}
+every model. Bars carry an error bar only where the fit has a random component.
+B0 through B4 are closed-form solutions of a convex problem on a fixed split, so
+each is one deterministic number and has nothing to average over. The nonlinear
+baseline B5 is trained by stochastic gradient descent, and its bar is the mean
+of three seeds with the standard deviation across them. The three transformer
+bars are three separate training runs plotted individually rather than pooled,
+because they are not seed replicates: the script fixes the seed at 42, M01 and
+M02 differ only in run-to-run nondeterminism, and M03 also changes the
+scheduler's first cycle length. Figure~\ref{fig:ladder025} is this ladder under
+the query-pair-disjoint split.}{fig:ladder}
 
 \subsection{Reading the ladder\secstatus{todo}}
 
@@ -446,9 +453,9 @@ CGT, job 1609 & & & pending \\
 \end{tabular}
 \caption{Test Pearson on the 025 build under the two splits the transformer arms
 use, beside the 010 numbers of Table~\ref{tab:heldout}. Arm R on the two builds
-agrees for every closed-form model to $3 \times 10^{-13}$, which is the
-end-to-end check that the 025 labels and the pinned split are the 010 ones; B5
-is a stochastic fit and its run here was on CPU where 010's was on GPU. Arm Q is
+agrees for every closed-form model to $3 \times 10^{-13}$, which follows from
+the record-level label and split identity rather than testing it; B5 is a
+stochastic fit and its run here was on CPU where 010's was on GPU. Arm Q is
 one split, not the five folds of Table~\ref{tab:disjoint}, and it is the exact
 partition job 1609 will report on. Job 1598's number is a maximum over 36
 validation epochs and has no test evaluation yet.}
@@ -457,14 +464,29 @@ validation epochs and has no test evaluation yet.}
 
 \tcfigfit[0.80]{figures/additive_baselines_025_ladder.pdf}{Held-out Pearson on
 the 025 build for each baseline under arm R and arm Q, with the transformer rows
-that exist: the three 010 checkpoints and the arm R replication. The hatched bar
-is a validation maximum, not a test number, and the arm Q transformer slot
-waits on job 1609.}{fig:ladder025}
+that exist: the three 010 checkpoints and the arm R replication. This is
+Figure~\ref{fig:ladder} redrawn with the disjoint arm beside it. As there, only
+B5 carries an error bar, the standard deviation across its three seeds; B0
+through B4 are deterministic fits on a fixed split. Each arm is one split and
+not the five folds of Figure~\ref{fig:disjoint}, so the arm Q bars have no fold
+spread to show. The hatched bar is a validation maximum, not a test number, and
+the arm Q transformer slot waits on job 1609.}{fig:ladder025}
 
-\tcfigfit[0.42]{figures/additive_baselines_025_vs_010.pdf}{Arm R test Pearson
-on the 025 build against the same model on the 010 build. Every closed-form
-model lies on the identity line to numerical precision; the nonlinear baseline
-sits 0.006 above it, inside its own three-seed spread.}{fig:parity025}
+%% SOURCE: experiments/025-solid-growth/scripts/label_parity_010_vs_025.py ->
+%% results/label_parity_010_vs_025.json.
+\notesec{Arm R agrees because the data are the same, which the data show
+directly}
+Refitting is not how the two builds are checked against each other. Matching the
+025 records to 010's by genotype recovers all 376{,}732 of them, 376{,}526
+labels are bit-identical, and over the remaining 206 the largest absolute
+difference is $5.6 \times 10^{-17}$ at a Pearson of $1$. The split is carried
+across by that same genotype identity. B0 through B4 are deterministic functions
+of the labels and the split, so their agreement to $3 \times 10^{-13}$ in
+Table~\ref{tab:disjoint025} follows from those two facts and measures floating
+point, not reproducibility. B5 is the one row where the builds can differ, and
+it differs by 0.006 against a three-seed standard deviation of 0.005 on the 025
+fit. That run was on CPU where 010's was on GPU, and the cause has not been
+traced.
 
 \notesec{What arm Q is asking}
 On the partition job 1609 will report on, the additive ridge reaches 0.185 and

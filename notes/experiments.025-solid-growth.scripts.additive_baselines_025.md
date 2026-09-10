@@ -50,3 +50,29 @@ Wall time 131 s on CPU. Rerun:
 CUDA_VISIBLE_DEVICES="" python experiments/025-solid-growth/scripts/additive_baselines_025.py
 python experiments/025-solid-growth/scripts/additive_baselines_025.py --plot-only
 ```
+
+## 2026.09.09 - The parity panel leaves the report, the dataset check replaces it
+
+Review point: the arm R against 010 parity scatter was Figure 6 of
+`notes-tex/010-additive-baselines`, and it earns nothing a look at the dataset does not
+already give. The record-level comparison is the direct evidence and it needs no model:
+`label_parity_010_vs_025.py` matches all 376,732 triples by genotype, finds 376,526 labels
+bit-identical, and bounds the remaining 206 at 5.6e-17 with a Pearson of 1. The split is
+carried across by that same genotype identity, so B0 through B4, deterministic given labels
+and split, must return the 010 numbers. Their agreement to 3e-13 measures floating point,
+not reproducibility, and the report now says so instead of drawing it.
+
+The panel is still generated here and embedded above as a working diagnostic. It is no
+longer referenced by the document, so `make plots` stops converting it and
+`notes-tex/010-additive-baselines/figures/additive_baselines_025_vs_010.pdf` was removed.
+
+B5 is the only row where the two builds can differ. It differs by 0.006 against the 025
+fit's own three-seed standard deviation of 0.005. The CPU-against-GPU hypothesis above is
+still untested.
+
+Error bars, also from that review: only B5 carries one in either ladder figure, the standard
+deviation across its three seeds. B0 through B4 are single deterministic fits on a fixed
+split and have nothing to average. The three transformer bars in the 010 ladder are plotted
+individually because they are not seed replicates, the seed being fixed at 42, with M01 and
+M02 differing only in run-to-run nondeterminism and M03 also changing the scheduler's first
+cycle length. Both ladder captions now state this.

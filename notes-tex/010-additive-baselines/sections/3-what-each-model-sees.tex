@@ -56,18 +56,9 @@ to another. Whatever role they play, it is not to process the strain.
 \subsection{Where the nine graphs act, and where they do not\secstatus{todo}}
 \label{sec:graphs}
 
-The model has three places adjacency could enter the computation that produces a
-number. In the 010 configuration all three are off. The attention-mask
-configuration is not passed, so the head mask is \texttt{None} and every layer
-receives no mask. The perturbation-propagation configuration is not passed
-either, so that block is skipped. The attention itself is ordinary softmax
-self-attention with no adjacency bias term. Given a trained checkpoint, then, no
-adjacency tensor is an input to any operation that yields $\hat{y}$.
-
-That is a much narrower statement than it first appears, and an earlier version
-of this document overstated it. The nine adjacency matrices are consumed by a
-Kullback-Leibler penalty between each row-normalized adjacency $\tilde{A}$ and
-one attention head of layer 1,
+The nine adjacency matrices enter the model in exactly one place. During
+training, a Kullback-Leibler penalty pulls one attention head of layer 1 toward
+each row-normalized adjacency $\tilde{A}^{(k)}$,
 %
 \begin{equation}
   \mathcal{L}_{\mathrm{graph}} \;=\; \sum_{k=1}^{9} c_k
@@ -78,59 +69,86 @@ one attention head of layer 1,
   \label{eq:graphreg}
 \end{equation}
 %
-and that penalty is computed \emph{inside} the same forward call as the
-prediction, from the same pre-dropout attention tensor. Nothing detaches it. Its
-gradient therefore reaches the layer-1 query and key projections, through them
-every layer-0 parameter, and through those the gene embedding table. The trained
-$Z = T(E)$ of Eq.~\ref{eq:encoder} is shaped by the nine graphs even though
-$Z$'s value at inference is read off fixed weights.
+and that is the only operation that reads them.
 
-So the correct statement is not that the graphs are absent. It is that they act
-on the model's \emph{parameters} during training and not on the \emph{function}
-from checkpoint to prediction. An ablation that zeroes the coefficient on a
-trained checkpoint tests only the second, and Section~\ref{sec:verify} reports it
-as such.
+\notesec{Not in the prediction}
+Three mechanisms could put adjacency into the computation that yields
+$\hat{y}$: a head mask on attention, the perturbation-propagation block, and an
+adjacency bias inside the attention logits. All three are off in the 010
+configuration. Given a trained checkpoint, no adjacency tensor is an input to any
+operation between the gene indices and the prediction, and
+Section~\ref{sec:verify} checks this directly: setting the penalty weight to zero
+on a trained checkpoint moves the predictions by at most $1.3 \times 10^{-6}$.
 
-\notesec{The penalty was not weak, it dominated}
-Reconstructing the coefficient matters because the earlier version of this
-document reported it as negligible on two counts, and both were wrong for these
-runs. The per-graph weight $c_k$ in Eq.~\ref{eq:graphreg} is a product of three
+\notesec{In the weights}
+The penalty is computed inside the same forward call as the prediction, from the
+same pre-dropout attention tensor, and nothing detaches it. Its gradient reaches
+the layer-1 query and key projections, through them every layer-0 parameter,
+and through those the gene embedding table. So $Z = T(E)$ of
+Eq.~\ref{eq:encoder}, the per-gene vector the prediction is read from, is shaped
+by the nine graphs during training even though its value at inference comes off
+fixed weights. The graphs act on the parameters, not on the function from
+checkpoint to prediction. An ablation that zeroes the coefficient on a trained
+checkpoint tests only the second.
+
+\notesec{How large the penalty was}
+The per-graph weight $c_k$ in Eq.~\ref{eq:graphreg} is a product of three
 factors: the per-head $\lambda_k = 10^{-3}$, a global scale of $1.0$ read from
 \texttt{regression\_task.loss.graph\_regularization.lambda}, and an edge
-normalization intended to divide by mean degree. That last factor is computed as
+normalization meant to divide by the mean degree. That last factor is computed as
 \texttt{len(A.nonzero()[0])} summed over the nine matrices. On a dense
 \texttt{torch} tensor \texttt{A.nonzero()} has shape $[\mathrm{nnz}, 2]$, so
-\texttt{[0]} is a single index pair of length two, and the sum over nine graphs
-is $18$ rather than the 2.5 million edges intended. Dividing by $18/6607$
-multiplies by $367.06$, giving
+\texttt{[0]} is one index pair of length two, and the sum over nine graphs is
+$18$ rather than the 2.5 million edges intended. Dividing by $18/6607$ multiplies
+by $367.06$,
 %
 \begin{equation}
   c_k \;=\; 10^{-3} \times 1.0 \times \frac{6607}{18} \;=\; 0.367 ,
   \label{eq:effcoef}
 \end{equation}
 %
-applied to a Kullback-Leibler divergence summed over all $6{,}607$ rows. The
-runs' own logs confirm the consequence. Against a point loss of $0.81$, the
-graph term is $5{,}740$, and the trainer's own diagnostic
-\texttt{norm\_weighted\_graph\_reg}, which is the graph term divided by the total
-loss, reads $0.99986$ for all three checkpoints. The graph penalty was 99.99
-percent of what the optimizer minimized.
+applied to a divergence summed over all $6{,}607$ rows. The runs' logs record
+the consequence: against a point loss of $0.81$ the graph term is $5{,}740$, and
+the trainer's diagnostic \texttt{norm\_weighted\_graph\_reg}, the graph term
+divided by the total loss, reads $0.99986$ for all three checkpoints. The
+optimizer spent 99.99 percent of its objective on the graph penalty.
+Figure~\ref{fig:penalty} shows the three loss terms and that share over the
+whole of training. Section~\ref{sec:graphablation} reports what the penalty
+bought: the regularized heads recover their graphs, and the matched runs without
+the penalty do not train.
 
-\notesec{Two claims withdrawn}
-The earlier version stated that the configuration named \texttt{physical} and
-\texttt{regulatory} while the cell graph emitted \texttt{physical\_interaction}
-and \texttt{regulatory\_interaction}, leaving two heads unregularized, and that
-the weight was applied twice from one configuration key for an effective
-$10^{-6}$. Both are false for the 010 runs. The suffixed edge names were
-introduced on 2026-06-27, six months after these runs, and at the December 2025
-commit the cell graph emitted the bare names the configuration used; the runs log
-\texttt{val\_edge\_recovery/physical\_L1\_H0} and
-\texttt{regulatory\_L1\_H1}, keys the trainer emits only for a graph it matched,
-so all nine heads were regularized. The squared-lambda defect is real but belongs
-to the 019 configuration, where both keys interpolate the same $10^{-3}$; the 010
-training script reads the global scale from a different key whose value is $1.0$.
-The July 2026 commits did fix both defects, but neither defect was operating
-here.
+The dominance was not what produced the accuracy. The 025 replication of this
+configuration (job 1598, Section~\ref{sec:disjoint025}) ran after the edge
+normalization had been corrected, so its graph term is $0.34$ against a point
+loss of $0.80$, a share of 0.29 to 0.33 rather than 0.9999, and it reached
+validation Pearson 0.4463 at epoch 14 against 0.4472 to 0.4619 for the three
+010 checkpoints.
+
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/graph_penalty_vs_loss.py ->
+%% results/graph_penalty_vs_loss_history.csv, pulled from the four runs' W&B
+%% histories; summary in results/graph_penalty_vs_loss_summary.json
+\tcfigfit[0.98]{figures/graph_penalty_vs_loss.pdf}{The training objective of
+the three 010 runs and of the 025 replication, per epoch. \textbf{a}, the point
+term, the Sinkhorn term at its weight of 0.1, and the weighted graph penalty for
+the 010 runs, on a log axis: the penalty sits four orders of magnitude above the
+point loss from epoch 5 on. \textbf{b}, the same three terms for job 1598, where
+the corrected edge normalization puts the penalty below the point loss.
+\textbf{c}, the graph term's share of the total loss, recomputed from the logged
+terms: 0.9999 throughout for the 010 runs, 0.32 for the replication.
+\textbf{d}, validation Pearson per epoch with the best-Pearson epoch marked; the
+replication reaches the 010 band with the penalty at a third of the
+objective.}{fig:penalty}
+
+All nine heads carried the penalty. The configuration names the first two graphs
+\texttt{physical} and \texttt{regulatory}, which is what the cell graph called
+them at the December 2025 commit these runs used. The suffixed names,
+\texttt{physical\_interaction} and \texttt{regulatory\_interaction}, date from
+2026-06-27. The runs log the edge-recovery keys \texttt{physical\_L1\_H0} and
+\texttt{regulatory\_L1\_H1}, which the trainer emits only for a graph it
+matched.
+An earlier version of this document claimed those two heads were unregularized
+and that the weight was squared to $10^{-6}$; both claims were checked against
+the run logs and are false for these runs.
 
 \subsection{The transformer is a set function on three genes\secstatus{todo}}
 \label{sec:setfunction}

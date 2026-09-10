@@ -16,9 +16,13 @@ pieces carry that, and each one silently produces a WRONG run if omitted:
   doubles join training.
 - ``subset.split_file`` pins train/val/test. ``R`` is 010's random-over-records split
   carried across by genotype identity; ``Q`` is the query-pair-disjoint split.
-- ``transforms.fit_on_subset`` fits the normalizer on the arm's records. Over the whole
-  build gene_interaction has sd 0.0444; over the triples alone it is 0.0633, the value
-  010 normalized by.
+- ``transforms.fit_on`` names the records the label normalizer's mean and sd are
+  computed over: ``train`` for the arm's pinned training split, ``subset`` for every
+  record of the arm. Over the whole build gene_interaction has sd 0.0444; over the
+  triples alone it is 0.0633, the value 010 normalized by. 010 fit on all 376,732
+  records, which lets two scalars of validation and test information into training
+  (notes-tex/010-additive-baselines, the comparability table); ``train`` closes that,
+  and ``subset`` reproduces 010 exactly, which the replication arm needs.
 
 Run through the SLURM launcher, which sets the DDP rendezvous:
 
@@ -27,6 +31,7 @@ Run through the SLURM launcher, which sets the DDP rendezvous:
 
 # MUST be first import to catch SWIG warnings in worker processes
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import gzip
@@ -35,38 +40,43 @@ import json
 import logging
 import os
 import os.path as osp
+import socket
 import uuid
+
 import hydra
-import torch.nn as nn
 import lightning as L
 import torch
-from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.transforms.coo_regression_to_classification import (
-    COOLabelNormalizationTransform,
-    COOLabelBinningTransform,
-    COOInverseCompose,
-)
-from torch_geometric.transforms import Compose
-from torchcell.data.graph_processor import Perturbation
-from torchcell.trainers.int_transformer_cell import RegressionTask
+import torch.distributed as dist
+import torch.nn as nn
+import wandb
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
-import wandb
-import socket
-from torchcell.graph import SCerevisiaeGraph
-from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
-from torchcell.graph.graph import build_gene_multigraph
+from torch_geometric.transforms import Compose
+
+from torchcell.data import (
+    GenotypeAggregator,
+    MeanExperimentDeduplicator,
+    Neo4jCellDataset,
+)
+from torchcell.data.graph_processor import Perturbation
 from torchcell.datamodules import CellDataModule
-from torchcell.data import Neo4jCellDataset
+from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
-import torch.distributed as dist
-from torchcell.timestamp import timestamp
+from torchcell.graph import SCerevisiaeGraph
+from torchcell.graph.graph import build_gene_multigraph
 from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
+from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.timestamp import timestamp
+from torchcell.trainers.int_transformer_cell import RegressionTask
+from torchcell.transforms.coo_regression_to_classification import (
+    COOInverseCompose,
+    COOLabelBinningTransform,
+    COOLabelNormalizationTransform,
+)
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -173,7 +183,8 @@ def main(cfg: DictConfig) -> None:
     sweep_tags = [
         f"lambda_{lam:g}",
         f"seed_{wandb_cfg.get('seed', 42)}",
-        "build_" + wandb_cfg.get("dataset", {}).get("root_rel", "025-full").split("/")[-1],
+        "build_"
+        + wandb_cfg.get("dataset", {}).get("root_rel", "025-full").split("/")[-1],
     ]
     run = wandb.init(
         mode=WANDB_MODE,
@@ -229,11 +240,12 @@ def main(cfg: DictConfig) -> None:
         genome=genome,
         graph=graph,
     )
-    print(f"Built node embeddings: {list(node_embeddings.keys()) if node_embeddings else 'None (using learnable)'}")
+    print(
+        f"Built node embeddings: {list(node_embeddings.keys()) if node_embeddings else 'None (using learnable)'}"
+    )
 
     # Log static graph statistics for edge recovery monitoring
     from torchcell.viz.graph_recovery import GraphRecoveryVisualization
-    from torchcell.timestamp import timestamp
 
     graph_reg_config = wandb.config.model["graph_regularization"]
     regularized_heads = graph_reg_config.get("regularized_heads", {})
@@ -253,22 +265,17 @@ def main(cfg: DictConfig) -> None:
 
         # Add regularization info if this graph is regularized
         if graph_name in regularized_heads:
-            graph_info[graph_name]["reg_layer"] = regularized_heads[graph_name][
-                "layer"
-            ]
+            graph_info[graph_name]["reg_layer"] = regularized_heads[graph_name]["layer"]
             graph_info[graph_name]["reg_head"] = regularized_heads[graph_name]["head"]
 
     # Create aggregated graph info visualization and save to disk
     vis = GraphRecoveryVisualization(base_dir=wandb.run.dir)
-    graph_info_path = osp.join(
-        wandb.run.dir, f"graph_info_summary_{timestamp()}.png"
-    )
+    graph_info_path = osp.join(wandb.run.dir, f"graph_info_summary_{timestamp()}.png")
     vis.plot_graph_info_summary(graph_info, save_path=graph_info_path)
 
     print(EXPERIMENT_ROOT)
     with open(
-        osp.join(EXPERIMENT_ROOT, "025-solid-growth/queries/001_all_solid_growth.cql"),
-        "r",
+        osp.join(EXPERIMENT_ROOT, "025-solid-growth/queries/001_all_solid_growth.cql")
     ) as f:
         query = f.read()
     # Which build the arm reads. The 025 full build is the default; the graph-regularization
@@ -335,22 +342,48 @@ def main(cfg: DictConfig) -> None:
         # Normalization transform
         if "normalization" in transform_config:
             norm_config = transform_config["normalization"]
-            # FIT ON THE ARM'S RECORDS, not the whole build. Same column, different
+            # FIT ON THE ARM'S RECORDS, never the whole build. Same column, different
             # populations: gene_interaction has sd 0.0444 over all 13,525,071 records
             # and 0.0633 over the 376,732 triples, so fitting on everything would
             # divide every trigenic target by a constant 1.43x too small and raise the
             # effective learning rate with it, against a 010 run normalized by 0.0633.
+            #
+            # Which of the arm's records: `train` fits on the pinned training split
+            # alone, so no validation or test label reaches the two constants; `subset`
+            # fits on every record of the arm, which is what 010 did and what a
+            # replication of 010 has to do. Pearson is invariant to the two constants,
+            # so the choice moves the loss scale, not the metric.
+            fit_on = wandb.config.transforms["fit_on"]
+            if fit_on == "train":
+                fit_indices = sorted(
+                    set(pinned_split_indices["train"]) & set(index_subset)
+                )
+            elif fit_on == "subset":
+                fit_indices = list(index_subset)
+            else:
+                raise ValueError(
+                    f"transforms.fit_on must be 'train' or 'subset', got {fit_on!r}"
+                )
             norm_transform = COOLabelNormalizationTransform(
-                dataset,
-                norm_config,
-                fit_indices=(
-                    index_subset
-                    if wandb.config.transforms["fit_on_subset"]
-                    else None
-                ),
+                dataset, norm_config, fit_indices=fit_indices
             )
             transforms_list.append(norm_transform)
-            print(f"Added normalization transform for: {list(norm_config.keys())}")
+            print(
+                f"Added normalization transform for: {list(norm_config.keys())} "
+                f"(fit_on={fit_on}, {len(fit_indices)} records)"
+            )
+            wandb.log(
+                {
+                    "arm/norm_fit_on": fit_on,
+                    "arm/norm_fit_records": len(fit_indices),
+                    **{
+                        f"arm/norm_{label}_{key}": value
+                        for label, stats in norm_transform.stats.items()
+                        for key, value in stats.items()
+                        if key in ("mean", "std")
+                    },
+                }
+            )
 
             # Print normalization parameters
             for label, stats in norm_transform.stats.items():
@@ -515,9 +548,7 @@ def main(cfg: DictConfig) -> None:
             "model/params_perturbation_transform": param_counts.get(
                 "perturbation_transform", 0
             ),
-            "model/params_perturbation_head": param_counts.get(
-                "perturbation_head", 0
-            ),
+            "model/params_perturbation_head": param_counts.get("perturbation_head", 0),
             "model/params_total": param_counts.get("total", 0),
         }
     )
@@ -580,8 +611,12 @@ def main(cfg: DictConfig) -> None:
             inverse_transform=inverse_transform,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
             plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
-            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"]["plot_edge_recovery_every_n_epochs"],
-            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"]["plot_transformer_diagnostics_every_n_epochs"],
+            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"][
+                "plot_edge_recovery_every_n_epochs"
+            ],
+            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"][
+                "plot_transformer_diagnostics_every_n_epochs"
+            ],
             grad_accumulation_schedule=wandb.config["regression_task"][
                 "grad_accumulation_schedule"
             ],
@@ -607,8 +642,12 @@ def main(cfg: DictConfig) -> None:
             device=device,
             inverse_transform=inverse_transform,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
-            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"]["plot_edge_recovery_every_n_epochs"],
-            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"]["plot_transformer_diagnostics_every_n_epochs"],
+            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"][
+                "plot_edge_recovery_every_n_epochs"
+            ],
+            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"][
+                "plot_transformer_diagnostics_every_n_epochs"
+            ],
             execution_mode=execution_mode,
         )
 
@@ -625,7 +664,7 @@ def main(cfg: DictConfig) -> None:
                 import torch._inductor.config as inductor_config
 
                 inductor_config.precompilation_timeout_seconds = 2 * 60 * 60  # 2 hours
-                print(f"  Set precompilation timeout to 2 hours")
+                print("  Set precompilation timeout to 2 hours")
 
                 if compile_mode == "max-autotune":
                     inductor_config.max_autotune_subproc_result_timeout_seconds = 300.0
@@ -633,7 +672,7 @@ def main(cfg: DictConfig) -> None:
                     inductor_config.max_autotune_subproc_terminate_timeout_seconds = (
                         20.0
                     )
-                    print(f"  Set autotune subprocess timeout to 5 minutes")
+                    print("  Set autotune subprocess timeout to 5 minutes")
 
                 task.model = torch.compile(task.model, mode=compile_mode, dynamic=True)
                 print(

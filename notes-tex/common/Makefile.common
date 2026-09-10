@@ -230,8 +230,13 @@ figures:
 # So the conversion measures rather than assumes: convert a 100-unit square,
 # read what came out, and zoom every real conversion by 72/that. Both librsvg
 # behaviours land on width * 72/100 points, which is the true size.
-PLOT_SLUG ?= $(notdir $(CURDIR))
-PLOT_SRC  := $(REPO)/notes/assets/images/$(PLOT_SLUG)
+#
+# A document that reads panels from more than one experiment's image directory
+# lists them in PLOT_SLUGS; the first directory holding NAME.svg wins. PLOT_SLUG
+# alone still works and is the single-directory default.
+PLOT_SLUG  ?= $(notdir $(CURDIR))
+PLOT_SLUGS ?= $(PLOT_SLUG)
+PLOT_SRCS  := $(foreach slug,$(PLOT_SLUGS),$(REPO)/notes/assets/images/$(slug))
 
 plots:
 	@t=$$(mktemp -d); \
@@ -243,8 +248,10 @@ plots:
 	echo "  librsvg gives $$pt pt per 100 units; converting at zoom $$z"; \
 	for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(DEPS) 2>/dev/null | sort -u); do \
 	  n=$$(basename $$f .pdf); \
-	  s="$(PLOT_SRC)/$$n.svg"; \
-	  if [ -f "$$s" ]; then echo "  $$s -> $$f"; rsvg-convert -z $$z -f pdf -o "$$f" "$$s"; fi; \
+	  for d in $(PLOT_SRCS); do \
+	    s="$$d/$$n.svg"; \
+	    if [ -f "$$s" ]; then echo "  $$s -> $$f"; rsvg-convert -z $$z -f pdf -o "$$f" "$$s"; break; fi; \
+	  done; \
 	done
 
 watch:

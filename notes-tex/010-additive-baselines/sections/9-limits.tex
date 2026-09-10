@@ -49,7 +49,10 @@ measured, so the B5 column should be read as one draw.
 Table~\ref{tab:disjoint} has no transformer row. Its checkpoints trained on the
 random split, so scoring them on held-out query pairs would measure memorization.
 Whether the transformer's $+0.04$ margin survives a disjoint split is not
-measured, in either direction.
+measured, in either direction. The run that measures it is queued: job 1609 on
+GilaHyper trains the replication configuration on the 025 query-pair-disjoint
+split (Section~\ref{sec:disjoint025}), and the baselines it will be read
+against are already in Table~\ref{tab:disjoint025}.
 
 \notesec{Whether the graphs carry information is separate from whether they are
 load-bearing}

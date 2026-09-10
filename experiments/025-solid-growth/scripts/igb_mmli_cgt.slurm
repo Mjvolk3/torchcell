@@ -16,15 +16,19 @@
 #
 # THE CHECKOUT. IGB's main clone (~/projects/torchcell) sits on whatever branch the 019
 # work last needed and must not be flipped under a running job, so this job runs from its
-# OWN worktree, created HERE on the compute node at first use. Two constraints shape that:
-# the login node must not walk a 12k-file checkout (it is access + transfer only, and a
-# `git worktree add` there drew a warning in July 2026), and the compute node has no
-# network, so the ref has to be fetched beforehand, from the login node:
+# OWN detached worktree. The worktree is prepared on the LOGIN node before sbatch: the
+# compute nodes have no git at all (jobs 2390540-43 died at `git: command not found`, and
+# rockylinux_9.sif carries none either, as the 019 wave-5 launcher records), and no
+# network. The job only verifies the worktree exists and prints its HEAD from the gitdir.
 #
 #   git -C ~/projects/torchcell fetch origin feat/025-fitness-joint-head
+#   # first time:
+#   git -C ~/projects/torchcell worktree add --detach \
+#       ~/projects/torchcell.worktrees/025-fitness-joint-head origin/feat/025-fitness-joint-head
+#   # afterwards, to advance a queued job's code (never under a RUNNING job):
+#   git -C ~/projects/torchcell.worktrees/025-fitness-joint-head checkout --detach origin/feat/025-fitness-joint-head
 #
-# Every job then checks out origin/$BRANCH (detached) and prints the SHA it runs, so a
-# later push changes what a LATER job runs, never a running one.
+# A job reads whatever the worktree holds when it starts, so advance it only between jobs.
 #
 # LOG DIR must pre-exist: SLURM opens --output before this script runs.
 #   mkdir -p /home/a-m/mjvolk3/scratch/torchcell/experiments/025-solid-growth/slurm/output
@@ -70,17 +74,15 @@ echo "branch      : $BRANCH"
 echo "DATA_ROOT   : $IGB_DATA_ROOT"
 echo "=========================================================="
 
-# ---- Checkout (compute node, no network: origin/$BRANCH must already be fetched) ----
-git -C "$MAIN_REPO" rev-parse --verify --quiet "origin/$BRANCH" >/dev/null || {
-  echo "ERROR: origin/$BRANCH not fetched in $MAIN_REPO; run on the login node:" >&2
+# ---- Checkout (prepared on the login node; compute nodes have no git) ----
+[[ -d "$PROJECT_ROOT" && -f "$PROJECT_ROOT/.git" ]] || {
+  echo "ERROR: worktree $PROJECT_ROOT missing; on the login node run:" >&2
   echo "       git -C $MAIN_REPO fetch origin $BRANCH" >&2
+  echo "       git -C $MAIN_REPO worktree add --detach $PROJECT_ROOT origin/$BRANCH" >&2
   exit 1; }
-if [[ ! -d "$PROJECT_ROOT" ]]; then
-  git -C "$MAIN_REPO" worktree add --detach "$PROJECT_ROOT" "origin/$BRANCH" || exit 1
-else
-  git -C "$PROJECT_ROOT" checkout --detach "origin/$BRANCH" || exit 1
-fi
-echo "commit      : $(git -C "$PROJECT_ROOT" rev-parse HEAD)"
+# A worktree's .git is a one-line file `gitdir: <path>`; a detached HEAD there is the SHA.
+GITDIR="$(sed -n 's/^gitdir: //p' "$PROJECT_ROOT/.git")"
+echo "commit      : $(cat "$GITDIR/HEAD")"
 # The worktree has no .env (untracked); the main clone's holds IGB's roots. The exports
 # below win anyway, since load_dotenv never overrides a set variable.
 [[ -f "$PROJECT_ROOT/.env" ]] || cp "$MAIN_REPO/.env" "$PROJECT_ROOT/.env"

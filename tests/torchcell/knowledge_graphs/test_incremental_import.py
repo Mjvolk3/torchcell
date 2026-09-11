@@ -152,6 +152,7 @@ def test_incremental_import_call_mirrors_full_build_flags(out_dir: Path) -> None
         "--skip-duplicate-nodes=true",
         "--skip-bad-relationships=false",
         "--strict=true",
+        "--bad-tolerance=1000000000",  # duplicates of existing ids are "bad entries"
     ):
         assert flag in call
     assert (

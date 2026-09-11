@@ -326,6 +326,7 @@ def incremental_import_call(
     report_file: str | None = None,
     threads: int = 8,
     max_off_heap_memory: str = "16G",
+    bad_tolerance: int = 1_000_000_000,
 ) -> str:
     """The ``neo4j-admin database import incremental`` command for this increment.
 
@@ -351,6 +352,11 @@ def incremental_import_call(
         "--strict=true",
         f"--threads={threads}",
         f"--max-off-heap-memory={max_off_heap_memory}",
+        # every node id that already exists in the store counts as a "bad entry" under
+        # --skip-duplicate-nodes; the default tolerance of 1000 aborts an increment that
+        # shares more than that many nodes with the store (measured: re-admitting a
+        # dataset already served died at 1008 duplicates), so the cap is lifted
+        f"--bad-tolerance={bad_tolerance}",
     ]
     if report_file is not None:
         parts.append(f"--report-file={report_file}")

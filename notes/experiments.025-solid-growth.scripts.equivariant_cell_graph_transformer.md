@@ -475,4 +475,11 @@ checkpoint keeps the best epoch.
 | 2394963 | mmli | `cgt_s0_q_kl_emb_022` (composite, 100 ep) | afterany 2391135 |
 | 2394964 | mmli | `cgt_s0_q_kl_calm_023` (CaLM, 100 ep) | afterany 2394963 |
 | 2394965 | cabbi | `cgt_s0_q_kl_prot_024` (ProtT5, 100 ep) | running |
-| 2394966 | cabbi | `cgt_s0_q_kl_ctrl_025` (learnable control, 100 ep) | afterany 2394965 |
+| 2394966 | cabbi | `cgt_s0_q_kl_ctrl_025` (learnable control, 100 ep) | cancelled 14:50 before starting |
+
+The 100-epoch learnable control was cancelled: the learnable model's held-out optimum
+falls early (epoch 14 in the 010 replication, 2 to 12 in job 1640) and its validation
+loss only climbs after, so the 30-epoch control (`_016`, 2391135) already contains its
+best epoch, and a 100-epoch run would read a memorized state. The 100-epoch embedding
+arms are read at their best epoch and at epoch 30 against `_016`, and at epoch 100 with
+no matched control. The cabbi slot after 2394965 is free.

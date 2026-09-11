@@ -1,0 +1,27 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_fudt_026.yaml
+#
+# FLANKS ALONE, 100 EPOCHS: promoter + terminator with no ORF view. cgt_s0_q_kl_emb_022
+# with the composite reduced to the two species fungal UTR transformer embeddings,
+# fudt_upstream (1,003 bp 5' of the start, 768) and fudt_downstream (300 bp 3' of the
+# stop, 768), 1,536 dims, through the same 2-layer preprocessor at hidden width 692 so the
+# embedding side carries 1,190,088 parameters against the learnable table's 1,189,260.
+# Completes the single-region set (CaLM _020/_023, ProtT5 _021/_024): what the regulatory
+# DNA carries for interaction extrapolation when the ORF is absent. In the 019 kNN probe
+# both flanks sat near the noise floor on morphology and expression; untested on
+# interactions.
+#
+#   sbatch -p cabbi --gres=gpu:4 -J 025-q-fudt-100 experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_fudt_026
+defaults:
+  - cgt_s0_q_kl_emb_022
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, seq_embedding, fudt_only, flanks_only, param_matched, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_100, igb]
+
+cell_dataset:
+  node_embeddings: [fudt_upstream, fudt_downstream]
+
+model:
+  learnable_embedding:
+    preprocessor:
+      hidden_dim: 692

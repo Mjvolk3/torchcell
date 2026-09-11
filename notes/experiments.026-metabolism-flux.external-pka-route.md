@@ -966,3 +966,56 @@ and the 64 percent upper bound of 425 of 665 is a real target rather than an ari
 - Whether a per-compound cross-check between two predictors is a usable bad-ladder detector.
   Panel f says the tools disagree with each other more than the best one disagrees with
   ChemAxon, which is what would make such a check informative, and it has not been built.
+
+## 2026.09.11 - The 300-compound set is superseded, and two engineering bugs found on the way
+
+The 300-compound benchmark answered whether an open-source predictor can stand in for
+ChemAxon at all. It cannot settle which one, and the selection has moved to a 2,400-compound
+set scored at every working compartment pH: **[[experiments.026-metabolism-flux.pka-method-selection]]**.
+The seed-17 300 are pinned into that set as a fixed subset, so nothing here is invalidated;
+it becomes the subset the extended run's ensemble membership is fitted on.
+
+Two things measured here should be carried forward rather than re-derived, and two
+engineering faults were found that make earlier per-tool failure counts read wrong.
+
+### The two faults, both of which look like tool limitations and are not
+
+**pKasolver-lite writes its subprocess handoff to a FIXED filename in the current
+directory.** `pkasolver.query._call_dimorphite_dl` shells out to `call_dimorphite_dl.py`,
+which ends with `pickle.dump(mol, open("test.pkl", "wb"))`, and the parent reads `test.pkl`
+back. Two processes in one directory overwrite each other's handoff, and the loser sees
+`EOFError: Ran out of input` or an `AssertionError` on a half-written pickle. Measured: 14
+shards in one working directory failed **89 of 172** compounds; the same shards in
+per-shard directories failed **16 of 2,400**. The fix is one `cd` per worker, and it is in
+`gh_pka_selection_cpu_predictors.slurm`.
+
+**The same subprocess needs the env's `bin` first on `PATH`.** It is launched as a bare
+`python`, so without that every compound fails inside the subprocess with
+`ModuleNotFoundError: No module named 'pkasolver'` while the parent records a clean error.
+That is why the first sharded submission looked like a 100 percent failure rate.
+
+Neither fault affects the original 300-compound numbers, which were produced by a single
+process in the repository root.
+
+### MolGpKa is far cheaper than the 300-compound run suggested
+
+The 300-compound run took 11,783 s in one process, 39 s per compound. The 2,400-compound
+run took **1,889 CPU-seconds over 56 shards, 0.79 s per compound**, on a set whose compounds
+are on average larger. Whatever dominated the earlier run, it was not the model. The
+practical consequence is that MolGpKa over the whole unpriced set is minutes, not hours.
+
+### Where MolGpKa actually fails, and it is the regime that matters
+
+126 of 2,400 compounds come back with an EMPTY ladder and no error, which the record shape
+counts as `ok` and the scoring counts as a failure. 93 of those 126 are lipid-like and 94
+carry a phosphate. So the failure is concentrated exactly in the class the yeast-GEM fill-in
+is spent on. That is what put a CASCADE into the ensemble list, and it is why the selected
+method is a cascade rather than the single best tool.
+
+### Files
+
+- `experiments/026-metabolism-flux/scripts/external_pka_method_selection.py`
+- `experiments/026-metabolism-flux/scripts/gh_pka_selection_cpu_predictors.slurm`
+- `experiments/026-metabolism-flux/scripts/external_pka_benchmark.py`
+  (`--shard`/`--n-shards`, `merge-shards`, the `EXTERNAL_PKA_SAMPLE` and
+  `EXTERNAL_PKA_PRED_TEMPLATE` environment overrides, and `_transform_kj_per_mol(..., p_h)`)

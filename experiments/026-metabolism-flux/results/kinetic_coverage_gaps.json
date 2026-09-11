@@ -1,0 +1,2128 @@
+{
+  "built_at": "2026-09-11T05:41:40.770795+00:00",
+  "n_catalytic_units": 3728,
+  "n_reactions": 4131,
+  "n_metabolites": 2806,
+  "n_genes": 1161,
+  "sources": {
+    "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/swissprot.tsv": "d27e0950c93dc81bfca30e00e446b95d6fedfd86530d9dde76699cdda43bae1c",
+    "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/smilesDB.tsv": "3d9efb2076c94a9c3a22ef25753edf60fd215bf7c79a5a00783f4b9cedb2f884",
+    "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/metanetx/chem_prop.tsv": "8463f8ee94a1eaec6d6820a05bf09455675a9eb41ac72230dd0d85c9d6c800d2",
+    "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/open_enzyme_database/scerevisiae/oed_records.json": "0e4aca9e0872e5b19b7c325dc83c64cc43c9f2fba0d535d417e10a925e683398",
+    "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/within_class_plausibility.json": "7184ea9488bb2570d2c53aa12891faf0f1052b8e6f60cc159e06d249bd29a58b",
+    "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/lipid_structures.json": "282f784e06fd46606ef2bfa8b1c7bac3eea6ec4a9cfa84a58c5ed68fc8e1637c",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/ezkinetics/verified/k_cat.parquet": "ab116c336f71312a4f53d04a2511121f2e5f8f9c34e7a0ea34ad7767f0dd894d",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/eitlem/verified/k_cat.parquet": "7cd3d1f1fff85be486387a8cd16089eec39eb535c25ff518bce4d4c568779390",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/unikp/verified/k_cat.parquet": "7b3f838606db7dd43d7e38380702da6edc330a02e8b52e9715b1cbfaac42c1e7",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/ezkinetics/verified/k_cat_manifest.json": "4ef94ff062ff83fc47041b8ce486cffbd61bf1bbbef2b9bae022b4620a76627a",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/eitlem/verified/k_cat_manifest.json": "6394d202df3cfbda690b683ffdafc350c0dcfdb9ced1a416350c502032bf8009",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/unikp/verified/k_cat_manifest.json": "54d60a70d9db421069546f8a5caf2a196c3716f05b57ef3fce3a394fa6222471",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/ezkinetics/verified/K_M.parquet": "be180871f6f9ff85aa4a1b41610f64116edf1f2c45249d3f8316c27e36fc9d87",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/ezkinetics/verified/K_M_manifest.json": "685a7aea82ba09fdcc5d3314467956984a4d5546fc8d53d1a0b16a3007f101f3"
+  },
+  "substrate_structure_routes": {
+    "none": 1447,
+    "verified": 1359
+  },
+  "lipid_writer_reach": {
+    "n_lipid_structures_formula_verified": 347,
+    "n_substrates_of_default_tier_units_without_smiles": 19,
+    "n_of_those_the_lipid_writer_covers": 0
+  },
+  "parameters": {
+    "k_cat": {
+      "parameter": "k_cat",
+      "selected_predictors": [
+        "ezkinetics",
+        "eitlem",
+        "unikp"
+      ],
+      "selection_rule": "own_class_band",
+      "selection_baseline_fraction": 0.5319148936170213,
+      "tier_counts": {
+        "measured": 97,
+        "homolog": 782,
+        "predicted": 2831,
+        "default": 18
+      },
+      "n_units": 3728,
+      "n_units_any_selected_prediction": 3709,
+      "n_units_all_selected_predictions": 3709,
+      "n_units_partial_selected_predictions": 0,
+      "n_units_no_selected_prediction": 19,
+      "default_tier_blockers": {
+        "substrate_structure_missing": 18
+      },
+      "default_tier_units": [
+        {
+          "unit_id": 556,
+          "reaction_id": "r_0520",
+          "reaction_name": "GPI-anchor assembly, step 6",
+          "gene_ids": [
+            "YKL165C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0334",
+              "6-O-[alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 559,
+          "reaction_id": "r_0523",
+          "reaction_name": "GPI-anchor assembly, step 9",
+          "gene_ids": [
+            "YDR302W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0338",
+              "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 560,
+          "reaction_id": "r_0523",
+          "reaction_name": "GPI-anchor assembly, step 9",
+          "gene_ids": [
+            "YLL031C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0338",
+              "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 1379,
+          "reaction_id": "r_1228",
+          "reaction_name": "N,N'-diformyldityrosine transport",
+          "gene_ids": [
+            "YBR180W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_1185",
+              "N,N'-diformyldityrosine",
+              "C20H22N2O8"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 1565,
+          "reaction_id": "r_2148",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-but-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2775",
+              "3-hydroxybutanoyl-ACP",
+              "C4H7O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 1566,
+          "reaction_id": "r_2149",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-hex-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2776",
+              "3-hydroxyhexanoyl-ACP",
+              "C6H11O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 1567,
+          "reaction_id": "r_2150",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-oct-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2777",
+              "3-hydroxyoctanoyl-ACP",
+              "C8H15O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3277,
+          "reaction_id": "r_4152",
+          "reaction_name": "Cytochrome c apocytochrome-c-lyase",
+          "gene_ids": [
+            "YAL039C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.4.1.17",
+            "4.4.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: candidate structures exist but none matches the GEM's composition, so the GEM's formula is a partial or protein-bound species",
+          "unresolved_substrates": [
+            [
+              "s_3748",
+              "Cytochrome c",
+              "C40H40FeN6O6S2"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3278,
+          "reaction_id": "r_4152",
+          "reaction_name": "Cytochrome c apocytochrome-c-lyase",
+          "gene_ids": [
+            "YKL087C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.4.1.17",
+            "4.4.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: candidate structures exist but none matches the GEM's composition, so the GEM's formula is a partial or protein-bound species",
+          "unresolved_substrates": [
+            [
+              "s_3748",
+              "Cytochrome c",
+              "C40H40FeN6O6S2"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3414,
+          "reaction_id": "r_4239",
+          "reaction_name": "L-arginyl-tRNA(Arg):protein arginyltransferase",
+          "gene_ids": [
+            "YGL017W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.2.8"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_0428",
+              "Arg-tRNA(Arg)",
+              "C6H15N4OR"
+            ],
+            [
+              "s_3884",
+              "generic protein",
+              "C2H4NOR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3458,
+          "reaction_id": "r_4277",
+          "reaction_name": "acyl-CoA:sn-glycerol-3-phosphate 1-O-acyltransferase",
+          "gene_ids": [
+            "YLR099C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.51"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3937",
+              "Acyl-CoA",
+              "C22H31N7O17P3SR"
+            ],
+            [
+              "s_3938",
+              "1-acyl-sn-glycerol 3-phosphate",
+              "C4H6O7PR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3459,
+          "reaction_id": "r_4277",
+          "reaction_name": "acyl-CoA:sn-glycerol-3-phosphate 1-O-acyltransferase",
+          "gene_ids": [
+            "YPR139C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.51"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3937",
+              "Acyl-CoA",
+              "C22H31N7O17P3SR"
+            ],
+            [
+              "s_3938",
+              "1-acyl-sn-glycerol 3-phosphate",
+              "C4H6O7PR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3462,
+          "reaction_id": "r_4280",
+          "reaction_name": "octanoyl-[acp]:protein N6-octanoyltransferase",
+          "gene_ids": [
+            "YLR239C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.181"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_1254",
+              "octanoyl-ACP",
+              "C8H15OSR"
+            ],
+            [
+              "s_3944",
+              "Apoprotein",
+              "NH2R"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3463,
+          "reaction_id": "r_4281",
+          "reaction_name": "lipoyl-[acp]:protein N6-lipoyltransferase",
+          "gene_ids": [
+            "YLR239C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.181"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3944",
+              "Apoprotein",
+              "NH2R"
+            ],
+            [
+              "s_3946",
+              "Lipoyl-[acp]",
+              "C8H13OS3R"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3505,
+          "reaction_id": "r_4325",
+          "reaction_name": "Iron sulfur cluster assembly protein 2, mitochondrial (Iron sulfur cluster scaffold protein 2)",
+          "gene_ids": [
+            "YOR226C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM",
+          "unresolved_substrates": [
+            [
+              "s_4006",
+              "S-sulfanyl-[L-cysteine desulfurase]",
+              ""
+            ],
+            [
+              "s_4007",
+              "[disordered-form [Fe-S] cluster scaffold protein]",
+              ""
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3506,
+          "reaction_id": "r_4325",
+          "reaction_name": "Iron sulfur cluster assembly protein 2, mitochondrial (Iron sulfur cluster scaffold protein 2)",
+          "gene_ids": [
+            "YPL135W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM",
+          "unresolved_substrates": [
+            [
+              "s_4006",
+              "S-sulfanyl-[L-cysteine desulfurase]",
+              ""
+            ],
+            [
+              "s_4007",
+              "[disordered-form [Fe-S] cluster scaffold protein]",
+              ""
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3662,
+          "reaction_id": "r_4700",
+          "reaction_name": "hydrogen sulfide transport",
+          "gene_ids": [
+            "YIL166C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0841",
+              "hydrogen sulfide",
+              "HS"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3665,
+          "reaction_id": "r_4704",
+          "reaction_name": "alkanesulfonate transport",
+          "gene_ids": [
+            "YIL166C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_4266",
+              "alkanesulfonate",
+              "CH3O3SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        }
+      ],
+      "missing_all_selected_blockers": {
+        "substrate_structure_missing": 19
+      },
+      "missing_all_selected_units": [
+        {
+          "unit_id": 556,
+          "reaction_id": "r_0520",
+          "reaction_name": "GPI-anchor assembly, step 6",
+          "gene_ids": [
+            "YKL165C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0334",
+              "6-O-[alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 559,
+          "reaction_id": "r_0523",
+          "reaction_name": "GPI-anchor assembly, step 9",
+          "gene_ids": [
+            "YDR302W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0338",
+              "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 560,
+          "reaction_id": "r_0523",
+          "reaction_name": "GPI-anchor assembly, step 9",
+          "gene_ids": [
+            "YLL031C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0338",
+              "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 1379,
+          "reaction_id": "r_1228",
+          "reaction_name": "N,N'-diformyldityrosine transport",
+          "gene_ids": [
+            "YBR180W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_1185",
+              "N,N'-diformyldityrosine",
+              "C20H22N2O8"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 1565,
+          "reaction_id": "r_2148",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-but-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2775",
+              "3-hydroxybutanoyl-ACP",
+              "C4H7O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 1566,
+          "reaction_id": "r_2149",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-hex-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2776",
+              "3-hydroxyhexanoyl-ACP",
+              "C6H11O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 1567,
+          "reaction_id": "r_2150",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-oct-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2777",
+              "3-hydroxyoctanoyl-ACP",
+              "C8H15O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 1717,
+          "reaction_id": "r_2295",
+          "reaction_name": "delta3,delta2-enoyl-CoA isomerase (cis-dec-3-enoyl-CoA)",
+          "gene_ids": [
+            "YLR284C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "5.3.3.8"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_2926",
+              "cis-dec-3-enoyl-CoA",
+              "C31H52N7O17P3S"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3277,
+          "reaction_id": "r_4152",
+          "reaction_name": "Cytochrome c apocytochrome-c-lyase",
+          "gene_ids": [
+            "YAL039C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.4.1.17",
+            "4.4.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: candidate structures exist but none matches the GEM's composition, so the GEM's formula is a partial or protein-bound species",
+          "unresolved_substrates": [
+            [
+              "s_3748",
+              "Cytochrome c",
+              "C40H40FeN6O6S2"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3278,
+          "reaction_id": "r_4152",
+          "reaction_name": "Cytochrome c apocytochrome-c-lyase",
+          "gene_ids": [
+            "YKL087C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.4.1.17",
+            "4.4.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: candidate structures exist but none matches the GEM's composition, so the GEM's formula is a partial or protein-bound species",
+          "unresolved_substrates": [
+            [
+              "s_3748",
+              "Cytochrome c",
+              "C40H40FeN6O6S2"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3414,
+          "reaction_id": "r_4239",
+          "reaction_name": "L-arginyl-tRNA(Arg):protein arginyltransferase",
+          "gene_ids": [
+            "YGL017W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.2.8"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_0428",
+              "Arg-tRNA(Arg)",
+              "C6H15N4OR"
+            ],
+            [
+              "s_3884",
+              "generic protein",
+              "C2H4NOR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3458,
+          "reaction_id": "r_4277",
+          "reaction_name": "acyl-CoA:sn-glycerol-3-phosphate 1-O-acyltransferase",
+          "gene_ids": [
+            "YLR099C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.51"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3937",
+              "Acyl-CoA",
+              "C22H31N7O17P3SR"
+            ],
+            [
+              "s_3938",
+              "1-acyl-sn-glycerol 3-phosphate",
+              "C4H6O7PR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3459,
+          "reaction_id": "r_4277",
+          "reaction_name": "acyl-CoA:sn-glycerol-3-phosphate 1-O-acyltransferase",
+          "gene_ids": [
+            "YPR139C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.51"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3937",
+              "Acyl-CoA",
+              "C22H31N7O17P3SR"
+            ],
+            [
+              "s_3938",
+              "1-acyl-sn-glycerol 3-phosphate",
+              "C4H6O7PR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3462,
+          "reaction_id": "r_4280",
+          "reaction_name": "octanoyl-[acp]:protein N6-octanoyltransferase",
+          "gene_ids": [
+            "YLR239C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.181"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_1254",
+              "octanoyl-ACP",
+              "C8H15OSR"
+            ],
+            [
+              "s_3944",
+              "Apoprotein",
+              "NH2R"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3463,
+          "reaction_id": "r_4281",
+          "reaction_name": "lipoyl-[acp]:protein N6-lipoyltransferase",
+          "gene_ids": [
+            "YLR239C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.181"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3944",
+              "Apoprotein",
+              "NH2R"
+            ],
+            [
+              "s_3946",
+              "Lipoyl-[acp]",
+              "C8H13OS3R"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3505,
+          "reaction_id": "r_4325",
+          "reaction_name": "Iron sulfur cluster assembly protein 2, mitochondrial (Iron sulfur cluster scaffold protein 2)",
+          "gene_ids": [
+            "YOR226C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM",
+          "unresolved_substrates": [
+            [
+              "s_4006",
+              "S-sulfanyl-[L-cysteine desulfurase]",
+              ""
+            ],
+            [
+              "s_4007",
+              "[disordered-form [Fe-S] cluster scaffold protein]",
+              ""
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3506,
+          "reaction_id": "r_4325",
+          "reaction_name": "Iron sulfur cluster assembly protein 2, mitochondrial (Iron sulfur cluster scaffold protein 2)",
+          "gene_ids": [
+            "YPL135W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM",
+          "unresolved_substrates": [
+            [
+              "s_4006",
+              "S-sulfanyl-[L-cysteine desulfurase]",
+              ""
+            ],
+            [
+              "s_4007",
+              "[disordered-form [Fe-S] cluster scaffold protein]",
+              ""
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3662,
+          "reaction_id": "r_4700",
+          "reaction_name": "hydrogen sulfide transport",
+          "gene_ids": [
+            "YIL166C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0841",
+              "hydrogen sulfide",
+              "HS"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        },
+        {
+          "unit_id": 3665,
+          "reaction_id": "r_4704",
+          "reaction_name": "alkanesulfonate transport",
+          "gene_ids": [
+            "YIL166C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_4266",
+              "alkanesulfonate",
+              "CH3O3SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics",
+            "eitlem",
+            "unikp"
+          ]
+        }
+      ],
+      "predictor_row_failures": {
+        "ezkinetics": {
+          "pairs_the_predictor_left_unpriced": 0
+        },
+        "eitlem": {
+          "pairs_the_predictor_left_unpriced": 0
+        },
+        "unikp": {
+          "pairs_the_predictor_left_unpriced": 3
+        }
+      }
+    },
+    "K_M": {
+      "parameter": "K_M",
+      "selected_predictors": [
+        "ezkinetics"
+      ],
+      "selection_rule": "own_class_band",
+      "selection_baseline_fraction": 0.48936170212765956,
+      "tier_counts": {
+        "measured": 97,
+        "homolog": 782,
+        "predicted": 2831,
+        "default": 18
+      },
+      "n_units": 3728,
+      "n_units_any_selected_prediction": 3709,
+      "n_units_all_selected_predictions": 3709,
+      "n_units_partial_selected_predictions": 0,
+      "n_units_no_selected_prediction": 19,
+      "default_tier_blockers": {
+        "substrate_structure_missing": 18
+      },
+      "default_tier_units": [
+        {
+          "unit_id": 556,
+          "reaction_id": "r_0520",
+          "reaction_name": "GPI-anchor assembly, step 6",
+          "gene_ids": [
+            "YKL165C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0334",
+              "6-O-[alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 559,
+          "reaction_id": "r_0523",
+          "reaction_name": "GPI-anchor assembly, step 9",
+          "gene_ids": [
+            "YDR302W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0338",
+              "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 560,
+          "reaction_id": "r_0523",
+          "reaction_name": "GPI-anchor assembly, step 9",
+          "gene_ids": [
+            "YLL031C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0338",
+              "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 1379,
+          "reaction_id": "r_1228",
+          "reaction_name": "N,N'-diformyldityrosine transport",
+          "gene_ids": [
+            "YBR180W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_1185",
+              "N,N'-diformyldityrosine",
+              "C20H22N2O8"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 1565,
+          "reaction_id": "r_2148",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-but-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2775",
+              "3-hydroxybutanoyl-ACP",
+              "C4H7O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 1566,
+          "reaction_id": "r_2149",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-hex-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2776",
+              "3-hydroxyhexanoyl-ACP",
+              "C6H11O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 1567,
+          "reaction_id": "r_2150",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-oct-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2777",
+              "3-hydroxyoctanoyl-ACP",
+              "C8H15O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3277,
+          "reaction_id": "r_4152",
+          "reaction_name": "Cytochrome c apocytochrome-c-lyase",
+          "gene_ids": [
+            "YAL039C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.4.1.17",
+            "4.4.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: candidate structures exist but none matches the GEM's composition, so the GEM's formula is a partial or protein-bound species",
+          "unresolved_substrates": [
+            [
+              "s_3748",
+              "Cytochrome c",
+              "C40H40FeN6O6S2"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3278,
+          "reaction_id": "r_4152",
+          "reaction_name": "Cytochrome c apocytochrome-c-lyase",
+          "gene_ids": [
+            "YKL087C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.4.1.17",
+            "4.4.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: candidate structures exist but none matches the GEM's composition, so the GEM's formula is a partial or protein-bound species",
+          "unresolved_substrates": [
+            [
+              "s_3748",
+              "Cytochrome c",
+              "C40H40FeN6O6S2"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3414,
+          "reaction_id": "r_4239",
+          "reaction_name": "L-arginyl-tRNA(Arg):protein arginyltransferase",
+          "gene_ids": [
+            "YGL017W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.2.8"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_0428",
+              "Arg-tRNA(Arg)",
+              "C6H15N4OR"
+            ],
+            [
+              "s_3884",
+              "generic protein",
+              "C2H4NOR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3458,
+          "reaction_id": "r_4277",
+          "reaction_name": "acyl-CoA:sn-glycerol-3-phosphate 1-O-acyltransferase",
+          "gene_ids": [
+            "YLR099C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.51"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3937",
+              "Acyl-CoA",
+              "C22H31N7O17P3SR"
+            ],
+            [
+              "s_3938",
+              "1-acyl-sn-glycerol 3-phosphate",
+              "C4H6O7PR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3459,
+          "reaction_id": "r_4277",
+          "reaction_name": "acyl-CoA:sn-glycerol-3-phosphate 1-O-acyltransferase",
+          "gene_ids": [
+            "YPR139C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.51"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3937",
+              "Acyl-CoA",
+              "C22H31N7O17P3SR"
+            ],
+            [
+              "s_3938",
+              "1-acyl-sn-glycerol 3-phosphate",
+              "C4H6O7PR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3462,
+          "reaction_id": "r_4280",
+          "reaction_name": "octanoyl-[acp]:protein N6-octanoyltransferase",
+          "gene_ids": [
+            "YLR239C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.181"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_1254",
+              "octanoyl-ACP",
+              "C8H15OSR"
+            ],
+            [
+              "s_3944",
+              "Apoprotein",
+              "NH2R"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3463,
+          "reaction_id": "r_4281",
+          "reaction_name": "lipoyl-[acp]:protein N6-lipoyltransferase",
+          "gene_ids": [
+            "YLR239C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.181"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3944",
+              "Apoprotein",
+              "NH2R"
+            ],
+            [
+              "s_3946",
+              "Lipoyl-[acp]",
+              "C8H13OS3R"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3505,
+          "reaction_id": "r_4325",
+          "reaction_name": "Iron sulfur cluster assembly protein 2, mitochondrial (Iron sulfur cluster scaffold protein 2)",
+          "gene_ids": [
+            "YOR226C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM",
+          "unresolved_substrates": [
+            [
+              "s_4006",
+              "S-sulfanyl-[L-cysteine desulfurase]",
+              ""
+            ],
+            [
+              "s_4007",
+              "[disordered-form [Fe-S] cluster scaffold protein]",
+              ""
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3506,
+          "reaction_id": "r_4325",
+          "reaction_name": "Iron sulfur cluster assembly protein 2, mitochondrial (Iron sulfur cluster scaffold protein 2)",
+          "gene_ids": [
+            "YPL135W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM",
+          "unresolved_substrates": [
+            [
+              "s_4006",
+              "S-sulfanyl-[L-cysteine desulfurase]",
+              ""
+            ],
+            [
+              "s_4007",
+              "[disordered-form [Fe-S] cluster scaffold protein]",
+              ""
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3662,
+          "reaction_id": "r_4700",
+          "reaction_name": "hydrogen sulfide transport",
+          "gene_ids": [
+            "YIL166C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0841",
+              "hydrogen sulfide",
+              "HS"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3665,
+          "reaction_id": "r_4704",
+          "reaction_name": "alkanesulfonate transport",
+          "gene_ids": [
+            "YIL166C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_4266",
+              "alkanesulfonate",
+              "CH3O3SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        }
+      ],
+      "missing_all_selected_blockers": {
+        "substrate_structure_missing": 19
+      },
+      "missing_all_selected_units": [
+        {
+          "unit_id": 556,
+          "reaction_id": "r_0520",
+          "reaction_name": "GPI-anchor assembly, step 6",
+          "gene_ids": [
+            "YKL165C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0334",
+              "6-O-[alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 559,
+          "reaction_id": "r_0523",
+          "reaction_name": "GPI-anchor assembly, step 9",
+          "gene_ids": [
+            "YDR302W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0338",
+              "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 560,
+          "reaction_id": "r_0523",
+          "reaction_name": "GPI-anchor assembly, step 9",
+          "gene_ids": [
+            "YLL031C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.-.-.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM | no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0338",
+              "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+              ""
+            ],
+            [
+              "s_1352",
+              "phosphatidylethanolamine backbone",
+              "C5H10NO4P"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 1379,
+          "reaction_id": "r_1228",
+          "reaction_name": "N,N'-diformyldityrosine transport",
+          "gene_ids": [
+            "YBR180W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_1185",
+              "N,N'-diformyldityrosine",
+              "C20H22N2O8"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 1565,
+          "reaction_id": "r_2148",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-but-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2775",
+              "3-hydroxybutanoyl-ACP",
+              "C4H7O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 1566,
+          "reaction_id": "r_2149",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-hex-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2776",
+              "3-hydroxyhexanoyl-ACP",
+              "C6H11O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 1567,
+          "reaction_id": "r_2150",
+          "reaction_name": "3-hydroxyacyl-thioester dehydratase (trans-oct-2-enoyl-ACP)",
+          "gene_ids": [
+            "YHR067W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.2.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_2777",
+              "3-hydroxyoctanoyl-ACP",
+              "C8H15O2SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 1717,
+          "reaction_id": "r_2295",
+          "reaction_name": "delta3,delta2-enoyl-CoA isomerase (cis-dec-3-enoyl-CoA)",
+          "gene_ids": [
+            "YLR284C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "5.3.3.8"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_2926",
+              "cis-dec-3-enoyl-CoA",
+              "C31H52N7O17P3S"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3277,
+          "reaction_id": "r_4152",
+          "reaction_name": "Cytochrome c apocytochrome-c-lyase",
+          "gene_ids": [
+            "YAL039C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.4.1.17",
+            "4.4.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: candidate structures exist but none matches the GEM's composition, so the GEM's formula is a partial or protein-bound species",
+          "unresolved_substrates": [
+            [
+              "s_3748",
+              "Cytochrome c",
+              "C40H40FeN6O6S2"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3278,
+          "reaction_id": "r_4152",
+          "reaction_name": "Cytochrome c apocytochrome-c-lyase",
+          "gene_ids": [
+            "YKL087C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "4.4.1.17",
+            "4.4.1.-"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: candidate structures exist but none matches the GEM's composition, so the GEM's formula is a partial or protein-bound species",
+          "unresolved_substrates": [
+            [
+              "s_3748",
+              "Cytochrome c",
+              "C40H40FeN6O6S2"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3414,
+          "reaction_id": "r_4239",
+          "reaction_name": "L-arginyl-tRNA(Arg):protein arginyltransferase",
+          "gene_ids": [
+            "YGL017W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.2.8"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_0428",
+              "Arg-tRNA(Arg)",
+              "C6H15N4OR"
+            ],
+            [
+              "s_3884",
+              "generic protein",
+              "C2H4NOR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3458,
+          "reaction_id": "r_4277",
+          "reaction_name": "acyl-CoA:sn-glycerol-3-phosphate 1-O-acyltransferase",
+          "gene_ids": [
+            "YLR099C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.51"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3937",
+              "Acyl-CoA",
+              "C22H31N7O17P3SR"
+            ],
+            [
+              "s_3938",
+              "1-acyl-sn-glycerol 3-phosphate",
+              "C4H6O7PR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3459,
+          "reaction_id": "r_4277",
+          "reaction_name": "acyl-CoA:sn-glycerol-3-phosphate 1-O-acyltransferase",
+          "gene_ids": [
+            "YPR139C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.51"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3937",
+              "Acyl-CoA",
+              "C22H31N7O17P3SR"
+            ],
+            [
+              "s_3938",
+              "1-acyl-sn-glycerol 3-phosphate",
+              "C4H6O7PR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3462,
+          "reaction_id": "r_4280",
+          "reaction_name": "octanoyl-[acp]:protein N6-octanoyltransferase",
+          "gene_ids": [
+            "YLR239C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.181"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_1254",
+              "octanoyl-ACP",
+              "C8H15OSR"
+            ],
+            [
+              "s_3944",
+              "Apoprotein",
+              "NH2R"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3463,
+          "reaction_id": "r_4281",
+          "reaction_name": "lipoyl-[acp]:protein N6-lipoyltransferase",
+          "gene_ids": [
+            "YLR239C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [
+            "2.3.1.181"
+          ],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_3944",
+              "Apoprotein",
+              "NH2R"
+            ],
+            [
+              "s_3946",
+              "Lipoyl-[acp]",
+              "C8H13OS3R"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3505,
+          "reaction_id": "r_4325",
+          "reaction_name": "Iron sulfur cluster assembly protein 2, mitochondrial (Iron sulfur cluster scaffold protein 2)",
+          "gene_ids": [
+            "YOR226C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM",
+          "unresolved_substrates": [
+            [
+              "s_4006",
+              "S-sulfanyl-[L-cysteine desulfurase]",
+              ""
+            ],
+            [
+              "s_4007",
+              "[disordered-form [Fe-S] cluster scaffold protein]",
+              ""
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3506,
+          "reaction_id": "r_4325",
+          "reaction_name": "Iron sulfur cluster assembly protein 2, mitochondrial (Iron sulfur cluster scaffold protein 2)",
+          "gene_ids": [
+            "YPL135W"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 2 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: macromolecular species with no formula in the GEM",
+          "unresolved_substrates": [
+            [
+              "s_4006",
+              "S-sulfanyl-[L-cysteine desulfurase]",
+              ""
+            ],
+            [
+              "s_4007",
+              "[disordered-form [Fe-S] cluster scaffold protein]",
+              ""
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3662,
+          "reaction_id": "r_4700",
+          "reaction_name": "hydrogen sulfide transport",
+          "gene_ids": [
+            "YIL166C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: no candidate structure in any mirrored catalog for this compound",
+          "unresolved_substrates": [
+            [
+              "s_0841",
+              "hydrogen sulfide",
+              "HS"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        },
+        {
+          "unit_id": 3665,
+          "reaction_id": "r_4704",
+          "reaction_name": "alkanesulfonate transport",
+          "gene_ids": [
+            "YIL166C"
+          ],
+          "n_genes": 1,
+          "ec_numbers": [],
+          "blocker": "substrate_structure_missing",
+          "detail": "none of 1 substrates resolves to a SMILES through any mirrored route; 0 are written by lipid_structure_writer.py; residual reasons: R-group placeholder, the GEM defines the species only up to a substituent",
+          "unresolved_substrates": [
+            [
+              "s_4266",
+              "alkanesulfonate",
+              "CH3O3SR"
+            ]
+          ],
+          "missing_predictors": [
+            "ezkinetics"
+          ]
+        }
+      ],
+      "predictor_row_failures": {
+        "ezkinetics": {
+          "pairs_the_predictor_left_unpriced": 0
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,446 @@
+{
+ "built_at": "2026-09-11T06:42:51.218179+00:00",
+ "tool": "pkasolver-lite ph7_mol (dimorphite-dl)",
+ "records": [
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "ph7_charge": -3,
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OP(=O)([O-])[O-])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -3,
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OP(=O)([O-])[O-])OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -3,
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "ph7_charge": -3,
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "ph7_charge": -3,
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "ph7_charge": -3,
+   "error": null
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-16:1, 2-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OP(=O)([O-])OCC1OC(n2ccc(N)nc2=O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-18:0, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-18:1, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OP(=O)([O-])OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:acylglycerone phosphate (16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(=O)COP(=O)(O)O",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(=O)COP(=O)([O-])[O-]",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:cardiolipin (1-16:0, 2-18:1, 3-18:0, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-16:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-16:1, 4-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-18:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-18:1, 4-18:1)",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-16:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-16:1, 4-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-18:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-18:1, 4-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:0, 2-16:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:0, 2-16:1, 4-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:1, 2-16:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:1, 2-16:1, 4-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:0, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:0, 4-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:1, 4-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-18:0, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-18:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:0, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:0, 4-18:1)",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:1, 4-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-18:0, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-18:1, 4-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN(C)C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH+](C)C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN(C)C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH+](C)C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-18:1)",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:0, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:1, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCNC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH2+]C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:1, 2-18:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCNC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH2+]C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:0, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:0, 2-18:1)",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:1, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCCNC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "tier_a:ferroheme b",
+   "input_smiles": "C=CC1=C(C)C2=CC3=C(C=C)C(C)=C4C=C5C(C)=C(CCC(=O)[O-])C6=[N+]5[Fe-2]5(N7C(=CC1=[N+]25)C(C)=C(CCC(=O)[O-])C7=C6)N43",
+   "input_charge": -2,
+   "ph7_smiles": "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "tier_a:phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "input_charge": 0,
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "tier_a:superoxide",
+   "input_smiles": "[O][O-]",
+   "input_charge": -1,
+   "ph7_smiles": null,
+   "ph7_charge": null,
+   "error": "pkasolver returned no pH 7 state"
+  },
+  {
+   "key": "tier_a:N-(4-oxoglutarate)-L-cysteinylglycine",
+   "input_smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "input_charge": -2,
+   "ph7_smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "ph7_charge": -2,
+   "error": null
+  },
+  {
+   "key": "tier_a:methionyl acetate",
+   "input_smiles": "CC(=O)OC(=O)C(CCSC)N",
+   "input_charge": 0,
+   "ph7_smiles": "CSCCC([NH3+])C(=O)OC(C)=O",
+   "ph7_charge": 1,
+   "error": null
+  },
+  {
+   "key": "acyl:tyrosyl acetate",
+   "input_smiles": "CC(=O)OCCc1ccc(O)cc1",
+   "input_charge": 0,
+   "ph7_smiles": "CC(=O)OCCc1ccc(O)cc1",
+   "ph7_charge": 0,
+   "error": null
+  },
+  {
+   "key": "acyl:methionyl acetate",
+   "input_smiles": "CSCCCOC(C)=O",
+   "input_charge": 0,
+   "ph7_smiles": null,
+   "ph7_charge": null,
+   "error": "pkasolver returned no pH 7 state"
+  }
+ ]
+}

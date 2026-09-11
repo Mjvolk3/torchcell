@@ -1,0 +1,842 @@
+{
+  "built_at": "2026-09-11T03:54:18.360840+00:00",
+  "sources": {
+    "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/metanetx/chem_prop.tsv": "8463f8ee94a1eaec6d6820a05bf09455675a9eb41ac72230dd0d85c9d6c800d2",
+    "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/metanetx/chem_xref.tsv": "ba2451ffd9ba3342f8a64a966f8540d08ca82d9f70a28ee84a03aeb0bf6ed135",
+    "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/lipid_structures.json": "282f784e06fd46606ef2bfa8b1c7bac3eea6ec4a9cfa84a58c5ed68fc8e1637c",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/_features/gem_protein_sequences.json": "aff12ee34212e3cbb5840b8d8c0e1dd6a4468a485da1add935a513e957b1120a"
+  },
+  "n_metabolites": 2806,
+  "n_priced_by_existing_pipeline": 2021,
+  "n_unpriced_by_existing_pipeline": 785,
+  "n_substrates_of_blocked_units": 86,
+  "n_blocked_units_before": 176,
+  "resolved": [
+    {
+      "met_id": "s_0549",
+      "smiles": "OC1OC[C@@H](O)[C@@H](O)[C@@H]1O",
+      "route": "annotation_xref",
+      "key": "kegg.compound:C00216",
+      "structure_id": "MNXM544",
+      "gem_formula": "C5H10O5",
+      "gem_charge": 0.0,
+      "smiles_formula": "C5H10O5"
+    },
+    {
+      "met_id": "s_0555",
+      "smiles": "O=C(COP(=O)(O)O)[C@@H](O)[C@H](O)[C@H](O)COP(=O)(O)O",
+      "route": "annotation_xref",
+      "key": "chebi:16905",
+      "structure_id": "MNXM500",
+      "gem_formula": "C6H10O12P2",
+      "gem_charge": -4.0,
+      "smiles_formula": "C6H14O12P2"
+    },
+    {
+      "met_id": "s_1365",
+      "smiles": "NC(=O)C1=C(NC=O)N([C@@H]2O[C@H](COP(=O)([O-])[O-])[C@@H](O)[C@H]2O)C=N1",
+      "route": "annotation_xref",
+      "key": "chebi:58467",
+      "structure_id": "MNXM1104518",
+      "gem_formula": "C10H13N4O9P",
+      "gem_charge": -2.0,
+      "smiles_formula": "C10H13N4O9P-2"
+    },
+    {
+      "met_id": "s_2896",
+      "smiles": "CCCCCC/C=C\\C/C=C/C(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+      "route": "supplied",
+      "key": "s_2896",
+      "structure_id": null,
+      "gem_formula": "C33H54N7O17P3S",
+      "gem_charge": 0.0,
+      "smiles_formula": "C33H54N7O17P3S"
+    },
+    {
+      "met_id": "s_2901",
+      "smiles": "CCCCCCCC/C=C\\C/C=C/C(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+      "route": "supplied",
+      "key": "s_2901",
+      "structure_id": null,
+      "gem_formula": "C35H58N7O17P3S",
+      "gem_charge": 0.0,
+      "smiles_formula": "C35H58N7O17P3S"
+    },
+    {
+      "met_id": "s_2928",
+      "smiles": "CCCCCC/C=C\\C=C\\CC(=O)SCCNC(=O)CCNC(=O)[C@H](O)C(C)(C)COP(=O)([O-])OP(=O)([O-])OC[C@H]1O[C@@H](N2C=NC3=C2N=CN=C3N)[C@H](O)[C@@H]1OP(=O)([O-])[O-]",
+      "route": "annotation_xref",
+      "key": "chebi:139121",
+      "structure_id": "MNXM745532",
+      "gem_formula": "C33H54N7O17P3S",
+      "gem_charge": 0.0,
+      "smiles_formula": "C33H50N7O17P3S-4"
+    },
+    {
+      "met_id": "s_2929",
+      "smiles": "CCCCCCCC/C=C\\CC(=O)SCCNC(=O)CCNC(=O)[C@H](O)C(C)(C)COP(=O)([O-])OP(=O)([O-])OC[C@H]1O[C@@H](N2C=NC3=C2N=CN=C3N)[C@H](O)[C@@H]1OP(=O)([O-])[O-]",
+      "route": "annotation_xref",
+      "key": "bigg.metabolite:dd3coa",
+      "structure_id": "MNXM1103969",
+      "gem_formula": "C33H56N7O17P3S",
+      "gem_charge": 0.0,
+      "smiles_formula": "C33H52N7O17P3S-4"
+    },
+    {
+      "met_id": "s_2930",
+      "smiles": "CCCCCCCC/C=C\\C=C\\CC(=O)SCCNC(=O)CCNC(=O)[C@H](O)C(C)(C)COP(=O)([O-])OP(=O)([O-])OC[C@H]1O[C@@H](N2C=NC3=C2N=CN=C3N)[C@H](O)[C@@H]1OP(=O)([O-])[O-]",
+      "route": "annotation_xref",
+      "key": "chebi:72001",
+      "structure_id": "MNXM741820",
+      "gem_formula": "C35H58N7O17P3S",
+      "gem_charge": 0.0,
+      "smiles_formula": "C35H54N7O17P3S-4"
+    },
+    {
+      "met_id": "s_2931",
+      "smiles": "CCCCCCCCCC/C=C/CC(=O)SCCNC(=O)CCNC(=O)[C@H](O)C(C)(C)COP(=O)([O-])OP(=O)([O-])OC[C@H]1O[C@@H](N2C=NC3=C2N=CN=C3N)[C@H](O)[C@@H]1OP(=O)([O-])[O-]",
+      "route": "annotation_xref",
+      "key": "chebi:88083",
+      "structure_id": "MNXM1107924",
+      "gem_formula": "C35H60N7O17P3S",
+      "gem_charge": 0.0,
+      "smiles_formula": "C35H56N7O17P3S-4"
+    },
+    {
+      "met_id": "s_2972",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@@H](CO)COC(=O)CCCCCCCCCCCCCCCCC",
+      "route": "annotation_xref",
+      "key": "chebi:75468",
+      "structure_id": "MNXM150136",
+      "gem_formula": "C39H74O5",
+      "gem_charge": 0.0,
+      "smiles_formula": "C39H74O5"
+    },
+    {
+      "met_id": "s_2974",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "annotation_xref",
+      "key": "chebi:52333",
+      "structure_id": "MNXM741599",
+      "gem_formula": "C39H72O5",
+      "gem_charge": 0.0,
+      "smiles_formula": "C39H72O5"
+    },
+    {
+      "met_id": "s_3096",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+      "route": "supplied",
+      "key": "s_3096",
+      "structure_id": null,
+      "gem_formula": "C44H79N3O15P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C44H79N3O15P2"
+    },
+    {
+      "met_id": "s_3098",
+      "smiles": "CCCCCCC=CCCCCCCCC(=O)OC[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]1O[C@@H](N2C=CC(N)=NC2=O)[C@H](O)[C@@H]1O)OC(=O)CCCCCCCC=CCCCCCC",
+      "route": "annotation_xref",
+      "key": "chebi:104012",
+      "structure_id": "MNXM1371749",
+      "gem_formula": "C44H77N3O15P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C44H77N3O15P2"
+    },
+    {
+      "met_id": "s_3100",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+      "route": "supplied",
+      "key": "s_3100",
+      "structure_id": null,
+      "gem_formula": "C46H83N3O15P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C46H83N3O15P2"
+    },
+    {
+      "met_id": "s_3102",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+      "route": "supplied",
+      "key": "s_3102",
+      "structure_id": null,
+      "gem_formula": "C46H81N3O15P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C46H81N3O15P2"
+    },
+    {
+      "met_id": "s_3104",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])OC[C@H]1O[C@@H](N2C=CC(N)=NC2=O)[C@H](O)[C@@H]1O",
+      "route": "annotation_xref",
+      "key": "chebi:34077",
+      "structure_id": "MNXM1369095",
+      "gem_formula": "C46H83N3O15P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C46H81N3O15P2-2"
+    },
+    {
+      "met_id": "s_3106",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3106",
+      "structure_id": null,
+      "gem_formula": "C46H81N3O15P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C46H81N3O15P2"
+    },
+    {
+      "met_id": "s_3109",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC[C@H](N)C(=O)O",
+      "route": "annotation_xref",
+      "key": "chebi:89824",
+      "structure_id": "MNXM1107610",
+      "gem_formula": "C38H72NO10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C38H72NO10P"
+    },
+    {
+      "met_id": "s_3113",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OC[C@H]([NH3+])C(=O)[O-]",
+      "route": "annotation_xref",
+      "key": "chebi:34086",
+      "structure_id": "MNXM734082",
+      "gem_formula": "C40H76NO10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H75NO10P-"
+    },
+    {
+      "met_id": "s_3128",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC[C@H](N)C(=O)O",
+      "route": "annotation_xref",
+      "key": "chebi:89824",
+      "structure_id": "MNXM1107610",
+      "gem_formula": "C38H72NO10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C38H72NO10P"
+    },
+    {
+      "met_id": "s_3137",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OC[C@H]([NH3+])C(=O)[O-]",
+      "route": "annotation_xref",
+      "key": "chebi:34086",
+      "structure_id": "MNXM734082",
+      "gem_formula": "C40H76NO10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H75NO10P-"
+    },
+    {
+      "met_id": "s_3145",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC[C@H](N)C(=O)O",
+      "route": "annotation_xref",
+      "key": "chebi:89824",
+      "structure_id": "MNXM1107610",
+      "gem_formula": "C38H72NO10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C38H72NO10P"
+    },
+    {
+      "met_id": "s_3148",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+      "route": "supplied",
+      "key": "s_3148",
+      "structure_id": null,
+      "gem_formula": "C37H72NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C37H72NO8P"
+    },
+    {
+      "met_id": "s_3150",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "annotation_xref",
+      "key": "chebi:138792",
+      "structure_id": "MNXM739593",
+      "gem_formula": "C37H70NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C37H70NO8P"
+    },
+    {
+      "met_id": "s_3152",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+      "route": "supplied",
+      "key": "s_3152",
+      "structure_id": null,
+      "gem_formula": "C39H76NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C39H76NO8P"
+    },
+    {
+      "met_id": "s_3155",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OC[C@H]([NH3+])C(=O)[O-]",
+      "route": "annotation_xref",
+      "key": "chebi:34086",
+      "structure_id": "MNXM734082",
+      "gem_formula": "C40H76NO10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H75NO10P-"
+    },
+    {
+      "met_id": "s_3156",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+      "route": "supplied",
+      "key": "s_3156",
+      "structure_id": null,
+      "gem_formula": "C39H76NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C39H76NO8P"
+    },
+    {
+      "met_id": "s_3158",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3158",
+      "structure_id": null,
+      "gem_formula": "C39H74NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C39H74NO8P"
+    },
+    {
+      "met_id": "s_3160",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+      "route": "supplied",
+      "key": "s_3160",
+      "structure_id": null,
+      "gem_formula": "C41H80NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C41H80NO8P"
+    },
+    {
+      "met_id": "s_3162",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3162",
+      "structure_id": null,
+      "gem_formula": "C41H78NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C41H78NO8P"
+    },
+    {
+      "met_id": "s_3163",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC[C@H](N)C(=O)O",
+      "route": "annotation_xref",
+      "key": "chebi:89824",
+      "structure_id": "MNXM1107610",
+      "gem_formula": "C38H72NO10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C38H72NO10P"
+    },
+    {
+      "met_id": "s_3173",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OC[C@H]([NH3+])C(=O)[O-]",
+      "route": "annotation_xref",
+      "key": "chebi:34086",
+      "structure_id": "MNXM734082",
+      "gem_formula": "C40H76NO10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H75NO10P-"
+    },
+    {
+      "met_id": "s_3181",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+      "route": "supplied",
+      "key": "s_3181",
+      "structure_id": null,
+      "gem_formula": "C37H72NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C37H72NO8P"
+    },
+    {
+      "met_id": "s_3185",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "annotation_xref",
+      "key": "chebi:138792",
+      "structure_id": "MNXM739593",
+      "gem_formula": "C37H70NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C37H70NO8P"
+    },
+    {
+      "met_id": "s_3187",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+      "route": "supplied",
+      "key": "s_3187",
+      "structure_id": null,
+      "gem_formula": "C39H76NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C39H76NO8P"
+    },
+    {
+      "met_id": "s_3191",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+      "route": "supplied",
+      "key": "s_3191",
+      "structure_id": null,
+      "gem_formula": "C39H76NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C39H76NO8P"
+    },
+    {
+      "met_id": "s_3193",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3193",
+      "structure_id": null,
+      "gem_formula": "C39H74NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C39H74NO8P"
+    },
+    {
+      "met_id": "s_3195",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+      "route": "supplied",
+      "key": "s_3195",
+      "structure_id": null,
+      "gem_formula": "C41H80NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C41H80NO8P"
+    },
+    {
+      "met_id": "s_3197",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3197",
+      "structure_id": null,
+      "gem_formula": "C41H78NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C41H78NO8P"
+    },
+    {
+      "met_id": "s_3207",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+      "route": "supplied",
+      "key": "s_3207",
+      "structure_id": null,
+      "gem_formula": "C40H78NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H78NO8P"
+    },
+    {
+      "met_id": "s_3211",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+      "route": "supplied",
+      "key": "s_3211",
+      "structure_id": null,
+      "gem_formula": "C42H82NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C42H82NO8P"
+    },
+    {
+      "met_id": "s_3214",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "annotation_xref",
+      "key": "chebi:74669",
+      "structure_id": "MNXM1364449",
+      "gem_formula": "C44H84NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C44H84NO8P"
+    },
+    {
+      "met_id": "s_3227",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)CO",
+      "route": "supplied",
+      "key": "s_3227",
+      "structure_id": null,
+      "gem_formula": "C38H73O10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C38H73O10P"
+    },
+    {
+      "met_id": "s_3229",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)CO)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3229",
+      "structure_id": null,
+      "gem_formula": "C38H71O10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C38H71O10P"
+    },
+    {
+      "met_id": "s_3230",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OC[C@@H](O)CO",
+      "route": "annotation_xref",
+      "key": "chebi:89270",
+      "structure_id": "MNXM73825",
+      "gem_formula": "C40H77O10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H77O10P"
+    },
+    {
+      "met_id": "s_3231",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)(O)OC[C@@H](O)CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "annotation_xref",
+      "key": "chebi:89093",
+      "structure_id": "MNXM73699",
+      "gem_formula": "C40H75O10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H75O10P"
+    },
+    {
+      "met_id": "s_3232",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)CO",
+      "route": "annotation_xref",
+      "key": "chebi:34080",
+      "structure_id": "MNXM739919",
+      "gem_formula": "C40H77O10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H76O10P-"
+    },
+    {
+      "met_id": "s_3233",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OC[C@@H](O)CO",
+      "route": "annotation_xref",
+      "key": "chebi:89398",
+      "structure_id": "MNXM73876",
+      "gem_formula": "C40H75O10P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H75O10P"
+    },
+    {
+      "met_id": "s_3270",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3270",
+      "structure_id": null,
+      "gem_formula": "C57H108O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C57H108O16P2"
+    },
+    {
+      "met_id": "s_3272",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3272",
+      "structure_id": null,
+      "gem_formula": "C57H106O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C57H106O16P2"
+    },
+    {
+      "met_id": "s_3273",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3273",
+      "structure_id": null,
+      "gem_formula": "C59H112O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H112O16P2"
+    },
+    {
+      "met_id": "s_3274",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3274",
+      "structure_id": null,
+      "gem_formula": "C59H110O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H110O16P2"
+    },
+    {
+      "met_id": "s_3275",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3275",
+      "structure_id": null,
+      "gem_formula": "C59H112O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H112O16P2"
+    },
+    {
+      "met_id": "s_3276",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3276",
+      "structure_id": null,
+      "gem_formula": "C59H110O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H110O16P2"
+    },
+    {
+      "met_id": "s_3278",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3278",
+      "structure_id": null,
+      "gem_formula": "C59H112O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H112O16P2"
+    },
+    {
+      "met_id": "s_3279",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3279",
+      "structure_id": null,
+      "gem_formula": "C59H110O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H110O16P2"
+    },
+    {
+      "met_id": "s_3280",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3280",
+      "structure_id": null,
+      "gem_formula": "C61H116O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C61H116O16P2"
+    },
+    {
+      "met_id": "s_3281",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3281",
+      "structure_id": null,
+      "gem_formula": "C61H114O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C61H114O16P2"
+    },
+    {
+      "met_id": "s_3282",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3282",
+      "structure_id": null,
+      "gem_formula": "C61H116O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C61H116O16P2"
+    },
+    {
+      "met_id": "s_3283",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3283",
+      "structure_id": null,
+      "gem_formula": "C61H114O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C61H114O16P2"
+    },
+    {
+      "met_id": "s_3284",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3284",
+      "structure_id": null,
+      "gem_formula": "C57H108O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C57H108O16P2"
+    },
+    {
+      "met_id": "s_3285",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3285",
+      "structure_id": null,
+      "gem_formula": "C59H112O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H112O16P2"
+    },
+    {
+      "met_id": "s_3286",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3286",
+      "structure_id": null,
+      "gem_formula": "C57H106O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C57H106O16P2"
+    },
+    {
+      "met_id": "s_3287",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3287",
+      "structure_id": null,
+      "gem_formula": "C59H110O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H110O16P2"
+    },
+    {
+      "met_id": "s_3288",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3288",
+      "structure_id": null,
+      "gem_formula": "C59H112O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H112O16P2"
+    },
+    {
+      "met_id": "s_3289",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3289",
+      "structure_id": null,
+      "gem_formula": "C61H116O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C61H116O16P2"
+    },
+    {
+      "met_id": "s_3290",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+      "route": "supplied",
+      "key": "s_3290",
+      "structure_id": null,
+      "gem_formula": "C59H110O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H110O16P2"
+    },
+    {
+      "met_id": "s_3291",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3291",
+      "structure_id": null,
+      "gem_formula": "C61H114O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C61H114O16P2"
+    },
+    {
+      "met_id": "s_3292",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3292",
+      "structure_id": null,
+      "gem_formula": "C59H112O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H112O16P2"
+    },
+    {
+      "met_id": "s_3293",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3293",
+      "structure_id": null,
+      "gem_formula": "C61H116O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C61H116O16P2"
+    },
+    {
+      "met_id": "s_3294",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3294",
+      "structure_id": null,
+      "gem_formula": "C59H110O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C59H110O16P2"
+    },
+    {
+      "met_id": "s_3295",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "supplied",
+      "key": "s_3295",
+      "structure_id": null,
+      "gem_formula": "C61H114O16P2",
+      "gem_charge": 0.0,
+      "smiles_formula": "C61H114O16P2"
+    },
+    {
+      "met_id": "s_3296",
+      "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+      "route": "supplied",
+      "key": "s_3296",
+      "structure_id": null,
+      "gem_formula": "C40H78NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C40H78NO8P"
+    },
+    {
+      "met_id": "s_3304",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+      "route": "supplied",
+      "key": "s_3304",
+      "structure_id": null,
+      "gem_formula": "C42H82NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C42H82NO8P"
+    },
+    {
+      "met_id": "s_3307",
+      "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+      "route": "annotation_xref",
+      "key": "chebi:74669",
+      "structure_id": "MNXM1364449",
+      "gem_formula": "C44H84NO8P",
+      "gem_charge": 0.0,
+      "smiles_formula": "C44H84NO8P"
+    }
+  ],
+  "unresolved": [
+    {
+      "met_id": "s_0428",
+      "name": "Arg-tRNA(Arg)",
+      "formula": "C6H15N4OR",
+      "n_candidates": "4"
+    },
+    {
+      "met_id": "s_2775",
+      "name": "3-hydroxybutanoyl-ACP",
+      "formula": "C4H7O2SR",
+      "n_candidates": "2"
+    },
+    {
+      "met_id": "s_2776",
+      "name": "3-hydroxyhexanoyl-ACP",
+      "formula": "C6H11O2SR",
+      "n_candidates": "6"
+    },
+    {
+      "met_id": "s_2777",
+      "name": "3-hydroxyoctanoyl-ACP",
+      "formula": "C8H15O2SR",
+      "n_candidates": "6"
+    },
+    {
+      "met_id": "s_2926",
+      "name": "cis-dec-3-enoyl-CoA",
+      "formula": "C31H52N7O17P3S",
+      "n_candidates": "0"
+    },
+    {
+      "met_id": "s_3748",
+      "name": "Cytochrome c",
+      "formula": "C40H40FeN6O6S2",
+      "n_candidates": "4"
+    },
+    {
+      "met_id": "s_3884",
+      "name": "generic protein",
+      "formula": "C2H4NOR",
+      "n_candidates": "2"
+    },
+    {
+      "met_id": "s_3937",
+      "name": "Acyl-CoA",
+      "formula": "C22H31N7O17P3SR",
+      "n_candidates": "6"
+    },
+    {
+      "met_id": "s_3938",
+      "name": "1-acyl-sn-glycerol 3-phosphate",
+      "formula": "C4H6O7PR",
+      "n_candidates": "4"
+    },
+    {
+      "met_id": "s_4006",
+      "name": "S-sulfanyl-[L-cysteine desulfurase]",
+      "formula": "",
+      "n_candidates": "0"
+    },
+    {
+      "met_id": "s_4007",
+      "name": "[disordered-form [Fe-S] cluster scaffold protein]",
+      "formula": "",
+      "n_candidates": "0"
+    }
+  ],
+  "resolved_by_route": {
+    "supplied": 48,
+    "annotation_xref": 27
+  },
+  "n_blocked_units_recoverable": 165,
+  "n_new_pair_rows": 293,
+  "counterfactual_other_metabolites_resolvable": 503,
+  "counterfactual_other_metabolites_examined": 699
+}

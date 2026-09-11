@@ -1,0 +1,372 @@
+{
+  "built_at": "2026-09-11T05:09:18.768875+00:00",
+  "sources": {
+    "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/within_class_plausibility.json": "7184ea9488bb2570d2c53aa12891faf0f1052b8e6f60cc159e06d249bd29a58b",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/ezkinetics/verified/k_cat.parquet": "213a823feb3e8f86a0dd50e67aefadf6b88ea36a53fdb001879d29087060452d",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/eitlem/verified/k_cat.parquet": "02b8c4d4485878b9210a0c48f250d880f77f8297d2f3a89395d3f22074461779",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/unikp/verified/k_cat.parquet": "3f04c93926fe47d148f5c4cb3dfba538b7cea5f8b900eea979ee06dd3c9cc4e1",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/ezkinetics/verified/K_M.parquet": "184f6c6e7a1627a097d3fc5e341880c90df44f7e07cadfa497da11e2e5d0db1a",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/eitlem/verified/K_M.parquet": "6ad62c509448a8ce3d71f113045403cfdfe850ac7737b47d9836ef3a0b967733"
+  },
+  "parameters": {
+    "k_cat": {
+      "predictors": [
+        "ezkinetics",
+        "eitlem",
+        "unikp"
+      ],
+      "selection_note": "predictors the code path admits",
+      "n_units_all_predictors": 3698,
+      "overall": {
+        "group": "all",
+        "n_units": 3698,
+        "median_decades": 0.7375652597699748,
+        "p90_decades": 1.428821022672132,
+        "frac_over_1_decade": 0.29935100054083286,
+        "ci95_over_1_decade": [
+          0.2848047664150133,
+          0.31431366788755466
+        ]
+      },
+      "by_ec_class": [
+        {
+          "group": "1",
+          "n_units": 500,
+          "median_decades": 0.6593170976089494,
+          "p90_decades": 1.199231424533936,
+          "frac_over_1_decade": 0.256,
+          "ci95_over_1_decade": [
+            0.2197077079214847,
+            0.29601297028200185
+          ]
+        },
+        {
+          "group": "2",
+          "n_units": 1397,
+          "median_decades": 0.8668070206174261,
+          "p90_decades": 1.4796927032233684,
+          "frac_over_1_decade": 0.4058697208303508,
+          "ci95_over_1_decade": [
+            0.3804114806178322,
+            0.43184421874587003
+          ]
+        },
+        {
+          "group": "3",
+          "n_units": 888,
+          "median_decades": 0.5606965177247327,
+          "p90_decades": 1.1606548966783736,
+          "frac_over_1_decade": 0.17342342342342343,
+          "ci95_over_1_decade": [
+            0.1499418414877656,
+            0.19971835402777174
+          ]
+        },
+        {
+          "group": "4",
+          "n_units": 145,
+          "median_decades": 0.723218791819911,
+          "p90_decades": 1.538944089834534,
+          "frac_over_1_decade": 0.3310344827586207,
+          "ci95_over_1_decade": [
+            0.2596691651047421,
+            0.4111214844341175
+          ]
+        },
+        {
+          "group": "5",
+          "n_units": 37,
+          "median_decades": 0.7182747930028835,
+          "p90_decades": 2.0321835348720607,
+          "frac_over_1_decade": 0.35135135135135137,
+          "ci95_over_1_decade": [
+            0.21825607047859202,
+            0.5124097700348178
+          ]
+        },
+        {
+          "group": "6",
+          "n_units": 124,
+          "median_decades": 0.5392952657736523,
+          "p90_decades": 1.042430413401073,
+          "frac_over_1_decade": 0.12903225806451613,
+          "ci95_over_1_decade": [
+            0.08100831267044237,
+            0.19935033776216646
+          ]
+        },
+        {
+          "group": "none",
+          "n_units": 607,
+          "median_decades": 0.6636259930715742,
+          "p90_decades": 1.4257670049914344,
+          "frac_over_1_decade": 0.2981878088962109,
+          "ci95_over_1_decade": [
+            0.2631571138913638,
+            0.3357568163308961
+          ]
+        }
+      ],
+      "by_substrate_heavy_atoms": [
+        {
+          "group": "<12",
+          "n_units": 1415,
+          "median_decades": 0.5497848240786958,
+          "p90_decades": 1.2558217552497863,
+          "frac_over_1_decade": 0.18091872791519434,
+          "ci95_over_1_decade": [
+            0.16173375465296524,
+            0.2018315018119945
+          ]
+        },
+        {
+          "group": "12-30",
+          "n_units": 1052,
+          "median_decades": 0.7060597045539115,
+          "p90_decades": 1.4829948473051384,
+          "frac_over_1_decade": 0.2946768060836502,
+          "ci95_over_1_decade": [
+            0.267914756654721,
+            0.322932906726749
+          ]
+        },
+        {
+          "group": "30-60",
+          "n_units": 999,
+          "median_decades": 0.8657735687844208,
+          "p90_decades": 1.3307269883654573,
+          "frac_over_1_decade": 0.36936936936936937,
+          "ci95_over_1_decade": [
+            0.3399945576706309,
+            0.3997449617832671
+          ]
+        },
+        {
+          "group": ">60",
+          "n_units": 232,
+          "median_decades": 1.3844577181839295,
+          "p90_decades": 1.7664799611644793,
+          "frac_over_1_decade": 0.7413793103448276,
+          "ci95_over_1_decade": [
+            0.6814252081640254,
+            0.7934700902761526
+          ]
+        }
+      ],
+      "by_complex_size": [
+        {
+          "group": "1",
+          "n_units": 3425,
+          "median_decades": 0.7122580177254215,
+          "p90_decades": 1.4013922838835349,
+          "frac_over_1_decade": 0.27795620437956203,
+          "ci95_over_1_decade": [
+            0.2632079782312719,
+            0.2932019584077216
+          ]
+        },
+        {
+          "group": "2",
+          "n_units": 201,
+          "median_decades": 1.1983640296168505,
+          "p90_decades": 1.4536934041677065,
+          "frac_over_1_decade": 0.6268656716417911,
+          "ci95_over_1_decade": [
+            0.5582131506545563,
+            0.6907598857538307
+          ]
+        },
+        {
+          "group": "3+",
+          "n_units": 72,
+          "median_decades": 0.9204375321315873,
+          "p90_decades": 1.6219020068587484,
+          "frac_over_1_decade": 0.4027777777777778,
+          "ci95_over_1_decade": [
+            0.297211110765762,
+            0.5181932840532745
+          ]
+        }
+      ]
+    },
+    "K_M": {
+      "predictors": [
+        "ezkinetics",
+        "eitlem"
+      ],
+      "selection_note": "the coverage figure's alternative pair; the code path admits one predictor for this parameter, and one predictor has no spread",
+      "n_units_all_predictors": 3698,
+      "overall": {
+        "group": "all",
+        "n_units": 3698,
+        "median_decades": 0.5222758229443603,
+        "p90_decades": 1.431808725678615,
+        "frac_over_1_decade": 0.23850730124391564,
+        "ci95_over_1_decade": [
+          0.2250474808075656,
+          0.2525098318212528
+        ]
+      },
+      "by_ec_class": [
+        {
+          "group": "1",
+          "n_units": 500,
+          "median_decades": 0.5133593842564619,
+          "p90_decades": 1.1130598551326618,
+          "frac_over_1_decade": 0.138,
+          "ci95_over_1_decade": [
+            0.11051800870339493,
+            0.17100201387718747
+          ]
+        },
+        {
+          "group": "2",
+          "n_units": 1397,
+          "median_decades": 0.5311133574360287,
+          "p90_decades": 1.2051735062733253,
+          "frac_over_1_decade": 0.20687186828919113,
+          "ci95_over_1_decade": [
+            0.18644874841966252,
+            0.22890264997909082
+          ]
+        },
+        {
+          "group": "3",
+          "n_units": 888,
+          "median_decades": 0.4153326132574724,
+          "p90_decades": 1.3712782773284904,
+          "frac_over_1_decade": 0.21846846846846846,
+          "ci95_over_1_decade": [
+            0.19253513040093045,
+            0.2468271071124638
+          ]
+        },
+        {
+          "group": "4",
+          "n_units": 145,
+          "median_decades": 0.415087299187462,
+          "p90_decades": 0.8688805668670203,
+          "frac_over_1_decade": 0.08275862068965517,
+          "ci95_over_1_decade": [
+            0.04797375026669245,
+            0.13908071083947096
+          ]
+        },
+        {
+          "group": "5",
+          "n_units": 37,
+          "median_decades": 0.3764883394613081,
+          "p90_decades": 1.2196001432968855,
+          "frac_over_1_decade": 0.13513513513513514,
+          "ci95_over_1_decade": [
+            0.0591329438831613,
+            0.2797741191952078
+          ]
+        },
+        {
+          "group": "6",
+          "n_units": 124,
+          "median_decades": 0.3955434675241014,
+          "p90_decades": 0.8722995561097857,
+          "frac_over_1_decade": 0.06451612903225806,
+          "ci95_over_1_decade": [
+            0.0330509096085294,
+            0.12215272350801139
+          ]
+        },
+        {
+          "group": "none",
+          "n_units": 607,
+          "median_decades": 1.0056739115916213,
+          "p90_decades": 2.2331723167656032,
+          "frac_over_1_decade": 0.5024711696869851,
+          "ci95_over_1_decade": [
+            0.46280513750735813,
+            0.5421061204899201
+          ]
+        }
+      ],
+      "by_substrate_heavy_atoms": [
+        {
+          "group": "<12",
+          "n_units": 1415,
+          "median_decades": 0.6229484345131315,
+          "p90_decades": 1.8362925172461004,
+          "frac_over_1_decade": 0.31590106007067137,
+          "ci95_over_1_decade": [
+            0.292205463698165,
+            0.34059353809391024
+          ]
+        },
+        {
+          "group": "12-30",
+          "n_units": 1052,
+          "median_decades": 0.588696872439734,
+          "p90_decades": 1.4107814611227463,
+          "frac_over_1_decade": 0.28612167300380226,
+          "ci95_over_1_decade": [
+            0.25962807028806323,
+            0.3141715790676346
+          ]
+        },
+        {
+          "group": "30-60",
+          "n_units": 999,
+          "median_decades": 0.40209359013450574,
+          "p90_decades": 0.8944639812355345,
+          "frac_over_1_decade": 0.06506506506506507,
+          "ci95_over_1_decade": [
+            0.05137547482465124,
+            0.08208675661380638
+          ]
+        },
+        {
+          "group": ">60",
+          "n_units": 232,
+          "median_decades": 0.5958085730389511,
+          "p90_decades": 1.0727525662385018,
+          "frac_over_1_decade": 0.2974137931034483,
+          "ci95_over_1_decade": [
+            0.2422800721563087,
+            0.3591470880813991
+          ]
+        }
+      ],
+      "by_complex_size": [
+        {
+          "group": "1",
+          "n_units": 3425,
+          "median_decades": 0.5281441076558967,
+          "p90_decades": 1.431808725678615,
+          "frac_over_1_decade": 0.23737226277372261,
+          "ci95_over_1_decade": [
+            0.22342228508499976,
+            0.2519107037470511
+          ]
+        },
+        {
+          "group": "2",
+          "n_units": 201,
+          "median_decades": 0.2577508613279529,
+          "p90_decades": 1.2502760003568318,
+          "frac_over_1_decade": 0.1791044776119403,
+          "ci95_over_1_decade": [
+            0.1322693090735695,
+            0.23797536354051066
+          ]
+        },
+        {
+          "group": "3+",
+          "n_units": 72,
+          "median_decades": 0.7304004885593872,
+          "p90_decades": 1.5462496295765122,
+          "frac_over_1_decade": 0.4583333333333333,
+          "ci95_over_1_decade": [
+            0.3482862697676984,
+            0.5726013280118886
+          ]
+        }
+      ]
+    }
+  }
+}

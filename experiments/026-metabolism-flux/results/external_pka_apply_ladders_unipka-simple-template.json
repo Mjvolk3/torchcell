@@ -1,0 +1,780 @@
+{
+ "built_at": "2026-09-11T06:48:09.812722+00:00",
+ "tool": "unipka-simple-template",
+ "tool_version": "unipkainfer 0.2.0",
+ "weights_sha256": {},
+ "records": [
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.17376356124878,
+    6.190067863464355,
+    1.2664432525634766
+   ],
+   "site_pkas": [
+    8.17376356124878,
+    6.190067863464355,
+    1.2664432525634766
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.145377349853515,
+    6.140676784515381,
+    1.2993181228637696
+   ],
+   "site_pkas": [
+    8.145377349853515,
+    6.140676784515381,
+    1.2993181228637696
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.166041660308839,
+    6.218300628662109,
+    1.3017658233642577
+   ],
+   "site_pkas": [
+    8.166041660308839,
+    6.218300628662109,
+    1.3017658233642577
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.228743171691894,
+    6.21159143447876,
+    1.3335033416748048
+   ],
+   "site_pkas": [
+    8.228743171691894,
+    6.21159143447876,
+    1.3335033416748048
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.21386079788208,
+    6.315182209014893,
+    1.3493809700012207
+   ],
+   "site_pkas": [
+    8.21386079788208,
+    6.315182209014893,
+    1.3493809700012207
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.160947132110596,
+    6.182173347473144,
+    1.2902033805847168
+   ],
+   "site_pkas": [
+    8.160947132110596,
+    6.182173347473144,
+    1.2902033805847168
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-16:1, 2-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    7.0105382919311525,
+    4.494888830184936,
+    2.0648206233978272
+   ],
+   "site_pkas": [
+    7.0105382919311525,
+    4.494888830184936,
+    2.0648206233978272
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-18:0, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    7.08694019317627,
+    4.452067041397095,
+    2.2568967819213865
+   ],
+   "site_pkas": [
+    7.08694019317627,
+    4.452067041397095,
+    2.2568967819213865
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-18:1, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    7.020970630645752,
+    4.542785596847534,
+    1.9848018646240235
+   ],
+   "site_pkas": [
+    7.020970630645752,
+    4.542785596847534,
+    1.9848018646240235
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:acylglycerone phosphate (16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    7.264231491088867,
+    1.2170817375183105
+   ],
+   "site_pkas": [
+    7.264231491088867,
+    1.2170817375183105
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:cardiolipin (1-16:0, 2-18:1, 3-18:0, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.70005989074707,
+    2.1555278301239014
+   ],
+   "site_pkas": [
+    6.70005989074707,
+    2.1555278301239014
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.70005989074707,
+    2.1617085933685303
+   ],
+   "site_pkas": [
+    6.70005989074707,
+    2.1617085933685303
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-16:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.44567461013794,
+    2.2403554916381836
+   ],
+   "site_pkas": [
+    6.44567461013794,
+    2.2403554916381836
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-16:1, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.5519530296325685,
+    2.173512172698975
+   ],
+   "site_pkas": [
+    6.5519530296325685,
+    2.173512172698975
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-18:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.568549537658692,
+    2.171133041381836
+   ],
+   "site_pkas": [
+    6.568549537658692,
+    2.171133041381836
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-18:1, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.509060478210449,
+    2.2485281467437743
+   ],
+   "site_pkas": [
+    6.509060478210449,
+    2.2485281467437743
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-16:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.380238246917725,
+    2.0507981300354006
+   ],
+   "site_pkas": [
+    6.380238246917725,
+    2.0507981300354006
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-16:1, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.380146503448486,
+    2.059279537200928
+   ],
+   "site_pkas": [
+    6.380146503448486,
+    2.059279537200928
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-18:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.386521053314209,
+    2.044916343688965
+   ],
+   "site_pkas": [
+    6.386521053314209,
+    2.044916343688965
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-18:1, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.373730278015136,
+    2.0923898220062256
+   ],
+   "site_pkas": [
+    6.373730278015136,
+    2.0923898220062256
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:0, 2-16:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.5215106964111325,
+    2.2167789459228517
+   ],
+   "site_pkas": [
+    6.5215106964111325,
+    2.2167789459228517
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:0, 2-16:1, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.6613517761230465,
+    2.1374929904937745
+   ],
+   "site_pkas": [
+    6.6613517761230465,
+    2.1374929904937745
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:1, 2-16:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.522093200683594,
+    2.1993006229400636
+   ],
+   "site_pkas": [
+    6.522093200683594,
+    2.1993006229400636
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:1, 2-16:1, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.5947648048400875,
+    2.162624788284302
+   ],
+   "site_pkas": [
+    6.5947648048400875,
+    2.162624788284302
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:0, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.445874500274658,
+    2.23921480178833
+   ],
+   "site_pkas": [
+    6.445874500274658,
+    2.23921480178833
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:0, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.568829727172852,
+    2.168603229522705
+   ],
+   "site_pkas": [
+    6.568829727172852,
+    2.168603229522705
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.381453895568848,
+    2.057048034667969
+   ],
+   "site_pkas": [
+    6.381453895568848,
+    2.057048034667969
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:1, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.388695335388183,
+    2.0436521053314207
+   ],
+   "site_pkas": [
+    6.388695335388183,
+    2.0436521053314207
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-18:0, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.51876916885376,
+    2.2201443672180177
+   ],
+   "site_pkas": [
+    6.51876916885376,
+    2.2201443672180177
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-18:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.523099136352539,
+    2.202026700973511
+   ],
+   "site_pkas": [
+    6.523099136352539,
+    2.202026700973511
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:0, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.548603248596192,
+    2.173512172698975
+   ],
+   "site_pkas": [
+    6.548603248596192,
+    2.173512172698975
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:0, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.504743576049805,
+    2.243733263015747
+   ],
+   "site_pkas": [
+    6.504743576049805,
+    2.243733263015747
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.380146503448486,
+    2.059279537200928
+   ],
+   "site_pkas": [
+    6.380146503448486,
+    2.059279537200928
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:1, 4-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.374225997924805,
+    2.0923898220062256
+   ],
+   "site_pkas": [
+    6.374225997924805,
+    2.0923898220062256
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-18:0, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.6613517761230465,
+    2.1374929904937745
+   ],
+   "site_pkas": [
+    6.6613517761230465,
+    2.1374929904937745
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-18:1, 4-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.5947648048400875,
+    2.162624788284302
+   ],
+   "site_pkas": [
+    6.5947648048400875,
+    2.162624788284302
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.425689315795898,
+    2.5637056827545166
+   ],
+   "site_pkas": [
+    8.425689315795898,
+    2.5637056827545166
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.483922958374023,
+    2.524780607223511
+   ],
+   "site_pkas": [
+    8.483922958374023,
+    2.524780607223511
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.450736045837402,
+    2.595752477645874
+   ],
+   "site_pkas": [
+    8.450736045837402,
+    2.595752477645874
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.390899658203125,
+    2.625607633590698
+   ],
+   "site_pkas": [
+    8.390899658203125,
+    2.625607633590698
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.36227798461914,
+    2.6989235401153566
+   ],
+   "site_pkas": [
+    8.36227798461914,
+    2.6989235401153566
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.410147094726563,
+    2.5670021533966065
+   ],
+   "site_pkas": [
+    8.410147094726563,
+    2.5670021533966065
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:0, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    9.865256309509277,
+    2.8418843269348146
+   ],
+   "site_pkas": [
+    9.865256309509277,
+    2.8418843269348146
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:1, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    9.74323558807373,
+    2.793364095687866
+   ],
+   "site_pkas": [
+    9.74323558807373,
+    2.793364095687866
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:1, 2-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    9.817633628845215,
+    2.8419135570526124
+   ],
+   "site_pkas": [
+    9.817633628845215,
+    2.8419135570526124
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:0, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    9.83845272064209,
+    2.86134672164917
+   ],
+   "site_pkas": [
+    9.83845272064209,
+    2.86134672164917
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:0, 2-18:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    9.874726104736329,
+    2.9209385395050047
+   ],
+   "site_pkas": [
+    9.874726104736329,
+    2.9209385395050047
+   ],
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:1, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    9.819205474853515,
+    2.8254743576049806
+   ],
+   "site_pkas": [
+    9.819205474853515,
+    2.8254743576049806
+   ],
+   "error": null
+  },
+  {
+   "key": "tier_a:ferroheme b",
+   "tool": "unipka-simple-template",
+   "ok": false,
+   "pkas": [],
+   "site_pkas": [],
+   "error": "no macrostate pair survived enumeration and inference"
+  },
+  {
+   "key": "tier_a:phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    9.62911777496338,
+    2.778149652481079
+   ],
+   "site_pkas": [
+    9.62911777496338,
+    2.778149652481079
+   ],
+   "error": null
+  },
+  {
+   "key": "tier_a:superoxide",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    8.326695156097411
+   ],
+   "site_pkas": [
+    8.326695156097411
+   ],
+   "error": null
+  },
+  {
+   "key": "tier_a:N-(4-oxoglutarate)-L-cysteinylglycine",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    9.284785270690918,
+    4.569518089294434,
+    3.5053726196289063
+   ],
+   "site_pkas": [
+    9.284785270690918,
+    4.569518089294434,
+    3.5053726196289063
+   ],
+   "error": null
+  },
+  {
+   "key": "tier_a:methionyl acetate",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    6.509706497192383
+   ],
+   "site_pkas": [
+    6.509706497192383
+   ],
+   "error": null
+  },
+  {
+   "key": "acyl:tyrosyl acetate",
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "pkas": [
+    9.805440139770507
+   ],
+   "site_pkas": [
+    9.805440139770507
+   ],
+   "error": null
+  },
+  {
+   "key": "acyl:methionyl acetate",
+   "tool": "unipka-simple-template",
+   "ok": false,
+   "pkas": [],
+   "site_pkas": [],
+   "error": "no macrostate pair survived enumeration and inference"
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_projection.yaml
+# [[experiments.027-betaxanthin-metabolic.projection-head]]
+#
+# THE PROJECTION HEAD, structural only. The flux starts at v0 = N z, a point of ker S, and
+# is then alternately clipped into the genotype box and projected back onto ker S, five
+# times. Mass balance holds exactly at the end of the loop and the leftover box overshoot is
+# reported per sample, so the two constraints the wave-5 flux_off cell showed to be the
+# blocking ones (mass balance and the box) are satisfied by construction rather than paid
+# for out of the data term.
+#
+# No thermodynamics, no enzyme capacity, no protein budget: this is the structural analog of
+# `flux_off`, so `flux_off` -> `flux_projection` isolates what making the two constraints
+# exact buys, with no measured parameter in the comparison at all.
+base_arm: flux_projection
+permute_train_targets: false

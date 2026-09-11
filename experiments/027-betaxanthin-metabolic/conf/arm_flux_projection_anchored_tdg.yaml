@@ -1,0 +1,28 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_projection_anchored_tdg.yaml
+# [[experiments.027-betaxanthin-metabolic.projection-head]]
+#
+# EVERYTHING ON, AND ALL OF IT STRUCTURAL. Anchored thermodynamics, the predicted-kcat
+# capacity bound through the abundance head, the forward protein-pool budget and the Gibbs
+# dissipation limit, on a flux whose bounds, enzyme capacity AND second law are enforced by
+# the parameterization rather than by a penalty.
+#
+# WHY. Jobs 1689, 1690 and 1708 made mass balance exact and left the second law soft, and
+# the soft term closed nothing: job 1708's top-100 strains met the balance criterion at
+# every tolerance and still carried a median thermodynamic violation fraction of 0.405 at a
+# constraint scale of 0.1. A weight that has to be traded against the data term cannot
+# deliver a criterion of the form "95 percent of the top 100 violate nothing".
+#
+# HOW. The sign of a reaction's deltaG is a bound on its flux, so it goes in the box:
+# dG above +epsilon clamps the upper bound to zero, dG below -epsilon clamps the lower bound
+# to zero, and a near-equilibrium reaction is left alone because its direction is not
+# resolved. The box is PER SAMPLE, since deltaG carries the learned concentration term, so
+# the model licenses a direction by moving concentrations inside the physiological window
+# rather than by fighting the constraint. Twenty alternations end on the clip, so bounds,
+# capacity and direction are all exact and the balance residual is the only reported
+# leftover; measured on yeast-GEM at initialization it is under 1e-2 on every sample.
+#
+# Read `c_thermo` with care on this arm: its epsilon makes a flux pinned to zero score 1,
+# so it runs HIGH while the violation fraction is exactly 0. The feasibility block's
+# thermo_model_violation_frac is the readout.
+base_arm: flux_projection_anchored_tdg
+permute_train_targets: false

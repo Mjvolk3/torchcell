@@ -250,3 +250,91 @@ Copied to `$DATA_ROOT/data/torchcell/yetfl_thermo/` with sha256 recorded in
   `units = "kJ/mol"` for a kcal/mol file. Not changed here: that file belongs to another
   work item, and changing it silently rescales every arm that used `shipped`.
 - Report the unit error upstream to SysBioChalmers/yeast-GEM.
+
+## 2026.09.11 - The 33 dGPredictor rows, named and corrected
+
+`constraints._read_delta_g_csv` multiplies every value it reads by 4.184, because yETFL's
+model declares `thermo_units = 'kcal/mol'` and yeast-GEM copied the numbers under a kJ/mol
+header. That is right for the metabolite column and for 3,177 of the reaction column's
+3,210 rows. It is wrong for the other 33: `v8_7_0.m` fills those from dGPredictor, and
+dGPredictor's own driver reports kJ/mol, so multiplying them leaves them 4.184x too large.
+The open item at the end of the previous section is now closed on the reaction side.
+
+### How the 33 were identified
+
+`experiments/026-metabolism-flux/scripts/thermo_dgpredictor_rows.py`, writing
+`results/dgpredictor_reaction_rows.json` and a copy at
+`$DATA_ROOT/data/torchcell/thermo_equilibrator/dgpredictor_reaction_rows.json`.
+
+A shipped row is a dGPredictor row exactly when yETFL's curated model does not price that
+reaction id, because `v8_7_0.m` fills from yETFL by id and then fills a fixed index block
+from dGPredictor. Measured: 3,210 shipped rows, 3,177 matched to yETFL with a maximum
+absolute difference of 0.0050 and 1.000 of them inside `round(x, 2)`, leaving **33 rows**:
+
+`r_4630, r_4635, r_4640, r_4645, r_4649, r_4650, r_4651, r_4652, r_4653, r_4654, r_4655,
+r_4656, r_4657, r_4658, r_4659, r_4673, r_4675, r_4677, r_4678, r_4679, r_4681, r_4682,
+r_4684, r_4685, r_4686, r_4700, r_4701, r_4702, r_4703, r_4705, r_4707, r_4708, r_4779`
+
+### Two cross-checks, one of which failed and is reported as failing
+
+**The index block: 31 of 33.** `v8_7_0.m` writes `model.rxnDeltaG(3983:4062) =
+dgpred_rxnG.detaG(3983:4062)`. Against yeast-GEM 9.0.2's reaction order, 31 of the 33 fall
+inside that block and two do not: `r_4630` at position 3979 and `r_4779` at 4127. The block
+indices were written against v8.7.0, whose reaction list has since changed, so a shifted
+position is expected rather than disqualifying, but it is recorded rather than smoothed
+over.
+
+**The unit back-solve: UNINFORMATIVE, and this is the honest finding.** The idea was to use
+the eQuilibrator recomputation as an independent kJ/mol ruler: for every reaction it can
+price from its own metabolites, is the shipped row closer as written or after multiplying
+by 4.184? A kcal row should prefer the multiplication. The control rows, the 2,227 yETFL
+rows that are known kcal, prefer it in only 0.545 of cases, with a median absolute error of
+21.6 kJ/mol either way. The ruler does not separate the two units at all. The reason is in
+the section above: at the reaction level the shipped column disagrees with its own
+metabolite column by a median 10.2 kcal/mol through the proton term and the compartment
+collapse, which is larger than the factor being tested. The metabolite-level regression
+that did settle the unit question (slope 4.187, Pearson 0.987 over 1,927 shared
+metabolites) has no reaction-level analogue.
+
+So the identification rests on documentary provenance, which is what this note is for:
+`v8_7_0.m` assigns the block from dGPredictor, `run_dgpredictor.py` reports kJ/mol, and
+yETFL does not price those ids.
+
+### What the correction changes
+
+`parameters.resolve_reaction_delta_g` reads the correction file and divides those rows back
+before the union's last-resort fill, and it RAISES when the file is absent rather than
+shipping the over-converted values. The union fills 6 reactions from the shipped reaction
+column and 5 of them are dGPredictor rows
+(`results/thermo_union_reprice.json`):
+
+| reaction | source | before (kJ/mol) | after (kJ/mol) | change |
+|---|---|---|---|---|
+| `r_0241` | yETFL, kcal | -1382.268 | -1382.268 | 0 |
+| `r_4700` | dGPredictor | 0.000 | 0.000 | 0 |
+| `r_4701` | dGPredictor | -12.301 | -2.940 | +9.361 |
+| `r_4703` | dGPredictor | -52.091 | -12.450 | +39.641 |
+| `r_4708` | dGPredictor | -215.225 | -51.440 | +163.785 |
+| `r_4779` | dGPredictor | 0.000 | 0.000 | 0 |
+
+Three reactions move, and `r_4708` moves by 164 kJ/mol, which is far more than any
+plausible driving force. The other 28 dGPredictor rows are not reached by the union,
+because a metabolite route already prices those reactions.
+
+### Files
+
+- `experiments/026-metabolism-flux/scripts/thermo_dgpredictor_rows.py`
+- `experiments/026-metabolism-flux/scripts/thermo_union_reprice.py`
+- `experiments/026-metabolism-flux/results/dgpredictor_reaction_rows.json`
+- `experiments/026-metabolism-flux/results/thermo_union_reprice.json`
+- `torchcell/metabolism/parameters.py` (`DGPREDICTOR_ROWS_FILENAME`,
+  `_shipped_reaction_column_kj`, `ThermoSource.UNION_EXTERNAL`)
+
+### Still open
+
+- `constraints._read_delta_g_csv` still multiplies the whole column, so a consumer that
+  reads `ThermoTable.rxn_delta_g` directly rather than through
+  `resolve_reaction_delta_g` still sees the 33 over-converted. The correction belongs at
+  parse time; it was not put there because `constraints.py` is owned by another work item
+  tonight.
+- Report the unit error upstream to SysBioChalmers/yeast-GEM.

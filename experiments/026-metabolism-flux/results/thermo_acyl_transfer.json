@@ -1,0 +1,93 @@
+{
+ "built_at": "2026-09-11T06:38:56.168609+00:00",
+ "conditions": {
+  "p_h": 7.2,
+  "ionic_strength_m": 0.25,
+  "temperature_k": 303.15,
+  "p_mg": 3.0
+ },
+ "acceptance_test": "the RDKit formula of the composed structure must equal the GEM formula moved to the neutral species, H_neutral = H_gem - charge_gem with every other element unchanged; anything else is a different molecule and is rejected",
+ "hydroxyl_smarts": "[CX4][OX2H]",
+ "n_candidate_reactions": 3,
+ "n_composed": 2,
+ "n_formula_pass": 2,
+ "n_priced": 0,
+ "n_metabolite_rows_priced": 0,
+ "outcomes": {
+  "ambiguous_hydroxyl": 1,
+  "composed": 2
+ },
+ "records": [
+  {
+   "met_id": "s_4033",
+   "met_ids": [
+    "s_4033"
+   ],
+   "name": "[protein]-N(6)-acetyl-L-lysine",
+   "gem_formula": "C8H14N2O2",
+   "gem_charge": 0,
+   "reaction_id": "r_4340",
+   "reaction_name": "D-amino-acid N-acetyltransferase HPA3 (DNT) (EC 2.3.1.36) (EC 2.3.1.48) (Histone and other protein acetyltransferase 3)",
+   "reaction_string": "s_0373 + s_4032 <=> s_0529 + s_0794 + s_4033",
+   "donor_met_id": "s_0373",
+   "donor_name": "acetyl-CoA",
+   "acceptor_met_id": "s_4032",
+   "acceptor_name": "[protein]-L-lysine",
+   "acceptor_smiles": "[NH3+]CCCC[C@H](NC(*)=O)C(=O)N*",
+   "product_smiles": null,
+   "rdkit_formula": null,
+   "neutral_target_formula": null,
+   "formula_match": false,
+   "outcome": "ambiguous_hydroxyl",
+   "detail": "0 aliphatic hydroxyls; which one the enzyme acylates is not determined by the formula, so nothing is composed"
+  },
+  {
+   "met_id": "s_4254",
+   "met_ids": [
+    "s_4254",
+    "s_4255"
+   ],
+   "name": "tyrosyl acetate",
+   "gem_formula": "C10H12O3",
+   "gem_charge": 0,
+   "reaction_id": "r_4687",
+   "reaction_name": "alcohol acetyltransferase (tyrosol)",
+   "reaction_string": "s_0373 + s_4245 --> s_0529 + s_4254",
+   "donor_met_id": "s_0373",
+   "donor_name": "acetyl-CoA",
+   "acceptor_met_id": "s_4245",
+   "acceptor_name": "tyrosol",
+   "acceptor_smiles": "OCCC1=CC=C(O)C=C1",
+   "product_smiles": "CC(=O)OCCc1ccc(O)cc1",
+   "rdkit_formula": "C10H12O3",
+   "neutral_target_formula": "C10H12O3",
+   "formula_match": true,
+   "outcome": "composed",
+   "detail": ""
+  },
+  {
+   "met_id": "s_4256",
+   "met_ids": [
+    "s_4256",
+    "s_4257"
+   ],
+   "name": "methionyl acetate",
+   "gem_formula": "C6H12O2S",
+   "gem_charge": 0,
+   "reaction_id": "r_4690",
+   "reaction_name": "alcohol acetyltransferase (methionol)",
+   "reaction_string": "s_0373 + s_4239 --> s_0529 + s_4256",
+   "donor_met_id": "s_0373",
+   "donor_name": "acetyl-CoA",
+   "acceptor_met_id": "s_4239",
+   "acceptor_name": "methionol",
+   "acceptor_smiles": "CSCCCO",
+   "product_smiles": "CSCCCOC(C)=O",
+   "rdkit_formula": "C6H12O2S",
+   "neutral_target_formula": "C6H12O2S",
+   "formula_match": true,
+   "outcome": "composed",
+   "detail": ""
+  }
+ ]
+}

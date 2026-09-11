@@ -14,7 +14,7 @@ import json
 import os
 import os.path as osp
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
@@ -32,6 +32,9 @@ from torchcell.metabolism.parameters import (
     load_predicted_unit_table,
     resolve_reaction_delta_g,
 )
+
+if TYPE_CHECKING:
+    from torchcell.metabolism.constraints import CatalyticUnits
 
 # WITHOUT THIS the real-data tests below skip silently on a machine that has the data.
 # `DATA_ROOT` and `EXPERIMENT_ROOT` live in the repo's `.env`, not in the shell pytest is
@@ -113,11 +116,48 @@ def test_selection_with_no_admitted_predictor_raises_rather_than_defaulting(tmp_
 def _predictor_parquet(
     tmp_path: Path, name: str, rows: list[tuple[int, str, float]]
 ) -> None:
-    directory = tmp_path / name / "processed"
+    """One synthetic predictor table, in the VERIFIED version directory the loader reads."""
+    from torchcell.metabolism.parameters import KINETICS_VERSION
+
+    directory = tmp_path / name / KINETICS_VERSION
     directory.mkdir(parents=True)
     pd.DataFrame(rows, columns=["unit_id", "gene_id", "k_cat"]).to_parquet(
         directory / "k_cat.parquet"
     )
+    _substrate_map(tmp_path, rows)
+
+
+def _substrate_map(tmp_path: Path, rows: list[tuple[int, str, float]]) -> None:
+    """The substrate map the loader carries onto the table, written once per mirror.
+
+    Minimal on purpose: these tests are about the median and the masking, and the substrate
+    map only has to exist and parse. Its content is exercised by the measured-tier tests.
+    """
+    from torchcell.metabolism.parameters import VERIFIED_PAIRS_FEATURE
+
+    path = tmp_path / VERIFIED_PAIRS_FEATURE
+    if path.exists():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {
+                "unit_id": unit_id,
+                "substrate_name": "synthetic substrate",
+                "smiles": "CCO",
+                "reaction_ec": "1.1.1.1",
+            }
+            for unit_id, _, _ in rows
+        ]
+        or [
+            {
+                "unit_id": 0,
+                "substrate_name": "synthetic substrate",
+                "smiles": "CCO",
+                "reaction_ec": "1.1.1.1",
+            }
+        ]
+    ).to_parquet(path)
 
 
 def test_predicted_value_is_a_log_median_over_predictors_of_a_min_over_subunits(
@@ -388,3 +428,187 @@ def test_the_union_merges_two_tables_that_are_now_in_the_same_unit(real_gem):
     ratio = float(a[a > 1.0].median() / b[a > 1.0].median())
     # Read as kcal this ratio sat near 1/4; in a common unit it is order 1.
     assert 0.25 < ratio < 4.0, ratio
+
+
+# =====================================================================================
+# THE SUBSTRATE-MATCHED MEASURED TIER AND THE HOMOLOG TIER
+# =====================================================================================
+
+
+def _units(
+    n_units: int, genes_per_unit: list[list[int]], gene_ids: list[str]
+) -> "CatalyticUnits":
+    """A synthetic CatalyticUnits, built directly rather than parsed from a GPR."""
+    from torchcell.metabolism.constraints import CatalyticUnits
+
+    edges = [(u, g) for u, genes in enumerate(genes_per_unit) for g in genes]
+    return CatalyticUnits(
+        unit_gene_index=torch.tensor(edges).t().long(),
+        unit_reaction=torch.arange(n_units).long(),
+        n_units=n_units,
+        n_multigene_units=sum(1 for genes in genes_per_unit if len(genes) > 1),
+        n_reactions_with_gpr=n_units,
+        gene_ids=gene_ids,
+    )
+
+
+def _row(**kwargs):
+    from torchcell.metabolism.enzyme_kinetics import OedKineticRecord
+
+    base = {
+        "enzymetype": "wildtype",
+        "temperature": 30.0,
+        "kcat_unit": "1/s",
+        "km_unit": "mM",
+    }
+    return OedKineticRecord.model_validate({**base, **kwargs})
+
+
+def test_a_measurement_on_the_wrong_substrate_is_not_a_measurement():
+    """The defect this tier was rebuilt for: 74 of 148 units were priced off a substrate
+    the reaction does not consume, because the key was the accession alone.
+    """
+    from torchcell.metabolism.enzyme_kinetics import KineticKind
+    from torchcell.metabolism.parameters import (
+        ParameterProvenance,
+        SubstrateMatch,
+        _database_tiers,
+    )
+
+    ethanol = "CCO"
+    acetate = "CC(=O)O"
+    units = _units(2, [[0], [1]], ["g0", "g1"])
+    substrates = SubstrateMatch(
+        keys={0: {_block(ethanol)}, 1: {_block(ethanol)}},
+        names={0: {"ethanol"}, 1: {"ethanol"}},
+        ec={0: {"1.1.1.1"}, 1: {"1.1.1.1"}},
+    )
+    organism_rows = [
+        _row(
+            uniprot="P1",
+            ec="1.1.1.1",
+            organism="Yeast",
+            substrate="ethanol",
+            smiles=ethanol,
+            kcat_value=100.0,
+            km_value=0.5,
+        ),
+        # The same protein, assayed on something this reaction never sees.
+        _row(
+            uniprot="P2",
+            ec="1.1.1.1",
+            organism="Yeast",
+            substrate="acetate",
+            smiles=acetate,
+            kcat_value=7.0,
+            km_value=9.0,
+        ),
+    ]
+    accessions = {"g0": "P1", "g1": "P2"}
+
+    tiers = _database_tiers(
+        units, accessions, organism_rows, [], substrates, KineticKind.KCAT, 30.0
+    )
+    assert tiers[0][0] == pytest.approx(100.0)
+    assert tiers[0][1] is ParameterProvenance.OPEN_ENZYME_DATABASE
+    assert 1 not in tiers, "the acetate row must not price an ethanol reaction"
+
+    # And with the check disabled, which is what the old key did, it does price it.
+    unchecked = SubstrateMatch(ec=substrates.ec, accept_all_unchecked=True)
+    assert 1 in _database_tiers(
+        units, accessions, organism_rows, [], unchecked, KineticKind.KCAT, 30.0
+    )
+
+
+def test_the_homolog_tier_fills_only_what_this_organism_cannot():
+    """A cross-organism EC match is used where the accession key finds nothing, is tagged
+    apart, and never displaces a measurement of this organism's own protein.
+    """
+    from torchcell.metabolism.enzyme_kinetics import KineticKind
+    from torchcell.metabolism.parameters import (
+        ParameterProvenance,
+        SubstrateMatch,
+        _database_tiers,
+    )
+
+    ethanol = "CCO"
+    units = _units(2, [[0], [1]], ["g0", "g1"])
+    substrates = SubstrateMatch(
+        keys={0: {_block(ethanol)}, 1: {_block(ethanol)}},
+        names={0: {"ethanol"}, 1: {"ethanol"}},
+        ec={0: {"1.1.1.1"}, 1: {"1.1.1.1"}},
+    )
+    organism_rows = [
+        _row(
+            uniprot="P1",
+            ec="1.1.1.1",
+            organism="Yeast",
+            substrate="ethanol",
+            smiles=ethanol,
+            kcat_value=100.0,
+            km_value=0.5,
+        )
+    ]
+    homolog_rows = [
+        _row(
+            uniprot="Q9",
+            ec="1.1.1.1",
+            organism="Some other bug",
+            substrate="ethanol",
+            smiles=ethanol,
+            kcat_value=3.0,
+            km_value=0.1,
+        )
+    ]
+    tiers = _database_tiers(
+        units,
+        {"g0": "P1", "g1": "P2"},
+        organism_rows,
+        homolog_rows,
+        substrates,
+        KineticKind.KCAT,
+        30.0,
+    )
+    assert tiers[0][1] is ParameterProvenance.OPEN_ENZYME_DATABASE
+    assert tiers[0][0] == pytest.approx(100.0), (
+        "a homolog must not displace the protein"
+    )
+    assert tiers[1][1] is ParameterProvenance.OPEN_ENZYME_DATABASE_EC_HOMOLOG
+    assert tiers[1][0] == pytest.approx(3.0)
+
+
+def test_the_homolog_tier_is_not_counted_as_a_measurement():
+    """`flux_layer._tier_counts` reads EXPERIMENTAL_SOURCES, so the coarse split must place
+    a homolog value with the predictions rather than inflate the experimental fraction.
+    """
+    from torchcell.metabolism.parameters import (
+        EXPERIMENTAL_SOURCES,
+        ParameterProvenance,
+        ParameterTable,
+    )
+
+    provenance = [
+        ParameterProvenance.OPEN_ENZYME_DATABASE,
+        ParameterProvenance.OPEN_ENZYME_DATABASE_EC_HOMOLOG,
+        ParameterProvenance.PREDICTED_MEDIAN,
+        ParameterProvenance.ORGANISM_DEFAULT,
+    ]
+    table = ParameterTable.build(torch.ones(4), provenance, unit="1/s")
+    assert table.tier_counts() == {
+        "measured": 1,
+        "homolog": 1,
+        "predicted": 1,
+        "default": 1,
+    }
+    assert (
+        ParameterProvenance.OPEN_ENZYME_DATABASE_EC_HOMOLOG not in EXPERIMENTAL_SOURCES
+    )
+    assert float(table.experimental_coverage.fraction) == pytest.approx(0.25)
+
+
+def _block(smiles: str) -> str:
+    from torchcell.metabolism.kinetics_pipeline import inchikey_block
+
+    block = inchikey_block(smiles)
+    assert block is not None
+    return block

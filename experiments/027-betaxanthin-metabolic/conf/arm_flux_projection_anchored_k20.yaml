@@ -1,0 +1,11 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_projection_anchored_k20.yaml
+# [[experiments.027-betaxanthin-metabolic.projection-head]]
+#
+# `flux_projection_anchored` with twenty alternations instead of five. Everything else is
+# identical, so the pair measures whether the residual five steps leave (the box overshoot,
+# since the loop ends on the balance projection) is large enough to reach the phenotype.
+#
+# The step count rides in the parameterization string, `projection_k20`, because 026's
+# build_flux_layer forwards that field and no other new one.
+base_arm: flux_projection_anchored_k20
+permute_train_targets: false

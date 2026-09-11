@@ -1,0 +1,81 @@
+{
+ "built_at": "2026-09-11T07:09:20.981145+00:00",
+ "gauge_shift_kj_per_mol": 1000.0,
+ "claim": "in a reaction elementally balanced in the ion's element the ion's absolute formation energy cancels exactly, so only elementally unbalanced reactions can move under a change of gauge",
+ "n_reactions": 4131,
+ "n_priced_baseline": 3779,
+ "n_priced_shifted": 3779,
+ "n_reactions_touching_a_tabled_ion": 22,
+ "n_moved": 6,
+ "n_moved_and_unbalanced": 6,
+ "n_moved_but_balanced": 0,
+ "claim_holds": true,
+ "max_change_among_balanced_kj_per_mol": 0.0,
+ "moved": [
+  {
+   "reaction_id": "r_2020",
+   "delta_r_g0_kj_per_mol": 283.8492570738729,
+   "change_under_gauge_shift_kj_per_mol": -1000.0,
+   "elementally_balanced": false,
+   "imbalance": {
+    "K": -1.0
+   },
+   "reaction_string": "s_1374 <=> "
+  },
+  {
+   "reaction_id": "r_2049",
+   "delta_r_g0_kj_per_mol": 263.1457415738729,
+   "change_under_gauge_shift_kj_per_mol": -1000.0,
+   "elementally_balanced": false,
+   "imbalance": {
+    "Na": -1.0
+   },
+   "reaction_string": "s_1438 <=> "
+  },
+  {
+   "reaction_id": "r_4593",
+   "delta_r_g0_kj_per_mol": 131.44736449887293,
+   "change_under_gauge_shift_kj_per_mol": -1000.0,
+   "elementally_balanced": false,
+   "imbalance": {
+    "charge": 1.0,
+    "Cl": -1.0
+   },
+   "reaction_string": "s_4200 <=> "
+  },
+  {
+   "reaction_id": "r_4594",
+   "delta_r_g0_kj_per_mol": -61.720888204508356,
+   "change_under_gauge_shift_kj_per_mol": -1000.0,
+   "elementally_balanced": false,
+   "imbalance": {
+    "charge": -2.0,
+    "Cu": -1.0
+   },
+   "reaction_string": "s_4201 <=> "
+  },
+  {
+   "reaction_id": "r_4596",
+   "delta_r_g0_kj_per_mol": 150.42122979549166,
+   "change_under_gauge_shift_kj_per_mol": -1000.0,
+   "elementally_balanced": false,
+   "imbalance": {
+    "charge": -2.0,
+    "Zn": -1.0
+   },
+   "reaction_string": "s_4203 <=> "
+  },
+  {
+   "reaction_id": "r_4600",
+   "delta_r_g0_kj_per_mol": 556.2921957954917,
+   "change_under_gauge_shift_kj_per_mol": -1000.0,
+   "elementally_balanced": false,
+   "imbalance": {
+    "charge": -2.0,
+    "Ca": -1.0
+   },
+   "reaction_string": "s_4199 <=> "
+  }
+ ],
+ "reading": "22 reactions touch a tabled ion and 6 of them move when every ion is shifted by 1000 kJ/mol. Every one that moves is elementally unbalanced, so the absolute values change no balanced reaction's energy and the table's contribution to the usable part of the reaction table is exactly its coverage, not its numbers."
+}

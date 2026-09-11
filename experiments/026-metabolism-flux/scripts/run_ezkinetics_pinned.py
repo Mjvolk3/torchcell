@@ -266,6 +266,18 @@ def main() -> None:
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--protein-batch-size", type=int, default=4,
                         help="ESM2 batch size. The authors use 4; 1 removes padding.")
+    # A run over a SUBSET of the pair table, for the units a later structure-resolution
+    # pass unblocked. The subset is written to its own parquet and appended by
+    # improve_kinetic_coverage.py, so the production table is never re-predicted: this
+    # model is not bit-reproducible across hardware, and rebuilding would move values on
+    # units that nothing asked to move. The coverage summary is written only for a full
+    # run, since a subset's coverage numbers would describe the subset.
+    parser.add_argument("--inputs", default=PAIRS,
+                        help="Pair table to predict, .csv or .parquet. Default: the "
+                             "full yeast-GEM pair table.")
+    parser.add_argument("--output", default=None,
+                        help="Where to write the predictions parquet. Default: the "
+                             "predictor's own processed table.")
     args = parser.parse_args()
     PROTEIN_BATCH_SIZE[0] = args.protein_batch_size
 
@@ -283,13 +295,20 @@ def main() -> None:
             )
         return
 
-    pairs = pd.read_csv(PAIRS)
-    sequence_of_gene = (
-        pd.read_parquet(SEQUENCE_SOURCE)[["gene_id", "sequence"]]
-        .drop_duplicates("gene_id")
-        .set_index("gene_id")["sequence"]
+    pairs = (
+        pd.read_parquet(args.inputs)
+        if args.inputs.endswith(".parquet")
+        else pd.read_csv(args.inputs)
     )
-    work = pairs.assign(sequence=pairs["gene_id"].map(sequence_of_gene))
+    if "sequence" in pairs:
+        work = pairs.copy()
+    else:
+        sequence_of_gene = (
+            pd.read_parquet(SEQUENCE_SOURCE)[["gene_id", "sequence"]]
+            .drop_duplicates("gene_id")
+            .set_index("gene_id")["sequence"]
+        )
+        work = pairs.assign(sequence=pairs["gene_id"].map(sequence_of_gene))
     work = work[work["sequence"].notna() & work["smiles"].notna()].reset_index(drop=True)
     print(f"{len(work)} of {len(pairs)} pairs have both a sequence and a SMILES")
 
@@ -303,7 +322,11 @@ def main() -> None:
     manifest = json.load(open(osp.join(MIRROR, "manifest.json")))
     work["weights_sha256"] = manifest["revision"]
     work["provenance"] = f"ezkinetics@{manifest['revision'][:12]}"
-    work.to_parquet(osp.join(OUT_DIR, f"{args.parameter}.parquet"))
+    default_output = osp.join(OUT_DIR, f"{args.parameter}.parquet")
+    work.to_parquet(args.output or default_output)
+    if args.output and args.output != default_output:
+        print(f"wrote {args.output}; no summary, this is a subset run")
+        return
 
     n_units_total = 3728
     summary = {

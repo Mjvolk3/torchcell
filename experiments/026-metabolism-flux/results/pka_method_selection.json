@@ -1,0 +1,164 @@
+{
+ "built_at": "2026-09-11T06:13:25.013616+00:00",
+ "rule": {
+  "statistic": "the worst per-pH p90 of |dGf'0(predicted) - dGf'0(cache)| over the working compartment pHs",
+  "why_p90": "the fill-in is a tail risk: a method whose median is 0.2 kJ/mol and whose p90 is 8 kJ/mol puts an 8 kJ/mol error on one reaction in ten, and one wrongly signed reaction potential is what a second-law hinge acts on",
+  "why_worst_ph": "a metabolite is priced at its compartment's pH, so the method has to hold at all of them; taking the mean over pHs would let a good cytosol score hide a bad vacuole one",
+  "max_failure_rate": 0.02,
+  "evaluated_on": "the compounds NOT in the pinned seed-17 300, since that subset fitted the ensemble membership and the per-group rule",
+  "tie_breaks": [
+   "median |ddGf'0| at pH 7.2",
+   "seconds per compound"
+  ],
+  "ensembles_allowed": true
+ },
+ "scores_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/pka_method_selection_scores.json",
+ "scores_sha256": "0805b070a2d32d8bbe4e18c82984417e43d27f75b9bff3dbc5e7962f0f7df641",
+ "validation_set_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/pka_selection_validation_set.json",
+ "n_evaluated": 2100,
+ "working_ph": [
+  5.0,
+  6.2,
+  6.6,
+  7.0,
+  7.1,
+  7.2,
+  7.4,
+  7.8
+ ],
+ "selected": "cascade_top3",
+ "selected_kind": "ensemble",
+ "selected_members": [
+  "unipka-simple-template",
+  "molgpka",
+  "pkasolver"
+ ],
+ "selected_worst_working_p90": 8.330862016390645,
+ "selected_worst_working_ph": "7.8",
+ "selected_failure_rate": 0.0023809523809523725,
+ "selected_median_ph72": 0.06731935134246214,
+ "selected_mae_ph72": 1.0361699713307173,
+ "selected_frac_count_match": 0.3379474940334129,
+ "selected_seconds_per_compound": 3.620224819580714,
+ "ranking": [
+  {
+   "method": "ensemble_top2",
+   "kind": "ensemble",
+   "worst_working_p90": 7.82678943359673,
+   "worst_working_ph": "5",
+   "mae_ph72": 1.4663545140741439,
+   "median_ph72": 0.502115313733043,
+   "max_ph72": 20.938609455413598,
+   "failure_rate": 0.16952380952380952,
+   "frac_count_match": 0.28211009174311924,
+   "pka_mae_paired": 3.1754331688725754,
+   "seconds_per_compound": 1.1870714288949966
+  },
+  {
+   "method": "cascade_top3",
+   "kind": "ensemble",
+   "worst_working_p90": 8.330862016390645,
+   "worst_working_ph": "7.8",
+   "mae_ph72": 1.0361699713307173,
+   "median_ph72": 0.06731935134246214,
+   "max_ph72": 9.586755138660692,
+   "failure_rate": 0.0023809523809523725,
+   "frac_count_match": 0.3379474940334129,
+   "pka_mae_paired": 3.5001747424711835,
+   "seconds_per_compound": 3.620224819580714
+  },
+  {
+   "method": "cascade_top2",
+   "kind": "ensemble",
+   "worst_working_p90": 8.333194320403813,
+   "worst_working_ph": "7.8",
+   "mae_ph72": 1.0366391765903544,
+   "median_ph72": 0.06752837279049118,
+   "max_ph72": 9.586755138660692,
+   "failure_rate": 0.0028571428571428914,
+   "frac_count_match": 0.3376313276026743,
+   "pka_mae_paired": 3.5006149920830945,
+   "seconds_per_compound": 1.1870714288949966
+  },
+  {
+   "method": "unipka-simple-template",
+   "kind": "tool",
+   "worst_working_p90": 8.745061334567367,
+   "worst_working_ph": "7.8",
+   "mae_ph72": 1.156659191712045,
+   "median_ph72": 0.07670462896328445,
+   "max_ph72": 9.586755138660692,
+   "failure_rate": 0.11523809523809525,
+   "frac_count_match": 0.3536060279870829,
+   "pka_mae_paired": 3.558056581155947,
+   "seconds_per_compound": 0.3999979967872302
+  },
+  {
+   "method": "per_group_best",
+   "kind": "ensemble",
+   "worst_working_p90": 8.745061334567367,
+   "worst_working_ph": "7.8",
+   "mae_ph72": 1.156659191712045,
+   "median_ph72": 0.07670462896328445,
+   "max_ph72": 9.586755138660692,
+   "failure_rate": 0.11523809523809525,
+   "frac_count_match": 0.3536060279870829,
+   "pka_mae_paired": 3.558056581155947,
+   "seconds_per_compound": 3.620224819580714
+  },
+  {
+   "method": "molgpka",
+   "kind": "tool",
+   "worst_working_p90": 9.33099866705071,
+   "worst_working_ph": "7.8",
+   "mae_ph72": 1.1042093127546775,
+   "median_ph72": 0.12964013882253766,
+   "max_ph72": 15.518643024586822,
+   "failure_rate": 0.05714285714285716,
+   "frac_count_match": 0.21666666666666667,
+   "pka_mae_paired": 3.3554285344833885,
+   "seconds_per_compound": 0.7870734321077665
+  },
+  {
+   "method": "ensemble_top3",
+   "kind": "ensemble",
+   "worst_working_p90": 9.381970622404426,
+   "worst_working_ph": "7.8",
+   "mae_ph72": 1.7950635140548163,
+   "median_ph72": 0.33148259686339543,
+   "max_ph72": 36.76832878666289,
+   "failure_rate": 0.004761904761904745,
+   "frac_count_match": 0.36363636363636365,
+   "pka_mae_paired": 3.0786776563807114,
+   "seconds_per_compound": 3.620224819580714
+  },
+  {
+   "method": "pkasolver",
+   "kind": "tool",
+   "worst_working_p90": 18.120017505333365,
+   "worst_working_ph": "7.8",
+   "mae_ph72": 4.045746733517626,
+   "median_ph72": 1.4660762175983564,
+   "max_ph72": 173.24617603746447,
+   "failure_rate": 0.0071428571428571175,
+   "frac_count_match": 0.3635491606714628,
+   "pka_mae_paired": 3.4561946064205764,
+   "seconds_per_compound": 2.4331533906857175
+  }
+ ],
+ "rejected_for_failure_rate": [
+  "molgpka (failure rate 0.057)",
+  "unipka-simple-template (failure rate 0.115)",
+  "ensemble_top2 (failure rate 0.170)",
+  "per_group_best (failure rate 0.115)"
+ ],
+ "magnesium_gap": {
+  "n_sampled_with_magnesium_constants": 14.0,
+  "note": "specified_pkas carries proton dissociation constants only, so every transform here is proton-only on both sides; a compound whose cache entry has magnesium constants keeps an unclosable gap on this route"
+ },
+ "caveats": [
+  "The ground truth is ChemAxon's own pKa list as stored in the eQuilibrator cache, so this measures agreement with the convention the cache is built in, not agreement with experiment.",
+  "Magnesium dissociation constants are absent from every external route, so a compound that binds magnesium keeps a gap this benchmark cannot close.",
+  "pKa-count match is reported and is NOT part of the rule: a ladder can carry the right number of pKas and the wrong values, and the transform is what the flux layer consumes."
+ ]
+}

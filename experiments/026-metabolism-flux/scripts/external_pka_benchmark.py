@@ -98,8 +98,22 @@ load_dotenv()
 
 EXPERIMENT_ROOT = cast(str, os.environ["EXPERIMENT_ROOT"])
 RESULTS = osp.join(EXPERIMENT_ROOT, "026-metabolism-flux", "results")
-SAMPLE_PATH = osp.join(RESULTS, "external_pka_validation_set.json")
-PRED_PATH_TEMPLATE = osp.join(RESULTS, "external_pka_predictions_{tool}.json")
+
+# The validation set and the prediction filenames are overridable through the environment
+# so a SECOND, larger sample can be predicted by the same commands without duplicating any
+# of them. Each predictor runs under its own conda environment and re-invokes this file as
+# a subprocess (Uni-pKa does, one per fold), and an environment variable is the one channel
+# that survives both hops. Unset, the names are the 300-compound benchmark's, so every
+# command reproduces that run exactly as before.
+SAMPLE_PATH = osp.join(
+    RESULTS, os.environ.get("EXTERNAL_PKA_SAMPLE", "external_pka_validation_set.json")
+)
+PRED_PATH_TEMPLATE = osp.join(
+    RESULTS,
+    os.environ.get(
+        "EXTERNAL_PKA_PRED_TEMPLATE", "external_pka_predictions_{tool}.json"
+    ),
+)
 BENCHMARK_PATH = osp.join(RESULTS, "external_pka_benchmark.json")
 PER_COMPOUND_CSV = osp.join(RESULTS, "external_pka_per_compound.csv")
 
@@ -137,6 +151,34 @@ class ValidationCompound(BaseModel):
     n_heavy_atoms: int
     has_magnesium_constants: bool
     stratum: str
+    # The four axes below are written only by the method-selection sampler
+    # (``external_pka_method_selection.py sample``), which stratifies on more than the pKa
+    # count. They default so the 300-compound benchmark file still validates unchanged.
+    net_charge_ph7: int = Field(
+        default=0,
+        description=(
+            "Formal charge of the cache's major microspecies, which the cache defines at "
+            "pH 7. Read off that SMILES rather than derived from the pKa list."
+        ),
+    )
+    molecular_weight: float = Field(
+        default=0.0, description="Average molecular weight of the neutral parent, Da."
+    )
+    lipid_like: bool = Field(
+        default=False,
+        description=(
+            "Long acyl chain or a phosphate headgroup, the regime the yeast-GEM fill-in "
+            "actually runs in. Defined by SMARTS in the method-selection sampler."
+        ),
+    )
+    strata: dict[str, str] = Field(
+        default_factory=dict,
+        description="Stratum label per axis: pka_count, group, charge, mass, lipid.",
+    )
+    in_seed17_subset: bool = Field(
+        default=False,
+        description="True for a compound carried over from the 300-compound seed-17 set.",
+    )
 
 
 class ValidationSet(BaseModel):
@@ -152,6 +194,12 @@ class ValidationSet(BaseModel):
     group_counts: dict[str, int]
     n_with_magnesium_constants: int
     compounds: list[ValidationCompound]
+    pinned_from: str | None = Field(
+        default=None,
+        description="Sample file whose compounds were carried over verbatim, if any.",
+    )
+    n_pinned: int = 0
+    stratum_counts_by_axis: dict[str, dict[str, int]] = Field(default_factory=dict)
 
 
 class PredictionRecord(BaseModel):
@@ -378,6 +426,70 @@ def _load_sample() -> ValidationSet:
         return ValidationSet.model_validate_json(handle.read())
 
 
+def _shard_of(
+    compounds: list[ValidationCompound], shard: int, n_shards: int
+) -> list[ValidationCompound]:
+    """Every ``n_shards``-th compound starting at ``shard``.
+
+    MolGpKa costs ~39 s per compound in one process and pKasolver-lite ~4 s, so a
+    2,000-compound set is 22 h and 2.2 h respectively on one core. Both are pure CPU with
+    no shared state, so the set is cut round-robin rather than into contiguous blocks: the
+    strata are interleaved in the sample file, and a contiguous cut would hand one worker
+    every 6-pKa compound and leave it running long after the rest are done.
+    """
+    if n_shards <= 1:
+        return compounds
+    if not 0 <= shard < n_shards:
+        raise ValueError(f"shard {shard} is outside 0..{n_shards - 1}")
+    return [c for i, c in enumerate(compounds) if i % n_shards == shard]
+
+
+def _prediction_path(tool: str, shard: int, n_shards: int) -> str:
+    """Where one worker writes; a sharded run writes one file per worker."""
+    if n_shards <= 1:
+        return PRED_PATH_TEMPLATE.format(tool=tool)
+    return PRED_PATH_TEMPLATE.format(tool=f"{tool}_shard{shard:03d}of{n_shards:03d}")
+
+
+def cmd_merge_shards(args: argparse.Namespace) -> None:
+    """Concatenate one tool's shard files into the single prediction file ``score`` reads.
+
+    A missing shard is an error rather than a silently shorter prediction set: a merged
+    file that quietly dropped a worker would be scored as if the tool had simply failed on
+    those compounds, which is a different claim from the tool never having seen them.
+    """
+    records: list[PredictionRecord] = []
+    seconds = 0.0
+    n_requested = 0
+    version = ""
+    for shard in range(args.n_shards):
+        path = _prediction_path(args.tool, shard, args.n_shards)
+        if not osp.isfile(path):
+            raise FileNotFoundError(f"shard {shard} of {args.n_shards} is missing: {path}")
+        with open(path) as handle:
+            pset = PredictionSet.model_validate_json(handle.read())
+        records.extend(pset.records)
+        seconds += pset.seconds_total
+        n_requested += pset.n_requested
+        version = pset.tool_version
+    merged = PredictionSet(
+        tool=args.tool,
+        tool_version=version,
+        built_at=_timestamp(),
+        n_requested=n_requested,
+        n_ok=sum(1 for r in records if r.ok),
+        seconds_total=seconds,
+        records=records,
+    )
+    out = PRED_PATH_TEMPLATE.format(tool=args.tool)
+    with open(out, "w") as handle:
+        handle.write(merged.model_dump_json(indent=1))
+    print(
+        f"wrote {out}: {merged.n_ok}/{merged.n_requested} over {args.n_shards} shards,"
+        f" {seconds:.0f} CPU-seconds"
+    )
+
+
 # ------------------------------------------------------------------ predict-pkasolver
 
 
@@ -390,11 +502,12 @@ def cmd_predict_pkasolver(args: argparse.Namespace) -> None:
 
     RDLogger.DisableLog("rdApp.*")
     vset = _load_sample()
+    compounds = _shard_of(vset.compounds, args.shard, args.n_shards)
     model = QueryModel()
 
     records: list[PredictionRecord] = []
     t_all = time.time()
-    for i, compound in enumerate(vset.compounds):
+    for i, compound in enumerate(compounds):
         t0 = time.time()
         try:
             mol = Chem.MolFromSmiles(compound.neutral_smiles)
@@ -428,7 +541,7 @@ def cmd_predict_pkasolver(args: argparse.Namespace) -> None:
                 )
             )
         if (i + 1) % 25 == 0:
-            print(f"  {i + 1}/{len(vset.compounds)}", flush=True)
+            print(f"  {i + 1}/{len(compounds)}", flush=True)
 
     import pkasolver
 
@@ -436,12 +549,12 @@ def cmd_predict_pkasolver(args: argparse.Namespace) -> None:
         tool="pkasolver-lite",
         tool_version=getattr(pkasolver, "__version__", "unknown"),
         built_at=_timestamp(),
-        n_requested=len(vset.compounds),
+        n_requested=len(compounds),
         n_ok=sum(1 for r in records if r.ok),
         seconds_total=time.time() - t_all,
         records=records,
     )
-    path = PRED_PATH_TEMPLATE.format(tool="pkasolver")
+    path = _prediction_path("pkasolver", args.shard, args.n_shards)
     with open(path, "w") as handle:
         handle.write(pset.model_dump_json(indent=1))
     print(f"wrote {path}: ok {pset.n_ok}/{pset.n_requested} in {pset.seconds_total:.0f}s")
@@ -907,9 +1020,10 @@ def cmd_predict_molgpka(args: argparse.Namespace) -> None:
     RDLogger.DisableLog("rdApp.*")
 
     vset = _load_sample()
+    compounds = _shard_of(vset.compounds, args.shard, args.n_shards)
     records: list[PredictionRecord] = []
     t_all = time.time()
-    for i, compound in enumerate(vset.compounds):
+    for i, compound in enumerate(compounds):
         t0 = time.time()
         ladder: list[float] = []
         sites_seen: list[float] = []
@@ -966,18 +1080,18 @@ def cmd_predict_molgpka(args: argparse.Namespace) -> None:
             )
         )
         if (i + 1) % 25 == 0:
-            print(f"  {i + 1}/{len(vset.compounds)}", flush=True)
+            print(f"  {i + 1}/{len(compounds)}", flush=True)
 
     pset = PredictionSet(
         tool="molgpka",
         tool_version=args.tool_version,
         built_at=_timestamp(),
-        n_requested=len(vset.compounds),
+        n_requested=len(compounds),
         n_ok=sum(1 for r in records if r.ok),
         seconds_total=time.time() - t_all,
         records=records,
     )
-    path = PRED_PATH_TEMPLATE.format(tool="molgpka")
+    path = _prediction_path("molgpka", args.shard, args.n_shards)
     with open(path, "w") as handle:
         handle.write(pset.model_dump_json(indent=1))
     print(f"wrote {path}: ok {pset.n_ok}/{pset.n_requested} in {pset.seconds_total:.0f}s")
@@ -1229,9 +1343,17 @@ def cmd_predict_unipka(args: argparse.Namespace) -> None:
 
 
 def _transform_kj_per_mol(
-    atom_bag: dict[str, int], pkas: list[float], reference_n_h: int
+    atom_bag: dict[str, int],
+    pkas: list[float],
+    reference_n_h: int,
+    p_h: float = P_H,
 ) -> float | None:
     """The Legendre transform at the study conditions, referenced to ``reference_n_h``.
+
+    ``p_h`` defaults to the study condition, pH 7.2. The method-selection benchmark calls
+    the same function at each compartment pH the flux layer actually runs at, because the
+    transform is what a pKa error propagates through and its sensitivity to a pKa is
+    largest where that pKa sits near the pH.
 
     Built with the same function the compound-creation path uses, then re-referenced so
     that a predicted pKa set and the cache's pKa set are compared on one energy zero.
@@ -1270,7 +1392,7 @@ def _transform_kj_per_mol(
         # log-sum-exp, so the same negation is applied here.
         ddg_over_rt.append(
             -micro.transform(
-                pH=P_H,
+                pH=p_h,
                 pMg=P_MG,
                 ionic_strength_M=IONIC_STRENGTH_M,
                 T_in_K=TEMPERATURE_K,
@@ -2547,6 +2669,19 @@ def cmd_table(args: argparse.Namespace) -> None:
                 )
 
 
+def _add_shard_args(parser: argparse.ArgumentParser) -> None:
+    """The round-robin split shared by the two single-process CPU predictors."""
+    parser.add_argument(
+        "--shard", type=int, default=0, help="this worker's index, 0-based"
+    )
+    parser.add_argument(
+        "--n-shards",
+        type=int,
+        default=1,
+        help="how many workers split the set; 1 writes the unsharded file",
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2559,7 +2694,15 @@ def main() -> None:
     p_sample.set_defaults(func=cmd_sample)
 
     p_ps = sub.add_parser("predict-pkasolver", help="run pKasolver-lite")
+    _add_shard_args(p_ps)
     p_ps.set_defaults(func=cmd_predict_pkasolver)
+
+    p_merge = sub.add_parser(
+        "merge-shards", help="concatenate one tool's shard files into one prediction file"
+    )
+    p_merge.add_argument("--tool", required=True, help="pkasolver or molgpka")
+    p_merge.add_argument("--n-shards", type=int, required=True)
+    p_merge.set_defaults(func=cmd_merge_shards)
 
     p_qk = sub.add_parser("predict-qupkake", help="run QupKake and build the ladder")
     p_qk.add_argument("--workers", type=int, default=16)
@@ -2599,6 +2742,7 @@ def main() -> None:
         "--repo", required=True, help="path to a MolGpKa checkout (holds models/)"
     )
     p_mg.add_argument("--tool-version", type=str, default="MolGpKa@main")
+    _add_shard_args(p_mg)
     p_mg.set_defaults(func=cmd_predict_molgpka)
 
     p_score = sub.add_parser("score", help="score the predictions against the cache")

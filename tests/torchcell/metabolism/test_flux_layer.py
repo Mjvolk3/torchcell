@@ -86,7 +86,7 @@ def _layer(**overrides: Any) -> FluxLayer:
     cfg = FluxLayerConfig(hidden_dim=8, reaction_embed_dim=4, **overrides)
     gem = _toy_gem()
     kwargs: dict[str, Any] = {}
-    if cfg.parameterization == "nullspace":
+    if cfg.parameterization.startswith(("nullspace", "projection")):
         kwargs["null_space"] = null_space_basis(gem.s)
     return FluxLayer(
         gem,
@@ -611,3 +611,551 @@ def test_zero_delay_reproduces_the_plain_warmup():
     )
     for epoch in (0, 5, 10, 20, 80):
         assert plain.set_constraint_epoch(epoch) == delayed.set_constraint_epoch(epoch)
+
+
+# =====================================================================================
+# WAVE 6 (2026-09-10): the projection parameterization, the latent sampler, and the
+# eQuilibrator square-root covariance.
+# =====================================================================================
+
+
+def _projection_layer(seed: int = 7, **overrides: Any) -> FluxLayer:
+    """A projection layer built from a fixed seed, so two of them share their weights."""
+    torch.manual_seed(seed)
+    return _layer(
+        parameterization="projection", thermo_mode=ThermoMode.OFF, **overrides
+    )
+
+
+def test_parse_parameterization_reads_the_three_kinds_and_the_step_suffix():
+    """The suffix form is the only channel an 026 ARMS entry has for the step count."""
+    from torchcell.metabolism.flux_layer import parse_parameterization
+
+    assert parse_parameterization("box", 5).kind == "box"
+    assert parse_parameterization("nullspace", 5).kind == "nullspace"
+    plain = parse_parameterization("projection", 5)
+    assert (plain.kind, plain.projection_steps) == ("projection", 5)
+    suffixed = parse_parameterization("projection_k20", 5)
+    assert (suffixed.kind, suffixed.projection_steps) == ("projection", 20)
+    # The end and the method ride in the string too, since an ARMS entry reaches no other
+    # new config field; a suffix that names nothing leaves the config's own value standing.
+    assert parse_parameterization("projection", 5).projection_end is None
+    assert parse_parameterization("projection_box", 5).projection_end == "box"
+    full = parse_parameterization("projection_k20_box_dykstra", 5)
+    assert (full.projection_steps, full.projection_end, full.projection_method) == (
+        20,
+        "box",
+        "dykstra",
+    )
+    with pytest.raises(ValueError, match="parameterization"):
+        parse_parameterization("projction", 5)
+    with pytest.raises(ValueError, match="parameterization"):
+        parse_parameterization("projection_k20_bx", 5)
+
+
+def test_the_parameterization_string_overrides_the_config_end():
+    """A cell launched as projection_box must END ON THE CLIP whatever the config says."""
+    layer = _layer(
+        parameterization="projection_box",
+        thermo_mode=ThermoMode.OFF,
+        projection_end="balance",
+    )
+    assert layer.projection_end == "box"
+    out = layer(*_inputs())
+    assert float(layer.feasibility(out)["box_violation_frac"].max()) == 0.0
+    # And the coverage report says which end ran, not which end was configured.
+    assert layer.coverage_report()["projection_end"] == "box"
+    assert layer.coverage_report()["parameterization_raw"] == "projection_box"
+
+
+def test_projection_balances_mass_exactly_at_the_balance_end():
+    """Ending on the balance projection means S v = 0, not S v small."""
+    layer = _projection_layer(projection_steps=5, projection_end="balance")
+    out = layer(*_inputs())
+    feas = layer.feasibility(out)
+    assert float(feas["balance_ratio_max"].max()) < 1e-5, float(
+        feas["balance_ratio_max"].max()
+    )
+    assert float(out["c_balance"]) < 1e-8
+
+
+def test_projection_satisfies_the_box_exactly_at_the_box_end():
+    """Ending on the clip means the bounds hold to machine precision."""
+    layer = _projection_layer(projection_steps=5, projection_end="box")
+    out = layer(*_inputs())
+    v, lb, ub = out["v"], out["lb"], out["ub"]
+    assert torch.all(v >= lb - 1e-6)
+    assert torch.all(v <= ub + 1e-6)
+    assert float(layer.feasibility(out)["box_violation_frac"].max()) == 0.0
+
+
+def test_more_projection_steps_shrink_the_off_end_residual():
+    """K is not decoration: the residual the chosen end does NOT fix falls with K.
+
+    Both layers are built from the same seed and read the same inputs, so they emit the
+    same v0 and the only difference is the number of alternations.
+    """
+    inputs = _inputs()
+    torch.manual_seed(21)
+    one = _projection_layer(projection_steps=1)(*inputs)
+    torch.manual_seed(21)
+    twenty = _projection_layer(projection_steps=20)(*inputs)
+    # At the balance end the leftover is the box overshoot, and c_box is its magnitude.
+    assert float(twenty["c_box"]) < float(one["c_box"])
+
+
+def _thermo_box_layer(steps: int = 20, **overrides: Any) -> FluxLayer:
+    """The second law as a box: projection, ending on the clip, directional bounds on."""
+    return _layer(
+        parameterization=f"projection_k{steps}_box_tdg",
+        thermo_mode=ThermoMode.ANCHORED,
+        **overrides,
+    )
+
+
+def test_the_thermo_box_makes_the_second_law_exact():
+    r"""Every active reaction runs downhill, ``v dG <= 0``, with no penalty involved.
+
+    The sign of ``dG`` is a bound on ``v``, and a bound belongs in the box. With the clip
+    last, a flux that is in the box is downhill by construction, so ``c_thermo`` stops being
+    a term the data loss can outbid and becomes a diagnostic that should read zero.
+    """
+    layer = _thermo_box_layer()
+    out = layer(*_inputs())
+    v, delta_g = out["v"], out["delta_r_g"]
+    active = layer.delta_r_g0_mask & (~layer.thermo_exempt)
+    drive = v[:, active] * delta_g[:, active]
+    assert float(drive.max()) <= 1e-6, float(drive.max())
+    assert float(layer.feasibility(out)["thermo_violation_frac"].max()) == 0.0
+    assert float(layer.feasibility(out)["thermo_uphill_frac"].max()) == 0.0
+
+
+def test_c_thermo_is_not_a_readout_once_the_second_law_is_a_box():
+    r"""``c_thermo`` stays HIGH on a head that satisfies the second law exactly, by design.
+
+    The hinge is ``relu(v dG + eps) / (|v||dG| + eps)``, and its ``eps`` is what makes the
+    strict inequality expressible. At ``v = 0`` both the numerator and the denominator are
+    ``eps``, so a reaction the directional box pinned to zero scores exactly 1, and a head
+    that pins many of them reads near 1 overall while violating nothing. Measured on the toy
+    network: the second-law violation fraction is 0 and ``c_thermo`` is about 0.84.
+
+    This is pinned as a test because reading ``c_thermo`` as a violation rate on a ``tdg``
+    cell is the obvious mistake, and it would be read as the physics failing when it is in
+    fact exact. ``feasibility``'s two thermodynamic fractions are the readouts; ``c_thermo``
+    is kept unchanged only because every arm before 2026-09-11 was trained against it.
+    """
+    layer = _thermo_box_layer()
+    out = layer(*_inputs())
+    assert float(layer.feasibility(out)["thermo_violation_frac"].max()) == 0.0
+    assert float(out["c_thermo"]) > 0.5
+    # And the reason is the zero fluxes, not a violation: no reaction runs uphill at all.
+    active = layer.delta_r_g0_mask & (~layer.thermo_exempt)
+    assert float((out["v"][:, active] * out["delta_r_g"][:, active]).max()) <= 1e-6
+
+
+def test_the_thermo_box_keeps_the_bounds_exact_and_reports_the_balance_residual():
+    """Ending on the clip means bounds AND direction hold; balance is what is reported."""
+    layer = _thermo_box_layer()
+    out = layer(*_inputs())
+    v, lb, ub = out["v"], out["lb"], out["ub"]
+    assert torch.all(v >= lb - 1e-6)
+    assert torch.all(v <= ub + 1e-6)
+    feas = layer.feasibility(out)
+    assert float(feas["box_violation_frac"].max()) == 0.0
+    # The balance residual is the one loose end, and it is REPORTED rather than claimed
+    # away. On THIS network it is often large, and that is a property of the fixture, not
+    # of the head: the toy net is four reactions built around a futile cycle, so pinning
+    # r1 and r2 to opposite directions can leave the tightened box meeting ker S only at
+    # the origin while the two exempt exchange reactions stay free. The residual is a
+    # per-sample number for the same reason: the directional box depends on that
+    # genotype's learned concentrations. The 1e-2 claim belongs on yeast-GEM, and it is
+    # made there, in test_thermo_box_on_the_real_gem_is_exact_and_nearly_balanced.
+    assert feas["balance_ratio_median"].shape == (4,)
+    assert torch.all(torch.isfinite(feas["balance_ratio_median"]))
+
+    # More alternations do not make it worse, which is what says the leftover is a
+    # convergence question rather than an artifact of the loop.
+    torch.manual_seed(5)
+    one = _thermo_box_layer(steps=1)
+    torch.manual_seed(5)
+    twenty = _thermo_box_layer(steps=20)
+    inputs = _inputs()
+    r1 = one.feasibility(one(*inputs))["balance_ratio_median"]
+    r20 = twenty.feasibility(twenty(*inputs))["balance_ratio_median"]
+    assert float(r20.median()) <= float(r1.median()) + 1e-6
+
+
+def test_an_emptied_directional_box_is_counted_rather_than_hidden():
+    """A forced lower bound that the second law forbids has to be visible, not absorbed."""
+    layer = _thermo_box_layer()
+    out = layer(*_inputs())
+    assert "feas_thermo_box_emptied_frac" in out
+    assert 0.0 <= float(out["feas_thermo_box_emptied_frac"]) <= 1.0
+
+
+def test_the_thermo_box_refuses_a_head_that_does_not_end_on_the_clip():
+    """Only the clip enforces the directional bound, so the balance end must be refused."""
+    with pytest.raises(ValueError, match="thermo_box"):
+        _layer(
+            parameterization="projection_k20_balance_tdg",
+            thermo_mode=ThermoMode.ANCHORED,
+        )
+    with pytest.raises(ValueError, match="thermo_box"):
+        _layer(
+            parameterization="nullspace",
+            thermo_mode=ThermoMode.ANCHORED,
+            thermo_box=True,
+        )
+
+
+def test_the_thermo_box_is_off_by_default_everywhere():
+    """Every arm configured before 2026-09-11 must keep its soft second law."""
+    for raw in ("box", "nullspace", "projection", "projection_k20_box"):
+        layer = _layer(parameterization=raw, thermo_mode=ThermoMode.ANCHORED)
+        assert layer.thermo_box is False, raw
+        assert "feas_thermo_box_emptied_frac" not in layer(*_inputs())
+
+
+def test_dykstra_also_lands_in_the_intersection():
+    """The nearest-point variant keeps the exactness claim of the end it stops on."""
+    layer = _projection_layer(projection_steps=8, projection_method="dykstra")
+    out = layer(*_inputs())
+    feas = layer.feasibility(out)
+    assert float(feas["balance_ratio_max"].max()) < 1e-5
+    # Dykstra starts from the same v0, so its box overshoot is finite and reported.
+    assert float(out["c_box"]) >= 0.0
+
+
+def test_projection_gradients_reach_the_latent_mlp_and_the_gene_tokens():
+    """A clip has zero gradient on its saturated side, so this is not automatic."""
+    layer = _projection_layer()
+    h, ctx, idx, idx_batch = _inputs()
+    h.requires_grad_(True)
+    out = layer(h, ctx, idx, idx_batch)
+    (out["v"].sum() + layer.constraint_loss(out)).backward()
+    first = layer.latent_mlp[0]
+    assert isinstance(first, torch.nn.Linear)
+    assert first.weight.grad is not None
+    assert float(first.weight.grad.abs().sum()) > 0.0
+    assert h.grad is not None and float(h.grad.abs().sum()) > 0.0
+
+
+def test_projection_deletion_still_zeros_its_reaction():
+    """The clip carries the deletion: lb = ub = 0 pins r1 to zero through every step."""
+    layer = _projection_layer(projection_end="box")
+    out = layer(*_inputs(deleted=0))
+    assert torch.allclose(out["v"][:, 1], torch.zeros(4), atol=1e-6)
+
+
+def test_latent_stochastic_moves_between_draws_and_collapses_to_the_mean_in_eval():
+    """A sampler that repeats one flux is not a sampler; eval must still be the mean."""
+    layer = _projection_layer(latent_stochastic=True)
+    inputs = _inputs()
+    layer.train()
+    first, second = layer(*inputs)["v"], layer(*inputs)["v"]
+    assert float((first - second).abs().max()) > 0.0
+    layer.eval()
+    assert torch.allclose(layer(*inputs)["v"], layer(*inputs)["v"])
+
+
+def test_kl_is_zero_for_a_unit_gaussian_posterior_and_positive_otherwise():
+    """KL(N(mu, sigma) || N(0, I)) = 0 exactly at mu = 0, sigma = 1."""
+    layer = _projection_layer(latent_stochastic=True)
+    readout = layer.latent_mlp[2]
+    assert isinstance(readout, torch.nn.Linear)
+    torch.nn.init.zeros_(readout.weight)
+    torch.nn.init.zeros_(readout.bias)
+    torch.nn.init.zeros_(layer.latent_log_std.bias)
+    layer.train()
+    out = layer(*_inputs())
+    assert abs(float(out["c_kl"])) < 1e-6
+    torch.nn.init.constant_(layer.latent_log_std.bias, 1.0)
+    assert float(layer(*_inputs())["c_kl"]) > 0.0
+
+
+def test_the_kl_is_absent_from_the_loss_of_a_deterministic_arm():
+    """c_kl exists on every arm and is exactly zero unless the latent is stochastic."""
+    layer = _projection_layer()
+    out = layer(*_inputs())
+    assert float(out["c_kl"]) == 0.0
+    assert "kl" not in layer.config.weights
+
+
+def test_sample_returns_shapes_and_per_draw_feasibility():
+    """[S, B, r] fluxes and [S, B] feasibility, drawn in eval mode."""
+    layer = _projection_layer(latent_stochastic=True)
+    layer.eval()
+    drawn = layer.sample(*_inputs(batch=3), n_samples=5)
+    assert drawn.v.shape == (5, 3, layer.n_reactions)
+    assert drawn.balance_ratio_median.shape == (5, 3)
+    assert drawn.thermo_uphill_frac.shape == (5, 3)
+    assert drawn.n_samples == 5
+    # The draws differ even though the module is in eval mode.
+    assert float((drawn.v[0] - drawn.v[1]).abs().max()) > 0.0
+    # And every draw is balanced, because every draw was projected.
+    assert float(drawn.balance_ratio_median.max()) < 1e-5
+
+
+def test_a_deterministic_projection_cell_can_be_switched_into_a_sampler():
+    """``audit_top_strain_feasibility.py`` sets ``config.stochastic`` on a BUILT layer.
+
+    The spread head therefore has to exist on every projection layer, sampled or not, or the
+    switch would need a parameter that is absent from the checkpoint. Cheap to hold: a
+    zero-weight linear whose bias is the initial log sigma.
+    """
+    layer = _projection_layer()
+    assert layer.latent_stochastic is False
+    assert hasattr(layer, "latent_log_std")
+    names = dict(layer.named_parameters())
+    layer.config.stochastic = True
+    assert layer.latent_stochastic is True
+    assert set(dict(layer.named_parameters())) == set(names)
+    layer.eval()
+    drawn = layer.sample(*_inputs(batch=2), n_samples=3)
+    assert float((drawn.v[0] - drawn.v[1]).abs().max()) > 0.0
+
+
+def test_a_nullspace_layer_ignores_stochastic_as_it_always_has():
+    """The pre-2026-09-10 no-op on the existing flux_nullspace arm is preserved."""
+    layer = _layer(
+        parameterization="nullspace", thermo_mode=ThermoMode.OFF, stochastic=True
+    )
+    assert layer.latent_stochastic is False
+    assert not hasattr(layer, "latent_log_std")
+    layer.train()
+    inputs = _inputs()
+    assert torch.allclose(layer(*inputs)["v"], layer(*inputs)["v"])
+
+
+def test_sample_refuses_a_deterministic_or_box_layer():
+    """No fall back: repeating one flux would report a feasibility fraction of 0 or 1."""
+    deterministic = _projection_layer()
+    with pytest.raises(ValueError, match="latent_stochastic"):
+        deterministic.sample(*_inputs(), n_samples=2)
+    box = _layer(thermo_mode=ThermoMode.OFF)
+    with pytest.raises(ValueError, match="parameterization"):
+        box.sample(*_inputs(), n_samples=2)
+
+
+def test_feasibility_returns_one_row_per_sample_on_every_arm():
+    """The same keys from the box head as from the projection head."""
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    out = layer(*_inputs(batch=6))
+    feas = layer.feasibility(out)
+    for key in (
+        "balance_ratio_median",
+        "balance_ratio_max",
+        "box_violation_frac",
+        "thermo_violation_frac",
+        "thermo_uphill_frac",
+    ):
+        assert feas[key].shape == (6,), key
+    # The box head is exact on the box by construction, per sample as well as on average.
+    assert float(feas["box_violation_frac"].max()) == 0.0
+    # An uphill fraction restricted to reactions carrying flux can only be larger than the
+    # one that counts a numerically positive product at zero flux, never smaller.
+    assert float(feas["thermo_violation_frac"].max()) <= 1.0
+
+
+def test_a_non_orthonormal_basis_is_refused():
+    """N (N^T v) is a projector only for an orthonormal N, so a scaled basis must fail."""
+    gem = _toy_gem()
+    basis = null_space_basis(gem.s) * 2.0
+    with pytest.raises(ValueError, match="orthonormal"):
+        FluxLayer(
+            gem,
+            ["g0", "g1", "g2"],
+            config=FluxLayerConfig(
+                hidden_dim=8, reaction_embed_dim=4, parameterization="projection"
+            ),
+            kcat_per_s=torch.tensor([1.0, 1.0]),
+            molecular_weight_kda=torch.tensor([40.0, 40.0, 40.0]),
+            null_space=basis,
+        )
+
+
+def test_the_covariance_path_replaces_the_isotropic_offset():
+    """delta_g_error = Q m, with m of the factor's rank and a N(0, I) prior."""
+    from torchcell.metabolism.flux_layer import ReactionSqrtCovariance
+
+    n_components = 3
+    q = torch.tensor(
+        [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 3.0], [0.0, 0.0, 0.0]]
+    )
+    cov = ReactionSqrtCovariance(
+        q=q,
+        mask=torch.tensor([True, True, True, False]),
+        n_components=n_components,
+        n_reactions_covered=3,
+        source_path="synthetic",
+        sha256="0" * 64,
+    )
+    cfg = FluxLayerConfig(
+        hidden_dim=8,
+        reaction_embed_dim=4,
+        thermo_mode=ThermoMode.ANCHORED,
+        thermo_uncertainty="covariance",
+    )
+    layer = FluxLayer(
+        _toy_gem(),
+        ["g0", "g1", "g2"],
+        config=cfg,
+        kcat_per_s=torch.tensor([1.0, 1.0]),
+        molecular_weight_kda=torch.tensor([40.0, 40.0, 40.0]),
+        delta_g_sqrt_cov=cov,
+    )
+    assert not hasattr(layer, "delta_g_offset")
+    assert layer.delta_g_m.shape == (n_components,)
+    out = layer(*_inputs())
+    # m starts at zero, so the offset starts at zero and the prior with it.
+    assert float(out["c_thermo_prior"]) == 0.0
+    assert torch.allclose(out["thermo_delta_g_offset"], torch.zeros(4))
+    with torch.no_grad():
+        layer.delta_g_m.copy_(torch.tensor([1.0, 1.0, 1.0]))
+    moved = layer(*_inputs())
+    assert torch.allclose(
+        moved["thermo_delta_g_offset"], torch.tensor([1.0, 2.0, 3.0, 0.0])
+    )
+    assert float(moved["c_thermo_prior"]) == pytest.approx(1.0)
+    report = layer.coverage_report()
+    assert report["thermo_uncertainty"] == "covariance"
+    assert report["n_reactions_covariance_covered"] == 3
+
+
+def test_the_covariance_path_refuses_to_run_without_a_covariance():
+    """A 'covariance' run with no Q would be the isotropic run wearing its name."""
+    cfg = FluxLayerConfig(
+        hidden_dim=8,
+        reaction_embed_dim=4,
+        thermo_mode=ThermoMode.ANCHORED,
+        thermo_uncertainty="covariance",
+    )
+    with pytest.raises(ValueError, match="covariance"):
+        FluxLayer(
+            _toy_gem(),
+            ["g0", "g1", "g2"],
+            config=cfg,
+            kcat_per_s=torch.tensor([1.0, 1.0]),
+            molecular_weight_kda=torch.tensor([40.0, 40.0, 40.0]),
+        )
+
+
+def test_the_dgpredictor_rows_of_the_shipped_column_are_not_converted(tmp_path):
+    r"""yeast-GEM 9.0.2's shipped reaction column is TWO units, and the header says one.
+
+    The curation script fills it from yETFL in kcal/mol and then fills an index block from
+    dGPredictor in kJ/mol. Converting the whole column multiplies those 33 rows by 4.184 and
+    produces a free energy 4.2x too large that looks entirely ordinary. Checked on a
+    synthetic CSV so the property is pinned without the GEM: the exempt row comes back as
+    written, its neighbor comes back converted, and both missing-value conventions are still
+    dropped.
+    """
+    from torchcell.metabolism.constraints import (
+        KCAL_PER_MOL_TO_KJ_PER_MOL,
+        _read_delta_g_csv,
+        dgpredictor_reaction_ids,
+    )
+
+    csv = tmp_path / "model_rxnDeltaG.csv"
+    csv.write_text(
+        "rxns,rxnDeltaG\nr_0001,10.0\nr_4650,10.0\nr_0002,10000000\nr_0003,NaN\n"
+    )
+    plain = _read_delta_g_csv(str(csv))
+    assert plain["r_4650"] == pytest.approx(10.0 * KCAL_PER_MOL_TO_KJ_PER_MOL)
+
+    exempt = _read_delta_g_csv(str(csv), already_kj_ids=frozenset({"r_4650"}))
+    assert exempt["r_4650"] == pytest.approx(10.0)
+    assert exempt["r_0001"] == pytest.approx(10.0 * KCAL_PER_MOL_TO_KJ_PER_MOL)
+    # Both missing-value conventions stay dropped whichever way the row is priced.
+    assert "r_0002" not in exempt and "r_0003" not in exempt
+
+    # The id list is loaded from a file and a missing file is fatal, never an empty set:
+    # silently skipping the exemption is how the 4.2x error reached the layer.
+    rows = tmp_path / "dgpredictor_reaction_rows.json"
+    rows.write_text('{"dgpredictor_reaction_ids": ["r_4650", "r_4651"]}')
+    ids, path = dgpredictor_reaction_ids(str(rows))
+    assert ids == frozenset({"r_4650", "r_4651"}) and path == str(rows)
+    with pytest.raises(FileNotFoundError, match="dGPredictor"):
+        dgpredictor_reaction_ids(str(tmp_path / "absent.json"))
+
+
+THERMO_DIR = osp.join(
+    os.environ.get("DATA_ROOT", "/nonexistent"), "data/torchcell/thermo_equilibrator"
+)
+
+
+@pytest.mark.skipif(
+    not osp.exists(GEM_CHECKOUT), reason="yeast-GEM checkout not present"
+)
+def test_thermo_box_on_the_real_gem_is_exact_and_nearly_balanced():
+    r"""The claim that matters, on the network it is meant for, at initialization.
+
+    On yeast-GEM 9.0.2 the directional box has 4,131 reactions and a 1,538-dimensional null
+    space to work with, so unlike the four-reaction toy fixture it has room: the second law
+    and the bounds hold exactly, and twenty alternations bring the balance residual under
+    1e-2 on every sample without any training at all.
+
+    Untrained deliberately. A property that only holds after fitting is a property of the
+    fit; this one is a property of the parameterization, so it has to hold at epoch zero.
+    """
+    from torchcell.metabolism.constraints import build_gem_tensors
+    from torchcell.metabolism.yeast_GEM import YeastGEM
+
+    source = YeastGEM()
+    gem = build_gem_tensors(source.model, model_dir=source.model_dir)
+    torch.manual_seed(2700)
+    layer = FluxLayer(
+        gem,
+        [f"g{i}" for i in range(64)],
+        config=FluxLayerConfig(
+            hidden_dim=16,
+            reaction_embed_dim=4,
+            parameterization="projection_k20_box_tdg",
+            thermo_mode=ThermoMode.ANCHORED,
+        ),
+    )
+    out = layer(
+        torch.randn(4, 64, 16),
+        torch.randn(4, 16),
+        torch.zeros(0, dtype=torch.long),
+        torch.zeros(0, dtype=torch.long),
+    )
+    feas = layer.feasibility(out)
+    active = layer.delta_r_g0_mask & (~layer.thermo_exempt)
+    drive = out["v"][:, active] * out["delta_r_g"][:, active]
+    assert float(drive.max()) <= 1e-6, float(drive.max())
+    assert float(feas["thermo_violation_frac"].max()) == 0.0
+    assert float(feas["box_violation_frac"].max()) == 0.0
+    assert float(feas["balance_ratio_median"].max()) < 1e-2, float(
+        feas["balance_ratio_median"].max()
+    )
+
+
+@pytest.mark.skipif(
+    not osp.exists(osp.join(THERMO_DIR, "formation_sigma.npz")),
+    reason="eQuilibrator formation covariance not present",
+)
+def test_real_reaction_covariance_row_norms_equal_the_tabulated_sigma():
+    r"""``sigma_j = ||Q_j||`` ties the matrix to the number the thermo table already ships.
+
+    ``resolve_reaction_delta_g`` forms :math:`S^\top\Sigma^{1/2}` and keeps only its row
+    norms; :func:`reaction_sqrt_covariance` keeps the matrix. If they ever diverge, the
+    covariance path would be fitting a different uncertainty from the one every coverage
+    report prints.
+    """
+    from torchcell.metabolism.constraints import build_gem_tensors
+    from torchcell.metabolism.flux_layer import reaction_sqrt_covariance
+    from torchcell.metabolism.parameters import ThermoSource, resolve_reaction_delta_g
+    from torchcell.metabolism.yeast_GEM import YeastGEM
+
+    source = YeastGEM()
+    gem = build_gem_tensors(
+        source.model, model_dir=source.model_dir, with_independent_rows=False
+    )
+    table = resolve_reaction_delta_g(gem, THERMO_DIR, ThermoSource.UNION)
+    cov = reaction_sqrt_covariance(THERMO_DIR, gem.s, list(gem.met_ids))
+    norms = cov.q.norm(dim=1)
+    covered = table.sigma_mask
+    assert torch.allclose(norms[covered], table.sigma[covered], atol=1e-3, rtol=1e-4)
+    assert cov.n_components == 590
+    assert int(covered.sum()) == 1755

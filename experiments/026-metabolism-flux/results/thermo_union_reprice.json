@@ -1,0 +1,111 @@
+{
+ "built_at": "2026-09-11T07:09:28.416217+00:00",
+ "metabolite_table_written": "/scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/metabolite_dgf_prime_with_external.parquet",
+ "n_metabolite_rows_written": 2561,
+ "n_rows_from_the_recomputation": 2113,
+ "n_rows_added_by_the_staged_pipeline": 436,
+ "added_by_route": {
+  "cache_structure": 289,
+  "external_pka": 70,
+  "shipped_table": 35,
+  "literature_table": 24,
+  "composition_surrogate": 12,
+  "repeat_unit_surrogate": 6
+ },
+ "kj_per_kcal": 4.184,
+ "n_dgpredictor_rows": 33,
+ "filled_from_the_reaction_column": [
+  {
+   "reaction_id": "r_0241",
+   "from_dgpredictor": false,
+   "delta_r_g0_before_kj_per_mol": -1382.26806640625,
+   "delta_r_g0_after_kj_per_mol": -1382.26806640625,
+   "change_kj_per_mol": 0.0
+  },
+  {
+   "reaction_id": "r_4779",
+   "from_dgpredictor": true,
+   "delta_r_g0_before_kj_per_mol": 0.0,
+   "delta_r_g0_after_kj_per_mol": 0.0,
+   "change_kj_per_mol": 0.0
+  }
+ ],
+ "sources": [
+  {
+   "source": "shipped",
+   "n_reactions": 4131,
+   "n_priced": 3505,
+   "fraction_priced": 0.8484628419268943,
+   "n_with_sigma": 1645,
+   "provenance_counts": {
+    "none": 626,
+    "shipped_metabolite_sum": 3505
+   },
+   "metabolite_counts": {
+    "n_metabolites": 2806,
+    "known": 2389,
+    "shipped": 2389
+   }
+  },
+  {
+   "source": "equilibrator",
+   "n_reactions": 4131,
+   "n_priced": 2741,
+   "fraction_priced": 0.663519728879206,
+   "n_with_sigma": 1755,
+   "provenance_counts": {
+    "none": 1390,
+    "equilibrator": 2741
+   },
+   "metabolite_counts": {
+    "n_metabolites": 2806,
+    "known": 2113,
+    "shipped": 2389,
+    "equilibrator": 2113
+   }
+  },
+  {
+   "source": "union",
+   "n_reactions": 4131,
+   "n_priced": 3722,
+   "fraction_priced": 0.9009924957637376,
+   "n_with_sigma": 1755,
+   "provenance_counts": {
+    "none": 409,
+    "equilibrator": 2741,
+    "mixed": 831,
+    "shipped_reaction_column": 6,
+    "shipped_metabolite_sum": 144,
+    "shipped_reaction_rows_unit_corrected": 33,
+    "shipped_reaction_rows_unit_corrected_and_used": 5
+   },
+   "metabolite_counts": {
+    "n_metabolites": 2806,
+    "known": 2511,
+    "shipped": 2389,
+    "equilibrator": 2113
+   }
+  },
+  {
+   "source": "union_external",
+   "n_reactions": 4131,
+   "n_priced": 3779,
+   "fraction_priced": 0.9147906076010651,
+   "n_with_sigma": 1755,
+   "provenance_counts": {
+    "none": 352,
+    "equilibrator": 3777,
+    "shipped_reaction_column": 2,
+    "shipped_reaction_rows_unit_corrected": 33,
+    "shipped_reaction_rows_unit_corrected_and_used": 1
+   },
+   "metabolite_counts": {
+    "n_metabolites": 2806,
+    "known": 2561,
+    "shipped": 2389,
+    "equilibrator": 2561
+   }
+  }
+ ],
+ "flux_layer_note": "the flux layer consumes this through FluxLayerConfig.thermo_source; set it to 'union_external' to read the extended table, and the layer refuses a table whose source disagrees with the config"
+}

@@ -316,3 +316,101 @@ the agent job directory so that it survives the session, next to the pilot's
 - **The empty-pKa interface defect** (`local_compound_cache.py:128` guards on truthiness) is
   worth reporting upstream. It cost nothing here only because every affected compound
   happened to be in the cache already.
+
+## 2026.09.11 - Re-pricing the 48 external-route lipids, and why the writer cannot reach the other 62
+
+### The convention was wrong, and it was worth 1,585 kJ/mol
+
+The 48 lipid records whose route is `external_pka` were priced by submitting the WRITTEN
+NEUTRAL structure to the compound bridge. eQuilibrator derives a compound's reference
+microspecies from the SMILES it is handed, so that anchors the formation energy to a
+different microstate than the cache's own entries, which are ChemAxon's major microspecies
+at pH 7. `external_pka_reprice.json` measured the size of that on 7 targets priced both
+ways: mean residual against the cache -777.5 kJ/mol on the neutral parent against +0.128
+kJ/mol on the pH 7 microspecies.
+
+`experiments/026-metabolism-flux/scripts/external_pka_apply_selection.py` re-prices them
+under the pinned convention with the pKa method chosen in
+[[experiments.026-metabolism-flux.pka-method-selection]]. Result
+(`results/external_pka_applied.json`): **48 of 48 lipid targets priced, covering 58
+yeast-GEM metabolite rows**, with a median absolute change of **1,585.2 kJ/mol** (range
+779.2 to 1,985.3). The old values were wrong by that much, not by a rounding error.
+
+The selected method is the cascade Uni-pKa simple template -> MolGpKa -> pKasolver-lite,
+and on these 53 targets Uni-pKa answered for 52 and pKasolver-lite for the remaining one;
+MolGpKa was never reached. The cascade earns its place on the 2,400-compound benchmark
+rather than here, where it degenerates to its first member.
+
+The split of labor inside the re-pricing is deliberate and is recorded per compound. The
+pH 7 major microspecies comes from pKasolver's `States.ph7_mol`, which dimorphite-dl
+enumerates: that is a protonation-state enumerator, not a pKa regressor. The pKa VALUES
+come from the selected method. Using one tool for the convention and another for the values
+is the same split `reprice-microspecies` measured the convention shift with.
+
+By chemical class, the 48 are 24 monolysocardiolipins, 6 diacylglycerol 3-diphosphates, 6
+phosphatidyl-N,N-dimethylethanolamines, 6 phosphatidyl-N-methylethanolamines, 3
+CDP-diacylglycerols, 2 cardiolipins and 1 acylglycerone phosphate.
+
+The 120 cache-lookup lipids are NOT re-priced and must not be: a cache compound is already
+on the cache's own convention, and it carries ChemAxon pKas and magnesium dissociation
+constants that no external route can reproduce.
+
+### The tier-a targets: 2 of 5 close, and the other 3 say why
+
+Same run, same convention. `phosphatidylethanolamine (1-16:1, 2-16:1)` prices at 1,971.11
+kJ/mol over 6 metabolite rows and `N-(4-oxoglutarate)-L-cysteinylglycine` at -539.61 over
+2. The other three do not, and each carries its reason rather than a blank:
+
+| target | rows | outcome | why |
+|---|---|---|---|
+| ferroheme b | 1 | `compound_creation_failed` | the iron macrocycle has no group decomposition; a pKa list cannot supply one |
+| methionyl acetate | 2 | `compound_creation_failed` | same, on the mixed anhydride |
+| superoxide | 2 | `compound_creation_failed` | the group decomposer refuses it. Under MolGpKa alone this target had failed one step earlier, with no pKa inside (0, 14) at all; the cascade's first member supplies one and the compound still cannot be created, which moves the blocker from the pKa stage to the decomposition and does not close it |
+
+### Why the writer cannot compose the remaining 62 tier-b rows
+
+`results/lipid_names_parsed.json`: 206 distinct tier-b names over 409 metabolite rows, 168
+names parsed covering 347 rows, **38 names unparsed covering 62 rows**. Two reasons, and
+they are different kinds of thing.
+
+| class | reason | names | rows |
+|---|---|---|---|
+| other | `no_acyl_composition_in_name` | 12 | 16 |
+| sphingolipid | `slime_backbone_pseudo_metabolite` | 6 | 12 |
+| glycan | `no_acyl_composition_in_name` | 4 | 6 |
+| triacylglycerol TAG | `slime_backbone_pseudo_metabolite` | 2 | 5 |
+| protein-linked | `no_acyl_composition_in_name` | 4 | 4 |
+| phosphatidylinositol PI | `slime_backbone_pseudo_metabolite` | 2 | 3 |
+| phosphatidylethanolamine PE | `slime_backbone_pseudo_metabolite` | 1 | 3 |
+| cardiolipin CL | `slime_backbone_pseudo_metabolite` | 1 | 2 |
+| sterol ester | `slime_backbone_pseudo_metabolite` | 1 | 2 |
+| phosphatidate PA | `slime_backbone_pseudo_metabolite` | 1 | 2 |
+| generic pseudo-metabolite | `slime_backbone_pseudo_metabolite` | 1 | 2 |
+| phosphatidylcholine PC | `slime_backbone_pseudo_metabolite` | 1 | 2 |
+| phosphatidylglycerol PG | `slime_backbone_pseudo_metabolite` | 1 | 2 |
+| phosphatidylinositol PI | `no_acyl_composition_in_name` | 1 | 1 |
+
+**`slime_backbone_pseudo_metabolite`, 17 names over 37 rows, is closed and always will
+be.** A SLIME backbone is not a molecule: its formula is a DIFFERENCE formula, the part of
+a lipid class that is not acyl chain. `triglyceride backbone` is `C3H2`, `ceramide
+backbone` is `HNO2`. No structure writer, pKa predictor or decomposer applies, because
+there is nothing to write a structure of. In the staged pipeline these carry
+`UnpricedReason.PSEUDO_METABOLITE`, and they are the single largest remaining block: 215 of
+the 393 unpriced reactions are blocked by a pseudo-metabolite and nothing else.
+
+**`no_acyl_composition_in_name`, 21 names over 25 rows, needs a source rather than a
+parser.** These are names that give a class and no chains: glycans, protein-linked species,
+and a handful of unclassified lipids. A structure exists in principle and the name does not
+determine it, so composing one would be inventing a species. They carry
+`UnpricedReason.NO_STRUCTURE_AVAILABLE` and the remedy is a structure from a namespace or a
+curator, not more parsing.
+
+### Files
+
+- `experiments/026-metabolism-flux/scripts/external_pka_apply_selection.py`
+- `experiments/026-metabolism-flux/results/external_pka_apply_targets.json`
+- `experiments/026-metabolism-flux/results/external_pka_apply_ladders_molgpka.json`
+- `experiments/026-metabolism-flux/results/external_pka_apply_ladders_pkasolver.json`
+- `experiments/026-metabolism-flux/results/external_pka_apply_microspecies.json`
+- `experiments/026-metabolism-flux/results/external_pka_apply_combined.json`
+- `experiments/026-metabolism-flux/results/external_pka_applied.json`

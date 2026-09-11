@@ -62,6 +62,51 @@ difference of potentials it sums to zero around any cycle, so no cycle can run d
 everywhere; requiring :math:`\nu_j\Delta_j\le0` therefore forbids internal loops without a
 single integer variable. That is exactly the property that makes loopless FBA a MILP.
 
+SPENDING THE EXACTNESS BUDGET: BOX, NULL SPACE, PROJECTION
+----------------------------------------------------------
+``parameterization`` decides which constraint holds by construction.
+
+``box``
+    :math:`v=lb+(ub-lb)\,\sigma(z)`. Box, directionality and enzyme capacity are exact;
+    :math:`Sv=0` is a scale-relative penalty.
+
+``nullspace``
+    :math:`v=\mathcal Nz` with :math:`S\mathcal N=0`. Mass balance is exact; the box is a
+    penalty.
+
+``projection``
+    Both, alternately. Start at :math:`v_0=\mathcal Nz` and alternate the two projections
+    :math:`P_{\mathrm{bal}}(v)=\mathcal N(\mathcal N^\top v)` (exact because
+    :math:`\mathcal N` is orthonormal, so :math:`\mathcal N\mathcal N^\top` is the
+    orthogonal projector onto :math:`\ker S`) and
+    :math:`P_{\mathrm{box}}(v)=\mathrm{clip}(v,lb,ub)`. This is von Neumann's alternating
+    projection between a subspace and a box, both convex, so the iterates converge to a
+    point of the intersection; ``projection_method="dykstra"`` runs Dykstra's correction
+    instead, which converges to the NEAREST such point to :math:`v_0`.
+
+    **What "exact" means here is settled by which projection runs last, and that is a
+    config choice, not a detail.** ``projection_end="balance"`` ends on
+    :math:`P_{\mathrm{bal}}`, so :math:`Sv=0` holds to machine precision and the residual
+    box violation is what the layer reports; ``projection_end="box"`` ends on the clip, so
+    the box holds to machine precision and the residual is :math:`\lVert Sv\rVert`. The
+    trade is real and neither end is free: :math:`K` finite steps do not reach the
+    intersection, they only shrink whichever residual is left over. ``feasibility`` returns
+    both per sample so the caller never has to infer which one is the loose end.
+
+    Default ``balance``, because the Genesis filter that motivates the head asks first
+    whether a nominated strain's flux is stoichiometrically consistent, and a residual box
+    violation is a bound that is slightly overrun rather than a flux that comes from
+    nowhere.
+
+``latent_stochastic`` turns the last two into an amortized sampler: :math:`z=\mu+\sigma
+\epsilon` with a :math:`\mathrm{KL}(\mathcal N(\mu,\sigma)\Vert\mathcal N(0,I))` term
+returned as ``c_kl``, and :meth:`FluxLayer.sample` draws :math:`S` fluxes per genotype and
+reports each draw's own feasibility. Every draw is projected, so the sampler's support is
+the feasible set rather than a Gaussian around it: the 026 stochastic head, which drew
+:math:`z` per reaction and projected nothing, produced draws with a median balance ratio of
+1.98 and 30 percent thermodynamic violations
+(``experiments/026-metabolism-flux/results/flux_sampling_demo.json``).
+
 THERMODYNAMICS: FREE VS ANCHORED
 --------------------------------
 Following Thermo-Flux Eq. (4), the in-cell reaction energy decomposes into three terms,
@@ -94,14 +139,33 @@ UNCERTAINTY, AND WHY IT IS A LATENT
 Thermo-Flux carries correlated uncertainty as :math:`\Delta_rG^{\circ,\mathrm{error}}=Qm`
 with :math:`m\sim\mathcal N(0,1)` and :math:`Q` the square-root covariance from
 eQuilibrator, and its Box 3 *infers* :math:`m` by regression against measured
-concentrations and fluxes. That inference is exactly what a latent variable does. Here
-:math:`m` is a learned per-reaction offset with a Gaussian prior, so the same quantity is
-fit by gradient descent instead of by an MILP regression.
+concentrations and fluxes. That inference is exactly what a latent variable does, and both
+forms of it are implemented here, selected by ``thermo_uncertainty``.
 
-:math:`Q` itself is **not available**: eQuilibrator is not installed and the GEM ships
-point values with no covariance, so the offset is currently isotropic rather than
-correlated. That is a real gap and it is recorded as one rather than approximated. The
-covariance would enter as a single matrix multiply and nothing else would change.
+``isotropic`` (**the default, and what every 026 and 027 run to date used**)
+    :math:`m` is a learned **per-reaction** offset of dimension :math:`r`, added straight
+    onto :math:`\Delta_rG_j`, with a :math:`\lVert m\rVert^2` prior. Every reaction gets its
+    own free direction and the correlations between them are dropped.
+
+``covariance``
+    :math:`m` is a learned latent of dimension :math:`k` and the offset is
+    :math:`Qm`, so the reactions can only move together in the directions the component
+    contribution actually leaves uncertain. :math:`Q` is supplied by the caller as
+    ``delta_g_sqrt_cov``; :func:`reaction_sqrt_covariance` builds it.
+
+:math:`Q` **is available**, contrary to what this docstring said before 2026-09-10. Our
+eQuilibrator recomputation writes ``formation_sigma.npz`` into
+``$DATA_ROOT/data/torchcell/thermo_equilibrator``, holding the metabolite square-root
+covariance :math:`\Sigma^{1/2}` of the component contribution as a dense
+``2099 x 590`` factor over the species it could reach. The reaction-level factor is
+:math:`Q=S^\top\Sigma^{1/2}`, a ``4131 x 590`` matrix, and
+:math:`\sigma_j=\lVert Q_j\rVert_2` is exactly the per-reaction number
+:class:`~torchcell.metabolism.parameters.ReactionThermoTable` already carries in ``sigma``
+(``resolve_reaction_delta_g`` forms the same product and keeps only its row norms).
+On yeast-GEM 9.0.2 with the union route, 1,755 of 4,131 reactions have EVERY participant
+inside the factor; the rest carry no covariance and therefore no offset at all under the
+``covariance`` path, because a reaction whose error model is unknown should not be given a
+free parameter that looks like one.
 
 Metabolites with no tabulated formation energy follow Thermo-Flux's own convention:
 :math:`\Delta_f G^\circ = 0` with an uncertainty of :math:`\pm 3000` kJ/mol, which is
@@ -122,6 +186,7 @@ effort.
 from __future__ import annotations
 
 import math
+import re
 from typing import Any
 
 import torch
@@ -133,6 +198,7 @@ from torchcell.metabolism.constraints import (
     CONC_UPPER_M,
     GemTensors,
     ThermoMode,
+    null_space_basis,
 )
 from torchcell.metabolism.parameters import (
     EXPERIMENTAL_SOURCES,
@@ -214,8 +280,102 @@ class FluxLayerConfig(BaseModel):
         description=(
             "'box' -- v = lb + (ub-lb)*sigmoid(z); bounds exact, Sv=0 soft. "
             "'nullspace' -- v = N z with S N = 0; Sv=0 exact, bounds soft. "
-            "The exactness budget has to be spent on one or the other, and which one "
-            "matters more is what the two arms measure."
+            "'projection' -- alternate the two projections K times from v0 = N z, so both "
+            "constraints hold to whatever K buys and the one named by `projection_end` "
+            "holds exactly. "
+            "'projection_k<N>' names the step count in the string itself, which is the "
+            "only channel 026's build_flux_layer leaves open to an arm (it forwards this "
+            "field and no other new one); 'projection' alone takes `projection_steps`."
+        ),
+    )
+    projection_steps: int = Field(
+        default=5,
+        description=(
+            "K, the number of box clips in the alternating projection. Each clip is "
+            "followed by the balance projection except, under projection_end='box', the "
+            "last. K=1 is one clip; the off-end residual falls with K and the cost is 2K "
+            "matmuls of [B, r] against the [r, nullity] basis per forward."
+        ),
+    )
+    projection_end: str = Field(
+        default="balance",
+        description=(
+            "Which projection runs last, and therefore which constraint is EXACT rather "
+            "than merely small. 'balance' -- S v = 0 to machine precision, box violation "
+            "reported. 'box' -- lb <= v <= ub to machine precision, balance residual "
+            "reported. Read as a claim about the output, not a tuning knob."
+        ),
+    )
+    projection_method: str = Field(
+        default="alternating",
+        description=(
+            "'alternating' -- von Neumann, a point OF the intersection. 'dykstra' -- the "
+            "NEAREST point of the intersection to v0, at one extra pair of correction "
+            "tensors. Both converge; only Dykstra's limit is the metric projection."
+        ),
+    )
+    latent_stochastic: bool = Field(
+        default=False,
+        description=(
+            "For 'nullspace' and 'projection': draw z = mu + sigma * eps from a learned "
+            "amortized Gaussian rather than emitting mu, and return "
+            "KL(N(mu, sigma) || N(0, I)) as out['c_kl']. Off reproduces the deterministic "
+            "head exactly, including the order of the multiply by flux_scale. Distinct "
+            "from `stochastic`, which is the per-reaction draw of the 'box' head; an arm "
+            "that sets `stochastic` on a latent parameterization gets this instead, since "
+            "`stochastic` is a no-op there and `stochastic` is the only boolean 026's "
+            "build_flux_layer forwards."
+        ),
+    )
+    latent_log_std_init: float = Field(
+        default=-3.0,
+        description=(
+            "Initial log sigma of the latent posterior, from a zero-weight linear head so "
+            "every sample starts at the same spread. exp(-3) = 0.050 against a latent whose "
+            "deterministic magnitude is order 1, so the draw starts as a perturbation of "
+            "the mean rather than as noise that replaces it."
+        ),
+    )
+    kl_weight: float = Field(
+        default=1.0e-3,
+        description=(
+            "Weight on out['c_kl'] when the `weights` dict carries no 'kl' key, which is "
+            "the case for every arm built by 026's build_flux_layer. It changes nothing "
+            "unless `latent_stochastic` is set, because c_kl is exactly zero otherwise."
+        ),
+    )
+    thermo_box: bool = Field(
+        default=False,
+        description=(
+            "Make the SECOND LAW exact by construction, as a per-sample directional box. "
+            "For every reaction the thermodynamic table prices and Box 2 does not exempt, "
+            "the sign of the layer's own delta_r_G decides the sign the flux is allowed: "
+            "dG > +epsilon forces ub <- min(ub, 0), dG < -epsilon forces lb <- max(lb, 0), "
+            "and |dG| <= epsilon leaves the box alone. A flux inside that box satisfies "
+            "v dG <= 0 identically, so c_thermo becomes a diagnostic that should read ~0 "
+            "rather than a penalty the data term can outbid. Requires a projection "
+            "parameterization ending on the box, since only the clip enforces it. Off by "
+            "default; reachable from an 026 arm as the 'tdg' token of the "
+            "parameterization string."
+        ),
+    )
+    thermo_uncertainty: str = Field(
+        default="isotropic",
+        description=(
+            "'isotropic' -- a free per-reaction offset on delta_r_G with an L2 prior, what "
+            "every 026 and 027 run to date used. 'covariance' -- Thermo-Flux's Qm, with m a "
+            "learned latent of the factor's rank and a N(0, I) prior; requires the caller "
+            "to pass `delta_g_sqrt_cov`, since a covariance path with no covariance would "
+            "be the isotropic path wearing its name."
+        ),
+    )
+    null_space_cache_path: str | None = Field(
+        default=None,
+        description=(
+            "Where torchcell.metabolism.constraints.null_space_basis caches the basis when "
+            "the layer has to build it itself, which happens only for 'projection' with no "
+            "`null_space` argument. None recomputes: a dense SVD of the 2,806 x 4,131 "
+            "stoichiometric matrix, measured at 2.6 s, paid once at construction."
         ),
     )
     thermo_mode: ThermoMode = ThermoMode.ANCHORED
@@ -379,6 +539,163 @@ class FluxLayerConfig(BaseModel):
     )
 
 
+#: ``projection``, plus optional suffixes naming the step count, the exact end, and the
+#: method: ``projection_k20_box_dykstra``. The suffix form exists because 026's
+#: ``build_flux_layer`` forwards ``parameterization`` and no other new config field, so the
+#: string is the only channel an ARMS entry has for any of the three.
+_PROJECTION_PATTERN = re.compile(
+    r"^projection(?:_k(\d+))?(?:_(balance|box))?(?:_(tdg))?(?:_(dykstra))?$"
+)
+
+
+class ParameterizationSpec(BaseModel):
+    """The parsed form of ``FluxLayerConfig.parameterization``.
+
+    ``kind`` is one of ``box``, ``nullspace``, ``projection``. The three projection fields
+    are meaningful only for the last, and a ``None`` there means the string named nothing
+    and the config's own value stands. Kept as a record rather than a tuple so a run's log
+    can print what it parsed.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str
+    projection_steps: int
+    projection_end: str | None = None
+    projection_method: str | None = None
+    thermo_box: bool = False
+    raw: str
+
+
+def parse_parameterization(raw: str, default_steps: int) -> ParameterizationSpec:
+    r"""Read ``box``, ``nullspace``, or ``projection[_k<N>][_balance|_box][_tdg][_dykstra]``.
+
+    The suffixes, in order, name the step count, which projection runs LAST (and is
+    therefore exact), whether the box is tightened by the second law (``tdg``), and the
+    method. ``projection_k20_box_tdg`` is twenty alternations ending on a directional clip.
+
+    An unrecognized string is an error rather than a silent fall back to ``box``: a run
+    whose parameterization was a typo must not report a number.
+    """
+    if raw in {"box", "nullspace"}:
+        return ParameterizationSpec(kind=raw, projection_steps=default_steps, raw=raw)
+    match = _PROJECTION_PATTERN.match(raw)
+    if match is None:
+        raise ValueError(
+            f"parameterization={raw!r} is not one of 'box', 'nullspace', or "
+            "'projection[_k<N>][_balance|_box][_tdg][_dykstra]'."
+        )
+    steps = default_steps if match.group(1) is None else int(match.group(1))
+    if steps < 1:
+        raise ValueError(f"projection needs at least one step; got {steps}.")
+    return ParameterizationSpec(
+        kind="projection",
+        projection_steps=steps,
+        projection_end=match.group(2),
+        projection_method=match.group(4),
+        thermo_box=match.group(3) is not None,
+        raw=raw,
+    )
+
+
+class ReactionSqrtCovariance(BaseModel):
+    r"""Thermo-Flux's :math:`Q`, the reaction square-root covariance, with its provenance.
+
+    ``q`` is :math:`S^\top\Sigma^{1/2}` where :math:`\Sigma^{1/2}` is the metabolite factor
+    eQuilibrator's component contribution emits, so :math:`Qm` with
+    :math:`m\sim\mathcal N(0,I)` reproduces the correlated standard-energy error and
+    :math:`\lVert Q_j\rVert_2` is the per-reaction sigma
+    :class:`~torchcell.metabolism.parameters.ReactionThermoTable` already reports.
+
+    ``mask`` is True only where EVERY participant of the reaction is inside the factor. A
+    partially covered reaction's norm is an underestimate rather than a conservative bound,
+    so its row is zeroed and it takes no offset at all.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+    q: torch.Tensor = Field(description="[r, k] kJ/mol per unit latent.")
+    mask: torch.Tensor = Field(description="[r] bool, True on fully covered reactions.")
+    n_components: int
+    n_reactions_covered: int
+    source_path: str
+    sha256: str
+
+
+def reaction_sqrt_covariance(
+    thermo_dir: str, s: torch.Tensor, met_ids: list[str]
+) -> ReactionSqrtCovariance:
+    r"""Build :math:`Q=S^\top\Sigma^{1/2}` from the eQuilibrator formation factor.
+
+    Reads the same ``formation_sigma.npz`` that
+    :func:`~torchcell.metabolism.parameters.resolve_reaction_delta_g` reads, and forms the
+    same product; that function keeps only the row norms, and this one keeps the matrix,
+    which is what the ``Qm`` offset needs. The two are checked against each other in
+    ``tests/torchcell/metabolism/test_flux_layer.py``.
+
+    Args:
+        thermo_dir: ``$DATA_ROOT/data/torchcell/thermo_equilibrator``.
+        s: ``[m, r]`` stoichiometric matrix, sparse or dense.
+        met_ids: The GEM's metabolite ids, in row order of ``s``.
+    """
+    import hashlib
+    import os.path as osp
+
+    import numpy as np
+
+    path = osp.join(thermo_dir, "formation_sigma.npz")
+    payload = np.load(path, allow_pickle=False)
+    covered_ids = [str(x) for x in payload["met_ids"]]
+    factor = payload["sigma"]
+    position = {mid: i for i, mid in enumerate(covered_ids)}
+    full = np.zeros((len(met_ids), factor.shape[1]))
+    covered = np.zeros(len(met_ids), dtype=bool)
+    for i, mid in enumerate(met_ids):
+        j = position.get(mid)
+        if j is not None:
+            full[i] = factor[j]
+            covered[i] = True
+    dense = (s.to_dense() if s.is_sparse else s).numpy()
+    projected = dense.T @ full
+    participates = np.abs(dense) > 0
+    complete = ~(participates & ~covered[:, None]).any(axis=0)
+    complete &= participates.any(axis=0)
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return ReactionSqrtCovariance(
+        q=torch.from_numpy(projected * complete[:, None]).float(),
+        mask=torch.from_numpy(complete),
+        n_components=int(factor.shape[1]),
+        n_reactions_covered=int(complete.sum()),
+        source_path=path,
+        sha256=digest.hexdigest(),
+    )
+
+
+class FluxSample(BaseModel):
+    """A batch of flux draws with each draw's own feasibility.
+
+    A sampler that reports one averaged residual cannot answer the question the Genesis
+    metabolic-grounding target asks, which is what FRACTION of the draws for a nominated
+    strain are feasible. Every field except ``v`` is therefore ``[S, B]``.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+    v: torch.Tensor = Field(description="[S, B, r] flux draws.")
+    balance_ratio_median: torch.Tensor = Field(description="[S, B]")
+    balance_ratio_max: torch.Tensor = Field(description="[S, B]")
+    box_violation_frac: torch.Tensor = Field(description="[S, B]")
+    thermo_violation_frac: torch.Tensor = Field(description="[S, B]")
+    thermo_uphill_frac: torch.Tensor = Field(description="[S, B]")
+    n_samples: int
+    parameterization: str
+    projection_steps: int
+    projection_end: str
+
+
 def gene_index_map(
     model_gene_ids: list[str], gem_gene_ids: list[str]
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -455,6 +772,7 @@ class FluxLayer(nn.Module):
     mw_kda: torch.Tensor
     null_basis: torch.Tensor
     log_e0: torch.Tensor
+    delta_g_q: torch.Tensor
 
     def __init__(
         self,
@@ -471,6 +789,7 @@ class FluxLayer(nn.Module):
         kcat_provenance: list[str] | None = None,
         km_mm: torch.Tensor | None = None,
         km_provenance: list[str] | None = None,
+        delta_g_sqrt_cov: ReactionSqrtCovariance | None = None,
     ) -> None:
         """Build the layer against one GEM.
 
@@ -511,6 +830,9 @@ class FluxLayer(nn.Module):
             km_mm: ``[n_units]`` affinity per catalytic unit. Stored and reported; nothing in
                 :meth:`forward` reads it, since the capacity bound is saturation-free.
             km_provenance: The same, for ``km_mm``.
+            delta_g_sqrt_cov: Thermo-Flux's :math:`Q`, from
+                :func:`reaction_sqrt_covariance`. Required by, and read only by,
+                ``config.thermo_uncertainty='covariance'``.
         """
         super().__init__()
         self.config = config or FluxLayerConfig()
@@ -644,6 +966,35 @@ class FluxLayer(nn.Module):
         self.n_transport_terms_sourced = 0
         self.register_buffer("delta_r_g_transport", self._transport_term(gem))
 
+        # -- the standard-energy uncertainty latent --------------------------
+        if cfg.thermo_uncertainty not in {"isotropic", "covariance"}:
+            raise ValueError(
+                f"thermo_uncertainty={cfg.thermo_uncertainty!r} is not 'isotropic' or "
+                "'covariance'."
+            )
+        self.thermo_uncertainty = cfg.thermo_uncertainty
+        self.delta_g_sqrt_cov = delta_g_sqrt_cov
+        if cfg.thermo_uncertainty == "covariance":
+            if delta_g_sqrt_cov is None:
+                raise ValueError(
+                    "thermo_uncertainty='covariance' needs Q; build it with "
+                    "torchcell.metabolism.flux_layer.reaction_sqrt_covariance. There is no "
+                    "isotropic fall back, because a run must not record a correlated "
+                    "uncertainty it did not use."
+                )
+            if delta_g_sqrt_cov.q.shape[0] != self.n_reactions:
+                raise ValueError(
+                    f"Q covers {delta_g_sqrt_cov.q.shape[0]} reactions against this GEM's "
+                    f"{self.n_reactions}."
+                )
+            self.register_buffer("delta_g_q", delta_g_sqrt_cov.q.clone())
+            self.n_delta_g_components = int(delta_g_sqrt_cov.n_components)
+            self.n_reactions_cov_covered = int(delta_g_sqrt_cov.n_reactions_covered)
+        else:
+            self.register_buffer("delta_g_q", torch.zeros(self.n_reactions, 0))
+            self.n_delta_g_components = 0
+            self.n_reactions_cov_covered = 0
+
         # -- kinetics ---------------------------------------------------------
         if kcat_per_s is None:
             kcat = torch.full((self.n_units,), cfg.default_kcat_per_s)
@@ -679,20 +1030,74 @@ class FluxLayer(nn.Module):
 
         # -- learned parts ----------------------------------------------------
         d = cfg.hidden_dim
-        self.parameterization = cfg.parameterization
-        if cfg.parameterization == "nullspace":
-            if null_space is None:
+        spec = parse_parameterization(cfg.parameterization, cfg.projection_steps)
+        self.parameterization = spec.kind
+        self.projection_steps = spec.projection_steps
+        # The string wins over the config field when it names one, because the string is the
+        # only channel an 026 ARMS entry has and a cell must be able to say which end it
+        # made exact in the one field its launcher forwards.
+        self.projection_end = spec.projection_end or cfg.projection_end
+        self.projection_method = spec.projection_method or cfg.projection_method
+        self.thermo_box = bool(spec.thermo_box or cfg.thermo_box)
+        if self.thermo_box and not (
+            spec.kind == "projection" and self.projection_end == "box"
+        ):
+            raise ValueError(
+                "thermo_box needs parameterization='projection...' ending on the box "
+                f"(got {spec.kind!r} ending on {self.projection_end!r}). The directional "
+                "box is enforced by the clip, so a head that ends on the balance "
+                "projection would report the second law as exact while leaving it soft."
+            )
+        if spec.kind == "projection":
+            if self.projection_end not in {"balance", "box"}:
                 raise ValueError(
-                    "parameterization='nullspace' needs the basis; build it with "
-                    "torchcell.metabolism.constraints.null_space_basis(gem.s)."
+                    f"projection_end={self.projection_end!r} is not 'balance' or 'box'."
+                )
+            if self.projection_method not in {"alternating", "dykstra"}:
+                raise ValueError(
+                    f"projection_method={self.projection_method!r} is not 'alternating' "
+                    "or 'dykstra'."
+                )
+        if spec.kind in {"nullspace", "projection"}:
+            if null_space is None:
+                if spec.kind == "nullspace":
+                    raise ValueError(
+                        "parameterization='nullspace' needs the basis; build it with "
+                        "torchcell.metabolism.constraints.null_space_basis(gem.s)."
+                    )
+                # THE PROJECTION ARM BUILDS ITS OWN. 026's `build_flux_layer` computes the
+                # basis only for 'nullspace', and it is not this module's to edit, so the
+                # layer falls back to computing it rather than refusing to run. It is a
+                # 2.6 s dense SVD, paid once; a caller that already has the cached basis
+                # should still pass it.
+                null_space = null_space_basis(
+                    gem.s, cache_path=cfg.null_space_cache_path
                 )
             self.register_buffer("null_basis", null_space)
             self.n_latent = int(null_space.shape[1])
             self.latent_mlp = nn.Sequential(
                 nn.Linear(d, d), nn.ReLU(), nn.Linear(d, self.n_latent)
             )
+            # THE POSTERIOR SPREAD HEAD IS ALWAYS BUILT ON THE PROJECTION KIND, whether or
+            # not the run samples, so a deterministically trained cell can be switched into
+            # a sampler after its weights are loaded. `audit_top_strain_feasibility.py` does
+            # exactly that, by setting `config.stochastic` on a layer that is already built,
+            # and a head created lazily at that point would not be in the checkpoint. On
+            # 'nullspace' the head is built only when asked for, so the existing arm's
+            # parameter set and its consumption of the init RNG are untouched.
+            if spec.kind == "projection" or cfg.latent_stochastic:
+                # Zero weights and a constant bias, so every genotype starts at the same
+                # spread and the posterior widens only where the data asks it to.
+                self.latent_log_std = nn.Linear(d, self.n_latent)
+                nn.init.zeros_(self.latent_log_std.weight)
+                nn.init.constant_(self.latent_log_std.bias, cfg.latent_log_std_init)
+            self.null_basis_orthonormality_error, self.null_basis_balance_error = (
+                self._validate_null_basis()
+            )
         else:
             self.n_latent = 0
+            self.null_basis_orthonormality_error = 0.0
+            self.null_basis_balance_error = 0.0
         self.reaction_embedding = nn.Embedding(self.n_reactions, cfg.reaction_embed_dim)
         z_out = 2 if cfg.stochastic else 1
         self.flux_mlp = nn.Sequential(
@@ -732,10 +1137,173 @@ class FluxLayer(nn.Module):
             # log-concentration, squashed into the physiological window
             self.log_c_base = nn.Parameter(torch.zeros(self.n_metabolites))
             self.log_c_from_context = nn.Linear(d, self.n_metabolites)
-            # the Q m offset of Thermo-Flux Eq. (5), isotropic because Q is unavailable
-            self.delta_g_offset = nn.Parameter(torch.zeros(self.n_reactions))
+            if self.thermo_uncertainty == "isotropic":
+                # The Q m offset of Thermo-Flux Eq. (5) with Q dropped: one free direction
+                # per reaction. What every 026 and 027 run to date fit.
+                self.delta_g_offset = nn.Parameter(torch.zeros(self.n_reactions))
+            else:
+                # Q m proper. m lives in the factor's component space, so the reactions can
+                # only move in the directions the component contribution left uncertain.
+                self.delta_g_m = nn.Parameter(torch.zeros(self.n_delta_g_components))
 
     # -- construction helpers -------------------------------------------------
+
+    @property
+    def latent_stochastic(self) -> bool:
+        """Whether the latent is drawn rather than emitted, read at CALL time.
+
+        A property rather than an ``__init__`` flag because a trained cell is switched into
+        a sampler after its weights are loaded: ``audit_top_strain_feasibility.py`` sets
+        ``config.stochastic`` on a built layer and then draws. On the projection kind either
+        switch turns sampling on, since the spread head is built there unconditionally; on
+        ``nullspace`` only ``latent_stochastic`` does, so ``stochastic`` stays the no-op it
+        has always been for that arm.
+        """
+        if not hasattr(self, "latent_log_std"):
+            return False
+        if self.parameterization == "projection":
+            return bool(self.config.latent_stochastic or self.config.stochastic)
+        return bool(self.config.latent_stochastic)
+
+    def _validate_null_basis(self, probes: int = 8) -> tuple[float, float]:
+        r"""Measure the two properties the projection rests on, rather than assuming them.
+
+        :math:`P_{\mathrm{bal}}(v)=\mathcal N(\mathcal N^\top v)` is the orthogonal
+        projector onto :math:`\ker S` only when :math:`\mathcal N^\top\mathcal N=I`. A basis
+        that is merely a basis makes it an oblique map, which still lands in
+        :math:`\ker S` but no longer contracts the distance to the box, so the alternating
+        projection need not converge. Rather than form the ``1538 x 1538`` Gram matrix, this
+        applies :math:`\mathcal N^\top\mathcal N` to a few random latents, which is the same
+        assertion at 1/200th of the cost, and it also reads off
+        :math:`\lVert S\mathcal Nz\rVert_\infty` so the balance claim is measured too.
+
+        Returns:
+            ``(orthonormality_error, balance_error)``, both in the units the caller should
+            report: the first is dimensionless, the second the largest absolute row of
+            :math:`S\mathcal Nz` relative to the largest absolute entry of
+            :math:`\mathcal Nz`.
+        """
+        generator = torch.Generator(device="cpu").manual_seed(0)
+        z = torch.randn(probes, self.n_latent, generator=generator)
+        v = z @ self.null_basis.t()
+        recovered = v @ self.null_basis
+        ortho = float((recovered - z).abs().max())
+        residual = float(self._s_matmul(v).abs().max())
+        balance = residual / max(float(v.abs().max()), 1e-12)
+        if ortho > 1e-3:
+            raise ValueError(
+                f"the supplied null-space basis is not orthonormal: N^T N z differs from z "
+                f"by {ortho:.3e}. The balance projection N (N^T v) is only a projector for "
+                "an orthonormal basis; constraints.null_space_basis returns one."
+            )
+        return ortho, balance
+
+    def _thermo_tighten(
+        self, lb: torch.Tensor, ub: torch.Tensor, delta_g: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        r"""Tighten the box so that every flux inside it runs downhill.
+
+        The second law asks :math:`v_j\Delta_rG_j\le0`, which for a KNOWN sign of
+        :math:`\Delta_rG_j` is just a sign restriction on :math:`v_j`, and a sign
+        restriction is a bound. So it belongs in the box rather than in the objective:
+
+        .. math::
+            \Delta_rG_j>+\epsilon\ \Rightarrow\ v^u_j\leftarrow\min(v^u_j,0),\qquad
+            \Delta_rG_j<-\epsilon\ \Rightarrow\ v^\ell_j\leftarrow\max(v^\ell_j,0),
+
+        with :math:`|\Delta_rG_j|\le\epsilon` left alone, because near equilibrium the sign
+        is not resolved and forcing one would be asserting a direction the data does not
+        have. Reactions outside ``dg_mask`` or exempted by Thermo-Flux's Box 2 are untouched.
+
+        **This is a per-sample box**, because :math:`\Delta_rG` carries the learned
+        concentration term and therefore depends on the genotype. That is what makes it a
+        constraint the model can satisfy rather than one it must fight: to license a flux in
+        a direction, the model moves the concentrations inside the physiological window
+        until the reaction energy has the sign it needs, which is exactly the degree of
+        freedom Thermo-Flux gives its own solver.
+
+        The tightening can empty a box, when a reaction carries a strictly positive lower
+        bound and an energy that forbids forward flux. The second law wins there and the
+        lower bound is dropped to meet the upper one, but the count is returned rather than
+        absorbed, because a genotype with many emptied boxes is one whose medium or forced
+        fluxes disagree with its thermodynamics.
+
+        Returns:
+            ``(lb, ub, emptied)`` with ``emptied`` a ``[B, r]`` bool of the boxes the
+            tightening inverted.
+        """
+        active = (self.delta_r_g0_mask & (~self.thermo_exempt)).unsqueeze(0)
+        eps = self.config.thermo_epsilon
+        uphill = active & (delta_g > eps)
+        downhill = active & (delta_g < -eps)
+        zero = ub.new_zeros(())
+        ub = torch.where(uphill, torch.minimum(ub, zero), ub)
+        lb = torch.where(downhill, torch.maximum(lb, zero), lb)
+        emptied = lb > ub
+        return torch.minimum(lb, ub), ub, emptied
+
+    def _project_balanced(self, v: torch.Tensor) -> torch.Tensor:
+        r"""Orthogonal projection onto :math:`\ker S`, exact for an orthonormal basis."""
+        return (v @ self.null_basis) @ self.null_basis.t()
+
+    def _project_feasible(
+        self, v: torch.Tensor, lb: torch.Tensor, ub: torch.Tensor
+    ) -> torch.Tensor:
+        r"""Alternate the balance projection and the box clip, ``projection_steps`` times.
+
+        ``K`` counts the CLIPS. Each is followed by the balance projection except, under
+        ``projection_end='box'``, the last one, so the returned point is exactly in the box
+        or exactly in :math:`\ker S` according to the config and the other residual is what
+        :meth:`feasibility` reports.
+
+        ``clamp`` with tensor bounds passes gradient to the input where the flux is interior
+        and to ``lb``/``ub`` where it is clipped, so the genotype term reaches the flux
+        through the box even when the latent term is saturated, which is the property the
+        deletion needs.
+        """
+        steps = self.projection_steps
+        end_on_box = self.projection_end == "box"
+        if self.projection_method == "alternating":
+            for k in range(steps):
+                v = torch.minimum(torch.maximum(v, lb), ub)
+                if not (end_on_box and k == steps - 1):
+                    v = self._project_balanced(v)
+            return v
+        # DYKSTRA. The plain alternation reaches A INTERSECT B; Dykstra's correction terms
+        # make the limit the point of the intersection NEAREST v0, which is the difference
+        # between "a feasible flux" and "the feasible flux this genotype's latent asked for".
+        p = torch.zeros_like(v)
+        q = torch.zeros_like(v)
+        for k in range(steps):
+            y = torch.minimum(torch.maximum(v + p, lb), ub)
+            p = v + p - y
+            if end_on_box and k == steps - 1:
+                return y
+            w = self._project_balanced(y + q)
+            q = y + q - w
+            v = w
+        return v
+
+    def _latent(
+        self, context: torch.Tensor, force_sample: bool = False
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        r"""The latent :math:`z` and its KL against :math:`\mathcal N(0,I)`.
+
+        Deterministic unless ``latent_stochastic``, and then :math:`z=\mu+\sigma\epsilon` in
+        training or whenever ``force_sample`` is set, which is how :meth:`sample` draws in
+        eval mode without changing the module's training flag.
+
+        The KL is the per-sample MEAN over latent dimensions rather than the sum, so one
+        weight serves a 1,538-dimensional yeast basis and a three-dimensional toy alike.
+        """
+        mu = self.latent_mlp(context)
+        if not self.latent_stochastic:
+            return mu, mu.new_zeros(())
+        log_std = self.latent_log_std(context)
+        std = torch.exp(log_std)
+        z = mu + torch.randn_like(mu) * std if (self.training or force_sample) else mu
+        kl = 0.5 * (mu**2 + std**2 - 1.0 - 2.0 * log_std).mean(dim=1)
+        return z, kl.mean()
 
     def _transport_term(self, gem: GemTensors) -> torch.Tensor:
         r"""Supply :math:`\Delta_r G^t_j`, from the GEM's own column or from the physics.
@@ -992,14 +1560,20 @@ class FluxLayer(nn.Module):
         raw = self.log_c_base.unsqueeze(0) + self.log_c_from_context(context)
         log_c = lo + (hi - lo) * torch.sigmoid(raw)
         conc_term = self.rt * self._s_transpose_matmul(log_c)
+        offset = (
+            self.delta_g_offset
+            if self.thermo_uncertainty == "isotropic"
+            else self.delta_g_q @ self.delta_g_m
+        )
         delta = (
             self.delta_r_g0.unsqueeze(0)
             + conc_term
             + self.delta_r_g_transport.unsqueeze(0)
-            + self.delta_g_offset.unsqueeze(0)
+            + offset.unsqueeze(0)
         )
         extras["log_c"] = log_c
         extras["conc_term"] = conc_term
+        extras["delta_g_offset"] = offset
         return delta, self.delta_r_g0_mask, extras
 
     def _s_transpose_matmul(self, x: torch.Tensor) -> torch.Tensor:
@@ -1064,10 +1638,26 @@ class FluxLayer(nn.Module):
             e_u = self.unit_abundance(e_g)
         lb, ub, capacity = self.dynamic_box(c_j, e_u)
 
-        if self.parameterization == "nullspace":
+        # THE REACTION ENERGIES ARE NEEDED BEFORE THE FLUX when the second law is a box
+        # rather than a penalty, so they are computed here for every arm and reused below.
+        # Nothing about this call is stateful or random, so moving it earlier leaves every
+        # existing arm's numbers and its consumption of the RNG exactly as they were.
+        delta_g, dg_mask, extras = self.reaction_potential(context)
+        thermo_emptied: torch.Tensor | None = None
+        if self.thermo_box:
+            lb, ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
+
+        kl = h_genes.new_zeros(())
+        if self.parameterization in {"nullspace", "projection"}:
             # Mass balance is exact here, for any latent: S (N z) = (S N) z = 0.
-            z_latent = self.latent_mlp(context) * cfg.flux_scale
+            latent, kl = self._latent(context)
+            z_latent = latent * cfg.flux_scale
             v = z_latent @ self.null_basis.t()
+            if self.parameterization == "projection":
+                # ... and then the box is made exact too, alternately, so that whichever
+                # end the config names holds to machine precision and the other residual
+                # is a measured number rather than an unbounded penalty.
+                v = self._project_feasible(v, lb, ub)
             # The box is what is soft now, and directionality with it.
             out_of_box = torch.relu(v - ub) + torch.relu(lb - v)
             box_penalty = (out_of_box / cfg.flux_scale).mean()
@@ -1090,6 +1680,12 @@ class FluxLayer(nn.Module):
 
         out: dict[str, torch.Tensor] = {"v": v, "c_j": c_j, "gamma": gamma}
         out["c_box"] = box_penalty
+        out["c_kl"] = kl
+        # The box, carried out so `feasibility` can price a violation per sample without
+        # rebuilding the genotype chain. Two-dimensional, so the trainer's scalar log, which
+        # takes only 0-dim entries, does not pick them up.
+        out["lb"] = lb
+        out["ub"] = ub
         out["feas_box_violation_frac"] = (
             ((v > ub + 1e-4) | (v < lb - 1e-4)).float().mean()
         )
@@ -1120,9 +1716,11 @@ class FluxLayer(nn.Module):
             residual.abs() / (omega + cfg.balance_epsilon)
         ).median()
 
-        # (b) second law, relaxed to a hinge; no binary variables
-        delta_g, dg_mask, extras = self.reaction_potential(context)
+        # (b) second law. A hinge, unless `thermo_box` already made it a bound, in which
+        # case the same expression is a DIAGNOSTIC that should read ~0 and says so if not.
         out.update({f"thermo_{k}": t for k, t in extras.items()})
+        if thermo_emptied is not None:
+            out["feas_thermo_box_emptied_frac"] = thermo_emptied.float().mean()
         active = dg_mask & (~self.thermo_exempt)
         if active.any() and self.thermo_mode is not ThermoMode.OFF:
             va, ga = v[:, active], delta_g[:, active]
@@ -1185,13 +1783,166 @@ class FluxLayer(nn.Module):
         # (e) parsimony: the main defence against a 1,538-dimensional null space
         out["c_parsimony"] = torch.sqrt(v**2 + 1e-8).mean() / cfg.flux_scale
 
-        # (f) prior on the Thermo-Flux uncertainty latent
-        if self.thermo_mode is ThermoMode.ANCHORED:
+        # (f) prior on the Thermo-Flux uncertainty latent. Under 'covariance' the prior is
+        # N(0, I) on m itself, which is Thermo-Flux's own statement of it; under 'isotropic'
+        # it is the same expression applied to the per-reaction offset, where it is a ridge
+        # rather than a likelihood because the per-reaction errors are not independent.
+        if self.thermo_mode is not ThermoMode.ANCHORED:
+            out["c_thermo_prior"] = v.new_zeros(())
+        elif self.thermo_uncertainty == "isotropic":
             out["c_thermo_prior"] = (self.delta_g_offset**2).mean()
         else:
-            out["c_thermo_prior"] = v.new_zeros(())
+            out["c_thermo_prior"] = (self.delta_g_m**2).mean()
 
         return out
+
+    # -- feasibility, per sample ----------------------------------------------
+
+    def _thermo_active(self) -> torch.Tensor:
+        """Reactions the second law is applied to: priced, and not exempt."""
+        return self.delta_r_g0_mask & (~self.thermo_exempt)
+
+    def feasibility(
+        self,
+        out: dict[str, torch.Tensor],
+        box_tol: float = 1.0e-4,
+        flux_tol: float = 1.0e-6,
+    ) -> dict[str, torch.Tensor]:
+        r"""Per-sample feasibility, as ``[B]`` tensors. The canonical definitions.
+
+        :meth:`forward` averages these into scalars for the training log; a filter over
+        nominated strains needs them per genotype, because "95 percent of the top 100 do not
+        violate mass balance" is a statement about individual strains and a batch mean can
+        satisfy it while a third of the strains do not.
+
+        Keys, and what each one is:
+
+        ``balance_ratio_median`` / ``balance_ratio_max``
+            :math:`|S_iv|/(\omega_i+\epsilon)` over the independent rows, where
+            :math:`\omega` is the metabolite's turnover, so the residual is priced against
+            the throughput it sits on rather than absolutely. The median is the typical
+            metabolite and the max is the worst one; a filter should read the max.
+            :meth:`forward`'s ``feas_balance_median`` is the median over the FLATTENED
+            batch, which is not the mean of these, so the two are related but not equal.
+
+        ``box_violation_frac``
+            Fraction of reactions outside ``[lb, ub]`` by more than ``box_tol``, the same
+            tolerance and definition ``feas_box_violation_frac`` uses.
+
+        ``thermo_violation_frac``
+            Fraction of second-law reactions with :math:`v_j\Delta_rG_j>0`, matching
+            ``feas_thermo_violation_frac``. Counts a reaction at zero flux whose product is
+            numerically positive.
+
+        ``thermo_uphill_frac``
+            The same, restricted to reactions actually CARRYING flux
+            (:math:`|v_j|>` ``flux_tol``). This is the number a feasibility filter wants: a
+            reaction at zero flux is not running uphill, it is not running.
+
+        Zero-filled where the term does not apply, so the caller gets the same keys from
+        every arm rather than having to test the config.
+        """
+        v = out["v"]
+        lb, ub = out["lb"], out["ub"]
+        eps = self.config.balance_epsilon
+        residual = self._s_matmul(v)[:, self.independent_rows].abs()
+        omega = self.turnover(v)[:, self.independent_rows]
+        ratio = residual / (omega + eps)
+        result = {
+            "balance_ratio_median": ratio.median(dim=1).values,
+            "balance_ratio_max": ratio.max(dim=1).values,
+            "box_violation_frac": (
+                ((v > ub + box_tol) | (v < lb - box_tol)).float().mean(dim=1)
+            ),
+        }
+        active = self._thermo_active()
+        if "delta_r_g" in out and bool(active.any()):
+            drive = v[:, active] * out["delta_r_g"][:, active]
+            carrying = v[:, active].abs() > flux_tol
+            uphill = (drive > 0) & carrying
+            result["thermo_violation_frac"] = (drive > 0).float().mean(dim=1)
+            result["thermo_uphill_frac"] = uphill.float().sum(
+                dim=1
+            ) / carrying.float().sum(dim=1).clamp(min=1.0)
+        else:
+            result["thermo_violation_frac"] = v.new_zeros(v.shape[0])
+            result["thermo_uphill_frac"] = v.new_zeros(v.shape[0])
+        return result
+
+    def sample(
+        self,
+        h_genes: torch.Tensor,
+        context: torch.Tensor,
+        perturbation_indices: torch.Tensor,
+        perturbation_indices_batch: torch.Tensor,
+        n_samples: int,
+    ) -> FluxSample:
+        """Draw ``n_samples`` fluxes per genotype and price each draw's own feasibility.
+
+        The genotype chain, the box and the reaction energies are computed ONCE and shared
+        across draws, because they are deterministic functions of the tokens: only the
+        latent is resampled. The draw is taken whether or not the module is training, which
+        is the point of calling this rather than :meth:`forward` in a loop.
+
+        Requires a latent parameterization with ``latent_stochastic`` set. There is no
+        deterministic fall back: a "sampler" that returned ``n_samples`` copies of one flux
+        would report a feasibility fraction of 0 or 1 and look like a measurement.
+        """
+        if self.parameterization not in {"nullspace", "projection"}:
+            raise ValueError(
+                f"sample() needs parameterization 'nullspace' or 'projection'; this layer "
+                f"is {self.parameterization!r}. The box head's draw is per reaction and "
+                "carries no balance guarantee at all."
+            )
+        if not self.latent_stochastic:
+            raise ValueError(
+                "sample() needs latent_stochastic; this layer emits a single flux per "
+                "genotype and repeating it is not a sample."
+            )
+        cfg = self.config
+        gamma = self.gene_availability(
+            h_genes, perturbation_indices, perturbation_indices_batch
+        )
+        c_j = self.reaction_availability(gamma)
+        e_u = (
+            self.unit_abundance(self.gene_abundance(h_genes, gamma))
+            if cfg.use_abundance_head
+            else None
+        )
+        lb, ub, _ = self.dynamic_box(c_j, e_u)
+        delta_g, dg_mask, _ = self.reaction_potential(context)
+        if self.thermo_box:
+            # The same directional box the deterministic head gets, so every DRAW is
+            # thermodynamically feasible rather than only the mean.
+            lb, ub, _ = self._thermo_tighten(lb, ub, delta_g)
+        active = dg_mask & (~self.thermo_exempt)
+        has_thermo = bool(active.any()) and self.thermo_mode is not ThermoMode.OFF
+
+        draws: list[torch.Tensor] = []
+        feas: list[dict[str, torch.Tensor]] = []
+        for _ in range(n_samples):
+            latent, _ = self._latent(context, force_sample=True)
+            v = (latent * cfg.flux_scale) @ self.null_basis.t()
+            if self.parameterization == "projection":
+                v = self._project_feasible(v, lb, ub)
+            piece: dict[str, torch.Tensor] = {"v": v, "lb": lb, "ub": ub}
+            if has_thermo:
+                piece["delta_r_g"] = delta_g
+            draws.append(v)
+            feas.append(self.feasibility(piece))
+        stacked = {k: torch.stack([f[k] for f in feas]) for k in feas[0]}
+        return FluxSample(
+            v=torch.stack(draws),
+            balance_ratio_median=stacked["balance_ratio_median"],
+            balance_ratio_max=stacked["balance_ratio_max"],
+            box_violation_frac=stacked["box_violation_frac"],
+            thermo_violation_frac=stacked["thermo_violation_frac"],
+            thermo_uphill_frac=stacked["thermo_uphill_frac"],
+            n_samples=n_samples,
+            parameterization=self.parameterization,
+            projection_steps=self.projection_steps,
+            projection_end=self.projection_end,
+        )
 
     def set_constraint_epoch(self, epoch: int) -> float:
         r"""Set the constraint scale for one epoch and return it.
@@ -1241,6 +1992,11 @@ class FluxLayer(nn.Module):
             + w["parsimony"] * out["c_parsimony"]
             + w["thermo_prior"] * out["c_thermo_prior"]
             + w.get("box", 1.0) * out["c_box"]
+            # The latent KL, which is exactly zero unless `latent_stochastic` is set, so the
+            # sum is unchanged for every arm that does not sample. The default comes from
+            # `kl_weight` rather than from the dict because 026's build_flux_layer writes
+            # the whole `weights` dict itself and an arm cannot add a key to it.
+            + w.get("kl", self.config.kl_weight) * out["c_kl"]
         )
         return total * self.constraint_scale
 
@@ -1301,4 +2057,32 @@ class FluxLayer(nn.Module):
             "n_transport_terms_sourced": self.n_transport_terms_sourced,
             "transport_term_is_zero": self.n_transport_terms_sourced == 0,
             "thermo_mode": str(self.thermo_mode),
+            "parameterization": self.parameterization,
+            "parameterization_raw": self.config.parameterization,
+            "projection_steps": (
+                self.projection_steps if self.parameterization == "projection" else None
+            ),
+            "projection_end": (
+                self.projection_end if self.parameterization == "projection" else None
+            ),
+            "projection_method": (
+                self.projection_method
+                if self.parameterization == "projection"
+                else None
+            ),
+            "n_latent": self.n_latent,
+            # MEASURED at construction, not asserted: the projection is a projection only
+            # if the basis is orthonormal, and it lands in ker S only to the precision the
+            # basis was computed at.
+            "null_basis_orthonormality_error": self.null_basis_orthonormality_error,
+            "null_basis_balance_error": self.null_basis_balance_error,
+            "thermo_box": self.thermo_box,
+            "latent_stochastic": self.latent_stochastic,
+            "kl_weight": self.config.weights.get("kl", self.config.kl_weight),
+            "thermo_uncertainty": self.thermo_uncertainty,
+            "n_delta_g_components": self.n_delta_g_components,
+            "n_reactions_covariance_covered": self.n_reactions_cov_covered,
+            "delta_g_sqrt_cov_sha256": (
+                None if self.delta_g_sqrt_cov is None else self.delta_g_sqrt_cov.sha256
+            ),
         }

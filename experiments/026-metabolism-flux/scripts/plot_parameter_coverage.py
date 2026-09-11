@@ -52,6 +52,11 @@ import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.ticker import MultipleLocator
 
+from torchcell.metabolism.parameters import (
+    KINETICS_VERSION,
+    PLAUSIBILITY_RESULT,
+    PredictorSelection,
+)
 from torchcell.timestamp import timestamp
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
@@ -138,42 +143,44 @@ def tenths(ax: plt.Axes) -> None:
     ax.set_axisbelow(True)
 
 
+# ONE SELECTION RULE, AND IT LIVES IN THE CODE THE FLUX LAYER RUNS.
+# ------------------------------------------------------------------
+# This figure used to rank predictors by its own statistic: the mean of the shared-EC4-band
+# and own-class-band fractions, top three, drop anything at or below the EC-median lookup.
+# `PredictorSelection.from_study` in `torchcell/metabolism/parameters.py` used a different
+# one: the own-class band alone, keeping a predictor when its WILSON 95 PERCENT LOWER BOUND
+# clears the lookup's point fraction. Both were in the repo and they disagreed on K_M, where
+# the figure's rule admitted EZKinetics and EITLEM and the code's admitted EZKinetics alone.
+#
+# The code's rule wins and this file now calls it, for two reasons. It is the rule the flux
+# layer actually applies, so a figure using any other rule describes a table nobody builds.
+# And it is the stricter of the two on the evidence available: with 44 to 47 scorable pairs,
+# a point estimate above the baseline is not evidence of being above the baseline, and
+# EITLEM's K_M lower bound (0.372) sits below the lookup (0.489). Admitting it would need a
+# rule that states an error tolerance, which is a decision, not a default.
 def plausibility(block: dict, name: str) -> float:
-    """The selection statistic: mean of the two within-class plausibility fractions.
-
-    Both fractions answer "how often does this predictor land inside the spread that real
-    enzymes of the same EC4 class show", one against a single shared band and one against
-    each pair's own class band. They are the leakage-robust pair, since a memorized value
-    helps a predictor no more than a correct one does on either.
-    """
-    return 0.5 * (
-        block["shared_band"][name]["ec4"]["frac"]
-        + block["own_class_band"]["predictors"][name]["frac"]
-    )
+    """The selection statistic, kept for the figure's ranking axis: the own-class fraction."""
+    return float(block["own_class_band"]["predictors"][name]["frac"])
 
 
 def lookup_plausibility(block: dict) -> float:
-    """The same statistic for the EC-median lookup, which is the bar to clear."""
-    return 0.5 * (
-        block["ec_median_lookup"]["shared"]["ec4"]["frac"]
-        + block["ec_median_lookup"]["own_class"]["frac"]
-    )
+    """The EC-median lookup's own-class fraction, which is the bar to clear."""
+    return float(block["ec_median_lookup"]["own_class"]["frac"])
 
 
-def select_predictors(block: dict) -> list[str]:
-    """Rank by :func:`plausibility`, keep at most three, drop any below the lookup.
+def select_predictors(parameter: str) -> list[str]:
+    """The admitted set, read from the one rule the flux layer applies.
 
-    Computed rather than listed, so the figure cannot drift from the results it claims to
-    read. The floor matters: on :math:`K_M` it removes the third-ranked predictor, and a
-    hardcoded "top three" would have shown a predictor that a table lookup beats.
+    Delegated rather than reimplemented: two implementations of one rule is how the repo
+    came to hold two answers for K_M.
     """
-    floor = lookup_plausibility(block)
-    ranked = sorted(block["shared_band"], key=lambda p: -plausibility(block, p))
-    return [p for p in ranked[:MAX_SELECTED] if plausibility(block, p) > floor]
+    return PredictorSelection.from_study(
+        parameter, osp.join(EXPERIMENT_ROOT, PLAUSIBILITY_RESULT)
+    ).selected
 
 
 def unit_spread(parameter: str, predictors: list[str]) -> np.ndarray:
-    """Across-predictor spread per catalytic unit, over the given predictors only.
+    r"""Across-predictor spread per catalytic unit, over the given predictors only.
 
     The consensus parquet carries a ``spread_decades`` column, but it is taken over EVERY
     predictor that emitted a value, so it cannot answer what a table restricted to the
@@ -183,7 +190,9 @@ def unit_spread(parameter: str, predictors: list[str]) -> np.ndarray:
     """
     columns: dict[str, pd.Series] = {}
     for predictor in predictors:
-        path = osp.join(KINETICS_DIR, predictor, "processed", f"{parameter}.parquet")
+        # The VERIFIED tables: the ones built on substrate structures whose composition
+        # was checked against the GEM's formula, which is what the resolver reads.
+        path = osp.join(KINETICS_DIR, predictor, KINETICS_VERSION, f"{parameter}.parquet")
         frame = pd.read_parquet(path)
         values = frame[frame[parameter] > 0].copy()
         values["log10"] = np.log10(values[parameter])
@@ -354,7 +363,7 @@ def panel_within_class(ax: plt.Axes, block: dict, parameter: str) -> dict:
     enzymes. The lookup is drawn as a hatched group rather than as a rule, so it is read on
     the same axis and by the same two bars as the predictors it is being compared with.
     """
-    selected = select_predictors(block)
+    selected = select_predictors(parameter)
     groups = [*selected, "ec_median_lookup"]
     shared = [
         block["shared_band"][p]["ec4"] if p in block["shared_band"]
@@ -460,7 +469,7 @@ def main() -> None:
     surrogates = pd.read_parquet(osp.join(THERMO_DIR, "metabolite_dgf_surrogate.parquet"))
 
     selected = {
-        parameter: select_predictors(plausible["parameters"][parameter])
+        parameter: select_predictors(parameter)
         for parameter in ("k_cat", "K_M")
     }
     spreads = {p: unit_spread(p, selected[p]) for p in ("k_cat", "K_M")}
@@ -519,9 +528,12 @@ def main() -> None:
     # against a file rather than against the picture.
     report_out = {
         "selection_rule": (
-            "mean of the shared EC4 band fraction and the own-class band fraction, "
-            "top 3, dropping any predictor at or below the EC-median lookup"
+            "own-class EC4 band, keeping a predictor whose Wilson 95 percent lower bound "
+            "exceeds the EC-median lookup's point fraction. One rule, applied by "
+            "PredictorSelection.from_study in torchcell/metabolism/parameters.py, which is "
+            "the rule the flux layer runs"
         ),
+        "predictor_table_version": KINETICS_VERSION,
         "parameters": {
             parameter: {
                 "selected": chosen[parameter]["selected"],

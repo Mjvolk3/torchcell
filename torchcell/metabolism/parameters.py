@@ -73,7 +73,7 @@ import json
 import os.path as osp
 import re
 from enum import StrEnum
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
 import numpy as np
 import pandas as pd
@@ -112,6 +112,12 @@ class ParameterProvenance(StrEnum):
     #: organism. Which predictors those are is not baked in here: it is read from the study's
     #: own result file and recorded per run in :class:`PredictorSelection`.
     PREDICTED_MEDIAN = "predicted_median"
+    #: A measurement of an enzyme in ANOTHER organism carrying the same EC number and
+    #: assayed on a substrate this reaction consumes. It is evidence about the chemistry,
+    #: not about this protein, so it sits BETWEEN the measured and the predicted tier and
+    #: is never counted as a measurement of the organism being modeled. For a chassis with
+    #: no assays of its own this is the only measured-adjacent tier available at all.
+    OPEN_ENZYME_DATABASE_EC_HOMOLOG = "open_enzyme_database_ec_homolog"
     ORGANISM_DEFAULT = "organism_default"
     SWISSPROT = "swissprot"
     YMDB = "ymdb"
@@ -119,6 +125,14 @@ class ParameterProvenance(StrEnum):
 
 #: Which provenance tags are measurements rather than model output. The
 #: published-only ablation is exactly a filter on this set.
+#:
+#: **The homolog tag is deliberately absent.** A cross-organism EC match is a real
+#: measurement of a real enzyme, but not of the enzyme in this model, and
+#: :func:`~torchcell.metabolism.flux_layer._tier_counts` reads this set to decide what
+#: counts as measured. Including it would inflate the experimental fraction that 027's
+#: preflight asserts on, which exists to catch a missing mirror; the honest coarse
+#: placement of a homolog value is with the predictions, and the fine tier stays readable
+#: in the provenance list and in :meth:`ParameterTable.tier_counts`.
 EXPERIMENTAL_SOURCES = frozenset(
     {
         ParameterProvenance.BRENDA,
@@ -191,16 +205,26 @@ class ParameterTable(BaseModel):
     notes: str = ""
 
     def tier_counts(self) -> dict[str, int]:
-        """The three-way split the coverage report has to print.
+        """The four-way split the coverage report has to print.
 
-        ``measured`` is a database value, ``predicted`` a sequence-model value, ``default``
-        the organism constant. Reporting only ``known`` merges the first two, and those are
-        the two a "published-only" ablation has to separate.
+        ``measured`` is a measurement of THIS organism's protein on a substrate the
+        reaction consumes, ``homolog`` a measurement of the same chemistry in another
+        organism, ``predicted`` a sequence-model value, ``default`` the organism constant.
+        Reporting only ``known`` merges the first three, and a "published-only" ablation
+        has to separate all four.
+
+        ``homolog`` is reported separately here and folded in with the predictions by
+        :func:`~torchcell.metabolism.flux_layer._tier_counts`, which reads
+        :data:`EXPERIMENTAL_SOURCES` and does not know about the finer split. The two
+        reports therefore agree on ``measured`` and on ``default``, and the flux layer's
+        ``predicted`` is this table's ``predicted`` plus ``homolog``.
         """
-        counts = {"measured": 0, "predicted": 0, "default": 0}
+        counts = {"measured": 0, "homolog": 0, "predicted": 0, "default": 0}
         for p in self.provenance:
             if p in EXPERIMENTAL_SOURCES:
                 counts["measured"] += 1
+            elif p is ParameterProvenance.OPEN_ENZYME_DATABASE_EC_HOMOLOG:
+                counts["homolog"] += 1
             elif p is ParameterProvenance.ORGANISM_DEFAULT:
                 counts["default"] += 1
             else:
@@ -313,6 +337,18 @@ KINETICS_MIRROR = "data/torchcell/kinetics"
 #: It is the only place the predictor ranking comes from; nothing here hardcodes a winner.
 PLAUSIBILITY_RESULT = "026-metabolism-flux/results/within_class_plausibility.json"
 
+#: Version subdirectory of each predictor's mirror that the resolver reads. ``verified``
+#: holds the tables built on substrate structures whose composition was checked against the
+#: GEM's formula; ``processed`` holds the unchecked tables it supersedes, kept on disk so a
+#: before-and-after is reproducible. Written by
+#: ``experiments/026-metabolism-flux/scripts/improve_kinetic_coverage.py --stage verify``.
+KINETICS_VERSION = "verified"
+
+#: The verified ``(unit, gene, substrate, SMILES)`` table, relative to the kinetics mirror.
+#: It is what makes a substrate-matched measured tier possible without a cobra model in
+#: hand: it names, per catalytic unit, the substrates whose structure survived the check.
+VERIFIED_PAIRS_FEATURE = "_features/verified_pairs.parquet"
+
 
 def _sha256_of(path: str, chunk: int = 1 << 20) -> str:
     h = hashlib.sha256()
@@ -383,6 +419,174 @@ class PredictorSelection(BaseModel):
         )
 
 
+class SubstrateMatch(BaseModel):
+    """Per catalytic unit, the identity of the substrates its reaction consumes.
+
+    **An empty instance means no substrate is known, and therefore no measurement can be
+    accepted.** That is the correct semantics rather than a missing feature: a database row
+    is a measurement of one enzyme acting on one molecule, and without knowing which
+    molecules the reaction consumes there is no way to tell whether the row describes this
+    reaction or a different activity of the same protein. Half the measured tier turned out
+    to be the second case.
+
+    Two keys, because neither alone is enough. The InChIKey connectivity block is
+    protonation- and stereo-tolerant and is what matches a database's neutral acid to a
+    GEM's anion; the lowercased name catches the rows whose SMILES does not parse.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    keys: dict[int, set[str]] = Field(default_factory=dict)
+    names: dict[int, set[str]] = Field(default_factory=dict)
+    #: EC numbers annotated on each unit's reaction, the key the homolog tier matches on.
+    ec: dict[int, set[str]] = Field(default_factory=dict)
+    source_path: str = ""
+    sha256: str = ""
+    #: Accept every row without checking its substrate. This reproduces the accession-only
+    #: key the resolver used before 2026-09-11 and exists ONLY so a before-and-after can be
+    #: computed; the name is deliberately ugly, because a table built with it contains
+    #: turnover numbers assayed on molecules the reaction does not consume.
+    accept_all_unchecked: bool = False
+
+    def matches(self, unit_id: int, key: str | None, name: str | None) -> str | None:
+        """How this row's substrate matches the unit's, or None when it does not."""
+        if self.accept_all_unchecked:
+            return "unchecked"
+        if key and key in self.keys.get(unit_id, set()):
+            return "inchikey_block"
+        if name and name.lower() in self.names.get(unit_id, set()):
+            return "substrate_name"
+        return None
+
+    @classmethod
+    def from_verified_pairs(cls, path: str) -> SubstrateMatch:
+        """Build from the verified pair table, keyed on the structures it carries."""
+        from torchcell.metabolism.kinetics_pipeline import inchikey_block
+
+        frame = pd.read_parquet(
+            path, columns=["unit_id", "substrate_name", "smiles", "reaction_ec"]
+        ).drop_duplicates()
+        # An empty SMILES is a substrate with no verified structure. It contributes its
+        # NAME to the match and no structural key, which is the honest reading: the GEM
+        # says what the reaction consumes, and we could not find its structure.
+        blocks = {s: inchikey_block(s) if s else None for s in frame["smiles"].unique()}
+        keys: dict[int, set[str]] = {}
+        names: dict[int, set[str]] = {}
+        ec: dict[int, set[str]] = {}
+        for unit_id, name, smiles, codes in frame.itertuples(index=False):
+            block = blocks[smiles]
+            if block:
+                keys.setdefault(int(unit_id), set()).add(block)
+            names.setdefault(int(unit_id), set()).add(str(name).lower())
+            ec.setdefault(int(unit_id), set()).update(
+                c for c in str(codes or "").split(";") if c
+            )
+        return cls(
+            keys=keys, names=names, ec=ec, source_path=path, sha256=_sha256_of(path)
+        )
+
+
+def _substrate_key(
+    record: OedKineticRecord, cache: dict[str, str | None]
+) -> str | None:
+    """The InChIKey connectivity block of a database row's assayed substrate."""
+    from torchcell.metabolism.kinetics_pipeline import inchikey_block
+
+    if not record.smiles:
+        return None
+    if record.smiles not in cache:
+        cache[record.smiles] = inchikey_block(record.smiles)
+    return cache[record.smiles]
+
+
+def _database_tiers(
+    units: CatalyticUnits,
+    gene_to_uniprot: dict[str, str],
+    organism_records: list[OedKineticRecord],
+    homolog_records: list[OedKineticRecord],
+    substrates: SubstrateMatch,
+    kind: KineticKind,
+    target_temperature_c: float,
+) -> dict[int, tuple[float, ParameterProvenance, str]]:
+    r"""Per catalytic unit, the best database value and which tier it came from.
+
+    Two tiers, tried in order and never merged.
+
+    **Measured**, the accession key: rows for a member gene's own accession, filtered to
+    those assayed on a substrate the unit's reaction consumes. The substrate filter is
+    applied BEFORE the temperature cascade, so a row assayed on an unrelated substrate can
+    no longer win the tie-break and then be discarded, which would leave the unit unmatched
+    while a valid row existed.
+
+    **Homolog**, the EC key: rows in ANY organism whose EC number is annotated on the
+    unit's reaction and whose substrate matches. This is evidence about the chemistry
+    rather than about this protein, and it is tagged
+    :attr:`ParameterProvenance.OPEN_ENZYME_DATABASE_EC_HOMOLOG` so the two never merge.
+
+    A unit's value is the minimum over member genes for turnover and the maximum for
+    affinity: a complex cannot turn over faster than its slowest subunit, and its weakest
+    binding step sets where it saturates.
+    """
+    by_accession = index_by_uniprot(organism_records)
+    by_ec: dict[str, list[OedKineticRecord]] = {}
+    for record in homolog_records:
+        if record.ec:
+            by_ec.setdefault(record.ec, []).append(record)
+
+    unit_genes: dict[int, list[str]] = {}
+    for u, g in zip(
+        units.unit_gene_index[0].tolist(), units.unit_gene_index[1].tolist()
+    ):
+        unit_genes.setdefault(u, []).append(units.gene_ids[g])
+
+    cache: dict[str, str | None] = {}
+    take = min if kind is KineticKind.KCAT else max
+    out: dict[int, tuple[float, ParameterProvenance, str]] = {}
+    for unit_id in range(units.n_units):
+        hits: list[tuple[float, str]] = []
+        for gene in unit_genes.get(unit_id, []):
+            accession = gene_to_uniprot.get(gene)
+            if not accession:
+                continue
+            candidates = [
+                r
+                for r in by_accession.get(accession, [])
+                if substrates.matches(unit_id, _substrate_key(r, cache), r.substrate)
+            ]
+            if not candidates:
+                continue
+            resolved = resolve_parameter(
+                candidates,
+                kind,
+                uniprot=accession,
+                target_temperature_c=target_temperature_c,
+            )
+            if resolved is not None:
+                hits.append((float(resolved.value), resolved.substrate or ""))
+        if hits:
+            value, substrate = take(hits, key=lambda h: h[0])
+            out[unit_id] = (value, ParameterProvenance.OPEN_ENZYME_DATABASE, substrate)
+            continue
+        candidates = [
+            r
+            for code in substrates.ec.get(unit_id, set())
+            for r in by_ec.get(code, [])
+            if substrates.matches(unit_id, _substrate_key(r, cache), r.substrate)
+        ]
+        if not candidates:
+            continue
+        resolved = resolve_parameter(
+            candidates, kind, uniprot="", target_temperature_c=target_temperature_c
+        )
+        if resolved is not None:
+            out[unit_id] = (
+                float(resolved.value),
+                ParameterProvenance.OPEN_ENZYME_DATABASE_EC_HOMOLOG,
+                resolved.substrate or "",
+            )
+    return out
+
+
 class PredictedUnitTable(BaseModel):
     r"""A predicted value per catalytic unit, with the predictors behind each one.
 
@@ -407,6 +611,13 @@ class PredictedUnitTable(BaseModel):
     unit: str
     source_paths: dict[str, str]
     sha256: dict[str, str]
+    #: Which version subdirectory of the mirror the values came from.
+    version: str = KINETICS_VERSION
+    #: The substrates each unit's reaction consumes, as InChIKey connectivity blocks, from
+    #: the same verified pair table the predictions were computed on. Carried here because
+    #: it is the only object the resolver already receives that knows the structures, and a
+    #: measured value cannot be accepted without checking what it was assayed on.
+    substrates: SubstrateMatch = Field(default_factory=lambda: SubstrateMatch())
 
 
 def _per_unit_from_predictor(
@@ -441,15 +652,27 @@ def _per_unit_from_predictor(
 
 
 def load_predicted_unit_table(
-    parameter: str, n_units: int, kinetics_dir: str, plausibility_json: str
+    parameter: str,
+    n_units: int,
+    kinetics_dir: str,
+    plausibility_json: str,
+    version: str = KINETICS_VERSION,
 ) -> PredictedUnitTable:
     """Median prediction per catalytic unit over the predictors the study admits.
+
+    Reads the **verified** version of each predictor's table by default: the one built on
+    substrate structures whose composition was checked against the GEM's formula. The
+    unverified tables remain on disk under ``processed/`` and are reachable by passing
+    ``version="processed"``, which is what a before-and-after comparison does; nothing
+    silently falls back to them, because a value computed for a molecule the GEM does not
+    contain is not a value for that reaction.
 
     Args:
         parameter: ``"k_cat"`` or ``"K_M"``; the parquet basename and the study's key.
         n_units: Number of catalytic units in the GEM, from ``CatalyticUnits.n_units``.
         kinetics_dir: ``$DATA_ROOT/data/torchcell/kinetics``.
         plausibility_json: The within-class study's result file.
+        version: Version subdirectory of each predictor's mirror.
     """
     selection = PredictorSelection.from_study(parameter, plausibility_json)
     if not selection.selected:
@@ -462,7 +685,7 @@ def load_predicted_unit_table(
     paths: dict[str, str] = {}
     hashes: dict[str, str] = {}
     for name in selection.selected:
-        path = osp.join(kinetics_dir, name, "processed", f"{parameter}.parquet")
+        path = osp.join(kinetics_dir, name, version, f"{parameter}.parquet")
         values, _ = _per_unit_from_predictor(path, parameter, n_units)
         stacked.append(values)
         paths[name] = path
@@ -482,6 +705,32 @@ def load_predicted_unit_table(
         unit="1/s" if parameter == "k_cat" else "mM",
         source_paths=paths,
         sha256=hashes,
+        version=version,
+        substrates=SubstrateMatch.from_verified_pairs(
+            osp.join(kinetics_dir, VERIFIED_PAIRS_FEATURE)
+        ),
+    )
+
+
+def _organism_default(
+    values: list[float], fallback: float, name: str
+) -> tuple[float, str]:
+    """The organism constant, and the sentence that says what it is.
+
+    ONE definition for both parameters and for both the in-place resolver and the portable
+    pipeline: the median of the values the DATABASE TIERS actually placed in the table, per
+    catalytic unit. Per-unit rather than per-gene, because the table's entries are per unit
+    and a per-gene median silently reweights complexes; measured-and-homolog rather than
+    measured alone, because the default's job is to be on the right scale for the reactions
+    that have no number, and a 94-unit median is a thinner estimate than a 900-unit one.
+    With no database rows at all it is the literature fallback, which is the only case where
+    a constant enters that the organism's own data did not set.
+    """
+    if not values:
+        return fallback, f"the literature fallback {fallback:.3g} {name} (empty slice)"
+    median = float(np.median(np.asarray(values, dtype=float)))
+    return median, (
+        f"the median of the {len(values)} database-tier values, {median:.3g} {name}"
     )
 
 
@@ -492,89 +741,97 @@ def resolve_kcat_table(
     *,
     registry: PredictorRegistry | None = None,
     predicted: PredictedUnitTable | None = None,
+    substrates: SubstrateMatch | None = None,
+    homolog_mirror_dir: str | None = None,
     target_temperature_c: float = 30.0,
 ) -> ParameterTable:
-    r"""One :math:`k_{cat}` per catalytic unit, database-first.
+    r"""One :math:`k_{cat}` per catalytic unit, database-first and substrate-matched.
 
-    A catalytic unit is an AND-term of genes: a complex has several, an isozyme one. The
-    unit's turnover is taken as the **minimum** over its member genes' resolved values,
-    because a complex cannot turn over faster than its slowest constituent, and this is the
-    same "scarcest subunit limits" logic the availability softmin uses one level up.
+    FOUR TIERS, IN ORDER
+    --------------------
+    1. **measured** -- a row for a member gene's own accession, in this organism, assayed on
+       a substrate the unit's reaction consumes.
+    2. **homolog** -- a row in any organism whose EC number is annotated on the reaction and
+       whose substrate matches. Evidence about the chemistry, not about this protein, and
+       tagged apart so it is never counted as a measurement of this organism.
+    3. **predicted** -- the median over the admitted sequence predictors.
+    4. **default** -- the organism constant, see :func:`_organism_default`.
 
-    Resolution per gene: UniProt accession from SwissProt -> Open Enzyme Database rows for
-    that accession -> the existing temperature-aware selection cascade
-    (:func:`~torchcell.metabolism.enzyme_kinetics.resolve_parameter`) -> a registered
-    sequence predictor if one is present -> the organism default. The organism default is
-    the **median of whatever the database did supply**, not a literature constant, so it is
-    at least on the right scale for the organism at hand; with an empty slice it falls back
-    to :data:`FALLBACK_KCAT_PER_S`.
+    **The substrate match is what makes tier 1 mean something.** Keying on the accession
+    alone let a multi-substrate enzyme contribute a turnover number measured on a molecule
+    the reaction does not touch, which was the case for 74 of the 148 units the accession
+    key admitted. Without ``substrates`` no row can be checked, so no row is accepted: an
+    empty :class:`SubstrateMatch` yields an empty measured tier rather than an unchecked one.
+
+    A unit's value is the **minimum** over its member genes, because a complex cannot turn
+    over faster than its slowest constituent, and this is the same "scarcest subunit limits"
+    logic the availability softmin uses one level up.
 
     Returns:
         A :class:`ParameterTable` of length ``units.n_units``, in units of 1/s.
     """
-    records: list[OedKineticRecord] = []
-    try:
-        records = load_mirrored_records(oed_mirror_dir)
-    except FileNotFoundError:
-        records = []
-    by_uniprot = index_by_uniprot(records)
+    records = load_mirrored_records(oed_mirror_dir)
+    homolog_records = (
+        load_mirrored_records(homolog_mirror_dir) if homolog_mirror_dir else []
+    )
+    # The substrate map comes from THIS argument and nowhere else. Taking it from
+    # ``predicted`` when the caller omits it would make the measured tier depend on whether
+    # a predicted tier was requested, which is a coupling nobody would expect; and an empty
+    # map is the correct answer to "no substrates known", since an unchecked row is not a
+    # measurement of this reaction.
+    match = substrates if substrates is not None else SubstrateMatch()
     gene_to_uniprot = uniprot_for_genes(model_dir, units.gene_ids)
+    database = _database_tiers(
+        units,
+        gene_to_uniprot,
+        records,
+        homolog_records,
+        match,
+        KineticKind.KCAT,
+        target_temperature_c,
+    )
+
+    # A registered in-process predictor is a different mechanism from the parquet tier and
+    # is kept for the protocol's sake; it fills only units the database leaves.
     sequences = {
         gid: row["sequence"]
         for gid, row in load_swissprot(model_dir).items()
         if row.get("sequence")
     }
-
-    per_gene: dict[int, tuple[float, ParameterProvenance]] = {}
-    for g, gid in enumerate(units.gene_ids):
-        accession = gene_to_uniprot.get(gid)
-        resolved = None
-        if accession and accession in by_uniprot:
-            resolved = resolve_parameter(
-                by_uniprot[accession],
-                KineticKind.KCAT,
-                uniprot=accession,
-                target_temperature_c=target_temperature_c,
-            )
-        if resolved is not None:
-            per_gene[g] = (
-                float(resolved.value),
-                ParameterProvenance.OPEN_ENZYME_DATABASE,
-            )
-            continue
-        if registry is not None and registry.predictors and gid in sequences:
-            predictor = registry.predictors[0]
-            kcat, _ = predictor.predict(sequences[gid])  # type: ignore[attr-defined]
-            per_gene[g] = (
-                float(kcat),
-                ParameterProvenance(getattr(predictor, "name", "kcatnet")),
-            )
-
-    measured = [v for v, _ in per_gene.values()]
-    default = (
-        float(torch.tensor(measured).median()) if measured else FALLBACK_KCAT_PER_S
-    )
-
-    unit_genes: dict[int, list[int]] = {}
+    unit_genes: dict[int, list[str]] = {}
     for u, g in zip(
         units.unit_gene_index[0].tolist(), units.unit_gene_index[1].tolist()
     ):
-        unit_genes.setdefault(u, []).append(g)
+        unit_genes.setdefault(u, []).append(units.gene_ids[g])
+
+    default, default_note = _organism_default(
+        [v for v, _, _ in database.values()], FALLBACK_KCAT_PER_S, "1/s"
+    )
 
     values: list[float] = []
     provenance: list[ParameterProvenance] = []
     for u in range(units.n_units):
-        hits = [per_gene[g] for g in unit_genes.get(u, []) if g in per_gene]
-        if hits:
-            value, source = min(hits, key=lambda t: t[0])
+        if u in database:
+            value, source, _ = database[u]
             values.append(value)
             provenance.append(source)
         elif predicted is not None and bool(predicted.mask[u]):
-            # THE PREDICTED TIER, between measured and default. Database-first still holds:
-            # this branch is reached only where the Open Enzyme Database prices nothing, so a
-            # predictor never overwrites a measurement it may well have memorized.
             values.append(float(predicted.values[u]))
             provenance.append(ParameterProvenance.PREDICTED_MEDIAN)
+        elif registry is not None and registry.predictors:
+            genes = [g for g in unit_genes.get(u, []) if g in sequences]
+            # The registry holds `object` so any model class can be registered without
+            # importing it here; the protocol is what the call site actually requires.
+            predictor = cast(KcatPredictor, registry.predictors[0])
+            scored = [float(predictor.predict(sequences[g])[0]) for g in genes]
+            if scored:
+                values.append(min(scored))
+                provenance.append(
+                    ParameterProvenance(getattr(predictor, "name", "kcatnet"))
+                )
+            else:
+                values.append(default)
+                provenance.append(ParameterProvenance.ORGANISM_DEFAULT)
         else:
             values.append(default)
             provenance.append(ParameterProvenance.ORGANISM_DEFAULT)
@@ -583,10 +840,9 @@ def resolve_kcat_table(
         "no predicted tier"
         if predicted is None
         else (
-            "predicted tier = median over "
-            + ", ".join(predicted.selection.selected)
-            + f" (admitted by {predicted.selection.statistic} against the EC-median lookup "
-            f"at {predicted.selection.baseline_fraction:.3f})"
+            f"predicted tier = median over {', '.join(predicted.selection.selected)} "
+            f"({predicted.version} tables, admitted by {predicted.selection.statistic} "
+            f"against the EC-median lookup at {predicted.selection.baseline_fraction:.3f})"
         )
     )
     return ParameterTable.build(
@@ -594,9 +850,10 @@ def resolve_kcat_table(
         provenance,
         unit="1/s",
         notes=(
-            f"Open Enzyme Database first ({len(records)} organism rows), then {predicted_note}, "
-            f"then the organism default {default:.3g} 1/s = the median of the resolved "
-            "values. A complex takes the min over its subunits."
+            f"Open Enzyme Database first ({len(records)} organism rows, substrate-matched "
+            f"against {len(match.keys)} units), then the EC homolog tier "
+            f"({len(homolog_records)} rows, any organism), then {predicted_note}, then "
+            f"{default_note}. A complex takes the min over its subunits."
         ),
     )
 
@@ -607,9 +864,11 @@ def resolve_km_table(
     oed_mirror_dir: str,
     *,
     predicted: PredictedUnitTable | None = None,
+    substrates: SubstrateMatch | None = None,
+    homolog_mirror_dir: str | None = None,
     target_temperature_c: float = 30.0,
 ) -> ParameterTable:
-    r"""One :math:`K_M` per catalytic unit, on the same cascade as :func:`resolve_kcat_table`.
+    r"""One :math:`K_M` per catalytic unit, on the same four tiers as :func:`resolve_kcat_table`.
 
     The layer stores this and does not yet consume it: the capacity bound in use is
     :math:`|v_j| \le k_{\mathrm{cat}} E`, saturation-free, so :math:`K_M` would enter only
@@ -621,43 +880,37 @@ def resolve_km_table(
     turnover rule: a high :math:`K_M` is a weak binder, and the weakest binding step is what
     sets the concentration at which the complex saturates.
     """
-    records: list[OedKineticRecord] = []
-    try:
-        records = load_mirrored_records(oed_mirror_dir)
-    except FileNotFoundError:
-        records = []
-    by_uniprot = index_by_uniprot(records)
+    records = load_mirrored_records(oed_mirror_dir)
+    homolog_records = (
+        load_mirrored_records(homolog_mirror_dir) if homolog_mirror_dir else []
+    )
+    # The substrate map comes from THIS argument and nowhere else. Taking it from
+    # ``predicted`` when the caller omits it would make the measured tier depend on whether
+    # a predicted tier was requested, which is a coupling nobody would expect; and an empty
+    # map is the correct answer to "no substrates known", since an unchecked row is not a
+    # measurement of this reaction.
+    match = substrates if substrates is not None else SubstrateMatch()
     gene_to_uniprot = uniprot_for_genes(model_dir, units.gene_ids)
-
-    per_gene: dict[int, float] = {}
-    for g, gid in enumerate(units.gene_ids):
-        accession = gene_to_uniprot.get(gid)
-        if accession and accession in by_uniprot:
-            resolved = resolve_parameter(
-                by_uniprot[accession],
-                KineticKind.KM,
-                uniprot=accession,
-                target_temperature_c=target_temperature_c,
-            )
-            if resolved is not None:
-                per_gene[g] = float(resolved.value)
-
-    measured = list(per_gene.values())
-    default = float(torch.tensor(measured).median()) if measured else 1.0
-
-    unit_genes: dict[int, list[int]] = {}
-    for u, g in zip(
-        units.unit_gene_index[0].tolist(), units.unit_gene_index[1].tolist()
-    ):
-        unit_genes.setdefault(u, []).append(g)
+    database = _database_tiers(
+        units,
+        gene_to_uniprot,
+        records,
+        homolog_records,
+        match,
+        KineticKind.KM,
+        target_temperature_c,
+    )
+    default, default_note = _organism_default(
+        [v for v, _, _ in database.values()], 1.0, "mM"
+    )
 
     values: list[float] = []
     provenance: list[ParameterProvenance] = []
     for u in range(units.n_units):
-        hits = [per_gene[g] for g in unit_genes.get(u, []) if g in per_gene]
-        if hits:
-            values.append(max(hits))
-            provenance.append(ParameterProvenance.OPEN_ENZYME_DATABASE)
+        if u in database:
+            value, source, _ = database[u]
+            values.append(value)
+            provenance.append(source)
         elif predicted is not None and bool(predicted.mask[u]):
             values.append(float(predicted.values[u]))
             provenance.append(ParameterProvenance.PREDICTED_MEDIAN)
@@ -670,9 +923,10 @@ def resolve_km_table(
         provenance,
         unit="mM",
         notes=(
-            f"Open Enzyme Database first ({len(records)} organism rows), then the predicted "
-            f"tier, then the organism default {default:.3g} mM. A complex takes the max over "
-            "its subunits. STORED, NOT USED: the capacity bound is saturation-free."
+            f"Open Enzyme Database first ({len(records)} organism rows, substrate-matched), "
+            f"then the EC homolog tier ({len(homolog_records)} rows, any organism), then the "
+            f"predicted tier, then {default_note}. A complex takes the max over its subunits. "
+            "STORED, NOT USED: the capacity bound is saturation-free."
         ),
     )
 
@@ -746,6 +1000,18 @@ def concentration_prior(
 #: ``experiments/026-metabolism-flux/scripts/build_equilibrator_thermo.py``.
 THERMO_EQUILIBRATOR_MIRROR = "data/torchcell/thermo_equilibrator"
 
+#: Which rows of the shipped REACTION column are already kJ/mol, written by
+#: ``experiments/026-metabolism-flux/scripts/thermo_dgpredictor_rows.py`` into the
+#: eQuilibrator thermo directory.
+#:
+#: yeast-GEM 9 copied yETFL's values without converting and yETFL declares kcal/mol, so
+#: :func:`~torchcell.metabolism.constraints._read_delta_g_csv` multiplies the whole column
+#: by 4.184 on read. That is right for the metabolite column and for 3,177 of the reaction
+#: column's 3,210 rows; the other 33 come from dGPredictor, whose driver reports kJ/mol, so
+#: those are left 4.184x too large. This file names them, and
+#: :func:`resolve_reaction_delta_g` divides them back before the union's last-resort fill.
+DGPREDICTOR_ROWS_FILENAME = "dgpredictor_reaction_rows.json"
+
 
 class ThermoSource(StrEnum):
     """Which route to a reaction's standard energy a run is using.
@@ -758,11 +1024,20 @@ class ThermoSource(StrEnum):
     ``UNION``         -- merge the two metabolite tables (eQuilibrator preferred where both
                          price a species), then fall back to the shipped REACTION column for
                          reactions the merge still cannot price.
+    ``UNION_EXTERNAL``-- the same merge, but the eQuilibrator side is the table that also
+                         carries the written-structure lipids and the external-pKa targets
+                         (``metabolite_dgf_prime_with_external.parquet``, written by
+                         ``experiments/026-metabolism-flux/scripts/thermo_union_reprice.py``
+                         out of the staged pipeline). A SEPARATE member rather than a
+                         redefinition of ``UNION``, so a run that predates the extra rows
+                         still reproduces exactly, and so a config records which table it
+                         consumed.
     """
 
     SHIPPED = "shipped"
     EQUILIBRATOR = "equilibrator"
     UNION = "union"
+    UNION_EXTERNAL = "union_external"
 
 
 class ReactionThermoTable(BaseModel):
@@ -792,15 +1067,21 @@ class ReactionThermoTable(BaseModel):
     notes: str = ""
 
 
+#: The recomputation table, and the same table extended with the written-structure lipids
+#: and the external-pKa targets. Two files rather than one so a run pins which it read.
+METABOLITE_TABLE_FILENAME = "metabolite_dgf_prime.parquet"
+METABOLITE_TABLE_WITH_EXTERNAL_FILENAME = "metabolite_dgf_prime_with_external.parquet"
+
+
 def _equilibrator_metabolite_table(
-    thermo_dir: str, met_ids: list[str]
+    thermo_dir: str, met_ids: list[str], filename: str = METABOLITE_TABLE_FILENAME
 ) -> tuple[np.ndarray, np.ndarray, str]:
     """Per-metabolite eQuilibrator formation energy, aligned to the GEM's index order.
 
     yeast-GEM gives every compartment-specific species its own ``s_`` id, so the parquet's
     ``met_id`` IS the model metabolite id and no compartment stripping is involved.
     """
-    path = osp.join(thermo_dir, "metabolite_dgf_prime.parquet")
+    path = osp.join(thermo_dir, filename)
     frame = pd.read_parquet(path, columns=["met_id", "dgf_prime_kj_per_mol"])
     lookup = dict(
         zip(frame["met_id"].astype(str), frame["dgf_prime_kj_per_mol"].to_numpy())
@@ -818,6 +1099,46 @@ def _equilibrator_metabolite_table(
             "differently, which means this table belongs to another model build."
         )
     return values, mask, path
+
+
+def _shipped_reaction_column_kj(
+    gem: GemTensors, thermo_dir: str
+) -> tuple[np.ndarray, np.ndarray, list[str], str]:
+    r"""The shipped reaction column with the dGPredictor rows' double conversion undone.
+
+    Returns ``(values, mask, corrected_reaction_ids, path)``.
+
+    The whole column arrives from
+    :func:`~torchcell.metabolism.constraints.load_thermo_table` already multiplied by 4.184,
+    because yETFL's values are kcal/mol under a kJ/mol header. The 33 rows yeast-GEM filled
+    from dGPredictor were kJ/mol before that multiplication, so they are divided back here.
+
+    The correction file is REQUIRED rather than optional. Making it optional would mean the
+    union table silently ships 33 reactions whose standard energy is 4.184x too large,
+    which for a 30 kJ/mol reaction is a 96 kJ/mol error in the quantity the second-law
+    hinge tests the sign of. A missing file is an unbuilt input, not a default.
+    """
+    path = osp.join(thermo_dir, DGPREDICTOR_ROWS_FILENAME)
+    if not osp.isfile(path):
+        raise FileNotFoundError(
+            f"{path} is missing, so the 33 dGPredictor rows of the shipped reaction column "
+            "cannot be told apart from the yETFL rows and would stay over-converted by "
+            "4.184. Build it with "
+            "experiments/026-metabolism-flux/scripts/thermo_dgpredictor_rows.py."
+        )
+    with open(path) as handle:
+        record = json.load(handle)
+    already_kj = set(record["dgpredictor_reaction_ids"])
+    factor = float(record["kj_per_kcal"])
+
+    values = gem.thermo.rxn_delta_g.numpy().astype(np.float64).copy()  # type: ignore[union-attr]
+    mask = gem.thermo.rxn_mask.numpy().astype(bool)  # type: ignore[union-attr]
+    corrected: list[str] = []
+    for j, reaction_id in enumerate(gem.rxn_ids):
+        if reaction_id in already_kj and mask[j]:
+            values[j] = values[j] / factor
+            corrected.append(reaction_id)
+    return values, mask, corrected, path
 
 
 def _reaction_sigma(
@@ -883,7 +1204,13 @@ def resolve_reaction_delta_g(
         met_tag = np.where(met_mask, "shipped_metabolite_sum", "none")
     else:
         eq_values, eq_mask, eq_path = _equilibrator_metabolite_table(
-            thermo_dir, met_ids
+            thermo_dir,
+            met_ids,
+            filename=(
+                METABOLITE_TABLE_WITH_EXTERNAL_FILENAME
+                if source is ThermoSource.UNION_EXTERNAL
+                else METABOLITE_TABLE_FILENAME
+            ),
         )
         paths["equilibrator_met"] = eq_path
         hashes["equilibrator_met"] = _sha256_of(eq_path)
@@ -918,18 +1245,31 @@ def resolve_reaction_delta_g(
         provenance.append(tags.pop() if len(tags) == 1 else "mixed")
 
     delta = delta * mask
-    if source is ThermoSource.UNION:
+    if source in (ThermoSource.UNION, ThermoSource.UNION_EXTERNAL):
         # Last resort: the shipped REACTION column, for reactions no metabolite table can
         # assemble. It is a different method again (yETFL by reaction id, then dG-predictor
         # matched BY ROW POSITION), so it is tagged as its own route and never merged into
         # the metabolite tally.
-        rxn_values = gem.thermo.rxn_delta_g.numpy().astype(np.float64)
-        rxn_mask = gem.thermo.rxn_mask.numpy().astype(bool)
+        #
+        # The column also MIXES UNITS, and the mix is corrected before it is used: 33 of
+        # its rows come from dGPredictor in kJ/mol while the rest come from yETFL in
+        # kcal/mol, and the parser converts the whole column. See
+        # `_shipped_reaction_column_kj`.
+        rxn_values, rxn_mask, corrected, rows_path = _shipped_reaction_column_kj(
+            gem, thermo_dir
+        )
+        paths["shipped_reaction_unit_correction"] = rows_path
+        hashes["shipped_reaction_unit_correction"] = _sha256_of(rows_path)
         fill = rxn_mask & ~mask
         delta = np.where(fill, rxn_values, delta)
         for j in np.nonzero(fill)[0]:
             provenance[int(j)] = "shipped_reaction_column"
         mask = mask | fill
+        n_corrected_used = sum(
+            1
+            for j, reaction_id in enumerate(gem.rxn_ids)
+            if reaction_id in set(corrected) and fill[j]
+        )
 
     sigma, sigma_mask, sigma_path = _reaction_sigma(thermo_dir, gem.s, met_ids)
     paths["equilibrator_sigma"] = sigma_path
@@ -943,6 +1283,9 @@ def resolve_reaction_delta_g(
     counts["known"] = int(mask.sum())
     counts["n_reactions"] = int(n_reactions)
     counts["sigma_known"] = int(sigma_mask.sum())
+    if source in (ThermoSource.UNION, ThermoSource.UNION_EXTERNAL):
+        counts["shipped_reaction_rows_unit_corrected"] = len(corrected)
+        counts["shipped_reaction_rows_unit_corrected_and_used"] = n_corrected_used
 
     met_counts = {
         "n_metabolites": len(met_ids),

@@ -77,6 +77,8 @@ from torchcell.metabolism.parameters import (
     KINETICS_MIRROR,
     PLAUSIBILITY_RESULT,
     THERMO_EQUILIBRATOR_MIRROR,
+    VERIFIED_PAIRS_FEATURE,
+    SubstrateMatch,
     ThermoSource,
     load_predicted_unit_table,
     molecular_weight_table,
@@ -104,6 +106,10 @@ QUERY_PATH = osp.join(
 OED_MIRROR = osp.join(
     DATA_ROOT, "data/enzyme_kinetics/open_enzyme_database/scerevisiae"
 )
+#: The whole Open Enzyme Database, every organism. It supplies the EC-plus-substrate
+#: homolog tier, which is measured chemistry from a protein that is NOT this organism's and
+#: is tagged apart from the measured tier for exactly that reason.
+HOMOLOG_MIRROR = osp.join(DATA_ROOT, "data/enzyme_kinetics/open_enzyme_database/all")
 
 #: The 19 Mulleder columns in the key-sorted order the Perturbation graph processor emits
 #: (``sorted(metabolite_level)``), paired with the cytosolic yeast-GEM species each one is.
@@ -188,6 +194,102 @@ ARMS: dict[str, dict[str, Any]] = {
         "use_protein_budget": True,
         "use_dissipation_limit": True,
     },
+    # WAVE 6 (2026-09-10). THE PROJECTION HEAD. `box` and `nullspace` each buy one exact
+    # constraint by giving up the other; `projection` starts at v0 = N z and alternates the
+    # balance projection with the box clip, so both hold, with the one named by
+    # `projection_end` (default balance) exact and the other's residual reported per sample.
+    # The motivation is the Genesis metabolic-grounding target, which asks what fraction of
+    # NOMINATED strains are feasible: a penalty that is small on average says nothing about
+    # the top 100, and a parameterization does.
+    #
+    # `flux_projection` is the structural analog of `flux_off`: no thermodynamics, no
+    # capacity, no budget, so pooled -> flux_projection isolates what routing the prediction
+    # through a feasible flux buys, with no measured parameter involved.
+    "flux_projection": {
+        "flux": True,
+        "parameterization": "projection",
+        "thermo_mode": ThermoMode.OFF,
+        "use_enzyme_capacity": False,
+        "use_protein_budget": False,
+        "use_dissipation_limit": False,
+    },
+    # EVERYTHING ON. Anchored thermodynamics, the predicted-kcat capacity bound through the
+    # abundance head, the forward protein-pool budget, and the dissipation limit, on top of
+    # a flux that is balanced and in-box by construction. This is the arm that answers
+    # whether the physics can be satisfied at once rather than one term at a time; the
+    # dissipation limit is trained against here rather than held out as a readout, so a
+    # model that respects it in this arm has been told to, not discovered it.
+    "flux_projection_anchored": {
+        "flux": True,
+        "parameterization": "projection",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
+    # The same, sampled. `stochastic` on a projection parameterization is read as the LATENT
+    # draw z = mu + sigma eps with a KL against N(0, I), which is the only new boolean an
+    # arm can reach through 026's build_flux_layer; the KL weight is FluxLayerConfig's
+    # `kl_weight` default of 1e-3, since build_flux_layer writes the weights dict itself.
+    "flux_projection_stochastic": {
+        "flux": True,
+        "parameterization": "projection",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+        "stochastic": True,
+    },
+    # THE SECOND LAW AS A BOX (2026-09-11). Cells 1689/1690/1708 made mass balance exact
+    # and left the thermodynamics soft, and the soft term closed nothing: on the top 100
+    # predicted strains of job 1708, at a constraint scale of 0.1, the balance criterion was
+    # met by every strain and `thermo_model_violation_frac` still read a median of 0.405, so
+    # the Genesis criterion failed on the deltaG half in every arm run to that point.
+    #
+    # The fix is not a bigger weight. For a reaction whose energy has a known sign, the
+    # second law IS a bound: dG > 0 forbids forward flux, dG < 0 forbids reverse. Writing it
+    # as a bound puts it where the box and the balance already are, and the alternating
+    # projection then ends on a clip that satisfies all three. `tdg` in the parameterization
+    # string is that switch, and `_box` is what makes the clip last, without which the
+    # directional bound would be reported as exact while the balance projection moved the
+    # flux back off it. Twenty alternations, because the balance residual is now the only
+    # loose end and it is the one K buys down.
+    "flux_projection_anchored_tdg": {
+        "flux": True,
+        "parameterization": "projection_k20_box_tdg",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
+    # The same, sampled, so the feasibility question can be asked of a DISTRIBUTION over a
+    # nominated strain's flux rather than of one point.
+    "flux_projection_anchored_tdg_stochastic": {
+        "flux": True,
+        "parameterization": "projection_k20_box_tdg",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+        "stochastic": True,
+    },
+    # K = 20 alternations instead of 5. The step count rides in the parameterization string
+    # because that field is the only one build_flux_layer forwards; everything else matches
+    # `flux_projection_anchored`, so the pair is a clean read on whether the residual the
+    # projection leaves is large enough to matter to the phenotype.
+    "flux_projection_anchored_k20": {
+        "flux": True,
+        "parameterization": "projection_k20",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
 }
 
 
@@ -232,11 +334,21 @@ def build_flux_layer(
     Four things an arm may now ask for beyond its constraint switches, all keyed off the arm
     dict so the registry stays the single source of truth:
 
-    * ``kcat_tier``: ``"measured"`` is the historical table, 148 measured units and 3,580
-      organism defaults out of 3,728; ``"predicted"`` inserts the sequence-predictor tier
-      between them and turns that into 148 measured, 3,410 predicted, 170 default.
+    * ``kcat_tier``: ``"measured"`` keeps the database tiers and the organism default only;
+      ``"predicted"`` inserts the sequence-predictor tier between them.
+    * ``kcat_homolog_tier``: whether a cross-organism EC-plus-substrate measurement may fill
+      a unit the organism's own assays do not reach. ON by default since 2026-09-11: it is
+      the tier a chassis with no assays of its own would live on, and turning it off is what
+      a yeast-only ablation does. It is tagged apart from the measured tier and the flux
+      layer's coarse split counts it with the predictions, never as a measurement.
     * ``thermo_source``: which route supplies the standard reaction energies.
     * ``constraint_warmup_epochs`` / ``constraint_final_scale``: the ramp on the physics.
+
+    **The measured tier is substrate-matched.** ``SubstrateMatch`` is built here for every
+    arm, predicted tier or not, because without it no database row can be checked against
+    the reaction it is being attached to and the resolver accepts none. Keying on the
+    accession alone attached 74 of 148 turnover numbers to a substrate the reaction does not
+    consume; see [[experiments.026-metabolism-flux.kinetic-coverage-closure]].
     """
     if not arm["flux"]:
         return None, {}
@@ -245,10 +357,16 @@ def build_flux_layer(
     units = gem.catalytic_units
     mw = molecular_weight_table(source.model_dir, units.gene_ids)
     kcat_tier = arm.get("kcat_tier", "measured")
+    kinetics_dir = osp.join(DATA_ROOT, KINETICS_MIRROR)
+    substrates = SubstrateMatch.from_verified_pairs(
+        osp.join(kinetics_dir, VERIFIED_PAIRS_FEATURE)
+    )
+    homolog_mirror = (
+        HOMOLOG_MIRROR if arm.get("kcat_homolog_tier", True) else None
+    )
     predicted_kcat = predicted_km = None
     km = None
     if kcat_tier == "predicted":
-        kinetics_dir = osp.join(DATA_ROOT, KINETICS_MIRROR)
         plausibility = osp.join(EXPERIMENT_ROOT, PLAUSIBILITY_RESULT)
         predicted_kcat = load_predicted_unit_table(
             "k_cat", units.n_units, kinetics_dir, plausibility
@@ -256,11 +374,23 @@ def build_flux_layer(
         predicted_km = load_predicted_unit_table(
             "K_M", units.n_units, kinetics_dir, plausibility
         )
-        km = resolve_km_table(units, source.model_dir, OED_MIRROR, predicted=predicted_km)
+        km = resolve_km_table(
+            units,
+            source.model_dir,
+            OED_MIRROR,
+            predicted=predicted_km,
+            substrates=substrates,
+            homolog_mirror_dir=homolog_mirror,
+        )
     elif kcat_tier != "measured":
         raise ValueError(f"kcat_tier must be 'measured' or 'predicted', got {kcat_tier!r}")
     kcat = resolve_kcat_table(
-        units, source.model_dir, OED_MIRROR, predicted=predicted_kcat
+        units,
+        source.model_dir,
+        OED_MIRROR,
+        predicted=predicted_kcat,
+        substrates=substrates,
+        homolog_mirror_dir=homolog_mirror,
     )
     thermo_source = ThermoSource(arm.get("thermo_source", "shipped"))
     reaction_thermo = None

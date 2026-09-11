@@ -101,7 +101,9 @@ eQuilibrator, which is not installed. Both are recorded as gaps rather than appr
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+import os
 import os.path as osp
 import re
 from datetime import UTC, datetime
@@ -244,7 +246,19 @@ class ThermoTable(BaseModel):
     )
     unit_conversion_factor: float = Field(
         default=KCAL_PER_MOL_TO_KJ_PER_MOL,
-        description="Multiplier applied to every value read from the CSV.",
+        description=(
+            "Multiplier applied to every value read from the CSV, EXCEPT the reaction rows "
+            "counted by n_reaction_rows_already_kj, which are passed through."
+        ),
+    )
+    n_reaction_rows_already_kj: int = Field(
+        default=0,
+        description=(
+            "Reaction rows of this GEM that were already kJ/mol as written and were "
+            "therefore NOT multiplied: the dGPredictor block of yeast-GEM 9.0.2's shipped "
+            "column, 33 rows of 3,210. Zero means no exemption was applied, which is "
+            "correct only for a GEM whose reaction column is uniformly kcal/mol."
+        ),
     )
     temperature_k: float = DEFAULT_TEMPERATURE_K
     retrieved_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -370,7 +384,60 @@ def _sha256_file(path: str, chunk: int = 1 << 20) -> str:
     return h.hexdigest()
 
 
-def _read_delta_g_csv(path: str) -> dict[str, float]:
+#: Where the dGPredictor row list lives, relative to ``DATA_ROOT``. Written by the
+#: thermodynamics audit that recovered which rows of yeast-GEM 9.0.2's shipped reaction
+#: column came from dGPredictor rather than from yETFL.
+DGPREDICTOR_ROWS_RELPATH = (
+    "data/torchcell/thermo_equilibrator/dgpredictor_reaction_rows.json"
+)
+
+
+def dgpredictor_reaction_ids(path: str | None = None) -> tuple[frozenset[str], str]:
+    r"""Reaction ids in the shipped column that are ALREADY kJ/mol, and where that is recorded.
+
+    yeast-GEM 9.0.2's ``model_rxnDeltaG.csv`` is not one table. The curation script fills it
+    from yETFL by reaction id, in **kcal/mol**, and then fills a further index block from
+    dGPredictor, in **kJ/mol**, and the file's header declares kJ for all of it. Converting
+    the whole column multiplies those 33 rows by 4.184 and produces an energy that is 4.2x
+    too large while looking entirely ordinary.
+
+    The 33 ids were identified by ABSENCE from yETFL's curated model, and 31 of the 33 fall
+    inside the index block the curation script assigns from dGPredictor, which is what bounds
+    the risk that a reaction yETFL prices under another id was misfiled. Note that the audit's
+    back-solve against our eQuilibrator formation table does NOT settle it on its own: only
+    13 of 27 scorable rows preferred the as-written value. The provenance is the evidence
+    here, not the back-solve, and the caveat travels with the file.
+
+    Args:
+        path: The JSON. ``None`` resolves ``$DATA_ROOT`` and
+            :data:`DGPREDICTOR_ROWS_RELPATH`.
+
+    Returns:
+        ``(ids, path)``. Raises rather than returning an empty set if the file is missing,
+        because silently skipping the correction is how the 4.2x error got here.
+    """
+    if path is None:
+        data_root = os.environ.get("DATA_ROOT")
+        if data_root is None:
+            raise ValueError(
+                "DATA_ROOT is unset, so the dGPredictor row list cannot be located. Pass "
+                "`dgpredictor_rows_path` explicitly to load_thermo_table."
+            )
+        path = osp.join(data_root, DGPREDICTOR_ROWS_RELPATH)
+    if not osp.isfile(path):
+        raise FileNotFoundError(
+            f"{path} is missing, so the 33 dGPredictor rows of the shipped reaction column "
+            "cannot be exempted from the kcal-to-kJ conversion and would be reported 4.184x "
+            "too large. Rebuild it with the 026 thermodynamics audit."
+        )
+    with open(path) as handle:
+        payload = json.load(handle)
+    return frozenset(str(x) for x in payload["dgpredictor_reaction_ids"]), path
+
+
+def _read_delta_g_csv(
+    path: str, already_kj_ids: frozenset[str] = frozenset()
+) -> dict[str, float]:
     r"""Read a two-column ``id,value`` GEM deltaG CSV, dropping every missing-value form.
 
     **The file uses TWO missing-value conventions and they are easy to miss.** Most gaps
@@ -391,6 +458,17 @@ def _read_delta_g_csv(path: str) -> dict[str, float]:
     happens here: see :data:`KCAL_PER_MOL_TO_KJ_PER_MOL`. Returning the raw number and
     converting at the call site would leave a kcal value reachable, and the file's own header
     says kJ, so nothing downstream would notice.
+
+    **Except that the reaction file is not all one unit.** ``already_kj_ids`` names the rows
+    that are already kJ/mol and must be passed through unconverted; on yeast-GEM 9.0.2 that
+    is the 33-row dGPredictor block, from :func:`dgpredictor_reaction_ids`. The exemption is
+    per row and at parse time for the same reason the drop is: a row converted once cannot
+    be identified afterwards.
+
+    Args:
+        path: The two-column CSV.
+        already_kj_ids: Ids whose value is in kJ/mol as written. Empty for the metabolite
+            file, which is uniformly kcal/mol.
     """
     out: dict[str, float] = {}
     with open(path) as f:
@@ -407,12 +485,17 @@ def _read_delta_g_csv(path: str) -> dict[str, float]:
                 continue
             # The sentinel test is against the RAW value, because 1e7 is the sentinel in the
             # file's own units; converting first would move it off the constant.
-            out[key] = value * KCAL_PER_MOL_TO_KJ_PER_MOL
+            out[key] = (
+                value if key in already_kj_ids else value * KCAL_PER_MOL_TO_KJ_PER_MOL
+            )
     return out
 
 
 def load_thermo_table(
-    model_dir: str, met_ids: list[str], rxn_ids: list[str]
+    model_dir: str,
+    met_ids: list[str],
+    rxn_ids: list[str],
+    dgpredictor_rows_path: str | None = None,
 ) -> ThermoTable:
     r"""Load :math:`\Delta_f G'^\circ` / :math:`\Delta_r G'^\circ` from a GEM checkout.
 
@@ -430,14 +513,19 @@ def load_thermo_table(
         model_dir: The GEM checkout root (the directory containing ``data/`` and ``model/``).
         met_ids: Metabolite ids in tensor-index order.
         rxn_ids: Reaction ids in tensor-index order.
+        dgpredictor_rows_path: The JSON naming the reaction rows that are already kJ/mol.
+            ``None`` resolves it under ``DATA_ROOT``; it is REQUIRED rather than optional,
+            since without it 33 of the 3,210 priced reactions come back 4.184x too large.
 
     Returns:
         A :class:`ThermoTable` aligned to ``met_ids`` / ``rxn_ids``, with coverage masks.
     """
     met_path = osp.join(model_dir, "data", "databases", "model_metDeltaG.csv")
     rxn_path = osp.join(model_dir, "data", "databases", "model_rxnDeltaG.csv")
+    already_kj, dgp_path = dgpredictor_reaction_ids(dgpredictor_rows_path)
+    # The metabolite file is uniformly kcal/mol; only the reaction column is mixed.
     met_raw = _read_delta_g_csv(met_path)
-    rxn_raw = _read_delta_g_csv(rxn_path)
+    rxn_raw = _read_delta_g_csv(rxn_path, already_kj_ids=already_kj)
 
     met_g = np.zeros(len(met_ids), dtype=np.float64)
     met_mask = np.zeros(len(met_ids), dtype=bool)
@@ -462,8 +550,15 @@ def load_thermo_table(
         rxn_mask=torch.from_numpy(rxn_mask),
         met_coverage=TableCoverage.of(met_mask),
         rxn_coverage=TableCoverage.of(rxn_mask),
-        source_paths={"met": met_path, "rxn": rxn_path},
-        sha256={"met": _sha256_file(met_path), "rxn": _sha256_file(rxn_path)},
+        source_paths={"met": met_path, "rxn": rxn_path, "dgpredictor_rows": dgp_path},
+        sha256={
+            "met": _sha256_file(met_path),
+            "rxn": _sha256_file(rxn_path),
+            "dgpredictor_rows": _sha256_file(dgp_path),
+        },
+        n_reaction_rows_already_kj=int(
+            sum(1 for rid in rxn_ids if rid in already_kj and rid in rxn_raw)
+        ),
     )
 
 

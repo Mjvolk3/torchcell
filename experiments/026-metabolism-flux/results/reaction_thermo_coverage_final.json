@@ -1,0 +1,511 @@
+{
+ "built_at": "2026-09-11T07:10:57.223652+00:00",
+ "gem": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+ "gem_sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+ "stages": [
+  "equilibrator_recomputation",
+  "accession_sweep",
+  "external_pka_targets",
+  "structure_writer_lipids",
+  "ion_formation_table",
+  "composition_surrogate",
+  "repeat_unit_surrogate",
+  "shipped_metabolite_column",
+  "audit_diagnosis",
+  "structure_attempt_diagnosis"
+ ],
+ "n_metabolites": 2806,
+ "n_metabolites_priced": 2561,
+ "metabolite_routes": {
+  "cache_accession": 2125,
+  "cache_structure": 289,
+  "none": 245,
+  "external_pka": 70,
+  "shipped_table": 35,
+  "literature_table": 24,
+  "composition_surrogate": 12,
+  "repeat_unit_surrogate": 6
+ },
+ "metabolite_reasons": {
+  "placeholder_formula": 161,
+  "pseudo_metabolite": 55,
+  "no_structure_available": 12,
+  "group_decomposition_failed": 10,
+  "placeholder_structure": 6,
+  "no_pka_prediction": 1
+ },
+ "n_reactions": 4131,
+ "n_reactions_priced": 3779,
+ "fraction_reactions_priced": 0.9147906076010651,
+ "reaction_routes": {
+  "cache_accession": 2761,
+  "mixed": 861,
+  "none": 352,
+  "cache_structure": 122,
+  "literature_table": 11,
+  "external_pka": 9,
+  "shipped_table": 9,
+  "shipped_reaction_column": 2,
+  "repeat_unit_surrogate": 2,
+  "composition_surrogate": 2
+ },
+ "reaction_reasons": {
+  "blocked_by_metabolite": 352
+ },
+ "reactions_by_sole_blocking_reason": {
+  "pseudo_metabolite": 216,
+  "placeholder_formula": 98,
+  "mixed_reasons": 14,
+  "no_structure_available": 11,
+  "group_decomposition_failed": 10,
+  "placeholder_structure": 2,
+  "no_pka_prediction": 1
+ },
+ "flux_carrying": {
+  "n_flux_carrying": 2845.0,
+  "n_priced": 2716.0,
+  "fraction": 0.9546572934973638
+ },
+ "n_reactions_with_sigma": 1755,
+ "top_blocking_metabolites": [
+  {
+   "met_id": "s_3738",
+   "name": "cardiolipin backbone",
+   "formula": "C9H14O9P2",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 49
+  },
+  {
+   "met_id": "s_3713",
+   "name": "triglyceride backbone",
+   "formula": "C3H2",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 33
+  },
+  {
+   "met_id": "s_0892",
+   "name": "inositol-P-ceramide backbone",
+   "formula": "C6H12NO10P",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 11
+  },
+  {
+   "met_id": "s_0859",
+   "name": "inositol phosphomannosylinositol phosphoceramide backbone",
+   "formula": "C18H33NO23P2",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 11
+  },
+  {
+   "met_id": "s_1114",
+   "name": "mannosylinositol phosphorylceramide backbone",
+   "formula": "C12H22NO15P",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 11
+  },
+  {
+   "met_id": "s_3721",
+   "name": "ceramide backbone",
+   "formula": "HNO2",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 11
+  },
+  {
+   "met_id": "s_0089",
+   "name": "1-phosphatidyl-1D-myo-inositol backbone",
+   "formula": "C9H15O9P",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 9
+  },
+  {
+   "met_id": "s_3710",
+   "name": "phosphatidyl-L-serine backbone",
+   "formula": "C6H10NO6P",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 9
+  },
+  {
+   "met_id": "s_3711",
+   "name": "phosphatidylcholine backbone",
+   "formula": "C8H16NO3P",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 9
+  },
+  {
+   "met_id": "s_3712",
+   "name": "phosphatidylethanolamine backbone",
+   "formula": "C5H10NO4P",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 9
+  },
+  {
+   "met_id": "s_3730",
+   "name": "phosphatidate backbone",
+   "formula": "C3H5O4P",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 9
+  },
+  {
+   "met_id": "s_3732",
+   "name": "diglyceride backbone",
+   "formula": "C3H4O",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 9
+  },
+  {
+   "met_id": "s_0709",
+   "name": "ferricytochrome c",
+   "formula": "C42H44FeN8O8S2R4",
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 7
+  },
+  {
+   "met_id": "s_0710",
+   "name": "ferrocytochrome c",
+   "formula": "C42H45FeN8O8S2R4",
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 7
+  },
+  {
+   "met_id": "s_1845",
+   "name": "ACP1",
+   "formula": "",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 7
+  },
+  {
+   "met_id": "s_3736",
+   "name": "phosphatidylglycerol backbone",
+   "formula": "C6H11O6P",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 7
+  },
+  {
+   "met_id": "s_0694",
+   "name": "fatty acid backbone",
+   "formula": "",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 5
+  },
+  {
+   "met_id": "s_0465",
+   "name": "carboxyacetyl-ACP",
+   "formula": "C3H3O3SR",
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 4
+  },
+  {
+   "met_id": "s_1582",
+   "name": "tRNA(Ala)",
+   "formula": "RH",
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3
+  },
+  {
+   "met_id": "s_0428",
+   "name": "Arg-tRNA(Arg)",
+   "formula": "C6H15N4OR",
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3
+  },
+  {
+   "met_id": "s_1583",
+   "name": "tRNA(Arg)",
+   "formula": "RH",
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3
+  },
+  {
+   "met_id": "s_0712",
+   "name": "ferroheme b",
+   "formula": "C34H30FeN4O4",
+   "reason": "no_pka_prediction",
+   "n_reactions_blocked": 3
+  },
+  {
+   "met_id": "s_1612",
+   "name": "tRNA(Tyr)",
+   "formula": "RH",
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3
+  },
+  {
+   "met_id": "s_3746",
+   "name": "lipid backbone",
+   "formula": "",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 3
+  },
+  {
+   "met_id": "s_3747",
+   "name": "lipid chain",
+   "formula": "",
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 3
+  }
+ ],
+ "remedy_summary": {
+  "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it": {
+   "n_metabolites": 161
+  },
+  "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule": {
+   "n_metabolites": 55
+  },
+  "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name": {
+   "n_metabolites": 12
+  },
+  "a pKa LADDER is needed: the structure decomposes and the pKa stage returned nothing": {
+   "n_metabolites": 1
+  },
+  "nothing is possible: the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule rather than a molecule": {
+   "n_metabolites": 6
+  },
+  "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted": {
+   "n_metabolites": 10
+  }
+ },
+ "betaxanthin_route": {
+  "pathway_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/pathway_thermo_betaxanthin.json",
+  "n_pathway_compounds": 5,
+  "n_pathway_compounds_resolved": 5,
+  "heterologous_compounds_all_priced": true,
+  "anchor_metabolites": [
+   {
+    "met_id": "s_1051",
+    "role": "amine donor: tyrosine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 97.81302375638052
+   },
+   {
+    "met_id": "s_1275",
+    "role": "oxygen",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 16.399999999865035
+   },
+   {
+    "met_id": "s_1212",
+    "role": "NADPH",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -1976.669502718518
+   },
+   {
+    "met_id": "s_1207",
+    "role": "NADP+",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -2041.7459766831937
+   },
+   {
+    "met_id": "s_0803",
+    "role": "water",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -152.94701317831533
+   },
+   {
+    "met_id": "s_0794",
+    "role": "proton",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 0.0
+   },
+   {
+    "met_id": "s_0955",
+    "role": "amine donor: alanine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -70.01685631388261
+   },
+   {
+    "met_id": "s_0965",
+    "role": "amine donor: arginine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 344.3407344327188
+   },
+   {
+    "met_id": "s_0969",
+    "role": "amine donor: asparagine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -185.31665419297883
+   },
+   {
+    "met_id": "s_0973",
+    "role": "amine donor: aspartate",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -443.31053311121843
+   },
+   {
+    "met_id": "s_0981",
+    "role": "amine donor: cysteine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -40.799869503719435
+   },
+   {
+    "met_id": "s_0991",
+    "role": "amine donor: glutamate",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -352.63509671406695
+   },
+   {
+    "met_id": "s_0999",
+    "role": "amine donor: glutamine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -97.7851000122534
+   },
+   {
+    "met_id": "s_1006",
+    "role": "amine donor: histidine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 206.57493854850085
+   },
+   {
+    "met_id": "s_1016",
+    "role": "amine donor: isoleucine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 209.8389644797308
+   },
+   {
+    "met_id": "s_1021",
+    "role": "amine donor: leucine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 204.86581882659306
+   },
+   {
+    "met_id": "s_1025",
+    "role": "amine donor: lysine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 277.68970095588503
+   },
+   {
+    "met_id": "s_1029",
+    "role": "amine donor: methionine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 150.0114640090515
+   },
+   {
+    "met_id": "s_1032",
+    "role": "amine donor: phenylalanine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 261.4320832207161
+   },
+   {
+    "met_id": "s_1035",
+    "role": "amine donor: proline",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 79.58199900948017
+   },
+   {
+    "met_id": "s_1039",
+    "role": "amine donor: serine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -223.36571532204232
+   },
+   {
+    "met_id": "s_1045",
+    "role": "amine donor: threonine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": -145.85087683217068
+   },
+   {
+    "met_id": "s_1048",
+    "role": "amine donor: tryptophan",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 398.6056501382799
+   },
+   {
+    "met_id": "s_1056",
+    "role": "amine donor: valine",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 109.83960480636051
+   },
+   {
+    "met_id": "s_0271",
+    "role": "amine donor: 4_aminobenzoate",
+    "priced": true,
+    "route": "cache_accession",
+    "dgf_prime_kj_per_mol": 53.40257380673344
+   }
+  ],
+  "n_anchors": 25,
+  "n_anchors_priced": 25,
+  "n_yeast_reactions_touching_an_anchor": 934,
+  "n_priced": 893,
+  "fraction_priced": 0.9561027837259101,
+  "unpriced_reasons": {
+   "blocked_by_metabolite": 41
+  },
+  "note": "the five heterologous intermediates are not in yeast-GEM and are priced directly from the compound cache (pathway_thermo_betaxanthin.json); what is counted here is the yeast side the heterologous reactions draw on, whose driving forces the flux layer has to get right for a betaxanthin prediction to mean anything"
+ },
+ "ceiling_ladder": {
+  "built_at": "2026-09-11T07:10:57.232149+00:00",
+  "n_reactions": 4131,
+  "n_flux_carrying": 2845,
+  "rungs": [
+   {
+    "name": "now",
+    "n_reactions_priced": 3779,
+    "fraction_reactions_priced": 0.9147906076010651,
+    "n_flux_carrying_priced": 2716,
+    "fraction_flux_carrying_priced": 0.9546572934973638,
+    "reasons_resolved": {},
+    "what_it_would_take": "nothing; this is the table as built",
+    "evidence": ""
+   },
+   {
+    "name": "structures_and_pka_ladders_resolved",
+    "n_reactions_priced": 3792,
+    "fraction_reactions_priced": 0.9179375453885258,
+    "n_flux_carrying_priced": 2724,
+    "fraction_flux_carrying_priced": 0.957469244288225,
+    "reasons_resolved": {
+     "no_structure_available": 12,
+     "no_pka_prediction": 2
+    },
+    "what_it_would_take": "a structure from a namespace or a curator for every species that has none, and a pKa ladder inside (0, 14) for every species whose ladder is empty",
+    "evidence": "no measurement here says these are obtainable; the rung is what WOULD close"
+   },
+   {
+    "name": "everything_chemically_possible_resolved",
+    "n_reactions_priced": 3802,
+    "fraction_reactions_priced": 0.9203582667634955,
+    "n_flux_carrying_priced": 2727,
+    "fraction_flux_carrying_priced": 0.958523725834798,
+    "reasons_resolved": {
+     "no_structure_available": 12,
+     "group_decomposition_failed": 10,
+     "no_pka_prediction": 2
+    },
+    "what_it_would_take": "the rung above plus a decomposition or a tabulated value for every structure the group decomposer refuses",
+    "evidence": "thermo_tier_d_probe.json measured that none of the remaining refused structures is reachable by the reactant-contribution path or by a surrogate within the admitted spread, so this rung needs new data rather than new code"
+   }
+  ],
+  "n_permanently_closed_reactions": 329,
+  "permanently_closed_reasons": {
+   "pseudo_metabolite": 228,
+   "placeholder_formula": 108,
+   "placeholder_structure": 3
+  },
+  "note": "A reaction is permanently closed when every metabolite blocking it is not a molecule: a SLIME backbone whose formula is a difference formula, or a placeholder formula that names a family. No pKa predictor, structure writer, decomposer or literature table changes those, so the last rung is the ceiling for any method at all rather than for this one. The rungs and the permanently closed set partition the unpriced reactions exactly: every unpriced reaction is either closed for good or named by the last rung."
+ },
+ "notes": "A reaction is priced only when EVERY participant carries a formation energy, or when the shipped reaction column fills it directly. The shipped reaction column mixes units and the 33 dGPredictor rows named in dgpredictor_reaction_rows.json are exempted from the kcal conversion."
+}

@@ -1,0 +1,17 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_projection_stochastic.yaml
+# [[experiments.027-betaxanthin-metabolic.projection-head]]
+#
+# `flux_projection_anchored` turned into an amortized SAMPLER: the latent is drawn as
+# z = mu + sigma eps from a learned per-genotype Gaussian and a KL against N(0, I) is added
+# to the constraint sum at weight 1e-3. Every draw goes through the same projection loop, so
+# the sampler's support is the feasible set itself.
+#
+# This is the arm that can answer the Genesis metabolic-grounding question in its actual
+# form, which is about a DISTRIBUTION over a nominated strain's flux rather than one point:
+# `FluxLayer.sample` returns S draws per genotype with each draw's own balance residual, box
+# violation and uphill fraction. The 026 stochastic head drew z per reaction and projected
+# nothing, and its draws had a median balance ratio of 1.98 with 30 percent thermodynamic
+# violations (results/flux_sampling_demo.json), so this is a replacement for it rather than
+# a tuning of it.
+base_arm: flux_projection_stochastic
+permute_train_targets: false

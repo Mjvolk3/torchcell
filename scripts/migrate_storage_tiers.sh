@@ -116,6 +116,7 @@ run docker run \
     -p 7687:7687 -p 7474:7474 \
     --restart=unless-stopped \
     -v "$DB_ROOT/data":/var/lib/neo4j/data \
+    -v "$DB_ROOT/biocypher-out":/var/lib/neo4j/biocypher-out \
     -v "$DB_ROOT/.env":/.env \
     -v "$DB_ROOT/biocypher":/var/lib/neo4j/biocypher \
     -v "$DB_ROOT/conf":/var/lib/neo4j/conf \
@@ -124,6 +125,9 @@ run docker run \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_server_databases_default__to__read__only=true \
     "$IMAGE"
+# biocypher-out is mounted so an incremental admission
+# (database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm) can hand CSVs to
+# neo4j-admin inside the serving container; it must exist and be owned by uid 7474.
 
 if [ "$APPLY" = 1 ]; then
     echo

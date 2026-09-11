@@ -20,6 +20,7 @@ from typing import Any, cast
 import certifi
 import hydra
 import wandb
+import yaml
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 
@@ -337,9 +338,12 @@ def main(cfg: DictConfig) -> None:
         # Incremental: BioCypher's import call would WIPE the store, and its
         # schema-info node describes the full build (an increment cannot update it).
         # Prepare headers/constraints/reference analysis + the incremental call.
+        # The target database name is the BioCypher config's (the same file that names
+        # it for the full import call), not a hydra key.
+        with open(BIOCYPHER_CONFIG_PATH) as handle:
+            database_name = str(yaml.safe_load(handle)["neo4j"]["database_name"])
         plan = prepare_incremental_import(
-            Path(bc._output_directory),
-            database=str(wandb.config.neo4j["database_name"]),
+            Path(bc._output_directory), database=database_name
         )
         wandb.log(
             {

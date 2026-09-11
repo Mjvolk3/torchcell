@@ -63,6 +63,11 @@ echo "Running on $(hostname) at $(date)"
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 
+# Runs under sbatch (the SLURM_* values come from the allocation) or directly from a
+# shell when the queue cannot place it, in which case the same small envelope applies.
+SLURM_CPUS_PER_TASK="${SLURM_CPUS_PER_TASK:-8}"
+SLURM_MEM_PER_NODE="${SLURM_MEM_PER_NODE:-32768}"
+
 : "${DATASET_CLASS:?set DATASET_CLASS=<registered dataset class name>}"
 TORCHCELL_SRC="${TORCHCELL_SRC:-/home/michaelvolk/Documents/projects/torchcell}"
 TORCHCELL_PIP_REF="${TORCHCELL_PIP_REF:-git+https://github.com/Mjvolk3/torchcell.git@main}"
@@ -104,7 +109,9 @@ python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --rep
 
 echo "---------------- 2 STAGE dev LMDB -> build tree (as uid 7474)"
 TS=$(date +%Y-%m-%d_%H-%M-%S)
-docker run --rm --entrypoint bash \
+# --entrypoint bash bypasses the image entrypoint that drops to the neo4j user, so the
+# uid is set explicitly: the build tree is uid-7474 territory.
+docker run --rm --entrypoint bash --user 7474:7474 \
     -v "$BUILD_ROOT/database/data":/var/lib/neo4j/data \
     -v "$DEV_DATA_ROOT/data/torchcell/$SLUG":/mnt/src:ro \
     "$IMAGE" -c "set -euo pipefail
@@ -121,12 +128,23 @@ cmp "$TORCHCELL_SRC/biocypher/config/torchcell_schema_config.yaml" \
     "$BUILD_ROOT/database/biocypher/config/torchcell_schema_config.yaml"
 
 echo "---------------- 4 GENERATE CSVs (ephemeral container, incremental mode)"
+# biocypher-out is written by uid 7474 (the generating container) and READ by this host
+# user (reference analysis, counts), so it is 7474-owned and world-readable.
 docker run --rm --user 0 -v "$SERVE_ROOT":/serve "$IMAGE" bash -c \
-    'mkdir -p /serve/biocypher-out && chown 7474:7474 /serve/biocypher-out'
+    'mkdir -p /serve/biocypher-out && chown 7474:7474 /serve/biocypher-out && chmod 755 /serve/biocypher-out'
 mem_mb=$((SLURM_MEM_PER_NODE))
 if [ "$TORCHCELL_PIP_REF" = "src" ]; then
-    SRC_MOUNT=(-v "$TORCHCELL_SRC":/mnt/torchcell-src:ro)
-    PIP_TARGET=/mnt/torchcell-src
+    # pip cannot build from a read-only bind mount (it writes egg-info into the source
+    # tree), so build the wheel on the host and hand the container the wheel.
+    WHEEL_DIR="$BUILD_ROOT/database/slurm/output/${JOB}_wheel_${DATASET_CLASS}"
+    mkdir -p "$WHEEL_DIR"
+    python -m pip wheel --no-deps --no-build-isolation -w "$WHEEL_DIR" "$TORCHCELL_SRC" >/dev/null
+    WHEEL=$(ls "$WHEEL_DIR"/torchcell-*.whl | head -1)
+    [ -n "$WHEEL" ] || { echo "no wheel built from $TORCHCELL_SRC"; exit 1; }
+    chmod -R a+rX "$WHEEL_DIR"
+    SRC_MOUNT=(-v "$WHEEL_DIR":/mnt/torchcell-wheel:ro)
+    PIP_TARGET="/mnt/torchcell-wheel/$(basename "$WHEEL")"
+    echo "installing the worktree wheel $WHEEL"
 else
     SRC_MOUNT=()
     PIP_TARGET="$TORCHCELL_PIP_REF"
@@ -147,6 +165,10 @@ docker run --rm --entrypoint bash \
         set -a; source /.env; set +a
         wandb login \$WANDB_API_KEY >/dev/null
         python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small --config-name kg_increment 'datasets=[$DATASET_CLASS]'
+        # this container runs as root (pip needs the image's site-packages); hand the
+        # output to the neo4j user, which runs the import, and keep it host-readable
+        OUT_DIR=\$(dirname \$(cat biocypher_file_name.txt))
+        chown -R 7474:7474 /var/lib/neo4j/\$OUT_DIR && chmod -R a+rX /var/lib/neo4j/\$OUT_DIR
         echo INCREMENT_CALL=\$(cat biocypher_file_name.txt)" 2>&1 | tee "$GEN_LOG"
 CALL_REL=$(grep -oE '^INCREMENT_CALL=.*' "$GEN_LOG" | tail -1 | cut -d= -f2-)
 [ -n "$CALL_REL" ] || { echo "no incremental call script reported"; exit 1; }
@@ -203,6 +225,6 @@ cat "$OUT_HOST/incremental-import.report" 2>/dev/null | head -20 || true
 echo "---------------- 7 RECORD + ARCHIVE"
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
     record --report "$REPORT" --biocypher-out "$OUT_TS" --n-experiments "$N_LIVE"
-docker run --rm --entrypoint bash -v "$SERVE_ROOT/biocypher-out":/src:ro -v "$ARCHIVE_ROOT":/dst "$IMAGE" \
+docker run --rm --entrypoint bash --user 7474:7474 -v "$SERVE_ROOT/biocypher-out":/src:ro -v "$ARCHIVE_ROOT":/dst "$IMAGE" \
     -c "cp -a /src/$OUT_TS /dst/ && ls -ld /dst/$OUT_TS"
 echo "DONE at $(date)"

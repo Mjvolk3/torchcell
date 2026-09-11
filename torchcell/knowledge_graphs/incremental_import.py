@@ -47,6 +47,8 @@ from __future__ import annotations
 
 import csv
 import re
+import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -239,15 +241,17 @@ def _unquote(value: str) -> str:
     return value
 
 
-def _iter_rows(part_paths: list[str]) -> list[list[str]]:
-    rows: list[list[str]] = []
+def _iter_rows(part_paths: list[str]) -> Iterator[list[str]]:
+    """Stream the rows of a label's part files (a field can be a multi-MB JSON blob)."""
+    # An Experiment's serialized_data is the whole record (a pseudobulk expression
+    # record is ~1 MB), far above csv's 128 KiB default field limit.
+    csv.field_size_limit(sys.maxsize)
     for part in part_paths:
         with open(part, encoding="utf-8", newline="") as handle:
             reader = csv.reader(
                 handle, delimiter=_DELIMITER, quotechar=_QUOTE, strict=True
             )
-            rows.extend(reader)
-    return rows
+            yield from reader
 
 
 def analyze_references(groups: list[CsvGroup], sample: int = 20) -> ReferenceAnalysis:
@@ -258,9 +262,11 @@ def analyze_references(groups: list[CsvGroup], sample: int = 20) -> ReferenceAna
         if group.kind != "node":
             continue
         id_index = group.columns.index(":ID")
-        rows = _iter_rows(group.part_paths)
-        node_counts[group.label] = len(rows)
-        node_ids.update(_unquote(row[id_index]) for row in rows)
+        n_rows = 0
+        for row in _iter_rows(group.part_paths):
+            n_rows += 1
+            node_ids.add(_unquote(row[id_index]))
+        node_counts[group.label] = n_rows
 
     edge_counts: dict[str, int] = {}
     external: set[str] = set()
@@ -271,9 +277,9 @@ def analyze_references(groups: list[CsvGroup], sample: int = 20) -> ReferenceAna
             continue
         start_index = group.columns.index(":START_ID")
         end_index = group.columns.index(":END_ID")
-        rows = _iter_rows(group.part_paths)
-        edge_counts[group.label] = len(rows)
-        for row in rows:
+        n_rows = 0
+        for row in _iter_rows(group.part_paths):
+            n_rows += 1
             start, end = _unquote(row[start_index]), _unquote(row[end_index])
             start_ext, end_ext = start not in node_ids, end not in node_ids
             if start_ext:
@@ -284,6 +290,7 @@ def analyze_references(groups: list[CsvGroup], sample: int = 20) -> ReferenceAna
                 n_between_external += 1
                 if len(between_external) < sample:
                     between_external.append([group.label, start, end])
+        edge_counts[group.label] = n_rows
     return ReferenceAnalysis(
         node_counts=node_counts,
         edge_counts=edge_counts,
@@ -314,8 +321,11 @@ def incremental_import_call(
     and off-heap memory are bounded because the import runs INSIDE the serving
     container next to the (stopped-database, still running) Neo4j server.
     """
+    # The database is the positional argument and goes FIRST: --nodes/--relationships
+    # take one-or-more files, so a trailing positional is swallowed as a file
+    # ("File 'torchcell' doesn't exist", measured).
     parts: list[str] = [
-        f"{bin_prefix}neo4j-admin database import incremental",
+        f"{bin_prefix}neo4j-admin database import incremental {database}",
         "--force",
         "--verbose",
         '--delimiter="\\t"',
@@ -338,7 +348,6 @@ def incremental_import_call(
             parts.append(
                 f'--relationships="{group.header_path},{directory}/{group.label}-part.*"'
             )
-    parts.append(database)
     return " \\\n    ".join(parts) + "\n"
 
 

@@ -137,7 +137,11 @@ def test_incremental_import_call_mirrors_full_build_flags(out_dir: Path) -> None
     groups = discover_csv_groups(out_dir)
     headers = write_incremental_headers(groups)
     call = incremental_import_call(groups, headers, "torchcell")
-    assert call.startswith("/var/lib/neo4j/bin/neo4j-admin database import incremental")
+    # the database is the FIRST argument: a trailing positional would be swallowed by
+    # the preceding --relationships=<files>... option
+    assert call.startswith(
+        "/var/lib/neo4j/bin/neo4j-admin database import incremental torchcell \\\n"
+    )
     assert "--schema" not in call  # unsupported for incremental import on 5.26
     for flag in (
         "--force",
@@ -157,7 +161,7 @@ def test_incremental_import_call_mirrors_full_build_flags(out_dir: Path) -> None
         f'--relationships="{out_dir}/GenomeMemberOf-header.csv,{out_dir}/GenomeMemberOf-part.*"'
         in call
     )
-    assert call.rstrip().endswith("torchcell")
+    assert call.rstrip().endswith('GenomeMemberOf-part.*"')
 
 
 def test_prepare_writes_everything(out_dir: Path) -> None:

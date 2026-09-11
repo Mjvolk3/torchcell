@@ -565,3 +565,38 @@ GPU-hours of bbub's 3,738. Logs: `/work/hdd/bbub/mjvolk3/slurm-logs/019-expr-v11
 Readout plan: `roll_max` at a matched budget (smallest final epoch across the 12) with
 paired within-node contrasts, E_ptt5 - E_calm (the contrast v10 could not make),
 E_calm_ptt5 - E_ptt5, E_full - E_calm_ptt5; three seeds resolve about 0.03.
+
+## 2026.09.10 - Sync complete, per-gene seed 4 submitted, Pearson and ListMLE finals
+
+The login-node sync (`igb_login_wandb_sync.sh`, `INCLUDE_SYNCED=1`) finished with 20 run
+directories synced and 0 failures, so `torchcell_019_expr_v9` now holds the final history
+of every completed IGB run and a refreshed snapshot of the two ListMLE runs still training
+(`2385807_0/_1`, 5,147 and 4,959 epochs at sync time). Completed since the last record:
+`2378262_1` (anchored Pearson seed 1, 3 d 22 h 31 m), `2385808_0/_1` (batch-64 ListMLE,
+1 d 19 h 06 m), `2389901_0/_1` (per-gene replicates seeds 2-3, 16 h 08 m and 15 h 37 m).
+
+Per-gene seed 4 submitted: `2392370_2`, cabbi, stage `pergene_rep` task 2 (`RR_ref` and
+`RR_pergene` seed 4 co-resident on one RTX 6000 Ada, 1,000 epochs, 30 h wall), source
+`26213a8c` with a clean diff. Seeds 2-3 ran at `4db2fbc8`; the five commits between touch
+`cgt_expr_v11_emb.yaml`, `delta_expr_v11_emb.slurm`, `igb_login_wandb_sync.sh` and two
+notes, none of which this stage reads, so the pair is a code-identical replicate. Five
+pairs (mech seeds 0-1, replicate seeds 2-4) when it lands.
+
+Final numbers from `pearson_round_readout.py` after the sync (`roll_max`, centered 5-epoch
+rolling mean, matched against the incumbent band at the nearest tabulated budget):
+
+| run | arm | seed | epochs | roll_max @ epoch | Spearman | incumbent band |
+|---|---|--:|--:|---|--:|---|
+| `ppc2pyv5` | Q_pearson_mse | 1 | 9,899 | 0.1936 @ 3,193 | 0.178 | 0.1965 +/- 0.0222 @ 9,900 |
+| `7ylecrjz` | Q_pearson_b64 | 0 | 9,899 | 0.1942 @ 1,926 | 0.175 | 0.1965 +/- 0.0222 @ 9,900 |
+| `wb2xocf2` | Q_pearson_b64 | 1 | 9,899 | 0.1856 @ 2,419 | 0.171 | 0.1965 +/- 0.0222 @ 9,900 |
+| `k79hvcqe` | Q_listmle_b64 | 0 | 5,999 | 0.1529 @ 5,555 | 0.148 | 0.1917 +/- 0.0177 @ 6,000 |
+| `6b33ftkt` | Q_listmle_b64 | 1 | 5,999 | 0.1608 @ 4,995 | 0.148 | 0.1917 +/- 0.0177 @ 6,000 |
+| `teaeym0k` | Q_listmle | 0 | 5,147 (running) | 0.1770 @ 4,266 | 0.175 | 0.1917 +/- 0.0177 @ 6,000 |
+| `g755dzhn` | Q_listmle | 1 | 4,959 (running) | 0.1499 @ 1,488 | 0.154 | 0.1883 +/- 0.0171 @ 4,000 |
+
+Every surviving metric-aligned run sits on or below the incumbent band; none is above it.
+The three completed Pearson runs peak at 1,926 to 3,193 epochs and hold 0.150 to 0.174 at
+the end, so the metric-aligned objectives do not collapse at batch 64 and do not improve
+the score either. The batch-64 ListMLE pair is 0.03 to 0.04 below the band at a matched
+6,000 epochs, twice the band's spread. The batch-32 ListMLE runs are partial.

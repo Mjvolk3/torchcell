@@ -1041,6 +1041,48 @@ phenotype-label values; aggregation combines equivalent-genotype records with di
 phenotype labels (Fitness, GeneInteraction) into a single HeteroData instance.}{fig:conversion-dedup-agg}
 \end{figure*}
 
+%% Hand-composed schematic (notes/assets/drawio/FigS-dataset-admission-loop.drawio) of the
+%% dataset-admission code path: torchcell/provenance/schema_impact.py (schema-impact gate),
+%% torchcell/knowledge_graphs/kg_manifest.py (manifest admission) and
+%% torchcell/knowledge_graphs/incremental_import.py with
+%% database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm (the increment runner), as run
+%% for the Nadal-Ribelles 2025 admission (GilaHyper job 1722, 2026-09-11). Panel c is a plan, not
+%% a result; see notes/torchcell.knowledge_graphs.dataset-admission-loop.md.
+\begin{figure*}[t]
+\tcfig{figures/FigS-dataset-admission-loop.pdf}{\textbf{Adding a dataset without rebuilding the
+others, and growing the ontology under the same gates.} \textbf{a},~The admission path for one
+dataset. A Zotero item names the paper; the literature mirror holds the paper, its supplements
+and data with a manifest that pins every file by sha256 and records how it was retrieved; a
+typed loader and its pydantic schema turn the released tables into genotype~$\times$
+environment~$\rightarrow$ phenotype records with every sourced value quoted; the dev LMDB build
+is verified at levels L0 to L4 (structural, completeness, numeric, units, cross-source); the
+BioCypher adapter and graph schema map the records to nodes and edges; the schema-impact gate
+diffs the pydantic schema surface against \texttt{main}; and the manifest admission gate
+decides whether the served graph can take an increment. \textbf{b},~What the gates decide. Each
+loader's dependency closure is the forward closure over the schema surface of the classes it
+imports, so a changed class reaches every loader whose closure contains it (loaders 1 and 2
+rebuild; 3 and 4 are untouched) while a new class or adapter method reaches only the new loader.
+The store manifest records, per served dataset, its closure fingerprints, the graph node classes
+and the adapter methods it was serialized under; an increment is admissible only when all three
+are unchanged for every served dataset, in which case the dev LMDB is staged, that dataset's CSVs
+are emitted, a uniqueness constraint on the shared node id is created, edges the store already
+holds are dropped, and \texttt{neo4j-admin database import incremental} runs against the stopped
+store before verification, manifest recording and archiving. Incremental import matches existing
+node ids and can neither update nor delete them, so any change to a served class is blocked and
+takes the full path: the impacted dev LMDBs are rebuilt and re-verified, every dataset's CSVs are
+emitted, a new store is imported in full and the manifest is bootstrapped from it.
+\textbf{c},~The planned agent loop (dashed borders are not built). An \texttt{add\_dataset} job
+starts from a citation key; retrieval uses the mirror, else the recorded method or a web search,
+and keeps a copy so a rebuild never depends on the source; the closure neighbors of b and their
+papers form the context; N proposing agents draft the loader, the schema delta and the adapter;
+M critics score every proposal and the accepted union becomes the plan; one implementer applies
+it in one worktree and one pull request, and a failed check (unit tests, type and lint checks,
+L0 to L4, schema impact) returns to Propose with the failure. Token usage of every agent run is
+priced into a cost ledger. Several jobs run in parallel; the served store takes one increment at
+a time, and each increment passes the gates of a. Composed from the code, not from a published
+figure.}{fig:dataset-admission-loop}
+\end{figure*}
+
 \begin{figure*}[t]
 \tcfig{figures/s288c_selecting_gene_sequence.pdf}{DNA sequence selection for the sequence model.
 The coding sequence is taken from the outermost start to stop codon, ignoring five-prime

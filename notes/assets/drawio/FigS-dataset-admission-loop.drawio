@@ -1,0 +1,318 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.7.17">
+  <diagram name="dataset-admission-loop" id="datasetAdmissionLoop">
+    <mxGraphModel dx="1400" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="703" pageHeight="520" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- ================================================================
+             TRUE-SIZE CANVAS. draw.io units = 1/100 inch (100 units = 1 in).
+             Content occupies 0..702 x 0..508 units
+               = 178.2 mm wide  (cap 179.4 mm; PANEL_WIDTHS_MM["full"] = 179)
+               = 129.0 mm tall  (cap 170 mm; MAX_HEIGHT_MM)
+             Type: Arial; body 8.3 (5.98 pt), panel letters 11.1 (7.99 pt).
+             Palette: PLOT_PALETTE / PLOT_PALETTE_FILL slots 1 to 6 only.
+             gray = curated by hand; orange = artifacts and data; purple = code
+             and agents; yellow = verification; red = gates; blue = served store.
+             Solid border = runs today; dashed border = planned.
+
+             Column grid, 8 columns, shared by panels a and c:
+               col k: x = 4 + 88 k, width 78  (k = 0..7)
+               0: 4..82 | 1: 92..170 | 2: 180..258 | 3: 268..346
+               4: 356..434 | 5: 444..522 | 6: 532..610 | 7: 620..698
+             Panel b: left block 0..330, right block 350..702.
+             ================================================================ -->
+
+        <!-- ===================== panel a: the admission pipeline ===================== -->
+        <mxCell id="pahL" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11.1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pah" value="Adding one dataset to the served graph. Every stage is code that ran for the Nadal-Ribelles 2025 admission." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="21" y="0" width="674" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a1" value="Zotero item (citation key)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="4" y="18" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="Literature mirror + manifest.json" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="92" y="18" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" value="Loader + schema (pydantic)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="180" y="18" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" value="Dev LMDB build" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="268" y="18" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" value="L0 to L4 verification" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="356" y="18" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" value="BioCypher adapter + graph schema" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="444" y="18" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="a7" value="Schema-impact gate" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="532" y="18" width="78" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="a8" value="Manifest admission gate" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="620" y="18" width="78" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ae1" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="82" y="33" as="sourcePoint" /><mxPoint x="92" y="33" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ae2" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="170" y="33" as="sourcePoint" /><mxPoint x="180" y="33" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ae3" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="258" y="33" as="sourcePoint" /><mxPoint x="268" y="33" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ae4" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="346" y="33" as="sourcePoint" /><mxPoint x="356" y="33" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ae5" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="434" y="33" as="sourcePoint" /><mxPoint x="444" y="33" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ae6" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="522" y="33" as="sourcePoint" /><mxPoint x="532" y="33" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ae7" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="610" y="33" as="sourcePoint" /><mxPoint x="620" y="33" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="an1" value="curated by hand; an agent never writes to it" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="4" y="52" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="an2" value="paper.pdf, paper.md, si/, data/; every file sha256-pinned with its retrieval method" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="92" y="52" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="an3" value="typed genotype &#215; environment &#8594; phenotype records; values sourced with quotes" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="180" y="52" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="an4" value="processed/lmdb and build_manifest.json in the dev tree" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="268" y="52" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="an5" value="structural, completeness, numeric, units, cross-source" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="356" y="52" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="an6" value="node and edge methods; new classes and methods are additive" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="444" y="52" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="an7" value="diff of the schema surface against main; names impacted loaders and severity" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="532" y="52" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="an8" value="served closures, graph classes and adapter methods unchanged? (b)" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="620" y="52" width="78" height="58" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== panel b: what the gates decide ===================== -->
+        <mxCell id="pbhL" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11.1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="122" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pbh" value="What the gates decide. A changed class reaches every loader that imports it; only an unchanged served graph admits an increment." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="21" y="122" width="674" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bL" value="schema surface (pydantic classes) above, dataset loaders below" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="140" width="330" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="bc1" value="changed class" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="0" y="156" width="70" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="bc2" value="class importing it" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="90" y="156" width="70" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="bc3" value="unchanged class" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="180" y="156" width="70" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="bc4" value="new class" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="260" y="156" width="70" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="be12" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#B85450;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="70" y="167" as="sourcePoint" /><mxPoint x="90" y="167" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="bl1" value="loader 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#B85450;strokeWidth=1.5;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="0" y="214" width="54" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="bl2" value="loader 2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#B85450;strokeWidth=1.5;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="66" y="214" width="54" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="bl3" value="loader 3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="132" y="214" width="54" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="bl4" value="loader 4" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="198" y="214" width="54" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="bl5" value="new loader" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="264" y="214" width="66" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="bd1" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#B85450;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="27" y="178" as="sourcePoint" /><mxPoint x="27" y="214" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bd2" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#B85450;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="115" y="178" as="sourcePoint" /><mxPoint x="93" y="214" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bd3" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="205" y="178" as="sourcePoint" /><mxPoint x="159" y="214" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bd4" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="225" y="178" as="sourcePoint" /><mxPoint x="225" y="214" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bd5" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#9673A6;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="297" y="178" as="sourcePoint" /><mxPoint x="297" y="214" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bd6" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="215" y="178" as="sourcePoint" /><mxPoint x="290" y="214" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="bt1" value="rebuild" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="0" y="238" width="54" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="bt2" value="rebuild" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="66" y="238" width="54" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="bt3" value="untouched" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="132" y="238" width="54" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="bt4" value="untouched" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="198" y="238" width="54" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="bt5" value="additive" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="264" y="238" width="66" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="ban" value="Each loader's closure is the forward closure of the classes it imports over the schema surface. A change is stale when stored records would serialize differently and breaking when construction fails; both rebuild loaders 1 and 2 and leave 3 and 4 alone. A new class or a new adapter method reaches only the new loader." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="254" width="330" height="58" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bgo" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="334" y="200" as="sourcePoint" /><mxPoint x="348" y="200" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="bR" value="manifest admission: two paths into the served store" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="140" width="352" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="bA" value="ADMISSIBLE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="156" width="62" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bA1" value="stage dev LMDB into the build tree" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="420" y="156" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bA2" value="emit this dataset's CSVs" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="476" y="156" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bA3" value="id constraint; drop stored edges" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="532" y="156" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bA4" value="import incremental (store stopped)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="588" y="156" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bA5" value="verify; record; archive" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="644" y="156" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bAe0" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="412" y="174" as="sourcePoint" /><mxPoint x="420" y="174" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bAe1" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="470" y="174" as="sourcePoint" /><mxPoint x="476" y="174" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bAe2" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="526" y="174" as="sourcePoint" /><mxPoint x="532" y="174" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bAe3" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="582" y="174" as="sourcePoint" /><mxPoint x="588" y="174" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bAe4" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="638" y="174" as="sourcePoint" /><mxPoint x="644" y="174" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="bB" value="BLOCKED" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="204" width="62" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bB1" value="rebuild impacted dev LMDBs" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="420" y="204" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bB2" value="L0 to L4 again" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="476" y="204" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bB3" value="emit CSVs for all datasets" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="532" y="204" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bB4" value="import full into a new store" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="588" y="204" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bB5" value="bootstrap the manifest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="644" y="204" width="50" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bBe0" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="412" y="222" as="sourcePoint" /><mxPoint x="420" y="222" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bBe1" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="470" y="222" as="sourcePoint" /><mxPoint x="476" y="222" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bBe2" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="526" y="222" as="sourcePoint" /><mxPoint x="532" y="222" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bBe3" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="582" y="222" as="sourcePoint" /><mxPoint x="588" y="222" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bBe4" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="638" y="222" as="sourcePoint" /><mxPoint x="644" y="222" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="bran" value="Admissible when the served datasets' closure fingerprints, the existing graph node classes and the adapter methods they use are all unchanged; new classes, node types and methods pass. Incremental import matches existing node ids and can neither update nor delete them, so any change to a served class takes the full path, and the manifest names the datasets and symbols that force it." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="254" width="352" height="58" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== panel c: the planned agent loop ===================== -->
+        <mxCell id="pchL" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11.1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="324" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pch" value="Planned: agents add datasets in parallel and grow the ontology under the same gates. Dashed borders are not yet built." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="21" y="324" width="674" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c1" value="add_dataset job (citation key)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="4" y="342" width="78" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" value="Retrieve: mirror, else recorded method or web search; keep a copy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="92" y="342" width="78" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" value="Context: neighbors by import (b) and their papers" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;dashed=1;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="180" y="342" width="78" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" value="Propose &#215; N: loader, schema delta, adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;dashed=1;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="268" y="342" width="78" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" value="Critique &#215; M: aggregated acceptance" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;dashed=1;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="356" y="342" width="78" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" value="Implement: one agent applies the accepted plan" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;dashed=1;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="444" y="342" width="78" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" value="Checks: pytest, mypy, ruff, L0 to L4, schema impact" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="532" y="342" width="78" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" value="PR, then the gates of a" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="620" y="342" width="78" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="ce1" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="82" y="365" as="sourcePoint" /><mxPoint x="92" y="365" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ce2" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="170" y="365" as="sourcePoint" /><mxPoint x="180" y="365" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ce3" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="258" y="365" as="sourcePoint" /><mxPoint x="268" y="365" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ce4" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="346" y="365" as="sourcePoint" /><mxPoint x="356" y="365" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ce5" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="434" y="365" as="sourcePoint" /><mxPoint x="444" y="365" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ce6" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="522" y="365" as="sourcePoint" /><mxPoint x="532" y="365" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ce7" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="610" y="365" as="sourcePoint" /><mxPoint x="620" y="365" as="targetPoint" /></mxGeometry></mxCell>
+
+        <!-- failed check returns to Propose: three straight segments under the row -->
+        <mxCell id="cl1" style="endArrow=none;html=1;strokeColor=#B85450;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="571" y="388" as="sourcePoint" /><mxPoint x="571" y="400" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="cl2" style="endArrow=none;html=1;strokeColor=#B85450;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="571" y="400" as="sourcePoint" /><mxPoint x="307" y="400" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="cl3" style="endArrow=classic;html=1;strokeColor=#B85450;strokeWidth=1;dashed=1;endSize=3;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="307" y="400" as="sourcePoint" /><mxPoint x="307" y="388" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="clt" value="a failed check returns to Propose with the failure" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="330" y="402" width="220" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cn1" value="one job per dataset; several in flight; the store takes one increment at a time" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="4" y="416" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="cn2" value="sha256 recorded before use; the kept copy outlives the source" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="92" y="416" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="cn3" value="loaders whose closure shares the classes the new records need" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="180" y="416" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="cn4" value="typed pydantic-ai outputs; token usage priced into a cost ledger per run" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="268" y="416" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="cn5" value="reviewers score every proposal; the accepted union is the plan" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="356" y="416" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="cn6" value="one implementer, one worktree, one PR" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="444" y="416" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="cn7" value="the checks a human change must pass today" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="532" y="416" width="78" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="cn8" value="admission decides increment or full rebuild (b)" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="620" y="416" width="78" height="58" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== legend ===================== -->
+        <mxCell id="legbox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="478" width="702" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1" value="curated by hand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="8" y="484" width="80" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" value="artifacts and data" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="96" y="484" width="86" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" value="code and agents" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="190" y="484" width="80" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" value="verification" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="278" y="484" width="64" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" value="gates" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="350" y="484" width="44" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6" value="served store" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="402" y="484" width="64" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg7" value="planned" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="474" y="484" width="50" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg8" value="thick red border = loader that must rebuild" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="532" y="484" width="168" height="18" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

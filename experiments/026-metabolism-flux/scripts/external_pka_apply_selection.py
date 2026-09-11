@@ -91,15 +91,15 @@ MOLGPKA_REPO = osp.join(DATA_ROOT, "pka", "MolGpKa")
 #: failure. Used to tell those two apart WITHOUT reading a tool's error string, since each
 #: tool words "there is nothing here" differently and one of them words it as an error.
 IONIZABLE_CENTER_SMARTS: tuple[str, ...] = (
-    "[CX3](=O)[OX2H1,OX1-]",                      # carboxylic acid or carboxylate
-    "[PX4](=O)([OX2H1,OX1-])",                    # phosphate
-    "[SX4](=O)(=O)[OX2H1,OX1-]",                  # sulfonate
-    "[OX2H1,OX1-]c",                              # phenol or phenolate
+    "[CX3](=O)[OX2H1,OX1-]",  # carboxylic acid or carboxylate
+    "[PX4](=O)([OX2H1,OX1-])",  # phosphate
+    "[SX4](=O)(=O)[OX2H1,OX1-]",  # sulfonate
+    "[OX2H1,OX1-]c",  # phenol or phenolate
     "[NX3;!$(N[C,S]=[O,S,N]);!$(N=*);!$([N+](=O)[O-])]",  # amine
-    "[NX4+]",                                     # quaternary or protonated amine
-    "[SX2H]",                                     # thiol
-    "[nX3H]",                                     # protonated aromatic nitrogen
-    "[NX3][CX3](=[NX2])[NX3]",                    # guanidine
+    "[NX4+]",  # quaternary or protonated amine
+    "[SX2H]",  # thiol
+    "[nX3H]",  # protonated aromatic nitrogen
+    "[NX3][CX3](=[NX2])[NX3]",  # guanidine
 )
 
 
@@ -277,6 +277,35 @@ class LadderSet(BaseModel):
     records: list[LadderRecord]
 
 
+def _neutral_microspecies(smiles: str) -> str:
+    """The neutral form of a structure, for a predictor that only reads neutral parents.
+
+    Protonates every anionic oxygen, sulfur and nitrogen and deprotonates every cationic
+    nitrogen, which is what turns a stored microspecies back into the parent the site
+    predictors were trained on. Returns the input unchanged when it is already neutral or
+    when RDKit cannot read it, because a predictor refusing a structure is a result and a
+    silently rewritten structure is not.
+    """
+    from rdkit import Chem
+
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None or Chem.GetFormalCharge(mol) == 0:
+        return smiles
+    for atom in mol.GetAtoms():
+        charge = atom.GetFormalCharge()
+        if charge < 0 and atom.GetSymbol() in ("O", "S", "N"):
+            atom.SetFormalCharge(0)
+            atom.SetNumExplicitHs(atom.GetNumExplicitHs() - charge)
+        elif charge > 0 and atom.GetSymbol() == "N" and atom.GetTotalNumHs() >= charge:
+            atom.SetFormalCharge(0)
+            atom.SetNumExplicitHs(max(0, atom.GetTotalNumHs() - charge))
+    try:
+        Chem.SanitizeMol(mol)
+    except Exception:  # noqa: BLE001 - an unsanitizable rewrite is not a structure
+        return smiles
+    return str(Chem.MolToSmiles(mol))
+
+
 def cmd_ladders(args: argparse.Namespace) -> None:
     """Run one member tool over the targets and write its macroscopic ladders.
 
@@ -329,7 +358,13 @@ def cmd_ladders(args: argparse.Namespace) -> None:
             error: str | None = None
             try:
                 for acidic in (True, False):
-                    state = target.smiles
+                    # The NEUTRAL microspecies, not whatever charge state the target was
+                    # written in. MolGpKa walks out from the structure it is handed, and
+                    # on a dianion it returns nothing at all while the neutral form of the
+                    # same molecule gives a full ladder: its site models were trained on
+                    # neutral parents. Starting neutral and letting the walk deprotonate is
+                    # the same ladder, reached from the state the model can see.
+                    state = _neutral_microspecies(target.smiles)
                     for _ in range(MAX_PKAS + 1):
                         mol = Chem.MolFromSmiles(state)
                         if mol is None:
@@ -391,11 +426,7 @@ def cmd_ladders(args: argparse.Namespace) -> None:
                 mol = Chem.MolFromSmiles(target.smiles)
                 states = calculate_microstate_pka_values(mol, query_model=model)
                 pkas = sorted(
-                    (
-                        float(s.pka)
-                        for s in states
-                        if MIN_PH < float(s.pka) < MAX_PH
-                    ),
+                    (float(s.pka) for s in states if MIN_PH < float(s.pka) < MAX_PH),
                     reverse=True,
                 )
                 records.append(
@@ -601,6 +632,7 @@ def cmd_microspecies(args: argparse.Namespace) -> None:
 
 class CombinedLadder(BaseModel):
     """The ladder the selected rule produces for one target, and which members fed it."""
+
     key: str
     method: str
     members_used: list[str]
@@ -988,7 +1020,9 @@ def main() -> None:
     p_m = sub.add_parser("microspecies", help="the pH 7 major microspecies per target")
     p_m.set_defaults(func=cmd_microspecies)
 
-    p_c = sub.add_parser("combine", help="apply the selected rule to the member ladders")
+    p_c = sub.add_parser(
+        "combine", help="apply the selected rule to the member ladders"
+    )
     p_c.set_defaults(func=cmd_combine)
 
     p_p = sub.add_parser("price", help="create and price the compounds")

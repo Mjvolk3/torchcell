@@ -1,302 +1,317 @@
 {
-  "slug": "triphosphate",
-  "met_ids": ["s_4098", "s_4099"],
-  "gem_name": "triphosphate",
-  "gem_formula": "O10P3",
-  "gem_charge": -5,
-  "compartments": ["c", "e"],
-  "blocked_reactions": ["r_4403", "r_4369", "r_4528"],
-  "kind": "pka_ladder",
-  "admission": "measured",
-  "value": {
-    "dgf_kj_per_mol": null,
-    "species": "P3O10(5-), and its protonated microspecies HP3O10(4-) and H2P3O10(3-)",
-    "standard_or_transformed": null,
+ "slug": "triphosphate",
+ "met_ids": [
+  "s_4098",
+  "s_4099"
+ ],
+ "gem_name": "triphosphate",
+ "gem_formula": "O10P3",
+ "gem_charge": -5,
+ "compartments": [
+  "c",
+  "e"
+ ],
+ "blocked_reactions": [
+  "r_4403",
+  "r_4369",
+  "r_4528"
+ ],
+ "kind": "pka_ladder",
+ "admission": "measured",
+ "value": {
+  "dgf_kj_per_mol": null,
+  "species": "P3O10(5-), and its protonated microspecies HP3O10(4-) and H2P3O10(3-)",
+  "standard_or_transformed": null,
+  "T_K": 303.15,
+  "pH": null,
+  "ionic_strength_M": 0.1,
+  "pMg": null,
+  "pka_ladder": [
+   {
+    "acid_species": "HP3O10(4-)",
+    "conjugate_base": "P3O10(5-)",
+    "pka": 7.77,
+    "sigma": 0.02,
     "T_K": 303.15,
-    "pH": null,
     "ionic_strength_M": 0.1,
-    "pMg": null,
-    "pka_ladder": [
-      {
-        "acid_species": "HP3O10(4-)",
-        "conjugate_base": "P3O10(5-)",
-        "pka": 7.77,
-        "sigma": 0.02,
-        "T_K": 303.15,
-        "ionic_strength_M": 0.1,
-        "background_electrolyte": "NaNO3",
-        "method": "potentiometric titration, glass electrode, Gran calibration, nonlinear least squares",
-        "constant_type": "conditional (stepwise protonation constant log10 K1) at I = 0.1 mol/L",
-        "source_index": 1,
-        "pka_extrapolated_to_zero_ionic_strength": 8.852,
-        "extrapolation_rule": "pKa_obs(I) = pKa(I=0) + dh(I) * (2*z_acid - 2) / (RT ln10), with dh from equilibrator_cache.thermodynamic_constants.debye_hueckel; dh(I=0.1, 303.15 K) = 0.62773 kJ/mol, z_acid = -4",
-        "temperature_series_ionic_strength_0.1": {
-          "278.15": 7.33,
-          "288.15": 7.55,
-          "298.15": 7.69,
-          "303.15": 7.77,
-          "308.15": 7.89
-        }
-      },
-      {
-        "acid_species": "H2P3O10(3-)",
-        "conjugate_base": "HP3O10(4-)",
-        "pka": 5.40,
-        "sigma": 0.02,
-        "T_K": 303.15,
-        "ionic_strength_M": 0.1,
-        "background_electrolyte": "NaNO3",
-        "method": "potentiometric titration, glass electrode, Gran calibration, nonlinear least squares",
-        "constant_type": "conditional (stepwise protonation constant log10 K2) at I = 0.1 mol/L",
-        "source_index": 1,
-        "pka_extrapolated_to_zero_ionic_strength": 6.266,
-        "extrapolation_rule": "pKa_obs(I) = pKa(I=0) + dh(I) * (2*z_acid - 2) / (RT ln10), with dh from equilibrator_cache.thermodynamic_constants.debye_hueckel; dh(I=0.1, 303.15 K) = 0.62773 kJ/mol, z_acid = -3",
-        "temperature_series_ionic_strength_0.1": {
-          "278.15": 5.12,
-          "288.15": 5.22,
-          "298.15": 5.34,
-          "303.15": 5.40,
-          "308.15": 5.49
-        }
-      }
-    ],
-    "pka_ladder_is_incomplete": true,
-    "pka_ladder_missing_rungs": "H3P3O10(2-), H4P3O10(1-) and H5P3O10 were not measured in the source and are not carried here; their populations at pH 6.8 to 7.2 are below 1e-3 of the total, so they do not affect the transform at the pipeline's conditions",
-    "does_not_price_the_metabolite": true
+    "background_electrolyte": "NaNO3",
+    "method": "potentiometric titration, glass electrode, Gran calibration, nonlinear least squares",
+    "constant_type": "conditional (stepwise protonation constant log10 K1) at I = 0.1 mol/L",
+    "source_index": 1,
+    "pka_extrapolated_to_zero_ionic_strength": 8.852,
+    "extrapolation_rule": "pKa_obs(I) = pKa(I=0) + dh(I) * (2*z_acid - 2) / (RT ln10), with dh from equilibrator_cache.thermodynamic_constants.debye_hueckel; dh(I=0.1, 303.15 K) = 0.62773 kJ/mol, z_acid = -4",
+    "temperature_series_ionic_strength_0.1": {
+     "278.15": 7.33,
+     "288.15": 7.55,
+     "298.15": 7.69,
+     "303.15": 7.77,
+     "308.15": 7.89
+    }
+   },
+   {
+    "acid_species": "H2P3O10(3-)",
+    "conjugate_base": "HP3O10(4-)",
+    "pka": 5.4,
+    "sigma": 0.02,
+    "T_K": 303.15,
+    "ionic_strength_M": 0.1,
+    "background_electrolyte": "NaNO3",
+    "method": "potentiometric titration, glass electrode, Gran calibration, nonlinear least squares",
+    "constant_type": "conditional (stepwise protonation constant log10 K2) at I = 0.1 mol/L",
+    "source_index": 1,
+    "pka_extrapolated_to_zero_ionic_strength": 6.266,
+    "extrapolation_rule": "pKa_obs(I) = pKa(I=0) + dh(I) * (2*z_acid - 2) / (RT ln10), with dh from equilibrator_cache.thermodynamic_constants.debye_hueckel; dh(I=0.1, 303.15 K) = 0.62773 kJ/mol, z_acid = -3",
+    "temperature_series_ionic_strength_0.1": {
+     "278.15": 5.12,
+     "288.15": 5.22,
+     "298.15": 5.34,
+     "303.15": 5.4,
+     "308.15": 5.49
+    }
+   }
+  ],
+  "pka_ladder_is_incomplete": true,
+  "pka_ladder_missing_rungs": "H3P3O10(2-), H4P3O10(1-) and H5P3O10 were not measured in the source and are not carried here; their populations at pH 6.8 to 7.2 are below 1e-3 of the total, so they do not affect the transform at the pipeline's conditions",
+  "does_not_price_the_metabolite": true,
+  "pkas": [
+   7.77,
+   5.4
+  ],
+  "overrides_cache_ladder": true
+ },
+ "sigma_kj_per_mol": null,
+ "sources": [
+  {
+   "source_url": "https://data.nist.gov/od/ds/mds2-2124/NBS_Tables_with_ErratumValues.csv",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sSL -o NBS_Tables_with_ErratumValues.csv 'https://data.nist.gov/od/ds/mds2-2124/NBS_Tables_with_ErratumValues.csv'  # then verified against the record's published checksum: curl -sSL 'https://data.nist.gov/od/ds/ark:/88434/mds2-2124/NBS_Tables_with_ErratumValues.csv.sha256'",
+   "sha256": "cb8a8b8b94a287e6e8c82eed8bad2cf9b611d574d1cfd95c8528d318dfef4b44",
+   "retrieved_at": "2026-09-11T21:56:00Z",
+   "verbatim_quote": "PO4<sup>3-</sup>,,,,ao,94.9714,-,-1277.4,-1018.7,-,-220.3*,-,\nP2O7<sup>4-</sup>,,,,ao,173.9434,-,-2271.1,-1919.0,-,-117.,-,\nP4O6,,,,cr,219.8916,-,-1640.1,-,-,-,-,",
+   "location": "NIST digitization of Wagman et al. 1982, The NBS Tables of Chemical Thermodynamic Properties (J. Phys. Chem. Ref. Data 11, Suppl. 2), NIST PDR record mds2-2124. Rows 1286 to 1288 of NBS_Tables_with_ErratumValues.csv: the aqueous phosphorus oxyanion block runs orthophosphate then diphosphate then straight to P4O6. A search of the whole file for the string P3O10 returns only Zn5(P3O10)2 (row 4247, am), Li5P3O10 (row 10572, vit), Na5P3O10 (rows 11348, 11349 cr; row 11350 in 5200 H2O with an enthalpy but no Gibbs energy and no entropy) and Na5P3O10.6H2O (row 11351). There is NO entry for an aqueous triphosphate ion in any protonation state, so the NBS tables carry no formation Gibbs energy for this species.",
+   "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/NBS_Tables_with_ErratumValues.csv"
   },
-  "sigma_kj_per_mol": null,
-  "sources": [
-    {
-      "source_url": "https://data.nist.gov/od/ds/mds2-2124/NBS_Tables_with_ErratumValues.csv",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sSL -o NBS_Tables_with_ErratumValues.csv 'https://data.nist.gov/od/ds/mds2-2124/NBS_Tables_with_ErratumValues.csv'  # then verified against the record's published checksum: curl -sSL 'https://data.nist.gov/od/ds/ark:/88434/mds2-2124/NBS_Tables_with_ErratumValues.csv.sha256'",
-      "sha256": "cb8a8b8b94a287e6e8c82eed8bad2cf9b611d574d1cfd95c8528d318dfef4b44",
-      "retrieved_at": "2026-09-11T21:56:00Z",
-      "verbatim_quote": "PO4<sup>3-</sup>,,,,ao,94.9714,-,-1277.4,-1018.7,-,-220.3*,-,\nP2O7<sup>4-</sup>,,,,ao,173.9434,-,-2271.1,-1919.0,-,-117.,-,\nP4O6,,,,cr,219.8916,-,-1640.1,-,-,-,-,",
-      "location": "NIST digitization of Wagman et al. 1982, The NBS Tables of Chemical Thermodynamic Properties (J. Phys. Chem. Ref. Data 11, Suppl. 2), NIST PDR record mds2-2124. Rows 1286 to 1288 of NBS_Tables_with_ErratumValues.csv: the aqueous phosphorus oxyanion block runs orthophosphate then diphosphate then straight to P4O6. A search of the whole file for the string P3O10 returns only Zn5(P3O10)2 (row 4247, am), Li5P3O10 (row 10572, vit), Na5P3O10 (rows 11348, 11349 cr; row 11350 in 5200 H2O with an enthalpy but no Gibbs energy and no entropy) and Na5P3O10.6H2O (row 11351). There is NO entry for an aqueous triphosphate ion in any protonation state, so the NBS tables carry no formation Gibbs energy for this species.",
-      "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/NBS_Tables_with_ErratumValues.csv"
-    },
-    {
-      "source_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3843374/fullTextXML",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sSL -o europepmc_PMC3843374_fullTextXML.xml 'https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3843374/fullTextXML'",
-      "sha256": "129ce1cf08f7775a1f45a72205275145595f26e9d23ebf1095d217d2f5f64269",
-      "retrieved_at": "2026-09-11T22:03:00Z",
-      "verbatim_quote": "Table 1 Logarithmic stepwise protonation constants of P3O(10-n)(NH)n5- ( n = 0, 2) anions determined by potentiometric titrations at I = 0.1 mol·L -1 (NaNO 3 ) [...] P3O105- log 10 K 1 log 10 K 2 [...] 25 °C 7.69 (0.01) 5.34 (0.01) [...] 30 °C 7.77 (0.02) 5.40 (0.02) [...] Numbers in parentheses indicate standard deviations derived from the nonlinear least-squares approximation. // 40 cm 3 solutions of 0.002 mol·L -1 Na 5 P 3 O 10 or Na 5 P 3 O 8 (NH) 2 + 0.10 mol·L -1 NaNO 3 were titrated stepwise by a solution of 0.01 mol·L -1 HNO 3 + 0.10 mol·L -1 NaNO 3 . // All titration procedures were carried out automatically at 5.0, 15.0, 25.0, 30.0, or 35.0 (±0.5) °C under a N 2 atmosphere",
-      "location": "Maki, H., Tsujito, M., Sakurai, M., Yamada, T., Nariai, H. and Mizuhata, M. (2013). Stabilities of the Divalent Metal Ion Complexes of a Short-Chain Polyphosphate Anion and Its Imino Derivative. Journal of Solution Chemistry 42, 2104. DOI 10.1007/s10953-013-0099-2, PMC3843374, PMID 24319300. Table 1 and the Potentiometric Titration subsection of Methods. Quote reconstructed from the JATS XML by stripping tags and MathML and collapsing whitespace; the // marks join separate passages, and [...] marks columns of the same table that belong to the imino derivative P3O8(NH)2(5-), not to triphosphate.",
-      "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/europepmc_PMC3843374_fullTextXML.xml"
-    },
-    {
-      "source_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11530844/fullTextXML",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sSL -o europepmc_PMC11530844_fullTextXML.xml 'https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11530844/fullTextXML'",
-      "sha256": "2e227d7c03476936c24097f5c66852f84efe011bb9c38ed9ca6ad2563454f49c",
-      "retrieved_at": "2026-09-11T22:03:00Z",
-      "verbatim_quote": "The Gibbs free energies of hydrolysis denoted herein as ΔG'pH7 are referring to 1 molar concentrations of reactants and products and 55.55 mol of water at pH 7 and 300 K. Our calculations also include inorganic triphosphate, which is expected to yield comparable values to ATP, but with ΔG'pH7 = -56.3 kJ mol-1 the highly charged HP3O10-4 species is likely subject to errors that are not accounted for by implicit and explicit solvation by SMD. Similarly, P2O7-4 with ΔG'pH7 = -36.7 kJ mol-1 exceeds the expected -13.9 kJ mol-1 based on the values given by Alberty et al. // The free energies of formation were thus calculated using the PBE(0) density functional and the 6-311G(2d,2p) basis set as implemented in Guassian16 Rev. C.01 and to account for the solvation energies in water, the molecules were embedded in a polarizable solvent continuum (SMD).",
-      "location": "Sanden, S. A., Butch, C. J., Bartlett, S., Virgo, N., Sekine, Y. and McGlynn, S. E. (2024). Rapid hydrolysis rates of thio- and phosphate esters constrain the origin of metabolism to cool, acidic to neutral environments. iScience 27, 111088. PMC11530844. Section 'Thermochemistry using density functional theory'. Quote reconstructed from the JATS XML by stripping tags and MathML and collapsing whitespace; the // marks join separate passages. A correction exists (iScience 2025 Jun 5;28(6):112790) and it changes only a reference label in Figure 1, not this number.",
-      "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/europepmc_PMC11530844_fullTextXML.xml"
-    },
-    {
-      "source_url": "doi:10.5281/zenodo.3978440/TECRDB.csv",
-      "retrieval_method": "zenodo_via_equilibrator_cache",
-      "retrieval_command": "from component_contribution.training_data import TRAINING_DATA_TECR_SETTINGS; from equilibrator_cache.zenodo import get_cached_filepath; get_cached_filepath(TRAINING_DATA_TECR_SETTINGS)  # downloads to ~/.cache/equilibrator/TECRDB.csv, copied into the mirror",
-      "sha256": "fe331b8b3962143bc32b017363bbadca71a49846b36beec100869f5587dc38a1",
-      "retrieved_at": "2026-09-11T22:05:00Z",
-      "verbatim_quote": "http://xpdb.nist.gov/enzyme_thermodynamics/enzyme_data1.pl?col=1.&T1=53MEY/SHA_1069,53MEY/SHA,calorimetry,B,3.6.1.2,trimetaphosphatase,kegg:C02466 + kegg:C00001 = kegg:C00536,trimetaphosphate(aq) + H2O(l) = triphosphate(aq),,,306.15,,6.95,",
-      "location": "Line 3245 of TECRDB.csv, the eQuilibrator 3.0 export of the NIST Thermodynamics of Enzyme-Catalyzed Reactions Database (Goldberg and Tewari). This is the ONLY row in 4544 that mentions triphosphate (kegg:C00536). Its K and K_prime fields are both empty, so no equilibrium constant is carried, and the reaction is trimetaphosphate hydrolysis rather than r_4403. There is no TECRDB row for triphosphate + H2O = diphosphate + phosphate (EC 3.6.1.25) at all.",
-      "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/equilibrator_TECRDB.csv"
-    },
-    {
-      "source_url": null,
-      "retrieval_method": "local_probe",
-      "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python emit_probes.py  # equilibrator-api 0.6.0, equilibrator-cache 0.6.2, component-contribution 0.6.0",
-      "sha256": "4e99aba6fb705102177a39b5a32e1189b8610c11b2051bb5ec64bb70c1032988",
-      "retrieved_at": "2026-09-11T22:10:00Z",
-      "verbatim_quote": "\"triphosphate\": {\"compound_id\": 314, \"formula\": \"HO10P3\", \"group_vector_is_none\": false, \"group_vector_len\": 0, \"in_component_contribution_train_S\": false, \"n_training_reactions\": 0, \"standard_dg_formation_kj_per_mol\": null} ; \"diphosphate\": {\"compound_id\": 14, \"group_vector_len\": 0, \"in_component_contribution_train_S\": true, \"n_training_reactions\": 345, \"standard_dg_formation_kj_per_mol\": -1966.8036657706114} ; \"phosphate\": {\"compound_id\": 12, \"group_vector_len\": 0, \"in_component_contribution_train_S\": true, \"n_training_reactions\": 659, \"standard_dg_formation_kj_per_mol\": -1095.2054811974629}",
-      "location": "equilibrator_cache_probe.json, keys compounds.triphosphate, compounds.diphosphate, compounds.phosphate. Establishes the real mechanism of the exclusion: the group vector is EMPTY for phosphate and diphosphate too, so an empty group vector is not what separates them; what separates triphosphate is that it is absent from the component-contribution training stoichiometry (631 compounds by 3999 reactions), so the reactant contribution has nothing either.",
-      "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/equilibrator_cache_probe.json"
-    },
-    {
-      "source_url": null,
-      "retrieval_method": "local_probe",
-      "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python emit_probes.py  # equilibrator-assets 0.6.0 GroupDecomposer",
-      "sha256": "0f9466b77ea1d4ef6fbeba476d5976ad9ad2bb9d8bab1f9b66e52c9ef1e39f6c",
-      "retrieved_at": "2026-09-11T22:10:00Z",
-      "verbatim_quote": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups",
-      "location": "group_decomposition_probe.json. Every protonation state of triphosphate fails, with ignore_protonations both False and True. The controls settle what the failure means: bare diphosphate P2O7(4-) and bare orthophosphate PO4(3-) fail identically, while ATP decomposes into 13 groups including '-OPO3 [H0 Z-2 Mg0]' and '-OPO2-OPO2- [H0 Z-2 Mg0]'. The group system has phosphate groups only as substituents on a carbon skeleton, so no protonation state of a bare inorganic polyphosphate can decompose.",
-      "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/group_decomposition_probe.json"
-    },
-    {
-      "source_url": null,
-      "retrieval_method": "local_probe",
-      "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python emit_probes.py  # calls equilibrator_cache.thermodynamic_constants._legendre_transform directly",
-      "sha256": "00f360fc9d06d77fbc7241c5b4692e3dc0c632283ef6f7425574d9cef57c9620",
-      "retrieved_at": "2026-09-11T22:10:00Z",
-      "verbatim_quote": "\"cache_ladder\": {\"relative_transform_kj_per_mol\": 14.552112305776271, \"populations\": [{\"number_protons\": -1, \"charge\": -6, \"fraction\": 0.9027}, {\"number_protons\": 0, \"charge\": -5, \"fraction\": 0.0928}, {\"number_protons\": 1, \"charge\": -4, \"fraction\": 0.0045}]} ; \"measured_ladder\": {\"relative_transform_kj_per_mol\": 27.31362070420955, \"populations\": [{\"number_protons\": 1, \"charge\": -4, \"fraction\": 0.7180}, {\"number_protons\": 0, \"charge\": -5, \"fraction\": 0.2726}, {\"number_protons\": 2, \"charge\": -3, \"fraction\": 0.0095}]} ; \"difference_measured_minus_cache_kj_per_mol\": 12.76150839843328",
-      "location": "transform_comparison.json, at pH 7.0, I = 0.25 M, T = 303.15 K, pMg 3. The cache's stored ladder carries six microspecies from charge -6 to charge -1, one rung too far in both directions: triphosphate is fully deprotonated at P3O10(5-), so the charge -6 microspecies does not exist, and under the cache's own numbers it holds 90 percent of the population at pH 7.",
-      "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/transform_comparison.json"
-    },
-    {
-      "source_url": null,
-      "retrieval_method": "local_file_in_gem_release",
-      "retrieval_command": "grep -n 's_4098\\|s_4099' model_metDeltaG.csv ; grep -n 'r_4403' model_rxnDeltaG.csv",
-      "sha256": "179a5aac4221ded673a5bba798870ca4cac9b9d19e955de6a0f25de65a3cee8f",
-      "retrieved_at": "2026-09-11T21:55:00Z",
-      "verbatim_quote": "s_4098,10000000\ns_4099,10000000",
-      "location": "$DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_metDeltaG.csv rows 2579 and 2580. 10000000 is the release's no-value sentinel, carried by every row of the file that has no estimate. The companion model_rxnDeltaG.csv (sha256 7a66ef5d7892bd65229e908e5eff4cd95e741d6c493ee8645d480a53e2da5796) carries r_4403,10000000 at row 3760. yeast-GEM 9.0.2 therefore ships no value of its own for either metabolite or for the reaction.",
-      "local_path": "$DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_metDeltaG.csv"
-    },
-    {
-      "source_url": "https://www.science.co.il/chemistry/databases/Codata-key-values-for-thermodynamics.pdf",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "grep -in 'P3O10\\|triphosph\\|tripoly' codata-key-values-for-thermodynamics.txt  # against the copy already mirrored by fetch_ion_formation_energies.py",
-      "sha256": "74e66a67afc5d6935ed8a308ae4eb4d23478cc00cfb10642489b874f811bba09",
-      "retrieved_at": "2026-09-11T21:57:00Z",
-      "verbatim_quote": "HPO4-2              aq                 -1299.0±1.5      -33.5±1.5\nH2PO4-              aq                 -1302.6±1.5      92.5±1.5",
-      "location": "$DATA_ROOT/data/torchcell/ion_formation_energies/codata-key-values-for-thermodynamics.txt (CODATA Key Values for Thermodynamics, Cox, Wagman and Medvedev 1989), lines 95 and 101. The only aqueous phosphorus species CODATA evaluates are the two orthophosphate ions quoted; a case-insensitive search for P3O10, triphosph and tripoly returns nothing. CODATA carries no triphosphate value.",
-      "local_path": "$DATA_ROOT/data/torchcell/ion_formation_energies/codata-key-values-for-thermodynamics.txt"
-    },
-    {
-      "source_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=13115420&rettype=abstract&retmode=text",
-      "retrieval_method": "pubmed_efetch",
-      "retrieval_command": "curl -sS 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=13115420&rettype=abstract&retmode=text' -o pubmed_13115420_abstract.txt",
-      "sha256": "82c5408c2a4852c825e10d4d623fcf1c92a085beff501c235fbbe6f89873683f",
-      "retrieved_at": "2026-09-11T22:08:00Z",
-      "verbatim_quote": "Biochim Biophys Acta. 1953 Sep-Oct;12(1-2):121-7. doi: 10.1016/0006-3002(53)90130-9.\n\nHeat of hydrolysis of trimetaphosphate.\n\nMEYERHOF O, SHATAS R, KAPLAN A.",
-      "location": "PubMed record for the primary paper behind TECRDB reference 53MEY/SHA. Recorded so the trail is closed, NOT as a value: the PubMed record carries no abstract, the full text was not retrieved, and the measurement is calorimetric on trimetaphosphate hydrolysis rather than on r_4403.",
-      "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/pubmed_13115420_abstract.txt"
-    }
-  ],
-  "searches": [
-    {
-      "query": "NBS tables Wagman 1982 standard Gibbs energy of formation P3O10^5- triphosphate ion aqueous",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "Pointed at the NIST digitization of the NBS tables (NIST PDR record mds2-2124) as a machine-readable CSV. Followed."
-    },
-    {
-      "query": "https://data.nist.gov/rmm/records/mds2-2124 (component list)",
-      "engine": "WebFetch",
-      "date": "2026-09-11",
-      "outcome": "Gave the direct download URLs for NBS_Tables_with_ErratumValues.csv and its published sha256. Both fetched; the downloaded bytes match the published checksum."
-    },
-    {
-      "query": "grep P3O10 / P2O7 / all formulas containing P3 in NBS_Tables_with_ErratumValues.csv",
-      "engine": "local grep",
-      "date": "2026-09-11",
-      "outcome": "NEGATIVE for an aqueous triphosphate ion. Diphosphate P2O7(4-) is present with dfG = -1919.0 kJ/mol; the eleven P3-containing rows are all solids or one solution enthalpy for Na5P3O10."
-    },
-    {
-      "query": "tripolyphosphate hydrolysis standard free energy of hydrolysis kJ/mol measured equilibrium triphosphate to pyrophosphate orthophosphate",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "No measured free energy of hydrolysis surfaced. Hits are kinetics (rate constants, activation energies) or generic ATP bioenergetics."
-    },
-    {
-      "query": "Goldberg Tewari NIST thermodynamics enzyme-catalyzed reactions triphosphatase EC 3.6.1.25 equilibrium constant inorganic triphosphate hydrolysis",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "Located the TECRDB series (Part 3, Hydrolases, J. Phys. Chem. Ref. Data 23, 1035, 1994). The srd.nist.gov reprint at 1.555957.pdf returned HTTP 503 on two attempts, so the database itself was queried instead through eQuilibrator's Zenodo export."
-    },
-    {
-      "query": "search the eQuilibrator TECRDB / formation / redox training tables for C00536, triphosphate, tripolyphosphate, pppi",
-      "engine": "local pandas over the Zenodo training data",
-      "date": "2026-09-11",
-      "outcome": "DECISIVE. One row in 4544 mentions triphosphate (53MEY/SHA, calorimetry, trimetaphosphatase) and it carries no K and no K_prime. Zero rows in the 226-row formation-energy table and zero in the 13-row redox table. No measured equilibrium constant exists for triphosphate anywhere in eQuilibrator's training data, which is why compound 314 is absent from train_S."
-    },
-    {
-      "query": "inorganic triphosphatase EC 3.6.1.25 equilibrium constant measured apparent K' triphosphate + H2O = diphosphate + phosphate thermodynamics",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "No measured apparent equilibrium constant found. Only enzyme-database entries (BRENDA, ExplorEnz, MetaCyc) that state the reaction, plus the TECRDB series index."
-    },
-    {
-      "query": "Meyerhof Shatas 1953 calorimetry heat of hydrolysis trimetaphosphate triphosphate enthalpy kcal enzyme",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "Identified the primary paper behind 53MEY/SHA (Meyerhof, Shatas and Kaplan, Biochim. Biophys. Acta 12, 121, 1953). Full text not retrieved; the PubMed record carries no abstract. Not usable: calorimetric enthalpy on the wrong reaction, and an enthalpy alone does not give a Gibbs energy."
-    },
-    {
-      "query": "\"P3O10\" standard Gibbs energy of formation aqueous kJ/mol tripolyphosphate ion thermodynamic table Bard standard potentials",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "No value. Bard, Parsons and Jordan (1985) has a phosphorus chapter but no accessible tabulation of P3O10(5-) surfaced; the book is not open."
-    },
-    {
-      "query": "thermodynamic database aqueous species \"P3O10-5\" log K formation Gibbs energy PHREEQC llnl.dat Thermoddem geochemical",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "No value. Geochemical databases surfaced generically; none was shown to carry a polyphosphate anion."
-    },
-    {
-      "query": "Alberty thermodynamics of biochemical reactions standard transformed Gibbs energy formation pyrophosphate triphosphate PPPi species table",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "No value. Alberty's tables are cited by the 2024 DFT paper for pyrophosphate but never for triphosphate, which is consistent with triphosphate being absent from them; not independently confirmed."
-    },
-    {
-      "query": "triphosphoric acid pKa values pK4 pK5 tripolyphosphate protonation constants 25 C Smith Martell critical stability constants",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "Smith and Martell (NIST SRD 46) is not openly accessible. Secondary pages give ranges only and disagree with each other, so none was used."
-    },
-    {
-      "query": "triphosphate ion protonation constants potentiometric log K measured 25 C ionic strength 0.1 tripolyphosphate",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "FOUND the admitted source: Maki et al. 2013, J. Solution Chem., open access on PMC, a primary potentiometric measurement with a temperature series."
-    },
-    {
-      "query": "Irani Callis 1960 Metal complexing by phosphorus compounds thermodynamics of ionization tripolyphosphoric acid pK values",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "Identified a second measured ladder (Irani et al., J. Inorg. Nucl. Chem. 1966, Metal complexing by phosphorus compounds IX) that would give the lower rungs. Paywalled and not retrieved."
-    },
-    {
-      "query": "iScience 2025 28 112790 correction Sanden Butch McGlynn erratum",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "The correction changes only a reference label in Figure 1 (Weber 1994 to Weber 1981). The -56.3 kJ/mol value is unaffected."
-    },
-    {
-      "query": "PMC11530844 full text: value, method, conditions, solvation warning",
-      "engine": "WebFetch then Europe PMC XML",
-      "date": "2026-09-11",
-      "outcome": "Confirmed the lead exactly and mirrored the article. Also found the authors' own calibration statement that their P2O7(4-) number overshoots the Alberty value by 22.8 kJ/mol, which is the strongest argument against admitting -56.3."
-    }
-  ],
-  "decomposition_check": {
-    "attempted": true,
-    "decomposes": false,
-    "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups. Raised for every protonation state tried, with ignore_protonations both False and True. The controls place the failure: bare diphosphate P2O7(4-) and bare orthophosphate PO4(3-) fail identically while ATP decomposes into 13 groups including '-OPO3' and '-OPO2-OPO2-', so the group system recognizes phosphate groups only when they hang off a carbon skeleton. No alternative protonation state can be made to decompose, and the exclusion label group_decomposition_failed is by itself not the reason triphosphate is unpriced: phosphate and diphosphate carry an empty group vector too and are priced from the reactant contribution, which triphosphate cannot use because it appears in none of the 3999 training reactions.",
-    "smiles_tried": [
-      "[O-]P(=O)([O-])OP(=O)([O-])OP(=O)([O-])[O-]",
-      "OP([O-])(=O)OP([O-])(=O)OP([O-])([O-])=O",
-      "OP([O-])(=O)OP([O-])(=O)OP(O)([O-])=O",
-      "OP([O-])(=O)OP(O)(=O)OP([O-])([O-])=O",
-      "OP(O)(=O)OP([O-])(=O)OP(O)([O-])=O",
-      "OP(O)(=O)OP(O)(=O)OP(O)(O)=O",
-      "[O-]P(=O)([O-])OP(=O)([O-])[O-]",
-      "[O-]P(=O)([O-])[O-]",
-      "Nc1ncnc2c1ncn2[C@@H]1O[C@H](COP(=O)([O-])OP(=O)([O-])OP(=O)([O-])[O-])[C@@H](O)[C@H]1O"
-    ]
+  {
+   "source_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3843374/fullTextXML",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sSL -o europepmc_PMC3843374_fullTextXML.xml 'https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3843374/fullTextXML'",
+   "sha256": "129ce1cf08f7775a1f45a72205275145595f26e9d23ebf1095d217d2f5f64269",
+   "retrieved_at": "2026-09-11T22:03:00Z",
+   "verbatim_quote": "Table 1 Logarithmic stepwise protonation constants of P3O(10-n)(NH)n5- ( n = 0, 2) anions determined by potentiometric titrations at I = 0.1 mol\u00b7L -1 (NaNO 3 ) [...] P3O105- log 10 K 1 log 10 K 2 [...] 25 \u00b0C 7.69 (0.01) 5.34 (0.01) [...] 30 \u00b0C 7.77 (0.02) 5.40 (0.02) [...] Numbers in parentheses indicate standard deviations derived from the nonlinear least-squares approximation. // 40 cm 3 solutions of 0.002 mol\u00b7L -1 Na 5 P 3 O 10 or Na 5 P 3 O 8 (NH) 2 + 0.10 mol\u00b7L -1 NaNO 3 were titrated stepwise by a solution of 0.01 mol\u00b7L -1 HNO 3 + 0.10 mol\u00b7L -1 NaNO 3 . // All titration procedures were carried out automatically at 5.0, 15.0, 25.0, 30.0, or 35.0 (\u00b10.5) \u00b0C under a N 2 atmosphere",
+   "location": "Maki, H., Tsujito, M., Sakurai, M., Yamada, T., Nariai, H. and Mizuhata, M. (2013). Stabilities of the Divalent Metal Ion Complexes of a Short-Chain Polyphosphate Anion and Its Imino Derivative. Journal of Solution Chemistry 42, 2104. DOI 10.1007/s10953-013-0099-2, PMC3843374, PMID 24319300. Table 1 and the Potentiometric Titration subsection of Methods. Quote reconstructed from the JATS XML by stripping tags and MathML and collapsing whitespace; the // marks join separate passages, and [...] marks columns of the same table that belong to the imino derivative P3O8(NH)2(5-), not to triphosphate.",
+   "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/europepmc_PMC3843374_fullTextXML.xml"
   },
-  "computed_values_recorded_not_admitted": [
-    {
-      "value": -56.3,
-      "method": "DFT, PBE0/6-311G(2d,2p) in Gaussian 16 Rev. C.01, SMD implicit continuum with four explicit water molecules hydrogen bonded to the most charged residues; reported as delta G'(pH 7) of hydrolysis in kJ/mol, referred to 1 M reactants and products, 55.55 mol water, pH 7 and 300 K, no ionic strength and no magnesium specified. The hydrolyzing species is stated as HP3O10(4-).",
-      "source_index": 2
-    },
-    {
-      "value": -36.7,
-      "method": "Same DFT protocol, for diphosphate P2O7(4-) hydrolysis. Recorded as the CALIBRATION of the number above, not as a triphosphate value: the same paper states this overshoots the expected -13.9 kJ/mol from Alberty by 22.8 kJ/mol, which is the size of the error the authors attribute to solvation of highly charged anions.",
-      "source_index": 2
-    },
-    {
-      "value": null,
-      "method": "eQuilibrator's own pKa ladder for compound 314 (six microspecies, charge -6 to -1, stored as ddg_over_rt in the compound cache). It is a prediction rather than a measurement, and it is wrong in a way that is visible without any external data: it places a sixth deprotonation on a species that has no sixth proton. Implied pKas 0.890, 2.450, 3.240, 7.120 and 7.730, against measured 5.40 and 7.77 (I = 0.1, 30 C) for the two rungs that were measured.",
-      "source_index": 6
-    }
-  ],
-  "notes": "WHAT WAS FOUND. A measured pKa ladder, and nothing that prices the metabolite. Two stepwise protonation constants of P3O10(5-) were measured potentiometrically by Maki et al. 2013 at five temperatures including 30 C, which is the pipeline's own temperature: pKa(HP3O10 4-) = 7.77 (0.02) and pKa(H2P3O10 3-) = 5.40 (0.02) at I = 0.1 M NaNO3. Those are conditional constants at I = 0.1, so a zero-ionic-strength pair (8.852 and 6.266) is derived here with eQuilibrator's own Debye-Huckel term, because eQuilibrator's transform applies that term itself and would otherwise double count it. The derivation is recorded in the value block and in transform_comparison.json; it is arithmetic on the measured numbers, not a new measurement.\n\nWHAT WAS NOT FOUND, AND WHY r_4403 STAYS BLOCKED. No formation energy and no reaction energy. Four independent places that would carry one do not: the NBS tables have no aqueous triphosphate ion in any protonation state (they stop at P2O7 4- and jump to P4O6); CODATA evaluates only the two orthophosphate ions; the NIST TECRDB has exactly one triphosphate row in 4544 and it carries no equilibrium constant, and none at all for EC 3.6.1.25; yeast-GEM 9.0.2 ships its no-value sentinel for s_4098, s_4099 and r_4403. So this record does NOT unblock r_4403 and must not be read as pricing triphosphate. Of the three listed reactions only r_4403 is chemistry; r_4369 is a proton symport with the same species on both sides and r_4528 is an exchange, and both are closed by separate rules regardless of this record.\n\nWHAT THE PKA LADDER IS WORTH ANYWAY. The cache's stored ladder is not merely imprecise, it is off by one rung in both directions: it carries a microspecies at charge -6, which would require deprotonating an oxide of an already fully deprotonated anion, and it omits the neutral acid H5P3O10 at the bottom. Under eQuilibrator's own transform at pH 7.0, I = 0.25 M, T = 303.15 K, that fictitious species holds 90 percent of the population, and the whole pH-dependent part of the transform sits 12.76 kJ/mol away from where the measured ladder puts it. That is the size of the error the ladder would inject into r_4403 the day an anchor arrives, so the ladder is worth fixing before, not after.\n\nWHY THE EXCLUSION LABEL IS MISLEADING. The row is labeled group_decomposition_failed, and decomposition does fail for every protonation state tried. But phosphate and diphosphate also carry an empty group vector and are priced anyway, from the reactant contribution, because they appear in 659 and 345 training reactions. Triphosphate appears in none. The honest statement of the exclusion is 'no group decomposition AND absent from the reactant-contribution training set', and the second half is the binding one: no pKa predictor, structure writer or protonation-state search can move it.\n\nWHAT A HUMAN WOULD STILL NEED TO DO. (1) To price it: find or make one absolute anchor. Three routes, in descending order of promise. Route A, the NBS solid: NBS gives Na5P3O10 (cr, form I) delta_f G = -4093.9 kJ/mol and an enthalpy but no entropy for the same salt in 5200 H2O, so a measured solubility product with a Pitzer treatment at the relevant ionic strength would close the cycle to P3O10(5-) through delta_f G(Na+, aq); this is a literature-search plus derivation task, not a curation task, and the activity treatment at high ionic strength is where it can go wrong. Route B, an equilibrium measurement: no apparent equilibrium constant for triphosphate hydrolysis appears to exist, plausibly because the reaction is effectively irreversible, so this would mean an isotope-exchange or coupled-equilibrium measurement rather than a literature find. Route C, accept a computed value with an explicit route label: the only computed number found is -56.3 kJ/mol, and the same paper's own pyrophosphate check overshoots by 22.8 kJ/mol, so if it were ever used it should carry an uncertainty of at least that size and a route that is not the default one. (2) To use the pKa ladder: decide whether the pipeline may override a cached ladder at all, and if so, drop the charge -6 microspecies for every fully deprotonated inorganic anion, not just this one, since the same predictor artifact will recur. (3) Optional completion of the ladder: Irani et al., J. Inorg. Nucl. Chem. 1966 (Metal complexing by phosphorus compounds IX, thermodynamics of ionization of ortho-, pyro- and tripolyphosphoric acids) is the obvious source for the three lower rungs; it is paywalled and was not retrieved. Those rungs change nothing at pH 6.8 to 7.2.\n\nCONDITIONS SUMMARY. Measured values: 303.15 K (and 278.15, 288.15, 298.15, 308.15), I = 0.1 mol/L NaNO3, no magnesium, conditional constants, aqueous. Derived zero-ionic-strength values: same temperatures, I = 0, eQuilibrator Debye-Huckel. Transform comparison: pH 7.0, I = 0.25 mol/L, 303.15 K, pMg 3. Computed value not admitted: pH 7, 300 K, 1 M standard state, ionic strength and magnesium unspecified."
+  {
+   "source_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11530844/fullTextXML",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sSL -o europepmc_PMC11530844_fullTextXML.xml 'https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11530844/fullTextXML'",
+   "sha256": "2e227d7c03476936c24097f5c66852f84efe011bb9c38ed9ca6ad2563454f49c",
+   "retrieved_at": "2026-09-11T22:03:00Z",
+   "verbatim_quote": "The Gibbs free energies of hydrolysis denoted herein as \u0394G'pH7 are referring to 1 molar concentrations of reactants and products and 55.55 mol of water at pH 7 and 300 K. Our calculations also include inorganic triphosphate, which is expected to yield comparable values to ATP, but with \u0394G'pH7 = -56.3 kJ mol-1 the highly charged HP3O10-4 species is likely subject to errors that are not accounted for by implicit and explicit solvation by SMD. Similarly, P2O7-4 with \u0394G'pH7 = -36.7 kJ mol-1 exceeds the expected -13.9 kJ mol-1 based on the values given by Alberty et al. // The free energies of formation were thus calculated using the PBE(0) density functional and the 6-311G(2d,2p) basis set as implemented in Guassian16 Rev. C.01 and to account for the solvation energies in water, the molecules were embedded in a polarizable solvent continuum (SMD).",
+   "location": "Sanden, S. A., Butch, C. J., Bartlett, S., Virgo, N., Sekine, Y. and McGlynn, S. E. (2024). Rapid hydrolysis rates of thio- and phosphate esters constrain the origin of metabolism to cool, acidic to neutral environments. iScience 27, 111088. PMC11530844. Section 'Thermochemistry using density functional theory'. Quote reconstructed from the JATS XML by stripping tags and MathML and collapsing whitespace; the // marks join separate passages. A correction exists (iScience 2025 Jun 5;28(6):112790) and it changes only a reference label in Figure 1, not this number.",
+   "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/europepmc_PMC11530844_fullTextXML.xml"
+  },
+  {
+   "source_url": "doi:10.5281/zenodo.3978440/TECRDB.csv",
+   "retrieval_method": "zenodo_via_equilibrator_cache",
+   "retrieval_command": "from component_contribution.training_data import TRAINING_DATA_TECR_SETTINGS; from equilibrator_cache.zenodo import get_cached_filepath; get_cached_filepath(TRAINING_DATA_TECR_SETTINGS)  # downloads to ~/.cache/equilibrator/TECRDB.csv, copied into the mirror",
+   "sha256": "fe331b8b3962143bc32b017363bbadca71a49846b36beec100869f5587dc38a1",
+   "retrieved_at": "2026-09-11T22:05:00Z",
+   "verbatim_quote": "http://xpdb.nist.gov/enzyme_thermodynamics/enzyme_data1.pl?col=1.&T1=53MEY/SHA_1069,53MEY/SHA,calorimetry,B,3.6.1.2,trimetaphosphatase,kegg:C02466 + kegg:C00001 = kegg:C00536,trimetaphosphate(aq) + H2O(l) = triphosphate(aq),,,306.15,,6.95,",
+   "location": "Line 3245 of TECRDB.csv, the eQuilibrator 3.0 export of the NIST Thermodynamics of Enzyme-Catalyzed Reactions Database (Goldberg and Tewari). This is the ONLY row in 4544 that mentions triphosphate (kegg:C00536). Its K and K_prime fields are both empty, so no equilibrium constant is carried, and the reaction is trimetaphosphate hydrolysis rather than r_4403. There is no TECRDB row for triphosphate + H2O = diphosphate + phosphate (EC 3.6.1.25) at all.",
+   "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/equilibrator_TECRDB.csv"
+  },
+  {
+   "source_url": null,
+   "retrieval_method": "local_probe",
+   "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python emit_probes.py  # equilibrator-api 0.6.0, equilibrator-cache 0.6.2, component-contribution 0.6.0",
+   "sha256": "4e99aba6fb705102177a39b5a32e1189b8610c11b2051bb5ec64bb70c1032988",
+   "retrieved_at": "2026-09-11T22:10:00Z",
+   "verbatim_quote": "\"triphosphate\": {\"compound_id\": 314, \"formula\": \"HO10P3\", \"group_vector_is_none\": false, \"group_vector_len\": 0, \"in_component_contribution_train_S\": false, \"n_training_reactions\": 0, \"standard_dg_formation_kj_per_mol\": null} ; \"diphosphate\": {\"compound_id\": 14, \"group_vector_len\": 0, \"in_component_contribution_train_S\": true, \"n_training_reactions\": 345, \"standard_dg_formation_kj_per_mol\": -1966.8036657706114} ; \"phosphate\": {\"compound_id\": 12, \"group_vector_len\": 0, \"in_component_contribution_train_S\": true, \"n_training_reactions\": 659, \"standard_dg_formation_kj_per_mol\": -1095.2054811974629}",
+   "location": "equilibrator_cache_probe.json, keys compounds.triphosphate, compounds.diphosphate, compounds.phosphate. Establishes the real mechanism of the exclusion: the group vector is EMPTY for phosphate and diphosphate too, so an empty group vector is not what separates them; what separates triphosphate is that it is absent from the component-contribution training stoichiometry (631 compounds by 3999 reactions), so the reactant contribution has nothing either.",
+   "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/equilibrator_cache_probe.json"
+  },
+  {
+   "source_url": null,
+   "retrieval_method": "local_probe",
+   "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python emit_probes.py  # equilibrator-assets 0.6.0 GroupDecomposer",
+   "sha256": "0f9466b77ea1d4ef6fbeba476d5976ad9ad2bb9d8bab1f9b66e52c9ef1e39f6c",
+   "retrieved_at": "2026-09-11T22:10:00Z",
+   "verbatim_quote": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups",
+   "location": "group_decomposition_probe.json. Every protonation state of triphosphate fails, with ignore_protonations both False and True. The controls settle what the failure means: bare diphosphate P2O7(4-) and bare orthophosphate PO4(3-) fail identically, while ATP decomposes into 13 groups including '-OPO3 [H0 Z-2 Mg0]' and '-OPO2-OPO2- [H0 Z-2 Mg0]'. The group system has phosphate groups only as substituents on a carbon skeleton, so no protonation state of a bare inorganic polyphosphate can decompose.",
+   "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/group_decomposition_probe.json"
+  },
+  {
+   "source_url": null,
+   "retrieval_method": "local_probe",
+   "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python emit_probes.py  # calls equilibrator_cache.thermodynamic_constants._legendre_transform directly",
+   "sha256": "00f360fc9d06d77fbc7241c5b4692e3dc0c632283ef6f7425574d9cef57c9620",
+   "retrieved_at": "2026-09-11T22:10:00Z",
+   "verbatim_quote": "\"cache_ladder\": {\"relative_transform_kj_per_mol\": 14.552112305776271, \"populations\": [{\"number_protons\": -1, \"charge\": -6, \"fraction\": 0.9027}, {\"number_protons\": 0, \"charge\": -5, \"fraction\": 0.0928}, {\"number_protons\": 1, \"charge\": -4, \"fraction\": 0.0045}]} ; \"measured_ladder\": {\"relative_transform_kj_per_mol\": 27.31362070420955, \"populations\": [{\"number_protons\": 1, \"charge\": -4, \"fraction\": 0.7180}, {\"number_protons\": 0, \"charge\": -5, \"fraction\": 0.2726}, {\"number_protons\": 2, \"charge\": -3, \"fraction\": 0.0095}]} ; \"difference_measured_minus_cache_kj_per_mol\": 12.76150839843328",
+   "location": "transform_comparison.json, at pH 7.0, I = 0.25 M, T = 303.15 K, pMg 3. The cache's stored ladder carries six microspecies from charge -6 to charge -1, one rung too far in both directions: triphosphate is fully deprotonated at P3O10(5-), so the charge -6 microspecies does not exist, and under the cache's own numbers it holds 90 percent of the population at pH 7.",
+   "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/transform_comparison.json"
+  },
+  {
+   "source_url": null,
+   "retrieval_method": "local_file_in_gem_release",
+   "retrieval_command": "grep -n 's_4098\\|s_4099' model_metDeltaG.csv ; grep -n 'r_4403' model_rxnDeltaG.csv",
+   "sha256": "179a5aac4221ded673a5bba798870ca4cac9b9d19e955de6a0f25de65a3cee8f",
+   "retrieved_at": "2026-09-11T21:55:00Z",
+   "verbatim_quote": "s_4098,10000000\ns_4099,10000000",
+   "location": "$DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_metDeltaG.csv rows 2579 and 2580. 10000000 is the release's no-value sentinel, carried by every row of the file that has no estimate. The companion model_rxnDeltaG.csv (sha256 7a66ef5d7892bd65229e908e5eff4cd95e741d6c493ee8645d480a53e2da5796) carries r_4403,10000000 at row 3760. yeast-GEM 9.0.2 therefore ships no value of its own for either metabolite or for the reaction.",
+   "local_path": "$DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_metDeltaG.csv"
+  },
+  {
+   "source_url": "https://www.science.co.il/chemistry/databases/Codata-key-values-for-thermodynamics.pdf",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "grep -in 'P3O10\\|triphosph\\|tripoly' codata-key-values-for-thermodynamics.txt  # against the copy already mirrored by fetch_ion_formation_energies.py",
+   "sha256": "74e66a67afc5d6935ed8a308ae4eb4d23478cc00cfb10642489b874f811bba09",
+   "retrieved_at": "2026-09-11T21:57:00Z",
+   "verbatim_quote": "HPO4-2              aq                 -1299.0\u00b11.5      -33.5\u00b11.5\nH2PO4-              aq                 -1302.6\u00b11.5      92.5\u00b11.5",
+   "location": "$DATA_ROOT/data/torchcell/ion_formation_energies/codata-key-values-for-thermodynamics.txt (CODATA Key Values for Thermodynamics, Cox, Wagman and Medvedev 1989), lines 95 and 101. The only aqueous phosphorus species CODATA evaluates are the two orthophosphate ions quoted; a case-insensitive search for P3O10, triphosph and tripoly returns nothing. CODATA carries no triphosphate value.",
+   "local_path": "$DATA_ROOT/data/torchcell/ion_formation_energies/codata-key-values-for-thermodynamics.txt"
+  },
+  {
+   "source_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=13115420&rettype=abstract&retmode=text",
+   "retrieval_method": "pubmed_efetch",
+   "retrieval_command": "curl -sS 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=13115420&rettype=abstract&retmode=text' -o pubmed_13115420_abstract.txt",
+   "sha256": "82c5408c2a4852c825e10d4d623fcf1c92a085beff501c235fbbe6f89873683f",
+   "retrieved_at": "2026-09-11T22:08:00Z",
+   "verbatim_quote": "Biochim Biophys Acta. 1953 Sep-Oct;12(1-2):121-7. doi: 10.1016/0006-3002(53)90130-9.\n\nHeat of hydrolysis of trimetaphosphate.\n\nMEYERHOF O, SHATAS R, KAPLAN A.",
+   "location": "PubMed record for the primary paper behind TECRDB reference 53MEY/SHA. Recorded so the trail is closed, NOT as a value: the PubMed record carries no abstract, the full text was not retrieved, and the measurement is calorimetric on trimetaphosphate hydrolysis rather than on r_4403.",
+   "local_path": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/triphosphate/pubmed_13115420_abstract.txt"
+  }
+ ],
+ "searches": [
+  {
+   "query": "NBS tables Wagman 1982 standard Gibbs energy of formation P3O10^5- triphosphate ion aqueous",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Pointed at the NIST digitization of the NBS tables (NIST PDR record mds2-2124) as a machine-readable CSV. Followed."
+  },
+  {
+   "query": "https://data.nist.gov/rmm/records/mds2-2124 (component list)",
+   "engine": "WebFetch",
+   "date": "2026-09-11",
+   "outcome": "Gave the direct download URLs for NBS_Tables_with_ErratumValues.csv and its published sha256. Both fetched; the downloaded bytes match the published checksum."
+  },
+  {
+   "query": "grep P3O10 / P2O7 / all formulas containing P3 in NBS_Tables_with_ErratumValues.csv",
+   "engine": "local grep",
+   "date": "2026-09-11",
+   "outcome": "NEGATIVE for an aqueous triphosphate ion. Diphosphate P2O7(4-) is present with dfG = -1919.0 kJ/mol; the eleven P3-containing rows are all solids or one solution enthalpy for Na5P3O10."
+  },
+  {
+   "query": "tripolyphosphate hydrolysis standard free energy of hydrolysis kJ/mol measured equilibrium triphosphate to pyrophosphate orthophosphate",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "No measured free energy of hydrolysis surfaced. Hits are kinetics (rate constants, activation energies) or generic ATP bioenergetics."
+  },
+  {
+   "query": "Goldberg Tewari NIST thermodynamics enzyme-catalyzed reactions triphosphatase EC 3.6.1.25 equilibrium constant inorganic triphosphate hydrolysis",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Located the TECRDB series (Part 3, Hydrolases, J. Phys. Chem. Ref. Data 23, 1035, 1994). The srd.nist.gov reprint at 1.555957.pdf returned HTTP 503 on two attempts, so the database itself was queried instead through eQuilibrator's Zenodo export."
+  },
+  {
+   "query": "search the eQuilibrator TECRDB / formation / redox training tables for C00536, triphosphate, tripolyphosphate, pppi",
+   "engine": "local pandas over the Zenodo training data",
+   "date": "2026-09-11",
+   "outcome": "DECISIVE. One row in 4544 mentions triphosphate (53MEY/SHA, calorimetry, trimetaphosphatase) and it carries no K and no K_prime. Zero rows in the 226-row formation-energy table and zero in the 13-row redox table. No measured equilibrium constant exists for triphosphate anywhere in eQuilibrator's training data, which is why compound 314 is absent from train_S."
+  },
+  {
+   "query": "inorganic triphosphatase EC 3.6.1.25 equilibrium constant measured apparent K' triphosphate + H2O = diphosphate + phosphate thermodynamics",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "No measured apparent equilibrium constant found. Only enzyme-database entries (BRENDA, ExplorEnz, MetaCyc) that state the reaction, plus the TECRDB series index."
+  },
+  {
+   "query": "Meyerhof Shatas 1953 calorimetry heat of hydrolysis trimetaphosphate triphosphate enthalpy kcal enzyme",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Identified the primary paper behind 53MEY/SHA (Meyerhof, Shatas and Kaplan, Biochim. Biophys. Acta 12, 121, 1953). Full text not retrieved; the PubMed record carries no abstract. Not usable: calorimetric enthalpy on the wrong reaction, and an enthalpy alone does not give a Gibbs energy."
+  },
+  {
+   "query": "\"P3O10\" standard Gibbs energy of formation aqueous kJ/mol tripolyphosphate ion thermodynamic table Bard standard potentials",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "No value. Bard, Parsons and Jordan (1985) has a phosphorus chapter but no accessible tabulation of P3O10(5-) surfaced; the book is not open."
+  },
+  {
+   "query": "thermodynamic database aqueous species \"P3O10-5\" log K formation Gibbs energy PHREEQC llnl.dat Thermoddem geochemical",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "No value. Geochemical databases surfaced generically; none was shown to carry a polyphosphate anion."
+  },
+  {
+   "query": "Alberty thermodynamics of biochemical reactions standard transformed Gibbs energy formation pyrophosphate triphosphate PPPi species table",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "No value. Alberty's tables are cited by the 2024 DFT paper for pyrophosphate but never for triphosphate, which is consistent with triphosphate being absent from them; not independently confirmed."
+  },
+  {
+   "query": "triphosphoric acid pKa values pK4 pK5 tripolyphosphate protonation constants 25 C Smith Martell critical stability constants",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Smith and Martell (NIST SRD 46) is not openly accessible. Secondary pages give ranges only and disagree with each other, so none was used."
+  },
+  {
+   "query": "triphosphate ion protonation constants potentiometric log K measured 25 C ionic strength 0.1 tripolyphosphate",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "FOUND the admitted source: Maki et al. 2013, J. Solution Chem., open access on PMC, a primary potentiometric measurement with a temperature series."
+  },
+  {
+   "query": "Irani Callis 1960 Metal complexing by phosphorus compounds thermodynamics of ionization tripolyphosphoric acid pK values",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Identified a second measured ladder (Irani et al., J. Inorg. Nucl. Chem. 1966, Metal complexing by phosphorus compounds IX) that would give the lower rungs. Paywalled and not retrieved."
+  },
+  {
+   "query": "iScience 2025 28 112790 correction Sanden Butch McGlynn erratum",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "The correction changes only a reference label in Figure 1 (Weber 1994 to Weber 1981). The -56.3 kJ/mol value is unaffected."
+  },
+  {
+   "query": "PMC11530844 full text: value, method, conditions, solvation warning",
+   "engine": "WebFetch then Europe PMC XML",
+   "date": "2026-09-11",
+   "outcome": "Confirmed the lead exactly and mirrored the article. Also found the authors' own calibration statement that their P2O7(4-) number overshoots the Alberty value by 22.8 kJ/mol, which is the strongest argument against admitting -56.3."
+  }
+ ],
+ "decomposition_check": {
+  "attempted": true,
+  "decomposes": false,
+  "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups. Raised for every protonation state tried, with ignore_protonations both False and True. The controls place the failure: bare diphosphate P2O7(4-) and bare orthophosphate PO4(3-) fail identically while ATP decomposes into 13 groups including '-OPO3' and '-OPO2-OPO2-', so the group system recognizes phosphate groups only when they hang off a carbon skeleton. No alternative protonation state can be made to decompose, and the exclusion label group_decomposition_failed is by itself not the reason triphosphate is unpriced: phosphate and diphosphate carry an empty group vector too and are priced from the reactant contribution, which triphosphate cannot use because it appears in none of the 3999 training reactions.",
+  "smiles_tried": [
+   "[O-]P(=O)([O-])OP(=O)([O-])OP(=O)([O-])[O-]",
+   "OP([O-])(=O)OP([O-])(=O)OP([O-])([O-])=O",
+   "OP([O-])(=O)OP([O-])(=O)OP(O)([O-])=O",
+   "OP([O-])(=O)OP(O)(=O)OP([O-])([O-])=O",
+   "OP(O)(=O)OP([O-])(=O)OP(O)([O-])=O",
+   "OP(O)(=O)OP(O)(=O)OP(O)(O)=O",
+   "[O-]P(=O)([O-])OP(=O)([O-])[O-]",
+   "[O-]P(=O)([O-])[O-]",
+   "Nc1ncnc2c1ncn2[C@@H]1O[C@H](COP(=O)([O-])OP(=O)([O-])OP(=O)([O-])[O-])[C@@H](O)[C@H]1O"
+  ]
+ },
+ "computed_values_recorded_not_admitted": [
+  {
+   "value": -56.3,
+   "method": "DFT, PBE0/6-311G(2d,2p) in Gaussian 16 Rev. C.01, SMD implicit continuum with four explicit water molecules hydrogen bonded to the most charged residues; reported as delta G'(pH 7) of hydrolysis in kJ/mol, referred to 1 M reactants and products, 55.55 mol water, pH 7 and 300 K, no ionic strength and no magnesium specified. The hydrolyzing species is stated as HP3O10(4-).",
+   "source_index": 2
+  },
+  {
+   "value": -36.7,
+   "method": "Same DFT protocol, for diphosphate P2O7(4-) hydrolysis. Recorded as the CALIBRATION of the number above, not as a triphosphate value: the same paper states this overshoots the expected -13.9 kJ/mol from Alberty by 22.8 kJ/mol, which is the size of the error the authors attribute to solvation of highly charged anions.",
+   "source_index": 2
+  },
+  {
+   "value": null,
+   "method": "eQuilibrator's own pKa ladder for compound 314 (six microspecies, charge -6 to -1, stored as ddg_over_rt in the compound cache). It is a prediction rather than a measurement, and it is wrong in a way that is visible without any external data: it places a sixth deprotonation on a species that has no sixth proton. Implied pKas 0.890, 2.450, 3.240, 7.120 and 7.730, against measured 5.40 and 7.77 (I = 0.1, 30 C) for the two rungs that were measured.",
+   "source_index": 6
+  }
+ ],
+ "notes": "WHAT WAS FOUND. A measured pKa ladder, and nothing that prices the metabolite. Two stepwise protonation constants of P3O10(5-) were measured potentiometrically by Maki et al. 2013 at five temperatures including 30 C, which is the pipeline's own temperature: pKa(HP3O10 4-) = 7.77 (0.02) and pKa(H2P3O10 3-) = 5.40 (0.02) at I = 0.1 M NaNO3. Those are conditional constants at I = 0.1, so a zero-ionic-strength pair (8.852 and 6.266) is derived here with eQuilibrator's own Debye-Huckel term, because eQuilibrator's transform applies that term itself and would otherwise double count it. The derivation is recorded in the value block and in transform_comparison.json; it is arithmetic on the measured numbers, not a new measurement.\n\nWHAT WAS NOT FOUND, AND WHY r_4403 STAYS BLOCKED. No formation energy and no reaction energy. Four independent places that would carry one do not: the NBS tables have no aqueous triphosphate ion in any protonation state (they stop at P2O7 4- and jump to P4O6); CODATA evaluates only the two orthophosphate ions; the NIST TECRDB has exactly one triphosphate row in 4544 and it carries no equilibrium constant, and none at all for EC 3.6.1.25; yeast-GEM 9.0.2 ships its no-value sentinel for s_4098, s_4099 and r_4403. So this record does NOT unblock r_4403 and must not be read as pricing triphosphate. Of the three listed reactions only r_4403 is chemistry; r_4369 is a proton symport with the same species on both sides and r_4528 is an exchange, and both are closed by separate rules regardless of this record.\n\nWHAT THE PKA LADDER IS WORTH ANYWAY. The cache's stored ladder is not merely imprecise, it is off by one rung in both directions: it carries a microspecies at charge -6, which would require deprotonating an oxide of an already fully deprotonated anion, and it omits the neutral acid H5P3O10 at the bottom. Under eQuilibrator's own transform at pH 7.0, I = 0.25 M, T = 303.15 K, that fictitious species holds 90 percent of the population, and the whole pH-dependent part of the transform sits 12.76 kJ/mol away from where the measured ladder puts it. That is the size of the error the ladder would inject into r_4403 the day an anchor arrives, so the ladder is worth fixing before, not after.\n\nWHY THE EXCLUSION LABEL IS MISLEADING. The row is labeled group_decomposition_failed, and decomposition does fail for every protonation state tried. But phosphate and diphosphate also carry an empty group vector and are priced anyway, from the reactant contribution, because they appear in 659 and 345 training reactions. Triphosphate appears in none. The honest statement of the exclusion is 'no group decomposition AND absent from the reactant-contribution training set', and the second half is the binding one: no pKa predictor, structure writer or protonation-state search can move it.\n\nWHAT A HUMAN WOULD STILL NEED TO DO. (1) To price it: find or make one absolute anchor. Three routes, in descending order of promise. Route A, the NBS solid: NBS gives Na5P3O10 (cr, form I) delta_f G = -4093.9 kJ/mol and an enthalpy but no entropy for the same salt in 5200 H2O, so a measured solubility product with a Pitzer treatment at the relevant ionic strength would close the cycle to P3O10(5-) through delta_f G(Na+, aq); this is a literature-search plus derivation task, not a curation task, and the activity treatment at high ionic strength is where it can go wrong. Route B, an equilibrium measurement: no apparent equilibrium constant for triphosphate hydrolysis appears to exist, plausibly because the reaction is effectively irreversible, so this would mean an isotope-exchange or coupled-equilibrium measurement rather than a literature find. Route C, accept a computed value with an explicit route label: the only computed number found is -56.3 kJ/mol, and the same paper's own pyrophosphate check overshoots by 22.8 kJ/mol, so if it were ever used it should carry an uncertainty of at least that size and a route that is not the default one. (2) To use the pKa ladder: decide whether the pipeline may override a cached ladder at all, and if so, drop the charge -6 microspecies for every fully deprotonated inorganic anion, not just this one, since the same predictor artifact will recur. (3) Optional completion of the ladder: Irani et al., J. Inorg. Nucl. Chem. 1966 (Metal complexing by phosphorus compounds IX, thermodynamics of ionization of ortho-, pyro- and tripolyphosphoric acids) is the obvious source for the three lower rungs; it is paywalled and was not retrieved. Those rungs change nothing at pH 6.8 to 7.2.\n\nCONDITIONS SUMMARY. Measured values: 303.15 K (and 278.15, 288.15, 298.15, 308.15), I = 0.1 mol/L NaNO3, no magnesium, conditional constants, aqueous. Derived zero-ionic-strength values: same temperatures, I = 0, eQuilibrator Debye-Huckel. Transform comparison: pH 7.0, I = 0.25 mol/L, 303.15 K, pMg 3. Computed value not admitted: pH 7, 300 K, 1 M standard state, ionic strength and magnesium unspecified. | 2026-09-11 integration: value.pkas holds the measured ladder as a flat list so it overrides the cached one wherever a structure route runs on this species. No energy follows from it today, because the bare phosphates have no group cover; it is stored so the transform is right when an anchor arrives."
 }

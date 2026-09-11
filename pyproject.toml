@@ -160,6 +160,12 @@ module = [
     "cobra", "cobra.*",
     "dask", "dask.*",
     "datasets", "datasets.*",
+    # The compound bridge. Untyped, and deliberately NOT installed in the torchcell env:
+    # it lives in `equilibrator-ext`, and the modules that use it import it inside the
+    # method that needs it so the package still imports without it.
+    "equilibrator_api", "equilibrator_api.*",
+    "equilibrator_assets", "equilibrator_assets.*",
+    "equilibrator_cache", "equilibrator_cache.*",
     "gffutils", "gffutils.*",
     "geomloss", "geomloss.*",
     "goatools", "goatools.*",

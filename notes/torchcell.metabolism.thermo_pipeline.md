@@ -165,3 +165,77 @@ The audit table was tried first and is the wrong input for a second reason worth
 it lists hydrogen sulfide as recovered with an empty final blocker while the recomputation
 carries no value for it, so taking its word would have skipped the one metabolite the sweep
 exists to catch.
+
+## 2026.09.11 - Four reaction rules: cancellation, non-chemical, reaction pricers, balance
+
+### A reaction can be priced without pricing every participant
+
+Rule 1 said a reaction is priced only when EVERY participant carries a formation energy.
+That is right for a sum and wrong for a cancellation: a species on both sides with
+coefficients summing to zero contributes nothing to `sum_i S_ij dfG'_i`, so whether the
+table has a number for it cannot change the reaction's chemical energy.
+`cancelling_participants` groups the participants by `chemical_identity`, which is
+(normalized name, formula, charge), and drops any group whose coefficients sum to zero.
+
+Two properties are deliberate. Only groups holding an UNPRICED member cancel, so no
+reaction that already had a value gets a different one: the two compartment copies sit at
+their own pH, their transformed energies differ by the pH term, and dropping a fully priced
+pair would move that term silently into the transport term. And the compartment work itself
+is left to `torchcell.metabolism.transport`, which builds it from the stoichiometry, the
+compartment of each metabolite and its CHARGE, and needs no price, so a species with no
+formation energy still contributes its transport work and nothing is double counted.
+
+Measured on yeast-GEM 9.0.2: 22 reactions gained a value, 0 of the 3,779 already priced
+changed, 0 of 2,561 metabolite values changed. Nineteen of the 22 cancel entirely and carry
+the new route `cancelled_participants` with a chemical energy of exactly zero.
+
+### An exchange is not chemistry, and it was in the denominator
+
+`UnpricedReason.NON_CHEMICAL` and `ThermoPipelineResult.reaction_counts_chemical`. An
+exchange, demand, sink or biomass or pool pseudoreaction is not elementally balanced and
+has no standard reaction energy to find; 284 of yeast-GEM's 4,131 reactions are one, and
+leaving them in the denominator made every coverage fraction a different number from the
+one it claimed to be. The rule is three config fields, because no single test finds them
+all: cobra's `boundary` catches the 274 exchanges, a name token catches the carbohydrate
+and cofactor pseudoreactions, and an SBO term catches the biomass pseudoreaction. A
+non-chemical reaction that DOES carry a value keeps it and carries the flag, so no number
+changed; what changed is which denominator it is reported against.
+
+### A reaction energy that is not a sum of formation energies
+
+`ReactionPricer` is a stage that prices a reaction directly, offered every reaction the
+metabolite table cannot price after cancellation and ahead of the reaction-level fill
+table. It exists for protein-bound redox carriers, whose measured quantity is a midpoint
+potential of a COUPLE: the oxidized and reduced forms have no separate formation energy and
+never will, so `dG'0 = -nF dE'0` prices the reaction and both species stay unpriced under
+`PRICED_AT_REACTION_LEVEL`. The implementation is
+`torchcell.metabolism.thermo_curation.CuratedReactionPricer`; nothing organism-specific
+enters this module.
+
+### The balance check the coverage number needed
+
+`reaction_balance` computes the elemental and charge imbalance of every chemical reaction
+from the participants' own formulas, skipping any reaction where a placeholder or empty
+formula makes the sum undefined, so "we know this is wrong" is never confused with "we
+cannot tell". Diagnostic only: no price depends on it. 205 of yeast-GEM 9.0.2's chemical
+reactions do not balance.
+
+### `legendre_transform_kj`
+
+The single-microspecies Legendre transform, eQuilibrator's form, generalizing the
+ionic-strength-only version `IonFormationResolver` used. It uses eQuilibrator's ROUNDED gas
+constant 0.00831 rather than the CODATA value: the difference is 0.29 kJ/mol on a
+twelve-proton species at pH 7.8, and a transform that disagrees with the one the cache
+applied to its own compounds would put a systematic offset between curated rows and every
+other row. Verified against `equilibrator_cache.thermodynamic_constants._legendre_transform`
+over 1,008 grid points by `thermo_curation_price.py`, worst deviation 1.7e-13 kJ/mol, which
+that script re-checks on every rebuild and refuses to write its output if it exceeds 1e-9.
+
+### A curated reason outranks a later diagnosis
+
+`MetabolitePrice.reason_is_final`. The precedence rule was "the last stage to speak wins",
+which is right for two heuristics and wrong when the earlier one is a measurement: a
+curator who ran the group decomposer on heme a and recorded that it refused the structure
+is stating evidence, and a namespace heuristic that later calls the same species "no
+structure available" moves the coverage ladder by reclassifying work that is not retrieval
+as retrieval. A stage may now mark a reason final, and only the curated stage does.

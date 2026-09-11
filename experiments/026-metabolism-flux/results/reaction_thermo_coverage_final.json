@@ -1,8 +1,9 @@
 {
- "built_at": "2026-09-11T07:10:57.223652+00:00",
+ "built_at": "2026-09-11T23:33:32.658611+00:00",
  "gem": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
  "gem_sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
  "stages": [
+  "curated_records",
   "equilibrator_recomputation",
   "accession_sweep",
   "external_pka_targets",
@@ -15,100 +16,108 @@
   "structure_attempt_diagnosis"
  ],
  "n_metabolites": 2806,
- "n_metabolites_priced": 2561,
+ "n_metabolites_priced": 2559,
  "metabolite_routes": {
-  "cache_accession": 2125,
+  "cache_accession": 2117,
   "cache_structure": 289,
-  "none": 245,
+  "none": 247,
   "external_pka": 70,
   "shipped_table": 35,
   "literature_table": 24,
   "composition_surrogate": 12,
-  "repeat_unit_surrogate": 6
+  "repeat_unit_surrogate": 6,
+  "curated_structure": 4,
+  "carrier_potential": 2
  },
  "metabolite_reasons": {
-  "placeholder_formula": 161,
+  "placeholder_formula": 159,
   "pseudo_metabolite": 55,
-  "no_structure_available": 12,
-  "group_decomposition_failed": 10,
+  "group_decomposition_failed": 16,
+  "no_structure_available": 6,
   "placeholder_structure": 6,
-  "no_pka_prediction": 1
+  "recorded_not_admitted": 4,
+  "group_in_null_space": 1
  },
  "n_reactions": 4131,
- "n_reactions_priced": 3779,
- "fraction_reactions_priced": 0.9147906076010651,
+ "n_reactions_priced": 3801,
+ "fraction_reactions_priced": 0.9201161946259986,
  "reaction_routes": {
-  "cache_accession": 2761,
-  "mixed": 861,
-  "none": 352,
+  "cache_accession": 2751,
+  "mixed": 872,
+  "none": 330,
   "cache_structure": 122,
+  "cancelled_participants": 19,
   "literature_table": 11,
   "external_pka": 9,
   "shipped_table": 9,
-  "shipped_reaction_column": 2,
+  "curated_structure": 2,
   "repeat_unit_surrogate": 2,
-  "composition_surrogate": 2
+  "composition_surrogate": 2,
+  "shipped_reaction_column": 1,
+  "conserved_moiety": 1
  },
  "reaction_reasons": {
-  "blocked_by_metabolite": 352
+  "blocked_by_metabolite": 312,
+  "non_chemical": 18
  },
  "reactions_by_sole_blocking_reason": {
-  "pseudo_metabolite": 216,
-  "placeholder_formula": 98,
+  "pseudo_metabolite": 201,
+  "placeholder_formula": 89,
   "mixed_reasons": 14,
-  "no_structure_available": 11,
-  "group_decomposition_failed": 10,
+  "group_decomposition_failed": 11,
+  "no_structure_available": 10,
+  "recorded_not_admitted": 2,
   "placeholder_structure": 2,
-  "no_pka_prediction": 1
+  "group_in_null_space": 1
  },
  "flux_carrying": {
   "n_flux_carrying": 2845.0,
-  "n_priced": 2716.0,
-  "fraction": 0.9546572934973638
+  "n_priced": 2724.0,
+  "fraction": 0.957469244288225
  },
- "n_reactions_with_sigma": 1755,
+ "n_reactions_with_sigma": 1770,
  "top_blocking_metabolites": [
   {
    "met_id": "s_3738",
    "name": "cardiolipin backbone",
    "formula": "C9H14O9P2",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 49
+   "n_reactions_blocked": 48
   },
   {
    "met_id": "s_3713",
    "name": "triglyceride backbone",
    "formula": "C3H2",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 33
+   "n_reactions_blocked": 32
   },
   {
    "met_id": "s_0892",
    "name": "inositol-P-ceramide backbone",
    "formula": "C6H12NO10P",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 11
+   "n_reactions_blocked": 10
   },
   {
    "met_id": "s_0859",
    "name": "inositol phosphomannosylinositol phosphoceramide backbone",
    "formula": "C18H33NO23P2",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 11
+   "n_reactions_blocked": 10
   },
   {
    "met_id": "s_1114",
    "name": "mannosylinositol phosphorylceramide backbone",
    "formula": "C12H22NO15P",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 11
+   "n_reactions_blocked": 10
   },
   {
    "met_id": "s_3721",
    "name": "ceramide backbone",
    "formula": "HNO2",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 11
+   "n_reactions_blocked": 10
   },
   {
    "met_id": "s_0089",
@@ -122,49 +131,35 @@
    "name": "phosphatidyl-L-serine backbone",
    "formula": "C6H10NO6P",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 9
+   "n_reactions_blocked": 8
   },
   {
    "met_id": "s_3711",
    "name": "phosphatidylcholine backbone",
    "formula": "C8H16NO3P",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 9
+   "n_reactions_blocked": 8
   },
   {
    "met_id": "s_3712",
    "name": "phosphatidylethanolamine backbone",
    "formula": "C5H10NO4P",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 9
+   "n_reactions_blocked": 8
   },
   {
    "met_id": "s_3730",
    "name": "phosphatidate backbone",
    "formula": "C3H5O4P",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 9
+   "n_reactions_blocked": 8
   },
   {
    "met_id": "s_3732",
    "name": "diglyceride backbone",
    "formula": "C3H4O",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 9
-  },
-  {
-   "met_id": "s_0709",
-   "name": "ferricytochrome c",
-   "formula": "C42H44FeN8O8S2R4",
-   "reason": "placeholder_formula",
-   "n_reactions_blocked": 7
-  },
-  {
-   "met_id": "s_0710",
-   "name": "ferrocytochrome c",
-   "formula": "C42H45FeN8O8S2R4",
-   "reason": "placeholder_formula",
-   "n_reactions_blocked": 7
+   "n_reactions_blocked": 8
   },
   {
    "met_id": "s_1845",
@@ -178,7 +173,7 @@
    "name": "phosphatidylglycerol backbone",
    "formula": "C6H11O6P",
    "reason": "pseudo_metabolite",
-   "n_reactions_blocked": 7
+   "n_reactions_blocked": 6
   },
   {
    "met_id": "s_0694",
@@ -219,7 +214,7 @@
    "met_id": "s_0712",
    "name": "ferroheme b",
    "formula": "C34H30FeN4O4",
-   "reason": "no_pka_prediction",
+   "reason": "recorded_not_admitted",
    "n_reactions_blocked": 3
   },
   {
@@ -242,26 +237,43 @@
    "formula": "",
    "reason": "pseudo_metabolite",
    "n_reactions_blocked": 3
+  },
+  {
+   "met_id": "s_1254",
+   "name": "octanoyl-ACP",
+   "formula": "C8H15OSR",
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3
+  },
+  {
+   "met_id": "s_3774",
+   "name": "G00011",
+   "formula": "C74H122N4O57R",
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3
   }
  ],
  "remedy_summary": {
   "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it": {
-   "n_metabolites": 161
+   "n_metabolites": 159
   },
   "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule": {
    "n_metabolites": 55
   },
-  "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name": {
-   "n_metabolites": 12
+  "a curated record EXISTS and its admission is computed or provisional, so it is reported and not priced; what it would take is a measured or tabulated source": {
+   "n_metabolites": 4
   },
-  "a pKa LADDER is needed: the structure decomposes and the pKa stage returned nothing": {
-   "n_metabolites": 1
+  "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted": {
+   "n_metabolites": 16
+  },
+  "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name": {
+   "n_metabolites": 6
   },
   "nothing is possible: the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule rather than a molecule": {
    "n_metabolites": 6
   },
-  "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted": {
-   "n_metabolites": 10
+  "a group NOBODY TRAINED ON: the structure decomposes and one of its groups is in the component-contribution null space, so the estimate has infinite variance. Different from a missing group definition: the group exists and no training compound carries it, so the remedy is a measurement of a compound that does, or a microspecies whose groups are covered": {
+   "n_metabolites": 1
   }
  },
  "betaxanthin_route": {
@@ -449,63 +461,3285 @@
   "n_anchors": 25,
   "n_anchors_priced": 25,
   "n_yeast_reactions_touching_an_anchor": 934,
-  "n_priced": 893,
-  "fraction_priced": 0.9561027837259101,
+  "n_priced": 892,
+  "fraction_priced": 0.9550321199143469,
   "unpriced_reasons": {
-   "blocked_by_metabolite": 41
+   "blocked_by_metabolite": 40,
+   "non_chemical": 2
   },
   "note": "the five heterologous intermediates are not in yeast-GEM and are priced directly from the compound cache (pathway_thermo_betaxanthin.json); what is counted here is the yeast side the heterologous reactions draw on, whose driving forces the flux layer has to get right for a betaxanthin prediction to mean anything"
  },
  "ceiling_ladder": {
-  "built_at": "2026-09-11T07:10:57.232149+00:00",
+  "built_at": "2026-09-11T23:33:32.667069+00:00",
   "n_reactions": 4131,
+  "n_reactions_chemical": 3847,
+  "n_reactions_non_chemical": 284,
   "n_flux_carrying": 2845,
   "rungs": [
    {
     "name": "now",
-    "n_reactions_priced": 3779,
-    "fraction_reactions_priced": 0.9147906076010651,
-    "n_flux_carrying_priced": 2716,
-    "fraction_flux_carrying_priced": 0.9546572934973638,
+    "n_reactions_priced": 3535,
+    "fraction_reactions_priced": 0.9188978424746556,
+    "n_flux_carrying_priced": 2724,
+    "fraction_flux_carrying_priced": 0.957469244288225,
     "reasons_resolved": {},
     "what_it_would_take": "nothing; this is the table as built",
     "evidence": ""
    },
    {
     "name": "structures_and_pka_ladders_resolved",
-    "n_reactions_priced": 3792,
-    "fraction_reactions_priced": 0.9179375453885258,
-    "n_flux_carrying_priced": 2724,
-    "fraction_flux_carrying_priced": 0.957469244288225,
+    "n_reactions_priced": 3545,
+    "fraction_reactions_priced": 0.9214972706004679,
+    "n_flux_carrying_priced": 2732,
+    "fraction_flux_carrying_priced": 0.9602811950790862,
     "reasons_resolved": {
-     "no_structure_available": 12,
-     "no_pka_prediction": 2
+     "no_structure_available": 10
     },
     "what_it_would_take": "a structure from a namespace or a curator for every species that has none, and a pKa ladder inside (0, 14) for every species whose ladder is empty",
     "evidence": "no measurement here says these are obtainable; the rung is what WOULD close"
    },
    {
     "name": "everything_chemically_possible_resolved",
-    "n_reactions_priced": 3802,
-    "fraction_reactions_priced": 0.9203582667634955,
-    "n_flux_carrying_priced": 2727,
-    "fraction_flux_carrying_priced": 0.958523725834798,
+    "n_reactions_priced": 3556,
+    "fraction_reactions_priced": 0.9243566415388614,
+    "n_flux_carrying_priced": 2735,
+    "fraction_flux_carrying_priced": 0.961335676625659,
     "reasons_resolved": {
-     "no_structure_available": 12,
-     "group_decomposition_failed": 10,
-     "no_pka_prediction": 2
+     "no_structure_available": 10,
+     "group_decomposition_failed": 8,
+     "recorded_not_admitted": 3,
+     "group_in_null_space": 1
     },
     "what_it_would_take": "the rung above plus a decomposition or a tabulated value for every structure the group decomposer refuses",
     "evidence": "thermo_tier_d_probe.json measured that none of the remaining refused structures is reachable by the reactant-contribution path or by a surrogate within the admitted spread, so this rung needs new data rather than new code"
    }
   ],
-  "n_permanently_closed_reactions": 329,
+  "n_permanently_closed_reactions": 291,
   "permanently_closed_reasons": {
-   "pseudo_metabolite": 228,
-   "placeholder_formula": 108,
+   "pseudo_metabolite": 202,
+   "placeholder_formula": 96,
    "placeholder_structure": 3
   },
-  "note": "A reaction is permanently closed when every metabolite blocking it is not a molecule: a SLIME backbone whose formula is a difference formula, or a placeholder formula that names a family. No pKa predictor, structure writer, decomposer or literature table changes those, so the last rung is the ceiling for any method at all rather than for this one. The rungs and the permanently closed set partition the unpriced reactions exactly: every unpriced reaction is either closed for good or named by the last rung."
+  "note": "A reaction is permanently closed when every metabolite blocking it is not a molecule: a SLIME backbone whose formula is a difference formula, or a placeholder formula that names a family. No pKa predictor, structure writer, decomposer or literature table changes those, so the last rung is the ceiling for any method at all rather than for this one. Every fraction here is over the CHEMICAL reactions: the exchanges, demands, sinks and pseudoreactions are counted separately, because they are not elementally balanced and a standard reaction energy has no meaning for them. The rungs and the permanently closed set partition the unpriced reactions exactly: every unpriced reaction is either closed for good or named by the last rung."
  },
+ "curation": {
+  "curation_dir": "experiments/026-metabolism-flux/results/curation",
+  "n_records": 16,
+  "n_admitted": 11,
+  "n_recorded_not_admitted": 5,
+  "admitted": [
+   "chitobiosyl_pp_dolichol",
+   "cytochrome_c",
+   "ethylnitronate",
+   "glycogen",
+   "heme_a",
+   "heme_o",
+   "mannan",
+   "nitrophenyl_phosphate",
+   "pectin",
+   "siroheme",
+   "triphosphate"
+  ],
+  "recorded_not_admitted": {
+   "cytochrome_b5": "provisional",
+   "ferroheme_b": "provisional",
+   "gpi_intermediate": "provisional",
+   "methionine_s_oxide": "none",
+   "porphyrin": "none"
+  },
+  "n_metabolites_priced_by_slug": {
+   "cytochrome_c": 2,
+   "glycogen": 2,
+   "mannan": 2
+  },
+  "n_reactions_priced_by_slug": {},
+  "formula_overrides": [],
+  "carrier_refusals": {
+   "r_0365": "untrusted_structure: a participant has no structure this route can trust",
+   "r_0436": "untrusted_structure: a participant has no structure this route can trust",
+   "r_0531": "untrusted_structure: a participant has no structure this route can trust",
+   "r_0999": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'C': -2.0, 'Fe': 1.0, 'N': 3.0}",
+   "r_4159": "untrusted_structure: a participant has no structure this route can trust",
+   "r_4186": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'O': 1.0}",
+   "r_4197": "untrusted_structure: a participant has no structure this route can trust",
+   "r_4202": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'O': 1.0}",
+   "r_4220": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'O': -4.0, 'P': -1.0}",
+   "r_4273": "group_in_null_space: the group difference has an infinite-variance component; groups no training compound carries: ['-NO2 [H0 Z0 Mg0]']",
+   "r_4403": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'O': -8.0, 'P': -3.0}"
+  }
+ },
+ "n_reactions_cancelled": 22,
+ "n_reactions_non_chemical": 284,
+ "n_reactions_chemical": 3847,
+ "n_reactions_chemical_priced": 3535,
+ "fraction_chemical_priced": 0.9188978424746556,
+ "n_reactions_imbalanced": 205,
+ "imbalanced_reactions": [
+  {
+   "reaction_id": "r_0013",
+   "element_imbalance": {},
+   "charge_imbalance": 4.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_0229",
+   "element_imbalance": {},
+   "charge_imbalance": 2.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_0312",
+   "element_imbalance": {},
+   "charge_imbalance": -1.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_0365",
+   "element_imbalance": {},
+   "charge_imbalance": -1.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_0532",
+   "element_imbalance": {},
+   "charge_imbalance": -2.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_0774",
+   "element_imbalance": {
+    "H": 1.0,
+    "O": 1.0
+   },
+   "charge_imbalance": -1.0,
+   "offending_met_ids": [
+    "s_0394",
+    "s_0434",
+    "s_0633",
+    "s_0794",
+    "s_1219",
+    "s_1222",
+    "s_1322",
+    "s_1386"
+   ]
+  },
+  {
+   "reaction_id": "r_0775",
+   "element_imbalance": {
+    "H": 1.0,
+    "O": 1.0
+   },
+   "charge_imbalance": -1.0,
+   "offending_met_ids": [
+    "s_0397",
+    "s_0437",
+    "s_0636",
+    "s_0799",
+    "s_1221",
+    "s_1223",
+    "s_1326",
+    "s_1387"
+   ]
+  },
+  {
+   "reaction_id": "r_0813",
+   "element_imbalance": {},
+   "charge_imbalance": -1.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_1027",
+   "element_imbalance": {},
+   "charge_imbalance": 1.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_1449",
+   "element_imbalance": {
+    "C": -28.570277147999995,
+    "H": -57.14055429599999,
+    "N": -0.08973645799999996,
+    "O": -1.5911114599999996,
+    "P": -0.08973645799999996
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0907",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1450",
+   "element_imbalance": {
+    "C": -28.935268988,
+    "H": -57.870537976,
+    "N": -0.061682698000000036,
+    "O": -1.254466340000001,
+    "P": -0.061682698000000036
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0910",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1451",
+   "element_imbalance": {
+    "C": -28.474280748000005,
+    "H": -56.94856149600001,
+    "N": -0.07373705799999997,
+    "O": -2.4311174600000003,
+    "P": -0.07373705799999997
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0913",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1452",
+   "element_imbalance": {
+    "C": -28.839272587999996,
+    "H": -57.67854517599999,
+    "N": -0.04568329800000004,
+    "O": -2.09447234,
+    "P": -0.04568329800000004
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0916",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1453",
+   "element_imbalance": {
+    "C": -28.666273548,
+    "H": -57.332547096,
+    "N": -0.10573585799999996,
+    "O": -0.7511054599999989,
+    "P": -0.10573585799999996
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0895",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1454",
+   "element_imbalance": {
+    "C": -29.031265388000005,
+    "H": -58.06253077600001,
+    "N": -0.07768209800000003,
+    "O": -0.4144603400000001,
+    "P": -0.07768209800000003
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0898",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1455",
+   "element_imbalance": {
+    "C": -28.570277147999995,
+    "H": -57.14055429599999,
+    "N": -0.08973645799999996,
+    "O": -1.5911114599999996,
+    "P": -0.08973645799999996
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0901",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1456",
+   "element_imbalance": {
+    "C": -28.935268988,
+    "H": -57.870537976,
+    "N": -0.061682698000000036,
+    "O": -1.254466340000001,
+    "P": -0.061682698000000036
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0904",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1457",
+   "element_imbalance": {
+    "C": -28.378284348,
+    "H": -56.756568696,
+    "N": -0.05773765799999997,
+    "O": -3.2711234599999988,
+    "P": -0.05773765799999997
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0919",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1458",
+   "element_imbalance": {
+    "C": -28.743276187999992,
+    "H": -57.486552375999985,
+    "N": -0.029683898000000042,
+    "O": -2.9344783400000005,
+    "P": -0.029683898000000042
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0892",
+    "s_0922",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1479",
+   "element_imbalance": {
+    "C": -22.658339207999994,
+    "H": -46.212264948,
+    "N": 0.298528844,
+    "O": 7.172416532,
+    "P": 0.597057688
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0862",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1480",
+   "element_imbalance": {
+    "C": -22.686685928,
+    "H": -46.353119668,
+    "N": 0.32658260399999994,
+    "O": 7.873760532,
+    "P": 0.6531652079999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0865",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1481",
+   "element_imbalance": {
+    "C": -22.370350007999996,
+    "H": -45.684284747999996,
+    "N": 0.3145282439999999,
+    "O": 6.540402731999997,
+    "P": 0.6290564879999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0874",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1482",
+   "element_imbalance": {
+    "C": -22.398696728,
+    "H": -45.825139467999996,
+    "N": 0.34258200400000005,
+    "O": 7.241746732000001,
+    "P": 0.6851640080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0877",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1483",
+   "element_imbalance": {
+    "C": -22.370350007999996,
+    "H": -45.684284747999996,
+    "N": 0.3145282439999999,
+    "O": 6.540402731999997,
+    "P": 0.6290564879999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0868",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1484",
+   "element_imbalance": {
+    "C": -22.398696728,
+    "H": -45.825139467999996,
+    "N": 0.34258200400000005,
+    "O": 7.241746732000001,
+    "P": 0.6851640080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0871",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1485",
+   "element_imbalance": {
+    "C": -22.082360807999997,
+    "H": -45.156304547999994,
+    "N": 0.330527644,
+    "O": 5.908388932000001,
+    "P": 0.661055288
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0880",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1486",
+   "element_imbalance": {
+    "C": -22.110707528000002,
+    "H": -45.297159267999994,
+    "N": 0.35858140399999994,
+    "O": 6.609732931999998,
+    "P": 0.7171628079999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0883",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1487",
+   "element_imbalance": {
+    "C": -21.794371608,
+    "H": -44.62832434799999,
+    "N": 0.3465270439999999,
+    "O": 5.276375131999998,
+    "P": 0.6930540879999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0886",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1488",
+   "element_imbalance": {
+    "C": -21.82271832799999,
+    "H": -44.76917906799999,
+    "N": 0.37458080400000004,
+    "O": 5.9777191320000025,
+    "P": 0.7491616080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0859",
+    "s_0889",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1509",
+   "element_imbalance": {
+    "C": -27.162987096000002,
+    "H": -54.47078607600001,
+    "N": 0.07240594200000006,
+    "O": 0.39234225000000134,
+    "P": 0.07240594200000006
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1129",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1510",
+   "element_imbalance": {
+    "C": -27.359656376,
+    "H": -54.92023215599999,
+    "N": 0.10045970199999998,
+    "O": 0.8692561700000013,
+    "P": 0.10045970199999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1132",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1511",
+   "element_imbalance": {
+    "C": -26.970994295999994,
+    "H": -54.11879927599999,
+    "N": 0.08840534199999994,
+    "O": -0.3676667500000024,
+    "P": 0.08840534199999994
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1135",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1512",
+   "element_imbalance": {
+    "C": -27.167663575999992,
+    "H": -54.568245356,
+    "N": 0.11645910200000009,
+    "O": 0.10924717000000117,
+    "P": 0.11645910200000009
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1138",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1513",
+   "element_imbalance": {
+    "C": -27.354979895999996,
+    "H": -54.822772876,
+    "N": 0.05640654199999995,
+    "O": 1.1523512499999997,
+    "P": 0.05640654199999995
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1117",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1514",
+   "element_imbalance": {
+    "C": -27.551649175999994,
+    "H": -55.27221895599998,
+    "N": 0.0844603020000001,
+    "O": 1.6292651700000014,
+    "P": 0.0844603020000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1120",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1515",
+   "element_imbalance": {
+    "C": -27.162987096000002,
+    "H": -54.47078607600001,
+    "N": 0.07240594200000006,
+    "O": 0.39234225000000134,
+    "P": 0.07240594200000006
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1123",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1516",
+   "element_imbalance": {
+    "C": -27.359656376,
+    "H": -54.92023215599999,
+    "N": 0.10045970199999998,
+    "O": 0.8692561700000013,
+    "P": 0.10045970199999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1126",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1517",
+   "element_imbalance": {
+    "C": -26.779001496,
+    "H": -53.766812476,
+    "N": 0.10440474200000005,
+    "O": -1.127675749999999,
+    "P": 0.10440474200000005
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1141",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_1518",
+   "element_imbalance": {
+    "C": -26.975670775999998,
+    "H": -54.21625855600001,
+    "N": 0.13245850199999998,
+    "O": -0.650761829999999,
+    "P": 0.13245850199999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1114",
+    "s_1144",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_1603",
+   "element_imbalance": {
+    "H": 2.0
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0270",
+    "s_0300",
+    "s_0775",
+    "s_0794",
+    "s_1322"
+   ]
+  },
+  {
+   "reaction_id": "r_2232",
+   "element_imbalance": {
+    "H": 4.0
+   },
+   "charge_imbalance": 4.0,
+   "offending_met_ids": [
+    "s_0534",
+    "s_0801",
+    "s_0809",
+    "s_2882",
+    "s_2884"
+   ]
+  },
+  {
+   "reaction_id": "r_2236",
+   "element_imbalance": {
+    "H": 4.0
+   },
+   "charge_imbalance": 4.0,
+   "offending_met_ids": [
+    "s_0840",
+    "s_2884",
+    "s_2886"
+   ]
+  },
+  {
+   "reaction_id": "r_2284",
+   "element_imbalance": {
+    "H": -4.0
+   },
+   "charge_imbalance": -4.0,
+   "offending_met_ids": [
+    "s_0378",
+    "s_0534",
+    "s_2884",
+    "s_2915"
+   ]
+  },
+  {
+   "reaction_id": "r_3963",
+   "element_imbalance": {
+    "C": -25.545274841999998,
+    "H": -49.026460709999995,
+    "O": -4.697061162000001,
+    "P": -0.19097165800000004
+   },
+   "charge_imbalance": -0.809028342,
+   "offending_met_ids": [
+    "s_0089",
+    "s_3545",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_3964",
+   "element_imbalance": {
+    "C": -25.595671842,
+    "H": -47.630033069999996,
+    "O": -4.719235842,
+    "P": -0.19298753800000001
+   },
+   "charge_imbalance": -0.807012462,
+   "offending_met_ids": [
+    "s_0089",
+    "s_3547",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_3965",
+   "element_imbalance": {
+    "C": -26.274965562000002,
+    "H": -50.57000342999999,
+    "O": -4.3884698019999995,
+    "P": -0.162917898
+   },
+   "charge_imbalance": -0.837082102,
+   "offending_met_ids": [
+    "s_0089",
+    "s_3549",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_3966",
+   "element_imbalance": {
+    "C": -26.329394322,
+    "H": -49.23774682999999,
+    "O": -4.4106444819999995,
+    "P": -0.16493377799999998
+   },
+   "charge_imbalance": -0.835066222,
+   "offending_met_ids": [
+    "s_0089",
+    "s_3551",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3967",
+   "element_imbalance": {
+    "C": -26.278997322000002,
+    "H": -50.63417446999999,
+    "O": -4.3884698019999995,
+    "P": -0.162917898
+   },
+   "charge_imbalance": -0.837082102,
+   "offending_met_ids": [
+    "s_0089",
+    "s_3553",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3968",
+   "element_imbalance": {
+    "C": -26.329394322,
+    "H": -49.23774682999999,
+    "O": -4.4106444819999995,
+    "P": -0.16493377799999998
+   },
+   "charge_imbalance": -0.835066222,
+   "offending_met_ids": [
+    "s_0089",
+    "s_3555",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3969",
+   "element_imbalance": {
+    "C": -27.008688042000003,
+    "H": -52.17771719,
+    "O": -4.079878442,
+    "P": -0.13486413799999997
+   },
+   "charge_imbalance": -0.865135862,
+   "offending_met_ids": [
+    "s_0089",
+    "s_3557",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3970",
+   "element_imbalance": {
+    "C": -27.063116802000003,
+    "H": -50.84546059,
+    "O": -4.102053122000001,
+    "P": -0.13688001800000005
+   },
+   "charge_imbalance": -0.863119982,
+   "offending_met_ids": [
+    "s_0089",
+    "s_3559",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3971",
+   "element_imbalance": {
+    "C": -22.20386656,
+    "H": -37.77932184,
+    "O": -1.491174
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3443",
+    "s_3709",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_3972",
+   "element_imbalance": {
+    "C": -22.4045676,
+    "H": -38.62958408,
+    "O": -1.4350664800000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3442",
+    "s_3709",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3979",
+   "element_imbalance": {
+    "C": -25.422744828,
+    "H": -48.82224402,
+    "N": -0.266035818,
+    "O": -4.574531148,
+    "P": -0.266035818
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3109",
+    "s_3710",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_3980",
+   "element_imbalance": {
+    "C": -25.467094187999997,
+    "H": -47.41573698,
+    "N": -0.26805169799999995,
+    "O": -4.590658188,
+    "P": -0.26805169799999995
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3110",
+    "s_3710",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_3981",
+   "element_imbalance": {
+    "C": -26.236596828,
+    "H": -50.50605554,
+    "N": -0.23798205800000005,
+    "O": -4.350101068000001,
+    "P": -0.23798205800000005
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3111",
+    "s_3710",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_3982",
+   "element_imbalance": {
+    "C": -26.284977947999998,
+    "H": -49.16371954,
+    "N": -0.23999793800000002,
+    "O": -4.366228108,
+    "P": -0.23999793800000002
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3112",
+    "s_3710",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3983",
+   "element_imbalance": {
+    "C": -26.240628588,
+    "H": -50.570226579999996,
+    "N": -0.23798205800000005,
+    "O": -4.350101068,
+    "P": -0.23798205800000005
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3113",
+    "s_3710",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3984",
+   "element_imbalance": {
+    "C": -26.284977947999998,
+    "H": -49.16371954,
+    "N": -0.23999793800000002,
+    "O": -4.366228108,
+    "P": -0.23999793800000002
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3114",
+    "s_3710",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3985",
+   "element_imbalance": {
+    "C": -27.054480588000004,
+    "H": -52.254038099999995,
+    "N": -0.209928298,
+    "O": -4.1256709879999995,
+    "P": -0.209928298
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3115",
+    "s_3710",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3986",
+   "element_imbalance": {
+    "C": -27.102861708,
+    "H": -50.9117021,
+    "N": -0.21194417799999998,
+    "O": -4.141798028,
+    "P": -0.21194417799999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3116",
+    "s_3710",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3988",
+   "element_imbalance": {
+    "C": -25.970249744,
+    "H": -50.449325488,
+    "N": -0.26796497799999996,
+    "O": -4.7822111739999995,
+    "P": -0.26796497799999996
+   },
+   "charge_imbalance": 0.732035022,
+   "offending_met_ids": [
+    "s_3207",
+    "s_3711",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_3989",
+   "element_imbalance": {
+    "C": -26.018630864000002,
+    "H": -49.054913728,
+    "N": -0.26998085800000005,
+    "O": -4.792290574,
+    "P": -0.26998085800000005
+   },
+   "charge_imbalance": 0.730019142,
+   "offending_met_ids": [
+    "s_3208",
+    "s_3711",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_3990",
+   "element_imbalance": {
+    "C": -26.855989423999997,
+    "H": -52.22080484799999,
+    "N": -0.25591061800000003,
+    "O": -4.6899405739999995,
+    "P": -0.25591061800000003
+   },
+   "charge_imbalance": 0.744089382,
+   "offending_met_ids": [
+    "s_3209",
+    "s_3711",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_3991",
+   "element_imbalance": {
+    "C": -26.908402304,
+    "H": -50.890564127999994,
+    "N": -0.257926498,
+    "O": -4.700019974,
+    "P": -0.257926498
+   },
+   "charge_imbalance": 0.742073502,
+   "offending_met_ids": [
+    "s_3210",
+    "s_3711",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3992",
+   "element_imbalance": {
+    "C": -26.732025983999996,
+    "H": -52.02898548799999,
+    "N": -0.23991121800000004,
+    "O": -4.641942374,
+    "P": -0.23991121800000004
+   },
+   "charge_imbalance": 0.760088782,
+   "offending_met_ids": [
+    "s_3211",
+    "s_3711",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3993",
+   "element_imbalance": {
+    "C": -26.780407104,
+    "H": -50.63457372799999,
+    "N": -0.241927098,
+    "O": -4.652021774,
+    "P": -0.241927098
+   },
+   "charge_imbalance": 0.758072902,
+   "offending_met_ids": [
+    "s_3212",
+    "s_3711",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3994",
+   "element_imbalance": {
+    "C": -27.617765664000004,
+    "H": -53.800464848,
+    "N": -0.227856858,
+    "O": -4.549671774,
+    "P": -0.227856858
+   },
+   "charge_imbalance": 0.772143142,
+   "offending_met_ids": [
+    "s_3213",
+    "s_3711",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3995",
+   "element_imbalance": {
+    "C": -27.670178544000002,
+    "H": -52.470224128,
+    "N": -0.22987273799999997,
+    "O": -4.559751174,
+    "P": -0.22987273799999997
+   },
+   "charge_imbalance": 0.770127262,
+   "offending_met_ids": [
+    "s_3214",
+    "s_3711",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_3997",
+   "element_imbalance": {
+    "C": -25.376758009999996,
+    "H": -49.26234201999999,
+    "N": -0.31004561799999997,
+    "O": -4.218498712,
+    "P": -0.31004561799999997
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3181",
+    "s_3712",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_3998",
+   "element_imbalance": {
+    "C": -25.41909149,
+    "H": -47.85583498,
+    "N": -0.31206149800000005,
+    "O": -4.230593992,
+    "P": -0.31206149800000005
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3185",
+    "s_3712",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_3999",
+   "element_imbalance": {
+    "C": -26.218663770000003,
+    "H": -50.946153540000005,
+    "N": -0.28199185800000004,
+    "O": -4.050176152000001,
+    "P": -0.28199185800000004
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3187",
+    "s_3712",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4000",
+   "element_imbalance": {
+    "C": -26.26502901,
+    "H": -49.603817539999994,
+    "N": -0.284007738,
+    "O": -4.062271432,
+    "P": -0.284007738
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3189",
+    "s_3712",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4001",
+   "element_imbalance": {
+    "C": -26.222695530000003,
+    "H": -51.01032458,
+    "N": -0.28199185800000004,
+    "O": -4.050176152,
+    "P": -0.28199185800000004
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3191",
+    "s_3712",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4002",
+   "element_imbalance": {
+    "C": -26.26502901,
+    "H": -49.603817539999994,
+    "N": -0.284007738,
+    "O": -4.062271432,
+    "P": -0.284007738
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3193",
+    "s_3712",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4003",
+   "element_imbalance": {
+    "C": -27.06460129,
+    "H": -52.6941361,
+    "N": -0.253938098,
+    "O": -3.8818535919999992,
+    "P": -0.253938098
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3195",
+    "s_3712",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4004",
+   "element_imbalance": {
+    "C": -27.11096653,
+    "H": -51.35180009999999,
+    "N": -0.25595397799999997,
+    "O": -3.893948872,
+    "P": -0.25595397799999997
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3197",
+    "s_3712",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4006",
+   "element_imbalance": {
+    "C": -36.307708919999996,
+    "H": -70.3455224,
+    "O": -4.46545848
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3011",
+    "s_3713",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4007",
+   "element_imbalance": {
+    "C": -37.20975396,
+    "H": -72.31793504,
+    "O": -4.409350959999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3012",
+    "s_3713",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4008",
+   "element_imbalance": {
+    "C": -36.346010639999996,
+    "H": -68.92288832,
+    "O": -4.46949024
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3013",
+    "s_3713",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4009",
+   "element_imbalance": {
+    "C": -37.24805568,
+    "H": -70.89530096,
+    "O": -4.4133827199999995
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3014",
+    "s_3713",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4010",
+   "element_imbalance": {
+    "C": -37.2057222,
+    "H": -72.25376399999999,
+    "O": -4.409350959999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3015",
+    "s_3713",
+    "s_3740",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4011",
+   "element_imbalance": {
+    "C": -38.10776724,
+    "H": -74.22617663999999,
+    "O": -4.35324344
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3016",
+    "s_3713",
+    "s_3740",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4012",
+   "element_imbalance": {
+    "C": -37.24805568,
+    "H": -70.89530096,
+    "O": -4.4133827199999995
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3017",
+    "s_3713",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4013",
+   "element_imbalance": {
+    "C": -38.15010072,
+    "H": -72.86771359999999,
+    "O": -4.3572752
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3018",
+    "s_3713",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4014",
+   "element_imbalance": {
+    "C": -36.346010639999996,
+    "H": -68.92288832,
+    "O": -4.46949024
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3019",
+    "s_3713",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4015",
+   "element_imbalance": {
+    "C": -37.24805568,
+    "H": -70.89530096,
+    "O": -4.4133827199999995
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3020",
+    "s_3713",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4016",
+   "element_imbalance": {
+    "C": -36.38431236,
+    "H": -67.50025424,
+    "O": -4.473522
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3021",
+    "s_3713",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4017",
+   "element_imbalance": {
+    "C": -37.2863574,
+    "H": -69.47266687999999,
+    "O": -4.41741448
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3022",
+    "s_3713",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4018",
+   "element_imbalance": {
+    "C": -37.244023920000004,
+    "H": -70.83112992,
+    "O": -4.4133827199999995
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3023",
+    "s_3713",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4019",
+   "element_imbalance": {
+    "C": -38.146068959999994,
+    "H": -72.80354256,
+    "O": -4.3572752
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3024",
+    "s_3713",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4020",
+   "element_imbalance": {
+    "C": -37.2863574,
+    "H": -69.47266687999999,
+    "O": -4.41741448
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3025",
+    "s_3713",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4021",
+   "element_imbalance": {
+    "C": -38.188402440000004,
+    "H": -71.44507952,
+    "O": -4.36130696
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3026",
+    "s_3713",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4022",
+   "element_imbalance": {
+    "C": -37.2057222,
+    "H": -72.25376399999999,
+    "O": -4.409350959999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3027",
+    "s_3713",
+    "s_3740",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4023",
+   "element_imbalance": {
+    "C": -38.10776724,
+    "H": -74.22617663999999,
+    "O": -4.35324344
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3028",
+    "s_3713",
+    "s_3740",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4024",
+   "element_imbalance": {
+    "C": -37.244023920000004,
+    "H": -70.83112992,
+    "O": -4.4133827199999995
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3029",
+    "s_3713",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4025",
+   "element_imbalance": {
+    "C": -38.146068959999994,
+    "H": -72.80354256,
+    "O": -4.3572752
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3030",
+    "s_3713",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4026",
+   "element_imbalance": {
+    "C": -38.10373548,
+    "H": -74.1620056,
+    "O": -4.35324344
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3031",
+    "s_3713",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4027",
+   "element_imbalance": {
+    "C": -39.00578052,
+    "H": -76.13441824,
+    "O": -4.29713592
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3032",
+    "s_3713",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4028",
+   "element_imbalance": {
+    "C": -38.146068959999994,
+    "H": -72.80354256,
+    "O": -4.3572752
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3033",
+    "s_3713",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4029",
+   "element_imbalance": {
+    "C": -39.048114,
+    "H": -74.7759552,
+    "O": -4.30116768
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3034",
+    "s_3713",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4030",
+   "element_imbalance": {
+    "C": -37.24805568,
+    "H": -70.89530096,
+    "O": -4.4133827199999995
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3035",
+    "s_3713",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4031",
+   "element_imbalance": {
+    "C": -38.15010072,
+    "H": -72.86771359999999,
+    "O": -4.3572752
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3036",
+    "s_3713",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4032",
+   "element_imbalance": {
+    "C": -37.2863574,
+    "H": -69.47266687999999,
+    "O": -4.41741448
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3037",
+    "s_3713",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4033",
+   "element_imbalance": {
+    "C": -38.188402440000004,
+    "H": -71.44507952,
+    "O": -4.36130696
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3038",
+    "s_3713",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4034",
+   "element_imbalance": {
+    "C": -38.146068959999994,
+    "H": -72.80354256,
+    "O": -4.3572752
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3039",
+    "s_3713",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4035",
+   "element_imbalance": {
+    "C": -39.048114,
+    "H": -74.7759552,
+    "O": -4.30116768
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3040",
+    "s_3713",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4036",
+   "element_imbalance": {
+    "C": -38.188402440000004,
+    "H": -71.44507952,
+    "O": -4.36130696
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3041",
+    "s_3713",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4037",
+   "element_imbalance": {
+    "C": -39.090447479999995,
+    "H": -73.41749216,
+    "O": -4.30519944
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3042",
+    "s_3713",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4066",
+   "element_imbalance": {
+    "C": -28.031858399999997,
+    "H": -56.41157496000001,
+    "N": -0.34785816,
+    "O": -0.3894632
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0476",
+    "s_3721",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_4067",
+   "element_imbalance": {
+    "C": -28.565172799999996,
+    "H": -57.45015,
+    "N": -0.3198044,
+    "O": -0.27724815999999997
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0479",
+    "s_3721",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_4068",
+   "element_imbalance": {
+    "C": -28.031858399999997,
+    "H": -56.39557556000001,
+    "N": -0.33185876000000003,
+    "O": -1.3574644
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0482",
+    "s_3721",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_4069",
+   "element_imbalance": {
+    "C": -28.565172799999996,
+    "H": -57.4341506,
+    "N": -0.303805,
+    "O": -1.2452493600000003
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0485",
+    "s_3721",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_4070",
+   "element_imbalance": {
+    "C": -28.031858399999997,
+    "H": -56.39557556000001,
+    "N": -0.33185876000000003,
+    "O": -1.3574644
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0488",
+    "s_3721",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_4071",
+   "element_imbalance": {
+    "C": -28.565172799999996,
+    "H": -57.4341506,
+    "N": -0.303805,
+    "O": -1.2452493600000003
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0491",
+    "s_3721",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_4072",
+   "element_imbalance": {
+    "C": -28.031858399999997,
+    "H": -56.37957616000001,
+    "N": -0.31585936000000003,
+    "O": -2.3254656000000002
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0494",
+    "s_3721",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_4073",
+   "element_imbalance": {
+    "C": -28.565172799999996,
+    "H": -57.418151200000004,
+    "N": -0.2878056,
+    "O": -2.21325056
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0497",
+    "s_3721",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_4074",
+   "element_imbalance": {
+    "C": -28.031858399999997,
+    "H": -56.363576760000015,
+    "N": -0.29985996000000004,
+    "O": -3.2934667999999996
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0500",
+    "s_3721",
+    "s_3742",
+    "s_3744"
+   ]
+  },
+  {
+   "reaction_id": "r_4075",
+   "element_imbalance": {
+    "C": -28.565172799999996,
+    "H": -57.402151800000006,
+    "N": -0.2718062,
+    "O": -3.18125176
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0503",
+    "s_3721",
+    "s_3742",
+    "s_3745"
+   ]
+  },
+  {
+   "reaction_id": "r_4076",
+   "element_imbalance": {
+    "C": -12.87931248,
+    "H": -28.488574559999996,
+    "N": -0.6824874000000001,
+    "O": -2.43103472
+   },
+   "charge_imbalance": -1.0,
+   "offending_met_ids": [
+    "s_1366",
+    "s_3726",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4077",
+   "element_imbalance": {
+    "C": -12.87931248,
+    "H": -27.566147453999996,
+    "N": -0.602507498,
+    "O": -4.238557214,
+    "P": -0.602507498
+   },
+   "charge_imbalance": 1.0,
+   "offending_met_ids": [
+    "s_1367",
+    "s_3728",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4078",
+   "element_imbalance": {
+    "C": -12.87931248,
+    "H": -28.5485404,
+    "N": -0.6974788599999999,
+    "O": -1.43103472
+   },
+   "charge_imbalance": -1.0,
+   "offending_met_ids": [
+    "s_1445",
+    "s_3726",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4079",
+   "element_imbalance": {
+    "C": -12.87931248,
+    "H": -27.617169474,
+    "N": -0.619514838,
+    "O": -3.289579234,
+    "P": -0.619514838
+   },
+   "charge_imbalance": 1.0,
+   "offending_met_ids": [
+    "s_1446",
+    "s_3728",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4080",
+   "element_imbalance": {
+    "C": -24.891919734,
+    "H": -47.93753553,
+    "O": -4.398835992,
+    "P": -0.35512993800000003
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2954",
+    "s_3730",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4081",
+   "element_imbalance": {
+    "C": -25.787917133999997,
+    "H": -49.815707489999994,
+    "O": -4.222449911999999,
+    "P": -0.325060298
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2955",
+    "s_3730",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4082",
+   "element_imbalance": {
+    "C": -24.924173814,
+    "H": -46.51086969,
+    "O": -4.402867752000001,
+    "P": -0.35512993800000003
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2956",
+    "s_3730",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4083",
+   "element_imbalance": {
+    "C": -25.826218854000004,
+    "H": -48.39912104999999,
+    "O": -4.234545192,
+    "P": -0.327076178
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2957",
+    "s_3730",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4084",
+   "element_imbalance": {
+    "C": -25.783885373999997,
+    "H": -49.751536449999996,
+    "O": -4.222449912,
+    "P": -0.325060298
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2958",
+    "s_3730",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4085",
+   "element_imbalance": {
+    "C": -26.685930414,
+    "H": -51.639787809999994,
+    "O": -4.054127352,
+    "P": -0.297006538
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2959",
+    "s_3730",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4086",
+   "element_imbalance": {
+    "C": -25.826218854000004,
+    "H": -48.39912104999999,
+    "O": -4.234545192,
+    "P": -0.327076178
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2960",
+    "s_3730",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4087",
+   "element_imbalance": {
+    "C": -26.728263894,
+    "H": -50.28737241,
+    "O": -4.066222632,
+    "P": -0.29902241799999996
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2961",
+    "s_3730",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4088",
+   "element_imbalance": {
+    "C": -25.119764159999995,
+    "H": -47.88619816,
+    "O": -3.4093943199999996
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2967",
+    "s_3732",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4089",
+   "element_imbalance": {
+    "C": -26.02785684,
+    "H": -49.81056679999999,
+    "O": -3.32724892
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2968",
+    "s_3732",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4090",
+   "element_imbalance": {
+    "C": -25.16411352,
+    "H": -46.475659359999995,
+    "O": -3.41745784
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2969",
+    "s_3732",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4091",
+   "element_imbalance": {
+    "C": -26.066158559999998,
+    "H": -48.39196448,
+    "O": -3.3332965600000004
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2970",
+    "s_3732",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4092",
+   "element_imbalance": {
+    "C": -26.023825079999998,
+    "H": -49.74639575999999,
+    "O": -3.32724892
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2971",
+    "s_3732",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4093",
+   "element_imbalance": {
+    "C": -26.92587012,
+    "H": -51.662700879999996,
+    "O": -3.2430876399999997
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2972",
+    "s_3732",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4094",
+   "element_imbalance": {
+    "C": -26.066158559999998,
+    "H": -48.39196448,
+    "O": -3.3332965600000004
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2973",
+    "s_3732",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4095",
+   "element_imbalance": {
+    "C": -26.968203600000002,
+    "H": -50.3082696,
+    "O": -3.24913528
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_2974",
+    "s_3732",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4096",
+   "element_imbalance": {
+    "C": -15.848288082,
+    "H": -33.157371878,
+    "O": -5.84550298,
+    "P": -0.43543289799999996
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3126",
+    "s_3734",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4097",
+   "element_imbalance": {
+    "C": -16.582010562,
+    "H": -34.877300678,
+    "O": -5.50885786,
+    "P": -0.40737913800000003
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3127",
+    "s_3734",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4098",
+   "element_imbalance": {
+    "C": -25.500737627999996,
+    "H": -49.231266637999994,
+    "O": -4.652523948,
+    "P": -0.27903461799999996
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3227",
+    "s_3736",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4099",
+   "element_imbalance": {
+    "C": -25.545086988,
+    "H": -47.826775478,
+    "O": -4.6686509880000004,
+    "P": -0.28105049800000004
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3229",
+    "s_3736",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4100",
+   "element_imbalance": {
+    "C": -26.314589627999997,
+    "H": -50.887024398,
+    "O": -4.4280938679999995,
+    "P": -0.25098085800000003
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3230",
+    "s_3736",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4101",
+   "element_imbalance": {
+    "C": -26.362970748000002,
+    "H": -49.54670427799999,
+    "O": -4.444220907999999,
+    "P": -0.252996738
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3231",
+    "s_3736",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4102",
+   "element_imbalance": {
+    "C": -26.318621387999997,
+    "H": -50.951195438,
+    "O": -4.4280938679999995,
+    "P": -0.25098085800000003
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3232",
+    "s_3736",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4103",
+   "element_imbalance": {
+    "C": -26.362970748000002,
+    "H": -49.54670427799999,
+    "O": -4.444220907999999,
+    "P": -0.252996738
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3233",
+    "s_3736",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4104",
+   "element_imbalance": {
+    "C": -44.486392523999996,
+    "H": -87.397844744,
+    "O": -2.789965164,
+    "P": 0.703703848
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3234",
+    "s_3738",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4105",
+   "element_imbalance": {
+    "C": -44.554932444,
+    "H": -86.027623544,
+    "O": -2.8302827639999997,
+    "P": 0.6956403280000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3235",
+    "s_3738",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4106",
+   "element_imbalance": {
+    "C": -45.216083244000004,
+    "H": -88.96944122400001,
+    "O": -2.481373804,
+    "P": 0.7598113679999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3236",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4107",
+   "element_imbalance": {
+    "C": -45.288654924,
+    "H": -87.663391064,
+    "O": -2.521691404,
+    "P": 0.7517478479999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3237",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4108",
+   "element_imbalance": {
+    "C": -45.220115004,
+    "H": -89.033612264,
+    "O": -2.481373804,
+    "P": 0.7598113679999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3238",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4109",
+   "element_imbalance": {
+    "C": -45.288654924,
+    "H": -87.663391064,
+    "O": -2.521691404,
+    "P": 0.7517478479999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3239",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4110",
+   "element_imbalance": {
+    "C": -44.536789524,
+    "H": -85.999401224,
+    "O": -2.8121398440000007,
+    "P": 0.6996720879999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3240",
+    "s_3738",
+    "s_3740",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4111",
+   "element_imbalance": {
+    "C": -44.605329444,
+    "H": -84.629180024,
+    "O": -2.8524574440000006,
+    "P": 0.6916085679999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3241",
+    "s_3738",
+    "s_3741"
+   ]
+  },
+  {
+   "reaction_id": "r_4112",
+   "element_imbalance": {
+    "C": -45.26648024399999,
+    "H": -87.570997704,
+    "O": -2.503548483999999,
+    "P": 0.7557796080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3242",
+    "s_3738",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4113",
+   "element_imbalance": {
+    "C": -45.339051924,
+    "H": -86.264947544,
+    "O": -2.5438660840000007,
+    "P": 0.7477160879999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3243",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4114",
+   "element_imbalance": {
+    "C": -45.270512004,
+    "H": -87.635168744,
+    "O": -2.503548483999999,
+    "P": 0.7557796080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3244",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4115",
+   "element_imbalance": {
+    "C": -45.339051924,
+    "H": -86.264947544,
+    "O": -2.5438660840000007,
+    "P": 0.7477160879999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3245",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4116",
+   "element_imbalance": {
+    "C": -45.216083244000004,
+    "H": -88.96944122400001,
+    "O": -2.481373804,
+    "P": 0.7598113679999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3246",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4117",
+   "element_imbalance": {
+    "C": -45.284623163999996,
+    "H": -87.599220024,
+    "O": -2.521691404,
+    "P": 0.7517478479999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3247",
+    "s_3738",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4118",
+   "element_imbalance": {
+    "C": -45.945773964000004,
+    "H": -90.54103770399999,
+    "O": -2.172782444,
+    "P": 0.8159188880000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3248",
+    "s_3738",
+    "s_3741",
+    "s_3742"
+   ]
+  },
+  {
+   "reaction_id": "r_4119",
+   "element_imbalance": {
+    "C": -46.01834564399999,
+    "H": -89.23498754399999,
+    "O": -2.2131000440000017,
+    "P": 0.8078553679999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3249",
+    "s_3738",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4120",
+   "element_imbalance": {
+    "C": -45.949805724,
+    "H": -90.605208744,
+    "O": -2.172782444,
+    "P": 0.8159188880000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3250",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4121",
+   "element_imbalance": {
+    "C": -46.01834564399999,
+    "H": -89.23498754399999,
+    "O": -2.2131000440000017,
+    "P": 0.8078553679999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3251",
+    "s_3738",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4122",
+   "element_imbalance": {
+    "C": -45.270512004,
+    "H": -87.635168744,
+    "O": -2.503548483999999,
+    "P": 0.7557796080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3252",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4123",
+   "element_imbalance": {
+    "C": -45.339051924,
+    "H": -86.264947544,
+    "O": -2.5438660840000007,
+    "P": 0.7477160879999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3253",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4124",
+   "element_imbalance": {
+    "C": -46.000202724000005,
+    "H": -89.206765224,
+    "O": -2.194957124000001,
+    "P": 0.811887128
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3254",
+    "s_3738",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4125",
+   "element_imbalance": {
+    "C": -46.072774404,
+    "H": -87.900715064,
+    "O": -2.235274723999999,
+    "P": 0.8038236080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3255",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4126",
+   "element_imbalance": {
+    "C": -46.00423448400001,
+    "H": -89.270936264,
+    "O": -2.194957124000001,
+    "P": 0.811887128
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3256",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4127",
+   "element_imbalance": {
+    "C": -46.072774404,
+    "H": -87.900715064,
+    "O": -2.235274723999999,
+    "P": 0.8038236080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3257",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4128",
+   "element_imbalance": {
+    "C": -45.220115004,
+    "H": -89.033612264,
+    "O": -2.481373804,
+    "P": 0.7598113679999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3258",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4129",
+   "element_imbalance": {
+    "C": -45.288654924,
+    "H": -87.663391064,
+    "O": -2.521691404,
+    "P": 0.7517478479999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3259",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4130",
+   "element_imbalance": {
+    "C": -45.949805724,
+    "H": -90.605208744,
+    "O": -2.172782444,
+    "P": 0.8159188880000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3260",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4131",
+   "element_imbalance": {
+    "C": -46.022377404,
+    "H": -89.299158584,
+    "O": -2.2131000440000017,
+    "P": 0.8078553679999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3261",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4132",
+   "element_imbalance": {
+    "C": -45.953837484000005,
+    "H": -90.66937978399999,
+    "O": -2.172782444,
+    "P": 0.8159188880000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3262",
+    "s_3738",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4133",
+   "element_imbalance": {
+    "C": -46.022377404,
+    "H": -89.299158584,
+    "O": -2.2131000440000017,
+    "P": 0.8078553679999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3263",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4134",
+   "element_imbalance": {
+    "C": -45.270512004,
+    "H": -87.635168744,
+    "O": -2.503548483999999,
+    "P": 0.7557796080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3264",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4135",
+   "element_imbalance": {
+    "C": -45.339051924,
+    "H": -86.264947544,
+    "O": -2.5438660840000007,
+    "P": 0.7477160879999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3265",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4136",
+   "element_imbalance": {
+    "C": -46.000202724000005,
+    "H": -89.206765224,
+    "O": -2.194957124000001,
+    "P": 0.811887128
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3266",
+    "s_3738",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4137",
+   "element_imbalance": {
+    "C": -46.072774404,
+    "H": -87.900715064,
+    "O": -2.235274723999999,
+    "P": 0.8038236080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3267",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4138",
+   "element_imbalance": {
+    "C": -46.00423448400001,
+    "H": -89.270936264,
+    "O": -2.194957124000001,
+    "P": 0.811887128
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3268",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4139",
+   "element_imbalance": {
+    "C": -46.072774404,
+    "H": -87.900715064,
+    "O": -2.235274723999999,
+    "P": 0.8038236080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3269",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4140",
+   "element_imbalance": {
+    "C": -46.00423448400001,
+    "H": -89.270936264,
+    "O": -2.194957124000001,
+    "P": 0.811887128
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3308",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4141",
+   "element_imbalance": {
+    "C": -46.072774404,
+    "H": -87.900715064,
+    "O": -2.235274723999999,
+    "P": 0.8038236080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3309",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4142",
+   "element_imbalance": {
+    "C": -46.733925204,
+    "H": -90.84253274400001,
+    "O": -1.8863657640000009,
+    "P": 0.8679946479999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3310",
+    "s_3738",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4143",
+   "element_imbalance": {
+    "C": -46.806496884,
+    "H": -89.536482584,
+    "O": -1.9266833640000005,
+    "P": 0.8599311279999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3311",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4144",
+   "element_imbalance": {
+    "C": -46.73795696399999,
+    "H": -90.906703784,
+    "O": -1.8863657640000007,
+    "P": 0.8679946479999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3312",
+    "s_3738",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4145",
+   "element_imbalance": {
+    "C": -46.806496884,
+    "H": -89.536482584,
+    "O": -1.9266833640000005,
+    "P": 0.8599311279999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3313",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4146",
+   "element_imbalance": {
+    "C": -46.022377404,
+    "H": -89.299158584,
+    "O": -2.2131000440000017,
+    "P": 0.8078553679999998
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3314",
+    "s_3738",
+    "s_3740",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4147",
+   "element_imbalance": {
+    "C": -46.072774404,
+    "H": -87.900715064,
+    "O": -2.235274723999999,
+    "P": 0.8038236080000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3315",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4148",
+   "element_imbalance": {
+    "C": -46.752068124000004,
+    "H": -90.87075506400001,
+    "O": -1.9045086839999998,
+    "P": 0.8639628880000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3316",
+    "s_3738",
+    "s_3741",
+    "s_3742",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4149",
+   "element_imbalance": {
+    "C": -46.806496884,
+    "H": -89.536482584,
+    "O": -1.9266833640000005,
+    "P": 0.8599311279999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3317",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4150",
+   "element_imbalance": {
+    "C": -46.756099883999994,
+    "H": -90.934926104,
+    "O": -1.9045086839999996,
+    "P": 0.8639628880000001
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3318",
+    "s_3738",
+    "s_3740",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4151",
+   "element_imbalance": {
+    "C": -46.806496884,
+    "H": -89.536482584,
+    "O": -1.9266833640000005,
+    "P": 0.8599311279999999
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_3319",
+    "s_3738",
+    "s_3741",
+    "s_3743"
+   ]
+  },
+  {
+   "reaction_id": "r_4167",
+   "element_imbalance": {},
+   "charge_imbalance": -2.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_4249",
+   "element_imbalance": {},
+   "charge_imbalance": -1.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_4481",
+   "element_imbalance": {},
+   "charge_imbalance": -1.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_4484",
+   "element_imbalance": {},
+   "charge_imbalance": -1.0,
+   "offending_met_ids": []
+  },
+  {
+   "reaction_id": "r_4568",
+   "element_imbalance": {
+    "O": 1.0
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_1321",
+    "s_4194"
+   ]
+  },
+  {
+   "reaction_id": "r_4679",
+   "element_imbalance": {
+    "H": -1.0
+   },
+   "charge_imbalance": -1.0,
+   "offending_met_ids": [
+    "s_0426",
+    "s_0439",
+    "s_0534",
+    "s_0638",
+    "s_4251",
+    "s_4252"
+   ]
+  },
+  {
+   "reaction_id": "r_4701",
+   "element_imbalance": {
+    "H": -1.0
+   },
+   "charge_imbalance": 0.0,
+   "offending_met_ids": [
+    "s_0421",
+    "s_0807",
+    "s_1401",
+    "s_3785",
+    "s_3906"
+   ]
+  },
+  {
+   "reaction_id": "r_4702",
+   "element_imbalance": {
+    "H": 1.0
+   },
+   "charge_imbalance": 1.0,
+   "offending_met_ids": [
+    "s_0180",
+    "s_0981",
+    "s_0991",
+    "s_4264"
+   ]
+  },
+  {
+   "reaction_id": "r_4707",
+   "element_imbalance": {
+    "H": -1.0
+   },
+   "charge_imbalance": -1.0,
+   "offending_met_ids": [
+    "s_0803",
+    "s_4113"
+   ]
+  },
+  {
+   "reaction_id": "r_4782",
+   "element_imbalance": {},
+   "charge_imbalance": -1.0,
+   "offending_met_ids": []
+  }
+ ],
  "notes": "A reaction is priced only when EVERY participant carries a formation energy, or when the shipped reaction column fills it directly. The shipped reaction column mixes units and the 33 dGPredictor rows named in dgpredictor_reaction_rows.json are exempted from the kcal conversion."
 }

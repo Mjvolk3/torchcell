@@ -367,9 +367,17 @@ def test_yeast_gem_is_just_another_model() -> None:
     result = run_thermo_pipeline(
         model, ThermoPipelineConfig(organism="S. cerevisiae", conditions=conditions), []
     )
-    # With no stages nothing is priced, and every reaction says why.
-    assert result.reaction_counts.n_priced == 0
-    assert all(r.reason is not None for r in result.reactions)
+    # With no stages the only reactions that carry a value are the ones whose every
+    # participant CANCELS, whose chemical energy is zero whatever the table says, and
+    # every other reaction says why it has none.
+    priced = [r for r in result.reactions if r.delta_r_g0_kj_per_mol is not None]
+    assert all(r.route is ThermoRoute.CANCELLED_PARTICIPANTS for r in priced)
+    assert all(r.delta_r_g0_kj_per_mol == 0.0 for r in priced)
+    assert all(
+        r.reason is not None
+        for r in result.reactions
+        if r.delta_r_g0_kj_per_mol is None
+    )
     # Every compartment other than the two named is reported as running on the default.
     assert "v" in result.compartments_at_default
     assert "c" not in result.compartments_at_default

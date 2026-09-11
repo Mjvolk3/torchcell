@@ -16,6 +16,13 @@ another organism means writing another file like this one, not touching the modu
 
 THE STAGES, IN PRECEDENCE ORDER
 --------------------------------
+0. ``curated_records`` -- with ``--curation-dir``, the curated thermodynamic records under
+   ``results/curation/``. FIRST, because a curator looked at those species on purpose and
+   that outranks any automatic route. Only ``measured`` and ``tabulated`` records are
+   priced; the rest are reported. The structure route inside it needs eQuilibrator, which
+   is not in this environment, so the driver writes
+   ``results/thermo_curation_pricing_requests.json`` and RAISES until
+   ``thermo_curation_price.py`` has answered it under ``equilibrator-ext``.
 1. ``equilibrator_recomputation`` -- ``metabolite_dgf_prime.parquet``, one self-consistent
    component-contribution method at each compartment's own pH, and the only stage that
    carries a formation sigma.
@@ -61,17 +68,33 @@ import pandas as pd
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
+from torchcell.metabolism.thermo_curation import (
+    ConservedMoietyRequest,
+    CuratedReactionPricer,
+    CuratedRecordSet,
+    CuratedResolver,
+    FormulaOverride,
+    MoietyReactionTable,
+    PricedStructureTable,
+    apply_formula_corrections,
+    load_curated_records,
+    moiety_requests,
+    pricing_requests,
+    requests_digest,
+)
 from torchcell.metabolism.thermo_pipeline import (
     CompartmentConditions,
     IonFormationResolver,
     MetaboliteIdentity,
     MetabolitePrice,
+    ReactionBalance,
     TableResolver,
     ThermoPipelineConfig,
     ThermoPipelineResult,
     ThermoRoute,
     UnpricedReason,
     identities_from_model,
+    is_non_chemical_reaction,
     run_thermo_pipeline,
     sha256_of,
     summarize,
@@ -148,9 +171,7 @@ class ParquetResolver:
         self.sha256 = sha256_of(path)
 
     def resolve(
-        self,
-        metabolites: list[MetaboliteIdentity],
-        conditions: CompartmentConditions,
+        self, metabolites: list[MetaboliteIdentity], conditions: CompartmentConditions
     ) -> list[MetabolitePrice]:
         """Price every metabolite this parquet has a finite row for."""
         out: list[MetabolitePrice] = []
@@ -166,7 +187,9 @@ class ParquetResolver:
                     met_id=met.met_id,
                     dgf_prime_kj_per_mol=float(value),
                     sigma_kj_per_mol=(
-                        float(sigma) if sigma is not None and np.isfinite(sigma) else None
+                        float(sigma)
+                        if sigma is not None and np.isfinite(sigma)
+                        else None
                     ),
                     route=self.route,
                     p_h=p_h,
@@ -225,9 +248,7 @@ class JsonRecordResolver:
                 }
 
     def resolve(
-        self,
-        metabolites: list[MetaboliteIdentity],
-        conditions: CompartmentConditions,
+        self, metabolites: list[MetaboliteIdentity], conditions: CompartmentConditions
     ) -> list[MetabolitePrice]:
         """Price every metabolite one of this file's records names."""
         out: list[MetabolitePrice] = []
@@ -293,9 +314,7 @@ class StructureAttemptReasonResolver:
                 self.reason[str(met_id)] = (reason, str(record.get("outcome", "")))
 
     def resolve(
-        self,
-        metabolites: list[MetaboliteIdentity],
-        conditions: CompartmentConditions,
+        self, metabolites: list[MetaboliteIdentity], conditions: CompartmentConditions
     ) -> list[MetabolitePrice]:
         """State a reason for every species the attempt looked at; price nothing."""
         out: list[MetabolitePrice] = []
@@ -353,9 +372,7 @@ class AuditReasonResolver:
         }
 
     def resolve(
-        self,
-        metabolites: list[MetaboliteIdentity],
-        conditions: CompartmentConditions,
+        self, metabolites: list[MetaboliteIdentity], conditions: CompartmentConditions
     ) -> list[MetabolitePrice]:
         """State a reason for every metabolite; price nothing."""
         out: list[MetabolitePrice] = []
@@ -442,6 +459,12 @@ class CeilingLadder(BaseModel):
 
     built_at: str
     n_reactions: int
+    #: The CHEMICAL denominator: every reaction minus the exchanges, demands, sinks and
+    #: pseudoreactions, which have no standard reaction energy to find. The ladder is
+    #: computed over this, so a fraction on it is a fraction of the reactions where a value
+    #: is a physical quantity.
+    n_reactions_chemical: int = 0
+    n_reactions_non_chemical: int = 0
     n_flux_carrying: int
     rungs: list[CeilingRung]
     n_permanently_closed_reactions: int
@@ -473,6 +496,19 @@ class CoverageCeiling(BaseModel):
     remedy_summary: dict[str, dict[str, int]]
     betaxanthin_route: dict[str, object]
     ceiling_ladder: CeilingLadder
+    #: The curation buckets. ``admitted`` records reached the priced table;
+    #: ``recorded_not_admitted`` ones are loaded, validated and reported and never priced.
+    curation: dict[str, object] = {}
+    #: Reactions priced because their unpriced participants cancel, and reactions counted
+    #: outside the chemical denominator because they are not chemistry.
+    n_reactions_cancelled: int = 0
+    n_reactions_non_chemical: int = 0
+    n_reactions_chemical: int = 0
+    n_reactions_chemical_priced: int = 0
+    fraction_chemical_priced: float = 0.0
+    #: Reactions whose own formulas do not balance. Diagnostic; no price depends on it.
+    n_reactions_imbalanced: int = 0
+    imbalanced_reactions: list[ReactionBalance] = []
     notes: str
 
 
@@ -509,7 +545,121 @@ REMEDY = {
     UnpricedReason.NOT_ATTEMPTED: "no configured stage claimed it",
     UnpricedReason.BLOCKED_BY_METABOLITE: "see the blocking metabolites",
     UnpricedReason.NO_PARTICIPANTS: "an empty stoichiometry; not a reaction",
+    UnpricedReason.GROUP_IN_NULL_SPACE: (
+        "a group NOBODY TRAINED ON: the structure decomposes and one of its groups is in "
+        "the component-contribution null space, so the estimate has infinite variance. "
+        "Different from a missing group definition: the group exists and no training "
+        "compound carries it, so the remedy is a measurement of a compound that does, or "
+        "a microspecies whose groups are covered"
+    ),
+    UnpricedReason.CARRIER_NOT_CONSERVED: (
+        "nothing is needed for the metabolite: a redox carrier priced by a pseudo pair is "
+        "made or destroyed in this reaction, so the gauge does not cancel and the sum is "
+        "not a reaction energy"
+    ),
+    UnpricedReason.NON_CHEMICAL: (
+        "nothing is needed: an exchange, demand, sink or pseudoreaction is not "
+        "elementally balanced and has no standard reaction energy to find"
+    ),
+    UnpricedReason.RECORDED_NOT_ADMITTED: (
+        "a curated record EXISTS and its admission is computed or provisional, so it is "
+        "reported and not priced; what it would take is a measured or tabulated source"
+    ),
+    UnpricedReason.PRICED_AT_REACTION_LEVEL: (
+        "nothing is needed: a curated record prices this species' reactions directly, "
+        "which is what a midpoint potential of a couple can do and a formation energy of "
+        "one of its members cannot"
+    ),
 }
+
+
+#: Where the driver leaves the structure-route calls the curated records imply, and where
+#: it expects `thermo_curation_price.py` to have left the answers.
+CURATION_REQUESTS = osp.join(RESULTS, "thermo_curation_pricing_requests.json")
+CURATION_PRICED = osp.join(RESULTS, "thermo_curation_priced_structures.json")
+ACCESSION_REQUESTS = osp.join(RESULTS, "thermo_accession_check_requests.json")
+ACCESSION_COMPOSITION = osp.join(RESULTS, "thermo_accession_composition.json")
+MOIETY_REQUESTS = osp.join(RESULTS, "thermo_moiety_requests.json")
+MOIETY_PRICED = osp.join(RESULTS, "thermo_moiety_priced.json")
+
+#: The unpriced reasons a STRUCTURE could still fix. A placeholder formula or a
+#: pseudo-metabolite has no structure and never will, so a reaction blocked by one is never
+#: offered to the conserved-moiety route.
+MOIETY_REACHABLE_REASONS = frozenset(
+    {
+        UnpricedReason.GROUP_DECOMPOSITION_FAILED,
+        UnpricedReason.NO_PKA_PREDICTION,
+        UnpricedReason.NO_STRUCTURE_AVAILABLE,
+        UnpricedReason.RECORDED_NOT_ADMITTED,
+        UnpricedReason.GROUP_IN_NULL_SPACE,
+    }
+)
+
+
+def build_curation(
+    args: argparse.Namespace, identities: list[MetaboliteIdentity], conditions
+) -> tuple[CuratedRecordSet | None, CuratedResolver | None, list[FormulaOverride]]:
+    """Load the curated records, apply the formula corrections, build the stage.
+
+    Writes the pricing-request file every time, because it is derived from the records and
+    the conditions and is stale the moment either changes. A request the priced-structure
+    artifact does not answer RAISES here, with the command that produces it: the two
+    environments cannot share a process, so the only alternative to raising is running on
+    an artifact that predates the records, which is how a coverage number stops meaning
+    anything.
+    """
+    if not args.curation_dir:
+        return None, None, []
+    records = load_curated_records(args.curation_dir)
+    print(
+        f"curation: {len(records.records)} records from {args.curation_dir}, "
+        f"{sum(1 for r in records.records if r.admitted)} admitted"
+    )
+    corrected, overrides = apply_formula_corrections(identities, records)
+    for override in overrides:
+        print(
+            f"  formula override {override.met_id}: {override.gem_formula} "
+            f"({override.gem_charge:+d}) -> {override.corrected_formula} "
+            f"({override.corrected_charge:+d}) [{override.slug}]"
+        )
+    requests = pricing_requests(records, corrected, conditions)
+    digest = requests_digest(requests)
+    with open(CURATION_REQUESTS, "w") as handle:
+        json.dump(
+            {
+                "built_at": datetime.now(UTC).isoformat(),
+                "curation_dir": args.curation_dir,
+                "n_requests": len(requests),
+                "requests_digest": digest,
+                "requests": [r.model_dump() for r in requests],
+            },
+            handle,
+            indent=1,
+        )
+    print(f"wrote {CURATION_REQUESTS}: {len(requests)} structure route calls")
+    pricer = None
+    if requests:
+        if osp.isfile(CURATION_PRICED):
+            with open(CURATION_PRICED) as handle:
+                answered = json.load(handle)["requests_digest"]
+            if answered != digest:
+                raise ValueError(
+                    f"{CURATION_PRICED} answers a DIFFERENT request set than the one just "
+                    f"written ({answered[:12]} against {digest[:12]}). The records or the "
+                    "conditions changed since it was built; rerun "
+                    "thermo_curation_price.py under the equilibrator-ext environment."
+                )
+        if not osp.isfile(CURATION_PRICED):
+            raise FileNotFoundError(
+                f"{len(requests)} curated structures need the structure route and "
+                f"{CURATION_PRICED} does not exist. Run, from the repository root:\n"
+                "  PYTHONPATH=$PWD ~/miniconda3/envs/equilibrator-ext/bin/python \\\n"
+                "      experiments/026-metabolism-flux/scripts/thermo_curation_price.py \\\n"
+                "      --local-cache $DATA_ROOT/tmp/thermo_curation.sqlite \\\n"
+                "      --seed-cache ~/.cache/equilibrator/compounds.sqlite"
+            )
+        pricer = PricedStructureTable(CURATION_PRICED)
+    return records, CuratedResolver(records, pricer), overrides
 
 
 def build_stages(
@@ -615,7 +765,10 @@ def build_stages(
     # reach them even in principle, so this is the one route that is a measurement from the
     # literature rather than a computation, and it is tagged as its own.
     ion_table = osp.join(
-        DATA_ROOT, "data", "torchcell", "ion_formation_energies",
+        DATA_ROOT,
+        "data",
+        "torchcell",
+        "ion_formation_energies",
         "ion_formation_energies.json",
     )
     if osp.isfile(ion_table):
@@ -639,8 +792,9 @@ def build_stages(
                 value_column="dgf_prime_surrogate_kj_per_mol",
                 sigma_column="surrogate_sd_kj_per_mol",
                 route=ThermoRoute.COMPOSITION_SURROGATE,
-                row_filter=lambda f: f["surrogate_spread_kj_per_mol"]
-                <= args.surrogate_spread,
+                row_filter=lambda f: (
+                    f["surrogate_spread_kj_per_mol"] <= args.surrogate_spread
+                ),
                 reason=UnpricedReason.SURROGATE_SPREAD_TOO_WIDE,
             )
         )
@@ -679,7 +833,9 @@ def build_stages(
             values=shipped,
             units="kcal/mol",
             source_path=osp.join(GEM_DIR, "data", "databases", "model_metDeltaG.csv"),
-            sha256=sha256_of(osp.join(GEM_DIR, "data", "databases", "model_metDeltaG.csv")),
+            sha256=sha256_of(
+                osp.join(GEM_DIR, "data", "databases", "model_metDeltaG.csv")
+            ),
         )
     )
 
@@ -768,6 +924,17 @@ def main() -> None:
         action="store_true",
         help="drop the repeat-unit surrogate stage, for a table with no surrogates in it",
     )
+    parser.add_argument(
+        "--curation-dir",
+        default=None,
+        help=(
+            "a directory of curated thermodynamic records "
+            "(experiments/026-metabolism-flux/results/curation). Every file in it is "
+            "validated and a malformed one raises; admitted records enter the priced table "
+            "at the TOP of the precedence order, and computed or provisional ones are "
+            "reported in the recorded_not_admitted bucket and never priced"
+        ),
+    )
     args = parser.parse_args()
 
     import cobra
@@ -777,8 +944,74 @@ def main() -> None:
     _, _, rows_path = _reaction_table()
     config = build_config(model)
 
+    identities = identities_from_model(model)
+    records, curated, overrides = build_curation(args, identities, config.conditions)
+    if records is not None:
+        identities, _ = apply_formula_corrections(identities, records)
+
     stages = build_stages(args)
-    result = run_thermo_pipeline(model, config, stages, formation_sigma())
+    # The curated stage goes FIRST. A curator looked at these species on purpose, which
+    # outranks any automatic route, and a record placed after the automatic stages would
+    # be shadowed by exactly the values it was written to replace.
+    if curated is not None:
+        stages.insert(0, curated)
+    pricers = (
+        [CuratedReactionPricer(records, identities)] if records is not None else []
+    )
+    result = run_thermo_pipeline(
+        model,
+        config,
+        stages,
+        formation_sigma(),
+        reaction_pricers=pricers,
+        identities=identities,
+    )
+    # The conserved-moiety route needs to know what is still blocking, so its request list
+    # is derived from a first pass and the second pass consumes the answers. Two passes
+    # rather than one because the route is a reaction-level stage whose INPUT is the
+    # metabolite-level outcome, and guessing the blockers before running the stages would
+    # be a second, driftable definition of "blocked".
+    n_accession = _write_accession_requests(result, identities)
+    print(f"wrote {ACCESSION_REQUESTS}: {n_accession} accession-priced metabolites")
+    filters: list = []
+    guard = None
+    if osp.isfile(ACCESSION_COMPOSITION):
+        guard = CompositionGuard(ACCESSION_COMPOSITION)
+        filters.append(guard)
+    if records is not None:
+        moiety = _write_moiety_requests(model, result, identities, records, config)
+        table = (
+            MoietyReactionTable(MOIETY_PRICED)
+            if moiety and osp.isfile(MOIETY_PRICED)
+            else None
+        )
+        if table is not None:
+            pricers = [*pricers, table]
+        elif moiety:
+            print(
+                f"wrote {MOIETY_REQUESTS}: {len(moiety)} reactions for the "
+                "conserved-moiety route; run thermo_curation_price.py to answer them"
+            )
+        if table is not None or filters:
+            result = run_thermo_pipeline(
+                model,
+                config,
+                stages,
+                formation_sigma(),
+                reaction_pricers=pricers,
+                identities=identities,
+                price_filters=filters,
+            )
+        if table is not None:
+            print(
+                f"conserved moiety: {sum(1 for r in table.rows.values() if r.priced)}"
+                f"/{len(table.rows)} of the requested reactions priced"
+            )
+        if guard is not None:
+            print(
+                f"composition guard: withdrew {len(guard.dropped)} accession prices whose "
+                "structure is not the GEM's molecule"
+            )
     print(summarize(result))
 
     os.makedirs(RESULTS, exist_ok=True)
@@ -786,8 +1019,185 @@ def main() -> None:
     write_result(result, full_path)
     print(f"wrote {full_path}")
 
-    _write_ceiling(result, model, rows_path)
-    _write_exclusions(result, model)
+    _write_ceiling(result, model, rows_path, records, overrides, pricers)
+    _write_exclusions(result, model, identities)
+
+
+class CompositionGuard:
+    """Drop an accession price whose STRUCTURE is not the GEM's molecule.
+
+    The accession route never had a composition check: it accepted the first accession
+    that resolved to a compound carrying a formation energy, whatever molecule that
+    compound turned out to be. Two families of consequence are in the shipped table, and
+    they are different problems:
+
+    *A different molecule.* Glycogen's structure is a four-residue oligomer against a
+    one-residue formula, so its price is roughly four times too negative. There is no
+    convention under which that is the same species, and the price is dropped.
+
+    *A repeat unit the GEM does not write.* Every dolichol species in yeast-GEM carries the
+    n = 0 core formula while every accession structure is n = 1, one isoprene larger. That
+    offset is legitimate ONLY if it is the same in every family member, because then it
+    cancels in the reactions where the family is conserved. The rule is therefore a FAMILY
+    rule: pass the offset when every member carries it, drop the family when they disagree,
+    and record ``repeat_unit_offset`` on each price so no reader has to rediscover it.
+
+    Placed immediately AFTER the accession stages and before anything else can consume
+    their prices, and it prices nothing itself.
+    """
+
+    name = "accession_composition_guard"
+
+    #: The routes this guard is entitled to overrule. A curated structure has its own
+    #: composition check and a literature table has no structure to check.
+    GUARDED_ROUTES = frozenset(
+        {ThermoRoute.CACHE_ACCESSION, ThermoRoute.CACHE_STRUCTURE}
+    )
+
+    def __init__(self, path: str) -> None:
+        """Read the composition sweep and index it by metabolite."""
+        with open(path) as handle:
+            payload = json.load(handle)
+        self.path = path
+        self.family_consistent = bool(payload["family_consistent"])
+        self.rows = {row["met_id"]: row for row in payload["rows"]}
+        #: What this guard withdrew on the last call, for the report.
+        self.dropped: list[dict[str, object]] = []
+
+    def verdict(self, met_id: str) -> tuple[bool, float | None, str]:
+        """``(keep, repeat_unit_offset, why)`` for one metabolite."""
+        row = self.rows.get(met_id)
+        if row is None:
+            return True, None, ""
+        if row["classification"] == "match":
+            return True, 0.0, ""
+        if row["classification"] == "repeat_unit_multiple":
+            if self.family_consistent:
+                return True, row["repeat_unit_offset"], row["detail"]
+            return (
+                False,
+                row["repeat_unit_offset"],
+                (
+                    "the repeat-unit family is NOT consistent, so the offset does not cancel"
+                ),
+            )
+        if row["classification"] == "other":
+            return False, None, row["detail"]
+        return True, None, ""
+
+    def __call__(self, prices: list[MetabolitePrice]) -> list[MetabolitePrice]:
+        """Drop the prices this guard refuses and annotate the ones it keeps."""
+        kept, dropped = apply_composition_guard(prices, self)
+        self.dropped = dropped
+        return kept
+
+
+def apply_composition_guard(
+    prices: list[MetabolitePrice], guard: CompositionGuard
+) -> tuple[list[MetabolitePrice], list[dict[str, object]]]:
+    """Drop the prices the guard refuses and annotate the ones it keeps."""
+    out: list[MetabolitePrice] = []
+    dropped: list[dict[str, object]] = []
+    for price in prices:
+        if not price.priced or price.route not in guard.GUARDED_ROUTES:
+            out.append(price)
+            continue
+        keep, offset, why = guard.verdict(price.met_id)
+        if keep:
+            provenance = dict(price.provenance)
+            if offset:
+                provenance["repeat_unit_offset"] = offset
+                provenance["composition_note"] = why
+            out.append(price.model_copy(update={"provenance": provenance}))
+            continue
+        dropped.append(
+            {
+                "met_id": price.met_id,
+                "dropped_dgf_prime_kj_per_mol": price.dgf_prime_kj_per_mol,
+                "route": str(price.route),
+                "why": why,
+            }
+        )
+        out.append(
+            MetabolitePrice(
+                met_id=price.met_id,
+                reason=UnpricedReason.NO_STRUCTURE_AVAILABLE,
+                reason_is_final=True,
+                detail=(
+                    "the accession route priced this from a structure that is not the "
+                    f"GEM's molecule: {why}"
+                ),
+                provenance={"composition_guard": guard.path, "dropped": True},
+            )
+        )
+    return out, dropped
+
+
+def _write_accession_requests(result: ThermoPipelineResult, identities) -> int:
+    """List every accession-priced metabolite for the composition sweep."""
+    by_id = {m.met_id: m for m in identities}
+    rows = [
+        {
+            "met_id": price.met_id,
+            "name": by_id[price.met_id].name,
+            "formula": by_id[price.met_id].formula,
+            "charge": by_id[price.met_id].charge,
+            "accessions": by_id[price.met_id].accessions,
+            "route": str(price.route),
+            "dgf_prime_kj_per_mol": price.dgf_prime_kj_per_mol,
+        }
+        for price in result.metabolites
+        if price.priced
+        and price.route in CompositionGuard.GUARDED_ROUTES
+        and by_id[price.met_id].accessions
+    ]
+    with open(ACCESSION_REQUESTS, "w") as handle:
+        json.dump(
+            {
+                "built_at": datetime.now(UTC).isoformat(),
+                "n_metabolites": len(rows),
+                "metabolites": rows,
+            },
+            handle,
+            indent=1,
+        )
+    return len(rows)
+
+
+def _write_moiety_requests(
+    model, result: ThermoPipelineResult, identities, records, config
+) -> list[ConservedMoietyRequest]:
+    """Derive and write the conserved-moiety request list from a first pass."""
+    prices = {p.met_id: p for p in result.metabolites}
+    reactions = [
+        (r.id, {m.id: float(c) for m, c in r.metabolites.items()})
+        for r in model.reactions
+        if not is_non_chemical_reaction(r, config)
+    ]
+    requests = moiety_requests(
+        reactions,
+        identities,
+        prices,
+        records,
+        config.conditions,
+        MOIETY_REACHABLE_REASONS,
+        already_priced=frozenset(
+            r.reaction_id
+            for r in result.reactions
+            if r.delta_r_g0_kj_per_mol is not None
+        ),
+    )
+    with open(MOIETY_REQUESTS, "w") as handle:
+        json.dump(
+            {
+                "built_at": datetime.now(UTC).isoformat(),
+                "n_requests": len(requests),
+                "requests": [r.model_dump() for r in requests],
+            },
+            handle,
+            indent=1,
+        )
+    return requests
 
 
 def build_config(model) -> ThermoPipelineConfig:
@@ -849,7 +1259,14 @@ def _build_ceiling_ladder(result: ThermoPipelineResult) -> CeilingLadder:
     reason_by_met = {p.met_id: p.reason for p in result.metabolites}
     flux_ids = set(result.config.flux_carrying_reaction_ids)
 
-    unpriced = [r for r in result.reactions if r.delta_r_g0_kj_per_mol is None]
+    # The ladder is over the CHEMICAL reactions. An exchange or a pseudoreaction that
+    # cannot be priced is not a gap anyone can close, and leaving it in the denominator
+    # made every rung report a smaller fraction than the one it names.
+    unpriced = [
+        r
+        for r in result.reactions
+        if r.delta_r_g0_kj_per_mol is None and not r.non_chemical
+    ]
     blocking_reasons: dict[str, set[UnpricedReason]] = {}
     for reaction in unpriced:
         reasons = {
@@ -873,9 +1290,9 @@ def _build_ceiling_ladder(result: ThermoPipelineResult) -> CeilingLadder:
         for reason in blocking_reasons[reaction_id] & PERMANENTLY_CLOSED_REASONS:
             closed_counts[str(reason)] = closed_counts.get(str(reason), 0) + 1
 
-    n_total = result.reaction_counts.n_total
+    n_total = result.reaction_counts_chemical.n_total
     n_flux = len(flux_ids)
-    base_priced = result.reaction_counts.n_priced
+    base_priced = result.reaction_counts_chemical.n_priced
     base_flux = sum(
         1
         for r in result.reactions
@@ -913,9 +1330,7 @@ def _build_ceiling_ladder(result: ThermoPipelineResult) -> CeilingLadder:
         UnpricedReason.NO_PKA_PREDICTION,
     }
     everything_possible = {
-        reason
-        for reasons in blocking_reasons.values()
-        for reason in reasons
+        reason for reasons in blocking_reasons.values() for reason in reasons
     } - PERMANENTLY_CLOSED_REASONS
 
     rungs = [
@@ -947,7 +1362,9 @@ def _build_ceiling_ladder(result: ThermoPipelineResult) -> CeilingLadder:
     ]
     return CeilingLadder(
         built_at=datetime.now(UTC).isoformat(),
-        n_reactions=n_total,
+        n_reactions=result.reaction_counts.n_total,
+        n_reactions_chemical=n_total,
+        n_reactions_non_chemical=result.n_non_chemical_reactions,
         n_flux_carrying=n_flux,
         rungs=rungs,
         n_permanently_closed_reactions=len(permanently_closed),
@@ -959,14 +1376,69 @@ def _build_ceiling_ladder(result: ThermoPipelineResult) -> CeilingLadder:
             "molecule: a SLIME backbone whose formula is a difference formula, or a "
             "placeholder formula that names a family. No pKa predictor, structure writer, "
             "decomposer or literature table changes those, so the last rung is the ceiling "
-            "for any method at all rather than for this one. The rungs and the permanently "
+            "for any method at all rather than for this one. Every fraction here is over "
+            "the CHEMICAL reactions: the exchanges, demands, sinks and pseudoreactions are "
+            "counted separately, because they are not elementally balanced and a standard "
+            "reaction energy has no meaning for them. The rungs and the permanently "
             "closed set partition the unpriced reactions exactly: every unpriced reaction "
             "is either closed for good or named by the last rung."
         ),
     )
 
 
-def _write_ceiling(result: ThermoPipelineResult, model, rows_path: str) -> None:
+def _curation_block(
+    result: ThermoPipelineResult,
+    records: CuratedRecordSet | None,
+    overrides: list[FormulaOverride],
+    pricers: list[CuratedReactionPricer],
+) -> dict[str, object]:
+    """What the curated records did: admitted, reported, and what each one closed.
+
+    The two buckets are counted from the RECORDS rather than from the metabolite reasons,
+    because a record that is not admitted deliberately leaves the species' reason alone: a
+    provisional note about a species whose formula carries an R does not move it out of the
+    permanently closed class, and counting the bucket off the reason would hide that.
+    """
+    if records is None:
+        return {"curation_dir": "", "n_records": 0}
+    priced_by_slug: dict[str, int] = {}
+    for price in result.metabolites:
+        slug = price.provenance.get("slug") if price.priced else None
+        if isinstance(slug, str):
+            priced_by_slug[slug] = priced_by_slug.get(slug, 0) + 1
+    reaction_by_slug: dict[str, int] = {}
+    for reaction in result.reactions:
+        slug = reaction.provenance.get("slug")
+        if isinstance(slug, str) and reaction.delta_r_g0_kj_per_mol is not None:
+            reaction_by_slug[slug] = reaction_by_slug.get(slug, 0) + 1
+    return {
+        "curation_dir": records.directory,
+        "n_records": len(records.records),
+        "n_admitted": sum(1 for r in records.records if r.admitted),
+        "n_recorded_not_admitted": sum(1 for r in records.records if not r.admitted),
+        "admitted": sorted(r.slug for r in records.records if r.admitted),
+        "recorded_not_admitted": {
+            r.slug: str(r.admission) for r in records.records if not r.admitted
+        },
+        "n_metabolites_priced_by_slug": dict(sorted(priced_by_slug.items())),
+        "n_reactions_priced_by_slug": dict(sorted(reaction_by_slug.items())),
+        "formula_overrides": [o.model_dump() for o in overrides],
+        "carrier_refusals": {
+            reaction_id: why
+            for pricer in pricers
+            for reaction_id, why in sorted(pricer.refusals.items())
+        },
+    }
+
+
+def _write_ceiling(
+    result: ThermoPipelineResult,
+    model,
+    rows_path: str,
+    records: CuratedRecordSet | None = None,
+    overrides: list[FormulaOverride] | None = None,
+    pricers: list[CuratedReactionPricer] | None = None,
+) -> None:
     reason_by_met = {p.met_id: p.reason for p in result.metabolites}
     sole: dict[str, int] = {}
     for reaction in result.reactions:
@@ -1012,6 +1484,14 @@ def _write_ceiling(result: ThermoPipelineResult, model, rows_path: str) -> None:
         remedy_summary=remedy_summary,
         betaxanthin_route=_betaxanthin_block(result, model),
         ceiling_ladder=_build_ceiling_ladder(result),
+        curation=_curation_block(result, records, overrides or [], pricers or []),
+        n_reactions_cancelled=sum(1 for r in result.reactions if r.cancelled_met_ids),
+        n_reactions_non_chemical=result.n_non_chemical_reactions,
+        n_reactions_chemical=result.reaction_counts_chemical.n_total,
+        n_reactions_chemical_priced=result.reaction_counts_chemical.n_priced,
+        fraction_chemical_priced=result.reaction_counts_chemical.fraction,
+        n_reactions_imbalanced=len(result.imbalanced_reactions),
+        imbalanced_reactions=result.imbalanced_reactions,
         notes=(
             "A reaction is priced only when EVERY participant carries a formation energy, "
             "or when the shipped reaction column fills it directly. The shipped reaction "
@@ -1118,7 +1598,7 @@ def _betaxanthin_block(result: ThermoPipelineResult, model) -> dict[str, object]
     }
 
 
-def _write_exclusions(result: ThermoPipelineResult, model) -> None:
+def _write_exclusions(result: ThermoPipelineResult, model, identity_list=None) -> None:
     """One record per unpriced metabolite: the reason, the formula, the reactions blocked."""
     blocked: dict[str, list[str]] = {}
     for reaction in result.reactions:
@@ -1126,7 +1606,12 @@ def _write_exclusions(result: ThermoPipelineResult, model) -> None:
             continue
         for met_id in reaction.blocking_met_ids:
             blocked.setdefault(met_id, []).append(reaction.reaction_id)
-    identities = {m.met_id: m for m in identities_from_model(model)}
+    identities = {
+        m.met_id: m
+        for m in (
+            identity_list if identity_list is not None else identities_from_model(model)
+        )
+    }
 
     records: list[ExclusionRecord] = []
     for price in result.metabolites:

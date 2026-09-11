@@ -30,10 +30,14 @@ metabolites that blocked it.
 
 THE RULES THAT MAKE THE OUTPUT READABLE
 ---------------------------------------
-1. **A reaction is priced only when EVERY participant carries a formation energy.** One
-   unpriced participant makes the sum a number that looks like a free energy and is not
-   one. This is the same predicate ``audit_reaction_thermo_coverage.py`` uses, restated
-   once here so the two cannot drift.
+1. **A reaction is priced only when EVERY participant carries a formation energy**, or
+   when every participant it cannot price CANCELS. One unpriced participant makes the sum
+   a number that looks like a free energy and is not one. This is the same predicate
+   ``audit_reaction_thermo_coverage.py`` uses, restated once here so the two cannot drift.
+   The cancellation exception is chemistry rather than a relaxation: a species that appears
+   on both sides of a reaction with coefficients summing to zero contributes nothing to
+   :math:`\sum_i S_{ij}\Delta_f G'^\circ_i`, so its absence from the metabolite table cannot
+   change the reaction's chemical energy. See :func:`cancelling_participants`.
 2. **Every value carries its route, and routes are never averaged.** A reaction assembled
    from two routes is tagged ``mixed`` rather than attributed to either, because its
    uncertainty is not either route's.
@@ -44,6 +48,16 @@ THE RULES THAT MAKE THE OUTPUT READABLE
 4. **No stage may silently substitute a value.** A surrogate (an energy borrowed from a
    compound of the same composition) is a route of its own, is admitted only under an
    explicit spread bound, and carries that spread as its sigma.
+5. **A reaction that is not chemistry is counted outside the chemical denominator.** An
+   exchange, a demand, a sink and a biomass or pool pseudoreaction are modeling devices
+   whose "standard reaction energy" has no physical meaning, because they are not
+   elementally balanced. Leaving them in the denominator makes every coverage fraction a
+   different number from the one it claims to be, so they carry
+   :attr:`UnpricedReason.NON_CHEMICAL` and
+   :attr:`ThermoPipelineResult.reaction_counts_chemical` reports the fraction over the rest.
+   Which reactions those are is a property of the MODEL, so the rule is a config field
+   (:attr:`ThermoPipelineConfig.non_chemical_boundary` and its two companions) rather than
+   a hardcoded list.
 
 WHAT IS ORGANISM-SPECIFIC AND WHERE IT LIVES
 --------------------------------------------
@@ -68,6 +82,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os.path as osp
+import re
 from enum import StrEnum
 from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
@@ -86,9 +101,27 @@ KJ_PER_KCAL = 4.184
 #: single structure and no single formation energy exists for it.
 PLACEHOLDER_TOKENS = ("R", "X", "*")
 
+#: The gas constant in kJ/mol/K AS eQuilibrator ROUNDS IT
+#: (``equilibrator_cache.thermodynamic_constants.default_R_in_kJ_per_mol_per_K``). The CODATA
+#: value is 8.314462618e-3 and this is 0.05 percent below it, which on a twelve-proton
+#: species at pH 7.8 is 0.29 kJ/mol. The rounded value is copied deliberately: every other
+#: number in this table comes out of eQuilibrator, and a transform that disagrees with the
+#: one the cache applied to its own compounds puts a systematic offset between our curated
+#: rows and every other row. Consistency with the table beats a correction of 0.05 percent.
+EQUILIBRATOR_R_KJ_PER_MOL_PER_K = 0.00831
+
+#: The Faraday constant in kJ/mol/V. A one-electron transfer across 1 V is 96.485 kJ/mol,
+#: which is what turns a measured midpoint potential into a reaction energy.
+FARADAY_KJ_PER_MOL_PER_V = 96.48533212
+
+#: Coefficients whose absolute value is below this are treated as zero when testing whether
+#: a set of participants cancels. Stoichiometries are stored as floats and a GEM writes
+#: 0.9999999999 where it means 1.
+COEFFICIENT_TOLERANCE = 1e-9
+
 
 class ThermoRoute(StrEnum):
-    """How one formation energy was obtained. Ordered from most to least direct.
+    r"""How one formation energy was obtained. Ordered from most to least direct.
 
     ``CACHE_ACCESSION``      -- an identifier on the metabolite resolved to a compound that
                                 already carries a component-contribution energy.
@@ -108,6 +141,25 @@ class ThermoRoute(StrEnum):
                                 at all (a bare ion has no groups and no training reaction).
     ``SHIPPED_REACTION``     -- the GEM's own REACTION table, which is not a formation
                                 energy at all and can only fill a reaction directly.
+    ``CURATED_STRUCTURE``    -- a structure a CURATOR supplied, with a provenance record,
+                                priced through the same structure route as any other.
+    ``CURATED_FORMATION``    -- a formation energy a curator took from a measured or
+                                tabulated source, Legendre-transformed to the compartment.
+    ``CURATED_PKA``          -- a curated pKa ladder applied to a structure that already
+                                resolved, which is the ladder the transform needed.
+    ``CURATED_FORMULA``      -- the GEM's formula or charge was wrong, a curator corrected
+                                it, and the corrected species was priced.
+    ``CARRIER_POTENTIAL``    -- a protein-bound redox carrier, priced as a PSEUDO pair:
+                                the oxidized form at zero and the reduced form at
+                                :math:`-nFE'^\circ`. Only the difference is physical, and
+                                it cancels the gauge in every reaction that conserves the
+                                carrier.
+    ``CONSERVED_MOIETY``     -- a reaction-level route: a moiety that no group covers
+                                appears unchanged on both sides, so the reaction is priced
+                                from the GROUP DIFFERENCE of everything else.
+    ``CANCELLED_PARTICIPANTS``-- a reaction-level route: every participant cancelled, so
+                                the chemical energy is exactly zero and the whole standard
+                                energy is the compartment (transport) term.
     ``NONE``                 -- no route succeeded.
     """
 
@@ -116,10 +168,17 @@ class ThermoRoute(StrEnum):
     STRUCTURE_WRITER = "structure_writer"
     EXTERNAL_PKA = "external_pka"
     LITERATURE_TABLE = "literature_table"
+    CURATED_STRUCTURE = "curated_structure"
+    CURATED_FORMATION = "curated_formation"
+    CURATED_PKA = "curated_pka"
+    CURATED_FORMULA = "curated_formula"
     COMPOSITION_SURROGATE = "composition_surrogate"
     REPEAT_UNIT_SURROGATE = "repeat_unit_surrogate"
     SHIPPED_TABLE = "shipped_table"
     SHIPPED_REACTION = "shipped_reaction_column"
+    CARRIER_POTENTIAL = "carrier_potential"
+    CONSERVED_MOIETY = "conserved_moiety"
+    CANCELLED_PARTICIPANTS = "cancelled_participants"
     MIXED = "mixed"
     NONE = "none"
 
@@ -144,8 +203,32 @@ class UnpricedReason(StrEnum):
                                       rather than a molecule. Nothing is possible.
     ``SURROGATE_SPREAD_TOO_WIDE``  -- same-composition compounds disagree by more than the
                                       admitted bound, so borrowing is not defensible.
+    ``RECORDED_NOT_ADMITTED``      -- a curated record EXISTS for this species and its
+                                      admission is ``computed`` or ``provisional``, so it
+                                      is loaded, validated and reported but kept out of the
+                                      table the models read. A different statement from
+                                      "nobody looked".
+    ``PRICED_AT_REACTION_LEVEL``   -- a curated record covers this species and prices the
+                                      REACTIONS it appears in directly, so it has no
+                                      formation energy by design. Protein-bound redox
+                                      carriers are the case: a midpoint potential is a
+                                      property of a couple, not of one species.
+    ``GROUP_IN_NULL_SPACE``        -- a structure exists, decomposes, and one of its groups
+                                      lies in the null space of the component-contribution
+                                      training set, so the estimate has infinite variance.
+                                      A different statement from "no group definition":
+                                      the group EXISTS and was never observed.
     ``NOT_ATTEMPTED``              -- no stage in this configuration claimed it.
     ``BLOCKED_BY_METABOLITE``      -- reactions only: at least one participant is unpriced.
+    ``CARRIER_NOT_CONSERVED``      -- reactions only: a redox carrier priced by a pseudo
+                                      formation-energy pair is made or destroyed here, so
+                                      the arbitrary gauge does not cancel and the sum is
+                                      not a reaction energy.
+    ``NON_CHEMICAL``               -- reactions only: an exchange, demand, sink or biomass
+                                      or pool pseudoreaction. Not elementally balanced and
+                                      not chemistry, so a standard reaction energy has no
+                                      meaning for it and it is counted outside the chemical
+                                      denominator.
     ``NO_PARTICIPANTS``            -- reactions only: an empty stoichiometry.
     """
 
@@ -156,8 +239,13 @@ class UnpricedReason(StrEnum):
     NO_PKA_PREDICTION = "no_pka_prediction"
     PLACEHOLDER_STRUCTURE = "placeholder_structure"
     SURROGATE_SPREAD_TOO_WIDE = "surrogate_spread_too_wide"
+    GROUP_IN_NULL_SPACE = "group_in_null_space"
+    RECORDED_NOT_ADMITTED = "recorded_not_admitted"
+    PRICED_AT_REACTION_LEVEL = "priced_at_reaction_level"
     NOT_ATTEMPTED = "not_attempted"
     BLOCKED_BY_METABOLITE = "blocked_by_metabolite"
+    CARRIER_NOT_CONSERVED = "carrier_not_conserved"
+    NON_CHEMICAL = "non_chemical"
     NO_PARTICIPANTS = "no_participants"
 
 
@@ -250,6 +338,13 @@ class MetabolitePrice(BaseModel):
     p_mg: float | None = None
     temperature_k: float | None = None
     detail: str = ""
+    #: Set by a stage whose reason is EVIDENCE rather than a diagnosis: a curator ran the
+    #: group decomposer on this structure and recorded what it said. A later stage may not
+    #: overwrite such a reason, which is the one exception to "the last stage to speak
+    #: wins". Without it a curated, provenance-backed decomposition failure was overwritten
+    #: by a namespace heuristic that called the same species "no structure available", and
+    #: the coverage ladder then reported work as retrieval that is not retrieval.
+    reason_is_final: bool = False
     #: Free-form, route-specific provenance: the accession that hit, the pKa list used, the
     #: predictor and its weight hashes, the compounds a surrogate was drawn from.
     provenance: dict[str, object] = Field(default_factory=dict)
@@ -276,6 +371,17 @@ class ReactionPrice(BaseModel):
     #: failure can.
     blocking_reasons: list[UnpricedReason] = Field(default_factory=list)
     n_participants: int = 0
+    #: Participants dropped from the sum because they cancel chemically: the same species,
+    #: on both sides, with coefficients summing to zero. Their formation energies cannot
+    #: change this reaction's chemical energy, so an unpriced one cannot block it.
+    cancelled_met_ids: list[str] = Field(default_factory=list)
+    #: True for an exchange, demand, sink or biomass/pool pseudoreaction. Such a reaction is
+    #: not elementally balanced and its standard energy is not a physical quantity, so it is
+    #: excluded from the CHEMICAL denominator whatever value it happens to carry.
+    non_chemical: bool = False
+    #: Free-form, route-specific provenance for a reaction-level route: the record a carrier
+    #: potential came from, the potentials it was built out of.
+    provenance: dict[str, object] = Field(default_factory=dict)
 
 
 @runtime_checkable
@@ -318,6 +424,54 @@ class StructureWriter(Protocol):
 
     def write(self, metabolite: MetaboliteIdentity) -> str | None:
         """A SMILES for this metabolite, or ``None`` if the name does not determine one."""
+        ...
+
+
+@runtime_checkable
+class PriceFilter(Protocol):
+    """Something that may WITHDRAW a price, which a resolver cannot do.
+
+    A resolver is offered only the metabolites still unpriced, so it can add a value and
+    never remove one. Removing one is a different act with a different justification: the
+    value exists and is wrong, because the structure behind it is not the GEM's molecule.
+    A filter runs after every stage and returns one entry per metabolite it was given.
+    """
+
+    name: str
+
+    def __call__(self, prices: list[MetabolitePrice]) -> list[MetabolitePrice]:
+        """Return the price list, with any value this filter refuses withdrawn."""
+        ...
+
+
+@runtime_checkable
+class ReactionPricer(Protocol):
+    r"""A stage that prices a REACTION directly, without pricing its participants.
+
+    Some standard reaction energies are measured as reaction energies and cannot be
+    factored into formation energies at all. A protein-bound redox carrier is the case
+    this exists for: what is measured is a midpoint potential of a COUPLE, so the
+    oxidized and reduced forms have no separate formation energy, and
+    :math:`\Delta_r G'^\circ=-nF\Delta E'^\circ` prices the reaction while leaving both
+    species unpriced forever.
+
+    A pricer is offered only reactions the metabolite table could not price after
+    cancellation, and it runs BEFORE the reaction-level fill table, so a measured potential
+    outranks a shipped column. Returning ``None`` means "nothing to say about this
+    reaction", which is different from returning a price with no value.
+    """
+
+    name: str
+
+    def price(
+        self,
+        reaction_id: str,
+        stoichiometry: dict[str, float],
+        unpriced_met_ids: list[str],
+        prices: dict[str, MetabolitePrice],
+        conditions: CompartmentConditions,
+    ) -> ReactionPrice | None:
+        """Price this reaction, or return ``None``."""
         ...
 
 
@@ -419,6 +573,21 @@ class ThermoPipelineConfig(BaseModel):
     #: SLIME backbones). Supplied by the caller, because what counts as a pseudo-metabolite
     #: is a property of the model, not of chemistry.
     pseudo_metabolite_ids: list[str] = Field(default_factory=list)
+    #: Treat every cobra boundary reaction (exchange, demand, sink) as non-chemical. True
+    #: for every GEM: a boundary reaction has one participant and no second side to balance
+    #: against, so it cannot carry a standard reaction energy.
+    non_chemical_boundary: bool = True
+    #: Reaction NAME substrings, matched case-insensitively, that mark a pseudoreaction.
+    #: The default is yeast-GEM's own convention; another model states its own.
+    non_chemical_name_tokens: list[str] = Field(
+        default_factory=lambda: ["pseudoreaction"]
+    )
+    #: SBO terms that mark a reaction as a modeling device. The default is the biomass
+    #: production term, which yeast-GEM puts on ``r_4041`` and nothing else.
+    non_chemical_sbo_terms: list[str] = Field(default_factory=lambda: ["SBO:0000629"])
+    #: Turn the cancellation rule off, for a run that wants the strict all-participants
+    #: predicate. On by default, because cancellation is chemistry rather than a relaxation.
+    cancel_identical_participants: bool = True
 
 
 class RouteCounts(BaseModel):
@@ -435,6 +604,27 @@ class RouteCounts(BaseModel):
         return self.n_priced / self.n_total if self.n_total else 0.0
 
 
+class ReactionBalance(BaseModel):
+    r"""One reaction whose participants' own formulas do not balance.
+
+    Diagnostic only: it changes no price. A reaction that does not balance elementally has
+    a :math:`\sum_i S_{ij}\Delta_f G'^\circ_i` that is not a reaction energy, however
+    many of its participants are priced, so the list is the honest companion to a coverage
+    fraction rather than a separate audit.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    reaction_id: str
+    #: element -> products minus reactants, only the elements that do not cancel.
+    element_imbalance: dict[str, float] = Field(default_factory=dict)
+    #: products minus reactants of the declared charges, 0.0 when charge balances.
+    charge_imbalance: float = 0.0
+    #: The participants carrying at least one of the imbalanced elements. The short list a
+    #: curator would look at first.
+    offending_met_ids: list[str] = Field(default_factory=list)
+
+
 class ThermoPipelineResult(BaseModel):
     """The reaction table, the metabolite table behind it, and every stated gap."""
 
@@ -448,6 +638,13 @@ class ThermoPipelineResult(BaseModel):
     reactions: list[ReactionPrice]
     metabolite_counts: RouteCounts
     reaction_counts: RouteCounts
+    #: The same accounting over the CHEMICAL reactions only, which is the denominator a
+    #: coverage fraction should be read against.
+    reaction_counts_chemical: RouteCounts = Field(default_factory=RouteCounts)
+    #: How many reactions the non-chemical rule removed from that denominator.
+    n_non_chemical_reactions: int = 0
+    #: Reactions whose own formulas do not balance. Diagnostic; no price depends on it.
+    imbalanced_reactions: list[ReactionBalance] = Field(default_factory=list)
     flux_carrying: dict[str, float] = Field(default_factory=dict)
     #: met_id -> how many otherwise priceable reactions it alone blocks. The short list that
     #: turns a diffuse coverage gap into a work queue.
@@ -574,6 +771,10 @@ def resolve_metabolites(
                 # them under the generic fallback.
                 reasons.setdefault(answer.met_id, answer)
             elif answer.reason is not None:
+                held = reasons.get(answer.met_id)
+                if held is not None and held.reason_is_final:
+                    # Evidence outranks a later diagnosis. See MetabolitePrice.
+                    continue
                 reasons[answer.met_id] = answer
         remaining = [m for m in remaining if m.met_id not in priced]
 
@@ -588,6 +789,22 @@ def resolve_metabolites(
         # biomass pool that a structure writer declined is not "no structure available",
         # it is not a molecule, and a coverage ceiling counted the first way would put it
         # on the work queue forever.
+        #
+        # ONE reason outranks the structural fact: a curated record that prices this
+        # species' REACTIONS directly. It is not a gap at all, and calling a carrier
+        # "pseudo-metabolite" would put a species that is priced onto the work queue.
+        #
+        # RECORDED_NOT_ADMITTED deliberately does NOT outrank it. A record nobody admitted
+        # changes nothing about the chemistry, and letting it win would pull a species with
+        # an R in its formula out of the permanently closed class on the strength of a
+        # provisional note, which is exactly the kind of quiet ceiling inflation the closed
+        # reason set exists to prevent.
+        if (
+            stated is not None
+            and stated.reason is UnpricedReason.PRICED_AT_REACTION_LEVEL
+        ):
+            out.append(stated)
+            continue
         if structural in (
             UnpricedReason.PSEUDO_METABOLITE,
             UnpricedReason.PLACEHOLDER_FORMULA,
@@ -636,17 +853,222 @@ def _counts(
     )
 
 
+_ELEMENT_TOKEN = re.compile(r"([A-Z][a-z]?)(\d*\.?\d*)")
+
+
+def element_counts(formula: str) -> dict[str, float]:
+    """The elemental composition of a formula, hydrogens included.
+
+    Raises on a placeholder formula, because ``C10H18RO`` has no composition: the ``R``
+    stands for a family of side chains and counting it as one atom of an element called R
+    would make a balance check pass on a molecule that does not exist.
+    """
+    text = (formula or "").strip()
+    if not text:
+        raise ValueError("an empty formula has no composition")
+    if any(token in text for token in PLACEHOLDER_TOKENS):
+        raise ValueError(f"{formula!r} is a placeholder formula, not a composition")
+    out: dict[str, float] = {}
+    consumed = 0
+    for element, count in _ELEMENT_TOKEN.findall(text):
+        consumed += len(element) + len(count)
+        out[element] = out.get(element, 0.0) + (float(count) if count else 1.0)
+    if consumed != len(text):
+        raise ValueError(f"{formula!r} is not an elemental formula")
+    return out
+
+
+def chemical_identity(metabolite: MetaboliteIdentity) -> tuple[str, str, int]:
+    """What makes two compartment copies of a species THE SAME CHEMICAL.
+
+    ``(normalized name, formula, charge)``. A GEM that compartmentalizes gives every
+    compartment copy its own id, so an id comparison finds nothing; the name plus the
+    composition plus the charge is what identifies the molecule. All three are required:
+    the name alone would merge two different protonation states (yeast-GEM writes both
+    ``Ferricytochrome b5`` and ``Ferrocytochrome b5`` with the formula ``Fe``, separated
+    only by charge), and the formula alone would merge every isomer in the model.
+
+    The name is lowercased and its internal whitespace collapsed, and nothing else is
+    normalized: a synonym is a different string and this function will say so, which is the
+    conservative direction. It can only ever REFUSE to cancel something that does cancel;
+    it cannot cancel two different molecules.
+    """
+    name = " ".join((metabolite.name or "").split()).lower()
+    return (name, (metabolite.formula or "").strip(), int(metabolite.charge))
+
+
+def cancelling_participants(
+    stoichiometry: dict[str, float],
+    identity_by_met: dict[str, tuple[str, str, int]],
+    unpriced_met_ids: set[str],
+) -> list[str]:
+    r"""Which participants drop out of :math:`\sum_i S_{ij}\Delta_f G'^\circ_i` by identity.
+
+    Participants are grouped by :func:`chemical_identity`; a group whose coefficients sum
+    to zero contributes nothing to the sum, because every member carries the same formation
+    energy. Transport reactions are the case: ``mannan[c] <=> mannan[er]`` is two copies of
+    one molecule, and whether the pipeline has a number for mannan cannot change the
+    reaction's chemical energy, which is zero.
+
+    Two properties, both deliberate.
+
+    *Only groups holding an UNPRICED member cancel.* A group that is fully priced is left
+    in the sum exactly as before, so no reaction that already had a value gets a different
+    one. That is not a symmetry the chemistry demands, it is a compatibility guarantee: the
+    two copies sit at their own compartment pH, so their transformed energies differ by the
+    pH term, and dropping a fully priced pair would silently move that term from the
+    formation sum into the transport term, changing shipped numbers.
+
+    *What is left over is the transport term, and this function does not compute it.* The
+    compartment work of moving a charged species across a membrane is
+    :mod:`torchcell.metabolism.transport`'s job, and the flux layer adds it separately as
+    ``delta_r_g_transport``. Cancelling here does not double count it: that term is built
+    from the stoichiometry, each metabolite's compartment and its CHARGE, and needs no
+    price at all, so a species with no formation energy still contributes its transport
+    work.
+    """
+    groups: dict[tuple[str, str, int], list[str]] = {}
+    for met_id in stoichiometry:
+        groups.setdefault(identity_by_met[met_id], []).append(met_id)
+    out: list[str] = []
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        if not any(m in unpriced_met_ids for m in members):
+            continue
+        total = sum(stoichiometry[m] for m in members)
+        if abs(total) > COEFFICIENT_TOLERANCE:
+            continue
+        out.extend(members)
+    return sorted(out)
+
+
+def carrier_conservation_violations(
+    stoichiometry: dict[str, float], prices: dict[str, MetabolitePrice]
+) -> list[str]:
+    r"""Carrier species in this reaction whose group is NOT conserved, if any.
+
+    A redox carrier priced by :attr:`ThermoRoute.CARRIER_POTENTIAL` carries a PSEUDO
+    formation energy: the oxidized form is fixed at zero and the reduced form at
+    :math:`-nFE'^\circ`, so only their difference is physical. That gauge cancels in any
+    reaction that consumes and produces the carrier in equal amounts, which is every redox
+    step it takes part in, and it does NOT cancel in a reaction that makes or destroys the
+    carrier. Holocytochrome c synthase is the case: it builds the protein from a heme and
+    an apoprotein, and summing a gauge-dependent number over it would report an arbitrary
+    constant as a reaction energy.
+
+    Carrier species are grouped by the record that priced them
+    (``provenance['carrier_group']``), so two different carriers in one reaction are
+    checked separately.
+    """
+    totals: dict[str, float] = {}
+    members: dict[str, list[str]] = {}
+    for met_id, coefficient in stoichiometry.items():
+        price = prices.get(met_id)
+        if price is None or price.route is not ThermoRoute.CARRIER_POTENTIAL:
+            continue
+        group = str(price.provenance.get("carrier_group", ""))
+        totals[group] = totals.get(group, 0.0) + coefficient
+        members.setdefault(group, []).append(met_id)
+    out: list[str] = []
+    for group, total in totals.items():
+        if abs(total) > COEFFICIENT_TOLERANCE:
+            out.extend(members[group])
+    return sorted(out)
+
+
+def _annotation_values(annotation: object) -> list[str]:
+    """An SBML annotation value as a list of strings, whatever shape cobra stored."""
+    if annotation is None:
+        return []
+    if isinstance(annotation, (list, tuple, set)):
+        return [str(v) for v in annotation]
+    return [str(annotation)]
+
+
+def is_non_chemical_reaction(
+    reaction: cobra.Reaction, config: ThermoPipelineConfig
+) -> bool:
+    """True for an exchange, demand, sink or pseudoreaction, by the config's own rule.
+
+    Three independent tests, because no single one catches them all in any GEM we have
+    looked at: cobra's ``boundary`` (one participant and no other side), a name token, and
+    an SBO term. yeast-GEM needs all three -- its carbohydrate and cofactor pseudoreactions
+    are interior reactions with ordinary SBO terms and are recognizable only by name, while
+    its biomass pseudoreaction is recognizable by name AND by SBO and its 274 exchanges by
+    neither.
+    """
+    if config.non_chemical_boundary and reaction.boundary:
+        return True
+    name = (reaction.name or "").lower()
+    if any(token.lower() in name for token in config.non_chemical_name_tokens):
+        return True
+    if config.non_chemical_sbo_terms:
+        wanted = set(config.non_chemical_sbo_terms)
+        found = set(_annotation_values((reaction.annotation or {}).get("sbo")))
+        if wanted & found:
+            return True
+    return False
+
+
+def reaction_balance(
+    reaction: cobra.Reaction, identities: dict[str, MetaboliteIdentity]
+) -> ReactionBalance | None:
+    """The elemental and charge imbalance of one reaction, or ``None`` when it balances.
+
+    Returns ``None`` also when the check cannot be RUN: a participant with no formula or a
+    placeholder formula makes the sum undefined, and reporting such a reaction as
+    imbalanced would confuse "we know this is wrong" with "we cannot tell".
+    """
+    totals: dict[str, float] = {}
+    charge = 0.0
+    for metabolite, coefficient in reaction.metabolites.items():
+        identity = identities[metabolite.id]
+        try:
+            counts = element_counts(identity.formula)
+        except ValueError:
+            return None
+        for element, count in counts.items():
+            totals[element] = totals.get(element, 0.0) + float(coefficient) * count
+        charge += float(coefficient) * identity.charge
+    imbalance = {
+        element: total
+        for element, total in totals.items()
+        if abs(total) > COEFFICIENT_TOLERANCE
+    }
+    if not imbalance and abs(charge) <= COEFFICIENT_TOLERANCE:
+        return None
+    offending = sorted(
+        metabolite.id
+        for metabolite in reaction.metabolites
+        if set(element_counts(identities[metabolite.id].formula)) & set(imbalance)
+    )
+    return ReactionBalance(
+        reaction_id=reaction.id,
+        element_imbalance=dict(sorted(imbalance.items())),
+        charge_imbalance=float(charge) if abs(charge) > COEFFICIENT_TOLERANCE else 0.0,
+        offending_met_ids=offending,
+    )
+
+
 def assemble_reactions(
     model: cobra.Model,
+    identities: list[MetaboliteIdentity],
     prices: list[MetabolitePrice],
     reason_by_met: dict[str, UnpricedReason | None],
     config: ThermoPipelineConfig,
     formation_sigma: dict[str, float] | None = None,
+    reaction_pricers: list[ReactionPricer] | None = None,
 ) -> list[ReactionPrice]:
     r"""Sum the metabolite table over :math:`S`, one reaction at a time.
 
-    A reaction is priced only when every participant is, so the loop is over reactions and
-    the blocking participants are recorded per reaction rather than counted globally.
+    A reaction is priced when every participant is, or when every participant that is not
+    CANCELS, so the loop is over reactions and the blocking participants are recorded per
+    reaction rather than counted globally. The order inside one reaction is fixed and is
+    the precedence policy: the metabolite sum, then cancellation, then any
+    :class:`ReactionPricer` (a measured reaction energy, e.g. a carrier midpoint
+    potential), and only then the reaction-level fill table, which is the weakest evidence
+    of the four.
 
     The sigma is the quadrature sum of the participants' formation sigmas weighted by their
     stoichiometric coefficients. That treats the formation uncertainties as INDEPENDENT and
@@ -657,12 +1079,27 @@ def assemble_reactions(
     per-metabolite sigmas gets this, and the result records which it was.
     """
     priced = {p.met_id: p for p in prices if p.priced}
+    identity_by_met = {m.met_id: chemical_identity(m) for m in identities}
     reaction_fill = dict(config.reaction_table)
     exempt = set(config.reaction_table_already_kj)
     factor = KJ_PER_KCAL if config.reaction_table_units == "kcal/mol" else 1.0
+    pricers = list(reaction_pricers or [])
+
+    def _reasons(met_ids: list[str]) -> list[UnpricedReason]:
+        return sorted(
+            {r for r in (reason_by_met.get(m) for m in met_ids) if r is not None}
+        )
+
+    def _sigma(met_ids: list[str], stoichiometry: dict[str, float]) -> float | None:
+        if formation_sigma is None or not all(m in formation_sigma for m in met_ids):
+            return None
+        return float(
+            np.sqrt(sum((stoichiometry[m] * formation_sigma[m]) ** 2 for m in met_ids))
+        )
 
     out: list[ReactionPrice] = []
     for reaction in model.reactions:
+        non_chemical = is_non_chemical_reaction(reaction, config)
         stoichiometry = {m.id: float(c) for m, c in reaction.metabolites.items()}
         if not stoichiometry:
             out.append(
@@ -670,39 +1107,85 @@ def assemble_reactions(
                     reaction_id=reaction.id,
                     reason=UnpricedReason.NO_PARTICIPANTS,
                     n_participants=0,
+                    non_chemical=non_chemical,
                 )
             )
             continue
         blocking = sorted(m for m in stoichiometry if m not in priced)
-        if not blocking:
-            # Every participant is in `priced`, and a priced entry has a float energy by
-            # construction, so the cast is a statement about `MetabolitePrice.priced`
-            # rather than an unchecked assumption.
+        unconserved = carrier_conservation_violations(stoichiometry, priced)
+        if unconserved:
+            # The carrier's pseudo energies are gauge dependent and the gauge does not
+            # cancel here, so this reaction has no value from them. It is unpriced with the
+            # carrier species named, rather than priced with an arbitrary constant in it.
+            out.append(
+                ReactionPrice(
+                    reaction_id=reaction.id,
+                    reason=UnpricedReason.CARRIER_NOT_CONSERVED,
+                    blocking_met_ids=unconserved,
+                    blocking_reasons=_reasons(unconserved),
+                    n_participants=len(stoichiometry),
+                    non_chemical=non_chemical,
+                )
+            )
+            continue
+        cancelled = (
+            cancelling_participants(stoichiometry, identity_by_met, set(blocking))
+            if blocking and config.cancel_identical_participants
+            else []
+        )
+        remaining_blocking = [m for m in blocking if m not in cancelled]
+        if not remaining_blocking:
+            # Every participant is in `priced` or cancels. A priced entry has a float
+            # energy by construction, so the assert is a statement about
+            # `MetabolitePrice.priced` rather than an unchecked assumption.
+            summed = [m for m in stoichiometry if m not in cancelled]
             total = 0.0
-            for met_id, coefficient in stoichiometry.items():
+            for met_id in summed:
                 energy = priced[met_id].dgf_prime_kj_per_mol
                 assert energy is not None
-                total += coefficient * energy
-            routes = {priced[m].route for m in stoichiometry}
-            sigma = None
-            if formation_sigma is not None and all(
-                m in formation_sigma for m in stoichiometry
-            ):
-                sigma = float(
-                    np.sqrt(
-                        sum(
-                            (coefficient * formation_sigma[m]) ** 2
-                            for m, coefficient in stoichiometry.items()
-                        )
-                    )
-                )
+                total += stoichiometry[met_id] * energy
+            routes = {priced[m].route for m in summed}
+            if not routes:
+                # Every participant cancelled. The chemical energy is exactly zero and the
+                # whole standard energy of the reaction is its compartment term.
+                route = ThermoRoute.CANCELLED_PARTICIPANTS
+            else:
+                route = routes.pop() if len(routes) == 1 else ThermoRoute.MIXED
             out.append(
                 ReactionPrice(
                     reaction_id=reaction.id,
                     delta_r_g0_kj_per_mol=float(total),
-                    sigma_kj_per_mol=sigma,
-                    route=routes.pop() if len(routes) == 1 else ThermoRoute.MIXED,
+                    sigma_kj_per_mol=_sigma(summed, stoichiometry),
+                    route=route,
+                    blocking_met_ids=[],
+                    blocking_reasons=[],
                     n_participants=len(stoichiometry),
+                    cancelled_met_ids=cancelled,
+                    non_chemical=non_chemical,
+                )
+            )
+            continue
+        quoted: ReactionPrice | None = None
+        for pricer in pricers:
+            quoted = pricer.price(
+                reaction.id,
+                stoichiometry,
+                remaining_blocking,
+                priced,
+                config.conditions,
+            )
+            if quoted is not None:
+                break
+        if quoted is not None:
+            out.append(
+                quoted.model_copy(
+                    update={
+                        "blocking_met_ids": remaining_blocking,
+                        "blocking_reasons": _reasons(remaining_blocking),
+                        "n_participants": len(stoichiometry),
+                        "cancelled_met_ids": cancelled,
+                        "non_chemical": non_chemical,
+                    }
                 )
             )
             continue
@@ -714,31 +1197,27 @@ def assemble_reactions(
                     reaction_id=reaction.id,
                     delta_r_g0_kj_per_mol=float(raw) * scale,
                     route=ThermoRoute.SHIPPED_REACTION,
-                    blocking_met_ids=blocking,
-                    blocking_reasons=sorted(
-                        {
-                            r
-                            for r in (reason_by_met.get(m) for m in blocking)
-                            if r is not None
-                        }
-                    ),
+                    blocking_met_ids=remaining_blocking,
+                    blocking_reasons=_reasons(remaining_blocking),
                     n_participants=len(stoichiometry),
+                    cancelled_met_ids=cancelled,
+                    non_chemical=non_chemical,
                 )
             )
             continue
         out.append(
             ReactionPrice(
                 reaction_id=reaction.id,
-                reason=UnpricedReason.BLOCKED_BY_METABOLITE,
-                blocking_met_ids=blocking,
-                blocking_reasons=sorted(
-                    {
-                        r
-                        for r in (reason_by_met.get(m) for m in blocking)
-                        if r is not None
-                    }
+                reason=(
+                    UnpricedReason.NON_CHEMICAL
+                    if non_chemical
+                    else UnpricedReason.BLOCKED_BY_METABOLITE
                 ),
+                blocking_met_ids=remaining_blocking,
+                blocking_reasons=_reasons(remaining_blocking),
                 n_participants=len(stoichiometry),
+                cancelled_met_ids=cancelled,
+                non_chemical=non_chemical,
             )
         )
     return out
@@ -749,6 +1228,9 @@ def run_thermo_pipeline(
     config: ThermoPipelineConfig,
     stages: list[MetaboliteResolver],
     formation_sigma: dict[str, float] | None = None,
+    reaction_pricers: list[ReactionPricer] | None = None,
+    identities: list[MetaboliteIdentity] | None = None,
+    price_filters: list[PriceFilter] | None = None,
 ) -> ThermoPipelineResult:
     """The whole pipeline: identities, staged resolution, reaction assembly, accounting.
 
@@ -759,17 +1241,49 @@ def run_thermo_pipeline(
         stages: Resolvers in PRECEDENCE order.
         formation_sigma: Optional per-metabolite formation sigma in kJ/mol. Independent
             propagation; see :func:`assemble_reactions`.
+        reaction_pricers: Optional reaction-level stages, in precedence order, offered
+            every reaction the metabolite table cannot price after cancellation and ahead
+            of the reaction-level fill table.
+        identities: The metabolite identities to run on, for a caller that has CORRECTED
+            what the model declares (a curated formula or charge). Must cover exactly the
+            model's metabolites, so a correction cannot quietly add or drop a species.
+            Omitted means the model's own declarations.
+        price_filters: Callables applied to the resolved prices before the reactions are
+            assembled. A filter may UNPRICE a metabolite, which no resolver can do: a
+            stage answers "here is a value" or "here is why I have none", and neither can
+            withdraw a value an earlier stage produced. Withdrawing one is what a
+            composition check does when it finds that the structure behind a price is a
+            different molecule.
     """
     from datetime import UTC, datetime
 
-    identities = identities_from_model(model)
+    if identities is None:
+        identities = identities_from_model(model)
+    elif {m.met_id for m in identities} != {m.id for m in model.metabolites}:
+        raise ValueError(
+            "the identities given do not cover exactly the model's metabolites: "
+            f"{len(identities)} against {len(model.metabolites)}"
+        )
     config = config.model_copy(update={"stage_names": [s.name for s in stages]})
     prices = resolve_metabolites(
         identities, stages, config.conditions, config.pseudo_metabolite_ids
     )
+    for price_filter in price_filters or []:
+        prices = price_filter(prices)
+        if {p.met_id for p in prices} != {m.met_id for m in identities}:
+            raise ValueError(
+                f"price filter {getattr(price_filter, 'name', price_filter)!r} changed "
+                "which metabolites the result covers"
+            )
     reason_by_met = {p.met_id: p.reason for p in prices}
     reactions = assemble_reactions(
-        model, prices, reason_by_met, config, formation_sigma
+        model,
+        identities,
+        prices,
+        reason_by_met,
+        config,
+        formation_sigma,
+        reaction_pricers,
     )
 
     compartments = sorted({m.compartment for m in identities if m.compartment})
@@ -783,6 +1297,22 @@ def run_thermo_pipeline(
         [r.reason for r in reactions],
         sum(1 for r in reactions if r.delta_r_g0_kj_per_mol is not None),
     )
+    chemical = [r for r in reactions if not r.non_chemical]
+    rxn_counts_chemical = _counts(
+        [r.route for r in chemical],
+        [r.reason for r in chemical],
+        sum(1 for r in chemical if r.delta_r_g0_kj_per_mol is not None),
+    )
+    identity_by_id = {m.met_id: m for m in identities}
+    imbalanced = [
+        balance
+        for balance in (
+            reaction_balance(reaction, identity_by_id)
+            for reaction in model.reactions
+            if not is_non_chemical_reaction(reaction, config)
+        )
+        if balance is not None
+    ]
 
     flux_carrying: dict[str, float] = {}
     if config.flux_carrying_reaction_ids:
@@ -822,6 +1352,9 @@ def run_thermo_pipeline(
         reactions=reactions,
         metabolite_counts=met_counts,
         reaction_counts=rxn_counts,
+        reaction_counts_chemical=rxn_counts_chemical,
+        n_non_chemical_reactions=len(reactions) - len(chemical),
+        imbalanced_reactions=imbalanced,
         flux_carrying=flux_carrying,
         blocking_metabolites=blocking,
         notes=(
@@ -954,6 +1487,42 @@ def debye_hueckel_kj(ionic_strength_m: float, temperature_k: float) -> float:
     return float(alpha / (1.0 / ionic_strength_m**0.5 + 1.6))
 
 
+def legendre_transform_kj(
+    *,
+    charge: int,
+    num_protons: float,
+    p_h: float,
+    ionic_strength_m: float,
+    temperature_k: float,
+) -> float:
+    r"""The Legendre transform of ONE microspecies, in kJ/mol, eQuilibrator's form.
+
+    :math:`\Delta_f G'^\circ=\Delta_f G^\circ + N_H RT\ln(10)\,\mathrm{pH}
+    - \mathrm{DH}(I,T)\,(z^2-N_H)`, which is
+    ``equilibrator_cache.thermodynamic_constants._legendre_transform`` times :math:`RT`
+    with the magnesium terms dropped. Magnesium binding is NOT represented: every species
+    this is applied to is a curated record with no magnesium binding constants, and
+    inventing :math:`N_{Mg}=0` for a species that binds magnesium would be a silent
+    assumption rather than a stated one. A record that needs it needs a new argument here
+    and a measured constant to put in it.
+
+    :func:`IonFormationResolver` is the special case :math:`N_H=0`, and calls this.
+    """
+    proton_term = (
+        num_protons
+        * EQUILIBRATOR_R_KJ_PER_MOL_PER_K
+        * temperature_k
+        * float(np.log(10))
+        * p_h
+    )
+    if ionic_strength_m > 0:
+        dh = debye_hueckel_kj(ionic_strength_m, temperature_k)
+        ionic_term = -dh * (charge**2 - num_protons)
+    else:
+        ionic_term = 0.0
+    return float(proton_term + ionic_term)
+
+
 class IonFormationResolver:
     r"""Price monatomic aqueous ions from a pinned thermochemical table, by element and charge.
 
@@ -1058,8 +1627,12 @@ class IonFormationResolver:
             delta_f_h = float(cast(float, entry["delta_f_h_kj_per_mol"]))
             delta_r_s = float(cast(float, entry["delta_r_s_j_per_mol_k"]))
             dgf = delta_f_h - temperature * delta_r_s / 1000.0
-            transform = (
-                -debye_hueckel_kj(ionic, temperature) * charge**2 if ionic > 0 else 0.0
+            transform = legendre_transform_kj(
+                charge=charge,
+                num_protons=0.0,
+                p_h=p_h,
+                ionic_strength_m=ionic,
+                temperature_k=temperature,
             )
             out.append(
                 MetabolitePrice(
@@ -1116,6 +1689,13 @@ def summarize(result: ThermoPipelineResult) -> str:
             f"/{result.reaction_counts.n_total}"
             f" ({result.reaction_counts.fraction:.3%})"
         ),
+        (
+            f"  chemical:  {result.reaction_counts_chemical.n_priced}"
+            f"/{result.reaction_counts_chemical.n_total}"
+            f" ({result.reaction_counts_chemical.fraction:.3%}),"
+            f" {result.n_non_chemical_reactions} non-chemical excluded"
+        ),
+        f"  elementally imbalanced: {len(result.imbalanced_reactions)}",
     ]
     if result.flux_carrying:
         lines.append(

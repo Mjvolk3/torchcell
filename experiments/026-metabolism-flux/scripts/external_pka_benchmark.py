@@ -345,9 +345,7 @@ def cmd_sample(args: argparse.Namespace) -> None:
         if n_scanned > args.scan_limit:
             break
         pkas = list(compound.dissociation_constants or [])
-        pkas = sorted(
-            (p for p in pkas if MIN_PH < float(p) < MAX_PH), reverse=True
-        )
+        pkas = sorted((p for p in pkas if MIN_PH < float(p) < MAX_PH), reverse=True)
         if not 1 <= len(pkas) <= MAX_PKAS:
             continue
         atom_bag = dict(compound.atom_bag or {})
@@ -465,7 +463,9 @@ def cmd_merge_shards(args: argparse.Namespace) -> None:
     for shard in range(args.n_shards):
         path = _prediction_path(args.tool, shard, args.n_shards)
         if not osp.isfile(path):
-            raise FileNotFoundError(f"shard {shard} of {args.n_shards} is missing: {path}")
+            raise FileNotFoundError(
+                f"shard {shard} of {args.n_shards} is missing: {path}"
+            )
         with open(path) as handle:
             pset = PredictionSet.model_validate_json(handle.read())
         records.extend(pset.records)
@@ -513,11 +513,7 @@ def cmd_predict_pkasolver(args: argparse.Namespace) -> None:
             mol = Chem.MolFromSmiles(compound.neutral_smiles)
             states = calculate_microstate_pka_values(mol, query_model=model)
             pkas = sorted(
-                (
-                    float(s.pka)
-                    for s in states
-                    if MIN_PH < float(s.pka) < MAX_PH
-                ),
+                (float(s.pka) for s in states if MIN_PH < float(s.pka) < MAX_PH),
                 reverse=True,
             )
             records.append(
@@ -557,7 +553,9 @@ def cmd_predict_pkasolver(args: argparse.Namespace) -> None:
     path = _prediction_path("pkasolver", args.shard, args.n_shards)
     with open(path, "w") as handle:
         handle.write(pset.model_dump_json(indent=1))
-    print(f"wrote {path}: ok {pset.n_ok}/{pset.n_requested} in {pset.seconds_total:.0f}s")
+    print(
+        f"wrote {path}: ok {pset.n_ok}/{pset.n_requested} in {pset.seconds_total:.0f}s"
+    )
 
 
 # -------------------------------------------------------------------- predict-qupkake
@@ -791,9 +789,7 @@ def cmd_predict_qupkake(args: argparse.Namespace) -> None:
                     if acidic
                     else max(wanted, key=lambda t: t[1])
                 )
-                nxt = _apply_proton_change(
-                    state[cid], dominant[0], -1 if acidic else 1
-                )
+                nxt = _apply_proton_change(state[cid], dominant[0], -1 if acidic else 1)
                 if nxt is None:
                     continue
                 state[cid] = nxt
@@ -830,7 +826,9 @@ def cmd_predict_qupkake(args: argparse.Namespace) -> None:
     path = PRED_PATH_TEMPLATE.format(tool="qupkake")
     with open(path, "w") as handle:
         handle.write(pset.model_dump_json(indent=1))
-    print(f"wrote {path}: ok {pset.n_ok}/{pset.n_requested} in {pset.seconds_total:.0f}s")
+    print(
+        f"wrote {path}: ok {pset.n_ok}/{pset.n_requested} in {pset.seconds_total:.0f}s"
+    )
 
 
 # -------------------------------------------------------------------- salvage-qupkake
@@ -1094,10 +1092,30 @@ def cmd_predict_molgpka(args: argparse.Namespace) -> None:
     path = _prediction_path("molgpka", args.shard, args.n_shards)
     with open(path, "w") as handle:
         handle.write(pset.model_dump_json(indent=1))
-    print(f"wrote {path}: ok {pset.n_ok}/{pset.n_requested} in {pset.seconds_total:.0f}s")
+    print(
+        f"wrote {path}: ok {pset.n_ok}/{pset.n_requested} in {pset.seconds_total:.0f}s"
+    )
 
 
 # --------------------------------------------------------------------- predict-unipka
+
+
+#: Atomic numbers a Uni-pKa microstate filter written with wildcard charges will discard.
+#: Anything past the second row that is not a common organic heteroatom counts as a metal
+#: for this purpose; the point is to refuse the class rather than to classify chemistry.
+_ORGANIC_ELEMENTS = frozenset(
+    {"H", "B", "C", "N", "O", "F", "Si", "P", "S", "Cl", "Se", "Br", "I"}
+)
+
+
+def _has_metal(smiles: str) -> bool:
+    """Whether a structure carries an atom outside the organic set, a metal in practice."""
+    from rdkit import Chem
+
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return False
+    return any(a.GetSymbol() not in _ORGANIC_ELEMENTS for a in mol.GetAtoms())
 
 
 def cmd_predict_unipka(args: argparse.Namespace) -> None:
@@ -1132,6 +1150,20 @@ def cmd_predict_unipka(args: argparse.Namespace) -> None:
 
     vset = _load_sample()
     compounds = vset.compounds[: args.limit] if args.limit else vset.compounds
+    # Uni-pKa's enumerator drops any microstate matching its FILTER_PATTERNS, and that list
+    # contains the wildcard `[*-2]`, which matches `[Fe-2]` in every metal-complex
+    # microstate and empties the ensemble. The failure is silent: the model is handed an
+    # empty macrostate pair and returns nothing, which reads downstream as "no ladder" and
+    # not as "the enumerator threw the molecule away". Metal complexes are therefore
+    # refused here, by name, until the enumerator's filter is restricted to non-metals.
+    metals = [c for c in compounds if _has_metal(c.neutral_smiles)]
+    if metals:
+        print(
+            f"refusing {len(metals)} metal-containing compounds: Uni-pKa's enumerator "
+            "filter discards every microstate of a metal complex. "
+            + ", ".join(c.compound_id for c in metals[:8])
+        )
+        compounds = [c for c in compounds if not _has_metal(c.neutral_smiles)]
     work = args.work_dir
     os.makedirs(work, exist_ok=True)
 
@@ -1209,9 +1241,7 @@ def cmd_predict_unipka(args: argparse.Namespace) -> None:
     infer_in = osp.join(work, "unipka_rungs.tsv")
     frame[["SMILES", "TARGET"]].to_csv(infer_in, sep="\t", index=False)
     print(
-        f"{len(frame)} rungs over {len(compounds)} compounds"
-        f" -> {infer_in}",
-        flush=True,
+        f"{len(frame)} rungs over {len(compounds)} compounds -> {infer_in}", flush=True
     )
 
     # 4. Inference, one fold per PROCESS over one shared LMDB.
@@ -1343,10 +1373,7 @@ def cmd_predict_unipka(args: argparse.Namespace) -> None:
 
 
 def _transform_kj_per_mol(
-    atom_bag: dict[str, int],
-    pkas: list[float],
-    reference_n_h: int,
-    p_h: float = P_H,
+    atom_bag: dict[str, int], pkas: list[float], reference_n_h: int, p_h: float = P_H
 ) -> float | None:
     """The Legendre transform at the study conditions, referenced to ``reference_n_h``.
 
@@ -1453,7 +1480,9 @@ def _summarize(rows: list[ScoreRow], tool: str) -> ToolSummary:
         frac_ok=len(ok_rows) / len(rows) if rows else 0.0,
         n_count_match=sum(1 for r in ok_rows if r.count_matches),
         frac_count_match=(
-            sum(1 for r in ok_rows if r.count_matches) / len(ok_rows) if ok_rows else 0.0
+            sum(1 for r in ok_rows if r.count_matches) / len(ok_rows)
+            if ok_rows
+            else 0.0
         ),
         pka_mae_paired=float(np.mean(mae_values)) if mae_values else None,
         pka_mae_n=len(mae_values),
@@ -1724,10 +1753,7 @@ def cmd_microspecies_at_ph(args: argparse.Namespace) -> None:
         )
 
     result = MicrospeciesSet(
-        built_at=_timestamp(),
-        p_h=7.0,
-        tool="pkasolver-lite",
-        targets=targets,
+        built_at=_timestamp(), p_h=7.0, tool="pkasolver-lite", targets=targets
     )
     path = osp.join(RESULTS, "external_pka_microspecies.json")
     with open(path, "w") as handle:
@@ -2125,9 +2151,7 @@ def cmd_magnesium(args: argparse.Namespace) -> None:
         ORM object keeps the session clean.
         """
         species = [
-            ms
-            for ms in compound.microspecies
-            if with_mg or ms.number_magnesiums == 0
+            ms for ms in compound.microspecies if with_mg or ms.number_magnesiums == 0
         ]
         values = [
             -(
@@ -2184,9 +2208,7 @@ def cmd_magnesium(args: argparse.Namespace) -> None:
                 ),
                 dgf_prime_full_kj_per_mol=full,
                 dgf_prime_no_mg_kj_per_mol=no_mg,
-                omission_cost_kj_per_mol={
-                    k: no_mg[k] - full[k] for k in full
-                },
+                omission_cost_kj_per_mol={k: no_mg[k] - full[k] for k in full},
                 # What a substructure-derived pKd would cost if it were off by one
                 # within-bucket standard deviation of the shipped table.
                 wrong_pkd_cost_kj_per_mol={
@@ -2306,7 +2328,9 @@ def cmd_magnesium(args: argparse.Namespace) -> None:
             f" {cost.n_mg_constants} | {cells} | {wrong:.4f} |"
         )
     print()
-    print("| phosphate steps | n constants | n compounds | pKd mean | pKd sd | pKd range |")
+    print(
+        "| phosphate steps | n constants | n compounds | pKd mean | pKd sd | pKd range |"
+    )
     print("|---|---|---|---|---|---|")
     for bucket in substructure:
         print(
@@ -2698,7 +2722,8 @@ def main() -> None:
     p_ps.set_defaults(func=cmd_predict_pkasolver)
 
     p_merge = sub.add_parser(
-        "merge-shards", help="concatenate one tool's shard files into one prediction file"
+        "merge-shards",
+        help="concatenate one tool's shard files into one prediction file",
     )
     p_merge.add_argument("--tool", required=True, help="pkasolver or molgpka")
     p_merge.add_argument("--n-shards", type=int, required=True)
@@ -2804,7 +2829,9 @@ def main() -> None:
         help="price every target from both protonation conventions",
     )
     p_rp.add_argument(
-        "--local-cache", required=True, help="writable cache for the submitted structure"
+        "--local-cache",
+        required=True,
+        help="writable cache for the submitted structure",
     )
     p_rp.add_argument(
         "--local-cache-ph7",

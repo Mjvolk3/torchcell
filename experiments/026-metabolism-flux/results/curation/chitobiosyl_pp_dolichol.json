@@ -1,376 +1,385 @@
 {
-  "slug": "chitobiosyl_pp_dolichol",
-  "met_ids": [
-    "s_3767"
+ "slug": "chitobiosyl_pp_dolichol",
+ "met_ids": [
+  "s_3767"
+ ],
+ "gem_name": "N,N'-Chitobiosyldiphosphodolichol",
+ "gem_formula": "C36H64N2O17P2",
+ "gem_charge": 0,
+ "compartments": [
+  "er"
+ ],
+ "blocked_reactions": [
+  "r_4159"
+ ],
+ "kind": "polymer_convention",
+ "admission": "tabulated",
+ "value": {
+  "smiles": "CC(=O)N[C@H]1[C@@H](OP(=O)(O)OP(=O)(O)OCCC(C)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)O[C@H](CO)[C@@H](O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2NC(C)=O)[C@@H]1O",
+  "inchi": "InChI=1S/C36H64N2O17P2/c1-21(2)11-8-12-22(3)13-9-14-23(4)15-10-16-24(5)17-18-50-56(46,47)55-57(48,49)54-36-30(38-26(7)42)33(45)34(28(20-40)52-36)53-35-29(37-25(6)41)32(44)31(43)27(19-39)51-35/h11,13,15,24,27-36,39-40,43-45H,8-10,12,14,16-20H2,1-7H3,(H,37,41)(H,38,42)(H,46,47)(H,48,49)/b22-13+,23-15+/t24?,27-,28-,29-,30-,31-,32-,33-,34-,35+,36-/m1/s1",
+  "inchikey": "WPXHWCJFZGZSHJ-HUKUIXITSA-N",
+  "formula": "C36H64N2O17P2",
+  "charge": 0,
+  "microspecies_note": "The recorded structure is the fully protonated diphosphate DIESTER, that is the neutral diacid R-O-P(=O)(OH)-O-P(=O)(OH)-O-R', which is what the GEM's charge 0 demands and what ChEBI:12427 depicts. It is not the species that dominates at pH 7.1. The pH 7 major microspecies is the (2-) dianion (SMILES with both P-OH written [O-], formula C36H62N2O17P2, InChIKey WPXHWCJFZGZSHJ-HUKUIXITSA-L), which is character for character the formula and charge yeast-GEM gives its cytosolic twin s_1184 and the ChEBI:57269 core. The two GEM species s_3767 [er] and s_1184 [c] are therefore the same molecule at two protonation states in two compartments, not two compounds. The pKa set used to build the microspecies ladder is [13.43, 12.78, 5.85, 5.25, 3.19, 1.74], taken verbatim from equilibrator cache compound 49402, which carries the identical ionizable set (two diphosphate-diester OH, four sugar OH plus the hydroxymethyls).",
+  "dolichol_convention": "MEASURED, not assumed. yeast-GEM 9.0.2 writes the ChEBI/KEGG generic formula '(C5H8)n.<core>' with n = 0, keeping only the core. Verified for all 12 dolichol-family species in the model against their ChEBI records: dolichol s_0642 = CHEBI:16091 core C20H36O q0; dolichyl phosphate s_0645/s_0646 = CHEBI:16214 core C20H37O4P q0; dolichyl diphosphate s_3888 = CHEBI:57497 core C20H35O7P2 q-3; dolichyl D-mannosyl phosphate s_0644 = CHEBI:15809 core C26H47O9P q0; dolichyl beta-D-glucosyl phosphate s_3911 = CHEBI:57525 core C26H46O9P q-1; GlcNAc-PP-Dol s_3765 = CHEBI:18278 core C28H51NO12P2 q0; chitobiosyl-PP-Dol s_3767 = CHEBI:12427 core C36H64N2O17P2 q0; s_1184 = CHEBI:57269 core C36H62N2O17P2 q-2; Man2-GlcNAc2-PP-Dol s_0414 = CHEBI:28067 core C48H84N2O27P2 q0. So dolichol is NOT counted as zero: the core already contains a C20 dolichyl, that is FOUR isoprene units with the alpha unit saturated, and ChEBI's n counts EXTRA units beyond those four. The GEM is internally consistent in carbon count everywhere; it is inconsistent only in which protonation state it picks per species (some cores are the neutral ChEBI entry, some the (2-) entry). SEPARATELY and importantly: ChEBI's DEPICTED structure and mass are the n = 1 member (C25 dolichyl, five units), which is what MetaNetX and the equilibrator compound cache ingested. So the GEM's formulas are n = 0 while every structure the pipeline resolved for them is n = 1. Neither is the yeast molecule, which runs 14 to 17 isoprene units.",
+  "sibling_species_priced_how": [
+   {
+    "met_id": "s_0642",
+    "name": "dolichol",
+    "gem_formula": "C20H36O",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM797",
+    "cache_compound_id": 749,
+    "cache_formula": "C25H44O",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": 2167.398098,
+    "sigma_kj_per_mol": 10.72525,
+    "p_h": 7.2
+   },
+   {
+    "met_id": "s_0645",
+    "name": "dolichyl phosphate [c]",
+    "gem_formula": "C20H37O4P",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM278",
+    "cache_compound_id": 264,
+    "cache_formula": "C25H43O4P",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": 1278.705952,
+    "sigma_kj_per_mol": 10.868917,
+    "p_h": 7.2
+   },
+   {
+    "met_id": "s_0646",
+    "name": "dolichyl phosphate [er]",
+    "gem_formula": "C20H37O4P",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM278",
+    "cache_compound_id": 264,
+    "cache_formula": "C25H43O4P",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": 1253.71212,
+    "sigma_kj_per_mol": 10.868917,
+    "p_h": 7.1
+   },
+   {
+    "met_id": "s_3888",
+    "name": "Dolichyl diphosphate",
+    "gem_formula": "C20H35O7P2",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM2370",
+    "cache_compound_id": 2103,
+    "cache_formula": "C25H44O7P2",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": 383.27735,
+    "sigma_kj_per_mol": 11.132439,
+    "p_h": 7.1
+   },
+   {
+    "met_id": "s_0644",
+    "name": "dolichyl D-mannosyl phosphate",
+    "gem_formula": "C26H47O9P",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM296",
+    "cache_compound_id": 282,
+    "cache_formula": "C31H54O9P",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": 1257.199559,
+    "sigma_kj_per_mol": 11.931906,
+    "p_h": 7.1
+   },
+   {
+    "met_id": "s_3911",
+    "name": "Dolichyl beta-D-glucosyl phosphate",
+    "gem_formula": "C26H46O9P",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM145615",
+    "cache_compound_id": 116523,
+    "cache_formula": "C31H54O9P",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": 1257.199559,
+    "sigma_kj_per_mol": 11.931906,
+    "p_h": 7.1
+   },
+   {
+    "met_id": "s_3765",
+    "name": "N-Acetyl-D-glucosaminyldiphosphodolichol",
+    "gem_formula": "C28H51NO12P2",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM818",
+    "cache_compound_id": 768,
+    "cache_formula": "C33H57NO12P2",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": 303.894863,
+    "sigma_kj_per_mol": 12.38677,
+    "p_h": 7.1,
+    "note": "the OTHER dolichol-linked participant of r_4159"
+   },
+   {
+    "met_id": "s_1184",
+    "name": "N,N'-diacetylchitobiosyldiphosphodolichol [c]",
+    "gem_formula": "C36H62N2O17P2",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM63078",
+    "cache_compound_id": 49402,
+    "cache_formula": "C41H70N2O17P2",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": 251.237576,
+    "sigma_kj_per_mol": 14.054752,
+    "p_h": 7.2,
+    "note": "THE SAME MOLECULE as s_3767, at the (2-) state in the cytosol; the GEM annotates it CHEBI:12427 (the neutral entry) while carrying the CHEBI:57269 (2-) formula and charge"
+   },
+   {
+    "met_id": "s_0443",
+    "name": "beta-D-mannosyldiacetylchitobiosyl-PP-Dol [c]",
+    "gem_formula": "C42H72N2O22P2",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM1078",
+    "cache_compound_id": 997,
+    "cache_formula": "C47H80N2O22P2",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": 12.793024,
+    "sigma_kj_per_mol": 14.906556,
+    "p_h": 7.2
+   },
+   {
+    "met_id": "s_0444",
+    "name": "beta-D-mannosyldiacetylchitobiosyl-PP-Dol [g]",
+    "gem_formula": "C42H72N2O22P2",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM1078",
+    "cache_compound_id": 997,
+    "cache_formula": "C47H80N2O22P2",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": -265.700573,
+    "sigma_kj_per_mol": 14.906556,
+    "p_h": 6.6
+   },
+   {
+    "met_id": "s_0414",
+    "name": "alpha-D-mannosyl-beta-D-mannosyl-chitobiosyl-PP-Dol",
+    "gem_formula": "C48H84N2O27P2",
+    "route": "cache_accession",
+    "accession": "metanetx.chemical:MNXM41231",
+    "cache_compound_id": 29648,
+    "cache_formula": "C53H90N2O27P2",
+    "delta_carbons": 5,
+    "dgf_prime_kj_per_mol": -538.951234,
+    "sigma_kj_per_mol": 15.873342,
+    "p_h": 6.6
+   }
   ],
-  "gem_name": "N,N'-Chitobiosyldiphosphodolichol",
-  "gem_formula": "C36H64N2O17P2",
-  "gem_charge": 0,
-  "compartments": [
-    "er"
+  "pkas": [
+   13.43,
+   12.78,
+   5.85,
+   5.25,
+   3.19,
+   1.74
   ],
-  "blocked_reactions": [
-    "r_4159"
-  ],
-  "kind": "polymer_convention",
-  "admission": "tabulated",
-  "value": {
-    "smiles": "CC(=O)N[C@H]1[C@@H](OP(=O)(O)OP(=O)(O)OCCC(C)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)O[C@H](CO)[C@@H](O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2NC(C)=O)[C@@H]1O",
-    "inchi": "InChI=1S/C36H64N2O17P2/c1-21(2)11-8-12-22(3)13-9-14-23(4)15-10-16-24(5)17-18-50-56(46,47)55-57(48,49)54-36-30(38-26(7)42)33(45)34(28(20-40)52-36)53-35-29(37-25(6)41)32(44)31(43)27(19-39)51-35/h11,13,15,24,27-36,39-40,43-45H,8-10,12,14,16-20H2,1-7H3,(H,37,41)(H,38,42)(H,46,47)(H,48,49)/b22-13+,23-15+/t24?,27-,28-,29-,30-,31-,32-,33-,34-,35+,36-/m1/s1",
-    "inchikey": "WPXHWCJFZGZSHJ-HUKUIXITSA-N",
-    "formula": "C36H64N2O17P2",
-    "charge": 0,
-    "microspecies_note": "The recorded structure is the fully protonated diphosphate DIESTER, that is the neutral diacid R-O-P(=O)(OH)-O-P(=O)(OH)-O-R', which is what the GEM's charge 0 demands and what ChEBI:12427 depicts. It is not the species that dominates at pH 7.1. The pH 7 major microspecies is the (2-) dianion (SMILES with both P-OH written [O-], formula C36H62N2O17P2, InChIKey WPXHWCJFZGZSHJ-HUKUIXITSA-L), which is character for character the formula and charge yeast-GEM gives its cytosolic twin s_1184 and the ChEBI:57269 core. The two GEM species s_3767 [er] and s_1184 [c] are therefore the same molecule at two protonation states in two compartments, not two compounds. The pKa set used to build the microspecies ladder is [13.43, 12.78, 5.85, 5.25, 3.19, 1.74], taken verbatim from equilibrator cache compound 49402, which carries the identical ionizable set (two diphosphate-diester OH, four sugar OH plus the hydroxymethyls).",
-    "dolichol_convention": "MEASURED, not assumed. yeast-GEM 9.0.2 writes the ChEBI/KEGG generic formula '(C5H8)n.<core>' with n = 0, keeping only the core. Verified for all 12 dolichol-family species in the model against their ChEBI records: dolichol s_0642 = CHEBI:16091 core C20H36O q0; dolichyl phosphate s_0645/s_0646 = CHEBI:16214 core C20H37O4P q0; dolichyl diphosphate s_3888 = CHEBI:57497 core C20H35O7P2 q-3; dolichyl D-mannosyl phosphate s_0644 = CHEBI:15809 core C26H47O9P q0; dolichyl beta-D-glucosyl phosphate s_3911 = CHEBI:57525 core C26H46O9P q-1; GlcNAc-PP-Dol s_3765 = CHEBI:18278 core C28H51NO12P2 q0; chitobiosyl-PP-Dol s_3767 = CHEBI:12427 core C36H64N2O17P2 q0; s_1184 = CHEBI:57269 core C36H62N2O17P2 q-2; Man2-GlcNAc2-PP-Dol s_0414 = CHEBI:28067 core C48H84N2O27P2 q0. So dolichol is NOT counted as zero: the core already contains a C20 dolichyl, that is FOUR isoprene units with the alpha unit saturated, and ChEBI's n counts EXTRA units beyond those four. The GEM is internally consistent in carbon count everywhere; it is inconsistent only in which protonation state it picks per species (some cores are the neutral ChEBI entry, some the (2-) entry). SEPARATELY and importantly: ChEBI's DEPICTED structure and mass are the n = 1 member (C25 dolichyl, five units), which is what MetaNetX and the equilibrator compound cache ingested. So the GEM's formulas are n = 0 while every structure the pipeline resolved for them is n = 1. Neither is the yeast molecule, which runs 14 to 17 isoprene units.",
-    "sibling_species_priced_how": [
-      {
-        "met_id": "s_0642",
-        "name": "dolichol",
-        "gem_formula": "C20H36O",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM797",
-        "cache_compound_id": 749,
-        "cache_formula": "C25H44O",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": 2167.398098,
-        "sigma_kj_per_mol": 10.72525,
-        "p_h": 7.2
-      },
-      {
-        "met_id": "s_0645",
-        "name": "dolichyl phosphate [c]",
-        "gem_formula": "C20H37O4P",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM278",
-        "cache_compound_id": 264,
-        "cache_formula": "C25H43O4P",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": 1278.705952,
-        "sigma_kj_per_mol": 10.868917,
-        "p_h": 7.2
-      },
-      {
-        "met_id": "s_0646",
-        "name": "dolichyl phosphate [er]",
-        "gem_formula": "C20H37O4P",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM278",
-        "cache_compound_id": 264,
-        "cache_formula": "C25H43O4P",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": 1253.71212,
-        "sigma_kj_per_mol": 10.868917,
-        "p_h": 7.1
-      },
-      {
-        "met_id": "s_3888",
-        "name": "Dolichyl diphosphate",
-        "gem_formula": "C20H35O7P2",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM2370",
-        "cache_compound_id": 2103,
-        "cache_formula": "C25H44O7P2",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": 383.27735,
-        "sigma_kj_per_mol": 11.132439,
-        "p_h": 7.1
-      },
-      {
-        "met_id": "s_0644",
-        "name": "dolichyl D-mannosyl phosphate",
-        "gem_formula": "C26H47O9P",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM296",
-        "cache_compound_id": 282,
-        "cache_formula": "C31H54O9P",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": 1257.199559,
-        "sigma_kj_per_mol": 11.931906,
-        "p_h": 7.1
-      },
-      {
-        "met_id": "s_3911",
-        "name": "Dolichyl beta-D-glucosyl phosphate",
-        "gem_formula": "C26H46O9P",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM145615",
-        "cache_compound_id": 116523,
-        "cache_formula": "C31H54O9P",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": 1257.199559,
-        "sigma_kj_per_mol": 11.931906,
-        "p_h": 7.1
-      },
-      {
-        "met_id": "s_3765",
-        "name": "N-Acetyl-D-glucosaminyldiphosphodolichol",
-        "gem_formula": "C28H51NO12P2",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM818",
-        "cache_compound_id": 768,
-        "cache_formula": "C33H57NO12P2",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": 303.894863,
-        "sigma_kj_per_mol": 12.38677,
-        "p_h": 7.1,
-        "note": "the OTHER dolichol-linked participant of r_4159"
-      },
-      {
-        "met_id": "s_1184",
-        "name": "N,N'-diacetylchitobiosyldiphosphodolichol [c]",
-        "gem_formula": "C36H62N2O17P2",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM63078",
-        "cache_compound_id": 49402,
-        "cache_formula": "C41H70N2O17P2",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": 251.237576,
-        "sigma_kj_per_mol": 14.054752,
-        "p_h": 7.2,
-        "note": "THE SAME MOLECULE as s_3767, at the (2-) state in the cytosol; the GEM annotates it CHEBI:12427 (the neutral entry) while carrying the CHEBI:57269 (2-) formula and charge"
-      },
-      {
-        "met_id": "s_0443",
-        "name": "beta-D-mannosyldiacetylchitobiosyl-PP-Dol [c]",
-        "gem_formula": "C42H72N2O22P2",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM1078",
-        "cache_compound_id": 997,
-        "cache_formula": "C47H80N2O22P2",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": 12.793024,
-        "sigma_kj_per_mol": 14.906556,
-        "p_h": 7.2
-      },
-      {
-        "met_id": "s_0444",
-        "name": "beta-D-mannosyldiacetylchitobiosyl-PP-Dol [g]",
-        "gem_formula": "C42H72N2O22P2",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM1078",
-        "cache_compound_id": 997,
-        "cache_formula": "C47H80N2O22P2",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": -265.700573,
-        "sigma_kj_per_mol": 14.906556,
-        "p_h": 6.6
-      },
-      {
-        "met_id": "s_0414",
-        "name": "alpha-D-mannosyl-beta-D-mannosyl-chitobiosyl-PP-Dol",
-        "gem_formula": "C48H84N2O27P2",
-        "route": "cache_accession",
-        "accession": "metanetx.chemical:MNXM41231",
-        "cache_compound_id": 29648,
-        "cache_formula": "C53H90N2O27P2",
-        "delta_carbons": 5,
-        "dgf_prime_kj_per_mol": -538.951234,
-        "sigma_kj_per_mol": 15.873342,
-        "p_h": 6.6
-      }
-    ]
+  "pkas_source": "equilibrator cache compound 49402, quoted verbatim in microspecies_note"
+ },
+ "sigma_kj_per_mol": 14.054751715812303,
+ "sources": [
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_12427.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/'",
+   "sha256": "1c539d0b72bf52c18200fa19176f3a5824886dfe64869ed8360b79308da6b945",
+   "retrieved_at": "2026-09-11T21:56:00Z",
+   "verbatim_quote": "\"chemical_data\":{\"formula\":\"(C5H8)n.C36H64N2O17P2\",\"charge\":0,\"mass\":\"926.972\",\"monoisotopic_mass\":\"926.43062\"}",
+   "location": "chebi_12427.json, key chemical_data (CHEBI:12427, N,N'-diacetylchitobiosyldiphosphodolichol)"
   },
-  "sigma_kj_per_mol": 14.054751715812303,
-  "sources": [
-    {
-      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_12427.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/'",
-      "sha256": "1c539d0b72bf52c18200fa19176f3a5824886dfe64869ed8360b79308da6b945",
-      "retrieved_at": "2026-09-11T21:56:00Z",
-      "verbatim_quote": "\"chemical_data\":{\"formula\":\"(C5H8)n.C36H64N2O17P2\",\"charge\":0,\"mass\":\"926.972\",\"monoisotopic_mass\":\"926.43062\"}",
-      "location": "chebi_12427.json, key chemical_data (CHEBI:12427, N,N'-diacetylchitobiosyldiphosphodolichol)"
-    },
-    {
-      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_12427.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/'",
-      "sha256": "1c539d0b72bf52c18200fa19176f3a5824886dfe64869ed8360b79308da6b945",
-      "retrieved_at": "2026-09-11T21:56:00Z",
-      "verbatim_quote": "\"default_structure\": {\"id\": 76150, \"smiles\": \"CC(=O)N[C@H]1[C@@H](OP(=O)(O)OP(=O)(O)OCCC(C)CC/C=C(/C)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)O[C@H](CO)[C@@H](O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2NC(C)=O)[C@@H]1O\", ... \"standard_inchi_key\": \"QBRZRKKUHJLMCY-HRUJLXCPSA-N\"",
-      "location": "chebi_12427.json, key default_structure; formula of that depicted structure is C41H72N2O17P2, i.e. the n = 1 member of the family"
-    },
-    {
-      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/57269/",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_57269.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/57269/'",
-      "sha256": "036b78f212209e2f730b504a48176d0387af437444be6f5dc274c19dc5f91cc1",
-      "retrieved_at": "2026-09-11T21:56:00Z",
-      "verbatim_quote": "\"ascii_name\":\"N,N'-diacetylchitobiosyldiphosphonatodolichol(2-)\" ... \"formula\":\"(C5H8)n.C36H62N2O17P2\",\"charge\":-2",
-      "location": "chebi_57269.json, keys ascii_name and chemical_data; this is the (2-) microspecies whose n = 0 core is what yeast-GEM writes for s_1184"
-    },
-    {
-      "source_url": "https://rest.kegg.jp/get/C04537",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sS -L -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/kegg_C04537.txt https://rest.kegg.jp/get/C04537",
-      "sha256": "e4eae5016dbf127ebe3e3e45b073254ed26dc3226972822a3dd174caab496a11",
-      "retrieved_at": "2026-09-11T21:56:00Z",
-      "verbatim_quote": "NAME        N,N'-Diacetylchitobiosyldiphosphodolichol;\n            Chitobiosyldiphosphodolichol\nFORMULA     C36H64N2O17P2(C5H8)n",
-      "location": "kegg_C04537.txt lines 2-4 (ENTRY C04537 Compound)"
-    },
-    {
-      "source_url": "https://rest.kegg.jp/get/R05970",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sS -L -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/kegg_R05970.txt https://rest.kegg.jp/get/R05970",
-      "sha256": "6c0fcb5f71d8f4d9989785907d344aa031d08188565067d6b2547efb31b5fdf4",
-      "retrieved_at": "2026-09-11T21:56:00Z",
-      "verbatim_quote": "DEFINITION  UDP-N-acetyl-D-glucosamine + N-Acetyl-D-glucosaminyldiphosphodolichol <=> UDP + N,N'-Chitobiosyldiphosphodolichol\nEQUATION    G10610 + G00001 <=> G10619 + G00002",
-      "location": "kegg_R05970.txt lines 2-3; R05970 is the kegg.reaction annotation on yeast-GEM r_4159, and its product G00002 is C04537 is CHEBI:12427"
-    },
-    {
-      "source_url": "https://www.rhea-db.org/rhea/?query=RHEA:23380&columns=rhea-id,equation,chebi-id,ec&format=tsv&limit=10",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/rhea_23380.tsv 'https://www.rhea-db.org/rhea/?query=RHEA:23380&columns=rhea-id,equation,chebi-id,ec&format=tsv&limit=10'",
-      "sha256": "6f6adf9093d26a65de732963f008c997964fb552162250be7d766a2088479839",
-      "retrieved_at": "2026-09-11T21:56:00Z",
-      "verbatim_quote": "RHEA:23380\tan N-acetyl-alpha-D-glucosaminyl-diphospho-di-trans,poly-cis-dolichol + UDP-N-acetyl-alpha-D-glucosamine = an N,N'-diacetylchitobiosyl-diphospho-di-trans,poly-cis-dolichol + UDP + H(+)\tCHEBI:58427;CHEBI:57705;CHEBI:57269;CHEBI:58223;CHEBI:15378\tEC:2.4.1.141",
-      "location": "rhea_23380.tsv row 2; the Rhea participants are the (2-) ChEBI microspecies CHEBI:58427 and CHEBI:57269, not the neutral ones"
-    },
-    {
-      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/16091/",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_16091.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/16091/'",
-      "sha256": "e42b7ae6736f8ea7dfc0f8a1fd7bd6c0e37dc5be4d3edb1f99bc6fe61140da60",
-      "retrieved_at": "2026-09-11T21:56:00Z",
-      "verbatim_quote": "\"ascii_name\":\"dolichol\" ... \"formula\":\"(C5H8)n.C20H36O\",\"charge\":0,\"mass\":\"360.626\"",
-      "location": "chebi_16091.json, keys ascii_name and chemical_data; the n = 0 core is C20H36O (four isoprene units) while the mass 360.626 is that of the depicted n = 1 structure C25H44O"
-    },
-    {
-      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/18278/",
-      "retrieval_method": "direct_url",
-      "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_18278.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/18278/'",
-      "sha256": "fd9de695f5c571d7c422f8d64f6975eed50f7e98054e3c88e668ea330fed95b0",
-      "retrieved_at": "2026-09-11T21:56:00Z",
-      "verbatim_quote": "\"ascii_name\":\"N-acetyl-D-glucosaminyldiphosphodolichol\" ... \"formula\":\"(C5H8)n.C28H51NO12P2\",\"charge\":0",
-      "location": "chebi_18278.json; this is the other dolichol-linked participant of r_4159 (yeast-GEM s_3765), and its n = 0 core is what the GEM writes"
-    },
-    {
-      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
-      "retrieval_method": "local_artifact",
-      "retrieval_command": "~/miniconda3/envs/torchcell/bin/python -c \"import cobra; m=cobra.io.read_sbml_model('$DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml'); print([(x.id,x.name,x.formula,x.charge,x.compartment,x.annotation) for x in m.metabolites if 'dolich' in (x.name or '').lower()])\"",
-      "sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
-      "retrieved_at": "2026-09-11T22:05:00Z",
-      "verbatim_quote": "s_3767\ter\tC36H64N2O17P2\tq=0\tN,N'-Chitobiosyldiphosphodolichol\n    annot: {'sbo': 'SBO:0000247'}",
-      "location": "yeast-GEM.xml, species M_s_3767__91__er__93__; the annotation bag carries only an SBO term, so no namespace accession is present. Same sha256 the pipeline recorded in reaction_thermo_coverage_final.json."
-    },
-    {
-      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
-      "retrieval_method": "local_artifact",
-      "retrieval_command": "~/miniconda3/envs/torchcell/bin/python -c \"import cobra; m=cobra.io.read_sbml_model('.../yeast-GEM.xml'); r=m.reactions.get_by_id('r_4159'); print(r.build_reaction_string(use_metabolite_names=True), r.check_mass_balance(), r.annotation)\"",
-      "sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
-      "retrieved_at": "2026-09-11T22:05:00Z",
-      "verbatim_quote": "UDP-N-acetyl-alpha-D-glucosamine + N-Acetyl-D-glucosaminyldiphosphodolichol <=> H+ + UDP + N,N'-Chitobiosyldiphosphodolichol\nmass balance: {}\nannot: {'sbo': 'SBO:0000176', 'ec-code': '2.4.1.141', 'kegg.reaction': 'R05970', 'metanetx.reaction': 'MNXR100208'}",
-      "location": "yeast-GEM.xml, reaction R_r_4159; check_mass_balance() returns an empty dict, so r_4159 balances in both mass and charge as written"
-    },
-    {
-      "source_url": "file:///home/michaelvolk/.cache/equilibrator/compounds.sqlite",
-      "retrieval_method": "local_artifact",
-      "retrieval_command": "sqlite3 file:$HOME/.cache/equilibrator/compounds.sqlite?mode=ro \"SELECT c.id, c.inchi_key, c.smiles, c.atom_bag FROM compounds c JOIN compound_identifiers i ON i.compound_id=c.id WHERE i.accession IN ('MNXM63078','MNXM818','MNXM278','MNXM296','MNXM797','MNXM2370','MNXM145615','MNXM1078','MNXM41231')\"",
-      "sha256": "not hashed: 1.34 GB equilibrator compound cache, mtime 2026-09-03T22:12; identified by content (compound_id 49402 for CHEBI:12427/MNXM63078)",
-      "retrieved_at": "2026-09-11T22:05:00Z",
-      "verbatim_quote": "49402  QBRZRKKUHJLMCY-HRUJLXCPSA-N  atom_bag {'C': 41, 'O': 17, 'P': 2, 'H': 70, 'N': 2, 'e-': 498}",
-      "location": "compounds.sqlite table compounds, id 49402, reached from accessions MNXM63078, CHEBI:12427, C04537 and chito2pdol; every one of the 11 dolichol-family siblings resolves to a cache structure with exactly five more carbons than the GEM formula"
-    },
-    {
-      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/metabolite_dgf_prime_with_external.parquet",
-      "retrieval_method": "local_artifact",
-      "retrieval_command": "~/miniconda3/envs/torchcell/bin/python -c \"import pandas as pd; df=pd.read_parquet('$DATA_ROOT/data/torchcell/thermo_equilibrator/metabolite_dgf_prime_with_external.parquet'); print(df[df.met_id.isin(['s_3767','s_1184','s_3765'])])\"",
-      "sha256": "f9b564844e5b3b0946de179672ae7f6b78f2560821a2e3423059ff16400e8871",
-      "retrieved_at": "2026-09-11T22:05:00Z",
-      "verbatim_quote": "s_1184  251.237576  14.054752  cache_accession  7.2  0.25  3.0  303.15  metanetx.chemical",
-      "location": "metabolite_dgf_prime_with_external.parquet row 876; s_3767 has no row at all, and all 11 dolichol-family siblings carry route cache_accession"
-    },
-    {
-      "source_url": "file:///home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_structure_attempt.json",
-      "retrieval_method": "local_artifact",
-      "retrieval_command": "~/miniconda3/envs/torchcell/bin/python -c \"import json; d=json.load(open('experiments/026-metabolism-flux/results/thermo_structure_attempt.json')); print([r for r in d['records'] if r['met_id']=='s_3767'])\"",
-      "sha256": "a6c3c6a40ced7faccbc0d9e72bcd7ae7af9b47372141a62ebd7f4ee95cd82cf1",
-      "retrieved_at": "2026-09-11T22:05:00Z",
-      "verbatim_quote": "\"accession_used\": null, ... \"outcome\": \"no_structure_in_any_namespace\", \"reason\": \"no_structure_available\", \"remedy\": \"a structure from a curator; no namespace the GEM cites has one\"",
-      "location": "thermo_structure_attempt.json, records entry for s_3767; the exclusion is an ABSENT accession, not a hard chemistry problem"
-    },
-    {
-      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/decomposition_check_final.json",
-      "retrieval_method": "local_artifact",
-      "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/decomposition_check_final.py",
-      "sha256": "51bae3465bbeeb9c4bb8c9d5c83b82c8b8e3e901ac193698b2664be3e32afe57",
-      "retrieved_at": "2026-09-11T22:05:00Z",
-      "verbatim_quote": "\"compound_id\": 694327, \"formula\": \"C36H64N2O17P2\", \"inchi_key\": \"WPXHWCJFZGZSHJ-HUKUIXITSA-N\", \"decomposes\": true, \"error\": null, \"sigma_kj_per_mol\": 11.59004353174231",
-      "location": "decomposition_check_final.json; the recorded structure passes the pipeline's group decomposer"
-    }
-  ],
-  "searches": [
-    {
-      "query": "https://www.rhea-db.org/rhea/23380.rdf",
-      "engine": "curl",
-      "date": "2026-09-11",
-      "outcome": "HTTP 403. Rhea refuses the plain .rdf path to a default curl user agent."
-    },
-    {
-      "query": "https://www.ebi.ac.uk/webservices/chebi/2.0/test/getCompleteEntity?chebiId=CHEBI:12427",
-      "engine": "curl",
-      "date": "2026-09-11",
-      "outcome": "HTTP 500. The legacy ChEBI SOAP test endpoint is dead; it returns a 10135 byte error page for every id, so a naive fetch looks like a hit."
-    },
-    {
-      "query": "https://www.rhea-db.org/rhea/?query=RHEA:23380&columns=rhea-id,equation,chebi-id,ec&format=tsv",
-      "engine": "curl with a browser user agent",
-      "date": "2026-09-11",
-      "outcome": "HTTP 200. Gives the equation and the five ChEBI participants. Confirms the Rhea participants are the (2-) microspecies CHEBI:58427 and CHEBI:57269, and that Rhea names the lipid di-trans,poly-cis-dolichol, that is a FAMILY, not one molecule."
-    },
-    {
-      "query": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/",
-      "engine": "curl",
-      "date": "2026-09-11",
-      "outcome": "HTTP 200. THE decisive hit: formula (C5H8)n.C36H64N2O17P2, charge 0, which is character for character the yeast-GEM s_3767 formula and charge with the (C5H8)n term dropped. Also carries the depicted structure, which is the n = 1 member C41H72N2O17P2."
-    },
-    {
-      "query": "ChEBI backend API for 57269, 16091, 16214, 15809, 57525, 18278, 58427, 18396, 28067",
-      "engine": "curl",
-      "date": "2026-09-11",
-      "outcome": "HTTP 200 for all nine. Every one is written (C5H8)n.<core>, and every core matches the yeast-GEM formula of the corresponding species. This is what establishes the convention as a family property rather than a one-off."
-    },
-    {
-      "query": "https://rest.kegg.jp/get/C04537 and /get/R05970",
-      "engine": "curl",
-      "date": "2026-09-11",
-      "outcome": "HTTP 200. KEGG writes FORMULA C36H64N2O17P2(C5H8)n and lists Chitobiosyldiphosphodolichol as a synonym, which is where the GEM's species NAME for s_3767 comes from. R05970 is the kegg.reaction on r_4159 and its product G00002 is C04537 is CHEBI:12427."
-    },
-    {
-      "query": "ChEBI 12427 N,N'-diacetylchitobiosyldiphosphodolichol (C5H8)n formula",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "Confirmed the CHEBI:12427 / CHEBI:57269 conjugate acid and base pair and surfaced CHEBI:18341 as a further related entry. No new primary fact beyond the API records already retrieved."
-    },
-    {
-      "query": "yeast Saccharomyces cerevisiae dolichol chain length isoprene units Dol-15 Dol-16 predominant",
-      "engine": "WebSearch",
-      "date": "2026-09-11",
-      "outcome": "Yeast dolichols run about 14 to 17 isoprene units in vegetative cells (Rer2p product), with Srt1p making 18 to 23. Not used as a sourced value in this record; it is context showing that BOTH the GEM's n = 0 (four units) and ChEBI's depicted n = 1 (five units) are conventions rather than the yeast molecule."
-    },
-    {
-      "query": "SELECT ... FROM compound_identifiers WHERE accession IN (the nine MetaNetX ids the GEM cites for the dolichol family)",
-      "engine": "sqlite3 on the equilibrator compound cache",
-      "date": "2026-09-11",
-      "outcome": "All nine resolve. Every resolved structure has exactly five more carbons than the GEM formula, that is the n = 1 member, and every one carries a group vector. s_3767 cites nothing, so it resolves to nothing."
-    },
-    {
-      "query": "cobra scan of yeast-GEM 9.0.2 for metabolite names matching dolich|chitobio|glucosaminyldiphospho|oligosacchar, then every reaction touching them",
-      "engine": "cobrapy",
-      "date": "2026-09-11",
-      "outcome": "12 species, 11 with accessions and 1 without (s_3767). r_4159 balances in mass and charge. s_3767 [er] appears in r_4159 only and s_1184 [c] in r_0228 only, so the two halves of the same molecule never meet."
-    },
-    {
-      "query": "flux_variability_analysis(model, reaction_list=['r_4159'], fraction_of_optimum=0.0)",
-      "engine": "cobrapy",
-      "date": "2026-09-11",
-      "outcome": "minimum 0.0, maximum 0.0. r_4159 is structurally blocked because s_3767 is a dead end, so pricing it adds one reaction to the thermodynamic coverage count and zero flux-carrying reactions."
-    }
-  ],
-  "decomposition_check": {
-    "attempted": true,
-    "decomposes": true,
-    "error": null
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_12427.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/'",
+   "sha256": "1c539d0b72bf52c18200fa19176f3a5824886dfe64869ed8360b79308da6b945",
+   "retrieved_at": "2026-09-11T21:56:00Z",
+   "verbatim_quote": "\"default_structure\": {\"id\": 76150, \"smiles\": \"CC(=O)N[C@H]1[C@@H](OP(=O)(O)OP(=O)(O)OCCC(C)CC/C=C(/C)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)O[C@H](CO)[C@@H](O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2NC(C)=O)[C@@H]1O\", ... \"standard_inchi_key\": \"QBRZRKKUHJLMCY-HRUJLXCPSA-N\"",
+   "location": "chebi_12427.json, key default_structure; formula of that depicted structure is C41H72N2O17P2, i.e. the n = 1 member of the family"
   },
-  "notes": "WHAT THE EXCLUSION ACTUALLY IS. s_3767 was not excluded because its chemistry is hard. thermo_structure_attempt.json records accession_used = null: the GEM gives s_3767 an SBO term and nothing else, while its eleven dolichol-family siblings all carry a metanetx.chemical accession and all eleven were priced through it. The species name and formula both trace to KEGG C04537 (whose second listed name is 'Chitobiosyldiphosphodolichol' and whose FORMULA line is C36H64N2O17P2(C5H8)n), so the accession was simply never attached during model build.\n\nTHE CONVENTION, MEASURED. Every dolichol-family formula in yeast-GEM 9.0.2 is the ChEBI or KEGG generic formula '(C5H8)n.<core>' with n = 0. Nine ChEBI records were pulled and all nine cores match the GEM string exactly. The core is NOT dolichol-free: it contains a C20 dolichyl, four isoprene units with the alpha unit saturated, and ChEBI's n counts units BEYOND those four. Arithmetic check on r_4159's own species: chitobiose C16H28N2O11 plus dolichyl diphosphate C20H38O7P2 minus H2O is C36H64N2O17P2, the GEM formula for s_3767 to the atom, and r_4159's check_mass_balance() is empty.\n\nTHE TRAP, AND IT ALREADY BIT THE PIPELINE. ChEBI's DEPICTED structure is the n = 1 member (C25 dolichyl), and that is the structure MetaNetX and the equilibrator compound cache hold. So all eleven siblings were priced against a molecule with exactly five more carbons than the GEM formula they are attached to; the offset is +5 C for every single one. The accession sweep applies no composition check, while the later thermo_structure_attempt.py does, so if s_3767 were simply given the MNXM63078 accession the newer stage would reject it as composition_mismatch even though eleven siblings sailed through the older one. That is a real inconsistency in the pipeline, and it belongs to the family, not to this species.\n\nWHY THE CURATED STRUCTURE IS NOT THE RIGHT DEFAULT ROUTE, WITH THE NUMBER. The structure recorded here decomposes (compound 694327, group vector present, sigma 11.59 kJ/mol), so 'give it a structure' works mechanically. It gives the wrong answer anyway. Measured, both created fresh by the same route with the same pKas: the n = 0 core prices at dgf'0 = 1737.31 kJ/mol at pH 7.2 and the n = 1 member at 2190.14, so one isoprene unit is worth 452.83 kJ/mol at pH 7.2 and 448.19 at pH 7.1. r_4159's other dolichol-linked participant, s_3765, is priced at n = 1. Feeding r_4159 an n = 0 s_3767 against an n = 1 s_3765 gives dGr'0 = +1475.83 kJ/mol at pH 7.1, using the shipped values for UDP-GlcNAc (-2076.847), s_3765 (303.895), UDP (-1997.294) and H+ (0). Pricing s_3767 the way its twin s_1184 was priced instead gives dGr'0 = -13.72 kJ/mol, which is the expected magnitude for a UDP-sugar glycosyltransferase. The +1489 kJ/mol gap between those two is pure convention artifact.\n\nRECOMMENDED REMEDY, in order. (1) Give s_3767 the accessions its own name and formula already point at, metanetx.chemical:MNXM63078 / CHEBI:12427 / kegg.compound:C04537, and let the accession route price it exactly as it priced s_1184: dgf'0 = 210.627 kJ/mol at the ER pH 7.1, sigma 14.055, which is the sigma recorded in this record's sigma_kj_per_mol field. This is the only option that keeps s_3767 on the same footing as s_3765 inside r_4159. (2) If instead the project decides to enforce the composition check and move the WHOLE family to n = 0, then use the SMILES recorded here for s_3767 and its (2-) sibling SMILES for s_1184, and rebuild all eleven siblings at n = 0 in the same pass. Do not mix. (3) The polymer route repeat_unit_surrogate is NOT the right home. It is built for species whose length is genuinely unspecified; here the GEM has committed to a definite length (n = 0) and ChEBI to another (n = 1), so the problem is choosing between two definite conventions, not modeling an unknown one.\n\nSEPARATE MODEL DEFECT, FLAGGED FOR A HUMAN, NOT FIXED HERE. s_3767 [er] appears in r_4159 only and s_1184 [c] appears in r_0228 only, with no transport or equivalence between them, so the ER branch of N-glycan precursor assembly (r_4170 then r_4159) dead-ends. FVA confirms r_4159 has minimum 0.0 and maximum 0.0, that is it is structurally blocked. Pricing s_3767 therefore adds one reaction to the thermodynamic coverage count and zero flux-carrying reactions. The biologically correct fix is to merge s_3767 and s_1184 into one species in one compartment, which is a yeast-GEM curation change and is out of scope for this record.\n\nPROVENANCE CAVEATS. ChemAxon cxcalc is not installed on this host, so the plain LocalCompoundCache is read-only and creates no compound at all; the decomposition check ran through LocalCompoundCache(pkas_provided_externally=True) with the pKa ladder copied from cache compound 49402, which is the same route external_pka_apply_selection.py uses. A freshly created compound and a shipped cache compound for the SAME molecule are not interchangeable: created fresh from the neutral parent, the n = 1 member prices at 2190.14 kJ/mol against the shipped compound's 251.24 at pH 7.2, and their group vectors differ at exactly two indices (44 and 46), which tracks the reference microspecies (the shipped compound anchors the (2-) state at 70 protons, the fresh one the neutral at 72). I have not traced that 1938.9 kJ/mol offset to a specific group energy and am not claiming a mechanism for it; it is stated as an observation, and it is a further reason to prefer the accession route over fresh creation. Finally, 'tabulated' here labels the STRUCTURE and the CONVENTION, which come verbatim from ChEBI and KEGG records; any formation energy that follows from either remedy is component-contribution COMPUTED and should be labeled computed downstream."
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/57269/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_57269.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/57269/'",
+   "sha256": "036b78f212209e2f730b504a48176d0387af437444be6f5dc274c19dc5f91cc1",
+   "retrieved_at": "2026-09-11T21:56:00Z",
+   "verbatim_quote": "\"ascii_name\":\"N,N'-diacetylchitobiosyldiphosphonatodolichol(2-)\" ... \"formula\":\"(C5H8)n.C36H62N2O17P2\",\"charge\":-2",
+   "location": "chebi_57269.json, keys ascii_name and chemical_data; this is the (2-) microspecies whose n = 0 core is what yeast-GEM writes for s_1184"
+  },
+  {
+   "source_url": "https://rest.kegg.jp/get/C04537",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/kegg_C04537.txt https://rest.kegg.jp/get/C04537",
+   "sha256": "e4eae5016dbf127ebe3e3e45b073254ed26dc3226972822a3dd174caab496a11",
+   "retrieved_at": "2026-09-11T21:56:00Z",
+   "verbatim_quote": "NAME        N,N'-Diacetylchitobiosyldiphosphodolichol;\n            Chitobiosyldiphosphodolichol\nFORMULA     C36H64N2O17P2(C5H8)n",
+   "location": "kegg_C04537.txt lines 2-4 (ENTRY C04537 Compound)"
+  },
+  {
+   "source_url": "https://rest.kegg.jp/get/R05970",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/kegg_R05970.txt https://rest.kegg.jp/get/R05970",
+   "sha256": "6c0fcb5f71d8f4d9989785907d344aa031d08188565067d6b2547efb31b5fdf4",
+   "retrieved_at": "2026-09-11T21:56:00Z",
+   "verbatim_quote": "DEFINITION  UDP-N-acetyl-D-glucosamine + N-Acetyl-D-glucosaminyldiphosphodolichol <=> UDP + N,N'-Chitobiosyldiphosphodolichol\nEQUATION    G10610 + G00001 <=> G10619 + G00002",
+   "location": "kegg_R05970.txt lines 2-3; R05970 is the kegg.reaction annotation on yeast-GEM r_4159, and its product G00002 is C04537 is CHEBI:12427"
+  },
+  {
+   "source_url": "https://www.rhea-db.org/rhea/?query=RHEA:23380&columns=rhea-id,equation,chebi-id,ec&format=tsv&limit=10",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/rhea_23380.tsv 'https://www.rhea-db.org/rhea/?query=RHEA:23380&columns=rhea-id,equation,chebi-id,ec&format=tsv&limit=10'",
+   "sha256": "6f6adf9093d26a65de732963f008c997964fb552162250be7d766a2088479839",
+   "retrieved_at": "2026-09-11T21:56:00Z",
+   "verbatim_quote": "RHEA:23380\tan N-acetyl-alpha-D-glucosaminyl-diphospho-di-trans,poly-cis-dolichol + UDP-N-acetyl-alpha-D-glucosamine = an N,N'-diacetylchitobiosyl-diphospho-di-trans,poly-cis-dolichol + UDP + H(+)\tCHEBI:58427;CHEBI:57705;CHEBI:57269;CHEBI:58223;CHEBI:15378\tEC:2.4.1.141",
+   "location": "rhea_23380.tsv row 2; the Rhea participants are the (2-) ChEBI microspecies CHEBI:58427 and CHEBI:57269, not the neutral ones"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/16091/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_16091.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/16091/'",
+   "sha256": "e42b7ae6736f8ea7dfc0f8a1fd7bd6c0e37dc5be4d3edb1f99bc6fe61140da60",
+   "retrieved_at": "2026-09-11T21:56:00Z",
+   "verbatim_quote": "\"ascii_name\":\"dolichol\" ... \"formula\":\"(C5H8)n.C20H36O\",\"charge\":0,\"mass\":\"360.626\"",
+   "location": "chebi_16091.json, keys ascii_name and chemical_data; the n = 0 core is C20H36O (four isoprene units) while the mass 360.626 is that of the depicted n = 1 structure C25H44O"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/18278/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) torchcell-curation/1.0' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/chebi_18278.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/18278/'",
+   "sha256": "fd9de695f5c571d7c422f8d64f6975eed50f7e98054e3c88e668ea330fed95b0",
+   "retrieved_at": "2026-09-11T21:56:00Z",
+   "verbatim_quote": "\"ascii_name\":\"N-acetyl-D-glucosaminyldiphosphodolichol\" ... \"formula\":\"(C5H8)n.C28H51NO12P2\",\"charge\":0",
+   "location": "chebi_18278.json; this is the other dolichol-linked participant of r_4159 (yeast-GEM s_3765), and its n = 0 core is what the GEM writes"
+  },
+  {
+   "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+   "retrieval_method": "local_artifact",
+   "retrieval_command": "~/miniconda3/envs/torchcell/bin/python -c \"import cobra; m=cobra.io.read_sbml_model('$DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml'); print([(x.id,x.name,x.formula,x.charge,x.compartment,x.annotation) for x in m.metabolites if 'dolich' in (x.name or '').lower()])\"",
+   "sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+   "retrieved_at": "2026-09-11T22:05:00Z",
+   "verbatim_quote": "s_3767\ter\tC36H64N2O17P2\tq=0\tN,N'-Chitobiosyldiphosphodolichol\n    annot: {'sbo': 'SBO:0000247'}",
+   "location": "yeast-GEM.xml, species M_s_3767__91__er__93__; the annotation bag carries only an SBO term, so no namespace accession is present. Same sha256 the pipeline recorded in reaction_thermo_coverage_final.json."
+  },
+  {
+   "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+   "retrieval_method": "local_artifact",
+   "retrieval_command": "~/miniconda3/envs/torchcell/bin/python -c \"import cobra; m=cobra.io.read_sbml_model('.../yeast-GEM.xml'); r=m.reactions.get_by_id('r_4159'); print(r.build_reaction_string(use_metabolite_names=True), r.check_mass_balance(), r.annotation)\"",
+   "sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+   "retrieved_at": "2026-09-11T22:05:00Z",
+   "verbatim_quote": "UDP-N-acetyl-alpha-D-glucosamine + N-Acetyl-D-glucosaminyldiphosphodolichol <=> H+ + UDP + N,N'-Chitobiosyldiphosphodolichol\nmass balance: {}\nannot: {'sbo': 'SBO:0000176', 'ec-code': '2.4.1.141', 'kegg.reaction': 'R05970', 'metanetx.reaction': 'MNXR100208'}",
+   "location": "yeast-GEM.xml, reaction R_r_4159; check_mass_balance() returns an empty dict, so r_4159 balances in both mass and charge as written"
+  },
+  {
+   "source_url": "file:///home/michaelvolk/.cache/equilibrator/compounds.sqlite",
+   "retrieval_method": "local_artifact",
+   "retrieval_command": "sqlite3 file:$HOME/.cache/equilibrator/compounds.sqlite?mode=ro \"SELECT c.id, c.inchi_key, c.smiles, c.atom_bag FROM compounds c JOIN compound_identifiers i ON i.compound_id=c.id WHERE i.accession IN ('MNXM63078','MNXM818','MNXM278','MNXM296','MNXM797','MNXM2370','MNXM145615','MNXM1078','MNXM41231')\"",
+   "sha256": "not hashed: 1.34 GB equilibrator compound cache, mtime 2026-09-03T22:12; identified by content (compound_id 49402 for CHEBI:12427/MNXM63078)",
+   "retrieved_at": "2026-09-11T22:05:00Z",
+   "verbatim_quote": "49402  QBRZRKKUHJLMCY-HRUJLXCPSA-N  atom_bag {'C': 41, 'O': 17, 'P': 2, 'H': 70, 'N': 2, 'e-': 498}",
+   "location": "compounds.sqlite table compounds, id 49402, reached from accessions MNXM63078, CHEBI:12427, C04537 and chito2pdol; every one of the 11 dolichol-family siblings resolves to a cache structure with exactly five more carbons than the GEM formula"
+  },
+  {
+   "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/metabolite_dgf_prime_with_external.parquet",
+   "retrieval_method": "local_artifact",
+   "retrieval_command": "~/miniconda3/envs/torchcell/bin/python -c \"import pandas as pd; df=pd.read_parquet('$DATA_ROOT/data/torchcell/thermo_equilibrator/metabolite_dgf_prime_with_external.parquet'); print(df[df.met_id.isin(['s_3767','s_1184','s_3765'])])\"",
+   "sha256": "f9b564844e5b3b0946de179672ae7f6b78f2560821a2e3423059ff16400e8871",
+   "retrieved_at": "2026-09-11T22:05:00Z",
+   "verbatim_quote": "s_1184  251.237576  14.054752  cache_accession  7.2  0.25  3.0  303.15  metanetx.chemical",
+   "location": "metabolite_dgf_prime_with_external.parquet row 876; s_3767 has no row at all, and all 11 dolichol-family siblings carry route cache_accession"
+  },
+  {
+   "source_url": "file:///home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_structure_attempt.json",
+   "retrieval_method": "local_artifact",
+   "retrieval_command": "~/miniconda3/envs/torchcell/bin/python -c \"import json; d=json.load(open('experiments/026-metabolism-flux/results/thermo_structure_attempt.json')); print([r for r in d['records'] if r['met_id']=='s_3767'])\"",
+   "sha256": "a6c3c6a40ced7faccbc0d9e72bcd7ae7af9b47372141a62ebd7f4ee95cd82cf1",
+   "retrieved_at": "2026-09-11T22:05:00Z",
+   "verbatim_quote": "\"accession_used\": null, ... \"outcome\": \"no_structure_in_any_namespace\", \"reason\": \"no_structure_available\", \"remedy\": \"a structure from a curator; no namespace the GEM cites has one\"",
+   "location": "thermo_structure_attempt.json, records entry for s_3767; the exclusion is an ABSENT accession, not a hard chemistry problem"
+  },
+  {
+   "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/decomposition_check_final.json",
+   "retrieval_method": "local_artifact",
+   "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/chitobiosyl_pp_dolichol/decomposition_check_final.py",
+   "sha256": "51bae3465bbeeb9c4bb8c9d5c83b82c8b8e3e901ac193698b2664be3e32afe57",
+   "retrieved_at": "2026-09-11T22:05:00Z",
+   "verbatim_quote": "\"compound_id\": 694327, \"formula\": \"C36H64N2O17P2\", \"inchi_key\": \"WPXHWCJFZGZSHJ-HUKUIXITSA-N\", \"decomposes\": true, \"error\": null, \"sigma_kj_per_mol\": 11.59004353174231",
+   "location": "decomposition_check_final.json; the recorded structure passes the pipeline's group decomposer"
+  }
+ ],
+ "searches": [
+  {
+   "query": "https://www.rhea-db.org/rhea/23380.rdf",
+   "engine": "curl",
+   "date": "2026-09-11",
+   "outcome": "HTTP 403. Rhea refuses the plain .rdf path to a default curl user agent."
+  },
+  {
+   "query": "https://www.ebi.ac.uk/webservices/chebi/2.0/test/getCompleteEntity?chebiId=CHEBI:12427",
+   "engine": "curl",
+   "date": "2026-09-11",
+   "outcome": "HTTP 500. The legacy ChEBI SOAP test endpoint is dead; it returns a 10135 byte error page for every id, so a naive fetch looks like a hit."
+  },
+  {
+   "query": "https://www.rhea-db.org/rhea/?query=RHEA:23380&columns=rhea-id,equation,chebi-id,ec&format=tsv",
+   "engine": "curl with a browser user agent",
+   "date": "2026-09-11",
+   "outcome": "HTTP 200. Gives the equation and the five ChEBI participants. Confirms the Rhea participants are the (2-) microspecies CHEBI:58427 and CHEBI:57269, and that Rhea names the lipid di-trans,poly-cis-dolichol, that is a FAMILY, not one molecule."
+  },
+  {
+   "query": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/",
+   "engine": "curl",
+   "date": "2026-09-11",
+   "outcome": "HTTP 200. THE decisive hit: formula (C5H8)n.C36H64N2O17P2, charge 0, which is character for character the yeast-GEM s_3767 formula and charge with the (C5H8)n term dropped. Also carries the depicted structure, which is the n = 1 member C41H72N2O17P2."
+  },
+  {
+   "query": "ChEBI backend API for 57269, 16091, 16214, 15809, 57525, 18278, 58427, 18396, 28067",
+   "engine": "curl",
+   "date": "2026-09-11",
+   "outcome": "HTTP 200 for all nine. Every one is written (C5H8)n.<core>, and every core matches the yeast-GEM formula of the corresponding species. This is what establishes the convention as a family property rather than a one-off."
+  },
+  {
+   "query": "https://rest.kegg.jp/get/C04537 and /get/R05970",
+   "engine": "curl",
+   "date": "2026-09-11",
+   "outcome": "HTTP 200. KEGG writes FORMULA C36H64N2O17P2(C5H8)n and lists Chitobiosyldiphosphodolichol as a synonym, which is where the GEM's species NAME for s_3767 comes from. R05970 is the kegg.reaction on r_4159 and its product G00002 is C04537 is CHEBI:12427."
+  },
+  {
+   "query": "ChEBI 12427 N,N'-diacetylchitobiosyldiphosphodolichol (C5H8)n formula",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Confirmed the CHEBI:12427 / CHEBI:57269 conjugate acid and base pair and surfaced CHEBI:18341 as a further related entry. No new primary fact beyond the API records already retrieved."
+  },
+  {
+   "query": "yeast Saccharomyces cerevisiae dolichol chain length isoprene units Dol-15 Dol-16 predominant",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Yeast dolichols run about 14 to 17 isoprene units in vegetative cells (Rer2p product), with Srt1p making 18 to 23. Not used as a sourced value in this record; it is context showing that BOTH the GEM's n = 0 (four units) and ChEBI's depicted n = 1 (five units) are conventions rather than the yeast molecule."
+  },
+  {
+   "query": "SELECT ... FROM compound_identifiers WHERE accession IN (the nine MetaNetX ids the GEM cites for the dolichol family)",
+   "engine": "sqlite3 on the equilibrator compound cache",
+   "date": "2026-09-11",
+   "outcome": "All nine resolve. Every resolved structure has exactly five more carbons than the GEM formula, that is the n = 1 member, and every one carries a group vector. s_3767 cites nothing, so it resolves to nothing."
+  },
+  {
+   "query": "cobra scan of yeast-GEM 9.0.2 for metabolite names matching dolich|chitobio|glucosaminyldiphospho|oligosacchar, then every reaction touching them",
+   "engine": "cobrapy",
+   "date": "2026-09-11",
+   "outcome": "12 species, 11 with accessions and 1 without (s_3767). r_4159 balances in mass and charge. s_3767 [er] appears in r_4159 only and s_1184 [c] in r_0228 only, so the two halves of the same molecule never meet."
+  },
+  {
+   "query": "flux_variability_analysis(model, reaction_list=['r_4159'], fraction_of_optimum=0.0)",
+   "engine": "cobrapy",
+   "date": "2026-09-11",
+   "outcome": "minimum 0.0, maximum 0.0. r_4159 is structurally blocked because s_3767 is a dead end, so pricing it adds one reaction to the thermodynamic coverage count and zero flux-carrying reactions."
+  }
+ ],
+ "decomposition_check": {
+  "attempted": true,
+  "decomposes": true,
+  "error": null
+ },
+ "notes": "WHAT THE EXCLUSION ACTUALLY IS. s_3767 was not excluded because its chemistry is hard. thermo_structure_attempt.json records accession_used = null: the GEM gives s_3767 an SBO term and nothing else, while its eleven dolichol-family siblings all carry a metanetx.chemical accession and all eleven were priced through it. The species name and formula both trace to KEGG C04537 (whose second listed name is 'Chitobiosyldiphosphodolichol' and whose FORMULA line is C36H64N2O17P2(C5H8)n), so the accession was simply never attached during model build.\n\nTHE CONVENTION, MEASURED. Every dolichol-family formula in yeast-GEM 9.0.2 is the ChEBI or KEGG generic formula '(C5H8)n.<core>' with n = 0. Nine ChEBI records were pulled and all nine cores match the GEM string exactly. The core is NOT dolichol-free: it contains a C20 dolichyl, four isoprene units with the alpha unit saturated, and ChEBI's n counts units BEYOND those four. Arithmetic check on r_4159's own species: chitobiose C16H28N2O11 plus dolichyl diphosphate C20H38O7P2 minus H2O is C36H64N2O17P2, the GEM formula for s_3767 to the atom, and r_4159's check_mass_balance() is empty.\n\nTHE TRAP, AND IT ALREADY BIT THE PIPELINE. ChEBI's DEPICTED structure is the n = 1 member (C25 dolichyl), and that is the structure MetaNetX and the equilibrator compound cache hold. So all eleven siblings were priced against a molecule with exactly five more carbons than the GEM formula they are attached to; the offset is +5 C for every single one. The accession sweep applies no composition check, while the later thermo_structure_attempt.py does, so if s_3767 were simply given the MNXM63078 accession the newer stage would reject it as composition_mismatch even though eleven siblings sailed through the older one. That is a real inconsistency in the pipeline, and it belongs to the family, not to this species.\n\nWHY THE CURATED STRUCTURE IS NOT THE RIGHT DEFAULT ROUTE, WITH THE NUMBER. The structure recorded here decomposes (compound 694327, group vector present, sigma 11.59 kJ/mol), so 'give it a structure' works mechanically. It gives the wrong answer anyway. Measured, both created fresh by the same route with the same pKas: the n = 0 core prices at dgf'0 = 1737.31 kJ/mol at pH 7.2 and the n = 1 member at 2190.14, so one isoprene unit is worth 452.83 kJ/mol at pH 7.2 and 448.19 at pH 7.1. r_4159's other dolichol-linked participant, s_3765, is priced at n = 1. Feeding r_4159 an n = 0 s_3767 against an n = 1 s_3765 gives dGr'0 = +1475.83 kJ/mol at pH 7.1, using the shipped values for UDP-GlcNAc (-2076.847), s_3765 (303.895), UDP (-1997.294) and H+ (0). Pricing s_3767 the way its twin s_1184 was priced instead gives dGr'0 = -13.72 kJ/mol, which is the expected magnitude for a UDP-sugar glycosyltransferase. The +1489 kJ/mol gap between those two is pure convention artifact.\n\nRECOMMENDED REMEDY, in order. (1) Give s_3767 the accessions its own name and formula already point at, metanetx.chemical:MNXM63078 / CHEBI:12427 / kegg.compound:C04537, and let the accession route price it exactly as it priced s_1184: dgf'0 = 210.627 kJ/mol at the ER pH 7.1, sigma 14.055, which is the sigma recorded in this record's sigma_kj_per_mol field. This is the only option that keeps s_3767 on the same footing as s_3765 inside r_4159. (2) If instead the project decides to enforce the composition check and move the WHOLE family to n = 0, then use the SMILES recorded here for s_3767 and its (2-) sibling SMILES for s_1184, and rebuild all eleven siblings at n = 0 in the same pass. Do not mix. (3) The polymer route repeat_unit_surrogate is NOT the right home. It is built for species whose length is genuinely unspecified; here the GEM has committed to a definite length (n = 0) and ChEBI to another (n = 1), so the problem is choosing between two definite conventions, not modeling an unknown one.\n\nSEPARATE MODEL DEFECT, FLAGGED FOR A HUMAN, NOT FIXED HERE. s_3767 [er] appears in r_4159 only and s_1184 [c] appears in r_0228 only, with no transport or equivalence between them, so the ER branch of N-glycan precursor assembly (r_4170 then r_4159) dead-ends. FVA confirms r_4159 has minimum 0.0 and maximum 0.0, that is it is structurally blocked. Pricing s_3767 therefore adds one reaction to the thermodynamic coverage count and zero flux-carrying reactions. The biologically correct fix is to merge s_3767 and s_1184 into one species in one compartment, which is a yeast-GEM curation change and is out of scope for this record.\n\nPROVENANCE CAVEATS. ChemAxon cxcalc is not installed on this host, so the plain LocalCompoundCache is read-only and creates no compound at all; the decomposition check ran through LocalCompoundCache(pkas_provided_externally=True) with the pKa ladder copied from cache compound 49402, which is the same route external_pka_apply_selection.py uses. A freshly created compound and a shipped cache compound for the SAME molecule are not interchangeable: created fresh from the neutral parent, the n = 1 member prices at 2190.14 kJ/mol against the shipped compound's 251.24 at pH 7.2, and their group vectors differ at exactly two indices (44 and 46), which tracks the reference microspecies (the shipped compound anchors the (2-) state at 70 protons, the fresh one the neutral at 72). I have not traced that 1938.9 kJ/mol offset to a specific group energy and am not claiming a mechanism for it; it is stated as an observation, and it is a further reason to prefer the accession route over fresh creation. Finally, 'tabulated' here labels the STRUCTURE and the CONVENTION, which come verbatim from ChEBI and KEGG records; any formation energy that follows from either remedy is component-contribution COMPUTED and should be labeled computed downstream. | 2026-09-11 integration: the pKa set [13.43, 12.78, 5.85, 5.25, 3.19, 1.74] was moved out of microspecies_note prose into value.pkas so the compound bridge can create the compound; the numbers are unchanged and their source is the cache compound the note names."
 }

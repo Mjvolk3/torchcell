@@ -39,8 +39,8 @@ measurements: [[torchcell.metabolism.flux_layer]], section 2026.09.10.
 | file | what |
 |---|---|
 | `torchcell/metabolism/flux_layer.py` | `parameterization="projection"` / `"projection_k<N>"`, `projection_steps`, `projection_end`, `projection_method`, `latent_stochastic`, `latent_log_std_init`, `kl_weight`, `thermo_uncertainty`, `null_space_cache_path`; `feasibility()`, `sample()`, `reaction_sqrt_covariance()`, `parse_parameterization()`; pydantic `ParameterizationSpec`, `ReactionSqrtCovariance`, `FluxSample` |
-| `tests/torchcell/metabolism/test_flux_layer.py` | 16 wave-6 property tests; 48 pass, strict mypy clean |
-| `experiments/026-metabolism-flux/scripts/train_flux.py` | four new ARMS entries, no existing entry touched |
+| `tests/torchcell/metabolism/test_flux_layer.py` | 26 wave-6 property tests; 58 pass, strict mypy clean |
+| `experiments/026-metabolism-flux/scripts/train_flux.py` | seven new ARMS entries, no existing entry touched |
 | `experiments/027-betaxanthin-metabolic/conf/arm_flux_projection*.yaml` | four arm files |
 | `experiments/027-betaxanthin-metabolic/scripts/gh_wave6_proj_*.slurm` | the cells |
 | `experiments/027-betaxanthin-metabolic/scripts/analyze_projection.py` | the read: curves, endpoints, the trainer's feasibility block, and the sampler audit off the checkpoint |
@@ -281,24 +281,230 @@ tolerance to `criteria_flags` alongside the median one, and report the fraction 
 carrying flux next to every feasibility number. Whether training moves the flux off the
 origin is exactly what P5 to P8 measure; at initialization it has not.
 
-| cell | job | arm | scale | seed | deltaG route |
-|---|---|---|---|---|---|
-| P5 | 1723 | flux_projection_anchored_tdg | 0.1 | 2700 | union_external |
-| P6 | 1724 | flux_projection_anchored_tdg | 0.1 | 2701 | union_external |
-| P7 | 1725 | flux_projection_anchored_tdg | 0.0 | 2700 | union_external |
-| P8 | 1726 | flux_projection_anchored_tdg_stochastic | 0.1 | 2700 | union_external |
+| cell | job | arm | scale | seed | escape | sel epoch | test Sp | pooled | paired |
+|---|---|---|---|---|---|---|---|---|---|
+| P5 | 1723 | tdg | 0.1 | 2700 | none | 63 | 0.0719 | 0.0717 | +0.0002 |
+| P6 | 1724 | tdg | 0.1 | 2701 | none | 32 | -0.0647 | 0.1058 | -0.1705 |
+| P7 | 1725 | tdg | 0.0 | 2700 | 26, not sustained | 60 | -0.0006 | 0.0717 | -0.0723 |
+| P8 | 1726 | tdg stochastic | 0.1 | 2700 | none | 29 | 0.0380 | 0.0717 | -0.0337 |
 
-P7 is the cell that asks whether the physics needs any penalty weight at all once bounds,
-capacity and direction are structural; P8 asks the feasibility question of a distribution
-rather than of a point.
+All on `union_external` deltaG (3,770 reactions priced), K = 20, ending on the clip.
+
+Top-100 predicted strains:
+
+| criterion | P5 (scale 0.1) | P6 (scale 0.1) | P7 (**scale 0**) |
+|---|---|---|---|
+| `balance_median_ratio_le_1e-02` | 0.00 | 0.00 | **1.00** |
+| `box_violation_frac_eq_0` | 1.00 | 1.00 | **1.00** |
+| `thermo_model_violation_frac_eq_0` | 1.00 | 1.00 | **0.98** |
+| **`both_balance_le_1e-02_and_thermo_model_eq_0`** | 0.00 | 0.00 | **0.98** |
+
+**The Genesis metabolic-grounding target is met, by P7, at 0.98 against a target of 0.95.**
+98 of the top 100 predicted strains carry a flux that is within 1 percent of mass balance,
+inside every bound, and has no uphill active reaction. No arm before this reached above 0.00
+on the joint criterion.
+
+Four things have to be said with it.
+
+**It is met at constraint scale ZERO, and the penalty is what breaks it.** P5 and P6, the
+same arm at scale 0.1, hold box and second law at 1.00 and drop mass balance to 0.00 at every
+tolerance including 1e-1. Removing the penalty entirely restores balance to 1.00. Hypothesis
+(untested): the weighted constraint gradient moves the latent to a region where the tightened
+box and `ker S` no longer intersect within twenty alternations, so the clip that ends the
+loop leaves a large residual. What is measured is the scale-0-versus-scale-0.1 difference,
+not the mechanism.
+
+**The feasibility is against the model's OWN thermodynamics, not against standard state.**
+`thermo_standard_state_violation_frac_eq_0` is 0.00 in every one of these cells. The
+directional box is built from `delta_r_G` including the learned `RT sum S ln c` term, so the
+model licenses each direction by choosing concentrations, and the same flux evaluated at
+standard state runs uphill somewhere. The concentrations are squashed into the physiological
+window of 0.1 uM to 10 mM, so they are not arbitrary, but they are fitted, and the 0.98 is
+conditional on them being real. Comparing them against Mulleder's measured absolute
+intracellular amino acid concentrations is the check that would settle it, and it has not
+been run.
+
+**The head that achieves it does not predict.** P7 scores -0.0006 against pooled's 0.0717 at
+the same seed, which is chance. It reached the escape threshold at epoch 26 and did not
+sustain it. P5 is level with pooled (+0.0002) and P6 is far below it (-0.1705). So across the
+three deterministic tdg cells the phenotype signal is gone, and the initialization
+measurement says why is at least plausible: the directional box leaves only 14.7 percent of
+reactions carrying flux at a mean magnitude of 0.046, against 88.1 percent and 1.076 for the
+balance-end head, and the flux-scalar head reads that vector.
+
+### The sampler meets the criterion too, on 6,400 draws
+
+Job 1725 trained deterministically and was switched into a sampler after its weights were
+loaded, then asked for 64 draws for each of the 100 highest-predicted strains
+(`analyze_projection.py --draws 64 --draw-genotypes 100`, tolerances in the record):
+
+| quantity | value |
+|---|---|
+| `frac_draws_balanced` (ratio <= 1e-2) | 1.00 |
+| `frac_draws_downhill` (zero uphill reactions carrying flux) | 0.99 |
+| `frac_draws_feasible` (both) | **0.99** |
+| `frac_genotypes_all_draws_feasible` | **0.99** |
+| `box_violation_frac_mean` | **0.0** |
+| per-draw balance ratio median, p50 / p90 | 2.6e-8 / 5.8e-7 |
+| `uphill_frac_mean` | 9.6e-6 |
+
+99 of the 100 nominated strains have **every one** of their 64 draws feasible on all three
+constraints. That is a stronger statement than the point-estimate criterion: the amortized
+sampler's support is the feasible set, not a Gaussian near it. The deterministic head's box
+breakdown on the same cell reads `frac_reactions_violating` exactly 0.0, with 13.7 percent of
+reactions sitting in a box the directional tightening collapsed to a point.
+
+For contrast, the 026 stochastic head drew `z` per reaction and projected nothing, and its
+draws had a median balance ratio of 1.98 with 30 percent thermodynamic violations.
+
+### Why the feasible head carries no signal, and one retracted number
+
+From job 1725's checkpoint, the top-100 strains, against job 1689's (plain projection, same
+seed and scale):
+
+| quantity | 1689 plain projection | 1725 tdg |
+|---|---|---|
+| median absolute flux | 1.02 | **0.00** |
+| fraction of reactions with abs flux below 1e-6 | 0.119 | **0.706** |
+| fraction of boxes collapsed to a point | 0.050 | 0.135 |
+| betaxanthin-route reactions collapsed | 1 of 20 | **4 of 20** |
+| projection residual trace over 20 steps | falls to 1.3e-6 | falls to 2.4e-6, no oscillation |
+
+The residual trace falls smoothly rather than alternating between two levels, so the
+tightened box and `ker S` do intersect: the feasible set is reachable, not empty. It is
+simply concentrated near the origin. Seventy percent of the flux vector is zero, and a fifth
+of the reactions on the betaxanthin route are pinned, so the flux-scalar head is reading a
+mostly-zero vector whose nonzero part barely moves between genotypes.
+
+At initialization on yeast-GEM, untrained, eight samples, with the real gene universe:
+
+| head | frac abs flux < 1e-6 | mean abs flux | balance | box | second law | boxes pinned |
+|---|---|---|---|---|---|---|
+| `projection` (balance end) | 0.119 | 1.159 | 5.4e-9 | 0.527 | 0.508 | 0.002 |
+| `projection_k20_box` | 0.441 | 0.355 | 2.7e-1 | 0.000 | 0.332 | 0.002 |
+| `projection_k20_box_tdg` | 0.680 | 0.067 | 2.6e-1 | 0.000 | 0.000 | 0.171 |
+| `projection_k20_box_tdgm5` | 0.609 | 0.184 | 5.8e-1 | 0.000 | 0.123 | 0.148 |
+
+Ending on the clip with NO thermodynamics already takes the flux from 12 percent zeros to 44
+percent, so **respecting the bounds costs most of the density on its own**, and the sign
+tightening adds the rest. A 5 kJ/mol margin recovers density but reintroduces a 0.123
+second-law violation fraction, so it trades exactness for density rather than buying both;
+it is implemented and tested as `tdgm5` and was not given a cell.
+
+**Retraction.** An earlier version of this measurement reported that 65.7 percent of boxes
+were already collapsed before any tightening, and concluded the sign restriction was
+irrelevant. That was an artifact of the harness: it built the layer over a synthetic
+64-gene universe, so `gem_to_model` was -1 for every GEM gene, `gamma` was zero everywhere,
+and every one of the 65.6 percent of reactions carrying a GPR had availability zero. With
+the real gene ids the figure is 0.2 percent before and 17.1 percent after, which says the
+opposite: the sign restriction is what collapses the boxes. The two boxend cells were
+submitted with the wrong rationale in a frozen comment; the arm and the contrast they test
+are unaffected, and the worktree copies are corrected.
+
+**So the two halves have not been achieved together.** The projection can make any two of
+{mass balance, bounds, second law} exact, and wave 6 has now measured both corners: ending on
+the balance projection gives balance 1.00 with box 0.00 and thermo 0.00 and a working
+predictor (P1 to P4), and ending on the thermodynamic box gives box 1.00, thermo 0.98,
+balance 1.00 at scale 0 and a predictor at chance (P7). The remaining question is whether the
+prediction loss is caused by the sparsity the directional box induces or by something else,
+and the cheapest next test is a `tdg` cell with the thermodynamic epsilon widened, which
+leaves more reactions unconstrained near equilibrium and should recover flux density without
+giving up the exactness.
 
 ### Figure
 
-![](./assets/images/027-betaxanthin-metabolic/wave6_projection_2026-09-11-03-13-11.svg)
+![](./assets/images/027-betaxanthin-metabolic/wave6_projection_2026-09-11-10-00-14.svg)
 
-Generated by `experiments/027-betaxanthin-metabolic/scripts/analyze_projection.py`. Panel a,
-validation prediction spread against the target's, per epoch, with the escape threshold of
-0.05 dashed. Panel b, test Spearman on the 629 pinned genes at the validation-selected
-epoch, beside the pooled control at the same seed; the tick label carries each cell's
-kinetic-table composition, since two bars whose capacity tables differ are not a controlled
-comparison.
+Generated by `experiments/027-betaxanthin-metabolic/scripts/analyze_projection.py`. Colored
+by which constraint the projection loop makes EXACT, since that is what separates the cells;
+twelve distinct colors would encode nothing. **a**, Validation prediction spread against the
+target's, per epoch, one line per cell, with the 0.05 escape threshold dashed. Every purple
+line, the six cells whose box carries the directional second law, stays on or below the
+threshold for all 80 epochs; every orange and red line, the six without it, rises and holds.
+**b**, Test Spearman on the 629 pinned genes at the validation-selected epoch, per cell,
+beside the hatched pooled control at the same seed. Per-cell kinetic-table composition is in
+`results/wave6_projection_summary.json` under `kcat_table_label`, since the tables were
+revised between submissions and two cells whose capacity tables differ are not a fully
+controlled comparison.
+
+## 2026.09.11 - Wave 6 complete: twelve cells, and what separates them
+
+Full table from `results/wave6_projection_summary.json`. Test Spearman on the 629 pinned
+genes at the validation-selected epoch; `paired` is against the pooled control at the same
+seed (0.0717 at 2700, job 1674; 0.1058 at 2701, job 1680; no pooled control was run at 2702).
+"sust" is whether the escape held to the last three epochs.
+
+| cell | job | arm | scale | seed | escape | sust | sel | test Sp | paired |
+|---|---|---|---|---|---|---|---|---|---|
+| P1 | 1689 | projection (balance end) | 0.0 | 2700 | 17 | yes | 35 | 0.1170 | +0.0453 |
+| P2 | 1690 | projection (balance end) | 0.0 | 2701 | 18 | yes | 74 | 0.1413 | +0.0355 |
+| P3 | 1708 | everything on (balance end) | 0.1 | 2700 | 29 | yes | 72 | 0.1154 | +0.0437 |
+| P4 | 1709 | everything on (balance end) | 0.1 | 2701 | 27 | yes | 74 | 0.0199 | -0.0859 |
+| P5 | 1723 | tdg | 0.1 | 2700 | none | no | 63 | 0.0719 | +0.0002 |
+| P6 | 1724 | tdg | 0.1 | 2701 | none | no | 32 | -0.0647 | -0.1705 |
+| P7 | 1725 | tdg | 0.0 | 2700 | 26 | no | 60 | -0.0006 | -0.0723 |
+| P8 | 1726 | tdg stochastic | 0.1 | 2700 | none | no | 29 | 0.0380 | -0.0337 |
+| P9 | 1730 | tdg | 0.0 | 2701 | 17 | no | 24 | 0.0023 | -0.1035 |
+| P10 | 1731 | tdg | 0.0 | 2702 | 72 | no | 31 | -0.0625 | n/a |
+| P11 | 1734 | box end, no tdg | 0.0 | 2700 | 22 | yes | 71 | 0.1003 | +0.0286 |
+| P12 | 1735 | box end, no tdg | 0.0 | 2701 | 13 | yes | 46 | -0.0239 | -0.1297 |
+
+### What is established
+
+**The directional sign tightening, not the box end, is what stops the head escaping the
+mean plateau. Six of six versus zero of six.** Every projection cell without the sign
+tightening sustained its escape (P1, P2, P3, P4 at the balance end; P11, P12 at the box end),
+and not one of the six `tdg` cells did, across three seeds and both constraint scales. P7,
+P9 and P10 reached the threshold and fell back; P5, P6 and P8 never reached it. The box end
+alone is therefore not the blocker: P11 and P12 respect every bound exactly and still escape
+and hold.
+
+**The `tdg` arm carries no phenotype signal, and that is the head rather than a seed.** At
+constraint scale 0 it scores -0.0006, +0.0023 and -0.0625 at seeds 2700, 2701 and 2702. That
+was the question the P9 and P10 cells were run to answer, and the answer is the head.
+
+### What is NOT established, and one headline that needs qualifying
+
+**The Genesis criterion was met once, in one cell of twelve, and did not reproduce.** P7 met
+it at 0.98 (balance within 1 percent, in-bounds, no uphill reaction, on 98 of the top 100
+strains), and its 64-draw sampler audit put 99 of 100 strains at every draw feasible. The
+same arm at the same scale scored `both` = 0.00 at seeds 2701 and 2702, where the balance
+criterion collapsed to 0.00 at the 1e-2 tolerance. So the 0.98 is a single observation of a
+configuration that fails the same criterion at two other seeds, and the honest summary is
+that the criterion is **reachable, not yet reliable**.
+
+**No arm's endpoint beats pooled across its seeds.** The balance-end projection arm is the
+best of them at +0.045 and +0.036, both about one noise width (the 019 replicate study puts
+the between-seed spread near 0.04). Every other arm has at least one seed well below pooled,
+and three arms have two seeds straddling zero by more than 0.13. With two seeds per arm
+nothing here is a demonstrated prediction gain.
+
+### The trade, stated plainly
+
+The three constraints cannot currently be had at once with a usable predictor:
+
+| what is exact | cells | escapes and holds | Genesis `both` |
+|---|---|---|---|
+| mass balance | P1 to P4 | 4 of 4 | 0.00 (box and thermo both fail) |
+| bounds and capacity | P11, P12 | 2 of 2 | 0.00 (thermo fails) |
+| bounds, capacity and second law | P5 to P10 | 0 of 6 | 0.98 once, 0.00 in five |
+
+Reading across the rows: each step to the right buys a constraint and costs the escape. The
+last step buys the whole criterion and costs the predictor.
+
+### What to try next
+
+The margin is implemented and tested (`tdgm5`, `thermo_box_margin_kj`) and was not run: at
+initialization it recovers the mean absolute flux from 0.067 to 0.184 and costs a second-law
+violation fraction of 0.123, so on its own it trades exactness for density. Two cheaper
+things to try first, both hypotheses:
+
+- **Anneal the sign tightening.** Every `tdg` cell had the directional box on from epoch 0,
+  and the plateau is an epoch-0 to epoch-30 phenomenon. Turning the tightening on after the
+  head has escaped is the same experiment `constraint_delay_epochs` ran for the penalties,
+  and it is a config field away.
+- **Check the learned concentrations against Mulleder.** Every `tdg` cell's feasibility is
+  against the model's own delta_r_G, and `thermo_standard_state_violation_frac_eq_0` is 0.00
+  in all of them, so the sign pattern the box enforces depends on concentrations that have
+  never been compared to the 19 measured absolute intracellular amino acid concentrations
+  the dataset already contains.

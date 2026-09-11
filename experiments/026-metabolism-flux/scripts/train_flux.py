@@ -281,6 +281,39 @@ ARMS: dict[str, dict[str, Any]] = {
     # because that field is the only one build_flux_layer forwards; everything else matches
     # `flux_projection_anchored`, so the pair is a clean read on whether the residual the
     # projection leaves is large enough to matter to the phenotype.
+    # THE BOX END WITHOUT THE SIGN TIGHTENING (2026-09-11). The control that separates two
+    # explanations of why the tdg head lost the phenotype signal. Measured at initialization
+    # on yeast-GEM with the REAL gene universe, untrained: ending on the clip with NO
+    # thermodynamics in the box takes the flux from 11.9 percent zeros to 44.1 percent and
+    # the balance ratio from 5.4e-9 to 0.27; the sign tightening then takes it to 68.0
+    # percent and collapses 17.1 percent of boxes to a point, against 0.2 percent before it.
+    # So respecting the bounds already costs most of the density on its own, and this arm is
+    # what says whether that alone accounts for the lost signal.
+    "flux_projection_anchored_k20_boxend": {
+        "flux": True,
+        "parameterization": "projection_k20_box",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
+    # THE MARGIN. The directional box at its default margin pins 68.0 percent of reactions
+    # below 1e-6 at initialization and 70.6 percent on the trained top-100 strains of job
+    # 1725, whose head scores at chance. `tdgm5` constrains only reactions at least 5 kJ/mol
+    # from equilibrium: at initialization that recovers the mean absolute flux from 0.067 to
+    # 0.184 and costs a second-law violation fraction of 0.123, so it trades exactness for
+    # density rather than buying both. Implemented and tested, NOT run: the box-end control
+    # above is the cheaper discriminator and took the cells.
+    "flux_projection_anchored_tdgm5": {
+        "flux": True,
+        "parameterization": "projection_k20_box_tdgm5",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
     "flux_projection_anchored_k20": {
         "flux": True,
         "parameterization": "projection_k20",

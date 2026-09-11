@@ -86,6 +86,40 @@ readout rather than on the trunk alone. On the pooled arm it is `MetabolomeVecto
 which is what carried the measured +7.03 output offset, and `FluxMetaboliteHead` has no such
 term.
 
+### The amino-acid head fix, measured
+
+`--head-normalize` means something different on each head, and the difference is worth
+stating because the flag name is the same. On `FluxScalarHead` it divides the dense `w^T v`
+input by the layer's working flux magnitude. `FluxMetaboliteHead` has no dense term and no
+such switch, so `train_bx.py` divides its INITIAL slope by `log1p(flux_scale)` instead,
+which is the identical forward pass at initialization and leaves the slope free to learn.
+
+Measured on this dataset (seed 9001, two epochs, same recipe), epoch-0 data loss against a
+target standardized to mean 0 and sd 1:
+
+| head | epoch-0 data loss |
+|---|---|
+| pooled `MetabolomeVectorHead` | 0.4872 |
+| `FluxMetaboliteHead`, no fix | 2.4478 |
+| `FluxMetaboliteHead`, fix | 0.6028 |
+
+### What the audit round trip actually verified
+
+`audit_top_strain_feasibility.py` rebuilt `wave5_g7_flux_capacity_nocstr_s2705` (job 1713,
+80 epochs) from its cell record and its saved weights and recomputed the whole feasibility
+block: **maximum absolute difference from the trainer's own numbers 0.000e+00**
+(`results/audit_wave5_g7_flux_capacity_nocstr_s2705.json`). The checkpoint is 4.1 MB, which
+is what excluding buffers buys; a full `state_dict` would have carried the constant
+stoichiometric matrix.
+
+`--stochastic` refuses on this arm, and the refusal is the correct behavior rather than a
+gap. On the `box` parameterization the flux MLP is built with `z_out = 2 if cfg.stochastic
+else 1`, so a deterministically trained cell has no spread channel and setting
+`config.stochastic` afterwards would index a dimension of size 1. The script checks the
+width and exits with a message naming the `projection` parameterization, which builds the
+spread head unconditionally and is the arm the draw audit is for. Nothing is faked: a spread
+that was never supervised is not a posterior.
+
 ### Two shape traps fixed on the way
 
 - The CRPS branch of `loss_fn` squeezed the target's feature axis and restored it after,

@@ -81,6 +81,11 @@ class DrawAudit(BaseModel):
     draws: int
     n_genotypes: int
     arm_was_trained_stochastic: bool
+    #: How the audited genotypes were chosen. The Genesis question is about the strains the
+    #: model NOMINATES, which only exists for the betaxanthin head; an amino-acid cell has
+    #: no production ranking, so it is audited on a fixed prefix of the dataset instead and
+    #: the difference is recorded rather than left for the reader to infer.
+    genotype_selection: str
     note: str
     fraction_of_draws: dict[str, float] = Field(default_factory=dict)
     fraction_of_genotypes_all_draws_feasible: dict[str, float] = Field(
@@ -234,11 +239,27 @@ def main() -> None:
         layer = model.flux_layer
         was_stochastic = bool(layer.config.stochastic)
         _enable_sampler(model)
-        order_mask = _top_k_mask(
-            per_all["prediction"],
-            np.ones(per_all["prediction"].size, dtype=bool),
-            args.draw_genotypes,
-        )
+        n_total = per_all["balance_median_ratio"].size
+        if "prediction" in per_all:
+            order_mask = _top_k_mask(
+                per_all["prediction"],
+                np.ones(n_total, dtype=bool),
+                args.draw_genotypes,
+            )
+            selection = (
+                f"the {args.draw_genotypes} genotypes with the highest predicted "
+                "betaxanthin, which is the Genesis question"
+            )
+        else:
+            # No production ranking exists on the amino-acid head, so there is no "top"
+            # to audit. A fixed prefix in dataset order is arbitrary but reproducible, and
+            # saying which it is beats inventing a ranking out of a 19-column prediction.
+            order_mask = np.zeros(n_total, dtype=bool)
+            order_mask[: args.draw_genotypes] = True
+            selection = (
+                f"the first {args.draw_genotypes} genotypes in dataset order; this cell "
+                "trained the amino-acid head, which defines no production ranking"
+            )
         wanted = set(np.flatnonzero(order_mask).tolist())
         cell_graph = dataset.cell_graph.to(device)
         # Per genotype, one list of per-draw feasibility rows.
@@ -278,6 +299,7 @@ def main() -> None:
             draws=args.draws,
             n_genotypes=n_geno,
             arm_was_trained_stochastic=was_stochastic,
+            genotype_selection=selection,
             note=(
                 "fraction_of_draws counts every (genotype, draw) pair; "
                 "fraction_of_genotypes_all_draws_feasible counts a genotype only when "

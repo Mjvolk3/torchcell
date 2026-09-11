@@ -793,6 +793,44 @@ def test_an_emptied_directional_box_is_counted_rather_than_hidden():
     assert 0.0 <= float(out["feas_thermo_box_emptied_frac"]) <= 1.0
 
 
+def test_the_thermo_box_margin_leaves_near_equilibrium_reactions_free():
+    r"""A margin constrains fewer reactions, and the ones it drops are the undecided ones.
+
+    Measured motivation (job 1725): with the margin at its default, which falls back to the
+    1e-3 kJ/mol numerical epsilon, 70.6 percent of reactions on the top-100 strains are
+    pinned below 1e-6 against 11.9 percent for the untightened head, and that head scores at
+    chance on the phenotype. A reaction half a kJ/mol from equilibrium has a sign the
+    tabulated energy cannot resolve, so pinning it spends a degree of freedom and buys no
+    thermodynamics.
+    """
+    # SAME SEED for both, so the only difference between the two boxes is the margin. The
+    # availability and capacity chain is randomly initialized, and comparing two
+    # independently initialized layers compares those instead.
+    torch.manual_seed(31)
+    layer = _layer(
+        parameterization="projection_k20_box_tdg", thermo_mode=ThermoMode.ANCHORED
+    )
+    torch.manual_seed(31)
+    wide = _layer(
+        parameterization="projection_k20_box_tdgm50", thermo_mode=ThermoMode.ANCHORED
+    )
+    assert layer.thermo_box_margin_kj == 0.0
+    assert wide.thermo_box_margin_kj == 50.0
+
+    inputs = _inputs()
+    tight_out, wide_out = layer(*inputs), wide(*inputs)
+    lb_t, ub_t = tight_out["lb"], tight_out["ub"]
+    lb_w, ub_w = wide_out["lb"], wide_out["ub"]
+    # A wider margin can only RELAX the box, never tighten it.
+    assert torch.all(ub_w >= ub_t - 1e-6)
+    assert torch.all(lb_w <= lb_t + 1e-6)
+    # And it leaves at least as much room, counted as reactions pinned to a single point.
+    pinned_tight = ((ub_t - lb_t) <= 1e-12).float().mean()
+    pinned_wide = ((ub_w - lb_w) <= 1e-12).float().mean()
+    assert float(pinned_wide) <= float(pinned_tight)
+    assert wide.coverage_report()["thermo_box_margin_kj"] == 50.0
+
+
 def test_the_thermo_box_refuses_a_head_that_does_not_end_on_the_clip():
     """Only the clip enforces the directional bound, so the balance end must be refused."""
     with pytest.raises(ValueError, match="thermo_box"):

@@ -174,12 +174,23 @@ class FeasibilityRow(BaseModel):
         return source.get(stat, float("nan"))
 
     def short_label(self) -> str:
-        """Arm, phenotype and seed in the few characters an axis tick can hold."""
-        arm = {"pooled": "pool"}.get(
-            self.arm, "proj" if "projection" in self.arm else "flux"
-        )
+        """Phenotype, recipe and seed in the few characters an axis tick can hold.
+
+        Derived from the RESULT STEM, not from arm and seed: the amino-acid `nocstr` and
+        `allon` cells are both `flux_capacity` at seed 2700 and differ only in constraint
+        scale, so an arm-and-seed label prints the same string twice for two different runs.
+        """
+        stem = self.cell.removesuffix(".json")
         phen = "bx" if self.head == "betaxanthin" else "aa"
-        return f"{arm} {phen} s{self.seed}"
+        if "allon" in stem:
+            recipe = "allon"
+        elif "proj" in stem:
+            recipe = "proj"
+        elif self.arm == "pooled":
+            recipe = "pool"
+        else:
+            recipe = "box"
+        return f"{phen} {recipe} s{self.seed}"
 
 
 class Wave6Summary(BaseModel):
@@ -492,7 +503,9 @@ def _panel_paired(ax: Any, contrast: PairedContrast, ylabel: str) -> None:
             label=f"seed {seed}",
         )
     ax.set_xticks(xs)
-    ax.set_xticklabels(["flux, no constraint", "pooled"])
+    # The same wording as the three-arm panel: this arm is the box parameterization too,
+    # and once the projection arm exists "box" is what distinguishes it, not "no constraint".
+    ax.set_xticklabels([ARM_LABELS["nocstr"], ARM_LABELS["pooled"]])
     ax.set_xlim(-0.35, 1.35)
     ax.set_ylabel(ylabel)
     if contrast.seeds:
@@ -503,6 +516,50 @@ def _panel_paired(ax: Any, contrast: PairedContrast, ylabel: str) -> None:
         ax.yaxis.set_minor_locator(MultipleLocator(max((hi - lo) / 10.0, 1e-6)))
         ax.tick_params(which="minor", length=0)
         ax.grid(True, which="both", axis="y", linewidth=0.3, alpha=0.4)
+    ax.set_axisbelow(True)
+
+
+#: The three component criteria of the Genesis test, in the order they are plotted.
+CRITERIA = (
+    ("balance_median_ratio_le_1e-02", "mass balance within 1%"),
+    ("box_violation_frac_eq_0", "inside the flux box"),
+    ("thermo_standard_state_violation_frac_eq_0", "no uphill reaction"),
+)
+
+
+def _panel_criteria(ax: Any, rows: list[FeasibilityRow]) -> None:
+    """Fraction of genotypes meeting each component criterion, one group per flux cell.
+
+    All three are shown together because passing one is not passing the test: the box
+    parameterization satisfies the box and nothing else, the projection satisfies mass
+    balance and not the box, and neither satisfies the second law. A panel showing only
+    mass balance would read as the projection arm being feasible.
+    """
+    usable = [r for r in rows if r.available and r.population_fractions]
+    if not usable:
+        ax.set_xticks([])
+        ax.set_ylabel("fraction of genotypes")
+        return
+    idx = np.arange(len(usable), dtype=float)
+    width = 0.27
+    for i, (key, label) in enumerate(CRITERIA):
+        ax.bar(
+            idx + (i - 1) * width,
+            [r.population_fractions.get(key, np.nan) for r in usable],
+            width,
+            color=PLOT_PALETTE[i],
+            edgecolor="black",
+            linewidth=0.4,
+            label=label,
+        )
+    ax.set_xticks(idx)
+    ax.set_xticklabels([r.short_label() for r in usable], rotation=90)
+    ax.set_ylim(0, 1.05)
+    ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(which="minor", length=0)
+    ax.set_ylabel("fraction of genotypes")
+    ax.grid(True, which="both", axis="y", linewidth=0.3, alpha=0.4)
     ax.set_axisbelow(True)
 
 
@@ -566,6 +623,7 @@ def make_figure(
     rows: list[FeasibilityRow],
     stamp: str,
     aa_arms: tuple[list[str], list[int], dict[str, list[float]]] | None = None,
+    bx_all: PairedContrast | None = None,
 ) -> str:
     apply_paper_style()
     width_mm = PANEL_WIDTHS_MM["full"]
@@ -573,7 +631,10 @@ def make_figure(
         2, 2, figsize=(mm_to_in(width_mm), mm_to_in(130.0)), constrained_layout=True
     )
     axes = grid.ravel()
-    _panel_paired(axes[0], bx, "pinned test Spearman")
+    # ALL seeds, not just the modal parameter-table group. Panel a is the data; which seed
+    # belongs to which kcat table is in the note's table, because a marker for it would be
+    # something other than data inside the axes.
+    _panel_paired(axes[0], bx_all or bx, "pinned test Spearman")
     if aa_arms is not None and aa_arms[1]:
         live, seeds, vals = aa_arms
         order = [a for a in ("nocstr", "proj", "pooled") if a in live]
@@ -582,16 +643,11 @@ def make_figure(
         )
     else:
         _panel_paired(axes[1], aa, "mean per-feature Spearman")
-    # The theoretical ceiling of the balance ratio is 2: |sum_j S_ij v_j| can at most equal
-    # sum_j |S_ij v_j|, and omega is half of that. A bar at 2 is a flux vector in which
-    # nothing a metabolite produces is consumed.
-    _panel_violation(
-        axes[2],
-        rows,
-        "balance_median_ratio",
-        "median balance residual ratio",
-        2.0,
-    )
+    # Whether each constraint is MET, all three together, because passing one is not
+    # passing the test.
+    _panel_criteria(axes[2], rows)
+    # And how badly the second law is missed, since it is missed by every cell and a
+    # fraction of zero says nothing about the size of the miss.
     _panel_violation(
         axes[3],
         rows,
@@ -608,10 +664,10 @@ def make_figure(
             loc="lower left", bbox_to_anchor=(0, 1.02), ncol=3, frameon=True,
             fontsize=5.0, handlelength=1.2, borderpad=0.3,
         )
-    for ax in (axes[2], axes[3]):
+    for ax, ncol in ((axes[2], 3), (axes[3], 2)):
         if ax.get_legend_handles_labels()[0]:
             ax.legend(
-                loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, frameon=True,
+                loc="lower left", bbox_to_anchor=(0, 1.02), ncol=ncol, frameon=True,
                 fontsize=5.0, handlelength=1.2, borderpad=0.3,
             )
     for ax, letter in zip(axes, "abcd", strict=True):
@@ -685,7 +741,9 @@ def main() -> None:
         for stem, r in sorted(loaded.items())
     }
 
-    figure = make_figure(bx, aa, rows, stamp, _arm_series(loaded, AA_ARMS, AA_SEEDS))
+    figure = make_figure(
+        bx, aa, rows, stamp, _arm_series(loaded, AA_ARMS, AA_SEEDS), bx_all=bx_het
+    )
     summary = Wave6Summary(
         generated_at=stamp,
         betaxanthin_parity=bx,

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-11-05-56-37",
+  "generated_at": "2026-09-11-08-55-11",
   "betaxanthin_parity": {
     "metric": "pinned test Spearman (betaxanthin)",
     "arm_a": "nocstr",
@@ -74,9 +74,7 @@
     "a_sd": 0.013675048834894588,
     "b_mean": 0.05143061236319698,
     "b_sd": 0.017603543901117038,
-    "missing": [
-      "wave6_aa_allon_s2700.json"
-    ],
+    "missing": [],
     "excluded_physics_mismatch": {},
     "physics_key_used": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
   },
@@ -310,53 +308,85 @@
     "metric": "mean per-feature test Spearman (mulleder19), projection vs pooled",
     "arm_a": "proj",
     "arm_b": "pooled",
-    "seeds": [],
-    "a_values": [],
-    "b_values": [],
-    "differences": [],
-    "n_pairs": 0,
-    "mean_difference": null,
-    "sd_difference": null,
-    "t_statistic": null,
-    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=0 seeds, df=0. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
-    "a_mean": null,
-    "a_sd": null,
-    "b_mean": null,
-    "b_sd": null,
-    "missing": [
-      "wave6_aa_proj_s2700.json",
-      "wave6_aa_proj_s2701.json",
-      "wave6_aa_proj_s2702.json"
+    "seeds": [
+      2700,
+      2701,
+      2702
     ],
+    "a_values": [
+      -0.012213024654427822,
+      0.01745623168841727,
+      0.03132966158139944
+    ],
+    "b_values": [
+      0.06627851808298879,
+      0.0319842001176061,
+      0.05602911888899604
+    ],
+    "differences": [
+      -0.07849154273741661,
+      -0.014527968429188833,
+      -0.024699457307596602
+    ],
+    "n_pairs": 3,
+    "mean_difference": -0.03923965615806735,
+    "sd_difference": 0.03437146704069332,
+    "t_statistic": -1.9773691375128069,
+    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=3 seeds, df=2. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+    "a_mean": 0.01219095620512963,
+    "a_sd": 0.022243734524447722,
+    "b_mean": 0.05143061236319698,
+    "b_sd": 0.017603543901117038,
+    "missing": [],
     "excluded_physics_mismatch": {},
-    "physics_key_used": null
+    "physics_key_used": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
   },
   "amino_acid_proj_vs_nocstr": {
     "metric": "mean per-feature test Spearman (mulleder19), projection vs box flux",
     "arm_a": "proj",
     "arm_b": "nocstr",
-    "seeds": [],
-    "a_values": [],
-    "b_values": [],
-    "differences": [],
-    "n_pairs": 0,
-    "mean_difference": null,
-    "sd_difference": null,
-    "t_statistic": null,
-    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=0 seeds, df=0. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
-    "a_mean": null,
-    "a_sd": null,
-    "b_mean": null,
-    "b_sd": null,
-    "missing": [
-      "wave6_aa_proj_s2700.json",
-      "wave6_aa_proj_s2701.json",
-      "wave6_aa_proj_s2702.json"
+    "seeds": [
+      2700,
+      2701,
+      2702
     ],
+    "a_values": [
+      -0.012213024654427822,
+      0.01745623168841727,
+      0.03132966158139944
+    ],
+    "b_values": [
+      0.027538496464909107,
+      0.0005213249242075233,
+      0.010345455054238594
+    ],
+    "differences": [
+      -0.03975152111933693,
+      0.016934906764209747,
+      0.02098420652716084
+    ],
+    "n_pairs": 3,
+    "mean_difference": -0.000610802609322113,
+    "sd_difference": 0.03395726860707029,
+    "t_statistic": -0.031155072128541808,
+    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=3 seeds, df=2. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+    "a_mean": 0.01219095620512963,
+    "a_sd": 0.022243734524447722,
+    "b_mean": 0.01280175881445174,
+    "b_sd": 0.013675048834894588,
+    "missing": [],
     "excluded_physics_mismatch": {},
-    "physics_key_used": null
+    "physics_key_used": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
   },
-  "amino_acid_extra": {},
+  "amino_acid_extra": {
+    "allon_s2700": {
+      "cell": "wave6_aa_allon_s2700.json",
+      "select_epoch": 8,
+      "mean_spearman_pinned": 0.010440652404410156,
+      "mean_pearson_pinned": 0.013431065973188532,
+      "mean_spearman_all_test": 0.007097569652352725
+    }
+  },
   "feasibility": [
     {
       "cell": "wave5_g7_flux_capacity_nocstr_s2700.json",
@@ -623,6 +653,35 @@
       "population_medians": {}
     },
     {
+      "cell": "wave6_aa_allon_s2700.json",
+      "arm": "flux_capacity",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 8,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 1.9875469207763672,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.2521638572216034,
+        "thermo_standard_state_uphill_frac": 0.5088192224502563
+      }
+    },
+    {
       "cell": "wave6_aa_nocstr_s2700.json",
       "arm": "flux_capacity",
       "seed": 2700,
@@ -753,6 +812,93 @@
       "population_fractions": {},
       "top_medians": {},
       "population_medians": {}
+    },
+    {
+      "cell": "wave6_aa_proj_s2700.json",
+      "arm": "flux_projection",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 26,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 1.0,
+        "balance_median_ratio_le_1e-02": 1.0,
+        "balance_median_ratio_le_1e-03": 1.0,
+        "box_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 1.0146299356250665e-9,
+        "balance_max_ratio": 0.001339872949756682,
+        "box_violation_frac": 0.5935608744621277,
+        "thermo_standard_state_violation_frac": 0.3964223861694336,
+        "thermo_standard_state_uphill_frac": 0.585133969783783
+      }
+    },
+    {
+      "cell": "wave6_aa_proj_s2701.json",
+      "arm": "flux_projection",
+      "seed": 2701,
+      "head": "mulleder19",
+      "select_epoch": 76,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 1.0,
+        "balance_median_ratio_le_1e-02": 1.0,
+        "balance_median_ratio_le_1e-03": 1.0,
+        "box_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 3.1950564416405314e-9,
+        "balance_max_ratio": 0.00002559645326982718,
+        "box_violation_frac": 0.3522149622440338,
+        "thermo_standard_state_violation_frac": 0.4425850808620453,
+        "thermo_standard_state_uphill_frac": 0.6201134920120239
+      }
+    },
+    {
+      "cell": "wave6_aa_proj_s2702.json",
+      "arm": "flux_projection",
+      "seed": 2702,
+      "head": "mulleder19",
+      "select_epoch": 77,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 1.0,
+        "balance_median_ratio_le_1e-02": 1.0,
+        "balance_median_ratio_le_1e-03": 1.0,
+        "box_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 4.709830747628985e-9,
+        "balance_max_ratio": 0.00010048097465187311,
+        "box_violation_frac": 0.34664732217788696,
+        "thermo_standard_state_violation_frac": 0.4382573366165161,
+        "thermo_standard_state_uphill_frac": 0.6167299151420593
+      }
     }
   ],
   "per_cell": {
@@ -990,6 +1136,28 @@
       "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave5_g8_pooled_s2705.pt",
       "physics_key": null
     },
+    "wave6_aa_allon_s2700.json": {
+      "arm": "flux_capacity",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 8,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.026560141606942603,
+      "score": 0.010440652404410156,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.0001370647693527653,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/hbnp7cgy",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002204-gh_wave6_aa_allon_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_allon_s2700.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
     "wave6_aa_nocstr_s2700.json": {
       "arm": "flux_capacity",
       "seed": 2700,
@@ -1121,10 +1289,74 @@
       },
       "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_pooled_s2702.pt",
       "physics_key": null
+    },
+    "wave6_aa_proj_s2700.json": {
+      "arm": "flux_projection",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 26,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.021088093329270027,
+      "score": -0.012213024654427822,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.0005703894486558918,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/0sa5sis4",
+      "code_provenance": {
+        "train_bx.py": "c9862598f51712fb04ca16628ffa230764448c118b7427d1c949242a8ef7578e",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-054810-gh_wave6_aa_proj_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_proj_s2700.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave6_aa_proj_s2701.json": {
+      "arm": "flux_projection",
+      "seed": 2701,
+      "head": "mulleder19",
+      "select_epoch": 76,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.07887177938889516,
+      "score": 0.01745623168841727,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.1169007420539856,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/7vhb6aki",
+      "code_provenance": {
+        "train_bx.py": "c9862598f51712fb04ca16628ffa230764448c118b7427d1c949242a8ef7578e",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-054817-gh_wave6_aa_proj_s2701/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_proj_s2701.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave6_aa_proj_s2702.json": {
+      "arm": "flux_projection",
+      "seed": 2702,
+      "head": "mulleder19",
+      "select_epoch": 77,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.0407741842485082,
+      "score": 0.03132966158139944,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.12287804739255655,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/qzotcqen",
+      "code_provenance": {
+        "train_bx.py": "c9862598f51712fb04ca16628ffa230764448c118b7427d1c949242a8ef7578e",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-054826-gh_wave6_aa_proj_s2702/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_proj_s2702.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
     }
   },
-  "missing_files": [
-    "wave6_aa_allon_s2700.json"
-  ],
-  "figure_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave6_parity_and_feasibility_2026-09-11-05-56-37.svg"
+  "missing_files": [],
+  "figure_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave6_parity_and_feasibility_2026-09-11-08-55-11.svg"
 }

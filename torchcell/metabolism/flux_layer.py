@@ -359,6 +359,20 @@ class FluxLayerConfig(BaseModel):
             "parameterization string."
         ),
     )
+    thermo_box_margin_kj: float = Field(
+        default=0.0,
+        description=(
+            "Only reactions whose |delta_r_G| exceeds this margin, in kJ/mol, get a "
+            "directional bound; the rest keep both directions. 0.0 falls back to "
+            "`thermo_epsilon` (1e-3 kJ/mol), which constrains essentially every priced "
+            "reaction and is what the first tdg cells ran. MEASURED motivation (job 1725): "
+            "at that setting 70.6 percent of reactions are pinned below 1e-6 against 11.9 "
+            "percent for the untightened head, and the resulting head scores at chance. A "
+            "reaction half a kJ/mol from equilibrium has a sign the table cannot resolve, "
+            "so pinning it spends a degree of freedom on no thermodynamic content. "
+            "Reachable from an arm as the 'tdgm<margin>' token."
+        ),
+    )
     thermo_uncertainty: str = Field(
         default="isotropic",
         description=(
@@ -544,7 +558,7 @@ class FluxLayerConfig(BaseModel):
 #: ``build_flux_layer`` forwards ``parameterization`` and no other new config field, so the
 #: string is the only channel an ARMS entry has for any of the three.
 _PROJECTION_PATTERN = re.compile(
-    r"^projection(?:_k(\d+))?(?:_(balance|box))?(?:_(tdg))?(?:_(dykstra))?$"
+    r"^projection(?:_k(\d+))?(?:_(balance|box))?(?:_(tdg)(?:m(\d+))?)?(?:_(dykstra))?$"
 )
 
 
@@ -564,6 +578,7 @@ class ParameterizationSpec(BaseModel):
     projection_end: str | None = None
     projection_method: str | None = None
     thermo_box: bool = False
+    thermo_box_margin_kj: float | None = None
     raw: str
 
 
@@ -592,8 +607,11 @@ def parse_parameterization(raw: str, default_steps: int) -> ParameterizationSpec
         kind="projection",
         projection_steps=steps,
         projection_end=match.group(2),
-        projection_method=match.group(4),
+        projection_method=match.group(5),
         thermo_box=match.group(3) is not None,
+        thermo_box_margin_kj=(
+            None if match.group(4) is None else float(match.group(4))
+        ),
         raw=raw,
     )
 
@@ -1039,6 +1057,11 @@ class FluxLayer(nn.Module):
         self.projection_end = spec.projection_end or cfg.projection_end
         self.projection_method = spec.projection_method or cfg.projection_method
         self.thermo_box = bool(spec.thermo_box or cfg.thermo_box)
+        self.thermo_box_margin_kj = (
+            cfg.thermo_box_margin_kj
+            if spec.thermo_box_margin_kj is None
+            else spec.thermo_box_margin_kj
+        )
         if self.thermo_box and not (
             spec.kind == "projection" and self.projection_end == "box"
         ):
@@ -1233,7 +1256,10 @@ class FluxLayer(nn.Module):
             tightening inverted.
         """
         active = (self.delta_r_g0_mask & (~self.thermo_exempt)).unsqueeze(0)
-        eps = self.config.thermo_epsilon
+        # The margin, not the numerical epsilon, is what decides which reactions the box
+        # constrains. A reaction 0.5 kJ/mol from equilibrium has a sign the table cannot
+        # resolve, and pinning it costs a degree of freedom for no thermodynamic content.
+        eps = max(self.config.thermo_epsilon, self.thermo_box_margin_kj)
         uphill = active & (delta_g > eps)
         downhill = active & (delta_g < -eps)
         zero = ub.new_zeros(())
@@ -2077,6 +2103,7 @@ class FluxLayer(nn.Module):
             "null_basis_orthonormality_error": self.null_basis_orthonormality_error,
             "null_basis_balance_error": self.null_basis_balance_error,
             "thermo_box": self.thermo_box,
+            "thermo_box_margin_kj": self.thermo_box_margin_kj,
             "latent_stochastic": self.latent_stochastic,
             "kl_weight": self.config.weights.get("kl", self.config.kl_weight),
             "thermo_uncertainty": self.thermo_uncertainty,

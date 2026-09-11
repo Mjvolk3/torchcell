@@ -187,6 +187,48 @@ class BoxViolationBreakdown(BaseModel):
     note: str
 
 
+#: The three cytosolic species the Cachera cassette's route runs through, from 026's
+#: BETAXANTHIN_PRECURSORS: tyrosine, and the two aromatic-pathway intermediates its
+#: feedback-resistant ARO4 and ARO7 alleles act on.
+BETAXANTHIN_PRECURSOR_METABOLITES = ["s_1051", "s_0188", "s_1032"]
+
+
+class FluxDiagnosis(BaseModel):
+    r"""Why a feasible head might carry no phenotype signal.
+
+    The hypothesis this is built to test, stated as one: the learned sign pattern plus mass
+    balance admits only near-zero flux, so ``v`` is nearly the same vector for every
+    genotype and the flux-scalar head reads nothing. Three things would have to be true
+    together, and each has its own field: the flux is small, most of it is exactly zero, and
+    what is left barely moves between strains.
+
+    ``v_spread_over_scale`` is the decisive one. It is the standard deviation of each
+    reaction's flux ACROSS genotypes, averaged over reactions and divided by the mean
+    absolute flux, so it asks how much of the flux vector is genotype-specific rather than
+    shared. A value near zero says the head is reading a constant.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    n_genotypes: int
+    n_reactions: int
+    parameterization_raw: str
+    thermo_box: bool
+    abs_v_median: float
+    abs_v_mean: float
+    frac_reactions_below_1e_6: float
+    v_spread_across_genotypes_mean: float
+    v_spread_over_scale: float
+    n_reactions_identical_across_genotypes: int
+    frac_boxes_collapsed_to_zero: float
+    n_betaxanthin_route_reactions: int
+    n_betaxanthin_route_collapsed: int
+    frac_betaxanthin_route_collapsed: float
+    projection_residual_trace: list[float]
+    projection_box_gap_trace: list[float]
+    trace_note: str
+
+
 class CellSummary(BaseModel):
     """One wave-6 projection cell, from whatever evidence exists for it."""
 
@@ -223,6 +265,8 @@ class CellSummary(BaseModel):
     feasibility_test: dict[str, float] | None = None
     draw_audit: DrawAudit | None = None
     box_breakdown: BoxViolationBreakdown | None = None
+    flux_diagnosis: FluxDiagnosis | None = None
+    constraint_terms_at_select: dict[str, float] = Field(default_factory=dict)
     sd_ratio_curve: list[float] = Field(default_factory=list)
 
 
@@ -321,6 +365,8 @@ def read_result(summary: CellSummary, payload: dict[str, Any]) -> None:
             "projection_steps",
             "projection_end",
             "projection_method",
+            "thermo_box",
+            "thermo_box_margin_kj",
             "n_latent",
             "null_basis_orthonormality_error",
             "null_basis_balance_error",
@@ -343,6 +389,16 @@ def read_result(summary: CellSummary, payload: dict[str, Any]) -> None:
             f"{k[0]}{v}" for k, v in sorted(counts.items()) if v
         )
     history = payload.get("history") or []
+    # WHICH TERM IS ACTUALLY NONZERO at the epoch the cell was scored on. A constraint sum
+    # of 0.04 says nothing about whether it is parsimony, the budget, the dissipation hinge
+    # or the thermodynamic prior doing the pulling.
+    sel = summary.select_epoch
+    if history and sel is not None and sel < len(history):
+        summary.constraint_terms_at_select = {
+            k: float(v)
+            for k, v in history[sel].items()
+            if k.startswith("c_") and isinstance(v, (int, float))
+        }
     if history:
         summary.feas_last_epoch = {
             k: float(v)
@@ -414,6 +470,79 @@ def _box_breakdown(
     )
 
 
+def _diagnose(
+    layer: Any,
+    v: np.ndarray,
+    lb: np.ndarray,
+    ub: np.ndarray,
+    trace: dict[str, list[float]],
+) -> FluxDiagnosis:
+    """Assemble :class:`FluxDiagnosis` from one batch of top-ranked genotypes."""
+    abs_v = np.abs(v)
+    spread = v.std(axis=0)
+    scale = float(abs_v.mean())
+    collapsed = (ub - lb) <= 1e-12
+    # Reactions that touch any betaxanthin precursor, read off the layer's own S.
+    met_pos = {m: i for i, m in enumerate(layer.met_ids)}
+    rows = [met_pos[m] for m in BETAXANTHIN_PRECURSOR_METABOLITES if m in met_pos]
+    idx = layer.s_indices.cpu().numpy()
+    route = np.unique(idx[1][np.isin(idx[0], rows)])
+    route_collapsed = collapsed[:, route]
+    return FluxDiagnosis(
+        n_genotypes=int(v.shape[0]),
+        n_reactions=int(v.shape[1]),
+        parameterization_raw=str(layer.config.parameterization),
+        thermo_box=bool(layer.thermo_box),
+        abs_v_median=float(np.median(abs_v)),
+        abs_v_mean=scale,
+        frac_reactions_below_1e_6=float((abs_v < 1e-6).mean()),
+        v_spread_across_genotypes_mean=float(spread.mean()),
+        v_spread_over_scale=float(spread.mean() / scale) if scale > 0 else 0.0,
+        n_reactions_identical_across_genotypes=int((spread < 1e-9).sum()),
+        frac_boxes_collapsed_to_zero=float(collapsed.mean()),
+        n_betaxanthin_route_reactions=int(route.size),
+        n_betaxanthin_route_collapsed=int(route_collapsed.mean(axis=0).sum()),
+        frac_betaxanthin_route_collapsed=float(route_collapsed.mean()),
+        projection_residual_trace=trace["balance"],
+        projection_box_gap_trace=trace["box"],
+        trace_note=(
+            "Per alternation k: 'balance' is max |S v| / max |v| after step k, 'box' is the "
+            "mean out-of-box overshoot over flux_scale. A trace that stops falling and "
+            "alternates between two levels says the tightened box and ker S meet only near "
+            "the origin for the learned sign pattern, which is the degeneracy the "
+            "near-zero-flux hypothesis predicts."
+        ),
+    )
+
+
+def _trace_projection(
+    layer: Any, context: torch.Tensor, lb: torch.Tensor, ub: torch.Tensor, steps: int
+) -> dict[str, list[float]]:
+    """Re-run the alternating projection outside the layer, recording both residuals.
+
+    Reuses the layer's own `_latent`, `_project_balanced` and the ALREADY-TIGHTENED box from
+    its forward pass, so this is the same sequence `forward` ran, not a reimplementation of
+    it. Done here rather than by instrumenting `forward` because `forward` runs on every
+    training step and must not carry a diagnostic.
+    """
+    with torch.no_grad():
+        latent, _ = layer._latent(context)
+        v = (latent * layer.config.flux_scale) @ layer.null_basis.t()
+        trace: dict[str, list[float]] = {"balance": [], "box": []}
+        end_on_box = layer.projection_end == "box"
+        for k in range(steps):
+            v = torch.minimum(torch.maximum(v, lb), ub)
+            if not (end_on_box and k == steps - 1):
+                v = layer._project_balanced(v)
+            scale = float(v.abs().max())
+            trace["balance"].append(
+                float(layer._s_matmul(v).abs().max()) / max(scale, 1e-12)
+            )
+            gap = torch.relu(v - ub) + torch.relu(lb - v)
+            trace["box"].append(float(gap.mean()) / float(layer.config.flux_scale))
+    return trace
+
+
 def audit_draws(
     result_name: str,
     n_draws: int,
@@ -421,7 +550,7 @@ def audit_draws(
     balance_tol: float,
     uphill_tol: float,
     box_tol: float,
-) -> tuple[DrawAudit | None, BoxViolationBreakdown | None]:
+) -> tuple[DrawAudit | None, BoxViolationBreakdown | None, FluxDiagnosis | None]:
     """Rebuild one cell from its checkpoint and price ``n_draws`` sampled fluxes.
 
     Imported lazily, because the trainer owns ``train_bx.py`` and importing it pulls in the
@@ -435,7 +564,7 @@ def audit_draws(
         f"{stem}.pt",
     )
     if not osp.isfile(ckpt_path):
-        return None, None
+        return None, None, None
 
     spec = importlib.util.spec_from_file_location(
         "train_bx_for_audit", osp.join(EXP_DIR, "scripts", "train_bx.py")
@@ -520,6 +649,7 @@ def audit_draws(
     box: list[np.ndarray] = []
     uphill: list[np.ndarray] = []
     box_parts: list[dict[str, np.ndarray]] = []
+    diagnosis: FluxDiagnosis | None = None
     offset = 0
     with torch.no_grad():
         for batch in dm.all_dataloader():
@@ -544,6 +674,20 @@ def audit_draws(
             pert = batch["gene"].perturbation_indices
             pert_batch = batch["gene"].perturbation_indices_batch
             context = perturbed_gene_pool(h_genes, pert, pert_batch)
+            if diagnosis is None and layer.parameterization == "projection":
+                diagnosis = _diagnose(
+                    layer,
+                    reps["flux"]["v"][rows].cpu().numpy(),
+                    reps["flux"]["lb"][rows].cpu().numpy(),
+                    reps["flux"]["ub"][rows].cpu().numpy(),
+                    _trace_projection(
+                        layer,
+                        context,
+                        reps["flux"]["lb"],
+                        reps["flux"]["ub"],
+                        layer.projection_steps,
+                    ),
+                )
             drawn = layer.sample(h_genes, context, pert, pert_batch, n_draws)
             idx = torch.tensor(keep, device=drawn.v.device)
             bal.append(drawn.balance_ratio_median[:, idx].cpu().numpy())
@@ -584,15 +728,36 @@ def audit_draws(
         box_violation_frac_mean=float(boxes.mean()),
         uphill_frac_mean=float(ups.mean()) if thermo_available else None,
     )
-    return audit, breakdown
+    return audit, breakdown, diagnosis
+
+
+#: The three families the wave-6 cells fall into, and the ONE thing that separates them:
+#: which constraint the projection loop makes exact. Colored by family rather than by cell
+#: because twelve distinct colors would encode nothing, and the family is the finding.
+FAMILIES: list[tuple[str, str]] = [
+    ("balance end", "mass balance exact"),
+    ("box end", "bounds exact"),
+    ("tdg", "bounds and second law exact"),
+]
+
+
+def _family(cell: CellSummary) -> str:
+    """Which exactness family a cell belongs to, from what its layer actually ran."""
+    proj = cell.projection or {}
+    if proj.get("thermo_box"):
+        return "tdg"
+    if proj.get("projection_end") == "box":
+        return "box end"
+    return "balance end"
 
 
 def make_figure(cells: list[CellSummary]) -> str:
-    """Two panels: the escape curve per cell, and the paired test Spearman against pooled.
+    """Two panels: the escape curve by family, and the endpoint against the pooled control.
 
-    Panel a shows the prediction spread over epochs, which is the quantity that says whether
-    a cell left the betaxanthin mean plateau and whether it stayed off it. Panel b is the
-    endpoint each cell is scored on, next to its own seed's pooled control.
+    Panel a is the prediction spread over epochs, the quantity that says whether a cell left
+    the betaxanthin mean plateau and whether it stayed off it, with one line per cell colored
+    by which constraint its projection loop makes exact. Panel b is the endpoint each cell is
+    scored on beside the pooled control at its own seed.
     """
     plt.rcParams.update(
         {
@@ -608,70 +773,68 @@ def make_figure(cells: list[CellSummary]) -> str:
         }
     )
     fig, axes = plt.subplots(
-        1, 2, figsize=(mm_to_in(179.0), mm_to_in(58.0)), constrained_layout=True
+        2, 1, figsize=(mm_to_in(179.0), mm_to_in(112.0)), constrained_layout=True
     )
-    drawn = [c for c in cells if c.sd_ratio_curve]
+    color = {name: PLOT_PALETTE[i] for i, (name, _) in enumerate(FAMILIES)}
+
     ax = axes[0]
-    for i, cell in enumerate(drawn):
+    seen: set[str] = set()
+    for cell in [c for c in cells if c.sd_ratio_curve]:
+        fam = _family(cell)
         ax.plot(
             range(len(cell.sd_ratio_curve)),
             cell.sd_ratio_curve,
-            color=PLOT_PALETTE[i % len(PLOT_PALETTE)],
+            color=color[fam],
             linewidth=0.8,
-            label=cell.cell,
+            label=None if fam in seen else f"{fam} ({dict(FAMILIES)[fam]})",
         )
+        seen.add(fam)
     ax.axhline(ESCAPE_SD_RATIO, color="black", linewidth=0.5, linestyle="--")
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation prediction sd / target sd")
-    ax.set_ylim(0.0, 1.0)
+    ax.set_ylim(0.0, 0.6)
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(which="minor", length=0)
     ax.grid(which="both", axis="y", linewidth=0.3, alpha=0.4)
     for spine in ax.spines.values():
         spine.set_visible(True)
-    if drawn:
-        ax.legend(
-            loc="lower left",
-            bbox_to_anchor=(0.0, 1.02),
-            ncol=2,
-            frameon=True,
-            framealpha=1.0,
-            edgecolor="black",
-            fancybox=False,
-        )
+    ax.legend(
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.02),
+        ncol=3,
+        frameon=True,
+        framealpha=1.0,
+        edgecolor="black",
+        fancybox=False,
+    )
 
     ax = axes[1]
     scored = [c for c in cells if c.test_spearman_pinned is not None]
     positions = np.arange(len(scored), dtype=float)
     width = 0.38
-    ax.bar(
-        positions - width / 2,
-        [c.test_spearman_pinned or 0.0 for c in scored],
-        width=width,
-        color=PLOT_PALETTE[0],
-        edgecolor="black",
-        linewidth=0.5,
-        label="projection cell",
-    )
+    for i, cell in enumerate(scored):
+        ax.bar(
+            positions[i] - width / 2,
+            cell.test_spearman_pinned or 0.0,
+            width=width,
+            color=color[_family(cell)],
+            edgecolor="black",
+            linewidth=0.5,
+        )
     ax.bar(
         positions + width / 2,
         [BASELINES.get(int(c.seed or -1), {}).get("pooled", np.nan) for c in scored],
         width=width,
-        color=PLOT_PALETTE[1],
+        color="white",
         edgecolor="black",
         linewidth=0.5,
+        hatch="///",
         label="pooled control, same seed",
     )
     ax.axhline(0.0, color="black", linewidth=0.5)
     ax.set_xticks(positions)
-    # The kinetic table label rides on the tick, so a reader cannot compare two bars
-    # without seeing that their capacity tables differ.
-    ax.set_xticklabels(
-        [f"{c.cell}\n{c.kcat_table_label or 'kcat table unknown'}" for c in scored],
-        rotation=30,
-        ha="right",
-    )
+    ax.set_xticklabels([c.cell.split()[0] for c in scored])
     ax.set_ylabel("test Spearman, 629 pinned genes")
     ax.yaxis.set_major_locator(MultipleLocator(0.05))
     ax.grid(which="major", axis="y", linewidth=0.3, alpha=0.4)
@@ -680,19 +843,17 @@ def make_figure(cells: list[CellSummary]) -> str:
     ax.legend(
         loc="lower left",
         bbox_to_anchor=(0.0, 1.02),
-        ncol=2,
+        ncol=1,
         frameon=True,
         framealpha=1.0,
         edgecolor="black",
         fancybox=False,
     )
 
-    # Panel letters OUTSIDE the axes and clear of the rotated y-label, which sits near
-    # x = -0.13 in axes coordinates and collided with a letter placed at -0.12.
     for ax, letter in zip(axes, "ab", strict=False):
         ax.text(
-            -0.22,
-            1.28,
+            -0.06,
+            1.30,
             letter,
             transform=ax.transAxes,
             fontsize=8,
@@ -729,21 +890,61 @@ CELLS: dict[str, tuple[str, str]] = {
         "027-w6-proj-anchored-s2701",
         "wave6_proj_flux_projection_anchored_s2701.json",
     ),
-    "P5 stochastic scale0.1 s2700": (
-        "027-w6-proj-stoch-s2700",
-        "wave6_proj_flux_projection_stochastic_s2700.json",
+    # The second-law-as-a-box cells. `tdg` is the directional box, `ue` the union_external
+    # deltaG route, and all four end on the clip at K = 20.
+    "P5 tdg scale0.1 s2700": (
+        "027-w6-proj-tdg-s2700",
+        "wave6_proj_flux_projection_anchored_tdg_ue_s2700.json",
     ),
-    "P6 everything-on scale0.03 s2700": (
-        "027-w6-proj-anchored-s0p03-s2700",
-        "wave6_proj_flux_projection_anchored_s0p03_s2700.json",
+    "P6 tdg scale0.1 s2701": (
+        "027-w6-proj-tdg-s2701",
+        "wave6_proj_flux_projection_anchored_tdg_ue_s2701.json",
     ),
-    "P7 everything-on scale0.3 s2700": (
-        "027-w6-proj-anchored-s0p3-s2700",
-        "wave6_proj_flux_projection_anchored_s0p3_s2700.json",
+    "P7 tdg scale0 s2700": (
+        "027-w6-proj-tdg-nocstr-s2700",
+        "wave6_proj_flux_projection_anchored_tdg_ue_nocstr_s2700.json",
     ),
-    "P8 everything-on K20 s2700": (
-        "027-w6-proj-anchored-k20-s2700",
-        "wave6_proj_flux_projection_anchored_k20_s2700.json",
+    "P8 tdg stochastic scale0.1 s2700": (
+        "027-w6-proj-tdg-stoch-s2700",
+        "wave6_proj_flux_projection_anchored_tdg_stoch_ue_s2700.json",
+    ),
+    # The two discriminating controls. P9 and P10 repeat the tdg arm at further seeds, to
+    # say whether its zero signal is the head or one seed; P11 and P12 end on the clip with
+    # NO sign tightening, to say whether respecting the bounds alone costs the signal.
+    "P9 tdg scale0 s2701": (
+        "027-w6-proj-tdg-nocstr-s2701",
+        "wave6_proj_flux_projection_anchored_tdg_ue_nocstr_s2701.json",
+    ),
+    "P10 tdg scale0 s2702": (
+        "027-w6-proj-tdg-nocstr-s2702",
+        "wave6_proj_flux_projection_anchored_tdg_ue_nocstr_s2702.json",
+    ),
+    "P11 box-end scale0 s2700": (
+        "027-w6-proj-boxend-nocstr-s2700",
+        "wave6_proj_flux_projection_anchored_k20_boxend_ue_nocstr_s2700.json",
+    ),
+    "P12 box-end scale0 s2701": (
+        "027-w6-proj-boxend-nocstr-s2701",
+        "wave6_proj_flux_projection_anchored_k20_boxend_ue_nocstr_s2701.json",
+    ),
+    # Third seeds for the two arms that keep the signal, and the first cells for the
+    # 5 kJ/mol margin, which asks whether the sign tightening can be kept at a strength
+    # that leaves the head somewhere to move.
+    "P13 tdgm5 scale0 s2700": (
+        "027-w6-proj-tdgm5-nocstr-s2700",
+        "wave6_proj_flux_projection_anchored_tdgm5_ue_nocstr_s2700.json",
+    ),
+    "P14 tdgm5 scale0 s2701": (
+        "027-w6-proj-tdgm5-nocstr-s2701",
+        "wave6_proj_flux_projection_anchored_tdgm5_ue_nocstr_s2701.json",
+    ),
+    "P15 projection scale0 s2702": (
+        "027-w6-proj-nocstr-s2702",
+        "wave6_proj_flux_projection_s2702.json",
+    ),
+    "P16 box-end scale0 s2702": (
+        "027-w6-proj-boxend-nocstr-s2702",
+        "wave6_proj_flux_projection_anchored_k20_boxend_ue_nocstr_s2702.json",
     ),
 }
 
@@ -786,13 +987,15 @@ def main() -> None:
             with open(result_path) as handle:
                 read_result(summary, json.load(handle))
             if not args.no_draws:
-                summary.draw_audit, summary.box_breakdown = audit_draws(
-                    result_name,
-                    args.draws,
-                    args.draw_genotypes,
-                    args.balance_tol,
-                    args.uphill_tol,
-                    args.box_tol,
+                (summary.draw_audit, summary.box_breakdown, summary.flux_diagnosis) = (
+                    audit_draws(
+                        result_name,
+                        args.draws,
+                        args.draw_genotypes,
+                        args.balance_tol,
+                        args.uphill_tol,
+                        args.box_tol,
+                    )
                 )
         if log_path is None and summary.result_path is None:
             continue

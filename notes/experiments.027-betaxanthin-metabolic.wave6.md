@@ -116,13 +116,26 @@ parameter table across the paired flux cells and drops any seed built from a dif
 BY NAME, into `excluded_physics_mismatch`, rather than averaging two different models into
 one contrast.
 
-The wave-6 cells pin `TC_FLUX_SCRIPTS_DIR` and `PYTHONPATH` at the 23:05 freeze, so all
-eleven of them run the pre-homolog table and match seeds 2700, 2701 and 2703. The one cell
-that does not is the resubmitted seed-2702 flux cell (job 1707), which was relaunched from
-the worktree snapshot without that pin, so it carries the homolog tier. **Hypothesis
-(untested): the homolog tier changes the score as well as the table.** The cell will be
-reported on its own rather than pooled, and the difference between it and the other five
-flux seeds is not attributable to the seed.
+The wave-6 cells pin `TC_FLUX_SCRIPTS_DIR` and `PYTHONPATH` at the 23:05 freeze, so none of
+them carries the homolog tier. The one cell that does is the resubmitted seed-2702 flux cell
+(job 1707), relaunched from the worktree snapshot without that pin.
+
+**Freezing the CODE was not enough, and the finished cells are what showed it.** Seeds 2704
+and 2705 ran the frozen `train_flux.py` and still resolved a third table: 148 measured, 3,570
+predicted, 10 default, against seeds 2700, 2701 and 2703's 148 / 3,410 / 170. The resolver
+reads the predicted-kcat mirror off disk under `$DATA_ROOT`, and that mirror was regenerated
+overnight, so the DATA moved under a pinned code path. Three tables in one contrast:
+
+| group | seeds | kcat measured / homolog / predicted / default |
+|---|---|---|
+| A | 2700, 2701, 2703 | 148 / 0 / 3,410 / 170 |
+| B | 2702 | 96 / 782 / 2,820 / 30 |
+| C | 2704, 2705 | 148 / 0 / 3,570 / 10 |
+
+This is why `analyze_wave6.py` keys the guard on the tier counts each run RECORDED rather
+than on a code hash: a hash of `train_flux.py` and `flux_layer.py` would have called groups
+A and C identical, because for those two cells they are. **Hypothesis (untested): the kcat
+table changes the score, not just the table.** Nothing here separates it from seed noise.
 
 ### The amino-acid phenotype has plenty of pinned test genes
 
@@ -185,21 +198,31 @@ feasibility block either. 2704 and 2705 and every amino-acid cell carry it.
 | pooled s2700 | `wave5_g8_pooled_s2700.json` | 1674 | no | no |
 | flux nocstr s2701 | `wave5_g7_flux_capacity_nocstr_s2701.json` | 1679 | no | no |
 | pooled s2701 | `wave5_g8_pooled_s2701.json` | 1680 | no | no |
-| flux nocstr s2702 | `wave5_g7_flux_capacity_nocstr_s2702.json` | 1681 | no | no |
+| flux nocstr s2702 | `wave5_g7_flux_capacity_nocstr_s2702.json` | 1681 died, rerun 1707 | yes | yes |
 | pooled s2702 | `wave5_g8_pooled_s2702.json` | 1682 | no | no |
 | flux nocstr s2703 | `wave5_g7_flux_capacity_nocstr_s2703.json` | 1683 | no | no |
-| pooled s2703 | `wave5_g8_pooled_s2703.json` | 1684 | no | no |
-| flux nocstr s2704 | `wave5_g7_flux_capacity_nocstr_s2704.json` | 1694 | yes | yes |
-| pooled s2704 | `wave5_g8_pooled_s2704.json` | 1695 | null, no flux layer | yes |
-| flux nocstr s2705 | `wave5_g7_flux_capacity_nocstr_s2705.json` | 1696 | yes | yes |
-| pooled s2705 | `wave5_g8_pooled_s2705.json` | 1697 | null, no flux layer | yes |
-| amino acid, flux nocstr s2700 | `wave6_aa_nocstr_s2700.json` | 1698 | yes | yes |
-| amino acid, pooled s2700 | `wave6_aa_pooled_s2700.json` | 1699 | null, no flux layer | yes |
-| amino acid, flux nocstr s2701 | `wave6_aa_nocstr_s2701.json` | 1700 | yes | yes |
-| amino acid, pooled s2701 | `wave6_aa_pooled_s2701.json` | 1701 | null, no flux layer | yes |
-| amino acid, flux nocstr s2702 | `wave6_aa_nocstr_s2702.json` | 1702 | yes | yes |
-| amino acid, pooled s2702 | `wave6_aa_pooled_s2702.json` | 1703 | null, no flux layer | yes |
-| amino acid, flux all-on s2700 | `wave6_aa_allon_s2700.json` | 1704 | yes | yes |
+| pooled s2703 | `wave5_g8_pooled_s2703.json` | 1684 died, rerun 1710 | null, no flux layer | yes |
+| flux nocstr s2704 | `wave5_g7_flux_capacity_nocstr_s2704.json` | 1694 cancelled, rerun 1711 | yes | yes |
+| pooled s2704 | `wave5_g8_pooled_s2704.json` | 1695 cancelled, rerun 1712 | null, no flux layer | yes |
+| flux nocstr s2705 | `wave5_g7_flux_capacity_nocstr_s2705.json` | 1696 cancelled, rerun 1713 | yes | yes |
+| pooled s2705 | `wave5_g8_pooled_s2705.json` | 1697 cancelled, rerun 1714 | null, no flux layer | yes |
+| amino acid, flux nocstr s2700 | `wave6_aa_nocstr_s2700.json` | 1698 cancelled, rerun 1715 | yes | yes |
+| amino acid, pooled s2700 | `wave6_aa_pooled_s2700.json` | 1699 cancelled, rerun 1716 | null, no flux layer | yes |
+| amino acid, flux nocstr s2701 | `wave6_aa_nocstr_s2701.json` | 1700 cancelled, rerun 1717 | yes | yes |
+| amino acid, pooled s2701 | `wave6_aa_pooled_s2701.json` | 1701 cancelled, rerun 1718 | null, no flux layer | yes |
+| amino acid, flux nocstr s2702 | `wave6_aa_nocstr_s2702.json` | 1702 cancelled, rerun 1719 | yes | yes |
+| amino acid, pooled s2702 | `wave6_aa_pooled_s2702.json` | 1703 cancelled, rerun 1720 | null, no flux layer | yes |
+| amino acid, flux all-on s2700 | `wave6_aa_allon_s2700.json` | 1704 cancelled, rerun 1721 | yes | yes |
+| amino acid, flux projection s2700 | `wave6_aa_proj_s2700.json` | 1727 | yes | yes |
+| amino acid, flux projection s2701 | `wave6_aa_proj_s2701.json` | 1728 | yes | yes |
+| amino acid, flux projection s2702 | `wave6_aa_proj_s2702.json` | 1729 | yes | yes |
+
+Jobs 1694 to 1704 were cancelled while PENDING and resubmitted as 1711 to 1721 through
+`freeze_and_submit.sh`, which snapshots the whole worktree per job; the wave-6 scripts'
+own `TC_FROZEN` pin still shadows the snapshot's `torchcell` and 026 scripts, so what those
+eleven cells imported is the 23:05 freeze either way. Jobs 1681 and 1684 died mid-run when a
+spawned DataLoader worker re-imported a mid-edit `flux_layer.py`, and were rerun as 1707 and
+1710; 1707 therefore carries the homolog kcat tier while every other flux cell does not.
 
 ### Preflight, all four code paths
 
@@ -292,12 +315,41 @@ offset is not the explanation. **Hypothesis (untested): the deficit is the reado
 capacity, since `a_k log(1 + omega_k) + b_k` is two free parameters per amino acid against
 the pooled head's MLP over the whole representation.**
 
+### Turning the physics on collapses the amino-acid head too, and still does not balance it
+
+`wave6_aa_allon_s2700.json`, job 1721: the same flux arm at constraint scale 0.1 over a
+20-epoch linear warmup. Two things happened, and they are separate.
+
+The head collapsed. The selected epoch is 8, and the final validation prediction spread is
+0.000 of the target's, so the model ends as a constant predictor and its 0.0104 mean
+per-feature Spearman is the correlation of a constant plus jitter, not a score. That
+reproduces on the amino-acid head what wave 5 measured on betaxanthin: the constraint terms
+hold the readout on the mean plateau.
+
+The constraint did bind, and it was not enough. Over the run, `c_balance` fell from 3.0682
+to 2.2459 and the training-time `feas_balance_median` from 1.9921 to 1.6661. So 80 epochs at
+scale 0.1 moves the typical relative balance residual from about 1.99 to about 1.67 out of a
+maximum of 2. At the epoch validation actually selected, epoch 8, where the ramp had reached
+scale 0.04, the audited median is 1.9875 and the fraction of genotypes meeting any tolerance
+is still 0.000.
+
+Two consequences worth separating. First, the Genesis target is not reachable by turning the
+existing penalty up a little: a 0.33 move in 80 epochs at the strength that already collapses
+the phenotype head is not on a path to 1e-2. Second, epoch selection and feasibility are
+pulling in opposite directions here, because the epoch validation likes is the one before the
+physics has ramped in. Nothing in the current protocol notices that; the feasibility block is
+what makes it visible.
+
 ### The Genesis metabolic-grounding number is 0 percent, not 95
 
-First fully trained cell carrying the feasibility block: `wave5_g7_flux_capacity_nocstr_s2702.json`,
-job 1707, 80 epochs, selected epoch 62, pinned test Spearman 0.0972 on 629 genes, final
-validation prediction spread 0.3601 of the target's, so the head had left the mean plateau
-and this is a working model rather than a collapsed one.
+**Ten flux cells carry the feasibility block, and not one of them has a single genotype
+meeting the Genesis criterion.** Not a low fraction: zero, in every cell, under every
+tolerance in the ladder. The target is at least 95 percent of the top 100.
+
+The worked example below is `wave5_g7_flux_capacity_nocstr_s2702.json`, job 1707, 80 epochs,
+selected epoch 62, pinned test Spearman 0.0972 on 629 genes, final validation prediction
+spread 0.3601 of the target's, so the head had left the mean plateau and this is a working
+model rather than a collapsed one.
 
 | group | n | balance median ratio (max is 2) | uphill fraction of active reactions | fraction meeting the Genesis criterion |
 |---|---|---|---|---|
@@ -329,7 +381,89 @@ Genesis target of 95 percent is 95 points away rather than a few.
 **The top 100 are indistinguishable from the population** (1.9977 against 1.9961; 0.3468
 against 0.3335), so the model's nominated strains are neither more nor less feasible than
 any other genotype. Reporting the top-100 fraction without the population fraction beside it
-would have hidden that.
+would have hidden that. Checked across every cell where both groups are defined, the top-100
+fraction equals the population fraction for every criterion, with no exceptions.
+
+Across all ten flux cells the box arms sit at a median balance residual ratio of 1.958 to
+1.996 with an uphill fraction of 0.252 to 0.349, and the projection arms at exactly 0.0000
+balance with an uphill fraction of 0.396 to 0.443. The Genesis criterion reads 0.000
+everywhere.
+
+### The projection arm balances exactly and fails the box instead
+
+The driver added a third amino-acid arm on the `projection` parameterization at constraint
+scale 0 (jobs 1727, 1728, 1729). It changes the feasibility picture completely and the
+phenotype not at all.
+
+| arm | mass balance within 1% | inside the flux box | no uphill reaction | Genesis criterion |
+|---|---|---|---|---|
+| box, betaxanthin, 3 cells | 0.00 | 1.00 | 0.00 | 0.00 |
+| box, amino acid, 4 cells | 0.00 | 1.00 | 0.00 | 0.00 |
+| projection, amino acid, 3 cells | 1.00 | 0.00 | 0.00 | 0.00 |
+
+Fractions of all 4,930 genotypes; the top-100 fraction equals the population fraction in
+every cell where both are defined. The median balance residual ratio is 0.0000 for all three
+projection cells against 1.958 to 1.996 for the box cells, so the projection is exact rather
+than merely better, which is what `v = N z` guarantees. The cost is the box, which no
+genotype satisfies in any projection cell.
+
+**Ten flux cells, zero meeting the Genesis criterion.** The exactness budget is spent on one
+constraint or the other, exactly as `flux_layer.py`'s own table says it is, and the second
+law is satisfied by neither: the median uphill fraction is 0.25 to 0.35 on the box cells and
+0.40 to 0.45 on the projection cells, so making mass balance exact made the thermodynamics
+worse rather than better. **Hypothesis (untested): the projection pushes flux into
+directions the tabulated energies forbid, because nothing in the projection knows about
+them.**
+
+The phenotype is unchanged by the switch. Projection against pooled on the amino acids is
+-0.0392, SD 0.0344, n = 3 (per seed: -0.0785, -0.0145, -0.0247), and projection against the
+box flux head is -0.0006, SD 0.0340, n = 3, which is as close to no difference as three
+seeds can show. So the two parameterizations predict equally poorly and differ only in which
+physical constraint they satisfy.
+
+### Every audited checkpoint reproduces its own numbers
+
+`audit_top_strain_feasibility.py` rebuilds the model from the result file's cell record,
+loads the saved weights, and recomputes the whole feasibility block. Five cells audited, all
+agreeing with the trainer to a maximum absolute difference of **0.000e+00**:
+
+| cell | tree used to rebuild | arm |
+|---|---|---|
+| `smoke_w6_aa_flux` | 23:05 freeze | box, amino acid |
+| `wave5_g7_flux_capacity_nocstr_s2704` | 23:05 freeze | box, betaxanthin |
+| `wave5_g7_flux_capacity_nocstr_s2705` | 23:05 freeze | box, betaxanthin |
+| `wave5_g7_flux_capacity_nocstr_s2702` | live worktree | box, betaxanthin, homolog tier |
+| `wave6_aa_proj_s2700` | live worktree | projection, amino acid |
+
+The seed-2702 row is the informative one: it was trained from the worktree snapshot with the
+homolog kcat tier, and rebuilding it against the LIVE tree reproduced its numbers exactly,
+which is what says the cell record plus the checkpoint plus the on-disk parameter tables
+determine the model. A checkpoint audited against the wrong tables would not have matched.
+
+### The draw audit
+
+`audit_top_strain_feasibility.py --stochastic --draws 16` on `wave6_aa_proj_s2700`, 100
+genotypes, dropout held in eval so the spread is the flux posterior alone: mass balance holds
+on 100 percent of the 1,600 (genotype, draw) pairs and on 100 percent of genotypes across
+every one of their draws; the box and the second law fail on all of them. The deterministic
+recomputation from the checkpoint again matched the trainer to 0.000e+00
+(`results/audit_wave6_aa_proj_s2700.json`).
+
+### Figure
+
+![](./assets/images/027-betaxanthin-metabolic/wave6_parity_and_feasibility_2026-09-11-08-55-11.svg)
+
+**Figure 1. Wave-6 parity contrasts and the feasibility of the flux vectors they produce.**
+**a**, Pinned test Spearman on the 629 Merzbacher genes for the betaxanthin phenotype, one
+line per seed across the flux arm at constraint scale 0 and the no-module pooled control;
+six seeds, and the lines cross, which is the finding. **b**, Mean per-feature test Spearman
+over the 19 Mulleder amino acids on the 564 pinned test genotypes that carry a profile,
+across the box flux head, the projection flux head and the pooled control; three seeds.
+**c**, Fraction of all 4,930 genotypes meeting each component of the Genesis criterion at
+the validation-selected epoch, per flux cell. **d**, Median per-genotype fraction of active
+reactions running uphill at standard state, for the top 100 predicted producers and for all
+genotypes; the top-100 bar is absent for the amino-acid cells, which define no production
+ranking. Generated by `experiments/027-betaxanthin-metabolic/scripts/analyze_wave6.py`.
 
 ### Reruns
 

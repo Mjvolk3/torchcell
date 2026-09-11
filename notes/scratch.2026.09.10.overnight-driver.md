@@ -103,3 +103,38 @@ the module helps amino-acid or betaxanthin prediction.
   the box flux head is below pooled at every seed, paired diffs -0.039, -0.031, -0.046.
   Driver queued flux_projection (scale 0) on the amino-acid head, seeds 2700-2702: jobs
   1727, 1728, 1729 (scripts gh_wave6_aa_proj_s270{0,1,2}.slurm).
+- 06:47 hourly check: 1721/1723/1724/1725 RUNNING fresh (finishing ~07:10); 1726-1729
+  pending. Trainer + flux running. WIP commit b1a4b14f landed (hooks pass). No action.
+- 07:47 hourly check: 1726-1729 RUNNING fresh (last four cells; done ~09:10). 1721,
+  1723-1725 COMPLETED. Trainer + flux running. No action.
+- 07:55 tdg readouts: tdg nocstr s2700 (1725) MEETS GENESIS on 100% of top-100 (balance
+  2.8e-8, box 0, thermo_model 0) but test Spearman -0.0006 (plain projection same seed
+  0.117); tdg scale 0.1 s2700/s2701 (1723/1724) box+thermo exact but balance ratio
+  0.83/1.00, Spearman 0.072/-0.065. aa allon box head (1721) collapsed early: sel 8, 0.010.
+  Sent flux agent: diagnose degenerate feasible set from checkpoints, then last cells by
+  09:20 (tdg nocstr s2701/s2702; box-exact-without-tightening or margin-tightening).
+- 08:47 hourly check: flux agent submitted the last round: 1730/1731 tdg nocstr s2701/s2702,
+  1734/1735 boxend nocstr s2700/s2701, all RUNNING fresh (done ~09:45). 1726-1729
+  COMPLETED. Trainer + flux running. No action.
+- 09:05 trainer final report: parity contrast n=6 flux-pooled = -0.0172, sd 0.0456, t=-0.93
+  (per seed +0.003, +0.013, -0.072, +0.026, -0.079, +0.005): NOT established either way.
+  Genesis 0% on every box/plain-projection cell (box arms balance ratio ~2.0; projection
+  arms box 0.00 satisfied). Amino acids: flux head costs 0.0386 (sd 0.0071, n=3, t=-9.4);
+  projection vs box -0.0006. aa allon collapsed (sel 8). Checkpoint audits agree to 0.0.
+  Three kcat table versions across the six parity seeds (data mirror not frozen; analysis
+  keys on tier counts). Trainer built its own frozen package /scratch/.../frozen-027-wave6.
+- 09:47 hourly check: 1734/1735 (boxend nocstr) RUNNING fresh, last two cells (~10:10);
+  1730/1731 (tdg nocstr s2701/s2702) COMPLETED. Flux agent running; trainer, thermo,
+  kinetics done. No action.
+- 10:05 tdg nocstr seeds 2701/2702 (1730/1731): Spearman 0.002 / -0.063, box + second law
+  exact but balance median 0.69 / 0.068 (Genesis 0.00); seed 2700's 100% came with balance
+  2.8e-8 and zero signal. Wrote scripts/overnight_summary_2026_09_11.py (reads the five
+  result JSONs, writes results/overnight_summary_2026_09_11.{json,md}); ran it. Waiting on
+  1734/1735 (boxend) and the flux agent's report.
+- 10:05 flux agent final report: 12 cells; sign tightening (tdg) blocks the sustained
+  escape 0/6 vs 6/6 without it; tdg zero signal is the head not the seed; Genesis reachable
+  (P7 0.98, 99/100 strains feasible at every draw) but not reliable (0.00 at s2701/s2702);
+  covariance Q wired (4131x590); constraints.py parse-time fix landed; 134 tests pass.
+  Driver launched the last round on idle GPUs (done ~11:30): tdgm5 s2700/s2701 (1736/1737),
+  plain projection s2702 (1738), boxend s2702 (1739).
+- 10:12 overnight note written (experiments.027-betaxanthin-metabolic.overnight-2026-09-11), week-37 note created, memories written; 131 metabolism tests pass. Waiting on 1736-1739.

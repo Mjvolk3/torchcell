@@ -265,3 +265,33 @@ left unmarked; they are covered by their parent.
 **Do not self-promote a section.** An agent writing or revising a section leaves it `ai`,
 exactly as the paper's editing policy leaves a finished `todo` section for the author to
 promote. Only the author moves a section to `tent` or `read`.
+
+## 2026.09.08 - Every training result links to its W&B run
+
+**A `notes-tex` document that reports a trained result carries the W&B link for every run
+behind it, not just the project.** A table of arm means is a summary of curves that live
+on W&B, and a reader who wants the loss trajectory, the selected epoch or the validation
+curve behind one number should be able to click through to it from the PDF. The paper's
+editing view already colors external URLs, so the links cost nothing visually.
+
+The pattern, established for the 027 document:
+
+- **The trainer records `wandb_run_id` and `wandb_url` in its result JSON** next to the
+  metric it reports (`train_bx.py`, `sweep_flux.py`). A result file without the run URL
+  cannot be indexed afterwards; the 18 early `flux_arms_gpu*.json` runs of 026 are the
+  example, and they have no page.
+- **A script in the experiment folder builds the index and the table**
+  (`experiments/027-betaxanthin-metabolic/scripts/wandb_run_index.py`,
+  `experiments/026-metabolism-flux/scripts/wandb_run_index.py`): it reads the SAME result
+  files the analysis reads, writes `results/wandb_run_index.json` (pydantic records), and
+  emits `notes-tex/<doc>/tables/wandb_runs_<id>.tex` with every cell a
+  `\href{url}{\texttt{run id}}`. The section `\input`s that file next to the summary table
+  it backs. Never type run ids into a section by hand.
+- **Shape of the table.** A balanced grid is seed rows by arm columns (027: 24 by 6). A
+  sweep with uneven cells is one row per grid cell with `seed: id` entries wrapped in a
+  `p{}` column (026). Both fit `\footnotesize` on one page.
+- **The project link appears once in prose** near the first result it backs, and again in
+  the environment table where the entity and project are recorded as facts of the launch.
+
+The 019 documents and the paper's Methods should adopt the same pattern when they next
+report a trained result.

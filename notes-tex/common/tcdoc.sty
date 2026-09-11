@@ -252,6 +252,14 @@
   \includegraphics[width=#1\textwidth]{#2}\par\vspace{2pt}
   \caption[]{#3}\label{#4}
   \end{figure}}
+%% \tcfigh is \tcfigfit placed HERE ([H]) instead of floated. On a short document a
+%% floated figure is sent to its own page and leaves the text pages half empty; a
+%% three-page digest cannot afford that. Same scaling caveat as \tcfigfit.
+\newcommand{\tcfigh}[4][0.98]{%
+  \begin{figure}[H]\centering
+  \includegraphics[width=#1\textwidth]{#2}\par\vspace{2pt}
+  \caption[]{#3}\label{#4}
+  \end{figure}}
 %% Placeholder box for a figure that does not exist yet -- keeps the layout and
 %% the \ref working so a todo section still compiles and still reads correctly.
 \newcommand{\figph}[2]{%

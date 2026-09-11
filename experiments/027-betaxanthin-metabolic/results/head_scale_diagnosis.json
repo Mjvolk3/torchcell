@@ -1,0 +1,36 @@
+{
+  "note": "Raw head output at INITIALIZATION on one real training batch, against a target standardized to mean 0 sd 1. A head that starts at sd s pays a CRPS of order s before it has learned anything.",
+  "heads": [
+    {
+      "arm": "pooled",
+      "head_kind": "scalar",
+      "out_mean": -0.5731205940246582,
+      "out_sd": 0.0074052768759429455,
+      "target_mean": 0.0,
+      "target_sd": 1.0,
+      "ratio_sd_to_target": 0.0074052768759429455,
+      "detail": {
+        "hidden_cls_sd": 1.005597710609436
+      }
+    },
+    {
+      "arm": "flux_capacity",
+      "head_kind": "flux_scalar",
+      "out_mean": 7.030399322509766,
+      "out_sd": 0.23694300651550293,
+      "target_mean": 0.0,
+      "target_sd": 1.0,
+      "ratio_sd_to_target": 0.23694300651550293,
+      "detail": {
+        "v_abs_mean": 9.866799354553223,
+        "v_sd": 18.57978630065918,
+        "v_abs_max": 61.14791488647461,
+        "n_reactions": 4131.0,
+        "log1p_omega_mean": 3.1227023601531982,
+        "dense_term_sd": 0.2681092619895935,
+        "precursor_term_sd": 0.037834636867046356,
+        "dense_weight_sd": 0.008998933248221874
+      }
+    }
+  ]
+}

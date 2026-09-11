@@ -161,8 +161,12 @@ endif
 # Verified against the store manifest before it is written; needs TC_LIT_URL and
 # TC_LIT_API_KEY in the repo .env. Web-API export, so fields are formatted by
 # Zotero's translator rather than Better BibTeX; entry keys are the same.
+# BIB_NAME selects which served bibliography this document pulls: its own name by
+# default (a Zotero collection exported under the document slug), or `library` for a
+# document that cites from the whole library without a collection of its own.
+BIB_NAME ?= $(DOC)
 bib-pull:
-	@$(PYTHON) $(REPO)/scripts/lit_bib_pull.py --name $(DOC) --out references.bib
+	@$(PYTHON) $(REPO)/scripts/lit_bib_pull.py --name $(BIB_NAME) --out references.bib
 
 # CI-able: report citekey conflicts and duplicate works without writing anything.
 # Exits non-zero on a key conflict (one key, two works), which is the failure that

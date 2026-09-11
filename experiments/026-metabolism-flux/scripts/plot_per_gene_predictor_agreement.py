@@ -15,17 +15,25 @@ over its pairs in :math:`\log_{10}` space, taken separately for each predictor. 
 rather than mean because the pair distribution is heavy-tailed and one lipid substrate
 should not set a gene's turnover number.
 
-FOUR PANELS
--------------
-a. The across-predictor spread per gene, in decades. This is the error bar on a single
-   gene's :math:`k_{cat}` when the predictor is chosen arbitrarily.
+SIX PANELS, three rows of two
+------------------------------
+a. The across-predictor spread per gene, in orders of magnitude. This is the error bar on a
+   single gene's :math:`k_{cat}` when the predictor is chosen arbitrarily. (The JSON keys
+   still say ``decades``; they are read by the plotting code and renaming them would break
+   the figures for a word that no reader sees.)
 b. The same spread laid against the dynamic range of :math:`k_{cat}` itself, so the
    spread can be compared to the signal rather than read in isolation.
 c. Gene-level rank agreement between predictors. Pair-level Spearman is already reported;
-   this asks the different question of whether two predictors order the GENES alike.
+   this asks the different question of whether two predictors order the GENES alike. The
+   value is written into each cell: on a heatmap the number IS the datum, so this is the one
+   place the no-text-inside-the-axes rule does not apply, and the layout is three rows of two
+   rather than two of three so that the cells are large enough to carry a 6 pt number
+   without shrinking it.
 d. The genes that feed the betaxanthin cassette. Two of the four cassette members are
    heterologous and have no reaction in yeast-GEM, so no predictor emits a value for them;
    that absence is drawn rather than left out.
+e. Predicted against measured, on the Open Enzyme Database pairs.
+f. Accuracy against measured, ranked.
 """
 
 import argparse
@@ -41,7 +49,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, to_rgba
+from matplotlib.ticker import MultipleLocator
 
 from torchcell.timestamp import timestamp
 from torchcell.utils import (
@@ -61,6 +70,58 @@ KINETICS = osp.join(DATA_ROOT, "data", "torchcell", "kinetics")
 RESULTS = osp.join(EXPERIMENT_ROOT, "026-metabolism-flux", "results")
 OUT_DIR = osp.join(ASSET_IMAGES_DIR, "026-metabolism-flux")
 
+#: One predictor -> one color, EVERYWHERE. Panels d, e and f each drew their own series in
+#: whatever order they happened to iterate, so UniKP was blue in one panel and orange in the
+#: next. A reader comparing panels then reads two different enzymes. The map is keyed on the
+#: predictor name so the color cannot depend on sort order.
+PREDICTOR_COLOR_INDEX = {
+    "dlkcat": 0,
+    "unikp": 1,
+    "eitlem": 2,
+    "turnup": 3,
+    "deepenzyme": 4,
+    # EZKinetics takes slot 5 and Boost_KM slot 6, not the other way round. Slots 7-12 are
+    # a 0.73 SHADE of slots 1-6, so slot 6 is dark orange and collides with DLKcat's orange
+    # in the k_cat panels: the palette reserves lightness for validation-vs-test, never for
+    # category. Boost_KM is K_M-only and never shares a panel with DLKcat, so it is the one
+    # that can safely take a shade. This keeps all six k_cat predictors on distinct hues.
+    "ezkinetics": 5,
+    "boost_km": 6,
+}
+
+# A DELIBERATE DEVIATION from the primary-before-secondary rule, recorded so it is not
+# "fixed" later. Six k_cat predictors need six slots, so blue (DeepEnzyme, fifth) and gray
+# (EZKinetics, sixth) are correct there: the four primaries are spent first, which is
+# exactly what the rule asks. The K_M figures then carry gray for EZKinetics with only four
+# series, which the rule alone would forbid. One predictor, one color across every figure is
+# the stronger constraint: a reader comparing the k_cat and K_M figures is comparing the
+# same models, and a predictor that changed color between them would be read as two. Moving
+# EZKinetics to a primary would put it on yellow beside Boost_KM's dark yellow, separating
+# two categories by lightness, which is the encoding the palette reserves for validation
+# against test.
+
+
+def predictor_color(name: str) -> str:
+    """The one color this predictor is drawn in, in every panel of every figure."""
+    return PLOT_PALETTE[PREDICTOR_COLOR_INDEX[name] % len(PLOT_PALETTE)]
+
+
+#: The parameter, not the panel, picks the color where a panel draws ONE series per
+#: parameter. k_cat is the orange primary and K_M the purple one, matching panel e of
+#: parameter_coverage, so a reader moving between the two figures does not meet K_M in two
+#: different colors. Panel b used the orange fill for both, which is the defect.
+PARAMETER_COLOR = {"k_cat": 0, "K_M": 2}
+
+#: The within-class band of panel e is a reference REGION, not a series, so it must not take
+#: a color any predictor in the figure already has. This is the muted tier's PURPLE, dusty
+#: mauve (line #B690A4, fill #E8D3DE): no predictor reaches past slot 7, its low chroma keeps
+#: it behind the points, and its hue is used by nothing else in either figure. The pale
+#: yellow it replaces sat in Boost_KM's own hue family in the K_M figure and in TurNuP's in
+#: the k_cat one, so in both the band read as one more predictor rather than as a reference.
+#: Zero-based, so 14 is the fifteenth color; 15 is sand, which is the yellow this moved off.
+BAND_SLOT = 14
+
+
 DISPLAY = {
     "dlkcat": "DLKcat",
     "unikp": "UniKP",
@@ -68,6 +129,7 @@ DISPLAY = {
     "turnup": "TurNuP",
     "deepenzyme": "DeepEnzyme",
     "boost_km": "Boost_KM",
+    "ezkinetics": "EZKinetics",
 }
 
 # The Btx-cassette as torchcell.datasets.scerevisiae.cachera2023 declares it, plus the
@@ -112,8 +174,40 @@ def box(ax: plt.Axes) -> None:
         spine.set_linewidth(0.5)
 
 
+def tenths(ax: plt.Axes) -> None:
+    """A gridline every 0.1 on a 0 to 1 metric axis, labeled every 0.2."""
+    ax.set_ylim(0, 1.0)
+    ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(axis="y", which="minor", length=0)
+    ax.grid(axis="y", which="both", linewidth=0.3, color="0.85")
+    ax.set_axisbelow(True)
+
+
+def legend_above(ax: plt.Axes, handles, names, ncol: int) -> None:
+    """Put a legend OUTSIDE the axes, above it.
+
+    Repo rule: nothing but data is drawn inside the axes. A legend placed with `loc=` sits
+    over the data, gets shrunk to fit whatever space is left, and silently collides with any
+    annotation that moves. Anchoring above the axes costs a little height and cannot collide.
+    """
+    ax.legend(
+        handles,
+        names,
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.01),
+        ncol=ncol,
+        frameon=False,
+        fontsize=6,
+        handlelength=1.2,
+        handletextpad=0.4,
+        borderpad=0.0,
+        columnspacing=1.0,
+    )
+
+
 def main() -> None:
-    """Draw the four panels and record every number they show."""
+    """Draw the six panels and record every number they show."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--parameter", default="k_cat", choices=["k_cat", "K_M"])
     parser.add_argument("--no-timestamp", action="store_true")
@@ -136,62 +230,75 @@ def main() -> None:
         "n_genes_all_predictors": int(len(complete)),
     }
 
+    # Three rows of two, not two of three. At two-of-three every panel was 55 mm wide and
+    # the heatmap in c came out with cells under 5 mm; at 88 mm a panel the cells are 7 mm
+    # and carry their value at 6 pt. Height stays under the 170 mm ceiling.
     fig, axes = plt.subplots(
-        2, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(108)), dpi=300
+        3, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(152)), dpi=300
     )
 
     # --- a. the across-predictor spread for one gene ---------------------------
     ax = axes[0, 0]
     spread = (complete.max(axis=1) - complete.min(axis=1)).to_numpy()
+    median_spread = float(np.median(spread))
     ax.hist(spread, bins=45, color=PLOT_PALETTE[0], edgecolor="black", linewidth=0.3)
-    ax.axvline(float(np.median(spread)), color="black", linewidth=0.8, linestyle="--")
-    ax.text(
-        float(np.median(spread)),
-        ax.get_ylim()[1] * 0.94,
-        f"  median {np.median(spread):.2f}  ({10 ** np.median(spread):.0f}-fold)",
-        fontsize=5,
-        va="top",
-    )
+    ax.axvline(median_spread, color="black", linewidth=0.8, linestyle="--")
+    # The median is NOT annotated on the panel; it is stated in the caption. See the
+    # no-labels-inside-the-axes rule in CLAUDE.md.
     ax.set_xlabel(
         f"across-predictor spread of {symbol},  "
-        r"$\log_{10}(\mathrm{max}/\mathrm{min})$"
+        r"$\log_{10}(\mathrm{max}/\mathrm{min})$" "\n(orders of magnitude)"
     )
     ax.set_ylabel("genes")
     box(ax)
-    summary["spread_median_decades"] = float(np.median(spread))
+    summary["spread_median_decades"] = median_spread
     summary["spread_p90_decades"] = float(np.percentile(spread, 90))
     summary["spread_frac_above_1_decade"] = float((spread > 1.0).mean())
 
     # --- b. spread against the dynamic range of the quantity itself ------------
+    #
+    # WHY THIS PANEL WAS REDRAWN. The band carries the whole message and it was drawn in
+    # PLOT_PALETTE_FILL[0] with linewidth 0: a 92-percent-luminance wash with no edge, under
+    # a 0.7 pt pure-black median line. The palest color in the palette was doing the primary
+    # work while the darkest ink went to a curve that is monotone by construction, since the
+    # genes are SORTED by it. Three changes, none of them cosmetic:
+    #   1. the band keeps the pale fill but gains its own line color as a real edge, drawn as
+    #      the min and max curves, so the envelope has a boundary the eye can find;
+    #   2. the color follows the PARAMETER, so K_M is purple here and purple in the coverage
+    #      figure rather than orange in one and purple in the other;
+    #   3. x is the percentile of genes rather than an ordinal count, so the axis reads
+    #      without the reader converting "gene 800 of 980" into a fraction.
+    # The median line stays black and thin: it is the summary, and it should not outweigh
+    # the quantity the panel exists to show.
     ax = axes[0, 1]
+    slot = PARAMETER_COLOR[parameter]
     center = complete.median(axis=1).to_numpy()
     order = np.argsort(center)
+    low = complete.min(axis=1).to_numpy()[order]
+    high = complete.max(axis=1).to_numpy()[order]
+    percentile = np.linspace(0, 100, len(order))
     ax.fill_between(
-        np.arange(len(order)),
-        complete.min(axis=1).to_numpy()[order],
-        complete.max(axis=1).to_numpy()[order],
-        color=PLOT_PALETTE[4],
-        alpha=0.45,
-        linewidth=0,
+        percentile, low, high, color=PLOT_PALETTE_FILL[slot], linewidth=0,
         label="predictor min-max",
     )
+    for edge in (low, high):
+        ax.plot(percentile, edge, color=PLOT_PALETTE[slot], linewidth=0.6)
     ax.plot(
-        np.arange(len(order)),
+        percentile,
         center[order],
         color="black",
         linewidth=0.7,
         label="median over predictors",
     )
-    ax.set_xlabel("gene, ranked by median across predictors")
+    ax.set_xlim(0, 100)
+    ax.set_xlabel("gene percentile, ranked by median across predictors")
     ax.set_ylabel(f"log$_{{10}}$ {symbol}")
-    ax.legend(loc="upper left", frameon=False, fontsize=5, handlelength=1.4,
-              handletextpad=0.4, borderpad=0.1)
+    handles, names = ax.get_legend_handles_labels()
+    legend_above(ax, handles, names, ncol=2)
     box(ax)
-    # The comparison the panel exists to make: is the disagreement between instruments
-    # larger than the range of the quantity they are measuring?
     signal = float(np.percentile(center, 90) - np.percentile(center, 10))
     summary["central_p10_p90_range_decades"] = signal
-    summary["spread_over_signal"] = float(np.median(spread) / signal)
+    summary["spread_over_signal"] = float(median_spread / signal)
 
     # --- c. gene-level rank agreement -----------------------------------------
     ax = axes[1, 0]
@@ -200,36 +307,39 @@ def main() -> None:
     for i, left in enumerate(predictors):
         for j, right in enumerate(predictors):
             if i == j:
-                # A predictor against itself is 1 by construction and carries no
-                # information, so the diagonal is left blank rather than drawn as the
-                # brightest cell on the panel.
                 continue
             both = table[[left, right]].dropna()
             if len(both) >= 3:
                 grid[i, j] = both[left].corr(both[right], method="spearman")
-    # The same white-to-orange ramp 020 uses for its Merzbacher comparison matrices
-    # (`CGT_CMAP` in plot_merzbacher_comparison.py), so agreement matrices across the
-    # betaxanthin work read alike rather than each inventing a scale.
     agreement_cmap = LinearSegmentedColormap.from_list(
         "tc_orange",
         ["#FFFFFF", PLOT_PALETTE_FILL[0], PLOT_PALETTE[0], PLOT_PALETTE[6]],
     )
     agreement_cmap.set_bad("#FFFFFF")
-    image = ax.imshow(np.ma.masked_invalid(grid), cmap=agreement_cmap, vmin=0, vmax=1)
+    # aspect="auto" lets the matrix fill the panel it is given. With the default equal
+    # aspect the height bounds it, the panel sits as a square in the middle of an 88 mm
+    # slot and the letter floats 20 mm from its own panel.
+    image = ax.imshow(
+        np.ma.masked_invalid(grid), cmap=agreement_cmap, vmin=0, vmax=1, aspect="auto"
+    )
     ax.set_xticks(range(n))
     ax.set_xticklabels([DISPLAY.get(p, p) for p in predictors], rotation=35, ha="right")
     ax.set_yticks(range(n))
     ax.set_yticklabels([DISPLAY.get(p, p) for p in predictors])
+    # The value goes in the cell. This is data, not a label: a heatmap cell's number is the
+    # datum the color encodes, and the color alone cannot be read to two decimals. Black
+    # throughout, because the scale tops out at 0.55 where the orange is still mid-tone.
     for i in range(n):
         for j in range(n):
             if np.isfinite(grid[i, j]):
-                ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center", fontsize=5,
-                        color="white" if grid[i, j] > 0.80 else "black")
-    # A slim, short colorbar: the default steals width from the matrix and pushes the
-    # panel right, which is what left panel c cramped against panel d.
-    bar = fig.colorbar(image, ax=ax, fraction=0.030, pad=0.02, shrink=0.82)
+                ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center",
+                        fontsize=6, color="black")
+    # The colorbar takes its own strip to the right rather than the gap below, which is
+    # what had squeezed the heatmap to a third of the panel height.
+    bar = fig.colorbar(image, ax=ax, location="right", fraction=0.05, pad=0.04,
+                       aspect=22)
     bar.set_label("gene-level Spearman", fontsize=6)
-    bar.ax.tick_params(labelsize=5, width=0.5)
+    bar.ax.tick_params(labelsize=6, width=0.5)
     bar.outline.set_linewidth(0.5)
     box(ax)
     summary["gene_level_spearman"] = {
@@ -257,17 +367,15 @@ def main() -> None:
         for k, predictor in enumerate(predictors):
             value = table.loc[orf, predictor]
             if np.isfinite(value):
-                ax.scatter(value, row, s=9, color=PLOT_PALETTE[k % len(PLOT_PALETTE)],
+                ax.scatter(value, row, s=9, color=predictor_color(predictor),
                            edgecolors="black", linewidths=0.3, zorder=3,
                            label=DISPLAY.get(predictor, predictor) if row == 2 else None)
-
-    # The absent genes get ONE shaded band and ONE label, not a repeated sentence per row.
-    # Both heterologous members of the cassette are missing for the same reason, so saying
-    # it twice reads as two findings and collides with the tick labels.
     if absent_rows:
+        # The shaded band marks the heterologous genes; what it means is said in the
+        # caption, not written across the panel.
         ax.axhspan(
             min(absent_rows) - 0.45, max(absent_rows) + 0.45,
-            color=PLOT_PALETTE[5], alpha=0.13, linewidth=0, zorder=0,
+            color=PLOT_PALETTE_FILL[5], linewidth=0, zorder=0,
         )
     ax.set_yticks(offsets)
     ax.set_yticklabels(labels)
@@ -275,37 +383,109 @@ def main() -> None:
     ax.axhline(len(CASSETTE) - 0.5, color="black", linewidth=0.5, linestyle=":")
     ax.set_xlabel(f"log$_{{10}}$ {symbol}")
     ax.set_ylabel("cassette / tyrosine supply")
-    left_limit, right_limit = ax.get_xlim()
-    span = right_limit - left_limit
-    ax.set_xlim(left_limit, right_limit + 0.46 * span)
-    if absent_rows:
-        # Placed at the right, inside the space just opened for the legend, so it sits
-        # beside the shaded band rather than across the gene names.
-        ax.text(
-            0.985, (min(absent_rows) + max(absent_rows)) / 2,
-            "no reaction\nin yeast-GEM",
-            fontsize=4.8, style="italic", color="#555555", va="center", ha="right",
-            transform=ax.get_yaxis_transform(),
-        )
     handles, names = ax.get_legend_handles_labels()
     if handles:
-        ax.legend(handles, names, loc="lower right", frameon=False, fontsize=4.8,
-                  handletextpad=0.2, borderpad=0.1, labelspacing=0.22)
+        legend_above(ax, handles, names, ncol=3)
     box(ax)
     summary["cassette_genes_absent_from_all_predictors"] = absent
 
-    for letter, ax in zip("abcd", axes.flatten()):
-        ax.text(-0.20, 1.08, letter, transform=ax.transAxes, fontsize=8,
+    # --- e and f. accuracy against measured values -----------------------------
+    accuracy_path = osp.join(RESULTS, "predictor_vs_measured.json")
+    pairs_path = osp.join(RESULTS, "predictor_vs_measured.csv")
+    with open(accuracy_path) as handle:
+        accuracy = json.load(handle)
+    pairs = pd.read_csv(pairs_path)
+    block = accuracy["parameters"][parameter]["predictors"]
+    scored = {k: v for k, v in block.items() if "spearman" in v}
+
+    # --- e. predicted against measured ----------------------------------------
+    ax = axes[2, 0]
+    subset = pairs[pairs["parameter"] == parameter]
+    for k, predictor in enumerate(sorted(scored, key=lambda p: -scored[p]["spearman"])):
+        rows = subset[subset["predictor"] == predictor]
+        ax.scatter(
+            np.log10(rows["measured"]), np.log10(rows["predicted"]),
+            s=6, color=to_rgba(predictor_color(predictor), 0.85), edgecolors="black",
+            linewidths=0.2, zorder=3,
+            label=DISPLAY.get(predictor, predictor),
+        )
+    lo = float(np.log10(subset["measured"].min())) - 0.4
+    hi = float(np.log10(subset["measured"].max())) + 0.4
+    # The band of biological plausibility, not a tolerance on the prediction. Its half
+    # width is the median standard deviation of log10 kcat across the distinct enzymes of
+    # one EC4 class, measured over the whole Open Enzyme Database. A point inside it is no
+    # further from the truth than two enzymes doing the SAME job are from each other, which
+    # is what a predictor that had learned only the enzyme's function would achieve.
+    with open(osp.join(RESULTS, "ec_class_variance.json")) as handle:
+        within_class_sd = json.load(handle)["parameters"][parameter]["within_class"][
+            "median_within_class_sd_decades"
+        ]
+    ax.fill_between(
+        [lo, hi], [lo - within_class_sd, hi - within_class_sd],
+        [lo + within_class_sd, hi + within_class_sd],
+        color=PLOT_PALETTE_FILL[BAND_SLOT], edgecolor=PLOT_PALETTE[BAND_SLOT],
+        linewidth=0.4, zorder=1,
+        label=f"within-class spread (±{within_class_sd:.2f})",
+    )
+    ax.plot([lo, hi], [lo, hi], color="black", linewidth=0.6, linestyle="--", zorder=2)
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(lo, hi)
+    ax.set_xlabel(f"measured log$_{{10}}$ {symbol}, Open Enzyme Database")
+    ax.set_ylabel(f"predicted log$_{{10}}$ {symbol}")
+    handles, names = ax.get_legend_handles_labels()
+    legend_above(ax, handles, names, ncol=4)
+    summary["within_class_band_decades"] = within_class_sd
+    summary["frac_predictions_inside_within_class_band"] = {
+        predictor: float(
+            (
+                np.abs(
+                    np.log10(subset.loc[subset["predictor"] == predictor, "predicted"])
+                    - np.log10(subset.loc[subset["predictor"] == predictor, "measured"])
+                )
+                < within_class_sd
+            ).mean()
+        )
+        for predictor in sorted(scored)
+    }
+    box(ax)
+
+    # --- f. accuracy, ranked --------------------------------------------------
+    ax = axes[2, 1]
+    ordered = sorted(scored, key=lambda p: -scored[p]["spearman"])
+    positions = np.arange(len(ordered))
+    width = 0.38
+    ax.bar(positions - width / 2, [scored[p]["spearman"] for p in ordered], width,
+           color=PLOT_PALETTE[0], edgecolor="black", linewidth=0.4,
+           label="Spearman against measured")
+    # Two series, so the second takes the SECOND palette slot rather than the third.
+    ax.bar(positions + width / 2,
+           [scored[p]["median_abs_error_decades"] for p in ordered], width,
+           color=PLOT_PALETTE[1], edgecolor="black", linewidth=0.4,
+           label="median |error| (orders of magnitude)")
+    ax.set_xticks(positions)
+    ax.set_xticklabels([DISPLAY.get(p, p) for p in ordered], rotation=35, ha="right")
+    # Two different quantities share the axis, so the label names both rather than calling
+    # them one thing. Higher is better for the first, lower for the second. The unit of
+    # the second is in the legend entry; repeating it here ran the label into the panel
+    # letter.
+    ax.set_ylabel("Spearman  /  median |error|")
+    tenths(ax)
+    handles, names = ax.get_legend_handles_labels()
+    legend_above(ax, handles, names, ncol=1)
+    box(ax)
+    summary["accuracy_vs_measured"] = scored
+    summary["accuracy_n_pairs"] = (
+        int(next(iter(scored.values()))["n_pairs"]) if scored else 0
+    )
+    summary["selection_effect"] = accuracy["parameters"][parameter].get(
+        "selection_effect"
+    )
+
+    for letter, ax in zip("abcdef", axes.flatten()):
+        ax.text(-0.14, 1.14, letter, transform=ax.transAxes, fontsize=8,
                 fontweight="bold", va="top")
 
-    fig.tight_layout(w_pad=2.4, h_pad=2.0)
-
-    # Reclaim the dead space to the left of panel c. Done after tight_layout because that
-    # is what created it: the matrix is centred in its cell against tick labels far wider
-    # than panel a's, so the axes drifts right of the column above it.
-    heat_ax = axes[1, 0]
-    pos = heat_ax.get_position()
-    heat_ax.set_position([pos.x0 - 0.055, pos.y0, pos.width + 0.030, pos.height])
+    fig.tight_layout(w_pad=2.6, h_pad=2.8)
     base = f"per_gene_agreement_{parameter}{stamp}"
     savefig_true_size_svg(fig, osp.join(OUT_DIR, f"{base}.svg"))
     fig.savefig(osp.join(OUT_DIR, f"{base}.png"), dpi=300)
@@ -314,7 +494,7 @@ def main() -> None:
     os.makedirs(RESULTS, exist_ok=True)
     with open(osp.join(RESULTS, f"per_gene_agreement_{parameter}.json"), "w") as handle:
         json.dump(summary, handle, indent=2)
-    print(json.dumps(summary, indent=2))
+    print(json.dumps(summary, indent=2)[:1200])
     print(f"figure written to {osp.join(OUT_DIR, base)}.svg")
 
 

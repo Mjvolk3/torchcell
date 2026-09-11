@@ -230,22 +230,43 @@ def check_provenance(srcs: dict[str, str]) -> list[tuple[str, str]]:
 
 
 def check_figure_widths(srcs: dict[str, str]) -> list[tuple[str, str]]:
-    """Figures placed at true size must fit the text block."""
+    """Figures placed at true size must fit the text block.
+
+    A figure placed with ``\\tcfigfit`` or its placed-here twin ``\\tcfigh`` is EXEMPT,
+    because those macros scale to a fraction of ``\\textwidth`` by definition, so an
+    oversize source is intended rather than a defect.
+    The error message has always named that remedy; until now nothing detected it, so the
+    only way to satisfy the check was to redraw a diagram that was already placed correctly.
+    """
     findings = []
     refs = set()
+    fitted = set()
     for txt in srcs.values():
         refs.update(re.findall(r"(figures/[A-Za-z0-9._/-]+\.pdf)", txt))
+        # \tcfigfit[scale]{figures/x.pdf}{caption}{label} -- the optional arg may be absent.
+        # \tcfigh takes the same arguments and scales the same way.
+        fitted.update(
+            re.findall(
+                r"\\tcfig(?:fit|h)(?:\[[^\]]*\])?\{(figures/[A-Za-z0-9._/-]+\.pdf)\}", txt
+            )
+        )
     for rel in sorted(refs):
         if not osp.exists(rel):
             findings.append(("WARN", f"figure referenced but missing: {rel}"))
             continue
-        raw = open(rel, "rb").read(400_000)
+        # Read the WHOLE file: rsvg-convert writes the page object after the content
+        # stream, so a figure over ~400 kB had its /MediaBox past a fixed prefix and the
+        # width check skipped it silently (external_pka_benchmark.pdf, 691 kB).
+        raw = open(rel, "rb").read()
         boxes = re.findall(rb"/MediaBox\s*\[\s*([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)", raw)
         if not boxes:
+            findings.append(("WARN", f"figure has no readable /MediaBox, width unchecked: {rel}"))
             continue
         x0, _y0, x1, _y1 = (float(v) for v in boxes[0])
         mm = (x1 - x0) * MM_PER_PT
-        if mm > TEXT_BLOCK_MM + 0.5:
+        if rel in fitted:
+            print(f"  {GRY}fig{RST} {rel} {mm:.1f} mm (scaled by \\tcfigfit)")
+        elif mm > TEXT_BLOCK_MM + 0.5:
             findings.append(
                 ("ERROR", f"{rel} is {mm:.1f} mm wide, text block is {TEXT_BLOCK_MM:.0f} mm "
                           f"-- redraw to <=180 mm or place with \\tcfigfit")

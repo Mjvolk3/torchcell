@@ -37,6 +37,7 @@ from dotenv import load_dotenv
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -47,28 +48,55 @@ RESULTS_DIR = osp.join(os.environ["EXPERIMENT_ROOT"], "026-metabolism-flux", "re
 IMAGES_DIR = osp.join(os.environ["ASSET_IMAGES_DIR"], "026-metabolism-flux")
 
 ARM_ORDER = ["pooled", "flux_off", "flux_free", "flux_anchored", "flux_nullspace"]
-#: Short labels. A five-category axis at 88 mm has about 16 mm per tick, so anything
-#: longer than roughly ten characters per line collides with its neighbours.
+#: Short labels, ROTATED rather than stacked on two lines. A five-category axis in a third
+#: of the page has about 11 mm per tick, and "flux anchored" set horizontally overruns its
+#: neighbour whether it is on one line or two.
 ARM_LABEL = {
     "pooled": "pooled",
-    "flux_off": "flux\nbare",
-    "flux_free": "flux\nfree $\\mu$",
-    "flux_anchored": "flux\nanchored",
-    "flux_nullspace": "flux\nnull sp.",
+    "flux_off": "flux bare",
+    "flux_free": "flux free $\\mu$",
+    "flux_anchored": "flux anchored",
+    "flux_nullspace": "flux null space",
 }
+#: The same names without the "flux " prefix, for legends where the panel has already said
+#: that every series is an arm of the flux layer.
+ARM_SHORT = {a: ARM_LABEL[a].replace("flux ", "") for a in ARM_ORDER}
 #: Betaxanthin replicate-based noise ceiling, from
 #: experiments/019-simb-multimodal/results/pigment_noise_ceiling.json.
 BETAXANTHIN_CEILING = 0.914
 
+#: One arm, ONE color, in every panel. Keyed on the arm rather than on iteration order, so
+#: a corner in panel c is drawn in the same color as that arm's trace in panel b.
+ARM_COLOR = {arm: PLOT_PALETTE[i] for i, arm in enumerate(ARM_ORDER)}
+
 
 def _style(ax: plt.Axes) -> None:
-    """Boxed axes, 0.5 pt spines, tenth gridlines."""
+    """Boxed axes, 0.5 pt spines, thin solid gridlines."""
     for spine in ax.spines.values():
         spine.set_visible(True)
         spine.set_linewidth(0.5)
     ax.tick_params(labelsize=6, width=0.5, length=2)
-    ax.grid(True, which="both", linewidth=0.3, alpha=0.4)
+    ax.grid(True, which="both", linewidth=0.3, color="0.85")
     ax.set_axisbelow(True)
+
+
+def _legend_above(ax: plt.Axes, ncol: int, handles=None, names=None) -> None:
+    """Legend OUTSIDE the axes, above it. Only data goes in the data area."""
+    if handles is None:
+        handles, names = ax.get_legend_handles_labels()
+    ax.legend(
+        handles,
+        names,
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.01),
+        ncol=ncol,
+        frameon=False,
+        fontsize=6,
+        handlelength=1.2,
+        handletextpad=0.4,
+        borderpad=0.0,
+        columnspacing=1.0,
+    )
 
 
 def load_runs() -> list[dict[str, Any]]:
@@ -108,11 +136,10 @@ def main() -> None:
     arms = [a for a in ARM_ORDER if a in by_arm]
     print(f"loaded {len(runs)} runs across {len(arms)} arms")
 
-    plt.rcParams.update(
-        {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"}
-    )
+    apply_paper_style()
+    plt.rcParams.update({"xtick.major.width": 0.5, "ytick.major.width": 0.5})
     fig, axes = plt.subplots(
-        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(54.0))
+        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58.0))
     )
 
     # -- a. prediction --------------------------------------------------------
@@ -143,24 +170,21 @@ def main() -> None:
             )
     ax.axhline(0, color="black", linewidth=0.5)
     ax.set_xticks(x)
-    ax.set_xticklabels([ARM_LABEL[a] for a in arms], fontsize=6)
+    ax.set_xticklabels([ARM_LABEL[a] for a in arms], rotation=30, ha="right")
     ax.set_ylabel("peak validation Pearson $r$")
     ax.set_ylim(-0.10, 0.20)
-    ax.legend(fontsize=6, frameon=False, loc="upper left", handlelength=1.2)
-    ax.text(
-        0.98,
-        0.97,
-        f"noise ceiling $r$ = {BETAXANTHIN_CEILING}",
-        transform=ax.transAxes,
-        fontsize=6,
-        va="top",
-        ha="right",
+    handles, names = ax.get_legend_handles_labels()
+    handles.append(
+        plt.Line2D([0], [0], marker="o", markersize=2, linestyle="none", color="black")
     )
+    names.append("one seed")
+    _legend_above(ax, ncol=3, handles=handles, names=names)
+    # The noise ceiling is stated in the caption, not drawn inside the axes.
     _style(ax)
 
     # -- b. feasibility over training ----------------------------------------
     ax = axes[1]
-    for i, a in enumerate(arms):
+    for a in arms:
         hist = by_arm[a][0]["history"]
         bal = [h.get("feas_balance_median") for h in hist]
         if not any(v is not None for v in bal):
@@ -168,58 +192,56 @@ def main() -> None:
         ax.plot(
             [h["epoch"] for h in hist],
             bal,
-            color=PLOT_PALETTE[i],
+            color=ARM_COLOR[a],
             linewidth=0.8,
-            label=a.replace("_", " "),
+            label=ARM_SHORT[a],
         )
     ax.set_yscale("log")
     ax.set_xlabel("epoch")
     ax.set_ylabel(
         "mass-balance residual\n"
-        r"median$_i\;|[Sv]_i| / \omega_i$   (2 = worst)"
+        r"median$_i\;|[Sv]_i| / \omega_i$"
     )
-    ax.legend(fontsize=6, frameon=False)
+    _legend_above(ax, ncol=2)
     _style(ax)
 
     # -- c. the exactness budget ---------------------------------------------
-    # The three box-parameterized arms land on ONE point by construction, so annotating
-    # each at its own coordinate stacks three labels on top of each other. Group the
-    # arms by their (balance, box) corner and label the corner once.
+    # The three box-parameterized arms land on ONE point by construction. They used to be
+    # collapsed into a corner carrying a stacked TEXT label inside the data area, which is
+    # the annotation the repo standard forbids and which also gave the corner a color that
+    # meant nothing in panel b. Instead each arm keeps ITS OWN color and is drawn at its
+    # own coordinate, with markers nested from large to small so a shared corner shows
+    # every member as a ring rather than hiding all but the last drawn. Membership is read
+    # off the legend above the panel.
     ax = axes[2]
     corners: dict[tuple[float, float], list[str]] = defaultdict(list)
+    placed: dict[str, tuple[float, float]] = {}
     for a in arms:
         hist = by_arm[a][0]["history"]
         if not hist or "feas_balance_median" not in hist[-1]:
             continue
         bal = max(hist[-1]["feas_balance_median"], 1e-12)
         box = max(hist[-1].get("feas_box_violation_frac", 0.0), 1e-12)
+        placed[a] = (bal, box)
         # Round to a decade so numerically identical corners collapse together.
         corners[(round(np.log10(bal), 1), round(np.log10(box), 1))].append(a)
-    for i, ((lb, lx), members) in enumerate(sorted(corners.items())):
+    sizes: dict[str, float] = {}
+    for members in corners.values():
+        for rank, member in enumerate(members):
+            sizes[member] = 40.0 - 13.0 * rank
+    for a in arms:
+        if a not in placed:
+            continue
+        bal, box = placed[a]
         ax.scatter(
-            10**lb,
-            10**lx,
-            s=22,
-            color=PLOT_PALETTE[i],
+            bal,
+            box,
+            s=sizes[a],
+            color=ARM_COLOR[a],
             edgecolors="black",
             linewidths=0.4,
             zorder=3,
-        )
-        label = "\n".join(m.replace("flux_", "").replace("_", " ") for m in members)
-        # Label inward. A corner sitting at the right edge of the axis has no room to its
-        # right, and the box arms sit at a residual of ~2, which IS the right edge.
-        # Label inward on BOTH axes. A corner at the right edge has no room to its right,
-        # and one at the bottom edge has none below, where it would land on the tick labels.
-        right = lb > -4
-        low = lx < -6
-        ax.annotate(
-            label,
-            (10**lb, 10**lx),
-            fontsize=6,
-            xytext=(-5 if right else 5, 4 if low else -2),
-            textcoords="offset points",
-            va="bottom" if low else "top",
-            ha="right" if right else "left",
+            label=ARM_SHORT[a],
         )
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -227,9 +249,14 @@ def main() -> None:
     ax.set_ylim(1e-13, 1e1)
     ax.set_xlabel(r"mass-balance residual (soft $\to$ right)")
     ax.set_ylabel(r"box violation fraction (soft $\to$ up)")
+    _legend_above(ax, ncol=2)
     _style(ax)
 
-    fig.tight_layout()
+    for letter, ax in zip("abc", axes):
+        ax.text(-0.20, 1.18, letter, transform=ax.transAxes, fontsize=8,
+                fontweight="bold", va="top")
+
+    fig.tight_layout(w_pad=2.6)
     stem = osp.join(IMAGES_DIR, "flux_arm_comparison")
     fig.savefig(f"{stem}.png", dpi=300)
     savefig_true_size_svg(fig, f"{stem}.svg")

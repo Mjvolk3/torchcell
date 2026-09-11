@@ -22,6 +22,13 @@ genuinely new ones, and the blocker is a license rather than a method. That dist
 decides what to do next: a novel-compound route has to come from a decomposition that
 estimates pKa without ChemAxon, not from more plumbing here.
 
+Which side of that boundary a compound falls on depends on how it is looked up, and the
+first version of this script drew the line in the wrong place. It matched the PubChem
+structure's InChI against the cache exactly, but the cache stores the InChI of the major
+microspecies, so a compound whose stored form is deprotonated does not match the neutral
+structure and is reported as absent. Matching the first two InChIKey blocks, the skeleton
+and the stereochemistry, is invariant to protonation and finds it.
+
 Structures are retrieved from PubChem by name and checked against the molecular formulas
 the pathway module declares, so a wrong-compound hit shows up as a formula mismatch
 instead of a plausible number.
@@ -93,6 +100,8 @@ def main() -> None:
             "formula_matches": formula == expected_formula,
             "smiles": smiles,
             "in_equilibrator_cache": False,
+            "cache_inchi_key": None,
+            "n_cache_matches": 0,
             "dgf_prime_kj_per_mol": None,
             "sigma_kj_per_mol": None,
             "blocker": None,
@@ -107,11 +116,18 @@ def main() -> None:
             continue
 
         molecule = Chem.MolFromSmiles(smiles)
-        compound = (
-            cc.get_compound_by_inchi(Chem.MolToInchi(molecule))
+        # Match on the first two InChIKey blocks, the skeleton and the stereochemistry,
+        # not on the InChI string. The cache stores the InChI of the MAJOR MICROSPECIES,
+        # whose final InChIKey block records the protonation state, so an exact match
+        # against a neutral structure reports a cached compound as absent.
+        matches = (
+            cc.search_compound_by_inchi_key(Chem.MolToInchiKey(molecule)[:25])
             if molecule is not None
-            else None
+            else []
         )
+        compound = matches[0] if matches else None
+        row["cache_inchi_key"] = compound.inchi_key if compound is not None else None
+        row["n_cache_matches"] = len(matches)
         if compound is None:
             row["blocker"] = "absent_from_cache_needs_cxcalc_chemaxon_license"
             rows.append(row)

@@ -1,0 +1,166 @@
+{
+ "built_at": "2026-09-09T21:24:40.258463+00:00",
+ "n_targets": 9,
+ "n_with_structure": 8,
+ "n_already_in_cache": 3,
+ "n_genuinely_absent": 5,
+ "targets": [
+  {
+   "key": "betaxanthin:leucodopachrome",
+   "source": "pathway_thermo_betaxanthin",
+   "name": "leucodopachrome",
+   "met_ids": [],
+   "formula": "C9H9NO4",
+   "chemical_class": null,
+   "smiles": "C1[C@H](NC2=CC(=C(C=C21)O)O)C(=O)O",
+   "structure_source": "pubchem_via_pathway_thermo",
+   "inchi_key": "JDWYRSDDJVCWPB-LURJTMIESA-N",
+   "cache_hit_compound_id": 2121,
+   "cache_hit_has_group_vector": true,
+   "genuinely_absent": false,
+   "blocker": null
+  },
+  {
+   "key": "betaxanthin:betanidin",
+   "source": "pathway_thermo_betaxanthin",
+   "name": "betanidin",
+   "met_ids": [],
+   "formula": "C18H16N2O8",
+   "chemical_class": null,
+   "smiles": "C1[C@H](N=C(C=C1/C=C/N2[C@@H](CC3=CC(=C(C=C32)O)O)C(=O)O)C(=O)O)C(=O)O",
+   "structure_source": "pubchem_via_pathway_thermo",
+   "inchi_key": "BBJUSJOGHYQDQX-WODDMCJRSA-N",
+   "cache_hit_compound_id": 32385,
+   "cache_hit_has_group_vector": true,
+   "genuinely_absent": false,
+   "blocker": null
+  },
+  {
+   "key": "betaxanthin:betalamic acid",
+   "source": "pathway_thermo_betaxanthin",
+   "name": "betalamic acid",
+   "met_ids": [],
+   "formula": "C9H9NO5",
+   "chemical_class": null,
+   "smiles": "C\\1[C@H](NC(=C/C1=C/C=O)C(=O)O)C(=O)O",
+   "structure_source": "pubchem_via_pathway_thermo",
+   "inchi_key": "YQDKULBMDMPFLH-FSRBREEPSA-N",
+   "cache_hit_compound_id": 1874,
+   "cache_hit_has_group_vector": true,
+   "genuinely_absent": false,
+   "blocker": null
+  },
+  {
+   "key": "audit:ferroheme b",
+   "source": "unresolved_metabolites",
+   "name": "ferroheme b",
+   "met_ids": [
+    "s_0712"
+   ],
+   "formula": "C34H30FeN4O4",
+   "chemical_class": "other",
+   "smiles": "C=CC1=C(C)C2=CC3=C(C=C)C(C)=C4C=C5C(C)=C(CCC(=O)[O-])C6=[N+]5[Fe-2]5(N7C(=CC1=[N+]25)C(C)=C(CCC(=O)[O-])C7=C6)N43",
+   "structure_source": "metanetx.chem_prop:MNXM249",
+   "inchi_key": "KABFMIBPWCXCRK-UHFFFAOYSA-J",
+   "cache_hit_compound_id": null,
+   "cache_hit_has_group_vector": null,
+   "genuinely_absent": true,
+   "blocker": null
+  },
+  {
+   "key": "audit:phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "source": "unresolved_metabolites",
+   "name": "phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "met_ids": [
+    "s_3132",
+    "s_3150",
+    "s_3168",
+    "s_3185",
+    "s_3467",
+    "s_3706"
+   ],
+   "formula": "C37H70NO8P",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "structure_source": "metanetx.chem_prop:MNXM739593 via chebi:138792",
+   "inchi_key": "PGPMCWZMPPZJML-NAFNZUQFSA-N",
+   "cache_hit_compound_id": null,
+   "cache_hit_has_group_vector": null,
+   "genuinely_absent": true,
+   "blocker": null
+  },
+  {
+   "key": "audit:1-acylglycerophosphoethanolamine (16:1)",
+   "source": "unresolved_metabolites",
+   "name": "1-acylglycerophosphoethanolamine (16:1)",
+   "met_ids": [
+    "s_3425",
+    "s_3468",
+    "s_3687"
+   ],
+   "formula": "C21H42NO7P",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "smiles": null,
+   "structure_source": null,
+   "inchi_key": null,
+   "cache_hit_compound_id": null,
+   "cache_hit_has_group_vector": null,
+   "genuinely_absent": false,
+   "blocker": "no_structure_in_any_namespace"
+  },
+  {
+   "key": "audit:superoxide",
+   "source": "unresolved_metabolites",
+   "name": "superoxide",
+   "met_ids": [
+    "s_3813",
+    "s_3931"
+   ],
+   "formula": "O2",
+   "chemical_class": "other",
+   "smiles": "[O][O-]",
+   "structure_source": "metanetx.chem_prop:MNXM1107906 via chebi:18421",
+   "inchi_key": "MXDZWXWHPVATGF-UHFFFAOYSA-N",
+   "cache_hit_compound_id": null,
+   "cache_hit_has_group_vector": null,
+   "genuinely_absent": true,
+   "blocker": null
+  },
+  {
+   "key": "audit:N-(4-oxoglutarate)-L-cysteinylglycine",
+   "source": "unresolved_metabolites",
+   "name": "N-(4-oxoglutarate)-L-cysteinylglycine",
+   "met_ids": [
+    "s_3923",
+    "s_3924"
+   ],
+   "formula": "C10H12N2O7S",
+   "chemical_class": "other",
+   "smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "structure_source": "metanetx.chem_prop:MNXM745469 via chebi:138256",
+   "inchi_key": "PMIVQUCENWNWHX-YFKPBYRVSA-L",
+   "cache_hit_compound_id": null,
+   "cache_hit_has_group_vector": null,
+   "genuinely_absent": true,
+   "blocker": null
+  },
+  {
+   "key": "audit:methionyl acetate",
+   "source": "unresolved_metabolites",
+   "name": "methionyl acetate",
+   "met_ids": [
+    "s_4256",
+    "s_4257"
+   ],
+   "formula": "C6H12O2S",
+   "chemical_class": "other",
+   "smiles": "CC(=O)OC(=O)C(CCSC)N",
+   "structure_source": "yeast-GEM smilesDB",
+   "inchi_key": "JRMLIAXLYHMCSQ-UHFFFAOYSA-N",
+   "cache_hit_compound_id": null,
+   "cache_hit_has_group_vector": null,
+   "genuinely_absent": true,
+   "blocker": null
+  }
+ ]
+}

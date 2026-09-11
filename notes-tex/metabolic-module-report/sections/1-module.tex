@@ -1,0 +1,40 @@
+%% notes-tex/metabolic-module-report/sections/1-module.tex
+%% [[torchcell.models.equivariant_cell_graph_transformer.mermaid.metabolic-module-simple]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/metabolic-module-report/sections/1-module.tex
+
+\section{The flux module and what feeds it\secstatus{todo}}
+\label{sec:module}
+
+The cell graph transformer's instruments map representation to representation (Type~I) or
+to a measured output (Type~II). The flux module is neither: it leaves gene index space for
+reaction space $\mathbb{R}^{4131}$ under a fixed stoichiometry, and its output $\nu$ is a
+latent physical state phenotypes are read from (Figure~\ref{fig:module}). A deletion sets a
+gene's availability to zero as a hard fact; the GEM's gene-protein-reaction rules fold gene
+gates to a reaction by a softmin over a complex's subunits and a sum over isozymes, and the
+result scales an enzyme-capacity ceiling,
+\begin{equation}
+  |\nu_j| \le c_j(H_{\mathrm{pert}})\, k_{cat,j}\,\bar E,
+  \qquad
+  \mathcal{L} = \mathcal{L}_{\mathrm{data}}
+  + \lambda_{\mathrm{th}}\,\frac{1}{|\mathcal{J}|}\sum_{j\in\mathcal{J}}
+    \frac{[\,\nu_j\,\Delta_r G_j + \epsilon\,]_{+}}{|\nu_j|\,|\Delta_r G_j| + \epsilon}.
+  \label{eq:module}
+\end{equation}
+The capacity bound is the only path by which a genotype reaches a flux magnitude, since
+4{,}129 of the GEM's 4{,}131 bounds are $\pm1000$ or $0$; $\bar E$ is constant and no
+enzyme abundance is predicted. The second-law term charges for flux running uphill and,
+because $\Delta_r G$ sums to zero around any cycle, removes with no binary variable the 427
+internal loops a growth constraint leaves free. It acts at training time only; the violation
+fraction is reported at evaluation. Gibbs dissipation is a logged readout, not a
+penalty: the Niebel 2019 limit is an empirical plateau, not a law.
+
+\tcfigh[0.8]{figures/cgt_metabolic_module.pdf}{\textbf{The flux module's main components
+  and what feeds them.} Orange, the path from the perturbed gene state to enzyme
+  availability; purple, the fixed yeast-GEM 9.0.2 stoichiometry and bounds; yellow, the
+  parameter tables, a \textbf{dashed} border marking one built and read by nothing; blue,
+  the flux vector; red, the soft constraints. Three of the five tables are
+  dashed: $k_{cat}$ resolves from the Open Enzyme
+  Database at 3.7 percent of catalytic units and $\Delta_f G$ from the table shipped with
+  the GEM. A predicted $k_{cat}$ tier and a merged energy route exist in the resolvers,
+  under test. Source
+  \texttt{notes/torchcell.models.equivariant\_cell\_graph\_transformer.mermaid.metabolic-module-simple.md}.}{fig:module}

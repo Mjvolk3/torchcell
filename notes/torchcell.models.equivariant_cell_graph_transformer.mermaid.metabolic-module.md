@@ -73,10 +73,10 @@ graph TD
       direction TB
       MassBal["$$\begin{gathered}\text{Mass Balance}\\\ \|S\nu\|\ \text{scale-relative}\end{gathered}$$"]
       SecondLaw["$$\begin{gathered}\text{Second Law}\\\ \mathrm{relu}(\nu_j \Delta_r G_j + \epsilon)\\\ \text{no binary variable}\end{gathered}$$"]
-      Dissipation["$$\begin{gathered}\text{Gibbs Dissipation}\\\ g_{\mathrm{diss}} \le g_{\mathrm{lim}}\end{gathered}$$"]
     end
 
     FluxVector["$$\begin{gathered}\nu \in \mathbb{R}^{4131}\\\ \text{feasible flux}\end{gathered}$$"]
+    Dissipation["$$\begin{gathered}\text{Gibbs Dissipation, readout only}\\\ g_{\mathrm{diss}} = \sum_{j \in \mathrm{exch}} \Delta_r G_j \nu_j\\\ \text{validated against}\ g_{\mathrm{lim}}\text{, never penalized}\end{gathered}$$"]
   end
 
   subgraph TypeII["$$\begin{gathered}\text{Type II Virtual Instruments}\\\ (\text{Representation} \to \text{Output})\end{gathered}$$"]
@@ -127,7 +127,7 @@ graph TD
   Potential --> SecondLaw
   FluxVector --> MassBal
   FluxVector --> SecondLaw
-  FluxVector --> Dissipation
+  FluxVector -.->|"$$\text{validation}$$"| Dissipation
   Stoich --> MassBal
 
   FluxVector --> OutBetax
@@ -155,7 +155,9 @@ graph TD
   class PertOps,PerturbedState typeI
   class KcatTable,KmTable,ThermoTable params
   class Stoich,Media,Pathway,GeneAvail,Enzyme,Box,Potential,FluxVector metabolic
-  class MassBal,SecondLaw,Dissipation graphreg
+  class MassBal,SecondLaw graphreg
+  classDef readout fill:#FFFFFF,stroke:#999999,stroke-width:1px,stroke-dasharray:4 3
+  class Dissipation readout
   class TypeIIRowA,FitnessInst,GeneIntInst invariant
   class TypeIIRowB,ExprInst,MorphInst equivariantRO
   classDef equivariantRO fill:#E1D5E7,stroke:#846592,stroke-width:2px

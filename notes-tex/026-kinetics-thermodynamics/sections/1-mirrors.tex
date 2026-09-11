@@ -7,10 +7,11 @@
 
 \subsection{The starting state\secstatus{todo}}
 
-Before this work, yeast-GEM 9.0.2 had 3{,}728 catalytic units and one turnover number for
-almost none of them. Measured $k_{cat}$ covered 148 units, 4.0 percent, drawn from the Open
-Enzyme Database's 1{,}126 \emph{S. cerevisiae} rows, which between them name only 106
-distinct UniProt accessions. The other 3{,}580 units, 96 percent of the model, ran on a
+Before this work, yeast-GEM 9.0.2~\cite{zhangYeast9ConsensusGenomescale2024} had 3{,}728
+catalytic units and one turnover number for almost none of them. Measured $k_{cat}$ covered
+148 units, 4.0 percent, drawn from the Open Enzyme
+Database's~\cite{yuanOpenEnzymeDatabase2026} 1{,}126 \emph{S. cerevisiae} rows, which
+between them name only 106 distinct UniProt accessions. The other 3{,}580 units, 96 percent of the model, ran on a
 single flat default of 10.3 s$^{-1}$, the median of the values that did resolve. $K_M$ had
 no table at all: the parameter existed as an enum member and a protocol flag with nothing
 behind either.
@@ -35,8 +36,7 @@ produced}, regenerable from a mirror plus code, and every row carries the
 a mirror invalidates the provenance of every build made from it, so a mirror is only ever
 added.
 
-The reason to pay this cost is that a predicted $k_{cat}$ is a model output, not a
-measurement, and the difference has to survive into the table. A value with no provenance
+ A value with no provenance
 becomes indistinguishable from a measured one within two steps, and the flux layer's
 coverage gate has to tell an experimental value, a predicted value and a filled default
 apart.
@@ -81,6 +81,5 @@ changed dtype would yield numbers that are not UniKP's predictions.
 
 So UniKP runs in an environment pinned to scikit-learn 1.2.2, invoked as a subprocess with
 parquet as the interface, and the torchcell-side dataset class calls it rather than
-importing it. Treating that as an accident to be patched around would be a mistake; it is
-the shape this has to take, and DeepEnzyme additionally wants NVIDIA apex and an old numpy
+importing it. DeepEnzyme additionally wants NVIDIA apex and an old numpy
 for the same reason.

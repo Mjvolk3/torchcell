@@ -1,0 +1,60 @@
+%% notes-tex/metabolic-module-report/sections/2-parameters.tex
+%% [[experiments.026-metabolism-flux.scripts.plot_per_gene_predictor_agreement]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/metabolic-module-report/sections/2-parameters.tex
+
+\section{What the parameter tables are worth\secstatus{todo}}
+\label{sec:parameters}
+
+Six published $k_{cat}$ predictors (DLKcat, UniKP, EITLEM, TurNuP, DeepEnzyme, EZKinetics)
+and four $K_M$ predictors were run from hash-pinned mirrors over 95.3 percent of yeast-GEM's
+3{,}728 catalytic units, the ceiling set by substrate structure availability. Per gene, the
+unit the capacity bound reads (Figure~\ref{fig:agreement}), the median gene moves 1.28
+orders of magnitude between the highest and lowest predictor and 71 percent move by more
+than one order, against a consensus range across genes of 0.87. On the 57 measured yeast
+pairs, EZKinetics leads on rank at Spearman
+0.79 and EITLEM on magnitude at 0.23 orders median error, an upper bound: every predictor
+trained on the literature those measurements come from.
+
+\tcfigh[0.86]{figures/per_gene_agreement_k_cat.pdf}{\textbf{Agreement between the six
+  $k_{cat}$ predictors, and their accuracy against measured yeast values.} Panels a to d
+  cover the 980 genes all six predictors cover; e and f the 57 measured pairs.
+  \textbf{a}, Across-predictor spread per gene; dashed, the median of 1.28 orders of
+  magnitude. \textbf{b}, The same spread against the dynamic range of $k_{cat}$, genes
+  ranked by their median. \textbf{c}, Gene-level Spearman between predictors, 0.01 to 0.55.
+  \textbf{d}, The betaxanthin supply genes; the shaded band marks the two heterologous
+  cassette members with no yeast-GEM reaction. \textbf{e}, Predicted against measured; the
+  band's half width of 0.75 is the median standard deviation of $\log_{10} k_{cat}$ within
+  one EC4 class. \textbf{f}, Spearman and median absolute error, ranked. Figure 6 of the 026
+  document, from \texttt{plot\_per\_gene\_predictor\_agreement.py}.}{fig:agreement}
+
+\textbf{Most of that plausibility is coarse-class knowledge} (Figure~\ref{fig:plausibility}).
+Against the EC4 band every predictor beats the EC-median lookup, 56 to 84 percent against
+53; at EC1 the lookup already reaches 79 percent, and for $K_M$ no predictor beats the
+lookup at all. On the nine unmeasured betaxanthin supply genes, four of six $k_{cat}$
+predictors are class-plausible and no $K_M$ predictor is.
+
+The thermodynamic table is recomputed with eQuilibrator component contribution, which
+returns a covariance the shipped point values cannot. It prices 2{,}741 of 4{,}131
+reactions, 986 recovered by fixing the proton convention; with the shipped table it reaches
+3{,}716, 94.4 percent of flux-carrying reactions. \textbf{The shipped file is in kilocalories
+and labeled kilojoules}, copied verbatim from yETFL by yeast-GEM's curation script:
+regressing our table on yETFL's over 1{,}927 shared metabolites gives a slope of 4.187 at
+$r = 0.987$. Correcting that and matching compartment conditions closes the transport arm of
+the disagreement, median 17.4 to 5.6 kJ\,mol$^{-1}$, leaving the single-compartment cloud at
+17.6, the genuine estimator difference. Of the 665 unpriced metabolites, 185 carry placeholder formulas and
+are a method ceiling; \textbf{347 of the rest now carry a structure written from the name
+and a price}, taking the recomputation past the shipped column to 86.3 percent, though the
+union does not move and the values need re-transforming per compartment. All five
+betaxanthin intermediates resolve by InChIKey, and Uni-pKa on its simple enumeration
+template reproduces ChemAxon's energies to 0.91 kJ\,mol$^{-1}$, so the license binds
+nowhere.
+
+\tcfigh[0.86]{figures/within_class_plausibility_k_cat.pdf}{\textbf{How many of each
+  predictor's $k_{cat}$ values fall inside the spread of enzymes doing the same job.}
+  \textbf{a}, Fraction of the 57 measured pairs inside a shared band as the class is read
+  to fewer EC digits; dashed, the EC-median lookup. \textbf{b}, The EC4 fraction against
+  each pair's own class band, Wilson 95 percent intervals. \textbf{c}, The 23 betaxanthin
+  supply units against one standard deviation of their EC4 class. \textbf{d}, Fraction of
+  the 16 scorable units inside, by predictor: DLKcat 16 of 16, UniKP 15, EITLEM 6.
+  \textbf{e}, Each unit's class band half width. Figure 7 of the 026 document, from
+  \texttt{plot\_within\_class\_plausibility.py}.}{fig:plausibility}

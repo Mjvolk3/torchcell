@@ -113,15 +113,14 @@ from torchcell.data import (  # noqa: E402
 )
 from torchcell.data.graph_processor import Perturbation  # noqa: E402
 from torchcell.data.neo4j_cell import Neo4jCellDataset  # noqa: E402
+from torchcell.datamodules import CellDataModule  # noqa: E402
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder  # noqa: E402
 from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph  # noqa: E402
 from torchcell.losses.distributional import gaussian_crps  # noqa: E402
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
-
-from torchcell.datamodules import CellDataModule  # noqa: E402
 from torchcell.models.cell_graph_transformer_metabolism import (  # noqa: E402
     CellGraphTransformerMetabolism,
 )
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
 HEAD = "betaxanthin"
 
@@ -159,6 +158,16 @@ def build_dataset() -> "Neo4jCellDataset":
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
+        # NOT the default. `overwrite` defaults to True, which calls
+        # `gffutils.create_db(force=True)` and so UNLINKS and rebuilds the 15 MB
+        # `data/sgd/genome/data.db` on every construction. With 8 workers per node all
+        # building the genome at once, seven of them open the file inside another's rebuild
+        # window and die on `FileNotFoundError: .../data.db` -- which reads as a missing
+        # file and is in fact a write race. This killed 7 of 8 workers on Delta node
+        # gpub071 (21813442_0) and every worker of three tasks in array 21797666. The
+        # database is a build artifact and is never edited, so nothing here should rebuild
+        # it; the older experiments all pass overwrite=False for the same reason.
+        overwrite=False,
     )
     graph = SCerevisiaeGraph(
         sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
@@ -300,6 +309,169 @@ class BxCell(BaseModel):
     weight_decay: float
     split_seed: int
     select_smoothing_window: int = Field(ge=1)
+    # RECIPE SWITCHES, added 2026-09-09 after the collapse audit. Both default to what the
+    # 144-cell grid ran, so a grid cell deserializes unchanged; both are ON in the 019 run
+    # that reached 0.434 (job 1344), and the grid had dropped them without recording it.
+    crps: bool = Field(
+        default=False,
+        description=(
+            "Score the scalar head as a Gaussian CRPS with a (mu, log_sigma) output. The "
+            "grid's loop sliced log_sigma away before the loss and fell back to MSE."
+        ),
+    )
+    graph_reg: bool = Field(
+        default=False,
+        description=(
+            "Pass 019's graph-structure regularizer (lambda 6.5e-5, one attention head per "
+            "graph) to the model. The grid never passed it, so graph_reg_loss was 0."
+        ),
+    )
+    abort_on_collapse: bool = Field(
+        default=False,
+        description=(
+            "Stop the run when the validation prediction spread stays under 1 percent of "
+            "the target spread past epoch 10, which is the collapse the grid ran 200 epochs "
+            "of without noticing."
+        ),
+    )
+    aux_mulleder: bool = Field(
+        default=False,
+        description=(
+            "Train the 19-column Mulleder amino-acid head jointly, as the 019 run that "
+            "reached 0.434 did (active_heads: [betaxanthin, mulleder19]). The 027 protocol "
+            "dropped it to make the comparison betaxanthin-only, and the four recipe "
+            "diagnostics of 2026-09-09 collapsed with and without CRPS and the graph "
+            "regularizer, which leaves the co-head as the remaining recipe difference. "
+            "Selection and scoring stay betaxanthin-only."
+        ),
+    )
+
+
+    attention_mask: bool = Field(
+        default=False,
+        description=(
+            "Hard graph masking: burn each of the nine relations into one attention head "
+            "at layer 1, as the 020 Delta grid (delta_grid_betaxanthin.yaml) did. The 019 "
+            "KL regularizer was replaced by this after the July runs."
+        ),
+    )
+    learnable_embedding: bool = Field(
+        default=False,
+        description=(
+            "MEMORIZATION CONTROL. A free per-gene vector lets the model fit the training "
+            "targets by lookup (019 measured train r 0.86 with it), so a run that cannot "
+            "fit even with it has a dead signal path, not weak features."
+        ),
+    )
+    pert_heads: int = Field(
+        default=6,
+        description=(
+            "Perturbation-head attention heads. 6 is what 019's gh_metabolism_000 and the "
+            "027 grid used; 9 is what the 020 grid that trained used. Must divide hidden."
+        ),
+    )
+    # WAVE 5 (2026-09-10). Three knobs on the module itself, all defaulting to what waves 1
+    # to 4 ran, so an earlier result file deserializes unchanged.
+    kcat_tier: str = Field(
+        default="measured",
+        description=(
+            "'measured' resolves kcat from the Open Enzyme Database and defaults the rest "
+            "(148 of 3,728 catalytic units measured, 3,580 default). 'predicted' inserts the "
+            "sequence-predictor tier between them (148 measured, 3,410 predicted, 170 "
+            "default) using the predictors the within-class study admits for yeast."
+        ),
+    )
+    thermo_source: str = Field(
+        default="shipped",
+        description=(
+            "Which route prices the standard reaction energies: 'shipped' (the GEM's own "
+            "metabolite table summed over S, 3,505 of 4,131 reactions), 'equilibrator' "
+            "(2,741) or 'union' (3,722)."
+        ),
+    )
+    constraint_warmup_epochs: int = Field(
+        default=0,
+        description=(
+            "Ramp the flux layer's constraint weights linearly from 0 over this many epochs."
+        ),
+    )
+    constraint_scale: float = Field(
+        default=1.0,
+        description="Final multiplier on the whole weighted constraint sum after warmup.",
+    )
+    constraint_delay_epochs: int = Field(
+        default=0,
+        description=(
+            "Hold the constraint scale at exactly zero for this many epochs before the ramp "
+            "begins, so the module is applied to a head that has already left the plateau."
+        ),
+    )
+    head_normalize: bool = Field(
+        default=False,
+        description=(
+            "Divide the flux head's two inputs by the layer's working flux magnitude before "
+            "reading them. MEASURED 2026-09-10 (diagnose_head_scale.py, results/"
+            "head_scale_diagnosis.json): unnormalized, the flux head starts at output mean "
+            "+7.030 against a target standardized to mean 0 sd 1, while the pooled head "
+            "starts at -0.573. The head spends its first epochs unlearning a seven-sigma "
+            "offset. Off by default so every wave-1 to wave-5 run deserializes unchanged."
+        ),
+    )
+
+
+AUX_HEAD = "mulleder19"
+AUX_WIDTH = 19
+
+#: The 020 grid's hard mask: relation -> attention head at layer 1, in edge-type names.
+ATTENTION_MASK_CONFIG: dict[str, Any] = {
+    "enabled": True,
+    "layers": [1],
+    "head_graphs": {
+        0: "physical_interaction",
+        1: "regulatory_interaction",
+        2: "tflink",
+        3: "string12_0_neighborhood",
+        4: "string12_0_fusion",
+        5: "string12_0_cooccurence",
+        6: "string12_0_coexpression",
+        7: "string12_0_experimental",
+        8: "string12_0_database",
+    },
+}
+
+
+#: The 019 graph-structure prior, copied from gh_metabolism_000.yaml: one regularized
+#: attention head per graph at layer 1, lambda 6.5e-5, a quarter of the rows sampled.
+GRAPH_REG_LAMBDA = 6.5e-5
+GRAPH_REG_CONFIG: dict[str, Any] = {
+    "graph_reg_lambda": GRAPH_REG_LAMBDA,
+    "graph_reg_layer": [1],
+    "row_sampling_rate": 0.25,
+    "regularized_heads": {
+        name: {"layer": [1], "head": i, "lambda": GRAPH_REG_LAMBDA}
+        for i, name in enumerate(STRONG_GRAPHS)
+    },
+}
+#: Collapse detector threshold: prediction spread over target spread on the validation
+#: split. The grid's cells sat at 8e-3 and below. The patience is NOT ten epochs: on the
+#: current code the mean plateau is the normal start and lasts 117 to 157 epochs before the
+#: spread appears (020 Delta grid, W&B history of runs w7fuxsvr, azh3tstz, 74sde13z,
+#: dhmloet1), while the July 26 code left it at epoch 23 (run gilahyper-1346). A ten-epoch
+#: abort, which the 2026-09-09 diagnostics ran with, kills every run that would have
+#: escaped; the 027 grid's 200 epochs on Delta were also inside that window for most seeds.
+COLLAPSE_SD_RATIO = 0.01
+COLLAPSE_PATIENCE_EPOCHS = int(os.getenv("COLLAPSE_PATIENCE_EPOCHS", "200"))
+
+
+def _head_params(pred: torch.Tensor) -> torch.Tensor:
+    """``[B, param_dim]`` from a scalar head, whichever shape it emitted.
+
+    A distributional scalar head emits ``[B, 1, param_dim]`` and a point head ``[B, 1]``.
+    The grid's loop did ``pred[..., 0]`` on the former, which keeps mu and throws away
+    log_sigma, so the CRPS branch of the loss was unreachable. Squeezing the feature axis
+    keeps both parameters.
+    """
+    return pred.squeeze(1) if pred.dim() == 3 else pred
 
 
 def arm_names() -> list[str]:
@@ -321,7 +493,26 @@ def load_config() -> BxConfig:
         return BxConfig(**yaml.safe_load(fh))
 
 
-def build_cell(arm: str, seed: int, cfg: BxConfig, epochs: int | None = None) -> BxCell:
+def build_cell(
+    arm: str,
+    seed: int,
+    cfg: BxConfig,
+    epochs: int | None = None,
+    crps: bool = False,
+    graph_reg: bool = False,
+    abort_on_collapse: bool = False,
+    aux_mulleder: bool = False,
+    attention_mask: bool = False,
+    pert_heads: int = 6,
+    layers: int | None = None,
+    learnable_embedding: bool = False,
+    kcat_tier: str = "measured",
+    thermo_source: str = "shipped",
+    constraint_warmup_epochs: int = 0,
+    constraint_scale: float = 1.0,
+    constraint_delay_epochs: int = 0,
+    head_normalize: bool = False,
+) -> BxCell:
     """Merge ``base.yaml`` with one arm file into a fully specified cell."""
     with open(osp.join(CONF_DIR, f"arm_{arm}.yaml")) as fh:
         armcfg = ArmConfig(**yaml.safe_load(fh))
@@ -337,7 +528,7 @@ def build_cell(arm: str, seed: int, cfg: BxConfig, epochs: int | None = None) ->
         permute_train_targets=armcfg.permute_train_targets,
         epochs=epochs if epochs is not None else cfg.train.epochs,
         hidden=cfg.model.hidden,
-        layers=cfg.model.layers,
+        layers=layers if layers is not None else cfg.model.layers,
         attention_heads=cfg.model.attention_heads,
         batch_size=cfg.model.batch_size,
         num_workers=int(os.getenv("NUM_WORKERS", str(cfg.train.num_workers))),
@@ -345,6 +536,19 @@ def build_cell(arm: str, seed: int, cfg: BxConfig, epochs: int | None = None) ->
         weight_decay=cfg.model.weight_decay,
         split_seed=cfg.data.split_seed,
         select_smoothing_window=cfg.scoring.select_smoothing_window,
+        crps=crps,
+        graph_reg=graph_reg,
+        abort_on_collapse=abort_on_collapse,
+        aux_mulleder=aux_mulleder,
+        attention_mask=attention_mask,
+        pert_heads=pert_heads,
+        learnable_embedding=learnable_embedding,
+        kcat_tier=kcat_tier,
+        thermo_source=thermo_source,
+        constraint_warmup_epochs=constraint_warmup_epochs,
+        constraint_scale=constraint_scale,
+        constraint_delay_epochs=constraint_delay_epochs,
+        head_normalize=head_normalize,
     )
 
 
@@ -500,7 +704,17 @@ def run_cell(
     """Train one cell, select an epoch on validation, score it on the pinned test genes."""
     torch.manual_seed(cell.seed)
     np.random.seed(cell.seed)
-    arm = ARMS[cell.base_arm]
+    # 026's registry stays the single source of truth for WHAT the module does; the cell adds
+    # only the parameter-source and schedule knobs on top of it. A copy, so a second cell in
+    # the same process cannot inherit the first one's overrides.
+    arm = {
+        **ARMS[cell.base_arm],
+        "kcat_tier": cell.kcat_tier,
+        "thermo_source": cell.thermo_source,
+        "constraint_warmup_epochs": cell.constraint_warmup_epochs,
+        "constraint_final_scale": cell.constraint_scale,
+        "constraint_delay_epochs": cell.constraint_delay_epochs,
+    }
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     gene_ids = list(dataset.cell_graph["gene"].node_ids)
@@ -526,20 +740,36 @@ def run_cell(
         # alone, and a Mulleder-only genotype simply matches nothing and arrives masked False.
         HEAD: {"label": "metabolite_level", "width": 1}
     }
+    param_dim = 2 if cell.crps else 1
     if arm["flux"]:
         met_index = flux_meta["met_index"]
         heads_config = {
             HEAD: {
                 "kind": "flux_scalar",
                 "output_dim": 1,
+                "param_dim": param_dim,
                 "precursor_indices": [
                     met_index[m] for m in BETAXANTHIN_PRECURSORS if m in met_index
                 ],
+                "normalize_inputs": cell.head_normalize,
             }
         }
     else:
-        heads_config = {HEAD: {"kind": "scalar", "output_dim": 1}}
+        heads_config = {HEAD: {"kind": "scalar", "output_dim": 1, "param_dim": param_dim}}
+    if cell.aux_mulleder:
+        # The co-head reads the pooled representation whatever the arm, so the contrast
+        # between arms stays on the betaxanthin readout alone.
+        head_specs[AUX_HEAD] = {"label": "metabolite_level", "width": AUX_WIDTH}
+        heads_config[AUX_HEAD] = {"kind": "vector", "output_dim": AUX_WIDTH}
 
+    graph_reg_kwargs: dict[str, Any] = (
+        {
+            "graph_regularization_config": GRAPH_REG_CONFIG,
+            "graph_reg_lambda": GRAPH_REG_LAMBDA,
+        }
+        if cell.graph_reg
+        else {}
+    )
     model = CellGraphTransformerMetabolism(
         cell_graph=dataset.cell_graph,
         gene_num=len(gene_ids),
@@ -552,18 +782,20 @@ def run_cell(
         # protein embedding, which 020 measured at 0.279 (off) against 0.151 (on) and
         # 019 recorded as making generalization impossible by construction.
         learnable_embedding_config={
-            "enabled": False,
+            "enabled": cell.learnable_embedding,
             "size": cell.hidden,
             "preprocessor": {"num_layers": 2, "dropout": 0.1},
         },
-        # 6, from 019's conf. The default is 8, and 90 is not divisible by 8, so the
-        # perturbation head's cross-attention refuses to build at this width.
-        perturbation_head_config={"num_heads": 6, "dropout": 0.1},
+        # 6, from 019's conf, or 9 as the 020 grid ran. The default is 8, and 90 is not
+        # divisible by 8, so the perturbation head's cross-attention refuses to build.
+        perturbation_head_config={"num_heads": cell.pert_heads, "dropout": 0.1},
+        attention_mask_config=ATTENTION_MASK_CONFIG if cell.attention_mask else None,
         # The model reads cell_graph["gene"].x only when it is TOLD it has precomputed
         # embeddings; without this it looks for a learnable table that is now disabled and
         # raises "No gene embeddings available".
         node_embeddings=_NODE_EMBEDDINGS,
         flux_layer=flux_layer,
+        **graph_reg_kwargs,
     ).to(device)
 
     dm = CellDataModule(
@@ -592,20 +824,25 @@ def run_cell(
     def loss_fn(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         if prediction.shape[-1] == 2:
             mu, log_sigma = prediction[..., 0], prediction[..., 1]
-            return gaussian_crps(mu, log_sigma, target.squeeze(-1)).unsqueeze(-1)
+            # `gaussian_crps` takes sigma, not log sigma; the clamp keeps exp finite.
+            sigma = torch.exp(log_sigma.clamp(-6.0, 3.0))
+            return gaussian_crps(mu, sigma, target.squeeze(-1)).unsqueeze(-1)
         return nn.functional.mse_loss(prediction, target, reduction="none")
 
     # Target standardization from the TRAIN split only. A metric computed against
     # test-informed statistics is not a held-out metric.
-    chunks: list[torch.Tensor] = []
+    chunks: dict[str, list[torch.Tensor]] = {name: [] for name in head_specs}
     for batch in dm.train_dataloader():
-        t, m = extract_targets(batch, head_specs)[HEAD]
-        chunks.append(torch.where(m, t, torch.nan))
-    cat = torch.cat(chunks, dim=0)
-    mean = torch.nanmean(cat, dim=0)
-    centered = cat - mean
-    sd = torch.nanmean(centered * centered, dim=0).sqrt().clamp(min=1e-6)
-    mean, sd = mean.to(device), sd.to(device)
+        for name, (t, m) in extract_targets(batch, head_specs).items():
+            chunks[name].append(torch.where(m, t, torch.nan))
+    stats: dict[str, tuple[torch.Tensor, torch.Tensor]] = {}
+    for name, parts in chunks.items():
+        cat = torch.cat(parts, dim=0)
+        mu = torch.nanmean(cat, dim=0)
+        centered = cat - mu
+        s = torch.nanmean(centered * centered, dim=0).sqrt().clamp(min=1e-6)
+        stats[name] = (mu.to(device), s.to(device))
+    mean, sd = stats[HEAD]
 
     window = cell.select_smoothing_window
     half = window // 2
@@ -622,7 +859,14 @@ def run_cell(
 
     for epoch in range(cell.epochs):
         model.train()
-        train_loss, n_batches = 0.0, 0
+        train_loss, train_data_loss, n_batches = 0.0, 0.0, 0
+        # THE CONSTRAINT RAMP, set once per epoch before any batch. Epoch 0 carries no
+        # physics at all when a warmup is configured, so the data term is the only thing
+        # moving the head while it is on the mean plateau.
+        constraint_scale = 1.0
+        if model.flux_layer is not None:
+            constraint_scale = model.flux_layer.set_constraint_epoch(epoch)
+        train_constraint_loss = 0.0
         feas: dict[str, float] = {}
         for batch in dm.train_dataloader():
             batch = batch.to(device)
@@ -637,18 +881,34 @@ def run_cell(
                 perm = torch.randperm(t.shape[0], device=device)
                 t, m = t[perm], m[perm]
             z = (t - mean) / sd
-            pred = reps["head_outputs"][HEAD]
-            if pred.dim() == 3:
-                pred = pred[..., 0]
-            loss = (loss_fn(pred, z) * m).sum() / m.sum().clamp(min=1)
-            loss = loss + reps["graph_reg_loss"]
+            pred = _head_params(reps["head_outputs"][HEAD])
+            data_loss = (loss_fn(pred, z) * m).sum() / m.sum().clamp(min=1)
+            loss = data_loss + reps["graph_reg_loss"]
+            if cell.aux_mulleder:
+                # Masked per-feature MSE on the standardized amino-acid vector, weight 1,
+                # as 019's head_weights had it. Never permuted: the null is on betaxanthin.
+                t_aux, m_aux = extract_targets(batch, head_specs)[AUX_HEAD]
+                t_aux, m_aux = t_aux.to(device), m_aux.to(device)
+                mu_aux, sd_aux = stats[AUX_HEAD]
+                z_aux = (t_aux - mu_aux) / sd_aux
+                p_aux = reps["head_outputs"][AUX_HEAD]
+                if p_aux.dim() == 3:
+                    p_aux = p_aux[..., 0]
+                aux_loss = (
+                    nn.functional.mse_loss(p_aux, z_aux, reduction="none") * m_aux
+                ).sum() / m_aux.sum().clamp(min=1)
+                loss = loss + aux_loss
+                feas["aux_loss"] = feas.get("aux_loss", 0.0) + float(aux_loss.detach())
+            train_data_loss += float(data_loss.detach())
             if "flux" in reps:
                 # `reps` carries "flux" only when the model was built WITH a layer, so this
                 # cannot be None here. Asserted rather than type-ignored: if it ever were
                 # None the constraint terms would silently vanish and the arm would still
                 # report a plausible number.
                 assert model.flux_layer is not None
-                loss = loss + model.flux_layer.constraint_loss(reps["flux"])
+                constraint_term = model.flux_layer.constraint_loss(reps["flux"])
+                loss = loss + constraint_term
+                train_constraint_loss += float(constraint_term.detach())
                 for k, v in reps["flux"].items():
                     if v.dim() == 0 and k.startswith(
                         ("c_", "feas_", "g_diss", "protein_used")
@@ -666,6 +926,23 @@ def run_cell(
         val_r = _masked_pearson(preds, trues)
         val_curve.append(val_r)
         ring.append((epoch, _params_snapshot(model)))
+        # THE COLLAPSE DIAGNOSTIC. Pearson and Spearman are scale-free, so a head that
+        # emits a constant plus jitter still returns a number; the spread ratio is what
+        # says whether there is a prediction to correlate at all.
+        observed = np.isfinite(trues)
+        pred_sd_ratio = float(
+            np.std(preds[observed]) / max(np.std(trues[observed]), 1e-12)
+        )
+        if (
+            cell.abort_on_collapse
+            and epoch >= COLLAPSE_PATIENCE_EPOCHS
+            and pred_sd_ratio < COLLAPSE_SD_RATIO
+        ):
+            raise SystemExit(
+                f"[{cell.arm} s{cell.seed}] COLLAPSED: validation prediction spread is "
+                f"{pred_sd_ratio:.2e} of the target spread at epoch {epoch}. Stopping "
+                "rather than spending the budget on a constant predictor."
+            )
 
         # The centered window can only score epoch `t - half` once epoch `t` exists, which is
         # exactly why the ring is `window` deep: the snapshot for that epoch is still in it.
@@ -680,8 +957,20 @@ def run_cell(
         row = {
             "epoch": epoch,
             "train_loss": train_loss / max(n_batches, 1),
+            # The data term alone, which is the one comparable with `val_loss`.
+            "train_data_loss": train_data_loss / max(n_batches, 1),
+            "val_loss": _masked_loss(
+                model, dm.val_dataloader(), dataset, head_specs, mean, sd, loss_fn
+            ),
             "val_pearson": val_r,
+            "val_pred_sd_ratio": pred_sd_ratio,
             "n_val": int(np.isfinite(trues).sum()),
+            "graph_reg_loss": float(reps["graph_reg_loss"]),
+            # The two numbers the warmup experiment is read on, logged BESIDE the spread
+            # ratio so the epoch at which the physics binds and the epoch at which the head
+            # leaves the plateau are on the same axis.
+            "constraint_scale": constraint_scale,
+            "train_constraint_loss": train_constraint_loss / max(n_batches, 1),
         }
         for k, v in feas.items():
             row[k] = v / max(n_batches, 1)
@@ -690,7 +979,10 @@ def run_cell(
             on_epoch(row)
         print(
             f"[{cell.arm} s{cell.seed}] ep {epoch:3d} loss {row['train_loss']:.4f} "
-            f"val_r {val_r:+.4f} best_ep {best_epoch}",
+            f"data {row['train_data_loss']:.4f} cstr {row['train_constraint_loss']:.4f} "
+            f"scale {constraint_scale:.3f} "
+            f"val_loss {row['val_loss']:.4f} val_r {val_r:+.4f} "
+            f"sd_ratio {pred_sd_ratio:.4f} best_ep {best_epoch}",
             flush=True,
         )
 
@@ -748,12 +1040,49 @@ def _predict(
             batch = batch.to(device)
             _, reps = model(dataset.cell_graph.to(device), batch)
             t, m = extract_targets(batch, head_specs)[HEAD]
-            pred = reps["head_outputs"][HEAD]
-            if pred.dim() == 3:
-                pred = pred[..., 0]
+            # The point prediction is mu, the first parameter, whatever the head emits.
+            pred = _head_params(reps["head_outputs"][HEAD])[:, :1]
             ps.append((pred * sd + mean).cpu().numpy().reshape(-1))
             ts.append(torch.where(m, t, torch.nan).cpu().numpy().reshape(-1))
     return np.concatenate(ps), np.concatenate(ts)
+
+
+def _masked_loss(
+    model: nn.Module,
+    loader: Any,
+    dataset: Any,
+    head_specs: dict[str, dict[str, Any]],
+    mean: torch.Tensor,
+    sd: torch.Tensor,
+    loss_fn: Any,
+) -> float:
+    """The DATA-FIT loss on a held-out loader, in the same units as training.
+
+    Separate from ``_predict`` because that returns the point prediction only: it slices
+    ``pred[..., 0]`` and discards ``log_sigma``, so a CRPS cannot be reconstructed from what
+    it hands back. The loss is computed on normalized targets, exactly as in training.
+
+    This is the DATA term alone. The training loop's ``train_loss`` also carries the graph
+    regularizer and, on a flux arm, the constraint terms, and neither depends on the labels,
+    so adding them to a validation number would make the two curves incomparable in a way
+    that is invisible on a plot. ``train_data_loss`` is logged beside it for that comparison.
+    """
+    device = next(model.parameters()).device
+    was_training = model.training
+    model.eval()
+    total, count = 0.0, 0.0
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch.to(device)
+            _, reps = model(dataset.cell_graph.to(device), batch)
+            t, m = extract_targets(batch, head_specs)[HEAD]
+            t, m = t.to(device), m.to(device)
+            z = (t - mean) / sd
+            pred = _head_params(reps["head_outputs"][HEAD])
+            total += float((loss_fn(pred, z) * m).sum())
+            count += float(m.sum())
+    model.train(was_training)
+    return total / max(count, 1.0)
 
 
 def _score_test(
@@ -852,19 +1181,110 @@ def main() -> None:
         action="store_true",
         help="Skip the per-gene dump. For a local build/shape check, never for a result.",
     )
+    parser.add_argument("--crps", action="store_true", help="Gaussian CRPS on the head.")
+    parser.add_argument(
+        "--graph-reg", action="store_true", help="019's graph-structure regularizer."
+    )
+    parser.add_argument(
+        "--abort-on-collapse", action="store_true",
+        help="Stop once the validation prediction spread stays under 1%% of the target's.",
+    )
+    parser.add_argument(
+        "--aux-mulleder", action="store_true",
+        help="Train the 19-amino-acid Mulleder head jointly, as the 019 recipe did.",
+    )
+    parser.add_argument(
+        "--attention-mask", action="store_true",
+        help="The 020 grid's hard graph masking, one relation per attention head.",
+    )
+    parser.add_argument("--pert-heads", type=int, default=6)
+    parser.add_argument("--learnable-embedding", action="store_true",
+                        help="Memorization control: a free per-gene vector.")
+    parser.add_argument("--layers", type=int, default=None)
+    parser.add_argument(
+        "--kcat-tier", choices=("measured", "predicted"), default="measured",
+        help="Insert the sequence-predictor kcat/K_M tier between measured and default.",
+    )
+    parser.add_argument(
+        "--thermo-source", choices=("shipped", "equilibrator", "union"), default="shipped",
+        help="Which route prices the standard reaction energies.",
+    )
+    parser.add_argument(
+        "--constraint-warmup-epochs", type=int, default=0,
+        help="Ramp the flux constraint weights linearly from 0 over this many epochs.",
+    )
+    parser.add_argument(
+        "--constraint-scale", type=float, default=1.0,
+        help="Final multiplier on the weighted constraint sum after warmup.",
+    )
+    parser.add_argument(
+        "--constraint-delay-epochs", type=int, default=0,
+        help="Hold the constraint scale at zero for this many epochs before ramping.",
+    )
+    parser.add_argument(
+        "--head-normalize", action="store_true",
+        help="Read the flux head's inputs in units of the layer's working flux magnitude.",
+    )
+    parser.add_argument(
+        "--wandb-group", default=None,
+        help="Log this cell to W&B under the given group (project from WANDB_PROJECT).",
+    )
+    parser.add_argument(
+        "--tag", default="", help="Suffix for the result file and the W&B run name."
+    )
     args = parser.parse_args()
 
     cfg = load_config()
-    cell = build_cell(args.arm, args.seed, cfg, epochs=args.epochs)
+    cell = build_cell(
+        args.arm, args.seed, cfg, epochs=args.epochs, crps=args.crps,
+        graph_reg=args.graph_reg, abort_on_collapse=args.abort_on_collapse,
+        aux_mulleder=args.aux_mulleder, attention_mask=args.attention_mask,
+        pert_heads=args.pert_heads, layers=args.layers,
+        learnable_embedding=args.learnable_embedding,
+        kcat_tier=args.kcat_tier, thermo_source=args.thermo_source,
+        constraint_warmup_epochs=args.constraint_warmup_epochs,
+        constraint_scale=args.constraint_scale,
+        constraint_delay_epochs=args.constraint_delay_epochs,
+        head_normalize=args.head_normalize,
+    )
     dataset = build_dataset()
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)
     pinned, report = resolve_pinned_test(dataset, cfg)
+
+    run = None
+    if args.wandb_group:
+        import wandb
+
+        run = wandb.init(
+            project=os.getenv("WANDB_PROJECT", "torchcell_027_bxfx"),
+            group=args.wandb_group,
+            name=f"{cell.arm}{args.tag}-s{cell.seed}",
+            tags=["027", "bxfx", cell.arm, f"seed{cell.seed}", args.wandb_group],
+            config=cell.model_dump(),
+            mode=os.getenv("WANDB_MODE", "online"),
+        )
     result = run_cell(
-        cell, cfg, dataset, pinned, report, dump_predictions=not args.smoke
+        cell, cfg, dataset, pinned, report, dump_predictions=not args.smoke,
+        on_epoch=(lambda row: wandb.log(row, step=int(row["epoch"]))) if run else None,
     )
+    if run is not None:
+        pin = result["test"]["pinned"]
+        run.summary.update(
+            {
+                "test_spearman_pinned": pin["spearman"],
+                "test_pearson_pinned": pin["pearson"],
+                "n_test_pinned": pin["n"],
+                "select_epoch": result["select_epoch"],
+                "select_val_pearson": result["select_val_pearson"],
+                "wall_time_s": result["wall_time_s"],
+            }
+        )
+        result["wandb_run_id"] = run.id
+        result["wandb_url"] = run.url
+        run.finish()
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
-    out = args.out or f"single_{cell.arm}_s{cell.seed}.json"
+    out = args.out or f"single_{cell.arm}{args.tag}_s{cell.seed}.json"
     path = osp.join(RESULTS_DIR, out)
     with open(path, "w") as fh:
         json.dump(result, fh, indent=2, default=str)

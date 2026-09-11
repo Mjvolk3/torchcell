@@ -49,7 +49,8 @@
 
 set -euo pipefail
 
-source "${SLURM_SUBMIT_DIR:-/projects/bbub/mjvolk3/torchcell}/experiments/027-betaxanthin-metabolic/scripts/delta_bxfx_common.sh"
+# Absolute. See the note on PROJECT_ROOT in delta_bxfx_common.sh.
+source "/projects/bbub/mjvolk3/torchcell/experiments/027-betaxanthin-metabolic/scripts/delta_bxfx_common.sh"
 
 bxfx_env
 bxfx_preflight

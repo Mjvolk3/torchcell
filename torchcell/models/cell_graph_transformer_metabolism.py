@@ -77,6 +77,7 @@ if __name__ == "__main__":
         0, _osp.dirname(_osp.dirname(_osp.dirname(_osp.abspath(__file__))))
     )
 
+import math
 from typing import Any, cast
 
 import torch
@@ -168,6 +169,8 @@ class FluxScalarHead(nn.Module):
         precursor_indices: torch.Tensor,
         use_dense_flux: bool = True,
         param_dim: int = 1,
+        normalize_inputs: bool = False,
+        flux_scale: float = 100.0,
     ) -> None:
         """Build the readout.
 
@@ -176,22 +179,55 @@ class FluxScalarHead(nn.Module):
             precursor_indices: ``[P]`` GEM metabolite indices of the named precursors.
             use_dense_flux: Include the unrestricted ``w^T v`` term.
             param_dim: Distributional parameters.
+            normalize_inputs: Divide both inputs by the layer's own working flux magnitude
+                before reading them, so the head starts on the scale of the standardized
+                target. See the class note on the measured offset. Default ``False``, which
+                reproduces every 026 and 027 run before 2026-09-10.
+            flux_scale: The layer's working flux magnitude in mmol/gDW/h, i.e.
+                ``FluxLayerConfig.flux_scale``. Read only when ``normalize_inputs`` is set,
+                and it must be the SAME value the flux layer was built with, or the head is
+                normalizing by a number that is not its input's scale.
         """
         super().__init__()
         self.register_buffer("precursor_indices", precursor_indices)
         self.output_dim = 1
         self.param_dim = param_dim
         self.use_dense_flux = use_dense_flux
+        self.normalize_inputs = normalize_inputs
+        self.flux_scale = float(flux_scale)
         self.precursor = nn.Linear(int(precursor_indices.numel()), param_dim)
         if use_dense_flux:
             self.dense = nn.Linear(n_reactions, param_dim)
 
     def forward(self, v: torch.Tensor, turnover: torch.Tensor) -> torch.Tensor:
-        """``([B, r], [B, m]) -> [B, 1]`` or ``[B, 1, param_dim]``."""
+        """``([B, r], [B, m]) -> [B, 1]`` or ``[B, 1, param_dim]``.
+
+        WHY THE INPUTS ARE OPTIONALLY DIVIDED BY ``flux_scale``, measured 2026-09-10 by
+        ``experiments/027-betaxanthin-metabolic/scripts/diagnose_head_scale.py`` on one real
+        training batch at initialization. The target is standardized to mean 0, sd 1. The
+        pooled head starts at mean -0.573, sd 0.0074. This head, unnormalized, starts at
+        **mean +7.030**, sd 0.237 -- seven target standard deviations from the target mean.
+        The spread is not the problem; the OFFSET is. It comes from the dense term: 4,131
+        fluxes with mean absolute value 9.87 and maximum 61.1, summed against random
+        weights, give a large constant that the head has to unlearn before it can learn a
+        genotype effect. That is consistent with the wave-5 cells' epoch-0 data loss of 8.5
+        to 14.3 against the pooled arm's 0.49, at a constraint weight of exactly zero.
+
+        Dividing by ``flux_scale`` expresses both inputs in units of the layer's own working
+        flux magnitude: ``v / flux_scale`` is the box coordinate the layer parameterizes,
+        and ``log1p(omega) / log1p(flux_scale)`` is the same scale for a turnover, which
+        carries the same units. Nothing is centered and nothing is learned here, so the
+        head's meaning is unchanged; only the units it reads are.
+        """
         omega = turnover[:, self.precursor_indices].clamp(min=0.0)
-        out: torch.Tensor = self.precursor(torch.log1p(omega))
+        precursor_input = torch.log1p(omega)
+        dense_input = v
+        if self.normalize_inputs:
+            precursor_input = precursor_input / math.log1p(self.flux_scale)
+            dense_input = v / self.flux_scale
+        out: torch.Tensor = self.precursor(precursor_input)
         if self.use_dense_flux:
-            out = out + self.dense(v)
+            out = out + self.dense(dense_input)
         return out.unsqueeze(1) if self.param_dim > 1 else out
 
 
@@ -473,6 +509,10 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
                     ),
                     use_dense_flux=bool(spec.get("use_dense_flux", True)),
                     param_dim=int(spec.get("param_dim", 1)),
+                    normalize_inputs=bool(spec.get("normalize_inputs", False)),
+                    # Taken from the LAYER rather than from the spec, so the head cannot be
+                    # told to normalize by a magnitude the layer does not use.
+                    flux_scale=float(self.flux_layer.config.flux_scale),
                 )
             elif kind == "scalar":
                 if output_dim != 1:

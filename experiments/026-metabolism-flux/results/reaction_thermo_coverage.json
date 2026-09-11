@@ -1,0 +1,189 @@
+{
+  "n_reactions": 4131,
+  "n_metabolites": 2806,
+  "shipped_provenance": {
+    "source_file": "code/modelCuration/v8_7_0.m",
+    "pull_request": "yeast-GEM PR #330",
+    "metabolites": {
+      "primary": "yETFL (yeast8_thermo_curated.mat, Zenodo record 4778047)",
+      "primary_match_key": "metNames, the metabolite NAME string",
+      "fallback": "ModelSEED",
+      "fallback_match_key": "kegg.compound identifier",
+      "note_in_source": "'Gather ModelSEED data via get_seed_data.py, CSV obtained how?'"
+    },
+    "reactions": {
+      "primary": "yETFL (rxnDeltaGR)",
+      "primary_match_key": "reaction id",
+      "fallback": "dG-predictor (group contribution)",
+      "fallback_match_key": "ROW POSITION: model.rxnDeltaG(3983:4062) = dgpred_rxnG.detaG(3983:4062), which assumes the two tables are row-aligned",
+      "note_in_source": "'no deltaG is found for model.rxns(3983:4131). Current dG-predictor dataset has data for model.rxns(1:4062).'"
+    },
+    "consequence": "The reaction column and the metabolite column come from different sources under different keys, so the reaction table is not the sum of the metabolite table and neither is a single self-consistent thermodynamic method."
+  },
+  "routes": {
+    "shipped_reaction_column": {
+      "n": 3210,
+      "frac": 0.7770515613652869
+    },
+    "shipped_metabolite_sum": {
+      "n": 3505,
+      "frac": 0.8484628419268943
+    },
+    "equilibrator_recomputation": {
+      "n": 2741,
+      "frac": 0.663519728879206
+    }
+  },
+  "route_overlap": {
+    "equilibrator_recomputation+shipped_metabolite_sum+shipped_reaction_column": 2254,
+    "shipped_metabolite_sum+shipped_reaction_column": 950,
+    "none": 417,
+    "equilibrator_recomputation+shipped_metabolite_sum": 284,
+    "equilibrator_recomputation": 203,
+    "shipped_metabolite_sum": 17,
+    "shipped_reaction_column": 6
+  },
+  "only_recomputation": 203,
+  "only_shipped_metabolites": 967,
+  "union_of_reaction_sets": 3708,
+  "priceable_under_merged_metabolite_table": 3716,
+  "reactions_needing_both_tables": 8,
+  "shipped_reaction_column_not_reproducible_from_its_own_metabolites": 6,
+  "recovery_gap": {
+    "n_reactions_shipped_can_price_and_we_cannot": 967,
+    "n_distinct_blocking_metabolites": 396,
+    "n_blocking_metabolites_with_placeholder_formula": 2,
+    "reactions_freed_by_top_10_metabolites": 39,
+    "reactions_freed_by_top_25_metabolites": 115,
+    "reactions_freed_by_top_50_metabolites": 237,
+    "top_blockers": [
+      {
+        "met_id": "s_3304",
+        "name": "phosphatidylcholine (1-16:0, 2-18:1)",
+        "formula": "C42H82NO8P",
+        "n_reactions_blocked": 26
+      },
+      {
+        "met_id": "s_3296",
+        "name": "phosphatidylcholine (1-16:0, 2-16:1)",
+        "formula": "C40H78NO8P",
+        "n_reactions_blocked": 26
+      },
+      {
+        "met_id": "s_3362",
+        "name": "1-phosphatidyl-1D-myo-inositol (1-16:1, 2-16:1)",
+        "formula": "C41H75O13P",
+        "n_reactions_blocked": 24
+      },
+      {
+        "met_id": "s_3426",
+        "name": "1-acylglycerophosphoethanolamine (18:0)",
+        "formula": "C23H48NO7P",
+        "n_reactions_blocked": 17
+      },
+      {
+        "met_id": "s_3424",
+        "name": "1-acylglycerophosphoethanolamine (16:0)",
+        "formula": "C21H44NO7P",
+        "n_reactions_blocked": 17
+      },
+      {
+        "met_id": "s_3427",
+        "name": "1-acylglycerophosphoethanolamine (18:1)",
+        "formula": "C23H46NO7P",
+        "n_reactions_blocked": 17
+      },
+      {
+        "met_id": "s_3425",
+        "name": "1-acylglycerophosphoethanolamine (16:1)",
+        "formula": "C21H42NO7P",
+        "n_reactions_blocked": 17
+      },
+      {
+        "met_id": "s_3195",
+        "name": "phosphatidylethanolamine (1-18:0, 2-18:1)",
+        "formula": "C41H80NO8P",
+        "n_reactions_blocked": 15
+      },
+      {
+        "met_id": "s_3187",
+        "name": "phosphatidylethanolamine (1-18:0, 2-16:1)",
+        "formula": "C39H76NO8P",
+        "n_reactions_blocked": 15
+      },
+      {
+        "met_id": "s_3193",
+        "name": "phosphatidylethanolamine (1-16:1, 2-18:1)",
+        "formula": "C39H74NO8P",
+        "n_reactions_blocked": 15
+      },
+      {
+        "met_id": "s_3185",
+        "name": "phosphatidylethanolamine (1-16:1, 2-16:1)",
+        "formula": "C37H70NO8P",
+        "n_reactions_blocked": 15
+      },
+      {
+        "met_id": "s_3191",
+        "name": "phosphatidylethanolamine (1-16:0, 2-18:1)",
+        "formula": "C39H76NO8P",
+        "n_reactions_blocked": 15
+      }
+    ]
+  },
+  "gain": {
+    "n_reactions_only_recomputation_can_price": 203,
+    "top_metabolites_the_shipped_table_lacks": [
+      {
+        "met_id": "s_1620",
+        "name": "TRX1 disulphide",
+        "n_reactions": 12
+      },
+      {
+        "met_id": "s_2789",
+        "name": "palmitoyl-CoA",
+        "n_reactions": 11
+      },
+      {
+        "met_id": "s_1616",
+        "name": "TRX1",
+        "n_reactions": 11
+      },
+      {
+        "met_id": "s_0714",
+        "name": "FMN",
+        "n_reactions": 8
+      },
+      {
+        "met_id": "s_2847",
+        "name": "palmitoyl-CoA",
+        "n_reactions": 8
+      },
+      {
+        "met_id": "s_1479",
+        "name": "tetracosanoyl-CoA",
+        "n_reactions": 5
+      },
+      {
+        "met_id": "s_1302",
+        "name": "palmitoyl-CoA",
+        "n_reactions": 5
+      },
+      {
+        "met_id": "s_1405",
+        "name": "riboflavin",
+        "n_reactions": 5
+      },
+      {
+        "met_id": "s_1622",
+        "name": "TRX1 disulphide",
+        "n_reactions": 5
+      },
+      {
+        "met_id": "s_1305",
+        "name": "palmitoyl-CoA",
+        "n_reactions": 5
+      }
+    ]
+  }
+}

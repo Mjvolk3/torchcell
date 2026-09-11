@@ -264,3 +264,350 @@ def test_real_gem_delta_g_rejects_both_missing_value_conventions():
     assert not torch.isnan(gem.thermo.rxn_delta_g).any()
     assert gem.thermo.met_coverage.n_known == 2389
     assert gem.thermo.rxn_coverage.n_known == 3210
+
+
+def _abundance_layer(**overrides: Any) -> FluxLayer:
+    return _layer(
+        use_abundance_head=True,
+        thermo_mode=ThermoMode.OFF,
+        use_enzyme_capacity=True,
+        use_protein_budget=True,
+        **overrides,
+    )
+
+
+def test_abundance_head_starts_inside_the_budget():
+    """With no prior supplied, the equal-molar prior fills half the budget by construction."""
+    layer = _abundance_layer()
+    out = layer(*_inputs())
+    e_g = out["e_g"]
+    assert e_g.shape == (4, 3)
+    assert torch.all(e_g > 0)
+    # tanh of a random projection moves genes both ways, so the total sits near the prior.
+    ratio = float(out["feas_budget_ratio"])
+    assert 0.05 < ratio < 5.0, ratio
+    assert float(out["c_budget"]) >= 0.0
+
+
+def test_abundance_deletion_zeroes_the_complex_reaction():
+    """A deleted subunit has zero abundance, the unit's power mean is zero, r1 has no capacity."""
+    layer = _abundance_layer()
+    out = layer(*_inputs(deleted=0))
+    assert torch.all(out["e_g"][:, 0] == 0.0)
+    assert torch.all(out["v"][:, 1].abs() < 1e-6)
+    # The isozyme reaction r2, catalyzed by g2 alone, keeps a positive capacity.
+    assert torch.all(out["e_g"][:, 2] > 0)
+
+
+def test_abundance_capacity_is_the_bound_and_is_reported():
+    """The box is capped by kcat * E_u, and the active-fraction diagnostic is emitted."""
+    layer = _abundance_layer()
+    h, ctx, idx, idx_batch = _inputs()
+    out = layer(h, ctx, idx, idx_batch)
+    gamma = layer.gene_availability(h, idx, idx_batch)
+    e_u = layer.unit_abundance(layer.gene_abundance(h, gamma))
+    cap = torch.zeros(4, layer.n_reactions)
+    cap.index_add_(1, layer.unit_reaction, layer.kcat_per_h.unsqueeze(0) * e_u)
+    for j in (1, 2):
+        assert torch.all(out["v"][:, j].abs() <= cap[:, j] + 1e-6)
+    assert "feas_capacity_active_frac" in out
+    assert 0.0 <= float(out["feas_capacity_active_frac"]) <= 1.0
+
+
+def test_unit_abundance_is_a_smooth_minimum_over_subunits():
+    """A complex takes (close to) the scarcest subunit; an isozyme unit is its one gene."""
+    layer = _abundance_layer(softmin_beta=32.0)
+    e_g = torch.tensor([[1.0e-5, 4.0e-5, 7.0e-5]])
+    e_u = layer.unit_abundance(e_g)
+    assert abs(float(e_u[0, 0]) - 1.0e-5) < 0.05e-5
+    assert abs(float(e_u[0, 1]) - 7.0e-5) < 1e-9
+
+
+def test_abundance_prior_can_be_supplied_and_gradients_reach_it():
+    """A measured proteome sets the prior, and the data can move E through the head."""
+    cfg = FluxLayerConfig(
+        hidden_dim=8,
+        reaction_embed_dim=4,
+        use_abundance_head=True,
+        thermo_mode=ThermoMode.OFF,
+    )
+    layer = FluxLayer(
+        _toy_gem(),
+        ["g0", "g1", "g2"],
+        config=cfg,
+        kcat_per_s=torch.tensor([1.0, 1.0]),
+        molecular_weight_kda=torch.tensor([40.0, 40.0, 40.0]),
+        abundance_prior_mmol_per_gdw=torch.tensor([1e-6, 2e-6, 3e-6]),
+    )
+    assert not layer.abundance_prior_is_default
+    h, ctx, idx, idx_batch = _inputs()
+    h.requires_grad_(True)
+    out = layer(h, ctx, idx, idx_batch)
+    out["e_g"].sum().backward()
+    assert h.grad is not None and float(h.grad.abs().sum()) > 0
+
+
+# =====================================================================================
+# WAVE 5 (2026-09-10): the predicted parameter tiers, the merged thermo table, and the
+# constraint warmup.
+# =====================================================================================
+
+
+def _toy_reaction_thermo(source: Any) -> Any:
+    """A four-reaction merged table with one reaction priced by each route."""
+    from torchcell.metabolism.parameters import ReactionThermoTable
+
+    mask = torch.tensor([True, True, True, False])
+    return ReactionThermoTable(
+        delta_r_g0=torch.tensor([-5.0, -10.0, 10.0, 0.0]),
+        mask=mask,
+        provenance=["equilibrator", "mixed", "shipped_metabolite_sum", "none"],
+        sigma=torch.tensor([2.0, 0.0, 0.0, 0.0]),
+        sigma_mask=torch.tensor([True, False, False, False]),
+        source=source,
+        counts={"known": 3, "n_reactions": 4, "sigma_known": 1},
+        met_counts={"n_metabolites": 3, "known": 3},
+        source_paths={},
+        sha256={},
+    )
+
+
+def test_supplied_reaction_thermo_replaces_the_shipped_sum():
+    """The layer uses the table it is handed, not the GEM's own metabolite sum."""
+    from torchcell.metabolism.parameters import ThermoSource
+
+    table = _toy_reaction_thermo(ThermoSource.UNION)
+    cfg = FluxLayerConfig(
+        hidden_dim=8, reaction_embed_dim=4, thermo_source=ThermoSource.UNION
+    )
+    layer = FluxLayer(
+        _toy_gem(),
+        ["g0", "g1", "g2"],
+        config=cfg,
+        kcat_per_s=torch.tensor([1.0, 1.0]),
+        molecular_weight_kda=torch.tensor([40.0, 40.0, 40.0]),
+        reaction_thermo=table,
+    )
+    assert torch.equal(layer.delta_r_g0, table.delta_r_g0)
+    assert torch.equal(layer.delta_r_g0_mask, table.mask)
+    report = layer.coverage_report()
+    assert report["thermo_source"] == str(ThermoSource.UNION)
+    assert report["thermo_route_counts"]["known"] == 3
+    assert report["n_reactions_delta_g_sigma_known"] == 1
+    out = layer(*_inputs())
+    assert torch.isfinite(out["c_thermo"])
+
+
+def test_a_thermo_table_that_disagrees_with_the_config_is_refused():
+    """A run must never record a route it did not use, so the mismatch is fatal."""
+    from torchcell.metabolism.parameters import ThermoSource
+
+    cfg = FluxLayerConfig(
+        hidden_dim=8, reaction_embed_dim=4, thermo_source=ThermoSource.EQUILIBRATOR
+    )
+    with pytest.raises(ValueError, match="thermo_source"):
+        FluxLayer(
+            _toy_gem(),
+            ["g0", "g1", "g2"],
+            config=cfg,
+            kcat_per_s=torch.tensor([1.0, 1.0]),
+            molecular_weight_kda=torch.tensor([40.0, 40.0, 40.0]),
+            reaction_thermo=_toy_reaction_thermo(ThermoSource.UNION),
+        )
+
+
+def test_coverage_report_splits_kcat_into_three_tiers():
+    """One boolean cannot describe a table that is part measured, part predicted."""
+    layer = _layer(thermo_mode=ThermoMode.OFF)
+    assert layer.coverage_report()["kcat_tier_counts"]["unknown"] == 2
+
+    gem = _toy_gem()
+    cfg = FluxLayerConfig(
+        hidden_dim=8, reaction_embed_dim=4, thermo_mode=ThermoMode.OFF
+    )
+    tagged = FluxLayer(
+        gem,
+        ["g0", "g1", "g2"],
+        config=cfg,
+        kcat_per_s=torch.tensor([1.0, 2.0]),
+        molecular_weight_kda=torch.tensor([40.0, 40.0, 40.0]),
+        kcat_provenance=["open_enzyme_database", "predicted_median"],
+        km_mm=torch.tensor([0.5, 0.7]),
+        km_provenance=["predicted_median", "organism_default"],
+    )
+    report = tagged.coverage_report()
+    assert report["kcat_tier_counts"] == {
+        "measured": 1,
+        "predicted": 1,
+        "default": 0,
+        "unknown": 0,
+    }
+    assert report["km_tier_counts"]["predicted"] == 1
+    assert report["km_tier_counts"]["default"] == 1
+    assert report["km_table_present"] is True
+
+
+def test_a_provenance_list_of_the_wrong_length_is_an_error():
+    """A short list would attribute the missing units to nothing at all."""
+    with pytest.raises(ValueError, match="provenance"):
+        FluxLayer(
+            _toy_gem(),
+            ["g0", "g1", "g2"],
+            config=FluxLayerConfig(hidden_dim=8, reaction_embed_dim=4),
+            kcat_per_s=torch.tensor([1.0, 1.0]),
+            molecular_weight_kda=torch.tensor([40.0, 40.0, 40.0]),
+            kcat_provenance=["open_enzyme_database"],
+        )
+
+
+def test_constraint_warmup_ramps_from_zero_and_saturates():
+    """Epoch 0 carries no physics; epoch W carries all of it and it stops there."""
+    layer = _layer(
+        thermo_mode=ThermoMode.OFF,
+        constraint_warmup_epochs=20,
+        constraint_final_scale=0.1,
+    )
+    assert layer.set_constraint_epoch(0) == 0.0
+    assert layer.set_constraint_epoch(10) == pytest.approx(0.05)
+    assert layer.set_constraint_epoch(20) == pytest.approx(0.1)
+    assert layer.set_constraint_epoch(200) == pytest.approx(0.1)
+
+    out = layer(*_inputs())
+    layer.set_constraint_epoch(0)
+    assert float(layer.constraint_loss(out)) == 0.0
+    layer.set_constraint_epoch(20)
+    warm = float(layer.constraint_loss(out))
+    layer.set_constraint_epoch(10)
+    assert float(layer.constraint_loss(out)) == pytest.approx(warm / 2, rel=1e-5)
+
+
+def test_no_warmup_leaves_the_constraint_loss_exactly_as_it_was():
+    """The default has to reproduce every run before 2026-09-10, byte for byte."""
+    layer = _layer(thermo_mode=ThermoMode.OFF)
+    assert layer.constraint_scale == 1.0
+    out = layer(*_inputs())
+    w = layer.config.weights
+    expected = (
+        w["balance"] * out["c_balance"]
+        + w["thermo"] * out["c_thermo"]
+        + w["budget"] * out["c_budget"]
+        + w["dissipation"] * out["c_dissipation"]
+        + w["parsimony"] * out["c_parsimony"]
+        + w["thermo_prior"] * out["c_thermo_prior"]
+        + w.get("box", 1.0) * out["c_box"]
+    )
+    assert float(layer.constraint_loss(out)) == pytest.approx(float(expected))
+
+
+def test_constraint_scale_leaves_the_gradient_direction_intact():
+    """A scale is a step size on the physics, not a reweighting between its terms."""
+    layer = _layer(thermo_mode=ThermoMode.OFF, constraint_final_scale=0.1)
+    out = layer(*_inputs())
+    loss = layer.constraint_loss(out)
+    first = layer.flux_mlp[0]
+    assert isinstance(first, torch.nn.Linear)
+    weight = first.weight
+    (grad_small,) = torch.autograd.grad(loss, weight, retain_graph=True)
+    layer.constraint_scale = 1.0
+    (grad_full,) = torch.autograd.grad(layer.constraint_loss(out), weight)
+    assert torch.allclose(grad_small * 10.0, grad_full, atol=1e-6)
+
+
+def test_flux_head_normalization_puts_its_init_on_the_target_scale():
+    r"""The flux readout must not start seven target sigmas from the target mean.
+
+    MEASURED on the real model, 2026-09-10, by
+    ``experiments/027-betaxanthin-metabolic/scripts/diagnose_head_scale.py``: against a
+    target standardized to mean 0 and sd 1, the pooled head starts at mean -0.573 (sd
+    0.0074) and the unnormalized flux head at **mean +7.030** (sd 0.237). The offset, not
+    the spread, is what the CRPS pays, and it matches the wave-5 cells' epoch-0 data loss of
+    8.5 to 14.3 at a constraint weight of exactly zero (jobs 1663 to 1665).
+
+    Reproduced here on fluxes of the same magnitude the real layer emits, so the property is
+    pinned without the GEM: the normalized head's offset must be smaller by the flux scale,
+    and the unnormalized one must still be large, or the test would pass on a head that
+    normalizes nothing.
+    """
+    from torchcell.models.cell_graph_transformer_metabolism import FluxScalarHead
+
+    scale = 100.0
+    torch.manual_seed(2700)
+    # 4,131 reactions with |v| mean ~10 and max ~60, the measured shape of the real vector.
+    v = torch.rand(64, 4131) * 60.0
+    turnover = torch.rand(64, 2806) * 60.0
+    precursors = torch.tensor([12, 77, 900])
+
+    torch.manual_seed(11)
+    plain = FluxScalarHead(4131, precursors, param_dim=2, flux_scale=scale)
+    torch.manual_seed(11)
+    normed = FluxScalarHead(
+        4131, precursors, param_dim=2, normalize_inputs=True, flux_scale=scale
+    )
+    with torch.no_grad():
+        mu_plain = plain(v, turnover)[:, 0, 0]
+        mu_normed = normed(v, turnover)[:, 0, 0]
+
+    # The defect the diagnosis found, reproduced: a many-sigma constant offset.
+    assert abs(float(mu_plain.mean())) > 2.0, float(mu_plain.mean())
+    # And the fix: on the scale a standardized target is scored against.
+    assert abs(float(mu_normed.mean())) < 1.0, float(mu_normed.mean())
+    assert float(mu_normed.std()) < 1.0
+    # It is a change of UNITS, not of the head: same weights, inputs divided by one scalar.
+    assert torch.allclose(normed.dense.weight, plain.dense.weight)
+
+
+def test_flux_head_normalization_is_off_by_default():
+    """Every 026 and 027 run before 2026-09-10 must deserialize unchanged."""
+    from torchcell.models.cell_graph_transformer_metabolism import FluxScalarHead
+
+    head = FluxScalarHead(10, torch.tensor([0, 1]), param_dim=1)
+    assert head.normalize_inputs is False
+    torch.manual_seed(3)
+    v = torch.randn(4, 10) * 50.0
+    turnover = torch.rand(4, 5) * 50.0
+    with torch.no_grad():
+        expected = head.precursor(
+            torch.log1p(turnover[:, head.precursor_indices].clamp(min=0.0))
+        ) + head.dense(v)
+        assert torch.allclose(head(v, turnover), expected)
+
+
+def test_constraint_delay_holds_at_zero_then_ramps():
+    r"""The delayed schedule: exactly zero until the delay, then the ordinary warmup.
+
+    This is the schedule that lets the module be measured on a head that has already left the
+    mean plateau. Measured 2026-09-10: at a final scale of 0.1 the flux arm never escaped in
+    80 epochs (job 1669); at 0.0 the same cell escaped at epoch 33 (job 1673). A delay past
+    the escape is the only way to apply the constraints to a trained head.
+    """
+    layer = _layer(
+        thermo_mode=ThermoMode.OFF,
+        constraint_delay_epochs=40,
+        constraint_warmup_epochs=20,
+        constraint_final_scale=0.1,
+    )
+    # Held at exactly zero across the whole escape window.
+    for epoch in (0, 1, 20, 33, 39):
+        assert layer.set_constraint_epoch(epoch) == 0.0, epoch
+    # Then the ordinary linear ramp, measured from the END of the delay.
+    assert layer.set_constraint_epoch(40) == 0.0
+    assert layer.set_constraint_epoch(50) == pytest.approx(0.05)
+    assert layer.set_constraint_epoch(60) == pytest.approx(0.1)
+    assert layer.set_constraint_epoch(200) == pytest.approx(0.1)
+
+
+def test_zero_delay_reproduces_the_plain_warmup():
+    """The default must leave every earlier schedule bit for bit."""
+    plain = _layer(
+        thermo_mode=ThermoMode.OFF,
+        constraint_warmup_epochs=20,
+        constraint_final_scale=0.1,
+    )
+    delayed = _layer(
+        thermo_mode=ThermoMode.OFF,
+        constraint_delay_epochs=0,
+        constraint_warmup_epochs=20,
+        constraint_final_scale=0.1,
+    )
+    for epoch in (0, 5, 10, 20, 80):
+        assert plain.set_constraint_epoch(epoch) == delayed.set_constraint_epoch(epoch)

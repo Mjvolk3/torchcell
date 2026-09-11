@@ -22,6 +22,21 @@ Layout, which is DERIVED from the repo path rather than invented::
       -> torchcell / paper / nature-biotech
 
 so there is never a question of which Zotero collection a document belongs in.
+
+A rendered Dendron note is the one case that does not follow its repo path. It is
+built by ``notes/assets/publish/scripts/bib_tex_pdf.sh`` into
+``notes/assets/pdf-output/<fname>.pdf`` and has no directory of its own, and its
+readers are the same people who read the notes-tex documents, so it is filed in
+the same tree::
+
+    notes/experiments.026-metabolism-flux.enzyme-constrained-thermodynamic-flux-layer.md
+      -> torchcell / notes-tex / experiments.026-metabolism-flux.enzyme-constrained-thermodynamic-flux-layer
+
+The Doc Key for a note is its repo-relative ``.md`` path, so it can never collide
+with a notes-tex directory's key even if a directory were given the same name.
+The title comes from the Dendron frontmatter ``title:`` field, which is the only
+title a note has.
+
 The topic collections (``torchcell / torchcell-topics / *``) hold OTHER people's
 papers; these trees hold ours. Keeping the two apart is what stops a draft from
 being mistaken for literature when the bibliography is rebuilt.
@@ -80,6 +95,10 @@ Usage::
     python notes-tex/common/zotero_publish.py paper/nature-biotech \\
         --pdf editing --tex sections/frontmatter.tex
 
+    # a rendered Dendron note: the repo-relative .md, built by bib_tex_pdf.sh
+    python notes-tex/common/zotero_publish.py \\
+        notes/experiments.026-metabolism-flux.enzyme-constrained-thermodynamic-flux-layer.md
+
 ``--tex`` is explicit rather than discovered. Searching the directory for the one
 file containing ``\\title`` finds two in paper/nature-biotech, because the stock
 ``sn-article.tex`` sample carries a placeholder title, and a rule that silently
@@ -135,6 +154,9 @@ class BuiltDoc(BaseModel):
     git_commit: str
     git_branch: str
     built_at: str  # YYYY-MM-DD-HH-MM-SS, local
+    # Set only for a rendered Dendron note, whose collection is chosen (the notes-tex
+    # tree) rather than derived from its path; the key still names the source file.
+    doc_key_override: str | None = None
 
     @property
     def doc(self) -> str:
@@ -148,7 +170,7 @@ class BuiltDoc(BaseModel):
 
     @property
     def doc_key(self) -> str:
-        return self.doc_dir
+        return self.doc_key_override or self.doc_dir
 
     @property
     def filename(self) -> str:
@@ -319,6 +341,54 @@ def load_built_doc(repo: str, rel_dir: str, pdf_stem: str, tex_rel: str) -> Buil
     )
 
 
+def _frontmatter_title(md_path: str) -> str:
+    """The ``title:`` field of a Dendron note's YAML frontmatter."""
+    src = open(md_path, encoding="utf-8").read()
+    m = re.match(r"---\n(.*?)\n---\n", src, re.S)
+    if not m:
+        sys.exit(f"{md_path} has no Dendron frontmatter.")
+    t = re.search(r"^title:\s*(.+?)\s*$", m.group(1), re.M)
+    if not t:
+        sys.exit(f"{md_path}: frontmatter has no title field.")
+    return t.group(1).strip("'\"")
+
+
+def load_built_note(repo: str, note_rel: str) -> BuiltDoc:
+    """Load a rendered Dendron note, filed under the notes-tex tree.
+
+    The PDF is what ``notes/assets/publish/scripts/bib_tex_pdf.sh`` writes; a note
+    carries no author line, so the author is the git identity of whoever publishes.
+    """
+    md = osp.join(repo, note_rel)
+    if not osp.isfile(md) or not note_rel.startswith("notes/") or not note_rel.endswith(".md"):
+        sys.exit(f"{note_rel} is not a notes/<fname>.md file.")
+    fname = osp.basename(note_rel)[:-3]
+    pdf = osp.join(repo, "notes", "assets", "pdf-output", f"{fname}.pdf")
+    if not osp.exists(pdf):
+        sys.exit(f"{pdf} does not exist -- render the note with bib_tex_pdf.sh first.")
+
+    raw = open(pdf, "rb").read()
+    dirty = _git(repo, "status", "--porcelain", "--untracked-files=no") != ""
+    commit = _git(repo, "rev-parse", "HEAD")[:12] + ("-dirty" if dirty else "")
+    name = _git(repo, "config", "user.name").split()
+    return BuiltDoc(
+        doc_dir=f"{DEFAULT_PARENT_DIR}/{fname}",
+        pdf_stem=fname,
+        pdf_path=pdf,
+        title=_frontmatter_title(md),
+        subtitle=None,
+        authors=[(" ".join(name[:-1]), name[-1])] if name else [],
+        sha256=hashlib.sha256(raw).hexdigest(),
+        n_bytes=len(raw),
+        git_commit=commit,
+        git_branch=_git(repo, "rev-parse", "--abbrev-ref", "HEAD"),
+        built_at=datetime.datetime.fromtimestamp(osp.getmtime(pdf)).strftime(
+            "%Y-%m-%d-%H-%M-%S"
+        ),
+        doc_key_override=note_rel,
+    )
+
+
 def refresh_provenance(zot: zotero.Zotero, parent: dict, built: BuiltDoc) -> None:
     """Point the parent item at the build the top attachment came from.
 
@@ -409,7 +479,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("doc", help="repo-relative document directory, e.g. "
                                 "paper/nature-biotech; a bare name means "
-                                "notes-tex/<name>")
+                                "notes-tex/<name>; a notes/<fname>.md path means "
+                                "that rendered Dendron note, filed under notes-tex")
     ap.add_argument("--pdf", default=None, metavar="STEM",
                     help="PDF stem to publish (default: the document directory's "
                          "own name, which is what its Makefile builds). e.g. editing")
@@ -435,16 +506,21 @@ def main() -> None:
     if args.clean and args.pdf:
         sys.exit("--clean and --pdf say the same thing; pass only one.")
     rel_dir = args.doc.strip("/")
-    if "/" not in rel_dir:
-        rel_dir = f"{DEFAULT_PARENT_DIR}/{rel_dir}"
-    # The default stem is the document directory's own name, because that is what
-    # Makefile.common builds: notes-tex/eqtl-data-model -> eqtl-data-model.pdf.
-    # paper/nature-biotech has no such default build and always passes --pdf.
-    leaf = rel_dir.rsplit("/", 1)[-1]
-    pdf_stem = args.pdf or (f"{leaf}-clean" if args.clean else leaf)
-    tex_rel = args.tex or f"{pdf_stem}.tex"
-
-    built = load_built_doc(repo, rel_dir, pdf_stem, tex_rel)
+    if rel_dir.endswith(".md"):
+        if args.pdf or args.tex or args.clean:
+            sys.exit("--pdf, --tex and --clean do not apply to a Dendron note.")
+        built = load_built_note(repo, rel_dir)
+    else:
+        if "/" not in rel_dir:
+            rel_dir = f"{DEFAULT_PARENT_DIR}/{rel_dir}"
+        # The default stem is the document directory's own name, because that is
+        # what Makefile.common builds: notes-tex/eqtl-data-model ->
+        # eqtl-data-model.pdf. paper/nature-biotech has no such default build and
+        # always passes --pdf.
+        leaf = rel_dir.rsplit("/", 1)[-1]
+        pdf_stem = args.pdf or (f"{leaf}-clean" if args.clean else leaf)
+        tex_rel = args.tex or f"{pdf_stem}.tex"
+        built = load_built_doc(repo, rel_dir, pdf_stem, tex_rel)
     print(f"{built.full_title}")
     print(f"  {built.pdf_path}")
     print(f"  {built.n_bytes:,} bytes  sha256 {built.sha256}")

@@ -34,7 +34,7 @@
 # did run balanced.
 #
 #SBATCH --partition=gpuA40x4
-#SBATCH --account=bbub-delta-gpu
+#SBATCH --account=bfjt-delta-gpu
 #SBATCH --array=0-8
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -48,9 +48,18 @@
 #SBATCH --output=/projects/bbub/mjvolk3/torchcell/experiments/027-betaxanthin-metabolic/slurm/output/%x_%A_%a.out
 #SBATCH --error=/projects/bbub/mjvolk3/torchcell/experiments/027-betaxanthin-metabolic/slurm/output/%x_%A_%a.out
 #
-# ACCOUNT: bfjt-delta-gpu (12,797 h as of 2026-09-03). In the header on purpose: every older
-# Delta launcher in this repo says `--account=bbtp-delta-gpu` on the submit line, and bbtp NO
-# LONGER EXISTS on this allocation.
+# ACCOUNT: bfjt-delta-gpu (12,788 h of 17,141 unspent as of 2026-09-04). In the header on
+# purpose: every older Delta launcher in this repo says `--account=bbtp-delta-gpu` on the
+# submit line, and bbtp NO LONGER EXISTS on this allocation.
+#
+# The account is the ONLY lever on queue position here, and it is a large one. `sbatch
+# --test-only` across the four accounts with a positive GPU balance, run 2026-09-04 21:00,
+# returned bbub 09-06T18:16, bfjt 09-05T00:25, bflt and bgcg 09-04T22:42 -- and returned the
+# SAME estimate for each account at a 20 h and a 12 h wall, so shortening the wall buys
+# nothing. The spread is fairshare: bbub is 83 percent spent and priced at priority 810,
+# bfjt is 25 percent spent and priced at 1094. bflt and bgcg schedule marginally sooner
+# still but hold only ~5,000 h each, and this job's worst case is 9 nodes x 4 GPUs x 20 h =
+# 720 GPU-hours, about 15 percent of one of them. bbhh is unusable at -6,447 h.
 #
 # JOB NAME `027-bxfx` is deliberately distinct from the expression sweep `019-expr-v10`
 # (Delta array 21796128) that is pending on the same account, so `squeue`, the slurm output
@@ -58,7 +67,10 @@
 
 set -euo pipefail
 
-source "${SLURM_SUBMIT_DIR:-/projects/bbub/mjvolk3/torchcell}/experiments/027-betaxanthin-metabolic/scripts/delta_bxfx_common.sh"
+# Absolute. See the note on PROJECT_ROOT in delta_bxfx_common.sh: SLURM_SUBMIT_DIR is always
+# set, so the `:-` default never fires, and submitting from $HOME resolved this to
+# /u/mjvolk3 and killed array 21813159 in 8 seconds.
+source "/projects/bbub/mjvolk3/torchcell/experiments/027-betaxanthin-metabolic/scripts/delta_bxfx_common.sh"
 
 bxfx_env
 bxfx_preflight

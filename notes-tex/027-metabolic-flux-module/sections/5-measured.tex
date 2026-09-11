@@ -5,6 +5,42 @@
 \section{What has been measured\secstatus{todo}}
 \label{sec:measured}
 
+\subsection{What separates the two rounds\secstatus{todo}}
+
+Both rounds ask whether the flux module helps predict betaxanthin, and they differ in
+almost everything else. Reading a number from one against a number from the other is the
+mistake this table exists to prevent.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[026 against 027]{The two rounds, side by side. The backbone is the difference
+  that outranks the others, since the 026 baseline was roughly five times below the
+  demonstrated ceiling on this target.}
+  \label{tab:026v027}
+  %% SOURCE: experiments/026-metabolism-flux/scripts/sweep_flux.py and its results/sweep_*.json
+  %% args block; experiments/027-betaxanthin-metabolic/conf/base.yaml and scripts/train_bx.py.
+  \begin{tabular}{@{}p{0.20\textwidth}p{0.36\textwidth}p{0.36\textwidth}@{}}
+    \hline
+    & 026 & 027 \\
+    \hline
+    backbone & weak: 2 graphs, learnable embeddings, hidden 32, 4 heads &
+      strong: 9 graphs, \texttt{prot\_T5\_all}, no learnable table, hidden 90, 9 heads \\
+    trainer & \texttt{sweep\_flux.py} & \texttt{train\_bx.py} \\
+    epochs & 30 & 200 \\
+    split & re-rolled per seed, so seed moves signal and nuisance together &
+      \textbf{pinned} Merzbacher 639-gene test split, fixed across every cell \\
+    scored on & validation, \textbf{maximum over epochs} &
+      test, at an epoch selected on validation \\
+    replication & 10 seeds per arm, plus a 24-run permuted-label null &
+      24 seeds per arm, with the nulls as two of the six arms \\
+    machine & GilaHyper & Delta \texttt{gpuA40x4}, 72 workers \\
+    W\&B project & \texttt{torchcell\_026\_flux\_sweep} & \texttt{torchcell\_027\_bxfx} \\
+    outcome & no arm clears its own null & every cell is a constant predictor \\
+    \hline
+  \end{tabular}
+\end{table}
+
 \subsection{The 026 sweep, and why it decided nothing\secstatus{todo}}
 
 \begin{table}[H]
@@ -27,6 +63,12 @@
     \hline
   \end{tabular}
 \end{table}
+
+Every run behind that table has a W\&B page, indexed in Table~\ref{tab:wandb-runs-026};
+the arm rows there are the ten seeds each arm contributes, and the null and regularization
+grids are the runs the next two paragraphs draw on.
+
+\input{tables/wandb_runs_026.tex}
 
 The ordering looks like the ladder the design predicted. It is not evidence, for three
 measured reasons.

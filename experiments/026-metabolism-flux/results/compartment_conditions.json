@@ -1,0 +1,201 @@
+{
+  "generated_at": "2026-09-10T18:24:40.555209+00:00",
+  "rows": [
+    {
+      "compartment": "c",
+      "name": "cytoplasm",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 7.2,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 7.0,
+      "yetfl_ionic_strength_m": 0.25,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "ce",
+      "name": "cell envelope",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 5.0,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 60.0,
+      "yetfl_p_h": 7.0,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "e",
+      "name": "extracellular",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 5.0,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 60.0,
+      "yetfl_p_h": 5.0,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 60.0
+    },
+    {
+      "compartment": "er",
+      "name": "endoplasmic reticulum",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 7.1,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 7.2,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "erm",
+      "name": "endoplasmic reticulum membrane",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 7.1,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 7.2,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "g",
+      "name": "Golgi",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 6.6,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 6.35,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "gm",
+      "name": "Golgi membrane",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 6.6,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 6.35,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "im",
+      "name": "mitochondrial intermembrane space",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": null,
+      "pipeline_ionic_strength_m": null,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 7.0,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "lp",
+      "name": "lipid particle",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 7.2,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 7.0,
+      "yetfl_ionic_strength_m": 0.25,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "m",
+      "name": "mitochondrion",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 7.8,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": -160.0,
+      "yetfl_p_h": 7.5,
+      "yetfl_ionic_strength_m": 0.25,
+      "yetfl_potential_mv_vs_cytosol": -180.0
+    },
+    {
+      "compartment": "mm",
+      "name": "mitochondrial membrane",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 7.8,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": -160.0,
+      "yetfl_p_h": 7.5,
+      "yetfl_ionic_strength_m": 0.25,
+      "yetfl_potential_mv_vs_cytosol": -180.0
+    },
+    {
+      "compartment": "n",
+      "name": "nucleus",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 7.2,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 7.0,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": -15.0
+    },
+    {
+      "compartment": "p",
+      "name": "peroxisome",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 7.0,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 8.2,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "v",
+      "name": "vacuole",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 6.2,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 6.17,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    },
+    {
+      "compartment": "vm",
+      "name": "vacuolar membrane",
+      "literature_value_in_library": "no primary source in library; in-library modeling tabulations are smithThermofluxGenerationAnalysis2026 Table 1 (cytosol 7.0, mitochondrion 7.4, extracellular 5.0 only) and oftadehGenomescaleMetabolicModel2021 via its compartment-data file",
+      "pipeline_p_h": 6.2,
+      "pipeline_ionic_strength_m": 0.25,
+      "pipeline_potential_mv_vs_cytosol": 0.0,
+      "yetfl_p_h": 6.17,
+      "yetfl_ionic_strength_m": 0.0,
+      "yetfl_potential_mv_vs_cytosol": 0.0
+    }
+  ],
+  "literature_status": "Every pH in the pipeline table is a textbook organellar value. The library holds no primary measurement of any yeast compartment pH: the only in-library sources for these numbers are two modeling papers that themselves tabulate assumptions, Smith et al. 2026 (Thermo-Flux, Table 1) and Oftadeh et al. 2021 (yETFL, through its compartment-data file). The measurements that should replace them are named in the curation request below; none is in the library, and none is cited anywhere in this build.",
+  "curation_requests": [
+    "Orij et al. 2009, in vivo measurement of cytosolic and mitochondrial pH in S. cerevisiae with ratiometric pHluorin (cytosol, mitochondrial matrix).",
+    "Brett et al. 2005 and Plant et al. 1999, vacuolar lumen pH in S. cerevisiae.",
+    "Llopis et al. 1998, organelle pH by targeted GFP (mitochondrial matrix, Golgi, ER), measured in mammalian cells and used here only as the source of the textbook ordering.",
+    "A peroxisomal pH measurement for S. cerevisiae; the pipeline uses 7.0 and yETFL uses 8.2, a 1.2-unit disagreement that no source in the library settles."
+  ],
+  "pipeline_source": "pH: COMPARTMENT_PH in experiments/026-metabolism-flux/scripts/build_equilibrator_thermo.py, textbook organellar values, assumed. Ionic strength and membrane potential magnitudes: Smith et al. 2026 Thermo-Flux, Table 1, iMM904 parameter set. Signs assigned here.",
+  "yetfl_source": "yETFL (Oftadeh et al. 2021), info_yeast/thermo/yeast_compartment_data.json, Zenodo 10.5281/zenodo.4778047. Applied by matTFA's prepModelforTFA.",
+  "flux_layer_compartment_parameters": {
+    "ph": {
+      "c": 7.0,
+      "m": 7.4,
+      "e": 5.0
+    },
+    "ionic_strength_m": {},
+    "membrane_potential_mv": {
+      "e": 60.0,
+      "m": 160.0
+    },
+    "reference_compartment": "c",
+    "temperature_k": 303.15,
+    "source": "Smith et al. 2026, Thermo-Flux, Table 1 (iMM904 parameter set); membrane potentials in mV, pH dimensionless."
+  },
+  "equilibrator_defaults": {
+    "p_h": 7.0,
+    "ionic_strength_m": 0.25,
+    "p_mg": 3.0,
+    "temperature_k": 298.15,
+    "source": "eQuilibrator 3 ComponentContribution defaults; the 026 build overrides temperature to 303.15 K and pH per compartment."
+  }
+}

@@ -1,0 +1,410 @@
+{
+  "question": "yeast-GEM 9.0.2 ships model_metDeltaG.csv and model_rxnDeltaG.csv. Which estimator, at which conditions, produced them, and does matching those conditions close the disagreement with an eQuilibrator recomputation?",
+  "generated_at": "2026-09-10T18:19:49.499292+00:00",
+  "upstream_artifacts": {
+    "yeast8_thermo_curated.mat": {
+      "source_url": "https://zenodo.org/records/4778047/files/input_models.zip",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sL -o input_models.zip 'https://zenodo.org/records/4778047/files/input_models.zip?download=1' && unzip -o input_models.zip input_models/yeast8_thermo_curated.mat",
+      "description": "yETFL's thermodynamically curated Yeast8.3.4, the source of 96 percent of yeast-GEM 9's deltaG values. Carries thermo_units, metDeltaGFtr, rxnDeltaGR.",
+      "sha256": "ec82ce09e76e5b5fc8a75fc86f86eb3c8510b1f5d02fa4434bfcce8bc833ea2f"
+    },
+    "yeast_compartment_data.json": {
+      "source_url": "https://zenodo.org/records/4778047/files/info_yeast.zip",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sL -o info_yeast.zip 'https://zenodo.org/records/4778047/files/info_yeast.zip?download=1' && unzip -o info_yeast.zip info_yeast/thermo/yeast_compartment_data.json",
+      "description": "The compartment pH, ionic strength and membrane potential table matTFA applied when yETFL transformed every formation energy.",
+      "sha256": "3b96940ad301622309758d501ac1276cfa90e1c6063d77d0d328868318e99dcb"
+    },
+    "dgpred_rxnG.csv": {
+      "source_url": "https://github.com/SysBioChalmers/yeast-GEM/raw/main/data/modelCuration/v8_7_0/dgpred_rxnG.csv",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sL https://codeload.github.com/SysBioChalmers/yeast-GEM/tar.gz/refs/heads/main | tar xz --strip-components=1 yeast-GEM-main/data/modelCuration/v8_7_0/dgpred_rxnG.csv",
+      "description": "dGPredictor output for the reactions yETFL did not cover.",
+      "sha256": "0870ec4d64773fcea0fd6249d7922a42d4bc0af19f035cd0bf15886526aba6bd"
+    },
+    "v8_7_0.m": {
+      "source_url": "https://github.com/SysBioChalmers/yeast-GEM/raw/main/code/modelCuration/v8_7_0.m",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sL https://codeload.github.com/SysBioChalmers/yeast-GEM/tar.gz/refs/heads/main | tar xz --strip-components=1 yeast-GEM-main/code/modelCuration/v8_7_0.m",
+      "description": "The curation script that assigned metDeltaG and rxnDeltaG, PR #330, yeast-GEM 8.7.0. The authority on source priority and on the name-based metabolite match that discards the compartment.",
+      "sha256": "7c8bfb5b0fd5f53e89ea182f528a30b18dd5938a81c2a7be10cc7c7c664edb70"
+    },
+    "run_dgpredictor.py": {
+      "source_url": "https://github.com/SysBioChalmers/yeast-GEM/raw/main/data/modelCuration/v8_7_0/code/run_dgpredictor.py",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sL https://codeload.github.com/SysBioChalmers/yeast-GEM/tar.gz/refs/heads/main | tar xz --strip-components=1 yeast-GEM-main/data/modelCuration/v8_7_0/code/run_dgpredictor.py",
+      "description": "The dGPredictor driver, which pins pH 7.0, ionic strength 0.1 M and T 298.15 K and the M12_model_BR Bayesian-ridge fit.",
+      "sha256": "1d60f1c9963dd954ea7b888384f146b155e777a0b45fe4043fb83a6d02eb3ed8"
+    }
+  },
+  "gem_artifacts": {
+    "model_metDeltaG.csv": {
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_metDeltaG.csv",
+      "sha256": "179a5aac4221ded673a5bba798870ca4cac9b9d19e955de6a0f25de65a3cee8f"
+    },
+    "model_rxnDeltaG.csv": {
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_rxnDeltaG.csv",
+      "sha256": "7a66ef5d7892bd65229e908e5eff4cd95e741d6c493ee8645d480a53e2da5796"
+    }
+  },
+  "yetfl_compartment_conditions": {
+    "ce": {
+      "symbol": "ce",
+      "name": "cell envelope",
+      "p_h": 7.0,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {}
+    },
+    "c": {
+      "symbol": "c",
+      "name": "cytoplasm",
+      "p_h": 7.0,
+      "ionic_strength_m": 0.25,
+      "membrane_potential_mv": {
+        "m": -180.0,
+        "mm": -180.0,
+        "e": 60.0,
+        "n": -15.0
+      }
+    },
+    "e": {
+      "symbol": "e",
+      "name": "extracellular",
+      "p_h": 5.0,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {
+        "c": -60.0
+      }
+    },
+    "m": {
+      "symbol": "m",
+      "name": "mitochondrion",
+      "p_h": 7.5,
+      "ionic_strength_m": 0.25,
+      "membrane_potential_mv": {
+        "c": 180.0
+      }
+    },
+    "n": {
+      "symbol": "n",
+      "name": "nucleus",
+      "p_h": 7.0,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {
+        "c": 15.0
+      }
+    },
+    "p": {
+      "symbol": "p",
+      "name": "peroxisome",
+      "p_h": 8.2,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {}
+    },
+    "er": {
+      "symbol": "er",
+      "name": "endoplasmic reticulum",
+      "p_h": 7.2,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {}
+    },
+    "g": {
+      "symbol": "g",
+      "name": "Golgi",
+      "p_h": 6.35,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {}
+    },
+    "lp": {
+      "symbol": "lp",
+      "name": "lipid particle",
+      "p_h": 7.0,
+      "ionic_strength_m": 0.25,
+      "membrane_potential_mv": {}
+    },
+    "v": {
+      "symbol": "v",
+      "name": "vacuole",
+      "p_h": 6.17,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {}
+    },
+    "erm": {
+      "symbol": "erm",
+      "name": "endoplasmic reticulum membrane",
+      "p_h": 7.2,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {}
+    },
+    "vm": {
+      "symbol": "vm",
+      "name": "vacuolar membrane",
+      "p_h": 6.17,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {}
+    },
+    "gm": {
+      "symbol": "gm",
+      "name": "Golgi membrane",
+      "p_h": 6.35,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {}
+    },
+    "mm": {
+      "symbol": "mm",
+      "name": "mitochondrial membrane",
+      "p_h": 7.5,
+      "ionic_strength_m": 0.25,
+      "membrane_potential_mv": {
+        "c": 180.0
+      }
+    },
+    "im": {
+      "symbol": "im",
+      "name": "inter-membrane mitochondrion",
+      "p_h": 7.0,
+      "ionic_strength_m": 0.0,
+      "membrane_potential_mv": {}
+    }
+  },
+  "yetfl_model": {
+    "thermo_units": "kcal/mol",
+    "n_metabolites_with_dgf": 2329,
+    "n_reactions_with_drg": 3184,
+    "n_transport_reactions": 550,
+    "reaction_column_is_metabolite_sum": {
+      "n_reactions": 2677,
+      "max_abs_residual_kcal": 0.0,
+      "median_abs_residual_kcal": 0.0
+    },
+    "estimator": "group-contribution method (Mavrovouniotis 1990) as packaged in matTFA's thermo_data.thermodb, transformed to each compartment's pH and ionic strength by Alberty's relation. Oftadeh et al. 2021, Methods.",
+    "temperature_k": 298.15,
+    "p_mg": null,
+    "n_metabolites_joined_to_yeast9": 2324
+  },
+  "shipped_tables": {
+    "n_metabolites": 2389,
+    "n_reactions": 3210
+  },
+  "units": {
+    "n_metabolites_compared": 1927,
+    "yetfl_declared_units": "kcal/mol",
+    "slope_ours_kj_per_yetfl_unit": 4.186686409304563,
+    "median_ratio": 4.142039847845723,
+    "pearson": 0.9869292065924902,
+    "kj_per_kcal": 4.184,
+    "verdict": "The shipped columns are kcal/mol. yeast-GEM copied yETFL's values without converting, and the yeast9 paper reports them as kJ/mol."
+  },
+  "reaction_column_identity": {
+    "n_shipped": 3210,
+    "n_in_yetfl": 3177,
+    "max_abs_difference": 0.004998686039677125,
+    "frac_within_rounding": 1.0,
+    "n_not_from_yetfl": 33,
+    "note": "round(x, 2) in v8_7_0.m accounts for every difference. The reactions not in yETFL are the dGPredictor block, whose own driver reports kJ/mol, so the shipped reaction column mixes two unit systems."
+  },
+  "compartment_collapse": {
+    "n_metabolites": 2324,
+    "n_matching_own_compartment": 1162,
+    "frac_matching_own_compartment": 0.5,
+    "error_kcal_percentiles": {
+      "50": 0.061539650940254376,
+      "75": 20.725156375998296,
+      "90": 66.20373402147673,
+      "95": 97.2790468116945,
+      "99": 133.26376041548303
+    },
+    "error_kj_percentiles": {
+      "50": 0.25748189953402434,
+      "75": 86.71405427717687,
+      "90": 276.99642314585867,
+      "95": 407.0155318601298,
+      "99": 557.5755735783811
+    },
+    "mean_error_kj": 74.47197202917862,
+    "by_compartment": {
+      "c": {
+        "matching": 592,
+        "total": 679
+      },
+      "ce": {
+        "matching": 36,
+        "total": 119
+      },
+      "e": {
+        "matching": 22,
+        "total": 231
+      },
+      "er": {
+        "matching": 60,
+        "total": 89
+      },
+      "erm": {
+        "matching": 136,
+        "total": 225
+      },
+      "g": {
+        "matching": 2,
+        "total": 54
+      },
+      "gm": {
+        "matching": 1,
+        "total": 78
+      },
+      "lp": {
+        "matching": 49,
+        "total": 143
+      },
+      "m": {
+        "matching": 44,
+        "total": 230
+      },
+      "mm": {
+        "matching": 97,
+        "total": 143
+      },
+      "n": {
+        "matching": 24,
+        "total": 76
+      },
+      "p": {
+        "matching": 67,
+        "total": 123
+      },
+      "v": {
+        "matching": 7,
+        "total": 48
+      },
+      "vm": {
+        "matching": 25,
+        "total": 86
+      }
+    },
+    "cause": "v8_7_0.m strips the compartment tag from metNames, de-duplicates, and maps by chemical name, so every compartment copy of a chemical receives one value. yETFL's transform is compartment specific, so half the entries are the value for a different compartment."
+  },
+  "internal_consistency": {
+    "proton_formation_energy_kcal": {
+      "ce": 9.54,
+      "c": 9.54,
+      "er": 9.54,
+      "e": 9.54,
+      "g": 9.54,
+      "lp": 9.54,
+      "m": 9.54,
+      "n": 9.54,
+      "p": 9.54,
+      "v": 9.54,
+      "erm": 9.54,
+      "mm": 9.54,
+      "gm": 9.54,
+      "vm": 9.54
+    },
+    "arms": {
+      "shipped_metabolite_column_without_proton": {
+        "single": {
+          "n": 2021,
+          "median_abs_residual_kcal": 2.370000000000023,
+          "median_abs_residual_kj": 9.916080000000097
+        },
+        "multi": {
+          "n": 1183,
+          "median_abs_residual_kcal": 2.78,
+          "median_abs_residual_kj": 11.63152
+        }
+      },
+      "shipped_metabolite_column_with_proton": {
+        "single": {
+          "n": 2021,
+          "median_abs_residual_kcal": 10.21,
+          "median_abs_residual_kj": 42.71864000000001
+        },
+        "multi": {
+          "n": 1183,
+          "median_abs_residual_kcal": 2.91,
+          "median_abs_residual_kj": 12.175440000000002
+        }
+      },
+      "yetfl_per_compartment_without_proton": {
+        "single": {
+          "n": 2005,
+          "median_abs_residual_kcal": 0.002393631474912006,
+          "median_abs_residual_kj": 0.010014954091031833
+        },
+        "multi": {
+          "n": 1169,
+          "median_abs_residual_kcal": 0.0038260258658056046,
+          "median_abs_residual_kj": 0.01600809222253065
+        }
+      },
+      "yetfl_per_compartment_with_proton": {
+        "single": {
+          "n": 2005,
+          "median_abs_residual_kcal": 9.538877284539822,
+          "median_abs_residual_kj": 39.910662558514616
+        },
+        "multi": {
+          "n": 1169,
+          "median_abs_residual_kcal": 0.0038889269534649884,
+          "median_abs_residual_kj": 0.016271270373297512
+        }
+      }
+    },
+    "reading": "The 10.2 the flux layer records as an unexplained single-compartment residual is yeast-GEM disagreeing with itself, in kcal/mol. Most of it is the proton: matTFA prices H+ at RT ln(10) pH and then never adds it into a reaction sum, while yeast-GEM ships that number in the metabolite column, so summing the column charges it once per net proton. The rest is the compartment collapse. Neither is evidence about eQuilibrator."
+  },
+  "condition_matching": {
+    "single_compartment_reactions": 2024,
+    "transport_reactions": 1186,
+    "transport_reactions_with_nonzero_shipped": 893,
+    "arms": {
+      "single_shipped_read_as_kj_uniform_ph": {
+        "n": 1231,
+        "median_abs_diff_kj": 16.25390208838141,
+        "pearson": 0.5374648742298891,
+        "slope_ours_per_shipped": 2.1496048133890384
+      },
+      "single_shipped_converted_to_kj_uniform_ph": {
+        "n": 1231,
+        "median_abs_diff_kj": 19.098091282143024,
+        "pearson": 0.5374648742298893,
+        "slope_ours_per_shipped": 0.5137627244134555
+      },
+      "transport_shipped_converted_to_kj_uniform_ph": {
+        "n": 752,
+        "median_abs_diff_kj": 17.3636,
+        "pearson": 0.2983966024110834,
+        "slope_ours_per_shipped": 0.019739078790924038
+      },
+      "single_shipped_converted_to_kj_matched_conditions": {
+        "n": 1230,
+        "median_abs_diff_kj": 17.60312797482424,
+        "pearson": 0.5128927575418507,
+        "slope_ours_per_shipped": 0.49494998173442417
+      },
+      "transport_shipped_converted_to_kj_matched_conditions": {
+        "n": 752,
+        "median_abs_diff_kj": 5.606456787704557,
+        "pearson": 0.7511243202796293,
+        "slope_ours_per_shipped": 0.748591101695388
+      },
+      "transport_all_shipped_converted_matched_conditions": {
+        "n": 1023,
+        "median_abs_diff_kj": 0.5704313424508882,
+        "pearson": 0.738868783128662,
+        "slope_ours_per_shipped": 0.748591101695388
+      }
+    },
+    "our_conditions_default": {
+      "temperature_k": 303.15,
+      "ionic_strength_m": 0.25,
+      "p_mg": 3.0,
+      "p_h": "per compartment, textbook values"
+    },
+    "yeast9_conditions": {
+      "temperature_k": 298.15,
+      "ionic_strength_m": "per compartment, 0.25 M or 0.0 M",
+      "p_mg": "no magnesium term in the Alberty transform matTFA uses",
+      "p_h": "per compartment, yeast_compartment_data.json"
+    }
+  }
+}

@@ -101,7 +101,9 @@ class KineticRetrieval(BaseModel):
     sha256: str
     retrieved_at: datetime
     n_records: int
-    organism: str
+    #: None means the whole database, every organism, which is the slice an EC-class
+    #: variance analysis needs and a per-organism parameter lookup does not.
+    organism: str | None
 
 
 class OedKineticRecord(BaseModel):
@@ -176,17 +178,19 @@ def _sha256(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def _data_url(organism: str, limit: int, offset: int) -> str:
-    """Build one page URL. Kept separate so it can be recorded as retrieval provenance."""
-    return (
-        f"{OED_API_BASE}/data?organism={quote(organism)}&limit={limit}&offset={offset}"
-    )
+def _data_url(organism: str | None, limit: int, offset: int) -> str:
+    """Build one page URL. Kept separate so it can be recorded as retrieval provenance.
+
+    With ``organism=None`` the filter is omitted and the endpoint pages the whole database.
+    """
+    organism_filter = "" if organism is None else f"organism={quote(organism)}&"
+    return f"{OED_API_BASE}/data?{organism_filter}limit={limit}&offset={offset}"
 
 
 def fetch_oed_records(
-    organism: str = SCEREVISIAE, page_size: int = 1000, max_pages: int = 200
+    organism: str | None = SCEREVISIAE, page_size: int = 1000, max_pages: int = 200
 ) -> tuple[list[dict[str, Any]], str]:
-    """Page the OED ``/data`` endpoint for one organism.
+    """Page the OED ``/data`` endpoint for one organism, or all of them.
 
     Returns the rows and the exact shell command that reproduces the retrieval. Paging
     stops on a short page, so ``max_pages`` is only a runaway guard -- it is not expected
@@ -214,17 +218,15 @@ def fetch_oed_records(
         raise ValueError(
             f"OED paging incomplete for {organism}: got {len(rows)} of {total} records"
         )
-    command = (
-        f"for off in $(seq 0 {page_size} N); do curl -sS "
-        f'"{OED_API_BASE}/data?organism={quote(organism)}&limit={page_size}&offset=$off"; done'
-    )
+    page_url = _data_url(organism, page_size, 0).replace("offset=0", "offset=$off")
+    command = f'for off in $(seq 0 {page_size} N); do curl -sS "{page_url}"; done'
     return rows, command
 
 
 def mirror_oed_slice(
-    mirror_dir: str, organism: str = SCEREVISIAE, page_size: int = 1000
+    mirror_dir: str, organism: str | None = SCEREVISIAE, page_size: int = 1000
 ) -> KineticRetrieval:
-    """Fetch an organism slice, write it with a sha256-pinned provenance record.
+    """Fetch an organism slice, or the whole database, with a sha256-pinned provenance record.
 
     The mirror -- not the endpoint -- is what the flux layer reads, so a run is
     reproducible after the service changes or goes away.

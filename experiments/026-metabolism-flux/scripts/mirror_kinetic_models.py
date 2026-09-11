@@ -193,6 +193,30 @@ SPECS: dict[str, dict[str, object]] = {
             "convention as DLKcat."
         ),
     },
+    "ezkinetics": {
+        "clone_dir": "EZKinetics",
+        "display_name": "EZKinetics",
+        "source_url": "https://github.com/le-yuan/EZKinetics",
+        "method": RetrievalMethod.git_clone,
+        "emits": ["k_cat", "K_M", "k_cat_over_K_M"],
+        "inputs": ["sequence", "substrate_smiles", "ph", "temperature"],
+        "runnable": True,
+        "extra_command": None,
+        "notes": (
+            "UNPUBLISHED, manuscript under review, so it carries no DOI and cannot be "
+            "cited; the repository went public under MIT on 2026-04-16. Weights ship IN "
+            "the repository, unlike every other predictor here, as 36 fitted XGBoost "
+            "models over 3 parameters x 4 protein encoders x 3 substrate encoders. "
+            "`inference/predict.py` fixes the combination: ESM2_650M for k_cat, ESM2_3B "
+            "for K_M and k_cat/K_M, ChemBERTa-77M-MTR for the substrate in all three, "
+            "with pH and temperature appended as two extra features (defaults 7.0 and "
+            "25.0). Output is log10, the same convention as UniKP. It is the ONLY "
+            "predictor here that conditions on assay pH and temperature. Both the "
+            "training encoders in code/ and inference/predict.py read repr_layers=[33] "
+            "for BOTH ESM2 sizes, so despite 3B having 36 layers there is no "
+            "train-inference mismatch; this was checked rather than assumed."
+        ),
+    },
 }
 
 
@@ -224,7 +248,17 @@ def build_mirror(name: str, copy: bool) -> ModelMirror:
         # ``.git`` is excluded on purpose: the mirror pins bytes by sha256, and carrying a
         # 100 MB object store for a history nothing reads makes every verify pass slower
         # without making any value more traceable. The commit is recorded instead.
-        shutil.copytree(source, target, ignore=shutil.ignore_patterns(".git"))
+        # `ignore_dangling_symlinks` is not optional: a released repository can carry a
+        # symlink to something it never shipped, and without this the whole mirror aborts on
+        # it. EZKinetics ships three, `data/{KCAT,KM,KCAT_KM}/sequence/tmp/latest`, left
+        # behind by MMseqs2 scratch directories. A dangling link points at no bytes, so
+        # there is nothing for the sha256 manifest to pin and skipping it loses nothing.
+        shutil.copytree(
+            source,
+            target,
+            ignore=shutil.ignore_patterns(".git"),
+            ignore_dangling_symlinks=True,
+        )
 
     # A weight archive downloaded separately lands beside the clone; fold it in so the
     # mirror is one self-contained, hashed unit.

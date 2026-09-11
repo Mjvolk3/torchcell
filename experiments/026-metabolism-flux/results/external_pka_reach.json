@@ -1,0 +1,44 @@
+{
+ "built_at": "2026-09-09T21:25:22.595894+00:00",
+ "n_remaining_unpriced": 665,
+ "n_distinct_names": 376,
+ "tier_a_structure_exists_today": 16,
+ "tier_a_distinct_names": 6,
+ "tier_b_structure_writable_from_name": 409,
+ "tier_b_distinct_names": 206,
+ "tier_c_no_structure_can_exist": 185,
+ "tier_c_distinct_names": 140,
+ "tier_d_blocked_by_group_decomposition": 50,
+ "tier_d_distinct_names": 24,
+ "by_blocker": {
+  "no_usable_structure_available": 409,
+  "structure_known_but_no_group_decomposition": 50,
+  "placeholder_formula_no_definite_structure": 185,
+  "structure_absent_from_cache": 16,
+  "only_composition_mismatched_candidates": 5
+ },
+ "tier_b_by_class": {
+  "glycan": 6,
+  "phosphatidylinositol_PI": 135,
+  "other": 16,
+  "triacylglycerol_TAG": 56,
+  "sterol_ester": 2,
+  "sphingolipid": 12,
+  "generic_pseudo_metabolite": 2,
+  "phosphatidylcholine_PC": 10,
+  "phosphatidylethanolamine_PE": 53,
+  "acyl_CoA": 9,
+  "fatty_acid_acyl_chain": 8,
+  "phosphatidate_PA": 25,
+  "phosphatidylglycerol_PG": 9,
+  "cardiolipin_CL": 62,
+  "protein_linked": 4
+ },
+ "tier_b_name_pattern_matches": 338,
+ "notes": {
+  "tier_a": "a structure resolves from an existing namespace, so a pKa predictor is the only missing input",
+  "tier_b": "definite formula but no structure in any namespace, dominated by lipid species whose acyl composition is written in the name; a structure writer would have to compose the headgroup with the named chains and check the formula it produces against the GEM's",
+  "tier_c": "R, X or * in the formula, so no single structure exists and neither a pKa predictor nor a structure writer changes anything",
+  "tier_d": "a structure is already in the cache and the group decomposer refuses it, so external pKas do not help"
+ }
+}

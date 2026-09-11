@@ -1,0 +1,7707 @@
+{
+ "built_at": "2026-09-09T21:15:20.504959+00:00",
+ "cache_path": "sqlite:////home/michaelvolk/.cache/equilibrator/compounds.sqlite",
+ "n_compounds": 300,
+ "seed": 17,
+ "n_candidates_scanned": 115720,
+ "n_candidates_eligible": 74101,
+ "stratum_counts": {
+  "n_pka_1": 50,
+  "n_pka_2": 50,
+  "n_pka_3": 50,
+  "n_pka_4": 50,
+  "n_pka_5": 50,
+  "n_pka_6": 50
+ },
+ "group_counts": {
+  "carboxylate": 103,
+  "amine": 137,
+  "phenol": 103,
+  "phosphate": 44
+ },
+ "n_with_magnesium_constants": 7,
+ "compounds": [
+  {
+   "compound_id": 458849,
+   "inchi_key": "IFYWTLQMNWNCFH-DHXZDTOLSA-M",
+   "major_ms_smiles": "CC1=C2[C@H](C([O-])=O)[C@@]34CC(=C)[C@@](O)(C3)CC[C@H]4C2=CC=C1",
+   "neutral_smiles": "C=C1C[C@]23C[C@@]1(O)CC[C@H]2c1cccc(C)c1[C@@H]3C(=O)O",
+   "formula_atom_bag": {
+    "C": 18,
+    "H": 19,
+    "O": 3,
+    "e-": 152
+   },
+   "cache_pkas": [
+    4.44
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 21,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 454772,
+   "inchi_key": "",
+   "major_ms_smiles": "CN1[C@@H](CO)[C@H]2CCN([C@H]2C2=C1C=CC(=C2)C1=CC=C(C=C1)C#N)S(=O)(=O)C1=CC=C(C)C=C1",
+   "neutral_smiles": "Cc1ccc(S(=O)(=O)N2CC[C@@H]3[C@H](CO)N(C)c4ccc(-c5ccc(C#N)cc5)cc4[C@@H]32)cc1",
+   "formula_atom_bag": {
+    "C": 27,
+    "N": 3,
+    "H": 27,
+    "O": 3,
+    "S": 1,
+    "e-": 250
+   },
+   "cache_pkas": [
+    2.0
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 99199,
+   "inchi_key": "VDNFSSVVXBUKRX-UHFFFAOYSA-N",
+   "major_ms_smiles": "COC1=CC(OC)=C2CC3C(CC2=C1CC=C(C)C)C(C)(C)OC1=C3C=CC(O)=C1",
+   "neutral_smiles": "COc1cc(OC)c2c(c1CC=C(C)C)CC1C(C2)c2ccc(O)cc2OC1(C)C",
+   "formula_atom_bag": {
+    "C": 26,
+    "O": 4,
+    "H": 32,
+    "e-": 220
+   },
+   "cache_pkas": [
+    9.76
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 381914,
+   "inchi_key": "OXLIXGVIMJEMIS-BMAUTABQSA-N",
+   "major_ms_smiles": "CCCCCCCC\\C=C/CCCCCCCCOC[C@H](COP([O-])(=O)OCC[N+](C)(C)C)OC(=O)CCC",
+   "neutral_smiles": "CCCCCCCC/C=C\\CCCCCCCCOC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCC",
+   "formula_atom_bag": {
+    "C": 30,
+    "O": 7,
+    "H": 60,
+    "P": 1,
+    "N": 1,
+    "e-": 318
+   },
+   "cache_pkas": [
+    1.86
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 39,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 92855,
+   "inchi_key": "ZKXLEDOCSSUHKY-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(=O)OCC1(C)CCCC2(C)C3CCC4CC3(CC4C([O-])=O)CCC12",
+   "neutral_smiles": "CC(=O)OCC1(C)CCCC2(C)C1CCC13CC(CCC12)C(C(=O)O)C3",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 4,
+    "H": 33,
+    "e-": 198
+   },
+   "cache_pkas": [
+    4.73
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 18497,
+   "inchi_key": "SEXFFYIXMCVNNG-AWEZNQCLSA-N",
+   "major_ms_smiles": "COC1=CC2=C(CC[C@H](O2)C2=CC3=C(OCO3)C=C2O)C=C1",
+   "neutral_smiles": "COc1ccc2c(c1)O[C@H](c1cc3c(cc1O)OCO3)CC2",
+   "formula_atom_bag": {
+    "C": 17,
+    "O": 5,
+    "H": 16,
+    "e-": 158
+   },
+   "cache_pkas": [
+    9.35
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 38532,
+   "inchi_key": "HQMDHDKBZGKPGS-RFVHGSKJSA-N",
+   "major_ms_smiles": "CC[C@@H]([NH3+])CC1=C(OC)C=C(C)C(OC)=C1",
+   "neutral_smiles": "CC[C@@H](N)Cc1cc(OC)c(C)cc1OC",
+   "formula_atom_bag": {
+    "C": 13,
+    "H": 22,
+    "N": 1,
+    "O": 2,
+    "e-": 122
+   },
+   "cache_pkas": [
+    9.97
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 16344,
+   "inchi_key": "RVUCYJXFCAVHNC-VAWYXSNFSA-M",
+   "major_ms_smiles": "CCCCCCCCCC\\C=C\\CCCCCC([O-])=O",
+   "neutral_smiles": "CCCCCCCCCC/C=C/CCCCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 18,
+    "O": 2,
+    "H": 33,
+    "e-": 158
+   },
+   "cache_pkas": [
+    4.89
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 20,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 447410,
+   "inchi_key": "",
+   "major_ms_smiles": "COC(=O)CSC1=NC(N2CCOCC2)=C2C[NH+](C)C(C)(C)CC2=C1C#N",
+   "neutral_smiles": "COC(=O)CSc1nc(N2CCOCC2)c2c(c1C#N)CC(C)(C)N(C)C2",
+   "formula_atom_bag": {
+    "C": 19,
+    "O": 3,
+    "S": 1,
+    "N": 4,
+    "H": 27,
+    "e-": 208
+   },
+   "cache_pkas": [
+    6.78
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 11285,
+   "inchi_key": "NPDSHTNEKLQQIJ-SIGMCMEVSA-M",
+   "major_ms_smiles": "CCCCC\\C=C\\C=C\\C(O)CCCCCCCC([O-])=O",
+   "neutral_smiles": "CCCCC/C=C/C=C/C(O)CCCCCCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 18,
+    "O": 3,
+    "H": 31,
+    "e-": 164
+   },
+   "cache_pkas": [
+    4.68
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 21,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 127434,
+   "inchi_key": "BAZQYVYVKYOAGO-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(C([O-])=O)C1=CC=C(CC2CCCC2=O)C=C1",
+   "neutral_smiles": "CC(C(=O)O)c1ccc(CC2CCCC2=O)cc1",
+   "formula_atom_bag": {
+    "C": 15,
+    "O": 3,
+    "H": 17,
+    "e-": 132
+   },
+   "cache_pkas": [
+    4.19
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 18,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 24284,
+   "inchi_key": "IHCPDBBYTYJYIL-QVDQXJPCSA-N",
+   "major_ms_smiles": "CCC(C)C(=O)O[C@H](CC([O-])=O)C[N+](C)(C)C",
+   "neutral_smiles": "CCC(C)C(=O)O[C@H](CC(=O)[O-])C[N+](C)(C)C",
+   "formula_atom_bag": {
+    "C": 12,
+    "O": 4,
+    "H": 23,
+    "N": 1,
+    "e-": 134
+   },
+   "cache_pkas": [
+    4.34
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 17,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 4794,
+   "inchi_key": "ITTPZDMHCNGAGQ-UHFFFAOYSA-M",
+   "major_ms_smiles": "OCCCCCCCCC1OC1CCCCCCCC([O-])=O",
+   "neutral_smiles": "O=C(O)CCCCCCCC1OC1CCCCCCCCO",
+   "formula_atom_bag": {
+    "O": 4,
+    "C": 18,
+    "H": 33,
+    "e-": 174
+   },
+   "cache_pkas": [
+    4.62
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 121738,
+   "inchi_key": "LMIQERWZRIFWNZ-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=CC=C2NC=CC2=C1",
+   "neutral_smiles": "Oc1ccc2[nH]ccc2c1",
+   "formula_atom_bag": {
+    "O": 1,
+    "C": 8,
+    "N": 1,
+    "H": 7,
+    "e-": 70
+   },
+   "cache_pkas": [
+    9.57
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 10,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 131512,
+   "inchi_key": "JLEXUIVKURIPFI-UHFFFAOYSA-N",
+   "major_ms_smiles": "[NH3+]C(CO)(CO)CO",
+   "neutral_smiles": "NC(CO)(CO)CO",
+   "formula_atom_bag": {
+    "N": 1,
+    "H": 12,
+    "C": 4,
+    "O": 3,
+    "e-": 66
+   },
+   "cache_pkas": [
+    8.95
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 8,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 63631,
+   "inchi_key": "DVGPZIMBJLTERM-UHFFFAOYSA-M",
+   "major_ms_smiles": "COC1=C(OC)C2=C(OC=C(C2=O)C2=CC3=C(OCO3)C=C2)C(CC=C(C)C)=C1[O-]",
+   "neutral_smiles": "COc1c(O)c(CC=C(C)C)c2occ(-c3ccc4c(c3)OCO4)c(=O)c2c1OC",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 7,
+    "H": 21,
+    "e-": 216
+   },
+   "cache_pkas": [
+    6.89
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 58955,
+   "inchi_key": "IUKLSMSEHKDIIP-BZMYINFQSA-O",
+   "major_ms_smiles": "C[C@H]1CC[C@@H]2[NH+](C1)C[C@H]1[C@@H]3C[C@H]4[C@@H](C[C@H](O)[C@H]5C[C@@H](O)CC[C@]45C)[C@@H]3CC[C@@H]1[C@]2(C)O",
+   "neutral_smiles": "C[C@H]1CC[C@@H]2N(C1)C[C@H]1[C@@H]3C[C@H]4[C@@H](C[C@H](O)[C@H]5C[C@@H](O)CC[C@@]54C)[C@@H]3CC[C@@H]1[C@]2(C)O",
+   "formula_atom_bag": {
+    "C": 27,
+    "H": 46,
+    "N": 1,
+    "O": 3,
+    "e-": 238
+   },
+   "cache_pkas": [
+    10.56
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 51347,
+   "inchi_key": "YNNQTVPKSXTDCK-SABUVIKOSA-O",
+   "major_ms_smiles": "CC\\C=C/C\\C=C/C\\C=C/C\\C=C/CC[C@@H](O)[C@H](C)[NH3+]",
+   "neutral_smiles": "CC/C=C\\C/C=C\\C/C=C\\C/C=C\\CC[C@@H](O)[C@H](C)N",
+   "formula_atom_bag": {
+    "C": 18,
+    "H": 32,
+    "O": 1,
+    "N": 1,
+    "e-": 154
+   },
+   "cache_pkas": [
+    9.83
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 20,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 24247,
+   "inchi_key": "YNBIUHDYZWCBSF-UHFFFAOYSA-M",
+   "major_ms_smiles": "CCCCCCCCCCCCCCC(OC)C([O-])=O",
+   "neutral_smiles": "CCCCCCCCCCCCCCC(OC)C(=O)O",
+   "formula_atom_bag": {
+    "C": 17,
+    "O": 3,
+    "H": 33,
+    "e-": 160
+   },
+   "cache_pkas": [
+    4.32
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 20,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 309902,
+   "inchi_key": "DRUGZYWRQAVALM-AXHZCLLHSA-O",
+   "major_ms_smiles": "CO[C@@H]1CN(C)C(=O)C2=C(OC[C@H](C)[NH+](CC3=CN=CN=C3)C[C@@H]1C)C=CC(NC(=O)NC(C)C)=C2",
+   "neutral_smiles": "CO[C@@H]1CN(C)C(=O)c2cc(NC(=O)NC(C)C)ccc2OC[C@H](C)N(Cc2cncnc2)C[C@@H]1C",
+   "formula_atom_bag": {
+    "C": 26,
+    "O": 4,
+    "H": 39,
+    "N": 6,
+    "e-": 268
+   },
+   "cache_pkas": [
+    7.56
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 36,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 25740,
+   "inchi_key": "WJAIFDIPOPXOPB-VCVMUKOKSA-M",
+   "major_ms_smiles": "C[C@H](CCCC(CO)C([O-])=O)[C@H]1CC[C@H]2[C@@H]3[C@H](O)C[C@@H]4C[C@H](O)CC[C@]4(C)[C@H]3C[C@H](O)[C@]12C",
+   "neutral_smiles": "C[C@H](CCCC(CO)C(=O)O)[C@H]1CC[C@H]2[C@@H]3[C@H](O)C[C@@H]4C[C@H](O)CC[C@]4(C)[C@H]3C[C@H](O)[C@]12C",
+   "formula_atom_bag": {
+    "C": 27,
+    "H": 45,
+    "O": 6,
+    "e-": 256
+   },
+   "cache_pkas": [
+    4.45
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 89955,
+   "inchi_key": "NSVPCFNUUARRKL-CSKARUKUSA-M",
+   "major_ms_smiles": "CCC(O)\\C=C\\CCCCCCCC([O-])=O",
+   "neutral_smiles": "CCC(O)/C=C/CCCCCCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 13,
+    "O": 3,
+    "H": 23,
+    "e-": 126
+   },
+   "cache_pkas": [
+    4.99
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 449627,
+   "inchi_key": "LSUXCWJOIAWGOU-NZSVHAIKSA-N",
+   "major_ms_smiles": "CCCCC\\C=C\\C\\C=C/CCCCCCCC(=O)O[C@H](CO)COP([O-])(=O)OCC[N+](C)(C)C",
+   "neutral_smiles": "CCCCC/C=C/C/C=C\\CCCCCCCC(=O)O[C@H](CO)COP(=O)([O-])OCC[N+](C)(C)C",
+   "formula_atom_bag": {
+    "C": 26,
+    "O": 7,
+    "H": 50,
+    "P": 1,
+    "N": 1,
+    "e-": 284
+   },
+   "cache_pkas": [
+    1.86
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 691618,
+   "inchi_key": "DBXBTMSZEOQQDU-GSVOUGTGSA-M",
+   "major_ms_smiles": "C[C@H](CO)C([O-])=O",
+   "neutral_smiles": "C[C@H](CO)C(=O)O",
+   "formula_atom_bag": {
+    "C": 4,
+    "H": 7,
+    "O": 3,
+    "e-": 56
+   },
+   "cache_pkas": [
+    4.37
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 7,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 119848,
+   "inchi_key": "UHMWYQAZYGDJGM-VQHVLOKHSA-M",
+   "major_ms_smiles": "OCCCCCCCC\\C=C\\C([O-])=O",
+   "neutral_smiles": "O=C(O)/C=C/CCCCCCCCO",
+   "formula_atom_bag": {
+    "O": 3,
+    "C": 11,
+    "H": 19,
+    "e-": 110
+   },
+   "cache_pkas": [
+    4.83
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 14,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 557077,
+   "inchi_key": "XOMRRQXKHMYMOC-UHFFFAOYSA-N",
+   "major_ms_smiles": "CCCCCCCCCCCCCCCC(=O)OC(CC([O-])=O)C[N+](C)(C)C",
+   "neutral_smiles": "CCCCCCCCCCCCCCCC(=O)OC(CC(=O)[O-])C[N+](C)(C)C",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 4,
+    "N": 1,
+    "H": 45,
+    "e-": 222
+   },
+   "cache_pkas": [
+    4.22
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 28,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 480668,
+   "inchi_key": "UNSRRHDPHVZAHH-WYTUUNCASA-M",
+   "major_ms_smiles": "CCCCCCCC\\C=C\\C\\C=C\\C\\C=C\\CCCC([O-])=O",
+   "neutral_smiles": "CCCCCCCC/C=C/C/C=C/C/C=C/CCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 20,
+    "O": 2,
+    "H": 33,
+    "e-": 170
+   },
+   "cache_pkas": [
+    4.82
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 73771,
+   "inchi_key": "YCDZKMJZSGRQML-UHFFFAOYSA-N",
+   "major_ms_smiles": "COC1=CC=C2C=C(OC2=C1)C1=C(OC)C=C(O)C=C1",
+   "neutral_smiles": "COc1ccc2cc(-c3ccc(O)cc3OC)oc2c1",
+   "formula_atom_bag": {
+    "C": 16,
+    "O": 4,
+    "H": 14,
+    "e-": 142
+   },
+   "cache_pkas": [
+    9.02
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 20,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 454087,
+   "inchi_key": "BFOWTYGBWYCXKR-UHFFFAOYSA-N",
+   "major_ms_smiles": "CC1=CC2=C(C)C=C(NC3=CC=CC=C3)N=C2C=C1",
+   "neutral_smiles": "Cc1ccc2nc(Nc3ccccc3)cc(C)c2c1",
+   "formula_atom_bag": {
+    "C": 17,
+    "N": 2,
+    "H": 16,
+    "e-": 132
+   },
+   "cache_pkas": [
+    7.82
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 19,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 469404,
+   "inchi_key": "HTBGIBJYEMSNQR-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(C)(O)CCC=CC(=O)C([O-])=O",
+   "neutral_smiles": "CC(C)(O)CCC=CC(=O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 9,
+    "O": 4,
+    "H": 13,
+    "e-": 100
+   },
+   "cache_pkas": [
+    3.48
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 13,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 31053,
+   "inchi_key": "BPBNMDXSLVPNFT-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(=C)C1CC2=C(OC3=C4C=CC(C)(C)OC4=CC(=O)C3=C2O)C2=C1C(=O)C1=C(C=CC(C)(C)O1)C2=O",
+   "neutral_smiles": "C=C(C)C1Cc2c(oc3c4c(cc(=O)c-3c2O)OC(C)(C)C=C4)C2=C1C(=O)C1=C(C=CC(C)(C)O1)C2=O",
+   "formula_atom_bag": {
+    "C": 30,
+    "O": 7,
+    "H": 26,
+    "e-": 262
+   },
+   "cache_pkas": [
+    7.17
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 37,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 15606,
+   "inchi_key": "FPAQLJHSZVFKES-NXVVXOECSA-M",
+   "major_ms_smiles": "CCCCCCCCCCCCCC\\C=C/CCCC([O-])=O",
+   "neutral_smiles": "CCCCCCCCCCCCCC/C=C\\CCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 20,
+    "O": 2,
+    "H": 37,
+    "e-": 174
+   },
+   "cache_pkas": [
+    4.89
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 22973,
+   "inchi_key": "YOKHLRHWEXTWJR-KHPPLWFESA-M",
+   "major_ms_smiles": "CCCCCCCCC\\C=C/CCCCCCCC([O-])=O",
+   "neutral_smiles": "CCCCCCCCC/C=C\\CCCCCCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 19,
+    "O": 2,
+    "H": 35,
+    "e-": 166
+   },
+   "cache_pkas": [
+    4.99
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 21,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 13442,
+   "inchi_key": "",
+   "major_ms_smiles": "CCCCCC#CCCCC([O-])=O",
+   "neutral_smiles": "CCCCCC#CCCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 11,
+    "O": 2,
+    "H": 17,
+    "e-": 100
+   },
+   "cache_pkas": [
+    4.56
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 13,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 308012,
+   "inchi_key": "QBVBSZGSMKFHHH-UHFFFAOYSA-O",
+   "major_ms_smiles": "CC1=CC(C)=C(OCC(O)C[NH2+]C(C)(C)C)C(C)=C1",
+   "neutral_smiles": "Cc1cc(C)c(OCC(O)CNC(C)(C)C)c(C)c1",
+   "formula_atom_bag": {
+    "C": 16,
+    "O": 2,
+    "N": 1,
+    "H": 28,
+    "e-": 146
+   },
+   "cache_pkas": [
+    9.76
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 19,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 457203,
+   "inchi_key": "XXLXNBVPIJNYMH-DHDCSXOGSA-N",
+   "major_ms_smiles": "COC1=CC(N2CCCC2)=C(OC)C=C1C=C1SC(=O)N(C)C1=O",
+   "neutral_smiles": "COc1cc(N2CCCC2)c(OC)cc1C=C1SC(=O)N(C)C1=O",
+   "formula_atom_bag": {
+    "C": 17,
+    "O": 4,
+    "N": 2,
+    "S": 1,
+    "H": 20,
+    "e-": 184
+   },
+   "cache_pkas": [
+    2.6
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 24,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 92809,
+   "inchi_key": "HTNUCKDQVIZWMJ-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(CCC(=C)C(C)C([O-])=O)C1CCC2(C)C3CCC4C5(CC35CCC12C)CCC(=O)C4(C)C",
+   "neutral_smiles": "C=C(CCC(C)C1CCC2(C)C3CCC4C(C)(C)C(=O)CCC45CC35CCC12C)C(C)C(=O)O",
+   "formula_atom_bag": {
+    "C": 31,
+    "O": 3,
+    "H": 47,
+    "e-": 258
+   },
+   "cache_pkas": [
+    4.63
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 15949,
+   "inchi_key": "RCYNQXHBZULXMM-DSIBUQCCSA-M",
+   "major_ms_smiles": "CCCCCCCC\\C=C\\CCCC\\C=C\\CCCC([O-])=O",
+   "neutral_smiles": "CCCCCCCC/C=C/CCCC/C=C/CCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 20,
+    "O": 2,
+    "H": 35,
+    "e-": 172
+   },
+   "cache_pkas": [
+    4.89
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 471597,
+   "inchi_key": "IYULRWBZWXMBGW-UHFFFAOYSA-O",
+   "major_ms_smiles": "C[NH+](C)CC1=CC=C(C)O1",
+   "neutral_smiles": "Cc1ccc(CN(C)C)o1",
+   "formula_atom_bag": {
+    "C": 8,
+    "N": 1,
+    "H": 14,
+    "O": 1,
+    "e-": 76
+   },
+   "cache_pkas": [
+    7.95
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 10,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 8289,
+   "inchi_key": "ROUDCKODIMKLNO-CTBSXBMHSA-M",
+   "major_ms_smiles": "CCCCC[C@H](O)\\C=C\\[C@H]1[C@H](O)CC(=O)[C@@H]1CC(=O)CCCCC([O-])=O",
+   "neutral_smiles": "CCCCC[C@H](O)/C=C/[C@H]1[C@H](O)CC(=O)[C@@H]1CC(=O)CCCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 20,
+    "H": 31,
+    "O": 6,
+    "e-": 200
+   },
+   "cache_pkas": [
+    4.1
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 28087,
+   "inchi_key": "IOWYALZFEJOVHO-HDICACEKSA-M",
+   "major_ms_smiles": "C[C@@]12OO[C@@](CCC([O-])=O)(C3=CC=CC=C13)C1=CC=CC=C21",
+   "neutral_smiles": "C[C@]12OO[C@](CCC(=O)O)(c3ccccc31)c1ccccc12",
+   "formula_atom_bag": {
+    "C": 18,
+    "O": 4,
+    "H": 15,
+    "e-": 156
+   },
+   "cache_pkas": [
+    4.12
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 35344,
+   "inchi_key": "ZEBMMHUDQRRILP-WZSMAATHSA-O",
+   "major_ms_smiles": "CC[NH+]1C[C@]2(COC)CC[C@H](O)[C@@]34[C@@H]5C[C@H]6[C@H](OC(C)=O)[C@@H]5[C@](O)(C[C@@H]6OC)[C@@H](C[C@H]23)C14",
+   "neutral_smiles": "CCN1C[C@]2(COC)CC[C@H](O)[C@]34C1[C@H](C[C@H]23)[C@@]1(O)C[C@H](OC)[C@H]2C[C@@H]4[C@@H]1[C@H]2OC(C)=O",
+   "formula_atom_bag": {
+    "C": 25,
+    "N": 1,
+    "H": 40,
+    "O": 6,
+    "e-": 244
+   },
+   "cache_pkas": [
+    9.84
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 474345,
+   "inchi_key": "SRJCJJKWVSSELL-UHFFFAOYSA-N",
+   "major_ms_smiles": "CC1=CC=C2C=CC=CC2=C1O",
+   "neutral_smiles": "Cc1ccc2ccccc2c1O",
+   "formula_atom_bag": {
+    "C": 11,
+    "O": 1,
+    "H": 10,
+    "e-": 84
+   },
+   "cache_pkas": [
+    9.96
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 12,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 692714,
+   "inchi_key": "IPRPPFIAVHPVJH-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=CC=C(CC=O)C=C1",
+   "neutral_smiles": "O=CCc1ccc(O)cc1",
+   "formula_atom_bag": {
+    "O": 2,
+    "C": 8,
+    "H": 8,
+    "e-": 72
+   },
+   "cache_pkas": [
+    9.5
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 10,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 42164,
+   "inchi_key": "HFTWTHSIMCSLFQ-CMLLUXCUSA-M",
+   "major_ms_smiles": "CC1(C)[C@@H](O)CC[C@@]2(C)[C@H]1CC[C@]1(C)[C@@H]2C(=O)C=C2[C@@H]3C[C@@](C)([C@H](O)C[C@]3(C)CC[C@@]12C)C([O-])=O",
+   "neutral_smiles": "CC1(C)[C@@H](O)CC[C@]2(C)[C@H]3C(=O)C=C4[C@@H]5C[C@](C)(C(=O)O)[C@H](O)C[C@]5(C)CC[C@@]4(C)[C@]3(C)CC[C@@H]12",
+   "formula_atom_bag": {
+    "C": 30,
+    "H": 45,
+    "O": 5,
+    "e-": 266
+   },
+   "cache_pkas": [
+    4.32
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 38181,
+   "inchi_key": "BFSVOASYOCHEOV-UHFFFAOYSA-O",
+   "major_ms_smiles": "CC[NH+](CC)CCO",
+   "neutral_smiles": "CCN(CC)CCO",
+   "formula_atom_bag": {
+    "C": 6,
+    "N": 1,
+    "H": 16,
+    "O": 1,
+    "e-": 66
+   },
+   "cache_pkas": [
+    9.55
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 8,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 101670,
+   "inchi_key": "RHBGITBPARBDPH-HSFFGMMNSA-M",
+   "major_ms_smiles": "[O-]C(=O)\\C=C\\C=C/C1=CC2=C(OCO2)C=C1",
+   "neutral_smiles": "O=C(O)/C=C/C=C\\c1ccc2c(c1)OCO2",
+   "formula_atom_bag": {
+    "O": 4,
+    "C": 12,
+    "H": 9,
+    "e-": 114
+   },
+   "cache_pkas": [
+    3.59
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 80220,
+   "inchi_key": "XWFNYKWKDWAAMZ-OWYCYUENSA-N",
+   "major_ms_smiles": "CO[C@@]12C[C@H]3C(C)(C)O[C@@](CC=C(C)C)(C1=O)[C@]31OC3=CC=CC(O)=C3C(=O)C1=C2",
+   "neutral_smiles": "CO[C@@]12C=C3C(=O)c4c(O)cccc4O[C@@]34[C@@H](C1)C(C)(C)O[C@@]4(CC=C(C)C)C2=O",
+   "formula_atom_bag": {
+    "C": 24,
+    "O": 6,
+    "H": 26,
+    "e-": 218
+   },
+   "cache_pkas": [
+    8.79
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 61050,
+   "inchi_key": "XWYOJSCUMATACI-CXWHUAPYSA-M",
+   "major_ms_smiles": "CCCCCCCCCCCCCCCCCC[C@H](C)C[C@H](C)C[C@H](C)C[C@H](C)C[C@H](C)C[C@H](C)C[C@H](C)C([O-])=O",
+   "neutral_smiles": "CCCCCCCCCCCCCCCCCC[C@H](C)C[C@H](C)C[C@H](C)C[C@H](C)C[C@H](C)C[C@H](C)C[C@H](C)C(=O)O",
+   "formula_atom_bag": {
+    "C": 39,
+    "H": 77,
+    "O": 2,
+    "e-": 328
+   },
+   "cache_pkas": [
+    5.07
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 41,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 91745,
+   "inchi_key": "KBQFPPUAIJHDCO-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=CC=CC2=C1OC1=CC=CC=C1C2=O",
+   "neutral_smiles": "O=c1c2ccccc2oc2c(O)cccc12",
+   "formula_atom_bag": {
+    "O": 3,
+    "C": 13,
+    "H": 8,
+    "e-": 110
+   },
+   "cache_pkas": [
+    7.9
+   ],
+   "n_cache_pkas": 1,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_1"
+  },
+  {
+   "compound_id": 439040,
+   "inchi_key": "MQIOPFNXRQHRLN-AHSWYQDFSA-M",
+   "major_ms_smiles": "CCCCCC\\C=C/CCCCCCCCCC(=O)O[C@H](CO)COP([O-])(=O)OC[C@@H](O)CO",
+   "neutral_smiles": "CCCCCC/C=C\\CCCCCCCCCC(=O)O[C@H](CO)COP(=O)(O)OC[C@@H](O)CO",
+   "formula_atom_bag": {
+    "C": 24,
+    "O": 9,
+    "H": 46,
+    "P": 1,
+    "e-": 278
+   },
+   "cache_pkas": [
+    13.59,
+    1.89
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 550723,
+   "inchi_key": "CQIKJOZGEFZHGH-IECBHUPTSA-O",
+   "major_ms_smiles": "CCS(=O)(=O)NC1=CC2=C(OC[C@@H](C)[NH+](CC3CCCC3)C[C@@H](C)[C@H](CN(C)C2=O)OC)C=C1",
+   "neutral_smiles": "CCS(=O)(=O)Nc1ccc2c(c1)C(=O)N(C)C[C@H](OC)[C@H](C)CN(CC1CCCC1)[C@H](C)CO2",
+   "formula_atom_bag": {
+    "C": 25,
+    "S": 1,
+    "O": 5,
+    "N": 3,
+    "H": 42,
+    "e-": 268
+   },
+   "cache_pkas": [
+    10.27,
+    9.57
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 470108,
+   "inchi_key": "WDDLEWLMCWUMGF-UHFFFAOYSA-N",
+   "major_ms_smiles": "[NH3+]C(CCCC=O)C(C([O-])=O)C1=CC=CC=C1",
+   "neutral_smiles": "NC(CCCC=O)C(C(=O)O)c1ccccc1",
+   "formula_atom_bag": {
+    "N": 1,
+    "H": 17,
+    "C": 13,
+    "O": 3,
+    "e-": 126
+   },
+   "cache_pkas": [
+    10.11,
+    3.85
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 17,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 472030,
+   "inchi_key": "WEAHDCKRWCXVPC-DOMIDYPGSA-M",
+   "major_ms_smiles": "COC1=NC(C)=N[14C](NC([O-])=O)=N1",
+   "neutral_smiles": "COc1nc(C)n[14c](NC(=O)O)n1",
+   "formula_atom_bag": {
+    "C": 6,
+    "O": 3,
+    "N": 4,
+    "H": 7,
+    "e-": 96
+   },
+   "cache_pkas": [
+    2.04,
+    0.91
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 13,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 139422,
+   "inchi_key": "IOFUFYLETVNNRF-FKQKSGFWSA-M",
+   "major_ms_smiles": "[O-]C(=O)CC\\C=C/CC[C@@H]1[C@@H](CC(=O)[C@H]1N1CCOCC1)OCC1=CC=C(C=C1)C1=CC=CC=C1",
+   "neutral_smiles": "O=C(O)CC/C=C\\CC[C@H]1[C@H](N2CCOCC2)C(=O)C[C@H]1OCc1ccc(-c2ccccc2)cc1",
+   "formula_atom_bag": {
+    "O": 5,
+    "C": 29,
+    "H": 34,
+    "N": 1,
+    "e-": 256
+   },
+   "cache_pkas": [
+    6.12,
+    4.06
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 5093,
+   "inchi_key": "RWSPXLDDWKEOIW-VLIDSJQPSA-N",
+   "major_ms_smiles": "C[C@H]1O[C@H](C[C@@H](O)[C@@H]1O)C1=C(O)C2=C(C=C1)C(=O)C1=C(C=CC3=C1C(=O)C[C@](C)(O)C3)C2=O",
+   "neutral_smiles": "C[C@H]1O[C@@H](c2ccc3c(c2O)C(=O)c2ccc4c(c2C3=O)C(=O)C[C@](C)(O)C4)C[C@@H](O)[C@@H]1O",
+   "formula_atom_bag": {
+    "C": 25,
+    "H": 24,
+    "O": 8,
+    "e-": 238
+   },
+   "cache_pkas": [
+    13.15,
+    7.4
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 354304,
+   "inchi_key": "ABGJVJJZFFDDMG-JOCHJYFZSA-N",
+   "major_ms_smiles": "CC(C)CCCCCCCCCCCCOC[C@H](COP([O-])(=O)OCC[NH3+])OC(C)=O",
+   "neutral_smiles": "CC(=O)O[C@H](COCCCCCCCCCCCCC(C)C)COP(=O)(O)OCCN",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 7,
+    "H": 46,
+    "P": 1,
+    "N": 1,
+    "e-": 256
+   },
+   "cache_pkas": [
+    10.0,
+    1.87
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 35298,
+   "inchi_key": "RSOZZQTUMVBTMR-XGUNBQNXSA-O",
+   "major_ms_smiles": "C[NH+](C)CCC(=O)O[C@@H]1[C@H](OC(C)=O)[C@@]2(C)O[C@](C)(CC(=O)[C@]2(O)[C@@]2(C)[C@@H](O)CCC(C)(C)[C@H]12)C=C",
+   "neutral_smiles": "C=C[C@@]1(C)CC(=O)[C@]2(O)[C@@]3(C)[C@@H](O)CCC(C)(C)[C@@H]3[C@H](OC(=O)CCN(C)C)[C@H](OC(C)=O)[C@@]2(C)O1",
+   "formula_atom_bag": {
+    "C": 27,
+    "N": 1,
+    "H": 44,
+    "O": 8,
+    "e-": 276
+   },
+   "cache_pkas": [
+    11.57,
+    8.85
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 36,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 474177,
+   "inchi_key": "JJHQJVABKOVKQR-UHFFFAOYSA-L",
+   "major_ms_smiles": "CCCCCCCCCCCCCCCCCCCCCCCCCC(C)C(CC([O-])=O)C([O-])=O",
+   "neutral_smiles": "CCCCCCCCCCCCCCCCCCCCCCCCCC(C)C(CC(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 31,
+    "O": 4,
+    "H": 58,
+    "e-": 278
+   },
+   "cache_pkas": [
+    5.96,
+    4.48
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 447520,
+   "inchi_key": "",
+   "major_ms_smiles": "C[C@H](CO)N1C[C@@H](C)[C@@H](C[NH+](C)CC2=CC=CC=C2C([O-])=O)OC2=C(C=CC(=C2)C#CC2CCCC2)S1(=O)=O",
+   "neutral_smiles": "C[C@@H]1CN([C@H](C)CO)S(=O)(=O)c2ccc(C#CC3CCCC3)cc2O[C@@H]1CN(C)Cc1ccccc1C(=O)O",
+   "formula_atom_bag": {
+    "C": 30,
+    "H": 38,
+    "O": 6,
+    "N": 2,
+    "S": 1,
+    "e-": 296
+   },
+   "cache_pkas": [
+    8.34,
+    3.3
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 39,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 125071,
+   "inchi_key": "UPNLRNQUIJXYPN-LFWRRJNUSA-N",
+   "major_ms_smiles": "COC1=C(O)C=CC(C=CCOC(=O)C=CC2=CC=C(O)C=C2)=C1",
+   "neutral_smiles": "COc1cc(C=CCOC(=O)C=Cc2ccc(O)cc2)ccc1O",
+   "formula_atom_bag": {
+    "C": 19,
+    "O": 5,
+    "H": 18,
+    "e-": 172
+   },
+   "cache_pkas": [
+    10.08,
+    9.3
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 24,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 88558,
+   "inchi_key": "BTZKCJJXILZIFU-ISLYRVAYSA-M",
+   "major_ms_smiles": "COC1=CC(C=CC(=O)OCCCCCCCCCCCCCCCC([O-])=O)=CC(OC)=C1O",
+   "neutral_smiles": "COc1cc(C=CC(=O)OCCCCCCCCCCCCCCCC(=O)O)cc(OC)c1O",
+   "formula_atom_bag": {
+    "C": 27,
+    "O": 7,
+    "H": 41,
+    "e-": 260
+   },
+   "cache_pkas": [
+    9.29,
+    4.95
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 550640,
+   "inchi_key": "DRBRVKGUSIXHOZ-HJJDGDTKSA-O",
+   "major_ms_smiles": "C[C@@H](CO)N1C[C@H](C)[C@@H](C[NH+](C)CC2CC2)OCCCC[C@H](C)OC2=C(C=C(NS(C)(=O)=O)C=C2)C1=O",
+   "neutral_smiles": "C[C@H]1CCCCO[C@H](CN(C)CC2CC2)[C@@H](C)CN([C@@H](C)CO)C(=O)c2cc(NS(C)(=O)=O)ccc2O1",
+   "formula_atom_bag": {
+    "C": 27,
+    "H": 46,
+    "O": 6,
+    "N": 3,
+    "S": 1,
+    "e-": 292
+   },
+   "cache_pkas": [
+    9.93,
+    9.11
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 37,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 649980,
+   "inchi_key": "ZLVSYODPTJZFMK-UHFFFAOYSA-M",
+   "major_ms_smiles": "OC1=CC=C(C=C1)C([O-])=O",
+   "neutral_smiles": "O=C(O)c1ccc(O)cc1",
+   "formula_atom_bag": {
+    "O": 3,
+    "C": 7,
+    "H": 5,
+    "e-": 72
+   },
+   "cache_pkas": [
+    9.67,
+    4.38
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 10,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 36412,
+   "inchi_key": "RFWZESUMWJKKRN-UHFFFAOYSA-O",
+   "major_ms_smiles": "CC1=CC=CC=C1N1CC[NH+](CCC2=NN=C3CCCCN23)CC1",
+   "neutral_smiles": "Cc1ccccc1N1CCN(CCc2nnc3n2CCCC3)CC1",
+   "formula_atom_bag": {
+    "C": 19,
+    "N": 5,
+    "H": 28,
+    "e-": 176
+   },
+   "cache_pkas": [
+    7.64,
+    2.59
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 24,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 11965,
+   "inchi_key": "OBQBHBOGTLPNJM-HJULIUOESA-N",
+   "major_ms_smiles": "[NH3+][C@@H](CS(=O)CC1=CC=CC=C1)C([O-])=O",
+   "neutral_smiles": "N[C@@H](CS(=O)Cc1ccccc1)C(=O)O",
+   "formula_atom_bag": {
+    "N": 1,
+    "H": 13,
+    "C": 10,
+    "S": 1,
+    "O": 3,
+    "e-": 120
+   },
+   "cache_pkas": [
+    8.45,
+    1.93
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 15,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 100236,
+   "inchi_key": "GGQLLLSSCCXUBL-UHFFFAOYSA-N",
+   "major_ms_smiles": "COC1=CC(O)=C(C(=O)OC2CC3(C)C4CC(C)(CO)CC4C=C(CO)C23O)C(C)=C1",
+   "neutral_smiles": "COc1cc(C)c(C(=O)OC2CC3(C)C4CC(C)(CO)CC4C=C(CO)C23O)c(O)c1",
+   "formula_atom_bag": {
+    "C": 24,
+    "O": 7,
+    "H": 32,
+    "e-": 232
+   },
+   "cache_pkas": [
+    12.94,
+    9.76
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 47367,
+   "inchi_key": "JGWWMNVPHKMUCV-WOBXFXBNSA-N",
+   "major_ms_smiles": "CC\\C=C/C\\C=C/C\\C=C/CCCCCCCC(=O)O[C@H](CO)COP([O-])(=O)OCC[NH3+]",
+   "neutral_smiles": "CC/C=C\\C/C=C\\C/C=C\\CCCCCCCC(=O)O[C@H](CO)COP(=O)(O)OCCN",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 7,
+    "H": 42,
+    "P": 1,
+    "N": 1,
+    "e-": 258
+   },
+   "cache_pkas": [
+    10.0,
+    1.87
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 309825,
+   "inchi_key": "DHPIXDXHWYRYQT-OXYPMYLPSA-O",
+   "major_ms_smiles": "CCCNC(=O)NC1=CC2=C(OC[C@H](C)[NH+](CC3=CC=C(C=C3)C3=CC=CC=N3)C[C@@H](C)[C@H](CN(C)C2=O)OC)C=C1",
+   "neutral_smiles": "CCCNC(=O)Nc1ccc2c(c1)C(=O)N(C)C[C@H](OC)[C@H](C)CN(Cc1ccc(-c3ccccn3)cc1)[C@@H](C)CO2",
+   "formula_atom_bag": {
+    "C": 33,
+    "N": 5,
+    "O": 4,
+    "H": 44,
+    "e-": 308
+   },
+   "cache_pkas": [
+    8.84,
+    4.32
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 42,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 542984,
+   "inchi_key": "",
+   "major_ms_smiles": "CC1=CC(=C(C)C=C1)S(=O)(=O)N1CCN(CC(=O)NC2=C(C=CS2)C#N)CC1",
+   "neutral_smiles": "Cc1ccc(C)c(S(=O)(=O)N2CCN(CC(=O)Nc3sccc3C#N)CC2)c1",
+   "formula_atom_bag": {
+    "C": 19,
+    "S": 2,
+    "O": 3,
+    "N": 4,
+    "H": 22,
+    "e-": 220
+   },
+   "cache_pkas": [
+    4.7,
+    1.71
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 28,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 78379,
+   "inchi_key": "BTUDGPVTCYNYLK-UHFFFAOYSA-L",
+   "major_ms_smiles": "CC(C)(CCC([O-])=O)C([O-])=O",
+   "neutral_smiles": "CC(C)(CCC(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 7,
+    "O": 4,
+    "H": 10,
+    "e-": 86
+   },
+   "cache_pkas": [
+    4.77,
+    4.0
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 11,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 692317,
+   "inchi_key": "CRBRHPQDBVQDPG-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(O)C(=O)C=C(O)C(=O)C([O-])=O",
+   "neutral_smiles": "CC(O)C(=O)C=C(O)C(=O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 7,
+    "O": 6,
+    "H": 7,
+    "e-": 98
+   },
+   "cache_pkas": [
+    6.22,
+    2.5
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 13,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 140987,
+   "inchi_key": "WTLSFXRNHZPOMH-PMUMKWKESA-O",
+   "major_ms_smiles": "C[C@H](CO)N1C[C@H](C)[C@@H](C[NH+](C)C)OC2=C(C=C(C=C2)N(C)C)C1=O",
+   "neutral_smiles": "C[C@H](CO)N1C[C@H](C)[C@@H](CN(C)C)Oc2ccc(N(C)C)cc2C1=O",
+   "formula_atom_bag": {
+    "C": 19,
+    "H": 32,
+    "O": 3,
+    "N": 3,
+    "e-": 190
+   },
+   "cache_pkas": [
+    8.41,
+    4.3
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 25,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 475175,
+   "inchi_key": "AKZPESVDESXPFD-UHFFFAOYSA-O",
+   "major_ms_smiles": "C[NH2+]C(CCC=O)C(C=O)=CC=CN",
+   "neutral_smiles": "CNC(CCC=O)C(C=O)=CC=CN",
+   "formula_atom_bag": {
+    "C": 10,
+    "N": 2,
+    "H": 17,
+    "O": 2,
+    "e-": 106
+   },
+   "cache_pkas": [
+    9.12,
+    6.46
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 14,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 125052,
+   "inchi_key": "WRRSFOZOETZUPG-FFHNEAJVSA-N",
+   "major_ms_smiles": "COC1=C2O[C@H]3[C@@H](O)C=C[C@H]4[C@H]5CC(C=C1)=C2[C@@]34CC[NH+]5C",
+   "neutral_smiles": "COc1ccc2c3c1O[C@H]1[C@@H](O)C=C[C@H]4[C@@H](C2)N(C)CC[C@@]341",
+   "formula_atom_bag": {
+    "C": 18,
+    "O": 3,
+    "H": 22,
+    "N": 1,
+    "e-": 160
+   },
+   "cache_pkas": [
+    13.78,
+    9.19
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 31654,
+   "inchi_key": "RPMDQAYGQBREBS-LPHOPBHVSA-O",
+   "major_ms_smiles": "C[NH+]1CC[C@@]2(O)[C@@H](C1)C1=CC=CC(C)=C1OC1=CC=CC=C21",
+   "neutral_smiles": "Cc1cccc2c1Oc1ccccc1[C@@]1(O)CCN(C)C[C@@H]21",
+   "formula_atom_bag": {
+    "C": 19,
+    "N": 1,
+    "H": 22,
+    "O": 2,
+    "e-": 158
+   },
+   "cache_pkas": [
+    13.42,
+    7.09
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 473559,
+   "inchi_key": "MGPIGWBKOSKAQK-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=CC=CC(O)=C1C1=CC=C(C=C1)C1=CC=CC=C1",
+   "neutral_smiles": "Oc1cccc(O)c1-c1ccc(-c2ccccc2)cc1",
+   "formula_atom_bag": {
+    "O": 2,
+    "C": 18,
+    "H": 14,
+    "e-": 138
+   },
+   "cache_pkas": [
+    10.35,
+    9.1
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 20,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 551719,
+   "inchi_key": "PEPLWFCUXOTHLS-ISJBWFOZSA-O",
+   "major_ms_smiles": "CO[C@@H]1CN(C)C(=O)C2=C(OC[C@H](C)[NH+](CC3=NC=CS3)C[C@@H]1C)C=CC(NS(=O)(=O)C1=CC=C(C)C=C1)=C2",
+   "neutral_smiles": "CO[C@@H]1CN(C)C(=O)c2cc(NS(=O)(=O)c3ccc(C)cc3)ccc2OC[C@H](C)N(Cc2nccs2)C[C@@H]1C",
+   "formula_atom_bag": {
+    "C": 28,
+    "O": 5,
+    "H": 37,
+    "N": 4,
+    "S": 2,
+    "e-": 304
+   },
+   "cache_pkas": [
+    8.13,
+    6.94
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 39,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 164828,
+   "inchi_key": "YRHBEKYZAVIFHW-DVYDKJBRSA-L",
+   "major_ms_smiles": "CCCCC\\C=C/C\\C=C/C\\C=C/C\\C=C/CCCCCCCCCC(=O)OC[C@H](COP([O-])([O-])=O)OC(=O)CC",
+   "neutral_smiles": "CCCCC/C=C\\C/C=C\\C/C=C\\C/C=C\\CCCCCCCCCC(=O)OC[C@H](COP(=O)(O)O)OC(=O)CC",
+   "formula_atom_bag": {
+    "C": 32,
+    "O": 8,
+    "H": 53,
+    "P": 1,
+    "e-": 326
+   },
+   "cache_pkas": [
+    6.34,
+    1.32
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 41,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 497864,
+   "inchi_key": "HCERARMSZYIAOP-FPBTUTEESA-N",
+   "major_ms_smiles": "C\\C=C\\C1=CC2=C(C=C1)S(=O)(=O)N(C[C@H](C)[C@H](C[NH+](C)CC1=CC=C(C=C1)C([O-])=O)O2)[C@H](C)CO",
+   "neutral_smiles": "C/C=C/c1ccc2c(c1)O[C@@H](CN(C)Cc1ccc(C(=O)O)cc1)[C@@H](C)CN([C@H](C)CO)S2(=O)=O",
+   "formula_atom_bag": {
+    "C": 26,
+    "S": 1,
+    "O": 6,
+    "N": 2,
+    "H": 34,
+    "e-": 268
+   },
+   "cache_pkas": [
+    8.28,
+    3.67
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 550435,
+   "inchi_key": "MMMYSTLGMRKVBA-KCOOYEKVSA-O",
+   "major_ms_smiles": "C[NH2+]C[C@H]1OCCCC[C@H](C)OC2=C(C=C([N-]S(=O)(=O)C3=CC=CS3)C=C2)C(=O)N(C[C@H]1C)[C@@H](C)CO",
+   "neutral_smiles": "CNC[C@H]1OCCCC[C@H](C)Oc2ccc(NS(=O)(=O)c3cccs3)cc2C(=O)N([C@@H](C)CO)C[C@H]1C",
+   "formula_atom_bag": {
+    "C": 26,
+    "N": 3,
+    "H": 39,
+    "O": 6,
+    "S": 2,
+    "e-": 296
+   },
+   "cache_pkas": [
+    9.55,
+    6.31
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 37,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 129418,
+   "inchi_key": "OCYSGIYOVXAGKQ-FVGYRXGTSA-N",
+   "major_ms_smiles": "C[NH2+]C[C@H](O)C1=CC(O)=CC=C1",
+   "neutral_smiles": "CNC[C@H](O)c1cccc(O)c1",
+   "formula_atom_bag": {
+    "C": 9,
+    "N": 1,
+    "H": 14,
+    "O": 2,
+    "e-": 90
+   },
+   "cache_pkas": [
+    9.69,
+    9.07
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 12,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 443383,
+   "inchi_key": "NALQGZGZTMNLHT-JBYIUTFZSA-O",
+   "major_ms_smiles": "C[C@H](CO)N1C[C@@H](C)[C@@H](CN(C)C(=O)C[NH+](C)C)OC2=C(C=CC(=C2)C2=CC=NC=C2)S1(=O)=O",
+   "neutral_smiles": "C[C@@H]1CN([C@H](C)CO)S(=O)(=O)c2ccc(-c3ccncc3)cc2O[C@@H]1CN(C)C(=O)CN(C)C",
+   "formula_atom_bag": {
+    "C": 24,
+    "H": 35,
+    "O": 5,
+    "N": 4,
+    "S": 1,
+    "e-": 262
+   },
+   "cache_pkas": [
+    7.5,
+    4.79
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 91,
+   "inchi_key": "COLNVLDHVKWLRT-QMMMGPOBSA-N",
+   "major_ms_smiles": "[NH3+][C@@H](CC1=CC=CC=C1)C([O-])=O",
+   "neutral_smiles": "N[C@@H](Cc1ccccc1)C(=O)O",
+   "formula_atom_bag": {
+    "N": 1,
+    "H": 11,
+    "C": 9,
+    "O": 2,
+    "e-": 88
+   },
+   "cache_pkas": [
+    9.45,
+    2.47
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 12,
+   "has_magnesium_constants": true,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 36564,
+   "inchi_key": "ZVQQBKJJJZODIH-FXHJKIPBSA-M",
+   "major_ms_smiles": "C[C@]12CC[C@H]3[C@H]([C@@H]1CCC2=O)\\C(C=C1C[C@@H](O)CC[C@]31C)=N/OCC([O-])=O",
+   "neutral_smiles": "C[C@]12CC[C@H](O)CC1=C/C(=N/OCC(=O)O)[C@@H]1[C@@H]2CC[C@]2(C)C(=O)CC[C@@H]12",
+   "formula_atom_bag": {
+    "C": 21,
+    "H": 28,
+    "O": 5,
+    "N": 1,
+    "e-": 202
+   },
+   "cache_pkas": [
+    4.01,
+    3.33
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 29362,
+   "inchi_key": "DXKRVBFWTXQSNQ-GDNBJRDFSA-M",
+   "major_ms_smiles": "COC1=CC=C(C=C1)C(=CC1=CC=CC(C)=N1)C([O-])=O",
+   "neutral_smiles": "COc1ccc(C(=Cc2cccc(C)n2)C(=O)O)cc1",
+   "formula_atom_bag": {
+    "C": 16,
+    "O": 3,
+    "N": 1,
+    "H": 14,
+    "e-": 142
+   },
+   "cache_pkas": [
+    5.28,
+    2.72
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 20,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 36494,
+   "inchi_key": "REAZZDPREXHWNV-BUNNSNHRSA-N",
+   "major_ms_smiles": "CO[C@@H](CC[C@H](C)[C@H]1O[C@@]23CC(OC(=O)C[C@@H](OC(=O)C[C@](O)(O2)[C@H](C)CC3(C)C)[C@@H](C)O)[C@@H]1C)C1=CC(O)=CC=C1",
+   "neutral_smiles": "CO[C@@H](CC[C@H](C)[C@H]1O[C@@]23CC(OC(=O)C[C@H]([C@@H](C)O)OC(=O)C[C@](O)(O2)[C@H](C)CC3(C)C)[C@@H]1C)c1cccc(O)c1",
+   "formula_atom_bag": {
+    "C": 32,
+    "O": 10,
+    "H": 48,
+    "e-": 320
+   },
+   "cache_pkas": [
+    11.52,
+    9.36
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 42,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 23924,
+   "inchi_key": "YGXXBXKYOPKULI-XSSYPUMDSA-N",
+   "major_ms_smiles": "C[C@]12CC[C@H]3[C@@H](CCC4=CC(O)=C(N)C=C34)[C@@H]1CC[C@@H]2O",
+   "neutral_smiles": "C[C@]12CC[C@@H]3c4cc(N)c(O)cc4CC[C@H]3[C@@H]1CC[C@@H]2O",
+   "formula_atom_bag": {
+    "C": 18,
+    "H": 25,
+    "O": 2,
+    "N": 1,
+    "e-": 156
+   },
+   "cache_pkas": [
+    10.63,
+    4.91
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 21,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 43426,
+   "inchi_key": "NAQMVNRVTILPCV-UHFFFAOYSA-P",
+   "major_ms_smiles": "[NH3+]CCCCCC[NH3+]",
+   "neutral_smiles": "NCCCCCCN",
+   "formula_atom_bag": {
+    "N": 2,
+    "H": 18,
+    "C": 6,
+    "e-": 66
+   },
+   "cache_pkas": [
+    10.51,
+    9.9
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 8,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 120861,
+   "inchi_key": "DFQICHCWIIJABH-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=CC2=CC(O)=CC=C2C=C1",
+   "neutral_smiles": "Oc1ccc2ccc(O)cc2c1",
+   "formula_atom_bag": {
+    "O": 2,
+    "C": 10,
+    "H": 8,
+    "e-": 84
+   },
+   "cache_pkas": [
+    10.09,
+    9.47
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 12,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 130406,
+   "inchi_key": "NGVLEQPKHLWZLN-UHFFFAOYSA-M",
+   "major_ms_smiles": "OC1=C(O)C(OS([O-])(=O)=O)=CC=C1",
+   "neutral_smiles": "O=S(=O)(O)Oc1cccc(O)c1O",
+   "formula_atom_bag": {
+    "O": 6,
+    "C": 6,
+    "S": 1,
+    "H": 5,
+    "e-": 106
+   },
+   "cache_pkas": [
+    13.27,
+    9.17
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 13,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 132626,
+   "inchi_key": "UZCLYICSWADYGM-VHIAHCGJSA-M",
+   "major_ms_smiles": "CCCCC[C@@H]1O[C@H]1C(O)\\C=C/CCCCCCCC([O-])=O",
+   "neutral_smiles": "CCCCC[C@@H]1O[C@H]1C(O)/C=C\\CCCCCCCC(=O)O",
+   "formula_atom_bag": {
+    "C": 18,
+    "H": 31,
+    "O": 4,
+    "e-": 172
+   },
+   "cache_pkas": [
+    13.75,
+    4.99
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 310405,
+   "inchi_key": "SQOASKBWAGOZIY-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=CC=C(C=C1)N1CCN(CC1)C(=O)CCC1=CNC2=CC=CC=C12",
+   "neutral_smiles": "O=C(CCc1c[nH]c2ccccc12)N1CCN(c2ccc(O)cc2)CC1",
+   "formula_atom_bag": {
+    "O": 2,
+    "C": 21,
+    "N": 3,
+    "H": 23,
+    "e-": 186
+   },
+   "cache_pkas": [
+    10.3,
+    4.35
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 119252,
+   "inchi_key": "CDBKCIOGROFMEO-NSCUHMNNSA-M",
+   "major_ms_smiles": "COC1=CC(C=CC([O-])=O)=CC(C=O)=C1O",
+   "neutral_smiles": "COc1cc(C=CC(=O)O)cc(C=O)c1O",
+   "formula_atom_bag": {
+    "C": 11,
+    "O": 5,
+    "H": 9,
+    "e-": 116
+   },
+   "cache_pkas": [
+    8.96,
+    3.25
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 10525,
+   "inchi_key": "AGPKZVBTJJNPAG-UHFFFAOYSA-N",
+   "major_ms_smiles": "CCC(C)C([NH3+])C([O-])=O",
+   "neutral_smiles": "CCC(C)C(N)C(=O)O",
+   "formula_atom_bag": {
+    "C": 6,
+    "N": 1,
+    "H": 13,
+    "O": 2,
+    "e-": 72
+   },
+   "cache_pkas": [
+    9.59,
+    2.79
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 9,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 136554,
+   "inchi_key": "CJDPXZMTCMWKET-YGRYZZMUSA-N\n",
+   "major_ms_smiles": "CC(C)CCC\\C(C)=C\\CC\\C(C)=C\\CC\\C(C)=C/CC[C@H](C)CCOP([O-])([O-])=O",
+   "neutral_smiles": "C/C(=C/CC[C@H](C)CCOP(=O)(O)O)CC/C=C(\\C)CC/C=C(\\C)CCCC(C)C",
+   "formula_atom_bag": {
+    "C": 25,
+    "H": 45,
+    "O": 4,
+    "P": 1,
+    "e-": 244
+   },
+   "cache_pkas": [
+    6.82,
+    1.8
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 449622,
+   "inchi_key": "JLPKNCULJRQTGL-UHFFFAOYSA-L",
+   "major_ms_smiles": "[O-]P([O-])(=O)OCCN=C=S",
+   "neutral_smiles": "O=P(O)(O)OCCN=C=S",
+   "formula_atom_bag": {
+    "O": 4,
+    "P": 1,
+    "C": 3,
+    "N": 1,
+    "S": 1,
+    "H": 4,
+    "e-": 94
+   },
+   "cache_pkas": [
+    6.37,
+    1.38
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 10,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 548123,
+   "inchi_key": "ADWJBSWPWOPVMW-AKCHCHLHSA-O",
+   "major_ms_smiles": "C[C@H](CO)N1C[C@@H](C)[C@@H](C[NH+](C)C)OC2=C(C=CC=C2NC(=O)C2=CC(C)=NN2C)C1=O",
+   "neutral_smiles": "Cc1cc(C(=O)Nc2cccc3c2O[C@H](CN(C)C)[C@H](C)CN([C@H](C)CO)C3=O)n(C)n1",
+   "formula_atom_bag": {
+    "C": 23,
+    "H": 34,
+    "O": 4,
+    "N": 5,
+    "e-": 238
+   },
+   "cache_pkas": [
+    8.3,
+    1.91
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 549933,
+   "inchi_key": "DRBRVKGUSIXHOZ-BPUGDSSMSA-O",
+   "major_ms_smiles": "C[C@H](CO)N1C[C@H](C)[C@H](C[NH+](C)CC2CC2)OCCCC[C@@H](C)OC2=C(C=C(NS(C)(=O)=O)C=C2)C1=O",
+   "neutral_smiles": "C[C@@H]1CCCCO[C@@H](CN(C)CC2CC2)[C@@H](C)CN([C@H](C)CO)C(=O)c2cc(NS(C)(=O)=O)ccc2O1",
+   "formula_atom_bag": {
+    "C": 27,
+    "H": 46,
+    "O": 6,
+    "N": 3,
+    "S": 1,
+    "e-": 292
+   },
+   "cache_pkas": [
+    9.93,
+    9.11
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 37,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 81189,
+   "inchi_key": "KIMBFCFJDPSYCZ-ONEGZZNKSA-N",
+   "major_ms_smiles": "CC=CC(=O)COC(=O)C1=C(O)C=C(O)C=C1C",
+   "neutral_smiles": "CC=CC(=O)COC(=O)c1c(C)cc(O)cc1O",
+   "formula_atom_bag": {
+    "C": 13,
+    "O": 5,
+    "H": 14,
+    "e-": 132
+   },
+   "cache_pkas": [
+    10.55,
+    8.7
+   ],
+   "n_cache_pkas": 2,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 18,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_2"
+  },
+  {
+   "compound_id": 472999,
+   "inchi_key": "NRQRGKJZZDRFRF-UHFFFAOYSA-M",
+   "major_ms_smiles": "NC1(OC(CO)C(O)C1=O)C(=O)NC([O-])=O",
+   "neutral_smiles": "NC1(C(=O)NC(=O)O)OC(CO)C(O)C1=O",
+   "formula_atom_bag": {
+    "N": 2,
+    "C": 7,
+    "O": 7,
+    "H": 9,
+    "e-": 122
+   },
+   "cache_pkas": [
+    12.22,
+    9.12,
+    4.95
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 550928,
+   "inchi_key": "UWHHOQDATRPBOP-KHCICDEESA-O",
+   "major_ms_smiles": "CCS(=O)(=O)NC1=CC2=C(OC[C@@H](C)[NH+](CC3=CN=CC=C3)C[C@@H](C)[C@@H](CN(C)C2=O)OC)C=C1",
+   "neutral_smiles": "CCS(=O)(=O)Nc1ccc2c(c1)C(=O)N(C)C[C@@H](OC)[C@H](C)CN(Cc1cccnc1)[C@H](C)CO2",
+   "formula_atom_bag": {
+    "C": 25,
+    "S": 1,
+    "O": 5,
+    "N": 4,
+    "H": 37,
+    "e-": 270
+   },
+   "cache_pkas": [
+    10.12,
+    7.98,
+    2.97
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 118410,
+   "inchi_key": "HEBRDBXKSZUFPH-DTWKUNHWSA-L",
+   "major_ms_smiles": "O[C@H]([C@H](CC1=CC=C(O)C=C1)C([O-])=O)C([O-])=O",
+   "neutral_smiles": "O=C(O)[C@@H](Cc1ccc(O)cc1)[C@@H](O)C(=O)O",
+   "formula_atom_bag": {
+    "O": 6,
+    "C": 11,
+    "H": 10,
+    "e-": 126
+   },
+   "cache_pkas": [
+    9.51,
+    5.2,
+    3.41
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 17,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 14203,
+   "inchi_key": "ODRBLEJSVVCENJ-UHFFFAOYSA-M",
+   "major_ms_smiles": "COC1=CC(=CC(O)=C1O)C1=C(OC)C(=O)C2=C(OC)C=C([O-])C=C2O1",
+   "neutral_smiles": "COc1cc(-c2oc3cc(O)cc(OC)c3c(=O)c2OC)cc(O)c1O",
+   "formula_atom_bag": {
+    "C": 18,
+    "O": 8,
+    "H": 15,
+    "e-": 188
+   },
+   "cache_pkas": [
+    12.31,
+    8.94,
+    6.38
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 423086,
+   "inchi_key": "OCVHFIWHXZAFAY-OUJYGWMBSA-M",
+   "major_ms_smiles": "CC\\C=C/C\\C=C/C\\C=C/C\\C=C/C\\C=C/CCCC(=O)O[C@H](COC(=O)CC)COP([O-])(=O)OC[C@H]([NH3+])C([O-])=O",
+   "neutral_smiles": "CC/C=C\\C/C=C\\C/C=C\\C/C=C\\C/C=C\\CCCC(=O)O[C@H](COC(=O)CC)COP(=O)(O)OC[C@H](N)C(=O)O",
+   "formula_atom_bag": {
+    "C": 29,
+    "O": 10,
+    "H": 45,
+    "P": 1,
+    "N": 1,
+    "e-": 322
+   },
+   "cache_pkas": [
+    9.38,
+    2.18,
+    1.47
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phosphate",
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 41,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 143077,
+   "inchi_key": "YNSZNIPNNMZZOV-JBYIUTFZSA-O",
+   "major_ms_smiles": "C[C@H](CO)N1C[C@@H](C)[C@@H](C[NH+](C)CC2=CC=C(O)C=C2)OCC2=CN(CCCC1=O)N=N2",
+   "neutral_smiles": "C[C@@H]1CN([C@H](C)CO)C(=O)CCCn2cc(nn2)CO[C@@H]1CN(C)Cc1ccc(O)cc1",
+   "formula_atom_bag": {
+    "C": 23,
+    "H": 36,
+    "O": 4,
+    "N": 5,
+    "e-": 240
+   },
+   "cache_pkas": [
+    9.51,
+    8.17,
+    0.1
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 545054,
+   "inchi_key": "BDZBVPGIDURNLH-XZWHSSHBSA-N",
+   "major_ms_smiles": "CCCCCCCCCCCCC[C@@H](O)[C@H](COP([O-])(=O)OCC[N+](C)(C)C)NC(=O)CCCCCCCCC",
+   "neutral_smiles": "CCCCCCCCCCCCC[C@@H](O)[C@H](COP(=O)([O-])OCC[N+](C)(C)C)NC(=O)CCCCCCCCC",
+   "formula_atom_bag": {
+    "C": 31,
+    "H": 65,
+    "O": 6,
+    "P": 1,
+    "N": 2,
+    "e-": 328
+   },
+   "cache_pkas": [
+    5.87,
+    3.05,
+    1.75
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 40,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 7651,
+   "inchi_key": "ASVRZUOBVUEPHE-UHFFFAOYSA-M",
+   "major_ms_smiles": "[O-]C(=O)C1=CCC=C([NH2+]1)C([O-])=O",
+   "neutral_smiles": "O=C(O)C1=CCC=C(C(=O)O)N1",
+   "formula_atom_bag": {
+    "O": 4,
+    "C": 7,
+    "N": 1,
+    "H": 6,
+    "e-": 88
+   },
+   "cache_pkas": [
+    5.54,
+    4.79,
+    0.22
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 12,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 47439,
+   "inchi_key": "RPDXXWXUUHHHMM-UHFFFAOYSA-O",
+   "major_ms_smiles": "OC1=CC=CC(CNC2=C3NCN=C3NC=[NH+]2)=C1",
+   "neutral_smiles": "Oc1cccc(CNC2=C3NCN=C3NC=N2)c1",
+   "formula_atom_bag": {
+    "O": 1,
+    "C": 12,
+    "N": 5,
+    "H": 14,
+    "e-": 128
+   },
+   "cache_pkas": [
+    9.42,
+    7.12,
+    0.64
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 18,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 72560,
+   "inchi_key": "JQIASYPXXAIEFJ-KSFYIVLOSA-M",
+   "major_ms_smiles": "COC1=C(O)C=C(C=C1)C1=CC(O)=C2C(=O)C3=C(O[C@@H]4[C@H]3C(C)C(=O)C4=O)C=C2O1",
+   "neutral_smiles": "COc1ccc(-c2cc(O)c3c(=O)c4c(cc-3o2)O[C@H]2C(=O)C(=O)C(C)[C@@H]42)cc1O",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 8,
+    "H": 16,
+    "e-": 212
+   },
+   "cache_pkas": [
+    9.56,
+    7.83,
+    7.0
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 40724,
+   "inchi_key": "FKQMIMOLIFCHFV-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(C)=CCC1=CC(=CC(CC=C(C)C)=C1O)C1=COC2=C(CC=C(C)C)C(O)=CC(=O)C2=C1O",
+   "neutral_smiles": "CC(C)=CCc1cc(-c2coc3c(CC=C(C)C)c(O)cc(=O)c-3c2O)cc(CC=C(C)C)c1O",
+   "formula_atom_bag": {
+    "C": 30,
+    "O": 5,
+    "H": 34,
+    "e-": 254
+   },
+   "cache_pkas": [
+    8.7,
+    7.98,
+    6.38
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 455507,
+   "inchi_key": "",
+   "major_ms_smiles": "C[C@@H](CO)N1C[C@H](C)[C@@H](C[NH+](C)CC2=CC=C(C=C2)C([O-])=O)OC2=C(C=C(C=N2)C#CCC2=CC=CC=C2)C1=O",
+   "neutral_smiles": "C[C@H]1CN([C@@H](C)CO)C(=O)c2cc(C#CCc3ccccc3)cnc2O[C@@H]1CN(C)Cc1ccc(C(=O)O)cc1",
+   "formula_atom_bag": {
+    "C": 32,
+    "H": 35,
+    "O": 5,
+    "N": 3,
+    "e-": 288
+   },
+   "cache_pkas": [
+    8.24,
+    3.67,
+    0.5
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 40,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 77962,
+   "inchi_key": "PMALFGMVFUCPMK-BIPCEHGGSA-N",
+   "major_ms_smiles": "COC1=C(O)C=CC(=C1)[C@H](O)[C@H]1CO[C@@H]([C@H]1CO)C1=CC(O)=C(O)C=C1",
+   "neutral_smiles": "COc1cc([C@H](O)[C@H]2CO[C@H](c3ccc(O)c(O)c3)[C@H]2CO)ccc1O",
+   "formula_atom_bag": {
+    "C": 19,
+    "O": 7,
+    "H": 22,
+    "e-": 192
+   },
+   "cache_pkas": [
+    12.65,
+    9.99,
+    9.13
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 469452,
+   "inchi_key": "CREILPPFGSVICT-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(O)C(=O)C(=O)C(=O)CC([O-])=O",
+   "neutral_smiles": "CC(O)C(=O)C(=O)C(=O)CC(=O)O",
+   "formula_atom_bag": {
+    "C": 7,
+    "O": 6,
+    "H": 7,
+    "e-": 98
+   },
+   "cache_pkas": [
+    13.55,
+    11.94,
+    3.57
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 13,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 454458,
+   "inchi_key": "PSOBHRQFTWDSLH-FIKGOQFSSA-O",
+   "major_ms_smiles": "C[C@@H](CO)N1C[C@H](C)[C@H](CN(C)S(C)(=O)=O)OC2=C(C=C(NC(=O)CCC[NH+](C)C)C=C2)C1=O",
+   "neutral_smiles": "C[C@H]1CN([C@@H](C)CO)C(=O)c2cc(NC(=O)CCCN(C)C)ccc2O[C@H]1CN(C)S(C)(=O)=O",
+   "formula_atom_bag": {
+    "C": 23,
+    "H": 39,
+    "O": 6,
+    "N": 4,
+    "S": 1,
+    "e-": 268
+   },
+   "cache_pkas": [
+    9.88,
+    5.33,
+    1.52
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 90042,
+   "inchi_key": "GCGPCEUHJCFZIV-DRQOBSTJSA-M",
+   "major_ms_smiles": "C[C@@H]1CC[C@@]2(CC[C@]3(C)C(=CCC4[C@@]5(C)CC[C@H](O[C@@H]6OC[C@H](O)[C@H](O)[C@H]6O)C(C)(C)C5CC[C@@]34C)C2=C1C)C([O-])=O",
+   "neutral_smiles": "CC1=C2C3=CCC4[C@@]5(C)CC[C@H](O[C@@H]6OC[C@H](O)[C@H](O)[C@H]6O)C(C)(C)C5CC[C@@]4(C)[C@]3(C)CC[C@@]2(C(=O)O)CC[C@H]1C",
+   "formula_atom_bag": {
+    "C": 35,
+    "H": 53,
+    "O": 7,
+    "e-": 320
+   },
+   "cache_pkas": [
+    13.4,
+    12.25,
+    4.66
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 42,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 48284,
+   "inchi_key": "MXYRZDAGKTVQIL-IOSLPCCCSA-N",
+   "major_ms_smiles": "C[C@]1(O[C@H](CO)[C@@H](O)[C@H]1O)N1C=NC2=C(N)N=CN=C12",
+   "neutral_smiles": "C[C@@]1(n2cnc3c(N)ncnc32)O[C@H](CO)[C@@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "C": 11,
+    "O": 4,
+    "H": 15,
+    "N": 5,
+    "e-": 148
+   },
+   "cache_pkas": [
+    13.86,
+    12.36,
+    3.92
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 20,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 92168,
+   "inchi_key": "XYVLZAYJHCECPN-UHFFFAOYSA-M",
+   "major_ms_smiles": "[NH3+]CCCCCCOP([O-])([O-])=O",
+   "neutral_smiles": "NCCCCCCOP(=O)(O)O",
+   "formula_atom_bag": {
+    "N": 1,
+    "H": 15,
+    "C": 6,
+    "O": 4,
+    "P": 1,
+    "e-": 106
+   },
+   "cache_pkas": [
+    10.21,
+    6.83,
+    1.81
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 12,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 546975,
+   "inchi_key": "NQJCYDIBEOZMBZ-XFQAVAEZSA-O",
+   "major_ms_smiles": "C[NH2+]C[C@@H]1OC2=C(C=C(NC(=O)C3CCCCC3)C=C2)C(=O)N(C[C@H]1C)[C@@H](C)CO",
+   "neutral_smiles": "CNC[C@@H]1Oc2ccc(NC(=O)C3CCCCC3)cc2C(=O)N([C@@H](C)CO)C[C@H]1C",
+   "formula_atom_bag": {
+    "C": 23,
+    "N": 3,
+    "H": 36,
+    "O": 4,
+    "e-": 226
+   },
+   "cache_pkas": [
+    9.36,
+    5.11,
+    1.78
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 308639,
+   "inchi_key": "QWIQMHSQTXUQBK-WURXVLGASA-O",
+   "major_ms_smiles": "COC1=CC=C(NC(=O)NC2=CC=CC3=C2O[C@@H](C[NH+](C)CC2=CC4=C(OCO4)C=C2)[C@@H](C)CN([C@@H](C)CO)C3=O)C=C1",
+   "neutral_smiles": "COc1ccc(NC(=O)Nc2cccc3c2O[C@@H](CN(C)Cc2ccc4c(c2)OCO4)[C@@H](C)CN([C@@H](C)CO)C3=O)cc1",
+   "formula_atom_bag": {
+    "C": 32,
+    "O": 7,
+    "N": 4,
+    "H": 39,
+    "e-": 314
+   },
+   "cache_pkas": [
+    7.96,
+    5.18,
+    3.91
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 43,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 370173,
+   "inchi_key": "ACZQJFXORIIXSB-DUYBGCNESA-M",
+   "major_ms_smiles": "CCCC\\C=C/CCCCCCCCCC\\C=C/OC[C@@H](O)COP([O-])(=O)OC[C@@H](O)CO",
+   "neutral_smiles": "CCCC/C=C\\CCCCCCCCCC/C=C\\OC[C@@H](O)COP(=O)(O)OC[C@@H](O)CO",
+   "formula_atom_bag": {
+    "C": 24,
+    "O": 8,
+    "H": 46,
+    "P": 1,
+    "e-": 270
+   },
+   "cache_pkas": [
+    13.95,
+    13.35,
+    1.89
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 440710,
+   "inchi_key": "BPHLUJMJQBCHJQ-UHFFFAOYSA-N",
+   "major_ms_smiles": "O=N(=O)C1=CC=CC(=C1)C1=NC(NCC2=CC=CC=C2)=C2C=CC=CC2=N1",
+   "neutral_smiles": "O=[N+]([O-])c1cccc(-c2nc(NCc3ccccc3)c3ccccc3n2)c1",
+   "formula_atom_bag": {
+    "O": 2,
+    "N": 4,
+    "C": 21,
+    "H": 16,
+    "e-": 186
+   },
+   "cache_pkas": [
+    9.12,
+    8.17,
+    1.38
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 540096,
+   "inchi_key": "LKXUWZZXBNQMRT-UHFFFAOYSA-O",
+   "major_ms_smiles": "CCN(CC(=O)NC1=CC2=C(OCO2)C=C1)CC1=NC(=O)C2=CC=CC=C2N1",
+   "neutral_smiles": "CCN(CC(=O)Nc1ccc2c(c1)OCO2)Cc1nc(=O)c2ccccc2[nH]1",
+   "formula_atom_bag": {
+    "C": 20,
+    "N": 4,
+    "O": 4,
+    "H": 20,
+    "e-": 200
+   },
+   "cache_pkas": [
+    12.05,
+    7.98,
+    2.43
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 28,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 447293,
+   "inchi_key": "LDTACDBKWNCJPQ-UHFFFAOYSA-N",
+   "major_ms_smiles": "CC1CN(CC(C)O1)C1=C(SCC(=O)NC2=CC=CC=C2)N=C2C=CC=CC2=N1",
+   "neutral_smiles": "CC1CN(c2nc3ccccc3nc2SCC(=O)Nc2ccccc2)CC(C)O1",
+   "formula_atom_bag": {
+    "C": 22,
+    "N": 4,
+    "O": 2,
+    "S": 1,
+    "H": 24,
+    "e-": 216
+   },
+   "cache_pkas": [
+    4.56,
+    2.21,
+    0.64
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 29,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 553936,
+   "inchi_key": "GLUHNSIYAMZXSN-UHFFFAOYSA-N",
+   "major_ms_smiles": "CC1=CC=C(NC(=O)CSC2=NN=C([N-]C(=O)CN3CCOCC3)S2)C=C1",
+   "neutral_smiles": "Cc1ccc(NC(=O)CSc2nnc(NC(=O)CN3CCOCC3)s2)cc1",
+   "formula_atom_bag": {
+    "C": 17,
+    "N": 5,
+    "O": 3,
+    "S": 2,
+    "H": 20,
+    "e-": 214
+   },
+   "cache_pkas": [
+    13.93,
+    3.59,
+    2.71
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 118486,
+   "inchi_key": "XUCOLQITPSNBGF-DMTCNVIQSA-N",
+   "major_ms_smiles": "C[C@H](C[C@H]([NH3+])C([O-])=O)C(O)O",
+   "neutral_smiles": "C[C@H](C[C@H](N)C(=O)O)C(O)O",
+   "formula_atom_bag": {
+    "C": 6,
+    "H": 13,
+    "N": 1,
+    "O": 4,
+    "e-": 88
+   },
+   "cache_pkas": [
+    12.2,
+    8.91,
+    2.2
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 11,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 74926,
+   "inchi_key": "YZEMVBNZFGKQIE-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=CC2=CC(O)=CC(O)=C2C=C1",
+   "neutral_smiles": "Oc1ccc2c(O)cc(O)cc2c1",
+   "formula_atom_bag": {
+    "O": 3,
+    "C": 10,
+    "H": 8,
+    "e-": 92
+   },
+   "cache_pkas": [
+    10.57,
+    9.76,
+    8.93
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 13,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 1645,
+   "inchi_key": "QXKAIJAYHKCRRA-YVZJFKFKSA-M",
+   "major_ms_smiles": "OC[C@H](O)[C@H](O)[C@@H](O)C([O-])=O",
+   "neutral_smiles": "O=C(O)[C@H](O)[C@@H](O)[C@@H](O)CO",
+   "formula_atom_bag": {
+    "O": 6,
+    "C": 5,
+    "H": 9,
+    "e-": 88
+   },
+   "cache_pkas": [
+    13.71,
+    12.77,
+    3.39
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 11,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 476663,
+   "inchi_key": "DSXFHNSGLYXPNG-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC1CCC2C1C(OC1OC(CO)C(O)C(O)C1O)OC=C2C([O-])=O",
+   "neutral_smiles": "CC1CCC2C(C(=O)O)=COC(OC3OC(CO)C(O)C(O)C3O)C12",
+   "formula_atom_bag": {
+    "C": 16,
+    "O": 9,
+    "H": 23,
+    "e-": 192
+   },
+   "cache_pkas": [
+    13.2,
+    12.21,
+    4.14
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 25,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 30567,
+   "inchi_key": "WNHUAWNEKMITEW-UHFFFAOYSA-M",
+   "major_ms_smiles": "OC1=C(O)C2=C(C=C1)C(=O)C1=C(C=C([O-])C=C1)C2=O",
+   "neutral_smiles": "O=C1c2ccc(O)cc2C(=O)c2c1ccc(O)c2O",
+   "formula_atom_bag": {
+    "O": 5,
+    "C": 14,
+    "H": 7,
+    "e-": 132
+   },
+   "cache_pkas": [
+    11.21,
+    7.72,
+    7.08
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 19,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 459213,
+   "inchi_key": "DPSIIBWTFLKRDP-XMMPIXPASA-O",
+   "major_ms_smiles": "COC1=CC=C2C(=C1)N(C)C1=C2C2(CN(CC3=CC=C(C=C3)C3=CC=CC=N3)C2)C[NH2+][C@@H]1CO",
+   "neutral_smiles": "COc1ccc2c3c(n(C)c2c1)[C@@H](CO)NCC31CN(Cc2ccc(-c3ccccn3)cc2)C1",
+   "formula_atom_bag": {
+    "C": 28,
+    "O": 2,
+    "N": 4,
+    "H": 31,
+    "e-": 242
+   },
+   "cache_pkas": [
+    8.36,
+    5.93,
+    4.31
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 449832,
+   "inchi_key": "MONOFYZVTFTEBW-AXHZCLLHSA-O",
+   "major_ms_smiles": "COCC(=O)NC1=CC2=C(C=C1)C(=O)N(C)C[C@@H](OC)[C@@H](C)C[NH+](CC1=CN=CC=C1)[C@@H](C)CO2",
+   "neutral_smiles": "COCC(=O)Nc1ccc2c(c1)OC[C@H](C)N(Cc1cccnc1)C[C@H](C)[C@H](OC)CN(C)C2=O",
+   "formula_atom_bag": {
+    "C": 26,
+    "O": 5,
+    "N": 4,
+    "H": 37,
+    "e-": 260
+   },
+   "cache_pkas": [
+    7.97,
+    3.48,
+    2.81
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 548430,
+   "inchi_key": "GZTCRZUPEZJWSX-RZIGYZOXSA-O",
+   "major_ms_smiles": "COC1=CC=C(NC(=O)N(C)C[C@H]2OC3=C(C=C(NC(=O)CC[NH+]4CCOCC4)C=C3)C(=O)N(C[C@H]2C)[C@@H](C)CO)C=C1",
+   "neutral_smiles": "COc1ccc(NC(=O)N(C)C[C@H]2Oc3ccc(NC(=O)CCN4CCOCC4)cc3C(=O)N([C@@H](C)CO)C[C@H]2C)cc1",
+   "formula_atom_bag": {
+    "C": 31,
+    "O": 7,
+    "N": 5,
+    "H": 44,
+    "e-": 320
+   },
+   "cache_pkas": [
+    7.4,
+    4.45,
+    1.29
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 43,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 44887,
+   "inchi_key": "SXHOGLPTLQBGDO-NUQXRTDISA-N",
+   "major_ms_smiles": "COC1=C(OC)C(O)=C(C=C1)C1COC2=C(C1)C=CC(O[C@@H]1OC(CO)[C@@H](O)[C@H](O)C1O)=C2",
+   "neutral_smiles": "COc1ccc(C2COc3cc(O[C@@H]4OC(CO)[C@@H](O)[C@H](O)C4O)ccc3C2)c(O)c1OC",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 10,
+    "H": 28,
+    "e-": 246
+   },
+   "cache_pkas": [
+    13.2,
+    12.21,
+    10.33
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 98038,
+   "inchi_key": "ZDUPGHPJVKHTEK-UHFFFAOYSA-N",
+   "major_ms_smiles": "COC1=C(O)C=CC2=C1N(C)C1=C(C(O)=CC3=C1C(O)C(O)C(C)(C)O3)C2=O",
+   "neutral_smiles": "COc1c(O)ccc2c(=O)c3c(O)cc4c(c3n(C)c12)C(O)C(O)C(C)(C)O4",
+   "formula_atom_bag": {
+    "C": 20,
+    "O": 7,
+    "N": 1,
+    "H": 21,
+    "e-": 204
+   },
+   "cache_pkas": [
+    12.72,
+    8.98,
+    8.29
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 28,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 66171,
+   "inchi_key": "CNFKFBYQNXFUCI-UHFFFAOYSA-N",
+   "major_ms_smiles": "COC1=C(OC)C2=C(C(O)=C1)C(=O)C=C(O2)C1=C(O)C=CC(O)=C1",
+   "neutral_smiles": "COc1cc(O)c2c(=O)cc(-c3cc(O)ccc3O)oc2c1OC",
+   "formula_atom_bag": {
+    "C": 17,
+    "O": 7,
+    "H": 14,
+    "e-": 172
+   },
+   "cache_pkas": [
+    10.9,
+    8.75,
+    7.82
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 24,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 311291,
+   "inchi_key": "PUSZFNDBKFADMS-QTEQDKRBSA-N",
+   "major_ms_smiles": "C[C@@H](CO)N1C[C@@H](C)[C@H](CN(C)C(=O)NC2=CC(=[NH+]C=C2)N2CCOCC2)OCC2=CN(CCCC1=O)N=N2",
+   "neutral_smiles": "C[C@@H]1CN([C@@H](C)CO)C(=O)CCCn2cc(nn2)CO[C@H]1CN(C)C(=O)Nc1ccnc(N2CCOCC2)c1",
+   "formula_atom_bag": {
+    "C": 26,
+    "H": 41,
+    "O": 5,
+    "N": 8,
+    "e-": 292
+   },
+   "cache_pkas": [
+    12.31,
+    6.72,
+    0.13
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 39,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 472299,
+   "inchi_key": "CRWWPBCAJDKQBN-QQZLWQJHSA-L",
+   "major_ms_smiles": "CC(CCC[C@@H](O)C=C[C@@H]1[C@@H](CC=CCCCC(N)=O)[C@@H](O)CC1=O)C(CC([O-])=O)C([O-])=O",
+   "neutral_smiles": "CC(CCC[C@@H](O)C=C[C@H]1C(=O)C[C@H](O)[C@@H]1CC=CCCCC(N)=O)C(CC(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 24,
+    "H": 35,
+    "O": 8,
+    "N": 1,
+    "e-": 252
+   },
+   "cache_pkas": [
+    13.04,
+    5.81,
+    4.31
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 50182,
+   "inchi_key": "NGYZAEAXQQNUBZ-FPOVZHCZSA-M",
+   "major_ms_smiles": "CCCCCCCCCCCCCCCC(=O)N[C@@H]([C@@H](C)CC)C([O-])=O",
+   "neutral_smiles": "CCCCCCCCCCCCCCCC(=O)N[C@H](C(=O)O)[C@@H](C)CC",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 3,
+    "N": 1,
+    "H": 42,
+    "e-": 206
+   },
+   "cache_pkas": [
+    6.27,
+    4.31,
+    1.75
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 15513,
+   "inchi_key": "ZQNDIDYSUDPHEU-LMVSBANXSA-M",
+   "major_ms_smiles": "CC(C)=CCCC(C)=CCC1=C([O-])C(C(=O)C=CC2=CC=CC=C2)=C(O)C=C1O",
+   "neutral_smiles": "CC(C)=CCCC(C)=CCc1c(O)cc(O)c(C(=O)C=Cc2ccccc2)c1O",
+   "formula_atom_bag": {
+    "C": 25,
+    "O": 4,
+    "H": 27,
+    "e-": 210
+   },
+   "cache_pkas": [
+    9.46,
+    8.13,
+    6.88
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 29,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 74023,
+   "inchi_key": "SXDGLCCGJJGJRY-FEUCYYSJSA-M",
+   "major_ms_smiles": "CC(CCC=O)=CCC1=C(O)C=CC(C(=O)C=CC2=CC=C(O)C=C2)=C1[O-]",
+   "neutral_smiles": "CC(=CCc1c(O)ccc(C(=O)C=Cc2ccc(O)cc2)c1O)CCC=O",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 5,
+    "H": 21,
+    "e-": 194
+   },
+   "cache_pkas": [
+    9.16,
+    8.44,
+    6.93
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 475,
+   "inchi_key": "ADVPTQAUNPRNPO-REOHCLBHSA-M",
+   "major_ms_smiles": "[NH3+][C@@H](CS([O-])=O)C([O-])=O",
+   "neutral_smiles": "N[C@@H](CS(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "N": 1,
+    "H": 6,
+    "C": 3,
+    "S": 1,
+    "O": 4,
+    "e-": 80
+   },
+   "cache_pkas": [
+    9.09,
+    1.99,
+    1.12
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 9,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 9738,
+   "inchi_key": "PXBZEVLDFAKFLV-UHFFFAOYSA-N",
+   "major_ms_smiles": "NC(=O)OCC(COC(N)=O)C1=CC=C(O)C=C1",
+   "neutral_smiles": "NC(=O)OCC(COC(N)=O)c1ccc(O)cc1",
+   "formula_atom_bag": {
+    "N": 2,
+    "C": 11,
+    "O": 5,
+    "H": 14,
+    "e-": 134
+   },
+   "cache_pkas": [
+    11.76,
+    11.28,
+    10.02
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 18,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 33453,
+   "inchi_key": "WVOLTBSCXRRQFR-DLBZAZTESA-M",
+   "major_ms_smiles": "CCCCCC1=CC(O)=C([C@@H]2C=C(C)CC[C@H]2C(C)=C)C(O)=C1C([O-])=O",
+   "neutral_smiles": "C=C(C)[C@@H]1CCC(C)=C[C@H]1c1c(O)cc(CCCCC)c(C(=O)O)c1O",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 4,
+    "H": 29,
+    "e-": 194
+   },
+   "cache_pkas": [
+    13.0,
+    9.67,
+    2.91
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 447469,
+   "inchi_key": "HFGPIAHGJWWKDI-KRWDZBQOSA-O",
+   "major_ms_smiles": "CC1=CC(C)=C(NC(=O)CSC2=NN=C(O2)[C@@H]([NH3+])CC2=CNC3=CC=CC=C23)C=C1",
+   "neutral_smiles": "Cc1ccc(NC(=O)CSc2nnc([C@@H](N)Cc3c[nH]c4ccccc34)o2)c(C)c1",
+   "formula_atom_bag": {
+    "C": 22,
+    "N": 5,
+    "O": 2,
+    "S": 1,
+    "H": 24,
+    "e-": 222
+   },
+   "cache_pkas": [
+    7.13,
+    4.19,
+    0.9
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 67786,
+   "inchi_key": "YAPAFDNQABLIIN-XNTDXEJSSA-M",
+   "major_ms_smiles": "CC(C)=CCC1=CC(C=CC(=O)C2=C([O-])C(CC=C(C)C)=C(O)C=C2)=CC(CC=C(C)C)=C1O",
+   "neutral_smiles": "CC(C)=CCc1cc(C=CC(=O)c2ccc(O)c(CC=C(C)C)c2O)cc(CC=C(C)C)c1O",
+   "formula_atom_bag": {
+    "C": 30,
+    "O": 4,
+    "H": 35,
+    "e-": 248
+   },
+   "cache_pkas": [
+    8.9,
+    8.31,
+    6.92
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 25228,
+   "inchi_key": "OINCELAOJGBMQV-PHYPRBDBSA-O",
+   "major_ms_smiles": "C[C@H]1O[C@H](O)[C@H](O)[C@@H]([NH3+])[C@H]1O",
+   "neutral_smiles": "C[C@H]1O[C@H](O)[C@H](O)[C@@H](N)[C@H]1O",
+   "formula_atom_bag": {
+    "C": 6,
+    "H": 14,
+    "O": 4,
+    "N": 1,
+    "e-": 88
+   },
+   "cache_pkas": [
+    13.3,
+    11.37,
+    8.81
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 11,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 21628,
+   "inchi_key": "PRKNCOCERFKSLP-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=CC=CC2=C1C(=O)C1=C(O)C=CC(O)=C1C2=O",
+   "neutral_smiles": "O=C1c2cccc(O)c2C(=O)c2c(O)ccc(O)c21",
+   "formula_atom_bag": {
+    "O": 5,
+    "C": 14,
+    "H": 8,
+    "e-": 132
+   },
+   "cache_pkas": [
+    10.27,
+    8.66,
+    7.99
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 19,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 552169,
+   "inchi_key": "ACBVZQMFXFPRGI-DEYYWGMASA-O",
+   "major_ms_smiles": "CCC(=O)NC1=CC2=C(C=C1)C(=O)N(C)C[C@H](OC)[C@@H](C)C[NH2+][C@@H](C)CO2",
+   "neutral_smiles": "CCC(=O)Nc1ccc2c(c1)OC[C@H](C)NC[C@H](C)[C@@H](OC)CN(C)C2=O",
+   "formula_atom_bag": {
+    "C": 20,
+    "O": 4,
+    "N": 3,
+    "H": 32,
+    "e-": 204
+   },
+   "cache_pkas": [
+    8.46,
+    5.33,
+    0.76
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 453552,
+   "inchi_key": "OXAYHDRNXZXDOZ-BKZGZDJESA-O",
+   "major_ms_smiles": "CO[C@@H]1CN(C)C(=O)C2=C(OC[C@@H](C)[NH+](CCC3=CC=CC=C3)C[C@@H]1C)C=CC(NC(=O)C1=CC(OC)=CC=C1)=C2",
+   "neutral_smiles": "COc1cccc(C(=O)Nc2ccc3c(c2)C(=O)N(C)C[C@@H](OC)[C@@H](C)CN(CCc2ccccc2)[C@H](C)CO3)c1",
+   "formula_atom_bag": {
+    "C": 33,
+    "O": 5,
+    "H": 42,
+    "N": 3,
+    "e-": 300
+   },
+   "cache_pkas": [
+    9.21,
+    4.83,
+    0.84
+   ],
+   "n_cache_pkas": 3,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 41,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_3"
+  },
+  {
+   "compound_id": 546903,
+   "inchi_key": "JUTKNILMLORGHM-XJGOYTCSSA-O",
+   "major_ms_smiles": "C[C@H](CO)N1C[C@@H](C)[C@H](C[NH+](C)CC2=CC=NC=C2)OC2=C(C=C(NC(=O)CC3=CC=CC=C3)C=C2)C1=O",
+   "neutral_smiles": "C[C@@H]1CN([C@H](C)CO)C(=O)c2cc(NC(=O)Cc3ccccc3)ccc2O[C@H]1CN(C)Cc1ccncc1",
+   "formula_atom_bag": {
+    "C": 30,
+    "H": 37,
+    "O": 4,
+    "N": 4,
+    "e-": 276
+   },
+   "cache_pkas": [
+    7.7,
+    4.83,
+    3.38,
+    0.91
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 38,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 30586,
+   "inchi_key": "BTVGKIWEGFQOTG-PKNBQFBNSA-M",
+   "major_ms_smiles": "COC1=C(CC=C(C)C)C=C(C=CC(=O)C2=C(O)C=C(O)C=C2[O-])C(CC=C(C)C)=C1O",
+   "neutral_smiles": "COc1c(CC=C(C)C)cc(C=CC(=O)c2c(O)cc(O)cc2O)c(CC=C(C)C)c1O",
+   "formula_atom_bag": {
+    "C": 26,
+    "O": 6,
+    "H": 29,
+    "e-": 234
+   },
+   "cache_pkas": [
+    9.9,
+    9.31,
+    8.22,
+    7.0
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 13063,
+   "inchi_key": "HQQLCBLQXGBFFF-IKFVAXRFSA-N",
+   "major_ms_smiles": "COC1=C(O[C@@H]2OC(CO)[C@@H](O)C(O)C2O)C=C(C(O)=C1)C1=C(OC)C(=O)C2=C(O)C(OC)=C(OC)C=C2O1",
+   "neutral_smiles": "COc1cc(O)c(-c2oc3cc(OC)c(OC)c(O)c3c(=O)c2OC)cc1O[C@@H]1OC(CO)[C@@H](O)C(O)C1O",
+   "formula_atom_bag": {
+    "C": 25,
+    "O": 14,
+    "H": 28,
+    "e-": 290
+   },
+   "cache_pkas": [
+    13.2,
+    12.2,
+    8.44,
+    7.64
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 39,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 539930,
+   "inchi_key": "QXZFAILDNWQRAW-JJIBRWJFSA-N",
+   "major_ms_smiles": "OCCOC1=CC=C(C=NNC(=O)CCCCCCC(=O)NC2=CC=CC=C2O)C=C1",
+   "neutral_smiles": "O=C(CCCCCCC(=O)Nc1ccccc1O)NN=Cc1ccc(OCCO)cc1",
+   "formula_atom_bag": {
+    "O": 5,
+    "C": 23,
+    "N": 3,
+    "H": 29,
+    "e-": 228
+   },
+   "cache_pkas": [
+    9.45,
+    5.56,
+    4.73,
+    0.2
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 126619,
+   "inchi_key": "VLSHIBYUEOPPRX-UHFFFAOYSA-N",
+   "major_ms_smiles": "C[NH+]1CCC23C4OC5=C(OC6OC(C(O)C(O)C6O)C([O-])=O)C=CC(CC1C2CCC4=O)=C35",
+   "neutral_smiles": "CN1CCC23c4c5ccc(OC6OC(C(=O)O)C(O)C(O)C6O)c4OC2C(=O)CCC3C1C5",
+   "formula_atom_bag": {
+    "C": 23,
+    "N": 1,
+    "H": 27,
+    "O": 9,
+    "e-": 244
+   },
+   "cache_pkas": [
+    13.27,
+    12.22,
+    9.15,
+    2.68
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 447438,
+   "inchi_key": "YTDFAVNBAISVRJ-UHFFFAOYSA-N",
+   "major_ms_smiles": "CN1C(SCC(=O)C2=CC3=C(C=C2)C2=CC=CC=C2C3)=NN=C1C1=CC(N)=CC=C1",
+   "neutral_smiles": "Cn1c(SCC(=O)c2ccc3c(c2)Cc2ccccc2-3)nnc1-c1cccc(N)c1",
+   "formula_atom_bag": {
+    "C": 24,
+    "N": 4,
+    "S": 1,
+    "O": 1,
+    "H": 20,
+    "e-": 216
+   },
+   "cache_pkas": [
+    13.55,
+    13.16,
+    3.39,
+    1.04
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 88530,
+   "inchi_key": "MQVRGDZCYDEQML-LFXZADKFSA-M",
+   "major_ms_smiles": "COC1=CC=C(C=C1)C1=C(O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O)C(O)=C2C([O-])=CC(=O)C=C2O1",
+   "neutral_smiles": "COc1ccc(-c2oc3cc(=O)cc(O)c-3c(O)c2O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O)cc1",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 11,
+    "H": 21,
+    "e-": 242
+   },
+   "cache_pkas": [
+    13.2,
+    12.2,
+    7.97,
+    6.38
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 143541,
+   "inchi_key": "HWJPWWYTGBZDEG-AWEZNQCLSA-O",
+   "major_ms_smiles": "COC1=C(OC)C2=C(C=C[C@H](O2)C2CC2)C(CC2=C[NH+]=C(N)N=C2N)=C1",
+   "neutral_smiles": "COc1cc(Cc2cnc(N)nc2N)c2c(c1OC)O[C@H](C1CC1)C=C2",
+   "formula_atom_bag": {
+    "C": 19,
+    "O": 3,
+    "H": 23,
+    "N": 4,
+    "e-": 188
+   },
+   "cache_pkas": [
+    13.39,
+    11.41,
+    6.71,
+    0.68
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 25216,
+   "inchi_key": "JJDRRZFRTKZLFT-UHFFFAOYSA-N",
+   "major_ms_smiles": "CC1=NC(C)=C(S1)C1=NC(NC2=CC(O)=CC=C2)=NC=C1",
+   "neutral_smiles": "Cc1nc(C)c(-c2ccnc(Nc3cccc(O)c3)n2)s1",
+   "formula_atom_bag": {
+    "C": 15,
+    "N": 4,
+    "S": 1,
+    "O": 1,
+    "H": 14,
+    "e-": 156
+   },
+   "cache_pkas": [
+    13.65,
+    9.63,
+    2.65,
+    0.87
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 21,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 472709,
+   "inchi_key": "NQMQVWIOROGFJO-MRVPVSSYSA-M",
+   "major_ms_smiles": "OC1=CC=CC=C1[C@H]1CN(CC([O-])=O)C(=S)N1",
+   "neutral_smiles": "O=C(O)CN1C[C@H](c2ccccc2O)NC1=S",
+   "formula_atom_bag": {
+    "O": 3,
+    "C": 11,
+    "H": 11,
+    "N": 2,
+    "S": 1,
+    "e-": 132
+   },
+   "cache_pkas": [
+    9.12,
+    7.13,
+    6.12,
+    2.47
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 17,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 123118,
+   "inchi_key": "ISPRRZDPZDVHLE-OZYANKIXSA-N",
+   "major_ms_smiles": "O=C(N[C@@H]1C2CC[NH+](CC2)[C@H]1CC1=CN=CC=C1)C1=CC2=CC=CC=C2O1",
+   "neutral_smiles": "O=C(N[C@@H]1C2CCN(CC2)[C@H]1Cc1cccnc1)c1cc2ccccc2o1",
+   "formula_atom_bag": {
+    "O": 2,
+    "C": 22,
+    "N": 3,
+    "H": 24,
+    "e-": 192
+   },
+   "cache_pkas": [
+    8.22,
+    5.42,
+    3.6,
+    0.91
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 472418,
+   "inchi_key": "IPGPPHSUBXYRCI-GZXVCZRGSA-M",
+   "major_ms_smiles": "CCCCCCCCCCC[14CH2]C(O)(C(OC(C)=O)C(=O)C1=CC=CC=C1O)C([O-])=O",
+   "neutral_smiles": "CCCCCCCCCCC[14CH2]C(O)(C(=O)O)C(OC(C)=O)C(=O)c1ccccc1O",
+   "formula_atom_bag": {
+    "C": 24,
+    "H": 35,
+    "O": 7,
+    "e-": 236
+   },
+   "cache_pkas": [
+    13.17,
+    12.66,
+    9.01,
+    3.5
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 281,
+   "inchi_key": "YXJDFQJKERBOBM-TXICZTDVSA-L",
+   "major_ms_smiles": "OC[C@H]1O[C@H](OP([O-])([O-])=O)[C@H](O)[C@@H]1O",
+   "neutral_smiles": "O=P(O)(O)O[C@H]1O[C@H](CO)[C@@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "O": 8,
+    "C": 5,
+    "H": 9,
+    "P": 1,
+    "e-": 120
+   },
+   "cache_pkas": [
+    13.83,
+    12.29,
+    6.22,
+    1.16
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 14,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 117312,
+   "inchi_key": "UOKMGZNPGFVBLH-JGQKHYKVSA-L",
+   "major_ms_smiles": "CO[C@H]1[C@H](C)O[C@@H](C[C@]1(C)N(=O)=O)OP([O-])(=O)OP([O-])(=O)OC[C@H]1O[C@H](C[C@@H]1O)N1C=C(C)C(=O)NC1=O",
+   "neutral_smiles": "CO[C@H]1[C@H](C)O[C@H](OP(=O)(O)OP(=O)(O)OC[C@H]2O[C@@H](n3cc(C)c(=O)[nH]c3=O)C[C@@H]2O)C[C@]1(C)[N+](=O)[O-]",
+   "formula_atom_bag": {
+    "C": 18,
+    "O": 15,
+    "H": 27,
+    "N": 3,
+    "P": 2,
+    "e-": 308
+   },
+   "cache_pkas": [
+    13.99,
+    7.62,
+    3.18,
+    1.74
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 38,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 455694,
+   "inchi_key": "VXLZULRHUBHIQU-UHFFFAOYSA-N",
+   "major_ms_smiles": "COCCNC(=O)C(N(CC1=CC=CS1)C(=O)C1=C(N)C(=NS1)C(N)=O)C1=CC=C(C)O1",
+   "neutral_smiles": "COCCNC(=O)C(c1ccc(C)o1)N(Cc1cccs1)C(=O)c1snc(C(N)=O)c1N",
+   "formula_atom_bag": {
+    "C": 20,
+    "O": 5,
+    "N": 5,
+    "S": 2,
+    "H": 23,
+    "e-": 250
+   },
+   "cache_pkas": [
+    6.84,
+    4.88,
+    4.02,
+    1.51
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 458999,
+   "inchi_key": "RIBPBJMOZQOLJW-YTTGMZPUSA-O",
+   "major_ms_smiles": "COC1=CC=C2C(NC3=C2C2(CC[NH+](CC4=CC=C(C=C4)C4=CC=CC=N4)CC2)CN(CC2=CC=NC=C2)[C@H]3CO)=C1",
+   "neutral_smiles": "COc1ccc2c3c([nH]c2c1)[C@H](CO)N(Cc1ccncc1)CC31CCN(Cc2ccc(-c3ccccn3)cc2)CC1",
+   "formula_atom_bag": {
+    "C": 35,
+    "O": 2,
+    "N": 5,
+    "H": 38,
+    "e-": 298
+   },
+   "cache_pkas": [
+    9.36,
+    5.63,
+    4.36,
+    3.43
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 42,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 101801,
+   "inchi_key": "HMNSRTLZAJHSIK-YUMQZZPRSA-O",
+   "major_ms_smiles": "NC(=[NH2+])NCCC[C@H](NC(=O)[C@@H]1CCC[NH2+]1)C([O-])=O",
+   "neutral_smiles": "N=C(N)NCCC[C@H](NC(=O)[C@@H]1CCCN1)C(=O)O",
+   "formula_atom_bag": {
+    "N": 5,
+    "C": 11,
+    "H": 22,
+    "O": 3,
+    "e-": 146
+   },
+   "cache_pkas": [
+    12.07,
+    9.71,
+    3.99,
+    3.18
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 19,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 101100,
+   "inchi_key": "WWKVQWHAWPZZDB-UHFFFAOYSA-N",
+   "major_ms_smiles": "COC(=O)C1=COC(OC2OC(CO)C(O)C(O)C2O)C(C=C)C1CC(=O)OCCC1=CC(O)=C(O)C=C1",
+   "neutral_smiles": "C=CC1C(OC2OC(CO)C(O)C(O)C2O)OC=C(C(=O)OC)C1CC(=O)OCCc1ccc(O)c(O)c1",
+   "formula_atom_bag": {
+    "C": 25,
+    "O": 13,
+    "H": 32,
+    "e-": 286
+   },
+   "cache_pkas": [
+    13.32,
+    12.72,
+    12.09,
+    9.28
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 38,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 455975,
+   "inchi_key": "CJHDBEPXEKGBDW-YVMONPNESA-O",
+   "major_ms_smiles": "[NH3+]CCCCNC(=O)C=CC1=CC=C(O)C=C1",
+   "neutral_smiles": "NCCCCNC(=O)C=Cc1ccc(O)cc1",
+   "formula_atom_bag": {
+    "N": 2,
+    "H": 19,
+    "C": 13,
+    "O": 2,
+    "e-": 126
+   },
+   "cache_pkas": [
+    10.29,
+    9.44,
+    6.9,
+    4.91
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 17,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 127398,
+   "inchi_key": "WJSIUCDMWSDDCE-UHFFFAOYSA-K",
+   "major_ms_smiles": "OC(CC([O-])=O)(CC([O-])=O)C([O-])=O",
+   "neutral_smiles": "O=C(O)CC(O)(CC(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "O": 7,
+    "C": 6,
+    "H": 5,
+    "e-": 100
+   },
+   "cache_pkas": [
+    13.92,
+    5.39,
+    4.67,
+    3.05
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 13,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 11220,
+   "inchi_key": "VJDOAZKNBQCAGE-WDCZJNDASA-L",
+   "major_ms_smiles": "OC[C@@H](O)[C@H](O)[C@H](O)COP([O-])([O-])=O",
+   "neutral_smiles": "O=P(O)(O)OC[C@@H](O)[C@@H](O)[C@H](O)CO",
+   "formula_atom_bag": {
+    "O": 8,
+    "C": 5,
+    "H": 11,
+    "P": 1,
+    "e-": 122
+   },
+   "cache_pkas": [
+    13.78,
+    12.77,
+    6.52,
+    1.49
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 14,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 471072,
+   "inchi_key": "JOENJMYGKJAZOZ-UHFFFAOYSA-K",
+   "major_ms_smiles": "CCCCCCCCOC(=O)C1=C(C=C(C=C1)C(=O)OCCCCCCC(C)C(O)(CC([O-])=O)C([O-])=O)C([O-])=O",
+   "neutral_smiles": "CCCCCCCCOC(=O)c1ccc(C(=O)OCCCCCCC(C)C(O)(CC(=O)O)C(=O)O)cc1C(=O)O",
+   "formula_atom_bag": {
+    "C": 29,
+    "O": 11,
+    "H": 39,
+    "e-": 304
+   },
+   "cache_pkas": [
+    13.72,
+    5.74,
+    3.89,
+    2.8
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 40,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 90211,
+   "inchi_key": "JSLUYTKYLIDAEB-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=CC2=C(C(O)=C1)C1=C(C=CC(O)=C1O)C=C2",
+   "neutral_smiles": "Oc1cc(O)c2c(ccc3ccc(O)c(O)c32)c1",
+   "formula_atom_bag": {
+    "O": 4,
+    "C": 14,
+    "H": 10,
+    "e-": 126
+   },
+   "cache_pkas": [
+    12.43,
+    10.35,
+    9.15,
+    8.5
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 18,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 44900,
+   "inchi_key": "ZPVNWCMRCGXRJD-UHFFFAOYSA-N",
+   "major_ms_smiles": "OC1=C(O)C=C(C=C1)C1CC(=O)C2=C(O1)C(O)=C(O)C=C2",
+   "neutral_smiles": "O=C1CC(c2ccc(O)c(O)c2)Oc2c1ccc(O)c2O",
+   "formula_atom_bag": {
+    "O": 6,
+    "C": 15,
+    "H": 12,
+    "e-": 150
+   },
+   "cache_pkas": [
+    12.85,
+    12.21,
+    9.24,
+    7.98
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 21,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 422560,
+   "inchi_key": "LMQUWJJBWBRXSK-OZRWLNDDSA-M",
+   "major_ms_smiles": "CCC(=O)OC[C@H](COP([O-])(=O)O[C@H]1[C@H](O)[C@@H](O)[C@H](O)[C@@H](O)[C@H]1O)OC(=O)CCCCCCCCCC(C)C",
+   "neutral_smiles": "CCC(=O)OC[C@H](COP(=O)(O)O[C@@H]1[C@H](O)[C@H](O)[C@@H](O)[C@H](O)[C@H]1O)OC(=O)CCCCCCCCCC(C)C",
+   "formula_atom_bag": {
+    "C": 25,
+    "O": 13,
+    "H": 46,
+    "P": 1,
+    "e-": 316
+   },
+   "cache_pkas": [
+    13.72,
+    13.0,
+    12.36,
+    1.83
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 39,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 544926,
+   "inchi_key": "CMQWYXPFCLWWCJ-GSLIJJQTSA-N",
+   "major_ms_smiles": "CCCC(=O)N[C@@H](COP([O-])(=O)OCC[N+](C)(C)C)[C@H](O)[C@H](O)CCCCCCCCCCC(C)C",
+   "neutral_smiles": "CCCC(=O)N[C@@H](COP(=O)([O-])OCC[N+](C)(C)C)[C@H](O)[C@H](O)CCCCCCCCCCC(C)C",
+   "formula_atom_bag": {
+    "C": 26,
+    "O": 7,
+    "N": 2,
+    "H": 55,
+    "P": 1,
+    "e-": 296
+   },
+   "cache_pkas": [
+    13.46,
+    5.7,
+    2.85,
+    1.72
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 36,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 66197,
+   "inchi_key": "MQAHKRVNVQQRHE-UHFFFAOYSA-M",
+   "major_ms_smiles": "COC(=O)OC1OC2=C(C=CC(O)=C2)C2=C1OC1=CC(=O)C(O)=C([O-])C1=C2O",
+   "neutral_smiles": "COC(=O)OC1Oc2cc(O)ccc2-c2c1oc1cc(=O)c(O)c(O)c-1c2O",
+   "formula_atom_bag": {
+    "C": 18,
+    "O": 10,
+    "H": 11,
+    "e-": 200
+   },
+   "cache_pkas": [
+    13.18,
+    8.99,
+    8.19,
+    6.69
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 28,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 452145,
+   "inchi_key": "JFPVXVDWJQMJEE-DJKKODMXSA-M",
+   "major_ms_smiles": "CON=C(C(=O)NC1C2SCC(COC(N)=O)=C(N2C1=O)C([O-])=O)C1=CC=CO1",
+   "neutral_smiles": "CON=C(C(=O)NC1C(=O)N2C(C(=O)O)=C(COC(N)=O)CSC12)c1ccco1",
+   "formula_atom_bag": {
+    "C": 16,
+    "O": 8,
+    "N": 4,
+    "S": 1,
+    "H": 15,
+    "e-": 220
+   },
+   "cache_pkas": [
+    11.9,
+    11.08,
+    3.33,
+    2.67
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 29,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 460655,
+   "inchi_key": "LYFXRHUNCZZUTQ-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(=O)OCC1OC(OC2=CC(=O)C3=C(O)C=C(OC3=C2)C2=CC=C(O)C=C2)C(O)C(O)C1O",
+   "neutral_smiles": "CC(=O)OCC1OC(Oc2cc3oc(-c4ccc(O)cc4)cc(O)c-3c(=O)c2)C(O)C(O)C1O",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 11,
+    "H": 22,
+    "e-": 248
+   },
+   "cache_pkas": [
+    13.21,
+    12.2,
+    8.74,
+    7.3
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 473981,
+   "inchi_key": "XFFRHPMUUIUWBP-UHFFFAOYSA-J",
+   "major_ms_smiles": "CC(CCCCCCCCCCC(C)(O)C(CC([O-])=O)C([O-])=O)C(CC([O-])=O)C([O-])=O",
+   "neutral_smiles": "CC(CCCCCCCCCCC(C)(O)C(CC(=O)O)C(=O)O)C(CC(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 9,
+    "H": 34,
+    "e-": 242
+   },
+   "cache_pkas": [
+    6.18,
+    5.6,
+    4.68,
+    4.09
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 98745,
+   "inchi_key": "CCXXIROIENJKKR-UHFFFAOYSA-M",
+   "major_ms_smiles": "OCC1OC(OC2=CC(O)=CC(O)=C2C(=O)C2=CC=CC=C2)C(O)C(O)C1O",
+   "neutral_smiles": "O=C(c1ccccc1)c1c(O)cc(O)cc1OC1OC(CO)C(O)C(O)C1O",
+   "formula_atom_bag": {
+    "O": 9,
+    "C": 19,
+    "H": 20,
+    "e-": 206
+   },
+   "cache_pkas": [
+    13.2,
+    12.2,
+    8.73,
+    7.12
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 28,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 460704,
+   "inchi_key": "QADCERNTBWTXFV-UHFFFAOYSA-O",
+   "major_ms_smiles": "NC(=[NH2+])NCCCC([NH3+])C(=O)NC(CC1=CNC2=CC=CC=C12)C([O-])=O",
+   "neutral_smiles": "N=C(N)NCCCC(N)C(=O)NC(Cc1c[nH]c2ccccc12)C(=O)O",
+   "formula_atom_bag": {
+    "N": 6,
+    "C": 17,
+    "H": 25,
+    "O": 3,
+    "e-": 192
+   },
+   "cache_pkas": [
+    12.06,
+    8.84,
+    4.16,
+    3.43
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 411,
+   "inchi_key": "KHWCHTKSEGGWEX-RRKCRQDMSA-L",
+   "major_ms_smiles": "NC1=C2N=CN([C@H]3C[C@H](O)[C@@H](COP([O-])([O-])=O)O3)C2=NC=N1",
+   "neutral_smiles": "Nc1ncnc2c1ncn2[C@H]1C[C@H](O)[C@@H](COP(=O)(O)O)O1",
+   "formula_atom_bag": {
+    "N": 5,
+    "C": 10,
+    "H": 12,
+    "O": 6,
+    "P": 1,
+    "e-": 172
+   },
+   "cache_pkas": [
+    13.98,
+    6.28,
+    3.94,
+    1.23
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": true,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 47152,
+   "inchi_key": "WODFZXPEUFAPMM-SOSWIJNKSA-M",
+   "major_ms_smiles": "COC1=C(O)C=CC(=C1)C1=CC(O)=C2C(=O)C=C(O[C@@H]3OC(C)[C@H](O)[C@H](O)C3O)C=C2O1",
+   "neutral_smiles": "COc1cc(-c2cc(O)c3c(=O)cc(O[C@@H]4OC(C)[C@H](O)[C@H](O)C4O)cc-3o2)ccc1O",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 10,
+    "H": 22,
+    "e-": 234
+   },
+   "cache_pkas": [
+    13.27,
+    12.21,
+    9.21,
+    7.31
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 430337,
+   "inchi_key": "RAORLEQHOLTNOO-LEWJYISDSA-K",
+   "major_ms_smiles": "CCCCCCCCCCCCCC(=O)OC[C@H](COP([O-])(=O)OC[C@@H](O)COP([O-])([O-])=O)OC(=O)CC",
+   "neutral_smiles": "CCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)(O)OC[C@@H](O)COP(=O)(O)O)OC(=O)CC",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 13,
+    "H": 43,
+    "P": 2,
+    "e-": 318
+   },
+   "cache_pkas": [
+    13.7,
+    6.53,
+    2.04,
+    1.35
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 38,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 47105,
+   "inchi_key": "YGIMNZIIYOGVNP-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(C)=CCC1=C(O)C=C2OC=C(C(O)=C2C1=O)C1=C(O)C(CC(O)C(C)=C)=C(O)C=C1",
+   "neutral_smiles": "C=C(C)C(O)Cc1c(O)ccc(-c2coc3cc(O)c(CC=C(C)C)c(=O)c-3c2O)c1O",
+   "formula_atom_bag": {
+    "C": 25,
+    "O": 7,
+    "H": 26,
+    "e-": 232
+   },
+   "cache_pkas": [
+    10.02,
+    8.79,
+    7.9,
+    6.36
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 66503,
+   "inchi_key": "OIDNVHGBTSUBEW-VHDGCEQUSA-N",
+   "major_ms_smiles": "O[C@H]1[C@H](O)C2=C(O[C@@H]1C1=CC(O)=C(O)C(O)=C1)C=C(O)C=C2",
+   "neutral_smiles": "Oc1ccc2c(c1)O[C@H](c1cc(O)c(O)c(O)c1)[C@@H](O)[C@@H]2O",
+   "formula_atom_bag": {
+    "O": 7,
+    "C": 15,
+    "H": 14,
+    "e-": 160
+   },
+   "cache_pkas": [
+    12.85,
+    11.04,
+    9.5,
+    8.72
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 499699,
+   "inchi_key": "CMFJQPXRJRRAOF-FMWKFLBASA-O",
+   "major_ms_smiles": "OC[C@H]1[C@@H]2CN3C(=O)C(=CC=C3[C@@H]([NH2+]2)[C@@H]1C(=O)NCC1CCCCC1)C1=CN=CN=C1",
+   "neutral_smiles": "O=C(NCC1CCCCC1)[C@@H]1[C@@H](CO)[C@@H]2Cn3c(ccc(-c4cncnc4)c3=O)[C@H]1N2",
+   "formula_atom_bag": {
+    "O": 3,
+    "C": 23,
+    "H": 30,
+    "N": 5,
+    "e-": 226
+   },
+   "cache_pkas": [
+    8.78,
+    5.79,
+    3.02,
+    0.75
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 40719,
+   "inchi_key": "OFVKCCFSBLYGGS-SOFGYWHQSA-N",
+   "major_ms_smiles": "CC(C)=CCCC1(C)OC2=C(O)C=C(C(=O)C=CC3=C(O)C=CC(O)=C3)C(O)=C2C=C1",
+   "neutral_smiles": "CC(C)=CCCC1(C)C=Cc2c(O)c(C(=O)C=Cc3cc(O)ccc3O)cc(O)c2O1",
+   "formula_atom_bag": {
+    "C": 25,
+    "O": 6,
+    "H": 26,
+    "e-": 224
+   },
+   "cache_pkas": [
+    11.43,
+    10.8,
+    9.23,
+    7.57
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 119061,
+   "inchi_key": "SYRNKUQPFVFKTE-QDPFKYGGSA-M",
+   "major_ms_smiles": "CCC(C)C=C(C)C=CC(=O)C1C(=O)NC(CC2=CC=C(O)C=C2)C1=O",
+   "neutral_smiles": "CCC(C)C=C(C)C=CC(=O)C1C(=O)NC(Cc2ccc(O)cc2)C1=O",
+   "formula_atom_bag": {
+    "C": 21,
+    "O": 4,
+    "N": 1,
+    "H": 25,
+    "e-": 190
+   },
+   "cache_pkas": [
+    9.61,
+    8.84,
+    4.18,
+    1.38
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 119834,
+   "inchi_key": "OFBANDBMHLEMFA-YTMVLYRLSA-N",
+   "major_ms_smiles": "CCCCCCCCCCCCCCCC(=O)N[C@@H](CN1CCOCC1)[C@@H](O)C1=CC=CC=C1",
+   "neutral_smiles": "CCCCCCCCCCCCCCCC(=O)N[C@@H](CN1CCOCC1)[C@@H](O)c1ccccc1",
+   "formula_atom_bag": {
+    "C": 29,
+    "O": 3,
+    "N": 2,
+    "H": 50,
+    "e-": 262
+   },
+   "cache_pkas": [
+    13.84,
+    6.84,
+    5.41,
+    2.15
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 225738,
+   "inchi_key": "MPDMLCBONFVZSW-JCGVRSQUSA-O",
+   "major_ms_smiles": "C[NH2+]C[C@@H]1OC2=C(C=CC=C2NC(=O)NC2=C(C)ON=C2C)C(=O)N(C[C@@H]1C)[C@H](C)CO",
+   "neutral_smiles": "CNC[C@@H]1Oc2c(NC(=O)Nc3c(C)noc3C)cccc2C(=O)N([C@H](C)CO)C[C@@H]1C",
+   "formula_atom_bag": {
+    "C": 22,
+    "N": 5,
+    "H": 32,
+    "O": 5,
+    "e-": 238
+   },
+   "cache_pkas": [
+    9.32,
+    4.73,
+    3.34,
+    1.04
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 46096,
+   "inchi_key": "YZQCXOFQZKCETR-UWVGGRQHSA-M",
+   "major_ms_smiles": "[NH3+][C@@H](CC([O-])=O)C(=O)N[C@@H](CC1=CC=CC=C1)C([O-])=O",
+   "neutral_smiles": "N[C@@H](CC(=O)O)C(=O)N[C@@H](Cc1ccccc1)C(=O)O",
+   "formula_atom_bag": {
+    "N": 2,
+    "H": 15,
+    "C": 13,
+    "O": 5,
+    "e-": 148
+   },
+   "cache_pkas": [
+    9.7,
+    4.42,
+    3.78,
+    3.01
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 20,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 91051,
+   "inchi_key": "GFZFUVWXGQWUGX-ZICOWINBSA-N",
+   "major_ms_smiles": "OC1=C(O)C=C(C=COC(=O)C=CC2=CC(O)=C(O)C=C2)C=C1",
+   "neutral_smiles": "O=C(C=Cc1ccc(O)c(O)c1)OC=Cc1ccc(O)c(O)c1",
+   "formula_atom_bag": {
+    "O": 6,
+    "C": 17,
+    "H": 14,
+    "e-": 164
+   },
+   "cache_pkas": [
+    12.89,
+    12.29,
+    9.49,
+    8.88
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 23,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 27421,
+   "inchi_key": "YFZSQPRYLBGYKE-SLYRBRRESA-N",
+   "major_ms_smiles": "COC1=C(O)C=CC(=C1)C1=CC(=O)C2=C(O)C(OC)=C(O[C@@H]3OC(CO)[C@@H](O)[C@H](O)C3O)C=C2O1",
+   "neutral_smiles": "COc1cc(-c2cc(=O)c3c(O)c(OC)c(O[C@@H]4OC(CO)[C@@H](O)[C@H](O)C4O)cc3o2)ccc1O",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 12,
+    "H": 24,
+    "e-": 258
+   },
+   "cache_pkas": [
+    13.2,
+    12.2,
+    9.22,
+    7.87
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 539949,
+   "inchi_key": "SRXKAYJJGAAOBP-UHFFFAOYSA-N",
+   "major_ms_smiles": "CC(=O)NCCCC([NH3+])C([O-])=O",
+   "neutral_smiles": "CC(=O)NCCCC(N)C(=O)O",
+   "formula_atom_bag": {
+    "C": 7,
+    "O": 3,
+    "N": 2,
+    "H": 14,
+    "e-": 94
+   },
+   "cache_pkas": [
+    9.53,
+    6.75,
+    4.75,
+    2.16
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 12,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 455423,
+   "inchi_key": "DHFYMYKOVLGPGL-GNMOFYLKSA-N",
+   "major_ms_smiles": "C[C@H](CO)N1C[C@@H](C)[C@H](C[NH+](C)CC2=CC=C(C=C2)C([O-])=O)OC2=C(C=CC=C2NC(=O)NC2CCCCC2)C1=O",
+   "neutral_smiles": "C[C@@H]1CN([C@H](C)CO)C(=O)c2cccc(NC(=O)NC3CCCCC3)c2O[C@H]1CN(C)Cc1ccc(C(=O)O)cc1",
+   "formula_atom_bag": {
+    "C": 31,
+    "H": 42,
+    "O": 6,
+    "N": 4,
+    "e-": 304
+   },
+   "cache_pkas": [
+    8.36,
+    5.43,
+    3.98,
+    3.38
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 41,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 475809,
+   "inchi_key": "NJNUSQIPESZUOR-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC(O)(CO)C(=O)C(O)C(O)C(O)C([O-])=O",
+   "neutral_smiles": "CC(O)(CO)C(=O)C(O)C(O)C(O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 8,
+    "O": 8,
+    "H": 13,
+    "e-": 126
+   },
+   "cache_pkas": [
+    13.38,
+    12.63,
+    11.98,
+    3.37
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 38785,
+   "inchi_key": "QKBSYAOOLDJWIB-UHFFFAOYSA-J",
+   "major_ms_smiles": "[O-]P([O-])(=O)SSP([O-])([O-])=O",
+   "neutral_smiles": "O=P(O)(O)SSP(=O)(O)O",
+   "formula_atom_bag": {
+    "O": 6,
+    "P": 2,
+    "S": 2,
+    "e-": 114
+   },
+   "cache_pkas": [
+    6.99,
+    6.2,
+    2.21,
+    1.31
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 10,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 451173,
+   "inchi_key": "GVXVZXDPRNGAOE-ZCFXJLACSA-M",
+   "major_ms_smiles": "CC(C)=CCCC(C)=CCC1=C([O-])C(C(=O)C=CC2=CC=C(O)C=C2)=C(O)C=C1O",
+   "neutral_smiles": "CC(C)=CCCC(C)=CCc1c(O)cc(O)c(C(=O)C=Cc2ccc(O)cc2)c1O",
+   "formula_atom_bag": {
+    "C": 25,
+    "O": 5,
+    "H": 27,
+    "e-": 218
+   },
+   "cache_pkas": [
+    9.6,
+    8.95,
+    8.08,
+    6.88
+   ],
+   "n_cache_pkas": 4,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_4"
+  },
+  {
+   "compound_id": 471375,
+   "inchi_key": "GHVIPSQVNZJMJN-UHFFFAOYSA-M",
+   "major_ms_smiles": "CC1(CO)CC1C(=O)NC(CCCCCSCC([NH3+])C([O-])=O)C([O-])=O",
+   "neutral_smiles": "CC1(CO)CC1C(=O)NC(CCCCCSCC(N)C(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 16,
+    "O": 6,
+    "N": 2,
+    "S": 1,
+    "H": 27,
+    "e-": 202
+   },
+   "cache_pkas": [
+    9.14,
+    5.6,
+    4.09,
+    2.53,
+    1.34
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 25,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 128704,
+   "inchi_key": "DSBGQRZOJXSECT-UHFFFAOYSA-N",
+   "major_ms_smiles": "C[NH+](C)CC1CCCCC1(O)C1=CC(OC2OC(C(O)C(O)C2O)C([O-])=O)=CC=C1",
+   "neutral_smiles": "CN(C)CC1CCCCC1(O)c1cccc(OC2OC(C(=O)O)C(O)C(O)C2O)c1",
+   "formula_atom_bag": {
+    "C": 21,
+    "N": 1,
+    "H": 31,
+    "O": 8,
+    "e-": 228
+   },
+   "cache_pkas": [
+    13.86,
+    13.17,
+    12.21,
+    9.23,
+    2.81
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 444770,
+   "inchi_key": "NQVHKOMHSOOYQX-FFGOWVMKSA-N",
+   "major_ms_smiles": "C[C@H](NC(=O)C[C@H]1O[C@@H](CO)[C@H](NC(=O)CN2CCOCC2)C=C1)C1=CC=CC=C1",
+   "neutral_smiles": "C[C@H](NC(=O)C[C@@H]1C=C[C@@H](NC(=O)CN2CCOCC2)[C@H](CO)O1)c1ccccc1",
+   "formula_atom_bag": {
+    "C": 22,
+    "H": 31,
+    "N": 3,
+    "O": 5,
+    "e-": 224
+   },
+   "cache_pkas": [
+    5.63,
+    4.9,
+    4.11,
+    3.2,
+    1.0
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 28499,
+   "inchi_key": "YFVGIJBUXMQFOF-OFSFZXSLSA-N",
+   "major_ms_smiles": "COC1=CC=C(C=C1)C1=CC(O)=C2C(=O)C=C(O[C@@H]3OC(CO[C@@H]4OC(C)[C@H](O)[C@H](O)C4O)[C@@H](O)[C@H](O)C3O)C=C2O1",
+   "neutral_smiles": "COc1ccc(-c2cc(O)c3c(=O)cc(O[C@@H]4OC(CO[C@@H]5OC(C)[C@H](O)[C@H](O)C5O)[C@@H](O)[C@H](O)C4O)cc-3o2)cc1",
+   "formula_atom_bag": {
+    "C": 28,
+    "O": 14,
+    "H": 32,
+    "e-": 312
+   },
+   "cache_pkas": [
+    13.52,
+    13.01,
+    12.44,
+    11.91,
+    7.31
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 42,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 445603,
+   "inchi_key": "CJRLOTNMWBMMLN-PMWMKWCKSA-O",
+   "major_ms_smiles": "CN1[C@H]2CC[C@@H](CC(=O)NCCC[NH+]3CCOCC3)O[C@@H]2COC2=C(C=C(NC(=O)CC3=CC=CS3)C=C2)C1=O",
+   "neutral_smiles": "CN1C(=O)c2cc(NC(=O)Cc3cccs3)ccc2OC[C@H]2O[C@H](CC(=O)NCCCN3CCOCC3)CC[C@@H]21",
+   "formula_atom_bag": {
+    "C": 29,
+    "N": 4,
+    "H": 39,
+    "O": 6,
+    "S": 1,
+    "e-": 304
+   },
+   "cache_pkas": [
+    7.49,
+    5.94,
+    4.59,
+    3.42,
+    0.83
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 40,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 556321,
+   "inchi_key": "DQIDKWUHVOLFRC-KSZLIROESA-N",
+   "major_ms_smiles": "OC[C@@H]1O[C@H](CC(=O)NC2CCCCC2)C=C[C@H]1NC(=O)CN1CCOCC1",
+   "neutral_smiles": "O=C(C[C@@H]1C=C[C@@H](NC(=O)CN2CCOCC2)[C@H](CO)O1)NC1CCCCC1",
+   "formula_atom_bag": {
+    "O": 5,
+    "C": 20,
+    "H": 33,
+    "N": 3,
+    "e-": 214
+   },
+   "cache_pkas": [
+    5.98,
+    5.0,
+    4.16,
+    3.36,
+    0.99
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 28,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 2007,
+   "inchi_key": "LZKNVSNNPRQZJB-DBRKOABJSA-M",
+   "major_ms_smiles": "CC(=O)N[C@H]([C@@H](O)[C@H](O)[C@H](O)CO)C([O-])=O",
+   "neutral_smiles": "CC(=O)N[C@@H](C(=O)O)[C@@H](O)[C@H](O)[C@H](O)CO",
+   "formula_atom_bag": {
+    "C": 8,
+    "O": 7,
+    "N": 1,
+    "H": 14,
+    "e-": 126
+   },
+   "cache_pkas": [
+    13.87,
+    12.84,
+    5.76,
+    3.55,
+    0.12
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 35030,
+   "inchi_key": "SAFJOTXIKNUGOJ-LNWOBJSJSA-N",
+   "major_ms_smiles": "[NH3+]C(C(O)[C@H]1CN2[C@H](CC2=O)O1)C(=O)NC(C(O)[C@H]1CN2[C@H](CC2=O)O1)C([O-])=O",
+   "neutral_smiles": "NC(C(=O)NC(C(=O)O)C(O)[C@H]1CN2C(=O)C[C@@H]2O1)C(O)[C@H]1CN2C(=O)C[C@@H]2O1",
+   "formula_atom_bag": {
+    "N": 4,
+    "H": 22,
+    "C": 16,
+    "O": 9,
+    "e-": 218
+   },
+   "cache_pkas": [
+    13.89,
+    13.29,
+    8.69,
+    3.63,
+    2.55
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 29,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 92910,
+   "inchi_key": "QDXPYWCJJZAQEN-UHFFFAOYSA-N",
+   "major_ms_smiles": "OCC1(O)COC(OCC2OC(OC(=O)C3=CC=C(O)C=C3)C(O)C(O)C2O)C1O",
+   "neutral_smiles": "O=C(OC1OC(COC2OCC(O)(CO)C2O)C(O)C(O)C1O)c1ccc(O)cc1",
+   "formula_atom_bag": {
+    "O": 12,
+    "C": 18,
+    "H": 24,
+    "e-": 228
+   },
+   "cache_pkas": [
+    13.51,
+    12.98,
+    12.31,
+    11.7,
+    8.47
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 547089,
+   "inchi_key": "FOYMHNRGVNUWHD-OAGGEKHMSA-O",
+   "major_ms_smiles": "CCC(=O)N[C@@H]1CC[C@H](CC(=O)NCC[NH+]2CCCCC2)O[C@H]1CO",
+   "neutral_smiles": "CCC(=O)N[C@@H]1CC[C@H](CC(=O)NCCN2CCCCC2)O[C@H]1CO",
+   "formula_atom_bag": {
+    "C": 18,
+    "O": 4,
+    "N": 3,
+    "H": 34,
+    "e-": 194
+   },
+   "cache_pkas": [
+    9.14,
+    5.99,
+    5.12,
+    3.6,
+    2.98
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 25,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 65321,
+   "inchi_key": "XCQNRWMPPLJRCM-WPFPZJGASA-M",
+   "major_ms_smiles": "COC1=C(OC(C)=O)C2=C(C(O)=C1)C(=O)C(O[C@@H]1OC(C)[C@H](O)C(O)[C@@H]1O)=C(O2)C1=CC(O)=C(O)C=C1",
+   "neutral_smiles": "COc1cc(O)c2c(=O)c(O[C@@H]3OC(C)[C@H](O)C(O)[C@@H]3O)c(-c3ccc(O)c(O)c3)oc2c1OC(C)=O",
+   "formula_atom_bag": {
+    "C": 24,
+    "O": 13,
+    "H": 24,
+    "e-": 272
+   },
+   "cache_pkas": [
+    13.3,
+    12.43,
+    11.84,
+    8.57,
+    7.23
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 37,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 12614,
+   "inchi_key": "LPYOOEHZOVSGIO-XHOQVIGFSA-M",
+   "major_ms_smiles": "COC1=C(O[C@@H]2OC([C@@H](O)[C@H](O)C2O)C([O-])=O)C=C(O)C2=C1OC(=CC2=O)C1=CC=CC=C1O",
+   "neutral_smiles": "COc1c(O[C@@H]2OC(C(=O)O)[C@@H](O)[C@H](O)C2O)cc(O)c2c(=O)cc(-c3ccccc3O)oc12",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 12,
+    "H": 19,
+    "e-": 248
+   },
+   "cache_pkas": [
+    13.27,
+    12.22,
+    8.41,
+    7.7,
+    2.71
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 451189,
+   "inchi_key": "DITNEQHUTYSTHA-URQYDQELSA-M",
+   "major_ms_smiles": "NC1=C2N=CN([C@@H]3O[C@H](COP([O-])([O-])=O)[C@@H](OC(=O)[C@@H]([NH3+])CC4=CC=CC=C4)[C@H]3O)C2=NC=N1",
+   "neutral_smiles": "Nc1ncnc2c1ncn2[C@@H]1O[C@H](COP(=O)(O)O)[C@@H](OC(=O)[C@@H](N)Cc2ccccc2)[C@H]1O",
+   "formula_atom_bag": {
+    "N": 6,
+    "C": 19,
+    "H": 22,
+    "O": 8,
+    "P": 1,
+    "e-": 258
+   },
+   "cache_pkas": [
+    12.56,
+    7.04,
+    6.19,
+    3.92,
+    1.22
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 269,
+   "inchi_key": "RZZPDXZPRHQOCG-OJAKKHQRSA-M",
+   "major_ms_smiles": "C[N+](C)(C)CCOP([O-])(=O)OP([O-])(=O)OC[C@H]1O[C@H]([C@H](O)[C@@H]1O)N1C=CC(N)=NC1=O",
+   "neutral_smiles": "C[N+](C)(C)CCOP(=O)(O)OP(=O)([O-])OC[C@H]1O[C@@H](n2ccc(N)nc2=O)[C@H](O)[C@@H]1O",
+   "formula_atom_bag": {
+    "C": 14,
+    "N": 4,
+    "O": 11,
+    "P": 2,
+    "H": 25,
+    "e-": 256
+   },
+   "cache_pkas": [
+    12.57,
+    5.92,
+    3.55,
+    2.97,
+    1.83
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": true,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 4766,
+   "inchi_key": "VWBAKCRPXQBUFQ-UHFFFAOYSA-L",
+   "major_ms_smiles": "OC1=C(CCC(=O)C([O-])=O)C(=O)NC(=C1)C([O-])=O",
+   "neutral_smiles": "O=C(O)C(=O)CCc1c(O)cc(C(=O)O)[nH]c1=O",
+   "formula_atom_bag": {
+    "O": 7,
+    "C": 10,
+    "N": 1,
+    "H": 7,
+    "e-": 132
+   },
+   "cache_pkas": [
+    12.11,
+    10.09,
+    5.29,
+    1.66,
+    0.68
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 18,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 45278,
+   "inchi_key": "FBYTVIISAJWXNX-GTSDWETFSA-R",
+   "major_ms_smiles": "C[NH2+]C[C@@H]1CC[C@@H]([NH3+])[C@@H](O[C@@H]2[C@@H]([NH3+])C[C@H](OC)[C@H]([C@H]2O)N(C)C(=O)CNC=[NH2+])O1",
+   "neutral_smiles": "CNC[C@@H]1CC[C@@H](N)[C@@H](O[C@H]2[C@H](O)[C@H](N(C)C(=O)CNC=N)[C@@H](OC)C[C@@H]2N)O1",
+   "formula_atom_bag": {
+    "C": 18,
+    "N": 6,
+    "H": 40,
+    "O": 5,
+    "e-": 226
+   },
+   "cache_pkas": [
+    13.45,
+    10.38,
+    9.79,
+    9.2,
+    8.67
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 29,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 75178,
+   "inchi_key": "KKZJGLLVHKMTCM-UHFFFAOYSA-P",
+   "major_ms_smiles": "OCC[NH2+]CCNC1=C2C(=O)C3=C(O)C=CC(O)=C3C(=O)C2=C(NCC[NH2+]CCO)C=C1",
+   "neutral_smiles": "O=C1c2c(O)ccc(O)c2C(=O)c2c(NCCNCCO)ccc(NCCNCCO)c21",
+   "formula_atom_bag": {
+    "O": 6,
+    "C": 22,
+    "N": 4,
+    "H": 30,
+    "e-": 236
+   },
+   "cache_pkas": [
+    10.29,
+    9.36,
+    8.86,
+    8.27,
+    1.97
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 65688,
+   "inchi_key": "HUGBFYOPUYQSCP-PPJOHYRRSA-N",
+   "major_ms_smiles": "COC1=C(O)C=CC(=C1)C1OC2=CC(OC)=C(O[C@@H]3OC(CO)[C@@H](O)[C@H](O)C3O)C(=O)C2=C(O)C1=O",
+   "neutral_smiles": "COC1=C(O[C@@H]2OC(CO)[C@@H](O)[C@H](O)C2O)C(=O)C2=C(O)C(=O)C(c3ccc(O)c(OC)c3)OC2=C1",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 13,
+    "H": 24,
+    "e-": 266
+   },
+   "cache_pkas": [
+    13.2,
+    12.21,
+    10.36,
+    8.8,
+    7.54
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 36,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 31293,
+   "inchi_key": "AMJCTDBATIKENQ-VVWFOWEGSA-N",
+   "major_ms_smiles": "OCC1O[C@@H](OC2=CC(O)=C3C(=O)C(OC3=C2)=CC2=CC(O)=C(O)C=C2)C(O)[C@@H](O)[C@@H]1O",
+   "neutral_smiles": "O=C1C(=Cc2ccc(O)c(O)c2)Oc2cc(O[C@@H]3OC(CO)[C@@H](O)[C@H](O)C3O)cc(O)c21",
+   "formula_atom_bag": {
+    "O": 11,
+    "C": 21,
+    "H": 20,
+    "e-": 234
+   },
+   "cache_pkas": [
+    13.25,
+    12.54,
+    11.98,
+    8.95,
+    8.22
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 49517,
+   "inchi_key": "STVKLDUINKMZFE-RQNOJGIXSA-O",
+   "major_ms_smiles": "COC1=C(NC(=O)C2=CC3=CC=CC=C3N2C)C=CC(=C1)C1=NN([C@H]2CC[C@@H](CC2)[NH+]2CCN(C)CC2)C2=NC=NC(N)=C12",
+   "neutral_smiles": "COc1cc(-c2nn([C@H]3CC[C@H](N4CCN(C)CC4)CC3)c3ncnc(N)c23)ccc1NC(=O)c1cc2ccccc2n1C",
+   "formula_atom_bag": {
+    "C": 33,
+    "O": 2,
+    "N": 9,
+    "H": 40,
+    "e-": 316
+   },
+   "cache_pkas": [
+    8.82,
+    5.94,
+    3.74,
+    2.39,
+    0.11
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 44,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 51278,
+   "inchi_key": "JZRAOXRUPYISEN-MOEPPVLCSA-N\n",
+   "major_ms_smiles": "COC1=C(O)C=CC(C=CC(=O)O[C@H]([C@@H](O)[C@@H](O)[C@H](O)C([O-])=O)C([O-])=O)=C1",
+   "neutral_smiles": "COc1cc(C=CC(=O)O[C@@H](C(=O)O)[C@@H](O)[C@@H](O)[C@H](O)C(=O)O)ccc1O",
+   "formula_atom_bag": {
+    "C": 16,
+    "O": 11,
+    "H": 16,
+    "e-": 202
+   },
+   "cache_pkas": [
+    13.62,
+    12.71,
+    9.87,
+    3.48,
+    2.79
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 45834,
+   "inchi_key": "GSXOAOHZAIYLCY-PBXRRBTRSA-L",
+   "major_ms_smiles": "OCC(=O)[C@@H](O)[C@@H](O)[C@H](O)COP([O-])([O-])=O",
+   "neutral_smiles": "O=C(CO)[C@@H](O)[C@@H](O)[C@H](O)COP(=O)(O)O",
+   "formula_atom_bag": {
+    "O": 9,
+    "C": 6,
+    "H": 11,
+    "P": 1,
+    "e-": 136
+   },
+   "cache_pkas": [
+    13.96,
+    13.28,
+    12.16,
+    6.52,
+    1.49
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 121853,
+   "inchi_key": "WFCOGXPRDSFHPT-PQNMNNSOSA-N",
+   "major_ms_smiles": "CN1C2=NC(C)=C(CCC([NH3+])C([O-])=O)N2C(=O)C2=C1N(C=N2)[C@@H]1O[C@H](CO)[C@@H](O)[C@H]1O",
+   "neutral_smiles": "Cc1nc2n(C)c3c(ncn3[C@@H]3O[C@H](CO)[C@@H](O)[C@H]3O)c(=O)n2c1CCC(N)C(=O)O",
+   "formula_atom_bag": {
+    "C": 18,
+    "N": 6,
+    "H": 24,
+    "O": 7,
+    "e-": 230
+   },
+   "cache_pkas": [
+    13.89,
+    12.46,
+    9.51,
+    2.7,
+    0.96
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 49578,
+   "inchi_key": "FACGWONUFWMXPN-XMMPIXPASA-O",
+   "major_ms_smiles": "C[C@H](CCC1=CC=C(O)C=C1)NC(=O)CC1=C(NC2=CC(OCC[NH+]3CCCCC3)=CC=C12)C1=CC=CC=C1",
+   "neutral_smiles": "C[C@H](CCc1ccc(O)cc1)NC(=O)Cc1c(-c2ccccc2)[nH]c2cc(OCCN3CCCCC3)ccc12",
+   "formula_atom_bag": {
+    "C": 33,
+    "H": 40,
+    "O": 3,
+    "N": 3,
+    "e-": 282
+   },
+   "cache_pkas": [
+    13.8,
+    9.6,
+    8.8,
+    6.07,
+    3.87
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 39,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 40339,
+   "inchi_key": "GOOORDFPBKMNLH-NFRVFMFJSA-N",
+   "major_ms_smiles": "OCC1O[C@@H](OC2=CC3=C(C=C2)C(=O)C=C(O3)C2=CC(O)=C(O)C(O)=C2)C(O)[C@@H](O)[C@@H]1O",
+   "neutral_smiles": "O=c1cc(-c2cc(O)c(O)c(O)c2)oc2cc(O[C@@H]3OC(CO)[C@@H](O)[C@H](O)C3O)ccc12",
+   "formula_atom_bag": {
+    "O": 11,
+    "C": 21,
+    "H": 20,
+    "e-": 234
+   },
+   "cache_pkas": [
+    13.88,
+    13.13,
+    12.22,
+    11.05,
+    8.27
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 460749,
+   "inchi_key": "CKAJHWFHHFSCDT-UHFFFAOYSA-L",
+   "major_ms_smiles": "[NH3+]C(CC([O-])=O)C(=O)NC(CCC([O-])=O)C([O-])=O",
+   "neutral_smiles": "NC(CC(=O)O)C(=O)NC(CCC(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "N": 2,
+    "H": 12,
+    "C": 9,
+    "O": 7,
+    "e-": 138
+   },
+   "cache_pkas": [
+    9.7,
+    4.5,
+    3.91,
+    3.38,
+    2.69
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 18,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 91864,
+   "inchi_key": "DHJQGIFMZKHMDS-UHFFFAOYSA-N",
+   "major_ms_smiles": "COC1=CC(=CC(OC)=C1O)C12OC(C)(C(C1OC1OC(CO)C(O)C(O)C1O)C1=C(O)C=C(O)C=C1O2)C(C)=O",
+   "neutral_smiles": "COc1cc(C23Oc4cc(O)cc(O)c4C(C2OC2OC(CO)C(O)C(O)C2O)C(C)(C(C)=O)O3)cc(OC)c1O",
+   "formula_atom_bag": {
+    "C": 27,
+    "O": 14,
+    "H": 32,
+    "e-": 306
+   },
+   "cache_pkas": [
+    13.2,
+    12.22,
+    10.5,
+    9.43,
+    8.81
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 41,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 693144,
+   "inchi_key": "XHHOHZPNYFQJKL-UHFFFAOYSA-M",
+   "major_ms_smiles": "[NH3+]C(CCC(=O)NC(CC1=CC=CC=C1)C([O-])=O)C([O-])=O",
+   "neutral_smiles": "NC(CCC(=O)NC(Cc1ccccc1)C(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "N": 2,
+    "H": 17,
+    "C": 14,
+    "O": 5,
+    "e-": 156
+   },
+   "cache_pkas": [
+    9.54,
+    5.85,
+    3.99,
+    1.86,
+    1.1
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 21,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 472933,
+   "inchi_key": "XURFTHGCBIMKCY-UHFFFAOYSA-L",
+   "major_ms_smiles": "CC(=O)NC(O)(CC(O)C(O)COP([O-])([O-])=O)C=O",
+   "neutral_smiles": "CC(=O)NC(O)(C=O)CC(O)C(O)COP(=O)(O)O",
+   "formula_atom_bag": {
+    "C": 8,
+    "O": 9,
+    "N": 1,
+    "P": 1,
+    "H": 14,
+    "e-": 158
+   },
+   "cache_pkas": [
+    13.37,
+    11.2,
+    6.68,
+    5.51,
+    1.5
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 19,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 848,
+   "inchi_key": "YCWUVLPMLLBDCU-STQMWFEESA-L",
+   "major_ms_smiles": "NC1=NC(=O)C2=C(NC[C@H](CNC3=CC=C(C=C3)C(=O)N[C@@H](CCC([O-])=O)C([O-])=O)N2C=N)N1",
+   "neutral_smiles": "N=CN1c2c([nH]c(N)nc2=O)NC[C@@H]1CNc1ccc(C(=O)N[C@@H](CCC(=O)O)C(=O)O)cc1",
+   "formula_atom_bag": {
+    "N": 8,
+    "C": 20,
+    "O": 6,
+    "H": 22,
+    "e-": 248
+   },
+   "cache_pkas": [
+    7.17,
+    4.37,
+    3.72,
+    3.04,
+    2.06
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": true,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 471564,
+   "inchi_key": "URHQKWGENQQEQJ-UBNQGINQSA-M",
+   "major_ms_smiles": "CC1(C)C[C@@H]1C(=O)NC(CCCCCS(=O)(=O)C[C@H]([NH3+])C([O-])=O)C([O-])=O",
+   "neutral_smiles": "CC1(C)C[C@@H]1C(=O)NC(CCCCCS(=O)(=O)C[C@H](N)C(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 16,
+    "H": 27,
+    "O": 7,
+    "N": 2,
+    "S": 1,
+    "e-": 210
+   },
+   "cache_pkas": [
+    7.74,
+    5.32,
+    3.73,
+    1.87,
+    0.99
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 74429,
+   "inchi_key": "FZLJPEPAYPUMMR-RTRLPJTCSA-N\n",
+   "major_ms_smiles": "CC(=O)N[C@@H]1[C@@H](O)[C@H](O)[C@@H](CO)OC1OP([O-])([O-])=O",
+   "neutral_smiles": "CC(=O)N[C@H]1C(OP(=O)(O)O)O[C@H](CO)[C@@H](O)[C@@H]1O",
+   "formula_atom_bag": {
+    "C": 8,
+    "O": 9,
+    "N": 1,
+    "H": 14,
+    "P": 1,
+    "e-": 158
+   },
+   "cache_pkas": [
+    12.9,
+    6.32,
+    5.57,
+    1.59,
+    0.79
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 19,
+   "has_magnesium_constants": true,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 138059,
+   "inchi_key": "XEOGRHZGJFTETQ-ZETCQYMHSA-M",
+   "major_ms_smiles": "[NH3+]CCCC[C@H](NC(=O)CCC([O-])=O)C([O-])=O",
+   "neutral_smiles": "NCCCC[C@H](NC(=O)CCC(=O)O)C(=O)O",
+   "formula_atom_bag": {
+    "N": 2,
+    "H": 17,
+    "C": 10,
+    "O": 5,
+    "e-": 132
+   },
+   "cache_pkas": [
+    10.21,
+    5.94,
+    4.1,
+    3.39,
+    1.3
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 17,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 4069,
+   "inchi_key": "FZLJPEPAYPUMMR-BKJPEWSUSA-L",
+   "major_ms_smiles": "CC(=O)NC1C(O)C(O)[C@@H](CO)OC1OP([O-])([O-])=O",
+   "neutral_smiles": "CC(=O)NC1C(OP(=O)(O)O)O[C@H](CO)C(O)C1O",
+   "formula_atom_bag": {
+    "C": 8,
+    "O": 9,
+    "N": 1,
+    "H": 14,
+    "P": 1,
+    "e-": 158
+   },
+   "cache_pkas": [
+    12.9,
+    6.32,
+    5.57,
+    1.59,
+    0.79
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 19,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 68470,
+   "inchi_key": "MYIRTOOWWKKWIT-YQJCILLHSA-M",
+   "major_ms_smiles": "COC1=CC(=CC(OC)=C1O)C1=C(O[C@@H]2OC(C)[C@H](O)C(O)[C@@H]2O)C(O)=C2C([O-])=CC(=O)C=C2O1",
+   "neutral_smiles": "COc1cc(-c2oc3cc(=O)cc(O)c-3c(O)c2O[C@@H]2OC(C)[C@H](O)C(O)[C@@H]2O)cc(OC)c1O",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 12,
+    "H": 23,
+    "e-": 258
+   },
+   "cache_pkas": [
+    13.27,
+    12.21,
+    8.58,
+    7.85,
+    6.37
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 496474,
+   "inchi_key": "JPUKWEQWGBDDQB-IDRAQACASA-M",
+   "major_ms_smiles": "OC[C@H]1O[C@@H](OC2=C(OC3=CC(=O)C=C([O-])C3=C2O)C2=CC=C(O)C=C2)[C@H](O)[C@H](O)[C@@H]1O",
+   "neutral_smiles": "O=c1cc2oc(-c3ccc(O)cc3)c(O[C@@H]3O[C@H](CO)[C@@H](O)[C@@H](O)[C@H]3O)c(O)c-2c(O)c1",
+   "formula_atom_bag": {
+    "O": 11,
+    "C": 21,
+    "H": 19,
+    "e-": 234
+   },
+   "cache_pkas": [
+    13.2,
+    12.2,
+    8.65,
+    7.87,
+    6.37
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 6975,
+   "inchi_key": "CEQVCLWWGAYCPR-KUJJACLUSA-M",
+   "major_ms_smiles": "C[C@@H]1O[C@@H](C[C@@H]([NH3+])[C@H]1O)OP([O-])(=O)OP([O-])(=O)OC[C@H]1O[C@H](C[C@@H]1O)N1C=C(C)C(=O)NC1=O",
+   "neutral_smiles": "Cc1cn([C@H]2C[C@H](O)[C@@H](COP(=O)(O)OP(=O)(O)O[C@@H]3C[C@@H](N)[C@@H](O)[C@H](C)O3)O2)c(=O)[nH]c1=O",
+   "formula_atom_bag": {
+    "C": 16,
+    "H": 26,
+    "O": 13,
+    "N": 3,
+    "P": 2,
+    "e-": 278
+   },
+   "cache_pkas": [
+    13.46,
+    9.66,
+    7.61,
+    3.18,
+    1.74
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 496367,
+   "inchi_key": "LZCYTIIPENLJKB-QOUVSYAKSA-M",
+   "major_ms_smiles": "CC(=O)OC1[C@@H](O)[C@H](O)C(CO)O[C@H]1C1=C([O-])C=C2OC(=CC(O)=C2C1=O)C1=CC(O)=C(O)C=C1",
+   "neutral_smiles": "CC(=O)OC1[C@@H](O)[C@H](O)C(CO)O[C@H]1c1c(O)cc2oc(-c3ccc(O)c(O)c3)cc(O)c-2c1=O",
+   "formula_atom_bag": {
+    "C": 23,
+    "O": 12,
+    "H": 21,
+    "e-": 256
+   },
+   "cache_pkas": [
+    12.83,
+    12.06,
+    8.75,
+    7.71,
+    6.14
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 75538,
+   "inchi_key": "JYHPIPMSJVTYAP-KVQBGUIXSA-K",
+   "major_ms_smiles": "NC1=C2N=CN([C@H]3C[C@H](O)[C@@H](COP([O-])(=O)OP([O-])([O-])=O)O3)C2=NC(=O)N1",
+   "neutral_smiles": "Nc1[nH]c(=O)nc2c1ncn2[C@H]1C[C@H](O)[C@@H](COP(=O)(O)OP(=O)(O)O)O1",
+   "formula_atom_bag": {
+    "N": 5,
+    "C": 10,
+    "H": 12,
+    "O": 10,
+    "P": 2,
+    "e-": 220
+   },
+   "cache_pkas": [
+    13.31,
+    7.42,
+    3.21,
+    1.87,
+    1.1
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 1428,
+   "inchi_key": "ABVCUBUIXWJYSE-GQUPQBGVSA-N",
+   "major_ms_smiles": "OC[C@H]1O[C@@H](OC2=C(OC3=CC(O)=CC(=O)C3=C2)C2=CC=C(O)C=C2)[C@H](O)[C@@H](O)[C@@H]1O",
+   "neutral_smiles": "O=c1cc(O)cc2oc(-c3ccc(O)cc3)c(O[C@@H]3O[C@H](CO)[C@@H](O)[C@H](O)[C@H]3O)cc1-2",
+   "formula_atom_bag": {
+    "O": 10,
+    "C": 21,
+    "H": 20,
+    "e-": 226
+   },
+   "cache_pkas": [
+    13.2,
+    12.2,
+    8.45,
+    7.54,
+    6.4
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 553182,
+   "inchi_key": "VIRGWJWOQCDSPY-BHDDXSALSA-O",
+   "major_ms_smiles": "COC1=CC=C(NC(=O)N[C@@H]2CC[C@@H](CCNC(=O)CC[NH+]3CCCCC3)O[C@@H]2CO)C=C1",
+   "neutral_smiles": "COc1ccc(NC(=O)N[C@@H]2CC[C@@H](CCNC(=O)CCN3CCCCC3)O[C@@H]2CO)cc1",
+   "formula_atom_bag": {
+    "C": 24,
+    "O": 5,
+    "N": 4,
+    "H": 39,
+    "e-": 250
+   },
+   "cache_pkas": [
+    9.8,
+    6.37,
+    5.69,
+    4.42,
+    3.74
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 691983,
+   "inchi_key": "WCWLOZYNRVLFOG-SDBHATRESA-N",
+   "major_ms_smiles": "NC1=C2N=C(NCCCCCC[NH3+])N([C@@H]3O[C@@H]4COP([O-])(=O)O[C@H]4[C@H]3O)C2=NC=N1",
+   "neutral_smiles": "NCCCCCCNc1nc2c(N)ncnc2n1[C@@H]1O[C@@H]2COP(=O)(O)O[C@H]2[C@H]1O",
+   "formula_atom_bag": {
+    "N": 7,
+    "C": 16,
+    "H": 26,
+    "O": 6,
+    "P": 1,
+    "e-": 234
+   },
+   "cache_pkas": [
+    12.73,
+    10.2,
+    5.83,
+    4.73,
+    1.81
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 556390,
+   "inchi_key": "FGSZILDPBBWYSU-UHFFFAOYSA-O",
+   "major_ms_smiles": "[O-]C(=[NH+]C1CCCC1)C1=CC2=C(N=C3C=CC=CN3C2=O)N(CCC[NH+]2CCOCC2)C1=[NH2+]",
+   "neutral_smiles": "N=c1c(C(O)=NC2CCCC2)cc2c(=O)n3ccccc3nc2n1CCCN1CCOCC1",
+   "formula_atom_bag": {
+    "O": 3,
+    "C": 24,
+    "N": 6,
+    "H": 32,
+    "e-": 240
+   },
+   "cache_pkas": [
+    10.05,
+    7.05,
+    4.48,
+    3.24,
+    1.61
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 93901,
+   "inchi_key": "QWSAYEBSTMCFKY-BMPGWQKJSA-M",
+   "major_ms_smiles": "O[C@@H]1[C@@H](O)[C@H](OC2=CC(C=CC3=CC=C(O)C=C3)=CC(O)=C2)O[C@@H]([C@H]1O)C([O-])=O",
+   "neutral_smiles": "O=C(O)[C@H]1O[C@@H](Oc2cc(O)cc(C=Cc3ccc(O)cc3)c2)[C@H](O)[C@@H](O)[C@@H]1O",
+   "formula_atom_bag": {
+    "O": 9,
+    "C": 20,
+    "H": 19,
+    "e-": 212
+   },
+   "cache_pkas": [
+    13.27,
+    12.22,
+    9.72,
+    9.1,
+    3.14
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 29,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 692314,
+   "inchi_key": "UATBBPZDIBHUKS-UHFFFAOYSA-L",
+   "major_ms_smiles": "CC(O)(C([O-])=O)C(=O)C(O)=C(O)C(=O)C([O-])=O",
+   "neutral_smiles": "CC(O)(C(=O)O)C(=O)C(O)=C(O)C(=O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 8,
+    "O": 9,
+    "H": 6,
+    "e-": 128
+   },
+   "cache_pkas": [
+    13.01,
+    10.77,
+    7.74,
+    3.0,
+    2.12
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 17,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 116127,
+   "inchi_key": "DZHDVYLBNKMLMB-ZFWWWQNUSA-O",
+   "major_ms_smiles": "[NH3+]CCCC[C@H](NC(=O)[C@@H]([NH3+])CC1=CNC2=CC=CC=C12)C([O-])=O",
+   "neutral_smiles": "NCCCC[C@H](NC(=O)[C@@H](N)Cc1c[nH]c2ccccc12)C(=O)O",
+   "formula_atom_bag": {
+    "N": 4,
+    "H": 25,
+    "C": 17,
+    "O": 3,
+    "e-": 178
+   },
+   "cache_pkas": [
+    10.28,
+    9.41,
+    4.25,
+    3.5,
+    0.23
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 24,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 472926,
+   "inchi_key": "ZIPUXEJSWNFJDK-UHFFFAOYSA-L",
+   "major_ms_smiles": "CC(=O)NC1(O)CC(O)C(COP([O-])([O-])=O)OC1O",
+   "neutral_smiles": "CC(=O)NC1(O)CC(O)C(COP(=O)(O)O)OC1O",
+   "formula_atom_bag": {
+    "C": 8,
+    "O": 9,
+    "N": 1,
+    "P": 1,
+    "H": 14,
+    "e-": 158
+   },
+   "cache_pkas": [
+    12.1,
+    10.69,
+    6.45,
+    5.47,
+    1.23
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 19,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 2194,
+   "inchi_key": "BWBRFVRXCBBDEH-ZTVLJYEESA-L",
+   "major_ms_smiles": "CC(=O)N[C@H]1C(O)O[C@H](CO)[C@H](OS([O-])(=O)=O)[C@@H]1O[C@@H]1OC(=C[C@H](O)[C@H]1O)C([O-])=O",
+   "neutral_smiles": "CC(=O)N[C@H]1C(O)O[C@H](CO)[C@H](OS(=O)(=O)O)[C@@H]1O[C@@H]1OC(C(=O)O)=C[C@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "C": 14,
+    "O": 14,
+    "N": 1,
+    "H": 19,
+    "S": 1,
+    "e-": 240
+   },
+   "cache_pkas": [
+    12.45,
+    11.65,
+    5.36,
+    2.68,
+    0.97
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 472977,
+   "inchi_key": "RSXJQLMRAHDSKI-UHFFFAOYSA-L",
+   "major_ms_smiles": "CC(=O)NCC(O)C(O)C(O)COP([O-])([O-])=O",
+   "neutral_smiles": "CC(=O)NCC(O)C(O)C(O)COP(=O)(O)O",
+   "formula_atom_bag": {
+    "C": 7,
+    "O": 8,
+    "N": 1,
+    "P": 1,
+    "H": 14,
+    "e-": 144
+   },
+   "cache_pkas": [
+    12.88,
+    6.75,
+    5.84,
+    3.72,
+    1.4
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 17,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 116456,
+   "inchi_key": "HBIOCZHRIWYSFJ-PUBJGORFSA-N",
+   "major_ms_smiles": "OC[C@@H]1O[C@H](O[C@@H]2[C@@H](O)[C@H](CO)O[C@@H]2O[C@@H]2C[NH2+]C(C2)C([O-])=O)[C@H](O)[C@H]1O",
+   "neutral_smiles": "O=C(O)C1C[C@H](O[C@H]2O[C@@H](CO)[C@H](O)[C@H]2O[C@H]2O[C@@H](CO)[C@H](O)[C@H]2O)CN1",
+   "formula_atom_bag": {
+    "O": 11,
+    "C": 15,
+    "H": 25,
+    "N": 1,
+    "e-": 210
+   },
+   "cache_pkas": [
+    13.82,
+    12.99,
+    12.2,
+    10.51,
+    1.15
+   ],
+   "n_cache_pkas": 5,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 27,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_5"
+  },
+  {
+   "compound_id": 83304,
+   "inchi_key": "KQBOEJCDGYYZJZ-ITCYIJQVSA-N",
+   "major_ms_smiles": "O[C@H]1CC2=C(O[C@@H]1C1=CC(O)=C(O)C(O)=C1)C([C@H]1[C@H](O)[C@H](OC3=C1C=CC(O)=C3)C1=CC(O)=C(O)C(O)=C1)=C(O)C=C2O",
+   "neutral_smiles": "Oc1ccc2c(c1)O[C@H](c1cc(O)c(O)c(O)c1)[C@@H](O)[C@@H]2c1c(O)cc(O)c2c1O[C@H](c1cc(O)c(O)c(O)c1)[C@@H](O)C2",
+   "formula_atom_bag": {
+    "O": 13,
+    "C": 30,
+    "H": 26,
+    "e-": 310
+   },
+   "cache_pkas": [
+    11.47,
+    10.99,
+    10.53,
+    9.66,
+    9.02,
+    8.49
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 43,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 496674,
+   "inchi_key": "BVLPXKYBBOURAF-UHFFFAOYSA-L",
+   "major_ms_smiles": "OCCC1=CC(=C(O)C=C1)C1=C(O)C2=C(C(O)=C1[O-])C(=O)C1=CC(O)=C(C([O-])=O)C(C([O-])=O)=C1C2=O",
+   "neutral_smiles": "O=C(O)c1c(O)cc2c(c1C(=O)O)C(=O)c1c(O)c(-c3cc(CCO)ccc3O)c(O)c(O)c1C2=O",
+   "formula_atom_bag": {
+    "O": 12,
+    "C": 24,
+    "H": 13,
+    "e-": 256
+   },
+   "cache_pkas": [
+    11.87,
+    10.17,
+    8.86,
+    6.65,
+    4.13,
+    1.46
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 36,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 116449,
+   "inchi_key": "IEJZOPBVBXAOBH-UHFFFAOYSA-L",
+   "major_ms_smiles": "OC(CN1C=CN=C1)(P(O)([O-])=O)P([O-])([O-])=O",
+   "neutral_smiles": "O=P(O)(O)C(O)(Cn1ccnc1)P(=O)(O)O",
+   "formula_atom_bag": {
+    "O": 7,
+    "C": 5,
+    "N": 2,
+    "P": 2,
+    "H": 7,
+    "e-": 140
+   },
+   "cache_pkas": [
+    12.65,
+    8.13,
+    7.48,
+    6.67,
+    1.42,
+    0.66
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 16,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 130164,
+   "inchi_key": "BNZARFMIWCTHFU-UUOKFMHZSA-H",
+   "major_ms_smiles": "NC1=NC2=C(N=CN2[C@@H]2O[C@H](COP([O-])(=O)OP([O-])(=O)OP(O)([O-])=O)[C@@H](OP([O-])([O-])=O)[C@H]2O)C(=O)N1",
+   "neutral_smiles": "Nc1nc2c(ncn2[C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OP(=O)(O)O)[C@@H](OP(=O)(O)O)[C@H]2O)c(=O)[nH]1",
+   "formula_atom_bag": {
+    "N": 5,
+    "C": 10,
+    "H": 12,
+    "O": 17,
+    "P": 4,
+    "e-": 308
+   },
+   "cache_pkas": [
+    7.44,
+    5.96,
+    3.3,
+    2.54,
+    1.21,
+    0.62
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 36,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 11612,
+   "inchi_key": "PUPKKEQDLNREIM-RPSBXBBBSA-M",
+   "major_ms_smiles": "C[C@@H]1O[C@H](OC2=CC(O)=C3C(=O)C(O[C@H]4O[C@@H](C)[C@H](O)[C@@H](O)[C@H]4O)=C(OC3=C2)C2=CC=C(O)C=C2)[C@H](O)[C@H](O)[C@H]1O",
+   "neutral_smiles": "C[C@@H]1O[C@H](Oc2cc(O)c3c(=O)c(O[C@H]4O[C@@H](C)[C@H](O)[C@@H](O)[C@H]4O)c(-c4ccc(O)cc4)oc3c2)[C@H](O)[C@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "C": 27,
+    "H": 30,
+    "O": 14,
+    "e-": 304
+   },
+   "cache_pkas": [
+    13.54,
+    13.04,
+    12.44,
+    11.91,
+    8.56,
+    7.08
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 41,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 116259,
+   "inchi_key": "DORPKYRPJIIARM-UHFFFAOYSA-N",
+   "major_ms_smiles": "CC1OC(OC2C(O)C(CO)OC(OCCC3=CC(O)=C(O)C=C3)C2O)C(O)C(O)C1O",
+   "neutral_smiles": "CC1OC(OC2C(O)C(CO)OC(OCCc3ccc(O)c(O)c3)C2O)C(O)C(O)C1O",
+   "formula_atom_bag": {
+    "C": 20,
+    "O": 12,
+    "H": 30,
+    "e-": 246
+   },
+   "cache_pkas": [
+    13.6,
+    13.17,
+    12.79,
+    12.38,
+    11.9,
+    9.45
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 131817,
+   "inchi_key": "DRDCJEIZVLVWNC-BHELSUTKSA-L",
+   "major_ms_smiles": "C[C@@H]1OC(OP([O-])(=O)OP([O-])(=O)OC[C@H]2O[C@H]([C@H](O)[C@@H]2O)N2C=CC(=O)NC2=O)[C@H](O)[C@H](O)[C@H]1O",
+   "neutral_smiles": "C[C@@H]1OC(OP(=O)(O)OP(=O)(O)OC[C@H]2O[C@@H](n3ccc(=O)[nH]c3=O)[C@H](O)[C@@H]2O)[C@H](O)[C@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "C": 15,
+    "H": 22,
+    "O": 16,
+    "P": 2,
+    "N": 2,
+    "e-": 286
+   },
+   "cache_pkas": [
+    13.28,
+    12.64,
+    12.06,
+    7.59,
+    3.18,
+    1.73
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 7267,
+   "inchi_key": "IWVCMVBTMGNXQD-PXOLEDIWSA-N",
+   "major_ms_smiles": "CN(C)[C@H]1[C@@H]2[C@@H](O)[C@H]3C(=C([O-])[C@]2(O)C(=O)C(C(N)=O)C1=O)C(=O)C1=C(C=CC=C1O)[C@@]3(C)O",
+   "neutral_smiles": "CN(C)[C@@H]1C(=O)C(C(N)=O)C(=O)[C@@]2(O)C(O)=C3C(=O)c4c(O)cccc4[C@@](C)(O)[C@H]3[C@H](O)[C@@H]12",
+   "formula_atom_bag": {
+    "C": 22,
+    "N": 2,
+    "H": 23,
+    "O": 9,
+    "e-": 242
+   },
+   "cache_pkas": [
+    13.62,
+    12.39,
+    9.1,
+    7.95,
+    7.28,
+    1.4
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 100064,
+   "inchi_key": "IGRMTQMIDNDFAA-UHFFFAOYSA-O",
+   "major_ms_smiles": "[NH3+]CCCCC([NH3+])C(=O)NC(CC1=CNC=N1)C([O-])=O",
+   "neutral_smiles": "NCCCCC(N)C(=O)NC(Cc1c[nH]cn1)C(=O)O",
+   "formula_atom_bag": {
+    "N": 5,
+    "H": 22,
+    "C": 12,
+    "O": 3,
+    "e-": 152
+   },
+   "cache_pkas": [
+    12.96,
+    10.3,
+    9.51,
+    6.76,
+    3.93,
+    3.2
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 20,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 458602,
+   "inchi_key": "HGUVPEBGCAVWID-KETMJRJWSA-M",
+   "major_ms_smiles": "OC[C@H]1O[C@@H](OC2=C([C@@H]3O[C@H](CO)[C@@H](O)[C@H](O)[C@H]3O)C(=O)C3=C(O)C=C(OC3=C2)C2=CC=C(O)C=C2)[C@H](O)[C@@H](O)[C@@H]1O",
+   "neutral_smiles": "O=c1c2c(O)cc(-c3ccc(O)cc3)oc-2cc(O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O)c1[C@@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "O": 15,
+    "C": 27,
+    "H": 30,
+    "e-": 312
+   },
+   "cache_pkas": [
+    13.63,
+    13.13,
+    12.61,
+    12.05,
+    8.73,
+    6.87
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 42,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 141716,
+   "inchi_key": "QAGYKUNXZHXKMR-BBDMRMKHSA-O",
+   "major_ms_smiles": "CC1=C(C=CC=C1O)C(=O)N[C@@H](CSC1=CC=CC=C1)[C@H](O)C[NH+]1C[C@@H]2CCCC[C@@H]2C[C@H]1C(=O)NC(C)(C)C",
+   "neutral_smiles": "Cc1c(O)cccc1C(=O)N[C@@H](CSc1ccccc1)[C@H](O)CN1C[C@@H]2CCCC[C@@H]2C[C@H]1C(=O)NC(C)(C)C",
+   "formula_atom_bag": {
+    "C": 32,
+    "O": 4,
+    "N": 3,
+    "H": 46,
+    "S": 1,
+    "e-": 306
+   },
+   "cache_pkas": [
+    10.05,
+    9.08,
+    8.11,
+    4.13,
+    3.39,
+    1.47
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 40,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 556670,
+   "inchi_key": "SSIZKFAFDISVTQ-LZGMGDPASA-L",
+   "major_ms_smiles": "ONC1=NC2=C(N=CN2C2O[C@H](COP([O-])([O-])=O)[C@@H](O)[C@H]2O)C(=O)N1",
+   "neutral_smiles": "O=c1[nH]c(NO)nc2c1ncn2C1O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "O": 9,
+    "N": 5,
+    "C": 10,
+    "H": 12,
+    "P": 1,
+    "e-": 196
+   },
+   "cache_pkas": [
+    12.94,
+    12.35,
+    11.15,
+    6.25,
+    1.66,
+    1.03
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 25,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 89833,
+   "inchi_key": "XDMSDABSDRMKOO-UHFFFAOYSA-M",
+   "major_ms_smiles": "COC(=O)C(OC(=O)C1=CC(O)=C(O)C(O)=C1)C(O)C(O)C(O)C([O-])=O",
+   "neutral_smiles": "COC(=O)C(OC(=O)c1cc(O)c(O)c(O)c1)C(O)C(O)C(O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 14,
+    "O": 12,
+    "H": 15,
+    "e-": 196
+   },
+   "cache_pkas": [
+    13.92,
+    13.33,
+    12.57,
+    11.27,
+    8.1,
+    2.84
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 26,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 7045,
+   "inchi_key": "YUDKHXMQDKVDGU-FMOSSLLZSA-M",
+   "major_ms_smiles": "OC[C@H]1O[C@@H](OC2=C(O)C=C3C[C@@H](C([O-])=O)[N+](=CC=C4C[C@H]([NH2+]C(=C4)C([O-])=O)C([O-])=O)C3=C2)[C@H](O)[C@@H](O)[C@@H]1O",
+   "neutral_smiles": "O=C(O)C1=CC(=CC=[N+]2c3cc(O[C@@H]4O[C@H](CO)[C@@H](O)[C@H](O)[C@H]4O)c(O)cc3C[C@H]2C(=O)[O-])C[C@@H](C(=O)O)N1",
+   "formula_atom_bag": {
+    "O": 13,
+    "C": 24,
+    "H": 25,
+    "N": 2,
+    "e-": 288
+   },
+   "cache_pkas": [
+    13.21,
+    12.2,
+    8.67,
+    4.81,
+    3.43,
+    2.4
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 39,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 121156,
+   "inchi_key": "DAJQUPOUYBWRQQ-XNIJJKJLSA-K",
+   "major_ms_smiles": "CNC1=CC=CC=C1C(=O)O[C@H]1[C@@H](O)[C@@H](O[C@@H]1COP([O-])(=O)OP(O)([O-])=O)N1C=NC2=C1N=C(N)NC2=O",
+   "neutral_smiles": "CNc1ccccc1C(=O)O[C@H]1[C@@H](O)[C@H](n2cnc3c(=O)[nH]c(N)nc32)O[C@@H]1COP(=O)(O)OP(=O)(O)O",
+   "formula_atom_bag": {
+    "C": 18,
+    "N": 6,
+    "O": 12,
+    "H": 20,
+    "P": 2,
+    "e-": 298
+   },
+   "cache_pkas": [
+    12.61,
+    11.58,
+    7.42,
+    3.25,
+    2.28,
+    1.63
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 38,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 14056,
+   "inchi_key": "RJPMXEPQESULBJ-YZWXTBDSSA-N",
+   "major_ms_smiles": "CC1O[C@@H](OC[C@H]2O[C@@H](OC3=CC=C(C=C3)C3CC(=O)C4=C(O)C=C(O)C=C4O3)C(O)C(O)[C@@H]2O)[C@@H](O)C(O)[C@H]1O",
+   "neutral_smiles": "CC1O[C@@H](OC[C@H]2O[C@@H](Oc3ccc(C4CC(=O)c5c(O)cc(O)cc5O4)cc3)C(O)C(O)[C@@H]2O)[C@@H](O)C(O)[C@H]1O",
+   "formula_atom_bag": {
+    "C": 27,
+    "O": 14,
+    "H": 32,
+    "e-": 306
+   },
+   "cache_pkas": [
+    13.52,
+    13.01,
+    12.44,
+    11.91,
+    9.51,
+    7.87
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 41,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 67963,
+   "inchi_key": "IBLNMEMSULYOOK-VEHQQRBSSA-K",
+   "major_ms_smiles": "C[C@H](NS([O-])(=O)=O)[C@H](NC(=O)C(=NOC(C)(C)C([O-])=O)C1=CSC(N)=N1)C([O-])=O",
+   "neutral_smiles": "C[C@H](NS(=O)(=O)O)[C@H](NC(=O)C(=NOC(C)(C)C(=O)O)c1csc(N)n1)C(=O)O",
+   "formula_atom_bag": {
+    "C": 13,
+    "H": 16,
+    "N": 5,
+    "S": 2,
+    "O": 9,
+    "e-": 236
+   },
+   "cache_pkas": [
+    11.75,
+    9.85,
+    8.14,
+    3.62,
+    3.06,
+    2.49
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 29,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 23850,
+   "inchi_key": "XYZHKJQHXUZGSK-PTCRCJAKSA-M",
+   "major_ms_smiles": "C[C@H]1OC(O)[C@H](NC(C)=O)[C@@H](O[C@@H]2O[C@H]([C@@H](O)[C@@H](O)[C@@H]2NC(C)=O)C([O-])=O)[C@@H]1O",
+   "neutral_smiles": "CC(=O)N[C@@H]1[C@H](O[C@H]2[C@H](O)[C@@H](C)OC(O)[C@@H]2NC(C)=O)O[C@@H](C(=O)O)[C@@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "C": 16,
+    "H": 25,
+    "O": 11,
+    "N": 2,
+    "e-": 224
+   },
+   "cache_pkas": [
+    13.39,
+    12.8,
+    11.7,
+    5.9,
+    5.22,
+    3.28
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 29,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 50277,
+   "inchi_key": "SSIZKFAFDISVTQ-UUOKFMHZSA-L",
+   "major_ms_smiles": "ONC1=NC2=C(N=CN2[C@@H]2O[C@H](COP([O-])([O-])=O)[C@@H](O)[C@H]2O)C(=O)N1",
+   "neutral_smiles": "O=c1[nH]c(NO)nc2c1ncn2[C@@H]1O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "O": 9,
+    "N": 5,
+    "C": 10,
+    "H": 12,
+    "P": 1,
+    "e-": 196
+   },
+   "cache_pkas": [
+    12.94,
+    12.35,
+    11.15,
+    6.25,
+    1.66,
+    1.03
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 25,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 28237,
+   "inchi_key": "IQLBECLICFDTTF-PVEDRDFWSA-N",
+   "major_ms_smiles": "NC1=NC(=O)C2=C(N1)C(=CN2)[C@@H]1[NH2+][C@H](COP([O-])([O-])=O)[C@@H](O)[C@H]1O",
+   "neutral_smiles": "Nc1nc(=O)c2[nH]cc([C@@H]3N[C@H](COP(=O)(O)O)[C@@H](O)[C@H]3O)c2[nH]1",
+   "formula_atom_bag": {
+    "N": 5,
+    "C": 11,
+    "O": 7,
+    "H": 15,
+    "P": 1,
+    "e-": 188
+   },
+   "cache_pkas": [
+    13.16,
+    9.37,
+    8.58,
+    7.79,
+    6.5,
+    1.5
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 24,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 77903,
+   "inchi_key": "YSORAXGDTRAEMV-CGXGPNJMSA-M",
+   "major_ms_smiles": "O[C@@H]1[C@@H](O)[C@H](OC2=CC(O)=C3C(=O)C[C@H](OC3=C2)C2=CC(O)=C(O)C=C2)O[C@@H]([C@H]1O)C([O-])=O",
+   "neutral_smiles": "O=C1C[C@@H](c2ccc(O)c(O)c2)Oc2cc(O[C@@H]3O[C@H](C(=O)O)[C@@H](O)[C@H](O)[C@H]3O)cc(O)c21",
+   "formula_atom_bag": {
+    "O": 12,
+    "C": 21,
+    "H": 19,
+    "e-": 242
+   },
+   "cache_pkas": [
+    13.37,
+    12.7,
+    12.08,
+    9.31,
+    8.54,
+    2.73
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "phenol"
+   ],
+   "n_heavy_atoms": 33,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 25426,
+   "inchi_key": "QPIOQLJXMZWNFJ-PQFOHKHZSA-L",
+   "major_ms_smiles": "O[C@@H](CN1C[C@@H](O)[C@H]1C([O-])=O)[C@H]([NH2+]CC[C@H](O)C([O-])=O)C([O-])=O",
+   "neutral_smiles": "O=C(O)[C@@H](NCC[C@H](O)C(=O)O)[C@@H](O)CN1C[C@@H](O)[C@H]1C(=O)O",
+   "formula_atom_bag": {
+    "O": 9,
+    "C": 12,
+    "H": 18,
+    "N": 2,
+    "e-": 178
+   },
+   "cache_pkas": [
+    13.83,
+    9.49,
+    4.05,
+    3.36,
+    1.64,
+    0.81
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 23,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 97923,
+   "inchi_key": "PYVBFDCHJDMSMM-FNCQTZNRSA-N",
+   "major_ms_smiles": "OC1=CC=C(C=CC(=O)NCCCCNC(=O)C=CC2=CC=C(O)C=C2)C=C1",
+   "neutral_smiles": "O=C(C=Cc1ccc(O)cc1)NCCCCNC(=O)C=Cc1ccc(O)cc1",
+   "formula_atom_bag": {
+    "O": 4,
+    "C": 22,
+    "N": 2,
+    "H": 24,
+    "e-": 202
+   },
+   "cache_pkas": [
+    9.82,
+    9.22,
+    6.92,
+    6.4,
+    5.02,
+    4.45
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 28,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 50273,
+   "inchi_key": "DZRNFMWYICVPEX-KKFHFHRHSA-N",
+   "major_ms_smiles": "NC1=NC2=C(C=C(CN(C=O)C3=CC=C(C=C3)C(O)[NH2+][C@@H](CCC([O-])=O)C([O-])=O)C=C2)C(=O)N1",
+   "neutral_smiles": "Nc1nc2ccc(CN(C=O)c3ccc(C(O)N[C@@H](CCC(=O)O)C(=O)O)cc3)cc2c(=O)[nH]1",
+   "formula_atom_bag": {
+    "N": 5,
+    "C": 22,
+    "O": 7,
+    "H": 22,
+    "e-": 246
+   },
+   "cache_pkas": [
+    13.32,
+    12.7,
+    7.64,
+    3.78,
+    2.89,
+    2.32
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 88627,
+   "inchi_key": "VNHVNFCIDMAHID-CSUGHPSWSA-M",
+   "major_ms_smiles": "OC[C@H]1O[C@@H](OC2=C(OC3=CC(=O)C=C([O-])C3=C2O)C2=CC=C(O)C=C2)[C@H](O)[C@@H](OC(=O)C=CC2=CC=C(O)C=C2)[C@@H]1O",
+   "neutral_smiles": "O=C(C=Cc1ccc(O)cc1)O[C@@H]1[C@@H](O)[C@H](Oc2c(-c3ccc(O)cc3)oc3cc(=O)cc(O)c-3c2O)O[C@H](CO)[C@H]1O",
+   "formula_atom_bag": {
+    "O": 13,
+    "C": 30,
+    "H": 25,
+    "e-": 310
+   },
+   "cache_pkas": [
+    13.19,
+    12.24,
+    9.47,
+    8.59,
+    7.86,
+    6.37
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 43,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 142267,
+   "inchi_key": "ORFOPKXBNMVMKC-KZBLUZIOSA-M",
+   "major_ms_smiles": "CC(C)(ON=C(C(=O)N[C@H]1[C@H]2SCC(C[N+]3=CC=CC=C3)=C(N2C1=O)C([O-])=O)C1=CSC(N)=N1)C([O-])=O",
+   "neutral_smiles": "CC(C)(ON=C(C(=O)N[C@@H]1C(=O)N2C(C(=O)O)=C(C[n+]3ccccc3)CS[C@H]12)c1csc(N)n1)C(=O)[O-]",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 7,
+    "N": 6,
+    "H": 21,
+    "S": 2,
+    "e-": 284
+   },
+   "cache_pkas": [
+    11.82,
+    9.84,
+    8.14,
+    3.41,
+    2.88,
+    2.35
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 37,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 66711,
+   "inchi_key": "FVRWSIPJNWXCEO-YUMQZZPRSA-M",
+   "major_ms_smiles": "CC(=O)SC[C@H](NC(=O)CC[C@H]([NH3+])C([O-])=O)C(=O)NCC([O-])=O",
+   "neutral_smiles": "CC(=O)SC[C@H](NC(=O)CC[C@H](N)C(=O)O)C(=O)NCC(=O)O",
+   "formula_atom_bag": {
+    "C": 12,
+    "O": 7,
+    "S": 1,
+    "H": 18,
+    "N": 3,
+    "e-": 184
+   },
+   "cache_pkas": [
+    9.54,
+    5.59,
+    4.13,
+    3.27,
+    1.85,
+    1.28
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 23,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 36269,
+   "inchi_key": "SRNWOUGRCWSEMX-TYASJMOZSA-L",
+   "major_ms_smiles": "NC1=C2N=CN([C@@H]3O[C@H](COP([O-])(=O)OP([O-])(=O)OC[C@H]4OC(O)[C@H](O)[C@@H]4O)[C@@H](O)[C@H]3O)C2=NC=N1",
+   "neutral_smiles": "Nc1ncnc2c1ncn2[C@@H]1O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]2OC(O)[C@H](O)[C@@H]2O)[C@@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "N": 5,
+    "C": 15,
+    "H": 21,
+    "O": 14,
+    "P": 2,
+    "e-": 290
+   },
+   "cache_pkas": [
+    13.36,
+    12.54,
+    11.29,
+    4.93,
+    2.28,
+    1.85
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 36,
+   "has_magnesium_constants": true,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 97275,
+   "inchi_key": "WCZDQPXNBJTKPI-UHFFFAOYSA-M",
+   "major_ms_smiles": "OCC1OC(OC2=CC3=[O+]C(=C([O-])C=C3C(O)=C2)C2=CC(O)=C(O)C=C2)C(O)C(O)C1O",
+   "neutral_smiles": "[O-]c1cc2c(O)cc(OC3OC(CO)C(O)C(O)C3O)cc2[o+]c1-c1ccc(O)c(O)c1",
+   "formula_atom_bag": {
+    "O": 11,
+    "C": 21,
+    "H": 20,
+    "e-": 234
+   },
+   "cache_pkas": [
+    13.45,
+    12.92,
+    12.23,
+    9.59,
+    7.31,
+    3.05
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 65696,
+   "inchi_key": "AGKJZAUTPQSZRO-VOZSWFBASA-M",
+   "major_ms_smiles": "COC1=C(O)C(O)=C2C(=O)C(O[C@H]3O[C@H](CO)[C@@H](O)C(O)C3O)=C(OC2=C1)C1=CC(O)=C(O)C=C1",
+   "neutral_smiles": "COc1cc2oc(-c3ccc(O)c(O)c3)c(O[C@H]3O[C@H](CO)[C@@H](O)C(O)C3O)c(=O)c2c(O)c1O",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 13,
+    "H": 22,
+    "e-": 258
+   },
+   "cache_pkas": [
+    13.29,
+    12.68,
+    12.24,
+    11.75,
+    8.58,
+    7.36
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 80027,
+   "inchi_key": "OXYDHUNPMSPUCC-ONGXEEELSA-M",
+   "major_ms_smiles": "C[C@@H]1OC2=C(C(O)=C3C(O)=CC(O)=C(C3=C2)C2=C3C=C4OC(C)=C(C)C(O)=C4C(=O)C3=C(O)C=C2[O-])C(=O)[C@H]1C",
+   "neutral_smiles": "Cc1oc2cc3c(-c4c(O)cc(O)c5c(O)c6c(cc45)O[C@@H](C)[C@H](C)C6=O)c(O)cc(O)c3c(=O)c-2c(O)c1C",
+   "formula_atom_bag": {
+    "C": 30,
+    "H": 23,
+    "O": 10,
+    "e-": 284
+   },
+   "cache_pkas": [
+    13.51,
+    9.9,
+    9.06,
+    8.31,
+    7.71,
+    6.73
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 40,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 47173,
+   "inchi_key": "SUDIELTVVOYEKB-OKGGZUOPSA-M",
+   "major_ms_smiles": "CC1O[C@@H](OC2C(O)[C@H](O)C(CO)O[C@H]2OC2=C(O)C=C(C=C2)C2=CC(O)=C3C(O)=CC(=O)C=C3O2)[C@@H](O)C(O)[C@H]1O",
+   "neutral_smiles": "CC1O[C@@H](OC2C(O)[C@H](O)C(CO)O[C@H]2Oc2ccc(-c3cc(O)c4c(O)cc(=O)cc-4o3)cc2O)[C@@H](O)C(O)[C@H]1O",
+   "formula_atom_bag": {
+    "C": 27,
+    "O": 15,
+    "H": 30,
+    "e-": 312
+   },
+   "cache_pkas": [
+    13.32,
+    12.72,
+    12.1,
+    9.42,
+    8.16,
+    6.58
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 42,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 3945,
+   "inchi_key": "REIIQZAQCCFGIJ-LBLJTAPMSA-O",
+   "major_ms_smiles": "CN(CCC([NH3+])CC(=O)N[C@H]1C=C[C@@H](O[C@@H]1C([O-])=O)N1C=CC(=O)NC1=O)C(N)=[NH2+]",
+   "neutral_smiles": "CN(CCC(N)CC(=O)N[C@H]1C=C[C@H](n2ccc(=O)[nH]c2=O)O[C@@H]1C(=O)O)C(=N)N",
+   "formula_atom_bag": {
+    "C": 17,
+    "N": 7,
+    "H": 26,
+    "O": 6,
+    "e-": 224
+   },
+   "cache_pkas": [
+    12.23,
+    9.16,
+    7.47,
+    5.17,
+    3.18,
+    1.14
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 30,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 27261,
+   "inchi_key": "IHRVJPZYTSPICL-MYLAYABESA-M",
+   "major_ms_smiles": "COC1=C([C@@H]2OC(CO)[C@@H](O)[C@H](O)C2O)C(=O)C2=C(O)C=C(OC2=C1[C@@H]1OC[C@H](O)[C@H](O)C1O)C1=CC=C(O)C=C1",
+   "neutral_smiles": "COc1c([C@@H]2OC[C@H](O)[C@H](O)C2O)c2oc(-c3ccc(O)cc3)cc(O)c-2c(=O)c1[C@@H]1OC(CO)[C@@H](O)[C@H](O)C1O",
+   "formula_atom_bag": {
+    "C": 27,
+    "O": 14,
+    "H": 30,
+    "e-": 304
+   },
+   "cache_pkas": [
+    13.81,
+    13.33,
+    12.81,
+    12.29,
+    8.73,
+    6.87
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 41,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 2001,
+   "inchi_key": "YTTRPBWEMMPYSW-HRRFRDKFSA-N",
+   "major_ms_smiles": "CC(=O)N[C@@H]1[C@@H](O)[C@H](O)[C@@H](CO)O[C@H]1NC(=O)C[C@H]([NH3+])C([O-])=O",
+   "neutral_smiles": "CC(=O)N[C@@H]1[C@@H](O)[C@H](O)[C@@H](CO)O[C@H]1NC(=O)C[C@H](N)C(=O)O",
+   "formula_atom_bag": {
+    "C": 12,
+    "O": 8,
+    "N": 3,
+    "H": 21,
+    "e-": 178
+   },
+   "cache_pkas": [
+    12.95,
+    9.61,
+    5.87,
+    4.86,
+    1.77,
+    1.26
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 23,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 93481,
+   "inchi_key": "QBKGCCSZLPZTIE-INOXDZRUSA-O",
+   "major_ms_smiles": "OC1=C2OC3=CC=C(C=C3)C=CC(=O)NCCC[NH2+]CCCCNC(=O)C=CC(C=C1)=C2",
+   "neutral_smiles": "O=C1C=Cc2ccc(O)c(c2)Oc2ccc(cc2)C=CC(=O)NCCCNCCCCN1",
+   "formula_atom_bag": {
+    "O": 4,
+    "C": 25,
+    "N": 3,
+    "H": 30,
+    "e-": 232
+   },
+   "cache_pkas": [
+    10.66,
+    8.48,
+    6.75,
+    6.2,
+    4.74,
+    4.15
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "amine",
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 313831,
+   "inchi_key": "VJINNCIGURPUSJ-SXFPFFLUSA-K",
+   "major_ms_smiles": "CCCC(=O)OC[C@H](COP([O-])(=O)O[C@@H]1[C@H](O)[C@H](O)[C@@H](O)[C@H](OP([O-])([O-])=O)[C@H]1O)OC(=O)CC",
+   "neutral_smiles": "CCCC(=O)OC[C@H](COP(=O)(O)O[C@H]1[C@H](O)[C@@H](OP(=O)(O)O)[C@H](O)[C@@H](O)[C@H]1O)OC(=O)CC",
+   "formula_atom_bag": {
+    "C": 16,
+    "O": 16,
+    "H": 27,
+    "P": 2,
+    "e-": 284
+   },
+   "cache_pkas": [
+    13.75,
+    13.1,
+    12.46,
+    6.19,
+    1.92,
+    1.08
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate"
+   ],
+   "n_heavy_atoms": 34,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 18770,
+   "inchi_key": "SLCKJKWFULXZBD-ZIMZFXMASA-N",
+   "major_ms_smiles": "OCC1O[C@@H](OC2=CC(=O)C=C3OC(=C(O[C@@H]4OC(CO)[C@H](O)C(O)C4O)C=C23)C2=CC=C(O)C=C2)C(O)[C@@H](O)[C@@H]1O",
+   "neutral_smiles": "O=c1cc2oc(-c3ccc(O)cc3)c(O[C@@H]3OC(CO)[C@H](O)C(O)C3O)cc-2c(O[C@@H]2OC(CO)[C@@H](O)[C@H](O)C2O)c1",
+   "formula_atom_bag": {
+    "O": 15,
+    "C": 27,
+    "H": 30,
+    "e-": 312
+   },
+   "cache_pkas": [
+    13.49,
+    12.99,
+    12.43,
+    11.9,
+    8.37,
+    6.66
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 42,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 3184,
+   "inchi_key": "OPLVZTYVQUWKHB-SDBHATRESA-J",
+   "major_ms_smiles": "CC(C)=CCNC1=C2N=CN([C@@H]3O[C@H](COP([O-])(=O)OP([O-])(=O)OP(O)([O-])=O)[C@@H](O)[C@H]3O)C2=NC=N1",
+   "neutral_smiles": "CC(C)=CCNc1ncnc2c1ncn2[C@@H]1O[C@H](COP(=O)(O)OP(=O)(O)OP(=O)(O)O)[C@@H](O)[C@H]1O",
+   "formula_atom_bag": {
+    "C": 15,
+    "N": 5,
+    "H": 21,
+    "O": 13,
+    "P": 3,
+    "e-": 298
+   },
+   "cache_pkas": [
+    12.6,
+    7.42,
+    4.72,
+    3.29,
+    1.55,
+    0.9
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 36,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 16209,
+   "inchi_key": "QELFZYXMLJAILU-DUXPYHPUSA-M",
+   "major_ms_smiles": "OCC1OC(OC2=CC(O)=CC(O)=C2C(=O)C=CC2=CC(O)=C(O)C=C2)C(O)C(O)C1O",
+   "neutral_smiles": "O=C(C=Cc1ccc(O)c(O)c1)c1c(O)cc(O)cc1OC1OC(CO)C(O)C(O)C1O",
+   "formula_atom_bag": {
+    "O": 11,
+    "C": 21,
+    "H": 22,
+    "e-": 236
+   },
+   "cache_pkas": [
+    13.27,
+    12.58,
+    12.01,
+    9.2,
+    8.57,
+    7.14
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 469398,
+   "inchi_key": "FRPZVOSKFZPIOY-UHFFFAOYSA-K",
+   "major_ms_smiles": "CC(O)(C([O-])=O)C(=O)C(O)(C(O)C([O-])=O)C([O-])=O",
+   "neutral_smiles": "CC(O)(C(=O)O)C(=O)C(O)(C(=O)O)C(O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 8,
+    "O": 10,
+    "H": 7,
+    "e-": 138
+   },
+   "cache_pkas": [
+    13.78,
+    12.44,
+    11.23,
+    4.47,
+    3.19,
+    2.52
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 18,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 137828,
+   "inchi_key": "HCGFOSJNUODEOH-LHZZQDSXSA-N",
+   "major_ms_smiles": "CC(C)[C@H](NC(=O)[C@@H]([NH3+])CNC(=O)C1OC1C(N)=O)C([O-])=O",
+   "neutral_smiles": "CC(C)[C@H](NC(=O)[C@@H](N)CNC(=O)C1OC1C(N)=O)C(=O)O",
+   "formula_atom_bag": {
+    "C": 12,
+    "H": 20,
+    "N": 4,
+    "O": 6,
+    "e-": 168
+   },
+   "cache_pkas": [
+    12.33,
+    9.24,
+    4.28,
+    3.76,
+    2.72,
+    1.24
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate",
+    "amine"
+   ],
+   "n_heavy_atoms": 22,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 74524,
+   "inchi_key": "LQEBEXMHBLQMDB-QIXZNPMTSA-L",
+   "major_ms_smiles": "C[C@@H]1OC(OP([O-])(=O)OP([O-])(=O)OC[C@H]2O[C@H]([C@H](O)[C@@H]2O)N2C=NC3=C2N=C(N)NC3=O)[C@@H](O)[C@H](O)[C@@H]1O",
+   "neutral_smiles": "C[C@@H]1OC(OP(=O)(O)OP(=O)(O)OC[C@H]2O[C@@H](n3cnc4c(=O)[nH]c(N)nc43)[C@H](O)[C@@H]2O)[C@@H](O)[C@H](O)[C@@H]1O",
+   "formula_atom_bag": {
+    "C": 16,
+    "H": 23,
+    "O": 15,
+    "P": 2,
+    "N": 5,
+    "e-": 306
+   },
+   "cache_pkas": [
+    12.83,
+    12.25,
+    11.52,
+    4.07,
+    3.12,
+    1.73
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 38,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 122975,
+   "inchi_key": "BWBSAHNMKJGTFW-ANYXEJIESA-O",
+   "major_ms_smiles": "[NH3+]CCO[C@@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]1O[C@@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]1O[C@@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]1O",
+   "neutral_smiles": "NCCO[C@@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]1O[C@@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]1O[C@@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]1O",
+   "formula_atom_bag": {
+    "N": 1,
+    "H": 38,
+    "C": 20,
+    "O": 16,
+    "e-": 292
+   },
+   "cache_pkas": [
+    13.89,
+    13.33,
+    12.9,
+    12.5,
+    12.0,
+    9.44
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 37,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 553125,
+   "inchi_key": "ZCGNSQNJACZJHF-QHAWAJNXSA-O",
+   "major_ms_smiles": "OC[C@H]1O[C@@H](CCNC(=O)CC[NH+]2CCCCC2)CC[C@@H]1NC(=O)CC1=CN=CC=C1",
+   "neutral_smiles": "O=C(CCN1CCCCC1)NCC[C@H]1CC[C@H](NC(=O)Cc2cccnc2)[C@@H](CO)O1",
+   "formula_atom_bag": {
+    "O": 4,
+    "C": 23,
+    "H": 37,
+    "N": 4,
+    "e-": 234
+   },
+   "cache_pkas": [
+    9.8,
+    6.35,
+    5.51,
+    4.7,
+    3.81,
+    2.89
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 325,
+   "inchi_key": "HAAZLUGHYHWQIW-KVQBGUIXSA-J",
+   "major_ms_smiles": "NC1=NC2=C(N=CN2[C@H]2C[C@H](O)[C@@H](COP([O-])(=O)OP([O-])(=O)OP(O)([O-])=O)O2)C(=O)N1",
+   "neutral_smiles": "Nc1nc2c(ncn2[C@H]2C[C@H](O)[C@@H](COP(=O)(O)OP(=O)(O)OP(=O)(O)O)O2)c(=O)[nH]1",
+   "formula_atom_bag": {
+    "N": 5,
+    "C": 10,
+    "H": 13,
+    "O": 13,
+    "P": 3,
+    "e-": 260
+   },
+   "cache_pkas": [
+    11.63,
+    7.42,
+    4.12,
+    3.24,
+    2.52,
+    0.89
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 31,
+   "has_magnesium_constants": true,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 28240,
+   "inchi_key": "RIFBDBJMZRWGPH-JTQLQIEISA-N",
+   "major_ms_smiles": "CC[C@H](C)C(=O)C1SC(CCOP([O-])(=O)OP(O)([O-])=O)=C(C)N1CC1=CN=C(C)N=C1N",
+   "neutral_smiles": "CC[C@H](C)C(=O)C1SC(CCOP(=O)(O)OP(=O)(O)O)=C(C)N1Cc1cnc(C)nc1N",
+   "formula_atom_bag": {
+    "C": 17,
+    "H": 26,
+    "O": 8,
+    "S": 1,
+    "P": 2,
+    "N": 4,
+    "e-": 268
+   },
+   "cache_pkas": [
+    7.57,
+    6.88,
+    4.44,
+    3.24,
+    2.34,
+    1.65
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phosphate",
+    "amine"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 122019,
+   "inchi_key": "NFDVBRYUYXDEQO-CEXWTWQISA-M",
+   "major_ms_smiles": "CC(=O)N[C@H](CC1=CC=CC=C1)C(=O)N[C@@H](CC1=CNC=N1)C(=O)N1CCC[C@@H]1C([O-])=O",
+   "neutral_smiles": "CC(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N1CCC[C@@H]1C(=O)O",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 5,
+    "N": 5,
+    "H": 26,
+    "e-": 234
+   },
+   "cache_pkas": [
+    12.94,
+    6.81,
+    5.83,
+    3.98,
+    3.32,
+    1.94
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "carboxylate"
+   ],
+   "n_heavy_atoms": 32,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 458491,
+   "inchi_key": "CNQDKAFKNBVKDW-RPKMEZRRSA-N",
+   "major_ms_smiles": "NC(=O)C1=CN([C@@H]2O[C@H](CO)[C@@H](O)[C@H]2O)C2=C1C(=O)NC(N)=N2",
+   "neutral_smiles": "NC(=O)c1cn([C@@H]2O[C@H](CO)[C@@H](O)[C@H]2O)c2nc(N)[nH]c(=O)c12",
+   "formula_atom_bag": {
+    "N": 5,
+    "C": 12,
+    "O": 6,
+    "H": 15,
+    "e-": 170
+   },
+   "cache_pkas": [
+    13.9,
+    12.61,
+    11.94,
+    7.64,
+    5.88,
+    0.78
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "amine"
+   ],
+   "n_heavy_atoms": 23,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  },
+  {
+   "compound_id": 65699,
+   "inchi_key": "BEFLEGLDYKEXPG-RVCUDQPGSA-N",
+   "major_ms_smiles": "COC1=C(O[C@@H]2OC(CO)[C@@H](O)[C@H](O)C2O)C(=O)C2=C(O)C(=O)C(OC2=C1)C1=CC(O)=C(O)C=C1",
+   "neutral_smiles": "COC1=C(O[C@@H]2OC(CO)[C@@H](O)[C@H](O)C2O)C(=O)C2=C(O)C(=O)C(c3ccc(O)c(O)c3)OC2=C1",
+   "formula_atom_bag": {
+    "C": 22,
+    "O": 13,
+    "H": 22,
+    "e-": 258
+   },
+   "cache_pkas": [
+    13.34,
+    12.76,
+    12.11,
+    9.99,
+    8.51,
+    7.51
+   ],
+   "n_cache_pkas": 6,
+   "groups": [
+    "phenol"
+   ],
+   "n_heavy_atoms": 35,
+   "has_magnesium_constants": false,
+   "stratum": "n_pka_6"
+  }
+ ]
+}

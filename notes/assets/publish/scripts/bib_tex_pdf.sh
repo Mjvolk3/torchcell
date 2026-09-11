@@ -55,13 +55,71 @@ header_includes_path="${output_dir}/assets/publish/tex-templates/header-includes
 echo "Edit notes/assets/publish/tex-templates/header-includes.tex for customizing spacing."
 
 # --- preprocess: Unicode sanitize -> temp markdown (SVGs stay vector) ---
+#
+# SVG -> PDF is done HERE, not left to pandoc. Pandoc 2.14 shells out to a bare
+# `rsvg-convert`, and librsvg 2.50 rasterizes an SVG's declared size at 90 dpi, so a figure
+# saying width="510pt" arrives in the PDF at 638 pt. Pandoc's \maxwidth then caps it at the
+# text block, which is why every figure used to print at exactly the block width whatever
+# its designed size, and a figure that was already the block width lost 17 percent. Two SVG
+# conventions are in use and each needs its own correction, both verified on librsvg 2.50:
+#   * width="Npt"  (pdftocairo output, e.g. a *.vector.svg from a draw.io export):
+#     `-d 72 -p 72`, which makes a point a point (510 pt in -> 510 pt out).
+#   * unitless width (torchcell.utils.savefig_true_size_svg, 100 units per inch): librsvg
+#     writes one PDF point per unit whatever the dpi (`-d 100` changes nothing), so the
+#     zoom is measured with a 100-unit probe and applied as `-z`, exactly as the `plots`
+#     rule in notes-tex/common/Makefile.common does.
+# Each referenced .svg is converted at true size into a temp dir and the temp
+# markdown points at the PDF; the note itself keeps referencing the .svg.
 preprocessed="$(mktemp --suffix=.md)"
-trap 'rm -f "${preprocessed}"' EXIT
-python3 - "${input_file}" "${preprocessed}" <<'PYEOF'
+svg_pdf_dir="$(mktemp -d)"
+trap 'rm -rf "${preprocessed}" "${svg_pdf_dir}"' EXIT
+python3 - "${input_file}" "${preprocessed}" "${output_dir}" "${svg_pdf_dir}" <<'PYEOF'
+import os
+import re
+import subprocess
 import sys
 
-src, dst = sys.argv[1], sys.argv[2]
+src, dst, notes_dir, svg_pdf_dir = sys.argv[1:5]
 text = open(src, encoding="utf-8").read()
+
+
+def unitless_zoom() -> str:
+    """Zoom that turns 100 unitless SVG units into one inch (72 pt) on this librsvg."""
+    probe = os.path.join(svg_pdf_dir, "probe.svg")
+    probe_pdf = os.path.join(svg_pdf_dir, "probe.pdf")
+    open(probe, "w").write(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" '
+        'viewBox="0 0 100 100"><rect width="100" height="100"/></svg>'
+    )
+    subprocess.run(["rsvg-convert", "-f", "pdf", "-o", probe_pdf, probe], check=True)
+    raw = open(probe_pdf, "rb").read()
+    box = re.search(rb"/MediaBox \[([^\]]*)\]", raw)
+    pt_per_100 = float(box.group(1).split()[2])
+    return f"{72.0 / pt_per_100:.6f}"
+
+
+ZOOM = unitless_zoom()
+
+
+def svg_to_pdf(match: re.Match) -> str:
+    """Convert one referenced SVG at true size for its size convention; keep the rest."""
+    rel = match.group(2)
+    path = os.path.normpath(os.path.join(notes_dir, rel))
+    if not os.path.isfile(path):
+        return match.group(0)
+    head = open(path, encoding="utf-8", errors="replace").read(4096)
+    root = re.search(r"<svg\b[^>]*>", head)
+    width = re.search(r'\bwidth="([^"]+)"', root.group(0)) if root else None
+    if width and width.group(1).endswith("pt"):
+        args = ["-d", "72", "-p", "72"]
+    else:
+        args = ["-z", ZOOM]
+    out = os.path.join(svg_pdf_dir, os.path.basename(path)[:-4] + ".pdf")
+    subprocess.run(["rsvg-convert", *args, "-f", "pdf", "-o", out, path], check=True)
+    return f"{match.group(1)}({out}{match.group(3)})"
+
+
+text = re.sub(r"(!\[[^\]]*\])\(([^)\s]+\.svg)((?:\s+\"[^\"]*\")?)\)", svg_to_pdf, text)
 
 # sanitize non-ASCII glyphs the default xelatex font lacks (outside code fences)
 repl = {

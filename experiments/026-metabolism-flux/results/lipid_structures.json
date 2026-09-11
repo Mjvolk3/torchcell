@@ -1,0 +1,3254 @@
+{
+ "built_at": "2026-09-10T18:13:47.584814+00:00",
+ "conventions": {
+  "double_bond_position": "Delta-9 for the first double bond and every 3 carbons after it, cis, except for the acyl-CoA names which state their own positions and geometry",
+  "stereocenters": "left unspecified, including in the CoA moiety",
+  "protonation": "every structure is written neutral; the acceptance test compares against the GEM formula moved to the neutral species by H -> H - charge",
+  "coenzyme_a": "taken from the compound cache by InChIKey prefix RGJOEKWQDUBAIZ and neutralized to C21H36N7O16P3S, not typed here"
+ },
+ "n_attempted": 168,
+ "n_written": 168,
+ "n_formula_pass": 168,
+ "n_formula_fail": 0,
+ "pass_by_class": {
+  "cardiolipin_CL": 60,
+  "phosphatidylinositol_PI": 30,
+  "triacylglycerol_TAG": 21,
+  "phosphatidylethanolamine_PE": 20,
+  "phosphatidate_PA": 12,
+  "acyl_CoA": 9,
+  "phosphatidylglycerol_PG": 7,
+  "fatty_acid_acyl_chain": 7,
+  "phosphatidylcholine_PC": 2
+ },
+ "fail_by_class": {},
+ "pass_by_template": {
+  "CL": 60,
+  "TAG": 18,
+  "ACYLCOA": 9,
+  "PI35P2": 8,
+  "DGPP": 7,
+  "PI45P2": 7,
+  "PI4P": 7,
+  "PDME": 7,
+  "PMME": 7,
+  "PI3P": 6,
+  "FFA": 6,
+  "PE": 6,
+  "PGP": 5,
+  "CDPDAG": 5,
+  "MAG1": 3,
+  "PC": 2,
+  "PG": 2,
+  "PI": 1,
+  "ACYLDHAP": 1,
+  "LPI2": 1
+ },
+ "metabolite_rows_pass": 347,
+ "failures": [],
+ "structures": [
+  {
+   "name": "(R)-3-hydroxy-cis-dodec-5-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "template": "ACYLCOA",
+   "met_ids": [
+    "s_2910"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CC(O)CC(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+   "inchi_key": "AYORDFMYYBNSBO-KTKRTIGZSA-N",
+   "n_heavy_atoms": 62,
+   "gem_formula": "C33H56N7O18P3S",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C33H56N7O18P3S",
+   "rdkit_formula": "C33H56N7O18P3S",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "(R)-3-hydroxy-cis-hexadec-9-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "template": "ACYLCOA",
+   "met_ids": [
+    "s_2908"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCC(O)CC(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+   "inchi_key": "ZIRSQPAPHGZDIL-KTKRTIGZSA-N",
+   "n_heavy_atoms": 66,
+   "gem_formula": "C37H64N7O18P3S",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C37H64N7O18P3S",
+   "rdkit_formula": "C37H64N7O18P3S",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "(R)-3-hydroxy-cis-tetradec-7-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "template": "ACYLCOA",
+   "met_ids": [
+    "s_2909"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCC(O)CC(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+   "inchi_key": "WGCARZJTIJIWSL-KTKRTIGZSA-N",
+   "n_heavy_atoms": 64,
+   "gem_formula": "C35H60N7O18P3S",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C35H60N7O18P3S",
+   "rdkit_formula": "C35H60N7O18P3S",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "DGPP",
+   "met_ids": [
+    "s_3616",
+    "s_3624"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "inchi_key": "OAJTXLLJMMQDGV-PEZBUJJGSA-N",
+   "n_heavy_atoms": 48,
+   "gem_formula": "C35H68O11P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C35H68O11P2",
+   "rdkit_formula": "C35H68O11P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "DGPP",
+   "met_ids": [
+    "s_3617",
+    "s_3625"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "AUSLCZYKGDIQJT-VMNXYWKNSA-N",
+   "n_heavy_atoms": 48,
+   "gem_formula": "C35H66O11P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C35H66O11P2",
+   "rdkit_formula": "C35H66O11P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "DGPP",
+   "met_ids": [
+    "s_3621",
+    "s_3629"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "OWHYOLXJAMKZJL-LJSPAGPLSA-N",
+   "n_heavy_atoms": 50,
+   "gem_formula": "C37H70O11P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C37H70O11P2",
+   "rdkit_formula": "C37H70O11P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "DGPP",
+   "met_ids": [
+    "s_3618",
+    "s_3626"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "inchi_key": "JNJOBRNYZDKEIY-PEZBUJJGSA-N",
+   "n_heavy_atoms": 50,
+   "gem_formula": "C37H72O11P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C37H72O11P2",
+   "rdkit_formula": "C37H72O11P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "DGPP",
+   "met_ids": [
+    "s_3622",
+    "s_3630"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "inchi_key": "ZTJKHDWNZHJHDB-ZZEZOPTASA-N",
+   "n_heavy_atoms": 52,
+   "gem_formula": "C39H76O11P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C39H76O11P2",
+   "rdkit_formula": "C39H76O11P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "DGPP",
+   "met_ids": [
+    "s_3619",
+    "s_3627"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "inchi_key": "WENQGZWUGGWWQJ-LJSPAGPLSA-N",
+   "n_heavy_atoms": 50,
+   "gem_formula": "C37H70O11P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C37H70O11P2",
+   "rdkit_formula": "C37H70O11P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "DGPP",
+   "met_ids": [
+    "s_3623",
+    "s_3631"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "SKWFYHADBYFCMH-CLFAGFIQSA-N",
+   "n_heavy_atoms": 52,
+   "gem_formula": "C39H74O11P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C39H74O11P2",
+   "rdkit_formula": "C39H74O11P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-monoglyceride (16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "MAG1",
+   "met_ids": [
+    "s_3633",
+    "s_3641",
+    "s_3649",
+    "s_3671",
+    "s_3676"
+   ],
+   "n_metabolite_rows": 5,
+   "smiles": "CCCCCCCCCCCCCCCC(=O)OCC(O)CO",
+   "inchi_key": "QHZLMUACJMDIAE-UHFFFAOYSA-N",
+   "n_heavy_atoms": 23,
+   "gem_formula": "C19H38O4",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C19H38O4",
+   "rdkit_formula": "C19H38O4",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-monoglyceride (16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "MAG1",
+   "met_ids": [
+    "s_3635",
+    "s_3643",
+    "s_3651",
+    "s_3672",
+    "s_3679"
+   ],
+   "n_metabolite_rows": 5,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(O)CO",
+   "inchi_key": "KVYUBFKSKZWZSV-FPLPWBNLSA-N",
+   "n_heavy_atoms": 23,
+   "gem_formula": "C19H36O4",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C19H36O4",
+   "rdkit_formula": "C19H36O4",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-monoglyceride (18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "MAG1",
+   "met_ids": [
+    "s_3637",
+    "s_3645",
+    "s_3653",
+    "s_3673",
+    "s_3681"
+   ],
+   "n_metabolite_rows": 5,
+   "smiles": "CCCCCCCCCCCCCCCCCC(=O)OCC(O)CO",
+   "inchi_key": "VBICKXHEKHSIBG-UHFFFAOYSA-N",
+   "n_heavy_atoms": 25,
+   "gem_formula": "C21H42O4",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C21H42O4",
+   "rdkit_formula": "C21H42O4",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI",
+   "met_ids": [
+    "s_3119",
+    "s_3326",
+    "s_3344",
+    "s_3362",
+    "s_3378",
+    "s_3547"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(O)C(O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "HBPXEBWVNAJRCA-VMNXYWKNSA-N",
+   "n_heavy_atoms": 55,
+   "gem_formula": "C41H75O13P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H75O13P",
+   "rdkit_formula": "C41H75O13P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI35P2",
+   "met_ids": [
+    "s_3416",
+    "s_3592",
+    "s_3600"
+   ],
+   "n_metabolite_rows": 3,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "VMJOKOJJQVPKLG-PEZBUJJGSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C41H79O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H79O19P3",
+   "rdkit_formula": "C41H79O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI35P2",
+   "met_ids": [
+    "s_3420",
+    "s_3596",
+    "s_3604"
+   ],
+   "n_metabolite_rows": 3,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "QDATYXLPUKPDCY-ZCXUNETKSA-N",
+   "n_heavy_atoms": 65,
+   "gem_formula": "C43H83O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H83O19P3",
+   "rdkit_formula": "C43H83O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI35P2",
+   "met_ids": [
+    "s_3417",
+    "s_3593",
+    "s_3601"
+   ],
+   "n_metabolite_rows": 3,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "CEDQPZAHCQGLRM-VMNXYWKNSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C41H77O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H77O19P3",
+   "rdkit_formula": "C41H77O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI35P2",
+   "met_ids": [
+    "s_3421",
+    "s_3597",
+    "s_3605"
+   ],
+   "n_metabolite_rows": 3,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "JJUOHBUMEHDTCZ-LJSPAGPLSA-N",
+   "n_heavy_atoms": 65,
+   "gem_formula": "C43H81O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H81O19P3",
+   "rdkit_formula": "C43H81O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI35P2",
+   "met_ids": [
+    "s_3418",
+    "s_3594",
+    "s_3602"
+   ],
+   "n_metabolite_rows": 3,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "HZENDLHFSQBUSN-PEZBUJJGSA-N",
+   "n_heavy_atoms": 65,
+   "gem_formula": "C43H83O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H83O19P3",
+   "rdkit_formula": "C43H83O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI35P2",
+   "met_ids": [
+    "s_3422",
+    "s_3598",
+    "s_3606"
+   ],
+   "n_metabolite_rows": 3,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "DZVYGEUROWEICC-ZZEZOPTASA-N",
+   "n_heavy_atoms": 67,
+   "gem_formula": "C45H87O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C45H87O19P3",
+   "rdkit_formula": "C45H87O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI35P2",
+   "met_ids": [
+    "s_3419",
+    "s_3595",
+    "s_3603"
+   ],
+   "n_metabolite_rows": 3,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OC1C(O)C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "FFUGMCSBRGROPF-LJSPAGPLSA-N",
+   "n_heavy_atoms": 65,
+   "gem_formula": "C43H81O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H81O19P3",
+   "rdkit_formula": "C43H81O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI35P2",
+   "met_ids": [
+    "s_3423",
+    "s_3599",
+    "s_3607"
+   ],
+   "n_metabolite_rows": 3,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "NCQJPYRCYOFNGI-CLFAGFIQSA-N",
+   "n_heavy_atoms": 67,
+   "gem_formula": "C45H85O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C45H85O19P3",
+   "rdkit_formula": "C45H85O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI3P",
+   "met_ids": [
+    "s_3392",
+    "s_3535",
+    "s_3544",
+    "s_3560",
+    "s_3568"
+   ],
+   "n_metabolite_rows": 5,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "NICUBRPMJMZFPJ-PEZBUJJGSA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C41H78O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H78O16P2",
+   "rdkit_formula": "C41H78O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI3P",
+   "met_ids": [
+    "s_3396",
+    "s_3540",
+    "s_3552",
+    "s_3564",
+    "s_3572"
+   ],
+   "n_metabolite_rows": 5,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "YCJUQKBIQUCHID-ZCXUNETKSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C43H82O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H82O16P2",
+   "rdkit_formula": "C43H82O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI3P",
+   "met_ids": [
+    "s_3393",
+    "s_3537",
+    "s_3546",
+    "s_3561",
+    "s_3569"
+   ],
+   "n_metabolite_rows": 5,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(O)C(O)C(OP(=O)(O)O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "DEQQATKVNVJGLU-VMNXYWKNSA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C41H76O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H76O16P2",
+   "rdkit_formula": "C41H76O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI3P",
+   "met_ids": [
+    "s_3397",
+    "s_3541",
+    "s_3554",
+    "s_3565",
+    "s_3573"
+   ],
+   "n_metabolite_rows": 5,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(O)C(O)C(OP(=O)(O)O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "KWQCEQBHSHTFHQ-LJSPAGPLSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C43H80O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H80O16P2",
+   "rdkit_formula": "C43H80O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI3P",
+   "met_ids": [
+    "s_3394",
+    "s_3538",
+    "s_3548",
+    "s_3562",
+    "s_3570"
+   ],
+   "n_metabolite_rows": 5,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "DOHIUZWJEWYRIQ-PEZBUJJGSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C43H82O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H82O16P2",
+   "rdkit_formula": "C43H82O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI3P",
+   "met_ids": [
+    "s_3395",
+    "s_3539",
+    "s_3550",
+    "s_3563",
+    "s_3571"
+   ],
+   "n_metabolite_rows": 5,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "ZWEJBLOUKBVSNN-LJSPAGPLSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C43H80O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H80O16P2",
+   "rdkit_formula": "C43H80O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI45P2",
+   "met_ids": [
+    "s_3400",
+    "s_3408",
+    "s_3496",
+    "s_3608"
+   ],
+   "n_metabolite_rows": 4,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "RXWJULSAXOVSMY-PEZBUJJGSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C41H79O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H79O19P3",
+   "rdkit_formula": "C41H79O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI45P2",
+   "met_ids": [
+    "s_3404",
+    "s_3412",
+    "s_3505",
+    "s_3612"
+   ],
+   "n_metabolite_rows": 4,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "IQWUGLVLOWHAIC-ZCXUNETKSA-N",
+   "n_heavy_atoms": 65,
+   "gem_formula": "C43H83O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H83O19P3",
+   "rdkit_formula": "C43H83O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI45P2",
+   "met_ids": [
+    "s_3401",
+    "s_3409",
+    "s_3499",
+    "s_3609"
+   ],
+   "n_metabolite_rows": 4,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(OP(=O)(O)O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "WXVUAEKEEKBSMK-VMNXYWKNSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C41H77O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H77O19P3",
+   "rdkit_formula": "C41H77O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI45P2",
+   "met_ids": [
+    "s_3405",
+    "s_3413",
+    "s_3507",
+    "s_3613"
+   ],
+   "n_metabolite_rows": 4,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(OP(=O)(O)O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "RDFHKVSRQVTPND-LJSPAGPLSA-N",
+   "n_heavy_atoms": 65,
+   "gem_formula": "C43H81O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H81O19P3",
+   "rdkit_formula": "C43H81O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI45P2",
+   "met_ids": [
+    "s_3402",
+    "s_3410",
+    "s_3501",
+    "s_3610"
+   ],
+   "n_metabolite_rows": 4,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "SNWHXJLJAIUYCO-PEZBUJJGSA-N",
+   "n_heavy_atoms": 65,
+   "gem_formula": "C43H83O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H83O19P3",
+   "rdkit_formula": "C43H83O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI45P2",
+   "met_ids": [
+    "s_3403",
+    "s_3411",
+    "s_3503",
+    "s_3611"
+   ],
+   "n_metabolite_rows": 4,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(OP(=O)(O)O)C1O",
+   "inchi_key": "QILILGSXVOJGGA-LJSPAGPLSA-N",
+   "n_heavy_atoms": 65,
+   "gem_formula": "C43H81O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H81O19P3",
+   "rdkit_formula": "C43H81O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI45P2",
+   "met_ids": [
+    "s_3407",
+    "s_3415",
+    "s_3511",
+    "s_3615"
+   ],
+   "n_metabolite_rows": 4,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(OP(=O)(O)O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "IGQSAMXNWMLOOS-CLFAGFIQSA-N",
+   "n_heavy_atoms": 67,
+   "gem_formula": "C45H85O19P3",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C45H85O19P3",
+   "rdkit_formula": "C45H85O19P3",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI4P",
+   "met_ids": [
+    "s_3325",
+    "s_3343",
+    "s_3361",
+    "s_3377",
+    "s_3576",
+    "s_3584"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(O)C1O",
+   "inchi_key": "AVFQIUBVEBTUFN-PEZBUJJGSA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C41H78O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H78O16P2",
+   "rdkit_formula": "C41H78O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI4P",
+   "met_ids": [
+    "s_3333",
+    "s_3351",
+    "s_3369",
+    "s_3385",
+    "s_3580",
+    "s_3588"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(O)C1O",
+   "inchi_key": "KPHJRMBLPRXMEM-ZCXUNETKSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C43H82O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H82O16P2",
+   "rdkit_formula": "C43H82O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI4P",
+   "met_ids": [
+    "s_3327",
+    "s_3345",
+    "s_3363",
+    "s_3379",
+    "s_3577",
+    "s_3585"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "OGOHLTAQDLVLOJ-VMNXYWKNSA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C41H76O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H76O16P2",
+   "rdkit_formula": "C41H76O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI4P",
+   "met_ids": [
+    "s_3335",
+    "s_3353",
+    "s_3371",
+    "s_3387",
+    "s_3581",
+    "s_3589"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "VNKGVOZBXPOUHZ-LJSPAGPLSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C43H80O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H80O16P2",
+   "rdkit_formula": "C43H80O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI4P",
+   "met_ids": [
+    "s_3329",
+    "s_3347",
+    "s_3365",
+    "s_3381",
+    "s_3578",
+    "s_3586"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(O)C1O",
+   "inchi_key": "AZDKNAJKTLNQIQ-PEZBUJJGSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C43H82O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H82O16P2",
+   "rdkit_formula": "C43H82O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI4P",
+   "met_ids": [
+    "s_3331",
+    "s_3349",
+    "s_3367",
+    "s_3383",
+    "s_3579",
+    "s_3587"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(O)C1O",
+   "inchi_key": "WHGUBYVLTZBHHL-LJSPAGPLSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C43H80O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H80O16P2",
+   "rdkit_formula": "C43H80O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "PI4P",
+   "met_ids": [
+    "s_3339",
+    "s_3357",
+    "s_3375",
+    "s_3391",
+    "s_3583",
+    "s_3591"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OC1C(O)C(O)C(OP(=O)(O)O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "XIBQVFRCUJZPTP-CLFAGFIQSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C45H84O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C45H84O16P2",
+   "rdkit_formula": "C45H84O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "template": "PGP",
+   "met_ids": [
+    "s_3220"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)O",
+   "inchi_key": "RCAKEXBGCGLMOX-PEZBUJJGSA-N",
+   "n_heavy_atoms": 53,
+   "gem_formula": "C38H74O13P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C38H74O13P2",
+   "rdkit_formula": "C38H74O13P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "template": "PGP",
+   "met_ids": [
+    "s_3221"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "PTJJTQQVMKSSOK-VMNXYWKNSA-N",
+   "n_heavy_atoms": 53,
+   "gem_formula": "C38H72O13P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C38H72O13P2",
+   "rdkit_formula": "C38H72O13P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "template": "PGP",
+   "met_ids": [
+    "s_3225"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "FPBKBTVRSMJESP-LJSPAGPLSA-N",
+   "n_heavy_atoms": 55,
+   "gem_formula": "C40H76O13P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C40H76O13P2",
+   "rdkit_formula": "C40H76O13P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "template": "PGP",
+   "met_ids": [
+    "s_3222"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)O",
+   "inchi_key": "QGNFXTQEIITQFL-PEZBUJJGSA-N",
+   "n_heavy_atoms": 55,
+   "gem_formula": "C40H78O13P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C40H78O13P2",
+   "rdkit_formula": "C40H78O13P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "template": "PGP",
+   "met_ids": [
+    "s_3223"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)O",
+   "inchi_key": "VQWKGJJOWRWELC-LJSPAGPLSA-N",
+   "n_heavy_atoms": 55,
+   "gem_formula": "C40H76O13P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C40H76O13P2",
+   "rdkit_formula": "C40H76O13P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "3-oxo-cis-dodec-5-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "template": "ACYLCOA",
+   "met_ids": [
+    "s_2922"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CC(=O)CC(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+   "inchi_key": "VKLHSLOWDWGVGP-KTKRTIGZSA-N",
+   "n_heavy_atoms": 62,
+   "gem_formula": "C33H54N7O18P3S",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C33H54N7O18P3S",
+   "rdkit_formula": "C33H54N7O18P3S",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "3-oxo-cis-tetradec-7-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "template": "ACYLCOA",
+   "met_ids": [
+    "s_2921"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCC(=O)CC(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+   "inchi_key": "BEPLLRGJVXAEJI-KTKRTIGZSA-N",
+   "n_heavy_atoms": 64,
+   "gem_formula": "C35H58N7O18P3S",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C35H58N7O18P3S",
+   "rdkit_formula": "C35H58N7O18P3S",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "C16:0 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "template": "FFA",
+   "met_ids": [
+    "s_3740"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCCCCCCCCCC(=O)O",
+   "inchi_key": "IPCSVZSSVZVIGE-UHFFFAOYSA-N",
+   "n_heavy_atoms": 18,
+   "gem_formula": "C16H32O2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C16H32O2",
+   "rdkit_formula": "C16H32O2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "C16:1 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "template": "FFA",
+   "met_ids": [
+    "s_3741"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)O",
+   "inchi_key": "SECPZKHBENQXJG-FPLPWBNLSA-N",
+   "n_heavy_atoms": 18,
+   "gem_formula": "C16H30O2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C16H30O2",
+   "rdkit_formula": "C16H30O2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "C18:0 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "template": "FFA",
+   "met_ids": [
+    "s_3742"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCCCCCCCCCCCC(=O)O",
+   "inchi_key": "QIQXTHQIDYTFRH-UHFFFAOYSA-N",
+   "n_heavy_atoms": 20,
+   "gem_formula": "C18H36O2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C18H36O2",
+   "rdkit_formula": "C18H36O2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "C18:1 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "template": "FFA",
+   "met_ids": [
+    "s_3743"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O",
+   "inchi_key": "ZQPPMHVWECSIRJ-KTKRTIGZSA-N",
+   "n_heavy_atoms": 20,
+   "gem_formula": "C18H34O2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C18H34O2",
+   "rdkit_formula": "C18H34O2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "C24:0 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "template": "FFA",
+   "met_ids": [
+    "s_3744"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCCCCCCCCCCCCCCCCCC(=O)O",
+   "inchi_key": "QZZGJDVWLFXDLK-UHFFFAOYSA-N",
+   "n_heavy_atoms": 26,
+   "gem_formula": "C24H48O2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C24H48O2",
+   "rdkit_formula": "C24H48O2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "C26:0 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "template": "FFA",
+   "met_ids": [
+    "s_3745"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCCCCCCCCCCCCCCCCCCCC(=O)O",
+   "inchi_key": "XMHIUKTWLZUKEX-UHFFFAOYSA-N",
+   "n_heavy_atoms": 28,
+   "gem_formula": "C26H52O2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C26H52O2",
+   "rdkit_formula": "C26H52O2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "CDPDAG",
+   "met_ids": [
+    "s_3084",
+    "s_3096"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "inchi_key": "PQSHMALAWALIIC-PEZBUJJGSA-N",
+   "n_heavy_atoms": 64,
+   "gem_formula": "C44H79N3O15P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C44H79N3O15P2",
+   "rdkit_formula": "C44H79N3O15P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "CDPDAG",
+   "met_ids": [
+    "s_3089",
+    "s_3106"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "HVDFATBGVREBQF-LJSPAGPLSA-N",
+   "n_heavy_atoms": 66,
+   "gem_formula": "C46H81N3O15P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C46H81N3O15P2",
+   "rdkit_formula": "C46H81N3O15P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "CDPDAG",
+   "met_ids": [
+    "s_3086",
+    "s_3100"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "inchi_key": "UCRSWMNWVZFDMF-PEZBUJJGSA-N",
+   "n_heavy_atoms": 66,
+   "gem_formula": "C46H83N3O15P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C46H83N3O15P2",
+   "rdkit_formula": "C46H83N3O15P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "CDPDAG",
+   "met_ids": [
+    "s_3090"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "inchi_key": "BZFPCBWCAKHOFP-ZZEZOPTASA-N",
+   "n_heavy_atoms": 68,
+   "gem_formula": "C48H87N3O15P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C48H87N3O15P2",
+   "rdkit_formula": "C48H87N3O15P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "template": "CDPDAG",
+   "met_ids": [
+    "s_3087",
+    "s_3102"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "inchi_key": "LWXZUUOXTNCACG-LJSPAGPLSA-N",
+   "n_heavy_atoms": 66,
+   "gem_formula": "C46H81N3O15P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C46H81N3O15P2",
+   "rdkit_formula": "C46H81N3O15P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "acylglycerone phosphate (16:1)",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "template": "ACYLDHAP",
+   "met_ids": [
+    "s_2941",
+    "s_2949"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(=O)COP(=O)(O)O",
+   "inchi_key": "WIGDASFCTNRVDE-FPLPWBNLSA-N",
+   "n_heavy_atoms": 27,
+   "gem_formula": "C19H35O7P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C19H35O7P",
+   "rdkit_formula": "C19H35O7P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-16:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3314"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "RINNQSJWQUKHOK-LYIXVYKHSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H144O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H144O17P2",
+   "rdkit_formula": "C77H144O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3258"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "HLWJFPGODYNZNR-OQEOCZKOSA-N",
+   "n_heavy_atoms": 94,
+   "gem_formula": "C75H142O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C75H142O17P2",
+   "rdkit_formula": "C75H142O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3262"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "ZPHFETGCGQORSL-SGRXOXICSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H146O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H146O17P2",
+   "rdkit_formula": "C77H146O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3260"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "SITWISOKEVSRGJ-NFYJCUABSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H146O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H146O17P2",
+   "rdkit_formula": "C77H146O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3318"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "LURKIRCDEFGGLO-VTNGKBQQSA-N",
+   "n_heavy_atoms": 98,
+   "gem_formula": "C79H148O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C79H148O17P2",
+   "rdkit_formula": "C79H148O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-16:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3240"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "VBKVDKSJQJMNLZ-QLMGBXRLSA-N",
+   "n_heavy_atoms": 92,
+   "gem_formula": "C73H136O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C73H136O17P2",
+   "rdkit_formula": "C73H136O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-16:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3244"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "OQQAELSMMXVYDI-UGQSRQFTSA-N",
+   "n_heavy_atoms": 94,
+   "gem_formula": "C75H140O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C75H140O17P2",
+   "rdkit_formula": "C75H140O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-16:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3242"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "RKUCODXIXIXKCT-QUDUAHFBSA-N",
+   "n_heavy_atoms": 94,
+   "gem_formula": "C75H140O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C75H140O17P2",
+   "rdkit_formula": "C75H140O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-16:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3315"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "UKYJZWLLPJULLU-PPFRTFKJSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H142O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H142O17P2",
+   "rdkit_formula": "C77H142O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3264"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "UNCDNNMJUAILFO-FKECQXQLSA-N",
+   "n_heavy_atoms": 94,
+   "gem_formula": "C75H140O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C75H140O17P2",
+   "rdkit_formula": "C75H140O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3268"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "XKZPKAWPUPSUJF-CTYSUHNXSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H144O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H144O17P2",
+   "rdkit_formula": "C77H144O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3265"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "LPBHDSRWBZTUCO-CINDCHFTSA-N",
+   "n_heavy_atoms": 94,
+   "gem_formula": "C75H138O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C75H138O17P2",
+   "rdkit_formula": "C75H138O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3269"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "SKJGYXULKABZHM-PPFRTFKJSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H142O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H142O17P2",
+   "rdkit_formula": "C77H142O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3266"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "LCUVBORQENWTAO-CFNFFGBASA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H144O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H144O17P2",
+   "rdkit_formula": "C77H144O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3267"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "JRDZWRUMYANUQS-PPFRTFKJSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H142O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H142O17P2",
+   "rdkit_formula": "C77H142O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3319"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "ATMVAFVGQSPYTQ-VVRJDZCFSA-N",
+   "n_heavy_atoms": 98,
+   "gem_formula": "C79H146O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C79H146O17P2",
+   "rdkit_formula": "C79H146O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3246"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "JQSMVOVLPIKMJH-YDWWYXFJSA-N",
+   "n_heavy_atoms": 94,
+   "gem_formula": "C75H142O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C75H142O17P2",
+   "rdkit_formula": "C75H142O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3250"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "SITWISOKEVSRGJ-NFYJCUABSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H146O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H146O17P2",
+   "rdkit_formula": "C77H146O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3247"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "RKUCODXIXIXKCT-QUDUAHFBSA-N",
+   "n_heavy_atoms": 94,
+   "gem_formula": "C75H140O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C75H140O17P2",
+   "rdkit_formula": "C75H140O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3251"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "LCUVBORQENWTAO-CFNFFGBASA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H144O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H144O17P2",
+   "rdkit_formula": "C77H144O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3248"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "QIXCIYNCKWUYPJ-YDWWYXFJSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H146O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H146O17P2",
+   "rdkit_formula": "C77H146O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3249"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "LDUXBDQMMFLDQX-YGFANVMPSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H144O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H144O17P2",
+   "rdkit_formula": "C77H144O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3316"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "IUHJDAUSTREBJI-FLVJKVENSA-N",
+   "n_heavy_atoms": 98,
+   "gem_formula": "C79H148O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C79H148O17P2",
+   "rdkit_formula": "C79H148O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3252"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "UPNIZHAKPCAWML-FKECQXQLSA-N",
+   "n_heavy_atoms": 94,
+   "gem_formula": "C75H140O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C75H140O17P2",
+   "rdkit_formula": "C75H140O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3256"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "VNOGHVLQRCDTKE-LYIXVYKHSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H144O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H144O17P2",
+   "rdkit_formula": "C77H144O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3253"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "RLNUSHBADPLXEA-CINDCHFTSA-N",
+   "n_heavy_atoms": 94,
+   "gem_formula": "C75H138O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C75H138O17P2",
+   "rdkit_formula": "C75H138O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3257"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "JRDZWRUMYANUQS-PPFRTFKJSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H142O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H142O17P2",
+   "rdkit_formula": "C77H142O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3254"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "LDUXBDQMMFLDQX-YGFANVMPSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H144O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H144O17P2",
+   "rdkit_formula": "C77H144O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3255"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "YLUKLXPQKZSOFF-PPFRTFKJSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H142O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H142O17P2",
+   "rdkit_formula": "C77H142O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3317"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "NSHXPPPROQLOLP-VVRJDZCFSA-N",
+   "n_heavy_atoms": 98,
+   "gem_formula": "C79H146O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C79H146O17P2",
+   "rdkit_formula": "C79H146O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3308"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "RINNQSJWQUKHOK-LYIXVYKHSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H144O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H144O17P2",
+   "rdkit_formula": "C77H144O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3312"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "LURKIRCDEFGGLO-VTNGKBQQSA-N",
+   "n_heavy_atoms": 98,
+   "gem_formula": "C79H148O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C79H148O17P2",
+   "rdkit_formula": "C79H148O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3309"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "UKYJZWLLPJULLU-PPFRTFKJSA-N",
+   "n_heavy_atoms": 96,
+   "gem_formula": "C77H142O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C77H142O17P2",
+   "rdkit_formula": "C77H142O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3313"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "ATMVAFVGQSPYTQ-VVRJDZCFSA-N",
+   "n_heavy_atoms": 98,
+   "gem_formula": "C79H146O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C79H146O17P2",
+   "rdkit_formula": "C79H146O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3310"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "IUHJDAUSTREBJI-FLVJKVENSA-N",
+   "n_heavy_atoms": 98,
+   "gem_formula": "C79H148O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C79H148O17P2",
+   "rdkit_formula": "C79H148O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3311"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "NSHXPPPROQLOLP-VVRJDZCFSA-N",
+   "n_heavy_atoms": 98,
+   "gem_formula": "C79H146O17P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C79H146O17P2",
+   "rdkit_formula": "C79H146O17P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cis-dodec-5-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "template": "ACYLCOA",
+   "met_ids": [
+    "s_2895"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCC(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+   "inchi_key": "RCVJZGBRLGUTKT-KTKRTIGZSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C33H56N7O17P3S",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C33H56N7O17P3S",
+   "rdkit_formula": "C33H56N7O17P3S",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "cis-tetradec-7-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "template": "ACYLCOA",
+   "met_ids": [
+    "s_2893"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCC(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+   "inchi_key": "JPIHVKICKVPFFY-KTKRTIGZSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C35H60N7O17P3S",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C35H60N7O17P3S",
+   "rdkit_formula": "C35H60N7O17P3S",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:0, 2-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3284"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "CHUMORDHNQWFRE-XFUYORNGSA-N",
+   "n_heavy_atoms": 75,
+   "gem_formula": "C57H108O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C57H108O16P2",
+   "rdkit_formula": "C57H108O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:0, 2-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3285"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "CVFVNANVXLOXFP-BIDHIOHYSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H112O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H112O16P2",
+   "rdkit_formula": "C59H112O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:0, 2-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3292"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "ZCSJCWSJKHLHPE-BIDHIOHYSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H112O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H112O16P2",
+   "rdkit_formula": "C59H112O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:0, 2-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3293"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "JPMGIDWBAFGGGC-LBXGSASVSA-N",
+   "n_heavy_atoms": 79,
+   "gem_formula": "C61H116O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C61H116O16P2",
+   "rdkit_formula": "C61H116O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:1, 2-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3286"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "UGTMNZLYOKETBP-BUTYCLJRSA-N",
+   "n_heavy_atoms": 75,
+   "gem_formula": "C57H106O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C57H106O16P2",
+   "rdkit_formula": "C57H106O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:1, 2-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3287"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "IOTNVAIJMNERFP-ULXWNTFBSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H110O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H110O16P2",
+   "rdkit_formula": "C59H110O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:1, 2-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3294"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "PYEHJWNKYGSZJN-ULXWNTFBSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H110O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H110O16P2",
+   "rdkit_formula": "C59H110O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:1, 2-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3295"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "NLJOLQLRWMYNEW-CABVQDRLSA-N",
+   "n_heavy_atoms": 79,
+   "gem_formula": "C61H114O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C61H114O16P2",
+   "rdkit_formula": "C61H114O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-18:0, 2-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3288"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "IBNSGEGPFRSRGL-XFUYORNGSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H112O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H112O16P2",
+   "rdkit_formula": "C59H112O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-18:0, 2-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3289"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "ZJOOCAVJWHOTCC-AWOVZMASSA-N",
+   "n_heavy_atoms": 79,
+   "gem_formula": "C61H116O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C61H116O16P2",
+   "rdkit_formula": "C61H116O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-18:1, 2-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3290"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "PUROVGPUSPBNGU-ULXWNTFBSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H110O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H110O16P2",
+   "rdkit_formula": "C59H110O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-18:1, 2-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3291"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "SZGQFSFUNDJBGL-CABVQDRLSA-N",
+   "n_heavy_atoms": 79,
+   "gem_formula": "C61H114O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C61H114O16P2",
+   "rdkit_formula": "C61H114O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3270"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "CHUMORDHNQWFRE-XFUYORNGSA-N",
+   "n_heavy_atoms": 75,
+   "gem_formula": "C57H108O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C57H108O16P2",
+   "rdkit_formula": "C57H108O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3275"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "ZCSJCWSJKHLHPE-BIDHIOHYSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H112O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H112O16P2",
+   "rdkit_formula": "C59H112O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3272"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "UGTMNZLYOKETBP-BUTYCLJRSA-N",
+   "n_heavy_atoms": 75,
+   "gem_formula": "C57H106O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C57H106O16P2",
+   "rdkit_formula": "C57H106O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3276"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "PYEHJWNKYGSZJN-ULXWNTFBSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H110O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H110O16P2",
+   "rdkit_formula": "C59H110O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3273"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "IBNSGEGPFRSRGL-XFUYORNGSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H112O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H112O16P2",
+   "rdkit_formula": "C59H112O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3274"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "PUROVGPUSPBNGU-ULXWNTFBSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H110O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H110O16P2",
+   "rdkit_formula": "C59H110O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3278"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "CVFVNANVXLOXFP-BIDHIOHYSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H112O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H112O16P2",
+   "rdkit_formula": "C59H112O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3282"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "JPMGIDWBAFGGGC-LBXGSASVSA-N",
+   "n_heavy_atoms": 79,
+   "gem_formula": "C61H116O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C61H116O16P2",
+   "rdkit_formula": "C61H116O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3279"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "IOTNVAIJMNERFP-ULXWNTFBSA-N",
+   "n_heavy_atoms": 77,
+   "gem_formula": "C59H110O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C59H110O16P2",
+   "rdkit_formula": "C59H110O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3283"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "NLJOLQLRWMYNEW-CABVQDRLSA-N",
+   "n_heavy_atoms": 79,
+   "gem_formula": "C61H114O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C61H114O16P2",
+   "rdkit_formula": "C61H114O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3280"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "ZJOOCAVJWHOTCC-AWOVZMASSA-N",
+   "n_heavy_atoms": 79,
+   "gem_formula": "C61H116O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C61H116O16P2",
+   "rdkit_formula": "C61H116O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "template": "CL",
+   "met_ids": [
+    "s_3281"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "SZGQFSFUNDJBGL-CABVQDRLSA-N",
+   "n_heavy_atoms": 79,
+   "gem_formula": "C61H114O16P2",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C61H114O16P2",
+   "rdkit_formula": "C61H114O16P2",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PDME",
+   "met_ids": [
+    "s_3199"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "inchi_key": "OHGPMNRGCZDYQF-VLGSPTGOSA-N",
+   "n_heavy_atoms": 49,
+   "gem_formula": "C39H76NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C39H76NO8P",
+   "rdkit_formula": "C39H76NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PDME",
+   "met_ids": [
+    "s_3203"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "inchi_key": "ZSVMWQMKUKDZTH-VXPUYCOJSA-N",
+   "n_heavy_atoms": 51,
+   "gem_formula": "C41H80NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H80NO8P",
+   "rdkit_formula": "C41H80NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PDME",
+   "met_ids": [
+    "s_3200"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN(C)C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "PYECRQLIFUYLEH-IQRFGFHNSA-N",
+   "n_heavy_atoms": 49,
+   "gem_formula": "C39H74NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C39H74NO8P",
+   "rdkit_formula": "C39H74NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PDME",
+   "met_ids": [
+    "s_3204"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN(C)C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "IAYTZZZFSDDELX-FRKBGCJLSA-N",
+   "n_heavy_atoms": 51,
+   "gem_formula": "C41H78NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H78NO8P",
+   "rdkit_formula": "C41H78NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PDME",
+   "met_ids": [
+    "s_3201"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "inchi_key": "RMARBPFAEGEQBO-VLGSPTGOSA-N",
+   "n_heavy_atoms": 51,
+   "gem_formula": "C41H80NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H80NO8P",
+   "rdkit_formula": "C41H80NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PDME",
+   "met_ids": [
+    "s_3205"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "inchi_key": "JPXWWRACEORTKX-XDOYNYLZSA-N",
+   "n_heavy_atoms": 53,
+   "gem_formula": "C43H84NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C43H84NO8P",
+   "rdkit_formula": "C43H84NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PDME",
+   "met_ids": [
+    "s_3202"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "inchi_key": "XMCZMOUBOYRSIQ-FRKBGCJLSA-N",
+   "n_heavy_atoms": 51,
+   "gem_formula": "C41H78NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H78NO8P",
+   "rdkit_formula": "C41H78NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PMME",
+   "met_ids": [
+    "s_3184"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "inchi_key": "HHJZVMIJMZTDJC-ICFOKQHNSA-N",
+   "n_heavy_atoms": 48,
+   "gem_formula": "C38H74NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C38H74NO8P",
+   "rdkit_formula": "C38H74NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PMME",
+   "met_ids": [
+    "s_3192"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "inchi_key": "YAOJJIUXLIFZQN-HNENSFHCSA-N",
+   "n_heavy_atoms": 50,
+   "gem_formula": "C40H78NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C40H78NO8P",
+   "rdkit_formula": "C40H78NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PMME",
+   "met_ids": [
+    "s_3186"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCNC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "HRTNJPRHLDGDBC-RYOQUFEFSA-N",
+   "n_heavy_atoms": 48,
+   "gem_formula": "C38H72NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C38H72NO8P",
+   "rdkit_formula": "C38H72NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PMME",
+   "met_ids": [
+    "s_3194"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCNC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "XNJQCBSHMDWHHT-FESQGUELSA-N",
+   "n_heavy_atoms": 50,
+   "gem_formula": "C40H76NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C40H76NO8P",
+   "rdkit_formula": "C40H76NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PMME",
+   "met_ids": [
+    "s_3188"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "inchi_key": "LKAWGLGUWZEPTE-ICFOKQHNSA-N",
+   "n_heavy_atoms": 50,
+   "gem_formula": "C40H78NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C40H78NO8P",
+   "rdkit_formula": "C40H78NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PMME",
+   "met_ids": [
+    "s_3196"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "inchi_key": "FTQVYYIOBHBJOV-VZCXRCSSSA-N",
+   "n_heavy_atoms": 52,
+   "gem_formula": "C42H82NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C42H82NO8P",
+   "rdkit_formula": "C42H82NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PMME",
+   "met_ids": [
+    "s_3190"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCCNC",
+   "inchi_key": "AMEQGEMIPSZKLL-FESQGUELSA-N",
+   "n_heavy_atoms": 50,
+   "gem_formula": "C40H76NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C40H76NO8P",
+   "rdkit_formula": "C40H76NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylcholine (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylcholine_PC",
+   "template": "PC",
+   "met_ids": [
+    "s_3207",
+    "s_3296",
+    "s_3448",
+    "s_3693"
+   ],
+   "n_metabolite_rows": 4,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+   "inchi_key": "QIBZFHLFHCIUOT-ZPHPHTNESA-N",
+   "n_heavy_atoms": 50,
+   "gem_formula": "C40H78NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C40H78NO8P",
+   "rdkit_formula": "C40H78NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylcholine (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylcholine_PC",
+   "template": "PC",
+   "met_ids": [
+    "s_3211",
+    "s_3304",
+    "s_3458",
+    "s_3701"
+   ],
+   "n_metabolite_rows": 4,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+   "inchi_key": "WTJKGGKOPKCXLL-MRCUWXFGSA-N",
+   "n_heavy_atoms": 52,
+   "gem_formula": "C42H82NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C42H82NO8P",
+   "rdkit_formula": "C42H82NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PE",
+   "met_ids": [
+    "s_3130",
+    "s_3148",
+    "s_3166",
+    "s_3181",
+    "s_3465",
+    "s_3705"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "inchi_key": "CZOSTDZGCCEZTJ-PEZBUJJGSA-N",
+   "n_heavy_atoms": 47,
+   "gem_formula": "C37H72NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C37H72NO8P",
+   "rdkit_formula": "C37H72NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PE",
+   "met_ids": [
+    "s_3138",
+    "s_3156",
+    "s_3174",
+    "s_3191",
+    "s_3473",
+    "s_3686"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "inchi_key": "FHQVHHIBKUMWTI-ZCXUNETKSA-N",
+   "n_heavy_atoms": 49,
+   "gem_formula": "C39H76NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C39H76NO8P",
+   "rdkit_formula": "C39H76NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PE",
+   "met_ids": [
+    "s_3140",
+    "s_3158",
+    "s_3176",
+    "s_3193",
+    "s_3474",
+    "s_3688"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "RAMNOXDFBNFSFC-LJSPAGPLSA-N",
+   "n_heavy_atoms": 49,
+   "gem_formula": "C39H74NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C39H74NO8P",
+   "rdkit_formula": "C39H74NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PE",
+   "met_ids": [
+    "s_3134",
+    "s_3152",
+    "s_3170",
+    "s_3187",
+    "s_3469",
+    "s_3707"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "inchi_key": "XQWOAWVAWAXMKM-PEZBUJJGSA-N",
+   "n_heavy_atoms": 49,
+   "gem_formula": "C39H76NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C39H76NO8P",
+   "rdkit_formula": "C39H76NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PE",
+   "met_ids": [
+    "s_3142",
+    "s_3160",
+    "s_3178",
+    "s_3195",
+    "s_3475",
+    "s_3690"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "inchi_key": "JQKOHRZNEOQNJE-ZZEZOPTASA-N",
+   "n_heavy_atoms": 51,
+   "gem_formula": "C41H80NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H80NO8P",
+   "rdkit_formula": "C41H80NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "template": "PE",
+   "met_ids": [
+    "s_3144",
+    "s_3162",
+    "s_3180",
+    "s_3197",
+    "s_3476",
+    "s_3692"
+   ],
+   "n_metabolite_rows": 6,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "MWRBNPKJOOWZPW-CLFAGFIQSA-N",
+   "n_heavy_atoms": 51,
+   "gem_formula": "C41H78NO8P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C41H78NO8P",
+   "rdkit_formula": "C41H78NO8P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylglycerol (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "template": "PG",
+   "met_ids": [
+    "s_3227"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)CO",
+   "inchi_key": "NOFOTAHTYLXZNV-PEZBUJJGSA-N",
+   "n_heavy_atoms": 49,
+   "gem_formula": "C38H73O10P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C38H73O10P",
+   "rdkit_formula": "C38H73O10P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "phosphatidylglycerol (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "template": "PG",
+   "met_ids": [
+    "s_3229"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)CO)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "GHQNERCMPIDAAU-VMNXYWKNSA-N",
+   "n_heavy_atoms": 49,
+   "gem_formula": "C38H71O10P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C38H71O10P",
+   "rdkit_formula": "C38H71O10P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "sn-2-acyl-1-lysophosphatidylinositol (18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "template": "LPI2",
+   "met_ids": [
+    "s_3127"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OC1C(O)C(O)C(O)C(O)C1O",
+   "inchi_key": "ILUXUYQKWSBQGI-KTKRTIGZSA-N",
+   "n_heavy_atoms": 40,
+   "gem_formula": "C27H51O12P",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C27H51O12P",
+   "rdkit_formula": "C27H51O12P",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "trans-2,cis-5-dodecadienoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "template": "ACYLCOA",
+   "met_ids": [
+    "s_2896"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCC/C=C\\C/C=C/C(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+   "inchi_key": "ZSJRXHRCABOSNC-WBVBYKIGSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C33H54N7O17P3S",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C33H54N7O17P3S",
+   "rdkit_formula": "C33H54N7O17P3S",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "trans-2,cis-5-tetradecadienoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "template": "ACYLCOA",
+   "met_ids": [
+    "s_2901"
+   ],
+   "n_metabolite_rows": 1,
+   "smiles": "CCCCCCCC/C=C\\C/C=C/C(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+   "inchi_key": "JVEFYXPCQBMMAA-GFHFAWEGSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C35H58N7O17P3S",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C35H58N7O17P3S",
+   "rdkit_formula": "C35H58N7O17P3S",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:0, 2-16:1, 3-18:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3035",
+    "s_3075"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COC(=O)CCCCCCCCCCCCCCC",
+   "inchi_key": "TWJCMQZMAPGUSG-BIDHIOHYSA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C53H98O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C53H98O6",
+   "rdkit_formula": "C53H98O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:0, 2-18:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3020",
+    "s_3060"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "XMGKWDALQAPFOX-UOBUJMOASA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C53H98O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C53H98O6",
+   "rdkit_formula": "C53H98O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:0, 2-18:1, 3-18:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3036",
+    "s_3076"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "JFISYPWOVQNHLS-LBXGSASVSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C55H102O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C55H102O6",
+   "rdkit_formula": "C55H102O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-16:1, 3-16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3013",
+    "s_3048"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "RUOVJPPUXXFZPC-UZTWDUGDSA-N",
+   "n_heavy_atoms": 57,
+   "gem_formula": "C51H94O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C51H94O6",
+   "rdkit_formula": "C51H94O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-16:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3029",
+    "s_3069"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "QEZWFCZNHWUARW-XFUYORNGSA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C53H98O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C53H98O6",
+   "rdkit_formula": "C53H98O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-18:1, 3-16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3014",
+    "s_3050"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "XMGKWDALQAPFOX-UOBUJMOASA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C53H98O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C53H98O6",
+   "rdkit_formula": "C53H98O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-18:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3022",
+    "s_3062"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "WSJUMCLBIMYQBU-ULXWNTFBSA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C53H96O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C53H96O6",
+   "rdkit_formula": "C53H96O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-18:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3030",
+    "s_3070"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "UKQCGKYEJGBSQO-AWOVZMASSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C55H102O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C55H102O6",
+   "rdkit_formula": "C55H102O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-16:1, 3-16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3015",
+    "s_3052"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COC(=O)CCCCCCCCCCCCCCCCC",
+   "inchi_key": "YSNGWXHIKNKBNE-FLFQWRMESA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C53H100O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C53H100O6",
+   "rdkit_formula": "C53H100O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-16:1, 3-18:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3039",
+    "s_3079"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COC(=O)CCCCCCCCCCCCCCCCC",
+   "inchi_key": "JHISGXUBPFPZEO-HBLVUIEFSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C55H102O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C55H102O6",
+   "rdkit_formula": "C55H102O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-18:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3024",
+    "s_3064"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "UKQCGKYEJGBSQO-AWOVZMASSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C55H102O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C55H102O6",
+   "rdkit_formula": "C55H102O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-18:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3032",
+    "s_3072"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COC(=O)CCCCCCCCCCCCCCCCC",
+   "inchi_key": "RBLADLVPSYELCA-IKPAITLHSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C57H108O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C57H108O6",
+   "rdkit_formula": "C57H108O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-18:1, 3-18:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3040",
+    "s_3080"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "RYNHWWNZNIGDAQ-CDAVXRBQSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C57H106O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C57H106O6",
+   "rdkit_formula": "C57H106O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-16:1, 3-16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3017",
+    "s_3056"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COC(=O)CCCCCCCCCCCCCCC",
+   "inchi_key": "TWJCMQZMAPGUSG-BIDHIOHYSA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C53H98O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C53H98O6",
+   "rdkit_formula": "C53H98O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-16:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3025",
+    "s_3065"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "inchi_key": "UFHNZOACKFBCOM-ULXWNTFBSA-N",
+   "n_heavy_atoms": 59,
+   "gem_formula": "C53H96O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C53H96O6",
+   "rdkit_formula": "C53H96O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-16:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3033",
+    "s_3073"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COC(=O)CCCCCCCCCCCCCCCCC",
+   "inchi_key": "JHISGXUBPFPZEO-HBLVUIEFSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C55H102O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C55H102O6",
+   "rdkit_formula": "C55H102O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-18:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3026",
+    "s_3066"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "YBWITEZBUYUNFC-CABVQDRLSA-N",
+   "n_heavy_atoms": 61,
+   "gem_formula": "C55H100O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C55H100O6",
+   "rdkit_formula": "C55H100O6",
+   "formula_match": true,
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-18:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "template": "TAG",
+   "met_ids": [
+    "s_3034",
+    "s_3074"
+   ],
+   "n_metabolite_rows": 2,
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "inchi_key": "RYNHWWNZNIGDAQ-CDAVXRBQSA-N",
+   "n_heavy_atoms": 63,
+   "gem_formula": "C57H106O6",
+   "gem_charge": 0.0,
+   "neutral_target_formula": "C57H106O6",
+   "rdkit_formula": "C57H106O6",
+   "formula_match": true,
+   "failure": null
+  }
+ ]
+}

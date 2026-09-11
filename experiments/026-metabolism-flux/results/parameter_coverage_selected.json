@@ -1,0 +1,52 @@
+{
+  "selection_rule": "mean of the shared EC4 band fraction and the own-class band fraction, top 3, dropping any predictor at or below the EC-median lookup",
+  "parameters": {
+    "k_cat": {
+      "selected": [
+        "ezkinetics",
+        "unikp",
+        "eitlem"
+      ],
+      "lookup_statistic": 0.5291153415453527,
+      "statistic": {
+        "dlkcat": 0.6718924972004479,
+        "unikp": 0.7846211272863008,
+        "eitlem": 0.768943635684957,
+        "turnup": 0.6786020583190394,
+        "deepenzyme": 0.557297499066816,
+        "ezkinetics": 0.8359462486002239
+      },
+      "n_units_all_selected": 3552,
+      "spread_median_decades": 0.713805569394869,
+      "spread_p90_decades": 1.4736990960855105,
+      "spread_frac_above_1_decade": 0.2865990990990991,
+      "all_predictors": {
+        "n_units": 3552,
+        "spread_median_decades": 1.1384494118276964,
+        "spread_frac_above_1_decade": 0.6179617117117117
+      }
+    },
+    "K_M": {
+      "selected": [
+        "ezkinetics",
+        "eitlem"
+      ],
+      "lookup_statistic": 0.5429264650989175,
+      "statistic": {
+        "unikp": 0.47965658827920865,
+        "eitlem": 0.5711086226203808,
+        "boost_km": 0.49533407988055245,
+        "ezkinetics": 0.6368047779022024
+      },
+      "n_units_all_selected": 3552,
+      "spread_median_decades": 0.4885600581761792,
+      "spread_p90_decades": 1.4044586002556163,
+      "spread_frac_above_1_decade": 0.1990427927927928,
+      "all_predictors": {
+        "n_units": 3552,
+        "spread_median_decades": 0.8667733574395785,
+        "spread_frac_above_1_decade": 0.42117117117117114
+      }
+    }
+  }
+}

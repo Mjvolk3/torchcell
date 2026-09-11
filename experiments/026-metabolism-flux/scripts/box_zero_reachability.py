@@ -81,6 +81,11 @@ def _balance_stats(layer: FluxLayer, v: torch.Tensor) -> dict[str, float]:
     }
 
 
+#: Display names for the two parameterizations, so a legend never carries a code
+#: identifier. "nullspace" is the config value; "null space" is English.
+PARAMETERIZATION_LABEL = {"box": "sigmoid box", "nullspace": "null space"}
+
+
 def _figure(fluxes: dict[str, np.ndarray], balances: dict[str, np.ndarray]) -> None:
     """Two panels: what magnitudes each parameterization reaches, and what it balances."""
     import matplotlib.pyplot as plt
@@ -88,17 +93,19 @@ def _figure(fluxes: dict[str, np.ndarray], balances: dict[str, np.ndarray]) -> N
     from torchcell.utils import (
         PANEL_WIDTHS_MM,
         PLOT_PALETTE,
+        apply_paper_style,
         mm_to_in,
         savefig_true_size_svg,
     )
 
     images_dir = osp.join(os.environ["ASSET_IMAGES_DIR"], "026-metabolism-flux")
     os.makedirs(images_dir, exist_ok=True)
-    plt.rcParams.update(
-        {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"}
-    )
+    apply_paper_style()
+    # Full page width and lettered. At the old 88.5 mm the figure printed at half the
+    # note's 182 mm text block, so its 6 pt labels sat beside 10 pt body type and the two
+    # log axes had a decade every 4 mm.
     fig, axes = plt.subplots(
-        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(48.0))
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62.0))
     )
 
     ax = axes[0]
@@ -110,7 +117,7 @@ def _figure(fluxes: dict[str, np.ndarray], balances: dict[str, np.ndarray]) -> N
             histtype="step",
             linewidth=0.9,
             color=PLOT_PALETTE[i],
-            label=name,
+            label=PARAMETERIZATION_LABEL[name],
         )
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -119,7 +126,9 @@ def _figure(fluxes: dict[str, np.ndarray], balances: dict[str, np.ndarray]) -> N
     ax.set_xlim(1e-9, 1e3)
     ax.set_xlabel(r"$|v_j|$ (mmol gDW$^{-1}$ h$^{-1}$)")
     ax.set_ylabel("reactions")
-    ax.legend(fontsize=6, frameon=False, loc="upper left")
+    # Above the axes, not floating in the upper left corner of the data area, where it sat
+    # on the box arm's own tail.
+    _legend_above(ax, ncol=2)
     _style(ax)
 
     ax = axes[1]
@@ -130,32 +139,62 @@ def _figure(fluxes: dict[str, np.ndarray], balances: dict[str, np.ndarray]) -> N
             histtype="step",
             linewidth=0.9,
             color=PLOT_PALETTE[i],
-            label=name,
+            label=PARAMETERIZATION_LABEL[name],
         )
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.axvline(2.0, color="black", linewidth=0.5, linestyle=":")
     ax.set_xlabel(
         "mass-balance residual per metabolite\n"
-        r"$|[Sv]_i| / \omega_i$   (2 = worst possible)"
+        r"$|[Sv]_i| / \omega_i$"
     )
     ax.set_ylabel("metabolites")
+    # The panel had no legend at all: the two histograms were drawn with `label=` and
+    # nothing ever rendered them, so the reader had to carry the colors over from the
+    # panel on the left.
+    handles, names = ax.get_legend_handles_labels()
+    handles.append(plt.Line2D([0], [0], color="black", linewidth=0.5, linestyle=":"))
+    names.append("worst possible, 2")
+    _legend_above(ax, ncol=3, handles=handles, names=names)
     _style(ax)
 
-    fig.tight_layout()
+    for letter, ax in zip("ab", axes):
+        ax.text(-0.14, 1.16, letter, transform=ax.transAxes, fontsize=8,
+                fontweight="bold", va="top")
+
+    fig.tight_layout(w_pad=2.6)
     stem = osp.join(images_dir, "box_vs_nullspace")
     fig.savefig(f"{stem}.png", dpi=300)
     savefig_true_size_svg(fig, f"{stem}.svg")
     plt.close(fig)
 
 
+def _legend_above(ax, ncol: int, handles=None, names=None) -> None:
+    """Legend OUTSIDE the axes, above it. Only data goes in the data area."""
+    if handles is None:
+        handles, names = ax.get_legend_handles_labels()
+    ax.legend(
+        handles,
+        names,
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.01),
+        ncol=ncol,
+        frameon=False,
+        fontsize=6,
+        handlelength=1.2,
+        handletextpad=0.4,
+        borderpad=0.0,
+        columnspacing=1.0,
+    )
+
+
 def _style(ax) -> None:
-    """Boxed axes at 0.5 pt, the repo figure standard."""
+    """Boxed axes at 0.5 pt, thin solid gridlines, the repo figure standard."""
     for spine in ax.spines.values():
         spine.set_visible(True)
         spine.set_linewidth(0.5)
     ax.tick_params(labelsize=6, width=0.5, length=2)
-    ax.grid(True, which="both", linewidth=0.3, alpha=0.4)
+    ax.grid(True, which="both", linewidth=0.3, color="0.85")
     ax.set_axisbelow(True)
 
 

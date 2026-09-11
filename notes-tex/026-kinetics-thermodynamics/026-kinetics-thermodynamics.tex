@@ -25,6 +25,19 @@
 %% line rather than run it past the text block.
 \emergencystretch=3.5em
 
+%% Float packing. This document is 15 figures and 18 tables, and LaTeX's defaults
+%% (topfraction 0.7, textfraction 0.2) refuse to put a tall figure on a page that
+%% also carries text, so several full-width panels were being sent to pages of
+%% their own with a third of the page left blank. Loosening the fractions packs
+%% them against text instead. It changes placement only, never content or size.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.06}
+\renewcommand{\floatpagefraction}{0.80}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+
 \title{\vspace{-1.5em}Kinetic and Thermodynamic Parameters\\for the Flux Module\\
   {\large Five predictors run, and formation energies\\
    recomputed with uncertainty}}
@@ -45,33 +58,37 @@ usable only for this organism. All three are now built, and every value carries 
 \texttt{sha256} of the weights or the model version that produced it.
 
 Six kinetic predictors were mirrored into a standard location with per-file hashes,
-retrieval commands and git commits, and five were run over the enzyme-substrate pairs of
-yeast-GEM 9.0.2, with protein sequences taken from the genome object rather than from the
-table the model bundles. Validating each against its own authors' published examples paid
-for itself: \textbf{two of these models exponentiate base 2 and two base 10}, and reading
-either wrong yields turnover numbers that still look credible. Two entries in an earlier
-readiness audit were reversed by reading files rather than filenames, in both directions,
-and a third blocker dissolved entirely once its dependency was checked.
-
-The five predictors agree on the median $k_{cat}$ and disagree per pair. On identical
-enzyme-substrate pairs their rank correlation ranges from \textbf{0.015 to 0.509}, with a
-typical disagreement of 0.4 to 0.7 decades. Since almost none of these pairs has a measured
-value, that spread, and not any published accuracy figure, is the honest uncertainty on a
-single predicted turnover number.
+retrieval commands and git commits, and run over the enzyme-substrate pairs of yeast-GEM
+9.0.2, with protein sequences taken from the genome object rather than from the table the
+model bundles. Validating each against its own authors' published examples paid for itself:
+\textbf{two of these models exponentiate base 2 and three base 10}, and reading either
+wrong yields turnover numbers that still look credible. They agree on the median $k_{cat}$
+and disagree per pair, at a rank correlation of \textbf{0.015 to 0.509} on identical pairs.
+Since almost none of these pairs has a measured value, that spread, and not any published
+accuracy figure, is the honest uncertainty on a single predicted turnover number.
 
 Formation energies were recomputed from eQuilibrator's component contribution, which
 returns a covariance and applies to any organism because it works from structure. Summing
 the resulting table reproduces eQuilibrator's own reaction call to
-$9.1\times10^{-13}$ kJ\,mol$^{-1}$, so the table is correct; on the chemical reactions both
-tables cover it agrees with the shipped file to a median of 10.11 kJ\,mol$^{-1}$, which is
-about as well as the shipped file agrees with itself. The gain is 785 reactions with a
-real standard error, median 2.30 kJ\,mol$^{-1}$, and the rank-590 covariance factor the
-flux layer had recorded as unavailable. The cost is reaction coverage, 42.5 percent against
-77.7. Compartment-specific pH is implemented and not trusted: it moves 1{,}309 reactions by
-a median 42 kJ\,mol$^{-1}$, which is not credible.
+$6.8\times10^{-13}$ kJ\,mol$^{-1}$. \textbf{The file it is compared against turns out to be
+in kilocalories and labeled kilojoules}: yeast-GEM's curation script copies yETFL's values
+across with no conversion, and regressing our table on yETFL's over 1{,}927 shared
+metabolites gives a slope of 4.187 at $r = 0.987$. Correcting that and matching the
+compartment conditions closes the transport arm of the disagreement, median 17.4 to
+5.6 kJ\,mol$^{-1}$, and leaves the single-compartment cloud where it was, 16.3 to 17.6.
+Only the second is a disagreement about thermodynamics.
 
-The predictors agree with each other far less than either agrees with its own training
-data, and that gap is the honest uncertainty on any single predicted value.
+\textbf{The largest single coverage change in this work was a bug of ours.} The proton is
+the reference of the Legendre transform rather than a compound to be priced, and
+eQuilibrator correctly declines to give it a formation energy; left as a missing value it
+removed every reaction that moves a proton. Pricing it at zero, verified against
+eQuilibrator's own reaction call to 0.0000 kJ\,mol$^{-1}$, takes reaction coverage from
+42.5 to \textbf{66.4 percent} and leaves the union with the shipped table unchanged at
+90.0. The translocation term those 170 proton-moving reactions then omit is computed
+separately and checked against yeast-GEM's own column. Writing structures for the lipids no
+database indexes prices 347 of the 665 metabolites the recomputation could not reach,
+taking it to 86.3 percent of reactions and past the shipped column, on one method with one
+uncertainty.
 \end{abstract}
 
 \vspace{0.5em}
@@ -82,8 +99,11 @@ data, and that gap is the honest uncertainty on any single predicted value.
 \input{sections/2-predictors}
 \input{sections/3-thermodynamics}
 \input{sections/4-reproduction}
+\input{sections/4b-coverage}
 \input{sections/5-module}
 \input{sections/6-limits}
 \input{sections/7-sources}
+
+\bibliography{references}
 
 \end{document}

@@ -1,0 +1,24 @@
+%% notes-tex/metabolic-module-report/sections/3-status.tex
+%% [[experiments.027-betaxanthin-metabolic]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/metabolic-module-report/sections/3-status.tex
+
+\section{Where the training stands\secstatus{todo}}
+\label{sec:status}
+
+The 027 grid on Delta ran 144 cells, six arms over 24 seeds, on Cachera's betaxanthin
+screen with the 019 nine-graph backbone. The anchored module scored $-0.020$ test Spearman
+against $+0.027$ for no module. The prediction dumps show every cell is a constant
+predictor: the largest prediction spread in any cell is 0.8 percent of the target
+spread, the no-module arms sit at the target mean with a training loss of exactly 1.00 from
+epoch 10, and the flux arms at wrong constants. The claim that the thermodynamic anchor
+costs is therefore withdrawn and the module's effect is unmeasured; the same backbone
+reached 0.434 under the 019 trainer, so the defect is in the 027 loop. Two defects precede
+any relaunch: training uses yeast-GEM's shipped exchange bounds, which forbid all
+amino-acid uptake, while the Cachera strains grew in a supplemented medium; and 170 of the
+183 proton-translocating reactions carry a confidently wrong zero, the translocation term
+being computed but off by default.
+
+\textbf{Order of work.} A trainer that reproduces 0.434 on the no-module arm with an abort
+on prediction collapse; the module arms on it, on the dataset's actual medium; then the
+merged $\Delta_f G$ and predicted $k_{cat}$ tables, on GilaHyper jobs 1663, 1667, 1668 and
+1669, carried to a selected epoch.

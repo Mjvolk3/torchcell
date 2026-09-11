@@ -21,7 +21,13 @@
 # Everything else below is copied from the 019 include because those values were validated
 # interactively on Delta rather than guessed, and the comments say what each one cost.
 
-PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/projects/bbub/mjvolk3/torchcell}"
+# Absolute, NOT derived from SLURM_SUBMIT_DIR. `${SLURM_SUBMIT_DIR:-default}` reads like a
+# safety net and is dead code: slurm ALWAYS sets the variable, to whatever directory sbatch
+# was invoked from, so the default can never fire. Submitting from anywhere but the repo
+# (`ssh delta 'sbatch ...'` runs in $HOME) then resolved this to /u/mjvolk3 and killed array
+# 21813159 in 8 seconds with "No such file or directory". Every other path in this file is
+# already a hardcoded Delta path; this one is too.
+PROJECT_ROOT="/projects/bbub/mjvolk3/torchcell"
 
 # DATA_ROOT is the LARGE space, NOT /projects (tight quota) and NOT /work/hdd (which several
 # older scripts in this repo still name). Confirmed on the Delta login node 2026-09-03: the

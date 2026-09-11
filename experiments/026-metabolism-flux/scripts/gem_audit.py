@@ -27,6 +27,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 from dotenv import load_dotenv
+from matplotlib.colors import to_rgba
 from matplotlib.ticker import MultipleLocator
 
 from torchcell.metabolism.constraints import build_gem_tensors, compare_reaction_delta_g
@@ -40,6 +41,7 @@ from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -56,19 +58,49 @@ OED_MIRROR = osp.join(
 )
 
 
+HATCH = "////"
+
+#: Thermal energy at the growth temperature the SGA screens use, RT with
+#: R = 8.314 J/mol/K and T = 303.15 K, in kJ/mol. Marked on the residual histogram as the
+#: scale below which a disagreement cannot change an equilibrium constant appreciably.
+RT_KJ_PER_MOL_AT_30C = 2.52
+
+
 def _apply_style(ax: plt.Axes) -> None:
-    """Repo figure standard: boxed axes, 6 pt Arial, tenth gridlines."""
+    """Repo figure standard: boxed axes at 0.5 pt, thin solid gridlines."""
     for spine in ax.spines.values():
         spine.set_visible(True)
         spine.set_linewidth(0.5)
     ax.tick_params(labelsize=6, width=0.5, length=2)
-    ax.grid(True, which="both", linewidth=0.3, alpha=0.4)
+    # A solid pale gray rather than a black line at alpha: alpha fades whatever is drawn
+    # with it, and the repo standard reserves transparency for nothing at all.
+    ax.grid(True, which="both", linewidth=0.3, color="0.85")
     ax.set_axisbelow(True)
+
+
+def _legend_above(ax: plt.Axes, ncol: int, handles=None, names=None) -> None:
+    """Legend OUTSIDE the axes, above it. Only data is drawn inside the data area."""
+    if handles is None:
+        handles, names = ax.get_legend_handles_labels()
+    ax.legend(
+        handles,
+        names,
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.01),
+        ncol=ncol,
+        frameon=False,
+        fontsize=6,
+        handlelength=1.2,
+        handletextpad=0.4,
+        borderpad=0.0,
+        columnspacing=1.0,
+    )
 
 
 def coverage_figure(audit: dict[str, Any], path_stem: str) -> None:
     """Stacked bars: how much of each parameter class is measured, predicted, defaulted."""
-    plt.rcParams.update({"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"})
+    apply_paper_style()
+    plt.rcParams.update({"hatch.linewidth": 0.4})
     rows = [
         ("Stoichiometry $S$", 1.0, 0.0, 0.0),
         (
@@ -107,36 +139,30 @@ def coverage_figure(audit: dict[str, Any], path_stem: str) -> None:
     predicted = np.array([r[2] for r in rows])
     default = np.array([r[3] for r in rows])
 
+    # Full page width: the row labels are long enough that at 88.5 mm they took a third of
+    # the canvas, and the figure printed at half the note's 182 mm text block.
     fig, ax = plt.subplots(
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(52.0))
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(56.0))
     )
     y = np.arange(len(rows))
-    ax.barh(y, measured, color=PLOT_PALETTE[4], edgecolor="black", linewidth=0.4,
+    # Palette order: the three levels are one ordered series, so they take slots 1, 2 and
+    # the gray residual slot, and the residual carries a solid black hatch rather than a
+    # paler tone, because lightness is reserved for validation against test.
+    ax.barh(y, measured, color=PLOT_PALETTE[0], edgecolor="black", linewidth=0.4,
             label="measured")
-    ax.barh(y, predicted, left=measured, color=PLOT_PALETTE[0], edgecolor="black",
+    ax.barh(y, predicted, left=measured, color=PLOT_PALETTE[1], edgecolor="black",
             linewidth=0.4, label="predicted")
     ax.barh(y, default, left=measured + predicted, color=PLOT_PALETTE[5],
-            edgecolor="black", linewidth=0.4, hatch="///", label="organism default")
+            edgecolor="black", linewidth=0.4, hatch=HATCH, label="organism default")
     ax.set_yticks(y)
     ax.set_yticklabels(labels)
     ax.set_xlim(0, 1)
     ax.xaxis.set_major_locator(MultipleLocator(0.2))
     ax.xaxis.set_minor_locator(MultipleLocator(0.1))
-    ax.tick_params(which="minor", length=0)
+    ax.tick_params(axis="x", which="minor", length=0)
     ax.set_xlabel("fraction of entities")
     ax.invert_yaxis()
-    # Below the axis, not inside it: the kcat and concentration rows are almost entirely
-    # "organism default", so an in-axes legend lands on top of the two bars the figure
-    # exists to show.
-    ax.legend(
-        fontsize=6,
-        frameon=False,
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.28),
-        ncol=3,
-        handlelength=1.4,
-        columnspacing=1.2,
-    )
+    _legend_above(ax, ncol=3)
     _apply_style(ax)
     fig.tight_layout()
     fig.savefig(f"{path_stem}.png", dpi=300)
@@ -145,20 +171,37 @@ def coverage_figure(audit: dict[str, Any], path_stem: str) -> None:
 
 
 def delta_g_figure(recomputed: np.ndarray, shipped: np.ndarray, path_stem: str) -> None:
-    """The two independent routes to a standard reaction energy, against each other."""
-    plt.rcParams.update({"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"})
+    """The two independent routes to a standard reaction energy, against each other.
+
+    Full page width and lettered, because the figure carries two panels and a reader has
+    to hold both at once: the cross in a, and where its arms land in b.
+    """
+    apply_paper_style()
     fig, axes = plt.subplots(
         1,
         2,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(48.0)),
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62.0)),
     )
     ax = axes[0]
-    ax.scatter(shipped, recomputed, s=1.5, color=PLOT_PALETTE[4], alpha=0.4,
-               edgecolors="none")
+    # Alpha on the FACE only, via to_rgba, rather than on the artist: the cloud is dense
+    # enough that opaque markers would print as one block, and no edge or hatch is drawn
+    # here for the transparency to fade.
+    ax.scatter(shipped, recomputed, s=1.5, color=to_rgba(PLOT_PALETTE[0], 0.4),
+               edgecolors="none", label="reaction")
     lim = [min(shipped.min(), recomputed.min()), max(shipped.max(), recomputed.max())]
-    ax.plot(lim, lim, color="black", linewidth=0.5, linestyle="--")
+    ax.plot(lim, lim, color="black", linewidth=0.5, linestyle="--", label="equality")
     ax.set_xlabel(r"shipped $\Delta_r G'^\circ$ (kJ mol$^{-1}$)")
-    ax.set_ylabel(r"$\sum_i S_{ij}\Delta_f G'^\circ_i$")
+    ax.set_ylabel(r"$\sum_i S_{ij}\Delta_f G'^\circ_i$ (kJ mol$^{-1}$)")
+    _legend_above(
+        ax,
+        ncol=2,
+        handles=[
+            plt.Line2D([0], [0], marker="o", markersize=2.2, linestyle="none",
+                       color=PLOT_PALETTE[0]),
+            plt.Line2D([0], [0], color="black", linewidth=0.5, linestyle="--"),
+        ],
+        names=["reaction", "equality"],
+    )
     _apply_style(ax)
 
     ax = axes[1]
@@ -167,24 +210,28 @@ def delta_g_figure(recomputed: np.ndarray, shipped: np.ndarray, path_stem: str) 
     ax.set_yscale("log")
     ax.set_xlabel(r"$|$residual$|$ (kJ mol$^{-1}$)")
     ax.set_ylabel("reactions")
-    ax.axvline(2.52, color="black", linewidth=0.5, linestyle=":")
-    # Annotated in AXES coordinates, horizontally, in the panel's empty upper right.
-    # The previous version placed it in DATA coordinates on a LOG axis and rotated it
-    # 90 degrees, so `ylim[1] * 0.4` put its baseline near the top of the axes and the
-    # rotated string then ran off the panel and was clipped mid-word. A log axis makes
-    # a fraction of the upper limit a position near the top, not near the middle.
-    ax.text(
-        0.97,
-        0.95,
-        r"dotted: $RT$ at $30^{\circ}$C",
-        transform=ax.transAxes,
-        fontsize=6,
-        ha="right",
-        va="top",
+    ax.axvline(RT_KJ_PER_MOL_AT_30C, color="black", linewidth=0.5, linestyle=":")
+    # The reference line is named in the legend ABOVE the axes and its value is in the
+    # caption. It used to be an annotation parked in the panel's upper right, which is
+    # exactly the text-inside-the-data-area the repo standard forbids: it collides with
+    # anything that moves and it duplicates a number the caption already carries.
+    _legend_above(
+        ax,
+        ncol=2,
+        handles=[
+            plt.Rectangle((0, 0), 1, 1, facecolor=PLOT_PALETTE[1], edgecolor="black",
+                          linewidth=0.4),
+            plt.Line2D([0], [0], color="black", linewidth=0.5, linestyle=":"),
+        ],
+        names=["reactions", r"$RT$ at 30 $^{\circ}$C"],
     )
     _apply_style(ax)
 
-    fig.tight_layout()
+    for letter, ax in zip("ab", axes):
+        ax.text(-0.14, 1.16, letter, transform=ax.transAxes, fontsize=8,
+                fontweight="bold", va="top")
+
+    fig.tight_layout(w_pad=2.6)
     fig.savefig(f"{path_stem}.png", dpi=300)
     savefig_true_size_svg(fig, f"{path_stem}.svg")
     plt.close(fig)
@@ -274,7 +321,10 @@ def main() -> None:
     with open(osp.join(RESULTS_DIR, "gem_audit.json"), "w") as f:
         json.dump(audit, f, indent=2)
 
-    coverage_figure(audit, osp.join(IMAGES_DIR, "parameter_coverage"))
+    # NOT "parameter_coverage": that basename belongs to plot_parameter_coverage.py, whose
+    # six-panel figure is the one the dev note and notes-tex both include. Both scripts
+    # wrote it, so whichever ran last silently decided which figure the documents showed.
+    coverage_figure(audit, osp.join(IMAGES_DIR, "gem_audit_parameter_coverage"))
     delta_g_figure(
         recomputed[both].numpy(),
         thermo.rxn_delta_g[both].numpy(),

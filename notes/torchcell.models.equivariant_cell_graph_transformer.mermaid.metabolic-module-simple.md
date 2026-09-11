@@ -21,42 +21,51 @@ the detailed diagram draws several of these edges solid when the code does not h
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'background':'#F5EEDD','clusterBkg':'#F5EEDD','clusterBorder':'#E0D6BE','lineColor':'#B7AC93'}}}%%
 graph TD
-  Hpert["Perturbed gene state H_pert<br><i>from the transformer</i>"]
-  Avail["Gene availability a_g<br>0 if deleted, else a sigmoid gate"]
-  Enzyme["Enzyme abundance E_g<br>softmin over complex, sum over isozymes"]
-  Flux["FLUX VECTOR v<br>box: v = lb + (ub - lb) * sigmoid(z)<br>capacity: |v| <= k_cat * E"]
-  Out["Phenotype heads<br>betaxanthin, amino acids, growth"]
+  Hpert["$$\begin{gathered}\text{Perturbed gene state}\ H_{\mathrm{pert}}\\\ \text{from the transformer}\end{gathered}$$"]
+  Avail["$$\begin{gathered}\text{Gene availability}\\\ \gamma_g = 0\ \text{if deleted, else}\ \sigma(w^\top h_g)\end{gathered}$$"]
+  Enzyme["$$\begin{gathered}\text{Enzyme abundance}\ E_j\\\ \mathrm{softmin}_\beta\ \text{over a complex (GPR AND)}\\\ \sum\ \text{over isozymes (GPR OR)}\end{gathered}$$"]
+  Flux["$$\begin{gathered}\textbf{Flux vector}\ \nu \in \mathbb{R}^{4131}\\\ \nu_j = lb_j + (ub_j - lb_j)\,\sigma(z_j)\\\ |\nu_j| \le k_{cat,j}\,E_j\end{gathered}$$"]
+  Out["$$\begin{gathered}\text{Phenotype heads}\\\ \text{betaxanthin, amino acids, growth}\end{gathered}$$"]
 
-  subgraph GEM["Fixed, from yeast-GEM 9.0.2"]
-    direction LR
-    Stoich["Stoichiometry S<br>2806 x 4131"]
-    Bounds["Bounds and media<br>direction only, no capacity"]
+  subgraph GEM["$$\text{Fixed, from yeast-GEM 9.0.2}$$"]
+    direction TB
+    Stoich["$$\begin{gathered}\text{Stoichiometry}\\\ S \in \mathbb{R}^{2806 \times 4131}\end{gathered}$$"]
+    GPR["$$\begin{gathered}\text{GPR rules}\\\ \texttt{(A and B) or C}\\\ \text{per reaction, in the SBML}\end{gathered}$$"]
+    Bounds["$$\begin{gathered}\text{Bounds and media}\\\ lb_j,\ ub_j\text{: direction only}\end{gathered}$$"]
   end
 
-  subgraph Tables["Parameter tables (dashed = built, read by nothing)"]
+  subgraph Wired["$$\text{Parameter tables read today}$$"]
     direction LR
-    Kcat["k_cat<br>OED, 4.0% measured"]
-    Thermo["delta_f G<br>shipped with the GEM"]
-    KcatPred["k_cat predicted<br>5 models, 95.3%"]
-    ThermoNew["delta_f G recomputed<br>eQuilibrator + covariance"]
-    Km["K_M<br>3 models, 93-95%"]
+    Kcat["$$\begin{gathered}k_{cat}\\\ \text{OED, 4.0\% measured}\end{gathered}$$"]
+    Thermo["$$\begin{gathered}\Delta_f G\\\ \text{shipped with the GEM}\end{gathered}$$"]
   end
 
-  subgraph Soft["Soft constraints"]
+  subgraph Built["$$\text{Built, hash-pinned, read by nothing}$$"]
     direction LR
-    Mass["Mass balance<br>||Sv||"]
-    Second["Second law<br>relu(v * delta_r G + eps)<br>forbids loops, no binary"]
-    Diss["Gibbs dissipation"]
+    KcatPred["$$\begin{gathered}k_{cat}\ \text{predicted}\\\ \text{5 models, 95.3\%}\end{gathered}$$"]
+    ThermoNew["$$\begin{gathered}\Delta_f G'^{\circ},\ \Sigma\ \text{recomputed}\\\ \text{eQuilibrator + covariance}\end{gathered}$$"]
+    Km["$$\begin{gathered}K_M\\\ \text{3 models, 93 to 95\%}\end{gathered}$$"]
   end
+
+  subgraph Soft["$$\text{Soft constraints}$$"]
+    direction TB
+    Mass["$$\begin{gathered}\text{Mass balance}\\\ \|S\nu\|\ \text{scale-relative}\end{gathered}$$"]
+    Second["$$\begin{gathered}\text{Second law}\\\ \mathrm{relu}(\nu_j \Delta_r G_j + \epsilon)\\\ \text{forbids loops, no binary}\end{gathered}$$"]
+  end
+
+  Diss["$$\begin{gathered}\text{Gibbs dissipation, readout only}\\\ g_{\mathrm{diss}} = \sum_{j \in \mathrm{exch}} \Delta_r G_j \nu_j\\\ \text{checked against}\ g_{\mathrm{lim}}\ \text{(Niebel 2019), never penalized}\end{gathered}$$"]
 
   Hpert --> Avail --> Enzyme --> Flux
-  GEM --> Flux
+  GPR --> Enzyme
+  Stoich --> Flux
+  Bounds --> Flux
   Kcat --> Flux
   Thermo --> Second
-  KcatPred -.->|"not wired"| Flux
-  Km -.->|"not wired"| Flux
-  ThermoNew -.->|"not wired"| Second
+  KcatPred -.->|"$$\text{not wired}$$"| Flux
+  Km -.->|"$$\text{not wired}$$"| Flux
+  ThermoNew -.->|"$$\text{not wired}$$"| Second
   Flux --> Soft
+  Flux -.->|"$$\text{validation}$$"| Diss
   Flux --> Out
 
   classDef learned fill:#FFE6CC,stroke:#BD8800,stroke-width:2px
@@ -68,13 +77,28 @@ graph TD
   classDef out fill:#FFE6CC,stroke:#A24A46,stroke-width:3px
 
   class Hpert,Avail,Enzyme learned
-  class Stoich,Bounds fixed
+  class Stoich,GPR,Bounds fixed
   class Kcat,Thermo wired
   class KcatPred,ThermoNew,Km unwired
   class Flux flux
-  class Mass,Second,Diss pen
+  class Mass,Second pen
+  class Diss unwired
   class Out out
 ```
+
+**Where the complex-versus-isozyme split comes from.** It is not inferred from EC numbers
+or from any kinetic table. Each yeast-GEM reaction carries a gene-protein-reaction (GPR)
+rule as a boolean string in the SBML, for example `(YKL060C and YLR044C) or YGR254W`. An
+`and` is a complex whose subunits are all required, so availability folds by a softmin
+(the scarcest subunit limits); an `or` is a set of isozymes that substitute for one
+another, so availability folds by a sum (capacities add). `parse_catalytic_units` in
+`torchcell/metabolism/constraints.py` reads cobra's `gene_reaction_rule` string for every
+reaction, splits on top-level `or` into units and each unit on `and` into subunits, and
+stores the result as index arrays (`CatalyticUnits`); `reaction_availability` in
+`flux_layer.py` applies the softmin and the sum over those arrays. A reaction with no GPR
+keeps availability 1, since an unannotated reaction is one nobody has assigned a gene to,
+not one that no gene catalyzes. The softmin temperature is `softmin_beta` in
+`FluxLayerConfig`.
 
 ### What the five components do
 

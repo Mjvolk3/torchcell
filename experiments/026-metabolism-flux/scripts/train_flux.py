@@ -73,7 +73,17 @@ from torchcell.metabolism.constraints import (
     null_space_basis,
 )
 from torchcell.metabolism.flux_layer import FluxLayer, FluxLayerConfig
-from torchcell.metabolism.parameters import molecular_weight_table, resolve_kcat_table
+from torchcell.metabolism.parameters import (
+    KINETICS_MIRROR,
+    PLAUSIBILITY_RESULT,
+    THERMO_EQUILIBRATOR_MIRROR,
+    ThermoSource,
+    load_predicted_unit_table,
+    molecular_weight_table,
+    resolve_kcat_table,
+    resolve_km_table,
+    resolve_reaction_delta_g,
+)
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.models.cell_graph_transformer_metabolism import (
     CellGraphTransformerMetabolism,
@@ -149,6 +159,26 @@ ARMS: dict[str, dict[str, Any]] = {
         "use_protein_budget": True,
         "use_dissipation_limit": True,
     },
+    # THE PROTEIN NODE (2026-09-09). The abundance head replaces the nominal E_bar with a
+    # predicted per-gene enzyme abundance; the capacity bound is kcat * E_u and the
+    # protein budget is the forward pool constraint on E. Two arms: capacity alone, and
+    # capacity plus the anchored thermodynamics. Dissipation is a readout in both.
+    "flux_capacity": {
+        "flux": True,
+        "thermo_mode": ThermoMode.OFF,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": False,
+        "use_abundance_head": True,
+    },
+    "flux_abundance": {
+        "flux": True,
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": False,
+        "use_abundance_head": True,
+    },
     # The exactness-budget arm: mass balance exact by construction, box soft.
     "flux_nullspace": {
         "flux": True,
@@ -166,6 +196,9 @@ def build_dataset() -> Neo4jCellDataset:
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
+        # See the note in 027's train_bx.py: the default `overwrite=True` rebuilds
+        # data.db under every worker, which is a write race when workers share a node.
+        overwrite=False,
     )
     graph = SCerevisiaeGraph(
         sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
@@ -194,22 +227,60 @@ def build_dataset() -> Neo4jCellDataset:
 def build_flux_layer(
     arm: dict[str, Any], model_gene_ids: list[str], hidden_dim: int
 ) -> tuple[FluxLayer | None, dict[str, Any]]:
-    """Construct the flux layer for one arm, with real MW and OED-resolved kcat."""
+    """Construct the flux layer for one arm, with real MW and OED-resolved kcat.
+
+    Four things an arm may now ask for beyond its constraint switches, all keyed off the arm
+    dict so the registry stays the single source of truth:
+
+    * ``kcat_tier``: ``"measured"`` is the historical table, 148 measured units and 3,580
+      organism defaults out of 3,728; ``"predicted"`` inserts the sequence-predictor tier
+      between them and turns that into 148 measured, 3,410 predicted, 170 default.
+    * ``thermo_source``: which route supplies the standard reaction energies.
+    * ``constraint_warmup_epochs`` / ``constraint_final_scale``: the ramp on the physics.
+    """
     if not arm["flux"]:
         return None, {}
     source = YeastGEM()
     gem = build_gem_tensors(source.model, model_dir=source.model_dir)
     units = gem.catalytic_units
     mw = molecular_weight_table(source.model_dir, units.gene_ids)
-    kcat = resolve_kcat_table(units, source.model_dir, OED_MIRROR)
+    kcat_tier = arm.get("kcat_tier", "measured")
+    predicted_kcat = predicted_km = None
+    km = None
+    if kcat_tier == "predicted":
+        kinetics_dir = osp.join(DATA_ROOT, KINETICS_MIRROR)
+        plausibility = osp.join(EXPERIMENT_ROOT, PLAUSIBILITY_RESULT)
+        predicted_kcat = load_predicted_unit_table(
+            "k_cat", units.n_units, kinetics_dir, plausibility
+        )
+        predicted_km = load_predicted_unit_table(
+            "K_M", units.n_units, kinetics_dir, plausibility
+        )
+        km = resolve_km_table(units, source.model_dir, OED_MIRROR, predicted=predicted_km)
+    elif kcat_tier != "measured":
+        raise ValueError(f"kcat_tier must be 'measured' or 'predicted', got {kcat_tier!r}")
+    kcat = resolve_kcat_table(
+        units, source.model_dir, OED_MIRROR, predicted=predicted_kcat
+    )
+    thermo_source = ThermoSource(arm.get("thermo_source", "shipped"))
+    reaction_thermo = None
+    if thermo_source is not ThermoSource.SHIPPED:
+        reaction_thermo = resolve_reaction_delta_g(
+            gem, osp.join(DATA_ROOT, THERMO_EQUILIBRATOR_MIRROR), thermo_source
+        )
     parameterization = arm.get("parameterization", "box")
     cfg = FluxLayerConfig(
         hidden_dim=hidden_dim,
         parameterization=parameterization,
         thermo_mode=arm["thermo_mode"],
+        thermo_source=thermo_source,
+        constraint_warmup_epochs=int(arm.get("constraint_warmup_epochs", 0)),
+        constraint_final_scale=float(arm.get("constraint_final_scale", 1.0)),
+        constraint_delay_epochs=int(arm.get("constraint_delay_epochs", 0)),
         use_enzyme_capacity=arm["use_enzyme_capacity"],
         use_protein_budget=arm["use_protein_budget"],
         use_dissipation_limit=arm["use_dissipation_limit"],
+        use_abundance_head=bool(arm.get("use_abundance_head", False)),
         stochastic=bool(arm.get("stochastic", False)),
         # The physics terms are dimensionless but not automatically COMMENSURATE with the
         # data term. Measured at init on a real batch, the unweighted constraint sum is
@@ -242,10 +313,33 @@ def build_flux_layer(
         kcat_per_s=kcat.values,
         molecular_weight_kda=mw.values,
         null_space=basis,
+        reaction_thermo=reaction_thermo,
+        kcat_provenance=[str(p) for p in kcat.provenance],
+        km_mm=None if km is None else km.values,
+        km_provenance=None if km is None else [str(p) for p in km.provenance],
     )
     meta = {
         "coverage": layer.coverage_report(),
+        # UNCHANGED BY THE PREDICTED TIER, deliberately. `experimental_coverage` counts
+        # measurements only, so the preflight floor in 027's `run_cell` still fires when the
+        # Open Enzyme Database mirror is missing, even though the predicted tier would fill
+        # every unit it left empty.
         "kcat_experimental_fraction": float(kcat.experimental_coverage.fraction),
+        "kcat_tier": kcat_tier,
+        "kcat_tier_counts": kcat.tier_counts(),
+        "kcat_notes": kcat.notes,
+        "km_tier_counts": None if km is None else km.tier_counts(),
+        "predicted_kcat_selection": (
+            None if predicted_kcat is None else predicted_kcat.selection.model_dump()
+        ),
+        "predicted_km_selection": (
+            None if predicted_km is None else predicted_km.selection.model_dump()
+        ),
+        "thermo_source": str(thermo_source),
+        "thermo_route_counts": (
+            None if reaction_thermo is None else reaction_thermo.counts
+        ),
+        "thermo_sha256": None if reaction_thermo is None else reaction_thermo.sha256,
         "mw_experimental_fraction": float(mw.experimental_coverage.fraction),
         "met_index": {m: i for i, m in enumerate(gem.met_ids)},
     }

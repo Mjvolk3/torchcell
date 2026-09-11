@@ -1,0 +1,209 @@
+{
+ "built_at": "2026-09-10T19:11:31.435363+00:00",
+ "p_h": 7.0,
+ "tool": "pkasolver-lite",
+ "targets": [
+  {
+   "key": "audit:ferroheme b",
+   "name": "ferroheme b",
+   "source": "pilot",
+   "input_smiles": "C=CC1=C(C)C2=CC3=C(C=C)C(C)=C4C=C5C(C)=C(CCC(=O)[O-])C6=[N+]5[Fe-2]5(N7C(=CC1=[N+]25)C(C)=C(CCC(=O)[O-])C7=C6)N43",
+   "ph7_smiles": "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25",
+   "ph7_charge": -2,
+   "input_charge": -2,
+   "pkas": [
+    3.3938636112213136,
+    3.3009616470336915
+   ],
+   "cache_compound_id": null,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "audit:phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "name": "phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "source": "pilot",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_charge": 0,
+   "input_charge": 0,
+   "pkas": [
+    9.176300086975097,
+    7.220053882598877
+   ],
+   "cache_compound_id": null,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "audit:superoxide",
+   "name": "superoxide",
+   "source": "pilot",
+   "input_smiles": "[O][O-]",
+   "ph7_smiles": null,
+   "ph7_charge": null,
+   "input_charge": -1,
+   "pkas": [],
+   "cache_compound_id": null,
+   "cache_smiles": null,
+   "error": "pkasolver returned no protonation state"
+  },
+  {
+   "key": "audit:N-(4-oxoglutarate)-L-cysteinylglycine",
+   "name": "N-(4-oxoglutarate)-L-cysteinylglycine",
+   "source": "pilot",
+   "input_smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "ph7_smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "ph7_charge": -2,
+   "input_charge": -2,
+   "pkas": [
+    6.84884690284729,
+    6.532162742614746,
+    6.46652382850647,
+    5.6501337432861325,
+    5.607294406890869,
+    5.466563606262207,
+    4.192352333068848,
+    2.9871950817108153
+   ],
+   "cache_compound_id": null,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "audit:methionyl acetate",
+   "name": "methionyl acetate",
+   "source": "pilot",
+   "input_smiles": "CC(=O)OC(=O)C(CCSC)N",
+   "ph7_smiles": "CSCCC([NH3+])C(=O)OC(C)=O",
+   "ph7_charge": 1,
+   "input_charge": 0,
+   "pkas": [
+    7.871563549041748
+   ],
+   "cache_compound_id": null,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-18:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "ph7_charge": 0,
+   "input_charge": 0,
+   "pkas": [
+    9.23219108581543,
+    9.027311325073242,
+    8.84673023223877,
+    1.226935863494873
+   ],
+   "cache_compound_id": 58900,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:0, 2-18:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-16:0, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "ph7_charge": 0,
+   "input_charge": 0,
+   "pkas": [
+    9.193157196044922,
+    9.005382537841797,
+    1.2405985593795776
+   ],
+   "cache_compound_id": 58889,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-16:0, 2-16:1)",
+   "name": "phosphatidylethanolamine (1-16:0, 2-16:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH3+]",
+   "ph7_charge": 0,
+   "input_charge": 0,
+   "pkas": [
+    8.998303413391113,
+    8.872750282287598,
+    1.2574107646942139
+   ],
+   "cache_compound_id": 57341,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-16:0, 2-18:1)",
+   "name": "phosphatidylethanolamine (1-16:0, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH3+]",
+   "ph7_charge": 0,
+   "input_charge": 0,
+   "pkas": [
+    8.991924285888672,
+    8.864418983459473,
+    1.2574107646942139
+   ],
+   "cache_compound_id": 22188,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-16:1, 2-18:1)",
+   "name": "phosphatidylethanolamine (1-16:1, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_charge": 0,
+   "input_charge": 0,
+   "pkas": [
+    8.98618221282959,
+    8.86594295501709,
+    1.2574108839035034
+   ],
+   "cache_compound_id": 57396,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-18:0, 2-16:1)",
+   "name": "phosphatidylethanolamine (1-18:0, 2-16:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH3+]",
+   "ph7_charge": 0,
+   "input_charge": 0,
+   "pkas": [
+    8.991609573364258,
+    8.864449501037598,
+    1.2574107646942139
+   ],
+   "cache_compound_id": 57529,
+   "cache_smiles": null,
+   "error": null
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-18:0, 2-18:1)",
+   "name": "phosphatidylethanolamine (1-18:0, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH3+]",
+   "ph7_charge": 0,
+   "input_charge": 0,
+   "pkas": [
+    8.985255241394043,
+    8.85610580444336,
+    1.2574107646942139
+   ],
+   "cache_compound_id": 21808,
+   "cache_smiles": null,
+   "error": null
+  }
+ ]
+}

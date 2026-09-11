@@ -36,6 +36,7 @@ from torchcell.timestamp import timestamp
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
     apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
@@ -72,6 +73,17 @@ def box(ax: plt.Axes) -> None:
         spine.set_linewidth(0.5)
 
 
+def legend_above(ax: plt.Axes, ncol: int, handles=None, names=None) -> None:
+    """Legend OUTSIDE the axes, above it. Only data goes in the data area."""
+    if handles is None:
+        handles, names = ax.get_legend_handles_labels()
+    ax.legend(
+        handles, names, loc="lower left", bbox_to_anchor=(0.0, 1.01), ncol=ncol,
+        frameon=False, fontsize=6, handlelength=1.3, handletextpad=0.4, borderpad=0.0,
+        columnspacing=1.0, labelspacing=0.25,
+    )
+
+
 def main() -> None:
     """Draw the three panels and echo the numbers they rest on."""
     parser = argparse.ArgumentParser()
@@ -89,7 +101,7 @@ def main() -> None:
     null = sweep["null"]
 
     fig, axes = plt.subplots(
-        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(52)), dpi=300
+        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58)), dpi=300
     )
 
     # --- a. every arm against the null band ------------------------------------
@@ -100,11 +112,12 @@ def main() -> None:
     positions = np.arange(len(labels))
 
     # The null band goes down FIRST, so the arms are read against it rather than against 0.
+    # A SOLID pale gray, not gray at alpha: alpha fades whatever is drawn with it, and the
+    # palette already carries the light member of the gray slot.
     ax.axhspan(
         null["peak_mean"] - null["peak_sd"],
         null["peak_p95"],
-        color=PLOT_PALETTE[5],
-        alpha=0.20,
+        color=PLOT_PALETTE_FILL[5],
         linewidth=0,
         zorder=0,
     )
@@ -114,38 +127,39 @@ def main() -> None:
                zorder=1, label=f"null p95 = {null['peak_p95']:.3f}")
     ax.errorbar(
         positions, means, yerr=sems, fmt="o", markersize=3.2,
-        color=PLOT_PALETTE[1], ecolor="black", elinewidth=0.6, capsize=2,
+        color=PLOT_PALETTE[0], ecolor="black", elinewidth=0.6, capsize=2,
         markeredgecolor="black", markeredgewidth=0.3, zorder=3,
     )
     ax.set_xticks(positions)
     ax.set_xticklabels(labels, rotation=30, ha="right")
     ax.set_ylabel("peak val Pearson (mean $\\pm$ s.e.m.)")
     ax.set_ylim(0, 0.20)
-    ax.legend(loc="upper left", frameon=False, fontsize=4.6, handlelength=1.3,
-              handletextpad=0.4, borderpad=0.1, labelspacing=0.25)
+    # Outside the axes and at 6 pt, not 4.6: repo rule is that only data is drawn inside
+    # the axes, and 5 pt is the printed floor.
+    legend_above(ax, ncol=1)
     box(ax)
 
     # --- b. what survives to the end of training -------------------------------
     ax = axes[1]
     last5 = [rows[key]["last5_mean"] for key, _ in ORDER if key in rows]
     width = 0.38
-    ax.bar(positions - width / 2, means, width, color=PLOT_PALETTE[1],
+    # Two series, so they take the first two palette slots in order.
+    ax.bar(positions - width / 2, means, width, color=PLOT_PALETTE[0],
            edgecolor="black", linewidth=0.4, label="peak (max over epochs)")
-    ax.bar(positions + width / 2, last5, width, color=PLOT_PALETTE[3],
+    ax.bar(positions + width / 2, last5, width, color=PLOT_PALETTE[1],
            edgecolor="black", linewidth=0.4, label="mean of final 5 epochs")
     ax.axhline(0, color="black", linewidth=0.5)
     ax.set_xticks(positions)
     ax.set_xticklabels(labels, rotation=30, ha="right")
     ax.set_ylabel("val Pearson")
-    ax.legend(loc="upper left", frameon=False, fontsize=4.8, handlelength=1.2,
-              handletextpad=0.4, borderpad=0.1)
+    legend_above(ax, ncol=2)
     box(ax)
 
     # --- c. the effect that dwarfs every arm -----------------------------------
     ax = axes[2]
     for i, (values, name, color) in enumerate(
-        [(WEAK_FAMILY, "weak backbone", PLOT_PALETTE[5]),
-         (STRONG_FAMILY, "strong backbone", PLOT_PALETTE[0])]
+        [(WEAK_FAMILY, "weak backbone", PLOT_PALETTE[0]),
+         (STRONG_FAMILY, "strong backbone", PLOT_PALETTE[1])]
     ):
         jitter = (np.random.default_rng(0).random(len(values)) - 0.5) * 0.22
         ax.scatter(np.full(len(values), i) + jitter, values, s=11, color=color,
@@ -157,13 +171,19 @@ def main() -> None:
     ax.set_ylabel("peak val Pearson")
     ax.set_ylim(0, 0.5)
     ax.set_xlim(-0.5, 1.5)
+    # The panel set `label=` on both series and then never called a legend, so the two
+    # families printed unnamed and the reader had to find them in the caption.
+    handles, names = ax.get_legend_handles_labels()
+    handles.append(plt.Line2D([0], [0], color="black", linewidth=1.0))
+    names.append("median")
+    legend_above(ax, ncol=2, handles=handles, names=names)
     box(ax)
 
     for letter, ax in zip("abc", axes):
-        ax.text(-0.20, 1.07, letter, transform=ax.transAxes, fontsize=8,
+        ax.text(-0.20, 1.18, letter, transform=ax.transAxes, fontsize=8,
                 fontweight="bold", va="top")
 
-    fig.tight_layout()
+    fig.tight_layout(w_pad=2.6)
     base = f"arm_comparison{stamp}"
     savefig_true_size_svg(fig, osp.join(OUT_DIR, f"{base}.svg"))
     fig.savefig(osp.join(OUT_DIR, f"{base}.png"), dpi=300)

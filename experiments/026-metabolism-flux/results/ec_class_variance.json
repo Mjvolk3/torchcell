@@ -1,0 +1,402 @@
+{
+  "parameters": {
+    "k_cat": {
+      "n_records": 22975,
+      "n_pairs": 14319,
+      "n_enzymes": 4555,
+      "n_ec4_classes": 1994,
+      "within_class": {
+        "ec_level": 4,
+        "n_classes_scored": 523,
+        "n_enzymes_in_scored_classes": 3154,
+        "median_within_class_sd_decades": 0.7502902419306464,
+        "p90_within_class_sd_decades": 1.4400204711663198,
+        "median_within_class_range_decades": 1.7713652610403516,
+        "frac_classes_sd_above_half_decade": 0.7533460803059273,
+        "frac_classes_range_above_1_decade": 0.7858508604206501,
+        "sd_of_class_medians_decades": 1.0577032363394605,
+        "sd_across_all_enzymes_decades": 1.398576816515732,
+        "p10_p90_range_across_all_enzymes_decades": 3.427665252141946
+      },
+      "variance_decomposition": [
+        {
+          "level": 1,
+          "n_classes": 7,
+          "n_enzymes": 4994,
+          "r_squared_between": 0.033914225441764805,
+          "icc": 0.04247991540146074,
+          "within_class_sd_decades": 1.3754831274648844,
+          "total_sd_decades": 1.398576816515732
+        },
+        {
+          "level": 2,
+          "n_classes": 53,
+          "n_enzymes": 4988,
+          "r_squared_between": 0.11656995530637641,
+          "icc": 0.11196143816230168,
+          "within_class_sd_decades": 1.3207234104275938,
+          "total_sd_decades": 1.397814971685101
+        },
+        {
+          "level": 3,
+          "n_classes": 160,
+          "n_enzymes": 4969,
+          "r_squared_between": 0.19837780618706735,
+          "icc": 0.17591055331699804,
+          "within_class_sd_decades": 1.272288142867296,
+          "total_sd_decades": 1.3980966928928922
+        },
+        {
+          "level": 4,
+          "n_classes": 892,
+          "n_enzymes": 3892,
+          "r_squared_between": 0.5856838726747139,
+          "icc": 0.46328084019375876,
+          "within_class_sd_decades": 1.0028675719902735,
+          "total_sd_decades": 1.3680679891928644
+        }
+      ],
+      "within_class_by_level": [
+        {
+          "ec_level": 1,
+          "n_classes_scored": 7,
+          "n_enzymes_in_scored_classes": 4602,
+          "median_within_class_sd_decades": 1.3299615868445869,
+          "p90_within_class_sd_decades": 2.0367972576934203,
+          "median_within_class_range_decades": 10.182930683585987,
+          "frac_classes_sd_above_half_decade": 1.0,
+          "frac_classes_range_above_1_decade": 1.0,
+          "sd_of_class_medians_decades": 0.7534878549009292,
+          "sd_across_all_enzymes_decades": 1.3977120026903274,
+          "p10_p90_range_across_all_enzymes_decades": 3.375170573011017
+        },
+        {
+          "ec_level": 2,
+          "n_classes_scored": 50,
+          "n_enzymes_in_scored_classes": 4625,
+          "median_within_class_sd_decades": 1.223985642264012,
+          "p90_within_class_sd_decades": 1.5311272512981156,
+          "median_within_class_range_decades": 5.93559560652389,
+          "frac_classes_sd_above_half_decade": 0.98,
+          "frac_classes_range_above_1_decade": 0.98,
+          "sd_of_class_medians_decades": 0.5837057856012874,
+          "sd_across_all_enzymes_decades": 1.3959728822883641,
+          "p10_p90_range_across_all_enzymes_decades": 3.3736099245078774
+        },
+        {
+          "ec_level": 3,
+          "n_classes_scored": 142,
+          "n_enzymes_in_scored_classes": 4595,
+          "median_within_class_sd_decades": 1.1097524516917723,
+          "p90_within_class_sd_decades": 1.5034566020731197,
+          "median_within_class_range_decades": 3.5842983952119836,
+          "frac_classes_sd_above_half_decade": 0.9647887323943662,
+          "frac_classes_range_above_1_decade": 0.9647887323943662,
+          "sd_of_class_medians_decades": 0.7642283144227735,
+          "sd_across_all_enzymes_decades": 1.3961073327009255,
+          "p10_p90_range_across_all_enzymes_decades": 3.381052719478915
+        },
+        {
+          "ec_level": 4,
+          "n_classes_scored": 523,
+          "n_enzymes_in_scored_classes": 3154,
+          "median_within_class_sd_decades": 0.7502902419306464,
+          "p90_within_class_sd_decades": 1.4400204711663198,
+          "median_within_class_range_decades": 1.7713652610403516,
+          "frac_classes_sd_above_half_decade": 0.7533460803059273,
+          "frac_classes_range_above_1_decade": 0.7858508604206501,
+          "sd_of_class_medians_decades": 1.0577032363394605,
+          "sd_across_all_enzymes_decades": 1.398576816515732,
+          "p10_p90_range_across_all_enzymes_decades": 3.427665252141946
+        }
+      ],
+      "condition_spread": {
+        "all_conditions": {
+          "n_pairs_repeated": 1826,
+          "median_sd_decades": 0.11358654164817439,
+          "median_range_decades": 0.20048749536197177,
+          "p90_range_decades": 1.2248078216079081,
+          "frac_range_above_1_decade": 0.13472070098576122,
+          "n_pairs_multi_condition": 1008,
+          "median_range_multi_condition_decades": 0.4771212547196624
+        },
+        "physiological_window": {
+          "n_pairs_repeated": 1126,
+          "median_sd_decades": 0.06825699897157185,
+          "median_range_decades": 0.12059038184036369,
+          "p90_range_decades": 1.063510843878296,
+          "frac_range_above_1_decade": 0.10657193605683836,
+          "n_pairs_multi_condition": 506,
+          "median_range_multi_condition_decades": 0.3962432162536409
+        },
+        "window": {
+          "temperature_c": [
+            20.0,
+            40.0
+          ],
+          "ph": [
+            6.0,
+            8.0
+          ]
+        }
+      },
+      "within_class_physiological": {
+        "ec_level": 4,
+        "n_classes_scored": 383,
+        "n_enzymes_in_scored_classes": 2102,
+        "median_within_class_sd_decades": 0.7073551802689503,
+        "p90_within_class_sd_decades": 1.4207015737959314,
+        "median_within_class_range_decades": 1.6659220654934424,
+        "frac_classes_sd_above_half_decade": 0.7101827676240209,
+        "frac_classes_range_above_1_decade": 0.7441253263707572,
+        "sd_of_class_medians_decades": 1.1045876861680233,
+        "sd_across_all_enzymes_decades": 1.427256340299578,
+        "p10_p90_range_across_all_enzymes_decades": 3.5202650362033747
+      }
+    },
+    "K_M": {
+      "n_records": 22975,
+      "n_pairs": 14319,
+      "n_enzymes": 4555,
+      "n_ec4_classes": 1994,
+      "within_class": {
+        "ec_level": 4,
+        "n_classes_scored": 523,
+        "n_enzymes_in_scored_classes": 3154,
+        "median_within_class_sd_decades": 0.5811273763697363,
+        "p90_within_class_sd_decades": 1.0691946508926409,
+        "median_within_class_range_decades": 1.395605069605295,
+        "frac_classes_sd_above_half_decade": 0.6080305927342257,
+        "frac_classes_range_above_1_decade": 0.6673040152963671,
+        "sd_of_class_medians_decades": 1.0323279314875737,
+        "sd_across_all_enzymes_decades": 1.155280871986818,
+        "p10_p90_range_across_all_enzymes_decades": 2.968199844960189
+      },
+      "variance_decomposition": [
+        {
+          "level": 1,
+          "n_classes": 7,
+          "n_enzymes": 4994,
+          "r_squared_between": 0.029065022966176544,
+          "icc": 0.03623685373745245,
+          "within_class_sd_decades": 1.1390525349561775,
+          "total_sd_decades": 1.155280871986818
+        },
+        {
+          "level": 2,
+          "n_classes": 53,
+          "n_enzymes": 4988,
+          "r_squared_between": 0.13978961951633925,
+          "icc": 0.13629699130945444,
+          "within_class_sd_decades": 1.0774198650135651,
+          "total_sd_decades": 1.155597339990639
+        },
+        {
+          "level": 3,
+          "n_classes": 160,
+          "n_enzymes": 4969,
+          "r_squared_between": 0.24375990670492445,
+          "icc": 0.22359694192042487,
+          "within_class_sd_decades": 1.0216778513259646,
+          "total_sd_decades": 1.155901225702525
+        },
+        {
+          "level": 4,
+          "n_classes": 892,
+          "n_enzymes": 3892,
+          "r_squared_between": 0.6742305124310694,
+          "icc": 0.5781136186150245,
+          "within_class_sd_decades": 0.7524545924513035,
+          "total_sd_decades": 1.1575909071986903
+        }
+      ],
+      "within_class_by_level": [
+        {
+          "ec_level": 1,
+          "n_classes_scored": 7,
+          "n_enzymes_in_scored_classes": 4602,
+          "median_within_class_sd_decades": 1.122848979176129,
+          "p90_within_class_sd_decades": 1.2013988633581536,
+          "median_within_class_range_decades": 6.82865989653532,
+          "frac_classes_sd_above_half_decade": 1.0,
+          "frac_classes_range_above_1_decade": 1.0,
+          "sd_of_class_medians_decades": 0.33601193556151576,
+          "sd_across_all_enzymes_decades": 1.14235339547526,
+          "p10_p90_range_across_all_enzymes_decades": 2.8977219498990934
+        },
+        {
+          "ec_level": 2,
+          "n_classes_scored": 50,
+          "n_enzymes_in_scored_classes": 4625,
+          "median_within_class_sd_decades": 0.9902928494580914,
+          "p90_within_class_sd_decades": 1.3140186799381663,
+          "median_within_class_range_decades": 4.6771228434247,
+          "frac_classes_sd_above_half_decade": 0.9,
+          "frac_classes_range_above_1_decade": 0.92,
+          "sd_of_class_medians_decades": 0.6045062451541505,
+          "sd_across_all_enzymes_decades": 1.1430190751792682,
+          "p10_p90_range_across_all_enzymes_decades": 2.9152044032443594
+        },
+        {
+          "ec_level": 3,
+          "n_classes_scored": 142,
+          "n_enzymes_in_scored_classes": 4595,
+          "median_within_class_sd_decades": 0.9052353961206809,
+          "p90_within_class_sd_decades": 1.3071689380353957,
+          "median_within_class_range_decades": 3.1513753494567336,
+          "frac_classes_sd_above_half_decade": 0.8661971830985915,
+          "frac_classes_range_above_1_decade": 0.9014084507042254,
+          "sd_of_class_medians_decades": 0.6919486600155986,
+          "sd_across_all_enzymes_decades": 1.1434568845334792,
+          "p10_p90_range_across_all_enzymes_decades": 2.9113621977492965
+        },
+        {
+          "ec_level": 4,
+          "n_classes_scored": 523,
+          "n_enzymes_in_scored_classes": 3154,
+          "median_within_class_sd_decades": 0.5811273763697363,
+          "p90_within_class_sd_decades": 1.0691946508926409,
+          "median_within_class_range_decades": 1.395605069605295,
+          "frac_classes_sd_above_half_decade": 0.6080305927342257,
+          "frac_classes_range_above_1_decade": 0.6673040152963671,
+          "sd_of_class_medians_decades": 1.0323279314875737,
+          "sd_across_all_enzymes_decades": 1.155280871986818,
+          "p10_p90_range_across_all_enzymes_decades": 2.968199844960189
+        }
+      ],
+      "condition_spread": {
+        "all_conditions": {
+          "n_pairs_repeated": 1826,
+          "median_sd_decades": 0.13603070534607986,
+          "median_range_decades": 0.22694392843424138,
+          "p90_range_decades": 1.1860652982086801,
+          "frac_range_above_1_decade": 0.13417305585980285,
+          "n_pairs_multi_condition": 1008,
+          "median_range_multi_condition_decades": 0.37691915051445335
+        },
+        "physiological_window": {
+          "n_pairs_repeated": 1126,
+          "median_sd_decades": 0.12087006555436551,
+          "median_range_decades": 0.20391946019675877,
+          "p90_range_decades": 1.1245692721648504,
+          "frac_range_above_1_decade": 0.12078152753108348,
+          "n_pairs_multi_condition": 506,
+          "median_range_multi_condition_decades": 0.3323312373697279
+        },
+        "window": {
+          "temperature_c": [
+            20.0,
+            40.0
+          ],
+          "ph": [
+            6.0,
+            8.0
+          ]
+        }
+      },
+      "within_class_physiological": {
+        "ec_level": 4,
+        "n_classes_scored": 383,
+        "n_enzymes_in_scored_classes": 2102,
+        "median_within_class_sd_decades": 0.5844531376769838,
+        "p90_within_class_sd_decades": 1.0717644593970685,
+        "median_within_class_range_decades": 1.342825178140321,
+        "frac_classes_sd_above_half_decade": 0.6031331592689295,
+        "frac_classes_range_above_1_decade": 0.6527415143603134,
+        "sd_of_class_medians_decades": 1.062616432614708,
+        "sd_across_all_enzymes_decades": 1.180910443550022,
+        "p10_p90_range_across_all_enzymes_decades": 3.013049553815038
+      }
+    }
+  },
+  "ec_class_baseline_k_cat": {
+    "n_pairs": 57,
+    "spearman": 0.4301899673095108,
+    "pearson_log10": 0.6009335448029534,
+    "median_abs_error_decades": 0.7434095185414753,
+    "median_bias_decades": -0.07192424417260423,
+    "frac_within_1_decade": 0.7368421052631579,
+    "n_priced_at_ec4": 53,
+    "median_class_n": 4.0
+  },
+  "within_class_accuracy_k_cat": {
+    "n_pairs_available": 57,
+    "n_pairs_used": 27,
+    "n_classes": 13,
+    "note": "Classes with a single scored pair are excluded: centering sends them to the origin, where they cannot disagree.",
+    "predictors": {
+      "deepenzyme": {
+        "n_pairs": 27,
+        "n_classes": 13,
+        "pearson_raw": 0.5540462801710999,
+        "pearson_within_class": -0.1562444816249516,
+        "n_bootstrap_draws": 2000,
+        "pearson_within_class_ci95": [
+          -0.6611864592819956,
+          0.37627694387532906
+        ],
+        "spearman_raw": 0.34656490165211395
+      },
+      "dlkcat": {
+        "n_pairs": 27,
+        "n_classes": 13,
+        "pearson_raw": 0.858352951590358,
+        "pearson_within_class": 0.001496533017095042,
+        "n_bootstrap_draws": 2000,
+        "pearson_within_class_ci95": [
+          -0.44325007153577806,
+          0.5240803660314242
+        ],
+        "spearman_raw": 0.7016794220233991
+      },
+      "eitlem": {
+        "n_pairs": 27,
+        "n_classes": 13,
+        "pearson_raw": 0.8112959310311959,
+        "pearson_within_class": 0.14949555701037165,
+        "n_bootstrap_draws": 2000,
+        "pearson_within_class_ci95": [
+          -0.3692967747299171,
+          0.5058864366701962
+        ],
+        "spearman_raw": 0.4696183425030408
+      },
+      "ezkinetics": {
+        "n_pairs": 27,
+        "n_classes": 13,
+        "pearson_raw": 0.9313096550286623,
+        "pearson_within_class": 0.527318995493844,
+        "n_bootstrap_draws": 2000,
+        "pearson_within_class_ci95": [
+          0.058880502475688816,
+          0.8865253128973156
+        ],
+        "spearman_raw": 0.8195420229376862
+      },
+      "turnup": {
+        "n_pairs": 24,
+        "n_classes": 12,
+        "pearson_raw": 0.8061959540728442,
+        "pearson_within_class": 0.04223779304146886,
+        "n_bootstrap_draws": 1999,
+        "pearson_within_class_ci95": [
+          -0.2652551433323338,
+          0.4960654026094064
+        ],
+        "spearman_raw": 0.4446865798596347
+      },
+      "unikp": {
+        "n_pairs": 27,
+        "n_classes": 13,
+        "pearson_raw": 0.8451025136357164,
+        "pearson_within_class": 0.2944353174436845,
+        "n_bootstrap_draws": 2000,
+        "pearson_within_class_ci95": [
+          -0.253467355584437,
+          0.7011984120980547
+        ],
+        "spearman_raw": 0.680610718751156
+      }
+    }
+  }
+}

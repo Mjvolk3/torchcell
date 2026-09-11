@@ -1,0 +1,74 @@
+{
+  "resolution": {
+    "metanetx": 2265,
+    "chebi": 191,
+    "kegg": 5,
+    "bigg": 11,
+    "inchi": 2,
+    "unresolved": 332
+  },
+  "funnel": {
+    "drawn_step": "baseline",
+    "GEM metabolites": 2806,
+    "identifier resolved": 2474,
+    "energy returned": 2113,
+    "GEM reactions": 4131,
+    "all participants priced": 2741,
+    "after_recovery_routes": {
+      "step": "R3_inchikey_structure",
+      "n_metabolites_priceable": 2141,
+      "n_reactions_all_participants_priceable": 2787
+    }
+  },
+  "blockers": {
+    "n_unpriced_after_audit": 665,
+    "n_priced_by_written_lipid_structures": 347,
+    "by_blocker": {
+      "no_usable_structure_available": {
+        "n": 409,
+        "n_priced_since": 347
+      },
+      "placeholder_formula_no_definite_structure": {
+        "n": 185,
+        "n_priced_since": 0
+      },
+      "structure_known_but_no_group_decomposition": {
+        "n": 50,
+        "n_priced_since": 0
+      },
+      "structure_absent_from_cache": {
+        "n": 16,
+        "n_priced_since": 0
+      },
+      "only_composition_mismatched_candidates": {
+        "n": 5,
+        "n_priced_since": 0
+      }
+    }
+  },
+  "ceiling": {
+    "placeholder": 185,
+    "definite": 480,
+    "definite_written_and_priced": 347,
+    "definite_not_yet_written": 133,
+    "composition_probe": {
+      "n_unpriced_with_definite_formula": 480,
+      "n_composition_decomposable_in_cache": 455
+    }
+  },
+  "pathway": {
+    "gem_priced": 2113,
+    "gem_total": 2806,
+    "pathway_priced": 5,
+    "pathway_total": 5,
+    "pathway_unpriced": []
+  },
+  "lipid_structure_writer": {
+    "n_metabolite_rows_priced": 347,
+    "n_by_route": {
+      "cache_lookup": 289,
+      "external_pka": 58
+    },
+    "note": "values sit in results/lipid_priced.json at pH 7.2 and are not in the built metabolite table panels a to e are computed on"
+  }
+}

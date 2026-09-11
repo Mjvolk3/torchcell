@@ -6,59 +6,222 @@
 \label{sec:sources}
 
 Each predictor is a published method, a code repository at a pinned commit, and a weights
-archive, and the three are cited differently. The tables below carry all of them so a
-reference can be added to the library and a manifest field filled without re-deriving the
-provenance. Every commit and \texttt{sha256} comes from
+archive, and the three are cited differently. Every commit and \texttt{sha256} comes from
 \texttt{\$DATA\_ROOT/models/kinetics/<name>/manifest.json} or from
 \texttt{mirror\_kinetic\_models.py}; the DOIs were verified against Crossref rather than
 recalled.
 
-\subsection{Papers\secstatus{todo}}
+\subsection{Papers, by the parameter they supply\secstatus{todo}}
 
-\begin{table}[H]
+One table per parameter, because the question these are looked up to answer is always
+``where did \emph{this} number come from'', and that question is asked per parameter. Each
+row carries the mirrored artifact, its publication, how it was retrieved and the
+\texttt{sha256} the manifest pins it by, so a manifest field can be filled without
+re-deriving the provenance. \texttt{sha256} is given to the first eight characters of the
+one file that carries the prediction. Where the column reads ``no manifest'', the artifact
+sits outside \texttt{models/kinetics/} and has none, which is one of the defects
+Section~\ref{sec:defects} records.
+
+%% SOURCE: $DATA_ROOT/models/kinetics/<name>/manifest.json (source_url,
+%% retrieval_command, revision, files[].sha256) + Crossref verification of each DOI.
+%% Per-file sha256 read from those manifests on 2026-09-10.
+\begin{table}[!htbp]
   \centering
   \footnotesize
-  \caption[Papers to cite]{The publication behind each artifact used in this document.}
-  \label{tab:papers}
-  %% SOURCE: manifest.json per mirror + Crossref verification; see notes for the audit.
-  \begin{tabular}{@{}p{0.15\textwidth}p{0.46\textwidth}p{0.31\textwidth}@{}}
+  \caption[$k_{cat}$ sources]{The six $k_{cat}$ predictors: what was mirrored, the paper
+  behind it, and the pin. Role is what the artifact does in this work.}
+  \label{tab:papers-kcat}
+  \begin{tabular}{@{}p{0.10\textwidth}p{0.30\textwidth}p{0.24\textwidth}p{0.12\textwidth}p{0.14\textwidth}@{}}
     \hline
-    Tool & Paper & DOI \\
+    Artifact & Publication & Retrieval & \texttt{sha256} & Role \\
     \hline
-    DLKcat & Li et al., Deep learning-based $k_{cat}$ prediction enables improved
-      enzyme-constrained model reconstruction. \emph{Nat Catal} 5:662--672, 2022
-      & \texttt{10.1038/s41929-022-00798-z} \\
-    UniKP & Yu et al., UniKP: a unified framework for the prediction of enzyme kinetic
-      parameters. \emph{Nat Commun} 14:8211, 2023
-      & \texttt{10.1038/s41467-023-44113-1} \\
-    EITLEM & Shen et al., EITLEM-Kinetics: a deep-learning framework for kinetic parameter
-      prediction of mutant enzymes. \emph{Chem Catal} 4:101094, 2024
-      & \texttt{10.1016/j.checat.2024.101094} \\
-    TurNuP & Kroll et al., Turnover number predictions for kinetically uncharacterized
-      enzymes using machine and deep learning. \emph{Nat Commun} 14:4139, 2023
-      & \texttt{10.1038/s41467-023-39840-4} \\
-    DeepEnzyme & Wang et al., DeepEnzyme: a robust deep learning model for improved enzyme
-      turnover number prediction. \emph{Brief Bioinform} 25(5):bbae409, 2024
-      & \texttt{10.1093/bib/bbae409} \\
-    Boost\_KM & Kroll et al., Deep learning allows genome-scale prediction of Michaelis
-      constants from structural features. \emph{PLoS Biol} 19:e3001402, 2021
-      & \texttt{10.1371/journal.pbio.3001402} \\
-    eQuilibrator & Beber et al., eQuilibrator 3.0: a database solution for thermodynamic
-      constant estimation. \emph{Nucleic Acids Res} 50:D603--D609, 2022
-      & \texttt{10.1093/nar/gkab1106} \\
-    Component contribution & Noor et al., Consistent estimation of Gibbs energy using
-      component contributions. \emph{PLoS Comput Biol} 9:e1003098, 2013
-      & \texttt{10.1371/journal.pcbi.1003098} \\
-    Yeast-MetaTwin & Wu et al., Systematically exploring yeast metabolism through
-      retrobiosynthesis and deep learning. \emph{Nat Catal} 9:434--447, 2026
-      & \texttt{10.1038/s41929-026-01523-w} \\
+    DLKcat & Li et al., \emph{Nat Catal} 5:662--672, 2022,
+      \texttt{10.1038/s41929-022-00798-z} &
+      \texttt{git clone SysBioChalmers/} \texttt{DLKcat} at
+      \texttt{7c15d0d4} & \texttt{df5f6ab1} & run over 3{,}552 units; base 2 \\
+    UniKP & Yu et al., \emph{Nat Commun} 14:8211, 2023,
+      \texttt{10.1038/s41467-023-44113-1} &
+      \texttt{git clone Luo-SynBioLab/} \texttt{UniKP} at \texttt{3ad5576a}; regressors from
+      HuggingFace \texttt{HanselYu/UniKP} & \texttt{fe908112} &
+      run; second on rank accuracy \\
+    EITLEM & Shen et al., \emph{Chem Catal} 4:101094, 2024,
+      \texttt{10.1016/j.checat.2024.101094} &
+      \texttt{git clone XvesS/} \texttt{EITLEM-Kinetics} at \texttt{7bb9d666}; weights from
+      Zenodo \texttt{10.5281/} \texttt{zenodo.16153803}, 12.3 GB &
+      14 files pinned & run; best magnitude accuracy \\
+    TurNuP~\cite{krollTurnoverNumberPredictions2023} & Kroll et al., \emph{Nat Commun}
+      14:4139, 2023 &
+      \texttt{git clone AlexanderKroll/} \texttt{kcat\_prediction} at \texttt{98d88a37};
+      Zenodo \texttt{8367052} and \texttt{8038678} & \texttt{da6cb47b} &
+      run; the one coverage outlier at 55.2\% \\
+    DeepEnzyme & Wang et al., \emph{Brief Bioinform} 25(5):bbae409, 2024,
+      \texttt{10.1093/bib/bbae409} &
+      \texttt{git clone hongzhonglu/} \texttt{DeepEnzyme} at \texttt{d225ec31}; figshare
+      \texttt{10.6084/m9.} \texttt{figshare.25771062.v2} & \texttt{95962268} &
+      run; last on every accuracy measure \\
+    EZKinetics & unpublished, under review; no DOI &
+      \texttt{git clone le-yuan/} \texttt{EZKinetics} at \texttt{bf7a8973}, MIT since
+      2026-04-16; weights in repository & \texttt{35de57b7} &
+      run; leads rank accuracy; the only condition-aware one \\
+    ESM-1b & Meta \texttt{fair-esm}; \textbf{publication not recorded in the mirror} &
+      published \texttt{fair-esm} URL, after a silent \texttt{bsdtar} truncation &
+      \texttt{0569754e} & enzyme encoder for TurNuP and for the Boost\_KM variant Wu et
+      al.~\cite{wuSystematicallyExploringYeast2026} ran \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[$K_M$ sources]{The four $K_M$ predictors. Three of them are the same mirrors as
+  Table~\ref{tab:papers-kcat}, listed again with the file that carries the $K_M$ model,
+  because the artifact a $K_M$ value traces to is not the one a $k_{cat}$ value traces to.}
+  \label{tab:papers-km}
+  \begin{tabular}{@{}p{0.10\textwidth}p{0.30\textwidth}p{0.24\textwidth}p{0.12\textwidth}p{0.14\textwidth}@{}}
+    \hline
+    Artifact & Publication & Retrieval & \texttt{sha256} & Role \\
+    \hline
+    Boost\_KM & Kroll et al., \emph{PLoS Biol} 19:e3001402, 2021,
+      \texttt{10.1371/journal.pbio.} \texttt{3001402} &
+      \texttt{git clone AlexanderKroll/} \texttt{KM\_prediction} at \texttt{432a4fc0} &
+      \texttt{79833811} & run; the paper's UniRep model, not the ESM-1b one Wu et
+      al.~\cite{wuSystematicallyExploringYeast2026} ran \\
+    UniKP & Yu et al., \emph{Nat Commun} 14:8211, 2023,
+      \texttt{10.1038/s41467-023-44113-1} & as Table~\ref{tab:papers-kcat} &
+      \texttt{f0b8d597} & run; below the EC-median lookup on class plausibility \\
+    EITLEM & Shen et al., \emph{Chem Catal} 4:101094, 2024,
+      \texttt{10.1016/j.checat.2024.101094} & as Table~\ref{tab:papers-kcat} &
+      14 files pinned & run; one of the two selected $K_M$ predictors \\
+    EZKinetics & unpublished, under review; no DOI & as Table~\ref{tab:papers-kcat},
+      ESM2\_3B encoder rather than ESM2\_650M & \texttt{f23bd2fd} &
+      run; leads both $K_M$ rankings \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Gibbs energy sources]{Formation and reaction Gibbs energies. The two shipped CSVs
+  are the incumbent this work compares against; the eQuilibrator route is what replaces
+  them. The three rows below them are what the shipped CSVs are made of, listed separately
+  because a value in either column traces to one of the three and not to yeast-GEM.
+  \textbf{Neither shipped file has a provenance manifest of its own}, which is why
+  their pins are the hashes recorded by \texttt{gem\_audit.py} rather than by a mirror; the
+  three upstream artifacts below them are mirrored with \texttt{sha256} in
+  \texttt{thermo\_yeast9\_provenance.json}.}
+  \label{tab:papers-thermo}
+  %% SOURCE: results/gem_audit.json (thermo.sha256.met, thermo.sha256.rxn,
+  %% thermo.source_paths); results/equilibrator_thermo.json for the recomputation;
+  %% results/thermo_yeast9_provenance.json (upstream_artifacts, units.slope = 4.187 at
+  %% r = 0.987, identity on 3,177 of 3,210 reactions) for the three upstream rows.
+  \begin{tabular}{@{}p{0.10\textwidth}p{0.30\textwidth}p{0.24\textwidth}p{0.12\textwidth}p{0.14\textwidth}@{}}
+    \hline
+    Artifact & Publication & Retrieval & \texttt{sha256} & Role \\
+    \hline
+    eQuilibrator 3.0~\cite{beberEQuilibrator30Database2022} & Beber et al., \emph{Nucleic
+      Acids Res} 50:D603--D609, 2022 &
+      \texttt{pip}, plus the compound cache at
+      \texttt{\textasciitilde/.cache/} \texttt{equilibrator/} \texttt{compounds.sqlite} &
+      no manifest & the recomputation: 2{,}113 metabolites, 2{,}741 reactions, with
+      covariance \\
+    Component contribution & Noor et al., \emph{PLoS Comput Biol} 9:e1003098, 2013,
+      \texttt{10.1371/journal.pcbi.} \texttt{1003098} & method, inside eQuilibrator &
+      no manifest & the estimator; why the table transfers to any organism \\
+    Shipped metabolite table & yeast-GEM 9.0.2~\cite{zhangYeast9ConsensusGenomescale2024},
+      curated from yETFL~\cite{oftadehGenomescaleMetabolicModel2021} by metabolite
+      \emph{name}, ModelSEED fallback on KEGG id &
+      \texttt{data/databases/} \texttt{model\_metDeltaG.csv}, shipped with the GEM &
+      \texttt{179a5aac} &
+      the incumbent formation table; 2{,}389 metabolites, \textbf{kcal\,mol$^{-1}$}, no
+      uncertainty \\
+    Shipped reaction table & same, with a dG-predictor fallback attached by
+      \emph{row position} & \texttt{data/databases/} \texttt{model\_rxnDeltaG.csv},
+      shipped with the GEM & \texttt{7a66ef5d} &
+      the incumbent reaction column; 3{,}210 reactions, \textbf{two unit systems} \\
+    yETFL & Oftadeh et al.~\cite{oftadehGenomescaleMetabolicModel2021} &
+      Zenodo \texttt{10.5281/} \texttt{zenodo.4778047}, \texttt{input\_models.zip} and
+      \texttt{info\_yeast.zip} & \texttt{ec82ce09}, \texttt{3b96940a} &
+      what both shipped columns hold: 3{,}177 of 3{,}210 reaction values verbatim, in
+      kcal\,mol$^{-1}$ \\
+    matTFA, Mavrovouniotis group contribution & Mavrovouniotis 1990, as cited by yETFL's
+      Methods and packaged in matTFA's \texttt{thermo\_data.thermodb} with Alberty's
+      transform; \textbf{publication not recorded in the mirror} &
+      through the yETFL model above; \textbf{not mirrored separately} &
+      no manifest &
+      the estimator behind yETFL: 298.15\,K, per-compartment pH and $I$, no magnesium \\
+    dG-predictor & Wang et al.\ 2021; \textbf{publication not recorded in the mirror} &
+      \texttt{data/model} \texttt{Curation/v8\_7\_0/} of yeast-GEM, with
+      \texttt{run\_dgpredictor.py} & \texttt{0870ec4d} &
+      the fallback on 33 reactions, in kJ\,mol$^{-1}$, attached by row position \\
+    Yeast-MetaTwin~\cite{wuSystematicallyExploringYeast2026} & Wu et al., \emph{Nat Catal}
+      9:434--447, 2026 &
+      \texttt{git clone LiLabTsinghua/} \texttt{Yeast-MetaTwin} at \texttt{de1268ee};
+      Zenodo \texttt{10.5281/} \texttt{zenodo.13911783}, 6.6 GB &
+      no manifest & the figure being reproduced, and the ESM-1b Boost\_KM variant \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[p$K_a$ sources]{Acid dissociation constants, which is the input that decides
+  whether a compound outside the cache can be priced at all (Section~\ref{sec:pka}). The
+  first row is the incumbent and the reference the other four are scored against; it is
+  the only one that is not open source. Three of the four publications reached the paper
+  mirror on 2026-09-10, under the citation keys given, and none of them is in this
+  document's served bibliography yet, so they are named rather than cited. \textbf{None of
+  these has a mirror manifest yet}, since they sit outside \texttt{models/kinetics/}; the
+  pin is the repository commit, or the weight revision where the weights are not in the
+  repository.}
+  \label{tab:papers-pka}
+  %% SOURCE: notes/experiments.026-metabolism-flux.external-pka-route.md (clone commits,
+  %% licenses, weight paths, fold sha256s) and results/external_pka_benchmark.json (scores).
+  \begin{tabular}{@{}p{0.13\textwidth}p{0.27\textwidth}p{0.24\textwidth}p{0.12\textwidth}p{0.14\textwidth}@{}}
+    \hline
+    Artifact & Publication & Retrieval & Pin & Role \\
+    \hline
+    ChemAxon \texttt{cxcalc} & proprietary; reached through eQuilibrator's compound cache &
+      not installed here; the cache's stored constants are used & the cache file &
+      the reference the other four are scored against; the license that blocks new
+      compounds \\
+    \texttt{equilibrator-} \texttt{assets} master &
+      Beber et al.~\cite{beberEQuilibrator30Database2022} &
+      \texttt{git clone gitlab.com/} \texttt{equilibrator/} \texttt{equilibrator-assets} &
+      \texttt{c79e371e} &
+      the bridge: \texttt{pkas\_provided\_} \texttt{externally}, absent from 0.6.0 \\
+    Uni-pKa & Luo et al., \emph{JACS Au} 4:3451--3465, 2024, mirrored as
+      \texttt{luoBridging} \texttt{MachineLearning2024}, with the preprint as
+      \texttt{luoUnipKa} \texttt{AccuratePhysically}; Apache-2.0 &
+      \texttt{pip install unipkainfer}; five folds
+      \texttt{fold\_\{0..4\}/} \texttt{checkpoint\_best.pt},
+      571{,}250{,}635 bytes each, from HuggingFace
+      \texttt{bindresearch/} \texttt{pkasso\_unipka}; GPU &
+      HuggingFace revision \texttt{e28a5917}; \texttt{fold\_0} sha256
+      \texttt{4d5a5fc9} \texttt{\ldots062a200} &
+      \textbf{the tool selected}, on the simple enumeration template:
+      0.91 kJ\,mol$^{-1}$, 299 of 300 \\
+    MolGpKa & Pan et al., \emph{J Chem Inf Model} 61:3159--3165, 2021, mirrored as
+      \texttt{panMolGpka} \texttt{WebServer2021}; MIT, though the license header names
+      OpenNMT as copyright holder rather than the authors &
+      \texttt{git clone}; weights in repository, 6.0 MB each; CPU & repository commit &
+      1.21 kJ\,mol$^{-1}$, ran all 300; flagged on 48.3 percent of ladders \\
+    pKasolver-lite & \textbf{publication not yet recorded}; MIT &
+      \texttt{git clone}; 50 weight files, 105 MB; needs PyG exactly 2.0.1 &
+      repository commit & 2.52 kJ\,mol$^{-1}$; degrades to 7.13 on six-constant ladders \\
+    QupKake & Abarbanel and Hutchison, \emph{J Chem Theory Comput} 20:6946--6956, 2024,
+      mirrored as \texttt{abarbanelQupKake} \texttt{IntegratingMachine2024}; BSD-3 &
+      \texttt{git clone}; ships its own xTB 6.4.1 binary & repository commit &
+      \textbf{unmeasured}: 4 of up to 14 rungs, 1 of 60 ladders finished \\
     \hline
   \end{tabular}
 \end{table}
 
 \subsection{Code and weights\secstatus{todo}}
 
-\begin{table}[H]
+\begin{table}[!htbp]
   \centering
   \footnotesize
   \caption[Code repositories and weight archives]{What was mirrored, at which revision.
@@ -97,7 +260,8 @@ recalled.
   \end{tabular}
 \end{table}
 
-\subsection{Four provenance defects to repair\secstatus{todo}}
+\subsection{Five provenance defects to repair\secstatus{todo}}
+\label{sec:defects}
 
 These are recorded rather than fixed silently, because each one breaks the rebuild
 guarantee in a different way.
@@ -116,6 +280,11 @@ guarantee in a different way.
   \item \textbf{All six kinetics manifests carry \texttt{citation\_key: null}.} Once these
     papers are in the mirror, that field joins each weight file to its publication, which is
     what makes a predicted value citable rather than merely traceable.
+  \item \textbf{The four p$K_a$ predictors have no manifest, and three of their four
+    publications are mirrored but not yet citable.} They were cloned and run, and
+    Table~\ref{tab:papers-pka} gives their license, repository and mirror key. A p$K_a$ that reaches a formation energy is a model output like any other
+    and needs the same pin, so these belong under \texttt{models/} before the route is used
+    for anything but a benchmark.
 \end{itemize}
 
 One extraction hazard is worth recording alongside them. \texttt{bsdtar} reading
@@ -124,5 +293,4 @@ One extraction hazard is worth recording alongside them. \texttt{bsdtar} reading
 truncation is silent, and a checkpoint that short still opens far enough to look like a
 file. It was caught by comparing against the listed size and then confirmed by
 \texttt{torch.load} refusing it. The bytes finally used were fetched from the published
-\texttt{fair-esm} URL and verified to the recorded \texttt{sha256}, which is the general
-lesson: a size or hash check is what makes an extractor's exit code mean anything.
+\texttt{fair-esm} URL and verified to the recorded \texttt{sha256},

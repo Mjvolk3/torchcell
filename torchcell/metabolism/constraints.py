@@ -127,6 +127,29 @@ RT_KJ_PER_MOL = R_KJ_PER_MOL_K * DEFAULT_TEMPERATURE_K
 #: that arithmetic accepts without complaint. See the module docstring.
 DELTA_G_SENTINEL = 1.0e7
 
+#: THE SHIPPED DELTA-G CSVs ARE kcal/mol, NOT kJ/mol, AND THEY SAY OTHERWISE.
+#:
+#: Measured 2026-09-10 (``experiments/026-metabolism-flux/results/thermo_yeast9_provenance.json``,
+#: note ``[[experiments.026-metabolism-flux.yeast9-delta-g-provenance]]``): yeast-GEM 9 copied
+#: yETFL's ``metDeltaGFtr`` / ``rxnDeltaGR`` without converting, and yETFL declares
+#: ``thermo_units = "kcal/mol"``. Regressing an independent kJ/mol recomputation on the
+#: shipped column over 1,927 shared metabolites gives slope 4.187 with Pearson 0.987, against
+#: the exact 4.184 kJ per kcal. The yeast9 paper reports the column as kJ/mol.
+#:
+#: Reading the file as kJ/mol understates every standard energy by 4.184x, which makes every
+#: second-law hinge 4x too permissive and silently mixes scales the moment those values are
+#: merged with a kJ/mol table. The conversion happens at PARSE time so no code path can hold
+#: a kcal number and call it kJ.
+#:
+#: KNOWN, BOUNDED, AND NOT YET FIXED: the shipped REACTION column is not uniformly kcal.
+#: The same study measured it as yETFL's ``rxnDeltaGR`` on 3,177 of 3,210 rows, with the
+#: remaining 33 coming from dGPredictor, which reports kJ/mol. Those 33 are therefore
+#: over-converted by 4.184 here. Separating them needs the yETFL file to identify which rows
+#: they are, which is a retrieval step rather than a code change. The reaction column is used
+#: in exactly one place, the union table's last-resort fill, where it supplies 6 of 4,131
+#: reactions; the metabolite column, which every other route sums, is unaffected.
+KCAL_PER_MOL_TO_KJ_PER_MOL = 4.184
+
 #: Physiological bounds on intracellular metabolite concentration, molar. Bounds the
 #: learned log-concentration so an anchored delta_r G' cannot be satisfied by an absurd
 #: concentration.
@@ -208,12 +231,30 @@ class ThermoTable(BaseModel):
     sha256: dict[str, str]
     sentinel: float = DELTA_G_SENTINEL
     units: str = "kJ/mol"
+    shipped_units_in_file: str = Field(
+        default="kcal/mol",
+        description=(
+            "The unit the CSV is actually written in, which is NOT the unit this table "
+            "reports. See KCAL_PER_MOL_TO_KJ_PER_MOL."
+        ),
+    )
+    converted_to: str = Field(
+        default="kJ/mol",
+        description="The unit every value in this table is expressed in.",
+    )
+    unit_conversion_factor: float = Field(
+        default=KCAL_PER_MOL_TO_KJ_PER_MOL,
+        description="Multiplier applied to every value read from the CSV.",
+    )
     temperature_k: float = DEFAULT_TEMPERATURE_K
     retrieved_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     notes: str = (
         "delta_f G'^circ values are the TRANSFORMED standard energies shipped with the "
         "GEM; no further pH / ionic-strength Legendre transform is applied here, and no "
-        "component-contribution covariance is available from this source."
+        "component-contribution covariance is available from this source. The CSVs are "
+        "kcal/mol despite being reported as kJ/mol (yeast-GEM copied yETFL, which declares "
+        "thermo_units kcal/mol, without converting); every value here has been multiplied "
+        "by 4.184 at parse time."
     )
 
 
@@ -345,6 +386,11 @@ def _read_delta_g_csv(path: str) -> dict[str, float]:
 
     Deliberately not ``pandas.read_csv`` + a filter: the drop has to happen at the point of
     parsing so no code path can ever hold a ``1e7`` or a NaN and call it an energy.
+
+    **The values are converted from kcal/mol to kJ/mol here**, for the same reason the drop
+    happens here: see :data:`KCAL_PER_MOL_TO_KJ_PER_MOL`. Returning the raw number and
+    converting at the call site would leave a kcal value reachable, and the file's own header
+    says kJ, so nothing downstream would notice.
     """
     out: dict[str, float] = {}
     with open(path) as f:
@@ -359,7 +405,9 @@ def _read_delta_g_csv(path: str) -> dict[str, float]:
             value = float(raw)
             if value == DELTA_G_SENTINEL or not math.isfinite(value):
                 continue
-            out[key] = value
+            # The sentinel test is against the RAW value, because 1e7 is the sentinel in the
+            # file's own units; converting first would move it off the constant.
+            out[key] = value * KCAL_PER_MOL_TO_KJ_PER_MOL
     return out
 
 

@@ -217,3 +217,54 @@ python .../drawio_true_size_import.py <panel1>.svg [<panel2>.svg ...] | pbcopy
 Slot checks (stderr prints each panel's units + mm): third = 227.6, half_plus = 348.4,
 full = 706.7 units. Unitless SVG numbers pass through as draw.io units; pt/mm/cm/in/px
 are converted.
+
+## 2026.09.10 - Caption rule: one panel, one description
+
+**Every panel gets its own description, starting with its bold letter; never merge two
+panels into one clause.** A caption that opens a clause `\textbf{e}, \textbf{f}, Accuracy
+on the 57 Open Enzyme Database pairs` has told the reader that two panels exist and
+nothing about which is which. Write them as separate sentences:
+
+```latex
+\textbf{e}, Predicted against measured $k_{cat}$ on the 57 pairs ... .
+\textbf{f}, The same comparison ranked, Spearman against median absolute error.
+```
+
+The second may be a single clause; length is not the point, attribution is. The rule
+holds for a pair that genuinely shares a data source, which is exactly the case that
+invites the merge.
+
+**Check it on every caption in the document, not only the one that was flagged.** The
+defect is silent: a merged pair still reads as fluent prose and nothing in `make check`
+looks for it. The mechanical test is that the bold letters, read in order, are `a, b, c,
+...` with no letter appearing except at the head of its own sentence.
+
+Recorded in `CLAUDE.md` "Figure & Plotting Standards" and
+[[paper.nature-biotech.style-guide]] as well, since captions are written in all three
+places.
+
+## 2026.09.10 - The four primaries and the two secondaries
+
+The palette's 18 colors were already ordered so that a series of N takes the first N. What
+was never written down is the ROLE split inside each cycle of six, which is what a plot
+that picks colors by hand needs:
+
+| slots in a cycle | role | colors | when they may be used |
+| --- | --- | --- | --- |
+| 1-4 | **primary** | orange, red, purple, yellow | any series, mixed uniformly, in any order |
+| 5-6 | **secondary** | blue, gray | only once a series needs a fifth and a sixth color |
+
+Nothing is encoded by which primary a category draws, so the four are interchangeable and
+a two-color panel should use two of them. A two- or three-series panel drawn in blue has
+skipped a primary and is wrong even though every color in it is in the palette.
+
+**Tier 1 is now called `vivid`, not `primary`.** Carrying both meanings made "primary"
+ambiguous between the tier and the role, which is the collision
+[[writing-style-guide]] says to fix by renaming rather than by warning at every use. The
+colors are unchanged and still LOCKED.
+
+The swatch SVG shows both axes: a tier bracket above (`vivid`, `dark`, `muted earth`) and
+a role bracket below it repeated per cycle (`primary 1-4`, `secondary 5-6`). Regenerate
+with `python notes/assets/scripts/generate_color_palette.py`.
+
+![palette](assets/images/color-palette.svg)

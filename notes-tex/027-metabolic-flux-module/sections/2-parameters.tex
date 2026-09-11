@@ -18,11 +18,15 @@ or the reader computes 148/1{,}065 and gets 13.9. $K_M$ had no table at all: the
 member and a protocol flag with nothing behind either. The thermodynamics came from a
 shipped file of point values with no covariance, usable only for this organism.
 
-Six kinetic predictors were mirrored into
+Seven kinetic predictors were mirrored into
 \texttt{\$DATA\_ROOT/models/kinetics/<name>/} with per-file \texttt{sha256}, retrieval
-commands and git commits, and all six now run over the enzyme-substrate pairs of yeast-GEM
+commands and git commits, and all seven now run over the enzyme-substrate pairs of yeast-GEM
 9.0.2, with protein sequences taken from the genome object rather than from the table each
-model bundles.
+model bundles. The seventh, EZKinetics, is unpublished and pinned by repository and commit
+(\texttt{le-yuan/EZKinetics}, revision \texttt{bf7a897}); it is the only one that
+conditions on assay pH and temperature, and since yeast-GEM carries neither per pair it is
+run at the authors' 7.0 and 25\,\textdegree C defaults, which keeps it comparable with the
+six condition-blind predictors.
 
 \begin{table}[H]
   \centering
@@ -41,16 +45,18 @@ model bundles.
     EITLEM & $k_{cat}$ & 7{,}456 & 3{,}552 & 95.3\% & 3.981 s$^{-1}$ \\
     TurNuP & $k_{cat}$ & 5{,}143 & 2{,}056 & 55.2\% & 10.819 s$^{-1}$ \\
     DeepEnzyme & $k_{cat}$ & 7{,}300 & 3{,}546 & 95.1\% & 4.167 s$^{-1}$ \\
+    EZKinetics & $k_{cat}$ & 7{,}456 & 3{,}552 & 95.3\% & 4.617 s$^{-1}$ \\
     \hline
     UniKP & $K_M$ & 7{,}351 & 3{,}552 & 95.3\% & 0.0796 mM \\
     EITLEM & $K_M$ & 7{,}456 & 3{,}552 & 95.3\% & 0.0793 mM \\
     Boost\_KM & $K_M$ & 7{,}157 & 3{,}468 & 93.0\% & 0.1410 mM \\
+    EZKinetics & $K_M$ & 7{,}456 & 3{,}552 & 95.3\% & 0.1424 mM \\
     \hline
   \end{tabular}
 \end{table}
 
-\textbf{Two of these models exponentiate base 2 and four base 10.} DLKcat and DeepEnzyme
-are $\log_2$; UniKP, EITLEM, TurNuP and Boost\_KM are $\log_{10}$. Reading either wrong
+\textbf{Two of these models exponentiate base 2 and five base 10.} DLKcat and DeepEnzyme
+are $\log_2$; UniKP, EITLEM, TurNuP, Boost\_KM and EZKinetics are $\log_{10}$. Reading either wrong
 yields turnover numbers that still look entirely credible, which is why each was validated
 against something its own authors published before its values were believed.
 
@@ -72,16 +78,21 @@ lose.
     \hline
     Table & Status & How it enters, or why it does not \\
     \hline
-    $k_{cat}$ & \textbf{wired}, but from the Open Enzyme Database, not the predictors &
-      the capacity bound $|\nu_j| \le k_{cat,j} E_{g(j)}$. \texttt{resolve\_kcat\_table}
-      reads the OED mirror, so the run uses 4.0 percent measured values and a default for
-      the rest. The predicted tables are not yet plumbed to this call \\
-    $\Delta_f G'^{\circ}$ & \textbf{wired}, but the GEM's shipped table, not the
-      eQuilibrator recomputation &
+    $k_{cat}$ & \textbf{wired}; the predicted tier exists and no arm below used it &
+      the capacity bound $|\nu_j| \le k_{cat,j} E_{g(j)}$. Every arm in this document ran
+      \texttt{resolve\_kcat\_table} on the OED mirror alone, 4.0 percent measured and a
+      default for the rest. A \texttt{PredictedUnitTable} tier now sits between the measured
+      values and the default, filling 3{,}410 of the 3{,}728 units, and is exercised only by
+      the wave-5 cells, which are still running \\
+    $\Delta_f G'^{\circ}$ & \textbf{wired}; the merged route exists and no arm below used it &
       the standard term of $\Delta_r G_j$, hence the second-law hinge and the dissipation
-      bound. \texttt{load\_thermo\_table} reads
-      \texttt{data/databases/model\_metDeltaG.csv}; the recomputed parquet with its
-      covariance is read by nothing \\
+      bound. Every arm below read
+      \texttt{data/databases/model\_metDeltaG.csv} through \texttt{load\_thermo\_table},
+      which is a kcal-scale file and was read as kilojoules, so those hinges were 4.184
+      times too permissive; the reader converts at parse time now.
+      \texttt{resolve\_reaction\_delta\_g} builds from a named route, and the union of
+      the shipped and recomputed metabolite tables prices 3{,}722 reactions with a
+      propagated standard deviation on 1{,}755 \\
     $K_M$ & \textbf{built, not wired} &
       the saturation term is drawn as inactive in the module diagram and is inactive in the
       code. $K_M$ contributes nothing to any result reported here \\
@@ -89,20 +100,22 @@ lose.
   \end{tabular}
 \end{table}
 
-\textbf{None of the three tables built in this work is consumed by any measured arm.} The
-$k_{cat}$ predictions are not plumbed to \texttt{resolve\_kcat\_table}, the recomputed
-formation energies are not plumbed to \texttt{load\_thermo\_table}, and $K_M$ has no
-consumer at all. Every arm reported here ran on the Open Enzyme Database's 4.0 percent
-measured $k_{cat}$ plus a default, and on yeast-GEM's shipped formation energies.
+\textbf{None of the three tables built in this work is consumed by any measured arm below.}
+Every arm reported here ran on the Open Enzyme Database's 4.0 percent measured $k_{cat}$
+plus a default, and on yeast-GEM's shipped formation energies. That is the sharpest thing to
+carry out of this document, because the module diagram draws solid edges from the kcat and
+thermodynamic tables into the box and the potential, and no arm below has those edges.
 
-That is the sharpest thing to carry out of this document, because the module diagram draws
-solid edges from the kcat and thermodynamic tables into the box and the potential, and those
-edges do not exist in the code. The tables are an audit of what the inputs \emph{could} be
-and a demonstration that they can be built reproducibly for any organism. They are not yet
-inputs. Wiring them is the next change, and until it happens no result should be described
-as testing predicted kinetics or recomputed thermodynamics.
+\textbf{The plumbing itself now exists and is under test.} \texttt{resolve\_kcat\_table}
+takes a predicted tier and \texttt{resolve\_reaction\_delta\_g} a named energy route, and
+GilaHyper cells are running the flux arms against them under a constraint warmup: job 1663
+(\texttt{flux\_off}), jobs 1667 and 1668 (\texttt{flux\_capacity} and
+\texttt{flux\_abundance} on the unit-corrected union, resubmitted after jobs 1664 and 1665
+were found to be reading a mixed-unit table) and job 1669 (head normalization). None has
+reached a selected epoch or a test score, so nothing here is a result for the predicted or
+recomputed tables. $K_M$ still has no consumer at all.
 
-\subsection{Why five predictors and not one\secstatus{todo}}
+\subsection{Why six predictors and not one\secstatus{todo}}
 
 Re-keying the comparison from the enzyme-substrate pair to the \textbf{gene}, which is the
 unit the capacity bound reads, gives the number that decides how a predicted table should
@@ -112,27 +125,32 @@ be used.
   \centering
   \footnotesize
   \caption[Per-gene disagreement]{Across-predictor spread per gene against the dynamic
-  range of the quantity itself, in decades, over genes every predictor covers.}
+  range of the quantity itself, in orders of magnitude, over genes every predictor covers. The
+  $k_{cat}$ row is over six predictors and the $K_M$ row over four; before EZKinetics they
+  were 1.23 against 0.94 (ratio 1.32) and 0.70 against 1.34 (ratio 0.52), so the sixth
+  predictor widened both disagreements.}
   \label{tab:pergene}
   %% SOURCE: experiments/026-metabolism-flux/results/per_gene_agreement_{k_cat,K_M}.json
   \begin{tabular}{@{}lrrrr@{}}
     \hline
     Quantity & Genes & Median spread & Consensus p10--p90 & Ratio \\
     \hline
-    $k_{cat}$ & 980 & \textbf{1.23} & 0.94 & \textbf{1.32} \\
-    $K_M$ & 1{,}150 & 0.70 & 1.34 & 0.52 \\
+    $k_{cat}$ & 980 & \textbf{1.28} & 0.87 & \textbf{1.47} \\
+    $K_M$ & 1{,}150 & 0.81 & 1.22 & 0.67 \\
     \hline
   \end{tabular}
 \end{table}
 
 \textbf{For $k_{cat}$ the disagreement between predictors exceeds the quantity being
-predicted.} The median gene moves 1.23 decades between the highest and lowest predictor, a
-factor of 17, and 67 percent of genes move by more than a full decade, against a
-10th-to-90th-percentile spread across genes of 0.94 decades. Choosing a different published
-predictor moves one gene's turnover number further than real enzymes differ from one
-another. Gene-level Spearman between $k_{cat}$ predictors runs 0.04 to 0.48.
+predicted, and a sixth predictor widened it.} The median gene moves 1.28 orders of magnitude between the
+highest and lowest predictor, a factor of 19, and 71 percent of genes move by more than a
+full order of magnitude, against a 10th-to-90th-percentile spread across genes of 0.87
+orders of magnitude.
+Choosing a different published predictor moves one gene's turnover number further than
+real enzymes differ from one another. Gene-level Spearman between $k_{cat}$ predictors runs
+0.01 (DeepEnzyme against EZKinetics) to 0.55 (EZKinetics against UniKP).
 
-\textbf{For $K_M$ it does not.} The same construction gives 0.70 against 1.34, and
+\textbf{For $K_M$ it does not.} The same construction gives 0.81 against 1.22, and
 Boost\_KM agrees with UniKP at a gene-level Spearman of 0.75, higher than any pair of
 $k_{cat}$ predictors reaches. Both are statements about agreement rather than accuracy,
 since almost none of these pairs has a measured value.
@@ -140,3 +158,70 @@ since almost none of these pairs has a measured value.
 That is why the registry in \texttt{torchcell/datasets/kinetics/} exists and why a config
 string selects the predictor: predictor choice is a hyperparameter with a measured effect
 size, not a settled detail.
+
+\subsection{Which predictor is right, as far as that can be measured\secstatus{todo}}
+
+Agreement is silent on accuracy. The Open Enzyme Database mirror carries measured
+\emph{S. cerevisiae} values, and restricting to wild-type enzymes assayed between 20 and
+40\,\textdegree C and joining on (UniProt accession, substrate) leaves \textbf{57} pairs
+that are also among the catalytic units the predictors were run over.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Predictor accuracy against measured values]{Accuracy on the 57 measured pairs.
+  Error is the median absolute $\log_{10}$ ratio in orders of magnitude, bias the median signed ratio,
+  negative meaning the predictor runs low. Every predictor trained on BRENDA or SABIO-RK,
+  from which the Open Enzyme Database is itself assembled, so an unknown fraction of these
+  pairs was seen in training and the values are an upper bound on held-out accuracy.}
+  \label{tab:accuracy}
+  %% SOURCE: experiments/026-metabolism-flux/results/predictor_vs_measured.json,
+  %% compare_predictors_to_measured.py.
+  \begin{tabular}{@{}llrrrr@{}}
+    \hline
+    Parameter & Predictor & Spearman & Error & Bias & Within 1 dec \\
+    \hline
+    $k_{cat}$ & EZKinetics & \textbf{+0.790} & 0.37 & $-0.14$ & \textbf{91.2\%} \\
+    $k_{cat}$ & UniKP & +0.751 & 0.31 & $-0.12$ & 89.5\% \\
+    $k_{cat}$ & DLKcat & +0.656 & 0.38 & $-0.14$ & 84.2\% \\
+    $k_{cat}$ & EITLEM & +0.603 & \textbf{0.23} & $-0.01$ & 78.9\% \\
+    $k_{cat}$ & TurNuP & +0.506 & 0.44 & $+0.00$ & 81.1\% \\
+    $k_{cat}$ & DeepEnzyme & +0.341 & 0.65 & $-0.23$ & 66.7\% \\
+    \hline
+    $K_M$ & EZKinetics & \textbf{+0.701} & 0.40 & $-0.05$ & \textbf{87.7\%} \\
+    $K_M$ & Boost\_KM & +0.680 & 0.53 & $-0.16$ & 78.9\% \\
+    $K_M$ & UniKP & +0.615 & 0.61 & $-0.08$ & 78.9\% \\
+    $K_M$ & EITLEM & +0.612 & \textbf{0.43} & $+0.02$ & 82.5\% \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\textbf{The accuracy ranking is not the agreement ranking.} EZKinetics leads on rank
+accuracy for both parameters while agreeing with DeepEnzyme at 0.01 on $k_{cat}$; EITLEM
+leads on magnitude and places fourth on rank. So Table~\ref{tab:pergene} cannot be read as
+a quality ordering, and the two accuracy axes disagree about which predictor is best. The
+57 scored pairs are not the easy tail either: the across-predictor $k_{cat}$ spread on them
+is 1.37 orders of magnitude against 1.27 over all 3{,}814 pairs, so the upper-bound caveat rests on
+leakage alone. If one predicted table were to be wired into the capacity bound, EZKinetics
+is the one these numbers point at for both parameters, with a $k_{cat}$ bias of $-0.14$
+orders of magnitude to correct.
+
+\textbf{Most of that correlation is the enzyme class rather than the enzyme, and this
+bounds what wiring a predicted table can buy.} Measured on the whole Open Enzyme Database,
+35{,}753 records across 4{,}555 enzymes, the median EC4 class spans 1.77 orders of magnitude between
+its highest and lowest member against a measurement floor of 0.12 orders of magnitude, so knowing an
+enzyme's exact four-digit EC number leaves 0.75 orders of magnitude of standard deviation unexplained
+and accounts for under half the variance (intraclass correlation 0.46). A lookup table
+that predicts each enzyme as the median of the others in its EC class, using no sequence
+and no learning, scores a Spearman of \textbf{0.430} on the same 57 pairs: below TurNuP and
+above DeepEnzyme. Centering both axes on the class mean collapses every predictor's Pearson
+from the 0.81 to 0.93 range to between $-0.16$ and $+0.53$, and only EZKinetics has an
+interval excluding zero.
+
+The consequence for this module is specific. A flux layer already knows which reaction it
+is parameterizing, so the between-class range is information it does not need; what the
+capacity bound needs is the within-class ordering, which is the part these predictors are
+measured to be weakest at. A predicted $k_{cat}$ table is therefore an order-of-magnitude
+prior, and expecting the wiring to sharpen the bound is not supported by the accuracy
+numbers. The full analysis, with its sample-size caveats, is in
+\texttt{notes-tex/026-kinetics-thermodynamics}, Section~4.5.

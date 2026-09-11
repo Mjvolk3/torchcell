@@ -54,8 +54,8 @@ Default units reachable with an open-source tool: 0.
 | rung | reactions priced | fraction | flux-carrying priced | fraction | what it would take |
 |---|---:|---:|---:|---:|---|
 | now | 3779 | 0.9148 | 2716 | 0.9547 | nothing; this is the table as built |
-| structures_and_pka_ladders_resolved | 3792 | 0.9179 | 2724 | 0.9575 | a structure from a namespace or a curator for every species that has none, and a pKa ladder inside (0, 14) for every species whose ladder is empty |
-| everything_chemically_possible_resolved | 3802 | 0.9204 | 2727 | 0.9585 | the rung above plus a decomposition or a tabulated value for every structure the group decomposer refuses |
+| structures and pka ladders resolved | 3792 | 0.9179 | 2724 | 0.9575 | a structure from a namespace or a curator for every species that has none, and a pKa ladder inside (0, 14) for every species whose ladder is empty |
+| everything chemically possible resolved | 3802 | 0.9204 | 2727 | 0.9585 | the rung above plus a decomposition or a tabulated value for every structure the group decomposer refuses |
 
 Permanently closed reactions by sole reason: pseudo_metabolite 216, placeholder_formula 98, placeholder_structure 2.
 
@@ -99,16 +99,22 @@ Rule: the worst per-pH p90 of |dGf'0(predicted) - dGf'0(cache)| over the working
 
 | arm | seed | scale | thermo source | kcat table | selected epoch | test Spearman | pooled at seed | Genesis top-100 | balance <= 1e-2 | box exact | second law exact | balance median |
 |---|---:|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| flux_projection_anchored | 2700 | 0.1 | union | intermediate verified | 72 | 0.1154 | 0.0717 | 0.00 | 1.00 | 0.00 | 0.00 | 1.5e-08 |
-| flux_projection_anchored | 2701 | 0.1 | union | shipped verified | 74 | 0.0199 | 0.1058 | 0.00 | 1.00 | 0.00 | 0.00 | 2.9e-09 |
-| flux_projection_anchored_tdg_stochastic | 2700 | 0.1 | union_external | shipped verified | 29 | 0.0380 | 0.0717 | 1.00 | 1.00 | 1.00 | 1.00 | 2.0e-11 |
-| flux_projection_anchored_tdg | 2700 | 0 | union_external | shipped verified | 60 | -0.0006 | 0.0717 | 1.00 | 1.00 | 1.00 | 1.00 | 2.8e-08 |
-| flux_projection_anchored_tdg | 2701 | 0 | union_external | shipped verified | 24 | 0.0023 | 0.1058 | 0.00 | 0.00 | 1.00 | 0.99 | 0.693 |
-| flux_projection_anchored_tdg | 2702 | 0 | union_external | shipped verified | 31 | -0.0625 | 0.1687 | 0.00 | 0.00 | 1.00 | 1.00 | 0.068 |
-| flux_projection_anchored_tdg | 2700 | 0.1 | union_external | shipped verified | 63 | 0.0719 | 0.0717 | 0.00 | 0.00 | 1.00 | 1.00 | 0.825 |
-| flux_projection_anchored_tdg | 2701 | 0.1 | union_external | shipped verified | 32 | -0.0647 | 0.1058 | 0.00 | 0.00 | 1.00 | 1.00 | 1.003 |
-| flux_projection | 2700 | 0 | union | other (94, 774, 2830, 30) | 35 | 0.1170 | 0.0717 | n/a | 1.00 | 0.00 | n/a | 1.4e-08 |
-| flux_projection | 2701 | 0 | union | other (94, 774, 2830, 30) | 74 | 0.1413 | 0.1058 | n/a | 1.00 | 0.00 | n/a | 9.2e-09 |
+| anchored K20, box end | 2700 | 0 | union+ext | shipped | 71 | 0.1003 | 0.0717 | 0.00 | 0.00 | 1.00 | 0.00 | 0.298 |
+| anchored K20, box end | 2701 | 0 | union+ext | shipped | 46 | -0.0239 | 0.1058 | 0.00 | 0.00 | 1.00 | 0.00 | 0.035 |
+| anchored K20, box end | 2702 | 0 | union+ext | shipped | 49 | 0.0019 | 0.1687 | 0.00 | 0.00 | 1.00 | 0.00 | 0.343 |
+| anchored, balance end | 2700 | 0.1 | union | interim | 72 | 0.1154 | 0.0717 | 0.00 | 1.00 | 0.00 | 0.00 | 1.5e-08 |
+| anchored, balance end | 2701 | 0.1 | union | shipped | 74 | 0.0199 | 0.1058 | 0.00 | 1.00 | 0.00 | 0.00 | 2.9e-09 |
+| anchored, sign-tightened, stochastic | 2700 | 0.1 | union+ext | shipped | 29 | 0.0380 | 0.0717 | 1.00 | 1.00 | 1.00 | 1.00 | 2.0e-11 |
+| anchored, sign-tightened | 2700 | 0 | union+ext | shipped | 60 | -0.0006 | 0.0717 | 1.00 | 1.00 | 1.00 | 1.00 | 2.8e-08 |
+| anchored, sign-tightened | 2701 | 0 | union+ext | shipped | 24 | 0.0023 | 0.1058 | 0.00 | 0.00 | 1.00 | 0.99 | 0.693 |
+| anchored, sign-tightened | 2702 | 0 | union+ext | shipped | 31 | -0.0625 | 0.1687 | 0.00 | 0.00 | 1.00 | 1.00 | 0.068 |
+| anchored, sign-tightened | 2700 | 0.1 | union+ext | shipped | 63 | 0.0719 | 0.0717 | 0.00 | 0.00 | 1.00 | 1.00 | 0.825 |
+| anchored, sign-tightened | 2701 | 0.1 | union+ext | shipped | 32 | -0.0647 | 0.1058 | 0.00 | 0.00 | 1.00 | 1.00 | 1.003 |
+| anchored, sign-tightened 5 kJ/mol margin | 2700 | 0 | union+ext | shipped | 25 | -0.0276 | 0.0717 | 0.00 | 0.00 | 1.00 | 0.00 | 0.139 |
+| anchored, sign-tightened 5 kJ/mol margin | 2701 | 0 | union+ext | shipped | 77 | 0.0574 | 0.1058 | 0.00 | 0.00 | 1.00 | 0.00 | 0.044 |
+| projection, balance end | 2700 | 0 | union | other | 35 | 0.1170 | 0.0717 | n/a | 1.00 | 0.00 | n/a | 1.4e-08 |
+| projection, balance end | 2701 | 0 | union | other | 74 | 0.1413 | 0.1058 | n/a | 1.00 | 0.00 | n/a | 9.2e-09 |
+| projection, balance end | 2702 | 0 | union | shipped | 75 | 0.0555 | 0.1687 | n/a | 1.00 | 0.00 | n/a | 9.9e-09 |
 
 ### Findings, each tied to its source
 
@@ -147,11 +153,11 @@ agreeing; projection head vs pooled -0.039, sd 0.034. Switching the constraints 
 the amino-acid box head at epoch 8 (job 1721), the wave-5 betaxanthin collapse on a second
 phenotype.
 
-**The projection head escapes the plateau and matches or beats pooled on betaxanthin at the
-seeds run.** Scale 0: 0.117 and 0.141 against pooled 0.072 and 0.106 (jobs 1689, 1690).
-Everything on at scale 0.1: 0.115 and 0.020 (jobs 1708, 1709), no collapse. n = 2 per arm
-with a between-seed spread near 0.05, so this is an observation to replicate, not a result;
-seed 2702 is running as job 1738.
+**The projection head escapes the plateau at every seed and is not better than pooled
+across seeds.** Scale 0: 0.117, 0.141 and 0.056 against pooled 0.072, 0.106 and 0.169 (jobs
+1689, 1690, 1738), paired differences +0.045, +0.036, -0.113. Everything on at scale 0.1:
+0.115 and 0.020 (jobs 1708, 1709), no collapse. The best arm of the night sits inside one
+noise width of the control.
 
 **Feasibility by construction is reachable but not reliable, and the second law is what
 fights the signal.** The box head is never balanced (median ratio about 2, the theoretical
@@ -168,12 +174,17 @@ none with it did (0 of 6), so the tightening, not the box end, is what blocks le
 (analyze_projection.py). All feasibility reads are against the model's own reaction
 energies; at standard state the fraction is 0.00 in every cell.
 
-**Hypothesis (untested):** the learned sign pattern plus the balance constraint admits only
-near-zero flux for most genotypes, so the projected flux is nearly genotype-independent and
-the head reads nothing. The flux agent's at-init measurement points the same way: a 5 kJ/mol
-margin (tightening only reactions whose |ΔG| exceeds it) raised the mean flux density from
-0.067 to 0.184 while reintroducing a 0.123 second-law violation fraction. Cells 1736 and
-1737 test that arm at seeds 2700 and 2701.
+**The margin does not rescue it.** Tightening only reactions whose |ΔG| exceeds 5 kJ/mol
+(jobs 1736, 1737) restored the escape but lost second-law exactness entirely (fraction with
+no violation 0.00 on the top 100 at both seeds) and did not recover prediction (-0.028 and
++0.057, both below pooled), as its initialization measurement had predicted (flux density
+0.067 to 0.184 with a 0.123 violation fraction). At seed 2702 the three families order
+monotonically in how much exactness they take on: balance end 0.056, box end 0.002, sign
+tightening -0.063. Hypothesis (untested): the learned sign pattern plus the balance
+constraint admits only near-zero flux for most genotypes, so the projected flux is nearly
+genotype-independent and the head reads nothing; the flux agent's suggested next steps are
+to anneal the tightening in after the epoch 0 to 30 plateau and to check the learned
+concentrations against the 19 measured amino acids already in the dataset.
 
 **An incident changed how cells are launched.** Two cells died with a NameError in a
 DataLoader worker while slurm showed RUNNING: spawned workers re-import the trainer and
@@ -184,6 +195,23 @@ to `$DATA_ROOT/job-snapshots/<stamp>-<name>/`, verifies the imports, records the
 and sha256 of the files that matter, and submits from the snapshot. The trainer agent
 independently built a frozen package for its cells for the same reason.
 
+### Figures
+
+Both figures are produced by the stream scripts named in their captions and are the same
+files embedded in the wave-6 and projection-head notes.
+
+![](./assets/images/027-betaxanthin-metabolic/wave6_parity_and_feasibility_2026-09-11-08-55-11.svg)
+
+Figure 1. Wave-6 parity contrasts and feasibility, `analyze_wave6.py`: the six-seed
+betaxanthin contrast, the three-seed amino-acid contrast, and the top-100 feasibility
+fractions per cell under the trainer's tolerance ladder.
+
+![](./assets/images/027-betaxanthin-metabolic/wave6_projection_2026-09-11-11-25-37.svg)
+
+Figure 2. The sixteen projection-head cells, `analyze_projection.py`: escape and
+selection per cell, test Spearman against pooled at the same seed, and the top-100
+balance, box and second-law fractions by family (balance end, box end, sign tightening).
+
 ### What is open
 
 - Replace the median balance tolerance with a max-based one and report the fraction of
@@ -192,8 +220,8 @@ independently built a frozen package for its cells for the same reason.
 - Rerun the betaxanthin parity contrast on one kcat table version; freeze the data mirror
   together with the code (extend freeze_and_submit.sh to copy the parquet versions the
   resolver reads).
-- A head that is feasible and informative at once: the margin-tightened arm (cells 1736,
-  1737), Dykstra (implemented, tested, never trained), and the covariance path (wired,
+- A head that is feasible and informative at once: annealing the sign tightening in after
+  the plateau, Dykstra (implemented, tested, never trained), and the covariance path (wired,
   tested for shape and agreement with the shipped sigma, never trained).
 - Curation: metallated porphyrin structures, the 23 closable reactions, the 18 default
   units (R-groups, formula-less macromolecules, cytochrome c).
@@ -204,9 +232,9 @@ independently built a frozen package for its cells for the same reason.
 
 ### Job ledger
 
-Twenty-nine cells on GilaHyper, all 80 epochs, 77 to 95 minutes each; per-cell tables with
+Thirty-four cells on GilaHyper, all 80 epochs, 77 to 95 minutes each; per-cell tables with
 job ids are in the wave-6 and projection-head notes. Driver's own cells: 1682, 1683, 1707,
 1710 (parity seeds 2702 and 2703), 1727 to 1729 (projection head on amino acids), 1736 to
-1739 (margin-tightened head seeds 2700 and 2701, plain projection and box-end at seed 2702).
+1739 (margin-tightened head at seeds 2700 and 2701, plain projection and box-end at seed 2702).
 Killed: 1681, 1684 (worker NameError), 1691 to 1704 (cancelled and resubmitted frozen as
 1708 to 1721).

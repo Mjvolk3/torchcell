@@ -12,8 +12,8 @@ Default units reachable with an open-source tool: 0.
 | rung | reactions priced | fraction | flux-carrying priced | fraction | what it would take |
 |---|---:|---:|---:|---:|---|
 | now | 3779 | 0.9148 | 2716 | 0.9547 | nothing; this is the table as built |
-| structures_and_pka_ladders_resolved | 3792 | 0.9179 | 2724 | 0.9575 | a structure from a namespace or a curator for every species that has none, and a pKa ladder inside (0, 14) for every species whose ladder is empty |
-| everything_chemically_possible_resolved | 3802 | 0.9204 | 2727 | 0.9585 | the rung above plus a decomposition or a tabulated value for every structure the group decomposer refuses |
+| structures and pka ladders resolved | 3792 | 0.9179 | 2724 | 0.9575 | a structure from a namespace or a curator for every species that has none, and a pKa ladder inside (0, 14) for every species whose ladder is empty |
+| everything chemically possible resolved | 3802 | 0.9204 | 2727 | 0.9585 | the rung above plus a decomposition or a tabulated value for every structure the group decomposer refuses |
 
 Permanently closed reactions by sole reason: pseudo_metabolite 216, placeholder_formula 98, placeholder_structure 2.
 
@@ -57,13 +57,19 @@ Rule: the worst per-pH p90 of |dGf'0(predicted) - dGf'0(cache)| over the working
 
 | arm | seed | scale | thermo source | kcat table | selected epoch | test Spearman | pooled at seed | Genesis top-100 | balance <= 1e-2 | box exact | second law exact | balance median |
 |---|---:|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| flux_projection_anchored | 2700 | 0.1 | union | intermediate verified | 72 | 0.1154 | 0.0717 | 0.00 | 1.00 | 0.00 | 0.00 | 1.5e-08 |
-| flux_projection_anchored | 2701 | 0.1 | union | shipped verified | 74 | 0.0199 | 0.1058 | 0.00 | 1.00 | 0.00 | 0.00 | 2.9e-09 |
-| flux_projection_anchored_tdg_stochastic | 2700 | 0.1 | union_external | shipped verified | 29 | 0.0380 | 0.0717 | 1.00 | 1.00 | 1.00 | 1.00 | 2.0e-11 |
-| flux_projection_anchored_tdg | 2700 | 0 | union_external | shipped verified | 60 | -0.0006 | 0.0717 | 1.00 | 1.00 | 1.00 | 1.00 | 2.8e-08 |
-| flux_projection_anchored_tdg | 2701 | 0 | union_external | shipped verified | 24 | 0.0023 | 0.1058 | 0.00 | 0.00 | 1.00 | 0.99 | 0.693 |
-| flux_projection_anchored_tdg | 2702 | 0 | union_external | shipped verified | 31 | -0.0625 | 0.1687 | 0.00 | 0.00 | 1.00 | 1.00 | 0.068 |
-| flux_projection_anchored_tdg | 2700 | 0.1 | union_external | shipped verified | 63 | 0.0719 | 0.0717 | 0.00 | 0.00 | 1.00 | 1.00 | 0.825 |
-| flux_projection_anchored_tdg | 2701 | 0.1 | union_external | shipped verified | 32 | -0.0647 | 0.1058 | 0.00 | 0.00 | 1.00 | 1.00 | 1.003 |
-| flux_projection | 2700 | 0 | union | other (94, 774, 2830, 30) | 35 | 0.1170 | 0.0717 | n/a | 1.00 | 0.00 | n/a | 1.4e-08 |
-| flux_projection | 2701 | 0 | union | other (94, 774, 2830, 30) | 74 | 0.1413 | 0.1058 | n/a | 1.00 | 0.00 | n/a | 9.2e-09 |
+| anchored K20, box end | 2700 | 0 | union+ext | shipped | 71 | 0.1003 | 0.0717 | 0.00 | 0.00 | 1.00 | 0.00 | 0.298 |
+| anchored K20, box end | 2701 | 0 | union+ext | shipped | 46 | -0.0239 | 0.1058 | 0.00 | 0.00 | 1.00 | 0.00 | 0.035 |
+| anchored K20, box end | 2702 | 0 | union+ext | shipped | 49 | 0.0019 | 0.1687 | 0.00 | 0.00 | 1.00 | 0.00 | 0.343 |
+| anchored, balance end | 2700 | 0.1 | union | interim | 72 | 0.1154 | 0.0717 | 0.00 | 1.00 | 0.00 | 0.00 | 1.5e-08 |
+| anchored, balance end | 2701 | 0.1 | union | shipped | 74 | 0.0199 | 0.1058 | 0.00 | 1.00 | 0.00 | 0.00 | 2.9e-09 |
+| anchored, sign-tightened, stochastic | 2700 | 0.1 | union+ext | shipped | 29 | 0.0380 | 0.0717 | 1.00 | 1.00 | 1.00 | 1.00 | 2.0e-11 |
+| anchored, sign-tightened | 2700 | 0 | union+ext | shipped | 60 | -0.0006 | 0.0717 | 1.00 | 1.00 | 1.00 | 1.00 | 2.8e-08 |
+| anchored, sign-tightened | 2701 | 0 | union+ext | shipped | 24 | 0.0023 | 0.1058 | 0.00 | 0.00 | 1.00 | 0.99 | 0.693 |
+| anchored, sign-tightened | 2702 | 0 | union+ext | shipped | 31 | -0.0625 | 0.1687 | 0.00 | 0.00 | 1.00 | 1.00 | 0.068 |
+| anchored, sign-tightened | 2700 | 0.1 | union+ext | shipped | 63 | 0.0719 | 0.0717 | 0.00 | 0.00 | 1.00 | 1.00 | 0.825 |
+| anchored, sign-tightened | 2701 | 0.1 | union+ext | shipped | 32 | -0.0647 | 0.1058 | 0.00 | 0.00 | 1.00 | 1.00 | 1.003 |
+| anchored, sign-tightened 5 kJ/mol margin | 2700 | 0 | union+ext | shipped | 25 | -0.0276 | 0.0717 | 0.00 | 0.00 | 1.00 | 0.00 | 0.139 |
+| anchored, sign-tightened 5 kJ/mol margin | 2701 | 0 | union+ext | shipped | 77 | 0.0574 | 0.1058 | 0.00 | 0.00 | 1.00 | 0.00 | 0.044 |
+| projection, balance end | 2700 | 0 | union | other | 35 | 0.1170 | 0.0717 | n/a | 1.00 | 0.00 | n/a | 1.4e-08 |
+| projection, balance end | 2701 | 0 | union | other | 74 | 0.1413 | 0.1058 | n/a | 1.00 | 0.00 | n/a | 9.2e-09 |
+| projection, balance end | 2702 | 0 | union | shipped | 75 | 0.0555 | 0.1687 | n/a | 1.00 | 0.00 | n/a | 9.9e-09 |

@@ -1,0 +1,155 @@
+{
+ "slug": "ethylnitronate",
+ "met_ids": ["s_3934"],
+ "gem_name": "Ethylnitronate",
+ "gem_formula": "C2H5NO2",
+ "gem_charge": 0,
+ "compartments": ["c"],
+ "blocked_reactions": ["r_4273"],
+ "kind": "structure",
+ "admission": "tabulated",
+ "value": {
+  "smiles": "CCN(=O)=O",
+  "inchi": "InChI=1S/C2H5NO2/c1-2-3(4)5/h2H2,1H3",
+  "inchikey": "MCSAJNNLRCFZED-UHFFFAOYSA-N",
+  "formula": "C2H5NO2",
+  "charge": 0,
+  "microspecies_note": "The species that balances r_4273 as the GEM writes it is nitroethane (C2H5NO2, charge 0), NOT the ethylnitronate anion the GEM name claims. Verified with cobra check_mass_balance on yeast-GEM.xml: the reaction returns {} (balanced) with C2H5NO2 at charge 0. Hand check: LHS C19 H26 N5 O13 P1 charge -2; RHS C19 H26 N5 O13 P1 charge -2. Substituting the nitronate anion (C2H4NO2, charge -1) leaves the reaction short one hydrogen and one negative charge, and it re-balances only if the 2 H+ on the product side become 1 H+, which is exactly the form RHEA:28767 writes for EC 1.13.12.16. Nitroethane and its conjugate base are one compound in the eQuilibrator cache (compound id 1907), which carries both microspecies, charge 0 with 5 H and charge -1 with 4 H, separated by ddg_over_rt 20.838395091596116, i.e. a ChemAxon-predicted pKa of 9.05. The measured aqueous pKa is lower: 8.6 at 25 C (Wheland and Farr 1943), 8.46 at 25 C and 8.44 at 30 C (Turnbull and Maron 1943), all from the IUPAC compilation served by PubChem. Swapping the cache ladder for the measured pKa moves dfG'0 at pH 7.2 by 0.16 kJ/mol (181.71 to 181.55), which is far inside the group-contribution sigma of 3.97 kJ/mol, so the pKa is not what blocks this species.",
+  "representation_rule": "Write an aliphatic or aromatic nitro group in the PENTAVALENT uncharged form N(=O)=O, never the charge-separated form [N+](=O)[O-], before handing a structure to the eQuilibrator group decomposer. The group definition -NO2 in group_definitions.csv has SMARTS [C,c,N,n]N(=O)=O and OpenBabel's matcher does not treat the two spellings as equivalent, so the charge-separated form leaves the nitrogen unassigned and the decomposition fails. Measured on this species: CCN(=O)=O decomposes with zero unassigned atoms into -NO2 + -C-[H2] + -C[H3] + Origin, while CC[N+](=O)[O-] (the SMILES ChEBI:16268 publishes) leaves atom 3 unassigned, and CC=N(O)=O (the SMILES the eQuilibrator cache stores for compound 1907) leaves atom 4 unassigned. Controls behave the same way: CN(=O)=O and c1ccccc1N(=O)=O decompose, C[N+](=O)[O-] and [O-][N+](=O)c1ccccc1 do not. The rule is reusable for every nitro species in the GEM, including s_3859 4-nitrophenyl phosphate and s_3860 4-nitrophenol. It fixes the DIAGNOSIS but buys no energy here, see notes."
+ },
+ "sigma_kj_per_mol": null,
+ "sources": [
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/16268/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -H 'Accept: application/json' -o chebi_16268.json https://www.ebi.ac.uk/chebi/backend/api/public/compound/16268/",
+   "sha256": "206462700e12386347e3082fda8a3500747a7994437934b96088133fc30c867a",
+   "retrieved_at": "2026-09-11T22:03:00Z",
+   "verbatim_quote": "\"name\":\"nitroethane\",\"stars\":3,\"definition\":\"A nitroalkane that is ethane substituted by a nitro group.\" ... \"default_structure\":{\"id\":768278,\"smiles\":\"CC[N+](=O)[O-]\",\"standard_inchi\":\"InChI=1S/C2H5NO2/c1-2-3(4)5/h2H2,1H3\",\"standard_inchi_key\":\"MCSAJNNLRCFZED-UHFFFAOYSA-N\"} ... \"chemical_data\":{\"formula\":\"C2H5NO2\",\"charge\":0,\"mass\":\"75.067\",\"monoisotopic_mass\":\"75.03203\"}",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/chebi_16268.json, JSON keys name, definition, default_structure, chemical_data"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/55327/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -H 'Accept: application/json' -o chebi_55327.json https://www.ebi.ac.uk/chebi/backend/api/public/compound/55327/",
+   "sha256": "a9bc46e4f0ee248e03661be33104b646b0b821c4e014b4386c05446494f795d0",
+   "retrieved_at": "2026-09-11T22:03:00Z",
+   "verbatim_quote": "\"name\":\"<em>aci</em>-nitroethane(1−)\" ... \"definition\":\"A nitrogen oxoanion arising from deprotonation of the hydroxy group of nitroethane.\" ... \"default_structure\":{\"id\":2168252,\"smiles\":\"CC=[N+]([O-])[O-]\",\"standard_inchi\":\"InChI=1S/C2H4NO2/c1-2-3(4)5/h2H,1H3/q-1\",\"standard_inchi_key\":\"YERBBVNYIKLXDM-UHFFFAOYSA-N\"} ... \"chemical_data\":{\"formula\":\"C2H4NO2\",\"charge\":-1,\"mass\":\"74.059\"}",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/chebi_55327.json, JSON keys name, definition, default_structure, chemical_data"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/77894/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -H 'Accept: application/json' -o chebi_77894.json https://www.ebi.ac.uk/chebi/backend/api/public/compound/77894/",
+   "sha256": "18b139e77c18139333269a9716a92b3c2dc2877afa48b7574f383cc3cd085e36",
+   "retrieved_at": "2026-09-11T22:05:00Z",
+   "verbatim_quote": "\"name\":\"<em>aci</em>-nitroethane\" ... \"definition\":\"An <em>aci</em>-nitro compound that is the predominant form of ethylnitronate at pH 7.3 (according to Marvin v 6.2.0.).\" ... \"smiles\":\"C/C=[N+](\\\\[O-])O\",\"standard_inchi_key\":\"CPZLOQHKKRZRSD-UHFFFAOYSA-N\" ... \"formula\":\"C2H5NO2\",\"charge\":0",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/chebi_77894.json, JSON keys name, definition, default_structure, chemical_data"
+  },
+  {
+   "source_url": "https://rest.kegg.jp/get/C18091",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o kegg_C18091.txt https://rest.kegg.jp/get/C18091",
+   "sha256": "c49a099446830a27bda483d0698966f70b6c166a738d3f84b0f92dfe1ac41224",
+   "retrieved_at": "2026-09-11T22:01:00Z",
+   "verbatim_quote": "ENTRY       C18091                      Compound\nNAME        Ethylnitronate\nFORMULA     C2H4NO2\nEXACT_MASS  74.0242\nMOL_WEIGHT  74.06\nREACTION    R00025\nENZYME      1.13.12.16\nDBLINKS     PubChem: 96024308\n            ChEBI: 55327",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/kegg_C18091.txt, lines 1-9"
+  },
+  {
+   "source_url": "https://rest.kegg.jp/get/C01837",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o kegg_C01837.txt https://rest.kegg.jp/get/C01837",
+   "sha256": "5658bee14b0cbd0c86d9b5f734800699f112e0ca982db3520f542668a4678c6f",
+   "retrieved_at": "2026-09-11T22:01:00Z",
+   "verbatim_quote": "ENTRY       C01837                      Compound\nNAME        Nitroethane\nFORMULA     C2H5NO2\nEXACT_MASS  75.0320\nMOL_WEIGHT  75.07\nREACTION    R00799\nENZYME      1.7.3.1\nDBLINKS     CAS: 79-24-3\n            PubChem: 4956\n            ChEBI: 16268",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/kegg_C01837.txt, lines 1-11"
+  },
+  {
+   "source_url": "https://rest.kegg.jp/get/R00025",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o kegg_R00025.txt https://rest.kegg.jp/get/R00025",
+   "sha256": "d312708423595c043d755602bab3160aa3b0cff504ad71ff338d26e777313e70",
+   "retrieved_at": "2026-09-11T22:01:00Z",
+   "verbatim_quote": "NAME        ethylnitronate:oxygen 2-oxidoreductase (nitrite-forming)\nDEFINITION  Ethylnitronate + Oxygen + Reduced FMN <=> Acetaldehyde + Nitrite + FMN + H2O\nEQUATION    C18091 + C00007 + C01847 <=> C00084 + C00088 + C00061 + C00001\nCOMMENT     Previously classified as 2-nitropropane dioxygenase (EC 1.13.11.32).",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/kegg_R00025.txt, lines 2-6"
+  },
+  {
+   "source_url": "https://www.rhea-db.org/rhea?query=RHEA:28767&columns=rhea-id,equation,chebi,chebi-id,ec&format=tsv",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o rhea_28767.tsv 'https://www.rhea-db.org/rhea?query=RHEA:28767&columns=rhea-id,equation,chebi,chebi-id,ec,rhea-id-master&format=tsv'",
+   "sha256": "ee79850caf5333bf909ce819e39c3b46b31627d6e0b648a5ddd83953fcab98f6",
+   "retrieved_at": "2026-09-11T22:04:00Z",
+   "verbatim_quote": "RHEA:28767\tethylnitronate + O2 = chemical entity + acetaldehyde + nitrite + H(+)\taci-nitroethane;dioxygen;chemical entity;acetaldehyde;nitrite;hydron\tCHEBI:77894;CHEBI:15379;CHEBI:24431;CHEBI:15343;CHEBI:16301;CHEBI:15378\tEC:1.13.12.16",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/rhea_28767.tsv, line 2"
+  },
+  {
+   "source_url": "https://www.enzyme-database.org/query.php?ec=1.13.12.16",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o explorenz_ec_1_13_12_16.html 'https://www.enzyme-database.org/query.php?ec=1.13.12.16'",
+   "sha256": "31fb4ff0d92f04073288f59f3775842fd6e79b47f7e106b5cf2446bc6c569cf0",
+   "retrieved_at": "2026-09-11T22:08:00Z",
+   "verbatim_quote": "Previously classified as 2-nitropropane dioxygenase (EC 1.13.11.32), but it is now recognized that this was the result of the slow ionization of nitroalkanes to their nitronate (anionic) forms. ... Active towards linear alkyl nitronates of lengths between 2 and 6 carbon atoms and, with lower activity, towards propyl-2-nitronate. The enzyme from N. crassa can also utilize neutral nitroalkanes, but with lower activity.",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/explorenz_ec_1_13_12_16.html, EC 1.13.12.16 entry, Comments field"
+  },
+  {
+   "source_url": "https://pubchem.ncbi.nlm.nih.gov/sdq/sdqagent.cgi?infmt=json&outfmt=json&query={\"download\":\"*\",\"collection\":\"iupacpka\",\"where\":{\"ands\":[{\"cid\":\"6587\"}]}}",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o pubchem_iupac_pka_6587.json 'https://pubchem.ncbi.nlm.nih.gov/sdq/sdqagent.cgi?infmt=json&outfmt=json&query=%7B%22download%22%3A%22*%22%2C%22collection%22%3A%22iupacpka%22%2C%22where%22%3A%7B%22ands%22%3A%5B%7B%22cid%22%3A%226587%22%7D%5D%7D%7D'",
+   "sha256": "a936e749e9e25c6b2ba249fa064ca02372b1a84d8501e27f89d2d83c8a22b7ae",
+   "retrieved_at": "2026-09-11T22:04:00Z",
+   "verbatim_quote": "{\"cid\":\"6587\",\"pkatype\":\"pKa1\",\"pka\":\"8.6\",\"temperature\":\"25\",\"method\":\"Measurements of pH changes during titrations using glass electrodes\",\"citation\":\"F. W. Wheland and J. Farr, J. Am. Chem. Soc. 65, 1433 (1943).\"} ... {\"pka\":\"8.49\",\"temperature\":\"18\",\"remarks\":\"C=0.003-0.007, mixed constant\",\"citation\":\"D. Turnbull and S. H. Maron, J. Am. Chem. Soc. 65, 212 (1943).\"} ... {\"pka\":\"8.46\",\"temperature\":\"25\",\"remarks\":\"pH equilibrium requires ca 5 min\"} ... {\"pka\":\"8.44\",\"temperature\":\"30\",\"remarks\":\"pH equilibrium requires ca 5 min\"}",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/pubchem_iupac_pka_6587.json, all 4 records"
+  },
+  {
+   "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6587/JSON",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o pubchem_cid6587_nitroethane.json https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6587/JSON",
+   "sha256": "bf6e2675fb1edf6fa326a93525f5279497c19e14888b982248422f4b1b83f22f",
+   "retrieved_at": "2026-09-11T22:04:00Z",
+   "verbatim_quote": "\"TOCHeading\": \"Dissociation Constants\" ... \"Reference\": [\"Serjeant, E.P., Dempsey B.; Ionisation Constants of Organic  Acids in Aqueous Solution. International Union of Pure and  Applied Chemistry (IUPAC). IUPAC Chemical Data Series No.  23, 1979. New York, New York: Pergamon Press, Inc., p. 33\"] ... \"Value\": {\"StringWithMarkup\": [{\"String\": \"pKa = 8.6\"}]}",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/pubchem_cid6587_nitroethane.json, Record.Section, TOCHeading 'Dissociation Constants'"
+  },
+  {
+   "source_url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C79243&Units=SI&Mask=1FFF",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o nist_webbook_nitroethane_thermo.html 'https://webbook.nist.gov/cgi/cbook.cgi?ID=C79243&Units=SI&Mask=1FFF'",
+   "sha256": "cfef9ed8336759085edb99b010c59943a4b9f8591f194df36bae67404e33882d",
+   "retrieved_at": "2026-09-11T22:06:00Z",
+   "verbatim_quote": "ΔfH°liquid -144. ± 0.4 kJ/mol Ccb Lebedeva and Ryadenko, 1973 ALS ... ΔfH°liquid -143.6 ± 1.1 kJ/mol Ccb Cass, Fletcher, et al., 1958 ... ΔfH°liquid -140.1 ± 1.3 kJ/mol Ccb Holcomb and Dorsey, 1949",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ethylnitronate/nist_webbook_nitroethane_thermo.html, section 'Condensed phase thermochemistry data'"
+  }
+ ],
+ "searches": [
+  {"query": "cobra check_mass_balance on r_4273 in yeast-GEM 9.0.2", "engine": "local (cobrapy, torchcell env)", "date": "2026-09-11", "outcome": "Returns {} with s_3934 = C2H5NO2 charge 0, so the reaction as written is elementally and charge balanced ONLY with nitroethane. Hand check of the anion shows it needs 1 H+ instead of 2."},
+  {"query": "eQuilibrator compound cache lookup of chebi:CHEBI:16268, kegg:C18091, metanetx.chemical:MNXM2143", "engine": "local (equilibrator-ext env, ~/.cache/equilibrator/compounds.sqlite)", "date": "2026-09-11", "outcome": "All three resolve to the SAME compound id 1907, stored SMILES CC=N(O)=O, InChIKey MCSAJNNLRCFZED-UHFFFAOYSA-N, group_vector = [] (length 0), standard_dg_formation returns None. Its synonym list merges nitroethane, aci-nitroethane and ethylnitronate(1-)."},
+  {"query": "GroupDecomposer.Decompose on CC[N+](=O)[O-], CCN(=O)=O, CC=N(O)=O, C/C=[N+]([O-])[O-], CC=[N+]([O-])O, plus nitromethane and nitrobenzene controls", "engine": "local (equilibrator_assets group decomposer)", "date": "2026-09-11", "outcome": "CCN(=O)=O, C/C=[N+]([O-])[O-] and CC=[N+]([O-])O decompose with zero unassigned atoms; CC[N+](=O)[O-], CC=N(O)=O and CC=N(=O)[O-] do not. Only CCN(=O)=O maps onto the chemically correct -NO2 group; the two anionic spellings map onto -N< plus [N]-O oxide groups."},
+  {"query": "grep -i nitro ~/.cache/equilibrator/group_definitions.csv", "engine": "local", "date": "2026-09-11", "outcome": "A -NO2 group exists: \"-NO2\",0,0,0,\"[C,c,N,n]N(=O)=O\",\"1|2|3\",\"Nitro\". The SMARTS demands the pentavalent spelling, which is why the charge-separated form fails."},
+  {"query": "L_inf projection of each group basis vector in ComponentContribution.predictor.preprocess", "engine": "local", "date": "2026-09-11", "outcome": "||L_inf e_g|| = 1.0 for -NO2, [N]-O [H1 Z0] and [N]-O [H0 Z-1]; 0.0 for -C-, -C and Origin. 85 of 163 groups are unconstrained. Independently, column 67 of train_G (-NO2) is used by 0 of the 631 training compounds. RMSE_inf = 100000 kJ/mol."},
+  {"query": "nitroethane pKa 8.6 aqueous Pearson Dillon 1953 nitronate ionization constant", "engine": "WebSearch", "date": "2026-09-11", "outcome": "Confirms pKa 8.6 for nitroethane and points at the Pearson and Dillon pseudo-acid series, but the primary papers are paywalled. Superseded by the PubChem IUPAC pKa table, which is the tabulated compilation and gives temperatures."},
+  {"query": "Pearson Dillon \"Rates of Ionization of Pseudo Acids\" JACS 1953 75 2439 nitroethane pK 8.60", "engine": "WebSearch", "date": "2026-09-11", "outcome": "Citation confirmed as Pearson, R. G.; Dillon, R. L. J. Am. Chem. Soc. 1953, 75, 2439-2443, but the text is paywalled and no value was extracted. Not used as a source."},
+  {"query": "NIST Thermodynamics of Enzyme-Catalyzed Reactions Database TECRDB nitronate monooxygenase nitroalkane oxidase equilibrium constant", "engine": "WebSearch", "date": "2026-09-11", "outcome": "NEGATIVE. No TECRDB entry for a nitronate or nitroalkane reaction surfaced. Consistent with the local finding that nitroethane is not among eQuilibrator's 631 reactant-contribution training compounds."},
+  {"query": "Alberty \"Thermodynamics of Biochemical Reactions\" standard Gibbs energy formation nitroethane nitronate table species", "engine": "WebSearch", "date": "2026-09-11", "outcome": "NEGATIVE. Alberty's tabulated reactant sets (53 reactants at 298.15 K, and the larger BasicBiochemData tables) do not surface nitroethane or any nitronate."},
+  {"query": "eQuilibrator component contribution nitro group -NO2 no training data infinite uncertainty group contribution coverage nitroalkane", "engine": "WebSearch", "date": "2026-09-11", "outcome": "NEGATIVE for published discussion of nitro-group coverage. The local L_inf computation answers the question directly instead."},
+  {"query": "Gadda nitronate monooxygenase Neurospora crassa substrate propionate 3-nitronate anionic nitronate not neutral nitroalkane specificity", "engine": "WebSearch", "date": "2026-09-11", "outcome": "Fungal and bacterial NMOs act on anionic nitronates; the Neurospora crassa class II enzyme also turns over neutral nitroalkanes, more slowly. Confirmed verbatim from the ExplorEnz EC 1.13.12.16 comment, which is the source cited here."},
+  {"query": "NIST Chemistry WebBook nitroethane C79243 thermochemistry", "engine": "direct_url", "date": "2026-09-11", "outcome": "Liquid-phase dfH and combustion enthalpies only. No dfG at all, no aqueous phase, and the Henry's law table is empty. Nothing usable as an aqueous Gibbs energy."}
+ ],
+ "decomposition_check": {
+  "attempted": true,
+  "decomposes": true,
+  "error": "The GEM's own accessions reach eQuilibrator compound 1907, whose stored SMILES CC=N(O)=O leaves one atom unassigned, so the cached group_vector is an empty list and standard_dg_formation returns None. Rewriting the structure as CCN(=O)=O decomposes cleanly, but the resulting -NO2 group is unparameterized: ||L_inf x|| = 1.0 and RMSE_inf = 100000 kJ/mol, so the estimate is undefined rather than uncertain and the reaction stays non-estimable.",
+  "smiles_tried": [
+   {"smiles": "CCN(=O)=O", "decomposes": true, "error": null},
+   {"smiles": "CC[N+](=O)[O-]", "decomposes": false, "error": "atom 3 unassigned; the -NO2 SMARTS [C,c,N,n]N(=O)=O does not match the charge-separated spelling"},
+   {"smiles": "CC=N(O)=O", "decomposes": false, "error": "atom 4 unassigned; this is the SMILES the eQuilibrator cache stores for compound 1907 and the direct cause of the empty group vector"},
+   {"smiles": "C/C=[N+]([O-])[O-]", "decomposes": true, "error": null},
+   {"smiles": "CC=N(=O)[O-]", "decomposes": false, "error": "atom 3 unassigned"},
+   {"smiles": "CC=[N+]([O-])O", "decomposes": true, "error": null},
+   {"smiles": "C[N+](=O)[O-]", "decomposes": false, "error": "nitromethane control; atom 2 unassigned"},
+   {"smiles": "CN(=O)=O", "decomposes": true, "error": null},
+   {"smiles": "[O-][N+](=O)c1ccccc1", "decomposes": false, "error": "nitrobenzene control; atom 2 unassigned"},
+   {"smiles": "c1ccccc1N(=O)=O", "decomposes": true, "error": null},
+   {"smiles": "CC=O", "decomposes": true, "error": "acetaldehyde positive control, decomposes as expected"}
+  ]
+ },
+ "notes": "WHICH SPECIES BALANCES r_4273. Nitroethane, C2H5NO2 at charge 0. cobra check_mass_balance on $DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml returns {} for r_4273 exactly as the GEM writes it, with 2 H+ on the product side. The ethylnitronate anion (C2H4NO2, charge -1) does not balance that equation; it balances the variant with 1 H+, which is what RHEA:28767 writes for EC 1.13.12.16. So the GEM's formula and charge are self-consistent and only the NAME is wrong, and the GEM's two accessions disagree with each other: chebi=CHEBI:16268 is nitroethane while kegg.compound=C18091 is Ethylnitronate (C2H4NO2, ChEBI:55327). Biochemically the anion is the canonical substrate for EC 1.13.12.16, but the ExplorEnz comment records that the Neurospora crassa enzyme also turns over neutral nitroalkanes, so a yeast NMO homolog (YJR149W) acting on nitroethane is not absurd. Renaming s_3934 to nitroethane, or switching it to the anion and dropping one H+, is a GEM curation decision for a human, not something this record makes.\n\nWHAT THE STRUCTURE FIX BUYS, AND WHAT IT DOES NOT. It buys a correct diagnosis and nothing else. With CCN(=O)=O the decomposition succeeds and component contribution returns dfG0 = -31.17 kJ/mol, sigma_fin = 3.97 kJ/mol, and dfG'0 = 181.71 kJ/mol at pH 7.2, I = 0.25 M, T = 303.15 K, pMg 3.0; summing S^T dfG'0 over r_4273 with the proton at 0 gives -394.78 kJ/mol with sigma_fin 6.59 kJ/mol. That number MUST NOT be used. The -NO2 group is in the component-contribution null space: ||L_inf e_NO2|| = 1.0 and RMSE_inf = 100000 kJ/mol, verified two independent ways (the L_inf projection, and column 67 of train_G being used by 0 of the 631 training compounds). Both nitronate spellings are worse, since they route through [N]-O oxide groups that are also unconstrained. build_equilibrator_thermo.py already masks this correctly: its estimable flag is ||S^T sigma_inf|| < 1e-10, which is 1.0 here, so applying the structure fix would leave r_4273 with estimable = False. The integrating agent should therefore treat this record as a REPRESENTATION RULE plus a reclassification of the exclusion reason from group_decomposition_failed to unparameterized_group, not as a route to a price.\n\nWHY THE CACHE FAILS AT ALL. eQuilibrator compound 1907 merges nitroethane, aci-nitroethane and ethylnitronate(1-) into one compound keyed on InChIKey MCSAJNNLRCFZED-UHFFFAOYSA-N and stores the aci spelling CC=N(O)=O. That spelling matches no group, so the cached group_vector is an empty list rather than None. That is a silent trap for any code that tests group_vector is not None as a proxy for decomposability, which thermo_structure_attempt.py does; an empty list passes that test and the failure then shows up one step later as a missing formation energy. Worth a one-line hardening there: test for a non-empty vector.\n\nPKA. Not the blocker, but tabulated and measured, so recorded. The IUPAC compilation served by PubChem gives four aqueous values for the nitroethane / ethylnitronate couple: 8.6 at 25 C (Wheland and Farr, JACS 65, 1433, 1943), 8.49 at 18 C, 8.46 at 25 C and 8.44 at 30 C (Turnbull and Maron, JACS 65, 212, 1943), all by glass-electrode titration; the Turnbull and Maron entries are flagged as mixed constants at C = 0.003 to 0.007 M, and no ionic strength is stated. At the pipeline's 303.15 K the tabulated value is 8.44. The eQuilibrator cache carries a ChemAxon-predicted ladder of 9.05 (ddg_over_rt 20.838395091596116). Substituting the measured value changes dfG'0 by 0.16 kJ/mol at pH 7.2, so it would not be worth a separate pka_ladder record on its own for this species; it is recorded here so a later external-pKa pass can pick it up. If the integrator wants a standalone pka_ladder row: pkas [8.44], site assignment alpha C-H of the nitroalkane giving the C=N nitronate, T_K 303.15, ionic strength not stated.\n\nDOCUMENTED NEGATIVES. No aqueous formation data. NIST Chemistry WebBook C79243 lists only liquid-phase dfH (-144.0 +/- 0.4, -143.6 +/- 1.1 and -140.1 +/- 1.3 kJ/mol) and combustion enthalpies, with no dfG, no aqueous phase, and an empty Henry's law table, so it cannot be turned into an aqueous Gibbs energy without a gas-phase entropy and a solvation model; that route would be computed, not measured, and was not taken. No TECRDB apparent equilibrium constant for a nitronate or nitroalkane reaction was found, and nitroethane is not among eQuilibrator's 631 reactant-contribution training compounds, which is the same statement from inside the tool. No entry surfaced in Alberty's tabulated reactant sets.\n\nWHAT A HUMAN STILL NEEDS TO DO. Decide whether to rename s_3934 to nitroethane or re-specify it as the anion with 1 H+ in r_4273 (a GEM curation call). Decide whether r_4273 should simply stay unpriced, which is the honest outcome, or whether a nitro-group contribution should be fitted from an external source; the latter is a research task, since it requires aqueous data for at least one nitroalkane and none was found. Optionally harden the empty-group-vector test in thermo_structure_attempt.py, and apply the pentavalent-nitro representation rule to s_3859 and s_3860 as well, expecting the same unparameterized-group verdict."
+}

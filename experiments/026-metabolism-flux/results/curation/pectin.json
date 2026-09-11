@@ -1,0 +1,293 @@
+{
+  "slug": "pectin",
+  "met_ids": ["s_1309"],
+  "gem_name": "pectin",
+  "gem_formula": "C6H7O6",
+  "gem_charge": 0,
+  "compartments": ["e"],
+  "blocked_reactions": ["r_0365", "r_1999"],
+  "kind": "polymer_convention",
+  "admission": "tabulated",
+  "value": {
+    "repeat_unit_smiles": "*O[C@@H]1[C@H](O)[C@@H](O)[C@@H](*)O[C@@H]1C(=O)[O-]",
+    "repeat_unit_formula": "C6H7O6",
+    "repeat_unit_charge": -1,
+    "linkage": "alpha-(1->4) glycosidic, the homogalacturonan backbone. One residue is one alpha-D-galactopyranuronate unit. The two attachment points in the SMILES are, in written order, the O4 oxygen (bonded to the preceding residue's anomeric C1) and the anomeric C1 itself (bonded to the following residue's O4). Each residue therefore owns exactly ONE bridging oxygen, its own O4, so the bridging oxygen is counted once per residue and never twice. That accounting is what makes the residue C6H7O6 rather than C6H7O7.",
+    "end_groups": "None are counted. ChEBI writes the whole chain as (C6H7O6)n.H2O (CHEBI:140523): n residues plus one water, the water being the H on the non-reducing end's O4 and the OH on the reducing end's anomeric C1. yeast-GEM writes the species as ONE residue, C6H7O6, with no terminal water, which is the per-repeat-unit convention the repeat-unit surrogate route requires. The GEM's own stoichiometry confirms it: r_0365 consumes one pectin and one water and yields one D-galacturonate, which is exactly residue + H2O -> monomer at n = 1.",
+    "convention_note": "The GEM species s_1309 pectin is ONE alpha-1,4-linked D-galacturonate residue of homogalacturonan at degree of methyl esterification 0, with the C6 carboxyl deprotonated, so the residue carries charge -1. This is not invented here: ChEBI tabulates exactly this entity as CHEBI:140523 [(1->4)-alpha-D-galacturonosyl](n), formula (C6H7O6)n.H2O, charge -1, 'Major microspecies at pH 7.3', and Rhea uses it as the polymer participant in RHEA:13573. The GEM's elemental formula C6H7O6 is therefore CORRECT as shipped and needs no change; only the charge is wrong. C6H7O6 at charge 0 is not a neutral closed-shell molecule, as the row noted. The neutral residue is C6H8O6 (ChEBI:15446, (C6H8O6)n.H2O, charge 0; also the (C6H8O6)n term of ChEBI:62969 polygalacturonic acid), and the anion obtained by removing the carboxylic proton is C6H7O6 at charge -1. yeast-GEM took the deprotonated composition and left the charge field at 0. Degree of methyl esterification is 0 and not free to choose: the methyl-esterified residue is a different tabulated entity, CHEBI:140522 [(1->4)-alpha-D-galacturonosyl methyl ester](n), (C7H10O6)n.H2O at charge 0, and any nonzero esterification would break the elemental balance of r_0365 by CH2 per esterified residue. Acetylation is likewise 0, for the same reason. Do NOT take the structure MetaNetX offers for the GEM's own annotation: MNXM107600 is deprecated and redirects to MNXM726528 = chebi:15446 rendered as the free monomer C6H10O7 at charge 0, which would make r_0365 unbalanced by one water. Do NOT take CHEBI:60190 homogalacturonan either: its repeat is (C17H22O15)n, a methyl-esterified and acetylated dimer, and its SMILES carries the esters explicitly. Do NOT take KEGG C00714, whose repeat is (C26H36O24)n, four residues at degree of methyl esterification 0.5.",
+    "reaction_balance_check": {
+      "reaction_id": "r_0365",
+      "name": "endopolygalacturonase",
+      "ec_code": "3.2.1.15",
+      "gene_reaction_rule": "YJR153W",
+      "equation": "H2O + pectin --> D-galacturonate",
+      "participants": [
+        {"coefficient": -1, "met_id": "s_0805", "name": "H2O", "formula": "H2O", "charge": 0},
+        {"coefficient": -1, "met_id": "s_1309", "name": "pectin", "formula": "C6H7O6", "charge": 0},
+        {"coefficient": 1, "met_id": "s_0560", "name": "D-galacturonate", "formula": "C6H9O7", "charge": -1}
+      ],
+      "as_shipped_element_balance": "BALANCED. C6H7O6 + H2O = C6H9O7 exactly; cobra check_mass_balance() reports no element key.",
+      "as_shipped_charge_balance": "NOT BALANCED. cobra check_mass_balance() on r_0365 returns {'charge': -1.0}: substrates sum to 0 and the product is -1.",
+      "as_shipped_check_mass_balance": {"charge": -1.0},
+      "with_proposed_charge_check_mass_balance": {},
+      "with_proposed_element_sums_products_minus_substrates": {},
+      "with_proposed_charge_sum": 0.0,
+      "conclusion": "Setting s_1309 charge to -1 and leaving the formula at C6H7O6 makes r_0365 balance exactly in every element and in charge. This is the ONLY change r_0365 requires.",
+      "r_1999_note": "r_1999 pectin exchange is a boundary reaction and is unbalanced by construction (check_mass_balance() returns {'charge': 1.0, 'C': -6.0, 'H': -7.0, 'O': -6.0} with the corrected charge). It closes by the pipeline's exchange rule and is not evidence about the convention, per the row instruction.",
+      "verified_by": "verification_rdkit_cobra.txt, sha256 d76e1ca9e3a1fce7831f83f8a094c57d7d11d7be6fb9b0997d35d95be4285525, run against yeast-GEM.xml sha256 9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7 with RDKit 2026.03.6"
+    },
+    "proposed_formula": "C6H7O6",
+    "proposed_charge": -1
+  },
+  "sigma_kj_per_mol": null,
+  "sources": [
+    {
+      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+      "retrieval_method": "local_mirror",
+      "retrieval_command": "sha256sum /scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+      "sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+      "retrieved_at": "2026-09-11T22:01:34Z",
+      "verbatim_quote": "<species metaid=\"s_1309\" sboTerm=\"SBO:0000247\" id=\"s_1309\" name=\"pectin\" compartment=\"e\" initialConcentration=\"0\" hasOnlySubstanceUnits=\"false\" boundaryCondition=\"false\" constant=\"false\" fbc:charge=\"0\" fbc:chemicalFormula=\"C6H7O6\">",
+      "location": "line 16082; the reaction is at line 53621, <reaction metaid=\"r_0365\" ... name=\"endopolygalacturonase\" reversible=\"false\" ...> annotated ec-code/3.2.1.15 and pubmed/10028181"
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/140523/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -H 'Accept: application/json' https://www.ebi.ac.uk/chebi/backend/api/public/compound/140523/ -o chebi_140523.json",
+      "sha256": "f1369193328504b4ed82a55f71824362437c70a5b94876bfe2b83ba2d0e2bf4b",
+      "retrieved_at": "2026-09-11T21:54:35Z",
+      "verbatim_quote": "\"name\":\"[(1\\u21924)-\\u03b1-<small>D</small>-galacturonosyl]<small><sub>(<em>n</em>)</sub></small>\" ... \"definition\":\"Major microspecies at pH 7.3\" ... \"chemical_data\":{\"formula\":\"(C6H7O6)n.H2O\",\"charge\":-1,\"mass\":\"193.131\",\"monoisotopic_mass\":\"193.03538\"}",
+      "location": "chebi_140523.json, fields name, definition and chemical_data. THE PRIMARY SOURCE FOR THIS RECORD: it tabulates the repeat unit as C6H7O6 at charge -1, exactly the GEM formula with the charge corrected."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/15446/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -H 'Accept: application/json' https://www.ebi.ac.uk/chebi/backend/api/public/compound/15446/ -o chebi_15446.json",
+      "sha256": "929cf3c0e225c2e9c30e309d20236e2c0902b1e4073e64a2147e37cd64471897",
+      "retrieved_at": "2026-09-11T21:54:41Z",
+      "verbatim_quote": "\"chemical_data\":{\"formula\":\"(C6H8O6)n.H2O\",\"charge\":0,\"mass\":\"194.139\",\"monoisotopic_mass\":\"194.04265\"}",
+      "location": "chebi_15446.json, chemical_data. The NEUTRAL residue is C6H8O6, so C6H7O6 can only be the carboxylate anion; this is what rules out charge 0 on the GEM formula."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/140522/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -H 'Accept: application/json' https://www.ebi.ac.uk/chebi/backend/api/public/compound/140522/ -o chebi_140522.json",
+      "sha256": "eb0c74d4d01d4c1d5646066f15e507bcc517f9c98a627cd6fa7aca3f45dc1465",
+      "retrieved_at": "2026-09-11T21:54:46Z",
+      "verbatim_quote": "\"name\":\"[(1\\u21924)-\\u03b1-<small>D</small>-galacturonosyl methyl ester]<small><sub>(<em>n</em>)</sub></small>\" ... \"chemical_data\":{\"formula\":\"(C7H10O6)n.H2O\",\"charge\":0",
+      "location": "chebi_140522.json, name and chemical_data. Fixes the degree of methyl esterification at 0: the esterified residue is a separate entity at C7H10O6, charge 0."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/58658/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -H 'Accept: application/json' https://www.ebi.ac.uk/chebi/backend/api/public/compound/58658/ -o chebi_58658.json",
+      "sha256": "e5cd216866226b81de15176bf9d2d6f2502b96860364ea67adbe7ccac8d924ef",
+      "retrieved_at": "2026-09-11T21:52:30Z",
+      "verbatim_quote": "\"definition\":\"A carbohydrate acid anion that is the conjugate base of \\u03b1-<small>D</small>-galacturonic acid, obtained by deprotonation of the carboxy group; major species at pH 7.3.\" ... \"smiles\":\"O=C([O-])[C@H]1O[C@H](O)[C@H](O)[C@@H](O)[C@H]1O\" ... \"formula\":\"C6H9O7\",\"charge\":-1",
+      "location": "chebi_58658.json. The monomer, matching GEM s_0560 D-galacturonate C6H9O7 charge -1 exactly. Capping the proposed residue's two attachment points with H (at O4) and OH (at C1) reproduces this SMILES canonically."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/17309/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -H 'Accept: application/json' https://www.ebi.ac.uk/chebi/backend/api/public/compound/17309/ -o chebi_17309.json",
+      "sha256": "7d4d4b2c3c9141c2a95910aa7836af6cf0580599cf857137f51be6f54925283a",
+      "retrieved_at": "2026-09-11T21:52:13Z",
+      "verbatim_quote": "\"name\":\"pectin\" ... \"definition\":\"A heteropolysaccharide containing a large proportion of <small>D</small>-galactopyranosyluronic acid residues in \\u03b1-(1\\u21924) linkage, of which the hydroxy groups at positions C2 and C3  may be acetylated and carboxy groups at positions C6 may be esterified to varying degrees by methyl groups or be partially or completely converted into salts.\" ... \"default_structure\":null ... \"chemical_data\":null",
+      "location": "chebi_17309.json. This is the GEM's own ChEBI annotation on s_1309, and it carries NO structure and NO formula: an underdetermined heteropolysaccharide class, which is why the structure route reported no_structure_in_any_namespace."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/62969/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -H 'Accept: application/json' https://www.ebi.ac.uk/chebi/backend/api/public/compound/62969/ -o chebi_62969.json",
+      "sha256": "fb09f0b8961347372c976e192c22eb23dcd10bc3bee8c95660063b7f84e8dd10",
+      "retrieved_at": "2026-09-11T21:52:19Z",
+      "verbatim_quote": "\"definition\":\"An oligosaccharide of more than twenty <small>D</small>-galacturonic acid residues joined by \\u03b1(1\\u21924) glycosidic linkages. In the diagram, n > 18.\" ... \"formula\":\"(C6H8O6)n.C12H18O13\",\"charge\":0",
+      "location": "chebi_62969.json. Independent confirmation of the (C6H8O6)n repeat. Its DEPICTED structure is only a trisaccharide, and the eQuilibrator cache stores it as C18H23O19; that cached trianion is what the computed cross-check uses."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/60190/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -H 'Accept: application/json' https://www.ebi.ac.uk/chebi/backend/api/public/compound/60190/ -o chebi_60190.json",
+      "sha256": "7b2107d57dc2c23f3bc122459a9d75d5ada34e87b1e5553721268d8b11bdb693",
+      "retrieved_at": "2026-09-11T21:52:24Z",
+      "verbatim_quote": "\"definition\":\"A pectidic polymer, characterized by a backbone of 1,4-linked \\u03b1-<small>D</small>-Gal<em>p</em>A residues that can be methyl-esterified at C-6 and carry acetyl groups on O-2 and O-3.\" ... \"smiles\":\"*O[C@H]1O[C@H](C(=O)O)[C@H](O[C@H]2O[C@H](C(=O)OC)[C@H](O*)[C@H](OC(C)=O)[C@H]2O)[C@H](O)[C@H]1OC(C)=O\" ... \"formula\":\"(C17H22O15)n\",\"charge\":0",
+      "location": "chebi_60190.json. REJECTED as the GEM's residue: its repeat is an esterified and acetylated dimer at C17H22O15, not C6H7O6. Kept as the precedent for the attachment-point SMILES style used here."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/68837/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -H 'Accept: application/json' https://www.ebi.ac.uk/chebi/backend/api/public/compound/68837/ -o chebi_68837.json",
+      "sha256": "6314fb35304c6cfd0fba99cab4767ebd6e085e322f444db6cea8a665fbf4d18d",
+      "retrieved_at": "2026-09-11T21:58:03Z",
+      "verbatim_quote": "\"name\":\"pectate\" ... \"definition\":\"A polysaccharide acid oxoanion obtained by deprotonation of the carboxy groups of pectin.\" ... \"default_structure\":null ... \"chemical_data\":null",
+      "location": "chebi_68837.json. Names the deprotonated polymer the GEM means but carries no formula, charge or structure, so it cannot supply the convention on its own."
+    },
+    {
+      "source_url": "https://rest.kegg.jp/get/C00714",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L https://rest.kegg.jp/get/C00714 -o kegg_C00714.txt",
+      "sha256": "0fa799a47dfb85fe5781e115d0a608cc7111ee8d975f5db6051d9e4a3c5f5810",
+      "retrieved_at": "2026-09-11T21:57:02Z",
+      "verbatim_quote": "NAME        Pectin;\n            Poly(1,4-alpha-D-galacturonide)\nFORMULA     (C26H36O24)n",
+      "location": "kegg_C00714.txt, ENTRY/NAME/FORMULA block. The GEM's KEGG annotation. REJECTED: (C26H36O24)n is four residues carrying two methyl esters (4 x C6H8O6 + 2 CH2 = C26H36O24), so degree of methyl esterification 0.5 and a four-residue repeat. Adopting it would break the elemental balance of r_0365."
+    },
+    {
+      "source_url": "https://www.metanetx.org/chem_info/MNXM107600",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L https://www.metanetx.org/chem_info/MNXM107600 -o metanetx_MNXM107600.html",
+      "sha256": "1676660aae9ee6f777daa0e6cdeb4376ade07df3f12d2f6264d798129c3681c9",
+      "retrieved_at": "2026-09-11T21:57:43Z",
+      "verbatim_quote": "MNXM107600 is deprecated and here replaced by MNXM726528 ... reference chebi:15446 ... formula C6H10O7 ... global charge 0 ... InChIKey AEMOLEFTQBMNLQ-BKBMJHBISA-N ... SMILES O=C(O)[C@H]1O[C@H](O)[C@H](O)[C@@H](O)[C@H]1O",
+      "location": "metanetx_MNXM107600.html, the Properties table. A TRAP, recorded so nobody walks into it: the GEM's MetaNetX annotation redirects to a structure that is the free MONOMER C6H10O7 at charge 0. Feeding that to s_1309 leaves r_0365 unbalanced by one water."
+    },
+    {
+      "source_url": "https://www.rhea-db.org/rhea?query=RHEA:13573&columns=rhea-id,equation,chebi-id&format=tsv",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L 'https://www.rhea-db.org/rhea?query=RHEA:13573&columns=rhea-id,equation,chebi-id&format=tsv' -o rhea_13573.tsv",
+      "sha256": "5af05a67508e83c3aa6dc25ebe79ec911aef37ce03d7f66ed0cb36f5a553ad6a",
+      "retrieved_at": "2026-09-11T21:54:02Z",
+      "verbatim_quote": "RHEA:13573\t[(1->4)-alpha-D-galacturonosyl](n) + UDP-alpha-D-galacturonate = [(1->4)-alpha-D-galacturonosyl](n+1) + UDP + H(+)\tCHEBI:140523;CHEBI:57635;CHEBI:58223;CHEBI:15378",
+      "location": "rhea_13573.tsv, the single data row. Rhea's own per-residue polymer convention, and it uses CHEBI:140523, the entity adopted here."
+    },
+    {
+      "source_url": "https://www.rhea-db.org/rhea?query=ec:3.2.1.15&columns=rhea-id,equation,chebi-id&format=tsv&limit=50",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L 'https://www.rhea-db.org/rhea?query=ec:3.2.1.15&columns=rhea-id,equation,chebi-id&format=tsv&limit=50' -o rhea_ec_3_2_1_15.tsv",
+      "sha256": "414e62a1a996fb6f0257607cb3664b2fdc9370920cecbf92a6fb5b8eb9fb9435",
+      "retrieved_at": "2026-09-11T21:53:10Z",
+      "verbatim_quote": "Reaction identifier\tEquation\tChEBI identifier\n",
+      "location": "rhea_ec_3_2_1_15.tsv, whole file: a header row and nothing else. DOCUMENTED NEGATIVE: Rhea curates no reaction for EC 3.2.1.15, so r_0365 has no Rhea counterpart and no Rhea-anchored energy."
+    },
+    {
+      "source_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=20668400&rettype=abstract&retmode=text",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=20668400&rettype=abstract&retmode=text' -o pubmed_20668400_abstract.txt",
+      "sha256": "783bb437a613a50386325ae5827ef9094883e962a555148d1cd9b3d4a715d0c0",
+      "retrieved_at": "2026-09-11T22:00:31Z",
+      "verbatim_quote": "Thermodynamic parameters for polygalacturonic acid hydrolysis by purified PG were, deltaH* = 7.98 kJ/mol, deltaG* = 68.86 kJ/mol, deltaS*= -194.48 J/mol/K, deltaG(E-S) = -1.04 kJ/mol and deltaG(E-T) = -8.96 kJ/mol.",
+      "location": "pubmed_20668400_abstract.txt, abstract. REJECTED as an energy source. The starred quantities are ACTIVATION parameters of the enzyme (Maisuria et al., J Microbiol Biotechnol 2010;20(7):1077-85), and deltaG(E-S)/deltaG(E-T) are enzyme-substrate and enzyme-transition-state binding energies. None is an equilibrium constant for the hydrolysis and none is a formation energy. The rest of the paper reports irreversible thermal inactivation."
+    },
+    {
+      "source_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=PMC5153499&retmode=xml",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -L 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=PMC5153499&retmode=xml' -o pmc_5153499.xml",
+      "sha256": "03e30785aff460a8308c24ed22e2b5e897b277077770cc739a6281d489095d21",
+      "retrieved_at": "2026-09-11T22:00:49Z",
+      "verbatim_quote": "activation energy (15.1 kJ/mol) indicates that the pectinase must overcome a small energy barrier to hydrolyze the substrate",
+      "location": "pmc_5153499.xml, Results/Discussion. REJECTED as an energy source. Every thermodynamic quantity in the paper is either an activation energy of catalysis (15.1 kJ/mol) or a thermal denaturation parameter (Ea(d) 125.5 kJ/mol; deltaH(d) 124.4 to 124.7 kJ/mol; deltaS(d) 203.9 to 238.2 J/mol/K; deltaG(d) about 50 kJ/mol, all in Table 4). None is an equilibrium energy of a chemical species."
+    },
+    {
+      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/pectin/verification_rdkit_cobra.txt",
+      "retrieval_method": "generated_here",
+      "retrieval_command": "~/miniconda3/envs/torchcell/bin/python verify_pectin.py  (RDKit 2026.03.6 + cobra, reads yeast-GEM.xml sha256 9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7)",
+      "sha256": "d76e1ca9e3a1fce7831f83f8a094c57d7d11d7be6fb9b0997d35d95be4285525",
+      "retrieved_at": "2026-09-11T22:01:34Z",
+      "verbatim_quote": "non-dummy comp   {'O': 6, 'H': 7, 'C': 6} charge -1 attachment points 2 ... shipped check_mass_balance: {'charge': -1.0} ... with pectin charge = -1  : {} ... products - substrates: {} charge: 0.0 ... ALL CHECKS PASS",
+      "location": "verification_rdkit_cobra.txt, whole file. The reaction-balance evidence for this record."
+    },
+    {
+      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/pectin/verification_equilibrator_crosscheck.txt",
+      "retrieval_method": "generated_here",
+      "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python verify_pectin_eq.py  (eQuilibrator at pH 5.0, I 0.25 M, pMg 3.0, T 303.15 K, the compartment e conditions in thermo_pipeline_yeast9.json)",
+      "sha256": "b5169006229eaf86188de08e86096813f2bbbc14b9acd963a9eddfb9bc33e11c",
+      "retrieved_at": "2026-09-11T22:02:01Z",
+      "verbatim_quote": "A. repeat_unit_surrogate rule  R = G'(monomer) - G'(H2O) + 6.0505\n   R = -635.6241 kJ/mol\nB. independent, from the cached C18H23O19 trianion = 3 x C6H7O6(-) + H2O\n   R = (G'(trimer) - G'(H2O)) / 3 = -639.9527 kJ/mol\n\n   A - B = +4.3285 kJ/mol; surrogate per-residue sigma = 3.4063",
+      "location": "verification_equilibrator_crosscheck.txt, whole file. A COMPUTED cross-check of the CONVENTION, not a measured energy: both sides are component-contribution values. It confirms that treating C6H7O6 as one residue and a chain as n residues plus one water reproduces the cached trimer to within 4.33 kJ/mol."
+    },
+    {
+      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/pectin/verification_group_decomposition.txt",
+      "retrieval_method": "generated_here",
+      "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python decomp.py  (equilibrator_assets GroupDecomposer)",
+      "sha256": "f8998147e5882fe0b117c4bac02e848a908d2165b20a71ed2b98616370cbae07",
+      "retrieved_at": "2026-09-11T22:02:29Z",
+      "verbatim_quote": "proposed repeat unit (2 attachment points): FAILED GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol; proxy of <Swig Object of type 'OpenBabel::OBMol *' at 0x7f3fdeb7d970> > into groups\nalpha-D-galacturonate monomer (CHEBI:58658): DECOMPOSES, 8 groups",
+      "location": "verification_group_decomposition.txt, whole file. The residue structure is a placeholder and cannot be priced by group contribution; the monomer it is derived from can."
+    }
+  ],
+  "searches": [
+    {
+      "query": "ChEBI polygalacturonate polymer entry galacturonate residue formula charge",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Surfaced CHEBI:62969 polygalacturonic acid, CHEBI:60190 homogalacturonan and CHEBI:58658 alpha-D-galacturonate. None of the three is the GEM's residue, but they set up the residue arithmetic."
+    },
+    {
+      "query": "Rhea endopolygalacturonase EC 3.2.1.15 reaction ChEBI polygalacturonate",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Only ExPASy and BRENDA descriptions of the enzyme. No Rhea reaction, which the direct Rhea query then confirmed."
+    },
+    {
+      "query": "ec:3.2.1.15",
+      "engine": "Rhea TSV API",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. Header row only, zero reactions. Rhea does not curate EC 3.2.1.15."
+    },
+    {
+      "query": "polygalacturonate",
+      "engine": "Rhea TSV API",
+      "date": "2026-09-11",
+      "outcome": "One hit, RHEA:13573, whose polymer participant is [(1->4)-alpha-D-galacturonosyl](n) = CHEBI:140523. This is the lead that produced the convention."
+    },
+    {
+      "query": "pectin / galacturonan",
+      "engine": "Rhea TSV API",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE for both. Rhea has no reaction naming pectin or galacturonan."
+    },
+    {
+      "query": "polygalacturonate",
+      "engine": "ChEBI es_search API",
+      "date": "2026-09-11",
+      "outcome": "CHEBI:25860 polygalacturonates (a class, no formula, no structure) and CHEBI:62969."
+    },
+    {
+      "query": "galacturonosyl",
+      "engine": "ChEBI es_search API",
+      "date": "2026-09-11",
+      "outcome": "DECISIVE. Returned CHEBI:140523 (C6H7O6)n.H2O charge -1, CHEBI:15446 (C6H8O6)n.H2O charge 0, CHEBI:140522 methyl ester (C7H10O6)n.H2O charge 0, CHEBI:141004 the dimer C12H16O13 charge -2, and CHEBI:68837 pectate. The first of these matches the GEM formula exactly once the charge is corrected."
+    },
+    {
+      "query": "NIST Thermodynamics of Enzyme-Catalyzed Reactions polygalacturonase equilibrium constant galacturonide hydrolysis",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. Only the general NIST TECRDB series pages; no apparent equilibrium constant for EC 3.2.1.15 or for any (1->4)-alpha-D-galacturonide hydrolysis."
+    },
+    {
+      "query": "Gibbs energy of formation pectin polygalacturonic acid kJ/mol thermodynamic table",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. No tabulated formation energy for pectin or polygalacturonic acid in any source returned."
+    },
+    {
+      "query": "enthalpy of combustion polygalacturonic acid pectin standard enthalpy of formation calorimetry",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. Combustion calorimetry results for cellulose and polyethylene, nothing for pectin or polygalacturonic acid. Even a hit would have been an enthalpy, not a Gibbs energy."
+    },
+    {
+      "query": "PMC5153499 full text, thermodynamic quantities",
+      "engine": "WebFetch + PMC efetch",
+      "date": "2026-09-11",
+      "outcome": "REJECTED. Activation energy of catalysis 15.1 kJ/mol plus thermal denaturation parameters only. Confirms the prior pass; these must not be recorded as equilibrium energies."
+    },
+    {
+      "query": "PubMed 20668400 abstract",
+      "engine": "NCBI efetch",
+      "date": "2026-09-11",
+      "outcome": "REJECTED. Activation parameters (deltaH*, deltaG*, deltaS*), enzyme-substrate and enzyme-transition-state binding energies, and irreversible inactivation parameters. No equilibrium constant, no formation energy."
+    },
+    {
+      "query": "chebi:CHEBI:140523, chebi:CHEBI:15446, chebi:CHEBI:17309, chebi:CHEBI:68837, metanetx.chemical:MNXM107600, metanetx.chemical:MNXM726528, kegg:C00714, chebi:CHEBI:62969, chebi:CHEBI:60190",
+      "engine": "eQuilibrator compound cache lookup",
+      "date": "2026-09-11",
+      "outcome": "CHEBI:140523 and MNXM726528 are absent from the cache. CHEBI:17309, CHEBI:68837, MNXM107600 and KEGG C00714 all resolve to cache compound id 82801, which has no formula, no InChIKey and no formation energy: that is the mechanical reason the pipeline reported no_structure_in_any_namespace for s_1309. CHEBI:15446 resolves to id 28221, also structureless. CHEBI:62969 resolves to id 649274 with formula C18H23O19 and a formation energy, which is the trisaccharide rather than the polymer."
+    }
+  ],
+  "decomposition_check": {
+    "attempted": true,
+    "decomposes": false,
+    "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol; proxy of <Swig Object of type 'OpenBabel::OBMol *' at 0x7f3fdeb7d970> > into groups. Expected: the repeat unit carries two attachment points and is therefore a PLACEHOLDER_STRUCTURE, which component contribution cannot price. In the same run the monomer alpha-D-galacturonate (CHEBI:58658) decomposed into 8 groups, so the residue's energy must come from the repeat-unit surrogate route off the priced monomer, never from feeding this SMILES to the structure route."
+  },
+  "notes": "WHICH KIND THIS ROW IS. Both, and the split is clean. r_0365 balances ELEMENTALLY as shipped (C6H7O6 + H2O = C6H9O7, no element key in cobra's check_mass_balance) and fails ONLY on charge, by exactly -1. So the elemental formula needs no correction and the row is not a formula correction in the elemental sense; it is a CHARGE correction (fbc:charge 0 -> -1 on s_1309) plus a polymer convention. kind is set to polymer_convention because the convention is what unblocks pricing, and the charge fix is one field inside it, carried as value.proposed_charge. A code agent should apply both: the charge, and the repeat-unit reading of the species.\n\nWHY PECTIN DID NOT TAKE THE REPEAT-UNIT SURROGATE ROUTE. It was a candidate and it failed one precondition. thermo_polymer_repeat_unit.py refuses a species unless every non-boundary reaction carrying it is mass balanced, because a residue energy computed against per-chain stoichiometry would be wrong by the chain length. r_0365 fails that check on charge, so the existing thermo_polymer_repeat_unit.json records s_1309 with outcome stoichiometry_not_per_repeat_unit and detail 'mass balance fails on r_0365; a residue energy would be wrong by the chain length'. The refusal was correct behavior and the diagnosis it printed was the only part that was misleading: the stoichiometry IS per repeat unit, and the imbalance is a charge annotation bug, not a chain-length bug. The script's monomer finder would otherwise have succeeded on its own, since r_0365 has the exact shape it looks for (species + n H2O -> n monomer with n = 1) and D-galacturonate s_0560 is priced. Once fbc:charge on s_1309 is -1, the precondition passes and the route claims the species with no change to the script.\n\nWHAT THE SURROGATE WOULD THEN PRODUCE. Computed here, not produced by a pipeline run, so treat it as a forecast rather than a result: R = G'(D-galacturonate) - G'(H2O) + 6.0505 = -820.1443 + 178.4697 + 6.0505 = -635.62 kJ/mol at compartment e conditions, with sigma = sqrt(1.3286^2 + 0.7590^2 + 3.4063^2) = 3.73 kJ/mol. The independent cross-check off the cached C18H23O19 trianion gives -639.95 kJ/mol, a 4.33 kJ/mol difference, within that sigma. Both numbers are component-contribution values, so the agreement tests the CONVENTION (is C6H7O6 one residue? is a chain n residues plus one water?) and says nothing about the accuracy of either energy. sigma_kj_per_mol is left null in this record because the record admits a convention, not an energy; the surrogate route computes and labels its own sigma.\n\nADMISSION. tabulated, and the word refers to the STRUCTURE and CONVENTION, not to an energy. CHEBI:140523 tabulates the repeat unit as (C6H7O6)n.H2O at charge -1, Rhea uses that same entity in RHEA:13573, and CHEBI:15446 and CHEBI:140522 pin down the neutral and the methyl-esterified alternatives so the choice is forced rather than picked. NO measured and NO tabulated formation energy for pectin, polygalacturonic acid or the galacturonate residue was found anywhere: Rhea curates no EC 3.2.1.15 reaction, the NIST TECRDB search returned no apparent equilibrium constant for a (1->4)-alpha-D-galacturonide hydrolysis, and no combustion or formation table covers the polymer. The two literature leads carried into this row (PMC5153499 and PubMed 20668400) are activation and denaturation parameters and were rejected. That negative is the reason the energy has to come from the surrogate.\n\nWHAT A HUMAN STILL NEEDS TO DO. (1) Decide whether to change fbc:charge on s_1309 in a local copy of yeast-GEM or to carry the correction as a pipeline-side override, and if it is carried locally, report it upstream to yeast-GEM: the shipped model has a charge-unbalanced r_0365 and the fix is one attribute. (2) Confirm the intent to re-annotate s_1309 from ChEBI:17309 (a structureless heteropolysaccharide class) to ChEBI:140523, and from the deprecated MNXM107600 to nothing rather than to MNXM726528, since MetaNetX's replacement is the free monomer and would silently unbalance r_0365 by one water. (3) Confirm that degree of methyl esterification 0 is the intended reading of this GEM species. It is forced by the elemental balance of r_0365 as the model is written, but real pectin is partially esterified, so the model is describing pectate rather than pectin and the species name is a misnomer; that is a modeling judgment, not a curation one. (4) Decide whether the repeat-unit SMILES recorded here is stored at all. It carries attachment points and is proven here not to decompose, so it must never reach the structure route; its only use is documentation of what the residue is. (5) Sanity-check the alpha anomeric configuration in the recorded SMILES against a drawn structure. It was obtained by substituting attachment points into CHEBI:140523's own SMILES without touching any stereo descriptor, and the capped form reproduces CHEBI:58658 canonically, but no independent depiction was inspected."
+}

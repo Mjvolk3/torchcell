@@ -1,0 +1,353 @@
+{
+  "slug": "gpi_intermediate",
+  "met_ids": [
+    "s_0332"
+  ],
+  "gem_name": "6-[6-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-2-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-alpha-2-(2-aminoethylphosphoryl)mannosyl-(1->4)-alpha-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+  "gem_formula": "C43H44N9O",
+  "gem_charge": 0,
+  "compartments": [
+    "er"
+  ],
+  "blocked_reactions": [
+    "r_0523"
+  ],
+  "kind": "formula_correction",
+  "admission": "provisional",
+  "value": {
+    "proposed_formula": "C55H100N3O39P3R2",
+    "proposed_charge": 0,
+    "derivation": "Anchor: s_0329 (6-(alpha-D-glucosaminyl)-1-phosphatidyl-1D-myo-inositol, ChEBI:17049) is the last\nGPI intermediate in yeast-GEM that carries a formula: C17H28NO17PR2, charge 0. RDKit reproduces\nexactly that formula (C17H28*2NO17P, charge 0) from the ChEBI:17049 R-group SMILES, so the anchor\nand the R convention are both verified.\n\nEvery downstream intermediate (s_0330, s_0334, s_0337, s_0339, s_0338) has NO formula in yeast-GEM\n9.0.2, so r_0523 cannot be balanced directly. The formulas are recovered by walking the pathway\nfrom the anchor, taking each step's transferred group from the donor/acceptor pair that IS definite:\n\n  r_0137 (step 3, Gpi12/Gwt1 acylation): palmitoyl-CoA (C37H62N7O17P3S, -4) -> CoA (C21H32N7O16P3S, -4)\n          transferred group = C16H30O\n          s_0330 = C17H28NO17PR2 + C16H30O = C33H58NO18PR2\n  r_0519 (step 5): dolichyl D-mannosyl phosphate (C26H47O9P) -> dolichyl phosphate (C20H37O4P)\n          transferred group = C6H10O5 (mannosyl)\n          s_0334 = C39H68NO23PR2\n  r_0520 (step 6, Mcd4 EtN-P onto Man-I C2): phosphatidylethanolamine backbone (C5H10NO4P)\n          minus diglyceride backbone (C3H4O) = C2H6NO3P (phosphoethanolamine)\n          s_0337 = C41H74N2O26P2R2\n  r_0521 (step 7): + C6H10O5 -> s_0339 = C47H84N2O31P2R2\n  r_0522 (step 8): + C6H10O5 -> s_0338 = C53H94N2O36P2R2\n  r_0523 (step 9, Gpi13 EtN-P onto Man-III C6): s_0332 = s_0338 + s_1352 - s_0620\n          = C53H94N2O36P2R2 + C5H10NO4P - C3H4O = C55H100N3O39P3R2, charge 0.\n\nElement-by-element closure of r_0523 with the derived values:\n  LHS  s_0338 C53H94N2O36P2R2 + s_1352 C5H10NO4P  = C58 H104 N3 O40 P3 R2\n  RHS  s_0332 C55H100N3O39P3R2 + s_0620 C3H4O     = C58 H104 N3 O40 P3 R2\n  charge 0 + 0 = 0 + 0. Balanced in C, H, N, O, P, R and charge.\n\nIndependent structural check (RDKit). A SMILES for the KEGG G13044 topology was constructed on the\nChEBI:17049 R-group scaffold (palmitoyl on inositol C2; GlcN alpha1->6 inositol; Man-I alpha1->4\nGlcN carrying EtN-P on C2; Man-II alpha1->6 Man-I; Man-III alpha1->2 Man-II carrying EtN-P on C6)\nand RDKit returns C55H100N3O39P3R2, charge 0, identical to the additive derivation. The same\nscaffold with one fewer EtN-P returns C53H94N2O36P2R2, identical to the derived s_0338. Constructed\nSMILES (verification device only, NOT a curated structure):\n[1*]C(=O)OC[C@]([H])(COP(=O)(O)O[C@@H]5[C@H](OC(=O)CCCCCCCCCCCCCCC)[C@H](O)[C@@H](O)[C@H](O)[C@H]5O[C@H]1O[C@H](CO)[C@@H](O[C@H]2O[C@H](CO[C@H]3O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]3O[C@H]4O[C@H](COP(=O)(O)OCCN)[C@@H](O)[C@H](O)[C@@H]4O)[C@@H](O)[C@H](O)[C@@H]2OP(=O)(O)OCCN)[C@H](O)[C@H]1N)OC([2*])=O\n\nSecond independent check against a tabulated ChEBI formula. CHEBI:52597 is the 2-acyl child of\nCHEBI:53060 and is the only member of this family with a deposited structure; ChEBI tabulates\nC42H75N4O39P4R3, charge 0. Recomputing the same walk in the all-R convention (inositol acyl left as\nR rather than palmitoyl) gives C40H69N3O39P3R3 for the two-EtN-P species and C42H75N4O42P4R3 for the\nthree-EtN-P species. The C, H, N, P and R counts match CHEBI:52597 exactly; the oxygen count differs\nby exactly 3, because CHEBI:52597's deposited SMILES writes the three ethanolamine phosphates as\nP-C phosphonates (P(=O)(O)CCN) instead of P-O-C phosphoesters (P(=O)(O)OCCN). RDKit confirms both:\nthe deposited SMILES gives C42H75N4O39P4R3, and the same SMILES with the three bridging oxygens\nrestored gives C42H75N4O42P4R3. Swapping the R-acyl on inositol for the explicit palmitoyl that\nyeast-GEM's r_0137 forces converts C40H69N3O39P3R3 into C55H100N3O39P3R2, the proposed formula.\n\nIdentity of the product. yeast-GEM r_0523 is KEGG R08107 (\"Phosphatidylethanolamine + G00149 <=>\n1,2-Diacyl-sn-glycerol + G13044\"): all four participants map one to one (s_0338 = CHEBI:53059 =\nG00149; s_1352 = CHEBI:16038 = C00350; s_0620 = CHEBI:18035 = C00165; s_0332 = CHEBI:53060 = G13044).\nKEGG G13044's composition is \"(GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)2 (P)2\", i.e. TWO ethanolamine\nphosphates, and its NODE/EDGE block places them on Man-I C2 and Man-III C6. The CHEBI:53060\ndefinition agrees (two EtN-P). The CHEBI:53060 NAME, which yeast-GEM copied verbatim into\ns_0332's metName, lists THREE aminoethylphosphoryl groups and writes the Man-III linkage as\n(1->6); that name describes the complete precursor G13152 (KEGG R12702 makes G13044 + PE ->\nDAG + G13152), not G13044. The reaction stoichiometry, the ChEBI definition and the KEGG reaction\nall agree on two EtN-P, so the derived formula follows the stoichiometry, not the name.\n\nProvenance of the wrong formula. In yeast-GEM v8.0.2 s_0332's formula field held the KEGG glycan\ncomposition string \"(GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)2 (P)2\". Commit 2eb8e907 (PR #111,\n\"Fix/met formulas\", merged 2018-05-18) blanked every formula containing \"(\" and re-inferred it with\nCOBRA's computeMetFormulae, a mass-balance solver. Because s_0332's only reaction, r_0523, has an\nunformulated substrate (s_0338) and two SLIME backbone pseudo-species, the system was\nunderdetermined and the solver returned C43H44N9O, which contains no phosphorus and a single oxygen.\nEvery other metabolite touched by that commit received a hand truncation of polymer notation; s_0332\nis the only one whose formula was invented by the solver. The value has been unchanged from v8.1.0\nthrough v9.1.1 (2026-08-28).",
+    "smiles": null,
+    "inchikey": null,
+    "acyl_convention": "Mixed, and forced by the model's own stoichiometry. The two sn-1/sn-2 phosphatidyl chains are generic ChEBI R groups ([1*]/[2*]; the ester carbonyl carbon is explicit, the chain radical is R), written 'R2' in yeast-GEM, as in s_3878 C11H16O13PR2, s_0329 C17H28NO17PR2 and s_4002 C32H60N2O31P2R2. The inositol 2-O-acyl is NOT an R group: r_0137 acylates with palmitoyl-CoA explicitly, transferring C16H30O, so every species from s_0330 onward carries an explicit C16 palmitoyl. yeast-GEM therefore fixes no chain length for the phosphatidyl chains and fixes C16:0 for the inositol acyl. In an all-R convention (three R groups) the same species would be C40H69N3O39P3R3.",
+    "reaction_balance_table": [
+      {
+        "met_id": "s_0338",
+        "role": "substrate",
+        "coefficient": -1,
+        "name": "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+        "gem_formula": null,
+        "gem_charge": 0,
+        "definiteness": "placeholder_no_formula",
+        "resolved_formula": "C53H94N2O36P2R2",
+        "resolved_charge": 0,
+        "basis": "derived by walking r_0137/r_0519/r_0520/r_0521/r_0522 from the definite anchor s_0329 (ChEBI:17049); RDKit-confirmed on a constructed KEGG G00149 scaffold"
+      },
+      {
+        "met_id": "s_1352",
+        "role": "substrate",
+        "coefficient": -1,
+        "name": "phosphatidylethanolamine backbone",
+        "gem_formula": "C5H10NO4P",
+        "gem_charge": 0,
+        "definiteness": "slime_backbone_pseudospecies",
+        "resolved_formula": "C5H10NO4P",
+        "resolved_charge": 0,
+        "basis": "SLIME backbone introduced in PR #112; not a real molecule (real R-group PE was C7H12NO8PR2 in v8.0.2). Only its DIFFERENCE from s_0620 is chemically meaningful"
+      },
+      {
+        "met_id": "s_0332",
+        "role": "product",
+        "coefficient": 1,
+        "name": "6-[6-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-2-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-alpha-2-(2-aminoethylphosphoryl)mannosyl-(1->4)-alpha-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+        "gem_formula": "C43H44N9O",
+        "gem_charge": 0,
+        "definiteness": "erroneous_solver_output",
+        "resolved_formula": "C55H100N3O39P3R2",
+        "resolved_charge": 0,
+        "basis": "s_0338 + s_1352 - s_0620; equals the RDKit formula of a constructed KEGG G13044 scaffold"
+      },
+      {
+        "met_id": "s_0620",
+        "role": "product",
+        "coefficient": 1,
+        "name": "diglyceride backbone",
+        "gem_formula": "C3H4O",
+        "gem_charge": 0,
+        "definiteness": "slime_backbone_pseudospecies",
+        "resolved_formula": "C3H4O",
+        "resolved_charge": 0,
+        "basis": "SLIME backbone introduced in PR #112; not a real molecule (real R-group DAG was C5H6O5R2 in v8.0.2). s_1352 - s_0620 = C2H6NO3P, exactly the phosphoethanolamine group transferred"
+      },
+      {
+        "met_id": "__totals__",
+        "role": "balance",
+        "coefficient": null,
+        "name": "LHS - RHS with the resolved formulas",
+        "gem_formula": "LHS C58H104N3O40P3R2 / RHS C58H104N3O40P3R2",
+        "gem_charge": 0,
+        "definiteness": "balanced",
+        "resolved_formula": "C:0 H:0 N:0 O:0 P:0 R:0",
+        "resolved_charge": 0,
+        "basis": "yeast-GEM 9.0.2 as shipped reports C:41 H:38 N:8 O:-2 P:-1 for this reaction"
+      }
+    ]
+  },
+  "sigma_kj_per_mol": null,
+  "sources": [
+    {
+      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+      "retrieval_method": "local_artifact",
+      "retrieval_command": "~/miniconda3/envs/torchcell/bin/python /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/gem_probe.py  # cobra.io.read_sbml_model(<path>); print r_0523 participants",
+      "sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "-1  s_0338     [er] formula=None charge=0\n  -1  s_1352     [er] formula='C5H10NO4P' charge=0\n  +1  s_0332     [er] formula='C43H44N9O' charge=0\n  +1  s_0620     [er] formula='C3H4O' charge=0\n\nmass balance: {'C': 41.0, 'H': 38.0, 'N': 8.0, 'O': -2.0, 'P': -1.0}",
+      "location": "reaction r_0523 'GPI-anchor assembly, step 9'; probe output stored at /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/gem_r0523_probe.txt (sha256 6834179830a4bde66d42f01bf28f7f90819ecebe1730ac795dd5b952c60a2710)"
+    },
+    {
+      "source_url": "https://raw.githubusercontent.com/SysBioChalmers/yeast-GEM/main/model/yeast-GEM.yml",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL https://raw.githubusercontent.com/SysBioChalmers/yeast-GEM/main/model/yeast-GEM.yml -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/yeastGEM_main_v9.1.1.yml",
+      "sha256": "2ddfaaa73ead41ab243127d1b34fa56db2c86052f6eabcd12bb4eea93947dc17",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "    - id: s_0332\n    - compartment: er\n    - charge: 0.0\n    - formula: C43H44N9O\n    - annotation: !!omap\n      - chebi: CHEBI:53060",
+      "location": "model/yeast-GEM.yml lines 3573-3581, yeast-GEM v9.1.1 dated 2026-08-28; the error is still present upstream"
+    },
+    {
+      "source_url": "https://raw.githubusercontent.com/SysBioChalmers/yeast-GEM/v8.0.2/ModelFiles/yml/yeastGEM.yml",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL https://raw.githubusercontent.com/SysBioChalmers/yeast-GEM/v8.0.2/ModelFiles/yml/yeastGEM.yml -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/yeastGEM_v8.0.2.yml",
+      "sha256": "d79429790eceda5aa21fa0fb906b626204795228859f67458d61b28ca05e9afa",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "    - formula: (GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)2 (P)2",
+      "location": "ModelFiles/yml/yeastGEM.yml line 2149 (s_0332 entry), yeast-GEM v8.0.2; the field held the KEGG G13044 composition string, not a chemical formula"
+    },
+    {
+      "source_url": "https://api.github.com/repos/SysBioChalmers/yeast-GEM/commits/2eb8e907",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "gh api repos/SysBioChalmers/yeast-GEM/commits/2eb8e907 --jq '.files[] | select(.filename==\"ModelFiles/yml/yeastGEM.yml\") | .patch' > /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/commit_2eb8e907_yml.patch",
+      "sha256": "0f1ab6f57efaab9a73b0d37390d8c74c193b5574229d73d4bc6fb5131823ee38",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "@@ -2145,7 +2145,7 @@\n     - id: s_0332\n     - compartment: er\n-    - formula: (GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)2 (P)2\n+    - formula: C43H44N9O",
+      "location": "commit 2eb8e907 (PR #111 'Fix/met formulas', merged 2018-05-18), hunk at ModelFiles/yml/yeastGEM.yml line 2145; every other hunk in the same patch is a hand truncation of polymer notation"
+    },
+    {
+      "source_url": "https://raw.githubusercontent.com/SysBioChalmers/yeast-GEM/2eb8e907/ComplementaryScripts/modelCuration/makeFormulasCompliant.m",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL https://raw.githubusercontent.com/SysBioChalmers/yeast-GEM/2eb8e907/ComplementaryScripts/modelCuration/makeFormulasCompliant.m -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/makeFormulasCompliant_2eb8e907.m",
+      "sha256": "5d118a6770eee0cf12beeab1322239a0dcd1745293835a57c6dd6b3f4e4b3912",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "%Try to use COBRA's \"computeMetFormulae\":\nproblems = contains(model.metFormulas,'(');\nmodel_test = model;\nmodel_test.metFormulas(problems) = '';\n[~,metFormulae,~,~,~,~,~,~] = computeMetFormulae(model_test);",
+      "location": "ComplementaryScripts/modelCuration/makeFormulasCompliant.m at commit 2eb8e907; the commit message reads 'fixed all remaining formulas that had \"(\" and \")\", either with COBRA's \"computeMetFormulae\" or by manual inspection. Some rxns remain mass-unbalanced after this.'"
+    },
+    {
+      "source_url": "https://raw.githubusercontent.com/SysBioChalmers/yeast-GEM/main/data/testResults/qc_findings.md",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL https://raw.githubusercontent.com/SysBioChalmers/yeast-GEM/main/data/testResults/qc_findings.md -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/yeastgem_qc_findings.md",
+      "sha256": "7550f7be5d1e8801c461d8d1a8562a4ae39795629ca227cc395ac3fae70b37c3",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "| r_0523 | GPI-anchor assembly, step 9 | C:41;H:38;N:8;O:-2;P:-1 |",
+      "location": "data/testResults/qc_findings.md line 132, section 'Mass-imbalanced reactions'; the same file lists s_0330, s_0334, s_0337, s_0338 and s_0339 (lines 20-24) under 'Metabolites missing formula', and s_0332 under 'Dead-end metabolites' (line 205)"
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:53060/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:53060/' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/chebi_53060_api.json",
+      "sha256": "cd9201530c3d3e225b6a415eb36a43c81b95dfacd1405508f2b417689653b8f8",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "An inositol compound having an α-6-(2-aminoethylphosphoryl)mannosyl-(1→2)-α-mannosyl-(1→6)-α-2-(2-aminoethylphosphoryl)mannosyl-α-glucosaminyl moiety at the 6-position, a phosphatidyl substituent at the 1-position and an undefined acyl substituent in an unspecified position.",
+      "location": "CHEBI:53060 'definition' field (markup stripped); 'default_structure' and 'chemical_data' are both null, so ChEBI holds no structure, formula, charge or mass for this entry. Its only cross-reference is KEGG GLYCAN G13044. The definition names TWO aminoethylphosphoryl groups while the entry's own name names three"
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:53059/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:53059/' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/chebi_53059_api.json",
+      "sha256": "39c9ee5d651e49e88be8848ec51774a2ff474e27fbad6e6a9d79114784dab6da",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "An inositol compound having an α-mannosyl-(1→2)-α-mannosyl-(1→6)-α-2-(2-aminoethylphosphoryl)mannosyl-α-glucosaminyl moiety at the 6-position, a phosphatidyl substituent at the 1-position and an undefined acyl substituent in an unspecified position.",
+      "location": "CHEBI:53059 'definition' field (markup stripped), the substrate s_0338; 'default_structure' and 'chemical_data' are null, cross-referenced to KEGG GLYCAN G00149"
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:52597/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:52597/' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/chebi_52597_api.json",
+      "sha256": "fe457fb3242d67c3e8c6d0cecdf9f7e2327204cd89aebd0b5283486afcb0e80d",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "\"chemical_data\": {\"formula\": \"C42H75N4O39P4R3\", \"charge\": 0, \"mass\": \"1383.943\", \"monoisotopic_mass\": \"1383.29589\"}",
+      "location": "CHEBI:52597 (the 2-acyl child of CHEBI:53060) 'chemical_data' field; its 'default_structure.smiles' is an R-group SMILES with is_r_group true whose three ethanolamine phosphates are written as P-C phosphonates 'P(=O)(O)CCN', three bridging oxygens short of a phosphoester"
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:17049/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:17049/' -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/chebi_17049_api.json",
+      "sha256": "9f2a626a3abc4748a1c156e4591b0f3e8b5e6b3ebbd3ea762001bc0bded3d87a",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "[1*]C(=O)OC[C@]([H])(COP(=O)(O)O[C@@H]1[C@H](O)[C@H](O)[C@@H](O)[C@H](O)[C@H]1O[C@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1N)OC([2*])=O",
+      "location": "CHEBI:17049 'default_structure.smiles', the parent of yeast-GEM s_0329; RDKit gives C17H28NO17P plus two dummy atoms at charge 0, matching yeast-GEM's C17H28NO17PR2. This fixes the meaning of R in this pathway"
+    },
+    {
+      "source_url": "https://rest.kegg.jp/get/gl:G13044",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL https://rest.kegg.jp/get/gl:G13044 -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/kegg_G13044.txt",
+      "sha256": "3d8a38cba27eeb9597078d6a76d1e601faeae7985961b66f0c85aee5d2ef16d1",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "COMPOSITION (GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)2 (P)2",
+      "location": "KEGG GLYCAN G13044, COMPOSITION line; the NODE/EDGE block places the two ethanolamine phosphates on Man-I position 2 (edge '5:2 4') and Man-III position 6 (edge '9:6 8'), with Man-III alpha1->2 to Man-II (edge '9:a1 6:2')"
+    },
+    {
+      "source_url": "https://rest.kegg.jp/get/gl:G00149",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL https://rest.kegg.jp/get/gl:G00149 -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/kegg_G00149.txt",
+      "sha256": "1331e0f18b81482fb9817314d28c024a87c12a3c6cb52d00071d333540493172",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "COMPOSITION (GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)1 (P)1",
+      "location": "KEGG GLYCAN G00149, COMPOSITION line; the substrate s_0338 / CHEBI:53059, one ethanolamine phosphate fewer than G13044"
+    },
+    {
+      "source_url": "https://rest.kegg.jp/get/rn:R08107",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL https://rest.kegg.jp/get/rn:R08107 -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/kegg_R08107.txt",
+      "sha256": "82ae5c4512f182e73c18184e461e5a2906e0eef2641dbf0f3a0c66f5452f0ff7",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "DEFINITION  Phosphatidylethanolamine + G00149 <=> 1,2-Diacyl-sn-glycerol + G13044\nEQUATION    C00350 + G00149 <=> C00641 + G13044",
+      "location": "KEGG REACTION R08107, pathway rn00563; all four participants map one to one onto yeast-GEM r_0523, which fixes the product as G13044 (two EtN-P)"
+    },
+    {
+      "source_url": "https://rest.kegg.jp/get/rn:R12702",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL https://rest.kegg.jp/get/rn:R12702 -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/kegg_R12702.txt",
+      "sha256": "42ee2dd3d8c9c81da92012d67027e01b63d5425ca21226504a41d98e49ebbe70",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "DEFINITION  Phosphatidylethanolamine + G13044 <=> 1,2-Diacyl-sn-glycerol + G13152",
+      "location": "KEGG REACTION R12702; the NEXT step makes the three-EtN-P complete precursor G13152, which is what the CHEBI:53060 name (copied into yeast-GEM's metName for s_0332) actually describes. yeast-GEM has no reaction for this step"
+    },
+    {
+      "source_url": "https://www.metanetx.org/chem_info/MNXM38542",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL https://www.metanetx.org/chem_info/MNXM38542 -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/metanetx_MNXM38542.html",
+      "sha256": "2a8bc8b61e886d0fdb17fc0f324a8dc8568bd605eb5035c756ae12e08923718a",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "<tr><td>formula</td><td>&nbsp;</td></tr>\n\n<tr><td>global charge</td><td>&nbsp;</td></tr>\n<tr><td>mol weight</td><td>&nbsp;</td></tr>\n<tr><td>InChIKey</td><td>&nbsp;</td></tr>",
+      "location": "MetaNetX MNXM38542 (the metanetx.chemical annotation on s_0332) property table; formula, charge, mass, InChI and SMILES are all empty, so C43H44N9O did not come from MetaNetX. MNXM1179 (s_0338) and MNXM7903 (s_4002) are likewise empty"
+    },
+    {
+      "source_url": "https://api.github.com/repos/SysBioChalmers/yeast-GEM/issues/194",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "gh api repos/SysBioChalmers/yeast-GEM/issues/194 > /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/yeastgem_issue_194.md",
+      "sha256": "ce56354650a3d16644b79d26b515da524c6e3b00915721c8808bbca7c5dd6d1f",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "Various reactions are chemically unbalanced. Many are caused by H<sup>+</sup>, but this is not the only culprit (see list below). In some cases, the `metFormula` should be modified.",
+      "location": "yeast-GEM issue #194 'fix: mass- and charge balance reactions', opened 2019-07-22, still open; an umbrella report that does not name s_0332 or r_0523"
+    },
+    {
+      "source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/gpi_intermediate/yeastgem_s0332_formula_history.txt",
+      "retrieval_method": "local_artifact",
+      "retrieval_command": "assembled by hand from curl of the v8.0.2, v8.1.0 and main ymls; see the header of the file",
+      "sha256": "3cac986e388d6ffed5a6cf3f47eb1028c388db217ae3be92f6dee57d3f8aa711",
+      "retrieved_at": "2026-09-11",
+      "verbatim_quote": "## v8.0.2  ModelFiles/yml/yeastGEM.yml\n    - formula: (GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)2 (P)2\n\n## v8.1.0  ModelFiles/yml/yeastGEM.yml  (first release after PR #111, commit 2eb8e907)\n    - formula: C43H44N9O",
+      "location": "release-by-release excerpt of the s_0332 entry, plus the v8.0.2 pre-SLIME formulas s_1352 = C7H12NO8PR2 and s_0620 = C5H6O5R2"
+    }
+  ],
+  "searches": [
+    {
+      "query": "repo:SysBioChalmers/yeast-GEM s_0332",
+      "engine": "github_search_issues",
+      "date": "2026-09-11",
+      "outcome": "0 hits. No issue or pull request in yeast-GEM mentions this metabolite id."
+    },
+    {
+      "query": "s_0332 repo:SysBioChalmers/yeast-GEM",
+      "engine": "github_search_code",
+      "date": "2026-09-11",
+      "outcome": "4 files: data/testResults/qc_findings.md, data/databases/model_metDeltaG.csv, data/databases/BiGGmetDictionary_newIDs.csv, data/.deprecated/databases/Yeast7.6MNXMetMappingList.tsv."
+    },
+    {
+      "query": "C43H44N9O",
+      "engine": "github_search_code",
+      "date": "2026-09-11",
+      "outcome": "1 hit outside yeast-GEM: EPFL-LCSB/SubNetX 1_subnetwork_extraction/data/organisms_metabolites_annotated/yeast.tsv, a downstream copy. The string is unique to the yeast-GEM lineage."
+    },
+    {
+      "query": "repo:SysBioChalmers/yeast-GEM GPI in:title,body",
+      "engine": "github_search_issues",
+      "date": "2026-09-11",
+      "outcome": "0 hits."
+    },
+    {
+      "query": "repo:SysBioChalmers/yeast-GEM formula in:title",
+      "engine": "github_search_issues",
+      "date": "2026-09-11",
+      "outcome": "5 hits: #147, #148, #111 (Fix/met formulas), #19 (fix: chemical formulas field), #39. PR #111 is the one that introduced C43H44N9O."
+    },
+    {
+      "query": "repo:SysBioChalmers/yeast-GEM \"GPI-anchor\"",
+      "engine": "github_search_issues",
+      "date": "2026-09-11",
+      "outcome": "1 unrelated hit (#337 Volatile Esters & Polyphosphate Reactions). No upstream report of this formula."
+    },
+    {
+      "query": "repo:SysBioChalmers/yeast-GEM mass balance in:title,body state:open",
+      "engine": "github_search_issues",
+      "date": "2026-09-11",
+      "outcome": "1 open umbrella issue, #194 'fix: mass- and charge balance reactions' (2019), which does not name s_0332 or r_0523."
+    },
+    {
+      "query": "repo:SysBioChalmers/yeast-GEM computeMetFormulae",
+      "engine": "github_search_issues",
+      "date": "2026-09-11",
+      "outcome": "0 hits. The solver that produced the formula is never discussed in the tracker."
+    },
+    {
+      "query": "git blame model/yeast-GEM.yml line 3577",
+      "engine": "github_graphql_blame",
+      "date": "2026-09-11",
+      "outcome": "Uninformative. The whole file is attributed to the release bot commit 2d594ae1 'chore: version 9.1.1 (#398)', which rewrites lines 16-36269. Resolved instead by bisecting release tags."
+    },
+    {
+      "query": "s_0332 formula at tags v8.0.0, v8.0.1, v8.0.2, v8.1.0, v8.1.3, v8.2.0, v8.3.0, v8.6.0, v9.0.0, main",
+      "engine": "github_raw_tag_bisect",
+      "date": "2026-09-11",
+      "outcome": "v8.0.0 SBML and v8.0.1/v8.0.2 yml carry '(GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)2 (P)2'; v8.1.0 onward carry C43H44N9O. The change is commit 2eb8e907 in PR #111."
+    },
+    {
+      "query": "CHEBI:53060, CHEBI:53059, CHEBI:53058, CHEBI:53057, CHEBI:53056, CHEBI:53055, CHEBI:17049, CHEBI:52597",
+      "engine": "chebi_backend_api",
+      "date": "2026-09-11",
+      "outcome": "The six 53055-53060 class entries have null default_structure and null chemical_data: no structure, formula, charge or mass. CHEBI:17049 has an R-group SMILES. CHEBI:52597, the 2-acyl child of 53060, is the only member of the family with a deposited structure and a tabulated formula (C42H75N4O39P4R3)."
+    },
+    {
+      "query": "glucosaminyl acyl phosphatidyl inositol aminoethylphosphoryl",
+      "engine": "chebi_es_search",
+      "date": "2026-09-11",
+      "outcome": "HTTP 404, 'No compound matches the provided term'. No further ChEBI entry for this family surfaced."
+    },
+    {
+      "query": "getCompleteEntity?chebiId=CHEBI:53060 (legacy ChEBI SOAP web service)",
+      "engine": "ebi_webservices",
+      "date": "2026-09-11",
+      "outcome": "HTTP 500. The 2.0 web service is retired; the backend API at /chebi/backend/api/public/compound/<accession>/ is the working route."
+    },
+    {
+      "query": "gl:G13044, gl:G00149, gl:G00140, gl:G00143, rn:R08107, rn:R12702, rn:R07129",
+      "engine": "kegg_rest",
+      "date": "2026-09-11",
+      "outcome": "G13044 = (GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)2 (P)2 with EtN-P on Man-I C2 and Man-III C6; G00149 has one EtN-P. R08107 is exactly yeast-GEM r_0523. R12702 makes the three-EtN-P G13152."
+    },
+    {
+      "query": "MNXM38542, MNXM1179, MNXM7903",
+      "engine": "metanetx_web",
+      "date": "2026-09-11",
+      "outcome": "All three have empty formula, charge, mass, InChI and SMILES. MNXM7903 (yeast-GEM s_4002) maps to kegg.glycan:G00149, the same compound as s_0338, so s_4002 duplicates s_0338 under a different MetaNetX id."
+    },
+    {
+      "query": "MetaCyc GPI-anchor biosynthesis yeast Gpi13 ethanolamine phosphate transferase Man3 EtNP molecular formula",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "No MetaCyc compound page or formula surfaced. Confirms only the biology: Gpi13p transfers phosphoethanolamine to the third mannose (Molecular Biology of the Cell 11:1611)."
+    },
+    {
+      "query": "LIPID MAPS GPI anchor \"Man3-GlcN-acyl-PI\" EtNP defined acyl chain structure formula",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "No defined-acyl entry surfaced. Reviews confirm the intermediate series Man-Man-(EtNP)Man-GlcN-(acyl)PI -> complete precursor EtNP-Man-(EtNP)Man-(EtNP)Man-GlcN-(acyl)PI, and that the inositol acyl in yeast is usually palmitate."
+    }
+  ],
+  "decomposition_check": {
+    "attempted": false,
+    "decomposes": null,
+    "error": "Not attempted, and not possible. Group-contribution decomposition needs a fully specified structure; this species has two undefined fatty acyl chains (R2) and no structure exists in ChEBI, MetaNetX or KEGG (CHEBI:53060 has null default_structure and null chemical_data). The record delivers a formula correction, not an energy. equilibrator_cache, equilibrator_assets, component_contribution and equilibrator_api are also absent from the torchcell conda env used here."
+  },
+  "notes": "What the correction is. yeast-GEM 9.0.2 gives s_0332 the formula C43H44N9O, which has no phosphorus and one oxygen and therefore cannot be a glycophosphatidylinositol. The value is a COBRA computeMetFormulae output produced in PR #111 (commit 2eb8e907, 2018-05-18) after the field's original content, the KEGG G13044 composition string '(GlcN)1 (Ino(acyl)-P)1 (Man)3 (EtN)2 (P)2', was blanked for containing parentheses. The solver was underdetermined because s_0332's only reaction has an unformulated substrate. The error is unchanged in yeast-GEM v9.1.1 (2026-08-28). The proposed value is C55H100N3O39P3R2 at charge 0.\n\nWhy the admission is provisional, not tabulated. The rule admits a mass-balance formula correction as tabulated only when the other participants of the reaction are definite species. They are not. s_0338 has no formula at all in yeast-GEM (nor in ChEBI or MetaNetX), and s_1352 and s_0620 are SLIME backbone pseudo-species whose formulas, C5H10NO4P and C3H4O, are not real molecules. The derivation is therefore anchored on s_0329 five steps upstream and closed by three independent checks (additive walk, RDKit on a constructed G13044 scaffold, and agreement with the tabulated CHEBI:52597 formula once its phosphonate drawing error is corrected), but no single tabulated source states C55H100N3O39P3R2.\n\nNo structure exists. CHEBI:53060, CHEBI:53059 and the four other members of the series (53055, 53056, 53057, 53058) are class entries with null default_structure and null chemical_data. MetaNetX carries no structure for MNXM38542. KEGG holds G13044 only as a glycan topology, not a molfile. The one structure in the family, CHEBI:52597, is an R-group structure for a different species (three EtN-P, all-R acyl) and it is drawn wrong. So no defined-acyl-chain representative exists to admit, and smiles and inchikey are left null. The SMILES quoted inside value.derivation was constructed here to verify the formula and must not be treated as a curated structure.\n\nFixing the formula does not unblock r_0523 for FBA. s_0332 is a dead-end metabolite: r_0523 is its only reaction, and yeast-GEM's own qc_findings.md lists it under 'Dead-end metabolites'. The correction removes r_0523 from the thermodynamic exclusion list, nothing more. Because the species has two undefined acyl chains, group-contribution decomposition remains impossible even with the corrected formula, so an energy for r_0523 still cannot be computed by the default route.\n\nWhich chain-length convention yeast-GEM uses. Not a fixed chain length. The phosphatidyl chains are generic ChEBI R groups ([1*]/[2*], carbonyl carbon explicit, chain radical implicit), written 'R2' in the GEM: s_3878 C11H16O13PR2, s_3879 C19H29NO18PR2, s_0329 C17H28NO17PR2, s_4002 C32H60N2O31P2R2. The inositol 2-O-acyl is the exception: r_0137 acylates with palmitoyl-CoA explicitly, so a mass-balanced s_0330 onwards must carry an explicit C16 palmitoyl. The proposed formula follows that mixed convention because the model's own stoichiometry forces it. In an all-R convention the same species is C40H69N3O39P3R3.\n\nWhat a human still has to decide. (1) Whether to adopt the mixed convention above or to switch the whole GPI branch to all-R, which would also require rewriting r_0137 to use a generic acyl-CoA. (2) Whether to fill in the five missing formulas s_0330 C33H58NO18PR2, s_0334 C39H68NO23PR2, s_0337 C41H74N2O26P2R2, s_0339 C47H84N2O31P2R2, s_0338 C53H94N2O36P2R2, all derived here from the same walk; s_0332 alone will not balance the branch. (3) Whether to correct s_0332's metName, which is the CHEBI:53060 name and describes a three-EtN-P species (KEGG G13152) rather than the two-EtN-P G13044 the reaction actually produces.\n\nUpstream defects found along the way, none of them filed. An issue against SysBioChalmers/yeast-GEM is warranted and should cover all of these together, since they are one broken pathway branch: (a) s_0332's formula C43H44N9O; (b) five GPI intermediates with no formula; (c) r_0520 consumes the whole phosphatidylethanolamine backbone and releases no diglyceride backbone, so it transfers C5H10NO4P where the chemistry transfers C2H6NO3P; (d) r_0522 releases no dolichyl phosphate; (e) s_4002 'G00149' duplicates s_0338 (both are KEGG G00149 / CHEBI:53059) with a third formula, C32H60N2O31P2R2, that matches neither, and s_4002/s_4003 sit on an orphan reaction r_4322 disconnected from the r_0518-r_0523 chain. An upstream ChEBI report is also warranted for CHEBI:52597's three P-C phosphonate bonds and for the CHEBI:53060 name-versus-definition conflict. Existing issue #194 is an open umbrella for mass imbalance but names none of this. Nothing was filed."
+}

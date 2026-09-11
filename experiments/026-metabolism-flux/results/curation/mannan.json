@@ -1,0 +1,172 @@
+{
+ "slug": "mannan",
+ "met_ids": ["s_1107", "s_1108"],
+ "gem_name": "mannan",
+ "gem_formula": "C6H10O5",
+ "gem_charge": 0,
+ "compartments": ["c", "er"],
+ "blocked_reactions": ["r_0362", "r_1932", "r_4048"],
+ "kind": "polymer_convention",
+ "admission": "tabulated",
+ "value": {
+  "repeat_unit_smiles": "*OC[C@H]1O[C@H](*)[C@@H](O)[C@@H](O)[C@@H]1O",
+  "repeat_unit_formula": "C6H10O5",
+  "repeat_unit_charge": 0,
+  "linkage": "alpha-(1->6)",
+  "end_groups": "two attachment points, exactly as ChEBI:27912 and KEGG C01654 write the repeat unit. One is the glycosidic bond at the anomeric carbon C1 (the acetal oxygen belongs to the NEXT residue); the other is on the O6 oxygen, which belongs to THIS residue and receives the next residue's C1. A chain of n residues is therefore (C6H10O5)n and a chain terminated by hydrolysis at both ends is H2O(C6H10O5)n, which is the form ChEBI writes for CHEBI:59573. yeast-GEM carries no chain-length variable and no reducing-end species, so no terminal water is added: the GEM species is exactly one residue.",
+  "convention_note": "One alpha-1,6-linked (backbone) anhydromannose residue, i.e. alpha-D-mannopyranose (C6H12O6) minus one water. RDKit confirms the SMILES above is C6H10O5 with charge 0 when the two dummy atoms are read as bond stubs, matching the GEM formula exactly. Two independent readings of the GEM agree on the residue interpretation. (1) Mass balance: r_0362 is dolichyl D-mannosyl phosphate (C26H47O9P) -> dolichyl phosphate (C20H37O4P) + mannan (C6H10O5), and C26H47O9P == C26H47O9P element for element, so the coefficient of 1 on the species is one transferred mannosyl, not a chain. (2) Structure: the branched pentamannoside repeat that ChEBI writes for the yeast outer chain (CHEBI:61300) has formula (C30H50O25)n = 5 x C6H10O5, so the per-mannose formula is C6H10O5 whether the branches are counted or not, and the GEM's C6H10O5 can only be one mannose residue. The linkage chosen is alpha-(1->6) because that is the backbone of S. cerevisiae cell-wall mannan (PMC10958358) and the only linkage ChEBI gives a bare-mannan repeat unit for (CHEBI:27912). Caveat, and it is real: the GEM's own producing reaction r_0362 is EC 2.4.1.109, protein O-mannosyltransferase, whose true product is 3-O-(alpha-D-mannosyl)-L-seryl/threonyl-[protein], an alpha-O-mannosyl residue on a protein hydroxyl rather than an alpha-1,6 chain extension. yeast-GEM lumps that product into the same 'mannan' pool that the carbohydrate pseudo-reaction r_4048 draws cell-wall mannan from. Both readings are the same C6H10O5 residue and both attach the anomeric carbon through an ether oxygen to a primary or secondary alcohol, so at the resolution of this surrogate (sigma 1.4 kJ/mol) the choice does not change the value; it is recorded rather than hidden.",
+  "surrogate_route_input": {
+   "route": "repeat_unit_surrogate",
+   "n_residues": 1,
+   "stoichiometry_is_per_repeat_unit": true,
+   "stoichiometry_evidence": "thermo_polymer_repeat_unit.json already records stoichiometry_is_per_repeat_unit=true with unbalanced_reactions=[] for both s_1107 (checked r_1932) and s_1108 (checked r_0362, r_1932); the precondition the route demands is met and it is only the monomer identification that is missing",
+   "drop_in_for_existing_route": {
+    "what_the_route_needs": "the existing route reads the monomer off a hydrolysis reaction of the form species + n H2O -> n monomer with the monomer priced; yeast-GEM has no mannanase reaction, so the monomer must be supplied by curation",
+    "monomer_met_id_by_compartment": {"c": "s_0571", "er": "s_3933"},
+    "monomer_name": "D-mannose",
+    "monomer_source": "curated; r_0362 transfers one mannosyl from dolichyl D-mannosyl phosphate, and CHEBI:27912 / KEGG C01654 write the mannan repeat unit as one mannose residue",
+    "extra_water": false,
+    "resulting_dgf_prime_kj_per_mol": {"s_1107": -242.6401144557181, "s_1108": -249.6007341692495},
+    "resulting_sigma_kj_per_mol": 3.6478343661210904,
+    "note": "these are what the route produces unchanged, using its shared glycosidic correction of +6.0504 kJ/mol calibrated on six disaccharides none of which is a mannoside, and its single cytosolic water (-152.9470) for both compartments"
+   },
+   "preferred_dimer_difference": {
+    "rule": "a disaccharide is two residues plus one water, so R = [G(alpha-1,6-mannobiose) - G(H2O)] / 2; this is the same algebra the existing route uses, with the mannan-specific dimer as the calibration substrate instead of the six-disaccharide mean",
+    "dimer_name": "alpha-1,6-mannobiose",
+    "dimer_accessions": ["kegg:C01728", "metacyc.compound:CPD-13935", "chebi:CHEBI:53445", "metanetx.chemical:MNXM22500", "metanetx.chemical:MNXM723069"],
+    "dimer_equilibrator_cache_compound_ids": [691514, 47650, 460418],
+    "dimer_inchi_key": "DLRVVLDZNNYCBX-ONPLHCRPSA-N",
+    "dimer_decomposes": true,
+    "dgf_prime_kj_per_mol": {"s_1107": -248.7039712623819, "s_1108": -254.5045210920918},
+    "sigma_kj_per_mol": 1.4391761136736134,
+    "conditions": {"p_h": {"s_1107": 7.2, "s_1108": 7.1}, "ionic_strength_m": 0.25, "p_mg": 3.0, "temperature_k": 303.15}
+   }
+  }
+ },
+ "sigma_kj_per_mol": 1.4391761136736134,
+ "sources": [
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI%3A27912/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -H 'Accept: application/json' -o chebi_27912.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI%3A27912/'",
+   "sha256": "5f8e67d04438a611fac6ae7799eb838826f570451e85c9420a1241db9f1d3ed1",
+   "retrieved_at": "2026-09-11T21:53:54+00:00",
+   "verbatim_quote": "\"definition\":\"A mannan consisting of repeating <small>D</small>-mannosyl units joined via α-(1→6)-linkages.\" ... \"chemical_data\":{\"formula\":\"(C6H10O5)n\",\"charge\":0,\"mass\":\"162.141\",\"monoisotopic_mass\":\"162.05282\"} ... \"smiles\":\"*OC[C@H]1O[C@H](*)[C@@H](O)[C@@H](O)[C@@H]1O\"",
+   "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/mannan/chebi_27912.json, JSON keys definition, chemical_data and default_structure.smiles; ChEBI 3-star (manually curated) entry (1->6)-alpha-D-mannan"
+  },
+  {
+   "source_url": "https://rest.kegg.jp/get/C01654",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o kegg_C01654.txt 'https://rest.kegg.jp/get/C01654'",
+   "sha256": "60ffea2a858f6926039f077f45ae99a2b3ba5ed666cfe8dc7017371e2c401f31",
+   "retrieved_at": "2026-09-11T21:55:25+00:00",
+   "verbatim_quote": "NAME        1,6-Mannan\nFORMULA     (C6H10O5)n",
+   "location": "kegg_C01654.txt lines 2-3; the ATOM block of the same record carries two 'Z *' pseudo-atoms (atoms 9 and 10) bonded to the O of C6 and to the anomeric carbon, and a BRACKET ... n repeat declaration, which is the same two-attachment-point convention as CHEBI:27912"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI%3A28808/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -H 'Accept: application/json' -o chebi_28808.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI%3A28808/'",
+   "sha256": "b72e2aaa6fad27c3a56b41ca1b64d70be0755ea366e55b8121562c580a6a38dd",
+   "retrieved_at": "2026-09-11T21:53:14+00:00",
+   "verbatim_quote": "\"chebi_accession\":\"CHEBI:28808\",\"name\":\"mannan\",\"stars\":3,\"definition\":null ... \"chemical_data\":null ... \"default_structure\":null",
+   "location": "chebi_28808.json, keys definition, chemical_data and default_structure; this is the accession yeast-GEM cites for s_1107/s_1108 and it is a class term with no formula and no structure, which is why the pipeline recorded no_structure_in_any_namespace"
+  },
+  {
+   "source_url": "https://rest.kegg.jp/get/C00464",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o kegg_C00464.txt 'https://rest.kegg.jp/get/C00464'",
+   "sha256": "812cfe8a15ef6b35158a11b1f5b248044f60a500eceef3bfe9b097a3ce95bb9f",
+   "retrieved_at": "2026-09-11T21:52:25+00:00",
+   "verbatim_quote": "ENTRY       C00464                      Compound\nNAME        Mannan;\n            Mannoglycan\nREMARK      Same as: G10509 G10540 G10541 G10542",
+   "location": "kegg_C00464.txt lines 1-4; the record has NO FORMULA field and no ATOM block, so the other accession yeast-GEM cites is structureless too"
+  },
+  {
+   "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10958358/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -A 'Mozilla/5.0 (curation; mjvolk3@illinois.edu)' -o pmc10958358.html 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10958358/'",
+   "sha256": "ce7055cdd3e7faaa5d8a50317e7465614f0cf409b85b6cf284dfea1af3d5964d",
+   "retrieved_at": "2026-09-11T21:54:28+00:00",
+   "verbatim_quote": "Yeast mannan has an α-1,6-linked backbone and α-1,2- and α-1,3-linked mannose branches",
+   "location": "pmc10958358.html, section 2.1 'Cell wall polysaccharide structures'; article 'Yeast cell wall mannan structural features, biological activities, and production strategies'. Quote located by grep -o 'Yeast mannan has an[^<]*' on the stored file"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI%3A61300/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -H 'Accept: application/json' -o chebi_61300.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI%3A61300/'",
+   "sha256": "c95e86ae9a795ccc7bca526bbf54a744cc7437183c730bee03712ba8cc3aedab",
+   "retrieved_at": "2026-09-11T21:53:59+00:00",
+   "verbatim_quote": "\"name\":\"[6)-α-<small>D</small>-Man-(1→2)-α-<small>D</small>-Man-(1→2)-[α-<small>D</small>-Man-(1→2)-α-<small>D</small>-Man-(1→6)]-α-<small>D</small>-Man-(1→]<small><sub>n</sub></small>\" ... \"definition\":\"A mannan consisting of repeating branched pentamannoside units joined via α-(1→6)-linkages.\" ... \"chemical_data\":{\"formula\":\"(C30H50O25)n\",\"charge\":0",
+   "location": "chebi_61300.json, keys name, definition and chemical_data; (C30H50O25)n = 5 x C6H10O5, so the branched yeast repeat has the same per-mannose formula as the bare backbone"
+  },
+  {
+   "source_url": "https://www.rhea-db.org/rhea?query=RHEA:49408&columns=rhea-id,equation,chebi,chebi-id&format=tsv",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o rhea_49408.json 'https://www.rhea-db.org/rhea?query=RHEA:49408&columns=rhea-id,equation,chebi,chebi-id&format=tsv'",
+   "sha256": "e02d5a223757481ef3448e1d2a091e8d25a40afcb2593c16ad34921bf5a0cb66",
+   "retrieved_at": "2026-09-11T21:52:30+00:00",
+   "verbatim_quote": "RHEA:49408\t[(1->2)-beta-D-mannosyl](n) + phosphate = [(1->2)-beta-D-mannosyl](n-1) + alpha-D-mannose 1-phosphate\t(1->2)-beta-D-mannan;hydrogenphosphate;alpha-D-mannose 1-phosphate(2-)\tCHEBI:59573;CHEBI:43474;CHEBI:58409",
+   "location": "rhea_49408.json, the single data row. The lead resolves to a (1->2)-BETA-D-mannan (CHEBI:59573), a Candida/bacterial polymer, not the S. cerevisiae alpha-1,6 backbone; it corroborates the polymer formula convention and nothing about the linkage"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI%3A59573/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -H 'Accept: application/json' -o chebi_59573.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI%3A59573/'",
+   "sha256": "5645d9f042048c5cf086127f4fb2694f14e3c653b9a79bcf75883307fc078cce",
+   "retrieved_at": "2026-09-11T21:53:20+00:00",
+   "verbatim_quote": "\"definition\":\"A mannan consisting of repeating mannosyl units joined via β-(1→2)-linkages.\" ... \"chemical_data\":{\"formula\":\"(C6H10O5)n.H2O\",\"charge\":0,\"mass\":\"180.156\"",
+   "location": "chebi_59573.json, keys definition and chemical_data; the '.H2O' is the hydrolyzed-both-ends form of the same C6H10O5 residue, which is where the H2O(C6H10O5)n lead came from"
+  },
+  {
+   "source_url": "https://rest.kegg.jp/get/ec:2.4.1.109",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o kegg_ec_2.4.1.109.txt 'https://rest.kegg.jp/get/ec:2.4.1.109'",
+   "sha256": "a38b6e6270db94bfa4d2a6fbd5aacdf0fa37d267a1ac413ec0a88a5d8a646b88",
+   "retrieved_at": "2026-09-11T21:55:19+00:00",
+   "verbatim_quote": "SYSNAME     dolichyl beta-D-mannosyl-phosphate:L-threonyl/L-seryl-[protein] O-D-mannosyltransferase (configuration-inverting)\n...\nCOMMENT     The enzyme transfers mannosyl residues to the hydroxy group of serine or threonine residues, producing cell-wall mannoproteins.",
+   "location": "kegg_ec_2.4.1.109.txt lines 11 and 21; this is the EC code yeast-GEM assigns to r_0362, and it establishes that the reaction transfers exactly ONE mannosyl and that its true product is a protein O-mannosyl residue rather than an alpha-1,6 chain extension"
+  },
+  {
+   "source_url": null,
+   "retrieval_method": "local_computation",
+   "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python price_mannobiose.py  # ComponentContribution over a copy of ~/.cache/equilibrator/compounds.sqlite at /scratch/projects/torchcell-scratch/tmp/mannan_curation_cache.sqlite, I=0.25 M, pMg 3.0, T=303.15 K",
+   "sha256": "97059026267bc201a78a77936cbd316a21a13fa25888a5de7cce1d92ba50ba24",
+   "retrieved_at": "2026-09-11T22:00:18+00:00",
+   "verbatim_quote": "\"residue_dimer_difference_kj_per_mol\": -248.70397126238188, \"residue_dimer_difference_sigma_kj_per_mol\": 1.2123964016969273, \"residue_existing_generic_route_kj_per_mol\": -242.64011445571808",
+   "location": "equilibrator_mannobiose_pricing.json, compartments.c. D-mannose reprices to -401.63758099172975 at pH 7.2, identical to the pipeline's s_0571, so the conditions reproduce the pipeline exactly"
+  },
+  {
+   "source_url": null,
+   "retrieval_method": "local_computation",
+   "retrieval_command": "/scratch/projects/torchcell-scratch/envs/equilibrator/bin/python crosscheck.py  # same cache and conditions, pH 7.2",
+   "sha256": "51f07dcdf7e8de10b7d1d7e4cb613f4c37d5d762d5da5413f25b7101fc5521ca",
+   "retrieved_at": "2026-09-11T22:02:06+00:00",
+   "verbatim_quote": "\"residue_dimer_difference_kj_per_mol\": {\"alpha-1,6-mannobiose\": -248.70397126238188, \"isomaltose\": -247.16646644388518, \"gentiobiose\": -247.75907188668887, \"maltose\": -244.2644139636122}",
+   "location": "equilibrator_disaccharide_crosscheck.json; the three (1->6) dimers give residue energies spanning 1.54 kJ/mol (sd 0.775), which is the measured spread that the reported sigma adds in quadrature to the component-contribution sigma of 1.212"
+  }
+ ],
+ "searches": [
+  {"query": "Rhea 49408 mannan H2O(C6H10O5)n", "engine": "WebSearch", "date": "2026-09-11", "outcome": "no direct hit on RHEA:49408; confirmed the (C6H10O5)n polymer notation is in general use. Followed up with the Rhea REST query below."},
+  {"query": "https://www.rhea-db.org/rhea?query=RHEA:49408&columns=rhea-id,equation,chebi,chebi-id&format=tsv", "engine": "curl (Rhea REST)", "date": "2026-09-11", "outcome": "RHEA:49408 is a (1->2)-BETA-D-mannan phosphorylase, ChEBI:59573. The lead's linkage is wrong for S. cerevisiae; its formula convention is right."},
+  {"query": "ChEBI 28808 mannan polysaccharide definition", "engine": "WebSearch", "date": "2026-09-11", "outcome": "surfaced CHEBI:59573 and the general mannan literature; pointed at the ChEBI API for the authoritative record."},
+  {"query": "https://www.ebi.ac.uk/webservices/chebi/2.0/test/getCompleteEntity?chebiId=CHEBI:28808", "engine": "curl (ChEBI SOAP)", "date": "2026-09-11", "outcome": "FAILED: the legacy ChEBI web service returns HTTP 500 with an EBI error page. Switched to the current backend API."},
+  {"query": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:28808/", "engine": "curl (ChEBI API)", "date": "2026-09-11", "outcome": "mannan is a 3-star CLASS term: definition null, chemical_data null, default_structure null. This is the negative that explains the pipeline outcome."},
+  {"query": "ChEBI ontology children of CHEBI:28808", "engine": "read of chebi_28808.json ontology_relations", "date": "2026-09-11", "outcome": "found CHEBI:27912 (1->6)-alpha-D-mannan, CHEBI:59573 (1->2)-beta-D-mannan, CHEBI:27857 (1->4)-beta-D-mannan and CHEBI:61300, the branched yeast pentamannoside repeat."},
+  {"query": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:27912/", "engine": "curl (ChEBI API)", "date": "2026-09-11", "outcome": "HIT: formula (C6H10O5)n, charge 0, SMILES with two attachment points. This is the adopted repeat unit."},
+  {"query": "https://rest.kegg.jp/get/C00464", "engine": "curl (KEGG REST)", "date": "2026-09-11", "outcome": "no FORMULA field, no ATOM block; the second accession yeast-GEM cites is structureless too."},
+  {"query": "https://rest.kegg.jp/get/C01654", "engine": "curl (KEGG REST)", "date": "2026-09-11", "outcome": "HIT: '1,6-Mannan', FORMULA (C6H10O5)n, ATOM block with two 'Z *' attachment atoms and a BRACKET n repeat; independent corroboration of ChEBI:27912."},
+  {"query": "https://rest.expasy.org/enzyme/2.4.1.109.txt", "engine": "curl", "date": "2026-09-11", "outcome": "FAILED: could not resolve host from this machine. Used the KEGG enzyme record instead."},
+  {"query": "https://rest.kegg.jp/get/ec:2.4.1.109", "engine": "curl (KEGG REST)", "date": "2026-09-11", "outcome": "r_0362's EC is protein O-mannosyltransferase; one mannosyl transferred per turnover, product is 3-O-(alpha-D-mannosyl)-L-seryl/threonyl-[protein]."},
+  {"query": "PMC10958358 yeast cell wall mannan alpha-1,6 backbone", "engine": "WebFetch", "date": "2026-09-11", "outcome": "verbatim sentence obtained and then confirmed present in the stored HTML by grep."},
+  {"query": "Tewari Goldberg thermodynamics hydrolysis mannobiose equilibrium constant disaccharide", "engine": "WebSearch", "date": "2026-09-11", "outcome": "NEGATIVE for mannobiose. Tewari and Goldberg 1989 (J Biol Chem) measured cellobiose, gentiobiose, isomaltose and maltose only: isomaltose K = 17.25 +/- 0.7 and gentiobiose K = 17.9 +/- 0.7 at 298.15 K, i.e. -7.06 and -7.15 kJ/mol. No measured alpha-1,6-mannosidic hydrolysis energy exists to anchor this residue."},
+  {"query": "eQuilibrator glycogen residue polysaccharide repeat unit formation energy group contribution", "engine": "WebSearch", "date": "2026-09-11", "outcome": "background on component contribution only; no evidence of any residue-level polysaccharide estimate. Settled directly against the local cache instead."},
+  {"query": "SELECT compound_id FROM compound_identifiers WHERE accession IN ('CHEBI:28808','C00464','MNXM2020','C00369','C00182')", "engine": "sqlite3 over ~/.cache/equilibrator/compounds.sqlite (read-only)", "date": "2026-09-11", "outcome": "DECISIVE NEGATIVE: mannan (id 1798, 28338) and starch (id 929) have empty smiles/inchi and NULL group_vector. Glycogen (id 42472) is the only polysaccharide with a structure and it is a whole C24H42O21 tetrasaccharide, not a residue. eQuilibrator holds NO group-contribution estimate for a polysaccharide repeat unit."},
+  {"query": "SELECT * FROM compounds WHERE inchi_key LIKE 'DLRVVLDZNNYCBX%'", "engine": "sqlite3 over ~/.cache/equilibrator/compounds.sqlite (read-only)", "date": "2026-09-11", "outcome": "HIT: 21 (1->6)-linked disaccharides, all with group vectors, including alpha-1,6-mannobiose at cache ids 691514 (KEGG C01728), 47650 (MetaCyc CPD-13935) and 460418 (CHEBI:53445). This is what makes the dimer-difference surrogate possible."}
+ ],
+ "decomposition_check": {
+  "attempted": true,
+  "decomposes": false,
+  "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups -- equilibrator_assets.group_decompose.GroupDecomposer rejects the attachment-point SMILES *OC[C@H]1O[C@H](*)[C@@H](O)[C@@H](O)[C@@H]1O. The same decomposer succeeds on alpha-D-mannopyranose (5 nonzero groups) and on the closed-ring alpha-1,6-mannobiose (7 nonzero groups) run in the same call, so the failure is the dummy atoms and not the sugar. This is why the record is a CONVENTION plus a dimer-difference surrogate and not a priced structure: the curated repeat unit is correct chemistry that eQuilibrator cannot price directly."
+ },
+ "notes": "WHY THE EXISTING ROUTE MISSED IT, two independent reasons, both measured rather than inferred. (1) The structure route: thermo_structure_attempt.json records outcome=no_structure_in_any_namespace for both s_1107 and s_1108, and the reason is now pinned down -- every accession yeast-GEM cites for mannan (CHEBI:28808, KEGG C00464, MNXM2020) is a structureless class term, confirmed both at ChEBI/KEGG and in the local eQuilibrator cache, where compounds 1798 and 28338 have empty smiles/inchi and a NULL group_vector. (2) The repeat-unit route: thermo_polymer_repeat_unit.json records outcome=no_hydrolysis_reaction_identifies_a_monomer. Its precondition PASSED (stoichiometry_is_per_repeat_unit=true, unbalanced_reactions=[]); what failed is the monomer identification, because that route reads the monomer off a model reaction of the form species + n H2O -> n monomer and yeast-GEM 9.0.2 carries no mannanase or mannosidase acting on the mannan pool. The route's own guard is behaving correctly; it is refusing to guess, and this record is the curation it is waiting for.\n\nWHAT r_0362 BALANCES TO. C26H47O9P -> C20H37O4P + C6H10O5 balances exactly on C, H, O and P. Verified by hand here and independently by the pipeline's own check, which lists r_0362 among s_1108's balanced reactions. r_1932 (mannan [er] -> mannan [c]) is a transport and trivially balanced; r_4048 is the carbohydrate pseudo-reaction and is unbalanced by construction, so the pipeline excludes it from the test. Both close by separate code rules and neither bears on the convention.\n\nWHAT A HUMAN STILL NEEDS TO DO.\n(a) Choose between the two surrogate values. The drop-in needs no code change beyond a curated monomer map and gives -242.640 [c] / -249.601 [er] +/- 3.648. The dimer difference needs alpha-1,6-mannobiose admitted as a mannan-specific calibration substrate and gives -248.704 [c] / -254.505 [er] +/- 1.439, a threefold tighter sigma from a linkage- and sugar-matched dimer. I recommend the dimer difference. They differ by 6.1 and 4.9 kJ/mol, which is 1.7 and 1.3 sigma of the looser one.\n(b) Read the one anomaly before trusting the number. Component contribution puts the alpha-1,6-MANNOSIDIC hydrolysis at +0.027 kJ/mol, while its own alpha-1,6-GLUCOSIDIC (isomaltose) value is -8.427 and its beta-1,6 (gentiobiose) value is -7.242, the latter two both close to the measured -7.06 and -7.15 of Tewari and Goldberg 1989. Mannobiose is therefore a 7-8 kJ/mol outlier in the hydrolysis view. It is much less of an outlier in the residue view (-248.704 against -247.166 and -247.759), because the residue is half a dimer and the monomer never enters, and that is exactly why the dimer difference is the more robust form. I have NOT diagnosed the cause of the hydrolysis-view outlier and it should not be explained away without measurement.\n(c) Decide whether the two compartment copies should share one value. s_1107 sits at pH 7.2 and s_1108 at pH 7.1, and the pipeline prices the copies separately, so they differ by 5.8 kJ/mol. That is the pipeline's existing convention and I have followed it.\n(d) Two GEM defects found in passing, neither of them mine to fix. First, yeast-GEM's own smiles field for s_1107/s_1108 is C(C1C(C(C(C(O1)OC2...)))O)O, which RDKit reads as C24H42O21, a FOUR-mannose oligosaccharide contradicting the entry's own C6H10O5 formula by a factor of four. Nothing in the pipeline reads that field today, but anything that starts reading it will be wrong by 4x. Second, and this one is live: glycogen s_0773/s_0774 carry the identical defect (formula C6H10O5, smiles a C24H42O21 tetrasaccharide, ChEBI:28087/KEGG C00182) and they ARE priced, by route cache_accession, at -1127.25 and -1370.87 kJ/mol. Those are tetrasaccharide energies on a one-residue formula. For comparison a single glucose residue prices near -248 by the same dimer difference. Glycogen looks roughly 4x too negative and the accession route apparently applies no composition check. That is not this row, but it is the same failure mode and it is already in the served numbers.\n(e) Optional, and only if someone wants a tighter mannan value: the alpha-1,2 and alpha-1,3 branch residues of the real polymer are not distinguished here. All three linkages give the same C6H10O5 residue, and the (1->6) family spread of 0.775 kJ/mol bounds what a per-linkage treatment could buy, so it is almost certainly not worth doing."
+}

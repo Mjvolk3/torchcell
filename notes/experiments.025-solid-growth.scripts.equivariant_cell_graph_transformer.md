@@ -437,3 +437,42 @@ rank stalled on an LMDB page read through the Taiga NFS mount for over 30 minute
 waited 26 h and the scheduler estimates a 2026-09-12 14:08 start; seven more jobs chain
 behind it. Delta at ~60 min/epoch over NFS against IGB at 17 min/epoch on local disk
 puts the whole Delta design in question; decision pending.
+
+### 14:30 - ProtT5 alone complete; the 100-epoch round queued on mmli and cabbi
+
+ProtT5 alone (2391134, `pmkzwwzw`, COMPLETED 8 h 42 m): max 0.270 at epoch 3, then
+0.12 to 0.16 from epoch 18 on, 0.135 at epoch 29; its validation point loss rose from
+0.90 at epoch 3 to 1.05 at epoch 29. So of the three embedding arms it is the one that
+follows the learnable model's pattern (1640: 0.96 to 1.22), while composite and CaLM hold
+flat near 0.94. One seed each; no mechanism claimed.
+
+Validation point loss (z-scored MSE on gene interaction) at matched epochs, the reading
+that separates the arms more cleanly than the noisy Pearson:
+
+| epoch | 3 | 9 | 15 | 21 | 27 |
+|---|---|---|---|---|---|
+| 1640, learnable, cosine | 0.956 | 0.991 | 1.054 | 1.175 | 1.215 |
+| composite, constant | 0.918 | 0.979 | 0.925 | 0.967 | 0.942 |
+| CaLM, constant | 0.928 | 0.936 | 0.927 | 0.947 | 0.946 |
+| ProtT5, constant | 0.898 | 0.967 | 1.006 | 1.023 | 1.031 |
+
+Whether the input helps is not yet answered: the matched 30-epoch control (`_016`,
+2391135) started at 13:50 and reads out about 23:00. The graph penalty is still falling
+at epoch 30 in every embedding arm (composite 3.36, CaLM 2.98, ProtT5 similar, against
+0.33 for the learnable model by epoch 9), so the 30-epoch table is of unconverged
+penalties. The 100-epoch round (`_022` to `_025`, `trainer.max_epochs: 100`, one key
+each on the 30-epoch configs) runs in two lanes from a second login-node worktree
+(`~/projects/torchcell.worktrees/025-fitness-joint-head-b` at a7f701e4, passed to the
+launcher as `PROJECT_ROOT`, so the running `_016` job's worktree is untouched). The
+cabbi lane uses 4 of compute-3-3's 8 RTX 6000s, the hardware the 010 M01 to M03 runs
+trained on with this batch size and precision; it is slower than the A100s, and cross-lane
+comparisons cross hardware, which changes speed and floating-point nondeterminism, not
+the computation. Runs are watched and any arm can be stopped early; the val-Pearson
+checkpoint keeps the best epoch.
+
+| IGB job | partition | config | dependency |
+|---|---|---|---|
+| 2394963 | mmli | `cgt_s0_q_kl_emb_022` (composite, 100 ep) | afterany 2391135 |
+| 2394964 | mmli | `cgt_s0_q_kl_calm_023` (CaLM, 100 ep) | afterany 2394963 |
+| 2394965 | cabbi | `cgt_s0_q_kl_prot_024` (ProtT5, 100 ep) | running |
+| 2394966 | cabbi | `cgt_s0_q_kl_ctrl_025` (learnable control, 100 ep) | afterany 2394965 |

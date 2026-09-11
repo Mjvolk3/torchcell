@@ -44,6 +44,7 @@ import socket
 import uuid
 
 import hydra
+from hydra.core.hydra_config import HydraConfig
 import lightning as L
 import torch
 import torch.distributed as dist
@@ -180,7 +181,13 @@ def main(cfg: DictConfig) -> None:
     # penalty weight, the seed and the build. Read from the resolved config so a Hydra
     # override on the command line is what gets tagged.
     lam = wandb_cfg["model"]["graph_regularization"]["graph_reg_lambda"]
+    # The config name and its number (`cgt_s0_q_kl_emb_017` and `_017`), the way the 019
+    # configs tag their rounds, so a run is findable by the arm it ran without reading the
+    # group hash. Read from Hydra rather than the yaml, so an override chain tags the leaf.
+    config_name = HydraConfig.get().job.config_name
     sweep_tags = [
+        config_name,
+        f"_{config_name.rsplit('_', 1)[-1]}",
         f"lambda_{lam:g}",
         f"seed_{wandb_cfg.get('seed', 42)}",
         "build_"

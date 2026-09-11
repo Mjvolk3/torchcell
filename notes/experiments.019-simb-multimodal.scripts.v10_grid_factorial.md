@@ -59,3 +59,16 @@ Readout width and weight decay at 1e-4 are measured nulls at a resolution of abo
 budget edge.
 
 ![](./assets/images/019-simb-multimodal/v10_grid_factorial.svg)
+
+## 2026.09.10 - Retraction: the readout factor was inert
+
+`linear_readout` was declared in the configs and recorded in every run's W&B config, but
+`CellGraphTransformer.__init__` never passed it to `PerGeneHead`, so both levels of the
+readout factor trained the two-layer head. The tell is on W&B: runs with
+`multitask.linear_readout` true and false log identical parameter counts, 1,447,309 under
+the deep trunk (`43lbzqv7` vs `cbri2xri`) and 682,988 under the shallow one (`zqvbr670` vs
+`we9yt8az`). The readout row in the table above is therefore a null by construction, and
+"readout is a measured null" is withdrawn; the embedding, trunk and weight-decay rows stand,
+since those factors reached the model. The option was wired on 2026-09-10
+(`test_linear_readout_is_wired_into_the_head` guards it) and linear vs two-layer runs as
+`H_linear` in the v12 readout round.

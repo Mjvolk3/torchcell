@@ -41,7 +41,7 @@ factor & contrast (level 1 $-$ level 0) & effect & $t$ & effect, 31 runs & $t$ \
 \midrule
 embedding    & \file{prot_T5_all} $-$ \file{random_1024} & $+0.068$ & $+7.8$ & $+0.076$ & $+17.3$ \\
 trunk        & $L{=}2,h{=}45$ $-$ $L{=}6,h{=}90$     & $-0.012$ & $-1.4$ & $-0.018$ & $-4.0$ \\
-readout      & linear $-$ two-layer                   & $+0.007$ & $+0.8$ & $+0.002$ & $+0.5$ \\
+readout (inert, see text) & linear $-$ two-layer      & $+0.007$ & $+0.8$ & $+0.002$ & $+0.5$ \\
 weight decay & $10^{-4}$ $-$ $10^{-8}$                & $+0.005$ & $+0.5$ & $-0.000$ & $-0.1$ \\
 \midrule
 embedding $\times$ trunk & & $+0.017$ & $+2.0$ & $+0.013$ & $+2.9$ \\
@@ -77,11 +77,17 @@ one healthy draw of the incumbent-with-ProtT5 cell scores $0.141$ against the in
 $0.161 \pm 0.010$ at the same budget, one draw against eight, and that is not a resolved gap
 in either direction.
 
-\pfstep{Readout width and weight decay are measured nulls} Both effects are under $0.008$
-against a resolution of about $0.02$ at two standard errors. The trunk is a small effect in
-favor of the deeper one, $-0.012$ over all runs and $-0.018$ once the stuck run is dropped,
-and it is sharper under ProtT5 (the interaction). Of the four factors chosen to act on the
-train-validation gap, one acts.
+\pfstep{Weight decay is a measured null; the readout row is retracted} The weight-decay
+effect is under $0.008$ against a resolution of about $0.02$ at two standard errors. The
+readout row is a null by construction, not a measurement: \file{linear_readout} was
+declared in the config and carried in every run's recorded configuration, but the model
+never passed it to the head, so both levels trained the two-layer head. The parameter
+counts logged to W\&B are identical across the two levels, $1{,}447{,}309$ under the deep
+trunk and $682{,}988$ under the shallow one, which is the tell. The option was wired on
+2026-09-10 with a regression test, and linear against two-layer readout is unmeasured until
+the v12 readout round (\cref{sec:next}). The trunk is a small effect in favor of the deeper
+one, $-0.012$ over all runs and $-0.018$ once the stuck run is dropped, and it is sharper
+under ProtT5 (the interaction). Of the three factors that were in fact varied, one acts.
 
 \pfstep{One run in 32 never learned} Cell 1 seed 0 (\texttt{te8272kk}: ProtT5, $L{=}6$,
 two-layer readout, weight decay $10^{-8}$) sits at $0.019$ at its best and $-0.007$ at

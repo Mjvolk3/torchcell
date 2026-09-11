@@ -1556,6 +1556,7 @@ class PerGeneHead(nn.Module):
         film_dim: int = 0,
         per_gene_weight: bool = False,
         linear_readout: bool = False,
+        context_readout: bool = False,
     ):
         """Build the shared MLP applied to every gene embedding.
 
@@ -1593,6 +1594,14 @@ class PerGeneHead(nn.Module):
                 map per gene token. Tests whether the head's nonlinearity is load-bearing,
                 which the kNN and ridge baselines on this panel suggest it may not be. Not
                 a capacity lever: it removes 8,190 of 1,194,509 parameters.
+            context_readout: Give every gene its own affine row over the STRAIN context
+                ``c_b`` (the attended perturbation context, constant across genes for a
+                single deletion), summed in through a zero-initialized gate. This is
+                State's readout form, ``W_recon in R^{d_h x G}`` applied to a cell-level
+                vector, and the ridge decoder the Ahlmann-Eltze benchmark fits from a
+                cell embedding; ``per_gene_weight`` is GEARS's form, the row applied to
+                the gene's own token. Requires ``num_genes`` and a scalar-per-gene head;
+                costs ``num_genes * (hidden_dim + 1) + 1`` parameters.
         """
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -1727,8 +1736,40 @@ class PerGeneHead(nn.Module):
             self.trunk = self.mlp[:-1]
             self.readout = self.mlp[-1]
 
+        # PER-GENE ROW ON THE STRAIN CONTEXT (``context_readout=True``) -- State's form.
+        #
+        # State's gene reconstruction head is one linear map W_recon in R^{d_h x G} applied
+        # to a CELL token's hidden state (doi:10.1101/2025.06.26.661135, "Gene
+        # Reconstruction Head"), and the Ahlmann-Eltze benchmark's decoder for the
+        # foundation models is a ridge regression from the perturbed CELL embedding to
+        # every gene (doi:10.1038/s41592-025-02772-6). Both read each gene off a strain
+        # vector through a gene-specific row; neither reads the gene's own token. Here the
+        # strain vector is the attended perturbation context c_b, which for a single
+        # deletion is the same vector at every gene position, so gene u's term is
+        # w_u . c_b + b_u: a per-gene linear readout of the strain, added to the shared
+        # head's output. GEARS's row (``per_gene_weight``) reads phi(h_u, c_b) instead.
+        #
+        # ZERO-GATED like the per-gene row, so the head is the exact shared-MLP output at
+        # step 0 and the arm is a clean ablation. Cost: num_genes * (hidden_dim + 1) + 1.
+        self.context_readout = context_readout
+        self.ctx_w: nn.Parameter | None = None
+        self.ctx_b: nn.Parameter | None = None
+        if context_readout:
+            assert num_genes > 0, "context_readout requires num_genes"
+            if output_dim != 1:
+                raise ValueError(
+                    "context_readout is defined for a scalar-per-gene head "
+                    f"(output_dim=1); got output_dim={output_dim}"
+                )
+            self.ctx_w = nn.Parameter(torch.randn(num_genes, hidden_dim) * 0.02)
+            self.ctx_b = nn.Parameter(torch.zeros(num_genes))
+            self.ctx_scale = nn.Parameter(torch.zeros(1))
+
     def forward(
-        self, H_genes_pert: torch.Tensor, film_cond: torch.Tensor | None = None
+        self,
+        H_genes_pert: torch.Tensor,
+        film_cond: torch.Tensor | None = None,
+        context: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Forward pass of the per-gene head.
 
@@ -1738,6 +1779,9 @@ class PerGeneHead(nn.Module):
                 FiLM to engage: the scale/shift are only applied when the head was built
                 with ``film_dim > 0`` AND this is not ``None``, so passing ``None``
                 reduces the head to its unconditioned form.
+            context: [batch, N, d] attended perturbation context, read by the per-gene
+                context rows when the head was built with ``context_readout=True``.
+                ``None`` leaves that term out.
 
         Returns:
             predictions: [batch, N] if output_dim == param_dim == 1;
@@ -1770,6 +1814,14 @@ class PerGeneHead(nn.Module):
             )
         else:
             out = self.mlp(H_genes_pert)  # [batch, N, output_dim * param_dim]
+        if self.context_readout and context is not None:
+            # Each gene's own [d] row dotted with the strain context at its position; a
+            # per-gene SCALAR broadcast over the distributional params, as for `pg`.
+            ctx = torch.einsum("bnd,nd->bn", context, cast(torch.Tensor, self.ctx_w))
+            ctx = ctx + cast(torch.Tensor, self.ctx_b).unsqueeze(0)  # [batch, N]
+            out = out + self.ctx_scale * ctx.reshape(
+                ctx.shape + (1,) * (out.ndim - ctx.ndim)
+            )
         if self.output_dim == 1:
             # Scalar per gene: the trailing axis is the distributional param axis (or is
             # squeezed away entirely in the point case).
@@ -2343,9 +2395,14 @@ class CellGraphTransformer(nn.Module):
                 if pg_cfg.get("film_on_pert_set", False)
                 else 0,
                 per_gene_weight=bool(pg_cfg.get("per_gene_weight", False)),
+                linear_readout=bool(pg_cfg.get("linear_readout", False)),
+                context_readout=bool(pg_cfg.get("context_readout", False)),
             )
         pg_spec = self.heads_config.get("per_gene") or {}
         self.per_gene_concat_context = bool(pg_spec.get("concat_context", False))
+        # State-form readout: the head also reads the attended context through per-gene
+        # rows, so the forward passes `pert_context` to it only when this is set.
+        self.per_gene_context_readout = bool(pg_spec.get("context_readout", False))
         # F0: give the per-gene head the POOLED PERTURBED-SET representation z_S (and
         # h_CLS) -- exactly the pair of inputs PerturbationHead uses, and the mechanism
         # behind the trigenic-interaction result. PerGeneHead currently sees neither: it
@@ -3016,7 +3073,9 @@ class CellGraphTransformer(nn.Module):
                 pg_in = torch.cat([pg_in, self.bilinear(H_genes, pert_context)], dim=-1)
             # z_S ONLY as the FiLM conditioner -- pert_cond's h_CLS half is strain-constant.
             head_outputs["per_gene"] = self.per_gene_head(
-                pg_in, film_cond=z_S if self.per_gene_film else None
+                pg_in,
+                film_cond=z_S if self.per_gene_film else None,
+                context=pert_context if self.per_gene_context_readout else None,
             )
             if self.response_basis is not None:
                 assert pert_cond is not None, (

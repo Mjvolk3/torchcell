@@ -511,6 +511,28 @@ case "$ARM" in
                      ARM_TAGS=(mech-baseline pair-rank0 xfer-yes stage-pergene-rep round-pergene-rep) ;;
   RR_pergene)        OVERRIDES=(multitask.per_gene_weight=true)
                      ARM_TAGS=(mech-pergene-readout xfer-yes stage-pergene-rep round-pergene-rep) ;;
+  # ============================ READOUT ROUND (2026.09.10, v12) ============================
+  # Eight readouts on the full-locus input E_full under the pinball objective; the config
+  # (cgt_expr_v12_head.yaml) explains each arm and what published readout it is. The
+  # `readout-*` tag names the family so the readout script can select on it.
+  H_ref)             OVERRIDES=()
+                     ARM_TAGS=(readout-shared-mlp stage-head round-head) ;;
+  H_linear)          OVERRIDES=(multitask.linear_readout=true)
+                     ARM_TAGS=(readout-linear stage-head round-head) ;;
+  H_pergene)         OVERRIDES=(multitask.per_gene_weight=true)
+                     ARM_TAGS=(readout-pergene stage-head round-head) ;;
+  H_gears)           OVERRIDES=(multitask.per_gene_weight=true
+                                model.cross_gene.enabled=true model.cross_gene.rank=64)
+                     ARM_TAGS=(readout-pergene readout-crossgene stage-head round-head) ;;
+  H_basis64)         OVERRIDES=(multitask.response_basis_rank=64)
+                     ARM_TAGS=(readout-basis64 stage-head round-head) ;;
+  H_pergene_basis64) OVERRIDES=(multitask.per_gene_weight=true
+                                multitask.response_basis_rank=64)
+                     ARM_TAGS=(readout-pergene readout-basis64 stage-head round-head) ;;
+  H_concat)          OVERRIDES=(multitask.concat_context=true)
+                     ARM_TAGS=(readout-concat stage-head round-head) ;;
+  H_state)           OVERRIDES=(multitask.context_readout=true)
+                     ARM_TAGS=(readout-state-context stage-head round-head) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

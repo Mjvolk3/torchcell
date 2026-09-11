@@ -600,3 +600,56 @@ The three completed Pearson runs peak at 1,926 to 3,193 epochs and hold 0.150 to
 the end, so the metric-aligned objectives do not collapse at batch 64 and do not improve
 the score either. The batch-64 ListMLE pair is 0.03 to 0.04 below the band at a matched
 6,000 epochs, twice the band's spread. The batch-32 ListMLE runs are partial.
+
+## 2026.09.10 - Readout round designed (v12): eight readouts on E_full under pinball
+
+The question is which readout sits best on the gene tokens once the input is the full
+locus, [fudt_upstream, calm, prot_T5_all, fudt_downstream], and the objective is the
+incumbent's pinball loss. The documented readout families, from the mirrored papers, map
+onto existing config keys except one:
+
+| arm | override | published form |
+|---|---|---|
+| H_ref | none | shared two-layer MLP over gene tokens; GEARS's "No Gene-specific Decoder" ablation |
+| H_linear | `multitask.linear_readout=true` | one shared affine map per token (never wired before, see below) |
+| H_pergene | `multitask.per_gene_weight=true` | GEARS: gene-specific row `w_u, b_u` on the gene's own hidden state |
+| H_gears | `per_gene_weight` + `model.cross_gene.enabled=true rank=64` | GEARS complete: the row plus a pooled cross-gene state |
+| H_basis64 | `multitask.response_basis_rank=64` | factored bilinear, gene sensitivity x strain amplitude; scGPT's MVC form |
+| H_pergene_basis64 | both | the mechanism round's combined arm |
+| H_concat | `multitask.concat_context=true` | shared MLP over [h_pert ; h_i ; c]; State SE decoder form (MLP over gene embedding and cell vector) |
+| H_state | `multitask.context_readout=true` | State ST `W_recon` and the Ahlmann-Eltze ridge decoder: a per-gene affine row on the STRAIN vector, new code |
+
+H_state is the one family the code did not have. State's gene reconstruction head is a
+linear `W_recon in R^{d_h x G}` applied to a CELL token, and the benchmark decodes the
+foundation models with a ridge regression from the perturbed cell embedding; both read a
+gene off a strain vector through a gene-specific row and never read the gene's own token.
+`PerGeneHead(context_readout=True)` adds `w_u . c_b + b_u` over the attended perturbation
+context (constant across genes for a single deletion), zero-gated like the GEARS row, so it
+is the shared head at step 0 (`test_per_gene_readout_rows_are_identity_at_init`, both
+arms, exact equality). Cost `N (d + 1) + 1`.
+
+Not in the round: cross-gene mixing alone (the incumbent already carries the Perceiver
+channel, and `M_nomix` read inside the v9 band at 9,900 epochs), and the rank-32 bilinear
+features, which the response basis subsumes.
+
+**Retraction found while wiring the round.** `linear_readout` was declared and recorded
+but never passed into `PerGeneHead` (`test_linear_readout_is_wired_into_the_head` now
+guards it). The v10 grid's "readout" factor therefore compared the MLP head with itself;
+W&B parameter counts are identical across its two levels. The v10 readout null is
+withdrawn in the document and the v10 note; linear vs MLP is unmeasured until this round.
+
+**Design.** 8 arms x 4 seeds (0-3) = 32 runs, four co-resident per 48 GB card, seed-major:
+a card holds four arms of one seed, so every contrast against H_ref is paired within seed
+with the card as a block. Two tasks on cabbi (RTX 6000 Ada, `--cpus-per-task=12
+--mem=120g`) and six on the `gpu` partition (A40, `--cpus-per-task=16 --mem=110g`), two
+days wall. Four per card is sized from W&B system metrics: 10.1 GB for a solo batch-64 run
+(`7ylecrjz`) and 17.9 GB total for two packed batch-32 runs (`ppc2pyv5`), about 9 GB each.
+Host memory for two packed runs read 21 GB at day 1.9. The rate at four per card is not
+measured (two per card was 1.44x solo); a 2.5x assumption puts 1,400 epochs at 28 to 36
+h. Budget 1,400 epochs is v11's, so H_ref replicates v11's E_full arm on IGB at the same
+budget. Four pairs per contrast at a paired sd of ~0.03 resolve about 0.035. Config
+`cgt_expr_v12_head.yaml` (E_full pinned in the config, project `torchcell_019_expr_v12`),
+arms in `gh_expr_008_arm.sh`, stage `head` in `igb_expr_wave5.slurm`.
+
+Caveat carried: v11 is at epoch ~200 of 1,400, so E_full is unproven against calm; the
+readout contrasts are within E_full and stand either way.

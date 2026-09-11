@@ -135,3 +135,7 @@ organism-general story no matter how well it scores. Arms predating wave 4 set n
 keep exactly their old three tags, so they stay comparable. A post-hoc lookup table keyed on arm name
 would have repeated the original scorer bug one level up; declaring the tags in the branch that sets
 the overrides is what makes that impossible.
+
+## 2026.09.10 - `H_*` arms: the readout round
+
+Eight readouts on the full-locus input under pinball, each an existing config key except `H_state` (`multitask.context_readout`, new in `PerGeneHead` the same day): `H_ref`, `H_linear`, `H_pergene`, `H_gears` (per-gene row plus pooled cross-gene state), `H_basis64`, `H_pergene_basis64`, `H_concat`, `H_state`. The config header (`cgt_expr_v12_head.yaml`) names the published readout each one is. Tags: `readout-<family>` for the mechanism and `stage-head` / `round-head` for the selection. `H_linear` is the first run of `linear_readout` that reaches the model: the key was declared and recorded but never passed to the head, so the v10 "linear" runs built the MLP head.

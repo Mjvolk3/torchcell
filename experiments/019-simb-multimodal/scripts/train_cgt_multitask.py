@@ -235,6 +235,13 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
             spec["linear_readout"] = bool(
                 cfg.multitask.get("linear_readout", False)
             )
+            # State-form readout: a per-gene affine row over the strain context c_b,
+            # zero-gated. GEARS's row (per_gene_weight) reads the gene's own token; this
+            # one reads the strain vector, as State's W_recon and the benchmark's ridge
+            # decoder do.
+            spec["context_readout"] = bool(
+                cfg.multitask.get("context_readout", False)
+            )
             # CONCAT arm: feed the head [h_pert ; h_i ; c] instead of h_pert alone, so it
             # can learn arbitrary (h_i, c_b) interactions rather than only functions of
             # their sum. Equivariant (shared MLP per token) and graph-free.

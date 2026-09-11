@@ -1,0 +1,77 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v12_head.yaml
+# THE READOUT ROUND -- project v12, eight readouts on the full-locus input, on IGB.
+#
+# WHY A NEW PROJECT. v11 asks whether a richer per-gene INPUT moves the score; this round
+# holds that input fixed at v11's widest arm and asks which READOUT sits best on top of it.
+# Pooling the two would compare runs whose question differs.
+#
+# THE INPUT IS PINNED to E_full, [fudt_upstream, calm, prot_T5_all, fudt_downstream],
+# 3,328-d in locus order (5' window, ORF, protein, 3' window). It is set HERE rather than by
+# the launcher so every arm reads it from the config and the launcher only varies the
+# readout. v11 has not finished (epochs ~200 of 1,400 at submission), so E_full is not yet
+# measured against calm; every contrast in this round is within E_full and stands either
+# way, and H_ref replicates v11's E_full arm on the IGB cards.
+#
+# THE OBJECTIVE IS THE INCUMBENT'S: quantile head, pinball loss, K = 19. The objective
+# round found the distributional heads indistinguishable and the Pearson and ListMLE
+# objectives on or below the incumbent band, so pinball stays.
+#
+# THE ARMS, set by the launcher (gh_expr_008_arm.sh, H_* arms), every one an existing
+# config key. Each is the shared two-layer MLP plus one mechanism, zero-gated where the
+# code allows, so the arm is the reference at step 0:
+#   H_ref              nothing                     shared MLP over gene tokens; GEARS's
+#                                                  "No Gene-specific Decoder" ablation
+#   H_linear           linear_readout              one shared affine map per token. Was
+#                                                  NEVER wired before this round: v10's
+#                                                  "linear" runs built the MLP head
+#                                                  (identical parameter counts on W&B), so
+#                                                  v10's readout null is retracted
+#   H_pergene          per_gene_weight             GEARS's gene-specific row w_u on the
+#                                                  gene's own hidden state
+#   H_gears            per_gene_weight             GEARS complete: the row plus a pooled
+#                     + cross_gene rank 64         cross-gene state broadcast to every gene
+#   H_basis64          response_basis_rank 64      factored bilinear readout, gene
+#                                                  sensitivity x strain amplitude; the
+#                                                  scGPT MVC form (q_k^T W u)
+#   H_pergene_basis64  both                        the mechanism round's combined arm
+#   H_concat           concat_context              shared MLP over [h_pert ; h_i ; c]; the
+#                                                  State SE decoder form, an MLP over
+#                                                  (gene embedding, cell vector)
+#   H_state            context_readout             per-gene affine row over the STRAIN
+#                                                  vector c_b; State's W_recon and the
+#                                                  Ahlmann-Eltze ridge decoder. New code
+#                                                  in this round, tested at identity
+# Not in the round: cross-gene mixing alone (the incumbent already carries a Perceiver
+# cross-gene channel that read within the band in v9, `M_nomix`), and the rank-32
+# bilinear features, which the response basis subsumes.
+#
+# DESIGN. 8 arms x 4 seeds = 32 runs, four co-resident per 48 GB card, seed-major, so a
+# card holds four arms of ONE seed and every contrast against H_ref is paired within seed
+# with the card as a block. Two cards on cabbi (RTX 6000 Ada) and six on the `gpu`
+# partition (A40); the pairing is within task, so the card type never enters a contrast.
+# Four per card is sized from W&B system metrics: 10.1 GB for a solo batch-64 run and
+# 17.9 GB for two packed batch-32 runs, so about 9 GB each, 36 to 40 GB for four.
+#
+# BUDGET: 1,400 epochs, v11's, so H_ref and v11's E_full read at the same budget. The rate
+# at four per card is not measured (two per card was 1.44x solo); the two-day wall assumes
+# up to 2.5x, and the readout scores at the matched budget across the 32 if any arm falls
+# short. Four pairs per contrast at a paired sd of ~0.03 resolve about 0.035.
+defaults:
+  - cgt_expr_v11_emb
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v12
+  tags: [readout-round, v12]
+
+cell_dataset:
+  node_embeddings: [fudt_upstream, calm, prot_T5_all, fudt_downstream]
+
+multitask:
+  # DECLARED so the H_state arm can be selected from the CLI; hydra struct mode rejects an
+  # override on an undeclared key (the failure that killed canary 2369676).
+  context_readout: false
+
+trainer:
+  max_epochs: 1400
+  train_eval_every: 10

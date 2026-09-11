@@ -47,3 +47,9 @@ sbatch ... --export=ALL,W5_STAGE=h2,TORCHCELL_SOURCE_GIT_HASH=$H,TORCHCELL_SOURC
 - **`train_eval_every=10` in `long`, not 5**: the eval-mode pass sweeps 4,074 train records against validation's 534 and costs ~65 s, so at every=5 it would add ~13 s to every epoch and ~36 h across 10,000 of them. Every=10 halves that and still yields 1,000 curve points.
 
 - **`wave6` spends its budget on arms rather than replicates**: 12 pair-rank/regularization arms (`V_ref`, `V_sink`, `V_basis16/32/64`, `V_film`, `V_hadamard`, `V_hadamard_add`, `V_drop2/3`, `V_wd1e4/1e2`) at one seed fill 3 runs/GPU x 4 A100 exactly, on `cgt_expr_012`, with the noise floor carried from wave 5's measured across-init sd of ~0.006 (n=8, fixed split).
+
+## 2026.09.10 - `head` stage: the v12 readout round, four runs per card
+
+- **`head` packs FOUR runs per 48 GB card**, sized from W&B system metrics rather than the 20 GB figure in the header: a solo batch-64 run peaks at 10.1 GB (`7ylecrjz`) and two packed batch-32 runs total 17.9 GB (`ppc2pyv5`), so a batch-32 run is about 9 GB and four are 36 to 40 GB. Host memory scales with the count (two packed runs read 21 GB at day 1.9), so the tasks ask 110 to 120 GB.
+- **Eight tasks across two partitions, and that is fine for the pairing.** Tasks 0-1 go to cabbi (`--cpus-per-task=12`, 28 CPUs free there) and 2-7 to the `gpu` A40s (`--cpus-per-task=16`). The seed-major ordering means a task holds four arms of one seed, so every contrast is within task and the card type is a block, never a factor.
+- **Stage config is `cgt_expr_v12_head`**, which pins the E_full input in the config; the launcher varies only the readout (`H_*` arms in `gh_expr_008_arm.sh`). Budget 1,400 epochs, v11's, so `H_ref` replicates v11's E_full arm on IGB.

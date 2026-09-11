@@ -215,3 +215,51 @@ def test_per_metabolite_head_requires_incidence() -> None:
             cell_graph=cg,
             heads_config={"per_metabolite": {}},
         )
+
+
+def _per_gene_model(spec: dict[str, Any], seed: int = 7) -> CellGraphTransformer:
+    """A model whose only multitask head is the per-gene head with the given spec."""
+    return _make_model({"per_gene": {"output_dim": 1, **spec}}, seed=seed)
+
+
+def _per_gene_output(model: CellGraphTransformer) -> torch.Tensor:
+    model.eval()
+    with torch.no_grad():
+        _, reps = model(_make_cell_graph(), _make_batch())
+    out = reps["head_outputs"]["per_gene"]
+    assert isinstance(out, torch.Tensor)
+    return out
+
+
+@pytest.mark.parametrize("arm", ["per_gene_weight", "context_readout"])
+def test_per_gene_readout_rows_are_identity_at_init(arm: str) -> None:
+    """The GEARS-form and State-form per-gene rows are zero-gated.
+
+    At step 0 the head must return exactly the shared-MLP output, so any later movement
+    is attributable to the mechanism and not to its new parameters. The rows are built
+    AFTER the shared MLP, so the MLP init is identical across the two models.
+    """
+    base = _per_gene_model({})
+    armed = _per_gene_model({arm: True})
+    assert torch.allclose(_per_gene_output(base), _per_gene_output(armed), atol=0.0)
+    extra = sum(p.numel() for p in armed.parameters()) - sum(
+        p.numel() for p in base.parameters()
+    )
+    assert extra == GENE_NUM * (HIDDEN + 1) + 1
+
+
+def test_linear_readout_is_wired_into_the_head() -> None:
+    """``linear_readout`` must change the head that is built.
+
+    Regression test: the spec key existed and was declared in the configs, but the model
+    never passed it to ``PerGeneHead``, so every "linear" run trained the two-layer head.
+    """
+    mlp = _per_gene_model({})
+    linear = _per_gene_model({"linear_readout": True})
+    assert mlp.per_gene_head is not None and linear.per_gene_head is not None
+    assert not mlp.per_gene_head.linear_readout
+    assert linear.per_gene_head.linear_readout
+    assert sum(p.numel() for p in linear.parameters()) < sum(
+        p.numel() for p in mlp.parameters()
+    )
+    assert _per_gene_output(linear).shape == (BATCH_SIZE, GENE_NUM)

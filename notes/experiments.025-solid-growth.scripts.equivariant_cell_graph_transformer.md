@@ -375,3 +375,65 @@ visible in W&B beside `model/params_gene_embedding`. Submitted from cf5fee7a:
 | 2391133 | `cgt_s0_q_kl_calm_020` | afterany 2391132 |
 | 2391134 | `cgt_s0_q_kl_prot_021` | afterany 2391133 |
 | 2391135 | `cgt_s0_q_kl_ctrl_016` | afterany 2391134 |
+
+Synced from the login node (`wandb sync --include-offline` on each of the four per-rank
+offline dirs; rank 0 is `s1vx2zgw` and carries the validation metrics). The composite arm
+runs at about 17 min/epoch on compute-5-7 (8 h 41 m to epoch 29), a third of the 58
+measured for the KL replication there in September, so the four-arm chain is about 36 h,
+not 5 days.
+
+Composite arm, one seed, read at 22:40 with epoch 29 still running (partial by one
+epoch). `val/gene_interaction/Pearson` by epoch, with `train/gene_interaction/Pearson`:
+
+| epoch | 0 | 1 | 2 | 3 | 4 | 6 | 10 | 11 | 15 | 17 | 20 | 23 | 26 | 28 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| val | 0.151 | 0.209 | 0.263 | 0.241 | 0.196 | 0.226 | 0.251 | 0.238 | 0.238 | 0.235 | 0.175 | 0.227 | 0.202 | 0.173 |
+| train | 0.030 | 0.218 | 0.309 | 0.345 | 0.359 | 0.374 | 0.393 | 0.399 | 0.422 | 0.434 | 0.451 | 0.466 | 0.482 | 0.493 |
+
+Max over epochs 0.263 at epoch 2 (an upward-biased order statistic over 29 epochs);
+epochs 10 to 19 sit at 0.22 to 0.25; epoch 28 is 0.173. Train Pearson climbs
+monotonically to 0.49 while val drifts down after epoch 19, so the arm overfits the
+training pairs under the constant rate. For scale, not as a matched comparison: job 1640
+(learnable table, cosine, 36 epochs) reached 0.199 max and 0.131 at epoch 35 on this
+split; additive ridge 0.185, MLP 0.141. The matched control `_016` is last in the chain.
+`val/cls_pert_strain_sd` runs 0.31 to 0.43 from epoch 2 on (wild-type CLS is 0.0).
+
+## 2026.09.11 - Composite and CaLM complete, ProtT5 at epoch 18; both Delta controls lost to an NCCL timeout
+
+Synced 13:55. Rank-0 runs: composite `s1vx2zgw` (2391132, COMPLETED 9 h 03 m), CaLM
+`8aa08xx0` (2391133, COMPLETED 8 h 40 m), ProtT5 `pmkzwwzw` (2391134, running, epoch
+18 of 30). One seed each; the matched learnable control (`_016`, 2391135) has not run,
+so no arm has its matched comparison yet.
+
+| arm | epochs | max over epochs (epoch) | epoch 29 | train Pearson at last epoch |
+|---|--:|---|---|---|
+| composite | 30 | 0.263 (2) | 0.222 | 0.502 |
+| CaLM alone | 30 | 0.252 (7) | 0.208 | 0.532 |
+| ProtT5 alone | 19 (partial) | 0.270 (3) | 0.123 at epoch 18 | 0.454 |
+
+Composite by epoch: 0.151 0.209 0.262 0.241 0.196 0.185 0.226 0.225 0.208 0.190 0.251
+0.238 0.236 0.223 0.218 0.238 0.220 0.235 0.215 0.220 0.175 0.181 0.223 0.227 0.193
+0.193 0.202 0.218 0.173 0.222. CaLM: 0.089 0.176 0.249 0.210 0.225 0.217 0.162 0.252
+0.218 0.213 0.191 0.226 0.201 0.236 0.212 0.230 0.229 0.212 0.194 0.189 0.192 0.222
+0.198 0.209 0.162 0.173 0.210 0.212 0.165 0.208. ProtT5 through 18: 0.168 0.205 0.223
+0.270 0.237 0.236 0.238 0.238 0.247 0.204 0.240 0.181 0.179 0.241 0.147 0.177 0.179
+0.190 0.123.
+
+Every arm peaks in its first ten epochs and swings 0.05 to 0.10 epoch to epoch while
+train climbs monotonically past 0.45, so the epoch-30 reading sits 0.04 to 0.06 under
+the max in every case; the two numbers are reported together as the protocol says.
+Against the scale marks on this split (1640: 0.199 max, 0.131 at epoch 35; ridge 0.185)
+all three embedding arms' maxima are higher and their late-epoch values are near or
+above the ridge, but the schedule and the seed differ, so this is not a comparison until
+`_016` runs. ProtT5 alone at epoch 18 (0.123) is the lowest late value of the three;
+partial.
+
+**Delta.** Both constant-rate controls died: 21934082 (seed 1) FAILED at 16 h 42 m in
+epoch 16, 21934084 (seed 2) FAILED at 25 h 49 m in epoch 18, each with rank 0 exiting
+-6 after the NCCL watchdog caught an `ALLREDUCE` collective timeout (1,800 s, the
+30-minute process-group default) on another rank, in the middle of a training epoch
+(epoch 16 at 65 percent; epoch 18 at 3 percent). Plausible mechanism, unverified: one
+rank stalled on an LMDB page read through the Taiga NFS mount for over 30 minutes. The fitness arm 21947151 has
+waited 26 h and the scheduler estimates a 2026-09-12 14:08 start; seven more jobs chain
+behind it. Delta at ~60 min/epoch over NFS against IGB at 17 min/epoch on local disk
+puts the whole Delta design in question; decision pending.

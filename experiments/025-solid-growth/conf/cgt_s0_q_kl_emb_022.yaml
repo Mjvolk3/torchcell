@@ -1,0 +1,21 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_emb_022.yaml
+#
+# COMPOSITE, 100 EPOCHS. cgt_s0_q_kl_emb_017 with the epoch budget raised from 30 to 100
+# under the same constant rate. Why: at epoch 30 the composite arm's graph penalty was
+# still falling (3.36, about 0.1 per epoch, against 0.33 for the learnable model by epoch
+# 9), its validation point loss was flat at about 0.94 with no rise, and validation
+# Pearson had swung 0.17 to 0.26 with no trend since epoch 10. A fixed gene vector takes
+# far longer than a free table to arrange the layer-1 attention onto the graphs, so the
+# 30-epoch reading is of an unconverged penalty. Runs are watched and can be stopped early;
+# the val-Pearson checkpoint keeps the best epoch. About 30 h on the mmli node.
+#
+#   sbatch -J 025-q-emb-100 experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_emb_022
+defaults:
+  - cgt_s0_q_kl_emb_017
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, seq_embedding, full_gene_composite, param_matched, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_100, igb]
+
+trainer:
+  max_epochs: 100

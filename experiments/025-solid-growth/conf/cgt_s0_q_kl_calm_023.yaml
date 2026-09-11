@@ -1,0 +1,16 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_calm_023.yaml
+#
+# CaLM ALONE, 100 EPOCHS. cgt_s0_q_kl_calm_020 with the epoch budget raised to 100; see
+# cgt_s0_q_kl_emb_022 for why (unconverged graph penalty at epoch 30, flat validation
+# loss). Watched, stoppable early.
+#
+#   sbatch -J 025-q-calm-100 experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_calm_023
+defaults:
+  - cgt_s0_q_kl_calm_020
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, seq_embedding, calm_only, param_matched, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_100, igb]
+
+trainer:
+  max_epochs: 100

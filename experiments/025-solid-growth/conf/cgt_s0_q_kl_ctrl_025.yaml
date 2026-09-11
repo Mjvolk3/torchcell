@@ -1,0 +1,18 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_ctrl_025.yaml
+#
+# LEARNABLE-TABLE CONTROL, 100 EPOCHS. cgt_s0_q_kl_ctrl_016 with the epoch budget raised
+# to 100 so the matched control shares the budget of the 100-epoch embedding arms (_022 to
+# _024). Job 1640 (cosine, 36 epochs) showed the learnable model's validation point loss
+# climbing past 1.0 from epoch 12; this reads the same under the constant rate. Watched,
+# stoppable early.
+#
+#   sbatch -J 025-q-ctrl-100 experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_ctrl_025
+defaults:
+  - cgt_s0_q_kl_ctrl_016
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, learnable_embedding, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_100, igb]
+
+trainer:
+  max_epochs: 100

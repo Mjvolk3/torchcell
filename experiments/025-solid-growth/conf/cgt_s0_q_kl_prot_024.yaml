@@ -1,0 +1,18 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_prot_024.yaml
+#
+# ProtT5 ALONE, 100 EPOCHS. cgt_s0_q_kl_prot_021 with the epoch budget raised to 100; see
+# cgt_s0_q_kl_emb_022 for why. Note the 30-epoch ProtT5 arm was the one embedding arm
+# whose validation point loss rose (0.90 at epoch 3 to 1.05 at epoch 29) and whose
+# validation Pearson fell to 0.12 to 0.14 after epoch 18, the learnable model's pattern;
+# a longer run reads whether that continues. Watched, stoppable early.
+#
+#   sbatch -J 025-q-prot-100 experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_prot_024
+defaults:
+  - cgt_s0_q_kl_prot_021
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, seq_embedding, prot_t5_only, param_matched, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_100, igb]
+
+trainer:
+  max_epochs: 100

@@ -1,14 +1,20 @@
 #!/bin/bash
 #SBATCH --job-name=increment_kg
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=96G
-#SBATCH --time=12:00:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH --time=03:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
 
 # Add ONE dataset to the SERVED knowledge graph without rebuilding the others.
+#
+# Resources: small on purpose. The heavy steps run in docker containers whose memory is
+# bounded by their own --memory limits (CSV generation) or by the serving container's
+# limit (the import: HEAP_SIZE + --max-off-heap-memory), not by this allocation; the
+# slurm request covers the host-side admission check, staging and verification. Keeping
+# it small also lets the backfill scheduler place it beside the GPU sweeps.
 #
 #   sbatch --export=ALL,DATASET_CLASS=NadalRibellesPerturbSeq2025Dataset \
 #       database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm

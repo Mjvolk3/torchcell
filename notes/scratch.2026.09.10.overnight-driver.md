@@ -91,3 +91,15 @@ the module helps amino-acid or betaxanthin prediction.
   tdg cells). Trainer + flux agents running; thermo + kinetics done. WIP commit attempt
   blocked by mypy (18 errors in parameters.py, kinetics_pipeline.py, three test files);
   ruff-format and markdownlint auto-fixed. Spawned a scoped mypy cleanup agent; retry after.
+- 02:53 mypy cleanup agent done (5 files, 37 tests pass); WIP commit 625b1021 landed on the branch (hooks pass). Tree clean except test.pkl.
+- 03:47 hourly check: 1713-1716 RUNNING fresh; 9 pending. 1709-1712 COMPLETED. Trainer +
+  flux running; thermo + kinetics done. No action.
+- 04:47 hourly check: 1717-1720 (aa s2701/s2702) RUNNING fresh; 5 pending (1721 aa allon,
+  1723-1726 tdg). 1713-1716 COMPLETED. Trainer + flux running. No action.
+- 05:47 hourly check: 1721 (aa allon), 1723/1724/1725 (tdg) RUNNING fresh; 1726 pending.
+  1717-1720 COMPLETED (aa pairs s2701, s2702). Trainer + flux running. No action.
+- 05:55 amino-acid parity read (mean Spearman over 19 features, 564 pinned genes): box
+  nocstr vs pooled = 0.0275/0.0663 (s2700), 0.0005/0.0320 (s2701), 0.0103/0.0560 (s2702):
+  the box flux head is below pooled at every seed, paired diffs -0.039, -0.031, -0.046.
+  Driver queued flux_projection (scale 0) on the amino-acid head, seeds 2700-2702: jobs
+  1727, 1728, 1729 (scripts gh_wave6_aa_proj_s270{0,1,2}.slurm).

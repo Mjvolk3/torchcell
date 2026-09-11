@@ -72,9 +72,15 @@ PARITY_ARMS: dict[str, str] = {
 #: The amino-acid cells. `allon` is a single constrained cell and has no pair, so it is
 #: summarized per arm and never enters a paired contrast.
 AA_SEEDS = (2700, 2701, 2702)
+#: Three amino-acid arms. `proj` is the projection parameterization, which alternates the
+#: balance projection with the box clip so BOTH hold, against `nocstr`'s box head, which
+#: satisfies only the box. Contrasted pairwise: the module against no module
+#: (`nocstr` and `proj` against `pooled`) and the two flux parameterizations against each
+#: other (`proj` against `nocstr`), which is the one that isolates the parameterization.
 AA_ARMS: dict[str, str] = {
     "nocstr": "wave6_aa_nocstr_s{seed}.json",
     "pooled": "wave6_aa_pooled_s{seed}.json",
+    "proj": "wave6_aa_proj_s{seed}.json",
 }
 AA_EXTRA: dict[str, str] = {"allon_s2700": "wave6_aa_allon_s2700.json"}
 
@@ -100,16 +106,13 @@ def physics_key(result: dict[str, Any]) -> str | None:
     if not meta:
         return None
     counts = meta.get("kcat_tier_counts") or {}
-    return "|".join(
-        [
-            str(meta.get("kcat_tier")),
-            ",".join(f"{k}={counts[k]}" for k in sorted(counts)),
-            str(meta.get("thermo_source")),
-            str(meta.get("thermo_sha256")),
-            ",".join(
-                f"{k}={v}" for k, v in sorted((meta.get("km_tier_counts") or {}).items())
-            ),
-        ]
+    sha = meta.get("thermo_sha256") or {}
+    known = (meta.get("thermo_route_counts") or {}).get("known")
+    return (
+        "kcat[" + ",".join(f"{k}={counts[k]}" for k in sorted(counts)) + "]"
+        + f" thermo[{meta.get('thermo_source')},known={known},"
+        + ",".join(f"{k}={str(v)[:8]}" for k, v in sorted(sha.items()))
+        + "]"
     )
 
 
@@ -172,7 +175,9 @@ class FeasibilityRow(BaseModel):
 
     def short_label(self) -> str:
         """Arm, phenotype and seed in the few characters an axis tick can hold."""
-        arm = "flux" if self.arm != "pooled" else "pool"
+        arm = {"pooled": "pool"}.get(
+            self.arm, "proj" if "projection" in self.arm else "flux"
+        )
         phen = "bx" if self.head == "betaxanthin" else "aa"
         return f"{arm} {phen} s{self.seed}"
 
@@ -183,8 +188,21 @@ class Wave6Summary(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     generated_at: str
+    #: The primary contrast: the largest group of seeds whose flux layers were built from
+    #: the same parameter tables.
     betaxanthin_parity: PairedContrast
     amino_acid_parity: PairedContrast
+    #: One contrast per parameter-table group, and the pool over all seeds regardless of
+    #: table. The heterogeneous pool is reported so the cost of the guard is visible; it
+    #: is NOT the number to quote.
+    betaxanthin_parity_by_physics: dict[str, PairedContrast] = Field(default_factory=dict)
+    betaxanthin_parity_heterogeneous: PairedContrast | None = None
+    amino_acid_parity_by_physics: dict[str, PairedContrast] = Field(default_factory=dict)
+    amino_acid_parity_heterogeneous: PairedContrast | None = None
+    #: The projection parameterization on the amino-acid target, against the no-module
+    #: control and against the box flux head.
+    amino_acid_proj_vs_pooled: PairedContrast | None = None
+    amino_acid_proj_vs_nocstr: PairedContrast | None = None
     amino_acid_extra: dict[str, dict[str, Any]] = Field(default_factory=dict)
     feasibility: list[FeasibilityRow] = Field(default_factory=list)
     per_cell: dict[str, dict[str, Any]] = Field(default_factory=dict)
@@ -210,9 +228,14 @@ def _score(result: dict[str, Any]) -> float:
 
 
 def _paired(
-    metric: str, arms: dict[str, str], seeds: tuple[int, ...]
-) -> tuple[PairedContrast, dict[str, dict[str, Any]]]:
-    a_name, b_name = "nocstr", "pooled"
+    metric: str,
+    arms: dict[str, str],
+    seeds: tuple[int, ...],
+    a_name: str = "nocstr",
+    b_name: str = "pooled",
+) -> tuple[
+    PairedContrast, dict[str, dict[str, Any]], dict[str, PairedContrast], PairedContrast
+]:
     missing: list[str] = []
     loaded: dict[str, dict[str, Any]] = {}
     pairs: list[tuple[int, dict[str, Any], dict[str, Any]]] = []
@@ -235,8 +258,10 @@ def _paired(
         )
 
     # THE PHYSICS GUARD. Only cells whose flux layer was built from the same parameter
-    # tables are replicates of one another; the majority key is what the contrast is
-    # computed on, and every seed outside it is dropped BY NAME rather than averaged in.
+    # tables are replicates of one another. Three different tables were in play overnight
+    # (the homolog kcat tier switching on, and the predicted-kcat mirror being regenerated),
+    # so the primary contrast is computed on the LARGEST group of seeds that share a table
+    # and every other group is reported separately rather than averaged in.
     keys = [physics_key(a) for _, a, _ in pairs]
     present = [k for k in keys if k is not None]
     modal = Counter(present).most_common(1)[0][0] if present else None
@@ -247,46 +272,91 @@ def _paired(
     for (seed, a_res, b_res), key in zip(pairs, keys, strict=True):
         if modal is not None and key is not None and key != modal:
             excluded[seed] = (
-                f"the flux arm's layer was built from a different parameter table "
-                f"({key}) than the other cells ({modal}), so it is not a replicate of them."
+                f"flux layer built from {key}, the other cells from {modal}; not a "
+                "replicate of them."
             )
             continue
         kept_seeds.append(seed)
         a_vals.append(_score(a_res))
         b_vals.append(_score(b_res))
+    primary = _build_contrast(
+        metric, a_name, b_name, kept_seeds, a_vals, b_vals, missing, excluded, modal
+    )
+
+    # Every other group of seeds that shares a table, and the physics-heterogeneous pool
+    # over all of them, both reported so the reader can see what the guard cost and what
+    # ignoring it would have said.
+    by_key: dict[str, list[tuple[int, dict[str, Any], dict[str, Any]]]] = {}
+    for pair, key in zip(pairs, keys, strict=True):
+        by_key.setdefault(key or "no flux layer", []).append(pair)
+    groups: dict[str, PairedContrast] = {}
+    for key, subset in by_key.items():
+        groups[key] = _build_contrast(
+            metric,
+            a_name,
+            b_name,
+            [s for s, _, _ in subset],
+            [_score(a) for _, a, _ in subset],
+            [_score(b) for _, _, b in subset],
+            [],
+            {},
+            key,
+        )
+    heterogeneous = _build_contrast(
+        metric + " (PHYSICS-HETEROGENEOUS, every seed pooled regardless of table)",
+        a_name,
+        b_name,
+        [s for s, _, _ in pairs],
+        [_score(a) for _, a, _ in pairs],
+        [_score(b) for _, _, b in pairs],
+        missing,
+        {},
+        "mixed",
+    )
+    return primary, loaded, groups, heterogeneous
+
+
+def _build_contrast(
+    metric: str,
+    a_name: str,
+    b_name: str,
+    seeds: list[int],
+    a_vals: list[float],
+    b_vals: list[float],
+    missing: list[str],
+    excluded: dict[int, str],
+    key: str | None,
+) -> PairedContrast:
     diffs = [a - b for a, b in zip(a_vals, b_vals, strict=True)]
     n = len(diffs)
     # ddof=1: the sample SD of the differences, which is what the paired t divides by.
     sd = float(np.std(diffs, ddof=1)) if n > 1 else float("nan")
     mean = float(np.mean(diffs)) if n else float("nan")
     t = float(mean / (sd / np.sqrt(n))) if n > 1 and sd > 0 else None
-    return (
-        PairedContrast(
-            metric=metric,
-            arm_a=a_name,
-            arm_b=b_name,
-            seeds=kept_seeds,
-            a_values=a_vals,
-            b_values=b_vals,
-            differences=diffs,
-            n_pairs=n,
-            mean_difference=mean,
-            sd_difference=sd,
-            t_statistic=t,
-            t_statistic_note=(
-                "paired t = mean(difference) / (sd(difference) / sqrt(n)) on "
-                f"n={n} seeds, df={max(n - 1, 0)}. Reported for its sign and magnitude; "
-                "at this n it is a summary of the spread, not a significance claim."
-            ),
-            a_mean=float(np.mean(a_vals)) if a_vals else float("nan"),
-            a_sd=float(np.std(a_vals, ddof=1)) if len(a_vals) > 1 else float("nan"),
-            b_mean=float(np.mean(b_vals)) if b_vals else float("nan"),
-            b_sd=float(np.std(b_vals, ddof=1)) if len(b_vals) > 1 else float("nan"),
-            missing=missing,
-            excluded_physics_mismatch=excluded,
-            physics_key_used=modal,
+    return PairedContrast(
+        metric=metric,
+        arm_a=a_name,
+        arm_b=b_name,
+        seeds=seeds,
+        a_values=a_vals,
+        b_values=b_vals,
+        differences=diffs,
+        n_pairs=n,
+        mean_difference=mean,
+        sd_difference=sd,
+        t_statistic=t,
+        t_statistic_note=(
+            "paired t = mean(difference) / (sd(difference) / sqrt(n)) on "
+            f"n={n} seeds, df={max(n - 1, 0)}. Reported for its sign and magnitude; "
+            "at this n it is a summary of the spread, not a significance claim."
         ),
-        loaded,
+        a_mean=float(np.mean(a_vals)) if a_vals else float("nan"),
+        a_sd=float(np.std(a_vals, ddof=1)) if len(a_vals) > 1 else float("nan"),
+        b_mean=float(np.mean(b_vals)) if b_vals else float("nan"),
+        b_sd=float(np.std(b_vals, ddof=1)) if len(b_vals) > 1 else float("nan"),
+        missing=missing,
+        excluded_physics_mismatch=excluded,
+        physics_key_used=key,
     )
 
 
@@ -350,6 +420,61 @@ def _feasibility_rows(loaded: dict[str, dict[str, Any]]) -> list[FeasibilityRow]
             )
         )
     return rows
+
+
+def _arm_series(
+    loaded: dict[str, dict[str, Any]], arms: dict[str, str], seeds: tuple[int, ...]
+) -> tuple[list[str], list[int], dict[str, list[float]]]:
+    """Seeds present in EVERY arm that has any result at all, and each arm's scores.
+
+    An arm whose cells have not finished is dropped from the panel rather than turning
+    every seed into a gap, so a partial rerun still draws the arms that are complete.
+    """
+    live = [
+        a for a in arms if any(loaded.get(arms[a].format(seed=s)) for s in seeds)
+    ]
+    kept: list[int] = []
+    vals: dict[str, list[float]] = {a: [] for a in live}
+    for s in seeds:
+        res = {a: loaded.get(arms[a].format(seed=s)) for a in live}
+        if any(r is None for r in res.values()):
+            continue
+        kept.append(s)
+        for a, r in res.items():
+            vals[a].append(_score(cast(dict[str, Any], r)))
+    return live, kept, vals
+
+
+def _panel_arms(
+    ax: Any,
+    arms: list[str],
+    seeds: list[int],
+    vals: dict[str, list[float]],
+    labels: dict[str, str],
+    ylabel: str,
+) -> None:
+    """One line per seed across N arms, so a within-seed comparison is read vertically."""
+    xs = list(range(len(arms)))
+    for i, seed in enumerate(seeds):
+        ax.plot(
+            xs,
+            [vals[a][i] for a in arms],
+            marker="o",
+            markersize=2.0,
+            linewidth=0.6,
+            color=PLOT_PALETTE[i % len(PLOT_PALETTE)],
+            label=f"seed {seed}",
+        )
+    ax.set_xticks(xs)
+    ax.set_xticklabels([labels.get(a, a) for a in arms])
+    ax.set_xlim(-0.35, len(arms) - 1 + 0.35)
+    ax.set_ylabel(ylabel)
+    if seeds:
+        lo, hi = ax.get_ylim()
+        ax.yaxis.set_minor_locator(MultipleLocator(max((hi - lo) / 10.0, 1e-6)))
+        ax.tick_params(which="minor", length=0)
+        ax.grid(True, which="both", axis="y", linewidth=0.3, alpha=0.4)
+    ax.set_axisbelow(True)
 
 
 def _panel_paired(ax: Any, contrast: PairedContrast, ylabel: str) -> None:
@@ -427,8 +552,20 @@ def _panel_violation(
     ax.set_axisbelow(True)
 
 
+#: Axis labels for the arms, so the panel never shows a result-file stem.
+ARM_LABELS = {
+    "nocstr": "flux, box",
+    "proj": "flux, projection",
+    "pooled": "pooled",
+}
+
+
 def make_figure(
-    bx: PairedContrast, aa: PairedContrast, rows: list[FeasibilityRow], stamp: str
+    bx: PairedContrast,
+    aa: PairedContrast,
+    rows: list[FeasibilityRow],
+    stamp: str,
+    aa_arms: tuple[list[str], list[int], dict[str, list[float]]] | None = None,
 ) -> str:
     apply_paper_style()
     width_mm = PANEL_WIDTHS_MM["full"]
@@ -437,7 +574,14 @@ def make_figure(
     )
     axes = grid.ravel()
     _panel_paired(axes[0], bx, "pinned test Spearman")
-    _panel_paired(axes[1], aa, "mean per-feature Spearman")
+    if aa_arms is not None and aa_arms[1]:
+        live, seeds, vals = aa_arms
+        order = [a for a in ("nocstr", "proj", "pooled") if a in live]
+        _panel_arms(
+            axes[1], order, seeds, vals, ARM_LABELS, "mean per-feature Spearman"
+        )
+    else:
+        _panel_paired(axes[1], aa, "mean per-feature Spearman")
     # The theoretical ceiling of the balance ratio is 2: |sum_j S_ij v_j| can at most equal
     # sum_j |S_ij v_j|, and omega is half of that. A bar at 2 is a flux vector in which
     # nothing a metabolite produces is consumed.
@@ -485,10 +629,21 @@ def make_figure(
 
 def main() -> None:
     stamp = timestamp()
-    bx, loaded_bx = _paired("pinned test Spearman (betaxanthin)", PARITY_ARMS, PARITY_SEEDS)
-    aa, loaded_aa = _paired(
+    bx, loaded_bx, bx_groups, bx_het = _paired(
+        "pinned test Spearman (betaxanthin)", PARITY_ARMS, PARITY_SEEDS
+    )
+    aa, loaded_aa, aa_groups, aa_het = _paired(
         "mean per-feature test Spearman (mulleder19)", AA_ARMS, AA_SEEDS
     )
+    aa_pp, loaded_pp, _, _ = _paired(
+        "mean per-feature test Spearman (mulleder19), projection vs pooled",
+        AA_ARMS, AA_SEEDS, a_name="proj", b_name="pooled",
+    )
+    aa_pn, loaded_pn, _, _ = _paired(
+        "mean per-feature test Spearman (mulleder19), projection vs box flux",
+        AA_ARMS, AA_SEEDS, a_name="proj", b_name="nocstr",
+    )
+    loaded_aa = {**loaded_aa, **loaded_pp, **loaded_pn}
     loaded: dict[str, dict[str, Any]] = {**loaded_bx, **loaded_aa}
     extra: dict[str, dict[str, Any]] = {}
     for name, stem in AA_EXTRA.items():
@@ -530,11 +685,17 @@ def main() -> None:
         for stem, r in sorted(loaded.items())
     }
 
-    figure = make_figure(bx, aa, rows, stamp)
+    figure = make_figure(bx, aa, rows, stamp, _arm_series(loaded, AA_ARMS, AA_SEEDS))
     summary = Wave6Summary(
         generated_at=stamp,
         betaxanthin_parity=bx,
         amino_acid_parity=aa,
+        betaxanthin_parity_by_physics=bx_groups,
+        betaxanthin_parity_heterogeneous=bx_het,
+        amino_acid_parity_by_physics=aa_groups,
+        amino_acid_parity_heterogeneous=aa_het,
+        amino_acid_proj_vs_pooled=aa_pp,
+        amino_acid_proj_vs_nocstr=aa_pn,
         amino_acid_extra=extra,
         feasibility=rows,
         per_cell=per_cell,
@@ -561,6 +722,21 @@ def main() -> None:
         f"  paired difference {aa.mean_difference:+.4f} sd {aa.sd_difference:.4f} "
         f"t {aa.t_statistic}"
     )
+    for name, c in (
+        ("projection vs pooled", aa_pp),
+        ("projection vs box flux", aa_pn),
+    ):
+        if c.n_pairs:
+            print(
+                f"\namino acid, {name}, n={c.n_pairs} seeds {c.seeds}\n"
+                f"  {c.arm_a} mean {c.a_mean:+.4f} sd {c.a_sd:.4f}\n"
+                f"  {c.arm_b} mean {c.b_mean:+.4f} sd {c.b_sd:.4f}\n"
+                f"  paired difference {c.mean_difference:+.4f} "
+                f"sd {c.sd_difference:.4f} t {c.t_statistic}"
+            )
+        else:
+            print(f"\namino acid, {name}: no completed pairs yet")
+
     print("\nfeasibility (top 100 predicted / all genotypes)")
     for row in rows:
         if not row.available:
@@ -571,11 +747,21 @@ def main() -> None:
             top_txt = "n/a" if top is None else f"{top:.3f}"
             print(f"  {row.cell} {key}: top {top_txt} / all "
                   f"{row.population_fractions[key]:.3f}")
-    for label, contrast in (("betaxanthin", bx), ("amino acid", aa)):
-        if contrast.excluded_physics_mismatch:
-            print(f"\nEXCLUDED from the {label} contrast, physics mismatch:")
-            for seed, why in contrast.excluded_physics_mismatch.items():
-                print(f"  seed {seed}: {why}")
+    for label, groups_, het in (
+        ("betaxanthin", bx_groups, bx_het),
+        ("amino acid", aa_groups, aa_het),
+    ):
+        if len(groups_) > 1:
+            print(f"\n{label}: the cells do NOT share one parameter table")
+            for key, c in groups_.items():
+                print(
+                    f"  seeds {c.seeds} n={c.n_pairs} diff {c.mean_difference:+.4f} "
+                    f"sd {c.sd_difference:.4f}  <- {key}"
+                )
+            print(
+                f"  pooled anyway (NOT the number to quote): n={het.n_pairs} "
+                f"diff {het.mean_difference:+.4f} sd {het.sd_difference:.4f}"
+            )
     if summary.missing_files:
         print("\nMISSING (not yet finished or never launched):")
         for name in summary.missing_files:

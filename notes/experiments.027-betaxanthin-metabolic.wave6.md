@@ -223,6 +223,75 @@ fractions match the trainer's to a maximum absolute difference of 0.000e+00
 
 ## 2026.09.11 - Results
 
+### The wave-5 parity claim does not replicate at six seeds
+
+All twelve betaxanthin parity cells finished, and every one of them left the mean plateau
+(final validation prediction spread 0.27 to 0.47 of the target's), so none of these is a
+collapsed run. Pinned test Spearman at the validation-selected epoch:
+
+| seed | flux, no constraint | pooled | difference | flux kcat table |
+|---|---|---|---|---|
+| 2700 | 0.0747 | 0.0717 | +0.0030 | A |
+| 2701 | 0.1185 | 0.1058 | +0.0127 | A |
+| 2702 | 0.0972 | 0.1687 | -0.0715 | B |
+| 2703 | 0.0256 | -0.0001 | +0.0257 | A |
+| 2704 | 0.0225 | 0.1012 | -0.0787 | C |
+| 2705 | 0.1417 | 0.1364 | +0.0053 | C |
+
+Flux arm mean 0.0801, SD 0.0488. Pooled arm mean 0.0973, SD 0.0581. **Paired difference
+-0.0172, SD 0.0456, n = 6, paired t = -0.93 on 5 degrees of freedom.** The t is reported
+for its sign and magnitude; at six seeds it summarizes the spread and is not a significance
+claim.
+
+Wave 5 read this contrast as +0.0030 and +0.0127 on seeds 2700 and 2701 and took it as the
+module helping at parity. Those two are the two smallest-magnitude positive differences in
+the set. The four seeds added since are +0.0257, -0.0715, -0.0787 and +0.0053, and the
+pooled estimate crosses zero and points the other way. **The correct statement is that the
+contrast is not established in either direction**, not that the module hurts: the paired
+differences span -0.0787 to +0.0257 while the between-seed SD of the flux arm's own score
+is 0.0488, so pairing by seed removes much less of the nuisance here than it did in 019.
+
+The seeds are also NOT exchangeable, and the analysis says so rather than hiding it. Three
+different kcat tables were in play (`A` = 148 measured, 3,410 predicted, 170 default, the
+wave-5 table; `B` = 96 measured, 782 homolog, 2,820 predicted, 30 default, the homolog tier;
+`C` = 148 measured, 3,570 predicted, 10 default, the regenerated predicted mirror). Within
+group A alone the three seeds give +0.0138, SD 0.0114. Group C's two seeds give -0.0367,
+SD 0.0594, and group B's single seed -0.0715. Reading the sign as a property of the kcat
+table would be over-reading: with n of 3, 2 and 1 against a between-seed SD near 0.05, the
+groups are not separable from seed noise, and table and seed are confounded because the
+table changed over the same hours the seeds were run. **Hypothesis (untested): the kcat
+table changes the contrast.** Testing it needs the same seeds run on both tables.
+
+### On the amino acids the mechanistic readout costs 0.039, and all three seeds agree
+
+The amino-acid head is the case with the strongest mechanistic story: each of the 19
+measured amino acids is read off the turnover of its own GEM metabolite, so if the
+predicted flux vector carries information about metabolite pools it should appear here
+before anywhere else. Mean per-feature test Spearman over the 19 columns on the pinned
+Merzbacher test genes (564 genotypes carrying the full profile, 10,716 measurements):
+
+| seed | flux, box head | pooled | difference | flux spread | pooled spread |
+|---|---|---|---|---|---|
+| 2700 | 0.0275 | 0.0663 | -0.0387 | 0.060 | 0.278 |
+| 2701 | 0.0005 | 0.0320 | -0.0315 | 0.056 | 0.153 |
+| 2702 | 0.0103 | 0.0560 | -0.0457 | 0.078 | 0.320 |
+
+Flux mean 0.0128, SD 0.0137. Pooled mean 0.0514, SD 0.0176. **Paired difference -0.0386,
+SD 0.0071, n = 3, paired t = -9.41 on 2 degrees of freedom.** All three cells share one
+parameter table, so nothing here is excluded by the physics guard. The t is a summary of
+the spread at three seeds, not a significance claim, but the three paired differences span
+only 0.0142 while the effect is 0.0386, which is a far tighter agreement than anything the
+betaxanthin endpoint produced.
+
+The last two columns say what kind of deficit it is. The flux cells' validation prediction
+spread is 0.056 to 0.078 of the target's, against 0.153 to 0.320 for the pooled cells: the
+mechanistic head barely leaves the mean plateau, so it is largely failing to fit rather
+than fitting and ranking badly. This is with the head fix already applied (the slope
+initialization that took the epoch-0 data loss from 2.4478 to 0.6028), so the residual
+offset is not the explanation. **Hypothesis (untested): the deficit is the readout's
+capacity, since `a_k log(1 + omega_k) + b_k` is two free parameters per amino acid against
+the pooled head's MLP over the whole representation.**
+
 ### The Genesis metabolic-grounding number is 0 percent, not 95
 
 First fully trained cell carrying the feasibility block: `wave5_g7_flux_capacity_nocstr_s2702.json`,

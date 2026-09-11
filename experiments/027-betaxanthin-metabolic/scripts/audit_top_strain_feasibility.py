@@ -104,8 +104,26 @@ class AuditReport(BaseModel):
 
 
 def _enable_sampler(model: Any) -> None:
-    """Take reparameterized draws without taking dropout noise with them."""
+    """Take reparameterized draws without taking dropout noise with them.
+
+    PRECONDITION, checked rather than assumed. On the ``box`` parameterization the flux MLP
+    is built with ``z_out = 2 if cfg.stochastic else 1``, so a cell trained deterministically
+    has no spread channel at all and setting ``config.stochastic`` afterwards indexes a
+    dimension of size 1. Refused with a message instead of crashing in the draw loop, and
+    NOT worked around: a spread that was never trained is not a posterior, so there is
+    nothing honest to fall back to.
+    """
     layer = model.flux_layer
+    z_out_width = layer.flux_mlp[-1].out_features
+    if layer.parameterization == "box" and z_out_width < 2:
+        raise SystemExit(
+            "--stochastic needs a flux head with a spread channel. This cell was trained "
+            f"on the 'box' parameterization with a {z_out_width}-channel flux MLP, so no "
+            "log_std exists to draw from and none was ever supervised. The 'projection' "
+            "parameterization builds the spread head unconditionally and is what the draw "
+            "audit is for; re-run this cell on that arm, or drop --stochastic to get the "
+            "deterministic recomputation, which is what the trainer's own block reports."
+        )
     layer.config.stochastic = True
     model.eval()
     layer.train()

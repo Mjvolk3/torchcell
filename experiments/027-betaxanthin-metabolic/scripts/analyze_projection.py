@@ -687,10 +687,12 @@ def make_figure(cells: list[CellSummary]) -> str:
         fancybox=False,
     )
 
+    # Panel letters OUTSIDE the axes and clear of the rotated y-label, which sits near
+    # x = -0.13 in axes coordinates and collided with a letter placed at -0.12.
     for ax, letter in zip(axes, "ab", strict=False):
         ax.text(
-            -0.12,
-            1.16,
+            -0.22,
+            1.28,
             letter,
             transform=ax.transAxes,
             fontsize=8,

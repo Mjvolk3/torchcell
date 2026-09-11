@@ -19,6 +19,7 @@ from torchcell.adapters import (
     MetaboliteDaSilveira2014Adapter,
     MetaboliteZelezniak2018Adapter,
     MicroarrayKemmeren2014Adapter,
+    NadalRibellesPerturbSeq2025Adapter,
     OrganicAcidYoshida2012Adapter,
     ProteomeMessner2023Adapter,
     ProteomeZelezniak2018Adapter,
@@ -68,6 +69,9 @@ from torchcell.datasets.scerevisiae.lopez2024 import (
 )
 from torchcell.datasets.scerevisiae.messner2023 import ProteomeMessner2023Dataset
 from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
+from torchcell.datasets.scerevisiae.nadal_ribelles2025 import (
+    NadalRibellesPerturbSeq2025Dataset,
+)
 from torchcell.datasets.scerevisiae.oduibhir2014 import SmfODuibhir2014Dataset
 from torchcell.datasets.scerevisiae.ohnuki2018 import ScmdOhnuki2018Dataset
 from torchcell.datasets.scerevisiae.ohnuki2022 import ScmdOhnuki2022Dataset
@@ -125,4 +129,5 @@ dataset_adapter_map = {
     IsobutanolScreenLopez2024Dataset: IsobutanolScreenLopez2024Adapter,
     IsobutanolValidatedLopez2024Dataset: IsobutanolValidatedLopez2024Adapter,
     FattyAcidXue2025Dataset: FattyAcidXue2025Adapter,
+    NadalRibellesPerturbSeq2025Dataset: NadalRibellesPerturbSeq2025Adapter,
 }

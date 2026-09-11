@@ -744,17 +744,29 @@ is silently reused otherwise). Verifiers may **read** the `database/...` LMDB an
 their report back to the writable `data/...` tree (e.g. the morphology verifier) -- source
 vs report paths are deliberately separate.
 
-**Rebuild policy -- the WHOLE `database/data/...` tree is remade in one full build run (for
-now).** We do NOT incrementally rebuild individual datasets under `database/data/...` when a
-loader changes. Instead, **everything under `$DATA_ROOT/database/data/...` is remade as part
-of the entire database build run** -- the full KG build re-processes every dataset from
-scratch. This is deliberately inefficient: the goal right now is a **reliable start-to-end
-rebuild-from-scratch**, so we gain confidence the whole thing can be reconstructed
-deterministically before we optimize. So when a loader lands (e.g. the morphology resolver
-migration), the follow-up is "the next full database build run picks it up," NOT "clear just
-that one `database/data/<dataset>`." Once the end-to-end rebuild is trusted, we can move to
-smaller/incremental rebuilds; until then, assume any `database/data/...` change means a full
-rebuild.
+**Rebuild policy -- two paths, and a manifest decides which one applies.** The served store
+carries a build manifest (`torchcell/knowledge_graphs/kg_manifest.py`, file
+`$BUILD_ROOT/database/kg_manifest.json`) recording, per served dataset, the schema-contract
+fingerprints, the BioCypher graph schema, and the adapter code it was serialized under.
+
+- **Incremental admission (the default for ADDING a dataset).** A dataset can be added to the
+  served graph without rebuilding the others when nothing already served would change:
+  `python -m torchcell.knowledge_graphs.kg_manifest --manifest <m> admit --dataset <Class>
+  --data-root <dev DATA_ROOT>` must say ADMISSIBLE, then
+  `sbatch --export=ALL,DATASET_CLASS=<Class> database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm`
+  stages the dev LMDB, emits only that dataset's CSVs (`kg_increment.yaml`), and runs
+  `neo4j-admin database import incremental` into the live store. Adding NEW schema classes,
+  graph node classes, or adapter methods is additive and admissible. Read
+  [[torchcell.knowledge_graphs.incremental-admission]] before the first run on a machine.
+- **Full rebuild (required, not optional) when the admission check BLOCKS**: a served
+  dataset's schema closure changed (its stored records would serialize differently now), an
+  existing graph node class changed its properties, or adapter code used by a served dataset
+  changed (a written acknowledgment is accepted only after reviewing the diff). Incremental
+  import cannot update or delete existing nodes, so a changed class that is imported elsewhere
+  means the datasets importing it are rebuilt in a full build: everything under
+  `$DATA_ROOT/database/data/...` is remade from scratch by the full KG build. Never "clear
+  just that one `database/data/<dataset>`" to dodge the check; the honest answer to a
+  shared-class change is the full rebuild, and the manifest names the datasets and symbols.
 
 **`EXPERIMENT_ROOT`**
 

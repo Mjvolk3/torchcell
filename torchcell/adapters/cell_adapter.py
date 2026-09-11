@@ -96,6 +96,11 @@ class CellAdapter:
             ("media reference", self._get_media_reference_nodes),
             ("temperature (chunked)", self._temperature_node),
             ("temperature reference", self._get_temperature_reference_nodes),
+            ("environment perturbation (chunked)", self._environment_perturbation_node),
+            (
+                "environment perturbation reference",
+                self._get_environment_perturbation_reference_nodes,
+            ),
             ("fitness phenotype (chunked)", self._fitness_phenotype_node),
             (
                 "gene interaction phenotype (chunked)",
@@ -121,6 +126,10 @@ class CellAdapter:
             (
                 "rnaseq expression phenotype (chunked)",
                 self._rnaseq_expression_phenotype_node,
+            ),
+            (
+                "pseudobulk expression phenotype (chunked)",
+                self._pseudobulk_expression_phenotype_node,
             ),
             ("visual score phenotype (chunked)", self._visual_score_phenotype_node),
             ("metabolite phenotype (chunked)", self._metabolite_phenotype_node),
@@ -159,6 +168,10 @@ class CellAdapter:
             (
                 "rnaseq expression phenotype reference",
                 self._get_rnaseq_expression_phenotype_reference_nodes,
+            ),
+            (
+                "pseudobulk expression phenotype reference",
+                self._get_pseudobulk_expression_phenotype_reference_nodes,
             ),
             (
                 "visual score phenotype reference",
@@ -203,6 +216,14 @@ class CellAdapter:
             (
                 "temperature to environment (chunked)",
                 self._temperature_to_environment_edge,
+            ),
+            (
+                "environment perturbation to environment (chunked)",
+                self._environment_perturbation_to_environment_edges,
+            ),
+            (
+                "environment perturbation to environment reference",
+                self._get_environment_perturbation_to_environment_reference_edges,
             ),
             (
                 "genome to experiment reference",
@@ -555,6 +576,61 @@ class CellAdapter:
                 ),
             },
         )
+
+    # --- Environment perturbations (the environment axis of Genotype.perturbations) ---
+    # An added compound / physical factor / biologic is its own node, content-addressed
+    # like a gene perturbation, so a condition such as "YPD + 0.4 M NaCl" is queryable
+    # rather than only embedded in the environment's serialized_data.
+
+    @staticmethod
+    def _environment_perturbation_node_from(perturbation: Any) -> BioCypherNode:
+        perturbation_id = hashlib.sha256(
+            json.dumps(perturbation.model_dump()).encode("utf-8")
+        ).hexdigest()
+        compound = getattr(perturbation, "compound", None)
+        concentration = getattr(perturbation, "concentration", None)
+        return BioCypherNode(
+            node_id=perturbation_id,
+            preferred_id=perturbation.perturbation_type,
+            node_label="environment perturbation",
+            properties={
+                "perturbation_type": perturbation.perturbation_type,
+                "description": perturbation.description,
+                # compound / concentration exist on SmallMoleculePerturbation; a physical
+                # factor or biologic carries its identity in serialized_data only.
+                "compound_name": compound.name if compound is not None else None,
+                "inchikey": compound.inchikey if compound is not None else None,
+                "concentration_value": (
+                    concentration.value if concentration is not None else None
+                ),
+                "concentration_unit": (
+                    str(concentration.unit.value)
+                    if concentration is not None and concentration.unit is not None
+                    else None
+                ),
+                "serialized_data": json.dumps(perturbation.model_dump()),
+            },
+        )
+
+    @data_chunker
+    def _environment_perturbation_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherNode]:
+        return [
+            self._environment_perturbation_node_from(perturbation)
+            for perturbation in data["experiment"].environment.perturbations
+        ]
+
+    def _get_environment_perturbation_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            for perturbation in data.reference.environment_reference.perturbations:
+                node = self._environment_perturbation_node_from(perturbation)
+                if node.get_id() not in seen_node_ids:
+                    seen_node_ids.add(node.get_id())
+                    nodes.append(node)
+        return nodes
 
     def _get_environment_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
@@ -1184,6 +1260,59 @@ class CellAdapter:
             )
         return nodes
 
+    @staticmethod
+    def _pseudobulk_expression_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties for a ``PseudobulkExpressionPhenotype`` (experiment or reference).
+
+        The per-gene log2 fold-change dict is stored as a JSON string (the multi-valued
+        phenotype convention); ``dispersion`` and ``n_cells`` are the per-genotype
+        single-cell scalars and stay typed so they are queryable.
+        """
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "expression_log2_ratio": json.dumps(phenotype.expression_log2_ratio),
+            "dispersion": phenotype.dispersion,
+            "n_cells": phenotype.n_cells,
+            "measurement_type": phenotype.measurement_type,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+
+    @data_chunker
+    def _pseudobulk_expression_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="pseudobulk expression phenotype",
+            properties=self._pseudobulk_expression_properties(phenotype),
+        )
+
+    def _get_pseudobulk_expression_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="pseudobulk expression phenotype",
+                    node_label="pseudobulk expression phenotype",
+                    properties=self._pseudobulk_expression_properties(phenotype),
+                )
+            )
+        return nodes
+
     @data_chunker
     def _visual_score_phenotype_node(
         self, data: dict[str, Any], method_name: str
@@ -1569,6 +1698,51 @@ class CellAdapter:
             relationship_label="temperature member of",
         )
         return edge
+
+    @data_chunker
+    def _environment_perturbation_to_environment_edges(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherEdge]:
+        environment = data["experiment"].environment
+        environment_id = hashlib.sha256(
+            json.dumps(environment.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return [
+            BioCypherEdge(
+                source_id=hashlib.sha256(
+                    json.dumps(perturbation.model_dump()).encode("utf-8")
+                ).hexdigest(),
+                target_id=environment_id,
+                relationship_label="environment perturbation member of",
+            )
+            for perturbation in environment.perturbations
+        ]
+
+    def _get_environment_perturbation_to_environment_reference_edges(
+        self,
+    ) -> list[BioCypherEdge]:
+        edges = []
+        seen_pairs: set[tuple[str, str]] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            environment = data.reference.environment_reference
+            environment_id = hashlib.sha256(
+                json.dumps(environment.model_dump()).encode("utf-8")
+            ).hexdigest()
+            for perturbation in environment.perturbations:
+                perturbation_id = hashlib.sha256(
+                    json.dumps(perturbation.model_dump()).encode("utf-8")
+                ).hexdigest()
+                pair = (perturbation_id, environment_id)
+                if pair not in seen_pairs:
+                    seen_pairs.add(pair)
+                    edges.append(
+                        BioCypherEdge(
+                            source_id=perturbation_id,
+                            target_id=environment_id,
+                            relationship_label="environment perturbation member of",
+                        )
+                    )
+        return edges
 
     def _get_genome_to_experiment_reference_edges(self) -> list[BioCypherEdge]:
         edges = []

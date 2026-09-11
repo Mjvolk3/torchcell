@@ -1,0 +1,39 @@
+# torchcell/knowledge_graphs/conf/kg_increment.yaml
+# [[torchcell.knowledge_graphs.conf.kg_increment.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_increment.yaml
+#
+# Emit ONE (or a few) dataset's CSVs and prepare a neo4j-admin INCREMENTAL import into
+# the served store, instead of the full (wiping) build. Used by
+# database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm after the admission
+# check (torchcell.knowledge_graphs.kg_manifest admit) has passed.
+#
+#   python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small \
+#       --config-name kg_increment 'datasets=[NadalRibellesPerturbSeq2025Dataset]'
+#
+# `datasets` MUST be overridden on the command line (an empty list is refused); every
+# named dataset is emitted in full (no subset), and the build fails loudly if a named
+# dataset's LMDB is not staged in the build tree.
+
+defaults:
+  - default
+  - _self_
+
+wandb:
+  mode: online
+  project: tcdb
+
+# Small chunks: increments are single datasets of thousands, not tens of millions, of
+# records, and a small chunk keeps the per-worker heap far below the full build's.
+adapters:
+  io_to_total_worker_ratio: 0.1
+  chunk_size: 1e4
+  loader_batch_size: 1e3
+
+subset:
+  size: null
+  seed: 42
+  per_dataset: {}
+  prefilter: {}
+
+datasets: []
+import_mode: incremental

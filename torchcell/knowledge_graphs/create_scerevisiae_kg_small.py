@@ -14,6 +14,7 @@ import os.path as osp
 import time
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import Any, cast
 
 import certifi
@@ -26,6 +27,10 @@ import torchcell
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+from torchcell.knowledge_graphs.incremental_import import (
+    INCREMENTAL_CALL_FILENAME,
+    prepare_incremental_import,
+)
 from torchcell.knowledge_graphs.subset import (
     RecordFilter,
     select_indices,
@@ -191,18 +196,62 @@ def main(cfg: DictConfig) -> None:
     )
     subset_prefilter = {name: RecordFilter(**spec) for name, spec in _pre_map.items()}
 
-    # Build EVERY dataset in the registry (subset), each paired with its adapter.
+    # Membership. `datasets: null` builds EVERY dataset in the registry (the full
+    # build); a list of class names restricts the build to those, which is what an
+    # incremental admission uses to emit ONE dataset's CSVs. `import_mode: incremental`
+    # then prepares a neo4j-admin incremental import instead of the full (wiping) one.
+    _datasets_cfg = cfg.get("datasets", None)
+    selected_names = (
+        None
+        if _datasets_cfg is None
+        else [
+            str(n)
+            for n in cast(
+                "list[Any]", OmegaConf.to_container(_datasets_cfg, resolve=True)
+            )
+        ]
+    )
+    import_mode = str(cfg.get("import_mode", "full"))
+    if import_mode not in ("full", "incremental"):
+        raise ValueError(
+            f"import_mode must be 'full' or 'incremental', got {import_mode!r}"
+        )
+    if import_mode == "incremental" and not selected_names:
+        raise ValueError(
+            "import_mode: incremental requires a non-empty `datasets` list"
+        )
+    known_names = {cls.__name__ for cls in dataset_adapter_map}
+    if selected_names is not None:
+        unknown = sorted(set(selected_names) - known_names)
+        if unknown:
+            raise KeyError(f"datasets not in dataset_adapter_map: {unknown}")
+    build_items = [
+        (dataset_class, adapter_class)
+        for dataset_class, adapter_class in dataset_adapter_map.items()
+        if selected_names is None or dataset_class.__name__ in selected_names
+    ]
+    log.info(
+        "Build membership: %s", "ALL" if selected_names is None else selected_names
+    )
+
+    # Build every selected dataset (subset), each paired with its adapter.
     # A dataset's root is its loader's default; genome/graph are injected when the
     # loader declares them. Datasets whose dev-tree LMDB is absent are skipped LOUDLY
-    # so a test build reports coverage instead of aborting on the first missing one.
+    # so a test build reports coverage instead of aborting on the first missing one --
+    # except in incremental mode, where the one dataset asked for must be present.
     adapters = []
     skipped: list[str] = []
-    for dataset_class, adapter_class in dataset_adapter_map.items():
+    for dataset_class, adapter_class in build_items:
         params = inspect.signature(
             dataset_class.__init__  # type: ignore[misc]  # inspecting a class's __init__
         ).parameters
         root = osp.join(DATA_ROOT, params["root"].default)
         if not osp.isdir(osp.join(root, "processed", "lmdb")):
+            if import_mode == "incremental":
+                raise FileNotFoundError(
+                    f"{dataset_class.__name__}: no LMDB at {root}; stage the dataset "
+                    "into the build tree before an incremental admission"
+                )
             log.warning("SKIP %s: no LMDB at %s", dataset_class.__name__, root)
             skipped.append(dataset_class.__name__)
             continue
@@ -277,13 +326,47 @@ def main(cfg: DictConfig) -> None:
         len(adapters),
     )
     wandb.log({"total_nodes": total_nodes, "total_edges": total_edges})
-    # Write admin import statement and schema information (for biochatter)
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
-
-    relative_bash_script_path = osp.join(
-        "biocypher-out", time_str, "neo4j-admin-import-call.sh"
-    )
+    if import_mode == "full":
+        # Write admin import statement and schema information (for biochatter)
+        bc.write_import_call()
+        bc.write_schema_info(as_node=True)
+        relative_bash_script_path = osp.join(
+            "biocypher-out", time_str, "neo4j-admin-import-call.sh"
+        )
+    else:
+        # Incremental: BioCypher's import call would WIPE the store, and its
+        # schema-info node describes the full build (an increment cannot update it).
+        # Prepare headers/constraints/reference analysis + the incremental call.
+        plan = prepare_incremental_import(
+            Path(bc._output_directory),
+            database=str(wandb.config.neo4j["database_name"]),
+        )
+        wandb.log(
+            {
+                "increment_n_node_ids": plan.analysis.n_node_ids,
+                "increment_n_external_ids": plan.analysis.n_external_ids,
+                "increment_n_edges_between_external": plan.analysis.n_edges_between_external,
+            }
+        )
+        log.info(
+            "Incremental import prepared: %d node labels, %d edge types, %d node ids, "
+            "%d external endpoint ids, %d edges between existing nodes",
+            len(plan.node_labels),
+            len(plan.edge_types),
+            plan.analysis.n_node_ids,
+            plan.analysis.n_external_ids,
+            plan.analysis.n_edges_between_external,
+        )
+        if plan.analysis.has_duplicate_edge_risk:
+            raise RuntimeError(
+                "increment contains relationships whose BOTH endpoints already exist "
+                "in the served graph; incremental import would duplicate them. "
+                f"Sample: {plan.analysis.edges_between_external_sample}. "
+                f"CSVs left in {plan.out_dir} for inspection."
+            )
+        relative_bash_script_path = osp.join(
+            "biocypher-out", time_str, INCREMENTAL_CALL_FILENAME
+        )
 
     with open("biocypher_file_name.txt", "w") as f:
         f.write(relative_bash_script_path)

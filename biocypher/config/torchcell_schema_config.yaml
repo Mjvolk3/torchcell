@@ -87,6 +87,21 @@ temperature:
         unit: str
         serialized_data: str
 
+# The environment axis of perturbation: an added compound (small molecule), a physical
+# factor, or a biologic agent, content-addressed like a gene perturbation. Compound and
+# concentration are projected for small molecules; the typed record is serialized_data.
+environment perturbation:
+    is_a: environmental exposure
+    represented_as: node
+    properties:
+        perturbation_type: str
+        description: str
+        compound_name: str
+        inchikey: str
+        concentration_value: float
+        concentration_unit: str
+        serialized_data: str
+
 # TODO expand out to include different phenotypes.
 # PHENOTYPES START
 fitness phenotype:
@@ -176,6 +191,22 @@ rnaseq expression phenotype:
         n_mapped_reads: int
         serialized_data: str
 
+# Single-cell Perturb-seq collapsed to pseudobulk per genotype (Nadal-Ribelles 2025):
+# per-gene log2 fold-change vs the same-condition WT as a JSON string, plus the two
+# per-genotype single-cell scalars (dispersion, n_cells) kept typed for querying.
+pseudobulk expression phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        expression_log2_ratio: str
+        dispersion: float
+        n_cells: int
+        measurement_type: str
+        serialized_data: str
+
 visual score phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -248,6 +279,7 @@ phenotype member of:
             calmorph phenotype,
             microarray expression phenotype,
             rnaseq expression phenotype,
+            pseudobulk expression phenotype,
             visual score phenotype,
             metabolite phenotype,
             protein abundance phenotype,
@@ -264,6 +296,12 @@ temperature member of:
     is_a: part of
     represented_as: edge
     source: temperature
+    target: environment
+
+environment perturbation member of:
+    is_a: part of
+    represented_as: edge
+    source: environment perturbation
     target: environment
 
 genome member of:

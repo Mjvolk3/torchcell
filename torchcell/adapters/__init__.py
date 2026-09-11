@@ -38,6 +38,9 @@ from .messner2023_adapter import (
 from .mulleder2016_adapter import (
     AminoAcidMulleder2016Adapter as AminoAcidMulleder2016Adapter,
 )
+from .nadal_ribelles2025_adapter import (
+    NadalRibellesPerturbSeq2025Adapter as NadalRibellesPerturbSeq2025Adapter,
+)
 from .oduibhir2014_adapter import SmfODuibhir2014Adapter as SmfODuibhir2014Adapter
 from .ohnuki2018_adapter import ScmdOhnuki2018Adapter as ScmdOhnuki2018Adapter
 from .ohnuki2022_adapter import ScmdOhnuki2022Adapter as ScmdOhnuki2022Adapter
@@ -109,6 +112,7 @@ expression_adapters = [
     "SmMicroarraySameith2015Adapter",
     "DmMicroarraySameith2015Adapter",
     "CaudalPanTranscriptome2024Adapter",
+    "NadalRibellesPerturbSeq2025Adapter",
 ]
 
 morphology_adapters = ["ScmdOhnuki2018Adapter", "ScmdOhnuki2022Adapter"]

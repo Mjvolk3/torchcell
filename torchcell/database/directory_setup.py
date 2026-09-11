@@ -1,5 +1,12 @@
-"""Create the Neo4j database directory tree and copy in config files."""
+"""Create the Neo4j database directory tree and copy in config files.
 
+``--env-file`` names the container ``.env`` to copy in (default
+``$WORKSPACE_DIR/database/database.env``). It is a machine-local secrets file that is not
+tracked, so a git worktree does not have one; a build driven from a worktree passes the
+primary checkout's copy explicitly.
+"""
+
+import argparse
 import os
 import os.path as osp
 import shutil
@@ -13,8 +20,18 @@ DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 WORKSPACE_DIR = cast(str, os.getenv("WORKSPACE_DIR"))
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     """Build the database directory layout and copy conf, env, and biocypher files."""
+    parser = argparse.ArgumentParser(
+        prog="python -m torchcell.database.directory_setup",
+        description="Create $DATA_ROOT/database/... and copy conf, env, biocypher in.",
+    )
+    parser.add_argument(
+        "--env-file",
+        default=osp.join(WORKSPACE_DIR, "database", "database.env"),
+        help="container .env to copy to $DATA_ROOT/database/.env",
+    )
+    args = parser.parse_args(argv)
     # Create directories
     directories = [
         osp.join(DATA_ROOT, "database"),
@@ -38,9 +55,8 @@ def main() -> None:
     shutil.copyfile(src_neo4j_conf, dst_neo4j_conf)
 
     # Copy and rename .env file
-    src_database_env = osp.join(WORKSPACE_DIR, "database", "database.env")
     dst_env_path = osp.join(DATA_ROOT, "database/.env")
-    shutil.copyfile(src_database_env, dst_env_path)
+    shutil.copyfile(args.env_file, dst_env_path)
 
     # Copy biocypher directory into database
     src_biocypher = osp.join(WORKSPACE_DIR, "biocypher")

@@ -52,6 +52,9 @@ __all__ = [
     "forward_closure",
     "loader_schema_deps",
     "loader_closure",
+    "loader_schema_deps_from_source",
+    "loader_closure_from_source",
+    "symbol_dependents",
 ]
 
 # Field(...) keyword arguments that are documentation only: changing them must NOT change a
@@ -344,6 +347,50 @@ def forward_closure(seeds: set[str], ref_graph: dict[str, set[str]]) -> set[str]
                 seen.add(nxt)
                 stack.append(nxt)
     return seen
+
+
+def loader_schema_deps_from_source(source: str, surface: SchemaSurface) -> set[str]:
+    """Surface classes a loader's SOURCE TEXT imports from ``torchcell.datamodels``.
+
+    The text form lets a loader be analyzed at a git ref (``git show <ref>:<path>``)
+    without checking it out, the same way :func:`load_surface_from_sources` does for
+    the schema surface.
+    """
+    tree = ast.parse(source)
+    deps: set[str] = set()
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.ImportFrom)
+            and node.module is not None
+            and node.module.startswith("torchcell.datamodels")
+        ):
+            for alias in node.names:
+                if alias.name in surface.specs:
+                    deps.add(alias.name)
+    return deps
+
+
+def loader_closure_from_source(source: str, surface: SchemaSurface) -> set[str]:
+    """Transitive closure of a loader's schema imports, from its source text."""
+    return forward_closure(
+        loader_schema_deps_from_source(source, surface), surface.ref_graph
+    )
+
+
+def symbol_dependents(
+    loader_sources: dict[str, str], surface: SchemaSurface
+) -> dict[str, set[str]]:
+    """Reverse index: schema symbol -> the loaders (by label) whose closure contains it.
+
+    Answers "if this symbol's contract changes, which datasets are disturbed?" for the
+    whole fleet at once, which is the question an admission check asks about every
+    symbol a NEW dataset shares with the datasets already served.
+    """
+    dependents: dict[str, set[str]] = {}
+    for label, source in loader_sources.items():
+        for symbol in loader_closure_from_source(source, surface):
+            dependents.setdefault(symbol, set()).add(label)
+    return dependents
 
 
 def loader_schema_deps(loader_path: Path, surface: SchemaSurface) -> set[str]:

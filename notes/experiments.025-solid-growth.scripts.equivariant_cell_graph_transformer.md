@@ -482,4 +482,10 @@ falls early (epoch 14 in the 010 replication, 2 to 12 in job 1640) and its valid
 loss only climbs after, so the 30-epoch control (`_016`, 2391135) already contains its
 best epoch, and a 100-epoch run would read a memorized state. The 100-epoch embedding
 arms are read at their best epoch and at epoch 30 against `_016`, and at epoch 100 with
-no matched control. The cabbi slot after 2394965 is free.
+no matched control. The cabbi slot after 2394965 goes to the flanks-only arm
+`cgt_s0_q_kl_fudt_026` (fudt_upstream + fudt_downstream, 1,536 dims, hidden width 692,
+1,190,088 embedding-side parameters, model total 4,775,689 from its CPU smoke), job
+2395008, which completes the single-region set: what the regulatory DNA carries with no
+ORF view. It runs from a third login-node worktree (`025-fitness-joint-head-c` at
+baba07c8) so neither running job's checkout moves. compute-3-3's GPUs are RTX 6000 Ada,
+48 GB, the same card as GilaHyper, so the two lanes differ less than first stated.

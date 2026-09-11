@@ -8,6 +8,7 @@ from torchcell.knowledge_graphs.incremental_import import (
     CONSTRAINTS_FILENAME,
     INCREMENTAL_CALL_FILENAME,
     REFERENCE_ANALYSIS_FILENAME,
+    CsvGroup,
     analyze_references,
     constraints_cypher,
     discover_csv_groups,
@@ -178,3 +179,50 @@ def test_prepare_writes_everything(out_dir: Path) -> None:
     script = (out_dir / INCREMENTAL_CALL_FILENAME).read_text(encoding="utf-8")
     assert script.startswith("#!/bin/bash\nset -euo pipefail\n")
     assert plan.analysis.n_edges_between_external == 1
+
+
+def test_filter_existing_edges_rewrites_only_matching_rows(out_dir: Path) -> None:
+    from torchcell.knowledge_graphs.incremental_import import (
+        EXISTING_EDGES_FILENAME,
+        filter_existing_edges,
+    )
+
+    seen: dict[str, list[tuple[str, str]]] = {}
+
+    def lookup(group: CsvGroup, pairs: list[tuple[str, str]]) -> set[tuple[str, str]]:
+        seen[group.label] = pairs
+        # the store already holds e2 -> D1 and G -> e1
+        return {p for p in pairs if p in {("e2", "D1"), ("G", "e1")}}
+
+    summary = filter_existing_edges(out_dir, lookup)
+    assert seen["ExperimentMemberOf"] == [("e1", "D1"), ("e2", "D1")]
+    assert summary.checked == {"ExperimentMemberOf": 2, "GenomeMemberOf": 2}
+    assert summary.existing == {"ExperimentMemberOf": 1, "GenomeMemberOf": 1}
+    assert summary.n_existing == 2
+    kept = (out_dir / "ExperimentMemberOf-part000.csv").read_text(encoding="utf-8")
+    assert kept == f"e1\t\tD1\t{Q}ExperimentMemberOf{Q}\n"
+    backup = out_dir / "unfiltered" / "ExperimentMemberOf-part000.csv"
+    assert backup.read_text(encoding="utf-8").count("\n") == 2
+    assert (out_dir / "GenomeMemberOf-part000.csv").read_text(encoding="utf-8") == (
+        f"G\t\tX\t{Q}GenomeMemberOf{Q}\n"
+    )
+    assert (out_dir / EXISTING_EDGES_FILENAME).exists()
+    # node files are untouched and rediscovery still sees the same groups
+    assert {g.label for g in discover_csv_groups(out_dir)} == {
+        "Dataset",
+        "Experiment",
+        "ExperimentMemberOf",
+        "GenomeMemberOf",
+    }
+
+
+def test_filter_existing_edges_is_a_no_op_when_nothing_exists(out_dir: Path) -> None:
+    from torchcell.knowledge_graphs.incremental_import import filter_existing_edges
+
+    before = (out_dir / "ExperimentMemberOf-part000.csv").read_text(encoding="utf-8")
+    summary = filter_existing_edges(out_dir, lambda group, pairs: set())
+    assert summary.n_existing == 0
+    assert (out_dir / "ExperimentMemberOf-part000.csv").read_text(
+        encoding="utf-8"
+    ) == before
+    assert not (out_dir / "unfiltered").exists()

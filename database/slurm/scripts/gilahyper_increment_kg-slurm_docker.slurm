@@ -48,6 +48,7 @@
 #   SERVE_ROOT         serving root the container mounts (default /db/database)
 #   NEO4J_CONTAINER    serving container (default tc-neo4j-readonly)
 #   NEO4J_DATABASE     database to grow (default torchcell)
+#   NEO4J_BOLT_URI     host-side bolt URI of that container (default bolt://localhost:7687)
 #   ACK_ADAPTER_DRIFT  written reason passed to --ack-adapter-drift (default: none)
 #   ARCHIVE_ROOT       CSV archive (default /bulk/biocypher-out)
 #   DATABASE_ENV_FILE  the container .env (untracked secrets; default: the primary
@@ -76,6 +77,7 @@ SERVE_ROOT="${SERVE_ROOT:-/db/database}"
 KG_MANIFEST="${KG_MANIFEST:-$BUILD_ROOT/database/kg_manifest.json}"
 NEO4J_CONTAINER="${NEO4J_CONTAINER:-tc-neo4j-readonly}"
 NEO4J_DATABASE="${NEO4J_DATABASE:-torchcell}"
+NEO4J_BOLT_URI="${NEO4J_BOLT_URI:-bolt://localhost:7687}"
 ARCHIVE_ROOT="${ARCHIVE_ROOT:-/bulk/biocypher-out}"
 DATABASE_ENV_FILE="${DATABASE_ENV_FILE:-/home/michaelvolk/Documents/projects/torchcell/database/database.env}"
 IMAGE=michaelvolk/tc-neo4j:5.26.28
@@ -129,8 +131,10 @@ cmp "$TORCHCELL_SRC/biocypher/config/torchcell_schema_config.yaml" \
 
 echo "---------------- 4 GENERATE CSVs (ephemeral container, incremental mode)"
 # biocypher-out is written by uid 7474 (the generating container) and READ by this host
-# user (reference analysis, counts), so it is 7474-owned and world-readable.
-docker run --rm --user 0 -v "$SERVE_ROOT":/serve "$IMAGE" bash -c \
+# user (reference analysis, counts), so it is 7474-owned and world-readable. Root is
+# needed to create it under the root-owned serving root: --entrypoint bash gives real
+# root, whereas the image entrypoint drops to neo4j regardless of --user.
+docker run --rm --entrypoint bash -v "$SERVE_ROOT":/serve "$IMAGE" -c \
     'mkdir -p /serve/biocypher-out && chown 7474:7474 /serve/biocypher-out && chmod 755 /serve/biocypher-out'
 mem_mb=$((SLURM_MEM_PER_NODE))
 if [ "$TORCHCELL_PIP_REF" = "src" ]; then
@@ -167,8 +171,10 @@ docker run --rm --entrypoint bash \
         python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small --config-name kg_increment 'datasets=[$DATASET_CLASS]'
         # this container runs as root (pip needs the image's site-packages); hand the
         # output to the neo4j user, which runs the import, and keep it host-readable
+        # world-writable as well: the host-side existing-edge filter rewrites the edge
+        # part files in place before the import (a transient staging directory)
         OUT_DIR=\$(dirname \$(cat biocypher_file_name.txt))
-        chown -R 7474:7474 /var/lib/neo4j/\$OUT_DIR && chmod -R a+rX /var/lib/neo4j/\$OUT_DIR
+        chown -R 7474:7474 /var/lib/neo4j/\$OUT_DIR && chmod -R a+rwX /var/lib/neo4j/\$OUT_DIR
         echo INCREMENT_CALL=\$(cat biocypher_file_name.txt)" 2>&1 | tee "$GEN_LOG"
 CALL_REL=$(grep -oE '^INCREMENT_CALL=.*' "$GEN_LOG" | tail -1 | cut -d= -f2-)
 [ -n "$CALL_REL" ] || { echo "no incremental call script reported"; exit 1; }
@@ -200,6 +206,9 @@ done
 docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" "SHOW CONSTRAINTS YIELD name, labelsOrTypes, properties RETURN name, labelsOrTypes, properties;"
 docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '');"
 docker exec "$NEO4J_CONTAINER" $CS -d system "SHOW DATABASE $NEO4J_DATABASE YIELD name, access;"
+echo "-- drop relationship rows the store already holds (shared context nodes re-emit theirs)"
+NEO4J_URI="$NEO4J_BOLT_URI" python -m torchcell.knowledge_graphs.incremental_import filter-existing-edges \
+    --out-dir "$OUT_HOST" --database "$NEO4J_DATABASE"
 echo "-- STOP DATABASE, incremental import as neo4j (uid 7474), START DATABASE"
 docker exec "$NEO4J_CONTAINER" $CS -d system "STOP DATABASE $NEO4J_DATABASE WAIT;"
 set +e

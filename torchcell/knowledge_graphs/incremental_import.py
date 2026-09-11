@@ -34,6 +34,16 @@ BioCypher already wrote:
    increment must already exist in the served graph; a relationship whose BOTH endpoints
    are external would be re-created on top of an existing one (incremental import cannot
    dedup relationships), so it is reported as a blocker rather than silently duplicated.
+4. **Existing-edge filter (against the live store).** The increment re-emits the shared
+   context nodes its records use (genome, medium, temperature, an environment another
+   dataset already produced) together with THEIR relationships, e.g. medium -> environment.
+   Those nodes are matched to the existing ones, but the relationships would be created
+   again (measured: ``MediaMemberOf`` and ``TemperatureMemberOf`` into a shared control
+   environment doubled in a dress rehearsal). ``filter_existing_edges`` looks every
+   relationship row up in the online store (through the ``Entity.id`` index) and rewrites
+   the edge part files without the rows that already exist, keeping the originals under
+   ``unfiltered/``. Run it after the constraint exists and before the database is
+   stopped.
 
 The import call mirrors the flags of the full build (tab delimiter, ``|`` array
 delimiter, single-quote quoting) with the two safety flags flipped: bad relationships
@@ -48,8 +58,9 @@ from __future__ import annotations
 import csv
 import re
 import sys
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -67,6 +78,10 @@ __all__ = [
     "INCREMENTAL_CALL_FILENAME",
     "CONSTRAINTS_FILENAME",
     "REFERENCE_ANALYSIS_FILENAME",
+    "EXISTING_EDGES_FILENAME",
+    "ExistingEdgeFilter",
+    "query_existing_edges",
+    "filter_existing_edges",
 ]
 
 INCREMENTAL_CALL_FILENAME = "neo4j-admin-incremental-import-call.sh"
@@ -385,3 +400,151 @@ def prepare_incremental_import(
         edge_types=edge_types,
         analysis=analysis,
     )
+
+
+# --------------------------------------------------------------- existing-edge filter
+
+EXISTING_EDGES_FILENAME = "incremental-existing-edges.json"
+UNFILTERED_DIRNAME = "unfiltered"
+
+
+class ExistingEdgeFilter(BaseModel):
+    """Outcome of dropping relationship rows that the served store already holds."""
+
+    checked: dict[str, int]  # type -> rows looked up
+    existing: dict[str, int]  # type -> rows dropped because they already exist
+    sample: list[list[str]] = Field(default_factory=list)  # [type, start, end]
+
+    @property
+    def n_existing(self) -> int:
+        """Total relationship rows dropped."""
+        return sum(self.existing.values())
+
+
+def _edge_rows(group: CsvGroup) -> Iterator[tuple[str, str, str]]:
+    """``(start, end, raw row)`` for every row of an edge group's part files."""
+    start_index = group.columns.index(":START_ID")
+    end_index = group.columns.index(":END_ID")
+    for part in group.part_paths:
+        with open(part, encoding="utf-8", newline="") as handle:
+            for line in handle:
+                fields = line.rstrip("\n").split(_DELIMITER)
+                yield _unquote(fields[start_index]), _unquote(fields[end_index]), line
+
+
+def query_existing_edges(
+    group: CsvGroup, rows: list[tuple[str, str]], session: Any, batch_size: int = 5000
+) -> set[tuple[str, str]]:
+    """Which ``(start, end)`` pairs already carry a relationship of this group's type.
+
+    Uses the ``Entity.id`` uniqueness index on both endpoints, so a batch of a few
+    thousand lookups takes well under a second on the served store.
+    """
+    existing: set[tuple[str, str]] = set()
+    cypher = (
+        "UNWIND $rows AS r "
+        "MATCH (a:Entity {id: r.s})-[x]->(b:Entity {id: r.e}) "
+        "WHERE type(x) = $t "
+        "RETURN DISTINCT r.s AS s, r.e AS e"
+    )
+    for offset in range(0, len(rows), batch_size):
+        batch = [{"s": s, "e": e} for s, e in rows[offset : offset + batch_size]]
+        result = session.run(cypher, rows=batch, t=group.label)
+        existing.update((record["s"], record["e"]) for record in result)
+    return existing
+
+
+def filter_existing_edges(
+    out_dir: Path,
+    lookup: Callable[[CsvGroup, list[tuple[str, str]]], set[tuple[str, str]]],
+) -> ExistingEdgeFilter:
+    """Rewrite every edge part file without the rows ``lookup`` reports as existing.
+
+    ``lookup`` receives an edge group and its distinct ``(start, end)`` pairs and returns
+    the subset that already exists in the store (``query_existing_edges`` bound to a
+    session in production; any callable in tests). Originals are kept under an
+    ``unfiltered/`` subdirectory, and a JSON summary is written.
+    """
+    groups = discover_csv_groups(out_dir)
+    checked: dict[str, int] = {}
+    dropped: dict[str, int] = {}
+    sample: list[list[str]] = []
+    for group in groups:
+        if group.kind != "edge":
+            continue
+        pairs = sorted({(s, e) for s, e, _ in _edge_rows(group)})
+        checked[group.label] = len(pairs)
+        existing = lookup(group, pairs) if pairs else set()
+        dropped[group.label] = 0
+        if not existing:
+            continue
+        for part in group.part_paths:
+            original = Path(part)
+            # originals go to a SUBDIRECTORY: neo4j-admin globs `<Type>-part.*` as a
+            # regex, so a sibling `...csv.unfiltered` would be imported as well
+            backup = original.parent / UNFILTERED_DIRNAME / original.name
+            backup.parent.mkdir(exist_ok=True)
+            if not backup.exists():
+                original.rename(backup)
+            kept: list[str] = []
+            start_index = group.columns.index(":START_ID")
+            end_index = group.columns.index(":END_ID")
+            with open(backup, encoding="utf-8", newline="") as handle:
+                for line in handle:
+                    fields = line.rstrip("\n").split(_DELIMITER)
+                    pair = (_unquote(fields[start_index]), _unquote(fields[end_index]))
+                    if pair in existing:
+                        dropped[group.label] += 1
+                        if len(sample) < 20:
+                            sample.append([group.label, pair[0], pair[1]])
+                        continue
+                    kept.append(line)
+            original.write_text("".join(kept), encoding="utf-8")
+    summary = ExistingEdgeFilter(checked=checked, existing=dropped, sample=sample)
+    (out_dir / EXISTING_EDGES_FILENAME).write_text(
+        summary.model_dump_json(indent=2), encoding="utf-8"
+    )
+    return summary
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI: ``filter-existing-edges`` against a live store (run before STOP DATABASE)."""
+    import argparse
+
+    from neo4j import GraphDatabase
+
+    from torchcell.database.connection import neo4j_connection_settings
+
+    parser = argparse.ArgumentParser(
+        prog="python -m torchcell.knowledge_graphs.incremental_import"
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+    p_filter = sub.add_parser(
+        "filter-existing-edges",
+        help="drop relationship rows the served store already holds",
+    )
+    p_filter.add_argument("--out-dir", required=True)
+    p_filter.add_argument("--database", default="torchcell")
+    p_filter.add_argument("--uri", default=None, help="bolt URI (default: NEO4J_URI)")
+    args = parser.parse_args(argv)
+
+    settings = neo4j_connection_settings()
+    driver = GraphDatabase.driver(
+        args.uri or settings.uri, auth=(settings.username, settings.password)
+    )
+    with driver.session(database=args.database) as session:
+        summary = filter_existing_edges(
+            Path(args.out_dir),
+            lambda group, pairs: query_existing_edges(group, pairs, session),
+        )
+    driver.close()
+    print(
+        f"existing-edge filter: checked {sum(summary.checked.values())} distinct "
+        f"relationships, dropped {summary.n_existing} already in the store "
+        f"({', '.join(f'{k}={v}' for k, v in summary.existing.items() if v) or 'none'})"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

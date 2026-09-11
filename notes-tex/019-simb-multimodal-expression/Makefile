@@ -15,6 +15,9 @@ ZOTERO_PERSONAL_COLLECTION :=
 # to the 019-simb-multimodal image directory under a STABLE name (no timestamp),
 # because a timestamped filename cannot be the target of the `plots` rule.
 PLOT_SLUG := 019-simb-multimodal
+# The cross-study panel comes from the 028 knockout-expression scripts.
+# Recursive `=`, not `:=`: REPO is defined by the common Makefile included below.
+PLOT_SRC_EXTRA = $(REPO)/notes/assets/images/028-knockout-expression
 
 PYTHON ?= /home/michaelvolk/miniconda3/envs/torchcell/bin/python
 

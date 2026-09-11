@@ -45,6 +45,25 @@ $0.0099$ it needs three, which is six runs, \texttt{R\_ref} against \texttt{R\_p
 and a second 48-hour Delta array. Whether the arm's early peak and give-back survive a
 shorter budget is what the same runs show.
 
+\pfstep{The readout round, submitted 2026-09-10 on IGB} The published readouts reduce to
+a short list once the shared trunk is fixed: GEARS's gene-specific row on the gene's own
+token, that row plus GEARS's pooled cross-gene state, State's $\mathbf W_{\mathrm{recon}}$
+and the benchmark's ridge decoder (a gene-specific row on the strain vector), scGPT's
+masked-value form (a factored bilinear, gene sensitivity times strain amplitude), State's
+embedding-model decoder (a shared MLP over the gene embedding and the cell vector), and
+the shared linear map. Each maps to one existing option of the per-gene head except the
+strain-vector row, added as \file{context_readout} and zero-gated like the others. Eight
+arms by four seeds, four runs per 48\,GB card (a batch-32 run peaks near 9\,GB on the
+W\&B system metrics), seed-major so every contrast against the shared-MLP reference is
+paired within seed with the card as a block, on the full-locus input of \cref{sec:next}'s
+embedding round under the pinball objective, at that round's 1{,}400 epochs so the
+reference arm replicates its widest arm: jobs \texttt{2392379} (cabbi) and
+\texttt{2392381} (\file{gpu}), source \texttt{271b2c71}. The wiring of
+\file{linear_readout} was found broken while building it (\cref{sec:readouts-factorial}),
+so the linear arm is its first measurement. Four pairs per contrast at a paired sd near
+$0.03$ resolve about $0.035$; the full-locus input is itself unmeasured against
+\file{calm} until the embedding round lands, and every contrast here is within it.
+
 \pfstep{The batch-32 solo Pearson run that separates batch size from placement} The
 batch-64 pair are the round's only informative survivors and batch size is confounded
 with solo placement in that arm (\cref{sec:readouts-pearson}). One batch-32 solo seed of

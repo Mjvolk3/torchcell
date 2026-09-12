@@ -1,0 +1,118 @@
+{
+  "generated_at": "2026-09-11-16-58-50",
+  "kcat_tier": "predicted",
+  "kcat_homolog_tier": true,
+  "kinetics_version": "verified",
+  "n_catalytic_units": 3728,
+  "tier_counts": {
+    "measured": 97,
+    "homolog": 782,
+    "predicted": 2831,
+    "default": 18
+  },
+  "expected_tier_counts": {
+    "measured": 97,
+    "homolog": 782,
+    "predicted": 2831,
+    "default": 18
+  },
+  "matches_shipped": true,
+  "km_tier_counts": {
+    "measured": 97,
+    "homolog": 782,
+    "predicted": 2831,
+    "default": 18
+  },
+  "predicted_kcat_predictors": [
+    "ezkinetics",
+    "eitlem",
+    "unikp"
+  ],
+  "predicted_km_predictors": [
+    "ezkinetics"
+  ],
+  "kcat_notes": "Open Enzyme Database first (1126 organism rows, substrate-matched against 3710 units), then the EC homolog tier (35753 rows, any organism), then predicted tier = median over ezkinetics, eitlem, unikp (verified tables, admitted by own_class_band against the EC-median lookup at 0.532), then the median of the 879 database-tier values, 9.6 1/s. A complex takes the min over its subunits.",
+  "source_files": [
+    {
+      "role": "verified_pairs",
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/_features/verified_pairs.parquet",
+      "sha256": "b93b3a8a733dd70ac4558b2ba745abf942804bfc5ba711d0d44bf23c74277400",
+      "bytes": 127495,
+      "mtime_utc": "2026-09-11T05:36:33.752459+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/data/torchcell/kinetics/_features/verified_pairs.parquet"
+    },
+    {
+      "role": "plausibility_study",
+      "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/within_class_plausibility.json",
+      "sha256": "7184ea9488bb2570d2c53aa12891faf0f1052b8e6f60cc159e06d249bd29a58b",
+      "bytes": 18665,
+      "mtime_utc": "2026-09-09T03:31:47.910463+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/within_class_plausibility.json"
+    },
+    {
+      "role": "oed_scerevisiae/oed_records.json",
+      "path": "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/open_enzyme_database/scerevisiae/oed_records.json",
+      "sha256": "0e4aca9e0872e5b19b7c325dc83c64cc43c9f2fba0d535d417e10a925e683398",
+      "bytes": 513789,
+      "mtime_utc": "2026-07-26T20:07:23.781805+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/data/enzyme_kinetics/open_enzyme_database/scerevisiae/oed_records.json"
+    },
+    {
+      "role": "oed_all/oed_records.json",
+      "path": "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/open_enzyme_database/all/oed_records.json",
+      "sha256": "b8d1e652a3e258d5b70837fc807c311228648ef43440b9b866d0737ab89ce1fa",
+      "bytes": 16276498,
+      "mtime_utc": "2026-09-06T17:19:04.515616+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/data/enzyme_kinetics/open_enzyme_database/all/oed_records.json"
+    },
+    {
+      "role": "oed_scerevisiae/manifest.json",
+      "path": "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/open_enzyme_database/scerevisiae/manifest.json",
+      "sha256": "6e1bb013891a812e9a9950cd0f9be75f1835e8632e7e4ad54178dbec98b7b7f2",
+      "bytes": 562,
+      "mtime_utc": "2026-07-26T20:07:23.782805+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/data/enzyme_kinetics/open_enzyme_database/scerevisiae/manifest.json"
+    },
+    {
+      "role": "oed_all/manifest.json",
+      "path": "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/open_enzyme_database/all/manifest.json",
+      "sha256": "101a174e9a2dc24d234d680485d1f0b748c957d0754be0cf0325b4777762fe25",
+      "bytes": 472,
+      "mtime_utc": "2026-09-06T17:19:04.541616+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/data/enzyme_kinetics/open_enzyme_database/all/manifest.json"
+    },
+    {
+      "role": "predicted/k_cat/eitlem",
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/eitlem/verified/k_cat.parquet",
+      "sha256": "7cd3d1f1fff85be486387a8cd16089eec39eb535c25ff518bce4d4c568779390",
+      "bytes": 771446,
+      "mtime_utc": "2026-09-11T05:37:15.559275+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/data/torchcell/kinetics/eitlem/verified/k_cat.parquet"
+    },
+    {
+      "role": "predicted/k_cat/ezkinetics",
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/ezkinetics/verified/k_cat.parquet",
+      "sha256": "ab116c336f71312a4f53d04a2511121f2e5f8f9c34e7a0ea34ad7767f0dd894d",
+      "bytes": 765855,
+      "mtime_utc": "2026-09-11T05:39:45.016191+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/data/torchcell/kinetics/ezkinetics/verified/k_cat.parquet"
+    },
+    {
+      "role": "predicted/k_cat/unikp",
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/unikp/verified/k_cat.parquet",
+      "sha256": "7b3f838606db7dd43d7e38380702da6edc330a02e8b52e9715b1cbfaac42c1e7",
+      "bytes": 770483,
+      "mtime_utc": "2026-09-11T05:37:24.234444+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/data/torchcell/kinetics/unikp/verified/k_cat.parquet"
+    },
+    {
+      "role": "predicted/K_M/ezkinetics",
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/ezkinetics/verified/K_M.parquet",
+      "sha256": "be180871f6f9ff85aa4a1b41610f64116edf1f2c45249d3f8316c27e36fc9d87",
+      "bytes": 765955,
+      "mtime_utc": "2026-09-11T05:39:45.049192+00:00",
+      "frozen_copy": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics/data/torchcell/kinetics/ezkinetics/verified/K_M.parquet"
+    }
+  ],
+  "frozen_copy_dir": "/scratch/projects/torchcell-scratch/frozen-027-wave7-kinetics"
+}

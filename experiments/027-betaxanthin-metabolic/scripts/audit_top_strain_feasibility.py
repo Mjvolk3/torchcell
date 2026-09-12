@@ -37,7 +37,7 @@ import json
 import os
 import os.path as osp
 import sys
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import torch
@@ -48,20 +48,24 @@ load_dotenv()
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 from train_bx import (  # noqa: E402
+    BALANCE_TOLERANCES,
+    BOTH_BALANCE_TOLERANCE,
     CHECKPOINT_DIR,
     FEASIBILITY_DEFINITIONS,
     HEAD,
     RESULTS_DIR,
     TOP_K_FEASIBLE,
     BxCell,
+    FeasibilityStats,
     _fractions,
+    _head_params,
     _per_sample_feasibility,
+    _stats,
     _top_k_mask,
     build_dataset,
     build_feasibility_block,
     build_model_for_cell,
     code_provenance,
-    collect_feasibility,
     criteria_flags,
     load_config,
     pinned_test_mask,
@@ -70,7 +74,194 @@ from train_bx import (  # noqa: E402
 
 from torchcell.datamodules import CellDataModule  # noqa: E402
 
-DATA_ROOT = cast(str, os.environ["DATA_ROOT"])
+DATA_ROOT = os.environ["DATA_ROOT"]
+
+#: A reaction counts as CARRYING FLUX when its magnitude exceeds this fraction of the
+#: layer's working flux magnitude (``FluxLayerConfig.flux_scale``, 100 mmol/gDW/h), i.e.
+#: 1e-4 mmol/gDW/h at the shipped scale. Below that the reaction is off, and a balance
+#: statistic computed over a vector of off reactions is a statistic about zeros.
+FLUX_ACTIVE_RELATIVE_THRESHOLD = 1e-6
+
+STRICT_DEFINITIONS: dict[str, str] = {
+    "why": (
+        "The trainer's Genesis criterion tests the MEDIAN relative balance residual over "
+        "the independent rows of S. A flux vector that is zero on most reactions passes "
+        "that test on the zeros alone: the median row of a mostly-off vector has no "
+        "production to fail to consume. The max over the same rows is the honest form of "
+        "'this vector balances', and the fraction of reactions carrying flux says whether "
+        "there was anything to balance."
+    ),
+    "balance_max_ratio": (
+        "max over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon), "
+        "the same ratio the trainer takes the median of. Computed by "
+        "train_bx._per_sample_feasibility, which every wave-6 cell already recorded the "
+        "distribution of; only the CRITERION built on it is new."
+    ),
+    "flux_active_frac": (
+        "fraction of the 4,131 reactions with |v| > 1e-6 * flux_scale = 1e-4 mmol/gDW/h."
+    ),
+    "genesis_median_rule": (
+        "the trainer's criterion: balance_median_ratio <= 1e-2 AND no active reaction "
+        "running uphill at standard state."
+    ),
+    "genesis_max_rule": (
+        "the same criterion with balance_max_ratio <= 1e-2 in place of the median, so "
+        "EVERY independent row must balance, not the typical one."
+    ),
+}
+
+
+def _per_sample_extras(
+    layer: Any, flux: dict[str, torch.Tensor]
+) -> dict[str, torch.Tensor]:
+    """Per-sample scalars the trainer does not compute. ``[B]`` each."""
+    v = flux["v"]
+    threshold = FLUX_ACTIVE_RELATIVE_THRESHOLD * float(layer.config.flux_scale)
+    return {"flux_active_frac": (v.abs() > threshold).float().mean(dim=1)}
+
+
+def collect_with_extras(
+    model: Any,
+    loader: Any,
+    dataset: Any,
+    head_name: str,
+    mean: torch.Tensor,
+    sd: torch.Tensor,
+) -> dict[str, np.ndarray]:
+    """One forward pass collecting the trainer's per-sample scalars AND the extras.
+
+    A copy of ``train_bx.collect_feasibility`` with :func:`_per_sample_extras` folded into
+    the same pass rather than a second one. It is a copy and not a wrapper because
+    ``train_bx.py`` is owned by another work stream tonight and this script may not edit
+    it; the trainer's own scalars still come from ``_per_sample_feasibility``, so the two
+    cannot drift in their definitions.
+    """
+    device = next(model.parameters()).device
+    layer = model.flux_layer
+    assert layer is not None, "collect_with_extras called on an arm with no flux layer."
+    was_training = model.training
+    model.eval()
+    parts: dict[str, list[np.ndarray]] = {}
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch.to(device)
+            _, reps = model(dataset.cell_graph.to(device), batch)
+            per = _per_sample_feasibility(layer, reps["flux"])
+            per.update(_per_sample_extras(layer, reps["flux"]))
+            if head_name == HEAD:
+                pred = _head_params(reps["head_outputs"][head_name])
+                per["prediction"] = pred[:, 0] * sd[0] + mean[0]
+            for key, value in per.items():
+                parts.setdefault(key, []).append(value.detach().cpu().numpy())
+    model.train(was_training)
+    return {k: np.concatenate(v) for k, v in parts.items()}
+
+
+def strict_criteria_flags(per: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    """Per-genotype feasibility under the MAX balance rule, beside the median rule.
+
+    The thermodynamic half is unchanged, so every pair of rows here differs in exactly one
+    thing: which order statistic of the per-row balance residual has to clear 1 percent.
+    """
+    out: dict[str, np.ndarray] = {}
+    median = per["balance_median_ratio"]
+    maximum = per["balance_max_ratio"]
+    for tol in BALANCE_TOLERANCES:
+        out[f"balance_max_ratio_le_{tol:.0e}"] = maximum <= tol
+    for key, label in (
+        ("thermo_model_violation_frac", "thermo_model"),
+        ("thermo_standard_state_violation_frac", "thermo_standard_state"),
+    ):
+        if key not in per:
+            continue
+        downhill = per[key] <= 0.0
+        out[f"genesis_median_rule_{label}"] = (
+            median <= BOTH_BALANCE_TOLERANCE
+        ) & downhill
+        out[f"genesis_max_rule_{label}"] = (
+            maximum <= BOTH_BALANCE_TOLERANCE
+        ) & downhill
+    return out
+
+
+class StrictGroup(BaseModel):
+    """One group of genotypes under both balance rules."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    n: int
+    rank_by: str | None = None
+    stats: dict[str, FeasibilityStats]
+    fractions: dict[str, float]
+
+
+class StrictFeasibility(BaseModel):
+    """The max-based balance rule and the flux-carrying fraction, per group."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    definitions: dict[str, str] = Field(
+        default_factory=lambda: dict(STRICT_DEFINITIONS)
+    )
+    flux_active_threshold: float
+    flux_scale: float
+    n_independent_balance_rows: int
+    n_reactions: int
+    groups: dict[str, StrictGroup] = Field(default_factory=dict)
+
+
+def _strict_group(
+    per: dict[str, np.ndarray], sel: np.ndarray, rank_by: str | None
+) -> StrictGroup:
+    keys = ("balance_median_ratio", "balance_max_ratio", "flux_active_frac")
+    sub = {k: v[sel] for k, v in per.items() if k not in {"prediction", "observed"}}
+    return StrictGroup(
+        n=int(sel.sum()),
+        rank_by=rank_by,
+        stats={k: _stats(sub[k]) for k in keys},
+        fractions={
+            **{k: float(v.mean()) for k, v in criteria_flags(sub).items()},
+            **{k: float(v.mean()) for k, v in strict_criteria_flags(sub).items()},
+        },
+    )
+
+
+def build_strict_block(
+    per_all: dict[str, np.ndarray],
+    per_test: dict[str, np.ndarray],
+    test_pinned: np.ndarray,
+    layer: Any,
+    head_name: str,
+) -> StrictFeasibility:
+    """The same four groups the trainer reports, under the median AND the max rule."""
+    rank_note = "predicted betaxanthin, descending" if head_name == HEAD else None
+    groups: dict[str, StrictGroup] = {
+        "all": _strict_group(
+            per_all, np.ones(per_all["balance_median_ratio"].size, bool), None
+        ),
+        "pinned_test": _strict_group(per_test, test_pinned, None),
+    }
+    if rank_note is not None:
+        all_sel = np.ones(per_all["balance_median_ratio"].size, bool)
+        groups["all_top100"] = _strict_group(
+            per_all,
+            _top_k_mask(per_all["prediction"], all_sel, TOP_K_FEASIBLE),
+            rank_note,
+        )
+        groups["pinned_test_top100"] = _strict_group(
+            per_test,
+            _top_k_mask(per_test["prediction"], test_pinned, TOP_K_FEASIBLE),
+            rank_note,
+        )
+    return StrictFeasibility(
+        flux_active_threshold=(
+            FLUX_ACTIVE_RELATIVE_THRESHOLD * float(layer.config.flux_scale)
+        ),
+        flux_scale=float(layer.config.flux_scale),
+        n_independent_balance_rows=int(layer.independent_rows.numel()),
+        n_reactions=int(layer.n_reactions),
+        groups=groups,
+    )
 
 
 class DrawAudit(BaseModel):
@@ -91,6 +282,9 @@ class DrawAudit(BaseModel):
     fraction_of_genotypes_all_draws_feasible: dict[str, float] = Field(
         default_factory=dict
     )
+    #: The distribution of the two balance order statistics and of the flux-carrying
+    #: fraction over every (genotype, draw) pair.
+    draw_stats: dict[str, FeasibilityStats] = Field(default_factory=dict)
 
 
 class AuditReport(BaseModel):
@@ -103,6 +297,9 @@ class AuditReport(BaseModel):
     cell: dict[str, Any]
     select_epoch: int
     recomputed_feasibility: dict[str, Any]
+    #: The max-based balance rule and the flux-carrying fraction, which the trainer's block
+    #: does not carry. Computed in the same forward pass as the recomputation above.
+    strict_feasibility: StrictFeasibility
     agreement_with_trainer: dict[str, Any]
     draw_audit: DrawAudit | None = None
     code_provenance: dict[str, str]
@@ -140,20 +337,25 @@ def _enable_sampler(model: Any) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--result", required=True,
+        "--result",
+        required=True,
         help="Result file name under results/, e.g. wave5_g7_flux_capacity_nocstr_s2704.json",
     )
     parser.add_argument(
-        "--checkpoint", default=None,
+        "--checkpoint",
+        default=None,
         help="Override the checkpoint path; by default it is taken from the result file.",
     )
     parser.add_argument(
-        "--stochastic", action="store_true",
+        "--stochastic",
+        action="store_true",
         help="Switch the flux head's sampler on and report the fraction of DRAWS feasible.",
     )
     parser.add_argument("--draws", type=int, default=16)
     parser.add_argument(
-        "--draw-genotypes", type=int, default=TOP_K_FEASIBLE,
+        "--draw-genotypes",
+        type=int,
+        default=TOP_K_FEASIBLE,
         help="How many top-ranked genotypes to draw for. The default is the Genesis top 100.",
     )
     parser.add_argument("--out", default=None)
@@ -206,14 +408,23 @@ def main() -> None:
     )
     dm.setup()
 
-    per_test = collect_feasibility(
+    per_test = collect_with_extras(
         model, dm.test_dataloader(), dataset, main_head, mean, sd
     )
-    per_all = collect_feasibility(
+    per_all = collect_with_extras(
         model, dm.all_dataloader(), dataset, main_head, mean, sd
     )
+    pinned_mask = pinned_test_mask(dm, dataset)
+    # The trainer's block is rebuilt from the trainer's OWN scalars alone, so the
+    # recomputation stays comparable to what the cell wrote. The extras go into their own
+    # block rather than into this one.
+    trainer_keys = {k: v for k, v in per_all.items() if k != "flux_active_frac"}
+    trainer_keys_test = {k: v for k, v in per_test.items() if k != "flux_active_frac"}
     block = build_feasibility_block(
-        per_all, per_test, pinned_test_mask(dm, dataset), model.flux_layer, main_head
+        trainer_keys, trainer_keys_test, pinned_mask, model.flux_layer, main_head
+    )
+    strict = build_strict_block(
+        per_all, per_test, pinned_mask, model.flux_layer, main_head
     )
 
     # AGREEMENT. The trainer computed the same block inside the training process; this one
@@ -225,7 +436,12 @@ def main() -> None:
         deltas: dict[str, float] = {}
         for group, payload in block.groups.items():
             for name, value in payload.fractions.items():
-                ref = trainer_block["groups"].get(group, {}).get("fractions", {}).get(name)
+                ref = (
+                    trainer_block["groups"]
+                    .get(group, {})
+                    .get("fractions", {})
+                    .get(name)
+                )
                 if ref is not None:
                     deltas[f"{group}/{name}"] = float(value - ref)
         agreement = {
@@ -236,15 +452,13 @@ def main() -> None:
 
     draw_audit = None
     if args.stochastic:
-        layer = model.flux_layer
+        layer: Any = model.flux_layer
         was_stochastic = bool(layer.config.stochastic)
         _enable_sampler(model)
         n_total = per_all["balance_median_ratio"].size
         if "prediction" in per_all:
             order_mask = _top_k_mask(
-                per_all["prediction"],
-                np.ones(n_total, dtype=bool),
-                args.draw_genotypes,
+                per_all["prediction"], np.ones(n_total, dtype=bool), args.draw_genotypes
             )
             selection = (
                 f"the {args.draw_genotypes} genotypes with the highest predicted "
@@ -277,10 +491,11 @@ def main() -> None:
                     batch = batch.to(device)
                     _, reps = model(cell_graph, batch)
                     per = _per_sample_feasibility(layer, reps["flux"])
+                    per.update(_per_sample_extras(layer, reps["flux"]))
                     idx = torch.tensor(rows, device=device)
-                    for key, value in per.items():
+                    for key, drawn in per.items():
                         keep.setdefault(key, []).append(
-                            value[idx].detach().cpu().numpy()
+                            drawn[idx].detach().cpu().numpy()
                         )
                 for key, chunks in keep.items():
                     stacked.setdefault(key, []).append(np.concatenate(chunks))
@@ -291,9 +506,18 @@ def main() -> None:
         # The flags come back flat, so reshape them to [draws, genotypes] and require every
         # draw of a genotype to pass. Feasible on average and feasible on every draw are
         # different claims and both are reported.
+        draw_flags = {**criteria_flags(flat), **strict_criteria_flags(flat)}
         all_draws = {
             name: float(flags.reshape(args.draws, n_geno).all(axis=0).mean())
-            for name, flags in criteria_flags(flat).items()
+            for name, flags in draw_flags.items()
+        }
+        draw_stats = {
+            name: _stats(flat[name])
+            for name in (
+                "balance_median_ratio",
+                "balance_max_ratio",
+                "flux_active_frac",
+            )
         }
         draw_audit = DrawAudit(
             draws=args.draws,
@@ -308,8 +532,12 @@ def main() -> None:
                 + " flux head; on a deterministic arm the sampler reads a log_std output "
                 "that was never supervised, so the spread is not a calibrated posterior."
             ),
-            fraction_of_draws=_fractions(flat),
+            fraction_of_draws={
+                **_fractions(flat),
+                **{k: float(v.mean()) for k, v in strict_criteria_flags(flat).items()},
+            },
             fraction_of_genotypes_all_draws_feasible=all_draws,
+            draw_stats=draw_stats,
         )
 
     report = AuditReport(
@@ -318,6 +546,7 @@ def main() -> None:
         cell=cell.model_dump(),
         select_epoch=int(result["select_epoch"]),
         recomputed_feasibility=block.model_dump(),
+        strict_feasibility=strict,
         agreement_with_trainer=agreement,
         draw_audit=draw_audit,
         code_provenance=code_provenance(),
@@ -329,10 +558,25 @@ def main() -> None:
     print(f"wrote {out_path}")
     key = "all_top100" if "all_top100" in block.groups else "all"
     print(f"recomputed feasibility[{key}]: {block.groups[key].fractions}")
+    strict_group = strict.groups[key]
+    print(f"strict feasibility[{key}], n={strict_group.n}")
+    for stat_name in ("balance_median_ratio", "balance_max_ratio", "flux_active_frac"):
+        stat = strict_group.stats[stat_name]
+        print(
+            f"  {stat_name:24s} median {stat.median:.4g} p90 {stat.p90:.4g} "
+            f"max {stat.max:.4g}"
+        )
+    for flag_name, fraction in sorted(strict_group.fractions.items()):
+        if flag_name.startswith(("genesis_", "balance_max_ratio_le_")):
+            print(f"  {flag_name:52s} {fraction:.3f}")
     if agreement["checked"]:
-        print(f"agreement with the trainer: max |delta| {agreement['max_abs_delta']:.3e}")
+        print(
+            f"agreement with the trainer: max |delta| {agreement['max_abs_delta']:.3e}"
+        )
     if draw_audit is not None:
-        print(f"draw audit ({draw_audit.draws} draws, {draw_audit.n_genotypes} genotypes)")
+        print(
+            f"draw audit ({draw_audit.draws} draws, {draw_audit.n_genotypes} genotypes)"
+        )
         print(f"  fraction of draws: {draw_audit.fraction_of_draws}")
         print(
             "  fraction of genotypes feasible on every draw: "

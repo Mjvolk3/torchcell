@@ -501,4 +501,18 @@ Delta's bbub scratch quota is 9.8 TB with 2.8 TB used, so the 554 GB build is be
 copied to local Lustre by `delta_copy_025_build_local.slurm` (job 21984419, CPU
 partition, two rsync passes, size check against 554,075,586,560 B). After it prints
 CLEAN the symlink is swapped for the local directory, before the pending fitness chain
-(21947151 first, estimated start 2026-09-12 14:08) starts reading.
+(21947151 first, estimated start 2026-09-12 14:08) starts reading. The pending jobs need
+no resubmission: they open the build through the symlink path. The two lost controls are
+appended to the chain with the same 30-minute stagger, restoring three seeds per arm:
+
+| Delta job | config | seed | dependency |
+|---|---|---|---|
+| 21947151 | `cgt_s0_r_kl_fit_014` | 1 | pending, priority |
+| 21947152 | `cgt_s0_r_kl_fit_014` | 2 | after 21947151 + 30 min |
+| 21947958 | `cgt_s0_r_kl_fit_015` | 1 | after 21947152 + 30 min |
+| 21947959 | `cgt_s0_r_kl_fit_015` | 2 | after 21947958 + 30 min |
+| 21947960 | `cgt_s0_r_kl_fit_014` | 3 | after 21947959 + 30 min |
+| 21947961 | `cgt_s0_r_kl_ctrl_013` | 3 | after 21947960 + 30 min |
+| 21947962 | `cgt_s0_r_kl_fit_015` | 3 | after 21947961 + 30 min |
+| 21984678 | `cgt_s0_r_kl_ctrl_013` | 1 | after 21947962 + 30 min, replaces 21934082 |
+| 21984680 | `cgt_s0_r_kl_ctrl_013` | 2 | after 21984678 + 30 min, replaces 21934084 |

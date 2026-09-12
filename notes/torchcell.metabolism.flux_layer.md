@@ -237,3 +237,146 @@ those rows at parse time; a missing id list raises rather than skipping the corr
 path and sha256 join `source_paths` / `sha256`. Coverage is unchanged at 2,389 metabolites
 and 3,210 reactions. Pinned on a synthetic CSV by
 `test_the_dgpredictor_rows_of_the_shipped_column_are_not_converted`.
+
+## 2026.09.11 - The `fluxforce` Channel: the Second Law as a Differentiable Coupling
+
+### Why a new channel rather than a better margin on the directional box
+
+`_thermo_tighten` decides each priced reaction's allowed sign with `delta_g > eps` inside a
+`torch.where`. The comparison returns a boolean, so **no gradient reaches `log_c_base`
+through the box**: the model cannot move a metabolite pool until a reaction has the sign it
+needs, which is what the method's docstring claimed it could. The only thermodynamic
+gradient a `_tdg` cell has is the soft hinge `c_thermo`. Pinned by
+`test_fluxforce_passes_gradient_to_the_concentrations_and_the_thermo_box_does_not`, which
+takes a loss that is a function of the flux alone: `d(loss)/d(log_c_base)` is `None` on
+`projection_k20_box_tdg` and nonzero on `fluxforce_k20_box`.
+
+### The channel
+
+`fluxforce[_k<N>][_balance|_box]`, parsed by `parse_parameterization` next to `projection`
+and carrying the same two suffixes. On every reaction the table prices and Box 2 does not
+exempt,
+
+$$
+v_j = m_j\,f(\Delta_rG_j),\qquad f(x) = -\tanh\!\Big(\frac{x}{2RT}\Big),\qquad
+m_j = \max(|v^\ell_j|,|v^u_j|)\,\sigma(z_j)\ \ge 0,
+$$
+
+with $f$ the flux-force relation (Beard and Qian; the flux-force efficacy of Noor et al.
+2014), the net of forward and reverse rates at the ratio $e^{-\Delta_rG/RT}$. Unpriced and
+exempt reactions keep the sigmoid box. The flux is clipped to the genotype box and then run
+through the existing alternating projection at the configured `K` and end.
+
+- `flux_force_efficacy(delta_g)` is the function, public so an audit can reproduce a
+  reported efficacy from the `rt_kj_per_mol` the coverage report now carries.
+- `_fluxforce_flux(...)` returns `(v_pre, priced)`, and both `forward` and `sample` call it,
+  so a draw is the same construction with the magnitude logit resampled.
+- The spread head `flux_log_std` is built unconditionally on this kind, zero weights and a
+  constant bias, so a deterministically trained cell can be switched into a sampler after
+  its weights load, exactly as the projection head's posterior head is.
+- `ThermoMode.ANCHORED` is required. No fall back to the box head: a flux-force channel with
+  no reaction energies is the box head wearing a thermodynamic name.
+- No `tdg` token exists on this channel, by construction.
+
+### What is reported
+
+- `v_pre_projection` `[B, r]`, the flux before the projection, which satisfies the second law
+  exactly.
+- `feas_sign_flip_frac`, the fraction of flux-carrying priced reactions whose sign the
+  projection reversed. This is the whole of the second-law violation the channel produces,
+  and it is measured rather than inferred from the thermo fraction.
+- `g_diss_per_sample` `[B]`, `thermo_g_diss_mean` and `g_diss_mean` on every `ANCHORED` arm,
+  penalized or not, so Niebel's limit can serve as a validation readout. Units J/gDW/h;
+  Niebel's yeast limit of 3.7 kJ/gDW/h is the 3,700 that `g_diss_limit` carries. The sum is
+  signed, so a dissipating state is negative.
+
+Untrained on the real yeast-GEM, `fluxforce_k20_box` violates the second law on 0.000 of the
+priced reactions before the projection and 0.318 after it, against the plain projection's
+0.308; the flip fraction is 0.273 and is not moved by the starting magnitude (0.289 with the
+magnitude logit biased by -6, a factor of 22 in the pre-projection flux) or by `K` (0.270 at
+K = 50). Full table and the cells in
+[[experiments.027-betaxanthin-metabolic.wave7-flux-force-head]].
+
+### Box 2 exemptions, as implemented
+
+274 of yeast-GEM 9.0.2's 4,131 reactions are exempt, all exchanges, the biomass reaction
+among them. Thermo-Flux Box 2 also exempts water transport between compartments, and that
+rule does not fire here: it matches the string `H2O` against the reaction ID and this GEM's
+IDs are `r_0001` style, so the 13 reactions that move a water species between two
+compartments and do nothing else are all still constrained. Left as it is, because changing
+the exemption set moves the numbers of every arm already measured.
+
+### The third end token: `fluxforce_k<N>_force`
+
+`projection_end` on this channel takes a value the projection channel does not have.
+`balance` and `box` mean what they always meant, whichever projection runs last. `force`
+ends the alternation on the balance projection and then clips once into the box tightened
+to the direction each reaction's energy licenses, reusing `_thermo_tighten` for the
+tightening. After it, bounds and the second law are both exact and the balance residual is
+the reported leftover, which is the opposite trade from the box end.
+
+It is not the `tdg` head with extra steps. On `tdg` the sign clamp is the WHOLE mechanism,
+so the only path from the flux to the learned concentrations is a `torch.where` and there
+is no gradient. Here the magnitude and the direction that enter the clip are already smooth
+functions of dG, so a reaction the clip leaves alone still carries the derivative; pinned by
+`test_the_force_end_still_passes_gradient_to_the_concentrations`.
+
+Measured at initialization, untrained, real yeast-GEM, batch 4, torch seed 0:
+
+| end | second law violated | box violated | balance median | zeros | sign flips | grad to log_c |
+|---|---|---|---|---|---|---|
+| `box` | 0.318 | 0.000 | 0.597 | 40.5% | 0.273 | 5.76 |
+| `force` | 0.000 | 0.000 | 0.392 | 63.8% | 0.497 | 4.69 |
+| `projection_k20_box_tdg` | 0.000 | 0.000 | n/a | 68.0% | n/a | 0 (no path) |
+
+The force end buys the sign clamp's exactness at 63.8 percent zeros against the clamp's
+68.0, and keeps the concentration gradient. That is the discriminator between the two
+explanations of wave 6: if a `force` cell sustains its escape, the gradient is what the
+clamp cost; if it does not, the cause is the zeroing.
+
+### The fourth end token: `fluxforce_k<N>_boxforce`
+
+`force` restores the direction with a clip that runs AFTER the alternation, so the projection
+converges against a set the flux does not end in and the last clip spends the balance to buy
+exactness. `boxforce` tightens the box first, so every clip inside the alternation is already
+the directional one. Implemented as two lines in `forward`: `_thermo_tighten` before
+`_fluxforce_flux`, and `_project_feasible` reads `end_on_box` as true for it.
+
+Measured untrained on the real yeast-GEM, balance ratio median after the projection, with the
+second law and the box exact in every row:
+
+| K | `force` (clip last) | `boxforce` (direction in the box) |
+|---|---|---|
+| 20 | 0.4025 | 0.1928 |
+| 50 | 0.1805 | 0.0218 |
+| 100 | 0.0574 | 0.0000 |
+| 200 | 0.0000 | not run |
+
+On the trained-cell recipe at K = 100, `boxforce` reads balance median 0.0017, second-law
+violation 0.000, box violation 0.000, sign flips 0.000, and `d(flux sum)/d(log_c_base)`
+= 0.679, against the `tdg` head's identical exactness and zero gradient. It is the first
+setting that passes both halves of the Genesis criterion at initialization. The cost is
+density: 70.7 percent of reactions carry no flux, against `force`'s 64.5 and `tdg`'s 68.0.
+
+The balance MAXIMUM stays at 2.0, its largest possible value, at every K and on every arm
+measured to date: at least one metabolite in the flux is produced and never consumed. That is
+a property of the network and the box, not of a parameterization.
+
+### What the four ends measured, in one table
+
+Eight cells on the betaxanthin head, seeds 2700 to 2702, everything on, constraint scale
+0.0, the shipped verified kcat table. Full ledger and the paired contrasts in
+[[experiments.027-betaxanthin-metabolic.wave7-flux-force-head]].
+
+| channel | second law exact on the top 100 | Genesis, median rule | test Spearman | escapes sustained |
+|---|---|---|---|---|
+| `projection_k20_box_tdg` (the sign clamp, no gradient) | yes | 0.33 | -0.0202 (n = 3) | 0 of 3 |
+| `fluxforce_k20_box` | no | 0.00 | +0.0769 (n = 2) | 2 of 2 |
+| `fluxforce_k20_force` | yes | 0.00 | +0.0627 (n = 3) | 3 of 3 |
+| `fluxforce_k100_boxforce` | yes | **1.00 (3 of 3)** | +0.0563 (n = 3) | 0 of 3 |
+
+The channel exists because the sign clamp reaches exactness by a route that passes no
+gradient to the learned concentrations, and both flux-force ends that reach the same
+exactness score above it, paired: +0.0830 (sd 0.0511) for the force end and +0.0765 (sd
+0.0984) for `boxforce`, both n = 3. The two flux-force ends are indistinguishable from each
+other at -0.0065 (sd 0.0654).

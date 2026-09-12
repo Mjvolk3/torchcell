@@ -98,6 +98,33 @@ SPENDING THE EXACTNESS BUDGET: BOX, NULL SPACE, PROJECTION
     violation is a bound that is slightly overrun rather than a flux that comes from
     nowhere.
 
+``fluxforce``
+    The second law as a **smooth coupling** rather than as a sign clamp. For every priced,
+    non-exempt reaction the direction and a magnitude factor come from the reaction energy
+    through the flux-force relation (Beard and Qian; the flux-force efficacy of Noor et al.
+    2014),
+
+    .. math::
+        v_j = m_j\,f(\Delta_rG_j),\qquad
+        f(x) = \frac{1-e^{x/RT}}{1+e^{x/RT}} = -\tanh\!\Big(\frac{x}{2RT}\Big),\qquad
+        m_j = \max(|v^\ell_j|,|v^u_j|)\,\sigma(z_j),
+
+    so :math:`\operatorname{sign}v_j=-\operatorname{sign}\Delta_rG_j` by construction,
+    :math:`|v_j|\le m_j`, a near-equilibrium reaction goes quiet instead of being pinned,
+    and :math:`\partial v/\partial\ln c` is nonzero everywhere. Unpriced and exempt
+    reactions keep the sigmoid box. The flux is then clipped to the genotype box and run
+    through the same alternating projection, so mass balance is exact at
+    ``projection_end='balance'`` and the bounds are exact at ``'box'``.
+
+    **Why it exists, and it is a measured contrast.** ``thermo_box`` decides the sign with
+    ``delta_g > eps`` inside a ``torch.where``, which is a step: no gradient reaches the
+    learned concentrations through the box, so the model cannot move a pool to license a
+    direction along that path, and the only thermodynamic gradient it has left is the soft
+    hinge. In wave 6 every projection cell without the sign tightening sustained its escape
+    from the betaxanthin mean plateau (6 of 6) and none with it did (0 of 6). The projection
+    can still move a reaction across zero after the fact, which is the one second-law
+    violation this channel produces, and ``feas_sign_flip_frac`` counts it.
+
 ``latent_stochastic`` turns the last two into an amortized sampler: :math:`z=\mu+\sigma
 \epsilon` with a :math:`\mathrm{KL}(\mathcal N(\mu,\sigma)\Vert\mathcal N(0,I))` term
 returned as ``c_kl``, and :meth:`FluxLayer.sample` draws :math:`S` fluxes per genotype and
@@ -283,6 +310,10 @@ class FluxLayerConfig(BaseModel):
             "'projection' -- alternate the two projections K times from v0 = N z, so both "
             "constraints hold to whatever K buys and the one named by `projection_end` "
             "holds exactly. "
+            "'fluxforce' -- the priced reactions take v = m f(dG) with f the flux-force "
+            "relation and m a nonnegative magnitude read off the genotype box, then the "
+            "same clip and projection; the second law is smooth and differentiable in the "
+            "concentrations rather than a step. "
             "'projection_k<N>' names the step count in the string itself, which is the "
             "only channel 026's build_flux_layer leaves open to an arm (it forwards this "
             "field and no other new one); 'projection' alone takes `projection_steps`."
@@ -402,6 +433,31 @@ class FluxLayerConfig(BaseModel):
             "of both plus the shipped reaction column as a last resort ('union'). The table "
             "itself is built by parameters.resolve_reaction_delta_g and passed in; this field "
             "records which one, and the layer refuses a table that disagrees with it."
+        ),
+    )
+    conc_lower_m: float = Field(
+        default=CONC_LOWER_M,
+        gt=0.0,
+        description=(
+            "Floor of the physiological concentration window the ANCHORED log concentration "
+            "is squashed into, in molar. Defaults to constraints.CONC_LOWER_M, which is "
+            "Thermo-Flux's 0.1 uM, so every arm configured before 2026-09-11 is unchanged."
+        ),
+    )
+    conc_upper_m: float = Field(
+        default=CONC_UPPER_M,
+        gt=0.0,
+        description=(
+            "Ceiling of that window, in molar; the default is Thermo-Flux's 10 mM. A "
+            "measured concentration ABOVE the ceiling is unreachable by the learned "
+            "concentration whatever it learns, and the failure is silent, since the sigmoid "
+            "simply saturates. Mulleder 2016's intracellular amino acids run to 9.5e-2 M "
+            "(glutamine), with 10.6 percent of all 88,882 measurements above 1e-2 M, so an "
+            "arm that SUPERVISES the learned concentration against them has to raise this "
+            "(experiments/027-betaxanthin-metabolic/scripts/mulleder_concentration_window.py, "
+            "results/mulleder_concentration_window.json). Raising it also widens the "
+            "concentration term RT S^T ln c, which is a real loosening of the "
+            "thermodynamic anchor and is why it is a config field rather than a new default."
         ),
     )
     constraint_warmup_epochs: int = Field(
@@ -561,14 +617,23 @@ _PROJECTION_PATTERN = re.compile(
     r"^projection(?:_k(\d+))?(?:_(balance|box))?(?:_(tdg)(?:m(\d+))?)?(?:_(dykstra))?$"
 )
 
+#: ``fluxforce``, with the projection's step-count and exact-end suffixes plus one of its
+#: own: ``fluxforce_k20_box``, ``fluxforce_k20_force``. ``force`` ends on a clip into the box
+#: tightened to the direction the reaction energy licenses, so bounds and the second law are
+#: both exact and the balance residual is the leftover. There is no ``tdg`` token: the sign
+#: clamp as the WHOLE mechanism is what this channel replaces.
+_FLUXFORCE_PATTERN = re.compile(
+    r"^fluxforce(?:_k(\d+))?(?:_(balance|box|force|boxforce))?$"
+)
+
 
 class ParameterizationSpec(BaseModel):
     """The parsed form of ``FluxLayerConfig.parameterization``.
 
-    ``kind`` is one of ``box``, ``nullspace``, ``projection``. The three projection fields
-    are meaningful only for the last, and a ``None`` there means the string named nothing
-    and the config's own value stands. Kept as a record rather than a tuple so a run's log
-    can print what it parsed.
+    ``kind`` is one of ``box``, ``nullspace``, ``projection``, ``fluxforce``. The three
+    projection fields are meaningful only for the last two, and a ``None`` there means the
+    string named nothing and the config's own value stands. Kept as a record rather than a
+    tuple so a run's log can print what it parsed.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -589,16 +654,33 @@ def parse_parameterization(raw: str, default_steps: int) -> ParameterizationSpec
     therefore exact), whether the box is tightened by the second law (``tdg``), and the
     method. ``projection_k20_box_tdg`` is twenty alternations ending on a directional clip.
 
+    ``fluxforce[_k<N>][_balance|_box]`` is the same projection wrapped around a different
+    pre-projection flux: the direction and the magnitude factor come from the reaction
+    energy through a smooth odd function rather than from a sign clamp on the box. It takes
+    the step count and the exact end and nothing else.
+
     An unrecognized string is an error rather than a silent fall back to ``box``: a run
     whose parameterization was a typo must not report a number.
     """
     if raw in {"box", "nullspace"}:
         return ParameterizationSpec(kind=raw, projection_steps=default_steps, raw=raw)
+    force = _FLUXFORCE_PATTERN.match(raw)
+    if force is not None:
+        force_steps = default_steps if force.group(1) is None else int(force.group(1))
+        if force_steps < 1:
+            raise ValueError(f"fluxforce needs at least one step; got {force_steps}.")
+        return ParameterizationSpec(
+            kind="fluxforce",
+            projection_steps=force_steps,
+            projection_end=force.group(2),
+            raw=raw,
+        )
     match = _PROJECTION_PATTERN.match(raw)
     if match is None:
         raise ValueError(
-            f"parameterization={raw!r} is not one of 'box', 'nullspace', or "
-            "'projection[_k<N>][_balance|_box][_tdg][_dykstra]'."
+            f"parameterization={raw!r} is not one of 'box', 'nullspace', "
+            "'projection[_k<N>][_balance|_box][_tdg][_dykstra]', or "
+            "'fluxforce[_k<N>][_balance|_box]'."
         )
     steps = default_steps if match.group(1) is None else int(match.group(1))
     if steps < 1:
@@ -1071,17 +1153,32 @@ class FluxLayer(nn.Module):
                 "box is enforced by the clip, so a head that ends on the balance "
                 "projection would report the second law as exact while leaving it soft."
             )
-        if spec.kind == "projection":
-            if self.projection_end not in {"balance", "box"}:
+        if spec.kind in {"projection", "fluxforce"}:
+            allowed = (
+                {"balance", "box", "force", "boxforce"}
+                if spec.kind == "fluxforce"
+                else {"balance", "box"}
+            )
+            if self.projection_end not in allowed:
                 raise ValueError(
-                    f"projection_end={self.projection_end!r} is not 'balance' or 'box'."
+                    f"projection_end={self.projection_end!r} is not one of "
+                    f"{sorted(allowed)}. 'force' ends on the direction clip and exists only "
+                    "on the fluxforce channel, which is the only one that has a direction "
+                    "to restore."
                 )
             if self.projection_method not in {"alternating", "dykstra"}:
                 raise ValueError(
                     f"projection_method={self.projection_method!r} is not 'alternating' "
                     "or 'dykstra'."
                 )
-        if spec.kind in {"nullspace", "projection"}:
+        if spec.kind == "fluxforce" and self.thermo_mode is not ThermoMode.ANCHORED:
+            raise ValueError(
+                "parameterization='fluxforce' needs ThermoMode.ANCHORED (got "
+                f"{self.thermo_mode}). The channel reads its direction and its magnitude "
+                "factor off delta_r_G, so with no tabulated energies it would be the box "
+                "head wearing a thermodynamic name."
+            )
+        if spec.kind in {"nullspace", "projection", "fluxforce"}:
             if null_space is None:
                 if spec.kind == "nullspace":
                     raise ValueError(
@@ -1098,9 +1195,13 @@ class FluxLayer(nn.Module):
                 )
             self.register_buffer("null_basis", null_space)
             self.n_latent = int(null_space.shape[1])
-            self.latent_mlp = nn.Sequential(
-                nn.Linear(d, d), nn.ReLU(), nn.Linear(d, self.n_latent)
-            )
+            # THE FLUX-FORCE CHANNEL USES THE BASIS AND NOT THE LATENT. Its pre-projection
+            # flux is per reaction, read off the reaction energies, so the null-space latent
+            # and its posterior head would be parameters nothing reads.
+            if spec.kind != "fluxforce":
+                self.latent_mlp = nn.Sequential(
+                    nn.Linear(d, d), nn.ReLU(), nn.Linear(d, self.n_latent)
+                )
             # THE POSTERIOR SPREAD HEAD IS ALWAYS BUILT ON THE PROJECTION KIND, whether or
             # not the run samples, so a deterministically trained cell can be switched into
             # a sampler after its weights are loaded. `audit_top_strain_feasibility.py` does
@@ -1122,10 +1223,21 @@ class FluxLayer(nn.Module):
             self.null_basis_orthonormality_error = 0.0
             self.null_basis_balance_error = 0.0
         self.reaction_embedding = nn.Embedding(self.n_reactions, cfg.reaction_embed_dim)
-        z_out = 2 if cfg.stochastic else 1
+        # The fluxforce head carries its spread in a head of its own, built unconditionally,
+        # so the width of this one does not depend on `stochastic` there; every other kind
+        # keeps the width it has always had, and with it its checkpoints and its init RNG.
+        z_out = 1 if spec.kind == "fluxforce" else (2 if cfg.stochastic else 1)
         self.flux_mlp = nn.Sequential(
             nn.Linear(d + cfg.reaction_embed_dim, d), nn.ReLU(), nn.Linear(d, z_out)
         )
+        if spec.kind == "fluxforce":
+            # ALWAYS BUILT, for the same reason the projection's posterior head is: a cell
+            # trained deterministically is switched into a sampler after its weights load,
+            # and a head created at that point would not be in the checkpoint. Zero weights
+            # and a constant bias, so every genotype starts at the same spread.
+            self.flux_log_std = nn.Linear(d + cfg.reaction_embed_dim, 1)
+            nn.init.zeros_(self.flux_log_std.weight)
+            nn.init.constant_(self.flux_log_std.bias, cfg.latent_log_std_init)
         # A learned gate on non-deleted genes: dosage, alleles, over-expression. Deleted
         # genes never reach it.
         self.availability = nn.Linear(d, 1)
@@ -1181,7 +1293,13 @@ class FluxLayer(nn.Module):
         switch turns sampling on, since the spread head is built there unconditionally; on
         ``nullspace`` only ``latent_stochastic`` does, so ``stochastic`` stays the no-op it
         has always been for that arm.
+
+        On ``fluxforce`` the draw is not on a null-space latent at all: it is on the
+        per-reaction magnitude logit, through ``flux_log_std``. The name is kept because it
+        is the switch every caller already reads.
         """
+        if self.parameterization == "fluxforce":
+            return bool(self.config.latent_stochastic or self.config.stochastic)
         if not hasattr(self, "latent_log_std"):
             return False
         if self.parameterization == "projection":
@@ -1288,7 +1406,9 @@ class FluxLayer(nn.Module):
         deletion needs.
         """
         steps = self.projection_steps
-        end_on_box = self.projection_end == "box"
+        # 'boxforce' ends on the clip like 'box' does; what differs is the box it clips
+        # into, which the caller has already tightened to the licensed direction.
+        end_on_box = self.projection_end in {"box", "boxforce"}
         if self.projection_method == "alternating":
             for k in range(steps):
                 v = torch.minimum(torch.maximum(v, lb), ub)
@@ -1309,6 +1429,83 @@ class FluxLayer(nn.Module):
             q = y + q - w
             v = w
         return v
+
+    def flux_force_efficacy(self, delta_g: torch.Tensor) -> torch.Tensor:
+        r"""The flux-force relation, :math:`f(\Delta_rG)=-\tanh(\Delta_rG/2RT)`.
+
+        For an elementary reaction the forward and reverse rates stand in the ratio
+        :math:`v^+/v^-=e^{-\Delta_rG/RT}`, so the net flux is the forward rate times
+
+        .. math::
+            \frac{1-e^{\Delta_rG/RT}}{1+e^{\Delta_rG/RT}}
+            = -\tanh\!\Big(\frac{\Delta_rG}{2RT}\Big),
+
+        which is Beard and Qian's flux-force relation and the quantity Noor et al. (2014)
+        call the flux-force efficacy. Three properties are what the channel is built on, and
+        each is a property of this function rather than of a clamp around it:
+
+        * **the sign is structural**, :math:`\operatorname{sign} f=-\operatorname{sign}
+          \Delta_rG`, so a nonnegative magnitude times :math:`f` satisfies
+          :math:`v\,\Delta_rG\le0` identically;
+        * **near equilibrium it goes quiet** rather than being pinned, since
+          :math:`f\to0` smoothly as :math:`\Delta_rG\to0`, which is what the directional box
+          instead spends a degree of freedom on;
+        * **it is differentiable everywhere**, :math:`f'=-\operatorname{sech}^2(x)/2RT<0`,
+          so the learned concentrations receive gradient through the direction itself. The
+          directional box decides the sign with ``delta_g > eps`` inside ``torch.where``,
+          which is a step function and passes no gradient to :math:`\ln c` at all.
+
+        Saturation is the honest limit: past roughly :math:`|\Delta_rG|>10RT` the derivative
+        underflows and a reaction that far from equilibrium is effectively a sign again.
+        """
+        return -torch.tanh(delta_g / (2.0 * self.rt))
+
+    def _fluxforce_flux(
+        self,
+        context: torch.Tensor,
+        lb: torch.Tensor,
+        ub: torch.Tensor,
+        delta_g: torch.Tensor,
+        dg_mask: torch.Tensor,
+        draw: bool,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        r"""The pre-projection flux of the ``fluxforce`` channel, and its priced mask.
+
+        .. math::
+            v_j = m_j\,f(\Delta_rG_j),\qquad
+            m_j = \max(|v^\ell_j|,|v^u_j|)\,\sigma(z_j)\ \ge 0
+
+        on every reaction the thermodynamic table prices and Box 2 does not exempt, and the
+        ordinary sigmoid box :math:`v_j=v^\ell_j+(v^u_j-v^\ell_j)\sigma(z_j)` on the rest,
+        which is what an unpriced reaction has always been. The magnitude comes from the
+        GENOTYPE box, so availability, the deletion and the enzyme-capacity bound all still
+        bite exactly: :math:`c_j=0` gives :math:`v^\ell_j=v^u_j=0`, hence :math:`m_j=0` and a
+        flux of exactly zero.
+
+        The clip that follows is not decoration. An irreversible reaction with
+        :math:`v^\ell_j=0` whose energy forbids the forward direction gets
+        :math:`m_jf<0`, and clipping it to zero is the physically right answer: the reaction
+        does not run. Only the box can say that, because :math:`f` is never exactly zero.
+
+        Returns:
+            ``(v_pre, priced)`` with ``v_pre`` ``[B, r]`` inside the box and satisfying the
+            second law, and ``priced`` the ``[1, r]`` mask the force law was applied on.
+        """
+        b = context.shape[0]
+        rxn_emb = self.reaction_embedding.weight.unsqueeze(0).expand(b, -1, -1)
+        ctx = context.unsqueeze(1).expand(-1, self.n_reactions, -1)
+        features = torch.cat([ctx, rxn_emb], dim=-1)
+        z = self.flux_mlp(features)[..., 0]
+        if draw:
+            std = torch.exp(self.flux_log_std(features).squeeze(-1))
+            z = z + torch.randn_like(z) * std
+        fraction = torch.sigmoid(z)
+        priced = (dg_mask & (~self.thermo_exempt)).unsqueeze(0)
+        magnitude = torch.maximum(lb.abs(), ub.abs()) * fraction
+        v_force = magnitude * self.flux_force_efficacy(delta_g)
+        v_box = lb + (ub - lb) * fraction
+        v_pre = torch.where(priced, v_force, v_box)
+        return torch.minimum(torch.maximum(v_pre, lb), ub), priced
 
     def _latent(
         self, context: torch.Tensor, force_sample: bool = False
@@ -1582,7 +1779,10 @@ class FluxLayer(nn.Module):
             return delta, mask, extras
 
         # ANCHORED
-        lo, hi = math.log(CONC_LOWER_M), math.log(CONC_UPPER_M)
+        lo, hi = (
+            math.log(self.config.conc_lower_m),
+            math.log(self.config.conc_upper_m),
+        )
         raw = self.log_c_base.unsqueeze(0) + self.log_c_from_context(context)
         log_c = lo + (hi - lo) * torch.sigmoid(raw)
         conc_term = self.rt * self._s_transpose_matmul(log_c)
@@ -1674,7 +1874,57 @@ class FluxLayer(nn.Module):
             lb, ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
 
         kl = h_genes.new_zeros(())
-        if self.parameterization in {"nullspace", "projection"}:
+        sign_flip_frac: torch.Tensor | None = None
+        v_pre_projection: torch.Tensor | None = None
+        if self.parameterization == "fluxforce":
+            box_lb, box_ub = lb, ub
+            if self.projection_end == "boxforce":
+                # THE DIRECTION IN THE BOX FROM THE START, so the alternation converges
+                # against the set the flux has to end in rather than being overwritten by a
+                # clip after it. Measured untrained on the real GEM, balance ratio median
+                # after the projection: 0.193 at K = 20, 0.0218 at K = 50, 0.0000 at K = 100,
+                # against the clip-last end's 0.403, 0.181 and 0.057, with the second law and
+                # the box exact in both. The magnitude and the direction that reach the box
+                # are still smooth functions of delta_r_G, so unlike `tdg` the concentrations
+                # keep their gradient.
+                box_lb, box_ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
+            v_pre_projection, priced = self._fluxforce_flux(
+                context,
+                box_lb,
+                box_ub,
+                delta_g,
+                dg_mask,
+                draw=self.latent_stochastic and self.training,
+            )
+            v = self._project_feasible(v_pre_projection, box_lb, box_ub)
+            # WHAT THE PROJECTION COSTS, MEASURED. The pre-projection flux satisfies the
+            # second law by construction; the balance projection is free to move a reaction
+            # across zero, and when it does, that reaction now runs uphill. It is the one
+            # second-law violation this channel can produce, so it is counted rather than
+            # left to be inferred from the thermo fraction. Measured on job 1745 at seed
+            # 2700: the flip fraction 0.2846 and the top-100 model violation median 0.2851
+            # agree, which is what they must do if every violation is a flip.
+            carrying = (v_pre_projection.abs() > 1.0e-6) & priced
+            flipped = (v * v_pre_projection < 0) & carrying
+            sign_flip_frac = flipped.float().sum() / carrying.float().sum().clamp(
+                min=1.0
+            )
+            if self.projection_end == "force":
+                # THE DIRECTION RESTORED LAST. The alternation ended on the balance
+                # projection, so this clip is what the flux leaves through: the box
+                # tightened to the sign the reaction energy licenses. Bounds and the second
+                # law are then both exact and the balance residual is the reported leftover,
+                # which is the opposite trade from the box end. It is NOT the `tdg` head:
+                # the direction and the magnitude that enter this clip are already smooth
+                # functions of delta_r_G, so the learned concentrations keep the gradient
+                # path the sign clamp never had.
+                lb_force, ub_force, thermo_emptied = self._thermo_tighten(
+                    lb, ub, delta_g
+                )
+                v = torch.minimum(torch.maximum(v, lb_force), ub_force)
+            out_of_box = torch.relu(v - ub) + torch.relu(lb - v)
+            box_penalty = (out_of_box / cfg.flux_scale).mean()
+        elif self.parameterization in {"nullspace", "projection"}:
             # Mass balance is exact here, for any latent: S (N z) = (S N) z = 0.
             latent, kl = self._latent(context)
             z_latent = latent * cfg.flux_scale
@@ -1712,6 +1962,12 @@ class FluxLayer(nn.Module):
         # takes only 0-dim entries, does not pick them up.
         out["lb"] = lb
         out["ub"] = ub
+        if v_pre_projection is not None:
+            # Two-dimensional, so the trainer's scalar log leaves it alone; an audit that
+            # wants to price the projection's own cost reads it.
+            out["v_pre_projection"] = v_pre_projection
+        if sign_flip_frac is not None:
+            out["feas_sign_flip_frac"] = sign_flip_frac
         out["feas_box_violation_frac"] = (
             ((v > ub + 1e-4) | (v < lb - 1e-4)).float().mean()
         )
@@ -1768,7 +2024,28 @@ class FluxLayer(nn.Module):
             out["c_thermo"] = v.new_zeros(())
             out["feas_thermo_violation_frac"] = v.new_zeros(())
 
-        # (c) Gibbs dissipation rate (Niebel 2019), summed over exchange reactions
+        # (c) Gibbs dissipation rate (Niebel 2019), summed over exchange reactions.
+        #
+        # ALWAYS COMPUTED UNDER ANCHORED THERMODYNAMICS, whether or not it is penalized.
+        # Thermo-Flux takes the cellular Gibbs energy dissipation rate over the boundary
+        # fluxes, g_diss = sum_{j in exchange} v_j delta_r_G_j, and Niebel et al. (2019)
+        # report an upper limit near 3.7 kJ/gDW/h on it for S. cerevisiae at high growth
+        # rate. Units here: mmol/gDW/h times kJ/mol is J/gDW/h, so that limit is 3,700 in
+        # the numbers below, which is what `g_diss_limit` carries. SIGN CONVENTION, stated
+        # because it is easy to read the wrong way: this is the SIGNED sum, so a state that
+        # dissipates has a NEGATIVE value and the magnitude is the dissipation rate. The
+        # optional penalty is `use_dissipation_limit`, off by default, and it prices the
+        # signed excess above the limit exactly as every 026 and 027 arm measured it.
+        if self.thermo_mode is ThermoMode.ANCHORED:
+            g_diss_per_sample = (
+                v[:, self.is_exchange] * delta_g[:, self.is_exchange]
+            ).sum(dim=1)
+            out["g_diss_per_sample"] = g_diss_per_sample
+            out["thermo_g_diss_mean"] = g_diss_per_sample.mean()
+            # The same number under the prefix 027's trainer filters its scalar log on
+            # ('c_', 'feas_', 'g_diss', 'protein_used'), so an arm that does not penalize
+            # the dissipation still records it every epoch.
+            out["g_diss_mean"] = out["thermo_g_diss_mean"]
         if cfg.use_dissipation_limit and self.thermo_mode is ThermoMode.ANCHORED:
             g_diss = (v[:, self.is_exchange] * delta_g[:, self.is_exchange]).sum(dim=1)
             # kJ/mol * mmol/gDW/h = J/gDW/h, so no unit conversion is needed.
@@ -1914,11 +2191,11 @@ class FluxLayer(nn.Module):
         deterministic fall back: a "sampler" that returned ``n_samples`` copies of one flux
         would report a feasibility fraction of 0 or 1 and look like a measurement.
         """
-        if self.parameterization not in {"nullspace", "projection"}:
+        if self.parameterization not in {"nullspace", "projection", "fluxforce"}:
             raise ValueError(
-                f"sample() needs parameterization 'nullspace' or 'projection'; this layer "
-                f"is {self.parameterization!r}. The box head's draw is per reaction and "
-                "carries no balance guarantee at all."
+                f"sample() needs parameterization 'nullspace', 'projection' or "
+                f"'fluxforce'; this layer is {self.parameterization!r}. The box head's draw "
+                "is per reaction and carries no balance guarantee at all."
             )
         if not self.latent_stochastic:
             raise ValueError(
@@ -1947,10 +2224,24 @@ class FluxLayer(nn.Module):
         draws: list[torch.Tensor] = []
         feas: list[dict[str, torch.Tensor]] = []
         for _ in range(n_samples):
-            latent, _ = self._latent(context, force_sample=True)
-            v = (latent * cfg.flux_scale) @ self.null_basis.t()
-            if self.parameterization == "projection":
-                v = self._project_feasible(v, lb, ub)
+            if self.parameterization == "fluxforce":
+                box_lb, box_ub = lb, ub
+                if self.projection_end == "boxforce":
+                    box_lb, box_ub, _ = self._thermo_tighten(lb, ub, delta_g)
+                v_pre, _ = self._fluxforce_flux(
+                    context, box_lb, box_ub, delta_g, dg_mask, draw=True
+                )
+                v = self._project_feasible(v_pre, box_lb, box_ub)
+                if self.projection_end == "force":
+                    # Every DRAW leaves through the direction clip too, so the sampler's
+                    # support is the set the deterministic head lands in.
+                    lb_force, ub_force, _ = self._thermo_tighten(lb, ub, delta_g)
+                    v = torch.minimum(torch.maximum(v, lb_force), ub_force)
+            else:
+                latent, _ = self._latent(context, force_sample=True)
+                v = (latent * cfg.flux_scale) @ self.null_basis.t()
+                if self.parameterization == "projection":
+                    v = self._project_feasible(v, lb, ub)
             piece: dict[str, torch.Tensor] = {"v": v, "lb": lb, "ub": ub}
             if has_thermo:
                 piece["delta_r_g"] = delta_g
@@ -2086,16 +2377,23 @@ class FluxLayer(nn.Module):
             "parameterization": self.parameterization,
             "parameterization_raw": self.config.parameterization,
             "projection_steps": (
-                self.projection_steps if self.parameterization == "projection" else None
+                self.projection_steps
+                if self.parameterization in {"projection", "fluxforce"}
+                else None
             ),
             "projection_end": (
-                self.projection_end if self.parameterization == "projection" else None
+                self.projection_end
+                if self.parameterization in {"projection", "fluxforce"}
+                else None
             ),
             "projection_method": (
                 self.projection_method
-                if self.parameterization == "projection"
+                if self.parameterization in {"projection", "fluxforce"}
                 else None
             ),
+            # The temperature the flux-force relation is evaluated at, in kJ/mol, so a
+            # reported efficacy can be reproduced from the number the run actually used.
+            "rt_kj_per_mol": self.rt,
             "n_latent": self.n_latent,
             # MEASURED at construction, not asserted: the projection is a projection only
             # if the basis is orthonormal, and it lands in ker S only to the precision the

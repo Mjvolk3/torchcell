@@ -55,11 +55,13 @@ import json
 import math
 import os
 import os.path as osp
+import socket
 import sys
 import time
+import uuid
 from collections import deque
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -119,13 +121,54 @@ from torchcell.data.neo4j_cell import Neo4jCellDataset  # noqa: E402
 from torchcell.datamodules import CellDataModule  # noqa: E402
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder  # noqa: E402
 from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph  # noqa: E402
-from torchcell.losses.distributional import gaussian_crps  # noqa: E402
+from torchcell.losses.distributional import (  # noqa: E402
+    DistHead,
+    coverage,
+    dist_param_dim,
+    gaussian_crps,
+    make_dist_head,
+    pinball,
+    pit_ks,
+    pit_values,
+)
+from torchcell.metabolism.constraints import (  # noqa: E402
+    CONC_LOWER_M,
+    CONC_UPPER_M,
+    ThermoMode,
+)
+from torchcell.metabolism.parameters import ThermoSource  # noqa: E402
 from torchcell.models.cell_graph_transformer_metabolism import (  # noqa: E402
     CellGraphTransformerMetabolism,
+    perturbed_gene_pool,
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
 HEAD = "betaxanthin"
+
+#: WAVE 7 (2026-09-11). The two mechanistic amino-acid readouts, named so a result file says
+#: which one it ran rather than leaving it to be inferred from the arm.
+AA_READOUT_TURNOVER = "flux_metabolite"
+AA_READOUT_CONCENTRATION = "flux_concentration"
+AA_READOUTS = (AA_READOUT_TURNOVER, AA_READOUT_CONCENTRATION)
+#: Mulleder 2016 reports `intracellular_concentration_mM`, so a stored 1.0 is 1 mM.
+MM_PER_M = 1.0e3
+LN10 = math.log(10.0)
+
+#: Distributional losses this trainer can score a head with. 'crps' is the Gaussian CRPS
+#: every 027 cell before 2026-09-11 ran and stays the default. 'quantile' is the 019
+#: pinball loss over the K = 19 tau grid, which 019 measured as its best distributional
+#: loss on expression; the point estimate is then the predictive MEDIAN.
+DISTS = ("crps", "quantile")
+#: Central intervals the calibration block reports coverage for.
+COVERAGE_ALPHAS = (0.5, 0.8, 0.9)
+
+#: How the 19 measured amino acids are read off the layer's per-compartment concentration.
+CONC_SPACE_MIXTURE = "mixture"
+CONC_SPACE_CYTOSOL = "cytosol"
+CONC_SPACES = (CONC_SPACE_MIXTURE, CONC_SPACE_CYTOSOL)
+#: yeast-GEM's extracellular compartment is not part of the cell, and the membrane
+#: pseudo-compartments have no aqueous volume, so neither enters a whole-cell average.
+NON_CELL_COMPARTMENTS = frozenset({"e", "ce", "erm", "vm", "gm", "mm", "lp"})
 
 #: Selected-epoch trainable parameters land here, one file per cell, so a finished run can
 #: be re-opened and re-audited. Buffers are excluded (see `_params_snapshot`), which is what
@@ -134,9 +177,12 @@ CHECKPOINT_DIR = os.getenv("TC_CHECKPOINT_DIR", osp.join(DATA_ROOT, "checkpoints
 
 # 026's module globals came in with its `build_dataset`; this file defines its own, from
 # the same config fields the arms already declare.
-DATASET_ROOT = osp.join(DATA_ROOT, "data/torchcell/experiments/019-simb-multimodal/fig6_pigment_transfer")
+DATASET_ROOT = osp.join(
+    DATA_ROOT, "data/torchcell/experiments/019-simb-multimodal/fig6_pigment_transfer"
+)
 QUERY_PATH = osp.join(
-    os.environ["EXPERIMENT_ROOT"], "019-simb-multimodal/queries/fig6_pigment_transfer.cql"
+    os.environ["EXPERIMENT_ROOT"],
+    "019-simb-multimodal/queries/fig6_pigment_transfer.cql",
 )
 
 # The nine graphs and the protein embedding that separate the 0.43 runs from the 0.13 ones.
@@ -354,7 +400,6 @@ class BxCell(BaseModel):
         ),
     )
 
-
     attention_mask: bool = Field(
         default=False,
         description=(
@@ -439,6 +484,83 @@ class BxCell(BaseModel):
             "so the arm contrast stays on the readout rather than on the trunk alone."
         ),
     )
+    # WAVE 7 (2026-09-11). WHICH QUANTITY OF THE LAYER THE AMINO-ACID PREDICTION IS.
+    aa_readout: str = Field(
+        default=AA_READOUT_TURNOVER,
+        description=(
+            "'flux_metabolite' is wave 6's readout and the default: a_k log(1 + omega_k) + "
+            "b_k on the TURNOVER of each amino acid's GEM metabolite, two free parameters "
+            "per column, and it measured -0.039 mean per-feature Spearman against pooled at "
+            "three seeds. 'flux_concentration' predicts the layer's own learned log "
+            "concentration of that metabolite instead: the ANCHORED reaction potential "
+            "already carries log_c = lo + (hi - lo) sigmoid(base + W context) per strain, "
+            "and Mulleder 2016 measures exactly that quantity in absolute units. The "
+            "prediction is then log10(exp(log_c)) with NO parameters of its own on the "
+            "mean, so the same tensor the second law is computed from is the tensor the "
+            "amino-acid loss trains, which is what makes the tie mechanistic rather than "
+            "correlational. Requires an arm whose thermo_mode is ANCHORED."
+        ),
+    )
+    target_log10_molar: bool = Field(
+        default=False,
+        description=(
+            "Standardize and score the amino-acid target as log10 of its molar "
+            "concentration rather than as the stored mM value. Set by `build_cell` for the "
+            "'flux_concentration' readout and only for it, because that readout's "
+            "prediction IS a log10 molar concentration and comparing it against a linear mM "
+            "target would need a per-feature affine, which is the tie this arm removes. "
+            "Spearman is invariant to the monotone change of variable, so the per-feature "
+            "Spearman of a log10-molar arm and of an mM arm are directly comparable; "
+            "Pearson is not, and both are reported."
+        ),
+    )
+    dist: str = Field(
+        default="crps",
+        description=(
+            "Which distributional loss scores the head. 'crps' is the Gaussian CRPS on a "
+            "(mu, log_sigma) output, what every 027 cell before 2026-09-11 ran, and the "
+            "default, so an earlier result file deserializes unchanged. 'quantile' is the "
+            "019 pinball loss over the K = 19 tau grid from 0.05 to 0.95 "
+            "(`torchcell.losses.distributional`), whose point estimate is the predictive "
+            "MEDIAN rather than a mean. It applies to the MLP heads only: the flux readouts "
+            "predict the layer's own quantity, so a quantile fan would have to come from a "
+            "separate head and would break the tie that arm exists to make."
+        ),
+    )
+    conc_space: str = Field(
+        default=CONC_SPACE_MIXTURE,
+        description=(
+            "Which concentration the amino-acid prediction is. 'mixture' is the WHOLE-CELL "
+            "average, sum_n f_n [A]_n over every intracellular compartment the GEM carries "
+            "that amino acid in, with f_n the compartment's fractional volume: that is what "
+            "Mulleder measures, and Thermo-Flux states the relation. It matters rather than "
+            "being a refinement, because arginine, lysine and histidine are largely "
+            "vacuolar in yeast, so a cytosol-only readout predicts the wrong pool for them. "
+            "'cytosol' keeps only the cytosolic species and is the control that says what "
+            "the mixture is worth."
+        ),
+    )
+    conc_lower_m: float = Field(
+        default=CONC_LOWER_M,
+        gt=0.0,
+        description=(
+            "Floor of the flux layer's physiological concentration window, in molar, "
+            "written onto the built layer's config. Default is the shipped constant."
+        ),
+    )
+    conc_upper_m: float = Field(
+        default=CONC_UPPER_M,
+        gt=0.0,
+        description=(
+            "Ceiling of that window, in molar. The shipped 1e-2 does NOT cover the "
+            "phenotype this arm supervises: 10.6 percent of Mulleder's 88,882 measurements "
+            "are above it, and glutamate and glutamine are above it in 99.8 percent of "
+            "strains, up to 9.5e-2 M (mulleder_concentration_window.json). A supervised "
+            "value above the ceiling is unreachable and the sigmoid saturates silently, so "
+            "the concentration cells raise this. It also widens the concentration term of "
+            "every reaction energy, which is a real loosening of the thermodynamic anchor."
+        ),
+    )
 
 
 AUX_HEAD = "mulleder19"
@@ -488,6 +610,22 @@ COLLAPSE_SD_RATIO = 0.01
 COLLAPSE_PATIENCE_EPOCHS = int(os.getenv("COLLAPSE_PATIENCE_EPOCHS", "200"))
 
 
+def point_estimate(
+    raw: torch.Tensor, width: int, dist_head: "DistHead | None"
+) -> torch.Tensor:
+    """The head's POINT prediction ``[B, F]``, whatever distributional form it emitted.
+
+    Gaussian CRPS reports ``mu``; the quantile head reports the predictive MEDIAN, which is
+    the knot at tau nearest 0.5 and is what ``DistHead.point`` returns. Reading the first
+    parameter of a quantile fan would report the 5th percentile as the prediction.
+    """
+    if raw.dim() != 3:
+        return raw[:, :width]
+    if dist_head is not None:
+        return dist_head.point(raw)
+    return raw[..., 0]
+
+
 def _head_params(pred: torch.Tensor) -> torch.Tensor:
     """``[B, param_dim]`` from a scalar head, whichever shape it emitted.
 
@@ -497,6 +635,190 @@ def _head_params(pred: torch.Tensor) -> torch.Tensor:
     keeps both parameters.
     """
     return pred.squeeze(1) if pred.dim() == 3 else pred
+
+
+class CompartmentVolumeFractions(BaseModel):
+    r"""Fractional volumes :math:`f_n`, with per-compartment provenance.
+
+    WHY THIS EXISTS. Mulleder 2016 measures a WHOLE-CELL concentration, while the flux
+    layer learns one concentration per compartment species. Thermo-Flux (Smith et al. 2026,
+    mirrored ``paper.md`` sha256
+    ``496019ea07d9d95a63c1f0dbeada666d1e775a0dfcd50e53fe0235b87ead2593``) states the
+    relation verbatim: "The whole-cell concentration of a metabolite is a weighted average
+    of the concentration in the different subcellular compartments", ``[A]_total = [A]_1
+    f_1 + ... + [A]_n f_n``, "where ``[A]_total`` is the concentration of a metabolite in
+    the whole cell, ``[A]_n`` is the concentration of the metabolite in compartment ``n``
+    and ``f_n`` is the fractional volume of compartment ``n``". It gives no yeast values.
+
+    This matters and is not a refinement: arginine, lysine and histidine are largely
+    vacuolar in yeast, so a cytosol-only readout predicts the wrong pool for them.
+
+    PROVENANCE, stated per entry rather than as one blanket claim. Only the nucleus is
+    sourced; the rest are textbook exponential-phase values carried here as ASSUMED, in the
+    same way ``transport.pipeline_conditions`` carries assumed organellar pH. They are
+    recorded in every result file and flagged for curation.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    fractions: dict[str, float]
+    sourced: dict[str, bool]
+    source: str
+    quote: str
+    sha256: str
+    note: str
+
+
+def compartment_volume_fractions() -> CompartmentVolumeFractions:
+    """The fractional-volume table wave 7 runs on."""
+    return CompartmentVolumeFractions(
+        fractions={"c": 0.65, "v": 0.18, "n": 0.10, "m": 0.05, "er": 0.015, "p": 0.005},
+        sourced={
+            "c": False,
+            "v": False,
+            "n": True,
+            "m": False,
+            "er": False,
+            "p": False,
+        },
+        source=(
+            "Nucleus: Milo and Phillips 2016, Cell Biology by the Numbers, mirrored "
+            "paper.md sha256 "
+            "a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae, "
+            "'How big is a yeast cell?', citing BNID 100491 and 103952. Every other "
+            "compartment: textbook exponential-phase values, ASSUMED, not sourced."
+        ),
+        quote=(
+            "Prominent components of the cell volume include the nucleus, which takes up "
+            "about $1 0 \\%$ of the total cell volume (BNID 100491, 103952), the cell "
+            "wall, often ignored but making up $1 0 { - } 2 5 \\%$ (BNID 104593, 104592) "
+            "of the total dry mass, and the endoplasmic reticulum and vacuole, which are "
+            "usually the largest organelles."
+        ),
+        sha256="a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae",
+        note=(
+            "Five of the six entries are assumed and NEED CURATION. The weights set which "
+            "compartment dominates a whole-cell average, so they change the physical "
+            "reading of the prediction; they do not limit what the model can fit, because "
+            "each compartment's concentration is free inside the window and can compensate "
+            "for a wrong weight. The fractions sum to 1 over the intracellular "
+            "compartments, and a compartment where the GEM has no species for an amino "
+            "acid contributes nothing to that amino acid's average."
+        ),
+    )
+
+
+def amino_acid_compartment_species() -> dict[str, list[tuple[str, str]]]:
+    """``{amino acid -> [(compartment, species id), ...]}`` for the whole cell.
+
+    Derived from the GEM at run time rather than hardcoded, so it cannot drift from the
+    model the layer was built on: every species whose name matches the measured amino
+    acid's base name, minus the extracellular and membrane pseudo-compartments.
+    """
+    from torchcell.metabolism.yeast_GEM import YeastGEM
+
+    model = YeastGEM().model
+    by_id = {s.id: s for s in model.metabolites}
+    out: dict[str, list[tuple[str, str]]] = {}
+    for aa in AA_KEYS:
+        base = by_id[AMINO_ACID_TO_GEM_METABOLITE[aa]].name.split(" [")[0]
+        hits = sorted(
+            (str(s.compartment), str(s.id))
+            for s in model.metabolites
+            if s.name.split(" [")[0] == base
+            and str(s.compartment) not in NON_CELL_COMPARTMENTS
+        )
+        assert hits, f"no intracellular GEM species found for {aa!r} ({base!r})."
+        out[aa] = hits
+    return out
+
+
+def mixture_weights(
+    met_index: dict[str, int], space: str
+) -> tuple[torch.Tensor, torch.Tensor, dict[str, list[tuple[str, str, float]]]]:
+    r"""``(indices, log weights, per-amino-acid map)`` for the whole-cell average.
+
+    The prediction is ``log10 sum_n f_n c_n``, computed as a log-sum-exp over the
+    compartments so it is stable when one compartment sits at the window floor. Padding
+    entries carry a log weight of ``-inf``, which contributes exactly zero.
+
+    ``space='cytosol'`` keeps only the cytosolic species at weight 1, which is the
+    comparison arm rather than the physical quantity: it answers what the mixture is worth.
+    """
+    assert space in CONC_SPACES, (
+        f"conc space must be one of {CONC_SPACES}, got {space!r}."
+    )
+    table = compartment_volume_fractions()
+    species = amino_acid_compartment_species()
+    rows: list[list[tuple[int, float]]] = []
+    described: dict[str, list[tuple[str, str, float]]] = {}
+    for aa in AA_KEYS:
+        entries: list[tuple[int, float]] = []
+        described[aa] = []
+        for compartment, sid in species[aa]:
+            if space == CONC_SPACE_CYTOSOL and compartment != "c":
+                continue
+            weight = (
+                1.0 if space == CONC_SPACE_CYTOSOL else table.fractions[compartment]
+            )
+            assert sid in met_index, (
+                f"{aa} species {sid} ({compartment}) is not in the layer's metabolite "
+                "index, so the flux layer and the GEM disagree about the model."
+            )
+            entries.append((met_index[sid], weight))
+            described[aa].append((compartment, sid, weight))
+        assert entries, f"no compartment left for {aa!r} under space {space!r}."
+        rows.append(entries)
+    width = max(len(r) for r in rows)
+    indices = torch.zeros(len(rows), width, dtype=torch.long)
+    log_w = torch.full((len(rows), width), float("-inf"))
+    for i, entries in enumerate(rows):
+        for j, (idx, weight) in enumerate(entries):
+            indices[i, j] = idx
+            log_w[i, j] = math.log(weight)
+    return indices, log_w, described
+
+
+def mixture_log10_molar(
+    log_c: torch.Tensor, indices: torch.Tensor, log_w: torch.Tensor
+) -> torch.Tensor:
+    """``[B, m]`` natural-log concentrations -> ``[B, 19]`` log10 whole-cell molar."""
+    per_compartment = log_c[:, indices.reshape(-1)].reshape(
+        log_c.shape[0], indices.shape[0], indices.shape[1]
+    )
+    return torch.logsumexp(per_compartment + log_w.unsqueeze(0), dim=-1) / LN10
+
+
+def targets_in_space(
+    batch: Any, head_specs: dict[str, dict[str, Any]], log10_molar: bool
+) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
+    """``extract_targets``, optionally moved into log10 MOLAR.
+
+    Mulleder's values are stored as ``intracellular_concentration_mM``. The concentration
+    readout predicts ``log10`` of a molar concentration, so its target has to live there
+    too, and the change of variable belongs at the ONE place targets enter the run rather
+    than at each of the five that consume them.
+
+    Unobserved entries arrive as exact zeros under a False mask, and ``log10(0)`` is
+    ``-inf``, which multiplied by a zero mask is NaN rather than zero. They are replaced by
+    1 before the log, which the mask then discards. Observed entries must be strictly
+    positive; a non-positive measured concentration is a data error and is asserted, not
+    clipped.
+    """
+    raw: dict[str, tuple[torch.Tensor, torch.Tensor]] = extract_targets(
+        batch, head_specs
+    )
+    if not log10_molar:
+        return raw
+    out: dict[str, tuple[torch.Tensor, torch.Tensor]] = {}
+    for name, (t, m) in raw.items():
+        assert bool((t[m] > 0).all()), (
+            f"head {name!r} carries a non-positive observed concentration, which has no "
+            "log10. The Mulleder column is an absolute concentration in mM."
+        )
+        safe = torch.where(m, t, torch.ones_like(t))
+        out[name] = (torch.log10(safe / MM_PER_M), m)
+    return out
 
 
 def arm_names() -> list[str]:
@@ -538,10 +860,22 @@ def build_cell(
     constraint_delay_epochs: int = 0,
     head_normalize: bool = False,
     head: str = HEAD,
+    aa_readout: str = AA_READOUT_TURNOVER,
+    dist: str = "crps",
+    conc_space: str = CONC_SPACE_MIXTURE,
+    conc_lower_m: float = CONC_LOWER_M,
+    conc_upper_m: float = CONC_UPPER_M,
 ) -> BxCell:
     """Merge ``base.yaml`` with one arm file into a fully specified cell."""
     with open(osp.join(CONF_DIR, f"arm_{arm}.yaml")) as fh:
         armcfg = ArmConfig(**yaml.safe_load(fh))
+    assert aa_readout in AA_READOUTS, (
+        f"--aa-readout must be one of {AA_READOUTS}, got {aa_readout!r}."
+    )
+    assert conc_space in CONC_SPACES, (
+        f"--conc-space must be one of {CONC_SPACES}, got {conc_space!r}."
+    )
+    assert dist in DISTS, f"--dist must be one of {DISTS}, got {dist!r}."
     assert armcfg.base_arm in ARMS, (
         f"arm {arm!r} names base_arm={armcfg.base_arm!r}, which is not in 026's ARMS "
         f"registry ({sorted(ARMS)}). The registry is the single source of truth for what "
@@ -576,6 +910,15 @@ def build_cell(
         constraint_delay_epochs=constraint_delay_epochs,
         head_normalize=head_normalize,
         head=head,
+        aa_readout=aa_readout,
+        # DERIVED, not a switch of its own: the concentration readout emits a log10 molar
+        # concentration, so the target it is scored against has to be in that space, and no
+        # other readout may silently change the space its numbers are reported in.
+        target_log10_molar=aa_readout == AA_READOUT_CONCENTRATION,
+        dist=dist,
+        conc_space=conc_space,
+        conc_lower_m=conc_lower_m,
+        conc_upper_m=conc_upper_m,
     )
 
 
@@ -1008,13 +1351,11 @@ def build_feasibility_block(
     head_name: str,
 ) -> FeasibilityBlock:
     """Assemble the feasibility JSON block from two completed passes."""
-    rank_note = (
-        "predicted betaxanthin, descending"
-        if head_name == HEAD
-        else None
-    )
+    rank_note = "predicted betaxanthin, descending" if head_name == HEAD else None
     groups: dict[str, FeasibilityGroup] = {
-        "all": _group(per_all, np.ones(per_all["balance_median_ratio"].size, bool), None),
+        "all": _group(
+            per_all, np.ones(per_all["balance_median_ratio"].size, bool), None
+        ),
         "pinned_test": _group(per_test, test_pinned, None),
     }
     if rank_note is not None:
@@ -1060,6 +1401,396 @@ def flatten_feasibility_for_wandb(block: FeasibilityBlock) -> dict[str, float]:
     return out
 
 
+class FluxConcentrationReadout(nn.Module):
+    r"""The amino-acid prediction IS the flux layer's own learned log concentration.
+
+    WHAT IT REPLACES. ``FluxMetaboliteHead`` reads the TURNOVER of each amino acid's GEM
+    metabolite and maps it through a free per-column affine, ``a_k log(1 + omega_k) + b_k``.
+    Turnover is a flux, not a pool, so the affine is where the missing residence time is
+    absorbed, and the readout can only ever be scored as a correlation. Mulleder 2016
+    measures the pool itself, in mM.
+
+    WHAT IT READS INSTEAD. In ``ThermoMode.ANCHORED`` the layer already learns a per-strain
+    concentration for every metabolite, ``log c = lo + (hi - lo) sigmoid(base + W context)``
+    with ``[lo, hi]`` the physiological window, and it is that tensor, through
+    ``RT S^T ln c``, that sets every reaction energy and therefore the second law and the
+    dissipation limit. This module emits ``log10(exp(log_c))`` at the 19 named metabolite
+    rows and nothing else, so a gradient from the amino-acid loss lands on the same
+    parameters the physics reads.
+
+    NO AFFINE ON THE MEAN, deliberately. A learned per-column scale and offset would make
+    the prediction an arbitrary monotone image of the concentration, which is the tie this
+    arm exists to remove: with the affine, the arm measures whether the layer's context
+    vector carries amino-acid information; without it, it measures whether the layer's
+    CONCENTRATION is the measured concentration. The only parameter here is a per-column
+    ``log_sigma``, created only under CRPS, which sets the width of the predictive
+    distribution and never moves its mean, so the two arms it is compared against keep the
+    same loss function.
+    """
+
+    metabolite_indices: torch.Tensor
+    mixture_log_weights: torch.Tensor
+    target_mean: torch.Tensor
+    target_sd: torch.Tensor
+    #: Annotated at class level so mypy reads the concrete types rather than
+    #: `nn.Module.__getattr__`'s `Tensor | Module`, which is not callable.
+    model: CellGraphTransformerMetabolism
+    log_sigma: torch.Tensor | None
+
+    def __init__(
+        self,
+        model: CellGraphTransformerMetabolism,
+        metabolite_indices: torch.Tensor,
+        mixture_log_weights: torch.Tensor,
+        crps: bool,
+    ) -> None:
+        """Wrap a built model and bind the readout to the amino acids' compartments.
+
+        Args:
+            model: The metabolism transformer, built with an ANCHORED flux layer.
+            metabolite_indices: ``[19, C]`` long, the GEM metabolite row of every
+                intracellular compartment species of each measured amino acid, in the
+                column order the target uses.
+            mixture_log_weights: ``[19, C]``, the natural log of each compartment's
+                fractional volume, ``-inf`` on padding.
+            crps: Whether the loss is a Gaussian CRPS, in which case a per-column
+                ``log_sigma`` is created for the spread and the mean stays parameter-free.
+        """
+        super().__init__()
+        width = int(metabolite_indices.shape[0])
+        self.model = model
+        self.register_buffer("metabolite_indices", metabolite_indices)
+        self.register_buffer("mixture_log_weights", mixture_log_weights)
+        # The trainer compares a head's output against the STANDARDIZED target, so the
+        # readout has to speak that space. These are the train-split mean and sd of the
+        # target in log10 molar, written in by `set_target_standardization` once the
+        # trainer has computed them; the identity here is only what the module is built
+        # with, and a run that forgot to set them would be a raw log10 prediction against
+        # a standardized target, i.e. the offset defect wave 6 measured on the turnover
+        # head. They are CONSTANTS from the training split, not parameters, so the
+        # prediction is still a parameter-free image of the concentration.
+        self.register_buffer("target_mean", torch.zeros(width))
+        self.register_buffer("target_sd", torch.ones(width))
+        self.register_parameter(
+            "log_sigma", nn.Parameter(torch.zeros(width)) if crps else None
+        )
+
+    def set_target_standardization(self, mean: torch.Tensor, sd: torch.Tensor) -> None:
+        """Write the train-split per-column mean and sd of the log10 molar target."""
+        assert mean.shape == self.target_mean.shape, (
+            f"target mean has shape {tuple(mean.shape)}, expected "
+            f"{tuple(self.target_mean.shape)}."
+        )
+        with torch.no_grad():
+            self.target_mean.copy_(mean.to(self.target_mean.device))
+            self.target_sd.copy_(sd.to(self.target_sd.device))
+
+    @property
+    def flux_layer(self) -> Any:
+        """The wrapped model's layer, so every caller that reaches for it is unchanged."""
+        return self.model.flux_layer
+
+    @property
+    def num_parameters(self) -> dict[str, int]:
+        """The wrapped model's counts, plus the per-column log_sigma if there is one."""
+        counts: dict[str, int] = dict(self.model.num_parameters)
+        extra = 0 if self.log_sigma is None else int(self.log_sigma.numel())
+        counts[f"{AUX_HEAD}_head"] = extra
+        counts["total"] = counts["total"] + extra
+        return counts
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Run the wrapped model, then write the concentration into ``head_outputs``.
+
+        THE LAYER HAS TO BE CALLED HERE, and the reason is worth naming.
+        ``CellGraphTransformerMetabolism.forward`` runs its flux layer only when at least
+        one head reads it (``if self.flux_layer is not None and self.flux_head_names``),
+        and this arm declares no head, so nothing would run the layer and ``reps`` would
+        carry no ``flux`` at all. The call below is the model's own call, with the model's
+        own layer and the same four arguments in the same order, so the layer's output --
+        including every constraint residual the trainer then charges to the loss -- is
+        identical to what a declared flux head would have produced.
+        """
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        if "flux" not in reps:
+            layer = self.model.flux_layer
+            assert layer is not None, (
+                "the concentration readout was built on a model with no flux layer."
+            )
+            reps["flux"] = layer(
+                reps["H_genes_pert"],
+                perturbed_gene_pool(
+                    reps["H_genes_pert"],
+                    batch["gene"].perturbation_indices,
+                    batch["gene"].perturbation_indices_batch,
+                ),
+                batch["gene"].perturbation_indices,
+                batch["gene"].perturbation_indices_batch,
+            )
+        flux = reps["flux"]
+        assert "thermo_log_c" in flux, (
+            "the flux layer emitted no `thermo_log_c`, so its thermo_mode is not ANCHORED "
+            "and there is no learned concentration to predict. This arm is only defined on "
+            "an anchored layer."
+        )
+        log10_c = mixture_log10_molar(
+            flux["thermo_log_c"], self.metabolite_indices, self.mixture_log_weights
+        )
+        pred = (log10_c - self.target_mean.unsqueeze(0)) / self.target_sd.unsqueeze(0)
+        if self.log_sigma is not None:
+            pred = torch.stack(
+                [pred, self.log_sigma.unsqueeze(0).expand_as(pred)], dim=-1
+            )
+        reps["head_outputs"][AUX_HEAD] = pred
+        return predictions, reps
+
+
+class ConcentrationGroup(BaseModel):
+    """How well the layer's learned concentration matches the measured one, per column."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    n_records: int
+    n_measurements: int
+    mean_spearman: float
+    mean_pearson: float
+    columns: list[str]
+    spearman_per_feature: list[float]
+    pearson_per_feature: list[float]
+    n_per_feature: list[int]
+    median_pred_log10_m: list[float]
+    median_true_log10_m: list[float]
+    median_abs_error_log10: list[float]
+    frac_pred_at_ceiling: float
+    frac_pred_at_floor: float
+
+
+class CalibrationBlock(BaseModel):
+    """Is the head's predictive DISTRIBUTION calibrated, not just its point estimate?
+
+    Both losses here are proper scoring rules over a distribution, so a comparison on the
+    point metric alone leaves out half of what they were trained for. The probability
+    integral transform is the one diagnostic that reads the same way for both: PIT is the
+    predictive CDF evaluated at the observation, uniform on ``[0, 1]`` when the predictive
+    distribution is right, U-shaped when it is overconfident and bell-shaped when it is too
+    wide. `coverage` and `pit_ks` are scalar read-offs of the same transform.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    available: bool
+    reason: str | None = None
+    dist: str | None = None
+    group: str | None = None
+    n_measurements: int | None = None
+    columns: list[str] = Field(default_factory=list)
+    #: Empirical coverage of the central alpha interval, whole group then per feature.
+    coverage: dict[str, float] = Field(default_factory=dict)
+    coverage_per_feature: dict[str, list[float]] = Field(default_factory=dict)
+    #: Kolmogorov-Smirnov distance of the PIT sample from uniform; 0 is calibrated.
+    pit_ks: float | None = None
+    pit_ks_per_feature: list[float] = Field(default_factory=list)
+    pit_mean: float | None = None
+    pit_histogram: list[float] = Field(default_factory=list)
+
+
+def collect_pit(
+    model: nn.Module,
+    loader: Any,
+    dataset: Any,
+    head_specs: dict[str, dict[str, Any]],
+    head_name: str,
+    mean: torch.Tensor,
+    sd: torch.Tensor,
+    cell: BxCell,
+    dist_head: "DistHead | None",
+) -> tuple[np.ndarray, np.ndarray]:
+    """PIT values and their observation mask over a loader, ``[N, F]`` each.
+
+    The PIT is computed in the STANDARDIZED space the head predicts in, which is the space
+    the loss was computed in; a monotone change of variable does not move a PIT anyway.
+    The Gaussian branch uses this trainer's own ``sigma = exp(log_sigma)`` rather than
+    `DistHead`'s softplus, because that is the sigma the CRPS was trained with and a
+    calibration number computed under a different link would not describe the fitted model.
+    """
+    device = next(model.parameters()).device
+    was_training = model.training
+    model.eval()
+    pits: list[np.ndarray] = []
+    masks: list[np.ndarray] = []
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch.to(device)
+            _, reps = model(dataset.cell_graph.to(device), batch)
+            t, m = targets_in_space(batch, head_specs, cell.target_log10_molar)[
+                head_name
+            ]
+            t, m = t.to(device), m.to(device)
+            z = (t - mean) / sd
+            raw = _head_params(reps["head_outputs"][head_name])
+            if raw.dim() != 3:
+                continue
+            if dist_head is not None:
+                pit = pit_values(
+                    "quantile", z, quantiles=raw, taus=dist_head.taus.to(raw.device)
+                )
+            else:
+                mu, log_sigma = raw[..., 0], raw[..., 1]
+                pit = pit_values(
+                    "gaussian", z, mu=mu, scale=torch.exp(log_sigma.clamp(-6.0, 3.0))
+                )
+            pits.append(pit.cpu().numpy())
+            masks.append(m.cpu().numpy())
+    model.train(was_training)
+    if not pits:
+        return np.zeros((0, 0)), np.zeros((0, 0), dtype=bool)
+    return np.concatenate(pits), np.concatenate(masks)
+
+
+def build_calibration_block(
+    pit: np.ndarray, mask: np.ndarray, cell: BxCell, columns: list[str], group: str
+) -> CalibrationBlock:
+    """Coverage, the KS distance from uniform, and the PIT histogram, over one group."""
+    if pit.size == 0:
+        return CalibrationBlock(
+            available=False,
+            reason=(
+                "the head emits a point prediction, so it has no predictive distribution "
+                "to calibrate."
+            ),
+            dist=cell.dist,
+        )
+    flat = torch.tensor(pit[mask], dtype=torch.float32)
+    cov = {f"alpha_{a:.2f}": float(coverage(flat, a)) for a in COVERAGE_ALPHAS}
+    per_feature: dict[str, list[float]] = {
+        f"alpha_{a:.2f}": [] for a in COVERAGE_ALPHAS
+    }
+    ks_per_feature: list[float] = []
+    for f in range(pit.shape[1]):
+        col = torch.tensor(pit[mask[:, f], f], dtype=torch.float32)
+        for a in COVERAGE_ALPHAS:
+            per_feature[f"alpha_{a:.2f}"].append(float(coverage(col, a)))
+        ks_per_feature.append(float(pit_ks(col)))
+    hist, _ = np.histogram(pit[mask], bins=20, range=(0.0, 1.0), density=True)
+    return CalibrationBlock(
+        available=True,
+        dist=cell.dist,
+        group=group,
+        n_measurements=int(mask.sum()),
+        columns=columns,
+        coverage=cov,
+        coverage_per_feature=per_feature,
+        pit_ks=float(pit_ks(flat)),
+        pit_ks_per_feature=ks_per_feature,
+        pit_mean=float(flat.mean()),
+        pit_histogram=[float(x) for x in hist],
+    )
+
+
+class ConcentrationMixtureEntry(BaseModel):
+    """One compartment species contributing to an amino acid's whole-cell average."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    compartment: str
+    species: str
+    fractional_volume: float
+
+
+class ConcentrationAudit(BaseModel):
+    """The learned concentration against Mulleder, for ANY arm whose layer is ANCHORED.
+
+    On a ``flux_concentration`` cell this is the supervised quantity and duplicates the test
+    block, which is the cross-check. On every other anchored arm it is UNSUPERVISED: the
+    concentrations were fitted only to make the reaction energies work, and this says
+    whether they landed anywhere near the measured pools. The projection-head note asks for
+    exactly this number and it had never been computed.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    available: bool
+    reason: str | None = None
+    supervised: bool = False
+    conc_space: str | None = None
+    conc_lower_m: float | None = None
+    conc_upper_m: float | None = None
+    volume_fractions: CompartmentVolumeFractions | None = None
+    mixture: dict[str, list[ConcentrationMixtureEntry]] = Field(default_factory=dict)
+    groups: dict[str, ConcentrationGroup] = Field(default_factory=dict)
+
+
+def collect_concentration(
+    model: nn.Module,
+    loader: Any,
+    dataset: Any,
+    head_specs: dict[str, dict[str, Any]],
+    indices: torch.Tensor,
+    log_weights: torch.Tensor,
+) -> tuple[np.ndarray, np.ndarray]:
+    """``(learned log10 molar, measured log10 molar)``, ``[N, 19]`` each, over a loader.
+
+    The learned side is the WHOLE-CELL average over the amino acid's compartments, which
+    is the quantity Mulleder measures; see :func:`mixture_weights`.
+    """
+    device = next(model.parameters()).device
+    was_training = model.training
+    model.eval()
+    preds: list[np.ndarray] = []
+    trues: list[np.ndarray] = []
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch.to(device)
+            _, reps = model(dataset.cell_graph.to(device), batch)
+            log10_c = mixture_log10_molar(
+                reps["flux"]["thermo_log_c"], indices, log_weights
+            )
+            t, m = targets_in_space(batch, head_specs, True)[AUX_HEAD]
+            preds.append(log10_c.cpu().numpy())
+            trues.append(torch.where(m, t, torch.nan).cpu().numpy())
+    model.train(was_training)
+    return np.concatenate(preds), np.concatenate(trues)
+
+
+def _concentration_group(
+    pred: np.ndarray, true: np.ndarray, sel: np.ndarray, lo: float, hi: float
+) -> ConcentrationGroup:
+    p, t = pred[sel], true[sel]
+    scored = _score_test_vector(p, t, np.ones(len(p), dtype=bool), AA_KEYS)
+    med_pred = [float(np.median(p[:, f])) for f in range(p.shape[1])]
+    med_true = [
+        float(np.nanmedian(t[:, f]))
+        if bool(np.isfinite(t[:, f]).any())
+        else float("nan")
+        for f in range(t.shape[1])
+    ]
+    med_err = [
+        float(np.nanmedian(np.abs(p[:, f] - t[:, f])))
+        if bool(np.isfinite(t[:, f]).any())
+        else float("nan")
+        for f in range(t.shape[1])
+    ]
+    # Within 0.01 of a decade of an edge, the sigmoid is saturated and the head cannot move
+    # the value further, which is the failure the window check exists to prevent.
+    return ConcentrationGroup(
+        n_records=int(sel.sum()),
+        n_measurements=int(np.isfinite(t).sum()),
+        mean_spearman=float(scored["mean_spearman"]),
+        mean_pearson=float(scored["mean_pearson"]),
+        columns=AA_KEYS,
+        spearman_per_feature=list(scored["spearman_per_feature"]),
+        pearson_per_feature=list(scored["pearson_per_feature"]),
+        n_per_feature=list(scored["n_per_feature"]),
+        median_pred_log10_m=med_pred,
+        median_true_log10_m=med_true,
+        median_abs_error_log10=med_err,
+        frac_pred_at_ceiling=float((p >= math.log10(hi) - 0.01).mean()),
+        frac_pred_at_floor=float((p <= math.log10(lo) + 0.01).mean()),
+    )
+
+
 def build_model_for_cell(
     cell: BxCell, cfg: BxConfig, dataset: Any, device: torch.device
 ) -> tuple[nn.Module, dict[str, dict[str, Any]], str, dict[str, Any]]:
@@ -1086,8 +1817,26 @@ def build_model_for_cell(
         "constraint_final_scale": cell.constraint_scale,
         "constraint_delay_epochs": cell.constraint_delay_epochs,
     }
+    # THE CHANNEL OVERRIDE (wave 7). `fluxforce` is a parameterization of
+    # torchcell.metabolism.flux_layer, not a new physics switch, and 026's ARMS stays the
+    # single source of truth for the switches; this passes the string through without
+    # editing that registry. What the layer parsed is recorded in
+    # flux_meta.coverage.parameterization_raw, so the run still says what it ran.
+    channel = os.getenv("TC_FLUX_PARAMETERIZATION")
+    if channel:
+        arm["parameterization"] = channel
     gene_ids = list(dataset.cell_graph["gene"].node_ids)
     flux_layer, flux_meta = build_flux_layer(arm, gene_ids, cell.hidden)
+
+    if flux_layer is not None:
+        # THE CONCENTRATION WINDOW, written onto the built layer rather than passed into
+        # its construction: 026's `build_flux_layer` owns that construction and forwards
+        # only the fields its own registry names, and this experiment does not edit it.
+        # `reaction_potential` reads the window off `config` at call time, so the
+        # assignment takes effect. Both defaults equal the shipped constants, so a cell
+        # that does not ask for a different window is unchanged.
+        flux_layer.config.conc_lower_m = cell.conc_lower_m
+        flux_layer.config.conc_upper_m = cell.conc_upper_m
 
     if arm["flux"]:
         frac = float(flux_meta["kcat_experimental_fraction"])
@@ -1110,6 +1859,28 @@ def build_model_for_cell(
         "--head mulleder19 makes the amino-acid head the PRIMARY supervised head; "
         "--aux-mulleder would then declare it twice."
     )
+    assert not (cell.dist == "quantile" and arm["flux"]), (
+        "--dist quantile is defined for the MLP heads only. A flux readout predicts the "
+        "layer's own quantity (its turnover or its concentration), so a quantile fan would "
+        "have to come from a separate parameterized head, which is exactly the tie the "
+        "mechanistic arm removes. The principled distributional form there is an energy "
+        "score over the flux sampler's draws, which is not built."
+    )
+    assert cell.aa_readout in AA_READOUTS, (
+        f"aa_readout must be one of {AA_READOUTS}, got {cell.aa_readout!r}."
+    )
+    assert not (
+        cell.aa_readout == AA_READOUT_CONCENTRATION
+        and not (cell.head == AUX_HEAD and arm["flux"])
+    ), (
+        f"aa_readout {AA_READOUT_CONCENTRATION!r} is defined only for a FLUX arm with "
+        f"--head {AUX_HEAD}; this cell is arm {cell.base_arm!r} on head {cell.head!r}."
+    )
+    assert cell.target_log10_molar == (cell.aa_readout == AA_READOUT_CONCENTRATION), (
+        "target_log10_molar is derived from the readout and must not be set by hand: the "
+        "concentration readout predicts log10 molar and every other readout predicts the "
+        "target in its stored units."
+    )
     main_head = cell.head
     main_width = 1 if main_head == HEAD else AUX_WIDTH
     head_specs: dict[str, dict[str, Any]] = {
@@ -1118,7 +1889,14 @@ def build_model_for_cell(
         # alone, and a Mulleder-only genotype simply matches nothing and arrives masked False.
         main_head: {"label": "metabolite_level", "width": main_width}
     }
-    param_dim = 2 if cell.crps else 1
+    # THE HEAD'S OUTPUT WIDTH follows the distributional loss: 2 for the Gaussian CRPS's
+    # (mu, log_sigma) and K = 19 for the quantile grid. `dist_param_dim` is the same
+    # function 019's trainer uses, so the two experiments cannot disagree about the width.
+    param_dim = dist_param_dim(cell.dist) if cell.crps else 1
+    assert not (cell.dist == "quantile" and not cell.crps), (
+        "--dist quantile is a distributional loss and needs --crps, which is the flag that "
+        "makes the head emit more than a point."
+    )
     heads_config: dict[str, Any] = {}
     met_index = flux_meta["met_index"] if arm["flux"] else {}
     if main_head == HEAD:
@@ -1138,6 +1916,19 @@ def build_model_for_cell(
                 "output_dim": 1,
                 "param_dim": param_dim,
             }
+    elif arm["flux"] and cell.aa_readout == AA_READOUT_CONCENTRATION:
+        # THE CONCENTRATION READOUT declares NO head at all: the prediction is a slice of
+        # the layer's own `thermo_log_c`, injected into `head_outputs` by
+        # `FluxConcentrationReadout` below. Declaring a head here would put a parameterized
+        # map between the concentration and the loss, which is the tie this arm removes.
+        assert (
+            flux_layer is not None and flux_layer.thermo_mode is ThermoMode.ANCHORED
+        ), (
+            f"--aa-readout {AA_READOUT_CONCENTRATION} needs an arm whose thermo_mode is "
+            f"ANCHORED, since the learned concentration exists only there; arm "
+            f"{cell.base_arm!r} is "
+            f"{'not a flux arm' if flux_layer is None else str(flux_layer.thermo_mode)}."
+        )
     elif arm["flux"]:
         # 026's mechanistic readout: each measured amino acid is read off the turnover of
         # its own GEM metabolite, so the flux arm's amino-acid prediction goes through the
@@ -1197,6 +1988,32 @@ def build_model_for_cell(
         flux_layer=flux_layer,
         **graph_reg_kwargs,
     ).to(device)
+
+    if main_head == AUX_HEAD and cell.aa_readout == AA_READOUT_CONCENTRATION:
+        assert flux_layer is not None
+        indices, log_weights, described = mixture_weights(met_index, cell.conc_space)
+        flux_meta["concentration_mixture"] = {
+            aa: [
+                {"compartment": c, "species": sid, "fractional_volume": w}
+                for c, sid, w in entries
+            ]
+            for aa, entries in described.items()
+        }
+        flux_meta["compartment_volume_fractions"] = (
+            compartment_volume_fractions().model_dump()
+        )
+        wrapped = FluxConcentrationReadout(
+            model, indices.to(device), log_weights.to(device), cell.crps
+        ).to(device)
+        print(
+            f"[concentration-readout] whole-cell mixture over "
+            f"{ {aa: [c for c, _, _ in v] for aa, v in described.items()} }, window "
+            f"[{flux_layer.config.conc_lower_m:.0e}, "
+            f"{flux_layer.config.conc_upper_m:.0e}] M, "
+            f"{'learned per-column log_sigma' if cell.crps else 'point prediction'}",
+            flush=True,
+        )
+        return wrapped, head_specs, main_head, flux_meta
 
     if main_head == AUX_HEAD and arm["flux"] and cell.head_normalize:
         # THE HEAD FIX FOR THE AMINO-ACID READOUT. `FluxMetaboliteHead` emits
@@ -1262,10 +2079,27 @@ def run_cell(
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=cell.lr, weight_decay=cell.weight_decay
     )
+
     # CRPS, not MSE. The head emits (mu, log_sigma) and is scored as a distribution;
     # 019 measured 0.413 -> 0.434 from this single change, and 020 measured crps 0.275
     # against point 0.172 across its sweep.
+    # THE QUANTILE HEAD, when asked for. `DistHead` owns the tau grid and the median index,
+    # so this trainer and 019's read the same grid; it holds no parameters in this mode, and
+    # the CRPS path below is untouched, which is what keeps every earlier cell byte-identical.
+    dist_head: DistHead | None = (
+        make_dist_head(cell.dist).to(device) if cell.dist == "quantile" else None
+    )
+
     def loss_fn(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if dist_head is not None:
+            # Pinball, elementwise over the K quantiles and then averaged over them, so the
+            # caller's `(loss * mask).sum() / mask.sum()` keeps meaning the masked mean.
+            taus = dist_head.taus.to(prediction.device)
+            if prediction.dim() == 3:
+                return pinball(prediction, target, taus).mean(dim=-1)
+            return (
+                pinball(prediction, target.squeeze(-1), taus).mean(dim=-1).unsqueeze(-1)
+            )
         if prediction.dim() == 3 and prediction.shape[-1] == 2:
             # A DISTRIBUTIONAL VECTOR head, `[B, F, 2]` against a `[B, F]` target. The
             # scalar branch below squeezes the target's feature axis and restores it after,
@@ -1285,7 +2119,9 @@ def run_cell(
     # test-informed statistics is not a held-out metric.
     chunks: dict[str, list[torch.Tensor]] = {name: [] for name in head_specs}
     for batch in dm.train_dataloader():
-        for name, (t, m) in extract_targets(batch, head_specs).items():
+        for name, (t, m) in targets_in_space(
+            batch, head_specs, cell.target_log10_molar
+        ).items():
             chunks[name].append(torch.where(m, t, torch.nan))
     stats: dict[str, tuple[torch.Tensor, torch.Tensor]] = {}
     for name, parts in chunks.items():
@@ -1295,6 +2131,19 @@ def run_cell(
         s = torch.nanmean(centered * centered, dim=0).sqrt().clamp(min=1e-6)
         stats[name] = (mu.to(device), s.to(device))
     mean, sd = stats[main_head]
+    if isinstance(model, FluxConcentrationReadout):
+        # The readout emits a log10 molar concentration and the loss is computed against
+        # the standardized target, so the readout is handed the SAME train-split statistics
+        # rather than a learned affine. Set here rather than in `build_model_for_cell`
+        # because the statistics come from a pass over the training loader, which the model
+        # has to exist for.
+        model.set_target_standardization(mean, sd)
+        print(
+            "[concentration-readout] target standardization in log10 M: mean "
+            f"{[round(float(x), 3) for x in mean]}, sd "
+            f"{[round(float(x), 3) for x in sd]}",
+            flush=True,
+        )
 
     window = cell.select_smoothing_window
     half = window // 2
@@ -1316,15 +2165,18 @@ def run_cell(
         # physics at all when a warmup is configured, so the data term is the only thing
         # moving the head while it is on the mean plateau.
         constraint_scale = 1.0
-        if model.flux_layer is not None:
-            constraint_scale = model.flux_layer.set_constraint_epoch(epoch)
+        epoch_layer: Any = model.flux_layer
+        if epoch_layer is not None:
+            constraint_scale = epoch_layer.set_constraint_epoch(epoch)
         train_constraint_loss = 0.0
         feas: dict[str, float] = {}
         for batch in dm.train_dataloader():
             batch = batch.to(device)
             optimizer.zero_grad(set_to_none=True)
             _, reps = model(dataset.cell_graph.to(device), batch)
-            t, m = extract_targets(batch, head_specs)[main_head]
+            t, m = targets_in_space(batch, head_specs, cell.target_log10_molar)[
+                main_head
+            ]
             t, m = t.to(device), m.to(device)
             if cell.permute_train_targets:
                 # THE NULL: target and mask permuted TOGETHER, so the genotype-to-phenotype
@@ -1339,7 +2191,9 @@ def run_cell(
             if cell.aux_mulleder:
                 # Masked per-feature MSE on the standardized amino-acid vector, weight 1,
                 # as 019's head_weights had it. Never permuted: the null is on betaxanthin.
-                t_aux, m_aux = extract_targets(batch, head_specs)[AUX_HEAD]
+                t_aux, m_aux = targets_in_space(
+                    batch, head_specs, cell.target_log10_molar
+                )[AUX_HEAD]
                 t_aux, m_aux = t_aux.to(device), m_aux.to(device)
                 mu_aux, sd_aux = stats[AUX_HEAD]
                 z_aux = (t_aux - mu_aux) / sd_aux
@@ -1357,8 +2211,9 @@ def run_cell(
                 # cannot be None here. Asserted rather than type-ignored: if it ever were
                 # None the constraint terms would silently vanish and the arm would still
                 # report a plausible number.
-                assert model.flux_layer is not None
-                constraint_term = model.flux_layer.constraint_loss(reps["flux"])
+                batch_layer: Any = model.flux_layer
+                assert batch_layer is not None
+                constraint_term = batch_layer.constraint_loss(reps["flux"])
                 loss = loss + constraint_term
                 train_constraint_loss += float(constraint_term.detach())
                 for k, v in reps["flux"].items():
@@ -1373,7 +2228,15 @@ def run_cell(
             n_batches += 1
 
         preds, trues = _predict(
-            model, dm.val_dataloader(), dataset, head_specs, main_head, mean, sd
+            model,
+            dm.val_dataloader(),
+            dataset,
+            head_specs,
+            main_head,
+            mean,
+            sd,
+            cell.target_log10_molar,
+            dist_head,
         )
         val_r = _mean_pearson(preds, trues)
         val_curve.append(val_r)
@@ -1417,6 +2280,7 @@ def run_cell(
                 mean,
                 sd,
                 loss_fn,
+                cell.target_log10_molar,
             ),
             "val_pearson": val_r,
             "val_pred_sd_ratio": pred_sd_ratio,
@@ -1464,7 +2328,16 @@ def run_cell(
         _restore(model, snap_by_epoch[sel_epoch])
 
     test = _score_test(
-        model, dm, dataset, head_specs, main_head, mean, sd, cell, dump_predictions
+        model,
+        dm,
+        dataset,
+        head_specs,
+        main_head,
+        mean,
+        sd,
+        cell,
+        dump_predictions,
+        dist_head,
     )
     result: dict[str, Any] = {
         "cell": cell.model_dump(),
@@ -1485,7 +2358,15 @@ def run_cell(
         # so it is reported only because the pinned Merzbacher test genes carry few
         # amino-acid measurements and the reader needs to see the larger sample too.
         vp, vt = _predict(
-            model, dm.val_dataloader(), dataset, head_specs, main_head, mean, sd
+            model,
+            dm.val_dataloader(),
+            dataset,
+            head_specs,
+            main_head,
+            mean,
+            sd,
+            cell.target_log10_molar,
+            dist_head,
         )
         result["validation_selection_split"] = {
             "note": (
@@ -1495,6 +2376,96 @@ def run_cell(
             ),
             **_score_test_vector(vp, vt, np.ones(len(vp), dtype=bool), AA_KEYS),
         }
+
+    # CALIBRATION at the selected epoch, on the pinned Merzbacher test genes. Reported for
+    # every distributional head, so the CRPS and pinball arms are compared on what their
+    # distribution does as well as on where its point estimate lands.
+    pit, pit_mask = collect_pit(
+        model,
+        dm.test_dataloader(),
+        dataset,
+        head_specs,
+        main_head,
+        mean,
+        sd,
+        cell,
+        dist_head,
+    )
+    if pit.size:
+        pinned_rows = pinned_test_mask(dm, dataset)
+        result["calibration"] = build_calibration_block(
+            pit[pinned_rows],
+            pit_mask[pinned_rows],
+            cell,
+            AA_KEYS if main_head == AUX_HEAD else [HEAD],
+            "pinned_test",
+        ).model_dump()
+    else:
+        result["calibration"] = CalibrationBlock(
+            available=False,
+            reason="the head emitted a point prediction; there is no PIT for it.",
+            dist=cell.dist,
+        ).model_dump()
+
+    layer_for_conc: Any = model.flux_layer
+    if (
+        main_head == AUX_HEAD
+        and layer_for_conc is not None
+        and layer_for_conc.thermo_mode is ThermoMode.ANCHORED
+    ):
+        # THE MECHANISTIC READOUT, computed for every anchored arm rather than only for the
+        # supervised one: an arm that predicts amino acids from turnover still learns a
+        # concentration, and whether that concentration is the measured concentration is a
+        # separate question from whether the phenotype head scored well.
+        indices, log_weights, described = mixture_weights(
+            flux_meta["met_index"], cell.conc_space
+        )
+        c_pred, c_true = collect_concentration(
+            model,
+            dm.test_dataloader(),
+            dataset,
+            head_specs,
+            indices.to(device),
+            log_weights.to(device),
+        )
+        pinned_mask = pinned_test_mask(dm, dataset)
+        lo = float(layer_for_conc.config.conc_lower_m)
+        hi = float(layer_for_conc.config.conc_upper_m)
+        audit = ConcentrationAudit(
+            available=True,
+            supervised=cell.aa_readout == AA_READOUT_CONCENTRATION,
+            conc_space=cell.conc_space,
+            conc_lower_m=lo,
+            conc_upper_m=hi,
+            volume_fractions=compartment_volume_fractions(),
+            mixture={
+                aa: [
+                    ConcentrationMixtureEntry(
+                        compartment=c, species=sid, fractional_volume=w
+                    )
+                    for c, sid, w in entries
+                ]
+                for aa, entries in described.items()
+            },
+            groups={
+                "pinned_test": _concentration_group(
+                    c_pred, c_true, pinned_mask, lo, hi
+                ),
+                "test_all": _concentration_group(
+                    c_pred, c_true, np.ones(len(c_pred), dtype=bool), lo, hi
+                ),
+            },
+        )
+    else:
+        audit = ConcentrationAudit(
+            available=False,
+            reason=(
+                "the learned log concentration exists only on a flux arm whose thermo_mode "
+                "is ANCHORED, scored against the amino-acid phenotype; this cell is arm "
+                f"{cell.arm!r} on head {main_head!r}."
+            ),
+        )
+    result["concentration_audit"] = audit.model_dump()
 
     if compute_feasibility:
         layer = model.flux_layer
@@ -1553,12 +2524,18 @@ def _predict(
     head_name: str,
     mean: torch.Tensor,
     sd: torch.Tensor,
+    log10_molar: bool = False,
+    dist_head: "DistHead | None" = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Denormalized predictions and targets over a loader, ``[N, W]``.
 
     Unobserved entries of the target become NaN. The array is two-dimensional whatever the
     head's width, so a width-1 phenotype and a width-19 one are read the same way; the
     betaxanthin callers take column 0 and are unchanged by that.
+
+    ``log10_molar`` puts BOTH sides in log10 molar, which is the space the concentration
+    readout predicts in; the denormalized prediction and the target then have the same
+    units, and the per-feature Spearman is unchanged by the monotone change of variable.
     """
     device = next(model.parameters()).device
     model.eval()
@@ -1569,10 +2546,9 @@ def _predict(
         for batch in loader:
             batch = batch.to(device)
             _, reps = model(dataset.cell_graph.to(device), batch)
-            t, m = extract_targets(batch, head_specs)[head_name]
-            # The point prediction is mu, the first parameter, whatever the head emits.
+            t, m = targets_in_space(batch, head_specs, log10_molar)[head_name]
             raw = _head_params(reps["head_outputs"][head_name])
-            pred = raw[..., 0] if raw.dim() == 3 else raw[:, :width]
+            pred = point_estimate(raw, width, dist_head)
             ps.append((pred * sd + mean).cpu().numpy().reshape(-1, width))
             ts.append(torch.where(m, t, torch.nan).cpu().numpy().reshape(-1, width))
     return np.concatenate(ps), np.concatenate(ts)
@@ -1605,6 +2581,7 @@ def _masked_loss(
     mean: torch.Tensor,
     sd: torch.Tensor,
     loss_fn: Any,
+    log10_molar: bool = False,
 ) -> float:
     """The DATA-FIT loss on a held-out loader, in the same units as training.
 
@@ -1625,7 +2602,7 @@ def _masked_loss(
         for batch in loader:
             batch = batch.to(device)
             _, reps = model(dataset.cell_graph.to(device), batch)
-            t, m = extract_targets(batch, head_specs)[head_name]
+            t, m = targets_in_space(batch, head_specs, log10_molar)[head_name]
             t, m = t.to(device), m.to(device)
             z = (t - mean) / sd
             pred = _head_params(reps["head_outputs"][head_name])
@@ -1659,10 +2636,7 @@ def pinned_test_mask(dm: Any, dataset: Any) -> np.ndarray:
 
 
 def _score_test_vector(
-    preds: np.ndarray,
-    trues: np.ndarray,
-    sel: np.ndarray,
-    columns: list[str],
+    preds: np.ndarray, trues: np.ndarray, sel: np.ndarray, columns: list[str]
 ) -> dict[str, Any]:
     """Per-feature test metrics for a width-``F`` phenotype.
 
@@ -1700,6 +2674,7 @@ def _score_test(
     sd: torch.Tensor,
     cell: BxCell,
     dump_predictions: bool,
+    dist_head: "DistHead | None" = None,
 ) -> dict[str, Any]:
     """The prespecified test metrics, on the pinned genes and on the whole test split.
 
@@ -1710,7 +2685,15 @@ def _score_test(
     """
     order = [int(i) for i in dm.test_dataset.indices]
     preds, trues = _predict(
-        model, dm.test_dataloader(), dataset, head_specs, head_name, mean, sd
+        model,
+        dm.test_dataloader(),
+        dataset,
+        head_specs,
+        head_name,
+        mean,
+        sd,
+        cell.target_log10_molar,
+        dist_head,
     )
     assert len(preds) == len(order), (
         f"test pass covered {len(preds)}/{len(order)} records -- a short count is a silent "
@@ -1725,6 +2708,7 @@ def _score_test(
     is_pinned = pinned_test_mask(dm, dataset)
     all_rows = np.ones(len(order), dtype=bool)
 
+    records: list[dict[str, Any]]
     if head_name == HEAD:
         p1, t1 = preds[:, 0], trues[:, 0]
         records = [
@@ -1745,7 +2729,10 @@ def _score_test(
                 "n": int(obs.sum()),
                 "spearman": _masked_spearman(p, t),
                 "pearson": _masked_pearson(p, t),
-                **{f"top{k}": _top_k_enrichment(p[obs], t[obs], k) for k in (10, 25, 50)},
+                **{
+                    f"top{k}": _top_k_enrichment(p[obs], t[obs], k)
+                    for k in (10, 25, 50)
+                },
             }
 
         out: dict[str, Any] = {"pinned": block(is_pinned), "all": block(all_rows)}
@@ -1777,6 +2764,13 @@ def _score_test(
                     "experiment": "027-betaxanthin-metabolic",
                     "cell": cell.model_dump(),
                     "head": head_name,
+                    # WHICH SPACE the numbers below are in. The concentration readout
+                    # predicts and is scored in log10 molar; every other arm reports the
+                    # target in its stored units, which for the amino acids is mM. A dump
+                    # that did not say so would put two different units under one key.
+                    "target_space": (
+                        "log10_molar" if cell.target_log10_molar else "stored_units"
+                    ),
                     "n_test_records": len(order),
                     "metrics": out,
                     "predictions": records,
@@ -1799,33 +2793,45 @@ def main() -> None:
         action="store_true",
         help="Skip the per-gene dump. For a local build/shape check, never for a result.",
     )
-    parser.add_argument("--crps", action="store_true", help="Gaussian CRPS on the head.")
+    parser.add_argument(
+        "--crps", action="store_true", help="Gaussian CRPS on the head."
+    )
     parser.add_argument(
         "--graph-reg", action="store_true", help="019's graph-structure regularizer."
     )
     parser.add_argument(
-        "--abort-on-collapse", action="store_true",
+        "--abort-on-collapse",
+        action="store_true",
         help="Stop once the validation prediction spread stays under 1%% of the target's.",
     )
     parser.add_argument(
-        "--aux-mulleder", action="store_true",
+        "--aux-mulleder",
+        action="store_true",
         help="Train the 19-amino-acid Mulleder head jointly, as the 019 recipe did.",
     )
     parser.add_argument(
-        "--attention-mask", action="store_true",
+        "--attention-mask",
+        action="store_true",
         help="The 020 grid's hard graph masking, one relation per attention head.",
     )
     parser.add_argument("--pert-heads", type=int, default=6)
-    parser.add_argument("--learnable-embedding", action="store_true",
-                        help="Memorization control: a free per-gene vector.")
+    parser.add_argument(
+        "--learnable-embedding",
+        action="store_true",
+        help="Memorization control: a free per-gene vector.",
+    )
     parser.add_argument("--layers", type=int, default=None)
     parser.add_argument(
-        "--kcat-tier", choices=("measured", "predicted"), default="measured",
+        "--kcat-tier",
+        choices=("measured", "predicted"),
+        default="measured",
         help="Insert the sequence-predictor kcat/K_M tier between measured and default.",
     )
     parser.add_argument(
         "--thermo-source",
-        choices=("shipped", "equilibrator", "union", "union_external"),
+        # THE ENUM IS THE LIST. A hardcoded tuple silently hid `verified` when it was added
+        # to ThermoSource, so the flag reads the enum and cannot fall behind it again.
+        choices=tuple(s.value for s in ThermoSource),
         default="shipped",
         help=(
             "Which route prices the standard reaction energies. 'union_external' is the "
@@ -1835,23 +2841,32 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--constraint-warmup-epochs", type=int, default=0,
+        "--constraint-warmup-epochs",
+        type=int,
+        default=0,
         help="Ramp the flux constraint weights linearly from 0 over this many epochs.",
     )
     parser.add_argument(
-        "--constraint-scale", type=float, default=1.0,
+        "--constraint-scale",
+        type=float,
+        default=1.0,
         help="Final multiplier on the weighted constraint sum after warmup.",
     )
     parser.add_argument(
-        "--constraint-delay-epochs", type=int, default=0,
+        "--constraint-delay-epochs",
+        type=int,
+        default=0,
         help="Hold the constraint scale at zero for this many epochs before ramping.",
     )
     parser.add_argument(
-        "--head-normalize", action="store_true",
+        "--head-normalize",
+        action="store_true",
         help="Read the flux head's inputs in units of the layer's working flux magnitude.",
     )
     parser.add_argument(
-        "--head", choices=(HEAD, AUX_HEAD), default=HEAD,
+        "--head",
+        choices=(HEAD, AUX_HEAD),
+        default=HEAD,
         help=(
             "Which phenotype the cell trains, selects and scores on. 'betaxanthin' is the "
             "wave-1 to wave-5 protocol and the default; 'mulleder19' moves all three to "
@@ -1859,18 +2874,66 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--no-feasibility", action="store_true",
+        "--aa-readout",
+        choices=AA_READOUTS,
+        default=AA_READOUT_TURNOVER,
+        help=(
+            "Which quantity of the flux layer the 19 amino acids are read off: "
+            "'flux_metabolite' is wave 6's turnover readout with a free affine per column; "
+            "'flux_concentration' predicts the layer's own learned log10 molar "
+            "concentration with no parameters on the mean, and needs an ANCHORED arm."
+        ),
+    )
+    parser.add_argument(
+        "--dist",
+        choices=DISTS,
+        default="crps",
+        help=(
+            "Distributional loss on the head: Gaussian CRPS (default) or the 019 pinball "
+            "loss over 19 quantiles, whose point estimate is the predictive median. "
+            "'quantile' applies to the MLP heads only, not to a flux readout."
+        ),
+    )
+    parser.add_argument(
+        "--conc-space",
+        choices=CONC_SPACES,
+        default=CONC_SPACE_MIXTURE,
+        help=(
+            "Whole-cell 'mixture' over every intracellular compartment species of each "
+            "amino acid, weighted by fractional volume, or cytosol-only as the control."
+        ),
+    )
+    parser.add_argument(
+        "--conc-lower-m",
+        type=float,
+        default=CONC_LOWER_M,
+        help="Floor of the flux layer's concentration window, in molar.",
+    )
+    parser.add_argument(
+        "--conc-upper-m",
+        type=float,
+        default=CONC_UPPER_M,
+        help=(
+            "Ceiling of that window, in molar. The shipped 1e-2 leaves 10.6 percent of "
+            "Mulleder's measurements unreachable; see mulleder_concentration_window.json."
+        ),
+    )
+    parser.add_argument(
+        "--no-feasibility",
+        action="store_true",
         help=(
             "Skip the two feasibility passes at the selected epoch. They add one forward "
             "pass over the test split and one over the whole dataset."
         ),
     )
     parser.add_argument(
-        "--no-checkpoint", action="store_true",
+        "--no-checkpoint",
+        action="store_true",
         help="Do not write the selected-epoch trainable parameters to $DATA_ROOT.",
     )
     parser.add_argument(
-        "--wandb-group", default=None,
+        "--wandb-group",
+        default=None,
         help="Log this cell to W&B under the given group (project from WANDB_PROJECT).",
     )
     parser.add_argument(
@@ -1880,17 +2943,30 @@ def main() -> None:
 
     cfg = load_config()
     cell = build_cell(
-        args.arm, args.seed, cfg, epochs=args.epochs, crps=args.crps,
-        graph_reg=args.graph_reg, abort_on_collapse=args.abort_on_collapse,
-        aux_mulleder=args.aux_mulleder, attention_mask=args.attention_mask,
-        pert_heads=args.pert_heads, layers=args.layers,
+        args.arm,
+        args.seed,
+        cfg,
+        epochs=args.epochs,
+        crps=args.crps,
+        graph_reg=args.graph_reg,
+        abort_on_collapse=args.abort_on_collapse,
+        aux_mulleder=args.aux_mulleder,
+        attention_mask=args.attention_mask,
+        pert_heads=args.pert_heads,
+        layers=args.layers,
         learnable_embedding=args.learnable_embedding,
-        kcat_tier=args.kcat_tier, thermo_source=args.thermo_source,
+        kcat_tier=args.kcat_tier,
+        thermo_source=args.thermo_source,
         constraint_warmup_epochs=args.constraint_warmup_epochs,
         constraint_scale=args.constraint_scale,
         constraint_delay_epochs=args.constraint_delay_epochs,
         head_normalize=args.head_normalize,
         head=args.head,
+        aa_readout=args.aa_readout,
+        dist=args.dist,
+        conc_space=args.conc_space,
+        conc_lower_m=args.conc_lower_m,
+        conc_upper_m=args.conc_upper_m,
     )
     dataset = build_dataset()
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)
@@ -1900,17 +2976,45 @@ def main() -> None:
     if args.wandb_group:
         import wandb
 
+        # The repo's run-naming standard (019's train_cgt_multitask.py): the run NAME and
+        # GROUP are `<host>-<slurm job id>_<sha256 of the config>`, which is unique,
+        # reproducible and says nothing a reader has to parse; everything that
+        # distinguishes a run (wave, machine, head, arm, seed, free tag) goes in TAGS, so
+        # the W&B table is filtered by tag, never by parsing a name.
+        wandb_config = cell.model_dump()
+        job_id = os.environ.get("SLURM_JOB_ID") or str(uuid.uuid4())
+        hostname = socket.gethostname()
+        hashed_cfg = hashlib.sha256(
+            json.dumps(wandb_config, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()
+        wandb_group = f"{hostname}-{job_id}_{hashed_cfg}"
+        wandb_tags = [
+            "027",
+            "bxfx",
+            args.wandb_group,
+            hostname,
+            cell.head,
+            cell.arm,
+            f"seed{cell.seed}",
+        ]
+        if args.tag:
+            wandb_tags.append(args.tag.lstrip("_"))
         run = wandb.init(
             project=os.getenv("WANDB_PROJECT", "torchcell_027_bxfx"),
-            group=args.wandb_group,
-            name=f"{cell.arm}{args.tag}-s{cell.seed}",
-            tags=["027", "bxfx", cell.arm, f"seed{cell.seed}", args.wandb_group],
-            config=cell.model_dump(),
-            mode=os.getenv("WANDB_MODE", "online"),
+            group=wandb_group,
+            name=f"run_{wandb_group}",
+            tags=wandb_tags,
+            config=wandb_config,
+            mode=cast(Any, os.getenv("WANDB_MODE", "online")),
         )
     out = args.out or f"single_{cell.arm}{args.tag}_s{cell.seed}.json"
     result = run_cell(
-        cell, cfg, dataset, pinned, report, dump_predictions=not args.smoke,
+        cell,
+        cfg,
+        dataset,
+        pinned,
+        report,
+        dump_predictions=not args.smoke,
         on_epoch=(lambda row: wandb.log(row, step=int(row["epoch"]))) if run else None,
         compute_feasibility=not args.no_feasibility,
         checkpoint_stem=None if args.no_checkpoint else osp.splitext(out)[0],
@@ -1945,10 +3049,15 @@ def main() -> None:
             )
         if "feasibility" in result and result["feasibility"]["available"]:
             summary.update(
-                flatten_feasibility_for_wandb(
-                    FeasibilityBlock(**result["feasibility"])
-                )
+                flatten_feasibility_for_wandb(FeasibilityBlock(**result["feasibility"]))
             )
+        if result["concentration_audit"]["available"]:
+            for group, payload in result["concentration_audit"]["groups"].items():
+                summary[f"conc/{group}/mean_spearman"] = payload["mean_spearman"]
+                summary[f"conc/{group}/mean_pearson"] = payload["mean_pearson"]
+                summary[f"conc/{group}/frac_pred_at_ceiling"] = payload[
+                    "frac_pred_at_ceiling"
+                ]
         run.summary.update(summary)
         result["wandb_run_id"] = run.id
         result["wandb_url"] = run.url
@@ -1969,14 +3078,25 @@ def main() -> None:
             f"{result['test']['pinned']['n_records_with_any_feature']} genotypes)"
         )
     )
+    conc_line = ""
+    if result["concentration_audit"]["available"]:
+        pinned = result["concentration_audit"]["groups"]["pinned_test"]
+        conc_line = (
+            f"\n  learned concentration vs Mulleder, pinned test: mean spearman "
+            f"{pinned['mean_spearman']:+.4f}, mean pearson {pinned['mean_pearson']:+.4f}, "
+            f"frac at window ceiling {pinned['frac_pred_at_ceiling']:.3f}"
+        )
     feas_line = ""
     if "feasibility" in result and result["feasibility"]["available"]:
         groups = result["feasibility"]["groups"]
         key = "all_top100" if "all_top100" in groups else "all"
         feas_line = f"\n  feasibility[{key}] {groups[key]['fractions']}"
-    print(f"wrote {path}\n"
-          f"  select_epoch {result['select_epoch']} ({result['select_rule']})\n"
-          f"{headline}{feas_line}", flush=True)
+    print(
+        f"wrote {path}\n"
+        f"  select_epoch {result['select_epoch']} ({result['select_rule']})\n"
+        f"{headline}{conc_line}{feas_line}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

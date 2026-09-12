@@ -86,7 +86,7 @@ def _layer(**overrides: Any) -> FluxLayer:
     cfg = FluxLayerConfig(hidden_dim=8, reaction_embed_dim=4, **overrides)
     gem = _toy_gem()
     kwargs: dict[str, Any] = {}
-    if cfg.parameterization.startswith(("nullspace", "projection")):
+    if cfg.parameterization.startswith(("nullspace", "projection", "fluxforce")):
         kwargs["null_space"] = null_space_basis(gem.s)
     return FluxLayer(
         gem,
@@ -1197,3 +1197,279 @@ def test_real_reaction_covariance_row_norms_equal_the_tabulated_sigma():
     assert torch.allclose(norms[covered], table.sigma[covered], atol=1e-3, rtol=1e-4)
     assert cov.n_components == 590
     assert int(covered.sum()) == 1755
+
+
+# --------------------------------------------------------------------------------------
+# THE FLUX-FORCE CHANNEL (2026-09-11). The second law as a smooth, differentiable coupling
+# rather than as a sign clamp on the box.
+# --------------------------------------------------------------------------------------
+
+
+def _fluxforce_layer(steps: int = 20, end: str = "box", **overrides: Any) -> FluxLayer:
+    """The flux-force head on the toy network, anchored, ending where the caller says."""
+    return _layer(
+        parameterization=f"fluxforce_k{steps}_{end}",
+        thermo_mode=ThermoMode.ANCHORED,
+        **overrides,
+    )
+
+
+def test_parse_reads_the_fluxforce_channel_and_its_two_suffixes():
+    """The string is the only channel an arm has, so it must carry K and the exact end."""
+    from torchcell.metabolism.flux_layer import parse_parameterization
+
+    plain = parse_parameterization("fluxforce", 5)
+    assert (plain.kind, plain.projection_steps, plain.projection_end) == (
+        "fluxforce",
+        5,
+        None,
+    )
+    full = parse_parameterization("fluxforce_k20_box", 5)
+    assert (full.kind, full.projection_steps, full.projection_end) == (
+        "fluxforce",
+        20,
+        "box",
+    )
+    assert parse_parameterization("fluxforce_balance", 5).projection_end == "balance"
+    # No `tdg` token: stacking a sign clamp on the flux-force relation would clip the very
+    # function whose gradient the channel exists to deliver.
+    with pytest.raises(ValueError, match="parameterization"):
+        parse_parameterization("fluxforce_k20_box_tdg", 5)
+
+
+def test_fluxforce_runs_every_priced_reaction_downhill_before_the_projection():
+    r"""``v = m f(dG)`` with ``m >= 0`` gives ``v dG <= 0`` identically, with no clamp."""
+    layer = _fluxforce_layer()
+    out = layer(*_inputs())
+    v_pre, delta_g = out["v_pre_projection"], out["delta_r_g"]
+    active = layer.delta_r_g0_mask & (~layer.thermo_exempt)
+    assert bool(active.any())
+    assert float((v_pre[:, active] * delta_g[:, active]).max()) <= 1e-6
+    # And the pre-projection flux is already inside the genotype box, so the deletion and
+    # the capacity bound bite before anything else runs.
+    assert float((v_pre - out["ub"]).max()) <= 1e-6
+    assert float((out["lb"] - v_pre).max()) <= 1e-6
+
+
+def test_fluxforce_magnitude_is_bounded_by_the_genotype_box():
+    """``|v| <= max(|lb|, |ub|)``, so the box, not the force law, sets the scale."""
+    layer = _fluxforce_layer()
+    out = layer(*_inputs())
+    ceiling = torch.maximum(out["lb"].abs(), out["ub"].abs())
+    assert float((out["v_pre_projection"].abs() - ceiling).max()) <= 1e-6
+
+
+def test_fluxforce_goes_quiet_near_equilibrium_instead_of_being_pinned():
+    r"""``f(dG) -> 0`` smoothly, which is what the directional box spends a bound on.
+
+    Measured on the toy network: the priced reactions sit at ``|dG| = 10`` kJ/mol, where
+    ``|f| = 0.96``, and moving them to ``0.1`` kJ/mol takes ``|f|`` to ``0.02``. The
+    directional box makes no distinction between the two, and constrains both.
+    """
+    layer = _fluxforce_layer()
+    far = layer.flux_force_efficacy(torch.tensor([-10.0, 10.0]))
+    near = layer.flux_force_efficacy(torch.tensor([-0.1, 0.1]))
+    assert float(far.abs().min()) > 0.9
+    assert float(near.abs().max()) < 0.05
+    assert float(layer.flux_force_efficacy(torch.zeros(1)).abs().max()) == 0.0
+    # Odd, and monotone decreasing: the sign is structural rather than a convention.
+    grid = torch.linspace(-50.0, 50.0, 101)
+    f = layer.flux_force_efficacy(grid)
+    assert torch.allclose(f, -layer.flux_force_efficacy(-grid), atol=1e-6)
+    assert bool((f[1:] - f[:-1] <= 0).all())
+
+
+def test_fluxforce_passes_gradient_to_the_concentrations_and_the_thermo_box_does_not():
+    r"""THE FINDING THIS CHANNEL WAS BUILT ON, pinned as a test.
+
+    ``_thermo_tighten`` decides the sign with ``delta_g > eps`` inside ``torch.where``, a
+    step function, so no gradient reaches ``log_c_base`` through the box: the model cannot
+    move a metabolite pool to license a direction along that path, and the docstring claim
+    that it can is false for it. The flux-force relation is differentiable everywhere, so
+    the same derivative is nonzero. The loss here is a function of the FLUX alone, which is
+    what isolates the parameterization: through the soft hinge ``c_thermo`` both heads pass
+    gradient, and that is a different path.
+    """
+    torch.manual_seed(11)
+    inputs = _inputs()
+
+    force = _fluxforce_layer()
+    grad_force = torch.autograd.grad(
+        force(*inputs)["v"].sum(), force.log_c_base, allow_unused=True
+    )[0]
+    assert grad_force is not None
+    assert float(grad_force.abs().sum()) > 0.0
+
+    tdg = _layer(
+        parameterization="projection_k20_box_tdg", thermo_mode=ThermoMode.ANCHORED
+    )
+    grad_tdg = torch.autograd.grad(
+        tdg(*inputs)["v"].sum(), tdg.log_c_base, allow_unused=True
+    )[0]
+    assert grad_tdg is None or float(grad_tdg.abs().sum()) == 0.0
+
+
+def test_fluxforce_gradients_still_reach_the_gene_tokens():
+    """The genotype chain is untouched: availability and capacity still move the flux."""
+    layer = _fluxforce_layer()
+    h, ctx, idx, idx_batch = _inputs()
+    h.requires_grad_(True)
+    layer(h, ctx, idx, idx_batch)["v"].pow(2).sum().backward()
+    assert h.grad is not None and float(h.grad.abs().sum()) > 0.0
+
+
+def test_fluxforce_deletion_still_zeros_its_reaction():
+    """``c_j = 0`` collapses the box, so the magnitude is zero whatever the energy says."""
+    layer = _fluxforce_layer(end="box")
+    out = layer(*_inputs(deleted=0))
+    assert torch.allclose(out["v"][:, 1], torch.zeros(4), atol=1e-6)
+
+
+def test_fluxforce_balances_mass_exactly_at_the_balance_end():
+    """The channel changes the pre-projection flux and nothing about what the ends mean."""
+    layer = _fluxforce_layer(end="balance")
+    out = layer(*_inputs())
+    residual = layer._s_matmul(out["v"])[:, layer.independent_rows]
+    assert float(residual.abs().max()) < 1e-5
+
+
+def test_fluxforce_reports_the_sign_flips_the_projection_introduces():
+    """The one second-law violation this channel can produce is counted, not hidden."""
+    for end in ("balance", "box"):
+        layer = _fluxforce_layer(end=end)
+        out = layer(*_inputs())
+        frac = float(out["feas_sign_flip_frac"])
+        assert 0.0 <= frac <= 1.0
+        # And it is the honest accounting of the difference between the two fluxes: no
+        # reaction may be counted as flipped while both fluxes carry the same sign.
+        v, v_pre = out["v"], out["v_pre_projection"]
+        active = layer.delta_r_g0_mask & (~layer.thermo_exempt)
+        carrying = (v_pre.abs() > 1e-6) & active.unsqueeze(0)
+        flipped = (v * v_pre < 0) & carrying
+        expected = float(flipped.sum()) / max(float(carrying.sum()), 1.0)
+        assert abs(frac - expected) < 1e-9
+
+
+def test_fluxforce_samples_and_prices_every_draw():
+    """A trained cell can be switched into a sampler, as the projection head can."""
+    layer = _fluxforce_layer()
+    assert layer.latent_stochastic is False
+    layer.config.stochastic = True
+    assert layer.latent_stochastic is True
+    drawn = layer.sample(*_inputs(batch=3), n_samples=4)
+    assert drawn.v.shape == (4, 3, 4)
+    assert drawn.balance_ratio_median.shape == (4, 3)
+    assert drawn.parameterization == "fluxforce"
+    # The draws differ, which is the whole point of calling this rather than forward twice.
+    assert float((drawn.v[0] - drawn.v[1]).abs().max()) > 0.0
+
+
+def test_fluxforce_refuses_a_thermo_mode_that_prices_nothing():
+    """No fall back to the box head: the channel IS the reaction energy."""
+    with pytest.raises(ValueError, match="ANCHORED"):
+        _layer(parameterization="fluxforce_k5_box", thermo_mode=ThermoMode.OFF)
+
+
+def test_the_dissipation_rate_is_reported_even_when_it_is_not_penalized():
+    """Niebel's limit is a validation readout, so the rate is logged whether or not it binds.
+
+    Thermo-Flux takes the cellular Gibbs energy dissipation rate over the boundary fluxes;
+    a model that stays under the limit unasked has learned something, and one trained under
+    it has been told the answer. Reporting it unconditionally is what lets the two be told
+    apart, so this holds with ``use_dissipation_limit`` off.
+    """
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED, use_dissipation_limit=False)
+    out = layer(*_inputs(batch=5))
+    assert out["g_diss_per_sample"].shape == (5,)
+    assert float(out["c_dissipation"]) == 0.0
+    assert torch.allclose(out["thermo_g_diss_mean"], out["g_diss_per_sample"].mean())
+    # And the penalized arm reports the same number under its own key.
+    penalized = _layer(thermo_mode=ThermoMode.ANCHORED, use_dissipation_limit=True)
+    penalized.load_state_dict(layer.state_dict())
+    out_p = penalized(*_inputs(batch=5))
+    assert torch.allclose(out_p["g_diss"], out_p["thermo_g_diss_mean"])
+
+
+def test_the_force_end_makes_the_second_law_exact_and_reports_the_balance_residual():
+    r"""``fluxforce_k20_force``: the flux leaves through the direction clip, not the box.
+
+    The alternation ends on the balance projection, which is free to move a reaction across
+    zero; the last clip then puts every priced reaction back inside the box tightened to the
+    sign its energy licenses. Bounds and the second law are both exact after it, and the
+    balance residual is what is reported, which is the opposite trade from the box end.
+    """
+    layer = _fluxforce_layer(end="force")
+    assert layer.projection_end == "force"
+    out = layer(*_inputs())
+    v, delta_g = out["v"], out["delta_r_g"]
+    active = layer.delta_r_g0_mask & (~layer.thermo_exempt)
+    assert float((v[:, active] * delta_g[:, active]).max()) <= 1e-6
+    assert float(layer.feasibility(out)["thermo_violation_frac"].max()) == 0.0
+    assert float(out["feas_box_violation_frac"]) == 0.0
+    # The flips the balance projection introduced are still counted, because the clip
+    # removes them by zeroing a reaction rather than by making them not have happened.
+    assert 0.0 <= float(out["feas_sign_flip_frac"]) <= 1.0
+    assert "feas_thermo_box_emptied_frac" in out
+
+
+def test_the_force_end_still_passes_gradient_to_the_concentrations():
+    """The direction clip is a step, but it is no longer the ONLY path to ``log_c``.
+
+    This is what separates the force end from the ``tdg`` head. The magnitude and the
+    direction that enter the clip are already smooth functions of the reaction energy, so a
+    flux that the clip leaves alone still carries the derivative, and the model can move a
+    pool to change the direction it asks for.
+    """
+    torch.manual_seed(13)
+    layer = _fluxforce_layer(end="force")
+    grad = torch.autograd.grad(
+        layer(*_inputs())["v"].sum(), layer.log_c_base, allow_unused=True
+    )[0]
+    assert grad is not None and float(grad.abs().sum()) > 0.0
+
+
+def test_the_force_end_is_refused_on_the_projection_channel():
+    """There is no direction to restore on a head that never had one."""
+    with pytest.raises(ValueError, match="parameterization"):
+        _layer(parameterization="projection_k20_force", thermo_mode=ThermoMode.ANCHORED)
+
+
+def test_the_boxforce_end_carries_the_direction_through_the_whole_alternation():
+    r"""``fluxforce_k<N>_boxforce``: the direction is IN the box the alternation clips into.
+
+    The ``force`` end reaches exactness with a clip that runs after the projection, so the
+    projection converges against a set the flux does not end in and the last clip throws the
+    balance away. Here the box is tightened first, so every clip in the alternation is
+    already the directional one and the balance projection converges against the set that
+    holds. Bounds and the second law are exact and the balance residual is reported.
+    """
+    layer = _fluxforce_layer(end="boxforce")
+    out = layer(*_inputs())
+    v, delta_g = out["v"], out["delta_r_g"]
+    active = layer.delta_r_g0_mask & (~layer.thermo_exempt)
+    assert float((v[:, active] * delta_g[:, active]).max()) <= 1e-6
+    assert float(out["feas_box_violation_frac"]) == 0.0
+    # The reported box is the GENOTYPE box, which the tightened one sits inside, so a flux
+    # that respects the tightened bounds respects the reported ones by construction.
+    assert float((v - out["ub"]).max()) <= 1e-4
+    assert float((out["lb"] - v).max()) <= 1e-4
+    assert "feas_thermo_box_emptied_frac" in out
+
+
+def test_the_boxforce_end_still_passes_gradient_to_the_concentrations():
+    """Tightening the box is a step; the magnitude and the direction inside it are not."""
+    torch.manual_seed(17)
+    layer = _fluxforce_layer(end="boxforce")
+    grad = torch.autograd.grad(
+        layer(*_inputs())["v"].sum(), layer.log_c_base, allow_unused=True
+    )[0]
+    assert grad is not None and float(grad.abs().sum()) > 0.0
+
+
+def test_the_boxforce_end_samples_inside_the_directional_box():
+    """Every draw leaves through the tightened clip, so no draw runs uphill."""
+    layer = _fluxforce_layer(end="boxforce")
+    layer.config.stochastic = True
+    drawn = layer.sample(*_inputs(batch=3), n_samples=4)
+    assert float(drawn.thermo_violation_frac.max()) == 0.0
+    assert float(drawn.box_violation_frac.max()) == 0.0

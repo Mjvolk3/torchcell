@@ -40,6 +40,9 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         "GenePerturbation",
         "CrisprConstruct",
         "ExpressionRangeMultiplier",
+        "SegregantGenotype",
+        "SegregantParent",
+        "HaplotypeBlock",
     ),
     "environment": (
         "Environment",

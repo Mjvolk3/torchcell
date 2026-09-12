@@ -2752,6 +2752,15 @@ class MeasurementType(StrEnum):
       matched reference condition for each mutant"); negative = condition-hypersensitive,
       0 = fitness unchanged vs reference. Distinct from ``growth_rate`` (a rate, which is
       non-negative) -- a differential is routinely negative.
+    - ``control_regression_residual``: SIGNED residual of a strain's colony size in a test
+      condition regressed on the SAME strain's colony size on a matched control plate
+      (Bloom 2019 segregant panels: ``residuals(lm(s.radius.mean ~ ctrl.s.radius.mean))``
+      against the same-cross, same-batch YPD or YNB plate); 0 = grew exactly as predicted
+      from control growth. Distinct from ``differential_fitness`` (a plain subtraction of
+      two normalized fitnesses): a regression residual removes the control-plate slope, so
+      the two are not comparable numbers.
+    - ``colony_size``: ABSOLUTE end-point colony size (mean radius in image pixels for the
+      Bloom 2019 control plates); non-negative, unnormalized, scale is the assay's own.
     """
 
     log2_ratio = "log2_ratio"
@@ -2760,6 +2769,8 @@ class MeasurementType(StrEnum):
     categorical = "categorical"
     growth_rate = "growth_rate"
     differential_fitness = "differential_fitness"
+    control_regression_residual = "control_regression_residual"
+    colony_size = "colony_size"
 
 
 class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
@@ -2905,6 +2916,134 @@ class EnvironmentResponseExperiment(Experiment, ModelStrict):
     phenotype: EnvironmentResponsePhenotype
 
 
+# --------------------------------------------------------------------------- #
+# Segregant (meiotic recombinant) genotypes -- a haplotype MOSAIC, not a gene edit.
+#
+# A segregant of a biparental cross carries no engineered perturbation and is not
+# individually sequenced to a verified sequence, so neither ``Genotype`` (a list of
+# gene-keyed ``GenePerturbation``s, regex-validated on ``systematic_gene_name``) nor
+# ``SequenceVariantPerturbation`` (which promises a dereferenceable sequence) can
+# hold it. The honest record is the strain-level mosaic settled in
+# ``[[torchcell.datamodels.eqtl-data-model]]``: ``{(chr, start, end, parent, p)}``
+# against two sha256-pinned parent assemblies. ``SegregantGenotype`` is therefore a
+# SIBLING of ``Genotype`` (never a subclass): a ``Genotype`` subclass with an empty
+# ``perturbations`` list would read as wild-type S288C to every gene-keyed consumer,
+# encoding an inference as an observation. The sibling makes gene-keyed consumers
+# fail loudly instead. ``Genotype`` itself is untouched, and the new names appear
+# only in their own bodies and the module-level union assignments below, so no
+# served dataset's schema contract moves (``torchcell/provenance/schema_deps.py``).
+# --------------------------------------------------------------------------- #
+class HaplotypeBlock(ModelStrict):
+    """One run of consecutive markers called to the same parent on one chromosome.
+
+    ``start``/``end`` are the reference-coordinate positions of the FIRST and LAST
+    marker of the run (as the marker names carry them); the crossover lies somewhere
+    in the unassigned gap between two adjacent blocks and is deliberately not
+    resolved. ``posterior`` is the assignment probability in [0, 1] (1.0 for a
+    released hard call); ``n_markers`` is the number of markers the run spans.
+    """
+
+    chromosome: str
+    start: int
+    end: int
+    parent: Literal[1, 2]
+    posterior: float = 1.0
+    n_markers: int
+
+    @model_validator(mode="after")
+    def _check(self) -> "HaplotypeBlock":
+        """Positions are ordered, the posterior is a probability, the run is non-empty."""
+        if self.start < 1 or self.end < self.start:
+            raise ValueError(
+                f"HaplotypeBlock needs 1 <= start <= end, got {self.start}..{self.end}"
+            )
+        if not 0.0 <= self.posterior <= 1.0:
+            raise ValueError(f"posterior must be in [0, 1], got {self.posterior}")
+        if self.n_markers < 1:
+            raise ValueError(f"n_markers must be >= 1, got {self.n_markers}")
+        return self
+
+
+class SegregantParent(ModelStrict):
+    """One parent of a biparental cross, pinned to a sha256-anchored assembly.
+
+    ``name`` is the source's label verbatim (e.g. ``BYa``, ``RMx``); ``peter_strain_id``
+    is the 1011-collection (Peter 2018) strain id when the parent is one of those
+    isolates (None for the S288C-derived BY); ``assembly_member`` names the assembly
+    file (a member path inside the pinned 1011 assemblies tarball, or the S288C
+    reference) and ``assembly_sha256`` the pinned container; ``engineered_background``
+    is the parent's marker/deletion genotype as the source states it, verbatim.
+    """
+
+    name: str
+    peter_strain_id: str | None = None
+    assembly_member: str
+    assembly_sha256: str
+    engineered_background: str
+
+
+class SegregantGenotype(ModelStrict):
+    """Strain-level haplotype mosaic of one haploid segregant from a two-parent cross.
+
+    ``blocks`` partition the called markers of every chromosome into parent-assigned
+    runs (see ``HaplotypeBlock``); the per-marker call matrix is a derived view
+    (re-expand each block at the cross's marker positions). ``call_method`` records
+    how the released calls were produced (quoted from the source's code), and
+    ``marker_matrix_sha256`` pins the released matrix the blocks were encoded from.
+    """
+
+    cross: str
+    segregant_id: str
+    parent_1: SegregantParent
+    parent_2: SegregantParent
+    blocks: list[HaplotypeBlock]
+    call_method: str
+    marker_matrix_sha256: str
+
+    @field_validator("blocks", mode="after")
+    @classmethod
+    def _check_blocks(cls, blocks: list[HaplotypeBlock]) -> list[HaplotypeBlock]:
+        """Per chromosome: blocks are in ascending order, non-overlapping, and alternate
+        parents (two adjacent runs of the same parent would be one run).
+        """
+        if not blocks:
+            raise ValueError("SegregantGenotype needs at least one HaplotypeBlock")
+        by_chrom: dict[str, list[HaplotypeBlock]] = {}
+        for block in blocks:
+            by_chrom.setdefault(block.chromosome, []).append(block)
+        for chrom, runs in by_chrom.items():
+            for prev, cur in zip(runs, runs[1:]):
+                if cur.start <= prev.end:
+                    raise ValueError(
+                        f"{chrom}: blocks overlap or are unordered at {prev.end} -> {cur.start}"
+                    )
+                if cur.parent == prev.parent:
+                    raise ValueError(
+                        f"{chrom}: adjacent blocks share parent {cur.parent}; merge them"
+                    )
+        return blocks
+
+    @property
+    def n_blocks(self) -> int:
+        """Number of haplotype blocks across all chromosomes."""
+        return len(self.blocks)
+
+
+class SegregantGrowthExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (control) context for a segregant growth experiment."""
+
+    experiment_reference_type: str = "segregant_growth"
+    phenotype_reference: EnvironmentResponsePhenotype
+
+
+class SegregantGrowthExperiment(Experiment, ModelStrict):
+    """Growth of a haploid segregant (haplotype-mosaic genotype) in one environment."""
+
+    experiment_type: str = "segregant_growth"
+    genotype: SegregantGenotype  # type: ignore[assignment]  # sibling of Genotype, deliberately narrowed
+    phenotype: EnvironmentResponsePhenotype
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -2937,6 +3076,7 @@ ExperimentType = (
     | MetaboliteExperiment
     | ProteinAbundanceExperiment
     | EnvironmentResponseExperiment
+    | SegregantGrowthExperiment
 )
 
 ExperimentReferenceType = (
@@ -2954,6 +3094,7 @@ ExperimentReferenceType = (
     | MetaboliteExperimentReference
     | ProteinAbundanceExperimentReference
     | EnvironmentResponseExperimentReference
+    | SegregantGrowthExperimentReference
 )
 
 
@@ -2971,6 +3112,7 @@ EXPERIMENT_TYPE_MAP = {
     "metabolite": MetaboliteExperiment,
     "protein_abundance": ProteinAbundanceExperiment,
     "environment_response": EnvironmentResponseExperiment,
+    "segregant_growth": SegregantGrowthExperiment,
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -2987,6 +3129,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "metabolite": MetaboliteExperimentReference,
     "protein_abundance": ProteinAbundanceExperimentReference,
     "environment_response": EnvironmentResponseExperimentReference,
+    "segregant_growth": SegregantGrowthExperimentReference,
 }
 
 

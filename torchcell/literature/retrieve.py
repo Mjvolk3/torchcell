@@ -52,6 +52,30 @@ def direct_url(url: str) -> bytes:
     return _get(url)
 
 
+def zip_member(url: str, member: str, container_sha256: str) -> bytes:
+    """Retrieve one member file out of a zip archive served at ``url``.
+
+    The whole container is downloaded and its sha256 asserted against
+    ``container_sha256`` BEFORE any member is read, so a rebuild that meets a
+    re-packed archive (a Dropbox share re-zips on every request, and the share's
+    contents can change) fails loudly instead of silently yielding a different
+    member. The member bytes are returned as-is; the caller pins their own sha256.
+    """
+    import hashlib
+    import io
+    import zipfile
+
+    container = _get(url, timeout=1800.0)
+    got = hashlib.sha256(container).hexdigest()
+    if got != container_sha256:
+        raise ValueError(
+            f"zip container sha256 mismatch for {url}: got {got}, "
+            f"expected {container_sha256}"
+        )
+    with zipfile.ZipFile(io.BytesIO(container)) as archive:
+        return archive.read(member)
+
+
 def pmc_oa_api(pmcid: str) -> bytes:
     """Retrieve a PMC open-access package tarball via the OA API.
 
@@ -82,5 +106,6 @@ def pmc_oa_api(pmcid: str) -> bytes:
 RETRIEVERS: dict[str, Callable[..., bytes]] = {
     "torchcell.literature.retrieve.springer_esm": springer_esm,
     "torchcell.literature.retrieve.direct_url": direct_url,
+    "torchcell.literature.retrieve.zip_member": zip_member,
     "torchcell.literature.retrieve.pmc_oa_api": pmc_oa_api,
 }

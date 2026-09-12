@@ -96,3 +96,34 @@ The paper is bib-only in Zotero and no library key was created; if it is later a
 - YNB assay medium. The xls states `YNB | 2% glucose` for the YNB, pH 3 and pH 8 rows; the nitrogen source and the YNB trace-metal and salt rows are not stated and remain the shipped `YNB`'s open gaps.
 - The `a`/`x` suffixes on parent labels (`BYa`, `RMx`) are stored verbatim and not interpreted.
 - SO term for a haplotype block: not assigned; `HaplotypeBlock` carries no SO field until the id is verified against an SO release.
+
+### Build result (530,100 records)
+
+Dev build at `$DATA_ROOT/data/torchcell/bloom2019` (worktree commit `d67bdbe2`, clean tree; 23.3 min sequential, `io_workers=0`): 13,950 segregants x 38 conditions = **530,100** records; 4 references (one per control environment x measurement type); gene set 6,557 S288C genes spanned by the mosaics; `processed/lmdb` 1.9 GB, `processed/interned` 142 MB (13,950 interned mosaics plus the 38 environments and 4 references). `preprocess/block_counts.json` holds the per-segregant block counts.
+
+Blocks per segregant, measured on the built store (n = 13,950): min 45, median 106, mean 153.8, max 1,847. Per cross:
+
+| cross | n | min | median | mean | max |
+|---|---|---|---|---|---|
+| 375 | 876 | 64 | 107 | 136.8 | 1,095 |
+| A | 951 | 55 | 83 | 85.6 | 278 |
+| 376 | 709 | 52 | 114 | 199.8 | 1,847 |
+| B | 953 | 47 | 90 | 97.2 | 631 |
+| 377 | 841 | 63 | 107 | 217.4 | 1,525 |
+| 393 | 865 | 52 | 100 | 145.5 | 1,604 |
+| 381 | 944 | 45 | 94 | 117.2 | 1,231 |
+| 3008 | 795 | 54 | 114 | 171.2 | 1,690 |
+| 2999 | 936 | 72 | 124.5 | 141.0 | 986 |
+| 3000 | 896 | 59 | 115 | 179.6 | 1,599 |
+| 3001 | 648 | 69 | 143 | 242.5 | 1,719 |
+| 3049 | 884 | 56 | 114 | 142.5 | 1,224 |
+| 3003 | 899 | 58 | 101 | 149.1 | 1,304 |
+| 3004 | 867 | 47 | 117 | 189.7 | 1,429 |
+| 3043 | 943 | 52 | 100 | 112.4 | 1,070 |
+| 3028 | 943 | 60 | 122 | 184.7 | 1,360 |
+
+The plan's hypothesis that every cross would look like cross A (about 86 blocks, tracking crossovers plus chromosomes) is falsified: cross A is the lightest, the medians of the other 15 run from 90 to 143, and the means are pulled up by long tails of segregants with hundreds to 1,847 blocks. Hypothesis (untested): the tail is single-marker or few-marker runs from genotyping noise in the argmax hard calls, which a posterior threshold would collapse; the release carries no posteriors, so the blocks record the calls as released.
+
+### Admission (`kg_manifest admit`, measured)
+
+`python -m torchcell.knowledge_graphs.kg_manifest --manifest /scratch/projects/torchcell/database/kg_manifest.json admit --dataset Bloom2019Dataset --data-root /scratch/projects/torchcell-scratch` at worktree commit `d67bdbe2`: **ADMISSIBLE**. Closure 34 symbols, 10 novel (`AssayType`, `EnvironmentPhysicalPerturbation`, `EnvironmentResponsePhenotype`, `HaplotypeBlock`, `MeasurementType`, `PhysicalFactor`, `SegregantGenotype`, `SegregantGrowthExperiment`, `SegregantGrowthExperimentReference`, `SegregantParent`), 24 shared with served datasets; served datasets with schema drift 0; graph schema 0 changed, 2 added; adapter methods added 5, drift touching served datasets none. The served store was built at `513cbfa1`.

@@ -320,7 +320,9 @@ def main() -> None:
     legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
     col = {
         "kemmeren": PLOT_PALETTE[3],
-        "nadalA": PLOT_PALETTE[0],
+        # Blue for Nadal A within this figure: beside Kemmeren's yellow, the orange used
+        # for Nadal elsewhere is indistinguishable at the histogram fill opacity.
+        "nadalA": PLOT_PALETTE[4],
         "caudal": PLOT_PALETTE[2],
         "messner": PLOT_PALETTE[1],
     }

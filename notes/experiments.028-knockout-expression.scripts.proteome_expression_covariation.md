@@ -55,3 +55,9 @@ of Kemmeren's already-weak 0.04. "Caudal" was read as the Caudal 2024 pan-transc
 Density maps use white-to-palette colormaps (Messner red, Caudal purple, Kemmeren
 yellow, Nadal orange). The document now carries this as its own subsection
 (`sec:readouts-proteome`) with the July EDA numbers restated for context.
+
+## 2026.09.12 - Nadal A in palette blue within this figure
+
+Beside Kemmeren's yellow at the 45% fill opacity, the orange used for Nadal elsewhere was
+not distinguishable in panels a and b (author feedback), so Nadal A is palette blue
+(`PLOT_PALETTE[4]`) in every panel of this figure, including the f density map.

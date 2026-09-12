@@ -41,10 +41,14 @@ everywhere in the genome at once.
   diagonal, each variant acting on its own gene and usually through its promoter; trans
   hotspots appear as vertical bands where one regulatory variant moves hundreds of
   transcripts.
-  \textbf{e}, The consequence for a record, developed in Sec.~\ref{sec:ontology}.
+  \textbf{e}, What a record stores, as built for the Bloom 2019 segregant panels
+  (Sec.~\ref{sec:built}): the genotype is a \file{SegregantGenotype}, a sibling of
+  \file{Genotype} holding the mosaic as haplotype blocks against two pinned parent
+  assemblies, and the QTL table is not stored.
   Panels \textbf{b} and \textbf{d} are schematic rather than plotted from data. Composed
   from the sources in Sec.~\ref{sec:what} rather than redrawn from a published figure;
-  source \file{notes/assets/drawio/eqtl-experiment-and-genotype-inference.drawio}.}
+  source \file{notes/assets/drawio/eqtl-experiment-and-genotype-inference.drawio},
+  emitted by \file{notes/assets/drawio/eqtl-experiment-and-genotype-inference.gen.py}.}
   {fig:eqtl}
 
 \subsection{Two measurements and one inference\secstatus{todo}}\label{sec:tables}

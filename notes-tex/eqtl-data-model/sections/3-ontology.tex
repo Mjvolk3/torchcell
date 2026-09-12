@@ -135,3 +135,46 @@ promoter-variant gap already imposes, so the two should be resolved together.
   \item \textbf{Measure the cardinality cost} on a single Albert 2018 segregant before
     building anything.
 \end{enumerate}
+
+\subsection{What was built\secstatus{todo}}\label{sec:built}
+
+The mosaic was implemented on 2026-09-12 for the Bloom 2019 segregant panels (eLife
+8:e49212, doi 10.7554/eLife.49212; 16 crosses, 13,950 haploid segregants, 38 growth
+conditions), in \file{torchcell/datasets/scerevisiae/bloom2019.py}, and it departs from
+Sec.~\ref{sec:proposal} in one respect. The proposal called the cost ``a genuinely new
+perturbation type''. A perturbation leaf cannot carry a mosaic: \file{Genotype} sorts its
+perturbations on \file{systematic_gene_name} and every gene-keyed consumer walks that
+list, so a leaf with no gene either fails the regex or has to carry a name it does not
+have, and a \file{Genotype} with an empty list reads as wild-type S288C to every consumer
+that reads only the list. The mosaic is therefore a \emph{sibling} of \file{Genotype}:
+\file{SegregantGenotype} holds \file{HaplotypeBlock}s of (chromosome, start, end, parent,
+posterior, n\_markers) between two \file{SegregantParent}s pinned to sha256-anchored
+assemblies, and \file{SegregantGrowthExperiment} declares that class as its genotype.
+The base \file{Experiment} rejects a segregant dict, so the union resolves the class
+unambiguously and a gene-keyed consumer fails loudly rather than reading a segregant as
+unperturbed. The new classes enter only the module-level unions and maps, so no served
+dataset's schema contract moved and the admission gate reported the increment admissible.
+
+Three of the four properties in Sec.~\ref{sec:proposal} held as stated on the built
+store. Honest: the release is the R/qtl hard call, so every block carries posterior 1.0
+and the call method is quoted from the authors' code. Lossless: every one of the 13,950
+block sets re-expands to its released marker row, checked at L2. Linkage-preserving by
+construction. Compact needs a correction. Cross A, the BY $\times$ RM cross the estimate
+of Sec.~\ref{sec:proposal} was made for, has a median of 83 blocks per segregant, inside
+the $10^1$--$10^2$ range; the other 15 crosses run from 90 to 143 at the median, and the
+means are pulled to 100--240 by tails of segregants with hundreds to 1,847 blocks. A
+segregant is still a few kilobytes rather than $\sim10^4$ variants, so the cardinality
+argument stands, but the block count is not a property of meiosis alone. It is a
+hypothesis, untested here, that the tail is short runs from genotyping noise in the hard
+calls that a posterior threshold would collapse; the release carries no posteriors, so the
+blocks record the calls as released.
+
+Two items of Sec.~\ref{sec:todo} closed with the build and two stay open. The parent
+assemblies are an ingestion dependency: each parent is pinned to its member of the 1011
+assemblies tarball, and a parent absent from the member index raises. The cardinality
+cost was measured on the whole panel rather than on one Albert 2018 segregant. The
+intergenic question is not resolved but is no longer coupled to this class, since a
+mosaic is not a \file{GenePerturbation} and needs no gene; a cis-eQTL still has no gene
+to attach to, so per-variant attribution and the regulatory-DNA class remain one open
+decision. Ingesting the two matrices for Albert 2018 and Boocock 2025 is the natural next
+increment on the same genotype class.

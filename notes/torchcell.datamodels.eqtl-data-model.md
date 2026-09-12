@@ -181,3 +181,9 @@ route). Ledger, by annotation key:
 
 `make check` clean (8 citations resolve, 0 style violations); v2 published to the same
 Zotero collection.
+
+## 2026.09.12 - Figure and document updated for what was built
+
+The mosaic is implemented ([[torchcell.datasets.scerevisiae.bloom2019]], PR #364) and it differs from the 2026.08.26 design in one respect: it is a sibling genotype class, `SegregantGenotype` with `HaplotypeBlock`s between two `SegregantParent`s, not a new perturbation leaf. A perturbation leaf would have to satisfy `GenePerturbation`'s gene-name regex, and `Genotype.sort_perturbations` walks the list on gene names; a `Genotype` with an empty list would read as wild-type S288C. The sibling is added only to the unions and maps, so no served closure moved (schema-impact gate: five added symbols, one stale enum, no served loader).
+
+Panel e of the figure now states what is stored as built, and its title says so. The generator that emits the `.drawio` is now committed beside it as `notes/assets/drawio/eqtl-experiment-and-genotype-inference.gen.py`; the scratchpad copy it was run from had drifted behind the committed diagram (panel d width, the gene-conversion box position, the legend geometry, gridlines, dot jitter ranges), and it was reconciled cell by cell until regenerating reproduced the committed diagram exactly except panel e. Panels a to d are unchanged. Sec. 3 of the document gains "What was built": the sibling decision, the measured block counts (cross A median 83, the other 15 crosses 90 to 143 at the median with tails to 1,847, so "compact" holds in bytes but not as a property of meiosis alone), which of the what-to-do items closed, and that the intergenic question is decoupled from this class but still open.

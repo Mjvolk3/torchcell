@@ -382,3 +382,68 @@ clip back onto a face. An isotropic Gaussian prior in latent coordinates has no 
 the genotype's bounds, so it cannot be the anti-collapse term. The term that can is the one
 Step 2 is built on: entropy measured against the genotype's OWN box, which is maximized by
 the uniform distribution on the polytope rather than by a fixed width.
+
+### The GPU cost of K = 16, measured: 1.11x per epoch
+
+Job 1783 (K = 16, seed 2703) wrote epochs 5 to 10 in 300 s, so 60.0 s per epoch. Its
+deterministic partner job 1776, the same recipe and the same seed at K = 1, ran 80 epochs
+plus startup, test and the feasibility pass in 82 min 07 s wall, about 54 s per epoch. The
+ratio is 1.11, against the CPU benchmark's 11.1 for the layer alone.
+
+The gap between the two numbers is the point: on a GPU the flux layer is a small share of a
+step that is dominated by the transformer backbone, and the backbone does not see the extra
+rows. K = 16 is therefore nearly free here, so all three pairs run at K = 16 and the K = 4
+fallback is not needed. A cell is roughly 95 min, and the six run one at a time.
+
+### Job ledger
+
+| job | cell | K | `latent_stochastic` | seed | state |
+|---|---|---|---|---|---|
+| 1783 | `gh_wave8_samp_k16_s2703` | 16 | on | 2703 | COMPLETED, 01:23:22 |
+| 1785 | `gh_wave8_samp_k1_s2703` | 1 | on | 2703 | running |
+| 1776 | `gh_wave7_fill_proj_projection_s2703` | 1 | off | 2703 | COMPLETED, 01:22:07 (wave 7) |
+
+## 2026.09.12 - Step 1 first cell: the posterior decays slowly, and the draws matter MORE over training
+
+Job 1783, K = 16 at seed 2703, 80 epochs, completed in 1 h 23 min.
+
+| epoch | `latent_sigma_p50` | `flux_draw_pred_sd` | `c_kl` | `val_pred_sd_ratio` | `val_pearson` |
+|---|---|---|---|---|---|
+| 0 | 4.891e-2 | 8.61e-3 | 2.605 | 0.0011 | -0.0069 |
+| 10 | 4.245e-2 | 3.42e-3 | 2.649 | 0.0011 | +0.1337 |
+| 20 | 3.542e-2 | 4.38e-3 | 2.771 | 0.0181 | -0.0041 |
+| 40 | 2.901e-2 | 6.67e-3 | 2.972 | 0.3191 | +0.2410 |
+| 60 | 2.526e-2 | 8.02e-3 | 3.086 | 0.2537 | +0.2250 |
+| 76 | 2.306e-2 | 1.03e-2 | 3.177 | 0.4289 | +0.2487 |
+| 79 | 2.257e-2 | 8.45e-3 | 3.212 | 0.0153 | +0.0463 |
+
+Three readings, and the first corrects a hypothesis of mine from earlier today.
+
+**The posterior decays, but it does not collapse.** Sigma fell from 4.891e-2 to 2.257e-2
+over 80 epochs, a factor of 2.2, with the KL at an effective weight of exactly zero. I
+predicted a collapse from the 130x seen on the wave-6 `tdg_stoch` cell; at this budget and
+on this arm that is wrong, and the difference between the two cells is not isolated by
+anything measured here. What both share is the direction: with no prior at all, sigma only
+ever goes down.
+
+**The draws move the phenotype MORE as training proceeds, not less.**
+`flux_draw_pred_sd` fell to 3.42e-3 by epoch 10 while the head was still on the plateau,
+then ROSE to 1.03e-2 by epoch 76 even as sigma kept shrinking. The two quantities are
+different things, exactly as the Step 0 note said they could be: the head learned to read
+the flux, so the same latent spread reaches further into the prediction. A sampled arm
+cannot be diagnosed from the posterior width alone.
+
+**The cell escaped the mean plateau.** `val_pred_sd_ratio` crossed 0.05 around epoch 20 and
+reached 0.43 by epoch 76, with validation Pearson at +0.25. This is not a collapsed run.
+
+Scores at seed 2703, one seed, no conclusion drawn yet:
+
+| arm | job | select epoch | pinned test Spearman |
+|---|---|---|---|
+| K = 16, sampled | 1783 | 76 | 0.0440 |
+| K = 1, sampled | 1785 | running | pending |
+| K = 1, deterministic | 1776 | 75 | 0.1039 |
+
+The 019 replicate study puts the between-seed spread near 0.04, so the 0.06 gap between the
+K = 16 cell and the deterministic cell is at the noise scale at n = 1 and the within-pair
+number is not in yet. Nothing is concluded until all three pairs are scored.

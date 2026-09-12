@@ -27,31 +27,65 @@ and a free variable per reaction with no anchor for either.
 
 The measured argument for adding it anyway is promiscuity: underground reactions show
 roughly twice the $K_M$ at indistinguishable $k_{cat}$, so a $k_{cat}$-only model cannot
-tell a promiscuous side activity from a native one. The measured argument against is that no
-$K_M$ predictor beats the EC-median lookup (Section~\ref{sec:accuracy}), so these values are
-order-of-magnitude priors, not constants.
+tell a promiscuous side activity from a native one. The measured argument against is that
+only one of the four $K_M$ predictors clears the EC-median lookup under the admission rule
+(Section~\ref{sec:kinetic-tiers}), so these values are order-of-magnitude priors, not
+constants.
 
-\subsection{The thermodynamic gaps\secstatus{todo}}
+\subsection{What no method reaches\secstatus{todo}}
+\label{sec:unreachable}
 
-%% SOURCE: results/lipid_coverage.json (n_newly_priced_metabolites = 347 of 665),
-%% results/lipid_priced.json (dgf_route_difference_same_protonation_kj_per_mol mean
-%% -777.5), results/transport_terms.json (pipeline.n_with_nonzero_term = 326 of 1,468
-%% crossing; vs_shipped_kj.sign_agreement = 0.847 on 287; n_nonzero_only_shipped = 613).
-Four, in order of how much they bind.
+%% SOURCE: results/reaction_thermo_coverage_final.json (ceiling_ladder: denominator 3,847,
+%% n_closable 21, n_permanently_closed_reactions 291 with permanently_closed_reasons
+%% counted per blocking class and therefore overlapping; metabolite_reasons;
+%% flux_carrying), results/thermo_exclusions.json (by_reason),
+%% results/thermo_tier_d_probe.json (no refused structure reachable by reactant
+%% contribution or a surrogate inside the admitted spread), and
+%% results/kinetic_coverage_closure.json (ceiling: n_default_units 18,
+%% n_reachable_with_open_source_tools 0).
 
-\textbf{Novel compounds needed a licensed tool, and no longer do.} Uni-pKa on the simple
-enumeration template supplies the constants to 0.91 kJ\,mol$^{-1}$ through
-\texttt{pkas\_provided\_externally} (Section~\ref{sec:pka}). \textbf{What binds is reach
-rather than accuracy}: 347 of the 665 unpriced metabolites now carry a written structure and
-a price (Section~\ref{sec:lipids}), and 185 of the remaining 318 never can. The 48 values
-that came through the external route were written as neutral structures and priced with
-MolGpKa constants, so they still carry the 777.5\,kJ\,mol$^{-1}$ protonation-convention
-offset until they are resubmitted as their pH 7 major microspecies, which closes it to
-0.13\,kJ\,mol$^{-1}$.
+\textbf{312 of the 3{,}847 chemical reactions carry no energy, and 291 of them never will.}
+A reaction is permanently closed when every species blocking it is not a molecule: a
+placeholder formula naming a family of compounds, a SLIME backbone whose formula is a
+difference formula, or a residue inside a macromolecule. Counted by at least one blocking
+species of each class, those three hold 202, 96 and 3 reactions, and the counts overlap
+where a reaction is blocked by two of them.
+\textbf{The 21 that remain are the whole of what any further method could
+buy}, and the probe that measured them found none of the refused structures reachable by
+the reactant-contribution path or by a surrogate inside the admitted spread, so they need
+new data rather than new code (Section~\ref{sec:permanent}). Counted over the whole model
+the gap is 330 reactions, the extra 18 being exchange, demand, sink and biomass
+pseudoreactions for which a standard reaction energy has no meaning.
 
-\textbf{Coverage is 66.4 percent against the shipped table's 84.9}, up from 42.5 before the
-proton convention of Section~\ref{sec:thermo}, and 86.3 with the written lipid structures,
-which are at a single pH and not in the built table yet.
+\textbf{Five chemistries are refused by the group system rather than by the species.} The
+porphyrin macrocycle has no group, and it holds heme a, heme o, siroheme and ferroheme b;
+the sulfoxide of L-methionine S-oxide has none; the aryl phosphate of 4-nitrophenyl
+phosphate has none. The nitro group is the opposite failure and is worth keeping separate:
+the group exists and sits in the component-contribution null space with 0 of 631 training
+compounds carrying it, so the estimate has infinite variance rather than no value.
+Triphosphate is a third kind, decomposing nowhere and appearing in none of the 3{,}999
+training reactions, so the reactant contribution that prices phosphate and diphosphate
+despite their empty group vectors is closed to it too. \textbf{Curation cannot move any of
+these}: triphosphate's p$K_a$ ladder is measured, admitted and recorded, and it prices
+nothing on its own, because a ladder fixes a transform and there is no untransformed
+energy for it to act on.
+
+\textbf{Novel compounds needed a licensed tool and no longer do.} The selected p$K_a$
+cascade creates a compound eQuilibrator has never seen through
+\texttt{pkas\_provided\_externally}, and it priced 70 of the model's metabolites
+(Section~\ref{sec:pka}). \textbf{What binds is reach rather than accuracy}: the cascade on
+its own reaches only a species that already has a structure and lacks a ladder, so the
+structure writers and not the predictor are what moved coverage. The
+777.5\,kJ\,mol$^{-1}$ protonation-convention offset those values once carried is closed;
+they were resubmitted as their pH 7 major microspecies, which moved them by a median of
+1{,}585\,kJ\,mol$^{-1}$ and left a residual of 0.13.
+
+\textbf{Eighteen catalytic units run on the organism default and no open-source tool reaches
+any of them} (Section~\ref{sec:kinetic-tiers}). Of the 28 substrate rows behind them, 14
+carry an R-group placeholder, which is a curation decision in the model rather than a
+missing structure; 7 are macromolecular species with no formula and need a predictor that
+accepts a protein substrate, which none of the seven mirrored models is; and the substrate
+writer was run on the rest and refused each one.
 
 \textbf{Proton translocation still carries zero in every arm reported here.}
 \texttt{transport\_delta\_g\_source: computed} is off by default, so the 183

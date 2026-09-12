@@ -25,7 +25,7 @@ Four families here, matching the four properties in
 - **Provenance honesty** -- the ``ProvenanceGapMixin`` rule holds for EVERY subclass,
   and ``SourcedValue`` fields keep one name.
 
-Four tests are ``xfail(strict=True)``: each names a real defect found today, and each
+Three tests are ``xfail(strict=True)``: each names a real defect found today, and each
 flips to a hard failure the moment the defect is fixed, so the xfail cannot rot.
 Findings and rejected checks: [[torchcell.datamodels.ontology-checks]].
 """
@@ -256,17 +256,17 @@ def test_every_declared_node_class_is_emitted_by_the_adapter() -> None:
     assert sorted(declared - emitted) == []
 
 
-@pytest.mark.xfail(
-    reason="Environment.temperature is optional (torchcell/datamodels/schema.py:1518 "
-    "-- a curation layer that never carried it records a typed gap), but "
-    "CellAdapter dereferences it unguarded at torchcell/adapters/cell_adapter.py:612, "
-    "694, 769, 771, 793 and 795. A record that legally gaps temperature raises "
-    "AttributeError during the KG build, so the schema and the adapter disagree about "
-    "what a valid record is.",
-    strict=True,
-)
 def test_adapter_never_walks_through_an_optional_schema_field() -> None:
-    """No adapter chain dereferences past a field the schema allows to be None."""
+    """No adapter chain dereferences past a field the schema allows to be None.
+
+    ``Environment.temperature`` is optional because a curation layer that never carried
+    a temperature records a typed gap rather than a guess, and ``CellAdapter`` used to
+    walk straight through it in six chains: a record that legally gaps temperature
+    raised AttributeError during the KG build. Every one of those reads is now bound to
+    a local and guarded, so a gapped temperature yields no temperature node and no
+    ``temperature member of`` edge. The check is generic, so it also holds the line for
+    the next optional field the schema grows.
+    """
     traversals = oc.adapter_optional_traversals(ADAPTER_SOURCE)
     assert [t.model_dump() for t in traversals] == []
 

@@ -51,10 +51,15 @@ DISPLAY = {
     "turnup": "TurNuP",
     "deepenzyme": "DeepEnzyme",
     "ezkinetics": "EZKinetics",
+    "catpred": "CatPred",
 }
 #: Same map as the agreement figure, so a predictor keeps one color across the document.
+#: CatPred takes the muted tier's red, slot 13: the vivid six are spent, and the muted tier
+#: separates a new category by chroma rather than by the lightness the palette reserves for
+#: two levels of one series.
 PREDICTOR_COLOR_INDEX = {
     "dlkcat": 0, "unikp": 1, "eitlem": 2, "turnup": 3, "deepenzyme": 4, "ezkinetics": 5,
+    "catpred": 13,
 }
 
 
@@ -307,7 +312,6 @@ def main() -> None:
             "spread_median_decades"
         ]
     kcat_classes = pd.read_csv(osp.join(RESULTS, "ec_class_spread_k_cat.csv"))
-    km_classes = pd.read_csv(osp.join(RESULTS, "ec_class_spread_K_M.csv"))
     condition_pairs = pd.read_csv(osp.join(RESULTS, "condition_spread_pairs_k_cat.csv"))
     # The models' spread comes from the consensus table, which is per catalytic unit and is
     # the same quantity fig 7e draws, so the two figures cannot disagree.

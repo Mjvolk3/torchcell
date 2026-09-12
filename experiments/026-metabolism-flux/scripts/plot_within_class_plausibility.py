@@ -246,6 +246,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--parameter", default="k_cat", choices=["k_cat", "K_M"])
     parser.add_argument("--no-timestamp", action="store_true")
+    # Which plausibility study to draw. The default name is the one
+    # `PredictorSelection.from_study` reads and a running training cell resolves
+    # against, so a study that scores a new predictor is written as a versioned
+    # sibling and the figure is pointed at it rather than at a rewritten live file.
+    parser.add_argument("--suffix", default="")
     args = parser.parse_args()
 
     apply_paper_style()
@@ -255,13 +260,17 @@ def main() -> None:
     parameter = args.parameter
     symbol = r"$k_{cat}$" if parameter == "k_cat" else r"$K_M$"
 
-    with open(osp.join(RESULTS, "within_class_plausibility.json")) as handle:
+    with open(
+        osp.join(RESULTS, f"within_class_plausibility{args.suffix}.json")
+    ) as handle:
         report = json.load(handle)
     block = report["parameters"][parameter]
     ordered = sorted(
         block["shared_band"], key=lambda p: -block["shared_band"][p]["ec4"]["frac"]
     )
-    units = pd.read_csv(osp.join(RESULTS, "within_class_plausibility_betaxanthin.csv"))
+    units = pd.read_csv(
+        osp.join(RESULTS, f"within_class_plausibility_betaxanthin{args.suffix}.csv")
+    )
     units = units[units["parameter"] == parameter].reset_index(drop=True)
     units["predicted_log10"] = units["predicted_log10"].map(
         lambda s: json.loads(s.replace("'", '"'))

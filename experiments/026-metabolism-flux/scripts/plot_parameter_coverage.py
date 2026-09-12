@@ -89,6 +89,7 @@ KCAT_COVERAGE = {
     "UniKP": 0.9528,
     "EITLEM": 0.9528,
     "EZKinetics": 0.9528,
+    "CatPred": 0.9514,
     "DeepEnzyme": 0.9512,
     "TurNuP": 0.5515,
 }
@@ -96,8 +97,13 @@ KM_COVERAGE = {
     "UniKP": 0.9528,
     "EITLEM": 0.9528,
     "EZKinetics": 0.9528,
+    "CatPred": 0.9514,
     "Boost_KM": 0.9303,
 }
+
+#: Mutable so `--suffix` reaches `select_predictors` without threading an argument through
+#: every panel. The same idiom `run_ezkinetics_pinned.py` uses for its batch size.
+SUFFIX = [""]
 
 LADDER_LABELS = {
     "shipped_only": "GEM shipped",
@@ -175,7 +181,10 @@ def select_predictors(parameter: str) -> list[str]:
     came to hold two answers for K_M.
     """
     return PredictorSelection.from_study(
-        parameter, osp.join(EXPERIMENT_ROOT, PLAUSIBILITY_RESULT)
+        parameter,
+        osp.join(
+            EXPERIMENT_ROOT, PLAUSIBILITY_RESULT.replace(".json", f"{SUFFIX[0]}.json")
+        ),
     ).selected
 
 
@@ -484,7 +493,12 @@ def panel_f(ax: plt.Axes, report: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-timestamp", action="store_true")
+    # Which plausibility study to read. The default name is the live one the resolver
+    # and every spawned DataLoader worker resolve against, so a study that scores a new
+    # predictor is written as a versioned sibling and selected here by name.
+    parser.add_argument("--suffix", default="")
     args = parser.parse_args()
+    SUFFIX[0] = args.suffix
 
     apply_paper_style()
     plt.rcParams.update({"xtick.major.width": 0.5, "ytick.major.width": 0.5,
@@ -496,7 +510,9 @@ def main() -> None:
         report = json.load(handle)
     with open(osp.join(RESULTS, "unresolved_metabolites.json")) as handle:
         unresolved = json.load(handle)
-    with open(osp.join(RESULTS, "within_class_plausibility.json")) as handle:
+    with open(
+        osp.join(RESULTS, f"within_class_plausibility{args.suffix}.json")
+    ) as handle:
         plausible = json.load(handle)
     measured = plausible["measured_source_coverage"]
     surrogates = pd.read_parquet(osp.join(THERMO_DIR, "metabolite_dgf_surrogate.parquet"))
@@ -589,7 +605,9 @@ def main() -> None:
             for parameter in ("k_cat", "K_M")
         },
     }
-    with open(osp.join(RESULTS, "parameter_coverage_selected.json"), "w") as handle:
+    with open(
+        osp.join(RESULTS, f"parameter_coverage_selected{args.suffix}.json"), "w"
+    ) as handle:
         json.dump(report_out, handle, indent=2)
     print(json.dumps(report_out, indent=2))
     print(f"figure -> {osp.join(OUT_DIR, base)}.svg")

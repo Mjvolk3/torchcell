@@ -1,6 +1,7 @@
 {
   "parameter": "k_cat",
   "predictors": [
+    "catpred",
     "deepenzyme",
     "dlkcat",
     "eitlem",
@@ -10,12 +11,18 @@
   ],
   "n_genes_any": 1153,
   "n_genes_all_predictors": 980,
-  "spread_median_decades": 1.275519848455003,
-  "spread_p90_decades": 2.2285211549067276,
-  "spread_frac_above_1_decade": 0.7122448979591837,
-  "central_p10_p90_range_decades": 0.8664336275145836,
-  "spread_over_signal": 1.4721495195355097,
+  "spread_median_decades": 1.4092309991049503,
+  "spread_p90_decades": 2.4535214738476783,
+  "spread_frac_above_1_decade": 0.8010204081632653,
+  "central_p10_p90_range_decades": 0.8718433549197493,
+  "spread_over_signal": 1.616380960126336,
   "gene_level_spearman": {
+    "catpred|deepenzyme": 0.10432270768508072,
+    "catpred|dlkcat": 0.15406945066276473,
+    "catpred|eitlem": 0.3657070229485909,
+    "catpred|ezkinetics": 0.393389179135563,
+    "catpred|turnup": 0.3466775899411353,
+    "catpred|unikp": 0.43551765871872106,
     "deepenzyme|dlkcat": 0.2648588373953965,
     "deepenzyme|eitlem": 0.04953504794232082,
     "deepenzyme|ezkinetics": 0.011182344533073468,
@@ -38,12 +45,13 @@
   ],
   "within_class_band_decades": 0.7502902419306464,
   "frac_predictions_inside_within_class_band": {
+    "catpred": 0.6551724137931034,
     "deepenzyme": 0.5614035087719298,
     "dlkcat": 0.6842105263157895,
-    "eitlem": 0.7719298245614035,
-    "ezkinetics": 0.8421052631578947,
+    "eitlem": 0.7758620689655172,
+    "ezkinetics": 0.8448275862068966,
     "turnup": 0.6981132075471698,
-    "unikp": 0.8245614035087719
+    "unikp": 0.8275862068965517
   },
   "accuracy_vs_measured": {
     "dlkcat": {
@@ -56,22 +64,22 @@
       "frac_within_half_decade": 0.5789473684210527
     },
     "unikp": {
-      "n_pairs": 57,
-      "spearman": 0.7507940639355525,
-      "pearson_log10": 0.8593674939287208,
-      "median_abs_error_decades": 0.3078773443935152,
-      "median_bias_decades": -0.11664495136704134,
-      "frac_within_1_decade": 0.8947368421052632,
-      "frac_within_half_decade": 0.7192982456140351
+      "n_pairs": 58,
+      "spearman": 0.7492847708524288,
+      "pearson_log10": 0.8591313744510588,
+      "median_abs_error_decades": 0.28736684122566547,
+      "median_bias_decades": -0.11336667136874778,
+      "frac_within_1_decade": 0.896551724137931,
+      "frac_within_half_decade": 0.7241379310344828
     },
     "eitlem": {
-      "n_pairs": 57,
-      "spearman": 0.6027095364966775,
-      "pearson_log10": 0.8210721356891191,
-      "median_abs_error_decades": 0.23380083195294343,
-      "median_bias_decades": -0.006745972683160517,
-      "frac_within_1_decade": 0.7894736842105263,
-      "frac_within_half_decade": 0.7368421052631579
+      "n_pairs": 58,
+      "spearman": 0.6100532204612438,
+      "pearson_log10": 0.8212284785503254,
+      "median_abs_error_decades": 0.23020976684329564,
+      "median_bias_decades": -0.009049205293948287,
+      "frac_within_1_decade": 0.7931034482758621,
+      "frac_within_half_decade": 0.7413793103448276
     },
     "turnup": {
       "n_pairs": 53,
@@ -92,20 +100,29 @@
       "frac_within_half_decade": 0.42105263157894735
     },
     "ezkinetics": {
-      "n_pairs": 57,
-      "spearman": 0.7903675390948579,
-      "pearson_log10": 0.8985507539182261,
-      "median_abs_error_decades": 0.36937568643717467,
-      "median_bias_decades": -0.13815429181833883,
-      "frac_within_1_decade": 0.9122807017543859,
-      "frac_within_half_decade": 0.6491228070175439
+      "n_pairs": 58,
+      "spearman": 0.7950902897504567,
+      "pearson_log10": 0.8986314417138018,
+      "median_abs_error_decades": 0.3643852524806379,
+      "median_bias_decades": -0.1469846051716936,
+      "frac_within_1_decade": 0.9137931034482759,
+      "frac_within_half_decade": 0.6551724137931034
+    },
+    "catpred": {
+      "n_pairs": 58,
+      "spearman": 0.47045251880963146,
+      "pearson_log10": 0.5772614555899939,
+      "median_abs_error_decades": 0.48989707596359944,
+      "median_bias_decades": 0.18341090716849756,
+      "frac_within_1_decade": 0.7241379310344828,
+      "frac_within_half_decade": 0.5
     }
   },
   "accuracy_n_pairs": 57,
   "selection_effect": {
-    "median_spread_all_pairs_decades": 1.3398796633542787,
-    "median_spread_measured_pairs_decades": 1.3848981159611355,
-    "n_all_pairs": 3814,
-    "n_measured_pairs": 57
+    "median_spread_all_pairs_decades": 1.4480497175399734,
+    "median_spread_measured_pairs_decades": 1.5031634345461828,
+    "n_all_pairs": 3891,
+    "n_measured_pairs": 58
   }
 }

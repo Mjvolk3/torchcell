@@ -47,7 +47,7 @@ path; left unset it misses and the constructor tries to fetch \texttt{go.obo} fr
 The DLKcat implementation reproduces the authors' three released example values to four
 decimal places, and that check caught two defects that would otherwise have been invisible
 in a plausible-looking table. The first is the exponentiation base, which
-Section~\ref{sec:logbase} tabulates for all six predictors.
+Section~\ref{sec:logbase} tabulates for every predictor whose base was checked.
 
 \textbf{Multi-component SMILES are refused by the model itself.} Its fingerprint pass
 indexes a node list built only from bonded atoms, so a disconnected fragment, such as the
@@ -117,10 +117,11 @@ verified ones.
 \begin{table}[!htbp]
   \centering
   \footnotesize
-  \caption[Predictor status]{The six predictors named in Wu et al.'s Methods, what each
-  emits, and what it took to run here. ``Ships weights'' refers to the repository as
-  cloned; UniKP's fitted regressors are released separately on HuggingFace and are
-  mirrored alongside it.}
+  \caption[Predictor status]{The eight mirrored predictors, what each emits, and what it
+  took to run here. The first six are the set named in Wu et al.'s Methods; EZKinetics and
+  CatPred were added afterwards and have subsections of their own. ``Ships weights'' refers
+  to the repository as cloned; UniKP's fitted regressors are released separately on
+  HuggingFace and are mirrored alongside it.}
   \label{tab:predictors}
   \begin{tabular}{llll}
     \hline
@@ -132,6 +133,8 @@ verified ones.
     EITLEM-Kinetics & $k_{cat}$, $K_M$ & Zenodo, 12.3 GB & many checkpoints \\
     Boost\_KM & $K_M$ & yes, two regressors & ESM-1b variant is the one Wu ran \\
     DeepEnzyme & $k_{cat}$ & figshare & uses AlphaFold structures \\
+    EZKinetics & $k_{cat}$, $K_M$ & yes, 36 fitted models & the only condition-aware one \\
+    CatPred & $k_{cat}$, $K_M$, $K_i$ & S3 capsule, 10.2 GB & the only one with a variance \\
     \hline
   \end{tabular}
 \end{table}

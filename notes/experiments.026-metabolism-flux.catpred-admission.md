@@ -368,3 +368,99 @@ sample from them means anything.
   `results/kinetic_predictor_spread_with_catpred.json`,
   `results/predictor_vs_measured.{json,csv}` (regenerated, now eight predictors)
 - `$DATA_ROOT/models/kinetics/catpred/`, `$DATA_ROOT/data/torchcell/kinetics/catpred/`
+
+## 2026.09.12 - CatPred folded into every predictor comparison in the 026 report
+
+The admission study above put CatPred in two figures of its own. This round puts it in the
+figures the document already had, so a reader never sees a seven-predictor panel beside an
+eight-predictor claim.
+
+### What was regenerated, and whether the layout took it
+
+Every one of these took the eighth series without a layout change. No figure had to be
+restructured, and none was left out.
+
+| figure | script | how CatPred enters |
+| --- | --- | --- |
+| 5, `kinetics_fig3` | `plot_kinetic_distributions.py` | two more ECDF curves, one per parameter, on the two overlaid panels |
+| 6, `per_gene_agreement_k_cat` | `plot_per_gene_predictor_agreement.py` | picked up automatically: the script scans the kinetics mirror for any predictor with a processed parquet. The heat map goes 6x6 to 7x7 |
+| 7, `within_class_plausibility_k_cat` | `plot_within_class_plausibility.py --suffix _with_catpred` | a seventh bar and a seventh dot series; both legends wrap to two rows |
+| 8, `per_gene_agreement_K_M` | same as 6, `--parameter K_M` | heat map 4x4 to 5x5 |
+| 9, `within_class_plausibility_K_M` | same as 7, `--parameter K_M` | a fifth bar and dot series |
+| 10, `ec_class_variance` | `plot_ec_class_variance.py` | panels d and e gain a bar; the predictor set is derived from `predictor_vs_measured.csv` rather than listed |
+| 16, `kinetics_tiers` | `plot_kinetics_tiers.py --suffix _with_catpred` | panel c, the admission rule, goes from seven predictors to eight |
+| 17, `parameter_coverage` | `plot_parameter_coverage.py --suffix _with_catpred` | panel d gains a coverage bar per parameter; panel h goes from one admitted $K_M$ predictor to two |
+
+Figures 16 and 17 were not in the first pass and were reworked here rather than annotated
+around: both read the admitted set through `PredictorSelection.from_study`, so both gained
+the same `--suffix` the study and the spread script already had. Nothing writes to the live
+`within_class_plausibility.json` or `parameter_coverage_selected.json`; the CatPred-inclusive
+run writes `_with_catpred` siblings and the figures are pointed at those.
+
+### Color
+
+CatPred keeps **slot 13, the muted tier's red `#9A6B66`**, in all eight figures. The vivid
+six are spent on the incumbents, and the muted tier is the one the palette provides for a
+new CATEGORY, since it separates by chroma; slots 7 to 12 separate by lightness, which is
+reserved for two levels of one series. Slot 12, the muted orange, is the reference band in
+the agreement and plausibility figures and was not available.
+
+### What the numbers did
+
+Two things moved at once and they should not be confused. **Adding CatPred** widened the
+$k_{cat}$ disagreement and gave $K_M$ a second admitted predictor. **Regenerating
+`predictor_vs_measured.csv`**, which was stale against the 2026-09-11 coverage extension,
+recovered one measured pair for each of the five predictors that had been extended, so the
+scorable set moved 57 to 58 and the own-class denominator 47 to 48. DLKcat, DeepEnzyme and
+TurNuP were never rerun on the appended rows and still score on 47, 47 and 44.
+
+| quantity | before | after |
+| --- | --- | --- |
+| $k_{cat}$ per-gene spread, median | 1.28 decades over six | **1.41 over seven** |
+| $k_{cat}$ genes past one decade | 71 % | **80 %** |
+| $k_{cat}$ spread over consensus range | 1.47 over six | **1.62 over seven** |
+| $K_M$ per-gene spread, median | 0.81 over four | **0.94 over five** |
+| $K_M$ genes past one decade | 36 % | **46 %** |
+| $K_M$ spread over consensus range | 0.67 | **0.75** |
+| EC-median lookup, Spearman | 0.430 on 57 | 0.428 on 58 |
+| admitted for $K_M$ | EZKinetics | **EZKinetics, CatPred** |
+| $K_M$ spread over the ADMITTED set | undefined, one predictor | **0.30 decades, 8.6 % past a decade** |
+
+The last row is the one worth keeping. Until now the $K_M$ predicted tier was a single
+model's output and the figures had to borrow the EZKinetics-EITLEM pair to show a spread at
+all. There are now two admitted predictors and they agree to 0.30 decades.
+
+### Captions, tables and claims that had to change
+
+Three claims in the body were made false by the eighth predictor and were corrected rather
+than left standing:
+
+- "Every $k_{cat}$ predictor beats the EC-median lookup and no $K_M$ predictor does" is now
+  "for $K_M$ only CatPred does by a margin", with the note that 44 of its 58 pairs are its
+  own training data.
+- "Two predictors do not beat a lookup table" became "one does not and two barely do":
+  CatPred clears the lookup by 0.04 on Spearman.
+- "TurNuP is the exception to the median agreement" became two exceptions, TurNuP at
+  10.8 s$^{-1}$ and CatPred at 9.9 against the 4.0 to 4.6 the other five share.
+
+Three tables went to eight predictors: the status table (`tab:predictors`, which also gained
+the EZKinetics row it never had), the accuracy table (`tab:accuracy`, refreshed throughout
+and given an $n$ column because the denominators now differ by predictor) and the
+within-class table (`tab:within-class`). The log-base table gained CatPred's self-test row,
+and the scales table's model row went from 1.28 over six predictors to 1.41 over seven.
+
+### Gates
+
+`make` and `make check` pass, 0 errors and 0 warnings, 11 cited and 0 missing. Every
+regenerated figure was inspected on the rendered page rather than only as an SVG.
+`ruff check` clean on all six edited plot scripts, which included removing one pre-existing
+unused read in `plot_ec_class_variance.py`. Published to Zotero as version 12,
+`026-kinetics-thermodynamics_2026-09-12-15-28-29_30fafc22.pdf`.
+
+### Still open
+
+- The `_consensus` parquets are still the 3,552-unit seven-predictor build, so the
+  `all_predictors` reference row of `parameter_coverage_selected_with_catpred.json` (1.14
+  decades) describes the old unit set. It is quoted as a reference and not as a result.
+- Promoting `_with_catpred` to the shipped `within_class_plausibility.json` remains a
+  separate decision: it changes the tier a running training cell resolves.

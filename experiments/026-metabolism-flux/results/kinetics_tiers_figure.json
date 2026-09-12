@@ -1,7 +1,7 @@
 {
- "built_at": "2026-09-12T04:51:53.533727+00:00",
+ "built_at": "2026-09-12T20:24:56.915632+00:00",
  "closure_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/kinetic_coverage_closure.json",
- "selected_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/parameter_coverage_selected.json",
+ "selected_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/parameter_coverage_selected_with_catpred.json",
  "figure_svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/kinetics_tiers.svg",
  "figure_png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/kinetics_tiers.png",
  "n_units": 3728,
@@ -46,14 +46,14 @@
     0.7783255623483881
    ],
    "unikp": [
-    0.7446808510638298,
-    0.6049182435213335,
-    0.8474684602847101
+    0.75,
+    0.6121562707418944,
+    0.8507936638838656
    ],
    "eitlem": [
-    0.7659574468085106,
-    0.6277574233192427,
-    0.8639672547308048
+    0.7708333333333334,
+    0.6346073579331621,
+    0.8669217379114111
    ],
    "turnup": [
     0.6590909090909091,
@@ -66,21 +66,26 @@
     0.685890338284227
    ],
    "ezkinetics": [
-    0.8297872340425532,
-    0.6986022390928663,
-    0.9111363616891925
+    0.8333333333333334,
+    0.7042217148214244,
+    0.9130448646795889
+   ],
+   "catpred": [
+    0.6666666666666666,
+    0.5254010959289259,
+    0.7832321938215805
    ]
   },
   "K_M": {
    "unikp": [
-    0.46808510638297873,
-    0.3333168698001677,
-    0.6076761688338266
+    0.4791666666666667,
+    0.34471316079869785,
+    0.6167076779824889
    ],
    "eitlem": [
-    0.5106382978723404,
-    0.37242453646853413,
-    0.6472444506534676
+    0.5208333333333334,
+    0.3832923220175111,
+    0.6552868392013023
    ],
    "boost_km": [
     0.44680851063829785,
@@ -88,15 +93,20 @@
     0.5875454026742175
    ],
    "ezkinetics": [
-    0.6595744680851063,
-    0.5167092444816402,
-    0.7783255623483881
+    0.6666666666666666,
+    0.5254010959289259,
+    0.7832321938215805
+   ],
+   "catpred": [
+    0.6666666666666666,
+    0.5254010959289259,
+    0.7832321938215805
    ]
   }
  },
  "lookup_statistic": {
-  "k_cat": 0.5319148936170213,
-  "K_M": 0.48936170212765956
+  "k_cat": 0.5416666666666666,
+  "K_M": 0.5
  },
  "admitted": {
   "k_cat": [
@@ -105,7 +115,8 @@
    "unikp"
   ],
   "K_M": [
-   "ezkinetics"
+   "ezkinetics",
+   "catpred"
   ]
  },
  "default_rows_by_reason": {

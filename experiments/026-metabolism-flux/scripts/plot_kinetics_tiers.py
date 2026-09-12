@@ -70,8 +70,8 @@ RESULTS = osp.join(EXPERIMENT_ROOT, "026-metabolism-flux", "results")
 IMAGE_DIR = osp.join(ASSET_IMAGES_DIR, "026-metabolism-flux")
 
 CLOSURE_JSON = osp.join(RESULTS, "kinetic_coverage_closure.json")
-SELECTED_JSON = osp.join(RESULTS, "parameter_coverage_selected.json")
-PLAUSIBILITY_JSON = osp.join(RESULTS, "within_class_plausibility.json")
+SELECTED_BASE = "parameter_coverage_selected"
+PLAUSIBILITY_BASE = "within_class_plausibility"
 FIGURE_JSON = osp.join(RESULTS, "kinetics_tiers_figure.json")
 
 #: The variant the flux layer reads, and the order the others are drawn in.
@@ -103,6 +103,7 @@ PREDICTOR_LABEL = {
     "turnup": "TurNuP",
     "deepenzyme": "DeepEnzyme",
     "boost_km": "Boost\\_KM",
+    "catpred": "CatPred",
 }
 REASON_SHORT = {
     "R-group placeholder, the GEM defines the species only up to a substituent": "R-group\nplaceholder",
@@ -143,13 +144,19 @@ def _read(path: str) -> dict[str, object]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-timestamp", action="store_true")
+    # Which plausibility study to read. The default name is the live one the resolver
+    # and every spawned DataLoader worker resolve against, so a study that scores a new
+    # predictor is written as a versioned sibling and selected here by name.
+    parser.add_argument("--suffix", default="")
     args = parser.parse_args()
     stamp = "" if args.no_timestamp else f"_{timestamp()}"
 
     apply_paper_style()
     closure = _read(CLOSURE_JSON)
-    selected = _read(SELECTED_JSON)
-    plausibility = _read(PLAUSIBILITY_JSON)
+    selected = _read(osp.join(RESULTS, f"{SELECTED_BASE}{args.suffix}.json"))
+    plausibility = _read(
+        osp.join(RESULTS, f"{PLAUSIBILITY_BASE}{args.suffix}.json")
+    )
 
     kcat = cast(
         dict[str, object], cast(dict[str, object], closure["parameters"])["k_cat"]
@@ -374,7 +381,7 @@ def main() -> None:
     numbers = FigureNumbers(
         built_at=datetime.now(UTC).isoformat(),
         closure_json=CLOSURE_JSON,
-        selected_json=SELECTED_JSON,
+        selected_json=osp.join(RESULTS, f"{SELECTED_BASE}{args.suffix}.json"),
         figure_svg=f"{base}.svg",
         figure_png=f"{base}.png",
         n_units=n_units,

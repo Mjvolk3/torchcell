@@ -92,6 +92,10 @@ PANELS: list[dict[str, str]] = [
     {"letter": "i", "predictor": "eitlem", "parameter": "K_M", "title": "EITLEM-$K_M$"},
     {"letter": "j", "predictor": "ezkinetics", "parameter": "K_M",
      "title": "EZKinetics-$K_M$"},
+    {"letter": "k", "predictor": "catpred", "parameter": "k_cat",
+     "title": "CatPred-$k_{cat}$"},
+    {"letter": "l", "predictor": "catpred", "parameter": "K_M",
+     "title": "CatPred-$K_M$"},
 ]
 
 # The three-way split Wu et al.'s Fig. 3 draws. Reserved rather than drawn: their per-pair
@@ -108,10 +112,16 @@ OURS_COLOR = PLOT_PALETTE[0]  # amber, our independent run
 PREDICTOR_COLOR_INDEX = {
     "dlkcat": 0, "unikp": 1, "eitlem": 2, "turnup": 3, "deepenzyme": 4, "ezkinetics": 5,
     "boost_km": 6,
+    # The eighth predictor takes the MUTED tier's red, slot 13. Slots 7 to 12 differ from
+    # the vivid tier in lightness, which the palette reserves for validation against test
+    # within one series; slots 13 to 18 differ in chroma, which is the tier a new category
+    # takes. Slot 12, the muted orange, is the reference band's in the agreement figures.
+    "catpred": 13,
 }
 DISPLAY = {
     "dlkcat": "DLKcat", "unikp": "UniKP", "eitlem": "EITLEM", "turnup": "TurNuP",
     "deepenzyme": "DeepEnzyme", "ezkinetics": "EZKinetics", "boost_km": "Boost_KM",
+    "catpred": "CatPred",
 }
 
 

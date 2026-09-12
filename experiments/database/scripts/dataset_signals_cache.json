@@ -19,6 +19,11 @@
     "key": "1784100609:19603456",
     "n": 4735
   },
+  "data/torchcell/bloom2019#instance": {
+    "bytes": 30553785,
+    "key": "1789204958:1990766592",
+    "n": 530100
+  },
   "data/torchcell/carotenoid_ozaydin2013": {
     "bytes": 21891,
     "key": "1783565955:18526208",
@@ -210,8 +215,8 @@
     "n": 428573
   },
   "data/torchcell/ffa_xue2025#instance": {
-    "bytes": 22436,
-    "key": "1783966477:663552",
+    "bytes": 22619,
+    "key": "1784323845:733184",
     "n": 176
   },
   "data/torchcell/gene_essentiality_sgd": {
@@ -220,18 +225,18 @@
     "n": 1329
   },
   "data/torchcell/gene_essentiality_sgd#instance": {
-    "bytes": 15066,
-    "key": "1727829740:2572288",
+    "bytes": 17957,
+    "key": "1784402070:4997120",
     "n": 1329
   },
   "data/torchcell/isobutanol_screen_lopez2024#instance": {
-    "bytes": 113983,
-    "key": "1783923848:17092608",
+    "bytes": 118341,
+    "key": "1784323828:17092608",
     "n": 4554
   },
   "data/torchcell/isobutanol_validated_lopez2024#instance": {
-    "bytes": 9301,
-    "key": "1783923848:843776",
+    "bytes": 9530,
+    "key": "1784323836:843776",
     "n": 224
   },
   "data/torchcell/metabolite_dasilveira2014#instance": {
@@ -255,23 +260,23 @@
     "n": 1484
   },
   "data/torchcell/microarray_kemmeren2014#instance": {
-    "bytes": 396514214,
-    "key": "1784230261:1910484992",
+    "bytes": 396563076,
+    "key": "1784585923:954310656",
     "n": 1484
   },
   "data/torchcell/nadal_ribelles_perturbseq2025#instance": {
-    "bytes": 280373497,
-    "key": "1784005697:1294630912",
+    "bytes": 281036649,
+    "key": "1789099727:1295310848",
     "n": 6188
   },
   "data/torchcell/organic_acid_yoshida2012#instance": {
-    "bytes": 1679,
-    "key": "1783835023:73728",
+    "bytes": 1746,
+    "key": "1784323187:73728",
     "n": 17
   },
   "data/torchcell/proteome_messner2023#instance": {
-    "bytes": 135352593,
-    "key": "1783832342:531382272",
+    "bytes": 135702644,
+    "key": "1784695655:531910656",
     "n": 4699
   },
   "data/torchcell/proteome_zelezniak2018": {
@@ -345,8 +350,8 @@
     "n": 472
   },
   "data/torchcell/smf_oduibhir2014#instance": {
-    "bytes": 33173,
-    "key": "1783884576:4927488",
+    "bytes": 34586,
+    "key": "1784584625:4927488",
     "n": 1312
   },
   "data/torchcell/synth_lethality_yeast_synth_leth_db": {

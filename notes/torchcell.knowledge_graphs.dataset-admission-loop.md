@@ -110,3 +110,16 @@ All three sit on the same BY x RM genotype class, so once the mosaic genotype ex
 ### Environment datasets must resolve to the metabolism module's media
 
 `torchcell/metabolism/media.py` consumes the schema's `Media` directly: `media_to_bounds(Media, ExchangeIndex)` resolves each `MediaComponent` through its `Compound` annotations (ChEBI, InChIKey, name candidates) to an exchange reaction and an uptake bound, and ships `SM_FBA`, `SC_FBA`, `SC_URA_FBA`, `YPD_APPROX_FBA` and the SGA selection media as `Media` objects. So the alignment requirement for the 13 environmental datasets is concrete: their `Media` records must be built from typed `MediaComponent`s whose compounds carry identifiers `resolve_component` can match, not name-only media; an undefined ingredient (yeast extract, peptone) stays `definition=undefined` and is reported as unresolved rather than silently dropped. Chemical stresses are `EnvironmentPerturbation`s with a `SmallMoleculePerturbation`, not media components (`MediaComponentRole` is never a phenotypic consequence), and they have no exchange reaction; the metabolism arm sees only the base medium for those datasets, which is the correct statement of what FBA can represent. Hoepfner's 150 structure-bearing compounds are the test case.
+
+## 2026.09.12 - The 50th dataset through the gate: Bloom 2019
+
+Bloom 2019 is built as `Bloom2019Dataset` ([[torchcell.datasets.scerevisiae.bloom2019]]), and it is the first ontology extension rather than a new phenotype to go through the admission path. What the gates said, measured:
+
+- Schema-impact gate (`scripts/schema_impact_check.py --base HEAD`, run before the schema commit): five added symbols (`HaplotypeBlock`, `SegregantParent`, `SegregantGenotype`, `SegregantGrowthExperiment`, `SegregantGrowthExperimentReference`) and one modified enum, `MeasurementType` (two added members), graded stale, not breaking. Impacted loaders: the 12 unserved chemogenomic loaders that import `MeasurementType`; no served dataset. `Genotype` is untouched because the new classes appear only in their own bodies and in the module-level union and map assignments, which the surface walk does not fingerprint (`schema_deps.py`, top-level `ClassDef` only).
+- Graph schema: two added node classes (`segregant genotype`, `environment response phenotype`) and one edge that gained a source label (`genotype member of`). Additive.
+- Adapter: three added `CellAdapter` methods and their table entries; no served method changed.
+- The raw mirror `torchcell-raw/bloomRareVariantsContribute2019/` is the first raw key with a `manifest.json` (`Manifest`, 25 files, `RetrievalRecord` per file), and the Dropbox share needed a new retriever, `zip_member`, that pins the container's sha256 before reading a member.
+
+The one caveat the plan named: the `MeasurementType` fingerprint moved, and that is safe only because no served closure contains it today. If a chemogenomic dataset is admitted before this branch lands, `admit` must be re-run.
+
+The admission result and the L0-L4 report are recorded in the loader note once the build finishes.

@@ -156,6 +156,11 @@ module = [
     "bibtexparser", "bibtexparser.*",
     "biocypher", "biocypher.*",
     "calm", "calm.*",
+    # The CatPred fork of chemprop. Untyped, and deliberately NOT installed in the
+    # torchcell env: it lives in its own mirror under $DATA_ROOT and is reached by the
+    # pinned runner putting that mirror on sys.path, so the package still imports without
+    # it. Same arrangement as equilibrator_api below.
+    "catpred", "catpred.*",
     "cellpose", "cellpose.*",
     "cobra", "cobra.*",
     "dask", "dask.*",

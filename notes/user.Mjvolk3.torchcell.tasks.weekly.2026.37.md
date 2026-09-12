@@ -20,3 +20,7 @@ created: 1789139102284
 - [x] `notes-tex/metabolic-module-report` updated with the closed counts, the evidence-class mix per parameter table and the route-attribution figure: [[experiments.026-metabolism-flux.enzyme-constrained-thermodynamic-flux-layer]]
 - [ ] Rerun the betaxanthin parity on one kcat table; max-based balance tolerance; margin-tightened head cells 1736/1737 readout
 - [x] Wave 7 parity on the shipped verified kcat table (3 seeds, jobs 1743/1748/1752/1756/1757/1759, paired difference -0.0550, sd 0.0904) and the max-based balance rule on the wave-6 projection checkpoints, where the one cell that met the Genesis criterion meets it only on the median: [[experiments.027-betaxanthin-metabolic.wave7-parity-one-table]]
+
+## 2026.09.12
+
+- [x] CatPred admission study: mirrored the release, ran it on the pinned pairs, measured the training overlap, scored it against the Wilson rule (rejected for k_cat by one hit, admitted for K_M), and analyzed the per-prediction variance: [[experiments.026-metabolism-flux.catpred-admission]]

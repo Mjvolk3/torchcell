@@ -87,6 +87,13 @@ PREDICTOR_COLOR_INDEX = {
     # that can safely take a shade. This keeps all six k_cat predictors on distinct hues.
     "ezkinetics": 5,
     "boost_km": 6,
+    # CatPred is the seventh k_cat series and also a K_M series, so the union of slots it
+    # must avoid is 0 to 6 and there is no vivid hue left. It takes the MUTED tier's red,
+    # slot 13, rather than a dark shade: slots 7 to 12 differ from the vivid tier in
+    # LIGHTNESS, which the palette reserves for validation against test within one series,
+    # while slots 13 to 18 differ in CHROMA, which is the tier the palette provides for a
+    # new category. Slot 12, the muted orange, is the band's.
+    "catpred": 13,
 }
 
 # A DELIBERATE DEVIATION from the primary-before-secondary rule, recorded so it is not
@@ -131,6 +138,7 @@ DISPLAY = {
     "deepenzyme": "DeepEnzyme",
     "boost_km": "Boost_KM",
     "ezkinetics": "EZKinetics",
+    "catpred": "CatPred",
 }
 
 # The Btx-cassette as torchcell.datasets.scerevisiae.cachera2023 declares it, plus the

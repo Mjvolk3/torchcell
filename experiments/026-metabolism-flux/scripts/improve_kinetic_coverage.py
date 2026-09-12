@@ -133,8 +133,16 @@ VERIFIED_SUBDIR = "verified"
 #: admit are here too: the selection rule can only be re-decided later on a full matrix,
 #: and that needs every predictor to cover the same units.
 ALL_PREDICTORS = {
-    "k_cat": ["ezkinetics", "eitlem", "unikp", "dlkcat", "turnup", "deepenzyme"],
-    "K_M": ["ezkinetics", "eitlem", "unikp", "boost_km"],
+    "k_cat": [
+        "ezkinetics",
+        "eitlem",
+        "unikp",
+        "dlkcat",
+        "turnup",
+        "deepenzyme",
+        "catpred",
+    ],
+    "K_M": ["ezkinetics", "eitlem", "unikp", "boost_km", "catpred"],
 }
 
 #: The predictor whose table defines the reference pair set: the only one that carries
@@ -937,7 +945,7 @@ CEILING_ROUTES: dict[str, tuple[str, bool]] = {
         False,
     ),
     "macromolecular species with no formula in the GEM": (
-        "a predictor whose substrate may be a protein. All six mirrored predictors take a "
+        "a predictor whose substrate may be a protein. Every mirrored predictor takes a "
         "small-molecule SMILES, so this is a model class we do not have rather than an "
         "input we failed to find",
         False,

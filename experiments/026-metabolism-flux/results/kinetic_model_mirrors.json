@@ -9,6 +9,15 @@
     "weight_bytes": 145757000
   },
   {
+    "name": "catpred",
+    "emits": "k_cat,K_M,K_i",
+    "inputs": "sequence,substrate_smiles",
+    "runnable": true,
+    "blocked_by": "",
+    "n_files": 294,
+    "weight_bytes": 217832979
+  },
+  {
     "name": "deepenzyme",
     "emits": "k_cat",
     "inputs": "sequence,substrate_smiles,structure",

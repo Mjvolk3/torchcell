@@ -43,6 +43,7 @@ after ``improve_kinetic_coverage.py``, so the new units are included.
 
 from __future__ import annotations
 
+import argparse
 import os
 import os.path as osp
 from datetime import UTC, datetime
@@ -185,6 +186,18 @@ def unit_substrate_size(parameter: str, n_units: int) -> np.ndarray:
 
 
 def main() -> None:
+    # The admitted set is read from a plausibility file, and scoring a new predictor writes
+    # a versioned sibling of that file rather than replacing the one a running training
+    # cell resolves against. `--suffix` selects the sibling and names the output to match,
+    # so a spread computed over a different admitted set can never be mistaken for the
+    # shipped one.
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--suffix",
+        default="",
+        help="Appended to the plausibility input and the outputs, e.g. `_with_catpred`.",
+    )
+    args = parser.parse_args()
     source = YeastGEM()
     model = source.model
     gem = build_gem_tensors(model, model_dir=source.model_dir)
@@ -202,7 +215,9 @@ def main() -> None:
         ec_class.append(str(codes[0]).split(".")[0] if codes else "none")
     ec_class = np.array(ec_class)
 
-    plausibility = osp.join(EXPERIMENT_ROOT, PLAUSIBILITY_RESULT)
+    plausibility = osp.join(
+        EXPERIMENT_ROOT, PLAUSIBILITY_RESULT.replace(".json", f"{args.suffix}.json")
+    )
     sources: dict[str, str] = {plausibility: sha256_of(plausibility)}
     report: dict[str, Any] = {}
 
@@ -259,7 +274,7 @@ def main() -> None:
             "by_complex_size": [g.model_dump() for g in by_complex],
         }
 
-    out_path = osp.join(RESULTS_DIR, "kinetic_predictor_spread.json")
+    out_path = osp.join(RESULTS_DIR, f"kinetic_predictor_spread{args.suffix}.json")
     with open(out_path, "w") as handle:
         handle.write(
             SpreadReport(
@@ -269,7 +284,7 @@ def main() -> None:
             ).model_dump_json(indent=2)
         )
 
-    plot(report)
+    plot(report, args.suffix)
     for parameter, block in report.items():
         print(f"{parameter}: {block['predictors']} n={block['n_units_all_predictors']}")
         print(f"  overall {block['overall']}")
@@ -311,7 +326,7 @@ def panel(axis: Any, groups: list[dict], color: str, xlabel: str) -> None:
         spine.set_linewidth(0.5)
 
 
-def plot(report: dict[str, Any]) -> None:
+def plot(report: dict[str, Any], suffix: str = "") -> None:
     """One row of three panels for k_cat, one for K_M."""
     apply_paper_style()
     width = mm_to_in(PANEL_WIDTHS_MM["full"])
@@ -352,7 +367,7 @@ def plot(report: dict[str, Any]) -> None:
         )
     stamp = timestamp()
     os.makedirs(IMAGE_DIR, exist_ok=True)
-    base = osp.join(IMAGE_DIR, f"kinetic_predictor_spread_{stamp}")
+    base = osp.join(IMAGE_DIR, f"kinetic_predictor_spread{suffix}_{stamp}")
     figure.savefig(f"{base}.png", dpi=300)
     savefig_true_size_svg(figure, f"{base}.svg")
     plt.close(figure)

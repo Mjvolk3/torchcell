@@ -18,6 +18,13 @@ estimate of it.** They are still worth having: a predictor that cannot reproduce
 may well have trained on has a problem that no held-out set would forgive, and the RANKING
 between predictors is more trustworthy than any single value.
 
+For CatPred the fraction is not unknown, because it released its training table with a
+UniProt accession on every row: 50 of the 57 :math:`k_{cat}` pairs and 43 of the 57
+:math:`K_M` pairs appear in CatPred-DB on a substrate whose structure matches, and the
+released production weights were fit on train plus validation plus test
+(``catpred_training_overlap.py`` -> ``results/catpred_training_overlap.json``). No zero is
+claimed for the other six; their overlap is unmeasured, not absent.
+
 **The Arnold-group database cannot be compared and this is measured, not assumed.**
 `longEnzymeEngineeringDatabase2026` is EnzEngDB (Long et al., NAR, doi 10.1093/nar/gkaf1142).
 It was read in full and queried read-only on 2026-09-02: it flattens every assay output into
@@ -56,8 +63,16 @@ OED_PATH = osp.join(
     "oed_records.json",
 )
 
-KCAT_PREDICTORS = ("dlkcat", "unikp", "eitlem", "turnup", "deepenzyme", "ezkinetics")
-KM_PREDICTORS = ("unikp", "eitlem", "boost_km", "ezkinetics")
+KCAT_PREDICTORS = (
+    "dlkcat",
+    "unikp",
+    "eitlem",
+    "turnup",
+    "deepenzyme",
+    "ezkinetics",
+    "catpred",
+)
+KM_PREDICTORS = ("unikp", "eitlem", "boost_km", "ezkinetics", "catpred")
 
 #: Assay temperature window kept, in Celsius. The GEM's own physiology is 30 C, and a kcat
 #: measured at 65 C is a different quantity rather than a noisy version of the same one.

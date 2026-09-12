@@ -1,0 +1,139 @@
+{
+  "built_at": "2026-09-12T09:04:33.076247+00:00",
+  "mirror": "/scratch/projects/torchcell-scratch/models/kinetics/catpred",
+  "production_data_path": "../CatPred-DB/data/processed/splits_wpdbs/kcat-random_trainvaltest.csv",
+  "value_tolerance_decades": 0.1,
+  "measured_csv": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/predictor_vs_measured.csv",
+  "measured_csv_sha256": "68882c71ef7b438c2c84644f793a41c89e7b376f2c519a9842bf8e76e5970134",
+  "parameters": [
+    {
+      "parameter": "k_cat",
+      "db_path": "/scratch/projects/torchcell-scratch/models/kinetics/catpred/CatPred-DB/data/kcat/kcat-random_trainvaltest.csv",
+      "db_sha256": "0d917681dab50618655bb1b989ae98622a3ef095109d45901c3515a937c0e423",
+      "n_db_rows": 23151,
+      "n_db_accessions": 7226,
+      "n_db_scerevisiae_rows": 361,
+      "n_db_scerevisiae_accessions": 167,
+      "n_measured_pairs": 58,
+      "levels": [
+        {
+          "level": "enzyme",
+          "n_matched": 53,
+          "n_total": 58,
+          "frac": 0.9137931034482759,
+          "examples": [
+            "P00330/acetaldehyde",
+            "P00549/adp",
+            "P00549/phosphoenolpyruvate",
+            "P00890/acetyl-coa",
+            "P04802/atp",
+            "P04802/l-aspartate",
+            "P04806/d-glucose",
+            "P04807/d-glucose"
+          ]
+        },
+        {
+          "level": "pair",
+          "n_matched": 51,
+          "n_total": 58,
+          "frac": 0.8793103448275862,
+          "examples": [
+            "P00330/acetaldehyde",
+            "P00549/adp",
+            "P00549/phosphoenolpyruvate",
+            "P00890/acetyl-coa",
+            "P04802/atp",
+            "P04802/l-aspartate",
+            "P04806/d-glucose",
+            "P04807/d-glucose"
+          ]
+        },
+        {
+          "level": "value",
+          "n_matched": 40,
+          "n_total": 58,
+          "frac": 0.6896551724137931,
+          "examples": [
+            "P00330/acetaldehyde",
+            "P00890/acetyl-coa",
+            "P04802/l-aspartate",
+            "P04806/d-glucose",
+            "P04807/d-glucose",
+            "P07275/1-pyrroline-5-carboxylate",
+            "P10869/atp",
+            "P10963/atp"
+          ]
+        }
+      ],
+      "n_gem_accessions": 1148,
+      "n_gem_accessions_in_db": 109,
+      "n_gem_units": 3709,
+      "n_gem_units_all_genes_in_db": 204
+    },
+    {
+      "parameter": "K_M",
+      "db_path": "/scratch/projects/torchcell-scratch/models/kinetics/catpred/CatPred-DB/data/km/km-random_trainvaltest.csv",
+      "db_sha256": "f009e63a240db0b392bf76d57e5a6c05be51f1ed27d074cf16e476110a68a88b",
+      "n_db_rows": 41174,
+      "n_db_accessions": 12466,
+      "n_db_scerevisiae_rows": 767,
+      "n_db_scerevisiae_accessions": 316,
+      "n_measured_pairs": 58,
+      "levels": [
+        {
+          "level": "enzyme",
+          "n_matched": 48,
+          "n_total": 58,
+          "frac": 0.8275862068965517,
+          "examples": [
+            "P00330/acetaldehyde",
+            "P00549/adp",
+            "P00549/phosphoenolpyruvate",
+            "P00890/acetyl-coa",
+            "P04802/atp",
+            "P04802/l-aspartate",
+            "P04806/d-glucose",
+            "P04807/d-glucose"
+          ]
+        },
+        {
+          "level": "pair",
+          "n_matched": 44,
+          "n_total": 58,
+          "frac": 0.7586206896551724,
+          "examples": [
+            "P00330/acetaldehyde",
+            "P00549/adp",
+            "P00549/phosphoenolpyruvate",
+            "P00890/acetyl-coa",
+            "P04802/atp",
+            "P04802/l-aspartate",
+            "P04806/d-glucose",
+            "P04807/d-glucose"
+          ]
+        },
+        {
+          "level": "value",
+          "n_matched": 30,
+          "n_total": 58,
+          "frac": 0.5172413793103449,
+          "examples": [
+            "P00330/acetaldehyde",
+            "P00549/adp",
+            "P00890/acetyl-coa",
+            "P04802/atp",
+            "P04802/l-aspartate",
+            "P06169/pyruvate",
+            "P07275/1-pyrroline-5-carboxylate",
+            "P10869/atp"
+          ]
+        }
+      ],
+      "n_gem_accessions": 1148,
+      "n_gem_accessions_in_db": 193,
+      "n_gem_units": 3709,
+      "n_gem_units_all_genes_in_db": 522
+    }
+  ],
+  "caveat": "The same overlap almost certainly exists for the other predictors, which trained on the same two databases. It is measured here and not there because CatPred released its training table with a UniProt accession on every row; a zero is not claimed for any other predictor."
+}

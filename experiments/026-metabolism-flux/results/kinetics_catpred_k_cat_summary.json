@@ -1,0 +1,19 @@
+{
+  "predictor": "catpred",
+  "parameter": "k_cat",
+  "n_rows": 6431,
+  "n_units": 3547,
+  "n_units_total": 3728,
+  "n_genes": 1147,
+  "n_substrates": 1336,
+  "coverage_frac": 0.9514484978540773,
+  "value_median": 9.929987715030526,
+  "value_p05": 0.7624853839573582,
+  "value_p95": 135.72866035384584,
+  "n_failed": 1025,
+  "failure_reasons": {
+    "no_heavy_atom_substrate": 1025
+  },
+  "weights_sha256": "feec68cf1884bb14fc80abf8477aa3fc10f76781984ab2849e17e90bbfe8da90",
+  "built_at": "2026-09-12T08:57:19.509075+00:00"
+}

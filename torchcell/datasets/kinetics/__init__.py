@@ -10,6 +10,7 @@ predictor is one module plus one line here.
 """
 
 from torchcell.datasets.kinetics.boost_km import BoostKmDataset, BoostKmEsm1bDataset
+from torchcell.datasets.kinetics.catpred import CatPredDataset
 from torchcell.datasets.kinetics.deepenzyme import DeepEnzymeDataset
 from torchcell.datasets.kinetics.dlkcat import DlkcatDataset
 from torchcell.datasets.kinetics.eitlem import EitlemDataset
@@ -17,6 +18,7 @@ from torchcell.datasets.kinetics.turnup import TurnupDataset
 from torchcell.datasets.kinetics.unikp import UniKPDataset
 
 KINETICS_CONFIGS = {
+    "catpred": CatPredDataset,
     "dlkcat": DlkcatDataset,
     "unikp": UniKPDataset,
     "deepenzyme": DeepEnzymeDataset,
@@ -29,6 +31,7 @@ KINETICS_CONFIGS = {
 __all__ = [
     "BoostKmDataset",
     "BoostKmEsm1bDataset",
+    "CatPredDataset",
     "DeepEnzymeDataset",
     "DlkcatDataset",
     "EitlemDataset",

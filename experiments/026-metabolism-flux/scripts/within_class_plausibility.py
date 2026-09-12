@@ -44,8 +44,16 @@ Writes ``results/within_class_plausibility.json`` and
 ``results/within_class_plausibility_betaxanthin.csv``.
 Run from the repo root with the torchcell env, after ``ec_class_variance.py`` and
 ``compare_predictors_to_measured.py``.
+
+**``--suffix`` exists because this file is live.** The default output is what
+:meth:`~torchcell.metabolism.parameters.PredictorSelection.from_study` reads, and a
+training cell re-imports the resolver in every spawned DataLoader worker, so rewriting it
+changes the tier a RUNNING run resolves. Scoring a new predictor therefore writes a
+versioned sibling, ``--suffix _with_catpred``, and promoting it to the shipped name is a
+separate decision taken when nothing is training on the old one.
 """
 
+import argparse
 import json
 import os
 import os.path as osp
@@ -83,8 +91,16 @@ from ec_class_variance import (  # noqa: E402
     within_class_spread,
 )
 
-KCAT_PREDICTORS = ("dlkcat", "unikp", "eitlem", "turnup", "deepenzyme", "ezkinetics")
-KM_PREDICTORS = ("unikp", "eitlem", "boost_km", "ezkinetics")
+KCAT_PREDICTORS = (
+    "dlkcat",
+    "unikp",
+    "eitlem",
+    "turnup",
+    "deepenzyme",
+    "ezkinetics",
+    "catpred",
+)
+KM_PREDICTORS = ("unikp", "eitlem", "boost_km", "ezkinetics", "catpred")
 
 #: The genes the betaxanthin case study runs on, as the agreement figure lists them: the
 #: two native cassette members, then the aromatic-amino-acid genes supplying tyrosine.
@@ -112,6 +128,7 @@ class Fraction(BaseModel):
 
     @classmethod
     def of(cls, inside: np.ndarray) -> "Fraction":
+        """Count a boolean array and attach the interval its denominator earns."""
         n = int(len(inside))
         k = int(inside.sum())
         if n == 0:
@@ -336,6 +353,18 @@ def measured_source_coverage(model: cobra.Model) -> dict:
 
 
 def main() -> None:
+    # The default output name is the file `PredictorSelection.from_study` reads, and a
+    # training cell re-imports the resolver in every spawned DataLoader worker, so
+    # rewriting it changes what a RUNNING run resolves. `--suffix` writes a versioned
+    # sibling instead, which is how a new predictor is scored without touching what is
+    # shipped; the shipped file is replaced only when someone asks for it by name.
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--suffix",
+        default="",
+        help="Appended to both output basenames, e.g. `_with_catpred`.",
+    )
+    args = parser.parse_args()
     model = cobra.io.read_sbml_model(GEM_XML)
     report: dict = {"parameters": {}}
     betaxanthin_rows: list[dict] = []
@@ -384,10 +413,14 @@ def main() -> None:
             betaxanthin_rows.append(row)
     report["measured_source_coverage"] = measured_source_coverage(model)
 
-    with open(osp.join(RESULTS, "within_class_plausibility.json"), "w") as handle:
+    report_path = osp.join(RESULTS, f"within_class_plausibility{args.suffix}.json")
+    with open(report_path, "w") as handle:
         json.dump(report, handle, indent=2)
     flat = pd.DataFrame(betaxanthin_rows)
-    flat.to_csv(osp.join(RESULTS, "within_class_plausibility_betaxanthin.csv"), index=False)
+    flat.to_csv(
+        osp.join(RESULTS, f"within_class_plausibility_betaxanthin{args.suffix}.csv"),
+        index=False,
+    )
 
     for parameter, block in report["parameters"].items():
         print(f"\n{parameter}: {block['n_measured_pairs']} measured pairs; bands "
@@ -406,7 +439,7 @@ def main() -> None:
     cov = report["measured_source_coverage"]
     print(f"\nmeasured coverage of {cov['n_catalytic_units']} units: "
           + json.dumps({k: {p: v.get('frac') for p, v in s.items() if p in ('k_cat', 'K_M')} for k, s in cov['sources'].items()}))
-    print(f"wrote {osp.join(RESULTS, 'within_class_plausibility.json')}")
+    print(f"wrote {report_path}")
 
 
 if __name__ == "__main__":

@@ -80,7 +80,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from dotenv import load_dotenv  # noqa: E402
-from matplotlib.ticker import MultipleLocator  # noqa: E402
+from matplotlib.ticker import (
+    FixedLocator,
+    MultipleLocator,
+    NullFormatter,
+    ScalarFormatter,
+)  # noqa: E402
+from scipy.stats import spearmanr  # noqa: E402
 
 from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
@@ -163,8 +169,12 @@ def _profiles(
     sentinel = {
         "threshold": SENTINEL,
         "frac_cells": (n_sentinel / n_cells) if n_cells else 0.0,
-        "frac_genes_rate_above_0.5": float((gene_rate > 0.5).mean()) if len(gene_rate) else 0.0,
-        "frac_genes_rate_above_0.1": float((gene_rate > 0.1).mean()) if len(gene_rate) else 0.0,
+        "frac_genes_rate_above_0.5": float((gene_rate > 0.5).mean())
+        if len(gene_rate)
+        else 0.0,
+        "frac_genes_rate_above_0.1": float((gene_rate > 0.1).mean())
+        if len(gene_rate)
+        else 0.0,
     }
     out: dict[str, dict[str, float]] = {}
     n_multi = 0
@@ -300,8 +310,291 @@ def _pair(
 
 
 def _sd_of_values(profiles: dict[str, dict[str, float]]) -> float:
-    vals = np.concatenate([np.fromiter(p.values(), dtype=float) for p in profiles.values()])
+    vals = np.concatenate(
+        [np.fromiter(p.values(), dtype=float) for p in profiles.values()]
+    )
     return float(np.std(vals))
+
+
+def _strain_sd(profiles: dict[str, dict[str, float]]) -> dict[str, float]:
+    """Per-deletion spread of the log2 profile (sd across reporters)."""
+    return {
+        o: float(np.std(np.fromiter(p.values(), dtype=float)))
+        for o, p in profiles.items()
+        if len(p) >= MIN_GENES_PER_STRAIN
+    }
+
+
+def _plain_log_x(ax, ticks):
+    """Plain tick labels on a log x axis (no 2 x 10^-1 minor labels)."""
+    ax.xaxis.set_major_locator(FixedLocator(ticks))
+    ax.xaxis.set_major_formatter(ScalarFormatter())
+    ax.xaxis.set_minor_formatter(NullFormatter())
+    ax.set_xticks(ticks)
+    ax.set_xticklabels([f"{v:g}" for v in ticks])
+
+
+def _figure(
+    images: str,
+    profiles: dict[str, dict[str, dict[str, float]]],
+    pairs: dict[str, Any],
+    nadal_raw_values: np.ndarray,
+    nadal_cells: dict[str, int],
+) -> tuple[str, dict[str, float]]:
+    """The 3 x 3 comparison figure; returns the SVG path and the panel statistics.
+
+    Row 1 is about the values themselves (scale, the sentinel, per-strain spread), row 2
+    about agreement on the shared deletions, row 3 about what agreement tracks. Kemmeren
+    against Nadal-Ribelles is the pair of interest; Kemmeren against Sameith is the
+    reference for what two studies of the same platform look like.
+    """
+    from matplotlib.colors import to_rgba
+
+    plt.rcParams.update(
+        {
+            "font.family": "Arial",
+            "font.size": 6,
+            "axes.linewidth": 0.5,
+            "svg.fonttype": "none",
+            "axes.titlesize": 6,
+            "legend.fontsize": 6,
+        }
+    )
+    col = {
+        "kemmeren": PLOT_PALETTE[0],
+        "sameith": PLOT_PALETTE[2],
+        "nadal": PLOT_PALETTE[1],
+    }
+    short = {"kemmeren": "Kemmeren", "sameith": "Sameith", "nadal": "Nadal-Ribelles"}
+    kn = pairs["kemmeren_vs_nadal"]
+
+    fig, axes = plt.subplots(
+        3, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(160))
+    )
+    legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
+
+    def filled_hist(ax, values, key, bins, label=None, density=True):
+        ax.hist(
+            values,
+            bins=bins,
+            histtype="stepfilled",
+            facecolor=to_rgba(col[key], 0.45),
+            edgecolor="black",
+            lw=0.4,
+            density=density,
+            label=label or short[key],
+        )
+
+    def box(ax):
+        for s in ax.spines.values():
+            s.set_visible(True)
+
+    # a. The values, sentinels removed: the two platforms sit on different scales.
+    ax = axes[0, 0]
+    bins = np.linspace(-6, 6, 97)
+    for key in ("kemmeren", "sameith", "nadal"):
+        vals = np.concatenate(
+            [np.fromiter(p.values(), dtype=float) for p in profiles[key].values()]
+        )
+        filled_hist(ax, vals, key, bins, label=f"{short[key]} (sd {vals.std():.2f})")
+    ax.set_yscale("log")
+    ax.set_xlabel("log2 value, sentinels removed")
+    ax.set_ylabel("density")
+    ax.set_title("value distributions")
+    ax.legend(loc="upper right", **legend_kw)
+
+    # b. Nadal-Ribelles as stored: the +-23 sentinel spikes.
+    ax = axes[0, 1]
+    bins = np.linspace(-35, 35, 141)
+    frac = float((np.abs(nadal_raw_values) >= SENTINEL).mean())
+    filled_hist(
+        ax, nadal_raw_values, "nadal", bins, label=f"{short['nadal']} as stored"
+    )
+    ax.axvline(-SENTINEL, color="black", lw=0.5, ls="--")
+    ax.axvline(SENTINEL, color="black", lw=0.5, ls="--")
+    ax.set_yscale("log")
+    ax.set_xlabel("log2 fold change as stored")
+    ax.set_ylabel("density")
+    ax.set_title(f"stored values, {100 * frac:.1f}% at |value| >= {SENTINEL:g}")
+    ax.legend(loc="upper right", **legend_kw)
+
+    # c. Per-strain spread of the profile.
+    ax = axes[0, 2]
+    sds = {k: _strain_sd(profiles[k]) for k in ("kemmeren", "sameith", "nadal")}
+    bins = np.logspace(-1.3, 0.7, 41)
+    for key in ("kemmeren", "sameith", "nadal"):
+        v = np.fromiter(sds[key].values(), dtype=float)
+        filled_hist(ax, v, key, bins, label=f"{short[key]} (median {np.median(v):.2f})")
+    ax.set_xscale("log")
+    _plain_log_x(ax, [0.1, 0.2, 0.5, 1, 2])
+    ax.set_xlabel("per-strain sd of the profile (log2)")
+    ax.set_ylabel("density")
+    ax.set_title("per-strain effect spread")
+    ax.legend(loc="upper right", **legend_kw)
+
+    # d. Kemmeren against Nadal-Ribelles on every shared (strain, gene) cell.
+    ax = axes[1, 0]
+    ka, kb = profiles["kemmeren"], profiles["nadal"]
+    xs, ys = [], []
+    for orf in set(ka) & set(kb):
+        pb = kb[orf]
+        for g, v in ka[orf].items():
+            w = pb.get(g)
+            if w is not None:
+                xs.append(w)
+                ys.append(v)
+    x = np.asarray(xs)
+    y = np.asarray(ys)
+    hb = ax.hexbin(x, y, gridsize=60, bins="log", cmap="Greys", linewidths=0)
+    lim = 4.0
+    ax.set_xlim(-lim, lim)
+    ax.set_ylim(-lim, lim)
+    sl = kn["scale"]["ols_slope_a_on_b"]
+    ax.plot([-lim, lim], [-lim, lim], color="black", lw=0.5, ls="--", label="identity")
+    ax.plot(
+        [-lim, lim],
+        [-lim * sl, lim * sl],
+        color=PLOT_PALETTE[1],
+        lw=0.8,
+        label=f"OLS slope {sl:.3f}",
+    )
+    ax.set_xlabel("Nadal-Ribelles log2 FC")
+    ax.set_ylabel("Kemmeren log2 ratio")
+    ax.set_title(
+        f"shared cells (n = {len(x):,}), r = {kn['scale']['cell_pearson']:.2f}"
+    )
+    ax.legend(loc="lower right", **legend_kw)
+    cbar = fig.colorbar(hb, ax=ax, fraction=0.05, pad=0.02)
+    # Title rather than a side label, which would sit on the neighbouring y label.
+    cbar.ax.set_title("count", fontsize=6, pad=3)
+
+    # e. Per-strain agreement.
+    ax = axes[1, 1]
+    bins = np.linspace(-0.4, 1.0, 36)
+    series = [
+        ("kemmeren_vs_sameith", "per_strain", "values", "Kem vs Sam", "sameith", "-"),
+        ("kemmeren_vs_nadal", "per_strain", "values", "Kem vs Nad", "nadal", "-"),
+        (
+            "kemmeren_vs_nadal",
+            "strong_responders",
+            "values_r",
+            f"Kem vs Nad, |Kem| > {STRONG:g}",
+            "nadal",
+            "--",
+        ),
+    ]
+    for key, block, field, label, ckey, ls in series:
+        v = np.asarray(pairs[key][block][field], dtype=float)
+        v = v[np.isfinite(v)]
+        if ls == "-":
+            filled_hist(ax, v, ckey, bins, label=f"{label} (med {np.median(v):.2f})")
+        else:
+            ax.hist(
+                v,
+                bins=bins,
+                histtype="step",
+                color=col[ckey],
+                lw=0.9,
+                ls=ls,
+                density=True,
+                label=f"{label} (med {np.median(v):.2f})",
+            )
+    ax.set_xlabel("per-strain Pearson r between studies")
+    ax.set_ylabel("density")
+    ax.set_title("per-strain agreement")
+    ax.xaxis.set_major_locator(MultipleLocator(0.2))
+    ax.xaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(which="minor", length=0)
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.6)
+    ax.legend(loc="upper right", **legend_kw)
+
+    # f. Per-reporter agreement (test-retest reliability).
+    ax = axes[1, 2]
+    for key, label, ckey in (
+        ("kemmeren_vs_sameith", "Kem vs Sam", "sameith"),
+        ("kemmeren_vs_nadal", "Kem vs Nad", "nadal"),
+    ):
+        v = np.asarray(pairs[key]["per_reporter"]["values"], dtype=float)
+        v = v[np.isfinite(v)]
+        filled_hist(ax, v, ckey, bins, label=f"{label} (med {np.median(v):.2f})")
+    ax.set_xlabel("per-reporter Pearson r between studies")
+    ax.set_ylabel("density")
+    ax.set_title("per-reporter agreement (test-retest)")
+    ax.xaxis.set_major_locator(MultipleLocator(0.2))
+    ax.xaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(which="minor", length=0)
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.6)
+    ax.legend(loc="upper right", **legend_kw)
+
+    # g. Per-strain agreement against the strain's effect size in Kemmeren.
+    ax = axes[2, 0]
+    dels = kn["per_strain"]["deletions"]
+    r_strain = np.asarray(kn["per_strain"]["values"], dtype=float)
+    kem_sd = np.asarray([sds["kemmeren"].get(o, np.nan) for o in dels])
+    m = np.isfinite(r_strain) & np.isfinite(kem_sd)
+    ax.scatter(kem_sd[m], r_strain[m], s=3, color=col["nadal"], lw=0, alpha=0.7)
+    ax.axhline(0, color="black", lw=0.5, ls="--")
+    ax.set_xscale("log")
+    _plain_log_x(ax, [0.1, 0.2, 0.3, 0.5])
+    ax.set_xlabel("Kemmeren per-strain sd (log2)")
+    ax.set_ylabel("per-strain r, Kem vs Nad")
+    rho = spearmanr(kem_sd[m], r_strain[m]).correlation
+    stats: dict[str, Any] = {"spearman_strain_r_vs_kemmeren_strain_sd": float(rho)}
+    ax.set_title(f"agreement vs effect size, Spearman {rho:.2f}")
+
+    # h. Per-strain agreement against the number of cells behind the pseudobulk.
+    ax = axes[2, 1]
+    cells = np.asarray([nadal_cells.get(o, np.nan) for o in dels], dtype=float)
+    m = np.isfinite(r_strain) & np.isfinite(cells) & (cells > 0)
+    ax.scatter(cells[m], r_strain[m], s=3, color=col["nadal"], lw=0, alpha=0.7)
+    ax.axhline(0, color="black", lw=0.5, ls="--")
+    ax.set_xscale("log")
+    _plain_log_x(ax, [10, 30, 100, 300, 1000])
+    ax.set_xlabel("Nadal-Ribelles cells per genotype")
+    ax.set_ylabel("per-strain r, Kem vs Nad")
+    rho = spearmanr(cells[m], r_strain[m]).correlation
+    stats["spearman_strain_r_vs_nadal_cells"] = float(rho)
+    stats["nadal_cells_per_genotype_median"] = float(np.median(cells[m]))
+    ax.set_title(f"agreement vs cell count, Spearman {rho:.2f}")
+
+    # i. Per-reporter agreement against the reporter's variance in Kemmeren.
+    ax = axes[2, 2]
+    reps = kn["per_reporter"]["reporters"]
+    r_rep = np.asarray(kn["per_reporter"]["values"], dtype=float)
+    shared = set(dels)
+    rep_sd = np.full(len(reps), np.nan)
+    for j, g in enumerate(reps):
+        vals = [ka[o][g] for o in shared if g in ka[o]]
+        if len(vals) >= MIN_STRAINS_PER_REPORTER:
+            rep_sd[j] = np.std(vals)
+    m = np.isfinite(r_rep) & np.isfinite(rep_sd)
+    ax.scatter(rep_sd[m], r_rep[m], s=2, color=col["nadal"], lw=0, alpha=0.5)
+    ax.axhline(0, color="black", lw=0.5, ls="--")
+    ax.set_xscale("log")
+    _plain_log_x(ax, [0.05, 0.1, 0.2, 0.5, 1])
+    ax.set_xlabel("Kemmeren per-reporter sd across shared strains")
+    ax.set_ylabel("per-reporter r, Kem vs Nad")
+    rho = spearmanr(rep_sd[m], r_rep[m]).correlation
+    stats["spearman_reporter_r_vs_kemmeren_reporter_sd"] = float(rho)
+    stats["per_strain_sd_median"] = {
+        k: float(np.median(np.fromiter(v.values(), dtype=float)))
+        for k, v in sds.items()
+    }
+    ax.set_title(f"reporter agreement vs its variance, Spearman {rho:.2f}")
+
+    for ax in axes.flat:
+        box(ax)
+    fig.subplots_adjust(
+        left=0.06, right=0.98, bottom=0.06, top=0.95, wspace=0.38, hspace=0.62
+    )
+    for ax, letter in zip(axes.flat, "abcdefghi"):
+        panel_label(ax, letter)
+    # Stable name: the expression document's `plots` rule converts figures/NAME.pdf from
+    # NAME.svg, and a timestamped file cannot be its target.
+    stem = osp.join(images, "cross_study_ko_expression")
+    fig.savefig(stem + ".png", dpi=300)
+    savefig_true_size_svg(fig, stem + ".svg")
+    return stem + ".svg", stats
 
 
 def main() -> None:
@@ -392,7 +685,14 @@ def main() -> None:
                     {
                         x: y
                         for x, y in vv.items()
-                        if x not in ("values", "values_r", "values_sign", "deletions", "reporters")
+                        if x
+                        not in (
+                            "values",
+                            "values_r",
+                            "values_sign",
+                            "deletions",
+                            "reporters",
+                        )
                     }
                     if isinstance(vv, dict)
                     else vv
@@ -405,11 +705,15 @@ def main() -> None:
     with open(osp.join(results_dir, "cross_study_ko_expression.json"), "w") as f:
         json.dump(out, f, indent=1)
     # Per-strain and per-reporter vectors for the figure and any later table.
-    with open(osp.join(results_dir, "cross_study_ko_expression_vectors.json"), "w") as f:
+    with open(
+        osp.join(results_dir, "cross_study_ko_expression_vectors.json"), "w"
+    ) as f:
         json.dump(
             {
                 k: {
-                    "per_strain": dict(zip(v["per_strain"]["deletions"], v["per_strain"]["values"])),
+                    "per_strain": dict(
+                        zip(v["per_strain"]["deletions"], v["per_strain"]["values"])
+                    ),
                     "per_reporter": dict(
                         zip(v["per_reporter"]["reporters"], v["per_reporter"]["values"])
                     ),
@@ -420,101 +724,29 @@ def main() -> None:
         )
 
     # ------------------------------------------------------------------ figure
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-            "axes.titlesize": 6,
-            "legend.fontsize": 6,
-        }
-    )
-    fig, axes = plt.subplots(
-        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(50))
-    )
-    colors = dict(zip([f"{a}_vs_{b}" for a, b in PAIRS], PLOT_PALETTE[:3]))
-    # Short legend labels; the n and medians live in the results JSON and the caption,
-    # so the legend box stays clear of the histograms (white-cross rule).
-    short = {"kemmeren": "Kem", "sameith": "Sam", "nadal": "Nad"}
-    names = {f"{a}_vs_{b}": f"{short[a]} vs {short[b]}" for a, b in PAIRS}
-    bins = np.linspace(-0.4, 1.0, 36)
-    for ax, which, title in (
-        (axes[0], "per_strain", "per-strain agreement"),
-        (axes[1], "per_reporter", "per-reporter agreement (test-retest)"),
-    ):
-        for key, p in pairs.items():
-            v = np.asarray(p[which]["values"], dtype=float)
-            v = v[np.isfinite(v)]
-            ax.hist(
-                v,
-                bins=bins,
-                histtype="step",
-                color=colors[key],
-                lw=0.8,
-                density=True,
-                label=names[key],
+    nadal_raw_values = np.concatenate(
+        [
+            np.fromiter(
+                r["experiment"]["phenotype"]["expression_log2_ratio"].values(),
+                dtype=float,
             )
-        if which == "per_strain":
-            v = np.asarray(pairs["kemmeren_vs_nadal"]["strong_responders"]["values_r"])
-            v = v[np.isfinite(v)]
-            ax.hist(
-                v,
-                bins=bins,
-                histtype="step",
-                color=colors["kemmeren_vs_nadal"],
-                lw=0.8,
-                ls="--",
-                density=True,
-                label=f"Kem vs Nad, |Kem| > {STRONG:g}",
-            )
-        ax.set_xlabel("Pearson r between studies")
-        ax.set_ylabel("density")
-        ax.set_title(title)
-        ax.xaxis.set_major_locator(MultipleLocator(0.2))
-        ax.xaxis.set_minor_locator(MultipleLocator(0.1))
-        ax.tick_params(which="minor", length=0)
-        ax.grid(axis="x", which="both", lw=0.3, alpha=0.4)
-        # Headroom so the framed legend sits above every histogram.
-        ax.set_ylim(0, ax.get_ylim()[1] * 1.45)
-        ax.legend(frameon=True, edgecolor="black", fancybox=False, loc="upper right")
-        for s in ax.spines.values():
-            s.set_visible(True)
-    # Scale panel: Kemmeren vs Nadal on shared cells, hexbin.
-    a, b = "kemmeren", "nadal"
-    ka, kb = profiles[a], profiles[b]
-    xs, ys = [], []
-    for orf in set(ka) & set(kb):
-        pa, pb = ka[orf], kb[orf]
-        for g, v in pa.items():
-            w = pb.get(g)
-            if w is not None:
-                xs.append(w)
-                ys.append(v)
-    x = np.asarray(xs)
-    y = np.asarray(ys)
-    ax = axes[2]
-    hb = ax.hexbin(x, y, gridsize=60, bins="log", cmap="Greys", linewidths=0)
-    lim = 4.0
-    ax.set_xlim(-lim, lim)
-    ax.set_ylim(-lim, lim)
-    sl = pairs["kemmeren_vs_nadal"]["scale"]["ols_slope_a_on_b"]
-    ax.plot([-lim, lim], [-lim, lim], color="black", lw=0.5, ls="--", label="identity")
-    ax.plot([-lim, lim], [-lim * sl, lim * sl], color=PLOT_PALETTE[1], lw=0.8, label=f"OLS slope {sl:.2f}")
-    ax.set_xlabel("Nadal-Ribelles log2 FC (pseudobulk)")
-    ax.set_ylabel("Kemmeren log2 ratio (microarray)")
-    ax.set_title(f"shared cells, r = {pairs['kemmeren_vs_nadal']['scale']['cell_pearson']:.2f}")
-    ax.legend(frameon=True, edgecolor="black", fancybox=False, loc="lower right")
-    fig.colorbar(hb, ax=ax, label="log10 count", fraction=0.05, pad=0.02)
-    fig.subplots_adjust(left=0.06, right=0.97, bottom=0.17, top=0.88, wspace=0.35)
-    for ax, letter in zip(axes, "abc"):
-        panel_label(ax, letter)
-    # Stable name: the expression document's `plots` rule converts figures/NAME.pdf from
-    # NAME.svg, and a timestamped file cannot be its target.
-    stem = osp.join(images, "cross_study_ko_expression")
-    fig.savefig(stem + ".png", dpi=300)
-    savefig_true_size_svg(fig, stem + ".svg")
-    print(f"\nfigure: {stem}.svg")
+            for r in raw["nadal"]
+        ]
+    )
+    nadal_cells: dict[str, int] = defaultdict(int)
+    for r in raw["nadal"]:
+        perts = r["experiment"]["genotype"]["perturbations"]
+        n = r["experiment"]["phenotype"].get("n_cells")
+        if len(perts) == 1 and n is not None:
+            nadal_cells[perts[0]["systematic_gene_name"]] += int(n)
+    svg, fig_stats = _figure(
+        images, profiles, pairs, nadal_raw_values, dict(nadal_cells)
+    )
+    out["figure_stats"] = fig_stats
+    with open(osp.join(results_dir, "cross_study_ko_expression.json"), "w") as f:
+        json.dump(out, f, indent=1)
+    print(json.dumps(fig_stats, indent=1))
+    print(f"\nfigure: {svg}")
     print(f"results: {osp.join(results_dir, 'cross_study_ko_expression.json')}")
 
 

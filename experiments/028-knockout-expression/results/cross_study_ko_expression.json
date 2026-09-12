@@ -206,5 +206,16 @@
     "sd_b": 0.18293486270122156
    }
   }
+ },
+ "figure_stats": {
+  "spearman_strain_r_vs_kemmeren_strain_sd": 0.36708836867131195,
+  "spearman_strain_r_vs_nadal_cells": 0.0197033729564226,
+  "nadal_cells_per_genotype_median": 91.5,
+  "spearman_reporter_r_vs_kemmeren_reporter_sd": 0.2891635067932461,
+  "per_strain_sd_median": {
+   "kemmeren": 0.18618714561930033,
+   "sameith": 0.15406977858556528,
+   "nadal": 0.8585434956270543
+  }
  }
 }

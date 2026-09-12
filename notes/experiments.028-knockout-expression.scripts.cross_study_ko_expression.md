@@ -60,3 +60,30 @@ Nadal-Ribelles values cannot be pooled with the microarray panels as one target:
 share no scale and, on the deletions both measured, almost no ordering. What they can be
 pooled with is a second environment of the same strains (the NaCl records), which is a
 different question.
+
+## 2026.09.11 - Nine-panel figure, and what the agreement tracks
+
+The figure is now 3 x 3 (values / agreement / what agreement tracks), filled histograms
+with black edges, Kemmeren vs Nadal-Ribelles as the pair of interest and Kemmeren vs
+Sameith as the same-platform reference. Panel statistics are recorded under
+`figure_stats` in the results JSON.
+
+- **Scale (a-c).** Sentinel-free log2 sd: Kemmeren 0.23, Sameith 0.18, Nadal-Ribelles 0.89.
+  The per-strain profile sd is bimodal for Nadal-Ribelles with a mode at 0.86 against 0.19
+  and 0.15 for the microarrays, so the sentinel cut at |20| does not put the remaining
+  values on the microarray scale; the scanpy ratio-of-means inflation is continuous in the
+  gene's mean count, not a step at zero.
+- **Agreement (d-f).** As in the previous section: per-strain median 0.003 (914), per-reporter
+  0.030, slope 0.006, versus 0.744 / 0.620 / 0.82 for Kemmeren vs Sameith.
+- **What it tracks (g-i).** Per-strain agreement rises with the strain's Kemmeren effect
+  size (Spearman 0.37) and per-reporter agreement with the reporter's Kemmeren variance
+  (0.29), and it does NOT track the number of cells behind the pseudobulk (Spearman 0.02;
+  median 92 cells per genotype, range about 10 to 600). An undersampled pseudobulk would
+  agree better where more cells were pooled; this one does not, which points at the stored
+  statistic rather than at the sampling. Hypothesis until the recompute is measured.
+
+The Seurat split object (`seus_split.RData`, 5.9 GB, md5 `65bb56ef...` per the Zenodo
+record) and the paper's DE scripts (`DEGs_summary.R`, `DEG.Rdata`, `summary.genotypes_Rev.R`,
+`Figures_Rev.R`) plus the Kemmeren table they used (`deleteome_all_mutants_controls.txt`)
+are being added to the raw mirror `$DATA_ROOT/torchcell-raw/nadalRibelles2025/` for the
+recompute; an R + Seurat 5.3.0 conda env (`r-seurat`) reads the object.

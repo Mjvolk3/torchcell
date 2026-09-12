@@ -314,3 +314,80 @@ grows is not identified; the \file{file_system} sharing strategy introduced in
 \texttt{f1bfa95b} to stop the file-descriptor exhaustion is the obvious suspect and is
 unverified. The memory of a running job cannot be raised, and the two rounds that finished
 lost one run per task to it rather than the whole task.
+
+\subsection{A third deletion panel, and whether it measures the same thing
+\secstatus{todo}}
+\label{sec:readouts-cross-study}
+
+Every round above trains and scores on the Kemmeren and Sameith microarrays, whose
+perturbation axis has 1{,}484 points (\cref{sec:strand-task}). Nadal-Ribelles et al.\
+2025 (doi:10.1038/s41467-025-57600-4) profiled about 3{,}100 single deletions of the same
+collection by single-cell RNA-seq, pseudobulked per genotype against a wild type in the
+same run, in base medium and under 0.4\,M NaCl. The base-medium records are 3{,}039
+deletion ORFs, of which 914 are in Kemmeren and 44 in Sameith; the union of the three
+panels is 3{,}609 deletions, 2.4 times today's axis. Before that panel can extend the
+axis it has to agree with the other two on the deletions they share, and
+\cref{fig:cross-study} measures that with the same test-retest construction as the
+ceiling, on the base-medium records only, with Kemmeren against Sameith as the reference
+for what two studies of one platform look like.
+\src{experiments/028-knockout-expression/results/cross_study_ko_expression.json}
+
+\pfstep{The stored values are on another scale, and one cell in five is a sentinel} The
+microarray $\log_2$ ratios have standard deviation $0.23$ and $0.18$; the stored
+Nadal-Ribelles values have $10.1$ as stored and $0.89$ after the correction below
+(\cref{fig:cross-study}a, b). They are scanpy \file{logfoldchanges} from a Wilcoxon
+rank-sum call, computed as $\log_2$ of the ratio of two expm1-transformed means with a
+$10^{-9}$ pseudocount, which returns $\pm 23$ to $\pm 33$ whenever one group's mean is
+zero: $20.2\,\%$ of the stored cells carry such a value and $22.6\,\%$ of genes carry it
+in more than half of their records. The Wilcoxon test is the paper's DE test; the fold
+change beside it is a separate quantity, and the paper used it only above an
+independent filter at mean normalized counts of $1.27$ and a $p$ threshold, whereas the
+loader stored it for every gene with a nonzero count. Those cells are treated as absent
+here. Even after that, the per-strain spread of a Nadal-Ribelles profile is bimodal, with
+a mode at sd $0.86$ against the microarrays' $0.19$ and $0.15$ (\cref{fig:cross-study}c),
+so the remaining values are still not on the microarray scale.
+
+\pfstep{On the shared deletions the two panels almost do not agree} Over 914 shared
+deletions the per-strain profile correlation with Kemmeren has median $0.003$, against
+$0.744$ for Kemmeren with Sameith over 82; the per-reporter test-retest median is $0.030$
+against $0.620$; the OLS slope of Kemmeren on Nadal-Ribelles over $4.06$ million shared
+cells is $0.006$ against $0.82$ on Sameith (\cref{fig:cross-study}d--f). On the
+reporters where Kemmeren's effect exceeds one $\log_2$ unit the agreement is weak but
+above chance, median $0.10$ with signs agreeing $60\,\%$ of the time (chance $50\,\%$,
+the microarray pair $93\,\%$). The gene mapping is right: the cys3 deletion carries MET14,
+MET3 and MET6 up by $3$ to $3.7$ and CYS3 itself down, the induction that deletion is
+known for. The paper's only comparison to Kemmeren is a count of genes at $p < 0.05$ over
+837 shared genotypes; it reports no profile correlation.
+
+\pfstep{What the agreement tracks} It rises with the strain's effect size in Kemmeren
+(Spearman $0.37$ over 914 strains) and with the reporter's variance across strains
+($0.29$ over 5{,}405 reporters), and it does not track the number of cells behind the
+pseudobulk at all (Spearman $0.02$; median 92 cells per genotype)
+(\cref{fig:cross-study}g--i). A pseudobulk that was merely undersampled would agree
+better where more cells were pooled; this one does not, which points at the statistic
+rather than the sampling. Hypothesis, and the test is under way: recomputing the
+per-genotype fold change from the single-cell object as a pseudobulk mean difference of
+log-normalized counts with a pseudocount and the paper's mean-count filter will put the
+panel on the microarray scale and raise the shared-deletion agreement; until that is
+measured the panel cannot be pooled with the microarrays as one target.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/cross_study_ko_expression.pdf}
+\caption[]{Three single-deletion expression panels compared, base medium only.
+\textbf{a}, $\log_2$ values of each panel with the Nadal-Ribelles sentinels removed;
+the two platforms sit on different scales. \textbf{b}, Nadal-Ribelles values as stored,
+with the $\pm 20$ lines: $20.2\,\%$ of cells are the zero-mean sentinel. \textbf{c}, per
+deletion, the standard deviation of its profile across reporters. \textbf{d}, Kemmeren
+against Nadal-Ribelles on every shared (strain, gene) cell, log-count density, with the
+identity and the fitted slope. \textbf{e}, per shared deletion, the Pearson across
+reporters between its two profiles: Kemmeren vs Sameith ($n = 82$), Kemmeren vs
+Nadal-Ribelles ($n = 914$), and the latter over only the reporters with $|\log_2| > 1$
+in Kemmeren (dashed, $n = 368$ strains). \textbf{f}, per reporter, the Pearson across
+shared strains between its two response vectors, the test-retest reliability behind the
+ceiling. \textbf{g}, the per-strain agreement of e against the strain's Kemmeren spread;
+\textbf{h}, against the number of cells behind its pseudobulk; \textbf{i}, the
+per-reporter agreement of f against the reporter's Kemmeren spread across the shared
+strains. Generated by \file{cross_study_ko_expression.py}.}
+\label{fig:cross-study}
+\end{figure}

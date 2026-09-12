@@ -34,6 +34,13 @@ nothing already served would change. Concretely, every blocker below is empty:
   ``dataset_adapter_map``, and its adapter may only enable phenotype node methods the
   graph schema declares (BioCypher drops undeclared classes silently).
 
+Several datasets can be admitted in ONE increment (``check_batch_admission``): each
+member is checked in isolation against the SERVED manifest and the batch is admissible
+only when every member is. Isolation is what makes the batch a plain extension rather
+than a second rule: no member is in the store, so nothing a member ADDS (a schema
+symbol, a graph class, an adapter method) can block another member, and a symbol two
+members both introduce is additive and only reported.
+
 The manifest lives beside the store (a machine-local file under the build tree), never
 in git: it describes one physical database.
 """
@@ -45,6 +52,7 @@ import ast
 import copy
 import hashlib
 import inspect
+import json
 import re
 import socket
 import subprocess
@@ -79,6 +87,7 @@ __all__ = [
     "ServedDrift",
     "AdapterDrift",
     "AdmissionReport",
+    "BatchAdmissionReport",
     "SCHEMA_CONFIG_RELPATH",
     "CELL_ADAPTER_RELPATH",
     "SURFACE_RELPATHS",
@@ -90,9 +99,17 @@ __all__ = [
     "closure_in_worktree",
     "bootstrap_manifest",
     "check_admission",
+    "check_batch_admission",
+    "batch_report_from_members",
     "record_admission",
+    "record_batch_admission",
     "load_manifest",
     "save_manifest",
+    "load_report",
+    "format_report",
+    "format_batch_report",
+    "split_dataset_args",
+    "parse_n_experiments",
 ]
 
 KG_MANIFEST_SCHEMA_VERSION = 1
@@ -226,6 +243,33 @@ class AdmissionReport(BaseModel):
     dev_lmdb_root: str
     in_adapter_map: bool
     undeclared_phenotype_methods: list[str]
+
+
+class BatchAdmissionReport(BaseModel):
+    """Verdict on adding SEVERAL datasets to the served store in ONE increment.
+
+    Every member carries its own ``AdmissionReport``, checked against the SERVED
+    manifest alone; the batch is admissible only when every one of them is. Two derived
+    views make the batch readable:
+
+    - ``co_introduced_symbols`` -- a schema symbol that more than one member introduces
+      (novel to the served store). Purely informational: a symbol no served dataset
+      holds cannot make served nodes stale, so members sharing one is additive.
+    - ``changed_symbol_importers`` -- for a symbol that DID change relative to the
+      served manifest, the served datasets that import it. This is the inverse of the
+      members' ``stale_served``, so a block reads as "served datasets X, Y import Z".
+    """
+
+    dataset_classes: list[str]
+    checked_at: str
+    torchcell_commit: str | None
+    torchcell_dirty: bool | None
+    served_commit: str | None
+    verdict: Literal["admissible", "blocked"]
+    reasons: list[str]
+    members: list[AdmissionReport]
+    co_introduced_symbols: dict[str, list[str]]  # symbol -> members introducing it
+    changed_symbol_importers: dict[str, list[str]]  # symbol -> served datasets
 
 
 # --------------------------------------------------------------------------- helpers
@@ -724,6 +768,122 @@ def check_admission(
     )
 
 
+def batch_report_from_members(members: list[AdmissionReport]) -> BatchAdmissionReport:
+    """Aggregate per-dataset admission reports into one batch verdict.
+
+    Pure aggregation: the members were each decided against the served manifest, and the
+    batch adds no rule of its own beyond "every member is admissible".
+    """
+    if not members:
+        raise ValueError("a batch admission needs at least one dataset")
+    names = [member.dataset_class for member in members]
+    repeated = sorted({name for name in names if names.count(name) > 1})
+    if repeated:
+        raise ValueError(f"dataset named more than once in the batch: {repeated}")
+
+    introduced: dict[str, list[str]] = {}
+    for member in members:
+        for symbol in member.novel_symbols:
+            introduced.setdefault(symbol, []).append(member.dataset_class)
+    co_introduced = {
+        symbol: sharers
+        for symbol, sharers in sorted(introduced.items())
+        if len(sharers) > 1
+    }
+
+    # the inverse of stale_served: which SERVED datasets import each changed symbol
+    importers: dict[str, set[str]] = {}
+    for member in members:
+        for drift in member.stale_served:
+            for symbol in drift.changed_symbols:
+                importers.setdefault(symbol, set()).add(drift.dataset_class)
+
+    reasons = [
+        f"{member.dataset_class}: {reason}"
+        for member in members
+        for reason in member.reasons
+    ]
+    first = members[0]
+    return BatchAdmissionReport(
+        dataset_classes=names,
+        checked_at=_now(),
+        torchcell_commit=first.torchcell_commit,
+        torchcell_dirty=first.torchcell_dirty,
+        served_commit=first.served_commit,
+        verdict="blocked" if reasons else "admissible",
+        reasons=reasons,
+        members=members,
+        co_introduced_symbols=co_introduced,
+        changed_symbol_importers={
+            symbol: sorted(datasets) for symbol, datasets in sorted(importers.items())
+        },
+    )
+
+
+def check_batch_admission(
+    manifest: KgBuildManifest,
+    repo_root: Path,
+    dataset_class_names: list[str],
+    data_root: Path,
+    ack_adapter_drift: str | None = None,
+) -> BatchAdmissionReport:
+    """Decide whether every named dataset can be added in ONE incremental import."""
+    return batch_report_from_members(
+        [
+            check_admission(manifest, repo_root, name, data_root, ack_adapter_drift)
+            for name in dataset_class_names
+        ]
+    )
+
+
+def _dataset_entry(
+    report: AdmissionReport,
+    *,
+    biocypher_out: str,
+    n_experiments: int | None,
+    repo_root: Path,
+    at: str,
+) -> KgDatasetEntry:
+    """The manifest entry for one admitted dataset."""
+    dataset_class = _dataset_class(report.dataset_class)
+    return KgDatasetEntry(
+        dataset_class=report.dataset_class,
+        loader_relpath=loader_relpath(dataset_class, repo_root),
+        adapter_files=dataset_adapter_files(dataset_class, repo_root),
+        closure=report.new_dataset_closure,
+        n_experiments=n_experiments,
+        biocypher_out=biocypher_out,
+        import_mode="incremental",
+        admitted_at=at,
+        torchcell_commit=report.torchcell_commit,
+    )
+
+
+def _adopt_current_surfaces(manifest: KgBuildManifest, repo_root: Path) -> None:
+    """Make the graph schema and adapter surface now in force the manifest's reference.
+
+    The store contains nodes produced by them once the import has succeeded.
+    """
+    manifest.graph_schema = graph_schema_from_yaml(
+        (repo_root / SCHEMA_CONFIG_RELPATH).read_text(encoding="utf-8")
+    )
+    methods, table = cell_adapter_surface(
+        (repo_root / CELL_ADAPTER_RELPATH).read_text(encoding="utf-8")
+    )
+    manifest.cell_adapter_methods = methods
+    manifest.cell_adapter_table = table
+    manifest.adapter_files = {
+        rel: _sha256((repo_root / rel).read_text(encoding="utf-8"))
+        for rel in adapter_file_relpaths(repo_root)
+    }
+
+
+def _acknowledged_drift(report: AdmissionReport) -> list[str]:
+    if not report.adapter_drift_acknowledged:
+        return []
+    return [f"{report.adapter_drift.describe()}: {report.adapter_drift_acknowledged}"]
+
+
 def record_admission(
     manifest: KgBuildManifest,
     report: AdmissionReport,
@@ -740,30 +900,14 @@ def record_admission(
     if report.verdict != "admissible":
         raise ValueError(f"cannot record a blocked admission: {report.reasons}")
     now = _now()
-    dataset_class = _dataset_class(report.dataset_class)
-    manifest.datasets[report.dataset_class] = KgDatasetEntry(
-        dataset_class=report.dataset_class,
-        loader_relpath=loader_relpath(dataset_class, repo_root),
-        adapter_files=dataset_adapter_files(dataset_class, repo_root),
-        closure=report.new_dataset_closure,
-        n_experiments=n_experiments,
+    manifest.datasets[report.dataset_class] = _dataset_entry(
+        report,
         biocypher_out=biocypher_out,
-        import_mode="incremental",
-        admitted_at=now,
-        torchcell_commit=report.torchcell_commit,
+        n_experiments=n_experiments,
+        repo_root=repo_root,
+        at=now,
     )
-    manifest.graph_schema = graph_schema_from_yaml(
-        (repo_root / SCHEMA_CONFIG_RELPATH).read_text(encoding="utf-8")
-    )
-    methods, table = cell_adapter_surface(
-        (repo_root / CELL_ADAPTER_RELPATH).read_text(encoding="utf-8")
-    )
-    manifest.cell_adapter_methods = methods
-    manifest.cell_adapter_table = table
-    manifest.adapter_files = {
-        rel: _sha256((repo_root / rel).read_text(encoding="utf-8"))
-        for rel in adapter_file_relpaths(repo_root)
-    }
+    _adopt_current_surfaces(manifest, repo_root)
     manifest.events.append(
         KgEvent(
             kind="incremental_admission",
@@ -771,13 +915,61 @@ def record_admission(
             torchcell_commit=report.torchcell_commit,
             datasets=[report.dataset_class],
             biocypher_out=biocypher_out,
-            acknowledged_adapter_drift=(
-                [
-                    f"{report.adapter_drift.describe()}: {report.adapter_drift_acknowledged}"
-                ]
-                if report.adapter_drift_acknowledged
-                else []
-            ),
+            acknowledged_adapter_drift=_acknowledged_drift(report),
+        )
+    )
+    return manifest
+
+
+def record_batch_admission(
+    manifest: KgBuildManifest,
+    report: BatchAdmissionReport,
+    *,
+    biocypher_out: str,
+    n_experiments: dict[str, int],
+    repo_root: Path,
+) -> KgBuildManifest:
+    """Record every member of an admitted batch under ONE event.
+
+    The members were imported by a single ``neo4j-admin database import incremental``
+    call from a single BioCypher output directory, so they share ``biocypher_out`` and
+    one event; the per-dataset experiment counts are the live ones the runner verified.
+    """
+    if report.verdict != "admissible":
+        raise ValueError(f"cannot record a blocked batch admission: {report.reasons}")
+    missing = sorted(set(report.dataset_classes) - set(n_experiments))
+    if missing:
+        raise ValueError(f"no experiment count given for {missing}")
+    unexpected = sorted(set(n_experiments) - set(report.dataset_classes))
+    if unexpected:
+        raise ValueError(
+            f"experiment counts for datasets not in the batch: {unexpected}"
+        )
+    now = _now()
+    for member in report.members:
+        manifest.datasets[member.dataset_class] = _dataset_entry(
+            member,
+            biocypher_out=biocypher_out,
+            n_experiments=n_experiments[member.dataset_class],
+            repo_root=repo_root,
+            at=now,
+        )
+    _adopt_current_surfaces(manifest, repo_root)
+    acknowledged: list[str] = []
+    for member in report.members:
+        # the drift is measured against the same manifest for every member, so the
+        # acknowledgment text repeats; record it once
+        acknowledged.extend(
+            line for line in _acknowledged_drift(member) if line not in acknowledged
+        )
+    manifest.events.append(
+        KgEvent(
+            kind="incremental_admission",
+            at=now,
+            torchcell_commit=report.torchcell_commit,
+            datasets=list(report.dataset_classes),
+            biocypher_out=biocypher_out,
+            acknowledged_adapter_drift=acknowledged,
         )
     )
     return manifest
@@ -818,6 +1010,7 @@ def live_neo4j_version(uri: str, user: str, password: str) -> str:
 
 
 def format_report(report: AdmissionReport) -> str:
+    """One dataset's verdict, with the evidence each blocker is decided from."""
     lines = [
         f"Admission check: {report.dataset_class}  ->  {report.verdict.upper()}",
         f"  working tree {report.torchcell_commit} (dirty={report.torchcell_dirty}); "
@@ -840,6 +1033,102 @@ def format_report(report: AdmissionReport) -> str:
     for reason in report.reasons:
         lines.append(f"  [BLOCK] {reason}")
     return "\n".join(lines)
+
+
+def format_batch_report(report: BatchAdmissionReport) -> str:
+    """The batch verdict, every member's report, and the two cross-member views."""
+    lines = [
+        f"Batch admission check: {', '.join(report.dataset_classes)}  ->  "
+        f"{report.verdict.upper()}",
+        f"  working tree {report.torchcell_commit} (dirty={report.torchcell_dirty}); "
+        f"served store built at {report.served_commit}",
+    ]
+    for member in report.members:
+        lines.extend(f"  {line}" for line in format_report(member).splitlines())
+    lines.append(
+        "  symbols introduced by more than one batch member (additive): "
+        + (
+            ", ".join(
+                f"{symbol} ({', '.join(sharers)})"
+                for symbol, sharers in report.co_introduced_symbols.items()
+            )
+            or "none"
+        )
+    )
+    if report.changed_symbol_importers:
+        lines.append("  changed symbols and the SERVED datasets that import them:")
+        for symbol, datasets in report.changed_symbol_importers.items():
+            in_batch = sorted(
+                member.dataset_class
+                for member in report.members
+                if symbol in member.new_dataset_closure
+            )
+            lines.append(
+                f"    {symbol}: served {', '.join(datasets)}"
+                + (
+                    f"; batch members importing it: {', '.join(in_batch)}"
+                    if in_batch
+                    else ""
+                )
+            )
+    for reason in report.reasons:
+        lines.append(f"  [BLOCK] {reason}")
+    return "\n".join(lines)
+
+
+def load_report(path: Path) -> AdmissionReport | BatchAdmissionReport:
+    """Read an admission report; a BATCH report is the one carrying ``members``."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if "members" in data:
+        return BatchAdmissionReport.model_validate(data)
+    return AdmissionReport.model_validate(data)
+
+
+def split_dataset_args(values: list[str]) -> list[str]:
+    """Dataset names from repeated ``--dataset`` values, each optionally a comma list."""
+    names: list[str] = []
+    for value in values:
+        for piece in value.split(","):
+            name = piece.strip()
+            if not name:
+                raise ValueError(f"empty dataset name in --dataset {value!r}")
+            if name in names:
+                raise ValueError(f"dataset named more than once: {name}")
+            names.append(name)
+    return names
+
+
+def parse_n_experiments(
+    values: list[str], dataset_classes: list[str]
+) -> dict[str, int]:
+    """``--n-experiments`` values as ``dataset -> count``.
+
+    A single dataset takes a bare count (``--n-experiments 6188``); a batch takes one
+    ``NAME=COUNT`` per member, and the names must be exactly the batch's members.
+    """
+    counts: dict[str, int] = {}
+    for value in values:
+        if "=" in value:
+            name, _, raw = value.partition("=")
+        elif len(dataset_classes) == 1:
+            name, raw = dataset_classes[0], value
+        else:
+            raise ValueError(
+                f"--n-experiments {value!r} needs the NAME=COUNT form for a batch of "
+                f"{len(dataset_classes)} datasets"
+            )
+        if name in counts:
+            raise ValueError(f"--n-experiments given twice for {name}")
+        counts[name] = int(raw)
+    missing = sorted(set(dataset_classes) - set(counts))
+    if missing:
+        raise ValueError(f"--n-experiments missing for {missing}")
+    unexpected = sorted(set(counts) - set(dataset_classes))
+    if unexpected:
+        raise ValueError(
+            f"--n-experiments names datasets not in the report: {unexpected}"
+        )
+    return counts
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -867,7 +1156,13 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     p_admit = sub.add_parser("admit", help="check whether a dataset can be added")
-    p_admit.add_argument("--dataset", required=True)
+    p_admit.add_argument(
+        "--dataset",
+        required=True,
+        action="append",
+        help="dataset class name; repeat the flag, or pass a comma-separated list, to "
+        "check a BATCH admitted in one incremental import",
+    )
     p_admit.add_argument("--data-root", required=True, help="dev tree holding the LMDB")
     p_admit.add_argument("--ack-adapter-drift", default=None)
     p_admit.add_argument("--report", default=None, help="write the JSON report here")
@@ -875,7 +1170,13 @@ def main(argv: list[str] | None = None) -> int:
     p_rec = sub.add_parser("record", help="record a completed incremental admission")
     p_rec.add_argument("--report", required=True, help="the admission report JSON")
     p_rec.add_argument("--biocypher-out", required=True)
-    p_rec.add_argument("--n-experiments", type=int, required=True)
+    p_rec.add_argument(
+        "--n-experiments",
+        action="append",
+        required=True,
+        help="live experiment count: COUNT for a single dataset, or NAME=COUNT "
+        "repeated, one per member, for a batch report",
+    )
 
     sub.add_parser("show", help="print the manifest summary")
     args = parser.parse_args(argv)
@@ -921,32 +1222,55 @@ def main(argv: list[str] | None = None) -> int:
             )
         return 0
     if args.command == "admit":
-        report = check_admission(
-            manifest,
-            repo_root,
-            args.dataset,
-            Path(args.data_root),
-            args.ack_adapter_drift,
+        names = split_dataset_args(args.dataset)
+        if len(names) == 1:
+            report = check_admission(
+                manifest,
+                repo_root,
+                names[0],
+                Path(args.data_root),
+                args.ack_adapter_drift,
+            )
+            print(format_report(report))
+            if args.report:
+                Path(args.report).write_text(
+                    report.model_dump_json(indent=2), encoding="utf-8"
+                )
+            return 0 if report.verdict == "admissible" else 1
+        batch = check_batch_admission(
+            manifest, repo_root, names, Path(args.data_root), args.ack_adapter_drift
         )
-        print(format_report(report))
+        print(format_batch_report(batch))
         if args.report:
             Path(args.report).write_text(
-                report.model_dump_json(indent=2), encoding="utf-8"
+                batch.model_dump_json(indent=2), encoding="utf-8"
             )
-        return 0 if report.verdict == "admissible" else 1
+        return 0 if batch.verdict == "admissible" else 1
     if args.command == "record":
-        report = AdmissionReport.model_validate_json(
-            Path(args.report).read_text(encoding="utf-8")
-        )
+        loaded = load_report(Path(args.report))
+        if isinstance(loaded, BatchAdmissionReport):
+            record_batch_admission(
+                manifest,
+                loaded,
+                biocypher_out=args.biocypher_out,
+                n_experiments=parse_n_experiments(
+                    args.n_experiments, loaded.dataset_classes
+                ),
+                repo_root=repo_root,
+            )
+            save_manifest(manifest, manifest_path)
+            print(f"recorded {', '.join(loaded.dataset_classes)} -> {manifest_path}")
+            return 0
+        counts = parse_n_experiments(args.n_experiments, [loaded.dataset_class])
         record_admission(
             manifest,
-            report,
+            loaded,
             biocypher_out=args.biocypher_out,
-            n_experiments=args.n_experiments,
+            n_experiments=counts[loaded.dataset_class],
             repo_root=repo_root,
         )
         save_manifest(manifest, manifest_path)
-        print(f"recorded {report.dataset_class} -> {manifest_path}")
+        print(f"recorded {loaded.dataset_class} -> {manifest_path}")
         return 0
     raise AssertionError(args.command)
 

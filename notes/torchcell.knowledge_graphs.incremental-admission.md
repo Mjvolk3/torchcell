@@ -66,3 +66,46 @@ Prerequisite done once: `tc-neo4j-readonly` was relaunched with `/db/database/bi
 The run, driven from the worktree (`TORCHCELL_PIP_REF=src`): admission passed; the dev LMDB was staged; 18,688 node ids and 40,291 relationship rows generated; the `Entity.id` uniqueness constraint was created on the 83 M-node store through the writable override and came online within the first poll; the existing-edge filter dropped exactly 2 rows (`MediaMemberOf` and `TemperatureMemberOf` into the control environment that da Silveira 2014 had already produced); `STOP DATABASE`, incremental import (build 5.7 s, merge 11.4 s), `START DATABASE`. Verified live: nodes 83,048,247 to 83,066,931 (+18,684), relationships 310,922,919 to 310,963,208 (+40,289), 36 datasets, 6188 of 6188 Nadal experiments, one relationship of each type into the shared control environment (no duplicates), the S288C genome node spanning 18 datasets, the NaCl environment perturbation node on 3097 experiments, a stored record round-tripping through the pydantic classes, and `dispersion` on all 6190 pseudobulk phenotype nodes. The manifest now lists 36 datasets (Nadal `incremental`, `2026-09-11_07-02-12`) and the CSVs are archived at `/bulk/biocypher-out/2026-09-11_07-02-12` (2.3 GB, 60 files).
 
 Left behind for a hand purge: `/db/rehearsal` (the rehearsal store plus four increment directories, 77 GB, all regenerable; its container `tc-neo4j-rehearsal` was removed), and the `*.superseded.*` copies of the Nadal LMDB that repeated staging left in the build tree (`/scratch/projects/torchcell/database/data/torchcell/nadal_ribelles_perturbseq2025`, uid 7474).
+
+## 2026.09.12 - Batch Admission: Several Datasets in One Increment
+
+Admitting one dataset per run costs a full pipeline (stage, generate, constraint, filter, stop, import, start, verify, record) per dataset, and the store is stopped once per dataset. A batch runs the same pipeline once for several datasets: one CSV set, one constraint step, one `neo4j-admin database import incremental`, one manifest event.
+
+### The batch verdict rule
+
+Every member is checked by the unchanged `check_admission` against the SERVED manifest, and the batch is admissible only when every member is. Nothing is relaxed and no second rule is added, because a member is checked in isolation: none of the members is in the store, so nothing a member ADDS (a schema symbol, a graph node class, an adapter method) can appear as drift for another member. Two members introducing the same new class is therefore additive, and the report only names it.
+
+The batch report (`BatchAdmissionReport`, pydantic, wrapping each member's `AdmissionReport`) carries two derived views:
+
+- `co_introduced_symbols`: schema symbol to the members that introduce it, for symbols more than one member brings. Informational.
+- `changed_symbol_importers`: for a symbol that changed relative to the served manifest, the SERVED datasets that import it. This is the inverse of the members' `stale_served` and is not a second computation, so a block reads as "served datasets X, Y import class Z", which is the sentence that decides whether the honest answer is a full rebuild. `format_batch_report` prints it together with the batch members whose own closure carries the symbol.
+
+### CLI
+
+`--dataset` repeats, and each value may be a comma-separated list:
+
+```bash
+python -m torchcell.knowledge_graphs.kg_manifest --manifest $BUILD_ROOT/database/kg_manifest.json \
+    admit --dataset ADataset --dataset BDataset,CDataset --data-root $DEV_DATA_ROOT --report admission.json
+```
+
+One dataset keeps the old behavior exactly: the same `format_report` output, the same `AdmissionReport` JSON, the same exit codes (0 admissible, 1 blocked). More than one prints the batch report (every member's report indented, then the two views) and writes a `BatchAdmissionReport` JSON; the exit code is 1 when any member blocks.
+
+`record` reads either shape (`load_report` recognizes a batch by its `members`) and takes the live experiment counts as `--n-experiments`: a bare count for a single dataset (`--n-experiments 6188`, the unchanged call), or `NAME=COUNT` repeated, one per member, for a batch. The names must be exactly the batch's members. A batch is recorded under ONE `incremental_admission` event listing every member, all sharing the `biocypher_out` directory they were imported from.
+
+### Runner
+
+`database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm` takes `DATASET_CLASSES`; `DATASET_CLASS` still works and is treated as a one-element batch.
+
+```bash
+sbatch --export=ALL,DATASET_CLASSES=ADataset,BDataset,CDataset \
+    database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm
+```
+
+Per-dataset stages are looped (slug resolution, LMDB staging, verification); the shared stages run once (`datasets=[A,B,C]` in the one ephemeral generate container, the constraint, the existing-edge filter, the import, the record). Output file names keep the dataset name for a single admission and become `batch<N>` for a batch.
+
+The verification expectation is now per member: the ExperimentMemberOf rows whose `:END_ID` is that dataset's `Dataset` node id (the id IS the class name, which is what the live verification query has always matched on), written to `${JOB}_expected_<tag>.txt`. Their sum must equal the increment's Experiment node rows, since an experiment belongs to exactly one dataset; a mismatch aborts before the import. Each member's live `ExperimentMemberOf` count is then compared against its own expectation and passed to `record` as `NAME=COUNT`.
+
+The CSV generator needed no change: `create_scerevisiae_kg_small` already builds every dataset named in `datasets`, and `kg_increment.yaml` already documented it as one or a few.
+
+Measured: `pytest tests/torchcell/knowledge_graphs -x -q` 26 passed; mypy clean on `kg_manifest.py`. The CLI was exercised against a COPY of the production manifest in a scratch directory (the production file itself read-only): single admit of `Bloom2019Dataset` ADMISSIBLE with output identical in shape to before, batch admit of `Bloom2019Dataset,SmfKuzmin2020Dataset` BLOCKED with exit 1 (the second is already served and its dev LMDB is stale), and both the batch and the single `record` paths writing the copy. No batch has been imported into a store yet.

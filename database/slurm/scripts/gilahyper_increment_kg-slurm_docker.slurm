@@ -8,7 +8,8 @@
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
 
-# Add ONE dataset to the SERVED knowledge graph without rebuilding the others.
+# Add ONE dataset, or a BATCH of datasets, to the SERVED knowledge graph without
+# rebuilding the others.
 #
 # Resources: small on purpose. The heavy steps run in docker containers whose memory is
 # bounded by their own --memory limits (CSV generation) or by the serving container's
@@ -18,26 +19,41 @@
 #
 #   sbatch --export=ALL,DATASET_CLASS=NadalRibellesPerturbSeq2025Dataset \
 #       database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm
+#   sbatch --export=ALL,DATASET_CLASSES=Bloom2019Dataset,FooDataset,BarDataset \
+#       database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm
+#
+# A batch is ONE increment: one CSV set, one constraint step, one neo4j-admin call, one
+# manifest event. Members are admitted independently (nothing a member adds can block
+# another, since none of them is served yet), so the batch is the single-dataset run
+# with every per-dataset stage looped.
 #
 # Stages (each one fails loudly; nothing is retried or worked around):
 #   1 ADMIT    kg_manifest admit: the served datasets' schema closures, the graph schema
 #              and the adapter code must be unchanged for everything already served, and
-#              the new dataset's dev-tree LMDB must be fresh. A block means FULL REBUILD
-#              (or, for adapter drift only, a reviewed ACK_ADAPTER_DRIFT reason).
-#   2 STAGE    copy the dev-tree LMDB into the uid-7474 build tree (via a container).
+#              each new dataset's dev-tree LMDB must be fresh. A block means FULL REBUILD
+#              (or, for adapter drift only, a reviewed ACK_ADAPTER_DRIFT reason). With
+#              more than one dataset the report is a BATCH report (blocked unless every
+#              member is admissible).
+#   2 STAGE    copy each dev-tree LMDB into the uid-7474 build tree (via a container).
 #   3 REFRESH  directory_setup: the build tree's biocypher/ config copy (schema config
 #              with the new node classes) and .env are refreshed from TORCHCELL_SRC.
 #   4 GENERATE an ephemeral python container (no Neo4j server) runs the KG builder in
-#              incremental mode for this dataset only; CSVs land in
-#              $SERVE_ROOT/biocypher-out/<ts>, which the SERVING container mounts.
+#              incremental mode for these datasets only (datasets=[A,B,C]); CSVs land in
+#              $SERVE_ROOT/biocypher-out/<ts>, which the SERVING container mounts. The
+#              per-dataset expected experiment count comes from the ExperimentMemberOf
+#              rows, whose :END_ID is the Dataset node id (the class name).
 #   5 IMPORT   in the serving container: create the id uniqueness constraints (the
 #              database is made writable for that step through the dynamic
 #              server.databases.writable setting, then set back), STOP DATABASE,
 #              neo4j-admin database import incremental as the neo4j user, START DATABASE.
-#   6 VERIFY   the new Dataset node's ExperimentMemberOf count equals the CSV row count.
-#   7 RECORD   kg_manifest record; CSVs archived to /bulk/biocypher-out/<ts>.
+#   6 VERIFY   every new Dataset node's ExperimentMemberOf count equals its CSV row count.
+#   7 RECORD   kg_manifest record (one event naming every member); CSVs archived to
+#              /bulk/biocypher-out/<ts>.
 #
-# Variables (all optional except DATASET_CLASS):
+# Variables (all optional except DATASET_CLASSES, or DATASET_CLASS for a single dataset):
+#   DATASET_CLASSES    comma-separated registered dataset class names, admitted in one
+#                      increment (default: the single DATASET_CLASS)
+#   DATASET_CLASS      one registered dataset class name (a one-element batch)
 #   TORCHCELL_SRC      checkout providing the host-side code + .env (default: main)
 #   TORCHCELL_PIP_REF  what the CSV-generating container installs
 #                      (default git+https://github.com/Mjvolk3/torchcell.git@main;
@@ -69,7 +85,18 @@ conda activate torchcell
 SLURM_CPUS_PER_TASK="${SLURM_CPUS_PER_TASK:-8}"
 SLURM_MEM_PER_NODE="${SLURM_MEM_PER_NODE:-32768}"
 
-: "${DATASET_CLASS:?set DATASET_CLASS=<registered dataset class name>}"
+DATASET_CLASSES="${DATASET_CLASSES:-${DATASET_CLASS:?set DATASET_CLASSES=<class>[,<class>...] (or DATASET_CLASS=<class>)}}"
+IFS=',' read -r -a RAW_DATASETS <<< "$DATASET_CLASSES"
+DATASET_ARRAY=()
+for NAME in "${RAW_DATASETS[@]}"; do
+    NAME="${NAME// /}"
+    [ -n "$NAME" ] || { echo "empty dataset name in DATASET_CLASSES=$DATASET_CLASSES"; exit 1; }
+    DATASET_ARRAY+=("$NAME")
+done
+N_DATASETS=${#DATASET_ARRAY[@]}
+# file names (report, wheel dir, generate log) keep the dataset name for a single
+# admission and become batch<N> for a batch
+if [ "$N_DATASETS" -eq 1 ]; then TAG="${DATASET_ARRAY[0]}"; else TAG="batch${N_DATASETS}"; fi
 TORCHCELL_SRC="${TORCHCELL_SRC:-/home/michaelvolk/Documents/projects/torchcell}"
 TORCHCELL_PIP_REF="${TORCHCELL_PIP_REF:-git+https://github.com/Mjvolk3/torchcell.git@main}"
 BUILD_ROOT="${BUILD_ROOT:-/scratch/projects/torchcell}"
@@ -87,9 +114,10 @@ cd "$TORCHCELL_SRC"
 export PYTHONPATH="$TORCHCELL_SRC"
 DEV_DATA_ROOT=$(grep -E '^DATA_ROOT=' .env | cut -d= -f2- | tr -d '"')
 JOB="${SLURM_JOB_ID:-nojob}"
-REPORT="$BUILD_ROOT/database/slurm/output/${JOB}_admission_${DATASET_CLASS}.json"
+REPORT="$BUILD_ROOT/database/slurm/output/${JOB}_admission_${TAG}.json"
+EXPECTED="$BUILD_ROOT/database/slurm/output/${JOB}_expected_${TAG}.txt"
 echo "source $TORCHCELL_SRC ($(git rev-parse --short HEAD)); dev tree $DEV_DATA_ROOT"
-echo "dataset $DATASET_CLASS -> $NEO4J_CONTAINER/$NEO4J_DATABASE; manifest $KG_MANIFEST"
+echo "$N_DATASETS dataset(s) ${DATASET_ARRAY[*]} -> $NEO4J_CONTAINER/$NEO4J_DATABASE; manifest $KG_MANIFEST"
 
 echo "---------------- 0 PREFLIGHT"
 [ -f "$KG_MANIFEST" ] || { echo "no manifest at $KG_MANIFEST (bootstrap it first)"; exit 1; }
@@ -98,31 +126,47 @@ docker inspect "$NEO4J_CONTAINER" --format '{{range .Mounts}}{{.Destination}}{{"
     | grep -qx /var/lib/neo4j/biocypher-out \
     || { echo "$NEO4J_CONTAINER does not mount /var/lib/neo4j/biocypher-out; relaunch it with -v $SERVE_ROOT/biocypher-out:/var/lib/neo4j/biocypher-out"; exit 1; }
 docker exec "$NEO4J_CONTAINER" $CS -d system "SHOW DATABASE $NEO4J_DATABASE YIELD name, currentStatus, access;"
-SLUG=$(python -c "
-from torchcell.database.build_dataset_lmdb import resolve_dataset_class, dataset_default_root
-import os.path as osp; print(osp.basename(dataset_default_root(resolve_dataset_class('$DATASET_CLASS'))))")
-echo "slug $SLUG"
+mapfile -t SLUGS < <(python - "${DATASET_ARRAY[@]}" <<'EOF'
+import os.path as osp
+import sys
+
+from torchcell.database.build_dataset_lmdb import (
+    dataset_default_root,
+    resolve_dataset_class,
+)
+
+for name in sys.argv[1:]:
+    print(osp.basename(dataset_default_root(resolve_dataset_class(name))))
+EOF
+)
+[ "${#SLUGS[@]}" -eq "$N_DATASETS" ] || { echo "could not resolve a slug for every dataset: ${SLUGS[*]}"; exit 1; }
+echo "slugs ${SLUGS[*]}"
 
 echo "---------------- 1 ADMIT"
 ACK_ARGS=()
 if [ -n "${ACK_ADAPTER_DRIFT:-}" ]; then ACK_ARGS=(--ack-adapter-drift "$ACK_ADAPTER_DRIFT"); fi
+DATASET_ARGS=()
+for NAME in "${DATASET_ARRAY[@]}"; do DATASET_ARGS+=(--dataset "$NAME"); done
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
-    admit --dataset "$DATASET_CLASS" --data-root "$DEV_DATA_ROOT" --report "$REPORT" "${ACK_ARGS[@]}"
+    admit "${DATASET_ARGS[@]}" --data-root "$DEV_DATA_ROOT" --report "$REPORT" "${ACK_ARGS[@]}"
 
-echo "---------------- 2 STAGE dev LMDB -> build tree (as uid 7474)"
+echo "---------------- 2 STAGE dev LMDBs -> build tree (as uid 7474)"
 TS=$(date +%Y-%m-%d_%H-%M-%S)
 # --entrypoint bash bypasses the image entrypoint that drops to the neo4j user, so the
 # uid is set explicitly: the build tree is uid-7474 territory.
-docker run --rm --entrypoint bash --user 7474:7474 \
-    -v "$BUILD_ROOT/database/data":/var/lib/neo4j/data \
-    -v "$DEV_DATA_ROOT/data/torchcell/$SLUG":/mnt/src:ro \
-    "$IMAGE" -c "set -euo pipefail
-        BT=/var/lib/neo4j/data/torchcell/$SLUG; mkdir -p \$BT
-        for d in processed preprocess; do
-            if [ -e \$BT/\$d ]; then mv \$BT/\$d \$BT/\$d.superseded.$TS; echo \"moved aside \$BT/\$d\"; fi
-            cp -a /mnt/src/\$d \$BT/\$d
-        done
-        ls -la \$BT \$BT/processed"
+for SLUG in "${SLUGS[@]}"; do
+    echo "-- staging $SLUG"
+    docker run --rm --entrypoint bash --user 7474:7474 \
+        -v "$BUILD_ROOT/database/data":/var/lib/neo4j/data \
+        -v "$DEV_DATA_ROOT/data/torchcell/$SLUG":/mnt/src:ro \
+        "$IMAGE" -c "set -euo pipefail
+            BT=/var/lib/neo4j/data/torchcell/$SLUG; mkdir -p \$BT
+            for d in processed preprocess; do
+                if [ -e \$BT/\$d ]; then mv \$BT/\$d \$BT/\$d.superseded.$TS; echo \"moved aside \$BT/\$d\"; fi
+                cp -a /mnt/src/\$d \$BT/\$d
+            done
+            ls -la \$BT \$BT/processed"
+done
 
 echo "---------------- 3 REFRESH build-tree biocypher config + env from $TORCHCELL_SRC"
 DATA_ROOT="$BUILD_ROOT" python -m torchcell.database.directory_setup --env-file "$DATABASE_ENV_FILE"
@@ -140,7 +184,7 @@ mem_mb=$((SLURM_MEM_PER_NODE))
 if [ "$TORCHCELL_PIP_REF" = "src" ]; then
     # pip cannot build from a read-only bind mount (it writes egg-info into the source
     # tree), so build the wheel on the host and hand the container the wheel.
-    WHEEL_DIR="$BUILD_ROOT/database/slurm/output/${JOB}_wheel_${DATASET_CLASS}"
+    WHEEL_DIR="$BUILD_ROOT/database/slurm/output/${JOB}_wheel_${TAG}"
     mkdir -p "$WHEEL_DIR"
     python -m pip wheel --no-deps --no-build-isolation -w "$WHEEL_DIR" "$TORCHCELL_SRC" >/dev/null
     WHEEL=$(ls "$WHEEL_DIR"/torchcell-*.whl | head -1)
@@ -153,7 +197,8 @@ else
     SRC_MOUNT=()
     PIP_TARGET="$TORCHCELL_PIP_REF"
 fi
-GEN_LOG="$BUILD_ROOT/database/slurm/output/${JOB}_generate_${DATASET_CLASS}.log"
+DATASET_LIST=$(IFS=,; echo "${DATASET_ARRAY[*]}")
+GEN_LOG="$BUILD_ROOT/database/slurm/output/${JOB}_generate_${TAG}.log"
 docker run --rm --entrypoint bash \
     --cpus="$SLURM_CPUS_PER_TASK" -e SLURM_CPUS_PER_TASK="$SLURM_CPUS_PER_TASK" --memory="${mem_mb}m" \
     -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
@@ -168,7 +213,7 @@ docker run --rm --entrypoint bash \
         python -m pip install --no-cache-dir biocypher==0.15.2 >/dev/null
         set -a; source /.env; set +a
         wandb login \$WANDB_API_KEY >/dev/null
-        python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small --config-name kg_increment 'datasets=[$DATASET_CLASS]'
+        python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small --config-name kg_increment 'datasets=[$DATASET_LIST]'
         # this container runs as root (pip needs the image's site-packages); hand the
         # output to the neo4j user, which runs the import, and keep it host-readable
         # world-writable as well: the host-side existing-edge filter rewrites the edge
@@ -189,7 +234,40 @@ print("node rows per label:", a["node_counts"]); print("edge rows per type:", a[
 print("distinct node ids", a["n_node_ids"], "| external endpoint ids", a["n_external_ids"], "| edges between existing nodes", a["n_edges_between_external"])
 assert a["n_edges_between_external"] == 0
 EOF
-N_EXPECTED=$(python -c "import json; print(json.load(open('$OUT_HOST/incremental-reference-analysis.json'))['node_counts']['Experiment'])")
+# per-dataset expectation for VERIFY: the ExperimentMemberOf rows pointing at each
+# Dataset node (whose id IS the class name). Their sum must be every Experiment row of
+# the increment -- an Experiment belongs to exactly one dataset.
+python - "$OUT_HOST" "${DATASET_ARRAY[@]}" > "$EXPECTED" <<'EOF'
+import csv
+import sys
+from pathlib import Path
+
+from torchcell.knowledge_graphs.incremental_import import discover_csv_groups
+
+csv.field_size_limit(sys.maxsize)
+out_dir, names = Path(sys.argv[1]), sys.argv[2:]
+group = next(
+    g for g in discover_csv_groups(out_dir) if g.label == "ExperimentMemberOf"
+)
+end = group.columns.index(":END_ID")
+counts = dict.fromkeys(names, 0)
+for part in group.part_paths:
+    with open(part, encoding="utf-8", newline="") as handle:
+        for row in csv.reader(handle, delimiter="\t", quotechar="'", strict=True):
+            target = row[end].strip("'")
+            if target not in counts:
+                raise SystemExit(
+                    f"ExperimentMemberOf points at Dataset {target!r}, which is not in "
+                    f"this increment ({names})"
+                )
+            counts[target] += 1
+for name in names:
+    print(f"{name}={counts[name]}")
+EOF
+cat "$EXPECTED"
+N_EXPECTED_TOTAL=$(awk -F= '{s+=$2} END {print s}' "$EXPECTED")
+N_EXPERIMENT_ROWS=$(python -c "import json; print(json.load(open('$OUT_HOST/incremental-reference-analysis.json'))['node_counts']['Experiment'])")
+[ "$N_EXPECTED_TOTAL" = "$N_EXPERIMENT_ROWS" ] || { echo "ExperimentMemberOf rows ($N_EXPECTED_TOTAL) != Experiment node rows ($N_EXPERIMENT_ROWS)"; exit 1; }
 
 echo "---------------- 5 IMPORT into $NEO4J_CONTAINER/$NEO4J_DATABASE"
 BEFORE=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (n) RETURN count(n);" | tail -1)
@@ -225,15 +303,22 @@ fi
 
 echo "---------------- 6 VERIFY"
 AFTER=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (n) RETURN count(n);" | tail -1)
-N_LIVE=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain \
-    "MATCH (d:Dataset {id:'$DATASET_CLASS'})<-[:ExperimentMemberOf]-(e:Experiment) RETURN count(e);" | tail -1)
-echo "nodes before $BEFORE, after $AFTER (+$((AFTER - BEFORE))); $DATASET_CLASS experiments live: $N_LIVE, expected: $N_EXPECTED"
-[ "$N_LIVE" = "$N_EXPECTED" ] || { echo "experiment count mismatch"; exit 1; }
+echo "nodes before $BEFORE, after $AFTER (+$((AFTER - BEFORE)))"
+N_EXPERIMENTS_ARGS=()
+for NAME in "${DATASET_ARRAY[@]}"; do
+    N_EXPECTED=$(grep "^${NAME}=" "$EXPECTED" | cut -d= -f2)
+    [ -n "$N_EXPECTED" ] || { echo "no expected count for $NAME in $EXPECTED"; exit 1; }
+    N_LIVE=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain \
+        "MATCH (d:Dataset {id:'$NAME'})<-[:ExperimentMemberOf]-(e:Experiment) RETURN count(e);" | tail -1)
+    echo "$NAME experiments live: $N_LIVE, expected: $N_EXPECTED"
+    [ "$N_LIVE" = "$N_EXPECTED" ] || { echo "experiment count mismatch for $NAME"; exit 1; }
+    N_EXPERIMENTS_ARGS+=(--n-experiments "$NAME=$N_LIVE")
+done
 cat "$OUT_HOST/incremental-import.report" 2>/dev/null | head -20 || true
 
 echo "---------------- 7 RECORD + ARCHIVE"
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
-    record --report "$REPORT" --biocypher-out "$OUT_TS" --n-experiments "$N_LIVE"
+    record --report "$REPORT" --biocypher-out "$OUT_TS" "${N_EXPERIMENTS_ARGS[@]}"
 docker run --rm --entrypoint bash --user 7474:7474 -v "$SERVE_ROOT/biocypher-out":/src:ro -v "$ARCHIVE_ROOT":/dst "$IMAGE" \
     -c "cp -a /src/$OUT_TS /dst/ && ls -ld /dst/$OUT_TS"
 echo "DONE at $(date)"

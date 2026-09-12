@@ -1,8 +1,8 @@
 {
- "built_at": "2026-09-12T20:15:31.384258+00:00",
+ "built_at": "2026-09-12T20:23:36.693077+00:00",
  "summary_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave7_aa_summary.json",
- "summary_sha256": "9b177fbfd7694a69c597b7f76c53b57b3cf2b22e641bcb61d5076252a6fa181a",
- "summary_generated_at": "2026-09-12-15-07-56",
+ "summary_sha256": "73143b38ee36e2940631d1f933ff1088ef01877daffe01382b2adc97d802c916",
+ "summary_generated_at": "2026-09-12-15-23-35",
  "primary_budget": "e200",
  "contrasts_emitted": [
   "e200/conc_vs_pooled",
@@ -21,15 +21,15 @@
   },
   {
    "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration.svg",
-   "sha256": "5d159d42393c907d47fbe697158ab9e8440285e43b68edc4bb1f48394e87312f",
-   "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-07-56.svg",
-   "source_sha256": "5d159d42393c907d47fbe697158ab9e8440285e43b68edc4bb1f48394e87312f"
+   "sha256": "36661bf634c50cb0ff1de0ab509841fadc4b3dadf2a4b578ce2e0a2b5e3ed6d0",
+   "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-23-35.svg",
+   "source_sha256": "36661bf634c50cb0ff1de0ab509841fadc4b3dadf2a4b578ce2e0a2b5e3ed6d0"
   },
   {
    "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration.png",
-   "sha256": "a91229c3ee402f8dcf3209736b9e2702cb1a0785b9f9b87f5a2746beddf27da1",
-   "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-07-56.png",
-   "source_sha256": "a91229c3ee402f8dcf3209736b9e2702cb1a0785b9f9b87f5a2746beddf27da1"
+   "sha256": "cc9269aa7e24d3190d71f689aee5ac2886382fd1f1904d46724a0942a64635f8",
+   "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-23-35.png",
+   "source_sha256": "cc9269aa7e24d3190d71f689aee5ac2886382fd1f1904d46724a0942a64635f8"
   }
  ]
 }

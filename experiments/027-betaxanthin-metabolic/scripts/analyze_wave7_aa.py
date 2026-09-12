@@ -46,6 +46,7 @@ Writes ``results/wave7_aa_summary.json`` and one timestamped figure into
 import json
 import os
 import os.path as osp
+import re
 from typing import Any, cast
 
 import matplotlib.pyplot as plt
@@ -106,6 +107,35 @@ EXPECTED_KCAT_TIERS: dict[str, int] = {
     "predicted": 2831,
     "default": 18,
 }
+#: Panels c and d draw one line per CELL and color it by its ARM, so a color means the
+#: readout and nothing else, and the legend names five arms rather than sixteen cells. It
+#: used to take PLOT_PALETTE[i] per cell, which made the color mean the sort order and gave
+#: those two panels a legend eight rows tall that crowded the panels above them.
+ARM_ORDER: tuple[str, ...] = ("conc", "conc_nocstr", "pooled", "pooledq", "turnover")
+
+
+def arm_of(stem: str) -> str:
+    """The readout a cell stem belongs to, with the budget and the seed stripped off."""
+    name = re.sub(r"_s\d+$", "", stem.removeprefix("wave7_aa_").removesuffix(".json"))
+    return name.removesuffix("_e200")
+
+
+def arm_color(stem: str) -> str:
+    """The one color this arm is drawn in, in every panel that draws per-cell lines."""
+    arm = arm_of(stem)
+    if arm not in ARM_ORDER:
+        raise KeyError(
+            f"cell stem {stem!r} resolves to arm {arm!r}, which is not in ARM_ORDER; "
+            "a line may not reach a panel without a declared color"
+        )
+    return PLOT_PALETTE[ARM_ORDER.index(arm)]
+
+
+def arm_legend_label(stem: str) -> str:
+    """The arm's display name on one line, for a legend rather than an axis."""
+    return ARM_LABELS[arm_of(stem)].replace("\n", " ")
+
+
 #: The three component criteria of the Genesis metabolic-grounding test.
 CRITERIA = (
     ("balance_median_ratio_le_1e-02", "mass balance within 1%"),
@@ -497,15 +527,18 @@ def _panel_per_amino_acid(ax: Any, rows: list[ConcentrationRow]) -> None:
 
 def _panel_escape(ax: Any, loaded: dict[str, dict[str, Any]]) -> None:
     """Validation prediction spread over the target's, per epoch, one line per cell."""
-    for i, (stem, result) in enumerate(sorted(loaded.items())):
+    seen: set[str] = set()
+    for stem, result in sorted(loaded.items()):
         history = result["history"]
+        arm = arm_of(stem)
         ax.plot(
             [row["epoch"] for row in history],
             [row["val_pred_sd_ratio"] for row in history],
             linewidth=0.5,
-            color=PLOT_PALETTE[i % len(PLOT_PALETTE)],
-            label=stem.removeprefix("wave7_aa_").removesuffix(".json"),
+            color=arm_color(stem),
+            label=arm_legend_label(stem) if arm not in seen else None,
         )
+        seen.add(arm)
     ax.axhline(0.05, color="black", linewidth=0.4, linestyle="--")
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation prediction spread ratio")
@@ -520,17 +553,20 @@ def _panel_curves(ax: Any, cells: list[CellRow]) -> None:
     sitting at the right edge is a cell whose selection was made by the wall, not by the
     model. The marker is the datum, not an annotation.
     """
-    for i, row in enumerate(cells):
+    seen: set[str] = set()
+    for row in cells:
         if not row.val_pearson_ma:
             continue
-        color = PLOT_PALETTE[i % len(PLOT_PALETTE)]
+        color = arm_color(row.cell)
+        arm = arm_of(row.cell)
         ax.plot(
             row.val_pearson_ma_epochs,
             row.val_pearson_ma,
             linewidth=0.5,
             color=color,
-            label=row.cell.removeprefix("wave7_aa_").removesuffix(".json"),
+            label=arm_legend_label(row.cell) if arm not in seen else None,
         )
+        seen.add(arm)
         ax.plot(
             [row.select_epoch],
             [row.val_pearson_ma[row.val_pearson_ma_epochs.index(row.select_epoch)]]
@@ -571,7 +607,11 @@ def _panel_criteria(ax: Any, cells: list[CellRow]) -> None:
         [f"{c.cell.removeprefix('wave7_aa_').removesuffix('.json')}" for c in usable],
         rotation=90,
     )
-    ax.set_ylim(0, 1.05)
+    # A criterion met by no genotype draws a zero-height bar, which at ylim bottom 0 is
+    # hidden under the axis spine and reads as a missing bar rather than as a zero. Opening
+    # the bottom lifts the baseline off the spine so the bar's own black edge is visible at
+    # 0, which puts the datum on the page without writing anything inside the axes.
+    ax.set_ylim(-0.045, 1.05)
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(which="minor", length=0)
@@ -605,12 +645,18 @@ def make_figure(
         for spine in ax.spines.values():
             spine.set_visible(True)
             spine.set_linewidth(0.5)
+    # Every legend sits ABOVE its axes and carries at most five entries, so it is one or
+    # two rows and does not reach the panel above. Panels c and d name arms rather than
+    # cells, which is what took their legends from eight rows to one.
+    # ncol is chosen so the legend is never WIDER than its panel: constrained_layout pays
+    # for an over-wide legend by shrinking every axes in the figure, which is how a
+    # one-row five-entry legend collapsed panel a's tick labels into each other.
     for ax, ncol in (
         (axes[0], 3),
-        (axes[1], 3),
+        (axes[1], 2),
         (axes[2], 2),
         (axes[3], 2),
-        (axes[5], 3),
+        (axes[5], 2),
     ):
         if ax.get_legend_handles_labels()[0]:
             ax.legend(
@@ -618,8 +664,10 @@ def make_figure(
                 bbox_to_anchor=(0, 1.02),
                 ncol=ncol,
                 frameon=True,
-                fontsize=5.0,
+                fontsize=6.0,
                 handlelength=1.2,
+                handletextpad=0.4,
+                columnspacing=1.0,
                 borderpad=0.3,
             )
     for ax, letter in zip(axes, "abcdef", strict=True):

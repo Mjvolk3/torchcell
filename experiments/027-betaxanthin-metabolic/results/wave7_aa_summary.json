@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-12-15-07-56",
+  "generated_at": "2026-09-12-15-23-35",
   "expected_kcat_tier_counts": {
     "measured": 97,
     "homolog": 782,
@@ -8587,5 +8587,5 @@
     "wave7_aa_turnover_s2701.json",
     "wave7_aa_turnover_s2702.json"
   ],
-  "figure_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-07-56.svg"
+  "figure_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-23-35.svg"
 }

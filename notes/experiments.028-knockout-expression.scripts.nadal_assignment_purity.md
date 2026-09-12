@@ -35,3 +35,17 @@ in the released object is roughly 60% other genotypes, which is why the recomput
 changes agree with Kemmeren no better than the stored ones, why agreement rises with a
 strain's effect size (a strong effect survives 60% dilution) and why it does not rise with
 the number of cells.
+
+## 2026.09.11 - The read-through alternative, tested and rejected
+
+The cassette design (paper Methods: heterologous terminator shortened from 262 to 43 nt
+"enabling the use of the endogenous terminator"; the targeted amplification "has coverage
+of the endogenous terminator") means the pTEF1-URA3-barcode transcript ends at the deleted
+gene's own terminator, so 3'-end reads from it land on the deleted locus. Under that
+mechanism a genotype's own cells would detect the deleted gene at a pTEF1 level regardless
+of native expression. Measured (2,724 genotypes with >= 20 cells): own-cell detection
+tracks the WT detection level all the way down (Spearman 0.64, ~0.6x in every bin), and
+for the 1,586 deleted genes WT detects in < 5% of cells the own cells detect it in a
+median 2.9% (2.1% of them above 20%). The cassette does not supply the counts; the
+excess-zero purity reading stands, with the caveat from the signature tests that it is
+confirmed only where a response is detectable.

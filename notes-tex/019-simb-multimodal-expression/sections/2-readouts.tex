@@ -380,23 +380,63 @@ and the slope $0.002$, $0.010$ and $0.000$ (\cref{fig:cross-study-recomputed}a--
 tracks cell count. The statistic was not the cause.
 \src{experiments/028-knockout-expression/results/cross_study_recomputed.json}
 
-\pfstep{The cause is the cell-to-genotype assignment, about $40\,\%$ pure} A cell carrying
-deletion $g$ cannot express $g$. Among the 41 genotypes whose deleted gene the wild type
-detects in at least half its cells, the genotype's own cells still detect it in a median
-$46\,\%$, $0.64$ of the wild-type rate, and 38 of the 41 are indistinguishable from wild
-type on their own deleted gene. The per-cell counts are a mixture, not a uniform
-reduction: cells labeled \file{bc-YLR044C} (\textit{pdc1}) carry PDC1 at a mean of 13.4
-UMI against 15.0 in wild type with $9\,\%$ at zero (wild type $1\,\%$), and a Poisson at
-that mean has no zeros, so the zero cells are the deletion cells and the rest are not.
-Reading the excess zeros as the share of true deletion cells,
-$p = (z_g - z_{wt})/(1 - z_{wt})$, gives a median purity of $0.36$ (IQR $0.25$ to $0.40$)
-over those 41 and $0.40$ (IQR $0.26$ to $0.52$) over the 281 genotypes whose deleted gene
-wild type detects in at least a fifth of cells (\cref{fig:cross-study-recomputed}f).
-Batch is not the cause; 3{,}307 of the 3{,}506 genotypes span three or more of the 14
-batches and the wild-type cells span all of them. What produces the impurity, the
-consensus of clone and genotype barcodes, ambient barcode reads in the microwell format,
-or strain identity in the library, is not measured here.
-\src{experiments/028-knockout-expression/scripts/nadal_assignment_purity.R}
+\pfstep{The conditions differ in more than the medium} Kemmeren and Sameith grew each
+strain alone in SC with $2\,\%$ glucose to early mid-log at OD$_{600}$ 0.6, two
+independent cultures, dye-swapped against a wild-type pool grown the same day, BY4742
+MAT$\alpha$. Nadal-Ribelles recovered the URA3-marked collection on URA$^-$ at 25\,$^\circ$C
+for 48 h, grew each strain 6 h in YPD to OD$_{660}$ 0.6 to 0.8, then pooled all 3{,}500
+strains into one flask and fixed them in methanol; the reference is 500 wild-type cells
+from seven barcoded wild-type strains in the same run. Kemmeren's own SC-against-YPD
+comparison of wild type found 128 genes changed at 1.7-fold, so the baseline differs, and
+a deletion's response can differ with it. Hypothesis, unmeasured here: the medium and
+the pooled growth lower cross-study agreement below the $0.62$ same-platform reference.
+Whether they take it to zero is what the cell-level measurements below address, and
+those do not depend on Kemmeren.
+
+\pfstep{Read-through from the barcode cassette is not what puts counts on the deleted
+gene} The redesigned cassette shortens the heterologous terminator from 262 to 43 nt so
+that the pTEF1-driven URA3-barcode transcript ends at the deleted gene's own terminator,
+and 3$'$-end capture reads that transcript at the deleted locus. If that were the source
+of the deleted gene's counts in its own cells, those counts would sit at one pTEF1 level
+whatever wild type expresses there. Measured over 2{,}724 genotypes with at least 20
+cells, the fraction of a genotype's cells detecting its deleted gene tracks the
+wild-type fraction all the way down (Spearman $0.64$) at about $0.6\times$ in every bin,
+and for the 1{,}586 deleted genes wild type itself detects in under $5\,\%$ of cells the
+genotype's own cells detect it in a median $2.9\,\%$. The counts at the deleted locus
+scale with native expression; the cassette does not supply them.
+\src{experiments/028-knockout-expression/results/nadal_readthrough_and_signature_tests.json}
+
+\pfstep{Where a response is detectable, about half the labeled cells carry it; for most
+genotypes none is detectable} Two single-cell tests that never use the deleted gene. For
+the 240 shared deletions with at least 20 Kemmeren reporters beyond one $\log_2$ unit,
+every cell of the genotype and every wild-type cell was scored on Kemmeren's signature
+(mean over up reporters minus mean over down reporters). The score separates the
+genotype's cells from wild type at a median AUROC of $0.53$ (IQR $0.50$ to $0.61$), 8 of
+240 above $0.8$; a median $7.5\,\%$ of a genotype's cells sit above the wild-type 95th
+percentile, against $5\,\%$ by chance. The 8 that separate are the strong regulators,
+\textit{rfx1}, \textit{rim101}, \textit{skn7}, \textit{sam1}, \textit{ada2},
+\textit{snf5}, \textit{swi3}, YGR122W, and in those $33$ to $68\,\%$ of the labeled
+cells sit above the wild-type 95th percentile, the rest inside the wild-type range. The
+second test asks for any reproducible signal: each genotype's cells were split in half,
+a 50-gene signature derived from one half against half the wild-type cells, and the
+other half scored against the held-out wild-type half. Over 207 genotypes with at least
+40 cells the median AUROC is $0.52$ (IQR $0.49$ to $0.57$) against a null of $0.49$
+(wild-type cells playing a genotype), with 18 above $0.65$ and 6 above $0.8$; the two
+tests agree on which genotypes separate (Spearman $0.24$).
+\src{experiments/028-knockout-expression/scripts/nadal_signature_mixture.R,
+nadal_split_half_signal.R}
+
+The excess-zero purity estimate (median $0.36$ to $0.40$ from the deleted gene's own
+counts; \cref{fig:cross-study-recomputed}f) and the signature fractions above say the
+same thing for the genotypes with a strong response: roughly half of the cells under a
+label are that genotype. For the majority of genotypes the labeled cells carry no
+reproducible signal at this depth (a median of 92 cells at 215 to 7{,}713 UMI each), and
+whether that is the same impurity, a response too small for the depth, or a response
+absent in YPD and pooled growth is not separable here. Batch is not the cause; 3{,}307
+of the 3{,}506 genotypes span three or more of the 14 batches and the wild-type cells
+span all of them. What produces the impurity in the strong-response genotypes, the
+clone-and-genotype barcode consensus, ambient barcode reads in the microwell format, or
+strain identity in the library, is not measured here.
 
 \pfstep{The deleted gene cannot be read off its own profile} A deletion removes its own
 transcript, so in a clean knockout profile the deleted gene sits at the bottom. In
@@ -407,18 +447,17 @@ $8.2\,\%$ under the three statistics, with a median rank at the 35th to 47th per
 of the profile (chance is the 50th) and a median own value of $-0.02$ to $-0.41$
 (\cref{fig:identify-deletion}). The rate does not rise with cells per genotype
 ($2.0\,\%$ under 30 cells, $0\,\%$ above 300). The deleted gene is not identifiable
-from a Nadal-Ribelles profile, which is the purity result seen from the profile's side.
+from a Nadal-Ribelles profile, and read-through from the cassette is not the reason (above).
 \src{experiments/028-knockout-expression/results/nadal_identify_deletion.json}
 
-A pseudobulk that is $60\,\%$ other genotypes carries a $0.4$-weighted copy of the true
-response on a near-wild-type background, which is every observation above at once: whole
-profiles correlate at zero, strong effects survive at $0.06$ to $0.10$, the slope is near
-zero, and more cells do not help. As released, the panel cannot be pooled with the
-microarrays as a knockout-expression target; a per-cell purity filter or a
-re-assignment from the raw barcode reads would be needed, and the released object
-carries only the consensus label. Its per-genotype dispersion, a single-cell
-heterogeneity readout the loader already carries, is a different target and is not
-affected in the same way.
+As released, the panel cannot be pooled with the microarrays as a knockout-expression
+target: on the shared deletions the pseudobulk agrees with Kemmeren at zero under every
+statistic, the strong responses that do cross survive at $0.06$ to $0.10$, and more cells
+do not help. Where the labeled cells are half another genotype, a per-cell filter on the
+deleted gene's own counts (the cells at zero) or a re-assignment from the raw barcode
+reads would be needed, and the released object carries only the consensus label. Its
+per-genotype dispersion, a single-cell heterogeneity readout the loader already carries,
+is a different target and is not affected in the same way.
 
 \begin{figure}[htbp]
 \centering

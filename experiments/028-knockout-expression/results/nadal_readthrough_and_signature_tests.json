@@ -1,0 +1,143 @@
+{
+ "n_genotypes_ge20_cells": 2724,
+ "spearman_own_vs_wt_detection": 0.641,
+ "bins": {
+  "(-0.001, 0.02]": {
+   "n": 878,
+   "own_detect_median": 0.0227272727272727,
+   "wt_detect_median": 0.008,
+   "ratio": 2.8409090909090873
+  },
+  "(0.02, 0.05]": {
+   "n": 748,
+   "own_detect_median": 0.037037037037037,
+   "wt_detect_median": 0.034,
+   "ratio": 1.0893246187363823
+  },
+  "(0.05, 0.1]": {
+   "n": 549,
+   "own_detect_median": 0.0591715976331361,
+   "wt_detect_median": 0.07,
+   "ratio": 0.8453085376162299
+  },
+  "(0.1, 0.2]": {
+   "n": 317,
+   "own_detect_median": 0.0962962962962963,
+   "wt_detect_median": 0.134,
+   "ratio": 0.718629076838032
+  },
+  "(0.2, 0.4]": {
+   "n": 170,
+   "own_detect_median": 0.149585635359116,
+   "wt_detect_median": 0.259,
+   "ratio": 0.5775507156722626
+  },
+  "(0.4, 0.6]": {
+   "n": 38,
+   "own_detect_median": 0.2971993732863295,
+   "wt_detect_median": 0.457,
+   "ratio": 0.6503268562064103
+  },
+  "(0.6, 0.8]": {
+   "n": 11,
+   "own_detect_median": 0.433333333333333,
+   "wt_detect_median": 0.692,
+   "ratio": 0.6262042389210015
+  },
+  "(0.8, 1.0]": {
+   "n": 13,
+   "own_detect_median": 0.66304347826087,
+   "wt_detect_median": 0.906,
+   "ratio": 0.731836068720607
+  }
+ },
+ "wt_detect_lt_0.05": {
+  "n": 1586,
+  "own_detect_median": 0.02874255619427905,
+  "frac_own_above_0.2": 0.02080706179066835
+ },
+ "kemmeren_signature": {
+  "n": 240,
+  "auroc_median": 0.5342596041385514,
+  "auroc_iqr": [
+   0.49978900555362726,
+   0.6095900000000002
+  ],
+  "n_auroc_gt_0.8": 8,
+  "n_auroc_gt_0.65": 44,
+  "frac_above_wt95_median": 0.075,
+  "top": [
+   {
+    "kogene": "YLR180W",
+    "n_cells": 62,
+    "auroc": 0.860096774193548,
+    "frac_above_wt95": 0.67741935483871
+   },
+   {
+    "kogene": "YHR206W",
+    "n_cells": 67,
+    "auroc": 0.846059701492537,
+    "frac_above_wt95": 0.477611940298507
+   },
+   {
+    "kogene": "YLR176C",
+    "n_cells": 87,
+    "auroc": 0.829379310344828,
+    "frac_above_wt95": 0.67816091954023
+   },
+   {
+    "kogene": "YHL027W",
+    "n_cells": 96,
+    "auroc": 0.825822916666667,
+    "frac_above_wt95": 0.4375
+   },
+   {
+    "kogene": "YDR448W",
+    "n_cells": 51,
+    "auroc": 0.825725490196078,
+    "frac_above_wt95": 0.333333333333333
+   },
+   {
+    "kogene": "YBR289W",
+    "n_cells": 68,
+    "auroc": 0.818147058823529,
+    "frac_above_wt95": 0.426470588235294
+   },
+   {
+    "kogene": "YGR122W",
+    "n_cells": 142,
+    "auroc": 0.806014084507042,
+    "frac_above_wt95": 0.373239436619718
+   },
+   {
+    "kogene": "YJL176C",
+    "n_cells": 38,
+    "auroc": 0.804368421052632,
+    "frac_above_wt95": 0.447368421052632
+   },
+   {
+    "kogene": "YDL047W",
+    "n_cells": 43,
+    "auroc": 0.796604651162791,
+    "frac_above_wt95": 0.372093023255814
+   },
+   {
+    "kogene": "YGR180C",
+    "n_cells": 28,
+    "auroc": 0.792071428571429,
+    "frac_above_wt95": 0.535714285714286
+   }
+  ]
+ },
+ "split_half": {
+  "n": 207,
+  "auroc_median": 0.520912280701754,
+  "auroc_iqr": [
+   0.48880503144654097,
+   0.5664686520376174
+  ],
+  "n_gt_0.8": 6,
+  "n_gt_0.65": 18,
+  "spearman_vs_kemmeren_auroc": 0.23469818488813846
+ }
+}

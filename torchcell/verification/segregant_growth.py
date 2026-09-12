@@ -538,12 +538,13 @@ def _l3_sourced_values(
     for sv in text_values:
         audits.append(audit_sourced_value(sv, library_root))
     for constant in media_module.MEDIA_LIBRARY.values():
-        for component in constant.components:
-            for sv in component.provenance:
-                if sv.provenance.citation_key != b.CITATION_KEY:
-                    continue
-                if sv.provenance.source_uri.endswith(".xls"):
-                    audits.append(_audit_xls_quote(sv, library_root))
+        medium_level = list(constant.provenance)
+        component_level = [sv for c in constant.components for sv in c.provenance]
+        for sv in medium_level + component_level:
+            if sv.provenance.citation_key != b.CITATION_KEY:
+                continue
+            if sv.provenance.source_uri.endswith(".xls"):
+                audits.append(_audit_xls_quote(sv, library_root))
     for spec in conditions.values():
         if spec.dose_quote:
             audits.append(

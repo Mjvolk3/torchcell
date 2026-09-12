@@ -460,9 +460,9 @@ YP = Media(
     provenance=[
         _bloom_sv(
             "YP base",
-            "Carbon Sources | Add 2% following (instead of Glucose) | Media: YP",
-            note="the Phenotypes sheet lists every carbon-source condition with "
-            "Media = YP and the sugar replacing glucose",
+            "Add 2% following (instead of Glucose)",
+            note="the Phenotypes sheet's 'Carbon Sources' block; every carbon-source "
+            "row in it reads Media = YP with the named sugar replacing glucose",
         )
     ],
 )
@@ -509,7 +509,9 @@ YP_SUCROSE = _yp_plus("sucrose", percent=2.0, quote="Sucrose | 20 | % | H2O | YP
 YP_TREHALOSE = _yp_plus("trehalose", percent=2.0, quote="Trehalose | 20 | % | H2O | YP")
 YP_XYLOSE = _yp_plus("xylose", percent=2.0, quote="Xylose | 20 | % | H2O | YP")
 YP_GLYCEROL = _yp_plus(
-    "glycerol", percent=3.0, quote="Glycerol 3% | 40 | % | H2O | 0.03 | 0.03 | 3 | YP"
+    "glycerol",
+    percent=3.0,
+    quote="Glycerol 3% | 40 | % | H2O | 0.03 | 0.03 | 3 | 500 | 37500 | 37500 | 3500 | 262500 | 262.5 | 2888 | YP",
 )
 YP_ETHANOL = _yp_plus(
     "ethanol",
@@ -531,8 +533,8 @@ YPD_ETHANOL = Media(
             provenance=[
                 _bloom_sv(
                     "2%",
-                    "Ethanol with Glucose | 100 | % | H2O | 0.02 | 0.08 | 8 | 0.25 | "
-                    "YP | 2% glucose",
+                    "Ethanol with Glucose | 100 | % | H2O | 0.02 | 0.08 | 8 | 0.25 | 500 | "
+                    "40000 | 10000 | 3500 | 70000 | 70 | 3080 | 4 | YP | 2% glucose",
                 )
             ],
         ),
@@ -553,14 +555,17 @@ YNB_GLUCOSE_SOLID = Media(
             role=MediaComponentRole.carbon_source,
             concentration=_c(2.0, _PCT),
             provenance=[
-                _bloom_sv("2%", "YNB | 20 | % | H2O | 0.02 | 2 | % | YNB | 2% glucose")
+                _bloom_sv(
+                    "2%",
+                    "YNB | 20 | % | H2O | 0.02 | 2 | % | 500 | 3500 | YNB | 2% glucose",
+                )
             ],
         ),
     ],
     provenance=[
         _bloom_sv(
             "YNB + 2% glucose",
-            "YNB | 20 | % | H2O | 0.02 | 2 | % | YNB | 2% glucose",
+            "YNB | 20 | % | H2O | 0.02 | 2 | % | 500 | 3500 | YNB | 2% glucose",
             note="the pH 3 and pH 8 rows also read 'YNB | 2% glucose'; the nitrogen "
             "source and the YNB trace-metal and salt rows are not stated in the "
             "sheet and remain the shipped YNB's open gaps",

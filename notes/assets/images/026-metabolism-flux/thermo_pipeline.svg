@@ -1609,7 +1609,7 @@ L 209.863268 416.106016
 L 209.863268 395.877194 
 L 173.413359 395.877194 
 z
-" clip-path="url(#p5e5156cc5f)" style="fill: #ffe6cc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p5e5156cc5f)" style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="matplotlib.axis_13">
     <g id="xtick_36">
@@ -1745,7 +1745,7 @@ L 123.513372 347.315216
 L 123.513372 343.115216 
 L 116.313372 343.115216 
 z
-" style="fill: #ffe6cc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_97">
      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="125.913372" y="347.315216" transform="rotate(-0 125.913372 347.315216)">curation gap, open</text>

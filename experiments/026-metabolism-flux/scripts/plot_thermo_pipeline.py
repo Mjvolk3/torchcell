@@ -67,7 +67,6 @@ from torchcell.timestamp import timestamp
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
-    PLOT_PALETTE_FILL,
     apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
@@ -384,7 +383,10 @@ def panel_g(ax: plt.Axes, remaining: pd.DataFrame, unresolved: dict) -> dict:
     bars = [
         ("placeholder\nformula", placeholder, PLOT_PALETTE[1]),
         ("definite formula,\nstructure written\nand priced", written, PLOT_PALETTE[0]),
-        ("definite formula,\nnot yet written", definite - written, PLOT_PALETTE_FILL[0]),
+        # A REAL palette color, not the pale fill. PLOT_PALETTE_FILL is the lighter member
+        # of a two-level bar and never a mark in its own right, and drawn as one this bar
+        # read as no color at all. Purple also keeps the panel off two shades of orange.
+        ("definite formula,\nnot yet written", definite - written, PLOT_PALETTE[2]),
     ]
     positions = np.arange(len(bars))
     ax.bar(positions, [b[1] for b in bars], 0.6, color=[b[2] for b in bars],
@@ -395,7 +397,7 @@ def panel_g(ax: plt.Axes, remaining: pd.DataFrame, unresolved: dict) -> dict:
     legend_above(
         ax, ncol=2,
         handles=[swatch(PLOT_PALETTE[1]), swatch(PLOT_PALETTE[0]),
-                 swatch(PLOT_PALETTE_FILL[0])],
+                 swatch(PLOT_PALETTE[2])],
         names=["method ceiling", "curation gap, closed", "curation gap, open"],
     )
     box(ax)

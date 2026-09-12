@@ -171,22 +171,30 @@ them internal loops. Only the thermodynamic term removes those, and it does so w
 binary variable, which is what a loopless flux balance program needs one for.
 
 \tcfigfit[1.0]{figures/cgt_metabolic_module.pdf}{\textbf{The flux module's main components
-  and what feeds them.} Orange is the path from the perturbed gene state to enzyme
-  abundance; purple the fixed yeast-GEM 9.0.2 stoichiometry and bounds; yellow the parameter
-  tables, with a \textbf{dashed} border and a dashed edge marking a table that is built and
-  read by nothing; blue the flux vector; red the soft constraints. Every hard constraint is
-  either exact by construction, as the box and the capacity bound are, or relaxed to a
-  smooth penalty; nothing is enforced by a binary variable, which is what makes the layer
-  differentiable and what removes the mixed-integer cost a per-genotype thermodynamic
-  program pays. \textbf{Three parameter tables are drawn dashed because the drawing predates
-  the wiring, and two of the three are now wired.} \texttt{resolve\_kcat\_table} takes a
-  predicted tier between the measured values and the organism default, which fills 3{,}410
-  of the 3{,}728 catalytic units and leaves the 148 measurements untouched, and
-  \texttt{resolve\_reaction\_delta\_g} builds the standard reaction energies from a named
-  route, the union of the shipped and recomputed metabolite tables pricing 3{,}722
-  reactions. $K_M$ is still read by nothing. Source:
+  and what feeds them.} Color is semantic and holds across this document: orange is the
+  learned path from the perturbed gene state to enzyme abundance and on to the phenotype
+  heads; purple the fixed yeast-GEM 9.0.2 stoichiometry, bounds and gene-protein-reaction
+  rules; yellow the parameter tables; blue the flux vector; red the soft constraints. A
+  solid edge carries data in a run; a dashed edge and a dashed white box mark something
+  built and read by nothing. Every hard constraint is either exact by construction, as the
+  box and the capacity bound are, or relaxed to a smooth penalty; nothing is enforced by a
+  binary variable, which is what makes the layer differentiable and what removes the
+  mixed-integer cost a per-genotype thermodynamic program pays.
+  \textbf{Two things are still unwired and neither of them is a parameter table.}
+  \texttt{FluxLayer} accepts the reaction square-root covariance as
+  \texttt{delta\_g\_sqrt\_cov} and builds the correlated error term from it;
+  \texttt{build\_flux\_layer} constructs none and \texttt{train\_bx.py} passes none, so every
+  arm run so far has a formation covariance on disk and a reaction potential with no
+  covariance in it. And \texttt{ThermoSource} has no member for the curated and verified
+  tables, so the curation records, the withdrawn mispricings and the composition guard
+  reach no run. $K_M$ is resolved on the same four tiers and handed to the layer as
+  \texttt{km\_mm}, and no term consumes it (Section~\ref{sec:limits}). The four-tier
+  $k_{cat}$ counts drawn here are what \texttt{kcat\_tier: predicted} resolves; the default
+  \texttt{measured} drops the predicted tier and leaves those units on the organism default.
+  Source:
   \texttt{notes/torchcell.models.equivariant\_cell\_graph\_transformer.}
   \texttt{mermaid.metabolic-module-simple.md}, rendered by
-  \texttt{notes/assets/publish/scripts/mermaid\_pdf.sh}. The full diagram, with the
-  transformer stack and the Type I and Type II instruments, is not reproduced here because
-  at this page width its labels print near 2 pt, under the 5 pt floor.}{fig:cgt-module}
+  \texttt{notes/assets/publish/scripts/mermaid\_pdf.sh}; its labels print at a median of
+  5.7 pt at this width. The full diagram, with the transformer stack and the Type I and
+  Type II instruments, is not reproduced here because at this page width its labels print
+  near 2 pt, under the 5 pt floor.}{fig:cgt-module}

@@ -44,7 +44,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from matplotlib.colors import to_rgba
 from matplotlib.ticker import MultipleLocator
 
 from torchcell.timestamp import timestamp
@@ -178,10 +177,10 @@ def panel_c(ax: plt.Axes, units: pd.DataFrame, ordered: list[str], symbol: str) 
     upper = (units["class_median_log10"] + units["class_sd_log10"]).to_numpy()
     ax.bar(
         positions[scorable], (upper - lower)[scorable], 0.7, bottom=lower[scorable],
-        # The class band is a reference REGION, not a series, so it takes the muted purple
-        # no predictor uses (slot 15, dusty mauve) rather than the gray slot EZKinetics is
-        # drawn in. Solid fill rather than a 25 percent alpha on a line color: alpha makes a
-        # tone the palette does not define and changes with whatever sits behind it.
+        # The class band is a reference REGION, not a series, so it takes BAND_SLOT, the
+        # muted orange (terracotta) no predictor uses, rather than the gray slot EZKinetics
+        # is drawn in. Solid fill rather than a 25 percent alpha on a line color: alpha
+        # makes a tone the palette does not define and changes with whatever sits behind it.
         color=PLOT_PALETTE_FILL[BAND_SLOT], linewidth=0, zorder=1,
         label="EC4 class, median ± 1 s.d.",
     )

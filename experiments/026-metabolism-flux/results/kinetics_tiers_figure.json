@@ -1,5 +1,5 @@
 {
- "built_at": "2026-09-12T04:03:43.003678+00:00",
+ "built_at": "2026-09-12T04:51:53.533727+00:00",
  "closure_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/kinetic_coverage_closure.json",
  "selected_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/parameter_coverage_selected.json",
  "figure_svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/kinetics_tiers.svg",

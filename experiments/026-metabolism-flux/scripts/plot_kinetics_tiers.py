@@ -51,7 +51,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from dotenv import load_dotenv
-from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import MaxNLocator, MultipleLocator
 from pydantic import BaseModel, ConfigDict
 
 from torchcell.timestamp import timestamp
@@ -190,9 +190,9 @@ def main() -> None:
     reasons = Counter(cast(str, row["reason"]) for row in remaining)
 
     width = PANEL_WIDTHS_MM["full"]
-    fig = plt.figure(figsize=(mm_to_in(width), mm_to_in(102.0)))
+    fig = plt.figure(figsize=(mm_to_in(width), mm_to_in(108.0)))
     grid = fig.add_gridspec(
-        2, 2, wspace=0.30, hspace=1.15, left=0.085, right=0.985, top=0.86, bottom=0.20
+        2, 2, wspace=0.30, hspace=1.15, left=0.085, right=0.985, top=0.83, bottom=0.20
     )
     ax_a = fig.add_subplot(grid[0, 0])
     ax_b = fig.add_subplot(grid[0, 1])
@@ -309,11 +309,13 @@ def main() -> None:
     # d, why the defaults are defaults.
     keys = [key for key, _ in reasons.most_common()]
     xs = np.arange(len(keys))
+    # Semantic color: these rows are the reason a unit falls to the organism default, so
+    # they carry the default tier's color from panels a and b rather than a neutral gray.
     ax_d.bar(
         xs,
         [reasons[key] for key in keys],
         width=0.6,
-        color=PLOT_PALETTE[5],
+        color=PLOT_PALETTE[TIER_ORDER.index("default")],
         edgecolor="black",
         linewidth=0.4,
     )
@@ -321,6 +323,9 @@ def main() -> None:
     ax_d.set_xticklabels([REASON_SHORT[key] for key in keys], rotation=25, ha="right")
     ax_d.set_ylabel("substrate rows")
     ax_d.margins(y=0.14)
+    ax_d.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax_d.grid(axis="y", linewidth=0.3, alpha=0.4)
+    ax_d.set_axisbelow(True)
 
     for ax in (ax_a, ax_b, ax_c, ax_d):
         for spine in ax.spines.values():
@@ -333,14 +338,17 @@ def main() -> None:
         labels=labels,
         loc="upper left",
         bbox_to_anchor=(0.02, 0.995),
-        ncol=4,
+        ncol=2,
+        fontsize=6,
         frameon=True,
         fancybox=False,
         edgecolor="black",
-        borderpad=0.3,
-        handlelength=1.1,
-        handletextpad=0.4,
-        columnspacing=1.0,
+        borderpad=0.45,
+        labelspacing=0.45,
+        handlelength=1.8,
+        handleheight=1.0,
+        handletextpad=0.5,
+        columnspacing=1.4,
     )
     ax_c.legend(
         loc="lower left",
@@ -354,7 +362,7 @@ def main() -> None:
         handletextpad=0.4,
     )
     for letter, (x, y) in zip(
-        "abcd", [(0.005, 0.895), (0.51, 0.895), (0.005, 0.395), (0.51, 0.395)]
+        "abcd", [(0.005, 0.865), (0.51, 0.865), (0.005, 0.395), (0.51, 0.395)]
     ):
         fig.text(x, y, letter, fontsize=8, fontweight="bold", ha="left", va="bottom")
 

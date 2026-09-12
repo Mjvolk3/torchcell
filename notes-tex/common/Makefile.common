@@ -189,6 +189,12 @@ bibcheck:
 #
 # So: refuse to start without a runnable exporter, and check that each output is
 # actually newer than its source afterwards.
+#
+# Then normalize with qpdf. draw.io 24.7.17 writes the page tree inside a COMPRESSED object
+# stream, so /MediaBox is not greppable and `check_doc.py`'s width check silently skips the
+# figure with a warning instead of measuring it. `--object-streams=disable` rewrites the
+# same vectors and the same embedded fonts with the page dictionary in the clear, which is
+# lossless and makes the width checkable again.
 figures:
 	@test -x "$(DRAWIO)" || { \
 	  echo "draw.io exporter not runnable: $(DRAWIO)"; \
@@ -202,6 +208,7 @@ figures:
 	      echo "  $$s -> $$f"; \
 	      $(DRAWIO_RUN) "$$s" $(DRAWIO_OPTS) "$$f" >/dev/null 2>&1 || { echo "    EXPORT FAILED"; exit 1; }; \
 	      [ "$$f" -nt "$$s" ] || { echo "    EXPORT PRODUCED NOTHING -- $$f is older than its source"; exit 1; }; \
+	      qpdf --object-streams=disable "$$f" "$$f.tmp" && mv -f "$$f.tmp" "$$f"; \
 	      break; \
 	    fi; \
 	  done; \

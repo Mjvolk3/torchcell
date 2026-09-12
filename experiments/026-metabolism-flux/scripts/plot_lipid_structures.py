@@ -290,11 +290,14 @@ def main() -> None:
     coverage = load("lipid_coverage.json")
 
     fig = plt.figure(
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(126)), dpi=300
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(134)), dpi=300
     )
     grid = fig.add_gridspec(
-        2, 2, height_ratios=[1.0, 0.92], hspace=0.55, wspace=0.30,
-        left=0.070, right=0.985, top=0.905, bottom=0.085,
+        # top leaves room for panel a's legend AND its panel letter, both of which sit
+        # ABOVE the axes. At top=0.905 the letter was drawn off the canvas and the fixed
+        # figsize clipped it; nothing errors, and the PNG hid it at the crop.
+        2, 2, height_ratios=[1.0, 0.92], hspace=0.60, wspace=0.30,
+        left=0.070, right=0.985, top=0.845, bottom=0.085,
     )
     ax_a = fig.add_subplot(grid[0, :])
     ax_b = fig.add_subplot(grid[1, 0])
@@ -307,7 +310,7 @@ def main() -> None:
     for letter, ax in zip("abc", (ax_a, ax_b, ax_c)):
         ax.text(
             -0.055 if ax is ax_a else -0.16,
-            1.30,
+            1.34 if ax is ax_a else 1.30,
             letter,
             transform=ax.transAxes,
             fontsize=8,

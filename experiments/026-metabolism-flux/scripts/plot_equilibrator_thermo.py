@@ -319,7 +319,7 @@ def main() -> None:
             checks = json.load(handle)
 
     fig, axes = plt.subplots(
-        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58)), dpi=300
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(46)), dpi=300
     )
 
     ax = axes[0]

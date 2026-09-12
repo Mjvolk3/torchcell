@@ -106,20 +106,21 @@ def predictor_color(name: str) -> str:
     return PLOT_PALETTE[PREDICTOR_COLOR_INDEX[name] % len(PLOT_PALETTE)]
 
 
-#: The parameter, not the panel, picks the color where a panel draws ONE series per
-#: parameter. k_cat is the orange primary and K_M the purple one, matching panel e of
-#: parameter_coverage, so a reader moving between the two figures does not meet K_M in two
-#: different colors. Panel b used the orange fill for both, which is the defect.
-PARAMETER_COLOR = {"k_cat": 0, "K_M": 2}
+#: ONE color for the min-max envelope, whichever parameter the figure is drawn for. It used
+#: to follow the parameter, orange for k_cat and purple for K_M, which made the two figures
+#: of the same script look like two different figures; a reader compares them panel by
+#: panel, so they have to be identical in styling and differ only in the data
+#: (user, 2026-09-11). The parameter is named in the axis label and the caption.
+PARAMETER_COLOR = {"k_cat": 0, "K_M": 0}
 
 #: The within-class band of panel e is a reference REGION, not a series, so it must not take
-#: a color any predictor in the figure already has. This is the muted tier's PURPLE, dusty
-#: mauve (line #B690A4, fill #E8D3DE): no predictor reaches past slot 7, its low chroma keeps
-#: it behind the points, and its hue is used by nothing else in either figure. The pale
-#: yellow it replaces sat in Boost_KM's own hue family in the K_M figure and in TurNuP's in
-#: the k_cat one, so in both the band read as one more predictor rather than as a reference.
-#: Zero-based, so 14 is the fifteenth color; 15 is sand, which is the yellow this moved off.
-BAND_SLOT = 14
+#: a color any predictor in the figure already has. It is the muted tier's ORANGE,
+#: terracotta (line #C48161, fill #F9D0BE): no predictor reaches past slot 7, its low chroma
+#: keeps it behind the points, and it is the hue this figure family reads as the reference
+#: envelope. It was dusty mauve until 2026-09-11, when the user asked for the light-purple
+#: backgrounds of these four figures to be orange.
+#: Zero-based, so 12 is the thirteenth color.
+BAND_SLOT = 12
 
 
 DISPLAY = {

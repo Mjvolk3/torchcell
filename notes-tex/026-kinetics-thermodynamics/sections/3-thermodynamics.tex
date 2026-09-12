@@ -450,7 +450,7 @@ $-3.43 \pm 0.28$ and triosephosphate isomerase $+5.61 \pm 0.55$ kJ\,mol$^{-1}$.
   %% the same left edge and the same 8 pt as the b and c letters the matplotlib panel
   %% below carries. Adding it to the drawing would place it inside the extracellular box.
   \noindent{\fontsize{8}{9}\selectfont\textbf{a}}\hfill\null\\[-0.8ex]
-  \includegraphics[width=0.62\textwidth]{figures/yeast-compartments-ph.pdf}
+  \includegraphics[width=\textwidth]{figures/yeast-compartments-ph.pdf}
 
   \vspace{1.5ex}
   \includegraphics[width=\textwidth]{figures/thermo_ef_diagnostics.pdf}
@@ -460,8 +460,12 @@ $-3.43 \pm 0.28$ and triosephosphate isomerase $+5.61 \pm 0.55$ kJ\,mol$^{-1}$.
   \textbf{a}, The compartments yeast-GEM carries, each labeled with the pH this pipeline
   applies when it transforms a formation energy, and two transport steps: a proton symport
   across the plasma membrane and a translocation from the cytosol into the mitochondrial
-  matrix, beside the two terms of Equation~(\ref{eq:transport}). Every pH here is an
-  assumed textbook value (Table~\ref{tab:compartment-conditions}). yeast-GEM 9 has no
+  matrix, whose two terms are Equation~(\ref{eq:transport}). Color is semantic: the cytosol
+  is blue wherever it appears in this document, the extracellular space gray, the two
+  mitochondrial compartments red, the secretory pathway purple, the nucleus yellow and the
+  peroxisome orange. The organelles are drawn as one row rather than nested, so the matrix
+  sits beside its intermembrane space rather than inside it. Every pH here is an assumed
+  textbook value (Table~\ref{tab:compartment-conditions}). yeast-GEM 9 has no
   intermembrane-space compartment, so the one drawn takes the cytosolic value the pipeline
   falls back to.
   \textbf{b}, Absolute change in $\Delta_r G'^\circ$ when each metabolite is transformed at

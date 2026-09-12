@@ -17,10 +17,10 @@
         "deepenzyme": 0.5531914893617021,
         "ezkinetics": 0.8297872340425532
       },
-      "n_units_all_selected": 3698,
-      "spread_median_decades": 0.7181780182691415,
-      "spread_p90_decades": 1.460889152371496,
-      "spread_frac_above_1_decade": 0.29150892374256354,
+      "n_units_all_selected": 3709,
+      "spread_median_decades": 0.7197898335741739,
+      "spread_p90_decades": 1.4654780817580164,
+      "spread_frac_above_1_decade": 0.2928012941493664,
       "all_predictors": {
         "n_units": 3552,
         "spread_median_decades": 1.1384494118276964,
@@ -38,7 +38,7 @@
         "boost_km": 0.44680851063829785,
         "ezkinetics": 0.6595744680851063
       },
-      "n_units_all_selected": 3698,
+      "n_units_all_selected": 3709,
       "spread_median_decades": 0.0,
       "spread_p90_decades": 0.0,
       "spread_frac_above_1_decade": 0.0,

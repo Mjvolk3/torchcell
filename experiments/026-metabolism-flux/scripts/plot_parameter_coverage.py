@@ -236,11 +236,30 @@ def panel_b(ax: plt.Axes, surrogates: pd.DataFrame, threshold: float) -> None:
     box(ax)
 
 
+#: Short forms for panel c's y labels, so nine rows fit a 37 mm panel without colliding.
+#: The caption gives the full name of every one of them.
+CLASS_ABBREV = {
+    "phosphatidylinositol_PI": "PI",
+    "cardiolipin_CL": "CL",
+    "triacylglycerol_TAG": "TAG",
+    "phosphatidate_PA": "PA",
+    "phosphatidylethanolamine_PE": "PE",
+    "phosphatidylglycerol_PG": "PG",
+    "phosphatidylcholine_PC": "PC",
+    "acyl_CoA": "acyl-CoA",
+    "fatty_acid_acyl_chain": "acyl chain",
+    "glycan": "glycan",
+    "sphingolipid": "sphingolipid",
+}
+
+
 def panel_c(ax: plt.Axes, unresolved: dict) -> None:
     """What is actually missing, by chemical class."""
     by_class = unresolved["baseline"]["unmatched_by_class"]
     items = sorted(by_class.items(), key=lambda kv: kv[1])[-9:]
-    labels = [k.replace("_", " ") for k, _ in items]
+    # ABBREVIATE. Nine full chemical-class names in a 37 mm row overlap each other, and the
+    # names already carry their own abbreviation; the caption spells them out.
+    labels = [CLASS_ABBREV.get(k, k.replace("_", " ")) for k, _ in items]
     counts = [v for _, v in items]
     positions = np.arange(len(labels))
     lipid = ("phosphatidyl", "cardiolipin", "triacyl", "phosphatidate", "sphingo", "acyl")
@@ -326,11 +345,13 @@ def panel_e(
     disagreement wider than it means the choice of predictor moves a turnover number
     further than swapping the enzyme for another one catalyzing the same reaction.
     """
+    # ONLY k_cat. The admission rule keeps a single K_M predictor, so the K_M
+    # across-predictor spread is identically zero and drawing it puts a spike at the origin
+    # that flattens the two distributions this panel exists to compare. The K_M column of
+    # results/parameter_coverage_selected.json records the zero; the caption states it.
     bins = np.linspace(0, 3.2, 40)
-    for name, color in [(r"$k_{cat}$", PLOT_PALETTE[0]), (r"$K_M$", PLOT_PALETTE[2])]:
-        key = "k_cat" if "cat" in name else "K_M"
-        ax.hist(spreads[key], bins=bins, histtype="step", linewidth=1.0, color=color,
-                label=name)
+    ax.hist(spreads["k_cat"], bins=bins, histtype="step", linewidth=1.0,
+            color=PLOT_PALETTE[0], label=r"$k_{cat}$")
     # Densities differ by an order of magnitude (3,552 units against 523 classes), so the
     # reference is rescaled to the panel; its SHAPE is the comparison. Drawn as a third
     # STEP OUTLINE rather than as a pale wash: the palette's light fills are the lighter
@@ -385,8 +406,11 @@ def panel_within_class(ax: plt.Axes, block: dict, parameter: str) -> dict:
         high = [c["ci95"][1] - c["frac"] for c in cells]
         return np.array([low, high])
 
+    # SEMANTIC COLOR: the two band types are purple and red here and nowhere else in this
+    # figure, which keeps orange for k_cat in panels d and e and stops the page from
+    # reading as one hue.
     for offset, cells, color, name in [
-        (-width / 2, shared, PLOT_PALETTE[0], "inside the shared EC4 band"),
+        (-width / 2, shared, PLOT_PALETTE[2], "inside the shared EC4 band"),
         (+width / 2, own, PLOT_PALETTE[1], "inside its own class band"),
     ]:
         hatches = ["" if g != "ec_median_lookup" else HATCH for g in groups]
@@ -435,16 +459,25 @@ def panel_f(ax: plt.Axes, report: dict) -> None:
     # scope is a solid black hatch on it. The pale fill used to carry the first bar, which
     # inverts the palette rule: the light fills are the lighter member of a two-level bar,
     # never the primary mark.
-    ax.bar(positions - width / 2, raw, width, color=PLOT_PALETTE[0],
-           edgecolor="black", linewidth=0.4, label="all 4,131 reactions")
-    ax.bar(positions + width / 2, weighted, width, color=PLOT_PALETTE[0],
-           edgecolor="black", linewidth=0.4, hatch=HATCH,
-           label=f"{flux['n_reactions_with_nonzero_fva_width']:,} that carry flux")
+    # SEMANTIC COLOR: a bar takes the color panel a gives its SOURCE, shipped orange and
+    # the recommended union purple, and the narrower flux-carrying scope is a solid black
+    # hatch on the same color. Drawing both sources in one hue made this panel a block of
+    # orange and encoded nothing.
+    source_colors = [PLOT_PALETTE[0], PLOT_PALETTE[2]]
+    ax.bar(positions - width / 2, raw, width, color=source_colors,
+           edgecolor="black", linewidth=0.4)
+    ax.bar(positions + width / 2, weighted, width, color=source_colors,
+           edgecolor="black", linewidth=0.4, hatch=HATCH)
+    legend_above(
+        ax, ncol=1,
+        handles=[swatch("#FFFFFF"), swatch("#FFFFFF", HATCH)],
+        names=["all 4,131 reactions",
+               f"{flux['n_reactions_with_nonzero_fva_width']:,} that carry flux"],
+    )
     ax.set_xticks(positions)
     ax.set_xticklabels(groups)
     ax.set_ylabel("reactions priced")
     tenths(ax)
-    legend_above(ax, ncol=1)
     box(ax)
 
 
@@ -491,7 +524,7 @@ def main() -> None:
     # leaves the 6 pt type and the rotated tick labels legible; the last few mm were measured
     # off against the overfull-vbox warning, which is the only signal this has a budget.
     fig, axes = plt.subplots(
-        4, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(148)), dpi=300
+        4, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(156)), dpi=300
     )
     panel_a(axes[0, 0], report)
     panel_b(axes[0, 1], surrogates, report["surrogate"]["tight_spread_threshold_kj"])

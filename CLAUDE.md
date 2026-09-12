@@ -649,6 +649,12 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   - The word **primary** names the ROLE and nothing else. The first tier was also called
     "primary" once, which made the term mean two things at once; it is **vivid** now
     (writing-style-guide: one term, one meaning).
+- **Color is SEMANTIC and BALANCED (user, 2026-09-11).** A color carries one meaning and
+  keeps it across every figure in a document (an evidence class, a compartment: cytosol is
+  blue, a parameter table), so a reader learns the mapping once. Within that constraint,
+  spend the four primaries evenly: a multi-panel figure in which one hue dominates (a
+  page of yellow bars) is wrong even when every color is in the palette. Check both
+  properties on the rendered PDF, not the script.
 - **Tiers differ by CHROMA, not lightness — and this is load-bearing.** Lightness is
   already spoken for: light-vs-dark encodes *validation vs test within a series* (that is
   what `PLOT_PALETTE_FILL` is for). If lightness also separated *categories*, the two

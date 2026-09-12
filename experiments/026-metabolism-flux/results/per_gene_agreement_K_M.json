@@ -6,20 +6,20 @@
     "ezkinetics",
     "unikp"
   ],
-  "n_genes_any": 1151,
+  "n_genes_any": 1153,
   "n_genes_all_predictors": 1150,
   "spread_median_decades": 0.8137393009349317,
-  "spread_p90_decades": 1.6646127939804953,
+  "spread_p90_decades": 1.6722146627258214,
   "spread_frac_above_1_decade": 0.3617391304347826,
-  "central_p10_p90_range_decades": 1.2188469755089788,
-  "spread_over_signal": 0.6676304058556014,
+  "central_p10_p90_range_decades": 1.2195986624073918,
+  "spread_over_signal": 0.6672189188275054,
   "gene_level_spearman": {
-    "boost_km|eitlem": 0.340889999088386,
-    "boost_km|ezkinetics": 0.6893896610220048,
-    "boost_km|unikp": 0.7470676945058173,
-    "eitlem|ezkinetics": 0.24780241448251572,
-    "eitlem|unikp": 0.362057570903341,
-    "ezkinetics|unikp": 0.6180632021811722
+    "boost_km|eitlem": 0.3410302868619663,
+    "boost_km|ezkinetics": 0.690928597423121,
+    "boost_km|unikp": 0.7463543493063316,
+    "eitlem|ezkinetics": 0.24964905130457368,
+    "eitlem|unikp": 0.36092653230892374,
+    "ezkinetics|unikp": 0.6190093009340626
   },
   "cassette_genes_absent_from_all_predictors": [
     "CYP76AD1",

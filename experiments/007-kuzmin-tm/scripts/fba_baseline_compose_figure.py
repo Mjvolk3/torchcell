@@ -3,13 +3,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/007-kuzmin-tm/scripts/fba_baseline_compose_figure
 """Compose FigS-yeast9-fba.drawio: the FBA baseline pipeline schematic plus its data panels.
 
-Panel (a) is a draw.io schematic of the pipeline behind the "Yeast9 FBA" value of Fig. 2d:
-the model and its medium, the gene-reaction rules that turn a deleted gene set into blocked
-reactions, the deletion sets taken from the screen, the FBA growth optimum, the fitness
-proxy, and the trigenic interaction of Fig. 2a. Every number in the boxes is read from
-``results/fba_baseline_si/stats.json``, written by ``fba_baseline_si.py`` (this folder), and
-the equations are real LaTeX typeset by MathJax (``math="1"`` on the model, ``$$...$$``
-labels; math cells at ``fontSize=7`` print at ~6 pt). Panels (b)-(f) are the true-size SVGs
+Panel (a) is a draw.io schematic of the pipeline behind the "Yeast9 FBA" value of Fig. 2d as
+six stage cards, each carrying a graphic rather than a paragraph: the model's gene coverage
+of the genome and of the screen (a true-size SVG from ``fba_baseline_si.py``), the
+gene-reaction rules drawn as OR and AND gates with one deleted gene, the deletion sets as a
+bar chart with the fully covered part shaded (SVG from the same script), FBA as its linear
+program in an algorithm block, the fitness proxy, and the trigenic interaction of Fig. 2a.
+The counts and correlations are in the caption. The equations are real LaTeX typeset by
+MathJax (``math="1"`` on the model, ``$$...$$`` labels; math cells at ``fontSize=7`` print
+at ~6 pt). Panels (b)-(f) are the true-size SVGs
 from the same script, placed at exact physical size (100 draw.io units per inch). Panel (g)
 is the same comparison as (b) for the rerun on the screen's own medium
 (``fba_screen_medium_tau.svg`` from ``fba_screen_medium_si.py``, this folder).
@@ -108,6 +110,25 @@ class Canvas:
             f'<mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" as="geometry"/></mxCell>'
         )
 
+    def ellipse(self, value, x, y, w, h, color=GRAY, fs=FS, dashed=False, fill=True):
+        style = (
+            f"ellipse;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize={fs};align=center;verticalAlign=middle;"
+            f"strokeColor={color[0]};fillColor={color[1] if fill else 'none'};strokeWidth=0.75;"
+            + ("dashed=1;" if dashed else "")
+        )
+        self.cells.append(
+            f'<mxCell id="{self._id()}" value={quoteattr(value)} style={quoteattr(style)} vertex="1" parent="1">'
+            f'<mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" as="geometry"/></mxCell>'
+        )
+
+    def line(self, x1, y1, x2, y2, color="#666666", width=0.75, dashed=False):
+        style = f"endArrow=none;html=1;strokeWidth={width};strokeColor={color};" + ("dashed=1;" if dashed else "")
+        self.cells.append(
+            f'<mxCell id="{self._id()}" style={quoteattr(style)} edge="1" parent="1">'
+            f'<mxGeometry relative="1" as="geometry"><mxPoint x="{x1}" y="{y1}" as="sourcePoint"/>'
+            f'<mxPoint x="{x2}" y="{y2}" as="targetPoint"/></mxGeometry></mxCell>'
+        )
+
     def text(self, value, x, y, w, h, fs=FS, bold=False, align="left", valign="top", color=None):
         style = (
             f"text;html=1;strokeColor=none;fillColor=none;align={align};verticalAlign={valign};"
@@ -124,8 +145,8 @@ class Canvas:
         """A LaTeX label typeset by MathJax (requires math="1" on the model)."""
         self.text(f"$${latex}$$", x, y, w, h, fs=FS_MATH, align=align, valign="middle")
 
-    def arrow(self, x1, y1, x2, y2, color="#666666", width=0.75):
-        style = f"endArrow=classic;html=1;strokeWidth={width};strokeColor={color};endSize=3;"
+    def arrow(self, x1, y1, x2, y2, color="#666666", width=0.75, dashed=False):
+        style = f"endArrow=classic;html=1;strokeWidth={width};strokeColor={color};endSize=3;" + ("dashed=1;" if dashed else "")
         self.cells.append(
             f'<mxCell id="{self._id()}" style={quoteattr(style)} edge="1" parent="1">'
             f'<mxGeometry relative="1" as="geometry"><mxPoint x="{x1}" y="{y1}" as="sourcePoint"/>'
@@ -159,87 +180,104 @@ def svg_size(path: str) -> tuple[float, float]:
 
 
 ARROW_GAP = 14  # between the boxes of the pipeline row
-PIPE_H = 126  # height of the pipeline boxes
+PIPE_H = 168  # height of the pipeline boxes (42.7 mm)
 BOX_W = [116, 108, 116, 100, 76, 121]  # sums with the five gaps to FULL_WIDTH
+HEAD_H = 15  # the bold heading band inside each box
+
+
+def rule_sketch(c: Canvas, x0: float, y0: float, w: float):
+    """Two gene-reaction rules drawn as gates: isozymes joined by OR survive one deletion,
+    a complex joined by AND is blocked by one. Genes are circles (a deleted gene dashed and
+    white), the gate a small box, the reaction an arrow (dashed when blocked).
+    """
+    stroke = ROLE_COLOR["rules"][0]
+    r = 13  # gene circle diameter
+    gx = x0 + 6  # gene column
+    gate_x = x0 + 40
+    rxn_x = x0 + 74
+    for row, (kind, gate, blocked, top) in enumerate([("isozymes", "OR", False, y0), ("complex", "AND", True, y0 + 44)]):
+        ya, yb = top + 2, top + 20  # two gene rows
+        c.ellipse(f"g<sub>{2 * row + 1}</sub>", gx, ya, r, r, color=ROLE_COLOR["rules"], fs=7)
+        c.ellipse(f"g<sub>{2 * row + 2}</sub>", gx, yb, r, r, color=ROLE_COLOR["rules"], fs=7, dashed=True, fill=False)
+        c.text("&Delta;", gx + r + 1, yb - 1, 10, 12, fs=7)
+        ym = (ya + yb + r) / 2
+        c.line(gx + r, ya + r / 2, gate_x, ym - 4, color=stroke)
+        c.line(gx + r, yb + r / 2, gate_x, ym + 4, color=stroke, dashed=True)
+        c.box(gate, gate_x, ym - 7, 22, 14, color=ROLE_COLOR["rules"], fs=7, bold=True)
+        c.arrow(gate_x + 22, ym, rxn_x - 2, ym, color=stroke, dashed=blocked)
+        c.text("v<sub>r</sub> = 0" if blocked else "v<sub>r</sub>", rxn_x, ym - 7, w - (rxn_x - x0) - 2, 14, fs=7, valign="middle")
+        c.text(f"{kind}: {gate}", gx, top + 34, 70, 10, fs=7)
+
+
+def algorithm_block(c: Canvas, x0: float, y0: float, w: float, h: float, lines: list[str], note: str):
+    """An algorithm-style block: a rule under the heading, math lines, a note under a rule."""
+    c.line(x0, y0, x0 + w, y0, color="#666666", width=0.5)
+    y = y0 + 3
+    for latex in lines:
+        c.math(latex, x0, y, w, 14)
+        y += 15
+    c.line(x0, y + 2, x0 + w, y + 2, color="#666666", width=0.5)
+    c.text(note, x0, y + 5, w, h - (y + 5 - y0), fs=FS)
 
 
 def pipeline(c: Canvas, st: dict, y0: float) -> float:
-    """Panel a: the pipeline as a row of boxes, left to right, numbers from stats.json."""
-    m, run, cov, corr = st["model"], st["run"], st["coverage"], st["correlations"]
+    """Panel a as six stage cards: a graphic per stage, the numbers in the caption."""
+    m = st["model"]
     assert sum(BOX_W) + 5 * ARROW_GAP == FULL_WIDTH, sum(BOX_W) + 5 * ARROW_GAP
-    x = 0.0
-    pad = 4
-    lefts = []
+    x, pad, lefts = 0.0, 4, []
     for w in BOX_W:
         lefts.append(x)
         x += w + ARROW_GAP
     h = PIPE_H
+    heads = ["Yeast9 metabolism", "Gene-reaction rules", "Deletion sets", "FBA growth", "Fitness proxy", "Interaction (Fig. 2a)"]
+    roles = ["input", "rules", "perturbation", "readout", "proxy", "score"]
+    for x0, w, head, role in zip(lefts, BOX_W, heads, roles):
+        c.box(head, x0, y0, w, h, color=ROLE_COLOR[role], align="left", valign="top", bold=True)
 
-    # 1. model + medium
+    # 1. Yeast9: how much of the genome, and of the screened genes, the model carries.
     x0, w = lefts[0], BOX_W[0]
-    c.box("Yeast9 and medium", x0, y0, w, h, color=ROLE_COLOR["input"], align="left", valign="top", bold=True)
+    gw, gh = c.image(osp.join(IMG_DIR, "fba_schematic_genes.svg"), x0 + pad, y0 + HEAD_H)
     c.text(
-        f"yeast-GEM {m['version']}: {m['n_reactions']:,} reactions, {m['n_metabolites']:,} metabolites, "
-        f"{m['n_genes']:,} genes. Default medium as distributed: {m['n_medium_exchanges_open']} open exchanges, "
-        f"glucose {m['glucose_uptake_bound']:g} mmol gDW<sup>-1</sup> h<sup>-1</sup>, "
-        f"NH<sub>4</sub><sup>+</sup> nitrogen, no amino acids or vitamins.",
-        x0 + pad, y0 + 13, w - 2 * pad, h - 15,
+        f"Default medium as distributed: {m['n_medium_exchanges_open']} of {m['n_exchange_reactions']} exchanges open; "
+        f"glucose {m['glucose_uptake_bound']:g} mmol gDW<sup>-1</sup> h<sup>-1</sup>, NH<sub>4</sub><sup>+</sup>, "
+        "no amino acid or vitamin.",
+        x0 + pad, y0 + HEAD_H + gh + 2, w - 2 * pad, h - HEAD_H - gh - 4,
     )
 
-    # 2. gene-reaction rules
+    # 2. Gene-reaction rules as gates.
     x0, w = lefts[1], BOX_W[1]
-    c.box("Gene-reaction rules", x0, y0, w, h, color=ROLE_COLOR["rules"], align="left", valign="top", bold=True)
-    c.math(r"s_g = 0 \text{ if } g \in p,\ \text{else } 1", x0 + pad, y0 + 15, w - 2 * pad, 16)
-    c.math(r"v_r = 0 \text{ if } \mathrm{GPR}_r(\mathbf{s}) = \text{false}", x0 + pad, y0 + 32, w - 2 * pad, 16)
-    c.text(
-        "A reaction is blocked when its Boolean rule (isozymes OR, complex subunits AND) "
-        "evaluates false. A gene absent from the model changes nothing.",
-        x0 + pad, y0 + 50, w - 2 * pad, h - 52,
-    )
+    rule_sketch(c, x0 + pad, y0 + HEAD_H + 2, w - 2 * pad)
+    c.math(r"s_g = 0 \text{ if } g \in p,\ \text{else } 1", x0 + pad, y0 + h - 40, w - 2 * pad, 16)
+    c.math(r"v_r = 0 \text{ if } \mathrm{GPR}_r(\mathbf{s}) = \text{false}", x0 + pad, y0 + h - 24, w - 2 * pad, 16)
 
-    # 3. deletions from the screen
+    # 3. Deletion sets: the screen's gene sets, and how many the model covers in full.
     x0, w = lefts[2], BOX_W[2]
-    c.box("Deletion sets", x0, y0, w, h, color=ROLE_COLOR["perturbation"], align="left", valign="top", bold=True)
-    c.text(
-        f"{run['n_singles']:,} singles, {run['n_doubles']:,} doubles, {run['n_triples']:,} triples: the gene sets "
-        f"of the Kuzmin 2018 and 2020 triples and their sub-collections. "
-        f"{cov['n_screened_genes_in_model']:,} of {cov['n_screened_genes']:,} genes are in Yeast9; "
-        f"{cov['triples_by_n_in_model']['3']:,} triples have all three genes in the model, "
-        f"{cov['triples_by_n_in_model']['0']:,} have none.",
-        x0 + pad, y0 + 13, w - 2 * pad, h - 15,
-    )
+    dw, dh = c.image(osp.join(IMG_DIR, "fba_schematic_deletions.svg"), x0 + pad, y0 + HEAD_H)
+    c.text("The Kuzmin 2018 and 2020 triples and every single and double inside them; each set is one deletion strain.",
+           x0 + pad, y0 + HEAD_H + dh + 2, w - 2 * pad, h - HEAD_H - dh - 4)
 
-    # 4. FBA growth
+    # 4. FBA as the linear program it is.
     x0, w = lefts[3], BOX_W[3]
-    c.box("FBA growth", x0, y0, w, h, color=ROLE_COLOR["readout"], align="left", valign="top", bold=True)
-    c.math(r"\mu = \max v_{\mathrm{growth}}", x0 + pad, y0 + 17, w - 2 * pad, 16)
-    c.math(r"\text{s.t. } S v = 0,\ lb \le v \le ub", x0 + pad, y0 + 35, w - 2 * pad, 16)
-    c.text(
-        f"GLPK, {run['solver_timeout_s']} s limit; one LP per deletion set; {run['n_processes']} processes, "
-        f"{run['runtime_seconds'] / 60:.0f} min in all. &mu;<sub>WT</sub> = {m['wt_growth']:.4f} h<sup>-1</sup>.",
-        x0 + pad, y0 + 54, w - 2 * pad, h - 56,
+    algorithm_block(
+        c, x0 + pad, y0 + HEAD_H + 2, w - 2 * pad, h - HEAD_H - 4,
+        [r"\mu = \max\ v_{\mathrm{growth}}", r"\text{s.t. } S v = 0", r"lb \le v \le ub", r"v_r = 0 \text{ for blocked } r"],
+        "One linear program per deletion set (GLPK, 60 s limit); the wild type is the same program with no gene deleted.",
     )
 
-    # 5. fitness proxy
+    # 5. Fitness proxy.
     x0, w = lefts[4], BOX_W[4]
-    c.box("Fitness proxy", x0, y0, w, h, color=ROLE_COLOR["proxy"], align="left", valign="top", bold=True)
-    c.math(r"f = \mu / \mu_{\mathrm{WT}}", x0 + pad, y0 + 17, w - 2 * pad, 16)
-    c.text("A non-optimal or timed-out solve counts as f = 0.", x0 + pad, y0 + 36, w - 2 * pad, h - 38)
+    c.math(r"f = \mu / \mu_{\mathrm{WT}}", x0 + pad, y0 + HEAD_H + 4, w - 2 * pad, 16)
+    c.text("Growth relative to the wild type; a solve with no optimum counts as f = 0.",
+           x0 + pad, y0 + HEAD_H + 26, w - 2 * pad, h - HEAD_H - 28)
 
-    # 6. interaction. The math cells sit 18 units below the heading and 15 apart: MathJax
-    # typesets a fraction of the cell height above its box, so a tighter stack overlaps
-    # the bold heading (seen in the 2026.09.10 render).
+    # 6. Interaction, as in Fig. 2a.
     x0, w = lefts[5], BOX_W[5]
-    c.box("Interaction (Fig. 2a)", x0, y0, w, h, color=ROLE_COLOR["score"], align="left", valign="top", bold=True)
-    c.math(r"\varepsilon_{ij} = f_{ij} - f_i f_j", x0 + pad, y0 + 18, w - 2 * pad, 16)
-    c.math(r"\tau_{ijk} = f_{ijk} - f_i f_j f_k", x0 + pad, y0 + 34, w - 2 * pad, 16)
-    c.math(r"\quad - \varepsilon_{ij} f_k - \varepsilon_{ik} f_j - \varepsilon_{jk} f_i", x0 + pad, y0 + 48, w - 2 * pad, 16)
-    t = corr["tau"]
-    c.text(
-        f"Against the measured &tau; of the same triples: Pearson r = {t['pearson_r']:.4f} "
-        f"(n = {t['n']:,}); {100 * t['frac_abs_below_1e-3']:.2f}% of predicted |&tau;| &lt; 10<sup>-3</sup>.",
-        x0 + pad, y0 + 68, w - 2 * pad, h - 70,
-    )
+    c.math(r"\varepsilon_{ij} = f_{ij} - f_i f_j", x0 + pad, y0 + HEAD_H + 4, w - 2 * pad, 16)
+    c.math(r"\tau_{ijk} = f_{ijk} - f_i f_j f_k", x0 + pad, y0 + HEAD_H + 20, w - 2 * pad, 16)
+    c.math(r"\quad - \varepsilon_{ij} f_k - \varepsilon_{ik} f_j - \varepsilon_{jk} f_i", x0 + pad, y0 + HEAD_H + 34, w - 2 * pad, 16)
+    c.text("From the predicted fitness of the triple, its three doubles and three singles; "
+           "compared with the measured &tau; of the same gene set (b, g).",
+           x0 + pad, y0 + HEAD_H + 56, w - 2 * pad, h - HEAD_H - 58)
 
     ym = y0 + h / 2
     for i in range(5):

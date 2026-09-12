@@ -640,7 +640,7 @@ def panel_stages(st: pd.DataFrame):
     X_LABEL, X_ARROW, X_NUM, X_CHANGE, X_BATCH, X_RATE = 0.03, 0.075, 0.12, 0.21, 0.75, 1.0
     hdr_y = ylim[1] + 0.25
     for x, txt, ha in [(X_NUM, "Stage", "center"), (X_CHANGE, "What changed", "left"),
-                       (X_BATCH, "Batch\nper GPU", "center"), (X_RATE, "Samples\nper s", "right")]:
+                       (X_BATCH, "Batch", "center"), (X_RATE, "Samples/s", "right")]:
         tab.text(x, hdr_y, txt, ha=ha, va="bottom", fontsize=6, fontweight="bold", clip_on=False, linespacing=1.1)
     for row, yi in y_pos.items():
         r = by_no.loc[row]

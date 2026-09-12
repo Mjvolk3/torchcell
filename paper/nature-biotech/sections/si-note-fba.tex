@@ -157,13 +157,19 @@ the medium correction removed the solver artifacts and raised the fitness correl
 %% panels of fba_baseline_si.py) -> figures/FigS-yeast9-fba.pdf.
 \begin{figure*}[t]
 \tcfig{figures/FigS-yeast9-fba.pdf}{\textbf{The Yeast9 flux-balance baseline of
-Fig.~\ref{fig:ggi}d.} \textbf{a},~The pipeline: yeast-GEM 9.0.2 on its default ammonium
-minimal medium (\supptab{tab:fba-medium}); a deletion set zeroes the state of its genes and
-blocks every reaction whose gene-reaction rule evaluates false; the deletion sets are the
-Kuzmin 2018 and 2020 triples and their sub-collections; FBA maximizes the growth
-pseudoreaction (GLPK, 60~s limit); fitness is the growth ratio to the wild type; the
+Fig.~\ref{fig:ggi}d.} \textbf{a},~The pipeline. Yeast9 (yeast-GEM 9.0.2: 4,131 reactions, 2,806
+metabolites) carries 1,161 of the 6,607 protein-coding genes and 736 of the 4,036 screened
+genes (filled bars), on its default ammonium minimal medium (\supptab{tab:fba-medium}). A
+deletion set zeroes the state of its genes and blocks every reaction whose gene-reaction
+rule evaluates false: isozymes are joined by OR, so one deletion (dashed, $\Delta$) leaves
+the reaction open; complex subunits by AND, so one deletion blocks it (dashed arrow); a gene absent from the
+model changes no rule. The
+deletion sets are the 4,036 singles, 651,181 doubles and 332,313 triples of the Kuzmin 2018
+and 2020 screens, of which 736, 18,565 and 7,419 have every gene in the model (darker bars).
+FBA solves one linear program per set (GLPK, 60~s limit; 128 processes, 10~min in all;
+$\mu_{\mathrm{WT}}=0.0858$~h$^{-1}$); fitness is the growth ratio to the wild type; the
 interaction is that of Fig.~\ref{fig:ggi}a, compared with the measured value of the same
-triple by Pearson correlation. Every number in the boxes is read from \texttt{stats.json}.
+triple in \textbf{b} and \textbf{g}.
 \textbf{b},~Predicted against measured $\tau_{ijk}$ for all 332,313 triples, as hexagonal
 bins with a logarithmic count scale; the vertical band at zero holds the 99.93\% of triples
 whose predicted $\lvert\tau_{ijk}\rvert$ is below $10^{-3}$, and the 231 others sit almost

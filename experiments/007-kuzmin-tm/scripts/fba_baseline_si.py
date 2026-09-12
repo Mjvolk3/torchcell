@@ -45,6 +45,7 @@ from matplotlib.ticker import MultipleLocator  # noqa: E402
 from scipy import stats  # noqa: E402
 
 from torchcell.metabolism.yeast_GEM import YeastGEM  # noqa: E402
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
@@ -90,6 +91,8 @@ TEX_DIR = osp.join(REPO_ROOT, "paper", "nature-biotech", "sections")
 
 ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
 ORANGE_F, RED_F, PURPLE_F, YELLOW_F = PLOT_PALETTE_FILL[:4]
+#: Translucent backing for in-axes annotations that sit over data (panels b, g).
+ANNOT_BOX = dict(boxstyle="square,pad=0.3", facecolor="white", alpha=0.8, edgecolor="none")
 
 # Thresholds. ``LETHAL`` is the pipeline's own "lethal" cut (targeted_fba_growth_fast.py
 # reports fitness < 0.01 as lethal). ``WT_LIKE`` and ``TAU_ZERO`` separate LP round-off
@@ -456,6 +459,7 @@ def panel_tau(frozen, corr):
         va="top",
         ha="right",
         fontsize=6,
+        bbox=ANNOT_BOX,
     )
     box(ax)
     save(fig, "fba_baseline_tau")
@@ -585,6 +589,56 @@ def panel_landscape(land: pd.DataFrame):
     save(fig, "fba_baseline_landscape")
 
 
+# ----------------------------------------------------------------------------- panel a glyphs
+def panel_schematic_genes(n_genome: int, n_model: int, n_screened: int, n_screened_in_model: int):
+    """Two proportion bars for the Yeast9 card of panel a: of the genome's protein-coding
+    genes and of the screened genes, the part the model carries (filled).
+    """
+    fig, ax = plt.subplots(figsize=(mm_to_in(27), mm_to_in(15)))
+    fig.subplots_adjust(left=0.02, right=0.98, bottom=0.04, top=0.96)
+    rows = [("Genome", n_genome, n_model), ("Screened", n_screened, n_screened_in_model)]
+    for i, (label, total, inside) in enumerate(rows):
+        y = 1 - i
+        ax.barh(y, 1.0, height=0.42, color="white", edgecolor="black", lw=0.5, zorder=2)
+        ax.barh(y, inside / total, height=0.42, color=ORANGE, edgecolor="black", lw=0.5, zorder=3)
+        ax.text(0, y + 0.31, f"{label}: {total:,} genes", ha="left", va="bottom", fontsize=6)
+        ax.text(inside / total + 0.02, y, f"{inside:,} in Yeast9 ({100 * inside / total:.0f}%)", ha="left", va="center", fontsize=6)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(-0.4, 1.75)
+    ax.axis("off")
+    save(fig, "fba_schematic_genes")
+
+
+def panel_schematic_deletions(counts: dict, covered: dict):
+    """Bar chart for the deletion-sets card of panel a: the single, double and triple
+    deletion sets of the screen (log count), with the sets whose every gene is in Yeast9
+    as the darker part.
+    """
+    fig, ax = plt.subplots(figsize=(mm_to_in(27), mm_to_in(25)))
+    fig.subplots_adjust(left=0.3, right=0.97, bottom=0.25, top=0.82)
+    orders = ["singles", "doubles", "triples"]
+    x = np.arange(3)
+    tot = [counts[o] for o in orders]
+    cov = [covered[o] for o in orders]
+    ax.bar(x, tot, 0.62, color=YELLOW, edgecolor="black", lw=0.5, zorder=3, label="all sets")
+    ax.bar(x, cov, 0.62, color=PLOT_PALETTE[9], edgecolor="black", lw=0.5, zorder=4, label="in Yeast9")
+    for xi, t, cv in zip(x, tot, cov):
+        ax.text(xi, t * 1.35, f"{t:,}", ha="center", va="bottom", fontsize=5)
+        ax.text(xi, cv * 0.5, f"{cv:,}", ha="center", va="center", fontsize=5, color="white")
+    ax.set_yscale("log")
+    ax.set_ylim(100, 5e6)
+    ax.set_yticks([1e2, 1e4, 1e6])
+    ax.set_xticks(x)
+    ax.set_xticklabels(["1", "2", "3"])
+    ax.set_xlim(-0.6, 2.75)
+    ax.set_xlabel("Genes deleted", labelpad=1)
+    ax.set_ylabel("Deletion sets", labelpad=1)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2, frameon=False, fontsize=5, handlelength=0.8,
+              handleheight=0.8, borderaxespad=0.0, columnspacing=0.8, handletextpad=0.4)
+    box(ax)
+    save(fig, "fba_schematic_deletions")
+
+
 # ----------------------------------------------------------------------------- tables
 def write_medium_table(med: pd.DataFrame, model_stats: dict, path: str):
     obj_id = model_stats["objective_id"].replace("_", r"\_")
@@ -623,6 +677,9 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     meta, wt, singles, doubles, triples, trigenic, matched, perts = load_frozen()
     gem, model = load_model()
+    genome = SCerevisiaeGenome(genome_root=osp.join(os.getenv("DATA_ROOT"), "data/sgd/genome"),
+                               go_root=osp.join(os.getenv("DATA_ROOT"), "data/go"), overwrite=False)
+    n_genome_genes = len(genome.gene_set)
 
     # Model, objective, medium, and the wild-type check against the frozen run.
     obj = [r for r in model.reactions if r.objective_coefficient != 0]
@@ -641,6 +698,7 @@ def main():
         "n_reactions": len(model.reactions),
         "n_metabolites": len(model.metabolites),
         "n_genes": len(model.genes),
+        "n_genome_genes": n_genome_genes,
         "n_exchange_reactions": len(model.exchanges),
         "n_medium_exchanges_open": len(med),
         "glucose_uptake_bound": float(model.medium["r_1714"]),
@@ -720,6 +778,11 @@ def main():
     panel_growth_bands(bands)
     panel_evaluable(cov, n_in, len(perts["singles"]), len(perts["doubles"]))
     panel_landscape(land)
+    panel_schematic_genes(n_genome_genes, len(model.genes), len(perts["singles"]), n_in["singles"])
+    panel_schematic_deletions(
+        {"singles": len(perts["singles"]), "doubles": len(perts["doubles"]), "triples": len(perts["triples"])},
+        {"singles": n_in["singles"], "doubles": n_in["doubles"], "triples": int(cov.loc[cov.n_in_model == 3, "n_triples"].iloc[0])},
+    )
 
 
 if __name__ == "__main__":

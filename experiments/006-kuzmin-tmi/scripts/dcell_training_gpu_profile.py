@@ -337,49 +337,49 @@ def run_profile(checkpoint: str | None, batches: list[int]) -> tuple[pd.DataFram
 
 
 # ----------------------------------------------------------------------------- the panel
+PHASE_LABELS = {
+    "gather": "Forward: gene-state gather",
+    "concat": "Forward: child-output concatenation",
+    "subsystem": "Forward: subsystem layers",
+    "heads": "Forward: root and auxiliary heads",
+    "loop": "Forward: Python loop overhead",
+    "loss": "Loss (root + 2,654 auxiliary MSEs)",
+    "backward": "Backward",
+    "clip": "Gradient clipping",
+    "optimizer": "AdamW step",
+}
+
+
 def panel_gpu_profile(prof: pd.DataFrame, ops: pd.DataFrame):
-    """Horizontal bars per phase of one step at the cluster batch: host-side time (light)
-    with the GPU kernel time of the same phase overlaid (dark); the environment, launch
-    count and GPU busy fraction in the panel header.
+    """Horizontal bars per phase of one step at the cluster batch: share of the step's
+    host time (light) with the share of GPU kernel time overlaid (dark). Shares, not
+    seconds: CUDA tracing slows the traced step several-fold. The environment, launch
+    count and wall-clock are in the figure caption, read from the frozen CSVs.
     """
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(48)))
-    fig.subplots_adjust(left=0.47, right=0.97, bottom=0.18, top=0.77)
-    # Shares, not seconds: CUDA tracing slows the profiled step several-fold (both wall-clocks
-    # are in the header), so the per-phase split is shown as a fraction of the profiled step's
-    # host time (light) and of its GPU kernel time (dark).
+    fig.subplots_adjust(left=0.44, right=0.97, bottom=0.18, top=0.90)
     y = np.arange(len(prof))[::-1]
     light = [PURPLE if k in FORWARD_PHASES else GRAY for k in prof["phase"]]
     dark = [DARK_PURPLE if k in FORWARD_PHASES else DARK_GRAY for k in prof["phase"]]
     ax.barh(y, 100 * prof["host_share"], color=light, edgecolor="black", lw=0.5, height=0.65, zorder=3)
     ax.barh(y, 100 * prof["device_share"], color=dark, edgecolor="black", lw=0.5, height=0.32, zorder=4)
-    xmax = 100 * float(max(prof["host_share"].max(), prof["device_share"].max()))
     for yi, (_, r) in zip(y, prof.iterrows()):
-        ax.text(100 * max(r["host_share"], r["device_share"]) + 0.02 * xmax, yi,
+        ax.text(100 * max(r["host_share"], r["device_share"]) + 2, yi,
                 f"{100 * r['host_share']:.0f}% | {100 * r['device_share']:.0f}%", va="center", fontsize=6)
     ax.set_yticks(y)
-    ax.set_yticklabels(prof["label"])
-    ax.set_xlim(0, xmax * 1.3)
+    ax.set_yticklabels([PHASE_LABELS[k] for k in prof["phase"]])
+    ax.set_xlim(0, 125)
+    ax.set_xticks([0, 20, 40, 60, 80, 100])
     ax.set_xlabel("Share of one training step (%): host | GPU kernels")
+    m = prof.iloc[0]
+    ax.set_title(f"One training step on one GPU, batch {int(m['batch_size'])}", fontsize=6, pad=3)
     ax.grid(axis="x", color="#D0D0D0", lw=0.4)
     ax.set_axisbelow(True)
     ax.legend(
         handles=[plt.Rectangle((0, 0), 1, 1, fc=PURPLE, ec="black", lw=0.5), plt.Rectangle((0, 0), 1, 1, fc=DARK_PURPLE, ec="black", lw=0.5)],
         labels=["host: Python + kernel launches", "GPU: kernels running"],
         loc="lower right", frameon=True, fontsize=6, handlelength=1.0, handleheight=0.8, borderaxespad=0.3,
-    )
-    m = prof.iloc[0]
-    head = ops[ops["batch_size"] == int(m["batch_size"])].iloc[0]
-    slope = np.polyfit(ops["batch_size"], ops["launches"], 1)[0]
-    fig.text(
-        0.01, 0.985,
-        f"GPU profile: {m['gpu_model'].replace('NVIDIA ', '').replace(' Generation', '')}, "
-        f"torch {'.'.join(str(m['torch_version']).split('.')[:2])}, bf16-mixed, batch {int(m['batch_size'])} as on the cluster\n"
-        f"{int(head['launches']):,} kernel launches per step, +{slope:,.0f} per added strain (batch {ops['batch_size'].min()} to {ops['batch_size'].max()})\n"
-        f"{head['step_wall_s']:.1f} s per step untraced ({head['step_wall_s_profiled']:.0f} s traced); "
-        f"kernels run for {head['kernel_time_s']:.1f} s ({100 * head['kernel_busy_frac']:.0f}% of the untraced step)\n"
-        f"no data loading in the step: the batch is built once and held on the GPU",
-        ha="left", va="top", fontsize=6, linespacing=1.15,
     )
     box(ax)
     save(fig, "dcell_training_gpu_profile")

@@ -62,3 +62,11 @@ So 81 of the 7,419 fully evaluable triples (1.1%) carry a significant measured i
 ## 2026.09.10 - The rerun on the screen's medium
 
 The "not run" placeholder of panel g is replaced by the rerun of [[experiments.007-kuzmin-tm.scripts.fba_screen_medium]], scored by [[experiments.007-kuzmin-tm.scripts.fba_screen_medium_si]]. One consequence for the numbers above: the 231 nonzero predictions of the frozen run are not reproducible (the same medium and code give 182 today, with the same YGR144W signature), so they are GLPK failures at glucose 1 rather than modeled interactions; at glucose 3.3 the consistency checks pass with zero violations.
+
+## 2026.09.12 - Panel a glyphs: gene coverage and deletion sets
+
+Two true-size SVGs for the stage cards of `FigS-yeast9-fba` panel a, so the schematic shows rather than states. `panel_schematic_genes` (27 x 15 mm): two proportion bars, the genome's 6,607 protein-coding genes (`SCerevisiaeGenome.gene_set`, now recorded as `n_genome_genes` in `stats.json`) with the 1,161 Yeast9 carries filled, and the 4,036 screened genes with the 736 in the model filled; both 18%. `panel_schematic_deletions` (27 x 25 mm): the 4,036 / 651,181 / 332,313 deletion sets on a log axis with the 736 / 18,565 / 7,419 whose every gene is in the model as the darker part. The in-axes annotation of panel b sits in the upper right on a translucent white box, off the data column at tau = 0 (the same box backs panel g).
+
+![](./assets/images/007-kuzmin-tm/fba_schematic_genes.svg)
+
+![](./assets/images/007-kuzmin-tm/fba_schematic_deletions.svg)

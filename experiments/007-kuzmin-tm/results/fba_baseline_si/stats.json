@@ -17,6 +17,7 @@
     "n_reactions": 4131,
     "n_metabolites": 2806,
     "n_genes": 1161,
+    "n_genome_genes": 6607,
     "n_exchange_reactions": 271,
     "n_medium_exchanges_open": 16,
     "glucose_uptake_bound": 1.0,
@@ -27,7 +28,7 @@
     "ngam_lb": 0.7,
     "solver": "optlang.glpk_interface",
     "wt_growth": 0.0858439697264682,
-    "wt_growth_recomputed": 0.0858440229457521
+    "wt_growth_recomputed": 0.08584396972646902
   },
   "coverage": {
     "n_screened_genes": 4036,
@@ -89,20 +90,20 @@
   "correlations": {
     "tau": {
       "n": 332313,
-      "pearson_r": 0.0018745278074905362,
-      "pearson_p": 0.27987581606233913,
-      "spearman_rho": 0.0029137202132126163,
+      "pearson_r": 0.0018745278074905453,
+      "pearson_p": 0.2798758160623305,
+      "spearman_rho": 0.002913720213212626,
       "pred_mean": 0.0006658000265125773,
       "pred_sd": 0.034580348981254186,
       "meas_mean": -0.009884821509440396,
       "meas_sd": 0.06205095550094878,
       "as_stored": {
         "n": 332313,
-        "pearson_r": 0.0019143512521787147,
+        "pearson_r": 0.0019143512521787249,
         "n_stored_and_raw": 332313,
         "frac_rows_stored_equals_raw_1e-3": 0.011717868395157578,
         "frac_sorted_stored_equals_sorted_raw_1e-3": 0.9998405118066401,
-        "pearson_r_stored_vs_raw_rowwise": -0.0316428062461622
+        "pearson_r_stored_vs_raw_rowwise": -0.03164280624616217
       },
       "frac_abs_below_1e-6": 0.9764589408178435,
       "frac_abs_below_1e-3": 0.9993048722138466,
@@ -117,25 +118,25 @@
         "-0.01": 3,
         "-0.07": 2
       },
-      "pearson_r_nonzero_only": 0.020382917007059524,
+      "pearson_r_nonzero_only": 0.020382917007059534,
       "n_nonzero_only": 231
     },
     "fitness": {
       "n": 332313,
-      "pearson_r": 0.1508572469039994,
+      "pearson_r": 0.15085724690399946,
       "pearson_p": 0.0,
-      "spearman_rho": 0.03048842125100796,
+      "spearman_rho": 0.030488421251008,
       "pred_mean": 0.9473652464386811,
       "pred_sd": 0.22124705039525178,
       "meas_mean": 0.8439693019532789,
       "meas_sd": 0.1803135731467273,
       "as_stored": {
         "n": 299146,
-        "pearson_r": -0.004643716180283494,
+        "pearson_r": -0.004643716180283471,
         "n_stored_and_raw": 299146,
         "frac_rows_stored_equals_raw_1e-3": 0.0038041625159621053,
         "frac_sorted_stored_equals_sorted_raw_1e-3": 3.0085643799348814e-05,
-        "pearson_r_stored_vs_raw_rowwise": -0.003850909436997416
+        "pearson_r_stored_vs_raw_rowwise": -0.0038509094369974235
       },
       "value_counts_round3": {
         "1.0": 308363,
@@ -148,7 +149,7 @@
         "0.998": 505
       },
       "n_distinct_round3": 38,
-      "pearson_r_triples_with_model_gene": 0.25386714810442335,
+      "pearson_r_triples_with_model_gene": 0.25386714810442323,
       "n_triples_with_model_gene": 111921
     }
   },

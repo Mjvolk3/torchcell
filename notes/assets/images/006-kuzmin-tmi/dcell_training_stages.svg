@@ -40,12 +40,10 @@ L 157.152756 88.331217
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="33.002079" y="23.426037" transform="rotate(-0 33.002079 23.426037)">What changed</text>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(109.530192 17.516131)">Batch</text>
-    <text style="font-weight: 700; font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(105.861754 23.504787)">per GPU</text>
+    <text style="font-weight: 700; font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="117.864567" y="23.504787" transform="rotate(-0 117.864567 23.504787)">Batch</text>
    </g>
    <g id="text_4">
-    <text style="font-weight: 700; font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(132.474006 17.596568)">Samples</text>
-    <text style="font-weight: 700; font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(142.812756 23.504787)">per s</text>
+    <text style="font-weight: 700; font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="157.152756" y="23.504787" transform="rotate(-0 157.152756 23.504787)">Samples/s</text>
    </g>
    <g id="text_5">
     <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="18.858331" y="38.675808" transform="rotate(-0 18.858331 38.675808)">1</text>

@@ -469,6 +469,14 @@ L 126.224277 7.086614
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_13">
+    <g id="patch_7">
+     <path d="M 52.504354 38.518025 
+L 125.220604 38.518025 
+L 125.220604 8.780337 
+L 52.504354 8.780337 
+z
+" style="fill: #ffffff; opacity: 0.8"/>
+    </g>
     <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(54.304354 14.770962)">SD/MSG -His/Arg/Lys/Ura</text>
     <!-- Pearson $r$ = -0.0007 -->
     <g transform="translate(69.720604 21.1874)">
@@ -536,7 +544,7 @@ L 126.224277 7.086614
    </g>
   </g>
   <g id="axes_2">
-   <g id="patch_7">
+   <g id="patch_8">
     <path d="M 128.255924 117.637795 
 L 133.783483 117.637795 
 L 133.783483 7.086614 
@@ -959,7 +967,7 @@ L 2 0
     </g>
    </g>
    <g id="LineCollection_1"/>
-   <g id="patch_8">
+   <g id="patch_9">
     <path d="M 128.255924 117.637795 
 L 131.019704 117.637795 
 L 133.783483 117.637795 

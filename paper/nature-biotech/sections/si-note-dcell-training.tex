@@ -88,14 +88,17 @@ first correct build (one forward pass per step, fp32); an earlier build that ran
 pass twice (128~s) and two reruns of the stage-4 configuration on later days (99 and 119~s)
 are not drawn: the first is a bug fix, and the shared machine drifts from day to day by more
 than several optimizations, so only same-sitting stages compare.
-\textbf{e},~Where one training step spends its time on one GPU (RTX 6000 Ada, torch 2.11,
-bf16-mixed, batch 600, the cluster's per-GPU batch; the epoch-142 checkpoint of
-\texttt{eni948by} loaded strictly into the rebuilt model before profiling). Light bars,
-share of the step's host time (Python plus kernel launches) per phase; dark bars, share of
-the GPU kernel time; the phases partition the step. The step issues 1.73 million kernel
-launches, 2,700 more per added strain, and the GPU runs kernels for 10\% of its 30.6~s;
-the per-term, per-strain gene-state gather is 92\% of the host time and 88\% of the kernel
-time. The batch is built once and held on the GPU, so no data loading is in the step.
+\textbf{e},~Where one training step spends its time on one GPU (RTX 6000 Ada, torch
+2.11, bf16-mixed, batch 600, the cluster's per-GPU batch; the epoch-142 checkpoint of
+\texttt{eni948by} loaded strictly into the rebuilt model before profiling). The five
+``Forward'' phases are the forward pass, gene-state gather being the lookup of each term's
+deleted genes, done once per term and per strain. Light bars, share of the step's host time
+(Python plus kernel launches) per phase; dark bars, share of the GPU kernel time; the phases
+partition the step. The step takes 30.6~s untraced (118~s under the tracer, which is why
+shares rather than seconds are drawn), issues 1,731,051 kernel launches, 2,700 more per
+added strain, and the GPU runs kernels for 3.1~s of it (10\%); the gather is 92\% of the
+host time and 88\% of the kernel time. The batch is built once and held on the GPU, so no
+data loading is in the step.
 \textbf{f},~Best validation Pearson~$r$ (maximum over epochs) of the same DCell on
 the Kuzmin 2018-only build (91,050 records; \texttt{biucpv7p}, best at epoch 227) and the
 experiment-006 build (332,313; \texttt{eni948by}, best at epoch 150), one run each, splits

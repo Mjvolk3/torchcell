@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -49,7 +49,7 @@ L 0 2
       </g>
      </g>
      <g id="text_1">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="43.738829" y="117.584699" transform="rotate(-0 43.738829 117.584699)">Genes</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="43.738829" y="117.511223" transform="rotate(-0 43.738829 117.511223)">Genes</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -59,7 +59,7 @@ L 0 2
       </g>
      </g>
      <g id="text_2">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="65.67948" y="117.584699" transform="rotate(-0 65.67948 117.584699)">Doubles</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="65.67948" y="117.511223" transform="rotate(-0 65.67948 117.511223)">Doubles</text>
      </g>
     </g>
     <g id="xtick_3">
@@ -69,7 +69,7 @@ L 0 2
       </g>
      </g>
      <g id="text_3">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="93.105293" y="117.584699" transform="rotate(-0 93.105293 117.584699)">0</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="93.105293" y="117.511223" transform="rotate(-0 93.105293 117.511223)">0</text>
      </g>
     </g>
     <g id="xtick_4">
@@ -79,7 +79,7 @@ L 0 2
       </g>
      </g>
      <g id="text_4">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="111.389168" y="117.584699" transform="rotate(-0 111.389168 117.584699)">1</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="111.389168" y="117.511223" transform="rotate(-0 111.389168 117.511223)">1</text>
      </g>
     </g>
     <g id="xtick_5">
@@ -89,7 +89,7 @@ L 0 2
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="129.673043" y="117.584699" transform="rotate(-0 129.673043 117.584699)">2</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="129.673043" y="117.511223" transform="rotate(-0 129.673043 117.511223)">2</text>
      </g>
     </g>
     <g id="xtick_6">
@@ -99,7 +99,7 @@ L 0 2
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="147.956919" y="117.584699" transform="rotate(-0 147.956919 117.584699)">3</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="147.956919" y="117.511223" transform="rotate(-0 147.956919 117.511223)">3</text>
      </g>
     </g>
    </g>
@@ -121,7 +121,7 @@ L -2 0
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="109.900617" transform="rotate(-0 27.268504 109.900617)">0.0</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="109.863879" transform="rotate(-0 27.268504 109.863879)">0.0</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -136,7 +136,7 @@ L 158.927244 87.590551
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="89.774633" transform="rotate(-0 27.268504 89.774633)">0.2</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="89.737895" transform="rotate(-0 27.268504 89.737895)">0.2</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -151,7 +151,7 @@ L 158.927244 67.464567
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="69.648649" transform="rotate(-0 27.268504 69.648649)">0.4</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="69.611911" transform="rotate(-0 27.268504 69.611911)">0.4</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -166,7 +166,7 @@ L 158.927244 47.338583
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="49.522665" transform="rotate(-0 27.268504 49.522665)">0.6</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="49.485926" transform="rotate(-0 27.268504 49.485926)">0.6</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -181,7 +181,7 @@ L 158.927244 27.212598
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="29.39668" transform="rotate(-0 27.268504 29.39668)">0.8</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="29.359942" transform="rotate(-0 27.268504 29.359942)">0.8</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -196,7 +196,7 @@ L 158.927244 7.086614
       </g>
      </g>
      <g id="text_12">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="9.270696" transform="rotate(-0 27.268504 9.270696)">1.0</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="9.233958" transform="rotate(-0 27.268504 9.233958)">1.0</text>
      </g>
     </g>
     <g id="ytick_7">
@@ -240,7 +240,7 @@ L 158.927244 17.149606
      <g id="line2d_28"/>
     </g>
     <g id="text_13">
-     <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="13.665809" y="57.401575" transform="rotate(-90 13.665809 57.401575)">Fraction of the set</text>
+     <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="13.736004" y="57.401575" transform="rotate(-90 13.736004 57.401575)">Fraction of the set</text>
     </g>
    </g>
    <g id="patch_3">
@@ -312,30 +312,30 @@ L 158.927244 7.086614
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_14">
-    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(45.032774 87.353188) rotate(-90)">736</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(45.031407 87.353188) rotate(-90)">736</text>
    </g>
    <g id="text_15">
-    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(66.973425 102.835004) rotate(-90)">18,565</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(66.972058 102.835004) rotate(-90)">18,565</text>
    </g>
    <g id="text_16">
-    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(94.399238 38.965562) rotate(-90)">220,392</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(94.397871 38.965562) rotate(-90)">220,392</text>
    </g>
    <g id="text_17">
-    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(112.683113 85.95605) rotate(-90)">65,214</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(112.681746 85.95605) rotate(-90)">65,214</text>
    </g>
    <g id="text_18">
-    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(130.966989 93.806875) rotate(-90)">39,288</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(130.965622 93.806875) rotate(-90)">39,288</text>
    </g>
    <g id="text_19">
-    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(149.250864 103.45734) rotate(-90)">7,419</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(149.249497 103.45734) rotate(-90)">7,419</text>
    </g>
    <g id="text_20">
-    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(38.372748 129.641493)">all members</text>
-    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(42.531029 136.171767)">in Yeast9</text>
+    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(38.372748 129.11831)">all members</text>
+    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(42.527748 135.464435)">in Yeast9</text>
    </g>
    <g id="text_21">
-    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(97.799543 129.641493)">Triples, by genes</text>
-    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(108.352981 136.171884)">in Yeast9</text>
+    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(97.80095 129.11831)">Triples, by genes</text>
+    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(108.3497 135.534747)">in Yeast9</text>
    </g>
   </g>
  </g>

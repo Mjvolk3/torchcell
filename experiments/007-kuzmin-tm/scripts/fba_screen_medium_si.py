@@ -61,6 +61,7 @@ from fba_baseline_si import (  # noqa: E402
 )
 from fba_baseline_si import OUT as BASELINE_OUT
 from fba_screen_medium import ARMS, OUT  # noqa: E402
+from fba_baseline_si import ANNOT_BOX  # noqa: E402
 
 from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in  # noqa: E402
 
@@ -283,7 +284,7 @@ def panel_tau(m: pd.DataFrame, st: dict):
     # Upper right: the data stand in a column at x = 0, so the upper-left corner is not free.
     ax.text(0.97, 0.97, f"SD/MSG -His/Arg/Lys/Ura\nPearson $r$ = {c['pearson_r']:.4f}\n$n$ = {c['n']:,}\n"
             f"{100 * c['frac_abs_below_1e-3']:.2f}% at $|\\tau|<10^{{-3}}$",
-            transform=ax.transAxes, va="top", ha="right", fontsize=6)
+            transform=ax.transAxes, va="top", ha="right", fontsize=6, bbox=ANNOT_BOX)
     box(ax)
     save(fig, "fba_screen_medium_tau")
 

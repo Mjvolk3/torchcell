@@ -127,3 +127,7 @@ The dashed 99 to 119 s range on the stage-5 row (CSV rows 6 and 7, the stage-5 c
 Removing a duplicated forward call is a bug fix, not an optimization, so CSV row 1 (128 s per step) is no longer drawn and row 2 (one forward pass, fp32, batch 256) is stage 1, the baseline. Panel d now shows stages 1 to 6 (rows 2 to 5, then 8 and 9); the caption names both omitted builds with their step times. The x axis ends at 100 s. No number changed; `speedup_stages.csv` keeps all nine rows.
 
 ![](./assets/images/006-kuzmin-tmi/dcell_training_stages.svg)
+
+## 2026.09.12 - Panel d headers on one line
+
+The column headers of panel d ("Batch", "Samples/s") are single lines; "batch per GPU" is said in the caption.

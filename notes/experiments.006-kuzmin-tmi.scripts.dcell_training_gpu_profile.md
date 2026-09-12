@@ -32,3 +32,9 @@ One RTX 6000 Ada (44.4 GB), torch 2.11.0+cu128, bf16-mixed, the epoch-142 checkp
 Hypothesis (untested): a single batched gather per stratum (one `index_select` over the flattened state table for all terms of a stratum, all strains at once) would remove most of the 1.66 M launches the forward issues per step, nearly all of them from the gather; at 10% kernel utilization the step could shrink several-fold before the arithmetic shows.
 
 ![](./assets/images/006-kuzmin-tmi/dcell_training_gpu_profile.svg)
+
+## 2026.09.12 - Panel e restyled: title, forward phases named, numbers in the caption
+
+Author review: the four-line header crowded the panel and the 92% label fell off the right edge. The header text (GPU, torch version, launches, wall-clocks) moved to the figure caption; the panel carries a one-line title ("One training step on one GPU, batch 600"), the five forward-pass phases are labeled "Forward: ..." so the gather reads as part of the forward pass, and the x axis runs to 125% so the bar labels fit. `PHASE_LABELS` holds the panel labels; the CSV labels are unchanged.
+
+![](./assets/images/006-kuzmin-tmi/dcell_training_gpu_profile.svg)

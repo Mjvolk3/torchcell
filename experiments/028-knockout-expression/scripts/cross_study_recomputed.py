@@ -368,6 +368,9 @@ def main() -> None:
         )
         filled(ax, v, k, bins, f"{names[k]} (sd {v.std():.2f})")
     ax.set_yscale("log")
+    # Headroom of two decades so the framed legend sits above every histogram.
+    lo, hi = ax.get_ylim()
+    ax.set_ylim(lo, hi * 3000)
     ax.set_xlabel("log2 value")
     ax.set_ylabel("density")
     ax.set_title("value distributions")

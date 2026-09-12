@@ -1,0 +1,75 @@
+{
+ "generated_by": "experiments/028-knockout-expression/scripts/nadal_identify_deletion.py",
+ "summary": {
+  "kemmeren": {
+   "n_genotypes": 1484,
+   "n_self_present": 1479,
+   "median_self_value": -2.4786809222452844,
+   "frac_self_below_minus1": 0.8553076402974983,
+   "median_rank": 1.0,
+   "median_rank_fraction": 0.00016210082671421625,
+   "frac_rank_1": 0.5949966193373901,
+   "frac_rank_le_10": 0.8938471940500338,
+   "frac_rank_bottom_1pct": 0.9344151453684922,
+   "frac_rank_bottom_10pct": 0.9499661933739013
+  },
+  "nadal_stored": {
+   "n_genotypes": 3039,
+   "n_self_present": 2292,
+   "median_self_value": -0.024196407,
+   "frac_self_below_minus1": 0.2107329842931937,
+   "median_rank": 2071.0,
+   "median_rank_fraction": 0.44701578585146673,
+   "frac_rank_1": 0.004363001745200698,
+   "frac_rank_le_10": 0.01788830715532286,
+   "frac_rank_bottom_1pct": 0.037521815008726006,
+   "frac_rank_bottom_10pct": 0.23080279232111692
+  },
+  "nadal_pseudobulk_log2fc": {
+   "n_genotypes": 3395,
+   "n_self_present": 2448,
+   "median_self_value": -0.4122429982862075,
+   "frac_self_below_minus1": 0.3125,
+   "median_rank": 1601.0,
+   "median_rank_fraction": 0.35106220788561504,
+   "frac_rank_1": 0.0012254901960784314,
+   "frac_rank_le_10": 0.006535947712418301,
+   "frac_rank_bottom_1pct": 0.020016339869281044,
+   "frac_rank_bottom_10pct": 0.2013888888888889
+  },
+  "nadal_seurat_avg_log2fc": {
+   "n_genotypes": 3395,
+   "n_self_present": 3207,
+   "median_self_value": -0.0551867164215567,
+   "frac_self_below_minus1": 0.040224508886810104,
+   "median_rank": 3023.0,
+   "median_rank_fraction": 0.470725630644659,
+   "frac_rank_1": 0.0077954474586841285,
+   "frac_rank_le_10": 0.03648269410664172,
+   "frac_rank_bottom_1pct": 0.08169628936700966,
+   "frac_rank_bottom_10pct": 0.21421889616463985
+  }
+ },
+ "nadal_pseudobulk_by_cells": {
+  "0-30": {
+   "n": 403,
+   "frac_bottom_1pct": 0.019851116625310174,
+   "median_self_value": -4.23838168387779
+  },
+  "30-100": {
+   "n": 939,
+   "frac_bottom_1pct": 0.029818956336528223,
+   "median_self_value": -0.483394968783964
+  },
+  "100-300": {
+   "n": 1011,
+   "frac_bottom_1pct": 0.012858555885262116,
+   "median_self_value": -0.249896557089702
+  },
+  "300-1000000": {
+   "n": 95,
+   "frac_bottom_1pct": 0.0,
+   "median_self_value": -0.120169067961488
+  }
+ }
+}

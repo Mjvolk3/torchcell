@@ -336,12 +336,19 @@ class BxConfig(BaseModel):
 
 
 class ArmConfig(BaseModel):
-    """``conf/arm_<name>.yaml``: the only two things an arm is allowed to change."""
+    """``conf/arm_<name>.yaml``: what an arm file is allowed to change.
+
+    The flux CHANNEL is here because a parameterization is a property of the arm rather than
+    of the run, and because 026's ARMS registry stays the single source of truth for the
+    physics switches: an 027 arm names a base arm for the switches and, optionally, the
+    channel string the layer parses.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     base_arm: str
     permute_train_targets: bool
+    flux_parameterization: str | None = None
 
 
 class BxCell(BaseModel):
@@ -559,6 +566,33 @@ class BxCell(BaseModel):
             "value above the ceiling is unreachable and the sigmoid saturates silently, so "
             "the concentration cells raise this. It also widens the concentration term of "
             "every reaction energy, which is a real loosening of the thermodynamic anchor."
+        ),
+    )
+    flux_parameterization: str | None = Field(
+        default=None,
+        description=(
+            "The flux layer's channel string, overriding the one 026's ARMS entry carries. "
+            "SERIALIZED HERE ON PURPOSE. Wave 7 passed it through the environment variable "
+            "TC_FLUX_PARAMETERIZATION, which the layer records in "
+            "flux_meta.coverage.parameterization_raw but the CELL does not, so anything "
+            "that rebuilt a cell from its result file alone reconstructed the BASE arm: the "
+            "first sampler audit of job 1755 died on "
+            "KeyError 'flux_layer.latent_mlp.0.weight', a parameter that exists only on the "
+            "arm the rebuild wrongly chose. With the channel in the cell, a rebuild is "
+            "correct without an environment variable. The variable is still read when this "
+            "field is None, so the wave-7 scripts and their reruns keep working."
+        ),
+    )
+    flux_density_weight: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Weight on the flux layer's turnover-density term, which penalizes independent "
+            "rows of S that do not turn over. 0.0 is off and is what every cell before "
+            "wave 8 ran. Written onto the built layer's config, and NOT multiplied by the "
+            "constraint scale: the wave-7 recipe runs the physics at scale 0.0, where a "
+            "term inside the ramp is exactly zero and the cell would be a silent duplicate "
+            "of the arm it is supposed to test."
         ),
     )
 
@@ -865,6 +899,7 @@ def build_cell(
     conc_space: str = CONC_SPACE_MIXTURE,
     conc_lower_m: float = CONC_LOWER_M,
     conc_upper_m: float = CONC_UPPER_M,
+    flux_density_weight: float = 0.0,
 ) -> BxCell:
     """Merge ``base.yaml`` with one arm file into a fully specified cell."""
     with open(osp.join(CONF_DIR, f"arm_{arm}.yaml")) as fh:
@@ -919,6 +954,10 @@ def build_cell(
         conc_space=conc_space,
         conc_lower_m=conc_lower_m,
         conc_upper_m=conc_upper_m,
+        # The channel comes from the arm FILE, which is where a parameterization belongs;
+        # the environment variable is read only when no arm file names one.
+        flux_parameterization=armcfg.flux_parameterization,
+        flux_density_weight=flux_density_weight,
     )
 
 
@@ -1817,12 +1856,19 @@ def build_model_for_cell(
         "constraint_final_scale": cell.constraint_scale,
         "constraint_delay_epochs": cell.constraint_delay_epochs,
     }
-    # THE CHANNEL OVERRIDE (wave 7). `fluxforce` is a parameterization of
+    # THE CHANNEL OVERRIDE. `fluxforce` is a parameterization of
     # torchcell.metabolism.flux_layer, not a new physics switch, and 026's ARMS stays the
     # single source of truth for the switches; this passes the string through without
-    # editing that registry. What the layer parsed is recorded in
-    # flux_meta.coverage.parameterization_raw, so the run still says what it ran.
-    channel = os.getenv("TC_FLUX_PARAMETERIZATION")
+    # editing that registry.
+    #
+    # THE CELL WINS OVER THE ENVIRONMENT (wave 8). Wave 7 had only the variable, so a cell's
+    # own record did not carry its channel and a rebuild from the result file alone
+    # reconstructed the base arm; `audit_top_strain_feasibility.py` on job 1755 died on
+    # KeyError 'flux_layer.latent_mlp.0.weight' for exactly that reason. `cell.flux_parameterization`
+    # is serialized with the cell, so a rebuild is now correct on its own. The variable is
+    # still honored when the cell names nothing, which is what keeps every wave-7 script and
+    # its reruns working unchanged.
+    channel = cell.flux_parameterization or os.getenv("TC_FLUX_PARAMETERIZATION")
     if channel:
         arm["parameterization"] = channel
     gene_ids = list(dataset.cell_graph["gene"].node_ids)
@@ -1835,6 +1881,10 @@ def build_model_for_cell(
         # `reaction_potential` reads the window off `config` at call time, so the
         # assignment takes effect. Both defaults equal the shipped constants, so a cell
         # that does not ask for a different window is unchanged.
+        # The turnover-density weight, written the same way and for the same reason:
+        # `constraint_loss` reads it off `config` at call time. 0.0 leaves the loss exactly
+        # as every cell before wave 8 computed it.
+        flux_layer.config.density_weight = cell.flux_density_weight
         flux_layer.config.conc_lower_m = cell.conc_lower_m
         flux_layer.config.conc_upper_m = cell.conc_upper_m
 
@@ -2939,6 +2989,16 @@ def main() -> None:
     parser.add_argument(
         "--tag", default="", help="Suffix for the result file and the W&B run name."
     )
+    parser.add_argument(
+        "--flux-density-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Weight on the flux layer's turnover-density term, which penalizes independent "
+            "rows of S that do not turn over. It is NOT multiplied by the constraint "
+            "scale, because the recipe these cells run holds that scale at 0.0."
+        ),
+    )
     args = parser.parse_args()
 
     cfg = load_config()
@@ -2967,6 +3027,7 @@ def main() -> None:
         conc_space=args.conc_space,
         conc_lower_m=args.conc_lower_m,
         conc_upper_m=args.conc_upper_m,
+        flux_density_weight=args.flux_density_weight,
     )
     dataset = build_dataset()
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)

@@ -380,3 +380,39 @@ gradient to the learned concentrations, and both flux-force ends that reach the 
 exactness score above it, paired: +0.0830 (sd 0.0511) for the force end and +0.0765 (sd
 0.0984) for `boxforce`, both n = 3. The two flux-force ends are indistinguishable from each
 other at -0.0065 (sd 0.0654).
+
+## 2026.09.12 - The Turnover-Density Term, and Dykstra on the Flux-Force Channel
+
+### `density_weight`: pricing a flux that balances by being off
+
+A balance statistic over a mostly-zero flux is a statement about the zeros. Measured
+untrained on the real yeast-GEM, `fluxforce_k100_boxforce` meets the Genesis median rule
+with **5.26 percent** of the independent rows of S turning over above `1e-3 * flux_scale`
+and 28.94 percent of reactions carrying any flux; the plain projection sits at 40.63 and
+57.31 percent and fails the rule. Emptying the network is the degenerate way to satisfy
+balance and nothing in the loss argued against it.
+
+`c_density = mean_i relu(1 - omega_i / (density_turnover_threshold * flux_scale))` over the
+independent rows is that argument: zero for a row at or above the threshold, one for a dead
+row, linear between. `feas_active_row_frac` and `feas_flux_active_frac` report the same
+thing as fractions, on every arm, weighted or not.
+
+Two deliberate properties, both pinned by tests:
+
+- **The threshold is the audit's.** `density_turnover_threshold` defaults to 1e-3, the
+  primary of `audit_top_strain_feasibility.BALANCE_TURNOVER_THRESHOLDS`, so the term the
+  model is trained against and the rule it is judged by are one statistic.
+- **The term is added OUTSIDE `constraint_scale`.** Every 027 cell runs the physics ramp at
+  0.0 or 0.1, and at 0.0 a term inside the product is identically zero: the cell would
+  report a density weight it never applied. At the default weight of 0.0 the term adds
+  exactly zero, so every arm before this date computes the loss it always did.
+
+### `_dykstra` on the flux-force channel
+
+The token was already legal on `projection`; it now parses on `fluxforce` too. Dykstra's
+correction lands on the NEAREST point of the intersection to the pre-projection flux rather
+than on some point of it, and on this network that is worth about a factor of two in flux
+density at no cost in exactness: at K = 100 on `boxforce`, 11.42 percent of rows turn over
+against von Neumann's 5.26, with the second law, the box and the balance median unchanged
+and the forward pass no slower. Raising K instead moves the wrong way, 1.50 percent of rows
+at K = 500, which withdraws the "raise K" recommendation from the wave-7 section above.

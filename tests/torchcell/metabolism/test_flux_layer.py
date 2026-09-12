@@ -1473,3 +1473,105 @@ def test_the_boxforce_end_samples_inside_the_directional_box():
     drawn = layer.sample(*_inputs(batch=3), n_samples=4)
     assert float(drawn.thermo_violation_frac.max()) == 0.0
     assert float(drawn.box_violation_frac.max()) == 0.0
+
+
+def test_the_density_term_is_zero_on_a_network_that_turns_over_and_one_on_a_dead_one():
+    r"""``c_density`` prices rows of S that carry no throughput, and nothing else.
+
+    A balance statistic over a mostly-zero flux is a statement about the zeros, so a head
+    that can empty the network satisfies the Genesis balance rule the degenerate way. The
+    term is the hinge ``relu(1 - omega_i / (threshold * flux_scale))`` over the independent
+    rows: a row at or above the threshold costs nothing and a row at zero costs one.
+    """
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    out = layer(*_inputs())
+    # Zero on this fixture, because every row of the toy network turns over above the
+    # threshold: the term prices dead rows and this network has none.
+    assert float(out["c_density"]) == 0.0
+    assert float(out["feas_active_row_frac"]) == 1.0
+    starved = _layer(thermo_mode=ThermoMode.ANCHORED, density_turnover_threshold=1.0)
+    out_starved = starved(*_inputs())
+    assert 0.0 < float(out_starved["c_density"]) <= 1.0
+    assert 0.0 <= float(out["feas_active_row_frac"]) <= 1.0
+    # A flux of exactly zero is the worst case and scores one on every row.
+    dead = dict(out)
+    dead["v"] = torch.zeros_like(out["v"])
+    layer_out = layer(*_inputs())
+    omega = layer.turnover(torch.zeros_like(layer_out["v"]))[:, layer.independent_rows]
+    threshold = layer.config.density_turnover_threshold * layer.config.flux_scale
+    assert float(torch.relu(1.0 - omega / threshold).mean()) == 1.0
+
+
+def test_the_density_term_is_off_by_default_and_outside_the_constraint_ramp():
+    """Two claims: it changes no existing arm, and it survives a constraint scale of zero.
+
+    Every wave-6 and wave-7 cell runs the physics at scale 0.0 or 0.1. A countermeasure to
+    a degenerate solution that lived inside the ramp would be identically zero at 0.0, and
+    the arm would report a weight it never applied.
+    """
+    # The toy network turns over well above the shipped threshold, so its density term is
+    # exactly zero; raising the threshold is what makes its rows count as dead and the term
+    # bite. That the shipped threshold reads zero HERE is itself the right behavior.
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED, density_turnover_threshold=1.0)
+    out = layer(*_inputs())
+    assert layer.config.density_weight == 0.0
+    assert float(out["c_density"]) > 0.0
+    baseline = float(layer.constraint_loss(out))
+
+    layer.config.density_weight = 0.5
+    weighted = float(layer.constraint_loss(out))
+    assert weighted > baseline
+    assert abs(weighted - baseline - 0.5 * float(out["c_density"])) < 1e-6
+
+    # And at a constraint scale of zero the density term is the WHOLE loss, which is the
+    # property the wave-8 cells depend on.
+    layer.constraint_scale = 0.0
+    assert abs(float(layer.constraint_loss(out)) - 0.5 * float(out["c_density"])) < 1e-6
+
+
+def test_the_density_term_gradient_pushes_throughput_onto_dead_rows():
+    """The term has to move the flux, not just report on it."""
+    layer = _fluxforce_layer(end="boxforce", density_turnover_threshold=1.0)
+    layer.config.density_weight = 1.0
+    layer.constraint_scale = 0.0
+    h, ctx, idx, idx_batch = _inputs()
+    out = layer(h, ctx, idx, idx_batch)
+    loss = layer.constraint_loss(out)
+    grads = torch.autograd.grad(
+        loss, list(layer.flux_mlp.parameters()), allow_unused=True
+    )
+    assert any(g is not None and float(g.abs().sum()) > 0.0 for g in grads)
+
+
+def test_the_density_threshold_matches_the_audit_rule():
+    """The trained term and the judging criterion are the same statistic, by construction."""
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    # `audit_top_strain_feasibility.BALANCE_TURNOVER_THRESHOLDS` has 1e-3 as its primary.
+    assert layer.config.density_turnover_threshold == 1.0e-3
+
+
+def test_the_fluxforce_channel_takes_the_dykstra_method_too():
+    r"""Dykstra's correction converges to the NEAREST point of the intersection to ``v0``.
+
+    That is not a detail on this head: von Neumann's alternation reaches SOME feasible
+    point, and on this network the point it reaches is sparse. Measured untrained on the
+    real yeast-GEM, the fraction of independent rows of S that turn over above
+    1e-3 * flux_scale: 5.26 percent for `fluxforce_k100_boxforce` and 11.42 percent for the
+    same channel under Dykstra, with the second law, the box and the balance median
+    unchanged. The token is what lets a cell ask for it.
+    """
+    from torchcell.metabolism.flux_layer import parse_parameterization
+
+    spec = parse_parameterization("fluxforce_k100_boxforce_dykstra", 5)
+    assert (
+        spec.kind,
+        spec.projection_steps,
+        spec.projection_end,
+        spec.projection_method,
+    ) == ("fluxforce", 100, "boxforce", "dykstra")
+    layer = _fluxforce_layer(end="boxforce", projection_method="dykstra")
+    assert layer.projection_method == "dykstra"
+    out = layer(*_inputs())
+    active = layer.delta_r_g0_mask & (~layer.thermo_exempt)
+    assert float((out["v"][:, active] * out["delta_r_g"][:, active]).max()) <= 1e-6
+    assert float(out["feas_box_violation_frac"]) == 0.0

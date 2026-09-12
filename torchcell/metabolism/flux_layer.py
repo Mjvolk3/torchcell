@@ -559,6 +559,38 @@ class FluxLayerConfig(BaseModel):
             "trained under it has been told the answer. Every 026/027 grid ran with this on."
         ),
     )
+    density_weight: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Weight on the TURNOVER-DENSITY term, which penalizes independent rows of S "
+            "that carry no throughput. 0.0 is off and is what every cell before 2026-09-12 "
+            "ran.\n\n"
+            "WHY IT EXISTS, MEASURED. The Genesis balance criterion is a statistic over the "
+            "rows of S, and a flux vector that is mostly zero passes it on the zeros: the "
+            "`fluxforce_k100_boxforce` head meets the median rule on 100 of 100 top strains "
+            "(jobs 1767, 1770, 1771) with only 26.5 percent of reactions carrying flux "
+            "above 1e-4 mmol/gDW/h, and under the turnover-thresholded rule it reads 2.0, "
+            "the worst value the statistic takes. Emptying the network is the degenerate "
+            "way to balance it, and nothing in the loss argued against it.\n\n"
+            "NOT MULTIPLIED BY `constraint_scale`. The recipe these cells run holds that "
+            "scale at exactly 0.0, so a term inside the ramp is identically zero and the "
+            "cell would be a silent duplicate of the arm it is meant to test. This term is "
+            "a countermeasure to a degenerate solution rather than a physical constraint "
+            "being ramped in, and `constraint_loss` adds it outside the product."
+        ),
+    )
+    density_turnover_threshold: float = Field(
+        default=1.0e-3,
+        gt=0.0,
+        description=(
+            "The turnover a row must reach to count as active, as a FRACTION of "
+            "`flux_scale`: 1e-3 is 0.1 mmol/gDW/h at the shipped scale. Deliberately the "
+            "same constant the feasibility audit's thresholded balance rule uses "
+            "(`BALANCE_TURNOVER_THRESHOLDS`, primary 1e-3), so the term the model is "
+            "trained against and the criterion it is judged by are the same statistic."
+        ),
+    )
     stochastic: bool = Field(
         default=False,
         description=(
@@ -623,7 +655,7 @@ _PROJECTION_PATTERN = re.compile(
 #: both exact and the balance residual is the leftover. There is no ``tdg`` token: the sign
 #: clamp as the WHOLE mechanism is what this channel replaces.
 _FLUXFORCE_PATTERN = re.compile(
-    r"^fluxforce(?:_k(\d+))?(?:_(balance|box|force|boxforce))?$"
+    r"^fluxforce(?:_k(\d+))?(?:_(balance|box|force|boxforce))?(?:_(dykstra))?$"
 )
 
 
@@ -673,6 +705,7 @@ def parse_parameterization(raw: str, default_steps: int) -> ParameterizationSpec
             kind="fluxforce",
             projection_steps=force_steps,
             projection_end=force.group(2),
+            projection_method=force.group(3),
             raw=raw,
         )
     match = _PROJECTION_PATTERN.match(raw)
@@ -1998,6 +2031,19 @@ class FluxLayer(nn.Module):
             residual.abs() / (omega + cfg.balance_epsilon)
         ).median()
 
+        # (a2) TURNOVER DENSITY. A balance statistic over a mostly-zero flux is a statement
+        # about the zeros, so a head that can empty the network has a degenerate way to
+        # satisfy it. This term prices exactly that: a row whose turnover reaches the
+        # threshold costs nothing, a row at zero costs one, and the cost is linear in
+        # between, so the gradient pushes throughput onto dead rows rather than pushing every
+        # flux up. It is reported for every arm and weighted only when asked.
+        active_turnover = cfg.density_turnover_threshold * cfg.flux_scale
+        out["c_density"] = torch.relu(1.0 - omega / active_turnover).mean()
+        out["feas_active_row_frac"] = (omega > active_turnover).float().mean()
+        out["feas_flux_active_frac"] = (
+            (v.abs() > 1.0e-6 * cfg.flux_scale).float().mean()
+        )
+
         # (b) second law. A hinge, unless `thermo_box` already made it a bound, in which
         # case the same expression is a DIAGNOSTIC that should read ~0 and says so if not.
         out.update({f"thermo_{k}": t for k, t in extras.items()})
@@ -2315,7 +2361,15 @@ class FluxLayer(nn.Module):
             # the whole `weights` dict itself and an arm cannot add a key to it.
             + w.get("kl", self.config.kl_weight) * out["c_kl"]
         )
-        return total * self.constraint_scale
+        # THE DENSITY TERM IS OUTSIDE THE RAMP, and that is a decision rather than an
+        # oversight. Every cell of waves 6 and 7 runs `constraint_final_scale` at 0.0 or
+        # 0.1, and at 0.0 a term inside the product is identically zero: the arm would
+        # report a density weight it never applied. The term is not one of the physics
+        # constraints being ramped in, it is what stops the head from satisfying the
+        # balance criterion by emptying the network. At the default weight of 0.0 it adds
+        # exactly zero, so every arm before wave 8 computes the same loss it always did.
+        density = w.get("density", self.config.density_weight) * out["c_density"]
+        return total * self.constraint_scale + density
 
     def coverage_report(self) -> dict[str, Any]:
         """What fraction of the layer rests on data rather than on a default.

@@ -185,9 +185,14 @@ binary variable, which is what a loopless flux balance program needs one for.
   \texttt{delta\_g\_sqrt\_cov} and builds the correlated error term from it;
   \texttt{build\_flux\_layer} constructs none and \texttt{train\_bx.py} passes none, so every
   arm run so far has a formation covariance on disk and a reaction potential with no
-  covariance in it. And \texttt{ThermoSource} has no member for the curated and verified
-  tables, so the curation records, the withdrawn mispricings and the composition guard
-  reach no run. $K_M$ is resolved on the same four tiers and handed to the layer as
+  covariance in it, and it is the only thing on that list.
+  \texttt{ThermoSource} gained a \texttt{verified} member, which resolves the curated tables
+  through their manifest's sha256 and reads the reaction values out of the verified reaction
+  table rather than re-summing them, since cancellation, the conserved moiety and the
+  shipped reaction column are reaction-level facts a stoichiometric sum cannot reproduce. It
+  is the only route in which the accession composition guard has run, so the glycogen and
+  dolichol mispricings are absent from it and present in every other route.
+  $K_M$ is resolved on the same four tiers and handed to the layer as
   \texttt{km\_mm}, and no term consumes it (Section~\ref{sec:limits}). The four-tier
   $k_{cat}$ counts drawn here are what \texttt{kcat\_tier: predicted} resolves; the default
   \texttt{measured} drops the predicted tier and leaves those units on the organism default.

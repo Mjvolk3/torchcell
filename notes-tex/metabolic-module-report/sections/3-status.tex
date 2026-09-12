@@ -26,14 +26,14 @@ a named failure class (Section~\ref{sec:parameters}). 291 of the 330 unpriced re
 permanently closed, blocked only by species that are not molecules, so no further method
 moves them. Nothing in the parameter tables is now what holds the module back.
 
-\textbf{A third defect precedes a relaunch, and it is a stale file rather than a missing
-value.} Every 026 and 027 run so far read
+\textbf{A third defect precedes a relaunch, and it is now a config value rather than missing
+code.} Every 026 and 027 run so far read
 \texttt{metabolite\_dgf\_prime\_}\allowbreak\texttt{with\_external.parquet}, which predates
 the composition check and therefore still carries the glycogen price taken from a
-four-residue oligomer and the dolichol offset. The corrected tables are
-\texttt{verified/metabolite\_dgf\_prime\_}\allowbreak\texttt{with\_curation.parquet} and its
-reaction companion, whose manifest names the sha256 of the file they supersede and of all 16
-curation records. Repointing the loader is a one-line change and it has not been made.
+four-residue oligomer and the dolichol offset. \texttt{ThermoSource} now carries a
+\texttt{verified} member that resolves the curated tables through their manifest's sha256
+and raises rather than falling back when a hash does not match, and it is the only route in
+which the composition guard has run. No arm asks for it yet.
 
 \textbf{Order of work.} A trainer that reproduces 0.434 on the no-module arm with an abort
 on prediction collapse; the module arms on it, on the dataset's actual medium, reading the

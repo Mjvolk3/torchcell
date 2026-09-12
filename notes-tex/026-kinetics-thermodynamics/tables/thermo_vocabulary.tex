@@ -1,0 +1,48 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/thermo_vocabulary.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/thermo_route_tables_tex.py
+%% SOURCE: hand-authored definitions declared in thermo_route_tables_tex.py, assembled from the same RouteDoc and ReasonDoc records the route tables are built from
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Controlled vocabulary]{Every term the recovery sections use, in alphabetical order. A route is a way of producing a value, a failure class is a reason there is none, and the two partition every species and every reaction in the model.}
+  \label{tab:thermo-vocabulary}
+  \begin{tabular}{@{}p{0.24\textwidth}p{0.70\textwidth}@{}}
+    \toprule
+    Term & Definition \\
+    \midrule
+    admission & the strongest claim a curation record's sources support: measured, tabulated, computed or provisional. Only measured and tabulated reach a served table \\
+    cache, by accession & a route. Reads an eQuilibrator compound the model's own identifier resolves, takes its component-contribution formation energy and transforms it to the metabolite's compartment \\
+    cache, by written structure & a route. Writes a structure from the metabolite's name, hashes it to an InChIKey and finds a compound eQuilibrator already holds under that key \\
+    cancellation & a route. Drops a species appearing unchanged on both sides, so a reaction closes without that species ever being priced \\
+    carrier potential & a route. Gauges an electron carrier pair, oxidized form at zero and reduced form at $-nFE'^{\circ}$, so the arbitrary gauge cancels in any reaction that conserves the carrier \\
+    catalytic unit & one reaction and the gene product complex that catalyzes it, the key a turnover number and a Michaelis constant are stored under \\
+    CODATA ion table & a route. Reads a tabulated single-ion formation energy, shifts it to eQuilibrator's gauge and applies the Debye-Huckel term \\
+    component contribution & eQuilibrator's estimator: decompose a structure into groups, fit group energies against a measured reaction corpus, and return a formation energy with the covariance that fit implies \\
+    composition surrogate & a route. Transfers the energy of a cache compound sharing the heavy-atom composition, admitted only where every such compound agrees to 5 kJ/mol \\
+    conserved moiety & a route. Decomposes every participant leniently and prices the group difference where the atoms no group covers match as a multiset across the two sides \\
+    curated structure or convention & a route. Prices a species from a structure or a polymer convention a curation record fixes, with sources and a sha256 per source \\
+    decomposition refused & a failure class. the structure exists and component contribution refuses it, so a pKa predictor changes nothing \\
+    evidence class & what a value rests on, one of measured, tabulated, estimated by component contribution, or curated \\
+    external pKa cascade & a route. Creates a compound eQuilibrator has never seen, from the pH 7 major microspecies plus a predicted pKa ladder, then decomposes and prices it \\
+    flux-carrying & a reaction whose flux-variability width is nonzero under the wild-type medium, so the layer can express a flux through it \\
+    group in the null space & a failure class. the structure decomposes and one group is in the component-contribution null space, so the estimate has infinite variance \\
+    microspecies & one protonation state of a compound. The reference microspecies is the state the caller draws, and choosing the neutral parent rather than the pH 7 major microspecies moves a formation energy by hundreds of kJ/mol \\
+    mixed routes & a route. Sums participants priced by more than one route, so the reaction's uncertainty belongs to no single route \\
+    more than one reason & a failure class. the reaction is blocked by species in two or more of the classes above \\
+    no structure & a failure class. a definite formula with no structure in any namespace and no writer that composes one from the name \\
+    non-chemical reaction & a failure class. an exchange, demand, sink or biomass pseudoreaction, not elementally balanced, so a standard reaction energy has no meaning for it \\
+    permanently closed & a reaction no pKa predictor, structure writer, decomposer or literature table can price, because every species blocking it is not a molecule \\
+    pKa ladder & the list of macroscopic dissociation constants inside pH 0 to 14 that fixes how a compound's protonation states are populated, and therefore its Legendre transform \\
+    placeholder formula & a failure class. an R, X or $*$ in the formula: the species is a family of molecules and no single formation energy exists for it \\
+    placeholder structure & a failure class. the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule \\
+    priced & carrying a transformed formation energy at the species' own compartment conditions; a reaction is priced when every participant is, or when a reaction-level route fills it directly \\
+    pseudo-metabolite & a failure class. a modeling device, a pool, a SLIME backbone or a difference formula, rather than a molecule \\
+    recorded, not admitted & a failure class. a curation record exists and its admission is computed or provisional, so it is reported and not priced \\
+    repeat-unit surrogate & a route. Prices one polymer residue as the monomer minus water minus half a calibrated hydrolysis energy \\
+    shipped metabolite column & a route. Reads yeast-GEM's own \texttt{model\_metDeltaG.csv}, converted out of kilocalories at parse time \\
+    shipped reaction column & a route. Reads yeast-GEM's \texttt{model\_rxnDeltaG.csv} directly \\
+    target & one distinct structure submitted to the external pKa route. Several yeast-GEM species can share one target \\
+    \bottomrule
+  \end{tabular}
+\end{table}

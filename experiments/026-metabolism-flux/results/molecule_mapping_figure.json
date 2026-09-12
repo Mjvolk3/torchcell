@@ -1,0 +1,74 @@
+{
+ "built_at": "2026-09-12T04:01:50.730778+00:00",
+ "sources": {
+  "namespaces": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_pipeline_figure.json",
+  "composition": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_curation_closure.json",
+  "lipid_names": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/lipid_names_parsed.json",
+  "lipid_coverage": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/lipid_coverage.json",
+  "polymer": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_polymer_repeat_unit.json",
+  "acyl": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_acyl_transfer.json"
+ },
+ "figure_svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/molecule_mapping.svg",
+ "figure_png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/molecule_mapping.png",
+ "namespace_resolution": {
+  "metanetx": 2265,
+  "chebi": 191,
+  "kegg": 5,
+  "bigg": 11,
+  "inchi": 2,
+  "unresolved": 332
+ },
+ "namespace_order_tried": [
+  "metanetx.chemical",
+  "chebi",
+  "kegg.compound",
+  "bigg.metabolite",
+  "inchi structure"
+ ],
+ "composition_check": {
+  "n_match": 2087,
+  "n_repeat_unit_multiple": 12,
+  "n_other": 8,
+  "n_checked": 2414
+ },
+ "lipid_writer": {
+  "names read": 206,
+  "parsed": 168,
+  "formula ok": 168,
+  "cache compound": 289,
+  "created compound": 58,
+  "in scope": 409,
+  "names parse": 347,
+  "priced": 347
+ },
+ "polymer_surrogate": {
+  "no_hydrolysis_reaction_identifies_a_monomer": 92,
+  "repeat_unit_surrogate": 4,
+  "stoichiometry_not_per_repeat_unit": 1,
+  "n_candidates": 97
+ },
+ "acyl_transfer": {
+  "ambiguous_hydroxyl": 1,
+  "composed": 2,
+  "n_candidate_reactions": 3,
+  "n_priced": 0
+ },
+ "curation_by_admission": {
+  "measured": {
+   "prices a species": 1,
+   "reported only": 1
+  },
+  "tabulated": {
+   "prices a species": 4,
+   "reported only": 5
+  },
+  "provisional": {
+   "prices a species": 0,
+   "reported only": 3
+  },
+  "none": {
+   "prices a species": 0,
+   "reported only": 2
+  }
+ }
+}

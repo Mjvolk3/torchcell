@@ -33,21 +33,61 @@ Against the EC4 band every predictor beats the EC-median lookup, 56 to 84 percen
 lookup at all. On the nine unmeasured betaxanthin supply genes, four of six $k_{cat}$
 predictors are class-plausible and no $K_M$ predictor is.
 
-The thermodynamic table is recomputed with eQuilibrator component contribution, which
-returns a covariance the shipped point values cannot. It prices 2{,}741 of 4{,}131
-reactions, 986 recovered by fixing the proton convention; with the shipped table it reaches
-3{,}716, 94.4 percent of flux-carrying reactions. \textbf{The shipped file is in kilocalories
-and labeled kilojoules}, copied verbatim from yETFL by yeast-GEM's curation script:
-regressing our table on yETFL's over 1{,}927 shared metabolites gives a slope of 4.187 at
-$r = 0.987$. Correcting that and matching compartment conditions closes the transport arm of
-the disagreement, median 17.4 to 5.6 kJ\,mol$^{-1}$, leaving the single-compartment cloud at
-17.6, the genuine estimator difference. Of the 665 unpriced metabolites, 185 carry placeholder formulas and
-are a method ceiling; \textbf{347 of the rest now carry a structure written from the name
-and a price}, taking the recomputation past the shipped column to 86.3 percent, though the
-union does not move and the values need re-transforming per compartment. All five
-betaxanthin intermediates resolve by InChIKey, and Uni-pKa on its simple enumeration
-template reproduces ChemAxon's energies to 0.91 kJ\,mol$^{-1}$, so the license binds
-nowhere.
+\textbf{Where the kinetic values come from.} The resolved $k_{cat}$ and $K_M$ tables cover
+all 3{,}728 catalytic units on four tiers, tried in order: 97 units, 2.6 percent, carry a
+measurement of yeast's own protein on a substrate the reaction consumes; 782, 21.0 percent,
+a measurement of the same EC number and substrate in another organism; 2{,}831, 75.9
+percent, the median over the predictors an admission rule keeps, which is EZKinetics, EITLEM
+and UniKP for $k_{cat}$ and EZKinetics alone for $K_M$; and 18 the organism default. The
+mix is therefore about a quarter measured and three quarters estimated, and the homolog tier
+is counted with the estimates wherever an experimental fraction is quoted, because a
+measurement of another organism's enzyme is not a measurement of this one. The 18 defaults
+are a ceiling rather than a backlog: 14 of the 28 substrate rows behind them carry an
+R-group placeholder, 7 are macromolecular species with no formula, and the structure writer
+was run on the rest and refused each.
+
+\textbf{Where the thermodynamic values come from.} The table is recomputed with eQuilibrator
+component contribution, which returns a covariance the shipped point values cannot, and it
+now prices \textbf{3{,}801 of 4{,}131 reactions}, 3{,}535 of the 3{,}847 chemical ones and
+\textbf{2{,}724 of the 2{,}845 that can carry flux}. Every value names one of nine routes
+and every gap one of seven failure classes (Figure~\ref{fig:routes}). The mix is dominated
+by one evidence class: 2{,}494 of the 2{,}559 priced species are estimated by component
+contribution, 59 read from a table, 4 fixed by a curation record and 2 gauged from a
+measured midpoint potential. \textbf{Coverage is not what the eight recovery routes past the
+plain accession lookup bought}; between them they price 153 species. What they bought is a
+table in which every value names its own method.
+
+\tcfigh[0.98]{figures/thermo_recovery_routes.pdf}{\textbf{Which route produced each
+  formation and reaction energy, and which failure class holds the rest.} Bars are colored
+  by evidence class; panels a to d use a logarithmic count axis.
+  \textbf{a}, The 2{,}559 priced metabolites by route.
+  \textbf{b}, The 247 with no value, by failure class.
+  \textbf{c}, The 3{,}801 priced reactions by route; \emph{mixed routes} is a reaction whose
+  participants came from more than one.
+  \textbf{d}, The 330 unpriced reactions by the single class that blocks them.
+  \textbf{e}, The ceiling ladder, each row against the denominator in its own tick label.
+  The last rung, 3{,}556 of 3{,}847 chemical reactions, is what would be priced if every
+  structure, ladder and refused decomposition were resolved, so it is the ceiling for any
+  method rather than for this one.
+  \textbf{f}, Reactions priced under four denominators. Figure 11 of the 026 document, from
+  \texttt{plot\_thermo\_recovery\_routes.py}.}{fig:routes}
+
+\textbf{The shipped file is in kilocalories and labeled kilojoules}, copied verbatim from
+yETFL by yeast-GEM's curation script: regressing our table on yETFL's over 1{,}927 shared
+metabolites gives a slope of 4.187 at $r = 0.987$. Correcting that and matching compartment
+conditions closes the transport arm of the disagreement, median 17.4 to 5.6 kJ\,mol$^{-1}$,
+leaving the single-compartment cloud at 17.6, the genuine estimator difference.
+
+\textbf{Two recovery routes are worth naming because they are error sources as much as
+coverage.} Structures written from the metabolite's own name price 347 lipid rows, and 48 of
+them need a compound eQuilibrator has never seen, created through a p$K_a$ cascade selected
+against the compound cache's own constants on 2{,}100 held-out compounds. That cascade's
+ladder error runs to a 90th percentile of 8.33 kJ\,mol$^{-1}$ at the worst compartment pH,
+while writing the same structure as its neutral parent rather than its pH 7 major
+microspecies moves the answer by a median of 1{,}585 kJ\,mol$^{-1}$, so the reference
+convention and not the predictor is what has to be got right. A composition check over the
+2{,}414 accession-priced species also found 8 priced as a different molecule, 6 of which are
+withdrawn.
 
 \tcfigh[0.86]{figures/within_class_plausibility_k_cat.pdf}{\textbf{How many of each
   predictor's $k_{cat}$ values fall inside the spread of enzymes doing the same job.}

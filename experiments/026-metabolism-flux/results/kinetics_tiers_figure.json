@@ -1,0 +1,119 @@
+{
+ "built_at": "2026-09-12T04:03:43.003678+00:00",
+ "closure_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/kinetic_coverage_closure.json",
+ "selected_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/parameter_coverage_selected.json",
+ "figure_svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/kinetics_tiers.svg",
+ "figure_png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/kinetics_tiers.png",
+ "n_units": 3728,
+ "shipped_variant": "verified_substrate_key_with_homolog",
+ "tier_counts": {
+  "measured": 97,
+  "homolog": 782,
+  "predicted": 2831,
+  "default": 18
+ },
+ "tier_counts_by_variant": {
+  "unverified_accession_key": {
+   "measured": 148,
+   "homolog": 0,
+   "predicted": 3570,
+   "default": 10
+  },
+  "verified_accession_key": {
+   "measured": 148,
+   "homolog": 0,
+   "predicted": 3562,
+   "default": 18
+  },
+  "verified_substrate_key": {
+   "measured": 97,
+   "homolog": 0,
+   "predicted": 3613,
+   "default": 18
+  },
+  "verified_substrate_key_with_homolog": {
+   "measured": 97,
+   "homolog": 782,
+   "predicted": 2831,
+   "default": 18
+  }
+ },
+ "admission": {
+  "k_cat": {
+   "dlkcat": [
+    0.6595744680851063,
+    0.5167092444816402,
+    0.7783255623483881
+   ],
+   "unikp": [
+    0.7446808510638298,
+    0.6049182435213335,
+    0.8474684602847101
+   ],
+   "eitlem": [
+    0.7659574468085106,
+    0.6277574233192427,
+    0.8639672547308048
+   ],
+   "turnup": [
+    0.6590909090909091,
+    0.5113914110064497,
+    0.7812418056088031
+   ],
+   "deepenzyme": [
+    0.5531914893617021,
+    0.4124545973257825,
+    0.685890338284227
+   ],
+   "ezkinetics": [
+    0.8297872340425532,
+    0.6986022390928663,
+    0.9111363616891925
+   ]
+  },
+  "K_M": {
+   "unikp": [
+    0.46808510638297873,
+    0.3333168698001677,
+    0.6076761688338266
+   ],
+   "eitlem": [
+    0.5106382978723404,
+    0.37242453646853413,
+    0.6472444506534676
+   ],
+   "boost_km": [
+    0.44680851063829785,
+    0.3141096617157729,
+    0.5875454026742175
+   ],
+   "ezkinetics": [
+    0.6595744680851063,
+    0.5167092444816402,
+    0.7783255623483881
+   ]
+  }
+ },
+ "lookup_statistic": {
+  "k_cat": 0.5319148936170213,
+  "K_M": 0.48936170212765956
+ },
+ "admitted": {
+  "k_cat": [
+   "ezkinetics",
+   "eitlem",
+   "unikp"
+  ],
+  "K_M": [
+   "ezkinetics"
+  ]
+ },
+ "default_rows_by_reason": {
+  "macromolecular species with no formula in the GEM": 7,
+  "no candidate structure in any mirrored catalog for this compound": 5,
+  "R-group placeholder, the GEM defines the species only up to a substituent": 14,
+  "candidate structures exist but none matches the GEM's composition, so the GEM's formula is a partial or protein-bound species": 2
+ },
+ "n_default_units": 18,
+ "n_reachable_with_open_source_tools": 0
+}

@@ -18,7 +18,24 @@ amino-acid uptake, while the Cachera strains grew in a supplemented medium; and 
 183 proton-translocating reactions carry a confidently wrong zero, the translocation term
 being computed but off by default.
 
+\textbf{The parameter tables are closed and the trainer is not.} As of 2026-09-11 the
+formation energies stand at 3{,}801 of 4{,}131 reactions and 2{,}724 of the 2{,}845 that can
+carry flux, and the kinetic tables at 97 measured, 782 homolog, 2{,}831 predicted and 18
+default over 3{,}728 catalytic units, with every value carrying a named route and every gap
+a named failure class (Section~\ref{sec:parameters}). 291 of the 330 unpriced reactions are
+permanently closed, blocked only by species that are not molecules, so no further method
+moves them. Nothing in the parameter tables is now what holds the module back.
+
+\textbf{A third defect precedes a relaunch, and it is a stale file rather than a missing
+value.} Every 026 and 027 run so far read
+\texttt{metabolite\_dgf\_prime\_}\allowbreak\texttt{with\_external.parquet}, which predates
+the composition check and therefore still carries the glycogen price taken from a
+four-residue oligomer and the dolichol offset. The corrected tables are
+\texttt{verified/metabolite\_dgf\_prime\_}\allowbreak\texttt{with\_curation.parquet} and its
+reaction companion, whose manifest names the sha256 of the file they supersede and of all 16
+curation records. Repointing the loader is a one-line change and it has not been made.
+
 \textbf{Order of work.} A trainer that reproduces 0.434 on the no-module arm with an abort
-on prediction collapse; the module arms on it, on the dataset's actual medium; then the
-merged $\Delta_f G$ and predicted $k_{cat}$ tables, on GilaHyper jobs 1663, 1667, 1668 and
-1669, carried to a selected epoch.
+on prediction collapse; the module arms on it, on the dataset's actual medium, reading the
+verified tables; then the merged $\Delta_f G$ and predicted $k_{cat}$ tables, on GilaHyper
+jobs 1663, 1667, 1668 and 1669, carried to a selected epoch.

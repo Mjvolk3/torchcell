@@ -36,6 +36,18 @@ $\sum_i S_{ij} \Delta_f G'^\circ_i$, so a reaction survives only if \emph{every}
 participant does, which is what makes reaction coverage the binding number and a
 metabolite-level figure an overstatement.
 
+\textbf{That is the first of eleven stages, and every one of them writes a route or a
+reason.} \texttt{thermo\_pipeline\_}\allowbreak\texttt{yeast9.py} runs curated records, the eQuilibrator
+recomputation, an accession sweep, the external p$K_a$ targets, the lipid structure writer,
+the ion formation table, the composition surrogate, the polymer repeat-unit surrogate and
+the shipped metabolite column in that order, then two diagnosis stages whose only job is to
+say why the remainder is unpriced. A later stage may overwrite an earlier stage's
+\emph{reason} but never its value, with one exception: a reason a curator recorded after
+running the group decomposer is final, so a measured decomposition failure cannot be
+overwritten by a namespace heuristic reporting the same species as merely lacking a
+structure. Section~\ref{sec:routes} reads the resulting attribution out route by route, and
+the rest of this section is the recomputation stage alone.
+
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=\textwidth]{figures/thermo_pipeline.pdf}
@@ -60,8 +72,9 @@ metabolite-level figure an overstatement.
   \textbf{e}, Whether a short list of metabolites would recover the rest. Resolving the 50
   most-blocking metabolites recovers 237 of the 967 reactions the shipped table prices and
   the recomputation cannot, so the gap is diffuse.
-  \textbf{f}, What still blocks each of the 665 metabolites left unpriced after every
-  recovery route, and what kind of metabolite it is. The largest bar is one population,
+  \textbf{f}, What still blocks each of the 665 metabolites the audit left unpriced, and
+  what kind of metabolite it is. Every panel is the recomputation stage alone; the built
+  table is Figure~\ref{fig:thermo-routes}. The largest bar is one population,
   lipid species carrying a definite acyl composition with no identifier in any namespace
   the model carries. \textbf{Hatched, the 347 of those 409 the lipid structure writer has
   since priced} (Section~\ref{sec:lipids}); those values are not in the table panels a to e
@@ -70,9 +83,7 @@ metabolite-level figure an overstatement.
   and the substrate is a class rather than a molecule, so no structure exists to protonate.
   \textbf{g}, The same 665 split into what the method cannot do and what curation has not
   done. A placeholder formula is a ceiling, 185 entries. The 480 with a definite formula
-  are a curation gap, and 347 are now closed, leaving 133 open. A composition probe over
-  the same 480 found 455 whose heavy-atom composition the compound cache already decomposes
-  elsewhere, which is what this panel drew before the structures existed.
+  are a curation gap, and 347 are now closed, leaving 133 open.
   \textbf{h}, The heterologous test case. 75.3 percent of yeast-GEM's own metabolites carry
   a formation energy against 5 of the 5 betaxanthin pathway intermediates, all resolved from
   the compound cache by InChIKey prefix rather than by the exact-InChI match that read 2 of
@@ -545,3 +556,10 @@ Where it stops is a compound the cache has never seen, since creating one runs a
 decomposition that needs p$K_a$ estimates from \texttt{cxcalc}.
 Section~\ref{sec:pka} measures the open-source replacement and
 Section~\ref{sec:lipids} the structures that let it be asked.
+
+\textbf{Where it stops permanently is a species that is not a molecule, and that is a
+different statement.} A placeholder formula, a SLIME backbone, a residue inside a
+macromolecule and a group no training compound carries are each unreachable by any method
+rather than by this one, and they hold 291 of the model's reactions.
+Section~\ref{sec:permanent} enumerates them and separates them from the 21 that a
+structure, a ladder or a decomposition would still close.

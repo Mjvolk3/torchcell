@@ -1,0 +1,24 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/thermo_accession_mispricings.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/thermo_route_tables_tex.py
+%% SOURCE: results/thermo_curation_closure.json, accession_sweep.other; full per-species rows in results/thermo_accession_composition.json
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Accession mispricings]{The eight species the composition check found priced as a different molecule. The accession route accepted the first identifier that resolved to a compound carrying a formation energy, whatever molecule that compound is; checking the resolved structure's composition against the model's own formula over all 2{,}414 accession-priced species finds 2{,}087 matches, 12 dolichols carrying exactly one extra isoprene unit, and these eight. Six are withdrawn; the glycogen pair is re-derived per residue from a curated polymer convention instead.}
+  \label{tab:thermo-mispricings}
+  \begin{tabular}{@{}llllrl@{}}
+    \toprule
+    Species & Name & GEM formula & Priced as & $\Delta_f G'^{\circ}$ & Outcome \\
+    \midrule
+    \texttt{s\_0773} & glycogen & \texttt{C6H10O5} & \texttt{C24H42O21} & -1127.2 & re-derived \\
+    \texttt{s\_0774} & glycogen & \texttt{C6H10O5} & \texttt{C24H42O21} & -1370.9 & re-derived \\
+    \texttt{s\_1578} & zymosterol intermediate 1c & \texttt{C28H43O3} & \texttt{C29H46O2} & 1257.2 & withdrawn \\
+    \texttt{s\_2920} & 3-oxo-cis-hexadec-9-enoyl-... & \texttt{C37H62N7O18P3S} & \texttt{C37H60N7O17P3S} & -575.1 & withdrawn \\
+    \texttt{s\_2923} & 3-oxo-cis-octadec-9-enoyl-... & \texttt{C39H66N7O18P3S} & \texttt{C39H64N7O17P3S} & -395.1 & withdrawn \\
+    \texttt{s\_4207} & trans-4-hydroxy-L-proline & \texttt{C5H9NO3} & \texttt{C5H4N4O4} & -119.0 & withdrawn \\
+    \texttt{s\_4295} & dimethylallyl phosphate & \texttt{C5H9O4P} & \texttt{C8H8O} & -512.4 & withdrawn \\
+    \texttt{s\_4313} & ITP & \texttt{C10H11N4O14P3} & \texttt{C4H4O4} & -2531.7 & withdrawn \\
+    \bottomrule
+  \end{tabular}
+\end{table}

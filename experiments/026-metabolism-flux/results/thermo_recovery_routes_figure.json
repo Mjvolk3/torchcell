@@ -1,0 +1,148 @@
+{
+ "built_at": "2026-09-12T04:06:12.691073+00:00",
+ "coverage_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/reaction_thermo_coverage_final.json",
+ "closure_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_curation_closure.json",
+ "figure_svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/thermo_recovery_routes.svg",
+ "figure_png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/thermo_recovery_routes.png",
+ "n_metabolites": 2806,
+ "n_metabolites_priced": 2559,
+ "n_reactions": 4131,
+ "n_reactions_priced": 3801,
+ "n_reactions_chemical": 3847,
+ "n_reactions_chemical_priced": 3535,
+ "evidence_class_by_route": {
+  "carrier_potential": "measured",
+  "literature_table": "tabulated",
+  "shipped_table": "tabulated",
+  "shipped_reaction_column": "tabulated",
+  "cache_accession": "estimated",
+  "cache_structure": "estimated",
+  "external_pka": "estimated",
+  "composition_surrogate": "estimated",
+  "repeat_unit_surrogate": "estimated",
+  "conserved_moiety": "estimated",
+  "cancelled_participants": "estimated",
+  "mixed": "estimated",
+  "curated_structure": "curated"
+ },
+ "metabolites_by_evidence_class": {
+  "measured": 2,
+  "tabulated": 59,
+  "estimated": 2494,
+  "curated": 4
+ },
+ "reactions_by_evidence_class": {
+  "measured": 0,
+  "tabulated": 21,
+  "estimated": 3778,
+  "curated": 2
+ },
+ "panels": [
+  {
+   "panel": "a",
+   "what": "metabolites by pricing route",
+   "counts": {
+    "cache_accession": 2117,
+    "cache_structure": 289,
+    "external_pka": 70,
+    "shipped_table": 35,
+    "literature_table": 24,
+    "composition_surrogate": 12,
+    "repeat_unit_surrogate": 6,
+    "curated_structure": 4,
+    "carrier_potential": 2
+   }
+  },
+  {
+   "panel": "b",
+   "what": "unpriced metabolites by reason",
+   "counts": {
+    "placeholder_formula": 159,
+    "pseudo_metabolite": 55,
+    "group_decomposition_failed": 16,
+    "no_structure_available": 6,
+    "placeholder_structure": 6,
+    "recorded_not_admitted": 4,
+    "group_in_null_space": 1
+   }
+  },
+  {
+   "panel": "c",
+   "what": "reactions by pricing route",
+   "counts": {
+    "cache_accession": 2751,
+    "mixed": 872,
+    "cache_structure": 122,
+    "cancelled_participants": 19,
+    "literature_table": 11,
+    "external_pka": 9,
+    "shipped_table": 9,
+    "curated_structure": 2,
+    "repeat_unit_surrogate": 2,
+    "composition_surrogate": 2,
+    "shipped_reaction_column": 1,
+    "conserved_moiety": 1
+   }
+  },
+  {
+   "panel": "d",
+   "what": "unpriced reactions by their sole blocking reason class",
+   "counts": {
+    "pseudo_metabolite": 201,
+    "placeholder_formula": 89,
+    "mixed_reasons": 14,
+    "group_decomposition_failed": 11,
+    "no_structure_available": 10,
+    "recorded_not_admitted": 2,
+    "placeholder_structure": 2,
+    "group_in_null_space": 1
+   }
+  },
+  {
+   "panel": "f",
+   "what": "reactions priced under four denominators",
+   "counts": {
+    "all reactions": 3801,
+    "chemical only": 3535,
+    "flux-carrying": 2724,
+    "no flux possible": 1077,
+    "all reactions total": 4131,
+    "chemical only total": 3847,
+    "flux-carrying total": 2845,
+    "no flux possible total": 1286
+   }
+  }
+ ],
+ "ladder": [
+  {
+   "label": "before curation (4,131)",
+   "n_priced": 3779,
+   "denominator": 4131,
+   "fraction": 0.9147906076010651
+  },
+  {
+   "label": "after curation (4,131)",
+   "n_priced": 3801,
+   "denominator": 4131,
+   "fraction": 0.9201161946259986
+  },
+  {
+   "label": "as built (3,847)",
+   "n_priced": 3535,
+   "denominator": 3847,
+   "fraction": 0.9188978424746556
+  },
+  {
+   "label": "structures resolved (3,847)",
+   "n_priced": 3545,
+   "denominator": 3847,
+   "fraction": 0.9214972706004679
+  },
+  {
+   "label": "chemically possible (3,847)",
+   "n_priced": 3556,
+   "denominator": 3847,
+   "fraction": 0.9243566415388614
+  }
+ ]
+}

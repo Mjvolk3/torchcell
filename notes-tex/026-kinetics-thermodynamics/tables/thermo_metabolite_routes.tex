@@ -1,0 +1,25 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/thermo_metabolite_routes.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/thermo_route_tables_tex.py
+%% SOURCE: results/reaction_thermo_coverage_final.json, metabolite_routes; prose column declared in thermo_route_tables_tex.py
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Formation-energy routes]{Every route that produced a formation energy, and how many of yeast-GEM 9.0.2's 2{,}806 metabolites it priced. The nine routes sum to the 2{,}559 priced species; the 247 with no value are Table~\ref{tab:thermo-unpriced-classes}. Evidence class is the strongest thing the number rests on, so a surrogate is estimated rather than tabulated: its value is component contribution on another molecule.}
+  \label{tab:thermo-metabolite-routes}
+  \begin{tabular}{@{}p{0.135\textwidth}p{0.30\textwidth}p{0.19\textwidth}lr@{}}
+    \toprule
+    Route & What it does & What it needs & Evidence & Species \\
+    \midrule
+    cache, by accession & reads an eQuilibrator compound the model's own identifier resolves, takes its component-contribution formation energy and transforms it to the metabolite's compartment & a MetaNetX, ChEBI, KEGG or BiGG identifier on the metabolite & estimated & 2{,}117 \\
+    cache, by written structure & writes a structure from the metabolite's name, hashes it to an InChIKey and finds a compound eQuilibrator already holds under that key & a name stating the acyl composition, and a headgroup template & estimated & 289 \\
+    external pKa cascade & creates a compound eQuilibrator has never seen, from the pH 7 major microspecies plus a predicted pKa ladder, then decomposes and prices it & a structure and a pKa ladder from the selected cascade & estimated & 70 \\
+    shipped metabolite column & reads yeast-GEM's own \texttt{model\_metDeltaG.csv}, converted out of kilocalories at parse time & a row in that file for this metabolite & tabulated & 35 \\
+    CODATA ion table & reads a tabulated single-ion formation energy, shifts it to eQuilibrator's gauge and applies the Debye-Huckel term & a monatomic ion whose species CODATA evaluates & tabulated & 24 \\
+    composition surrogate & transfers the energy of a cache compound sharing the heavy-atom composition, admitted only where every such compound agrees to 5 kJ/mol & a definite formula the cache can decompose elsewhere & estimated & 12 \\
+    repeat-unit surrogate & prices one polymer residue as the monomer minus water minus half a calibrated hydrolysis energy & a hydrolysis reaction in the model that names the monomer & estimated & 6 \\
+    curated structure or convention & prices a species from a structure or a polymer convention a curation record fixes, with sources and a sha256 per source & an admitted curation record of kind structure or polymer convention & curated & 4 \\
+    carrier potential & gauges an electron carrier pair, oxidized form at zero and reduced form at $-nFE'^{\circ}$, so the arbitrary gauge cancels in any reaction that conserves the carrier & a measured midpoint potential for the couple & measured & 2 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

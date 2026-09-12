@@ -72,6 +72,43 @@ processes opening the same gffutils SQLite database concurrently raced and made 
 unreadable; since the shards need the genome for nothing but a sequence lookup, the
 dependency was removed rather than serialized.
 
+\subsection{What a predictor is actually missing is a substrate structure\secstatus{todo}}
+\label{sec:substrate-structures}
+
+A predictor takes a protein sequence and a substrate structure. Every gene has a sequence,
+so nothing a predictor fails to price fails for want of a protein, and an audit of the 176
+catalytic units no admitted predictor could price found the same blocker on all 176: no
+structure for any substrate the reaction consumes. None was blocked by an accession, a
+sequence, the complex rule or a predictor crash.
+
+\textbf{Three routes recovered 165 of the 176, and each of them is a mapping rather than a
+model.} An annotation cross-reference priced 27, following the identifier yeast-GEM carries
+through MetaNetX's own cross-reference table to a current entry: the model annotates an
+older MNXref release, so \texttt{MNXM417} for fructose 1,6-bisphosphate is not a row in
+MNXref 4.5 and three reactions had no turnover number for that reason alone. The lipid
+structure writer of Section~\ref{sec:lipids} supplied 48 more from structures it had already
+composed for the thermodynamics. A substrate writer built the remaining two by constructing
+every chain length and keeping the one whose RDKit formula equals the model's, which selects
+dolichol-4 uniquely for dolichyl D-mannosyl phosphate out of $n = 2$ to $11$. Eleven units
+none of the three reached.
+
+\textbf{Acceptance is composition, not similarity.} A candidate structure is admitted only
+when its RDKit formula equals the model's formula with both moved to the neutral species by
+adding one hydrogen per negative charge. That rejects an R-group placeholder outright, since
+\texttt{C4H7O2SR} never equals \texttt{C4H7O2*}, and it is what caught the structures the
+tables were already resting on: of the 1{,}425 distinct substrate structures the first round
+of predictions used, \textbf{97 fail the check}, 35 of them tRNA species the model gives the
+formula \texttt{RH}. Repairing 31 and dropping the rest cost 8 catalytic units and moved
+none of the surviving values by more than one decade for $k_{cat}$.
+
+\textbf{Two table versions are kept and they are not interchangeable.} The \texttt{processed}
+tables are the first round, 3{,}717 units on unchecked structures; the \texttt{verified}
+tables are 3{,}709 units, 1{,}359 distinct structures and none failing the composition
+check. Every predictor was rerun on the verified pairs and both versions are hashed per
+predictor and per parameter in \texttt{results/kinetic\_table\_versions.json}, so a stated
+tier count names the version it belongs to. Section~\ref{sec:kinetic-tiers} reports the
+verified ones.
+
 \subsection{What each predictor cost to run\secstatus{todo}}
 
 %% SOURCE: hand-authored from the mirror manifests written by

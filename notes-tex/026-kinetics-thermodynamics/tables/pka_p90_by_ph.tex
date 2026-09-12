@@ -1,0 +1,25 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/pka_p90_by_ph.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/pka_selection_table_tex.py
+%% SOURCE: results/pka_method_selection_figure.json, panel b, written by plot_pka_method_selection.py
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[pKa error by compartment pH]{The p90 of $|\Delta\Delta_f G'^{\circ}|$, in kJ\,mol$^{-1}$, at each pH the pipeline transforms a metabolite at. A metabolite is priced at its own compartment's pH, so a method has to hold at all eight; scoring at pH 7.2 alone understates the selected cascade's tail by 3.4 kJ\,mol$^{-1}$ and ranks MolGpKa above Uni-pKa. The mitochondrial matrix at pH 7.8 is the worst column for every method but one.}
+  \label{tab:pka-by-ph}
+  \begin{tabular}{@{}lrrrrrrrr@{}}
+    \toprule
+    & \multicolumn{8}{c}{compartment pH} \\
+    Method & 5 & 6.2 & 6.6 & 7 & 7.1 & 7.2 & 7.4 & 7.8 \\
+    \midrule
+    median of two & 7.83 & 2.19 & 2.17 & 3.50 & 4.01 & 4.48 & 5.46 & 7.76 \\
+    \textbf{cascade, three members} & 5.58 & 1.88 & 2.50 & 3.94 & 4.38 & 4.88 & 5.98 & 8.33 \\
+    cascade, two members & 5.58 & 1.89 & 2.50 & 3.95 & 4.39 & 4.89 & 5.98 & 8.33 \\
+    Uni-pKa, simple template & 5.56 & 1.94 & 2.75 & 4.39 & 4.89 & 5.41 & 6.48 & 8.75 \\
+    best tool per functional group & 5.56 & 1.94 & 2.75 & 4.39 & 4.89 & 5.41 & 6.48 & 8.75 \\
+    MolGpKa & 8.46 & 2.39 & 2.83 & 3.36 & 3.56 & 4.00 & 5.38 & 9.33 \\
+    median of three & 9.34 & 2.66 & 2.65 & 4.06 & 4.60 & 5.25 & 6.46 & 9.38 \\
+    pKasolver-lite & 12.58 & 3.87 & 3.88 & 7.02 & 8.28 & 9.63 & 12.27 & 18.12 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

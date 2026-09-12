@@ -1,0 +1,27 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/pka_method_selection.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/pka_selection_table_tex.py
+%% SOURCE: results/pka_method_selection.json, rule and ranking, written by external_pka_method_selection.py decide
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[pKa method selection]{Every candidate p$K_a$ method against the eQuilibrator compound cache's own ChemAxon constants, on the 2{,}100 held-out compounds. The rule selects the smallest \emph{worst} per-pH p90 of $|\Delta\Delta_f G'^{\circ}|$ among methods whose failure rate is at most 0.02, breaking ties on the pH 7.2 median and then on cost. Failure rate is the fraction of compounds a method returns no ladder for, and it is a bound rather than a scored error because a method that cannot answer leaves a gap rather than a cheap answer. \emph{Right count} is the fraction whose ladder length matches the cache's, reported and deliberately outside the rule: a ladder can carry the right number of constants and the wrong values, and the transform is what the flux layer consumes.}
+  \label{tab:pka-selection}
+  \begin{tabular}{@{}llrrrrrrl@{}}
+    \toprule
+    & & & \multicolumn{2}{c}{worst pH} & \multicolumn{2}{c}{at pH 7.2} & & \\
+    Method & Kind & Fail & p90 & pH & Median & Mean & Right count & Verdict \\
+    \midrule
+    median of two & ensemble & 0.1695 & 7.83 & 5 & 0.502 & 1.47 & 0.282 & rejected, failure rate 0.170 \\
+    cascade, three members & ensemble & 0.0024 & 8.33 & 7.8 & 0.067 & 1.04 & 0.338 & \textbf{selected} \\
+    cascade, two members & ensemble & 0.0029 & 8.33 & 7.8 & 0.068 & 1.04 & 0.338 & ranked below \\
+    Uni-pKa, simple template & tool & 0.1152 & 8.75 & 7.8 & 0.077 & 1.16 & 0.354 & rejected, failure rate 0.115 \\
+    best tool per functional group & ensemble & 0.1152 & 8.75 & 7.8 & 0.077 & 1.16 & 0.354 & rejected, failure rate 0.115 \\
+    MolGpKa & tool & 0.0571 & 9.33 & 7.8 & 0.130 & 1.10 & 0.217 & rejected, failure rate 0.057 \\
+    median of three & ensemble & 0.0048 & 9.38 & 7.8 & 0.331 & 1.80 & 0.364 & ranked below \\
+    pKasolver-lite & tool & 0.0071 & 18.12 & 7.8 & 1.466 & 4.05 & 0.364 & ranked below \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.3em}\\
+  {\footnotesize p90, median and mean are of $|\Delta\Delta_f G'^{\circ}|$ in kJ\,mol$^{-1}$.}
+\end{table}

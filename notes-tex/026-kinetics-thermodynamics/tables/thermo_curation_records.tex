@@ -1,0 +1,32 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/thermo_curation_records.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/thermo_route_tables_tex.py
+%% SOURCE: results/thermo_curation_closure.json, rows; records in results/curation/
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Curation records]{The 16 hand-curated records. \emph{Admission} is the strongest claim the sources support, and only \emph{measured} and \emph{tabulated} reach the table a model reads: a provisional or absent record is loaded, validated and reported without being priced, which is why five of them price nothing. \emph{Closed} counts reactions the record itself closed, with in parentheses the reactions closed because the species cancels across the reaction instead. Each record carries its sources with a sha256 per source in \file{experiments/026-metabolism-flux/results/curation/}.}
+  \label{tab:thermo-curation}
+  \begin{tabular}{@{}p{0.15\textwidth}lllrrlp{0.24\textwidth}@{}}
+    \toprule
+    Record & Kind & Admission & Decomp. & Spec. & Src & Closed & Value \\
+    \midrule
+    chitobiosyl\_\-pp\_\-dolichol & polymer & tabulated & yes & 1 & 14 & 0 & repeat unit C36H64N2O17P2, no linkage stated \\
+    cytochrome\_\-c & carrier & measured & n/a & 2 & 10 & 7 & E$'$0 272.0 mV vs SHE, n=1, Saccharomyces cerevi... \\
+    ethylnitronate & structure & tabulated & yes & 1 & 11 & 0 & a curated structure, drawn as one microspecies \\
+    glycogen & polymer & tabulated & refused & 2 & 2 & 0 & repeat unit C6H10O5, curated dGf$'$0 s\_0773 -244... \\
+    heme\_\-a & structure & tabulated & refused & 3 & 7 & 1 & a curated structure, drawn as one microspecies \\
+    heme\_\-o & structure & tabulated & refused & 1 & 7 & 1 & a curated structure, drawn as one microspecies \\
+    mannan & polymer & tabulated & refused & 2 & 11 & 3 & repeat unit C6H10O5, curated dGf$'$0 s\_1107 -248... \\
+    nitrophenyl\_\-phosphate & structure & tabulated & mixed & 2 & 7 & 0 & per metabolite: s\_3860=a structure, s\_3859=non... \\
+    pectin & polymer & tabulated & refused & 1 & 18 & 0 & repeat unit C6H7O6, alpha-(1-$>$4) glycosidic, t... \\
+    siroheme & structure & tabulated & refused & 1 & 11 & 0 & a curated structure, drawn as one microspecies \\
+    triphosphate & pKa ladder & measured & refused & 2 & 10 & 0 (1) & pKa ladder [7.77, 5.4] \\
+    cytochrome\_\-b5 & carrier & provisional & n/a & 2 & 10 & 0 & E$'$0 5.5 mV vs SHE, n=1, Bos taurus \\
+    ferroheme\_\-b & pKa ladder & provisional & refused & 1 & 9 & 0 & pKa ladder [4.75, 4.15] \\
+    gpi\_\-intermediate & formula & provisional & n/a & 1 & 17 & 0 & formula -$>$ C55H100N3O39P3R2 \\
+    methionine\_\-s\_\-oxide & not found & none & refused & 3 & 10 & 0 & nothing found \\
+    porphyrin & not found & none & refused & 2 & 9 & 0 (1) & nothing found \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -1,0 +1,34 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/kinetic_default_units.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/kinetic_tier_tables_tex.py
+%% SOURCE: results/kinetic_coverage_closure.json, ceiling.remaining, written by improve_kinetic_coverage.py
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Units on the organism default]{Every catalytic unit still carrying the organism default, and the substrate that keeps it there. A unit needs a structure for at least one substrate its reaction consumes; these have none any mirrored predictor can take. \emph{Rows} is how many of the unit's substrates fail. None of the four classes is reachable with an open-source tool: an R-group placeholder is a curation decision in the model rather than a missing structure, a macromolecular substrate needs a predictor that accepts a protein and all seven mirrored models take a small-molecule SMILES, and the structure writer was run on the last two classes and refused them.}
+  \label{tab:kinetic-defaults}
+  \begin{tabular}{@{}rllp{0.30\textwidth}p{0.22\textwidth}r@{}}
+    \toprule
+    Unit & Reaction & Genes & Substrate & Why & Rows \\
+    \midrule
+    556 & \texttt{r\_0520} & YKL165C & 6-O-[alpha-D-mannosyl-(1-\textgreater{}4)-alpha-D-g; phosphatidylethanolamine backbone & macromolecular species with no formula in the GEM & 2 \\
+    559 & \texttt{r\_0523} & YDR302W & 6-O-\{alpha-D-mannosyl-(1-\textgreater{}2)-alpha-D-m; phosphatidylethanolamine backbone & macromolecular species with no formula in the GEM & 2 \\
+    560 & \texttt{r\_0523} & YLL031C & 6-O-\{alpha-D-mannosyl-(1-\textgreater{}2)-alpha-D-m; phosphatidylethanolamine backbone & macromolecular species with no formula in the GEM & 2 \\
+    1379 & \texttt{r\_1228} & YBR180W & N,N'-diformyldityrosine & no candidate structure in any mirrored catalog for this ... & 1 \\
+    1565 & \texttt{r\_2148} & YHR067W & 3-hydroxybutanoyl-ACP & R-group placeholder, the GEM defines the species only up... & 1 \\
+    1566 & \texttt{r\_2149} & YHR067W & 3-hydroxyhexanoyl-ACP & R-group placeholder, the GEM defines the species only up... & 1 \\
+    1567 & \texttt{r\_2150} & YHR067W & 3-hydroxyoctanoyl-ACP & R-group placeholder, the GEM defines the species only up... & 1 \\
+    3277 & \texttt{r\_4152} & YAL039C & Cytochrome c & candidate structures exist but none matches the GEM's co... & 1 \\
+    3278 & \texttt{r\_4152} & YKL087C & Cytochrome c & candidate structures exist but none matches the GEM's co... & 1 \\
+    3414 & \texttt{r\_4239} & YGL017W & Arg-tRNA(Arg); generic protein & R-group placeholder, the GEM defines the species only up... & 2 \\
+    3458 & \texttt{r\_4277} & YLR099C & 1-acyl-sn-glycerol 3-phosphate; Acyl-CoA & R-group placeholder, the GEM defines the species only up... & 2 \\
+    3459 & \texttt{r\_4277} & YPR139C & 1-acyl-sn-glycerol 3-phosphate; Acyl-CoA & R-group placeholder, the GEM defines the species only up... & 2 \\
+    3462 & \texttt{r\_4280} & YLR239C & Apoprotein; octanoyl-ACP & R-group placeholder, the GEM defines the species only up... & 2 \\
+    3463 & \texttt{r\_4281} & YLR239C & Apoprotein; Lipoyl-[acp] & R-group placeholder, the GEM defines the species only up... & 2 \\
+    3505 & \texttt{r\_4325} & YOR226C & S-sulfanyl-[L-cysteine desulfurase]; [disordered-form [Fe-S] cluster scaffo & macromolecular species with no formula in the GEM & 2 \\
+    3506 & \texttt{r\_4325} & YPL135W & S-sulfanyl-[L-cysteine desulfurase]; [disordered-form [Fe-S] cluster scaffo & macromolecular species with no formula in the GEM & 2 \\
+    3662 & \texttt{r\_4700} & YIL166C & hydrogen sulfide & no candidate structure in any mirrored catalog for this ... & 1 \\
+    3665 & \texttt{r\_4704} & YIL166C & alkanesulfonate & R-group placeholder, the GEM defines the species only up... & 1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

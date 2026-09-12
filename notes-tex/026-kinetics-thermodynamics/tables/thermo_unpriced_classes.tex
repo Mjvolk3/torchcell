@@ -1,0 +1,27 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/thermo_unpriced_classes.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/thermo_route_tables_tex.py
+%% SOURCE: results/reaction_thermo_coverage_final.json (metabolite_reasons, reactions_by_sole_blocking_reason, ceiling_ladder.permanently_closed_reasons) and results/thermo_exclusions.json (reactions_blocked_by_reason)
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Failure classes]{Every class that holds a value back, the species it holds and the reactions it blocks. \emph{Species} counts metabolites carrying that reason; \emph{blocks} counts reactions with at least one such participant, so the column double counts a reaction blocked by two classes; \emph{sole} counts reactions this class alone blocks and partitions the 330 unpriced reactions exactly. A class marked permanent is one no pKa predictor, structure writer, decomposer or literature table can move, so the sum of the permanent rows is the ceiling for any method rather than for this one.}
+  \label{tab:thermo-unpriced-classes}
+  \begin{tabular}{@{}p{0.16\textwidth}p{0.34\textwidth}p{0.17\textwidth}rrr@{}}
+    \toprule
+    Class & What it means & What it would take & Species & Blocks & Sole \\
+    \midrule
+    pseudo-metabolite$^{\dagger}$ & a modeling device, a pool, a SLIME backbone or a difference formula, rather than a molecule & none; the ceiling & 55 & 213 & 201 \\
+    placeholder formula$^{\dagger}$ & an R, X or $*$ in the formula: the species is a family of molecules and no single formation energy exists for it & none; the ceiling & 159 & 99 & 89 \\
+    decomposition refused & the structure exists and component contribution refuses it, so a pKa predictor changes nothing & a decomposition, or a tabulated value & 16 & 13 & 11 \\
+    no structure & a definite formula with no structure in any namespace and no writer that composes one from the name & a structure from a namespace or a curator & 6 & 10 & 10 \\
+    more than one reason & the reaction is blocked by species in two or more of the classes above & every blocking class resolved & 0 & 0 & 14 \\
+    placeholder structure$^{\dagger}$ & the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule & none; the ceiling & 6 & 3 & 2 \\
+    recorded, not admitted & a curation record exists and its admission is computed or provisional, so it is reported and not priced & a measured or tabulated source & 4 & 5 & 2 \\
+    group in the null space & the structure decomposes and one group is in the component-contribution null space, so the estimate has infinite variance & a measurement of a compound carrying that group & 1 & 1 & 1 \\
+    non-chemical reaction$^{\dagger}$ & an exchange, demand, sink or biomass pseudoreaction, not elementally balanced, so a standard reaction energy has no meaning for it & none; excluded from the chemical denominator & 0 & 0 & 0 \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.3em}\\
+  {\footnotesize $^{\dagger}$ permanent under the admission rule.}
+\end{table}

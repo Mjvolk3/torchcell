@@ -1,0 +1,28 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/thermo_reaction_routes.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/thermo_route_tables_tex.py
+%% SOURCE: results/reaction_thermo_coverage_final.json, reaction_routes; prose column declared in thermo_route_tables_tex.py
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Reaction-energy routes]{Every route that produced a reaction energy, over yeast-GEM 9.0.2's 4{,}131 reactions, 3{,}801 of them priced. A reaction is priced only when every participant carries a formation energy, or when a reaction-level route fills it directly, so the largest entry is the metabolite route its participants all came from and the second is the reactions assembled from more than one.}
+  \label{tab:thermo-reaction-routes}
+  \begin{tabular}{@{}p{0.135\textwidth}p{0.30\textwidth}p{0.19\textwidth}lr@{}}
+    \toprule
+    Route & What it does & What it needs & Evidence & Reactions \\
+    \midrule
+    cache, by accession & reads an eQuilibrator compound the model's own identifier resolves, takes its component-contribution formation energy and transforms it to the metabolite's compartment & a MetaNetX, ChEBI, KEGG or BiGG identifier on the metabolite & estimated & 2{,}751 \\
+    mixed routes & sums participants priced by more than one route, so the reaction's uncertainty belongs to no single route & every participant priced by something & estimated & 872 \\
+    cache, by written structure & writes a structure from the metabolite's name, hashes it to an InChIKey and finds a compound eQuilibrator already holds under that key & a name stating the acyl composition, and a headgroup template & estimated & 122 \\
+    cancellation & drops a species appearing unchanged on both sides, so a reaction closes without that species ever being priced & an unpriced species identical in name, formula and charge on both sides & estimated & 19 \\
+    CODATA ion table & reads a tabulated single-ion formation energy, shifts it to eQuilibrator's gauge and applies the Debye-Huckel term & a monatomic ion whose species CODATA evaluates & tabulated & 11 \\
+    external pKa cascade & creates a compound eQuilibrator has never seen, from the pH 7 major microspecies plus a predicted pKa ladder, then decomposes and prices it & a structure and a pKa ladder from the selected cascade & estimated & 9 \\
+    shipped metabolite column & reads yeast-GEM's own \texttt{model\_metDeltaG.csv}, converted out of kilocalories at parse time & a row in that file for this metabolite & tabulated & 9 \\
+    curated structure or convention & prices a species from a structure or a polymer convention a curation record fixes, with sources and a sha256 per source & an admitted curation record of kind structure or polymer convention & curated & 2 \\
+    repeat-unit surrogate & prices one polymer residue as the monomer minus water minus half a calibrated hydrolysis energy & a hydrolysis reaction in the model that names the monomer & estimated & 2 \\
+    composition surrogate & transfers the energy of a cache compound sharing the heavy-atom composition, admitted only where every such compound agrees to 5 kJ/mol & a definite formula the cache can decompose elsewhere & estimated & 2 \\
+    shipped reaction column & reads yeast-GEM's \texttt{model\_rxnDeltaG.csv} directly & a row in that file, with the 33 dGPredictor rows exempt from the conversion & tabulated & 1 \\
+    conserved moiety & decomposes every participant leniently and prices the group difference where the atoms no group covers match as a multiset across the two sides & a curated structure for each participant and a moiety that cancels & estimated & 1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

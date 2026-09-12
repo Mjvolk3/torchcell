@@ -87,3 +87,8 @@ record) and the paper's DE scripts (`DEGs_summary.R`, `DEG.Rdata`, `summary.geno
 `Figures_Rev.R`) plus the Kemmeren table they used (`deleteome_all_mutants_controls.txt`)
 are being added to the raw mirror `$DATA_ROOT/torchcell-raw/nadalRibelles2025/` for the
 recompute; an R + Seurat 5.3.0 conda env (`r-seurat`) reads the object.
+
+## 2026.09.12 - Legends off the histograms
+
+Panels a, b (log density: headroom 3e3 and 30), c (1.7x), e (1.9x) and f (1.8x) have
+headroom so the framed legends clear the histogram tops. Author feedback 2026.09.12.

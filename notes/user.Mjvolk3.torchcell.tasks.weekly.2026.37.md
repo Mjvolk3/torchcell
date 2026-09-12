@@ -53,3 +53,14 @@ created: 1788904951158
 - [x] **Can the deleted gene be read off a Nadal-Ribelles profile? No.** Kemmeren: rank 1 in 59.5%, bottom 1% in 93.4% (median own value -2.48). Nadal: rank 1 in 0.1-0.8%, bottom 1% in 2-8%, median rank at the 35th-47th percentile under all three statistics; does not improve with cell count. The purity result from the profile's side [[experiments.028-knockout-expression.scripts.nadal_identify_deletion]]
 - [x] **Read-through from the barcode cassette (user's hypothesis) tested and rejected**: own-cell detection of the deleted gene scales at ~0.6x WT across the whole expression range (Spearman 0.64) and is absent for natively silent genes, not flat at a pTEF1 level [[experiments.028-knockout-expression.scripts.nadal_assignment_purity]]
 - [x] **Single-cell signature tests (no deleted gene used)**: Kemmeren signatures separate a genotype's cells from WT at AUROC 0.53 (8/240 > 0.8: rfx1, rim101, skn7, sam1, ada2, snf5, swi3), with 33-68% of cells shifted where they do; split-half own-signature AUROC 0.52 vs null 0.49 (18/207 > 0.65). Where a response is detectable, ~half the labeled cells carry it; for ~90% of genotypes nothing reproducible is detectable at this depth. Document purity paragraphs rewritten; media/growth comparison added [[experiments.028-knockout-expression.scripts.nadal_signature_mixture]] [[experiments.028-knockout-expression.scripts.nadal_split_half_signal]]
+
+## 2026.09.12
+
+- [x] 028: within-Nadal replication (cross-batch 0.043 vs 0.022; split-half 0.080 vs 0.051 with the WT split) [[experiments.028-knockout-expression.scripts.nadal_batch_replication]]
+- [x] 028: the paper's own deleteome comparison rerun; unshown profile Spearman 0.013; DEG count is a cell-count artifact (-0.67) [[experiments.028-knockout-expression.scripts.nadal_paper_deleteome_comparison]]
+- [x] 028: structure tests (gene variability, strain magnitude, Mantel, GO co-annotation, RP module, best case) [[experiments.028-knockout-expression.scripts.cross_study_structure]]
+- [x] 028: Messner proteome vs Kemmeren / Nadal / Caudal; co-variation 0.31 / 0.05 / 0.36 [[experiments.028-knockout-expression.scripts.proteome_expression_covariation]]
+- [x] 028: replication and coverage figure [[experiments.028-knockout-expression.scripts.nadal_replication_coverage]]
+- [x] methods reread of Kemmeren 2014, Sameith 2015, Nadal-Ribelles 2025 (Singleron, not 10x; pooled only for the 15-min treatment) [[torchcell.datasets.scerevisiae.nadal_ribelles2025]]
+- [x] legend fixes on the three cross-study figures
+- [ ] scYeast (fanScYeastBiologicalknowledgeguidedFoundation2027) datasets not in torchcell: Jackson 2020/2023 scRNA, Wang 2022 aging, Su 2023 stress, IDEA (Hackett 2020), Messner growth rates, McManus ribosome occupancy, Martin-Perez half-lives; lowest effort = Messner growth rate (same mirrored SI)

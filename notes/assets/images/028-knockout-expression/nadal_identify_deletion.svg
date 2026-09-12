@@ -2247,57 +2247,57 @@ z
    </g>
    <g id="legend_2">
     <g id="patch_23">
-     <path d="M 206.289755 88.522378 
-L 280.930693 88.522378 
-L 280.930693 44.286441 
-L 206.289755 44.286441 
+     <path d="M 216.382933 102.053102 
+L 291.02387 102.053102 
+L 291.02387 57.817165 
+L 216.382933 57.817165 
 z
 " style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
     </g>
     <g id="line2d_60">
-     <path d="M 208.689755 48.881128 
-L 214.689755 48.881128 
-L 220.689755 48.881128 
+     <path d="M 218.782933 62.411852 
+L 224.782933 62.411852 
+L 230.782933 62.411852 
 " style="fill: none; stroke: #d6b656; stroke-linecap: square"/>
     </g>
     <g id="text_34">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="225.489755" y="50.981128" transform="rotate(-0 225.489755 50.981128)">Kemmeren</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="235.582933" y="64.511852" transform="rotate(-0 235.582933 64.511852)">Kemmeren</text>
     </g>
     <g id="line2d_61">
-     <path d="M 208.689755 57.368316 
-L 214.689755 57.368316 
-L 220.689755 57.368316 
+     <path d="M 218.782933 70.89904 
+L 224.782933 70.89904 
+L 230.782933 70.89904 
 " style="fill: none; stroke: #b85450; stroke-linecap: square"/>
     </g>
     <g id="text_35">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="225.489755" y="59.468316" transform="rotate(-0 225.489755 59.468316)">Nadal stored</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="235.582933" y="72.99904" transform="rotate(-0 235.582933 72.99904)">Nadal stored</text>
     </g>
     <g id="line2d_62">
-     <path d="M 208.689755 65.855503 
-L 214.689755 65.855503 
-L 220.689755 65.855503 
+     <path d="M 218.782933 79.386227 
+L 224.782933 79.386227 
+L 230.782933 79.386227 
 " style="fill: none; stroke: #d79b00; stroke-linecap: square"/>
     </g>
     <g id="text_36">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="225.489755" y="67.955503" transform="rotate(-0 225.489755 67.955503)">Nadal A pseudobulk</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="235.582933" y="81.486227" transform="rotate(-0 235.582933 81.486227)">Nadal A pseudobulk</text>
     </g>
     <g id="line2d_63">
-     <path d="M 208.689755 74.342691 
-L 214.689755 74.342691 
-L 220.689755 74.342691 
+     <path d="M 218.782933 87.873415 
+L 224.782933 87.873415 
+L 230.782933 87.873415 
 " style="fill: none; stroke: #9673a6; stroke-linecap: square"/>
     </g>
     <g id="text_37">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="225.489755" y="76.442691" transform="rotate(-0 225.489755 76.442691)">Nadal B Seurat</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="235.582933" y="89.973415" transform="rotate(-0 235.582933 89.973415)">Nadal B Seurat</text>
     </g>
     <g id="line2d_64">
-     <path d="M 208.689755 82.829878 
-L 214.689755 82.829878 
-L 220.689755 82.829878 
+     <path d="M 218.782933 96.360602 
+L 224.782933 96.360602 
+L 230.782933 96.360602 
 " style="fill: none; stroke-dasharray: 1.85,0.8; stroke-dashoffset: 0; stroke: #000000; stroke-width: 0.5"/>
     </g>
     <g id="text_38">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="225.489755" y="84.929878" transform="rotate(-0 225.489755 84.929878)">chance</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="235.582933" y="98.460602" transform="rotate(-0 235.582933 98.460602)">chance</text>
     </g>
    </g>
   </g>

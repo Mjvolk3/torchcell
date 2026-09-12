@@ -331,7 +331,10 @@ def main() -> None:
         "pseudobulk_log2fc": "A: pseudobulk",
         "seurat_avg_log2fc": "B: Seurat",
     }
+    # Same assignment as nadal_identify_deletion.py: Kemmeren yellow, stored red,
+    # A orange, B purple.
     col = dict(zip(order, [PLOT_PALETTE[1], PLOT_PALETTE[0], PLOT_PALETTE[2]]))
+    col["kemmeren"] = PLOT_PALETTE[3]
     legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
     fig, axes = plt.subplots(
         2, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(105))
@@ -353,24 +356,16 @@ def main() -> None:
     ax = axes[0, 0]
     bins = np.linspace(-4, 4, 81)
     kv = np.concatenate([np.fromiter(p.values(), dtype=float) for p in kem.values()])
-    ax.hist(
-        kv,
-        bins=bins,
-        histtype="step",
-        color="black",
-        lw=0.8,
-        density=True,
-        label=f"Kemmeren (sd {kv.std():.2f})",
-    )
+    filled(ax, kv, "kemmeren", bins, f"Kemmeren (sd {kv.std():.2f})")
     for k in order:
         v = np.concatenate(
             [np.fromiter(p.values(), dtype=float) for p in versions[k].values()]
         )
         filled(ax, v, k, bins, f"{names[k]} (sd {v.std():.2f})")
     ax.set_yscale("log")
-    # Headroom of two decades so the framed legend sits above every histogram.
+    # Headroom so the framed legend sits two decades above the tallest histogram.
     lo, hi = ax.get_ylim()
-    ax.set_ylim(lo, hi * 2e5)
+    ax.set_ylim(lo, hi * 3e6)
     ax.set_xlabel("log2 value")
     ax.set_ylabel("density")
     ax.set_title("value distributions")

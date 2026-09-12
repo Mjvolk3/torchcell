@@ -380,18 +380,24 @@ and the slope $0.002$, $0.010$ and $0.000$ (\cref{fig:cross-study-recomputed}a--
 tracks cell count. The statistic was not the cause.
 \src{experiments/028-knockout-expression/results/cross_study_recomputed.json}
 
-\pfstep{The conditions differ in more than the medium} Kemmeren and Sameith grew each
-strain alone in SC with $2\,\%$ glucose to early mid-log at OD$_{600}$ 0.6, two
-independent cultures, dye-swapped against a wild-type pool grown the same day, BY4742
-MAT$\alpha$. Nadal-Ribelles recovered the URA3-marked collection on URA$^-$ at 25\,$^\circ$C
-for 48 h, grew each strain 6 h in YPD to OD$_{660}$ 0.6 to 0.8, then pooled all 3{,}500
-strains into one flask and fixed them in methanol; the reference is 500 wild-type cells
-from seven barcoded wild-type strains in the same run. Kemmeren's own SC-against-YPD
+\pfstep{The conditions differ in the medium, and the pooling is brief} Kemmeren and
+Sameith grew each strain alone in SC with $2\,\%$ glucose at 30\,$^\circ$C in 24-well
+plates to early mid-log at OD$_{600}$ 0.6, two independent cultures each hybridized in
+dye-swap against a common wild-type reference RNA, with same-day wild-type cultures and a
+pool of 200 wild-type profiles as the statistical reference, BY4742 MAT$\alpha$ (Sameith
+follows the same procedure by citation and adds no numbers of its own). Nadal-Ribelles
+recovered the URA3-marked collection on URA$^-$ at 25\,$^\circ$C for 48 h to saturation,
+diluted each strain 1:40 into YPD in 96-well plates for 6 h to OD$_{660}$ 0.6 to 0.8
+(temperature not stated), pooled the plates into one flask, applied the 15-minute
+control or NaCl treatment to the pool, and fixed it in methanol; the pooled window is
+the treatment, not the growth. Cells were captured on Singleron GEXSCOPE microwell
+cartridges, 14 for the control condition, and the reference is 500 wild-type cells from
+seven barcoded wild-type strains in the same run. Kemmeren's own SC-against-YPD
 comparison of wild type found 128 genes changed at 1.7-fold, so the baseline differs, and
-a deletion's response can differ with it. Hypothesis, unmeasured here: the medium and
-the pooled growth lower cross-study agreement below the $0.62$ same-platform reference.
-Whether they take it to zero is what the cell-level measurements below address, and
-those do not depend on Kemmeren.
+a deletion's response can differ with it. Hypothesis, unmeasured here: the medium lowers
+cross-study agreement below the $0.62$ same-platform reference. Whether it takes it to
+zero is what the within-study replication and the cell-level measurements below address,
+and those do not depend on Kemmeren.
 
 \pfstep{Read-through from the barcode cassette is not what puts counts on the deleted
 gene} The redesigned cassette shortens the heterologous terminator from 262 to 43 nt so
@@ -432,11 +438,12 @@ same thing for the genotypes with a strong response: roughly half of the cells u
 label are that genotype. For the majority of genotypes the labeled cells carry no
 reproducible signal at this depth (a median of 92 cells at 215 to 7{,}713 UMI each), and
 whether that is the same impurity, a response too small for the depth, or a response
-absent in YPD and pooled growth is not separable here. Batch is not the cause; 3{,}307
-of the 3{,}506 genotypes span three or more of the 14 batches and the wild-type cells
-span all of them. What produces the impurity in the strong-response genotypes, the
-clone-and-genotype barcode consensus, ambient barcode reads in the microwell format, or
-strain identity in the library, is not measured here.
+absent in YPD is not separable here. Batch composition is not the cause; 3{,}307 of the
+3{,}506 genotypes span three or more of the 14 batches and the wild-type cells span all
+of them. What produces the impurity in the strong-response genotypes, the
+clone-and-genotype barcode consensus (a cell called by only one of the two libraries
+keeps that call), ambient barcode reads in the microwell format, or strain identity in
+the library, is not measured here.
 
 \pfstep{The deleted gene cannot be read off its own profile} A deletion removes its own
 transcript, so in a clean knockout profile the deleted gene sits at the bottom. In
@@ -450,14 +457,104 @@ of the profile (chance is the 50th) and a median own value of $-0.02$ to $-0.41$
 from a Nadal-Ribelles profile, and read-through from the cassette is not the reason (above).
 \src{experiments/028-knockout-expression/results/nadal_identify_deletion.json}
 
+\pfstep{The panel does not replicate itself} The microarray pair has a test-retest of
+$0.74$ per strain; the single-cell panel had none, and without one a cross-study zero
+cannot be read. The same genotype's cells fall in several of the 14 control cartridges,
+so its pseudobulk in one batch against that batch's wild-type cells can be compared with
+its pseudobulk in another (\cref{fig:replication-coverage}a). Over 17{,}554 pairs of
+batches of one genotype with at least 15 cells in each, the median Pearson is $0.043$;
+two different genotypes across the same two batches, cell counts matched, give $0.022$;
+$1.8\,\%$ of same-genotype pairs exceed $0.2$ against $0.2\,\%$ of the null. The value
+does not rise with cells ($0.042$ at 15 to 30 cells, $0.051$ above 120). With the pooled
+wild type as reference both become $0.11$: the batch effect (wild type against wild
+type between batches, sd $0.75$ $\log_2$, $16\,\%$ of genes beyond 2-fold) enters every
+profile as a common component, and a per-batch reference removes it. Splitting one
+genotype's cells within one batch in half, with the wild-type cells split too so no
+reference is shared, gives $0.080$ against an other-genotype null of $0.051$ over 786
+genotype-batches with at least 30 cells (\cref{fig:replication-coverage}b); with a
+shared reference the same split reads $0.37$, which is the reference's sampling noise. A
+Nadal-Ribelles genotype profile reproduces itself by $0.02$ to $0.03$ above a different
+genotype, and $0.04$ within the study is what a zero against Kemmeren predicts.
+\src{experiments/028-knockout-expression/scripts/nadal_batch_replication.R}
+
+\pfstep{Coverage and depth} A Kemmeren profile carries $6{,}182$ reporters with a ratio
+and a $p$ value; Kemmeren calls $52\,\%$ of its 1{,}484 mutants responsive (at least
+four genes at 1.7-fold and $p < 0.05$ after excluding 58 wild-type-variable genes; the
+paper's figure is $47\,\%$), with a median of 4 changed genes. A Nadal-Ribelles cell has
+a median 934 UMI over 492 genes, and a genotype's own cells put five or more UMI on a
+median $2{,}826$ of the object's $6{,}951$ genes (120 under 10 cells, $2{,}558$ at 30 to
+100, $4{,}810$ above 300); the pseudobulk reports $4{,}601$ because the 500 wild-type
+cells satisfy the summed-UMI rule on their own (\cref{fig:replication-coverage}c, d).
+The paper's DEG count per genotype (median 10) is a cell-count artifact: it falls with
+cells at Spearman $-0.67$, because a genotype with few cells has more genes at a zero
+mean and each is a $\pm 23$ sentinel that passes $|\log\mathrm{FC}| \ge 1$.
+\src{experiments/028-knockout-expression/results/nadal_replication_coverage.json}
+
+\pfstep{What the paper itself computed against the deleteome} Its released script
+computes, per genotype with more than five cells, the Spearman between the single-cell
+fold change and Kemmeren's $M$ over the shared genes, and the two studies' changed-gene
+counts; it plots only the counts (its Supplementary Fig.\ 1i) and the text calls that
+``a consistent correlation'' without a coefficient. Rerun from the released objects
+over 874 genotypes: the count-against-count Spearman is $0.23$ ($0.26$ with cells
+partialled out), and the profile correlation it computed and did not show has median
+$0.013$, IQR $-0.006$ to $0.037$, one genotype above $0.2$
+(\cref{fig:replication-coverage}e, f). The paper's own number is the number measured
+here.
+\src{experiments/028-knockout-expression/scripts/nadal_paper_deleteome_comparison.R}
+
+\pfstep{Coarser structure: what the two panels share is small and on the growth axis}
+Six tests on the 1{,}002 shared deletions, each with Kemmeren against Sameith as the
+same-platform reference (\cref{fig:cross-study-structure}). Which genes vary: the
+reporter's sd across the shared strains agrees between Kemmeren and Sameith at Spearman
+$0.88$ and between Kemmeren and Nadal-Ribelles at $-0.19$, and the Nadal-Ribelles sd
+tracks depth ($-0.50$ with wild-type counts per million); it is sampling noise. Which
+strains respond: Kemmeren's changed-gene count against the genotype's cross-batch
+replication in Nadal-Ribelles, Spearman $0.20$ over 260 ($p = 0.001$), small and real.
+Strain similarity: the strain-by-strain correlation matrices agree between Kemmeren and
+Sameith at $0.52$ (the top $1\,\%$ Kemmeren pairs rank at AUROC $0.73$ in Sameith) and
+between Kemmeren and Nadal-Ribelles at $0.03$ (AUROC $0.50$). Function within one study,
+with no second study involved: deletions annotated to one GO term of 5 to 100 genes are
+more similar than other pairs at AUROC $0.55$ (cellular component) and $0.53$ (process)
+over Kemmeren's responsive strains, $0.50$ and $0.48$ over all its strains, and $0.51$
+to $0.53$ in Nadal-Ribelles ($p = 4 \times 10^{-10}$ for the stored values); a function
+signal of the size Kemmeren shows with its nonresponders included. The ribosomal protein
+module (159 genes, the slow-growth axis): mean $\log_2$ per strain agrees between
+Kemmeren and Sameith at $0.54$, between Kemmeren and Nadal-Ribelles at $0.05$; against
+the authors' own per-cell iESR score averaged per genotype it is $-0.11$ ($p = 6 \times
+10^{-4}$, the expected sign) and against their ribosomal read fraction $+0.09$. The best
+case, deletions Kemmeren calls responsive whose Nadal-Ribelles profile replicates across
+batches at $r \ge 0.1$: 14 strains, median cross-study $r$ $0.078$, one above $0.2$
+(\textit{nmd2}, $0.22$).
+\src{experiments/028-knockout-expression/results/cross_study_structure.json}
+
+\pfstep{The knockout proteome agrees with the microarrays and with natural-isolate
+expression, and not with the single-cell panel} Messner et al.\ 2023 measured 1{,}830
+proteins over 4{,}549 deletion ORFs of the same collection in synthetic minimal medium,
+a third panel with no platform in common with either. Strain by strain, protein against
+mRNA $\log_2$ ratio over the proteins measured in both: with Kemmeren median $0.036$ per
+deletion over 1{,}350 and $0.075$ per protein across deletions, the July EDA's numbers;
+with Nadal-Ribelles $0.011$ and $0.012$ over 2{,}038. Gene by gene, the co-variation of
+two genes across a panel's strains, compared between panels on the Messner proteins: the
+proteome against Caudal et al.\ 2024's 943 natural isolates $0.36$ (the top $1\,\%$
+proteome pairs have median mRNA $r$ $0.48$ against $0.07$), against Kemmeren $0.31$,
+Kemmeren against Caudal $0.48$; against Nadal-Ribelles $0.05$, $0.11$ and $0.08$ from the
+three (\cref{fig:proteome-covariation}). Three panels that differ in platform,
+perturbation type and medium agree pairwise on which genes co-vary; the single-cell
+panel agrees with none of them.
+\src{experiments/028-knockout-expression/results/proteome_expression_covariation.json}
+
 As released, the panel cannot be pooled with the microarrays as a knockout-expression
-target: on the shared deletions the pseudobulk agrees with Kemmeren at zero under every
-statistic, the strong responses that do cross survive at $0.06$ to $0.10$, and more cells
-do not help. Where the labeled cells are half another genotype, a per-cell filter on the
-deleted gene's own counts (the cells at zero) or a re-assignment from the raw barcode
-reads would be needed, and the released object carries only the consensus label. Its
-per-genotype dispersion, a single-cell heterogeneity readout the loader already carries,
-is a different target and is not affected in the same way.
+target, and the reason is now measured rather than inferred: a genotype's profile does
+not reproduce itself within the study ($0.04$ across batches against $0.02$ for a
+different genotype), so it cannot reproduce Kemmeren's. What survives is small and
+sits on the growth axis and on function at the level Kemmeren shows with its
+nonresponders included. The paper's own profile correlation against the deleteome, which
+it computed and did not show, is $0.013$. Where the labeled cells are half another
+genotype, a per-cell filter on the deleted gene's own counts (the cells at zero) or a
+re-assignment from the raw barcode reads would be needed, and the released object
+carries only the consensus label. Its per-genotype dispersion, a single-cell
+heterogeneity readout the loader already carries, is a different target and is not
+affected in the same way.
 
 \begin{figure}[htbp]
 \centering
@@ -484,7 +581,7 @@ strains. Generated by \file{cross_study_ko_expression.py}.}
 \centering
 \includegraphics[width=\textwidth]{figures/cross_study_recomputed.pdf}
 \caption[]{Recomputing the Nadal-Ribelles fold change from the single-cell object, and
-why it does not help. \textbf{a}, $\log_2$ values of Kemmeren (outline) and of three
+why it does not help. \textbf{a}, $\log_2$ values of Kemmeren and of three
 Nadal-Ribelles versions: as stored, the bulk-like pseudobulk ratio (A) and Seurat's
 \file{avg_log2FC} (B). \textbf{b}, per shared deletion, the Pearson across reporters with
 Kemmeren for each version; \textbf{c}, the same per reporter across shared strains.
@@ -509,4 +606,57 @@ pseudobulk statistic, the deleted gene's own value against the cells behind the
 genotype; the band near $-5$ to $-8$ at low counts is the pseudocount floor of a
 near-empty pseudobulk. Generated by \file{nadal_identify_deletion.py}.}
 \label{fig:identify-deletion}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/nadal_replication_coverage.pdf}
+\caption[]{Within-study replication, coverage, and the paper's own deleteome
+comparison. \textbf{a}, Pearson between two batches of one genotype (pseudobulk against
+the batch's own wild-type cells), the different-genotype null with matched cell counts,
+and the same-genotype value with a pooled wild-type reference. \textbf{b}, split-half
+within one batch, each half against its own half of the wild-type cells, against cells
+per genotype; gray, the other-genotype null. \textbf{c}, genes per profile: covered by
+the genotype's own cells at five or more UMI, and reported under the summed-UMI rule;
+lines at Kemmeren's reporters per profile and at the genes in the single-cell object.
+\textbf{d}, changed genes per deletion under each study's own rule. \textbf{e}, the
+paper's Supplementary Fig.\ 1i reproduced from its released objects, shaded by cells
+per genotype. \textbf{f}, the per-genotype profile Spearman the paper's script computes
+and does not show, with and without the sentinel genes. Generated by
+\file{nadal_replication_coverage.py} from \file{nadal_batch_replication.R} and
+\file{nadal_paper_deleteome_comparison.R}.}
+\label{fig:replication-coverage}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/cross_study_structure.pdf}
+\caption[]{Agreement at levels a per-gene correlation misses, on the 1{,}002 shared
+deletions. \textbf{a}, a reporter's sd across the shared strains, Kemmeren against
+Sameith and against Nadal-Ribelles A. \textbf{b}, Kemmeren's changed-gene count per
+deletion against the genotype's cross-batch replication in Nadal-Ribelles. \textbf{c},
+strain-pair correlation within Kemmeren against the same pair within Nadal-Ribelles A.
+\textbf{d}, within one study, the AUROC of the pair correlation for pairs annotated to
+one GO cellular-component or biological-process term of 5 to 100 genes against other
+pairs. \textbf{e}, mean $\log_2$ over 159 cytosolic ribosomal protein genes per strain,
+Kemmeren against Nadal-Ribelles A and against Sameith. \textbf{f}, per-strain
+cross-study $r$ by whether Kemmeren calls the deletion responsive (K$+$) and whether its
+Nadal-Ribelles profile replicates across batches at $r \ge 0.1$ (N$+$); bars are
+medians. Generated by \file{cross_study_structure.py}.}
+\label{fig:cross-study-structure}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/proteome_expression_covariation.pdf}
+\caption[]{The Messner 2023 knockout proteome against three expression panels.
+\textbf{a}, per shared deletion, the Pearson between its protein and mRNA $\log_2$
+ratios (z-scored per gene across strains) for Kemmeren and for Nadal-Ribelles A.
+\textbf{b}, per protein, the Pearson across shared deletions. \textbf{c}, abundance
+level per gene, protein in the HIS3 reference against mean expression over the Caudal
+isolates. \textbf{d--f}, gene-pair co-variation: the correlation of two genes across
+Messner's deletions (protein) against the same pair across Caudal's isolates, Kemmeren's
+deletions and Nadal-Ribelles A's deletions (mRNA), log-count density. Generated by
+\file{proteome_expression_covariation.py}.}
+\label{fig:proteome-covariation}
 \end{figure}

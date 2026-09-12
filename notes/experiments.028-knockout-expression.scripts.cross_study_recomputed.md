@@ -41,3 +41,10 @@ the consensus label). As released, the Nadal-Ribelles control panel cannot be po
 the microarrays as a knockout-expression target; it remains a valid single-cell
 heterogeneity resource (the dispersion scalar the loader carries), which is a different
 target.
+
+## 2026.09.12 - Panel a: Kemmeren filled, more headroom
+
+Kemmeren is now a filled histogram in the palette yellow (it was a black outline that
+read as white against the fills), the Nadal versions keep red / orange / purple as in
+nadal_identify_deletion.py, and the log-density headroom is 3e6 so the legend sits two
+decades above the tallest bin.

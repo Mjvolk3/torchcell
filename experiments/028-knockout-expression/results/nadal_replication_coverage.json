@@ -1,0 +1,105 @@
+{
+ "generated_by": "experiments/028-knockout-expression/scripts/nadal_replication_coverage.py",
+ "cross_batch": {
+  "n_pairs": 17554,
+  "same_genotype_median_r_batch_ref": 0.042952087697173,
+  "same_genotype_median_r_pool_ref": 0.11340011433668601,
+  "null_median_r_batch_ref": 0.02182038514491705,
+  "null_median_r_pool_ref": 0.110706680049271,
+  "same_frac_r_above_0.2": 0.01805856215107668,
+  "null_frac_r_above_0.2": 0.0022217158482397176,
+  "same_by_min_cells": {
+   "15-30": {
+    "n": 15483,
+    "median_r": 0.04207886656008565
+   },
+   "30-60": {
+    "n": 1897,
+    "median_r": 0.0464921145048639
+   },
+   "60-120": {
+    "n": 164,
+    "median_r": 0.055218601320027
+   },
+   "120-1000000": {
+    "n": 10,
+    "median_r": 0.05065367883166045
+   }
+  },
+  "spearman_r_vs_min_cells": 0.018803815194552313
+ },
+ "split_half": {
+  "n": 786,
+  "median_r": 0.0796059354328969,
+  "null_median_r": 0.0514164231374667,
+  "frac_r_above_0.2": 0.04580152671755725,
+  "spearman_r_vs_cells": -0.04761907419679898,
+  "by_cells": {
+   "30-60": {
+    "n": 721,
+    "median_r": 0.0791634643708614
+   },
+   "60-120": {
+    "n": 60,
+    "median_r": 0.08486471148740865
+   },
+   "120-300": {
+    "n": 5,
+    "median_r": 0.050917637612682
+   },
+   "300-1000000": {
+    "n": 0,
+    "median_r": NaN
+   }
+  }
+ },
+ "wt_batch_effect": {
+  "n_batch_pairs": 78,
+  "median_sd_log2fc": 0.7510234365876416,
+  "median_frac_abs_gt1": 0.1609126984126985
+ },
+ "depth": {
+  "cells": 326438,
+  "median_umi_per_cell": 934.0,
+  "median_genes_per_cell": 492.0
+ },
+ "coverage": {
+  "kemmeren_reporters_per_profile": 6182,
+  "nadal_genes_in_object": 6951,
+  "nadal_median_genes_reported_per_genotype": 4601.0,
+  "nadal_median_genes_ge5umi_own_cells": 2826.0,
+  "nadal_by_cells_reported": {
+   "1-10": 4465.0,
+   "10-30": 4497.0,
+   "30-100": 4581.0,
+   "100-300": 4697.0,
+   "300-1000000": 4932.0
+  },
+  "nadal_by_cells_own": {
+   "1-10": 120.0,
+   "10-30": 942.0,
+   "30-100": 2558.0,
+   "100-300": 3785.0,
+   "300-1000000": 4810.0
+  }
+ },
+ "kemmeren_responsive": {
+  "n_profiles": 1484,
+  "frac_responsive": 0.5181940700808625,
+  "median_changed_genes": 4.0
+ },
+ "paper_figS1i": {
+  "n": 874,
+  "spearman_log_counts": 0.23369602214306076,
+  "spearman_partial_cells": 0.2566646836415444,
+  "spearman_nadal_degs_vs_cells": -0.6695348909070677,
+  "spearman_kemmeren_changed_vs_cells": -0.06489936453708588,
+  "javsma_median": 0.0132355683707482,
+  "javsma_iqr": [
+   -0.0064220467699340495,
+   0.03693647938561107
+  ],
+  "javsma_no_sentinel_median": 0.015166564277536699,
+  "javsma_frac_above_0.2": 0.0011441647597254005
+ }
+}

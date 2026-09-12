@@ -42,3 +42,9 @@ This is the same finding as the purity measurement
 side: if the labeled cells were the genotype, the deleted gene would be at the bottom of
 the profile as it is in every microarray strain; it sits in the middle, so most of the
 labeled cells are not that genotype.
+
+## 2026.09.12 - Legend moved off the curves
+
+Panel b's legend sits at the lower left (bbox 0.10, 0.17), right of Kemmeren's jump to 0.6
+at rank 1 and above the Nadal curves, which stay under 0.05 until rank fraction 0.01.
+Author feedback 2026.09.11 and .12 (twice covering data); verified on the rendered PNG.

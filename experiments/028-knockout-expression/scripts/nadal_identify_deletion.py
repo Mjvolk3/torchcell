@@ -245,9 +245,10 @@ def main() -> None:
     ax.set_xlabel("rank of the deleted gene, ascending, as a fraction of genes")
     ax.set_ylabel("cumulative fraction of genotypes")
     ax.set_title("where the deleted gene ranks")
-    # Kemmeren runs along the top and the Nadal curves along the bottom right; the
-    # clear region is the left middle.
-    ax.legend(loc="center left", bbox_to_anchor=(0.02, 0.55), **legend_kw)
+    # Kemmeren jumps to 0.8 at the far left and runs along the top; the Nadal curves stay
+    # under 0.05 until x = 1e-2 and rise along the right. The clear region is the lower
+    # left, right of Kemmeren's jump and above the Nadal curves.
+    ax.legend(loc="lower left", bbox_to_anchor=(0.10, 0.17), **legend_kw)
 
     # c. Nadal A: self value against cells per genotype
     ax = axes[2]

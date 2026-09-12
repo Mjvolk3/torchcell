@@ -398,6 +398,9 @@ def _figure(
         )
         filled_hist(ax, vals, key, bins, label=f"{short[key]} (sd {vals.std():.2f})")
     ax.set_yscale("log")
+    # Headroom of three decades so the framed legend clears the histogram tops.
+    lo, hi = ax.get_ylim()
+    ax.set_ylim(lo, hi * 3e3)
     ax.set_xlabel("log2 value, sentinels removed")
     ax.set_ylabel("density")
     ax.set_title("value distributions")
@@ -413,6 +416,8 @@ def _figure(
     ax.axvline(-SENTINEL, color="black", lw=0.5, ls="--")
     ax.axvline(SENTINEL, color="black", lw=0.5, ls="--")
     ax.set_yscale("log")
+    lo, hi = ax.get_ylim()
+    ax.set_ylim(lo, hi * 30)
     ax.set_xlabel("log2 fold change as stored")
     ax.set_ylabel("density")
     ax.set_title(f"stored values, {100 * frac:.1f}% at |value| >= {SENTINEL:g}")
@@ -430,6 +435,7 @@ def _figure(
     ax.set_xlabel("per-strain sd of the profile (log2)")
     ax.set_ylabel("density")
     ax.set_title("per-strain effect spread")
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.7)
     ax.legend(loc="upper right", **legend_kw)
 
     # d. Kemmeren against Nadal-Ribelles on every shared (strain, gene) cell.
@@ -505,7 +511,7 @@ def _figure(
     ax.xaxis.set_major_locator(MultipleLocator(0.2))
     ax.xaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(which="minor", length=0)
-    ax.set_ylim(0, ax.get_ylim()[1] * 1.6)
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.9)
     ax.legend(loc="upper right", **legend_kw)
 
     # f. Per-reporter agreement (test-retest reliability).
@@ -523,7 +529,7 @@ def _figure(
     ax.xaxis.set_major_locator(MultipleLocator(0.2))
     ax.xaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(which="minor", length=0)
-    ax.set_ylim(0, ax.get_ylim()[1] * 1.6)
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.8)
     ax.legend(loc="upper right", **legend_kw)
 
     # g. Per-strain agreement against the strain's effect size in Kemmeren.

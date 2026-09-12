@@ -87,3 +87,33 @@ Scripts and numbers: [[experiments.028-knockout-expression.scripts.cross_study_k
 [[experiments.028-knockout-expression.scripts.cross_study_recomputed]],
 [[experiments.028-knockout-expression.scripts.nadal_assignment_purity]]. The single-cell
 object and the paper's DE scripts are now in the raw mirror (md5s match Zenodo 14062629).
+
+## 2026.09.12 - Methods facts from a full reread, and the within-study replication
+
+From the mirrored paper and SI (nadal-ribellesSinglecellResolvedGenotypephenotype2025),
+verbatim quotes in the session's extraction:
+
+- Platform is Singleron GEXSCOPE microwell (High Density Matrix), NOT 10x: 220,000 cells
+  per cartridge, 29 cartridges (14 control, 15 NaCl), one NovaSeq S4 lane. Median 1,200
+  molecules and 550 genes per cell as reported; 934 UMI and 492 genes in the released
+  control object.
+- Growth: URA- recovery 25 C 48 h to saturation; 5 ul into 200 ul YPD in 96-well plates
+  for 6 h to OD660 0.6 to 0.8 (temperature not stated); plates pooled into a flask,
+  15-min control or 0.4 M NaCl on the pool, methanol fixation. The pooled window is the
+  treatment, not the growth, so pooled competition is not a plausible confounder.
+- Assignment: barcode read from the whole-transcriptome library (artificial contig) AND a
+  targeted amplicon of the URA3 3'UTR; a cell called by only ONE library keeps that call
+  (OR rule), conflicts are dropped; multi-genotype cells need one genotype in > 70% of
+  reads. No purity or doublet rate is reported; doublets, low-quality and unassigned
+  cells are one 350,913-cell removed category. Replacement strains of one gene carry an
+  IDENTICAL barcode and are told apart only by reference-contig naming (bc-X, bc-X-2).
+- 90% of genotype barcodes map within 300 bp of the intended locus; the other 10% are
+  removed for detailed analysis (Supplementary Data 1, not mirrored).
+- The only deleteome comparison is a DEG-count scatter (their Fig. S1i); the profile
+  Spearman their script computes (median 0.013) is not shown. See
+  [[experiments.028-knockout-expression.scripts.nadal_paper_deleteome_comparison]].
+- Within-study replication: same-genotype cross-batch r 0.043 vs 0.022 null; split-half
+  0.080 vs 0.051. See [[experiments.028-knockout-expression.scripts.nadal_batch_replication]].
+  The Messner proteome, Kemmeren and Caudal agree pairwise on gene co-variation at 0.31
+  to 0.48; this panel agrees with none at 0.05 to 0.11
+  ([[experiments.028-knockout-expression.scripts.proteome_expression_covariation]]).

@@ -27,6 +27,7 @@ from pydantic import BaseModel, TypeAdapter
 from torchcell.datamodels import schema
 from torchcell.datamodels.schema import (
     AllelePerturbation,
+    BarcodedKanMxDeletionPerturbation,
     CopyNumberVariantPerturbation,
     CrisprActivationPerturbation,
     CrisprConstruct,
@@ -136,6 +137,11 @@ _URI = dict(sequence_uri="YAL001C.fasta#AAB", sequence_sha256="a" * 64)
 
 FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     KanMxDeletionPerturbation: {**_SYS},
+    BarcodedKanMxDeletionPerturbation: {
+        **_SYS,
+        "barcode": "ACGTACGTACGTACGTACGT",
+        "collection": "Euroscarf MATa deletion set",
+    },
     NatMxDeletionPerturbation: {**_SYS},
     MeanDeletionPerturbation: {**_SYS, "num_duplicates": 2},
     MarkerDeletionPerturbation: {**_SYS, "marker": "KlURA3"},

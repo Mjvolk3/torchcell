@@ -270,6 +270,37 @@ class KanMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
     deletion_type: str = "KanMX"
 
 
+class BarcodedKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
+    """A KanMX deletion strain that carries the molecular barcode it was screened by.
+
+    A pooled competitive-growth screen (Bar-seq, HIP/HOP) does not read colonies, it reads
+    the 20-mer UPTAG/DNTAG the deletion cassette carries, so the barcode IS the strain's
+    read-out identity in that assay and belongs on the perturbation rather than in a note.
+    ``collection`` records WHICH physical deletion set the strain came from (Euroscarf MATa,
+    the Yeast Knockout Collection HOM/HET pool, ...), because two collections can hold the
+    same ORF deletion with different background mutations and different barcodes.
+
+    Both fields are nullable: a study that reports only the ORF resolves to the plain
+    ``KanMxDeletionPerturbation`` semantics with no barcode asserted, so scaffolding a
+    loader before the barcode table is mirrored is a typed absence rather than a guess.
+    A separate leaf (not fields added to ``KanMxDeletionPerturbation``) is deliberate --
+    ``KanMxDeletionPerturbation`` is inside 33 served dataset closures and any field added
+    to it would force a full rebuild of every one of them.
+    """
+
+    perturbation_type: Literal["barcoded_kanmx_deletion"] = "barcoded_kanmx_deletion"  # type: ignore[assignment]
+    barcode: str | None = Field(
+        default=None,
+        description="the molecular barcode (UPTAG/DNTAG 20-mer) the strain is counted by "
+        "in a pooled assay; None when the source released no barcode",
+    )
+    collection: str | None = Field(
+        default=None,
+        description="the physical deletion collection the strain came from, verbatim from "
+        "the source (e.g. 'Euroscarf MATa deletion set'); None when unsourced",
+    )
+
+
 class NatMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
     """Gene deletion via NatMX gene replacement."""
 
@@ -905,6 +936,7 @@ GenePerturbationType = (
     | MeanDeletionPerturbation
     | MarkerDeletionPerturbation
     | KanMxDeletionPerturbation
+    | BarcodedKanMxDeletionPerturbation
     | NatMxDeletionPerturbation
     | CrisprDeletionPerturbation
     | GeneAdditionPerturbation
@@ -2744,7 +2776,16 @@ class MeasurementType(StrEnum):
       columns).
     - ``sensitivity_score``: HIP/HOP sensitivity / fitness-defect score (Hoepfner MADL,
       Hillenmeyer, Lee).
-    - ``categorical``: qualitative call (Auesukaree sensitive/tolerant; Mota 0/+/++).
+    - ``categorical``: NOMINAL qualitative call with no order among its terms
+      (Auesukaree sensitive/tolerant; Mormino enhanced-signal/no-effect).
+    - ``ordinal``: a RANKED grade on a source-defined scale, where the ranks are ordered
+      but the spacing between them carries no meaning (Smith 2006 scores the clear zone
+      4/3/2/1 = larger than wild type / wild type / less than wild type / small or not
+      detectable, and growth on acetate 3/2.5/2/1). Distinct from ``categorical`` because
+      the order is real (a 2 lies between a 1 and a 3) and distinct from every numeric
+      member because the number is a rank, not a measured quantity: averaging it or
+      comparing it to a z-score is meaningless. Like ``categorical``, it requires
+      ``category``; unlike it, ``environment_response`` may carry the rank itself.
     - ``growth_rate``: absolute or normalized growth rate / doubling time.
     - ``differential_fitness``: SIGNED difference of normalized colony-size fitness in a
       test condition minus the matched reference condition (Costanzo 2021 condition-SGA:
@@ -2767,10 +2808,65 @@ class MeasurementType(StrEnum):
     z_score = "z_score"
     sensitivity_score = "sensitivity_score"
     categorical = "categorical"
+    ordinal = "ordinal"
     growth_rate = "growth_rate"
     differential_fitness = "differential_fitness"
     control_regression_residual = "control_regression_residual"
     colony_size = "colony_size"
+
+
+class ResponseCategory(StrEnum):
+    """The controlled vocabulary a qualitative environment-response call resolves to.
+
+    Every categorical screen invents its own words for the same small set of outcomes
+    ("sensitive", "tolerant", "++", "wild type", "defective"), so a free-text category
+    joins nothing: two screens reporting the same biology land in different buckets and a
+    single screen's vocabulary is unknowable without reading its loader. This enum is the
+    shared axis; the source's own word is kept verbatim in
+    ``EnvironmentResponsePhenotype.category_label``, so nothing is lost by mapping.
+
+    The axis is the strain's growth/readout RELATIVE TO the record's declared reference,
+    in the perturbed environment. Five members form an ORDER (``enhanced`` >
+    ``no_change`` > ``mildly_reduced`` > ``reduced`` > ``severely_reduced``); the
+    remaining three are deliberately unordered, because a source that reports only a
+    binary hit call has not measured a severity and a mapping must not invent one.
+
+    - ``enhanced``: measurably better than the reference (Smith 2006 clear-zone 4,
+      "larger than wild type"; a biosensor signal above control).
+    - ``no_change``: indistinguishable from the reference (Smith 2006 score 3 "wild
+      type"; Mota 2024's unlisted strains, "no detectable susceptibility").
+    - ``mildly_reduced``: a slight deficit short of a clear one (Smith 2006 growth 2.5,
+      the released table's undocumented intermediate grade).
+    - ``reduced``: a clear but partial deficit (Smith 2006 score 2, "less than wild type"
+      / "moderate"; Mota 2024 ``+``, minor-to-moderate growth inhibition).
+    - ``severely_reduced``: growth or signal essentially abolished (Smith 2006 score 1,
+      "small or not detectable" / "little/no growth"; Mota 2024 ``++``, total growth
+      inhibition).
+    - ``sensitive``: an UNGRADED hit call under stress, where the source reports only
+      that the strain is affected (Auesukaree 2009's listed stress-sensitive mutants).
+      Not a synonym for ``reduced``: mapping it there would assert a severity the source
+      never scored.
+    - ``resistant``: the ungraded opposite, a strain called tolerant of a stress that
+      affects the reference.
+    - ``not_determined``: the strain was screened but no call could be made (a failed or
+      excluded well), which is distinct both from ``no_change`` and from absence.
+    """
+
+    enhanced = "enhanced"
+    no_change = "no_change"
+    mildly_reduced = "mildly_reduced"
+    reduced = "reduced"
+    severely_reduced = "severely_reduced"
+    sensitive = "sensitive"
+    resistant = "resistant"
+    not_determined = "not_determined"
+
+
+#: Measurement types whose readout is a CALL rather than a quantity, so a ``category`` is
+#: required and a numeric ``environment_response`` is optional.
+CATEGORICAL_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
+    {MeasurementType.categorical, MeasurementType.ordinal}
+)
 
 
 class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
@@ -2787,6 +2883,13 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
     uncertainty ontology mirrors ``FitnessPhenotype``:
     ``environment_response_se`` is the DERIVED, ML-facing SE (auto-filled from the
     source-reported uncertainty + its type via ``derive_se``).
+
+    A qualitative call is TYPED: ``category`` is a ``ResponseCategory`` on the shared
+    cross-screen axis and ``category_label`` holds the source's own word for it, so a
+    screen's private vocabulary stays readable without becoming the join key.
+    ``screen_id`` names the screening run a measurement came from, which is what keeps
+    two independent screens of the same compound at the same dose from collapsing into
+    one record.
     """
 
     graph_level: str = "global"
@@ -2808,10 +2911,18 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
         description="signed numeric score (log2 ratio, z-score, sensitivity score, "
         "growth rate); None only for a purely categorical readout",
     )
-    category: str | None = Field(
+    category: ResponseCategory | None = Field(
         default=None,
-        description="qualitative call for categorical readouts, e.g. 'sensitive' | "
-        "'tolerant' | 'no_effect'; None for numeric readouts",
+        description="the qualitative call on the shared ResponseCategory axis; None for "
+        "purely numeric readouts",
+    )
+    category_label: str | None = Field(
+        default=None,
+        description="the source's own word or symbol for that call, verbatim (e.g. "
+        "'++', 'tolerant', 'wild type', the ordinal '4'), so the mapping onto "
+        "ResponseCategory is auditable and nothing the source said is lost. Requires "
+        "`category`: a label with no typed call is the free-text state this axis "
+        "replaces.",
     )
     environment_response_se: float | None = Field(
         default=None,
@@ -2838,6 +2949,15 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
         default=None,
         description="human-readable definition/units of the score, e.g. "
         "'log2(inhibitor/control)'",
+    )
+    screen_id: str | None = Field(
+        default=None,
+        description="the source's own identifier for the SCREEN this measurement came "
+        "from (Hoepfner 2014's internal study number, a plate/round id). A compound at "
+        "one dose can be screened more than once, and once the compound name is cleaned "
+        "those runs become indistinguishable: Hoepfner has 45 columns that collide on "
+        "(compound, dose) alone, so the screen id is what keeps one strain x one "
+        "condition L1-unique instead of silently merging independent measurements.",
     )
 
     @field_validator("environment_response")
@@ -2878,12 +2998,19 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
     @model_validator(mode="after")
     def _check(self) -> "EnvironmentResponsePhenotype":
         """Enforce numeric-vs-categorical coherence + the uncertainty invariant."""
-        if self.measurement_type is MeasurementType.categorical:
+        if self.measurement_type in CATEGORICAL_MEASUREMENT_TYPES:
             if self.category is None:
-                raise ValueError("categorical measurement_type requires `category`")
+                raise ValueError(
+                    f"{self.measurement_type} measurement_type requires `category`"
+                )
         elif self.environment_response is None:
             raise ValueError(
                 f"{self.measurement_type} requires a numeric environment_response"
+            )
+        if self.category_label is not None and self.category is None:
+            raise ValueError(
+                "category_label requires `category` (a verbatim source label with no "
+                "typed call is the free-text state ResponseCategory replaces)"
             )
         unc, typ = (
             self.environment_response_uncertainty,

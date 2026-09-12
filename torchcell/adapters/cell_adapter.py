@@ -91,6 +91,7 @@ class CellAdapter:
             ("genotype (chunked)", self._genotype_node),
             ("segregant genotype (chunked)", self._segregant_genotype_node),
             ("perturbation (chunked)", self._perturbation_node),
+            ("crispr construct (chunked)", self._crispr_construct_node),
             ("environment (chunked)", self._environment_node),
             ("environment reference", self._get_environment_reference_nodes),
             ("media (chunked)", self._media_node),
@@ -211,6 +212,10 @@ class CellAdapter:
             (
                 "perturbation to genotype (chunked)",
                 self._perturbation_to_genotype_edges,
+            ),
+            (
+                "crispr construct to perturbation (chunked)",
+                self._crispr_construct_to_perturbation_edges,
             ),
             (
                 "environment to experiment (chunked)",
@@ -596,24 +601,94 @@ class CellAdapter:
             nodes.append(node)
         return nodes
 
+    # Environment.temperature is Optional: a curation layer that never carried a
+    # temperature records a typed gap instead of guessing one. Every read of it is
+    # therefore bound to a local first and guarded -- an unguarded walk turns a legal
+    # record into an AttributeError at KG-build time. A present temperature yields
+    # exactly the node, edge and property bytes it did before.
+
+    # --- CRISPR constructs (the reagent a CRISPR perturbation was made with) ---
+    # A CrisprConstruct is COMPOSED onto the CRISPR leaves (CrisprDeletionPerturbation
+    # and the CRISPRa/CRISPRi expression family), so it is read off the perturbation,
+    # not off the genotype. It gets its OWN node class rather than extra properties on
+    # `perturbation`: `perturbation` is a served graph class, and adding a property to
+    # it would force a full rebuild of all 36 served datasets. `crispr` is declared only
+    # on the CRISPR leaves, so -- as with `strain_id` in _perturbation_node -- it is read
+    # defensively off a union whose other members do not carry it.
+
+    @staticmethod
+    def _crispr_construct_node_from(construct: Any) -> BioCypherNode:
+        construct_id = hashlib.sha256(
+            json.dumps(construct.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=construct_id,
+            preferred_id="crispr construct",
+            node_label="crispr construct",
+            properties={
+                "effector": construct.effector,
+                "guide_sequence": construct.guide_sequence,
+                "n_guides": construct.n_guides,
+                "library_pool": construct.library_pool,
+                "effector_plasmid_uri": construct.effector_plasmid_uri,
+                "effector_plasmid_sha256": construct.effector_plasmid_sha256,
+                "serialized_data": json.dumps(construct.model_dump()),
+            },
+        )
+
+    @data_chunker
+    def _crispr_construct_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherNode]:
+        """Emit one node per CRISPR construct carried by this record's perturbations."""
+        nodes = []
+        for perturbation in data["experiment"].genotype.perturbations:
+            construct = getattr(perturbation, "crispr", None)
+            if construct is not None:
+                nodes.append(self._crispr_construct_node_from(construct))
+        return nodes
+
+    @data_chunker
+    def _crispr_construct_to_perturbation_edges(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherEdge]:
+        """Link each CRISPR construct to the perturbation it was used to make."""
+        edges = []
+        for perturbation in data["experiment"].genotype.perturbations:
+            construct = getattr(perturbation, "crispr", None)
+            if construct is None:
+                continue
+            edges.append(
+                BioCypherEdge(
+                    source_id=hashlib.sha256(
+                        json.dumps(construct.model_dump()).encode("utf-8")
+                    ).hexdigest(),
+                    target_id=hashlib.sha256(
+                        json.dumps(perturbation.model_dump()).encode("utf-8")
+                    ).hexdigest(),
+                    relationship_label="crispr construct member of",
+                )
+            )
+        return edges
+
     @data_chunker
     def _environment_node(
         self, data: dict[str, Any], method_name: str
     ) -> BioCypherNode:
+        environment = data["experiment"].environment
         environment_id = hashlib.sha256(
-            json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
+            json.dumps(environment.model_dump()).encode("utf-8")
         ).hexdigest()
-        media = json.dumps(data["experiment"].environment.media.model_dump())
+        media = json.dumps(environment.media.model_dump())
+        temperature = environment.temperature
         return BioCypherNode(
             node_id=environment_id,
             preferred_id="environment",
             node_label="environment",
             properties={
-                "temperature": data["experiment"].environment.temperature.value,
+                "temperature": (temperature.value if temperature is not None else None),
                 "media": media,
-                "serialized_data": json.dumps(
-                    data["experiment"].environment.model_dump()
-                ),
+                "serialized_data": json.dumps(environment.model_dump()),
             },
         )
 
@@ -676,26 +751,24 @@ class CellAdapter:
         nodes = []
         seen_node_ids = set()
         for data in tqdm(self.dataset.experiment_reference_index):
+            environment = data.reference.environment_reference
             environment_id = hashlib.sha256(
-                json.dumps(data.reference.environment_reference.model_dump()).encode(
-                    "utf-8"
-                )
+                json.dumps(environment.model_dump()).encode("utf-8")
             ).hexdigest()
             if environment_id not in seen_node_ids:
                 seen_node_ids.add(environment_id)
-                media = json.dumps(
-                    data.reference.environment_reference.media.model_dump()
-                )
+                media = json.dumps(environment.media.model_dump())
+                temperature = environment.temperature
                 node = BioCypherNode(
                     node_id=environment_id,
                     preferred_id="environment",
                     node_label="environment",
                     properties={
-                        "temperature": data.reference.environment_reference.temperature.value,
-                        "media": media,
-                        "serialized_data": json.dumps(
-                            data.reference.environment_reference.model_dump()
+                        "temperature": (
+                            temperature.value if temperature is not None else None
                         ),
+                        "media": media,
+                        "serialized_data": json.dumps(environment.model_dump()),
                     },
                 )
                 nodes.append(node)
@@ -751,51 +824,42 @@ class CellAdapter:
                 nodes.append(node)
         return nodes
 
-    @data_chunker
-    def _temperature_node(
-        self, data: dict[str, Any], method_name: str
-    ) -> BioCypherNode:
+    @staticmethod
+    def _temperature_node_from(temperature: Any) -> BioCypherNode:
         temperature_id = hashlib.sha256(
-            json.dumps(data["experiment"].environment.temperature.model_dump()).encode(
-                "utf-8"
-            )
+            json.dumps(temperature.model_dump()).encode("utf-8")
         ).hexdigest()
         return BioCypherNode(
             node_id=temperature_id,
             preferred_id="temperature",
             node_label="temperature",
             properties={
-                "value": data["experiment"].environment.temperature.value,
-                "unit": data["experiment"].environment.temperature.unit,
-                "serialized_data": json.dumps(
-                    data["experiment"].environment.temperature.model_dump()
-                ),
+                "value": temperature.value,
+                "unit": temperature.unit,
+                "serialized_data": json.dumps(temperature.model_dump()),
             },
         )
+
+    @data_chunker
+    def _temperature_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherNode]:
+        """Emit the temperature node, or nothing when the record gaps temperature."""
+        temperature = data["experiment"].environment.temperature
+        if temperature is None:
+            return []
+        return [self._temperature_node_from(temperature)]
 
     def _get_temperature_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids: set[str] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
-            temperature_id = hashlib.sha256(
-                json.dumps(
-                    data.reference.environment_reference.temperature.model_dump()
-                ).encode("utf-8")
-            ).hexdigest()
-            if temperature_id not in seen_node_ids:
-                seen_node_ids.add(temperature_id)
-                node = BioCypherNode(
-                    node_id=temperature_id,
-                    preferred_id="temperature",
-                    node_label="temperature",
-                    properties={
-                        "value": data.reference.environment_reference.temperature.value,
-                        "unit": data.reference.environment_reference.temperature.unit,
-                        "serialized_data": json.dumps(
-                            data.reference.environment_reference.temperature.model_dump()
-                        ),
-                    },
-                )
+            temperature = data.reference.environment_reference.temperature
+            if temperature is None:
+                continue
+            node = self._temperature_node_from(temperature)
+            if node.get_id() not in seen_node_ids:
+                seen_node_ids.add(node.get_id())
                 nodes.append(node)
         return nodes
 
@@ -956,10 +1020,16 @@ class CellAdapter:
     # The typed record is serialized_data; the scalar response, its SE and the two
     # typed axes (measurement_type = WHAT the number is, assay_type = HOW it was
     # measured) are projected so a condition-response query never has to parse JSON.
+    # A categorical or ordinal screen carries no number, so its call is projected too:
+    # `category` on the shared ResponseCategory axis (what joins across screens) and
+    # `category_label` verbatim from the source (what makes the mapping auditable).
+    # `screen_id` names the screening run, so two screens of one compound at one dose
+    # stay separable.
 
     @staticmethod
     def _environment_response_properties(phenotype: Any) -> dict[str, Any]:
         assay_type = phenotype.assay_type
+        category = phenotype.category
         return {
             "graph_level": phenotype.graph_level,
             "label_name": phenotype.label_name,
@@ -968,6 +1038,9 @@ class CellAdapter:
             "environment_response_se": phenotype.environment_response_se,
             "measurement_type": str(phenotype.measurement_type.value),
             "assay_type": str(assay_type.value) if assay_type is not None else None,
+            "category": str(category.value) if category is not None else None,
+            "category_label": phenotype.category_label,
+            "screen_id": phenotype.screen_id,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
@@ -1780,21 +1853,25 @@ class CellAdapter:
     @data_chunker
     def _temperature_to_environment_edge(
         self, data: dict[str, Any], method_name: str
-    ) -> BioCypherEdge:
+    ) -> list[BioCypherEdge]:
+        """Link temperature to environment, or nothing when temperature is gapped."""
+        environment = data["experiment"].environment
+        temperature = environment.temperature
+        if temperature is None:
+            return []
         environment_id = hashlib.sha256(
-            json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
+            json.dumps(environment.model_dump()).encode("utf-8")
         ).hexdigest()
         temperature_id = hashlib.sha256(
-            json.dumps(data["experiment"].environment.temperature.model_dump()).encode(
-                "utf-8"
-            )
+            json.dumps(temperature.model_dump()).encode("utf-8")
         ).hexdigest()
-        edge = BioCypherEdge(
-            source_id=temperature_id,
-            target_id=environment_id,
-            relationship_label="temperature member of",
-        )
-        return edge
+        return [
+            BioCypherEdge(
+                source_id=temperature_id,
+                target_id=environment_id,
+                relationship_label="temperature member of",
+            )
+        ]
 
     @data_chunker
     def _environment_perturbation_to_environment_edges(

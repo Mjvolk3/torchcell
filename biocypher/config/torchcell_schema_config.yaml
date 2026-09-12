@@ -79,6 +79,23 @@ segregant genotype:
         n_blocks: int
         serialized_data: str
 
+# The engineered CRISPR machinery a perturbation was made with (CrisprConstruct): the
+# guide spacer + the Cas effector fusion + the library sub-pool it was screened in. It
+# is its OWN node class rather than extra properties on `perturbation`, because
+# `perturbation` is in the served graph and adding properties to it would force a full
+# rebuild; a new class is additive. Without it the effector, spacer and pool of every
+# CRISPRi/CRISPRa/CRISPRd record are reachable only by parsing serialized_data.
+crispr construct:
+    represented_as: node
+    properties:
+        effector: str
+        guide_sequence: str
+        n_guides: int
+        library_pool: str
+        effector_plasmid_uri: str
+        effector_plasmid_sha256: str
+        serialized_data: str
+
 environment:
     is_a: environmental exposure
     represented_as: node
@@ -263,6 +280,11 @@ protein abundance phenotype:
 # A strain's signed growth/fitness RESPONSE in a perturbed environment
 # (EnvironmentResponsePhenotype): chemogenomic screens and the segregant growth
 # panels. measurement_type = WHAT the number is, assay_type = HOW it was measured.
+# A categorical or ordinal screen has no number at all, so category (the shared
+# ResponseCategory axis) and category_label (the source's own word) are projected
+# too, else such a dataset is queryable only by parsing serialized_data. screen_id
+# names the screening run, which is what separates two independent screens of the
+# same compound at the same dose.
 environment response phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -274,6 +296,9 @@ environment response phenotype:
         environment_response_se: float
         measurement_type: str
         assay_type: str
+        category: str
+        category_label: str
+        screen_id: str
         serialized_data: str
 # PHENOTYPES END
 
@@ -289,6 +314,12 @@ perturbation member of:
     represented_as: edge
     source: perturbation
     target: genotype
+
+crispr construct member of:
+    is_a: part of
+    represented_as: edge
+    source: crispr construct
+    target: perturbation
 
 environment member of:
     is_a: participates in

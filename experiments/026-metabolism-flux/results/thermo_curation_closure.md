@@ -1,6 +1,6 @@
 # Thermodynamic curation closure
 
-Built 2026-09-11T23:33:33.653441+00:00 by `experiments/026-metabolism-flux/scripts/thermo_curation_closure_summary.py`.
+Built 2026-09-12T00:20:31.712340+00:00 by `experiments/026-metabolism-flux/scripts/thermo_curation_closure_summary.py`.
 
 ## Coverage before and after
 
@@ -15,6 +15,8 @@ Built 2026-09-11T23:33:33.653441+00:00 by `experiments/026-metabolism-flux/scrip
 | reactions priced through cancellation | 0 | 22 |
 
 ## Ceiling ladder after, over the chemical reactions
+
+Denominator 3847: chemical reactions only; 284 exchange, demand, sink and biomass pseudoreactions excluded as non_chemical. The three states partition it: 3535 priced now + 21 closable + 291 closed for good = 3847 (partition_check True). The 3801 of 4131 in the table above is a different fraction of a different denominator, the whole model.
 
 | rung | reactions priced | fraction | flux carrying | fraction |
 |---|---:|---:|---:|---:|

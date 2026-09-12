@@ -1,5 +1,5 @@
 {
- "built_at": "2026-09-11T23:33:32.658611+00:00",
+ "built_at": "2026-09-12T00:20:23.614002+00:00",
  "gem": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
  "gem_sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
  "stages": [
@@ -470,10 +470,14 @@
   "note": "the five heterologous intermediates are not in yeast-GEM and are priced directly from the compound cache (pathway_thermo_betaxanthin.json); what is counted here is the yeast side the heterologous reactions draw on, whose driving forces the flux layer has to get right for a betaxanthin prediction to mean anything"
  },
  "ceiling_ladder": {
-  "built_at": "2026-09-11T23:33:32.667069+00:00",
+  "built_at": "2026-09-12T00:20:23.622405+00:00",
   "n_reactions": 4131,
   "n_reactions_chemical": 3847,
   "n_reactions_non_chemical": 284,
+  "denominator": 3847,
+  "denominator_note": "chemical reactions only; 284 exchange, demand, sink and biomass pseudoreactions excluded as non_chemical",
+  "n_closable": 21,
+  "partition_check": true,
   "n_flux_carrying": 2845,
   "rungs": [
    {
@@ -520,7 +524,7 @@
    "placeholder_formula": 96,
    "placeholder_structure": 3
   },
-  "note": "A reaction is permanently closed when every metabolite blocking it is not a molecule: a SLIME backbone whose formula is a difference formula, or a placeholder formula that names a family. No pKa predictor, structure writer, decomposer or literature table changes those, so the last rung is the ceiling for any method at all rather than for this one. Every fraction here is over the CHEMICAL reactions: the exchanges, demands, sinks and pseudoreactions are counted separately, because they are not elementally balanced and a standard reaction energy has no meaning for them. The rungs and the permanently closed set partition the unpriced reactions exactly: every unpriced reaction is either closed for good or named by the last rung."
+  "note": "EVERY count and fraction in this ladder is over 3847 CHEMICAL reactions, not over the model's 4131: the 284 exchange, demand, sink and biomass pseudoreactions are excluded, because they are not elementally balanced and a standard reaction energy has no meaning for them. The priced count elsewhere in this file (CoverageCeiling.n_reactions_priced) is over the WHOLE model and is a different fraction of a different denominator. A reaction is permanently closed when every metabolite blocking it is not a molecule: a SLIME backbone whose formula is a difference formula, or a placeholder formula that names a family. No pKa predictor, structure writer, decomposer or literature table changes those, so the last rung is the ceiling for any method at all rather than for this one. The rungs and the permanently closed set partition the unpriced reactions exactly: every unpriced reaction is either closed for good or named by the last rung."
  },
  "curation": {
   "curation_dir": "experiments/026-metabolism-flux/results/curation",

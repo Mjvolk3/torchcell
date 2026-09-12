@@ -1,8 +1,8 @@
 {
- "built_at": "2026-09-11T23:33:33.653441+00:00",
+ "built_at": "2026-09-12T00:20:31.712340+00:00",
  "curation_dir": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/curation",
  "coverage_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/reaction_thermo_coverage_final.json",
- "coverage_sha256": "73176f1e807693eaa5e34c7cd6e2c0ed3051b003c659840de9b103f0ca61276a",
+ "coverage_sha256": "b0c64748af977654567db9de6c3c319b06ece8177ce8418c06b52872f9605f0b",
  "baseline_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_curation_baseline.json",
  "baseline_built_at": "2026-09-11T07:10:57.205448+00:00",
  "n_records": 16,
@@ -57,6 +57,11 @@
    "evidence": "thermo_tier_d_probe.json measured that none of the remaining refused structures is reachable by the reactant-contribution path or by a surrogate within the admitted spread, so this rung needs new data rather than new code"
   }
  ],
+ "ladder_denominator": 3847,
+ "ladder_denominator_note": "chemical reactions only; 284 exchange, demand, sink and biomass pseudoreactions excluded as non_chemical",
+ "ladder_n_closable": 21,
+ "ladder_n_permanently_closed": 291,
+ "ladder_partition_check": true,
  "rows": [
   {
    "slug": "cytochrome_c",

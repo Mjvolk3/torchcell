@@ -465,6 +465,16 @@ class CeilingLadder(BaseModel):
     #: is a physical quantity.
     n_reactions_chemical: int = 0
     n_reactions_non_chemical: int = 0
+    #: The number every fraction in this ladder is over, stated next to the rungs so a
+    #: reader never has to infer it. It is NOT ``CoverageCeiling.n_reactions_priced``'s
+    #: denominator, which is the whole model, and the two live in the same file.
+    denominator: int = 0
+    denominator_note: str = ""
+    #: Reactions that are unpriced now and would close if every reason the last rung names
+    #: were resolved. ``now + n_closable + n_permanently_closed_reactions`` is the
+    #: denominator, and :attr:`partition_check` says so at write time.
+    n_closable: int = 0
+    partition_check: bool = False
     n_flux_carrying: int
     rungs: list[CeilingRung]
     n_permanently_closed_reactions: int
@@ -1360,11 +1370,34 @@ def _build_ceiling_ladder(result: ThermoPipelineResult) -> CeilingLadder:
             "within the admitted spread, so this rung needs new data rather than new code",
         ),
     ]
+    # The three states have to PARTITION the denominator: priced now, closable by the last
+    # rung, closed for good. Asserted here rather than left to a reader with a calculator,
+    # because the same file also carries a priced count over the WHOLE model, and two
+    # numerators against two denominators in one document is how a ladder gets misread.
+    ceiling_rung = next(
+        rung for rung in rungs if rung.name == "everything_chemically_possible_resolved"
+    )
+    n_closable = ceiling_rung.n_reactions_priced - base_priced
+    partition = base_priced + n_closable + len(permanently_closed) == n_total
+    if not partition:
+        raise ValueError(
+            f"the ceiling ladder does not partition its denominator: priced {base_priced} "
+            f"+ closable {n_closable} + permanently closed {len(permanently_closed)} != "
+            f"{n_total} chemical reactions"
+        )
     return CeilingLadder(
         built_at=datetime.now(UTC).isoformat(),
         n_reactions=result.reaction_counts.n_total,
         n_reactions_chemical=n_total,
         n_reactions_non_chemical=result.n_non_chemical_reactions,
+        denominator=n_total,
+        denominator_note=(
+            "chemical reactions only; "
+            f"{result.n_non_chemical_reactions} exchange, demand, sink and biomass "
+            "pseudoreactions excluded as non_chemical"
+        ),
+        n_closable=n_closable,
+        partition_check=partition,
         n_flux_carrying=n_flux,
         rungs=rungs,
         n_permanently_closed_reactions=len(permanently_closed),
@@ -1372,14 +1405,18 @@ def _build_ceiling_ladder(result: ThermoPipelineResult) -> CeilingLadder:
             sorted(closed_counts.items(), key=lambda kv: -kv[1])
         ),
         note=(
+            f"EVERY count and fraction in this ladder is over {n_total} CHEMICAL "
+            f"reactions, not over the model's {result.reaction_counts.n_total}: the "
+            f"{result.n_non_chemical_reactions} exchange, demand, sink and biomass "
+            "pseudoreactions are excluded, because they are not elementally balanced and a "
+            "standard reaction energy has no meaning for them. The priced count elsewhere "
+            "in this file (CoverageCeiling.n_reactions_priced) is over the WHOLE model and "
+            "is a different fraction of a different denominator. "
             "A reaction is permanently closed when every metabolite blocking it is not a "
             "molecule: a SLIME backbone whose formula is a difference formula, or a "
             "placeholder formula that names a family. No pKa predictor, structure writer, "
             "decomposer or literature table changes those, so the last rung is the ceiling "
-            "for any method at all rather than for this one. Every fraction here is over "
-            "the CHEMICAL reactions: the exchanges, demands, sinks and pseudoreactions are "
-            "counted separately, because they are not elementally balanced and a standard "
-            "reaction energy has no meaning for them. The rungs and the permanently "
+            "for any method at all rather than for this one. The rungs and the permanently "
             "closed set partition the unpriced reactions exactly: every unpriced reaction "
             "is either closed for good or named by the last rung."
         ),

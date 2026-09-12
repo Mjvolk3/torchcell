@@ -127,6 +127,13 @@ class ClosureSummary(BaseModel):
     n_metabolites_priced_after: int
     ladder_before: list[dict[str, Any]] = Field(default_factory=list)
     ladder_after: list[dict[str, Any]] = Field(default_factory=list)
+    #: The ladder's own denominator and its partition, carried so the table below can never
+    #: be read against the whole-model count that sits in the same coverage file.
+    ladder_denominator: int = 0
+    ladder_denominator_note: str = ""
+    ladder_n_closable: int = 0
+    ladder_n_permanently_closed: int = 0
+    ladder_partition_check: bool = False
     rows: list[SlugRow] = Field(default_factory=list)
     n_open_reactions: int = 0
     open_by_reason: dict[str, int] = Field(default_factory=dict)
@@ -416,6 +423,13 @@ def main() -> None:
         n_metabolites_priced_after=result.metabolite_counts.n_priced,
         ladder_before=[],
         ladder_after=coverage["ceiling_ladder"]["rungs"],
+        ladder_denominator=coverage["ceiling_ladder"]["denominator"],
+        ladder_denominator_note=coverage["ceiling_ladder"]["denominator_note"],
+        ladder_n_closable=coverage["ceiling_ladder"]["n_closable"],
+        ladder_n_permanently_closed=coverage["ceiling_ladder"][
+            "n_permanently_closed_reactions"
+        ],
+        ladder_partition_check=coverage["ceiling_ladder"]["partition_check"],
         rows=rows,
         n_open_reactions=len(open_reactions),
         open_by_reason=dict(sorted(open_by_reason.items(), key=lambda kv: -kv[1])),
@@ -477,6 +491,16 @@ def _write_md(summary: ClosureSummary, path: str) -> None:
         f"| reactions priced through cancellation | 0 | {summary.n_reactions_cancelled} |",
         "",
         "## Ceiling ladder after, over the chemical reactions",
+        "",
+        f"Denominator {summary.ladder_denominator}: "
+        f"{summary.ladder_denominator_note}. The three states partition it: "
+        f"{summary.ladder_after[0]['n_reactions_priced']} priced now + "
+        f"{summary.ladder_n_closable} closable + "
+        f"{summary.ladder_n_permanently_closed} closed for good = "
+        f"{summary.ladder_denominator} "
+        f"(partition_check {summary.ladder_partition_check}). The "
+        f"{summary.n_reactions_priced_after} of {summary.n_reactions} in the table above "
+        "is a different fraction of a different denominator, the whole model.",
         "",
         "| rung | reactions priced | fraction | flux carrying | fraction |",
         "|---|---:|---:|---:|---:|",

@@ -1,5 +1,5 @@
 {
- "built_at": "2026-09-11T23:33:32.637803+00:00",
+ "built_at": "2026-09-12T00:20:23.593706+00:00",
  "config": {
   "organism": "Saccharomyces cerevisiae (yeast-GEM 9.0.2)",
   "gem_path": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",

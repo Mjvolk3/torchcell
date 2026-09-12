@@ -740,3 +740,24 @@ the species blocking them are not molecules.
 
 The coverage question is answered: 91.48 percent priced, 95.47 percent of the reactions that
 can carry flux, 0.56 percent still reachable and 7.96 percent closed to any method.
+
+## 2026.09.11 - The numbers above were superseded the same day
+
+The coverage figures in the section above were written from the pipeline run that finished
+at 04:00 UTC. `results/reaction_thermo_coverage_final.json` was regenerated at 23:33 UTC by
+a later run that adds stages this note does not describe (`curated_records`) and routes it
+does not describe (`curated_structure`, `cancelled_participants`, `conserved_moiety`) plus
+two new reasons (`recorded_not_admitted`, `group_in_null_space`).
+
+Current state in that file: **3,801 of 4,131 reactions priced (92.01 %)** and **2,724 of
+2,845 flux-carrying (95.75 %)**, against the 3,779 (91.48 %) and 2,716 (95.47 %) reported
+above. Read the JSON, not this note, for the live numbers.
+
+**One thing for whoever owns the newer stages.** The record now carries two different
+priced counts and the partition identity this note asserts no longer closes:
+`n_reactions_priced` is `result.reaction_counts.n_priced` = 3,801, while the ceiling
+ladder's `now` rung is `result.reaction_counts_chemical.n_priced` = 3,535, a difference of
+266. Both are computed in `_write_ceiling` from the same result. If the narrower
+"chemical" base is deliberate, the ladder should say so in its own `note` field, because as
+the file stands a reader summing `now` + closable + permanently closed gets 3,847 rather
+than 4,131.

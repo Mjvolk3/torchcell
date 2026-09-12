@@ -318,6 +318,13 @@ Withdrawing a wrong price makes the coverage count go DOWN, and that is the poin
 | metabolites priced | 2561 | 2563 | 2559 |
 | accession prices withdrawn as a different molecule | 0 | 0 | 6 |
 
+Denominator 3847: chemical reactions only, with the 284 exchange, demand, sink and biomass
+pseudoreactions excluded as `non_chemical`. The three states partition it exactly, and the
+writer now asserts that at write time (`partition_check`, raising if it fails): 3535 priced
+now + 21 closable + 291 closed for good = 3847. The 3801 of 4131 in the table above is a
+different fraction of a different denominator, the whole model, and the two sit in the same
+coverage file.
+
 | rung | reactions priced | fraction | flux carrying | fraction |
 |---|---:|---:|---:|---:|
 | now | 3535 | 0.9189 | 2724 | 0.9575 |

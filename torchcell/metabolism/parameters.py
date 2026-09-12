@@ -1032,12 +1032,22 @@ class ThermoSource(StrEnum):
                          redefinition of ``UNION``, so a run that predates the extra rows
                          still reproduces exactly, and so a config records which table it
                          consumed.
+    ``VERIFIED``      -- the CURATED tables under ``thermo_equilibrator/verified/``, pinned
+                         by their manifest's sha256. The reaction values are read from the
+                         verified REACTION table rather than re-summed, because three of the
+                         routes behind it are reaction-level facts a stoichiometric sum
+                         cannot reproduce: participants that cancel, a conserved moiety
+                         priced from a group difference, and the shipped reaction column.
+                         It is also the only route in which the accession composition guard
+                         has run, so the glycogen and dolichol mispricings are absent from
+                         it and present in every other route.
     """
 
     SHIPPED = "shipped"
     EQUILIBRATOR = "equilibrator"
     UNION = "union"
     UNION_EXTERNAL = "union_external"
+    VERIFIED = "verified"
 
 
 class ReactionThermoTable(BaseModel):
@@ -1071,6 +1081,138 @@ class ReactionThermoTable(BaseModel):
 #: and the external-pKa targets. Two files rather than one so a run pins which it read.
 METABOLITE_TABLE_FILENAME = "metabolite_dgf_prime.parquet"
 METABOLITE_TABLE_WITH_EXTERNAL_FILENAME = "metabolite_dgf_prime_with_external.parquet"
+
+#: Where the curated tables live, and the manifest that names them. Written by
+#: ``experiments/026-metabolism-flux/scripts/thermo_verified_tables.py``; the manifest is
+#: the only way in, so a table nobody recorded cannot be read by accident.
+VERIFIED_SUBDIR = "verified"
+VERIFIED_MANIFEST_FILENAME = "manifest.json"
+
+
+class VerifiedTables(BaseModel):
+    """The curated tables a manifest names, after their hashes have been checked."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    manifest_path: str
+    manifest_sha256: str
+    metabolite_path: str
+    metabolite_sha256: str
+    reaction_path: str
+    reaction_sha256: str
+    built_at: str = ""
+    gem_sha256: str = ""
+    curation_dir: str = ""
+    n_curation_records: int = 0
+
+
+def load_verified_tables(thermo_dir: str) -> VerifiedTables:
+    """Resolve the verified tables through their manifest, verifying every sha256.
+
+    There is no fall back to the shipped file. A missing manifest, a table the manifest
+    names that is not on disk, or a hash that does not match all raise, because the whole
+    point of this route is that a run can say exactly which bytes it trained on. Silently
+    reading the shipped table when the verified one is absent would put the glycogen and
+    dolichol mispricings back into a run whose config says they are gone.
+    """
+    manifest_path = osp.join(thermo_dir, VERIFIED_SUBDIR, VERIFIED_MANIFEST_FILENAME)
+    if not osp.isfile(manifest_path):
+        raise FileNotFoundError(
+            f"{manifest_path} does not exist, so there are no verified tables to read. "
+            "Build them with experiments/026-metabolism-flux/scripts/"
+            "thermo_verified_tables.py; do NOT fall back to the shipped table."
+        )
+    with open(manifest_path) as handle:
+        manifest = json.load(handle)
+    wanted = {
+        "metabolite": "metabolite_dgf_prime_with_curation.parquet",
+        "reaction": "reaction_drg_prime_with_curation.parquet",
+    }
+    found: dict[str, tuple[str, str]] = {}
+    for entry in manifest["tables"]:
+        for role, basename in wanted.items():
+            if osp.basename(str(entry["path"])) != basename:
+                continue
+            path = str(entry["path"])
+            if not osp.isfile(path):
+                raise FileNotFoundError(
+                    f"{manifest_path} names {path}, which is not on disk"
+                )
+            digest = _sha256_of(path)
+            if digest != entry["sha256"]:
+                raise ValueError(
+                    f"{path} has sha256 {digest[:12]} and the manifest recorded "
+                    f"{str(entry['sha256'])[:12]}. The table changed after it was "
+                    "recorded; rebuild it rather than reading bytes nobody pinned."
+                )
+            found[role] = (path, digest)
+    missing = sorted(set(wanted) - set(found))
+    if missing:
+        raise ValueError(f"{manifest_path} names no {missing} table")
+    return VerifiedTables(
+        manifest_path=manifest_path,
+        manifest_sha256=_sha256_of(manifest_path),
+        metabolite_path=found["metabolite"][0],
+        metabolite_sha256=found["metabolite"][1],
+        reaction_path=found["reaction"][0],
+        reaction_sha256=found["reaction"][1],
+        built_at=str(manifest.get("built_at", "")),
+        gem_sha256=str(manifest.get("gem_sha256", "")),
+        curation_dir=str(manifest.get("curation_dir", "")),
+        n_curation_records=len(manifest.get("curation_record_sha256", {}) or {}),
+    )
+
+
+def _verified_reaction_table(
+    gem: GemTensors, tables: VerifiedTables
+) -> tuple[np.ndarray, np.ndarray, list[str], np.ndarray]:
+    r"""Read :math:`\Delta_r G'^\circ` per reaction straight out of the verified table.
+
+    Returns ``(values, mask, provenance, sigma)``, all aligned to the GEM's reaction order.
+
+    Re-summing the verified METABOLITE table over :math:`S` instead would silently drop
+    every reaction whose value is a reaction-level fact: the 22 priced because their
+    unpriced participants cancel, the one priced from a conserved moiety's group
+    difference, and the ones filled from the shipped reaction column. The route reads the
+    reaction table for exactly that reason, and it carries the pipeline's own sigma with it.
+    """
+    frame = pd.read_parquet(tables.reaction_path)
+    missing = {"reaction_id", "delta_r_g0_kj_per_mol", "route"} - set(frame.columns)
+    if missing:
+        raise ValueError(f"{tables.reaction_path} has no column {sorted(missing)}")
+    values_by_id = dict(
+        zip(frame["reaction_id"].astype(str), frame["delta_r_g0_kj_per_mol"])
+    )
+    route_by_id = dict(
+        zip(frame["reaction_id"].astype(str), frame["route"].astype(str))
+    )
+    sigma_by_id = (
+        dict(zip(frame["reaction_id"].astype(str), frame["sigma_kj_per_mol"]))
+        if "sigma_kj_per_mol" in frame.columns
+        else {}
+    )
+    n_reactions = gem.n_reactions
+    values = np.zeros(n_reactions)
+    mask = np.zeros(n_reactions, dtype=bool)
+    sigma = np.zeros(n_reactions)
+    provenance: list[str] = []
+    for j, reaction_id in enumerate(gem.rxn_ids):
+        value = values_by_id.get(str(reaction_id))
+        if value is None or not np.isfinite(value):
+            provenance.append("none")
+            continue
+        values[j] = float(value)
+        mask[j] = True
+        provenance.append(route_by_id.get(str(reaction_id), "verified"))
+        stored = sigma_by_id.get(str(reaction_id))
+        if stored is not None and np.isfinite(stored):
+            sigma[j] = float(stored)
+    if not mask.any():
+        raise ValueError(
+            f"{tables.reaction_path} priced none of the {n_reactions} GEM reactions. The "
+            "two are keyed differently, which means this table belongs to another model."
+        )
+    return values, mask, provenance, sigma
 
 
 def _equilibrator_metabolite_table(
@@ -1176,6 +1318,93 @@ def _reaction_sigma(
     return sigma * complete, complete, path
 
 
+def _resolve_verified(
+    gem: GemTensors,
+    thermo_dir: str,
+    met_ids: list[str],
+    paths: dict[str, str],
+    hashes: dict[str, str],
+) -> ReactionThermoTable:
+    r"""The curated route: manifest-pinned tables, reaction values read rather than re-summed.
+
+    **The sigma is the one the flux layer already builds, and it is NOT rebuilt for this
+    table.** ``formation_sigma.npz`` is keyed by metabolite id, so it re-indexes onto the
+    verified metabolite set for free and a reaction gets a sigma only when EVERY
+    participant is in the covariance factor, which is the same conservative rule every
+    other route uses. What that means in practice: a reaction whose value comes from a
+    CURATED price (a carrier pseudo pair, a dimer difference, a conserved moiety) has no
+    entry in the factor and therefore no correlated sigma, and the verified reaction
+    table's own per-reaction sigma is carried instead where it has one. The covariance
+    matrix :math:`Q` that ``flux_layer.reaction_sqrt_covariance`` builds is likewise keyed
+    by metabolite id and is NOT re-fitted here: it still spans the eQuilibrator-reachable
+    metabolites only, so an arm running ``thermo_uncertainty='covariance'`` on this source
+    gets correlated uncertainty for the eQuilibrator part of the table and zero for the
+    curated part. That is a stated limit of this route, not a silent one.
+    """
+    tables = load_verified_tables(thermo_dir)
+    paths["verified_manifest"] = tables.manifest_path
+    hashes["verified_manifest"] = tables.manifest_sha256
+    paths["verified_met"] = tables.metabolite_path
+    hashes["verified_met"] = tables.metabolite_sha256
+    paths["verified_reaction"] = tables.reaction_path
+    hashes["verified_reaction"] = tables.reaction_sha256
+
+    met_values, met_mask, _ = _equilibrator_metabolite_table(
+        osp.dirname(tables.metabolite_path),
+        met_ids,
+        filename=osp.basename(tables.metabolite_path),
+    )
+    values, mask, provenance, stored_sigma = _verified_reaction_table(gem, tables)
+
+    sigma, sigma_mask, sigma_path = _reaction_sigma(thermo_dir, gem.s, met_ids)
+    paths["equilibrator_sigma"] = sigma_path
+    hashes["equilibrator_sigma"] = _sha256_of(sigma_path)
+    # The propagated covariance where the participants are all in the factor, and the
+    # table's own sigma where they are not. Neither is invented: the second is what the
+    # staged pipeline propagated when it built the value.
+    from_factor = sigma_mask & mask
+    from_table = mask & ~sigma_mask & (stored_sigma > 0)
+    sigma = np.where(from_factor, sigma, np.where(from_table, stored_sigma, 0.0))
+    sigma_mask = from_factor | from_table
+
+    counts: dict[str, int] = {}
+    for tag in provenance:
+        counts[tag] = counts.get(tag, 0) + 1
+    counts["known"] = int(mask.sum())
+    counts["n_reactions"] = int(gem.n_reactions)
+    counts["sigma_known"] = int(sigma_mask.sum())
+    counts["sigma_from_covariance_factor"] = int(from_factor.sum())
+    counts["sigma_from_the_verified_table"] = int(from_table.sum())
+    counts["curation_records"] = tables.n_curation_records
+    met_counts = {
+        "n_metabolites": len(met_ids),
+        "known": int(met_mask.sum()),
+        "verified": int(met_mask.sum()),
+    }
+    return ReactionThermoTable(
+        delta_r_g0=torch.from_numpy(values * mask).float(),
+        mask=torch.from_numpy(mask),
+        provenance=provenance,
+        sigma=torch.from_numpy(sigma * sigma_mask).float(),
+        sigma_mask=torch.from_numpy(sigma_mask),
+        source=ThermoSource.VERIFIED,
+        counts=counts,
+        met_counts=met_counts,
+        source_paths=paths,
+        sha256=hashes,
+        notes=(
+            "The curated tables, pinned by "
+            f"{osp.basename(tables.manifest_path)} built {tables.built_at}. Reaction "
+            "values are READ, not re-summed, because cancellation, the conserved moiety "
+            "and the shipped reaction column are reaction-level facts a sum over S cannot "
+            "reproduce. The 33 dGPredictor rows of the shipped reaction column were "
+            "unit-corrected when the pipeline wrote this table and are not converted "
+            "again here. The covariance factor still spans the eQuilibrator metabolites "
+            "only; curated prices carry the table's own sigma or none."
+        ),
+    )
+
+
 def resolve_reaction_delta_g(
     gem: GemTensors, thermo_dir: str, source: ThermoSource = ThermoSource.UNION
 ) -> ReactionThermoTable:
@@ -1199,6 +1428,12 @@ def resolve_reaction_delta_g(
     paths = dict(gem.thermo.source_paths)
     hashes = dict(gem.thermo.sha256)
 
+    if source is ThermoSource.VERIFIED:
+        # The curated route reads its REACTION values straight out of the verified table,
+        # so the branch below, which re-sums a metabolite table over S, is skipped
+        # entirely. The metabolite table is still read, for the counts and so the run pins
+        # which one it was.
+        return _resolve_verified(gem, thermo_dir, met_ids, paths, hashes)
     if source is ThermoSource.SHIPPED:
         met_values, met_mask = shipped_values * shipped_mask, shipped_mask
         met_tag = np.where(met_mask, "shipped_metabolite_sum", "none")

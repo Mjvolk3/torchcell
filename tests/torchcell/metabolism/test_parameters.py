@@ -30,6 +30,7 @@ from torchcell.metabolism.parameters import (
     PredictorSelection,
     ThermoSource,
     load_predicted_unit_table,
+    load_verified_tables,
     resolve_reaction_delta_g,
 )
 
@@ -612,3 +613,155 @@ def _block(smiles: str) -> str:
     block = inchikey_block(smiles)
     assert block is not None
     return block
+
+
+# ------------------------------------------------------------------ the verified route
+
+
+def _verified_dir(
+    tmp_path: Path, met_rows: list[dict[str, object]], rxn_rows: list[dict[str, object]]
+) -> str:
+    """A thermo dir holding a verified/ subdir with a manifest that pins both tables."""
+    thermo = tmp_path / "thermo_equilibrator"
+    verified = thermo / "verified"
+    verified.mkdir(parents=True)
+    met = verified / "metabolite_dgf_prime_with_curation.parquet"
+    rxn = verified / "reaction_drg_prime_with_curation.parquet"
+    pd.DataFrame(met_rows).to_parquet(met, index=False)
+    pd.DataFrame(rxn_rows).to_parquet(rxn, index=False)
+    manifest = {
+        "built_at": "2026-09-11T00:00:00+00:00",
+        "gem_sha256": "deadbeef",
+        "curation_record_sha256": {"a.json": "0" * 64},
+        "tables": [
+            {"path": str(met), "sha256": _sha256_of_file(met)},
+            {"path": str(rxn), "sha256": _sha256_of_file(rxn)},
+        ],
+    }
+    (verified / "manifest.json").write_text(json.dumps(manifest))
+    return str(thermo)
+
+
+def _sha256_of_file(path: Path | str) -> str:
+    import hashlib
+
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        while block := handle.read(1 << 20):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def test_the_verified_route_resolves_through_the_manifest(tmp_path):
+    thermo = _verified_dir(
+        tmp_path,
+        [{"met_id": "a_c", "dgf_prime_kj_per_mol": -900.0}],
+        [{"reaction_id": "R1", "delta_r_g0_kj_per_mol": -40.0, "route": "mixed"}],
+    )
+    tables = load_verified_tables(thermo)
+    assert tables.n_curation_records == 1
+    assert tables.metabolite_sha256 and tables.reaction_sha256
+    assert osp.isfile(tables.metabolite_path)
+
+
+def test_a_missing_verified_manifest_raises_rather_than_reading_the_shipped_table(
+    tmp_path,
+):
+    """The whole point of the route is knowing which bytes a run trained on."""
+    (tmp_path / "thermo_equilibrator").mkdir()
+    with pytest.raises(FileNotFoundError, match="do NOT fall back"):
+        load_verified_tables(str(tmp_path / "thermo_equilibrator"))
+
+
+def test_a_verified_table_whose_hash_moved_raises(tmp_path):
+    thermo = _verified_dir(
+        tmp_path,
+        [{"met_id": "a_c", "dgf_prime_kj_per_mol": -900.0}],
+        [{"reaction_id": "R1", "delta_r_g0_kj_per_mol": -40.0, "route": "mixed"}],
+    )
+    path = osp.join(thermo, "verified", "metabolite_dgf_prime_with_curation.parquet")
+    pd.DataFrame([{"met_id": "a_c", "dgf_prime_kj_per_mol": -1.0}]).to_parquet(
+        path, index=False
+    )
+    with pytest.raises(ValueError, match="changed after it was recorded"):
+        load_verified_tables(thermo)
+
+
+def test_a_manifest_that_names_no_reaction_table_raises(tmp_path):
+    thermo = _verified_dir(
+        tmp_path,
+        [{"met_id": "a_c", "dgf_prime_kj_per_mol": -900.0}],
+        [{"reaction_id": "R1", "delta_r_g0_kj_per_mol": -40.0, "route": "mixed"}],
+    )
+    manifest_path = osp.join(thermo, "verified", "manifest.json")
+    manifest = json.loads(Path(manifest_path).read_text())
+    manifest["tables"] = [
+        e for e in manifest["tables"] if "metabolite" in osp.basename(e["path"])
+    ]
+    Path(manifest_path).write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="names no \\['reaction'\\] table"):
+        load_verified_tables(thermo)
+
+
+@real_data
+def test_the_verified_route_keeps_the_reaction_level_values_a_re_sum_would_lose(
+    real_gem,
+):
+    """Cancellation, the conserved moiety and the reaction column are not sums over S.
+
+    Re-summing the verified METABOLITE table would drop every one of them, so the route
+    reads the reaction table instead, and this is the test that says so.
+    """
+    _, gem = real_gem
+    union = resolve_reaction_delta_g(gem, THERMO_DIR, ThermoSource.UNION_EXTERNAL)
+    verified = resolve_reaction_delta_g(gem, THERMO_DIR, ThermoSource.VERIFIED)
+
+    assert verified.source is ThermoSource.VERIFIED
+    assert verified.counts["known"] > union.counts["known"]
+    # Routes only a reaction-level fact can produce.
+    assert verified.counts.get("cancelled_participants", 0) > 0
+    assert verified.counts.get("conserved_moiety", 0) > 0
+    assert len(verified.provenance) == gem.n_reactions
+    assert not torch.isnan(verified.delta_r_g0).any()
+    assert float(verified.delta_r_g0[~verified.mask].abs().max()) == 0.0
+    # The manifest is pinned in the table's own provenance, both tables by sha256.
+    assert verified.sha256["verified_manifest"]
+    assert verified.sha256["verified_met"] != verified.sha256["verified_reaction"]
+    # Sigma is still only claimed where it is earned, and it is split by where it came from.
+    assert 0 < verified.counts["sigma_known"] < verified.counts["known"]
+    assert (
+        verified.counts["sigma_from_covariance_factor"]
+        + verified.counts["sigma_from_the_verified_table"]
+        == verified.counts["sigma_known"]
+    )
+
+
+@real_data
+def test_the_verified_route_drops_the_glycogen_mispricing_the_others_carry(real_gem):
+    """The composition guard ran on this table and on no other, and it is checkable.
+
+    Glycogen is one residue in the GEM and the accession route priced it from a
+    four-residue oligomer. The verified table carries the residue value; the union table
+    carries the oligomer's.
+    """
+    _, gem = real_gem
+    index = {mid: i for i, mid in enumerate(gem.met_ids)}
+    if "s_0773" not in index:
+        pytest.skip("this GEM has no glycogen s_0773")
+    frame = pd.read_parquet(
+        load_verified_tables(THERMO_DIR).metabolite_path,
+        columns=["met_id", "dgf_prime_kj_per_mol"],
+    )
+    verified_value = dict(
+        zip(frame["met_id"].astype(str), frame["dgf_prime_kj_per_mol"])
+    )["s_0773"]
+    shipped_frame = pd.read_parquet(
+        osp.join(THERMO_DIR, "metabolite_dgf_prime_with_external.parquet"),
+        columns=["met_id", "dgf_prime_kj_per_mol"],
+    )
+    shipped_value = dict(
+        zip(shipped_frame["met_id"].astype(str), shipped_frame["dgf_prime_kj_per_mol"])
+    )["s_0773"]
+    assert verified_value > shipped_value + 500.0, (
+        "the verified table must carry the RESIDUE value, not the oligomer's"
+    )

@@ -239,3 +239,56 @@ curator who ran the group decomposer on heme a and recorded that it refused the 
 is stating evidence, and a namespace heuristic that later calls the same species "no
 structure available" moves the coverage ladder by reclassifying work that is not retrieval
 as retrieval. A stage may now mark a reason final, and only the curated stage does.
+
+## 2026.09.12 - `ThermoSource.VERIFIED`: which table each source reads
+
+The curated tables existed and no source pointed at them, so every training run was still
+reading `metabolite_dgf_prime_with_external.parquet` and none of the curation round reached
+a model. `ThermoSource.VERIFIED` is that pointer.
+
+| source | metabolite table | reaction values | composition guard ran |
+|---|---|---|---|
+| `shipped` | yeast-GEM `model_metDeltaG.csv`, kcal converted on read | summed over S | no |
+| `equilibrator` | `metabolite_dgf_prime.parquet` | summed over S | no |
+| `union` | the two above merged, eQuilibrator preferred | summed over S, then the shipped reaction column | no |
+| `union_external` | `metabolite_dgf_prime_with_external.parquet` merged with shipped | summed over S, then the shipped reaction column | no |
+| `verified` | `verified/metabolite_dgf_prime_with_curation.parquet` | READ from `verified/reaction_drg_prime_with_curation.parquet` | **yes** |
+
+Measured on yeast-GEM 9.0.2 with `resolve_reaction_delta_g`: `union_external` prices
+3,779 of 4,131 reactions with sigma on 1,755; `verified` prices **3,801** with sigma on
+1,751, and its provenance carries `cancelled_participants` 19, `conserved_moiety` 1,
+`curated_structure` 2 and `carrier_potential` inside its 872 `mixed` reactions.
+
+### Why the reaction values are READ and not re-summed
+
+Three of the routes behind the verified table are reaction-level facts that a sum over S
+cannot reproduce: participants that CANCEL (19 reactions whose chemical energy is exactly
+zero because the same species sits on both sides), a conserved MOIETY priced from a group
+difference (r_0530), and the shipped reaction column. Re-summing the verified metabolite
+table would silently drop all of them. So `_resolve_verified` reads the reaction table and
+takes its `route` column as the per-reaction provenance.
+
+The 33 dGPredictor rows keep their unit correction by construction: the staged pipeline
+applied it when it wrote the table, so nothing converts them a second time on this path.
+
+### The covariance is NOT rebuilt for this table, and that is a stated limit
+
+`formation_sigma.npz` is keyed by metabolite id, so it re-indexes onto the verified
+metabolite set for free and a reaction earns a correlated sigma only when EVERY participant
+is in the factor. What it does NOT do is cover the curated prices: a carrier pseudo pair, a
+dimer difference and a conserved moiety have no entry in the component-contribution
+covariance, so those reactions take the verified table's own per-reaction sigma where it has
+one (1 reaction) and none otherwise. The `Q` matrix
+`flux_layer.reaction_sqrt_covariance` builds is the same factor and is likewise not
+re-fitted, so an arm running `thermo_uncertainty='covariance'` on this source gets
+correlated uncertainty for the eQuilibrator part of the table and zero for the curated part.
+Re-fitting the factor over the curated set is a separate piece of work.
+
+### Reaching it from a run
+
+`FluxLayerConfig.thermo_source` is the enum, so the layer needs no change: it only checks
+that the table it is handed carries the source the config names. **`train_bx.py` hard-codes
+its `--thermo-source` choices** as `("shipped", "equilibrator", "union", "union_external")`
+rather than deriving them from `ThermoSource`, so `--thermo-source verified` is rejected by
+argparse until that tuple is updated. That file belongs to the 027 stream and was not
+edited here.

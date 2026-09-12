@@ -1,0 +1,199 @@
+{
+  "lmdb_path": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig6_pigment_transfer/processed/lmdb",
+  "dataset_name": "AminoAcidMulleder2016Dataset",
+  "stored_unit": "intracellular_concentration_mM",
+  "conc_lower_m": 1e-07,
+  "conc_upper_m": 0.01,
+  "n_records": 4678,
+  "n_measurements": 88882,
+  "overall_min_m": 1.60987540662886e-06,
+  "overall_max_m": 0.0954843724609407,
+  "frac_measurements_above_upper": 0.10634324160122409,
+  "frac_measurements_below_lower": 0.0,
+  "amino_acids_exceeding_upper": [
+    "alanine",
+    "arginine",
+    "aspartate",
+    "glutamate",
+    "glutamine",
+    "glycine",
+    "serine",
+    "threonine",
+    "tyrosine"
+  ],
+  "recommended_conc_lower_m": 1e-07,
+  "recommended_conc_upper_m": 1.0,
+  "per_amino_acid": [
+    {
+      "amino_acid": "alanine",
+      "n": 4678,
+      "min_m": 0.00258025016705769,
+      "median_m": 0.00612709409654799,
+      "max_m": 0.019618772354016302,
+      "frac_above_upper": 0.014322359982898675,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "arginine",
+      "n": 4678,
+      "min_m": 0.000230185149681806,
+      "median_m": 0.002916543995924715,
+      "max_m": 0.017999248244336002,
+      "frac_above_upper": 0.005985463873450192,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "asparagine",
+      "n": 4678,
+      "min_m": 0.000158546536602145,
+      "median_m": 0.00122442530550694,
+      "max_m": 0.0029344935515207304,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "aspartate",
+      "n": 4678,
+      "min_m": 0.0011447991991975,
+      "median_m": 0.00503558632403167,
+      "max_m": 0.0132913595051229,
+      "frac_above_upper": 0.0012825994014536127,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "glutamate",
+      "n": 4678,
+      "min_m": 0.00343507915445609,
+      "median_m": 0.0214655727606026,
+      "max_m": 0.0779857567001164,
+      "frac_above_upper": 0.9980761008978196,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "glutamine",
+      "n": 4678,
+      "min_m": 0.00038340837645492996,
+      "median_m": 0.0282441873448774,
+      "max_m": 0.0954843724609407,
+      "frac_above_upper": 0.9985036340316374,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "glycine",
+      "n": 4678,
+      "min_m": 2.02754793286238e-05,
+      "median_m": 0.0018299610704155802,
+      "max_m": 0.019749540283424,
+      "frac_above_upper": 0.00042753313381787086,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "histidine",
+      "n": 4678,
+      "min_m": 0.0009924245173440931,
+      "median_m": 0.00477491431250596,
+      "max_m": 0.00967789020438452,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "isoleucine",
+      "n": 4678,
+      "min_m": 0.00021952549339491903,
+      "median_m": 0.00039936557691247,
+      "max_m": 0.0007343890500608681,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "leucine",
+      "n": 4678,
+      "min_m": 3.58604329567945e-05,
+      "median_m": 0.00026769644146562,
+      "max_m": 0.0007432400275230051,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "lysine",
+      "n": 4678,
+      "min_m": 7.60895838101083e-05,
+      "median_m": 0.0007732601540038301,
+      "max_m": 0.0095596631147094,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "methionine",
+      "n": 4678,
+      "min_m": 1.60987540662886e-06,
+      "median_m": 0.000126497929700501,
+      "max_m": 0.0004705417069139,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "phenylalanine",
+      "n": 4678,
+      "min_m": 0.00012808028165494002,
+      "median_m": 0.00027985007250509904,
+      "max_m": 0.0018364296562514099,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "proline",
+      "n": 4678,
+      "min_m": 0.00013371000638325102,
+      "median_m": 0.00112802677449486,
+      "max_m": 0.00207242069991448,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "serine",
+      "n": 4678,
+      "min_m": 0.000499021379550592,
+      "median_m": 0.002277089016366125,
+      "max_m": 0.0134679849796234,
+      "frac_above_upper": 0.00021376656690893543,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "threonine",
+      "n": 4678,
+      "min_m": 0.00226242933204069,
+      "median_m": 0.00399645376419888,
+      "max_m": 0.0101550898522488,
+      "frac_above_upper": 0.00021376656690893543,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "tryptophan",
+      "n": 4678,
+      "min_m": 1.15982267986631e-05,
+      "median_m": 3.88393711641798e-05,
+      "max_m": 0.00016214526427075303,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "tyrosine",
+      "n": 4678,
+      "min_m": 0.0006797430861261761,
+      "median_m": 0.00274186513866355,
+      "max_m": 0.019980686022681098,
+      "frac_above_upper": 0.001496365968362548,
+      "frac_below_lower": 0.0
+    },
+    {
+      "amino_acid": "valine",
+      "n": 4678,
+      "min_m": 0.00037753359827646905,
+      "median_m": 0.00135022585812751,
+      "max_m": 0.006339476834194471,
+      "frac_above_upper": 0.0,
+      "frac_below_lower": 0.0
+    }
+  ]
+}

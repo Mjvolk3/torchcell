@@ -65,3 +65,25 @@ experiments"). **30 °C** is used as the documented representative (standard
 growth-curve validations) and is **FLAGGED for review**. It is a shared constant
 across both conditions and every genotype, so it does not affect any mutant-vs-WT
 log2 FC — only the environment metadata. `GROWTH_TEMP_C` in the loader.
+
+## 2026.09.11 - Two findings about the stored values, from experiment 028
+
+1. **The stored `expression_log2_ratio` is scanpy's `logfoldchanges`, and one cell in five is
+   a zero-mean sentinel.** The formula returns +-23 to +-33 whenever one group's mean is zero;
+   20.2% of control cells carry such a value and 22.6% of genes carry it in more than half
+   of their records. The paper only used these values above a mean-count filter (1.27) and a
+   p threshold. A consumer must treat |value| >= 20 as absent, and even then the values are
+   not on a microarray scale (sd 0.89 vs 0.23).
+2. **The cell-to-genotype assignment (`assignment_consensus2`) is about 40% pure**, measured
+   from the deleted gene's own detection in its genotype's cells: median excess-zero purity
+   0.40 (n 281 genotypes whose deleted gene WT detects in >= 20% of cells); pdc1-labeled
+   cells carry PDC1 at 13.4 UMI vs 15.0 in WT. Consequently every per-genotype pseudobulk
+   is ~60% other genotypes, and the panel agrees with Kemmeren on 914 to 1,002 shared
+   deletions at a per-strain median of ~0.01 whether the fold change is the stored one or
+   recomputed from raw UMI three ways. As released, the dataset is not usable as a
+   knockout-expression target; the `dispersion` scalar is a separate readout.
+
+Scripts and numbers: [[experiments.028-knockout-expression.scripts.cross_study_ko_expression]],
+[[experiments.028-knockout-expression.scripts.cross_study_recomputed]],
+[[experiments.028-knockout-expression.scripts.nadal_assignment_purity]]. The single-cell
+object and the paper's DE scripts are now in the raw mirror (md5s match Zenodo 14062629).

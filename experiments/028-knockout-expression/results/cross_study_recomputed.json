@@ -1,0 +1,132 @@
+{
+ "generated_by": "experiments/028-knockout-expression/scripts/cross_study_recomputed.py",
+ "assignment_purity": {
+  "source": "experiments/028-knockout-expression/scripts/nadal_assignment_purity.R",
+  "n_genotypes_scored": 3314,
+  "wt_detect_ge_0.5": {
+   "n": 41,
+   "frac_own_cells_detecting_ko_median": 0.459821428571429,
+   "impurity_ratio_median": 0.635609063037464,
+   "purity_excess_zero_median": 0.364390936962536,
+   "purity_excess_zero_iqr": [
+    0.245579093487839,
+    0.403483655452159
+   ]
+  },
+  "wt_detect_ge_0.2": {
+   "n": 281,
+   "purity_excess_zero_median": 0.399252402990388,
+   "purity_excess_zero_iqr": [
+    0.260355029585799,
+    0.517141477547079
+   ]
+  }
+ },
+ "recompute_script": "experiments/028-knockout-expression/scripts/nadal_pseudobulk_recompute.R",
+ "statistics": {
+  "pseudobulk_log2fc": "A: pseudobulk CPM ratio",
+  "seurat_avg_log2fc": "B: Seurat avg_log2FC",
+  "scanpy_logfc": "C: scanpy formula (check)"
+ },
+ "resolution": {
+  "pseudobulk_log2fc": {
+   "genes_in_object": 6951,
+   "genes_unresolved": 526,
+   "genotypes_with_orf": 3506,
+   "orfs": 3395,
+   "orfs_with_replacement_strain": 110
+  },
+  "seurat_avg_log2fc": {
+   "genes_in_object": 6951,
+   "genes_unresolved": 526,
+   "genotypes_with_orf": 3506,
+   "orfs": 3395,
+   "orfs_with_replacement_strain": 110
+  },
+  "scanpy_logfc": {
+   "genes_in_object": 6951,
+   "genes_unresolved": 526,
+   "genotypes_with_orf": 3506,
+   "orfs": 3395,
+   "orfs_with_replacement_strain": 110
+  }
+ },
+ "reproduction_of_stored_by_scanpy_formula": {
+  "n_cells_matched": 16652453,
+  "sentinel_status_agreement": 0.9806647104783902,
+  "pearson_non_sentinel": 0.5147165274085626,
+  "median_abs_diff_non_sentinel": 0.25989137300114196
+ },
+ "kemmeren_vs_nadal": {
+  "stored": {
+   "n_shared_deletions": 914,
+   "n_shared_reporters": 5416,
+   "per_strain_median_r": 0.002900344575975205,
+   "per_strain_iqr": [
+    -0.020175995772428675,
+    0.03220750394915475
+   ],
+   "per_reporter_median_r": 0.02994657013797454,
+   "per_reporter_mean_sqrt_r_ceiling": 0.16270813740381893,
+   "strong_median_r": 0.1044456299338821,
+   "strong_sign_agreement": 0.6,
+   "ols_slope_kemmeren_on_nadal": 0.005865387483081466,
+   "cell_pearson": 0.025771148911132136,
+   "sd_nadal": 0.8826263059976182
+  },
+  "pseudobulk_log2fc": {
+   "n_shared_deletions": 1002,
+   "n_shared_reporters": 5267,
+   "per_strain_median_r": 0.013034121751175416,
+   "per_strain_iqr": [
+    -0.006131496717618168,
+    0.033255278140643454
+   ],
+   "per_reporter_median_r": 0.018536024653078603,
+   "per_reporter_mean_sqrt_r_ceiling": 0.12911618781897144,
+   "strong_median_r": 0.06439395039924185,
+   "strong_sign_agreement": 0.5384615384615384,
+   "ols_slope_kemmeren_on_nadal": 0.0016023147333766993,
+   "cell_pearson": 0.016411131271689715,
+   "sd_nadal": 2.057328315592911
+  },
+  "seurat_avg_log2fc": {
+   "n_shared_deletions": 1002,
+   "n_shared_reporters": 5959,
+   "per_strain_median_r": 0.008251323026434741,
+   "per_strain_iqr": [
+    -0.010319540790337478,
+    0.03179373755212375
+   ],
+   "per_reporter_median_r": 0.019933805254863914,
+   "per_reporter_mean_sqrt_r_ceiling": 0.13410965943680625,
+   "strong_median_r": 0.02695494032188002,
+   "strong_sign_agreement": 0.4117647058823529,
+   "ols_slope_kemmeren_on_nadal": 0.009671847477180563,
+   "cell_pearson": 0.019540719819762253,
+   "sd_nadal": 0.40806779236026924
+  },
+  "scanpy_logfc": {
+   "n_shared_deletions": 1002,
+   "n_shared_reporters": 5959,
+   "per_strain_median_r": 0.010956495187477738,
+   "per_strain_iqr": [
+    -0.007375149456768842,
+    0.03043006606764913
+   ],
+   "per_reporter_median_r": 0.011770367393608736,
+   "per_reporter_mean_sqrt_r_ceiling": 0.10770442626716732,
+   "strong_median_r": 0.00048611802162722265,
+   "strong_sign_agreement": 0.4117647058823529,
+   "ols_slope_kemmeren_on_nadal": 0.0001561699530621238,
+   "cell_pearson": 0.00867171034814128,
+   "sd_nadal": 11.215237718111053
+  }
+ },
+ "spearman_per_strain_r_vs_cells": {
+  "stored": 0.017098354824836542,
+  "pseudobulk_log2fc": -0.0358455840125019,
+  "seurat_avg_log2fc": -0.01545753060722208,
+  "scanpy_logfc": 9.583443048656754e-05
+ }
+}

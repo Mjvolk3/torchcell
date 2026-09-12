@@ -23,6 +23,35 @@
       "n_recurring_pairs": 420
     }
   },
+  "arm_q_gene_semantics": {
+    "n_distinct_pairs": 739315,
+    "n_recurring_pairs": 420,
+    "n_recurring_pair_instances": 376733,
+    "parts": {
+      "val": {
+        "records": 37705,
+        "query_pairs": 43,
+        "query_pairs_in_train": 0,
+        "distinct_array_genes": 4003,
+        "array_genes_in_train": 4003,
+        "query_pair_genes": 86,
+        "query_pair_genes_in_train": 78,
+        "records_all_three_genes_in_train": 30652,
+        "frac_records_all_three_genes_in_train": 0.8129425805596074
+      },
+      "test": {
+        "records": 37791,
+        "query_pairs": 46,
+        "query_pairs_in_train": 0,
+        "distinct_array_genes": 1182,
+        "array_genes_in_train": 1182,
+        "query_pair_genes": 92,
+        "query_pair_genes_in_train": 88,
+        "records_all_three_genes_in_train": 34558,
+        "frac_records_all_three_genes_in_train": 0.9144505305496018
+      }
+    }
+  },
   "test_pearson": {
     "R": {
       "B0_train_mean": {

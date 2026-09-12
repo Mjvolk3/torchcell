@@ -16,47 +16,65 @@ digenic interaction. The trigenic interaction score is
 %
 \external{Kuzmin et al.\ 2018, \texttt{10.1126/science.aao1729}; the definition of
 the released adjusted score, not re-derived here}
-a third-order residual: the multiplicative part of fitness and every pairwise term are
-subtracted before the number is reported, so $\tau$ is by construction the part of the
-triple phenotype that no single or double predicts. The loaders store it as
-\texttt{gene\_interaction}.
+a third-order residual: the multiplicative part of fitness and every pairwise term
+are subtracted before the number is reported, so $\tau$ is by construction the part
+of the triple phenotype that no single or double mutant predicts. The loaders store
+it as \texttt{gene\_interaction}.
 
 \notesec{The records}
-Subset S0 of the 025 build is its 376{,}732 trigenic records over 4{,}352 genes,
-the 010 build record for record: matching by genotype recovers every one, 376{,}526
-labels are bit-identical and the remaining 206 differ by at most
-$5.6 \times 10^{-17}$ (\file{experiments/025-solid-growth/scripts/label_parity_010_vs_025.py}).
-Every model below is fit on these records and nothing else.
+Subset S0 of the 025 build is its 376{,}732 trigenic records over 4{,}352 genes.
+Matching them to the 010 build by genotype recovers every one; 376{,}526 labels are
+bit-identical and the remaining 206 differ by at most $5.6 \times 10^{-17}$
+(\file{experiments/025-solid-growth/scripts/label_parity_010_vs_025.py}). Every
+model below is fit on these records and nothing else.
 
 \notesec{The screen structure}
-Counting unordered gene pairs over the records finds 739{,}315 distinct pairs, of
-which 420 occur five or more times. Those 420 cover 376{,}733 pair-instances, one more
-than the record count, so every record contains exactly one recurring pair and a
-single record contains two. The 420 pairs are the Kuzmin query doubles. Grouping
-records by them recovers the screen exactly, and any model with a per-pair offset can
+The records contain 739{,}315 distinct unordered gene pairs, of which 420 occur five
+or more times. Those 420 account for 376{,}733 pair instances, one more than the
+record count: every record contains exactly one recurring pair, and a single record
+contains two. The 420 pairs are the Kuzmin query doubles. Grouping records by their
+recurring pair recovers the screen exactly, and any model with a per-pair offset can
 absorb whatever is common to a screen.
 
 \notesec{The two arms}
 Arm R is 010's own split, random over records, carried into the 025 index space by
 genotype identity. Arm Q assigns whole query pairs to parts, so no screen appears in
-more than one part. The two arms hold out nearly the same number of records and differ
-only in what is held out.
+more than one part. The two arms hold out nearly the same number of records and
+differ only in what is held out.
 
 %% SOURCE: experiments/025-solid-growth/scripts/additive_baselines_025_panels.py ->
 %% tables/t1-arms.tex, from the two split artifacts named in the table.
 \begin{table}[htbp]
 \centering
 \footnotesize
-\caption{The two arms. Both partition the same 376{,}732 records. Arm R's parts each
-carry every one of the 420 query pairs; arm Q's parts carry disjoint sets of them.
-The split artifacts are the files the trainer loads, under
+\caption{The two arms. Both partition the same 376{,}732 records. Each part of arm
+R carries every one of the 420 query pairs; the parts of arm Q carry disjoint sets
+of them. The split artifacts are the files the trainer loads, under
 \texttt{experiments/025-solid-growth/results/}.}
 \label{tab:arms}
 \input{tables/t1-arms}
 \end{table}
 
-Under arm Q a held-out record's query pair has never been seen, but its genes have:
-every array gene of the validation and test parts appears in training, as do 78 of 86
-validation and 88 of 92 test query-pair genes, so 81 percent of validation and 92
-percent of test records have all three genes in the training set. The split holds out
-the pair, not the genes.
+\notesec{What arm Q holds out}
+The query pair, not the genes. Every array gene of the validation and test parts
+occurs in training, as do 78 of the 86 validation and 88 of the 92 test query-pair
+genes, so 81 percent of validation records and 91 percent of test records have all
+three genes in the training set (Table~\ref{tab:armqgenes}). A model on arm Q is
+therefore asked to predict an unseen pair of mostly seen genes with a seen third
+gene, which is the generalization that scoring an unmeasured triple requires. The
+test part spreads its records over 1{,}182 distinct array genes against the
+validation part's 4{,}003; the two parts are different kinds of screen sample, and
+no analysis here uses that difference.
+
+%% SOURCE: experiments/025-solid-growth/scripts/additive_baselines_025_panels.py ->
+%% tables/t4-armq-genes.tex, from the arm Q split artifact and the per-triple gene
+%% table of the 025 build.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{What the held-out parts of arm Q share with its training part. A query pair
+is the most frequent recurring pair a record carries, the rule that built the split;
+the array gene is the record's third gene.}
+\label{tab:armqgenes}
+\input{tables/t4-armq-genes}
+\end{table}

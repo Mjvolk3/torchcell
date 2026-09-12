@@ -27,6 +27,7 @@ Writes
     notes-tex/025-additive-baselines/tables/t1-arms.tex
     notes-tex/025-additive-baselines/tables/t2-heldout.tex
     notes-tex/025-additive-baselines/tables/t3-disjoint-runs.tex
+    notes-tex/025-additive-baselines/tables/t4-armq-genes.tex      what arm Q holds out, per part
 
 Panel c of the second figure is a placeholder by design: it draws the arm Q test nulls and
 an empty slot per planned replicate, so the layout the finished figure will have is fixed
@@ -40,6 +41,8 @@ import gzip
 import json
 import os
 import os.path as osp
+from collections import Counter
+from itertools import combinations
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -59,9 +62,16 @@ from torchcell.utils import (
 )
 
 load_dotenv()
+DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
 REPO_ROOT = osp.dirname(EXPERIMENT_ROOT)
+# 025 triple index -> its three systematic gene names, the same table the ladder script reads.
+RECAP = osp.join(
+    DATA_ROOT,
+    "data/torchcell/experiments/025-solid-growth/recapitulation/recapitulation_per_triple.csv.gz",
+)
+QUERY_PAIR_MIN_COUNT = 5
 
 RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "025-solid-growth", "results")
 RESULTS_010 = osp.join(EXPERIMENT_ROOT, "010-kuzmin-tmi", "results")
@@ -249,6 +259,66 @@ def arm_sizes() -> dict[str, dict[str, object]]:
             "n_recurring_pairs": int(len(q["pair_assignment"])),
         },
     }
+
+
+def arm_q_gene_semantics() -> dict[str, object]:
+    """What arm Q holds out: the query pair, and how much of each record's genes it has seen.
+
+    Regroups the S0 records by query pair with the rule ``subset_definitions.query_pair_split``
+    used (the most frequent recurring pair a record carries), checks the recurring pairs are
+    arm Q's 420, and then counts, for the validation and test parts, the distinct array
+    genes, how many of them the training part contains, how many query-pair genes it
+    contains, and how many records have all three genes in training.
+    """
+    q = load_gz("query_pair_disjoint_splits_025.json.gz")
+    pair_assignment: dict[str, str] = q["pair_assignment"]
+    subset = np.array(sorted(load_gz("subset_S0_indices.json.gz")), dtype=np.int64)
+    recap = pd.read_csv(RECAP, usecols=["idx_025", "gene_a", "gene_b", "gene_c"]).set_index("idx_025")
+    genes = recap.loc[subset, ["gene_a", "gene_b", "gene_c"]].to_numpy()
+
+    counts: Counter = Counter()
+    for trip in genes:
+        for p in combinations(sorted(trip), 2):
+            counts[p] += 1
+    recurring = {p for p, c in counts.items() if c >= QUERY_PAIR_MIN_COUNT}
+    if {"+".join(p) for p in recurring} != set(pair_assignment):
+        raise SystemExit("recurring pairs do not match arm Q's pair_assignment")
+
+    query_pair = np.empty(len(subset), dtype=object)
+    array_gene = np.empty(len(subset), dtype=object)
+    for i, trip in enumerate(genes):
+        rec = [p for p in combinations(sorted(trip), 2) if p in recurring]
+        best = max(rec, key=lambda p: counts[p])
+        query_pair[i] = best
+        (array_gene[i],) = set(trip) - set(best)
+
+    row_of = {int(r): i for i, r in enumerate(subset)}
+    parts = {s: np.array([row_of[int(r)] for r in q["splits"][s]]) for s in ("train", "val", "test")}
+    train_genes = set(genes[parts["train"]].ravel())
+    out: dict[str, object] = {
+        "n_distinct_pairs": len(counts),
+        "n_recurring_pairs": len(recurring),
+        "n_recurring_pair_instances": int(sum(counts[p] for p in recurring)),
+        "parts": {},
+    }
+    for s in ("val", "test"):
+        rows = parts[s]
+        pairs = {query_pair[i] for i in rows}
+        arr = {array_gene[i] for i in rows}
+        qp_genes = {g for p in pairs for g in p}
+        all_seen = np.array([all(g in train_genes for g in genes[i]) for i in rows])
+        out["parts"][s] = {
+            "records": int(rows.size),
+            "query_pairs": len(pairs),
+            "query_pairs_in_train": sum(1 for p in pairs if pair_assignment["+".join(p)] == "train"),
+            "distinct_array_genes": len(arr),
+            "array_genes_in_train": sum(1 for g in arr if g in train_genes),
+            "query_pair_genes": len(qp_genes),
+            "query_pair_genes_in_train": sum(1 for g in qp_genes if g in train_genes),
+            "records_all_three_genes_in_train": int(all_seen.sum()),
+            "frac_records_all_three_genes_in_train": float(all_seen.mean()),
+        }
+    return out
 
 
 def test_table(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
@@ -533,9 +603,34 @@ def table_heldout(agg: dict, cgt010: dict, ref_r: dict, ref_q: dict, d010: pd.Da
     write_table("t2-heldout.tex", "\n".join(body))
 
 
+def table_armq_genes(sem: dict) -> None:
+    v, t = sem["parts"]["val"], sem["parts"]["test"]
+
+    def seen(p: dict, k: str, tot: str) -> str:
+        return f"{p[k]} of {p[tot]}"
+
+    rows = [
+        ("Records", fmt_int(v["records"]), fmt_int(t["records"])),
+        ("Query pairs held out", str(v["query_pairs"]), str(t["query_pairs"])),
+        ("Query pairs also in training", str(v["query_pairs_in_train"]), str(t["query_pairs_in_train"])),
+        ("Distinct array genes", fmt_int(v["distinct_array_genes"]), fmt_int(t["distinct_array_genes"])),
+        ("Array genes present in training", seen(v, "array_genes_in_train", "distinct_array_genes"),
+         seen(t, "array_genes_in_train", "distinct_array_genes")),
+        ("Query-pair genes present in training", seen(v, "query_pair_genes_in_train", "query_pair_genes"),
+         seen(t, "query_pair_genes_in_train", "query_pair_genes")),
+        ("Records with all three genes in training",
+         f"{100 * v['frac_records_all_three_genes_in_train']:.1f}\\%",
+         f"{100 * t['frac_records_all_three_genes_in_train']:.1f}\\%"),
+    ]
+    body = ["\\begin{tabular}{lrr}", "\\toprule", " & Validation & Test \\\\", "\\midrule"]
+    body += [f"{a} & {b} & {c} \\\\" for a, b, c in rows]
+    body += ["\\bottomrule", "\\end{tabular}", ""]
+    write_table("t4-armq-genes.tex", "\n".join(body))
+
+
 def table_disjoint_runs(stats: dict) -> None:
     # Fixed widths on the two free-text columns, so the row fits the 182 mm text block.
-    body = ["\\begin{tabular}{llp{27mm}p{33mm}rrr}", "\\toprule",
+    body = ["\\begin{tabular}{ll>{\\raggedright\\arraybackslash}p{28mm}>{\\raggedright\\arraybackslash}p{38mm}rrr}", "\\toprule",
             "Run & Config & Gene input & Schedule, readout & Epochs & Val max (epoch) & Val last \\\\", "\\midrule"]
     for r in DISJOINT_RUNS:
         s = stats[r["key"]]
@@ -574,9 +669,13 @@ def main() -> None:
     table_arms(sizes)
     table_heldout(agg, cgt010, ref_r, ref_q, d010)
     table_disjoint_runs(stats)
+    sem = arm_q_gene_semantics()
+    table_armq_genes(sem)
+    print(json.dumps(sem, indent=1))
 
     out = {
         "arms": sizes,
+        "arm_q_gene_semantics": sem,
         "test_pearson": {
             arm: {m: {"mean": float(a.loc[m, "mean"]), "sd": (None if np.isnan(a.loc[m, "std"]) else float(a.loc[m, "std"]))}
                   for m in MODELS}

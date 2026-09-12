@@ -26,3 +26,11 @@ Runs:
 ![](assets/images/025-solid-growth/additive_baselines_025_fig2_disjoint_runs.svg)
 
 Layout notes: `tight_layout(rect=(0, 0, 1, 0.965))` leaves the headroom `panel_label` needs, since the letters sit 12 pt above each axes box and the top row's were clipped without it. The placeholder note in 2c is placed in the band between the null lines and the legend so no line crosses text.
+
+## 2026.09.12 - Revision pass and the arm Q gene-coverage table
+
+The document was revised in four passes before its first Zotero publish: a numbers audit against the result files, a prose rewrite, a read of the rendered pages, and a rebuild check. The audit found three errors in the first version: job 1640 first clears its validation null in epoch 4, not 3 (epochs above the ridge are 4, 5 and 7 to 16); GH 1598's validation maximum of 0.446 sits 0.001 below the 010 checkpoints' 0.447 to 0.462 band, not inside it; and the 010 bootstrap margin is +0.038 to +0.055, not +0.04 to +0.055. The abstract had also called all six models nulls, which B5 is not.
+
+The gene-coverage numbers for arm Q (which genes of a held-out record the training part has seen) had come from an ad hoc measurement in a session and not from a committed script, so `arm_q_gene_semantics()` was added to the panel script. It regroups S0 by query pair with the rule that built the split, asserts the 420 recurring pairs match the artifact, and writes `tables/t4-armq-genes.tex` plus an `arm_q_gene_semantics` block in the summary json. Reproduced: every array gene of validation (4,003 distinct) and test (1,182) occurs in training; 78 of 86 validation and 88 of 92 test query-pair genes do; 81.3 percent of validation and 91.4 percent of test records have all three genes in training; 739,315 distinct pairs, 420 recurring, 376,733 recurring-pair instances.
+
+Table 5's two free-text columns are now fixed-width and ragged-right, which removes the stretched justification the first build showed.

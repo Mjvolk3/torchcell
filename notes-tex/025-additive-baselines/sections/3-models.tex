@@ -6,8 +6,8 @@
 Let record $n$ have perturbed set $S_n$ of three genes, encoded as
 $x_n \in \{0,1\}^{|G|}$ over the $|G| = 4{,}352$ genes, with label $y_n = \tau$. A
 model is a set function $f : 2^G \to \mathbb{R}$, and its capacity to represent
-interaction is a structural property of the hypothesis class: for distinct genes $g$,
-$h$, $k$ and any $S$ disjoint from them,
+interaction is a structural property of the hypothesis class. For distinct genes
+$g$, $h$, $k$ and any $S$ disjoint from them,
 %
 \begin{equation}
   \Delta_{gh} f(S) = f(S \cup \{g,h\}) - f(S \cup \{g\}) - f(S \cup \{h\}) + f(S),
@@ -25,42 +25,45 @@ a null with respect to the label, whatever it is fit to.
 $\hat{y}(S) = \beta_0 + \sum_{g \in S} \beta_g$, with $\beta$ the ridge minimizer
 $(X^{\top}X + \alpha I)^{-1} X^{\top} \tilde{y}$ on the centered training labels and
 $\alpha$ chosen on validation over $\{10^{-2}, \ldots, 10^{3}\}$. Both finite
-differences vanish identically. The direct analog of the additive null of Visani,
-Verma and DeWitt (bioRxiv \texttt{2026.04.23.719915}).
+differences vanish identically. B1 is the additive null of Visani, Verma and DeWitt
+(bioRxiv \texttt{2026.04.23.719915}) transplanted from protein variants to gene
+deletions.
 
 \notesec{B2, additive plus recurring pairs}
 B1 with one coefficient $\gamma_{gh}$ per query pair in the training split. Each
 $\gamma_{gh}$ is the mean additive residual over that screen, shrunk by
-$\alpha/(n_{gh} + \alpha)$, so B2 is B1 plus one nearly unshrunk offset per screen.
-Second-order capacity on observed pairs, no third-order capacity.
+$\alpha/(n_{gh} + \alpha)$ with $n_{gh}$ in the hundreds to thousands, so B2 is B1
+plus one nearly unshrunk offset per screen. Second-order capacity on observed pairs,
+no third-order capacity.
 
 \notesec{B3, screen mean}
 No fitted parameters. The mean training label over the records carrying the
 record's query pair; if no pair in the record recurs in training, the mean of its
 three gene means; failing that, the train mean. On arm R the first case always
-fires; on arm Q it never does.
+fires. On arm Q it never does, and B3 is a mean of gene means.
 
 \notesec{B4, query pair only}
 B2 without the gene terms: a per-screen offset and nothing else. The array gene
 contributes nothing, so B4's score is an upper bound on how much of the metric is
 the identity of the screen. On arm Q no test record carries a pair with a
-coefficient, so B4 is structurally zero.
+coefficient, and B4 is structurally zero.
 
 \notesec{B5, nonlinearity on the same features}
 A free 128-vector per gene, summed over the three perturbed genes and read out by a
 two-hidden-layer network, trained by gradient descent with early stopping on
 validation, three seeds. Exactly B1's feature space, but $\Delta_{ghk} \not\equiv 0$,
-so B5 is not a null; it is the smallest departure from B1 that has interaction
-capacity.
+so B5 is not a null. It is the smallest departure from B1 that has interaction
+capacity, and it isolates what capacity alone buys.
 
 \notesec{The transformer}
-The cell graph transformer of experiment 010, run on the 025 build without change in
+The cell graph transformer of experiment 010, run on the 025 build with no change to
 architecture, loss, optimizer or schedule (\texttt{cgt\_s0\_r\_kl\_000} for arm R,
 \texttt{cgt\_s0\_q\_kl\_004} for arm Q). Its strain-dependent computation is a set
-function over the three perturbed gene identities, the same input the nulls see; the
-nine interaction graphs reach the prediction only through the trained weights, via a
-penalty on layer-1 attention. The long reading of that code is in the 010 document
-and is not repeated.
+function over the three perturbed gene identities, the same input the nulls see. The
+nine interaction graphs enter only through a penalty on layer-1 attention during
+training, so they shape the weights and are absent from the prediction function. The
+reading of the code that establishes both properties is in the 010 report and is
+not repeated.
 
 %% SOURCE: structural, derived from the model definitions above; no data involved.
 \begin{table}[htbp]
@@ -86,7 +89,7 @@ CGT & free 180-vector through an encoder & attention over $S$, mean, MLP & gradi
 \end{table}
 
 \notesec{Comparability}
-Every model is fit on the training part of the arm it is reported under, selects
-its free choices on the validation part, and is reported on test. The transformer's
+Every model is fit on the training part of the arm it is reported under, makes its
+free choices on the validation part, and is reported on test. The transformer's
 label normalizer is fit on the training part for arm Q and on all of S0 for arm R;
 Pearson is invariant to that choice, and the nulls use the training mean only.

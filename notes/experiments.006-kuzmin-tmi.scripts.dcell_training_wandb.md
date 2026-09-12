@@ -115,3 +115,9 @@ Stage 6 ("rerun on a later day", 119 s/step) drawn as a bar under stage 5 read a
 ![](./assets/images/006-kuzmin-tmi/dcell_training_stages.svg)
 
 `--from-csv` re-rendered all five panels; `cost.csv`, `checkpoints.csv`, `data_effect_runs.csv` and `data_effect.csv` were rewritten byte-identical (sha256 checked against the pre-run hashes of all 18 result files), and the two generated tables did not change.
+
+## 2026.09.11 - Fourth author review: panel d in order, the later-day reruns dropped
+
+The dashed 99 to 119 s range on the stage-5 row (CSV rows 6 and 7, the stage-5 configuration rerun on later days) read as a strange replicate with a different training time, and the stage numbers jumped from 5 to 8. `panel_stages()` now draws CSV rows 1 to 5 and 8 to 9 as stages 1 to 7 in order (`DRAWN_ROWS`, `stage_of`), with the cumulative arrows on 1 to 5 and the rule before the two `torch.compile` stages; rows 6 and 7 stay in `speedup_stages.csv` and are not drawn, and the caption says so with their values. The x axis ends at 150 s. No number changed.
+
+![](./assets/images/006-kuzmin-tmi/dcell_training_stages.svg)

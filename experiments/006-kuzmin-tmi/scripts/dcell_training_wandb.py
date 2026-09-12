@@ -59,7 +59,12 @@ import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.ticker import MultipleLocator
 
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, PLOT_PALETTE_FILL, mm_to_in, savefig_true_size_svg
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
 # Set AFTER the torchcell imports: the repo mplstyle is applied on import by some
 # torchcell modules and would override these.
@@ -213,7 +218,8 @@ def pull_history(api, project: str, rid: str) -> pd.DataFrame:
 
 def pull_kuzmin2018_runs(api) -> pd.DataFrame:
     """Freeze every run of the 005 DCell project with the config fields that decide whether
-    it is a full-build training run, and the epoch-level history of each run that is."""
+    it is a full-build training run, and the epoch-level history of each run that is.
+    """
     rows = []
     for r in api.runs(f"{ENTITY}/{KUZMIN2018_PROJECT}"):
         c, s = r.config, r.summary
@@ -340,7 +346,8 @@ def run_cost(hist: pd.DataFrame, meta: pd.Series, samples_per_epoch: float) -> d
 
 def data_effect_table(k2018: pd.DataFrame, runs: pd.DataFrame, hist: dict[str, pd.DataFrame]) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Best validation Pearson (maximum over epochs) per DCell run on each build, and the
-    per-build statistic: n, mean, SD, SEM (NaN when n = 1), run ids, epochs logged."""
+    per-build statistic: n, mean, SD, SEM (NaN when n = 1), run ids, epochs logged.
+    """
     per_run = []
     for _, r in k2018[k2018["full_build_run"]].iterrows():
         v = hist[r["run_id"]]
@@ -545,7 +552,8 @@ def panel_loss(hist: pd.DataFrame, full: pd.DataFrame, ck: pd.DataFrame):
 def panel_cost(cost: pd.DataFrame):
     """Panel c: GPU-hours to the best validation epoch (left) and wall-clock hours per epoch
     (right, the ``epoch_time_h_median`` column of cost.csv), both on log axes. Bar = mean
-    over runs, open circles = runs, whisker = SEM where a model has more than one run."""
+    over runs, open circles = runs, whisker = SEM where a model has more than one run.
+    """
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
     fig, axes = plt.subplots(1, 2, figsize=(w, mm_to_in(50)))
     fig.subplots_adjust(left=0.14, right=0.98, bottom=0.18, top=0.9, wspace=0.55)
@@ -579,11 +587,13 @@ def panel_cost(cost: pd.DataFrame):
 
 
 # Panel d: what each speed-up stage changed relative to the one before it (3-5 words).
-# Stage numbers are the 1-based rows of speedup_stages.csv. Stages 1-5 are the cumulative
-# chain measured on one day (each keeps every earlier change); 6 and 7 are the same
-# configuration as stage 5 rerun on later days (7 with 12 loader workers) and are drawn as a
-# shaded range on the stage-5 row, not as bars; 8 and 9 are stage 5 with torch.compile at
-# batch 500 and 600. Values come from speedup_stages.csv unchanged.
+# Keys are the rows of speedup_stages.csv. Rows 1-5 are the cumulative chain measured on
+# one day (each keeps every earlier change); rows 6 and 7 are the same configuration as
+# row 5 rerun on later days (7 with 12 loader workers) and are NOT drawn, because the
+# shared machine drifts from day to day by more than several optimizations and only
+# same-sitting stages compare; rows 8 and 9 are row 5 with torch.compile at batch 500 and
+# 600. The panel numbers the drawn rows 1 to 7 in order. Values come from
+# speedup_stages.csv unchanged.
 STAGE_CHANGE = {
     "Before Duplicate Forward": "forward pass run twice",
     "After Removing Duplicate Forward": "duplicate forward removed",
@@ -595,31 +605,26 @@ STAGE_CHANGE = {
     "BF16-Mixed Precison - 8 Workers - Compile - batch size 500": "stage 5 + torch.compile",
     "BF16-Mixed Precison - 8 Workers - Compile - batch size 600": "stage 5 + torch.compile",
 }
-CHAIN_STAGES = [1, 2, 3, 4, 5]  # the within-day cumulative chain, drawn as bars
-RERUN_STAGES = [6, 7]  # later-day reruns of stage 5, drawn as a range on the stage-5 row
-COMPILE_STAGES = [8, 9]  # torch.compile variants of stage 5, drawn as bars
-RERUN_GAP = 1.4  # rows of space under stage 5 for the range label
+CHAIN_ROWS = [1, 2, 3, 4, 5]  # the within-day cumulative chain, drawn as bars
+RERUN_ROWS = [6, 7]  # later-day reruns of row 5; kept in the CSV, not drawn
+COMPILE_ROWS = [8, 9]  # torch.compile variants of row 5, drawn as bars
+DRAWN_ROWS = CHAIN_ROWS + COMPILE_ROWS  # displayed as stages 1 to 7, in this order
 
 
 def panel_stages(st: pd.DataFrame):
     """Panel d as an explanatory table: left, stage number, what changed, batch per GPU and
     the resulting samples per second; right, seconds per optimizer step as bars on the same
-    rows. Down-arrows link the cumulative stages 1 -> 5. Stages 6 and 7 (reruns of stage 5
-    on later days) are the shaded range on the stage-5 row with its label in the gap below;
-    stages 8 and 9 (torch.compile) follow under a rule."""
+    rows. Down-arrows link the cumulative stages 1 -> 5; stages 6 and 7 (torch.compile on
+    stage 5) follow under a rule. The later-day reruns (CSV rows 6 and 7) are not drawn.
+    """
     st = st.reset_index(drop=True)
-    st["stage_no"] = np.arange(1, len(st) + 1)
-    assert list(st["stage_no"]) == CHAIN_STAGES + RERUN_STAGES + COMPILE_STAGES
-    by_no = st.set_index("stage_no")
-    # Row positions: chain rows from the top, a gap for the range label, then the compile rows.
-    y_pos, y = {}, len(CHAIN_STAGES) + len(COMPILE_STAGES) - 1 + RERUN_GAP
-    for sn in CHAIN_STAGES + COMPILE_STAGES:
-        if sn == COMPILE_STAGES[0]:
-            y -= RERUN_GAP
-        y_pos[sn] = y
-        y -= 1
-    ylim = (-0.6, y_pos[CHAIN_STAGES[0]] + 0.6)
-    y_rule = y_pos[COMPILE_STAGES[0]] + 0.55
+    st["row_no"] = np.arange(1, len(st) + 1)
+    assert list(st["row_no"]) == CHAIN_ROWS + RERUN_ROWS + COMPILE_ROWS
+    by_no = st.set_index("row_no")
+    stage_of = {row: i + 1 for i, row in enumerate(DRAWN_ROWS)}  # displayed stage number
+    y_pos = {row: len(DRAWN_ROWS) - 1 - i for i, row in enumerate(DRAWN_ROWS)}
+    ylim = (-0.6, y_pos[CHAIN_ROWS[0]] + 0.6)
+    y_rule = y_pos[COMPILE_ROWS[0]] + 0.5
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
     fig = plt.figure(figsize=(w, mm_to_in(50)))
     # Two axes on one row grid: the text table (no frame) and the bar chart (boxed).
@@ -633,36 +638,28 @@ def panel_stages(st: pd.DataFrame):
     for x, txt, ha in [(X_NUM, "Stage", "center"), (X_CHANGE, "What changed", "left"),
                        (X_BATCH, "Batch\nper GPU", "center"), (X_RATE, "Samples\nper s", "right")]:
         tab.text(x, hdr_y, txt, ha=ha, va="bottom", fontsize=6, fontweight="bold", clip_on=False, linespacing=1.1)
-    for sn, yi in y_pos.items():
-        r = by_no.loc[sn]
-        tab.text(X_NUM, yi, f"{sn}", ha="center", va="center", fontsize=6)
+    for row, yi in y_pos.items():
+        r = by_no.loc[row]
+        tab.text(X_NUM, yi, f"{stage_of[row]}", ha="center", va="center", fontsize=6)
         tab.text(X_CHANGE, yi, STAGE_CHANGE[r["stage"]], ha="left", va="center", fontsize=6)
         tab.text(X_BATCH, yi, f"{int(r['batch_size_per_gpu'])}", ha="center", va="center", fontsize=6)
         tab.text(X_RATE, yi, f"{r['samples_per_s']:.0f}", ha="right", va="center", fontsize=6)
     # Cumulative chain 1 -> 5: a down-arrow between consecutive rows, left of the numbers.
-    for a, b in zip(CHAIN_STAGES[:-1], CHAIN_STAGES[1:]):
+    for a, b in zip(CHAIN_ROWS[:-1], CHAIN_ROWS[1:]):
         tab.annotate("", xy=(X_ARROW, y_pos[b] + 0.3), xytext=(X_ARROW, y_pos[a] - 0.3),
                      arrowprops=dict(arrowstyle="-|>", color="black", lw=0.6, mutation_scale=5, shrinkA=0, shrinkB=0))
-    tab.text(X_LABEL, (y_pos[CHAIN_STAGES[0]] + y_pos[CHAIN_STAGES[-1]]) / 2, "cumulative", rotation=90,
+    tab.text(X_LABEL, (y_pos[CHAIN_ROWS[0]] + y_pos[CHAIN_ROWS[-1]]) / 2, "cumulative", rotation=90,
              ha="center", va="center", fontsize=6)
     tab.axhline(y_rule, xmin=0.0, xmax=1.0, color="#B0B0B0", lw=0.4)
 
-    ys = [y_pos[sn] for sn in y_pos]
-    vals = [by_no.loc[sn, "s_per_step"] for sn in y_pos]
+    ys = [y_pos[row] for row in y_pos]
+    vals = [by_no.loc[row, "s_per_step"] for row in y_pos]
     bars.barh(ys, vals, color=PURPLE, edgecolor="black", lw=0.5, height=0.65, zorder=3)
     for yi, v in zip(ys, vals):
         bars.text(v + 3, yi, f"{v:.0f}", va="center", ha="left", fontsize=6)
-    # Later-day reruns of stage 5 (rows 6, 7): a shaded range on the stage-5 row, labelled below.
-    lo, hi = by_no.loc[RERUN_STAGES, "s_per_step"].min(), by_no.loc[RERUN_STAGES, "s_per_step"].max()
-    y5 = y_pos[CHAIN_STAGES[-1]]
-    bars.add_patch(plt.Rectangle((lo, y5 - 0.325), hi - lo, 0.65, facecolor=PLOT_PALETTE_FILL[2],
-                                 edgecolor="black", lw=0.5, ls=(0, (2, 1.5)), zorder=3))
-    bars.text(hi + 3, y5, f"{lo:.0f}–{hi:.0f}", va="center", ha="left", fontsize=6)
-    bars.text(162, y5 - 0.5, f"{RERUN_STAGES[0]}, {RERUN_STAGES[1]}: reruns on the shared\nworkstation, later days",
-              va="top", ha="right", fontsize=6, linespacing=1.1, clip_on=False)
     bars.set_ylim(*ylim)
     bars.set_yticks([])
-    bars.set_xlim(0, 165)
+    bars.set_xlim(0, 150)
     bars.xaxis.set_major_locator(MultipleLocator(50))
     bars.set_xlabel("Seconds per optimizer step")
     bars.grid(axis="x", color="#D0D0D0", lw=0.4)
@@ -675,7 +672,8 @@ def panel_stages(st: pd.DataFrame):
 def panel_data_effect(per_run: pd.DataFrame, effect: pd.DataFrame):
     """Best validation Pearson (maximum over epochs) of DCell on the Kuzmin 2018-only build
     against the experiment-006 build: bar = mean over runs, whisker = SEM where n > 1, open
-    circles = runs. Both builds have one run, so no whisker is drawn."""
+    circles = runs. Both builds have one run, so no whisker is drawn.
+    """
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(48)))
     fig.subplots_adjust(left=0.16, right=0.97, bottom=0.2, top=0.95)

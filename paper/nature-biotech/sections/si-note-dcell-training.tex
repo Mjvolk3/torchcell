@@ -83,9 +83,10 @@ replicates, four GPUs each); bar, mean; open circles, runs; whisker, SEM where $
 (\supptab{tab:dcell-training-cost}). \textbf{d},~Speed-up stages on a shared four-GPU
 workstation: what each stage changed, batch per GPU, samples per second, and seconds per
 optimizer step as bars. Arrows mark the cumulative chain 1 to 5, measured in one sitting;
-stages 8 and 9 add \texttt{torch.compile} at batch 500 and 600; rows 6 and 7 (stage 5 rerun
-on later days, 99 and 119~s) are the dashed range, because the shared machine drifts from
-day to day by more than several optimizations and only same-sitting stages compare.
+stages 6 and 7 add \texttt{torch.compile} to stage 5 at batch 500 and 600. Two reruns of
+the stage-5 configuration on later days (99 and 119~s per step) are not drawn: the shared
+machine drifts from day to day by more than several optimizations, so only same-sitting
+stages compare.
 \textbf{e},~Where one training step spends its time on one GPU (RTX 6000 Ada, torch 2.11,
 bf16-mixed, batch 600, the cluster's per-GPU batch; the epoch-142 checkpoint of
 \texttt{eni948by} loaded strictly into the rebuilt model before profiling). Light bars,

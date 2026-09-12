@@ -148,9 +148,17 @@ authors or trust a live URL. Model these records with pydantic.
   reproducibility backstop; large non-PDF supplements/software/data do NOT go in
   Zotero). `$DATA_ROOT/torchcell-library/<citation_key>/` = local PDF mirror + OCR
   artifacts + `manifest.json` + non-PDF supplements under `software/`, `si/`, etc.
-  Dataset RAW files get the same treatment: a raw-data mirror with a per-file
-  provenance record (source_url + retrieval_command + sha256) that dataset loaders
-  reference, so every built LMDB traces to an exact, hash-pinned raw version.
+  Dataset RAW files get the same treatment: a raw-data mirror
+  (`$DATA_ROOT/torchcell-raw/<citation_key>/`) with a per-file provenance record
+  (source_url + retrieval_command + sha256) that dataset loaders reference, so every
+  built LMDB traces to an exact, hash-pinned raw version. **What is kept is exactly the
+  raw files the loader consumed for its first successful build**, not every released
+  file; a later revision that needs another file may fetch only files the paper's SI
+  lists, records the retrieval, and adds them to the raw mirror. If that source is gone,
+  the revision is blocked and says so; it never substitutes another file. Both mirrors
+  are rsynced (no deletions) into `/bulk` every Sunday by
+  `scripts/backup_mirrors_to_bulk.sh` (`scripts/crontab.txt`); sources have vanished
+  before, so the copy is the recovery plan, the URL is not.
 - **TorchCell Lit API (`tc-lit`) -- the HTTP access layer over the mirror, NOT a new
   library.** `tc-lit` is a running FastAPI/uvicorn service that streams the OCR'd,
   `sha256`-verified paper artifacts *out of* the `$DATA_ROOT/torchcell-library/`

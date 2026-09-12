@@ -41,3 +41,11 @@
 # run catches it; daily + age-gate is the precise way to get "removed after staying 14 days".)
 # Sweeps both /tmp and the /scratch sibling graveyard; never touches non-deprecate entries.
 0 4 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/purge_deprecated.sh >> /tmp/torchcell-purge-deprecated.log 2>&1'
+
+# mirror backup: weekly (Sunday 02:00) non-destructive rsync of the two provenance mirrors,
+# $DATA_ROOT/torchcell-library (papers, OCR, SI, released data + manifests) and
+# $DATA_ROOT/torchcell-raw (raw files each loader consumed for its first successful build),
+# into the /bulk archive tier. No --delete: a file removed on /scratch stays archived.
+# Seeded once by scripts/migrate_storage_tiers.sh (2026-08-23); this keeps it current, so a
+# rebuild never depends on a live URL (upstream sources have vanished before).
+0 2 * * 0 bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/backup_mirrors_to_bulk.sh >> /tmp/torchcell-backup-mirrors.log 2>&1'

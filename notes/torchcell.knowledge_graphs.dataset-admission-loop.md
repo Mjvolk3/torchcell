@@ -83,3 +83,30 @@ Candidates (mirror state from `$DATA_ROOT/torchcell-library/`; data hosts read f
 | Ho 2021 Biotechnol Biofuels | 1,125 segregants | ethanol, glycerol, isobutanol tolerance | unconfirmed | mirrored with 5 SI data files |
 
 Recommendation: Bloom 2019 as the 50th. It is the largest, it lands in the environment axis where nothing is served, its parents are the 1011 strains whose assemblies are already mirrored, and its genotype is exactly the mosaic the data model was designed for. Its processed matrices sit on Dropbox and Google Drive, the kind of host the mirror exists to outlive, so the first step is to fetch them, record the retrieval, and keep the copy. Bloom 2013 is the two-parent pilot of the same class (BY is S288C, already the reference genome) if a smaller first build is wanted, and Albert 2018 follows immediately because it shares the genotype class, which is the closure-neighbor case panel b describes. Unverified: whether the Dropbox and Google Drive links still resolve and what the matrices contain; the retrieval record is written when they are fetched.
+
+### Data recovery policy (decided 2026-09-11)
+
+What gets kept, per dataset, is exactly what a rebuild needs and nothing speculative:
+
+1. **Text.** The paper and its SI, mirrored and OCR'd in `$DATA_ROOT/torchcell-library/<key>/` with `manifest.json`.
+2. **Links.** The URLs the paper and SI give for released data, recorded as retrieval metadata (`RetrievalRecord`: method, URL, retriever, params, sha256, date), never as a live dependency.
+3. **The raw files the loader consumed for its first successful build**, copied into `$DATA_ROOT/torchcell-raw/<key>/` with the same manifest shape and sha256 the loader verifies. This is the set that makes the LMDB reproducible; released files the loader never read are not mirrored.
+4. **Backups.** `scripts/backup_mirrors_to_bulk.sh` rsyncs both mirrors into `/bulk` every Sunday at 02:00 (`scripts/crontab.txt`); no deletions propagate. The one-shot copy from 2026-08-23 is superseded.
+
+When a dataset is later revised and an agent needs a released file it did not consume the first time, it may fetch only files the SI lists for that paper, records the retrieval, and adds them to the raw mirror; if the source is gone, the revision is blocked and says so rather than substituting another file.
+
+Open work behind this policy: a `manifest.json` for each `torchcell-raw/<key>/` (the literature `Manifest` model applies as is), and moving the 28 loaders that pin a sha256 in module constants, and the 7 that pin nothing, onto `ArtifactRecord`. Both belong to the crank-turning pass over the remaining datasets.
+
+### Readout on the segregant papers (asked: was there an eLife RNA-seq segregant experiment?)
+
+Yes, three, and the eQTL data-model note names them as the only three of 155 candidates that score high on both Perturb-seq axes:
+
+- **Albert 2018 eLife (bulk RNA-seq, 1,012 BY x RM segregants).** Genetics of trans-regulatory variation in gene expression. Reads in SRA; processed supplementary data on figshare (`figshare.com/s/83bddc1ddf3f97108ad4`); code at `github.com/joshsbloom/eQTL_BYxRM`. Bib only, not mirrored. This is the bulk RNA-seq segregant experiment.
+- **Boocock 2025 eLife (single-cell RNA-seq, 393 BY x RM segregants pooled from Bloom 2013's panel).** Mirrored and annotated; the design note was written against it.
+- **N'Guessan 2025 eLife (single-cell RNA-seq, about 4,500 segregants, Nguyen Ba lab).** Candidate row only.
+
+All three sit on the same BY x RM genotype class, so once the mosaic genotype exists for one, the other two are closure neighbors and go in as increments. Bloom 2019 (growth on 38 conditions, 16 crosses) is the growth-phenotype counterpart and the recommended 50th; Albert 2018 is the expression counterpart on the two-parent cross and the natural 51st.
+
+### Environment datasets must resolve to the metabolism module's media
+
+`torchcell/metabolism/media.py` consumes the schema's `Media` directly: `media_to_bounds(Media, ExchangeIndex)` resolves each `MediaComponent` through its `Compound` annotations (ChEBI, InChIKey, name candidates) to an exchange reaction and an uptake bound, and ships `SM_FBA`, `SC_FBA`, `SC_URA_FBA`, `YPD_APPROX_FBA` and the SGA selection media as `Media` objects. So the alignment requirement for the 13 environmental datasets is concrete: their `Media` records must be built from typed `MediaComponent`s whose compounds carry identifiers `resolve_component` can match, not name-only media; an undefined ingredient (yeast extract, peptone) stays `definition=undefined` and is reported as unresolved rather than silently dropped. Chemical stresses are `EnvironmentPerturbation`s with a `SmallMoleculePerturbation`, not media components (`MediaComponentRole` is never a phenotypic consequence), and they have no exchange reaction; the metabolism arm sees only the base medium for those datasets, which is the correct statement of what FBA can represent. Hoepfner's 150 structure-bearing compounds are the test case.

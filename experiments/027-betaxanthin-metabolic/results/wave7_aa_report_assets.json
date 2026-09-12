@@ -1,0 +1,35 @@
+{
+ "built_at": "2026-09-12T20:15:31.384258+00:00",
+ "summary_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave7_aa_summary.json",
+ "summary_sha256": "9b177fbfd7694a69c597b7f76c53b57b3cf2b22e641bcb61d5076252a6fa181a",
+ "summary_generated_at": "2026-09-12-15-07-56",
+ "primary_budget": "e200",
+ "contrasts_emitted": [
+  "e200/conc_vs_pooled",
+  "e200/conc_nocstr_vs_pooled",
+  "e200/turnover_vs_pooled",
+  "e200/conc_vs_turnover",
+  "e200/conc_vs_conc_nocstr",
+  "e200/pooledq_vs_pooled"
+ ],
+ "assets": [
+  {
+   "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes-tex/027-metabolic-flux-module/tables/wave7_aa_contrasts.tex",
+   "sha256": "c2992fd216c86aa589cfb7eaa52aa675f0f8635f81c1ff6755c96e9bee4d8604",
+   "source_path": null,
+   "source_sha256": null
+  },
+  {
+   "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration.svg",
+   "sha256": "5d159d42393c907d47fbe697158ab9e8440285e43b68edc4bb1f48394e87312f",
+   "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-07-56.svg",
+   "source_sha256": "5d159d42393c907d47fbe697158ab9e8440285e43b68edc4bb1f48394e87312f"
+  },
+  {
+   "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration.png",
+   "sha256": "a91229c3ee402f8dcf3209736b9e2702cb1a0785b9f9b87f5a2746beddf27da1",
+   "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-07-56.png",
+   "source_sha256": "a91229c3ee402f8dcf3209736b9e2702cb1a0785b9f9b87f5a2746beddf27da1"
+  }
+ ]
+}

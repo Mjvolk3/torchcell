@@ -1,0 +1,22 @@
+%% notes-tex/027-metabolic-flux-module/tables/wave7_aa_contrasts.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/027-betaxanthin-metabolic/scripts/wave7_aa_report_assets.py
+%% SOURCE: experiments/027-betaxanthin-metabolic/results/wave7_aa_summary.json, contrasts
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Wave 7 amino-acid contrasts]{Every paired contrast of the wave 7 amino-acid round, at the 200-epoch budget. The statistic is the mean per-feature Spearman over Mulleder's 19 amino acids on the pinned Merzbacher test split, at the epoch a centered five-epoch moving average of validation Pearson selects, never a maximum over epochs. A contrast is PAIRED on the seed, so the difference column is the mean of the per-seed differences and its standard deviation is across seeds rather than across cells. Two contrasts pair only two seeds because the turnover arm ran two; at $n = 2$ or $3$ a standard deviation is an estimate with one or two degrees of freedom, so read the sign and the magnitude and not a $p$ value.}
+  \label{tab:wave7-aa}
+  \begin{tabular}{@{}p{0.40\textwidth}llrr@{}}
+    \toprule
+    Contrast & Arms & $n$ & Mean difference & s.d. \\
+    \midrule
+    concentration readout against the pooled control & conc vs pooled & 3 & \textbf{+0.0145} & 0.0093 \\
+    the same at constraint scale 0 & conc\_nocstr vs pooled & 3 & +0.0198 & 0.0136 \\
+    wave 6's turnover readout against the same control & turnover vs pooled & 2 & -0.0494 & 0.0024 \\
+    concentration against turnover, matched seeds & conc vs turnover & 2 & +0.0686 & 0.0088 \\
+    what the constraint costs the concentration readout & conc vs conc\_nocstr & 3 & -0.0052 & 0.0051 \\
+    pinball against CRPS on the control & pooledq vs pooled & 3 & -0.0082 & 0.0078 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -10,6 +10,8 @@
 # where the module's diagnostics are generated, rather than this document's name.
 
 PYTHON ?= /home/michaelvolk/miniconda3/envs/torchcell/bin/python
-PLOT_SLUG := 026-metabolism-flux
+# Panels come from two experiment image directories: the module diagnostics from 026,
+# the wave 7 amino-acid panel from 027.
+PLOT_SLUGS := 026-metabolism-flux 027-betaxanthin-metabolic
 
 include ../common/Makefile.common

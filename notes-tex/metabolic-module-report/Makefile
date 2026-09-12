@@ -10,6 +10,8 @@
 # simplified mermaid diagram, copied as emitted (fonts embedded), never re-converted.
 
 PYTHON ?= /home/michaelvolk/miniconda3/envs/torchcell/bin/python
-PLOT_SLUG := 026-metabolism-flux
+# Panels come from two experiment image directories: 026 for the module diagnostics,
+# 027 for the wave 7 amino-acid panel.
+PLOT_SLUGS := 026-metabolism-flux 027-betaxanthin-metabolic
 
 include ../common/Makefile.common

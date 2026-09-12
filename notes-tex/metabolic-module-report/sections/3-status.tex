@@ -18,6 +18,40 @@ amino-acid uptake, while the Cachera strains grew in a supplemented medium; and 
 183 proton-translocating reactions carry a confidently wrong zero, the translocation term
 being computed but off by default.
 
+\textbf{Round 2 has one positive result, and it is not on betaxanthin.} Supervising the
+flux layer's own learned whole-cell concentration, the volume-weighted mixture over the
+compartments each amino acid occupies, as the amino-acid readout beats the pooled control at
+all three seeds: $+0.0145$ mean per-feature Spearman on the pinned test split, standard
+deviation 0.0093, at an epoch selected on validation and never a maximum over epochs, and
+$+0.0198$ (s.d. 0.0136) with the constraint scale at 0. Wave 6's turnover readout on the
+byte-identical arm collapses to a constant, $-0.0494$ against the same control at its two
+seeds, so concentration minus turnover is $+0.0686$ at matched seeds. The learned whole-cell
+medians match the measured medians to 0.036 to 0.037 decades over four orders of magnitude,
+while the per-column held-out Spearman runs only $-0.09$ to $+0.17$ and the unsupervised arm
+reads $-0.0031$, so the agreement is supervision rather than physics. Four caveats travel
+with it: 10.63 percent of Mulleder's measurements sat above the shipped $10^{-2}$~M ceiling,
+so the window was widened to 1~M before the round; five of the six fractional volumes are
+assumed rather than sourced; $n = 3$ carries two degrees of freedom; and betaxanthin parity
+on the one shipped kinetic table is $-0.055$ (s.d. 0.090, $n = 3$), a null rather than a
+cost. Full account, contrasts and caveats in the 027 document.
+%% SOURCE: experiments/027-betaxanthin-metabolic/results/wave7_aa_summary.json and
+%% wave7_parity_summary.json, written by analyze_wave7_aa.py and analyze_wave7_parity.py.
+
+\tcfigh[0.80]{figures/wave7_aa_concentration.pdf}{\textbf{The amino-acid concentration
+  readout against the pooled control.}
+  \textbf{a}, Mean per-feature pinned-test Spearman per readout, one line per seed, so a
+  slope is the paired difference.
+  \textbf{b}, The same statistic per amino acid, learned whole-cell concentration against
+  Mulleder's measurement, by arm.
+  \textbf{c}, Validation Pearson as a centered five-epoch mean, with the selected epoch
+  marked.
+  \textbf{d}, Validation prediction spread ratio against the 0.05 collapse line; the two
+  turnover cells sit on it.
+  \textbf{e}, Three component feasibility criteria per flux cell: mass balance within
+  1 percent holds everywhere, the flux box and the no-uphill criterion nowhere.
+  \textbf{f}, The same contrast at the 80-epoch budget, two seeds. Figure 5 of the 027
+  document, from \texttt{analyze\_wave7\_aa.py}.}{fig:wave7-aa}
+
 \textbf{The parameter tables are closed and the trainer is not.} As of 2026-09-11 the
 formation energies stand at 3{,}801 of 4{,}131 reactions and 2{,}724 of the 2{,}845 that can
 carry flux, and the kinetic tables at 97 measured, 782 homolog, 2{,}831 predicted and 18

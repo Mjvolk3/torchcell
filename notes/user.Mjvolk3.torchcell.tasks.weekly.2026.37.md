@@ -25,3 +25,4 @@ created: 1789139102284
 
 - [x] CatPred admission study: mirrored the release, ran it on the pinned pairs, measured the training overlap, scored it against the Wilson rule (rejected for k_cat by one hit, admitted for K_M), and analyzed the per-prediction variance: [[experiments.026-metabolism-flux.catpred-admission]]
 - [x] Third balance rule (ratio over rows that turn over, 1e-3 of the flux scale with 1e-2 and 1e-4 sensitivity) on 18 checkpoints including the boxforce and force-end cells; Genesis 0.00 under both honest rules: [[experiments.027-betaxanthin-metabolic.wave7-parity-one-table]]
+- [x] Round 2 closing record across the five streams (curation closure, CatPred, one-table parity, flux-force heads, amino-acid concentration head), with the sixteen tables, the corrections the round forced and the 31-cell job ledger: [[experiments.027-betaxanthin-metabolic.round2-2026-09-12]]

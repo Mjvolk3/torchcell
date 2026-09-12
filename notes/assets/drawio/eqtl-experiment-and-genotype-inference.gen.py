@@ -75,7 +75,7 @@ arrow("a15", 372, 29, 386, 29)
 arrow("a16", 372, 87, 386, 87)
 box("a17", "X&#160;&#160;n &#215; m&#10;genotype POSTERIOR", 386, 18, 118, 30, PU, PUF)
 box("a18", "Y&#160;&#160;n &#215; p&#10;expression", 386, 76, 118, 30, YE, YEF)
-note("a19", "&lt;b&gt;The asymmetry.&lt;/b&gt; The phenotype is read directly. The genotype never is: it is INFERRED from sparse observations as a mosaic of two known genomes. Panel b is that inference; panels d and e are what it costs.",
+note("a19", "&lt;b&gt;The asymmetry.&lt;/b&gt;&#10;Phenotype: read directly.&#10;Genotype: never read. INFERRED as a mosaic of two known genomes (b), at a cost (d, e).",
      518, 18, 176, 88)
 
 # ---------------------------------------------------------------- panel b
@@ -120,16 +120,16 @@ txt("b8", "the ramp IS the uncertainty:&#10;a crossover is placed only to&#10;wi
 txt("b9", "a gene conversion tract sits&#10;BETWEEN markers, so no read&#10;reports it and no ramp appears",
     396, 302, 160, 34, col=RD)
 
-note("b10", "&lt;b&gt;Why sparse reads still suffice.&lt;/b&gt; The segregant is never sequenced de novo. At each locus it is ASSIGNED to one of two already-sequenced genomes. Meiosis makes &#8776;90 crossovers, so a genome is &#8776;10&#178; blocks, and one marker fixes every cataloged variant in its block. The task is locating &#8776;10&#178; boundaries, not determining &#8776;10&#8308; values.",
-     8, 342, 336, 62)
-note("b11", "&lt;b&gt;What no marker density fixes.&lt;/b&gt; Boundary intervals leave &#8776;0.8% of cataloged sites ambiguous. Non-crossover gene conversion (&#8776;46 per meiosis, &#8776;2 kb) affects more bases than that and is invisible to sparse markers. De novo mutation, aneuploidy (a haploid can carry a disomy) and non-reference sequence sit outside the mosaic model entirely.",
-     358, 342, 336, 62, GY, GYF)
+note("b10", "&lt;b&gt;Why sparse reads suffice.&lt;/b&gt;&#10;Each locus is ASSIGNED to one of two sequenced parents.&#10;&#8776;90 crossovers &#8594; &#8776;10&#178; blocks; one marker fixes every variant in its block.",
+     8, 342, 336, 56)
+note("b11", "&lt;b&gt;What no marker fixes.&lt;/b&gt;&#10;Boundary intervals: &#8776;0.8% of sites ambiguous.&#10;Gene conversion (&#8776;46 per meiosis, &#8776;2 kb): invisible between markers.&#10;De novo mutation, aneuploidy, non-reference sequence: outside the model.",
+     358, 342, 336, 56, GY, GYF)
 
 # ---------------------------------------------------------------- panel c
-panel("pc", "c", "What the two matrices look like", 8, 418, 360)
+panel("pc", "c", "What the two matrices look like", 8, 414, 360)
 random.seed(7)
 # X: rows = segregants, cols = markers, mosaic blocks per row
-X0, Y0, CW, CH = 76, 456, 7.2, 7.2
+X0, Y0, CW, CH = 76, 452, 7.2, 7.2
 txt("c0", "&lt;b&gt;X&lt;/b&gt;&#160;&#160;n segregants &#215; m markers", X0, Y0 - 16, 160, 12, col="#000000")
 for r in range(11):
     c = 0
@@ -154,41 +154,38 @@ for r in range(11):
 txt("c6", "p &#8776; 5,000 to 6,000; a VECTOR&#10;per strain, not a scalar", Y0X, Y0 + 84, 150, 24)
 
 # ---------------------------------------------------------------- panel d
-panel("pd", "d", "The resulting map: cis on the diagonal, trans in bands", 396, 418, 298)
-DX, DY, DW, DH = 452, 452, 90, 90
-cell("d0", "", f"rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor={GY};"
-     f"strokeWidth=0.75;fontFamily=Arial;fontSize=8.5;", DX, DY, DW, DH)
+panel("pd", "d", "The resulting map: cis on the diagonal, trans in bands", 396, 414, 298)
+DX, DY, DW, DH = 452, 448, 90, 90
 txt("d1", "marker position &#8594;", DX, DY + DH + 2, DW, 10, al="center")
 txt("d2", "gene position &#8594;", DX - 76, DY, 72, DH, al="right", va="middle")
-for k in range(1, 8):      # faint gridlines, eighths
-    grid = "rounded=0;html=1;fillColor=#DDDDDD;strokeColor=none;"
-    cell(f"dgv{k}", "", grid, DX + k * DW / 8, DY, 0.5, DH)
-    cell(f"dgh{k}", "", grid, DX, DY + k * DH / 8, DW, 0.5)
-for k in range(26):        # cis: the diagonal
-    f = k / 25.0
-    swatch(f"dc{k}", DX + f * (DW - 2.4), DY + DH - 4 - f * (DH - 4), 3, 3, OR, OR)
-for hx, cnt in [(0.30, 14), (0.62, 18), (0.85, 9)]:   # trans hotspots
-    for k in range(cnt):
-        swatch(f"dh{hx}_{k}", DX + hx * (DW - 2.4) + random.uniform(-1.5, 1.5),
-               DY + 3 + random.uniform(0, DH - 9), 2.4, 2.4, PU, PU)
-for k in range(30):        # scattered weak trans
-    swatch(f"ds{k}", DX + random.uniform(1.2, DW - 3), DY + random.uniform(2, DH - 5),
-           1.8, 1.8, "#BBBBBB", "#BBBBBB")
+N = 16                      # 16 x 16 cells, drawn like the panel c grids
+CS = DW / N
+HOT = {5: 0.7, 10: 0.8, 13: 0.55}   # hotspot columns and their row density
+for r in range(N):
+    for k in range(N):
+        stroke, fill = "#CCCCCC", "#FFFFFF"
+        if r == N - 1 - k:                         # cis: the diagonal
+            stroke, fill = OR, OR
+        elif k in HOT and random.random() < HOT[k]:  # trans hotspot columns
+            stroke, fill = PU, PU
+        elif random.random() < 0.05:               # scattered weak trans
+            stroke, fill = "#BBBBBB", "#BBBBBB"
+        swatch(f"dg{r}_{k}", DX + k * CS, DY + r * CS, CS - 0.6, CS - 0.6, stroke, fill)
 txt("d3", "&#9679; cis: a variant acting on its OWN gene, usually in the promoter",
     DX + DW + 10, DY + 2, 140, 24, col=OR)
 txt("d4", "&#9679; trans hotspot: one regulatory variant moving hundreds of transcripts",
     DX + DW + 10, DY + 30, 140, 34, col=PU)
-txt("d5", "each dot is one significant (gene, marker) pair: a row of the QTL table",
+txt("d5", "each cell is one significant (gene, marker) pair: a row of the QTL table",
     DX + DW + 10, DY + 68, 140, 24)
 
 # ---------------------------------------------------------------- panel e
-panel("pe", "e", "What a record stores, as built for the Bloom 2019 segregant panels", 8, 566)
-note("e1", "&lt;b&gt;Stored.&lt;/b&gt; One record per segregant per condition, (genotype, environment) &#8594; phenotype. The genotype is a SegregantGenotype, a sibling of Genotype rather than a perturbation leaf: HaplotypeBlocks of (chromosome, start, end, parent, posterior, n_markers) against two SegregantParents pinned to sha256-anchored assemblies. The variant set is a derived view. Measured: 83 to 143 blocks per segregant (medians by cross), tails to 1,847 from hard calls at posterior 1.0.",
-     8, 588, 340, 74)
-note("e2", "&lt;b&gt;Not stored, and what stays open.&lt;/b&gt; The QTL table is an estimate conditional on method, threshold and marker density, with no source value to check, so it is not a Phenotype. A mosaic needs no systematic_gene_name, since it is not a GenePerturbation; a cis-eQTL is still usually an intergenic promoter variant with no gene to attach to, so per-variant attribution and the reporter-assay class stay one open decision.",
-     358, 588, 336, 74, RD, RDF)
+panel("pe", "e", "What a record stores, as built for the Bloom 2019 segregant panels", 8, 562)
+note("e1", "&lt;b&gt;Stored.&lt;/b&gt;&#10;One record per segregant &#215; condition.&#10;Genotype: SegregantGenotype, a sibling of Genotype. HaplotypeBlocks (chr, start, end, parent, posterior, n_markers) between two pinned SegregantParents.&#10;Variant set: a derived view.",
+     8, 584, 340, 66)
+note("e2", "&lt;b&gt;Not stored, and still open.&lt;/b&gt;&#10;QTL table: an estimate, not a Phenotype.&#10;Intergenic variants: a mosaic needs no gene, a cis-eQTL still has none; per-variant attribution stays open.",
+     358, 584, 336, 66, RD, RDF)
 
-W, H = 702, 672
+W, H = 702, 662
 xml = ('    <!--\n'
        '      Generated by notes/assets/drawio/eqtl-experiment-and-genotype-inference.gen.py,\n'
        '      committed as the hand-composed schematic. Layout comments live in the prolog: a comment\n'

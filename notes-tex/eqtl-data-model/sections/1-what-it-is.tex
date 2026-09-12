@@ -21,7 +21,7 @@ expression.
 The perturbation is therefore not applied to a strain. It is inherited, and it is present
 everywhere in the genome at once.
 
-\tcfigfit[1.0]{figures/eqtl-experiment-and-genotype-inference.pdf}{%
+\tcfigfit[0.87]{figures/eqtl-experiment-and-genotype-inference.pdf}{%
   \textbf{An eQTL study, where inference enters it, and what it costs.}
   \textbf{a}, The cross. Both parents are deep-sequenced, so every variant and both its
   alleles are known before any segregant is examined. The segregants are then assayed
@@ -32,19 +32,37 @@ everywhere in the genome at once.
   certainties; the HMM output is a posterior whose ramps are the uncertainty, since a
   crossover is placed only to within one marker interval; the inferred blocks follow. A
   non-crossover gene conversion tract sitting between markers produces no ramp at all,
-  because no read reports it.
+  because no read reports it. Sparse reads suffice because the segregant is never
+  sequenced de novo: at each locus it is assigned to one of two already-sequenced genomes,
+  meiosis makes about 90 crossovers, so a genome is about $10^2$ blocks and one marker fixes
+  every cataloged variant in its block; the task is locating about $10^2$ boundaries, not
+  determining about $10^4$ values. What no marker density fixes: boundary intervals leave
+  about 0.8\% of cataloged sites ambiguous; non-crossover gene conversion (about 46 tracts
+  per meiosis, about 2 kb each) affects more bases than that and is invisible to sparse
+  markers; de novo mutation, aneuploidy (a haploid can carry a disomy) and non-reference
+  sequence sit outside the mosaic model entirely.
   \textbf{c}, The two matrices. $X$ shows haplotype blocks rather than noise, so its columns
   are linked; $Y$ is a vector per strain rather than a scalar.
   \textbf{d}, The map that results, and it is the QTL table of
-  Sec.~\ref{sec:tables} drawn as a matrix: each dot is one significant (gene, marker) row
+  Sec.~\ref{sec:tables} drawn as a matrix: each cell is one significant (gene, marker) row
   of that table, plotted gene position against marker position. Cis effects fall on the
   diagonal, each variant acting on its own gene and usually through its promoter; trans
   hotspots appear as vertical bands where one regulatory variant moves hundreds of
   transcripts.
   \textbf{e}, What a record stores, as built for the Bloom 2019 segregant panels
-  (Sec.~\ref{sec:built}): the genotype is a \file{SegregantGenotype}, a sibling of
-  \file{Genotype} holding the mosaic as haplotype blocks against two pinned parent
-  assemblies, and the QTL table is not stored.
+  (Sec.~\ref{sec:built}). Stored: one record per segregant per condition, the pair
+  (genotype, environment) to phenotype; the genotype is a \file{SegregantGenotype}, a
+  sibling of \file{Genotype} rather than a perturbation leaf, holding haplotype blocks of
+  (chromosome, start, end, parent, posterior, marker count) between two
+  \file{SegregantParent}s pinned to sha256-anchored assemblies, so the variant set is a
+  derived view and the posterior is stored as a posterior. On the built store the blocks per
+  segregant run from a median of 83 (cross A) to 143 (medians by cross), with tails to
+  1,847 from hard calls at posterior 1.0. Not stored: the QTL table, an estimate
+  conditional on method, threshold and marker density with no source value to check, so
+  it is not a \file{Phenotype}. Still open: a mosaic needs no \file{systematic_gene_name}
+  because it is not a \file{GenePerturbation}, but a cis-eQTL is usually an intergenic
+  promoter variant with no gene to attach to, so per-variant attribution and the
+  reporter-assay class remain one decision.
   Panels \textbf{b} and \textbf{d} are schematic rather than plotted from data. Composed
   from the sources in Sec.~\ref{sec:what} rather than redrawn from a published figure;
   source \file{notes/assets/drawio/eqtl-experiment-and-genotype-inference.drawio},

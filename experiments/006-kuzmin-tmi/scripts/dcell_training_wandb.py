@@ -587,39 +587,43 @@ def panel_cost(cost: pd.DataFrame):
 
 
 # Panel d: what each speed-up stage changed relative to the one before it (3-5 words).
-# Keys are the rows of speedup_stages.csv. Rows 1-5 are the cumulative chain measured on
-# one day (each keeps every earlier change); rows 6 and 7 are the same configuration as
-# row 5 rerun on later days (7 with 12 loader workers) and are NOT drawn, because the
-# shared machine drifts from day to day by more than several optimizations and only
-# same-sitting stages compare; rows 8 and 9 are row 5 with torch.compile at batch 500 and
-# 600. The panel numbers the drawn rows 1 to 7 in order. Values come from
-# speedup_stages.csv unchanged.
+# Keys are the rows of speedup_stages.csv. Row 1 is an early build that ran the forward
+# pass twice (128 s per step) and is NOT drawn: removing a duplicated call is a bug fix,
+# not an optimization, so row 2 (single forward, fp32) is the baseline. Rows 2-5 are the
+# cumulative chain measured on one day (each keeps every earlier change); rows 6 and 7
+# are the same configuration as row 5 rerun on later days (7 with 12 loader workers) and
+# are NOT drawn, because the shared machine drifts from day to day by more than several
+# optimizations and only same-sitting stages compare; rows 8 and 9 are row 5 with
+# torch.compile at batch 500 and 600. The panel numbers the drawn rows 1 to 6 in order.
+# Values come from speedup_stages.csv unchanged.
 STAGE_CHANGE = {
     "Before Duplicate Forward": "forward pass run twice",
-    "After Removing Duplicate Forward": "duplicate forward removed",
+    "After Removing Duplicate Forward": "baseline: fp32, one forward",
     "After Caching GO Strata": "GO strata tensors cached",
     "16-Mixed Precision": "fp16 mixed precision",
     "BF16-Mixed Precision": "bf16 mixed precision",
-    "BF16-Mixed Precision Regress": "stage 5 rerun, later day",
-    "BF16-Mixed Precison - 12 workers": "stage 5, 12 loader workers",
-    "BF16-Mixed Precison - 8 Workers - Compile - batch size 500": "stage 5 + torch.compile",
-    "BF16-Mixed Precison - 8 Workers - Compile - batch size 600": "stage 5 + torch.compile",
+    "BF16-Mixed Precision Regress": "stage 4 rerun, later day",
+    "BF16-Mixed Precison - 12 workers": "stage 4, 12 loader workers",
+    "BF16-Mixed Precison - 8 Workers - Compile - batch size 500": "stage 4 + torch.compile",
+    "BF16-Mixed Precison - 8 Workers - Compile - batch size 600": "stage 4 + torch.compile",
 }
-CHAIN_ROWS = [1, 2, 3, 4, 5]  # the within-day cumulative chain, drawn as bars
+DUPLICATE_ROWS = [1]  # the double-forward build; kept in the CSV, not drawn
+CHAIN_ROWS = [2, 3, 4, 5]  # the within-day cumulative chain, drawn as bars
 RERUN_ROWS = [6, 7]  # later-day reruns of row 5; kept in the CSV, not drawn
 COMPILE_ROWS = [8, 9]  # torch.compile variants of row 5, drawn as bars
-DRAWN_ROWS = CHAIN_ROWS + COMPILE_ROWS  # displayed as stages 1 to 7, in this order
+DRAWN_ROWS = CHAIN_ROWS + COMPILE_ROWS  # displayed as stages 1 to 6, in this order
 
 
 def panel_stages(st: pd.DataFrame):
     """Panel d as an explanatory table: left, stage number, what changed, batch per GPU and
     the resulting samples per second; right, seconds per optimizer step as bars on the same
-    rows. Down-arrows link the cumulative stages 1 -> 5; stages 6 and 7 (torch.compile on
-    stage 5) follow under a rule. The later-day reruns (CSV rows 6 and 7) are not drawn.
+    rows. Down-arrows link the cumulative stages 1 -> 4; stages 5 and 6 (torch.compile on
+    stage 4) follow under a rule. The double-forward build (CSV row 1) and the later-day
+    reruns (rows 6 and 7) are not drawn.
     """
     st = st.reset_index(drop=True)
     st["row_no"] = np.arange(1, len(st) + 1)
-    assert list(st["row_no"]) == CHAIN_ROWS + RERUN_ROWS + COMPILE_ROWS
+    assert list(st["row_no"]) == DUPLICATE_ROWS + CHAIN_ROWS + RERUN_ROWS + COMPILE_ROWS
     by_no = st.set_index("row_no")
     stage_of = {row: i + 1 for i, row in enumerate(DRAWN_ROWS)}  # displayed stage number
     y_pos = {row: len(DRAWN_ROWS) - 1 - i for i, row in enumerate(DRAWN_ROWS)}
@@ -659,7 +663,7 @@ def panel_stages(st: pd.DataFrame):
         bars.text(v + 3, yi, f"{v:.0f}", va="center", ha="left", fontsize=6)
     bars.set_ylim(*ylim)
     bars.set_yticks([])
-    bars.set_xlim(0, 150)
+    bars.set_xlim(0, 100)
     bars.xaxis.set_major_locator(MultipleLocator(50))
     bars.set_xlabel("Seconds per optimizer step")
     bars.grid(axis="x", color="#D0D0D0", lw=0.4)

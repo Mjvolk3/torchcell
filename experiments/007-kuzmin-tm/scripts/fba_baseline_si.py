@@ -446,14 +446,15 @@ def panel_tau(frozen, corr):
     ax.set_xlabel(r"Yeast9 FBA $\tau_{ijk}$")
     ax.set_ylabel(r"Measured $\tau_{ijk}$")
     c = corr["tau"]
+    # Upper right: the data stand in a column at x = 0, so the upper-left corner is not free.
     ax.text(
-        0.03,
+        0.97,
         0.97,
         f"Pearson $r$ = {c['pearson_r']:.4f}\n$n$ = {c['n']:,}\n"
         f"{100 * c['frac_abs_below_1e-3']:.2f}% at $|\\tau|<10^{{-3}}$",
         transform=ax.transAxes,
         va="top",
-        ha="left",
+        ha="right",
         fontsize=6,
     )
     box(ax)
@@ -522,7 +523,8 @@ def panel_growth_bands(bands: pd.DataFrame):
 
 def panel_evaluable(cov: pd.DataFrame, n_in: dict, n_genes: int, n_doubles: int):
     """How much of the screen Yeast9 can score: genes and doubles with every member in the
-    model, and triples by how many of their three genes are in the model."""
+    model, and triples by how many of their three genes are in the model.
+    """
     w = mm_to_in(PANEL_WIDTHS_MM["third"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(50)))
     fig.subplots_adjust(left=0.2, right=0.97, bottom=0.24, top=0.95)

@@ -469,9 +469,9 @@ L 126.224277 7.086614
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_13">
-    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(35.572177 14.770962)">SD/MSG -His/Arg/Lys/Ura</text>
+    <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(54.304354 14.770962)">SD/MSG -His/Arg/Lys/Ura</text>
     <!-- Pearson $r$ = -0.0007 -->
-    <g transform="translate(35.572177 21.1874)">
+    <g transform="translate(69.720604 21.1874)">
      <text>
       <tspan x="0" y="-0.6875" style="font-size: 6px; font-family: 'Arial'">P</tspan>
       <tspan x="4.001953" y="-0.6875" style="font-size: 6px; font-family: 'Arial'">e</tspan>
@@ -495,7 +495,7 @@ L 126.224277 7.086614
      </text>
     </g>
     <!-- $n$ = 332,313 -->
-    <g transform="translate(35.572177 27.533525)">
+    <g transform="translate(91.080604 27.533525)">
      <text>
       <tspan x="0" y="-0.6875" style="font-style: oblique; font-size: 6px; font-family: 'DejaVu Sans'">n</tspan>
       <tspan x="3.802734" y="-0.6875" style="font-size: 6px; font-family: 'Arial'"> </tspan>
@@ -511,7 +511,7 @@ L 126.224277 7.086614
      </text>
     </g>
     <!-- 99.99% at $|\tau|&lt;10^{-3}$ -->
-    <g transform="translate(35.572177 35.278025)">
+    <g transform="translate(65.640604 35.278025)">
      <text>
       <tspan x="0" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">9</tspan>
       <tspan x="3.336914" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">9</tspan>

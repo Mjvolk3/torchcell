@@ -49,7 +49,7 @@ replicate runs of the same length would cost about 8,900 GPU-hours at the observ
 which is why one run is reported and labeled as such. The forward pass visits the 2,655
 subsystems one at a time in a Python loop ordered by stratum, so every step launches
 hundreds of thousands of small kernels, more as the batch grows; the speed-up work on a shared four-GPU
-workstation (\suppfig{fig:dcell-training}d) took a step from 128~s to 20~s, and day-to-day
+workstation (\suppfig{fig:dcell-training}d) took a step from 82~s to 20~s, and day-to-day
 reruns of one configuration varied by as much as several of the optimizations. One
 training step of the same architecture, profiled on one GPU at the cluster's batch of
 600 and precision with the epoch-142 checkpoint loaded as the architecture check
@@ -82,11 +82,12 @@ median over epochs) for DCell (four GPUs), DANGO (two runs, two GPUs each) and C
 replicates, four GPUs each); bar, mean; open circles, runs; whisker, SEM where $n>1$
 (\supptab{tab:dcell-training-cost}). \textbf{d},~Speed-up stages on a shared four-GPU
 workstation: what each stage changed, batch per GPU, samples per second, and seconds per
-optimizer step as bars. Arrows mark the cumulative chain 1 to 5, measured in one sitting;
-stages 6 and 7 add \texttt{torch.compile} to stage 5 at batch 500 and 600. Two reruns of
-the stage-5 configuration on later days (99 and 119~s per step) are not drawn: the shared
-machine drifts from day to day by more than several optimizations, so only same-sitting
-stages compare.
+optimizer step as bars. Arrows mark the cumulative chain 1 to 4, measured in one sitting;
+stages 5 and 6 add \texttt{torch.compile} to stage 4 at batch 500 and 600. Stage 1 is the
+first correct build (one forward pass per step, fp32); an earlier build that ran the forward
+pass twice (128~s) and two reruns of the stage-4 configuration on later days (99 and 119~s)
+are not drawn: the first is a bug fix, and the shared machine drifts from day to day by more
+than several optimizations, so only same-sitting stages compare.
 \textbf{e},~Where one training step spends its time on one GPU (RTX 6000 Ada, torch 2.11,
 bf16-mixed, batch 600, the cluster's per-GPU batch; the epoch-142 checkpoint of
 \texttt{eni948by} loaded strictly into the rebuilt model before profiling). Light bars,

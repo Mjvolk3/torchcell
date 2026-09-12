@@ -42,3 +42,4 @@ created: 1788913645350
 ## 2026.09.11
 
 - [x] `FigS-dcell-training` panel d in order: stages 1 to 7 (the cumulative chain, then the two `torch.compile` variants), the later-day reruns of stage 5 no longer drawn as a dashed range; caption updated, no number changed ([[experiments.006-kuzmin-tmi.scripts.dcell_training_wandb]])
+- [x] SI figure review round 2: `FigS-dcell-training` panel d drops the double-forward build (a bug fix, not an optimization) so the fp32 single-forward build is stage 1 of 6; `FigS-yeast9-fba` panel a math no longer overlaps the box headings, and the panel b and g annotations moved to the upper right off the data column ([[experiments.006-kuzmin-tmi.scripts.dcell_training_wandb]], [[experiments.007-kuzmin-tm.scripts.fba_baseline_compose_figure]])

@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -313,7 +313,7 @@ L 0 2
       </g>
      </g>
      <g id="text_1">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="34.993641" y="127.505959" transform="rotate(-0 34.993641 127.505959)">−2</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="34.993641" y="127.432483" transform="rotate(-0 34.993641 127.432483)">−2</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -323,7 +323,7 @@ L 0 2
       </g>
      </g>
      <g id="text_2">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="57.245016" y="127.505959" transform="rotate(-0 57.245016 127.505959)">−1</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="57.245016" y="127.432483" transform="rotate(-0 57.245016 127.432483)">−1</text>
      </g>
     </g>
     <g id="xtick_3">
@@ -333,7 +333,7 @@ L 0 2
       </g>
      </g>
      <g id="text_3">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="79.496391" y="127.505959" transform="rotate(-0 79.496391 127.505959)">0</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="79.496391" y="127.432483" transform="rotate(-0 79.496391 127.432483)">0</text>
      </g>
     </g>
     <g id="xtick_4">
@@ -343,7 +343,7 @@ L 0 2
       </g>
      </g>
      <g id="text_4">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="101.747765" y="127.505959" transform="rotate(-0 101.747765 127.505959)">1</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="101.747765" y="127.432483" transform="rotate(-0 101.747765 127.432483)">1</text>
      </g>
     </g>
     <g id="xtick_5">
@@ -353,12 +353,12 @@ L 0 2
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="123.99914" y="127.505959" transform="rotate(-0 123.99914 127.505959)">2</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="123.99914" y="127.432483" transform="rotate(-0 123.99914 127.432483)">2</text>
      </g>
     </g>
     <g id="text_6">
      <!-- Yeast9 FBA $\tau_{ijk}$ -->
-     <g transform="translate(58.826391 137.136819)">
+     <g transform="translate(58.376391 136.944983)">
       <text>
        <tspan x="0" y="-0.6875" style="font-size: 6px; font-family: 'Arial'">Y</tspan>
        <tspan x="4.001953" y="-0.6875" style="font-size: 6px; font-family: 'Arial'">e</tspan>
@@ -372,9 +372,9 @@ L 0 2
        <tspan x="28.013672" y="-0.6875" style="font-size: 6px; font-family: 'Arial'">A</tspan>
        <tspan x="32.015625" y="-0.6875" style="font-size: 6px; font-family: 'Arial'"> </tspan>
        <tspan x="33.682617" y="-0.6875" style="font-style: oblique; font-size: 6px; font-family: 'DejaVu Sans'">τ</tspan>
-       <tspan x="37.294922" y="0.212497" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">i</tspan>
-       <tspan x="38.461816" y="0.212497" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">j</tspan>
-       <tspan x="39.628711" y="0.212497" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">k</tspan>
+       <tspan x="37.294922" y="0.296875" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">i</tspan>
+       <tspan x="38.461816" y="0.296875" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">j</tspan>
+       <tspan x="39.628711" y="0.296875" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">k</tspan>
       </text>
      </g>
     </g>
@@ -392,7 +392,7 @@ L -2 0
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="112.612018" transform="rotate(-0 27.268504 112.612018)">−1.0</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="112.575279" transform="rotate(-0 27.268504 112.575279)">−1.0</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -402,7 +402,7 @@ L -2 0
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="88.579152" transform="rotate(-0 27.268504 88.579152)">−0.5</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="88.542414" transform="rotate(-0 27.268504 88.542414)">−0.5</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -412,7 +412,7 @@ L -2 0
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="64.546287" transform="rotate(-0 27.268504 64.546287)">0.0</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="64.509548" transform="rotate(-0 27.268504 64.509548)">0.0</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -422,7 +422,7 @@ L -2 0
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="40.513421" transform="rotate(-0 27.268504 40.513421)">0.5</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="40.476683" transform="rotate(-0 27.268504 40.476683)">0.5</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -432,12 +432,12 @@ L -2 0
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="16.480556" transform="rotate(-0 27.268504 16.480556)">1.0</text>
+      <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="27.268504" y="16.443818" transform="rotate(-0 27.268504 16.443818)">1.0</text>
      </g>
     </g>
     <g id="text_12">
      <!-- Measured $\tau_{ijk}$ -->
-     <g transform="translate(9.624129 80.812205) rotate(-90)">
+     <g transform="translate(9.564129 80.812205) rotate(-90)">
       <text>
        <tspan x="0" y="-0.703125" style="font-size: 6px; font-family: 'Arial'">M</tspan>
        <tspan x="4.998047" y="-0.703125" style="font-size: 6px; font-family: 'Arial'">e</tspan>
@@ -449,9 +449,9 @@ L -2 0
        <tspan x="23.34375" y="-0.703125" style="font-size: 6px; font-family: 'Arial'">d</tspan>
        <tspan x="26.680664" y="-0.703125" style="font-size: 6px; font-family: 'Arial'"> </tspan>
        <tspan x="28.347656" y="-0.703125" style="font-style: oblique; font-size: 6px; font-family: 'DejaVu Sans'">τ</tspan>
-       <tspan x="31.959961" y="0.196872" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">i</tspan>
-       <tspan x="33.126855" y="0.196872" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">j</tspan>
-       <tspan x="34.29375" y="0.196872" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">k</tspan>
+       <tspan x="31.959961" y="0.28125" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">i</tspan>
+       <tspan x="33.126855" y="0.28125" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">j</tspan>
+       <tspan x="34.29375" y="0.28125" style="font-style: oblique; font-size: 4.2px; font-family: 'DejaVu Sans'">k</tspan>
       </text>
      </g>
     </g>
@@ -488,7 +488,7 @@ L 126.224277 7.086614
    </g>
    <g id="text_13">
     <!-- Pearson $r$ = 0.0019 -->
-    <g transform="translate(35.572177 15.221021)">
+    <g transform="translate(71.700604 14.697837)">
      <text>
       <tspan x="0" y="-0.6875" style="font-size: 6px; font-family: 'Arial'">P</tspan>
       <tspan x="4.001953" y="-0.6875" style="font-size: 6px; font-family: 'Arial'">e</tspan>
@@ -511,7 +511,7 @@ L 126.224277 7.086614
      </text>
     </g>
     <!-- $n$ = 332,313 -->
-    <g transform="translate(35.572177 21.751294)">
+    <g transform="translate(91.080604 21.043962)">
      <text>
       <tspan x="0" y="-0.6875" style="font-style: oblique; font-size: 6px; font-family: 'DejaVu Sans'">n</tspan>
       <tspan x="3.802734" y="-0.6875" style="font-size: 6px; font-family: 'Arial'"> </tspan>
@@ -527,24 +527,24 @@ L 126.224277 7.086614
      </text>
     </g>
     <!-- 99.93% at $|\tau|&lt;10^{-3}$ -->
-    <g transform="translate(35.572177 29.553404)">
+    <g transform="translate(65.640604 28.788462)">
      <text>
-      <tspan x="0" y="-0.404813" style="font-size: 6px; font-family: 'Arial'">9</tspan>
-      <tspan x="3.336914" y="-0.404813" style="font-size: 6px; font-family: 'Arial'">9</tspan>
-      <tspan x="6.673828" y="-0.404813" style="font-size: 6px; font-family: 'Arial'">.</tspan>
-      <tspan x="8.34082" y="-0.404813" style="font-size: 6px; font-family: 'Arial'">9</tspan>
-      <tspan x="11.677734" y="-0.404813" style="font-size: 6px; font-family: 'Arial'">3</tspan>
-      <tspan x="15.014648" y="-0.404813" style="font-size: 6px; font-family: 'Arial'">%</tspan>
-      <tspan x="20.349609" y="-0.404813" style="font-size: 6px; font-family: 'Arial'"> </tspan>
-      <tspan x="22.016602" y="-0.404813" style="font-size: 6px; font-family: 'Arial'">a</tspan>
-      <tspan x="25.353516" y="-0.404813" style="font-size: 6px; font-family: 'Arial'">t</tspan>
-      <tspan x="27.020508" y="-0.404813" style="font-size: 6px; font-family: 'Arial'"> </tspan>
-      <tspan x="28.6875" y="-0.404813" style="font-size: 6px; font-family: 'DejaVu Sans'">|</tspan>
-      <tspan x="34.321289" y="-0.404813" style="font-size: 6px; font-family: 'DejaVu Sans'">|</tspan>
-      <tspan x="37.511719" y="-0.404813" style="font-size: 6px; font-family: 'DejaVu Sans'">&lt;</tspan>
-      <tspan x="43.708008" y="-0.404813" style="font-size: 6px; font-family: 'DejaVu Sans'">1</tspan>
-      <tspan x="47.525391" y="-0.404813" style="font-size: 6px; font-family: 'DejaVu Sans'">0</tspan>
-      <tspan x="30.708984" y="-0.404813" style="font-style: oblique; font-size: 6px; font-family: 'DejaVu Sans'">τ</tspan>
+      <tspan x="0" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">9</tspan>
+      <tspan x="3.336914" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">9</tspan>
+      <tspan x="6.673828" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">.</tspan>
+      <tspan x="8.34082" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">9</tspan>
+      <tspan x="11.677734" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">3</tspan>
+      <tspan x="15.014648" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">%</tspan>
+      <tspan x="20.349609" y="-0.585938" style="font-size: 6px; font-family: 'Arial'"> </tspan>
+      <tspan x="22.016602" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">a</tspan>
+      <tspan x="25.353516" y="-0.585938" style="font-size: 6px; font-family: 'Arial'">t</tspan>
+      <tspan x="27.020508" y="-0.585938" style="font-size: 6px; font-family: 'Arial'"> </tspan>
+      <tspan x="28.6875" y="-0.585938" style="font-size: 6px; font-family: 'DejaVu Sans'">|</tspan>
+      <tspan x="34.321289" y="-0.585938" style="font-size: 6px; font-family: 'DejaVu Sans'">|</tspan>
+      <tspan x="37.511719" y="-0.585938" style="font-size: 6px; font-family: 'DejaVu Sans'">&lt;</tspan>
+      <tspan x="43.708008" y="-0.585938" style="font-size: 6px; font-family: 'DejaVu Sans'">1</tspan>
+      <tspan x="47.525391" y="-0.585938" style="font-size: 6px; font-family: 'DejaVu Sans'">0</tspan>
+      <tspan x="30.708984" y="-0.585938" style="font-style: oblique; font-size: 6px; font-family: 'DejaVu Sans'">τ</tspan>
       <tspan x="51.400195" y="-2.882812" style="font-size: 4.2px; font-family: 'DejaVu Sans'">−</tspan>
       <tspan x="54.919336" y="-2.882812" style="font-size: 4.2px; font-family: 'DejaVu Sans'">3</tspan>
      </text>
@@ -561,7 +561,7 @@ z
 " style="fill: #ffffff"/>
    </g>
    <image xlink:href="data:image/png;base64,
-iVBORw0KGgoAAAANSUhEUgAAAAgAAACaCAYAAACUoQnDAAAAnElEQVR4nO1W0QrDQAxy4/7/hws6aPecDGxH0sbXSES9u/YlSQiwgHCOhXjBbPhikjwwOTwsB9gSGheoUrcqnAfGBHFLCEoJdCW4uS7kSiiTgO1C17toUTf8oGwXJwTFW9TNTAIFgmKDulHgjepRN2Ks5JuGfxCYbojnPVy84zF+yUEFCHiEC9mHNvmdxBlBwd3AW7iY272jxRv1ARzkNHwjC8k/AAAAAElFTkSuQmCC" id="image1323208312" transform="scale(1 -1) translate(0 -110.88)" x="128.16" y="-6.48" width="5.76" height="110.88"/>
+iVBORw0KGgoAAAANSUhEUgAAAAgAAACaCAYAAACUoQnDAAAAlElEQVR4nO2WXQ6AMAiDq+H+FzYZ3qBdwjSw4Wubsq/4d7m7g1wGUB0GHtAJndAJJyfERzTFqjPsQeGDG3w8wuDSEB6hDJpCHlJjihEIU+iiwhQl1q2b/J5iQVF7rFuOQIKiKqw7wzuqxrqpDJj4pv1iGDKB6zUobi5P9ZDBwPVdKOI3rfidXFIU14+h6Kd70pCA4gUc5DR87UgCbAAAAABJRU5ErkJggg==" id="image80a312fea6" transform="scale(1 -1) translate(0 -110.88)" x="128.16" y="-6.48" width="5.76" height="110.88"/>
    <g id="matplotlib.axis_3"/>
    <g id="matplotlib.axis_4">
     <g id="ytick_6">
@@ -577,11 +577,11 @@ L 2 0
      </g>
      <g id="text_14">
       <!-- $\mathdefault{10^{0}}$ -->
-      <g transform="translate(139.283483 120.397795)">
+      <g transform="translate(139.283483 120.731545)">
        <text>
-        <tspan x="0" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">1</tspan>
-        <tspan x="3.336914" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">0</tspan>
-        <tspan x="6.73125" y="-2.98125" style="font-size: 4.2px; font-family: 'Arial'">0</tspan>
+        <tspan x="0" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">1</tspan>
+        <tspan x="3.336914" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">0</tspan>
+        <tspan x="6.778369" y="-4.98125" style="font-size: 4.2px; font-family: 'Arial'">0</tspan>
        </text>
       </g>
      </g>
@@ -594,11 +594,11 @@ L 2 0
      </g>
      <g id="text_15">
       <!-- $\mathdefault{10^{1}}$ -->
-      <g transform="translate(139.283483 100.37602)">
+      <g transform="translate(139.283483 100.70977)">
        <text>
-        <tspan x="0" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">1</tspan>
-        <tspan x="3.336914" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">0</tspan>
-        <tspan x="6.73125" y="-2.98125" style="font-size: 4.2px; font-family: 'Arial'">1</tspan>
+        <tspan x="0" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">1</tspan>
+        <tspan x="3.336914" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">0</tspan>
+        <tspan x="6.778369" y="-4.98125" style="font-size: 4.2px; font-family: 'Arial'">1</tspan>
        </text>
       </g>
      </g>
@@ -611,11 +611,11 @@ L 2 0
      </g>
      <g id="text_16">
       <!-- $\mathdefault{10^{2}}$ -->
-      <g transform="translate(139.283483 80.354244)">
+      <g transform="translate(139.283483 80.687994)">
        <text>
-        <tspan x="0" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">1</tspan>
-        <tspan x="3.336914" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">0</tspan>
-        <tspan x="6.73125" y="-2.98125" style="font-size: 4.2px; font-family: 'Arial'">2</tspan>
+        <tspan x="0" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">1</tspan>
+        <tspan x="3.336914" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">0</tspan>
+        <tspan x="6.778369" y="-4.98125" style="font-size: 4.2px; font-family: 'Arial'">2</tspan>
        </text>
       </g>
      </g>
@@ -628,11 +628,11 @@ L 2 0
      </g>
      <g id="text_17">
       <!-- $\mathdefault{10^{3}}$ -->
-      <g transform="translate(139.283483 60.332469)">
+      <g transform="translate(139.283483 60.666219)">
        <text>
-        <tspan x="0" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">1</tspan>
-        <tspan x="3.336914" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">0</tspan>
-        <tspan x="6.73125" y="-2.98125" style="font-size: 4.2px; font-family: 'Arial'">3</tspan>
+        <tspan x="0" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">1</tspan>
+        <tspan x="3.336914" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">0</tspan>
+        <tspan x="6.778369" y="-4.98125" style="font-size: 4.2px; font-family: 'Arial'">3</tspan>
        </text>
       </g>
      </g>
@@ -645,11 +645,11 @@ L 2 0
      </g>
      <g id="text_18">
       <!-- $\mathdefault{10^{4}}$ -->
-      <g transform="translate(139.283483 40.310693)">
+      <g transform="translate(139.283483 40.614443)">
        <text>
-        <tspan x="0" y="-0.514188" style="font-size: 6px; font-family: 'Arial'">1</tspan>
-        <tspan x="3.336914" y="-0.514188" style="font-size: 6px; font-family: 'Arial'">0</tspan>
-        <tspan x="6.73125" y="-2.992188" style="font-size: 4.2px; font-family: 'Arial'">4</tspan>
+        <tspan x="0" y="-0.810563" style="font-size: 6px; font-family: 'Arial'">1</tspan>
+        <tspan x="3.336914" y="-0.810563" style="font-size: 6px; font-family: 'Arial'">0</tspan>
+        <tspan x="6.778369" y="-4.992188" style="font-size: 4.2px; font-family: 'Arial'">4</tspan>
        </text>
       </g>
      </g>
@@ -662,11 +662,11 @@ L 2 0
      </g>
      <g id="text_19">
       <!-- $\mathdefault{10^{5}}$ -->
-      <g transform="translate(139.283483 20.258918)">
+      <g transform="translate(139.283483 20.592668)">
        <text>
-        <tspan x="0" y="-0.557938" style="font-size: 6px; font-family: 'Arial'">1</tspan>
-        <tspan x="3.336914" y="-0.557938" style="font-size: 6px; font-family: 'Arial'">0</tspan>
-        <tspan x="6.73125" y="-3.035938" style="font-size: 4.2px; font-family: 'Arial'">5</tspan>
+        <tspan x="0" y="-0.854313" style="font-size: 6px; font-family: 'Arial'">1</tspan>
+        <tspan x="3.336914" y="-0.854313" style="font-size: 6px; font-family: 'Arial'">0</tspan>
+        <tspan x="6.778369" y="-5.035938" style="font-size: 4.2px; font-family: 'Arial'">5</tspan>
        </text>
       </g>
      </g>
@@ -971,7 +971,7 @@ L 2 0
      </g>
     </g>
     <g id="text_20">
-     <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="153.891648" y="62.362205" transform="rotate(-90 153.891648 62.362205)">Triples</text>
+     <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="153.998171" y="62.362205" transform="rotate(-90 153.998171 62.362205)">Triples</text>
     </g>
    </g>
    <g id="LineCollection_1"/>

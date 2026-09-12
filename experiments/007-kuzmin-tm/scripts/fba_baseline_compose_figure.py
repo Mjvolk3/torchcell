@@ -189,8 +189,8 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
     # 2. gene-reaction rules
     x0, w = lefts[1], BOX_W[1]
     c.box("Gene-reaction rules", x0, y0, w, h, color=ROLE_COLOR["rules"], align="left", valign="top", bold=True)
-    c.math(r"s_g = 0 \text{ if } g \in p,\ \text{else } 1", x0 + pad, y0 + 13, w - 2 * pad, 16)
-    c.math(r"v_r = 0 \text{ if } \mathrm{GPR}_r(\mathbf{s}) = \text{false}", x0 + pad, y0 + 31, w - 2 * pad, 16)
+    c.math(r"s_g = 0 \text{ if } g \in p,\ \text{else } 1", x0 + pad, y0 + 15, w - 2 * pad, 16)
+    c.math(r"v_r = 0 \text{ if } \mathrm{GPR}_r(\mathbf{s}) = \text{false}", x0 + pad, y0 + 32, w - 2 * pad, 16)
     c.text(
         "A reaction is blocked when its Boolean rule (isozymes OR, complex subunits AND) "
         "evaluates false. A gene absent from the model changes nothing.",
@@ -212,31 +212,33 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
     # 4. FBA growth
     x0, w = lefts[3], BOX_W[3]
     c.box("FBA growth", x0, y0, w, h, color=ROLE_COLOR["readout"], align="left", valign="top", bold=True)
-    c.math(r"\mu = \max v_{\mathrm{growth}}", x0 + pad, y0 + 13, w - 2 * pad, 16)
-    c.math(r"\text{s.t. } S v = 0,\ lb \le v \le ub", x0 + pad, y0 + 31, w - 2 * pad, 16)
+    c.math(r"\mu = \max v_{\mathrm{growth}}", x0 + pad, y0 + 17, w - 2 * pad, 16)
+    c.math(r"\text{s.t. } S v = 0,\ lb \le v \le ub", x0 + pad, y0 + 35, w - 2 * pad, 16)
     c.text(
         f"GLPK, {run['solver_timeout_s']} s limit; one LP per deletion set; {run['n_processes']} processes, "
         f"{run['runtime_seconds'] / 60:.0f} min in all. &mu;<sub>WT</sub> = {m['wt_growth']:.4f} h<sup>-1</sup>.",
-        x0 + pad, y0 + 50, w - 2 * pad, h - 52,
+        x0 + pad, y0 + 54, w - 2 * pad, h - 56,
     )
 
     # 5. fitness proxy
     x0, w = lefts[4], BOX_W[4]
     c.box("Fitness proxy", x0, y0, w, h, color=ROLE_COLOR["proxy"], align="left", valign="top", bold=True)
-    c.math(r"f = \mu / \mu_{\mathrm{WT}}", x0 + pad, y0 + 13, w - 2 * pad, 16)
-    c.text("A non-optimal or timed-out solve counts as f = 0.", x0 + pad, y0 + 32, w - 2 * pad, h - 34)
+    c.math(r"f = \mu / \mu_{\mathrm{WT}}", x0 + pad, y0 + 17, w - 2 * pad, 16)
+    c.text("A non-optimal or timed-out solve counts as f = 0.", x0 + pad, y0 + 36, w - 2 * pad, h - 38)
 
-    # 6. interaction
+    # 6. interaction. The math cells sit 18 units below the heading and 15 apart: MathJax
+    # typesets a fraction of the cell height above its box, so a tighter stack overlaps
+    # the bold heading (seen in the 2026.09.10 render).
     x0, w = lefts[5], BOX_W[5]
     c.box("Interaction (Fig. 2a)", x0, y0, w, h, color=ROLE_COLOR["score"], align="left", valign="top", bold=True)
-    c.math(r"\varepsilon_{ij} = f_{ij} - f_i f_j", x0 + pad, y0 + 13, w - 2 * pad, 16)
-    c.math(r"\tau_{ijk} = f_{ijk} - f_i f_j f_k", x0 + pad, y0 + 29, w - 2 * pad, 16)
-    c.math(r"\quad - \varepsilon_{ij} f_k - \varepsilon_{ik} f_j - \varepsilon_{jk} f_i", x0 + pad, y0 + 43, w - 2 * pad, 16)
+    c.math(r"\varepsilon_{ij} = f_{ij} - f_i f_j", x0 + pad, y0 + 18, w - 2 * pad, 16)
+    c.math(r"\tau_{ijk} = f_{ijk} - f_i f_j f_k", x0 + pad, y0 + 34, w - 2 * pad, 16)
+    c.math(r"\quad - \varepsilon_{ij} f_k - \varepsilon_{ik} f_j - \varepsilon_{jk} f_i", x0 + pad, y0 + 48, w - 2 * pad, 16)
     t = corr["tau"]
     c.text(
         f"Against the measured &tau; of the same triples: Pearson r = {t['pearson_r']:.4f} "
         f"(n = {t['n']:,}); {100 * t['frac_abs_below_1e-3']:.2f}% of predicted |&tau;| &lt; 10<sup>-3</sup>.",
-        x0 + pad, y0 + 62, w - 2 * pad, h - 64,
+        x0 + pad, y0 + 68, w - 2 * pad, h - 70,
     )
 
     ym = y0 + h / 2

@@ -280,9 +280,10 @@ def panel_tau(m: pd.DataFrame, st: dict):
     ax.set_xlabel(r"Yeast9 FBA $\tau_{ijk}$, screen medium")
     ax.set_ylabel(r"Measured $\tau_{ijk}$")
     c = st["tau"]
-    ax.text(0.03, 0.97, f"SD/MSG -His/Arg/Lys/Ura\nPearson $r$ = {c['pearson_r']:.4f}\n$n$ = {c['n']:,}\n"
+    # Upper right: the data stand in a column at x = 0, so the upper-left corner is not free.
+    ax.text(0.97, 0.97, f"SD/MSG -His/Arg/Lys/Ura\nPearson $r$ = {c['pearson_r']:.4f}\n$n$ = {c['n']:,}\n"
             f"{100 * c['frac_abs_below_1e-3']:.2f}% at $|\\tau|<10^{{-3}}$",
-            transform=ax.transAxes, va="top", ha="left", fontsize=6)
+            transform=ax.transAxes, va="top", ha="right", fontsize=6)
     box(ax)
     save(fig, "fba_screen_medium_tau")
 

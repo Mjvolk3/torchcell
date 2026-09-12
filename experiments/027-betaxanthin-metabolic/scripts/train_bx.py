@@ -595,6 +595,47 @@ class BxCell(BaseModel):
             "of the arm it is supposed to test."
         ),
     )
+    # WAVE 8 (2026-09-12). K draws per genotype per forward pass, the simplest form of the
+    # question Flux Cone Learning answers with 124 OptGPSampler samples per deletion cone.
+    # All three default to what every earlier cell ran, so an older result file deserializes
+    # unchanged. Read [[experiments.027-betaxanthin-metabolic.wave8-sampling]] first: the
+    # Step 0 diagnostic is why `flux_latent_stochastic` is a cell field at all.
+    flux_draws: int = Field(
+        default=1,
+        ge=1,
+        description=(
+            "Latent draws per genotype per forward pass. The batch is expanded to B*draws "
+            "rows inside the flux layer, so the data loss becomes the mean over draws of "
+            "the per-draw CRPS and every constraint residual the mean over draws of its own "
+            "value. At 1 the forward pass is bit-for-bit the one every earlier cell ran. "
+            "Above 1 the layer refuses to build unless the latent actually draws, since K "
+            "copies of mu are not K samples."
+        ),
+    )
+    flux_latent_stochastic: bool = Field(
+        default=False,
+        description=(
+            "Turn the flux layer's latent draw on, z = mu + sigma eps with a KL against "
+            "N(0, I). MEASURED (wave8_latent_spread.json): no arm in 026's ARMS registry "
+            "except `flux_projection_stochastic` sets this, so every wave-6 and wave-7 "
+            "projection cell trained a deterministic latent whose spread head never "
+            "received a gradient and kept sigma at exp(-3) exactly. A K-draw contrast has "
+            "to hold this fixed across both of its arms, or it confounds the draw count "
+            "with whether the model samples at all."
+        ),
+    )
+    flux_kl_weight: float | None = Field(
+        default=None,
+        description=(
+            "Override the flux layer's `kl_weight`, the coefficient on out['c_kl']. None "
+            "keeps FluxLayerConfig's 1e-3. The KL sits INSIDE the ramped constraint sum, so "
+            "the weight that is actually applied is this times `constraint_scale`, which is "
+            "recorded as `effective_kl_weight` in the result's flux_meta. It matters "
+            "because the KL is the only term pushing sigma up: at an effective 1e-4 the "
+            "objective shrank the median posterior sd 130x over 80 epochs on the one 027 "
+            "cell that trained it."
+        ),
+    )
 
 
 AUX_HEAD = "mulleder19"
@@ -900,6 +941,9 @@ def build_cell(
     conc_lower_m: float = CONC_LOWER_M,
     conc_upper_m: float = CONC_UPPER_M,
     flux_density_weight: float = 0.0,
+    flux_draws: int = 1,
+    flux_latent_stochastic: bool = False,
+    flux_kl_weight: float | None = None,
 ) -> BxCell:
     """Merge ``base.yaml`` with one arm file into a fully specified cell."""
     with open(osp.join(CONF_DIR, f"arm_{arm}.yaml")) as fh:
@@ -958,6 +1002,9 @@ def build_cell(
         # the environment variable is read only when no arm file names one.
         flux_parameterization=armcfg.flux_parameterization,
         flux_density_weight=flux_density_weight,
+        flux_draws=flux_draws,
+        flux_latent_stochastic=flux_latent_stochastic,
+        flux_kl_weight=flux_kl_weight,
     )
 
 
@@ -1308,8 +1355,20 @@ def collect_feasibility(
             if head_name == HEAD:
                 # The scalar the ranking is defined on: the head's mean, denormalized back
                 # into the units the betaxanthin measurement is reported in.
+                #
+                # ONE ROW PER DRAW, not per genotype, when the arm draws. Feasibility is a
+                # property of a FLUX and there are K of those per genotype, while the
+                # prediction is the draw ensemble and there is one; repeating it aligns the
+                # two so that "the top 100 predicted strains" selects every draw of those
+                # 100 genotypes. That is the claim a sampled arm has to answer, since a
+                # genotype feasible on average and one feasible on every draw are different
+                # statements.
                 pred = _head_params(reps["head_outputs"][head_name])
-                per["prediction"] = pred[:, 0] * sd[0] + mean[0]
+                scalar = pred[:, 0] * sd[0] + mean[0]
+                draws = int(layer.config.draws)
+                per["prediction"] = (
+                    scalar.repeat_interleave(draws, dim=0) if draws > 1 else scalar
+                )
             for key, value in per.items():
                 parts.setdefault(key, []).append(value.detach().cpu().numpy())
     model.train(was_training)
@@ -1583,6 +1642,130 @@ class FluxConcentrationReadout(nn.Module):
                 [pred, self.log_sigma.unsqueeze(0).expand_as(pred)], dim=-1
             )
         reps["head_outputs"][AUX_HEAD] = pred
+        return predictions, reps
+
+
+def _sampling_meta(model: nn.Module, cell: BxCell) -> dict[str, Any]:
+    """What the arm sampled with, recorded beside the coverage block.
+
+    The KL weight on its own is misleading, because the KL sits inside the ramped constraint
+    sum: the coefficient that was actually applied is the product with the constraint scale.
+    Both are written so a reader of the result file never has to reconstruct it.
+    """
+    layer: Any = getattr(model, "flux_layer", None)
+    if layer is None:
+        return {"sampling": {"flux_draws": cell.flux_draws, "latent_stochastic": False}}
+    kl_weight = float(layer.config.kl_weight)
+    return {
+        "sampling": {
+            "flux_draws": int(layer.config.draws),
+            "latent_stochastic": bool(layer.latent_stochastic),
+            "latent_log_std_init": float(layer.config.latent_log_std_init),
+            "kl_weight": kl_weight,
+            "constraint_final_scale": float(layer.config.constraint_final_scale),
+            "effective_kl_weight": kl_weight
+            * float(layer.config.constraint_final_scale),
+        }
+    }
+
+
+class FluxDrawEnsemble(nn.Module):
+    r"""Reduce a K-draw model's ``B*K`` head outputs to ``B`` predictions, and report both.
+
+    WHAT THE FLUX LAYER DOES AND WHAT IS LEFT OVER. With ``config.draws = K`` the layer
+    expands the batch to ``B*K`` rows, one per draw, and the readout produces one prediction
+    per draw. Everything downstream of the head, the trainer's loss, the validation Pearson,
+    the test score, the calibration pass, expects ``B`` rows. This wrapper is the single
+    place that bridges the two, so no eval consumer needs to know the arm samples.
+
+    THE TWO PREDICTIONS ARE DIFFERENT OBJECTS AND BOTH ARE KEPT.
+
+    ``reps['head_draws'][name]``
+        the raw ``[B*K, ...]`` per-draw output. The TRAINING loss reads this, against a
+        target repeated ``K`` times, which makes the data term the mean over draws of the
+        per-draw score. Scoring the averaged prediction instead would train the model to
+        make the AVERAGE good and leave the individual draws free, which is the opposite of
+        what a sampler is for.
+
+    ``reps['head_outputs'][name]``
+        the ``[B, ...]`` reduction, which is what is SCORED. Flux Cone Learning averages its
+        per-sample predictions into one call per gene, and this is the same operation. For a
+        point head the reduction is the mean over draws. For the Gaussian CRPS head, whose
+        output is ``(mu, log sigma)`` per draw, the reduction is the moment match of the
+        mixture,
+
+        .. math::
+            \bar\mu=\frac1K\sum_k\mu_k,\qquad
+            \bar\sigma^2=\frac1K\sum_k\sigma_k^2+\frac1K\sum_k(\mu_k-\bar\mu)^2,
+
+        so the disagreement BETWEEN draws widens the predictive distribution instead of
+        being discarded. Taking the mean of ``log sigma`` and dropping the second term would
+        report a K-draw ensemble as more confident than a single draw, which is backwards.
+
+    ``reps['flux_draw_pred_sd']``
+        the across-draw sd of the mean parameter, averaged over the batch. This is the
+        number that says whether K draws are doing anything at all; at K = 1 it is exactly
+        zero and is reported as such.
+    """
+
+    model: nn.Module
+
+    def __init__(self, model: nn.Module, draws: int, head_names: list[str]) -> None:
+        """Wrap a built model whose flux layer is configured for ``draws`` draws."""
+        super().__init__()
+        assert draws >= 1, f"draws must be at least 1, got {draws}."
+        self.model = model
+        self.draws = int(draws)
+        self.head_names = list(head_names)
+
+    @property
+    def flux_layer(self) -> Any:
+        """The wrapped model's layer, so every caller that reaches for it is unchanged."""
+        return self.model.flux_layer
+
+    @property
+    def num_parameters(self) -> dict[str, int]:
+        """The wrapped model's counts. This wrapper holds no parameters of its own."""
+        return cast(dict[str, int], self.model.num_parameters)
+
+    @staticmethod
+    def reduce(pred: torch.Tensor, draws: int) -> torch.Tensor:
+        """``[B*K, ...] -> [B, ...]``, moment-matching a ``(mu, log sigma)`` last axis."""
+        rest = pred.shape[1:]
+        grouped = pred.view(-1, draws, *rest)
+        if pred.shape[-1] == 2:
+            mu, log_sigma = grouped[..., 0], grouped[..., 1]
+            mean = mu.mean(dim=1)
+            variance = torch.exp(2.0 * log_sigma).mean(dim=1) + mu.var(
+                dim=1, unbiased=False
+            )
+            return torch.stack(
+                [mean, 0.5 * torch.log(variance.clamp(min=1e-30))], dim=-1
+            )
+        return grouped.mean(dim=1)
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Run the wrapped model, then split its head outputs into draws and a reduction."""
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        head_outputs = cast(dict[str, torch.Tensor], reps["head_outputs"])
+        draws_out: dict[str, torch.Tensor] = {}
+        spreads: list[torch.Tensor] = []
+        for name in self.head_names:
+            pred = head_outputs[name]
+            draws_out[name] = pred
+            if self.draws == 1:
+                spreads.append(pred.new_zeros(()))
+                continue
+            head_outputs[name] = self.reduce(pred, self.draws)
+            grouped = pred.view(-1, self.draws, *pred.shape[1:])
+            mu = grouped[..., 0] if pred.shape[-1] == 2 else grouped
+            spreads.append(mu.detach().std(dim=1, unbiased=False).mean())
+        reps["head_draws"] = draws_out
+        reps["flux_draw_pred_sd"] = (
+            torch.stack(spreads).mean() if spreads else predictions.new_zeros(())
+        )
         return predictions, reps
 
 
@@ -1887,6 +2070,32 @@ def build_model_for_cell(
         flux_layer.config.density_weight = cell.flux_density_weight
         flux_layer.config.conc_lower_m = cell.conc_lower_m
         flux_layer.config.conc_upper_m = cell.conc_upper_m
+        # THE K-DRAW SWITCHES, written before the layer is used but AFTER it is built, for
+        # the same reason as the three above: 026's `build_flux_layer` owns the construction
+        # and forwards only the fields its own registry names. `draws` and `kl_weight` are
+        # read at call time so the assignment takes effect; `latent_stochastic` is read by
+        # the layer's `latent_stochastic` property, also at call time.
+        #
+        # The K > 1 assertion the layer makes in its constructor cannot fire here, since the
+        # layer was already built, so it is repeated as the explicit check below.
+        flux_layer.config.latent_stochastic = cell.flux_latent_stochastic
+        flux_layer.config.draws = cell.flux_draws
+        if cell.flux_kl_weight is not None:
+            flux_layer.config.kl_weight = cell.flux_kl_weight
+        assert cell.flux_draws == 1 or flux_layer.latent_stochastic, (
+            f"--flux-draws {cell.flux_draws} needs --flux-latent-stochastic: K copies of a "
+            "deterministic mu are not K samples, and the arm would pay K times the compute "
+            "to report the K = 1 prediction."
+        )
+        assert not (
+            cell.flux_draws > 1 and cell.aa_readout == AA_READOUT_CONCENTRATION
+        ), (
+            "the concentration readout predicts a slice of the layer's `thermo_log_c`, "
+            "which is a function of the genotype context and NOT of the drawn flux, so "
+            "--flux-draws above 1 buys it nothing and its B rows would not align with the "
+            "B*K flux rows. Measured and written up in "
+            "[[experiments.027-betaxanthin-metabolic.wave8-sampling]]."
+        )
 
     if arm["flux"]:
         frac = float(flux_meta["kcat_experimental_fraction"])
@@ -2089,6 +2298,20 @@ def build_model_for_cell(
             f"{1.0 / math.log1p(float(flux_layer.config.flux_scale)):.4f}",
             flush=True,
         )
+    if cell.flux_draws > 1:
+        # ONE PLACE reduces the B*K head outputs to B, so no eval consumer has to know the
+        # arm samples. The wrapper holds no parameters, so a checkpoint written through it
+        # differs from the unwrapped one only by the `model.` prefix on every name.
+        ensemble = FluxDrawEnsemble(model, cell.flux_draws, model.flux_head_names).to(
+            device
+        )
+        print(
+            f"[flux-draws] {cell.flux_draws} latent draws per genotype, reduced over heads "
+            f"{model.flux_head_names}; the training loss is the mean over draws of the "
+            f"per-draw score and the reported prediction is the draw ensemble",
+            flush=True,
+        )
+        return ensemble, head_specs, main_head, flux_meta
     return model, head_specs, main_head, flux_meta
 
 
@@ -2235,7 +2458,16 @@ def run_cell(
                 perm = torch.randperm(t.shape[0], device=device)
                 t, m = t[perm], m[perm]
             z = (t - mean) / sd
-            pred = _head_params(reps["head_outputs"][main_head])
+            # THE PER-DRAW SCORE, when the arm draws. `head_draws` carries the unreduced
+            # B*K rows and the target is repeated to match, so the masked mean below is
+            # exactly the mean over draws of the per-draw CRPS. Scoring the reduced
+            # prediction instead would train the ensemble average and leave each draw free.
+            if cell.flux_draws > 1:
+                pred = _head_params(reps["head_draws"][main_head])
+                z = z.repeat_interleave(cell.flux_draws, dim=0)
+                m = m.repeat_interleave(cell.flux_draws, dim=0)
+            else:
+                pred = _head_params(reps["head_outputs"][main_head])
             data_loss = (loss_fn(pred, z) * m).sum() / m.sum().clamp(min=1)
             loss = data_loss + reps["graph_reg_loss"]
             if cell.aux_mulleder:
@@ -2267,10 +2499,21 @@ def run_cell(
                 loss = loss + constraint_term
                 train_constraint_loss += float(constraint_term.detach())
                 for k, v in reps["flux"].items():
+                    # 'latent_' joins the prefixes at wave 8: a sampled arm's posterior sd
+                    # is the number that separates a sampler from a point estimate, and the
+                    # KL alone cannot report it because it mixes the mu and sigma halves.
                     if v.dim() == 0 and k.startswith(
-                        ("c_", "feas_", "g_diss", "protein_used")
+                        ("c_", "feas_", "g_diss", "protein_used", "latent_")
                     ):
                         feas[k] = feas.get(k, 0.0) + float(v.detach())
+            if "flux_draw_pred_sd" in reps:
+                # The across-draw sd of the head's own prediction, in standardized target
+                # units. Logged beside the posterior sd because the two can disagree: a
+                # wide latent whose draws all clip onto the same box face moves the flux
+                # and not the phenotype.
+                feas["flux_draw_pred_sd"] = feas.get("flux_draw_pred_sd", 0.0) + float(
+                    reps["flux_draw_pred_sd"].detach()
+                )
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
             optimizer.step()
@@ -2396,7 +2639,8 @@ def run_cell(
         "select_val_pearson": val_curve[sel_epoch] if val_curve else float("nan"),
         "test": test,
         "history": history,
-        "flux_meta": {k: v for k, v in flux_meta.items() if k != "met_index"},
+        "flux_meta": {k: v for k, v in flux_meta.items() if k != "met_index"}
+        | _sampling_meta(model, cell),
         "pinned_split": pinned_report,
         "n_parameters": model.num_parameters,
         "wall_time_s": time.time() - t0,
@@ -2536,8 +2780,16 @@ def run_cell(
             per_all = collect_feasibility(
                 model, dm.all_dataloader(), dataset, main_head, mean, sd
             )
+            # The mask indexes the rows of `per_all`, and a K-draw arm has K of those per
+            # genotype, so it is repeated the same way the prediction is. `np.repeat`
+            # matches `repeat_interleave`: it duplicates each element in place, which is the
+            # order the draws of one genotype arrive in.
             block = build_feasibility_block(
-                per_all, per_test, pinned_test_mask(dm, dataset), layer, main_head
+                per_all,
+                per_test,
+                np.repeat(pinned_test_mask(dm, dataset), int(layer.config.draws)),
+                layer,
+                main_head,
             )
         result["feasibility"] = block.model_dump()
 
@@ -2999,6 +3251,34 @@ def main() -> None:
             "scale, because the recipe these cells run holds that scale at 0.0."
         ),
     )
+    parser.add_argument(
+        "--flux-draws",
+        type=int,
+        default=1,
+        help=(
+            "Latent draws per genotype per forward pass. Above 1 needs "
+            "--flux-latent-stochastic; the data loss becomes the mean over draws of the "
+            "per-draw score and the reported prediction is the draw ensemble."
+        ),
+    )
+    parser.add_argument(
+        "--flux-latent-stochastic",
+        action="store_true",
+        help=(
+            "Draw the flux layer's latent, z = mu + sigma eps, with a KL against N(0, I). "
+            "Held FIXED across both arms of a K-draw contrast, or the contrast confounds "
+            "the draw count with whether the model samples at all."
+        ),
+    )
+    parser.add_argument(
+        "--flux-kl-weight",
+        type=float,
+        default=None,
+        help=(
+            "Override the coefficient on the latent KL (default 1e-3). It is multiplied by "
+            "the constraint scale, so the applied weight is the product."
+        ),
+    )
     args = parser.parse_args()
 
     cfg = load_config()
@@ -3028,6 +3308,9 @@ def main() -> None:
         conc_lower_m=args.conc_lower_m,
         conc_upper_m=args.conc_upper_m,
         flux_density_weight=args.flux_density_weight,
+        flux_draws=args.flux_draws,
+        flux_latent_stochastic=args.flux_latent_stochastic,
+        flux_kl_weight=args.flux_kl_weight,
     )
     dataset = build_dataset()
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)

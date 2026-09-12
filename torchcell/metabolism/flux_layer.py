@@ -358,6 +358,24 @@ class FluxLayerConfig(BaseModel):
             "build_flux_layer forwards."
         ),
     )
+    draws: int = Field(
+        default=1,
+        ge=1,
+        description=(
+            "How many latent draws :meth:`FluxLayer.forward` takes per genotype. At 1, the "
+            "default, the forward pass is bit-for-bit what it has always been. Above 1 the "
+            "genotype chain, the box and the reaction energies are computed ONCE and the "
+            "batch is expanded to B*draws rows, each carrying its own z, so every "
+            "constraint residual becomes the mean over draws as well as over the batch and "
+            "the readout sees one flux per draw. The draw is taken in eval too, since a "
+            "K-draw arm is scored on the average of its per-draw predictions the way Flux "
+            "Cone Learning averages over its OptGPSampler samples. Requires a latent "
+            "parameterization with the draw switched on, since K copies of mu are not "
+            "samples; the constructor asserts it rather than silently returning copies. "
+            "Read off `config` at call time, like `stochastic`, so no caller signature "
+            "changes and `sample()` keeps owning the explicit-N audit path."
+        ),
+    )
     latent_log_std_init: float = Field(
         default=-3.0,
         description=(
@@ -1314,6 +1332,18 @@ class FluxLayer(nn.Module):
                 # only move in the directions the component contribution left uncertain.
                 self.delta_g_m = nn.Parameter(torch.zeros(self.n_delta_g_components))
 
+        # K DRAWS NEEDS AN ACTUAL DRAW. Checked here rather than in the config validator
+        # because `latent_stochastic` is a property of the BUILT layer: on the projection
+        # kind either boolean turns the draw on, and on `nullspace` only one of them does.
+        # Without this, a K = 16 arm would run 16 copies of mu, report a per-draw mean that
+        # equals the deterministic prediction, and cost 16x the compute to do it.
+        assert cfg.draws == 1 or self.latent_stochastic, (
+            f"draws={cfg.draws} on a layer whose latent is deterministic "
+            f"(parameterization {self.parameterization!r}, latent_stochastic "
+            f"{cfg.latent_stochastic}, stochastic {cfg.stochastic}). K copies of mu are not "
+            "K samples; set latent_stochastic on the arm."
+        )
+
     # -- construction helpers -------------------------------------------------
 
     @property
@@ -1542,8 +1572,8 @@ class FluxLayer(nn.Module):
 
     def _latent(
         self, context: torch.Tensor, force_sample: bool = False
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        r"""The latent :math:`z` and its KL against :math:`\mathcal N(0,I)`.
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]:
+        r"""The latent :math:`z`, its KL against :math:`\mathcal N(0,I)`, and its sd.
 
         Deterministic unless ``latent_stochastic``, and then :math:`z=\mu+\sigma\epsilon` in
         training or whenever ``force_sample`` is set, which is how :meth:`sample` draws in
@@ -1551,15 +1581,23 @@ class FluxLayer(nn.Module):
 
         The KL is the per-sample MEAN over latent dimensions rather than the sum, so one
         weight serves a 1,538-dimensional yeast basis and a three-dimensional toy alike.
+
+        The third return is the posterior sd itself, or ``None`` on a deterministic layer.
+        It is returned rather than recomputed by the caller because a K-draw arm logs it
+        every epoch: measured on the one 027 cell that ever trained it
+        ([[experiments.027-betaxanthin-metabolic.wave8-sampling]]), the objective shrank the
+        median sigma by 130x over 80 epochs while the KL, at an effective weight of 1e-4,
+        did not resist, so an arm that samples without watching this number cannot tell a
+        sampler from a point estimate.
         """
         mu = self.latent_mlp(context)
         if not self.latent_stochastic:
-            return mu, mu.new_zeros(())
+            return mu, mu.new_zeros(()), None
         log_std = self.latent_log_std(context)
         std = torch.exp(log_std)
         z = mu + torch.randn_like(mu) * std if (self.training or force_sample) else mu
         kl = 0.5 * (mu**2 + std**2 - 1.0 - 2.0 * log_std).mean(dim=1)
-        return z, kl.mean()
+        return z, kl.mean(), std
 
     def _transport_term(self, gem: GemTensors) -> torch.Tensor:
         r"""Supply :math:`\Delta_r G^t_j`, from the GEM's own column or from the physics.
@@ -1906,7 +1944,47 @@ class FluxLayer(nn.Module):
         if self.thermo_box:
             lb, ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
 
+        # K DRAWS PER GENOTYPE, as an expansion of the batch rather than a loop.
+        #
+        # Everything above this line is a deterministic function of the tokens, so it is
+        # computed once and repeated; everything below it then runs on B*K rows with no
+        # change of its own. That is what makes the constraint residuals the mean over draws
+        # automatically: they are already means over the batch axis, and the draws are now
+        # part of it. `repeat_interleave` groups the draws of one genotype contiguously, so
+        # a consumer reshapes to [B, K, ...] with a plain view.
+        #
+        # EVERY BATCH-AXIS ENTRY OF THE RETURNED DICT CARRIES B*K ROWS, including the ones
+        # the draw cannot change. `c_j`, `gamma` and `e_g` are genotype quantities and
+        # repeating them stores identical rows, but a consumer that pairs one of them with
+        # the flux needs them to line up: `_per_sample_feasibility` in 027's trainer rebuilds
+        # the box from `c_j` and compares it against `v`, and at B rows against B*K that is
+        # a shape error at the end of a run rather than at its start. Every mean over the
+        # expanded rows equals the mean over the original ones, so no reported number moves.
+        #
+        # The `thermo_*` extras are the exception and stay at B rows: they are the learned
+        # concentration and its derived terms, which no draw touches, and the one readout
+        # that consumes them is refused with K > 1 by the trainer.
+        draws = int(cfg.draws)
+        if draws > 1:
+            context = context.repeat_interleave(draws, dim=0)
+            lb = lb.repeat_interleave(draws, dim=0)
+            ub = ub.repeat_interleave(draws, dim=0)
+            delta_g = delta_g.repeat_interleave(draws, dim=0)
+            c_j = c_j.repeat_interleave(draws, dim=0)
+            gamma = gamma.repeat_interleave(draws, dim=0)
+            if e_g is not None:
+                e_g = e_g.repeat_interleave(draws, dim=0)
+            if capacity is not None:
+                capacity = capacity.repeat_interleave(draws, dim=0)
+            if thermo_emptied is not None:
+                thermo_emptied = thermo_emptied.repeat_interleave(draws, dim=0)
+            # Every use of `b` below this point sizes a per-FLUX tensor, so it follows the
+            # expansion. `gamma` and `e_g` keep their B rows and their own diagnostics with
+            # them.
+            b = context.shape[0]
+
         kl = h_genes.new_zeros(())
+        latent_std: torch.Tensor | None = None
         sign_flip_frac: torch.Tensor | None = None
         v_pre_projection: torch.Tensor | None = None
         if self.parameterization == "fluxforce":
@@ -1927,7 +2005,7 @@ class FluxLayer(nn.Module):
                 box_ub,
                 delta_g,
                 dg_mask,
-                draw=self.latent_stochastic and self.training,
+                draw=self.latent_stochastic and (self.training or draws > 1),
             )
             v = self._project_feasible(v_pre_projection, box_lb, box_ub)
             # WHAT THE PROJECTION COSTS, MEASURED. The pre-projection flux satisfies the
@@ -1959,7 +2037,12 @@ class FluxLayer(nn.Module):
             box_penalty = (out_of_box / cfg.flux_scale).mean()
         elif self.parameterization in {"nullspace", "projection"}:
             # Mass balance is exact here, for any latent: S (N z) = (S N) z = 0.
-            latent, kl = self._latent(context)
+            #
+            # A K-draw arm forces the draw in eval as well as in training, because its
+            # prediction IS the average over draws and emitting mu K times would score a
+            # different estimator than the one that was trained. At K = 1 the flag is False
+            # and `_latent` behaves exactly as it always has.
+            latent, kl, latent_std = self._latent(context, force_sample=draws > 1)
             z_latent = latent * cfg.flux_scale
             v = z_latent @ self.null_basis.t()
             if self.parameterization == "projection":
@@ -1990,6 +2073,13 @@ class FluxLayer(nn.Module):
         out: dict[str, torch.Tensor] = {"v": v, "c_j": c_j, "gamma": gamma}
         out["c_box"] = box_penalty
         out["c_kl"] = kl
+        # THE NUMBER A SAMPLED ARM LIVES OR DIES BY, logged every epoch rather than
+        # reconstructed from the KL afterwards. `c_kl` mixes the mu and the sigma halves, so
+        # a KL that rises does not by itself say which one moved.
+        out["latent_n_draws"] = v.new_tensor(float(draws))
+        if latent_std is not None:
+            out["latent_sigma_p50"] = latent_std.detach().median()
+            out["latent_sigma_mean"] = latent_std.detach().mean()
         # The box, carried out so `feasibility` can price a violation per sample without
         # rebuilding the genotype chain. Two-dimensional, so the trainer's scalar log, which
         # takes only 0-dim entries, does not pick them up.
@@ -2284,7 +2374,7 @@ class FluxLayer(nn.Module):
                     lb_force, ub_force, _ = self._thermo_tighten(lb, ub, delta_g)
                     v = torch.minimum(torch.maximum(v, lb_force), ub_force)
             else:
-                latent, _ = self._latent(context, force_sample=True)
+                latent, _, _ = self._latent(context, force_sample=True)
                 v = (latent * cfg.flux_scale) @ self.null_basis.t()
                 if self.parameterization == "projection":
                     v = self._project_feasible(v, lb, ub)

@@ -169,3 +169,216 @@ above rather than preferences. First, K > 1 has to turn `latent_stochastic` ON, 
 draws are K copies of `mu`; that also switches the KL on. Second, the spread has to be held
 up against a data term that shrinks it, so the arm reports the posterior sd every epoch and
 the KL weight is a knob the cell records rather than an inherited default.
+
+## 2026.09.12 - Step 1: K draws per genotype, implemented
+
+Arm (b), the amino-acid concentration head, is DROPPED on the Step 0 finding that its
+readout is not a function of the flux. The whole budget goes to arm (a), betaxanthin plain
+projection at constraint scale 0, 80 epochs.
+
+### The contrast, and why both arms sample
+
+The obvious pairing, K = 16 against the deterministic wave-7 cells 1776 to 1778, confounds
+two changes: the draw count, and whether the model samples at all. Those cells ran
+`latent_stochastic` off. So the contrast is run as PAIRS in which both arms carry
+`--flux-latent-stochastic` and differ only in `--flux-draws`, and the deterministic cells
+become a third column measuring what turning the draw on costs on its own.
+
+| column | `flux_draws` | `latent_stochastic` | seeds | cells |
+|---|---|---|---|---|
+| K = 16 | 16 | on | 2703, 2704, 2705 | `gh_wave8_samp_k16_s270{3,4,5}.slurm` |
+| K = 1, sampled | 1 | on | 2703, 2704, 2705 | `gh_wave8_samp_k1_s270{3,4,5}.slurm` |
+| K = 1, deterministic | 1 | off | 2703, 2704, 2705 | jobs 1776, 1777, 1778 (wave 7) |
+
+Everything else is `gh_wave7_fill_proj_projection_s270{3,4,5}.slurm` verbatim: plain
+projection, constraint scale exactly 0.0, 20-epoch warmup on a scale that is zero anyway,
+predicted kcat, union thermodynamics, normalized head, CRPS, graph regularizer, 80 epochs.
+Score: pinned Merzbacher test Spearman at the validation-selected epoch under the centered
+5-epoch moving average, paired by seed. Never a max over epochs.
+
+### What K does, mechanically
+
+`FluxLayerConfig.draws` is read at call time, like `stochastic`, so no caller signature
+changes and `FluxLayer.sample` keeps owning the explicit-N audit path. Above 1, the layer
+computes the genotype chain, the box and the reaction energies ONCE and then expands the
+batch to `B*K` rows with `repeat_interleave`, so the draws of one genotype are contiguous
+and a consumer reshapes to `[B, K, ...]` with a plain view. Every constraint residual is
+already a mean over the batch axis, so it becomes the mean over draws for free.
+
+- `e_g` and the `thermo_*` extras are NOT expanded, because neither depends on the draw.
+  That is exactly why the concentration readout is incompatible with K > 1, and the trainer
+  refuses the combination rather than misaligning rows.
+- The draw is forced in EVAL as well as training when K > 1, since the arm's prediction is
+  the average over draws and emitting mu K times would score a different estimator than the
+  one trained.
+- The layer refuses to build with K > 1 on a deterministic latent. K copies of mu are not K
+  samples, and the failure would otherwise be a silent 16x compute bill for the K = 1 answer.
+
+The training loss reads the unreduced `B*K` predictions against a target repeated K times,
+so the data term is the mean over draws of the per-draw CRPS. The reported prediction is a
+separate object: `FluxDrawEnsemble` moment-matches the per-draw Gaussians,
+
+```text
+mu_bar    = mean_k mu_k
+sigma_bar^2 = mean_k sigma_k^2 + var_k(mu_k)
+```
+
+so disagreement between draws widens the predictive distribution instead of being discarded.
+Averaging `log sigma` instead would report a K-draw ensemble as more confident than a single
+draw. Every eval consumer, the validation Pearson, the test score and the calibration pass,
+sees `[B, ...]` and needs no change.
+
+Three new cell fields, all serialized: `flux_draws`, `flux_latent_stochastic`,
+`flux_kl_weight`. The result's `flux_meta.sampling` block records the KL weight AND the
+effective weight, which is the product with the constraint scale, since the KL sits inside
+the ramped sum. Two new per-epoch logs: `latent_sigma_p50` and `latent_sigma_mean` from the
+layer, and `flux_draw_pred_sd`, the across-draw sd of the head's own prediction in
+standardized target units. The two can disagree, and the disagreement is informative: a wide
+latent whose draws all clip onto the same box face moves the flux and not the phenotype.
+
+### K = 1 is bit-for-bit, and the tests that say so
+
+`tests/torchcell/metabolism/test_flux_layer.py` gains five tests. The load-bearing one
+builds two layers under the same seed, one with `draws` unset and one with `draws=1`, calls
+both under the same seed, and asserts `torch.equal` on `v`, `c_balance`, `c_box`, `c_kl` and
+`c_parsimony`. The rest assert that K draws expand the batch and are grouped by genotype
+(checked on the BOX, which is deterministic per genotype and so exactly constant within a
+group), that the draw is taken in eval only when K > 1, that K > 1 on a deterministic latent
+is refused, and that the posterior sd is reported exactly when there is one. All 83 tests in
+the file pass.
+
+### What K costs
+
+`experiments/027-betaxanthin-metabolic/scripts/bench_flux_draws.py`, CPU, the real
+yeast-GEM (4,131 reactions, 1,538-dimensional null basis), batch 128, forward plus backward
+of the flux layer alone, median of 3:
+
+| K | rows | median s | ratio to K = 1 | one `[rows, 4131]` float32 tensor |
+|---|---|---|---|---|
+| 1 | 128 | 0.073 | 1.00 | 2.0 MiB |
+| 4 | 512 | 0.182 | 2.49 | 8.1 MiB |
+| 16 | 2,048 | 0.813 | 11.14 | 32.3 MiB |
+
+Sub-linear in K, 11.1x for 16x the rows, which is what the shared genotype chain should buy
+and confirms nothing is recomputed per draw. These are CPU numbers and are NOT a prediction
+of the GPU ratio: the backbone is untouched by K, so the epoch-time ratio depends on what
+fraction of a GPU step the layer is. That fraction is measured from the first submitted
+pair, and if K = 16 costs more than about 3x per epoch the remaining pairs run at K = 4.
+
+## 2026.09.12 - Step 2 design: a sample-free flow-matching sampler
+
+### The constraint that sets the design
+
+Merzbacher's released Yeast9 sampling covers 1,121 SINGLE deletions. Our genotypes include
+doubles, triples and combinatorial designs, and no sampled set for those exists or will. A
+design that learns to imitate pre-sampled fluxes therefore cannot generalize to the
+genotypes the project is for, whatever it scores on singles. Two routes remain, and they
+differ in where the training signal comes from.
+
+**(a) On-the-fly targets.** A short hit-and-run chain in latent coordinates inside
+`{z : lb <= s N z <= ub}`, warm-started from the layer's own projected point, run for the
+genotypes in the batch at forward time, and used as the flow's targets. Honest, but it puts
+a Markov chain inside the training step: the chain length and thinning become
+hyperparameters bounded by what a step can afford, and a chain short enough to afford is a
+chain whose samples are correlated with the warm start, which is the model's own point. So
+the target distribution is a function of the model, and the flow learns to reproduce a
+biased sample of a distribution it is helping to define.
+
+**(b) A sample-free objective.** No target samples at all. Train the flow so that its own
+samples are feasible and spread out: maximize entropy subject to the feasibility penalties
+the layer ALREADY computes. This is the route to take, for three reasons. It needs no chain
+and no cached store, so it costs one flow evaluation per draw and generalizes to any
+genotype by construction, single or combinatorial. Every term in it already exists and is
+already normalized to be dimensionless: `c_box`, `c_balance`, `c_thermo`, `c_density`,
+`c_parsimony`. And the uniform distribution on a polytope IS the maximum-entropy
+distribution subject to staying inside it, so the objective's optimum is the target
+constraint-based sampling asks for, rather than an approximation of a sample of it.
+
+### The construction
+
+**Coordinates.** The flow lives in the admissible subspace found in Step 0, not in the raw
+1,538-dimensional latent. Every basis direction of the null space moves some reaction whose
+box has zero width, so a flow that ignores that spends its capacity learning to undo the
+blocked directions. The admissible subspace is the kernel of `N[Z, :]` with `Z` the
+zero-width reactions of THAT genotype, measured at 1,263 to 1,529 dimensions across the four
+audited cells. It is genotype-dependent, since a deletion closes reactions, so it is formed
+per batch from the bounds the layer already has.
+
+**The field.** Rectified flow / conditional flow matching (Lipman 2023, Tong 2023): a
+velocity field `u_theta(z_t, t, c)` with `c` the same genotype context the latent MLP takes,
+`z_0 ~ N(0, I)` restricted to the admissible subspace, `z_t = (1-t) z_0 + t z_1`. No noise
+schedule and no DDPM. Sampling is 8 to 10 Euler steps followed by the existing alternating
+projection, so mass balance and the box are exact at the end whatever the field does; the
+flow's job is WHERE in the feasible set to land, never whether the point is feasible.
+
+**The loss, with no target samples.** For a batch of flow samples `{v_i}` of one genotype,
+
+```text
+L = sum_j w_j c_j({v_i})  -  beta * H_hat({z_i})
+```
+
+where the first sum is the layer's existing constraint terms, unchanged and at their
+existing weights, and `H_hat` is an entropy surrogate on the flow's own draws. The surrogate
+is the open question and the first thing to settle empirically. Two candidates, in order of
+how little machinery they need:
+
+1. **A pairwise-repulsion energy**, `-mean_{i != i'} log ||z_i - z_i'||`, the Riesz energy
+   whose minimizer over a convex body is asymptotically uniform on it. No density, no trace
+   estimator, one `K x K` distance matrix per genotype per step.
+2. **The exact log-density** by the instantaneous change of variables along the flow, with a
+   Hutchinson trace estimator for the divergence. Correct, and roughly one extra
+   backward per Euler step. Not built now; the pairwise energy is measured first and the
+   exact density is the fallback if the pairwise term is what limits the result.
+
+`beta` is the one new hyperparameter, and Step 0 says which direction it fails in: the data
+term shrinks the posterior on its own, so `beta` too small collapses the flow to a point and
+the diagnostic that catches it is already logged (`flux_draw_pred_sd` and the across-draw
+flux sd against the box width).
+
+**Phenotype fine-tune.** K flow samples per genotype through the existing readouts and
+losses, gradients through the Euler steps, exactly as the Step 1 K-draw path does it. First
+cell: betaxanthin, one seed, against its K = 1 and K = 16 partners. Extended to three seeds
+only if the one-seed read is not clearly worse.
+
+**What must be measured before it is called a sampler.** The Step 0 instruments answer this
+directly: the across-draw flux sd against `1/sqrt(12)` of each reaction's box width, which
+a uniform sample of the box would reach; the fraction of reactions the draws move; and the
+across-draw prediction sd against the across-genotype sd. A flow whose coverage is below the
+frozen-sigma draw of Step 0 is not an improvement over the Gaussian latent, whatever its
+test Spearman does.
+
+### The number that makes the enzyme-constrained arms a separate problem
+
+The amino-acid arms carry the enzyme-capacity bound, and their boxes are consequently
+1e-7 mmol gDW^-1 h^-1 wide at the median, against a plain projection box of order 1 to 10 in
+the same units. The layer's working flux magnitude `flux_scale` is 100 mmol gDW^-1 h^-1, so
+one draw at the frozen sigma displaces the flux by about 5 in those units, which is 1e5
+times the box. Any sampler for those arms, this flow included, has to be scaled to the
+genotype's own box rather than to `flux_scale`, or every draw lands outside and the
+projection returns the same face. That is a property of the capacity bound and its
+abundance prior (median 2.7e-6 mmol/gDW), not of the sampler.
+
+### The KL is exactly zero in these cells, and the prior is the wrong shape anyway
+
+Measured on the one-epoch smoke of the K = 4 path: `flux_meta.sampling` reads
+`kl_weight 1e-3`, `constraint_final_scale 0.0`, `effective_kl_weight 0.0`. The KL sits
+inside the ramped constraint sum, and the wave-7 recipe these cells copy runs that sum at a
+scale of exactly zero, so the sampled arms carry NO prior on their posterior at all. Nothing
+opposes the data term, and the data term shrinks sigma: with the mean held, a wider draw
+spread raises the expected per-draw CRPS.
+
+Hypothesis (untested), and the reason the cells still run as specified: sigma will decay in
+both arms of every pair. That is not a reason to change the recipe, for two reasons. The
+contrast is K, and both arms share the KL treatment exactly, so a shared decay does not bias
+it. And `latent_sigma_p50` is now logged every epoch, so a null result comes with the
+measurement that explains it instead of being a mystery.
+
+Raising the KL weight is NOT the fix, and this is the argument that carries into Step 2. The
+prior is N(0, I), so its optimum is sigma = 1. Step 0 measured that sigma = 0.0498 already
+overshoots the box chord along random admissible directions by 1.85x on this very arm. A KL
+weight large enough to stop the collapse therefore pulls the posterior 20x past the polytope
+it is supposed to be sampling, and every draw lands outside the box for the projection to
+clip back onto a face. An isotropic Gaussian prior in latent coordinates has no knowledge of
+the genotype's bounds, so it cannot be the anti-collapse term. The term that can is the one
+Step 2 is built on: entropy measured against the genotype's OWN box, which is maximized by
+the uniform distribution on the polytope rather than by a fixed width.

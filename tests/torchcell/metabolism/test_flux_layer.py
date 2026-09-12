@@ -1575,3 +1575,160 @@ def test_the_fluxforce_channel_takes_the_dykstra_method_too():
     active = layer.delta_r_g0_mask & (~layer.thermo_exempt)
     assert float((out["v"][:, active] * out["delta_r_g"][:, active]).max()) <= 1e-6
     assert float(out["feas_box_violation_frac"]) == 0.0
+
+
+# -- K draws per genotype (wave 8) --------------------------------------------------
+
+
+def test_one_draw_reproduces_the_deterministic_forward_bit_for_bit():
+    """``draws=1`` must be the path every wave-5 to wave-7 cell ran, to the last bit.
+
+    The K-draw expansion is guarded on ``draws > 1``, so at 1 it should not run at all:
+    not a different order of operations that agrees to a tolerance, but the same tensors.
+    Both layers are built and called under the same manual seed, so the parameter
+    initialization and the RNG the draw consumes are identical.
+    """
+    torch.manual_seed(0)
+    plain = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.OFF,
+        latent_stochastic=True,
+    )
+    torch.manual_seed(0)
+    one = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.OFF,
+        latent_stochastic=True,
+        draws=1,
+    )
+    inputs = _inputs()
+    torch.manual_seed(1)
+    a = plain(*inputs)
+    torch.manual_seed(1)
+    b = one(*inputs)
+    for key in ("v", "c_balance", "c_box", "c_kl", "c_parsimony"):
+        assert torch.equal(a[key], b[key]), f"{key} differs at draws=1"
+
+
+def test_k_draws_expand_the_batch_and_differ_from_each_other():
+    """``draws=K`` returns ``B*K`` fluxes, grouped by genotype, and no two draws agree.
+
+    The grouping is what lets a caller reshape to ``[B, K, ...]`` with a plain view, and
+    the disagreement is what makes them samples rather than copies. Both are asserted
+    because a `repeat_interleave` written as a `repeat` would pass the second and fail the
+    reshape silently downstream.
+
+    The grouping is asserted on the BOX rather than on the flux. The box is a deterministic
+    function of the genotype, so it must be constant within a group and that check is exact;
+    the flux is a draw, and on a four-reaction toy network a genotype whose availability
+    closes its two catalyzed reactions has a box of zero width and every draw of it clips to
+    the same point. Requiring every genotype to move would be requiring the fixture not to
+    produce that genotype.
+    """
+    torch.manual_seed(3)
+    layer = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.OFF,
+        latent_stochastic=True,
+        draws=8,
+    )
+    layer.eval()
+    h, ctx, idx, idx_batch = _inputs(batch=3)
+    out = layer(h, ctx, idx, idx_batch)
+    assert out["v"].shape == (24, 4)
+    assert float(out["latent_n_draws"]) == 8.0
+    for name in ("lb", "ub"):
+        within = out[name].view(3, 8, 4).std(dim=1)
+        assert float(within.abs().max()) == 0.0, (
+            f"{name} varies between the draws of one genotype, so the rows are not grouped "
+            "by genotype and a [B, K, ...] view would mix them"
+        )
+    spread = out["v"].detach().view(3, 8, 4).std(dim=1)
+    assert float(spread.max()) > 0.0, "no genotype's draws differ at all"
+
+
+def test_the_draw_is_taken_in_eval_too():
+    """A K-draw arm samples in eval, since its prediction is the average over draws.
+
+    The deterministic head emits mu in eval and must keep doing so; only ``draws > 1``
+    forces the draw. Both halves are asserted, because a flag that forced the draw
+    everywhere would silently change every earlier arm's reported test score.
+    """
+    single = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.OFF,
+        latent_stochastic=True,
+    )
+    single.eval()
+    inputs = _inputs(batch=2)
+    assert torch.equal(single(*inputs)["v"], single(*inputs)["v"])
+
+    many = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.OFF,
+        latent_stochastic=True,
+        draws=4,
+    )
+    many.eval()
+    first, second = many(*inputs)["v"], many(*inputs)["v"]
+    assert not torch.equal(first, second), "eval with draws > 1 returned a fixed flux"
+
+
+def test_k_draws_on_a_deterministic_latent_is_refused():
+    """K copies of mu are not K samples, so the layer refuses to be built that way."""
+    with pytest.raises(AssertionError, match="not\nK samples|not K samples"):
+        _layer(
+            parameterization="projection",
+            thermo_mode=ThermoMode.OFF,
+            latent_stochastic=False,
+            stochastic=False,
+            draws=4,
+        )
+
+
+def test_the_posterior_sd_is_reported_for_a_sampled_layer_only():
+    """``latent_sigma_p50`` exists exactly when there is a posterior to report."""
+    sampled = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.OFF,
+        latent_stochastic=True,
+    )
+    out = sampled(*_inputs())
+    assert "latent_sigma_p50" in out
+    # Zero weights and a constant bias, so an untrained spread head reads exp(init).
+    assert float(out["latent_sigma_p50"]) == pytest.approx(
+        float(torch.exp(torch.tensor(sampled.config.latent_log_std_init))), rel=1e-5
+    )
+    plain = _layer(parameterization="nullspace", thermo_mode=ThermoMode.OFF)
+    assert "latent_sigma_p50" not in plain(*_inputs())
+
+
+def test_every_batch_axis_output_carries_the_expanded_rows():
+    """Under K draws, one contract: everything with a batch axis has ``B*K`` rows.
+
+    The exception is the ``thermo_*`` block, which is the learned concentration and its
+    derived terms. No draw touches those, and the one readout that consumes them refuses to
+    run with K > 1.
+
+    This is a regression test with a scar. `c_j` was left at B rows on the first pass
+    because no draw changes a reaction's availability, and 027's `_per_sample_feasibility`
+    rebuilds the box from exactly that tensor and compares it against the flux: the run
+    trained a full epoch, validated, tested, and died on a shape error in the feasibility
+    pass at the very end.
+    """
+    batch, draws = 3, 5
+    layer = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.ANCHORED,
+        latent_stochastic=True,
+        draws=draws,
+    )
+    out = layer(*_inputs(batch=batch))
+    rows = batch * draws
+    for key, value in out.items():
+        if value.dim() == 0 or key.startswith("thermo_"):
+            continue
+        assert value.shape[0] in (rows, 1), (
+            f"{key} has {value.shape[0]} rows; a batch-axis output must carry B*K = {rows} "
+            "so that a consumer can pair it with the flux"
+        )

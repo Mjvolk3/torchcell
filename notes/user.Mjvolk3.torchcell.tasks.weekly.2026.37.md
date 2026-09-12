@@ -66,3 +66,5 @@ created: 1788904951158
 - [ ] scYeast (fanScYeastBiologicalknowledgeguidedFoundation2027) datasets not in torchcell: Jackson 2020/2023 scRNA, Wang 2022 aging, Su 2023 stress, IDEA (Hackett 2020), Messner growth rates, McManus ribosome occupancy, Martin-Perez half-lives; lowest effort = Messner growth rate (same mirrored SI)
 - [x] 028: figures to palette-only colors, legends narrowed; comparison-designs schematic + comparisons table in the document; proteome as its own subsection [[experiments.028-knockout-expression.scripts.comparison_designs]]
 - [x] TFLink's yeast layer is YEASTRACT 2020 (downloaded 2020-07-20) + GTRD + ORegAnno; YEASTRACT+ 2023 has 215k associations [[torchcell.graph.graph]]
+- [x] v12 head round: gpu tasks done, 24 runs synced, readout on seeds 1-3 (H_concat +0.012 in every seed; two plateau runs) [[experiments.019-simb-multimodal.scripts.head_round_readout]]
+- [ ] v12: cabbi pair `2392379_0/_1` (seed 0) still running; sync with INCLUDE_SYNCED=1 after it ends and re-run `head_round_readout.py`

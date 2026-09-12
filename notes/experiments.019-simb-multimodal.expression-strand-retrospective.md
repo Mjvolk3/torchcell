@@ -653,3 +653,13 @@ arms in `gh_expr_008_arm.sh`, stage `head` in `igb_expr_wave5.slurm`.
 
 Caveat carried: v11 is at epoch ~200 of 1,400, so E_full is unproven against calm; the
 readout contrasts are within E_full and stand either way.
+
+## 2026.09.12 - Head round day two: gpu tasks done and synced, cabbi pair still running
+
+`2392381_2` to `_7` completed 09:54 to 11:02 CT (1 d 10 h to 1 d 12 h, four runs per
+A40, 1,399 epochs each); 24 runs synced from biologin-3 (`igb_login_wandb_sync.sh`, one
+process per run, 0 failures). `2392379_0` and `_1` (cabbi, seed 0) still RUNNING at
+1 d 16 h. Readout on seeds 1 to 3 in
+[[experiments.019-simb-multimodal.scripts.head_round_readout]]: H_concat +0.012 over
+H_ref in every seed (0.188 vs 0.176), H_basis64 +0.010 (one seed), the rest at or below
+H_ref; two runs (H_gears s1, H_pergene_basis64 s3) never left the constant plateau.

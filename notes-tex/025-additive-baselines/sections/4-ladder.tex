@@ -1,0 +1,66 @@
+%% notes-tex/025-additive-baselines/sections/4-ladder.tex
+
+\section{The ladder under both splits\secstatus{todo}}
+\label{sec:ladder}
+
+%% SOURCE: experiments/025-solid-growth/scripts/additive_baselines_025_panels.py ->
+%% tables/t2-heldout.tex, from results/additive_baselines_025.csv, the summary json,
+%% and 010-kuzmin-tmi/results/additive_baseline_gene_interaction.csv.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Test Pearson for every model under both arms, beside the 010 numbers. B0
+through B4 are closed-form fits on a fixed split and carry no spread; B5 is the mean
+and standard deviation over three seeds. The three transformer rows are on different
+footings and the row label says which: the 010 checkpoints were scored on the 010
+test split; GH 1598 and GH 1640 are validation maxima over 36 logged epochs, and
+neither has a test score.}
+\label{tab:heldout}
+\input{tables/t2-heldout}
+\end{table}
+
+%% SOURCE: experiments/025-solid-growth/scripts/additive_baselines_025_panels.py ->
+%% additive_baselines_025_fig1_ladders.svg. Panels a, b: the test rows of
+%% results/additive_baselines_025.csv plus the transformer references in the summary
+%% json. Panel c: results/additive_baselines_025_arm_val_history.csv. Panel d:
+%% 010-kuzmin-tmi/results/query_pair_disjoint_cv.csv against the arm Q test rows.
+\tcfig{figures/additive_baselines_025_fig1_ladders.pdf}{The ladder under both
+splits. \textbf{a}, arm R, random over records: the six baselines on test, the three
+010 checkpoints on the 010 test split, and the 025 replication GH 1598 as a validation
+maximum, hatched. \textbf{b}, arm Q, query-pair disjoint, same layout, with GH 1640
+hatched. Only B5 carries an error bar, the standard deviation over its three seeds;
+every other bar is one deterministic fit. \textbf{c}, validation Pearson per epoch
+for the two arms of the 010 configuration, each against the additive ridge fit on its
+own validation part; open circles mark each run's best epoch, the value the hatched
+bars carry. \textbf{d}, how much the disjoint null moves with the choice of held-out
+screens: five disjoint folds on the 010 build per model, mean and standard deviation
+with each fold as a point, and the arm Q single split as a diamond. B0 and B4 are zero
+on every fold and are omitted.}{fig:ladders}
+
+\notesec{Arm R is the 010 result}
+Every closed-form model agrees with its 010 value to $3 \times 10^{-13}$, which
+follows from the record-level label and split identity of Section~\ref{sec:data}
+rather than testing it. B5 differs by 0.006 against a three-seed standard deviation
+of 0.005; the 025 fit ran on CPU where 010's ran on GPU, and the cause is untraced.
+GH 1598 reaches a validation maximum of 0.446 at epoch 14, inside the 0.447 to 0.462
+band of the three 010 checkpoints' validation scores.
+
+\notesec{On the random split the ladder is mostly screen identity}
+B4 knows only which query pair a triple carries and reaches 0.390, 97 percent of the
+additive ridge and 86 percent of the best checkpoint. The transformer's margin over
+B1 is real, $+0.04$ to $+0.055$ with bootstrap intervals excluding zero in the 010
+analysis, and small.
+
+\notesec{Holding out screens collapses the ladder and inverts it}
+On arm Q the additive ridge falls from 0.400 to 0.185, B4 to zero by construction,
+and B5 from 0.432 to 0.141, below the ridge. Extra capacity that helped on unseen
+records of seen screens hurts on unseen screens. B3 falls back from a screen mean to a
+gene mean and lands at 0.142.
+
+\notesec{One disjoint split is a small sample of screens}
+Panel d is why arm Q's numbers are read as one draw rather than as the disjoint null.
+Across five disjoint folds on the 010 build the ridge spans 0.088 to 0.151,
+$0.127 \pm 0.033$, and arm Q's 0.185 lies above every fold. The same holds for B2,
+B3 and B5, so arm Q is a comparatively easy draw of 46 held-out screens. Any
+transformer number on arm Q is compared to the arm Q nulls, on the same 46 screens,
+and not to the fold mean.

@@ -1,0 +1,65 @@
+%% notes-tex/025-additive-baselines/sections/5-disjoint-transformer.tex
+
+\section{The transformer on held-out screens\secstatus{todo}}
+\label{sec:disjoint}
+
+Four transformer runs have trained on arm Q. One is the 010 configuration. The other
+three come from the joint-fitness-head branch (PR \#346, not yet on \texttt{main}):
+they replace the learnable gene table with a fixed sequence embedding of matched
+parameter count, read out through a perturbed CLS token, and train at a constant
+learning rate for 30 epochs. They share the split and the graph penalty with GH 1640
+and nothing else that matters for a replicate, so they are four runs on one split,
+not one run replicated.
+
+%% SOURCE: experiments/025-solid-growth/scripts/additive_baselines_025_panels.py ->
+%% tables/t3-disjoint-runs.tex, from the runs' W&B histories cached in
+%% results/additive_baselines_025_arm_val_history.csv and
+%% results/additive_baselines_025_disjoint_runs_history.csv.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Every transformer run on arm Q. Epochs is the number logged; GH 1640 was
+stopped by the 12 hour wall clock partway through epoch 36, the IGB runs finished
+their 30. The validation maximum is an upward-biased order statistic over the logged
+epochs. No run has a test score. Configs of the IGB runs are on branch
+\texttt{feat/025-fitness-joint-head}.}
+\label{tab:disjointruns}
+\input{tables/t3-disjoint-runs}
+\end{table}
+
+%% SOURCE: experiments/025-solid-growth/scripts/additive_baselines_025_panels.py ->
+%% additive_baselines_025_fig2_disjoint_runs.svg, from the same two history caches and
+%% the arm Q val and test rows of results/additive_baselines_025.csv.
+\tcfig{figures/additive_baselines_025_fig2_disjoint_runs.pdf}{Every transformer run
+on the query-pair-disjoint split. \textbf{a}, validation Pearson per epoch, with the
+additive ridge and the three-seed MLP fit on the same validation part as horizontal
+lines; open circles mark each run's best epoch. \textbf{b}, the same runs reduced to
+their best epoch (open) and last logged epoch (filled). \textbf{c}, placeholder for
+the test comparison that has not been run: the arm Q test nulls are drawn, and the
+empty slots are the epoch 7 checkpoint of GH 1640 and three seeds of the 010
+configuration, each to be scored on test at its best validation epoch.}{fig:disjointruns}
+
+\notesec{Every run peaks early and falls}
+GH 1640 passes the additive validation null of 0.150 in epoch 3, peaks at 0.199 in
+epoch 7, falls back through the null near epoch 17 and ends at 0.131, below every
+null but B3. The three IGB runs peak higher, 0.252 to 0.270 in epochs 2 to 7, and
+decline from there: the composite and CaLM embeddings end at 0.222 and 0.208, still
+above the ridge, and ProtT5 ends at 0.135, level with GH 1640. Arm R shows the
+opposite shape, a margin over its null that appears in epoch 2 and holds for the rest
+of the run (Figure~\ref{fig:ladders}c).
+
+\notesec{What the early peak does and does not say}
+On validation, then, a transformer holds a margin over additivity for a few epochs
+on screens it has never seen, and the size of that margin depends on the gene input
+and the schedule. Two things keep this from being a result. The maxima are order
+statistics over 30 to 36 noisy epochs, so each is biased upward by an amount the
+nulls, which are single fits, do not share. And validation is 43 screens; the test
+part is a different 46, and Figure~\ref{fig:ladders}d shows how far one draw of
+screens moves the null. A checkpoint scored on test at its validation-selected epoch
+is the number that compares to Table~\ref{tab:heldout}, and no run has one.
+
+\notesec{Hypothesis, untested}
+The decline after the peak is consistent with the model fitting screen-specific
+structure of the training pairs that does not transfer, the same structure B4
+measures, but no measurement here separates that from ordinary overfitting of the
+label noise, and the mechanism is not claimed.

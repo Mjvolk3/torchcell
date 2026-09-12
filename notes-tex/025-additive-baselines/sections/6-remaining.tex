@@ -1,0 +1,51 @@
+%% notes-tex/025-additive-baselines/sections/6-remaining.tex
+
+\section{What is left before this enters the main text\secstatus{todo}}
+\label{sec:remaining}
+
+\begin{enumerate}
+\item \textbf{Score GH 1640's epoch 7 checkpoint on the arm Q test part.} The
+  checkpoint survives
+  (\file{$DATA_ROOT/models/checkpoints/327csnlk-best-pearson-epoch=07-val*}). One
+  scoring pass fills the first slot of Figure~\ref{fig:disjointruns}c and gives the
+  first transformer test number against B1 0.185 and B5 0.141.
+\item \textbf{Replicate the 010 configuration on arm Q.} Three seeds of
+  \texttt{cgt\_s0\_q\_kl\_004} with a test evaluation at the best validation epoch,
+  under one fixed epoch budget. GH 1640 shows the run needs about 10 epochs to reach
+  its peak and 36 epochs cost the 12 hour wall clock, so a 20 epoch budget with
+  checkpoint-on-best is enough. These fill the remaining slots of
+  Figure~\ref{fig:disjointruns}c and give the transformer row of
+  Table~\ref{tab:heldout} a spread.
+\item \textbf{Decide whether the constant-learning-rate variants belong in the
+  ladder.} The IGB runs are a different model, readout and schedule. If they are to
+  be compared to the nulls they need the same treatment as item 2: a learnable-table
+  control at constant learning rate on arm Q
+  (\texttt{cgt\_s0\_q\_kl\_ctrl\_016}, which has no run on W\&B as of
+  2026-09-11), seeds, and test scores. Otherwise they stay in
+  Figure~\ref{fig:disjointruns}a,b as validation trajectories and are not in
+  Figure~\ref{fig:ladders}.
+\item \textbf{A paired bootstrap on arm Q test.} The 010 analysis established the
+  random-split margin with a paired bootstrap over test records. The same
+  2{,}000-resample interval on the arm Q predictions is what turns a transformer
+  minus B1 difference into a claim.
+\item \textbf{Fold spread for the transformer, or an explicit statement that it is
+  unaffordable.} Panel d of Figure~\ref{fig:ladders} is five folds for the nulls. A
+  transformer fold costs about 12 hours of one GilaHyper node per 36 epochs, so five
+  folds by three seeds is 15 runs. If the main text reports arm Q alone it should say
+  so and cite the fold spread of the null as the scale of the split-to-split
+  variation.
+\item \textbf{B5 on GPU.} The 025 B5 fit ran on CPU and differs from 010's GPU fit
+  by 0.006 on arm R. A GPU refit closes the one row of Table~\ref{tab:heldout} that
+  is not an exact reproduction.
+\item \textbf{Bibliography.} The Visani preprint and Kuzmin 2018 are named by DOI in
+  prose. A Zotero collection for this document, then \texttt{make bib-pull}, makes
+  them citations.
+\end{enumerate}
+
+\notesec{What this document does not carry over from the 010 report}
+The reading of the transformer code that establishes it is a set function over the
+perturbed gene identities, the graph penalty's share of the loss, the neighbor recall
+of the regularized heads, the matched pair of runs without the penalty, the
+record-by-record agreement between models, and the gene-index defect of the
+inference runs. Each is in \texttt{notes-tex/010-additive-baselines} and is cited
+from there when the main text needs it.

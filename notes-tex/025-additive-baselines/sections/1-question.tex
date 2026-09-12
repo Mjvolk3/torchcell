@@ -1,0 +1,35 @@
+%% notes-tex/025-additive-baselines/sections/1-question.tex
+
+\section{The question, and the state of the evidence\secstatus{todo}}
+\label{sec:question}
+
+A model that claims to learn genetic interaction has to beat a null that cannot
+represent interaction, on data where the null cannot borrow the answer from the
+training set. The 010 trigenic model was never measured against such a null, and its
+published split lets every model score the identity of the screen a record came
+from. Both gaps are closed on the 025 build, which holds the same records as 010 with
+bit-identical labels, under two splits: the published random split (arm R) and a
+split that never shares a Kuzmin query double between parts (arm Q).
+
+\begin{keybox}
+\textbf{Measured.} The six nulls on both arms, on test
+(Table~\ref{tab:heldout}, Figure~\ref{fig:ladders}a,b). Arm R reproduces the 010
+numbers exactly. On arm Q the additive ridge falls from 0.400 to 0.185, the
+screen-only model to zero, and the nonlinear baseline from 0.432 to 0.141, below the
+ridge. Four transformer runs on arm Q, all with validation curves that peak by epoch
+7 and decline (Figure~\ref{fig:disjointruns}a,b).
+
+\textbf{Not measured.} Any transformer test score on arm Q. Replicates of the 010
+configuration on arm Q. Figure~\ref{fig:disjointruns}c is the placeholder for both.
+\end{keybox}
+
+\notesec{Vocabulary}
+A \term{query pair} is the double mutant a Kuzmin trigenic screen was built around;
+every triple in the build is one query pair plus one array gene, and 420 query pairs
+recur across the 376{,}732 records. A \term{screen} is the set of triples sharing a
+query pair. \term{Arm R} and \term{arm Q} are the two transformer training arms of
+experiment 025 and the two splits the baselines are fit under. The \term{ladder} is
+the ordered set of baselines B0 through B5 and the transformer, read left to right by
+interaction capacity. A \term{validation maximum} is the largest validation Pearson
+over a run's logged epochs; it is an upward-biased order statistic and is never
+compared to a test number without saying so.

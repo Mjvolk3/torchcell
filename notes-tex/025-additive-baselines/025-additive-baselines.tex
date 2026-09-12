@@ -1,0 +1,70 @@
+%% notes-tex/025-additive-baselines/025-additive-baselines.tex
+%% [[experiments.025-solid-growth.scripts.additive_baselines_025_panels]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/025-additive-baselines/025-additive-baselines.tex
+%%
+%% The condensed, main-text-bound version of notes-tex/010-additive-baselines: the
+%% additive null ladder on the 025 build under both transformer arms, multi-panel
+%% figures only, and placeholders where a measurement is still outstanding. The
+%% long-form reading of the model code, the paired-prediction analysis and the
+%% index defect stay in the 010 document and are not repeated here.
+%%
+%% Build:  make            -> 025-additive-baselines.pdf   (draft: status chips)
+%%         make check      -> formatting / provenance / style gate
+%%         make plots      -> re-convert the panels from ASSET_IMAGES_DIR
+%%
+%% Every figure and table is written by
+%% experiments/025-solid-growth/scripts/additive_baselines_025_panels.py from
+%% result files under experiments/025-solid-growth/results/ and
+%% experiments/010-kuzmin-tmi/results/. The prose numbers come from
+%% results/additive_baselines_025_panels_summary.json.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}Additive Baselines on the 025 Build\\
+  {\large The trigenic ladder under a random and a query-pair-disjoint split,
+   in preparation for the main text}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Six baselines that cannot represent a three-way interaction, or can represent only
+a per-screen offset, are fit on exactly the 376{,}732 trigenic records and the two
+splits the 025 transformer arms train on. Under the published random-over-records
+split the per-gene additive ridge reaches 0.400 test Pearson, a model that sees
+only which Kuzmin query double a triple carries reaches 0.390, and the transformer
+checkpoints reach 0.438 to 0.455. Holding out whole query doubles collapses the
+additive ridge to 0.185 on the one disjoint split the transformer trains on, and to
+$0.127 \pm 0.033$ over five disjoint folds, and drops the nonlinear baseline below
+the additive one. Four transformer runs have trained on the disjoint split, one in
+the 010 configuration and three with a fixed sequence embedding and a constant
+learning rate. Every one of them peaks on validation between epoch 2 and epoch 7, at
+0.199 to 0.270 against an additive validation null of 0.150, and every one falls
+back afterward; the 010 configuration ends below the null at 0.131. None has a test
+score, so whether the transformer's margin over additivity survives held-out screens
+is not yet measured. This is a working document: the figures fix the layout the
+main-text figure will have, and the panel and rows still to be filled are marked.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-data}
+\input{sections/3-models}
+\input{sections/4-ladder}
+\input{sections/5-disjoint-transformer}
+\input{sections/6-remaining}
+
+\end{document}

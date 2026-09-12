@@ -1,0 +1,195 @@
+{
+  "arms": {
+    "R": {
+      "records": {
+        "train": 301386,
+        "val": 37673,
+        "test": 37673
+      },
+      "pairs": null,
+      "n_recurring_pairs": 420
+    },
+    "Q": {
+      "records": {
+        "train": 301236,
+        "val": 37705,
+        "test": 37791
+      },
+      "pairs": {
+        "train": 331,
+        "val": 43,
+        "test": 46
+      },
+      "n_recurring_pairs": 420
+    }
+  },
+  "test_pearson": {
+    "R": {
+      "B0_train_mean": {
+        "mean": 0.0,
+        "sd": null
+      },
+      "B4_query_pair_only": {
+        "mean": 0.3900994117552536,
+        "sd": null
+      },
+      "B3_hierarchical_mean": {
+        "mean": 0.3900983406139431,
+        "sd": null
+      },
+      "B1_additive_gene": {
+        "mean": 0.4003985938982024,
+        "sd": null
+      },
+      "B2_additive_plus_pair": {
+        "mean": 0.4056615095787174,
+        "sd": null
+      },
+      "B5_gene_embedding_mlp": {
+        "mean": 0.432239392225182,
+        "sd": 0.005289839975950339
+      }
+    },
+    "Q": {
+      "B0_train_mean": {
+        "mean": 0.0,
+        "sd": null
+      },
+      "B4_query_pair_only": {
+        "mean": 0.0,
+        "sd": null
+      },
+      "B3_hierarchical_mean": {
+        "mean": 0.1419907219600814,
+        "sd": null
+      },
+      "B1_additive_gene": {
+        "mean": 0.1853058901938133,
+        "sd": null
+      },
+      "B2_additive_plus_pair": {
+        "mean": 0.1800017433823052,
+        "sd": null
+      },
+      "B5_gene_embedding_mlp": {
+        "mean": 0.14132955976113803,
+        "sd": 0.006788440975805624
+      }
+    }
+  },
+  "val_nulls": {
+    "R": {
+      "B0_train_mean": 0.0,
+      "B4_query_pair_only": 0.3930523078873207,
+      "B3_hierarchical_mean": 0.3930515618613919,
+      "B1_additive_gene": 0.4009589852966883,
+      "B2_additive_plus_pair": 0.4081941303100228,
+      "B5_gene_embedding_mlp": 0.4303316359525269
+    },
+    "Q": {
+      "B0_train_mean": 0.0,
+      "B4_query_pair_only": 0.0,
+      "B3_hierarchical_mean": 0.1286411829728183,
+      "B1_additive_gene": 0.1499473668029666,
+      "B2_additive_plus_pair": 0.1442056966831059,
+      "B5_gene_embedding_mlp": 0.15726902895639974
+    }
+  },
+  "disjoint_fold_spread_010": {
+    "B3_hierarchical_mean": {
+      "fold_mean": 0.06571219819152684,
+      "fold_sd": 0.039205030563839144,
+      "fold_min": 0.0275370774866592,
+      "fold_max": 0.1189146156505882,
+      "arm_q_test": 0.1419907219600814
+    },
+    "B1_additive_gene": {
+      "fold_mean": 0.1266998516883308,
+      "fold_sd": 0.03331181136123363,
+      "fold_min": 0.0878962034493626,
+      "fold_max": 0.1514462961956987,
+      "arm_q_test": 0.1853058901938133
+    },
+    "B2_additive_plus_pair": {
+      "fold_mean": 0.12353600876035506,
+      "fold_sd": 0.03400824628566996,
+      "fold_min": 0.0820875185729644,
+      "fold_max": 0.1560639733378424,
+      "arm_q_test": 0.1800017433823052
+    },
+    "B5_gene_embedding_mlp": {
+      "fold_mean": 0.05780857115687229,
+      "fold_sd": 0.03927244550524101,
+      "fold_min": 0.006606201749634832,
+      "fold_max": 0.09036931163045869,
+      "arm_q_test": 0.14132955976113803
+    }
+  },
+  "disjoint_runs": [
+    {
+      "key": "job_1640",
+      "job": "GH 1640",
+      "run": "327csnlk",
+      "config": "cgt_s0_q_kl_004",
+      "gene_input": "learnable table",
+      "schedule": "cosine, 010 schedule",
+      "readout": "mean",
+      "budget": "600 epochs, cut at 12 h",
+      "history": "arm",
+      "n_epochs_logged": 36,
+      "best_epoch": 7,
+      "val_best": 0.1993194222450256,
+      "last_epoch": 35,
+      "val_last": 0.1305623948574066
+    },
+    {
+      "key": "igb_2391132",
+      "job": "IGB 2391132",
+      "run": "s1vx2zgw",
+      "config": "cgt_s0_q_kl_emb_017",
+      "gene_input": "four-region sequence composite",
+      "schedule": "constant $2.5 \\times 10^{-4}$",
+      "readout": "perturbed CLS",
+      "budget": "30 epochs, finished",
+      "history": "wandb",
+      "n_epochs_logged": 30,
+      "best_epoch": 2,
+      "val_best": 0.2624843120574951,
+      "last_epoch": 29,
+      "val_last": 0.2215903103351593
+    },
+    {
+      "key": "igb_2391133",
+      "job": "IGB 2391133",
+      "run": "8aa08xx0",
+      "config": "cgt_s0_q_kl_calm_020",
+      "gene_input": "CaLM codon embedding",
+      "schedule": "constant $2.5 \\times 10^{-4}$",
+      "readout": "perturbed CLS",
+      "budget": "30 epochs, finished",
+      "history": "wandb",
+      "n_epochs_logged": 30,
+      "best_epoch": 7,
+      "val_best": 0.2519307732582092,
+      "last_epoch": 29,
+      "val_last": 0.2076360434293747
+    },
+    {
+      "key": "igb_2391134",
+      "job": "IGB 2391134",
+      "run": "pmkzwwzw",
+      "config": "cgt_s0_q_kl_prot_021",
+      "gene_input": "ProtT5 protein embedding",
+      "schedule": "constant $2.5 \\times 10^{-4}$",
+      "readout": "perturbed CLS",
+      "budget": "30 epochs, finished",
+      "history": "wandb",
+      "n_epochs_logged": 30,
+      "best_epoch": 3,
+      "val_best": 0.2698822617530823,
+      "last_epoch": 29,
+      "val_last": 0.1349957585334777
+    }
+  ],
+  "note": "validation maxima are upward-biased order statistics; no disjoint run has a test score"
+}

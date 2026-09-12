@@ -501,7 +501,10 @@ Delta's bbub scratch quota is 9.8 TB with 2.8 TB used, so the 554 GB build is be
 copied to local Lustre by `delta_copy_025_build_local.slurm` (job 21984419, CPU
 partition, two rsync passes, size check against 554,075,586,560 B). After it prints
 CLEAN the symlink is swapped for the local directory, before the pending fitness chain
-(21947151 first, estimated start 2026-09-12 14:08) starts reading. The pending jobs need
+(21947151 first, estimated start 2026-09-12 14:08) starts reading. Done at 00:35: the
+copy took 32 minutes (about 290 MB/s), the second pass moved nothing, both `data.mdb`
+sizes read 554,075,586,560 B, and `001-full-build` is now a real directory on Lustre
+with the old link kept beside it as `001-full-build.taiga-link`. The pending jobs need
 no resubmission: they open the build through the symlink path. The two lost controls are
 appended to the chain with the same 30-minute stagger, restoring three seeds per arm:
 

@@ -33,6 +33,7 @@ Design note: ``[[torchcell.datamodels.media-components]]``.
 
 from __future__ import annotations
 
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     ComponentDefinition,
     Compound,
@@ -417,6 +418,165 @@ SC_URA = Media(
 )
 """SC with uracil dropped (selects a URA3-bearing plasmid)."""
 
+# --------------------------------------------------------------------------- #
+# Bloom 2019 segregant-panel media (eLife 8:e49212). The assay plates are solid
+# agar; the compound conditions sit on plain YPD (above), the carbon-source
+# conditions replace glucose in YP with 2% of another sugar, and the YNB plates
+# carry 2% glucose. Every concentration is quoted from the paper's Figure 1
+# source data 1 (the ``Phenotypes`` sheet of ``elife-49212-fig1-data1-v2.xls``),
+# deposited in the raw mirror under ``bloomRareVariantsContribute2019/data/``;
+# the xls is binary, so the quote is the row's cell strings and the audit is
+# structural (re-read the sheet), not a substring search.
+# --------------------------------------------------------------------------- #
+_BLOOM2019 = "bloomRareVariantsContribute2019"
+_BLOOM2019_XLS = "data/elife-49212-fig1-data1-v2.xls"
+_BLOOM2019_XLS_SHA = "990e75168a77522b9b684b8d0151e45c24c75ccbe7c360d18c500008cfdad8eb"
+_BLOOM2019_XML = "paper/elife-49212-v2.xml"
+_BLOOM2019_XML_SHA = "0cfa345ee5cf8fca5a4ae05bd05e2ee75a682d8a2521677f2cdc04be849eb782"
+
+
+def _bloom_sv(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
+    """A SourcedValue anchored to the Bloom 2019 Figure 1 source data 1 xls."""
+    return SourcedValue(
+        value=value,
+        provenance=Provenance(
+            source_uri=_BLOOM2019_XLS,
+            citation_key=_BLOOM2019,
+            sha256=_BLOOM2019_XLS_SHA,
+        ),
+        quote=quote,
+        note=note,
+    )
+
+
+_YP_COMPONENTS = [c for c in YPD.components if c.compound.name != "D-glucose"]
+
+YP = Media(
+    name="YP (yeast extract / peptone, no added carbon source)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="YP",
+    components=_YP_COMPONENTS,
+    provenance=[
+        _bloom_sv(
+            "YP base",
+            "Carbon Sources | Add 2% following (instead of Glucose) | Media: YP",
+            note="the Phenotypes sheet lists every carbon-source condition with "
+            "Media = YP and the sugar replacing glucose",
+        )
+    ],
+)
+"""YP base with no carbon source; a real medium only once a sugar is added."""
+
+
+def _yp_plus(
+    sugar: str,
+    *,
+    percent: float,
+    quote: str,
+    model_name: str | None = None,
+    name: str | None = None,
+) -> Media:
+    """YP + one carbon source at ``percent`` % (w/v) on the Bloom 2019 assay plates.
+
+    ``model_name`` is the compound name a genome-scale model carries when it differs
+    from the bench name (lactate is ``(S)-lactate`` in yeast-GEM; sorbitol is
+    ``D-glucitol``); the bench name stays in the human label.
+    """
+    compound = resolved_compound(model_name or sugar)
+    return Media(
+        name=name or f"YP + {percent:g}% {sugar}",
+        state="solid",
+        is_synthetic=False,
+        base_medium="YP",
+        components=[
+            *_YP_COMPONENTS,
+            MediaComponent(
+                compound=compound,
+                role=MediaComponentRole.carbon_source,
+                concentration=_c(percent, _PCT),
+                provenance=[_bloom_sv(f"{percent:g}%", quote)],
+            ),
+        ],
+        provenance=YP.provenance,
+    )
+
+
+YP_FRUCTOSE = _yp_plus("fructose", percent=2.0, quote="Fructose | 20 | % | H2O | YP")
+YP_GALACTOSE = _yp_plus("galactose", percent=2.0, quote="Galactose | 20 | % | H2O | YP")
+YP_LACTATE = _yp_plus(
+    "lactate",
+    percent=2.0,
+    quote="Lactate | 20 | % | H2O, pH = 6 | YP",
+    model_name="(S)-lactate",
+)
+YP_MALTOSE = _yp_plus("maltose", percent=2.0, quote="Maltose | 20 | % | H2O | YP")
+YP_MANNOSE = _yp_plus("mannose", percent=2.0, quote="Mannose | 20 | % | H2O | YP")
+YP_RAFFINOSE = _yp_plus("raffinose", percent=2.0, quote="Raffinose | 20 | % | H2O | YP")
+YP_SUCROSE = _yp_plus("sucrose", percent=2.0, quote="Sucrose | 20 | % | H2O | YP")
+YP_TREHALOSE = _yp_plus("trehalose", percent=2.0, quote="Trehalose | 20 | % | H2O | YP")
+YP_XYLOSE = _yp_plus("xylose", percent=2.0, quote="Xylose | 20 | % | H2O | YP")
+YP_GLYCEROL = _yp_plus(
+    "glycerol", percent=3.0, quote="Glycerol 3% | 40 | % | H2O | 0.03 | 0.03 | 3 | YP"
+)
+YP_ETHANOL = _yp_plus(
+    "ethanol",
+    percent=2.0,
+    quote="Ethanol NO glucose | 100 | % | H2O | 0.02 | 0.08 | 8 | 0.25",
+    name="YP + 2% ethanol (no glucose)",
+)
+YPD_ETHANOL = Media(
+    name="YPD + 2% ethanol (2% glucose + 2% ethanol)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="YPD",
+    components=[
+        *YPD.components,
+        MediaComponent(
+            compound=resolved_compound("ethanol"),
+            role=MediaComponentRole.carbon_source,
+            concentration=_c(2.0, _PCT),
+            provenance=[
+                _bloom_sv(
+                    "2%",
+                    "Ethanol with Glucose | 100 | % | H2O | 0.02 | 0.08 | 8 | 0.25 | "
+                    "YP | 2% glucose",
+                )
+            ],
+        ),
+    ],
+    provenance=YPD.provenance,
+)
+"""YPD with 2% ethanol added on top of the 2% glucose (Bloom 2019 ``EtOH_Glucose``)."""
+
+YNB_GLUCOSE_SOLID = Media(
+    name="YNB + 2% glucose (solid; Bloom 2019 minimal-medium plates)",
+    state="solid",
+    is_synthetic=True,
+    base_medium="YNB",
+    components=[
+        *YNB.components,
+        MediaComponent(
+            compound=Compound(name="D-glucose"),
+            role=MediaComponentRole.carbon_source,
+            concentration=_c(2.0, _PCT),
+            provenance=[
+                _bloom_sv("2%", "YNB | 20 | % | H2O | 0.02 | 2 | % | YNB | 2% glucose")
+            ],
+        ),
+    ],
+    provenance=[
+        _bloom_sv(
+            "YNB + 2% glucose",
+            "YNB | 20 | % | H2O | 0.02 | 2 | % | YNB | 2% glucose",
+            note="the pH 3 and pH 8 rows also read 'YNB | 2% glucose'; the nitrogen "
+            "source and the YNB trace-metal and salt rows are not stated in the "
+            "sheet and remain the shipped YNB's open gaps",
+        )
+    ],
+)
+"""Solid YNB + 2% glucose as pinned for the Bloom 2019 YNB / pH 3 / pH 8 plates."""
+
 # Registry of the canonical media (name -> object), for discovery/migration.
 MEDIA_LIBRARY: dict[str, Media] = {
     "SGA_DM_SELECTION": SGA_DM_SELECTION,
@@ -427,4 +587,18 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "YNB": YNB,
     "SC": SC,
     "SC_URA": SC_URA,
+    "YP": YP,
+    "YP_FRUCTOSE": YP_FRUCTOSE,
+    "YP_GALACTOSE": YP_GALACTOSE,
+    "YP_LACTATE": YP_LACTATE,
+    "YP_MALTOSE": YP_MALTOSE,
+    "YP_MANNOSE": YP_MANNOSE,
+    "YP_RAFFINOSE": YP_RAFFINOSE,
+    "YP_SUCROSE": YP_SUCROSE,
+    "YP_TREHALOSE": YP_TREHALOSE,
+    "YP_XYLOSE": YP_XYLOSE,
+    "YP_GLYCEROL": YP_GLYCEROL,
+    "YP_ETHANOL": YP_ETHANOL,
+    "YPD_ETHANOL": YPD_ETHANOL,
+    "YNB_GLUCOSE_SOLID": YNB_GLUCOSE_SOLID,
 }

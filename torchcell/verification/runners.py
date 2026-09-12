@@ -54,6 +54,10 @@ from torchcell.verification.report import (
     VerificationReport,
 )
 from torchcell.verification.rnaseq import rnaseq_gene_set, verify_rnaseq_dataset
+from torchcell.verification.segregant_growth import (
+    segregant_gene_set,
+    verify_segregant_growth_streaming,
+)
 from torchcell.verification.visual_score import (
     verify_visual_score_dataset,
     visual_score_gene_set,
@@ -1354,6 +1358,74 @@ def run_fitness(data_root: str) -> bool:
     return all_passed
 
 
+# --------------------------------------------------------------------------- #
+# Segregant growth datasets (haplotype-mosaic genotypes)
+# --------------------------------------------------------------------------- #
+SEGREGANT_GROWTH_DATASETS: dict[str, dict[str, Any]] = {
+    "bloom2019": {
+        "root": "data/torchcell/bloom2019",
+        "raw_mirror": "torchcell-raw/bloomRareVariantsContribute2019",
+        "assembly_index": (
+            "torchcell-library/peterGenomeEvolution10112018/data/"
+            "1011Assemblies.tar.gz.member_index.tsv"
+        ),
+        # 13,950 segregants x 38 served conditions (YPD;;2 / YPD;;3 are regressors,
+        # not conditions; 4NQO was removed upstream).
+        "expected_count": 530100,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.7554/eLife.49212",
+            citation_key="bloomRareVariantsContribute2019",
+            method=(
+                "16 biparental crosses of 1011-collection strains, 13,950 haploid "
+                "segregants genotyped by R/qtl argmax hard calls (released "
+                "genotype_<cross>.tsv.gz, 1 = parent 1 / 2 = parent 2) and encoded as "
+                "haplotype-block mosaics; 38 end-point colony-growth conditions from "
+                "phenotypes.tsv.gz: 36 are residuals of colony mean radius regressed on "
+                "the same-batch control plate (process_images.R), 2 are absolute radii; "
+                "duplicate plates averaged, missing cells mean-imputed (mapping.R); "
+                "raw mirror torchcell-raw/bloomRareVariantsContribute2019 with manifest.json "
+                "(Dropbox share zip sha256 78ded0db..., xls sha256 990e7516..., eLife XML "
+                "sha256 0cfa345e..., code at joshsbloom/yeast-16-parents c913c9ae)"
+            ),
+            page="eLife 8:e49212; Methods 'Phenotyping by endpoint colony growth'; Figure 1 source data 1",
+            sha256=("3942dbbc9280536f90cf4fc41ce39649cd2c638be623706a152b3a5406765575"),
+        ),
+    }
+}
+
+
+def run_segregant_growth(data_root: str) -> bool:
+    """Verify segregant growth datasets (L0-L4) and write reports. True if all pass."""
+    from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+
+    sgd_genes = _sgd_gene_set(data_root)
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(data_root, "data/sgd/genome"),
+        go_root=osp.join(data_root, "data/go"),
+        overwrite=False,
+    )
+    all_passed = True
+    for name, spec in SEGREGANT_GROWTH_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        report = verify_segregant_growth_streaming(
+            stream_records(abs_root),
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec["expected_count"],
+            raw_dir=osp.join(abs_root, "raw"),
+            raw_mirror=osp.join(data_root, spec["raw_mirror"]),
+            assembly_index_path=osp.join(data_root, spec["assembly_index"]),
+            genome=genome,
+            sgd_genes=sgd_genes,
+            gene_set=segregant_gene_set(osp.join(abs_root, "preprocess")),
+        )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
@@ -1366,6 +1438,7 @@ def run_all(data_root: str) -> bool:
     rnaseq_ok = run_rnaseq(data_root)
     environment_ok = run_environment_response(data_root)
     fitness_ok = run_fitness(data_root)
+    segregant_ok = run_segregant_growth(data_root)
     return (
         expression_ok
         and morphology_ok
@@ -1377,6 +1450,7 @@ def run_all(data_root: str) -> bool:
         and rnaseq_ok
         and environment_ok
         and fitness_ok
+        and segregant_ok
     )
 
 

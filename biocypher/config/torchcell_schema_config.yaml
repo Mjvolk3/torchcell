@@ -63,6 +63,22 @@ perturbation:
         strain_id: str
         serialized_data: str
 
+# A haploid segregant of a biparental cross: a haplotype MOSAIC against two pinned
+# parent assemblies (SegregantGenotype), not a list of gene perturbations. It IS a
+# genotype (is_a), so genotype-level queries reach it; the gene-keyed properties of
+# the plain genotype node are absent here and evaluate to null. Blocks travel in
+# serialized_data.
+segregant genotype:
+    is_a: genotype
+    represented_as: node
+    properties:
+        cross: str
+        segregant_id: str
+        parent_1: str
+        parent_2: str
+        n_blocks: int
+        serialized_data: str
+
 environment:
     is_a: environmental exposure
     represented_as: node
@@ -243,13 +259,29 @@ protein abundance phenotype:
         protein_abundance_se: str
         measurement_type: str
         serialized_data: str
+
+# A strain's signed growth/fitness RESPONSE in a perturbed environment
+# (EnvironmentResponsePhenotype): chemogenomic screens and the segregant growth
+# panels. measurement_type = WHAT the number is, assay_type = HOW it was measured.
+environment response phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        environment_response: float
+        environment_response_se: float
+        measurement_type: str
+        assay_type: str
+        serialized_data: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
 genotype member of:
     is_a: participates in
     represented_as: edge
-    source: genotype
+    source: [genotype, segregant genotype]
     target: experiment
 
 perturbation member of:
@@ -283,6 +315,7 @@ phenotype member of:
             visual score phenotype,
             metabolite phenotype,
             protein abundance phenotype,
+            environment response phenotype,
         ]
     target: [experiment, experiment reference]
 

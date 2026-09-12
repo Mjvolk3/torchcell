@@ -256,6 +256,16 @@ INCUBATION_HOURS = 48.0
 # temperature; 30 C is carried with a ProvenanceGap on every non-temperature plate.
 DEFAULT_TEMPERATURE_C = 30.0
 NOT_SERVED = {"YPD;;2", "YPD;;3"}
+# The control plate a residual was regressed on, by batch, and the served column that
+# carries that plate's ENVIRONMENT: the batch-2 and batch-3 YPD plates are the same
+# medium and temperature as the batch-1 plate (only the batch differs), so their
+# environment is the YPD;;1 environment.
+CONTROL_ENVIRONMENT_COLUMN = {
+    "YPD;;1": "YPD;;1",
+    "YPD;;2": "YPD;;1",
+    "YPD;;3": "YPD;;1",
+    "YNB;;1": "YNB;;1",
+}
 
 ph_unit = ConcentrationUnit.ph
 _MM = ConcentrationUnit.millimolar
@@ -908,12 +918,7 @@ class Bloom2019Dataset(ExperimentDataset):
                     note=note,
                 )
             )
-        control = self.conditions.get(spec.control_column)
-        control_env = (
-            self._environment(control)
-            if control is not None
-            else self._environment(spec)
-        )
+        control_env = self._environment(self.control_spec(spec))
         return SegregantGrowthExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
@@ -928,6 +933,10 @@ class Bloom2019Dataset(ExperimentDataset):
                 provenance_gaps=gaps,
             ),
         )
+
+    def control_spec(self, spec: ConditionSpec) -> ConditionSpec:
+        """The served condition whose environment is the control plate's environment."""
+        return self.conditions[CONTROL_ENVIRONMENT_COLUMN[spec.control_column]]
 
     # ---- genotypes ------------------------------------------------------------
     def _iter_cross_genotypes(
@@ -979,11 +988,15 @@ class Bloom2019Dataset(ExperimentDataset):
             osp.join(self.raw_dir, XLS_NAME), osp.join(self.raw_dir, README_NAME)
         )
         index = read_assembly_index(osp.join(data_root, PETER_DIR_REL, ASSEMBLY_INDEX))
+        # round_trip: the stored value is the exact decimal the release prints, so the
+        # verifier's re-read equals it bit for bit (the default parser can differ in
+        # the last digit).
         phenotypes = pd.read_csv(
             osp.join(self.raw_dir, PHENOTYPES_NAME),
             sep="\t",
             compression="gzip",
             index_col=0,
+            float_precision="round_trip",
         )
         phenotypes.index = phenotypes.index.astype(str)
         columns = [str(c) for c in phenotypes.columns]

@@ -110,6 +110,7 @@ CURATED: list[CuratedRow] = [
     CuratedRow(section="Expression (microarray)", name="Sameith 2015 dm", genotypes="72", env="1", phenotype="mRNA log2(mut/ref)", data_subpath="data/torchcell/dm_microarray_sameith2015"),
     CuratedRow(section="Expression (RNA-seq)", name="Caudal 2024 (pan-transcriptome)", genotypes="943", env="1", phenotype="mRNA abundance (RNA-seq)", data_subpath="data/torchcell/caudal_pantranscriptome2024"),
     CuratedRow(section="Expression (RNA-seq)", name="Nadal-Ribelles 2025 (Perturb-seq)", genotypes="3,150", env="2", phenotype="mRNA logFC (Perturb-seq)", data_subpath="data/torchcell/nadal_ribelles_perturbseq2025"),
+    CuratedRow(section="Environmental / chemogenomic", name="Bloom 2019 (16-cross segregant panel)", genotypes="13,950", env="38", phenotype="colony size residual / absolute", data_subpath="data/torchcell/bloom2019"),
     CuratedRow(section="Metabolite", name="Cachera 2023 (CRI-SPA betaxanthin)", genotypes="4,735", env="1", phenotype="betaxanthin (product proxy)", data_subpath="data/torchcell/betaxanthin_cachera2023"),
     CuratedRow(section="Metabolite", name="Mülleder 2016 (amino-acid metabolome)", genotypes="4,678", env="1", phenotype="amino-acid concentrations", data_subpath="data/torchcell/amino_acid_mulleder2016"),
     CuratedRow(section="Metabolite", name="Zelezniak 2018 (metabolome)", genotypes="95", env="1", phenotype="metabolite levels", data_subpath="data/torchcell/metabolite_zelezniak2018"),

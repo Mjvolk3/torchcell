@@ -7,6 +7,7 @@
 from .auesukaree2009 import (
     EnvChemgenAuesukaree2009Dataset as EnvChemgenAuesukaree2009Dataset,
 )
+from .bloom2019 import Bloom2019Dataset as Bloom2019Dataset
 from .cachera2023 import BetaxanthinCachera2023Dataset as BetaxanthinCachera2023Dataset
 from .caudal2024 import (
     CaudalPanTranscriptome2024Dataset as CaudalPanTranscriptome2024Dataset,
@@ -126,6 +127,8 @@ nadal_ribelles_datasets = ["NadalRibellesPerturbSeq2025Dataset"]
 
 yeastphenome_datasets = ["YeastPhenomeDataset"]
 
+bloom_datasets = ["Bloom2019Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -154,4 +157,5 @@ __all__ = (
     + xue_datasets
     + nadal_ribelles_datasets
     + yeastphenome_datasets
+    + bloom_datasets
 )

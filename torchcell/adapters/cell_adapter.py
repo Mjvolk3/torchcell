@@ -89,6 +89,7 @@ class CellAdapter:
             ("genome", self._get_genome_nodes),
             ("experiment (chunked)", self._experiment_node),
             ("genotype (chunked)", self._genotype_node),
+            ("segregant genotype (chunked)", self._segregant_genotype_node),
             ("perturbation (chunked)", self._perturbation_node),
             ("environment (chunked)", self._environment_node),
             ("environment reference", self._get_environment_reference_nodes),
@@ -138,6 +139,10 @@ class CellAdapter:
                 self._protein_abundance_phenotype_node,
             ),
             (
+                "environment response phenotype (chunked)",
+                self._environment_response_phenotype_node,
+            ),
+            (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
             ),
@@ -184,6 +189,10 @@ class CellAdapter:
             (
                 "protein abundance phenotype reference",
                 self._get_protein_abundance_phenotype_reference_nodes,
+            ),
+            (
+                "environment response phenotype reference",
+                self._get_environment_response_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
@@ -525,6 +534,37 @@ class CellAdapter:
                 "serialized_data": json.dumps(genotype.model_dump()),
             },
         )
+
+    # --- Segregant genotypes (haplotype mosaics; a sibling of Genotype) ---
+    # A SegregantGenotype has no gene-keyed perturbations, so it gets its own node
+    # method (never a branch inside _genotype_node, which every served dataset
+    # fingerprints). The node id is the sha256 of the whole model_dump, hashed once;
+    # the blocks travel in serialized_data.
+
+    @staticmethod
+    def _segregant_genotype_node_from(genotype: Any) -> BioCypherNode:
+        genotype_id = hashlib.sha256(
+            json.dumps(genotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=genotype_id,
+            preferred_id="segregant genotype",
+            node_label="segregant genotype",
+            properties={
+                "cross": genotype.cross,
+                "segregant_id": genotype.segregant_id,
+                "parent_1": genotype.parent_1.name,
+                "parent_2": genotype.parent_2.name,
+                "n_blocks": len(genotype.blocks),
+                "serialized_data": json.dumps(genotype.model_dump()),
+            },
+        )
+
+    @data_chunker
+    def _segregant_genotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        return self._segregant_genotype_node_from(data["experiment"].genotype)
 
     @data_chunker
     def _perturbation_node(
@@ -911,6 +951,63 @@ class CellAdapter:
             node_label="synthetic rescue phenotype",
             properties=properties,
         )
+
+    # --- Environment response phenotype (chemogenomic / segregant growth) ---
+    # The typed record is serialized_data; the scalar response, its SE and the two
+    # typed axes (measurement_type = WHAT the number is, assay_type = HOW it was
+    # measured) are projected so a condition-response query never has to parse JSON.
+
+    @staticmethod
+    def _environment_response_properties(phenotype: Any) -> dict[str, Any]:
+        assay_type = phenotype.assay_type
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "environment_response": phenotype.environment_response,
+            "environment_response_se": phenotype.environment_response_se,
+            "measurement_type": str(phenotype.measurement_type.value),
+            "assay_type": str(assay_type.value) if assay_type is not None else None,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+
+    @data_chunker
+    def _environment_response_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="environment response phenotype",
+            properties=self._environment_response_properties(phenotype),
+        )
+
+    def _get_environment_response_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="environment response phenotype",
+                    node_label="environment response phenotype",
+                    properties=self._environment_response_properties(phenotype),
+                )
+            )
+        return nodes
 
     def _get_fitness_phenotype_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []

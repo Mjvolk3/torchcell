@@ -35,6 +35,9 @@ SPECIES = [
     "Mg(2+)",
     "Ca(2+)",
     "D-glucose",
+    "D-galactose",
+    "(S)-lactate",
+    "ethanol",
     "ammonium",
     "L-glutamate",
     "biotin",
@@ -87,6 +90,27 @@ def _bound_by_name(bounds: MediaBounds, name: str) -> float:
     hits = [b for b in bounds.bounds.values() if b.metabolite_name == name]
     assert len(hits) == 1, (name, hits)
     return float(hits[0].uptake_bound)
+
+
+def test_bloom_yp_media_resolve_their_carbon_source(model: cobra.Model) -> None:
+    """A YP + sugar medium lets the model see the sugar; YP alone has no carbon bound.
+
+    The Bloom 2019 carbon-source conditions are MEDIA (typed components) rather than
+    ``carbon_source`` perturbations precisely so this resolution happens; yeast extract
+    and peptone stay ``excluded_by_role`` (intrinsically undefined digests).
+    """
+    from torchcell.datamodels.media import YP, YP_GALACTOSE, YP_LACTATE, YPD_ETHANOL
+
+    galactose = media_to_bounds(YP_GALACTOSE, model)
+    assert _bound_by_name(galactose, "D-galactose") == UptakePolicy().carbon_uptake
+    assert sorted(galactose.excluded_names) == ["peptone", "yeast extract"]
+    assert galactose.unresolved_names == []
+    bare = media_to_bounds(YP, model)
+    assert bare.bounds == {}
+    lactate = media_to_bounds(YP_LACTATE, model)
+    assert _bound_by_name(lactate, "(S)-lactate") == UptakePolicy().carbon_uptake
+    both = media_to_bounds(YPD_ETHANOL, model)
+    assert {b.metabolite_name for b in both.bounds.values()} == {"D-glucose", "ethanol"}
 
 
 def test_sga_tm_resolves_every_nutrient(model: cobra.Model) -> None:

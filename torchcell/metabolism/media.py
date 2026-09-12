@@ -270,6 +270,19 @@ _NAME_SYNONYMS: dict[str, str] = {
     "inositol": "myo-inositol",
     "dextrose": "d-glucose",
     "glucose": "d-glucose",
+    # the natural enantiomer is the D-sugar; a bench recipe drops the prefix
+    "fructose": "d-fructose",
+    "galactose": "d-galactose",
+    "mannose": "d-mannose",
+    "xylose": "d-xylose",
+    # sorbitol is D-glucitol, the name a GEM stores
+    "sorbitol": "d-glucitol",
+    "d-sorbitol": "d-glucitol",
+    # the physiological lactate is the (S) (= L) enantiomer
+    "lactate": "(s)-lactate",
+    "lactic acid": "(s)-lactate",
+    "l-lactate": "(s)-lactate",
+    "l-lactic acid": "(s)-lactate",
     "water": "h2o",
     "proton": "h+",
     "hydrogen ion": "h+",

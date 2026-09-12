@@ -1,5 +1,6 @@
 """BioCypher adapters mapping torchcell datasets into knowledge-graph nodes and edges."""
 
+from .bloom2019_adapter import Bloom2019Adapter as Bloom2019Adapter
 from .cachera2023_adapter import (
     BetaxanthinCachera2023Adapter as BetaxanthinCachera2023Adapter,
 )
@@ -134,6 +135,8 @@ proteome_metabolome_adapters = [
     "AminoAcidMulleder2016Adapter",
 ]
 
+segregant_adapters = ["Bloom2019Adapter"]
+
 
 __all__ = (
     cell_adapters
@@ -148,4 +151,5 @@ __all__ = (
     + morphology_adapters
     + metabolite_adapters
     + proteome_metabolome_adapters
+    + segregant_adapters
 )

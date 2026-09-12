@@ -3,6 +3,7 @@
 from torchcell.adapters import (
     AminoAcidMulleder2016Adapter,
     BetaxanthinCachera2023Adapter,
+    Bloom2019Adapter,
     CarotenoidOzaydin2013Adapter,
     CaudalPanTranscriptome2024Adapter,
     DmfCostanzo2016Adapter,
@@ -38,6 +39,7 @@ from torchcell.adapters import (
     TmiKuzmin2020Adapter,
 )
 from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
+from torchcell.datasets.scerevisiae.bloom2019 import Bloom2019Dataset
 from torchcell.datasets.scerevisiae.cachera2023 import BetaxanthinCachera2023Dataset
 from torchcell.datasets.scerevisiae.caudal2024 import CaudalPanTranscriptome2024Dataset
 from torchcell.datasets.scerevisiae.costanzo2016 import (
@@ -130,4 +132,5 @@ dataset_adapter_map = {
     IsobutanolValidatedLopez2024Dataset: IsobutanolValidatedLopez2024Adapter,
     FattyAcidXue2025Dataset: FattyAcidXue2025Adapter,
     NadalRibellesPerturbSeq2025Dataset: NadalRibellesPerturbSeq2025Adapter,
+    Bloom2019Dataset: Bloom2019Adapter,
 }

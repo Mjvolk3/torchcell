@@ -470,20 +470,15 @@ YP = Media(
 
 
 def _yp_plus(
-    sugar: str,
-    *,
-    percent: float,
-    quote: str,
-    model_name: str | None = None,
-    name: str | None = None,
+    sugar: str, *, percent: float, quote: str, name: str | None = None
 ) -> Media:
     """YP + one carbon source at ``percent`` % (w/v) on the Bloom 2019 assay plates.
 
-    ``model_name`` is the compound name a genome-scale model carries when it differs
-    from the bench name (lactate is ``(S)-lactate`` in yeast-GEM; sorbitol is
-    ``D-glucitol``); the bench name stays in the human label.
+    The bench name is the compound name; the metabolism resolver's synonym table maps
+    it to the model's form (``galactose`` -> ``D-galactose``, ``lactate`` ->
+    ``(S)-lactate``), so a medium never has to know a model's naming.
     """
-    compound = resolved_compound(model_name or sugar)
+    compound = resolved_compound(sugar)
     return Media(
         name=name or f"YP + {percent:g}% {sugar}",
         state="solid",
@@ -505,10 +500,7 @@ def _yp_plus(
 YP_FRUCTOSE = _yp_plus("fructose", percent=2.0, quote="Fructose | 20 | % | H2O | YP")
 YP_GALACTOSE = _yp_plus("galactose", percent=2.0, quote="Galactose | 20 | % | H2O | YP")
 YP_LACTATE = _yp_plus(
-    "lactate",
-    percent=2.0,
-    quote="Lactate | 20 | % | H2O, pH = 6 | YP",
-    model_name="(S)-lactate",
+    "lactate", percent=2.0, quote="Lactate | 20 | % | H2O, pH = 6 | YP"
 )
 YP_MALTOSE = _yp_plus("maltose", percent=2.0, quote="Maltose | 20 | % | H2O | YP")
 YP_MANNOSE = _yp_plus("mannose", percent=2.0, quote="Mannose | 20 | % | H2O | YP")

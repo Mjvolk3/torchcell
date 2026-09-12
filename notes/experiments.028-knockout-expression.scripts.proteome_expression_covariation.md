@@ -49,3 +49,9 @@ platform, perturbation type and medium (SM for Messner, SC for Kemmeren). Nadal 
 none of them (0.05 to 0.11), and its strain-level agreement with the proteome is a third
 of Kemmeren's already-weak 0.04. "Caudal" was read as the Caudal 2024 pan-transcriptome
 (the user's dictation); if Nadal was meant, the strain-aligned row covers it.
+
+## 2026.09.12 - Palette-only colors, own subsection in the document
+
+Density maps use white-to-palette colormaps (Messner red, Caudal purple, Kemmeren
+yellow, Nadal orange). The document now carries this as its own subsection
+(`sec:readouts-proteome`) with the July EDA numbers restated for context.

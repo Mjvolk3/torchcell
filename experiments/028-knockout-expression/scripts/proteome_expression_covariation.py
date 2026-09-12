@@ -56,7 +56,7 @@ from cross_study_recomputed import (  # noqa: E402
     _recomputed_profiles,
     _resolver,
 )
-from cross_study_structure import _matrix, _upper  # noqa: E402
+from cross_study_structure import _matrix, _palette_cmap, _upper  # noqa: E402
 
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 from torchcell.utils import (  # noqa: E402
@@ -348,19 +348,19 @@ def main() -> None:
         sa_k["_per_strain"].dropna(),
         col["kemmeren"],
         bins,
-        f"Kemmeren (med {sa_k['per_strain_median_r']:.2f}, n = {sa_k['per_strain_n']})",
+        f"Kemmeren ({sa_k['per_strain_median_r']:.2f}, n = {sa_k['per_strain_n']})",
     )
     filled(
         ax,
         sa_n["_per_strain"].dropna(),
         col["nadalA"],
         bins,
-        f"Nadal A (med {sa_n['per_strain_median_r']:.2f}, n = {sa_n['per_strain_n']})",
+        f"Nadal A ({sa_n['per_strain_median_r']:.2f}, n = {sa_n['per_strain_n']})",
     )
     ax.axvline(0, color="black", lw=0.5, ls="--")
     ax.set_xlabel("per-deletion r, Messner protein vs mRNA (z-scored)")
     ax.set_ylabel("density")
-    ax.set_title("strain-aligned: one deletion, protein vs mRNA")
+    ax.set_title("per deletion, protein vs mRNA (medians in legend)")
     ax.set_ylim(0, ax.get_ylim()[1] * 1.6)
     ax.legend(loc="upper right", **legend_kw)
 
@@ -371,19 +371,19 @@ def main() -> None:
         sa_k["_per_gene"].dropna(),
         col["kemmeren"],
         bins,
-        f"Kemmeren (med {sa_k['per_gene_median_r']:.2f}, n = {sa_k['per_gene_n']})",
+        f"Kemmeren ({sa_k['per_gene_median_r']:.2f}, n = {sa_k['per_gene_n']})",
     )
     filled(
         ax,
         sa_n["_per_gene"].dropna(),
         col["nadalA"],
         bins,
-        f"Nadal A (med {sa_n['per_gene_median_r']:.2f}, n = {sa_n['per_gene_n']})",
+        f"Nadal A ({sa_n['per_gene_median_r']:.2f}, n = {sa_n['per_gene_n']})",
     )
     ax.axvline(0, color="black", lw=0.5, ls="--")
     ax.set_xlabel("per-protein r across shared deletions, protein vs mRNA")
     ax.set_ylabel("density")
-    ax.set_title("strain-aligned: one protein across deletions")
+    ax.set_title("per protein across deletions (medians in legend)")
     ax.set_ylim(0, ax.get_ylim()[1] * 1.6)
     ax.legend(loc="upper right", **legend_kw)
 
@@ -394,7 +394,7 @@ def main() -> None:
         lev["protein_log2"],
         gridsize=40,
         bins="log",
-        cmap="Greys",
+        cmap=_palette_cmap(col["messner"]),
         linewidths=0,
     )
     ax.set_xlabel("Caudal: mean log2(TPM + 1) over isolates")
@@ -406,7 +406,14 @@ def main() -> None:
         axes[1], ["messner_vs_caudal", "messner_vs_kemmeren", "messner_vs_nadalA"]
     ):
         ua, ub = tri[key]
-        ax.hexbin(ua, ub, gridsize=50, bins="log", cmap="Greys", linewidths=0)
+        ax.hexbin(
+            ua,
+            ub,
+            gridsize=50,
+            bins="log",
+            cmap=_palette_cmap(col[key.split("_vs_")[1]]),
+            linewidths=0,
+        )
         ax.axhline(0, color="black", lw=0.5, ls="--")
         ax.axvline(0, color="black", lw=0.5, ls="--")
         b = key.split("_vs_")[1]

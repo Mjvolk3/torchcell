@@ -48,3 +48,15 @@ A total of 306 new GO terms would be added to G_raw from G.
 ## 2025.04.29
 
 The reason for `GeneMultiGraph` is that `pyg` `from_networkx` only takes type `nx.Graph` and `nx.Digraph`, if we make multigraph just a list of these objects then we just loop over them and use function to get multigraph object.
+
+## 2026.09.12 - TFLink's yeast layer is YEASTRACT 2020
+
+`G_tflink` is built from `TFLink_Saccharomyces_cerevisiae_interactions_All_simpleFormat_v1.0.tsv`.
+Per the TFLink paper (liskaTFLinkIntegratedGateway2022, Table 2), its S. cerevisiae
+content is Yeastract version 2020 downloaded 20/07/2020 (5,349 small-scale and 188,072
+large-scale interactions), plus GTRD 20.06 (ChIP-derived) and ORegAnno 3 for yeast.
+YEASTRACT+ 2023 (teixeiraYEASTRACTPortalExploitation2023) reports 215,398 S. cerevisiae
+regulatory associations, "a 5% increase" over its previous release. TFLink planned
+biennial updates; the file in `$DATA_ROOT/data/tflink` is v1.0. So the TF layer is a
+2020 snapshot; a direct YEASTRACT+ pull would be the newer source, and TFLink adds the
+GTRD binding evidence YEASTRACT does not carry.

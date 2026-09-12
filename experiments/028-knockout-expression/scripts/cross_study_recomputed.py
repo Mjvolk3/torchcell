@@ -44,7 +44,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from dotenv import load_dotenv  # noqa: E402
-from matplotlib.colors import to_rgba  # noqa: E402
+from matplotlib.colors import LinearSegmentedColormap, to_rgba  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
 from scipy.stats import spearmanr  # noqa: E402
 
@@ -415,7 +415,14 @@ def main() -> None:
                 ys.append(v)
     x = np.asarray(xs)
     y = np.asarray(ys)
-    hb = ax.hexbin(x, y, gridsize=60, bins="log", cmap="Greys", linewidths=0)
+    hb = ax.hexbin(
+        x,
+        y,
+        gridsize=60,
+        bins="log",
+        cmap=LinearSegmentedColormap.from_list("pal", ["#FFFFFF", PLOT_PALETTE[0]]),
+        linewidths=0,
+    )
     lim = 4.0
     sl = pairs["pseudobulk_log2fc"]["scale"]["ols_slope_a_on_b"]
     ax.plot([-lim, lim], [-lim, lim], color="black", lw=0.5, ls="--", label="identity")

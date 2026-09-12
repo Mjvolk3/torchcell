@@ -348,7 +348,7 @@ def _figure(
     against Nadal-Ribelles is the pair of interest; Kemmeren against Sameith is the
     reference for what two studies of the same platform look like.
     """
-    from matplotlib.colors import to_rgba
+    from matplotlib.colors import LinearSegmentedColormap, to_rgba
 
     plt.rcParams.update(
         {
@@ -451,7 +451,14 @@ def _figure(
                 ys.append(v)
     x = np.asarray(xs)
     y = np.asarray(ys)
-    hb = ax.hexbin(x, y, gridsize=60, bins="log", cmap="Greys", linewidths=0)
+    hb = ax.hexbin(
+        x,
+        y,
+        gridsize=60,
+        bins="log",
+        cmap=LinearSegmentedColormap.from_list("pal", ["#FFFFFF", PLOT_PALETTE[0]]),
+        linewidths=0,
+    )
     lim = 4.0
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim, lim)

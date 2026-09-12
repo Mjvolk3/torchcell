@@ -41,3 +41,8 @@ against Sameith (82 shared) as the same-platform reference. Results in
   responsive AND whose Nadal profile replicates across batches (r >= 0.10): n 14, median
   0.078, 1 of 14 above 0.2 (YHR077C nmd2 0.22, YGR122W 0.17). The other strata: 0.001 to
   0.014.
+
+## 2026.09.12 - Palette-only colors
+
+Panel c's density map is white-to-orange from the palette; legend labels carry only
+the Spearman, the statistic name moved to the title.

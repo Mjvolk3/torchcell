@@ -92,3 +92,8 @@ recompute; an R + Seurat 5.3.0 conda env (`r-seurat`) reads the object.
 
 Panels a, b (log density: headroom 3e3 and 30), c (1.7x), e (1.9x) and f (1.8x) have
 headroom so the framed legends clear the histogram tops. Author feedback 2026.09.12.
+
+## 2026.09.12 - Density map on the palette
+
+Panel d's hexbin uses a white-to-orange colormap built from `PLOT_PALETTE[0]` instead
+of Greys, so the figure carries palette colors only.

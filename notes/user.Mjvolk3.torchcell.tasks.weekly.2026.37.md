@@ -64,3 +64,5 @@ created: 1788904951158
 - [x] methods reread of Kemmeren 2014, Sameith 2015, Nadal-Ribelles 2025 (Singleron, not 10x; pooled only for the 15-min treatment) [[torchcell.datasets.scerevisiae.nadal_ribelles2025]]
 - [x] legend fixes on the three cross-study figures
 - [ ] scYeast (fanScYeastBiologicalknowledgeguidedFoundation2027) datasets not in torchcell: Jackson 2020/2023 scRNA, Wang 2022 aging, Su 2023 stress, IDEA (Hackett 2020), Messner growth rates, McManus ribosome occupancy, Martin-Perez half-lives; lowest effort = Messner growth rate (same mirrored SI)
+- [x] 028: figures to palette-only colors, legends narrowed; comparison-designs schematic + comparisons table in the document; proteome as its own subsection [[experiments.028-knockout-expression.scripts.comparison_designs]]
+- [x] TFLink's yeast layer is YEASTRACT 2020 (downloaded 2020-07-20) + GTRD + ORegAnno; YEASTRACT+ 2023 has 215k associations [[torchcell.graph.graph]]

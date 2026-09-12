@@ -223,7 +223,14 @@ def main() -> None:
         }
     )
     legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
-    c_nad, c_kem, c_null = PLOT_PALETTE[0], PLOT_PALETTE[3], PLOT_PALETTE[5]
+    # Palette only: Nadal A orange, Kemmeren yellow, the null purple, a second Nadal
+    # series red.
+    c_nad, c_kem, c_null, c_red = (
+        PLOT_PALETTE[0],
+        PLOT_PALETTE[3],
+        PLOT_PALETTE[2],
+        PLOT_PALETTE[1],
+    )
     fig, axes = plt.subplots(
         2, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(105))
     )
@@ -249,28 +256,27 @@ def main() -> None:
         same["r_batch_ref"].dropna(),
         c_nad,
         bins,
-        f"same genotype (med {same['r_batch_ref'].median():.2f})",
+        f"same genotype ({same['r_batch_ref'].median():.2f})",
     )
     filled(
         ax,
         null["r_batch_ref"].dropna(),
         c_null,
         bins,
-        f"different genotypes (med {null['r_batch_ref'].median():.2f})",
+        f"different genotypes ({null['r_batch_ref'].median():.2f})",
     )
     ax.hist(
         same["r_pool_ref"].dropna(),
         bins=bins,
         histtype="step",
-        color=c_nad,
-        lw=0.9,
-        ls="--",
+        color=c_red,
+        lw=1.0,
         density=True,
-        label=f"same, pooled WT ref (med {same['r_pool_ref'].median():.2f})",
+        label=f"same, pooled WT ({same['r_pool_ref'].median():.2f})",
     )
-    ax.set_xlabel("r between two batches of a genotype, Nadal A")
+    ax.set_xlabel("r between two batches of one genotype")
     ax.set_ylabel("density")
-    ax.set_title(f"cross-batch replication ({len(same):,} pairs)")
+    ax.set_title(f"cross-batch replication, {len(same):,} pairs (medians in legend)")
     ax.set_ylim(0, ax.get_ylim()[1] * 1.8)
     ax.legend(loc="upper right", **legend_kw)
 
@@ -282,8 +288,8 @@ def main() -> None:
         s=3,
         color=c_null,
         lw=0,
-        alpha=0.5,
-        label=f"other genotype (med {sh['r_null_other_genotype'].median():.2f})",
+        alpha=0.6,
+        label=f"other genotype ({sh['r_null_other_genotype'].median():.2f})",
     )
     ax.scatter(
         sh["cells"],
@@ -291,16 +297,16 @@ def main() -> None:
         s=3,
         color=c_nad,
         lw=0,
-        alpha=0.7,
-        label=f"split half (med {sh['r_split_half'].median():.2f})",
+        alpha=0.8,
+        label=f"split half ({sh['r_split_half'].median():.2f})",
     )
     ax.axhline(0, color="black", lw=0.5, ls="--")
     ax.set_xscale("log")
     _plain_log_x(ax, [30, 100, 300, 1000])
-    ax.set_xlabel("cells of the genotype in the batch")
-    ax.set_ylabel("r between halves, each vs its own WT half")
     rho = out["split_half"]["spearman_r_vs_cells"]
-    ax.set_title(f"split-half within batch, Spearman vs cells {rho:.2f}")
+    ax.set_xlabel(f"cells of the genotype in the batch (Spearman with r {rho:.2f})")
+    ax.set_ylabel("r between halves, each vs its own WT half")
+    ax.set_title("split-half within a batch (medians in legend)")
     lo, hi = ax.get_ylim()
     ax.set_ylim(lo, hi + (hi - lo) * 0.45)
     ax.legend(loc="upper left", **legend_kw)
@@ -313,8 +319,8 @@ def main() -> None:
         s=2,
         color=c_null,
         lw=0,
-        alpha=0.4,
-        label=f"reported (genotype + WT >= {MIN_UMI} UMI)",
+        alpha=0.6,
+        label=f"reported, genotype + WT >= {MIN_UMI} UMI",
     )
     ax.scatter(
         cov["cells"],
@@ -322,21 +328,17 @@ def main() -> None:
         s=2,
         color=c_nad,
         lw=0,
-        alpha=0.4,
+        alpha=0.6,
         label=f"own cells >= {OWN_UMI} UMI",
     )
     ax.axhline(
         KEMMEREN_REPORTERS,
         color=c_kem,
         lw=1.0,
-        label=f"Kemmeren, every profile ({KEMMEREN_REPORTERS:,})",
+        label=f"Kemmeren, {KEMMEREN_REPORTERS:,} per profile",
     )
     ax.axhline(
-        len(umi),
-        color="black",
-        lw=0.5,
-        ls=":",
-        label=f"genes in the Nadal object ({len(umi):,})",
+        len(umi), color=c_red, lw=0.8, ls=":", label=f"Nadal object, {len(umi):,} genes"
     )
     ax.set_xscale("log")
     _plain_log_x(ax, [1, 10, 100, 1000])
@@ -357,46 +359,61 @@ def main() -> None:
         resp["n_sig_fc1p7"] + 1,
         c_kem,
         bins,
-        f"Kemmeren (med {resp['n_sig_fc1p7'].median():.0f}; {100 * resp['responsive'].mean():.0f}% >= 4)",
+        f"Kemmeren, FC > 1.7 & p < 0.05 ({resp['n_sig_fc1p7'].median():.0f})",
     )
     filled(
         ax,
         paper["JAnsig"] + 1,
         c_nad,
         bins,
-        f"Nadal, paper's DEGs (med {paper['JAnsig'].median():.0f})",
+        f"Nadal, the paper's DEG rule ({paper['JAnsig'].median():.0f})",
     )
     ax.set_xscale("log")
     _plain_log_x(ax, [1, 10, 100, 1000])
-    ax.set_xlabel("changed genes per deletion + 1")
+    ax.set_xlabel(
+        f"changed genes per deletion + 1 (Kemmeren: {100 * resp['responsive'].mean():.0f}% >= 4)"
+    )
     ax.set_ylabel("density")
-    ax.set_title("changed genes per deletion, each study's own rule")
+    ax.set_title("changed genes per deletion (medians in legend)")
     ax.set_ylim(0, ax.get_ylim()[1] * 1.7)
     ax.legend(loc="upper right", **legend_kw)
 
-    # e. the paper's Supp Fig 1i
+    # e. the paper's Supp Fig 1i; counts are integers, so a small log jitter
     ax = axes[1, 1]
-    sc = ax.scatter(
-        paper["MAsig"] + 1,
-        paper["JAnsig"] + 1,
+    few = (paper["ncells"] < 30).to_numpy()
+    rng = np.random.default_rng(0)
+    x = (paper["MAsig"].to_numpy() + 1) * np.exp(rng.uniform(-0.06, 0.06, len(paper)))
+    y = (paper["JAnsig"].to_numpy() + 1) * np.exp(rng.uniform(-0.06, 0.06, len(paper)))
+    ax.scatter(
+        x[~few],
+        y[~few],
         s=4,
-        c=np.log10(paper["ncells"]),
-        cmap="Greys",
-        lw=0.2,
-        edgecolor="black",
+        color=c_nad,
+        lw=0,
+        alpha=0.7,
+        label=f">= 30 cells (n = {int((~few).sum())})",
+    )
+    ax.scatter(
+        x[few],
+        y[few],
+        s=4,
+        color=c_null,
+        lw=0,
         alpha=0.9,
+        label=f"< 30 cells (n = {int(few.sum())})",
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
     _plain_log_x(ax, [1, 10, 100, 1000])
     ax.set_xlabel("Kemmeren changed genes + 1 (|M| > 1, p < 0.05)")
-    ax.set_ylabel(
-        f"Nadal DEGs + 1 (Spearman vs cells {out['paper_figS1i']['spearman_nadal_degs_vs_cells']:.2f})"
-    )
     s = out["paper_figS1i"]
+    ax.set_ylabel(
+        f"Nadal DEGs + 1 (Spearman vs cells {s['spearman_nadal_degs_vs_cells']:.2f})"
+    )
     ax.set_title(f"paper's Fig. S1i, Spearman {s['spearman_log_counts']:.2f}")
-    cbar = fig.colorbar(sc, ax=ax, fraction=0.05, pad=0.02)
-    cbar.ax.set_title("log10 cells", fontsize=6, pad=3)
+    lo, hi = ax.get_ylim()
+    ax.set_ylim(lo, hi * 6)
+    ax.legend(loc="upper left", **legend_kw)
 
     # f. the unshown per-genotype profile correlation
     ax = axes[1, 2]
@@ -406,21 +423,21 @@ def main() -> None:
         paper["javsma"].dropna(),
         c_nad,
         bins,
-        f"as the paper computes it (med {paper['javsma'].median():.3f})",
+        f"as the paper computes it ({paper['javsma'].median():.3f})",
     )
     ax.hist(
         paper["javsma_no_sentinel"].dropna(),
         bins=bins,
         histtype="step",
-        color="black",
-        lw=0.8,
+        color=c_red,
+        lw=1.0,
         density=True,
-        label=f"sentinel genes removed (med {paper['javsma_no_sentinel'].median():.3f})",
+        label=f"sentinels removed ({paper['javsma_no_sentinel'].median():.3f})",
     )
     ax.axvline(0, color="black", lw=0.5, ls="--")
     ax.set_xlabel("per-genotype Spearman, Nadal logFC vs Kemmeren")
     ax.set_ylabel("density")
-    ax.set_title(f"the paper's unshown profile Spearman (n = {len(paper)})")
+    ax.set_title(f"the paper's unshown profile Spearman, n = {len(paper)}")
     ax.set_ylim(0, ax.get_ylim()[1] * 1.6)
     ax.legend(loc="upper right", **legend_kw)
 

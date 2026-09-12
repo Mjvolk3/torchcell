@@ -180,6 +180,13 @@ def _go_pair_auroc(c: pd.DataFrame, go_sets: dict[str, set[str]]) -> dict[str, A
     }
 
 
+def _palette_cmap(color: str):  # type: ignore[no-untyped-def]
+    """White to one palette color, for density maps."""
+    from matplotlib.colors import LinearSegmentedColormap
+
+    return LinearSegmentedColormap.from_list("pal", ["#FFFFFF", color])
+
+
 def _module_score(
     profiles: dict[str, dict[str, float]], genes: set[str], strains: list[str]
 ) -> pd.Series:
@@ -510,7 +517,7 @@ def main() -> None:
         color=c_sam,
         lw=0,
         alpha=0.4,
-        label=f"Sameith (Spearman {rho_ks:.2f})",
+        label=f"Sameith ({rho_ks:.2f})",
     )
     ax.scatter(
         gv_kn["sd_a"],
@@ -519,13 +526,13 @@ def main() -> None:
         color=c_nad,
         lw=0,
         alpha=0.4,
-        label=f"Nadal A (Spearman {rho_kn:.2f})",
+        label=f"Nadal A ({rho_kn:.2f})",
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("reporter sd across shared strains, Kemmeren")
     ax.set_ylabel("reporter sd, other study")
-    ax.set_title("which genes vary")
+    ax.set_title("which genes vary (Spearman in legend)")
     lo, hi = ax.get_ylim()
     ax.set_ylim(lo, hi * 8)
     ax.legend(loc="upper left", **legend_kw)
@@ -545,7 +552,12 @@ def main() -> None:
     # c. strain similarity structure
     ax = axes[0, 2]
     ax.hexbin(
-        man_kn["a"], man_kn["b"], gridsize=50, bins="log", cmap="Greys", linewidths=0
+        man_kn["a"],
+        man_kn["b"],
+        gridsize=50,
+        bins="log",
+        cmap=_palette_cmap(c_nad),
+        linewidths=0,
     )
     ax.axhline(0, color="black", lw=0.5, ls="--")
     ax.axvline(0, color="black", lw=0.5, ls="--")
@@ -582,7 +594,7 @@ def main() -> None:
         color=cols,
         edgecolor="black",
         lw=0.5,
-        label="same cellular component (complex)",
+        label="same cellular component",
     )
     ax.bar(
         xs + 0.2,
@@ -613,7 +625,7 @@ def main() -> None:
         color=c_nad,
         lw=0,
         alpha=0.6,
-        label=f"Nadal A (Spearman {r1:.2f})",
+        label=f"Nadal A ({r1:.2f})",
     )
     d2 = mod_s.dropna()
     r2 = out["ribosome_module"]["kem_rp_vs_sam_rp"]["spearman"]
@@ -624,13 +636,13 @@ def main() -> None:
         color=c_sam,
         lw=0,
         alpha=0.8,
-        label=f"Sameith (Spearman {r2:.2f})",
+        label=f"Sameith ({r2:.2f})",
     )
     ax.axhline(0, color="black", lw=0.5, ls="--")
     ax.axvline(0, color="black", lw=0.5, ls="--")
     ax.set_xlabel("Kemmeren: mean log2 over ribosomal protein genes")
     ax.set_ylabel("other study: mean log2, same genes")
-    ax.set_title(f"ribosomal protein module ({len(rp)} genes)")
+    ax.set_title(f"ribosomal protein module, {len(rp)} genes (Spearman in legend)")
     lo, hi = ax.get_ylim()
     ax.set_ylim(lo, hi + (hi - lo) * 0.5)
     ax.legend(loc="upper left", **legend_kw)

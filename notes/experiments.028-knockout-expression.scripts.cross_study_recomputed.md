@@ -48,3 +48,8 @@ Kemmeren is now a filled histogram in the palette yellow (it was a black outline
 read as white against the fills), the Nadal versions keep red / orange / purple as in
 nadal_identify_deletion.py, and the log-density headroom is 3e6 so the legend sits two
 decades above the tallest bin.
+
+## 2026.09.12 - Density map on the palette
+
+Panel d's hexbin uses a white-to-orange colormap built from `PLOT_PALETTE[0]` instead
+of Greys, so the figure carries palette colors only.

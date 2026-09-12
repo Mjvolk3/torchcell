@@ -29,3 +29,10 @@ in `experiments/028-knockout-expression/results/nadal_replication_coverage.json`
 - e: the paper's Supplementary Fig. 1i, Spearman 0.23 over 874 (0.26 with cells
   partialled out).
 - f: the profile Spearman the paper computed and did not show: median 0.013.
+
+## 2026.09.12 - Palette-only colors, shorter legends
+
+Null series in palette purple, the pooled-reference and second Nadal series in palette
+red, panel e as two palette classes (>= 30 and < 30 cells) instead of a grey colormap,
+medians moved from legend labels into the titles so legends stay narrow. Author
+feedback: "isn't using our color palette", legend running to the frame.

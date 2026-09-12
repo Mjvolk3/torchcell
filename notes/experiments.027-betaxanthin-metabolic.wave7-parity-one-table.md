@@ -346,3 +346,64 @@ PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
 - Reported by the thermodynamics work stream and not verified here: the shipped reaction-energy
   table carries a glycogen mispricing, so the standard-state second-law reads in every 026 and
   027 cell that touches those reactions are suspect.
+
+## 2026.09.12 - A third balance rule: the ratio over the rows that turn over
+
+The flux-force work stream raised that a max over ALL independent rows can be decided by
+rows at the `balance_epsilon` floor, where two tiny same-sign fluxes on an otherwise idle
+metabolite give a ratio of exactly 2, which would make the max rule fail every head as
+trivially as the median passes it. `audit_top_strain_feasibility.py` now computes the same
+ratio restricted to the rows that TURN OVER, `omega_i > t * flux_scale`, at t = 1e-3 (the
+primary) with 1e-2 and 1e-4 as the sensitivity, and reports its max, its 95th percentile and
+the number of rows above the threshold. Eighteen cells were re-audited from their
+checkpoints, each against the code tree it was trained with, and the boxforce cells need
+`TC_FLUX_PARAMETERIZATION` restored from `flux_meta.coverage.parameterization_raw`, which
+`audit_cells.py` now does per cell.
+
+Top 100 predicted producers, median over genotypes of each per-genotype statistic:
+
+| cell | jobs | balance median | balance max | rows above 1e-3 | active max 1e-3 | active p95 1e-3 | carrying flux | Genesis median / max / active |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| projection plain s2700-02 | 1689, 1690, 1738 | 9.2e-09 to 1.0e-08 | 1.2e-05 to 4.0e-05 | 2039 to 2053 | 1.0e-05 to 1.7e-05 | 1.7e-06 | 0.881 | 0.00 / 0.00 / 0.00 |
+| sign-tightened tdg s2700 | 1725 | 3.5e-08 | 2.000 | 938 | 2.000 | 2.000 | 0.286 | 1.00 / 0.00 / 0.00 |
+| sign-tightened tdg s2701, s2702 | 1730, 1731 | 0.568, 0.064 | 2.000 | 534, 1086 | 2.000 | 2.000 | 0.332, 0.321 | 0.00 / 0.00 / 0.00 |
+| sign-tightened, stochastic s2700 | 1726 | 0.416 | 2.000 | 44 | 2.000 | 2.000 | 0.364 | 0.00 / 0.00 / 0.00 |
+| tdgm5 s2700, s2701 | 1736, 1737 | 0.084, 0.103 | 2.000 | 1128, 1214 | 2.000 | 2.000 | 0.324, 0.352 | 0.00 / 0.00 / 0.00 |
+| wave 7 box s2700-02 | 1743, 1752, 1757 | 1.997 to 1.998 | 2.000 | 1685 to 1691 | 2.000 | 2.000 | 0.939 to 0.970 | 0.00 / 0.00 / 0.00 |
+| boxforce k100 s2700-02 | 1767, 1770, 1771 | 1.3e-08 to 2.8e-08 | 2.000 | 422 to 539 | 2.000 | 2.000 | 0.280 to 0.298 | 1.00 / 0.00 / 0.00 |
+| force end k20 s2700-02 | 1755, 1761, 1764 | 0.321 to 1.049 | 2.000 | 809 to 1437 | 2.000 | 2.000 | 0.345 to 0.368 | 0.00 / 0.00 / 0.00 |
+
+**The epsilon-floor explanation does not hold, and the max rule survives it.** Restricting
+to rows whose turnover exceeds 1e-3 of the flux scale, i.e. 0.1 mmol/gDW/h, leaves 422 to
+1,691 rows per genotype and the worst of them is still at the theoretical maximum of 2.000
+in every arm except the plain projection. The 95th percentile over those same rows is also
+2.000, so it is not a handful of rows near the threshold either: at least 5 percent of the
+rows that actually turn over are maximally unbalanced. The sensitivity runs the same way at
+1e-2 (277 to 1,646 rows, still 2.000; the one exception is the stochastic cell, whose 5
+qualifying rows give 1.84, which is a statistic over five rows and not a claim) and at 1e-4.
+
+**The plain projection was never at 2.0.** Its per-genotype max over ALL rows is 1.2e-05 to
+4.0e-05 and its thresholded max is 1.0e-05 to 1.7e-05, so the report that every arm reads
+exactly 2.0 does not reproduce here: the projection cells balance under all three rules, and
+they are the only cells that do.
+
+**The boxforce family reproduces the median artifact exactly.** Jobs 1767, 1770 and 1771 read
+a median residual of 1.3e-08 to 2.8e-08 and pass the median rule on 1.00 of the top 100,
+while their thresholded max is 2.000 and only 28 to 30 percent of reactions carry flux. That
+is the same shape as job 1725: a passing median bought by switching most of the network off.
+
+**The Genesis criterion is 0.00 in all eighteen cells under both honest rules.** Under the
+median rule four cells pass (1725, 1767, 1770, 1771); under the max rule and under the
+turnover-thresholded rule, none.
+
+![](./assets/images/027-betaxanthin-metabolic/wave7_parity_one_table_2026-09-12-12-23-27.svg)
+
+**Figure 2. The same figure with the third rule and the flux-force cells.** **a**, The
+wave-7 parity contrast, unchanged. **b**, The per-seed paired difference, unchanged.
+**c**, Fraction of each cell's top 100 balanced to within 1 percent under the median rule,
+the max rule, and the max over rows turning over more than 1e-3 of the flux scale; the three
+projection cells are the only ones where the second and third bars stand, and the four cells
+with a lone first bar (job 1725 and the three boxforce cells) are the median artifact.
+**d**, Fraction of reactions carrying flux for the median genotype, which is what those four
+cells trade away. Generated by
+`experiments/027-betaxanthin-metabolic/scripts/analyze_wave7_parity.py`.

@@ -71,8 +71,8 @@
         "stats": {
           "balance_median_ratio": {
             "median": 1.9963020086288452,
-            "mean": 1.9960511922836304,
-            "p90": 1.9977177381515503,
+            "mean": 1.9960503578186035,
+            "p90": 1.997720718383789,
             "max": 1.998068928718567
           },
           "balance_max_ratio": {
@@ -88,9 +88,9 @@
             "max": 0.0
           },
           "thermo_standard_state_violation_frac": {
-            "median": 0.3395845293998718,
-            "mean": 0.33439889550209045,
-            "p90": 0.35083669424057007,
+            "median": 0.33900749683380127,
+            "mean": 0.3338391184806824,
+            "p90": 0.3502596616744995,
             "max": 0.36699366569519043
           },
           "thermo_standard_state_uphill_frac": {
@@ -116,8 +116,8 @@
         "stats": {
           "balance_median_ratio": {
             "median": 1.9963170289993286,
-            "mean": 1.9962576627731323,
-            "p90": 1.997873306274414,
+            "mean": 1.9962592124938965,
+            "p90": 1.9978805780410767,
             "max": 1.998068928718567
           },
           "balance_max_ratio": {
@@ -133,9 +133,9 @@
             "max": 0.0
           },
           "thermo_standard_state_violation_frac": {
-            "median": 0.338718980550766,
-            "mean": 0.33409956097602844,
-            "p90": 0.3505481779575348,
+            "median": 0.33814194798469543,
+            "mean": 0.3335288465023041,
+            "p90": 0.34997114539146423,
             "max": 0.36151182651519775
           },
           "thermo_standard_state_uphill_frac": {
@@ -161,7 +161,7 @@
         "stats": {
           "balance_median_ratio": {
             "median": 1.996825098991394,
-            "mean": 1.996835470199585,
+            "mean": 1.9968382120132446,
             "p90": 1.9970688819885254,
             "max": 1.9975699186325073
           },
@@ -178,10 +178,10 @@
             "max": 0.0
           },
           "thermo_standard_state_violation_frac": {
-            "median": 0.3280438482761383,
-            "mean": 0.3279139995574951,
-            "p90": 0.333266019821167,
-            "max": 0.33641085028648376
+            "median": 0.32746681571006775,
+            "mean": 0.32733696699142456,
+            "p90": 0.33268898725509644,
+            "max": 0.3358338177204132
           },
           "thermo_standard_state_uphill_frac": {
             "median": 0.45793044567108154,
@@ -206,7 +206,7 @@
         "stats": {
           "balance_median_ratio": {
             "median": 1.9956343173980713,
-            "mean": 1.9955936670303345,
+            "mean": 1.9955967664718628,
             "p90": 1.9971100091934204,
             "max": 1.997603178024292
           },
@@ -223,10 +223,10 @@
             "max": 0.0
           },
           "thermo_standard_state_violation_frac": {
-            "median": 0.327034056186676,
-            "mean": 0.3254702687263489,
-            "p90": 0.3396422266960144,
-            "max": 0.3517022430896759
+            "median": 0.32645702362060547,
+            "mean": 0.32489898800849915,
+            "p90": 0.33906519412994385,
+            "max": 0.35112521052360535
           },
           "thermo_standard_state_uphill_frac": {
             "median": 0.47832322120666504,
@@ -253,7 +253,11 @@
       "balance_max_ratio": "max over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon), the same ratio the trainer takes the median of. Computed by train_bx._per_sample_feasibility, which every wave-6 cell already recorded the distribution of; only the CRITERION built on it is new.",
       "flux_active_frac": "fraction of the 4,131 reactions with |v| > 1e-6 * flux_scale = 1e-4 mmol/gDW/h.",
       "genesis_median_rule": "the trainer's criterion: balance_median_ratio <= 1e-2 AND no active reaction running uphill at standard state.",
-      "genesis_max_rule": "the same criterion with balance_max_ratio <= 1e-2 in place of the median, so EVERY independent row must balance, not the typical one."
+      "genesis_max_rule": "the same criterion with balance_max_ratio <= 1e-2 in place of the median, so EVERY independent row must balance, not the typical one.",
+      "balance_active_max_ratio_<t>": "max of the same ratio over the independent rows whose turnover omega_i exceeds t * flux_scale. The plain max is decided by rows at the balance_epsilon floor, where two tiny same-sign fluxes give a ratio of exactly 2, so it fails every head for a reason unrelated to the flux the model carries; restricting to rows that turn over is the rule that separates the heads.",
+      "balance_active_p95_ratio_<t>": "the 95th percentile of the same ratio over the same rows, which is the max with the top 5 percent of rows removed and is what a handful of near-threshold rows cannot dominate.",
+      "balance_active_rows_<t>": "how many independent rows clear the turnover threshold. A rule evaluated over three rows is not a statement about the flux vector, so the count is reported beside every thresholded ratio.",
+      "genesis_active_rule": "the Genesis criterion with balance_active_max_ratio at the primary threshold (1e-3 * flux_scale) <= 1e-2 in place of the median or the plain max."
     },
     "flux_active_threshold": 0.00009999999999999999,
     "flux_scale": 100.0,
@@ -266,8 +270,8 @@
         "stats": {
           "balance_median_ratio": {
             "median": 1.9963020086288452,
-            "mean": 1.9960511922836304,
-            "p90": 1.9977177381515503,
+            "mean": 1.9960503578186035,
+            "p90": 1.997720718383789,
             "max": 1.998068928718567
           },
           "balance_max_ratio": {
@@ -277,10 +281,64 @@
             "max": 2.0
           },
           "flux_active_frac": {
-            "median": 0.9005083441734314,
-            "mean": 0.9104137420654297,
-            "p90": 0.9823287129402161,
+            "median": 0.9000242352485657,
+            "mean": 0.9099371433258057,
+            "p90": 0.9818446040153503,
             "max": 0.9946743845939636
+          },
+          "balance_active_max_ratio_1e-02": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-02": {
+            "median": 1.9999998807907104,
+            "mean": 2.0,
+            "p90": 1.9999998807907104,
+            "max": 2.0
+          },
+          "balance_active_rows_1e-02": {
+            "median": 1637.0,
+            "mean": 1560.6085205078125,
+            "p90": 1658.0,
+            "max": 1736.0
+          },
+          "balance_active_max_ratio_1e-03": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-03": {
+            "median": 1.9999998807907104,
+            "mean": 2.0,
+            "p90": 1.9999998807907104,
+            "max": 2.0
+          },
+          "balance_active_rows_1e-03": {
+            "median": 1671.0,
+            "mean": 1679.2620849609375,
+            "p90": 1705.0,
+            "max": 2072.0
+          },
+          "balance_active_max_ratio_1e-04": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-04": {
+            "median": 1.9999998807907104,
+            "mean": 2.0,
+            "p90": 1.9999998807907104,
+            "max": 2.0
+          },
+          "balance_active_rows_1e-04": {
+            "median": 1829.0,
+            "mean": 1869.5653076171875,
+            "p90": 1987.0,
+            "max": 2440.0
           }
         },
         "fractions": {
@@ -294,8 +352,32 @@
           "balance_max_ratio_le_1e-01": 0.0,
           "balance_max_ratio_le_1e-02": 0.0,
           "balance_max_ratio_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-03": 0.0,
           "genesis_median_rule_thermo_standard_state": 0.0,
-          "genesis_max_rule_thermo_standard_state": 0.0
+          "genesis_max_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-02_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-02_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-03_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-03_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-04_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-04_rule_thermo_standard_state": 0.0
         }
       },
       "pinned_test": {
@@ -304,8 +386,8 @@
         "stats": {
           "balance_median_ratio": {
             "median": 1.9963170289993286,
-            "mean": 1.9962576627731323,
-            "p90": 1.997873306274414,
+            "mean": 1.9962592124938965,
+            "p90": 1.9978805780410767,
             "max": 1.998068928718567
           },
           "balance_max_ratio": {
@@ -315,10 +397,64 @@
             "max": 2.0
           },
           "flux_active_frac": {
-            "median": 0.902202844619751,
-            "mean": 0.915420651435852,
-            "p90": 0.9823287129402161,
+            "median": 0.9017187356948853,
+            "mean": 0.9149395227432251,
+            "p90": 0.9818446040153503,
             "max": 0.9912853837013245
+          },
+          "balance_active_max_ratio_1e-02": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-02": {
+            "median": 1.9999998807907104,
+            "mean": 1.999999761581421,
+            "p90": 1.9999998807907104,
+            "max": 1.9999998807907104
+          },
+          "balance_active_rows_1e-02": {
+            "median": 1631.0,
+            "mean": 1562.2847900390625,
+            "p90": 1658.0,
+            "max": 1695.0
+          },
+          "balance_active_max_ratio_1e-03": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-03": {
+            "median": 1.9999998807907104,
+            "mean": 1.999999761581421,
+            "p90": 1.9999998807907104,
+            "max": 1.9999998807907104
+          },
+          "balance_active_rows_1e-03": {
+            "median": 1671.0,
+            "mean": 1676.220703125,
+            "p90": 1703.0,
+            "max": 1977.0
+          },
+          "balance_active_max_ratio_1e-04": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-04": {
+            "median": 1.9999998807907104,
+            "mean": 1.999999761581421,
+            "p90": 1.9999998807907104,
+            "max": 1.9999998807907104
+          },
+          "balance_active_rows_1e-04": {
+            "median": 1825.0,
+            "mean": 1869.2989501953125,
+            "p90": 1988.199951171875,
+            "max": 2320.0
           }
         },
         "fractions": {
@@ -332,8 +468,32 @@
           "balance_max_ratio_le_1e-01": 0.0,
           "balance_max_ratio_le_1e-02": 0.0,
           "balance_max_ratio_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-03": 0.0,
           "genesis_median_rule_thermo_standard_state": 0.0,
-          "genesis_max_rule_thermo_standard_state": 0.0
+          "genesis_max_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-02_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-02_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-03_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-03_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-04_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-04_rule_thermo_standard_state": 0.0
         }
       },
       "all_top100": {
@@ -342,7 +502,7 @@
         "stats": {
           "balance_median_ratio": {
             "median": 1.996825098991394,
-            "mean": 1.996835470199585,
+            "mean": 1.9968382120132446,
             "p90": 1.9970688819885254,
             "max": 1.9975699186325073
           },
@@ -353,10 +513,64 @@
             "max": 2.0
           },
           "flux_active_frac": {
-            "median": 0.9581215381622314,
-            "mean": 0.9581336975097656,
-            "p90": 0.9647542834281921,
-            "max": 0.9886226058006287
+            "median": 0.957637369632721,
+            "mean": 0.957649290561676,
+            "p90": 0.9642701148986816,
+            "max": 0.9881384372711182
+          },
+          "balance_active_max_ratio_1e-02": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-02": {
+            "median": 1.9999998807907104,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_rows_1e-02": {
+            "median": 1610.0,
+            "mean": 1610.8399658203125,
+            "p90": 1617.0999755859375,
+            "max": 1688.0
+          },
+          "balance_active_max_ratio_1e-03": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-03": {
+            "median": 1.9999998807907104,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_rows_1e-03": {
+            "median": 1691.0,
+            "mean": 1697.7099609375,
+            "p90": 1711.0999755859375,
+            "max": 1933.0
+          },
+          "balance_active_max_ratio_1e-04": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-04": {
+            "median": 1.9999998807907104,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_rows_1e-04": {
+            "median": 1905.5,
+            "mean": 1910.3199462890625,
+            "p90": 1932.4000244140625,
+            "max": 2222.0
           }
         },
         "fractions": {
@@ -370,8 +584,32 @@
           "balance_max_ratio_le_1e-01": 0.0,
           "balance_max_ratio_le_1e-02": 0.0,
           "balance_max_ratio_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-03": 0.0,
           "genesis_median_rule_thermo_standard_state": 0.0,
-          "genesis_max_rule_thermo_standard_state": 0.0
+          "genesis_max_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-02_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-02_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-03_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-03_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-04_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-04_rule_thermo_standard_state": 0.0
         }
       },
       "pinned_test_top100": {
@@ -380,7 +618,7 @@
         "stats": {
           "balance_median_ratio": {
             "median": 1.9956343173980713,
-            "mean": 1.9955936670303345,
+            "mean": 1.9955967664718628,
             "p90": 1.9971100091934204,
             "max": 1.997603178024292
           },
@@ -391,10 +629,64 @@
             "max": 2.0
           },
           "flux_active_frac": {
-            "median": 0.876180112361908,
-            "mean": 0.8977197408676147,
-            "p90": 0.9618251919746399,
-            "max": 0.9842653274536133
+            "median": 0.8756959438323975,
+            "mean": 0.8972402811050415,
+            "p90": 0.9613410830497742,
+            "max": 0.9837811589241028
+          },
+          "balance_active_max_ratio_1e-02": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-02": {
+            "median": 1.9999998807907104,
+            "mean": 1.9999998807907104,
+            "p90": 1.9999998807907104,
+            "max": 1.9999998807907104
+          },
+          "balance_active_rows_1e-02": {
+            "median": 1514.5,
+            "mean": 1505.8199462890625,
+            "p90": 1622.0999755859375,
+            "max": 1665.0
+          },
+          "balance_active_max_ratio_1e-03": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-03": {
+            "median": 1.9999998807907104,
+            "mean": 1.9999998807907104,
+            "p90": 1.9999998807907104,
+            "max": 1.9999998807907104
+          },
+          "balance_active_rows_1e-03": {
+            "median": 1661.0,
+            "mean": 1667.43994140625,
+            "p90": 1690.0,
+            "max": 1793.0
+          },
+          "balance_active_max_ratio_1e-04": {
+            "median": 2.0,
+            "mean": 2.0,
+            "p90": 2.0,
+            "max": 2.0
+          },
+          "balance_active_p95_ratio_1e-04": {
+            "median": 1.9999998807907104,
+            "mean": 1.9999998807907104,
+            "p90": 1.9999998807907104,
+            "max": 1.9999998807907104
+          },
+          "balance_active_rows_1e-04": {
+            "median": 1815.0,
+            "mean": 1838.5699462890625,
+            "p90": 1904.0,
+            "max": 2099.0
           }
         },
         "fractions": {
@@ -408,8 +700,32 @@
           "balance_max_ratio_le_1e-01": 0.0,
           "balance_max_ratio_le_1e-02": 0.0,
           "balance_max_ratio_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-02_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-02_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-03_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-03_le_1e-03": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-01": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-02": 0.0,
+          "balance_active_max_ratio_1e-04_le_1e-03": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-01": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-02": 0.0,
+          "balance_active_p95_ratio_1e-04_le_1e-03": 0.0,
           "genesis_median_rule_thermo_standard_state": 0.0,
-          "genesis_max_rule_thermo_standard_state": 0.0
+          "genesis_max_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-02_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-02_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-03_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-03_rule_thermo_standard_state": 0.0,
+          "genesis_active_max_1e-04_rule_thermo_standard_state": 0.0,
+          "genesis_active_p95_1e-04_rule_thermo_standard_state": 0.0
         }
       }
     }

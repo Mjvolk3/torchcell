@@ -82,6 +82,22 @@ DATA_ROOT = os.environ["DATA_ROOT"]
 #: statistic computed over a vector of off reactions is a statistic about zeros.
 FLUX_ACTIVE_RELATIVE_THRESHOLD = 1e-6
 
+#: Turnover thresholds for the THIRD balance rule, as fractions of the flux scale. A row of
+#: S whose turnover omega_i is at the balance_epsilon floor has a ratio of 2 whenever the two
+#: tiny fluxes touching it share a sign, so a plain max over all rows is decided by idle
+#: metabolites and fails every head for a reason that has nothing to do with the flux the
+#: model actually carries. The rule below evaluates the same ratio over the rows that
+#: TURN OVER: omega_i > threshold * flux_scale. 1e-3 is the primary; the other two are the
+#: sensitivity, reported beside it rather than chosen after seeing the answer.
+BALANCE_TURNOVER_THRESHOLDS: tuple[float, ...] = (1e-2, 1e-3, 1e-4)
+PRIMARY_TURNOVER_THRESHOLD = 1e-3
+
+
+def _threshold_tag(threshold: float) -> str:
+    """The suffix a thresholded statistic carries, e.g. ``1e-03``."""
+    return f"{threshold:.0e}"
+
+
 STRICT_DEFINITIONS: dict[str, str] = {
     "why": (
         "The trainer's Genesis criterion tests the MEDIAN relative balance residual over "
@@ -108,16 +124,71 @@ STRICT_DEFINITIONS: dict[str, str] = {
         "the same criterion with balance_max_ratio <= 1e-2 in place of the median, so "
         "EVERY independent row must balance, not the typical one."
     ),
+    "balance_active_max_ratio_<t>": (
+        "max of the same ratio over the independent rows whose turnover omega_i exceeds "
+        "t * flux_scale. The plain max is decided by rows at the balance_epsilon floor, "
+        "where two tiny same-sign fluxes give a ratio of exactly 2, so it fails every head "
+        "for a reason unrelated to the flux the model carries; restricting to rows that "
+        "turn over is the rule that separates the heads."
+    ),
+    "balance_active_p95_ratio_<t>": (
+        "the 95th percentile of the same ratio over the same rows, which is the max with "
+        "the top 5 percent of rows removed and is what a handful of near-threshold rows "
+        "cannot dominate."
+    ),
+    "balance_active_rows_<t>": (
+        "how many independent rows clear the turnover threshold. A rule evaluated over "
+        "three rows is not a statement about the flux vector, so the count is reported "
+        "beside every thresholded ratio."
+    ),
+    "genesis_active_rule": (
+        "the Genesis criterion with balance_active_max_ratio at the primary threshold "
+        "(1e-3 * flux_scale) <= 1e-2 in place of the median or the plain max."
+    ),
 }
 
 
 def _per_sample_extras(
     layer: Any, flux: dict[str, torch.Tensor]
 ) -> dict[str, torch.Tensor]:
-    """Per-sample scalars the trainer does not compute. ``[B]`` each."""
+    """Per-sample scalars the trainer does not compute. ``[B]`` each.
+
+    The balance ratio is rebuilt here from the layer's own ``_s_matmul`` and ``turnover``,
+    the same two calls ``train_bx._per_sample_feasibility`` makes, so the thresholded
+    statistics are the SAME ratio as the trainer's median and the plain max, restricted to a
+    subset of the rows. A genotype with no row above the threshold gets NaN rather than a
+    number, and the count says how many rows the statistic was taken over.
+    """
+    cfg = layer.config
+    scale = float(cfg.flux_scale)
     v = flux["v"]
-    threshold = FLUX_ACTIVE_RELATIVE_THRESHOLD * float(layer.config.flux_scale)
-    return {"flux_active_frac": (v.abs() > threshold).float().mean(dim=1)}
+    residual = layer._s_matmul(v)[:, layer.independent_rows].abs()
+    omega = layer.turnover(v)[:, layer.independent_rows]
+    ratio = residual / (omega + cfg.balance_epsilon)
+    out: dict[str, torch.Tensor] = {
+        "flux_active_frac": (v.abs() > FLUX_ACTIVE_RELATIVE_THRESHOLD * scale)
+        .float()
+        .mean(dim=1)
+    }
+    for threshold in BALANCE_TURNOVER_THRESHOLDS:
+        tag = _threshold_tag(threshold)
+        active = omega > threshold * scale
+        counts = active.sum(dim=1)
+        masked = ratio.masked_fill(~active, float("-inf"))
+        maximum = masked.max(dim=1).values
+        # A quantile over a masked row needs the inactive entries gone, not set to -inf, so
+        # it is taken per genotype. There is no vectorized masked quantile in torch.
+        p95 = torch.full_like(maximum, float("nan"))
+        for i in range(ratio.shape[0]):
+            selected = ratio[i][active[i]]
+            if selected.numel():
+                p95[i] = torch.quantile(selected, 0.95)
+        out[f"balance_active_max_ratio_{tag}"] = maximum.masked_fill(
+            counts == 0, float("nan")
+        )
+        out[f"balance_active_p95_ratio_{tag}"] = p95
+        out[f"balance_active_rows_{tag}"] = counts.to(ratio.dtype)
+    return out
 
 
 def collect_with_extras(
@@ -157,17 +228,48 @@ def collect_with_extras(
     return {k: np.concatenate(v) for k, v in parts.items()}
 
 
-def strict_criteria_flags(per: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
-    """Per-genotype feasibility under the MAX balance rule, beside the median rule.
+def _nan_stats(x: np.ndarray) -> FeasibilityStats:
+    """``_stats`` for a quantity that is NaN where no row cleared the threshold."""
+    finite = x[np.isfinite(x)]
+    if not finite.size:
+        return FeasibilityStats(
+            median=float("nan"), mean=float("nan"), p90=float("nan"), max=float("nan")
+        )
+    return FeasibilityStats(
+        median=float(np.median(finite)),
+        mean=float(np.mean(finite)),
+        p90=float(np.percentile(finite, 90)),
+        max=float(np.max(finite)),
+    )
 
-    The thermodynamic half is unchanged, so every pair of rows here differs in exactly one
-    thing: which order statistic of the per-row balance residual has to clear 1 percent.
+
+def strict_criteria_flags(per: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    """Per-genotype feasibility under the MAX and the turnover-thresholded balance rules.
+
+    The thermodynamic half is unchanged in every rule, so the rows differ in exactly one
+    thing: which statistic of the per-row balance residual has to clear 1 percent. A NaN
+    ratio (no row above the turnover threshold) compares False, so a genotype whose flux
+    vector turns nothing over is never counted as balanced.
     """
     out: dict[str, np.ndarray] = {}
     median = per["balance_median_ratio"]
     maximum = per["balance_max_ratio"]
     for tol in BALANCE_TOLERANCES:
         out[f"balance_max_ratio_le_{tol:.0e}"] = maximum <= tol
+    active: dict[str, np.ndarray] = {}
+    with np.errstate(invalid="ignore"):
+        for threshold in BALANCE_TURNOVER_THRESHOLDS:
+            tag = _threshold_tag(threshold)
+            for statistic in ("max", "p95"):
+                key = f"balance_active_{statistic}_ratio_{tag}"
+                if key not in per:
+                    continue
+                values = per[key]
+                active[f"{statistic}_{tag}"] = values
+                for tol in BALANCE_TOLERANCES:
+                    out[f"{key}_le_{tol:.0e}"] = (
+                        np.nan_to_num(values, nan=np.inf) <= tol
+                    )
     for key, label in (
         ("thermo_model_violation_frac", "thermo_model"),
         ("thermo_standard_state_violation_frac", "thermo_standard_state"),
@@ -181,6 +283,10 @@ def strict_criteria_flags(per: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         out[f"genesis_max_rule_{label}"] = (
             maximum <= BOTH_BALANCE_TOLERANCE
         ) & downhill
+        for name, values in active.items():
+            out[f"genesis_active_{name}_rule_{label}"] = (
+                np.nan_to_num(values, nan=np.inf) <= BOTH_BALANCE_TOLERANCE
+            ) & downhill
     return out
 
 
@@ -214,11 +320,17 @@ def _strict_group(
     per: dict[str, np.ndarray], sel: np.ndarray, rank_by: str | None
 ) -> StrictGroup:
     keys = ("balance_median_ratio", "balance_max_ratio", "flux_active_frac")
+    thresholded = [
+        f"balance_active_{statistic}_{_threshold_tag(t)}"
+        for t in BALANCE_TURNOVER_THRESHOLDS
+        for statistic in ("max_ratio", "p95_ratio", "rows")
+    ]
     sub = {k: v[sel] for k, v in per.items() if k not in {"prediction", "observed"}}
     return StrictGroup(
         n=int(sel.sum()),
         rank_by=rank_by,
-        stats={k: _stats(sub[k]) for k in keys},
+        stats={k: _stats(sub[k]) for k in keys}
+        | {k: _nan_stats(sub[k]) for k in thresholded if k in sub},
         fractions={
             **{k: float(v.mean()) for k, v in criteria_flags(sub).items()},
             **{k: float(v.mean()) for k, v in strict_criteria_flags(sub).items()},
@@ -418,8 +530,11 @@ def main() -> None:
     # The trainer's block is rebuilt from the trainer's OWN scalars alone, so the
     # recomputation stays comparable to what the cell wrote. The extras go into their own
     # block rather than into this one.
-    trainer_keys = {k: v for k, v in per_all.items() if k != "flux_active_frac"}
-    trainer_keys_test = {k: v for k, v in per_test.items() if k != "flux_active_frac"}
+    extra_keys = {"flux_active_frac"} | {
+        key for key in per_all if key.startswith("balance_active_")
+    }
+    trainer_keys = {k: v for k, v in per_all.items() if k not in extra_keys}
+    trainer_keys_test = {k: v for k, v in per_test.items() if k not in extra_keys}
     block = build_feasibility_block(
         trainer_keys, trainer_keys_test, pinned_mask, model.flux_layer, main_head
     )
@@ -560,10 +675,18 @@ def main() -> None:
     print(f"recomputed feasibility[{key}]: {block.groups[key].fractions}")
     strict_group = strict.groups[key]
     print(f"strict feasibility[{key}], n={strict_group.n}")
-    for stat_name in ("balance_median_ratio", "balance_max_ratio", "flux_active_frac"):
+    primary = _threshold_tag(PRIMARY_TURNOVER_THRESHOLD)
+    for stat_name in (
+        "balance_median_ratio",
+        "balance_max_ratio",
+        f"balance_active_max_ratio_{primary}",
+        f"balance_active_p95_ratio_{primary}",
+        f"balance_active_rows_{primary}",
+        "flux_active_frac",
+    ):
         stat = strict_group.stats[stat_name]
         print(
-            f"  {stat_name:24s} median {stat.median:.4g} p90 {stat.p90:.4g} "
+            f"  {stat_name:34s} median {stat.median:.4g} p90 {stat.p90:.4g} "
             f"max {stat.max:.4g}"
         )
     for flag_name, fraction in sorted(strict_group.fractions.items()):

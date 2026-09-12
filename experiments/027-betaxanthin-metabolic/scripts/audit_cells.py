@@ -81,6 +81,22 @@ def candidate_trees() -> list[str]:
     return trees
 
 
+def flux_channel(stem: str) -> str | None:
+    """The parameterization the cell was BUILT with, as the arm registry spells it.
+
+    THE FOOTGUN, documented by the flux-force work stream. The channel is read from
+    ``TC_FLUX_PARAMETERIZATION`` at build time and only its coarse family survives into
+    ``flux_meta.coverage.parameterization`` (``fluxforce``); the exact channel
+    (``fluxforce_k100_boxforce``) is in ``parameterization_raw``. Rebuilding without the env
+    var set gives a DIFFERENT layer that loads the same weights, so the audit would report
+    the feasibility of a model that was never trained.
+    """
+    with open(osp.join(RESULTS, f"{stem}.json")) as fh:
+        meta = json.load(fh).get("flux_meta") or {}
+    raw = (meta.get("coverage") or {}).get("parameterization_raw")
+    return None if raw is None else str(raw)
+
+
 def resolve_tree(stem: str, trees: list[str]) -> tuple[str, str, dict[str, str]]:
     """The tree whose train_bx.py and flux_layer.py match the ones the cell recorded.
 
@@ -161,13 +177,19 @@ def main() -> None:
         )
         env["TC_FLUX_SCRIPTS_DIR"] = flux_scripts_dir(layer_root)
         env["PYTHONWARNINGS"] = "ignore"
+        channel = flux_channel(stem)
+        if channel is not None:
+            env["TC_FLUX_PARAMETERIZATION"] = channel
+        else:
+            env.pop("TC_FLUX_PARAMETERIZATION", None)
         command = [sys.executable, runner, "--result", f"{stem}.json"]
         if args.stochastic:
             command += ["--stochastic", "--draws", str(args.draws)]
         print(
             f"=== {stem}\n"
             f"    train_bx  {provenance['train_bx.py'][:12]} from {bx_root}\n"
-            f"    fluxlayer {provenance['flux_layer.py'][:12]} from {layer_root}",
+            f"    fluxlayer {provenance['flux_layer.py'][:12]} from {layer_root}\n"
+            f"    channel   {channel or 'from the arm registry'}",
             flush=True,
         )
         completed = subprocess.run(command, env=env, cwd=run_dir, check=False)

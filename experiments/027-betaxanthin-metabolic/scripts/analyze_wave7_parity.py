@@ -100,6 +100,12 @@ AUDIT_CELLS: tuple[str, ...] = (
     "wave7_parity_nocstr_s2703",
     "wave7_parity_nocstr_s2704",
     "wave7_parity_nocstr_s2705",
+    "wave7_ff_fluxforce_k100_boxforce_e80_s2700",
+    "wave7_ff_fluxforce_k100_boxforce_e80_s2701",
+    "wave7_ff_fluxforce_k100_boxforce_e80_s2702",
+    "wave7_ff_fluxforce_k20_force_e200_s2700",
+    "wave7_ff_fluxforce_k20_force_e200_s2701",
+    "wave7_ff_fluxforce_k20_force_e200_s2702",
 )
 
 #: How each audited cell is named in the table and on the axis.
@@ -119,7 +125,19 @@ AUDIT_LABELS: dict[str, str] = {
     "wave7_parity_nocstr_s2703": "w7 box s2703",
     "wave7_parity_nocstr_s2704": "w7 box s2704",
     "wave7_parity_nocstr_s2705": "w7 box s2705",
+    "wave7_ff_fluxforce_k100_boxforce_e80_s2700": "boxforce s2700",
+    "wave7_ff_fluxforce_k100_boxforce_e80_s2701": "boxforce s2701",
+    "wave7_ff_fluxforce_k100_boxforce_e80_s2702": "boxforce s2702",
+    "wave7_ff_fluxforce_k20_force_e200_s2700": "force end s2700",
+    "wave7_ff_fluxforce_k20_force_e200_s2701": "force end s2701",
+    "wave7_ff_fluxforce_k20_force_e200_s2702": "force end s2702",
 }
+
+#: The turnover threshold whose thresholded balance rule is the primary one, matching
+#: ``audit_top_strain_feasibility.PRIMARY_TURNOVER_THRESHOLD``. The other two thresholds are
+#: carried through into the JSON as the sensitivity.
+PRIMARY_TURNOVER_TAG = "1e-03"
+TURNOVER_TAGS = ("1e-02", "1e-03", "1e-04")
 
 
 class CellRecord(BaseModel):
@@ -193,6 +211,23 @@ class FeasibilityRuleRow(BaseModel):
     genesis_max_rule: float
     genesis_median_rule_model_thermo: float | None = None
     genesis_max_rule_model_thermo: float | None = None
+    #: The turnover-thresholded rule at the primary threshold: the ratio restricted to the
+    #: independent rows whose turnover exceeds 1e-3 of the flux scale.
+    balance_active_max_ratio_median: float | None = None
+    balance_active_p95_ratio_median: float | None = None
+    balance_active_rows_median: float | None = None
+    balance_active_max_le_1e_2: float | None = None
+    genesis_active_rule: float | None = None
+    genesis_active_rule_model_thermo: float | None = None
+    #: Every threshold, so the primary is readable against its sensitivity: tag -> value.
+    balance_active_max_ratio_by_threshold: dict[str, float] = Field(
+        default_factory=dict
+    )
+    balance_active_p95_ratio_by_threshold: dict[str, float] = Field(
+        default_factory=dict
+    )
+    balance_active_rows_by_threshold: dict[str, float] = Field(default_factory=dict)
+    genesis_active_by_threshold: dict[str, float] = Field(default_factory=dict)
     agreement_max_abs_delta: float | None = None
 
 
@@ -314,6 +349,12 @@ def _contrast(
     )
 
 
+def _stat(stats: dict[str, Any], key: str) -> float | None:
+    """One group median out of an audit's stats block, or None when the key is absent."""
+    payload = stats.get(key)
+    return None if payload is None else float(payload["median"])
+
+
 def _feasibility_rows(
     group: str, jobs: dict[str, list[int]]
 ) -> tuple[list[FeasibilityRuleRow], list[str]]:
@@ -363,6 +404,51 @@ def _feasibility_rows(
                 genesis_max_rule_model_thermo=fractions.get(
                     "genesis_max_rule_thermo_model"
                 ),
+                balance_active_max_ratio_median=_stat(
+                    stats, f"balance_active_max_ratio_{PRIMARY_TURNOVER_TAG}"
+                ),
+                balance_active_p95_ratio_median=_stat(
+                    stats, f"balance_active_p95_ratio_{PRIMARY_TURNOVER_TAG}"
+                ),
+                balance_active_rows_median=_stat(
+                    stats, f"balance_active_rows_{PRIMARY_TURNOVER_TAG}"
+                ),
+                balance_active_max_le_1e_2=fractions.get(
+                    f"balance_active_max_ratio_{PRIMARY_TURNOVER_TAG}_le_1e-02"
+                ),
+                genesis_active_rule=fractions.get(
+                    f"genesis_active_max_{PRIMARY_TURNOVER_TAG}_rule_"
+                    "thermo_standard_state"
+                ),
+                genesis_active_rule_model_thermo=fractions.get(
+                    f"genesis_active_max_{PRIMARY_TURNOVER_TAG}_rule_thermo_model"
+                ),
+                balance_active_max_ratio_by_threshold={
+                    tag: value
+                    for tag in TURNOVER_TAGS
+                    if (value := _stat(stats, f"balance_active_max_ratio_{tag}"))
+                    is not None
+                },
+                balance_active_p95_ratio_by_threshold={
+                    tag: value
+                    for tag in TURNOVER_TAGS
+                    if (value := _stat(stats, f"balance_active_p95_ratio_{tag}"))
+                    is not None
+                },
+                balance_active_rows_by_threshold={
+                    tag: value
+                    for tag in TURNOVER_TAGS
+                    if (value := _stat(stats, f"balance_active_rows_{tag}")) is not None
+                },
+                genesis_active_by_threshold={
+                    tag: fractions[key]
+                    for tag in TURNOVER_TAGS
+                    for key in [
+                        f"genesis_active_max_{tag}_rule_thermo_model",
+                        f"genesis_active_max_{tag}_rule_thermo_standard_state",
+                    ]
+                    if key in fractions
+                },
                 agreement_max_abs_delta=(
                     audit["agreement_with_trainer"].get("max_abs_delta")
                     if audit["agreement_with_trainer"].get("checked")
@@ -435,11 +521,11 @@ def _panel_differences(ax: Any, wave7: PairedContrast, wave6: PairedContrast) ->
 
 
 def _panel_rules(ax: Any, rows: list[FeasibilityRuleRow]) -> None:
-    """Mass balance within 1 percent under the median rule and under the max rule.
+    """Mass balance within 1 percent under each of the three balance rules.
 
     The BALANCE half of the Genesis criterion rather than the criterion itself, because the
     criterion is 0.00 in every audited cell under the standard-state second law and a panel
-    of empty bars carries nothing. What the max rule changes is exactly this half, and the
+    of empty bars carries nothing. What the rules change is exactly this half, and the
     Genesis fractions under each rule are in the note's table.
     """
     if not rows:
@@ -447,15 +533,26 @@ def _panel_rules(ax: Any, rows: list[FeasibilityRuleRow]) -> None:
         ax.set_ylabel("fraction of the top 100 balanced")
         return
     idx = np.arange(len(rows), dtype=float)
-    width = 0.38
+    width = 0.27
     for offset, values, color, label in (
         (
-            -width / 2,
+            -width,
             [r.balance_median_le_1e_2 for r in rows],
             PLOT_PALETTE[0],
             "median rule",
         ),
-        (width / 2, [r.balance_max_le_1e_2 for r in rows], PLOT_PALETTE[1], "max rule"),
+        (0.0, [r.balance_max_le_1e_2 for r in rows], PLOT_PALETTE[1], "max rule"),
+        (
+            width,
+            [
+                np.nan
+                if r.balance_active_max_le_1e_2 is None
+                else r.balance_active_max_le_1e_2
+                for r in rows
+            ],
+            PLOT_PALETTE[2],
+            "max over rows that turn over",
+        ),
     ):
         ax.bar(
             idx + offset,
@@ -526,7 +623,7 @@ def make_figure(
         for spine in ax.spines.values():
             spine.set_visible(True)
             spine.set_linewidth(0.5)
-    for ax, ncol in ((axes[0], 3), (axes[1], 2), (axes[2], 2), (axes[3], 1)):
+    for ax, ncol in ((axes[0], 3), (axes[1], 2), (axes[2], 3), (axes[3], 1)):
         if ax.get_legend_handles_labels()[0]:
             ax.legend(
                 loc="lower left",
@@ -719,13 +816,30 @@ def main() -> None:
         for seed, why in off_table.items():
             print(f"  seed {seed}: {why}")
     if rows:
-        print("\nfeasibility of the top 100, median rule against max rule")
+        print(
+            "\nfeasibility of the top 100; genesis is median / max / turnover-thresholded"
+        )
         for row in rows:
+            active = row.balance_active_max_ratio_median
+            active_rows = row.balance_active_rows_median
+            genesis_active = row.genesis_active_rule_model_thermo
+            if genesis_active is None:
+                genesis_active = row.genesis_active_rule
+            genesis_median = row.genesis_median_rule_model_thermo
+            if genesis_median is None:
+                genesis_median = row.genesis_median_rule
+            genesis_max = row.genesis_max_rule_model_thermo
+            if genesis_max is None:
+                genesis_max = row.genesis_max_rule
             print(
-                f"  {row.label:22s} job {str(row.slurm_job_ids):>8s} balance median {row.balance_median_ratio_median:.3e} "
-                f"max {row.balance_max_ratio_median:.3e} carrying flux "
-                f"{row.flux_active_frac_median:.3f} genesis {row.genesis_median_rule:.2f} "
-                f"-> {row.genesis_max_rule:.2f}"
+                f"  {row.label:22s} job {str(row.slurm_job_ids):>8s} "
+                f"bal med {row.balance_median_ratio_median:.2e} "
+                f"max {row.balance_max_ratio_median:.2e} "
+                f"active-max {'n/a' if active is None else f'{active:.2e}'} "
+                f"rows {'n/a' if active_rows is None else f'{active_rows:.0f}'} "
+                f"carrying {row.flux_active_frac_median:.3f} | genesis "
+                f"{genesis_median:.2f} / {genesis_max:.2f} / "
+                f"{'n/a' if genesis_active is None else f'{genesis_active:.2f}'}"
             )
     if summary.missing_files:
         print("\nMISSING result files:")

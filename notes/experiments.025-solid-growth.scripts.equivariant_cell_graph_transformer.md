@@ -489,3 +489,16 @@ no matched control. The cabbi slot after 2394965 goes to the flanks-only arm
 ORF view. It runs from a third login-node worktree (`025-fitness-joint-head-c` at
 baba07c8) so neither running job's checkout moves. compute-3-3's GPUs are RTX 6000 Ada,
 48 GB, the same card as GilaHyper, so the two lanes differ less than first stated.
+
+## 2026.09.12 - Delta reads the 025 build from local scratch, not Taiga
+
+The build Delta trains on has been the Taiga copy, through a symlink from
+`/scratch/bbub/mjvolk3/torchcell/data/torchcell/experiments/025-solid-growth/001-full-build`
+to `/taiga/illinois/eng/chbe/zhao5/mjvolk3/projects/torchcell/...`. Both constant-rate
+controls that read it died mid-epoch on the 30-minute NCCL watchdog, and the LMDB read
+through that mount is the only remote I/O in the training loop; unverified as the cause.
+Delta's bbub scratch quota is 9.8 TB with 2.8 TB used, so the 554 GB build is being
+copied to local Lustre by `delta_copy_025_build_local.slurm` (job 21984419, CPU
+partition, two rsync passes, size check against 554,075,586,560 B). After it prints
+CLEAN the symlink is swapped for the local directory, before the pending fitness chain
+(21947151 first, estimated start 2026-09-12 14:08) starts reading.

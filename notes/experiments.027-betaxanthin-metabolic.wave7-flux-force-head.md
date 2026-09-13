@@ -672,3 +672,112 @@ result). `build_model_for_cell` reads the cell first and the environment variabl
 the cell names nothing, so every wave-7 script and rerun still works while a rebuild from a
 result file alone now reconstructs the right arm. `arm_flux_fluxforce_boxforce.yaml` is the
 first arm to carry its channel, and the wave-8 cells set no environment variable at all.
+
+### Block 1, first cell: the density term buys signal, and the honest rule still fails
+
+Job 1781, `fluxforce_k100_boxforce` at density weight 0.5, seed 2700, 80 epochs, against job
+1767, the same channel at weight 0.0 and the same seed.
+
+| quantity | 1767, weight 0.0 | 1781, weight 0.5 |
+|---|---|---|
+| test Spearman, pinned, at the selected epoch | -0.0312 (epoch 53) | **+0.1155** (epoch 77) |
+| Genesis, trainer median rule | 1.00 | 1.00 |
+| Genesis, turnover-thresholded rule at 1e-3 | **0.00** | **0.00** |
+| Genesis, max rule | 0.00 | 0.00 |
+| `balance_active_max_ratio_1e-03`, top-100 median | **2.0** | **2.0** |
+| `balance_active_p95_ratio_1e-03` | **2.0** | **2.0** |
+| `balance_active_rows_1e-03` | 422 of 2,593 | **691 of 2,593** |
+| reactions carrying flux, top 100 | 0.2802 | 0.3062 |
+| rows turning over, last training epoch | not recorded | 0.2982, from 0.2010 at epoch 0 |
+| second law = 0, box violation = 0, sign flips | 1.00 / 0.81 / 0.000 | 1.00 / **1.00** / 0.000 |
+
+**What the term did.** `c_density` fell 0.7014 to 0.6134 within the run and the active-row
+fraction rose 0.2010 to 0.2982, so the gradient moved throughput onto dead rows as designed,
+and the training log reads `cstr 0.3067 scale 0.000`, which is the term surviving a
+constraint ramp held at zero.
+
+**What it did not do, and this is the finding.** Both cells were audited under the same
+three rules (the weight-0.0 audit was rerun for it), and the pair separates cleanly: the
+density term takes the rows that clear the turnover threshold from **422 to 691** of 2,593,
+a 64 percent increase, and leaves the balance ratio on those rows at **2.0**, the largest
+value the statistic takes, in BOTH cells. The 95th percentile is 2.0 in both as well, so it
+is not a handful of borderline rows: at least 5 percent of the rows that DO carry throughput
+are maximally unbalanced either way. Pricing dead rows put more rows in play without making
+the rows in play balance, and the turnover-thresholded Genesis rule reads 0.00 for both.
+
+**On the +0.1155.** n = 1. The weight-0.0 arm's own three seeds were -0.0312, +0.0996 and
++0.1004 (sd 0.0758), so this sits at the top of that spread and is not outside it; the
+paired gain of +0.1467 at seed 2700 is one pair. Seeds 2701 and 2702 decide it.
+
+**A confirmation that came free.** The audit of 1781 was run deliberately WITHOUT
+`TC_FLUX_PARAMETERIZATION` and rebuilt the right arm from the cell's own
+`flux_parameterization` field; the same audit of 1767, a pre-block-4 cell, died on
+`KeyError: 'flux_layer.latent_mlp.0.weight'` until the variable was supplied. That is block
+4 working and the footgun it closes, in one pair of runs.
+
+### The dose-response at seed 2700: monotone in rows, flat at the ceiling in balance
+
+All three cells audited under the same three rules (jobs 1767, 1781, 1784, seed 2700, the
+same channel, table and budget, differing only in the density weight):
+
+| density weight | job | test Spearman | rows clearing the turnover threshold | `balance_active_max_1e-03` | `balance_active_p95_1e-03` | reactions carrying flux | median rule | turnover rule | max rule |
+|---|---|---|---|---|---|---|---|---|---|
+| 0.0 | 1767 | -0.0312 | 422 of 2,593 | 2.0 | 2.0 | 0.2802 | 1.00 | 0.00 | 0.00 |
+| 0.5 | 1781 | +0.1155 | **691** | 2.0 | 2.0 | 0.3062 | 1.00 | 0.00 | 0.00 |
+| 2.0 | 1784 | +0.1334 | **810** | 2.0 | 2.0 | 0.3197 | 1.00 | 0.00 | 0.00 |
+
+The row count is monotone in the weight, 422 to 691 to 810, a 92 percent increase at the
+strong setting, and the balance ratio over those rows does not move at all: 2.0 at every
+weight, at the max and at the 95th percentile. The term does exactly what it prices and
+nothing beyond it.
+
+**So the degeneracy has two parts and this separates them.** Wave 7 read the Genesis median
+pass as "the flux is mostly off", and pricing the off rows fixes that half: nearly twice as
+many rows carry throughput. The other half survives untouched, and it is the one the honest
+rule tests: among the rows that DO carry throughput, at least 5 percent are maximally
+unbalanced whatever the density weight. Hypothesis (untested): those rows are metabolites
+whose only flux-carrying reactions are on one side of the balance, so no reweighting of the
+objective can balance them and the fix is structural rather than a loss term.
+
+Signal at this seed rises with the weight, -0.0312 to +0.1155 to +0.1334, both strengths
+above the control; n = 1 per weight against a control arm whose own three seeds spread by
+sd 0.0758, so the ordering is not yet a measurement.
+
+### The stuck rows are NOT structural, and my hypothesis above is wrong
+
+`audit_stuck_balance_rows.py` on job 1784 (density weight 2.0, seed 2700), 32 genotypes,
+2,593 independent rows each. For every row at a balance ratio within 1e-3 of 2.0 and above
+the turnover threshold, it asks whether any reaction touching that metabolite could supply
+the opposite-sign contribution under the box the layer actually built, and attributes each
+blocked reaction to the first stage of the box that excluded it.
+
+| quantity | per genotype | total over 32 |
+|---|---|---|
+| rows above the turnover threshold | 818 | |
+| stuck rows (ratio 2.0) | 288 | 9,219 |
+| **fixable by the objective** (a counterpart reaction is OPEN and unused) | **278** | **8,889** |
+| unfixable on the current bounds | 10 | 330 |
+| rows with no counterpart reaction at all | 0 | 0 |
+
+Cause of the 330 unfixable, over all 32 genotypes: **`gem_bound` 297, `availability` 33,
+`capacity` 0, `sign_clamp` 0**.
+
+**Retraction.** The hypothesis in the section above, that the stuck rows are metabolites
+whose only flux-carrying reactions sit on one side and are therefore structurally
+unbalanceable, is wrong: **96.4 percent of stuck rows have an open counterpart reaction the
+flux does not use**. Neither the sign clamp nor the enzyme bound blocks a single row, so the
+lever the coordinator asked about does not exist here, and the 3.6 percent that are blocked
+are blocked by the GEM's own bounds and by knockouts, which are the two stages a loss term
+was never going to reach anyway.
+
+**What that leaves, and it is measured rather than inferred.** These cells run
+`--constraint-scale 0.0`, and `constraint_loss` multiplies the whole physics sum, `c_balance`
+included, by that scale. The balance penalty is therefore switched OFF in every wave-7 and
+wave-8 cell, and the only thing balancing the flux at all is the projection, whose last step
+on this channel is the direction clip. The log line `cstr 1.1794 scale 0.000` on job 1784 is
+the whole loss being the density term and nothing else.
+
+So the remedy for the honest rule is the one the density term already demonstrates the
+mechanics of: a balance term that is added OUTSIDE the ramp, priced on the rows that turn
+over rather than on all 2,593. That is a smaller change than a bounds edit and it is not the
+cell that was queued, so it waits for a go-ahead rather than jumping the queue.

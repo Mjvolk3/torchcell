@@ -583,6 +583,18 @@ class BxCell(BaseModel):
             "field is None, so the wave-7 scripts and their reruns keep working."
         ),
     )
+    flux_balance_active_weight: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Weight on the flux layer's ACTIVE-ROW balance term, the relative residual over "
+            "the independent rows of S that clear the turnover threshold. 0.0 is off and is "
+            "what every cell before wave 8 ran. Like the density weight it is written onto "
+            "the built layer's config and applied OUTSIDE the constraint scale, which is "
+            "the whole point: at the scale this recipe runs, 0.0, the ordinary `c_balance` "
+            "is multiplied away and nothing in the loss asks the flux to balance."
+        ),
+    )
     flux_density_weight: float = Field(
         default=0.0,
         ge=0.0,
@@ -2068,6 +2080,7 @@ def build_model_for_cell(
         # `constraint_loss` reads it off `config` at call time. 0.0 leaves the loss exactly
         # as every cell before wave 8 computed it.
         flux_layer.config.density_weight = cell.flux_density_weight
+        flux_layer.config.balance_active_weight = cell.flux_balance_active_weight
         flux_layer.config.conc_lower_m = cell.conc_lower_m
         flux_layer.config.conc_upper_m = cell.conc_upper_m
         # THE K-DRAW SWITCHES, written before the layer is used but AFTER it is built, for
@@ -3242,6 +3255,15 @@ def main() -> None:
         "--tag", default="", help="Suffix for the result file and the W&B run name."
     )
     parser.add_argument(
+        "--flux-balance-active-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Weight on the flux layer's active-row balance term, the relative residual over "
+            "the rows that clear the turnover threshold. Also outside the constraint scale."
+        ),
+    )
+    parser.add_argument(
         "--flux-density-weight",
         type=float,
         default=0.0,
@@ -3308,6 +3330,7 @@ def main() -> None:
         conc_lower_m=args.conc_lower_m,
         conc_upper_m=args.conc_upper_m,
         flux_density_weight=args.flux_density_weight,
+        flux_balance_active_weight=args.flux_balance_active_weight,
         flux_draws=args.flux_draws,
         flux_latent_stochastic=args.flux_latent_stochastic,
         flux_kl_weight=args.flux_kl_weight,

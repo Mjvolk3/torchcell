@@ -598,6 +598,31 @@ class FluxLayerConfig(BaseModel):
             "being ramped in, and `constraint_loss` adds it outside the product."
         ),
     )
+    balance_active_weight: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Weight on the ACTIVE-ROW balance term, the squared relative residual over "
+            "only the independent rows of S whose turnover clears "
+            "`density_turnover_threshold`. 0.0 is off and is what every cell before "
+            "2026-09-12 ran.\n\n"
+            "WHY IT IS SEPARATE FROM `c_balance`, MEASURED. Every 027 cell runs the physics "
+            "ramp at 0.0 or 0.1, and `constraint_loss` multiplies the whole physics sum, "
+            "`c_balance` included, by that scale: at 0.0 the balance penalty is switched "
+            "OFF and the only thing balancing the flux is the projection. The structural "
+            "audit of job 1784 found 96.4 percent of the rows sitting at the worst possible "
+            "balance ratio had an OPEN counterpart reaction the flux simply did not use, "
+            "with the sign clamp and the enzyme bound blocking none of them "
+            "(`stuck_rows_wave8_dens_d2p0_boxforce_k100_e80_s2700.json`). Balance was never "
+            "asked for. This term asks for it, outside the ramp, like the density term.\n\n"
+            "WHY ONLY THE ACTIVE ROWS. The rule this is judged by is the thresholded one, "
+            "and a penalty averaged over all 2,593 rows is dominated by idle rows that pass "
+            "it for free. Restricting to the rows that turn over makes the trained term and "
+            "the judging rule the same statistic on the same set. A head could in principle "
+            "dodge it by pushing a row back below the threshold, which is exactly what the "
+            "density term prices, so the two are meant to run together."
+        ),
+    )
     density_turnover_threshold: float = Field(
         default=1.0e-3,
         gt=0.0,
@@ -2134,6 +2159,25 @@ class FluxLayer(nn.Module):
             (v.abs() > 1.0e-6 * cfg.flux_scale).float().mean()
         )
 
+        # (a3) BALANCE ON THE ROWS THAT CARRY FLUX. `c_balance` above averages the squared
+        # relative residual over every independent row, so idle rows, which pass for free,
+        # dominate it; and at a constraint scale of 0.0 it is multiplied away entirely. This
+        # term is the same ratio restricted to the rows the thresholded rule is evaluated
+        # on, and `constraint_loss` adds it outside the ramp. `omega` is detached in the
+        # denominator exactly as it is in `c_balance`, so the gradient reduces the RESIDUAL
+        # rather than inflating the turnover under it.
+        active_rows = omega > active_turnover
+        active_count = active_rows.sum(dim=1).clamp(min=1)
+        active_sq = (ratio**2) * active_rows
+        out["c_balance_active"] = (active_sq.sum(dim=1) / active_count).mean()
+        active_ratio = (residual.abs() / (omega + cfg.balance_epsilon))[active_rows]
+        if active_ratio.numel() > 0:
+            out["feas_balance_active_max"] = active_ratio.max()
+            out["feas_balance_active_p95"] = torch.quantile(active_ratio, 0.95)
+        else:
+            out["feas_balance_active_max"] = v.new_zeros(())
+            out["feas_balance_active_p95"] = v.new_zeros(())
+
         # (b) second law. A hinge, unless `thermo_box` already made it a bound, in which
         # case the same expression is a DIAGNOSTIC that should read ~0 and says so if not.
         out.update({f"thermo_{k}": t for k, t in extras.items()})
@@ -2459,7 +2503,15 @@ class FluxLayer(nn.Module):
         # balance criterion by emptying the network. At the default weight of 0.0 it adds
         # exactly zero, so every arm before wave 8 computes the same loss it always did.
         density = w.get("density", self.config.density_weight) * out["c_density"]
-        return total * self.constraint_scale + density
+        # THE ACTIVE-ROW BALANCE TERM IS OUTSIDE THE RAMP FOR THE SAME REASON, and it is the
+        # one the structural audit says is missing: the rows that carry flux and do not
+        # balance almost all COULD balance, they were simply never asked to. Zero at the
+        # default weight, so every arm before wave 8 computes the loss it always did.
+        active_balance = (
+            w.get("balance_active", self.config.balance_active_weight)
+            * out["c_balance_active"]
+        )
+        return total * self.constraint_scale + density + active_balance
 
     def coverage_report(self) -> dict[str, Any]:
         """What fraction of the layer rests on data rather than on a default.

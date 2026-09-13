@@ -1732,3 +1732,60 @@ def test_every_batch_axis_output_carries_the_expanded_rows():
             f"{key} has {value.shape[0]} rows; a batch-axis output must carry B*K = {rows} "
             "so that a consumer can pair it with the flux"
         )
+
+
+def test_the_active_row_balance_term_is_zero_on_a_balanced_flux():
+    r"""A flux in ``ker S`` has no residual, so the term it is judged by must read zero.
+
+    The statistic is the same relative residual the thresholded Genesis rule takes the max
+    of, restricted to the rows that turn over, so a head whose flux is exactly balanced owes
+    nothing and a head that balances only the idle rows is not let off.
+    """
+    layer = _layer(parameterization="nullspace", thermo_mode=ThermoMode.ANCHORED)
+    out = layer(*_inputs())
+    residual = layer._s_matmul(out["v"])[:, layer.independent_rows]
+    assert float(residual.abs().max()) < 1e-4
+    assert float(out["c_balance_active"]) < 1e-8
+    assert float(out["feas_balance_active_max"]) < 1e-6
+
+
+def test_the_active_row_balance_term_is_off_by_default_and_outside_the_ramp():
+    """Weight 0.0 leaves the loss bit-identical, and the term survives a scale of zero."""
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    out = layer(*_inputs())
+    assert layer.config.balance_active_weight == 0.0
+    baseline = float(layer.constraint_loss(out))
+
+    layer.config.balance_active_weight = 0.5
+    weighted = float(layer.constraint_loss(out))
+    expected = baseline + 0.5 * float(out["c_balance_active"])
+    assert abs(weighted - expected) < 1e-6
+
+    # At the scale these cells run, the ramped physics contributes nothing and this term is
+    # the whole of what asks the flux to balance.
+    layer.constraint_scale = 0.0
+    only = float(layer.constraint_loss(out))
+    assert abs(only - 0.5 * float(out["c_balance_active"])) < 1e-6
+
+
+def test_the_active_row_balance_term_ignores_the_idle_rows():
+    """Restricting to rows above the turnover threshold is what the rule does, so it is what
+    the term does: raising the threshold until no row qualifies takes the term to zero.
+    """
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED, density_turnover_threshold=1.0e6)
+    out = layer(*_inputs())
+    assert float(out["feas_active_row_frac"]) == 0.0
+    assert float(out["c_balance_active"]) == 0.0
+
+
+def test_the_active_row_balance_gradient_reduces_the_residual_not_the_turnover():
+    """``omega`` is detached in the denominator, so the only way down is a smaller residual."""
+    layer = _fluxforce_layer(end="boxforce")
+    layer.config.balance_active_weight = 1.0
+    layer.constraint_scale = 0.0
+    h, ctx, idx, idx_batch = _inputs()
+    out = layer(h, ctx, idx, idx_batch)
+    grads = torch.autograd.grad(
+        layer.constraint_loss(out), list(layer.flux_mlp.parameters()), allow_unused=True
+    )
+    assert any(g is not None and float(g.abs().sum()) > 0.0 for g in grads)

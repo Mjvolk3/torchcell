@@ -1,5 +1,11 @@
 """BioCypher adapters mapping torchcell datasets into knowledge-graph nodes and edges."""
 
+from .auesukaree2009_adapter import (
+    EnvChemgenAuesukaree2009Adapter as EnvChemgenAuesukaree2009Adapter,
+)
+from .baryshnikova2010_adapter import (
+    SmfBaryshnikova2010Adapter as SmfBaryshnikova2010Adapter,
+)
 from .bloom2019_adapter import Bloom2019Adapter as Bloom2019Adapter
 from .cachera2023_adapter import (
     BetaxanthinCachera2023Adapter as BetaxanthinCachera2023Adapter,
@@ -11,6 +17,9 @@ from .cell_adapter import CellAdapter as CellAdapter
 from .costanzo2016_adapter import DmfCostanzo2016Adapter as DmfCostanzo2016Adapter
 from .costanzo2016_adapter import DmiCostanzo2016Adapter as DmiCostanzo2016Adapter
 from .costanzo2016_adapter import SmfCostanzo2016Adapter as SmfCostanzo2016Adapter
+from .costanzo2021_adapter import (
+    EnvChemgenCostanzo2021Adapter as EnvChemgenCostanzo2021Adapter,
+)
 from .dasilveira2014_adapter import (
     MetaboliteDaSilveira2014Adapter as MetaboliteDaSilveira2014Adapter,
 )
@@ -27,6 +36,7 @@ from .kuzmin2020_adapter import DmiKuzmin2020Adapter as DmiKuzmin2020Adapter
 from .kuzmin2020_adapter import SmfKuzmin2020Adapter as SmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmfKuzmin2020Adapter as TmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmiKuzmin2020Adapter as TmiKuzmin2020Adapter
+from .lian2019_adapter import Lian2019Adapter as Lian2019Adapter
 from .lopez2024_adapter import (
     IsobutanolScreenLopez2024Adapter as IsobutanolScreenLopez2024Adapter,
 )
@@ -36,6 +46,8 @@ from .lopez2024_adapter import (
 from .messner2023_adapter import (
     ProteomeMessner2023Adapter as ProteomeMessner2023Adapter,
 )
+from .mormino2022_adapter import Mormino2022Adapter as Mormino2022Adapter
+from .mota2024_adapter import EnvChemgenMota2024Adapter as EnvChemgenMota2024Adapter
 from .mulleder2016_adapter import (
     AminoAcidMulleder2016Adapter as AminoAcidMulleder2016Adapter,
 )
@@ -56,6 +68,8 @@ from .sameith2015_adapter import (
     SmMicroarraySameith2015Adapter as SmMicroarraySameith2015Adapter,
 )
 from .sgd_adapter import GeneEssentialitySgdAdapter as GeneEssentialitySgdAdapter
+from .smith2006_adapter import Smith2006Adapter as Smith2006Adapter
+from .smith2016_adapter import Smith2016Adapter as Smith2016Adapter
 from .synth_leth_db_adapter import (
     SynthLethalityYeastSynthLethDbAdapter as SynthLethalityYeastSynthLethDbAdapter,
 )
@@ -137,6 +151,18 @@ proteome_metabolome_adapters = [
 
 segregant_adapters = ["Bloom2019Adapter"]
 
+environment_adapters = [
+    "EnvChemgenCostanzo2021Adapter",
+    "EnvChemgenAuesukaree2009Adapter",
+    "EnvChemgenMota2024Adapter",
+    "Smith2006Adapter",
+    "Smith2016Adapter",
+    "Lian2019Adapter",
+    "Mormino2022Adapter",
+]
+
+baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]
+
 
 __all__ = (
     cell_adapters
@@ -152,4 +178,6 @@ __all__ = (
     + metabolite_adapters
     + proteome_metabolome_adapters
     + segregant_adapters
+    + environment_adapters
+    + baryshnikova_adapters
 )

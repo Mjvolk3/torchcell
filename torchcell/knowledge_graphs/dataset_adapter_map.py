@@ -13,23 +13,31 @@ from torchcell.adapters import (
     DmiKuzmin2018Adapter,
     DmiKuzmin2020Adapter,
     DmMicroarraySameith2015Adapter,
+    EnvChemgenAuesukaree2009Adapter,
+    EnvChemgenCostanzo2021Adapter,
+    EnvChemgenMota2024Adapter,
     FattyAcidXue2025Adapter,
     GeneEssentialitySgdAdapter,
     IsobutanolScreenLopez2024Adapter,
     IsobutanolValidatedLopez2024Adapter,
+    Lian2019Adapter,
     MetaboliteDaSilveira2014Adapter,
     MetaboliteZelezniak2018Adapter,
     MicroarrayKemmeren2014Adapter,
+    Mormino2022Adapter,
     NadalRibellesPerturbSeq2025Adapter,
     OrganicAcidYoshida2012Adapter,
     ProteomeMessner2023Adapter,
     ProteomeZelezniak2018Adapter,
     ScmdOhnuki2018Adapter,
     ScmdOhnuki2022Adapter,
+    SmfBaryshnikova2010Adapter,
     SmfCostanzo2016Adapter,
     SmfKuzmin2018Adapter,
     SmfKuzmin2020Adapter,
     SmfODuibhir2014Adapter,
+    Smith2006Adapter,
+    Smith2016Adapter,
     SmMicroarraySameith2015Adapter,
     SynthLethalityYeastSynthLethDbAdapter,
     SynthRescueYeastSynthLethDbAdapter,
@@ -39,6 +47,10 @@ from torchcell.adapters import (
     TmiKuzmin2020Adapter,
 )
 from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
+from torchcell.datasets.scerevisiae.auesukaree2009 import (
+    EnvChemgenAuesukaree2009Dataset,
+)
+from torchcell.datasets.scerevisiae.baryshnikova2010 import SmfBaryshnikova2010Dataset
 from torchcell.datasets.scerevisiae.bloom2019 import Bloom2019Dataset
 from torchcell.datasets.scerevisiae.cachera2023 import BetaxanthinCachera2023Dataset
 from torchcell.datasets.scerevisiae.caudal2024 import CaudalPanTranscriptome2024Dataset
@@ -47,6 +59,7 @@ from torchcell.datasets.scerevisiae.costanzo2016 import (
     DmiCostanzo2016Dataset,
     SmfCostanzo2016Dataset,
 )
+from torchcell.datasets.scerevisiae.costanzo2021 import EnvChemgenCostanzo2021Dataset
 from torchcell.datasets.scerevisiae.dasilveira2014 import (
     MetaboliteDaSilveira2014Dataset,
 )
@@ -65,11 +78,14 @@ from torchcell.datasets.scerevisiae.kuzmin2020 import (
     TmfKuzmin2020Dataset,
     TmiKuzmin2020Dataset,
 )
+from torchcell.datasets.scerevisiae.lian2019 import CrisprMagicLian2019Dataset
 from torchcell.datasets.scerevisiae.lopez2024 import (
     IsobutanolScreenLopez2024Dataset,
     IsobutanolValidatedLopez2024Dataset,
 )
 from torchcell.datasets.scerevisiae.messner2023 import ProteomeMessner2023Dataset
+from torchcell.datasets.scerevisiae.mormino2022 import CrispriMormino2022Dataset
+from torchcell.datasets.scerevisiae.mota2024 import EnvChemgenMota2024Dataset
 from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
 from torchcell.datasets.scerevisiae.nadal_ribelles2025 import (
     NadalRibellesPerturbSeq2025Dataset,
@@ -84,6 +100,8 @@ from torchcell.datasets.scerevisiae.sameith2015 import (
     SmMicroarraySameith2015Dataset,
 )
 from torchcell.datasets.scerevisiae.sgd import GeneEssentialitySgdDataset
+from torchcell.datasets.scerevisiae.smith2006 import FattyAcidSmith2006Dataset
+from torchcell.datasets.scerevisiae.smith2016 import CrispriChemgenSmith2016Dataset
 from torchcell.datasets.scerevisiae.synth_leth_db import (
     SynthLethalityYeastSynthLethDbDataset,
     SynthRescueYeastSynthLethDbDataset,
@@ -133,4 +151,12 @@ dataset_adapter_map = {
     FattyAcidXue2025Dataset: FattyAcidXue2025Adapter,
     NadalRibellesPerturbSeq2025Dataset: NadalRibellesPerturbSeq2025Adapter,
     Bloom2019Dataset: Bloom2019Adapter,
+    SmfBaryshnikova2010Dataset: SmfBaryshnikova2010Adapter,
+    EnvChemgenCostanzo2021Dataset: EnvChemgenCostanzo2021Adapter,
+    EnvChemgenAuesukaree2009Dataset: EnvChemgenAuesukaree2009Adapter,
+    EnvChemgenMota2024Dataset: EnvChemgenMota2024Adapter,
+    FattyAcidSmith2006Dataset: Smith2006Adapter,
+    CrispriChemgenSmith2016Dataset: Smith2016Adapter,
+    CrisprMagicLian2019Dataset: Lian2019Adapter,
+    CrispriMormino2022Dataset: Mormino2022Adapter,
 }

@@ -845,31 +845,48 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_mota2024": {
         "root": "data/torchcell/env_chemgen_mota2024",
-        # acetic 373 + butyric 416 + octanoic 484 = 1273 records: susceptible-mutant
-        # rows from Tables S1/S2/S3, deduplicated per (ORF, acid) keeping the more
-        # severe score (RNR4 source duplicate) minus 6 unresolvable gene tokens.
-        "expected_count": 1273,
-        # BY4741 Euroscarf single-deletion collection: no constant background genes.
+        "expected_count": 1270,
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
-                "https://static-content.springer.com/esm/"
-                "art%3A10.1186%2Fs12934-024-02309-0/MediaObjects/"
-                "12934_2024_2309_MOESM{1,2,3}_ESM.xlsx"
+                "$DATA_ROOT/torchcell-raw/motaSharedMoreSpecific2024/si/"
+                "12934_2024_2309_MOESM{1,2,3}_ESM.xlsx (raw mirror; Springer ESM is "
+                "scriptable and re-yielded all three bit-identically on 2026-09-12)"
             ),
             citation_key="motaSharedMoreSpecific2024",
             method=(
-                "BMC open-access supplementary spreadsheets (Additional files 1-3 = "
-                "Tables S1/S2/S3); categorical spot-assay susceptibility calls "
-                "(+ minor/moderate, ++ total growth inhibition) for 75 mM acetic / "
-                "14 mM butyric / 0.30 mM octanoic acid, YPD pH 4.5, 30 C, 48 h; "
-                "gene names -> SGD R64 ORFs via genome alias table"
+                "BMC open-access supplementary spreadsheets (Additional files 1-3 = Tables "
+                "S1/S2/S3). ORDINAL spot-assay susceptibility grade, measurement_type="
+                "ordinal: environment_response carries the rank (0/1/2), category the "
+                "shared call (no_change / reduced / severely_reduced) and category_label "
+                "the source symbol ('0' / '+' / '++'). The reference is the PARENTAL "
+                "BY4741 in empty wells of the SAME plates, scored '0' ('an absence of a "
+                "detectable susceptibility phenotype'), so its rank is 0.0. 75 mM acetic / "
+                "14 mM butyric / 0.30 mM octanoic acid -> SmallMoleculePerturbation, plus a "
+                "typed EnvironmentPhysicalPerturbation(factor=ph, magnitude=4.5 pH, "
+                "agent=hydrochloric acid) on BOTH environments -- pH is never a medium "
+                "name. Media = the shared media.YPD_AGAR (base_medium='YPD'), 30 C, "
+                "duration_hours=48.0 (RULE: the time the stored call was made, anchored by "
+                "'(++) if no growth was observed after 48 h of incubation'; the 36-48 h "
+                "photograph window and the 24 h control reading are recorded as notes). "
+                "assay_type=spot_dilution; n_samples and sample_unit carry "
+                "ProvenanceGap(not_reported_by_primary) -- the screen states no replicate "
+                "count. Every token, including systematic-looking ones, goes through the "
+                "SHARED resolve_gene_name: 4 RENAMED names that the old resolver stored "
+                "unchecked are corrected (YGR272C->YGR271C-A, YJL021C->YJL020C, "
+                "YML010W-A->YML009W-B, YML013C-A->YML012C-A) and 6 RETIRED tokens (13 "
+                "records) are dropped. Dedup keeps the MORE SEVERE grade per (ORF, acid), "
+                "ties broken lexicographically: the RNR4 source duplicate (3 records) and "
+                "the EFG1/YGR272C pair (3 records), which the SI itself says are one gene "
+                "('merged with an adjacent ORF into a single reading frame, designated "
+                "YGR271C-A'). 1289 raw - 3 - 3 - 13 = 1270"
             ),
             page=(
                 "Microb Cell Fact 2024 s12934-024-02309-0 (PMC10903034); "
                 "MOESM1 sha256=b23ad28141e70b307048fc69475aedd4e3cf880118ae9d0d806b6d9f91205e42, "
                 "MOESM2 sha256=a7a1aaee1c76e52d8fe435326790c89170ab43ec96b92ef272903d8e78a1e81f, "
-                "MOESM3 sha256=27f1508641ad5e7cc29ab8611739d4940da355c1dffbe9c9a908c267cdf5d455"
+                "MOESM3 sha256=27f1508641ad5e7cc29ab8611739d4940da355c1dffbe9c9a908c267cdf5d455; "
+                "paper.md sha256=a19769f757fd912139551f39736dd2b67581cb03f83a7a9b9385e28516b1f1b6"
             ),
         ),
     },
@@ -947,34 +964,45 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_auesukaree2009": {
         "root": "data/torchcell/env_chemgen_auesukaree2009",
-        # ethanol 95 + methanol 55 + 1-propanol 125 + heat 178 + NaCl 42 + H2O2 30 = 525
-        # sensitive-mutant records, one categorical call per (deletion, stress). Methanol
-        # Table 2 lists 55 (abstract headline says 54 -- Table authoritative); all 525
-        # listed gene tokens resolve to unique R64 ORFs (YGR272c -> current YGR271C-A).
         "expected_count": 525,
-        # BY4742 nonessential haploid single-deletion collection: no constant background.
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
-                "$DATA_ROOT/torchcell-library/"
-                "auesukareeGenomewideIdentificationGenes2009/paper.pdf (library mirror; "
-                "PMC2747848; publisher PMC download is JS-proof-of-work, not scriptable)"
+                "$DATA_ROOT/torchcell-raw/auesukareeGenomewideIdentificationGenes2009/"
+                "paper/paper.pdf (raw mirror; bytes from Zotero attachment VIJCFVIA, "
+                "PMC2747848 file downloads being JS-proof-of-work and not scriptable)"
             ),
             citation_key="auesukareeGenomewideIdentificationGenes2009",
             sha256="01b945443c0ce41642c76fd737e12b4c31cacb5f384049a5c0a7e4bf9e1eb5a1",
             method=(
                 "Article Tables 1-6 extracted from the born-digital PDF text layer "
-                "(pdftotext -layout; per-class parenthetical counts as self-checksums); "
-                "categorical spot-assay sensitivity ('sensitive' vs parental BY4742, "
-                "tolerant) for 10% ethanol / 16% methanol / 7% 1-propanol (v/v) and "
-                "1 M NaCl / 5 mM H2O2 -> SmallMoleculePerturbation (typed Compound); "
-                "37 C heat -> raised Environment.temperature (no perturbation, M2); "
-                "YPD solid, 30 C (37 C heat), 3 days, aerobic; n_samples=3 (triplicate); "
-                "gene names -> SGD R64 ORFs via genome alias table"
+                "(pdftotext -layout; per-class parenthetical counts as self-checksums; the "
+                "poppler version is recorded in the raw mirror's manifest). Categorical "
+                "spot-assay sensitivity call, and the comparator is WITHIN a strain, not vs "
+                "the parent: 'Deletion mutants showing significantly reduced growth on "
+                "plates under stress conditions, as compared to those under non-stress "
+                "conditions, were defined as sensitive mutants.' So the reference "
+                "environment is the UNPERTURBED base environment (shared media.YPD, 30 C, "
+                "no perturbation, 72 h) -- 30 C for the heat records too -- and its "
+                "phenotype is ResponseCategory.no_change with category_label 'tolerant'; "
+                "the experiment is ResponseCategory.sensitive with category_label "
+                "'sensitive' (an UNGRADED hit call, deliberately not mapped to the graded "
+                "'reduced'). 10% ethanol / 16% methanol / 7% 1-propanol (percent v/v is a "
+                "CONVENTION -- the paper writes neither v/v nor w/v) and 1 M NaCl / 5 mM "
+                "H2O2 -> SmallMoleculePerturbation (typed Compound); 37 C heat -> raised "
+                "Environment.temperature (no perturbation, M2); media = the SHARED "
+                "media.YPD, whose three components the paper independently restates; "
+                "assay_type=spot_dilution; n_samples=3 ('performed in triplicate'; "
+                "biological vs technical is not stated, and sample_unit="
+                "biological_replicate is the independent-experiment reading). Gene tokens "
+                "go through the SHARED resolve_gene_name and AMBIGUOUS is a hard stop: "
+                "PPA1 -> YHR026W (VMA16) and FEN1 -> YCR034W (ELO2) are adjudicated by "
+                "source evidence, never first-matched"
             ),
             page=(
                 "J Appl Genet 2009 50(3):301-310 (doi:10.1007/BF03195688; PMC2747848); "
-                "paper.pdf sha256=01b945443c0ce41642c76fd737e12b4c31cacb5f384049a5c0a7e4bf9e1eb5a1"
+                "paper.pdf sha256=01b945443c0ce41642c76fd737e12b4c31cacb5f384049a5c0a7e4bf9e1eb5a1; "
+                "paper.md sha256=d0f3885d1f5027fc29beab7a4327ff377d2bc9c42dd5b87f580049eeda4223b2"
             ),
         ),
     },
@@ -1107,41 +1135,54 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_costanzo2021": {
         "root": "data/torchcell/env_chemgen_costanzo2021",
-        # 4406 R64-resolved strains (3624 dma KanMX deletions + 782 tsa TS alleles after
-        # dropping 23 old/merged non-R64 ORF names) x 14 conditions minus 366 empty cells
-        # = 61,318 records. Essential genes are screened as allelic series (one ORF, up to
-        # 18 ts alleles); the L1 uniqueness unit is the STRAIN (genotype signature).
-        "expected_count": 61318,
-        # SGA deletion/TS array (BY4741-derived): no constant drug-sensitized background.
+        "expected_count": 61430,
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
-                "https://www.science.org/doi/10.1126/science.abf8424 Data File S1 "
-                "(Science SI bot-blocked/403, deposited manually to the raw mirror); "
-                "Methods sourced from https://pmc.ncbi.nlm.nih.gov/articles/PMC9132594/"
+                "$DATA_ROOT/torchcell-raw/costanzoEnvironmentalRobustnessGlobal2021/"
+                "data/Costanzo et al_Data File S1_Conditions_Strains_Fitness.xlsx "
+                "(raw mirror; Science SI is HTTP 403 behind a Cloudflare challenge, so "
+                "the file is manual-once -> deposited); Methods sourced from the library "
+                "mirror's paper.md"
             ),
             citation_key="costanzoEnvironmentalRobustnessGlobal2021",
             sha256="f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad",
             method=(
                 "condition-SGA single-mutant fitness: DIFFERENTIAL mutant fitness = "
                 "normalized colony-size fitness in a test condition minus the matched "
-                "reference condition ('the difference in colony size measured in a "
-                "particular test condition versus the matched reference condition for each "
-                "mutant', PMC9132594 Methods); measurement_type=differential_fitness, "
-                "n_samples=3 sample_unit=screen ('an average of 3 replicate control screens "
-                "conducted per each of 14 test conditions as well as the reference condition "
-                "at 26 C'); 3624 KanMX deletions (SgaKanMxDeletion) + 782 TS alleles "
-                "(SgaTsAllele, essential-gene allelic series) x 14 conditions; galactose -> "
-                "EnvironmentPhysicalPerturbation(carbon_source), sorbitol/12 drugs -> "
-                "SmallMoleculePerturbation; 26 C on Environment.temperature (M2); ORFs "
-                "validated vs SGD R64 (23 old/merged names dropped)"
+                "reference condition ('To obtain condition-specific fitness estimates, we "
+                "computed the difference in colony size measured in a particular test "
+                "condition versus the matched reference condition for each mutant.'); "
+                "measurement_type=differential_fitness, assay_type=colony_size_array, "
+                "n_samples=3 sample_unit=screen ('an average of three replicate control "
+                "screens conducted per each of 14 test conditions as well as the reference "
+                "condition at 26 C'). 26 C is a DERIVATION, not a quote: the clause closes "
+                "a list ending with the reference condition, and 26.0 is applied to all 15 "
+                "conditions because one screen's three array copies share an incubator "
+                "('every double-mutant array generated from a singlequery SGA screen was "
+                "copied three times') and the TS array needs a permissive temperature. "
+                "Media = the SHARED media.SGA_DM_SELECTION (identical to served Costanzo "
+                "2016), except the galactose condition, which is the derived "
+                "media.SGA_DM_SELECTION_GALACTOSE with NO perturbation ('an alternative "
+                "carbon source' = replacement); the other 13 conditions are "
+                "SmallMoleculePerturbations. Environment.duration_hours is a typed "
+                "ProvenanceGap (the source's reference sheet splits 3-day vs 5-day "
+                "incubation; the differential's choice is in the un-mirrored SI). ORFs are "
+                "resolved with the SHARED SCerevisiaeGenome.resolve_gene_name: CURRENT "
+                "(4396) + RENAMED (18) kept under the current systematic name, "
+                "NON_GENE_FEATURE (12 ORFs, 168 cells) and RETIRED (3 ORFs, 42 cells) "
+                "dropped -- 4414 strains x 14 conditions minus empty cells = 61,430"
             ),
             page=(
                 "Science 2021 372(6542):eabf8424 (doi:10.1126/science.abf8424; PMID "
                 "33958448; PMC9132594); Data File S1 sheet 'Diff. Mutant fitness_Conditions'; "
-                "S1 sha256=f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad. "
-                "Several deposited concentrations recorded verbatim + flagged as SI unit "
-                "anomalies (bortezomib 1300 mM; actinomycin D 20 mM; geldanamycin 10 mM)"
+                "S1 sha256=f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad; "
+                "paper.md sha256=ba22973ed0c53c00c37bcfb9f659d3b0373c451a3f7633158afae274035559fb. "
+                "Three deposited concentrations are recorded verbatim and FLAGGED as SI unit "
+                "anomalies (bortezomib '1300 mM'; actinomycin D '20 mM'; geldanamycin '10 mM'), "
+                "and two bare fractions are read as percent (galactose '0.02' -> 2% w/v; MMS "
+                "'0.0001' -> 0.01% v/v); each reading lives in its SourcedValue note, not in "
+                "the phenotype's units string"
             ),
         ),
     },
@@ -1328,20 +1369,34 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
     },
     "smf_baryshnikova2010": {
         "root": "data/torchcell/smf_baryshnikova2010",
-        # 6023 raw alleles minus 30 unresolvable in current R64 (dubious/merged/removed ORFs).
+        # 6023 released alleles minus the 30 frozen in the loader's _UNRESOLVABLE
+        # (== baryshnikova2010.EXPECTED_RECORDS; kept literal here because this module
+        # must not import loaders).
         "expected_count": 5993,
         "provenance": Provenance(
-            source_uri="https://doi.org/10.1038/nmeth.1534",
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/baryshnikovaQuantitativeAnalysisFitness2010/"
+                "data/SupplementaryData1_SMF.xls (Springer ESM MOESM168, retrieved and "
+                "re-hashed before deposit)"
+            ),
             citation_key="baryshnikovaQuantitativeAnalysisFitness2010",
             method=(
-                "genome-scale SGA single-mutant fitness (Supplementary Data 1, "
-                "S1_SMF_standard): WT-normalized so the fitness distribution mode == 1.0; "
-                "uncertainty = bootstrap SE of the median (SI Note 1); n_samples=80 control "
-                "screens; 6023 alleles = 4635 KanMx deletions + 1082 DAmP + 306 TS, with the "
-                "raw allele id on strain_id so the TS allelic series stays distinct"
+                "genome-scale SGA single-mutant fitness (Supplementary Data 1, sheet "
+                "S1_SMF_standard_100209, publisher xls from Springer ESM MOESM168 deposited "
+                "in torchcell-raw/baryshnikovaQuantitativeAnalysisFitness2010): "
+                "WT-normalized so the fitness distribution mode == 1.0; uncertainty = "
+                "bootstrap SE of the median (SI Note 1); n_samples=80 control screens is "
+                "stored for the 4635 ARRAY-side kanMX deletions only, the 1388 query-side "
+                "(_damp/_tsq) rows carry a typed ProvenanceGap on n_samples; environment = "
+                "SGA_DM_SELECTION at 30 C for deletions and DAmP (Tong and Boone 2006 SGA "
+                "protocol step 18) and at 26 C for the TS alleles (Costanzo 2016 SI "
+                "semipermissive final selection, back-solved against Costanzo's 26/30 C "
+                "SMF columns on 291 shared strain ids); 6023 released alleles minus the 30 "
+                "frozen in _UNRESOLVABLE = 5993, with the raw allele id on strain_id so the "
+                "TS allelic series stays distinct"
             ),
-            page="Nat Methods 7:1017; Supplementary Data 1 'S1_SMF_standard_100209.txt'",
-            sha256=("c8114f88c96f3b605dc5837c8958de30c34e0077558fd78f26440465a19f6b5b"),
+            page="Nat Methods 7:1017; Supplementary Data 1 sheet 'S1_SMF_standard_100209'",
+            sha256="086bfadf2684f28940500dd87e3be74c53a957448d2016f7a02370540da8a04e",
         ),
     },
 }

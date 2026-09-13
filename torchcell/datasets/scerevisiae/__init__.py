@@ -7,6 +7,7 @@
 from .auesukaree2009 import (
     EnvChemgenAuesukaree2009Dataset as EnvChemgenAuesukaree2009Dataset,
 )
+from .baryshnikova2010 import SmfBaryshnikova2010Dataset as SmfBaryshnikova2010Dataset
 from .bloom2019 import Bloom2019Dataset as Bloom2019Dataset
 from .cachera2023 import BetaxanthinCachera2023Dataset as BetaxanthinCachera2023Dataset
 from .caudal2024 import (
@@ -50,6 +51,7 @@ from .sameith2015 import (
     SmMicroarraySameith2015Dataset as SmMicroarraySameith2015Dataset,
 )
 from .smith2006 import FattyAcidSmith2006Dataset as FattyAcidSmith2006Dataset
+from .smith2016 import CrispriChemgenSmith2016Dataset as CrispriChemgenSmith2016Dataset
 from .vanacloig2022 import (
     EnvChemgenVanacloig2022Dataset as EnvChemgenVanacloig2022Dataset,
 )
@@ -129,6 +131,10 @@ yeastphenome_datasets = ["YeastPhenomeDataset"]
 
 bloom_datasets = ["Bloom2019Dataset"]
 
+smith2016_datasets = ["CrispriChemgenSmith2016Dataset"]
+
+baryshnikova_datasets = ["SmfBaryshnikova2010Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -158,4 +164,6 @@ __all__ = (
     + nadal_ribelles_datasets
     + yeastphenome_datasets
     + bloom_datasets
+    + smith2016_datasets
+    + baryshnikova_datasets
 )

@@ -362,6 +362,7 @@ class ArmConfig(BaseModel):
     base_arm: str
     permute_train_targets: bool
     flux_parameterization: str | None = None
+    flux_balance_active_row_set: str = "dynamic"
 
 
 class BxCell(BaseModel):
@@ -547,6 +548,18 @@ class BxCell(BaseModel):
             "separate head and would break the tie that arm exists to make."
         ),
     )
+    bx_readout: str = Field(
+        default=BX_READOUT_FLUX_SCALAR,
+        description=(
+            "How the betaxanthin scalar is read off a flux arm. 'flux_scalar' is 026's "
+            "head, w^T v plus the log turnover of the named precursors, and the default. "
+            "'flux_precursor_concentration' reads the layer's learned whole-cell "
+            "CONCENTRATION of the precursors instead, the same quantity the amino-acid "
+            "arm supervises, through one weight per precursor and an intercept; that "
+            "affine is required because betaxanthin is a fluorescence intensity and no "
+            "unit-free map takes log10 molar to it. Needs an ANCHORED arm."
+        ),
+    )
     volume_table: str = Field(
         default=VOLUMES_ASSUMED,
         description=(
@@ -604,6 +617,16 @@ class BxCell(BaseModel):
             "arm the rebuild wrongly chose. With the channel in the cell, a rebuild is "
             "correct without an environment variable. The variable is still read when this "
             "field is None, so the wave-7 scripts and their reruns keep working."
+        ),
+    )
+    flux_balance_active_row_set: str = Field(
+        default="dynamic",
+        description=(
+            "Which rows the active-row balance term is priced on, from the arm file. "
+            "'dynamic' recomputes the set from the flux under test, which job 1795 "
+            "escaped by killing rows: 422 rows clearing the turnover threshold on the "
+            "top 100 became 5. 'frozen' fixes the set at the first forward, so a "
+            "killed row keeps its ratio of 2 in the sum."
         ),
     )
     flux_balance_active_weight: float = Field(
@@ -938,6 +961,7 @@ def species_mixture_weights(
     met_index: dict[str, int],
     space: str,
     volume_table: str = VOLUMES_ASSUMED,
+    bx_readout: str = BX_READOUT_FLUX_SCALAR,
 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, list[tuple[str, str, float]]]]:
     r"""The same whole-cell average for ANY set of chemicals, in a fixed column order.
 
@@ -1062,6 +1086,7 @@ def build_cell(
     dist: str = "crps",
     conc_space: str = CONC_SPACE_MIXTURE,
     volume_table: str = VOLUMES_ASSUMED,
+    bx_readout: str = BX_READOUT_FLUX_SCALAR,
     conc_lower_m: float = CONC_LOWER_M,
     conc_upper_m: float = CONC_UPPER_M,
     flux_density_weight: float = 0.0,
@@ -1081,6 +1106,9 @@ def build_cell(
     )
     assert volume_table in VOLUME_TABLES, (
         f"--volume-table must be one of {VOLUME_TABLES}, got {volume_table!r}."
+    )
+    assert bx_readout in BX_READOUTS, (
+        f"--bx-readout must be one of {BX_READOUTS}, got {bx_readout!r}."
     )
     assert dist in DISTS, f"--dist must be one of {DISTS}, got {dist!r}."
     assert armcfg.base_arm in ARMS, (
@@ -1125,11 +1153,13 @@ def build_cell(
         dist=dist,
         conc_space=conc_space,
         volume_table=volume_table,
+        bx_readout=bx_readout,
         conc_lower_m=conc_lower_m,
         conc_upper_m=conc_upper_m,
         # The channel comes from the arm FILE, which is where a parameterization belongs;
         # the environment variable is read only when no arm file names one.
         flux_parameterization=armcfg.flux_parameterization,
+        flux_balance_active_row_set=armcfg.flux_balance_active_row_set,
         flux_density_weight=flux_density_weight,
         flux_balance_active_weight=flux_balance_active_weight,
         flux_draws=flux_draws,
@@ -2293,6 +2323,13 @@ def build_model_for_cell(
         # as every cell before wave 8 computed it.
         flux_layer.config.density_weight = cell.flux_density_weight
         flux_layer.config.balance_active_weight = cell.flux_balance_active_weight
+        # The layer validates this at construction, and it is assigned after, so the
+        # check is repeated here rather than letting a typo pass as 'dynamic'.
+        assert cell.flux_balance_active_row_set in {"dynamic", "frozen"}, (
+            f"flux_balance_active_row_set={cell.flux_balance_active_row_set!r} is not "
+            "'dynamic' or 'frozen'."
+        )
+        flux_layer.config.balance_active_row_set = cell.flux_balance_active_row_set
         flux_layer.config.conc_lower_m = cell.conc_lower_m
         flux_layer.config.conc_upper_m = cell.conc_upper_m
         # THE K-DRAW SWITCHES, written before the layer is used but AFTER it is built, for
@@ -2350,6 +2387,13 @@ def build_model_for_cell(
         "mechanistic arm removes. The principled distributional form there is an energy "
         "score over the flux sampler's draws, which is not built."
     )
+    assert not (
+        cell.bx_readout == BX_READOUT_PRECURSOR_CONCENTRATION
+        and not (cell.head == HEAD and arm["flux"])
+    ), (
+        f"bx_readout {BX_READOUT_PRECURSOR_CONCENTRATION!r} is defined only for a FLUX "
+        f"arm on --head {HEAD}; this cell is arm {cell.base_arm!r} on head {cell.head!r}."
+    )
     assert cell.aa_readout in AA_READOUTS, (
         f"aa_readout must be one of {AA_READOUTS}, got {cell.aa_readout!r}."
     )
@@ -2384,7 +2428,18 @@ def build_model_for_cell(
     heads_config: dict[str, Any] = {}
     met_index = flux_meta["met_index"] if arm["flux"] else {}
     if main_head == HEAD:
-        if arm["flux"]:
+        if arm["flux"] and cell.bx_readout == BX_READOUT_PRECURSOR_CONCENTRATION:
+            # THE PRECURSOR-CONCENTRATION READOUT declares no model head: the prediction
+            # is a linear map of the layer's own `thermo_log_c` at the precursor rows,
+            # injected by `FluxPrecursorConcentrationReadout` below.
+            assert flux_layer is not None and (
+                flux_layer.thermo_mode is ThermoMode.ANCHORED
+            ), (
+                f"--bx-readout {BX_READOUT_PRECURSOR_CONCENTRATION} needs an arm whose "
+                f"thermo_mode is ANCHORED; arm {cell.base_arm!r} is "
+                f"{'not a flux arm' if flux_layer is None else str(flux_layer.thermo_mode)}."
+            )
+        elif arm["flux"]:
             heads_config[HEAD] = {
                 "kind": "flux_scalar",
                 "output_dim": 1,
@@ -2472,6 +2527,37 @@ def build_model_for_cell(
         flux_layer=flux_layer,
         **graph_reg_kwargs,
     ).to(device)
+
+    if main_head == HEAD and cell.bx_readout == BX_READOUT_PRECURSOR_CONCENTRATION:
+        assert flux_layer is not None
+        indices, log_weights, described = species_mixture_weights(
+            compartment_species_for(BETAXANTHIN_PRECURSOR_ANCHORS),
+            list(BETAXANTHIN_PRECURSOR_ANCHORS),
+            met_index,
+            cell.conc_space,
+            cell.volume_table,
+        )
+        flux_meta["betaxanthin_precursor_mixture"] = {
+            name: [
+                {"compartment": c, "species": sid, "fractional_volume": w}
+                for c, sid, w in entries
+            ]
+            for name, entries in described.items()
+        }
+        flux_meta["compartment_volume_fractions"] = compartment_volume_fractions(
+            cell.volume_table
+        ).model_dump()
+        wrapped_bx = FluxPrecursorConcentrationReadout(
+            model, indices.to(device), log_weights.to(device), param_dim
+        ).to(device)
+        print(
+            "[precursor-readout] betaxanthin from the whole-cell concentrations of "
+            f"{ {n: [c for c, _, _ in v] for n, v in described.items()} }, window "
+            f"[{flux_layer.config.conc_lower_m:.0e}, "
+            f"{flux_layer.config.conc_upper_m:.0e}] M, volume table {cell.volume_table}",
+            flush=True,
+        )
+        return wrapped_bx, head_specs, main_head, flux_meta
 
     if main_head == AUX_HEAD and cell.aa_readout == AA_READOUT_CONCENTRATION:
         assert flux_layer is not None
@@ -3424,6 +3510,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--bx-readout",
+        choices=BX_READOUTS,
+        default=BX_READOUT_FLUX_SCALAR,
+        help=(
+            "Betaxanthin from 026's flux scalar head (default) or from the learned "
+            "whole-cell concentrations of its precursors."
+        ),
+    )
+    parser.add_argument(
         "--volume-table",
         choices=VOLUME_TABLES,
         default=VOLUMES_ASSUMED,
@@ -3551,6 +3646,7 @@ def main() -> None:
         dist=args.dist,
         conc_space=args.conc_space,
         volume_table=args.volume_table,
+        bx_readout=args.bx_readout,
         conc_lower_m=args.conc_lower_m,
         conc_upper_m=args.conc_upper_m,
         flux_density_weight=args.flux_density_weight,

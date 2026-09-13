@@ -781,3 +781,37 @@ So the remedy for the honest rule is the one the density term already demonstrat
 mechanics of: a balance term that is added OUTSIDE the ramp, priced on the rows that turn
 over rather than on all 2,593. That is a smaller change than a bounds edit and it is not the
 cell that was queued, so it waits for a go-ahead rather than jumping the queue.
+
+### Block 1b: asking the active rows to balance, and the 84-fold artifact
+
+Job 1795 adds the active-row balance term at weight 0.5 to the density term at 0.5, same
+channel, seed, table and budget as the density cells. All four cells audited under the same
+three rules, top 100 predicted strains:
+
+| cell | weights (density / balance) | flux-active | rows clearing 1e-3 | active max | active p95 | plain max | median rule | turnover rule |
+|---|---|---|---|---|---|---|---|---|
+| 1767 | 0.0 / 0.0 | 0.2802 | **422** | 2.0 | 1.99999 | 2.0 | 1.00 | 0.00 |
+| 1781 | 0.5 / 0.0 | 0.3062 | **691** | 2.0 | 2.0 | 2.0 | 1.00 | 0.00 |
+| 1784 | 2.0 / 0.0 | 0.3197 | **810** | 2.0 | 2.0 | 2.0 | 1.00 | 0.00 |
+| 1795 | 0.5 / 0.5 | 0.2401 | **5** | 1.7307 | **1.7175** | 1.99998 | 1.00 | 0.00 |
+
+**The p95 fell below 2.0 for the first time in three waves, and it is an artifact.** The set
+it is computed over went from 422 rows to **5**, a factor of 84, so 1795 did not balance the
+rows that carry flux, it stopped carrying flux on all but five of them. The training log
+shows the same thing as it happened: the fraction of rows above the threshold fell 0.00501
+to 0.00225 while `c_density` did not move (0.9837 to 0.9860), and the flux-active fraction
+on the top 100 fell to 0.2401, BELOW the density-only cell at the same density weight. At
+0.5 against 0.5 the balance term overrode the density term rather than trading against it.
+
+Two things the table settles beyond that:
+
+- **Density does what it says.** 422 to 691 to 810 rows, monotone in the weight, with the
+  ratio pinned at 2.0 throughout. The term that prices emptiness is not the gameable one.
+- **The honest rule has not moved in four waves.** No cell of waves 6, 7 or 8 passes the
+  turnover-thresholded criterion, and the single apparent movement is the shrinkage above.
+
+The diagnosis is structural rather than a matter of weights: the penalized set is a function
+of the flux being penalized, so leaving the set is always available and is cheaper than
+balancing. `balance_active_row_set='frozen'` fixes the set at the first forward, which makes
+a killed row keep its ratio of 2 in the sum instead of vanishing from it. That is the next
+cell, at the same 0.5 and 0.5 so the row set is the only thing that changes.

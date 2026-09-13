@@ -1,0 +1,35 @@
+# compound_identity_inputs/curated_core.txt
+# Source: the 33 rows of the pre-serve-50 compound_identity_table.json (schema_version 1,
+# sha256 9e42cd29...), carried forward so their curated SPELLING and their hand-verified
+# ChEBI CURIEs survive the regrow. `canonical` means the label here is the row name even
+# when PubChem's Title differs (PubChem titles actinomycin D "Dactinomycin").
+# The five wildenhain seed CIDs of that table are in wildenhain2015_cids.txt. Two of the 33
+# names moved: `glucose` yields its canonical spelling to media.py's `D-glucose` (same CID
+# 5793, and the metabolism resolver's target name), and `tunicamycin` moves to
+# hillenmeyer2008.txt, which carries its mixture directive.
+1-propanol | canonical
+acetic acid | canonical | chebi=CHEBI:15366
+actinomycin D | canonical
+benomyl | canonical
+bortezomib | canonical
+butyric acid | canonical
+caspofungin | canonical
+concanamycin A | canonical
+cycloheximide | canonical
+ethanol | canonical | chebi=CHEBI:16236
+fluconazole | canonical
+furfural | canonical | chebi=CHEBI:30976
+galactose | canonical
+geldanamycin | canonical
+glycerol | canonical
+hydrogen peroxide | canonical | chebi=CHEBI:16240
+methanol | canonical | chebi=CHEBI:17790
+methyl methanesulfonate | canonical
+monensin | canonical
+myristic acid | canonical
+octanoic acid | canonical
+oleic acid | canonical
+rapamycin | canonical
+sodium chloride | canonical | chebi=CHEBI:26710
+sorbitol | canonical
+tamoxifen | canonical

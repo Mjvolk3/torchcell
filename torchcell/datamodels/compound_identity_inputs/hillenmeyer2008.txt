@@ -1,0 +1,352 @@
+# compound_identity_inputs/hillenmeyer2008.txt
+# Source: serve-50 review `Hillenmeyer2008Datasets.md`, section (a) -- the union of the
+# HET (het.ratio_result_nm.pub) and HOM (hom.z_result_nm.pub) `cond1`/`cond2` small-molecule
+# labels after the loader's column grouping (345 labels: 302 growable public names, 33
+# terminal labels, 10 already curated). 14 labels are bare PubChem CIDs the loader passes as
+# a name; they are resolved by CID here.
+# Aliases and terminal calls were PROBED against PubChem on 2026-09-12, not assumed.
+1,3-diallylurea
+1,4-dimethylendothall
+1,7-octadiene
+1,8-nonadiene
+2-cyanoethyl acrylate
+4,6-dichloroindole-2-carboxylic acid
+4-isopropyltropolone
+4NQO
+5,6-dihydroxyflavone
+5-fluorcytosine | query=5-fluorocytosine
+5-fluorocytosine
+5-fluorouracil
+5-fluorouridine
+acetic acid
+aclacinomycin A
+acriflavinium hydrochloride
+adenophostin A
+AG 1387 (Biomol) | unresolved=PubChem's name index carries no compound under this Biomol catalog code (probed AG 1387, AG-1387, tyrphostin AG 1387)
+AG 1478 (Biomol) | query=tyrphostin AG 1478
+AG 957 (Biomol) | query=AG-957
+aklavin hydrochloride
+alizarin
+allyl disulfide
+allyl sulfide
+alverine citrate
+alverine citrate, 30ul total up/dn | unresolved=the label fuses a hybridization volume into the compound name
+alverine citrate, 60ul total up/dn | unresolved=the label fuses a hybridization volume into the compound name
+aminacrine
+aminophenazone
+aminopterin
+amitriptyline hydrochloride
+amoxepine
+amphotericin | unresolved=genus name that does not pick a congener; the same matrix separately carries amphotericin B
+amphotericin B
+amsacrine
+angelicin
+anisomycin
+ansamitocin
+aphidicolin glycinate
+atorvastatin
+aureobasidin A
+azobenzene
+bathophenanthroline disulfonate | query=bathophenanthroline disulfonic acid
+bay 11-7082
+BCNU
+BCS | unresolved=abbreviation the SOM expands nowhere
+beclomethasone dipropionate
+benfluorex hydrochloride
+benomyl
+benzaldehyde
+benztropine
+benzyl benzoate
+berberine chloride
+biochanin A
+bisacodyl
+bisphenol | unresolved=genus name that does not pick a congener (A, F, S)
+bithionol
+bleomycin
+borrelidin
+bostrycoidin
+bouvardin
+brefeldin A
+bromhexine hydrochloride
+bromocriptine mesylate
+bruceantin
+bufexamac
+busulfan
+caffeine
+calvatic acid
+calyculin A
+camptothecin
+cantharidin
+cantharidin analog | unresolved=activity-class label; the SOM does not name the analog
+cantharidin disodium
+caracemide
+carbendazine
+carboplatin
+carmustine
+caspofungin
+CdCl2
+chemical diversity labs 14a | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chemical diversity labs 14f | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chemical diversity labs 1c10 | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chemical diversity labs 218 | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chemical diversity labs 232 | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chemical diversity labs 246 | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chemical diversity labs 275 | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chemical diversity labs 3f2 | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chemical diversity labs 41 | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chemical diversity labs 6842 | proprietary=ChemDiv library catalog code; the SOM releases no structure, SMILES or CAS for it
+chlorambucil
+chloroacetoxyquinoline
+chloroxine
+chlorzoxazone
+chrysin
+ciclopirox olamine
+CID 144303 | cid=144303
+CID 403818 | cid=403818
+CID 604586 | cid=604586
+CID 621889 | cid=621889
+CID 622648 | cid=622648
+CID 630688 | cid=630688
+CID 632839 | cid=632839
+CID 652287 | cid=652287
+CID 678146 | cid=678146
+CID 683517 | cid=683517
+CID 688028 | cid=688028
+CID 693573 | cid=693573
+CID 693632 | cid=693632
+CID 697443 | cid=697443
+cinerubin
+cisplatin
+citrinin
+citropten
+clofoctol
+clotrimazole
+cloxyquin
+clozapine
+CoCl2
+colchicine
+coralyne
+curcumin
+CuSO4
+cyclamin
+cycloheximide
+cytarabine
+damnacanthal
+danthron
+daunorubicin
+dianemycin
+dichlofenac sodium | query=diclofenac sodium
+dicumarol
+dieldrin
+diflunisal
+dimercaptopropanol
+dimethylellipticinium | unresolved=PubChem's name index carries no dimethylellipticinium; elliptinium (CID 42723) is the MONOmethyl congener, so adopting it would change the compound
+distamycin A
+DMAEC | unresolved=abbreviation the SOM expands nowhere
+DMSO 1% | unresolved=the label fuses a vehicle dose into the compound name
+DMSO 2% | unresolved=the label fuses a vehicle dose into the compound name
+DMSO 4% | unresolved=the label fuses a vehicle dose into the compound name
+DNA protein kinase inhibitor | unresolved=activity-class label, not a single chemical species
+domperidone
+doxorubicin
+drofenine hydrochloride
+droperidol
+dyclonine
+econazole
+econazole nitrate
+embelin
+emodin
+estradiol
+estradiol acetate
+estradiol diacetate
+estradiol propionate
+estrone acetate
+ethaverine hydrochloride
+ethoxyquin
+exalamide
+FeCl4 | unresolved=does not exist as written; iron(III) chloride is FeCl3 and tetrachloroferrate is the [FeCl4]- anion
+fenbendazole
+fenbufen
+fendiline hydrochloride
+fenofibrate
+fenoprofen
+fenpropimorph
+ferulic acid
+filipin
+FK506
+floxuridine
+fluconazole
+flufenamic acid
+flunarizine hydrochloride
+formestane
+fusarubin
+glafenine
+gossypol
+H2O2
+haloperidol
+helenine | unresolved=ambiguous label, used for both an interferon-inducer preparation and a sesquiterpene lactone
+hexestrol
+hexetidine
+HgCl2
+hydroxyurea
+hygromycin
+idarubicin
+indirubin
+ipriflavone
+itraconazole
+juglone
+K2Cr2O7
+ketoconazole
+L-dopa
+lapachol
+latrunculin | unresolved=genus name that does not pick a congener (A or B)
+lawsone
+lefunamide
+leucovorin
+LiCl
+lipoxamycin
+lovastatin
+mebendazole
+mechlorethamine
+meclizine hydrochloride
+meclocycline sulfosalicylate
+mecysteine hydrochloride
+mefenamic acid
+melphalan
+menadione epoxide
+merbromin
+metampicillin
+metergoline
+methotrexate
+methotrexate, 30ul total up/dn | unresolved=the label fuses a hybridization volume into the compound name
+methotrexate, 60ul total up/dn | unresolved=the label fuses a hybridization volume into the compound name
+methoxsalen
+methoxyvone
+miconazole
+mitomycin c
+mitotane
+mitoxanthrone
+mitoxanthrone hydrochloride
+MMS
+MnCl2
+monastrol
+motuporamine | unresolved=genus name that does not pick a congener
+MPP+
+mycophenolic acid
+myriocin
+NaCl
+NaF
+nalidixic acid
+naringenin
+neomycin sulfate
+nerol
+nicardipine hydrochloride
+niflumic acid
+nimustine
+nitrendipine
+nitric oxide
+nitromide
+nocodazole
+norcantharidin
+novobiocin
+nsc95397
+nystatin
+osajin
+oxaliplatin
+oxethazine
+PABA
+paclitaxel
+papuamide B
+paraquat
+parkinson-inducing peptide | unresolved=activity-class label, not a single chemical species
+paromomycin sulfate
+paroxetine hydrochloride
+parthenolide
+perillic acid
+phenanthroline monohydrochloride | query=1,10-phenanthroline hydrochloride
+phenolphthalein
+phenothrin
+phenoxybenzamine hydrochloride
+phloretin
+phosphatase inhibitor | unresolved=activity-class label, not a single chemical species
+pimethixene maleate
+pimpinellin
+piperidolate hydrochloride
+piperine
+piromidic acid
+podophyllotoxin
+potassium disulfite
+PP1
+PP2
+prazosin hydrochloride
+proadifen hydrochloride
+probucol
+progesterone
+promazine hydrochloride
+promethazine hydrochloride
+propiomazine maleate
+propyl disulfide
+protoveratrine B
+psoralen
+ptp2 | unresolved=a condition label, not a compound; SOM Table S3 carries the row "ptp2, 115, na, na"
+pyrimethamine
+pyrithione zinc
+quercetin
+quinacrine hydrochloride
+rapamycin
+reserpine
+resveratrol
+rhizoxin
+RIL1 (Biomol) | proprietary=Biomol catalog code; the SOM releases no structure for it
+RO 106-9920 (Calbio) | query=Ro 106-9920
+rotenone
+rutilantin | unresolved=PubChem's name index carries no rutilantin, and the label does not pick a congener (rutilantin A vs B)
+sanguinarine sulfate
+semustine
+sirtinol
+sodium arsenite
+sodium meclofenamate
+solasodine
+sorbitol
+spironolactone
+splitomicin
+staurosporine
+streptovitacin
+streptozotocin
+sulconazole nitrate
+sulfanilamide
+suxibuzone
+telomerase inhibitor ix (Biomol) | proprietary=Biomol catalog code; the SOM releases no structure for it
+teniposide
+terbinafine
+terreic acid
+tetrandrine
+thiabendazole
+thimerosal
+thio-tepa
+thiolutin
+thiotepa
+thiram
+thujaplicin alpha | query=alpha-thujaplicin
+thyronine
+tolfenamic acid
+tolnaftate
+tomatine
+triamterene
+trichlormethine
+trichostatin A
+trifluoperazine dihydrochloride
+trimeprazine tartrate
+triphenyltin
+tryptanthrin
+tunicamycin | canonical | chebi=CHEBI:29699 | mixture=ChEBI:29699 defines tunicamycin as "A mixture of antiviral nucleoside antibiotics ... at least 10 homologues"; PubChem returns no CID for the name, so no single-molecule InChIKey exists
+tyrphostin | unresolved=compound-family label; the SOM does not say which tyrphostin
+ursodiol
+usnic acid
+verrucarin A
+vitamin K3
+wiskostatin
+wortmannin
+xanthohumol
+zaluzanin C
+ZnCl2

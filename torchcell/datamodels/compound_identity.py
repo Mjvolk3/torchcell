@@ -15,9 +15,10 @@ Design (mirrors ``SCerevisiaeGenome.resolve_gene_name``):
 - **Pure + offline.** :func:`resolve_compound_identity` reads ONLY the committed
   ``compound_identity_table.json`` -- it NEVER touches the network at import,
   build, CI, or test time. The table is the sha256-pinned canonical artifact
-  (``scripts/build_compound_identity_table.py`` is the only thing that hits
-  PubChem, run once by a human). The bytes are sha256-self-checked at import; a
-  mismatch raises (tamper / drift detection).
+  (``compound_identity_curate.py`` is the only thing that hits PubChem, run by a
+  human against the committed input lists in ``compound_identity_inputs/``). The
+  bytes are sha256-self-checked at import; a mismatch raises (tamper / drift
+  detection).
 - **Non-generic pydantic.** ``CompoundIdentityRecord`` /
   ``CompoundIdentityResolution`` are plain ``BaseModel`` (no ``Generic[...]``) so
   loaders embedding them stay pickle/multiprocessing-safe (PR #119 lesson).
@@ -26,6 +27,31 @@ Design (mirrors ``SCerevisiaeGenome.resolve_gene_name``):
   to build a ``Compound`` fill-or-gap: fill structure fields where resolved,
   attach a typed ``ProvenanceGap`` on ``inchikey`` where not -- **additive only**,
   never clobbering a caller-supplied ``smiles`` (hoepfner already sets it).
+
+Canonical-name policy (serve-50)
+--------------------------------
+A row's ``name`` is the ONE name a resolved compound carries, and
+:func:`resolved_compound` returns it in ``Compound.name`` rather than echoing the
+label the loader passed. Every other spelling a paper uses is a ``synonyms`` entry on
+that row, so a loader passes its SOURCE LABEL as a lookup key and gets the canonical
+identity back. A row's name is PubChem's ``Title`` lowercased unless an input line
+curated a spelling (``media.py`` owns ``D-glucose``; the pre-existing table owns
+``actinomycin D``). This is what collapses ``NaCl`` and ``sodium chloride`` onto one
+``environment perturbation`` node instead of two joinable only on the ``inchikey``
+property, and it is why the source label must NOT be written into ``Compound.name``.
+``Compound`` has no ``source_label`` slot and ``schema.py`` is not changed to add one:
+``Compound`` sits in every served dataset's closure, so a field there is a full-rebuild
+trigger. The label survives in the table's ``synonyms``, which is where it belongs.
+
+Two structure routes, and the curated one wins
+----------------------------------------------
+:func:`inchikey_from_smiles` derives an InChIKey from a released SMILES with RDKit, for
+datasets that publish structures but no names a table can key on (Hoepfner 2014: 151 of
+152 SMILES parse, 150 distinct keys). ``resolved_compound(..., derive_from_smiles=True)``
+uses it ONLY when the table has no row for the label, because the two routes disagree:
+concanamycin A's curated PubChem key and its SMILES-derived key differ in the stereo
+block. A curated row therefore always wins, and the derivation route is reported as
+``RESOLVED_FROM_SMILES``.
 """
 
 from __future__ import annotations
@@ -43,12 +69,17 @@ from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 # The committed table lives next to this module; its bytes are the canonical,
 # sha256-pinned artifact. The builder recomputes + prints this constant.
 _TABLE_PATH = Path(__file__).with_name("compound_identity_table.json")
-_TABLE_SHA256 = "9e42cd290c5dadd858d2d9e39dcbcbd7d8dd945e251c1b6b73998cd1f0853f79"
+_TABLE_SHA256 = "da91da75e84743e4b782600ead0fe3bc220c4bdc02ee8f6d89734de4934c037c"
 
-# Conservative, DOCUMENTED synonym canonicalization (normalized -> normalized).
-# Only spellings we are certain name the SAME compound -- never a fuzzy near-miss.
-# Loaders may spell a compound differently from the seeded canonical name; this
-# maps those aliases onto the canonical key BEFORE lookup.
+# Conservative, DOCUMENTED synonym canonicalization (normalized -> normalized),
+# applied BEFORE lookup. Only spellings we are certain name the SAME compound --
+# never a fuzzy near-miss.
+#
+# Most aliases now live in the TABLE (each row's ``synonyms``, sourced from the
+# committed input lists), which is the reproducible home for them. This code-level
+# map is kept for the handful of foldings that predate the table and for spellings
+# no input list claims; the two compose, since normalization runs first and the
+# resulting key is then looked up among names AND synonyms.
 _SYNONYMS: dict[str, str] = {
     "h2o2": "hydrogen peroxide",
     "hydrogen peroxide (h2o2)": "hydrogen peroxide",
@@ -67,18 +98,41 @@ _SYNONYMS: dict[str, str] = {
 
 
 class CompoundResolutionStatus(StrEnum):
-    """Typed outcome of a resolution attempt.
+    """Typed outcome of a resolution attempt, ordered from usable to terminal.
 
     - ``RESOLVED``: the table maps the name/CID to a structure (an InChIKey).
+    - ``RESOLVED_FROM_SMILES``: no table row, but the caller's released SMILES
+      parsed and yielded an InChIKey (the Hoepfner route).
+    - ``RESOLVED_MIXTURE``: identified as a substance by ChEBI and/or a PubChem CID,
+      but no single-molecule InChIKey exists. Tunicamycin is at least ten homologues
+      (ChEBI:29699); agar's PubChem InChIKey belongs to the agarobiose repeat unit,
+      not to the algal polysaccharide. The identity rule accepts ChEBI or CID here,
+      and fabricating a key would misstate what was in the flask.
     - ``UNRESOLVED_PUBLIC``: a real public name we simply have not resolved yet --
       the ONE recoverable gap (grows the table over time).
-    - ``PROPRIETARY``: a known-proprietary code (e.g. Novartis CMBxxx) whose
-      structure the primary never released -- terminal.
+    - ``UNDEFINED_MIXTURE``: an intrinsically undefined preparation (yeast extract,
+      peptone, Difco YNB, an SC dropout powder). No structure exists to find --
+      terminal, and NOT a worklist item.
+    - ``PROPRIETARY``: a vendor or catalog code (Novartis CMBxxx, a ChemDiv or
+      ChemBridge library id) whose structure the primary never released -- terminal.
     """
 
     RESOLVED = "RESOLVED"
+    RESOLVED_FROM_SMILES = "RESOLVED_FROM_SMILES"
+    RESOLVED_MIXTURE = "RESOLVED_MIXTURE"
     UNRESOLVED_PUBLIC = "UNRESOLVED_PUBLIC"
+    UNDEFINED_MIXTURE = "UNDEFINED_MIXTURE"
     PROPRIETARY = "PROPRIETARY"
+
+
+#: Statuses whose gap on ``inchikey`` is TERMINAL: there is nothing left to fetch.
+_TERMINAL_STATUSES = frozenset(
+    {
+        CompoundResolutionStatus.RESOLVED_MIXTURE,
+        CompoundResolutionStatus.UNDEFINED_MIXTURE,
+        CompoundResolutionStatus.PROPRIETARY,
+    }
+)
 
 
 class CompoundIdentityRecord(BaseModel):
@@ -86,12 +140,17 @@ class CompoundIdentityRecord(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(description="canonical human name, or 'CID <cid>' for a CID row")
+    name: str = Field(description="the ONE canonical name this compound carries")
     inchikey: str | None = Field(default=None, description="canonical InChIKey")
     pubchem_cid: int | None = Field(default=None, description="PubChem CID integer")
-    chebi_id: str | None = Field(default=None, description="ChEBI CURIE (hand-curated)")
+    chebi_id: str | None = Field(default=None, description="ChEBI CURIE")
     smiles: str | None = Field(
         default=None, description="canonical/connectivity SMILES"
+    )
+    synonyms: list[str] = Field(
+        default_factory=list,
+        description="every other label a source spells this compound with; each is a "
+        "lookup key onto this row",
     )
     source_url: str | None = Field(
         default=None, description="the exact retrieval endpoint queried"
@@ -100,10 +159,14 @@ class CompoundIdentityRecord(BaseModel):
         default=None, description="RetrievalMethod value, e.g. 'pubchem_api'"
     )
     retrieved_at: str | None = Field(
-        default=None, description="ISO date the builder queried PubChem"
+        default=None, description="ISO date the curator queried PubChem"
     )
     resolution_status: str = Field(
-        description="CompoundResolutionStatus value at build time"
+        description="CompoundResolutionStatus value at curation time"
+    )
+    unresolved_reason: str | None = Field(
+        default=None,
+        description="why this row carries no InChIKey; the audit trail behind a drop",
     )
 
 
@@ -113,10 +176,35 @@ class CompoundIdentityResolution(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     status: CompoundResolutionStatus
+    name: str | None = Field(
+        default=None, description="the table's canonical name; None when no row matched"
+    )
     inchikey: str | None = None
     chebi_id: str | None = None
     pubchem_cid: int | None = None
     smiles: str | None = None
+    unresolved_reason: str | None = Field(
+        default=None, description="the row's audit trail for an absent InChIKey"
+    )
+
+    @property
+    def curated(self) -> bool:
+        """Whether a table row matched at all (the SMILES route defers to this)."""
+        return self.name is not None
+
+    @property
+    def identified(self) -> bool:
+        """Whether ANY structure identifier is carried (InChIKey, ChEBI, or CID).
+
+        This is the retention rule the brief states: a compound with none of these
+        cannot be encoded, so records depending on it are dropped rather than served
+        under a bare name.
+        """
+        return (
+            self.inchikey is not None
+            or self.chebi_id is not None
+            or self.pubchem_cid is not None
+        )
 
 
 def normalize_compound_name(name: str) -> str:
@@ -130,7 +218,14 @@ def _load_table() -> tuple[
     dict[str, CompoundIdentityRecord],
     dict[int, CompoundIdentityRecord],
 ]:
-    """Read + sha256-self-check the committed table, index by normalized name + CID."""
+    """Read + sha256-self-check the committed table, index by name, synonym, and CID.
+
+    Every lookup key must point at exactly ONE compound. A key claimed by two rows is
+    raised, not silently won by whichever row loaded last: the curator already awards a
+    contested key by precedence and qualifies the losers, so a duplicate here means the
+    table and this module's ``_SYNONYMS`` folding disagree and a loader would otherwise
+    get a different compound than the one it asked for.
+    """
     raw = _TABLE_PATH.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
     if digest != _TABLE_SHA256:
@@ -143,7 +238,15 @@ def _load_table() -> tuple[
     by_name: dict[str, CompoundIdentityRecord] = {}
     by_cid: dict[int, CompoundIdentityRecord] = {}
     for record in records:
-        by_name[normalize_compound_name(record.name)] = record
+        for label in [record.name, *record.synonyms]:
+            key = normalize_compound_name(label)
+            held = by_name.get(key)
+            if held is not None and held is not record:
+                raise RuntimeError(
+                    f"compound_identity_table.json: lookup key {key!r} is claimed by "
+                    f"both {held.name!r} and {record.name!r}"
+                )
+            by_name[key] = record
         if record.pubchem_cid is not None:
             by_cid.setdefault(record.pubchem_cid, record)
     return records, by_name, by_cid
@@ -159,10 +262,13 @@ def resolve_compound_identity(
 ) -> CompoundIdentityResolution:
     """Resolve a compound identity from the pinned table -- pure, offline.
 
-    Looks up by normalized ``name`` first, then by ``pubchem_cid``. Returns
-    ``RESOLVED`` with the structure fields when the table carries an InChIKey; else
-    ``PROPRIETARY`` (when ``known_proprietary``) or ``UNRESOLVED_PUBLIC``. NEVER
-    guesses a structure from a near-miss name.
+    Looks up by normalized ``name`` (matching a row's canonical name OR any of its
+    synonyms) first, then by ``pubchem_cid``. A matched row's own
+    ``resolution_status`` is authoritative, so a mixture comes back as
+    ``RESOLVED_MIXTURE`` carrying ChEBI/CID and no InChIKey, and a vendor code comes
+    back ``PROPRIETARY`` with the reason it is terminal. With no row at all the answer
+    is ``PROPRIETARY`` when the caller knows the label is a vendor code, else
+    ``UNRESOLVED_PUBLIC``. NEVER guesses a structure from a near-miss name.
     """
     record: CompoundIdentityRecord | None = None
     if name is not None:
@@ -170,26 +276,65 @@ def resolve_compound_identity(
     if record is None and pubchem_cid is not None:
         record = _BY_CID.get(pubchem_cid)
 
-    if record is not None and record.inchikey is not None:
+    if record is None:
         return CompoundIdentityResolution(
-            status=CompoundResolutionStatus.RESOLVED,
-            inchikey=record.inchikey,
-            chebi_id=record.chebi_id,
-            pubchem_cid=record.pubchem_cid,
-            smiles=record.smiles,
+            status=(
+                CompoundResolutionStatus.PROPRIETARY
+                if known_proprietary
+                else CompoundResolutionStatus.UNRESOLVED_PUBLIC
+            )
         )
 
-    status = (
-        CompoundResolutionStatus.PROPRIETARY
-        if known_proprietary
-        else CompoundResolutionStatus.UNRESOLVED_PUBLIC
-    )
-    # A row may exist but be unresolved (PubChem failed at build time); surface any
-    # cross-reference it does carry, but leave inchikey None so the caller gaps it.
     return CompoundIdentityResolution(
-        status=status,
-        pubchem_cid=record.pubchem_cid if record is not None else None,
-        smiles=record.smiles if record is not None else None,
+        status=CompoundResolutionStatus(record.resolution_status),
+        name=record.name,
+        inchikey=record.inchikey,
+        chebi_id=record.chebi_id,
+        pubchem_cid=record.pubchem_cid,
+        smiles=record.smiles,
+        unresolved_reason=record.unresolved_reason,
+    )
+
+
+def inchikey_from_smiles(smiles: str) -> str | None:
+    """Derive a standard InChIKey from a SMILES with RDKit, or ``None`` if it will not parse.
+
+    The offline structure route for a dataset that releases SMILES but no name a curated
+    table can key on. ``None`` is a MEASUREMENT, not a swallowed error: RDKit's parser
+    returns no molecule for chemistry it cannot represent (Hoepfner's boromycin, whose
+    boron cage fails), and it logs the reason to stderr. RDKit is imported lazily so this
+    module stays cheap to import in a loader worker.
+    """
+    from rdkit import Chem
+    from rdkit.Chem import inchi
+
+    molecule = Chem.MolFromSmiles(smiles)
+    if molecule is None:
+        return None
+    key: str = inchi.MolToInchiKey(molecule)  # type: ignore[no-untyped-call]  # RDKit untyped
+    return key or None
+
+
+def resolve_compound_identity_from_smiles(
+    name: str, smiles: str
+) -> CompoundIdentityResolution:
+    """Resolve by name, falling back to the caller's SMILES ONLY when no row exists.
+
+    The curated row always wins: the two routes measurably disagree (concanamycin A's
+    curated PubChem key and its SMILES-derived key differ in the stereo block), so a
+    dataset that both appears in the table and ships a SMILES must not silently get a
+    second identity for the same compound.
+    """
+    resolution = resolve_compound_identity(name=name)
+    if resolution.curated:
+        return resolution
+    derived = inchikey_from_smiles(smiles)
+    if derived is None:
+        return resolution
+    return CompoundIdentityResolution(
+        status=CompoundResolutionStatus.RESOLVED_FROM_SMILES,
+        inchikey=derived,
+        smiles=smiles,
     )
 
 
@@ -201,41 +346,65 @@ def resolved_compound(
     inchi: str | None = None,
     roles: list[str] | None = None,
     known_proprietary: bool = False,
+    derive_from_smiles: bool = False,
 ) -> Compound:
     """Build a ``Compound`` fill-or-gap through the resolver (the loader entrypoint).
 
-    Merges resolver output ADDITIVELY: a caller-supplied structure field (e.g.
-    hoepfner's ``smiles``, wildenhain's ``pubchem_cid``) always wins; the resolver
-    only fills a field that is still ``None``. When no InChIKey can be filled, a
-    typed ``ProvenanceGap`` is attached on ``inchikey`` -- ``not_reported_by_primary``
-    for a known-proprietary code, else ``deferred_pending_source_review`` (the
-    growable worklist). The gap is asserted ONLY on the ``None`` field, honoring the
-    ``ProvenanceGapMixin`` invariant.
+    ``name`` is the loader's SOURCE LABEL: whatever the paper's column or table calls
+    the compound. The returned ``Compound.name`` is the table's CANONICAL name when a
+    row matches, so two papers spelling one compound differently produce one node; the
+    label itself is already recorded as that row's synonym. With no row, the label is
+    kept as-is.
+
+    Structure fields merge ADDITIVELY: a caller-supplied field (hoepfner's ``smiles``,
+    wildenhain's ``pubchem_cid``) always wins; the resolver only fills what is still
+    ``None``. With ``derive_from_smiles=True`` an unmatched label whose SMILES parses
+    gets an RDKit-derived InChIKey, but a curated row always outranks that route.
+
+    When no InChIKey can be filled, a typed ``ProvenanceGap`` is attached on
+    ``inchikey``: ``not_reported_by_primary`` when the absence is terminal (a vendor
+    code, an undefined preparation, a homolog mixture with no single key), else
+    ``deferred_pending_source_review`` (the growable worklist). The gap is asserted ONLY
+    on the ``None`` field, honoring the ``ProvenanceGapMixin`` invariant.
     """
     resolution = resolve_compound_identity(
         name=name, pubchem_cid=pubchem_cid, known_proprietary=known_proprietary
     )
+    if (
+        derive_from_smiles
+        and smiles is not None
+        and resolution.inchikey is None
+        and not resolution.curated
+    ):
+        derived = inchikey_from_smiles(smiles)
+        if derived is not None:
+            resolution = resolution.model_copy(
+                update={
+                    "status": CompoundResolutionStatus.RESOLVED_FROM_SMILES,
+                    "inchikey": derived,
+                }
+            )
+
     merged_inchikey = resolution.inchikey  # loaders never supply an inchikey
     merged_cid = pubchem_cid if pubchem_cid is not None else resolution.pubchem_cid
     merged_smiles = smiles if smiles is not None else resolution.smiles
-    merged_chebi = resolution.chebi_id
 
     gaps: list[ProvenanceGap] = []
     if merged_inchikey is None:
         reason = (
             ProvenanceGapReason.not_reported_by_primary
-            if resolution.status == CompoundResolutionStatus.PROPRIETARY
+            if resolution.status in _TERMINAL_STATUSES
             else ProvenanceGapReason.deferred_pending_source_review
         )
         gaps.append(ProvenanceGap(field="inchikey", reason=reason))
 
     return Compound(
-        name=name,
+        name=resolution.name if resolution.name is not None else name,
         inchikey=merged_inchikey,
         inchi=inchi,
         smiles=merged_smiles,
         pubchem_cid=merged_cid,
-        chebi_id=merged_chebi,
+        chebi_id=resolution.chebi_id,
         roles=roles or [],
         provenance_gaps=gaps,
     )

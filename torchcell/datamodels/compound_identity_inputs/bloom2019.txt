@@ -1,0 +1,28 @@
+# compound_identity_inputs/bloom2019.txt
+# Source: serve-50 review `Baryshnikova2010_Bloom2019.md` -- every stress compound named by
+# `build_conditions()` in torchcell/datasets/scerevisiae/bloom2019.py (the 38 served columns
+# of phenotypes.tsv.gz). The carbon sources of the YP_* media (ethanol, fructose, galactose,
+# glycerol, lactate, maltose, mannose, raffinose, sucrose, trehalose, xylose) are curated in
+# media_library.txt, since media.py owns their spelling.
+# Labels are the loader's bench spellings and stay canonical so an existing build keeps its
+# compound names; PubChem's Title is recorded as a synonym where it differs.
+6-azauracil | canonical
+Congo red | canonical
+EGTA | canonical
+cadmium chloride | canonical
+caffeine | canonical
+cobalt chloride | canonical
+copper sulfate | canonical
+diamide | canonical
+formamide | canonical
+lithium chloride | canonical
+magnesium chloride | canonical
+manganese sulfate | canonical
+methotrexate | canonical
+neomycin | canonical
+paraquat | canonical
+sodium dodecyl sulfate | canonical
+zeocin | canonical
+fluconazole
+sorbitol
+tunicamycin

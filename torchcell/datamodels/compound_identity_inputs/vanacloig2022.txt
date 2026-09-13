@@ -1,0 +1,59 @@
+# compound_identity_inputs/vanacloig2022.txt
+# Source: serve-50 review `Vanacloig2022_Wildenhain2015.md` -- the 45 camel-cased compound
+# tokens of the GSE186866 count matrix (49 sample-column tokens minus Control1-4).
+# The alias map is SOURCED from the paper's own Abbreviations block,
+# $DATA_ROOT/torchcell-library/vanacloig-pedrosComparativeChemicalGenomic2022/paper.md
+# lines 24-34, verbatim:
+#   "DMSO : Dimethyl sulfoxide / MMS : Methylmethane sulphonate /
+#    BMIM-Cl : 1-butyl-3-methylimidazolium chloride /
+#    EMIM-Cl : 1-ethyl-3-methylimidazolium chloride / CV : Crystal violet /
+#    NAO : Nonyl-acridine orange / IBA : Isobutanol / MBO : 2-Methyl-3-butyn-2-ol /
+#    GVL : Gamma valerolactone / 5-HMF/HMF : 5-OH-Methylfurfural"
+# 22Dipyridyl is named in the body (paper.md lines 116, 149) as "the metal chelator
+# 2,2'-dipyridyl" and "the iron chelating agent 2,2'-dipyridyl".
+# The remaining tokens are camel-cased spellings of ordinary IUPAC/trivial names.
+22Dipyridyl | query=2,2'-dipyridyl
+24Dimethylimidazole | query=2,4-dimethylimidazole
+26Dimethylpyrazine | query=2,6-dimethylpyrazine
+2Methylimidazole | query=2-methylimidazole
+45Methylimidazole | query=4-methylimidazole
+4OHAcetophenone | query=4'-hydroxyacetophenone
+4OHBenzaldehyde | query=4-hydroxybenzaldehyde
+4OHBenzoicAcid | query=4-hydroxybenzoic acid
+5HMF | query=5-hydroxymethylfurfural
+Acetamide | query=acetamide
+Acetosyringone | query=acetosyringone
+Acetovanillone | query=acetovanillone
+AzelaicAcid | query=azelaic acid
+BMIMCl | query=1-butyl-3-methylimidazolium chloride
+Benomyl | query=benomyl
+BenzoicAcid | query=benzoic acid
+CV | query=crystal violet
+CaffeicAcid | query=caffeic acid
+CinnamicAcid | query=cinnamic acid
+CoumaricAcid | query=p-coumaric acid
+CoumaroylAmide | query=p-coumaramide
+DMSO | query=dimethyl sulfoxide
+EMIMCl | query=1-ethyl-3-methylimidazolium chloride
+EtOH | query=ethanol
+FerulicAcid | query=ferulic acid
+FeruloylAmide | query=ferulamide
+Furfural | query=furfural
+GVL | query=gamma-valerolactone
+IBA | query=isobutanol
+LevulinicAcid | query=levulinic acid
+MBO | unresolved=the paper contradicts itself on this abbreviation: the Abbreviations block (paper.md line 30) reads "MBO : 2-Methyl-3-butyn-2-ol" (CID 8258) while the Introduction (paper.md lines 48, 103) reads "2-methyl-3-buten-2-ol (MBO)" (CID 8257); butyn and buten are different compounds, so the label needs adjudication against Table S1 before a structure is adopted
+MMS | query=methyl methanesulfonate
+Methylglyoxal | query=methylglyoxal
+Mycobutanil | query=myclobutanil
+NAO | query=10-nonyl acridine orange
+QUADRIS1 | unresolved=a commercial formulation, not a chemical species; paper.md line 60 reads "QUADRIS is a suspension and was highly insoluble in SynBase, making OD600 reads inaccurate; thus, two concentrations were arbitrarily selected"
+QUADRIS2 | unresolved=a commercial formulation, not a chemical species; paper.md line 60 reads "QUADRIS is a suspension and was highly insoluble in SynBase, making OD600 reads inaccurate; thus, two concentrations were arbitrarily selected"
+SinapicAcid | query=sinapic acid
+SodiumAcetate | query=sodium acetate
+SodiumButyrate | query=sodium butyrate
+SodiumGlyoxylate | query=sodium glyoxylate
+Syringaldehyde | query=syringaldehyde
+SyringicAcid | query=syringic acid
+VanillicAcid | query=vanillic acid
+Vanillin | query=vanillin

@@ -1,0 +1,8 @@
+# compound_identity_inputs/hoepfner2014.txt
+# Source: serve-50 review `EnvChemgenHoepfner2014Dataset.md`, section (a).
+# Hoepfner's 152 structure-bearing compounds are resolved OFFLINE from the Table S1 SMILES
+# through `compound_identity.inchikey_from_smiles`, not from this list: 151 of 152 parse and
+# yield 150 distinct InChIKeys. Only two labels need a curated row.
+# DMSO is the vehicle for the whole screen and for most chemogenomic screens.
+DMSO | query=dimethyl sulfoxide
+Boromycin | unresolved=the released Table S1 SMILES does not parse in RDKit 2026.03.6 (boron chemistry), so no InChIKey can be derived from the primary structure; PubChem carries a Boromycin record (CID 76962270) but adopting it would substitute a different structure for the one the screen released

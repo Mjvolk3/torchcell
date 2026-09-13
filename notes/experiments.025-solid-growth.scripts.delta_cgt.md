@@ -51,3 +51,27 @@ per epoch, 4 GPUs, batch 256, bf16: GilaHyper RTX 6000 Ada 19.4 (KL) / 14 (mask)
 
 Not in this package (phase 2, needs trainer code): the gradient probe at epochs 0, 1, 2, 5,
 10, 20 for panel c of the mock-up, and the degree-matched random-graph control for panel f.
+
+## 2026.09.12 - The 025 LMDB is staged onto node-local NVMe; Lustre and Taiga are both too slow
+
+Three measured read paths for the same 554 GB build, same model, 4-GPU DDP, zero
+dataloader workers:
+
+| where the LMDB lives | min per epoch | evidence |
+|---|---|---|
+| GilaHyper local NVMe | 19 | jobs 1598 to 1659 |
+| IGB local disk | 17 | jobs 2391132 to 2391134 |
+| Delta, Taiga NFS mount | 63 | 21934082 (16 epochs in 16 h 42 m); both jobs later died on a 30-min NCCL watchdog |
+| Delta, Lustre `/scratch` (4 stripes of 114) | 200 to 220 | 21947151: epochs at +3.30, +3.28, +3.53, +3.66 h; CPU load 1.15 on 16 cores, node otherwise empty |
+
+With `num_workers=0` every LMDB page read happens in the training process, so read
+latency is the epoch time; Lustre's random small reads are the worst of the three. The
+launcher now copies `data.mdb` to `/tmp` at job start (1.5 TB NVMe on the A40 nodes,
+measured on gpub066 with `srun --overlap`; the copy job did 290 MB/s from Taiga, so about
+30 min) and trains from a node-local `DATA_ROOT` mirror: every entry along the build path
+is a symlink back to `/scratch` except the LMDB directory, which is a real copy so LMDB
+can write its `lock.mdb`. Genome, GO, STRING, TFLink, the index files, the split
+artifacts, W&B directories and `data_module_cache` all stay on `/scratch`. The mirror
+layout was checked on a fake tree before committing. `STAGE_LMDB=0` reads `/scratch`
+directly; the 010-build configs never stage (1.5 GB, page-cache resident). The local
+copy under `/tmp/$SLURM_JOB_ID` is removed at job exit.

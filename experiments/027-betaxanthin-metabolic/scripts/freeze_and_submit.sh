@@ -75,6 +75,48 @@ done
         experiments/026-metabolism-flux/scripts/train_flux.py
 )
 
+# AND IT MUST BE ABLE TO BUILD A CELL. py_compile checks syntax, which a half-plumbed
+# option passes: adding a BxCell field, a CLI flag and the `main()` call-site argument
+# without the matching `build_cell` parameter compiles cleanly and then dies at run time on
+#
+#     TypeError: build_cell() got an unexpected keyword argument 'flux_balance_active_weight'
+#
+# Job 1788 died that way 7 seconds into a GPU allocation on 2026-09-12, having waited in the
+# queue first. This check is the same 7 seconds spent before the job is submitted at all.
+# It also asserts that every BxCell field is REACHABLE from build_cell, which is the
+# invariant the half-plumbed option broke: a field the launcher cannot set is a knob whose
+# recorded value is silently always its default.
+(
+    cd "$SNAP"
+    set -a; . "$WT/.env"; set +a
+    EXPERIMENT_ROOT="$SNAP/experiments" PYTHONPATH="$SNAP" \
+        ~/miniconda3/envs/torchcell/bin/python -c '
+import importlib.util, inspect, sys
+
+spec = importlib.util.spec_from_file_location(
+    "train_bx_preflight", "experiments/027-betaxanthin-metabolic/scripts/train_bx.py"
+)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+# Fields build_cell is not expected to take: the ones it derives, reads from the config, or
+# takes from the arm file rather than from a launcher flag.
+derived = {
+    "arm", "base_arm", "seed", "permute_train_targets", "hidden", "attention_heads",
+    "batch_size", "num_workers", "lr", "weight_decay", "split_seed",
+    "select_smoothing_window", "target_log10_molar", "flux_parameterization",
+}
+taken = set(inspect.signature(module.build_cell).parameters)
+missing = sorted(f for f in module.BxCell.model_fields if f not in taken | derived)
+if missing:
+    sys.exit(
+        f"build_cell cannot set these BxCell fields: {missing}. A cell field with no way "
+        "in is a knob that always records its default."
+    )
+module.build_cell("flux_projection", 1, module.load_config(), epochs=1)
+print("[preflight] build_cell constructs a cell and reaches every field")
+'
+)
+
 git -C "$WT" rev-parse HEAD > "$SNAP/SNAPSHOT_GIT_HEAD"
 (
     cd "$SNAP"

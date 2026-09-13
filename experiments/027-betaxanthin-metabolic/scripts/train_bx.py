@@ -953,6 +953,7 @@ def build_cell(
     conc_lower_m: float = CONC_LOWER_M,
     conc_upper_m: float = CONC_UPPER_M,
     flux_density_weight: float = 0.0,
+    flux_balance_active_weight: float = 0.0,
     flux_draws: int = 1,
     flux_latent_stochastic: bool = False,
     flux_kl_weight: float | None = None,
@@ -1014,6 +1015,7 @@ def build_cell(
         # the environment variable is read only when no arm file names one.
         flux_parameterization=armcfg.flux_parameterization,
         flux_density_weight=flux_density_weight,
+        flux_balance_active_weight=flux_balance_active_weight,
         flux_draws=flux_draws,
         flux_latent_stochastic=flux_latent_stochastic,
         flux_kl_weight=flux_kl_weight,

@@ -147,6 +147,8 @@ def _genotype_signature(
                 ident = ident + (crispr["guide_sequence"],)
             if crispr.get("library_pool") is not None:
                 ident = ident + (crispr["library_pool"],)
+            if crispr.get("donor_sequence") is not None:
+                ident = ident + (crispr["donor_sequence"],)
         return ident
 
     return tuple(
@@ -259,9 +261,11 @@ def _reference_baseline_result(
             for category in baselines
             if experiment_categories.get(category)
         }
-        passed = (
-            n_reference_missing_category == 0 and len(baselines) == 1 and not collisions
-        )
+        # A census screen scores every strain, so its neutral baseline is
+        # necessarily also a measured call (Smith 2006 scores wild type as the
+        # modal grade); only a hits-only screen keeps the baseline out of the
+        # measured vocabulary. Collisions are reported, never failed.
+        passed = n_reference_missing_category == 0 and len(baselines) == 1
         if passed:
             message = (
                 f"categorical rule: all {n_refs} references carry the baseline category "

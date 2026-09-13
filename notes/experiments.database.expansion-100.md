@@ -230,3 +230,62 @@ accession. Accession is the strongest key and now runs on ~1 row in 17.
 Related: [[paper.north-star]] · [[paper.north-star.dataset-triage]] ·
 [[paper.supported-datasets-and-databases]] · [[metabolism.central-carbon-precursors]] ·
 [[experiments.024-perturb-seq-costing.method-review-and-costing]]
+
+## 2026.09.12 - Re-triage: bands before scale, waves of 50 and 70, and a synergy table
+
+Driven by a request to bring the CRISPRi work to the top, to sweep
+`jacksonGeneRegulatoryNetwork2020` and the `microbe-perturb-seq` collection for missing
+candidates, to re-triage the top 50 with a 51-70 bench, and to list the synergies between
+every candidate and either a supported dataset or another candidate.
+
+### What changed in the generator
+
+`experiments/database/scripts/build_candidate_datasets_table.py`:
+
+- `BUILT_COUNT` 49 -> 50 (Bloom 2019 built as the 50th), so `CUT` is 150.
+- New `WAVE_1 = 50` and `WAVE_2 = 70`. The candidates table now carries three divider
+  rows: end of wave 1, end of wave 2, and the long-run 150 cut.
+- New `Band` literal and `BANDS` table: `perturb-seq` (28 rows), `metabolism x expression`
+  (18 rows), `scale` (115 rows). `sort_key` is now `(band, tier, -log10(measurements))`, so
+  band is applied before tier and before scale. Every banded row carries a `band_why` and
+  the script refuses to run without one.
+- New `Synergy` model and `SYNERGIES` table: 101 named joins across 59 candidates, each
+  with a join key and what the join yields. 56 of the 101 partners are already built.
+  `_apply_curation()` validates every partner name against `CANDIDATES` or against
+  `SUPPORTED_PARTNERS` (the names in `build_supported_datasets_table.py`), so a renamed
+  partner is a startup failure rather than a silent claim.
+- New `previous_ranked()` and `moves()`. Bloom 2019 stays in `CANDIDATES` with
+  `status="built"` so the previous pass's ranking reproduces exactly and its departure
+  shows up as one recorded move instead of shifting 147 ranks by one.
+- New tables: `synergies.tex`, `swaps.tex` (now the 91-row move table), `pins.tex` (the old
+  pin table, unused while no pin binds). `counts.tex` now splits by wave and adds a band
+  block.
+
+### Ranking outcome
+
+Wave 1 is 28 Perturb-seq rows, 18 metabolism-and-expression rows and 4 scale rows. Top ten:
+Boocock 2025, Hale 2024, Jackson 2020, Puddu 2019, N'Guessan 2025, Hackett 2020, Hu 2007,
+Dong 2021, Momen-Roknabadi 2020, McGlincy 2021. The cost of banding is visible and stated in
+the document: de Boer 2020 falls 2 -> 47 and Lee 2014 4 -> 49, both still inside wave 1.
+
+### New candidates and new exclusions
+
+Three rows added: Airoldi 2016 (from the Jackson 2020 citation list, nitrogen-limited
+chemostat transcriptome on the same media as Jackson's NLIM conditions), Jariani 2020 and
+Urbonaite 2021 (yeast single-cell platforms from the collection sweep). All three are
+`recall` confidence with unfetched accessions.
+
+Eight exclusion rows added: Bloom 2019 (already built), the four TF-target prior networks
+Jackson 2020 uses, the Tchourine 2018 bulk compendium, Scholes 2019, Brandner 2025
+(mapSPLiT, the only microbial both-axes Perturb-seq found, but a preprint with no deposited
+accession), mammalian Perturb-seq, bacterial single-cell atlases, and the collection's
+reviews and statistics papers.
+
+### Caveats that carry forward
+
+- `recall` is now 86 of 161 rows and three of the first twenty are `recall` (Hackett 2020,
+  Hu 2007, Lenstra 2011). Verify before writing a loader.
+- Jackson 2020's authoritative 72-strain genotype list is Supplementary file 1 Table S2, an
+  Excel file not in the mirror. The released matrix carries 38,225 cells; the abstract says
+  38,285 and the discussion 38,255.
+- The overlap check still resolves a PMID for only 56 of 161 rows.

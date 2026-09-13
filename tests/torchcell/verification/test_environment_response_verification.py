@@ -594,10 +594,11 @@ def test_categorical_dataset_gets_the_categorical_reference_rule():
     assert result.details["rule"] == "categorical_baseline"
     assert result.details["reference_categories"] == {"no_change": 3}
 
-    # the reference's category is also a measured call -> the baseline is not a baseline
+    # a census screen scores every strain, so the baseline is also a measured call
+    # (Smith 2006 grades wild type as the modal call); reported, never failed
     records = [_categorical_record(g, "sensitive", "sensitive") for g in GENES]
     result = _result(_verify(records), "reference_zero")
-    assert not result.passed
+    assert result.passed
     assert result.details["baseline_used_as_measured_call"] == {"sensitive": 3}
 
 

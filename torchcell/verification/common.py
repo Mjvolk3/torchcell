@@ -219,6 +219,18 @@ def _compound_verdict(
     return "name_only"
 
 
+ALLELE_BEARING_PERTURBATION_TYPES: frozenset[str] = frozenset(
+    {
+        "allele",
+        "damp",
+        "suppressor_allele",
+        "temperature_sensitive_allele",
+        "sequence_variant",
+    }
+)
+"""Perturbation types whose perturbed_gene_name carries an allele designation."""
+
+
 class SharedRecordRules:
     """Accumulate the family-agnostic rules over a dataset's records.
 
@@ -332,9 +344,17 @@ class SharedRecordRules:
             systematic = perturbation.get("systematic_gene_name")
             if systematic is None or systematic in self.background_genes:
                 continue
-            self._name_records[
-                (systematic, perturbation.get("perturbed_gene_name"))
-            ] += 1
+            # An allele-bearing perturbation (act1-101, cys3_damp, lte1-supp1) keeps
+            # its allele designation in perturbed_gene_name by convention (the SGA
+            # strain is keyed on it), so the one-spelling and round-trip checks do
+            # not apply; the systematic name is still checked for currency.
+            common = (
+                None
+                if perturbation.get("perturbation_type")
+                in ALLELE_BEARING_PERTURBATION_TYPES
+                else perturbation.get("perturbed_gene_name")
+            )
+            self._name_records[(systematic, common)] += 1
             self._gene_records[systematic] += 1
         if self.sgd_genes is not None:
             genes = {
@@ -485,15 +505,47 @@ class SharedRecordRules:
         )
 
     def _gene_name_result(self) -> LevelResult:
-        """L1: one systematic name, one spelling, and both resolve to each other."""
-        spellings: dict[str, set[str | None]] = {}
+        """L1: one systematic name, one canonical spelling, and both resolve to each other.
+
+        Two spellings of one systematic name are a defect when they differ only by case
+        (``TOR1``/``Tor1``: one strain stored under two labels), or when one of them
+        does not resolve back to that gene. Two DISTINCT source names that both resolve
+        to the systematic name are a fact about the source (SGD merged two ORFs the
+        array screened as separate strains, ``YPR089W``/``YPR090W``) and are reported,
+        not failed. The ``None`` sentinel of an allele-bearing perturbation is never a
+        spelling. A common name the resolver cannot place at all is reported as
+        unresolved; only a name that resolves to ANOTHER gene fails.
+        """
+        spellings: dict[str, set[str]] = {}
         for (systematic, common), _ in self._name_records.items():
-            spellings.setdefault(systematic, set()).add(common)
-        split = {
-            systematic: sorted(str(name) for name in names)
-            for systematic, names in spellings.items()
-            if len(names) > 1
-        }
+            spellings.setdefault(systematic, set())
+            if common is not None:
+                spellings[systematic].add(str(common))
+        case_split: dict[str, list[str]] = {}
+        merged_aliases: dict[str, list[str]] = {}
+        split: dict[str, list[str]] = {}
+        for systematic, names in spellings.items():
+            by_case: dict[str, set[str]] = {}
+            for name in names:
+                by_case.setdefault(name.casefold(), set()).add(name)
+            if any(len(group) > 1 for group in by_case.values()):
+                case_split[systematic] = sorted(names)
+                continue
+            if len(by_case) <= 1:
+                continue
+            if self.resolve_gene_name is None:
+                split[systematic] = sorted(names)
+                continue
+            if all(
+                self.resolve_gene_name(name).systematic_name == systematic
+                and str(_enum_value(self.resolve_gene_name(name).status))
+                in {"current", "renamed"}
+                for name in names
+            ):
+                merged_aliases[systematic] = sorted(names)
+            else:
+                split[systematic] = sorted(names)
+        split.update(case_split)
         split_records = sum(
             count
             for (systematic, _), count in self._name_records.items()
@@ -501,6 +553,7 @@ class SharedRecordRules:
         )
         not_current: list[str] = []
         mismatched: list[str] = []
+        unresolved: list[str] = []
         if self.resolve_gene_name is not None:
             for systematic in sorted(spellings):
                 resolution = self.resolve_gene_name(systematic)
@@ -515,8 +568,12 @@ class SharedRecordRules:
             for systematic, common in sorted(
                 (s, c) for s, c in self._name_records if c is not None
             ):
-                resolved = self.resolve_gene_name(str(common)).systematic_name
-                if resolved != systematic:
+                resolution = self.resolve_gene_name(str(common))
+                resolved = resolution.systematic_name
+                status = str(_enum_value(resolution.status))
+                if resolved is None or status not in {"current", "renamed"}:
+                    unresolved.append(f"{common} ({status}; stored {systematic})")
+                elif resolved != systematic:
                     mismatched.append(f"{common} -> {resolved} (stored {systematic})")
         passed = not (split or not_current or mismatched)
         if not self._name_records:
@@ -525,17 +582,27 @@ class SharedRecordRules:
             message = (
                 f"{len(spellings)} systematic names, one canonical spelling each"
                 + (
+                    f" ({len(merged_aliases)} merged-ORF aliases)"
+                    if merged_aliases
+                    else ""
+                )
+                + (
                     ", each current in the genome"
                     if self.resolve_gene_name is not None
                     else " (no resolver supplied: spelling checked, annotation not)"
                 )
+                + (
+                    f"; {len(unresolved)} common names the resolver cannot place"
+                    if unresolved
+                    else ""
+                )
             )
         else:
             message = (
-                f"{len(split)} genes carry more than one common-name spelling "
-                f"({split_records} records); {len(not_current)} systematic names are not "
-                f"the genome's current name; {len(mismatched)} common names resolve to "
-                "another gene"
+                f"{len(split)} genes carry conflicting common-name spellings "
+                f"({split_records} records; {len(case_split)} case-only); "
+                f"{len(not_current)} systematic names are not the genome's current "
+                f"name; {len(mismatched)} common names resolve to another gene"
             )
         return LevelResult(
             level=Level.L1,
@@ -547,8 +614,10 @@ class SharedRecordRules:
                 "resolver": self.resolve_gene_name is not None,
                 "split_spellings": dict(sorted(split.items())[:20]),
                 "n_records_with_split_spelling": split_records,
+                "merged_orf_aliases": dict(sorted(merged_aliases.items())[:20]),
                 "not_current": not_current[:20],
                 "common_name_mismatch": mismatched[:20],
+                "unresolved_common_names": unresolved[:20],
             },
         )
 

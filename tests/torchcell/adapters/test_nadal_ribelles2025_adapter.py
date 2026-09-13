@@ -1,11 +1,15 @@
 """Unit tests for the pseudobulk-expression and environment-perturbation node methods."""
 
-import hashlib
 import json
 from typing import Any, cast
 
 from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.identity import (
+    environment_identity,
+    environment_perturbation_identity,
+    identity_sha256,
+)
 from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
@@ -54,9 +58,7 @@ def test_pseudobulk_properties_keep_scalars_typed_and_dict_as_json() -> None:
 def test_environment_perturbation_node_is_content_addressed() -> None:
     perturbation = _nacl_environment().perturbations[0]
     node = CellAdapter._environment_perturbation_node_from(perturbation)
-    expected_id = hashlib.sha256(
-        json.dumps(perturbation.model_dump()).encode("utf-8")
-    ).hexdigest()
+    expected_id = identity_sha256(environment_perturbation_identity(perturbation))
     assert node.get_id() == expected_id
     assert node.get_label() == "environment perturbation"
     props = node.get_properties()
@@ -77,9 +79,7 @@ def test_environment_perturbation_node_is_content_addressed() -> None:
 
 def test_environment_perturbation_edge_targets_the_environment_hash() -> None:
     environment = _nacl_environment()
-    environment_id = hashlib.sha256(
-        json.dumps(environment.model_dump()).encode("utf-8")
-    ).hexdigest()
+    environment_id = identity_sha256(environment_identity(environment))
 
     class FakeExperiment:
         pass

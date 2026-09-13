@@ -1,0 +1,69 @@
+%% notes-tex/database-expansion-100/sections/synergies.tex
+%% [[experiments.database.expansion-100]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-100/sections/synergies.tex
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py for the table;
+%% surrounding prose is hand-authored
+
+\section{What each candidate joins to\secstatus{todo}}\label{sec:synergies}
+
+A dataset's value in a substrate is not only what it measures. It is also what becomes
+measurable once it sits beside what is already held. Table~\ref{tab:synergies} names 101
+such pairs across 59 candidates, each with the axis the two share.
+
+\subsection{A join needs a shared axis, not a shared theme\secstatus{todo}}
+
+The \term{join key} column is required rather than decorative. Two metabolomics papers are
+not joinable because both measure metabolites; they are joinable when they measure
+overlapping analytes on overlapping strains. The keys in use are the deletion collection,
+the sequenced 1,011-isolate panel, a segregant panel from one cross, a guide library over
+one gene set, a media formulation, a compound set, and a single gene. A pair with none of
+these is a theme and is not listed.
+
+Fifty-six of the 101 pairs have a partner that is already built, so that join becomes
+runnable on the day the candidate is ingested rather than after two ingestions. Those are
+the cheapest experiments in the table and none of them has been run.
+
+\subsection{The joins that motivate the ordering\secstatus{todo}}
+
+Four groups carry most of the weight, and each is a specific question rather than an
+accumulation.
+
+\notesec{Metabolism against expression on one genotype axis} Blank 2005 measures flux
+through central carbon metabolism on deletion mutants that already carry an expression
+profile in the supported Kemmeren 2014 compendium, which is the only place in this table
+where the transcript-to-flux step can be fitted rather than assumed. Cooper 2010 measures
+the same amino-acid pools as the supported Mulleder 2016 by a different platform on an
+overlapping genotype set, which separates biology from batch. Aulakh 2025 adds a second
+metabolic panel, the ionome, on the whole collection. Above them sit Jakobson 2025 and
+Albert 2018, protein and transcript variation on one sequenced segregant panel, and
+Muenzner 2024 against the supported Caudal 2024, proteome and transcriptome on one isolate
+panel.
+
+\notesec{A condition axis measured on more than one layer} Brauer 2008 and Boer 2010 are
+the transcript and metabolite halves of one chemostat series, same laboratory and same
+limitations, and Hackett 2016 adds flux over the same conditions. Airoldi 2016, new to this
+pass, supplies the nitrogen-limited counterpart, and its media are the media Jackson 2020
+profiles single cells in. That last pairing is what makes a deletion effect in the
+single-cell atlas a contrast against a wild-type baseline in the same medium rather than an
+absolute.
+
+\notesec{One perturbation, two modalities} Liu 2021 against Kuroda 2019 is isobutanol
+tolerance on one collection by two readouts. Mukherjee 2021 against the supported
+Mormino 2022 is acetic acid by knockdown at genome scale against twelve genes. Dong 2021
+against the supported Lian 2019 is one tri-functional library read out by growth selection
+and by a metabolite biosensor, which is how a tolerance screen becomes a production screen.
+McGlincy 2021 against Momen-Roknabadi 2020 is two independently designed CRISPR
+interference libraries over the same genes, which is the cheapest decisive test of whether
+a model has learned gene function or guide design.
+
+\notesec{The same genotype read out in bulk and per cell} Jackson 2020 against the
+supported Kemmeren 2014 is the same transcription-factor deletions as a population average
+and as a per-cell distribution, which is the only available calibration of what pseudobulk
+loses. Hu 2007 extends the bulk side to 269 regulators. Boocock 2025 against Albert 2018 is
+the same cross measured in bulk and per cell.
+
+None of these transfers has been measured. Each is a hypothesis about what a model could
+learn, and each becomes a run once both halves are held.
+
+\clearpage
+\input{tables/synergies}

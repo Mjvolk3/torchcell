@@ -11,11 +11,11 @@
 \input{tables/sources}
 
 \clearpage
-\section{What the recommended 151 add up to\secstatus{todo}}\label{sec:counts}
+\section{What the list adds up to\secstatus{todo}}\label{sec:counts}
 
 \input{tables/counts}
 
-The recommended set carries roughly $1.8\times10^8$ genotype-by-environment instances and
+All 161 rows carry roughly $1.8\times10^8$ genotype-by-environment instances and
 $5.7\times10^8$ individual measurements. Both are lower bounds: rows whose axes could not
 be pinned down contribute nothing to either total, and the instance figures marked
 $\dagger$ are products of the two axes rather than counts the papers report.
@@ -29,4 +29,16 @@ rest: an 80-base promoter with an expression readout, not a strain with a phenot
 
 The honest summary is that this list contains one dataset larger than everything already
 built, one larger than everything else here, and about $2\times10^7$ instances spread across
-the remaining 148 rows.
+the remaining 150 rows.
+
+Wave 1 reads differently from the list as a whole, which is the point of banding it. Its
+class mix is 18 expression and single-cell rows, 10 natural variation, 8 CRISPR library
+screens and 6 metabolite rows, against a full-list mix in which tolerance screens are the
+largest group. Its sequence bases shift the same way: 14 of the 50 are
+\term{reference-only}, meaning the environment rather than a strain edit carries the
+perturbation, which is what a condition-crossed expression layer looks like.
+
+\clearpage
+\section{Rank changes against the previous pass\secstatus{todo}}\label{sec:moves}
+
+\input{tables/swaps}

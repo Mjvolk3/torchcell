@@ -29,7 +29,7 @@
 %% actually wants. \arraybackslash restores \\ after the > directive eats it.
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
-\title{\vspace{-1.5em}One Hundred Fifty-six Candidates for Datasets 50--200}
+\title{\vspace{-1.5em}One Hundred Sixty-one Candidates for Datasets 51--200}
 \author{Michael Volk}
 \date{\today}
 
@@ -38,13 +38,22 @@
 \thispagestyle{empty}
 
 \noindent
-The database holds 49 schematized and L0--L4-verified \org{Saccharomyces cerevisiae}
-datasets. Reaching 200 needs 151 more. Table~\ref{tab:candidates} ranks 159 candidates and
-Table~\ref{tab:sources} gives each one's citation, link and data location; rows 1--151 are
-the recommended set and the remaining 8 are a ranked reserve. Table~\ref{tab:excluded}
-records what was considered and dropped, which is where the one hard constraint shows up:
-a dataset earns a place only if the total genomic content of each strain can be
-reconstructed.
+The database holds 50 schematized and L0--L4-verified \org{Saccharomyces cerevisiae}
+datasets, of which 36 are served and 14 are built and waiting on the next full graph
+rebuild. Reaching 200 needs 150 more. Table~\ref{tab:candidates} ranks 161 candidates and
+Table~\ref{tab:sources} gives each one's citation, link and data location.
+
+The list is ordered for a decision about the next build week rather than for the
+long-run total, so it carries two near lines as well as the arithmetic one. Rows 1--50 are
+the recommended next builds, rows 51--70 are the bench behind them, and rows 71--150
+complete the set that reaches 200. Ranking puts the rows a planned yeast Perturb-seq is
+designed against first, then the rows that place metabolism and expression on genotypes
+that can be joined, then scale (Sec.~\ref{sec:rule}). Table~\ref{tab:synergies} names every
+join a candidate opens, against a supported dataset or against another candidate, with the
+shared axis that makes the pair addressable. Table~\ref{tab:swaps} records every rank
+change against the previous pass. Table~\ref{tab:excluded} records what was considered and
+dropped, which is where the one hard constraint shows up: a dataset earns a place only if
+the total genomic content of each strain can be reconstructed.
 
 \vspace{0.5em}
 \tccontents
@@ -52,6 +61,7 @@ reconstructed.
 
 \input{sections/rule}
 \input{sections/table}
+\input{sections/synergies}
 \input{sections/classes}
 \input{sections/perturbseq}
 \input{sections/caveats}

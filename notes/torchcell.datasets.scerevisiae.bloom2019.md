@@ -133,3 +133,83 @@ The plan's hypothesis that every cross would look like cross A (about 86 blocks,
 `preprocess/verification_report.json`, 22.4 min streaming: **L0-L4 PASS**, 17 levels. L0 530,100 records validate; L1 count 530,100, 530,100 unique (segregant, condition) pairs, 13,950 phenotype ids <-> 13,950 genotype rows, 530,100 documented gaps (the unreleased SE on every record, 0 deferred fields); L2 530,100 values finite and equal to the released tsv cells, 13,950 mosaics re-expand to their released marker rows, block invariants hold; L3 36 residual + 2 absolute conditions, reference 0 everywhere, 38/38 documented conditions with exactly `YNB;;1` and `YPD;;1` unedited, 53 sourced values audited against the raw mirror; L4 15 parents resolve in the assembly index, xls pairs and per-cross counts match, ref allele equals the S288C base at 0.9924 of 32,000 sampled markers (R64 coordinates, settled), 6,557 spanned genes all in SGD.
 
 The first run failed one level: three xls-anchored media quotes had skipped the row's volume columns and the YP base quote paraphrased two rows; `Media.provenance` was not audited, which let the paraphrase through. Quotes are now verbatim row strings, the audit walks medium-level provenance, and the store was rebuilt so the stored media carry the corrected quotes.
+
+## 2026.09.12 - Compound identity: the 18 name-only stress compounds resolved, store rebuilt
+
+Serve-50 review finding: 18 of the 20 dosed stress compounds were name-only (only
+fluconazole and sorbitol carried an InChIKey), which is 251,100 of the 530,100 records,
+47.4%. Under the serve-50 rule that a compound with no structure identifier cannot be
+encoded, those records would have been dropped rather than served.
+
+### No loader change was needed, and that is a measured result
+
+`build_conditions()` already routes every stress compound through
+`torchcell.datamodels.compound_identity.resolved_compound` (the `_smp` helper), so the
+18 name-only compounds were a gap in the CURATED TABLE, not in this loader. All 20 labels
+are now in `torchcell/datamodels/compound_identity_inputs/bloom2019.txt` and resolve:
+
+| status | n | compounds |
+|---|---|---|
+| `RESOLVED` (InChIKey + CID, most also ChEBI) | 19 | 6-azauracil, cadmium chloride, caffeine, cobalt chloride, Congo red, copper sulfate, diamide, EGTA, fluconazole, formamide, lithium chloride, magnesium chloride, manganese sulfate, methotrexate, neomycin, paraquat, sodium dodecyl sulfate, sorbitol, zeocin |
+| `RESOLVED_MIXTURE` (ChEBI, no single-molecule InChIKey) | 1 | tunicamycin (`CHEBI:29699`, at least ten homologues) |
+
+Tunicamycin keeps its typed `ProvenanceGap(field="inchikey")`, which is the honest encoding
+for a substance with no single structure, and the L3 identity rule accepts ChEBI in that
+case. `torchcell/datasets/scerevisiae/bloom2019.py` is UNCHANGED: the 38 xls-anchored
+`dose_quote` strings stay verbatim (the L3 `sourced_values` audit re-reads them out of the
+raw mirror), and the media constants the loader imports all still resolve after the library
+retype (`SD_MINIMAL` is now `SD`, which this loader never imported; it imports `YPD`,
+`YPD_ETHANOL`, `YNB_GLUCOSE_SOLID` and the eleven `YP_*` carbon-source variants, and all
+14 media it builds are `MEDIA_LIBRARY` objects).
+
+Two tests were added to `tests/torchcell/datasets/scerevisiae/test_bloom2019.py`:
+`test_every_stress_compound_resolves_to_a_structure_identifier` (no compound is left with
+neither an identifier nor a typed gap; tunicamycin is the only one without an InChIKey) and
+`test_every_condition_medium_is_a_shared_library_object`.
+
+### Rebuild
+
+The stored `Compound` objects change when the table fills in, so the dev store was rebuilt
+rather than patched. The previous build moved aside to
+`data/torchcell/bloom2019/deprecated-compound-identity-2026-09-12/` (nothing deleted);
+rebuild wrote 530,100 records in about 24 min, and `preprocess/block_counts.json` is
+written as before. Verified on the new store: 20 distinct stress compounds, 20 with an identifier,
+tunicamycin the only one without an InChIKey.
+
+### Verification (`verify_segregant_growth_streaming`, measured on the rebuilt store)
+
+Run from a scratch script with the same parameters `run_segregant_growth` passes
+(raw mirror, assembly index, genome, SGD gene set, per-cross gene set); report written to
+`preprocess/verification_report.json`. **L0-L4 PASS, 21 levels.** The two lines the review
+was about:
+
+```
+  [ok] L3 compound_identity: environment edits: 279000 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)
+  [ok] L3 media_compound_identity: medium components: 920700 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)
+  [ok] L3 media_membership: 530100 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (14 distinct media)
+```
+
+Before the rebuild the same store served 251,100 records whose only chemical identity was a
+name. The rest of the report is unchanged from the 2026.09.12 run above: L0 530,100 records
+validate, L1 count 530,100 with 530,100 unique (segregant, condition) pairs and a 13,950
+<-> 13,950 id bijection, L2 values equal to the released tsv cells and 13,950 mosaics
+re-expanding to their marker rows, L3 36 residual + 2 absolute conditions with reference 0
+everywhere and 53 sourced values audited against the raw mirror, L4 15 parents pinned,
+per-cross counts matching the xls, 0.9924 marker-reference agreement and 6,557 spanned genes
+all in SGD.
+
+The gap census moved from 530,100 to 544,050 documented gaps: the 530,100 unreleased
+`environment_response_se` values plus 13,950 tunicamycin `inchikey` gaps (one per segregant
+on the single tunicamycin condition). `media_membership` also now reports all 14 media as
+shared library objects rather than derived ones, because the retyped library owns them
+directly.
+
+### Open flags
+
+- **Records to drop: none.** The review's fallback of dropping 251,100 records is moot now
+  that all 20 compounds resolve.
+- **No `dropped_records.json`** is written for this dataset: nothing is dropped, so there is
+  no rule to record.
+- The `RESOLVED_MIXTURE` route means tunicamycin's `environment perturbation` node joins on
+  ChEBI, not on an InChIKey. Any query keyed strictly on `inchikey` will miss that one
+  condition (13,950 records).

@@ -1,0 +1,190 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+\begin{landscape}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}r@{\hspace{4pt}} L{42mm} L{44mm} L{48mm} L{96mm}@{}}
+\caption[]{Named joins between a candidate and either a supported dataset or
+another candidate. \emph{\#} is the candidate's rank in
+Table~\ref{tab:candidates}. A partner in \textbf{bold} is already built, so that
+row's join becomes runnable the moment the candidate is ingested; an unbolded
+partner is itself a candidate, so the join costs two ingestions. \emph{Join key}
+is the shared axis that makes the pair addressable; a pair with no such axis is a
+theme and is not listed. None of these transfers has been measured.}
+\label{tab:synergies}\\
+\toprule
+\textbf{\#} & \textbf{Candidate} & \textbf{Partner} & \textbf{Join key} & \textbf{What the join yields} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\footnotesize\emph{Table~\ref{tab:synergies}, continued}}\\
+\toprule
+\textbf{\#} & \textbf{Candidate} & \textbf{Partner} & \textbf{Join key} & \textbf{What the join yields} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1 & Boocock 2025 (single-cell eQTL mapping) & \textbf{Nadal-Ribelles 2025 (Perturb-seq)} & single-cell transcriptome readout, one genotype per cell & One dataset carries genotypes made by recombination and the other genotypes made by deletion, on the same readout, which is the test of whether a per-cell expression model transfers between the two. \\
+ &  & Albert 2018 (eQTL in 1,012 segregants) & same BY by RM cross, bulk against single cell & The same expression quantitative trait loci measured in bulk and per cell, so the cell-to-cell variance a bulk average hides is recoverable. \\
+ &  & Jakobson 2025 (genome-to-proteome map) & segregant genotype class & Transcript and protein variation on one recombinant panel. \\
+\addlinespace[5pt]
+2 & Hale 2024 (CRISPRi x natural variation) & \textbf{Smith 2016 (CRISPRi chem-genetic)} & CRISPR interference knockdown in S288C & One knockdown effect measured in the reference background and across 169 segregants, which separates a gene effect from a background effect. \\
+ &  & McGlincy 2021 (genome-scale CRISPRi library) & guide library design & Whether a knockdown effect is a property of the gene or of the guide. \\
+ &  & \textbf{Bloom 2019 (16-parent cross)} & segregant genotype class, growth traits & Knockdown effect against natural allele effect on comparable panels. \\
+\addlinespace[5pt]
+3 & Jackson 2020 (TF-deletion single-cell atlas) & \textbf{Kemmeren 2014} & single deletions of the same transcription factors, bulk against single cell & The same knockout read out as a population average and as a per-cell distribution, which is the only available calibration of what pseudobulk loses. \\
+ &  & \textbf{Nadal-Ribelles 2025 (Perturb-seq)} & deletion perturbation with a single-cell transcriptome readout & Twelve genotypes over eleven conditions against about 3,500 genotypes over two, so genotype breadth and condition breadth are separable for once. \\
+ &  & Airoldi 2016 (nitrogen-limited steady-state and dynamic transcriptome) & the same nitrogen-limited media formulations & A wild-type expression baseline in the same medium, which is what makes the deletion effect a contrast rather than an absolute. \\
+ &  & Hackett 2020 (IDEA inducible-TF transcriptome time series) & the same transcription factors, deletion against induction & Loss of function against gain of function on one regulator set. \\
+\addlinespace[5pt]
+4 & Puddu 2019 (WGS of the deletion collection) & \textbf{Costanzo 2016 dmf} & the same deletion collection & Converts the sequence basis of every S288C-KO row from an assumption into a measurement, including the largest built datasets. \\
+ &  & \textbf{Nadal-Ribelles 2025 (Perturb-seq)} & pooled deletion strains identified by barcode & Which pooled strains are not what their barcode says, which bears directly on the reported genotype-assignment impurity. \\
+\addlinespace[5pt]
+5 & N'Guessan 2025 (segregant scRNA-seq eQTL) & Boocock 2025 (single-cell eQTL mapping) & segregant genotype class, single-cell transcriptome & Two independent single-cell expression quantitative trait loci maps, which is the replication neither has on its own. \\
+ &  & \textbf{Bloom 2019 (16-parent cross)} & segregant genotype class, 16 founders against 2 & Whether an expression effect measured in a two-parent cross holds across sixteen founders. \\
+\addlinespace[5pt]
+6 & Hackett 2020 (IDEA inducible-TF transcriptome time series) & \textbf{Kemmeren 2014} & the same transcription factors, induction against deletion & Whether a regulator's targets are the same set whether it is removed or over-induced. \\
+ &  & \textbf{Sameith 2015 dm} & transcription-factor pairs & Induction dynamics for the single factors whose double deletions carry a measured expression epistasis. \\
+\addlinespace[5pt]
+7 & Hu 2007 (TF deletion expression compendium) & \textbf{Kemmeren 2014} & single deletions with a bulk expression readout & Two independently produced deletion expression compendia over overlapping regulators, which is the reproducibility check neither has alone and the largest such pair in yeast. \\
+ &  & Jackson 2020 (TF-deletion single-cell atlas) & transcription-factor deletions & 269 regulators in bulk against 11 per cell, so the regulators the single-cell atlas cannot reach still carry a profile. \\
+\addlinespace[5pt]
+8 & Dong 2021 (MAGIC + SAM biosensor) & \textbf{Lian 2019 (MAGIC CRISPR-AID)} & the same tri-functional library, fitness against biosensor readout & One library, two labels: growth selection and product concentration, which is how a tolerance screen is converted into a production screen. \\
+ &  & \textbf{Cachera 2023 (CRI-SPA betaxanthin)} & metabolite biosensor or colorimetric product readout on a genome-scale library & Two product-labeled genome-scale screens on different chemistry. \\
+\addlinespace[5pt]
+9 & Momen-Roknabadi 2020 (inducible CRISPRi library) & McGlincy 2021 (genome-scale CRISPRi library) & independently designed guide libraries over the same genes & The paired half of the library-transfer test. \\
+ &  & \textbf{SGD essentiality} & essential genes, knockdown against deletion & A graded phenotype where a deletion collection records only absence. \\
+\addlinespace[5pt]
+10 & McGlincy 2021 (genome-scale CRISPRi library) & Momen-Roknabadi 2020 (inducible CRISPRi library) & independently designed guide libraries over the same genes & Library-to-library transfer, which is the cheapest decisive test of whether a model learned gene function or guide-design idiosyncrasy. \\
+ &  & \textbf{Smith 2016 (CRISPRi chem-genetic)} & CRISPR interference over the same gene set & A knockdown fitness prior for the chemical-genetic conditions already built. \\
+\addlinespace[5pt]
+11 & Bao 2018 (CHAnGE single-nucleotide library) & \textbf{Lian 2019 (MAGIC CRISPR-AID)} & guide-indexed genome-wide library from the same laboratory & Sub-gene alleles against whole-gene activation, interference and deletion on one platform lineage. \\
+ &  & Li 2016 (tRNA fitness landscape) & designed single-nucleotide variants with a fitness label & Genome-wide shallow variant coverage against single-gene exhaustive coverage. \\
+\addlinespace[5pt]
+12 & Crook 2016 (tunable RNAi, isobutanol + 1-butanol) & \textbf{Lopez 2024 (isobutanol screen, private)} & isobutanol, knockdown against deletion & A graded knockdown axis over the phenotype the built biosensor screen measures as a titer proxy. \\
+ &  & Kuroda 2019 (isobutanol-specific tolerance) & isobutanol tolerance on the same collection & Dose-graded knockdown against whole-gene deletion for one phenotype. \\
+\addlinespace[5pt]
+13 & Roy 2018 (multiplexed precision editing) & Bao 2018 (CHAnGE single-nucleotide library) & designed edits, single against multiplexed & Whether multiplexed edit effects are the sum of their single-edit effects. \\
+\addlinespace[5pt]
+14 & Newman 2006 (protein noise, GFP library) & \textbf{Messner 2023 (proteome)} & protein abundance across the genome, per cell against population & Which proteins have a population mean that no single cell is near, which decides where a mean-level model is the wrong object. \\
+ &  & Gasch 2017 (single-cell stress heterogeneity) & per-cell variation in an isogenic population & Noise at the protein and transcript layers on the same question. \\
+\addlinespace[5pt]
+15 & Mukherjee 2021 (CRISPRi essential genes x acetic acid) & \textbf{Mormino 2022 (CRISPRi acetic-acid)} & acetic acid, CRISPR interference & The genome-scale extension of a twelve-gene screen already built. \\
+ &  & \textbf{Mota 2024 (weak-acid screen)} & weak-acid stress on deletion strains & Essential-gene coverage for a phenotype the deletion collection can only sample from the non-essential side. \\
+\addlinespace[5pt]
+16 & Lian 2017 (CRISPR-AID, beta-carotene) & \textbf{Ozaydin 2013 (beta-carotene screen)} & beta-carotene titer & Three perturbation modalities against a whole-collection deletion screen on the same product. \\
+\addlinespace[5pt]
+17 & Lenstra 2011 (chromatin regulator deletion expression) & \textbf{Kemmeren 2014} & single deletions with a bulk expression readout, different gene class & Chromatin regulators beside sequence-specific factors on one expression readout. \\
+ &  & \textbf{Sameith 2015 dm} & regulator deletions, single against double & Whether chromatin-regulator effects combine the way transcription-factor effects do. \\
+\addlinespace[5pt]
+18 & Jariani 2020 (yeast scRNA-seq through lag phase) & Jackson 2020 (TF-deletion single-cell atlas) & carbon-source shift with a per-cell readout & A transition sampled densely in time where the atlas samples eleven steady states. \\
+\addlinespace[5pt]
+19 & Guo 2018 (CRISPR-Cas9 tiling of essential genes) & \textbf{SGD essentiality} & essential genes & A graded allelic series where the built record is binary. \\
+\addlinespace[5pt]
+20 & Urbonaite 2021 (yeastDrop-Seq under drug treatment) & \textbf{Hoepfner 2014 (HIP/HOP atlas)} & chemical treatment of yeast & A per-cell readout for compound response where the built atlas has a pooled fitness score. \\
+\addlinespace[5pt]
+21 & Nadal-Ribelles 2019 (sensitive yeast scRNA-seq) & \textbf{Nadal-Ribelles 2025 (Perturb-seq)} & same laboratory, protocol against application & The sensitivity ceiling of the platform the built genome-scale single-cell dataset was produced on. \\
+ &  & Gasch 2017 (single-cell stress heterogeneity) & isogenic per-cell variation in BY4741 & Two independent measurements of how much an unperturbed yeast population varies, which is the floor a perturbation must clear. \\
+\addlinespace[5pt]
+22 & Gasch 2017 (single-cell stress heterogeneity) & Gasch 2000 (environmental stress response) & the same stress conditions, bulk against single cell & How much of the canonical stress response is a population average of cells that are individually in different states. \\
+\addlinespace[5pt]
+23 & Jaffe 2019 (multiplexed CRISPR interference epistasis) & \textbf{Costanzo 2016 dmi} & gene pairs, knockdown against deletion & Whether digenic interaction measured between two nulls is recovered between two knockdowns, which decides if the built interaction data can supervise a knockdown campaign. \\
+ &  & \textbf{Kuzmin 2018 tmi} & higher-order gene combinations & The knockdown analog of trigenic interaction. \\
+\addlinespace[5pt]
+24 & Jackson 2023 (wild-type scRNA-seq time course for RNA kinetics) & Jackson 2020 (TF-deletion single-cell atlas) & same platform and laboratory, wild type against deletions & The unperturbed per-cell variance the perturbed atlas is read against. \\
+\addlinespace[5pt]
+25 & Brettner 2024 (ultra-high-throughput yeast scRNA-seq) & Jackson 2020 (TF-deletion single-cell atlas) & multiplexed genotypes per single-cell run & The throughput ceiling for a barcoded-genotype design, measured rather than assumed. \\
+\addlinespace[5pt]
+26 & Mulleder 2012 (prototrophic deletion collection) & \textbf{Mulleder 2016 (amino-acid metabolome)} & the same prototrophic deletion strains & The strain resource the built amino-acid metabolome was measured on, which is what makes defined-medium phenotyping interpretable. \\
+ &  & Jackson 2020 (TF-deletion single-cell atlas) & prototrophy as a precondition for minimal media & A ready-made prototrophic library for a campaign that needs nitrogen or carbon limitation. \\
+\addlinespace[5pt]
+27 & Su 2023 (single-cell transcriptomes under four stresses) & Gasch 2000 (environmental stress response) & osmotic and starvation stress & Full-length per-cell transcripts against the bulk stress-response reference. \\
+\addlinespace[5pt]
+28 & Wang 2022 (single-cell transcriptomes across replicative aging) & Jackson 2023 (wild-type scRNA-seq time course for RNA kinetics) & wild-type per-cell states over time & Replicative age as a covariate on a platform that does not measure it. \\
+\addlinespace[5pt]
+29 & Albert 2018 (eQTL in 1,012 segregants) & Jakobson 2025 (genome-to-proteome map) & the same segregant panel & The transcript half of a paired transcript and protein map. \\
+ &  & Gerke 2017 (urea-cycle mQTL) & segregant genotype class & A metabolite locus read through the transcripts of the pathway that produces it. \\
+\addlinespace[5pt]
+30 & Jakobson 2025 (genome-to-proteome map) & Albert 2018 (eQTL in 1,012 segregants) & the same sequenced segregant panel & Protein and transcript quantitative trait loci on one genotype set, which is the direct measurement of how much of protein variation transcript variation explains. \\
+ &  & \textbf{Messner 2023 (proteome)} & protein abundance, natural variation against deletion & Whether the proteome response to a deleted gene resembles the response to a natural allele of it. \\
+\addlinespace[5pt]
+31 & Muenzner 2024 (natural-isolate proteome) & \textbf{Caudal 2024 (pan-transcriptome)} & the sequenced 1,011-isolate panel & Transcriptome and proteome on overlapping isolates, which is the cheap-layer against expensive-layer transfer question at natural genetic distance. \\
+ &  & Dutta 2026 (barcoded natural-isolate chemical response) & the same 1,011-isolate panel & Genome, transcriptome, proteome and a chemogenomic response surface on one genotype axis. \\
+\addlinespace[5pt]
+32 & Cooper 2010 (CE-MS amino-acid metabolome) & \textbf{Mulleder 2016 (amino-acid metabolome)} & the same amino acids on an overlapping deletion set & Two platforms measuring one trait class, which is the cleanest available test of whether a model learned biology or a batch effect. \\
+ &  & \textbf{Kemmeren 2014} & the same deletion collection & Amino-acid pools paired with the expression profile of the same knockout. \\
+\addlinespace[5pt]
+33 & Aulakh 2025 (genome-scale ionome) & \textbf{Mulleder 2016 (amino-acid metabolome)} & the whole deletion collection, metabolite readout & Two orthogonal metabolic panels on one genotype axis. \\
+ &  & \textbf{Kemmeren 2014} & the same deletion collection & Element levels against the transcriptional response of the same knockout. \\
+\addlinespace[5pt]
+34 & Leutert 2023 (phosphoproteome x 101 conditions) & Gasch 2000 (environmental stress response) & overlapping stress conditions & Post-translational regulation against transcriptional regulation for one condition set, on the layer that acts first. \\
+ &  & \textbf{Messner 2023 (proteome)} & protein identity & Modification state against abundance, which abundance alone cannot separate. \\
+\addlinespace[5pt]
+35 & Brauer 2008 (growth-rate-controlled chemostat transcriptome) & Boer 2010 (metabolome across nutrient limitations) & the same chemostat limitations & The transcript half of a paired transcript and metabolite series. \\
+ &  & Airoldi 2016 (nitrogen-limited steady-state and dynamic transcriptome) & growth rate under limitation, carbon against nitrogen & Whether the growth-rate expression program is nutrient-general. \\
+\addlinespace[5pt]
+36 & Hackett 2016 (SIMMER multi-omic flux) & Boer 2010 (metabolome across nutrient limitations) & the same nutrient-limited chemostats & Metabolite concentration and flux under one condition set, which is what a kinetic model needs and neither supplies alone. \\
+ &  & Brauer 2008 (growth-rate-controlled chemostat transcriptome) & nutrient limitation at controlled growth rate & Expression, metabolite and flux over one condition axis. \\
+\addlinespace[5pt]
+37 & Zhu 2014 (kinase / phosphatase lipidomics) & \textbf{da Silveira 2014 (lipidomics)} & lipid species on deletion strains & A second lipidome on a signaling-focused genotype set. \\
+ &  & \textbf{Kemmeren 2014} & kinase and phosphatase deletions & Lipid composition against the transcriptional response of the same signaling mutant. \\
+ &  & \textbf{Xue 2025 (free fatty acids, private)} & fatty-acid metabolism & Lipid class distribution against free fatty-acid titer, the two sides of the malonyl-CoA sink. \\
+\addlinespace[5pt]
+38 & Gerke 2017 (urea-cycle mQTL) & Albert 2018 (eQTL in 1,012 segregants) & segregant genotype class & A metabolite locus and the expression loci in the same interval. \\
+ &  & \textbf{Mulleder 2016 (amino-acid metabolome)} & nitrogen and amino-acid metabolites & Natural-allele against deletion effects on one metabolic module. \\
+\addlinespace[5pt]
+39 & Ambroset 2014 (metabolite QTL) & Peeters 2021 (fermentation-trait QTL atlas) & segregant panels with fermentation traits & 74 metabolites against 18 mapped traits, so a trait locus can be read as a metabolite change. \\
+ &  & \textbf{Zelezniak 2018 (metabolome)} & metabolite panel & Recombinant against deletion genotypes on a metabolite readout. \\
+\addlinespace[5pt]
+40 & Blank 2005 (13C metabolic flux) & \textbf{Kemmeren 2014} & deletion strains present in both & Flux against expression for the same knockout, which is the only place the transcript-to-flux step can be fitted rather than assumed. \\
+ &  & \textbf{Mulleder 2016 (amino-acid metabolome)} & deletion strains, flux against pool size & Whether a changed pool reflects changed flux or changed demand. \\
+\addlinespace[5pt]
+41 & Skelly 2013 (expression variation across isolates) & Muenzner 2024 (natural-isolate proteome) & natural isolates, paired against joined modalities & A within-experiment paired transcript and protein measurement to calibrate the cross-study join. \\
+\addlinespace[5pt]
+42 & Airoldi 2016 (nitrogen-limited steady-state and dynamic transcriptome) & Jackson 2020 (TF-deletion single-cell atlas) & the same nitrogen-limited media & A wild-type bulk baseline for the medium the single-cell atlas perturbs in. \\
+ &  & Yu 2021 (proteome and metabolome under nitrogen limitation) & nitrogen limitation & Transcript, protein and metabolite under one limitation. \\
+\addlinespace[5pt]
+43 & Boer 2010 (metabolome across nutrient limitations) & Brauer 2008 (growth-rate-controlled chemostat transcriptome) & the same chemostat limitations and growth rates & The metabolite and transcript halves of one experimental series. \\
+ &  & \textbf{Zelezniak 2018 (metabolome)} & metabolite panel & Condition-driven against genotype-driven metabolite variation. \\
+\addlinespace[5pt]
+44 & Tengolics 2024 (domestication metabolome) & \textbf{Caudal 2024 (pan-transcriptome)} & sequenced natural isolates & Metabolite against transcript variation across the same population. \\
+\addlinespace[5pt]
+45 & Eder 2020 (flux QTL) & Blank 2005 (13C metabolic flux) & flux measurement, natural variation against deletion & Whether flux control points found by deletion are the loci natural variation actually moves. \\
+ &  & Albert 2018 (eQTL in 1,012 segregants) & segregant genotype class & Flux loci against expression loci on comparable panels. \\
+\addlinespace[5pt]
+46 & Yu 2021 (proteome and metabolome under nitrogen limitation) & Airoldi 2016 (nitrogen-limited steady-state and dynamic transcriptome) & nitrogen limitation & The transcript layer for the protein and metabolite layers measured here. \\
+\addlinespace[5pt]
+47 & de Boer 2020 (100M random promoters) & Vaishnav 2022 (regulatory DNA fitness landscape) & the same random promoter library, expression against fitness & Two labels on one sequence set, which turns a sequence-to-expression model into a sequence-to-fitness model without new data. \\
+ &  & Renganaath 2020 (natural promoter-variant MPRA) & promoter sequence with a measured expression readout & Whether a model trained on random sequence predicts the effect of a real allele, the cheapest decisive transfer test in the table. \\
+\addlinespace[5pt]
+48 & Vaishnav 2022 (regulatory DNA fitness landscape) & de Boer 2020 (100M random promoters) & the same promoter library & Fitness label for sequences that already carry an expression label. \\
+\addlinespace[5pt]
+49 & Lee 2014 (HIP-HOP fitness signatures) & \textbf{Hoepfner 2014 (HIP/HOP atlas)} & the same heterozygous and homozygous collections, compound response & Two chemical-genetic matrices on one genotype axis, which is enough compound overlap to measure cross-screen reproducibility directly. \\
+ &  & \textbf{Hillenmeyer 2008 het (FitDb HIP)} & the same collections and readout & A third independent screen of the same design. \\
+\addlinespace[5pt]
+50 & Nguyen Ba 2022 (barcoded bulk QTL, 100k segregants) & \textbf{Bloom 2019 (16-parent cross)} & segregant genotype class, panel size & One cross at 100,000 progeny against sixteen founders at 14,000, which separates panel size from allelic diversity. \\
+\addlinespace[5pt]
+51 & Galardini 2019 (four backgrounds x 38 conditions) & \textbf{Costanzo 2021 (condition-SGA)} & deletion strains across conditions & The same conditional fitness question asked in four backgrounds rather than one. \\
+ &  & Hale 2024 (CRISPRi x natural variation) & perturbation held fixed, background varied & Deletion against knockdown for the background-dependence question. \\
+\addlinespace[5pt]
+52 & Parsons 2006 (bioactive-compound profiling) & \textbf{Hoepfner 2014 (HIP/HOP atlas)} & compound response on deletion strains & Compound overlap across screens run on different platforms. \\
+\addlinespace[5pt]
+53 & Dutta 2026 (barcoded natural-isolate chemical response) & \textbf{Caudal 2024 (pan-transcriptome)} & the sequenced 1,011-isolate panel & Chemical response and transcriptome on one isolate set. \\
+ &  & \textbf{Hoepfner 2014 (HIP/HOP atlas)} & compound response, isolates against deletions & Whether compound sensitivity found by gene deletion predicts sensitivity across natural genetic backgrounds. \\
+\addlinespace[5pt]
+54 & Li 2016 (tRNA fitness landscape) & Domingo 2018 (tRNA double-mutant landscape) & the same tRNA gene, single against double mutants & Whether a single-mutant landscape predicts the double-mutant one, which is the within-gene form of the epistasis question. \\
+\addlinespace[5pt]
+55 & Peter 2018 (1,011 isolate genomes + phenome) & \textbf{Caudal 2024 (pan-transcriptome)} & the same 1,011 isolates & The reference genome set that every isolate-WGS row in this table resolves its genotypes against. \\
+\addlinespace[5pt]
+62 & Liu 2021 (tryptophan / isobutanol tolerance) & Kuroda 2019 (isobutanol-specific tolerance) & isobutanol tolerance on the same deletion collection & Same genotypes, same phenotype, different readout, which is a method-effect control no single screen provides. \\
+\addlinespace[5pt]
+63 & Kuroda 2019 (isobutanol-specific tolerance) & \textbf{Lopez 2024 (isobutanol screen, private)} & isobutanol on the deletion collection & Tolerance against production for one product, on one genotype axis. \\
+\addlinespace[5pt]
+64 & Turco 2023 (Yeast Phenome) & \textbf{Hoepfner 2014 (HIP/HOP atlas)} & aggregated growth screens against a primary screen & De-duplication, which is the precondition for knowing what the aggregate adds. \\
+\addlinespace[5pt]
+98 & Trikka 2015 (carotenogenic heterozygous screen) & \textbf{Ozaydin 2013 (beta-carotene screen)} & carotenoid readout, heterozygous against homozygous deletion & Halved dosage against full deletion, which finds flux control points a null removes entirely. \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup
+\end{landscape}

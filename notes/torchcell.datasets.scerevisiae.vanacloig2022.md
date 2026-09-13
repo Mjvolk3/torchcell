@@ -86,8 +86,11 @@ one; the loader raises if any duplicate survives.
 - **Medium**: the shared `MEDIA_LIBRARY["SYNBASE"]` object (SynH3- minus acetamide, sodium
   acetate and cellobiose, with MSG replacing ammonium sulfate), so it joins at its
   `base_medium` SynH3-. pH 5.0 rides as
-  `EnvironmentPhysicalPerturbation(factor=ph, magnitude=5.0 pH)` because `Media` has no pH
-  field and `Media` sits in 36 served closures, so adding one is a full rebuild.
+  `EnvironmentPhysicalPerturbation(factor=ph, magnitude=5.0 pH, agent=hydrochloric acid)`
+  because `Media` has no pH field and `Media` sits in 36 served closures, so adding one is
+  a full rebuild. The agent is the acid the same sentence names ("adjusted to pH 5.0 with
+  HCl"), so the factor's realizing species is a joined compound entity rather than a silent
+  None, and the adapter projects it onto `factor` / `compound_name` / `concentration_value`.
 - **Compounds**: `resolved_compound` against the pinned identity table. All 41 retained
   tokens resolve to a canonical PubChem name and an InChIKey, so the compound entity joins
   across datasets. Dose is `Concentration(basis=IC30)` for 39 of them (Table S1 holds the
@@ -122,7 +125,7 @@ env_chemgen_vanacloig2022: PASS
   [ok] L0 structural: 143218 records validated
   [ok] L1 count: observed 143218, expected 143218
   [ok] L1 pair_uniqueness: 143218 unique (study, strain, condition) records, one each
-  [ok] L1 provenance_gaps: 143218 documented provenance gaps over 143218/143218 records; 1 deferred field(s): ['inchikey']; 2777106 undeclared None values over 8 carrier fields (top: Compound.inchi x859308, Compound.chebi_id x772054, Compound.pubchem_cid x286436, Compound.smiles x286436, Compound.inchikey x143218)
+  [ok] L1 provenance_gaps: 286436 documented provenance gaps over 143218/143218 records; 2 deferred field(s): ['inchikey', 'solvent']; 3063542 undeclared None values over 8 carrier fields (top: Compound.inchi x1002526, Compound.chebi_id x915272, Compound.pubchem_cid x286436, Compound.smiles x286436, Compound.inchikey x143218)
   [ok] L1 canonical_gene_names: 3598 systematic names, one canonical spelling each, each current in the genome
   [ok] L2 value_fidelity: 143218 values checked
   [ok] L2 se_nonnegative: 143218 values checked
@@ -130,7 +133,7 @@ env_chemgen_vanacloig2022: PASS
   [ok] L3 measurement_type_consistent: single measurement_type: <MeasurementType.log2_ratio: 'log2_ratio'>
   [ok] L3 reference_zero: numeric rule: reference response == 0 for all 143218 records
   [ok] L3 environment_perturbed: all 143218 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='SynBase (SynH3- minus acetamide/sodium acetate/cellobiose, MSG for ammonium sulfate)')
-  [ok] L3 compound_identity: environment edits: 143218 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)
+  [ok] L3 compound_identity: environment edits: 286436 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)
   [ok] L3 media_compound_identity: medium components: 143218 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)
   [ok] L3 media_membership: 143218 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media)
   [ok] L4 gene_containment_sgd: 1.000 of 3598 measured genes are S288C reference genes (>= 0.9)
@@ -139,9 +142,28 @@ env_chemgen_vanacloig2022: PASS
 
 The previous build failed L0 on 164,115 of 164,115 records and reported "no provenance
 gaps ... (fully sourced)", which was a false reassurance: it gapped nothing because its
-unsourced values were silent Nones. The one deferred gap here is the `inchikey` of
-SynBase's composition-deferred SynH3- base component, which is a shared `media.py` object,
-and it names a real worklist item (Zhang 2019 is not mirrored).
+unsourced values were silent Nones.
+
+### Which fields carry gaps, and which absence is carried some other way
+
+286,436 gaps = exactly 2 per record, and the deferred worklist now names both:
+
+- **`SmallMoleculePerturbation.solvent`**, one per record, `deferred_pending_source_review`
+  with `resolve_with` naming Table S1. This is possible because `EnvironmentPerturbation`
+  became a `ProvenanceGapMixin` carrier; before that it was a silent None. The vehicle is
+  UNKNOWN rather than absent: the primary says water-insoluble compounds went in at 1% v/v
+  DMSO but names which ones only in Table S1.
+- **`Compound.inchikey`** of SynBase's composition-deferred SynH3- base component, one per
+  record, from the shared `media.py` object. Zhang 2019 is not mirrored.
+
+The absent per-compound **IC30 molar value is deliberately NOT a gap**. A gap is legal only
+on a field that is `None`, and `SmallMoleculePerturbation.concentration` is never None: an
+IC30 or fixed basis is always known, and `basis` is the schema's own documented mechanism
+for a dose set to a target without a released number. The only way to type the molar
+value's absence would be to make `Concentration` a gap carrier, and `Concentration` sits in
+all 36 served closures, so that is a full-rebuild change rather than something to slip in
+here. `L3 compound_identity` now counts 286,436 compound references (up from 143,218)
+because the pH factor's HCl agent is a second identified compound on every record.
 
 ### Open flags
 
@@ -150,9 +172,9 @@ and it names a real worklist item (Zhang 2019 is not mirrored).
   `BarcodedKanMxDeletionPerturbation` leaf therefore asserts a marker the primary does not
   state; the `collection` field records what the primary DOES say. Closing this means
   mirroring Piotrowski 2017.
-- `Concentration` is not a `ProvenanceGapMixin` carrier, so the 39 missing IC30 molar
-  values and the absent per-compound `Solvent` (Table S1 says which compounds were
-  DMSO-delivered) are untyped absences rather than declared gaps.
+- `Concentration` is still not a `ProvenanceGapMixin` carrier, so the 39 missing IC30 molar
+  values remain carried by `basis=IC30` rather than by a declared gap (see above). The
+  per-compound solvent IS now a typed gap.
 - 57 genes have a pooled control CPM of 0 and 72 to 113 genes per CG batch have a
   batch-matched control CPM of 0, so their log2 ratio has a pseudocount denominator. These
   are NOT dropped (the treated value was measured); the rule set only drops cells with no

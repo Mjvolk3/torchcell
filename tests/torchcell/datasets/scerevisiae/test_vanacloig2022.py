@@ -161,11 +161,19 @@ def test_environment_carries_the_compound_and_a_typed_ph(built: Any) -> None:
     assert compound["concentration"]["value"] == 10.0
     assert compound["concentration"]["unit"] == "ug/mL"
     assert compound["concentration"]["basis"] == "fixed"
+    # the vehicle is the field that is actually None, so it is the one that is gapped;
+    # the dose is not gapped, because an IC30 / fixed basis is always known
+    assert compound["solvent"] is None
+    assert [g["field"] for g in compound["provenance_gaps"]] == ["solvent"]
+    assert compound["provenance_gaps"][0]["reason"] == "deferred_pending_source_review"
+    assert compound["provenance_gaps"][0]["resolve_with"]["page"] == "Table S1"
     ph = next(
         p for p in perturbations if p["perturbation_type"] == "environment_physical"
     )
     assert ph["factor"] == "pH"
     assert ph["magnitude"]["value"] == 5.0 and ph["magnitude"]["unit"] == "pH"
+    assert ph["agent"]["name"] == "hydrochloric acid"  # the acid the paper names
+    assert ph["provenance_gaps"] == []
 
 
 def test_reference_environment_holds_no_inhibitor(built: Any) -> None:

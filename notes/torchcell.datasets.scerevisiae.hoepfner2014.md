@@ -322,3 +322,27 @@ rows per assay remove 7,273 HIP + 6,671 HOP cells, and the Boromycin column drop
 24 merged-ORF targets now present as genes). Table S5: 183 flagged strains (was 185; YIL167W
 and YIL171W were non-gene rows and are dropped). Runner `expected_count` 3,124,319; the
 supported-datasets row 10,779 genotypes.
+
+### Verification (final store)
+
+Registered `env_chemgen_hoepfner2014` runner entry, streaming, resolver supplied
+(`scratchpad/serve50/builds/env_chemgen_hoepfner2014_verify_final.log`, 6,451 s):
+
+```
+env_chemgen_hoepfner2014: PASS
+  [ok] L0 structural: 3124319 records validated
+  [ok] L1 count: observed 3124319, expected 3124319
+  [ok] L1 pair_uniqueness: 3124319 unique (strain, condition) records, one each
+  [ok] L1 canonical_gene_names: 5842 systematic names, one canonical spelling each (28 merged-ORF aliases), each current in the genome
+  [ok] L2 value_fidelity: 3124319 values checked
+  [ok] L3 compound_identity: environment edits: 6248638 compound references carry a structure identifier; 0 declare a typed gap
+  [ok] L3 media_membership: 3124319 records on a shared MEDIA_LIBRARY medium (1 distinct media)
+  [ok] L4 gene_containment_sgd: 1.000 of 5842 measured genes are S288C reference genes (>= 0.9)
+  [ok] L4 current_genome_genes: every one of the 5842 measured systematic names is a gene of the current genome
+```
+
+The 28 merged-ORF aliases are the 52 renamed rows per assay seen as (current gene,
+source name) pairs: two deposited names resolving to one gene is a fact about the
+collection and is reported, not failed. The `(strain, condition)` key is the strain
+signature (systematic name, perturbation type, perturbed name), so the renamed strains
+and their genes' own rows stay distinct records.

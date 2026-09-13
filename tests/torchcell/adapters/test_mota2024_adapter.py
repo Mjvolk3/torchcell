@@ -83,13 +83,14 @@ def test_both_perturbations_become_distinct_environment_perturbation_nodes() -> 
     ph_node = CellAdapter._environment_perturbation_node_from(ph)
     assert acid_node.get_id() != ph_node.get_id()
     assert acid_node.get_properties()["compound_name"] == "acetic acid"
-    # the pH node's factor/magnitude/agent are NOT projected columns today
-    # (_environment_perturbation_node_from reads compound/concentration only), so they
-    # live in serialized_data; projecting them is served-adapter drift and is a
-    # shared-layer request, not something this dataset may change on its own.
+    # a physical factor projects its factor, its magnitude and the agent that set
+    # it onto the same columns a small molecule uses, so pH 4.5 is queryable
     ph_props = ph_node.get_properties()
     assert ph_props["perturbation_type"] == "environment_physical"
-    assert ph_props["compound_name"] is None
+    assert ph_props["factor"] == "pH"
+    assert ph_props["compound_name"] == "hydrochloric acid"
+    assert ph_props["concentration_value"] == 4.5
+    assert acid_node.get_properties()["factor"] is None
     serialized = json.loads(ph_props["serialized_data"])
     assert serialized["factor"] == "pH"
     assert serialized["magnitude"]["value"] == 4.5

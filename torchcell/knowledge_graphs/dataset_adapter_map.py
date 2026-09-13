@@ -16,6 +16,8 @@ from torchcell.adapters import (
     EnvChemgenAuesukaree2009Adapter,
     EnvChemgenCostanzo2021Adapter,
     EnvChemgenMota2024Adapter,
+    EnvChemgenVanacloig2022Adapter,
+    EnvChemgenWildenhain2015Adapter,
     FattyAcidXue2025Adapter,
     GeneEssentialitySgdAdapter,
     IsobutanolScreenLopez2024Adapter,
@@ -106,6 +108,10 @@ from torchcell.datasets.scerevisiae.synth_leth_db import (
     SynthLethalityYeastSynthLethDbDataset,
     SynthRescueYeastSynthLethDbDataset,
 )
+from torchcell.datasets.scerevisiae.vanacloig2022 import EnvChemgenVanacloig2022Dataset
+from torchcell.datasets.scerevisiae.wildenhain2015 import (
+    EnvChemgenWildenhain2015Dataset,
+)
 from torchcell.datasets.scerevisiae.xue2025 import FattyAcidXue2025Dataset
 from torchcell.datasets.scerevisiae.yoshida2012 import OrganicAcidYoshida2012Dataset
 from torchcell.datasets.scerevisiae.zelezniak2018 import (
@@ -159,4 +165,6 @@ dataset_adapter_map = {
     CrispriChemgenSmith2016Dataset: Smith2016Adapter,
     CrisprMagicLian2019Dataset: Lian2019Adapter,
     CrispriMormino2022Dataset: Mormino2022Adapter,
+    EnvChemgenVanacloig2022Dataset: EnvChemgenVanacloig2022Adapter,
+    EnvChemgenWildenhain2015Dataset: EnvChemgenWildenhain2015Adapter,
 }

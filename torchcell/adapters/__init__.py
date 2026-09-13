@@ -76,6 +76,12 @@ from .synth_leth_db_adapter import (
 from .synth_leth_db_adapter import (
     SynthRescueYeastSynthLethDbAdapter as SynthRescueYeastSynthLethDbAdapter,
 )
+from .vanacloig2022_adapter import (
+    EnvChemgenVanacloig2022Adapter as EnvChemgenVanacloig2022Adapter,
+)
+from .wildenhain2015_adapter import (
+    EnvChemgenWildenhain2015Adapter as EnvChemgenWildenhain2015Adapter,
+)
 from .xue2025_adapter import FattyAcidXue2025Adapter as FattyAcidXue2025Adapter
 from .yoshida2012_adapter import (
     OrganicAcidYoshida2012Adapter as OrganicAcidYoshida2012Adapter,
@@ -159,6 +165,8 @@ environment_adapters = [
     "Smith2016Adapter",
     "Lian2019Adapter",
     "Mormino2022Adapter",
+    "EnvChemgenVanacloig2022Adapter",
+    "EnvChemgenWildenhain2015Adapter",
 ]
 
 baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]

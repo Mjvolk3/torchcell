@@ -5,96 +5,81 @@
 """Wildenhain 2015 chemical-genetic matrix (CGM): env x geno -> z-score response.
 
 Wildenhain et al. 2015 (Cell Systems, doi:10.1016/j.cels.2015.12.003) screened a panel of
-haploid non-essential S. cerevisiae deletion strains ("sentinels", isogenic to BY4741,
-Euroscarf collection) against 4,915 unique compounds from four chemical libraries at a
-single 20 uM screening concentration, reading out growth inhibition as a normalized-OD600
-Z-score. This loader builds ONLY the chemical-genetic matrix (strain x compound -> z-score);
-the separate 128x128 cryptagen chemical-chemical synergy layer is out of scope.
+haploid non-essential S. cerevisiae deletion strains (Euroscarf collection, isogenic to
+BY4741) against thousands of compounds from four chemical libraries at a single 20 uM
+screening concentration, reading out growth inhibition as a normalized-OD600 Z-score. This
+loader builds ONLY the chemical-genetic matrix (strain x compound -> z-score); the separate
+128x128 cryptagen chemical-chemical synergy layer is out of scope.
 
-A "sentinel" is an ORDINARY single-gene haploid deletion strain (NOT a HIP/HOP engineered
-heterozygous strain), so there is no engineered-dosage complication: every screened strain
-is one KanMX gene replacement in the BY4741 reference background (the standard Euroscarf
-MATa deletion collection). The 195-strain "sentinel panel" is a dataset-level selection
-note, not a per-record schema element; the RELEASED data actually covers 242 distinct
-systematic ORFs (extra strains screened across the four libraries), all valid SGD R64 genes.
+Every screened strain is one haploid gene replacement in BY4741 (NOT a HIP/HOP engineered
+heterozygote), so there is no engineered-dosage complication. The paper's "195 sentinel
+strains" is a dataset-level selection note whose roster is in the unmirrored Table S3; the
+RELEASED data covers 242 distinct systematic ORFs, all current R64 genes, and all 242 are
+served.
 
-This maps onto the WS15 environment-perturbation ontology: ``EnvironmentResponseExperiment``
-= single-deletion ``Genotype`` (a ``KanMxDeletionPerturbation`` in the BY4741 reference
-background) x aerobic ``Environment`` carrying a ``SmallMoleculePerturbation`` (the compound
-at 20 uM in DMSO) -> ``EnvironmentResponsePhenotype`` (``measurement_type=z_score``,
-``environment_response`` the signed growth-inhibition Z-score). The parent BY4741 strain in
-the same compound environment is the reference; its Z-score is 0 (the standardized control
-baseline).
+DATA SOURCE. PubChem BioAssay AID 1159580 (the paper's ACCESSION NUMBERS section; the
+chemgrid.org/cgm portal is an interactive PHP site with no bulk export). Two artifacts are
+mirrored and sha256-pinned: the per-AID datapoint export ``1159580.csv.gz``, read out of the
+byte-stable NCBI FTP range archive with the container's OWN sha256 asserted first
+(``zip_member``), and the AID's PUG-REST description JSON, which is the only source for the
+screening protocol's medium, temperature, incubation, replicate structure and column
+definitions. Both are read from the raw mirror at build time; the URLs are retrieval
+metadata, not live dependencies.
 
-PROVENANCE / SOURCING (all sha256-pinned; see class constants + the runner Provenance):
-- 195-strain sentinel panel, 4,915 unique compounds, 20 uM, Z-score averaged over the
-  duplicate screens: RESULTS "Generation of a Chemical-Genetic Matrix" -- *"we screened a
-  total of 4,915 unique compounds derived from four different chemical libraries against a
-  panel of 195 non-essential deletion strains"* and *"We carried out over 600 growth-based
-  screens in duplicate at a compound concentration of 20 uM ... Z scores were calculated and
-  averaged for the replicate screens."* (paper.md line 68 + 70).
-- Strain background (haploid, isogenic to BY4741, Euroscarf; NOT HIP/HOP): EXPERIMENTAL
-  PROCEDURES -- *"S. cerevisiae deletion strains were obtained from the Euroscarf deletion
-  set and are isogenic to BY4741"* (paper.md line 217).
-- Medium / temperature / duration / solvent / duplicate structure (PubChem AID 1159580
-  protocol): *"All strains were grown and screened in synthetic complete (SC) medium with 2%
-  glucose."*, *"final concentration of 20 M. Screens were conducted in technical duplicate
-  ... DMSO solvent only controls ... Plates were incubated at 30 C without shaking for
-  approximately 18 h ... reading OD600 values"*, with per-record columns *"Raw OD read 1 =
-  first replicate"*, *"Raw OD read 2 = second replicate"*, *"Z_score = ... per screen"*.
-  Hence ``n_samples=2`` (the duplicate replicate screens, ``sample_unit=technical_replicate``)
-  underlies each released Z-score; ``units`` records the readout definition.
+WHAT THE NUMBER IS. The stored response is the released per-screen ``z_score``, averaged
+over the screens of a (strain, compound) cell exactly as the paper constructs the matrix
+("Z scores were calculated and averaged for the replicate screens"). The z-score is
+standardized WITHIN a screen ("Z-Score calculated based on kernel density distribution from
+normalized average reads per screen"), so the reference baseline of 0 is that screen's own
+normalized-growth center rather than a measured wild-type value, and the reference
+environment is the compound's own environment. The released ``sym == 'wild type'`` rows are
+strain measurements, not that baseline, and are not ingested (see the dendron note).
 
-DATA SOURCE (structured, scriptable, byte-stable):
-- Accession: PubChem BioAssay AID 1159580 (paper.md line 237, "ACCESSION NUMBERS"). The
-  additional http://chemgrid.org/cgm portal is an interactive PHP site (no bulk-downloadable
-  processed matrix), so the PubChem datapoint export is the canonical scriptable full-data
-  artifact. The per-AID CSV is pulled from the byte-stable NCBI FTP range archive and its
-  inner ``1159580.csv.gz`` (fixed 2022-12-16 mtime) is sha256-pinned; its content is
-  bit-identical to the PUG-REST ``/assay/aid/1159580/CSV`` export (492,126 datapoints).
-- Each released row carries PUBCHEM_CID + PUBCHEM_EXT_DATASOURCE_SMILES, so compounds map
-  directly to PubChem CIDs (99.9% of rows) and SMILES -- no live lookup needed.
+SCREEN COUNTING (measured, and it corrects the previous build). A (strain, compound) cell
+recurs across the four libraries, and the export ALSO re-emits the same datapoint under two
+gene-symbol spellings (``MDH1`` / ``mdh1``): of the 46,195 cells with more than one released
+row, 33,483 contain byte-identical duplicates. Within a cell, two rows sharing a z_score
+share every other data column too, and no two genuinely distinct datapoints of a cell share
+a z_score, so the z string IS the datapoint key. After deduplication the screens-per-cell
+histogram is {1: 412,368, 2: 14,579, 3: 1,617, 4: 7, 5: 2}. ``n_samples`` is therefore the
+number of contributing SCREENS with ``sample_unit=screen`` (the independent unit; the two
+OD reads inside a screen are the technical duplicate the z already averages), and the
+uncertainty is the sample SD across those screens, or a typed ``ProvenanceGap`` for the
+single-screen cells. The previous build's ``n_samples = 2 x rows`` counted OD reads of
+re-exported duplicates.
 
-BUILD / SOURCE QUIRKS handled deterministically (no fabrication):
-- Rows whose ``orf`` is a non-strain control token (``NA`` / ``NULL``, 7,296 rows) are
-  dropped -- only systematic-ORF strains enter the matrix.
-- A given (strain, compound) can recur across the four libraries: 46,195 (ORF, compound)
-  cells have 2-3 released screen rows with distinct Z-scores. These are collapsed to one
-  matrix cell by AVERAGING the per-screen Z-scores -- exactly the paper's stated matrix
-  construction (*"Z scores ... averaged for the replicate screens"*) -- and ``n_samples`` is
-  set to ``2 x (number of screen rows)`` to count all contributing duplicate-screen reads
-  (2 for the 89% single-screen cells). This averaging is a documented, deterministic
-  reconstruction of the paper's DEFINED quantity from the canonical artifact (the Vanacloig
-  precedent), NOT a value copied verbatim.
-- Compound identity is the PubChem CID when present (the paper's unique-compound axis), else
-  the PubChem SID (367 records lack a CID). The typed ``Compound`` carries this identifier as
-  its ``name`` (``"CID <cid>"`` / ``"SID <sid>"``) because the released structured artifact
-  provides NO human compound name; ``Compound.pubchem_cid`` carries the integer CID and
-  ``Compound.smiles`` the released SMILES. Final matrix: 242 strains x compounds = 428,573
-  records.
+RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``): cells whose compound
+carries no structure identifier (the 5 SID-only compounds, which have no CID and no SMILES).
+Everything else is served: all 5,173 CIDs resolve to an InChIKey and a canonical PubChem
+name through the pinned compound-identity table.
 """
+
+from __future__ import annotations
 
 import csv
 import gzip
 import hashlib
-import io
 import logging
 import os
 import os.path as osp
-import pickle
 import re
-import urllib.request
-import zipfile
+import shutil
 from collections.abc import Callable
-from statistics import fmean
-from typing import Any
+from datetime import UTC, datetime
+from pathlib import Path
+from statistics import fmean, stdev
+from typing import Any, Literal
 
-import lmdb
+from pydantic import BaseModel
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
+    AssayType,
+    BarcodedKanMxDeletionPerturbation,
+    Compound,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -104,40 +89,427 @@ from torchcell.datamodels.schema import (
     Experiment,
     ExperimentReference,
     Genotype,
-    KanMxDeletionPerturbation,
     MeasurementType,
-    Media,
     Publication,
     ReferenceGenome,
+    ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
     Solvent,
     Temperature,
+    UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.scerevisiae.gene_name_reconcile import default_genome
+from torchcell.literature.manifest import (
+    ROLE_RAW_DATA,
+    ArtifactRecord,
+    Manifest,
+    RetrievalMethod,
+    RetrievalRecord,
+)
+from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-DOI = "10.1016/j.cels.2015.12.003"
-# Byte-stable NCBI FTP range archive holding the per-AID datapoint export. The inner
-# 1159580.csv.gz (fixed 2022-12-16 mtime) is the canonical raw artifact and is sha256-pinned.
-_FTP_ZIP_URL = (
+# --------------------------------------------------------------------------- #
+# Provenance anchors
+# --------------------------------------------------------------------------- #
+CITATION_KEY = "wildenhainPredictionSynergismChemicalGenetic2015"
+PAPER_DOI = "10.1016/j.cels.2015.12.003"
+RAW_DIR_REL = f"torchcell-raw/{CITATION_KEY}"
+
+FTP_ZIP_URL = (
     "https://ftp.ncbi.nlm.nih.gov/pubchem/Bioassay/CSV/Data/1159001_1160000.zip"
 )
-_ZIP_MEMBER = "1159001_1160000/1159580.csv.gz"
-_RAW_FILENAME = "1159580.csv.gz"
-_RAW_SHA256 = "c461c679b63ac56045cef0f03ed9bcbb8e7f9c12146f1fc7cc8ac0c113188d64"
+ZIP_MEMBER = "1159001_1160000/1159580.csv.gz"
+#: sha256 of the FTP range archive itself, asserted BEFORE the member is read, so a
+#: re-packed upstream archive fails loudly instead of yielding different member bytes.
+CONTAINER_SHA256 = "d1fd5dc2bf7c526ad9845e0a14ae9981256fb820aaf4228b48a3ba0724ee59b0"
+DATA_FILENAME = "1159580.csv.gz"
+DATA_SHA256 = "c461c679b63ac56045cef0f03ed9bcbb8e7f9c12146f1fc7cc8ac0c113188d64"
+DATA_REL = f"data/{DATA_FILENAME}"
 
-# Systematic ORF pattern (protein-coding); non-strain tokens (NA/NULL) are dropped.
+AID_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/assay/aid/1159580/description/JSON"
+AID_FILENAME = "aid_1159580_description.json"
+AID_SHA256 = "23c5f8c56af94786cfe8e22c93fdde0b719ca2165975305944557ab39087b0e4"
+AID_REL = f"data/{AID_FILENAME}"
+RETRIEVED_AT = "2026-09-13"
+
+PAPER_MD = "paper.md"
+PAPER_MD_SHA256 = "f46409eb8f23412c9c1015d0f8f5bb581bfddfe2796d319d407585e23c757ac2"
+
+
+def _aid(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
+    """Bind a value to a verbatim quote in the sha256-pinned AID 1159580 description."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=AID_REL,
+            citation_key=CITATION_KEY,
+            sha256=AID_SHA256,
+            method="PubChem PUG-REST assay description JSON (torchcell-raw mirror)",
+            page="PC_AssayContainer[0].assay.descr.protocol",
+            retrieved=RETRIEVED_AT,
+        ),
+    )
+
+
+def _paper(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
+    """Bind a value to a verbatim quote in the sha256-pinned paper OCR mirror."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            page="RESULTS 'Generation of a Chemical-Genetic Matrix' / EXPERIMENTAL PROCEDURES",
+        ),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Sourced environment + phenotype constants
+# --------------------------------------------------------------------------- #
+MEDIUM = _aid(
+    "SC",
+    "All strains were grown and screened in synthetic complete (SC) medium with 2% "
+    "glucose.",
+    note="the paper's own medium sentence has 'All fungal species' as its subject, "
+    "which in context follows the list of fungal PATHOGEN isolates; the AID protocol "
+    "says 'All strains', which is unambiguous for the S. cerevisiae screens. The shared "
+    "SC library object carries D-glucose at 20 g/L, i.e. the same 2% w/v",
+)
+TEMPERATURE_C = _aid(
+    30.0,
+    "Plates were incubated at 30 C without shaking for approximately 18 h or until "
+    "culture saturation was achieved for the solvent controls.",
+    note="the PAPER states no incubation temperature anywhere (its only temperature is "
+    "37 C, for HeLa/HEK cells), so this value exists only because the AID description "
+    "is now mirrored and hashed; it is sourced, not a default",
+)
+DURATION_HOURS = _aid(
+    18.0,
+    "Plates were incubated at 30 C without shaking for approximately 18 h or until "
+    "culture saturation was achieved for the solvent controls.",
+)
+SCREEN_CONCENTRATION_UM = _paper(
+    20.0,
+    "We carried out over 600 growth-based screens in duplicate at a compound "
+    "concentration of $2 0 \\mu \\mathsf { M }$ .",
+    note="the AID protocol states the same dose as a preparation: 'Strains were seeded "
+    "at 50,000 cells per well in a volume of 100 L in 96 well plates followed by "
+    "addition of 2 L of 1 mM compound stock for final concentration of 20 M.'",
+)
+SOLVENT = _aid(
+    "DMSO",
+    "DMSO solvent only controls and 10 uM cycloheximide positive controls were seeded "
+    "in columns 1 and 12 of each assay plate.",
+    note="the vehicle is sourced; its FINAL fraction in the well is not released (the "
+    "stock's own solvent fraction is unstated), so Solvent.percent stays unset rather "
+    "than being back-computed from the 2 uL into 100 uL dilution",
+)
+ASSAY = _aid(
+    AssayType.liquid_od_growth,
+    "Cultures were resuspended by shaking on the robotic platform prior to reading OD600 "
+    "values on either Tecan M1000 or Tecan Sunrise plate readers.",
+)
+SCREEN_REPLICATION = _aid(
+    "technical duplicate",
+    "Screens were conducted in technical duplicate",
+    note="the duplicate is the pair of OD READS inside one screen, which the z-score "
+    "already averages ('normalized average reads per screen'); the independent unit of "
+    "replication is therefore the SCREEN, which is what n_samples counts",
+)
+Z_SCORE_DEFINITION = _aid(
+    MeasurementType.z_score,
+    "Z-Score calculated based on kernel density distribution from normalized average "
+    "reads per screen",
+    note="standardized WITHIN a screen, so 0 is that screen's normalized-growth center; "
+    "the companion statement is 'Z-factors for growth inhibition were calculated using "
+    "the median and the interquartile range (IQR) by fitting a normal distribution with "
+    "N(1,IQR) to the experimental data.'",
+)
+Z_AVERAGED = _paper(
+    "mean over the replicate screens",
+    "Z scores were calculated and averaged for the replicate screens.",
+)
+COLLECTION = _aid(
+    "Euroscarf deletion collection",
+    "All S. cerevisiae deletion strains were obtained from the Euroscarf deletion "
+    "collection.",
+    note="the paper says the same: 'S. cerevisiae deletion strains were obtained from "
+    "the Euroscarf deletion set and are isogenic to BY4741 (Table S3).' Neither source "
+    "names the deletion cassette's marker; kanMX is a property of the Euroscarf MATa "
+    "collection sourced to Winzeler 1999 / Giaever 2002, which are not mirrored",
+)
+PARENT_STRAIN = _aid(
+    "BY4741", "The wild type parental strain for this collection is BY 4741"
+)
+NON_REPLICATE_COLUMN = _aid(
+    "non replicate",
+    "test for non-replicates between first and second replicate",
+    note="a screen whose two OD reads disagreed; counting SCREENS rather than reads is "
+    "what keeps this flag from corrupting n_samples. The release also states 'Data "
+    "points with high variation between replicates (> 3 MAD) were removed as "
+    "inconsistent outliers.', so a retained flagged screen passed that filter",
+)
+BIOACTIVITY_COLUMN = _aid(
+    "bioactivity",
+    "sensitive if compound decreases fitness or resistant if compound increases fitness "
+    "compared to negative control",
+    note="together with the released PUBCHEM_ACTIVITY_OUTCOME this is the source of the "
+    "ResponseCategory mapping below",
+)
+
+MEASUREMENT_UNITS = (
+    "released PubChem AID 1159580 z_score of growth inhibition, standardized within a "
+    "screen from the normalized OD600 average of a technical-duplicate read pair "
+    "(20 uM compound in DMSO, SC + 2% glucose, 30 C, ~18 h); negative = growth "
+    "inhibition, averaged over the contributing screens of the cell"
+)
+
+#: Released activity outcome + bioactivity -> the shared ResponseCategory axis. The two
+#: columns' own definitions are the source (``BIOACTIVITY_COLUMN``): an Inactive datapoint
+#: is one the screen could not distinguish from the negative control, an Active one is a
+#: called hit whose DIRECTION the bioactivity column gives, and Inconclusive is PubChem's
+#: own "no call" verdict -- which is ``not_determined``, never silently an Inactive.
+OUTCOME_CATEGORY: dict[tuple[str, str], ResponseCategory] = {
+    ("Inactive", ""): ResponseCategory.no_change,
+    ("Active", "sensitive"): ResponseCategory.sensitive,
+    ("Active", "resistant"): ResponseCategory.resistant,
+    ("Inconclusive", "sensitive"): ResponseCategory.not_determined,
+    ("Inconclusive", "resistant"): ResponseCategory.not_determined,
+    ("Inconclusive", ""): ResponseCategory.not_determined,
+}
+
+#: Systematic ORF pattern; non-strain tokens (NA / NULL control rows) are dropped.
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
-SCREEN_CONCENTRATION_UM = 20.0
-MEASUREMENT_UNITS = (
-    "Z-score of growth inhibition from normalized OD600 (20 uM compound vs DMSO control, "
-    "SC + 2% glucose, 30 C, ~18 h); negative = growth inhibition, averaged over the "
-    "duplicate replicate screens"
-)
+
+# --------------------------------------------------------------------------- #
+# Raw mirror
+# --------------------------------------------------------------------------- #
+def _data_root() -> str:
+    """``DATA_ROOT`` from the environment (the mirror + build tree live under it)."""
+    return os.environ["DATA_ROOT"]
+
+
+def raw_mirror_dir(data_root: str | None = None) -> Path:
+    """``$DATA_ROOT/torchcell-raw/wildenhainPredictionSynergismChemicalGenetic2015``."""
+    return Path(data_root or _data_root()) / RAW_DIR_REL
+
+
+def _sha256(path: str | Path) -> str:
+    """Streaming sha256 of a file."""
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def raw_relpaths() -> dict[str, str]:
+    """Short name -> mirror-relative path for every file the loader reads."""
+    return {DATA_FILENAME: DATA_REL, AID_FILENAME: AID_REL}
+
+
+def deposit_raw_mirror(
+    *,
+    csv_path: str | Path,
+    aid_path: str | Path,
+    retrieved_at: str = RETRIEVED_AT,
+    data_root: str | None = None,
+) -> Path:
+    """Write the raw mirror from already-retrieved files and its ``manifest.json``.
+
+    Idempotent by sha256 (an existing file with the recorded hash is left alone, a
+    differing one raises). The datapoint export's retrieval pins the FTP container FIRST
+    and then reads one member out of it, so a re-packed upstream archive is detected
+    rather than silently followed.
+    """
+    root = raw_mirror_dir(data_root)
+    sources: dict[str, tuple[Path, str, RetrievalRecord]] = {
+        DATA_REL: (
+            Path(csv_path),
+            DATA_SHA256,
+            RetrievalRecord(
+                method=RetrievalMethod.direct_url,
+                source_url=FTP_ZIP_URL,
+                retriever="torchcell.literature.retrieve.zip_member",
+                params={
+                    "url": FTP_ZIP_URL,
+                    "member": ZIP_MEMBER,
+                    "container_sha256": CONTAINER_SHA256,
+                },
+                sha256=DATA_SHA256,
+                retrieved_at=retrieved_at,
+            ),
+        ),
+        AID_REL: (
+            Path(aid_path),
+            AID_SHA256,
+            RetrievalRecord(
+                method=RetrievalMethod.pubchem_api,
+                source_url=AID_URL,
+                retriever="torchcell.literature.retrieve.direct_url",
+                params={"url": AID_URL},
+                sha256=AID_SHA256,
+                retrieved_at=retrieved_at,
+            ),
+        ),
+    }
+    files: list[ArtifactRecord] = []
+    for relpath, (src, expected, retrieval) in sources.items():
+        got = _sha256(src)
+        if got != expected:
+            raise RuntimeError(f"{src} sha256 mismatch: got {got}, expected {expected}")
+        dest = root / relpath
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.exists():
+            if _sha256(dest) != expected:
+                raise RuntimeError(f"{dest} exists with a different sha256; refusing")
+        else:
+            shutil.copy2(src, dest)
+        files.append(
+            ArtifactRecord(
+                path=relpath,
+                role=ROLE_RAW_DATA,
+                bytes=dest.stat().st_size,
+                sha256=expected,
+                source=retrieval.source_url,
+                retrieval=retrieval,
+            )
+        )
+    manifest = Manifest(
+        citation_key=CITATION_KEY,
+        doi=PAPER_DOI,
+        title="Prediction of Synergism from Chemical-Genetic Interactions by Machine Learning",
+        files=files,
+        si_data_sources=[
+            "https://pubchem.ncbi.nlm.nih.gov/bioassay/1159580",
+            FTP_ZIP_URL,
+            AID_URL,
+        ],
+        si_expected=[
+            "Tables S1/S2 (the four compound libraries) and Table S3 (the 195 sentinel "
+            "strains) -- cell.com supplementary files are not scriptable, so they are "
+            "NOT mirrored and the 195-vs-242 strain split cannot be reconstructed"
+        ],
+        provenance_complete=True,
+        created_at=datetime.now(UTC).isoformat(),
+    )
+    (root / "manifest.json").write_text(manifest.model_dump_json(indent=2))
+    return root
+
+
+def load_manifest(data_root: str | None = None) -> Manifest:
+    """Read the raw mirror's ``manifest.json``."""
+    path = raw_mirror_dir(data_root) / "manifest.json"
+    return Manifest.model_validate_json(path.read_text())
+
+
+def manifest_sha256(manifest: Manifest, relpath: str) -> str:
+    """The recorded sha256 of one mirror file."""
+    for record in manifest.files:
+        if record.path == relpath:
+            return record.sha256
+    raise KeyError(f"{relpath} is not in the raw-mirror manifest")
+
+
+# --------------------------------------------------------------------------- #
+# Retention bookkeeping + the collapsed matrix cell
+# --------------------------------------------------------------------------- #
+class DropRule(BaseModel):
+    """One retention rule, the records it removed, and the items it removed them for."""
+
+    rule: str
+    scope: Literal["compound", "library_row", "cell"]
+    description: str
+    n_records: int
+    items: list[str] = []
+
+
+class DropLog(BaseModel):
+    """Every retention rule applied to a build, in the order they were applied."""
+
+    dataset: str
+    source_records: int
+    kept_records: int
+    dropped_records: int
+    rules: list[DropRule]
+
+
+class MatrixCell(BaseModel):
+    """One (strain, compound) cell of the CGM, collapsed over its released screens."""
+
+    orf: str
+    identity: str
+    pubchem_cid: int | None
+    smiles: str | None
+    #: z_score string -> (non-replicate flag, activity outcome, bioactivity), one entry
+    #: per DISTINCT released datapoint (the z string is the datapoint key; see the
+    #: module docstring for the measurement behind that).
+    screens: dict[str, tuple[str, str, str]] = {}
+
+    @property
+    def z_values(self) -> list[float]:
+        """The distinct per-screen z-scores contributing to this cell."""
+        return [float(z) for z in self.screens]
+
+    @property
+    def n_screens(self) -> int:
+        """Number of contributing screens (the independent unit of replication)."""
+        return len(self.screens)
+
+    @property
+    def all_screens_non_replicating(self) -> bool:
+        """Whether EVERY contributing screen's two OD reads failed to replicate."""
+        return all(flag == "1" for flag, _, _ in self.screens.values())
+
+    def category(self) -> tuple[ResponseCategory, str]:
+        """The released curation verdict on the shared axis + its verbatim source words.
+
+        A cell whose screens DISAGREE has no single released call, so it resolves to
+        ``not_determined`` and the label keeps every word the release used.
+        """
+        outcomes = sorted({outcome for _, outcome, _ in self.screens.values()})
+        activities = sorted({bio for _, _, bio in self.screens.values()})
+        if len(outcomes) == 1 and len(activities) == 1:
+            label = (
+                outcomes[0] if not activities[0] else f"{outcomes[0]} / {activities[0]}"
+            )
+            return OUTCOME_CATEGORY[(outcomes[0], activities[0])], label
+        words = [*outcomes, *[bio for bio in activities if bio]]
+        return ResponseCategory.not_determined, " / ".join(words)
+
+
+def _canonical_common_names(genome: SCerevisiaeGenome) -> dict[str, str]:
+    """``systematic name -> the genome's own standard (common) name``.
+
+    The release spells 16 ORFs two ways (``TOR1`` and ``Tor1``), which splits one
+    perturbation into two graph nodes. Taking the spelling from the genome instead of
+    from the source is what makes it one node, and identical across datasets. Only a
+    standard name that resolves BACK to the gene is used.
+    """
+    canonical: dict[str, str] = {}
+    for standard in genome.feature_index["standard_to_ids"]:
+        resolution = genome.resolve_gene_name(standard)
+        if resolution.is_current_gene and resolution.systematic_name is not None:
+            canonical.setdefault(resolution.systematic_name, standard)
+    return canonical
 
 
 @register_dataset
@@ -152,7 +524,7 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset. ORFs are already systematic, so no genome is required."""
+        """Initialize the dataset (the genome is loaded lazily inside ``process``)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -167,43 +539,48 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The single PubChem AID 1159580 datapoint archive required before processing."""
-        return [_RAW_FILENAME]
+        """The datapoint export and the AID description the protocol is sourced from."""
+        return [DATA_FILENAME, AID_FILENAME]
 
     def download(self) -> None:
-        """Fetch the FTP range zip, extract AID 1159580's csv.gz, verify its pinned sha256."""
-        os.makedirs(self.raw_dir, exist_ok=True)
-        dest = osp.join(self.raw_dir, _RAW_FILENAME)
-        if osp.exists(dest):
-            return
-        log.info("Downloading Wildenhain2015 PubChem AID archive from %s", _FTP_ZIP_URL)
-        req = urllib.request.Request(
-            _FTP_ZIP_URL, headers={"User-Agent": "Mozilla/5.0"}
-        )
-        with urllib.request.urlopen(req, timeout=600) as resp:
-            zip_bytes = resp.read()
-        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-            member = zf.read(_ZIP_MEMBER)
-        digest = hashlib.sha256(member).hexdigest()
-        if digest != _RAW_SHA256:
-            raise RuntimeError(
-                f"{_RAW_FILENAME} sha256 mismatch: got {digest}, expected {_RAW_SHA256}"
-            )
-        with open(dest, "wb") as handle:
-            handle.write(member)
-        log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(member))
+        """Link the manifest-listed mirror files into ``raw/`` and verify each sha256.
 
-    def _collapse_matrix(self) -> dict[tuple[str, str], dict[str, Any]]:
-        """Read the datapoint CSV; collapse to one cell per (ORF, compound-identity).
-
-        Identity is the PubChem CID when present, else the PubChem SID. Per-screen
-        Z-scores for a recurring (strain, compound) cell are averaged (the paper's matrix
-        construction), and the contributing screen count is tracked for ``n_samples``.
+        The mirror is canonical. The FTP container is 151 MB and its sha256 is recorded
+        with the member's, so ``deposit_raw_mirror``'s retrieval re-runs the download and
+        detects a re-packed archive; a build never depends on that URL being alive.
         """
-        path = osp.join(self.raw_dir, _RAW_FILENAME)
-        cells: dict[tuple[str, str], dict[str, Any]] = {}
+        data_root = _data_root()
+        manifest = load_manifest(data_root)
+        os.makedirs(self.raw_dir, exist_ok=True)
+        for name, relpath in raw_relpaths().items():
+            src = raw_mirror_dir(data_root) / relpath
+            if not src.exists():
+                raise RuntimeError(f"required raw artifact missing from mirror: {src}")
+            expected = manifest_sha256(manifest, relpath)
+            got = _sha256(src)
+            if got != expected:
+                raise RuntimeError(
+                    f"{name} sha256 mismatch: got {got}, expected {expected}"
+                )
+            dest = osp.join(self.raw_dir, name)
+            if not osp.exists(dest):
+                os.symlink(src, dest)
+        log.info(
+            "Wildenhain 2015 raw files linked into %s (sha256 verified)", self.raw_dir
+        )
+
+    # ---- source reading -------------------------------------------------------- #
+    def _collapse_matrix(self) -> tuple[dict[tuple[str, str], MatrixCell], int, int]:
+        """Read the datapoint CSV; collapse to one cell per (ORF, compound identity).
+
+        Identity is the PubChem CID when present, else the SID. Repeated releases of the
+        SAME datapoint (identical z) collapse; distinct screens accumulate. Returns the
+        cells plus the strain-row and non-strain-row counts.
+        """
+        path = osp.join(self.raw_dir, DATA_FILENAME)
+        cells: dict[tuple[str, str], MatrixCell] = {}
         n_rows = 0
-        n_control = 0
+        n_non_strain = 0
         with gzip.open(path, "rt", newline="") as handle:
             reader = csv.reader(handle)
             header = next(reader)
@@ -214,148 +591,288 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                     continue
                 orf = row[idx["orf"]].strip()
                 if not _SYSTEMATIC_RE.match(orf):
-                    n_control += 1
+                    n_non_strain += 1
                     continue
                 z_raw = row[idx["z_score"]].strip()
                 if not z_raw:
                     continue
+                n_rows += 1
                 cid = row[idx["PUBCHEM_CID"]].strip()
                 sid = row[idx["PUBCHEM_SID"]].strip()
-                smiles = row[idx["PUBCHEM_EXT_DATASOURCE_SMILES"]].strip()
-                sym = row[idx["sym"]].strip()
                 identity = f"CID {cid}" if cid else f"SID {sid}"
                 key = (orf, identity)
                 cell = cells.get(key)
                 if cell is None:
-                    cells[key] = {
-                        "orf": orf,
-                        "sym": sym or orf,
-                        "compound_name": identity,
-                        "pubchem_cid": int(cid) if cid else None,
-                        "smiles": smiles or None,
-                        "z_values": [float(z_raw)],
-                    }
-                else:
-                    cell["z_values"].append(float(z_raw))
-                n_rows += 1
+                    cell = MatrixCell(
+                        orf=orf,
+                        identity=identity,
+                        pubchem_cid=int(cid) if cid else None,
+                        smiles=row[idx["PUBCHEM_EXT_DATASOURCE_SMILES"]].strip()
+                        or None,
+                    )
+                    cells[key] = cell
+                cell.screens[z_raw] = (
+                    row[idx["non replicate"]].strip(),
+                    row[idx["PUBCHEM_ACTIVITY_OUTCOME"]].strip(),
+                    row[idx["bioactivity"]].strip(),
+                )
         log.info(
-            "Wildenhain2015: parsed %d strain datapoints (%d non-strain control rows "
-            "dropped) -> %d (ORF, compound) cells",
+            "Wildenhain2015: %d strain datapoints (%d non-strain control rows) -> "
+            "%d (ORF, compound) cells",
             n_rows,
-            n_control,
+            n_non_strain,
             len(cells),
         )
-        return cells
+        return cells, n_rows, n_non_strain
 
-    def _environment(self, cell: dict[str, Any]) -> Environment:
+    # ---- environment / phenotype builders -------------------------------------- #
+    def _compound(self, cell: MatrixCell) -> Compound:
+        """The compound's canonical identity: the table's PubChem name + InChIKey."""
+        return resolved_compound(
+            cell.identity, pubchem_cid=cell.pubchem_cid, smiles=cell.smiles
+        )
+
+    def _environment(self, compound: Compound) -> Environment:
         """Aerobic SC (2% glucose) liquid culture carrying the compound at 20 uM in DMSO."""
         return Environment(
-            media=Media(
-                name="synthetic complete (SC), 2% glucose",
-                state="liquid",
-                is_synthetic=True,
-            ),
-            temperature=Temperature(value=30.0),
+            media=SC,
+            temperature=Temperature(value=TEMPERATURE_C.value),
             perturbations=[
                 SmallMoleculePerturbation(
-                    compound=resolved_compound(
-                        cell["compound_name"],
-                        pubchem_cid=cell["pubchem_cid"],
-                        smiles=cell["smiles"],
-                    ),
+                    compound=compound,
                     concentration=Concentration(
-                        value=SCREEN_CONCENTRATION_UM, unit=ConcentrationUnit.micromolar
+                        value=SCREEN_CONCENTRATION_UM.value,
+                        unit=ConcentrationUnit.micromolar,
                     ),
-                    solvent=Solvent(name="DMSO"),
+                    solvent=Solvent(
+                        name=SOLVENT.value,
+                        compound=resolved_compound("dimethyl sulfoxide"),
+                    ),
                 )
             ],
             aerobicity="aerobic",
-            duration_hours=18.0,
+            duration_hours=DURATION_HOURS.value,
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="duration_generations",
+                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    note="an 18 h liquid OD growth to saturation doses exposure in "
+                    "hours, not doublings, and neither the paper nor the AID protocol "
+                    "reports a doubling count",
+                )
+            ],
         )
 
     def _reference(
         self, environment: Environment
     ) -> EnvironmentResponseExperimentReference:
-        """Parent BY4741 baseline in the same compound environment: control Z-score = 0."""
-        phenotype_reference = EnvironmentResponsePhenotype(
-            measurement_type=MeasurementType.z_score,
-            environment_response=0.0,
-            units=MEASUREMENT_UNITS,
-        )
+        """The screen's own normalized-growth center: z = 0, in the same compound well.
+
+        The z-score is standardized WITHIN a screen, so its 0 is that screen's center,
+        and the environment the baseline was measured in IS the compound environment.
+        """
         return EnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="BY4741"
+                species="Saccharomyces cerevisiae", strain=PARENT_STRAIN.value
             ),
-            environment_reference=environment.model_copy(),
-            phenotype_reference=phenotype_reference,
+            environment_reference=environment,
+            phenotype_reference=EnvironmentResponsePhenotype(
+                measurement_type=Z_SCORE_DEFINITION.value,
+                assay_type=ASSAY.value,
+                environment_response=0.0,
+                units=(
+                    MEASUREMENT_UNITS
+                    + "; the reference 0 is the screen's own normalized-growth center "
+                    "by construction of the z-score, NOT a measured wild-type value"
+                ),
+            ),
         )
 
-    def _experiment(
-        self, cell: dict[str, Any], environment: Environment
-    ) -> EnvironmentResponseExperiment:
-        """Build one env x geno -> z-score experiment for a (strain, compound) cell."""
-        genotype = Genotype(
+    def _phenotype(self, cell: MatrixCell) -> EnvironmentResponsePhenotype:
+        """The screen-averaged z-score with its across-screen dispersion, or a typed gap."""
+        z_values = cell.z_values
+        category, label = cell.category()
+        common: dict[str, Any] = {
+            "measurement_type": Z_SCORE_DEFINITION.value,
+            "assay_type": ASSAY.value,
+            "environment_response": fmean(z_values),
+            "category": category,
+            "category_label": label,
+            "n_samples": cell.n_screens,
+            "sample_unit": SampleUnit.screen,
+            "units": MEASUREMENT_UNITS,
+        }
+        if cell.n_screens == 1:
+            return EnvironmentResponsePhenotype(
+                **common,
+                provenance_gaps=[
+                    ProvenanceGap(
+                        field=field,
+                        reason=ProvenanceGapReason.not_reported_by_primary,
+                        note="one released screen for this (strain, compound) cell; a "
+                        "dispersion across screens is undefined at n=1 and the release "
+                        "carries no per-screen error",
+                    )
+                    for field in (
+                        "environment_response_uncertainty",
+                        "environment_response_se",
+                    )
+                ],
+            )
+        dispersion = stdev(z_values)
+        if dispersion == 0.0:
+            raise RuntimeError(
+                f"{cell.orf}/{cell.identity}: {cell.n_screens} distinct screens with a "
+                "sample SD of exactly 0, which the datapoint-key measurement says "
+                "cannot happen"
+            )
+        return EnvironmentResponsePhenotype(
+            **common,
+            environment_response_uncertainty=dispersion,
+            environment_response_uncertainty_type=UncertaintyType.sample_sd,
+        )
+
+    def _genotype(self, systematic: str, common: str) -> Genotype:
+        """One Euroscarf haploid deletion, carrying the collection it came from."""
+        return Genotype(
             perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=cell["orf"], perturbed_gene_name=cell["sym"]
+                BarcodedKanMxDeletionPerturbation(
+                    systematic_gene_name=systematic,
+                    perturbed_gene_name=common,
+                    collection=COLLECTION.value,
                 )
             ]
         )
-        z_values = cell["z_values"]
-        phenotype = EnvironmentResponsePhenotype(
-            measurement_type=MeasurementType.z_score,
-            environment_response=fmean(z_values),
-            n_samples=2 * len(z_values),
-            sample_unit=SampleUnit.technical_replicate,
-            units=MEASUREMENT_UNITS,
-        )
-        return EnvironmentResponseExperiment(
-            dataset_name=self.name,
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
-        )
 
+    # ---- build ------------------------------------------------------------------ #
     @post_process
     def process(self) -> None:
         """Collapse the datapoint export into the CGM matrix; write LMDB."""
-        cells = self._collapse_matrix()
-        publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
-        pub_dump = publication.model_dump()
+        cells, n_rows, n_non_strain = self._collapse_matrix()
+        source_records = len(cells)
 
-        # One reference per compound environment (Z-score control baseline is 0); cache
-        # the reference dump per compound identity to avoid rebuilding it per strain.
-        ref_cache: dict[str, dict[str, Any]] = {}
+        genome = default_genome()
+        gene_set = {gene.upper() for gene in genome.gene_set}
+        canonical = _canonical_common_names(genome)
+        orfs = sorted({cell.orf for cell in cells.values()})
+        off_genome = sorted(
+            orf
+            for orf in orfs
+            if not (
+                (resolution := genome.resolve_gene_name(orf)).is_current_gene
+                and resolution.systematic_name in gene_set
+            )
+        )
+        if off_genome:
+            raise RuntimeError(
+                f"{len(off_genome)} released ORFs are not current R64 genes: "
+                f"{off_genome[:10]}; the release measured 242 current genes when this "
+                "loader was written, so a new drop rule is needed, not a silent skip"
+            )
+        common_names = {orf: canonical.get(orf, orf) for orf in orfs}
+
+        # Resolve each DISTINCT compound identity once; a compound carrying no InChIKey,
+        # CID or ChEBI id cannot be encoded, so its cells are dropped.
+        compounds: dict[str, Compound] = {}
+        for cell in cells.values():
+            if cell.identity not in compounds:
+                compounds[cell.identity] = self._compound(cell)
+        unidentified = sorted(
+            identity
+            for identity, compound in compounds.items()
+            if compound.inchikey is None
+            and compound.pubchem_cid is None
+            and compound.chebi_id is None
+        )
+        unidentified_set = set(unidentified)
+        n_dropped = sum(
+            1 for cell in cells.values() if cell.identity in unidentified_set
+        )
+        names = [
+            compound.name
+            for identity, compound in compounds.items()
+            if identity not in unidentified_set
+        ]
+        if len(set(names)) != len(names):
+            raise RuntimeError(
+                "two distinct compound identities resolve to the same canonical name, "
+                "which would merge two conditions into one record key"
+            )
+
+        publication = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
+        environments: dict[str, Environment] = {}
+        references: dict[str, EnvironmentResponseExperimentReference] = {}
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
-        with env.begin(write=True) as txn:
-            for (orf, identity), cell in tqdm(
-                sorted(cells.items()), desc="Wildenhain2015 CGM"
-            ):
-                environment = self._environment(cell)
-                ref_dump = ref_cache.get(identity)
-                if ref_dump is None:
-                    ref_dump = self._reference(environment).model_dump()
-                    ref_cache[identity] = ref_dump
-                experiment = self._experiment(cell, environment)
+        n_all_non_replicating = 0
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for key in tqdm(sorted(cells), desc="Wildenhain2015 CGM"):
+                cell = cells[key]
+                if cell.identity in unidentified_set:
+                    continue
+                if cell.identity not in environments:
+                    environments[cell.identity] = self._environment(
+                        compounds[cell.identity]
+                    )
+                    references[cell.identity] = self._reference(
+                        environments[cell.identity]
+                    )
+                if cell.all_screens_non_replicating:
+                    n_all_non_replicating += 1
+                experiment = EnvironmentResponseExperiment(
+                    dataset_name=self.name,
+                    genotype=self._genotype(cell.orf, common_names[cell.orf]),
+                    environment=environments[cell.identity],
+                    phenotype=self._phenotype(cell),
+                )
                 txn.put(
                     f"{idx}".encode(),
-                    pickle.dumps(
-                        {
-                            "experiment": experiment.model_dump(),
-                            "reference": ref_dump,
-                            "publication": pub_dump,
-                        }
+                    self._intern_record(
+                        experiment, references[cell.identity], publication, itxn
                     ),
                 )
                 idx += 1
         env.close()
+        interned_env.close()
+
+        drop_log = DropLog(
+            dataset=self.name,
+            source_records=source_records,
+            kept_records=idx,
+            dropped_records=source_records - idx,
+            rules=[
+                DropRule(
+                    rule="compound_without_a_structure_identifier",
+                    scope="compound",
+                    description=(
+                        "the released row carries no PUBCHEM_CID and no SMILES, so the "
+                        "compound has no InChIKey, CID or ChEBI id to be keyed or "
+                        "joined by; only its submitter SID is known"
+                    ),
+                    n_records=n_dropped,
+                    items=unidentified,
+                )
+            ],
+        )
+        with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
+            handle.write(drop_log.model_dump_json(indent=2))
+        if drop_log.dropped_records != n_dropped:
+            raise RuntimeError(
+                f"drop accounting mismatch: rule total {n_dropped}, "
+                f"{drop_log.dropped_records} records missing from the build"
+            )
         log.info(
-            "Wrote %d Wildenhain2015 environment-response experiments to LMDB", idx
+            "Wrote %d Wildenhain2015 records (%d dropped for an unidentifiable "
+            "compound; %d non-strain rows ignored; %d cells whose every screen is "
+            "non-replicate flagged)",
+            idx,
+            n_dropped,
+            n_non_strain,
+            n_all_non_replicating,
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:

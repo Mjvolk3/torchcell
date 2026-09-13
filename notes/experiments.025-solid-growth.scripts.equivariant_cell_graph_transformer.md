@@ -592,3 +592,21 @@ Monday scheduler maintenance. The read-path table for the 025 build is now compl
 | Delta node NVMe via stage-in (A40) | 27 |
 | Delta Taiga NFS (A40) | 63, with 30-minute stalls |
 | Delta Lustre scratch (A40) | 200 to 220 |
+
+The control 22020652 then failed on the same lock-file error, 47 minutes in, because
+`sbatch` stores a copy of the batch script at submission: the seven jobs submitted at
+22:29 all carried the old launcher regardless of the worktree advance, and only the
+resubmitted 22030924 had the fix. All seven were cancelled and resubmitted from aa44be08,
+chained 30 minutes apart behind 22030924, in the same order:
+
+| Delta job | config | seed |
+|---|---|---|
+| 22030924 | `cgt_s0_r_kl_fit_014` | 1 (running, epoch 6 at 11:53) |
+| 22034665 | `cgt_s0_r_kl_ctrl_013` | 1 |
+| 22034666 | `cgt_s0_r_kl_fit_015` | 1 |
+| 22034667 | `cgt_s0_r_kl_fit_014` | 2 |
+| 22034668 | `cgt_s0_r_kl_ctrl_013` | 2 |
+| 22034669 | `cgt_s0_r_kl_fit_015` | 2 |
+| 22034670 | `cgt_s0_r_kl_fit_014` | 3 |
+| 22034671 | `cgt_s0_r_kl_ctrl_013` | 3 |
+| 22034673 | `cgt_s0_r_kl_fit_015` | 3 |

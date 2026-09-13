@@ -75,4 +75,5 @@ created: 1788904951158
 
 - [x] 028 figures: gene co-variation relaid (legend beside c, names on y, colorbar last); Fig 11 b legend to the clear middle; Fig 12 d Nadal in blue; Fig 13 d dark/light bars instead of hatching; legend markers enlarged in all 028 figures; every caption in the 019 expression document now leads with a one-sentence takeaway
 - [x] figure standards recorded: two levels of one series are dark and light, never hatched; `markerscale=2.5` for scatter legends; captions lead with the takeaway (CLAUDE.md figure standards + [[paper.nature-biotech.style-guide]] Figures)
-- [ ] Zelezniak 2018 proteome vs Messner (97 kinase deletions) and vs Kemmeren mRNA (94): the proteome replication check, author go-ahead 2026-09-13; Zelezniak metabolome goes to the metabolic strand, not here
+- [x] Zelezniak 2018 proteome vs Messner (89 shared kinase deletions) per deletion 0.08, per protein 0.09; vs Kemmeren mRNA 0.01; gene co-variation 0.15 where Messner reproduces itself at 0.80 on the same 87 strains: the knockout proteome has not been shown to replicate itself [[experiments.028-knockout-expression.scripts.proteome_replication_zelezniak]]
+- [ ] Zelezniak 2018 metabolome vs Messner protein / Kemmeren mRNA goes to the metabolic strand (026/027), not 028

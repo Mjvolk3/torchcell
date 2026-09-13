@@ -1,0 +1,68 @@
+{
+ "generated_by": "experiments/028-knockout-expression/scripts/proteome_replication_zelezniak.py",
+ "zelezniak_shape": [
+  97,
+  726
+ ],
+ "shared_strains": {
+  "zelezniak_messner": 89,
+  "zelezniak_kemmeren": 94,
+  "all_three": 87
+ },
+ "strain_aligned": {
+  "zelezniak_vs_messner": {
+   "n_shared_strains": 89,
+   "n_shared_genes": 714,
+   "per_strain_median_r": 0.08332180635700921,
+   "per_strain_n": 89,
+   "per_gene_median_r": 0.08564961524478465,
+   "per_gene_n": 714,
+   "per_gene_frac_above_0.3": 0.06722689075630252
+  },
+  "zelezniak_vs_kemmeren": {
+   "n_shared_strains": 94,
+   "n_shared_genes": 723,
+   "per_strain_median_r": 0.014632860603522297,
+   "per_strain_n": 94,
+   "per_gene_median_r": 0.032418551234066076,
+   "per_gene_n": 723,
+   "per_gene_frac_above_0.3": 0.004149377593360996
+  },
+  "messner_vs_kemmeren_same_strains": {
+   "n_shared_strains": 87,
+   "n_shared_genes": 711,
+   "per_strain_median_r": 0.014727448671429133,
+   "per_strain_n": 87,
+   "per_gene_median_r": 0.017026374964187036,
+   "per_gene_n": 711,
+   "per_gene_frac_above_0.3": 0.03938115330520394
+  }
+ },
+ "gene_covariation": {
+  "n_genes": 711,
+  "zelezniak_vs_messner": {
+   "n_pairs": 252394,
+   "spearman": 0.14810116877192023
+  },
+  "zelezniak_vs_kemmeren": {
+   "n_pairs": 252405,
+   "spearman": 0.0749412056732835
+  },
+  "messner_vs_kemmeren": {
+   "n_pairs": 252394,
+   "spearman": 0.2200016222045877
+  },
+  "zelezniak_vs_messner_all": {
+   "n_pairs": 252375,
+   "spearman": 0.16228002679921158
+  },
+  "messner_vs_messner_all": {
+   "n_pairs": 252373,
+   "spearman": 0.7957120789665527
+  }
+ },
+ "level": {
+  "n_genes": 714,
+  "spearman": 0.774459086001038
+ }
+}

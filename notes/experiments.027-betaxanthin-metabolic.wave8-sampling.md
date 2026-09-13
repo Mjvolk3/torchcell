@@ -447,3 +447,38 @@ Scores at seed 2703, one seed, no conclusion drawn yet:
 The 019 replicate study puts the between-seed spread near 0.04, so the 0.06 gap between the
 K = 16 cell and the deterministic cell is at the noise scale at n = 1 and the within-pair
 number is not in yet. Nothing is concluded until all three pairs are scored.
+
+## 2026.09.12 - Step 2 design revised: measure the spread in flux space, not in the latent
+
+The design above puts the flow in the per-genotype admissible subspace, obtained from an SVD
+of the zero-width block `N[Z, :]`. Costing it kills it: `Z` is genotype-dependent, since a
+deletion closes reactions, so that is one SVD of a few-hundred by 1,538 matrix PER GENOTYPE
+per forward pass, 128 of them a batch. The diagnostic could afford it for one genotype; a
+training step cannot.
+
+The replacement is simpler and measures the better quantity. The existing alternating
+projection already pins every zero-width reaction exactly, because clipping into a box of
+zero width IS the pin. So the flow does not need to know about the admissible subspace at
+all: it proposes freely in the latent, the projection makes the point feasible, and the
+entropy term is measured on the PROJECTED FLUX rather than on the latent. Directions the
+projection kills then contribute nothing to the objective automatically, which is the
+property the SVD was there to buy.
+
+Measuring spread in flux space also solves the scale problem that the amino-acid arms make
+unavoidable. Their enzyme-capacity bound gives a median box width of 1.5e-7
+mmol gDW^-1 h^-1, against a plain projection box of order 1 to 10 in the same units and a
+`flux_scale` of 100 mmol gDW^-1 h^-1. A repulsion term in raw flux units would be dominated
+entirely by the loose reactions of the loose arms. Dividing by each reaction's own box width
+makes the term dimensionless and per-genotype scale-free:
+
+```text
+H_hat = mean over pairs (i, i') of log || (v_i - v_i') / w ||,   w = ub - lb,  w > 0 only
+```
+
+Maximizing this spreads the draws in units of the box each reaction actually has, which is
+the quantity Step 0 already reports and calibrates against `1/sqrt(12)`. Cost is one K by K
+distance matrix per genotype, no density, no trace estimator, no SVD.
+
+The admissible-subspace machinery stays where it earned its place, in
+`audit_latent_spread.py`, as the instrument that measures how big the polytope is. It is not
+needed in the training loop.

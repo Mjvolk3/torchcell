@@ -577,3 +577,18 @@ mirror now leaves `*.lock` unlinked and `FileLockHelper` creates them locally
 (aa44be08). The control 22020652 was held before it could start on the old launcher,
 the worktree advanced, and the arm resubmitted as 22030924 with 22020652 re-chained
 30 minutes after it; the rest of the chain is unchanged.
+
+**Measured (10:00):** 22030924 started at 08:54, staged the LMDB in 1,007 s, and reached
+epoch 0 at 09:26 and epoch 1 at 09:53: **27 min per epoch** on A40s from node-local NVMe,
+against 63 through Taiga and 200 to 220 from Lustre scratch; the validation curve
+(0.397, 0.410) matches the earlier controls at the same epochs. Thirty epochs is about
+13.5 h plus the 17-minute stage-in, so the arm finishes around 23:00 today, before the
+Monday scheduler maintenance. The read-path table for the 025 build is now complete:
+
+| where the LMDB lives | min per epoch |
+|---|---|
+| IGB local disk (A100) | 17 |
+| GilaHyper NVMe (RTX 6000 Ada) | 19 |
+| Delta node NVMe via stage-in (A40) | 27 |
+| Delta Taiga NFS (A40) | 63, with 30-minute stalls |
+| Delta Lustre scratch (A40) | 200 to 220 |

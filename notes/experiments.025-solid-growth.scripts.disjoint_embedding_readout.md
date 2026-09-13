@@ -21,3 +21,12 @@ URLs. Rerun after any sync; a run's `complete` flag says whether it reached its 
 The findings read from it are in
 [[experiments.025-solid-growth.scripts.equivariant_cell_graph_transformer]] under the
 same date.
+
+### W&B report
+
+`experiments/025-solid-growth/scripts/disjoint_embedding_wandb_report.py` publishes a
+report with one run set filtered to the `split_Q` tag, the readout table above as
+markdown, and epoch curves of validation Pearson, validation point loss, train Pearson,
+the graph penalty and the perturbed-CLS strain spread. Each run creates a new version:
+
+<https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/reports/025-disjoint-split:-sequence-embeddings-against-the-learnable-table--VmlldzoxNzkyNTI2OA==>

@@ -92,6 +92,48 @@ for d in "$BUILD_REL/processed/lmdb" data/sgd/genome data/go data/string data/tf
 done
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 
+# ---- STAGE THE 025 LMDB ONTO NODE-LOCAL NVMe ----
+# Measured 2026-09-12 on gpub066 (job 21947151, node otherwise empty): reading the 554 GB
+# LMDB from Lustre /scratch (4 stripes of 114) ran 3.3 to 3.7 h per epoch with CPU load
+# 1.15 on 16 cores, i.e. the ranks sat waiting on page reads; the same build through the
+# Taiga NFS mount ran 63 min per epoch (jobs 21934082/84) and GilaHyper's local NVMe 19.
+# With num_workers=0 every LMDB read is in the training process, so read latency IS the
+# epoch time. So each job copies data.mdb to the node's local disk first (about half an
+# hour at the copy job's 290 MB/s) and trains from there. DATA_ROOT becomes a node-local
+# mirror in which everything is a symlink back to /scratch except that one directory, so
+# genome/GO/STRING/TFLink, the index files, the split artifacts, W&B dirs and the
+# data_module_cache stay where they are. Set STAGE_LMDB=0 to read /scratch directly.
+STAGE_LMDB="${STAGE_LMDB:-1}"
+if [[ "$STAGE_LMDB" == "1" && "$CONFIG_NAME" != cgt_010b_* ]]; then
+  LOCAL_ROOT="${SLURM_TMPDIR:-/tmp}/$SLURM_JOB_ID/torchcell"
+  SRC_LMDB="$DELTA_DATA_ROOT/$BUILD_REL/processed/lmdb/data.mdb"
+  need_kb=$(( $(stat -c %s "$SRC_LMDB") / 1024 * 11 / 10 ))
+  free_kb=$(df -k --output=avail "${SLURM_TMPDIR:-/tmp}" | tail -1)
+  [[ "$free_kb" -gt "$need_kb" ]] || {
+    echo "ERROR: node-local disk has ${free_kb} kB free, need ${need_kb} kB for the LMDB; set STAGE_LMDB=0 to read /scratch" >&2
+    exit 1; }
+  # Mirror DATA_ROOT by symlink at every level along BUILD_REL, materializing only the
+  # directories on that path so the LMDB directory itself can be a real, writable copy
+  # (LMDB writes its lock.mdb beside data.mdb even when opened read-only).
+  rel=""; src="$DELTA_DATA_ROOT"; dst="$LOCAL_ROOT"
+  mkdir -p "$dst"
+  for seg in $(tr '/' ' ' <<<"$BUILD_REL") processed lmdb; do
+    for e in "$src"/* "$src"/.[!.]*; do
+      [[ -e "$e" ]] || continue
+      b=$(basename "$e")
+      [[ "$b" == "$seg" ]] || ln -s "$e" "$dst/$b"
+    done
+    src="$src/$seg"; dst="$dst/$seg"; mkdir -p "$dst"
+  done
+  echo "staging $(stat -c %s "$SRC_LMDB") B LMDB -> $dst/data.mdb $(date)"
+  t0=$(date +%s)
+  cp "$SRC_LMDB" "$dst/data.mdb" || { echo "ERROR: LMDB stage-in copy failed" >&2; exit 1; }
+  [[ "$(stat -c %s "$dst/data.mdb")" == "$(stat -c %s "$SRC_LMDB")" ]] || { echo "ERROR: staged LMDB size mismatch" >&2; exit 1; }
+  echo "staged in $(( $(date +%s) - t0 )) s; DATA_ROOT -> $LOCAL_ROOT"
+  DELTA_DATA_ROOT="$LOCAL_ROOT"
+  trap 'rm -rf "${SLURM_TMPDIR:-/tmp}/$SLURM_JOB_ID"' EXIT
+fi
+
 cd "$PROJECT_ROOT/experiments" || exit 1
 
 export DATA_ROOT="$DELTA_DATA_ROOT"

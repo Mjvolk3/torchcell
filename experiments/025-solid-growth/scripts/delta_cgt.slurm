@@ -115,13 +115,17 @@ if [[ "$STAGE_LMDB" == "1" && "$CONFIG_NAME" != cgt_010b_* ]]; then
   # Mirror DATA_ROOT by symlink at every level along BUILD_REL, materializing only the
   # directories on that path so the LMDB directory itself can be a real, writable copy
   # (LMDB writes its lock.mdb beside data.mdb even when opened read-only).
+  # The `*.lock` files beside the index JSONs are NOT linked: filelock opens a lock with
+  # O_NOFOLLOW, so a symlinked lock raises ELOOP ("Too many levels of symbolic links",
+  # job 22020651). Left absent, FileLockHelper creates them in the local mirror, which is
+  # the right scope anyway (the four ranks of this job are the only readers).
   rel=""; src="$DELTA_DATA_ROOT"; dst="$LOCAL_ROOT"
   mkdir -p "$dst"
   for seg in $(tr '/' ' ' <<<"$BUILD_REL") processed lmdb; do
     for e in "$src"/* "$src"/.[!.]*; do
       [[ -e "$e" ]] || continue
       b=$(basename "$e")
-      [[ "$b" == "$seg" ]] || ln -s "$e" "$dst/$b"
+      [[ "$b" == "$seg" || "$b" == *.lock ]] || ln -s "$e" "$dst/$b"
     done
     src="$src/$seg"; dst="$dst/$seg"; mkdir -p "$dst"
   done

@@ -1,0 +1,7 @@
+# compound_identity_inputs/costanzo2021.txt
+# Source: serve-50 review `Costanzo2021_Auesukaree2009_Mota2024.md`. Thirteen of the 14
+# Costanzo 2021 compound names already resolve through curated_core.txt; tunicamycin is the
+# only gap, and it is carried in hillenmeyer2008.txt with its mixture directive
+# (ChEBI:29699, no single-molecule InChIKey). It is listed here so the source accounting
+# shows which review asked for it.
+tunicamycin

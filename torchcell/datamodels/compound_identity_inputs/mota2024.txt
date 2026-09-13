@@ -1,0 +1,6 @@
+# compound_identity_inputs/mota2024.txt
+# Source: serve-50 review `Costanzo2021_Auesukaree2009_Mota2024.md`, Mota section. The three
+# organic acids already resolve through curated_core.txt (acetic, butyric, octanoic).
+# Hydrochloric acid is the acidulant the Methods name ("20 g/L peptone ... acidified with HCl
+# until pH 4.5"), and it becomes the `agent` of the pH EnvironmentPhysicalPerturbation.
+hydrochloric acid

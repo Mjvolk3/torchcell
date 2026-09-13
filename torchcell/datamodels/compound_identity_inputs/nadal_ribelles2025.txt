@@ -1,0 +1,9 @@
+# compound_identity_inputs/nadal_ribelles2025.txt
+# Source: serve-50 review `Hillenmeyer2008Datasets.md`, the compound-node identity defect.
+# The served Nadal-Ribelles loader names exactly one compound
+# (torchcell/datasets/scerevisiae/nadal_ribelles2025.py:436, `sodium chloride`), while
+# Hillenmeyer spells the same compound `NaCl`. Both labels are listed so they collapse onto
+# ONE row (CID 5234) and therefore onto ONE environment-perturbation node, instead of two
+# nodes joinable only on the inchikey property.
+sodium chloride
+NaCl

@@ -1,0 +1,27 @@
+# compound_identity_inputs/smith2016.txt
+# Source: serve-50 review `Smith2006_Smith2016_Lian2019_Mormino2022.md`, Smith 2016 section --
+# the 19 drug labels stored in the crispri_chemgen_smith2016 LMDB, plus anhydrotetracycline
+# (the ATc inducer of the CRISPRi system). Additional file 8 ("Compound information",
+# sha256 a22ef00ace51...) releases the vendor per compound and the alias
+# "NSC-180973 (tamoxifen)", and releases NO structure, SMILES or CAS for any compound, which
+# is why the ten vendor catalog codes are terminal.
+Aureobasidin-A | query=aureobasidin A
+Cantharidin | query=cantharidin
+Cerulenin | query=cerulenin
+DMSO | query=dimethyl sulfoxide
+Daunorubicin | query=daunorubicin
+Doxorubicin | query=doxorubicin
+Fluconazole | query=fluconazole
+NSC-180973 | query=tamoxifen
+Rapamycin | query=rapamycin
+anhydrotetracycline
+0KPI-0099 | proprietary=ChemDiv library catalog code; Additional file 8 releases no structure, SMILES or CAS
+1181-0519 | proprietary=ChemDiv library catalog code; Additional file 8 releases no structure, SMILES or CAS
+4130-1276 | proprietary=ChemDiv library catalog code; Additional file 8 releases no structure, SMILES or CAS
+6630449 | proprietary=ChemBridge library catalog code; Additional file 8 releases no structure, SMILES or CAS
+7312221 | proprietary=ChemBridge library catalog code; Additional file 8 releases no structure, SMILES or CAS
+9121982 | proprietary=ChemBridge library catalog code; Additional file 8 releases no structure, SMILES or CAS
+9125678 | proprietary=ChemBridge library catalog code; Additional file 8 releases no structure, SMILES or CAS
+9150499 | proprietary=ChemBridge library catalog code; Additional file 8 releases no structure, SMILES or CAS
+CBF-666774 | proprietary=ChemBridge library catalog code; Additional file 8 releases no structure, SMILES or CAS
+ST016598 | proprietary=TimTec library catalog code; Additional file 8 releases no structure, SMILES or CAS

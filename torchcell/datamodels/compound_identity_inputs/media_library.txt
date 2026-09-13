@@ -1,0 +1,68 @@
+# compound_identity_inputs/media_library.txt
+# Source: serve-50 review brief, "Environment (media) must JOIN further up the branch" --
+# every distinct Compound name reachable from a Media constant in
+# torchcell/datamodels/media.py (55 labels: the SGA selection medium, YPD/YPAD, the
+# SD/YNB/SC family, and the Bloom 2019 YP + carbon-source variants).
+# Every label is `canonical`: media.py owns the bench spelling, the metabolism resolver's
+# _NAME_SYNONYMS is keyed on it, and a rename would re-hash every media node. PubChem's
+# Title is kept as a synonym where it differs (D-glucose keeps the D prefix; myo-inositol
+# does not become "an inositol").
+# Four preparations are intrinsically undefined and stay without any identifier by design;
+# agar has a PubChem CID but its InChIKey belongs to the agarobiose repeat unit, not to the
+# algal polysaccharide mixture that goes into a plate.
+4-aminobenzoic acid | canonical
+D-glucose | canonical
+G418 (geneticin) | canonical | query=geneticin
+L-alanine | canonical
+L-arginine | canonical
+L-asparagine | canonical
+L-aspartic acid | canonical
+L-canavanine | canonical
+L-cysteine | canonical
+L-glutamic acid | canonical
+L-glutamine | canonical
+L-histidine | canonical
+L-isoleucine | canonical
+L-leucine | canonical
+L-lysine | canonical
+L-methionine | canonical
+L-phenylalanine | canonical
+L-proline | canonical
+L-serine | canonical
+L-threonine | canonical
+L-tryptophan | canonical
+L-tyrosine | canonical
+L-valine | canonical
+adenine | canonical
+ammonium sulfate | canonical
+biotin | canonical
+calcium pantothenate | canonical
+ethanol
+folic acid | canonical
+fructose | canonical
+galactose
+glucose
+glycerol
+glycine | canonical
+lactate | canonical
+maltose | canonical
+mannose | canonical
+monosodium L-glutamate | canonical | query=monosodium glutamate
+myo-inositol | canonical
+niacin | canonical
+nourseothricin (clonNAT) | canonical | query=nourseothricin
+pyridoxine hydrochloride | canonical
+raffinose | canonical
+riboflavin | canonical
+sucrose | canonical
+thialysine (S-(2-aminoethyl)-L-cysteine) | canonical | query=thialysine
+thiamine hydrochloride | canonical
+trehalose | canonical
+uracil | canonical
+xylose | canonical
+agar | canonical | mixture=agar is a polysaccharide mixture extracted from red algae; PubChem's Agar record (CID 71571511) carries the InChIKey of the agarobiose repeat unit, which is not the substance weighed into a plate, so the CID is kept as the identifier and the InChIKey is left null
+SC amino-acid supplement powder (DO -His/Arg/Lys) | canonical | undefined=a formulated powder blend (3 g adenine, 2 g uracil, 2 g inositol, 0.2 g PABA, and all 20 amino acids per 55.2 g mix), not a chemical species
+peptone | canonical | undefined=an enzymatic digest of protein; intrinsically undefined, no structure exists
+yeast extract | canonical | undefined=an autolysate of yeast cells; intrinsically undefined, no structure exists
+yeast nitrogen base (w/o amino acids) | canonical | undefined=a formulated vitamin, trace-metal and salt blend (Difco), not a chemical species
+yeast nitrogen base (w/o amino acids and ammonium sulfate) | canonical | undefined=a formulated vitamin, trace-metal and salt blend (Difco), not a chemical species

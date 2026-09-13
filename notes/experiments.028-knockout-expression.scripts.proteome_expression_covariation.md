@@ -61,3 +61,10 @@ yellow, Nadal orange). The document now carries this as its own subsection
 Beside Kemmeren's yellow at the 45% fill opacity, the orange used for Nadal elsewhere was
 not distinguishable in panels a and b (author feedback), so Nadal A is palette blue
 (`PLOT_PALETTE[4]`) in every panel of this figure, including the f density map.
+
+## 2026.09.12 - Panels d to f relabeled: gene pairs, no strain shared
+
+The co-variation panels now say in the title that no strain is shared and in the axis
+labels that the y value is the same gene pair's r in the other panel, after the author
+asked how isolates could be compared to deletions. The all-panels version, with Sameith
+and a common ordering, is [[experiments.028-knockout-expression.scripts.gene_covariation_all]].

@@ -1,0 +1,147 @@
+{
+ "generated_by": "experiments/028-knockout-expression/scripts/gene_covariation_all.py",
+ "min_fraction_of_strains_per_gene": 0.8,
+ "nadal_min_cells": 50,
+ "strains": {
+  "messner": 4549,
+  "caudal": 943,
+  "kemmeren": 1484,
+  "sameith": 82,
+  "nadalA": 2243
+ },
+ "gene_sets": {
+  "protein": {
+   "panels": [
+    "messner",
+    "caudal",
+    "kemmeren",
+    "sameith",
+    "nadalA"
+   ],
+   "n_genes": 1645,
+   "pairwise_spearman": {
+    "messner": {
+     "caudal": 0.33725975601133545,
+     "kemmeren": 0.2984939512232186,
+     "sameith": 0.24003604047795113,
+     "nadalA": 0.0464615330585955
+    },
+    "caudal": {
+     "messner": 0.33725975601133545,
+     "kemmeren": 0.46975399975055104,
+     "sameith": 0.3666659108361107,
+     "nadalA": 0.08434280781747448
+    },
+    "kemmeren": {
+     "messner": 0.2984939512232186,
+     "caudal": 0.46975399975055104,
+     "sameith": 0.6757778179876717,
+     "nadalA": 0.10486088102405396
+    },
+    "sameith": {
+     "messner": 0.24003604047795113,
+     "caudal": 0.3666659108361107,
+     "kemmeren": 0.6757778179876717,
+     "nadalA": 0.030784387833981686
+    },
+    "nadalA": {
+     "messner": 0.0464615330585955,
+     "caudal": 0.08434280781747448,
+     "kemmeren": 0.10486088102405396,
+     "sameith": 0.030784387833981686
+    }
+   },
+   "structure": {
+    "messner": {
+     "n_pairs": 1330346,
+     "sd": 0.15854263327092505,
+     "median_abs": 0.08478317568853092,
+     "frac_abs_above_0.3": 0.07238492843215223
+    },
+    "caudal": {
+     "n_pairs": 1352190,
+     "sd": 0.26475067403869595,
+     "median_abs": 0.1894090108738968,
+     "frac_abs_above_0.3": 0.2820165805101354
+    },
+    "kemmeren": {
+     "n_pairs": 1352190,
+     "sd": 0.17328020177262327,
+     "median_abs": 0.15258351685790011,
+     "frac_abs_above_0.3": 0.16322780082680688
+    },
+    "sameith": {
+     "n_pairs": 1352190,
+     "sd": 0.2805304158605275,
+     "median_abs": 0.18431606715968685,
+     "frac_abs_above_0.3": 0.281948542734379
+    },
+    "nadalA": {
+     "n_pairs": 1352141,
+     "sd": 0.08548854169968206,
+     "median_abs": 0.13243980315732262,
+     "frac_abs_above_0.3": 0.044414007119080036
+    }
+   },
+   "ordering": "average-linkage clustering of the Kemmeren matrix"
+  },
+  "expression": {
+   "panels": [
+    "caudal",
+    "kemmeren",
+    "sameith",
+    "nadalA"
+   ],
+   "n_genes": 4337,
+   "pairwise_spearman": {
+    "caudal": {
+     "kemmeren": 0.3932862901423731,
+     "sameith": 0.29812376168894167,
+     "nadalA": -0.015852036461803984
+    },
+    "kemmeren": {
+     "caudal": 0.3932862901423731,
+     "sameith": 0.6448023105435696,
+     "nadalA": 0.08510690176155973
+    },
+    "sameith": {
+     "caudal": 0.29812376168894167,
+     "kemmeren": 0.6448023105435696,
+     "nadalA": 0.03094161938099217
+    },
+    "nadalA": {
+     "caudal": -0.015852036461803984,
+     "kemmeren": 0.08510690176155973,
+     "sameith": 0.03094161938099217
+    }
+   },
+   "structure": {
+    "caudal": {
+     "n_pairs": 9402508,
+     "sd": 0.23688559918639265,
+     "median_abs": 0.18203292215794525,
+     "frac_abs_above_0.3": 0.2628032861019634
+    },
+    "kemmeren": {
+     "n_pairs": 9402616,
+     "sd": 0.15713409164222658,
+     "median_abs": 0.1375925843715598,
+     "frac_abs_above_0.3": 0.12391827976384444
+    },
+    "sameith": {
+     "n_pairs": 9402616,
+     "sd": 0.257036992561803,
+     "median_abs": 0.16901717398075872,
+     "frac_abs_above_0.3": 0.2401640139297404
+    },
+    "nadalA": {
+     "n_pairs": 9401298,
+     "sd": 0.06674047710691611,
+     "median_abs": 0.08268089551248461,
+     "frac_abs_above_0.3": 0.011173988953440258
+    }
+   },
+   "ordering": "average-linkage clustering of the Kemmeren matrix"
+  }
+ }
+}

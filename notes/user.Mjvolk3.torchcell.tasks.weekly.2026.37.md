@@ -65,6 +65,8 @@ created: 1788904951158
 - [x] legend fixes on the three cross-study figures
 - [ ] scYeast (fanScYeastBiologicalknowledgeguidedFoundation2027) datasets not in torchcell: Jackson 2020/2023 scRNA, Wang 2022 aging, Su 2023 stress, IDEA (Hackett 2020), Messner growth rates, McManus ribosome occupancy, Martin-Perez half-lives; lowest effort = Messner growth rate (same mirrored SI)
 - [x] 028: figures to palette-only colors, legends narrowed; comparison-designs schematic + comparisons table in the document; proteome as its own subsection [[experiments.028-knockout-expression.scripts.comparison_designs]]
+- [x] 028: gene-pair co-variation across all five panels on one gene list, one ordering (Kem-Sam 0.68, Kem-Cau 0.47, Mes-Kem 0.30; Nadal 0.03-0.10); proteome figure d-f relabeled [[experiments.028-knockout-expression.scripts.gene_covariation_all]]
+- [x] Kemmeren-strain overlap of every built deletion-collection dataset counted (O'Duibhir 1,312 of 1,312; Messner 1,350; Mulleder 1,416; Ohya 1,440; Hoepfner 1,452; YeastPhenome 1,475; Sameith 82 singles + 72 doubles); pivot options for the free gpu cards discussed, no run submitted
 - [x] TFLink's yeast layer is YEASTRACT 2020 (downloaded 2020-07-20) + GTRD + ORegAnno; YEASTRACT+ 2023 has 215k associations [[torchcell.graph.graph]]
 - [x] v12 head round: gpu tasks done, 24 runs synced, readout on seeds 1-3 (H_concat +0.012 in every seed; two plateau runs) [[experiments.019-simb-multimodal.scripts.head_round_readout]]
 - [ ] v12: cabbi pair `2392379_0/_1` (seed 0) still running; sync with INCLUDE_SYNCED=1 after it ends and re-run `head_round_readout.py`

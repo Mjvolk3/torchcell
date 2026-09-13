@@ -15712,7 +15712,7 @@ z
      </g>
     </g>
     <g id="text_59">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="6.407219" y="223.342823" transform="rotate(-90 6.407219 223.342823)">r across Caudal isolates, mRNA</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="6.407219" y="223.342823" transform="rotate(-90 6.407219 223.342823)">same pair, Caudal isolates, mRNA</text>
     </g>
    </g>
    <g id="line2d_44">
@@ -15757,7 +15757,7 @@ z
     <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="2.940344" y="162.256501" transform="rotate(-0 2.940344 162.256501)">d</text>
    </g>
    <g id="text_61">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="91.226575" y="169.835251" transform="rotate(-0 91.226575 169.835251)">co-variation, Spearman 0.36 (1,777 genes)</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="91.226575" y="169.835251" transform="rotate(-0 91.226575 169.835251)">no strain shared: Spearman 0.36, 1,777 genes</text>
    </g>
   </g>
   <g id="axes_5">
@@ -24505,7 +24505,7 @@ z
      </g>
     </g>
     <g id="text_71">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="179.029464" y="223.342823" transform="rotate(-90 179.029464 223.342823)">r across Kemmeren deletions, mRNA</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="179.029464" y="223.342823" transform="rotate(-90 179.029464 223.342823)">same pair, Kemmeren deletions, mRNA</text>
     </g>
    </g>
    <g id="line2d_54">
@@ -24550,7 +24550,7 @@ z
     <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="175.562589" y="162.256501" transform="rotate(-0 175.562589 162.256501)">e</text>
    </g>
    <g id="text_73">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="169.835251" transform="rotate(-0 263.848819 169.835251)">co-variation, Spearman 0.31 (1,783 genes)</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="169.835251" transform="rotate(-0 263.848819 169.835251)">no strain shared: Spearman 0.31, 1,783 genes</text>
    </g>
   </g>
   <g id="axes_6">
@@ -33318,7 +33318,7 @@ z
      </g>
     </g>
     <g id="text_85">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="351.651708" y="223.342823" transform="rotate(-90 351.651708 223.342823)">r across Nadal A deletions, mRNA</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="351.651708" y="223.342823" transform="rotate(-90 351.651708 223.342823)">same pair, Nadal A deletions, mRNA</text>
     </g>
    </g>
    <g id="line2d_66">
@@ -33363,7 +33363,7 @@ z
     <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="348.094833" y="162.256501" transform="rotate(-0 348.094833 162.256501)">f</text>
    </g>
    <g id="text_87">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="436.471063" y="169.835251" transform="rotate(-0 436.471063 169.835251)">co-variation, Spearman 0.05 (1,650 genes)</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="436.471063" y="169.835251" transform="rotate(-0 436.471063 169.835251)">no strain shared: Spearman 0.05, 1,650 genes</text>
    </g>
   </g>
  </g>

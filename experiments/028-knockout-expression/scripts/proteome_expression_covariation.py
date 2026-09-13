@@ -425,10 +425,10 @@ def main() -> None:
             "nadalA": "Nadal A deletions",
         }[b]
         ax.set_xlabel("gene-pair r across Messner deletions, protein")
-        ax.set_ylabel(f"r across {name}, mRNA")
+        ax.set_ylabel(f"same pair, {name}, mRNA")
         m = mant[key]
         ax.set_title(
-            f"co-variation, Spearman {m['spearman']:.2f} ({m['n_genes']:,} genes)"
+            f"no strain shared: Spearman {m['spearman']:.2f}, {m['n_genes']:,} genes"
         )
 
     for ax in axes.flat:

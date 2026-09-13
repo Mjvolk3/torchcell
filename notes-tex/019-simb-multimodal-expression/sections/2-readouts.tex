@@ -429,7 +429,7 @@ GO co-annotation, within one study (\ref{fig:cross-study-structure}d) & strain p
 ribosomal protein module (\ref{fig:cross-study-structure}e) & deletion & Spearman of the module mean & $0.54$ & $0.05$ \\
 the paper's Supp.\ Fig.\ 1i (\ref{fig:replication-coverage}e) & genotype & Spearman of DE-gene counts & -- & $0.23$ \\
 the paper's unshown statistic (\ref{fig:replication-coverage}f) & genotype & Spearman of the two profiles & -- & $0.013$ \\
-gene co-variation (\ref{fig:proteome-covariation}d--f) & gene pair & Spearman of gene-gene $r$ between panels & Mes--Kem $0.31$, Mes--Cau $0.36$, Kem--Cau $0.48$ & $0.05$ to $0.11$ \\
+gene co-variation (\ref{fig:proteome-covariation}d--f, \ref{fig:gene-covariation-all}) & gene pair & Spearman of gene-gene $r$ between panels & Kem--Sam $0.68$, Kem--Cau $0.47$, Mes--Kem $0.30$, Mes--Cau $0.34$ & $0.03$ to $0.10$ \\
 \bottomrule
 \end{tabular}
 \label{tab:cross-study-comparisons}
@@ -775,24 +775,44 @@ July numbers reproduced from the LMDBs; with Nadal-Ribelles A $0.011$ and $0.012
 2{,}038 shared deletions (\cref{fig:proteome-covariation}a, b). Caudal shares no strain
 with a deletion panel, so it has no row here.
 
-\pfstep{Gene by gene} The co-variation of two genes across a panel's strains, one
-gene-by-gene correlation matrix per panel on the Messner proteins, and the Spearman
-between two panels' upper triangles (\cref{fig:comparison-designs}e): the proteome
-against the Caudal isolates $0.36$ over 1{,}777 genes, with the top $1\,\%$ proteome
-pairs having a median mRNA $r$ of $0.48$ against $0.07$ for the rest; against Kemmeren
-$0.31$; Kemmeren against Caudal $0.48$. Against Nadal-Ribelles A the three read $0.05$,
-$0.11$ and $0.08$ (\cref{fig:proteome-covariation}d--f). The abundance level itself
-agrees as expected, protein in the HIS3 reference against mean expression over the
-isolates at Spearman $0.68$ over 1{,}823 genes (\cref{fig:proteome-covariation}c).
+\pfstep{Gene by gene} No strain is aligned in this comparison. Within one panel two
+genes get one Pearson across that panel's own strains, whatever perturbed them, so a
+panel becomes one gene-by-gene matrix; two panels are compared by the Spearman between
+their matrices' upper triangles (\cref{fig:comparison-designs}e). It is the only
+comparison a deletion panel and an isolate panel admit. On the Messner proteins the
+proteome against the Caudal isolates reads $0.36$ over 1{,}777 genes, with the top
+$1\,\%$ proteome pairs having a median mRNA $r$ of $0.48$ against $0.07$ for the rest;
+against Kemmeren $0.31$; Kemmeren against Caudal $0.48$. Against Nadal-Ribelles A the
+three read $0.05$, $0.11$ and $0.08$ (\cref{fig:proteome-covariation}d--f). The
+abundance level itself agrees as expected, protein in the HIS3 reference against mean
+expression over the isolates at Spearman $0.68$ over 1{,}823 genes
+(\cref{fig:proteome-covariation}c).
 \src{experiments/028-knockout-expression/results/proteome_expression_covariation.json}
 
-Three panels that differ in platform, perturbation type and medium agree pairwise on
-which genes co-vary, at $0.31$ to $0.48$, while their strain-level agreement is $0.04$
-or less; what a deletion does to a transcript and to its protein is largely different,
-but the gene modules that move together are the same modules. The single-cell panel
-agrees with none of the three at either level. For the campaign this is the reason to
-carry the proteome as a target of its own rather than as a proxy for expression, and to
-leave the single-cell panel out of both.
+\pfstep{Every panel against every other} The same comparison over all five panels on
+one gene list, with the matrices themselves drawn in one ordering
+(\cref{fig:gene-covariation-all}). On the 1{,}645 proteins measured in every panel,
+Kemmeren against Sameith reads $0.68$, Kemmeren against Caudal $0.47$, Caudal against
+Sameith $0.37$, and the proteome against the three mRNA panels $0.30$, $0.34$ and
+$0.24$; Nadal-Ribelles A against any of the four $0.03$ to $0.10$. On the 4{,}337 genes
+measured in every mRNA panel the numbers hold: Kemmeren against Sameith $0.64$, against
+Caudal $0.39$, Caudal against Sameith $0.30$, Nadal-Ribelles A $-0.02$ to $0.09$. The
+spread of the gene-pair $r$ says how much co-variation a panel holds at all: the
+fraction of pairs beyond $|r| = 0.3$ is $28\,\%$ in Caudal and in Sameith, $16\,\%$ in
+Kemmeren, $7\,\%$ in the proteome and $4\,\%$ in Nadal-Ribelles A, whose matrix is
+nearly flat (sd $0.09$ against $0.16$ to $0.28$). Drawn in Kemmeren's cluster order,
+the two large blocks of Kemmeren appear at the same place in Caudal, in Sameith and,
+fainter, in the proteome, and nowhere in Nadal-Ribelles A.
+\src{experiments/028-knockout-expression/results/gene_covariation_all.json}
+
+Four panels that differ in platform, perturbation type and medium agree pairwise on
+which genes co-vary, at $0.24$ to $0.68$, while the strain-level agreement between the
+two that share strains is $0.04$; what a deletion does to a transcript and to its
+protein is largely different, but the gene modules that move together are the same
+modules, and the same modules move across natural isolates. The single-cell panel
+agrees with none of the four at either level and holds little co-variation of its own.
+For the campaign this is the reason to carry the proteome as a target of its own rather
+than as a proxy for expression, and to leave the single-cell panel out of both.
 
 \begin{figure}[htbp]
 \centering
@@ -807,4 +827,22 @@ Messner's deletions (protein) against the same pair across Caudal's isolates, Ke
 deletions and Nadal-Ribelles A's deletions (mRNA), log-count density. Generated by
 \file{proteome_expression_covariation.py}.}
 \label{fig:proteome-covariation}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/gene_covariation_all.pdf}
+\caption[]{Gene-pair co-variation in every panel. Within a panel, two genes get one
+Pearson across that panel's own strains; no strain is aligned between panels.
+\textbf{a}, Spearman between the upper triangles of two panels' gene-by-gene matrices
+on the 1{,}645 proteins measured in all five panels. \textbf{b}, the same on the
+4{,}337 genes measured in the four mRNA panels. \textbf{c}, the distribution of the
+gene-pair $r$ within each panel on the protein gene list. \textbf{d--h}, the five
+matrices on the protein gene list, and \textbf{i--l} the four mRNA matrices on the
+expression gene list, every matrix in the ordering given by average-linkage clustering
+of Kemmeren's matrix on that gene list, so a block in Kemmeren can be looked for at the
+same place in every other panel; color clipped at $\pm 0.6$. Sameith has 82 single
+deletions, Nadal-Ribelles A the 2{,}243 deletions with at least 50 cells. Generated by
+\file{gene_covariation_all.py}.}
+\label{fig:gene-covariation-all}
 \end{figure}

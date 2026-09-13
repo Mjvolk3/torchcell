@@ -233,3 +233,44 @@ Supported-datasets table regenerated (`build_supported_datasets_table.py --max-g
 50/50 built; `render_supported_datasets_table.py`): Hoepfner now 10,779 genotypes, 563
 environments (the distinct interned conditions over 608 kept columns, in place of the
 5,879 deposited sensitivity columns the row used to print), 3,124,319 records.
+
+### Re-verification of the rebuilt Hillenmeyer stores
+
+Both run on the stores the rebuild pass produced, with the shared resolver supplied
+(`scratchpad/serve50/builds/env_chemgen_hillenmeyer2008_{hom,het}_verify_final.log`):
+
+| store | records | L1 canonical_gene_names | verdict | wall (s) |
+|---|---|---|---|---|
+| env_chemgen_hillenmeyer2008_hom | 1,088,620 = 1,088,620 | 4,675 systematic names, each current in the genome | PASS | 2,183.5 |
+| env_chemgen_hillenmeyer2008_het | 2,698,797 = 2,698,797 | 5,825 systematic names, each current in the genome | PASS | 5,436.6 |
+
+The Hillenmeyer loaders already drop NON_GENE_FEATURE and RETIRED names through the
+resolver, which is why the same rule that failed Hoepfner passes them unchanged.
+
+## 2026.09.13 - Closing state: 50 of 50 built, verified and registered
+
+The Hoepfner verifier on the final store: PASS in 6,451 s, 3,124,319 records, 5,842 genes
+current in the genome, 28 merged-ORF aliases reported (verbatim block in
+[[torchcell.datasets.scerevisiae.hoepfner2014]]). With the Hillenmeyer pair above that
+closes the re-verification: every one of the 14 datasets this branch fixed is L0-L4 PASS
+on a store built under the final schema, and `dataset_adapter_map` holds 50.
+
+| state | count |
+|---|---|
+| loaders registered | 50 |
+| built in the dev tree, fresh under the final schema | 50 |
+| L0-L4 PASS | 50 |
+| served in the production store today | 36 |
+
+What lands: the shared media, compound-identity, node-identity, verifier and ontology-check
+layers; the 14 loaders with raw mirrors, adapters, confs, tests and notes; batch
+admission; the regenerated supported-datasets table; this note. What does NOT run on this
+branch: any import or full rebuild (deferred until more datasets are added, per the
+decision section), the Bloom increment, any write to the production manifest.
+
+Open items carried forward, for the next sessions: the Cachera smoke-test count (4,735
+asserted, 4,719 stored); a resolver for the expression, morphology, metabolite, protein
+and RNA-seq verifiers; a strain-quality flag node class for Table S5-style facts;
+`Environment.pre_culture_generations`, `Environment.vehicle`, `CrisprConstruct.delivery`;
+Wildenhain wild-type rows; the Teyssonniere 2024 vs Muenzner 2024 de-duplication in the
+candidate table.

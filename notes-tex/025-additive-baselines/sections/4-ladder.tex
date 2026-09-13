@@ -27,13 +27,15 @@ different footings, named in the row label: the 010 checkpoints were scored on t
 \tcfig{figures/additive_baselines_025_fig1_ladders.pdf}{The ladder under both
 splits. \textbf{a}, arm R, random over records: the six baselines on the 37{,}673
 test records, the three 010 checkpoints on the 010 test split, and the 025
-replication GH 1598 as a validation maximum, hatched. \textbf{b}, arm Q, query-pair
-disjoint, on the 37{,}791 test records of 46 held-out screens, with GH 1640 hatched.
-In both panels only B5 carries an error bar, the standard deviation over its three
-seeds; every other bar is one deterministic fit. \textbf{c}, validation Pearson per
-epoch for the two arms of the 010 configuration, each against the additive ridge fit
-on its own validation part; open circles mark each run's best epoch, the value the
-hatched bars carry. \textbf{d}, how far the disjoint null moves with the choice of
+replication GH 1598 as a validation maximum. \textbf{b}, arm Q, query-pair
+disjoint, on the 37{,}791 test records of 46 held-out screens, with GH 1640 as a
+validation maximum. Within each arm, a light bar is a test score and a dark bar a
+validation maximum with no test score. Only B5 carries an error bar, the standard
+deviation over its three seeds; every other bar is one deterministic fit.
+\textbf{c}, validation Pearson per epoch for the two arms of the 010 configuration,
+each against the additive ridge fit on its own validation part; open circles mark
+each run's best epoch, the value the dark bars of a and b carry. \textbf{d}, how far
+the disjoint null moves with the choice of
 held-out screens: five disjoint folds on the 010 build per model, mean and standard
 deviation with each fold as a point, and the arm Q single split as a diamond. B0 and
 B4 are zero on every fold and are omitted.}{fig:ladders}

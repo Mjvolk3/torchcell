@@ -55,6 +55,7 @@ from matplotlib.ticker import MultipleLocator
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
     apply_paper_style,
     mm_to_in,
     panel_label,
@@ -115,6 +116,10 @@ CGT_010 = {
     "CGT_M03_c7671wgj": "CGT M03\n(010 test)",
 }
 COLOR = {"R": PLOT_PALETTE[0], "Q": PLOT_PALETTE[1]}
+# Within one arm's series, lightness encodes the surface a bar was scored on: a test
+# score takes the series' light fill, a validation maximum the darker line color. No
+# hatching between bars of one series (repo figure standard, 2026-09-13).
+FILL = {"R": PLOT_PALETTE_FILL[0], "Q": PLOT_PALETTE_FILL[1]}
 
 # Every transformer run that has trained on the arm Q partition, in submission order. The
 # first is the 010 configuration itself (cosine schedule, learnable gene table, mean
@@ -340,16 +345,17 @@ def val_nulls(df: pd.DataFrame, arm: str) -> dict[str, float]:
 def ladder(ax, agg: pd.DataFrame, arm: str, extra: list[tuple[str, float, bool]], title: str):
     """Bars for the six baselines then the transformer entries of one arm.
 
-    ``extra`` is (tick label, value, hatched) per transformer bar; hatched marks a
-    validation maximum with no test score.
+    ``extra`` is (tick label, value, is_validation) per transformer bar. Test scores
+    are drawn in the arm's light fill, a validation maximum in the arm's darker line
+    color.
     """
     cats = [LABELS[m] for m in MODELS] + [e[0] for e in extra]
     x = np.arange(len(cats))
     vals = [agg.loc[m, "mean"] for m in MODELS]
     err = [0.0 if np.isnan(agg.loc[m, "std"]) else agg.loc[m, "std"] for m in MODELS]
-    ax.bar(x[: len(MODELS)], vals, 0.7, yerr=err, error_kw=EKW, color=COLOR[arm], **BAR)
-    for k, (_, v, hatched) in enumerate(extra):
-        ax.bar(x[len(MODELS) + k], v, 0.7, color=COLOR[arm], hatch="///" if hatched else None, **BAR)
+    ax.bar(x[: len(MODELS)], vals, 0.7, yerr=err, error_kw=EKW, color=FILL[arm], **BAR)
+    for k, (_, v, is_validation) in enumerate(extra):
+        ax.bar(x[len(MODELS) + k], v, 0.7, color=COLOR[arm] if is_validation else FILL[arm], **BAR)
     ax.set_xticks(x)
     ax.set_xticklabels(cats, rotation=45, ha="right", fontsize=5)
     ax.set_ylabel("Held-out Pearson r")
@@ -427,8 +433,8 @@ def figure_1(df, agg, summary, arm_history, cv) -> dict[str, object]:
            [(CGT_010[k], cgt010[k], False) for k in CGT_010] + [("CGT GH 1598\n(val max)", ref_r["val_pearson_best_epoch"], True)],
            "arm R, random over records")
     handles = [
-        Patch(facecolor="white", label="test score", **BAR),
-        Patch(facecolor="white", hatch="///", label="validation max over epochs, no test score", **BAR),
+        Patch(facecolor=FILL["R"], label="test score (light)", **BAR),
+        Patch(facecolor=COLOR["R"], label="validation max over epochs, no test score (dark)", **BAR),
     ]
     ax_a.legend(handles=handles, loc="upper left", handlelength=1.4, labelspacing=0.3, borderpad=0.4)
     ladder(ax_b, agg["Q"], "Q", [("CGT GH 1640\n(val max)", ref_q["val_pearson_best_epoch"], True)],

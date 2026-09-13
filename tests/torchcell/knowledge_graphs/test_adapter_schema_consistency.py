@@ -96,6 +96,7 @@ def test_every_node_method_property_is_declared() -> None:
         "environment perturbation": {
             "perturbation_type",
             "description",
+            "factor",
             "compound_name",
             "inchikey",
             "concentration_value",

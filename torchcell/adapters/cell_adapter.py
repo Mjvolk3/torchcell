@@ -740,8 +740,16 @@ class CellAdapter:
     @staticmethod
     def _environment_perturbation_node_from(perturbation: Any) -> BioCypherNode:
         perturbation_id = CellAdapter._environment_perturbation_node_id(perturbation)
+        # A small molecule carries compound + concentration; a physical factor carries
+        # factor + magnitude (+ an optional agent, the acid that set the pH); both
+        # project onto the same columns so pH 4.5 is as queryable as 0.4 M NaCl.
         compound = getattr(perturbation, "compound", None)
-        concentration = getattr(perturbation, "concentration", None)
+        if compound is None:
+            compound = getattr(perturbation, "agent", None)
+        dose = getattr(perturbation, "concentration", None)
+        if dose is None:
+            dose = getattr(perturbation, "magnitude", None)
+        factor = getattr(perturbation, "factor", None)
         return BioCypherNode(
             node_id=perturbation_id,
             preferred_id=perturbation.perturbation_type,
@@ -749,16 +757,13 @@ class CellAdapter:
             properties={
                 "perturbation_type": perturbation.perturbation_type,
                 "description": perturbation.description,
-                # compound / concentration exist on SmallMoleculePerturbation; a physical
-                # factor or biologic carries its identity in serialized_data only.
+                "factor": str(factor.value) if factor is not None else None,
                 "compound_name": compound.name if compound is not None else None,
                 "inchikey": compound.inchikey if compound is not None else None,
-                "concentration_value": (
-                    concentration.value if concentration is not None else None
-                ),
+                "concentration_value": dose.value if dose is not None else None,
                 "concentration_unit": (
-                    str(concentration.unit.value)
-                    if concentration is not None and concentration.unit is not None
+                    str(dose.unit.value)
+                    if dose is not None and dose.unit is not None
                     else None
                 ),
                 "serialized_data": json.dumps(perturbation.model_dump()),

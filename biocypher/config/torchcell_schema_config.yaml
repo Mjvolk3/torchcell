@@ -129,6 +129,7 @@ environment perturbation:
     properties:
         perturbation_type: str
         description: str
+        factor: str
         compound_name: str
         inchikey: str
         concentration_value: float

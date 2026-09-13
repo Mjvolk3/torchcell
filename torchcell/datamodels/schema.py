@@ -1423,8 +1423,13 @@ class Media(ModelStrict):
         ]
 
 
-class EnvironmentPerturbation(ModelStrict):
-    """Base: a defined change to the growth environment vs the base medium."""
+class EnvironmentPerturbation(ProvenanceGapMixin):
+    """Base: a defined change to the growth environment vs the base medium.
+
+    A gap carrier: a dose whose molar value the primary never states, or a solvent
+    it never names, is declared as a typed ``ProvenanceGap`` on that field rather
+    than left as a silent ``None``.
+    """
 
     perturbation_type: str
     description: str

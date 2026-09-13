@@ -823,24 +823,40 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_vanacloig2022": {
         "root": "data/torchcell/env_chemgen_vanacloig2022",
-        # 3647 screened ORFs (3651 barcodes - 2 all-NaN QC rows - 2 background-gene rows)
-        # x 45 compound columns.
-        "expected_count": 164115,
-        # 3DeltaAlpha background PDR1/PDR3/SNQ2 -- excluded from the screened-ORF key.
+        # 3608 retained library rows x 41 retained compounds (45 columns minus the DMSO
+        # vehicle control and the 3 compounds with no structure identifier) minus the
+        # 4710 all-three-replicates-zero cells. Rules + counts:
+        # preprocess/dropped_records.json.
+        "expected_count": 143218,
         "background_genes": frozenset({"YGL013C", "YBL005W", "YDR011W"}),
         "provenance": Provenance(
             source_uri=(
-                "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186866/suppl/"
-                "GSE186866_ChemGenomics_Raw_Counts_matrix.txt.gz"
+                "$DATA_ROOT/torchcell-raw/"
+                "vanacloig-pedrosComparativeChemicalGenomic2022/data/"
+                "GSE186866_ChemGenomics_Raw_Counts_matrix.txt.gz (raw mirror; retrieved "
+                "from https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186866/suppl/)"
             ),
             citation_key="vanacloig-pedrosComparativeChemicalGenomic2022",
             sha256="e29eb02769ce2180d632020dc612a7f3e14a124fc7f1e0e33f9d41b6f4e4a85a",
             method=(
-                "GEO GSE186866 raw barcode counts; per-sample CPM, per-gene "
-                "log2((CPM_compound_rep+1)/(CPM_pooled_control_mean+1)) mean of 3 biol. "
-                "reps (SE = SD/sqrt(3)); recomputed readout, NOT the paper's edgeR logFC"
+                "GEO GSE186866 raw up-tag barcode counts; per-sample CPM, then per gene "
+                "log2((CPM_treated_rep+1)/(CPM_control+1)) where the control is the mean "
+                "of the SAME CG00n batch's inhibitor-free control columns (the paper's "
+                "paired design), pooled over all 16 control columns for MMS only (the "
+                "one retained compound the paper analyzed unpaired); response = mean of "
+                "3 biological replicates, uncertainty = their sample SD (SE=SD/sqrt(3)); "
+                "recomputed readout, NOT the paper's edgeR logFC. Anaerobic SynBase "
+                "(shared MEDIA_LIBRARY object) at 30 C for 48 h / 6.5 doublings, pH 5.0 "
+                "as an EnvironmentPhysicalPerturbation; compounds at their IC30 basis "
+                "(Table S1 molar values unavailable) except Benomyl 10 ug/mL and MMS "
+                "(fixed, unit unstated). Dropped: the DMSO vehicle column, MBO and the "
+                "two QUADRIS doses (no structure identifier), 22 retired ORFs, 17 legacy "
+                "ORF spellings, and 4710 all-replicates-zero cells"
             ),
-            page="FEMS Yeast Res 2022 foac036; GEO GSE186866 raw counts (Table S1 SI unscriptable)",
+            page=(
+                "FEMS Yeast Res 2022 foac036; paper.md "
+                "sha256=0b5d938b54b8424fa08203a4357bc8f7c7dfae3fbe1a6d07d422848b92f37ba3"
+            ),
         ),
     },
     "env_chemgen_mota2024": {
@@ -934,31 +950,38 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_wildenhain2015": {
         "root": "data/torchcell/env_chemgen_wildenhain2015",
-        # 428573 = 242 screened ORFs x compounds, one cell per (ORF, CID-else-SID);
-        # 484830 systematic-ORF datapoints collapsed (46195 multi-library-repeat cells
-        # averaged), 7296 NA/NULL non-strain control rows dropped.
-        "expected_count": 428573,
-        # Plain haploid single-deletion collection (isogenic to BY4741): no constant
-        # background genes.
+        # 428573 (ORF, compound-identity) cells minus the 367 cells of the 5 SID-only
+        # compounds. Rules + counts: preprocess/dropped_records.json.
+        "expected_count": 428206,
         "background_genes": frozenset(),
+        "stream": True,
         "provenance": Provenance(
             source_uri=(
-                "https://ftp.ncbi.nlm.nih.gov/pubchem/Bioassay/CSV/Data/"
-                "1159001_1160000.zip (member 1159001_1160000/1159580.csv.gz)"
+                "$DATA_ROOT/torchcell-raw/"
+                "wildenhainPredictionSynergismChemicalGenetic2015/data/1159580.csv.gz "
+                "+ data/aid_1159580_description.json (raw mirror)"
             ),
             citation_key="wildenhainPredictionSynergismChemicalGenetic2015",
             sha256="c461c679b63ac56045cef0f03ed9bcbb8e7f9c12146f1fc7cc8ac0c113188d64",
             method=(
-                "PubChem BioAssay AID 1159580 datapoint export; normalized-OD600 growth-"
-                "inhibition Z-score per (deletion strain x compound) at 20 uM in DMSO, "
-                "SC + 2% glucose, 30 C, ~18 h; duplicate replicate screens (read 1/2) => "
-                "n_samples=2 per screen; multi-library-repeat cells averaged (paper's "
-                "'Z scores averaged for the replicate screens'); compounds -> PubChem CID"
+                "PubChem BioAssay AID 1159580 datapoint export (member of the FTP range "
+                "archive, container sha256 d1fd5dc2bf7c526ad9845e0a14ae9981256fb820aaf42"
+                "28b48a3ba0724ee59b0 asserted before the member is read); released "
+                "normalized-OD600 z_score per (deletion strain x compound) at 20 uM in "
+                "DMSO, SC + 2% glucose (shared MEDIA_LIBRARY object), 30 C, ~18 h. A "
+                "cell's contributing SCREENS are its distinct released datapoints (the "
+                "export re-emits the same datapoint under two gene-symbol spellings); "
+                "response = mean over screens, n_samples = screens (sample_unit=screen), "
+                "uncertainty = sample SD across screens or a typed ProvenanceGap at n=1. "
+                "PUBCHEM_ACTIVITY_OUTCOME + bioactivity map onto ResponseCategory "
+                "(Inactive->no_change, Active->sensitive/resistant, Inconclusive and "
+                "disagreeing screens->not_determined) with the source words verbatim in "
+                "category_label. Dropped: the 367 cells of the 5 SID-only compounds"
             ),
             page=(
-                "Cell Systems 2015 (doi:10.1016/j.cels.2015.12.003); ACCESSION NUMBERS "
-                "PubChem BioAssay AID 1159580; inner 1159580.csv.gz sha256=c461c679... "
-                "(bit-identical to PUG-REST /assay/aid/1159580/CSV, 492126 datapoints)"
+                "Cell Systems 2015 (doi:10.1016/j.cels.2015.12.003); AID description "
+                "sha256=23c5f8c56af94786cfe8e22c93fdde0b719ca2165975305944557ab39087b0e4; "
+                "paper.md sha256=f46409eb8f23412c9c1015d0f8f5bb581bfddfe2796d319d407585e23c757ac2"
             ),
         ),
     },

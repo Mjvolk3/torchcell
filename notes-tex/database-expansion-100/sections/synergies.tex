@@ -7,8 +7,8 @@
 \section{What each candidate joins to\secstatus{todo}}\label{sec:synergies}
 
 A dataset's value in a substrate is not only what it measures. It is also what becomes
-measurable once it sits beside what is already held. Table~\ref{tab:synergies} names 101
-such pairs across 59 candidates, each with the axis the two share.
+measurable once it sits beside what is already held. Table~\ref{tab:synergies} names 116
+such pairs across 66 candidates, each with the axis the two share.
 
 \subsection{A join needs a shared axis, not a shared theme\secstatus{todo}}
 
@@ -19,14 +19,46 @@ the sequenced 1,011-isolate panel, a segregant panel from one cross, a guide lib
 one gene set, a media formulation, a compound set, and a single gene. A pair with none of
 these is a theme and is not listed.
 
-Fifty-six of the 101 pairs have a partner that is already built, so that join becomes
+Sixty-two of the 116 pairs have a partner that is already built, so that join becomes
 runnable on the day the candidate is ingested rather than after two ingestions. Those are
 the cheapest experiments in the table and none of them has been run.
+
+Two kinds of key are distinguished in the table and the difference decides what a join can
+do. A \emph{strain-level} key means both layers were measured on the same genotypes, so
+the join is a paired observation and the residual between the layers is per strain. A
+\emph{gene-level} key means one side is a single genome-wide coefficient, a half-life or a
+translation rate, that applies to every strain alike. A gene-level layer cannot explain why
+two strains differ; it explains why two genes differ, and the two are not interchangeable.
 
 \subsection{The joins that motivate the ordering\secstatus{todo}}
 
 Four groups carry most of the weight, and each is a specific question rather than an
 accumulation.
+
+\notesec{Transcript against protein, and the two terms between them} Steady-state
+transcript and steady-state protein are both well covered, by the built Kemmeren 2014 and
+Messner 2023 and by several rows here, and they disagree. Four rows make the disagreement
+something a model can carry a term for rather than absorb as error. Grossbach 2022 measures
+transcript, protein and phosphosite on one set of 112 sequenced strains, so the residual
+between transcript and protein is observed within a genotype instead of across a
+population. Teyssonniere 2024 does the strain-level version at species scale, 942 isolate
+proteomes against the built Caudal 2024 transcriptomes on the same panel, and reports what
+the pairing shows: the two correlate weakly and the variants associated with each overlap
+by 3 percent. The remaining two are gene-level. McManus 2014 gives translation efficiency
+beside mRNA abundance for 5,474 genes and finds ribosome occupancy more conserved than
+transcript abundance, so translation buffers rather than tracks. Martin-Perez 2017 gives
+turnover for 3,160 proteins, spanning three orders of magnitude, which is why a single
+global mRNA-to-protein scaling cannot be right. Sun 2013 supplies the transcript-side
+counterpart, decomposing mRNA level into synthesis and decay across 46 deletion strains.
+
+\notesec{Cross-laboratory replication of the deletion transcriptome} Kemmeren 2014 is built
+and is the largest genotype-indexed transcriptome with designed perturbations, and nothing
+in the built set can check it. Hughes 2000, Hu 2007 and Sun 2013 all profile deletion
+strains by expression, in three other laboratories and across fourteen years of array and
+sequencing platforms, so agreement can be measured gene by gene on shared strains rather
+than assumed. That check matters here specifically: the built Nadal-Ribelles 2025 does not
+replicate its own genotype assignment across batches, so a second opinion on what a
+deletion does to a transcriptome is not a formality.
 
 \notesec{Metabolism against expression on one genotype axis} Blank 2005 measures flux
 through central carbon metabolism on deletion mutants that already carry an expression

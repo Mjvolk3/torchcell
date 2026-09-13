@@ -20,7 +20,9 @@ Usage, from the worktree root::
         --tags gh_wave8_samp --groupby flux_draws --metrics val_pearson,latent_sigma_p50
 
 The ad-hoc form (``--name`` with ``--tags``) builds a one-off view and report from the
-command line without editing this file.
+command line without editing this file. A contrast whose URLs are already recorded in
+``wandb_views.json`` is updated in place (same links); ``--new`` forces fresh ones.
+``--per-row`` sets the panels per row (default 6, narrow panels for an ultrawide).
 """
 
 from __future__ import annotations
@@ -151,6 +153,28 @@ SPECS: dict[str, ViewSpec] = {
             "select_val_pearson",
         ],
     ),
+    "bxread": ViewSpec(
+        key="bxread",
+        title="027 wave 8: betaxanthin readouts, precursor concentration vs scalar vs pooled",
+        description=(
+            "Betaxanthin (Cachera), 200 epochs, matched settings at each seed. Arms: "
+            "precursor-concentration readout (the same concentration mechanism the "
+            "amino acids use, read on tyrosine and its shikimate precursors), the 026 "
+            "scalar flux head, and the pooled control with no metabolic module. Score is "
+            "the pinned test Spearman at the validation-selected epoch."
+        ),
+        tags_any=["gh_wave8_bx"],
+        groupby=["bx_readout"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "val_pred_sd_ratio",
+            "train_data_loss",
+            "latent_sigma_p50",
+            "feas_flux_active_frac",
+        ],
+        scalars=["test_spearman_pinned", "select_val_pearson"],
+    ),
 }
 
 
@@ -173,6 +197,29 @@ def present_metrics(runs: list[Any], wanted: list[str]) -> list[str]:
     return [m for m in wanted if m in logged]
 
 
+# PANEL GEOMETRY. The W&B panel grid is 24 columns wide; a panel's width is a column count
+# and its height a row count. The default is six narrow panels per row (4 columns each,
+# 5 rows tall): the views are read on a 38-inch ultrawide, where the previous 3-per-row
+# layout stretched every chart to a third of the screen and pushed the grid off the bottom.
+GRID_COLUMNS = 24
+PANELS_PER_ROW = 6
+PANEL_ROWS = 5
+
+
+def panel_layout(i: int, offset_rows: int = 0) -> Any:
+    w = GRID_COLUMNS // PANELS_PER_ROW
+    return wr.Layout(
+        x=(i % PANELS_PER_ROW) * w,
+        y=(offset_rows + i // PANELS_PER_ROW) * PANEL_ROWS,
+        w=w,
+        h=PANEL_ROWS,
+    )
+
+
+def rows_for(n_panels: int) -> int:
+    return (n_panels + PANELS_PER_ROW - 1) // PANELS_PER_ROW
+
+
 def line_panels(metrics: list[str], groupby: str | None) -> list[Any]:
     panels: list[Any] = []
     for i, metric in enumerate(metrics):
@@ -186,7 +233,7 @@ def line_panels(metrics: list[str], groupby: str | None) -> list[Any]:
                 groupby_rangefunc="minmax" if groupby else None,
                 smoothing_type="none",
                 legend_position="south",
-                layout=wr.Layout(x=(i % 3) * 8, y=(i // 3) * 6, w=8, h=6),
+                layout=panel_layout(i),
             )
         )
     return panels
@@ -200,40 +247,59 @@ def bar_panels(metrics: list[str], offset_rows: int) -> list[Any]:
                 title=metric,
                 metrics=[metric],
                 orientation="h",
-                layout=wr.Layout(
-                    x=(i % 3) * 8, y=offset_rows * 6 + (i // 3) * 6, w=8, h=6
-                ),
+                layout=panel_layout(i, offset_rows),
             )
         )
     return panels
 
 
-def build_workspace(spec: ViewSpec, curves: list[str], scalars: list[str]) -> str:
-    """Save the project workspace view and return its URL."""
+def workspace_sections(curves: list[str], scalars: list[str]) -> list[Any]:
+    return [
+        ws.Section(
+            name="curves", panels=line_panels(curves, groupby=None), is_open=True
+        ),
+        ws.Section(
+            name="scalars", panels=bar_panels(scalars, offset_rows=0), is_open=True
+        ),
+    ]
+
+
+def workspace_runset(spec: ViewSpec) -> Any:
+    return ws.RunsetSettings(
+        filters=[ws.Tags().isin(spec.tags_any)],
+        groupby=[ws.Config(k) for k in spec.groupby],
+        order=[ws.Ordering(ws.Config("seed"), ascending=True)],
+    )
+
+
+def build_workspace(
+    spec: ViewSpec, curves: list[str], scalars: list[str], existing_url: str | None
+) -> str:
+    """Save the project workspace view and return its URL.
+
+    With ``existing_url`` the saved view is updated in place so a link the user already
+    has keeps working; without it a new view is created.
+    """
+    if existing_url:
+        workspace = ws.Workspace.from_url(existing_url)
+        workspace.name = spec.title
+        workspace.sections = workspace_sections(curves, scalars)
+        workspace.runset_settings = workspace_runset(spec)
+        workspace.save()
+        return str(workspace.url)
     workspace = ws.Workspace(
         entity=ENTITY,
         project=PROJECT,
         name=spec.title,
-        sections=[
-            ws.Section(
-                name="curves", panels=line_panels(curves, groupby=None), is_open=True
-            ),
-            ws.Section(
-                name="scalars", panels=bar_panels(scalars, offset_rows=0), is_open=True
-            ),
-        ],
-        runset_settings=ws.RunsetSettings(
-            filters=[ws.Tags().isin(spec.tags_any)],
-            groupby=[ws.Config(k) for k in spec.groupby],
-            order=[ws.Ordering(ws.Config("seed"), ascending=True)],
-        ),
+        sections=workspace_sections(curves, scalars),
+        runset_settings=workspace_runset(spec),
     )
     workspace.save_as_new_view()
     return str(workspace.url)
 
 
-def build_report(spec: ViewSpec, curves: list[str], scalars: list[str]) -> str:
-    """Save the report with one grid grouped by the contrast key and one by seed."""
+def report_blocks(spec: ViewSpec, curves: list[str], scalars: list[str]) -> list[Any]:
+    """One grid grouped by the contrast key and one by seed."""
     primary = spec.groupby[0]
     grids: list[Any] = []
     for label, group_key in (
@@ -252,16 +318,31 @@ def build_report(spec: ViewSpec, curves: list[str], scalars: list[str]) -> str:
             wr.PanelGrid(
                 runsets=[runset],
                 panels=line_panels(curves, groupby=group_key)
-                + bar_panels(scalars, offset_rows=(len(curves) + 2) // 3),
+                + bar_panels(scalars, offset_rows=rows_for(len(curves))),
             )
         )
+    return [wr.H1(text=spec.title), wr.P(text=spec.description), *grids]
+
+
+def build_report(
+    spec: ViewSpec, curves: list[str], scalars: list[str], existing_url: str | None
+) -> str:
+    """Save the report and return its URL, updating in place when a URL is known."""
+    if existing_url:
+        report = wr.Report.from_url(existing_url)
+        report.title = spec.title
+        report.description = spec.description
+        report.width = "fluid"
+        report.blocks = report_blocks(spec, curves, scalars)
+        report.save()
+        return str(report.url)
     report = wr.Report(
         entity=ENTITY,
         project=PROJECT,
         title=spec.title,
         description=spec.description,
         width="fluid",
-        blocks=[wr.H1(text=spec.title), wr.P(text=spec.description), *grids],
+        blocks=report_blocks(spec, curves, scalars),
     )
     report.save()
     return str(report.url)
@@ -280,8 +361,11 @@ def adhoc_spec(args: argparse.Namespace) -> ViewSpec:
 
 
 def main() -> None:
+    global PANELS_PER_ROW
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--contrast", default=None, help="kdraw | densbal | aa | all")
+    parser.add_argument(
+        "--contrast", default=None, help="kdraw | densbal | aa | bxread | all"
+    )
     parser.add_argument("--name", default=None, help="Ad-hoc view title (with --tags).")
     parser.add_argument(
         "--tags", default=None, help="Comma-separated tags, ANY matches."
@@ -294,7 +378,20 @@ def main() -> None:
     parser.add_argument("--description", default=None)
     parser.add_argument("--no-report", action="store_true")
     parser.add_argument("--no-workspace", action="store_true")
+    parser.add_argument(
+        "--per-row",
+        type=int,
+        default=PANELS_PER_ROW,
+        help="Panels per grid row (24-column grid; 6 -> narrow panels for an ultrawide).",
+    )
+    parser.add_argument(
+        "--new",
+        action="store_true",
+        help="Create fresh views instead of updating the URLs recorded in wandb_views.json.",
+    )
     args = parser.parse_args()
+    assert GRID_COLUMNS % args.per_row == 0, "--per-row must divide 24"
+    PANELS_PER_ROW = args.per_row
 
     if args.name:
         assert args.tags, "--name needs --tags"
@@ -325,10 +422,16 @@ def main() -> None:
             "scalars": scalars,
             "metrics_not_logged_by_any_run": missing,
         }
+        prior = {} if args.new else record.get(spec.key, {})
         if not args.no_workspace:
-            entry["workspace_url"] = build_workspace(spec, curves, scalars)
+            entry["workspace_url"] = build_workspace(
+                spec, curves, scalars, prior.get("workspace_url")
+            )
         if not args.no_report:
-            entry["report_url"] = build_report(spec, curves, scalars)
+            entry["report_url"] = build_report(
+                spec, curves, scalars, prior.get("report_url")
+            )
+        entry["panels_per_row"] = PANELS_PER_ROW
         record[spec.key] = entry
         print(
             f"[{spec.key}] {len(runs)} runs; {len(curves)} curves, {len(scalars)} bars"

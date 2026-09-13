@@ -1,7 +1,7 @@
 {
   "kdraw": {
     "title": "027 wave 8: K latent draws per forward pass",
-    "n_runs": 29,
+    "n_runs": 30,
     "tags_any": [
       "gh_wave8_samp",
       "gh_wave6_proj"
@@ -25,7 +25,8 @@
     ],
     "metrics_not_logged_by_any_run": [],
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=uo7zfv24xlb",
-    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-K-latent-draws-per-forward-pass--VmlldzoxNzkyMjM3OQ=="
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-K-latent-draws-per-forward-pass--VmlldzoxNzkyMjM3OQ==",
+    "panels_per_row": 6
   },
   "densbal": {
     "title": "027 wave 8: turnover density and active-row balance on the boxforce head",
@@ -58,7 +59,8 @@
     ],
     "metrics_not_logged_by_any_run": [],
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=z0gc792dywv",
-    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-turnover-density-and-active-row-balance-on-the-boxforce-head--VmlldzoxNzkyMjM3Mw=="
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-turnover-density-and-active-row-balance-on-the-boxforce-head--VmlldzoxNzkyMjM3Mw==",
+    "panels_per_row": 6
   },
   "aa": {
     "title": "027 waves 7 and 8: amino-acid readouts on the anchored projection head",
@@ -89,6 +91,34 @@
       "latent_sigma_p50"
     ],
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=hvk1dcemnhw",
-    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-waves-7-and-8:-amino-acid-readouts-on-the-anchored-projection-head--VmlldzoxNzkyMjM4MQ=="
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-waves-7-and-8:-amino-acid-readouts-on-the-anchored-projection-head--VmlldzoxNzkyMjM4MQ==",
+    "panels_per_row": 6
+  },
+  "bxread": {
+    "title": "027 wave 8: betaxanthin readouts, precursor concentration vs scalar vs pooled",
+    "n_runs": 3,
+    "tags_any": [
+      "gh_wave8_bx"
+    ],
+    "groupby": [
+      "bx_readout"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=ytr45azlq9y",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-betaxanthin-readouts,-precursor-concentration-vs-scalar-vs-pooled--VmlldzoxNzkyMzM5Mg==",
+    "panels_per_row": 6
   }
 }

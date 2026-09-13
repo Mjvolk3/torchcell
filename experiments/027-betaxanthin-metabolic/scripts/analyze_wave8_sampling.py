@@ -65,17 +65,31 @@ IMAGE_DIR = osp.join(ASSET_IMAGES_DIR, "027-betaxanthin-metabolic")
 
 SEEDS = (2703, 2704, 2705)
 
-#: column -> the result-file template it is read from.
+#: column -> the result-file template it is read from. Two rounds, and they are NOT
+#: comparable to each other: the 80-epoch cells all selected within a few epochs of the end
+#: of their budget with the training loss still falling, so they are the SHORT-BUDGET read
+#: and the 200-epoch cells are the definitive one.
 COLUMNS: dict[str, str] = {
     "k16_sampled": "wave8_samp_k16_s{seed}.json",
     "k1_sampled": "wave8_samp_k1_s{seed}.json",
     "k1_deterministic": "wave6_proj_flux_projection_s{seed}.json",
+    "k128_e200": "wave8_samp_k128_e200_s{seed}.json",
+    "k1_e200": "wave8_samp_k1_e200_s{seed}.json",
+}
+
+#: Which columns belong to which round, so a figure never puts an 80-epoch cell beside a
+#: 200-epoch one as though the two were the same experiment.
+ROUNDS: dict[str, list[str]] = {
+    "80 epochs (short budget)": ["k16_sampled", "k1_sampled", "k1_deterministic"],
+    "200 epochs": ["k128_e200", "k1_e200"],
 }
 
 LABELS: dict[str, str] = {
     "k16_sampled": "K = 16\nsampled",
     "k1_sampled": "K = 1\nsampled",
     "k1_deterministic": "K = 1\ndeterministic",
+    "k128_e200": "K = 128\n200 epochs",
+    "k1_e200": "K = 1\n200 epochs",
 }
 
 
@@ -90,6 +104,13 @@ class CellScore(BaseModel):
     present: bool
     select_epoch: int | None = None
     select_rule: str | None = None
+    n_epochs: int | None = Field(
+        default=None,
+        description=(
+            "Epochs the cell ran. Reported beside `select_epoch` because a selection at the "
+            "end of the budget means the curve had not stopped improving."
+        ),
+    )
     test_spearman_pinned: float | None = None
     flux_draws: int | None = None
     latent_stochastic: bool | None = None
@@ -149,6 +170,7 @@ def read_cell(column: str, seed: int) -> CellScore:
         present=True,
         select_epoch=int(result["select_epoch"]),
         select_rule=str(result["select_rule"]),
+        n_epochs=len(history) or None,
         test_spearman_pinned=float(result["test"]["pinned"]["spearman"]),
         flux_draws=sampling.get("flux_draws"),
         latent_stochastic=sampling.get("latent_stochastic"),
@@ -215,27 +237,45 @@ def make_figure(
     fig, axes = plt.subplots(
         1, 2, figsize=(mm_to_in(179.0), mm_to_in(62.0)), constrained_layout=True
     )
-    order = list(COLUMNS)
-    positions = np.arange(len(order), dtype=float)
+    # POSITIONS ARE GROUPED BY ROUND, with a gap between them, and a seed's line never
+    # crosses the gap. An 80-epoch cell and a 200-epoch cell are different experiments, and
+    # a line joining them would read as a trend where there is only a budget change.
+    order: list[str] = []
+    positions_list: list[float] = []
+    cursor = 0.0
+    round_of: dict[str, str] = {}
+    for label, columns in ROUNDS.items():
+        for column in columns:
+            order.append(column)
+            positions_list.append(cursor)
+            round_of[column] = label
+            cursor += 1.0
+        cursor += 0.6
+    positions = np.array(positions_list, dtype=float)
+    place = dict(zip(order, positions))
 
     ax = axes[0]
     for i, seed in enumerate(SEEDS):
-        values = [scores[(column, seed)].test_spearman_pinned for column in order]
-        drawn = [(p, v) for p, v in zip(positions, values) if v is not None]
-        if not drawn:
-            continue
-        ax.plot(
-            [p for p, _ in drawn],
-            [v for _, v in drawn],
-            marker="o",
-            markersize=3,
-            linewidth=0.8,
-            color=PLOT_PALETTE[i],
-            label=f"seed {seed}",
-        )
+        for label, columns in ROUNDS.items():
+            drawn = [
+                (place[c], scores[(c, seed)].test_spearman_pinned)
+                for c in columns
+                if scores[(c, seed)].test_spearman_pinned is not None
+            ]
+            if not drawn:
+                continue
+            ax.plot(
+                [p for p, _ in drawn],
+                [v for _, v in drawn],
+                marker="o",
+                markersize=3,
+                linewidth=0.8,
+                color=PLOT_PALETTE[i],
+                label=f"seed {seed}" if label == next(iter(ROUNDS)) else None,
+            )
     ax.set_xticks(positions)
     ax.set_xticklabels([LABELS[c] for c in order])
-    ax.set_xlim(-0.4, len(order) - 0.6)
+    ax.set_xlim(positions[0] - 0.4, positions[-1] + 0.4)
     ax.set_ylabel("pinned test Spearman")
     ax.yaxis.set_major_locator(MultipleLocator(0.05))
     ax.grid(axis="y", linewidth=0.3, alpha=0.4)
@@ -310,14 +350,25 @@ def main() -> None:
     contrasts = [
         contrast(scores, "k16_sampled", "k1_sampled"),
         contrast(scores, "k1_sampled", "k1_deterministic"),
+        contrast(scores, "k128_e200", "k1_e200"),
     ]
     for row in sorted(scores.values(), key=lambda s: (s.column, s.seed)):
         if not row.present:
             print(f"{row.column:18s} s{row.seed}  NOT LANDED")
             continue
+        # THE SELECTED EPOCH IS PRINTED WITH THE BUDGET IT CAME FROM. A cell that selects
+        # at the end of its budget has not finished improving, and its score is where it
+        # happened to be rather than what it converges to.
+        budget = row.n_epochs or 0
+        unfinished = (
+            budget > 0
+            and row.select_epoch is not None
+            and row.select_epoch >= budget - 5
+        )
+        tail = " AT THE END OF ITS BUDGET" if unfinished else ""
         print(
-            f"{row.column:18s} s{row.seed}  ep {row.select_epoch:3d}  "
-            f"test {row.test_spearman_pinned:+.4f}"
+            f"{row.column:18s} s{row.seed}  ep {row.select_epoch:3d}/{budget:3d}  "
+            f"test {row.test_spearman_pinned:+.4f}{tail}"
         )
     for item in contrasts:
         sd = "n/a" if item.sd_difference is None else f"{item.sd_difference:.4f}"

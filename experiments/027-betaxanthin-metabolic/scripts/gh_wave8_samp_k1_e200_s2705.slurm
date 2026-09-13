@@ -1,34 +1,35 @@
 #!/bin/bash
-# experiments/027-betaxanthin-metabolic/scripts/gh_wave8_samp_k128_s2703.slurm
+# experiments/027-betaxanthin-metabolic/scripts/gh_wave8_samp_k1_e200_s2705.slurm
 # [[experiments.027-betaxanthin-metabolic.wave8-sampling]]
 #
-# WAVE 8 (2026-09-12), THE DRAW COUNT PUSHED TO THE EXTREME. K = 128 at seed 2703.
+# WAVE 8 (2026-09-12), THE DEFINITIVE K-DRAW CONTRAST AT 200 EPOCHS. K = 1, seed 2705.
 #
-# WHY 128 AND NOT MORE. K = 16 cost 1.11x per epoch on the GPU (job 1783 at 60.0 s per
-# epoch against job 1776's ~54), because the flux layer is roughly 1 percent of a step that
-# the transformer backbone dominates and the backbone never sees the extra rows. Fitting
-# the CPU benchmark and that point gives a per-epoch cost near 1 + 0.0105 (0.7 K - 1),
-# which puts K = 128 at about 1.9x, just inside the 2x per-epoch budget. The measurement
-# decides: if this cell's epoch time exceeds 2x, the remaining seeds run at K = 64.
+# WHY THE 80-EPOCH CELLS DO NOT SETTLE IT. Every one of them selected its epoch at the very
+# end of its budget, 74 to 77 of 80, with the training data loss still falling: measured
+# 0.5397 to 0.5197 (job 1783), 0.5433 to 0.4761 (1785), 0.5319 to 0.4711 (1789) and 0.5315
+# to 0.4773 (1793). A contrast between two arms that are both still improving compares
+# where each happened to be when the clock stopped, not what either converges to. The
+# 80-epoch pairs stand as the SHORT-BUDGET read and this round is the definitive one.
 #
-# THE PAIR IS THE K = 1 SAMPLED CELL AT THE SAME SEED, not the deterministic one: both arms
-# carry --flux-latent-stochastic so the contrast is the draw count alone. Partners are jobs
-# 1785 (s2703), 1793 (s2704) and gh_wave8_samp_k1_s2705.
+# THE PAIR IS K = 1 SAMPLED AT THE SAME SEED, both arms carrying --flux-latent-stochastic,
+# so the contrast is the draw count and nothing else. The two arms of a seed run side by
+# side on the two available cards.
 #
-# MEMORY. One [B*K, 4131] float32 flux tensor is 258 MiB at batch 128 and K = 128, and the
-# alternating projection holds a handful at once, so the request is raised accordingly.
+# 200 EPOCHS, and the collapse guard is set to match so a slow escape is not cut off.
+# `select_epoch` is reported per cell: if it again lands at the end of the budget, 200 was
+# not enough either and the note says so rather than reporting a converged number.
 #
 #   cd <worktree-root> && bash experiments/027-betaxanthin-metabolic/scripts/freeze_and_submit.sh \
-#       experiments/027-betaxanthin-metabolic/scripts/gh_wave8_samp_k128_s2703.slurm
+#       experiments/027-betaxanthin-metabolic/scripts/gh_wave8_samp_k1_e200_s2705.slurm
 #
 #SBATCH -p main
-#SBATCH --mem=100g
+#SBATCH --mem=60g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=027-w8-samp-k128-s2703
-#SBATCH --time=10:00:00
+#SBATCH --job-name=027-w8-samp-k1-e200-s2705
+#SBATCH --time=08:00:00
 #SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/slurm/output/%x_%j.out
 #SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/slurm/output/%x_%j.out
 
@@ -49,12 +50,12 @@ export COLLAPSE_PATIENCE_EPOCHS=200
 export TC_TEST_PRED_DIR=$DATA_ROOT/test-predictions-027-wave8
 mkdir -p "$WANDB_DIR"
 echo "host $(hostname) gpu $CUDA_VISIBLE_DEVICES; DATA_ROOT=$DATA_ROOT; EXPERIMENT_ROOT=$EXPERIMENT_ROOT"
-EPOCHS="${WAVE8_EPOCHS:-80}"
+EPOCHS="${WAVE8_E200_EPOCHS:-200}"
 
 python experiments/027-betaxanthin-metabolic/scripts/train_bx.py \
-    --arm flux_projection --seed 2703 --epochs "$EPOCHS" --crps --graph-reg \
+    --arm flux_projection --seed 2705 --epochs "$EPOCHS" --crps --graph-reg \
     --kcat-tier predicted --thermo-source union \
     --constraint-warmup-epochs 20 --constraint-scale 0.0 --head-normalize \
-    --flux-latent-stochastic --flux-draws 128 \
-    --wandb-group gh_wave8_samp --tag _w8samp \
-    --out wave8_samp_k128_s2703.json
+    --flux-latent-stochastic --flux-draws 1 \
+    --wandb-group gh_wave8_samp_e200 --tag _w8samp \
+    --out wave8_samp_k1_e200_s2705.json

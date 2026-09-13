@@ -289,3 +289,70 @@ reviews and statistics papers.
   Excel file not in the mirror. The released matrix carries 38,225 cells; the abstract says
   38,285 and the discussion 38,255.
 - The overlap check still resolves a PMID for only 56 of 161 rows.
+
+## 2026.09.13 - Transcript against protein: seven rows, and the band widened
+
+Follow-up driven by a sister session assembling gene-level RNA-versus-protein correlates.
+The ask was that a strain-level or gene-level pairing of transcript, protein, translation
+and turnover be visible in the ranking.
+
+### Citations verified before any row was written
+
+None of the seven papers is in the mirror, so every citation was verified against PubMed
+E-utilities on 2026-09-13 rather than written from memory. Author lists, venues, volumes,
+pages and DOIs are from that lookup; deposits were NOT fetched.
+
+| row | citation | PMID | key counts (from the abstract) |
+|---|---|---|---|
+| Grossbach 2022 | Mol Syst Biol 18:e10712 | 35574625 | 112 strains; transcriptome + proteome + phosphoproteome |
+| Teyssonniere 2024 | PNAS 121:e2319211121 | 38696467 | 942 isolate proteomes; eQTL/pQTL overlap 3% |
+| Foss 2007 | Nat Genet 39:1369-1375 | 17952072 | segregant count NOT stated in the abstract |
+| McManus 2014 | Genome Res 24:422-430 | 24318730 | 5,474 orthologs; cerevisiae, paradoxus, F1 |
+| Martin-Perez 2017 | Cell Syst 5:283-294.e5 | 28918244 | 3,160 protein turnover rates |
+| Sun 2013 | Mol Cell 52:52-62 | 24119399 | 46 deletion strains; synthesis + decay rates |
+| Hughes 2000 | Cell 102:109-126 | 10929718 | 300 mutations and chemical treatments |
+
+Two premises in the request did not survive the check and the rows say so:
+
+- Sun 2013's 46 strains are deletions of mRNA degradation and metabolism genes. The
+  abstract does not say they came from the Kemmeren collection, so the row records the
+  overlap as gene identity and flags the provenance as unconfirmed.
+- Martin-Perez is correct as Martin-Perez M and Villen J, Cell Systems 2017.
+
+### Teyssonniere 2024 PNAS is a NEW row, not the existing one
+
+The table already had "Teyssonniere 2024 (species-wide trait survey)" citing PLoS Genet
+2024 (Shichino, Mito, Iwasaki, Schacherer). The PNAS paper is a different work with a
+different author set, and it is the 942-isolate proteome paired to the Caudal 2024
+transcriptomes. Both rows now exist under distinct names.
+
+DE-DUPLICATION OPEN: Teyssonniere 2024 PNAS (942 isolates) and Muenzner 2024 Nature (796)
+share authors and the 1,011 panel. Whether they are independent acquisitions is NOT
+established. Settle it before building both; the risk is ingesting one measurement twice.
+
+### Albert 2014 excluded
+
+Albert FW, Treusch S, Shockley AH, Bloom JS, Kruglyak L. Nature 2014;506:494-497. X-pQTL
+reads protein level from a GFP fusion, one gene at a time, in a large unsequenced sorted
+pool. There is no strain-by-protein matrix, so it cannot enter as a proteome row.
+
+### Band renamed: "metabolism x expression" -> "molecular layers"
+
+The band's members were already as much transcript-against-protein (Jakobson, Muenzner,
+Albert, Skelly) as metabolism, and McManus and Martin-Perez had nowhere to sit. The band is
+now: two or more of transcript, translation, protein, phosphosite, metabolite, flux and
+turnover, joinable on one axis. Membership is unchanged apart from the five rows added into
+it. The table distinguishes a STRAIN-level key (both layers on the same genotypes, residual
+per strain) from a GENE-level key (one layer is a genome-wide coefficient such as a
+half-life, so it explains why two genes differ and not why two strains do).
+
+### Consequence to watch
+
+The two bands now total 53 rows, so wave 1 is exactly the banded rows and NO scale row
+reaches it. de Boer 2020 falls 2 -> 54 and Lee 2014 4 -> 56, both out of wave 1. That is
+the deliberate cost of band-before-scale and is stated in Sec. 1.2 of the document rather
+than smoothed over. Wave 1 also inverts on instance count (1.8e6 instances but 3.9e8
+measurements) because its rows are vector-valued.
+
+Albert 2018 and Muenzner 2024 were ALREADY in this band from the previous pass; no re-band
+was needed. They moved 5 -> 31 and 7 -> 33 only because the perturb-seq band grew.

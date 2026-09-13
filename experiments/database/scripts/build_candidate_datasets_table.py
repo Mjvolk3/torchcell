@@ -130,18 +130,24 @@ PertSeq = Literal["none", "input", "output", "both"]
 #                    expression matrix is released, a barcoded single-cell
 #                    genotype set, or an induction series with a transcriptome
 #                    readout. These are the rows a campaign is designed against.
-#   metabolism x expression
-#                 -- carries metabolism and expression on genotypes that can be
-#                    joined, either within the row or against a supported dataset:
-#                    a proteome or metabolome on genotypes that already have a
-#                    transcriptome, or expression under the conditions where flux
-#                    is measured.
+#   molecular layers
+#                 -- two or more molecular layers joinable on one axis, either
+#                    within the row or against a supported dataset. The layers
+#                    are transcript, translation, protein, phosphosite,
+#                    metabolite, flux and turnover. The join is per STRAIN when
+#                    both layers are measured on the same genotypes, and per GENE
+#                    when a layer is a single genome-wide coefficient such as a
+#                    half-life. This was the "metabolism x expression" band and is
+#                    widened: transcript against protein is the same join as
+#                    expression against flux, and the rows that explain WHY the
+#                    two disagree, translation efficiency and turnover, had no
+#                    band to sit in at all.
 #   scale         -- everything else, ranked as before.
-Band = Literal["perturb-seq", "metabolism x expression", "scale"]
+Band = Literal["perturb-seq", "molecular layers", "scale"]
 
 BAND_ORDER: dict[str, int] = {
     "perturb-seq": 0,
-    "metabolism x expression": 1,
+    "molecular layers": 1,
     "scale": 2,
 }
 
@@ -3369,6 +3375,160 @@ CANDIDATES: list[Candidate] = [
         confidence="recall",
         perturbseq="output",
     ),
+    # ---- Transcript against protein, and the layers in between ------------
+    # Added because the list ranked steady-state transcript and steady-state
+    # protein well and had no row for what sits between them. Transcript level
+    # and protein level disagree, and the disagreement is not noise: it is
+    # translation efficiency and it is turnover. Without a row for each, a model
+    # asked to infer protein from RNA has no term for why the two differ.
+    # Citations, counts and venues below were verified against PubMed on
+    # 2026-09-13; none of these papers is in the mirror.
+    Candidate(
+        name="Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)",
+        citation="Grossbach J, Gillet L, Clement-Ziza M, Schmalohr CL, Schubert OT, Schutter M, Mawer JSP, Barnes CA, Bludau I, Weith M, Tessarz P, Graef M, Aebersold R, Beyer A. Mol Syst Biol 2022;18:e10712.",
+        url="https://doi.org/10.15252/msb.202110712",
+        klass="Natural variation",
+        tier=2,
+        genotypes_n=112,
+        genotypes="112 genomically defined strains (BY x RM panel)",
+        env_n=1,
+        env="1",
+        instances_n=112,
+        instances_basis="reported",
+        phenotype="transcript, protein and phosphosite abundance",
+        shape="three vectors",
+        dim=9978,
+        seq_basis="segregant-WGS",
+        why="The only row that measures transcript, protein and protein phosphorylation on one set of sequenced strains, 1,862 proteins and 2,116 phosphopeptides over 988 proteins. The pairing it yields is per strain rather than per gene: for each of the 112 genotypes the mRNA level and the protein level of the same gene are both observed, which is what turns the RNA-to-protein question from a population correlation into a within-strain residual. It also reports that genetic variants changing a protein's phosphorylation are mostly different from those changing its abundance, so the phosphosite layer is not a proxy for the protein layer.",
+        accession="Mol Syst Biol SI + PRIDE, identifier not fetched this pass",
+        confidence="recall",
+        added=True,
+    ),
+    Candidate(
+        name="Teyssonniere 2024 (species-wide proteome against transcriptome)",
+        citation="Teyssonniere EM, Trebulle P, Muenzner J, Loegler V, Ludwig D, Amari F, Mulleder M, Friedrich A, Hou J, Ralser M, Schacherer J. Proc Natl Acad Sci USA 2024;121:e2319211121.",
+        url="https://doi.org/10.1073/pnas.2319211121",
+        klass="Natural variation",
+        tier=2,
+        genotypes_n=942,
+        genotypes="942 natural isolates",
+        env_n=1,
+        env="1",
+        instances_n=942,
+        instances_basis="reported",
+        phenotype="protein abundance, paired with transcript abundance",
+        shape="vector",
+        dim=2000,
+        seq_basis="isolate-WGS",
+        why="Quantitative proteomes for 942 sequenced isolates, the same panel whose transcriptomes the built Caudal 2024 supplies, so the strain-level pairing is one to one rather than an overlap. It is also the published answer to what that pairing shows: mRNA and protein correlate weakly at the population gene level, and the variants associated with protein levels overlap those associated with transcript levels by 3 percent. That makes it the calibration for any RNA-to-protein inference rather than only another proteome. DE-DUPLICATION OPEN: it shares authors and a panel with Muenzner 2024 at 796 isolates, and whether the two are independent acquisitions or one re-served is not established here and must be settled before both are built.",
+        accession="PNAS SI; PMC11087752. PRIDE identifier not fetched this pass",
+        confidence="recall",
+        added=True,
+    ),
+    Candidate(
+        name="Foss 2007 (BY x RM segregant proteome)",
+        citation="Foss EJ, Radulovic D, Shaffer SA, Ruderfer DM, Bedalov A, Goodlett DR, Kruglyak L. Nat Genet 2007;39:1369-1375.",
+        url="https://doi.org/10.1038/ng.2007.22",
+        klass="Natural variation",
+        tier=3,
+        genotypes_n=None,
+        genotypes="BY x RM segregants; the count is not stated in the abstract and was not confirmed",
+        env_n=1,
+        env="1",
+        instances_n=None,
+        instances_basis="estimate",
+        phenotype="protein abundance (label-free MS)",
+        shape="vector",
+        seq_basis="segregant-WGS",
+        why="The first segregant proteome, and the independent replicate of Grossbach 2022 on the same cross fifteen years earlier and on a different platform. Its finding is the one this whole group turns on: the loci that influence protein abundance differ from those that influence transcript levels. Ranked below Grossbach because Grossbach measures the transcript layer on the same strains and this does not, and because neither the segregant count nor the proteome depth was confirmed this pass.",
+        accession="Nat Genet supplementary tables; not fetched",
+        confidence="recall",
+        added=True,
+    ),
+    Candidate(
+        name="McManus 2014 (ribosome profiling, allele-specific)",
+        citation="McManus CJ, May GE, Spealman P, Shteyman A. Genome Res 2014;24:422-430.",
+        url="https://doi.org/10.1101/gr.164996.113",
+        klass="Modality / backbone",
+        tier=3,
+        genotypes_n=3,
+        genotypes="S. cerevisiae, S. paradoxus and their F1 hybrid",
+        env_n=1,
+        env="1",
+        instances_n=3,
+        instances_basis="reported",
+        phenotype="ribosome occupancy paired with mRNA abundance",
+        shape="two vectors (5,474 orthologs)",
+        dim=10948,
+        seq_basis="reference-only",
+        why="Translation efficiency measured gene by gene alongside the mRNA abundance of the same gene, which is the first of the two terms that make protein level differ from transcript level. Its result is the reason the term is needed: ribosome occupancy is more conserved than transcript abundance, so translation buffers divergence in mRNA rather than tracking it. The S. paradoxus arm is out of species and would be stored separately or dropped; the cerevisiae arm and the hybrid's cerevisiae alleles are in scope.",
+        accession="GEO, series not fetched this pass",
+        confidence="recall",
+        added=True,
+    ),
+    Candidate(
+        name="Martin-Perez 2017 (protein half-lives)",
+        citation="Martin-Perez M, Villen J. Cell Syst 2017;5:283-294.e5.",
+        url="https://doi.org/10.1016/j.cels.2017.08.008",
+        klass="Modality / backbone",
+        tier=3,
+        genotypes_n=1,
+        genotypes="wild type, exponential growth",
+        env_n=1,
+        env="1",
+        instances_n=1,
+        instances_basis="reported",
+        phenotype="protein turnover rate",
+        shape="vector (3,160 proteins)",
+        dim=3160,
+        seq_basis="reference-only",
+        why="Turnover rates for 3,160 proteins, the second term that makes protein level differ from transcript level. Half-lives span three orders of magnitude and are not normally distributed, so a single global scaling from mRNA to protein cannot be right, and this is the per-gene coefficient that replaces it. The paper also reports that localization, complex membership and connectivity predict turnover better than sequence features do, which names the covariates such a model needs.",
+        accession="Cell Systems SI; PRIDE identifier not fetched this pass",
+        confidence="recall",
+        added=True,
+    ),
+    Candidate(
+        name="Sun 2013 (mRNA synthesis and decay rates across deletion strains)",
+        citation="Sun M, Schwalb B, Pirkl N, Maier KC, Schenk A, Failmezger H, Tresch A, Cramer P. Mol Cell 2013;52:52-62.",
+        url="https://doi.org/10.1016/j.molcel.2013.09.010",
+        klass="Expression / single cell",
+        tier=3,
+        genotypes_n=46,
+        genotypes="46 deletion strains of mRNA degradation and metabolism genes",
+        env_n=1,
+        env="1",
+        instances_n=46,
+        instances_basis="reported",
+        phenotype="mRNA level, synthesis rate and decay rate",
+        shape="three vectors",
+        dim=18000,
+        seq_basis="S288C-KO",
+        why="Comparative dynamic transcriptome analysis decomposes a transcript level into the synthesis rate and the decay rate that produce it, across 46 single deletions. That is the transcript-side counterpart of Martin-Perez 2017's protein half-lives, so the two together give both turnover terms. Its finding also warns what a steady-state compendium hides: a change in degradation rate is generally compensated by a change in synthesis rate, so mRNA level is buffered and two strains with the same level can have different kinetics. The 46 strains are single deletions and overlap the Kemmeren set by gene identity; the abstract does not say they came from that collection, and that provenance was not confirmed.",
+        accession="GEO, series not fetched this pass",
+        confidence="recall",
+        added=True,
+    ),
+    Candidate(
+        name="Hughes 2000 (compendium of expression profiles)",
+        citation="Hughes TR, Marton MJ, Jones AR, Roberts CJ, Stoughton R, et al., Friend SH. Cell 2000;102:109-126.",
+        url="https://doi.org/10.1016/S0092-8674(00)00015-5",
+        klass="Expression / single cell",
+        tier=3,
+        genotypes_n=300,
+        genotypes="300 mutations and chemical treatments",
+        env_n=1,
+        env="1",
+        instances_n=300,
+        instances_basis="reported",
+        phenotype="mRNA log ratio (two-color array)",
+        shape="vector (~6,000)",
+        dim=6000,
+        seq_basis="S288C-KO",
+        why="The original deletion expression compendium, and the oldest independent measurement of the phenotype the built Kemmeren 2014 measures. Ingesting it makes cross-laboratory replication of the deletion transcriptome testable on gene-by-gene profiles fourteen years apart and on different array platforms, which is a check the built set cannot run against itself. The 300 profiles mix deletions, titratable alleles and compound treatments, so the compound arm carries a reference genotype and the mutant arm an S288C-KO one; the split was not confirmed this pass.",
+        accession="Rosetta compendium, distributed with the paper; not fetched",
+        confidence="recall",
+        added=True,
+    ),
 ]
 
 # Why a row left the ranked list. Keyed by name so the move table can state it
@@ -3474,6 +3634,11 @@ EXCLUDED: list[Excluded] = [
     Excluded(
         name="Tchourine 2018 bulk expression compendium (2,577 observations)",
         reason="The benchmark Jackson 2020 compares its single-cell network against. It is a re-aggregation of public bulk series, and the strain behind an observation lives in each source series' metadata rather than in the released matrix, so admitting it is a de-duplication and re-curation task against Kemmeren 2014, Gasch 2000 and Brauer 2008 rather than one loader. Revisit if the per-sample genotype table is located.",
+        rule="not-a-dataset",
+    ),
+    Excluded(
+        name="Albert 2014 (X-pQTL, single-cell protein abundance in large populations)",
+        reason="Albert FW, Treusch S, Shockley AH, Bloom JS, Kruglyak L. Nature 2014;506:494-497. Considered as the BY x RM segregant proteome and it is not one: protein level is read from a green fluorescent protein fusion for one gene at a time in a large unsequenced pool, and the mapping comes from sorting that pool rather than from genotyped individuals. There is no strain-by-protein matrix to store, so it cannot enter as a proteome row. The segregant proteome rows here are Grossbach 2022 and Foss 2007.",
         rule="not-a-dataset",
     ),
     Excluded(
@@ -3607,6 +3772,18 @@ BANDS: dict[str, tuple[Band, str]] = {
         "Two knockdowns in the same cell with a measured interaction, which is the "
         "only combinatorial CRISPR interference design located in yeast.",
     ),
+    "Sun 2013 (mRNA synthesis and decay rates across deletion strains)": (
+        "perturb-seq",
+        "A designed single-gene perturbation crossed with a transcriptome, and the "
+        "only one that resolves the level into a synthesis rate and a decay rate. "
+        "Rates are what a per-cell snapshot cannot recover on its own.",
+    ),
+    "Hughes 2000 (compendium of expression profiles)": (
+        "perturb-seq",
+        "The original designed-perturbation expression compendium, and the "
+        "independent measurement that makes cross-laboratory replication of the "
+        "deletion transcriptome testable against the built Kemmeren 2014.",
+    ),
     "Hu 2007 (TF deletion expression compendium)": (
         "perturb-seq",
         "A designed single-gene perturbation crossed with a transcriptome over 269 "
@@ -3681,99 +3858,127 @@ BANDS: dict[str, tuple[Band, str]] = {
         "background because auxotrophy blocks minimal and nitrogen-limited media, "
         "so this is the strain resource a campaign in defined media needs.",
     ),
-    # -- metabolism x expression ---------------------------------------------
+    # -- molecular layers ------------------------------------------------------
+    "Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)": (
+        "molecular layers",
+        "Three layers on one set of 112 sequenced strains, so the transcript and "
+        "the protein of a gene are observed in the same genotype and the RNA to "
+        "protein question becomes a within-strain residual.",
+    ),
+    "Teyssonniere 2024 (species-wide proteome against transcriptome)": (
+        "molecular layers",
+        "Proteomes for 942 isolates, the panel whose transcriptomes the built "
+        "Caudal 2024 supplies, so the strain-level pairing is one to one.",
+    ),
+    "Foss 2007 (BY x RM segregant proteome)": (
+        "molecular layers",
+        "The independent replicate of Grossbach 2022 on the same cross, and the "
+        "first measurement that protein-level loci differ from transcript-level "
+        "loci.",
+    ),
+    "McManus 2014 (ribosome profiling, allele-specific)": (
+        "molecular layers",
+        "Translation efficiency per gene alongside the mRNA abundance of that "
+        "gene, which is the first of the two terms that separate protein level "
+        "from transcript level.",
+    ),
+    "Martin-Perez 2017 (protein half-lives)": (
+        "molecular layers",
+        "Protein turnover per gene, the second of those two terms, spanning three "
+        "orders of magnitude and therefore not replaceable by a global constant.",
+    ),
     "Jakobson 2025 (genome-to-proteome map)": (
-        "metabolism x expression",
+        "molecular layers",
         "Protein abundance across the same sequenced segregant panel Albert 2018 "
         "profiles by transcriptome, so protein and transcript quantitative trait "
         "loci are measurable on one genotype set.",
     ),
     "Muenzner 2024 (natural-isolate proteome)": (
-        "metabolism x expression",
+        "molecular layers",
         "796 proteomes drawn from the sequenced 1,011-isolate panel that the "
         "supported Caudal 2024 transcriptomes also come from.",
     ),
     "Albert 2018 (eQTL in 1,012 segregants)": (
-        "metabolism x expression",
+        "molecular layers",
         "The transcriptome half of the segregant panel that Jakobson 2025, "
         "Gerke 2017 and Eder 2020 measure protein, metabolite and flux on.",
     ),
     "Cooper 2010 (CE-MS amino-acid metabolome)": (
-        "metabolism x expression",
+        "molecular layers",
         "Amino-acid pools on the deletion collection by capillary electrophoresis, "
         "the same trait class the supported Mulleder 2016 measures by mass "
         "spectrometry and the same strains Kemmeren 2014 profiles.",
     ),
     "Aulakh 2025 (genome-scale ionome)": (
-        "metabolism x expression",
+        "molecular layers",
         "A metabolic readout on the whole deletion collection, which is the "
         "genotype axis the supported expression compendium already covers.",
     ),
     "Blank 2005 (13C metabolic flux)": (
-        "metabolism x expression",
+        "molecular layers",
         "The only row measuring flux rather than a concentration, on deletion "
         "mutants that also have a transcriptome in the supported set.",
     ),
     "Zhu 2014 (kinase / phosphatase lipidomics)": (
-        "metabolism x expression",
+        "molecular layers",
         "A lipidome over 129 signaling deletions, most of which carry an "
         "expression profile in the supported compendium.",
     ),
     "Hackett 2016 (SIMMER multi-omic flux)": (
-        "metabolism x expression",
+        "molecular layers",
         "Flux, metabolite and transcript measured in one study under the same "
         "nutrient limitations, so the join is internal rather than across papers.",
     ),
     "Boer 2010 (metabolome across nutrient limitations)": (
-        "metabolism x expression",
+        "molecular layers",
         "The metabolite half of the chemostat nutrient-limitation series whose "
         "transcriptome half is Brauer 2008, same laboratory and same conditions.",
     ),
     "Brauer 2008 (growth-rate-controlled chemostat transcriptome)": (
-        "metabolism x expression",
+        "molecular layers",
         "Expression at controlled growth rate under each nutrient limitation, "
         "which is the condition axis Boer 2010 and Hackett 2016 measure "
         "metabolites and flux on.",
     ),
     "Airoldi 2016 (nitrogen-limited steady-state and dynamic transcriptome)": (
-        "metabolism x expression",
+        "molecular layers",
         "Expression under the exact nitrogen-limited conditions that Jackson 2020 "
         "profiles single cells in, so the deletion effect separates from the "
         "medium effect.",
     ),
     "Leutert 2023 (phosphoproteome x 101 conditions)": (
-        "metabolism x expression",
+        "molecular layers",
         "Enzyme regulation acts faster than transcription, so a phosphosite layer "
         "over 101 conditions is what explains flux changes an expression table "
         "cannot.",
     ),
     "Gerke 2017 (urea-cycle mQTL)": (
-        "metabolism x expression",
+        "molecular layers",
         "Metabolite quantitative trait loci on a segregant cross that also has an "
         "expression map, so a metabolite locus can be read through its transcript.",
     ),
     "Ambroset 2014 (metabolite QTL)": (
-        "metabolism x expression",
+        "molecular layers",
         "A 74-metabolite panel on a sequenced segregant panel, the widest "
         "metabolite vector available on a recombinant genotype axis.",
     ),
     "Eder 2020 (flux QTL)": (
-        "metabolism x expression",
+        "molecular layers",
         "Flux mapped to segregant genotypes, which is the flux counterpart of the "
         "expression and protein maps on the same panel type.",
     ),
     "Tengolics 2024 (domestication metabolome)": (
-        "metabolism x expression",
+        "molecular layers",
         "Metabolite levels across sequenced isolates, the panel the supported "
         "Caudal 2024 transcriptomes and Muenzner 2024 proteomes also sit on.",
     ),
     "Yu 2021 (proteome and metabolome under nitrogen limitation)": (
-        "metabolism x expression",
+        "molecular layers",
         "Both layers measured in one study under nitrogen limitation, so it "
         "calibrates the protein-to-metabolite step that cross-study joins assume.",
     ),
     "Skelly 2013 (expression variation across isolates)": (
-        "metabolism x expression",
+        "molecular layers",
         "Transcriptome and proteome on the same 22 strains, which is the only row "
         "where the cheap and expensive layers are paired within one experiment "
         "rather than joined across two.",
@@ -4036,6 +4241,29 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "screen on the same product.",
         )
     ],
+    "Sun 2013 (mRNA synthesis and decay rates across deletion strains)": [
+        _syn("Kemmeren 2014", "supported",
+             "single deletion strains, gene by gene",
+             "A steady-state transcript level beside the synthesis and decay rates "
+             "that produce it, so two strains with the same level but different "
+             "kinetics stop looking identical."),
+        _syn("Martin-Perez 2017 (protein half-lives)", "candidate",
+             "turnover, transcript side against protein side, gene by gene",
+             "Both half-life terms in one place, which is what an RNA-to-protein "
+             "model needs in order to have a reason for the two to disagree."),
+    ],
+    "Hughes 2000 (compendium of expression profiles)": [
+        _syn("Kemmeren 2014", "supported",
+             "deletion strains, gene by gene, fourteen years and two array "
+             "platforms apart",
+             "Cross-laboratory replication of the deletion transcriptome, which "
+             "the built set cannot test against itself and which Nadal-Ribelles "
+             "2025 failed cross-batch."),
+        _syn("Hu 2007 (TF deletion expression compendium)", "candidate",
+             "deletion strains with a bulk expression readout",
+             "A third independent compendium, so agreement can be measured across "
+             "three laboratories rather than asserted from two."),
+    ],
     "Hu 2007 (TF deletion expression compendium)": [
         _syn(
             "Kemmeren 2014",
@@ -4193,7 +4421,62 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "or carbon limitation.",
         ),
     ],
-    # -- metabolism x expression ---------------------------------------------
+    # -- molecular layers ------------------------------------------------------
+    "Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)": [
+        _syn("Albert 2018 (eQTL in 1,012 segregants)", "candidate",
+             "BY x RM segregants, transcript layer",
+             "112 strains with transcript and protein measured together against "
+             "1,012 with transcript alone, so the within-strain RNA-to-protein "
+             "residual fitted on the small panel can be applied to the large one."),
+        _syn("Jakobson 2025 (genome-to-proteome map)", "candidate",
+             "segregant genotype class, protein layer",
+             "Two segregant proteomes on different panels and platforms, which is "
+             "what separates a protein quantitative trait locus from a batch."),
+        _syn("Leutert 2023 (phosphoproteome x 101 conditions)", "candidate",
+             "phosphosite identity",
+             "Phosphorylation driven by genotype against phosphorylation driven by "
+             "condition, on one site vocabulary."),
+    ],
+    "Teyssonniere 2024 (species-wide proteome against transcriptome)": [
+        _syn("Caudal 2024 (pan-transcriptome)", "supported",
+             "the same sequenced isolates, 942 against 943",
+             "Transcript and protein for the same strain, one to one rather than "
+             "by overlap. The published result on this pair is that the two "
+             "correlate weakly and share 3 percent of their associated variants, "
+             "so it is the calibration an inference model is scored against."),
+        _syn("Muenzner 2024 (natural-isolate proteome)", "candidate",
+             "the 1,011-isolate panel, protein layer",
+             "De-duplication before either is built: the two share authors and a "
+             "panel, and whether they are independent acquisitions is unsettled."),
+    ],
+    "Foss 2007 (BY x RM segregant proteome)": [
+        _syn("Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)",
+             "candidate",
+             "the same cross, protein layer, fifteen years and two platforms apart",
+             "Cross-laboratory replication of segregant protein abundance, which "
+             "neither measurement can establish alone."),
+    ],
+    "McManus 2014 (ribosome profiling, allele-specific)": [
+        _syn("Messner 2023 (proteome)", "supported",
+             "gene identity, translation rate against protein abundance",
+             "A per-gene translation term to put against measured protein level, "
+             "which is the coefficient a model otherwise has to learn blind."),
+        _syn("Martin-Perez 2017 (protein half-lives)", "candidate",
+             "gene identity, synthesis against degradation",
+             "Both halves of protein turnover, so steady-state abundance can be "
+             "decomposed rather than only predicted."),
+    ],
+    "Martin-Perez 2017 (protein half-lives)": [
+        _syn("Messner 2023 (proteome)", "supported",
+             "gene identity, half-life against abundance",
+             "Which proteins are abundant because they are made fast and which "
+             "because they are destroyed slowly, a distinction abundance alone "
+             "cannot make."),
+        _syn("Kemmeren 2014", "supported",
+             "gene identity, protein half-life against transcript response",
+             "Whether a transcript change reaches the protein layer at all, which "
+             "for a long-lived protein it largely does not."),
+    ],
     "Jakobson 2025 (genome-to-proteome map)": [
         _syn(
             "Albert 2018 (eQTL in 1,012 segregants)",
@@ -4226,6 +4509,14 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "the same 1,011-isolate panel",
             "Genome, transcriptome, proteome and a chemogenomic response surface "
             "on one genotype axis.",
+        ),
+        _syn(
+            "Teyssonniere 2024 (species-wide proteome against transcriptome)",
+            "candidate",
+            "the 1,011-isolate panel, protein layer",
+            "De-duplication before either is built: 796 isolates here against 942 "
+            "there, shared authors and one panel, and no evidence yet on whether "
+            "the two acquisitions are independent.",
         ),
     ],
     "Albert 2018 (eQTL in 1,012 segregants)": [

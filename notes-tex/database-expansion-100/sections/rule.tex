@@ -14,7 +14,7 @@ total genomic content of one strain would be reconstructed. The eleven bases in 
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
   \item \term{S288C-KO} -- the reference genome minus one cataloged ORF (BY4741, BY4742,
-    BY4743). Thirty-one of the 150 that reach 200 sit here, the largest single group.
+    BY4743). Thirty of the 150 that reach 200 sit here, the largest single group.
   \item \term{S288C-KO/het} -- a heterozygous diploid deletion, so a dosage edit rather
     than a null.
   \item \term{S288C+guide} -- the genome is unedited and the perturbation is a designed
@@ -52,22 +52,30 @@ with a released per-guide matrix tells it what guides to order. Each row therefo
 a \term{band}, applied before tier and before scale:
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
-  \item \term{perturb-seq}, 28 rows. A CRISPR interference or activation library whose
+  \item \term{perturb-seq}, 30 rows. A CRISPR interference or activation library whose
     per-guide matrix is released, a barcoded genotype set read out per cell, a designed
     single-gene perturbation crossed with a transcriptome, or the strain and noise
     measurements a pooled per-cell campaign depends on.
-  \item \term{metabolism x expression}, 18 rows. Metabolism and expression on genotypes
-    that can be joined, either inside one study or against a supported dataset: a proteome
-    or metabolome on genotypes that already carry a transcriptome, or expression under the
-    conditions where flux is measured.
+  \item \term{molecular layers}, 23 rows. Two or more of transcript, translation,
+    protein, phosphosite, metabolite, flux and turnover, joinable on one axis, either
+    inside one study or against a supported dataset. The join is per \emph{strain} when
+    both layers are measured on the same genotypes, and per \emph{gene} when one layer is
+    a single genome-wide coefficient such as a half-life.
   \item \term{scale}, 115 rows. Everything else, ordered as before.
 \end{itemize}
 
-Within a band the order is tier, then measurements. The cost of the banding is visible and
-is not hidden: de Boer 2020 falls from 2 to 47 and Lee 2014 from 4 to 49. Both remain
-inside the first fifty, so nothing large is deferred by it; what changes is that the first
-forty-six rows are chosen for what they combine with rather than for how many numbers they
-contain. Every move is listed in Table~\ref{tab:swaps}.
+The second band was \term{metabolism x expression} and is widened, because transcript
+against protein is the same join as expression against flux, and because the rows that say
+\emph{why} transcript and protein disagree, translation efficiency and turnover, had no
+band to sit in at all. Its membership is unchanged apart from the rows added with it.
+
+Within a band the order is tier, then measurements. The cost is visible and is not hidden:
+the two bands now total 53 rows, so they fill wave 1 and three of them spill into wave 2,
+and no scale row reaches wave 1 at all. de Boer 2020 falls from 2 to 54 and Lee 2014 from 4
+to 56. Both are the largest things in the table by instance count and both are now second
+wave, which is the deliberate consequence of ordering by what a row combines with rather
+than by how many numbers it holds. A reader who wants scale back reads wave 2 first. Every
+move is listed in Table~\ref{tab:swaps}.
 
 \subsection{Tier, and what rows are ranked on\secstatus{todo}}
 
@@ -103,9 +111,10 @@ sides of it are close, so it should be read as a budget rather than a verdict.
 
 The two nearer lines are what a build week is planned against. Wave 1 is rows 1--50 and
 wave 2 rows 51--70; a wave-2 row is promoted the moment a wave-1 row turns out to have no
-recoverable per-strain data, which has already happened once to Lee 2014. Wave 1 is 28
-Perturb-seq rows, 18 metabolism-and-expression rows and 4 scale rows, and wave 2 is scale
-throughout, so the two waves differ in kind and not only in rank.
+recoverable per-strain data, which has already happened once to Lee 2014. Wave 1 is 30
+Perturb-seq rows and 20 molecular-layer rows, with no scale row in it, and wave 2 is three
+molecular-layer rows followed by scale, so the two waves differ in kind and not only in
+rank.
 
 A dataset named explicitly in the scoping request is pinned into the recommended set even
 if it ranks below the cut, and the pin is reported rather than folded into the score, so

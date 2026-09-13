@@ -305,6 +305,9 @@ _DISSOCIATION: dict[str, tuple[str, ...]] = {
     "monosodium l-glutamate": ("sodium", "l-glutamate"),
     "monosodium glutamate": ("sodium", "l-glutamate"),
     "potassium phosphate": ("potassium", "phosphate"),
+    # Smith 2006's fatty-acid plates buffer with a KH2PO4 / K2HPO4 pair; the bench
+    # name carries "buffer", the ions are the same two.
+    "potassium phosphate buffer": ("potassium", "phosphate"),
     "magnesium sulfate": ("mg(2+)", "sulfate"),
     "sodium chloride": ("sodium", "chloride"),
 }

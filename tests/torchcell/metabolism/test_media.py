@@ -9,13 +9,20 @@ the model lacks shows up as ``unresolved``, which is the failure these tests gua
 import cobra
 import pytest
 
-from torchcell.datamodels.media import SGA_TM_SELECTION
+from torchcell.datamodels.media import (
+    CARBON_FREE_MEDIA,
+    MEDIA_LIBRARY,
+    SGA_TM_SELECTION,
+)
+from torchcell.datamodels.schema import ComponentDefinition, MediaComponentRole
 from torchcell.metabolism.media import (
     SGA_DM_SELECTION_FBA,
     SGA_TM_SELECTION_FBA,
     SM_FBA,
+    ExchangeIndex,
     MediaBounds,
     UptakePolicy,
+    build_exchange_index,
     media_to_bounds,
 )
 
@@ -36,6 +43,17 @@ SPECIES = [
     "Ca(2+)",
     "D-glucose",
     "D-galactose",
+    "D-fructose",
+    "D-mannose",
+    "D-xylose",
+    "maltose",
+    "sucrose",
+    "raffinose",
+    "trehalose",
+    "glycerol",
+    "oleate",
+    "myristate",
+    "acetate",
     "(S)-lactate",
     "ethanol",
     "ammonium",
@@ -163,3 +181,70 @@ def test_fba_recipe_tracks_the_ontology_dropouts() -> None:
         d.name for d in SGA_TM_SELECTION.dropouts
     ]
     assert SGA_TM_SELECTION_FBA.provenance == SGA_TM_SELECTION.provenance
+
+
+@pytest.fixture(scope="module")
+def index(model: cobra.Model) -> ExchangeIndex:
+    return build_exchange_index(model)
+
+
+@pytest.mark.parametrize("key", sorted(MEDIA_LIBRARY))
+def test_every_library_medium_states_a_carbon_source(key: str) -> None:
+    """A medium names a carbon source, or is a base listed as carbon-free with a reason.
+
+    The failure this locks out is silent: the shipped ``SC`` carried the 9 YNB
+    vitamins, all 20 amino acids and two nucleobases and NO sugar, so
+    ``media_to_bounds`` opened no carbon exchange and every dataset that grew on SC
+    reached FBA describing a medium nothing can grow in.
+    """
+    media = MEDIA_LIBRARY[key]
+    carbon = [c for c in media.components if c.role is MediaComponentRole.carbon_source]
+    assert carbon or key in CARBON_FREE_MEDIA, (
+        f"{key} names no carbon source and is not a documented carbon-free base"
+    )
+
+
+@pytest.mark.parametrize("key", sorted(MEDIA_LIBRARY))
+def test_every_library_medium_resolves_or_says_why_not(
+    key: str, model: cobra.Model, index: ExchangeIndex
+) -> None:
+    """Each component reaches an exchange, is excluded by role, or is a named mixture.
+
+    "Unresolved" is only honest when the component is not one species: a commercial
+    YNB, an SC or CSM drop-out powder, a polysorbate, or the SynH3- base whose
+    composition is deferred to an unmirrored paper. A ``defined`` component failing to
+    resolve is a naming drift between this library and the metabolism resolver, which
+    is exactly what this catches.
+    """
+    media = MEDIA_LIBRARY[key]
+    bounds = media_to_bounds(media, model, index=index)
+    by_name = {c.compound.name: c for c in media.components}
+    undocumented = [
+        name
+        for name in bounds.unresolved_names
+        if by_name[name].definition is ComponentDefinition.defined
+    ]
+    assert undocumented == [], f"{key}: {undocumented}"
+    if key not in CARBON_FREE_MEDIA:
+        carbon = {
+            c.compound.name
+            for c in media.components
+            if c.role is MediaComponentRole.carbon_source
+        }
+        opened = {
+            b.source.split("[component: ")[1].rstrip("]")
+            for b in bounds.bounds.values()
+        }
+        assert carbon & opened, f"{key}: no carbon source reached an exchange"
+
+
+def test_smith_phosphate_buffer_dissociates(
+    model: cobra.Model, index: ExchangeIndex
+) -> None:
+    """The buffered fatty-acid plates place their buffer on potassium + phosphate."""
+    from torchcell.datamodels.media import YPBO
+
+    bounds = media_to_bounds(YPBO, model, index=index)
+    opened = {b.metabolite_name for b in bounds.bounds.values()}
+    assert {"potassium", "phosphate", "oleate"} <= opened
+    assert "Tween 40" in bounds.unresolved_names

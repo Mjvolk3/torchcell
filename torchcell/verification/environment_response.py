@@ -15,31 +15,34 @@ this verifier adds:
 3. L2 ``response_finiteness`` -- numeric responses are finite (SIGNED; negatives allowed).
 4. L2 ``se_nonnegative`` -- reported SEs are non-negative.
 5. L3 ``measurement_type_consistent`` -- one measurement_type across the dataset.
-6. L3 ``reference_zero`` -- the reference (parent-strain) response is 0.
+6. L3 ``reference_zero`` -- the reference (parent-strain) response is 0 for a numeric
+   readout; for a purely CATEGORICAL dataset the numeric rule has nothing to look at, so
+   the reference instead has to carry the dataset's neutral baseline category, and the
+   result says which of the two rules ran.
 7. L3 ``environment_perturbed`` -- every experiment carries a genuine environmental edit
    (>= 1 perturbation, or a temperature shift off the dataset baseline, e.g. heat).
-8. L4 ``gene_containment`` (caller) -- screened deletions overlap the deletion collection.
+8. L4 ``gene_containment`` -- screened deletions overlap the deletion collection.
+
+On top of these it runs :class:`torchcell.verification.common.SharedRecordRules`, the
+rules that are not specific to this readout: the gap + silent-None census over every
+carrier, canonical gene names, uncertainty sanity, compound identity, media membership,
+and the L4 gene rules.
 """
 
 from __future__ import annotations
 
 import math
-import sys
+from collections import Counter
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any
 
+from torchcell.verification.common import GeneNameResolver, SharedRecordRules
 from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
 from torchcell.verification.report import (
     Level,
     LevelResult,
     Provenance,
     VerificationReport,
-)
-from torchcell.verification.sourced import (
-    ProvenanceGapCensus,
-    ProvenanceGapReason,
-    l1_provenance_gaps,
-    provenance_gap_level_result,
 )
 
 Record = dict[str, Any]
@@ -74,6 +77,12 @@ def _condition_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
     Mirrors :func:`_genotype_signature` on the environment axis: identity is derived from
     the environment's own content, so nothing has to be smuggled into a name. Elements are
     stringified for a total order (mixed None/str/float never breaks the sort).
+
+    A study that dosed the SAME compound at the SAME concentration in two separate screens
+    measured two conditions, not one: the screens are normalized independently, so the
+    phenotype's ``screen_id`` joins the signature when the dataset carries one (Hoepfner
+    has 45 such same-compound, same-dose column pairs). ``.get`` keeps the signature
+    identical for every dataset that does not carry the field.
     """
     env = experiment["environment"]
     perts: list[tuple[str, ...]] = []
@@ -99,6 +108,7 @@ def _condition_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
         media,
         env.get("duration_hours"),
         env.get("duration_generations"),
+        experiment["phenotype"].get("screen_id"),
     )
 
 
@@ -148,20 +158,26 @@ def _genotype_signature(
     )
 
 
-def _study_key(record: Record) -> tuple[str, str]:
-    """Measurement-context discriminator: (source publication, readout ``units``).
+def _study_key(record: Record) -> tuple[str, str, str]:
+    """Measurement-context discriminator: (publication, readout ``units``, ``screen_id``).
 
     A single-study, single-assay dataset has a constant context, so this does not affect
     uniqueness. A MULTI-study / multi-assay aggregation (e.g. YeastPhenome) legitimately
-    measures the SAME (strain, condition) in DIFFERENT screens -- a different study, or the
-    same study by a different assay (microarray vs barseq, recorded in ``units``). Each NPV
-    is normalized within its own screen, so those are independent measurements, NOT
+    measures the SAME (strain, condition) in DIFFERENT screens -- a different study, the
+    same study by a different assay (microarray vs barseq, recorded in ``units``), or the
+    same study's own repeat screen of one compound (``screen_id``). Each readout is
+    normalized within its own screen, so those are independent measurements, NOT
     duplicates -- the context joins the uniqueness key. A true duplicate (same context, same
-    strain, same condition) is still caught.
+    strain, same condition) is still caught. ``screen_id`` is read with ``.get`` so a
+    dataset without the field keys exactly as before.
     """
     pub = record.get("publication") or {}
-    units = record["experiment"]["phenotype"].get("units") or ""
-    return (str(pub.get("pubmed_id") or pub.get("doi") or ""), str(units))
+    phenotype = record["experiment"]["phenotype"]
+    return (
+        str(pub.get("pubmed_id") or pub.get("doi") or ""),
+        str(phenotype.get("units") or ""),
+        str(phenotype.get("screen_id") or ""),
+    )
 
 
 def _l1_pair_uniqueness(
@@ -217,27 +233,101 @@ def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
     )
 
 
-def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
-    """L3: the reference (parent-strain) response is 0 -- log2(1)=0, the control baseline."""
-    worst = 0.0
-    n = 0
-    for rec in records:
-        v = rec["reference"]["phenotype_reference"]["environment_response"]
-        if v is None:
-            continue
-        n += 1
-        worst = max(worst, abs(float(v)))
+def _reference_baseline_result(
+    *,
+    n_numeric: int,
+    worst: float,
+    reference_categories: Counter[str],
+    n_reference_missing_category: int,
+    experiment_categories: Counter[str],
+) -> LevelResult:
+    """L3: the reference record carries the readout's baseline. Two rules, one result.
+
+    NUMERIC readout: the reference (parent-strain) response is 0 -- log2(1) = 0, the
+    control baseline. CATEGORICAL readout: there is no number to be 0, and the numeric rule
+    then passes over zero values, which is how a purely categorical dataset scored a green
+    L3 that checked nothing. Its baseline is a CATEGORY, so the rule becomes: every
+    reference carries a category, they are all the SAME category (the dataset's declared
+    baseline), and no experiment record reports that baseline as a measured call. The
+    message names the rule that ran so a reader can tell a real pass from a vacuous one.
+    """
+    if n_numeric == 0 and (reference_categories or n_reference_missing_category):
+        baselines = sorted(reference_categories)
+        n_refs = sum(reference_categories.values())
+        collisions = {
+            category: experiment_categories[category]
+            for category in baselines
+            if experiment_categories.get(category)
+        }
+        passed = (
+            n_reference_missing_category == 0 and len(baselines) == 1 and not collisions
+        )
+        if passed:
+            message = (
+                f"categorical rule: all {n_refs} references carry the baseline category "
+                f"{baselines[0]!r}, which no experiment record reports"
+            )
+        else:
+            message = (
+                f"categorical rule: {n_reference_missing_category} references carry no "
+                f"category; {len(baselines)} distinct reference categories {baselines}; "
+                f"baseline also used as a measured call in {collisions}"
+            )
+        return LevelResult(
+            level=Level.L3,
+            name="reference_zero",
+            passed=passed,
+            message=message,
+            details={
+                "rule": "categorical_baseline",
+                "n_values": n_refs,
+                "reference_categories": dict(reference_categories),
+                "n_reference_missing_category": n_reference_missing_category,
+                "baseline_used_as_measured_call": collisions,
+            },
+        )
     holds = worst == 0.0
     return LevelResult(
         level=Level.L3,
         name="reference_zero",
         passed=holds,
         message=(
-            f"reference response == 0 for all {n} records"
+            f"numeric rule: reference response == 0 for all {n_numeric} records"
             if holds
-            else f"reference response not identically 0: max|v|={worst:.3g}"
+            else f"numeric rule: reference response not identically 0: max|v|={worst:.3g}"
         ),
-        details={"n_values": n, "worst_abs": worst},
+        details={"rule": "numeric_zero", "n_values": n_numeric, "worst_abs": worst},
+    )
+
+
+def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
+    """L3: the reference carries the baseline (numeric 0, or the neutral category)."""
+    worst = 0.0
+    n = 0
+    reference_categories: Counter[str] = Counter()
+    n_missing = 0
+    experiment_categories: Counter[str] = Counter()
+    for rec in records:
+        reference = rec["reference"]["phenotype_reference"]
+        v = reference["environment_response"]
+        if v is None:
+            category = reference.get("category")
+            if category is None:
+                n_missing += 1
+            else:
+                reference_categories[str(category)] += 1
+        else:
+            n += 1
+            worst = max(worst, abs(float(v)))
+        experiment_category = rec["experiment"]["phenotype"].get("category")
+        if experiment_category is not None:
+            experiment_categories[str(experiment_category)] += 1
+    return _reference_baseline_result(
+        n_numeric=n,
+        worst=worst,
+        reference_categories=reference_categories,
+        n_reference_missing_category=n_missing,
+        experiment_categories=experiment_categories,
     )
 
 
@@ -245,8 +335,6 @@ def _modal_scalar(
     records: Sequence[Record], getter: Callable[[dict[str, Any]], Any]
 ) -> Any:
     """The dataset's baseline (most common) value of an environment scalar, if any."""
-    from collections import Counter
-
     values = Counter(
         v
         for rec in records
@@ -311,13 +399,18 @@ def verify_environment_response_dataset(
     provenance: Provenance,
     expected_count: int,
     background_genes: frozenset[str] = frozenset(),
+    resolve_gene_name: GeneNameResolver | None = None,
+    sgd_genes: set[str] | None = None,
+    min_containment: float = 0.90,
 ) -> VerificationReport:
-    """Run the L0-L3 record-level gate for an environment-response dataset.
+    """Run the L0-L4 record-level gate for an environment-response dataset.
 
     ``background_genes`` are the systematic names of the constant drug-sensitized
     background (e.g. Vanacloig 3DeltaAlpha = PDR1/PDR3/SNQ2), excluded from the
-    (ORF, compound) uniqueness and gene-set keys. L4 (cross-source gene overlap with the
-    deletion collection) is asserted by the caller.
+    (ORF, compound) uniqueness and gene-set keys. ``sgd_genes`` turns on the L4 gene rules
+    (aggregate containment + per-record genome membership); ``resolve_gene_name`` turns on
+    the annotation half of the canonical-gene-name rule. Both are optional so this verifier
+    still runs where no genome is mounted.
     """
     from pydantic import TypeAdapter
 
@@ -329,18 +422,14 @@ def verify_environment_response_dataset(
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_pair_uniqueness(records, background_genes))
-    # Census gaps from BOTH gap-capable carriers (phenotype + environment) per record.
-    report.add(
-        l1_provenance_gaps(
-            {
-                "provenance_gaps": (
-                    rec["experiment"]["phenotype"].get("provenance_gaps") or []
-                )
-                + (rec["experiment"]["environment"].get("provenance_gaps") or [])
-            }
-            for rec in records
-        )
+
+    shared = SharedRecordRules(
+        background_genes=background_genes,
+        resolve_gene_name=resolve_gene_name,
+        sgd_genes=sgd_genes,
+        min_containment=min_containment,
     )
+    shared.add_all(records)
 
     responses = [
         float(rec["experiment"]["phenotype"]["environment_response"])
@@ -370,6 +459,8 @@ def verify_environment_response_dataset(
     report.add(_l3_measurement_type_consistent(records))
     report.add(_l3_reference_zero(records))
     report.add(_l3_environment_perturbed(records))
+    for result in shared.results():
+        report.add(result)
     return report
 
 
@@ -392,17 +483,17 @@ def verify_environment_response_dataset_streaming(
     sgd_genes: set[str],
     background_genes: frozenset[str] = frozenset(),
     min_containment: float = 0.90,
+    resolve_gene_name: GeneNameResolver | None = None,
 ) -> VerificationReport:
     """Single-pass, memory-bounded L0-L4 gate for LARGE environment-response datasets.
 
-    Semantically identical to ``verify_environment_response_dataset`` (+ the caller's L4
-    gene-containment), but consumes ``records`` as a stream so a 30M-record dataset (e.g.
-    the Hoepfner HIP-HOP atlas) never has to be materialized in RAM. The dominant
-    accumulator is the (ORF, compound) pair set; interning keeps it a few GB, not the
-    ~450 GB a full materialization would cost.
+    Semantically identical to ``verify_environment_response_dataset``, but consumes
+    ``records`` as a stream so a 30M-record dataset (e.g. the Hoepfner HIP-HOP atlas) never
+    has to be materialized in RAM. The dominant accumulator is the (ORF, compound) pair
+    set; interning keeps it a few GB, not the ~450 GB a full materialization would cost.
+    The shared rules are accumulators for the same reason, and memoize their per-condition
+    verdicts on the identity of the interned environment mapping.
     """
-    from collections import Counter
-
     from pydantic import TypeAdapter
 
     from torchcell.datamodels.schema import ExperimentType
@@ -421,6 +512,9 @@ def verify_environment_response_dataset_streaming(
     measurement_types: set[str] = set()
     ref_worst = 0.0
     n_ref = 0
+    reference_categories: Counter[str] = Counter()
+    n_reference_missing_category = 0
+    experiment_categories: Counter[str] = Counter()
     # Environment-edit accounting: a record with no perturbation is a valid edit iff its
     # temperature or media differs from the dataset baseline (modal). Baselines need all
     # records, so accumulate scalar counts + the (temp, media) of no-perturbation records
@@ -428,30 +522,17 @@ def verify_environment_response_dataset_streaming(
     temp_counts: Counter[Any] = Counter()
     media_counts: Counter[Any] = Counter()
     no_pert_env: list[tuple[Any, Any]] = []
-    screened: set[str] = set()
-    # Provenance-gap census (single-pass; a documented gap is informational, never a fail).
-    gap_records_with = 0
-    gap_total = 0
-    gap_by_reason: Counter[str] = Counter()
-    gap_by_field: Counter[str] = Counter()
-    gap_worklist: set[str] = set()
+    shared = SharedRecordRules(
+        background_genes=background_genes,
+        resolve_gene_name=resolve_gene_name,
+        sgd_genes=sgd_genes,
+        min_containment=min_containment,
+    )
 
     for i, rec in enumerate(records):
         exp = rec["experiment"]
         n_records += 1
-        gaps = (exp["phenotype"].get("provenance_gaps") or []) + (
-            exp["environment"].get("provenance_gaps") or []
-        )
-        if gaps:
-            gap_records_with += 1
-        for gap in gaps:
-            gap_total += 1
-            reason = str(gap["reason"])
-            field = str(gap["field"])
-            gap_by_reason[reason] += 1
-            gap_by_field[field] += 1
-            if reason == ProvenanceGapReason.deferred_pending_source_review:
-                gap_worklist.add(field)
+        shared.add(rec)
         try:
             validate(exp)
         except (ValueError, TypeError) as err:
@@ -470,8 +551,6 @@ def verify_environment_response_dataset_streaming(
         else:
             pair_seen.add(pkey)
             n_pairs += 1
-        for gene in _screened_genes(exp, background_genes):
-            screened.add(sys.intern(gene))
 
         response = exp["phenotype"]["environment_response"]
         if response is not None:
@@ -485,10 +564,20 @@ def verify_environment_response_dataset_streaming(
                 bad_se.append({"index": i, "value": se})
         measurement_types.add(exp["phenotype"]["measurement_type"])
 
-        ref_val = rec["reference"]["phenotype_reference"]["environment_response"]
+        reference = rec["reference"]["phenotype_reference"]
+        ref_val = reference["environment_response"]
         if ref_val is not None:
             n_ref += 1
             ref_worst = max(ref_worst, abs(float(ref_val)))
+        else:
+            ref_category = reference.get("category")
+            if ref_category is None:
+                n_reference_missing_category += 1
+            else:
+                reference_categories[str(ref_category)] += 1
+        exp_category = exp["phenotype"].get("category")
+        if exp_category is not None:
+            experiment_categories[str(exp_category)] += 1
         temp = (exp["environment"].get("temperature") or {}).get("value")
         media = (exp["environment"].get("media") or {}).get("name")
         if temp is not None:
@@ -539,18 +628,6 @@ def verify_environment_response_dataset_streaming(
         )
     )
     report.add(
-        provenance_gap_level_result(
-            ProvenanceGapCensus(
-                n_records=n_records,
-                n_records_with_gaps=gap_records_with,
-                n_gaps=gap_total,
-                by_reason=dict(gap_by_reason),
-                by_field=dict(gap_by_field),
-                worklist_fields=sorted(gap_worklist),
-            )
-        )
-    )
-    report.add(
         LevelResult(
             level=Level.L2,
             name="value_fidelity",
@@ -595,16 +672,12 @@ def verify_environment_response_dataset_streaming(
         )
     )
     report.add(
-        LevelResult(
-            level=Level.L3,
-            name="reference_zero",
-            passed=ref_worst == 0.0,
-            message=(
-                f"reference response == 0 for all {n_ref} records"
-                if ref_worst == 0.0
-                else f"reference response not identically 0: max|v|={ref_worst:.3g}"
-            ),
-            details={"n_values": n_ref, "worst_abs": ref_worst},
+        _reference_baseline_result(
+            n_numeric=n_ref,
+            worst=ref_worst,
+            reference_categories=reference_categories,
+            n_reference_missing_category=n_reference_missing_category,
+            experiment_categories=experiment_categories,
         )
     )
     baseline_temp = temp_counts.most_common(1)[0][0] if temp_counts else None
@@ -636,24 +709,11 @@ def verify_environment_response_dataset_streaming(
             },
         )
     )
-    overlap = len(screened & sgd_genes) / len(screened) if screened else 0.0
-    report.add(
-        LevelResult(
-            level=Level.L4,
-            name="gene_containment_sgd",
-            passed=overlap >= min_containment,
-            message=(
-                f"{overlap:.3f} of {len(screened)} measured genes are S288C reference "
-                f"genes (>= {min_containment})"
-            ),
-            details={
-                "n_measured": len(screened),
-                "n_in_sgd": len(screened & sgd_genes),
-                "overlap": overlap,
-                "missing_examples": sorted(screened - sgd_genes)[:20],
-            },
-        )
-    )
+    # L1 census + canonical names, L2 uncertainty, L3 identity/media and the two L4 gene
+    # rules all come from the shared accumulator, so the streaming report carries exactly
+    # the results the eager one does.
+    for result in shared.results():
+        report.add(result)
     return report
 
 

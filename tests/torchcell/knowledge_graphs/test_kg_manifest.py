@@ -8,13 +8,19 @@ from torchcell.knowledge_graphs.kg_manifest import (
     AdapterDrift,
     AdmissionReport,
     GraphSchemaEntry,
+    KgBuildManifest,
+    KgEvent,
     ServedDrift,
+    _acknowledged_value_drift,
     batch_report_from_members,
     cell_adapter_surface,
     format_batch_report,
+    format_report,
     graph_schema_from_yaml,
     parse_n_experiments,
     split_dataset_args,
+    value_surface_drift,
+    value_surface_from_sources,
 )
 
 SCHEMA_YAML = """
@@ -286,3 +292,103 @@ def test_parse_n_experiments_single_bare_count_and_batch_named_counts() -> None:
         parse_n_experiments(["ADataset=6188"], ["ADataset", "BDataset"])
     with pytest.raises(ValueError, match="not in the report"):
         parse_n_experiments(["ADataset=1", "CDataset=1"], ["ADataset"])
+
+
+# ------------------------------------------------------------------- value surface
+
+
+def test_value_surface_hashes_content_and_reports_changed_and_added() -> None:
+    """A changed shared VALUE file is drift; a file that joined the surface is additive."""
+    stored = value_surface_from_sources(
+        {
+            "torchcell/datamodels/media.py": "YPD = Media(...)",
+            "torchcell/datamodels/compound_identity.py": "def resolved_compound(): ...",
+        }
+    )
+    assert set(stored) == {
+        "torchcell/datamodels/media.py",
+        "torchcell/datamodels/compound_identity.py",
+    }
+    # same content -> no drift at all
+    assert value_surface_drift(stored, dict(stored)) == ([], [])
+    # edited recipe -> changed; a newly recorded file -> added (nothing served used it)
+    current = value_surface_from_sources(
+        {
+            "torchcell/datamodels/media.py": "YPD = Media(... + agar)",
+            "torchcell/datamodels/compound_identity.py": "def resolved_compound(): ...",
+            "torchcell/datamodels/compound_identity_table.json": "{}",
+        }
+    )
+    changed, added = value_surface_drift(stored, current)
+    assert changed == ["torchcell/datamodels/media.py"]
+    assert added == ["torchcell/datamodels/compound_identity_table.json"]
+    # a recorded file that disappeared is drift too, not silence
+    assert value_surface_drift(stored, {}) == (sorted(stored), [])
+
+
+def test_value_surface_change_blocks_and_the_ack_records_it() -> None:
+    """The block names the files; the acknowledgment travels into the manifest event."""
+    blocked = _member(
+        "ADataset",
+        reasons=[
+            "VALUE SURFACE CHANGED: ['torchcell/datamodels/media.py']. These files hold "
+            "the shared VALUES served media and compound node ids are content-addressed "
+            "from"
+        ],
+    )
+    blocked.value_surface_changed = ["torchcell/datamodels/media.py"]
+    assert blocked.verdict == "blocked"
+    assert "VALUE SURFACE CHANGED" in format_report(blocked)
+    assert "CHANGED: torchcell/datamodels/media.py" in format_report(blocked)
+
+    acknowledged = _member("ADataset")
+    acknowledged.value_surface_changed = ["torchcell/datamodels/media.py"]
+    acknowledged.value_drift_acknowledged = "YPD's edit only added a note field"
+    assert acknowledged.verdict == "admissible"
+    assert "acknowledged: YPD's edit only added a note field" in format_report(
+        acknowledged
+    )
+    assert _acknowledged_value_drift(acknowledged) == [
+        "torchcell/datamodels/media.py: YPD's edit only added a note field"
+    ]
+    assert _acknowledged_value_drift(_member("ADataset")) == []
+
+
+def test_unrecorded_value_surface_reports_rather_than_blocks() -> None:
+    """A manifest written before the surface existed has no baseline, so it says so."""
+    report = _member("ADataset")
+    report.value_surface_recorded = False
+    assert report.verdict == "admissible"
+    assert "value surface: not recorded" in format_report(report)
+
+
+def test_old_manifest_without_a_value_surface_still_loads() -> None:
+    """Back-compat: the field defaults to empty, it is not required by the model."""
+    manifest = KgBuildManifest.model_validate(
+        {
+            "database": "torchcell",
+            "store_host": "gilahyper",
+            "neo4j_version": "5.26.0",
+            "biocypher_version": "0.5.43",
+            "torchcell_commit": "513cbfa1",
+            "graph_schema": {},
+            "cell_adapter_methods": {},
+            "cell_adapter_table": {},
+            "adapter_files": {},
+            "datasets": {},
+            "events": [],
+            "created_at": "2026-09-01T00:00:00+00:00",
+            "updated_at": "2026-09-01T00:00:00+00:00",
+        }
+    )
+    assert manifest.value_surface == {}
+    # and an event written before value acknowledgments existed loads the same way
+    assert (
+        KgEvent(
+            kind="bootstrap",
+            at="2026-09-01T00:00:00+00:00",
+            torchcell_commit=None,
+            datasets=[],
+        ).acknowledged_value_drift
+        == []
+    )

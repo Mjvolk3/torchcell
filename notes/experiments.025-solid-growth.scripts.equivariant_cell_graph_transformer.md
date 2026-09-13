@@ -519,3 +519,49 @@ appended to the chain with the same 30-minute stagger, restoring three seeds per
 | 21947962 | `cgt_s0_r_kl_fit_015` | 3 | after 21947961 + 30 min |
 | 21984678 | `cgt_s0_r_kl_ctrl_013` | 1 | after 21947962 + 30 min, replaces 21934082 |
 | 21984680 | `cgt_s0_r_kl_ctrl_013` | 2 | after 21984678 + 30 min, replaces 21934084 |
+
+### 22:30 - The local copy was slower still; the chain resubmitted with node-local staging
+
+21947151 started at 01:09 (34 minutes after the swap) and did 5 epochs in 21 hours,
+3.3 to 3.7 h each, against 63 min through Taiga: learning normally (val interaction
+Pearson 0.397 to 0.433 over epochs 0 to 4, val fitness Pearson 0.935) but unable to
+reach epoch 30 inside 48 h. The node was ours alone with CPU load 1.15 on 16 cores, so
+the ranks were waiting on LMDB page reads from Lustre (the file sits on 4 of 114
+stripes). Three things checked before changing anything:
+
+- **Gradient recording is not the cause.** The trainer has no `wandb.watch`, no gradient
+  norm logging, and no step-level logging; every `self.log` is per epoch, sample plots
+  run once per epoch, transformer diagnostics and edge recovery every 10. The only
+  gradient operation is clipping. The panel-c gradient probe for the KL-versus-mask
+  question is not implemented yet, so nothing of that kind runs. The same code does 17
+  min per epoch on IGB and 19 on GilaHyper.
+- **The Delta docs prescribe node-local disk for this pattern.** Data Management: "The
+  high performance ssd storage (740GB CPU, 1.5TB GPU) is available in /tmp" and "Codes
+  that need to perform i/o to many small files should target /tmp on each node of the
+  job". `/projects` is 500 GB, `/work/hdd` 1 TB on 12 OSTs, and `/work/nvme` (96 OSTs,
+  about 800 GB/s aggregate) is "available upon request", which would remove the per-job
+  copy if granted.
+- **IGB's `gpu` partition cannot take these jobs as designed.** It is three nodes of two
+  A40s each; the protocol is single-node 4-GPU DDP at batch 256 per rank, and a 2-GPU
+  world size changes the effective batch and step count under the constant rate.
+
+All nine jobs (5 epochs of 21947151 discarded) were cancelled and resubmitted from
+b0f279f5 with the staging launcher ([[experiments.025-solid-growth.scripts.delta_cgt]]),
+controls interleaved so a complete seed lands first:
+
+| Delta job | config | seed | dependency |
+|---|---|---|---|
+| 22020651 | `cgt_s0_r_kl_fit_014` | 1 | pending, priority |
+| 22020652 | `cgt_s0_r_kl_ctrl_013` | 1 | after 22020651 + 30 min |
+| 22020653 | `cgt_s0_r_kl_fit_015` | 1 | chained |
+| 22020654 | `cgt_s0_r_kl_fit_014` | 2 | chained |
+| 22020655 | `cgt_s0_r_kl_ctrl_013` | 2 | chained |
+| 22020656 | `cgt_s0_r_kl_fit_015` | 2 | chained |
+| 22020657 | `cgt_s0_r_kl_fit_014` | 3 | chained |
+| 22020658 | `cgt_s0_r_kl_ctrl_013` | 3 | chained |
+| 22020659 | `cgt_s0_r_kl_fit_015` | 3 | chained |
+
+The first job's log reports the copy time and the first epochs' pace; that is the
+measurement of whether staging works. On IGB the flanks-only job 2395008 was released
+from its dependency to take cabbi's four free GPUs as soon as another user's four
+single-GPU tasks end.

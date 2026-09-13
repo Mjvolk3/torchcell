@@ -157,6 +157,11 @@ AA_READOUTS = (AA_READOUT_TURNOVER, AA_READOUT_CONCENTRATION)
 MM_PER_M = 1.0e3
 LN10 = math.log(10.0)
 
+#: How the betaxanthin scalar is read off the layer.
+BX_READOUT_FLUX_SCALAR = "flux_scalar"
+BX_READOUT_PRECURSOR_CONCENTRATION = "flux_precursor_concentration"
+BX_READOUTS = (BX_READOUT_FLUX_SCALAR, BX_READOUT_PRECURSOR_CONCENTRATION)
+
 #: Distributional losses this trainer can score a head with. 'crps' is the Gaussian CRPS
 #: every 027 cell before 2026-09-11 ran and stays the default. 'quantile' is the 019
 #: pinball loss over the K = 19 tau grid, which 019 measured as its best distributional
@@ -845,29 +850,69 @@ def compartment_volume_fractions(
     )
 
 
-def amino_acid_compartment_species() -> dict[str, list[tuple[str, str]]]:
-    """``{amino acid -> [(compartment, species id), ...]}`` for the whole cell.
+def compartment_species_for(
+    anchors: dict[str, str],
+) -> dict[str, list[tuple[str, str]]]:
+    """``{label -> [(compartment, species id), ...]}`` for the whole cell.
 
     Derived from the GEM at run time rather than hardcoded, so it cannot drift from the
-    model the layer was built on: every species whose name matches the measured amino
-    acid's base name, minus the extracellular and membrane pseudo-compartments.
+    model the layer was built on: every species whose name matches the anchor species'
+    base name, minus the extracellular and membrane pseudo-compartments.
+
+    Args:
+        anchors: ``{label -> one GEM species id}``; the id names the chemical and the
+            search finds the rest of its compartments.
     """
     from torchcell.metabolism.yeast_GEM import YeastGEM
 
     model = YeastGEM().model
     by_id = {s.id: s for s in model.metabolites}
     out: dict[str, list[tuple[str, str]]] = {}
-    for aa in AA_KEYS:
-        base = by_id[AMINO_ACID_TO_GEM_METABOLITE[aa]].name.split(" [")[0]
+    for label, anchor in anchors.items():
+        assert anchor in by_id, f"{label!r} names {anchor!r}, which is not in the GEM."
+        base = by_id[anchor].name.split(" [")[0]
         hits = sorted(
             (str(s.compartment), str(s.id))
             for s in model.metabolites
             if s.name.split(" [")[0] == base
             and str(s.compartment) not in NON_CELL_COMPARTMENTS
         )
-        assert hits, f"no intracellular GEM species found for {aa!r} ({base!r})."
-        out[aa] = hits
+        assert hits, f"no intracellular GEM species found for {label!r} ({base!r})."
+        out[label] = hits
     return out
+
+
+def amino_acid_compartment_species() -> dict[str, list[tuple[str, str]]]:
+    """``{amino acid -> [(compartment, species id), ...]}`` for the whole cell."""
+    return compartment_species_for(
+        {aa: AMINO_ACID_TO_GEM_METABOLITE[aa] for aa in AA_KEYS}
+    )
+
+
+#: WAVE 8 BLOCK 3. Betaxanthin is NOT a GEM metabolite: the Cachera cassette makes it
+#: outside the native network, L-tyrosine -> (CYP76AD1) L-DOPA -> (DOD) betalamic acid ->
+#: betaxanthin, and yeast-GEM carries no L-DOPA, betalamic acid or betaxanthin species
+#: (searched by name, 2026-09-12). What the GEM does carry is the SUPPLY of the route: the
+#: tyrosine pool the cassette draws on, and the shikimate nodes the cassette's own
+#: feedback-resistant ARO4 and ARO7 alleles act on. ARO4 is DAHP synthase, so its product
+#: DAHP is the node it deregulates; ARO7 is chorismate mutase, so chorismate is its
+#: substrate and prephenate its product.
+#:
+#: NOT the same list as 026's `BETAXANTHIN_PRECURSORS`, and the difference is a defect
+#: found here rather than a preference: that list is
+#: ``["s_1051", "s_0188", "s_1032"]``, and **s_0188 is 2-phospho-D-glyceric acid**, a
+#: glycolysis intermediate one enolase step before phosphoenolpyruvate, not an aromatic
+#: intermediate. 026's own comment describes the entry as one of "the two aromatic-pathway
+#: intermediates the cassette's alleles act on", so the id does not match the intent.
+#: 026 owns that registry and is not edited from here; this list is the corrected one and
+#: the turnover-based `flux_scalar` head still reads 026's.
+BETAXANTHIN_PRECURSOR_ANCHORS: dict[str, str] = {
+    "tyrosine": "s_1051",
+    "phenylalanine": "s_1032",
+    "chorismate": "s_0515",
+    "prephenate": "s_1377",
+    "dahp": "s_0349",
+}
 
 
 def mixture_weights(
@@ -882,14 +927,30 @@ def mixture_weights(
     ``space='cytosol'`` keeps only the cytosolic species at weight 1, which is the
     comparison arm rather than the physical quantity: it answers what the mixture is worth.
     """
+    return species_mixture_weights(
+        amino_acid_compartment_species(), AA_KEYS, met_index, space, volume_table
+    )
+
+
+def species_mixture_weights(
+    species: dict[str, list[tuple[str, str]]],
+    order: list[str],
+    met_index: dict[str, int],
+    space: str,
+    volume_table: str = VOLUMES_ASSUMED,
+) -> tuple[torch.Tensor, torch.Tensor, dict[str, list[tuple[str, str, float]]]]:
+    r"""The same whole-cell average for ANY set of chemicals, in a fixed column order.
+
+    Shared by the 19 amino acids and by the betaxanthin precursors, so the two readouts
+    cannot come to disagree about what a whole-cell concentration is.
+    """
     assert space in CONC_SPACES, (
         f"conc space must be one of {CONC_SPACES}, got {space!r}."
     )
     table = compartment_volume_fractions(volume_table)
-    species = amino_acid_compartment_species()
     rows: list[list[tuple[int, float]]] = []
     described: dict[str, list[tuple[str, str, float]]] = {}
-    for aa in AA_KEYS:
+    for aa in order:
         entries: list[tuple[int, float]] = []
         described[aa] = []
         for compartment, sid in species[aa]:
@@ -1835,6 +1896,100 @@ class FluxDrawEnsemble(nn.Module):
         reps["flux_draw_pred_sd"] = (
             torch.stack(spreads).mean() if spreads else predictions.new_zeros(())
         )
+        return predictions, reps
+
+
+class FluxPrecursorConcentrationReadout(nn.Module):
+    r"""Betaxanthin from the learned CONCENTRATIONS of the precursors that feed it.
+
+    WHY THIS IS NOT THE AMINO-ACID READOUT. Betaxanthin is not a GEM metabolite. The
+    Cachera cassette makes it outside the native network, L-tyrosine -> (CYP76AD1) L-DOPA
+    -> (DOD) betalamic acid -> betaxanthin, and yeast-GEM carries no species for L-DOPA,
+    betalamic acid or betaxanthin. What the model can carry is the SUPPLY: the tyrosine
+    pool the cassette draws on, and the shikimate nodes its feedback-resistant ARO4 and
+    ARO7 alleles act on.
+
+    THE AFFINE IS REQUIRED HERE, and that is a real difference from the amino-acid arm.
+    There the target IS a concentration, so the prediction could be the layer's own
+    concentration with no parameter on the mean. Betaxanthin is a corrected fluorescence
+    intensity in arbitrary units, and no unit-free map takes log10 molar to it, so this
+    head learns ``y = w^T log10 c_precursors + b``: one weight per precursor and one
+    intercept. That is the smallest map that can cross the units, and it is still a
+    mechanistic tie, because the only thing it is allowed to read is the concentration of
+    the named precursors.
+    """
+
+    metabolite_indices: torch.Tensor
+    mixture_log_weights: torch.Tensor
+    model: CellGraphTransformerMetabolism
+
+    def __init__(
+        self,
+        model: CellGraphTransformerMetabolism,
+        metabolite_indices: torch.Tensor,
+        mixture_log_weights: torch.Tensor,
+        param_dim: int,
+    ) -> None:
+        """Bind the readout to the precursors' compartment species.
+
+        Args:
+            model: The metabolism transformer, built with an ANCHORED flux layer.
+            metabolite_indices: ``[P, C]`` long, every intracellular compartment species
+                of each precursor.
+            mixture_log_weights: ``[P, C]``, log fractional volumes, ``-inf`` on padding.
+            param_dim: Distributional parameters the head emits per output.
+        """
+        super().__init__()
+        self.model = model
+        self.register_buffer("metabolite_indices", metabolite_indices)
+        self.register_buffer("mixture_log_weights", mixture_log_weights)
+        self.param_dim = param_dim
+        self.readout = nn.Linear(int(metabolite_indices.shape[0]), param_dim)
+
+    @property
+    def flux_layer(self) -> Any:
+        """The wrapped model's layer, so every caller that reaches for it is unchanged."""
+        return self.model.flux_layer
+
+    @property
+    def num_parameters(self) -> dict[str, int]:
+        """The wrapped model's counts, plus this head's weight and intercept."""
+        counts: dict[str, int] = dict(self.model.num_parameters)
+        extra = sum(p.numel() for p in self.readout.parameters() if p.requires_grad)
+        counts[f"{HEAD}_head"] = extra
+        counts["total"] = counts["total"] + extra
+        return counts
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Run the wrapped model, then read betaxanthin off the precursor pools."""
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        if "flux" not in reps:
+            layer = self.model.flux_layer
+            assert layer is not None, (
+                "the precursor readout was built on a model with no flux layer."
+            )
+            reps["flux"] = layer(
+                reps["H_genes_pert"],
+                perturbed_gene_pool(
+                    reps["H_genes_pert"],
+                    batch["gene"].perturbation_indices,
+                    batch["gene"].perturbation_indices_batch,
+                ),
+                batch["gene"].perturbation_indices,
+                batch["gene"].perturbation_indices_batch,
+            )
+        flux = reps["flux"]
+        assert "thermo_log_c" in flux, (
+            "the flux layer emitted no `thermo_log_c`, so its thermo_mode is not ANCHORED "
+            "and there is no learned concentration to read the precursors from."
+        )
+        log10_c = mixture_log10_molar(
+            flux["thermo_log_c"], self.metabolite_indices, self.mixture_log_weights
+        )
+        out = self.readout(log10_c)
+        reps["head_outputs"][HEAD] = out.unsqueeze(1)
         return predictions, reps
 
 
@@ -3432,6 +3587,12 @@ def main() -> None:
             cell.head,
             cell.arm,
             f"seed{cell.seed}",
+            # THE DRAW COUNT AS ITS OWN TAG, derived from the cell rather than passed by
+            # the launcher. A K-draw contrast whose arms share one hand-written tag cannot
+            # be grouped by K in the W&B view, which is what the first wave-8 pairs did:
+            # every cell carried `w8samp` whatever its K. Deriving it means the tag cannot
+            # disagree with the value the run actually used.
+            f"k{cell.flux_draws}",
         ]
         if args.tag:
             wandb_tags.append(args.tag.lstrip("_"))

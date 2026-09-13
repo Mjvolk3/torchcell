@@ -562,6 +562,18 @@ controls interleaved so a complete seed lands first:
 | 22020659 | `cgt_s0_r_kl_fit_015` | 3 | chained |
 
 The first job's log reports the copy time and the first epochs' pace; that is the
-measurement of whether staging works. On IGB the flanks-only job 2395008 was released
-from its dependency to take cabbi's four free GPUs as soon as another user's four
-single-GPU tasks end.
+measurement of whether staging works. On IGB the flanks-only job 2395008 was briefly
+released from its dependency, then re-held behind ProtT5 at 23:15 because the user wants
+cabbi's other four GPUs for different work.
+
+### 2026.09.13 07:45 - Stage-in works; the mirror's symlinked lock files did not
+
+22020651 started at 06:53 on gpub021, seventeen hours before the scheduler's estimate,
+and copied the LMDB to the node's NVMe in 940 s (about 590 MB/s). It then died in
+dataset init: `OSError: [Errno 40] Too many levels of symbolic links` on
+`processed/gene_set.json.lock`. Delta's filelock (newer than GilaHyper's 3.20.0) opens
+lock files with `O_NOFOLLOW`, so the mirror's symlinked `*.lock` files raise ELOOP. The
+mirror now leaves `*.lock` unlinked and `FileLockHelper` creates them locally
+(aa44be08). The control 22020652 was held before it could start on the old launcher,
+the worktree advanced, and the arm resubmitted as 22030924 with 22020652 re-chained
+30 minutes after it; the rest of the chain is unchanged.

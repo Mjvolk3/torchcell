@@ -1,0 +1,94 @@
+{
+  "kdraw": {
+    "title": "027 wave 8: K latent draws per forward pass",
+    "n_runs": 29,
+    "tags_any": [
+      "gh_wave8_samp",
+      "gh_wave6_proj"
+    ],
+    "groupby": [
+      "flux_draws",
+      "flux_latent_stochastic"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "latent_sigma_p50",
+      "flux_draw_pred_sd",
+      "train_data_loss",
+      "c_kl",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=uo7zfv24xlb",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-K-latent-draws-per-forward-pass--VmlldzoxNzkyMjM3OQ=="
+  },
+  "densbal": {
+    "title": "027 wave 8: turnover density and active-row balance on the boxforce head",
+    "n_runs": 13,
+    "tags_any": [
+      "gh_wave8_dens",
+      "gh_wave8_densbal",
+      "gh_wave7_ff"
+    ],
+    "groupby": [
+      "flux_density_weight",
+      "flux_balance_active_weight"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "c_density",
+      "c_balance_active",
+      "feas_active_row_frac",
+      "feas_flux_active_frac",
+      "feas_balance_active_p95",
+      "feas_balance_active_max",
+      "feas_thermo_violation_frac",
+      "feas_box_violation_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "feas/pinned_test_top100/balance_max_ratio_median",
+      "feas/pinned_test_top100/thermo_standard_state_violation_frac_eq_0"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=z0gc792dywv",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-turnover-density-and-active-row-balance-on-the-boxforce-head--VmlldzoxNzkyMjM3Mw=="
+  },
+  "aa": {
+    "title": "027 waves 7 and 8: amino-acid readouts on the anchored projection head",
+    "n_runs": 23,
+    "tags_any": [
+      "gh_wave7_aa",
+      "gh_wave8_aa"
+    ],
+    "groupby": [
+      "aa_readout",
+      "thermo_source",
+      "volume_table"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "train_loss"
+    ],
+    "scalars": [
+      "test_mean_spearman_pinned",
+      "conc/pinned_test/mean_spearman",
+      "conc/pinned_test/frac_pred_at_ceiling",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=hvk1dcemnhw",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-waves-7-and-8:-amino-acid-readouts-on-the-anchored-projection-head--VmlldzoxNzkyMjM4MQ=="
+  }
+}

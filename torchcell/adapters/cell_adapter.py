@@ -10,7 +10,7 @@ import hashlib
 import json
 import logging
 from collections import deque
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import Future, ProcessPoolExecutor
 from datetime import datetime
 from functools import wraps
@@ -22,6 +22,13 @@ from omegaconf import DictConfig
 from torch_geometric.data import Dataset
 from tqdm import tqdm
 
+from torchcell.datamodels.identity import (
+    environment_identity,
+    environment_perturbation_identity,
+    identity_sha256,
+    media_identity,
+    temperature_identity,
+)
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
 logging.basicConfig(level=logging.INFO)
@@ -255,7 +262,7 @@ class CellAdapter:
 
     def log_method_table(self) -> None:
         """Log a wandb table summarizing the configured node and edge methods."""
-        methods = []
+        methods: list[Iterable[Any]] = []
         simulated_event_counter = 0
         for method in (
             self.config.cell_adapter.node_methods
@@ -283,7 +290,12 @@ class CellAdapter:
             ]
             methods.append(method_info)
 
-        columns = ["event", "method", "data_type", "memory_reduction_factor"]
+        columns: list[str | int] = [
+            "event",
+            "method",
+            "data_type",
+            "memory_reduction_factor",
+        ]
         method_table = wandb.Table(columns=columns, data=methods)
         wandb.log({f"{self.dataset.name}_method_table": method_table})
 
@@ -671,14 +683,42 @@ class CellAdapter:
             )
         return edges
 
+    # --- Environment-side node ids: identity by COMPOSITION, not by quote ---
+    # A medium, a temperature, an environment perturbation and an environment are
+    # persistent entities two datasets can both state, so their ids come from what
+    # the entity IS (``torchcell.datamodels.identity``), not from the full pydantic
+    # dump. The dump carries the stating dataset's provenance quotes, notes and free
+    # text ``name``, so hashing it gave two datasets on the same YPD two media nodes
+    # and no cross-dataset aggregate could form. One function per class, called by
+    # the node method AND by every edge method, so an edge can never address a node
+    # the graph does not contain.
+
+    @staticmethod
+    def _media_node_id(media: Any) -> str:
+        """Content-address a ``Media`` by its composition."""
+        return identity_sha256(media_identity(media))
+
+    @staticmethod
+    def _temperature_node_id(temperature: Any) -> str:
+        """Content-address a ``Temperature`` by its value and typed unit."""
+        return identity_sha256(temperature_identity(temperature))
+
+    @staticmethod
+    def _environment_perturbation_node_id(perturbation: Any) -> str:
+        """Content-address an environment perturbation by its typed slots."""
+        return identity_sha256(environment_perturbation_identity(perturbation))
+
+    @staticmethod
+    def _environment_node_id(environment: Any) -> str:
+        """Content-address an ``Environment`` by medium, temperature, edits, duration."""
+        return identity_sha256(environment_identity(environment))
+
     @data_chunker
     def _environment_node(
         self, data: dict[str, Any], method_name: str
     ) -> BioCypherNode:
         environment = data["experiment"].environment
-        environment_id = hashlib.sha256(
-            json.dumps(environment.model_dump()).encode("utf-8")
-        ).hexdigest()
+        environment_id = self._environment_node_id(environment)
         media = json.dumps(environment.media.model_dump())
         temperature = environment.temperature
         return BioCypherNode(
@@ -699,9 +739,7 @@ class CellAdapter:
 
     @staticmethod
     def _environment_perturbation_node_from(perturbation: Any) -> BioCypherNode:
-        perturbation_id = hashlib.sha256(
-            json.dumps(perturbation.model_dump()).encode("utf-8")
-        ).hexdigest()
+        perturbation_id = CellAdapter._environment_perturbation_node_id(perturbation)
         compound = getattr(perturbation, "compound", None)
         concentration = getattr(perturbation, "concentration", None)
         return BioCypherNode(
@@ -752,9 +790,7 @@ class CellAdapter:
         seen_node_ids = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             environment = data.reference.environment_reference
-            environment_id = hashlib.sha256(
-                json.dumps(environment.model_dump()).encode("utf-8")
-            ).hexdigest()
+            environment_id = self._environment_node_id(environment)
             if environment_id not in seen_node_ids:
                 seen_node_ids.add(environment_id)
                 media = json.dumps(environment.media.model_dump())
@@ -776,11 +812,7 @@ class CellAdapter:
 
     @data_chunker
     def _media_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:
-        media_id = hashlib.sha256(
-            json.dumps(data["experiment"].environment.media.model_dump()).encode(
-                "utf-8"
-            )
-        ).hexdigest()
+        media_id = self._media_node_id(data["experiment"].environment.media)
         name = data["experiment"].environment.media.name
         state = data["experiment"].environment.media.state
         return BioCypherNode(
@@ -800,11 +832,7 @@ class CellAdapter:
         seen_node_ids = set()
         nodes = []
         for data in tqdm(self.dataset.experiment_reference_index):
-            media_id = hashlib.sha256(
-                json.dumps(
-                    data.reference.environment_reference.media.model_dump()
-                ).encode("utf-8")
-            ).hexdigest()
+            media_id = self._media_node_id(data.reference.environment_reference.media)
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
                 name = data.reference.environment_reference.media.name
@@ -826,9 +854,7 @@ class CellAdapter:
 
     @staticmethod
     def _temperature_node_from(temperature: Any) -> BioCypherNode:
-        temperature_id = hashlib.sha256(
-            json.dumps(temperature.model_dump()).encode("utf-8")
-        ).hexdigest()
+        temperature_id = CellAdapter._temperature_node_id(temperature)
         return BioCypherNode(
             node_id=temperature_id,
             preferred_id="temperature",
@@ -1780,9 +1806,7 @@ class CellAdapter:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
-        environment_id = hashlib.sha256(
-            json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
-        ).hexdigest()
+        environment_id = self._environment_node_id(data["experiment"].environment)
         edge = BioCypherEdge(
             source_id=environment_id,
             target_id=experiment_id,
@@ -1797,11 +1821,9 @@ class CellAdapter:
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-            environment_id = hashlib.sha256(
-                json.dumps(data.reference.environment_reference.model_dump()).encode(
-                    "utf-8"
-                )
-            ).hexdigest()
+            environment_id = self._environment_node_id(
+                data.reference.environment_reference
+            )
             env_experiment_ref_pair = (environment_id, experiment_ref_id)
             if env_experiment_ref_pair not in seen_environment_experiment_ref_pairs:
                 seen_environment_experiment_ref_pairs.add(env_experiment_ref_pair)
@@ -1835,14 +1857,8 @@ class CellAdapter:
     def _media_to_environment_edge(
         self, data: dict[str, Any], method_name: str
     ) -> BioCypherEdge:
-        environment_id = hashlib.sha256(
-            json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
-        ).hexdigest()
-        media_id = hashlib.sha256(
-            json.dumps(data["experiment"].environment.media.model_dump()).encode(
-                "utf-8"
-            )
-        ).hexdigest()
+        environment_id = self._environment_node_id(data["experiment"].environment)
+        media_id = self._media_node_id(data["experiment"].environment.media)
         edge = BioCypherEdge(
             source_id=media_id,
             target_id=environment_id,
@@ -1859,12 +1875,8 @@ class CellAdapter:
         temperature = environment.temperature
         if temperature is None:
             return []
-        environment_id = hashlib.sha256(
-            json.dumps(environment.model_dump()).encode("utf-8")
-        ).hexdigest()
-        temperature_id = hashlib.sha256(
-            json.dumps(temperature.model_dump()).encode("utf-8")
-        ).hexdigest()
+        environment_id = self._environment_node_id(environment)
+        temperature_id = self._temperature_node_id(temperature)
         return [
             BioCypherEdge(
                 source_id=temperature_id,
@@ -1878,14 +1890,10 @@ class CellAdapter:
         self, data: dict[str, Any], method_name: str
     ) -> list[BioCypherEdge]:
         environment = data["experiment"].environment
-        environment_id = hashlib.sha256(
-            json.dumps(environment.model_dump()).encode("utf-8")
-        ).hexdigest()
+        environment_id = self._environment_node_id(environment)
         return [
             BioCypherEdge(
-                source_id=hashlib.sha256(
-                    json.dumps(perturbation.model_dump()).encode("utf-8")
-                ).hexdigest(),
+                source_id=self._environment_perturbation_node_id(perturbation),
                 target_id=environment_id,
                 relationship_label="environment perturbation member of",
             )
@@ -1899,13 +1907,9 @@ class CellAdapter:
         seen_pairs: set[tuple[str, str]] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             environment = data.reference.environment_reference
-            environment_id = hashlib.sha256(
-                json.dumps(environment.model_dump()).encode("utf-8")
-            ).hexdigest()
+            environment_id = self._environment_node_id(environment)
             for perturbation in environment.perturbations:
-                perturbation_id = hashlib.sha256(
-                    json.dumps(perturbation.model_dump()).encode("utf-8")
-                ).hexdigest()
+                perturbation_id = self._environment_perturbation_node_id(perturbation)
                 pair = (perturbation_id, environment_id)
                 if pair not in seen_pairs:
                     seen_pairs.add(pair)

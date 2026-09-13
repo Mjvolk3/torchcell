@@ -7,17 +7,22 @@ This is the behavioral half of the guard; the static half (no adapter chain dere
 past an Optional schema field) lives in
 ``tests/torchcell/datamodels/test_ontology_coherence.py``.
 
-The second thing it pins is that a PRESENT temperature is emitted exactly as before,
-because every served dataset's temperature nodes are content-addressed on this output.
+The second thing it pins is that a PRESENT temperature still emits the same node
+PROPERTIES, and that its id is the temperature's identity projection (value + typed
+unit) rather than a hash of the whole dump.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 from typing import Any, cast
 
 from torchcell.adapters.cell_adapter import CellAdapter
+from torchcell.datamodels.identity import (
+    environment_identity,
+    identity_sha256,
+    temperature_identity,
+)
 from torchcell.datamodels.schema import Environment, Media, Temperature, TemperatureUnit
 
 MEDIA = Media(name="YPD", state="liquid", is_synthetic=False)
@@ -65,8 +70,8 @@ def test_a_gapped_temperature_still_yields_an_environment_node_with_a_null() -> 
     assert node.get_properties()["temperature"] is None
 
 
-def test_a_present_temperature_is_emitted_byte_identically() -> None:
-    """The node id and properties a served dataset was built on must not move."""
+def test_a_present_temperature_is_emitted_with_its_identity_id() -> None:
+    """The properties do not move; the id is the composition, not the dump."""
     temperature = Temperature(value=30.0, unit=TemperatureUnit.celsius)
     adapter = CellAdapter.__new__(CellAdapter)
     nodes = _undecorated(CellAdapter._temperature_node)(
@@ -74,12 +79,7 @@ def test_a_present_temperature_is_emitted_byte_identically() -> None:
     )
     assert len(nodes) == 1
     node = nodes[0]
-    assert (
-        node.get_id()
-        == hashlib.sha256(
-            json.dumps(temperature.model_dump()).encode("utf-8")
-        ).hexdigest()
-    )
+    assert node.get_id() == identity_sha256(temperature_identity(temperature))
     assert node.get_label() == "temperature"
     props = node.get_properties()
     assert props["value"] == 30.0
@@ -92,11 +92,8 @@ def test_a_present_temperature_is_emitted_byte_identically() -> None:
     assert len(edges) == 1
     assert edges[0].get_source_id() == node.get_id()
     assert edges[0].get_label() == "temperature member of"
-    assert (
-        edges[0].get_target_id()
-        == hashlib.sha256(
-            json.dumps(_environment(temperature).model_dump()).encode("utf-8")
-        ).hexdigest()
+    assert edges[0].get_target_id() == identity_sha256(
+        environment_identity(_environment(temperature))
     )
 
     environment_node = _undecorated(CellAdapter._environment_node)(

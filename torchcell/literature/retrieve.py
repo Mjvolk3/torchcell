@@ -52,26 +52,30 @@ def direct_url(url: str) -> bytes:
     return _get(url)
 
 
-def zip_member(url: str, member: str, container_sha256: str) -> bytes:
+def zip_member(url: str, member: str, container_sha256: str | None) -> bytes:
     """Retrieve one member file out of a zip archive served at ``url``.
 
-    The whole container is downloaded and its sha256 asserted against
-    ``container_sha256`` BEFORE any member is read, so a rebuild that meets a
-    re-packed archive (a Dropbox share re-zips on every request, and the share's
-    contents can change) fails loudly instead of silently yielding a different
-    member. The member bytes are returned as-is; the caller pins their own sha256.
+    The whole container is downloaded and, when ``container_sha256`` is given, its
+    sha256 is asserted BEFORE any member is read, so a rebuild that meets a re-packed
+    archive whose contents changed fails loudly instead of silently yielding a
+    different member. ``None`` is for hosts that re-zip per request with a fresh
+    container hash but stable members (Europe PMC's supplementaryFiles endpoint,
+    measured 2026-09-12: two retrievals, two container hashes, one member hash); the
+    member's own sha256, pinned by the caller, is then the only anchor. The member
+    bytes are returned as-is.
     """
     import hashlib
     import io
     import zipfile
 
     container = _get(url, timeout=1800.0)
-    got = hashlib.sha256(container).hexdigest()
-    if got != container_sha256:
-        raise ValueError(
-            f"zip container sha256 mismatch for {url}: got {got}, "
-            f"expected {container_sha256}"
-        )
+    if container_sha256 is not None:
+        got = hashlib.sha256(container).hexdigest()
+        if got != container_sha256:
+            raise ValueError(
+                f"zip container sha256 mismatch for {url}: got {got}, "
+                f"expected {container_sha256}"
+            )
     with zipfile.ZipFile(io.BytesIO(container)) as archive:
         return archive.read(member)
 

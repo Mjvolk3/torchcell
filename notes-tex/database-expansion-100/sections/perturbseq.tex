@@ -23,11 +23,18 @@ genome-wide CRISPRi library, which is large, but it delivers one guide per cell 
 out competitive fitness. It is low-dimensional on both axes and is no longer flagged; its
 value is as a second library for testing guide-design transfer, not as Perturb-seq evidence.
 
+The axis flag and the \term{perturb-seq} band of Sec.~\ref{sec:band} answer different
+questions and a row can carry one without the other. The flag asks what a dataset
+\emph{measured}; the band asks what it \emph{supplies to a campaign}. Momen-Roknabadi 2020
+measures neither axis at depth and supplies a guide library, so it is banded and unflagged.
+Puddu 2019 measures no axis at all and supplies the genotype verification a pooled assay
+depends on.
+
 \input{tables/perturbseq}
 
 \subsection{The quadrant that matters is nearly empty\secstatus{todo}}\label{sec:quadrant}
 
-Of 159 candidates, 15 are high on the input axis, 16 on the output axis, and \textbf{three}
+Of 161 candidates, 15 are high on the input axis, 18 on the output axis, and \textbf{three}
 on both: Boocock 2025, Albert 2018 and N'Guessan 2025. All three reach the both-axes
 quadrant the same way, by crossing recombinant natural genotypes with a transcriptome, and
 none of them perturbs a gene deliberately.
@@ -42,6 +49,26 @@ measured. Sameith 2015, also built, adds double mutants but only 72 of them.
 That is the argument for running the experiment, and it is also the specification. To land
 in the empty quadrant a design needs a combinatorial perturbation per cell, not a larger
 single-perturbation library, and a transcriptome readout rather than a growth score.
+
+\notesec{The full collection was read, and it does not close the gap} All 42 items in the
+microbe-perturb-seq topic collection were checked this pass. Seven carry a genotype axis in
+a single-cell host and four of those are built. The one that reaches both axes on purpose
+is Brandner 2025, which perturbs 52 transcription factors with 118 guides in
+\org{Escherichia coli} and \org{Pseudomonas putida}, includes multi-guide combinations
+specifically to resolve genetic interactions, and reads out a single-cell transcriptome.
+\org{P. putida} is a single-cell bioproduction host and so in scope, but the paper is a
+preprint and no deposited accession was found, so it is excluded rather than ranked and
+should be revisited on publication. It is the closest published design template for the
+campaign.
+
+Three mammalian rows set the format rather than supply data. Replogle 2022 perturbs every
+expressed gene across more than 2.5 million cells; Zhu 2026 crosses a genome-scale
+perturbation with stimulation time points across about 22 million cells, which is the
+perturbation-by-context tensor a yeast campaign is the analog of; and Yao 2024 pools
+random multi-perturbation composites over 598 genes and decompresses them, which is the one
+published route to second-order interactions at a tractable cell count. Compression is
+therefore the lever that makes combinatorial input affordable, and it is worth costing
+before the library is designed rather than after.
 
 \subsection{Depth rather than breadth\secstatus{todo}}\label{sec:depth}
 
@@ -71,7 +98,8 @@ thing a genotype-to-phenotype model will eventually be asked to predict on.
 \subsection{The synergy question is answerable, and not yet answered\secstatus{todo}}
 
 Whether one dataset predicts another decides how much new data is worth collecting, and the
-list contains the pairs to test it before any is collected:
+list contains the pairs to test it before any is collected. All 101 are in
+Table~\ref{tab:synergies}; six kinds recur, and the cheapest to run is the last.
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
   \item \textbf{Same phenotype, different platform.} Cooper 2010 against the built
@@ -92,5 +120,4 @@ list contains the pairs to test it before any is collected:
 \end{itemize}
 
 None of these transfers has been measured. Each is a hypothesis about what a model could
-learn, and each becomes a run once both halves are ingested. The last pair is the cheapest
-and the most immediately decisive.
+learn, and each becomes a run once both halves are ingested.

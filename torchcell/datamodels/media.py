@@ -65,6 +65,7 @@ from torchcell.datamodels.schema import (
     Compound,
     Concentration,
     ConcentrationUnit,
+    DoseBasis,
     Media,
     MediaComponent,
     MediaComponentRole,
@@ -236,9 +237,11 @@ def dropout(
         (
             component.model_copy(
                 update={
-                    "concentration": None,
+                    "concentration": Concentration(
+                        value=None, basis=DoseBasis.reduced_from_standard
+                    ),
                     "note": "partial drop-out; the source does not state the reduced "
-                    "level, so the amount is an open gap rather than a removal",
+                    "level, so the amount is a typed reduction rather than a removal",
                 }
             )
             if component.compound.name in reduced_names
@@ -521,7 +524,10 @@ YPD = Media(
     components=_YPD_CORE,
     provenance=[_sv("YEPD recipe", _YEPD_QUOTE)],
 )
-"""Rich complex medium; peptone + yeast extract are intrinsically undefined."""
+"""The YPD ROOT: the three ingredients every YPD member shares, and the join anchor
+(``base_medium == "YPD"``). Loaders do not use it directly: a plate is ``YPD_AGAR``
+(states its agar row) and a culture is ``YPD_LIQUID``; peptone and yeast extract are
+intrinsically undefined."""
 
 YPD_LIQUID = Media(
     name="YPD (yeast extract / peptone / dextrose), liquid",

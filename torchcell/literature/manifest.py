@@ -61,8 +61,10 @@ class FileRecord(BaseModel):
 
 class RetrievalMethod(StrEnum):
     """How an artifact is fetched. ``radiant_endpoint`` is a future slot (issue
-    #20) for un-scriptable sources served from the Radiant VM; there is no
-    ``manual_browser`` -- manual-once artifacts are deposited then served.
+    #20) for un-scriptable sources served from the Radiant VM. ``manual_browser``
+    is a manual-once retrieval (a publisher behind a browser challenge): the record
+    carries the human recipe as its command and the deposited bytes are what every
+    rebuild reads; re-checking the source is not scriptable for it.
     """
 
     springer_esm = "springer_esm"
@@ -72,6 +74,7 @@ class RetrievalMethod(StrEnum):
     zenodo = "zenodo"
     radiant_endpoint = "radiant_endpoint"
     pubchem_api = "pubchem_api"
+    manual_browser = "manual_browser"
 
 
 class SourceCheck(BaseModel):

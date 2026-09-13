@@ -36,11 +36,13 @@ def _retrieval(sha: str = PAYLOAD_SHA) -> RetrievalRecord:
 
 
 # --------------------------------------------------------------------------- #
-# Enum: no manual_browser; radiant_endpoint reserved (issue #20).
+# Enum: manual_browser is the typed record for a manual-once retrieval (the
+# recipe is the command, the deposited bytes are canonical); radiant_endpoint
+# reserved (issue #20).
 # --------------------------------------------------------------------------- #
-def test_no_manual_browser_method():
+def test_manual_browser_and_radiant_endpoint_methods():
     values = {m.value for m in RetrievalMethod}
-    assert "manual_browser" not in values
+    assert "manual_browser" in values
     assert "radiant_endpoint" in values
 
 

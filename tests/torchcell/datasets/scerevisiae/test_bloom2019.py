@@ -102,6 +102,50 @@ def test_condition_table_partition_and_controls() -> None:
     assert b.NOT_SERVED == {"YPD;;2", "YPD;;3"}
 
 
+def test_every_stress_compound_resolves_to_a_structure_identifier() -> None:
+    """No stress compound is name-only any more; ``resolved_compound`` fills or gaps it.
+
+    Every one of the 20 dosed compounds is in the curated identity table, so the L3
+    ``compound_identity`` rule (a compound with no identifier and no typed gap is
+    unencodable) can no longer drop 47% of the records. Tunicamycin is the one
+    ``RESOLVED_MIXTURE``: at least ten homologues, so ChEBI identifies the substance and
+    no single-molecule InChIKey exists to fill.
+    """
+    compounds = {
+        p.compound.name: p.compound
+        for spec in b.build_conditions().values()
+        for p in spec.perturbations
+        if isinstance(p, SmallMoleculePerturbation)
+    }
+    assert len(compounds) == 20
+    unencodable = [
+        name
+        for name, c in compounds.items()
+        if c.inchikey is None
+        and c.chebi_id is None
+        and c.pubchem_cid is None
+        and not c.provenance_gaps
+    ]
+    assert not unencodable
+    name_only = sorted(name for name, c in compounds.items() if c.inchikey is None)
+    assert name_only == ["tunicamycin"]
+    assert compounds["tunicamycin"].chebi_id == "CHEBI:29699"
+    assert [g.field for g in compounds["tunicamycin"].provenance_gaps] == ["inchikey"]
+    # a canonical name, never the loader's source label, is what reaches the graph
+    assert compounds["fluconazole"].inchikey == "RFHAOTPXVQNOHP-UHFFFAOYSA-N"
+    assert compounds["sodium dodecyl sulfate"].inchikey is not None
+
+
+def test_every_condition_medium_is_a_shared_library_object() -> None:
+    """The 14 media are library objects, so the L3 media-membership rule joins them."""
+    from torchcell.datamodels.media import MEDIA_LIBRARY
+
+    library = {m.name for m in MEDIA_LIBRARY.values()}
+    used = {spec.media.name for spec in b.build_conditions().values()}
+    assert len(used) == 14
+    assert not used - library
+
+
 def test_parent_ids_cover_every_readme_label() -> None:
     assert set(b.PARENT_PETER_ID) == set(b.PARENT_XLS_PREFIX)
     assert (

@@ -11,7 +11,8 @@
 The \term{already-built} row in that table is the largest single correction this pass
 makes. A July 2026 triage pass named a top ten for immediate ingestion; nine of those ten
 have since been built, along with roughly a dozen other rows it ranked highly. Only Lee 2014
-remains outstanding, and it is row 4 here. Any list that still treats that top ten as
+remains outstanding, and it is row 49 here. Bloom 2019 joined them since the previous
+pass and is the 50th supported dataset. Any list that still treats that top ten as
 outstanding work is stale.
 
 \subsection{Four rows were not what their names said\secstatus{todo}}\label{sec:status}
@@ -38,23 +39,23 @@ rather than the 195-strain panel it quotes. Under the sourcing rule that a value
 citation it was actually read from, the released matrix should cite the 2016 descriptor, with
 2015 as the original subset.
 
-\notesec{Lee 2014, row 4, is blocked rather than available} WS15 already attempted this
+\notesec{Lee 2014, row 49, is blocked rather than available} WS15 already attempted this
 ingestion. The roadmap records it as awaiting author matrices, which means the Science
 supplementary tables and the Nislow and Giaever lab portal did not yield per-strain values.
 Its rank is still earned: 3,356 compounds against the full heterozygous and homozygous
 collections really is the largest chemical-genetic matrix in existence, and it really is on
 the YKO genotype axis the built set already uses. What changes is the nature of the work.
-Row 4 is an author request, not a loader, and the $1.3\times10^7$ instances it contributes
+Row 49 is an author request, not a loader, and the $1.3\times10^7$ instances it contributes
 to the totals in Sec.~\ref{sec:counts} should not be counted as reachable until that
 request succeeds.
 
-\notesec{Turco 2023, row 28, already has a loader} \file{torchcell/datasets/scerevisiae/yeastphenome.py}
+\notesec{Turco 2023, row 64, already has a loader} \file{torchcell/datasets/scerevisiae/yeastphenome.py}
 consumes the curated YeastPhenome release and retains 49 growth screens, so this row is in
 flight rather than net new. It is not in the built set, which is why it appears here at all.
 Two consequences follow. Its de-duplication problem is partly solved already, since the
 loader excludes the primaries built directly, along with heterozygous-diploid and
 expression screens. And Lee 2014 is not among its 49 screens, so ingesting YeastPhenome
-does not backfill row 4.
+does not backfill row 49.
 
 \subsection{Overlap is now checked by script, and the check is not yet strong\secstatus{todo}}\label{sec:overlap}
 
@@ -74,16 +75,17 @@ gap, since SynLethDB models synthetic lethality and synthetic rescue, both two-l
 events, and synthetic dosage lethality pairs an overexpression with a deletion.
 
 The honest limit is coverage, and the expansion made it worse in relative terms. The script
-resolves a PMID for 56 of 155 rows and finds a parseable accession in 9. Accession is the
+resolves a PMID for 56 of 161 rows and finds a parseable accession in 9. Accession is the
 strongest key and the one that would have caught Wildenhain 2016, so it is running on about
 one row in seventeen. Recording each row's deposit identifier is the single highest-value
-edit available to this list, and it now matters more than it did at 73 rows.
+edit available to this list, and it now matters more than it did at 73 rows. It is also the check that would have
+caught Bloom 2019 leaving the list a pass earlier than a reader did.
 
 \subsection{The expansion tranche is less checked than the first 73\secstatus{todo}}\label{sec:confidence}
 
 Rows carry a confidence value in the generated JSON. \emph{sourced} means the figures trace
-to something read this session or to the sourced triage note, and covers 73 rows.
-\emph{recall} means the row was written from domain knowledge, and covers 82. For a recall
+to something read this session or to the sourced triage note, and covers 75 rows.
+\emph{recall} means the row was written from domain knowledge, and covers 86. For a recall
 row the dataset is real and the description is sound, but the citation details, the exact
 counts and the accession all need confirming before a loader is written, and a few carry an
 explicit warning in the accession column where a collision or a species question is open.
@@ -92,6 +94,12 @@ The two tranches are not interleaved by accident: ranking put several recall row
 top, because de Boer 2020 and Boocock 2025 genuinely are the largest things here. That is the
 right ranking and the wrong reading if the confidence flag is ignored. Treat the top of the
 table as a claim to verify first, not a queue to start work from.
+
+Banding does not change that and in one place sharpens it. Hackett 2020 at rank 6, Hu 2007
+at 7 and Lenstra 2011 at 17 are all \emph{recall} rows, so three of the first twenty carry
+counts and accessions that have not been confirmed against a deposit. Airoldi 2016 at 42 is
+new this pass and is sourced only from the Jackson 2020 citation list, not from its own
+release.
 
 \section{Before a loader is written\secstatus{todo}}\label{sec:caveats}
 

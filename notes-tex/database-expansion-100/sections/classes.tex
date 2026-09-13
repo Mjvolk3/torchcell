@@ -83,6 +83,17 @@ McGlincy 2021 and Momen-Roknabadi 2020 are two independently designed
 CRISPRi libraries; ingesting both makes library-to-library transfer a cheap and decisive
 test of whether a model has learned gene function or guide-design idiosyncrasy.
 
+Eight of this class sit in wave 1, which is the largest change the banding makes.
+Knockdown is the modality a pooled per-cell campaign can actually deliver: it needs no
+strain construction per gene, it is inducible so the perturbation can be timed, and it
+reaches the roughly one gene in five that a deletion collection cannot hold at all. That
+last point is Mukherjee 2021's, which covers the essential genes under acetic acid by
+CRISPRi. Two rows go further than one knockdown per cell: Jaffe 2019 measures an
+interaction between two simultaneous knockdowns, and Crook 2016 grades the knockdown by
+dose rather than applying it as a switch, which is the difference between a point and a
+curve per gene. Hale 2024 supplies the third dimension by building 8,046 guides into 169
+sequenced backgrounds.
+
 \subsection{Expression across conditions\secstatus{todo}}
 
 This class is genuinely thin in a way worth stating rather than papering over. Nadal-Ribelles 2025 is the largest genotype-indexed expression dataset in
@@ -93,9 +104,23 @@ be read against, N'Guessan 2025 profiles roughly 4,500 sequenced segregants by
 single-cell RNA-seq, and Leutert 2023 covers 101 conditions at the phosphosite
 level, where enzyme regulation acts faster than transcription.
 
-The initial reading was that datasets in the microbe-perturb-seq collection carry little
-data over large genotype numbers. That holds. Nothing found in this pass changes it, and
-the gap it points to is addressed in Sec.~\ref{sec:perturbseq} rather than by another row.
+All 42 items in the microbe-perturb-seq topic collection were read this pass, and the
+earlier reading that they carry little data over large genotype numbers holds. Seven have a
+real genotype axis in a single-cell host: Kemmeren 2014, Sameith 2015, Lian 2019 and
+Nadal-Ribelles 2025 are built, Jackson 2020 and Boocock 2025 are rows 3 and 1, and the
+seventh is a preprint with no deposited accession (Sec.~\ref{sec:quadrant}). The other 35
+divide into platform papers, mammalian Perturb-seq, bacterial condition atlases and
+single-cell statistics, all recorded in Table~\ref{tab:excluded}. Two small yeast platform
+rows were added from the sweep, Jariani 2020 and Urbonaite 2021, for the per-cell variance
+structure they measure rather than for a genotype axis they do not have.
+
+Two rows already on the list moved a long way up it for the same reason. Hu 2007 profiles
+269 transcription-factor deletions and Lenstra 2011 profiles chromatin regulators, so
+between them and the built Kemmeren 2014 the bulk deletion-expression coverage of both
+halves of transcriptional control is reachable; they were ranked 33 and 89 on scale alone
+and are 7 and 17 once the quadrant they sit in is what orders the list. Airoldi 2016, new
+this pass from the Jackson 2020 citation list, supplies the wild-type nitrogen-limited
+baseline for the media that atlas works in.
 
 \subsection{Metabolite and precursor coverage\secstatus{todo}}\label{sec:precursors}
 
@@ -133,10 +158,16 @@ another phenotype class.
 
 \subsection{Perturbation modality and reference backbone\secstatus{todo}}
 
-None of these is a headline dataset and one is load-bearing.
+None of these is a headline dataset and two are load-bearing.
 Puddu 2019 is whole-genome sequence for every strain in the deletion collection.
-Twenty-one recommended rows declare an \term{S288C-KO} sequence basis, and without Puddu
-that basis is an assumption that each strain differs from the reference at exactly the
-intended locus. Puddu shows it frequently does not. Ingesting it converts a shared
-assumption across half this table into a measurement, which is worth more than its own
-4,800 instances suggest.
+Thirty-one rows inside the long-run cut declare an \term{S288C-KO} sequence basis, and
+without Puddu that basis is an assumption that each strain differs from the reference at
+exactly the intended locus. Puddu shows it frequently does not. That matters more for a
+pooled campaign than for an arrayed screen, because a pooled assay reads a barcode and
+infers a genotype, so it is row 4 rather than row 27.
+
+Mulleder 2012 is the second. Jackson 2020 built its own prototrophic strains rather than
+use the deletion collection, because auxotrophic markers rule out minimal and
+nitrogen-limited media, and Mulleder 2012 is the prototrophic collection that removes that
+constraint. It is also the strain resource behind the built Mulleder 2016 amino-acid
+metabolome.

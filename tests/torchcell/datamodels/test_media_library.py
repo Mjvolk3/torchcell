@@ -21,6 +21,7 @@ from typing import Any
 import pytest
 
 from torchcell.datamodels import ontology_checks as oc
+from torchcell.datamodels.identity import media_identity
 from torchcell.datamodels.media import (
     HILLENMEYER_DROPOUT_MEDIA,
     MEDIA_LIBRARY,
@@ -35,6 +36,7 @@ from torchcell.datamodels.media import (
 )
 from torchcell.datamodels.schema import (
     ComponentDefinition,
+    DoseBasis,
     Environment,
     FitnessExperiment,
     FitnessExperimentReference,
@@ -198,14 +200,21 @@ def test_hillenmeyer_dropout_media_cover_every_hom_condition_label() -> None:
     assert tryptophan.base_medium == "SC"
 
 
-def test_a_partial_dropout_keeps_the_nutrient_and_clears_its_amount() -> None:
-    """A partial drop-out is a reduced level the source never states, not a removal."""
+def test_a_partial_dropout_keeps_the_nutrient_as_a_typed_reduction() -> None:
+    """A partial drop-out is a reduced level the source never states, not a removal.
+
+    The reduction is typed as a dose basis so the medium's composition identity
+    differs from the full SC recipe (four partial-dropout media collapsed onto SC when
+    the reduction lived only in a note).
+    """
     partial = HILLENMEYER_DROPOUT_MEDIA["biotin partial drop-out"]
     assert partial.dropouts == []
     biotin = next(c for c in partial.components if c.compound.name == "biotin")
-    assert biotin.concentration is None
+    assert biotin.concentration is not None
+    assert biotin.concentration.value is None
+    assert biotin.concentration.basis == DoseBasis.reduced_from_standard
     assert "partial drop-out" in (biotin.note or "")
-    assert "biotin" in partial.open_gaps
+    assert media_identity(partial) != media_identity(SC)
 
 
 # --- the verifier's own L3 rules --------------------------------------------- #

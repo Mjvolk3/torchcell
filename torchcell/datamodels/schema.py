@@ -1084,6 +1084,7 @@ class DoseBasis(StrEnum):
     IC50 = "IC50"
     MIC = "MIC"
     fixed = "fixed"
+    reduced_from_standard = "reduced_from_standard"  # a partial drop-out: the recipe level lowered by an amount the source does not state
 
 
 class PhysicalFactor(StrEnum):

@@ -25,8 +25,10 @@ Four families here, matching the four properties in
 - **Provenance honesty** -- the ``ProvenanceGapMixin`` rule holds for EVERY subclass,
   and ``SourcedValue`` fields keep one name.
 
-Three tests are ``xfail(strict=True)``: each names a real defect found today, and each
-flips to a hard failure the moment the defect is fixed, so the xfail cannot rot.
+One test is ``xfail(strict=True)``: it names a real defect still open, and flips to a
+hard failure the moment the defect is fixed, so the xfail cannot rot. The two media
+defects it used to sit beside (a name-only shared library, a ``base_medium`` naming
+nothing) are fixed and their tests are ordinary passing tests.
 Findings and rejected checks: [[torchcell.datamodels.ontology-checks]].
 """
 
@@ -316,34 +318,27 @@ def test_small_molecule_perturbation_compound_is_checkable() -> None:
     assert not oc.compound_has_identity_gap(perturbation.compound)
 
 
-@pytest.mark.xfail(
-    reason="torchcell/datamodels/media.py builds its compounds as bare "
-    "Compound(name=...) instead of going through "
-    "torchcell/datamodels/compound_identity.py:196 resolved_compound, so 40 distinct "
-    "substances in MEDIA_LIBRARY (D-glucose at media.py:262, the 20 SC amino acids at "
-    "media.py:315, the 9 YNB vitamins at media.py:304, agar, adenine, uracil, the four "
-    "SGA selection agents) carry neither a structure identifier nor a ProvenanceGap. "
-    "The shared media library is the object the cross-dataset environment join keys "
-    "on, and its own components cannot join to ChEBI/PubChem or to a chemogenomic "
-    "dataset's compound for the same substance.",
-    strict=True,
-)
 def test_shared_media_compounds_are_identified_or_gapped() -> None:
-    """Every single-substance compound in MEDIA_LIBRARY resolves, or says it cannot."""
+    """Every single-substance compound in MEDIA_LIBRARY resolves, or says it cannot.
+
+    Was a strict xfail: the library built every compound as a bare
+    ``Compound(name=...)``, so 40 distinct substances carried neither a structure
+    identifier nor a ``ProvenanceGap`` and the object the cross-dataset environment
+    join keys on could not itself join. Every single-substance component and every
+    dropout now goes through ``resolved_compound``.
+    """
     issues = oc.media_library_compound_issues()
     assert [i.model_dump() for i in issues] == []
 
 
-@pytest.mark.xfail(
-    reason="Media.base_medium is free text (torchcell/datamodels/schema.py:1349): "
-    "SD_MINIMAL declares base 'SD' (media.py:356) and the two SGA selection media "
-    "declare 'SD_MSG' (media.py:210, 221), and neither names a MEDIA_LIBRARY member. "
-    "A base label that resolves to no object cannot carry components or provenance, "
-    "so 'aggregate every record on an SD base' joins nothing.",
-    strict=True,
-)
 def test_every_media_base_resolves_to_a_library_member() -> None:
-    """A derived medium names a base that EXISTS as a shared object."""
+    """A derived medium names a base that EXISTS as a shared object.
+
+    Was a strict xfail: ``SD_MINIMAL`` declared base ``'SD'`` and the two SGA
+    selection media declared ``'SD_MSG'``, neither of which was a ``MEDIA_LIBRARY``
+    key, so "aggregate every record on an SD/MSG base" joined nothing. ``SD_MSG`` is
+    now a first-class base object and the minimal medium is registered under ``SD``.
+    """
     issues = oc.media_base_issues()
     assert [i.model_dump() for i in issues] == []
 
@@ -489,9 +484,10 @@ def test_join_key_audit_counts_every_identity_key() -> None:
     assert census.distinct_media_bases == ["YPD"]
     assert census.n_with_temperature == 1
     assert census.n_with_temperature_gap == 0
-    # YPD's glucose is name-only today, so the record is NOT compound-joinable.
-    assert census.n_with_every_compound_identified == 0
-    assert "D-glucose" in census.unidentified_compound_names
+    # YPD's glucose used to be name-only, which made the record un-joinable on
+    # compounds; the shared library now resolves it, so the census counts it.
+    assert census.n_with_every_compound_identified == 1
+    assert census.unidentified_compound_names == []
 
 
 def test_join_key_audit_separates_a_missing_temperature_from_a_gapped_one() -> None:

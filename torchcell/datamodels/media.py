@@ -7,6 +7,26 @@ Each constant is a fully-typed :class:`~torchcell.datamodels.schema.Media` with
 component-level composition and ``SourcedValue`` provenance, so a dataset loader
 imports one canonical object instead of re-declaring ``Media(name=..., state=...)``.
 
+The library is the JOIN LAYER
+----------------------------
+Two properties make that join real, and both are enforced by tests rather than by
+convention:
+
+- **Every single-substance component and every dropout goes through**
+  :func:`torchcell.datamodels.compound_identity.resolved_compound`, so it carries an
+  InChIKey / ChEBI / PubChem CID and joins to a chemogenomic dataset's compound for
+  the same substance. An undefined preparation (yeast extract, peptone, commercial
+  YNB, an SC supplement powder, a polysorbate) is NOT run through the resolver: it is
+  a bare ``Compound`` with ``definition=intrinsically_undefined`` or
+  ``composition_deferred``, because "undefined" is the truth about the bottle, not a
+  gap to be filled. Agar and tunicamycin are the third case, ``RESOLVED_MIXTURE``:
+  ChEBI and a CID exist, a single-molecule InChIKey does not.
+- **Every ``base_medium`` names a key of** :data:`MEDIA_LIBRARY`, checked at import by
+  :func:`_check_library`. A base that resolves to no object carries no components and
+  no provenance, so "aggregate every record on an SD/MSG base" would join nothing. A
+  base is also a component SUBSET of everything deriving from it, which is what lets
+  ``SC-Ura`` be a typed edit of ``SC`` instead of a lookalike recipe.
+
 Sourcing:
 - SGA selection media + the SC amino-acid supplement powder recipe come from
   **Tong & Boone 2006** (``yantongSyntheticGeneticArray2006``, Methods Mol Biol
@@ -20,15 +40,21 @@ Sourcing:
   MODEL convention from **Suthers 2020** (``suthersGenomescaleMetabolicReconstruction2020``,
   Metab Eng Commun, doi 10.1016/j.mec.2020.e00148) and lives in a future
   cobra/AMICI adapter, NOT in these wet-lab records.
+- Every medium added for the serve-50 review round quotes ONE sentence of a mirrored
+  ``paper.md`` (sha256 from that key's ``manifest.json``). Those files are MinerU OCR
+  output, so a quote carries the source's LaTeX math markup verbatim rather than a
+  cleaned-up rendering of it; the plain reading goes in ``SourcedValue.value`` and the
+  quote stays a literal substring of the pinned bytes.
 
 Follow-ups (documented gaps, fillable later):
-- ``Compound`` ChEBI / InChIKey / SMILES cross-refs are left empty here and get
-  populated by a sourced ChEBI/PubChem resolver pass (never guessed).
-- The SC amino-acid supplement is one ``defined`` component carrying the full
-  per-ingredient gram breakdown in its provenance quote; a cobra adapter can
-  expand it to per-metabolite bounds.
+- Concentrations are still absent for the YNB vitamins and the SC amino acids: the
+  identity is sourced, the wet-lab amount is not (``Media.open_gaps`` reports them).
+- ``SC``'s nitrogen source is inside the (unlisted) YNB line; the ontology object
+  names no ammonium salt, so FBA gets its nitrogen from
+  ``torchcell/metabolism/media.py``'s ``SM_FBA`` expansion rather than from here.
 
 Design note: ``[[torchcell.datamodels.media-components]]``.
+Round note: ``[[torchcell.datamodels.media]]``.
 """
 
 from __future__ import annotations
@@ -47,12 +73,39 @@ from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
 # --------------------------------------------------------------------------- #
-# Provenance anchors (paper.txt sha256, verified in the library mirror).
+# Provenance anchors. ``paper.txt`` sha256 for the two SGA protocol papers (the
+# pre-existing pins); ``paper.md`` sha256 from each key's manifest.json for the
+# serve-50 round.
 # --------------------------------------------------------------------------- #
 _TONG2006 = "yantongSyntheticGeneticArray2006"
 _TONG2006_SHA = "dda5fc727c5e532e02884cd1d30ad0774bfb773ed55e8f6b7074ee2158ab9aca"
 _KUZMIN2016 = "kuzminSyntheticGeneticArray2016"
 _KUZMIN2016_SHA = "02360306e6d0eb6324a9af962b8970cad019b3e06d5073688925614a657848ca"
+_HOEPFNER2014 = "hoepfnerHighresolutionChemicalDissection2014"
+_HOEPFNER2014_SHA = "a9877549eff2fe1aaf8aa403d9fea1c381284de030326f4475e869c102af0aeb"
+_HILLENMEYER2008 = "hillenmeyerChemicalGenomicPortrait2008"
+_HILLENMEYER2008_SHA = (
+    "cf4759f00083de78dd953b12dd66d4360a2f645321305f768403f26b451c1df0"
+)
+_VANACLOIG2022 = "vanacloig-pedrosComparativeChemicalGenomic2022"
+_VANACLOIG2022_SHA = "0b5d938b54b8424fa08203a4357bc8f7c7dfae3fbe1a6d07d422848b92f37ba3"
+_WILDENHAIN2015 = "wildenhainPredictionSynergismChemicalGenetic2015"
+_WILDENHAIN2015_SHA = "f46409eb8f23412c9c1015d0f8f5bb581bfddfe2796d319d407585e23c757ac2"
+_SMITH2006 = "smithExpressionFunctionalProfiling2006"
+_SMITH2006_SHA = "eb5ab21b842365e2138528bbce936bd68134dd97ee99eb9a58502c25ca2948c6"
+_LIAN2019 = "lianMultifunctionalGenomewideCRISPR2019"
+_LIAN2019_SHA = "63fe2b7101fc48feb297f9e34b83d108b74f03f28bbc280e08c7219bc975086c"
+_MORMINO2022 = "morminoIdentificationAceticAcid2022"
+_MORMINO2022_SHA = "f5d38e486148527bfba9dc9e40a9eb06ba051766aeca3e8ff67663551bf043c3"
+_MOTA2024 = "motaSharedMoreSpecific2024"
+_MOTA2024_SHA = "a19769f757fd912139551f39736dd2b67581cb03f83a7a9b9385e28516b1f1b6"
+_COSTANZO2021 = "costanzoEnvironmentalRobustnessGlobal2021"
+_COSTANZO2021_SHA = "ba22973ed0c53c00c37bcfb9f659d3b0373c451a3f7633158afae274035559fb"
+
+#: Deferral targets that are NOT mirrored. Naming one in ``defers_to`` is the typed
+#: way to say "the fuller definition exists, in a paper we do not hold".
+_PIERCE2006 = "pierceGenomewideAnalysisBarcoded2006"
+_ZHANG2019 = "zhangMultiomicFermentationUsing2019"
 
 
 def _sv(
@@ -61,12 +114,13 @@ def _sv(
     *,
     ck: str = _TONG2006,
     sha: str = _TONG2006_SHA,
+    uri: str = "paper.txt",
     note: str | None = None,
 ) -> SourcedValue:
-    """A SourcedValue pinned to a mirrored paper.txt (quote + sha256)."""
+    """A SourcedValue pinned to a mirrored artifact (quote + sha256)."""
     return SourcedValue(
         value=value,
-        provenance=Provenance(source_uri="paper.txt", citation_key=ck, sha256=sha),
+        provenance=Provenance(source_uri=uri, citation_key=ck, sha256=sha),
         quote=quote,
         note=note,
     )
@@ -80,12 +134,141 @@ _PCT = ConcentrationUnit.percent_w_v
 _GL = ConcentrationUnit.g_per_l
 _UGML = ConcentrationUnit.ug_per_ml
 
+#: Recorded once and referenced by every component whose source writes a bare "%".
+_PERCENT_BASIS_NOTE = (
+    "the source writes '%' with no w/v or v/v basis; recorded as w/v, which is the "
+    "basis for every other percentage in this library"
+)
+
+
+def _defined(
+    name: str,
+    role: MediaComponentRole,
+    *,
+    concentration: Concentration | None = None,
+    provenance: list[SourcedValue] | None = None,
+    note: str | None = None,
+    defers_to: list[str] | None = None,
+) -> MediaComponent:
+    """A single-substance component, resolved through the shared identity table.
+
+    ``resolved_compound`` returns the table's CANONICAL name, so two recipes spelling
+    one substance differently produce one compound, and it attaches a typed
+    ``ProvenanceGap`` on ``inchikey`` when no structure is available rather than
+    leaving a silent ``None``.
+    """
+    return MediaComponent(
+        compound=resolved_compound(name),
+        role=role,
+        concentration=concentration,
+        provenance=provenance or [],
+        note=note,
+        defers_to=defers_to or [],
+    )
+
+
+def _mixture(
+    name: str,
+    role: MediaComponentRole,
+    definition: ComponentDefinition,
+    *,
+    concentration: Concentration | None = None,
+    provenance: list[SourcedValue] | None = None,
+    note: str | None = None,
+    defers_to: list[str] | None = None,
+) -> MediaComponent:
+    """A preparation that is not one substance: bare ``Compound``, no identity gap.
+
+    Peptone, yeast extract, commercial YNB, an SC supplement powder and a polysorbate
+    have no structure to find, so demanding one (or recording its absence as a gap)
+    would misstate what is in the flask. The ``definition`` field is the honest
+    encoding, and it is what the identity checks key on.
+    """
+    return MediaComponent(
+        compound=Compound(name=name),
+        role=role,
+        concentration=concentration,
+        definition=definition,
+        provenance=provenance or [],
+        note=note,
+        defers_to=defers_to or [],
+    )
+
+
+_UNDEFINED = ComponentDefinition.intrinsically_undefined
+_DEFERRED = ComponentDefinition.composition_deferred
+
+
+def dropout(
+    base: Media,
+    *compound_names: str,
+    name: str,
+    partial: tuple[str, ...] = (),
+    provenance: list[SourcedValue] | None = None,
+) -> Media:
+    """``base`` with the named compounds moved from ``components`` into ``dropouts``.
+
+    A nutrient dropout is a typed EDIT of a defined medium, not a perturbation of an
+    unrelated one: encoding it this way is what makes a tryptophan dropout join to
+    ``SC``, to ``SC_URA`` and to the SGA selection media at the same base.
+
+    ``compound_names`` are looked up through ``resolved_compound`` so a source's
+    spelling ("tryptophan", "PABA") selects the base's canonical component
+    ("L-tryptophan", "4-aminobenzoic acid"). A name that matches nothing in ``base``
+    raises: a silent no-op dropout would claim an edit that never happened.
+
+    ``partial`` names compounds the source REDUCED rather than removed. They stay in
+    ``components`` with the concentration cleared, because the reduced level is a
+    number the source does not give; dropping them instead would overstate the edit.
+    """
+    removed = [resolved_compound(n) for n in compound_names]
+    reduced = [resolved_compound(n) for n in partial]
+    present = {c.compound.name for c in base.components}
+    for compound in [*removed, *reduced]:
+        if compound.name not in present:
+            raise ValueError(
+                f"{compound.name!r} is not a component of {base.name!r}; a dropout "
+                "must name something the base medium actually contains"
+            )
+    removed_names = {c.name for c in removed}
+    reduced_names = {c.name for c in reduced}
+    components = [
+        (
+            component.model_copy(
+                update={
+                    "concentration": None,
+                    "note": "partial drop-out; the source does not state the reduced "
+                    "level, so the amount is an open gap rather than a removal",
+                }
+            )
+            if component.compound.name in reduced_names
+            else component
+        )
+        for component in base.components
+        if component.compound.name not in removed_names
+    ]
+    return Media(
+        name=name,
+        state=base.state,
+        is_synthetic=base.is_synthetic,
+        base_medium=base.base_medium,
+        components=components,
+        dropouts=[*base.dropouts, *removed],
+        provenance=provenance or list(base.provenance),
+    )
+
+
 # --------------------------------------------------------------------------- #
-# SGA final selection medium (SD/MSG) -- Tong & Boone 2006 recipe #16 (per L):
-#   1.7 g YNB w/o amino acids or ammonium sulfate, 1 g MSG, 2 g amino-acids
-#   supplement powder (DO -His/Arg/Lys), 20 g bacto agar, 50 mL 40% glucose
-#   (= 20 g/L), canavanine 50 mg/L, thialysine 50 mg/L, G418 200 mg/L,
-#   clonNAT 100 mg/L. Whole SGA screen incubated at 26 C (Kuzmin 2018 SI).
+# SD/MSG -- the SGA base. Tong & Boone 2006 recipe #16 (per L): 1.7 g YNB w/o amino
+# acids or ammonium sulfate, 1 g MSG, 2 g amino-acids supplement powder
+# (DO -His/Arg/Lys), 20 g bacto agar, 50 mL 40% glucose (= 20 g/L), canavanine
+# 50 mg/L, thialysine 50 mg/L, G418 200 mg/L, clonNAT 100 mg/L. Whole SGA screen
+# incubated at 26 C (Kuzmin 2018 SI).
+#
+# The BASE object carries only the nitrogen half (YNB w/o AA+AS, MSG): a base must be
+# a component subset of every medium deriving from it, and the carbon source is stated
+# per recipe (glucose for the standard screens, galactose for Costanzo 2021's
+# alternative-carbon condition).
 # --------------------------------------------------------------------------- #
 _SGA_SUPPLEMENT_QUOTE = (
     "Amino-acids supplement powder mixture for synthetic media (complete): "
@@ -106,54 +289,86 @@ _SGA_BASE_QUOTE = (
     "1 mL G418 (200 mg/L)"
 )
 
+_YNB_NO_AA_NO_AS = _mixture(
+    "yeast nitrogen base (w/o amino acids and ammonium sulfate)",
+    MediaComponentRole.other,
+    _DEFERRED,
+    concentration=_c(1.7, _GL),
+    provenance=[
+        _sv(
+            "1.7 g/L",
+            "Add 1.7 g yeast nitrogen base without amino acids or "
+            "ammonium sulfate (BD Difco)",
+        )
+    ],
+    note="defined vitamin/salt mix (Difco); expand to per-component from the "
+    "Difco YNB spec",
+    defers_to=[_KUZMIN2016],
+)
+_MSG = _defined(
+    "monosodium L-glutamate",
+    MediaComponentRole.nitrogen_source,
+    concentration=_c(1.0, _GL),
+    provenance=[
+        _sv("1 g/L", "1 g MSG (L-glutamic acid sodium salt hydrate; Sigma)"),
+        _sv(
+            "MSG replaces (NH4)2SO4",
+            "MSG instead of ammonium sulfate is used as a nitrogen source in "
+            "this medium, because the latter interferes with the activity of "
+            "the antibiotic",
+            ck=_KUZMIN2016,
+            sha=_KUZMIN2016_SHA,
+        ),
+    ],
+    note="N source; ammonium sulfate would antagonize G418 selection",
+)
 
-def _sga_components() -> list[MediaComponent]:
+SD_MSG = Media(
+    name="SD/MSG base (YNB w/o amino acids and ammonium sulfate + MSG; "
+    "carbon source added per recipe)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="SD_MSG",
+    components=[_YNB_NO_AA_NO_AS, _MSG],
+    provenance=[_sv("SD/MSG nitrogen base", _SGA_BASE_QUOTE)],
+)
+"""The SGA nitrogen base every Costanzo/Kuzmin record sits on.
+
+It is a base, not a bench medium: like ``YP``, it names no carbon source, so a recipe
+deriving from it states its own (glucose for the standard screens, galactose for the
+Costanzo 2021 alternative-carbon condition).
+"""
+
+_SGA_GLUCOSE = _defined(
+    "D-glucose",
+    MediaComponentRole.carbon_source,
+    concentration=_c(2.0, _PCT),
+    provenance=[_sv("20 g/L", "add 50 mL 40% glucose")],
+)
+_SGA_AGAR = _defined(
+    "agar",
+    MediaComponentRole.gelling_agent,
+    concentration=_c(2.0, _PCT),
+    provenance=[_sv("20 g/L", "Add 20 g bacto agar")],
+)
+_G418 = _defined(
+    "G418 (geneticin)",
+    MediaComponentRole.selection_agent,
+    concentration=_c(200.0, _UGML),
+    provenance=[_sv("200 mg/L", "1 mL G418 (200 mg/L)")],
+    note="selects the kanMX marker",
+)
+
+
+def _sga_components(carbon: MediaComponent) -> list[MediaComponent]:
     """Shared SD/MSG selection-medium components (Tong & Boone 2006 recipe #16)."""
     return [
-        MediaComponent(
-            compound=Compound(name="D-glucose"),
-            role=MediaComponentRole.carbon_source,
-            concentration=_c(2.0, _PCT),
-            provenance=[_sv("20 g/L", "add 50 mL 40% glucose")],
-        ),
-        MediaComponent(
-            compound=Compound(name="monosodium L-glutamate"),
-            role=MediaComponentRole.nitrogen_source,
-            concentration=_c(1.0, _GL),
-            provenance=[
-                _sv("1 g/L", "1 g MSG (L-glutamic acid sodium salt hydrate; Sigma)"),
-                _sv(
-                    "MSG replaces (NH4)2SO4",
-                    "MSG instead of ammonium sulfate is used as a nitrogen source in "
-                    "this medium, because the latter interferes with the activity of "
-                    "the antibiotic",
-                    ck=_KUZMIN2016,
-                    sha=_KUZMIN2016_SHA,
-                ),
-            ],
-            note="N source; ammonium sulfate would antagonize G418 selection",
-        ),
-        MediaComponent(
-            compound=Compound(
-                name="yeast nitrogen base (w/o amino acids and ammonium sulfate)"
-            ),
-            role=MediaComponentRole.other,
-            concentration=_c(1.7, _GL),
-            definition=ComponentDefinition.composition_deferred,
-            provenance=[
-                _sv(
-                    "1.7 g/L",
-                    "Add 1.7 g yeast nitrogen base without amino acids or "
-                    "ammonium sulfate (BD Difco)",
-                )
-            ],
-            note="defined vitamin/salt mix (Difco); expand to per-component from the "
-            "Difco YNB spec",
-            defers_to=[_KUZMIN2016],
-        ),
-        MediaComponent(
-            compound=Compound(name="SC amino-acid supplement powder (DO -His/Arg/Lys)"),
-            role=MediaComponentRole.amino_acid,
+        *SD_MSG.components,
+        carbon,
+        _mixture(
+            "SC amino-acid supplement powder (DO -His/Arg/Lys)",
+            MediaComponentRole.amino_acid,
+            _DEFERRED,
             concentration=_c(2.0, _GL),
             provenance=[_sv("2 g DO powder/L", _SGA_SUPPLEMENT_QUOTE)],
             note="complete SC supplement MINUS the His/Arg/Lys dropout; full per-"
@@ -161,36 +376,25 @@ def _sga_components() -> list[MediaComponent]:
             "uracil, 2 g inositol, 0.2 g PABA, all 20 AAs @2 g except leucine "
             "@10 g, per 55.2 g mix, used at 2 g mix/L)",
         ),
-        MediaComponent(
-            compound=Compound(name="agar"),
-            role=MediaComponentRole.gelling_agent,
-            concentration=_c(2.0, _PCT),
-            provenance=[_sv("20 g/L", "Add 20 g bacto agar")],
-        ),
-        MediaComponent(
-            compound=Compound(name="L-canavanine"),
-            role=MediaComponentRole.selection_agent,
+        _SGA_AGAR,
+        _defined(
+            "L-canavanine",
+            MediaComponentRole.selection_agent,
             concentration=_c(50.0, _UGML),
             provenance=[_sv("50 mg/L", "add 0.5 mL canavanine (50 mg/L)")],
             note="toxic L-arginine analog; selects can1-delta haploids",
         ),
-        MediaComponent(
-            compound=Compound(name="thialysine (S-(2-aminoethyl)-L-cysteine)"),
-            role=MediaComponentRole.selection_agent,
+        _defined(
+            "thialysine (S-(2-aminoethyl)-L-cysteine)",
+            MediaComponentRole.selection_agent,
             concentration=_c(50.0, _UGML),
             provenance=[_sv("50 mg/L", "0.5 mL thialysine (50 mg/L)")],
             note="toxic L-lysine analog; selects lyp1-delta haploids",
         ),
-        MediaComponent(
-            compound=Compound(name="G418 (geneticin)"),
-            role=MediaComponentRole.selection_agent,
-            concentration=_c(200.0, _UGML),
-            provenance=[_sv("200 mg/L", "1 mL G418 (200 mg/L)")],
-            note="selects the kanMX marker",
-        ),
-        MediaComponent(
-            compound=Compound(name="nourseothricin (clonNAT)"),
-            role=MediaComponentRole.selection_agent,
+        _G418,
+        _defined(
+            "nourseothricin (clonNAT)",
+            MediaComponentRole.selection_agent,
             concentration=_c(100.0, _UGML),
             provenance=[_sv("100 mg/L", "1 mL clonNAT (100 mg/L)")],
             note="selects the natMX marker",
@@ -198,17 +402,17 @@ def _sga_components() -> list[MediaComponent]:
     ]
 
 
-_HIS = Compound(name="L-histidine")
-_ARG = Compound(name="L-arginine")
-_LYS = Compound(name="L-lysine")
-_URA = Compound(name="uracil")
+_HIS = resolved_compound("L-histidine")
+_ARG = resolved_compound("L-arginine")
+_LYS = resolved_compound("L-lysine")
+_URA = resolved_compound("uracil")
 
 SGA_DM_SELECTION = Media(
     name="SGA double-mutant selection (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)",
     state="solid",
     is_synthetic=True,
     base_medium="SD_MSG",
-    components=_sga_components(),
+    components=_sga_components(_SGA_GLUCOSE),
     dropouts=[_HIS, _ARG, _LYS],
     provenance=[_sv("SD/MSG -His/Arg/Lys selection medium", _SGA_BASE_QUOTE)],
 )
@@ -219,7 +423,7 @@ SGA_TM_SELECTION = Media(
     state="solid",
     is_synthetic=True,
     base_medium="SD_MSG",
-    components=_sga_components(),
+    components=_sga_components(_SGA_GLUCOSE),
     dropouts=[_HIS, _ARG, _LYS, _URA],
     provenance=[
         _sv(
@@ -235,47 +439,168 @@ SGA_TM_SELECTION = Media(
 """Kuzmin 2018 / 2020 trigenic SGA fitness-scoring medium (adds the Ura dropout for
 the KlURA3-marked third mutation)."""
 
+SGA_DM_SELECTION_GALACTOSE = Media(
+    name="SGA double-mutant selection, 2% galactose "
+    "(SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)",
+    state="solid",
+    is_synthetic=True,
+    base_medium="SD_MSG",
+    components=_sga_components(
+        _defined(
+            "galactose",
+            MediaComponentRole.carbon_source,
+            concentration=_c(2.0, _PCT),
+            provenance=[
+                _sv(
+                    "2% w/v galactose replacing the 2% glucose",
+                    "We examined 14 diverse conditions, including an alternative "
+                    "carbon source, osmotic stress, genotoxic stress, and 11 "
+                    "bioactive compounds that target distinct yeast biological "
+                    "processes",
+                    ck=_COSTANZO2021,
+                    sha=_COSTANZO2021_SHA,
+                    uri="paper.md",
+                    note="'an alternative carbon source' is a REPLACEMENT statement, "
+                    "which is why galactose is a derived medium here rather than an "
+                    "additive SmallMoleculePerturbation on a medium that still "
+                    "contains glucose; the percentage is the SI condition sheet's "
+                    "0.02 read as percent",
+                )
+            ],
+        )
+    ),
+    dropouts=[_HIS, _ARG, _LYS],
+    provenance=[_sv("SD/MSG -His/Arg/Lys selection medium", _SGA_BASE_QUOTE)],
+)
+"""Costanzo 2021's alternative-carbon condition: the SGA scoring medium with galactose
+in place of glucose."""
+
 # --------------------------------------------------------------------------- #
 # YEPD / YPD family -- complex (NOT chemically defined). Tong & Boone 2006 #9.
+#
+# ``YPD`` is the ROOT: the three ingredients every member shares. ``YPD_LIQUID`` and
+# ``YPD_AGAR`` differ from it only in state and in the agar row, and each names the
+# paper that states its own difference, so a Bloom plate and a Hoepfner 24-well plate
+# join at ``base_medium == "YPD"`` without either inheriting the other's bench quote.
 # --------------------------------------------------------------------------- #
+_YEPD_QUOTE = (
+    "YEPD: Add 120 mg adenine (Sigma), 10 g yeast extract, 20 g "
+    "peptone, 20 g bacto agar ... add 50 mL of 40% glucose solution"
+)
+
+_YPD_CORE = [
+    _mixture(
+        "yeast extract",
+        MediaComponentRole.complex_ingredient,
+        _UNDEFINED,
+        concentration=_c(1.0, _PCT),
+        provenance=[_sv("10 g/L", "10 g yeast extract")],
+    ),
+    _mixture(
+        "peptone",
+        MediaComponentRole.complex_ingredient,
+        _UNDEFINED,
+        concentration=_c(2.0, _PCT),
+        provenance=[_sv("20 g/L", "20 g peptone")],
+    ),
+    _defined(
+        "D-glucose",
+        MediaComponentRole.carbon_source,
+        concentration=_c(2.0, _PCT),
+        provenance=[
+            _sv("20 g/L (50 mL 40% glucose)", "add 50 mL of 40% glucose solution")
+        ],
+    ),
+]
+
 YPD = Media(
     name="YPD (yeast extract / peptone / dextrose)",
     state="solid",
     is_synthetic=False,
     base_medium="YPD",
+    components=_YPD_CORE,
+    provenance=[_sv("YEPD recipe", _YEPD_QUOTE)],
+)
+"""Rich complex medium; peptone + yeast extract are intrinsically undefined."""
+
+YPD_LIQUID = Media(
+    name="YPD (yeast extract / peptone / dextrose), liquid",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="YPD",
+    components=_YPD_CORE,
+    provenance=[
+        _sv("YEPD recipe", _YEPD_QUOTE),
+        _sv(
+            "1% yeast extract, 2% BactoPeptone, 2% glucose",
+            "11-point serial dilutions (3.1 dilution factor) were prepared in 96 well "
+            "plates with log phase growth yeast cultures (HIP pool) in YPD $2 \\%$ "
+            "glucose, $2 \\%$ BactoPeptone, $1 \\%$ yeast extract)",
+            ck=_HOEPFNER2014,
+            sha=_HOEPFNER2014_SHA,
+            uri="paper.md",
+            note="the same three ingredients and the same percentages as the Tong and "
+            "Boone YEPD recipe, stated independently by a liquid-culture screen",
+        ),
+        _sv(
+            "liquid",
+            "The HIP assay was performed in 24 well plates (Greiner 662102), with "
+            "$1 6 0 0 \\mu \\mathrm { l } /$ well YPD.",
+            ck=_HOEPFNER2014,
+            sha=_HOEPFNER2014_SHA,
+            uri="paper.md",
+        ),
+    ],
+)
+"""Liquid YPD: the object every pooled-culture screen on YPD should carry.
+
+Hoepfner 2014, Hillenmeyer 2008 and the served Nadal-Ribelles / Ohya / Ohnuki /
+da Silveira loaders all describe liquid YPD and today emit a bare
+``Media(name="YPD", state="liquid", is_synthetic=False)`` with no components, which
+reaches no FBA bound. Migrating them is a full-rebuild event, so it is scheduled with
+one, not slipped in per dataset.
+"""
+
+YPD_AGAR = Media(
+    name="YPD (solid, 2% agar)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="YPD",
     components=[
-        MediaComponent(
-            compound=Compound(name="yeast extract"),
-            role=MediaComponentRole.complex_ingredient,
-            concentration=_c(1.0, _PCT),
-            definition=ComponentDefinition.intrinsically_undefined,
-            provenance=[_sv("10 g/L", "10 g yeast extract")],
-        ),
-        MediaComponent(
-            compound=Compound(name="peptone"),
-            role=MediaComponentRole.complex_ingredient,
-            concentration=_c(2.0, _PCT),
-            definition=ComponentDefinition.intrinsically_undefined,
-            provenance=[_sv("20 g/L", "20 g peptone")],
-        ),
-        MediaComponent(
-            compound=Compound(name="D-glucose"),
-            role=MediaComponentRole.carbon_source,
+        *_YPD_CORE,
+        _defined(
+            "agar",
+            MediaComponentRole.gelling_agent,
             concentration=_c(2.0, _PCT),
             provenance=[
-                _sv("20 g/L (50 mL 40% glucose)", "add 50 mL of 40% glucose solution")
+                _sv(
+                    "20 g/L",
+                    "Solid media were prepared by addition of $2 0 \\ \\mathrm { g / L }$ "
+                    "agar (NZYTech, Lisbon, Portugal).",
+                    ck=_MOTA2024,
+                    sha=_MOTA2024_SHA,
+                    uri="paper.md",
+                )
             ],
         ),
     ],
     provenance=[
+        _sv("YEPD recipe", _YEPD_QUOTE),
         _sv(
-            "YEPD recipe",
-            "YEPD: Add 120 mg adenine (Sigma), 10 g yeast extract, 20 g "
-            "peptone, 20 g bacto agar ... add 50 mL of 40% glucose solution",
-        )
+            "20 g/L glucose, 10 g/L yeast extract, 20 g/L peptone",
+            "in liquid YPD medium containing, $2 0 ~ \\mathrm { g / L }$ glucose "
+            "(Merck, Darmstadt, Germany), $1 0 ~ \\mathrm { g / L }$ yeast extract and "
+            "$2 0 ~ \\mathrm { g / L }$ peptone, both from BD Biosciences (Franklin "
+            "Lakes, NJ, USA)",
+            ck=_MOTA2024,
+            sha=_MOTA2024_SHA,
+            uri="paper.md",
+            note="the pH 4.5 this sentence goes on to state is NOT a property of the "
+            "medium; it rides as EnvironmentPhysicalPerturbation(factor=ph)",
+        ),
     ],
 )
-"""Rich complex medium; peptone + yeast extract are intrinsically undefined."""
+"""Solid YPD with the agar row stated: Mota 2024's spot-assay and CFU plates."""
 
 YPAD = Media(
     name="YPAD (YPD + adenine)",
@@ -283,10 +608,10 @@ YPAD = Media(
     is_synthetic=False,
     base_medium="YPD",
     components=[
-        *YPD.components,
-        MediaComponent(
-            compound=Compound(name="adenine"),
-            role=MediaComponentRole.nucleobase,
+        *_YPD_CORE,
+        _defined(
+            "adenine",
+            MediaComponentRole.nucleobase,
             concentration=_c(120.0, _UGML),  # 120 mg/L == 120 ug/mL
             provenance=[_sv("120 mg/L", "Add 120 mg adenine (Sigma) ... to ... 1 L")],
             note="adenine to suppress ade2 revertant pigment",
@@ -337,39 +662,37 @@ _SC_AMINO_ACIDS = [
 
 
 def _named(names: list[str], role: MediaComponentRole) -> list[MediaComponent]:
-    """Name-only defined components (ChEBI/concentration filled by later passes)."""
+    """Identified components whose wet-lab concentration is still an open gap."""
     return [
-        MediaComponent(
-            compound=Compound(name=n),
-            role=role,
-            note="identity defined; ChEBI/InChIKey/SMILES + wet-lab concentration "
-            "pending a sourced enrichment pass",
+        _defined(
+            n,
+            role,
+            note="identity resolved through the shared compound table; the wet-lab "
+            "concentration is still pending a sourced enrichment pass",
         )
         for n in names
     ]
 
 
-SD_MINIMAL = Media(
+SD = Media(
     name="SD minimal (YNB + ammonium sulfate + glucose)",
     state="liquid",
     is_synthetic=True,
     base_medium="SD",
     components=[
-        MediaComponent(
-            compound=Compound(name="D-glucose"),
-            role=MediaComponentRole.carbon_source,
-            concentration=_c(2.0, _PCT),
+        _defined(
+            "D-glucose", MediaComponentRole.carbon_source, concentration=_c(2.0, _PCT)
         ),
-        MediaComponent(
-            compound=Compound(name="ammonium sulfate"),
-            role=MediaComponentRole.nitrogen_source,
+        _defined(
+            "ammonium sulfate",
+            MediaComponentRole.nitrogen_source,
             concentration=_c(5.0, _GL),
         ),
-        MediaComponent(
-            compound=Compound(name="yeast nitrogen base (w/o amino acids)"),
-            role=MediaComponentRole.other,
+        _mixture(
+            "yeast nitrogen base (w/o amino acids)",
+            MediaComponentRole.other,
+            _DEFERRED,
             concentration=_c(1.7, _GL),
-            definition=ComponentDefinition.composition_deferred,
             note="Difco YNB: the 9 vitamins + trace metals + salts",
         ),
     ],
@@ -386,37 +709,527 @@ YNB = Media(
 """Defined YNB vitamin set (9 vitamins; Difco/Sigma). Trace-metal + salt rows +
 concentrations pending the sourced enrichment pass."""
 
+_SC_QUOTE = (
+    "yeast cells were cultivated in synthetic complete medium (SC) "
+    "$( 0 . 7 7 \\textrm { g L } ^ { - 1 }$ complete supplement mix drop out (CSM), "
+    "$6 . 9 \\ \\mathrm { g \\ L ^ { - 1 } }$ yeast nitrogen base without amino acids "
+    "$( \\mathrm { Y N B ~ w / o ~ }$ AA), $2 0 \\ \\mathrm { g \\ L ^ { - 1 } }$ "
+    "glucose, $\\mathrm { p H } ~ 5 . 5$ , 4.5 or 3.5)"
+)
+
 SC = Media(
-    name="SC (synthetic complete: YNB + 20 amino acids + uracil + adenine)",
+    name="SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
     state="liquid",
     is_synthetic=True,
     base_medium="SC",
     components=[
         *YNB.components,
         *_named(_SC_AMINO_ACIDS, MediaComponentRole.amino_acid),
-        MediaComponent(
-            compound=Compound(name="uracil"),
-            role=MediaComponentRole.nucleobase,
-            note="SC nucleobase supplement",
+        _defined(
+            "uracil", MediaComponentRole.nucleobase, note="SC nucleobase supplement"
         ),
-        MediaComponent(
-            compound=Compound(name="adenine"),
-            role=MediaComponentRole.nucleobase,
-            note="SC nucleobase supplement",
+        _defined(
+            "adenine", MediaComponentRole.nucleobase, note="SC nucleobase supplement"
+        ),
+        _defined(
+            "D-glucose",
+            MediaComponentRole.carbon_source,
+            concentration=_c(20.0, _GL),
+            provenance=[
+                _sv(
+                    "20 g/L",
+                    _SC_QUOTE,
+                    ck=_MORMINO2022,
+                    sha=_MORMINO2022_SHA,
+                    uri="paper.md",
+                ),
+                _sv(
+                    "2% glucose",
+                    "All fungal species were grown and screened in synthetic complete "
+                    "(SC) medium with $2 \\%$ glucose.",
+                    ck=_WILDENHAIN2015,
+                    sha=_WILDENHAIN2015_SHA,
+                    uri="paper.md",
+                    note="20 g/L and 2% w/v are the same amount; two independent "
+                    "papers state the SC carbon source that the shipped constant had "
+                    "been missing entirely",
+                ),
+            ],
+            note="the carbon source SC had been missing: before this the medium "
+            "resolved no carbon exchange at all under media_to_bounds",
         ),
     ],
+    provenance=[
+        _sv(
+            "CSM 0.77 g/L + YNB w/o AA 6.9 g/L + glucose 20 g/L",
+            _SC_QUOTE,
+            ck=_MORMINO2022,
+            sha=_MORMINO2022_SHA,
+            uri="paper.md",
+            note="the two gram figures are recorded at the medium level rather than as "
+            "components because this library EXPANDS the CSM powder into the 20 amino "
+            "acids plus uracil and adenine, and the YNB into its 9 vitamins; listing "
+            "the powders as well would double-count them",
+        )
+    ],
 )
-"""Synthetic complete (defined): YNB + all 20 amino acids + uracil + adenine."""
+"""Synthetic complete (defined): YNB + all 20 amino acids + uracil + adenine + glucose."""
 
-SC_URA = Media(
+SC_URA = dropout(
+    SC,
+    "uracil",
     name="SC-Ura (synthetic complete minus uracil; URA3 plasmid selection)",
+)
+"""SC with uracil dropped (selects a URA3-bearing plasmid).
+
+Also the medium for Smith 2016's "SCM-Ura": Smith releases no SCM-Ura recipe, so the
+shipped gaps are the honest state and no dataset-specific sibling is created.
+"""
+
+# --------------------------------------------------------------------------- #
+# Hillenmeyer 2008 nutrient-dropout media. Table S1 classifies a named-nutrient
+# dropout as an environmental change (a media swap), not a small molecule, so each is
+# a DERIVED MEDIUM off SC rather than an EnvironmentPhysicalPerturbation on YPD --
+# which is what lets a tryptophan dropout join SC, SC-Ura and the SGA media.
+#
+# The SOM states neither the base recipe nor the reduced level of the three "partial"
+# conditions; the base is SC because a named-nutrient dropout is only defined against
+# a synthetic complete medium, and that inference is recorded on every object.
+# --------------------------------------------------------------------------- #
+_HILLENMEYER_DROPOUT_QUOTE = (
+    "we restricted our analysis to small molecule experiments, excluding conditions "
+    "of environmental change, such as amino acid dropout"
+)
+
+
+def _hm_dropout(label: str, compound: str, *, partial: bool = False) -> Media:
+    provenance = [
+        _sv(
+            f"{label} is an environmental change (a derived medium), not a compound",
+            _HILLENMEYER_DROPOUT_QUOTE,
+            ck=_HILLENMEYER2008,
+            sha=_HILLENMEYER2008_SHA,
+            uri="paper.md",
+            note="the SOM states no recipe for the dropout series; SC is the defined "
+            "medium a named-nutrient dropout is taken against, and the whole growth "
+            "protocol is deferred to Pierce 2006, which is not mirrored",
+        )
+    ]
+    if partial:
+        return dropout(
+            SC,
+            name=f"SC, partial {compound} drop-out (Hillenmeyer 2008 '{label}')",
+            partial=(compound,),
+            provenance=provenance,
+        )
+    return dropout(
+        SC,
+        compound,
+        name=f"SC - {compound} (Hillenmeyer 2008 '{label}')",
+        provenance=provenance,
+    )
+
+
+#: (condition label in the HOM score matrix, the SC component it names, partial?).
+#: "partial" is the source's own word for three vitamin conditions: the nutrient is
+#: reduced, not removed, and the reduced level is never stated.
+_HILLENMEYER_DROPOUTS: tuple[tuple[str, str, bool], ...] = (
+    ("adenine dropout", "adenine", False),
+    ("arginine dropout", "L-arginine", False),
+    ("isoleucine dropout", "L-isoleucine", False),
+    ("lysine dropout", "L-lysine", False),
+    ("threonine dropout", "L-threonine", False),
+    ("tryptophan dropout", "L-tryptophan", False),
+    ("tyrosine dropout", "L-tyrosine", False),
+    ("PABA drop-out", "4-aminobenzoic acid", False),
+    ("folic acid drop-out", "folic acid", False),
+    ("inositol drop-out", "myo-inositol", False),
+    ("niacin drop-out", "niacin", False),
+    ("thiamine HCl drop-out", "thiamine hydrochloride", False),
+    ("biotin partial drop-out", "biotin", True),
+    ("calcium pantothenate partial drop-out", "calcium pantothenate", True),
+    ("pyridoxine HCl partial drop-out", "pyridoxine hydrochloride", True),
+)
+
+
+def _hm_key(compound: str, partial: bool) -> str:
+    """MEDIA_LIBRARY key for one Hillenmeyer dropout medium."""
+    stem = resolved_compound(compound).name.upper().replace("-", "_").replace(" ", "_")
+    return f"SC_{'PARTIAL' if partial else 'MINUS'}_{stem}"
+
+
+#: Hillenmeyer 2008 HOM condition label -> the medium it denotes. The control label is
+#: not a dropout at all: it is plain SC, which is why it maps to the shared constant.
+HILLENMEYER_DROPOUT_MEDIA: dict[str, Media] = {
+    label: _hm_dropout(label, compound, partial=partial)
+    for label, compound, partial in _HILLENMEYER_DROPOUTS
+} | {"vitamin drop-out control media": SC}
+
+
+# --------------------------------------------------------------------------- #
+# Vanacloig-Pedros 2022: a defined hydrolysate-mimicking base whose composition the
+# primary defers to Zhang 2019 (not mirrored), plus the modifications this paper made.
+# The pH 5.0 the same sentence states is NOT a medium field: it rides as
+# EnvironmentPhysicalPerturbation(factor=ph).
+# --------------------------------------------------------------------------- #
+_SYNBASE_QUOTE = (
+    "yeast strains were grown in a modified version of synthetic "
+    "${ \\mathrm { S y n H } } 3 ^ { - }$ medium (‘SynBase’ medium) described in "
+    "(Zhang et al. 2019). SynBase medium used in this study was prepared identically "
+    "as ${ \\mathrm { S y n H 3 ^ { - } } }$ except for the following changes: "
+    "acetamide, sodium acetate, and cellobiose were not included, and ammonium "
+    "sulfate was replaced with ${ \\mathrm { ~ 1 ~ g / L ~ } }$ monosodium glutamate "
+    "(MSG, Fisher Scientific) and adjusted to $\\mathrm { p H } ~ 5 . 0$ with HCl."
+)
+
+SYNH3_MINUS = Media(
+    name="SynH3- (defined synthetic hydrolysate base)",
     state="liquid",
     is_synthetic=True,
-    base_medium="SC",
-    components=[c for c in SC.components if c.compound.name != "uracil"],
-    dropouts=[_URA],
+    base_medium="SYNH3_MINUS",
+    components=[
+        _mixture(
+            "SynH3- defined hydrolysate base",
+            MediaComponentRole.other,
+            _DEFERRED,
+            provenance=[
+                _sv(
+                    "composition deferred to Zhang 2019",
+                    _SYNBASE_QUOTE,
+                    ck=_VANACLOIG2022,
+                    sha=_VANACLOIG2022_SHA,
+                    uri="paper.md",
+                )
+            ],
+            note="the sugars, salts and amino acids of SynH3- are specified in Zhang "
+            "et al. 2019, Front Microbiol 10:2596, which is not mirrored; the carbon "
+            "source therefore sits inside this deferred line",
+            defers_to=[_ZHANG2019],
+        )
+    ],
+    provenance=[
+        _sv(
+            "SynH3- base",
+            _SYNBASE_QUOTE,
+            ck=_VANACLOIG2022,
+            sha=_VANACLOIG2022_SHA,
+            uri="paper.md",
+        )
+    ],
 )
-"""SC with uracil dropped (selects a URA3-bearing plasmid)."""
+"""The Vanacloig-Pedros 2022 base, composition deferred to its unmirrored originator."""
+
+SYNBASE = Media(
+    name="SynBase (SynH3- minus acetamide/sodium acetate/cellobiose, MSG for "
+    "ammonium sulfate)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="SYNH3_MINUS",
+    components=[
+        *SYNH3_MINUS.components,
+        _defined(
+            "monosodium L-glutamate",
+            MediaComponentRole.nitrogen_source,
+            concentration=_c(1.0, _GL),
+            provenance=[
+                _sv(
+                    "1 g/L, replacing ammonium sulfate",
+                    _SYNBASE_QUOTE,
+                    ck=_VANACLOIG2022,
+                    sha=_VANACLOIG2022_SHA,
+                    uri="paper.md",
+                )
+            ],
+            note="same compound and same amount as the SGA SD/MSG nitrogen source, "
+            "and for the same reason: ammonium sulfate blocks antibiotic selection",
+        ),
+    ],
+    dropouts=[
+        resolved_compound("acetamide"),
+        resolved_compound("sodium acetate"),
+        resolved_compound("cellobiose"),
+    ],
+    provenance=[
+        _sv(
+            "SynH3- with three omissions and MSG for ammonium sulfate",
+            _SYNBASE_QUOTE,
+            ck=_VANACLOIG2022,
+            sha=_VANACLOIG2022_SHA,
+            uri="paper.md",
+            note="the pH 5.0 stated in the same sentence is a typed environment "
+            "perturbation, not a Media field",
+        )
+    ],
+)
+"""Vanacloig-Pedros 2022's chemical-genomics medium."""
+
+# --------------------------------------------------------------------------- #
+# Smith 2006 fatty-acid plates. One Methods sentence gives all three recipes; the two
+# buffered YNB plates share a base, which is what makes myristate and acetate
+# comparable to each other and separable from the peptone-based oleate plate.
+# --------------------------------------------------------------------------- #
+_SMITH_MEDIA_QUOTE = (
+    "Omnitrays contained $4 0 \\mathrm { m l }$ of YPBA agar $( 0 . 6 7 \\%$ yeast "
+    "nitrogen base, $0 . 1 \\%$ yeast extract, $0 . 5 \\%$ potassium phosphate "
+    "buffer, pH 6.0, $2 \\%$ agar, $2 \\%$ acetate), $2 0 \\mathrm { m l }$ of YPBO "
+    "agar $( 0 . 3 \\%$ yeast extract, $0 . 5 \\%$ potassium phosphate buffer, "
+    "$\\mathrm { p H } 6 . 0$ $0 . { \\bar { 5 } } \\%$ peptone, $0 . 2 \\%$ Tween "
+    "40, $2 \\%$ agar, $0 . 1 \\%$ oleic acid) or $2 0 \\mathrm { m l }$ of YPBM agar "
+    "$( 0 . 6 7 \\%$ yeast nitrogen base, $0 . 1 \\%$ yeast extract, $0 . 5 \\%$ "
+    "potassium phosphate buffer, $\\mathrm { p H } 6 . 0$ $2 \\%$ agar, $0 . 5 \\%$ "
+    "Tween 40, $0 . 1 2 5 \\%$ myristic acid)."
+)
+
+
+def _smith_sv(value: object, *, note: str | None = None) -> SourcedValue:
+    return _sv(
+        value,
+        _SMITH_MEDIA_QUOTE,
+        ck=_SMITH2006,
+        sha=_SMITH2006_SHA,
+        uri="paper.md",
+        note=note,
+    )
+
+
+def _k_phosphate(percent: float) -> MediaComponent:
+    return _mixture(
+        "potassium phosphate buffer",
+        MediaComponentRole.buffer,
+        _DEFERRED,
+        concentration=_c(percent, _PCT),
+        provenance=[_smith_sv(f"{percent:g}% at pH 6.0")],
+        note="a KH2PO4 / K2HPO4 pair; the source gives the buffer's pH (6.0) but not "
+        "the ratio of the two salts, so the composition stays deferred. "
+        + _PERCENT_BASIS_NOTE,
+    )
+
+
+def _tween40(percent: float) -> MediaComponent:
+    return _mixture(
+        "Tween 40",
+        MediaComponentRole.other,
+        _DEFERRED,
+        concentration=_c(percent, _PCT),
+        provenance=[_smith_sv(f"{percent:g}%")],
+        note="polysorbate 40 is a polydisperse ethoxylated sorbitan ester, so no "
+        "single InChIKey names it; it emulsifies the fatty acid. "
+        + _PERCENT_BASIS_NOTE,
+    )
+
+
+def _smith_agar() -> MediaComponent:
+    return _defined(
+        "agar",
+        MediaComponentRole.gelling_agent,
+        concentration=_c(2.0, _PCT),
+        provenance=[_smith_sv("2%")],
+    )
+
+
+YPB = Media(
+    name="YPB (yeast extract / peptone / potassium phosphate buffer, pH 6.0)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="YPB",
+    components=[
+        _mixture(
+            "yeast extract",
+            MediaComponentRole.complex_ingredient,
+            _UNDEFINED,
+            concentration=_c(0.3, _PCT),
+            provenance=[_smith_sv("0.3%")],
+        ),
+        _mixture(
+            "peptone",
+            MediaComponentRole.complex_ingredient,
+            _UNDEFINED,
+            concentration=_c(0.5, _PCT),
+            provenance=[_smith_sv("0.5%")],
+        ),
+        _k_phosphate(0.5),
+    ],
+    provenance=[_smith_sv("YPBO base")],
+)
+"""The buffered peptone base of Smith 2006's oleate plate; no carbon source of its own."""
+
+YPBO = Media(
+    name="YPBO (YPB + 0.2% Tween 40 + 0.1% oleic acid, solid)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="YPB",
+    components=[
+        *YPB.components,
+        _tween40(0.2),
+        _smith_agar(),
+        _defined(
+            "oleic acid",
+            MediaComponentRole.carbon_source,
+            concentration=_c(0.1, _PCT),
+            provenance=[_smith_sv("0.1%")],
+            note=_PERCENT_BASIS_NOTE,
+        ),
+    ],
+    provenance=[_smith_sv("YPBO agar")],
+)
+"""Smith 2006's oleate clear-zone plate."""
+
+YNB_YE_B = Media(
+    name="YNB-YE-B (YNB w/o amino acids + yeast extract + potassium phosphate "
+    "buffer, pH 6.0)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="YNB_YE_B",
+    components=[
+        _mixture(
+            "yeast nitrogen base (w/o amino acids)",
+            MediaComponentRole.other,
+            _DEFERRED,
+            concentration=_c(0.67, _PCT),
+            provenance=[_smith_sv("0.67%")],
+        ),
+        _mixture(
+            "yeast extract",
+            MediaComponentRole.complex_ingredient,
+            _UNDEFINED,
+            concentration=_c(0.1, _PCT),
+            provenance=[_smith_sv("0.1%")],
+        ),
+        _k_phosphate(0.5),
+    ],
+    provenance=[_smith_sv("YPBM / YPBA base")],
+)
+"""The buffered YNB base shared by Smith 2006's myristate and acetate plates."""
+
+YPBM = Media(
+    name="YPBM (YNB-YE-B + 0.5% Tween 40 + 0.125% myristic acid, solid)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="YNB_YE_B",
+    components=[
+        *YNB_YE_B.components,
+        _smith_agar(),
+        _tween40(0.5),
+        _defined(
+            "myristic acid",
+            MediaComponentRole.carbon_source,
+            concentration=_c(0.125, _PCT),
+            provenance=[_smith_sv("0.125%")],
+            note=_PERCENT_BASIS_NOTE,
+        ),
+    ],
+    provenance=[_smith_sv("YPBM agar")],
+)
+"""Smith 2006's myristate clear-zone plate."""
+
+YPBA = Media(
+    name="YPBA (YNB-YE-B + 2% acetate, solid)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="YNB_YE_B",
+    components=[
+        *YNB_YE_B.components,
+        _smith_agar(),
+        _defined(
+            "acetate",
+            MediaComponentRole.carbon_source,
+            concentration=_c(2.0, _PCT),
+            provenance=[_smith_sv("2%")],
+            note="the shared table's canonical name for the bench 'acetate' is acetic "
+            "acid, the conjugate pair's neutral form. " + _PERCENT_BASIS_NOTE,
+        ),
+    ],
+    provenance=[_smith_sv("YPBA agar")],
+)
+"""Smith 2006's acetate growth plate."""
+
+# --------------------------------------------------------------------------- #
+# Lian 2019 SED-URA. One Methods sentence gives the recipe and the G418 supplement.
+# --------------------------------------------------------------------------- #
+_LIAN_MEDIA_QUOTE = (
+    "Yeast strains were cultivated in complex medium consisting of $2 \\%$ peptone, "
+    "$1 \\%$ yeast extract, and $2 \\%$ glucose (YPD) or synthetic complete medium "
+    "consisting of $0 . 1 7 \\%$ yeast nitrogen base, $0 . 1 \\%$ mono-sodium "
+    "glutamate, $0 . 0 7 7 \\%$ CSM-URA, and $2 \\%$ glucose (SED-URA) at "
+    "$3 0 ^ { \\circ } \\mathrm { C } ,$ . $2 5 0 \\mathrm { r p m }$ . When "
+    "necessary, $2 0 0 \\mu \\mathrm { g } \\mathrm { m L } ^ { - 1 }$ G418 (KSE "
+    "Scientific, Durham, NC, USA) was supplemented."
+)
+
+
+def _lian_sv(value: object, *, note: str | None = None) -> SourcedValue:
+    return _sv(
+        value,
+        _LIAN_MEDIA_QUOTE,
+        ck=_LIAN2019,
+        sha=_LIAN2019_SHA,
+        uri="paper.md",
+        note=note,
+    )
+
+
+SED_URA = Media(
+    name="SED-URA (YNB + monosodium glutamate + CSM-URA + 2% glucose)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="SED_URA",
+    components=[
+        _mixture(
+            "yeast nitrogen base (w/o amino acids)",
+            MediaComponentRole.other,
+            _DEFERRED,
+            concentration=_c(0.17, _PCT),
+            provenance=[_lian_sv("0.17%")],
+            note="0.17% w/v is 1.7 g/L, the same amount as the SGA SD/MSG line; the "
+            "paper does not state whether the YNB is also ammonium-sulfate free, so "
+            "this medium is its own base rather than a derivative of SD_MSG",
+        ),
+        _defined(
+            "monosodium L-glutamate",
+            MediaComponentRole.nitrogen_source,
+            concentration=_c(0.1, _PCT),
+            provenance=[_lian_sv("0.1% mono-sodium glutamate")],
+        ),
+        _mixture(
+            "CSM-URA (complete supplement mixture minus uracil)",
+            MediaComponentRole.amino_acid,
+            _DEFERRED,
+            concentration=_c(0.077, _PCT),
+            provenance=[_lian_sv("0.077%")],
+            note="commercial drop-out powder; expand from the vendor's CSM spec",
+        ),
+        _defined(
+            "D-glucose",
+            MediaComponentRole.carbon_source,
+            concentration=_c(2.0, _PCT),
+            provenance=[_lian_sv("2%")],
+        ),
+    ],
+    dropouts=[_URA],
+    provenance=[_lian_sv("SED-URA recipe")],
+)
+"""Lian 2019's URA3-selective medium for the MAGIC CRISPR-AID library."""
+
+SED_URA_G418 = Media(
+    name="SED-URA + 200 ug/mL G418",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="SED_URA",
+    components=[
+        *SED_URA.components,
+        _defined(
+            "G418 (geneticin)",
+            MediaComponentRole.selection_agent,
+            concentration=_c(200.0, _UGML),
+            provenance=[_lian_sv("200 ug/mL G418")],
+            note="same compound spelling as the SGA selection media, so the two "
+            "G418-selected families share one selection-agent identity",
+        ),
+    ],
+    dropouts=[_URA],
+    provenance=[_lian_sv("SED-URA with G418 selection")],
+)
+"""SED-URA with the kanMX selection agent added."""
 
 # --------------------------------------------------------------------------- #
 # Bloom 2019 segregant-panel media (eLife 8:e49212). The assay plates are solid
@@ -431,8 +1244,6 @@ SC_URA = Media(
 _BLOOM2019 = "bloomRareVariantsContribute2019"
 _BLOOM2019_XLS = "data/elife-49212-fig1-data1-v2.xls"
 _BLOOM2019_XLS_SHA = "990e75168a77522b9b684b8d0151e45c24c75ccbe7c360d18c500008cfdad8eb"
-_BLOOM2019_XML = "paper/elife-49212-v2.xml"
-_BLOOM2019_XML_SHA = "0cfa345ee5cf8fca5a4ae05bd05e2ee75a682d8a2521677f2cdc04be849eb782"
 
 
 def _bloom_sv(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
@@ -519,6 +1330,51 @@ YP_ETHANOL = _yp_plus(
     quote="Ethanol NO glucose | 100 | % | H2O | 0.02 | 0.08 | 8 | 0.25",
     name="YP + 2% ethanol (no glucose)",
 )
+
+YP_GLYCEROL_LIQUID = Media(
+    name="YP + glycerol, liquid (Hillenmeyer 2008 'YP glycerol'; percentage not stated)",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="YP",
+    components=[
+        *_YP_COMPONENTS,
+        _defined(
+            "glycerol",
+            MediaComponentRole.carbon_source,
+            provenance=[
+                _sv(
+                    "glycerol replaces glucose; percentage not stated",
+                    "media change YP glycerol, minimal media, sorbitol, "
+                    "synthetic complete",
+                    ck=_HILLENMEYER2008,
+                    sha=_HILLENMEYER2008_SHA,
+                    uri="paper.md",
+                    note="SOM Table S1 classifies 'YP glycerol' as a media change, "
+                    "not a small molecule, which is why it is a derived medium and "
+                    "not a carbon_source perturbation on YPD",
+                )
+            ],
+            note="concentration is an OPEN GAP: the Hillenmeyer SOM never states a "
+            "glycerol percentage and defers the growth protocol to Pierce 2006, which "
+            "is not mirrored. Bloom 2019's 3% is that paper's bench value on that "
+            "paper's plates and must not be copied here",
+            defers_to=[_PIERCE2006],
+        ),
+    ],
+    provenance=[
+        _sv(
+            "the whole growth protocol is deferred to Pierce 2006",
+            "The protocol for pooled, competitive growth of the deletion strains, "
+            "genomic DNA purification and PCR, and tag hybridization follows Ref. (2).",
+            ck=_HILLENMEYER2008,
+            sha=_HILLENMEYER2008_SHA,
+            uri="paper.md",
+        )
+    ],
+)
+"""Hillenmeyer 2008's liquid YP + glycerol pool. Joins Bloom 2019's solid ``YP_GLYCEROL``
+at ``base_medium == "YP"`` and at the glycerol compound, without borrowing its 3%."""
+
 YPD_ETHANOL = Media(
     name="YPD + 2% ethanol (2% glucose + 2% ethanol)",
     state="solid",
@@ -550,9 +1406,9 @@ YNB_GLUCOSE_SOLID = Media(
     base_medium="YNB",
     components=[
         *YNB.components,
-        MediaComponent(
-            compound=Compound(name="D-glucose"),
-            role=MediaComponentRole.carbon_source,
+        _defined(
+            "D-glucose",
+            MediaComponentRole.carbon_source,
             concentration=_c(2.0, _PCT),
             provenance=[
                 _bloom_sv(
@@ -576,14 +1432,27 @@ YNB_GLUCOSE_SOLID = Media(
 
 # Registry of the canonical media (name -> object), for discovery/migration.
 MEDIA_LIBRARY: dict[str, Media] = {
+    "SD_MSG": SD_MSG,
     "SGA_DM_SELECTION": SGA_DM_SELECTION,
     "SGA_TM_SELECTION": SGA_TM_SELECTION,
+    "SGA_DM_SELECTION_GALACTOSE": SGA_DM_SELECTION_GALACTOSE,
     "YPD": YPD,
+    "YPD_LIQUID": YPD_LIQUID,
+    "YPD_AGAR": YPD_AGAR,
     "YPAD": YPAD,
-    "SD_MINIMAL": SD_MINIMAL,
+    "SD": SD,
     "YNB": YNB,
     "SC": SC,
     "SC_URA": SC_URA,
+    "SYNH3_MINUS": SYNH3_MINUS,
+    "SYNBASE": SYNBASE,
+    "YPB": YPB,
+    "YPBO": YPBO,
+    "YNB_YE_B": YNB_YE_B,
+    "YPBM": YPBM,
+    "YPBA": YPBA,
+    "SED_URA": SED_URA,
+    "SED_URA_G418": SED_URA_G418,
     "YP": YP,
     "YP_FRUCTOSE": YP_FRUCTOSE,
     "YP_GALACTOSE": YP_GALACTOSE,
@@ -595,7 +1464,47 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "YP_TREHALOSE": YP_TREHALOSE,
     "YP_XYLOSE": YP_XYLOSE,
     "YP_GLYCEROL": YP_GLYCEROL,
+    "YP_GLYCEROL_LIQUID": YP_GLYCEROL_LIQUID,
     "YP_ETHANOL": YP_ETHANOL,
     "YPD_ETHANOL": YPD_ETHANOL,
     "YNB_GLUCOSE_SOLID": YNB_GLUCOSE_SOLID,
+} | {
+    _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
+    for label, compound, partial in _HILLENMEYER_DROPOUTS
 }
+
+#: Media that name no carbon source, each for a stated reason. A base exists to be
+#: derived from (``YP``, ``SD_MSG``, ``YPB``, ``YNB_YE_B``, ``YNB``), and ``SYNH3_MINUS``
+#: / ``SYNBASE`` keep their sugars inside a composition deferred to Zhang 2019.
+CARBON_FREE_MEDIA: dict[str, str] = {
+    "YP": "base; the carbon source is the thing a YP derivative adds",
+    "SD_MSG": "base; the SGA recipes state glucose, the Costanzo 2021 condition "
+    "states galactose",
+    "YNB": "base; the vitamin set only",
+    "YPB": "base of YPBO; the oleic acid is the derivative's",
+    "YNB_YE_B": "base of YPBM and YPBA; the fatty acid or acetate is the derivative's",
+    "SYNH3_MINUS": "the hydrolysate sugars sit inside a composition deferred to "
+    "Zhang 2019, which is not mirrored",
+    "SYNBASE": "same deferral as its SynH3- base",
+}
+
+
+def _check_library() -> None:
+    """Every ``base_medium`` in the library names a ``MEDIA_LIBRARY`` key.
+
+    Run at import, because a base that resolves to nothing is invisible: the medium
+    still validates, still serializes, and simply joins to no other record.
+    """
+    unresolved = {
+        key: media.base_medium
+        for key, media in MEDIA_LIBRARY.items()
+        if media.base_medium is None or media.base_medium not in MEDIA_LIBRARY
+    }
+    if unresolved:
+        raise RuntimeError(
+            "torchcell/datamodels/media.py: base_medium must name a MEDIA_LIBRARY "
+            f"key, but these do not: {unresolved}"
+        )
+
+
+_check_library()

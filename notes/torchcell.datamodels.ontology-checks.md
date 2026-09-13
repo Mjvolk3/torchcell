@@ -268,3 +268,7 @@ the checks people assume are failing:
   class.
 - No lane overlap, no back-edge, no enum value collision, no isolated node class, no
   medium losing a base component.
+
+## 2026.09.12 - Defects 1 and 2 closed
+
+The media library now builds every single-substance component through `resolved_compound` (55 substances identified, 9 undefined preparations by design, one gapped builder row), and every `base_medium` resolves to a `MEDIA_LIBRARY` key with a module-level check that raises otherwise ([[torchcell.datamodels.media]]). The two strict xfails now pass; the remaining xfail is `SOTerm` (defect 4), left in place deliberately. Defect 3 (the unguarded optional temperature) was closed by the adapter guard in the same branch.

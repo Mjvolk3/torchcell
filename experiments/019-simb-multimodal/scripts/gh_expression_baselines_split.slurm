@@ -52,9 +52,12 @@ export PYTHONPATH="$PROJECT_ROOT"
 export PYTHONUNBUFFERED=1
 
 TASK="${SLURM_ARRAY_TASK_ID:?submit with --array}"
+#   task 5-12   split seeds 4-11, the extra partitions that exist only for the linear
+#               models (no GPU run), so the split spread rests on twelve draws
 case "$TASK" in
   0|1|2|3) ARGS=(--split-seed "$TASK") ;;
   4)       ARGS=(--split-seed 0 --fold-test-into-train) ;;
+  5|6|7|8|9|10|11|12) ARGS=(--split-seed "$((TASK - 1))") ;;
   *) echo "unknown task $TASK" >&2; exit 1 ;;
 esac
 

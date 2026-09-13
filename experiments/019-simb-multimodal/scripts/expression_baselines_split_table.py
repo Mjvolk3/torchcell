@@ -31,6 +31,9 @@ from torchcell.utils.paths import experiment_results_dir
 REPO = Path(__file__).resolve().parents[3]
 TABLES = REPO / "notes-tex" / "019-simb-multimodal-expression" / "tables"
 SPLIT_SEEDS = [0, 1, 2, 3]
+# Partitions that exist only for the linear models (no GPU run): together with the
+# four above they put the split spread on twelve draws.
+EXTRA_SEEDS = list(range(4, 12))
 EMB_ORDER = ["prot_T5_all", "calm", "species_lm_5p_3p", "normalized_chrom_pathways"]
 EMB_NAME = {
     "prot_T5_all": "ProtT5",
@@ -70,7 +73,7 @@ def _f(x: float | None) -> str:
 
 def _load(results_dir: str) -> dict[str, dict]:
     out = {}
-    for seed in SPLIT_SEEDS:
+    for seed in SPLIT_SEEDS + EXTRA_SEEDS:
         with open(
             osp.join(results_dir, "expression_baselines_split", f"seed{seed}.json")
         ) as f:
@@ -107,7 +110,34 @@ def split_table(res: dict[str, dict]) -> tuple[str, dict]:
             ]
             v90 = _cell(res["seed0_fold90"], base, emb, "val_pearson_per_feature")
             va, ta = np.array(vals, float), np.array(tests, float)
+            all_seeds = SPLIT_SEEDS + EXTRA_SEEDS
+            va12 = np.array(
+                [
+                    _cell(res[f"seed{s}"], base, emb, "val_pearson_per_feature")
+                    for s in all_seeds
+                ],
+                float,
+            )
+            ta12 = np.array(
+                [
+                    _cell(res[f"seed{s}"], base, emb, "test_pearson_per_feature")
+                    for s in all_seeds
+                ],
+                float,
+            )
             summary[f"{base}/{emb}"] = {
+                "twelve_draws": {
+                    "seeds": all_seeds,
+                    "val_mean": float(va12.mean()),
+                    "val_sd": float(va12.std(ddof=1)),
+                    "val_min": float(va12.min()),
+                    "val_max": float(va12.max()),
+                    "test_mean": float(ta12.mean()),
+                    "test_sd": float(ta12.std(ddof=1)),
+                    "test_min": float(ta12.min()),
+                    "test_max": float(ta12.max()),
+                    "split0_val_rank_of_12": int((va12 > va12[0]).sum() + 1),
+                },
                 "val_by_split": vals,
                 "test_by_split": tests,
                 "val_mean": float(va.mean()),
@@ -235,10 +265,13 @@ def main() -> None:
             indent=1,
         )
     for key, v in summary.items():
+        t = v["twelve_draws"]
         print(
-            f"{key:<42} val {v['val_mean']:.3f} +/- {v['val_sd']:.3f}   "
-            f"test {v['test_mean']:.3f} +/- {v['test_sd']:.3f}   90/10 val {v['val_split0_fold90']:+.3f} "
-            f"({v['fold90_minus_split0_val']:+.3f})"
+            f"{key:<42} 4 draws val {v['val_mean']:.3f} +/- {v['val_sd']:.3f} "
+            f"test {v['test_mean']:.3f} +/- {v['test_sd']:.3f} | 12 draws val {t['val_mean']:.3f} "
+            f"+/- {t['val_sd']:.3f} [{t['val_min']:.3f}, {t['val_max']:.3f}] test {t['test_mean']:.3f} "
+            f"+/- {t['test_sd']:.3f} | split 0 val rank {t['split0_val_rank_of_12']}/12 | "
+            f"90/10 {v['fold90_minus_split0_val']:+.3f}"
         )
     print(f"wrote {TABLES / 'expression_baselines_split.tex'}")
     print(f"wrote {TABLES / 'knn_embedding_probe.tex'}")

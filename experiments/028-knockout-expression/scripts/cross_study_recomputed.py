@@ -335,7 +335,9 @@ def main() -> None:
     # A orange, B purple.
     col = dict(zip(order, [PLOT_PALETTE[1], PLOT_PALETTE[0], PLOT_PALETTE[2]]))
     col["kemmeren"] = PLOT_PALETTE[3]
-    legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
+    legend_kw = dict(
+        frameon=True, edgecolor="black", fancybox=False, framealpha=1.0, markerscale=2.5
+    )
     fig, axes = plt.subplots(
         2, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(105))
     )

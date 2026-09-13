@@ -371,7 +371,9 @@ def _figure(
     fig, axes = plt.subplots(
         3, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(160))
     )
-    legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
+    legend_kw = dict(
+        frameon=True, edgecolor="black", fancybox=False, framealpha=1.0, markerscale=2.5
+    )
 
     def filled_hist(ax, values, key, bins, label=None, density=True):
         ax.hist(

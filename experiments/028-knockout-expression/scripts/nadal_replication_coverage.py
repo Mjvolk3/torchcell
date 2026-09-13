@@ -222,7 +222,9 @@ def main() -> None:
             "legend.fontsize": 6,
         }
     )
-    legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
+    legend_kw = dict(
+        frameon=True, edgecolor="black", fancybox=False, framealpha=1.0, markerscale=2.5
+    )
     # Palette only: Nadal A orange, Kemmeren yellow, the null purple, a second Nadal
     # series red.
     c_nad, c_kem, c_null, c_red = (
@@ -361,10 +363,12 @@ def main() -> None:
         bins,
         f"Kemmeren, FC > 1.7 & p < 0.05 ({resp['n_sig_fc1p7'].median():.0f})",
     )
+    # Blue for Nadal here: beside Kemmeren's yellow the orange used elsewhere in the
+    # figure does not separate at the fill opacity.
     filled(
         ax,
         paper["JAnsig"] + 1,
-        c_nad,
+        PLOT_PALETTE[4],
         bins,
         f"Nadal, the paper's DEG rule ({paper['JAnsig'].median():.0f})",
     )

@@ -233,22 +233,24 @@ def main() -> None:
             "savefig.dpi": 300,
         }
     )
-    legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
-    fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(150)))
+    legend_kw = dict(
+        frameon=True, edgecolor="black", fancybox=False, framealpha=1.0, markerscale=2.5
+    )
+    fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(140)))
     # Two grids: the top row needs room for the row labels of b, the matrix block
     # needs none (no tick labels), so its cells can be nearly square and larger.
     gs_top = fig.add_gridspec(
         1,
         3,
-        width_ratios=[2, 2, 1.15],
+        width_ratios=[2, 2, 1.0],
         left=0.085,
-        right=0.985,
+        right=0.885,
         bottom=0.70,
         top=0.935,
         wspace=0.72,
     )
     gs = fig.add_gridspec(
-        2, 5, left=0.03, right=0.985, bottom=0.045, top=0.585, wspace=0.22, hspace=0.40
+        2, 5, left=0.04, right=0.985, bottom=0.03, top=0.60, wspace=0.22, hspace=0.22
     )
     axes_top = [fig.add_subplot(gs_top[0, i]) for i in range(3)]
     letters = iter("abcdefghijklmn")
@@ -304,22 +306,20 @@ def main() -> None:
     ax.set_ylabel("density")
     ax.set_title("spread of gene-pair r")
     ax.set_xlim(-1, 1)
-    hist_handles = ax.get_legend_handles_labels()
+    ax.legend(loc="center left", bbox_to_anchor=(1.03, 0.5), **legend_kw)
 
     for ax in axes_top:
         panel_label(ax, next(letters))
 
-    # the matrix block: the first cell holds the key (legend of c, colorbar of the
-    # matrices), then the five protein-list matrices and the four mRNA-list matrices
-    # flow in reading order, one ordering per gene list.
+    # the matrix block: protein-list matrices in the first row, mRNA-list matrices in
+    # the second, one ordering per gene list; the panel is named on its y axis as in
+    # a and b, strain and gene counts are in the caption.
     cmap = _diverging()
     last_im = None
-    slots = [(r, c) for r in range(2) for c in range(5)][1:]
-    for name in ("protein", "expression"):
+    for row, name in ((0, "protein"), (1, "expression")):
         keys = sets[name]
         order = order_all[name]
-        for k in keys:
-            row, col = slots.pop(0)
+        for col, k in enumerate(keys):
             ax = fig.add_subplot(gs[row, col])
             c = cov_all[name][k].loc[order, order].to_numpy(dtype=float)
             last_im = ax.imshow(
@@ -333,17 +333,20 @@ def main() -> None:
             )
             ax.set_xticks([])
             ax.set_yticks([])
-            ax.set_title(
-                f"{NAME[k]}, {len(order):,} {'proteins' if name == 'protein' else 'genes'}"
-            )
-            ax.set_xlabel(f"{mats[k].shape[0]:,} {STRAIN[k]}, {MODE[k]}")
+            ax.set_ylabel(NAME[k])
             panel_label(ax, next(letters))
-    key = fig.add_subplot(gs[0, 0])
-    key.set_axis_off()
-    key.legend(*hist_handles, loc="upper left", title="c", **legend_kw)
-    cax = key.inset_axes([0.08, 0.10, 0.84, 0.07])
-    cb = fig.colorbar(last_im, cax=cax, orientation="horizontal")
-    cb.set_label(f"d to l: gene-pair r, clipped at ±{HEAT_LIM}")
+    cax = fig.add_subplot(gs[1, 4])
+    cax.set_axis_off()
+    cb = fig.colorbar(
+        last_im,
+        ax=cax,
+        orientation="vertical",
+        fraction=0.5,
+        shrink=0.8,
+        aspect=12,
+        location="left",
+    )
+    cb.set_label(f"gene-pair r, clipped at ±{HEAT_LIM}")
     cb.outline.set_linewidth(0.5)
 
     for ax in fig.axes:

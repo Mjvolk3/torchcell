@@ -114,7 +114,7 @@ over-dispersed at $s/r = 1.92$ (SIMB retrospective, campaign section).
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/pinball_vs_mse.pdf}
-\caption[]{\textbf{The pinball loss, what its knots carry, and what the metric reads.}
+\caption[]{\textbf{The metric reads one knot of nineteen, and the eighteen it ignores set intervals the incumbent makes 1.6 times too narrow.}
 Panels \textbf{a} to \textbf{e} are synthetic; \textbf{f} is measured. \textbf{a},
 the pinball loss at three quantile levels against squared error. \textbf{b}, one
 illustrative gene: 19 predicted knots, the median knot, and the one observed value; each
@@ -207,7 +207,7 @@ since their loss and metric coincide on train.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/loss_min_vs_pearson_peak.pdf}
-\caption[]{\textbf{Where the loss bottoms out and where the Pearson peaks.} \textbf{a},
+\caption[]{\textbf{The validation loss bottoms out before the Pearson peaks in every run, so the long budget buys Pearson on a rising objective.} \textbf{a},
 validation loss relative to its minimum, one curve per run, colored by head; pale curves
 are collapsed runs. \textbf{b},
 the 5-epoch rolling mean of validation Pearson. \textbf{c}, the epoch of the loss minimum

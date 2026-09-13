@@ -52,6 +52,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from dotenv import load_dotenv  # noqa: E402
+from matplotlib.patches import Patch  # noqa: E402
 from scipy.stats import mannwhitneyu, spearmanr  # noqa: E402
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
@@ -73,6 +74,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noq
 from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
     mm_to_in,
     panel_label,
     savefig_true_size_svg,
@@ -502,8 +504,10 @@ def main() -> None:
             "legend.fontsize": 6,
         }
     )
-    legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
-    c_nad, c_sam, c_kem = PLOT_PALETTE[0], PLOT_PALETTE[2], PLOT_PALETTE[3]
+    legend_kw = dict(
+        frameon=True, edgecolor="black", fancybox=False, framealpha=1.0, markerscale=2.5
+    )
+    c_nad, c_sam = PLOT_PALETTE[0], PLOT_PALETTE[2]
     fig, axes = plt.subplots(
         2, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(105))
     )
@@ -585,7 +589,11 @@ def main() -> None:
         "Nad A >= 50 cells",
         "Nad stored",
     ]
-    cols = [c_kem, c_kem, c_sam, c_nad, c_nad, PLOT_PALETTE[1]]
+    # Two levels of one series are dark and light (line color, its fill sibling), not
+    # hatched; the legend swatches are the gray pair so they name the level, not a study.
+    idx = [3, 3, 2, 0, 0, 1]
+    cols = [PLOT_PALETTE[i] for i in idx]
+    cols_light = [PLOT_PALETTE_FILL[i] for i in idx]
     xs = np.arange(len(keys))
     ax.bar(
         xs - 0.2,
@@ -594,25 +602,36 @@ def main() -> None:
         color=cols,
         edgecolor="black",
         lw=0.5,
-        label="same cellular component",
     )
     ax.bar(
         xs + 0.2,
         [go["bp"][k]["auroc"] for k in keys],
         width=0.4,
-        color=cols,
+        color=cols_light,
         edgecolor="black",
         lw=0.5,
-        hatch="////",
-        label="same biological process",
     )
+    level_handles = [
+        Patch(
+            facecolor=PLOT_PALETTE[5],
+            edgecolor="black",
+            lw=0.5,
+            label="same cellular component",
+        ),
+        Patch(
+            facecolor=PLOT_PALETTE_FILL[5],
+            edgecolor="black",
+            lw=0.5,
+            label="same biological process",
+        ),
+    ]
     ax.axhline(0.5, color="black", lw=0.5, ls="--")
     ax.set_xticks(xs)
     ax.set_xticklabels(names, rotation=30, ha="right")
     ax.set_ylim(0.4, 0.85)
     ax.set_ylabel("AUROC, co-annotated pairs vs other pairs")
     ax.set_title("does a profile carry function (within study)")
-    ax.legend(loc="upper right", **legend_kw)
+    ax.legend(handles=level_handles, loc="upper right", **legend_kw)
 
     # e. ribosome module
     ax = axes[1, 1]

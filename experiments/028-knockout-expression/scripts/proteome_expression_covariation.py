@@ -317,7 +317,9 @@ def main() -> None:
             "legend.fontsize": 6,
         }
     )
-    legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
+    legend_kw = dict(
+        frameon=True, edgecolor="black", fancybox=False, framealpha=1.0, markerscale=2.5
+    )
     col = {
         "kemmeren": PLOT_PALETTE[3],
         # Blue for Nadal A within this figure: beside Kemmeren's yellow, the orange used

@@ -52,7 +52,7 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   hatching, not more color.
 - **Use the LINE/border colors** (`PLOT_PALETTE`) for plot marks; the pale `PLOT_PALETTE_FILL`
   is only the lighter member of a two-level bar (validation = line color, test = fill).
-  Hatches/edges solid black. Draw.io Fig 1 primaries (1--6) are **LOCKED**.
+  Edges solid black; two levels by lightness, never hatched. Draw.io Fig 1 primaries (1--6) are **LOCKED**.
 
 ## Figures
 
@@ -92,6 +92,15 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   fitted line runs through, or region text that touches a spine all fail. Move the text,
   widen an axis limit, or shorten the label. Broken only in extraordinary circumstances,
   and then said in the caption.
+- **Two levels of one series are dark and light, never hatched** (2026.09.13). The first
+  level takes the series' line color, the second its `PLOT_PALETTE_FILL` sibling, both
+  with a 0.5 pt black edge; legend swatches are the gray pair so they name the level, not
+  a series. No hatched bars anywhere (the linear-model bars included); hatching is only
+  the last resort past 18 series.
+- **Legend swatches for scatter series are enlarged** (`markerscale=2.5`) so the color
+  reads at 6 pt.
+- **A caption leads with its takeaway, in one sentence**, verifiable by looking at the
+  figure; panel descriptions follow. Never longer than a sentence.
 - **Legends are framed.** White face, 0.5 pt black edge, square corners
   (`legend.frameon: True`, `legend.fancybox: False`, `legend.framealpha: 1`). The frame
   still sits in a clear region; it is a border, not a license to cover data.

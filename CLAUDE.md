@@ -598,10 +598,23 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   lines, markers. `PLOT_PALETTE_FILL` (the light fills) is the draw.io object companion
   (Fig 1), used only as the *lighter* member of a two-level bar (e.g. validation = line
   color, test = its fill) — never as the primary plot color.
-- **Representation/patterns in solid black.** Hatches, bar edges, and pattern marks are
-  black at full opacity. To make a bar lighter (test vs validation), use a lighter
-  *solid* color (the fill), NOT `alpha=` on the whole bar — alpha fades the black
-  hatch/edge too (use `to_rgba(color, a)` on the face only if you must).
+- **Two levels of one series are DARK and LIGHT, never hatched.** When a category has
+  two levels (validation vs test, cellular component vs biological process, with vs
+  without a term), the first level takes the series' line color and the second its
+  `PLOT_PALETTE_FILL` sibling, both with a 0.5 pt black edge; the legend swatches are
+  the gray pair (`PLOT_PALETTE[5]` / `PLOT_PALETTE_FILL[5]`) so they name the level and
+  not a series. Do not hatch bars (author decision 2026.09.13, after the GO
+  co-annotation bars of the 028 structure figure); hatching stays the last resort past
+  18 series only. Bar edges are black at full opacity; to lighten a bar use the light
+  *solid* fill, NOT `alpha=` on the whole bar, which fades the edge too (use
+  `to_rgba(color, a)` on the face only if you must).
+- **Legend swatches for scatter series are enlarged** (`markerscale=2.5` in the legend
+  call) so the color reads at 6 pt; a 3 pt marker in a legend does not show its color.
+- **A figure caption leads with its takeaway, in one sentence.** The first sentence of
+  every caption states what the figure shows the reader has learned, verifiable by
+  looking at the figure ("Protein and mRNA barely correlate for the same deletion, yet
+  the same gene pairs co-vary in both"); the panel descriptions follow. Never longer than
+  a sentence; a figure whose takeaway cannot be stated in one is not earning its place.
 - **Tenth gridlines** on 0–1 metric axes: a gridline every 0.1, labelled only every 0.2
   (`MultipleLocator(0.2)` major + `MultipleLocator(0.1)` minor, minor tick marks hidden).
 - **Panel width is STRICT; height is LOOSE.** Design each panel to one of the standard

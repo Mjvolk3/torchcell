@@ -48,3 +48,12 @@ Results: `experiments/028-knockout-expression/results/gene_covariation_all.json`
 document as `fig:gene-covariation-all` under `sec:readouts-proteome`. Related:
 [[experiments.028-knockout-expression.scripts.proteome_expression_covariation]],
 [[experiments.028-knockout-expression.scripts.cross_study_structure]].
+
+## 2026.09.13 - Layout: legend beside c, panel names on the y axis, colorbar last
+
+Author feedback: the legend for c sat under a and read as part of it; the matrices carried
+a title above and a label below. Now c's legend sits outside its axes on the right, each
+matrix is named once on its y axis with the same names as a and b (strain and gene counts
+moved to the caption), and the colorbar takes the last cell of the block. Legend swatches
+are enlarged (`markerscale=2.5`) across the 028 figures, and the histogram in c uses the
+light fills with black edges.

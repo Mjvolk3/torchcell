@@ -70,3 +70,9 @@ created: 1788904951158
 - [x] TFLink's yeast layer is YEASTRACT 2020 (downloaded 2020-07-20) + GTRD + ORegAnno; YEASTRACT+ 2023 has 215k associations [[torchcell.graph.graph]]
 - [x] v12 head round: gpu tasks done, 24 runs synced, readout on seeds 1-3 (H_concat +0.012 in every seed; two plateau runs) [[experiments.019-simb-multimodal.scripts.head_round_readout]]
 - [ ] v12: cabbi pair `2392379_0/_1` (seed 0) still running; sync with INCLUDE_SYNCED=1 after it ends and re-run `head_round_readout.py`
+
+## 2026.09.13
+
+- [x] 028 figures: gene co-variation relaid (legend beside c, names on y, colorbar last); Fig 11 b legend to the clear middle; Fig 12 d Nadal in blue; Fig 13 d dark/light bars instead of hatching; legend markers enlarged in all 028 figures; every caption in the 019 expression document now leads with a one-sentence takeaway
+- [x] figure standards recorded: two levels of one series are dark and light, never hatched; `markerscale=2.5` for scatter legends; captions lead with the takeaway (CLAUDE.md figure standards + [[paper.nature-biotech.style-guide]] Figures)
+- [ ] Zelezniak 2018 proteome vs Messner (97 kinase deletions) and vs Kemmeren mRNA (94): the proteome replication check, author go-ahead 2026-09-13; Zelezniak metabolome goes to the metabolic strand, not here

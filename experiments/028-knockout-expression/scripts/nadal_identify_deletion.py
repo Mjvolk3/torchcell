@@ -199,7 +199,9 @@ def main() -> None:
     col = dict(
         zip(order, [PLOT_PALETTE[3], PLOT_PALETTE[1], PLOT_PALETTE[0], PLOT_PALETTE[2]])
     )
-    legend_kw = dict(frameon=True, edgecolor="black", fancybox=False, framealpha=1.0)
+    legend_kw = dict(
+        frameon=True, edgecolor="black", fancybox=False, framealpha=1.0, markerscale=2.5
+    )
     fig, axes = plt.subplots(
         1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(52))
     )
@@ -246,9 +248,9 @@ def main() -> None:
     ax.set_ylabel("cumulative fraction of genotypes")
     ax.set_title("where the deleted gene ranks")
     # Kemmeren jumps to 0.8 at the far left and runs along the top; the Nadal curves stay
-    # under 0.05 until x = 1e-2 and rise along the right. The clear region is the lower
-    # left, right of Kemmeren's jump and above the Nadal curves.
-    ax.legend(loc="lower left", bbox_to_anchor=(0.10, 0.17), **legend_kw)
+    # under 0.05 until x = 1e-2 and rise along the right. The clear region is the middle
+    # of the panel, right of Kemmeren's jump and above the Nadal curves.
+    ax.legend(loc="center", bbox_to_anchor=(0.52, 0.55), **legend_kw)
 
     # c. Nadal A: self value against cells per genotype
     ax = axes[2]

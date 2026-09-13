@@ -212,6 +212,7 @@ effort.
 
 from __future__ import annotations
 
+import hashlib
 import math
 import re
 from typing import Any
@@ -622,6 +623,27 @@ class FluxLayerConfig(BaseModel):
             "being ramped in, and `constraint_loss` adds it outside the product."
         ),
     )
+    balance_active_row_set: str = Field(
+        default="dynamic",
+        description=(
+            "Which rows the active-row balance term is priced on.\n\n"
+            "'dynamic' (the default, and what jobs 1795 and 1797 ran) recomputes the set "
+            "every forward from the flux under test: a row is in the set while its turnover "
+            "clears the threshold. That set is a function of the very flux being penalized, "
+            "so a head can leave the penalty by killing the row. MEASURED on job 1795 "
+            "(density 0.5, balance 0.5): the fraction of rows above the threshold fell from "
+            "0.00501 to 0.00225 over the run while `c_density` did not move (0.9837 to "
+            "0.9860) and the training p95 fell to 1.7549 over that remaining 0.2 percent. "
+            "The p95 moved by emptying the set rather than by balancing it.\n\n"
+            "'frozen' fixes the set at the FIRST forward pass and holds it, so killing a row "
+            "keeps it in the penalty at a ratio of 2 and the dodge costs rather than pays. "
+            "PROVENANCE HAZARD, stated because it is easy to miss: the trainer's checkpoint "
+            "stores `named_parameters` and no buffers, so a rebuild for an audit re-freezes "
+            "on ITS first batch rather than restoring the training set. "
+            "`coverage_report` therefore records the frozen row count and a digest of the "
+            "row indices, and an audit whose digest differs was scored on a different set."
+        ),
+    )
     balance_active_weight: float = Field(
         default=0.0,
         ge=0.0,
@@ -973,6 +995,7 @@ class FluxLayer(nn.Module):
     null_basis: torch.Tensor
     log_e0: torch.Tensor
     delta_g_q: torch.Tensor
+    frozen_active_rows: torch.Tensor
 
     def __init__(
         self,
@@ -1322,6 +1345,19 @@ class FluxLayer(nn.Module):
             self.n_latent = 0
             self.null_basis_orthonormality_error = 0.0
             self.null_basis_balance_error = 0.0
+        if cfg.balance_active_row_set not in {"dynamic", "frozen"}:
+            raise ValueError(
+                f"balance_active_row_set={cfg.balance_active_row_set!r} is not 'dynamic' "
+                "or 'frozen'."
+            )
+        # The frozen row set, empty until the first forward fills it. A buffer so it moves
+        # with the module across devices; NOT restored by the 027 checkpoint, which stores
+        # parameters only, and `coverage_report` records its digest for exactly that reason.
+        self.register_buffer(
+            "frozen_active_rows",
+            torch.zeros(int(self.independent_rows.numel()), dtype=torch.bool),
+        )
+        self.frozen_active_rows_ready = False
         self.reaction_embedding = nn.Embedding(self.n_reactions, cfg.reaction_embed_dim)
         # The fluxforce head carries its spread in a head of its own, built unconditionally,
         # so the width of this one does not depend on `stochastic` there; every other kind
@@ -2190,7 +2226,20 @@ class FluxLayer(nn.Module):
         # on, and `constraint_loss` adds it outside the ramp. `omega` is detached in the
         # denominator exactly as it is in `c_balance`, so the gradient reduces the RESIDUAL
         # rather than inflating the turnover under it.
-        active_rows = omega > active_turnover
+        above_threshold = omega > active_turnover
+        if cfg.balance_active_row_set == "frozen":
+            if not self.frozen_active_rows_ready:
+                # One batch at initialization decides the set, and it is held from there:
+                # a row the head later kills stays in the penalty at a ratio of 2, so
+                # emptying it costs instead of paying.
+                with torch.no_grad():
+                    self.frozen_active_rows = above_threshold.any(dim=0)
+                self.frozen_active_rows_ready = True
+            active_rows = self.frozen_active_rows.unsqueeze(0).expand_as(
+                above_threshold
+            )
+        else:
+            active_rows = above_threshold
         active_count = active_rows.sum(dim=1).clamp(min=1)
         active_sq = (ratio**2) * active_rows
         out["c_balance_active"] = (active_sq.sum(dim=1) / active_count).mean()
@@ -2614,6 +2663,17 @@ class FluxLayer(nn.Module):
             # The temperature the flux-force relation is evaluated at, in kJ/mol, so a
             # reported efficacy can be reproduced from the number the run actually used.
             "rt_kj_per_mol": self.rt,
+            "balance_active_row_set": self.config.balance_active_row_set,
+            "balance_active_weight": self.config.balance_active_weight,
+            "density_weight": self.config.density_weight,
+            "density_turnover_threshold": self.config.density_turnover_threshold,
+            # The frozen set, so an audit can tell whether it was scored on the training
+            # one: the checkpoint carries parameters and no buffers, and a rebuild
+            # re-freezes on its own first batch.
+            "frozen_active_row_count": int(self.frozen_active_rows.sum()),
+            "frozen_active_row_digest": hashlib.sha256(
+                self.frozen_active_rows.numpy().tobytes()
+            ).hexdigest()[:16],
             "n_latent": self.n_latent,
             # MEASURED at construction, not asserted: the projection is a projection only
             # if the basis is orthonormal, and it lands in ker S only to the precision the

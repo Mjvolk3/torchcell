@@ -1816,3 +1816,49 @@ def test_the_active_balance_percentile_survives_a_large_expanded_batch():
     with pytest.raises(RuntimeError, match="too large"):
         torch.quantile(over_the_cap, 0.95)
     assert torch.isfinite(_linear_quantile(over_the_cap, 0.95))
+
+
+def test_the_frozen_row_set_keeps_a_killed_row_in_the_penalty():
+    r"""The dodge the dynamic set allows, and what freezing does about it.
+
+    Under ``balance_active_row_set='dynamic'`` the penalized set is a function of the flux
+    being penalized, so a head can leave the penalty by pushing a row below the turnover
+    threshold; job 1795 did exactly that, taking the active-row fraction from 0.00501 to
+    0.00225 while ``c_density`` held. Frozen, the set is fixed at the first forward, so a
+    row that later goes quiet stays in the sum at the ratio its residual earns.
+    """
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED, balance_active_row_set="frozen")
+    inputs = _inputs()
+    assert not layer.frozen_active_rows_ready
+    layer(*inputs)
+    assert layer.frozen_active_rows_ready
+    frozen = layer.frozen_active_rows.clone()
+    assert bool(frozen.any())
+
+    # A second call with different tokens does not re-derive the set.
+    layer(*_inputs(batch=6))
+    assert torch.equal(layer.frozen_active_rows, frozen)
+
+    report = layer.coverage_report()
+    assert report["balance_active_row_set"] == "frozen"
+    assert report["frozen_active_row_count"] == int(frozen.sum())
+    assert len(report["frozen_active_row_digest"]) == 16
+
+
+def test_the_dynamic_row_set_is_the_default_and_unchanged():
+    """Every cell before this option ran the dynamic set; the default must still be it."""
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    assert layer.config.balance_active_row_set == "dynamic"
+    out = layer(*_inputs())
+    omega = layer.turnover(out["v"])[:, layer.independent_rows]
+    threshold = layer.config.density_turnover_threshold * layer.config.flux_scale
+    assert float(out["feas_active_row_frac"]) == float(
+        (omega > threshold).float().mean()
+    )
+    assert int(layer.frozen_active_rows.sum()) == 0
+
+
+def test_an_unknown_row_set_is_refused():
+    """A typo must not silently fall back to the set the cell did not ask for."""
+    with pytest.raises(ValueError, match="balance_active_row_set"):
+        _layer(thermo_mode=ThermoMode.ANCHORED, balance_active_row_set="active")

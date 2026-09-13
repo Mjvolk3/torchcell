@@ -1789,3 +1789,30 @@ def test_the_active_row_balance_gradient_reduces_the_residual_not_the_turnover()
         layer.constraint_loss(out), list(layer.flux_mlp.parameters()), allow_unused=True
     )
     assert any(g is not None and float(g.abs().sum()) > 0.0 for g in grads)
+
+
+def test_the_active_balance_percentile_survives_a_large_expanded_batch():
+    """``torch.quantile`` caps its input at 2**24 elements; the K-draw batch passes it.
+
+    The active-row balance percentile is taken over ``[B, independent rows]``. At batch 128
+    and yeast-GEM's 2,593 independent rows that is 332k elements at one draw and 42.5M at
+    128, and ``torch.quantile`` raises ``input tensor is too large`` above the cap. The
+    wave-8 K = 128 benchmark hit it before any job was submitted.
+
+    Two assertions, because only the pair is a fix: the sort-based quantile agrees with
+    ``torch.quantile`` wherever ``torch.quantile`` will answer at all, and it still answers
+    past the cap.
+    """
+    from torchcell.metabolism.flux_layer import _linear_quantile
+
+    generator = torch.Generator().manual_seed(0)
+    for n in (1, 2, 7, 1000, 33333):
+        x = torch.randn(n, generator=generator)
+        for q in (0.0, 0.5, 0.95, 1.0):
+            assert float(_linear_quantile(x, q)) == pytest.approx(
+                float(torch.quantile(x, q)), abs=1e-6
+            )
+    over_the_cap = torch.randn(2**24 + 1, generator=generator)
+    with pytest.raises(RuntimeError, match="too large"):
+        torch.quantile(over_the_cap, 0.95)
+    assert torch.isfinite(_linear_quantile(over_the_cap, 0.95))

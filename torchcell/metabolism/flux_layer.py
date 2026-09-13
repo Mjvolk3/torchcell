@@ -244,6 +244,30 @@ FARADAY_KJ_PER_MOL_V = 96.485
 DEFAULT_FLUX_SCALE = 100.0
 
 
+def _linear_quantile(x: torch.Tensor, q: float) -> torch.Tensor:
+    r"""``torch.quantile(x, q)`` without its input-size cap, by sorting.
+
+    ``torch.quantile`` refuses an input above 2**24 elements with
+    ``RuntimeError: quantile() input tensor is too large``. That ceiling is reachable here:
+    the active-row balance percentile is taken over ``[B, independent rows]``, which at
+    batch 128 and 2,593 rows is 332k elements at one draw per genotype and 42.5M at 128 of
+    them. The cap was hit by the wave-8 K = 128 benchmark before any job was submitted.
+
+    This reproduces the DEFAULT 'linear' interpolation exactly, so every number an existing
+    arm reported is unchanged: the quantile sits at position :math:`q(n-1)` of the sorted
+    values and interpolates between the two neighbours it falls between.
+    """
+    flat = x.reshape(-1)
+    n = flat.numel()
+    assert n > 0, "the quantile of an empty tensor is not defined."
+    ordered, _ = torch.sort(flat)
+    position = q * (n - 1)
+    lower = int(position)
+    upper = min(lower + 1, n - 1)
+    weight = position - lower
+    return ordered[lower] + (ordered[upper] - ordered[lower]) * weight
+
+
 def _tier_counts(provenance: list[str] | None, n: int) -> dict[str, int]:
     """Split a provenance list into measured / predicted / default counts.
 
@@ -2173,7 +2197,7 @@ class FluxLayer(nn.Module):
         active_ratio = (residual.abs() / (omega + cfg.balance_epsilon))[active_rows]
         if active_ratio.numel() > 0:
             out["feas_balance_active_max"] = active_ratio.max()
-            out["feas_balance_active_p95"] = torch.quantile(active_ratio, 0.95)
+            out["feas_balance_active_p95"] = _linear_quantile(active_ratio, 0.95)
         else:
             out["feas_balance_active_max"] = v.new_zeros(())
             out["feas_balance_active_p95"] = v.new_zeros(())

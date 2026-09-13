@@ -1,0 +1,138 @@
+%% notes-tex/019-simb-multimodal-expression/sections/3-baselines.tex
+%% SOURCE: results/expression_baselines_split/seed<k>.json and seed0_fold90.json
+%% (expression_baselines_split.py, GilaHyper CPU job 1806, 2026-09-13);
+%% results/expression_baselines_split/summary.json and the two generated tables
+%% (expression_baselines_split_table.py); results/knn_embedding_probe.json
+%% (knn_embedding_probe.py); results/split_indices_manifest.json (make_split_indices.py);
+%% the v12 numbers from results/head_round_readout.csv.
+
+\section{The linear and neighbor baselines, on the partitions the model trains on
+\secstatus{todo}}
+\label{sec:baselines}
+
+The four baselines of \cref{tab:strand-baselines} were scored on a private permutation of
+the raw Kemmeren panel, so baseline and trained arm shared a task but not a partition.
+Everything in this section reads the partition file the training run reads: for split seed
+$k$ the \file{CellDataModule} writes \file{index_details_seed_k.json}, the record indices
+per split, and both the baseline script and the GPU launcher take that file as given. The
+files are hashed in \file{split_indices_manifest.json}; seeds 0 to 2 carried the same hash
+on both machines and seed 3 was built once and copied. The trained arms on the same four
+partitions are the v13 round (\cref{sec:next}), running as this is written; nothing about
+them is reported here.
+
+\pfstep{Setup} Strain $b$ carries deletion set $S_b$ and a profile $y_b \in \mathbb{R}^F$
+over $F = 6{,}169$ reporters, each entry the $\log_2$ ratio to the wild-type reference. The
+partition $(\mathcal{T}, \mathcal{V}, \mathcal{E})$, train, validation, test, is the
+datamodule's record-level 80/10/10 draw for split seed $k$: a seeded shuffle within each
+index key (phenotype label, perturbation count), the per-key splits intersected. Every
+deleted gene appears once in the panel, so every strain in $\mathcal{V}$ and $\mathcal{E}$
+is an unseen perturbation. Per-gene training mean $\mu_f = |\mathcal{T}|^{-1}
+\sum_{b \in \mathcal{T}} y_{bf}$ and residual $r_{bf} = y_{bf} - \mu_f$. The metric is the
+training metric,
+%
+\begin{equation}
+  \mathrm{pf}(\hat{Y}, Y)
+  = \frac{1}{|\mathcal{F}_{\mathrm{ok}}|} \sum_{f \in \mathcal{F}_{\mathrm{ok}}}
+    \frac{\langle \hat{y}_{\cdot f} - \bar{\hat{y}}_f,\; y_{\cdot f} - \bar{y}_f \rangle}
+         {\|\hat{y}_{\cdot f} - \bar{\hat{y}}_f\|\,\|y_{\cdot f} - \bar{y}_f\|},
+  \qquad
+  \mathrm{nmse}(\hat{Y}, Y) = \frac{\sum_{b,f} (\hat{y}_{bf} - y_{bf})^2}
+                                   {\sum_{b,f} (y_{bf} - \mu_f)^2},
+  \label{eq:pf}
+\end{equation}
+%
+with the columns and the means taken over the strains of the scored split and
+$\mathcal{F}_{\mathrm{ok}}$ the reporters whose prediction and target both have a norm
+above $10^{-8}$. A prediction constant across strains has no surviving column and scores
+exactly $0$, which is what makes the first two baselines a self-check rather than a
+competitor.
+
+\pfstep{B0 and B1} $\hat{y}_{bf} = \mu_f$ and $\hat{y}_{bf} = 0$. Both are $0$ on
+\cref{eq:pf} on every partition; B0's \file{nmse} is $1$ by construction, and the script
+raises if either lands elsewhere. B1's \file{nmse} is how far the panel sits from the
+reference: $1.33$, $1.33$, $1.37$ and $1.39$ on the validation strains of splits 0 to 3.
+
+\pfstep{B2, the bilinear ridge} The perturbation is represented by an external gene
+embedding, $p_b = |S_b|^{-1} \sum_{g \in S_b} e_g \in \mathbb{R}^D$, standardized column by
+column on the training strains; a strain with no embedded gene is excluded from the score
+and counted. The gene basis $G \in \mathbb{R}^{F \times K}$ holds the top-$K$ right singular
+vectors of the training residual matrix $R_{\mathcal{T}}$, and
+%
+\begin{equation}
+  W^{\star} = \operatorname*{argmin}_{W}
+    \big\| R_{\mathcal{T}} G - P_{\mathcal{T}} W \big\|_F^2 + \lambda \|W\|_F^2
+  = \big( P_{\mathcal{T}}^{\top} P_{\mathcal{T}} + \lambda I \big)^{-1}
+    P_{\mathcal{T}}^{\top} R_{\mathcal{T}} G,
+  \qquad
+  \hat{Y} = P\, W^{\star} G^{\top} + \mathbf{1} \mu^{\top}.
+  \label{eq:b2}
+\end{equation}
+%
+This is the benchmark's $Y \approx G W P^{\top} + b$ with the intercept removed by
+centering. $K \in \{1, 2, 4, 8, 16, 32, 33, 64, 128, 256\}$ and
+$\lambda \in \{10^{-3}, \ldots, 10^{2}\}$, sixty cells, chosen on validation.
+
+\pfstep{B3, the neighbor mean} With $s_{bj} = \cos(p_b, p_j)$ over training strains $j$ and
+$N_k(b)$ the $k$ largest, $\hat{r}_b = k^{-1} \sum_{j \in N_k(b)} r_j$ and
+$\hat{y}_b = \hat{r}_b + \mu$, $k \in \{1, 3, 5, 10, 25\}$ chosen on validation. No fitted
+parameter.
+
+\pfstep{The kNN probe, the same idea on raw profiles} The earlier probe
+(\file{knn_embedding_probe.py}) predicts the whole profile rather than the residual,
+weights the neighbors by their clipped similarity, and ran on the split-0 partition file
+before any of this existed, so it is already on the model's partition:
+%
+\begin{equation}
+  \hat{y}_b = \sum_{j \in N_k(b)} w_{bj}\, y_j,
+  \qquad
+  w_{bj} = \frac{[s_{bj}]_+}{\sum_{j' \in N_k(b)} [s_{bj'}]_+},
+  \qquad
+  s_{bj} = \cos(e_b, e_j),
+  \label{eq:knn}
+\end{equation}
+%
+over fourteen embeddings and random embeddings of matched dimension as the floor. Its
+validation set is the 140 single-deletion strains of split 0.
+
+\pfstep{Selection mirrors the model's} A trained arm reports the epoch that maximizes
+validation Pearson, an optimistic order statistic over epochs. B2's cell and B3's $k$ are
+likewise the validation maximum, over sixty and five cells, so the validation columns below
+carry the same kind of optimism as \file{roll_max}, and the test columns are the read that
+does not. The 90/10 column folds the test records into train against the same validation
+strains, the linear analog of the round's 90/10 arm, and has no test read.
+
+\input{tables/expression_baselines_split.tex}
+
+\input{tables/knn_embedding_probe.tex}
+
+\pfstep{The partition moves a linear model as much as it moves the network} B2 on ProtT5
+reads $0.135$, $0.076$, $0.117$ and $0.094$ on the four validation draws, a spread of
+$0.026$ from a sixty-cell ridge with no seed of its own, and B3 on ProtT5 spreads $0.051$ on
+test. The four draws share the same training count and differ in which 155 strains are
+held out (the 72 Sameith doubles land 15, 13, 7 and 10 in validation), so the spread is the
+partition itself. That is the axis the v13 round was built to measure for the trained arms,
+and the linear numbers say it is large before any network is involved.
+
+\pfstep{Split 0 is the easiest validation draw for the linear models too} On split 0 both
+ProtT5 baselines post their highest validation score of the four draws and B2 its lowest
+test score, $0.085$ against $0.148$, $0.111$ and $0.097$ on the others; B3 on ProtT5 drops
+from $0.130$ on validation to $0.046$ on test there. Every score the campaign has quoted is
+a split-0 validation number. The v12 reference stack on that draw reads $0.174 \pm 0.008$
+and \file{H_concat} $0.188 \pm 0.005$ at 1{,}399 epochs (\cref{sec:readouts-head}), against
+$0.135$ for the best linear cell and $0.130$ for the best neighbor rule on the same 155
+strains, so the margin over the linear model on this partition is $0.04$ to $0.05$, not the
+$0.09$ that \cref{tab:strand-baselines} gave on a different permutation. The earlier
+$0.104$ was not wrong; it was another draw.
+
+\pfstep{Ten percent more training data buys the linear models almost nothing} With the 155
+test strains folded into train, B2 on ProtT5 moves from $0.135$ to $0.137$ and B3 from
+$0.130$ to $0.141$ on the same validation set, and CaLM by $+0.004$ and $+0.001$. Whether
+the trained arms move more is what task 2 of the round measures; the linear result is the
+floor that comparison is read against.
+
+\pfstep{Embeddings rank the same way under every rule} ProtT5 leads B2, B3 and the probe on
+every partition; CaLM is second; the species language model over both flanks sits at
+$0.04$ to $0.06$; the chromatin-pathway feature fits validation on split 0 and transfers to
+test at $0.004$ and $0.02$, the one case where the sixty-cell selection is visibly
+optimistic. In the probe, every nucleotide-transformer arm is at or below the random floor
+of $0.033$, and ProtT5's $0.117$ at $k = 25$ is what \cref{sec:strand-oracle} quotes.

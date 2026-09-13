@@ -117,3 +117,9 @@ worktree first so the final step is one job either way.
 ## 2026.09.12 - Decision: full rebuild, deferred
 
 The user chose the full rebuild, deferred: this branch lands with NO import, more datasets are added on top of it, and one full build then serves everything at once. Consequences: the Bloom increment is not run; the 14 fixed datasets are registered and verified on the dev tree only; the batch admission path stays for later increments once the rebuilt store carries the typed media and identified compounds; the shared media library and compound table changes (which move every medium node id) are exactly what the rebuild absorbs. The next wave is scouted from the north-star candidate table (`experiments/database/scripts/build_candidate_datasets_table.py`), Albert 2018 and Jackson 2020 first.
+
+## 2026.09.13 - Progress and the stale-store finding
+
+Twelve of the fourteen are fixed, rebuilt, verified and registered (Costanzo 2021, Auesukaree, Mota, Baryshnikova, Bloom, Smith 2006, Smith 2016, Lian, Mormino, Vanacloig, Wildenhain, Hoepfner); Hillenmeyer het and hom are built and awaiting their verifier reports. The batch admission dry run against a copy of the production manifest BLOCKS as expected and names every served dataset: 34 through the one added `DoseBasis` member, Nadal-Ribelles also through `EnvironmentPerturbation` gaining the gap mixin, plus the composition-based node ids in the served adapter methods. That is the evidence for the single full rebuild.
+
+The same enum change made ten of the eleven finished dev stores read `stale` (their `build_manifest.json` carries the pre-change fingerprints). The stored values are unchanged, but the verification evidence is regathered on stores whose manifest matches the schema exactly: every finished dataset is rebuilt once more, sequentially, and `run_all` is rerun. Known pre-existing failure outside this campaign: `test_cachera2023.py` asserts 4,735 records and the store holds 4,719.

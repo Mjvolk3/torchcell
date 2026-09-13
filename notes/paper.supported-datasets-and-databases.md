@@ -53,19 +53,19 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Auesukaree 2009 (stress screen) | 333 | 6 | 525 | stress sensitivity (categorical) | scalar | global | 8.5×10⁴ |
-| Mota 2024 (weak-acid screen) | 601 | 3 | 1,273 | weak-acid susceptibility (categorical) | scalar | global | 1.9×10⁵ |
-| Vanacloig-Pedros 2022 | 3,647 | 45 | 164,115 | chemogenomic fitness (log2-ratio) | scalar | global | 8.1×10⁷ |
-| Costanzo 2021 (condition-SGA) | 4,399 | 14 | 61,318 | differential mutant fitness | scalar | global | 9.0×10⁶ |
-| Hillenmeyer 2008 het (FitDb HIP) | 5,814 | 514 | 2,921,078 | HIP fitness-defect log2-ratio | scalar | global | 8.1×10⁸ |
-| Hillenmeyer 2008 hom (FitDb HOP) | 4,667 | 279 | 1,179,520 | HOP fitness-defect z-score | scalar | global | 3.4×10⁸ |
-| Wildenhain 2015 (drug tolerance) | 256 | 5,178 | 428,573 | growth-inhibition z-score | scalar | global | 1.5×10⁸ |
-| Hoepfner 2014 (HIP/HOP atlas) | 10,719 | 5,879 | 3,112,880 | HIP/HOP sensitivity score | scalar | global | 1.4×10⁹ |
-| Smith 2006 (chemogenomic) | 4,721 | 3 | 14,163 | chemogenomic sensitivity (clear-zone ordinal) | scalar | global | 1.7×10⁶ |
-| Lian 2019 (MAGIC CRISPR-AID) | 266,415 | 3 | 266,415 | furfural tolerance fitness (log2-ratio) | scalar | global | 1.3×10⁸ |
-| Mormino 2022 (CRISPRi acetic-acid) | 12 | 1 | 12 | acetic-acid sensitivity (categorical) | scalar | global | 8.8×10³ |
-| Smith 2016 (CRISPRi chem-genetic) | 1,035 | 26 | 14,463 | chemogenomic fitness (log2-ratio) | scalar | global | 4.8×10⁶ |
-| Bloom 2019 (16-cross segregant panel) | 13,950 | 38 | 530,100 | colony size residual / absolute | scalar | global | 2.4×10⁸ |
+| Auesukaree 2009 (stress screen) | 333 | 6 | 525 | stress sensitivity (categorical: sensitive/no_change) | scalar | global | 2.5×10⁵ |
+| Mota 2024 (weak-acid screen) | 601 | 3 | 1,270 | weak-acid susceptibility (ordinal: 0/1/2 grades) | scalar | global | 6.0×10⁵ |
+| Vanacloig-Pedros 2022 | 3,647 | 41 | 143,218 | chemogenomic fitness (log2-ratio) | scalar | global | 8.7×10⁷ |
+| Costanzo 2021 (condition-SGA) | 4,399 | 14 | 61,430 | differential mutant fitness | scalar | global | 1.0×10⁸ |
+| Hillenmeyer 2008 het (FitDb HIP) | 5,814 | 514 | 2,698,797 | HIP fitness-defect log2-ratio | scalar | global | 8.1×10⁸ |
+| Hillenmeyer 2008 hom (FitDb HOP) | 4,667 | 279 | 1,088,620 | HOP fitness-defect z-score | scalar | global | 3.4×10⁸ |
+| Wildenhain 2015 (drug tolerance) | 256 | 5,168 | 428,206 | growth-inhibition z-score | scalar | global | 2.0×10⁸ |
+| Hoepfner 2014 (HIP/HOP atlas) | 10,719 | 5,879 | 3,102,719 | HIP/HOP sensitivity score | scalar | global | 1.4×10⁹ |
+| Smith 2006 (chemogenomic) | 4,721 | 3 | 12,747 | chemogenomic sensitivity (clear-zone ordinal) | scalar | global | 1.4×10⁶ |
+| Lian 2019 (MAGIC CRISPR-AID) | 266,415 | 3 | 266,304 | furfural tolerance fitness (log2-ratio) | scalar | global | 1.3×10⁸ |
+| Mormino 2022 (CRISPRi acetic-acid) | 12 | 1 | 12 | acetic-acid sensitivity (categorical) | scalar | global | 1.2×10⁴ |
+| Smith 2016 (CRISPRi chem-genetic) | 1,035 | 8 | 7,053 | chemogenomic fitness (log2-ratio) | scalar | global | 2.1×10⁶ |
+| Bloom 2019 (16-cross segregant panel) | 13,950 | 38 | 530,100 | colony size residual / absolute | scalar | global | 2.5×10⁸ |
 
 ### Viability
 
@@ -123,7 +123,7 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| **Total (50 datasets)** |  |  | **53,070,400** |  |  |  | **2.6×10¹⁰** |
+| **Total (50 datasets)** |  |  | **52,716,966** |  |  |  | **2.6×10¹⁰** |
 
 ### In progress (not yet built/verified)
 

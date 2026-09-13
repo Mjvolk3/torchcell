@@ -113,3 +113,7 @@ decides.
 
 Batch admission (`admit --dataset A,B,C`, `DATASET_CLASSES` on the runner) landed in this
 worktree first so the final step is one job either way.
+
+## 2026.09.12 - Decision: full rebuild, deferred
+
+The user chose the full rebuild, deferred: this branch lands with NO import, more datasets are added on top of it, and one full build then serves everything at once. Consequences: the Bloom increment is not run; the 14 fixed datasets are registered and verified on the dev tree only; the batch admission path stays for later increments once the rebuilt store carries the typed media and identified compounds; the shared media library and compound table changes (which move every medium node id) are exactly what the rebuild absorbs. The next wave is scouted from the north-star candidate table (`experiments/database/scripts/build_candidate_datasets_table.py`), Albert 2018 and Jackson 2020 first.

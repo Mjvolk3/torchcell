@@ -23,6 +23,15 @@ nothing already served would change. Concretely, every blocker below is empty:
   ``torchcell_schema_config.yaml`` changed. New classes are fine (additive); a changed
   existing class means served nodes lack or carry properties the code now expects: FULL
   REBUILD.
+- **value surface drift** -- the three checks above fingerprint CODE and SCHEMA, which
+  leaves the shared VALUES that node ids are built from unwatched. A medium in
+  ``torchcell/datamodels/media.py`` and a row of ``compound_identity_table.json`` are data:
+  editing YPD's component list, or filling a compound's InChIKey, changes the content the
+  adapter serializes for a medium or a compound node without changing one line of adapter
+  code or one schema fingerprint. The served node keeps its old id, the dataset being
+  admitted writes a node with a new one, and the graph ends up with two YPDs that no query
+  joins. The surface is hashed file by file and compared; a change blocks with the same
+  written-acknowledgment mechanism adapter drift has (``--ack-value-drift``).
 - **adapter drift** -- node ids are sha256 of what ``CellAdapter`` serializes, so an
   adapter change CAN move ids silently. The check is method-level: a changed
   ``CellAdapter`` method blocks only if a SERVED adapter conf enables it, or if it is
@@ -57,6 +66,7 @@ import re
 import socket
 import subprocess
 import sys
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -91,7 +101,12 @@ __all__ = [
     "SCHEMA_CONFIG_RELPATH",
     "CELL_ADAPTER_RELPATH",
     "SURFACE_RELPATHS",
+    "VALUE_SURFACE_RELPATHS",
     "graph_schema_from_yaml",
+    "value_surface_from_sources",
+    "value_surface_in_worktree",
+    "value_surface_at_ref",
+    "value_surface_drift",
     "cell_adapter_surface",
     "adapter_file_relpaths",
     "loader_relpath",
@@ -117,6 +132,15 @@ SCHEMA_CONFIG_RELPATH = "biocypher/config/torchcell_schema_config.yaml"
 CELL_ADAPTER_RELPATH = "torchcell/adapters/cell_adapter.py"
 ADAPTER_DIR_RELPATH = "torchcell/adapters"
 SURFACE_RELPATHS = ("torchcell/datamodels/schema.py", "torchcell/datamodels/pydant.py")
+# Shared VALUES (not code shapes) that served node ids are built from: the recipes every
+# dataset's Media resolves to, the curated compound identity rows, and the resolver that
+# turns a name into a Compound. A change to any of them moves the content-addressed id of
+# a media or compound node, which no schema or adapter fingerprint would notice.
+VALUE_SURFACE_RELPATHS = (
+    "torchcell/datamodels/media.py",
+    "torchcell/datamodels/compound_identity.py",
+    "torchcell/datamodels/compound_identity_table.json",
+)
 
 
 class GraphSchemaEntry(BaseModel):
@@ -168,6 +192,7 @@ class KgEvent(BaseModel):
     biocypher_out: str | None = None
     note: str | None = None
     acknowledged_adapter_drift: list[str] = Field(default_factory=list)
+    acknowledged_value_drift: list[str] = Field(default_factory=list)
 
 
 class KgBuildManifest(BaseModel):
@@ -183,6 +208,10 @@ class KgBuildManifest(BaseModel):
     cell_adapter_methods: dict[str, str]  # CellAdapter function -> source fingerprint
     cell_adapter_table: dict[str, str]  # conf method name -> CellAdapter function
     adapter_files: dict[str, str]  # repo-relative adapter/conf path -> sha256
+    # Shared VALUE files -> sha256 of their content. Empty for a manifest written before
+    # the value surface was recorded: the check then reports "value surface not recorded"
+    # instead of blocking, since there is no baseline to compare against.
+    value_surface: dict[str, str] = Field(default_factory=dict)
     datasets: dict[str, KgDatasetEntry]
     events: list[KgEvent]
     created_at: str
@@ -239,6 +268,13 @@ class AdmissionReport(BaseModel):
     adapter_drift: AdapterDrift
     adapter_methods_added: list[str]
     adapter_drift_acknowledged: str | None
+    # Shared value files whose content changed since the build (a blocker unless
+    # acknowledged), files added to the surface since then (additive: nothing served was
+    # built from them), and whether the manifest recorded a surface at all.
+    value_surface_changed: list[str] = Field(default_factory=list)
+    value_surface_added: list[str] = Field(default_factory=list)
+    value_surface_recorded: bool = True
+    value_drift_acknowledged: str | None = None
     dev_lmdb_status: Literal["fresh", "stale", "unmanifested", "missing"]
     dev_lmdb_root: str
     in_adapter_map: bool
@@ -466,6 +502,61 @@ def surface_in_worktree(repo_root: Path) -> SchemaSurface:
     return load_surface([repo_root / relpath for relpath in SURFACE_RELPATHS])
 
 
+def value_surface_from_sources(sources: Mapping[str, str]) -> dict[str, str]:
+    """``relpath -> sha256`` of shared value-file CONTENT.
+
+    Content, not a parse: a medium's components, a compound row's InChIKey and the
+    resolver's normalization rules all feed the node id, and any edit to the file is
+    therefore a candidate for moving one. A false positive (a comment edit) is answered by
+    the acknowledgment, which is recorded; a false negative would silently split a node.
+    """
+    return {relpath: _sha256(text) for relpath, text in sorted(sources.items())}
+
+
+def value_surface_in_worktree(repo_root: Path) -> dict[str, str]:
+    """The value surface of the working tree (files that exist)."""
+    return value_surface_from_sources(
+        {
+            relpath: (repo_root / relpath).read_text(encoding="utf-8")
+            for relpath in VALUE_SURFACE_RELPATHS
+            if (repo_root / relpath).exists()
+        }
+    )
+
+
+def value_surface_at_ref(repo_root: Path, ref: str) -> dict[str, str]:
+    """The value surface as it was at ``ref`` (files that existed at that commit)."""
+    present = {
+        relpath
+        for relpath in VALUE_SURFACE_RELPATHS
+        if _git_ls(repo_root, ref, relpath) == [relpath]
+    }
+    return value_surface_from_sources(
+        {
+            relpath: _git_show(repo_root, ref, relpath)
+            for relpath in VALUE_SURFACE_RELPATHS
+            if relpath in present
+        }
+    )
+
+
+def value_surface_drift(
+    stored: Mapping[str, str], current: Mapping[str, str]
+) -> tuple[list[str], list[str]]:
+    """``(changed, added)`` between a recorded value surface and the current one.
+
+    CHANGED covers a recorded file whose content differs and a recorded file that is now
+    gone; both mean the values the served nodes were built from are not the values a new
+    node would be built from. ADDED is a file that joined the surface after the build:
+    nothing served was built from it, so it is additive and only reported.
+    """
+    changed = sorted(
+        relpath for relpath, digest in stored.items() if current.get(relpath) != digest
+    )
+    added = sorted(set(current) - set(stored))
+    return changed, added
+
+
 def closure_at_ref(
     repo_root: Path, ref: str, loader_rel: str, surface: SchemaSurface
 ) -> dict[str, str]:
@@ -566,6 +657,7 @@ def bootstrap_manifest(
         cell_adapter_methods=methods,
         cell_adapter_table=table,
         adapter_files=adapter_files,
+        value_surface=value_surface_at_ref(repo_root, commit),
         datasets=datasets,
         events=[
             KgEvent(
@@ -653,6 +745,7 @@ def check_admission(
     dataset_class_name: str,
     data_root: Path,
     ack_adapter_drift: str | None = None,
+    ack_value_drift: str | None = None,
 ) -> AdmissionReport:
     """Decide whether ``dataset_class_name`` can be added to the store incrementally."""
     from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
@@ -710,7 +803,20 @@ def check_admission(
             f"'<why served ids are unchanged>'. Drift: {drift.describe()}"
         )
 
-    # 4. the new dataset itself
+    # 4. shared VALUE files: a changed recipe or identity row moves media/compound ids
+    value_changed, value_added = value_surface_drift(
+        manifest.value_surface, value_surface_in_worktree(repo_root)
+    )
+    if value_changed and not ack_value_drift:
+        reasons.append(
+            f"VALUE SURFACE CHANGED: {value_changed}. These files hold the shared VALUES "
+            "served media and compound node ids are content-addressed from, so a served "
+            "node and a node the new dataset writes for the same substance or medium will "
+            "not share an id. Review the diff, then re-run with --ack-value-drift "
+            "'<why served ids are unchanged>'."
+        )
+
+    # 5. the new dataset itself
     dataset_class = _dataset_class(dataset_class_name)
     in_map = dataset_class in dataset_adapter_map
     if not in_map:
@@ -761,6 +867,10 @@ def check_admission(
         adapter_drift=drift,
         adapter_methods_added=methods_added,
         adapter_drift_acknowledged=ack_adapter_drift if not drift.is_empty else None,
+        value_surface_changed=value_changed,
+        value_surface_added=value_added,
+        value_surface_recorded=bool(manifest.value_surface),
+        value_drift_acknowledged=ack_value_drift if value_changed else None,
         dev_lmdb_status=lmdb_status,  # type: ignore[arg-type]
         dev_lmdb_root=lmdb_root,
         in_adapter_map=in_map,
@@ -826,11 +936,14 @@ def check_batch_admission(
     dataset_class_names: list[str],
     data_root: Path,
     ack_adapter_drift: str | None = None,
+    ack_value_drift: str | None = None,
 ) -> BatchAdmissionReport:
     """Decide whether every named dataset can be added in ONE incremental import."""
     return batch_report_from_members(
         [
-            check_admission(manifest, repo_root, name, data_root, ack_adapter_drift)
+            check_admission(
+                manifest, repo_root, name, data_root, ack_adapter_drift, ack_value_drift
+            )
             for name in dataset_class_names
         ]
     )
@@ -876,12 +989,21 @@ def _adopt_current_surfaces(manifest: KgBuildManifest, repo_root: Path) -> None:
         rel: _sha256((repo_root / rel).read_text(encoding="utf-8"))
         for rel in adapter_file_relpaths(repo_root)
     }
+    manifest.value_surface = value_surface_in_worktree(repo_root)
 
 
 def _acknowledged_drift(report: AdmissionReport) -> list[str]:
     if not report.adapter_drift_acknowledged:
         return []
     return [f"{report.adapter_drift.describe()}: {report.adapter_drift_acknowledged}"]
+
+
+def _acknowledged_value_drift(report: AdmissionReport) -> list[str]:
+    if not report.value_drift_acknowledged:
+        return []
+    return [
+        f"{', '.join(report.value_surface_changed)}: {report.value_drift_acknowledged}"
+    ]
 
 
 def record_admission(
@@ -916,6 +1038,7 @@ def record_admission(
             datasets=[report.dataset_class],
             biocypher_out=biocypher_out,
             acknowledged_adapter_drift=_acknowledged_drift(report),
+            acknowledged_value_drift=_acknowledged_value_drift(report),
         )
     )
     return manifest
@@ -956,11 +1079,17 @@ def record_batch_admission(
         )
     _adopt_current_surfaces(manifest, repo_root)
     acknowledged: list[str] = []
+    acknowledged_values: list[str] = []
     for member in report.members:
         # the drift is measured against the same manifest for every member, so the
         # acknowledgment text repeats; record it once
         acknowledged.extend(
             line for line in _acknowledged_drift(member) if line not in acknowledged
+        )
+        acknowledged_values.extend(
+            line
+            for line in _acknowledged_value_drift(member)
+            if line not in acknowledged_values
         )
     manifest.events.append(
         KgEvent(
@@ -970,6 +1099,7 @@ def record_batch_admission(
             datasets=list(report.dataset_classes),
             biocypher_out=biocypher_out,
             acknowledged_adapter_drift=acknowledged,
+            acknowledged_value_drift=acknowledged_values,
         )
     )
     return manifest
@@ -1009,6 +1139,28 @@ def live_neo4j_version(uri: str, user: str, password: str) -> str:
 # --------------------------------------------------------------------------- CLI
 
 
+def _format_value_surface(report: AdmissionReport) -> str:
+    """The value-surface line: not recorded, unchanged, or the files that changed."""
+    if not report.value_surface_recorded:
+        return (
+            "not recorded (manifest predates the value surface; nothing to compare "
+            "against, so this does not block)"
+        )
+    added = (
+        f"; added since the build (additive): {', '.join(report.value_surface_added)}"
+        if report.value_surface_added
+        else ""
+    )
+    if not report.value_surface_changed:
+        return f"unchanged ({len(VALUE_SURFACE_RELPATHS)} files){added}"
+    acknowledged = (
+        f" (acknowledged: {report.value_drift_acknowledged})"
+        if report.value_drift_acknowledged
+        else ""
+    )
+    return f"CHANGED: {', '.join(report.value_surface_changed)}{acknowledged}{added}"
+
+
 def format_report(report: AdmissionReport) -> str:
     """One dataset's verdict, with the evidence each blocker is decided from."""
     lines = [
@@ -1029,6 +1181,7 @@ def format_report(report: AdmissionReport) -> str:
             if report.adapter_drift_acknowledged
             else ""
         ),
+        f"  value surface: {_format_value_surface(report)}",
     ]
     for reason in report.reasons:
         lines.append(f"  [BLOCK] {reason}")
@@ -1165,6 +1318,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_admit.add_argument("--data-root", required=True, help="dev tree holding the LMDB")
     p_admit.add_argument("--ack-adapter-drift", default=None)
+    p_admit.add_argument(
+        "--ack-value-drift",
+        default=None,
+        help="why a changed shared VALUE file (media.py, compound_identity*) leaves the "
+        "served media/compound node ids unchanged; recorded in the manifest event",
+    )
     p_admit.add_argument("--report", default=None, help="write the JSON report here")
 
     p_rec = sub.add_parser("record", help="record a completed incremental admission")
@@ -1230,6 +1389,7 @@ def main(argv: list[str] | None = None) -> int:
                 names[0],
                 Path(args.data_root),
                 args.ack_adapter_drift,
+                args.ack_value_drift,
             )
             print(format_report(report))
             if args.report:
@@ -1238,7 +1398,12 @@ def main(argv: list[str] | None = None) -> int:
                 )
             return 0 if report.verdict == "admissible" else 1
         batch = check_batch_admission(
-            manifest, repo_root, names, Path(args.data_root), args.ack_adapter_drift
+            manifest,
+            repo_root,
+            names,
+            Path(args.data_root),
+            args.ack_adapter_drift,
+            args.ack_value_drift,
         )
         print(format_batch_report(batch))
         if args.report:

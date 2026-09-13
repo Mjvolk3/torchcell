@@ -13,7 +13,12 @@ invariant (subsumed by L0); this verifier adds:
 3. L2 ``value_fidelity`` -- fitness values are finite and non-negative (WT == 1, sick < 1).
 4. L2 ``se_nonnegative`` -- reported fitness SEs are non-negative.
 5. L3 ``reference_one`` -- the reference (wild-type) fitness is 1.0 (the convention baseline).
-6. L4 ``gene_containment`` (caller) -- screened deletions overlap the S288C gene universe.
+6. L4 ``gene_containment`` -- screened deletions overlap the S288C gene universe.
+
+It also runs :class:`torchcell.verification.common.SharedRecordRules`, the rules that are
+not specific to a readout: the gap + silent-None census over every carrier, canonical gene
+names, uncertainty sanity, compound identity, media membership, and (when the caller
+supplies the gene universe) the two L4 gene rules.
 """
 
 from __future__ import annotations
@@ -22,6 +27,7 @@ import math
 from collections.abc import Callable, Sequence
 from typing import Any
 
+from torchcell.verification.common import GeneNameResolver, SharedRecordRules
 from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
 from torchcell.verification.report import (
     Level,
@@ -117,11 +123,15 @@ def verify_fitness_dataset(
     dataset_name: str,
     provenance: Provenance,
     expected_count: int,
+    resolve_gene_name: GeneNameResolver | None = None,
+    sgd_genes: set[str] | None = None,
+    min_containment: float = 0.90,
 ) -> VerificationReport:
-    """Run the L0-L3 record-level gate for a single-mutant fitness dataset.
+    """Run the L0-L4 record-level gate for a single-mutant fitness dataset.
 
-    L4 (cross-source gene overlap with the S288C reference) is asserted by the caller via
-    :func:`fitness_gene_set`.
+    ``sgd_genes`` turns on the L4 gene rules (aggregate containment + per-record genome
+    membership) and ``resolve_gene_name`` the annotation half of the canonical-name rule;
+    without them the caller owns L4 (:func:`fitness_gene_set` is the overlap key).
     """
     from pydantic import TypeAdapter
 
@@ -159,6 +169,15 @@ def verify_fitness_dataset(
     )
 
     report.add(_l3_reference_one(records))
+
+    shared = SharedRecordRules(
+        resolve_gene_name=resolve_gene_name,
+        sgd_genes=sgd_genes,
+        min_containment=min_containment,
+    )
+    shared.add_all(records)
+    for result in shared.results():
+        report.add(result)
     return report
 
 

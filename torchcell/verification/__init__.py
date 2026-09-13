@@ -3,6 +3,11 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/__init__
 """Record-level L0-L4 verification framework (roadmap WS3)."""
 
+from torchcell.verification.common import (
+    CarrierGapCensus,
+    SharedRecordRules,
+    shared_rule_results,
+)
 from torchcell.verification.expression import (
     measured_gene_universe,
     verify_expression_dataset,
@@ -51,6 +56,9 @@ from torchcell.verification.visual_score import (
 )
 
 __all__ = [
+    "CarrierGapCensus",
+    "SharedRecordRules",
+    "shared_rule_results",
     "DerivationMethod",
     "Level",
     "LevelResult",

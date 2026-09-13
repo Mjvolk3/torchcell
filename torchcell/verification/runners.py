@@ -28,7 +28,6 @@ import lmdb
 
 from torchcell.data.experiment_dataset import resolve_interned
 from torchcell.verification.environment_response import (
-    environment_response_gene_set,
     verify_environment_response_dataset,
     verify_environment_response_dataset_streaming,
 )
@@ -36,7 +35,7 @@ from torchcell.verification.expression import (
     measured_gene_universe,
     verify_expression_dataset,
 )
-from torchcell.verification.fitness import fitness_gene_set, verify_fitness_dataset
+from torchcell.verification.fitness import verify_fitness_dataset
 from torchcell.verification.levels import l4_cross_source
 from torchcell.verification.metabolite import (
     metabolite_gene_set,
@@ -738,6 +737,21 @@ def _sgd_gene_set(data_root: str) -> set[str]:
     return genes
 
 
+def _genome(data_root: str) -> Any:
+    """The S288C genome, for the resolver the canonical-gene-name rule needs.
+
+    ``overwrite=False`` is mandatory: a rebuild here would race any other process holding
+    the same gffutils database.
+    """
+    from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+
+    return SCerevisiaeGenome(
+        genome_root=osp.join(data_root, "data/sgd/genome"),
+        go_root=osp.join(data_root, "data/go"),
+        overwrite=False,
+    )
+
+
 def _l4_rnaseq_gene_containment(sgd_genes: set[str], measured: set[str]) -> LevelResult:
     """L4: the measured expression gene universe is contained in the SGD gene set."""
     overlap = len(measured & sgd_genes) / len(measured) if measured else 0.0
@@ -1256,6 +1270,7 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
 def run_environment_response(data_root: str) -> bool:
     """Verify environment-response datasets (L0-L4) and write reports. True if all pass."""
     sgd_genes = _sgd_gene_set(data_root)
+    resolve_gene_name = _genome(data_root).resolve_gene_name
     all_passed = True
     for name, spec in ENVIRONMENT_RESPONSE_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
@@ -1270,6 +1285,7 @@ def run_environment_response(data_root: str) -> bool:
                 sgd_genes=sgd_genes,
                 background_genes=background,
                 min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+                resolve_gene_name=resolve_gene_name,
             )
         else:
             records = load_records(abs_root)
@@ -1279,11 +1295,9 @@ def run_environment_response(data_root: str) -> bool:
                 provenance=spec["provenance"],
                 expected_count=spec.get("expected_count", len(records)),
                 background_genes=background,
-            )
-            report.add(
-                _l4_rnaseq_gene_containment(
-                    sgd_genes, environment_response_gene_set(records, background)
-                ).model_copy(update={"name": "gene_containment_sgd"})
+                resolve_gene_name=resolve_gene_name,
+                sgd_genes=sgd_genes,
+                min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
             )
         out = _write_report(report, osp.join(abs_root, "preprocess"))
         print(report.summary())
@@ -1336,6 +1350,7 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
 def run_fitness(data_root: str) -> bool:
     """Verify single-mutant fitness datasets (L0-L4) and write reports. True if all pass."""
     sgd_genes = _sgd_gene_set(data_root)
+    resolve_gene_name = _genome(data_root).resolve_gene_name
     all_passed = True
     for name, spec in FITNESS_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
@@ -1345,11 +1360,9 @@ def run_fitness(data_root: str) -> bool:
             dataset_name=name,
             provenance=spec["provenance"],
             expected_count=spec.get("expected_count", len(records)),
-        )
-        report.add(
-            _l4_rnaseq_gene_containment(
-                sgd_genes, fitness_gene_set(records)
-            ).model_copy(update={"name": "gene_containment_sgd"})
+            resolve_gene_name=resolve_gene_name,
+            sgd_genes=sgd_genes,
+            min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
         )
         out = _write_report(report, osp.join(abs_root, "preprocess"))
         print(report.summary())

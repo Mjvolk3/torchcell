@@ -109,3 +109,51 @@ The verification expectation is now per member: the ExperimentMemberOf rows whos
 The CSV generator needed no change: `create_scerevisiae_kg_small` already builds every dataset named in `datasets`, and `kg_increment.yaml` already documented it as one or a few.
 
 Measured: `pytest tests/torchcell/knowledge_graphs -x -q` 26 passed; mypy clean on `kg_manifest.py`. The CLI was exercised against a COPY of the production manifest in a scratch directory (the production file itself read-only): single admit of `Bloom2019Dataset` ADMISSIBLE with output identical in shape to before, batch admit of `Bloom2019Dataset,SmfKuzmin2020Dataset` BLOCKED with exit 1 (the second is already served and its dev LMDB is stale), and both the batch and the single `record` paths writing the copy. No batch has been imported into a store yet.
+
+## 2026.09.12 - The value surface: what the gate could not see
+
+The admission check fingerprints the schema closure of every served dataset, the BioCypher
+graph schema and the `CellAdapter` methods. All three are CODE and SCHEMA. The shared VALUES
+that media and compound node ids are content-addressed from were unwatched, and they are the
+two files the environment work edits most: `torchcell/datamodels/media.py` (the recipes every
+dataset's `Media` resolves to) and `torchcell/datamodels/compound_identity_table.json` (the
+curated identity rows), plus `torchcell/datamodels/compound_identity.py`, the resolver that
+turns a name into a `Compound`.
+
+Adding a component to YPD, or filling one compound's InChIKey, changes the content the
+adapter serializes for that node without changing one line of adapter code or one schema
+fingerprint. The served node keeps the id it was written under, the dataset being admitted
+writes a node with a new one, and the store ends up holding two YPDs that no query joins.
+Incremental import cannot update the old node, so this is exactly the class of change the
+gate exists to catch.
+
+`KgBuildManifest.value_surface` is now `relpath -> sha256 of file content` for those three
+files, recorded by `bootstrap_manifest` (at the build commit, via `git show`, skipping files
+that did not exist then) and by `_adopt_current_surfaces` on every `record` / batch `record`.
+`check_admission` compares it and reports:
+
+- `VALUE SURFACE CHANGED: ['torchcell/datamodels/media.py']` as a BLOCK, cleared by
+  `--ack-value-drift '<why served ids are unchanged>'`, which is stored in the admission
+  event as `acknowledged_value_drift` exactly the way an adapter-drift acknowledgment is.
+- A file that joined the surface AFTER the build is `value_surface_added`: additive and only
+  reported, since nothing served was built from it.
+- A recorded file that is now missing counts as CHANGED, not as silence.
+
+`format_report` gains one line, `value surface: unchanged (3 files)` /
+`value surface: CHANGED: <files> (acknowledged: ...)` /
+`value surface: not recorded (...)`.
+
+Old manifests load unchanged: the field defaults to empty, and an empty stored surface reports
+"value surface not recorded (manifest predates the value surface; nothing to compare against,
+so this does not block)" instead of blocking. The production manifest will pick the surface up
+at its next `record`; until then this check is informational for that store.
+
+The hash is of file CONTENT, not of a parse of it. A comment-only edit therefore reads as
+drift and needs a one-line acknowledgment, which is recorded; the reverse error, a value edit
+the gate misses, silently splits a node and cannot be repaired incrementally.
+
+Measured: `pytest tests/torchcell/knowledge_graphs -x -q` 30 passed (4 new: content hashing +
+changed/added/missing drift, the block and the acknowledgment round trip, the unrecorded
+surface reporting rather than blocking, and an old manifest JSON without the field loading);
+mypy and ruff clean on `kg_manifest.py`. The batch path threads `--ack-value-drift` the same
+way it threads `--ack-adapter-drift`.

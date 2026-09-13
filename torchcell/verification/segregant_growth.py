@@ -15,7 +15,10 @@ plus a raw-file pass that re-derives what the records claim:
   segregant experiment pair is in the union).
 - L1 ``count``; ``pair_uniqueness`` on (segregant id, condition signature); ``id_bijection``
   (every phenotype row id is in exactly one genotype file and every genotype row has a
-  phenotype row); the ``provenance_gaps`` census.
+  phenotype row); plus the shared rules from :mod:`torchcell.verification.common` -- the
+  ``provenance_gaps`` census over every carrier, ``canonical_gene_names`` (vacuous here:
+  a mosaic genotype has no gene perturbations), ``uncertainty_sanity``,
+  ``compound_identity`` and ``media_membership``.
 - L2 ``value_fidelity`` (finite, and every stored value equals the released tsv cell
   exactly); ``mosaic_round_trip`` (every segregant's blocks re-expanded at the cross's
   sorted marker positions equal its released row); ``block_invariants`` (ordered,
@@ -46,19 +49,14 @@ import pandas as pd
 
 from torchcell.datamodels.schema import HaplotypeBlock
 from torchcell.datasets.scerevisiae import bloom2019 as b
+from torchcell.verification.common import SharedRecordRules
 from torchcell.verification.report import (
     Level,
     LevelResult,
     Provenance,
     VerificationReport,
 )
-from torchcell.verification.sourced import (
-    ProvenanceGapCensus,
-    ProvenanceGapReason,
-    SourcedValue,
-    audit_sourced_value,
-    provenance_gap_level_result,
-)
+from torchcell.verification.sourced import SourcedValue, audit_sourced_value
 
 Record = dict[str, Any]
 
@@ -174,15 +172,15 @@ def verify_segregant_growth_streaming(
     no_edit_columns: set[str] = set()
     seen_segregants: dict[str, str] = {}  # segregant id -> cross
     blocks_by_segregant: dict[str, list[dict[str, Any]]] = {}
-    gap_records_with = 0
-    gap_total = 0
-    gap_by_reason: Counter[str] = Counter()
-    gap_by_field: Counter[str] = Counter()
-    gap_worklist: set[str] = set()
+    # The family-agnostic rules (gap + silent-None census, compound identity, media
+    # membership, uncertainty sanity). L4 stays with this verifier: a segregant genotype is
+    # a haplotype mosaic, so its gene set comes from the genome, not from perturbations.
+    shared = SharedRecordRules()
 
     for i, rec in enumerate(records):
         exp = rec["experiment"]
         n_records += 1
+        shared.add(rec)
         try:
             validate(exp)
         except (ValueError, TypeError) as err:
@@ -228,19 +226,6 @@ def verify_segregant_growth_streaming(
         if ref_val is not None:
             n_ref += 1
             ref_worst = max(ref_worst, abs(float(ref_val)))
-        gaps = (exp["phenotype"].get("provenance_gaps") or []) + (
-            exp["environment"].get("provenance_gaps") or []
-        )
-        if gaps:
-            gap_records_with += 1
-        for gap in gaps:
-            gap_total += 1
-            reason = str(gap["reason"])
-            field = str(gap["field"])
-            gap_by_reason[reason] += 1
-            gap_by_field[field] += 1
-            if reason == ProvenanceGapReason.deferred_pending_source_review:
-                gap_worklist.add(field)
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(
@@ -348,18 +333,8 @@ def verify_segregant_growth_streaming(
             wrong_cross=wrong_cross[:10],
         )
     )
-    report.add(
-        provenance_gap_level_result(
-            ProvenanceGapCensus(
-                n_records=n_records,
-                n_records_with_gaps=gap_records_with,
-                n_gaps=gap_total,
-                by_reason=dict(gap_by_reason),
-                by_field=dict(gap_by_field),
-                worklist_fields=sorted(gap_worklist),
-            )
-        )
-    )
+    for result in shared.results():
+        report.add(result)
     report.add(
         _result(
             Level.L2,

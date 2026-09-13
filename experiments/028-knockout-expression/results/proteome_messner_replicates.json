@@ -1,0 +1,15 @@
+{
+ "generated_by": "experiments/028-knockout-expression/scripts/proteome_messner_replicates.py",
+ "n_duplicated_orfs": 146,
+ "n_proteins_scored": 1830,
+ "per_protein_median_r": 0.17991414109710285,
+ "per_protein_mean_r": 0.19972082991920403,
+ "per_protein_frac_above_0.3": 0.2650273224043716,
+ "ceiling_mean_sqrt_r": 0.4049039659991601,
+ "per_strain_median_r": 0.0365226879230815,
+ "per_strain_iqr": [
+  -0.04581108397633991,
+  0.2076622348789267
+ ],
+ "per_strain_n": 146
+}

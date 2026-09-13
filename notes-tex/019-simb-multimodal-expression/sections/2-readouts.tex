@@ -311,52 +311,55 @@ embedding stack under the pinball objective, four seeds, four runs per card) ran
 from 2026-09-10 23:17 CT. The six A40 tasks carrying seeds 1 to 3 finished between 09:54
 and 11:02 CT on 2026-09-12 after 1 d 10 h to 1 d 12 h, every run at its 1,400 epochs
 (about 40 epochs per hour per run at four per card, 2.6 times the solo rate in
-throughput); the two cabbi tasks carrying seed 0 were still running at 1 d 16 h. The 24
-finished runs were synced from the login node and read out with the round's rule:
-\file{roll\_max} at the matched budget of 1,399 epochs, paired within seed against
-\file{H\_ref}, the shared two-layer MLP readout.
+throughput); the two cabbi tasks carrying seed 0 (RTX 6000 cards, so GPU type is a
+seed-level block as in the mechanism round) finished at 16:19 and 16:44 CT the same day
+after 1 d 17 h. All 32 runs were synced from the login node and read out with the
+round's rule: \file{roll\_max} at the matched budget of 1,399 epochs, paired within seed
+against \file{H\_ref}, the shared two-layer MLP readout.
 \src{experiments/019-simb-multimodal/results/head_round_readout.json}
 
 \begin{table}[htbp]
 \centering\footnotesize
-\caption[]{The head round at epochs $\le 1{,}399$, seeds 1 to 3. \file{roll\_max} per
-arm (mean and sd over three seeds) and the paired difference against \file{H\_ref}
-within seed. The v9 long-budget band at the nearest tabulated budget (1,500 epochs) is
+\caption[]{The head round at epochs $\le 1{,}399$, four seeds. \file{roll\_max} per
+arm (mean and sd over four seeds) and the paired difference against \file{H\_ref}
+within seed; a star marks a run that never left the constant plateau. The v9 long-budget band at the nearest tabulated budget (1,500 epochs) is
 $0.1670 \pm 0.0117$ over eight arms.}
 \begin{tabular}{lrrlr}
 \toprule
-arm & mean & sd & minus \file{H\_ref}, seeds 1 / 2 / 3 & mean diff \\
+arm & mean & sd & minus \file{H\_ref}, seeds 0 / 1 / 2 / 3 & mean diff \\
 \midrule
-\file{H\_ref} (shared MLP) & $0.1758$ & $0.0083$ & & \\
-\file{H\_linear} & $0.1780$ & $0.0087$ & $+0.016$ / $-0.001$ / $-0.009$ & $+0.002$ \\
-\file{H\_pergene} (GEARS row) & $0.1674$ & $0.0167$ & $+0.016$ / $-0.014$ / $-0.027$ & $-0.008$ \\
-\file{H\_gears} (row + cross-gene) & $0.1252$ & $0.0600$ & $-0.110^{*}$ / $-0.038$ / $-0.005$ & $-0.051$ \\
-\file{H\_basis64} (scGPT MVC form) & $0.1856$ & $0.0151$ & $+0.035$ / $-0.003$ / $-0.003$ & $+0.010$ \\
-\file{H\_pergene\_basis64} & $0.1481$ & $0.0780$ & $+0.015$ / $+0.020$ / $-0.118^{*}$ & $-0.028$ \\
-\file{H\_concat} (State SE form) & $0.1880$ & $0.0064$ & $+0.014$ / $+0.011$ / $+0.012$ & $+0.012$ \\
-\file{H\_state} (State ST form) & $0.1705$ & $0.0049$ & $+0.006$ / $-0.019$ / $-0.003$ & $-0.005$ \\
+\file{H\_ref} (shared MLP) & $0.1740$ & $0.0076$ & & \\
+\file{H\_linear} & $0.1765$ & $0.0077$ & $+0.003$ / $+0.016$ / $-0.001$ / $-0.009$ & $+0.002$ \\
+\file{H\_pergene} (GEARS row) & $0.1656$ & $0.0141$ & $-0.009$ / $+0.016$ / $-0.014$ / $-0.027$ & $-0.008$ \\
+\file{H\_gears} (row + cross-gene) & $0.1344$ & $0.0523$ & $-0.007$ / $-0.110^{*}$ / $-0.038$ / $-0.005$ & $-0.040$ \\
+\file{H\_basis64} (scGPT MVC form) & $0.1532$ & $0.0661$ & $-0.113^{*}$ / $+0.035$ / $-0.003$ / $-0.003$ & $-0.021$ \\
+\file{H\_pergene\_basis64} & $0.1486$ & $0.0637$ & $-0.019$ / $+0.015$ / $+0.020$ / $-0.118^{*}$ & $-0.025$ \\
+\file{H\_concat} (State SE form) & $0.1876$ & $0.0053$ & $+0.017$ / $+0.014$ / $+0.011$ / $+0.012$ & $+0.0135$ \\
+\file{H\_state} (State ST form) & $0.1733$ & $0.0070$ & $+0.013$ / $+0.006$ / $-0.019$ / $-0.003$ & $-0.001$ \\
 \bottomrule
 \end{tabular}
 \label{tab:readouts-head}
 \end{table}
 
-\pfstep{Two runs never trained} \file{H\_gears} seed 1 collapsed to constant output
-(validation Pearson $0.000$, predicted-to-true spread ratio $0.000$ at the end) and
-\file{H\_pergene\_basis64} seed 3 sat on the $0.059$ mean plateau for all 1,399 epochs;
-both were the runs flagged as stuck at 14.7 h, and the third flagged run is in the cabbi
-pair. They are the starred entries in \cref{tab:readouts-head}, and they are what
-carries those two arms' means down; the escape-from-plateau failure rate at four runs
-per card, two of 24, is itself a number the round returns.
+\pfstep{Three runs never trained} \file{H\_gears} seed 1 collapsed to constant output
+(validation Pearson $0.000$, predicted-to-true spread ratio $0.000$ at the end),
+\file{H\_pergene\_basis64} seed 3 sat on the $0.059$ mean plateau for all 1,399 epochs,
+and \file{H\_basis64} seed 0 did the same at $0.056$; the three were the runs flagged as
+stuck at 14.7 h. They are the starred entries in \cref{tab:readouts-head}, and they are
+what carries those three arms' means down; the escape-from-plateau failure rate at four
+runs per card, three of 32, is itself a number the round returns, and all three are
+basis or cross-gene forms.
 
-\pfstep{What the twenty-two that trained say} \file{H\_concat}, the State SE decoder
+\pfstep{What the twenty-nine that trained say} \file{H\_concat}, the State SE decoder
 form (the strain vector concatenated to every gene token before the readout), is the
-only arm above \file{H\_ref} in every seed, by $+0.011$ to $+0.014$ with a seed-to-seed
-sd of $0.0015$ on the difference; three seeds resolve about $0.03$, so this is a
-consistent direction and not a resolved effect. \file{H\_basis64} is $+0.010$ on the
-strength of one seed. \file{H\_linear} and \file{H\_state} sit on \file{H\_ref}; the
-GEARS row is $-0.008$. The early single-epoch peaks that had \file{H\_state} and
+only arm above \file{H\_ref} in every seed, by $+0.011$ to $+0.017$, mean $+0.0135$
+with a seed-to-seed sd of $0.0026$ on the difference, a paired $t$ of about $10$ on
+three degrees of freedom; with the fourth seed on other hardware this is a resolved
+effect, small. \file{H\_basis64} was $+0.010$ on one seed at three seeds and is
+$-0.021$ at four, its seed 0 never having trained. \file{H\_linear} and \file{H\_state}
+sit on \file{H\_ref}; the GEARS row is $-0.008$. The early single-epoch peaks that had \file{H\_state} and
 \file{H\_pergene} ahead at 14.7 h do not survive the rolling maximum at the matched
-budget. \file{H\_ref} itself reads $0.176$ at 1,400 epochs on the E\_full stack against
+budget. \file{H\_ref} itself reads $0.174$ at 1,400 epochs on the E\_full stack against
 the v9 band mean of $0.167$ at 1,500, the embedding-content effect of the v10 and v11
 rounds seen again; the v11 E\_full run at 1,400 on Delta is the same configuration on
 other hardware and is the direct check when it syncs.
@@ -364,8 +367,8 @@ other hardware and is the direct check when it syncs.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/head_round_readout.pdf}
-\caption[]{\textbf{Only \file{H\_concat} is above \file{H\_ref} in every seed, by about $0.012$, a direction three seeds cannot resolve.} \textbf{a}, validation
-Pearson (5-epoch rolling mean) of all 24 runs, color by arm, line style by seed; the
+\caption[]{\textbf{Only \file{H\_concat} is above \file{H\_ref} in every seed, by $+0.0135$ over four seeds, a small resolved effect; three runs never left the plateau.} \textbf{a}, validation
+Pearson (5-epoch rolling mean) of all 32 runs, color by arm, line style by seed; the
 dotted line is the matched budget. \textbf{b}, \file{roll\_max} at epochs $\le 1{,}399$
 per arm and seed, lines joining one seed's arms; the band is the eight v9 long-budget
 arms at 1,500 epochs. \textbf{c}, the paired difference against \file{H\_ref} within

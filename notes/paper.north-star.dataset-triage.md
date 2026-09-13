@@ -417,13 +417,19 @@ Parallel gap: no genuine **eQTL/pQTL × compound** crossover (natural-variation 
 4. **High-dimensional template:** treat Nadal-Ribelles 2025 (row 52) as the reference case; verify its GEO accession as the immediate next step.
 5. All four new rows carry **data-availability caveats** (portal live-status for FitDb; ChemGRID for Wildenhain; SI strain-panel size for Piotrowski; Zotero-filing + decomposition for Turco) — confirm before treating any as ingestion-ready.
 
-## 2026.09.13 - Candidate rows from the knockout-expression comparisons (not yet triaged)
+## 2026.09.13 - Candidate rows from the knockout-expression comparisons (author go-ahead 2026-09-13: add as rows 80-87)
 
 Surfaced by the 028 cross-study work (Kemmeren against Nadal-Ribelles fails to replicate
 strain by strain; Messner against Zelezniak barely does). None of these is in the 79-row
 table above except Muenzner 2024 (row 53). Each would add a tier of the central dogma or a
-strain-level pairing that the served datasets do not have. Adding any is a curation
-decision; none has been fetched.
+strain-level pairing that the served datasets do not have. The author asked for these to
+be added (2026-09-13, "these are good candidates bc cross over"). Adding a paper to the
+library is done by hand in Zotero; the mirror pull and the loader follow from there. DOIs
+for the Zotero step: Hughes 2000 10.1016/S0092-8674(00)00015-5; Hu 2007 10.1038/ng1992;
+Muenzner 2024 10.1038/s41586-024-07442-9; Albert 2018 10.7554/eLife.35471; Sun 2013
+10.1101/gr.152546.112; McManus 2014 10.1101/gr.164996.113; Martin-Perez 2017
+10.1016/j.cels.2017.08.008; Hackett 2020 10.15252/msb.20199174. DOIs from memory, verify
+at the Zotero step.
 
 | candidate | tier | strains | what it pairs with | why |
 |---|---|---|---|---|

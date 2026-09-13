@@ -53,3 +53,17 @@ Example runs:
 
 Results: `experiments/019-simb-multimodal/results/head_round_readout.{csv,json}`. Re-run
 after the cabbi pair lands to fold in seed 0.
+
+## 2026.09.13 - Seed 0 in: H_concat +0.0135 in every seed, a small resolved effect
+
+The cabbi pair (`2392379_0/_1`, RTX 6000) completed 2026-09-12 16:19 and 16:44 CT after
+1 d 17 h; the eight runs synced with `INCLUDE_SYNCED=1` and the readout re-run on all 32.
+At epochs <= 1,399: H_ref 0.1740 +/- 0.0076; H_concat 0.1876 +/- 0.0053, paired +0.017 /
++0.014 / +0.011 / +0.012 (mean +0.0135, sd 0.0026). H_linear +0.002, H_state -0.001,
+H_pergene -0.008; H_basis64 seed 0 (`kjs3u9rw`) is the third plateau run (0.056), so
+H_basis64 falls to -0.021 and the plateau rate is 3 of 32, all basis or cross-gene forms.
+Seed-0 runs: H_ref `vahi7g0w`, H_concat `zigh98ds`.
+
+- <https://wandb.ai/zhao-group/torchcell_019_expr_v12/runs/zigh98ds>
+- <https://wandb.ai/zhao-group/torchcell_019_expr_v12/runs/vahi7g0w>
+- <https://wandb.ai/zhao-group/torchcell_019_expr_v12/runs/kjs3u9rw>

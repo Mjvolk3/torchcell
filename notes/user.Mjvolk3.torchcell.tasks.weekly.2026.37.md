@@ -69,7 +69,7 @@ created: 1788904951158
 - [x] Kemmeren-strain overlap of every built deletion-collection dataset counted (O'Duibhir 1,312 of 1,312; Messner 1,350; Mulleder 1,416; Ohya 1,440; Hoepfner 1,452; YeastPhenome 1,475; Sameith 82 singles + 72 doubles); pivot options for the free gpu cards discussed, no run submitted
 - [x] TFLink's yeast layer is YEASTRACT 2020 (downloaded 2020-07-20) + GTRD + ORegAnno; YEASTRACT+ 2023 has 215k associations [[torchcell.graph.graph]]
 - [x] v12 head round: gpu tasks done, 24 runs synced, readout on seeds 1-3 (H_concat +0.012 in every seed; two plateau runs) [[experiments.019-simb-multimodal.scripts.head_round_readout]]
-- [ ] v12: cabbi pair `2392379_0/_1` (seed 0) still running; sync with INCLUDE_SYNCED=1 after it ends and re-run `head_round_readout.py`
+- [x] v12: cabbi pair `2392379_0/_1` (seed 0) completed 09-12 16:44, synced, readout on 32 runs: H_concat +0.0135 in all four seeds (t ~10), H_basis64 seed 0 a third plateau run [[experiments.019-simb-multimodal.scripts.head_round_readout]]
 
 ## 2026.09.13
 

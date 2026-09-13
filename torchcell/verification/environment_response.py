@@ -590,10 +590,10 @@ def verify_environment_response_dataset_streaming(
             experiment_categories[str(exp_category)] += 1
         temp = (exp["environment"].get("temperature") or {}).get("value")
         media = (exp["environment"].get("media") or {}).get("name")
-        if temp is not None:
-            temp_counts[temp] += 1
-        if media is not None:
-            media_counts[media] += 1
+        # None counts as a baseline value, as in _modal_scalar: a gapped baseline
+        # temperature is an unstated one, and a stated temperature differs from it.
+        temp_counts[temp] += 1
+        media_counts[media] += 1
         if not (exp["environment"].get("perturbations") or []):
             no_pert_env.append((temp, media))
 

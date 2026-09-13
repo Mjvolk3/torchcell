@@ -7,6 +7,8 @@
 
 import json
 import logging
+import os
+import uuid
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -139,7 +141,14 @@ class FileLockHelper:
         try:
             with lock.acquire(timeout=timeout):
                 # Write to temporary file first for atomicity
-                temp_path = file_path.with_suffix(".tmp")
+                # Per-process temp name. A shared `<name>.tmp` let two co-resident runs on IGB's
+                # scratch (where the advisory lock did not exclude them) write the same
+                # temp file, and the second `replace` raised FileNotFoundError after the
+                # first had renamed it away (job 2397304, 3 of 24 runs). Each process now
+                # renames its own file over the destination, which is atomic either way.
+                temp_path = file_path.with_name(
+                    f"{file_path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp"
+                )
                 with open(temp_path, "w") as f:
                     json.dump(data, f, indent=indent, ensure_ascii=ensure_ascii)
 
@@ -207,7 +216,14 @@ class FileLockHelper:
                 updated_data = update_func(current_data)
 
                 # Write back atomically
-                temp_path = file_path.with_suffix(".tmp")
+                # Per-process temp name. A shared `<name>.tmp` let two co-resident runs on IGB's
+                # scratch (where the advisory lock did not exclude them) write the same
+                # temp file, and the second `replace` raised FileNotFoundError after the
+                # first had renamed it away (job 2397304, 3 of 24 runs). Each process now
+                # renames its own file over the destination, which is atomic either way.
+                temp_path = file_path.with_name(
+                    f"{file_path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp"
+                )
                 with open(temp_path, "w") as f:
                     json.dump(updated_data, f, indent=2, ensure_ascii=False)
 

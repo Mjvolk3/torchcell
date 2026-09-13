@@ -511,6 +511,12 @@ for k in $(seq 0 $((RUNS_PER_GPU - 1))); do
     echo "  resuming $ARM seed=$SEED from ${RESUME_CKPTS[$IDX]}"
   fi
   echo "  launching $ARM seed=$SEED -> $LOG"
+  # STAGGERED START. Four runs constructing the dataset in the same second raced on the
+  # gene_set.json write (job 2397304: three of 24 runs died at startup on the temp-file
+  # rename). The writer now uses per-process temp names; the stagger keeps the LMDB open,
+  # the split cache read and the W&B init from piling up as well. 30 s per run is nothing
+  # against a multi-day budget.
+  [[ "$k" -gt 0 ]] && sleep $((k * 30))
   singularity exec --nv "$SIF" bash -c "
     # -u omitted on purpose: conda's activate scripts reference unset variables, the same
     # class of failure as /etc/bashrc above. -e and pipefail still catch real errors.

@@ -911,14 +911,19 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         # ENCODABLE-COMPOUNDS-ONLY build (only compounds with a released SMILES in Table S1;
         # ~92% proprietary black-box CMBxxx dropped, incl. the named-but-structureless
         # CMB222), MINUS the one kept compound that resolves to no structure identifier
-        # (CMB409 Boromycin: 2 columns, 10,161 records). HIP 1,747,659 (305 encodable
-        # het-CNV experiments) + HOP 1,355,060 (303 encodable deletion experiments) =
-        # 3,102,719 records over 608 of 5,879 sensitivity columns (149 identified compounds,
-        # 148 distinct InChIKeys). One record per (ORF, sensitivity column); the compound is
-        # keyed by structure and the deposited study number lives on phenotype.screen_id.
-        # Drop ledger: <root>/dropped_records.json. See the loader docstring +
+        # (CMB409 Boromycin: 2 columns, 10,232 records). Row ORFs through the shared
+        # resolver: 6,651 rows kept per assay (6,599 CURRENT + 52 RENAMED merged-ORF
+        # strains kept as distinct strains of the current gene), 30 rows dropped per
+        # assay (18 NON_GENE_FEATURE: 9 blocked reading frames, 8 pseudogenes, 1
+        # transposable-element gene; 12 RETIRED), 7,273 HIP + 6,671 HOP cells lost.
+        # HIP 1,759,255 (305 encodable het-CNV experiments) + HOP 1,365,064 (303
+        # encodable deletion experiments) = 3,124,319 records over 608 of 5,879
+        # sensitivity columns (149 identified compounds, 148 distinct InChIKeys). One
+        # record per (row, sensitivity column); the compound is keyed by structure and
+        # the deposited study number lives on phenotype.screen_id. Drop ledger:
+        # <root>/dropped_records.json. See the loader docstring +
         # experiments/017-hoepfner-background-mutations/compound_encodability.json.
-        "expected_count": 3102719,
+        "expected_count": 3124319,
         # ~3.1M records -> single-pass streaming gate (retained from the 30M full-atlas build).
         "stream": True,
         # HIP het-CNV + HOP homozygous-deletion diploid collections (BY4743): no constant
@@ -949,8 +954,11 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "number, which keeps same-compound same-dose columns from two screens "
                 "L1-distinct; assay_type = pooled_competitive_growth_barcode; the 157 "
                 "Table S5 background-mutation HIP strains are KEPT and flagged in "
-                "<root>/table_s5_affected_strains.json; ORFs resolved to SGD R64 (non-R64 "
-                "names dropped)"
+                "<root>/table_s5_affected_strains.json; row ORFs go through the SHARED "
+                "resolve_gene_name (CURRENT kept; RENAMED kept under the current name with "
+                "the source ORF as perturbed_gene_name, a distinct strain; NON_GENE_FEATURE "
+                "such as pseudogenes and blocked reading frames, and RETIRED names, dropped "
+                "to <root>/dropped_records.json)"
             ),
             page=(
                 "Microbiol Res 2014 (doi:10.1016/j.micres.2013.11.004); Dryad "

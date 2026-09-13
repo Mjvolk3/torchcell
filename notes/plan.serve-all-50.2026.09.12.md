@@ -123,3 +123,113 @@ The user chose the full rebuild, deferred: this branch lands with NO import, mor
 Twelve of the fourteen are fixed, rebuilt, verified and registered (Costanzo 2021, Auesukaree, Mota, Baryshnikova, Bloom, Smith 2006, Smith 2016, Lian, Mormino, Vanacloig, Wildenhain, Hoepfner); Hillenmeyer het and hom are built and awaiting their verifier reports. The batch admission dry run against a copy of the production manifest BLOCKS as expected and names every served dataset: 34 through the one added `DoseBasis` member, Nadal-Ribelles also through `EnvironmentPerturbation` gaining the gap mixin, plus the composition-based node ids in the served adapter methods. That is the evidence for the single full rebuild.
 
 The same enum change made ten of the eleven finished dev stores read `stale` (their `build_manifest.json` carries the pre-change fingerprints). The stored values are unchanged, but the verification evidence is regathered on stores whose manifest matches the schema exactly: every finished dataset is rebuilt once more, sequentially, and `run_all` is rerun. Known pre-existing failure outside this campaign: `test_cachera2023.py` asserts 4,735 records and the store holds 4,719.
+
+## 2026.09.13 - Stale-manifest rebuild pass and re-verification
+
+All ELEVEN of the datasets in this pass read `stale`, not ten: `crispr_magic_lian2019`
+drifted on `EnvironmentPerturbation` alone, the other ten on `DoseBasis` as well
+(`smf_baryshnikova2010` on `DoseBasis` alone). The two Hillenmeyer stores, added to the
+pass afterwards, read `stale` on `EnvironmentPerturbation`. Freshness was read with
+`check_manifest` against `load_default_surface()` on the worktree's `torchcell/datamodels/`
+surface.
+
+Each stale store had `processed/`, `preprocess/experiment_reference_index.json` and
+`preprocess/build_manifest.json` moved into `<root>/deprecated-stale-manifest-2026-09-13/`,
+keeping `raw/` and the rest of `preprocess/` (`dropped_records.json`, `gene_set.json`,
+`block_counts.json`, `sourced_values.json`, `strain_batches.json`, and the Hoepfner
+`table_s5_affected_strains.json` beside the root). The reference-index cache is read back
+whenever present, so leaving it in place would have failed `post_process` on any count
+change. `gene_set.json` is rewritten by the `post_process` setter, so it did not need moving.
+
+Rebuild, then re-verification through the registered `ENVIRONMENT_RESPONSE_DATASETS` /
+`FITNESS_DATASETS` / `SEGREGANT_GROWTH_DATASETS` entries with each entry's own parameters
+(`stream` where set). Record counts and build wall times:
+
+| store | records | expected | build wall (s) |
+|---|---|---|---|
+| crispri_mormino2022 | 12 | 12 | 0.8 |
+| env_chemgen_auesukaree2009 | 525 | 525 | 0.9 |
+| env_chemgen_mota2024 | 1,270 | 1,270 | 1.6 |
+| smf_baryshnikova2010 | 5,993 | 5,993 | 6.7 |
+| crispri_chemgen_smith2016 | 7,053 | 7,053 | 8.3 |
+| env_chemgen_smith2006 | 12,747 | 12,747 | 9.7 |
+| env_chemgen_costanzo2021 | 61,430 | 61,430 | 39.8 |
+| env_chemgen_wildenhain2015 | 428,206 | 428,206 | 411.9 |
+| bloom2019 | 530,100 | 530,100 | 1,414.5 |
+| crispr_magic_lian2019 | 266,304 | 266,304 | 146.3 |
+| env_chemgen_hoepfner2014 | 3,102,719 | 3,102,719 | 535.5 |
+| env_chemgen_hillenmeyer2008_hom | 1,088,620 | 1,088,620 | 489.6 |
+| env_chemgen_hillenmeyer2008_het | 2,698,797 | 2,698,797 | 1,015.7 |
+
+Every rebuilt store reads `fresh`, and every record count equals its registered
+`expected_count`.
+
+Ten verifiers PASS on the rebuilt stores. Hoepfner 2014 FAILS one level:
+
+```
+[XX] L1 canonical_gene_names: 0 genes carry conflicting common-name spellings
+(0 records; 0 case-only); 14 systematic names are not the genome's current name;
+0 common names resolve to another gene
+```
+
+The 14 are YCL074W, YCL075W, YDR134C, YER109C, YFL056C, YIL167W, YIL170W, YIL171W,
+YIR043C, YJR026W, YLL016W, YLL017W, YOL153C, YOR031W, each reported as
+`non_gene_feature -> <itself>`: the resolver returns the same systematic name it was
+given, and the same level's L4 companion `current_genome_genes` accepts all 5,832
+measured names as genes of the current genome. The rule is being corrected in
+`torchcell/verification/common.py`; the Hillenmeyer verifiers were held rather than run
+against the same rule.
+
+Two findings beyond the pass. First, `env_chemgen_hoepfner2014` was rebuilt again by
+another process at 12:07 local (LMDB `data.mdb` mtime) after this pass verified it, and
+the store now on disk holds 3,124,319 records against the registered 3,102,719, a
+difference of 21,600. The PASS/FAIL above belongs to the 3,102,719-record store this pass
+built, not to what is on disk now. Second, the verification report is written into
+`preprocess/verification_report.json`, so re-running a verifier overwrites the previous
+report in place; the pre-rebuild reports were not preserved by the move-aside.
+
+## 2026.09.13 - Hoepfner ORF rule: the defect was the loader, not the L1 rule
+
+Correction to the section above: the L1 `canonical_gene_names` rule is right and was not
+changed. The 14 names it failed are `pseudogene`, `blocked_reading_frame` and
+`transposable_element_gene` features that resolve to themselves with status
+`non_gene_feature`; they are outside `SCerevisiaeGenome.gene_set` and outside every gene
+node the graph joins on. The L4 rules accepted them because their gene universe is the R64
+ORF + RNA FASTA header set, which lists those features as ORFs; that is a known looseness of
+L4 (it is a containment floor, not the current-gene check) and L1 with a resolver is the
+strict rule. The Hoepfner loader validated row ORFs against the same FASTA set instead of
+the shared resolver, so it kept 14 non-gene rows and dropped 52 renamed merged-ORF strains
+that every other chemogenomic loader keeps under the current gene. The loader now follows
+the Costanzo 2021 policy (details and the census in
+[[torchcell.datasets.scerevisiae.hoepfner2014]]); rebuilt to 3,124,319 records, runner and
+table updated. The 3,124,319-record store the rebuild pass saw on disk was this rebuild.
+
+Ontology check to add from this: the shared L4 gene set and the L1 resolver disagree on
+non-gene ORF features by construction. A loader that filters on the FASTA set alone will
+pass L4 and fail L1; the resolver is the policy. Recorded in
+[[torchcell.datamodels.ontology-checks]] as a loader convention rather than a new DAG
+check, since it is about gene identity, not the ontology graph.
+
+### Closing coherence run and the final admission dry run
+
+Test suites on the worktree at this point: datamodels, verification, adapters,
+knowledge_graphs and literature 841 passed, 3 skipped, 3 xfailed (the `SOTerm` dead-code
+xfail among them); datasets 194 passed, 1 failed, the pre-existing
+`test_cachera2023.py::test_cachera_build_smoke` count assertion (asserts 4,735, the store
+holds 4,719; not touched by this branch, reported to the user).
+
+Batch admission of all fourteen against a COPY of the production manifest
+(`scratchpad/serve50/kg_manifest.copy2.json`; the production file was compared byte for
+byte afterwards and is untouched): every dev LMDB reads `fresh`; verdict BLOCKED for all
+fourteen, on the same three grounds as before: 36 served datasets' schema closures moved
+(`EnvironmentPerturbation` gained the gap mixin, `DoseBasis` gained a member), the served
+graph class `environment perturbation` changed (the `factor` property), and adapter code
+used by served datasets changed (`_environment_node`, 36 served datasets). The value
+surface is not recorded in the production manifest, so it does not block. Report:
+`experiments/database/results/pre-build/2026-09-13/batch_admit_report_all14.json`. This is
+the evidence for the one full rebuild the user chose; no import is run on this branch.
+
+Supported-datasets table regenerated (`build_supported_datasets_table.py --max-gb 3`,
+50/50 built; `render_supported_datasets_table.py`): Hoepfner now 10,779 genotypes, 563
+environments (the distinct interned conditions over 608 kept columns, in place of the
+5,879 deposited sensitivity columns the row used to print), 3,124,319 records.

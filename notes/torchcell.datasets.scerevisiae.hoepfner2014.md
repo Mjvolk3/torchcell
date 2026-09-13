@@ -256,3 +256,69 @@ this run is the current answer.
 - 563 distinct environments are interned for 608 kept columns: two screens of the same
   compound at the same dose share ONE condition object, and are kept L1-distinct by
   `screen_id` on the phenotype. That is the intended shape.
+
+## 2026.09.13 - Row ORFs through the shared resolver; rebuilt to 3,124,319
+
+The stale-manifest rebuild pass re-ran the L0-L4 verifier on the 3,102,719-record
+build with a genome resolver supplied, and the shared L1 `canonical_gene_names` rule
+failed it:
+
+```
+[XX] L1 canonical_gene_names: 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 14 systematic names are not the genome's current name; 0 common names resolve to another gene
+```
+
+The 14 (YCL074W, YCL075W, YDR134C, YER109C, YFL056C, YIL167W, YIL170W, YIL171W, YIR043C,
+YJR026W, YLL016W, YLL017W, YOL153C, YOR031W) resolve to themselves with status
+`non_gene_feature`: in the R64-4-1 GFF they are `pseudogene` (8), `blocked_reading_frame`
+(9 after aliasing, e.g. YER109C/FLO8, YOR031W/CRS5) and one `transposable_element_gene`
+(YJR026W). They are real deletion strains, but they are not genes of the current genome:
+`SCerevisiaeGenome.gene_set` excludes them, and so does every gene node the graph joins
+on. The loader had validated row ORFs against the R64 ORF + RNA FASTA headers, and that
+universe lists pseudogenes and blocked reading frames as ORFs, which is why the L4
+`gene_containment_sgd` / `current_genome_genes` rules (built from the same FASTA set)
+accepted them while L1 did not. Costanzo 2021, Wildenhain 2015 and Hillenmeyer 2008 all
+already go through the shared resolver and keep only CURRENT or RENAMED genes; Hoepfner
+was the one chemogenomic loader with its own, broader universe.
+
+### Census of the deposited row ORFs (6,681 per matrix, identical in HIP and HOP)
+
+Measured with `scratchpad/serve50/hoepfner_orf_census.py` against the raw matrices:
+
+| resolver status | rows | notes |
+|---|---|---|
+| CURRENT | 6,599 | kept as is |
+| RENAMED | 52 | every one an old ORF SGD merged into a neighbour that also has its own row (YAL035C-A -> YAL034C-B, YFL035C / YFL035C-A -> YFL034C-B, ...); previously DROPPED as "non-R64" |
+| NON_GENE_FEATURE | 18 | 14 distinct targets after aliasing (YER108C -> YER109C, YFL057C -> YFL056C, YIL168W -> YIL167W, YIR044C -> YIR043C); previously KEPT |
+| RETIRED | 12 | R0010W-R0040C (2-micron), YAR037W, YAR040C, YAR043C, YBR160W_AS, YCL006C, YCL013W, YCL026C, YCL053C; previously dropped |
+
+### What changed in the loader
+
+- `ORF_RULE`: a row is kept only when `resolve_gene_name` returns CURRENT (stored as is) or
+  RENAMED (stored under the current systematic name with the deposited ORF as
+  `perturbed_gene_name`, so a merged-ORF strain stays a DISTINCT strain of that gene, the
+  Costanzo 2021 shape); NON_GENE_FEATURE and RETIRED rows are dropped with status,
+  resolved name, feature type and the number of non-empty cells lost in KEPT columns, into
+  `<root>/dropped_records.json` (`dropped_orfs`, `renamed_orfs`, `orf_rule`). The FASTA set
+  is still consulted as the final membership check, never as the rule.
+- The constructor takes `genome=`; when None a read-only S288C genome is opened at build
+  time (`overwrite=False`), never at import.
+- The Table S5 flag matches on the DEPOSITED name only. Table S5 names physical strains
+  by their 2014 name, so a renamed merged-ORF strain that now maps to a listed gene is
+  not that listed strain. The first rebuild matched on either name and flagged YJL020C's
+  records twice (610); the second rebuild corrects that.
+- Two tests pin the rule on a synthetic matrix with a fake resolver (`test_non_gene_and_
+  retired_rows_are_dropped_with_their_status`, `test_renamed_row_is_a_distinct_strain_of_
+  the_current_gene`).
+
+### Rebuild
+
+Stale stores moved aside, never deleted: `<root>/deprecated-orf-rule-2026-09-13/` (the
+3,102,719 build) and `<root>/deprecated-orf-rule-flagkey-2026-09-13/` (the first rebuild
+under the rule). Rebuilt in 555 s to **3,124,319 records** (HIP 1,759,255 + HOP 1,365,064;
+was HIP 1,747,659 + HOP 1,355,060): the 52 renamed rows add their cells, the 30 dropped
+rows per assay remove 7,273 HIP + 6,671 HOP cells, and the Boromycin column drop is now
+10,232 records (HIP 5,746 + HOP 4,486; was 10,161). Distinct genotypes 10,779 (was 10,719;
+101 of them renamed strains) over 5,842 genes (was 5,832, the 14 non-gene names gone and
+24 merged-ORF targets now present as genes). Table S5: 183 flagged strains (was 185; YIL167W
+and YIL171W were non-gene rows and are dropped). Runner `expected_count` 3,124,319; the
+supported-datasets row 10,779 genotypes.

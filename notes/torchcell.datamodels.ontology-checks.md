@@ -272,3 +272,22 @@ the checks people assume are failing:
 ## 2026.09.12 - Defects 1 and 2 closed
 
 The media library now builds every single-substance component through `resolved_compound` (55 substances identified, 9 undefined preparations by design, one gapped builder row), and every `base_medium` resolves to a `MEDIA_LIBRARY` key with a module-level check that raises otherwise ([[torchcell.datamodels.media]]). The two strict xfails now pass; the remaining xfail is `SOTerm` (defect 4), left in place deliberately. Defect 3 (the unguarded optional temperature) was closed by the adapter guard in the same branch.
+
+## 2026.09.13 - Gene identity: the resolver is the policy, the FASTA set is not
+
+Found while re-verifying Hoepfner 2014 (see [[plan.serve-all-50.2026.09.12]]): the L4
+`gene_containment_sgd` / `current_genome_genes` rules take their gene universe from the
+R64 ORF + RNA FASTA headers, and that set lists `pseudogene`, `blocked_reading_frame` and
+`transposable_element_gene` features as ORFs. The L1 `canonical_gene_names` rule, when a
+resolver is supplied, asks `SCerevisiaeGenome.resolve_gene_name` and fails any name whose
+status is not CURRENT. The two disagree on exactly those non-gene features, by
+construction. Loader convention that follows: every loader resolves its source gene names
+through the shared resolver (CURRENT kept; RENAMED kept under the current systematic name
+with the source name as `perturbed_gene_name`; NON_GENE_FEATURE and RETIRED dropped to a
+ledger). A loader that filters on the FASTA set alone passes L4 and fails L1. This is not
+a DAG check and is not added to `ontology_checks.py`; it is enforced by running the L1
+rule with a resolver on every gene-perturbation dataset (`runners.py` supplies one to
+the environment-response and fitness runners; the segregant runner has no gene
+perturbations to name, and the expression, morphology, metabolite, protein and RNA-seq
+runners do not yet take one, which is an open gap to close when those verifiers are
+next touched).

@@ -816,11 +816,39 @@ Spearman $0.77$ over 714 proteins (c). Gene co-variation across the 87 strains i
 $0.15$ between the proteomes and $0.07$ against Kemmeren, where Messner's own 87-strain
 matrix reproduces its full 4{,}549-strain matrix at $0.80$ (d--f): the strain count is
 enough to recover a panel's structure, and the $0.15$ is disagreement between the two
-studies. Hypothesis, untested: Zelezniak's stored values are SVA-adjusted, which may
-remove variation the two studies share; or most kinase deletions move the proteome too
-little for either study to measure the same small change, in which case the right tail
-of panel a holds the responsive ones.
+studies.
 \src{experiments/028-knockout-expression/results/proteome_replication_zelezniak.json}
+
+\pfstep{What differs between the two proteomes} Both draw on the Euroscarf MATa
+collection with prototrophy restored by the same minichromosome, in SM medium without
+supplements at 30\,\textdegree C, and neither paper says its stocks were checked against
+the other's. From there the methods part: Zelezniak grew 30 ml shake cultures and
+sampled each strain ``at an OD600 1.5 $\pm$ 0.1, before the cultures enter the diauxic
+shift'', in three biological replicates, on a TripleTOF 5600 with Spectronaut and a
+peptide-level surrogate-variable batch correction, against the parental strain; Messner
+grew 1.6 ml deep-well cultures with a glass bead at 1,000 rpm and harvested every strain
+8 h after a 1/10 dilution with no OD control, one measurement per strain
+(``Strains were not measured in replicates''), on a TripleTOF 6600 with DIA-NN and a
+plate-median batch correction across 57 plates, two instruments and 12 months, against
+a HIS3-complemented $his3\Delta$. Messner reports a growth rate of $< 0.8$ for 748 of
+4{,}678 strains, that a random forest on the proteome predicts growth at
+$R^2 = 0.68$, and a per-protein CV of $11.3\,\%$ in wild type and $16.2\,\%$ across
+knockouts; Zelezniak reports that ``less than 10\,\% of the total proteome changes in our
+kinase knockout strains could be explained by changes in growth rate''. Messner's own
+re-measurement of 29 deletions in the auxotrophic SGA background, same laboratory and
+medium, gave per-deletion Spearman ``from $\rho$ = 0.72 for the \textit{dep1}$\Delta$
+deletion strains to $\rho$ = $-0.19$ for the \textit{paf1}$\Delta$ deletion strain'', and
+Zelezniak's comparison of its kinase proteomes to microarrays of the same deletions gave
+a median per-strain $r$ of $0.12$. Hypotheses, untested and in this order: a single
+unreplicated sample per strain at a $16\,\%$ CV bounds a per-strain profile correlation
+far below the 388-sample abundance agreement; the clock-timed harvest puts slow-growing
+kinase deletions at a different growth phase than the OD-timed one, on the axis Messner
+says explains most of its proteome and Zelezniak says explains little of theirs; the
+surrogate-variable correction in Zelezniak may remove genotype-correlated structure;
+stock drift (Messner finds 92 aneuploid strains, one of them the kinase \textit{dbf2},
+and 44 strains still expressing the deleted gene) is real but touches too few of the 89
+to move a median. Media differ least. Neither paper compares itself to the other.
+\src{torchcell-library/messnerProteomicLandscapeGenomewide2023/paper.md, zelezniakMachineLearningPredicts2018/paper.md}
 
 Four panels that differ in platform, perturbation type and medium agree pairwise on
 which genes co-vary, at $0.24$ to $0.68$, while the strain-level agreement between the

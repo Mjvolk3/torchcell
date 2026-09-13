@@ -35,3 +35,27 @@ isobutanol). L0-L4 all pass (176 records).
 Runguphan & Keasling 2014 (PMID 23899824); `Provenance` points to the in-house xlsx (sha256
 023de80e). (2) KanMX marker is a representative (real markers mixed/unknown). (3) SC + 30C
 assumed. See memory `[[remaining-datasets-blocked-status]]`.
+
+## 2026.09.13 - Expression correlates for the ten TF deletions (idea, not run)
+
+Overlap of the 13 FFA genes (POX1, FAA1, FAA4 chassis plus the ten TFs) with the
+knockout-expression and proteome panels, counted from the LMDBs:
+
+| panel | FFA genes present as single deletions |
+|---|---|
+| Kemmeren 2014 (mRNA) | FAA4, FKH1, GCN5, OPI1, RFX1, RPD3, SPT3, YAP6 (7 of the 10 TFs; MED4, RGR1, TFC7 absent) |
+| O'Duibhir 2014 (growth rate, same lab) | the same eight |
+| Messner 2023 (protein) | POX1, FAA1, FAA4, FKH1, GCN5, OPI1, RFX1, RPD3, SPT3, YAP6 |
+| Sameith 2015 singles / doubles | FKH1, YAP6 / no double inside the set |
+| Nadal-Ribelles 2025 | POX1, FAA1, FAA4, RFX1, SPT3, YAP6 |
+
+Two uses, both unrun. (1) The seven single-TF profiles in Kemmeren against the single-TF
+FFA effects in the chassis: which expression signature a TF deletion carries, and whether
+the FFA-pathway genes (the identify_ffa_reactions set) move in it. (2) An expression
+model trained on Kemmeren singles (and Sameith doubles) can predict a profile for each of
+the 175 combinatorial strains, none of which has measured expression; the predicted
+profile is then a readout that can be tested against the measured FFA titers, which is
+the only way to see expression on the doubles and triples without a new experiment.
+Caveat: the FFA strains sit in the POX1 FAA1 FAA4 chassis, which no expression panel
+carries as a background, and the three absent TFs (MED4, RGR1, TFC7) are essential in
+S288C, so the Xue strains carry something other than a clean deletion for those.

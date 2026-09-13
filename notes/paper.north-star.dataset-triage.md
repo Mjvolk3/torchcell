@@ -416,3 +416,22 @@ Parallel gap: no genuine **eQTL/pQTL × compound** crossover (natural-variation 
 3. **File Turco 2023 into the Zotero `database` collection**, then give it a dedicated classification pass (meta-aggregation, not one row) before any ingestion decision.
 4. **High-dimensional template:** treat Nadal-Ribelles 2025 (row 52) as the reference case; verify its GEO accession as the immediate next step.
 5. All four new rows carry **data-availability caveats** (portal live-status for FitDb; ChemGRID for Wildenhain; SI strain-panel size for Piotrowski; Zotero-filing + decomposition for Turco) — confirm before treating any as ingestion-ready.
+
+## 2026.09.13 - Candidate rows from the knockout-expression comparisons (not yet triaged)
+
+Surfaced by the 028 cross-study work (Kemmeren against Nadal-Ribelles fails to replicate
+strain by strain; Messner against Zelezniak barely does). None of these is in the 79-row
+table above except Muenzner 2024 (row 53). Each would add a tier of the central dogma or a
+strain-level pairing that the served datasets do not have. Adding any is a curation
+decision; none has been fetched.
+
+| candidate | tier | strains | what it pairs with | why |
+|---|---|---|---|---|
+| Hughes et al. 2000, Cell (Rosetta compendium) | mRNA, microarray | ~276 deletions, YPD | Kemmeren (overlap not yet counted; the set was chosen across functions) | cross-lab replication of the deletion transcriptome, the test Nadal failed and Sameith (same lab) passed |
+| Hu, Killion, Iyer 2007, Nat Genet | mRNA, microarray | 263 TF deletions | Kemmeren (most TFs expected shared) | second cross-lab replication, on the regulators |
+| Muenzner et al. 2024, Nature (row 53) | protein | ~800 natural isolates | Caudal 2024 (same 1,011 collection) | protein against mRNA on the same isolates, strain by strain |
+| Albert et al. 2018, eLife (eQTL) | mRNA, RNA-seq | 1,012 BY x RM segregants | Bloom 2019 growth (segregants); a segregant proteome from the same cross, citation to verify | transcript and protein on a segregant panel |
+| Sun et al. 2013, Genome Res (comparative DTA) | mRNA synthesis and decay rates | 46 deletions | Kemmeren | splits an expression change into transcription and degradation |
+| McManus et al. 2014, Genome Res | ribosome occupancy | single strain | gene-level only | translation tier |
+| Martin-Perez and Villen 2017, Cell Syst | protein half-lives | single strain | gene-level only | turnover tier |
+| Hackett et al. 2020, Mol Syst Biol (IDEA) | mRNA, RNA-seq time courses | ~200 TF inductions | Kemmeren TF deletions (sign test), gene pairs | opposite perturbation; weakest angle of the list |

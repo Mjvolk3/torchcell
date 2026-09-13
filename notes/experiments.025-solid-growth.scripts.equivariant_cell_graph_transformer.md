@@ -610,3 +610,65 @@ chained 30 minutes apart behind 22030924, in the same order:
 | 22034670 | `cgt_s0_r_kl_fit_014` | 3 |
 | 22034671 | `cgt_s0_r_kl_ctrl_013` | 3 |
 | 22034673 | `cgt_s0_r_kl_fit_015` | 3 |
+
+## 2026.09.13 - Disjoint split: sequence embeddings against the matched learnable control
+
+All 30-epoch arms and two of the 100-epoch arms are complete; the table is produced by
+[[experiments.025-solid-growth.scripts.disjoint_embedding_readout]] from W&B by config
+tag and written to `results/disjoint_embedding_readout.csv`. One seed each, split Q, the
+constant-rate protocol, embedding side parameter-matched to the table. "max" is the max
+over the epochs run, an upward-biased order statistic; "mean 10 to 29" is a 20-epoch
+window average, not a max; "epoch 29" is the protocol's fixed reading.
+
+| config | arm | budget | max (epoch) | epoch 29 | mean 10 to 29 | mean 60 to 99 | val point loss at 29 | train P last | graph penalty last |
+|---|---|--:|---|---|---|---|---|---|---|
+| `ctrl_016` | learnable table | 30 | 0.195 (2) | 0.130 | 0.140 | | 1.217 | 0.644 | 0.34 |
+| `emb_017` | composite | 30 | 0.263 (2) | 0.222 | 0.215 | | 0.950 | 0.502 | 3.36 |
+| `calm_020` | CaLM alone | 30 | 0.252 (7) | 0.208 | 0.204 | | 0.950 | 0.532 | 2.98 |
+| `prot_021` | ProtT5 alone | 30 | 0.270 (3) | 0.135 | 0.162 | | 1.046 | 0.524 | 3.07 |
+| `emb_022` | composite | 100 | 0.263 (2) | 0.222 | 0.215 | 0.164 | 0.950 | 0.754 | 2.48 |
+| `prot_024` | ProtT5 alone | 100 | 0.248 (3) | 0.175 | 0.175 | 0.197 | 0.977 | 0.764 | 2.33 |
+| `calm_023` | CaLM alone | 100, at 32 | 0.252 (7) | 0.208 | 0.204 | partial | 0.950 | 0.544 | 2.90 |
+| `fudt_026` | promoter + terminator | 100, at 9 | 0.153 (6) | partial | partial | partial | partial | 0.378 | 6.81 |
+
+**Findings, one seed each.**
+
+- **The learnable control reproduces job 1640 under the constant rate**: 0.195 max at
+  epoch 2 against 1640's 0.199, 0.130 at epoch 29 against 0.131 at epoch 35. The
+  schedule was not what held the disjoint number down.
+- **Sequence input moves the disjoint number, and the move is not one lucky epoch.**
+  Over epochs 10 to 29 the composite averages 0.215 and CaLM 0.204 against the control's
+  0.140, with the control never above 0.163 in that window and the composite never
+  below 0.173. The maxima order the same way (0.263, 0.252 against 0.195). ProtT5 alone
+  has the highest max (0.270 at epoch 3) but averages 0.162 over the window: it peaks and
+  then follows the control down.
+- **The mechanism visible in the loss is memorization, and the composite resists it.**
+  The control's validation point loss climbs from 0.935 at epoch 2 to 1.217 at epoch 29,
+  past the label variance, while train Pearson reaches 0.64: the free rows fit the
+  training pairs. Composite and CaLM hold 0.95 through epoch 29. ProtT5 alone climbs to
+  1.05. Hypothesis, untested: a fixed gene vector cannot be moved to fit a training pair,
+  and a 3,328-dim vector through a width-339 projection is a tighter bottleneck than
+  ProtT5's 1,024 through width 985.
+- **The graph penalty tells the opposite story from the score.** The learnable model
+  drives the layer-1 attention onto the graphs (penalty 0.34 by epoch 29) and generalizes
+  worst; the embedding arms sit at 2.3 to 3.4 and generalize best. Matching the graphs is
+  easy for free rows and does not carry to unseen pairs.
+- **100 epochs adds nothing and costs something.** The composite's first 30 epochs are
+  bit-for-bit its 30-epoch run (same seed, same node type), then it decays to a mean of
+  0.164 over epochs 60 to 99 with validation loss at 1.05 and train Pearson at 0.75.
+  ProtT5 at 100 epochs holds 0.197 late. The best epoch is inside the first ten for every
+  arm, so the 30-epoch budget was sufficient on this split and the question is now
+  replicates, not epochs.
+- **The flanks alone are at epoch 9 with 0.153 max; partial**, but already below every
+  ORF-carrying arm at the same epochs (composite 0.208 to 0.263 over epochs 1 to 9).
+- Scale marks on this partition: additive ridge 0.185, MLP 0.141. The composite's window
+  mean sits above the ridge; the control's sits at the MLP.
+
+What this does not yet establish: the size of the composite-minus-control gap with error
+bars. Within a run the epoch-to-epoch swing is about 0.05, and no arm has a second seed.
+Two more seeds of `_016` and `_017` on the 30-epoch budget (about 9 h each on IGB) would
+put a spread on the 0.07 window gap.
+
+Sync note: `wandb sync` of an offline run rewrites the run's tags from its record, so
+tags added through the API are lost on the next sync; retag after the final sync, or
+rely on the config-name tags the run script now attaches at init.

@@ -23,6 +23,9 @@ from .costanzo2021_adapter import (
 from .dasilveira2014_adapter import (
     MetaboliteDaSilveira2014Adapter as MetaboliteDaSilveira2014Adapter,
 )
+from .hoepfner2014_adapter import (
+    EnvChemgenHoepfner2014Adapter as EnvChemgenHoepfner2014Adapter,
+)
 from .kemmeren2014_adapter import (
     MicroarrayKemmeren2014Adapter as MicroarrayKemmeren2014Adapter,
 )
@@ -167,6 +170,7 @@ environment_adapters = [
     "Mormino2022Adapter",
     "EnvChemgenVanacloig2022Adapter",
     "EnvChemgenWildenhain2015Adapter",
+    "EnvChemgenHoepfner2014Adapter",
 ]
 
 baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]

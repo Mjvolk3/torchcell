@@ -128,3 +128,41 @@ generally (this recurs across collections and QC issues), not Hoepfner-specific.
 - `hoepfner_crossvalidate_table_s5.py` → authoritative list + precision/recall
   (`table_s5_affected_strains.csv`, `table_s5_crossvalidation.json`).
 - `hoepfner_plot_table_s5_crossval.py` → fig 08.
+
+## 2026.09.12 - Exposure inside the encodable build, and where the flag now lives
+
+The counts above are for the FULL 29,996,238-record atlas. The served build is the
+encodable-compounds-only one, and after the serve-50 identity fix it is **3,102,719
+records**, so the exposure is much smaller in absolute terms and slightly larger as a
+share. Measured during the 2026.09.12 rebuild (`<root>/table_s5_affected_strains.json`,
+written by the loader itself):
+
+| set | strains | records | share of build | share of HIP |
+|---|---|---|---|---|
+| Table S5 positional | 157 | 47,863 | 1.543 % | 2.739 % |
+| all Table S5 listed | 185 | 56,401 | 1.818 % | 3.227 % |
+
+HOP exposure is **0**: the four clusters are HIP-only, as the paper states. The small
+difference from a pre-drop count (48,020 / 56,586) is exactly the Boromycin columns the
+identity rule removed, one record per flagged strain per dropped column.
+
+**Where the flag lives now.** The recommendation above ("flag, don't drop") is implemented,
+but NOT on the record. `Genotype` is not a `ProvenanceGapMixin`, so a typed gap cannot be
+asserted on it; and the `data_quality_flags: list[QualityFlag]` axis this note proposes
+would, on `Genotype` or on a deletion leaf, change a class inside 36 (resp. 1) served
+dataset closures, which is a full-rebuild trigger. Putting it on
+`EnvironmentResponsePhenotype` would be additive but semantically wrong (the flag is a
+reagent property, not a measurement property) and would duplicate it across 47,863 records.
+
+So the flag is a typed, sha256-anchored file beside the build,
+`<root>/table_s5_affected_strains.json` (`TableS5FlagFile` in
+`torchcell/datasets/scerevisiae/hoepfner2014.py`), carrying per strain the systematic name,
+the common name, the cluster, whether it is positional, the mutation, the construction lab
+and its measured record count, plus the pinned sha256 of both
+`experiments/017-hoepfner-background-mutations/results/table_s5_affected_strains.csv` and
+the mirrored `si/Table_S5.xls`. Any consumer joins it on `systematic_gene_name`.
+
+The durable answer is still option (c) from the serve-50 review: a `strain quality flag`
+GRAPH node class with an edge to `perturbation`, which is ADDITIVE to the graph schema and
+keeps the flag at the reagent level with no `schema.py` change. That is a shared-layer
+decision, not this dataset's.

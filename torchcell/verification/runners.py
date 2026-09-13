@@ -909,19 +909,22 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     "env_chemgen_hoepfner2014": {
         "root": "data/torchcell/env_chemgen_hoepfner2014",
         # ENCODABLE-COMPOUNDS-ONLY build (only compounds with a released SMILES in Table S1;
-        # ~92% proprietary black-box CMBxxx dropped, incl. the named-but-structureless CMB222):
-        # HIP 1,753,367 (306 encodable het-CNV experiments) + HOP 1,359,513 (304 encodable
-        # deletion experiments) = 3,112,880 records over 610 of 5879 sensitivity columns
-        # (150 encodable compounds of 1852 deposited). One record per (ORF, sensitivity column);
-        # compound_name embeds the unique experiment tag. See the loader docstring +
+        # ~92% proprietary black-box CMBxxx dropped, incl. the named-but-structureless
+        # CMB222), MINUS the one kept compound that resolves to no structure identifier
+        # (CMB409 Boromycin: 2 columns, 10,161 records). HIP 1,747,659 (305 encodable
+        # het-CNV experiments) + HOP 1,355,060 (303 encodable deletion experiments) =
+        # 3,102,719 records over 608 of 5,879 sensitivity columns (149 identified compounds,
+        # 148 distinct InChIKeys). One record per (ORF, sensitivity column); the compound is
+        # keyed by structure and the deposited study number lives on phenotype.screen_id.
+        # Drop ledger: <root>/dropped_records.json. See the loader docstring +
         # experiments/017-hoepfner-background-mutations/compound_encodability.json.
-        "expected_count": 3112880,
-        # ~3M records -> single-pass streaming gate (retained from the 30M full-atlas build).
+        "expected_count": 3102719,
+        # ~3.1M records -> single-pass streaming gate (retained from the 30M full-atlas build).
         "stream": True,
         # HIP het-CNV + HOP homozygous-deletion diploid collections (BY4743): no constant
         # background genes.
         "background_genes": frozenset(),
-        "provenance": Provenance(
+        "provenance": Provenance(  # noqa: F821  # resolved in runners.py's namespace
             source_uri=(
                 "https://datadryad.org/downloads/file_stream/4834608 (HIP_scores.txt); "
                 "https://datadryad.org/downloads/file_stream/4834609 (HOP_scores.txt); "
@@ -931,11 +934,23 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             method=(
                 "Novartis HIP-HOP chemogenomic atlas; deposited (adjusted) MADL "
                 "sensitivity score = (r_L - med(r_L))/MAD(r_L) per (deletion strain x "
-                "compound/concentration) at IC30 in YPD, 30 C, ~16 h, 2% DMSO; HIP = "
+                "compound/concentration) at IC30 in YPD_LIQUID, 30 C, 2% DMSO vehicle; "
+                "encodable compounds only (released Table S1 SMILES), and every kept "
+                "compound carries a structure identifier -- curated "
+                "compound_identity_table row first, else an InChIKey derived from the "
+                "released SMILES with RDKit; the one compound resolving to no identifier "
+                "(CMB409 Boromycin) is DROPPED (2 columns, 10,161 records). HIP = "
                 "heterozygous (EngineeredCopyNumberPerturbation copy 1/2, KanMX) diploid "
-                "incl. essential genes, HOP = homozygous KanMx deletion diploid; n_samples "
-                "= 2 (Ad. columns) / 1 (MADL columns), technical duplicate; ORFs resolved "
-                "to SGD R64 (non-R64 names dropped)"
+                "incl. essential genes at ~20 generations over four 16 h passages "
+                "(duration_hours a ProvenanceGap), HOP = homozygous KanMx deletion diploid "
+                "at 16 h / ~5 generations; n_samples = 2 (Ad. columns) / 1 (MADL columns), "
+                "technical duplicate, reference n_samples = 4 (conservative lower end of "
+                "the paper's 4-8 control replicates); screen_id = the deposited study "
+                "number, which keeps same-compound same-dose columns from two screens "
+                "L1-distinct; assay_type = pooled_competitive_growth_barcode; the 157 "
+                "Table S5 background-mutation HIP strains are KEPT and flagged in "
+                "<root>/table_s5_affected_strains.json; ORFs resolved to SGD R64 (non-R64 "
+                "names dropped)"
             ),
             page=(
                 "Microbiol Res 2014 (doi:10.1016/j.micres.2013.11.004); Dryad "

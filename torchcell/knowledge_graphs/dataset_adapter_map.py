@@ -15,6 +15,7 @@ from torchcell.adapters import (
     DmMicroarraySameith2015Adapter,
     EnvChemgenAuesukaree2009Adapter,
     EnvChemgenCostanzo2021Adapter,
+    EnvChemgenHoepfner2014Adapter,
     EnvChemgenMota2024Adapter,
     EnvChemgenVanacloig2022Adapter,
     EnvChemgenWildenhain2015Adapter,
@@ -65,6 +66,7 @@ from torchcell.datasets.scerevisiae.costanzo2021 import EnvChemgenCostanzo2021Da
 from torchcell.datasets.scerevisiae.dasilveira2014 import (
     MetaboliteDaSilveira2014Dataset,
 )
+from torchcell.datasets.scerevisiae.hoepfner2014 import EnvChemgenHoepfner2014Dataset
 from torchcell.datasets.scerevisiae.kemmeren2014 import MicroarrayKemmeren2014Dataset
 from torchcell.datasets.scerevisiae.kuzmin2018 import (
     DmfKuzmin2018Dataset,
@@ -167,4 +169,5 @@ dataset_adapter_map = {
     CrispriMormino2022Dataset: Mormino2022Adapter,
     EnvChemgenVanacloig2022Dataset: EnvChemgenVanacloig2022Adapter,
     EnvChemgenWildenhain2015Dataset: EnvChemgenWildenhain2015Adapter,
+    EnvChemgenHoepfner2014Dataset: EnvChemgenHoepfner2014Adapter,
 }

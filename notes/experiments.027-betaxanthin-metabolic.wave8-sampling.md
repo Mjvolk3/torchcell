@@ -482,3 +482,50 @@ distance matrix per genotype, no density, no trace estimator, no SVD.
 The admissible-subspace machinery stays where it earned its place, in
 `audit_latent_spread.py`, as the instrument that measures how big the polytope is. It is not
 needed in the training loop.
+
+## 2026.09.12 - The 80-epoch round is a short-budget read, and what K = 128 actually costs
+
+### Every 80-epoch cell stopped while it was still improving
+
+| cell | job | select epoch | budget | train_data_loss first to last |
+|---|---|---|---|---|
+| K = 16 s2703 | 1783 | 76 | 80 | 0.5397 to 0.5197 |
+| K = 1 s2703 | 1785 | 74 | 80 | 0.5433 to 0.4761 |
+| K = 16 s2704 | 1789 | 74 | 80 | 0.5319 to 0.4711 |
+| K = 1 s2704 | 1793 | 77 | 80 | 0.5315 to 0.4773 |
+
+Selection lands within six epochs of the end in all four, with the training loss still
+falling. A contrast between two arms that are both still improving measures where each
+happened to be when the clock stopped. The 80-epoch pairs are reported as the SHORT-BUDGET
+read and the definitive contrast is the 200-epoch round.
+
+The scorer now prints `select_epoch` with its budget and flags any cell that selected
+within five epochs of the end, so this cannot pass unnoticed again.
+
+### K = 128 costs 1.30x per epoch, not the 1.9x to 2.2x the models said
+
+Measured on job 1799, the first 200-epoch K = 128 cell: epochs 3 to 9 in 420 s, **70.0 s per
+epoch**. Against job 1776's ~54 s at K = 1 that is **1.30x**, and 200 epochs projects to
+about 3.9 h of training.
+
+Every extrapolation was too pessimistic, including mine. The CPU benchmark gives the layer
+alone at 47x for K = 64, and fitting the measured K = 16 point (1.11x per epoch) predicted
+1.93x at K = 128 on a 0.7K layer scaling and 2.17x on the 0.87K the K = 64 point suggested.
+The measurement is 1.30x. The gap says the GPU absorbs the wider batch better as K grows
+rather than in proportion to it: 16,384 rows through a 4,131 by 1,538 matmul is a shape that
+saturates the card, where 128 rows does not. A cost model fitted to CPU ratios and one small
+GPU point does not extrapolate over three octaves of K, and this one did not.
+
+| K | layer only, CPU | per epoch, GPU measured |
+|---|---|---|
+| 1 | 0.107 s | ~54 s (job 1776) |
+| 16 | 0.948 s | 60.0 s (job 1783), 1.11x |
+| 64 | 5.031 s | not run |
+| 128 | not measured, the run hit a bug first | 70.0 s (job 1799), 1.30x |
+
+The K = 128 CPU row is absent for a reason worth keeping: the benchmark died there on
+`RuntimeError: quantile() input tensor is too large`. `torch.quantile` caps its input at
+2**24 elements and `feas_balance_active_p95` is taken over `[B, independent rows]`, which is
+332k elements at K = 1 and 42.5M at K = 128. Every K = 128 forward pass would have died. The
+benchmark caught it before a single K = 128 job was submitted; the fix is a sort-based
+quantile reproducing the default linear interpolation exactly.

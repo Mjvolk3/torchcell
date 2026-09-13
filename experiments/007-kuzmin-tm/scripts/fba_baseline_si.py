@@ -600,10 +600,11 @@ def panel_schematic_genes(n_genome: int, n_model: int, n_screened: int, n_screen
     rows = [("Genome", n_genome, n_model), ("Screened", n_screened, n_screened_in_model)]
     for i, (label, total, inside) in enumerate(rows):
         y = 1 - i
-        ax.barh(y, 1.0, height=0.42, color="white", edgecolor="black", lw=0.5, zorder=2)
-        ax.barh(y, inside / total, height=0.42, color=ORANGE, edgecolor="black", lw=0.5, zorder=3)
+        bar_w = 0.46  # the bar; the count sits to its right, outside it and inside the glyph
+        ax.barh(y, bar_w, height=0.42, color="white", edgecolor="black", lw=0.5, zorder=2)
+        ax.barh(y, bar_w * inside / total, height=0.42, color=ORANGE, edgecolor="black", lw=0.5, zorder=3)
         ax.text(0, y + 0.31, f"{label}: {total:,} genes", ha="left", va="bottom", fontsize=6)
-        ax.text(inside / total + 0.02, y, f"{inside:,} ({100 * inside / total:.0f}%)", ha="left", va="center", fontsize=6)
+        ax.text(bar_w + 0.04, y, f"{inside:,} ({100 * inside / total:.0f}%)", ha="left", va="center", fontsize=6)
     ax.text(1.0, -0.55, "filled: in Yeast9", ha="right", va="center", fontsize=6, color=PLOT_PALETTE[6])
     ax.set_xlim(0, 1)
     ax.set_ylim(-0.85, 1.75)

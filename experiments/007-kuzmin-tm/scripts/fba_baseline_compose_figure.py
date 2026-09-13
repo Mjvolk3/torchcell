@@ -210,15 +210,16 @@ def rule_sketch(c: Canvas, x0: float, y0: float, w: float):
         c.text(f"{kind}: {gate}", gx, top + 38, 70, 10, fs=7)
 
 
-def algorithm_block(c: Canvas, x0: float, y0: float, w: float, h: float, lines: list[str], note: str):
-    """An algorithm-style block: a rule under the heading, math lines, a note under a rule."""
+def algorithm_block(c: Canvas, x0: float, y0: float, w: float, lines: list[str]) -> float:
+    """An algorithm-style block: a rule under the heading, one math line per row, a rule.
+    Returns the y below the closing rule."""
     c.line(x0, y0, x0 + w, y0, color="#666666", width=0.5)
     y = y0 + 3
     for latex in lines:
         c.math(latex, x0, y, w, 14)
         y += 15
     c.line(x0, y + 2, x0 + w, y + 2, color="#666666", width=0.5)
-    c.text(note, x0, y + 5, w, h - (y + 5 - y0), fs=FS)
+    return y + 2
 
 
 def small_table(c: Canvas, x0: float, y0: float, w: float, title: str, rows: list[tuple[str, str]]):
@@ -241,19 +242,54 @@ def plate_sketch(c: Canvas, x0: float, y0: float):
     stroke, fill = ROLE_COLOR["proxy"]
     pw, ph = 60, 40
     c.ellipse("", x0, y0, pw, ph, color=(stroke, "#FFFFFF"))
-    # (dx, dy, diameter): two wild-type colonies (large), five mutants (smaller)
-    colonies = [(12, 8, 8), (40, 24, 8), (30, 6, 5), (46, 10, 4), (10, 26, 4), (26, 27, 3), (22, 17, 5)]
-    for dx, dy, d in colonies:
+    # (dx, dy, diameter): two wild-type replicate colonies (large, ringed) and three
+    # replicate colonies of one mutant (equal, smaller); a strain's mu is the average
+    # over its replicates, so the label points at all of them.
+    wild = [(34, 6, 8), (46, 20, 8)]
+    mutant = [(8, 10, 5), (14, 24, 5), (24, 16, 5)]
+    for dx, dy, d in wild + mutant:
         c.ellipse("", x0 + dx, y0 + dy, d, d, color=(stroke, stroke))
-    for dx, dy, d in colonies[:2]:
+    for dx, dy, d in wild:
         c.ellipse("", x0 + dx - 3, y0 + dy - 3, d + 6, d + 6, color=(stroke, "#FFFFFF"), dashed=True, fill=False)
-    # labels below the plate, with leader lines
-    wx, wy, wd = colonies[1]
-    mx, my, md = colonies[6]
-    c.line(x0 + wx + wd / 2, y0 + wy + wd + 3, x0 + 46, y0 + ph + 6, color=stroke, width=0.5)
+    # labels below the plate, one leader line per colony
+    for dx, dy, d in wild:
+        c.line(x0 + dx + d / 2, y0 + dy + d + 3, x0 + 46, y0 + ph + 6, color=stroke, width=0.5)
     c.math(r"\mu_{\mathrm{WT}}", x0 + 36, y0 + ph + 4, 28, 14)
-    c.line(x0 + mx + md / 2, y0 + my + md, x0 + 12, y0 + ph + 6, color=stroke, width=0.5)
+    for dx, dy, d in mutant:
+        c.line(x0 + dx + d / 2, y0 + dy + d, x0 + 12, y0 + ph + 6, color=stroke, width=0.5)
     c.math(r"\mu", x0 + 6, y0 + ph + 4, 14, 14)
+
+
+def triple_sketch(c: Canvas, x0: float, y0: float):
+    """The Yeast9 gene set as an ellipse with two triples drawn as triangles of gene nodes:
+    one with all three genes inside, which FBA can score, and one with a gene outside
+    (dashed), whose tau is zero by construction."""
+    stroke, _fill = ROLE_COLOR["score"]
+    ew, eh = 70, 62
+    c.ellipse("", x0, y0, ew, eh, color=(stroke, "#FFFFFF"))
+    c.text("Yeast9 genes", x0, y0 + 2, ew, 10, fs=7, align="center")
+    d = 7  # gene node diameter
+
+    def node(cx, cy, dashed=False):
+        c.ellipse("", cx - d / 2, cy - d / 2, d, d, color=(stroke, "#FFFFFF" if dashed else stroke), dashed=dashed, fill=not dashed)
+
+    def edge(a, b, dashed=False):
+        c.line(a[0], a[1], b[0], b[1], color=stroke, width=0.6, dashed=dashed)
+
+    inside = [(x0 + 17, y0 + 46), (x0 + 41, y0 + 46), (x0 + 29, y0 + 24)]
+    for a, b in [(inside[0], inside[1]), (inside[1], inside[2]), (inside[2], inside[0])]:
+        edge(a, b)
+    for cx, cy in inside:
+        node(cx, cy)
+    c.math(r"\tau_{ijk}", x0 + 14, y0 + eh + 2, 32, 14)
+    straddle = [(x0 + 58, y0 + 24), (x0 + 58, y0 + 46), (x0 + 88, y0 + 35)]
+    edge(straddle[0], straddle[1])
+    edge(straddle[1], straddle[2], dashed=True)
+    edge(straddle[2], straddle[0], dashed=True)
+    node(*straddle[0])
+    node(*straddle[1])
+    node(*straddle[2], dashed=True)
+    c.math(r"\tau_{ijk} = 0", x0 + 54, y0 + eh + 2, 52, 14)
 
 
 def pipeline(c: Canvas, st: dict, y0: float) -> float:
@@ -299,27 +335,26 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
 
     # 4. FBA as the linear program it is.
     x0, w = lefts[3], BOX_W[3]
-    algorithm_block(
-        c, x0 + pad, y0 + HEAD_H + 2, w - 2 * pad, h - HEAD_H - 4,
+    y_end = algorithm_block(
+        c, x0 + pad, y0 + HEAD_H + 2, w - 2 * pad,
         [r"\mu = \max\ v_{\mathrm{growth}}", r"\text{s.t. } S v = 0", r"lb \le v \le ub", r"v_r = 0 \text{ for blocked } r"],
-        "One linear program per deletion set (GLPK, 60 s limit); the wild type is the same program with no gene deleted.",
+    )
+    small_table(
+        c, x0 + pad + 2, y_end + 6, w - 2 * pad - 4, "Solve",
+        [("Solver", "GLPK"), ("Per set", "one LP"), ("Limit", "60 s"), ("Wild type", "no deletion")],
     )
 
     # 5. Fitness proxy.
     x0, w = lefts[4], BOX_W[4]
     c.math(r"f = \mu / \mu_{\mathrm{WT}}", x0 + pad, y0 + HEAD_H + 2, w - 2 * pad, 16)
-    plate_sketch(c, x0 + (w - 60) / 2, y0 + HEAD_H + 24)
-    c.math(r"f = 0 \text{ if no optimum}", x0 + pad, y0 + h - 22, w - 2 * pad, 16)
+    plate_sketch(c, x0 + (w - 60) / 2, y0 + HEAD_H + 30)
 
     # 6. Interaction, as in Fig. 2a.
     x0, w = lefts[5], BOX_W[5]
     c.math(r"\varepsilon_{ij} = f_{ij} - f_i f_j", x0 + pad, y0 + HEAD_H + 4, w - 2 * pad, 16)
-    c.math(r"{\color{" + RED[0] + r"} \tau_{ijk}} = f_{ijk} - f_i f_j f_k", x0 + pad, y0 + HEAD_H + 20, w - 2 * pad, 16)
+    c.math(r"\tau_{ijk} = f_{ijk} - f_i f_j f_k", x0 + pad, y0 + HEAD_H + 20, w - 2 * pad, 16)
     c.math(r"\quad - \varepsilon_{ij} f_k - \varepsilon_{ik} f_j - \varepsilon_{jk} f_i", x0 + pad, y0 + HEAD_H + 34, w - 2 * pad, 16)
-    c.text("From the predicted fitness of the triple, its three doubles and three singles; "
-           f"compared with the measured <font color=\"{RED[0]}\">&tau;</font> of the same gene set "
-           f"(<font color=\"{RED[0]}\">b</font>, <font color=\"{RED[0]}\">g</font>).",
-           x0 + pad, y0 + HEAD_H + 56, w - 2 * pad, h - HEAD_H - 58)
+    triple_sketch(c, x0 + pad, y0 + HEAD_H + 58)
 
     ym = y0 + h / 2
     for i in range(5):

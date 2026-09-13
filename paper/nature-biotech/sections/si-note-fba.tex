@@ -168,9 +168,13 @@ deletion sets are the 4,036 singles, 651,181 doubles and 332,313 triples of the 
 and 2020 screens, of which 736, 18,565 and 7,419 have every gene in the model (darker bars).
 FBA solves one linear program per set (GLPK, 60~s limit; 128 processes, 10~min in all;
 $\mu_{\mathrm{WT}}=0.0858$~h$^{-1}$); fitness is the growth ratio to the wild type, drawn as
-colony sizes on a plate (ringed, the wild type); the interaction is that of
-Fig.~\ref{fig:ggi}a, compared with the measured value of the same triple in \textbf{b} and
-\textbf{g}.
+colony sizes on a plate (ringed, the wild-type replicates; a strain's $\mu$ is the mean
+over its replicate colonies; a solve with no optimum counts as $f=0$); the interaction is
+that of Fig.~\ref{fig:ggi}a, from the predicted fitness of the triple, its three doubles
+and three singles, and it can be scored in full only when all three genes are in Yeast9
+(the triangle inside the set); a triple with a gene outside the set (dashed) has
+$\tau_{ijk}=0$ by construction. Predicted $\tau_{ijk}$ is compared with the measured value
+of the same triple in \textbf{b} and \textbf{g}.
 \textbf{b},~Predicted against measured $\tau_{ijk}$ for all 332,313 triples, as hexagonal
 bins with a logarithmic count scale; the vertical band at zero holds the 99.93\% of triples
 whose predicted $\lvert\tau_{ijk}\rvert$ is below $10^{-3}$, and the 231 others sit almost

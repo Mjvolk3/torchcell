@@ -92,9 +92,9 @@ than several optimizations, so only same-sitting stages compare.
 2.11, bf16-mixed, batch 600, the cluster's per-GPU batch; the epoch-142 checkpoint of
 \texttt{eni948by} loaded strictly into the rebuilt model before profiling). The five
 ``Forward'' phases are the forward pass, gene-state gather being the lookup of each term's
-deleted genes, done once per term and per strain. Light bars, share of the step's host time
-(Python plus kernel launches) per phase; dark bars, share of the GPU kernel time; the phases
-partition the step. The step takes 30.6~s untraced (118~s under the tracer, which is why
+deleted genes, done once per term and per strain. Purple bars, share of the step's host
+time (Python plus kernel launches) per phase; orange bars, share of the GPU kernel time; the
+phases partition the step. The step takes 30.6~s untraced (118~s under the tracer, which is why
 shares rather than seconds are drawn), issues 1,731,051 kernel launches, 2,700 more per
 added strain, and the GPU runs kernels for 3.1~s of it (10\%); the gather is 92\% of the
 host time and 88\% of the kernel time. The batch is built once and held on the GPU, so no

@@ -533,8 +533,8 @@ def panel_loss(hist: pd.DataFrame, full: pd.DataFrame, ck: pd.DataFrame):
     ax.plot(steps["trainer/global_step"] / n_step, steps["train/loss"], color=YELLOW, lw=0.4, label="train loss (per 10 steps)")
     v = hist.sort_values("epoch")
     ax.plot(v["epoch"], v["val/loss"], color=PURPLE, lw=0.8, label="validation loss (per epoch)")
-    for e in ck["epoch"]:
-        ax.axvline(e, color=RED, lw=0.4, ls=":")
+    for i, e in enumerate(ck["epoch"]):
+        ax.axvline(e, color=RED, lw=0.4, ls=":", label="Fig. 2d checkpoints" if i == 0 else None)
     ax.set_yscale("log")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("DCell loss (log scale)")
@@ -543,7 +543,7 @@ def panel_loss(hist: pd.DataFrame, full: pd.DataFrame, ck: pd.DataFrame):
     ax.set_axisbelow(True)
     lr = full["learning_rate"].dropna()
     assert lr.min() == lr.max(), "learning rate was reduced during the run; update the label"
-    ax.text(0.02, 0.04, f"learning rate constant at {lr.max():.0e} (min_lr = lr)", transform=ax.transAxes, fontsize=6, va="bottom")
+    ax.text(0.02, 0.04, f"constant learning rate {lr.max():.0e}", transform=ax.transAxes, fontsize=6, va="bottom")
     ax.legend(loc="upper right", frameon=False, handlelength=1.6, borderpad=0.2, labelspacing=0.3)
     box(ax)
     save(fig, "dcell_training_loss")
@@ -575,6 +575,7 @@ def panel_cost(cost: pd.DataFrame):
             ax.scatter([i] * len(vals), vals, s=9, facecolor="white", edgecolor="black", lw=0.5, zorder=5)
             ax.text(i, top * 1.25, fmt_.format(mean), ha="center", va="bottom", fontsize=6)
         ax.set_yscale("log")
+        ax.set_xlim(-0.6, len(order) - 0.4)  # clear of the spines: a bar edge on a spine reads as a thick line
         ax.set_xticks(range(len(order)))
         ax.set_xticklabels([labels[m] for m in order])
         ax.set_ylabel(ylab)

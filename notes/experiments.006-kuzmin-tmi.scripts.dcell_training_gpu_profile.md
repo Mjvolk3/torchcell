@@ -38,3 +38,7 @@ Hypothesis (untested): a single batched gather per stratum (one `index_select` o
 Author review: the four-line header crowded the panel and the 92% label fell off the right edge. The header text (GPU, torch version, launches, wall-clocks) moved to the figure caption; the panel carries a one-line title ("One training step on one GPU, batch 600"), the five forward-pass phases are labeled "Forward: ..." so the gather reads as part of the forward pass, and the x axis runs to 125% so the bar labels fit. `PHASE_LABELS` holds the panel labels; the CSV labels are unchanged.
 
 ![](./assets/images/006-kuzmin-tmi/dcell_training_gpu_profile.svg)
+
+## 2026.09.12 - Panel e as grouped bars in two colors
+
+The dark overlay bars read as stray borders (a dark edge inside the gather bar, an orange stub past the backward bar) and the gray non-forward bars had no legend entry. Each phase is now two grouped bars, host share in purple and GPU kernel share in orange, one legend for every bar, and the forward/other split is carried by the "Forward:" labels alone. Numbers unchanged.

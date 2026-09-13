@@ -72,9 +72,9 @@ sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 from dcell_training_cpu_profile import (  # noqa: E402
     ALPHA,
     CLIP_NORM,
-    GRAY,
     LR,
     MODEL_RESULTS,
+    ORANGE,
     PHASES,
     PURPLE,
     RESULTS,
@@ -351,19 +351,18 @@ PHASE_LABELS = {
 
 
 def panel_gpu_profile(prof: pd.DataFrame, ops: pd.DataFrame):
-    """Horizontal bars per phase of one step at the cluster batch: share of the step's
-    host time (light) with the share of GPU kernel time overlaid (dark). Shares, not
-    seconds: CUDA tracing slows the traced step several-fold. The environment, launch
+    """Grouped horizontal bars per phase of one step at the cluster batch: the share of
+    the step's host time (purple) beside the share of its GPU kernel time (orange). Shares,
+    not seconds: CUDA tracing slows the traced step several-fold. The environment, launch
     count and wall-clock are in the figure caption, read from the frozen CSVs.
     """
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(48)))
     fig.subplots_adjust(left=0.44, right=0.97, bottom=0.18, top=0.90)
     y = np.arange(len(prof))[::-1]
-    light = [PURPLE if k in FORWARD_PHASES else GRAY for k in prof["phase"]]
-    dark = [DARK_PURPLE if k in FORWARD_PHASES else DARK_GRAY for k in prof["phase"]]
-    ax.barh(y, 100 * prof["host_share"], color=light, edgecolor="black", lw=0.5, height=0.65, zorder=3)
-    ax.barh(y, 100 * prof["device_share"], color=dark, edgecolor="black", lw=0.5, height=0.32, zorder=4)
+    bh = 0.36
+    ax.barh(y + bh / 2, 100 * prof["host_share"], color=PURPLE, edgecolor="black", lw=0.5, height=bh, zorder=3)
+    ax.barh(y - bh / 2, 100 * prof["device_share"], color=ORANGE, edgecolor="black", lw=0.5, height=bh, zorder=3)
     for yi, (_, r) in zip(y, prof.iterrows()):
         ax.text(100 * max(r["host_share"], r["device_share"]) + 2, yi,
                 f"{100 * r['host_share']:.0f}% | {100 * r['device_share']:.0f}%", va="center", fontsize=6)
@@ -377,7 +376,7 @@ def panel_gpu_profile(prof: pd.DataFrame, ops: pd.DataFrame):
     ax.grid(axis="x", color="#D0D0D0", lw=0.4)
     ax.set_axisbelow(True)
     ax.legend(
-        handles=[plt.Rectangle((0, 0), 1, 1, fc=PURPLE, ec="black", lw=0.5), plt.Rectangle((0, 0), 1, 1, fc=DARK_PURPLE, ec="black", lw=0.5)],
+        handles=[plt.Rectangle((0, 0), 1, 1, fc=PURPLE, ec="black", lw=0.5), plt.Rectangle((0, 0), 1, 1, fc=ORANGE, ec="black", lw=0.5)],
         labels=["host: Python + kernel launches", "GPU: kernels running"],
         loc="lower right", frameon=True, fontsize=6, handlelength=1.0, handleheight=0.8, borderaxespad=0.3,
     )

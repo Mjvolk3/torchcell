@@ -594,17 +594,19 @@ def panel_schematic_genes(n_genome: int, n_model: int, n_screened: int, n_screen
     """Two proportion bars for the Yeast9 card of panel a: of the genome's protein-coding
     genes and of the screened genes, the part the model carries (filled).
     """
-    fig, ax = plt.subplots(figsize=(mm_to_in(27), mm_to_in(15)))
+    fig, ax = plt.subplots(figsize=(mm_to_in(25), mm_to_in(15)))
     fig.subplots_adjust(left=0.02, right=0.98, bottom=0.04, top=0.96)
+    fig.patch.set_alpha(0.0)  # sits on the card's fill, so no white block behind it
     rows = [("Genome", n_genome, n_model), ("Screened", n_screened, n_screened_in_model)]
     for i, (label, total, inside) in enumerate(rows):
         y = 1 - i
         ax.barh(y, 1.0, height=0.42, color="white", edgecolor="black", lw=0.5, zorder=2)
         ax.barh(y, inside / total, height=0.42, color=ORANGE, edgecolor="black", lw=0.5, zorder=3)
         ax.text(0, y + 0.31, f"{label}: {total:,} genes", ha="left", va="bottom", fontsize=6)
-        ax.text(inside / total + 0.02, y, f"{inside:,} in Yeast9 ({100 * inside / total:.0f}%)", ha="left", va="center", fontsize=6)
+        ax.text(inside / total + 0.02, y, f"{inside:,} ({100 * inside / total:.0f}%)", ha="left", va="center", fontsize=6)
+    ax.text(1.0, -0.55, "filled: in Yeast9", ha="right", va="center", fontsize=6, color=PLOT_PALETTE[6])
     ax.set_xlim(0, 1)
-    ax.set_ylim(-0.4, 1.75)
+    ax.set_ylim(-0.85, 1.75)
     ax.axis("off")
     save(fig, "fba_schematic_genes")
 
@@ -614,19 +616,20 @@ def panel_schematic_deletions(counts: dict, covered: dict):
     deletion sets of the screen (log count), with the sets whose every gene is in Yeast9
     as the darker part.
     """
-    fig, ax = plt.subplots(figsize=(mm_to_in(27), mm_to_in(25)))
-    fig.subplots_adjust(left=0.3, right=0.97, bottom=0.25, top=0.82)
+    fig, ax = plt.subplots(figsize=(mm_to_in(27), mm_to_in(29)))
+    fig.subplots_adjust(left=0.3, right=0.97, bottom=0.22, top=0.85)
     orders = ["singles", "doubles", "triples"]
     x = np.arange(3)
     tot = [counts[o] for o in orders]
     cov = [covered[o] for o in orders]
     ax.bar(x, tot, 0.62, color=YELLOW, edgecolor="black", lw=0.5, zorder=3, label="all sets")
     ax.bar(x, cov, 0.62, color=PLOT_PALETTE[9], edgecolor="black", lw=0.5, zorder=4, label="in Yeast9")
-    for xi, t, cv in zip(x, tot, cov):
-        ax.text(xi, t * 1.35, f"{t:,}", ha="center", va="bottom", fontsize=5)
+    # The neighboring doubles and triples labels would touch at one height: raise one, lower the other.
+    for xi, t, cv, lift in zip(x, tot, cov, [1.35, 2.4, 1.12]):
+        ax.text(xi, t * lift, f"{t:,}", ha="center", va="bottom", fontsize=5)
         ax.text(xi, cv * 0.5, f"{cv:,}", ha="center", va="center", fontsize=5, color="white")
     ax.set_yscale("log")
-    ax.set_ylim(100, 5e6)
+    ax.set_ylim(100, 8e6)
     ax.set_yticks([1e2, 1e4, 1e6])
     ax.set_xticks(x)
     ax.set_xticklabels(["1", "2", "3"])

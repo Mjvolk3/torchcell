@@ -57,6 +57,7 @@ COL_GAP = 12  # 3 mm between columns
 ROW_GAP = 22  # 5.5 mm between rows; the next row's TOP_STRIP is the lower part of it
 TOP_STRIP = 16  # the letter strip above every row
 LETTER_W, LETTER_H = 18, 14
+LETTER_GAP = 5  # extra units between the letter strip and a full-width row of bordered cards
 
 # Palette (PLOT_PALETTE / PLOT_PALETTE_FILL slots 1-6), (stroke, fill).
 ORANGE = ("#D79B00", "#FFE6CC")
@@ -180,7 +181,7 @@ def svg_size(path: str) -> tuple[float, float]:
 
 
 ARROW_GAP = 14  # between the boxes of the pipeline row
-PIPE_H = 168  # height of the pipeline boxes (42.7 mm)
+PIPE_H = 174  # height of the pipeline boxes (44.2 mm)
 BOX_W = [116, 108, 116, 100, 76, 121]  # sums with the five gaps to FULL_WIDTH
 HEAD_H = 15  # the bold heading band inside each box
 
@@ -195,7 +196,7 @@ def rule_sketch(c: Canvas, x0: float, y0: float, w: float):
     gx = x0 + 6  # gene column
     gate_x = x0 + 40
     rxn_x = x0 + 74
-    for row, (kind, gate, blocked, top) in enumerate([("isozymes", "OR", False, y0), ("complex", "AND", True, y0 + 44)]):
+    for row, (kind, gate, blocked, top) in enumerate([("isozymes", "OR", False, y0), ("complex", "AND", True, y0 + 50)]):
         ya, yb = top + 2, top + 20  # two gene rows
         c.ellipse(f"g<sub>{2 * row + 1}</sub>", gx, ya, r, r, color=ROLE_COLOR["rules"], fs=7)
         c.ellipse(f"g<sub>{2 * row + 2}</sub>", gx, yb, r, r, color=ROLE_COLOR["rules"], fs=7, dashed=True, fill=False)
@@ -205,8 +206,8 @@ def rule_sketch(c: Canvas, x0: float, y0: float, w: float):
         c.line(gx + r, yb + r / 2, gate_x, ym + 4, color=stroke, dashed=True)
         c.box(gate, gate_x, ym - 7, 22, 14, color=ROLE_COLOR["rules"], fs=7, bold=True)
         c.arrow(gate_x + 22, ym, rxn_x - 2, ym, color=stroke, dashed=blocked)
-        c.text("v<sub>r</sub> = 0" if blocked else "v<sub>r</sub>", rxn_x, ym - 7, w - (rxn_x - x0) - 2, 14, fs=7, valign="middle")
-        c.text(f"{kind}: {gate}", gx, top + 34, 70, 10, fs=7)
+        c.math(r"v_r = 0" if blocked else r"v_r", rxn_x, ym - 8, w - (rxn_x - x0) - 2, 16)
+        c.text(f"{kind}: {gate}", gx, top + 38, 70, 10, fs=7)
 
 
 def algorithm_block(c: Canvas, x0: float, y0: float, w: float, h: float, lines: list[str], note: str):
@@ -218,6 +219,41 @@ def algorithm_block(c: Canvas, x0: float, y0: float, w: float, h: float, lines: 
         y += 15
     c.line(x0, y + 2, x0 + w, y + 2, color="#666666", width=0.5)
     c.text(note, x0, y + 5, w, h - (y + 5 - y0), fs=FS)
+
+
+def small_table(c: Canvas, x0: float, y0: float, w: float, title: str, rows: list[tuple[str, str]]):
+    """A two-column table: bold title, a rule, one row per (name, value), thin rules between."""
+    rh = 13
+    c.text(title, x0, y0, w, rh, bold=True, valign="middle")
+    y = y0 + rh
+    c.line(x0, y, x0 + w, y, color="#666666", width=0.5)
+    for name, value in rows:
+        c.text(name, x0, y, w * 0.45, rh, fs=7, valign="middle")
+        c.text(value, x0 + w * 0.45, y, w * 0.55, rh, fs=7, align="right", valign="middle")
+        y += rh
+        c.line(x0, y, x0 + w, y, color="#BBBBBB", width=0.4)
+
+
+def plate_sketch(c: Canvas, x0: float, y0: float):
+    """A toy plate: colonies as filled circles, the wild-type colonies ringed and labeled
+    mu_WT, one mutant colony labeled mu, so the fitness ratio has a picture.
+    """
+    stroke, fill = ROLE_COLOR["proxy"]
+    pw, ph = 60, 40
+    c.ellipse("", x0, y0, pw, ph, color=(stroke, "#FFFFFF"))
+    # (dx, dy, diameter): two wild-type colonies (large), five mutants (smaller)
+    colonies = [(12, 8, 8), (40, 24, 8), (30, 6, 5), (46, 10, 4), (10, 26, 4), (26, 27, 3), (22, 17, 5)]
+    for dx, dy, d in colonies:
+        c.ellipse("", x0 + dx, y0 + dy, d, d, color=(stroke, stroke))
+    for dx, dy, d in colonies[:2]:
+        c.ellipse("", x0 + dx - 3, y0 + dy - 3, d + 6, d + 6, color=(stroke, "#FFFFFF"), dashed=True, fill=False)
+    # labels below the plate, with leader lines
+    wx, wy, wd = colonies[1]
+    mx, my, md = colonies[6]
+    c.line(x0 + wx + wd / 2, y0 + wy + wd + 3, x0 + 46, y0 + ph + 6, color=stroke, width=0.5)
+    c.math(r"\mu_{\mathrm{WT}}", x0 + 36, y0 + ph + 4, 28, 14)
+    c.line(x0 + mx + md / 2, y0 + my + md, x0 + 12, y0 + ph + 6, color=stroke, width=0.5)
+    c.math(r"\mu", x0 + 6, y0 + ph + 4, 14, 14)
 
 
 def pipeline(c: Canvas, st: dict, y0: float) -> float:
@@ -236,12 +272,17 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
 
     # 1. Yeast9: how much of the genome, and of the screened genes, the model carries.
     x0, w = lefts[0], BOX_W[0]
-    gw, gh = c.image(osp.join(IMG_DIR, "fba_schematic_genes.svg"), x0 + pad, y0 + HEAD_H)
-    c.text(
-        f"Default medium as distributed: {m['n_medium_exchanges_open']} of {m['n_exchange_reactions']} exchanges open; "
-        f"glucose {m['glucose_uptake_bound']:g} mmol gDW<sup>-1</sup> h<sup>-1</sup>, NH<sub>4</sub><sup>+</sup>, "
-        "no amino acid or vitamin.",
-        x0 + pad, y0 + HEAD_H + gh + 2, w - 2 * pad, h - HEAD_H - gh - 4,
+    gw, gh = svg_size(osp.join(IMG_DIR, "fba_schematic_genes.svg"))
+    c.image(osp.join(IMG_DIR, "fba_schematic_genes.svg"), x0 + (w - gw) / 2, y0 + HEAD_H)
+    small_table(
+        c, x0 + pad + 2, y0 + HEAD_H + gh + 4, w - 2 * pad - 4, "Default medium",
+        [
+            ("Exchanges", f"{m['n_medium_exchanges_open']} of {m['n_exchange_reactions']} open"),
+            ("Glucose", f"{m['glucose_uptake_bound']:g} mmol/gDW/h"),
+            ("Nitrogen", "NH<sub>4</sub><sup>+</sup>"),
+            ("Amino acids", "none"),
+            ("Vitamins", "none"),
+        ],
     )
 
     # 2. Gene-reaction rules as gates.
@@ -253,7 +294,7 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
     # 3. Deletion sets: the screen's gene sets, and how many the model covers in full.
     x0, w = lefts[2], BOX_W[2]
     dw, dh = c.image(osp.join(IMG_DIR, "fba_schematic_deletions.svg"), x0 + pad, y0 + HEAD_H)
-    c.text("The Kuzmin 2018 and 2020 triples and every single and double inside them; each set is one deletion strain.",
+    c.text("Kuzmin 2018 and 2020 triples with every single and double inside them.",
            x0 + pad, y0 + HEAD_H + dh + 2, w - 2 * pad, h - HEAD_H - dh - 4)
 
     # 4. FBA as the linear program it is.
@@ -266,17 +307,18 @@ def pipeline(c: Canvas, st: dict, y0: float) -> float:
 
     # 5. Fitness proxy.
     x0, w = lefts[4], BOX_W[4]
-    c.math(r"f = \mu / \mu_{\mathrm{WT}}", x0 + pad, y0 + HEAD_H + 4, w - 2 * pad, 16)
-    c.text("Growth relative to the wild type; a solve with no optimum counts as f = 0.",
-           x0 + pad, y0 + HEAD_H + 26, w - 2 * pad, h - HEAD_H - 28)
+    c.math(r"f = \mu / \mu_{\mathrm{WT}}", x0 + pad, y0 + HEAD_H + 2, w - 2 * pad, 16)
+    plate_sketch(c, x0 + (w - 60) / 2, y0 + HEAD_H + 24)
+    c.math(r"f = 0 \text{ if no optimum}", x0 + pad, y0 + h - 22, w - 2 * pad, 16)
 
     # 6. Interaction, as in Fig. 2a.
     x0, w = lefts[5], BOX_W[5]
     c.math(r"\varepsilon_{ij} = f_{ij} - f_i f_j", x0 + pad, y0 + HEAD_H + 4, w - 2 * pad, 16)
-    c.math(r"\tau_{ijk} = f_{ijk} - f_i f_j f_k", x0 + pad, y0 + HEAD_H + 20, w - 2 * pad, 16)
+    c.math(r"{\color{" + RED[0] + r"} \tau_{ijk}} = f_{ijk} - f_i f_j f_k", x0 + pad, y0 + HEAD_H + 20, w - 2 * pad, 16)
     c.math(r"\quad - \varepsilon_{ij} f_k - \varepsilon_{ik} f_j - \varepsilon_{jk} f_i", x0 + pad, y0 + HEAD_H + 34, w - 2 * pad, 16)
     c.text("From the predicted fitness of the triple, its three doubles and three singles; "
-           "compared with the measured &tau; of the same gene set (b, g).",
+           f"compared with the measured <font color=\"{RED[0]}\">&tau;</font> of the same gene set "
+           f"(<font color=\"{RED[0]}\">b</font>, <font color=\"{RED[0]}\">g</font>).",
            x0 + pad, y0 + HEAD_H + 56, w - 2 * pad, h - HEAD_H - 58)
 
     ym = y0 + h / 2
@@ -291,7 +333,7 @@ def main():
 
     # Row 1: panel a, the pipeline schematic across the full width.
     row_top = 0
-    y1 = row_top + TOP_STRIP
+    y1 = row_top + TOP_STRIP + LETTER_GAP
     c.letter("a", 0, row_top)
     bottom1 = pipeline(c, st, y1)
 

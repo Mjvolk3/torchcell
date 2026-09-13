@@ -131,3 +131,7 @@ Removing a duplicated forward call is a bug fix, not an optimization, so CSV row
 ## 2026.09.12 - Panel d headers on one line
 
 The column headers of panel d ("Batch", "Samples/s") are single lines; "batch per GPU" is said in the caption.
+
+## 2026.09.12 - Panels b and c: checkpoint lines in the legend, bar edges off the spines
+
+Panel b: the three dotted red verticals (the Fig. 2d checkpoint epochs) carry a legend entry, and the learning-rate note is "constant learning rate 1e-03". Panel c: the x limits run from -0.6 to 2.6 so the last bar's black edge no longer coincides with the right spine, which had read as a thick vertical line.

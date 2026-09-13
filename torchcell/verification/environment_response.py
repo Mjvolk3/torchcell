@@ -341,12 +341,15 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
 def _modal_scalar(
     records: Sequence[Record], getter: Callable[[dict[str, Any]], Any]
 ) -> Any:
-    """The dataset's baseline (most common) value of an environment scalar, if any."""
-    values = Counter(
-        v
-        for rec in records
-        if (v := getter(rec["experiment"]["environment"])) is not None
-    )
+    """The dataset's baseline (most common) value of an environment scalar.
+
+    ``None`` counts as a value: a dataset whose records gap the temperature has an
+    UNSTATED baseline (Hillenmeyer 2008, whose SOM never gives the growth
+    temperature), and a record that states one differs from it. Skipping ``None``
+    would elect a temperature-shift condition as the baseline and then flag that
+    condition's own records as unperturbed.
+    """
+    values = Counter(getter(rec["experiment"]["environment"]) for rec in records)
     return values.most_common(1)[0][0] if values else None
 
 

@@ -21,6 +21,8 @@ from torchcell.adapters import (
     EnvChemgenWildenhain2015Adapter,
     FattyAcidXue2025Adapter,
     GeneEssentialitySgdAdapter,
+    HetHillenmeyer2008Adapter,
+    HomHillenmeyer2008Adapter,
     IsobutanolScreenLopez2024Adapter,
     IsobutanolValidatedLopez2024Adapter,
     Lian2019Adapter,
@@ -65,6 +67,10 @@ from torchcell.datasets.scerevisiae.costanzo2016 import (
 from torchcell.datasets.scerevisiae.costanzo2021 import EnvChemgenCostanzo2021Dataset
 from torchcell.datasets.scerevisiae.dasilveira2014 import (
     MetaboliteDaSilveira2014Dataset,
+)
+from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
+    HetHillenmeyer2008Dataset,
+    HomHillenmeyer2008Dataset,
 )
 from torchcell.datasets.scerevisiae.hoepfner2014 import EnvChemgenHoepfner2014Dataset
 from torchcell.datasets.scerevisiae.kemmeren2014 import MicroarrayKemmeren2014Dataset
@@ -170,4 +176,6 @@ dataset_adapter_map = {
     EnvChemgenVanacloig2022Dataset: EnvChemgenVanacloig2022Adapter,
     EnvChemgenWildenhain2015Dataset: EnvChemgenWildenhain2015Adapter,
     EnvChemgenHoepfner2014Dataset: EnvChemgenHoepfner2014Adapter,
+    HetHillenmeyer2008Dataset: HetHillenmeyer2008Adapter,
+    HomHillenmeyer2008Dataset: HomHillenmeyer2008Adapter,
 }

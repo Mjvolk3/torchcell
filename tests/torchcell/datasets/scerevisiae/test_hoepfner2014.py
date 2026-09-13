@@ -36,6 +36,7 @@ from torchcell.datasets.scerevisiae.hoepfner2014 import (
     _has_identifier,
     load_table_s5_strains,
 )
+from torchcell.sequence.genome.scerevisiae.s288c import GeneNameStatus
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 
@@ -284,3 +285,105 @@ def test_identifier_rule_reads_every_identity_field() -> None:
     assert _has_identifier(Compound(name="x", pubchem_cid=1))
     assert _has_identifier(Compound(name="x", chebi_id="CHEBI:1"))
     assert _has_identifier(Compound(name="x", inchikey="KRMDCWKBEZIMAB-UHFFFAOYSA-N"))
+
+
+# ---- the ORF retention rule ------------------------------------------------------ #
+class _Resolution:
+    """The three fields of ``GeneNameResolution`` the loader reads."""
+
+    def __init__(self, status: GeneNameStatus, name: str | None, feature: str | None):
+        self.status = status
+        self.systematic_name = name
+        self.feature_type = feature
+
+
+_RESOLVER: dict[str, _Resolution] = {
+    "YAL001C": _Resolution(GeneNameStatus.CURRENT, "YAL001C", None),
+    "YAL034C-B": _Resolution(GeneNameStatus.CURRENT, "YAL034C-B", None),
+    "YAL035C-A": _Resolution(GeneNameStatus.RENAMED, "YAL034C-B", None),
+    "YCL074W": _Resolution(GeneNameStatus.NON_GENE_FEATURE, "YCL074W", "pseudogene"),
+    "R0010W": _Resolution(GeneNameStatus.RETIRED, "R0010W", None),
+}
+
+
+def _matrix(tmp_path: Path) -> str:
+    """A HIP matrix with one row per resolver outcome; every kept cell non-empty."""
+    rows = [
+        "\t".join(HEADER),
+        "\t".join(['"YAL001C"'] + ['"0.1"'] * 7),
+        "\t".join(['"YAL034C-B"'] + ['"0.2"'] * 7),
+        "\t".join(['"YAL035C-A"'] + ['"0.3"'] * 7),
+        # column 5 (777_10, a kept HIP column) empty; column 7 is the HOP column
+        "\t".join(['"YCL074W"'] + ['"0.4"'] * 4 + ['""'] + ['"0.4"'] * 2),
+        "\t".join(['"R0010W"'] + ['"0.5"'] * 7),
+    ]
+    path = tmp_path / "HIP_scores.txt"
+    path.write_text("\n".join(rows) + "\n")
+    return str(path)
+
+
+def _records(tmp_path: Path) -> tuple[list[dict[str, Any]], Any]:
+    import pickle
+
+    from pydantic import TypeAdapter
+
+    from torchcell.datamodels.schema import ExperimentType
+
+    columns, dropped = _columns("HIP")
+    counts = module._BuildCounts()
+    refs = {("HIP", study): {"$ref": study} for study in {c.study for c in columns}}
+    records = [
+        pickle.loads(value)
+        for value in _dataset()._iter_records(
+            _matrix(tmp_path),
+            "HIP",
+            {"YAL001C", "YAL034C-B", "YCL074W", "R0010W"},
+            columns,
+            dropped,
+            refs,
+            {"$ref": "pub"},
+            counts,
+            frozenset({"YAL034C-B"}),
+            TypeAdapter(ExperimentType).validate_python,
+            lambda name: _RESOLVER[name],
+        )
+    ]
+    return records, counts
+
+
+def test_non_gene_and_retired_rows_are_dropped_with_their_status(
+    tmp_path: Path,
+) -> None:
+    records, counts = _records(tmp_path)
+    kept_rows = {
+        r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]
+        for r in records
+    }
+    assert kept_rows == {"YAL001C", "YAL034C-B", "YAL035C-A"}
+    dropped = {d.source_name: d for d in counts.dropped_orfs["HIP"]}
+    assert set(dropped) == {"R0010W", "YCL074W"}
+    assert (dropped["YCL074W"].status, dropped["YCL074W"].feature_type) == (
+        "non_gene_feature",
+        "pseudogene",
+    )
+    assert dropped["R0010W"].status == "retired"
+    # the pseudogene row loses its non-empty cells in the kept HIP columns only
+    n_kept_columns = len(_columns("HIP")[0])
+    assert dropped["R0010W"].n_records == n_kept_columns
+    assert dropped["YCL074W"].n_records == n_kept_columns - 1
+
+
+def test_renamed_row_is_a_distinct_strain_of_the_current_gene(tmp_path: Path) -> None:
+    records, counts = _records(tmp_path)
+    assert counts.renamed_orfs["HIP"] == {"YAL035C-A": "YAL034C-B"}
+    by_source = {
+        r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]: r[
+            "experiment"
+        ]["genotype"]["perturbations"][0]["systematic_gene_name"]
+        for r in records
+    }
+    assert by_source["YAL035C-A"] == "YAL034C-B"
+    assert by_source["YAL034C-B"] == "YAL034C-B"
+    # Table S5 names physical strains: the listed gene's own row is flagged, the
+    # renamed merged-ORF strain that now maps to that gene is not
+    assert counts.flagged == {"YAL034C-B": len(_columns("HIP")[0])}

@@ -34,10 +34,11 @@ key).
 RECORDS DROPPED -- rule: a column is dropped when its compound carries NO structure
 identifier after resolution (no curated identifier, and no RDKit-parseable released
 SMILES). Measured: ONE compound, CMB409 "Boromycin", whose released SMILES RDKit
-2026.03.6 cannot parse (boron cage). That is 2 columns and 10,161 records (HIP 5,708 +
-HOP 4,453), 0.326% of the encodable build, leaving 3,102,719 records over 149 compounds
-and 608 sensitivity columns. The rule and the measured counts are written to
-``<root>/dropped_records.json`` at build time.
+2026.03.6 cannot parse (boron cage). That is 2 columns and 10,232 records (HIP 5,746 +
+HOP 4,486), 0.327% of the encodable build, leaving 3,124,319 records over 149 compounds
+and 608 sensitivity columns (HIP 1,759,255 + HOP 1,365,064). The ORF rule below removes
+30 rows per assay (7,273 HIP + 6,671 HOP cells) on top of that. The rules and the
+measured counts are written to ``<root>/dropped_records.json`` at build time.
 
 SCREEN (study) IDENTITY -- ``EnvironmentResponsePhenotype.screen_id`` carries the
 deposited study number. It is a real batch covariate, *"<Study number>: an internal id
@@ -156,9 +157,16 @@ BUILD / SOURCE QUIRKS handled deterministically (no fabrication):
   Identity is structural, never smuggled into a name: the compound is the compound, the
   dose is the ``Concentration``, the assay is the genotype leaf, the study is
   ``screen_id``.
-- Systematic ORF names are validated against the SGD R64 gene universe (ORF + RNA-coding
-  FASTA headers); names not resolving to R64 (old/merged deletion-collection features) are
-  DROPPED and counted (never guessed) -> L4 containment == 1.000. Empty cells are skipped.
+- Systematic ORF names go through the SHARED ``SCerevisiaeGenome.resolve_gene_name``, the
+  same policy as Costanzo 2021, Wildenhain 2015 and Hillenmeyer 2008: a CURRENT gene is
+  kept as is; a RENAMED alias (an old deletion-collection ORF that SGD merged into a
+  neighbour, e.g. ``YAL035C-A`` -> ``YAL034C-B``) is kept under the current systematic
+  name with the source ORF as ``perturbed_gene_name``, so it stays a DISTINCT strain of
+  that gene; a NON_GENE_FEATURE (pseudogene, blocked reading frame, transposable-element
+  gene) or a RETIRED name is DROPPED with its status and feature type in the ledger. The
+  R64 FASTA universe alone is NOT the gene set (it lists pseudogenes and blocked reading
+  frames as ORFs), which is why a FASTA membership test used to pass 14 non-gene rows
+  that the shared L1 canonical-gene-name rule then failed. Empty cells are skipped.
 - Constant sub-objects are INTERNED into ``processed/interned``: one environment per
   sensitivity column, one reference per (assay, study), one publication. A record stores
   ``{"$ref": ...}`` pointers for them, which is what keeps a 3.1M-record LMDB small and
@@ -224,6 +232,7 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     sha256_file,
 )
+from torchcell.sequence.genome.scerevisiae.s288c import GeneNameStatus
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -304,6 +313,18 @@ DROP_RULE = (
     "drop every record whose compound carries no structure identifier after resolution: "
     "no curated compound_identity_table row with an InChIKey / ChEBI id / PubChem CID, "
     "and no RDKit-parseable released Table S1 SMILES to derive an InChIKey from"
+)
+
+#: Retention rule for a row's ORF: kept only when it resolves to a LIVE R64 gene.
+_KEPT_STATUSES = frozenset({GeneNameStatus.CURRENT, GeneNameStatus.RENAMED})
+
+ORF_RULE = (
+    "a row is kept only when its 'Systematic Name' resolves through the shared "
+    "SCerevisiaeGenome.resolve_gene_name to CURRENT (stored as is) or RENAMED (stored "
+    "under the current systematic name, the source ORF kept as perturbed_gene_name so a "
+    "merged-ORF strain stays distinct); a NON_GENE_FEATURE (pseudogene, blocked reading "
+    "frame, transposable-element gene) or a RETIRED name drops the row and every one of "
+    "its cells"
 )
 
 TABLE_S5_POLICY = (
@@ -607,21 +628,44 @@ class DroppedCompound(BaseModel):
     n_records: int
 
 
+class DroppedOrf(BaseModel):
+    """One source ORF the retention rule removed, with what the resolver said."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_name: str = Field(description="the 'Systematic Name' cell, verbatim")
+    status: str = Field(description="GeneNameStatus the shared resolver returned")
+    resolved_to: str | None = Field(
+        default=None, description="what the resolver mapped it to, when anything"
+    )
+    feature_type: str | None = Field(
+        default=None, description="GFF feature type for a NON_GENE_FEATURE"
+    )
+    n_records: int = Field(
+        description="non-empty cells in KEPT sensitivity columns lost with this row"
+    )
+
+
 class DroppedRecordReport(BaseModel):
-    """The build's drop ledger: the rule, and exactly what it removed."""
+    """The build's drop ledger: the rules, and exactly what they removed."""
 
     model_config = ConfigDict(extra="forbid")
 
     dataset: str
     rule: str
+    orf_rule: str
     n_kept: int
     n_dropped: int
     kept_by_assay: dict[str, int]
     dropped_by_assay: dict[str, int]
     dropped_compounds: list[DroppedCompound]
-    non_r64_orfs_dropped: dict[str, list[str]] = Field(
-        description="ORF names per assay that do not resolve to the SGD R64 universe; "
-        "old or merged deletion-collection features, never guessed onto a current gene"
+    dropped_orfs: dict[str, list[DroppedOrf]] = Field(
+        description="per assay, the rows whose ORF resolves to neither a CURRENT nor a "
+        "RENAMED R64 gene, never guessed onto a current gene"
+    )
+    renamed_orfs: dict[str, dict[str, str]] = Field(
+        description="per assay, source ORF -> current systematic name for every RENAMED "
+        "row kept; the source ORF stays on the record as perturbed_gene_name"
     )
     created_at: str
 
@@ -846,13 +890,14 @@ class _BuildCounts:
     (``DroppedRecordReport``, ``TableS5FlagFile``).
     """
 
-    __slots__ = ("kept", "dropped", "flagged", "non_r64")
+    __slots__ = ("kept", "dropped", "flagged", "dropped_orfs", "renamed_orfs")
 
     def __init__(self) -> None:
         self.kept: Counter[str] = Counter()  # assay -> kept records
         self.dropped: Counter[tuple[str, str]] = Counter()  # (assay, CMB) -> removed
         self.flagged: Counter[str] = Counter()  # ORF -> kept HIP records, Table S5 only
-        self.non_r64: dict[str, list[str]] = {}  # assay -> unresolvable ORF names
+        self.dropped_orfs: dict[str, list[DroppedOrf]] = {}  # assay -> dropped rows
+        self.renamed_orfs: dict[str, dict[str, str]] = {}  # assay -> source -> current
 
 
 @register_dataset
@@ -865,10 +910,33 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
+        genome: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset. ORFs are already systematic, so no genome is required."""
+        """Initialize the dataset. ``genome`` supplies ``resolve_gene_name``; when it is
+        None a read-only S288C genome is opened at build time (never at import).
+        """
+        self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    def _resolver(self) -> Callable[[str], Any]:
+        """``resolve_gene_name`` from the supplied genome, or a read-only S288C genome."""
+        if self.genome is None:
+            from dotenv import load_dotenv
+
+            from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+
+            load_dotenv()
+            data_root = os.environ["DATA_ROOT"]
+            # overwrite=False is mandatory: a rebuild here would race any other process
+            # holding the same gffutils database.
+            self.genome = SCerevisiaeGenome(
+                genome_root=osp.join(data_root, "data/sgd/genome"),
+                go_root=osp.join(data_root, "data/go"),
+                overwrite=False,
+            )
+        resolver: Callable[[str], Any] = self.genome.resolve_gene_name
+        return resolver
 
     @property
     def experiment_class(self) -> type[Experiment]:
@@ -1012,14 +1080,22 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             ),
         )
 
-    def _genotype(self, assay: str, orf: str) -> Genotype:
-        """HIP -> heterozygous engineered-CNV (copy 1 of 2); HOP -> homozygous deletion."""
+    def _genotype(
+        self, assay: str, orf: str, source_orf: str | None = None
+    ) -> Genotype:
+        """HIP -> heterozygous engineered-CNV (copy 1 of 2); HOP -> homozygous deletion.
+
+        ``orf`` is the CURRENT systematic name; ``source_orf`` is the deposited row name,
+        which differs only for a RENAMED (merged) ORF and then stays on the record as
+        ``perturbed_gene_name`` so that strain is not conflated with the gene's own row.
+        """
+        perturbed = orf if source_orf is None else source_orf
         if assay == "HIP":
             return Genotype(
                 perturbations=[
                     EngineeredCopyNumberPerturbation(
                         systematic_gene_name=orf,
-                        perturbed_gene_name=orf,
+                        perturbed_gene_name=perturbed,
                         copy_number=1,
                         reference_copy_number=2,
                         marker="KanMX",
@@ -1029,7 +1105,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         return Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=orf
+                    systematic_gene_name=orf, perturbed_gene_name=perturbed
                 )
             ]
         )
@@ -1149,32 +1225,57 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         counts: _BuildCounts,
         flag_orfs: frozenset[str],
         validate: Callable[[Any], object],
+        resolve: Callable[[str], Any],
     ) -> Iterator[bytes]:
-        """Yield one pickled record per (R64 ORF, kept sensitivity column).
+        """Yield one pickled record per (kept row, kept sensitivity column).
 
-        Counts the dropped columns' non-empty cells in the SAME pass, so the drop ledger
-        is measured rather than estimated. The first record of each column is validated
-        against the experiment schema, which is what makes the per-column template safe.
+        A row's ORF goes through ``resolve`` under ``ORF_RULE``; the cells a dropped
+        row loses in KEPT columns are counted, and the dropped columns' non-empty cells
+        are counted in the SAME pass, so the drop ledger is measured rather than
+        estimated. The first record of each column is validated against the experiment
+        schema, which is what makes the per-column template safe.
         """
-        dropped_orfs: set[str] = set()
+        dropped_orfs: list[DroppedOrf] = []
+        renamed: dict[str, str] = {}
         validated: set[int] = set()
         genotypes: dict[str, dict[str, Any]] = {}
         with open(path) as handle:
             handle.readline()
             for line in tqdm(handle, desc=f"Hoepfner2014 {assay}"):
                 parts = line.rstrip("\n").split("\t")
-                orf = parts[0].strip().strip('"')
-                if orf not in sgd_genes:
-                    dropped_orfs.add(orf)
+                source_orf = parts[0].strip().strip('"')
+                resolution = resolve(source_orf)
+                orf = resolution.systematic_name
+                if resolution.status not in _KEPT_STATUSES or orf not in sgd_genes:
+                    dropped_orfs.append(
+                        DroppedOrf(
+                            source_name=source_orf,
+                            status=str(resolution.status.value),
+                            resolved_to=orf,
+                            feature_type=resolution.feature_type,
+                            n_records=sum(
+                                1
+                                for col in columns
+                                if col.index < len(parts)
+                                and parts[col.index].strip().strip('"') != ""
+                            ),
+                        )
+                    )
                     continue
-                genotype = genotypes.get(orf)
+                if resolution.status == GeneNameStatus.RENAMED:
+                    renamed[source_orf] = orf
+                genotype = genotypes.get(source_orf)
                 if genotype is None:
-                    genotype = self._genotype(assay, orf).model_dump()
-                    genotypes[orf] = genotype
+                    genotype = self._genotype(assay, orf, source_orf).model_dump()
+                    genotypes[source_orf] = genotype
                 for index, cmb in dropped_columns:
                     if index < len(parts) and parts[index].strip().strip('"') != "":
                         counts.dropped[(assay, cmb)] += 1
-                flagged = assay == "HIP" and orf in flag_orfs
+                # Table S5 names PHYSICAL strains by their 2014 name, so the flag matches
+                # on the deposited (source) name only: a RENAMED merged-ORF strain is not
+                # the listed strain of the gene it now maps to, and is never flagged
+                # through the current name.
+                flagged = assay == "HIP" and source_orf in flag_orfs
                 for col in columns:
                     if col.index >= len(parts):
                         continue
@@ -1197,7 +1298,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                         validated.add(col.index)
                     counts.kept[assay] += 1
                     if flagged:
-                        counts.flagged[orf] += 1
+                        counts.flagged[source_orf] += 1
                     yield pickle.dumps(
                         {
                             "experiment": experiment,
@@ -1205,13 +1306,17 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                             "publication": pub_ref,
                         }
                     )
-        counts.non_r64[assay] = sorted(dropped_orfs)
+        counts.dropped_orfs[assay] = sorted(dropped_orfs, key=lambda d: d.source_name)
+        counts.renamed_orfs[assay] = dict(sorted(renamed.items()))
         log.info(
-            "Hoepfner2014 %s: wrote %d records; dropped %d non-R64 ORF names: %s",
+            "Hoepfner2014 %s: wrote %d records; kept %d RENAMED rows under their current "
+            "name; dropped %d rows (%d cells) whose ORF is no current gene: %s",
             assay,
             counts.kept[assay],
+            len(renamed),
             len(dropped_orfs),
-            sorted(dropped_orfs),
+            sum(d.n_records for d in dropped_orfs),
+            [f"{d.source_name}:{d.status}" for d in counts.dropped_orfs[assay]],
         )
 
     @post_process
@@ -1266,6 +1371,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
 
         counts = _BuildCounts()
         flag_orfs = frozenset(table_s5)
+        resolve = self._resolver()
         idx = 0
         batch_size = 500_000
         txn = env.begin(write=True)
@@ -1281,6 +1387,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 counts,
                 flag_orfs,
                 validate,
+                resolve,
             ):
                 txn.put(f"{idx}".encode(), value)
                 idx += 1
@@ -1332,6 +1439,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         report = DroppedRecordReport(
             dataset=self.name,
             rule=DROP_RULE,
+            orf_rule=ORF_RULE,
             n_kept=sum(counts.kept.values()),
             n_dropped=sum(counts.dropped.values()),
             kept_by_assay=dict(counts.kept),
@@ -1340,7 +1448,8 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 for assay, dropped in dropped_columns.items()
             },
             dropped_compounds=compounds,
-            non_r64_orfs_dropped=counts.non_r64,
+            dropped_orfs=counts.dropped_orfs,
+            renamed_orfs=counts.renamed_orfs,
             created_at=datetime.now(UTC).isoformat(),
         )
         out = osp.join(self.root, "dropped_records.json")

@@ -136,7 +136,10 @@ from torchcell.metabolism.constraints import (  # noqa: E402
     CONC_UPPER_M,
     ThermoMode,
 )
-from torchcell.metabolism.parameters import ThermoSource  # noqa: E402
+from torchcell.metabolism.parameters import (  # noqa: E402
+    ThermoSource,
+    yeast_compartment_volume_fractions,
+)
 from torchcell.models.cell_graph_transformer_metabolism import (  # noqa: E402
     CellGraphTransformerMetabolism,
     perturbed_gene_pool,
@@ -166,6 +169,11 @@ COVERAGE_ALPHAS = (0.5, 0.8, 0.9)
 CONC_SPACE_MIXTURE = "mixture"
 CONC_SPACE_CYTOSOL = "cytosol"
 CONC_SPACES = (CONC_SPACE_MIXTURE, CONC_SPACE_CYTOSOL)
+#: Which fractional-volume table weights the whole-cell average.
+VOLUMES_ASSUMED = "assumed"
+VOLUMES_SOURCED = "sourced"
+VOLUME_TABLES = (VOLUMES_ASSUMED, VOLUMES_SOURCED)
+
 #: yeast-GEM's extracellular compartment is not part of the cell, and the membrane
 #: pseudo-compartments have no aqueous volume, so neither enters a whole-cell average.
 NON_CELL_COMPARTMENTS = frozenset({"e", "ce", "erm", "vm", "gm", "mm", "lp"})
@@ -534,6 +542,16 @@ class BxCell(BaseModel):
             "separate head and would break the tie that arm exists to make."
         ),
     )
+    volume_table: str = Field(
+        default=VOLUMES_ASSUMED,
+        description=(
+            "Which fractional-volume table weights the whole-cell concentration average. "
+            "'assumed' is wave 7's textbook table (one of six entries sourced) and stays "
+            "the default so every wave-7 cell deserializes unchanged. 'sourced' is Uchida "
+            "et al. 2011's soft X-ray tomography measurement of S. cerevisiae, four of six "
+            "entries measured with the quote and the mirrored sha256 attached per entry."
+        ),
+    )
     conc_space: str = Field(
         default=CONC_SPACE_MIXTURE,
         description=(
@@ -756,8 +774,40 @@ class CompartmentVolumeFractions(BaseModel):
     note: str
 
 
-def compartment_volume_fractions() -> CompartmentVolumeFractions:
-    """The fractional-volume table wave 7 runs on."""
+def compartment_volume_fractions(
+    table: str = VOLUMES_ASSUMED,
+) -> CompartmentVolumeFractions:
+    """The fractional-volume table a cell runs on.
+
+    ``sourced`` reads `torchcell.metabolism.parameters.yeast_compartment_volume_fractions`,
+    which carries Uchida et al. 2011's soft X-ray tomography measurements of *S.
+    cerevisiae* with the quote and the mirrored sha256 per entry: cytosol 0.70 (the
+    paper's own remainder, an upper bound), vacuole 0.085 and nucleus 0.085 and
+    mitochondrion 0.015 as midpoints of the reported ranges, with the endoplasmic
+    reticulum and the peroxisome still flagged unsourced because that study does not
+    resolve them. ``assumed`` is wave 7's textbook table, kept so the two can be paired
+    seed for seed and so every wave-7 result file deserializes unchanged.
+    """
+    assert table in VOLUME_TABLES, (
+        f"--volume-table must be one of {VOLUME_TABLES}, got {table!r}."
+    )
+    if table == VOLUMES_SOURCED:
+        measured = yeast_compartment_volume_fractions()
+        entry = {e.compartment: e for e in measured.entries}
+        return CompartmentVolumeFractions(
+            fractions=measured.fractions(),
+            sourced=measured.sourced(),
+            source=measured.source,
+            quote=next(e.quote for e in measured.entries if e.quote),
+            sha256=next(e.sha256 for e in measured.entries if e.sha256),
+            note=(
+                measured.note
+                + " Per-entry notes: "
+                + "; ".join(
+                    f"{k}: {v.note}" for k, v in sorted(entry.items()) if v.note
+                )
+            ),
+        )
     return CompartmentVolumeFractions(
         fractions={"c": 0.65, "v": 0.18, "n": 0.10, "m": 0.05, "er": 0.015, "p": 0.005},
         sourced={
@@ -821,7 +871,7 @@ def amino_acid_compartment_species() -> dict[str, list[tuple[str, str]]]:
 
 
 def mixture_weights(
-    met_index: dict[str, int], space: str
+    met_index: dict[str, int], space: str, volume_table: str = VOLUMES_ASSUMED
 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, list[tuple[str, str, float]]]]:
     r"""``(indices, log weights, per-amino-acid map)`` for the whole-cell average.
 
@@ -835,7 +885,7 @@ def mixture_weights(
     assert space in CONC_SPACES, (
         f"conc space must be one of {CONC_SPACES}, got {space!r}."
     )
-    table = compartment_volume_fractions()
+    table = compartment_volume_fractions(volume_table)
     species = amino_acid_compartment_species()
     rows: list[list[tuple[int, float]]] = []
     described: dict[str, list[tuple[str, str, float]]] = {}
@@ -950,6 +1000,7 @@ def build_cell(
     aa_readout: str = AA_READOUT_TURNOVER,
     dist: str = "crps",
     conc_space: str = CONC_SPACE_MIXTURE,
+    volume_table: str = VOLUMES_ASSUMED,
     conc_lower_m: float = CONC_LOWER_M,
     conc_upper_m: float = CONC_UPPER_M,
     flux_density_weight: float = 0.0,
@@ -966,6 +1017,9 @@ def build_cell(
     )
     assert conc_space in CONC_SPACES, (
         f"--conc-space must be one of {CONC_SPACES}, got {conc_space!r}."
+    )
+    assert volume_table in VOLUME_TABLES, (
+        f"--volume-table must be one of {VOLUME_TABLES}, got {volume_table!r}."
     )
     assert dist in DISTS, f"--dist must be one of {DISTS}, got {dist!r}."
     assert armcfg.base_arm in ARMS, (
@@ -1009,6 +1063,7 @@ def build_cell(
         target_log10_molar=aa_readout == AA_READOUT_CONCENTRATION,
         dist=dist,
         conc_space=conc_space,
+        volume_table=volume_table,
         conc_lower_m=conc_lower_m,
         conc_upper_m=conc_upper_m,
         # The channel comes from the arm FILE, which is where a parameterization belongs;
@@ -1356,7 +1411,7 @@ def collect_feasibility(
     betaxanthin head is the predicted production level the ranking is defined on.
     """
     device = next(model.parameters()).device
-    layer = model.flux_layer
+    layer: Any = model.flux_layer
     assert layer is not None, "collect_feasibility called on an arm with no flux layer."
     was_training = model.training
     model.eval()
@@ -2265,7 +2320,9 @@ def build_model_for_cell(
 
     if main_head == AUX_HEAD and cell.aa_readout == AA_READOUT_CONCENTRATION:
         assert flux_layer is not None
-        indices, log_weights, described = mixture_weights(met_index, cell.conc_space)
+        indices, log_weights, described = mixture_weights(
+            met_index, cell.conc_space, cell.volume_table
+        )
         flux_meta["concentration_mixture"] = {
             aa: [
                 {"compartment": c, "species": sid, "fractional_volume": w}
@@ -2273,9 +2330,9 @@ def build_model_for_cell(
             ]
             for aa, entries in described.items()
         }
-        flux_meta["compartment_volume_fractions"] = (
-            compartment_volume_fractions().model_dump()
-        )
+        flux_meta["compartment_volume_fractions"] = compartment_volume_fractions(
+            cell.volume_table
+        ).model_dump()
         wrapped = FluxConcentrationReadout(
             model, indices.to(device), log_weights.to(device), cell.crps
         ).to(device)
@@ -2727,7 +2784,7 @@ def run_cell(
         # concentration, and whether that concentration is the measured concentration is a
         # separate question from whether the phenotype head scored well.
         indices, log_weights, described = mixture_weights(
-            flux_meta["met_index"], cell.conc_space
+            flux_meta["met_index"], cell.conc_space, cell.volume_table
         )
         c_pred, c_true = collect_concentration(
             model,
@@ -2746,7 +2803,7 @@ def run_cell(
             conc_space=cell.conc_space,
             conc_lower_m=lo,
             conc_upper_m=hi,
-            volume_fractions=compartment_volume_fractions(),
+            volume_fractions=compartment_volume_fractions(cell.volume_table),
             mixture={
                 aa: [
                     ConcentrationMixtureEntry(
@@ -2777,7 +2834,7 @@ def run_cell(
     result["concentration_audit"] = audit.model_dump()
 
     if compute_feasibility:
-        layer = model.flux_layer
+        layer: Any = model.flux_layer
         if layer is None:
             block = FeasibilityBlock(
                 available=False,
@@ -3212,6 +3269,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--volume-table",
+        choices=VOLUME_TABLES,
+        default=VOLUMES_ASSUMED,
+        help=(
+            "Fractional volumes for the whole-cell average: wave 7's 'assumed' textbook "
+            "table, or 'sourced', Uchida et al. 2011's soft X-ray tomography measurement."
+        ),
+    )
+    parser.add_argument(
         "--conc-space",
         choices=CONC_SPACES,
         default=CONC_SPACE_MIXTURE,
@@ -3329,6 +3395,7 @@ def main() -> None:
         aa_readout=args.aa_readout,
         dist=args.dist,
         conc_space=args.conc_space,
+        volume_table=args.volume_table,
         conc_lower_m=args.conc_lower_m,
         conc_upper_m=args.conc_upper_m,
         flux_density_weight=args.flux_density_weight,

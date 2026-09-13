@@ -1547,3 +1547,186 @@ def resolve_reaction_delta_g(
             "and is not one. 'mixed' marks a value assembled from two methods."
         ),
     )
+
+
+# ---------------------------------------------------------------------------------------
+# COMPARTMENT VOLUME FRACTIONS (2026-09-12)
+#
+# Thermo-Flux (Smith et al. 2026) writes a whole-cell metabolite concentration as the
+# volume-weighted average over compartments, [A]_total = sum_n f_n [A]_n. Predicting a
+# measured whole-cell concentration therefore needs f_n, and yeast-GEM does not carry it.
+# The table below is the one place that number lives, with its provenance attached to each
+# entry rather than to the table as a whole, because the entries are not equally sourced.
+# ---------------------------------------------------------------------------------------
+
+#: The raw-mirror record the measured fractions are read from.
+UCHIDA_2011_KEY = "uchidaQuantitativeAnalysisYeast2011"
+UCHIDA_2011_SHA256 = "4ad4cee88e942feffffd4c372b8b085f59ea70a303331a8173c9ccf260477aa2"
+UCHIDA_2011_QUOTE = (
+    "On average, the nucleus occupied 6-11% of cell volume; the nucleolus occupied 20% of "
+    "nucleus; vacuole(s) occupied 3-14% of cell; and mitochondria and lipid bodies "
+    "occupied 1-2% of cell ( Figure 3 ); therefore, the cytosol, other non-segmented "
+    "organelles, large macromolecular complexes, such as the ribosomes, and the "
+    "cytoskeleton occupy the remaining 70% of cell volume."
+)
+
+
+class CompartmentVolumeFraction(BaseModel):
+    """One compartment's fractional volume, with the evidence for it.
+
+    ``sourced`` is the field that matters: a fraction taken from a measurement and a
+    fraction carried as a textbook default weight a whole-cell average identically, and
+    only this flag tells them apart downstream.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    compartment: str = Field(description="yeast-GEM compartment symbol, e.g. 'c'.")
+    name: str
+    fraction: float = Field(gt=0.0, lt=1.0, description="f_n, of total cell volume.")
+    sourced: bool
+    reported_range: tuple[float, float] | None = Field(
+        default=None,
+        description=(
+            "The interval the source reports, when it reports one. `fraction` is its "
+            "MIDPOINT: there is no companion statistic to back-solve from, and taking the "
+            "conservative end of every range would make the weights sum far below 1 and "
+            "silently move the mass into the unmodeled remainder."
+        ),
+    )
+    citation_key: str | None = None
+    sha256: str | None = None
+    quote: str | None = None
+    note: str = ""
+
+
+class CompartmentVolumeTable(BaseModel):
+    """Fractional volumes for the intracellular compartments of budding yeast."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    entries: list[CompartmentVolumeFraction]
+    source: str
+    note: str
+
+    def fractions(self) -> dict[str, float]:
+        """``{compartment symbol -> f_n}``."""
+        return {e.compartment: e.fraction for e in self.entries}
+
+    def sourced(self) -> dict[str, bool]:
+        """``{compartment symbol -> whether f_n comes from a measurement}``."""
+        return {e.compartment: e.sourced for e in self.entries}
+
+
+def yeast_compartment_volume_fractions() -> CompartmentVolumeTable:
+    r"""Measured where a measurement exists, and flagged where one does not.
+
+    Uchida et al. 2011 measured organelle volumes in *S. cerevisiae* by soft X-ray
+    tomography, which segments organelles by linear absorption coefficient rather than by
+    a fluorescent label, and so measures irregular organelles (vacuoles, mitochondria) that
+    fluorescence cannot. It gives the nucleus, the vacuole and the mitochondrion directly,
+    and a single remainder for everything else. The endoplasmic reticulum and the
+    peroxisome are inside that remainder and are NOT resolved by it, so they stay flagged
+    as unsourced rather than being invented from the leftover.
+
+    The cytosolic entry is the paper's own remainder, 0.70, and it is an UPPER bound on the
+    aqueous cytosol: the same 70 percent holds the cytoskeleton, the ribosomes and every
+    organelle the study did not segment.
+    """
+    return CompartmentVolumeTable(
+        entries=[
+            CompartmentVolumeFraction(
+                compartment="c",
+                name="cytoplasm",
+                fraction=0.70,
+                sourced=True,
+                citation_key=UCHIDA_2011_KEY,
+                sha256=UCHIDA_2011_SHA256,
+                quote=UCHIDA_2011_QUOTE,
+                note=(
+                    "The paper's remainder. An UPPER bound on the aqueous cytosol, since "
+                    "the same 70 percent also holds the cytoskeleton, the ribosomes and "
+                    "the organelles the study did not segment."
+                ),
+            ),
+            CompartmentVolumeFraction(
+                compartment="v",
+                name="vacuole",
+                fraction=0.085,
+                sourced=True,
+                reported_range=(0.03, 0.14),
+                citation_key=UCHIDA_2011_KEY,
+                sha256=UCHIDA_2011_SHA256,
+                quote=UCHIDA_2011_QUOTE,
+                note=(
+                    "Midpoint of 3 to 14 percent. The range is wide because vacuolar "
+                    "volume tracks the cell cycle stage and the strain, and the paper "
+                    "reports five vacuole morphologies."
+                ),
+            ),
+            CompartmentVolumeFraction(
+                compartment="n",
+                name="nucleus",
+                fraction=0.085,
+                sourced=True,
+                reported_range=(0.06, 0.11),
+                citation_key=UCHIDA_2011_KEY,
+                sha256=UCHIDA_2011_SHA256,
+                quote=UCHIDA_2011_QUOTE,
+                note="Midpoint of 6 to 11 percent.",
+            ),
+            CompartmentVolumeFraction(
+                compartment="m",
+                name="mitochondrion",
+                fraction=0.015,
+                sourced=True,
+                reported_range=(0.01, 0.02),
+                citation_key=UCHIDA_2011_KEY,
+                sha256=UCHIDA_2011_SHA256,
+                quote=UCHIDA_2011_QUOTE,
+                note=(
+                    "Midpoint of 1 to 2 percent, which the paper reports jointly for "
+                    "mitochondria and lipid bodies; the mitochondrial share alone is "
+                    "therefore at most this."
+                ),
+            ),
+            CompartmentVolumeFraction(
+                compartment="er",
+                name="endoplasmic reticulum",
+                fraction=0.015,
+                sourced=False,
+                note=(
+                    "NOT SOURCED. Inside Uchida's unsegmented remainder. Carried as a "
+                    "textbook order of magnitude so the mixture has a weight for it, and "
+                    "flagged so no reading rests on it."
+                ),
+            ),
+            CompartmentVolumeFraction(
+                compartment="p",
+                name="peroxisome",
+                fraction=0.005,
+                sourced=False,
+                note=(
+                    "NOT SOURCED. Inside Uchida's unsegmented remainder, and in glucose "
+                    "medium peroxisomes are few and small. Flagged, as for the ER."
+                ),
+            ),
+        ],
+        source=(
+            "Uchida M, Sun Y, McDermott G, Knoechel C, Le Gros MA, Parkinson D, Yang S, "
+            "Larabell CA (2011). Quantitative analysis of yeast internal architecture "
+            "using soft X-ray tomography. Yeast 28(3):227-236, doi 10.1002/yea.1834. Read "
+            "from the PMC author manuscript PMC3404734 mirrored at "
+            "$DATA_ROOT/torchcell-raw/uchidaQuantitativeAnalysisYeast2011/paper/"
+            "pmc_fulltext.xml, sha256 "
+            "4ad4cee88e942feffffd4c372b8b085f59ea70a303331a8173c9ccf260477aa2."
+        ),
+        note=(
+            "Four of six entries are measured on Saccharomyces cerevisiae by soft X-ray "
+            "tomography; the endoplasmic reticulum and the peroxisome are not resolved by "
+            "that study and stay flagged. The entries do not sum to 1 and are not meant "
+            "to: a compartment where the model carries no species for a metabolite "
+            "contributes nothing to that metabolite's whole-cell average, and the "
+            "cytosolic 0.70 already contains volume that is not aqueous cytosol."
+        ),
+    )

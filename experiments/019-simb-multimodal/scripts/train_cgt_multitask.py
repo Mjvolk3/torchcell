@@ -2560,10 +2560,36 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         num_workers=cfg.data_module.num_workers,
         pin_memory=cfg.data_module.pin_memory,
         prefetch=cfg.data_module.prefetch,
+        # Worker processes live for the whole run when persistent (the datamodule
+        # default). Every packed five-day IGB task so far died of host RSS (61 GB against
+        # a 60 GB request after 3.5 to 4.6 days, cause unmeasured); `persistent_workers:
+        # false` respawns the workers each epoch so anything they accumulate is released.
+        persistent_workers=bool(cfg.data_module.get("persistent_workers", True)),
         follow_batch=follow_batch,
         pinned_test_indices=pinned_test,
     )
     data_module.setup()
+
+    # FOLD TEST INTO TRAIN (2026-09-13). `data_module.fold_test_into_train: true` moves the
+    # test records of the pinned partition into train and leaves test empty, so the run
+    # trains on 90% of the records against the SAME validation set as the 80/10/10 runs of
+    # that split seed. The only thing that changes between the two is 10% more training
+    # data, so the val number stays commensurable. There is nothing left to test on, so
+    # `trainer.run_test` is refused here rather than found after a week of training.
+    if bool(cfg.data_module.get("fold_test_into_train", False)):
+        if bool(cfg.trainer.get("run_test", False)):
+            raise ValueError(
+                "data_module.fold_test_into_train=true leaves no test set; "
+                "set trainer.run_test=false"
+            )
+        n_train0, n_test0 = len(data_module.index.train), len(data_module.index.test)
+        merged = sorted(set(data_module.index.train) | set(data_module.index.test))
+        data_module.train_dataset = torch.utils.data.Subset(dataset, merged)
+        data_module.test_dataset = torch.utils.data.Subset(dataset, [])
+        print(
+            f"[split] fold_test_into_train: train {n_train0} + test {n_test0} -> "
+            f"{len(merged)} records; test is now empty"
+        )
 
     if cfg.data_module.is_perturbation_subset:
         data_module = PerturbationSubsetDataModule(

@@ -1,0 +1,70 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/make_split_indices.py",
+ "dataset_tag": "fig3_core",
+ "seeds": {
+  "0": {
+   "index_file": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_core/data_module_cache/index_seed_0.json",
+   "index_sha256": "a572f3eb10f56b7391d8a31a673809a784392750119071d206aee9b790c37c67",
+   "details_sha256": "03f1d34c5c45e299cb435e4e618bf68c809627597277ed37c14cdaf051a3e8ec",
+   "existed_before_this_run": true,
+   "n_records": {
+    "train": 4074,
+    "val": 534,
+    "test": 517
+   },
+   "n_expression_records": {
+    "train": 1244,
+    "val": 155,
+    "test": 155
+   }
+  },
+  "1": {
+   "index_file": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_core/data_module_cache/index_seed_1.json",
+   "index_sha256": "0100f1fab2f0c347824781f3d2d64f7858bb972db235b9f7d71063ce01a55aa6",
+   "details_sha256": "cddfa926fa3e6a42611d752067fda69f7d8d935366c1103ed489e1e083ce8012",
+   "existed_before_this_run": true,
+   "n_records": {
+    "train": 4059,
+    "val": 529,
+    "test": 537
+   },
+   "n_expression_records": {
+    "train": 1253,
+    "val": 151,
+    "test": 150
+   }
+  },
+  "2": {
+   "index_file": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_core/data_module_cache/index_seed_2.json",
+   "index_sha256": "e6d4d87fe0ffd9fd11fb2ce964d1906270e95e6d4f3932752962f72446cc804a",
+   "details_sha256": "012ad1154ee93a4daa223264ca8767ac8d0dc7b89a85bce6628408f19d2ee939",
+   "existed_before_this_run": true,
+   "n_records": {
+    "train": 4069,
+    "val": 529,
+    "test": 527
+   },
+   "n_expression_records": {
+    "train": 1244,
+    "val": 155,
+    "test": 155
+   }
+  },
+  "3": {
+   "index_file": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_core/data_module_cache/index_seed_3.json",
+   "index_sha256": "bced67c62b3a17cdf001dc879e41ae88ed5e6856367f1d04a88e9f3c363d95bf",
+   "details_sha256": "28db271535a8d47209c3388b0c3b314003db8c38ecde9ac1c8337d56f7f2a436",
+   "existed_before_this_run": false,
+   "n_records": {
+    "train": 4069,
+    "val": 529,
+    "test": 527
+   },
+   "n_expression_records": {
+    "train": 1244,
+    "val": 155,
+    "test": 155
+   }
+  }
+ }
+}

@@ -1,0 +1,63 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v13_split.yaml
+# [[experiments.019-simb-multimodal.conf.cgt_expr_v13_split]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/conf/cgt_expr_v13_split
+#
+# SPLIT ROUND (2026-09-13). Every expression number since cgt_expr_011 is one validation
+# draw: the partition is pinned to split_seed 0, and the one measurement made before the
+# pin put the between-split sd at 0.0444 against a between-arm sd of 0.0058, with seed 0's
+# 155-strain validation draw +0.0893 above the other two. This round re-draws the partition
+# and pairs the two readouts that matter on each draw:
+#
+#   V_ref_s<k>      H_ref  (the v12 reference: E_full input, pinball, shared MLP readout)
+#   V_concat_s<k>   H_concat (multitask.concat_context=true; +0.0135 over H_ref on split 0
+#                   at 1,399 epochs, positive in 4 of 4 seeds)
+#   on split_seed k in {0, 1, 2, 3}, and
+#   V_*_s0_90       split 0 with the TEST records folded into TRAIN (90/10, same val set),
+#                   so the pair reads what 10% more training data buys.
+#
+# 24 runs, four per A40 card, one card per task, six tasks on the `gpu` partition:
+#   task 0  split 0, seeds 0-1        task 3  split 1, seeds 0-1
+#   task 1  split 0, seeds 2-3        task 4  split 2, seeds 0-1
+#   task 2  split 0 at 90/10, 0-1     task 5  split 3, seeds 0-1
+# Co-resident runs are the two arms of two seeds, so every ref/concat contrast is paired
+# within card and seed. All 24 sit on A40s, so the card type never enters a contrast.
+#
+# BUDGET 6,000 epochs. On split 0 the band mean is 0.188 at 4,000, 0.192 at 6,000 and
+# 0.197 at 9,900 with sd 0.017 to 0.022 at every point, and five of the eight long arms
+# peaked by epoch 4,109. Four per card ran at ~40 epochs/h/run in v12 with three workers;
+# with two workers the rate is not measured, and the wall is set long enough (10 days)
+# that the round finishes rather than being killed at a budget nobody chose. Scored as
+# roll_max at the matched epoch across all 24 if any run falls short.
+#
+# MEMORY. Every packed five-day IGB task so far died of host RSS (61 GB against 60 GB at
+# 3.5 to 4.6 days, cause unmeasured). Three levers, none of which waits on the cause:
+# 120 GB per task (the gpu nodes carry 250 GB for two cards), two loader workers per run
+# instead of three, and non-persistent workers so a worker's growth is released each epoch.
+# No smoke: if the guess is wrong the failure is the measurement.
+#
+# TEST. `trainer.run_test: true` scores the best-by-metric checkpoint on the 155 held-out
+# test strains at the end, the first held-out test number on this task. The first
+# ModelCheckpoint is what `ckpt_path="best"` resolves to, so its monitor is switched to
+# the expression metric here; the default val/loss checkpoint is the early-dip model.
+# The 90/10 arms have no test set and override run_test back to false.
+defaults:
+  - cgt_expr_v12_head
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v13
+  tags: [split-round, v13]
+
+data_module:
+  # DECLARED so every arm can set them from the CLI (hydra struct mode).
+  split_seed: 0
+  fold_test_into_train: false
+  persistent_workers: false
+
+trainer:
+  max_epochs: 6000
+  train_eval_every: 10
+  run_test: true
+  checkpoint:
+    monitor: val/expression/pearson_per_feature
+    mode: max

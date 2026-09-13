@@ -533,6 +533,21 @@ case "$ARM" in
                      ARM_TAGS=(readout-concat stage-head round-head) ;;
   H_state)           OVERRIDES=(multitask.context_readout=true)
                      ARM_TAGS=(readout-state-context stage-head round-head) ;;
+  # ============================ SPLIT ROUND (2026.09.13, v13) =============================
+  # H_ref and H_concat re-drawn on partitions split_seed 0..3 (conf/cgt_expr_v13_split.yaml
+  # explains the round). V_*_s0_90 is split 0 with the test records folded into train, the
+  # same 155-strain val set, and no test pass. The split number rides in the arm name so
+  # the readout can select on it; the seed is still initialization only.
+  V_ref_s0_90)       OVERRIDES=(data_module.split_seed=0 data_module.fold_test_into_train=true
+                                trainer.run_test=false)
+                     ARM_TAGS=(readout-shared-mlp split0 fold90 stage-split round-split) ;;
+  V_concat_s0_90)    OVERRIDES=(multitask.concat_context=true data_module.split_seed=0
+                                data_module.fold_test_into_train=true trainer.run_test=false)
+                     ARM_TAGS=(readout-concat split0 fold90 stage-split round-split) ;;
+  V_ref_s[0-9])      OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(readout-shared-mlp "split${ARM##*_s}" stage-split round-split) ;;
+  V_concat_s[0-9])   OVERRIDES=(multitask.concat_context=true data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(readout-concat "split${ARM##*_s}" stage-split round-split) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

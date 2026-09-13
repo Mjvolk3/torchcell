@@ -352,6 +352,31 @@ case "$STAGE" in
           SEEDS=(0 1 2 3)
           RUNS_PER_GPU=4; STAGE_CONFIG=cgt_expr_v12_head
           EXTRA_OV="" ;;
+  # ------------------------------------------------------------- SPLIT ROUND (2026.09.13)
+  # H_ref and H_concat on four partitions plus split 0 at 90/10 (conf/cgt_expr_v13_split.yaml).
+  # The run list is EXPLICIT rather than an arm x seed product, because the arm carries the
+  # split and each card holds one split's two arms for two seeds: every ref/concat contrast
+  # is paired within card and seed. Six tasks, four runs each, all on the `gpu` A40s.
+  # 6,000 epochs; --cpus-per-task=12 gives (12-2)/4 = 2 workers per run and 120 GB per task
+  # is half a 250 GB node, both chosen to hold host memory below what killed the five-day
+  # packed tasks. No walltime tuning: the partition has no limit and the round should end
+  # by finishing.
+  #
+  #   H=$(git rev-parse HEAD); D=$(git diff HEAD | sha256sum | cut -d" " -f1)
+  #   sbatch -p gpu --gres=gpu:1 --cpus-per-task=12 --mem=120g --time=10-00:00:00 \
+  #       --array=0-5 --export=ALL,W5_STAGE=split,TORCHCELL_SOURCE_GIT_HASH=$H,\
+  #   TORCHCELL_SOURCE_DIFF_SHA256=$D experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  split)  JOBS=(
+            V_ref_s0:0 V_concat_s0:0 V_ref_s0:1 V_concat_s0:1
+            V_ref_s0:2 V_concat_s0:2 V_ref_s0:3 V_concat_s0:3
+            V_ref_s0_90:0 V_concat_s0_90:0 V_ref_s0_90:1 V_concat_s0_90:1
+            V_ref_s1:0 V_concat_s1:0 V_ref_s1:1 V_concat_s1:1
+            V_ref_s2:0 V_concat_s2:0 V_ref_s2:1 V_concat_s2:1
+            V_ref_s3:0 V_concat_s3:0 V_ref_s3:1 V_concat_s3:1
+          )
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=4; STAGE_CONFIG=cgt_expr_v13_split
+          EXTRA_OV="" ;;
   # CANARY -- one fast_dev_run to prove container + conda + PYTHONPATH + LMDB path before a
   # wave is committed to the queue. Exits in minutes.
   canary) ARMS=(X_mix); SEEDS=(0)
@@ -364,7 +389,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head|split)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of
@@ -378,6 +403,9 @@ esac
 # checkpoint.
 if [[ "$STAGE" == "resume_many" ]]; then
   JOBS=("${RESUME_JOBS[@]}")
+elif [[ "${JOBS_EXPLICIT:-0}" == "1" ]]; then
+  # The stage wrote its own run list above (split round); nothing to build.
+  :
 else
   JOBS=()
   for seed in "${SEEDS[@]}"; do

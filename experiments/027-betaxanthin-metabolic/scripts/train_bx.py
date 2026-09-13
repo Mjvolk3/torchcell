@@ -694,6 +694,20 @@ class BxCell(BaseModel):
             "cell that trained it."
         ),
     )
+    flux_log_c_from_latent: bool = Field(
+        default=False,
+        description=(
+            "Make the flux layer's anchored concentration read the DRAWN latent as well as "
+            "the context, log c = lo + (hi - lo) sigmoid(base + W context + U z) with U "
+            "zero-initialized, so each of the K draws carries its own concentration and "
+            "the `flux_concentration` amino-acid readout becomes a function of the sample. "
+            "Without it that readout is a function of the genotype context alone and a "
+            "K-draw contrast on it is null by construction (wave 8 Finding 5). Requires "
+            "--flux-latent-stochastic; a construction-time switch, forwarded through the "
+            "arm dict into 026's build_flux_layer. Default False is bit-identical to every "
+            "earlier cell."
+        ),
+    )
 
 
 AUX_HEAD = "mulleder19"
@@ -1094,6 +1108,7 @@ def build_cell(
     flux_draws: int = 1,
     flux_latent_stochastic: bool = False,
     flux_kl_weight: float | None = None,
+    flux_log_c_from_latent: bool = False,
 ) -> BxCell:
     """Merge ``base.yaml`` with one arm file into a fully specified cell."""
     with open(osp.join(CONF_DIR, f"arm_{arm}.yaml")) as fh:
@@ -1165,6 +1180,7 @@ def build_cell(
         flux_draws=flux_draws,
         flux_latent_stochastic=flux_latent_stochastic,
         flux_kl_weight=flux_kl_weight,
+        flux_log_c_from_latent=flux_log_c_from_latent,
     )
 
 
@@ -1820,6 +1836,7 @@ def _sampling_meta(model: nn.Module, cell: BxCell) -> dict[str, Any]:
         "sampling": {
             "flux_draws": int(layer.config.draws),
             "latent_stochastic": bool(layer.latent_stochastic),
+            "log_c_from_latent": bool(layer.log_c_from_latent_enabled),
             "latent_log_std_init": float(layer.config.latent_log_std_init),
             "kl_weight": kl_weight,
             "constraint_final_scale": float(layer.config.constraint_final_scale),
@@ -2212,6 +2229,7 @@ def collect_concentration(
     is the quantity Mulleder measures; see :func:`mixture_weights`.
     """
     device = next(model.parameters()).device
+    layer: Any = model.flux_layer
     was_training = model.training
     model.eval()
     preds: list[np.ndarray] = []
@@ -2224,6 +2242,17 @@ def collect_concentration(
                 reps["flux"]["thermo_log_c"], indices, log_weights
             )
             t, m = targets_in_space(batch, head_specs, True)[AUX_HEAD]
+            if log10_c.shape[0] != t.shape[0]:
+                # One concentration per DRAW under `log_c_from_latent`, one target per
+                # genotype: the audited value is the mean over draws in log10 M, the same
+                # mean the draw ensemble scores (its moment match averages mu, which is an
+                # affine image of this).
+                draws = int(layer.config.draws)
+                assert log10_c.shape[0] == t.shape[0] * draws, (
+                    f"thermo_log_c has {log10_c.shape[0]} rows against {t.shape[0]} "
+                    f"targets and {draws} draws."
+                )
+                log10_c = log10_c.view(t.shape[0], draws, -1).mean(dim=1)
             preds.append(log10_c.cpu().numpy())
             trues.append(torch.where(m, t, torch.nan).cpu().numpy())
     model.train(was_training)
@@ -2308,6 +2337,13 @@ def build_model_for_cell(
     channel = cell.flux_parameterization or os.getenv("TC_FLUX_PARAMETERIZATION")
     if channel:
         arm["parameterization"] = channel
+    # THE TWO CONSTRUCTION-TIME LATENT SWITCHES go into the arm dict, the way the channel
+    # does, because `log_c_from_latent` builds a module and cannot be assigned onto a
+    # built layer. `latent_stochastic` travels with it so the layer's constructor can
+    # check the pairing; it is also assigned onto the config below, as before, so the
+    # call-time read is the same value.
+    arm["latent_stochastic"] = cell.flux_latent_stochastic
+    arm["log_c_from_latent"] = cell.flux_log_c_from_latent
     gene_ids = list(dataset.cell_graph["gene"].node_ids)
     flux_layer, flux_meta = build_flux_layer(arm, gene_ids, cell.hidden)
 
@@ -2349,14 +2385,21 @@ def build_model_for_cell(
             "deterministic mu are not K samples, and the arm would pay K times the compute "
             "to report the K = 1 prediction."
         )
+        assert flux_layer.log_c_from_latent_enabled == cell.flux_log_c_from_latent, (
+            "the built layer's log_c_from_latent does not match the cell's; the switch "
+            "is construction-time and travels through the arm dict."
+        )
         assert not (
-            cell.flux_draws > 1 and cell.aa_readout == AA_READOUT_CONCENTRATION
+            cell.flux_draws > 1
+            and cell.aa_readout == AA_READOUT_CONCENTRATION
+            and not cell.flux_log_c_from_latent
         ), (
             "the concentration readout predicts a slice of the layer's `thermo_log_c`, "
-            "which is a function of the genotype context and NOT of the drawn flux, so "
-            "--flux-draws above 1 buys it nothing and its B rows would not align with the "
-            "B*K flux rows. Measured and written up in "
-            "[[experiments.027-betaxanthin-metabolic.wave8-sampling]]."
+            "which without --flux-log-c-from-latent is a function of the genotype "
+            "context and NOT of the drawn flux, so --flux-draws above 1 buys it nothing "
+            "and its B rows would not align with the B*K flux rows. Measured and written "
+            "up in [[experiments.027-betaxanthin-metabolic.wave8-sampling]] (Finding 5); "
+            "set --flux-log-c-from-latent so each draw carries its own concentration."
         )
 
     if arm["flux"]:
@@ -2585,6 +2628,23 @@ def build_model_for_cell(
             f"{'learned per-column log_sigma' if cell.crps else 'point prediction'}",
             flush=True,
         )
+        if cell.flux_draws > 1:
+            # The readout writes one [19, 2] row per row of `thermo_log_c`, which under
+            # `log_c_from_latent` is one per draw, so the same reduction the betaxanthin
+            # heads get applies here: `head_draws` for the per-draw loss, the moment-matched
+            # mixture for the score. The head list is given explicitly because this arm
+            # declares no head on the model.
+            print(
+                f"[flux-draws] {cell.flux_draws} latent draws per genotype on the "
+                f"concentration readout; each draw carries its own log c",
+                flush=True,
+            )
+            return (
+                FluxDrawEnsemble(wrapped, cell.flux_draws, [AUX_HEAD]).to(device),
+                head_specs,
+                main_head,
+                flux_meta,
+            )
         return wrapped, head_specs, main_head, flux_meta
 
     if main_head == AUX_HEAD and arm["flux"] and cell.head_normalize:
@@ -2717,13 +2777,16 @@ def run_cell(
         s = torch.nanmean(centered * centered, dim=0).sqrt().clamp(min=1e-6)
         stats[name] = (mu.to(device), s.to(device))
     mean, sd = stats[main_head]
-    if isinstance(model, FluxConcentrationReadout):
+    # A K-draw concentration cell is the readout inside the draw ensemble; the
+    # standardization belongs to the readout either way.
+    readout = model.model if isinstance(model, FluxDrawEnsemble) else model
+    if isinstance(readout, FluxConcentrationReadout):
         # The readout emits a log10 molar concentration and the loss is computed against
         # the standardized target, so the readout is handed the SAME train-split statistics
         # rather than a learned affine. Set here rather than in `build_model_for_cell`
         # because the statistics come from a pass over the training loader, which the model
         # has to exist for.
-        model.set_target_standardization(mean, sd)
+        readout.set_target_standardization(mean, sd)
         print(
             "[concentration-readout] target standardization in log10 M: mean "
             f"{[round(float(x), 3) for x in mean]}, sd "
@@ -3619,6 +3682,16 @@ def main() -> None:
             "the constraint scale, so the applied weight is the product."
         ),
     )
+    parser.add_argument(
+        "--flux-log-c-from-latent",
+        action="store_true",
+        help=(
+            "Let the anchored concentration read the drawn latent (zero-initialized U z "
+            "term), so K draws give K concentrations per genotype and the "
+            "flux_concentration readout can answer a K-draw contrast. Needs "
+            "--flux-latent-stochastic."
+        ),
+    )
     args = parser.parse_args()
 
     cfg = load_config()
@@ -3654,6 +3727,7 @@ def main() -> None:
         flux_draws=args.flux_draws,
         flux_latent_stochastic=args.flux_latent_stochastic,
         flux_kl_weight=args.flux_kl_weight,
+        flux_log_c_from_latent=args.flux_log_c_from_latent,
     )
     dataset = build_dataset()
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)

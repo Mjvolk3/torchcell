@@ -394,9 +394,7 @@ def build_flux_layer(
     substrates = SubstrateMatch.from_verified_pairs(
         osp.join(kinetics_dir, VERIFIED_PAIRS_FEATURE)
     )
-    homolog_mirror = (
-        HOMOLOG_MIRROR if arm.get("kcat_homolog_tier", True) else None
-    )
+    homolog_mirror = HOMOLOG_MIRROR if arm.get("kcat_homolog_tier", True) else None
     predicted_kcat = predicted_km = None
     km = None
     if kcat_tier == "predicted":
@@ -416,7 +414,9 @@ def build_flux_layer(
             homolog_mirror_dir=homolog_mirror,
         )
     elif kcat_tier != "measured":
-        raise ValueError(f"kcat_tier must be 'measured' or 'predicted', got {kcat_tier!r}")
+        raise ValueError(
+            f"kcat_tier must be 'measured' or 'predicted', got {kcat_tier!r}"
+        )
     kcat = resolve_kcat_table(
         units,
         source.model_dir,
@@ -445,6 +445,13 @@ def build_flux_layer(
         use_dissipation_limit=arm["use_dissipation_limit"],
         use_abundance_head=bool(arm.get("use_abundance_head", False)),
         stochastic=bool(arm.get("stochastic", False)),
+        # CONSTRUCTION-TIME SWITCHES 027's trainer writes into the arm dict before this
+        # call (wave 8). `latent_stochastic` was assigned onto the built layer's config
+        # until now, which works on 'projection' because its spread head is always built;
+        # `log_c_from_latent` creates a module, so it has to be known here. No 026 arm
+        # sets either, and both default to what every earlier build ran.
+        latent_stochastic=bool(arm.get("latent_stochastic", False)),
+        log_c_from_latent=bool(arm.get("log_c_from_latent", False)),
         # The physics terms are dimensionless but not automatically COMMENSURATE with the
         # data term. Measured at init on a real batch, the unweighted constraint sum is
         # ~255 against a data loss of ~2, so at weight 1 the model spends every parameter

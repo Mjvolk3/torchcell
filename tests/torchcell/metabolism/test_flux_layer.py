@@ -1600,6 +1600,7 @@ def test_one_draw_reproduces_the_deterministic_forward_bit_for_bit():
         thermo_mode=ThermoMode.OFF,
         latent_stochastic=True,
         draws=1,
+        log_c_from_latent=False,
     )
     inputs = _inputs()
     torch.manual_seed(1)
@@ -1608,6 +1609,177 @@ def test_one_draw_reproduces_the_deterministic_forward_bit_for_bit():
     b = one(*inputs)
     for key in ("v", "c_balance", "c_box", "c_kl", "c_parsimony"):
         assert torch.equal(a[key], b[key]), f"{key} differs at draws=1"
+
+
+def test_log_c_from_latent_off_is_bit_identical_under_anchored_thermodynamics():
+    """The flag's default leaves an anchored K-draw layer at the last bit, extras included.
+
+    The flag moves the energy computation to after the draw, so this checks the OFF path
+    kept the old order: same seed, same init, same forward, every thermo extra equal and
+    at B rows.
+    """
+    batch, draws = 3, 4
+    torch.manual_seed(0)
+    plain = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.ANCHORED,
+        latent_stochastic=True,
+        draws=draws,
+    )
+    torch.manual_seed(0)
+    off = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.ANCHORED,
+        latent_stochastic=True,
+        draws=draws,
+        log_c_from_latent=False,
+    )
+    assert not off.log_c_from_latent_enabled
+    assert not hasattr(off, "log_c_from_latent")
+    inputs = _inputs(batch=batch)
+    torch.manual_seed(1)
+    a = plain(*inputs)
+    torch.manual_seed(1)
+    b = off(*inputs)
+    assert a.keys() == b.keys()
+    for key in a:
+        assert torch.equal(a[key], b[key]), (
+            f"{key} differs with log_c_from_latent=False"
+        )
+    assert b["thermo_log_c"].shape[0] == batch
+
+
+def test_log_c_from_latent_gives_each_draw_its_own_concentration():
+    """With the flag, ``thermo_log_c`` has ``B*K`` rows that differ across draws once U moves.
+
+    Three things, in order. At zero init the flag-on layer is the flag-off layer: same
+    parameters, same RNG consumption at init and in the forward, same flux, and the K
+    concentrations of one genotype are K copies. Once ``log_c_from_latent.weight`` is
+    nonzero the K rows of one genotype differ, so the amino-acid concentration readout is
+    a function of the draw. And ``sample()`` still runs, pricing each draw against its own
+    energies.
+    """
+    batch, draws = 3, 4
+    torch.manual_seed(0)
+    off = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.ANCHORED,
+        latent_stochastic=True,
+        draws=draws,
+    )
+    torch.manual_seed(0)
+    on = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.ANCHORED,
+        latent_stochastic=True,
+        draws=draws,
+        log_c_from_latent=True,
+    )
+    assert on.log_c_from_latent_enabled
+    assert on.log_c_from_latent.weight.shape == (on.n_metabolites, on.n_latent)
+    assert float(on.log_c_from_latent.weight.abs().max()) == 0.0
+    # Same init RNG consumed by both, so the shared parameters are identical.
+    for (name, p_off), (_, p_on) in zip(
+        off.named_parameters(), on.named_parameters(), strict=False
+    ):
+        if name != "log_c_from_latent.weight":
+            assert torch.equal(p_off, p_on), f"{name} differs at init"
+    inputs = _inputs(batch=batch)
+    torch.manual_seed(1)
+    a = off(*inputs)
+    torch.manual_seed(1)
+    b = on(*inputs)
+    assert torch.equal(a["v"], b["v"]), "zero-init flag-on flux differs from flag-off"
+    assert b["thermo_log_c"].shape == (batch * draws, on.n_metabolites)
+    assert b["thermo_conc_term"].shape == (batch * draws, on.n_reactions)
+    assert b["delta_r_g"].shape[0] == batch * draws
+    assert b["g_diss_per_sample"].shape[0] == batch * draws
+    grouped = b["thermo_log_c"].view(batch, draws, -1)
+    assert float(grouped.std(dim=1).abs().max()) == 0.0, (
+        "at zero init the draws of one genotype must share the concentration"
+    )
+    assert torch.equal(grouped[:, 0], a["thermo_log_c"]), (
+        "zero-init flag-on concentration differs from the flag-off one"
+    )
+
+    with torch.no_grad():
+        on.log_c_from_latent.weight.fill_(0.5)
+    c = on(*inputs)
+    grouped = c["thermo_log_c"].view(batch, draws, -1)
+    assert float(grouped.std(dim=1).max()) > 0.0, (
+        "the draws of one genotype share a concentration although U is nonzero"
+    )
+    sampled = on.sample(*inputs, n_samples=3)
+    assert sampled.v.shape == (3, batch, on.n_reactions)
+
+
+def test_log_c_from_latent_requires_a_drawn_latent_and_a_concentration():
+    """The flag is refused on a deterministic latent, a latent-free head, and no thermo."""
+    with pytest.raises(AssertionError, match="latent is deterministic"):
+        _layer(
+            parameterization="projection",
+            thermo_mode=ThermoMode.ANCHORED,
+            latent_stochastic=False,
+            stochastic=False,
+            log_c_from_latent=True,
+        )
+    with pytest.raises(AssertionError, match="null-space latent"):
+        _layer(
+            parameterization="box",
+            thermo_mode=ThermoMode.ANCHORED,
+            stochastic=True,
+            log_c_from_latent=True,
+        )
+    with pytest.raises(AssertionError, match="ANCHORED"):
+        _layer(
+            parameterization="projection",
+            thermo_mode=ThermoMode.OFF,
+            latent_stochastic=True,
+            log_c_from_latent=True,
+        )
+
+
+def test_log_c_from_latent_carries_gradient_to_u_and_to_the_posterior():
+    """A loss on ``thermo_log_c`` reaches U, and through U the latent's mu and sigma.
+
+    At zero init the path through U is closed (d log c / d z = U^T sigma' = 0), which is
+    the point of the zero init, so U is set nonzero first; the gradient then has to reach
+    both halves of the posterior, since that is what lets the data term shape the draw.
+    """
+    torch.manual_seed(0)
+    layer = _layer(
+        parameterization="projection",
+        thermo_mode=ThermoMode.ANCHORED,
+        latent_stochastic=True,
+        draws=2,
+        log_c_from_latent=True,
+    )
+    layer.train()
+    out = layer(*_inputs(batch=2))
+    out["thermo_log_c"].sum().backward()
+    assert layer.log_c_from_latent.weight.grad is not None
+    assert float(layer.log_c_from_latent.weight.grad.abs().max()) > 0.0
+    for p in (layer.latent_log_std.weight, layer.latent_log_std.bias):
+        assert p.grad is None or float(p.grad.abs().max()) == 0.0, (
+            "at zero init no gradient can pass through U"
+        )
+
+    layer.zero_grad()
+    with torch.no_grad():
+        layer.log_c_from_latent.weight.fill_(0.3)
+    out = layer(*_inputs(batch=2))
+    out["thermo_log_c"].sum().backward()
+    mu_params = [p for p in layer.latent_mlp.parameters()]
+    assert any(
+        p.grad is not None and float(p.grad.abs().max()) > 0.0 for p in mu_params
+    ), "no gradient reached the latent mean"
+    for name, p in (
+        ("latent_log_std.weight", layer.latent_log_std.weight),
+        ("latent_log_std.bias", layer.latent_log_std.bias),
+    ):
+        assert p.grad is not None and float(p.grad.abs().max()) > 0.0, (
+            f"no gradient reached {name}"
+        )
 
 
 def test_k_draws_expand_the_batch_and_differ_from_each_other():
@@ -1707,8 +1879,9 @@ def test_every_batch_axis_output_carries_the_expanded_rows():
     """Under K draws, one contract: everything with a batch axis has ``B*K`` rows.
 
     The exception is the ``thermo_*`` block, which is the learned concentration and its
-    derived terms. No draw touches those, and the one readout that consumes them refuses to
-    run with K > 1.
+    derived terms. Without ``log_c_from_latent`` no draw touches those, and the one readout
+    that consumes them is refused with K > 1 unless that flag is set (then they carry B*K
+    rows too; see ``test_log_c_from_latent_gives_each_draw_its_own_concentration``).
 
     This is a regression test with a scar. `c_j` was left at B rows on the first pass
     because no draw changes a reaction's availability, and 027's `_per_sample_feasibility`

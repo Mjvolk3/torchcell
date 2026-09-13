@@ -418,6 +418,27 @@ class FluxLayerConfig(BaseModel):
             "unless `latent_stochastic` is set, because c_kl is exactly zero otherwise."
         ),
     )
+    log_c_from_latent: bool = Field(
+        default=False,
+        description=(
+            "Make the ANCHORED concentration a function of the DRAWN latent as well as "
+            "of the genotype context: log c = lo + (hi - lo) sigmoid(base + W context + "
+            "U z), with U a zero-initialized `nn.Linear(n_latent, n_metabolites)`, so each "
+            "of the K draws carries its own concentration vector and the amino-acid "
+            "concentration readout becomes a function of the sample. Without it "
+            "`thermo_log_c` reads the context alone and a K-draw contrast on that readout "
+            "is null by construction (measured, wave 8 Finding 5 in "
+            "[[experiments.027-betaxanthin-metabolic.wave8-sampling]]). With it, the "
+            "reaction energies, the second-law box, the hinge and the dissipation are all "
+            "computed AFTER the draw, per draw, and the `thermo_*` extras carry B*draws "
+            "rows. Zero init keeps the flag-on forward pass bit-identical to flag-off "
+            "until U moves, so the latent path is learned rather than injected as noise. "
+            "Off, the default, is bit-identical to every earlier arm. Requires "
+            "`latent_stochastic` and a parameterization that has a latent "
+            "('projection' or 'nullspace') under ThermoMode.ANCHORED; the constructor "
+            "asserts all three."
+        ),
+    )
     thermo_box: bool = Field(
         default=False,
         description=(
@@ -1429,6 +1450,40 @@ class FluxLayer(nn.Module):
             "K samples; set latent_stochastic on the arm."
         )
 
+        # A DRAW-DEPENDENT CONCENTRATION NEEDS A DRAW, A LATENT AND A CONCENTRATION. The
+        # flag reads z inside `reaction_potential`, so it is meaningless on a layer whose
+        # latent is deterministic (every draw would carry the same concentration again), on
+        # a parameterization with no null-space latent, and outside ANCHORED, where no
+        # concentration is learned at all. A property of the BUILT layer, like `draws`
+        # above, since `latent_stochastic` is one too.
+        self.log_c_from_latent_enabled = bool(cfg.log_c_from_latent)
+        if self.log_c_from_latent_enabled:
+            assert self.parameterization in {"nullspace", "projection"}, (
+                f"log_c_from_latent needs a null-space latent to read; parameterization "
+                f"{self.parameterization!r} has none."
+            )
+            assert self.latent_stochastic, (
+                "log_c_from_latent on a layer whose latent is deterministic "
+                f"(parameterization {self.parameterization!r}, latent_stochastic "
+                f"{cfg.latent_stochastic}, stochastic {cfg.stochastic}). A concentration "
+                "read off mu is the context-only concentration again; set "
+                "latent_stochastic on the arm."
+            )
+            assert self.thermo_mode is ThermoMode.ANCHORED, (
+                f"log_c_from_latent needs ThermoMode.ANCHORED (got {self.thermo_mode}); "
+                "no concentration is learned otherwise."
+            )
+            # ZERO WEIGHT, AND NO RNG CONSUMED. `nn.Linear` draws a Kaiming init before it
+            # is zeroed, which would shift every parameter initialized after this layer
+            # and make a flag-on cell differ from its flag-off pair at init for a reason
+            # that is not the flag. The fork restores the generator state on exit, so the
+            # two cells consume the init RNG identically and differ only once U learns.
+            with torch.random.fork_rng(devices=[]):
+                self.log_c_from_latent = nn.Linear(
+                    self.n_latent, self.n_metabolites, bias=False
+                )
+            nn.init.zeros_(self.log_c_from_latent.weight)
+
     # -- construction helpers -------------------------------------------------
 
     @property
@@ -1913,16 +1968,30 @@ class FluxLayer(nn.Module):
         return lb, ub, capped
 
     def reaction_potential(
-        self, context: torch.Tensor
+        self, context: torch.Tensor, latent: torch.Tensor | None = None
     ) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
         r"""Per-reaction :math:`\Delta_r G_j` and the mask of reactions it is valid on.
 
         In ``ANCHORED`` mode this is Thermo-Flux Eq. (4) term by term. In ``FREE`` mode it
         is :math:`\sum_i S_{ij}\mu_i` with :math:`\mu` unconstrained. In ``OFF`` mode the
         mask is empty and the caller skips the term.
+
+        ``latent`` is the drawn :math:`z`, ``[B, n_latent]`` on the same rows as
+        ``context``, and it is REQUIRED exactly when ``log_c_from_latent`` is set: the
+        anchored concentration then reads
+        :math:`\log c=lo+(hi-lo)\,\sigma(\text{base}+W\,\text{context}+U z)`, so a caller
+        that passes ``B*K`` expanded rows gets one concentration per draw. Passing it on a
+        layer without the flag, or omitting it on one with the flag, is asserted against
+        rather than silently ignored, because either way the concentration would not be
+        the one the flag names.
         """
         b = context.shape[0]
         extras: dict[str, torch.Tensor] = {}
+        assert (latent is not None) == self.log_c_from_latent_enabled, (
+            f"reaction_potential got latent={'a tensor' if latent is not None else None} "
+            f"on a layer with log_c_from_latent={self.log_c_from_latent_enabled}; the "
+            "drawn latent is read exactly when the flag is set."
+        )
         if self.thermo_mode is ThermoMode.OFF:
             zeros = context.new_zeros(b, self.n_reactions)
             return zeros, torch.zeros_like(self.delta_r_g0_mask), extras
@@ -1940,6 +2009,8 @@ class FluxLayer(nn.Module):
             math.log(self.config.conc_upper_m),
         )
         raw = self.log_c_base.unsqueeze(0) + self.log_c_from_context(context)
+        if latent is not None:
+            raw = raw + self.log_c_from_latent(latent)
         log_c = lo + (hi - lo) * torch.sigmoid(raw)
         conc_term = self.rt * self._s_transpose_matmul(log_c)
         offset = (
@@ -2006,6 +2077,15 @@ class FluxLayer(nn.Module):
             A dict with ``v`` ``[B, r]``, every constraint residual as a scalar, and the
             per-sample feasibility diagnostics. Residuals are returned rather than summed
             so the caller owns the weighting and every term can be logged separately.
+
+            Under ``draws = K > 1`` every batch-axis entry carries ``B*K`` rows, grouped
+            by genotype. The ``thermo_*`` extras of the anchored mode (``thermo_log_c``
+            ``[., m]``, ``thermo_conc_term`` ``[., r]``, and ``thermo_delta_g_offset``
+            ``[r]`` with no batch axis) are the one exception and depend on the flag:
+            with ``log_c_from_latent`` OFF they are a function of the context alone and
+            stay at ``B`` rows; with it ON they are computed after the draw and carry
+            ``B*K`` rows, one concentration per draw, and so do ``delta_r_g`` and
+            ``g_diss_per_sample``.
         """
         cfg = self.config
         b = h_genes.shape[0]
@@ -2024,10 +2104,18 @@ class FluxLayer(nn.Module):
         # rather than a penalty, so they are computed here for every arm and reused below.
         # Nothing about this call is stateful or random, so moving it earlier leaves every
         # existing arm's numbers and its consumption of the RNG exactly as they were.
-        delta_g, dg_mask, extras = self.reaction_potential(context)
+        #
+        # UNLESS THE CONCENTRATION READS THE DRAW. With `log_c_from_latent` the energies
+        # are a function of z, which does not exist yet, so they are computed once per
+        # draw after the expansion below, and the directional box with them.
         thermo_emptied: torch.Tensor | None = None
-        if self.thermo_box:
-            lb, ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
+        delta_g: torch.Tensor
+        dg_mask: torch.Tensor
+        extras: dict[str, torch.Tensor]
+        if not self.log_c_from_latent_enabled:
+            delta_g, dg_mask, extras = self.reaction_potential(context)
+            if self.thermo_box:
+                lb, ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
 
         # K DRAWS PER GENOTYPE, as an expansion of the batch rather than a loop.
         #
@@ -2046,15 +2134,17 @@ class FluxLayer(nn.Module):
         # a shape error at the end of a run rather than at its start. Every mean over the
         # expanded rows equals the mean over the original ones, so no reported number moves.
         #
-        # The `thermo_*` extras are the exception and stay at B rows: they are the learned
-        # concentration and its derived terms, which no draw touches, and the one readout
-        # that consumes them is refused with K > 1 by the trainer.
+        # The `thermo_*` extras are the exception and stay at B rows when the
+        # concentration reads the context alone: no draw touches them, and the trainer
+        # refuses the readout that consumes them with K > 1 unless `log_c_from_latent` is
+        # set. With that flag they are computed below, after the draw, and carry B*K rows.
         draws = int(cfg.draws)
         if draws > 1:
             context = context.repeat_interleave(draws, dim=0)
             lb = lb.repeat_interleave(draws, dim=0)
             ub = ub.repeat_interleave(draws, dim=0)
-            delta_g = delta_g.repeat_interleave(draws, dim=0)
+            if not self.log_c_from_latent_enabled:
+                delta_g = delta_g.repeat_interleave(draws, dim=0)
             c_j = c_j.repeat_interleave(draws, dim=0)
             gamma = gamma.repeat_interleave(draws, dim=0)
             if e_g is not None:
@@ -2070,6 +2160,20 @@ class FluxLayer(nn.Module):
 
         kl = h_genes.new_zeros(())
         latent_std: torch.Tensor | None = None
+        latent: torch.Tensor | None = None
+        if self.log_c_from_latent_enabled:
+            # THE DRAW FIRST, THEN THE ENERGIES. The concentration is a function of z, so
+            # z is drawn on the expanded rows before anything thermodynamic exists, and the
+            # reaction energies, the directional box and every second-law term below then
+            # see one delta_r_G per draw. The flux and the concentration share the draw, so
+            # the per-draw hinge prices sign consistency between the drawn v and the drawn
+            # log c rather than between a drawn v and a concentration that never moved.
+            # The RNG is consumed here instead of inside the parameterization branch, and
+            # nothing between the two points draws, so the sample is the same one.
+            latent, kl, latent_std = self._latent(context, force_sample=draws > 1)
+            delta_g, dg_mask, extras = self.reaction_potential(context, latent=latent)
+            if self.thermo_box:
+                lb, ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
         sign_flip_frac: torch.Tensor | None = None
         v_pre_projection: torch.Tensor | None = None
         if self.parameterization == "fluxforce":
@@ -2126,8 +2230,10 @@ class FluxLayer(nn.Module):
             # A K-draw arm forces the draw in eval as well as in training, because its
             # prediction IS the average over draws and emitting mu K times would score a
             # different estimator than the one that was trained. At K = 1 the flag is False
-            # and `_latent` behaves exactly as it always has.
-            latent, kl, latent_std = self._latent(context, force_sample=draws > 1)
+            # and `_latent` behaves exactly as it always has. Under `log_c_from_latent`
+            # the draw was already taken above, before the energies, and is reused here.
+            if latent is None:
+                latent, kl, latent_std = self._latent(context, force_sample=draws > 1)
             z_latent = latent * cfg.flux_scale
             v = z_latent @ self.null_basis.t()
             if self.parameterization == "projection":
@@ -2466,18 +2572,35 @@ class FluxLayer(nn.Module):
             else None
         )
         lb, ub, _ = self.dynamic_box(c_j, e_u)
-        delta_g, dg_mask, _ = self.reaction_potential(context)
-        if self.thermo_box:
-            # The same directional box the deterministic head gets, so every DRAW is
-            # thermodynamically feasible rather than only the mean.
-            lb, ub, _ = self._thermo_tighten(lb, ub, delta_g)
+        # Under `log_c_from_latent` the energies are a function of the draw, so they are
+        # computed inside the loop from each draw's own z; the mask is the anchored table's
+        # and does not depend on it.
+        delta_g: torch.Tensor
+        dg_mask: torch.Tensor
+        if self.log_c_from_latent_enabled:
+            dg_mask = self.delta_r_g0_mask
+        else:
+            delta_g, dg_mask, _ = self.reaction_potential(context)
+            if self.thermo_box:
+                # The same directional box the deterministic head gets, so every DRAW is
+                # thermodynamically feasible rather than only the mean.
+                lb, ub, _ = self._thermo_tighten(lb, ub, delta_g)
         active = dg_mask & (~self.thermo_exempt)
         has_thermo = bool(active.any()) and self.thermo_mode is not ThermoMode.OFF
 
         draws: list[torch.Tensor] = []
         feas: list[dict[str, torch.Tensor]] = []
         for _ in range(n_samples):
-            if self.parameterization == "fluxforce":
+            draw_lb, draw_ub = lb, ub
+            if self.log_c_from_latent_enabled:
+                latent, _, _ = self._latent(context, force_sample=True)
+                delta_g, _, _ = self.reaction_potential(context, latent=latent)
+                if self.thermo_box:
+                    draw_lb, draw_ub, _ = self._thermo_tighten(lb, ub, delta_g)
+                v = (latent * cfg.flux_scale) @ self.null_basis.t()
+                if self.parameterization == "projection":
+                    v = self._project_feasible(v, draw_lb, draw_ub)
+            elif self.parameterization == "fluxforce":
                 box_lb, box_ub = lb, ub
                 if self.projection_end == "boxforce":
                     box_lb, box_ub, _ = self._thermo_tighten(lb, ub, delta_g)
@@ -2495,7 +2618,7 @@ class FluxLayer(nn.Module):
                 v = (latent * cfg.flux_scale) @ self.null_basis.t()
                 if self.parameterization == "projection":
                     v = self._project_feasible(v, lb, ub)
-            piece: dict[str, torch.Tensor] = {"v": v, "lb": lb, "ub": ub}
+            piece: dict[str, torch.Tensor] = {"v": v, "lb": draw_lb, "ub": draw_ub}
             if has_thermo:
                 piece["delta_r_g"] = delta_g
             draws.append(v)

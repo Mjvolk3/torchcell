@@ -529,3 +529,93 @@ The K = 128 CPU row is absent for a reason worth keeping: the benchmark died the
 332k elements at K = 1 and 42.5M at K = 128. Every K = 128 forward pass would have died. The
 benchmark caught it before a single K = 128 job was submitted; the fix is a sort-based
 quantile reproducing the default linear interpolation exactly.
+
+## 2026.09.13 - Step 3: draw-dependent concentration for the amino-acid K-draw test
+
+### The question
+
+User, 2026-09-13: "we will want to also know if sampling helps for amino acid prediction
+from amino acid dataset." The betaxanthin K-draw contrast closed NULL at 200 epochs on three
+seeds (`results/wave8_samp_k{1,128}_e200_s270{3,4,5}.json`; pinned-test Spearman at the
+selected epoch, K = 128 minus K = 1 paired by seed: +0.0595, -0.0085, -0.0356). The
+amino-acid target is the one where the latent should
+matter: 19 measured pools rather than one heterologous product, and a readout that is the
+layer's own concentration rather than a free head on a flux slice.
+
+### Why the current readout cannot answer it
+
+Finding 5 above. `FluxConcentrationReadout` emits `mixture_log10_molar(thermo_log_c)`, and
+`thermo_log_c` was `lo + (hi - lo) sigmoid(base + W context)`, a function of the genotype
+context alone, computed in `reaction_potential` BEFORE `forward` expands the batch to B*K
+rows and draws z. K draws gave K copies of one concentration; the trainer refused the pair
+(`--flux-draws > 1` with `--aa-readout flux_concentration`) for that reason. A K-draw cell on
+that readout would have been null by construction, whatever K.
+
+### The construction
+
+One new term, behind `FluxLayerConfig.log_c_from_latent` (default False, bit-identical to
+every earlier arm):
+
+```
+log c = lo + (hi - lo) sigmoid(base + W context + U z),   U in R^{m x n_latent}, U(0) = 0
+```
+
+- `U` is `FluxLayer.log_c_from_latent`, an `nn.Linear(n_latent, n_metabolites,
+  bias=False)` built only when the flag is set, zero-initialized, and built under
+  `torch.random.fork_rng` so the flag-on cell consumes the init RNG exactly as the flag-off
+  cell does. At init the two cells are the same model: same parameters, same flux, K copies
+  of one concentration per genotype. The latent path is learned, not injected as noise.
+- The draw is SHARED with the flux. `forward` now draws z on the expanded B*K rows first,
+  then calls `reaction_potential(context, latent=z)`, then tightens the directional box,
+  projects, and prices the second law, all per draw. The hinge `relu(v dG) / (|v||dG|)`
+  therefore sees the drawn v against the drawn log c, so it prices sign consistency between
+  the two halves of one sample rather than between a drawn flux and a concentration that
+  never moved. `sample()` does the same per draw.
+- The `thermo_*` extras (`thermo_log_c` [B*K, m], `thermo_conc_term` [B*K, r]) and
+  `delta_r_g`, `g_diss_per_sample` carry B*K rows under the flag. Flag off, they stay at B
+  rows and every earlier output is unchanged (asserted bit-for-bit in
+  `tests/torchcell/metabolism/test_flux_layer.py`, `test_log_c_from_latent_*`).
+- Trainer: `--flux-log-c-from-latent` (cell field `flux_log_c_from_latent`), a
+  construction-time switch that travels through the arm dict into 026's `build_flux_layer`
+  together with `latent_stochastic`, because a module cannot be assigned onto a built
+  layer. The concentration readout is wrapped in `FluxDrawEnsemble([mulleder19])` when K >
+  1, so the training loss is the mean over draws of the per-draw CRPS against the target
+  repeated K times (NaN-masked features repeated with it), and the scored prediction is the
+  moment-matched mixture. `collect_concentration` averages the K log10 concentrations per
+  genotype for the audit, the same mean the ensemble scores.
+- The refusal is replaced: K > 1 with the concentration readout now REQUIRES the flag.
+
+Smoke: one CPU epoch of the recipe at K = 4 (`results/smoke_w8_aasamp_k4.json`, seed 9106,
+`--smoke`), through training, validation, the concentration audit and the feasibility pass.
+
+### The contrast
+
+Three columns, paired by seed 2700 / 2701 / 2702, everything else equal to
+`gh_wave8_aa_concver_e200_s<seed>.slurm` (verified table, constraint scale 0.1 over a
+20-epoch warmup, 1 M ceiling, mixture space, 200 epochs, same scoring rule):
+
+| column | flag | K | file | measures |
+|---|---|---|---|---|
+| concver | off | 1 | `wave8_aa_concver_e200_s<seed>.json` | the existing baseline: pinned-test mean per-feature Spearman 0.0580 / 0.0725 / 0.0554 |
+| aasamp k1 | on | 1 | `wave8_aasamp_k1_e200_s<seed>.json` | what the stochastic, draw-dependent concentration costs on its own (k1 minus concver) |
+| aasamp k64 | on | 64 | `wave8_aasamp_k64_e200_s<seed>.json` | THE CONTRAST: k64 minus k1, both flag on, only the draw count differs |
+
+Scripts: `gh_wave8_aasamp_k{1,64}_e200_s270{0,1,2}.slurm`, W&B group `gh_wave8_aasamp`,
+tag `_w8aasamp`. K = 64 rather than 128 because the aa head is 19-wide and the 200-epoch aa
+cell already takes 3.3 h. Cost expectation, NOT measured: the betaxanthin K = 128 cost 1.22
+to 1.30x per epoch, so K = 64 on this cell is expected to land under 1.3x, about 4.3 h;
+the slurm cells ask for 12 h and 100 GB at K = 64, 8 h and 60 GB at K = 1.
+
+### Job ledger
+
+TODO (driver): job ids, per-epoch cost at K = 64 against K = 1, selected epoch, test mean
+per-feature Spearman per column, and the paired differences.
+
+| job | script | K | flag | seed | status | epoch s | test |
+|---|---|---|---|---|---|---|---|
+| | `gh_wave8_aasamp_k1_e200_s2700` | 1 | on | 2700 | | | |
+| | `gh_wave8_aasamp_k64_e200_s2700` | 64 | on | 2700 | | | |
+| | `gh_wave8_aasamp_k1_e200_s2701` | 1 | on | 2701 | | | |
+| | `gh_wave8_aasamp_k64_e200_s2701` | 64 | on | 2701 | | | |
+| | `gh_wave8_aasamp_k1_e200_s2702` | 1 | on | 2702 | | | |
+| | `gh_wave8_aasamp_k64_e200_s2702` | 64 | on | 2702 | | | |

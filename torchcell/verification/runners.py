@@ -1294,68 +1294,45 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_hillenmeyer2008_het": {
         "root": "data/torchcell/env_chemgen_hillenmeyer2008_het",
-        # HIP (heterozygous) fitness-defect log2_ratio. 726 arrays -> 514 unique
-        # environments (replicates aggregated) x 5984 R64 strains minus NA-only cells.
-        "expected_count": 2921078,
+        # kept records after the identifier rule and the two unrepresentable
+        # conditions; rules + counts in preprocess/dropped_records.json.
+        "expected_count": 2698797,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(
             source_uri=(
-                "Internet Archive (Wayback) mirror of the Stanford supplement "
-                "chemogenomics.stanford.edu/supplements/global/download/data/"
-                "het.ratio_result_nm.pub; live FitDb portals are DNS-dead, Science SI 403s"
+                "$DATA_ROOT/torchcell-raw/hillenmeyerChemicalGenomicPortrait2008/data/het.ratio_result_nm.pub "
+                "(raw mirror with manifest.json; Wayback capture 20151207003548 of the "
+                "chemogenomics.stanford.edu FitDb download, re-retrieved bit-identically 2026-09-12)"
             ),
             citation_key="hillenmeyerChemicalGenomicPortrait2008",
             sha256="c0ddefaeb44c9760481dc443d1c2e82570bad4eb1a5458acd74b169bec47cb44",
-            method=(
-                "genome-scale HIP fitness-defect log2_ratio = log2(mean control intensity / "
-                "treatment intensity), up+down tag mean; positive = fitness defect. "
-                "Per-array atlas AGGREGATED to one record per (strain, environment): arrays "
-                "with identical compound/concentration/generations are replicates -> mean, "
-                "n_samples=n_arrays, sample SD -> derived SE. HET = "
-                "EngineeredCopyNumberPerturbation (copy 1 of 2, diploid) incl. essential "
-                "genes. Conditions classified per SOM Table S1: temperature "
-                "(Environment.temperature, baseline 30 C), pH, amino-acid/vitamin "
-                "nutrient_dropout (agent=Compound), radiation, media swap "
-                "(Environment.media), carbon source (YP glycerol), else small molecule; "
-                "combination = 2 small molecules. ORFs -> SGD R64 (non-R64 dropped)"
-            ),
+            method="genome-scale HIP fitness-defect log2_ratio = log2(mean control intensity / treatment intensity), up+down tag mean; positive = fitness defect. HET = EngineeredCopyNumberPerturbation (copy 1 of 2, diploid) incl. essential genes. One record per (strain, environment, CONTROL SET): the SOM defines the score against a matched no-drug control set (same pool, generation count and scanner), so the control-set id is stored on phenotype.screen_id and one reference is emitted per control set with that set's control-array count as n_samples. Within a group each array contributes one value (the mean over that ORF's construction rows, which are DIFFERENT strains, not replicates); the record is the across-array mean with the sample SD, n_samples = arrays. Conditions per SOM Table S1: temperature on Environment.temperature; pH; nutrient drop-outs as DERIVED SC media (HILLENMEYER_DROPOUT_MEDIA); media swaps to SD / SC / YP_GLYCEROL_LIQUID; '<compound> irradiated' as compound + radiation; cond2 appended in every branch; base medium YPD_LIQUID. Temperature is NOT defaulted -- the SOM defers the growth protocol to Pierce 2006 (not mirrored), so non-temperature conditions carry a ProvenanceGap(deferred_pending_source_review) on it. duration_generations stores the MAGNITUDE (the sign is the no-recovery protocol flag, preserved in screen_id). Molar doses canonicalized exactly (Decimal) so '1.5 m' and '1.5e+06 um' are one environment. DROPPED: 57 environments / 68 arrays -- 56 naming a compound with no structure identifier, plus the '37c, 45c' heat-shock cycle. ORFs go through resolve_gene_name (renamed mapped, retired/non-gene dropped to preprocess/dropped_genes.json)",
             page=(
-                "Science 2008 320(5874):362-365 (doi:10.1126/science.1150021); "
-                "het.ratio_result_nm.pub "
-                "sha256=c0ddefaeb44c9760481dc443d1c2e82570bad4eb1a5458acd74b169bec47cb44"
+                "Science 2008 320:362 (doi:10.1126/science.1150021); SOM Table S1; raw mirror "
+                "manifest.json pinning every file; het.ratio_result_nm.pub sha256=c0ddefaeb44c9760481dc443d1c2e82570bad4eb1a5458acd74b169bec47cb44"
             ),
         ),
     },
     "env_chemgen_hillenmeyer2008_hom": {
         "root": "data/torchcell/env_chemgen_hillenmeyer2008_hom",
-        # HOP (homozygous) fitness-defect z_score. 418 arrays -> 284 unique environments
-        # (replicates aggregated) x 4769 R64 strains minus NA-only cells.
-        "expected_count": 1179520,
+        # kept records after the identifier rule and the two unrepresentable
+        # conditions; rules + counts in preprocess/dropped_records.json.
+        "expected_count": 1088620,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(
             source_uri=(
-                "Internet Archive (Wayback) mirror of the Stanford supplement "
-                "chemogenomics.stanford.edu/supplements/global/download/data/"
-                "hom.z_result_nm.pub; live FitDb portals are DNS-dead, Science SI 403s"
+                "$DATA_ROOT/torchcell-raw/hillenmeyerChemicalGenomicPortrait2008/data/hom.z_result_nm.pub "
+                "(raw mirror with manifest.json; Wayback capture 20151207003024 of the "
+                "chemogenomics.stanford.edu FitDb download, re-retrieved bit-identically 2026-09-12)"
             ),
             citation_key="hillenmeyerChemicalGenomicPortrait2008",
             sha256="0b7d5e4dad0e5b4336b1dac97fb32ef14d7d0bf9f5d1b0d5ddb382c393362b71",
-            method=(
-                "genome-scale HOP fitness-defect z_score = (mean control - treatment)/SD "
-                "control; positive = fitness defect. Per-array atlas AGGREGATED to one "
-                "record per (strain, environment): arrays with identical "
-                "compound/concentration/generations are replicates -> mean, "
-                "n_samples=n_arrays, sample SD -> derived SE. HOM = KanMx deletion diploid. "
-                "Conditions classified per SOM Table S1 (temperature, pH, nutrient_dropout, "
-                "radiation, media swap, carbon source, else small molecule). ORFs -> SGD "
-                "R64 (non-R64 dropped)"
-            ),
+            method="genome-scale HOP fitness-defect z_score = (mean control - treatment)/SD control; positive = fitness defect. HOM = KanMx deletion in a diploid. One record per (strain, environment, CONTROL SET): the SOM defines the score against a matched no-drug control set (same pool, generation count and scanner), so the control-set id is stored on phenotype.screen_id and one reference is emitted per control set with that set's control-array count as n_samples -- the n of the z-score's denominator. Within a group each array contributes one value (the mean over that ORF's construction rows, which are DIFFERENT strains, not replicates); the record is the across-array mean with the sample SD, n_samples = arrays. Conditions per SOM Table S1: temperature on Environment.temperature; pH (with cond2 parsed, so pH7.5+FK506 is no longer merged into plain pH7.5); the 15 nutrient drop-outs as DERIVED SC media plus SC for the drop-out control; media swaps to SD / SC / YP_GLYCEROL_LIQUID; 'no drug irradiated' as radiation alone and angelicin / psoralen irradiated as compound + radiation; base medium YPD_LIQUID. Temperature is NOT defaulted (ProvenanceGap deferring to Pierce 2006). duration_generations stores the MAGNITUDE (the sign is the no-recovery protocol flag, preserved in screen_id). Molar doses canonicalized exactly (Decimal). DROPPED: 32 environments / 37 arrays -- 30 naming a compound with no structure identifier, plus the two 'minimal media:400:um' arrays whose agent is named nowhere. ORFs go through resolve_gene_name (renamed mapped, retired/non-gene dropped to preprocess/dropped_genes.json)",
             page=(
-                "Science 2008 320(5874):362-365 (doi:10.1126/science.1150021); "
-                "hom.z_result_nm.pub "
-                "sha256=0b7d5e4dad0e5b4336b1dac97fb32ef14d7d0bf9f5d1b0d5ddb382c393362b71"
+                "Science 2008 320:362 (doi:10.1126/science.1150021); SOM Table S1; raw mirror "
+                "manifest.json pinning every file; hom.z_result_nm.pub sha256=0b7d5e4dad0e5b4336b1dac97fb32ef14d7d0bf9f5d1b0d5ddb382c393362b71"
             ),
         ),
     },

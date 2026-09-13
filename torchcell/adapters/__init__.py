@@ -23,6 +23,12 @@ from .costanzo2021_adapter import (
 from .dasilveira2014_adapter import (
     MetaboliteDaSilveira2014Adapter as MetaboliteDaSilveira2014Adapter,
 )
+from .hillenmeyer2008_adapter import (
+    HetHillenmeyer2008Adapter as HetHillenmeyer2008Adapter,
+)
+from .hillenmeyer2008_adapter import (
+    HomHillenmeyer2008Adapter as HomHillenmeyer2008Adapter,
+)
 from .hoepfner2014_adapter import (
     EnvChemgenHoepfner2014Adapter as EnvChemgenHoepfner2014Adapter,
 )
@@ -171,6 +177,8 @@ environment_adapters = [
     "EnvChemgenVanacloig2022Adapter",
     "EnvChemgenWildenhain2015Adapter",
     "EnvChemgenHoepfner2014Adapter",
+    "HetHillenmeyer2008Adapter",
+    "HomHillenmeyer2008Adapter",
 ]
 
 baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]

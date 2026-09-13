@@ -147,8 +147,11 @@ def _genotype_signature(
                 ident = ident + (crispr["guide_sequence"],)
             if crispr.get("library_pool") is not None:
                 ident = ident + (crispr["library_pool"],)
-            if crispr.get("donor_sequence") is not None:
-                ident = ident + (crispr["donor_sequence"],)
+        # the donor is a field of the CRISPR deletion perturbation itself, not of
+        # its construct: two designs can share a gene and a spacer and differ only
+        # in the donor (Lian 2019, 150 groups)
+        if p.get("donor_sequence") is not None:
+            ident = ident + (p["donor_sequence"],)
         return ident
 
     return tuple(

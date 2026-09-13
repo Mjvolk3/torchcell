@@ -1031,128 +1031,196 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_smith2006": {
         "root": "data/torchcell/env_chemgen_smith2006",
-        # 4721 unique-ORF strains x 3 conditions (oleate/myristate clear-zone + acetate
-        # growth) = 14163 ordinal-categorical records, one per (strain, condition). Every
-        # screened row carries all three scores (no blank condition cells). Of 4770 screened
-        # strains, 49 are dropped: 26 non-current/dubious systematic names + 23 alias-
-        # resolutions that would collide with a directly-present R64 ORF (e.g. YOR240W ->
-        # YOR239W, present as ABP140). Records store the ordinal (1-4) on
-        # environment_response with a semantic category; measurement_type=categorical.
-        "expected_count": 14163,
+        # 4249 unique-ORF strains x 3 conditions = 12,747 ordinal records. Of 4770
+        # released strains, 521 are dropped: 472 flagged NG/LG/NG-CONT on the YEPD growth
+        # control (the screen's own QC column), 26 non-current systematic names, and 23
+        # alias-resolutions that would collide with a directly-present R64 ORF.
+        "expected_count": 12747,
         # matalpha haploid single-deletion set (BY4742): no constant background.
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
-                "$DATA_ROOT/torchcell-library/smithExpressionFunctionalProfiling2006/"
-                "data/msb4100051-s1.xls (library mirror; Supplementary Table 1, fetched "
-                "once from the Europe PMC supplementary bundle for PMC1681483)"
+                "$DATA_ROOT/torchcell-raw/smithExpressionFunctionalProfiling2006/"
+                "data/msb4100051-s1.xls (raw mirror; Supplementary Table 1, retrieved as "
+                "one member of the Europe PMC REST supplementaryFiles zip for PMC1681483. "
+                "That endpoint re-zips per request, so the CONTAINER hash is not stable; the "
+                "record calls retrieve.zip_member with container_sha256=None and pins "
+                "the MEMBER hash, which a re-run of the stored record reproduced on "
+                "2026-09-13)"
             ),
             citation_key="smithExpressionFunctionalProfiling2006",
             sha256="7048663ffa4890478724e6e371f434baccc7160e6d8250df9a777a26c6b283a4",
             method=(
                 "Supplementary Table 1 (.xls, header row 23) per-strain ordinal scores for "
                 "the fatty-acid clear-zone screen; one record per (deletion strain x "
-                "condition). Clear-zone size on oleate (YPBO, 0.1% oleic acid w/v) and "
-                "myristate (YPBM, 0.125% myristic acid w/v) scored 4=larger/3=wild type/"
-                "2=less/1=small-or-absent; growth on acetate (YPBA, 2% acetate w/v) scored "
-                "3=wild-type/2=moderate/1=little-no (undocumented 2.5=intermediate kept). "
-                "Ordinal stored on environment_response with semantic category; "
-                "measurement_type=categorical (no ordinal enum member). Each condition = "
-                "SmallMoleculePerturbation (added carbon/fatty-acid species, percent w/v) on "
-                "a solid-agar Environment; 30 C, 3-4 days (duration_hours=84.0), aerobic; "
-                "n_samples=3 (triplicate replicate plates; quadruplicate pinning is within-"
-                "plate technical); reference = parental BY4742 (category wild_type, no "
-                "numeric baseline). Systematic names -> current SGD R64 ORFs (collision-"
-                "aware alias resolution; 49/4770 strains dropped)"
+                "condition). Clear zone on oleate (YPBO) and myristate (YPBM) scored "
+                "4=larger/3=wild type/2=less/1=small-or-absent (assay_type=halo_zone); "
+                "growth on acetate (YPBA) scored 3=wild-type/2=moderate/1=little-no with "
+                "an undocumented 2.5 kept verbatim (assay_type=colony_size_array). "
+                "measurement_type=ordinal: the 1-4 score is stored verbatim on "
+                "environment_response, `category` is the shared ResponseCategory call "
+                "(4->enhanced, 3->no_change, 2->reduced, 1->severely_reduced on the clear "
+                "zone; 3->no_change, 2.5->mildly_reduced, 2->reduced, 1->severely_reduced "
+                "on acetate) and `category_label` keeps the screen's own word. Media = the "
+                "SHARED media.YPBO / YPBM / YPBA objects, whose typed components carry the "
+                "published recipe INCLUDING the fatty acid or acetate as the medium's "
+                "carbon_source; the experimental edit is therefore "
+                "EnvironmentPhysicalPerturbation(factor=carbon_source, agent=<Compound>, "
+                "magnitude=<percent w/v>), the convention condition-SGA uses for galactose, "
+                "NOT a SmallMoleculePerturbation (none of the three is a stress on top of a "
+                "complete medium; each IS the plate's sole carbon source). 30 C, aerobic, "
+                "duration_hours=72.0 -- the source gives a RANGE ('Plates were incubated "
+                "for 3-4 days at 30 C') with no companion statistic to back-solve, so the "
+                "CLAUDE.md rule takes the CONSERVATIVE lower end rather than the previous "
+                "build's unmarked 84.0 h midpoint. n_samples=3 sample_unit="
+                "biological_replicate ('Colonies were replicated in triplicate onto "
+                "acetate, oleate or myristate agar omnitrays'; the quadruplicate YEPD "
+                "pinning is within-plate technical replication and is NOT counted). "
+                "Reference = parental BY4742, category no_change / label 'wild_type', no "
+                "numeric baseline (the 1-4 scale is an absolute visual ordinal, so the WT "
+                "value on it is 3 and asserting 0 would be false). Common names come from "
+                "the GENOME's standard name for the resolved ORF via the shared "
+                "resolve_gene_name, not the 2005-era Standard Name column (51 of those "
+                "resolved to a different gene). Systematic names -> current R64 with "
+                "collision-aware alias resolution"
             ),
             page=(
                 "Mol Syst Biol 2006 2:2006.0009 (doi:10.1038/msb4100051; PMID 16738555; "
                 "PMC1681483); msb4100051-s1.xls "
-                "sha256=7048663ffa4890478724e6e371f434baccc7160e6d8250df9a777a26c6b283a4"
+                "sha256=7048663ffa4890478724e6e371f434baccc7160e6d8250df9a777a26c6b283a4; "
+                "paper.md sha256=eb5ab21b842365e2138528bbce936bd68134dd97ee99eb9a58502c25ca2948c6"
             ),
         ),
     },
     "crispr_magic_lian2019": {
         "root": "data/torchcell/crispr_magic_lian2019",
-        # Genome-scale MAGIC CRISPRa/i/d furfural screen, per-GUIDE enrichment reprocessed
-        # from raw NGS (SRA PRJNA504483). 100,493 designed guides; drop 300 random controls
-        # + 16 source-corrupted-gene guides + 2,633 unresolved-gene guides (165 ncRNA/rDNA
-        # genes absent from the ORF genome); of the rest, each (guide x round) with a defined
-        # enrichment is a record (26,169 guide-rounds undetected; 48 guides skipped in the
-        # round where they target their own integrated background) = 266,415 records. Rounds
-        # are iterative in accumulating backgrounds (R1 bAID / R2 +SIZ1i / R3 +SIZ1i+NAT1a),
-        # so a record's genotype is a 1-/2-/3-perturbation mixed-modality CRISPR combo; the
-        # background is NOT constant across the dataset, so it is part of the genotype
-        # signature (background_genes empty). L1 strain identity keys on (gene, mode, guide
-        # spacer): sibling guides of one gene are distinct strains, like a TS-allele series.
-        "expected_count": 266415,
+        # 266,304 (guide x round) records of 301,479 cells. Rounds are iterative in
+        # accumulating backgrounds (R1 bAID / R2 +SIZ1i / R3 +SIZ1i+NAT1a), so the
+        # background is NOT constant across the dataset and belongs in the genotype
+        # signature -> background_genes stays empty.
+        "expected_count": 266304,
         "background_genes": frozenset(),
+        # 266,304 records: the eager path materializes them all (~25 min wall clock).
+        "stream": True,
         "provenance": Provenance(
             source_uri=(
-                "NCBI SRA PRJNA504483 (raw NGS, 21 runs) + Supplementary Data 4 reference "
-                "(41467_2019_13621_MOESM6_ESM.xlsx, 100,493 guides, sha256 4e3f225a...); "
-                "derived enrichment table + reprocessing scripts in the library mirror "
-                "$DATA_ROOT/torchcell-library/lianMultifunctionalGenomewideCRISPR2019/data/"
-                " (guide_enrichment_final.tsv + PROVENANCE.md)"
+                "$DATA_ROOT/torchcell-raw/lianMultifunctionalGenomewideCRISPR2019/"
+                "data/guide_enrichment_final.tsv (DERIVED from NCBI SRA PRJNA504483 by the "
+                "versioned pipeline in experiments/016-lian-magic-reprocess/, with a "
+                "ProcessingRecord naming its inputs) + si/si_data/"
+                "41467_2019_13621_MOESM5_ESM.xlsx (Supplementary Data 3, the CRISPRd design "
+                "library; springer_esm retrieval re-verified 2026-09-12)"
             ),
             citation_key="lianMultifunctionalGenomewideCRISPR2019",
             sha256="f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647",
             method=(
                 "The furfural per-guide enrichment is NOT a released supplement; it is "
                 "reprocessed from raw reads (SRA PRJNA504483): barcode = read[27:70] (43bp "
-                "activation) | read[27:71] (44bp interference/deletion), forward, exact-match "
-                "to the 100,493-guide reference; CPM(+1)/library; per round per replicate "
-                "log2(furfural-after / untreated-before); mean +- SD over 3 biological "
-                "triplicates. Validated vs the paper's hits (PDR1i round-3 rank 1, SLX5i "
-                "round-1 rank 1, SAP30d round-1 rank 2). One EnvironmentResponseExperiment per "
-                "(guide x round): genotype = the library member as a Crispr"
-                "Activation/Interference/Deletion perturbation (target gene + guide spacer + "
-                "orthogonal effector dLbCas12a-VP/dSpCas9-RD1152/SaCas9) PLUS the round's "
-                "integrated background (SIZ1 interference for r2/r3, NAT1 activation for r3, "
-                "guide unspecified); environment = furfural (5/10/15 mM by round) as a "
-                "SmallMoleculePerturbation on SED/G418 liquid, 30 C, aerobic; phenotype = "
-                "EnvironmentResponsePhenotype measurement_type=log2_ratio, environment_response"
-                "=mean log2FC, uncertainty=SD (sample_sd, n=3 -> SE=SD/sqrt(3)); reference = "
-                "no-enrichment baseline (log2FC 0) in the bAID host. Common gene names -> "
-                "current R64 ORFs via the genome (5,060/5,226 resolved)"
+                "activation) | read[27:71] (44bp interference/deletion), forward, "
+                "exact-match to the 100,493-guide Supplementary Data 4 reference (sha256 "
+                "4e3f225a...); CPM(+1)/library; per round per replicate log2(furfural-after "
+                "/ untreated-before); mean +- SD over 3 biological triplicates. Validated "
+                "vs the paper's hits (PDR1i round-3 rank 1, SLX5i round-1 rank 1, SAP30d "
+                "round-1 rank 2). One record per (guide x round): genotype = the library "
+                "member as a CrisprActivation/Interference/Deletion perturbation (target "
+                "gene + guide spacer + orthogonal effector dLbCas12a-VP / dSpCas9-RD1152 / "
+                "SaCas9) PLUS the round's integrated background (SIZ1 interference r2/r3, "
+                "NAT1 activation r3, guide unspecified). For CRISPRd the 121 nt design "
+                "cassette is SPLIT: the last 21 nt is the SaCas9 spacer on "
+                "crispr.guide_sequence and the leading 100 nt is the HR donor on "
+                "donor_sequence. The boundary is MEASURED against S288C, not assumed: the "
+                "two 50 nt donor arms flank a gap of exactly 28 bp in 193/193 resolvable "
+                "sampled designs (matching 'the deletion of 28 bp nucleotides'), the last "
+                "21 nt starts at that gap, and for all 24,706 non-control designs it sits "
+                "in the genome with a canonical SaCas9 NNGRRT PAM immediately 3' (0 "
+                "exceptions). The previous build stored the 44 nt amplicon BARCODE (donor "
+                "sequence) as the spacer on 62,793 records. The split is read from the "
+                "PUBLISHED Supplementary Data 3, whose Sequence column is element-for-"
+                "element identical to the archived lab design file and whose first 44 nt "
+                "reproduce the enrichment table's d barcode for all 24,806 rows -- the "
+                "positional join the loader asserts at build time. Environment = furfural "
+                "(5/10/15 mM by round) as a SmallMoleculePerturbation on the SHARED "
+                "media.SED_URA_G418 object, 30 C, aerobic, assay_type="
+                "pooled_competitive_growth_barcode; duration_hours AND duration_generations "
+                "are typed ProvenanceGaps (harvested at mid-log, neither reported). The "
+                "medium is SED-URA/G418, CORRECTED from the previous build's SED/G418, "
+                "which is the medium for the integrated validation strains in the same "
+                "paragraph and lacks the uracil dropout selecting the guide plasmid. "
+                "Phenotype = log2_ratio, uncertainty = SD (sample_sd, n=3 -> SE=SD/sqrt(3)); "
+                "reference = no-enrichment baseline (log2FC 0) in the bAID host (kept as "
+                "the reference strain: pAID6's integration locus is never stated, so its "
+                "three Cas cassettes cannot be sourced as gene-keyed additions, and the "
+                "effectors ride on CrisprConstruct.effector instead). Common names from the "
+                "genome's standard name via the shared resolve_gene_name. Dropped: 300 "
+                "controls, 16 source-corrupted names, 2,670 unresolved-gene guides, 26,169 "
+                "undetected guide-rounds and 48 self-background guide-rounds. The 318 records in "
+                "150 groups where two CRISPRd designs share a gene AND a 21 nt spacer "
+                "(multicopy loci, differing only in their donor arms) are KEPT: "
+                "donor_sequence is what tells those strains apart"
             ),
             page=(
                 "Nat Commun 2019 10:5794 (doi:10.1038/s41467-019-13621-4; PMID 31857575); "
                 "guide_enrichment_final.tsv "
-                "sha256=f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647"
+                "sha256=f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647; "
+                "Supplementary Data 3 "
+                "sha256=737074a76b9eee2dc015be8b17e29b4fbe65c8be5565e6fcbe71505dca4109e2; "
+                "paper.md sha256=63fe2b7101fc48feb297f9e34b83d108b74f03f28bbc280e08c7219bc975086c"
             ),
         ),
     },
     "crispri_mormino2022": {
         "root": "data/torchcell/crispri_mormino2022",
-        # 12 individually-isolated CRISPRi strains (Table 1) each -> one categorical
-        # acetic-acid-sensitivity call from the Haa1 biosensor RFP (+ -> sensitive, = ->
-        # no_effect). Genome-wide enrichment is figure-only (not ingested); guides live
-        # upstream in Smith 2017 (guide_sequence=None). One record per strain.
+        # 12 individually-isolated CRISPRi strains (Table 1), one categorical
+        # acetic-acid biosensor call each. No record is dropped.
         "expected_count": 12,
-        "background_genes": frozenset(),
+        # The pMM4_14L biosensor cassette (two GeneAdditionPerturbations integrated at HO)
+        # is in EVERY strain and in the comparator, so it is a constant background: it
+        # must be excluded from the L1 strain identity and from the L4 gene rules, which
+        # a heterologous cassette cannot satisfy by construction.
+        "background_genes": frozenset({"BM3R1-HAA1-mTurquoise2", "sfpHluorin"}),
         "provenance": Provenance(
             source_uri=(
-                "$DATA_ROOT/torchcell-library/morminoIdentificationAceticAcid2022/paper.pdf "
-                "(library mirror; Table 1 embedded as a literal — no SI data file released)"
+                "$DATA_ROOT/torchcell-raw/morminoIdentificationAceticAcid2022/paper.pdf "
+                "(raw mirror; BMC counter URL, direct_url, re-verified 2026-09-12) + "
+                "paper.md (the sha256-pinned OCR whose machine-readable Table 1 the build "
+                "audits every stored row against). No SI data file was released"
             ),
             citation_key="morminoIdentificationAceticAcid2022",
             sha256="388f8e922b0b94fba3a41965035eeee0f6180a110869073a426df96b5e63746a",
             method=(
-                "Table 1 'Properties of isolated strains' (12 rows) from the sha256-pinned "
-                "mirror PDF. Each strain = one CrisprInterferencePerturbation (target gene, "
-                "effector dCas9-Mxi1, guide_sequence=None; library from Smith 2017, BY4742) "
-                "in an acetic-acid environment (50 mM, pH 3.5, 30 C, aerobic). Phenotype = "
-                "EnvironmentResponsePhenotype measurement_type=categorical: RFP '+' (enhanced "
-                "Haa1-biosensor signal -> more acetic-acid sensitive) -> category 'sensitive', "
-                "'=' (as control) -> 'no_effect'; reference = CC23 control (no_effect). Growth "
-                "column and figure-only FI/sfpHluorin/growth values are NOT ingested; "
-                "n_samples None (qualitative summary call). 12 targets resolve to R64 ORFs"
+                "Table 1 'Properties of isolated strains' (12 rows), a module literal whose "
+                "every row is CHECKED verbatim against the OCR'd HTML table in paper.md "
+                "(sha256 f5d38e48...) before any record is written. Each strain = one "
+                "CrisprInterferencePerturbation (target gene, effector dCas9-Mxi1, "
+                "n_guides=1, guide_sequence=None -- Mormino releases no per-strain spacer, "
+                "the guides live upstream in the Smith 2017 BY4742-derived library) PLUS "
+                "the constant pMM4_14L biosensor cassette as two GeneAdditionPerturbations "
+                "integrated at the HO locus ('was integrated into the HO locus of the "
+                "CRISPRi library strains'). Environment = the SHARED media.SC object "
+                "(CORRECTED from the previous build's 'SD, pH 3.5': the paper says "
+                "synthetic complete, and SC's own 0.77 g/L CSM / 6.9 g/L YNB w/o AA / 20 "
+                "g/L glucose are sourced from THIS paper) carrying three typed edits -- "
+                "acetic acid 50 mM (NaOH-titrated to the medium pH), anhydrotetracycline 2 "
+                "ug/mL with a DMSO Solvent (the CRISPRi inducer, absent from the previous "
+                "build although released), and pH 3.5 as EnvironmentPhysicalPerturbation"
+                "(factor=ph) -- at 30 C, aerobic. Phenotype = measurement_type=categorical, "
+                "assay_type=biosensor_readout: Table 1's '+' (reporter expression 30% "
+                "higher than the CBL) -> ResponseCategory.enhanced, '=' (similar) -> "
+                "no_change, with category_label keeping the source symbol. n_samples=2 "
+                "sample_unit=biological_replicate ('Screening of the pooled and single cell "
+                "cultures sorted by FACS was performed in two biological replicates'). "
+                "Reference = the CBL pool (no_change / '='), CORRECTED from the previous "
+                "build's CC23 control strain: Table 1's own footnote says '*Reporter "
+                "expression 30% higher (+) or similar (=) compared to the CBL', and CC23 is "
+                "the comparator for the Growth column and the separate 150 mM experiments. "
+                "The Growth and essentiality columns and the figure-only FI / sfpHluorin / "
+                "growth values are NOT ingested. 12 targets resolve to current R64 genes"
             ),
             page=(
-                "Microb Cell Fact 2022 21:214 (doi:10.1186/s12934-022-01938-7; PMID 36284296; "
-                "PMC9571444), Table 1; paper.pdf "
-                "sha256=388f8e922b0b94fba3a41965035eeee0f6180a110869073a426df96b5e63746a"
+                "Microb Cell Fact 2022 21:214 (doi:10.1186/s12934-022-01938-7; PMID "
+                "36284296; PMC9571444), Table 1; paper.pdf "
+                "sha256=388f8e922b0b94fba3a41965035eeee0f6180a110869073a426df96b5e63746a; "
+                "paper.md sha256=f5d38e486148527bfba9dc9e40a9eb06ba051766aeca3e8ff67663551bf043c3"
             ),
         ),
     },
@@ -1278,53 +1346,61 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "crispri_chemgen_smith2016": {
         "root": "data/torchcell/crispri_chemgen_smith2016",
-        # Per-guide dCas9-Mxi1 CRISPRi chemical-genetic screen: 14,463 rows of Additional
-        # file 10 = one record per (pool x guide x drug-condition), 0 dropped (all 20 target
-        # ORFs are current R64; A/var(A) complete; every guide resolves to a spacer). 977
-        # guides x 26 (drug, concentration) conditions across 5 pools. L1 strain identity
-        # keys on (gene, crispr_interference, guide spacer, library_pool): sibling guides of
-        # a gene are distinct strains, AND the SAME 20 bp spacer screened in both broad_tiling
-        # and gene_tiling_20bp (272 such pairs) is two independent pooled measurements, kept
-        # distinct by library_pool (pool-relative fitness differs up to ~8 log2 units).
-        "expected_count": 14463,
-        # Single-guide CRISPRi strains: no constant background.
+        # 7,053 of the 14,463 rows of Additional file 10. 7,410 drop on the compound
+        # rule: ten Drug labels are ChemDiv / ChemBridge / TimTec catalog ids for which the
+        # primary released no structure, so no InChIKey / ChEBI / CID exists. L1 strain
+        # identity keys on (gene, crispr_interference, guide spacer, library_pool).
+        "expected_count": 7053,
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
-                "$DATA_ROOT/torchcell-library/smithQuantitativeCRISPRInterference2016/"
+                "$DATA_ROOT/torchcell-raw/smithQuantitativeCRISPRInterference2016/"
                 "si/si_data/13059_2016_900_MOESM10_ESM.xlsx (Additional file 10, sheet "
                 "'Fitness and Effect Data') + 13059_2016_900_MOESM4_ESM.xlsx (Additional "
-                "file 4, sheet 'gRNAs', guide->spacer); Springer ESM mirror"
+                "file 4, sheet 'gRNAs', guide->spacer); raw mirror, both with a "
+                "springer_esm retrieval re-verified 2026-09-12"
             ),
             citation_key="smithQuantitativeCRISPRInterference2016",
             sha256="02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0",
             method=(
-                "Additional file 10 (14,463 rows x 24 cols, sha256 02962e51...): one "
-                "EnvironmentResponseExperiment per (pool, guide, drug, concentration) row. "
-                "measurement_type=log2_ratio, environment_response = column 'A' = the "
-                "ATc-induced fold change (Methods 'ATc-induced fold change': A_ijk = f_ijk+ - "
-                "f_ijk-, the difference of log2 median-centred guide read-count fitness "
-                "between induced +ATc, i.e. dCas9-Mxi1 CRISPRi ON, and uninduced -ATc "
-                "cultures in that drug; negative = repression is a growth defect). Uncertainty "
-                "= column 'var(A)' stored VERBATIM as UncertaintyType.variance with "
-                "n_samples=1 (var(A) is the variance of the single released A estimate -- a "
-                "Gamma read-count-resampling posterior variance s2_+ + s2_-, already inverse-"
-                "variance-combined across the 8/3 replicate experiments for the 1% DMSO / "
-                "20 uM fluconazole conditions), so derive_se -> SE = sqrt(var(A)). Genotype = "
-                "CrisprInterferencePerturbation(target ORF, effector dCas9-Mxi1, "
-                "guide_sequence = the 18/20 nt Specificity_sequence spacer joined by guide "
-                "name from Additional file 4 (sha256 e5eb4e3c...), library_pool = #Pool). "
-                "Environment = row Drug + Concentration as one SmallMoleculePerturbation "
-                "(uM/nM; the 1% DMSO vehicle control -> 1.0 percent_v/v) on SCM-Ura liquid, "
-                "30 C, aerobic; ATc dose not released so not asserted. Reference = uninduced "
-                "-ATc baseline (A=0) in BY4741. 20 target ORFs all current R64 (0 dropped)"
+                "One EnvironmentResponseExperiment per (pool, guide, drug, concentration) "
+                "row of Additional file 10. measurement_type=log2_ratio, assay_type="
+                "pooled_competitive_growth_barcode, environment_response = column 'A' = the "
+                "ATc-induced fold change (A_ijk = f_ijk+ - f_ijk-, the difference of log2 "
+                "median-centred guide read-count fitness between induced +ATc and uninduced "
+                "-ATc cultures in that drug; negative = repression is a growth defect). "
+                "Uncertainty = column 'var(A)' stored VERBATIM as UncertaintyType.variance "
+                "with n_samples=1, DELIBERATELY: var(A) is the variance of the SINGLE "
+                "released estimate, already inverse-variance-combined across the 8 and 3 "
+                "replicate experiments for the 1% DMSO and 20 uM fluconazole conditions, so "
+                "derive_se must divide by 1 (recording 8 would shrink the SE by sqrt(8)); "
+                "the replicate structure is recorded in the loader's REPLICATE_STRUCTURE "
+                "SourcedValue instead. Genotype = CrisprInterferencePerturbation(target ORF, "
+                "effector dCas9-Mxi1, guide_sequence = the 18/20 nt Specificity_sequence "
+                "spacer joined by guide name from Additional file 4 (sha256 e5eb4e3c...), "
+                "library_pool = #Pool; the same spacer in two pools is two independent "
+                "pooled measurements). Environment = the SHARED media.SC_URA object (the "
+                "paper's SCM-Ura; Smith releases no recipe, so SC_URA's own gaps are the "
+                "honest state) + the row's Drug at its released dose as a "
+                "SmallMoleculePerturbation (uM/nM; the 1% DMSO vehicle control -> 1.0 "
+                "percent_v/v), 30 C, aerobic, duration_generations=20.0 ('approximately 20 "
+                "culture doublings') with duration_hours a typed ProvenanceGap. ATc is NOT "
+                "asserted: the pooled Methods say only '+/- ATc' and the one released "
+                "number (250 ng/mL) is from the qPCR section; no Solvent is asserted "
+                "either, since 'Drugs were dissolved in DMSO' sits in the individual-strain "
+                "section. The ~20%-growth-inhibition dose rule is real (Additional file 8 "
+                "ReadMe) but DoseBasis has no IC20 member and adding one is a full-rebuild "
+                "trigger, so it is documented not typed. Reference = uninduced -ATc "
+                "baseline (A=0) in BY4741. Common names from the genome's standard name. "
+                "20 target ORFs all current R64"
             ),
             page=(
                 "Genome Biol 2016 17:45 (doi:10.1186/s13059-016-0900-9); Additional file 10 "
                 "'Fitness and Effect Data' "
                 "sha256=02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0; "
                 "Additional file 4 'gRNAs' "
-                "sha256=e5eb4e3c7856782e36edff5ef55e680cb43fa8e9944bf8e40d7cb7b4f376c1e5"
+                "sha256=e5eb4e3c7856782e36edff5ef55e680cb43fa8e9944bf8e40d7cb7b4f376c1e5; "
+                "paper.md sha256=346be6968eced82706cffb163a76dfc5adf381e602bd11006fea608436ca7b2f"
             ),
         ),
     },

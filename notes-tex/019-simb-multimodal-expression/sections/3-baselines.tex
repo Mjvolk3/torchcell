@@ -110,8 +110,13 @@ reads $0.135$, $0.076$, $0.117$ and $0.094$ on the four validation draws, a spre
 $0.026$ from a sixty-cell ridge with no seed of its own, and B3 on ProtT5 spreads $0.051$ on
 test. The four draws share the same training count and differ in which 155 strains are
 held out (the 72 Sameith doubles land 15, 13, 7 and 10 in validation), so the spread is the
-partition itself. That is the axis the v13 round was built to measure for the trained arms,
-and the linear numbers say it is large before any network is involved.
+partition itself. Eight more partitions, split seeds 4 to 11, exist only for the linear
+models, and over the twelve draws B2 on ProtT5 reads $0.104 \pm 0.018$ on validation
+(range $0.076$ to $0.135$) and $0.108 \pm 0.017$ on test; B3 on ProtT5 $0.122 \pm 0.020$
+and $0.118 \pm 0.034$. Split 0 is the highest of the twelve validation draws for B2 and the
+third highest for B3. That is the axis the v13 round was built to measure for the trained
+arms, and the linear numbers say it is large before any network is involved.
+\src{experiments/019-simb-multimodal/results/expression_baselines_split/summary.json}
 
 \pfstep{Split 0 is the easiest validation draw for the linear models too} On split 0 both
 ProtT5 baselines post their highest validation score of the four draws and B2 its lowest

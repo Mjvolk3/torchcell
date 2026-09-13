@@ -1,0 +1,2232 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/expression_baselines_split.py",
+ "dataset_tag": "fig3_core",
+ "split": {
+  "kind": "CellDataModule index_details_seed",
+  "split_seed": 8,
+  "fold_test_into_train": false,
+  "n_train": 1244,
+  "n_val": 155,
+  "n_test": 155,
+  "n_gene": 6169,
+  "n_double_deletion": {
+   "train": 56,
+   "val": 12,
+   "test": 4
+  }
+ },
+ "B0_per_gene_mean_val": {
+  "pearson_per_feature": 0.0,
+  "nmse": 1.0
+ },
+ "B1_no_change_val": {
+  "pearson_per_feature": 0.0,
+  "nmse": 1.3367958442323546
+ },
+ "B0_per_gene_mean_test": {
+  "pearson_per_feature": 0.0,
+  "nmse": 1.0
+ },
+ "B1_no_change_test": {
+  "pearson_per_feature": 0.0,
+  "nmse": 1.3067161117076511
+ },
+ "B2_bilinear": {
+  "by_embedding": {
+   "prot_T5_all": {
+    "emb_dim": 1024,
+    "selected_on_val": {
+     "k_gene": 128,
+     "ridge": 100.0,
+     "val_pearson_per_feature": 0.11547138339056555,
+     "val_nmse": 1.1478605192558604,
+     "test_pearson_per_feature": 0.11582552821000414,
+     "test_nmse": 1.208523535608021
+    },
+    "cells": [
+     {
+      "k_gene": 1,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.01619989051114822,
+      "val_nmse": 1.9852794737479391,
+      "test_pearson_per_feature": 0.033687934063022125,
+      "test_nmse": 2.549363373960539
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.016547807672632524,
+      "val_nmse": 1.9652493137720468,
+      "test_pearson_per_feature": 0.0337057523658796,
+      "test_nmse": 2.520542602073869
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.01934674749536657,
+      "val_nmse": 1.8125627204445258,
+      "test_pearson_per_feature": 0.03386356359619196,
+      "test_nmse": 2.3027633151448548
+     },
+     {
+      "k_gene": 1,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.028788091620401166,
+      "val_nmse": 1.3899282846600631,
+      "test_pearson_per_feature": 0.03536381606920909,
+      "test_nmse": 1.7111671050557855
+     },
+     {
+      "k_gene": 1,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.05207396249297614,
+      "val_nmse": 1.0982478607362016,
+      "test_pearson_per_feature": 0.044987549232551806,
+      "test_nmse": 1.22503597506754
+     },
+     {
+      "k_gene": 1,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.07060155874342848,
+      "val_nmse": 1.0116813547800743,
+      "test_pearson_per_feature": 0.06740261205215903,
+      "test_nmse": 1.0325139155204883
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.03367186514645915,
+      "val_nmse": 2.4719921696983267,
+      "test_pearson_per_feature": 0.02889835705654991,
+      "test_nmse": 3.0005807050893574
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.03407230982818637,
+      "val_nmse": 2.443588296123873,
+      "test_pearson_per_feature": 0.028910807280904473,
+      "test_nmse": 2.9666681865833158
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.03726012995308236,
+      "val_nmse": 2.2265806469301834,
+      "test_pearson_per_feature": 0.02899059952030565,
+      "test_nmse": 2.7129406844034456
+     },
+     {
+      "k_gene": 2,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.047654042922798776,
+      "val_nmse": 1.6116386077792955,
+      "test_pearson_per_feature": 0.030927033032106806,
+      "test_nmse": 2.010061813060454
+     },
+     {
+      "k_gene": 2,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.06513880449845894,
+      "val_nmse": 1.167112443061159,
+      "test_pearson_per_feature": 0.0461522232963856,
+      "test_nmse": 1.3375089833650873
+     },
+     {
+      "k_gene": 2,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.07851488467780976,
+      "val_nmse": 1.0239354556285978,
+      "test_pearson_per_feature": 0.07346661996978232,
+      "test_nmse": 1.0529349910132102
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.023466467504554334,
+      "val_nmse": 2.980351214717267,
+      "test_pearson_per_feature": 0.026373887956759864,
+      "test_nmse": 3.5695997538664175
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.02382006516790866,
+      "val_nmse": 2.94440679261501,
+      "test_pearson_per_feature": 0.026421575488962658,
+      "test_nmse": 3.5279108506594503
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.02660546333286253,
+      "val_nmse": 2.6684373268228487,
+      "test_pearson_per_feature": 0.026884755488338307,
+      "test_nmse": 3.2115847817593077
+     },
+     {
+      "k_gene": 4,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.035363322069575355,
+      "val_nmse": 1.873612211516502,
+      "test_pearson_per_feature": 0.03174544079878546,
+      "test_nmse": 2.294558298501576
+     },
+     {
+      "k_gene": 4,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.053299641225350795,
+      "val_nmse": 1.2644916233317842,
+      "test_pearson_per_feature": 0.055261266190745506,
+      "test_nmse": 1.4201231186217318
+     },
+     {
+      "k_gene": 4,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.07771839634315747,
+      "val_nmse": 1.043617084965425,
+      "test_pearson_per_feature": 0.0954812700862828,
+      "test_nmse": 1.061450078305049
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.02935717781785809,
+      "val_nmse": 3.5071552213295663,
+      "test_pearson_per_feature": 0.030358529355360354,
+      "test_nmse": 4.213006907959436
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.029728945933661363,
+      "val_nmse": 3.4622606742770543,
+      "test_pearson_per_feature": 0.030401598510482093,
+      "test_nmse": 4.1620500616824385
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.032787551085146555,
+      "val_nmse": 3.1172579201537043,
+      "test_pearson_per_feature": 0.03090089656772826,
+      "test_nmse": 3.7730026257984197
+     },
+     {
+      "k_gene": 8,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.04506208090830328,
+      "val_nmse": 2.114483185699861,
+      "test_pearson_per_feature": 0.03686797827132231,
+      "test_nmse": 2.616601725945175
+     },
+     {
+      "k_gene": 8,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.07190847639689274,
+      "val_nmse": 1.3349984905783132,
+      "test_pearson_per_feature": 0.06234471176258715,
+      "test_nmse": 1.5284152578094732
+     },
+     {
+      "k_gene": 8,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.10191376653232886,
+      "val_nmse": 1.0518064829605875,
+      "test_pearson_per_feature": 0.10782072730388796,
+      "test_nmse": 1.0800567188542416
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.02719187868904834,
+      "val_nmse": 4.283910474651821,
+      "test_pearson_per_feature": 0.03696643906078782,
+      "test_nmse": 5.226417856873278
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.02756567605635384,
+      "val_nmse": 4.223685602927302,
+      "test_pearson_per_feature": 0.03703416944258581,
+      "test_nmse": 5.155552377219935
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.0306580767232697,
+      "val_nmse": 3.7638935109853557,
+      "test_pearson_per_feature": 0.03768633178322867,
+      "test_nmse": 4.617859934198528
+     },
+     {
+      "k_gene": 16,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.04394926142832864,
+      "val_nmse": 2.4553494418831603,
+      "test_pearson_per_feature": 0.04362548946964501,
+      "test_nmse": 3.0678828863178706
+     },
+     {
+      "k_gene": 16,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.07433146517194487,
+      "val_nmse": 1.4534246380565525,
+      "test_pearson_per_feature": 0.06915622582758667,
+      "test_nmse": 1.684905528243967
+     },
+     {
+      "k_gene": 16,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.10612885428237714,
+      "val_nmse": 1.0787938148993133,
+      "test_pearson_per_feature": 0.1141319817501598,
+      "test_nmse": 1.115078241667746
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.03568846914355182,
+      "val_nmse": 5.069127462193258,
+      "test_pearson_per_feature": 0.04211249585916713,
+      "test_nmse": 6.240363029299068
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.03603691715954838,
+      "val_nmse": 4.993245042539008,
+      "test_pearson_per_feature": 0.04222319854663422,
+      "test_nmse": 6.150226018605642
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.038907979147004675,
+      "val_nmse": 4.416244850651775,
+      "test_pearson_per_feature": 0.04317120900854064,
+      "test_nmse": 5.467740980262125
+     },
+     {
+      "k_gene": 32,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.0509610562494183,
+      "val_nmse": 2.794159629487617,
+      "test_pearson_per_feature": 0.0494188400566148,
+      "test_nmse": 3.5195486017951523
+     },
+     {
+      "k_gene": 32,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.0783002293325178,
+      "val_nmse": 1.5674452183134053,
+      "test_pearson_per_feature": 0.07307100848676644,
+      "test_nmse": 1.8331349738173444
+     },
+     {
+      "k_gene": 32,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.10917861480762038,
+      "val_nmse": 1.1078818756881215,
+      "test_pearson_per_feature": 0.11585886454238911,
+      "test_nmse": 1.1506780175862497
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.0355619297574699,
+      "val_nmse": 5.115076602969059,
+      "test_pearson_per_feature": 0.04298095914756315,
+      "test_nmse": 6.291418323421682
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.03590701907525335,
+      "val_nmse": 5.038330761399526,
+      "test_pearson_per_feature": 0.04309349397889633,
+      "test_nmse": 6.200270096773485
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.03875803374874207,
+      "val_nmse": 4.4545473908299895,
+      "test_pearson_per_feature": 0.04405542448748222,
+      "test_nmse": 5.509872992317785
+     },
+     {
+      "k_gene": 33,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.050932565718781464,
+      "val_nmse": 2.8124373845578328,
+      "test_pearson_per_feature": 0.050362625848400025,
+      "test_nmse": 3.5380908095735717
+     },
+     {
+      "k_gene": 33,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.07895865916542277,
+      "val_nmse": 1.5724083306043548,
+      "test_pearson_per_feature": 0.07393336837196926,
+      "test_nmse": 1.8371531763550144
+     },
+     {
+      "k_gene": 33,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.11035588856090357,
+      "val_nmse": 1.1088024877314853,
+      "test_pearson_per_feature": 0.11640813071458771,
+      "test_nmse": 1.1514786983021126
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.036902643841924904,
+      "val_nmse": 5.76065531224348,
+      "test_pearson_per_feature": 0.04370601188711008,
+      "test_nmse": 7.086693914422314
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.037225698139865045,
+      "val_nmse": 5.672651476239296,
+      "test_pearson_per_feature": 0.04384876386429595,
+      "test_nmse": 6.981806339078539
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.0399055888114135,
+      "val_nmse": 5.002363375009327,
+      "test_pearson_per_feature": 0.04510418279769272,
+      "test_nmse": 6.186465971889391
+     },
+     {
+      "k_gene": 64,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.05186988942806631,
+      "val_nmse": 3.105131139370081,
+      "test_pearson_per_feature": 0.05311724864929458,
+      "test_nmse": 3.9079653022656853
+     },
+     {
+      "k_gene": 64,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.08144743177883271,
+      "val_nmse": 1.6656210553701647,
+      "test_pearson_per_feature": 0.07843606394383824,
+      "test_nmse": 1.9623636818591066
+     },
+     {
+      "k_gene": 64,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.1140430842671788,
+      "val_nmse": 1.1291431708000657,
+      "test_pearson_per_feature": 0.11912751338656488,
+      "test_nmse": 1.182096211364643
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.0386141380066647,
+      "val_nmse": 6.32724377291055,
+      "test_pearson_per_feature": 0.04231714267847422,
+      "test_nmse": 7.776459231316814
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.03894125835741272,
+      "val_nmse": 6.228882467167085,
+      "test_pearson_per_feature": 0.042442434103870615,
+      "test_nmse": 7.659216623518679
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.0416564125003815,
+      "val_nmse": 5.479865863887403,
+      "test_pearson_per_feature": 0.043549078521644,
+      "test_nmse": 6.770307305217134
+     },
+     {
+      "k_gene": 128,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.05389542819325923,
+      "val_nmse": 3.3567449163360004,
+      "test_pearson_per_feature": 0.050991289663758724,
+      "test_nmse": 4.223726137170445
+     },
+     {
+      "k_gene": 128,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.08373462227347288,
+      "val_nmse": 1.745321944880706,
+      "test_pearson_per_feature": 0.07558061374902299,
+      "test_nmse": 2.0665250177006973
+     },
+     {
+      "k_gene": 128,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.11547138339056555,
+      "val_nmse": 1.1478605192558604,
+      "test_pearson_per_feature": 0.11582552821000414,
+      "test_nmse": 1.208523535608021
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.038389453810921424,
+      "val_nmse": 6.774994763282316,
+      "test_pearson_per_feature": 0.041541857431421116,
+      "test_nmse": 8.299745567848587
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.0387212947286776,
+      "val_nmse": 6.668302024479958,
+      "test_pearson_per_feature": 0.04166617867911448,
+      "test_nmse": 8.172892042529497
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.0414830801863977,
+      "val_nmse": 5.8564492287654115,
+      "test_pearson_per_feature": 0.042765241159526186,
+      "test_nmse": 7.2113943464538846
+     },
+     {
+      "k_gene": 256,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.05391558458761869,
+      "val_nmse": 3.556453039908578,
+      "test_pearson_per_feature": 0.05012679551476683,
+      "test_nmse": 4.459202628808677
+     },
+     {
+      "k_gene": 256,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.0831500056894239,
+      "val_nmse": 1.8114299450372116,
+      "test_pearson_per_feature": 0.07434697046496933,
+      "test_nmse": 2.145116726229519
+     },
+     {
+      "k_gene": 256,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.11422190080488016,
+      "val_nmse": 1.1649777685856024,
+      "test_pearson_per_feature": 0.11387248039110824,
+      "test_nmse": 1.2293412075497085
+     }
+    ],
+    "n_scored": {
+     "val": 155,
+     "test": 155
+    }
+   },
+   "calm": {
+    "emb_dim": 768,
+    "selected_on_val": {
+     "k_gene": 64,
+     "ridge": 100.0,
+     "val_pearson_per_feature": 0.13385175445887715,
+     "val_nmse": 1.0639806329129007,
+     "test_pearson_per_feature": 0.10677826291965928,
+     "test_nmse": 1.1133140239011659
+    },
+    "cells": [
+     {
+      "k_gene": 1,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.09357998923889103,
+      "val_nmse": 1.2039149687843587,
+      "test_pearson_per_feature": 0.026348360817601453,
+      "test_nmse": 1.3803731108075745
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.09365006939813333,
+      "val_nmse": 1.2028799730595425,
+      "test_pearson_per_feature": 0.026417602696819652,
+      "test_nmse": 1.3789540747151119
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.09430442594259486,
+      "val_nmse": 1.1931289695925724,
+      "test_pearson_per_feature": 0.02708735508005694,
+      "test_nmse": 1.3654584073645992
+     },
+     {
+      "k_gene": 1,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.0980226736733533,
+      "val_nmse": 1.1314657634078065,
+      "test_pearson_per_feature": 0.03223383292917794,
+      "test_nmse": 1.275344250737836
+     },
+     {
+      "k_gene": 1,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.0960408200734091,
+      "val_nmse": 1.0269139877671802,
+      "test_pearson_per_feature": 0.048910699325609645,
+      "test_nmse": 1.1038490881100391
+     },
+     {
+      "k_gene": 1,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.06393152960573334,
+      "val_nmse": 1.0017702767276304,
+      "test_pearson_per_feature": 0.05780352154231071,
+      "test_nmse": 1.0276689569426891
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.1031716405658602,
+      "val_nmse": 1.3429775545500864,
+      "test_pearson_per_feature": 0.04460931599532976,
+      "test_nmse": 1.52519539009991
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.10318760812937418,
+      "val_nmse": 1.3413268081677432,
+      "test_pearson_per_feature": 0.04466459518990087,
+      "test_nmse": 1.5231300814368602
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.10332339273542605,
+      "val_nmse": 1.3258604257043076,
+      "test_pearson_per_feature": 0.045194009556204354,
+      "test_nmse": 1.5035838025510222
+     },
+     {
+      "k_gene": 2,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.10344473705245229,
+      "val_nmse": 1.230989589296385,
+      "test_pearson_per_feature": 0.04902730698231454,
+      "test_nmse": 1.3767325068295688
+     },
+     {
+      "k_gene": 2,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.09877072438808907,
+      "val_nmse": 1.065709940887238,
+      "test_pearson_per_feature": 0.06020981951811692,
+      "test_nmse": 1.1444740123928407
+     },
+     {
+      "k_gene": 2,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.07377500928936755,
+      "val_nmse": 1.0064770072633544,
+      "test_pearson_per_feature": 0.06761903814000579,
+      "test_nmse": 1.036938370965572
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.09631426250811197,
+      "val_nmse": 1.545731020378354,
+      "test_pearson_per_feature": 0.056362519722375284,
+      "test_nmse": 1.728257159227423
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.09633951346166918,
+      "val_nmse": 1.5432973842950517,
+      "test_pearson_per_feature": 0.056453657241010945,
+      "test_nmse": 1.7253342284434054
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.09657138803262606,
+      "val_nmse": 1.5204508839694442,
+      "test_pearson_per_feature": 0.05732325780655807,
+      "test_nmse": 1.6976959334109125
+     },
+     {
+      "k_gene": 4,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.09782780908337245,
+      "val_nmse": 1.3785953224902119,
+      "test_pearson_per_feature": 0.06336122308398304,
+      "test_nmse": 1.519365520752217
+     },
+     {
+      "k_gene": 4,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.1025638988900101,
+      "val_nmse": 1.1231648673544388,
+      "test_pearson_per_feature": 0.07781967920178728,
+      "test_nmse": 1.1936963161384386
+     },
+     {
+      "k_gene": 4,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.10289978675828708,
+      "val_nmse": 1.0104427069610413,
+      "test_pearson_per_feature": 0.08681445039783652,
+      "test_nmse": 1.044907775038561
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.10783218121863375,
+      "val_nmse": 1.7025464944036794,
+      "test_pearson_per_feature": 0.06087277191269591,
+      "test_nmse": 1.9324899099951824
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.10788411317511903,
+      "val_nmse": 1.6995130376643557,
+      "test_pearson_per_feature": 0.060990552971577544,
+      "test_nmse": 1.9286157270202404
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.10837122195814002,
+      "val_nmse": 1.6710130754626364,
+      "test_pearson_per_feature": 0.06211950377618093,
+      "test_nmse": 1.8920221328913873
+     },
+     {
+      "k_gene": 8,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.11142412106584941,
+      "val_nmse": 1.4930493476774833,
+      "test_pearson_per_feature": 0.07019905037469562,
+      "test_nmse": 1.657614440215477
+     },
+     {
+      "k_gene": 8,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.12058562200362959,
+      "val_nmse": 1.1660347624434482,
+      "test_pearson_per_feature": 0.09052690266715799,
+      "test_nmse": 1.236414752819235
+     },
+     {
+      "k_gene": 8,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.12391045036256532,
+      "val_nmse": 1.0154193039885326,
+      "test_pearson_per_feature": 0.10469102349002143,
+      "test_nmse": 1.047737068818373
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.1051194256601945,
+      "val_nmse": 1.9704396701089464,
+      "test_pearson_per_feature": 0.06171865498014537,
+      "test_nmse": 2.243398583578666
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.10518412563385211,
+      "val_nmse": 1.9664074297942322,
+      "test_pearson_per_feature": 0.06183500106939668,
+      "test_nmse": 2.2383417169246784
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.1057998995582916,
+      "val_nmse": 1.928443490353237,
+      "test_pearson_per_feature": 0.06295049395770881,
+      "test_nmse": 2.190556552868864
+     },
+     {
+      "k_gene": 16,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.11009592547580214,
+      "val_nmse": 1.6882837143247384,
+      "test_pearson_per_feature": 0.0709503653156378,
+      "test_nmse": 1.8834921323781642
+     },
+     {
+      "k_gene": 16,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.12435766449522319,
+      "val_nmse": 1.2396401267579007,
+      "test_pearson_per_feature": 0.09144026495628729,
+      "test_nmse": 1.32618746285426
+     },
+     {
+      "k_gene": 16,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.13271591214785855,
+      "val_nmse": 1.0301360643981186,
+      "test_pearson_per_feature": 0.10765499805731091,
+      "test_nmse": 1.070449846351389
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.09851372051561876,
+      "val_nmse": 2.2556015675439385,
+      "test_pearson_per_feature": 0.05799933022904263,
+      "test_nmse": 2.55393168323258
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.09857716041084322,
+      "val_nmse": 2.250532087266315,
+      "test_pearson_per_feature": 0.05812275156649065,
+      "test_nmse": 2.5476978834804496
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.0991813630829857,
+      "val_nmse": 2.2027816526532855,
+      "test_pearson_per_feature": 0.0593067042882175,
+      "test_nmse": 2.4888204777008895
+     },
+     {
+      "k_gene": 32,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.10343315899950442,
+      "val_nmse": 1.8997994133227167,
+      "test_pearson_per_feature": 0.06784574591547014,
+      "test_nmse": 2.111140613211225
+     },
+     {
+      "k_gene": 32,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.11838953595469456,
+      "val_nmse": 1.3272993531359274,
+      "test_pearson_per_feature": 0.09055765939617616,
+      "test_nmse": 1.4189243988460902
+     },
+     {
+      "k_gene": 32,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.13026024436123182,
+      "val_nmse": 1.050235661033869,
+      "test_pearson_per_feature": 0.10772310276171067,
+      "test_nmse": 1.0942072631339799
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.09945713404925331,
+      "val_nmse": 2.2634624935049947,
+      "test_pearson_per_feature": 0.057865092638419574,
+      "test_nmse": 2.5654596057398784
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.09952062109915479,
+      "val_nmse": 2.258357696256304,
+      "test_pearson_per_feature": 0.0579887268700383,
+      "test_nmse": 2.559169010877982
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.10012511439612996,
+      "val_nmse": 2.2102777917468845,
+      "test_pearson_per_feature": 0.05917479050700344,
+      "test_nmse": 2.499761547110912
+     },
+     {
+      "k_gene": 33,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.10436739456055877,
+      "val_nmse": 1.905348218427813,
+      "test_pearson_per_feature": 0.06773002902971016,
+      "test_nmse": 2.1189601306039982
+     },
+     {
+      "k_gene": 33,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.1191379378545892,
+      "val_nmse": 1.3298074720318964,
+      "test_pearson_per_feature": 0.0904274428349777,
+      "test_nmse": 1.4220098739151341
+     },
+     {
+      "k_gene": 33,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.13090463340037717,
+      "val_nmse": 1.0510548702214608,
+      "test_pearson_per_feature": 0.10738157759760109,
+      "test_nmse": 1.0950530060491717
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.1007237060869801,
+      "val_nmse": 2.4522808129405163,
+      "test_pearson_per_feature": 0.05920341740866529,
+      "test_nmse": 2.8038683369159725
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.10079081857069347,
+      "val_nmse": 2.4464136684895883,
+      "test_pearson_per_feature": 0.059317652025425875,
+      "test_nmse": 2.7966978915820406
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.10142959355481129,
+      "val_nmse": 2.3911613252477193,
+      "test_pearson_per_feature": 0.06041393948858,
+      "test_nmse": 2.7289743920749117
+     },
+     {
+      "k_gene": 64,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.10589378474766215,
+      "val_nmse": 2.041211334159547,
+      "test_pearson_per_feature": 0.06835638136727915,
+      "test_nmse": 2.2942221523600255
+     },
+     {
+      "k_gene": 64,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.12109076590895348,
+      "val_nmse": 1.3845795518176844,
+      "test_pearson_per_feature": 0.08997733197614799,
+      "test_nmse": 1.4923318628765379
+     },
+     {
+      "k_gene": 64,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.13385175445887715,
+      "val_nmse": 1.0639806329129007,
+      "test_pearson_per_feature": 0.10677826291965928,
+      "test_nmse": 1.1133140239011659
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.09651967947249472,
+      "val_nmse": 2.6118879689054455,
+      "test_pearson_per_feature": 0.05764585962105321,
+      "test_nmse": 2.9958777238410135
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.09659244211529425,
+      "val_nmse": 2.6054433223544207,
+      "test_pearson_per_feature": 0.05775871420322881,
+      "test_nmse": 2.9880118200668995
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.09728652656722704,
+      "val_nmse": 2.544738751733928,
+      "test_pearson_per_feature": 0.05884197978217062,
+      "test_nmse": 2.9137161502249223
+     },
+     {
+      "k_gene": 128,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.10219882780799469,
+      "val_nmse": 2.159693753300686,
+      "test_pearson_per_feature": 0.06670727746147524,
+      "test_nmse": 2.4364726000438517
+     },
+     {
+      "k_gene": 128,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.11880991794409494,
+      "val_nmse": 1.4347758736518055,
+      "test_pearson_per_feature": 0.08849561364887454,
+      "test_nmse": 1.552324054709201
+     },
+     {
+      "k_gene": 128,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.13326032710446023,
+      "val_nmse": 1.0771355211237144,
+      "test_pearson_per_feature": 0.10591492940022892,
+      "test_nmse": 1.1303590096529454
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.09353131859779865,
+      "val_nmse": 2.741331057365843,
+      "test_pearson_per_feature": 0.05423554620295719,
+      "test_nmse": 3.147925365752242
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.09360373164375686,
+      "val_nmse": 2.7343835555439773,
+      "test_pearson_per_feature": 0.05434779285044844,
+      "test_nmse": 3.1394843809782276
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.09429535197410706,
+      "val_nmse": 2.6689489906695507,
+      "test_pearson_per_feature": 0.055425780464598944,
+      "test_nmse": 3.0597687380106726
+     },
+     {
+      "k_gene": 256,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.09923288313209122,
+      "val_nmse": 2.254192410016419,
+      "test_pearson_per_feature": 0.06328203235742985,
+      "test_nmse": 2.5481019845453337
+     },
+     {
+      "k_gene": 256,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.11608717175559576,
+      "val_nmse": 1.4745468378544724,
+      "test_pearson_per_feature": 0.08540914389337476,
+      "test_nmse": 1.599763631931236
+     },
+     {
+      "k_gene": 256,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.13097829834873284,
+      "val_nmse": 1.088616201698128,
+      "test_pearson_per_feature": 0.10384424950106658,
+      "test_nmse": 1.1440932366639458
+     }
+    ],
+    "n_scored": {
+     "val": 155,
+     "test": 155
+    }
+   },
+   "species_lm_5p_3p": {
+    "emb_dim": 1536,
+    "selected_on_val": {
+     "k_gene": 64,
+     "ridge": 100.0,
+     "val_pearson_per_feature": 0.04357991907155454,
+     "val_nmse": 1.2132303116273995,
+     "test_pearson_per_feature": 0.028784771913085986,
+     "test_nmse": 1.2302313035360077
+    },
+    "cells": [
+     {
+      "k_gene": 1,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.002269760723917889,
+      "val_nmse": 2.22539998869244,
+      "test_pearson_per_feature": 0.018454156042174916,
+      "test_nmse": 1.9413819894187514
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.0022528975189398813,
+      "val_nmse": 2.2125181029678678,
+      "test_pearson_per_feature": 0.018302346390824648,
+      "test_nmse": 1.9297194443544712
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.0020049191275179922,
+      "val_nmse": 2.1027127951305666,
+      "test_pearson_per_feature": 0.01675635372456113,
+      "test_nmse": 1.8313894522707965
+     },
+     {
+      "k_gene": 1,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.0008593767019669646,
+      "val_nmse": 1.6548497974409104,
+      "test_pearson_per_feature": 0.007942393563689648,
+      "test_nmse": 1.477865109041491
+     },
+     {
+      "k_gene": 1,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.001333310463348252,
+      "val_nmse": 1.212752581713836,
+      "test_pearson_per_feature": 0.0006687034475165228,
+      "test_nmse": 1.180602465073839
+     },
+     {
+      "k_gene": 1,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.002868259506652633,
+      "val_nmse": 1.0626057180126698,
+      "test_pearson_per_feature": 0.014352446238474308,
+      "test_nmse": 1.0465611991235544
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.001,
+      "val_pearson_per_feature": -0.01408247135700231,
+      "val_nmse": 2.554539347775884,
+      "test_pearson_per_feature": 0.0064097189884255645,
+      "test_nmse": 2.261041937492329
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.01,
+      "val_pearson_per_feature": -0.014022540499482133,
+      "val_nmse": 2.539471883148244,
+      "test_pearson_per_feature": 0.00624364921085038,
+      "test_nmse": 2.2477642265794477
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.1,
+      "val_pearson_per_feature": -0.01356449646573716,
+      "val_nmse": 2.4102156642143138,
+      "test_pearson_per_feature": 0.004574072208987884,
+      "test_nmse": 2.1352328197752493
+     },
+     {
+      "k_gene": 2,
+      "ridge": 1.0,
+      "val_pearson_per_feature": -0.010920408266106086,
+      "val_nmse": 1.8673088953573542,
+      "test_pearson_per_feature": -0.004916867127612964,
+      "test_nmse": 1.7128241554845722
+     },
+     {
+      "k_gene": 2,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.0018488365914556821,
+      "val_nmse": 1.2875856252291256,
+      "test_pearson_per_feature": -0.010382919243339046,
+      "test_nmse": 1.2958495833684969
+     },
+     {
+      "k_gene": 2,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.025145313246925788,
+      "val_nmse": 1.0748498244859688,
+      "test_pearson_per_feature": 0.012355754299359974,
+      "test_nmse": 1.0766543565336024
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.007017339625077958,
+      "val_nmse": 2.884896048110751,
+      "test_pearson_per_feature": -0.005649956580315304,
+      "test_nmse": 2.694395826320468
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.00713633532990078,
+      "val_nmse": 2.8668042217594243,
+      "test_pearson_per_feature": -0.005761245856834974,
+      "test_nmse": 2.677267786057053
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.00813365411134276,
+      "val_nmse": 2.710961361668757,
+      "test_pearson_per_feature": -0.006852412038801498,
+      "test_nmse": 2.530826834693335
+     },
+     {
+      "k_gene": 4,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.013522936207266778,
+      "val_nmse": 2.053383170549719,
+      "test_pearson_per_feature": -0.012663922316687636,
+      "test_nmse": 1.9622869981168394
+     },
+     {
+      "k_gene": 4,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.026490405113616843,
+      "val_nmse": 1.3572595021648706,
+      "test_pearson_per_feature": -0.01312878813914617,
+      "test_nmse": 1.396388402100908
+     },
+     {
+      "k_gene": 4,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.0413784952402786,
+      "val_nmse": 1.09634423736257,
+      "test_pearson_per_feature": 0.0071776726473662044,
+      "test_nmse": 1.1116231900910252
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.017205823892315914,
+      "val_nmse": 3.283413445094166,
+      "test_pearson_per_feature": -0.006310532447980831,
+      "test_nmse": 3.2751964149779886
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.01731864789221074,
+      "val_nmse": 3.2612472877240637,
+      "test_pearson_per_feature": -0.006402301163956152,
+      "test_nmse": 3.252626301906343
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.018205750700925494,
+      "val_nmse": 3.070106310508332,
+      "test_pearson_per_feature": -0.0072482009420203435,
+      "test_nmse": 3.0585711499202906
+     },
+     {
+      "k_gene": 8,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.022570627901971046,
+      "val_nmse": 2.2659144431356593,
+      "test_pearson_per_feature": -0.011465210831614121,
+      "test_nmse": 2.2826141258448773
+     },
+     {
+      "k_gene": 8,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.03190236795396796,
+      "val_nmse": 1.4321341306360535,
+      "test_pearson_per_feature": -0.008105492904313135,
+      "test_nmse": 1.4971516035822912
+     },
+     {
+      "k_gene": 8,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.04190434143512372,
+      "val_nmse": 1.1210647045994226,
+      "test_pearson_per_feature": 0.01732510741492888,
+      "test_nmse": 1.1318743244954932
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.01070849445250827,
+      "val_nmse": 3.8182477976635907,
+      "test_pearson_per_feature": 0.002180038956710772,
+      "test_nmse": 3.8780815788867278
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.010821924253634391,
+      "val_nmse": 3.7907359958991633,
+      "test_pearson_per_feature": 0.0020996903338282714,
+      "test_nmse": 3.8495729147922275
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.011756742111821605,
+      "val_nmse": 3.553755542223189,
+      "test_pearson_per_feature": 0.0013825559711422041,
+      "test_nmse": 3.6042777002741797
+     },
+     {
+      "k_gene": 16,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.01608631634072583,
+      "val_nmse": 2.562991323488543,
+      "test_pearson_per_feature": -0.0020838176227089083,
+      "test_nmse": 2.6139381867990057
+     },
+     {
+      "k_gene": 16,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.02521295910617987,
+      "val_nmse": 1.5447749952645544,
+      "test_pearson_per_feature": 0.001004590193193855,
+      "test_nmse": 1.615097663116729
+     },
+     {
+      "k_gene": 16,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.03772430667350459,
+      "val_nmse": 1.1545097415287857,
+      "test_pearson_per_feature": 0.019859042399451715,
+      "test_nmse": 1.1700128503702123
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.01562639072994332,
+      "val_nmse": 4.352836957831757,
+      "test_pearson_per_feature": 0.004302156233597121,
+      "test_nmse": 4.402503576835546
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.015735854398542977,
+      "val_nmse": 4.320478951687444,
+      "test_pearson_per_feature": 0.004244342177946001,
+      "test_nmse": 4.369345073281204
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.016662234111902974,
+      "val_nmse": 4.041477327212998,
+      "test_pearson_per_feature": 0.003721682603324582,
+      "test_nmse": 4.083643844410316
+     },
+     {
+      "k_gene": 32,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.021087015654915685,
+      "val_nmse": 2.870565233461035,
+      "test_pearson_per_feature": 0.0011851433356564753,
+      "test_nmse": 2.9197140985645773
+     },
+     {
+      "k_gene": 32,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.030192811598133234,
+      "val_nmse": 1.6613838010282738,
+      "test_pearson_per_feature": 0.004712636383352957,
+      "test_nmse": 1.7321439540943255
+     },
+     {
+      "k_gene": 32,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.04231050362660407,
+      "val_nmse": 1.1856686231800653,
+      "test_pearson_per_feature": 0.022980059648317477,
+      "test_nmse": 1.2036200966876098
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.014970395581742499,
+      "val_nmse": 4.37638557945362,
+      "test_pearson_per_feature": 0.004880545587530912,
+      "test_nmse": 4.423844731517545
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.015081074663276493,
+      "val_nmse": 4.343771543489804,
+      "test_pearson_per_feature": 0.004823319490947732,
+      "test_nmse": 4.390451388313493
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.016017695207134072,
+      "val_nmse": 4.062563715545603,
+      "test_pearson_per_feature": 0.004308851360553074,
+      "test_nmse": 4.102701007724848
+     },
+     {
+      "k_gene": 33,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.02051394256289668,
+      "val_nmse": 2.8827787706732693,
+      "test_pearson_per_feature": 0.001867314760987759,
+      "test_nmse": 2.930745375253484
+     },
+     {
+      "k_gene": 33,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.02978950560741563,
+      "val_nmse": 1.6657276095881455,
+      "test_pearson_per_feature": 0.005833241929891576,
+      "test_nmse": 1.736394476449577
+     },
+     {
+      "k_gene": 33,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.04238352947178446,
+      "val_nmse": 1.186842625306547,
+      "test_pearson_per_feature": 0.024010292489939366,
+      "test_nmse": 1.2051201436328933
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.017170446766323788,
+      "val_nmse": 4.78091615696673,
+      "test_pearson_per_feature": 0.008884465605905579,
+      "test_nmse": 4.860896181515236
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.017287247361720444,
+      "val_nmse": 4.744584897052611,
+      "test_pearson_per_feature": 0.008852949133487284,
+      "test_nmse": 4.823587736384397
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.018286652451571392,
+      "val_nmse": 4.431174800557266,
+      "test_pearson_per_feature": 0.008554441547578397,
+      "test_nmse": 4.501745579458325
+     },
+     {
+      "k_gene": 64,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.0231941346152414,
+      "val_nmse": 3.114806018956565,
+      "test_pearson_per_feature": 0.007203243728117495,
+      "test_nmse": 3.1823414184490826
+     },
+     {
+      "k_gene": 64,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.03294463058395749,
+      "val_nmse": 1.7525776514984088,
+      "test_pearson_per_feature": 0.01202333309284953,
+      "test_nmse": 1.8272727959134356
+     },
+     {
+      "k_gene": 64,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.04357991907155454,
+      "val_nmse": 1.2132303116273995,
+      "test_pearson_per_feature": 0.028784771913085986,
+      "test_nmse": 1.2302313035360077
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.017186165338327498,
+      "val_nmse": 5.117674594024717,
+      "test_pearson_per_feature": 0.010639087312194071,
+      "test_nmse": 5.21358557178782
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.017293940382942293,
+      "val_nmse": 5.078391685306302,
+      "test_pearson_per_feature": 0.01061973778417854,
+      "test_nmse": 5.1731550302711256
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.018221038626931977,
+      "val_nmse": 4.739288261336622,
+      "test_pearson_per_feature": 0.010424862885907398,
+      "test_nmse": 4.824143699252403
+     },
+     {
+      "k_gene": 128,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.022747533978989484,
+      "val_nmse": 3.3109339983291366,
+      "test_pearson_per_feature": 0.009564287750313968,
+      "test_nmse": 3.3871699255169485
+     },
+     {
+      "k_gene": 128,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.03219769136811414,
+      "val_nmse": 1.8260197877664848,
+      "test_pearson_per_feature": 0.014521449528262462,
+      "test_nmse": 1.9048723559083567
+     },
+     {
+      "k_gene": 128,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.04332164053781289,
+      "val_nmse": 1.2350459006204013,
+      "test_pearson_per_feature": 0.030477134337751892,
+      "test_nmse": 1.2540874018406183
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.017662001847393555,
+      "val_nmse": 5.376538172680519,
+      "test_pearson_per_feature": 0.012262942449245537,
+      "test_nmse": 5.4979303321892985
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.017767373095926048,
+      "val_nmse": 5.334939886142232,
+      "test_pearson_per_feature": 0.012240847096993045,
+      "test_nmse": 5.455020232816468
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.018672404472045816,
+      "val_nmse": 4.975697540279655,
+      "test_pearson_per_feature": 0.012017637458070243,
+      "test_nmse": 5.08446692770551
+     },
+     {
+      "k_gene": 256,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.02308469221459481,
+      "val_nmse": 3.460875153968816,
+      "test_pearson_per_feature": 0.010930345577537465,
+      "test_nmse": 3.554360600946456
+     },
+     {
+      "k_gene": 256,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.03212268764084243,
+      "val_nmse": 1.8822179016910652,
+      "test_pearson_per_feature": 0.015102411179976497,
+      "test_nmse": 1.9688114894165036
+     },
+     {
+      "k_gene": 256,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.04262284267127983,
+      "val_nmse": 1.2518627468026884,
+      "test_pearson_per_feature": 0.030282147051267833,
+      "test_nmse": 1.2731021064801444
+     }
+    ],
+    "n_scored": {
+     "val": 155,
+     "test": 155
+    }
+   },
+   "normalized_chrom_pathways": {
+    "emb_dim": 197,
+    "selected_on_val": {
+     "k_gene": 32,
+     "ridge": 1.0,
+     "val_pearson_per_feature": 0.12983173426790443,
+     "val_nmse": 0.9686985985891914,
+     "test_pearson_per_feature": 0.013304152170089534,
+     "test_nmse": 1.0139302547097533
+    },
+    "cells": [
+     {
+      "k_gene": 1,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.12605314171915633,
+      "val_nmse": 0.9672383998635175,
+      "test_pearson_per_feature": 0.014762534710450812,
+      "test_nmse": 1.0004859885925663
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.12604831656151846,
+      "val_nmse": 0.9672465124788167,
+      "test_pearson_per_feature": 0.014754120355528458,
+      "test_nmse": 1.0004873255410327
+     },
+     {
+      "k_gene": 1,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.1259833865327353,
+      "val_nmse": 0.9673317448189394,
+      "test_pearson_per_feature": 0.014655849058599181,
+      "test_nmse": 1.0005054330135172
+     },
+     {
+      "k_gene": 1,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.1256205758310707,
+      "val_nmse": 0.967716576203729,
+      "test_pearson_per_feature": 0.014226395294614872,
+      "test_nmse": 1.00062992121313
+     },
+     {
+      "k_gene": 1,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.1253778389674288,
+      "val_nmse": 0.9679950929767849,
+      "test_pearson_per_feature": 0.014282842419761228,
+      "test_nmse": 1.000614486766126
+     },
+     {
+      "k_gene": 1,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.12573664106680268,
+      "val_nmse": 0.9681661352670259,
+      "test_pearson_per_feature": 0.017202073641958922,
+      "test_nmse": 0.9996134021910886
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.09997332533848152,
+      "val_nmse": 0.9713655547657749,
+      "test_pearson_per_feature": 0.02666884088312344,
+      "test_nmse": 1.0008926642573486
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.10002859269228934,
+      "val_nmse": 0.9713643519745757,
+      "test_pearson_per_feature": 0.026589300293263594,
+      "test_nmse": 1.000901115217844
+     },
+     {
+      "k_gene": 2,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.10051212309997241,
+      "val_nmse": 0.9713648658961547,
+      "test_pearson_per_feature": 0.0259317949194927,
+      "test_nmse": 1.0009643799345662
+     },
+     {
+      "k_gene": 2,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.10231049196382264,
+      "val_nmse": 0.9714527842951601,
+      "test_pearson_per_feature": 0.023279345559479744,
+      "test_nmse": 1.0012883955819238
+     },
+     {
+      "k_gene": 2,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.10322785053407292,
+      "val_nmse": 0.9715650595525722,
+      "test_pearson_per_feature": 0.021838075810501723,
+      "test_nmse": 1.0013542762884775
+     },
+     {
+      "k_gene": 2,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.10220187481070458,
+      "val_nmse": 0.971529091192331,
+      "test_pearson_per_feature": 0.024268181824020154,
+      "test_nmse": 0.9999390570043605
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.11739409269231162,
+      "val_nmse": 0.9694482191527898,
+      "test_pearson_per_feature": 0.027164135534076626,
+      "test_nmse": 1.0023773269669702
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.11742954349177498,
+      "val_nmse": 0.9694491433237383,
+      "test_pearson_per_feature": 0.02707821182231294,
+      "test_nmse": 1.0023923364150233
+     },
+     {
+      "k_gene": 4,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.11772729803703244,
+      "val_nmse": 0.9694720137777275,
+      "test_pearson_per_feature": 0.02643579664345562,
+      "test_nmse": 1.0024722203515297
+     },
+     {
+      "k_gene": 4,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.11879397523745769,
+      "val_nmse": 0.9696496646934545,
+      "test_pearson_per_feature": 0.023886467260973317,
+      "test_nmse": 1.0028556913186009
+     },
+     {
+      "k_gene": 4,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.11932115614947855,
+      "val_nmse": 0.9698089162570576,
+      "test_pearson_per_feature": 0.022719179537583425,
+      "test_nmse": 1.0028570254225153
+     },
+     {
+      "k_gene": 4,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.1187249939947215,
+      "val_nmse": 0.9696473505195292,
+      "test_pearson_per_feature": 0.02606909974282974,
+      "test_nmse": 1.0008305171716598
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.1235006653130706,
+      "val_nmse": 0.9688962312984496,
+      "test_pearson_per_feature": 0.023310351071812615,
+      "test_nmse": 1.0046371408007875
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.12353310041195946,
+      "val_nmse": 0.9688952380969309,
+      "test_pearson_per_feature": 0.023234263345936132,
+      "test_nmse": 1.0046509786618663
+     },
+     {
+      "k_gene": 8,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.12387285150771671,
+      "val_nmse": 0.9688949016615986,
+      "test_pearson_per_feature": 0.022791544656292538,
+      "test_nmse": 1.004691276646157
+     },
+     {
+      "k_gene": 8,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.12501426233020504,
+      "val_nmse": 0.9690212176751452,
+      "test_pearson_per_feature": 0.021002394079889814,
+      "test_nmse": 1.004960569473278
+     },
+     {
+      "k_gene": 8,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.1254798875343314,
+      "val_nmse": 0.9691715911228934,
+      "test_pearson_per_feature": 0.02022745625447466,
+      "test_nmse": 1.004867688026389
+     },
+     {
+      "k_gene": 8,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.12474558667027773,
+      "val_nmse": 0.9689372025996803,
+      "test_pearson_per_feature": 0.02299697892854971,
+      "test_nmse": 1.0024885476962724
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.12824398104935097,
+      "val_nmse": 0.9677263895749724,
+      "test_pearson_per_feature": 0.017121029849839146,
+      "test_nmse": 1.009363901685964
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.12826884869327485,
+      "val_nmse": 0.9677198335957514,
+      "test_pearson_per_feature": 0.01703627503407732,
+      "test_nmse": 1.0093742291001877
+     },
+     {
+      "k_gene": 16,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.1285440476813815,
+      "val_nmse": 0.9676801446038457,
+      "test_pearson_per_feature": 0.016505210046789412,
+      "test_nmse": 1.0093898144655282
+     },
+     {
+      "k_gene": 16,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.1293219668969964,
+      "val_nmse": 0.9677430083171218,
+      "test_pearson_per_feature": 0.014296179138856073,
+      "test_nmse": 1.0096582872584625
+     },
+     {
+      "k_gene": 16,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.12939073813952764,
+      "val_nmse": 0.9679207013635123,
+      "test_pearson_per_feature": 0.013006478472635807,
+      "test_nmse": 1.00958489371863
+     },
+     {
+      "k_gene": 16,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.1283053383427101,
+      "val_nmse": 0.9675557590055739,
+      "test_pearson_per_feature": 0.014572719209766126,
+      "test_nmse": 1.006776332835882
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.1290486899908784,
+      "val_nmse": 0.9686024171379661,
+      "test_pearson_per_feature": 0.015641983614537,
+      "test_nmse": 1.013824681384275
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.12906525489662773,
+      "val_nmse": 0.9685966371300723,
+      "test_pearson_per_feature": 0.015570231021641352,
+      "test_nmse": 1.0138282742614406
+     },
+     {
+      "k_gene": 32,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.12929318837681378,
+      "val_nmse": 0.9685610374573821,
+      "test_pearson_per_feature": 0.015140431749132472,
+      "test_nmse": 1.0137930652958647
+     },
+     {
+      "k_gene": 32,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.12983173426790443,
+      "val_nmse": 0.9686985985891914,
+      "test_pearson_per_feature": 0.013304152170089534,
+      "test_nmse": 1.0139302547097533
+     },
+     {
+      "k_gene": 32,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.12967262046550188,
+      "val_nmse": 0.9689433942961801,
+      "test_pearson_per_feature": 0.012219141682829634,
+      "test_nmse": 1.0137574704660768
+     },
+     {
+      "k_gene": 32,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.12850162190513276,
+      "val_nmse": 0.9682600218544721,
+      "test_pearson_per_feature": 0.01364571271796816,
+      "test_nmse": 1.0103917019010145
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.12885462987090665,
+      "val_nmse": 0.9687568147677124,
+      "test_pearson_per_feature": 0.014779048576813796,
+      "test_nmse": 1.014636373963909
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.1288718549172406,
+      "val_nmse": 0.9687508407620423,
+      "test_pearson_per_feature": 0.01470595400058269,
+      "test_nmse": 1.0146403205934127
+     },
+     {
+      "k_gene": 33,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.1290998146451371,
+      "val_nmse": 0.9687150811964844,
+      "test_pearson_per_feature": 0.01427372634598719,
+      "test_nmse": 1.0146036345067921
+     },
+     {
+      "k_gene": 33,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.1296440369015247,
+      "val_nmse": 0.9688521668242216,
+      "test_pearson_per_feature": 0.012435424811846993,
+      "test_nmse": 1.0147350532588915
+     },
+     {
+      "k_gene": 33,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.1294977313423107,
+      "val_nmse": 0.969095257644593,
+      "test_pearson_per_feature": 0.011347622877992165,
+      "test_nmse": 1.014557006788257
+     },
+     {
+      "k_gene": 33,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.12835083328636676,
+      "val_nmse": 0.9683958962065347,
+      "test_pearson_per_feature": 0.012736333810380467,
+      "test_nmse": 1.0111570143110042
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.1254523715316404,
+      "val_nmse": 0.9699160480867259,
+      "test_pearson_per_feature": 0.012952629995899217,
+      "test_nmse": 1.0175463165790273
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.12547112406881833,
+      "val_nmse": 0.9699081612350301,
+      "test_pearson_per_feature": 0.012886765711650226,
+      "test_nmse": 1.0175464351882058
+     },
+     {
+      "k_gene": 64,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.12571258955446993,
+      "val_nmse": 0.9698575450849775,
+      "test_pearson_per_feature": 0.012498954459934871,
+      "test_nmse": 1.0174805271407301
+     },
+     {
+      "k_gene": 64,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.12632799294568878,
+      "val_nmse": 0.9699649582636495,
+      "test_pearson_per_feature": 0.01086189650160074,
+      "test_nmse": 1.017529987518314
+     },
+     {
+      "k_gene": 64,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.12626379313660152,
+      "val_nmse": 0.9701828814446942,
+      "test_pearson_per_feature": 0.009907361650294502,
+      "test_nmse": 1.0172865429620608
+     },
+     {
+      "k_gene": 64,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.1252738359383399,
+      "val_nmse": 0.9691904028768822,
+      "test_pearson_per_feature": 0.011178374616780635,
+      "test_nmse": 1.0135698350351805
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.12873164764203546,
+      "val_nmse": 0.9705514989167806,
+      "test_pearson_per_feature": 0.015793398007291026,
+      "test_nmse": 1.0188688713674945
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.12875002893398363,
+      "val_nmse": 0.9705423806960781,
+      "test_pearson_per_feature": 0.015736356349901386,
+      "test_nmse": 1.0188667045223054
+     },
+     {
+      "k_gene": 128,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.12897659527011152,
+      "val_nmse": 0.9704815145998066,
+      "test_pearson_per_feature": 0.01542416261061076,
+      "test_nmse": 1.0187812131243075
+     },
+     {
+      "k_gene": 128,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.1295361082705142,
+      "val_nmse": 0.9705620024792385,
+      "test_pearson_per_feature": 0.014087557140448471,
+      "test_nmse": 1.018770515191434
+     },
+     {
+      "k_gene": 128,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.12944814958217402,
+      "val_nmse": 0.9707419498932127,
+      "test_pearson_per_feature": 0.013307925273386284,
+      "test_nmse": 1.0184825007528984
+     },
+     {
+      "k_gene": 128,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.12850796958924524,
+      "val_nmse": 0.9694587144752441,
+      "test_pearson_per_feature": 0.014439049614087157,
+      "test_nmse": 1.0146078693395744
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.001,
+      "val_pearson_per_feature": 0.12839282999838608,
+      "val_nmse": 0.9722886499694914,
+      "test_pearson_per_feature": 0.015373597755224625,
+      "test_nmse": 1.0207748876694962
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.01,
+      "val_pearson_per_feature": 0.12841155185418957,
+      "val_nmse": 0.9722787762939819,
+      "test_pearson_per_feature": 0.01531692637923246,
+      "test_nmse": 1.0207714296853265
+     },
+     {
+      "k_gene": 256,
+      "ridge": 0.1,
+      "val_pearson_per_feature": 0.12863792790401465,
+      "val_nmse": 0.9722122159183555,
+      "test_pearson_per_feature": 0.015005139503979022,
+      "test_nmse": 1.0206745403088637
+     },
+     {
+      "k_gene": 256,
+      "ridge": 1.0,
+      "val_pearson_per_feature": 0.129194470609044,
+      "val_nmse": 0.9722793705160554,
+      "test_pearson_per_feature": 0.013678668236797495,
+      "test_nmse": 1.0206296360421863
+     },
+     {
+      "k_gene": 256,
+      "ridge": 10.0,
+      "val_pearson_per_feature": 0.12910627971718786,
+      "val_nmse": 0.9724299943761678,
+      "test_pearson_per_feature": 0.012895011395459679,
+      "test_nmse": 1.0202983718207805
+     },
+     {
+      "k_gene": 256,
+      "ridge": 100.0,
+      "val_pearson_per_feature": 0.12821276640581272,
+      "val_nmse": 0.9708843208460476,
+      "test_pearson_per_feature": 0.01394687437633892,
+      "test_nmse": 1.0161907313425738
+     }
+    ],
+    "n_scored": {
+     "val": 155,
+     "test": 155
+    }
+   }
+  },
+  "best_embedding": "calm"
+ },
+ "B3_neighbor_average": {
+  "by_embedding": {
+   "prot_T5_all": {
+    "selected_on_val": {
+     "k": 3,
+     "val_pearson_per_feature": 0.16045894547205303,
+     "val_nmse": 1.0966014568983613,
+     "test_pearson_per_feature": 0.10407786465100856,
+     "test_nmse": 1.2308045883323857
+    },
+    "cells": [
+     {
+      "k": 1,
+      "val_pearson_per_feature": 0.13534995471822725,
+      "val_nmse": 1.5616559659167948,
+      "test_pearson_per_feature": 0.08075700120880938,
+      "test_nmse": 1.8233754048289532
+     },
+     {
+      "k": 3,
+      "val_pearson_per_feature": 0.16045894547205303,
+      "val_nmse": 1.0966014568983613,
+      "test_pearson_per_feature": 0.10407786465100856,
+      "test_nmse": 1.2308045883323857
+     },
+     {
+      "k": 5,
+      "val_pearson_per_feature": 0.14807262700158136,
+      "val_nmse": 1.041995154778025,
+      "test_pearson_per_feature": 0.12069852875984305,
+      "test_nmse": 1.0918784471239364
+     },
+     {
+      "k": 10,
+      "val_pearson_per_feature": 0.13264573288515488,
+      "val_nmse": 1.0052596327527643,
+      "test_pearson_per_feature": 0.14393670464369934,
+      "test_nmse": 1.008374147974745
+     },
+     {
+      "k": 25,
+      "val_pearson_per_feature": 0.10232310694339689,
+      "val_nmse": 0.9951251970381195,
+      "test_pearson_per_feature": 0.14926861079997675,
+      "test_nmse": 0.9708198404002761
+     }
+    ],
+    "n_scored": {
+     "val": 155,
+     "test": 155
+    }
+   },
+   "calm": {
+    "selected_on_val": {
+     "k": 1,
+     "val_pearson_per_feature": 0.13473310746527728,
+     "val_nmse": 1.5051772176837377,
+     "test_pearson_per_feature": 0.05945215129391555,
+     "test_nmse": 1.7873066086412375
+    },
+    "cells": [
+     {
+      "k": 1,
+      "val_pearson_per_feature": 0.13473310746527728,
+      "val_nmse": 1.5051772176837377,
+      "test_pearson_per_feature": 0.05945215129391555,
+      "test_nmse": 1.7873066086412375
+     },
+     {
+      "k": 3,
+      "val_pearson_per_feature": 0.13455056365679496,
+      "val_nmse": 1.1242365004823571,
+      "test_pearson_per_feature": 0.09058890976155284,
+      "test_nmse": 1.2594387544072492
+     },
+     {
+      "k": 5,
+      "val_pearson_per_feature": 0.12447810445894095,
+      "val_nmse": 1.0621161457747075,
+      "test_pearson_per_feature": 0.0936276399268723,
+      "test_nmse": 1.1226669121416153
+     },
+     {
+      "k": 10,
+      "val_pearson_per_feature": 0.12031963636808192,
+      "val_nmse": 1.0174318678836793,
+      "test_pearson_per_feature": 0.0933627483777133,
+      "test_nmse": 1.046109282833098
+     },
+     {
+      "k": 25,
+      "val_pearson_per_feature": 0.10174810405466647,
+      "val_nmse": 0.9939579141660398,
+      "test_pearson_per_feature": 0.11524595527444063,
+      "test_nmse": 0.9947582723397467
+     }
+    ],
+    "n_scored": {
+     "val": 155,
+     "test": 155
+    }
+   },
+   "species_lm_5p_3p": {
+    "selected_on_val": {
+     "k": 5,
+     "val_pearson_per_feature": 0.06815653866055806,
+     "val_nmse": 1.097334724319746,
+     "test_pearson_per_feature": 0.05084174331474315,
+     "test_nmse": 1.1288565538462363
+    },
+    "cells": [
+     {
+      "k": 1,
+      "val_pearson_per_feature": 0.04190462964365843,
+      "val_nmse": 1.6198235391886329,
+      "test_pearson_per_feature": 0.020251799443924134,
+      "test_nmse": 1.8614160365458505
+     },
+     {
+      "k": 3,
+      "val_pearson_per_feature": 0.06452252730124551,
+      "val_nmse": 1.2138974789787105,
+      "test_pearson_per_feature": 0.03160755667482103,
+      "test_nmse": 1.2524405522929025
+     },
+     {
+      "k": 5,
+      "val_pearson_per_feature": 0.06815653866055806,
+      "val_nmse": 1.097334724319746,
+      "test_pearson_per_feature": 0.05084174331474315,
+      "test_nmse": 1.1288565538462363
+     },
+     {
+      "k": 10,
+      "val_pearson_per_feature": 0.059761951573209744,
+      "val_nmse": 1.0381809749579918,
+      "test_pearson_per_feature": 0.05154353945065904,
+      "test_nmse": 1.0548261673810098
+     },
+     {
+      "k": 25,
+      "val_pearson_per_feature": 0.032764734982681884,
+      "val_nmse": 1.018808452312798,
+      "test_pearson_per_feature": 0.03040705604637219,
+      "test_nmse": 1.0204714797397774
+     }
+    ],
+    "n_scored": {
+     "val": 155,
+     "test": 155
+    }
+   },
+   "normalized_chrom_pathways": {
+    "selected_on_val": {
+     "k": 1,
+     "val_pearson_per_feature": 0.06686859266573962,
+     "val_nmse": 1.7892113444117776,
+     "test_pearson_per_feature": -0.018987947474996894,
+     "test_nmse": 1.8414913113034983
+    },
+    "cells": [
+     {
+      "k": 1,
+      "val_pearson_per_feature": 0.06686859266573962,
+      "val_nmse": 1.7892113444117776,
+      "test_pearson_per_feature": -0.018987947474996894,
+      "test_nmse": 1.8414913113034983
+     },
+     {
+      "k": 3,
+      "val_pearson_per_feature": 0.03343398334097384,
+      "val_nmse": 1.260483176900482,
+      "test_pearson_per_feature": -0.015505031414064493,
+      "test_nmse": 1.3355761319244353
+     },
+     {
+      "k": 5,
+      "val_pearson_per_feature": 0.04080368257945118,
+      "val_nmse": 1.135143227946196,
+      "test_pearson_per_feature": -0.01736370712941466,
+      "test_nmse": 1.195569125205047
+     },
+     {
+      "k": 10,
+      "val_pearson_per_feature": 0.030369517580165126,
+      "val_nmse": 1.0690302611720983,
+      "test_pearson_per_feature": 0.00856276338523537,
+      "test_nmse": 1.088804949591678
+     },
+     {
+      "k": 25,
+      "val_pearson_per_feature": 0.04044170960907866,
+      "val_nmse": 1.0196670454200636,
+      "test_pearson_per_feature": 0.022207735164150165,
+      "test_nmse": 1.0254522664897279
+     }
+    ],
+    "n_scored": {
+     "val": 155,
+     "test": 155
+    }
+   }
+  },
+  "best_embedding": "prot_T5_all"
+ }
+}

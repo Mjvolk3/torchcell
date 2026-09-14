@@ -1,15 +1,19 @@
 ---
 name: plan-4.8
-description: Three scouts explore the codebase in parallel, argue the approach, and a plan-writer agent synthesizes the deliberation into a concise Dendron note. A reducer-critic then smart-tightens the plan (flagging low-value content for cuts, not truncating) until the plan is dense and human-readable. Built for Claude Opus 4.8 -- literal instruction-following, self-verification, long-running coherence -- so plans describe what and why, not every line of code.
+description: Three scouts explore the codebase in parallel, argue the approach, and a plan-writer agent synthesizes the deliberation into a concise Dendron note. A reducer-critic then smart-tightens the plan (flagging low-value content for cuts, not truncating) until the plan is dense and human-readable. Built for Claude Fable 5.1 agents (every Agent call passes model fable) -- literal instruction-following, self-verification, long-running coherence -- so plans describe what and why, not every line of code.
 ---
 
 # Plan-4.8
 
-A lightweight, high-level planning skill built for Opus 4.8 implementation agents.
+A lightweight, high-level planning skill built for Fable 5.1 implementation agents.
+
+## Model
+
+**Every Agent call in this skill passes `model: "fable"`** (Claude Fable 5.1) -- the three scouts, the deliberator, the plan-writer and the reducer-critic. The `fork` agent type ignores the override and inherits the session model, so do not use `fork` here; use `Explore` for scouts and `general-purpose` for the rest, with the explicit model. A plan written by a weaker model is the most expensive thing this pipeline can produce, since the implementer follows it literally.
 
 ## Why this skill exists
 
-Opus 4.8 surfaces three behaviors that reshape planning:
+Fable 5.1 surfaces three behaviors that reshape planning:
 
 1. **Takes instructions literally.** Over-constrained plans get copy-pasted into shallow implementations. Leave judgment room.
 2. **Catches its own logical faults and verifies its own outputs.** Implementers self-correct; plans need not enumerate every edge case.
@@ -93,7 +97,7 @@ Nothing touches local `main`.
 
 ## Phase 1: Three Parallel Scouts
 
-Launch **three** Agent calls (subagent_type: Explore, thoroughness: "medium") in a single message so they run concurrently. Each gets the same `<request>` with a distinct angle. No word caps.
+Launch **three** Agent calls (subagent_type: Explore, model: "fable", thoroughness: "medium") in a single message so they run concurrently. Each gets the same `<request>` with a distinct angle. No word caps.
 
 ### Scout A - Codebase reconnaissance
 
@@ -125,7 +129,7 @@ Launch **three** Agent calls (subagent_type: Explore, thoroughness: "medium") in
 
 ## Phase 2: Deliberation (one agent)
 
-Launch **one** Agent call (subagent_type: general-purpose) with all three scout reports.
+Launch **one** Agent call (subagent_type: general-purpose, model: "fable") with all three scout reports.
 
 > You are reading three scout reports for: `<request>`. Argue the approach: where scouts converge, where they conflict, the right decision at each conflict.
 >
@@ -137,7 +141,7 @@ Launch **one** Agent call (subagent_type: general-purpose) with all three scout 
 
 ## Phase 3: Plan Draft
 
-Launch **one** Agent call (subagent_type: general-purpose) with the request, all scout reports, and the deliberation. It edits the Phase 0 note.
+Launch **one** Agent call (subagent_type: general-purpose, model: "fable") with the request, all scout reports, and the deliberation. It edits the Phase 0 note.
 
 > You are the plan-writer. Edit `notes/<fname>.md`. Aim for ~300 lines but prioritize density. A reducer-critic tightens afterward.
 >
@@ -161,7 +165,7 @@ Launch **one** Agent call (subagent_type: general-purpose) with the request, all
 
 ## Phase 4: Reducer-Critic Loop
 
-Launch **one** Agent call (subagent_type: general-purpose) with the current plan. Max 3 iterations. The critic does NOT truncate -- it identifies low-value content and applies cuts.
+Launch **one** Agent call (subagent_type: general-purpose, model: "fable") with the current plan. Max 3 iterations. The critic does NOT truncate -- it identifies low-value content and applies cuts.
 
 > You are the reducer-critic for `notes/<fname>.md`. Current line count: `<N>`. Target: ~300 lines; density matters more than raw count.
 >
@@ -209,10 +213,11 @@ Nothing after this block.
 
 After presenting, enter a revision loop: answer questions from context; make specific edits; revise (don't restart) a rejected decision; run another reducer-critic pass on request. Exit when the user approves or pivots.
 
-## Rules (Opus 4.8 takes these literally)
+## Rules (Fable 5.1 takes these literally)
 
 - **Worktree-first: the plan note is born in its own `plan/<slug>` worktree, never on local `main`.** Phase 0 creates the worktree before any note is written; every later phase runs with the worktree as cwd. This is the invariant that keeps `main` pristine.
 - **3 scouts, 1 deliberator, 1 plan-writer, 1 reducer-critic (looped).** Do not add agents.
+- **Every agent runs on Fable 5.1** (`model: "fable"` on each Agent call). Never let one fall back to the session default.
 - **Scouts run in parallel** in a single message.
 - **No artificial word caps on scouts.** The reducer-critic trims.
 - **Reducer removes low-value categories, not line count.** After 3 passes, if still over, stop.

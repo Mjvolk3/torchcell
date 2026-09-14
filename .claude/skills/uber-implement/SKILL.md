@@ -13,6 +13,10 @@ End-to-end pipeline: plan a change with the full `/plan-4.8` pipeline, then imme
 
 The request is the same natural language you would pass to `/plan-4.8`. Append "merge when done" to auto-merge the PR after implementation.
 
+## Model
+
+The whole pipeline runs on Claude Fable 5.1. Phase A's six agents (three scouts, deliberator, plan-writer, reducer-critic) each pass `model: "fable"` on their Agent call, as `/plan-4.8` specifies. Phase B runs in the orchestrating session itself, which must be a Fable 5.1 session; if it is not, stop and say so rather than implementing on a weaker model.
+
 ## Phase A: Plan (plan-4.8 phases 0--5)
 
 Run `/plan-4.8` phases 0 through 5 exactly as documented:
@@ -63,7 +67,7 @@ Files changed:
 - **Do NOT use EnterPlanMode/ExitPlanMode** -- this skill replaces plan mode.
 - **Do NOT ask extra approval questions** -- tool approval prompts are the gates.
 - **Token budget**: significant context across both phases. For very large changes, scope scouts tightly.
-- **Use high or xhigh effort** for the implementation phase.
+- **Use high or xhigh effort** for the implementation phase, on Fable 5.1.
 
 ## Example
 

@@ -75,3 +75,21 @@ artifacts, W&B directories and `data_module_cache` all stay on `/scratch`. The m
 layout was checked on a fake tree before committing. `STAGE_LMDB=0` reads `/scratch`
 directly; the 010-build configs never stage (1.5 GB, page-cache resident). The local
 copy under `/tmp/$SLURM_JOB_ID` is removed at job exit.
+
+## 2026.09.14 - Sweep submitter rewritten for the 025 build
+
+`delta_submit_sweep.sh` now composes on `cgt_s0_r_kl_ctrl_013` (the constant-rate
+protocol) instead of the 010b configs: `sweep` submits 21 jobs, lambda 0 and the hard
+mask `cgt_s0_r_mask_028` first inside each seed, then 1e-2, 1e-1, 1e-4, 1e-5, 1; lambda
+1e-3 is the three ctrl_013 seeds already chained (22034665, 22034668, 22034671). One
+chain of `--dependency=after:<prev>+30`, 24 h clocks (27 min/epoch measured on the NVMe
+path; 30 epochs plus the stage-in took 16 h 01 m in 22030924), independent of the fitness
+chain so Delta can run one job from each. `DRY=1` prints; `AFTER=<jobid>` chains the
+first job. Submission waits for the 08:00 to 09:00 scheduler maintenance and is set to
+fire at 09:01 CDT from this session.
+
+Checked before the plan: the checkpoints of a staged run land on `/scratch` (the mirror
+links `models/`), so the per-arm best checkpoints the figure's panels a, d and e read are
+kept. Four NCCL watchdog core dumps from the Taiga-era failures sit in the Delta
+worktree's `experiments/` at 9.2 GB each (37 GB, untracked, `core.pt_nccl_watchdg.*`);
+they can go.

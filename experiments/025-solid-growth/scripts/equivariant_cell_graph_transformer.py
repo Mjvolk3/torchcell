@@ -299,18 +299,29 @@ def main(cfg: DictConfig) -> None:
 
     # === Arm definition: which records train, and how they are split ===
     subset_cfg = wandb.config.subset
-    index_subset = load_index_artifact(subset_cfg["indices"], None)
+    # `indices: null` is the whole build (S5): no artifact could hold 13.5M indices in
+    # the repo, and the pool is then every record. `unpinned_to_train` sends the records
+    # the split artifact does not name into train, so val and test stay the pinned
+    # trigenic sets while doubles and singles only ever train.
+    index_subset = (
+        None
+        if subset_cfg["indices"] is None
+        else load_index_artifact(subset_cfg["indices"], None)
+    )
+    unpinned_to_train = bool(subset_cfg.get("unpinned_to_train", False))
     pinned_split_indices = load_index_artifact(
         subset_cfg["split_file"], subset_cfg["split_key"]
     )
     split_sizes = {k: len(v) for k, v in pinned_split_indices.items()}
+    n_pool = len(dataset) if index_subset is None else len(index_subset)
     print(
-        f"arm: subset={subset_cfg['indices']} ({len(index_subset)} records), "
-        f"split={subset_cfg['split_file']} {split_sizes}"
+        f"arm: subset={subset_cfg['indices']} ({n_pool} records), "
+        f"split={subset_cfg['split_file']} {split_sizes}, "
+        f"unpinned_to_train={unpinned_to_train}"
     )
     wandb.log(
         {
-            "arm/n_subset": len(index_subset),
+            "arm/n_subset": n_pool,
             "arm/n_train_pinned": split_sizes["train"],
             "arm/n_val_pinned": split_sizes["val"],
             "arm/n_test_pinned": split_sizes["test"],
@@ -361,12 +372,21 @@ def main(cfg: DictConfig) -> None:
             # replication of 010 has to do. Pearson is invariant to the two constants,
             # so the choice moves the loss scale, not the metric.
             fit_on = wandb.config.transforms["fit_on"]
-            if fit_on == "train":
+            pool = (
+                set(range(len(dataset))) if index_subset is None else set(index_subset)
+            )
+            if fit_on == "train" and unpinned_to_train:
+                # Train is everything the pin does not hold out, so the constants come
+                # from the pinned train plus every unpinned record, never from val/test.
                 fit_indices = sorted(
-                    set(pinned_split_indices["train"]) & set(index_subset)
+                    pool
+                    - set(pinned_split_indices["val"])
+                    - set(pinned_split_indices["test"])
                 )
+            elif fit_on == "train":
+                fit_indices = sorted(set(pinned_split_indices["train"]) & pool)
             elif fit_on == "subset":
-                fit_indices = list(index_subset)
+                fit_indices = sorted(pool)
             else:
                 raise ValueError(
                     f"transforms.fit_on must be 'train' or 'subset', got {fit_on!r}"
@@ -483,6 +503,7 @@ def main(cfg: DictConfig) -> None:
         split_indices=["phenotype_label_index", "perturbation_count_index"],
         index_subset=index_subset,
         pinned_split_indices=pinned_split_indices,
+        unpinned_to_train=unpinned_to_train,
         batch_size=wandb.config.data_module["batch_size"],
         random_seed=seed,
         num_workers=wandb.config.data_module["num_workers"],
@@ -499,9 +520,15 @@ def main(cfg: DictConfig) -> None:
     # be derived from it. A pinned index outside `index_subset` is dropped rather than
     # placed, which is correct, and it is also exactly how an arm could quietly train on
     # fewer records than its name claims.
+    pool = set(range(len(dataset))) if index_subset is None else set(index_subset)
     for split in ("train", "val", "test"):
         realized = set(getattr(data_module.index, split))
-        requested = set(pinned_split_indices[split]) & set(index_subset)
+        requested = set(pinned_split_indices[split]) & pool
+        if unpinned_to_train and split == "train":
+            # Train is the pinned train plus every unpinned pool record.
+            requested = pool - (
+                set(pinned_split_indices["val"]) | set(pinned_split_indices["test"])
+            )
         assert realized == requested, (
             f"{split}: realized {len(realized)} records, pinned artifact intersected "
             f"with the subset gives {len(requested)}"

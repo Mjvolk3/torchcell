@@ -367,6 +367,51 @@ def test_pinned_records_outside_the_subset_are_not_placed(tmp_path: Any) -> None
     assert placed == set(range(0, 30))
 
 
+def test_unpinned_to_train_keeps_val_and_test_exactly_pinned(tmp_path: Any) -> None:
+    """The whole-build arm: pinned triple splits, every other record trains.
+
+    Without the flag the unpinned remainder is seed-split 80/10/10, so validation would
+    mix records the pin never named; with it, val and test are the pinned sets and
+    train is the pinned train plus everything else in the pool.
+    """
+    pinned = {
+        "train": set(range(0, 40)),
+        "val": set(range(40, 50)),
+        "test": set(range(50, 60)),
+    }
+    dm = CellDataModule(
+        dataset=_FakeDataset(),
+        cache_dir=str(tmp_path / "cache"),
+        split_indices=["phenotype_label_index"],
+        random_seed=42,
+        pinned_split_indices=pinned,
+        unpinned_to_train=True,
+    )
+    idx = dm.index
+    assert set(idx.val) == pinned["val"]
+    assert set(idx.test) == pinned["test"]
+    assert set(idx.train) == pinned["train"] | set(range(60, 200))
+    # The flag selects its own cache file: the unflagged module must not load this index.
+    plain = CellDataModule(
+        dataset=_FakeDataset(),
+        cache_dir=str(tmp_path / "cache"),
+        split_indices=["phenotype_label_index"],
+        random_seed=42,
+        pinned_split_indices=pinned,
+    )
+    assert len(plain.index.val) > len(pinned["val"])
+
+
+def test_unpinned_to_train_requires_a_pin(tmp_path: Any) -> None:
+    with pytest.raises(AssertionError, match="unpinned_to_train needs"):
+        CellDataModule(
+            dataset=_FakeDataset(),
+            cache_dir=str(tmp_path / "cache"),
+            split_indices=["phenotype_label_index"],
+            unpinned_to_train=True,
+        )
+
+
 def test_empty_subset_raises(tmp_path: Any) -> None:
     """An empty subset is a config mistake, not a request to train on nothing."""
     with pytest.raises(AssertionError, match="index_subset is empty"):

@@ -1,0 +1,19 @@
+# experiments/025-solid-growth/conf/cgt_s3_r_kl_fit_030.yaml
+#
+# THE CLOSURE ARM: cgt_s5_r_kl_fit_029 with the pool cut to S3 = triples + every single +
+# the 739,219 doubles whose gene pair lies inside some triple (subset_definitions.py:
+# 1,121,645 records). Same joint objective, same pinned trigenic splits, same
+# unpinned-to-train rule; 2.98x the S0 records per epoch instead of 35.9x, so a 30-epoch
+# run fits in about 36 h on a cabbi node at the measured S0 rate (24 min/epoch, job
+# 2395008; the scaling is an estimate, not a measurement).
+#
+#   sbatch -p cabbi --gres=gpu:4 -J 025-s3-fit experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s3_r_kl_fit_030
+defaults:
+  - cgt_s5_r_kl_fit_029
+  - _self_
+
+wandb:
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_30]
+
+subset:
+  indices: subset_S3_indices.json.gz

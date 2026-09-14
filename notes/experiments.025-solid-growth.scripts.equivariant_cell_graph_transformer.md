@@ -705,3 +705,81 @@ monitored metric, and a 16-record subset of the disjoint split gave a NaN valida
 Pearson; the 64-record smoke passed. Not a full-scale risk (every disjoint run logs the
 metric at every epoch on 37,705 validation records). Expected end of the chain: Wednesday
 about 10:30, from the measured 8 h 40 m to 9 h 03 m per 30-epoch run on this node.
+
+## 2026.09.14 - The graph-regularization sweep runs from the 025 build; a whole-build arm for cabbi
+
+### Sweep on Delta, composed on ctrl_013
+
+The sweep for `FigS-graph-regularization-sweep` no longer needs the 010 build. Every arm
+is `cgt_s0_r_kl_ctrl_013` with one key changed, and the three ctrl_013 seeds already in the
+Delta fitness chain (22034665, 22034668, 22034671) are the ladder's lambda 1e-3 point:
+
+| arm | override on `ctrl_013` | seeds | jobs |
+|---|---|---|---|
+| no penalty | `model.graph_regularization.graph_reg_lambda=0` | 1, 2, 3 | 3 |
+| ladder 1e-5, 1e-4, 1e-2, 1e-1, 1 | same key | 1, 2, 3 | 15 |
+| hard mask, layer 1, nine heads | config `cgt_s0_r_mask_028` (mask_003's block on ctrl_013, lambda 0, loss lambda 0, edge-recovery plots off) | 1, 2, 3 | 3 |
+| random graphs, degree-matched | not yet: needs the rewiring option | | |
+
+`delta_submit_sweep.sh sweep` submits the 21 as one chain (`after:<prev>+30`, 24 h
+clocks, seed-major with 0 and mask first inside each seed). Both configs were composed
+with Hydra to check every key: the mask arm has `attention_mask.enabled=true, layers=[1]`,
+nine `head_graphs`, per-head KL lambdas 0, loss lambda 0; the ladder arms carry the
+override into all nine `regularized_heads` through the interpolation, and the seed lands.
+Submission is scheduled for 09:01 CDT today, after the 08:00 to 09:00 scheduler
+maintenance; a one-shot reminder in this session fires it.
+
+A correction to the 2026.09.04 entry of [[experiments.025-solid-growth.training-plan]]:
+the KL arms regularize all nine graphs, not seven. `_normalize_adjacency_matrices`
+registers each `*_interaction` relation under its unsuffixed name too, so `physical` and
+`regulatory` resolve, and the loss raises rather than skips on a name it cannot find. The
+mask arm therefore masks the same nine heads the ladder regularizes.
+
+Two things the runs will not log and the panels must read from checkpoints: at lambda 0
+the model returns before computing the divergence, and under the mask the KL heads are
+declared at lambda 0, so `train/graph_reg_loss` exists only for the ladder. Panel a's
+lambda-0 and mask points come from the saved best checkpoints, which do survive the
+NVMe mirror: `models/checkpoints` is a symlink back to `/scratch`, and job 22030924
+(fit_014 seed 1, COMPLETED 00:08 today, 16 h 01 m, 30 epochs) left
+`b3n4ax4a-best-pearson-epoch=18-val/gene_interaction/Pearson=0.4523.ckpt` there. Its 27
+min/epoch is the rate the 24 h clock is sized on.
+
+### The whole-build arm for cabbi
+
+Asked for: train on the random-split triples with the fitness head, and add every
+double (dmf + dmi), every single, essential genes and synthetic lethality. Counted from
+the build's `dataset_name_index` x `perturbation_count_index` (scratch script, 819
+composite keys):
+
+| records | count | labels |
+|---|---|---|
+| singles | 5,694 | smf (fitness only) |
+| doubles | 13,142,648 | dmf + dmi; 13,993 of them carry a SynthLethDB record converted to fitness (3,720 SynthLethDB-only, 3,899 shared with Costanzo dmf) |
+| triples | 376,732 | tmf + tmi |
+| total | 13,525,071 | fitness on all, gene_interaction on 13,515,659 |
+
+Gene essentiality is absent: `dataset_name_index` has no key containing
+`SgdEssential`, and the served graph has no `GeneEssentialitySgdDataset` node (probe
+2026-09-14 01:00, count 0), so the query block returned nothing at build time. Essential
+genes appear only where a screen measured them. Adding them is a KG increment plus a
+requery, not a config.
+
+So the set the question describes is the whole build, S5 of the ladder, and it now has
+a config: `cgt_s5_r_kl_fit_029` (fit_014's joint objective, `subset.indices: null`,
+`unpinned_to_train: true`). The datamodule change that makes it an evaluation on the
+triples: `CellDataModule(unpinned_to_train=True)` moves every pool record the pinned
+split does not name into train, so val and test stay the 37,673 + 37,673 pinned
+trigenic records; without it the unpinned remainder is seed-split 80/10/10 and the
+validation Pearson would mix dmi with tmi. The normalizer under `fit_on: train` then
+fits on pinned train plus the unpinned records. Two tests cover it, and the trainer's
+post-setup assertion checks the realized splits against that rule.
+
+Cost, hypothesis by scaling and not a measurement: 35.9x the S0 records per epoch,
+against 17 min/epoch on mmli (2391135) and about 24 on cabbi (2395008 at partial epoch
+42 after 16 h 47 m), is 10 to 14 h per epoch, two weeks for 30 epochs on one node. The
+closure arm `cgt_s3_r_kl_fit_030` (S3: 1,121,645 records, the 739,219 doubles inside
+some triple plus all singles) is the same design at 2.98x, about 36 h on cabbi. A
+per-epoch cap on the doubles for S5 would need a sampler and is not written.
+
+cabbi at 00:50: our `025-q-fu` (2395008) running on compute-3-3 with three `dyna_seq`
+tasks of another user and a fourth pending on Resources, so no free lane there tonight.

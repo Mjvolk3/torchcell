@@ -235,8 +235,16 @@ class CellDataModule(L.LightningDataModule):
         pinned_test_indices: Iterable[int] | None = None,
         pinned_split_indices: Mapping[str, Iterable[int]] | None = None,
         index_subset: Iterable[int] | None = None,
+        unpinned_to_train: bool = False,
     ) -> None:
         """Store dataloader/split configuration and compute the split indices.
+
+        ``unpinned_to_train`` sends every pool record that ``pinned_split_indices`` does
+        not name into TRAIN instead of the seed-driven 80/10/10. This is the "train on
+        everything, evaluate on the triples" arm of the 025 ladder: the 010 tmi splits
+        stay pinned, and the 13.1M doubles and 5,694 singles become training records
+        only, so validation and test remain exactly the pinned trigenic sets. It requires
+        ``pinned_split_indices``; without a pin there is nothing to be unpinned from.
 
         ``pinned_test_indices`` forces those record indices into the TEST split, overriding
         the random assignment. It reproduces an EXTERNAL split inside ours -- e.g. Merzbacher
@@ -296,6 +304,10 @@ class CellDataModule(L.LightningDataModule):
         }
         unknown = set(self.pinned_split_indices) - {"train", "val", "test"}
         assert not unknown, f"pinned_split_indices has unknown splits: {unknown}"
+        self.unpinned_to_train = unpinned_to_train
+        assert not unpinned_to_train or self.pinned_split_indices, (
+            "unpinned_to_train needs pinned_split_indices to define what is pinned"
+        )
         pinned_sets = list(self.pinned_split_indices.values())
         for i, a in enumerate(pinned_sets):
             for b in pinned_sets[i + 1 :]:
@@ -353,7 +365,9 @@ class CellDataModule(L.LightningDataModule):
             parts.append(f"{split}:" + ",".join(map(str, sorted(indices))))
             n_pinned += len(indices)
         payload = "|".join(parts).encode()
-        return f"_pin{n_pinned}-{hashlib.sha256(payload).hexdigest()[:8]}"
+        tag = f"_pin{n_pinned}-{hashlib.sha256(payload).hexdigest()[:8]}"
+        # Same pin, different placement of the remainder: a different index file.
+        return tag + "-utt" if self.unpinned_to_train else tag
 
     def _subset_tag(self) -> str:
         """Cache-key suffix identifying the record subset, empty when there is none.
@@ -569,6 +583,18 @@ class CellDataModule(L.LightningDataModule):
                 f"Splits after full pinning: train={len(final_splits['train'])} "
                 f"val={len(final_splits['val'])} test={len(final_splits['test'])}"
             )
+            if self.unpinned_to_train:
+                pinned_all = set().union(*self.pinned_split_indices.values())
+                unpinned = all_indices - pinned_all
+                final_splits["val"] -= unpinned
+                final_splits["test"] -= unpinned
+                final_splits["train"] |= unpinned
+                log.info(
+                    f"unpinned_to_train: {len(unpinned)} unpinned records moved into "
+                    f"train; val and test are exactly the pinned sets "
+                    f"(train={len(final_splits['train'])} val={len(final_splits['val'])} "
+                    f"test={len(final_splits['test'])})"
+                )
 
         # Create DataModuleIndexDetails object
         self._index_details = DataModuleIndexDetails(

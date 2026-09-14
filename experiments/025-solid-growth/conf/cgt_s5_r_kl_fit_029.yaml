@@ -1,0 +1,38 @@
+# experiments/025-solid-growth/conf/cgt_s5_r_kl_fit_029.yaml
+#
+# THE WHOLE 025 BUILD AS TRAINING DATA, evaluated on 010's trigenic splits. S5 of the
+# ladder: cgt_s0_r_kl_fit_014 (joint interaction + fitness objective, fitness weight 1.0,
+# learnable table, constant-rate protocol) with the record pool widened from the 376,732
+# triples to all 13,525,071 records of the build: 5,694 singles (smf, fitness only),
+# 13,142,648 doubles (dmf + dmi, the composite of Costanzo 2016 and both Kuzmin screens,
+# plus 13,993 doubles carrying a SynthLethDB synthetic-lethality record converted to
+# fitness) and the triples (tmf + tmi). SGD gene essentiality contributed no record to
+# this build (query.py's block returned nothing from the served graph), so essential
+# genes enter only where a screen measured them.
+#
+# The R split is pinned over the triples exactly as in every S0 arm; everything the pin
+# does not name trains (`unpinned_to_train`), so validation and test are the same 37,673
+# trigenic records the S0 arms report on and the score is comparable across the ladder.
+# Every label present on a record is supervised: doubles contribute dmf and dmi entries,
+# singles smf, triples tmf and tmi, through the COO phenotype fields the joint objective
+# already decodes.
+#
+# COST, unmeasured: 35.9x the S0 records per epoch. IGB mmli does an S0 epoch in 17 min
+# (job 2391135) and cabbi in about 24 (job 2395008), so an epoch here is on the order of
+# 10 to 14 h and 30 epochs is two weeks on one node. Run it with a per-epoch cap on the
+# doubles or with fewer epochs; the closure-doubles arm cgt_s3_r_kl_fit_030 is the same
+# design at 1,121,645 records.
+#
+#   sbatch -p cabbi --gres=gpu:4 -J 025-s5-fit experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s5_r_kl_fit_029
+defaults:
+  - cgt_s0_r_kl_fit_014
+  - _self_
+
+wandb:
+  tags: [s5, split_R, graph_reg_kl, fitness_joint, all_orders, unpinned_to_train, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_30]
+
+subset:
+  indices: null
+  split_file: pinned_splits_from_010_seed_42.json.gz
+  split_key: pinned
+  unpinned_to_train: true

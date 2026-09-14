@@ -228,6 +228,21 @@ ARMS: dict[str, dict[str, Any]] = {
         "use_dissipation_limit": True,
         "use_abundance_head": True,
     },
+    # THE DISSIPATION LIMIT HELD OUT (2026-09-14). The Gibbs dissipation limit is a
+    # verification readout, not a training target: a model that stays under 3,700 J/gDW/h
+    # because it was penalized for exceeding it has been told to, not discovered it, and its
+    # dissipation feasibility then says nothing. Every 027 cell on `flux_projection_anchored`
+    # through wave 8 trained against the limit, so this arm is the same everything-on recipe
+    # with that one term off; `g_diss_mean` is still recorded every epoch as a readout.
+    "flux_projection_anchored_nodiss": {
+        "flux": True,
+        "parameterization": "projection",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": False,
+        "use_abundance_head": True,
+    },
     # The same, sampled. `stochastic` on a projection parameterization is read as the LATENT
     # draw z = mu + sigma eps with a KL against N(0, I), which is the only new boolean an
     # arm can reach through 026's build_flux_layer; the KL weight is FluxLayerConfig's

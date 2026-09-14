@@ -356,3 +356,45 @@ measurements) because its rows are vector-valued.
 
 Albert 2018 and Muenzner 2024 were ALREADY in this band from the previous pass; no re-band
 was needed. They moved 5 -> 31 and 7 -> 33 only because the perturb-seq band grew.
+
+## 2026.09.13 - Final fifty with ten in reserve, one table, statistics last (v10)
+
+The reviewer asked for the final top 50 in one full table with every stat and the reason
+for choosing, ten extra rows in case a row proves unreachable, and the summary statistics
+at the end. The document is restructured to that shape and the rest of the 168-row ranking
+stays in the script and its JSON, unprinted.
+
+- `render_final(rows)` in `build_candidate_datasets_table.py` writes `tables/final.tex`:
+  rows 1 to 60 with rank, dataset (class and phenotype on a second line), band and tier,
+  genotypes, environments, instances, measurements, sequence basis, time axis and the
+  `why` text, with a divider at row 51. `FINAL = 60`.
+- `render_summary(rows)` writes `tables/summary.tex`: counts split at the fifty line by
+  band, tier, class, sequence basis, Perturb-seq axis and attributes (time axis, joins to
+  built datasets, confidence, status, instance basis), with genotype, instance and
+  measurement sums. It is the last section of the document.
+- Sources and joins tables are restricted to the sixty; the sources table's `Why` column
+  becomes `Why it is ordered here` (the band reason, or the scale rule with the
+  measurement count), since the reason for choosing now sits in the final table.
+- New `Candidate.time_axis` and a `TIME_AXES` curation dict (checked against the rows at
+  import like `BANDS`): seven of the sixty carry a time dimension (Hackett 2020, Jariani
+  2020, Jackson 2023, Wang 2022, Airoldi 2016, and the rate rows Sun 2013 and Martin-Perez
+  2017). Steady-state chemostat rows vary dilution rate and are not counted.
+- Review comments on v9 (`zotero_comments.py database-expansion-100`, keys `4E2MFASD`
+  and `RGGC2TRF`) are answered in the new summary section: the time comment gets a
+  `Time` column, the count above, and the schema position (`Environment.duration_hours`
+  and `duration_generations` flatten a series into per-point environments; a first-class
+  time field and a series identity are the open schema items for c(t) modeling). The Sun
+  2013 comment gets a subsection and a rewritten `why`: overlap with Kemmeren 2014,
+  Hughes 2000, Hu 2007 and Lenstra 2011 is on the strain axis only, since none of those
+  stores a rate; the exact shared-strain count needs the unfetched GEO strain list.
+- Sections dropped from the document (still generated, no longer input): the 168-row
+  candidates table, counts by wave, swaps, pins, the classes and Perturb-seq sections.
+
+Statistics of the sixty (from `tables/summary.tex`): 30 perturb-seq + 20 molecular
+layers make the fifty; the extra ten are 3 molecular layers + 7 scale, and the scale seven
+include de Boer 2020 and Vaishnav 2022, which carry most of the instance sum. Classes:
+expression / single cell 20, natural variation 15, CRISPR library 8, metabolite 6,
+modality 5, tolerance 4, regulatory DNA 2. Bases: reference-only 16, S288C-KO 13,
+segregant-WGS 11, S288C+guide 7, isolate-WGS 6, designed-edit 3, reporter-locus 2, tag 1,
+engineered-chassis 1. 110 named joins, 58 to a built dataset, on 42 of the sixty rows.
+Confidence: 34 sourced, 26 recall. One blocked row (Lee 2014, 56).

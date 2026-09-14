@@ -29,7 +29,7 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -58,6 +58,9 @@ CUT = TARGET_COUNT - BUILT_COUNT  # 150
 #           turns out to have no recoverable per-strain data
 WAVE_1 = 50
 WAVE_2 = 70
+# Rows rendered in the final table: the recommended fifty plus ten extra, in rank
+# order, so a row that proves unreachable has a named replacement.
+FINAL = 60
 
 # ---------------------------------------------------------------------------
 # Vocabulary. Defined here so it is defined before use in the document, and so a
@@ -145,11 +148,7 @@ PertSeq = Literal["none", "input", "output", "both"]
 #   scale         -- everything else, ranked as before.
 Band = Literal["perturb-seq", "molecular layers", "scale"]
 
-BAND_ORDER: dict[str, int] = {
-    "perturb-seq": 0,
-    "molecular layers": 1,
-    "scale": 2,
-}
+BAND_ORDER: dict[str, int] = {"perturb-seq": 0, "molecular layers": 1, "scale": 2}
 
 
 class Synergy(BaseModel):
@@ -197,6 +196,10 @@ class Candidate(BaseModel):
     band_why: str = ""  # why this row is out of the scale band; required when it is
     synergy: list[Synergy] = Field(default_factory=list)
     added: bool = False  # first appears in this pass, so it has no previous rank
+    # The row's time dimension, when it has one: a sampled series, an age axis or a
+    # rate derived from a labeling series. Empty for a steady-state or endpoint row.
+    # Growth rate in a chemostat is a rate, not a time axis, and is left empty.
+    time_axis: str = ""
 
     @property
     def measurements(self) -> int | None:
@@ -3503,7 +3506,7 @@ CANDIDATES: list[Candidate] = [
         shape="three vectors",
         dim=18000,
         seq_basis="S288C-KO",
-        why="Comparative dynamic transcriptome analysis decomposes a transcript level into the synthesis rate and the decay rate that produce it, across 46 single deletions. That is the transcript-side counterpart of Martin-Perez 2017's protein half-lives, so the two together give both turnover terms. Its finding also warns what a steady-state compendium hides: a change in degradation rate is generally compensated by a change in synthesis rate, so mRNA level is buffered and two strains with the same level can have different kinetics. The 46 strains are single deletions and overlap the Kemmeren set by gene identity; the abstract does not say they came from that collection, and that provenance was not confirmed.",
+        why="Comparative dynamic transcriptome analysis decomposes a transcript level into the synthesis rate and the decay rate that produce it, across 46 single deletions. That is the transcript-side counterpart of Martin-Perez 2017's protein half-lives, so the two together give both turnover terms. Its finding also warns what a steady-state compendium hides: a change in degradation rate is generally compensated by a change in synthesis rate, so mRNA level is buffered and two strains with the same level can have different kinetics. Overlap with the other deletion-strain expression sets is on the strain axis, not the measurement: the built Kemmeren 2014 (1,484 deletions), Hughes 2000, Hu 2007 and Lenstra 2011 all store a steady-state level per gene, and none stores a rate, so this row is a second layer on shared strains rather than a second copy of one. The 46 strains are single deletions of mRNA degradation and metabolism genes and are expected to be inside the Kemmeren set by gene identity; the exact shared-strain count needs the GEO strain list, which was not fetched, and the abstract does not say the strains came from that collection.",
         accession="GEO, series not fetched this pass",
         confidence="recall",
         added=True,
@@ -4242,27 +4245,39 @@ SYNERGIES: dict[str, list[Synergy]] = {
         )
     ],
     "Sun 2013 (mRNA synthesis and decay rates across deletion strains)": [
-        _syn("Kemmeren 2014", "supported",
-             "single deletion strains, gene by gene",
-             "A steady-state transcript level beside the synthesis and decay rates "
-             "that produce it, so two strains with the same level but different "
-             "kinetics stop looking identical."),
-        _syn("Martin-Perez 2017 (protein half-lives)", "candidate",
-             "turnover, transcript side against protein side, gene by gene",
-             "Both half-life terms in one place, which is what an RNA-to-protein "
-             "model needs in order to have a reason for the two to disagree."),
+        _syn(
+            "Kemmeren 2014",
+            "supported",
+            "single deletion strains, gene by gene",
+            "A steady-state transcript level beside the synthesis and decay rates "
+            "that produce it, so two strains with the same level but different "
+            "kinetics stop looking identical.",
+        ),
+        _syn(
+            "Martin-Perez 2017 (protein half-lives)",
+            "candidate",
+            "turnover, transcript side against protein side, gene by gene",
+            "Both half-life terms in one place, which is what an RNA-to-protein "
+            "model needs in order to have a reason for the two to disagree.",
+        ),
     ],
     "Hughes 2000 (compendium of expression profiles)": [
-        _syn("Kemmeren 2014", "supported",
-             "deletion strains, gene by gene, fourteen years and two array "
-             "platforms apart",
-             "Cross-laboratory replication of the deletion transcriptome, which "
-             "the built set cannot test against itself and which Nadal-Ribelles "
-             "2025 failed cross-batch."),
-        _syn("Hu 2007 (TF deletion expression compendium)", "candidate",
-             "deletion strains with a bulk expression readout",
-             "A third independent compendium, so agreement can be measured across "
-             "three laboratories rather than asserted from two."),
+        _syn(
+            "Kemmeren 2014",
+            "supported",
+            "deletion strains, gene by gene, fourteen years and two array "
+            "platforms apart",
+            "Cross-laboratory replication of the deletion transcriptome, which "
+            "the built set cannot test against itself and which Nadal-Ribelles "
+            "2025 failed cross-batch.",
+        ),
+        _syn(
+            "Hu 2007 (TF deletion expression compendium)",
+            "candidate",
+            "deletion strains with a bulk expression readout",
+            "A third independent compendium, so agreement can be measured across "
+            "three laboratories rather than asserted from two.",
+        ),
     ],
     "Hu 2007 (TF deletion expression compendium)": [
         _syn(
@@ -4423,59 +4438,88 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     # -- molecular layers ------------------------------------------------------
     "Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)": [
-        _syn("Albert 2018 (eQTL in 1,012 segregants)", "candidate",
-             "BY x RM segregants, transcript layer",
-             "112 strains with transcript and protein measured together against "
-             "1,012 with transcript alone, so the within-strain RNA-to-protein "
-             "residual fitted on the small panel can be applied to the large one."),
-        _syn("Jakobson 2025 (genome-to-proteome map)", "candidate",
-             "segregant genotype class, protein layer",
-             "Two segregant proteomes on different panels and platforms, which is "
-             "what separates a protein quantitative trait locus from a batch."),
-        _syn("Leutert 2023 (phosphoproteome x 101 conditions)", "candidate",
-             "phosphosite identity",
-             "Phosphorylation driven by genotype against phosphorylation driven by "
-             "condition, on one site vocabulary."),
+        _syn(
+            "Albert 2018 (eQTL in 1,012 segregants)",
+            "candidate",
+            "BY x RM segregants, transcript layer",
+            "112 strains with transcript and protein measured together against "
+            "1,012 with transcript alone, so the within-strain RNA-to-protein "
+            "residual fitted on the small panel can be applied to the large one.",
+        ),
+        _syn(
+            "Jakobson 2025 (genome-to-proteome map)",
+            "candidate",
+            "segregant genotype class, protein layer",
+            "Two segregant proteomes on different panels and platforms, which is "
+            "what separates a protein quantitative trait locus from a batch.",
+        ),
+        _syn(
+            "Leutert 2023 (phosphoproteome x 101 conditions)",
+            "candidate",
+            "phosphosite identity",
+            "Phosphorylation driven by genotype against phosphorylation driven by "
+            "condition, on one site vocabulary.",
+        ),
     ],
     "Teyssonniere 2024 (species-wide proteome against transcriptome)": [
-        _syn("Caudal 2024 (pan-transcriptome)", "supported",
-             "the same sequenced isolates, 942 against 943",
-             "Transcript and protein for the same strain, one to one rather than "
-             "by overlap. The published result on this pair is that the two "
-             "correlate weakly and share 3 percent of their associated variants, "
-             "so it is the calibration an inference model is scored against."),
-        _syn("Muenzner 2024 (natural-isolate proteome)", "candidate",
-             "the 1,011-isolate panel, protein layer",
-             "De-duplication before either is built: the two share authors and a "
-             "panel, and whether they are independent acquisitions is unsettled."),
+        _syn(
+            "Caudal 2024 (pan-transcriptome)",
+            "supported",
+            "the same sequenced isolates, 942 against 943",
+            "Transcript and protein for the same strain, one to one rather than "
+            "by overlap. The published result on this pair is that the two "
+            "correlate weakly and share 3 percent of their associated variants, "
+            "so it is the calibration an inference model is scored against.",
+        ),
+        _syn(
+            "Muenzner 2024 (natural-isolate proteome)",
+            "candidate",
+            "the 1,011-isolate panel, protein layer",
+            "De-duplication before either is built: the two share authors and a "
+            "panel, and whether they are independent acquisitions is unsettled.",
+        ),
     ],
     "Foss 2007 (BY x RM segregant proteome)": [
-        _syn("Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)",
-             "candidate",
-             "the same cross, protein layer, fifteen years and two platforms apart",
-             "Cross-laboratory replication of segregant protein abundance, which "
-             "neither measurement can establish alone."),
+        _syn(
+            "Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)",
+            "candidate",
+            "the same cross, protein layer, fifteen years and two platforms apart",
+            "Cross-laboratory replication of segregant protein abundance, which "
+            "neither measurement can establish alone.",
+        )
     ],
     "McManus 2014 (ribosome profiling, allele-specific)": [
-        _syn("Messner 2023 (proteome)", "supported",
-             "gene identity, translation rate against protein abundance",
-             "A per-gene translation term to put against measured protein level, "
-             "which is the coefficient a model otherwise has to learn blind."),
-        _syn("Martin-Perez 2017 (protein half-lives)", "candidate",
-             "gene identity, synthesis against degradation",
-             "Both halves of protein turnover, so steady-state abundance can be "
-             "decomposed rather than only predicted."),
+        _syn(
+            "Messner 2023 (proteome)",
+            "supported",
+            "gene identity, translation rate against protein abundance",
+            "A per-gene translation term to put against measured protein level, "
+            "which is the coefficient a model otherwise has to learn blind.",
+        ),
+        _syn(
+            "Martin-Perez 2017 (protein half-lives)",
+            "candidate",
+            "gene identity, synthesis against degradation",
+            "Both halves of protein turnover, so steady-state abundance can be "
+            "decomposed rather than only predicted.",
+        ),
     ],
     "Martin-Perez 2017 (protein half-lives)": [
-        _syn("Messner 2023 (proteome)", "supported",
-             "gene identity, half-life against abundance",
-             "Which proteins are abundant because they are made fast and which "
-             "because they are destroyed slowly, a distinction abundance alone "
-             "cannot make."),
-        _syn("Kemmeren 2014", "supported",
-             "gene identity, protein half-life against transcript response",
-             "Whether a transcript change reaches the protein layer at all, which "
-             "for a long-lived protein it largely does not."),
+        _syn(
+            "Messner 2023 (proteome)",
+            "supported",
+            "gene identity, half-life against abundance",
+            "Which proteins are abundant because they are made fast and which "
+            "because they are destroyed slowly, a distinction abundance alone "
+            "cannot make.",
+        ),
+        _syn(
+            "Kemmeren 2014",
+            "supported",
+            "gene identity, protein half-life against transcript response",
+            "Whether a transcript change reaches the protein layer at all, which "
+            "for a long-lived protein it largely does not.",
+        ),
     ],
     "Jakobson 2025 (genome-to-proteome map)": [
         _syn(
@@ -4886,6 +4930,35 @@ SYNERGIES: dict[str, list[Synergy]] = {
 }
 
 
+# Rows in the final sixty that carry a time dimension, stated per row so the
+# summary can count them and a reader can see which rows would exercise a time
+# field on the record. Steady-state chemostat rows (Brauer 2008, Boer 2010,
+# Hackett 2016, Yu 2021) vary dilution rate, which is a rate, not a time axis.
+TIME_AXES: dict[str, str] = {
+    "Hackett 2020 (IDEA inducible-TF transcriptome time series)": (
+        "about eight time points after induction; one record per strain and time point"
+    ),
+    "Sun 2013 (mRNA synthesis and decay rates across deletion strains)": (
+        "rates derived from metabolic labeling; the rates are stored, not the series"
+    ),
+    "Jariani 2020 (yeast scRNA-seq through lag phase)": (
+        "time course through the lag phase of a glucose-to-maltose shift"
+    ),
+    "Jackson 2023 (wild-type scRNA-seq time course for RNA kinetics)": (
+        "one time course, sampled continuously"
+    ),
+    "Wang 2022 (single-cell transcriptomes across replicative aging)": (
+        "three ages: 2 h, 16 h and 36 h"
+    ),
+    "Airoldi 2016 (nitrogen-limited steady-state and dynamic transcriptome)": (
+        "an upshift time course beside the steady states"
+    ),
+    "Martin-Perez 2017 (protein half-lives)": (
+        "half-lives derived from a labeling time course; the rates are stored"
+    ),
+}
+
+
 def _apply_curation() -> None:
     """Attach bands and synergies to the rows, failing loudly on a stale name.
 
@@ -4897,7 +4970,11 @@ def _apply_curation() -> None:
     by_name = {c.name: c for c in CANDIDATES}
     if len(by_name) != len(CANDIDATES):
         raise SystemExit("duplicate candidate name")
-    for table, label in ((BANDS, "BANDS"), (SYNERGIES, "SYNERGIES")):
+    for table, label in (
+        (BANDS, "BANDS"),
+        (SYNERGIES, "SYNERGIES"),
+        (TIME_AXES, "TIME_AXES"),
+    ):
         missing = sorted(set(table) - set(by_name))
         if missing:
             raise SystemExit(f"{label} names absent from CANDIDATES: {missing}")
@@ -4914,6 +4991,8 @@ def _apply_curation() -> None:
         by_name[name].band_why = why
     for name, syns in SYNERGIES.items():
         by_name[name].synergy = syns
+    for name, axis in TIME_AXES.items():
+        by_name[name].time_axis = axis
     for c in CANDIDATES:
         if c.band != "scale" and not c.band_why:
             raise SystemExit(f"{c.name}: banded out of scale with no reason")
@@ -5336,8 +5415,8 @@ cell, sampled widely.}
 
 def render_sources(rows: list[Candidate]) -> str:
     hdr = (
-        r"\textbf{\#} & \textbf{Dataset, citation and link} & \textbf{Why} & "
-        r"\textbf{Data} \\"
+        r"\textbf{\#} & \textbf{Dataset, citation and link} & "
+        r"\textbf{Why it is ordered here} & \textbf{Data} \\"
     )
     head = (
         r"""\begin{landscape}
@@ -5346,10 +5425,12 @@ def render_sources(rows: list[Candidate]) -> str:
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
 \begin{longtable}{@{}r@{\hspace{4pt}} L{86mm} L{92mm} L{62mm}@{}}
-\caption[]{Sources for Table~\ref{tab:candidates}, in the same order. \emph{Why} states
-what the row buys that the built set does not. \emph{Data} is where the per-record values
-live; entries marked unconfirmed were not fetched live and must be checked before a loader
-is written. Every link is clickable.}
+\caption[]{Sources for Table~\ref{tab:final}, in the same order. \emph{Why it is
+ordered here} is the band reason for a perturb-seq or molecular-layers row, and the tier
+and measurement rule for a scale row; what the row buys is the \emph{Why} column of
+Table~\ref{tab:final}. \emph{Data} is where the per-record values live; entries marked
+unconfirmed were not fetched live and must be checked before a loader is written. Every
+link is clickable.}
 \label{tab:sources}\\
 \toprule
 """
@@ -5381,7 +5462,7 @@ is written. Every link is clickable.}
         # Accessions carry bare host paths, which TeX treats as one unbreakable
         # token; allow a break after each slash so the column can wrap.
         acc = tex_escape(c.accession).replace("/", r"/\allowbreak ")
-        lines.append(" & ".join([str(i), cite, tex_escape(c.why), acc]) + r" \\")
+        lines.append(" & ".join([str(i), cite, priority_tex(c), acc]) + r" \\")
         lines.append(r"\addlinespace[5pt]")
     return (
         head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n\\end{landscape}\n"
@@ -5435,8 +5516,8 @@ def render_synergies(rows: list[Candidate]) -> str:
 \renewcommand{\arraystretch}{1.15}
 \begin{longtable}{@{}r@{\hspace{4pt}} L{42mm} L{44mm} L{48mm} L{96mm}@{}}
 \caption[]{Named joins between a candidate and either a supported dataset or
-another candidate. \emph{\#} is the candidate's rank in
-Table~\ref{tab:candidates}. A partner in \textbf{bold} is already built, so that
+another candidate, for the sixty rows of Table~\ref{tab:final}. \emph{\#} is the
+candidate's rank there. A partner in \textbf{bold} is already built, so that
 row's join becomes runnable the moment the candidate is ingested; an unbolded
 partner is itself a candidate, so the join costs two ingestions. \emph{Join key}
 is the shared axis that makes the pair addressable; a pair with no such axis is a
@@ -5613,6 +5694,229 @@ no count contribute nothing, so both totals are lower bounds.}
     return head + "\n".join(lines) + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n"
 
 
+def priority_tex(c: Candidate) -> str:
+    """Why the row sits where it does: the band reason, or the scale rule."""
+    if c.band != "scale":
+        return tex_escape(c.band_why)
+    return tex_escape(
+        f"Scale band: tier {c.tier}, ordered by measurements ({c.measurements:,})."
+        if c.measurements
+        else f"Scale band: tier {c.tier}."
+    )
+
+
+def render_final(rows: list[Candidate]) -> str:
+    """The final table: the recommended fifty and ten extra, every stat and the reason.
+
+    One table rather than a stats table plus a reasons table, because the reader
+    asked for the reason beside the numbers. The dataset cell carries the class
+    and the phenotype on a second line so the column count stays at ten and the
+    reason column keeps 81 mm.
+    """
+    final = rows[:FINAL]
+    cols = (
+        r"@{}r@{\hspace{3pt}} L{40mm} L{11mm} L{20mm} L{18mm} r@{\hspace{4pt}} "
+        r"r@{\hspace{4pt}} L{19mm} L{14mm} L{81mm}@{}"
+    )
+    hdr = (
+        r"\textbf{\#} & \textbf{Dataset (class; phenotype)} & \textbf{Band, tier} & "
+        r"\textbf{Genotypes} & \textbf{Env} & \textbf{Inst.} & \textbf{Meas.} & "
+        r"\textbf{Sequence basis} & \textbf{Time} & \textbf{Why} \\"
+    )
+    head = (
+        r"""\begin{landscape}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{"""
+        + cols
+        + r"""}
+\caption[]{The final fifty, then ten extra in rank order in case a row above proves
+unreachable. Every stat the ranking used is here beside the reason. \emph{Band, tier}:
+\emph{P} is the perturb-seq band, \emph{M} molecular layers, \emph{S} scale, applied before
+tier (Sec.~\ref{sec:rule}); within a band the tier rule orders, then measurements.
+\emph{Genotypes} and \emph{Env} are the perturbation and condition axes. \emph{Inst.} is
+genotype$\times$environment records, $\dagger$ where it is the product of the two axes
+rather than a reported count and $\ddagger$ where it is an order-of-magnitude estimate.
+\emph{Meas.} is instances times phenotype dimensionality, the quantity rows are ranked on.
+\emph{Sequence basis} is the route to each strain's total genomic content; a row with no
+route is excluded (Table~\ref{tab:excluded}). \emph{Time} names the row's time dimension
+where it has one; a dash means steady state or endpoint. A $\bullet$ marks a row high on a
+Perturb-seq axis; superscript \textbf{B} marks a row blocked on data access, \textbf{L} one
+with a loader in flight. Citations, links and data locations are in
+Table~\ref{tab:sources}; joins in Table~\ref{tab:synergies}.}
+\label{tab:final}\\
+\toprule
+"""
+        + hdr
+        + r"""
+\midrule
+\endfirsthead
+\multicolumn{10}{@{}l}{\footnotesize\emph{Table~\ref{tab:final}, continued}}\\
+\toprule
+"""
+        + hdr
+        + r"""
+\midrule
+\endhead
+\bottomrule
+\endfoot
+"""
+    )
+    band_letter = {"perturb-seq": "P", "molecular layers": "M", "scale": "S"}
+    lines = []
+    for i, c in enumerate(final, start=1):
+        if i == WAVE_1 + 1:
+            lines.append(
+                r"\midrule \multicolumn{10}{@{}l}{\textbf{Ten extra, in rank order: "
+                r"rows "
+                + str(WAVE_1 + 1)
+                + r"--"
+                + str(FINAL)
+                + r" replace a row above "
+                r"that proves unreachable.}}\\ \midrule"
+            )
+        mark = {"reported": "", "product": r"$\dagger$", "estimate": r"$\ddagger$"}[
+            c.instances_basis
+        ]
+        star = "" if c.perturbseq == "none" else r"\,$\bullet$"
+        dataset = (
+            r"\textbf{"
+            + tex_escape(c.name)
+            + r"}"
+            + star
+            + status_tex(c.status)
+            + r"\newline {\scriptsize "
+            + tex_escape(c.klass)
+            + "; "
+            + tex_escape(c.phenotype)
+            + "}"
+        )
+        lines.append(
+            " & ".join(
+                [
+                    str(i),
+                    dataset,
+                    band_letter[c.band] + ", " + str(c.tier),
+                    tex_escape(c.genotypes),
+                    tex_escape(c.env),
+                    sci(c.instances_n) + mark,
+                    sci(c.measurements),
+                    seq_tex(c.seq_basis),
+                    tex_escape(c.time_axis) if c.time_axis else "--",
+                    tex_escape(c.why),
+                ]
+            )
+            + r" \\"
+        )
+        lines.append(r"\addlinespace[5pt]")
+    return (
+        head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n\\end{landscape}\n"
+    )
+
+
+def render_summary(rows: list[Candidate]) -> str:
+    """Summary statistics of the final sixty, split at the fifty line.
+
+    Every figure here is computed from the same rows the final table prints, so
+    the two cannot disagree. Genotype and instance sums are lower bounds: a row
+    with no count contributes nothing.
+    """
+    final = rows[:FINAL]
+    top = final[:WAVE_1]
+    extra = final[WAVE_1:]
+
+    def count(pred: Any) -> str:
+        a = sum(1 for c in top if pred(c))
+        b = sum(1 for c in extra if pred(c))
+        g = sum(c.genotypes_n or 0 for c in final if pred(c))
+        n = sum(c.instances_n or 0 for c in final if pred(c))
+        m = sum(c.measurements or 0 for c in final if pred(c))
+        return f"{a} & {b} & {g:,} & {sci(n)} & {sci(m)} \\\\"
+
+    def block(title: str, items: list[tuple[str, Any]]) -> list[str]:
+        out = [r"\midrule", r"\multicolumn{6}{@{}l}{\emph{" + title + r"}}\\"]
+        for label, pred in items:
+            if sum(1 for c in final if pred(c)) == 0:
+                continue
+            out.append(tex_escape(label) + " & " + count(pred))
+        return out
+
+    klasses = sorted({c.klass for c in final})
+    bases = sorted({c.seq_basis for c in final})
+    lines: list[str] = []
+    lines += block("By band", [(b, (lambda c, b=b: c.band == b)) for b in BAND_ORDER])
+    lines += block(
+        "By tier", [(f"tier {t}", (lambda c, t=t: c.tier == t)) for t in (1, 2, 3, 4)]
+    )
+    lines += block("By class", [(k, (lambda c, k=k: c.klass == k)) for k in klasses])
+    lines += block(
+        "By sequence basis", [(b, (lambda c, b=b: c.seq_basis == b)) for b in bases]
+    )
+    lines += block(
+        "Perturb-seq axis",
+        [
+            ("high on both axes", lambda c: c.perturbseq == "both"),
+            ("input axis only", lambda c: c.perturbseq == "input"),
+            ("output axis only", lambda c: c.perturbseq == "output"),
+            ("neither axis", lambda c: c.perturbseq == "none"),
+        ],
+    )
+    lines += block(
+        "Other attributes",
+        [
+            ("carries a time axis", lambda c: bool(c.time_axis)),
+            (
+                "has a join to a built dataset",
+                lambda c: any(s.partner_status == "supported" for s in c.synergy),
+            ),
+            (
+                "has a join to another candidate only",
+                lambda c: (
+                    bool(c.synergy)
+                    and not any(s.partner_status == "supported" for s in c.synergy)
+                ),
+            ),
+            ("no named join", lambda c: not c.synergy),
+            ("figures sourced this pass", lambda c: c.confidence == "sourced"),
+            ("figures from recall, to confirm", lambda c: c.confidence == "recall"),
+            ("blocked on data access", lambda c: c.status == "blocked"),
+            ("loader in flight", lambda c: c.status == "loader-in-flight"),
+            ("instances a reported count", lambda c: c.instances_basis == "reported"),
+            (
+                "instances a product of the axes",
+                lambda c: c.instances_basis == "product",
+            ),
+            ("instances an estimate", lambda c: c.instances_basis == "estimate"),
+        ],
+    )
+    lines.append(r"\midrule")
+    lines.append("Total & " + count(lambda c: True))
+    n_joins = sum(len(c.synergy) for c in final)
+    n_built_joins = sum(
+        1 for c in final for s in c.synergy if s.partner_status == "supported"
+    )
+    head = (
+        r"""\begin{table}[H]\centering
+\small
+\caption[]{Summary of the final sixty, split at the fifty line. \emph{Top 50} and
+\emph{Extra} count rows; \emph{Genotypes}, \emph{Instances} and \emph{Meas.} sum the row
+axes over all sixty and are lower bounds, since a row with no count contributes nothing.
+The sixty rows name """
+        + str(n_joins)
+        + r""" joins, """
+        + str(n_built_joins)
+        + r""" of them to a dataset already built.}
+\label{tab:summary}
+\begin{tabular}{@{}l r r r r r@{}}
+\toprule
+ & Top 50 & Extra & Genotypes & Instances & Meas. \\
+"""
+    )
+    return head + "\n".join(lines) + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n"
+
+
 def main() -> None:
     rows, swaps = ranked()
     if len(rows) < CUT:
@@ -5622,9 +5926,11 @@ def main() -> None:
     ms = moves(rows)
 
     write(TEX_DIR / "candidates.tex", render_candidates(rows))
-    write(TEX_DIR / "sources.tex", render_sources(rows))
+    write(TEX_DIR / "final.tex", render_final(rows))
+    write(TEX_DIR / "summary.tex", render_summary(rows))
+    write(TEX_DIR / "sources.tex", render_sources(rows[:FINAL]))
     write(TEX_DIR / "perturbseq.tex", render_perturbseq(rows))
-    write(TEX_DIR / "synergies.tex", render_synergies(rows))
+    write(TEX_DIR / "synergies.tex", render_synergies(rows[:FINAL]))
     write(TEX_DIR / "excluded.tex", render_excluded())
     write(TEX_DIR / "counts.tex", render_counts(rows))
     write(TEX_DIR / "swaps.tex", render_moves(ms))
@@ -5639,6 +5945,7 @@ def main() -> None:
                 "cut": CUT,
                 "wave_1": WAVE_1,
                 "wave_2": WAVE_2,
+                "final": FINAL,
                 "n_candidates": len(rows),
                 "pinned_swaps": swaps,
                 "moves": [m.model_dump() for m in ms],

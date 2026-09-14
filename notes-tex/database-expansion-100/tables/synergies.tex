@@ -7,8 +7,8 @@
 \renewcommand{\arraystretch}{1.15}
 \begin{longtable}{@{}r@{\hspace{4pt}} L{42mm} L{44mm} L{48mm} L{96mm}@{}}
 \caption[]{Named joins between a candidate and either a supported dataset or
-another candidate. \emph{\#} is the candidate's rank in
-Table~\ref{tab:candidates}. A partner in \textbf{bold} is already built, so that
+another candidate, for the sixty rows of Table~\ref{tab:final}. \emph{\#} is the
+candidate's rank there. A partner in \textbf{bold} is already built, so that
 row's join becomes runnable the moment the candidate is ingested; an unbolded
 partner is itself a candidate, so the join costs two ingestions. \emph{Join key}
 is the shared axis that makes the pair addressable; a pair with no such axis is a
@@ -194,18 +194,6 @@ theme and is not listed. None of these transfers has been measured.}
 \addlinespace[5pt]
 60 & Dutta 2026 (barcoded natural-isolate chemical response) & \textbf{Caudal 2024 (pan-transcriptome)} & the sequenced 1,011-isolate panel & Chemical response and transcriptome on one isolate set. \\
  &  & \textbf{Hoepfner 2014 (HIP/HOP atlas)} & compound response, isolates against deletions & Whether compound sensitivity found by gene deletion predicts sensitivity across natural genetic backgrounds. \\
-\addlinespace[5pt]
-61 & Li 2016 (tRNA fitness landscape) & Domingo 2018 (tRNA double-mutant landscape) & the same tRNA gene, single against double mutants & Whether a single-mutant landscape predicts the double-mutant one, which is the within-gene form of the epistasis question. \\
-\addlinespace[5pt]
-62 & Peter 2018 (1,011 isolate genomes + phenome) & \textbf{Caudal 2024 (pan-transcriptome)} & the same 1,011 isolates & The reference genome set that every isolate-WGS row in this table resolves its genotypes against. \\
-\addlinespace[5pt]
-69 & Liu 2021 (tryptophan / isobutanol tolerance) & Kuroda 2019 (isobutanol-specific tolerance) & isobutanol tolerance on the same deletion collection & Same genotypes, same phenotype, different readout, which is a method-effect control no single screen provides. \\
-\addlinespace[5pt]
-70 & Kuroda 2019 (isobutanol-specific tolerance) & \textbf{Lopez 2024 (isobutanol screen, private)} & isobutanol on the deletion collection & Tolerance against production for one product, on one genotype axis. \\
-\addlinespace[5pt]
-71 & Turco 2023 (Yeast Phenome) & \textbf{Hoepfner 2014 (HIP/HOP atlas)} & aggregated growth screens against a primary screen & De-duplication, which is the precondition for knowing what the aggregate adds. \\
-\addlinespace[5pt]
-105 & Trikka 2015 (carotenogenic heterozygous screen) & \textbf{Ozaydin 2013 (beta-carotene screen)} & carotenoid readout, heterozygous against homozygous deletion & Halved dosage against full deletion, which finds flux control points a null removes entirely. \\
 \addlinespace[5pt]
 \end{longtable}
 \endgroup

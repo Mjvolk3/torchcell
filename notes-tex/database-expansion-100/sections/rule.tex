@@ -9,12 +9,12 @@
 \subsection{Sequence reconstruction is the gate, not a preference\secstatus{todo}}
 
 A phenotype is only trainable against a genotype that can be written down. Every row in
-Table~\ref{tab:candidates} therefore names a \term{sequence basis}: the route by which the
+Table~\ref{tab:final} therefore names a \term{sequence basis}: the route by which the
 total genomic content of one strain would be reconstructed. The eleven bases in use are
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
   \item \term{S288C-KO} -- the reference genome minus one cataloged ORF (BY4741, BY4742,
-    BY4743). Thirty of the 150 that reach 200 sit here, the largest single group.
+    BY4743). Thirteen of the sixty in Table~\ref{tab:final} sit here, second only to reference-only.
   \item \term{S288C-KO/het} -- a heterozygous diploid deletion, so a dosage edit rather
     than a null.
   \item \term{S288C+guide} -- the genome is unedited and the perturbation is a designed
@@ -70,12 +70,12 @@ against protein is the same join as expression against flux, and because the row
 band to sit in at all. Its membership is unchanged apart from the rows added with it.
 
 Within a band the order is tier, then measurements. The cost is visible and is not hidden:
-the two bands now total 53 rows, so they fill wave 1 and three of them spill into wave 2,
-and no scale row reaches wave 1 at all. de Boer 2020 falls from 2 to 54 and Lee 2014 from 4
-to 56. Both are the largest things in the table by instance count and both are now second
-wave, which is the deliberate consequence of ordering by what a row combines with rather
-than by how many numbers it holds. A reader who wants scale back reads wave 2 first. Every
-move is listed in Table~\ref{tab:swaps}.
+the two bands total 53 rows, so they fill the fifty and three of them become the first
+three of the ten extra, and no scale row reaches the fifty at all. de Boer 2020 sits at 54
+and Lee 2014 at 56. Both are the largest things in the ranking by instance count and both
+are in the extra ten, which is the deliberate consequence of ordering by what a row
+combines with rather than by how many numbers it holds. A reader who wants scale back
+reads rows 54 to 60 first.
 
 \subsection{Tier, and what rows are ranked on\secstatus{todo}}
 

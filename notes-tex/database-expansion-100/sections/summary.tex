@@ -1,0 +1,65 @@
+%% notes-tex/database-expansion-100/sections/summary.tex
+%% [[experiments.database.expansion-100]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-100/sections/summary.tex
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+
+\clearpage
+\section{Summary statistics\secstatus{todo}}\label{sec:summary}
+
+\input{tables/summary}
+
+The fifty are the two priority bands in full: 30 perturb-seq rows and 20 molecular-layers
+rows, with no scale row among them. The ten extra are the three molecular-layers rows the
+fifty line cut and the first seven scale rows, and those seven include the two largest
+datasets in the whole ranking, de Boer 2020 and Vaishnav 2022, which is why the instance
+and measurement sums in Table~\ref{tab:summary} are carried mostly by the extra ten rather
+than by the fifty. The fifty are vector-valued: a few hundred strains each carrying a
+transcriptome, a proteome or a per-cell distribution, so they hold few instances and many
+measurements, and ranking on instances alone would have ordered the two blocks the other
+way round.
+
+Two class facts follow from the bands. Expression and single-cell rows are the largest
+class in the sixty, and 16 of the sixty are \term{reference-only}, meaning the environment
+rather than a strain edit carries the perturbation, which is what a condition-crossed
+expression layer looks like. Thirteen of the sixty sit on the S288C deletion collection,
+the axis most of the built set already uses, so those thirteen are the cheapest joins in the
+table.
+
+\subsection{Time\secstatus{todo}}\label{sec:time}
+
+A review comment on the previous version, anchored at Hackett 2020's time points, raised
+the concern that nothing in the substrate carries a time component, and that one is needed
+eventually for concentration-over-time modeling of the ordinary-differential-equation
+kind. Both halves are right. Seven of the sixty rows carry a time dimension
+(Table~\ref{tab:final}, \emph{Time} column): Hackett 2020's induction series, Jariani 2020's
+lag-phase course, Jackson 2023's continuous course, Wang 2022's three ages, Airoldi 2016's
+upshift course, and the two rate rows, Sun 2013 and Martin-Perez 2017, whose rates are
+derived from a labeling series that is not itself released. The steady-state chemostat
+rows (Brauer 2008, Boer 2010, Hackett 2016, Yu 2021) vary dilution rate, which is a growth
+rate, not a time axis, and are not counted.
+
+What the schema holds today is \texttt{Environment.duration\_hours} and
+\texttt{Environment.duration\_generations}, treatment durations that make two exposure
+lengths two distinct environments. A time series can therefore be ingested now, as one
+environment per time point, and that is how Hackett 2020's roughly 200 records per strain
+are counted in Table~\ref{tab:final}. It is a flattening: a model sees time as a
+categorical condition, and nothing on the record says that eight environments are one
+series in order. A first-class time field on the record and a series identity that groups
+its points are the two schema additions a $c(t)$ model needs, and the seven rows above are
+the ones that would exercise them. They are recorded here as an open schema item rather
+than folded into this list's ranking, since the ranking rule does not yet score a time
+axis.
+
+\subsection{Sun 2013 against the other deletion-strain expression sets\secstatus{todo}}\label{sec:sun}
+
+A second comment asked whether Sun 2013 (row 19) overlaps the other deletion-strain
+expression datasets. The overlap is on the strain axis and not on the measurement. The
+built Kemmeren 2014 (1,484 deletions) and the candidates Hughes 2000, Hu 2007 and Lenstra
+2011 each store a steady-state transcript level per gene and per deletion; Sun 2013 stores
+the synthesis rate and the decay rate that produce that level, across 46 deletions of mRNA
+degradation and metabolism genes, and none of the others stores a rate. It is therefore a
+second layer on shared strains, the join named in Table~\ref{tab:synergies}, rather than a
+second copy of a layer already held. What is not settled is the exact shared-strain count:
+the 46 are single deletions expected to be inside the Kemmeren set by gene identity, but
+the GEO strain list was not fetched, and the abstract does not say the strains came from
+the deletion collection. The row's figures are marked \emph{recall} for that reason.

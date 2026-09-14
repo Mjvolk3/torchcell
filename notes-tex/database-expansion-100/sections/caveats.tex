@@ -46,10 +46,10 @@ Its rank is still earned: 3,356 compounds against the full heterozygous and homo
 collections really is the largest chemical-genetic matrix in existence, and it really is on
 the YKO genotype axis the built set already uses. What changes is the nature of the work.
 Row 56 is an author request, not a loader, and the $1.3\times10^7$ instances it contributes
-to the totals in Sec.~\ref{sec:counts} should not be counted as reachable until that
+to the totals in Sec.~\ref{sec:summary} should not be counted as reachable until that
 request succeeds.
 
-\notesec{Turco 2023, row 71, already has a loader} \file{torchcell/datasets/scerevisiae/yeastphenome.py}
+\notesec{Turco 2023, row 71 of the full ranking and outside Table~\ref{tab:final}, already has a loader} \file{torchcell/datasets/scerevisiae/yeastphenome.py}
 consumes the curated YeastPhenome release and retains 49 growth screens, so this row is in
 flight rather than net new. It is not in the built set, which is why it appears here at all.
 Two consequences follow. Its de-duplication problem is partly solved already, since the
@@ -84,8 +84,9 @@ caught Bloom 2019 leaving the list a pass earlier than a reader did.
 \subsection{The expansion tranche is less checked than the first 73\secstatus{todo}}\label{sec:confidence}
 
 Rows carry a confidence value in the generated JSON. \emph{sourced} means the figures trace
-to something read this session or to the sourced triage note, and covers 75 rows.
-\emph{recall} means the row was written from domain knowledge, and covers 93. For a recall
+to something read this session or to the sourced triage note, and covers 75 of the 168
+ranked rows, 34 of the sixty printed. \emph{recall} means the row was written from domain
+knowledge, and covers 93 of the 168, 26 of the sixty. For a recall
 row the dataset is real and the description is sound, but the citation details, the exact
 counts and the accession all need confirming before a loader is written, and a few carry an
 explicit warning in the accession column where a collision or a species question is open.
@@ -111,7 +112,7 @@ building both without settling that would risk ingesting one measurement twice.
 
 \section{Before a loader is written\secstatus{todo}}\label{sec:caveats}
 
-Every figure in Table~\ref{tab:candidates} is an axis count, not a verified record count,
+Every figure in Table~\ref{tab:final} is an axis count, not a verified record count,
 and several are weaker than that. Three qualifications apply, in decreasing order of how
 much damage they would do if ignored.
 

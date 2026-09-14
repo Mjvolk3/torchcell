@@ -1,0 +1,39 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_embfit_027.yaml
+#
+# COMPOSITE SEQUENCE EMBEDDING + JOINT FITNESS OBJECTIVE ON THE DISJOINT SPLIT.
+# cgt_s0_q_kl_emb_017 (composite gene vector, parameter-matched, 30 epochs, constant rate,
+# query-pair-disjoint split) with the fitness head of cgt_s0_r_kl_fit_014 added: fitness
+# read by a linear probe from the perturbed CLS, fitness_lambda 1.0, both labels decoded
+# from the COO phenotype fields. The original 025 question (does supervising fitness help
+# the interaction prediction, since the trigenic score is a residual over fitness) asked on
+# the split where extrapolation is measured and with the input that moved it. Its control is
+# _017 itself; the only differences are the second label, its normalizer, the 181-parameter
+# probe and the extra loss term.
+#
+#   sbatch -J 025-q-embfit-const experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_embfit_027
+defaults:
+  - cgt_s0_q_kl_emb_017
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, seq_embedding, full_gene_composite, param_matched, fitness_joint, perturb_cls, cls_linear_readout, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, igb, fitness_lambda_1.0]
+
+cell_dataset:
+  phenotype_labels: [fitness, gene_interaction]
+
+transforms:
+  forward_transform:
+    normalization:
+      fitness:
+        strategy: standard
+
+model:
+  heads:
+    global:
+      decoder: s1_pool
+      output_dim: 1
+      use_gene_pool: false
+      linear: true
+
+regression_task:
+  fitness_lambda: 1.0

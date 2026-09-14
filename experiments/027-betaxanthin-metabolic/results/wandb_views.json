@@ -148,5 +148,42 @@
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=2mym7w1el5q",
     "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-K-latent-draws-on-the-amino-acid-concentration-readout--VmlldzoxNzkyNzA2NA==",
     "panels_per_row": 6
+  },
+  "aa_all": {
+    "title": "027: every amino-acid run, all waves",
+    "n_runs": 45,
+    "tags_any": [
+      "mulleder19",
+      "gh_wave6_aa",
+      "gh_wave7_aa",
+      "gh_wave8_aa",
+      "gh_wave8_aasamp"
+    ],
+    "groupby": [
+      "aa_readout",
+      "arm",
+      "epochs",
+      "thermo_source",
+      "volume_table",
+      "conc_space",
+      "flux_draws"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "flux_draw_pred_sd",
+      "latent_sigma_p50"
+    ],
+    "scalars": [
+      "test_mean_spearman_pinned",
+      "conc/pinned_test/mean_spearman",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=9wgb2y25y4r",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027:-every-amino-acid-run,-all-waves--VmlldzoxNzkyNzA5MA==",
+    "panels_per_row": 6
   }
 }

@@ -154,6 +154,51 @@ SPECS: dict[str, ViewSpec] = {
             "select_val_pearson",
         ],
     ),
+    "aa_all": ViewSpec(
+        key="aa_all",
+        title="027: every amino-acid run, all waves",
+        description=(
+            "Every cell whose head is the 19 Mulleder amino acids, waves 6 to 8, selected "
+            "by the head tag and every amino-acid wave tag so nothing is left out: pooled "
+            "controls, the wave-6 flux heads, turnover and concentration readouts, the "
+            "thermodynamic-table and volume-fraction ablations, and the K-draw cells. "
+            "Grouped by readout first, then by the ablation keys and the draw count. "
+            "Score is the mean per-feature pinned test Spearman at the validation-selected "
+            "epoch; budgets differ (80 versus 200 epochs), so pair within a budget."
+        ),
+        # The head tag alone misses the 14 wave-6 and early wave-7 cells that predate
+        # it; the wave tags plus the head tag select all 45 runs whose config head is
+        # mulleder19 (checked against the config filter on 2026-09-13).
+        tags_any=[
+            "mulleder19",
+            "gh_wave6_aa",
+            "gh_wave7_aa",
+            "gh_wave8_aa",
+            "gh_wave8_aasamp",
+        ],
+        groupby=[
+            "aa_readout",
+            "arm",
+            "epochs",
+            "thermo_source",
+            "volume_table",
+            "conc_space",
+            "flux_draws",
+        ],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "val_pred_sd_ratio",
+            "train_data_loss",
+            "flux_draw_pred_sd",
+            "latent_sigma_p50",
+        ],
+        scalars=[
+            "test_mean_spearman_pinned",
+            "conc/pinned_test/mean_spearman",
+            "select_val_pearson",
+        ],
+    ),
     "aasamp": ViewSpec(
         key="aasamp",
         title="027 wave 8: K latent draws on the amino-acid concentration readout",
@@ -392,7 +437,9 @@ def main() -> None:
     global PANELS_PER_ROW
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--contrast", default=None, help="kdraw | densbal | aa | aasamp | bxread | all"
+        "--contrast",
+        default=None,
+        help="kdraw | densbal | aa | aa_all | aasamp | bxread | all",
     )
     parser.add_argument("--name", default=None, help="Ad-hoc view title (with --tags).")
     parser.add_argument(

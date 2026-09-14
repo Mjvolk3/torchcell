@@ -15,8 +15,8 @@
 # UNITS. draw.io's canvas is 100 units per inch, so 1 mm = 3.937 units and Nature's
 # 180 mm full-page box is ~709 units. torchcell.utils.savefig_true_size_svg already writes
 # each panel's width/height in those units, which is why a panel's own SVG header can be
-# read straight into an mxCell geometry with no conversion. The network overlay is the one
-# exception: it is written in millimetres and is converted here.
+# read straight into an mxCell geometry with no conversion. A millimetre header (the form
+# the multigraph sweep writes) is converted here, so a sweep render can still be placed.
 #
 # TYPE. Panel letters are 8 pt bold lowercase, the only figure text Nature allows above
 # 7 pt. In draw.io the font-size field is in canvas units, not points, so 8 pt is typed as
@@ -67,7 +67,7 @@ def svg_size_units(path):
     overlay's rescaler writes millimetres. Both forms appear in this figure set, so the
     unit is read rather than assumed.
     """
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         head = fh.read(2000)
     m = re.search(r'<svg[^>]*\swidth="([\d.]+)(mm)?"[^>]*\sheight="([\d.]+)(mm)?"', head)
     if not m:
@@ -193,9 +193,7 @@ FIGURES = [
         "ffa-epistasis-fig4-network-overlay",
         "The interactions drawn on the pathway they act through.",
         [
-            [(None, "ffa_multigraph_overlays/multiplicative/all_ffa/"
-                   "multiplicative_ffa_multigraph_Genetic_Interactions_connected"
-                   "_unenriched_Total_Titer_fdr_within.svg")],
+            [(None, "panel_network_overlay.svg")],
         ],
     ),
 ]

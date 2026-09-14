@@ -105,3 +105,22 @@ arrangements are settled. Once a figure is arranged by hand in draw.io, replace 
 Related: [[experiments.008-xue-ffa.scripts.perspective_figure_panels]],
 [[experiments.008-xue-ffa.scripts.build_perspective_drawio]],
 [[experiments.008-xue-ffa.figure-candidates]], [[paper.nature-biotech.style-guide]]
+
+## 2026.09.14 - Network overlay rebuilt as a panel
+
+The layout pass listed above is done: Fig. 4 now comes from
+`experiments/008-xue-ffa/scripts/ffa_network_overlay_panel.py`
+([[experiments.008-xue-ffa.scripts.ffa_network_overlay_panel]]) as
+`panel_network_overlay.svg`, 179 x 118 mm at 6 pt, and the Makefile's special overlay rule
+is gone because the generic `plots` rule picks the panel up like any other. The draw.io
+source `ffa-epistasis-fig4-network-overlay.drawio` embeds the new panel.
+
+One change of content alongside the change of layout: the panel draws every triple
+significant on total titer (86: 75 negative, 11 positive) rather than the 47 connected in
+the genetic interaction graph, which was a leftover of the enrichment sweep's file naming.
+`--graph genetic` restores the restriction. The caption in `sections/results.tex` was
+rewritten to match.
+
+The other three figures were checked page by page at this pass and match the standard
+(palette, 6 pt Arial, boxed axes, standard widths). Still open: authorship, citations, and
+headless draw.io export.

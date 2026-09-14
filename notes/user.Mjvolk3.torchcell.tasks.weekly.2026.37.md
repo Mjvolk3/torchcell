@@ -59,3 +59,4 @@ created: 1788913645350
 ## 2026.09.14
 
 - [x] `notes-tex/025-additive-baselines` split into a long and a short build from one set of sections: both keep every model equation, the long one restores the 010 code reading, the graph-penalty and paired-prediction figures, the reproduction and ablation tables, and the extended limits; both published to Zotero [[experiments.025-solid-growth.scripts.additive_baselines_025_panels]]
+- [x] CPU scorer for job 1640's epoch 7 checkpoint on arm Q: encoder once, index space from the genome, sum pooling, train-fit normalizer; reproduces the logged validation Pearson to 0.0003, and the GilaHyper CPU slurm job scores validation and test for the disjoint comparison [[experiments.025-solid-growth.scripts.score_cgt_checkpoint_cpu]]

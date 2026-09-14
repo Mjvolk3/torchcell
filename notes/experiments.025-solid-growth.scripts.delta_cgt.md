@@ -93,3 +93,20 @@ links `models/`), so the per-arm best checkpoints the figure's panels a, d and e
 kept. Four NCCL watchdog core dumps from the Taiga-era failures sit in the Delta
 worktree's `experiments/` at 9.2 GB each (37 GB, untracked, `core.pt_nccl_watchdg.*`);
 they can go.
+
+### Submitted 2026-09-14 01:50 CDT
+
+The user chose to submit before the maintenance rather than after it (queue age counts
+toward priority; pending jobs persist across a scheduler restart). From 8e9a20fb, one
+chain, first job waiting on Priority beside the fitness chain's 22034665:
+
+| seed | lambda 0 | mask | 1e-2 | 1e-1 | 1e-4 | 1e-5 | 1 |
+|---|---|---|---|---|---|---|---|
+| 1 | 22055147 | 22055149 | 22055151 | 22055152 | 22055153 | 22055154 | 22055155 |
+| 2 | 22055156 | 22055157 | 22055158 | 22055159 | 22055160 | 22055161 | 22055162 |
+| 3 | 22055163 | 22055164 | 22055165 | 22055166 | 22055167 | 22055168 | 22055169 |
+
+Lambda 1e-3 remains the fitness chain's 22034665 / 22034668 / 22034671. What the sweep
+does not cover: the random-graph control (panel f, needs the rewiring option), the
+per-term gradient probe (panel c, needs a trainer hook), and the checkpoint readouts
+for panels a, d and e.

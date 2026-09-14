@@ -19,3 +19,20 @@ Saved workspace view "v13 split round by arm" (grouped by `arm`, epoch on x):
 <https://wandb.ai/zhao-group/torchcell_019_expr_v13?nw=ywphnc96tfh>
 
 Round design: [[experiments.019-simb-multimodal.conf.cgt_expr_v13_split]].
+
+## 2026.09.14 - The Charts view, populated and ranked
+
+The workspace API refuses the personal default view ("Workspace API does not currently support user views"), so the script owns a saved view instead, `v13 split round by arm` (`nw=ywphnc96tfh`), and overwrites it in place on every run: six sections in rank order of importance, all open, every panel with epoch on the x axis, runs grouped by `arm`.
+
+| rank | section | panels |
+|---|---|---|
+| 1 | headline: validation | val Pearson per feature, Spearman, per instance, spread ratio, val loss, val mean Pearson |
+| 2 | train side, the generalization gap | train-eval Pearson, spread ratio, Spearman, per instance, loss, nmse |
+| 3 | masked conditioning, revealed 0 / 10 / 100 / 1000 genes | val Pearson at k0 to k3, mask loss at k0 to k3 |
+| 4 | error and calibration | val nmse, mse, coverage 50 and 80, PIT KS, train-eval mse |
+| 5 | optimization | train loss, grad norm, clip fraction, mask loss k0 and k3, epoch seconds |
+| 6 | bookkeeping | scored genes, revealed counts, global step |
+
+The report is updated in place by title rather than recreated (a rerun once duplicated it; the duplicate was deleted). Pick the view from the dropdown on the project's Charts tab:
+
+<https://wandb.ai/zhao-group/torchcell_019_expr_v13?nw=ywphnc96tfh>

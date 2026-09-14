@@ -9,8 +9,9 @@ only recoverable from the tags. This script (1) renames every run in the project
 ``<arm>_seed<k>`` and writes four top-level config keys the UI can group and filter on
 (``arm``, ``split``, ``readout``, ``partition``), (2) writes a W&B report with one panel
 grid per question (headline by arm, per split with both readouts, every validation
-metric by arm, the train side, split against partition), and (3) saves a workspace view
-grouped by arm with epoch on the x axis. Rerun after every sync; it is idempotent.
+metric by arm, the train side, split against partition), and (3) overwrites the saved Charts
+view with six sections in rank order of importance, grouped by arm with
+epoch on the x axis. Rerun after every sync; it is idempotent.
 
 Run from the repo root:
     python experiments/019-simb-multimodal/scripts/wandb_v13_report.py
@@ -27,6 +28,11 @@ import wandb_workspaces.workspaces as ws
 ENTITY = "zhao-group"
 PROJECT = "torchcell_019_expr_v13"
 REPORT_TITLE = "v13 split round: H_ref and H_concat on four partitions and a 90/10 fold"
+# The saved Charts view this script owns. The workspace API refuses the personal default
+# view ("does not currently support user views"), so a saved view is the nearest thing:
+# open the project, pick "v13 split round by arm" in the view dropdown. Created once with
+# save_as_new_view(); every later run overwrites it in place.
+VIEW_ID = "ywphnc96tfh"
 X = "epoch"
 PF = "val/expression/pearson_per_feature"
 SPLITS = ["s0", "s0_90", "s1", "s2", "s3"]
@@ -196,36 +202,108 @@ def build_report() -> wr.Report:
     )
 
 
-def save_workspace_view() -> str:
-    view = ws.Workspace(
-        entity=ENTITY,
-        project=PROJECT,
-        name="v13 split round by arm",
-        sections=[
-            ws.Section(
-                name="Validation",
-                is_open=True,
-                panels=[
-                    wr.LinePlot(x=X, y=[m], title=m, layout=wr.Layout(w=8, h=6))
-                    for m in VAL_METRICS
-                ],
-            ),
-            ws.Section(
-                name="Train",
-                is_open=True,
-                panels=[
-                    wr.LinePlot(x=X, y=[m], title=m, layout=wr.Layout(w=8, h=6))
-                    for m in TRAIN_METRICS
-                ],
-            ),
+# The Charts tab, in rank order of importance. Section 1 is what decides the round;
+# every later section is what to read when section 1 moves or fails to.
+CHART_SECTIONS: list[tuple[str, list[str]]] = [
+    (
+        "1 headline: validation",
+        [
+            PF,
+            "val/expression/spearman_per_feature",
+            "val/expression/pearson_per_instance",
+            "val/expression/pred_sd_ratio",
+            "val/loss",
+            "val/mean/pearson_per_feature",
         ],
-        settings=ws.WorkspaceSettings(x_axis=X, smoothing_type="none", max_runs=24),
-        runset_settings=ws.RunsetSettings(
-            groupby=[ws.Config("arm")],
-            order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
-        ),
+    ),
+    (
+        "2 train side, the generalization gap",
+        [
+            "traineval/expression/pearson_per_feature",
+            "traineval/expression/pred_sd_ratio",
+            "traineval/expression/spearman_per_feature",
+            "traineval/expression/pearson_per_instance",
+            "traineval/loss",
+            "traineval/expression/nmse",
+        ],
+    ),
+    (
+        "3 masked conditioning, revealed 0 / 10 / 100 / 1000 genes",
+        [
+            "val/expression/pearson_per_feature@k0",
+            "val/expression/pearson_per_feature@k1",
+            "val/expression/pearson_per_feature@k2",
+            "val/expression/pearson_per_feature@k3",
+            "val/mask/loss@k0",
+            "val/mask/loss@k1",
+            "val/mask/loss@k2",
+            "val/mask/loss@k3",
+        ],
+    ),
+    (
+        "4 error and calibration",
+        [
+            "val/expression/nmse",
+            "val/expression/mse",
+            "val/expression/calib/coverage_50",
+            "val/expression/calib/coverage_80",
+            "val/expression/calib/pit_ks",
+            "traineval/expression/mse",
+        ],
+    ),
+    (
+        "5 optimization",
+        [
+            "train/loss",
+            "train/grad_norm",
+            "train/grad_norm_clip_frac",
+            "train/mask/loss@k0",
+            "train/mask/loss@k3",
+            "perf/epoch_seconds",
+        ],
+    ),
+    (
+        "6 bookkeeping",
+        [
+            "val/expression/n_scored_genes@k0",
+            "val/mask/n_revealed@k1",
+            "val/mask/n_revealed@k3",
+            "trainer/global_step",
+        ],
+    ),
+]
+
+
+def populate_view() -> str:
+    """Overwrite the saved Charts view with the ranked sections above."""
+    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={VIEW_ID}")
+    view.name = "v13 split round by arm"
+    view.sections = [
+        ws.Section(
+            name=name,
+            is_open=True,
+            layout_settings=ws.SectionLayoutSettings(columns=3, rows=2),
+            panel_settings=ws.SectionPanelSettings(x_axis=X, smoothing_type="none"),
+            panels=[
+                wr.LinePlot(
+                    x=X, y=[m], title=m, title_x="epoch", layout=wr.Layout(w=8, h=6)
+                )
+                for m in metrics
+            ],
+        )
+        for i, (name, metrics) in enumerate(CHART_SECTIONS)
+    ]
+    view.settings = ws.WorkspaceSettings(
+        x_axis=X,
+        smoothing_type="none",
+        max_runs=24,
+        sort_panels_alphabetically=False,
     )
-    view.save_as_new_view()
+    view.runset_settings = ws.RunsetSettings(
+        groupby=[ws.Config("arm")],
+        order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
+    )
+    view.save()
     return view.url
 
 
@@ -234,12 +312,21 @@ def main() -> None:
     n = label_runs(api)
     print(f"labeled runs: {n} changed")
     report = build_report()
-    report.save()
-    print(f"report: {report.url}")
-    try:
-        print(f"workspace view: {save_workspace_view()}")
-    except Exception as e:  # the view is a convenience; the report is the deliverable
-        print(f"workspace view not saved: {type(e).__name__}: {e}")
+    existing = [
+        r for r in api.reports(f"{ENTITY}/{PROJECT}") if r.display_name == REPORT_TITLE
+    ]
+    if existing:
+        live = wr.Report.from_url(
+            f"https://wandb.ai/{ENTITY}/{PROJECT}/reports/x--{existing[0].id}"
+        )
+        live.blocks = report.blocks
+        live.width = report.width
+        live.save()
+        print(f"report updated: {live.url}")
+    else:
+        report.save()
+        print(f"report created: {report.url}")
+    print(f"charts view: {populate_view()}")
 
 
 if __name__ == "__main__":

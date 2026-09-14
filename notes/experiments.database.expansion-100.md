@@ -359,6 +359,9 @@ was needed. They moved 5 -> 31 and 7 -> 33 only because the perturb-seq band gre
 
 ## 2026.09.13 - Final fifty with ten in reserve, one table, statistics last (v10)
 
+Published to Zotero as `database-expansion-100_2026-09-13-22-15-35_fe79d2dc.pdf` (version 10 in
+`torchcell/notes-tex/database-expansion-100`).
+
 The reviewer asked for the final top 50 in one full table with every stat and the reason
 for choosing, ten extra rows in case a row proves unreachable, and the summary statistics
 at the end. The document is restructured to that shape and the rest of the 168-row ranking

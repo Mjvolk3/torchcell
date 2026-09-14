@@ -672,3 +672,18 @@ put a spread on the 0.07 window gap.
 Sync note: `wandb sync` of an offline run rewrites the run's tags from its record, so
 tags added through the API are lost on the next sync; retag after the final sync, or
 rely on the config-name tags the run script now attaches at init.
+
+### 23:40 - CaLM at 100 decays like the composite; the flanks sit between control and ORF arms
+
+Synced at 23:39. CaLM 100-epoch (`_023`, epoch 80): validation loss 1.044 and train
+Pearson 0.73 at 80, the composite's decay. Flanks alone (`_026`, epoch 42, partial):
+max 0.208 at epoch 20, mean 0.164 over epochs 10 to 29, 0.146 at 29, validation loss
+1.013 at 29: above the learnable control (0.140) and below every ORF-carrying arm
+(0.204 to 0.215). Hypothesis, untested: part of the gain is regularization from any
+frozen per-gene vector, part is ORF content; the random-vector control separates them.
+
+Next round on mmli, queued behind the CaLM job so the node does not idle:
+`cgt_s0_q_kl_rand_018` (random 1,000-vector, width 1,005, parameter-matched, disjoint
+split, 30 epochs) as IGB job 2397827 from worktree `-c` at 8f3d2b11. Proposed after it,
+pending a go: seeds 1 and 2 of `_016` and `_017` (four jobs, about 9 h each), then the
+composite with the fitness head at weight 1.0 on the disjoint split.

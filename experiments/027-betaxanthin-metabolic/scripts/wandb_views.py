@@ -133,11 +133,12 @@ SPECS: dict[str, ViewSpec] = {
             "Mulleder amino acids (19 features, 564 pinned genes), 200 epochs. Readout "
             "arms: pooled control, turnover, whole-cell concentration mixture; the "
             "concentration arm on the shipped versus verified thermodynamic tables and on "
-            "the assumed versus sourced compartment volumes. Score is the mean per-feature "
-            "pinned test Spearman at the validation-selected epoch."
+            "the assumed versus sourced compartment volumes, and in the whole-cell mixture "
+            "versus the cytosol alone. Score is the mean per-feature pinned test Spearman "
+            "at the validation-selected epoch."
         ),
         tags_any=["gh_wave7_aa", "gh_wave8_aa"],
-        groupby=["aa_readout", "thermo_source", "volume_table"],
+        groupby=["aa_readout", "thermo_source", "volume_table", "conc_space"],
         curves=[
             "val_pearson",
             "val_loss",
@@ -150,6 +151,33 @@ SPECS: dict[str, ViewSpec] = {
             "test_mean_spearman_pinned",
             "conc/pinned_test/mean_spearman",
             "conc/pinned_test/frac_pred_at_ceiling",
+            "select_val_pearson",
+        ],
+    ),
+    "aasamp": ViewSpec(
+        key="aasamp",
+        title="027 wave 8: K latent draws on the amino-acid concentration readout",
+        description=(
+            "Mulleder amino acids, concentration readout with the draw-dependent "
+            "concentration (log_c_from_latent), verified thermodynamic tables, constraint "
+            "scale 0.1, 200 epochs. K = 64 against K = 1 draws per genotype per forward "
+            "pass, both sampled, paired by seed 2700 to 2702. Read the paired difference; "
+            "the across-draw prediction sd and the latent sigma show whether the draws are "
+            "still distinct at the selected epoch."
+        ),
+        tags_any=["gh_wave8_aasamp"],
+        groupby=["flux_draws"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "flux_draw_pred_sd",
+            "latent_sigma_p50",
+            "c_kl",
+            "train_data_loss",
+        ],
+        scalars=[
+            "test_mean_spearman_pinned",
+            "conc/pinned_test/mean_spearman",
             "select_val_pearson",
         ],
     ),
@@ -364,7 +392,7 @@ def main() -> None:
     global PANELS_PER_ROW
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--contrast", default=None, help="kdraw | densbal | aa | bxread | all"
+        "--contrast", default=None, help="kdraw | densbal | aa | aasamp | bxread | all"
     )
     parser.add_argument("--name", default=None, help="Ad-hoc view title (with --tags).")
     parser.add_argument(

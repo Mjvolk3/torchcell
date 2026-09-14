@@ -64,7 +64,7 @@
   },
   "aa": {
     "title": "027 waves 7 and 8: amino-acid readouts on the anchored projection head",
-    "n_runs": 23,
+    "n_runs": 29,
     "tags_any": [
       "gh_wave7_aa",
       "gh_wave8_aa"
@@ -72,7 +72,8 @@
     "groupby": [
       "aa_readout",
       "thermo_source",
-      "volume_table"
+      "volume_table",
+      "conc_space"
     ],
     "curves": [
       "val_pearson",
@@ -119,6 +120,33 @@
     ],
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=ytr45azlq9y",
     "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-betaxanthin-readouts,-precursor-concentration-vs-scalar-vs-pooled--VmlldzoxNzkyMzM5Mg==",
+    "panels_per_row": 6
+  },
+  "aasamp": {
+    "title": "027 wave 8: K latent draws on the amino-acid concentration readout",
+    "n_runs": 6,
+    "tags_any": [
+      "gh_wave8_aasamp"
+    ],
+    "groupby": [
+      "flux_draws"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "flux_draw_pred_sd",
+      "latent_sigma_p50",
+      "c_kl",
+      "train_data_loss"
+    ],
+    "scalars": [
+      "test_mean_spearman_pinned",
+      "conc/pinned_test/mean_spearman",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=2mym7w1el5q",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-K-latent-draws-on-the-amino-acid-concentration-readout--VmlldzoxNzkyNzA2NA==",
     "panels_per_row": 6
   }
 }

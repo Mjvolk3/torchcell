@@ -1,0 +1,47 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_mask_028.yaml
+#
+# THE HARD-MASK ENDPOINT OF THE GRAPH-REGULARIZATION SWEEP, under the constant-rate
+# protocol. cgt_s0_r_kl_ctrl_013 (learnable table, 010's random split, normalizer fit on
+# train, AdamW 2.5e-4 with no schedule, 30 epochs) with the soft KL prior replaced by
+# cgt_s0_r_mask_003's hard mask: layer 1, all nine heads, each head's attention restricted
+# to its graph's edges (self-loops kept). Nothing else changes, so this run and the ladder
+# runs (ctrl_013 with model.graph_regularization.graph_reg_lambda swept) differ in ONE
+# mechanism: how the nine gene-gene graphs enter layer 1.
+#
+# The KL heads are left declared with lambda 0. The model returns early at lambda 0, so no
+# adjacency is built and no graph_reg loss is logged; the divergence of this arm's attention
+# from the graphs (panel a of FigS-graph-regularization-sweep) is read from the saved
+# best checkpoint by the panel readout, as it is for the lambda-0 arm. Edge-recovery
+# plots are off: under the mask, recovery of the training graphs is vacuous.
+#
+#   sbatch --account=bfjt-delta-gpu --time=24:00:00 -J 025-mask-nvme-s1 \
+#     experiments/025-solid-growth/scripts/delta_cgt.slurm cgt_s0_r_mask_028 +seed=1
+defaults:
+  - cgt_s0_r_kl_ctrl_013
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_mask, mask_layer1, mask_vs_kl, graph_reg_sweep, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30]
+
+model:
+  attention_mask:
+    enabled: true
+    layers: [1]
+    head_graphs:
+      0: physical_interaction
+      1: regulatory_interaction
+      2: tflink
+      3: string12_0_neighborhood
+      4: string12_0_fusion
+      5: string12_0_cooccurence
+      6: string12_0_coexpression
+      7: string12_0_experimental
+      8: string12_0_database
+  graph_regularization:
+    graph_reg_lambda: 0.0
+
+regression_task:
+  loss:
+    graph_regularization:
+      lambda: 0.0
+  plot_edge_recovery_every_n_epochs: 0

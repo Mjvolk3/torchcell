@@ -266,7 +266,7 @@ def panel_tau(m: pd.DataFrame, st: dict):
     """Panel g: predicted against measured tau on the screen medium, the layout of panel b."""
     w = mm_to_in(PANEL_WIDTHS_MM["third"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(50)))
-    fig.subplots_adjust(left=0.2, right=0.82, bottom=0.17, top=0.95)
+    fig.subplots_adjust(left=0.2, right=0.82, bottom=0.17, top=0.90)
     cmap = LinearSegmentedColormap.from_list("amber", ["#FFFFFF", ORANGE_F, ORANGE, PLOT_PALETTE[6]])
     hb = ax.hexbin(m.tau_fba, m.tau_measured, gridsize=(36, 24), extent=(-2.1, 2.1, -1.15, 1.15),
                    norm=LogNorm(vmin=1, vmax=max(1, len(m))), cmap=cmap, mincnt=1, linewidths=0.1, edgecolors="none")
@@ -280,9 +280,10 @@ def panel_tau(m: pd.DataFrame, st: dict):
     ax.set_ylim(-1.15, 1.15)
     ax.set_xlabel(r"Yeast9 FBA $\tau_{ijk}$, screen medium")
     ax.set_ylabel(r"Measured $\tau_{ijk}$")
+    ax.set_title("Screen medium: SD/MSG -His/Arg/Lys/Ura", fontsize=6, pad=3)
     c = st["tau"]
     # Upper right: the data stand in a column at x = 0, so the upper-left corner is not free.
-    ax.text(0.97, 0.97, f"SD/MSG -His/Arg/Lys/Ura\nPearson $r$ = {c['pearson_r']:.4f}\n$n$ = {c['n']:,}\n"
+    ax.text(0.97, 0.97, f"Pearson $r$ = {c['pearson_r']:.4f}\n$n$ = {c['n']:,}\n"
             f"{100 * c['frac_abs_below_1e-3']:.2f}% at $|\\tau|<10^{{-3}}$",
             transform=ax.transAxes, va="top", ha="right", fontsize=6, bbox=ANNOT_BOX)
     box(ax)

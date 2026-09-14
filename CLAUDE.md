@@ -775,6 +775,13 @@ fingerprints, the BioCypher graph schema, and the adapter code it was serialized
   `$DATA_ROOT/database/data/...` is remade from scratch by the full KG build. Never "clear
   just that one `database/data/<dataset>`" to dodge the check; the honest answer to a
   shared-class change is the full rebuild, and the manifest names the datasets and symbols.
+  The full build is `database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm`
+  ([[database.slurm.scripts.gilahyper_live_rebuild-slurm_docker]]): it reads the DEV-tree
+  LMDBs read-only, so every mapped dev store must first read `fresh` under
+  `python -m torchcell.provenance.build_manifest` (rebuild stale ones with
+  `torchcell.database.build_dataset_lmdb`), builds the new store beside the served one on
+  `/db`, validates it, then swaps directories under `tc-neo4j-readonly` (minutes of
+  downtime; the old store stays as `data.superseded.<ts>` for rollback).
 
 **`EXPERIMENT_ROOT`**
 

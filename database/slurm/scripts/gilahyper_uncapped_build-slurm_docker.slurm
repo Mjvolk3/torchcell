@@ -15,6 +15,13 @@
 #
 #   sbatch database/slurm/scripts/gilahyper_uncapped_build-slurm_docker.slurm
 #
+# SUPERSEDED for full builds by gilahyper_live_rebuild-slurm_docker.slurm (2026-09-14),
+# which builds a new store beside the served one and swaps directories instead of
+# stopping the serving container for the whole build. This script has not run since the
+# torchcell-genomes:ro mount below was added: the image entrypoint chowns NEO4J_HOME
+# recursively under `bash -eu`, and a read-only mount under /var/lib/neo4j makes that
+# fail, so expect a restart loop until the genomes tier is staged into the build tree.
+#
 # RESOURCES, and why they are what they are. GilaHyper is 128 CPU / 513 G.
 #   time  10 days. Projected CSV generation is 66.9 h at the job-966 rates, but that
 #         projection charges dmf Costanzo a rate measured while its loader root still

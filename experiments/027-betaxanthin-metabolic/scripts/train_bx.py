@@ -152,7 +152,26 @@ HEAD = "betaxanthin"
 #: which one it ran rather than leaving it to be inferred from the arm.
 AA_READOUT_TURNOVER = "flux_metabolite"
 AA_READOUT_CONCENTRATION = "flux_concentration"
-AA_READOUTS = (AA_READOUT_TURNOVER, AA_READOUT_CONCENTRATION)
+#: WAVE 8 (2026-09-14). THE ABLATION THAT ASKS WHETHER THE MODULE IS ON. The same
+#: concentration head as `flux_concentration` (per-metabolite base + Linear(d, m) from the
+#: genotype context into the same sigmoid window, the same volume-weighted mixture, the same
+#: standardization and CRPS) built directly on the pooled backbone, with NO flux layer: no
+#: stoichiometry, no kcat, no thermodynamics, no constraint term. `thermo_log_c` is a
+#: function of the context alone ([[experiments.027-betaxanthin-metabolic.wave8-sampling]],
+#: Finding 5), so the flux enters the concentration cells only through the thermodynamic
+#: penalty; this readout removes that coupling and keeps everything else.
+AA_READOUT_CONTEXT_CONCENTRATION = "context_concentration"
+AA_READOUTS = (
+    AA_READOUT_TURNOVER,
+    AA_READOUT_CONCENTRATION,
+    AA_READOUT_CONTEXT_CONCENTRATION,
+)
+#: The readouts whose prediction IS a log10 molar concentration with no affine on the
+#: mean, so their target is standardized and scored in that space.
+AA_LOG10_MOLAR_READOUTS = (AA_READOUT_CONCENTRATION, AA_READOUT_CONTEXT_CONCENTRATION)
+#: Where `collect_concentration` reads the learned natural-log concentration from.
+CONC_SOURCE_FLUX = "flux"
+CONC_SOURCE_CONTEXT = "context"
 #: Mulleder 2016 reports `intracellular_concentration_mM`, so a stored 1.0 is 1 mM.
 MM_PER_M = 1.0e3
 LN10 = math.log(10.0)
@@ -519,7 +538,13 @@ class BxCell(BaseModel):
             "prediction is then log10(exp(log_c)) with NO parameters of its own on the "
             "mean, so the same tensor the second law is computed from is the tensor the "
             "amino-acid loss trains, which is what makes the tie mechanistic rather than "
-            "correlational. Requires an arm whose thermo_mode is ANCHORED."
+            "correlational. Requires an arm whose thermo_mode is ANCHORED. "
+            "'context_concentration' (wave 8) is the ablation of that readout: the SAME "
+            "head, base + Linear(d, m) from the genotype context into the same sigmoid "
+            "window, the same mixture, standardization and CRPS, built on the pooled "
+            "backbone with no flux layer at all. If it matches 'flux_concentration' the "
+            "module is not on for this target; if it falls back to pooled, the module's "
+            "thermodynamic penalty is what carries the gain. Requires --arm pooled."
         ),
     )
     target_log10_molar: bool = Field(
@@ -527,7 +552,8 @@ class BxCell(BaseModel):
         description=(
             "Standardize and score the amino-acid target as log10 of its molar "
             "concentration rather than as the stored mM value. Set by `build_cell` for the "
-            "'flux_concentration' readout and only for it, because that readout's "
+            "'flux_concentration' and 'context_concentration' readouts and only for them, "
+            "because that readout's "
             "prediction IS a log10 molar concentration and comparing it against a linear mM "
             "target would need a per-feature affine, which is the tie this arm removes. "
             "Spearman is invariant to the monotone change of variable, so the per-feature "
@@ -926,6 +952,22 @@ def amino_acid_compartment_species() -> dict[str, list[tuple[str, str]]]:
     )
 
 
+def gem_metabolite_index() -> dict[str, int]:
+    """``{species id -> row}`` in the GEM's own order, WITHOUT building a flux layer.
+
+    The flux layer's metabolite axis is ``GemTensors.met_ids``, which
+    ``build_gem_tensors`` derives as ``[m.id for m in model.metabolites]`` and 026's
+    ``build_flux_layer`` publishes as ``flux_meta["met_index"]``. The context-only
+    concentration readout needs that same axis (its head has one row per GEM metabolite,
+    so its parameter count equals the flux layer's concentration head) and needs nothing
+    else from the layer, so the map is read from the same cobra model directly. Checked
+    against the layer's own index in ``tests/torchcell/metabolism``.
+    """
+    from torchcell.metabolism.yeast_GEM import YeastGEM
+
+    return {str(m.id): i for i, m in enumerate(YeastGEM().model.metabolites)}
+
+
 #: WAVE 8 BLOCK 3. Betaxanthin is NOT a GEM metabolite: the Cachera cassette makes it
 #: outside the native network, L-tyrosine -> (CYP76AD1) L-DOPA -> (DOD) betalamic acid ->
 #: betaxanthin, and yeast-GEM carries no L-DOPA, betalamic acid or betaxanthin species
@@ -1164,7 +1206,7 @@ def build_cell(
         # DERIVED, not a switch of its own: the concentration readout emits a log10 molar
         # concentration, so the target it is scored against has to be in that space, and no
         # other readout may silently change the space its numbers are reported in.
-        target_log10_molar=aa_readout == AA_READOUT_CONCENTRATION,
+        target_log10_molar=aa_readout in AA_LOG10_MOLAR_READOUTS,
         dist=dist,
         conc_space=conc_space,
         volume_table=volume_table,
@@ -1675,31 +1717,17 @@ def flatten_feasibility_for_wandb(block: FeasibilityBlock) -> dict[str, float]:
     return out
 
 
-class FluxConcentrationReadout(nn.Module):
-    r"""The amino-acid prediction IS the flux layer's own learned log concentration.
+class ConcentrationReadoutBase(nn.Module):
+    r"""What the concentration readouts share: ``[B, m]`` natural-log concentration in,
+    ``[B, 19]`` (or ``[B, 19, 2]`` under CRPS) standardized prediction out.
 
-    WHAT IT REPLACES. ``FluxMetaboliteHead`` reads the TURNOVER of each amino acid's GEM
-    metabolite and maps it through a free per-column affine, ``a_k log(1 + omega_k) + b_k``.
-    Turnover is a flux, not a pool, so the affine is where the missing residence time is
-    absorbed, and the readout can only ever be scored as a correlation. Mulleder 2016
-    measures the pool itself, in mM.
-
-    WHAT IT READS INSTEAD. In ``ThermoMode.ANCHORED`` the layer already learns a per-strain
-    concentration for every metabolite, ``log c = lo + (hi - lo) sigmoid(base + W context)``
-    with ``[lo, hi]`` the physiological window, and it is that tensor, through
-    ``RT S^T ln c``, that sets every reaction energy and therefore the second law and the
-    dissipation limit. This module emits ``log10(exp(log_c))`` at the 19 named metabolite
-    rows and nothing else, so a gradient from the amino-acid loss lands on the same
-    parameters the physics reads.
-
-    NO AFFINE ON THE MEAN, deliberately. A learned per-column scale and offset would make
-    the prediction an arbitrary monotone image of the concentration, which is the tie this
-    arm exists to remove: with the affine, the arm measures whether the layer's context
-    vector carries amino-acid information; without it, it measures whether the layer's
-    CONCENTRATION is the measured concentration. The only parameter here is a per-column
-    ``log_sigma``, created only under CRPS, which sets the width of the predictive
-    distribution and never moves its mean, so the two arms it is compared against keep the
-    same loss function.
+    ONE PATH, TWO SOURCES OF ``log c``. ``FluxConcentrationReadout`` takes the flux layer's
+    ``thermo_log_c``; ``ContextConcentrationReadout`` computes the same parameterization on
+    the pooled backbone with no layer. Everything after the ``log c`` tensor is this class:
+    the volume-weighted whole-cell mixture in log10 molar, the train-split standardization,
+    and the per-column ``log_sigma``. Factored here rather than copied so the ablation
+    cannot differ from the arm it ablates in anything but the source of ``log c``; the
+    operations and their order are exactly those the wave-7 readout ran.
     """
 
     metabolite_indices: torch.Tensor
@@ -1721,7 +1749,7 @@ class FluxConcentrationReadout(nn.Module):
         """Wrap a built model and bind the readout to the amino acids' compartments.
 
         Args:
-            model: The metabolism transformer, built with an ANCHORED flux layer.
+            model: The metabolism transformer.
             metabolite_indices: ``[19, C]`` long, the GEM metabolite row of every
                 intracellular compartment species of each measured amino acid, in the
                 column order the target uses.
@@ -1766,12 +1794,60 @@ class FluxConcentrationReadout(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
-        """The wrapped model's counts, plus the per-column log_sigma if there is one."""
+        """The wrapped model's counts, plus every parameter the readout itself owns.
+
+        For the flux readout that is the per-column ``log_sigma`` when there is one; for
+        the context readout it is ``log_sigma`` plus the concentration head.
+        """
         counts: dict[str, int] = dict(self.model.num_parameters)
-        extra = 0 if self.log_sigma is None else int(self.log_sigma.numel())
+        extra = sum(int(p.numel()) for p in self.parameters()) - sum(
+            int(p.numel()) for p in self.model.parameters()
+        )
         counts[f"{AUX_HEAD}_head"] = extra
         counts["total"] = counts["total"] + extra
         return counts
+
+    def _write_prediction(self, log_c: torch.Tensor, reps: dict[str, Any]) -> None:
+        """``[B, m]`` natural-log concentration -> the standardized head output."""
+        log10_c = mixture_log10_molar(
+            log_c, self.metabolite_indices, self.mixture_log_weights
+        )
+        pred = (log10_c - self.target_mean.unsqueeze(0)) / self.target_sd.unsqueeze(0)
+        if self.log_sigma is not None:
+            pred = torch.stack(
+                [pred, self.log_sigma.unsqueeze(0).expand_as(pred)], dim=-1
+            )
+        reps["head_outputs"][AUX_HEAD] = pred
+
+
+class FluxConcentrationReadout(ConcentrationReadoutBase):
+    r"""The amino-acid prediction IS the flux layer's own learned log concentration.
+
+    WHAT IT REPLACES. ``FluxMetaboliteHead`` reads the TURNOVER of each amino acid's GEM
+    metabolite and maps it through a free per-column affine, ``a_k log(1 + omega_k) + b_k``.
+    Turnover is a flux, not a pool, so the affine is where the missing residence time is
+    absorbed, and the readout can only ever be scored as a correlation. Mulleder 2016
+    measures the pool itself, in mM.
+
+    WHAT IT READS INSTEAD. In ``ThermoMode.ANCHORED`` the layer already learns a per-strain
+    concentration for every metabolite, ``log c = lo + (hi - lo) sigmoid(base + W context)``
+    with ``[lo, hi]`` the physiological window, and it is that tensor, through
+    ``RT S^T ln c``, that sets every reaction energy and therefore the second law and the
+    dissipation limit. This module emits ``log10(exp(log_c))`` at the 19 named metabolite
+    rows and nothing else, so a gradient from the amino-acid loss lands on the same
+    parameters the physics reads.
+
+    NO AFFINE ON THE MEAN, deliberately. A learned per-column scale and offset would make
+    the prediction an arbitrary monotone image of the concentration, which is the tie this
+    arm exists to remove: with the affine, the arm measures whether the layer's context
+    vector carries amino-acid information; without it, it measures whether the layer's
+    CONCENTRATION is the measured concentration. The only parameter here is a per-column
+    ``log_sigma``, created only under CRPS, which sets the width of the predictive
+    distribution and never moves its mean, so the two arms it is compared against keep the
+    same loss function.
+
+    The model it wraps must have been built with an ANCHORED flux layer.
+    """
 
     def forward(
         self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
@@ -1809,15 +1885,125 @@ class FluxConcentrationReadout(nn.Module):
             "and there is no learned concentration to predict. This arm is only defined on "
             "an anchored layer."
         )
-        log10_c = mixture_log10_molar(
-            flux["thermo_log_c"], self.metabolite_indices, self.mixture_log_weights
+        self._write_prediction(flux["thermo_log_c"], reps)
+        return predictions, reps
+
+
+class ContextConcentrationReadout(ConcentrationReadoutBase):
+    r"""The flux layer's concentration head, on the pooled backbone, with no flux layer.
+
+    THE QUESTION IT ANSWERS (user, 2026-09-14): how do we know the metabolic module is ON
+    for the amino-acid target? The concentration readout's gain over pooled (+0.015 mean
+    pinned Spearman, n = 3 seeds, 200 epochs) is the module's only positive result there,
+    and Finding 5 of [[experiments.027-betaxanthin-metabolic.wave8-sampling]] showed the
+    readout predicts ``thermo_log_c = lo + (hi - lo) sigmoid(base + W context)``, a function
+    of the genotype context alone: the flux never enters the prediction, and the layer
+    touches the concentration only through the thermodynamic penalty that prices sign
+    consistency between ``v`` and ``dG'(log c)``. At constraint scale 0 the gain was
+    +0.020, so that coupling does not help. Hypothesis (untested until this arm runs): the
+    whole gain is the concentration PARAMETERIZATION, and the module contributes nothing
+    beyond it.
+
+    THE CONSTRUCTION. ``log_c_base`` (zeros, one per GEM metabolite) and
+    ``log_c_from_context = nn.Linear(d, m)`` (PyTorch default init), exactly as
+    ``FluxLayer.__init__`` builds them in ``ThermoMode.ANCHORED``; ``log c = lo + (hi - lo)
+    sigmoid(base + W context)`` with the window read at call time exactly as
+    ``FluxLayer.reaction_potential`` reads it; the context is ``perturbed_gene_pool`` of the
+    perturbed gene tokens, which is the tensor the metabolism model hands its layer as
+    ``context``. ``m`` is the FULL GEM metabolite count (2,806), not the 19 amino acids'
+    species, so the head is parameter-for-parameter the layer's concentration head; the
+    rows the mixture never reads are trained by nothing and stay at their initialization.
+    From ``log c`` on, the path is the shared base class, so the two readouts differ ONLY
+    in whether a flux layer stands between the context and the concentration.
+
+    WHAT IS ABSENT, by design: stoichiometry, kcat, thermodynamics, every constraint term,
+    the flux vector. ``reps`` carries no ``"flux"`` key, so the trainer charges no
+    constraint loss and the feasibility block reports null, as it does for ``pooled``.
+
+    HOW TO READ THE RESULT. Paired by seed against the wave-7 concentration cells and the
+    wave-7 pooled cells. Matching the concentration cells means the module is not on for
+    this target; falling back to pooled means the module, through ``c_thermo`` at constraint
+    scale 0.1, is what carries the gain.
+    """
+
+    log_c_base: torch.Tensor
+    log_c_from_context: nn.Linear
+
+    def __init__(
+        self,
+        model: CellGraphTransformerMetabolism,
+        metabolite_indices: torch.Tensor,
+        mixture_log_weights: torch.Tensor,
+        crps: bool,
+        hidden: int,
+        n_metabolites: int,
+        conc_lower_m: float,
+        conc_upper_m: float,
+    ) -> None:
+        """Bind the head to the GEM's metabolite axis and the window.
+
+        Args:
+            model: The pooled backbone, built with NO flux layer.
+            metabolite_indices: As in the base class, rows into the ``n_metabolites`` axis.
+            mixture_log_weights: As in the base class.
+            crps: As in the base class.
+            hidden: ``d``, the width of the context vector.
+            n_metabolites: ``m``, the GEM metabolite count the head has one row for.
+            conc_lower_m: Floor of the concentration window, in molar.
+            conc_upper_m: Ceiling of the window, in molar.
+        """
+        super().__init__(model, metabolite_indices, mixture_log_weights, crps)
+        assert model.flux_layer is None, (
+            "the context-only concentration readout was built on a model that carries a "
+            "flux layer; the ablation is defined on the pooled backbone."
         )
-        pred = (log10_c - self.target_mean.unsqueeze(0)) / self.target_sd.unsqueeze(0)
-        if self.log_sigma is not None:
-            pred = torch.stack(
-                [pred, self.log_sigma.unsqueeze(0).expand_as(pred)], dim=-1
-            )
-        reps["head_outputs"][AUX_HEAD] = pred
+        assert int(metabolite_indices.max()) < n_metabolites, (
+            f"a mixture index {int(metabolite_indices.max())} is outside the head's "
+            f"{n_metabolites} metabolite rows."
+        )
+        assert 0.0 < conc_lower_m < conc_upper_m, (
+            f"window [{conc_lower_m}, {conc_upper_m}] M is not an increasing positive pair."
+        )
+        self.conc_lower_m = float(conc_lower_m)
+        self.conc_upper_m = float(conc_upper_m)
+        # The same two objects `FluxLayer.__init__` creates under ThermoMode.ANCHORED:
+        # a zero base per metabolite and a default-initialized Linear from the context.
+        self.log_c_base = nn.Parameter(torch.zeros(n_metabolites))
+        self.log_c_from_context = nn.Linear(hidden, n_metabolites)
+
+    def log_concentration(self, context: torch.Tensor) -> torch.Tensor:
+        """``[B, d]`` context -> ``[B, m]`` natural-log molar, inside the window.
+
+        Term for term the ANCHORED branch of ``FluxLayer.reaction_potential`` with the
+        latent term absent.
+        """
+        lo, hi = math.log(self.conc_lower_m), math.log(self.conc_upper_m)
+        raw = self.log_c_base.unsqueeze(0) + self.log_c_from_context(context)
+        return lo + (hi - lo) * torch.sigmoid(raw)
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Run the pooled backbone, then write the concentration into ``head_outputs``.
+
+        The context is the same tensor ``CellGraphTransformerMetabolism.forward`` hands
+        its flux layer, built the same way from the same tokens. The natural-log
+        concentration is left in ``reps["context_log_c"]`` so the concentration audit
+        reads the readout's own tensor, as it reads ``thermo_log_c`` on a flux arm.
+        """
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        assert "flux" not in reps, (
+            "the context-only concentration readout received a flux output; the model "
+            "was built with a layer, which this ablation excludes."
+        )
+        context = perturbed_gene_pool(
+            reps["H_genes_pert"],
+            batch["gene"].perturbation_indices,
+            batch["gene"].perturbation_indices_batch,
+        )
+        log_c = self.log_concentration(context)
+        reps["context_log_c"] = log_c
+        self._write_prediction(log_c, reps)
         return predictions, reps
 
 
@@ -2222,12 +2408,18 @@ def collect_concentration(
     head_specs: dict[str, dict[str, Any]],
     indices: torch.Tensor,
     log_weights: torch.Tensor,
+    source: str = CONC_SOURCE_FLUX,
 ) -> tuple[np.ndarray, np.ndarray]:
     """``(learned log10 molar, measured log10 molar)``, ``[N, 19]`` each, over a loader.
 
     The learned side is the WHOLE-CELL average over the amino acid's compartments, which
-    is the quantity Mulleder measures; see :func:`mixture_weights`.
+    is the quantity Mulleder measures; see :func:`mixture_weights`. ``source`` names the
+    tensor: the flux layer's ``thermo_log_c`` on a flux arm, or the
+    ``ContextConcentrationReadout``'s own ``context_log_c`` on the ablation.
     """
+    assert source in (CONC_SOURCE_FLUX, CONC_SOURCE_CONTEXT), (
+        f"source must be {CONC_SOURCE_FLUX!r} or {CONC_SOURCE_CONTEXT!r}, got {source!r}."
+    )
     device = next(model.parameters()).device
     layer: Any = model.flux_layer
     was_training = model.training
@@ -2238,9 +2430,12 @@ def collect_concentration(
         for batch in loader:
             batch = batch.to(device)
             _, reps = model(dataset.cell_graph.to(device), batch)
-            log10_c = mixture_log10_molar(
-                reps["flux"]["thermo_log_c"], indices, log_weights
+            log_c = (
+                reps["flux"]["thermo_log_c"]
+                if source == CONC_SOURCE_FLUX
+                else reps["context_log_c"]
             )
+            log10_c = mixture_log10_molar(log_c, indices, log_weights)
             t, m = targets_in_space(batch, head_specs, True)[AUX_HEAD]
             if log10_c.shape[0] != t.shape[0]:
                 # One concentration per DRAW under `log_c_from_latent`, one target per
@@ -2447,9 +2642,20 @@ def build_model_for_cell(
         f"aa_readout {AA_READOUT_CONCENTRATION!r} is defined only for a FLUX arm with "
         f"--head {AUX_HEAD}; this cell is arm {cell.base_arm!r} on head {cell.head!r}."
     )
-    assert cell.target_log10_molar == (cell.aa_readout == AA_READOUT_CONCENTRATION), (
+    # THE ABLATION IS DEFINED ON THE POOLED BACKBONE ONLY. A flux arm would put the layer
+    # back, and a betaxanthin head has no 19-column concentration to supervise.
+    assert not (
+        cell.aa_readout == AA_READOUT_CONTEXT_CONCENTRATION
+        and not (
+            cell.head == AUX_HEAD and cell.base_arm == "pooled" and not arm["flux"]
+        )
+    ), (
+        f"aa_readout {AA_READOUT_CONTEXT_CONCENTRATION!r} is defined only for --arm pooled "
+        f"with --head {AUX_HEAD}; this cell is arm {cell.base_arm!r} on head {cell.head!r}."
+    )
+    assert cell.target_log10_molar == (cell.aa_readout in AA_LOG10_MOLAR_READOUTS), (
         "target_log10_molar is derived from the readout and must not be set by hand: the "
-        "concentration readout predicts log10 molar and every other readout predicts the "
+        "concentration readouts predict log10 molar and every other readout predicts the "
         "target in its stored units."
     )
     main_head = cell.head
@@ -2510,6 +2716,15 @@ def build_model_for_cell(
             f"ANCHORED, since the learned concentration exists only there; arm "
             f"{cell.base_arm!r} is "
             f"{'not a flux arm' if flux_layer is None else str(flux_layer.thermo_mode)}."
+        )
+    elif cell.aa_readout == AA_READOUT_CONTEXT_CONCENTRATION:
+        # THE CONTEXT-ONLY CONCENTRATION READOUT declares no head either: the prediction
+        # is injected by `ContextConcentrationReadout` below, on the pooled backbone. The
+        # `pooled` arm's own `vector` head is deliberately NOT built, so the only
+        # parameterized map from the context to the loss is the concentration head.
+        assert flux_layer is None, (
+            f"--aa-readout {AA_READOUT_CONTEXT_CONCENTRATION} excludes the flux layer; "
+            f"arm {cell.base_arm!r} built one."
         )
     elif arm["flux"]:
         # 026's mechanistic readout: each measured amino acid is read off the turnover of
@@ -2647,6 +2862,61 @@ def build_model_for_cell(
             )
         return wrapped, head_specs, main_head, flux_meta
 
+    if main_head == AUX_HEAD and cell.aa_readout == AA_READOUT_CONTEXT_CONCENTRATION:
+        assert flux_layer is None and cell.flux_draws == 1, (
+            "the context-only concentration readout is deterministic and layer-free; "
+            f"got flux_draws={cell.flux_draws} on arm {cell.base_arm!r}."
+        )
+        # THE SAME METABOLITE AXIS THE LAYER WOULD HAVE, read from the GEM without building
+        # the layer. Stored under the key the flux arms use so the concentration audit in
+        # `run_cell` reads it the same way; it is filtered out of the result file as there.
+        met_index = gem_metabolite_index()
+        flux_meta["met_index"] = met_index
+        indices, log_weights, described = mixture_weights(
+            met_index, cell.conc_space, cell.volume_table
+        )
+        flux_meta["concentration_mixture"] = {
+            aa: [
+                {"compartment": c, "species": sid, "fractional_volume": w}
+                for c, sid, w in entries
+            ]
+            for aa, entries in described.items()
+        }
+        flux_meta["compartment_volume_fractions"] = compartment_volume_fractions(
+            cell.volume_table
+        ).model_dump()
+        flux_meta["context_concentration"] = {
+            "n_metabolites": len(met_index),
+            "conc_lower_m": cell.conc_lower_m,
+            "conc_upper_m": cell.conc_upper_m,
+            "note": (
+                "the flux layer's ANCHORED concentration head (zero base per GEM "
+                "metabolite + Linear(hidden, n_metabolites) from the perturbed-gene pool, "
+                "sigmoid into the window) on the pooled backbone with no flux layer, no "
+                "stoichiometry, no kcat, no thermodynamics and no constraint term; the "
+                "ablation of `flux_concentration`."
+            ),
+        }
+        wrapped_ctx = ContextConcentrationReadout(
+            model,
+            indices.to(device),
+            log_weights.to(device),
+            cell.crps,
+            cell.hidden,
+            len(met_index),
+            cell.conc_lower_m,
+            cell.conc_upper_m,
+        ).to(device)
+        print(
+            f"[context-concentration-readout] NO flux layer; whole-cell mixture over "
+            f"{ {aa: [c for c, _, _ in v] for aa, v in described.items()} }, window "
+            f"[{cell.conc_lower_m:.0e}, {cell.conc_upper_m:.0e}] M over "
+            f"{len(met_index)} GEM metabolite rows, "
+            f"{'learned per-column log_sigma' if cell.crps else 'point prediction'}",
+            flush=True,
+        )
+        return wrapped_ctx, head_specs, main_head, flux_meta
+
     if main_head == AUX_HEAD and arm["flux"] and cell.head_normalize:
         # THE HEAD FIX FOR THE AMINO-ACID READOUT. `FluxMetaboliteHead` emits
         # `a_k log(1 + omega_k) + b_k` with `a_k` initialized to 1, so against a target
@@ -2780,7 +3050,7 @@ def run_cell(
     # A K-draw concentration cell is the readout inside the draw ensemble; the
     # standardization belongs to the readout either way.
     readout = model.model if isinstance(model, FluxDrawEnsemble) else model
-    if isinstance(readout, FluxConcentrationReadout):
+    if isinstance(readout, ConcentrationReadoutBase):
         # The readout emits a log10 molar concentration and the loss is computed against
         # the standardized target, so the readout is handed the SAME train-split statistics
         # rather than a learned affine. Set here rather than in `build_model_for_cell`
@@ -3078,15 +3348,20 @@ def run_cell(
         ).model_dump()
 
     layer_for_conc: Any = model.flux_layer
-    if (
-        main_head == AUX_HEAD
-        and layer_for_conc is not None
-        and layer_for_conc.thermo_mode is ThermoMode.ANCHORED
+    context_readout = isinstance(readout, ContextConcentrationReadout)
+    if main_head == AUX_HEAD and (
+        context_readout
+        or (
+            layer_for_conc is not None
+            and layer_for_conc.thermo_mode is ThermoMode.ANCHORED
+        )
     ):
         # THE MECHANISTIC READOUT, computed for every anchored arm rather than only for the
         # supervised one: an arm that predicts amino acids from turnover still learns a
         # concentration, and whether that concentration is the measured concentration is a
-        # separate question from whether the phenotype head scored well.
+        # separate question from whether the phenotype head scored well. The context-only
+        # ablation is audited the same way on its own tensor, so its `conc/pinned_test/*`
+        # numbers sit beside the flux cells' in the same views.
         indices, log_weights, described = mixture_weights(
             flux_meta["met_index"], cell.conc_space, cell.volume_table
         )
@@ -3097,13 +3372,18 @@ def run_cell(
             head_specs,
             indices.to(device),
             log_weights.to(device),
+            source=CONC_SOURCE_CONTEXT if context_readout else CONC_SOURCE_FLUX,
         )
         pinned_mask = pinned_test_mask(dm, dataset)
-        lo = float(layer_for_conc.config.conc_lower_m)
-        hi = float(layer_for_conc.config.conc_upper_m)
+        if context_readout:
+            lo = float(readout.conc_lower_m)
+            hi = float(readout.conc_upper_m)
+        else:
+            lo = float(layer_for_conc.config.conc_lower_m)
+            hi = float(layer_for_conc.config.conc_upper_m)
         audit = ConcentrationAudit(
             available=True,
-            supervised=cell.aa_readout == AA_READOUT_CONCENTRATION,
+            supervised=cell.aa_readout in AA_LOG10_MOLAR_READOUTS,
             conc_space=cell.conc_space,
             conc_lower_m=lo,
             conc_upper_m=hi,
@@ -3559,7 +3839,9 @@ def main() -> None:
             "Which quantity of the flux layer the 19 amino acids are read off: "
             "'flux_metabolite' is wave 6's turnover readout with a free affine per column; "
             "'flux_concentration' predicts the layer's own learned log10 molar "
-            "concentration with no parameters on the mean, and needs an ANCHORED arm."
+            "concentration with no parameters on the mean, and needs an ANCHORED arm; "
+            "'context_concentration' is that same head built on the pooled backbone with "
+            "no flux layer (the is-the-module-on ablation) and needs --arm pooled."
         ),
     )
     parser.add_argument(

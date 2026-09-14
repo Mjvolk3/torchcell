@@ -535,3 +535,128 @@ PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
   wave should push.
 - An energy score over `FluxLayer.sample`'s draws is the distributional form the flux
   readouts could take without breaking the tie. Implemented nowhere; not measured.
+
+## 2026.09.14 - Is the module on? The context-only concentration head
+
+### The question
+
+User, 2026-09-14: "how to make sure information / gradients are being forced through the
+metabolic module... how do we really know that it is on?"
+
+On the amino-acid target the module's only positive result is the concentration readout:
++0.015 mean pinned Spearman over pooled (sd 0.009, n = 3 seeds, 200 epochs;
+`results/wave7_aa_conc_e200_s270{0,1,2}.json` 0.0648 / 0.0663 / 0.0562 against
+`results/wave7_aa_pooled_e200_s270{0,1,2}.json` 0.0500 / 0.0425 / 0.0511).
+
+### Finding 5, restated
+
+[[experiments.027-betaxanthin-metabolic.wave8-sampling]] Finding 5: `FluxConcentrationReadout`
+predicts `mixture_log10_molar(flux["thermo_log_c"], ...)`, and in
+`FluxLayer.reaction_potential` `thermo_log_c = lo + (hi - lo) sigmoid(log_c_base +
+log_c_from_context(context))`, a function of the genotype context alone. The flux vector never
+enters the prediction. The layer touches the concentration only through the thermodynamic
+penalty `c_thermo` (weight 1.0 times constraint scale 0.1 after a 20-epoch warmup), which
+prices sign consistency between `v` and `dG'(log c)`; at constraint scale 0 the gain was
++0.020 (`results/wave7_aa_conc_nocstr_e200_s270{0,1,2}.json`), so that coupling does not help.
+
+Hypothesis (untested until the cells below run): the whole gain is the concentration
+PARAMETERIZATION, a per-metabolite-per-compartment sigmoid window between `conc_lower_m` and
+`conc_upper_m`, base plus linear-from-context, then the volume-weighted mixture and log10,
+and the metabolic module contributes nothing beyond it.
+
+### The construction
+
+`--aa-readout context_concentration`, valid only on `--arm pooled` with `--head mulleder19`
+(asserted in `build_model_for_cell`). `ContextConcentrationReadout` in `train_bx.py` builds
+the SAME concentration head directly on the pooled backbone, with no flux layer constructed
+at all:
+
+- `log_c_base = zeros(2806)` and `log_c_from_context = nn.Linear(hidden, 2806)` with
+  PyTorch's default init, which is exactly what `FluxLayer.__init__` creates under
+  `ThermoMode.ANCHORED` (flux_layer.py L1430-1431: zeros, default-initialized Linear).
+  The row count is the FULL GEM metabolite count, not the amino acids' species, so the
+  head is parameter-for-parameter the layer's concentration head; rows the mixture never
+  reads receive no gradient and stay at their initialization.
+- The context is `perturbed_gene_pool(H_genes_pert, perturbation_indices,
+  perturbation_indices_batch)`, the tensor `CellGraphTransformerMetabolism.forward` hands
+  its flux layer as `context`.
+- `log c = lo + (hi - lo) sigmoid(base + W context)` with the window read at call time from
+  `--conc-lower-m` / `--conc-upper-m`, as `reaction_potential` reads it off `config`.
+- The metabolite index is `gem_metabolite_index()`, `{m.id -> row}` over
+  `YeastGEM().model.metabolites`, which is how `build_gem_tensors` derives `met_ids` and
+  what 026's `build_flux_layer` publishes as `flux_meta["met_index"]`; the compartment
+  species and volume fractions come from the same `mixture_weights` /
+  `compartment_volume_fractions` calls the flux cells use.
+- From `log c` on, the path is shared code: `ConcentrationReadoutBase._write_prediction`
+  (mixture, log10, train-split standardization, per-column CRPS `log_sigma`) is the wave-7
+  readout's own body factored into a base class both readouts inherit; the operations and
+  their order are unchanged, so the existing `flux_concentration` cells are unaffected.
+- What is absent, by design: stoichiometry, kcat, thermodynamics, every constraint term,
+  the flux vector. `reps` carries no `"flux"` key, so the trainer charges no constraint
+  loss; the feasibility block reports null as it does for `pooled`; `flux_meta` carries a
+  `context_concentration` record and the mixture description; the concentration audit
+  runs on the readout's own `context_log_c`, so `conc/pinned_test/*` lands in W&B beside
+  the flux cells' numbers, and the W&B config carries `aa_readout: context_concentration`.
+- Not built: a `null` (permuted-target) copy, and a K-draw copy (the readout is
+  deterministic and layer-free, asserted `flux_draws == 1`).
+
+Tests: `tests/torchcell/metabolism/test_context_concentration_readout.py` (6 passed,
+2026-09-14). Handed the same `log c`, the context readout and the flux readout emit the same
+standardized `[B, 19, 2]` prediction bit for bit (`torch.equal`); the context readout's
+`log c` equals the hand-computed anchored formula on the pooled context; gradient reaches
+only the metabolite rows the mixture reads; the readout builds with `flux_layer is None` and
+`_sampling_meta` reports the pooled record; a model carrying a layer is refused; on the real
+GEM, `gem_metabolite_index()` equals the layer's `met_ids` index, 2,806 rows, with every
+`AMINO_ACID_TO_GEM_METABOLITE` id present.
+
+### What each outcome would mean
+
+Paired by seed against the wave-7 concentration cells and the wave-7 pooled cells, same
+200-epoch budget, same centered 5-epoch moving-average selection, same pinned split, same
+scorer (`pinned.mean_spearman`, per-feature Spearman over the 19 columns).
+
+- Context head matches the concentration cells (within their sd of 0.009): the metabolic
+  module is NOT on for this target. The gain is the parameterization, and every claim that
+  the amino-acid result shows the module doing work is withdrawn.
+- Context head falls back to the pooled cells: the module, through `c_thermo` at constraint
+  scale 0.1, is what carries the gain, and that is the surprise, because the scale-0 cells
+  gained more. Then the next question is which term of the penalty does it.
+- Context head lands between, or above the concentration cells: the penalty costs or
+  helps by a measurable amount, to be read against the three-seed sd, not the mean.
+
+The n = 3 noise floor is the same as wave 7's: a difference under about 0.01 is not a call.
+
+### TODO job ledger
+
+| cell | script | out | job | status |
+|---|---|---|---|---|
+| ctxconc e200 s2700 | `gh_wave8_aa_ctxconc_e200_s2700.slurm` | `wave8_aa_ctxconc_e200_s2700.json` | TODO | not submitted |
+| ctxconc e200 s2701 | `gh_wave8_aa_ctxconc_e200_s2701.slurm` | `wave8_aa_ctxconc_e200_s2701.json` | TODO | not submitted |
+| ctxconc e200 s2702 | `gh_wave8_aa_ctxconc_e200_s2702.slurm` | `wave8_aa_ctxconc_e200_s2702.json` | TODO | not submitted |
+
+Pairs: `wave7_aa_conc_e200_s270{0,1,2}.json` (0.0648 / 0.0663 / 0.0562) and
+`wave7_aa_pooled_e200_s270{0,1,2}.json` (0.0500 / 0.0425 / 0.0511). W&B group
+`gh_wave8_aa`, tag `w8aa_ctxconc`, config key `aa_readout = context_concentration`.
+
+Submit, one per call:
+
+```bash
+cd /home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets
+bash experiments/027-betaxanthin-metabolic/scripts/freeze_and_submit.sh \
+    experiments/027-betaxanthin-metabolic/scripts/gh_wave8_aa_ctxconc_e200_s2700.slurm
+bash experiments/027-betaxanthin-metabolic/scripts/freeze_and_submit.sh \
+    experiments/027-betaxanthin-metabolic/scripts/gh_wave8_aa_ctxconc_e200_s2701.slurm
+bash experiments/027-betaxanthin-metabolic/scripts/freeze_and_submit.sh \
+    experiments/027-betaxanthin-metabolic/scripts/gh_wave8_aa_ctxconc_e200_s2702.slurm
+```
+
+CPU smoke, 2026-09-14 (1 epoch, seed 2700, `--smoke --no-checkpoint`, no GPU, full data;
+`results/smoke_w8_aa_ctxconc.json`): ran end to end in 519 s wall (434 s inside `run_cell`).
+The result carries `cell.aa_readout = context_concentration`, `cell.target_log10_molar =
+true`, `test.pinned.mean_spearman` (+0.0040 after one epoch, 10,716 measurements on 564
+genotypes; a build check, NOT a result), `concentration_audit.available = true` with
+`supervised = true`, window [1e-7, 1] M and `groups.pinned_test` (so `conc/pinned_test/*`
+reaches W&B), `feasibility.available = false` as for pooled, `flux_meta` with
+`context_concentration`, `concentration_mixture`, `compartment_volume_fractions` and the
+pooled `sampling` record, and `n_parameters.mulleder19_head = 258,171 = 2806 x (90 + 2) + 19`
+(Linear(90, 2806) + base + log_sigma).

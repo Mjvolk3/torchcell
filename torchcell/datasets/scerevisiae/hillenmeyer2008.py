@@ -201,6 +201,7 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     SourceCheck,
 )
+from torchcell.sequence.genome.registry import SGD_S288C_R64, resolve
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
@@ -366,9 +367,7 @@ MATRICES: dict[str, _MatrixSpec] = {
 # S288C R64 gene universe (systematic ORF + RNA-coding names). A resolved name must also
 # be in this universe, which is the same set the L4 containment rule is scored against.
 _SGD_GENE_FASTAS = (
-    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
     "orf_coding_all_R64-4-1_20230830.fasta",
-    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
     "rna_coding_R64-4-1_20230830.fasta",
 )
 
@@ -785,8 +784,8 @@ def parse_columns(header: list[str], control_sets: dict[str, str]) -> list[Colum
 def _load_sgd_genes(data_root: str) -> set[str]:
     """S288C R64 systematic-name universe from the ORF + RNA-coding FASTA headers."""
     genes: set[str] = set()
-    for rel in _SGD_GENE_FASTAS:
-        with open(osp.join(data_root, rel)) as handle:
+    for name in _SGD_GENE_FASTAS:
+        with open(resolve(SGD_S288C_R64, name, data_root=data_root)) as handle:
             for line in handle:
                 if line.startswith(">"):
                     genes.add(line[1:].split()[0])

@@ -162,7 +162,7 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
 
         # Check if SGD gene data exists
         sgd_genes_dir = osp.join(
-            os.environ.get("DATA_ROOT", "data"), "sgd/genome/genes"
+            os.environ.get("DATA_ROOT", "data"), "data/sgd/genome/genes"
         )
         if osp.exists(sgd_genes_dir):
             gene_files = [f for f in os.listdir(sgd_genes_dir) if f.endswith(".json")]

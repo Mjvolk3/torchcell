@@ -14,3 +14,11 @@ This module is the executable top of the framework: it knows WHICH built LMDBs e
 - Owns the L4 cross-source assertions that no single verifier can make: expression datasets share one platform gene universe; deletion screens are gene-contained in Ohya's morphology set; RNA-seq genes are contained in the S288C SGD reference. Per-family verifiers only expose the gene-set key; the runner joins them.
 - Reads the Ohya LMDB from the (possibly read-only) KG-build tree but WRITES reports to the writable `data/torchcell/...` tree -- decoupling verification output from the build user's ownership.
 - `main`/`run_all` returns a shell exit code, so the whole abstract's data can gate CI. Uses the checks in [[torchcell.verification.levels]] and the models in [[torchcell.verification.report]].
+
+## 2026.09.14 - S288C gene universe and the Bloom member index from the genomes tier
+
+`SGD_GENE_FASTAS` holds filenames now and `_sgd_gene_set` resolves them from the tier
+set `sgd_S288C_R64-4-1_20230830` (7,146 names, unchanged); the Bloom entry's
+`assembly_index` is resolved from `peter2018_1011_assemblies`. `_genome` still passes
+`genome_root=data/sgd/genome` as the cache root with `overwrite=False`. See
+[[torchcell.sequence.genome.registry]].

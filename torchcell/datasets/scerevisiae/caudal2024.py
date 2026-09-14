@@ -43,7 +43,8 @@ Sources (hash-pinned, local library mirror):
   - Caudal expression: ``caudalPantranscriptomeRevealsLarge2024/data/
     final_data_annotated_merged_04052022.tab.zip`` (comma-delimited, latin-1;
     sha256 8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b).
-  - Peter genome: ``peterGenomeEvolution10112018/data/`` --
+  - Peter genome: the genomes tier set ``peter2018_1011_assemblies`` (resolved and
+    sha256-verified through ``torchcell.sequence.genome.registry``) --
     ``allReferenceGenesWithSNPsAndIndelsInferred.tar.gz`` (sha256 b5400b89...),
     ``genesMatrix_PresenceAbsence.tab.gz``, ``genesMatrix_CopyNumber.tab.gz``.
   - S288C reference: SGD R64-4-1 ``S288C_reference_sequence_R64-4-1_20230830.fsa``.
@@ -83,6 +84,7 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import PETER2018_1011, SGD_S288C_R64, resolve
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -98,15 +100,11 @@ CAUDAL_ZIP_REL = (
     "final_data_annotated_merged_04052022.tab.zip"
 )
 CAUDAL_ZIP_SHA256 = "8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b"
-PETER_DIR_REL = "torchcell-library/peterGenomeEvolution10112018/data"
 REFGENE_TAR_NAME = "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz"
 REFGENE_TAR_SHA256 = "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25"
 PRESENCE_NAME = "genesMatrix_PresenceAbsence.tab.gz"
 COPYNUMBER_NAME = "genesMatrix_CopyNumber.tab.gz"
-SGD_FSA_REL = (
-    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
-    "S288C_reference_sequence_R64-4-1_20230830.fsa"
-)
+SGD_FSA_NAME = "S288C_reference_sequence_R64-4-1_20230830.fsa"
 
 CAUDAL_ZIP_BASENAME = "final_data_annotated_merged_04052022.tab.zip"
 RAW_FILES = [CAUDAL_ZIP_BASENAME, REFGENE_TAR_NAME, PRESENCE_NAME, COPYNUMBER_NAME]
@@ -259,9 +257,10 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         os.makedirs(self.raw_dir, exist_ok=True)
         sources = {
             CAUDAL_ZIP_BASENAME: osp.join(data_root, CAUDAL_ZIP_REL),
-            REFGENE_TAR_NAME: osp.join(data_root, PETER_DIR_REL, REFGENE_TAR_NAME),
-            PRESENCE_NAME: osp.join(data_root, PETER_DIR_REL, PRESENCE_NAME),
-            COPYNUMBER_NAME: osp.join(data_root, PETER_DIR_REL, COPYNUMBER_NAME),
+            # Peter files come from the genomes tier, sha256-verified on resolve.
+            REFGENE_TAR_NAME: resolve(PETER2018_1011, REFGENE_TAR_NAME),
+            PRESENCE_NAME: resolve(PETER2018_1011, PRESENCE_NAME),
+            COPYNUMBER_NAME: resolve(PETER2018_1011, COPYNUMBER_NAME),
         }
         sha256_expected = {
             CAUDAL_ZIP_BASENAME: CAUDAL_ZIP_SHA256,
@@ -459,7 +458,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                 )
             return out
 
-        chrom = _sgd_chromosomes(osp.join(data_root, SGD_FSA_REL))
+        chrom = _sgd_chromosomes(resolve(SGD_S288C_R64, SGD_FSA_NAME))
         tar_path = osp.join(self.raw_dir, REFGENE_TAR_NAME)
         strain_col: list[str] = []
         sys_col: list[str] = []

@@ -71,6 +71,7 @@ docker run \
     -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
     -v $(pwd)/database/data/torchcell:/var/lib/neo4j/data/torchcell \
     -v $(pwd)/database/data/sgd:/var/lib/neo4j/data/sgd \
+    -v /scratch/projects/torchcell-scratch/torchcell-genomes:/var/lib/neo4j/torchcell-genomes:ro \
     -v $(pwd)/database/data:/var/lib/neo4j/data \
     -v $(pwd)/database/.env:/.env \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf \

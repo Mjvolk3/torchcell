@@ -30,8 +30,9 @@ the L2 check. Cross A: min 55, median 83, mean 85.6, max 278 blocks per segregan
 PARENTS. From Figure 1 source data 1 (sheet ``Crosses and Strains``): the diploid parent,
 the Peter 2018 strain id of parent 1, both parents' genotype strings, the cross code, the
 magic-marker plasmid and the segregant count. Parents are pinned to the 1011-collection
-assemblies tarball (``peterGenomeEvolution10112018/data/1011Assemblies.tar.gz``, mirrored
-and sha256-pinned; member index beside it) by Peter id; BY is the S288C reference. The
+assemblies tarball (``1011Assemblies.tar.gz``, resolved from the genomes tier set
+``peter2018_1011_assemblies`` through ``torchcell.sequence.genome.registry`` and
+sha256-pinned; member index beside it) by Peter id; BY is the S288C reference. The
 xls writes strain 273614 as ``SACE_MAA`` while the assembly member index carries it as
 ``MAA``; the ``SACE_`` prefix is the same one that once dropped an isolate's variants
 (issue #73), so the mapping is explicit and a parent absent from the index raises.
@@ -139,6 +140,11 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    PETER2018_1011,
+    load_genome_manifest,
+    resolve,
+)
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
@@ -151,7 +157,6 @@ log = logging.getLogger(__name__)
 CITATION_KEY = "bloomRareVariantsContribute2019"
 PAPER_DOI = "10.7554/eLife.49212"
 RAW_DIR_REL = f"torchcell-raw/{CITATION_KEY}"
-PETER_DIR_REL = "torchcell-library/peterGenomeEvolution10112018/data"
 ASSEMBLY_TAR = "1011Assemblies.tar.gz"
 ASSEMBLY_TAR_SHA256 = "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"
 ASSEMBLY_INDEX = "1011Assemblies.tar.gz.member_index.tsv"
@@ -987,7 +992,17 @@ class Bloom2019Dataset(ExperimentDataset):
         info = read_cross_table(
             osp.join(self.raw_dir, XLS_NAME), osp.join(self.raw_dir, README_NAME)
         )
-        index = read_assembly_index(osp.join(data_root, PETER_DIR_REL, ASSEMBLY_INDEX))
+        # The stored assembly_sha256 is a literal; the tier's manifest must pin the same
+        # tarball, so the stored records and the dereferenceable bytes cannot drift apart.
+        tier_tar_sha256 = (
+            load_genome_manifest(PETER2018_1011).record(ASSEMBLY_TAR).sha256
+        )
+        if tier_tar_sha256 != ASSEMBLY_TAR_SHA256:
+            raise RuntimeError(
+                f"genomes tier pins {ASSEMBLY_TAR} at {tier_tar_sha256}; the stored "
+                f"records pin {ASSEMBLY_TAR_SHA256}"
+            )
+        index = read_assembly_index(resolve(PETER2018_1011, ASSEMBLY_INDEX))
         # round_trip: the stored value is the exact decimal the release prints, so the
         # verifier's re-read equals it bit for bit (the default parser can differ in
         # the last digit).

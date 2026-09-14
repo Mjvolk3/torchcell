@@ -281,3 +281,15 @@ and the `Signal (gzip)` genotype block change (fewer, differently-typed perturba
 stale `experiment_reference_index.json` (pre-WS15 dense format, 2026-07-10 redesign) or
 `ExperimentReferenceIndex.from_stored` raises; a full `processed` + regenerable-`preprocess`
 clear (keeping only `sequence_variants.parquet`) rebuilds cleanly.
+
+## 2026.09.14 - Peter files and the S288C FASTA resolved from the genomes tier
+
+`download()` now takes the three Peter files (reference-genes tarball, presence and
+copy-number matrices) from the genomes tier set `peter2018_1011_assemblies` through
+`torchcell.sequence.genome.registry.resolve`, which verifies their sha256, and
+`_sgd_chromosomes` reads the S288C `.fsa` from `sgd_S288C_R64-4-1_20230830`; the
+hard-coded `PETER_DIR_REL` and `SGD_FSA_REL` are gone. The symlink-into-`raw_dir`
+mechanics and `REFGENE_TAR_SHA256` are unchanged, the served store is not rebuilt (943
+records, stored `sequence_sha256` untouched), and the existing `raw/` symlinks that
+still point at the library key keep working because that copy is retained. A fresh build
+would link to the tier instead. Chromosome list through the tier: 17 (I to XVI plus MT).

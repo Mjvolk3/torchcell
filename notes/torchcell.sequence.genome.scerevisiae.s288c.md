@@ -718,3 +718,22 @@ same name (e.g. `YER109C`/FLO8) resolved in one loader and dropped in another.
 Pure/per-name, applies NO drop policy -- callers own retention + batch collision handling.
 Consumed by `ohya2005` and `cachera2023`; unit tests in `test_s288c.py` (`test_resolve_*`).
 Backing index (`feature_index`) is cached and covers only `_LOCUS_FEATURE_TYPES`.
+
+## 2026.09.14 - Release files come from the genomes tier; the download path is gone
+
+`__attrs_post_init__` now resolves the four consumed files (`.fsa`, `.gff`,
+`orf_trans_all`, `orf_coding_all`) through `torchcell.sequence.genome.registry.resolve`
+against `ASSEMBLY_SET = sgd_S288C_R64-4-1_20230830`, sha256-verified on every
+construction. `download_and_extract_genome_files`, `untar_tgz_file` and
+`gunzip_all_files_in_dir` are deleted: they fetched an unpinned tgz from the SGD archive
+and deleted the container, so no build could say which bytes it had read. A machine
+without the tier fails here with the rsync that seeds it; there is no fallback to
+`data/sgd/genome`. `genome_root` keeps its meaning as the cache root (`data.db`, and via
+`SCerevisiaeGraph.sgd_root` the `genes/` and `graph/` caches), the constructor and the
+pickle contract are unchanged, and `overwrite` keeps its default (the DDP-safe
+build-when-absent is a separate follow-up). Measured with `overwrite=False` on GilaHyper
+(`scratchpad/genomes-tier/smoke.py`, 2026-09-14): construction 0.3 s through the
+registry against 0.1 s on the legacy paths, gene set 6,607 either way, pickle round trip
+reconstructs the same paths. `test_s288c.py` was not run in this pass because its fixture
+uses the default `overwrite=True` while four 027 jobs held `data.db`. Plan:
+[[plan.genomes-tier.2026.09.14]]; registry: [[torchcell.sequence.genome.registry]].

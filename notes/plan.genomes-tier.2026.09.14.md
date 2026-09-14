@@ -147,3 +147,20 @@ Run from the worktree with `WT=/home/michaelvolk/Documents/projects/torchcell.wo
 8. Peter library-manifest retrieval backfill under `#271`: the five `data/` entries gain the same `RetrievalRecord` the tier holds; decide there whether the library copy is retained or deprecated.
 9. Deprecation of the old S288C copy once `grep -rn "S288C_reference_genome_R64-4-1_20230830" torchcell/ experiments/` shows no reader outside the registry: `DEPRECATED_DIR=/scratch/projects/torchcell-deprecated scripts/deprecate.sh $DATA_ROOT/data/sgd/genome/S288C_reference_genome_R64-4-1_20230830 "superseded by torchcell-genomes/sgd_S288C_R64-4-1_20230830"`. `trash` is absent on GilaHyper and its 1 GB cap would refuse the tarball anyway; `deprecate.sh:10-13` refuses a graveyard inside `$DATA_ROOT` and defaults to `/tmp` on a root fs with 7.7 G free, so `DEPRECATED_DIR` must be set (the sibling graveyard exists as of 2026-09-14). The uid-7474 twin is untouched by that rename; the strays `data_alt.db*`, `data.db.bak`, `yeast-GEM.xlsx` are left as they are.
 10. A periodic `verify_assembly_set` run (bit-rot check against the manifests) in the same cron block as the backup, per memory `gilahyper-storage-tiers`.
+
+## 2026.09.14 - Implemented
+
+Every verification step above ran and passed on GilaHyper: migration tables all MATCH and
+SAME (`scripts/migrate_genomes_tier.py`, printed in [[scripts.migrate_genomes_tier]]);
+`verify_assembly_set` 9 and 6 files, both sets `provenance_complete=True` since the 4 GB
+tarball also reproduced; backup dry run then real run, 17 files, 4,284,249,415 bytes,
+tarball sha256 verified on `/bulk`, zero symlinks; registry tests 7 passed; genome smoke
+with `overwrite=False`: paths under the tier, gene set 6,607 before and after, pickle
+round trip, 0.3 s vs 0.1 s; `_sgd_gene_set` 7,146 before and after; member index 1,010
+entries identical to the library copy; 17 chromosomes; Bloom 530,100 and Caudal 943
+without any download or process; the grep is clean apart from the sentinel and comments;
+`bash -n` on the five slurm scripts; the corrected `genes/` path exists; mypy and ruff
+clean; the Bloom admission output after the change is identical to the baseline apart
+from the working-tree sha line, and the production manifest is untouched. Not run:
+`test_s288c.py` (its fixture rebuilds `data.db` while 027 jobs hold it). Untested until
+the next KG build: the container mount.

@@ -159,6 +159,7 @@ for SLUG in "${SLUGS[@]}"; do
     docker run --rm --entrypoint bash --user 7474:7474 \
         -v "$BUILD_ROOT/database/data":/var/lib/neo4j/data \
         -v "$DEV_DATA_ROOT/data/torchcell/$SLUG":/mnt/src:ro \
+        -v "$DEV_DATA_ROOT/torchcell-genomes":/var/lib/neo4j/torchcell-genomes:ro \
         "$IMAGE" -c "set -euo pipefail
             BT=/var/lib/neo4j/data/torchcell/$SLUG; mkdir -p \$BT
             for d in processed preprocess; do
@@ -204,6 +205,7 @@ docker run --rm --entrypoint bash \
     -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -v "$SERVE_ROOT/biocypher-out":/var/lib/neo4j/biocypher-out \
     -v "$BUILD_ROOT/database/data":/var/lib/neo4j/data \
+    -v "$DEV_DATA_ROOT/torchcell-genomes":/var/lib/neo4j/torchcell-genomes:ro \
     -v "$BUILD_ROOT/database/.env":/.env \
     -v "$BUILD_ROOT/database/biocypher":/var/lib/neo4j/biocypher \
     "${SRC_MOUNT[@]}" \

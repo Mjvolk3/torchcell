@@ -5,16 +5,12 @@
 
 """S. cerevisiae S288C genome access over SGD FASTA/GFF with GO and sequence windows."""
 
-import glob
-import gzip
 import logging
 import os
 import os.path as osp
-import shutil
-import tarfile
 from enum import StrEnum
 from itertools import product
-from typing import Any, SupportsIndex, cast
+from typing import Any, ClassVar, SupportsIndex, cast
 
 import gffutils
 import pandas as pd
@@ -39,6 +35,7 @@ from torchcell.sequence import (
     roman_to_int,
 )
 from torchcell.sequence.db_connection import GffutilsConnectionManager
+from torchcell.sequence.genome.registry import SGD_S288C_R64, resolve
 
 log = logging.getLogger(__name__)
 
@@ -466,6 +463,9 @@ class GeneNameResolution(BaseModel):
 class SCerevisiaeGenome(Genome):
     """S288C genome wrapper exposing genes, GO annotations, and sequence queries."""
 
+    #: The assembly set in the genomes tier this class reads its release files from.
+    ASSEMBLY_SET: ClassVar[str] = SGD_S288C_R64
+
     genome_root: str = field(init=True, repr=False, default="data/sgd/genome")
     go_root: str = field(init=True, repr=False, default="data/go")
     overwrite: bool = field(init=True, repr=True, default=True)
@@ -492,38 +492,30 @@ class SCerevisiaeGenome(Genome):
     _obo_path: str | None = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
-        """Set up paths, download genome files, and build the GFF database."""
+        """Resolve the release files from the genomes tier and build the GFF database."""
         # Call parent class init to ensure all base attributes are set
         super().__init__(data_root=self.genome_root)
-        reference_genome = "S288C_reference_genome"
         self.genome_version = "R64-4-1_20230830"
-        self.sgd_base_url = "http://sgd-archive.yeastgenome.org"
-        self.sequence_S288C = "sequence/S288C_reference"
-        self.genome_version_full = reference_genome + "_" + self.genome_version
 
-        self._dna_fasta_path: str = osp.join(
-            self.genome_root,
-            self.genome_version_full,
+        # The release files come from the genomes tier, sha256-verified on every
+        # resolve; genome_root stays the CACHE root (data.db, and through
+        # SCerevisiaeGraph.sgd_root the genes/ and graph/ caches). There is no
+        # download path: a machine without the tier fails here with the rsync that
+        # seeds it, never with unpinned bytes.
+        self._dna_fasta_path: str = resolve(
+            self.ASSEMBLY_SET,
             "S288C_reference_sequence_" + self.genome_version + ".fsa",
         )
-        self._gff_path: str = osp.join(
-            self.genome_root,
-            self.genome_version_full,
+        self._gff_path: str = resolve(
+            self.ASSEMBLY_SET,
             "saccharomyces_cerevisiae_" + self.genome_version + ".gff",
         )
-        self._protein_fasta_path = osp.join(
-            self.genome_root,
-            self.genome_version_full,
-            "orf_trans_all_" + self.genome_version + ".fasta",
+        self._protein_fasta_path = resolve(
+            self.ASSEMBLY_SET, "orf_trans_all_" + self.genome_version + ".fasta"
         )
-        self._cds_fasta_path = osp.join(
-            self.genome_root,
-            self.genome_version_full,
-            "orf_coding_all_" + self.genome_version + ".fasta",
+        self._cds_fasta_path = resolve(
+            self.ASSEMBLY_SET, "orf_coding_all_" + self.genome_version + ".fasta"
         )
-        # Download genome data
-        if not osp.exists(self._dna_fasta_path) or not osp.exists(self._gff_path):
-            self.download_and_extract_genome_files()
 
         db_path = osp.join(self.genome_root, "data.db")
 
@@ -611,38 +603,6 @@ class SCerevisiaeGenome(Genome):
             None,
             iter([]),
         )
-
-    def download_and_extract_genome_files(self) -> None:
-        """Download and extract genome files if they do not exist."""
-        zipped_version = f"{self.genome_version_full}.tgz"
-        url = osp.join(
-            self.sgd_base_url, self.sequence_S288C, "genome_releases", zipped_version
-        )
-
-        save_dir = self.genome_root
-        download_url(url, save_dir)
-        downloaded_file_path = osp.join(save_dir, url.split("/")[-1])
-        self.untar_tgz_file(downloaded_file_path, save_dir)
-        self.gunzip_all_files_in_dir(save_dir)
-
-    def untar_tgz_file(self, path_to_input_tgz: str, path_to_output_dir: str) -> None:
-        """Extract a .tgz file into the output directory and delete the archive."""
-        with tarfile.open(path_to_input_tgz, "r:gz") as tar_ref:
-            tar_ref.extractall(path_to_output_dir)
-        print(f"Extracted .tgz file to {path_to_output_dir}")
-        os.remove(path_to_input_tgz)  # remove the original .tgz file after extraction
-
-    def gunzip_all_files_in_dir(self, directory: str) -> None:
-        """Unzip all .gz files in a directory."""
-        gz_files = glob.glob(f"{directory}/**/*.gz", recursive=True)
-        for gz_file in gz_files:
-            with gzip.open(gz_file, "rb") as f_in:
-                with open(
-                    gz_file[:-3], "wb"
-                ) as f_out:  # remove '.gz' from output file name
-                    shutil.copyfileobj(f_in, f_out)
-            print(f"Unzipped {gz_file}")
-            os.remove(gz_file)  # remove the original .gz file
 
     def remove_deprecated_go_terms(self) -> None:
         """Drop GO terms absent from or obsolete in the GO DAG and update the DB."""

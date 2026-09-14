@@ -19,6 +19,10 @@ torchcell/models/pretrained_LLM/*
 /data/sgd/
 /data/torchcell/
 /data/sgd.gaf
+# provenance tiers (on the Mac DATA_ROOT is the repo root)
+/torchcell-genomes/
+/torchcell-library/
+/torchcell-raw/
 wandb/
 models/checkpoints/
 mechanistic_aware.csv

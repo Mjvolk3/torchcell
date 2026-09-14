@@ -27,6 +27,7 @@ from typing import Any
 import lmdb
 
 from torchcell.data.experiment_dataset import resolve_interned
+from torchcell.sequence.genome.registry import PETER2018_1011, SGD_S288C_R64, resolve
 from torchcell.verification.environment_response import (
     verify_environment_response_dataset,
     verify_environment_response_dataset_streaming,
@@ -716,9 +717,7 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
 
 # S288C reference gene universe (ORF + RNA-coding systematic names) for L4 containment.
 SGD_GENE_FASTAS = [
-    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
     "orf_coding_all_R64-4-1_20230830.fasta",
-    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
     "rna_coding_R64-4-1_20230830.fasta",
 ]
 # Empirically the Caudal measured-gene union is 0.943 contained in the SGD gene set (the
@@ -729,8 +728,8 @@ MIN_RNASEQ_GENE_CONTAINMENT = 0.90
 def _sgd_gene_set(data_root: str) -> set[str]:
     """Build the S288C systematic-name universe from the SGD ORF + RNA FASTA headers."""
     genes: set[str] = set()
-    for rel in SGD_GENE_FASTAS:
-        with open(osp.join(data_root, rel)) as handle:
+    for name in SGD_GENE_FASTAS:
+        with open(resolve(SGD_S288C_R64, name, data_root=data_root)) as handle:
             for line in handle:
                 if line.startswith(">"):
                     genes.add(line[1:].split()[0])
@@ -1532,10 +1531,8 @@ SEGREGANT_GROWTH_DATASETS: dict[str, dict[str, Any]] = {
     "bloom2019": {
         "root": "data/torchcell/bloom2019",
         "raw_mirror": "torchcell-raw/bloomRareVariantsContribute2019",
-        "assembly_index": (
-            "torchcell-library/peterGenomeEvolution10112018/data/"
-            "1011Assemblies.tar.gz.member_index.tsv"
-        ),
+        # the member index is resolved from the genomes tier (Peter 2018 set)
+        "assembly_index": "1011Assemblies.tar.gz.member_index.tsv",
         # 13,950 segregants x 38 served conditions (YPD;;2 / YPD;;3 are regressors,
         # not conditions; 4NQO was removed upstream).
         "expected_count": 530100,
@@ -1581,7 +1578,9 @@ def run_segregant_growth(data_root: str) -> bool:
             expected_count=spec["expected_count"],
             raw_dir=osp.join(abs_root, "raw"),
             raw_mirror=osp.join(data_root, spec["raw_mirror"]),
-            assembly_index_path=osp.join(data_root, spec["assembly_index"]),
+            assembly_index_path=resolve(
+                PETER2018_1011, spec["assembly_index"], data_root=data_root
+            ),
             genome=genome,
             sgd_genes=sgd_genes,
             gene_set=segregant_gene_set(osp.join(abs_root, "preprocess")),

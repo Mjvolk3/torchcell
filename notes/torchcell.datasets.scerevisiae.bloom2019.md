@@ -213,3 +213,16 @@ directly.
 - The `RESOLVED_MIXTURE` route means tunicamycin's `environment perturbation` node joins on
   ChEBI, not on an InChIKey. Any query keyed strictly on `inchikey` will miss that one
   condition (13,950 records).
+
+## 2026.09.14 - Parent assemblies resolved from the genomes tier
+
+Amends the 2026.09.12 statement that the parent assemblies "stay under
+`peterGenomeEvolution10112018/data/`": they are still never extracted, but the
+loader-facing copy is now the genomes tier set `peter2018_1011_assemblies`
+([[torchcell.sequence.genome.registry]]), resolved and sha256-verified at `process()`.
+`PETER_DIR_REL` is gone; before reading the member index, `process()` checks that the
+tier's manifest pins `1011Assemblies.tar.gz` at `ASSEMBLY_TAR_SHA256`, so the stored
+`assembly_sha256` literals and the dereferenceable bytes cannot drift apart. Stored records
+are byte-identical (they hold `<tar>::<member>` and the tarball sha256, no path); the dev
+store still reads 530,100 records, and the member index read through the tier equals the
+library copy (1,010 entries). The library key's `data/` is retained untouched.

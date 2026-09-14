@@ -110,3 +110,13 @@ Lambda 1e-3 remains the fitness chain's 22034665 / 22034668 / 22034671. What the
 does not cover: the random-graph control (panel f, needs the rewiring option), the
 per-term gradient probe (panel c, needs a trainer hook), and the checkpoint readouts
 for panels a, d and e.
+
+### Random-graph control submitted 2026-09-14 03:20 CDT
+
+`delta_submit_sweep.sh random` from 5d676892, chained after the sweep's last job
+22055169: 22056267 (seed 1), 22056268 (seed 2), 22056269 (seed 3), config
+`cgt_s0_r_kl_rand_031`. With these the queue holds everything the figure trains on:
+the fitness chain (whose three controls are lambda 1e-3), the 21-job sweep, and the
+three random-graph seeds; 32 jobs, all on bfjt-delta-gpu. The gradient probe is in the
+worktree they read at start. What remains is readout code over the finished runs and
+their checkpoints, not more training.

@@ -139,6 +139,37 @@ that did not exist then) and by `_adopt_current_surfaces` on every `record` / ba
   reported, since nothing served was built from it.
 - A recorded file that is now missing counts as CHANGED, not as silence.
 
+## 2026.09.14 - The full rebuild the gate asked for, and what the sweep found first
+
+The batch admission of the 14 unserved datasets BLOCKED on every served dataset
+([[plan.serve-all-50.2026.09.12]]), so the next store is a full build. Before launching it,
+a sweep over the 50 mapped dev stores found that the stores themselves were not ready: the
+`build_manifest.json` freshness check (`torchcell.provenance.build_manifest.check_manifest`
+against `load_default_surface()`) read 28 of them STALE and 8 unmanifested. The 28 were built
+in July, before the typed media library, the compound identity table and the `DoseBasis`
+change, and their closures drift on `Compound`, `DoseBasis`, `Environment`, `Media`,
+`MediaComponent` and `Phenotype`; the 8 (Caudal, both Sameith, both synth-leth DB, Ozaydin,
+Cachera, Yoshida) predate build manifests. A full build that read those LMDBs would have
+serialized the OLD media and compound content under new node ids, which is the join problem
+the campaign set out to fix. Only the 14 stores the campaign rebuilt on 2026.09.13 read fresh.
+
+So the full build is a chain, all on slurm: rebuild the 36 stores from their raw files
+(`torchcell.database.build_dataset_lmdb`, one job each, the move-aside recipe of the
+campaign), then the freshness gate over all 50 plus the L0-L4 sweep, then the all-50 adapter
+rehearsal at 1,000 records per dataset, and only then the store build. The build itself is
+`database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm`
+([[database.slurm.scripts.gilahyper_live_rebuild-slurm_docker]]): CSVs are generated from
+the dev tree mounted read-only, imported into a fresh data root on `/db`, validated (Dataset
+count and per-dataset `ExperimentMemberOf` rows against the CSVs), and only then swapped
+under `tc-neo4j-readonly` by two directory renames. The old store and the old
+`kg_manifest.json` stay beside the new ones; the new manifest is bootstrapped from the live
+store, so the next admission is judged against what the store actually holds.
+
+One more thing the sweep turned up: 174 files under the dev tree's `preprocess/` directories
+were owned by uid 7474 (hardlinked with the build tree, link count 2), so the first ten
+rebuild jobs died on `PermissionError` writing `data.csv` / `gene_set.json`. They were
+chowned to the dev user through a root container and resubmitted.
+
 `format_report` gains one line, `value surface: unchanged (3 files)` /
 `value surface: CHANGED: <files> (acknowledged: ...)` /
 `value surface: not recorded (...)`.

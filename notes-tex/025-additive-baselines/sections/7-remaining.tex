@@ -1,0 +1,111 @@
+%% notes-tex/025-additive-baselines/sections/7-remaining.tex
+
+\section{What is established, and what is left\secstatus{todo}}
+\label{sec:remaining}
+
+\subsection{Established\secstatus{todo}}
+
+The additive null is fit on the same records, splits and label the transformer
+uses, with the ridge penalty chosen on validation and reported on test, under both
+arms. On the published split the transformer's margin over a model that cannot
+represent interaction is real and small, and most of what every model scores there
+is screen identity: a model that never looks at the third gene reaches 97 percent
+of the additive null, and holding out whole query doubles drops the additive null
+from 0.400 to 0.185 on arm Q and to $0.127 \pm 0.033$ over five folds, and inverts
+the ordering of the baselines.\iflong{} Every model in the comparison receives the
+same information, the identity of the three perturbed genes; that is a reading of
+the code, verified by a hand-built forward pass that reproduces the recorded
+metrics. The graphs are load-bearing during training: they carried 99.99 percent of
+the 010 loss, their heads recover their graphs, and the matched pair of runs without
+the penalty does not train.\fi
+
+\subsection{Not established\secstatus{todo}}
+
+\notesec{The transformer has not been measured on held-out screens}
+Table~\ref{tab:heldout} has no transformer test number on arm Q. Four runs give
+validation trajectories that peak by epoch 7 and decline, and none has been scored
+on test. Whether the $+0.04$ margin of the random split survives held-out screens
+is not measured, in either direction.
+
+\iflong
+\notesec{The reproduction is faithful but not bit-exact}
+The hand-built forward pass matches the recorded 010 metrics to the fourth decimal,
+not exactly. The original runs used mixed bf16 precision and the reproduction runs
+in fp32, which is the likely source and has not been verified by rerunning in
+bf16. The conclusions of Section~\ref{sec:paired} rest on correlations at the
+second decimal and are not sensitive to a fourth-decimal shift.
+
+\notesec{One seed of the nonlinear baseline enters the paired analysis}
+Table~\ref{tab:paired} uses B5 seed 0. The three seeds agree closely on aggregate
+metrics, but their record-level agreement with each other was not measured.
+
+\notesec{Whether the graphs carry information is separate from whether they are
+load-bearing}
+The runs without the graph penalty fail to train, and the penalty was almost the
+entire loss. Neither separates the graphs supplying biological structure from a
+large auxiliary term supplying conditioning that the optimization needs. The
+control that would separate them, a comparable penalty against degree-matched
+random graphs, has not been run, and the matched pair itself ran 30 epochs with
+one diverged arm rather than three replicates.
+
+\notesec{Nothing here bears on the architecture's merits elsewhere}
+The set-function reduction of Section~\ref{sec:cgt} is specific to the 010
+configuration, where the masking and propagation arms are off and the
+perturbation transform is one block. A configuration that switches those on would
+have a strain-dependent encoder path and would need its own reading.
+\fi
+
+\subsection{What is left before this enters the main text\secstatus{todo}}
+
+\begin{enumerate}
+\item \textbf{Score GH 1640's epoch 7 checkpoint on the arm Q test part.} The
+  checkpoint survives
+  (\file{$DATA_ROOT/models/checkpoints/327csnlk-best-pearson-epoch=07-val*}). One
+  scoring pass fills the first slot of Figure~\ref{fig:disjointruns}c and gives the
+  first transformer test number against B1 0.185 and B5 0.141. The encoder runs
+  once and the per-record work is one cross-attention and a readout, so this runs
+  on CPU.
+\item \textbf{Replicate the 010 configuration on arm Q.} Three seeds of
+  \texttt{cgt\_s0\_q\_kl\_004} with a test evaluation at the best validation epoch,
+  under one fixed epoch budget. GH 1640 peaked at epoch 7 and 36 epochs cost the 12
+  hour wall clock, so a 20 epoch budget with checkpoint-on-best is enough. These
+  fill the remaining slots of Figure~\ref{fig:disjointruns}c and give the
+  transformer row of Table~\ref{tab:heldout} a spread.
+\item \textbf{Decide whether the constant-learning-rate variants belong in the
+  ladder.} The IGB runs are a different model, readout and schedule. If they are to
+  be compared to the nulls they need the treatment of item 2: a learnable-table
+  control at constant learning rate on arm Q
+  (\texttt{cgt\_s0\_q\_kl\_ctrl\_016}, which had no run on W\&B as of
+  2026-09-11), seeds, and test scores. Otherwise they stay in
+  Figure~\ref{fig:disjointruns}a,b as validation trajectories and do not enter
+  Figure~\ref{fig:ladders}.
+\item \textbf{A paired bootstrap on arm Q test.} The same 2{,}000-resample
+  interval that established the random-split margin, on the arm Q predictions, is
+  what turns a transformer minus B1 difference into a claim. It follows from item
+  1 at no cost.
+\item \textbf{Fold spread for the transformer, or an explicit statement that it is
+  unaffordable.} Panel d of Figure~\ref{fig:ladders} is five folds for the nulls. A
+  transformer fold costs about 12 hours of one GilaHyper node per 36 epochs, so five
+  folds by three seeds is 15 such runs. If the main text reports arm Q alone it
+  should say so and cite the fold spread of the null as the scale of the
+  split-to-split variation.
+\item \textbf{B5 on GPU.} The 025 B5 fit ran on CPU and differs from 010's GPU fit
+  by 0.006 on arm R. A GPU refit closes the one row of Table~\ref{tab:heldout} that
+  is not an exact reproduction.
+\iflong
+\item \textbf{The graph control.} A run with the penalty of Eq.~\ref{eq:graphreg}
+  against degree-matched random graphs, to separate the graphs carrying structure
+  from a large penalty carrying conditioning.
+\fi
+\item \textbf{Bibliography.} The Visani preprint, Tran 2026 and Kuzmin 2018 are
+  named by DOI in prose. A Zotero collection for this document, then
+  \texttt{make bib-pull}, makes them citations.
+\end{enumerate}
+
+\iflong
+\notesec{What is not carried over from the 010 report}
+The gene-index defect of the 010 inference runs, a uniform 28-position shift that
+invalidated the design-space selections, is in \texttt{notes-tex/010-index-defect}
+and the 010 report's design-space section, and bears on the panel selection rather
+than on the ladder.
+\fi

@@ -3,13 +3,38 @@
 \section{The question, and the state of the evidence\secstatus{todo}}
 \label{sec:question}
 
-A model that claims to learn genetic interaction has to beat a null that cannot
-represent interaction, on data where the null cannot borrow the answer from the
-training set. The 010 trigenic model was never measured against such a null, and its
-published split lets every model score the identity of the screen a record came
-from. Both gaps are closed here on the 025 build, which holds the 010 records with
-bit-identical labels, under two splits: the published random split (arm R) and a
-split that never shares a Kuzmin query double between parts (arm Q).
+Tran et al.\ introduced MULTI-evolve in \emph{Science} in 2026
+(\texttt{10.1126/science.aea1820}), a protein engineering framework whose fully
+connected networks were said to learn the epistatic landscape from single and
+double mutants and to identify synergistic combinations at higher order. Visani,
+Verma and DeWitt replied in a preprint, \emph{Additive baselines furnish no evidence
+for epistasis learning by MULTI-evolve} (bioRxiv \texttt{2026.04.23.719915}), which
+does one thing: it fits the null that the original paper never fit. An
+\term{additive model} over mutations predicts a phenotype as a sum of per-mutation
+terms and assigns exactly zero to every interaction, so it is the natural null for
+any claim that a model has learned interaction, as an intercept-only model is the
+null for a claim that a model has learned anything. Their networks' predictions
+correlated with a ridge-regularized additive model's at $r > 0.999$, and on held-out
+data the network did not significantly outperform the additive model or a
+zero-hidden-layer version of itself.
+
+The analogous question for the 010 trigenic transformer is whether its held-out
+performance on the trigenic interaction score survives the same test, and it has a
+second part the protein setting does not have: the published split lets every model
+score the identity of the screen a record came from. Both are answered here on the
+025 build, which holds the 010 records with bit-identical labels, under two splits:
+the published random split (arm R) and a split that never shares a Kuzmin query
+double between parts (arm Q).
+
+\notesec{One difference in the setup, and it cuts against the null}
+In the protein setting the quantity predicted is the multimutant phenotype itself,
+which per-mutation effects explain directly. Here the quantity predicted is already
+a residual: the trigenic interaction score subtracts the expectation built from
+single and double mutant fitness before the model ever sees it. An
+additive-in-single-gene-effects model is therefore a harder null here than it is
+there, and its performance is more surprising, not less. That argument has one
+loophole, the screen structure of Section~\ref{sec:data}, and quantifying it turns
+out to matter more than anything else below.
 
 \begin{keybox}
 \textbf{Measured.} Five nulls and the nonlinear baseline on both arms, on test

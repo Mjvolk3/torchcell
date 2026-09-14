@@ -3,93 +3,290 @@
 \section{The models\secstatus{todo}}
 \label{sec:models}
 
-Let record $n$ have perturbed set $S_n$ of three genes, encoded as
-$x_n \in \{0,1\}^{|G|}$ over the $|G| = 4{,}352$ genes, with label $y_n = \tau$. A
-model is a set function $f : 2^G \to \mathbb{R}$, and its capacity to represent
-interaction is a structural property of the hypothesis class. For distinct genes
-$g$, $h$, $k$ and any $S$ disjoint from them,
-%
-\begin{equation}
-  \Delta_{gh} f(S) = f(S \cup \{g,h\}) - f(S \cup \{g\}) - f(S \cup \{h\}) + f(S),
-  \qquad
-  \Delta_{ghk} f(S) = \sum_{U \subseteq \{g,h,k\}} (-1)^{3-|U|} f(S \cup U).
-  \label{eq:deltas}
-\end{equation}
-%
-A model with $\Delta_{ghk} f \equiv 0$ cannot express a three-way interaction and is
-a null with respect to the label, whatever it is fit to.
+\subsection{Where each baseline comes from\secstatus{todo}}
+\label{sec:provenance}
 
-\notesec{B0, train mean} $\hat{y} = \bar{y}_{\mathrm{train}}$. The zero point.
+Two of the six baselines are taken from the Visani preprint. The rest were built
+here for a confounder that the protein setting does not have. Naming which is which
+matters, because a baseline borrowed from a published critique carries that
+critique's authority and one invented here does not.
 
-\notesec{B1, additive per-gene ridge}
-$\hat{y}(S) = \beta_0 + \sum_{g \in S} \beta_g$, with $\beta$ the ridge minimizer
-$(X^{\top}X + \alpha I)^{-1} X^{\top} \tilde{y}$ on the centered training labels and
-$\alpha$ chosen on validation over $\{10^{-2}, \ldots, 10^{3}\}$. Both finite
-differences vanish identically. B1 is the additive null of Visani, Verma and DeWitt
-(bioRxiv \texttt{2026.04.23.719915}) transplanted from protein variants to gene
-deletions.
-
-\notesec{B2, additive plus recurring pairs}
-B1 with one coefficient $\gamma_{gh}$ per query pair in the training split. Each
-$\gamma_{gh}$ is the mean additive residual over that screen, shrunk by
-$\alpha/(n_{gh} + \alpha)$ with $n_{gh}$ in the hundreds to thousands, so B2 is B1
-plus one nearly unshrunk offset per screen. Second-order capacity on observed pairs,
-no third-order capacity.
-
-\notesec{B3, screen mean}
-No fitted parameters. The mean training label over the records carrying the
-record's query pair; if no pair in the record recurs in training, the mean of its
-three gene means; failing that, the train mean. On arm R the first case always
-fires. On arm Q it never does, and B3 is a mean of gene means.
-
-\notesec{B4, query pair only}
-B2 without the gene terms: a per-screen offset and nothing else. The array gene
-contributes nothing, so B4's score is an upper bound on how much of the metric is
-the identity of the screen. On arm Q no test record carries a pair with a
-coefficient, and B4 is structurally zero.
-
-\notesec{B5, nonlinearity on the same features}
-A free 128-vector per gene, summed over the three perturbed genes and read out by a
-two-hidden-layer network, trained by gradient descent with early stopping on
-validation, three seeds. Exactly B1's feature space, but $\Delta_{ghk} \not\equiv 0$,
-so B5 is not a null. It is the smallest departure from B1 that has interaction
-capacity, and it isolates what capacity alone buys.
-
-\notesec{The transformer}
-The cell graph transformer of experiment 010, run on the 025 build with no change to
-architecture, loss, optimizer or schedule (\texttt{cgt\_s0\_r\_kl\_000} for arm R,
-\texttt{cgt\_s0\_q\_kl\_004} for arm Q). Its strain-dependent computation is a set
-function over the three perturbed gene identities, the same input the nulls see. The
-nine interaction graphs enter only through a penalty on layer-1 attention during
-training, so they shape the weights and are absent from the prediction function. The
-reading of the code that establishes both properties is in the 010 report and is
-not repeated.
-
-%% SOURCE: structural, derived from the model definitions above; no data involved.
+%% SOURCE: structural; the two external rows cite the preprint by DOI.
 \begin{table}[htbp]
 \centering
 \footnotesize
-\caption{What each model can represent. The last two columns are properties of the
-hypothesis class, not fitted results. Only B5 and the transformer can express a
-three-way interaction, which is what the label is.}
+\caption{Provenance of the six baselines.}
+\label{tab:modelorigin}
+\begin{tabular}{lll}
+\toprule
+Model & Origin & Corresponds to \\
+\midrule
+B0 & standard & intercept-only null \\
+B1 & Visani et al.\ 2026 & their ridge-regularized additive model \\
+B2 & this analysis & B1 extended to observed pairs \\
+B3 & this analysis & unregularized counterpart of B4 \\
+B4 & this analysis & the Kuzmin screen-structure confounder \\
+B5 & Visani et al.\ 2026 & their zero-hidden-layer control, run in reverse \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+B1 is their additive null transplanted onto gene deletions. B5 inverts their
+zero-hidden-layer control: where they removed nonlinearity from the published
+architecture, B5 adds the smallest amount of nonlinearity to the additive feature
+space, so the two bracket the same gap from opposite sides. B3 and B4 have no
+counterpart in the preprint because the confounder they measure is specific to a
+synthetic genetic array: a protein engineering campaign has no analog of a query
+double mutant recurring across thousands of measured variants.
+
+\subsection{Notation and the interaction operator\secstatus{todo}}
+
+Let $G$ be the 4{,}352 genes appearing in the build and let record $n$ have
+perturbed set $S_n \subset G$ with $|S_n| = 3$. Encode it as
+$x_n \in \{0,1\}^{|G|}$ with $x_{n,g} = 1$ exactly when $g \in S_n$, so that
+$\lVert x_n \rVert_1 = 3$ for every record, and write $y_n$ for the trigenic
+interaction score of Eq.~\ref{eq:tau}.
+
+A model is a set function $f : 2^{G} \to \mathbb{R}$. Its capacity to represent
+interaction is measured by finite differences. For distinct genes $g, h, k$ and
+any $S$ disjoint from them,
+%
+\begin{align}
+  \Delta_g f(S) &= f(S \cup \{g\}) - f(S), \\
+  \Delta_{gh} f(S) &= f(S \cup \{g,h\}) - f(S \cup \{g\}) - f(S \cup \{h\}) + f(S),
+  \label{eq:delta2}\\
+  \Delta_{ghk} f(S) &= \sum_{U \subseteq \{g,h,k\}} (-1)^{3-|U|} f(S \cup U).
+  \label{eq:delta3}
+\end{align}
+%
+$\Delta_{gh} f \equiv 0$ says the model cannot express any pairwise interaction;
+$\Delta_{ghk} f \equiv 0$ says it cannot express any three-way interaction. These
+are the properties that make a model a null, and they are structural, holding for
+every parameter setting rather than for a fitted one.
+
+\subsection{B0, the train mean\secstatus{todo}}
+
+$\hat{y} = \bar{y}_{\mathrm{train}}$. Every finite difference vanishes. Its mean
+squared error is the label variance, and it fixes the zero point against which all
+reductions are read.
+
+\subsection{B1, the additive per-gene ridge\secstatus{todo}}
+
+%
+\begin{equation}
+  \hat{y}(S) \;=\; \beta_0 + \sum_{g \in S} \beta_g ,
+  \qquad
+  \hat{\beta} \;=\; \arg\min_{\beta} \sum_{n \in \mathrm{train}}
+  \bigl(y_n - \beta_0 - x_n^{\top}\beta\bigr)^2 + \alpha \lVert \beta \rVert_2^2 ,
+  \label{eq:b1}
+\end{equation}
+%
+with $\beta_0$ unpenalized and set to $\bar{y}_{\mathrm{train}}$. Writing $X$ for
+the $n_{\mathrm{train}} \times |G|$ matrix whose rows are the $x_n$ and
+$\tilde{y} = y - \bar{y}_{\mathrm{train}}$ for the centered labels, the minimizer is
+the ridge normal equation
+%
+\begin{equation}
+  \hat{\beta} \;=\; \bigl(X^{\top} X + \alpha I\bigr)^{-1} X^{\top} \tilde{y} ,
+  \label{eq:b1closed}
+\end{equation}
+%
+which the script evaluates by LSQR on the augmented system
+$[X;\, \sqrt{\alpha}\, I]\,\beta = [\tilde{y};\, 0]$ rather than by forming the
+inverse. Substituting Eq.~\ref{eq:b1} into Eq.~\ref{eq:delta2} gives
+$\Delta_{gh}\hat{y} = 0$ and hence $\Delta_{ghk}\hat{y} = 0$ identically. B1 is the
+direct analog of the additive null in the Visani preprint.
+
+The design is well conditioned despite having 4{,}352 coefficients: with three ones
+per row and 301{,}386 training rows there are 904{,}158 gene observations, a median
+of 9 per gene in the training split with a maximum of 3{,}430. The ridge penalty is
+chosen on validation over
+$\alpha \in \{10^{-2}, 10^{-1}, 1, 3, 10, 30, 100, 300, 1000\}$ and the selected
+value is then reported on test.
+
+\subsection{B2, additive plus recurring gene pairs\secstatus{todo}}
+
+Let $P$ be the set of unordered gene pairs occurring at least five times in the
+training split, $|P| = 420$. Adding one coefficient per such pair,
+%
+\begin{equation}
+  \hat{y}(S) \;=\; \beta_0 + \sum_{g \in S} \beta_g
+  + \sum_{\{g,h\} \subseteq S,\; \{g,h\} \in P} \gamma_{gh} ,
+  \label{eq:b2}
+\end{equation}
+%
+gives $\Delta_{gh}\hat{y} = \gamma_{gh}$ for a pair in $P$ and zero otherwise. B2
+therefore has second-order capacity on observed pairs. It still has \emph{no}
+third-order capacity: $\Delta_{ghk}\hat{y} = 0$ identically. Since the label is
+itself a third-order residual, B2 remains a null with respect to the quantity being
+predicted.
+
+The fit is the same ridge as B1 on the wider design $X = [X_G \;\; X_P]$, where
+$X_P$ is the $n_{\mathrm{train}} \times |P|$ pair-incidence matrix, so
+$(\hat{\beta}, \hat{\gamma})$ is Eq.~\ref{eq:b1closed} with $X$ replaced by
+$[X_G \;\; X_P]$ and one penalty $\alpha$ on both blocks. The pair block has a closed
+form of its own that says what B2 learns. Every record contains exactly one
+recurring pair (Section~\ref{sec:data}), so the stationarity condition of the ridge
+objective in $\gamma_{gh}$ involves only that pair's records, and
+%
+\begin{equation}
+  \hat{\gamma}_{gh} \;=\; \frac{\sum_{n \in \mathrm{train},\; \{g,h\} \subseteq S_n}
+  \bigl(y_n - \beta_0 - x_n^{\top}\hat{\beta}\bigr)}{n_{gh} + \alpha} ,
+  \label{eq:b2gamma}
+\end{equation}
+%
+with $n_{gh}$ the number of training triples carrying the pair. Each pair
+coefficient is the mean residual of the additive model over that query double's
+screen, shrunk toward zero by $\alpha / (n_{gh} + \alpha)$. With $n_{gh}$ in the
+hundreds to thousands and the selected $\alpha$ in the units to tens, the shrinkage
+is at most a few percent, so B2 is B1 plus one nearly unshrunk offset per screen.
+
+\subsection{B3, the empirical screen mean\secstatus{todo}}
+\label{sec:b3}
+
+B3 has no fitted parameters. Its per-gene and per-pair quantities are means of the
+training label over the records that contain the gene or the pair,
+%
+\begin{equation}
+  \bar{y}_g \;=\; \frac{\sum_{n \in \mathrm{train}} x_{n,g}\, y_n}{\sum_{n \in \mathrm{train}} x_{n,g}},
+  \qquad
+  \bar{y}_{gh} \;=\; \frac{\sum_{n \in \mathrm{train}} x_{n,g}\, x_{n,h}\, y_n}{\sum_{n \in \mathrm{train}} x_{n,g}\, x_{n,h}} ,
+  \label{eq:b3means}
+\end{equation}
+%
+so $\bar{y}_g$ averages $y$ over exactly the training triples in which gene $g$ is
+one of the three deletions, and $\bar{y}_{gh}$ over those carrying both $g$ and
+$h$. The prediction backs off through three levels,
+%
+\begin{equation}
+  \hat{y}(S) \;=\;
+  \begin{cases}
+    \operatorname{mean}\{\bar{y}_{gh} : \{g,h\} \subseteq S,\; n_{gh} \ge 5\}
+      & \text{if any pair in } S \text{ recurs,} \\
+    \operatorname{mean}\{\bar{y}_{g} : g \in S,\; n_g \ge 5\}
+      & \text{otherwise, if any gene in } S \text{ has 5 training records,} \\
+    \bar{y}_{\mathrm{train}} & \text{otherwise,}
+  \end{cases}
+  \label{eq:b3}
+\end{equation}
+%
+with $n_g$ and $n_{gh}$ the training counts. On the random split every test record
+carries a recurring pair, so the first case always fires and B3 is the per-screen
+mean of the label. On a query-pair-disjoint split no test record carries a
+recurring pair, the first case never fires, and B3 becomes the mean of its three
+gene means.
+
+\subsection{B4, the screen indicator\secstatus{todo}}
+\label{sec:b4}
+
+B4 drops the per-gene terms from Eq.~\ref{eq:b2} and keeps only the pair terms,
+%
+\begin{equation}
+  \hat{y}(S) \;=\; \beta_0 + \sum_{\{g,h\} \subseteq S,\; \{g,h\} \in P} \gamma_{gh} ,
+  \qquad
+  \hat{\gamma}_{gh} \;=\; \frac{\sum_{n \in \mathrm{train},\; \{g,h\} \subseteq S_n}
+  \bigl(y_n - \bar{y}_{\mathrm{train}}\bigr)}{n_{gh} + \alpha} ,
+  \label{eq:b4}
+\end{equation}
+%
+where the second expression is Eq.~\ref{eq:b2gamma} with no gene block. Because the
+recurring pairs are the Kuzmin query doubles, B4 is a per-screen offset: for a
+triple made of a query pair and an array gene, the array gene contributes nothing
+at all. Whatever B4 achieves is therefore an upper bound on how much of the metric
+is explained by knowing which screen a record came from.
+
+Eq.~\ref{eq:b4} at $\alpha \to 0$ is $\bar{y}_{gh}$ of Eq.~\ref{eq:b3means}, so on
+the random split, where the first case of Eq.~\ref{eq:b3} always fires, B3 and B4
+are the same predictor up to the shrinkage $\alpha/(n_{gh}+\alpha)$, which Pearson
+does not see. Table~\ref{tab:heldout} reports them equal to three decimals for that
+reason. On a disjoint split they part company: B4 is structurally zero and B3 falls
+back to gene means.
+
+\subsection{B5, nonlinearity on the same features\secstatus{todo}}
+
+Give each gene a free vector $e_g \in \mathbb{R}^{128}$, sum over the perturbed set
+and read out with a two-hidden-layer network $\phi$,
+%
+\begin{equation}
+  \hat{y}(S) \;=\; \phi\!\left(\sum_{g \in S} e_g\right),
+  \qquad
+  \phi : \mathbb{R}^{128} \to \mathbb{R}.
+  \label{eq:b5}
+\end{equation}
+%
+This is permutation invariant and uses precisely B1's feature space, the identity of
+the three genes and nothing more. Because $\phi$ is nonlinear, $\Delta_{gh}\hat{y}$
+and $\Delta_{ghk}\hat{y}$ are not identically zero, so B5 is not a null. It is the
+smallest departure from B1 that has interaction capacity, and it isolates what
+capacity alone buys. It is trained by gradient descent with early stopping on
+validation, with three seeds, so it reports a spread rather than a single number.
+
+\subsection{The transformer\secstatus{todo}}
+\label{sec:cgt}
+
+The cell graph transformer of experiment 010, run on the 025 build with no change
+to architecture, loss, optimizer or schedule (\texttt{cgt\_s0\_r\_kl\_000} for arm
+R, \texttt{cgt\_s0\_q\_kl\_004} for arm Q). Gene identity enters through a free
+table $E$ of 6{,}607 rows and 180 columns, which an eight-layer encoder $T$ maps
+once, at batch size one and independently of the strain, to per-gene vectors
+$Z = T(E)$ and a CLS vector $h_{\mathrm{CLS}}$. For a record with perturbed set $S$,
+the perturbation transform performs cross-attention in which all genes query the
+rows $\{Z_p : p \in S\}$, followed by a residual, a layer norm and a feedforward
+block, giving $H^{\mathrm{pert}}_i = g(Z_i + c_S)$ with $c_S$ the attended context.
+The head pools over the perturbed genes and reads out,
+%
+\begin{equation}
+  z_S \;=\; \frac{1}{|S|}\sum_{i \in S} H^{\mathrm{pert}}_i ,
+  \qquad
+  \hat{y} \;=\; \mathrm{MLP}\!\left([\,h_{\mathrm{CLS}} \,\Vert\, z_S\,]\right),
+  \label{eq:cgt}
+\end{equation}
+%
+with the MLP being $\mathrm{Linear}(360, 180) \to \mathrm{ReLU} \to
+\mathrm{Linear}(180, 1)$. Since $h_{\mathrm{CLS}}$ is constant, Eq.~\ref{eq:cgt} is
+a function of $z_S$ alone, and $z_S$ is a permutation-invariant pooling of
+quantities derived from $\{Z_p : p \in S\}$: the transformer is a set function on
+the three perturbed gene identities, built on a free per-gene vector, the same
+functional shape as the nulls, which are set functions on the same identities built
+on a free per-gene scalar. Comparing Eq.~\ref{eq:b5} with Eq.~\ref{eq:cgt}, both
+give every gene a free vector, pool over the three perturbed genes in a
+permutation-invariant way, and pass the pooled vector through a small network; the
+transformer's pooling is richer and its per-gene vectors are $Z = T(E)$ rather than
+a raw table. The nine interaction graphs enter only through a penalty on layer-1
+attention during training, so they shape the weights and are absent from the
+prediction function\iflong{} (Section~\ref{sec:sees})\fi.
+
+\subsection{Summary of capacity\secstatus{todo}}
+
+%% SOURCE: structural, derived above from the model equations; no data involved
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{What each model can represent. B3 is listed by the case of Eq.~\ref{eq:b3}
+that fires: the pair case on the random split, the gene case on a
+query-pair-disjoint split. The last two columns are structural properties of the
+hypothesis class, not fitted results. Only B5 and the cell graph transformer can
+express a three-way interaction, which is what the label is.}
 \label{tab:capacity}
-\begin{tabular}{llllcc}
+\begin{tabular}{lp{0.22\textwidth}p{0.24\textwidth}lcc}
 \toprule
 Model & Per-gene quantity & Set aggregation & Fit by & $\Delta_{gh} \not\equiv 0$ & $\Delta_{ghk} \not\equiv 0$ \\
 \midrule
 B0 & none & none & train mean & no & no \\
-B1 & free scalar & sum & ridge & no & no \\
-B2 & free scalar & sum, plus one offset per recurring pair & ridge & yes & no \\
-B3 & label mean over training triples & mean over pairs, else genes & label means & yes & no \\
-B4 & none & one offset per recurring pair & ridge & yes & no \\
-B5 & free 128-vector & sum, then MLP & gradient descent & yes & yes \\
-CGT & free 180-vector through an encoder & attention over $S$, mean, MLP & gradient descent & yes & yes \\
+B1 & free scalar $\beta_g$ & sum & ridge, Eq.~\ref{eq:b1closed} & no & no \\
+B2 & free scalar $\beta_g$ & sum, plus $\gamma_{gh}$ per recurring pair & ridge, Eq.~\ref{eq:b2gamma} & yes & no \\
+B3, pair case & none & mean of $\bar{y}_{gh}$ over the recurring pairs in $S$ & label means, Eq.~\ref{eq:b3means} & yes & no \\
+B3, gene case & $\bar{y}_g$, the label mean over training triples containing $g$ & mean over $S$ & label means, Eq.~\ref{eq:b3means} & no & no \\
+B4 & none & $\gamma_{gh}$ per recurring pair & ridge, Eq.~\ref{eq:b4} & yes & no \\
+B5 & free 128-vector $e_g$ & sum, then MLP & gradient descent & yes & yes \\
+CGT & free 180-vector via $T(E)$ & attention over $S$, mean, MLP, Eq.~\ref{eq:cgt} & gradient descent & yes & yes \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \notesec{Comparability}
 Every model is fit on the training part of the arm it is reported under, makes its
-free choices on the validation part, and is reported on test. The transformer's
-label normalizer is fit on the training part for arm Q and on all of S0 for arm R;
-Pearson is invariant to that choice, and the nulls use the training mean only.
+free choices on the validation part, and is reported on test, over the full part in
+raw $\tau$ units. The transformer's label normalizer is fit on the training part for
+arm Q and on all of S0 for arm R; Pearson is invariant to that choice, and the
+nulls use the training mean only\iflong{} (Section~\ref{sec:comparability})\fi.

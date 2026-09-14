@@ -1,0 +1,63 @@
+%% notes-tex/025-additive-baselines/025-additive-baselines-short.tex
+%% [[experiments.025-solid-growth.scripts.additive_baselines_025_panels]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/025-additive-baselines/025-additive-baselines-short.tex
+%%
+%% The SHORT version, for sharing: the same sections as 025-additive-baselines.tex
+%% with every \iflong ... \fi block dropped. The model equations, the two 025
+%% figures, the ladder tables and the disjoint transformer runs stay; the code
+%% reading, the graph-penalty and paired-prediction analyses, and the extended
+%% limits are in the long version only. Build with `make short`.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\newif\iflong
+\longfalse
+
+\title{\vspace{-1.5em}Additive Baselines on the 025 Build\\
+  {\large The trigenic ladder under a random and a query-pair-disjoint split,
+   short version}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Five nulls that cannot represent a three-way interaction, and a nonlinear baseline
+on the same features that can, are fit on exactly the 376{,}732 trigenic records
+and the two splits the 025 transformer arms train on. Under the published
+random-over-records split the per-gene additive ridge reaches 0.400 test Pearson, a
+model that sees only which Kuzmin query double a triple carries reaches 0.390, and
+the transformer checkpoints reach 0.438 to 0.455. Holding out whole query doubles
+collapses the additive ridge to 0.185 on the one disjoint split the transformer
+trains on, and to $0.127 \pm 0.033$ over five disjoint folds, and drops the
+nonlinear baseline below the additive one. Four transformer runs have trained on
+the disjoint split, one in the 010 configuration and three with a fixed sequence
+embedding and a constant learning rate. Every one of them peaks on validation
+between epoch 2 and epoch 7, at 0.199 to 0.270 against an additive validation null
+of 0.150, and every one falls back afterward; the 010 configuration ends below the
+null at 0.131. None has a test score, so whether the transformer's margin over
+additivity survives held-out screens is not yet measured, and the measurements that
+would settle it are listed.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-data}
+\input{sections/3-models}
+\input{sections/5-ladder}
+\input{sections/6-disjoint-transformer}
+\input{sections/7-remaining}
+
+\end{document}

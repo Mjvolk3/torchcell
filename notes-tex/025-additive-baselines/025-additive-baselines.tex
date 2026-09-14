@@ -2,21 +2,23 @@
 %% [[experiments.025-solid-growth.scripts.additive_baselines_025_panels]]
 %% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/025-additive-baselines/025-additive-baselines.tex
 %%
-%% The condensed, main-text-bound version of notes-tex/010-additive-baselines: the
-%% additive null ladder on the 025 build under both transformer arms, multi-panel
-%% figures only, and placeholders where a measurement is still outstanding. The
-%% long-form reading of the model code, the paired-prediction analysis and the
-%% index defect stay in the 010 document and are not repeated here.
+%% The LONG version: the additive-null ladder on the 025 build under both transformer
+%% arms, with the full model equations, the reading of the transformer code, the
+%% graph-penalty and paired-prediction analyses carried over from the 010 report, and
+%% the query-pair-disjoint transformer runs. 025-additive-baselines-short.tex builds
+%% the SHORT version for sharing from the same sections: everything inside
+%% \iflong ... \fi is dropped there, and the equations stay.
 %%
-%% Build:  make            -> 025-additive-baselines.pdf   (draft: status chips)
-%%         make check      -> formatting / provenance / style gate
+%% Build:  make            -> 025-additive-baselines.pdf        (long)
+%%         make short      -> 025-additive-baselines-short.pdf  (short)
+%%         make check      -> gate on the long build; make check-short on the short
 %%         make plots      -> re-convert the panels from ASSET_IMAGES_DIR
 %%
-%% Every figure and table is written by
-%% experiments/025-solid-growth/scripts/additive_baselines_025_panels.py from
-%% result files under experiments/025-solid-growth/results/ and
-%% experiments/010-kuzmin-tmi/results/. The prose numbers come from
-%% results/additive_baselines_025_panels_summary.json.
+%% Every figure and table is written by a committed script: the 025 panels and tables
+%% by experiments/025-solid-growth/scripts/additive_baselines_025_panels.py, the two
+%% 010 figures by experiments/010-kuzmin-tmi/scripts/graph_penalty_vs_loss.py and
+%% paired_prediction_agreement.py. Architecture claims are read from
+%% torchcell/models/equivariant_cell_graph_transformer.py, not recalled.
 
 \documentclass[10pt,a4paper]{article}
 \usepackage[draft]{tcdoc}
@@ -26,9 +28,12 @@
 
 \emergencystretch=3.5em
 
+\newif\iflong
+\longtrue
+
 \title{\vspace{-1.5em}Additive Baselines on the 025 Build\\
   {\large The trigenic ladder under a random and a query-pair-disjoint split,
-   in preparation for the main text}}
+   what each model sees, and what the graphs did}}
 \author{Michael Volk}
 \date{\today}
 
@@ -38,21 +43,37 @@
 
 \begin{abstract}
 \noindent
-Five nulls that cannot represent a three-way interaction, and a nonlinear baseline
-on the same features that can, are fit on exactly the 376{,}732 trigenic records
-and the two splits the 025 transformer arms train on. Under the published random-over-records
+A model that claims to learn genetic interaction has to beat a null that cannot
+represent interaction. Five such nulls, and a nonlinear baseline on the same
+features that can, are fit on exactly the 376{,}732 trigenic records and the two
+splits the 025 transformer arms train on. Under the published random-over-records
 split the per-gene additive ridge reaches 0.400 test Pearson, a model that sees
 only which Kuzmin query double a triple carries reaches 0.390, and the transformer
-checkpoints reach 0.438 to 0.455. Holding out whole query doubles collapses the
-additive ridge to 0.185 on the one disjoint split the transformer trains on, and to
-$0.127 \pm 0.033$ over five disjoint folds, and drops the nonlinear baseline below
-the additive one. Four transformer runs have trained on the disjoint split, one in
-the 010 configuration and three with a fixed sequence embedding and a constant
-learning rate. Every one of them peaks on validation between epoch 2 and epoch 7, at
-0.199 to 0.270 against an additive validation null of 0.150, and every one falls
-back afterward; the 010 configuration ends below the null at 0.131. None has a test
-score, so whether the transformer's margin over additivity survives held-out screens
-is not yet measured, and the measurements that would settle it are listed.
+checkpoints reach 0.438 to 0.455. Reading the model code establishes what that
+comparison is between: the transformer's encoder never sees the strain, the nine
+interaction graphs enter training through a penalty on layer-1 attention rather
+than through the function that maps a checkpoint to a prediction, and the
+strain-dependent computation is a set function over the three perturbed gene
+identities, the same input and the same hypothesis-class shape the nulls have. The
+penalty was not incidental: it carried 99.99 percent of the 010 training loss, the
+regularized heads recover their graphs at 0.73 to 1.00 recall, and a matched pair
+of runs without it fails to train. Rebuilding the forward pass reproduces the
+recorded metrics to the fourth decimal and shows the transformer is not a relabeled
+additive model, correlating with it at 0.73 to 0.76 rather than the 0.999 reported
+for MULTI-evolve, with a gain of $+0.038$ to $+0.055$ Pearson whose bootstrap
+intervals exclude zero.
+
+The result that changes what the metric means is the split. Holding out whole query
+doubles collapses the additive ridge to 0.185 on the one disjoint split the
+transformer trains on, and to $0.127 \pm 0.033$ over five disjoint folds, and drops
+the nonlinear baseline below the additive one. Four transformer runs have trained
+on the disjoint split, one in the 010 configuration and three with a fixed sequence
+embedding and a constant learning rate. Every one peaks on validation between epoch
+2 and epoch 7, at 0.199 to 0.270 against an additive validation null of 0.150, and
+every one falls back afterward; the 010 configuration ends below the null at 0.131.
+None has a test score, so whether the transformer's margin over additivity survives
+held-out screens is not yet measured, and the measurements that would settle it are
+listed.
 \end{abstract}
 
 \vspace{0.5em}
@@ -62,8 +83,9 @@ is not yet measured, and the measurements that would settle it are listed.
 \input{sections/1-question}
 \input{sections/2-data}
 \input{sections/3-models}
-\input{sections/4-ladder}
-\input{sections/5-disjoint-transformer}
-\input{sections/6-remaining}
+\input{sections/4-sees}
+\input{sections/5-ladder}
+\input{sections/6-disjoint-transformer}
+\input{sections/7-remaining}
 
 \end{document}

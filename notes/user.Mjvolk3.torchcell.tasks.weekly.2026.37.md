@@ -55,3 +55,7 @@ created: 1788913645350
 ## 2026.09.13
 
 - [x] 025 additive-baselines Figure 1 moved from hatched validation bars to the shade encoding (light fill for test, darker line color for a validation maximum), captions reworded, PDF rebuilt and republished to Zotero [[experiments.025-solid-growth.scripts.additive_baselines_025_panels]]
+
+## 2026.09.14
+
+- [x] `notes-tex/025-additive-baselines` split into a long and a short build from one set of sections: both keep every model equation, the long one restores the 010 code reading, the graph-penalty and paired-prediction figures, the reproduction and ablation tables, and the extended limits; both published to Zotero [[experiments.025-solid-growth.scripts.additive_baselines_025_panels]]

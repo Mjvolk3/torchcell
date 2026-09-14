@@ -35,10 +35,6 @@ PLOT_SLUG := 008-xue-ffa
 PLOT_SRC  := $(REPO)/notes/assets/images/$(PLOT_SLUG)
 DRAWIO_SRC := $(REPO)/notes/assets/drawio
 
-# The network overlay lives in a subdirectory of the images tree rather than at its top
-# level, and it is included under a shorter name, so it gets its own rule.
-OVERLAY_SVG := $(PLOT_SRC)/ffa_multigraph_overlays/multiplicative/all_ffa/multiplicative_ffa_multigraph_Genetic_Interactions_connected_unenriched_Total_Titer_fdr_within.svg
-
 ifeq ($(shell uname -s),Darwin)
   DRAWIO        ?= /Applications/draw.io.app/Contents/MacOS/draw.io
   DRAWIO_EXPORT  = "$(DRAWIO)" -x -f pdf --crop -o
@@ -71,11 +67,6 @@ plots: $(SHARED)
 	  s="$(PLOT_SRC)/$$n.svg"; \
 	  if [ -f "$$s" ]; then $(SVG2PDF) "$$s" "$$f"; fi; \
 	done
-	@if [ -f "$(OVERLAY_SVG)" ]; then \
-	  $(SVG2PDF) "$(OVERLAY_SVG)" figures/ffa_network_overlay.pdf; \
-	else \
-	  echo "  MISSING $(OVERLAY_SVG)"; exit 1; \
-	fi
 
 # Re-export any draw.io source this document references as figures/NAME.pdf. Use this once
 # a figure's arrangement is settled in draw.io and its \panelrow block has been replaced by

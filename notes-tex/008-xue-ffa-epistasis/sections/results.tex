@@ -225,15 +225,19 @@ itself makes the same point visually: the interacting triples span the transcrip
 set with no visible relation to which factors regulate which fatty acid genes
 (Fig.~\ref{fig:network}).
 
-\begin{figure*}[p]
-\tcfig{figures/ffa_network_overlay.pdf}{\textbf{Trigenic interactions on total fatty acid
-titer, drawn on the pathway they act through.} The ten deleted transcription factors are
-arranged in a circle at left; edges within the circle are the 44 negative and 3 positive
-trigenic interactions significant at a 5\% false discovery rate within the total-titer
-readout under the multiplicative model, restricted to triples whose three genes are
-connected in the yeast genetic interaction graph. A trigenic interaction is drawn as the
-three edges of its triangle, so an edge can carry more than one interaction. Dotted edges
-are transcription-factor-to-gene regulatory links; the remaining columns are the core fatty
-acid pathway genes, the reactions they catalyze, and the metabolites those reactions
-produce, with the five measured species and their compartments labeled.}{fig:network}
+\begin{figure*}[t]
+\tcfig{figures/panel_network_overlay.pdf}{\textbf{Trigenic interactions on total fatty acid
+titer, drawn upstream of the pathway they act through.} The ten deleted transcription
+factors are arranged in a circle at left. Edges within the circle are the 86 trigenic
+interactions significant at a 5\% false discovery rate within the total-titer readout under
+the multiplicative model, 75 negative (brick) and 11 positive (amber), each drawn as the
+three edges of its triangle; edge width is the number of interactions the pair takes part
+in, from 1 to 8, and positive is drawn over negative. Every one of the 45 pairs is in at
+least one negative interaction. Dotted arrows are regulatory links from a factor to a
+pathway gene in the SGD regulatory graph or TFLink; three of the ten factors have none.
+The columns to the right are the 13 core fatty acid pathway genes, the 64 reactions they
+catalyze, the intermediates those reactions consume or produce, and the 31 measured
+species, one node per compartment (peroxisome, ER membrane, lipid particle) with a bracket
+per species. LPA, 1-acyl-sn-glycerol 3-phosphate; PA, phosphatidate, written as the two
+acyl chains.}{fig:network}
 \end{figure*}

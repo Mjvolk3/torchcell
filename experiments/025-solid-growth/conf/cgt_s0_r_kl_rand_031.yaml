@@ -1,0 +1,29 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_rand_031.yaml
+#
+# THE RANDOM-GRAPH CONTROL of the graph-regularization sweep (panel f of
+# FigS-graph-regularization-sweep): is it the biology or any target? cgt_s0_r_kl_ctrl_013
+# unchanged (soft KL at lambda 1e-3 on layer 1, all nine heads, constant-rate protocol)
+# except that each of the nine gene-gene graphs is rewired before the model sees it,
+# keeping every gene's degree (in and out for the directed graphs, the single degree for
+# the symmetric STRING channels) and randomizing the wiring by seeded double-edge swaps
+# (torchcell.graph.rewire). The model is regularized toward, and the edge-recovery
+# diagnostics scored against, the rewired graphs. Rewiring seed = the run seed.
+#
+# lambda 1e-3 is 010's operating point and the ladder's measured anchor; the mock-up
+# says "best lambda from the sweep", which is not known at submission. If the sweep's
+# best differs, the arm is one override away: model.graph_regularization.graph_reg_lambda.
+#
+#   sbatch --account=bfjt-delta-gpu --time=24:00:00 -J 025-rand-nvme-s1 \
+#     experiments/025-solid-growth/scripts/delta_cgt.slurm cgt_s0_r_kl_rand_031 +seed=1
+defaults:
+  - cgt_s0_r_kl_ctrl_013
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, random_graph, degree_matched, graph_reg_sweep, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30]
+
+model:
+  random_graph:
+    enabled: true
+    seed: null
+    swaps_per_edge: 5.0

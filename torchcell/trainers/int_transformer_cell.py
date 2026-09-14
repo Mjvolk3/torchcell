@@ -56,8 +56,17 @@ class RegressionTask(L.LightningModule):
         inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
         fitness_lambda: float | None = None,
+        gradient_probe_epochs: list[int] | None = None,
     ):
         """Set up the model, cloned cell graph, loss, metrics, and execution mode.
+
+        ``gradient_probe_epochs`` lists epochs at whose FIRST training batch the
+        gradient of each weighted loss term (point, distribution, graph penalty,
+        fitness) is taken separately against every parameter and its global norm
+        logged as ``probe/grad_norm/<term>``, with the norm of the summed loss as
+        ``probe/grad_norm/total``. Panel c of the graph-regularization figure: where
+        the gradient comes from, by epoch. A term without a graph (lambda 0, the hard
+        mask) logs 0. Costs one extra backward per term on one batch per listed epoch.
 
         ``fitness_lambda`` switches on the JOINT fitness objective. ``None`` (the
         default) is the single-label path, bit-for-bit what 010 and the 025
@@ -74,6 +83,9 @@ class RegressionTask(L.LightningModule):
         self.model = model
         self.execution_mode = execution_mode
         self.fitness_lambda = fitness_lambda
+        self.gradient_probe_epochs: set[int] = set(
+            int(e) for e in (gradient_probe_epochs or [])
+        )
         # Clone cell_graph to avoid modifying the dataset's original cell_graph
         # This is necessary for pin_memory compatibility in DataLoader
         self.cell_graph = cell_graph.clone()
@@ -197,6 +209,49 @@ class RegressionTask(L.LightningModule):
         temp_data["gene"].phenotype_types = [label]
         inv = self.inverse_transform(temp_data)["gene"]["phenotype_values"]
         return cast(torch.Tensor, inv).reshape(batch_size, 1)
+
+    def _gradient_norm(self, term: torch.Tensor) -> float:
+        """Global L2 norm of d(term)/d(params); 0 for a term with no graph."""
+        if not term.requires_grad:
+            return 0.0
+        params = [p for p in self.model.parameters() if p.requires_grad]
+        grads = torch.autograd.grad(term, params, retain_graph=True, allow_unused=True)
+        total = torch.zeros((), device=term.device)
+        for g in grads:
+            if g is not None:
+                total = total + g.detach().float().pow(2).sum()
+        return float(total.sqrt())
+
+    def _log_gradient_probe(
+        self, terms: dict[str, torch.Tensor], total_loss: torch.Tensor, batch_size: int
+    ) -> None:
+        """Log ``probe/grad_norm/<term>`` for each weighted term and for their sum.
+
+        Each backward is taken with ``retain_graph=True`` so the optimizer's own
+        backward on ``total_loss`` still runs afterwards; the ``.grad`` fields are not
+        touched (``torch.autograd.grad`` returns the gradients rather than
+        accumulating them).
+        """
+        norms = {name: self._gradient_norm(t) for name, t in terms.items()}
+        norms["total"] = self._gradient_norm(total_loss)
+        # The SLURM log carries the numbers too, so a run whose W&B history is lost
+        # (offline sync, a killed job) still has its probe.
+        print(
+            f"gradient probe epoch {self.current_epoch} rank {self.global_rank}: "
+            + ", ".join(f"{k}={v:.4g}" for k, v in norms.items())
+        )
+        for name, value in norms.items():
+            self.log(
+                f"probe/grad_norm/{name}", value, batch_size=batch_size, sync_dist=True
+            )
+        if norms["point"] > 0:
+            self.log(
+                "probe/grad_ratio/graph_reg_to_point",
+                norms.get("graph_reg", 0.0) / norms["point"],
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+        self.log("probe/epoch", float(self.current_epoch), sync_dist=True)
 
     def _fitness_step(
         self,
@@ -1083,8 +1138,22 @@ class RegressionTask(L.LightningModule):
             )
 
         # Joint fitness objective on the global head (opt-in, see __init__).
+        fitness_term: torch.Tensor | None = None
         if self.fitness_lambda is not None:
-            loss = loss + self._fitness_step(batch, representations, batch_size, stage)
+            fitness_term = self._fitness_step(batch, representations, batch_size, stage)
+            loss = loss + fitness_term
+
+        # Per-term gradient norms on the first batch of a probe epoch (see __init__).
+        if (
+            stage == "train"
+            and batch_idx == 0
+            and self.current_epoch in self.gradient_probe_epochs
+            and isinstance(self.loss_func, PointDistGraphReg)
+        ):
+            terms = dict(self.loss_func.last_terms)
+            if fitness_term is not None:
+                terms["fitness"] = fitness_term
+            self._log_gradient_probe(terms, loss, batch_size)
 
         # Add dummy loss for unused parameters
         dummy_loss = self._ensure_no_unused_params_loss()

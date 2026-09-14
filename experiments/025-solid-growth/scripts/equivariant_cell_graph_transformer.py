@@ -44,13 +44,13 @@ import socket
 import uuid
 
 import hydra
-from hydra.core.hydra_config import HydraConfig
 import lightning as L
 import torch
 import torch.distributed as dist
 import torch.nn as nn
 import wandb
 from dotenv import load_dotenv
+from hydra.core.hydra_config import HydraConfig
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
@@ -67,6 +67,7 @@ from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModu
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.graph.graph import build_gene_multigraph
+from torchcell.graph.rewire import rewire_cell_graph
 from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
 from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
@@ -313,7 +314,7 @@ def main(cfg: DictConfig) -> None:
         subset_cfg["split_file"], subset_cfg["split_key"]
     )
     split_sizes = {k: len(v) for k, v in pinned_split_indices.items()}
-    n_pool = len(dataset) if index_subset is None else len(index_subset)
+    n_pool = "every" if index_subset is None else len(index_subset)
     print(
         f"arm: subset={subset_cfg['indices']} ({n_pool} records), "
         f"split={subset_cfg['split_file']} {split_sizes}, "
@@ -321,7 +322,6 @@ def main(cfg: DictConfig) -> None:
     )
     wandb.log(
         {
-            "arm/n_subset": n_pool,
             "arm/n_train_pinned": split_sizes["train"],
             "arm/n_val_pinned": split_sizes["val"],
             "arm/n_test_pinned": split_sizes["test"],
@@ -487,13 +487,18 @@ def main(cfg: DictConfig) -> None:
     fitness_lambda = wandb_cfg["regression_task"].get("fitness_lambda")
     heads_config = wandb_cfg["model"].get("heads")
     if fitness_lambda is not None:
-        if "fitness" not in phenotype_labels or "gene_interaction" not in phenotype_labels:
+        if (
+            "fitness" not in phenotype_labels
+            or "gene_interaction" not in phenotype_labels
+        ):
             raise ValueError(
                 "fitness_lambda needs cell_dataset.phenotype_labels to carry both "
                 f"fitness and gene_interaction, got {phenotype_labels}"
             )
         if not heads_config or "global" not in heads_config:
-            raise ValueError("fitness_lambda needs model.heads.global (the fitness head)")
+            raise ValueError(
+                "fitness_lambda needs model.heads.global (the fitness head)"
+            )
         follow_batch.append("phenotype_values")
     print(f"fitness_lambda: {fitness_lambda}  heads: {heads_config}")
 
@@ -521,6 +526,7 @@ def main(cfg: DictConfig) -> None:
     # placed, which is correct, and it is also exactly how an arm could quietly train on
     # fewer records than its name claims.
     pool = set(range(len(dataset))) if index_subset is None else set(index_subset)
+    wandb.log({"arm/n_subset": len(pool)})
     for split in ("train", "val", "test"):
         realized = set(getattr(data_module.index, split))
         requested = set(pinned_split_indices[split]) & pool
@@ -558,6 +564,33 @@ def main(cfg: DictConfig) -> None:
     log.info(device)
     devices = get_num_devices()
 
+    # Random-graph control: every gene-gene graph rewired with its degree sequence kept
+    # (double-edge swaps, seeded), so the KL prior and the mask carry structure with the
+    # same degrees and none of the biology. The dataset keeps its original graph; the
+    # model and the task get the rewired copy, so edge-recovery diagnostics score
+    # against the graphs the model was actually given.
+    cell_graph = dataset.cell_graph
+    random_graph_cfg = wandb_cfg["model"].get("random_graph") or {}
+    if random_graph_cfg.get("enabled", False):
+        rewire_seed = random_graph_cfg.get("seed")
+        rewire_seed = seed if rewire_seed is None else int(rewire_seed)
+        cell_graph, rewire_stats = rewire_cell_graph(
+            dataset.cell_graph,
+            seed=rewire_seed,
+            swaps_per_edge=float(random_graph_cfg.get("swaps_per_edge", 5.0)),
+        )
+        print(f"random_graph: rewired with seed {rewire_seed}")
+        for rel, st in rewire_stats.items():
+            print(f"  {rel}: {st}")
+        wandb.log(
+            {"random_graph/seed": rewire_seed}
+            | {
+                f"random_graph/{rel}/{k}": v
+                for rel, st in rewire_stats.items()
+                for k, v in st.items()
+            }
+        )
+
     print(f"Instantiating Equivariant CellGraphTransformer ({timestamp()})")
 
     # Get graph regularization lambda from loss config to pass to model
@@ -577,7 +610,7 @@ def main(cfg: DictConfig) -> None:
         hidden_channels=wandb.config["model"]["hidden_channels"],
         num_transformer_layers=wandb.config["model"]["num_transformer_layers"],
         num_attention_heads=wandb.config["model"]["num_attention_heads"],
-        cell_graph=dataset.cell_graph,
+        cell_graph=cell_graph,
         graph_regularization_config=wandb.config["model"]["graph_regularization"],
         perturbation_head_config=wandb.config["model"]["perturbation_head"],
         dropout=wandb.config["model"]["dropout"],
@@ -660,7 +693,7 @@ def main(cfg: DictConfig) -> None:
             checkpoint_path,
             map_location=device,
             model=model,
-            cell_graph=dataset.cell_graph,
+            cell_graph=cell_graph,
             loss_func=loss_func,
             device=device,
             optimizer_config=wandb_cfg["regression_task"]["optimizer"],
@@ -688,7 +721,7 @@ def main(cfg: DictConfig) -> None:
     else:
         task = RegressionTask(
             model=model,
-            cell_graph=dataset.cell_graph,
+            cell_graph=cell_graph,
             optimizer_config=wandb_cfg["regression_task"]["optimizer"],
             lr_scheduler_config=wandb_cfg["regression_task"]["lr_scheduler"],
             batch_size=wandb_cfg["data_module"]["batch_size"],
@@ -712,6 +745,9 @@ def main(cfg: DictConfig) -> None:
             ],
             execution_mode=execution_mode,
             fitness_lambda=fitness_lambda,
+            gradient_probe_epochs=wandb_cfg["regression_task"].get(
+                "gradient_probe_epochs"
+            ),
         )
 
     # Try to compile the model for better performance (PyTorch 2.0+)

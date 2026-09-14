@@ -353,3 +353,15 @@ work once and then strip the process that actually uses them.
 
 `--mem` stays at 250 g. Measured need after the fix is roughly 50 GB (4 ranks at 5.6 GB
 plus 56 worker interpreters), so the allocation is not the thing that was marginal.
+
+## 2026.09.14 - Correction: the KL arms regularize nine graphs
+
+The 2026.09.04 entry above says two of nine heads carried no graph prior because the
+config names `physical` and `regulatory` do not match the cell_graph relations
+`physical_interaction` and `regulatory_interaction`. That was true of the 019 runs it
+cites; by the time the 025 arms ran, `_normalize_adjacency_matrices` registered each
+suffixed relation under its bare stem as well, and `compute_graph_regularization_loss`
+raises on a name it cannot resolve rather than skipping it. Every 025 KL arm, including
+the replication `cgt_s0_r_kl_000` and the constant-rate sweep, regularizes all nine
+heads; the hard-mask arms mask the same nine. Details in
+[[experiments.025-solid-growth.scripts.equivariant_cell_graph_transformer]] (2026.09.14).

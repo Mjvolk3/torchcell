@@ -329,6 +329,19 @@ class PointDistGraphReg(nn.Module):
             graph_reg_val = self._zero
             loss_dict.update({"graph_reg_loss": 0.0, "weighted_graph_reg": 0.0})
 
+        # The weighted terms with their graphs attached, for the gradient probe
+        # (RegressionTask logs per-term gradient norms on probe epochs). loss_dict
+        # holds detached floats; these are the tensors the total was summed from.
+        self.last_terms = {
+            "point": weighted_point,
+            "dist": weighted_dist
+            if self.dist_loss is not None and self.lambda_dist > 0
+            else dist_val,
+            "graph_reg": weighted_graph_reg
+            if "graph_reg_loss" in representations and self.lambda_graph_reg > 0
+            else graph_reg_val,
+        }
+
         # Compute normalized contributions
         if total_loss > 0:
             loss_dict["norm_weighted_point"] = (

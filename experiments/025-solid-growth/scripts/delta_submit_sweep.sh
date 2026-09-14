@@ -20,7 +20,7 @@
 #
 #   lambda in {0, 1e-5, 1e-4, 1e-2, 1e-1, 1}   model.graph_regularization.graph_reg_lambda
 #   hard mask, layer 1, nine heads             cgt_s0_r_mask_028
-#   random graphs, degree-matched              not yet: needs the rewiring option
+#   random graphs, degree-matched              cgt_s0_r_kl_rand_031 (`random` mode, 3 jobs)
 #
 # Order: seed-major, endpoints first inside a seed (0, mask, then the ladder), so the
 # first completed jobs bracket the figure. Each job is chained `after` the previous one
@@ -35,11 +35,12 @@
 # about 1,350 at the measured 16 h, against bfjt-delta-gpu.
 set -euo pipefail
 
-MODE="${1:?usage: $0 sweep}"
+MODE="${1:?usage: $0 sweep|random}"
 ACCOUNT="${ACCOUNT:-bfjt-delta-gpu}"
 LAUNCHER="experiments/025-solid-growth/scripts/delta_cgt.slurm"
 BASE_CONFIG="cgt_s0_r_kl_ctrl_013"
 MASK_CONFIG="cgt_s0_r_mask_028"
+RANDOM_CONFIG="cgt_s0_r_kl_rand_031"
 SEEDS="${SEEDS:-1 2 3}"
 LAMBDAS="${LAMBDAS:-1e-2 1e-1 1e-4 1e-5 1}"
 HOURS="${HOURS:-24}"
@@ -72,6 +73,12 @@ case "$MODE" in
       for lam in $LAMBDAS; do
         submit "025-kl-${lam}-nvme-s${s}" "$BASE_CONFIG" model.graph_regularization.graph_reg_lambda="$lam" +seed="$s"
       done
+    done
+    ;;
+  random)
+    # Panel f: the nine graphs rewired with their degrees kept, KL at lambda 1e-3.
+    for s in $SEEDS; do
+      submit "025-rand-nvme-s${s}" "$RANDOM_CONFIG" +seed="$s"
     done
     ;;
   *) echo "unknown mode $MODE" >&2; exit 2 ;;

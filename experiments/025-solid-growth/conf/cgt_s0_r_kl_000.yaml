@@ -225,3 +225,7 @@ regression_task:
   plot_every_n_epochs: 1
   plot_transformer_diagnostics_every_n_epochs: 10
   plot_edge_recovery_every_n_epochs: 10
+  # Per-term gradient norms (point, dist, graph_reg, fitness) on the first batch of
+  # these epochs, logged as probe/grad_norm/*: panel c of the graph-regularization
+  # figure. One extra backward per term on one batch; nothing else changes.
+  gradient_probe_epochs: [0, 1, 2, 5, 10, 20]

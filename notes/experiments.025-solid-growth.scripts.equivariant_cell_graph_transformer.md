@@ -783,3 +783,40 @@ per-epoch cap on the doubles for S5 would need a sampler and is not written.
 
 cabbi at 00:50: our `025-q-fu` (2395008) running on compute-3-3 with three `dyna_seq`
 tasks of another user and a fourth pending on Resources, so no free lane there tonight.
+
+### The last two pieces, so the figure can be left to run
+
+**Random-graph control (panel f).** `torchcell.graph.rewire.degree_preserving_rewire`
+rewires an edge list by seeded double-edge swaps, (a, b) + (c, d) to (a, d) + (c, b),
+rejecting self-loops and duplicates, so every gene keeps its out-degree and in-degree
+(the configuration-model null of Maslov and Sneppen 2002). A graph stored with both
+directions of every edge would be swapped on its undirected edge set and re-symmetrized;
+in the 025 `cell_graph` none of the nine passes that test (each has at least one
+one-directional edge), so all nine are rewired as directed graphs. `rewire_cell_graph`
+copies the HeteroData with every gene-gene `edge_index` replaced and leaves the
+dataset's graph untouched. The 025 trainer applies it under `model.random_graph.enabled`
+(seed = the run seed unless `random_graph.seed` is set) and hands the rewired graph to
+the model and the task, so the KL prior, the mask and the edge-recovery diagnostics all
+see the same rewired graphs. Config `cgt_s0_r_kl_rand_031` = ctrl_013 + rewiring, at
+lambda 1e-3 (the mock-up's "best lambda from the sweep" is not known at submission; it is
+one override away). Four tests in `tests/torchcell/graph/test_rewire.py`.
+
+Measured on the real graphs in the CPU smoke (seed 1, five attempts per edge, under a
+minute for all nine): the fraction of original edges surviving is 0.13 (STRING
+coexpression, 1.0M edges), 0.14 (database), 0.18 (experimental), 0.19 (physical), 0.20
+(neighborhood), 0.32 (regulatory), 0.37 (fusion), 0.44 (co-occurrence), 0.46 (TFLink).
+The survivors are what the degree constraint forces: an edge between two hubs has few
+places to go. The overlap is logged per graph as `random_graph/<rel>/edge_overlap`.
+
+**Gradient probe (panel c).** `RegressionTask(gradient_probe_epochs=[...])`: on the first
+training batch of each listed epoch, the gradient of each weighted loss term (point,
+distribution, graph penalty, fitness when present) is taken separately against every
+parameter with `torch.autograd.grad(retain_graph=True)` and its global L2 norm logged as
+`probe/grad_norm/<term>`, with the summed loss as `probe/grad_norm/total` and the ratio
+`probe/grad_ratio/graph_reg_to_point`; a term with no graph (lambda 0, the mask) logs 0.
+`PointDistGraphReg` keeps its weighted term tensors as `last_terms` for this. The numbers
+are also printed to the SLURM log. `cgt_s0_r_kl_000` now carries
+`gradient_probe_epochs: [0, 1, 2, 5, 10, 20]`, so every 025 arm composed on it logs the
+probe, and every Delta job still pending picks it up at start (Delta jobs read the
+training script and configs from the worktree when they begin; only the sbatch launcher
+is copied at submission). The IGB chain runs from its own frozen worktrees and does not.

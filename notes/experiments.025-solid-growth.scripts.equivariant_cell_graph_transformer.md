@@ -684,6 +684,24 @@ frozen per-gene vector, part is ORF content; the random-vector control separates
 
 Next round on mmli, queued behind the CaLM job so the node does not idle:
 `cgt_s0_q_kl_rand_018` (random 1,000-vector, width 1,005, parameter-matched, disjoint
-split, 30 epochs) as IGB job 2397827 from worktree `-c` at 8f3d2b11. Proposed after it,
-pending a go: seeds 1 and 2 of `_016` and `_017` (four jobs, about 9 h each), then the
-composite with the fitness head at weight 1.0 on the disjoint split.
+split, 30 epochs) as IGB job 2397827 from worktree `-c` at 8f3d2b11. Queued behind it
+at 23:50, one after another, about 9 h each:
+
+| IGB job | config | seed | purpose |
+|---|---|---|---|
+| 2397827 | `cgt_s0_q_kl_rand_018` | 42 | frozen random vector: content versus frozen identity |
+| 2397845 | `cgt_s0_q_kl_ctrl_016` | 1 | control replicate |
+| 2397846 | `cgt_s0_q_kl_emb_017` | 1 | composite replicate |
+| 2397847 | `cgt_s0_q_kl_ctrl_016` | 2 | control replicate |
+| 2397848 | `cgt_s0_q_kl_emb_017` | 2 | composite replicate |
+| 2397876 | `cgt_s0_q_kl_embfit_027` | 42 | composite + fitness head (weight 1.0) on the disjoint split |
+
+`_027` composes on `_017` and adds `fit_014`'s fitness side: both COO labels, a
+standard normalizer on fitness fit on train, the 181-parameter linear probe of the
+perturbed CLS, `fitness_lambda: 1.0`. Its control is `_017`. Model total 4,776,551. Its
+16-record CPU smoke died after epoch 0 in the W&B checkpoint logger with "Out of range
+float values are not JSON compliant: -inf": Lightning substitutes -inf for a NaN
+monitored metric, and a 16-record subset of the disjoint split gave a NaN validation
+Pearson; the 64-record smoke passed. Not a full-scale risk (every disjoint run logs the
+metric at every epoch on 37,705 validation records). Expected end of the chain: Wednesday
+about 10:30, from the measured 8 h 40 m to 9 h 03 m per 30-epoch run on this node.

@@ -305,6 +305,35 @@ class ProductScalarHead(nn.Module):
         return cast(torch.Tensor, out)
 
 
+def gene_removal_indices(batch: Any) -> tuple[torch.Tensor, torch.Tensor, str]:
+    """``(indices, batch assignment, source)`` for genes the cell no longer HAS.
+
+    WHY THE FLUX LAYER NEEDS A DIFFERENT INDEX FROM THE BACKBONE. The backbone removes a
+    perturbed gene's node whatever the perturbation was, which is right: the strain's gene
+    content differs from the reference either way. The flux layer's availability gate reads
+    the same index as "this gene product is absent" and closes every reaction whose GPR
+    needs it, and that is only true of a DELETION.
+
+    The case that forced this: the Cachera betaxanthin cassette records ARO4^K229L
+    (YBR249C) and ARO7^G141S (YPR060C) as GeneAddition perturbations
+    (``cachera2023.py:67-113``). Those are feedback-resistant alleles the strain
+    OVERPRODUCES through, and the gate was shutting DAHP synthase and chorismate mutase in
+    every betaxanthin genotype, i.e. closing the exact two steps the experiment opens.
+
+    ``deletion_indices`` is emitted by the graph processors as an additive field. A batch
+    built before it existed does not carry it, so the perturbation index is used and the
+    CHOICE IS RETURNED rather than silently taken, so a run records which one it gated on.
+    """
+    gene = batch["gene"]
+    if hasattr(gene, "deletion_indices"):
+        return gene.deletion_indices, gene.deletion_indices_batch, "deletion_indices"
+    return (
+        gene.perturbation_indices,
+        gene.perturbation_indices_batch,
+        "perturbation_indices",
+    )
+
+
 def perturbed_gene_pool(
     H_genes_pert: torch.Tensor,
     perturbation_indices: torch.Tensor,
@@ -588,12 +617,9 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
             batch["gene"].perturbation_indices_batch,
         )
         if self.flux_layer is not None and self.flux_head_names:
-            flux = self.flux_layer(
-                H_genes_pert,
-                pert_pool,
-                batch["gene"].perturbation_indices,
-                batch["gene"].perturbation_indices_batch,
-            )
+            gate_indices, gate_batch, gate_source = gene_removal_indices(batch)
+            self.last_gene_removal_source = gate_source
+            flux = self.flux_layer(H_genes_pert, pert_pool, gate_indices, gate_batch)
             reps["flux"] = flux
             turnover = self.flux_layer.turnover(flux["v"])
             for name in self.flux_head_names:

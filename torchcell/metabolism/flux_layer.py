@@ -1290,6 +1290,23 @@ class ReferenceFluxTable(BaseModel):
         """Key to row. Built once by the layer and held, not rebuilt per forward."""
         return {key: row for row, key in enumerate(self.keys)}
 
+    def background_genes(self) -> set[str]:
+        """Genes the dataset PERTURBS but does not DELETE, which the key must ignore.
+
+        MEASURED, and it is the reason this method exists rather than a config list. The
+        Cachera betaxanthin strains carry CYP76AD1, DOD and the feedback-resistant native
+        alleles ARO4^K229L (YBR249C) and ARO7^G141S (YPR060C) as GENE ADDITIONS integrated
+        at locus XII-5, and the Ozaydin beta-carotene strains carry crtYB, crtI and BTS1
+        (YPL069C) the same way. ``GraphProcessor._process_gene_info`` collects
+        ``systematic_gene_name`` from every perturbation regardless of type, so all of them
+        arrive as perturbation indices and a key built from those indices would name a
+        cassette the strain HAS rather than a gene it lacks.
+
+        The list travels in the table's own provenance, so the layer learns it from the
+        artifact rather than from a setting that could disagree with it.
+        """
+        return {str(g) for g in self.provenance.get("background_genes", [])}
+
 
 def genotype_key(gene_ids: list[str]) -> str:
     """The canonical key for a genotype's deleted gene set.
@@ -1970,6 +1987,7 @@ class FluxLayer(nn.Module):
         self.reference_flux: ReferenceFluxRecord | None = None
         self.reference_table: ReferenceFluxTable | None = None
         self.reference_table_index: dict[str, int] = {}
+        self.reference_background_genes: set[str] = set()
         self.n_reference_fallbacks = 0
         self.n_reference_lookups = 0
         if spec.kind == "warmstart":
@@ -2022,6 +2040,7 @@ class FluxLayer(nn.Module):
                     )
                 self.reference_table = table
                 self.reference_table_index = table.index()
+                self.reference_background_genes = table.background_genes()
                 self.register_buffer("v_reference_table", table.v.clone())
         # NO BUFFER AND NO PARAMETER ON ANY OTHER KIND, deliberately: registering an empty
         # `v_reference` everywhere would change the state_dict of every arm already trained,
@@ -2531,7 +2550,7 @@ class FluxLayer(nn.Module):
             gem_of_pert[in_gem].tolist(),
             strict=True,
         ):
-            if row < batch:
+            if row < batch and gene_ids[gene] not in self.reference_background_genes:
                 rows[row].append(gene_ids[gene])
         selected = []
         fallbacks = 0
@@ -3874,6 +3893,7 @@ class FluxLayer(nn.Module):
                     "sha256": self.reference_table.sha256,
                     "n_genotypes": len(self.reference_table.keys),
                     "provenance": self.reference_table.provenance,
+                    "background_genes": sorted(self.reference_background_genes),
                     "n_lookups": self.n_reference_lookups,
                     "n_fallbacks": self.n_reference_fallbacks,
                     "fallback_frac": (

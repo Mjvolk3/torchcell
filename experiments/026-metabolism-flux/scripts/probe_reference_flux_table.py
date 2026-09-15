@@ -66,7 +66,11 @@ from torchcell.metabolism.flux_layer import (  # noqa: E402
     genotype_key,
     parsimonious_reference_flux,
 )
+from torchcell.metabolism.media import FBA_MEDIA  # noqa: E402
 from torchcell.metabolism.yeast_GEM import YeastGEM  # noqa: E402
+
+sys.path.insert(0, osp.join(EXPERIMENT_ROOT, "026-metabolism-flux", "scripts"))
+from train_flux import media_report  # noqa: E402
 
 FLUX_SCALE = 100.0
 #: A reference counts as moved by its deletion when it differs from the wild type by more
@@ -75,35 +79,90 @@ DELETION_EFFECT_THRESHOLD = 0.01
 
 
 def dataset_gene_sets() -> tuple[list[list[str]], dict[str, object]]:
-    """Every distinct deleted-gene set in the 027 dataset, as GEM gene ids.
+    """Every distinct DELETED-gene set in the 027 dataset, as gene ids.
 
-    Read from the dataset's own perturbation records rather than from a gene list, so a
-    genotype the table is built for is a genotype the trainer will actually ask about.
+    DELETIONS ONLY, and that is a correction rather than a refinement. Every Cachera
+    betaxanthin strain carries the same four-gene betaxanthin cassette as GENE ADDITIONS:
+    the heterologous CYP76AD1 and DOD, plus the feedback-resistant native alleles
+    ARO4^K229L (YBR249C) and ARO7^G141S (YPR060C) integrated ectopically at locus XII-5
+    (``torchcell/datasets/scerevisiae/cachera2023.py``). They are an engineered BACKGROUND
+    that every strain shares, not the experimental variable.
+
+    ``GraphProcessor._process_gene_info`` collects ``systematic_gene_name`` from EVERY
+    perturbation regardless of type, so those four reach the model as perturbation indices
+    and the flux layer's availability gate reads them as knockouts. Keying a reference
+    table the same way would solve the reference for a cell that has had its DAHP synthase
+    and chorismate mutase deleted, which is the opposite of what these strains are: they
+    overproduce THROUGH that pathway.
+
+    The rule here is ``DeletionKeyedGenotypeAggregator``'s, reused rather than restated:
+    a perturbation counts when its ``perturbation_type`` ends with ``DELETION_TYPE_SUFFIX``.
     """
     from train_bx import build_dataset
 
+    from torchcell.data.genotype_aggregate import DELETION_TYPE_SUFFIX
+
     dataset = build_dataset()
-    gene_ids = list(dataset.cell_graph["gene"].node_ids)
+    # LENGTH FIRST, THEN THE HANDLE. `Neo4jCellDataset.len` opens its own read handle and
+    # closes it, so an environment opened before that call is closed underneath us and the
+    # next read fails on a None env.
+    n_records = len(dataset)
+    dataset._init_lmdb_read()
     seen: dict[str, list[str]] = {}
-    counts = {"records": 0, "with_perturbation": 0, "sizes": {}}
-    for index in range(len(dataset)):
-        record = dataset[index]
-        counts["records"] += 1
-        indices = record["gene"].perturbation_indices.tolist()
-        names = sorted({gene_ids[i] for i in indices})
-        if names:
-            counts["with_perturbation"] += 1
-        size = str(len(names))
-        counts["sizes"][size] = counts["sizes"].get(size, 0) + 1
-        seen.setdefault(genotype_key(names), names)
+    counts: dict[str, object] = {
+        "records": 0,
+        "with_deletion": 0,
+        "deletion_sizes": {},
+        "non_deletion_genes": {},
+        "perturbation_types": {},
+    }
+    for index in range(n_records):
+        raw = dataset._deserialize_json(dataset._read_from_lmdb(index))
+        for item in raw:
+            counts["records"] = int(counts["records"]) + 1
+            perturbations = item["experiment"]["genotype"]["perturbations"]
+            deletions = sorted(
+                {
+                    p["systematic_gene_name"]
+                    for p in perturbations
+                    if p["perturbation_type"].endswith(DELETION_TYPE_SUFFIX)
+                }
+            )
+            for p in perturbations:
+                kind = str(p["perturbation_type"])
+                types = counts["perturbation_types"]
+                types[kind] = types.get(kind, 0) + 1
+                if not kind.endswith(DELETION_TYPE_SUFFIX):
+                    other = counts["non_deletion_genes"]
+                    name = str(p["systematic_gene_name"])
+                    other[name] = other.get(name, 0) + 1
+            if deletions:
+                counts["with_deletion"] = int(counts["with_deletion"]) + 1
+            sizes = counts["deletion_sizes"]
+            sizes[str(len(deletions))] = sizes.get(str(len(deletions)), 0) + 1
+            seen.setdefault(genotype_key(deletions), deletions)
     return list(seen.values()), counts
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--growth-fraction", type=float, default=1.0)
+    parser.add_argument(
+        "--medium",
+        default="YPD",
+        choices=sorted(FBA_MEDIA) + ["none"],
+        help=(
+            "The medium to apply to the exchange bounds BEFORE the knockout. MEASURED "
+            "reason for the default: on the GEM's shipped bounds every one of the "
+            "dataset's genotypes has a growth optimum of exactly 0, because essentially "
+            "all of them delete ARO4 (YBR249C) and ARO7 (YPR060C) and nothing supplies "
+            "aromatic amino acids. The strains were grown and measured, so a reference "
+            "that says they are dead is a statement about the medium, not about them. "
+            "Cachera 2023 is solid YPD, and HEAD_MEDIUM maps the betaxanthin head to YPD."
+        ),
+    )
     parser.add_argument("--max-sets", type=int, default=0, help="0 means every set.")
-    parser.add_argument("--out", default="reference_flux_table.npz")
+    parser.add_argument("--out", default="reference_flux_table_ypd.npz")
     args = parser.parse_args()
 
     if os.environ.get("PYTHONHASHSEED") != "0":
@@ -116,6 +175,16 @@ def main() -> None:
     os.makedirs(TABLE_DIR, exist_ok=True)
     source = YeastGEM()
     model = source.model
+    # THE MEDIUM FIRST, so the knockout is applied on top of it and the reference is solved
+    # on the same exchange bounds the cell's own box will carry under --apply-media dataset.
+    # A reference solved on one medium and clipped into a box built on another is two
+    # different cells.
+    # THE SAME FUNCTION THE CELL USES. `train_flux.media_report` closes every exchange and
+    # opens exactly the named recipe, then records the wild-type growth before and after.
+    # Calling it here rather than re-implementing it is what guarantees the reference and
+    # the cell's own box are built on one boundary.
+    media = media_report(model, None if args.medium == "none" else args.medium)
+    print("medium:", json.dumps({k: v for k, v in media.items() if k != "unresolved"}))
     gem = build_gem_tensors(model, source.model_dir)
     rxn_ids = list(gem.rxn_ids)
     gem_genes = {g.id for g in model.genes}
@@ -211,9 +280,14 @@ def main() -> None:
             "genotype's genes deleted through cobra.manipulation.knock_out_model_genes, so "
             "the GPR decides which reactions close"
         ),
-        "medium": (
-            "the GEM's shipped exchange bounds, clamped to the layer's flux scale; no "
-            "medium was applied on top"
+        "medium": args.medium,
+        "media_report": media,
+        "medium_note": (
+            f"{args.medium!r} applied through train_flux.media_report before the knockout, "
+            "then clamped to the layer's flux scale. 'none' is the GEM's shipped boundary, "
+            "on which EVERY genotype in this dataset has growth exactly 0 because almost "
+            "all of them delete ARO4 (YBR249C) and ARO7 (YPR060C) and nothing supplies "
+            "aromatic amino acids."
         ),
         "wild_type_growth": wild.objective_value,
         "wild_type_key": keys[0],
@@ -223,6 +297,14 @@ def main() -> None:
         "n_sets_moved_more_than_1pct": n_moved,
         "deletion_effect_threshold": DELETION_EFFECT_THRESHOLD,
         "dataset_record_counts": counts,
+        # THE ENGINEERED BACKGROUND, carried by the table so the layer can drop it from the
+        # lookup key without being told. These genes are perturbed in the dataset and are
+        # NOT deleted: the Cachera betaxanthin cassette (CYP76AD1, DOD, and the
+        # feedback-resistant native alleles ARO4^K229L / YBR249C and ARO7^G141S / YPR060C)
+        # and the Ozaydin beta-carotene cassette (crtYB, crtI, BTS1 / YPL069C). The graph
+        # processor puts every perturbation's gene name into perturbed_names regardless of
+        # type, so without this list the layer's key would name them and miss every row.
+        "background_genes": sorted(counts["non_deletion_genes"]),
         "python_hash_seed": os.environ.get("PYTHONHASHSEED"),
         "flux_sha256": hashlib.sha256(matrix.tobytes()).hexdigest(),
     }
@@ -250,7 +332,10 @@ def main() -> None:
         else {},
         "examples": rows[:25],
     }
-    out_path = osp.join(RESULTS_DIR, "probe_reference_flux_table.json")
+    out_path = osp.join(
+        RESULTS_DIR,
+        f"probe_reference_flux_table_{osp.splitext(args.out)[0]}.json",
+    )
     with open(out_path, "w") as handle:
         json.dump(summary, handle, indent=2)
     print(json.dumps(provenance, indent=2))

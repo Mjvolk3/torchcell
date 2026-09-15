@@ -2679,3 +2679,54 @@ def test_no_reference_table_is_bit_identical():
     empty = torch.zeros(0, dtype=torch.long)
     rows = layer.genotype_reference(3, empty, empty)
     assert float(rows.std(dim=0).max()) == 0.0
+
+
+def test_the_reference_key_ignores_the_engineered_background(tmp_path):
+    r"""A gene the strain HAS is not a gene the strain LACKS, and the key must know.
+
+    THE DEFECT THIS GUARDS, measured 2026-09-14. Every Cachera betaxanthin strain carries
+    CYP76AD1, DOD and the feedback-resistant native alleles ARO4^K229L (YBR249C) and
+    ARO7^G141S (YPR060C) as GENE ADDITIONS integrated at locus XII-5
+    (``cachera2023.py``), and ``GraphProcessor._process_gene_info`` collects
+    ``systematic_gene_name`` from every perturbation regardless of type. So all four arrive
+    as perturbation indices and are read as knockouts. Keyed that way, the reference lookup
+    would name a cassette the strain HAS, miss every row, and fall back to the wild type on
+    100 percent of the dataset.
+
+    The background list travels in the table's provenance, so the layer learns it from the
+    artifact rather than from a setting that could disagree with it.
+    """
+    import json
+
+    import numpy as np
+
+    probe = _layer(parameterization="warmstart_k20_box", thermo_mode=ThermoMode.OFF)
+    wild = probe.v_reference.numpy().copy()
+    knocked = wild.copy()
+    knocked[0] = 7.0
+    path = tmp_path / "table.npz"
+    np.savez(
+        path,
+        v=np.stack([wild, knocked]),
+        keys=np.array(["", "g2"]),
+        rxn_ids=np.array(list(probe.rxn_ids)),
+        # g0 stands in for the cassette: perturbed in every record, never deleted.
+        provenance=np.array(json.dumps({"background_genes": ["g0"]})),
+    )
+    layer = _layer(
+        parameterization="warmstart_k20_box",
+        thermo_mode=ThermoMode.OFF,
+        warm_start_reference_table_path=str(path),
+    )
+    assert layer.reference_background_genes == {"g0"}
+    # A genotype carrying the cassette (g0) AND deleting g2 must resolve to the g2 row.
+    indices = torch.tensor([0, 2], dtype=torch.long)
+    batch_of = torch.tensor([0, 0], dtype=torch.long)
+    rows = layer.genotype_reference(1, indices, batch_of)
+    assert float((rows[0] - torch.tensor(knocked)).abs().max()) == 0.0
+    assert layer.coverage_report()["warm_start_reference_table"]["n_fallbacks"] == 0
+    # And the cassette alone is the wild type, not a missing key.
+    rows = layer.genotype_reference(
+        1, torch.tensor([0], dtype=torch.long), torch.tensor([0], dtype=torch.long)
+    )
+    assert float((rows[0] - torch.tensor(wild)).abs().max()) == 0.0

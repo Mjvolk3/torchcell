@@ -1021,6 +1021,72 @@ reference is a cell that does not grow. The table is cached under
 `$DATA_ROOT/data/torchcell/reference_flux/` with the GEM version, the medium statement, the
 growth fraction, the flux sha256 and the dataset's own record counts.
 
+### 2026.09.14 (follow-up 10) - the flux layer has been deleting the betaxanthin pathway
+
+**The defect, stated plainly.** Every Cachera betaxanthin strain carries a four-gene
+betaxanthin cassette as GENE ADDITIONS: the heterologous `CYP76AD1` and `DOD`, plus the
+feedback-resistant native alleles **ARO4^K229L (`YBR249C`)** and **ARO7^G141S (`YPR060C`)**
+integrated ectopically at locus XII-5, on top of the intact native loci
+(`torchcell/datasets/scerevisiae/cachera2023.py`, lines 67 to 113, `GeneAdditionPerturbation`
+with `variant=`). `GraphProcessor._process_gene_info`
+(`torchcell/data/graph_processor.py`, line 158) builds `perturbed_names` from
+`systematic_gene_name` over EVERY perturbation regardless of type, so those genes are removed
+from the cell graph and arrive at the model as perturbation indices. The flux layer's
+`gene_availability` then hard-zeroes them.
+
+**So the layer has been holding ARO4 and ARO7 at availability 0 in every betaxanthin
+genotype since wave 5.** `YBR249C` carries DAHP synthase (`r_0042`, `r_0020`) and `YPR060C`
+chorismate mutase (`r_0278`). Those strains overproduce betaxanthin THROUGH the shikimate
+pathway, and the precursor readout reads that pathway. The layer was deleting the thing it
+was measuring.
+
+**Blast radius, as measured rather than estimated.** The perturbation-type census over the
+dataset's own records: **31,894 `gene_addition` against 13,753 `kanmx_deletion`**, with the
+non-deletion genes and their record counts
+
+| gene | records | cassette |
+|---|---|---|
+| `CYP76AD1`, `DOD`, `YBR249C` (ARO4), `YPR060C` (ARO7) | 4,669 each | Cachera betaxanthin |
+| `crtYB`, `crtI`, `YPL069C` (BTS1) | 4,406 each | Ozaydin beta-carotene |
+
+Every betaxanthin flux cell since wave 5 gated ARO4 and ARO7 off, and every beta-carotene
+cell gated `BTS1` off, which is an essential gene. The pooled backbone removed those nodes
+from every Cachera cell graph, so it is a constant across strains there rather than a
+per-strain error, but in the flux layer it is a per-strain false knockout.
+
+**A correction to my own numbers from three sections ago.** I reported the dataset as "4,190
+quadruple deletions, 479 triples, 213 doubles, 48 singles". That was the count of
+PERTURBATIONS, not deletions. Read through the records with the deletion rule, the dataset is
+**13,753 records, every one of them a SINGLE deletion** (`deletion_sizes: {'1': 13753}`) over
+**4,930 distinct deleted genes**. The "quadruples" were one deletion plus three cassette
+additions.
+
+**And it explains the 0.0 growth better than the medium does.** The lethal knockouts I built
+were deleting ARO4 plus ARO7 plus, in the beta-carotene records, BTS1, which is essential.
+The medium finding stands on its own and YPD is right for Cachera regardless, but the false
+knockout is the larger term, and the minimal-medium table is being built to separate them.
+
+**What changed.** The builder now keys on the DELETION-only gene set, reusing
+`DeletionKeyedGenotypeAggregator`'s rule (`perturbation_type.endswith(DELETION_TYPE_SUFFIX)`)
+rather than restating it, and reads it from the raw LMDB records, since the processed graph
+has already lost the type. It also writes the engineered background genes into the table's
+own provenance, and the layer reads that list from the artifact and drops those genes from
+the lookup key. Without it the key would name a cassette the strain HAS, miss every row, and
+fall back to the wild type on 100 percent of the dataset. One new test covers exactly that;
+127 pass.
+
+**This is a stopgap and it is marked as one.** The right fix is the `deletion_indices` field
+the targets builder is adding, which will carry the deletion-only set to the layer for the
+availability gate as well as for the reference lookup. The background-gene list fixes the
+REFERENCE key only. **The availability gate is still zeroing ARO4, ARO7 and BTS1**, so every
+number measured before `deletion_indices` lands, including the ones below, is measured on a
+layer that still believes the cassette genes are deleted.
+
+**One incidental defect found and worked around.** `Neo4jCellDataset.len()` opens its own
+LMDB handle and closes it, so a handle opened before that call is closed underneath the
+caller and the next read fails on a `None` env. The builder takes the length first, then
+opens its handle.
+
 ### CPU jobs this session
 
 | job | cell | state |

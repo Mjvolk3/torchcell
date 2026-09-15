@@ -142,6 +142,7 @@ from torchcell.metabolism.parameters import (  # noqa: E402
 )
 from torchcell.models.cell_graph_transformer_metabolism import (  # noqa: E402
     CellGraphTransformerMetabolism,
+    gene_removal_indices,
     perturbed_gene_pool,
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
@@ -294,6 +295,20 @@ ISOBUTANOL_QUERY_PATH = osp.join(
 )
 
 
+#: WAVE 9. THE ESSENTIALITY BUILD, a dedicated root because no existing one carries the
+#: label: both builds holding `GeneEssentialitySgdDataset` converted `is_essential` into
+#: `fitness` (measured 2026-09-14). Built by `gh_cpu_build_essentiality.slurm` from
+#: `queries/essentiality_build.cql` with `converter=None` and single-deletion genotypes
+#: only. It is NOT under `019-simb-multimodal/` because it is not a 019 figure build.
+ESSENTIALITY_DATASET_ROOT = osp.join(
+    DATA_ROOT, "data/torchcell/experiments/027-betaxanthin-metabolic/essentiality_build"
+)
+ESSENTIALITY_QUERY_PATH = osp.join(
+    os.environ["EXPERIMENT_ROOT"],
+    "027-betaxanthin-metabolic/queries/essentiality_build.cql",
+)
+
+
 def dataset_paths(head: str = HEAD) -> tuple[str, str]:
     """``(root, query path)`` for the build a head's phenotype lives in.
 
@@ -304,6 +319,8 @@ def dataset_paths(head: str = HEAD) -> tuple[str, str]:
     """
     if head == ISOBUTANOL_HEAD:
         return ISOBUTANOL_DATASET_ROOT, ISOBUTANOL_QUERY_PATH
+    if head == ESSENTIALITY_HEAD:
+        return ESSENTIALITY_DATASET_ROOT, ESSENTIALITY_QUERY_PATH
     return DATASET_ROOT, QUERY_PATH
 
 
@@ -2537,6 +2554,10 @@ class FluxConcentrationReadout(ConcentrationReadoutBase):
             assert layer is not None, (
                 "the concentration readout was built on a model with no flux layer."
             )
+            # THE GATE READS THE DELETION-ONLY INDEX, the pool reads every perturbed
+            # token: the context is a representation of what was changed, the gate is a
+            # statement about what is gone. See `gene_removal_indices`.
+            gate_indices, gate_batch, _ = gene_removal_indices(batch)
             reps["flux"] = layer(
                 reps["H_genes_pert"],
                 perturbed_gene_pool(
@@ -2544,8 +2565,8 @@ class FluxConcentrationReadout(ConcentrationReadoutBase):
                     batch["gene"].perturbation_indices,
                     batch["gene"].perturbation_indices_batch,
                 ),
-                batch["gene"].perturbation_indices,
-                batch["gene"].perturbation_indices_batch,
+                gate_indices,
+                gate_batch,
             )
         flux = reps["flux"]
         assert "thermo_log_c" in flux, (
@@ -2899,6 +2920,10 @@ class FluxPrecursorConcentrationReadout(nn.Module):
             assert layer is not None, (
                 "the precursor readout was built on a model with no flux layer."
             )
+            # THE GATE READS THE DELETION-ONLY INDEX, the pool reads every perturbed
+            # token: the context is a representation of what was changed, the gate is a
+            # statement about what is gone. See `gene_removal_indices`.
+            gate_indices, gate_batch, _ = gene_removal_indices(batch)
             reps["flux"] = layer(
                 reps["H_genes_pert"],
                 perturbed_gene_pool(
@@ -2906,8 +2931,8 @@ class FluxPrecursorConcentrationReadout(nn.Module):
                     batch["gene"].perturbation_indices,
                     batch["gene"].perturbation_indices_batch,
                 ),
-                batch["gene"].perturbation_indices,
-                batch["gene"].perturbation_indices_batch,
+                gate_indices,
+                gate_batch,
             )
         flux = reps["flux"]
         assert "thermo_log_c" in flux, (
@@ -2985,6 +3010,10 @@ class FluxBiomassReadout(nn.Module):
             assert layer is not None, (
                 "the biomass readout was built on a model with no flux layer."
             )
+            # THE GATE READS THE DELETION-ONLY INDEX, the pool reads every perturbed
+            # token: the context is a representation of what was changed, the gate is a
+            # statement about what is gone. See `gene_removal_indices`.
+            gate_indices, gate_batch, _ = gene_removal_indices(batch)
             reps["flux"] = layer(
                 reps["H_genes_pert"],
                 perturbed_gene_pool(
@@ -2992,8 +3021,8 @@ class FluxBiomassReadout(nn.Module):
                     batch["gene"].perturbation_indices,
                     batch["gene"].perturbation_indices_batch,
                 ),
-                batch["gene"].perturbation_indices,
-                batch["gene"].perturbation_indices_batch,
+                gate_indices,
+                gate_batch,
             )
         growth = reps["flux"]["v"][:, self.biomass_index : self.biomass_index + 1]
         reps["biomass_flux"] = growth
@@ -4185,7 +4214,11 @@ def run_cell(
         num_workers=cell.num_workers,
         pin_memory=True,
         prefetch=False,
-        follow_batch=["perturbation_indices", "phenotype_values"],
+        # `deletion_indices` joins follow_batch so `deletion_indices_batch` exists: the
+        # flux layer's availability gate reads the DELETION-only index, because a
+        # GeneAddition perturbation is not a removal (the Cachera cassette's ARO4 and ARO7
+        # alleles are additions the strain overproduces through).
+        follow_batch=["perturbation_indices", "deletion_indices", "phenotype_values"],
         pinned_test_indices=pinned_test,
     )
     dm.setup()
@@ -4549,6 +4582,16 @@ def run_cell(
         "history": history,
         "flux_meta": {k: v for k, v in flux_meta.items() if k != "met_index"}
         | _sampling_meta(model, cell),
+        # WHICH INDEX THE AVAILABILITY GATE READ. A GeneAddition perturbation is not a
+        # removal, so the gate reads `deletion_indices` when the batch carries it. Recorded
+        # because a batch built before that field existed silently falls back to
+        # `perturbation_indices`, which is the behavior that shut DAHP synthase and
+        # chorismate mutase in every Cachera genotype.
+        "gene_removal_source": getattr(
+            model.model if hasattr(model, "model") else model,
+            "last_gene_removal_source",
+            "not_recorded",
+        ),
         "pinned_split": pinned_report,
         # THE TARGET SCALE THE HEAD WAS TRAINED AGAINST. Every head is standardized on the
         # TRAIN split (the pass above), and the loss is charged on `(t - mean) / sd`, so a

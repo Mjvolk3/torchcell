@@ -237,6 +237,65 @@ physical reading of the prediction. $n = 3$ is three seeds, so the standard devi
 carry two degrees of freedom and are read for magnitude rather than for a $p$ value. And
 this is one endpoint: nothing here says the module helps on betaxanthin.
 
+\subsection{The three readouts, and the control that says the module is off\secstatus{todo}}
+\label{sec:aa-readouts}
+
+The amino-acid result above stands or falls on which quantity the 19 predictions are read
+from. Three readouts exist, and Figures~\ref{fig:readout-ctx}, \ref{fig:readout-conc} and
+\ref{fig:readout-turnover} draw them with the same boxes so the difference is the wiring
+and nothing else. \textbf{The flux-coupled concentration readout and its control with no
+flux layer at all are the same path from the genotype to the prediction}: both read a
+log-concentration vector that is a sigmoid of the pooled context, mix it over compartments,
+and score the mixture. The flux enters the second only through the second-law and
+dissipation penalties, which reach the concentration vector as a gradient and never reach
+the prediction. The turnover readout is the one that reads the flux, and it is the one that
+collapses.
+
+\tcfigh[0.98]{figures/aa_readout_context_concentration.pdf}{\textbf{The context-only
+  concentration readout (\texttt{context\_concentration}), the control with no flux
+  layer.} Orange is the pooled backbone's context vector; purple the sigmoid window that
+  turns it into a log concentration for 2{,}806 compartment species and the volume-weighted
+  whole-cell mixture over the compartments an amino acid occupies; red the 19 predictions
+  and the CRPS loss against Mulleder 2016. No stoichiometry, no kinetic table and no flux
+  vector sits on this path.}{fig:readout-ctx}
+
+\tcfigh[0.98]{figures/aa_readout_flux_concentration.pdf}{\textbf{The flux-coupled
+  concentration readout (\texttt{flux\_concentration}), the wave-7 arm.} The top row is
+  Figure~\ref{fig:readout-ctx} unchanged. Underneath, the same context draws a latent that
+  the flux layer (yellow) turns into a flux vector through the box, the $k_{cat}$ capacity
+  bound and the mass-balance projection, and the same log concentration sets the reaction
+  energies $\Delta_r G' = \Delta_r G^\circ + RT\,S^{\top}\log c$ that price the second-law
+  and dissipation terms against that flux at constraint scale 0.1. The dotted edge is the
+  only link back: a gradient into the concentration vector. There is no path from the flux
+  to the prediction.}{fig:readout-conc}
+
+\tcfigh[0.98]{figures/aa_readout_flux_metabolite.pdf}{\textbf{The turnover readout
+  (\texttt{flux\_metabolite}).} The flux is the prediction: context, latent, flux vector,
+  then the turnover $\omega_i = \tfrac{1}{2}\sum_j |S_{ij} v_j|$ on the 19 amino-acid rows
+  of the stoichiometric matrix, read out directly. It is the only readout that uses the
+  module, and it ends as a constant predictor (validation prediction spread 0.000 of the
+  target's; jobs 1766 and 1772).}{fig:readout-turnover}
+
+\textbf{Measured on 2026-09-14, the control matches the arm.} The context-only readout on
+the pooled backbone reads a mean per-feature pinned-test Spearman of 0.0545, 0.0601 and
+0.0670 at seeds 2700 to 2702 (jobs 1899, 1930 and 1931), against the flux-coupled readout's
+0.0648, 0.0663 and 0.0562 at the same seeds. Paired by seed the flux-coupled readout is
+$+0.0103$, $+0.0062$ and $-0.0108$ above the control, mean $+0.0019$, standard deviation
+0.0113, inside the pre-registered kill rule of 0.010. Against the pooled control the
+context-only readout is $+0.0127$, which is where the $+0.0145$ of
+Section~\ref{sec:wave7-aa} came from: the sigmoid-window parameterization on the pooled
+context, not the metabolic module. The flux layer is off for this readout, and the claim
+that supervising the layer's own concentration beats the control is withdrawn as a
+statement about the layer. The cost of the readout that does use the flux stays: turnover
+minus pooled is $-0.0494$ (n = 2), and the wave-6 box flux head is $-0.039$ against pooled
+(n = 3). At three seeds the minimum detectable paired effect on this endpoint is about
+0.03, so this is a null at every size the design can see rather than a measured zero.
+
+%% SOURCE: notes/experiments.027-betaxanthin-metabolic.mermaid.aa-readouts.md (mermaid),
+%% rendered by notes/assets/publish/scripts/mermaid_pdf.sh; the numbers are read from
+%% experiments/027-betaxanthin-metabolic/results/wave8_aa_ctxconc_e200_s270{0,1,2}.json
+%% and wave7_aa_conc_e200_s270{0,1,2}.json (W&B view nw=yxntcreb2vq).
+
 \subsection{Betaxanthin parity, and the criterion that has never been met\secstatus{todo}}
 
 On the endpoint the module was built for, the same wave is flat. \textbf{Betaxanthin parity

@@ -1174,3 +1174,84 @@ One GPU job: **1946**, `gh_wave9_warmstart_e200_s2700.slurm` via `freeze_and_sub
 
 All ran at `--nice=1000` on at most 8 cores and 24 GB with a time bound, behind the database
 rebuild's queue.
+
+### 2026.09.14 (follow-up 12) - the medium carries it, the genotypes carry nothing
+
+**Correction.** Follow-up 11's table is job **1973**; job 1971 predates `deletion_indices`
+reaching the batch and fell back to the perturbation index, and 1972 is the crash between
+them.
+
+**The 2x2** (`probe_medium_genotype_2x2.py`) crosses {shipped bounds, YPD} with {4 wild,
+32 wild, 32 real deletion genotypes} at one seed, one wild-type reference per medium
+solved inside the layer's own build step, gating through `deletion_indices`.
+`wild_type_32` and `deletion_32` share the same `h`, `context` and seed, so they differ in
+the removal index alone. Job **1974** ran it on the shipped artifacts (the six lower rows
+then read 0.0877/0.0078, 0.7008/0.0170, 0.7008/0.0170, 1.3867/0.3398, 1.5774/0.3342 and
+1.5898/0.3343), **1980** on medium-consistent ones plus a row on the GEM's own gene list.
+
+| medium | source | tokens | max | p95 | rows | density | rel | clip | forbidden |
+|---|---|---|---|---|---|---|---|---|---|
+| shipped | 4 wild, GEM universe | 1,161 | **0.0265** | **0.0013** | 82.0 | 0.163 | 0.017 | 0.0063 | 6.0 |
+| shipped | 4 wild | 6,607 | 0.0924 | 0.0134 | 88.0 | 0.180 | 0.078 | 0.0338 | 6.0 |
+| shipped | 32 wild | 6,607 | 0.7504 | 0.0232 | 87.9 | 0.178 | 0.090 | 0.0375 | 6.0 |
+| shipped | 32 deletions | 6,607 | 0.7504 | 0.0242 | 87.9 | 0.178 | 0.090 | 0.0375 | 6.1 |
+| YPD | 32 wild | 6,607 | 2.0000 | 0.4968 | 251.6 | 0.332 | 0.578 | 0.2332 | 4.0 |
+| YPD | 32 deletions | 6,607 | **2.0000** | **0.4968** | 251.6 | 0.332 | 0.578 | 0.2332 | 4.1 |
+
+**The genotype axis carries nothing, and it is not close.** Wild type to deletions at 32
+rows moves the maximum by **1.00x** on both media and p95 by 1.04x on the shipped bounds
+and 1.00x on YPD; every other statistic agrees to three decimals, and the gate closes
+**0.34** reactions per genotype. Three NON-genotype factors make the gap, in p95: the
+6,607-token gene universe against the GEM's 1,161 is **10.6x** (0.0013 to 0.0134), 32 rows
+instead of 4 is 1.7x, deletions 1.04x, YPD **20.5x** (to 0.4968). Row 1 reproduces jobs
+1937 and 1945 (0.0306 / 0.0019 / 81.8 / 0.177 / 0.018), so the GENE UNIVERSE is a third
+axis, not a discrepancy: every init check before this one initialized the layer's random
+heads over the GEM's gene list while a training cell passes the transformer's.
+
+**Step 2, and the YPD-consistent artifacts do not rescue YPD.** `thermo_exempt_gate.py`
+gained `--medium` and `--flux`; job **1975** re-solved both artifacts per medium against
+the layer's own pFBA reference rather than the cobra FBA vertex. The committed shipped
+pair is FBA on 425 constraints, 47 violated, 2,641.5 kJ; shipped pFBA is 402 / 42 /
+2,477.8; **YPD pFBA is 400 / 98 / 6,111.6**, each exempting its violated set to a residual
+of 0.000 kJ. The YPD list shares only 21 of its 98 with the shipped-pFBA list, so it is a
+different set of offenders. It does what it addresses and the balance statistics get
+slightly WORSE: sign-forbidden reference reactions fall 73 to **4** on YPD and 14 to 6 on
+the shipped bounds, while `bal_act_max` rises 1.5898 to 2.0000 on YPD and 0.7008 to 0.7504
+on the shipped bounds.
+
+**What holds YPD is CAPACITY.** The YPD pFBA reference has a norm of 102.74 and a maximum
+flux of 49.58 against the shipped boundary's 19.56 and 9.12, so the same ceilings bite far
+harder: the clip costs **0.2332** of the reference's norm against 0.0375. On the tightened
+box `r_0226` ATP synthase carries 32.93 against a ceiling of 9.62, **3.42x over**, with
+0.103 of the reference's squared norm. Follow-up 5 held it at 0.86x on the shipped
+boundary with the same `sigma_plus_2` table and fold, so the capacity axis is
+medium-dependent because the reference is.
+
+**Step 3: no cell is ready and nothing was written.** The rule was `bal_act_max` below
+1e-1 with p95 below 1e-2 on the 32 REAL genotypes. The best cell is the shipped-bounds one
+at **0.7504 / 0.0242**, missing by 7.5x and 2.4x; YPD misses by 20x and 50x.
+`gh_wave9_warmstart_genoref_e200_s2700.slurm` was not touched and nothing submitted. The
+gate is far closer to met on the medium that is biologically wrong for this dataset.
+
+**Step 4: MOMA is a different vector from the pFBA knockout, and for the median genotype
+it is the WILD TYPE.** Job **1982** minimizes `0.5||v - v_wt||^2` over `Sv=0` and each
+knockout's bounds on 30 of the 201 moved gene sets, YPD, through an OSQP-style ADMM in
+`probe_moma_reference.py` (no QP package is installed here). **28 of 30 converged**; the
+two at the iteration cap are excluded rather than reported, and the wild-type round trip
+is 1.5e-8, the check that these distances are the program's. Median distances relative to
+the wild type's norm over the 28, with the count above 1 percent: MOMA to the pFBA
+knockout **0.3906** (27 of 28), MOMA to the wild type **0.0057** (12 of 28), pFBA knockout
+to wild type 0.3906 (28 of 28). For **11 of the 28** the MOMA solution IS the wild-type
+flux to 1e-6, which is diagnostic: the wild-type flux is still feasible under those
+knockouts' own bounds, so the pFBA reference moved only because the LP picked a different
+vertex among degenerate optima. **A MOMA table would therefore train as the
+SINGLE-reference head did** for the median genotype, job 1946's failure mode, and part of
+the shipped table's 201 moved sets is alternate-optimum churn rather than rerouting. MOMA
+as specified carries no growth requirement, so 6 of 30 solutions have biomass exactly 0
+(median 0.509 against the wild type's 0.535).
+
+**CPU jobs**, all COMPLETED except 1981: 1974 `gh_cpu_medium_genotype_2x2.slurm` 37 s;
+1975 `gh_cpu_thermo_exempt_gate_media.slurm` 8 s; 1980 the consistent 2x2, 2 min 8 s; 1981
+`gh_cpu_moma_reference.slurm` CANCELLED, at fixed rho the first QP stopped at a primal
+residual of 1.2e-2, the order of the distances measured; 1982 the same with adaptive rho,
+17 min 47 s. `flux_layer.py` was not edited this session; 127 tests pass.

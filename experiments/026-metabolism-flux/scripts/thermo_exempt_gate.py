@@ -69,6 +69,9 @@ RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "026-metabolism-flux", "results")
 THERMO_DIR = osp.join(DATA_ROOT, "data/torchcell/thermo_equilibrator")
 
 RT_KJ_PER_MOL = 8.314462618e-3 * 303.15
+#: The flux layer's own clamp on the GEM's bounds, so `pfba_layer` solves the program the
+#: layer's reference is solved in rather than the GEM's 1000-magnitude one.
+FLUX_SCALE = 100.0
 FLUX_ACTIVE = 1.0e-6
 SLACK_TOLERANCE = 1.0e-6
 #: The gate, in kJ/mol of TOTAL L1 slack. Below this the flux is thermodynamically
@@ -221,6 +224,29 @@ def main() -> None:
     )
     parser.add_argument("--epsilon-kj", type=float, default=1.0e-3)
     parser.add_argument("--gate-kj", type=float, default=GATE_KJ)
+    parser.add_argument(
+        "--medium",
+        default=None,
+        help=(
+            "A key of torchcell.metabolism.media.FBA_MEDIA, applied to the exchange bounds "
+            "BEFORE the FBA the LP prices. Both artifacts this script writes are functions "
+            "of that flux: the exemption list is the set of reactions no concentration in "
+            "the window makes downhill AT THIS FLUX, and the witness is the concentration "
+            "vector that licenses THIS FLUX. A list solved on the shipped boundary and "
+            "applied to a layer built on YPD is priced against a different cell. Absent, "
+            "nothing is touched and the artifacts are bit-identical to every earlier run."
+        ),
+    )
+    parser.add_argument(
+        "--flux",
+        default="fba",
+        choices=["fba", "pfba_layer"],
+        help=(
+            "Which flux the sign constraints are priced at. 'fba' is what every run before "
+            "2026-09-14 used; 'pfba_layer' is the flux layer's own reference, so the list "
+            "and the witness are solved against the exact vector the layer clips."
+        ),
+    )
     parser.add_argument("--out", default="thermo_exempt_candidates.json")
     parser.add_argument(
         "--witness-out",
@@ -240,6 +266,32 @@ def main() -> None:
     started = time.time()
     source = YeastGEM()
     model = source.model
+    # THE MEDIUM, applied before anything reads a bound. MUTATES the model: `MediaBounds`
+    # closes every exchange and opens exactly the recipe, so the medium is a statement about
+    # the whole boundary rather than an additive patch, and the growth rate either side of it
+    # is the one number that says whether it was a no-op, a loosening or a starvation.
+    medium_meta: dict[str, object] = {"applied": False, "medium": None}
+    if args.medium is not None:
+        from torchcell.metabolism.media import FBA_MEDIA, media_to_bounds
+
+        assert args.medium in FBA_MEDIA, (
+            f"medium {args.medium!r} is not in FBA_MEDIA ({sorted(FBA_MEDIA)})."
+        )
+        growth_before = float(model.slim_optimize())
+        bounds = media_to_bounds(FBA_MEDIA[args.medium], model)
+        bounds.apply(model)
+        growth_after = float(model.slim_optimize())
+        medium_meta = {
+            "applied": True,
+            "medium": args.medium,
+            "n_exchanges_opened": len(bounds.bounds),
+            "wild_type_growth_before": growth_before,
+            "wild_type_growth_after": growth_after,
+        }
+        print(
+            f"medium {args.medium}: growth {growth_before:.4f} -> {growth_after:.4f} over "
+            f"{len(bounds.bounds)} opened exchanges"
+        )
     gem = build_gem_tensors(
         model, source.model_dir, with_thermo=True, with_independent_rows=False
     )
@@ -262,9 +314,34 @@ def main() -> None:
     for j in exchanges:
         constrained[j] = False
     constrained[biomass] = False
-    solution = model.optimize()
-    assert solution.status == "optimal", f"the base FBA is {solution.status}."
-    v = np.array([solution.fluxes[r] for r in rxn_ids])
+    # THE FLUX THE LP PRICES, and the choice matters because both artifacts are functions of
+    # it. `fba` is what every earlier run used: cobra's FBA vertex at maximum biomass, which
+    # is one of many optima and carries flux on loops the parsimonious solution does not.
+    # `pfba_layer` is the flux layer's OWN reference, `parsimonious_reference_flux` on the
+    # same S, the same clamped bounds and the same biomass column, so the exemption list and
+    # the witness are priced against the exact vector the layer clips into its box rather
+    # than against a different optimum of the same program.
+    if args.flux == "fba":
+        solution = model.optimize()
+        assert solution.status == "optimal", f"the base FBA is {solution.status}."
+        v = np.array([solution.fluxes[r] for r in rxn_ids])
+        flux_note = "cobra FBA at maximum biomass on the unperturbed GEM"
+    else:
+        from torchcell.metabolism.flux_layer import parsimonious_reference_flux
+
+        record = parsimonious_reference_flux(
+            gem.s,
+            gem.lb.clamp(-FLUX_SCALE, FLUX_SCALE),
+            gem.ub.clamp(-FLUX_SCALE, FLUX_SCALE),
+            biomass,
+            growth_fraction=1.0,
+        )
+        v = record.v.double().numpy()
+        flux_note = (
+            "parsimonious_reference_flux (the flux layer's own pFBA reference) on the "
+            "unperturbed GEM, bounds clamped to the layer's flux scale"
+        )
+    print(f"flux rule {args.flux}: biomass {v[biomass]:.5f}, norm {np.linalg.norm(v):.4f}")
     window = (CONC_LOWER_M, CONC_UPPER_M)
     full_idx = np.flatnonzero((np.abs(v) > FLUX_ACTIVE) & constrained)
     print(
@@ -358,10 +435,12 @@ def main() -> None:
         },
         "provenance": {
             "route": route.value,
+            "medium": medium_meta,
             "thermo_table_sha256": table_sha,
             "window_m": list(window),
             "epsilon_kj": args.epsilon_kj,
-            "flux": "cobra FBA at maximum biomass on the unperturbed GEM",
+            "flux": flux_note,
+            "flux_rule": args.flux,
             "flux_active_threshold": FLUX_ACTIVE,
             "rt_kj_per_mol": RT_KJ_PER_MOL,
             "gem": osp.basename(source.model_dir),
@@ -410,11 +489,13 @@ def main() -> None:
             ),
         },
         "route": route.value,
+        "medium": medium_meta,
         "window_m": list(window),
         "epsilon_kj": args.epsilon_kj,
         "rt_kj_per_mol": RT_KJ_PER_MOL,
         "gem": osp.basename(source.model_dir),
         "thermo_table_sha256": table_sha,
+        "flux_rule": args.flux,
         "exempt_file": args.out,
         "exempt_file_sha256": digest,
         "n_exempt_reactions": len(selected["removed"]),

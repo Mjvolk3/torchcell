@@ -285,12 +285,21 @@ rank order above.
 
 ### 2026.09.15 - What the warm-start line established, and where it stops
 
-- **Rank 2 fails on its one seed and the cell is invalid anyway.** Job 1946 selected at
-  epoch 3 (pinned -0.028, a constant predictor); on the top 100 the box and the model second
-  law are exact and the balance median is 7e-8, but the balance maximum sits at the 2.0
-  ceiling in every strain. It ran under the old gate (ARO4 and ARO7 closed) and on the
-  shipped bounds, and its init numbers came from four wild types. Seeds 2701 and 2702 are
-  not run; the active-row audit is job 1983.
+- **Rank 2 is the first cell to meet the honest rule on a real genotype, and it meets it on
+  46 of the top 100.** Job 1946, audited from its selected checkpoint at epoch 3 (job 1985,
+  `audit_wave9_warmstart_s2700.json`): on the top 100 the box and the model second law are
+  exact on 100 of 100, and the turnover-thresholded active-row rule at 1e-3 passes on 46
+  (p95 half on 81); at the 1e-2 threshold the max passes on 88 and the p95 on 90. The
+  per-strain median active-row maximum is 0.0106 over 81 active rows, against the pFBA
+  reference's 82 rows; every boxforce cell before it read 0.00 under this rule. The trainer's
+  own block reports the all-rows maximum at 2.0, the statistic the review retired as solver
+  noise (the pFBA reference reads 0.098 on it), which is what an earlier draft of this
+  addendum mistook for the ceiling. What the trajectory shows (run 6s8r3aov): the priced
+  balance term closed the gap within three epochs, then the data term grew the residual
+  scale from 0.010 to 0.087 and the worst strain's maximum went to 2.0 by epoch 45. The
+  cell is a constant predictor for betaxanthin (pinned -0.028), ran under the old gate and
+  the shipped bounds, and is one seed. Hypothesis (untested): freezing the residual scale at
+  its initial value holds feasibility for the whole run; that is the next cell.
 - **The 50x between the probe and the real batch is the medium and the gene universe, not
   the genotypes.** The 2x2 (jobs 1974 and 1980) crosses shipped bounds against YPD and wild
   types against 32 real deletion genotypes with the gate fixed: wild type to deletions moves

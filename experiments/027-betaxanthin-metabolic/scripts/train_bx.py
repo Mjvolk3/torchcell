@@ -1349,7 +1349,18 @@ ISOBUTANOL_HELDOUT_DATASET = "IsobutanolValidatedLopez2024Dataset"
 #:   `torchcell/datamodels/media.py` and only the uptake magnitudes are sourced (Suthers).
 #:   An SC-bounded cell is therefore running on an UNSOURCED medium and is labeled as such
 #:   in `flux_meta.media`.
-HEAD_MEDIUM: dict[str, str] = {HEAD: "YPD", AUX_HEAD: "SM", ISOBUTANOL_HEAD: "SC"}
+#: * Essentiality is scored on RICH medium: the deletion collection's viability calls come
+#:   from growth on YPD, and Merzbacher's split inherits those literature calls. This is
+#:   deliberately NOT the medium of the published FBA comparator, which Merzbacher ran on
+#:   glucose minimal aerobic; the phenotype and that baseline are different experiments, and
+#:   the mismatch is recorded rather than split the difference. A cell that wants to
+#:   reproduce the FBA number runs on the shipped bounds instead, with `--apply-media none`.
+HEAD_MEDIUM: dict[str, str] = {
+    HEAD: "YPD",
+    AUX_HEAD: "SM",
+    ISOBUTANOL_HEAD: "SC",
+    ESSENTIALITY_HEAD: "YPD",
+}
 
 
 def isobutanol_anchors(anchor_set: str) -> dict[str, str]:

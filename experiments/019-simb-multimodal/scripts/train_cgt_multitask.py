@@ -2741,6 +2741,13 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
 
     head_weights = _as_dict(cfg.multitask.head_weights)
     head_phenotypes = _as_dict(cfg.multitask.head_phenotypes)
+    # METRIC NAMESPACE PER HEAD, overridable. The per_gene head logs as `expression` by
+    # default; the proteome round (cgt_expr_v14_proteome) trains that same head on
+    # `protein_abundance` and names it `proteome` here, so `val/proteome/pearson_per_feature`
+    # says what was predicted and nothing on W&B pools it with the expression rounds.
+    for _head, _name in _as_dict(cfg.multitask.get("head_phenotype_names", {})).items():
+        HEAD_TO_PHENOTYPE[str(_head)] = str(_name)
+        print(f"[namespace] head '{_head}' logs as '{_name}'")
     active_heads = list(cfg.multitask.active_heads)
 
     # ---- Scale metadata -> wandb config + summary (scaling-study axis data) ----

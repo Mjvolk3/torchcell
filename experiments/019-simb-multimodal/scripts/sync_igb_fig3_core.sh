@@ -11,11 +11,15 @@
 #
 #   bash experiments/019-simb-multimodal/scripts/sync_igb_fig3_core.sh
 #   IGB_HOST=biologin-2 bash .../sync_igb_fig3_core.sh    # override login node
+#   bash experiments/019-simb-multimodal/scripts/sync_igb_fig3_core.sh fig3_proteome   # another tag
 set -euo pipefail
 
 # --- Source (GilaHyper) ---
+# The dataset tag is the one positional argument (default fig3_core); the same tree layout
+# holds for every 019 build (fig3_proteome, fig6_pigment_transfer, ...).
+TAG="${1:-fig3_core}"
 GH_DATA_ROOT="${DATA_ROOT:-/scratch/projects/torchcell-scratch}"
-REL="data/torchcell/experiments/019-simb-multimodal/fig3_core"
+REL="data/torchcell/experiments/019-simb-multimodal/$TAG"
 SRC="$GH_DATA_ROOT/$REL"
 
 # --- Destination (IGB) ---
@@ -32,7 +36,7 @@ if [[ ! -d "$SRC" ]]; then
   exit 1
 fi
 
-echo "== fig3_core sync GilaHyper -> IGB =="
+echo "== $TAG sync GilaHyper -> IGB =="
 echo "  src : $SRC  ($(du -sh "$SRC" | cut -f1))"
 echo "  dest: $IGB_USER@$IGB_HOST:$DEST_DIR"
 

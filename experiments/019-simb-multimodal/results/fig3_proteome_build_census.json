@@ -1,0 +1,27 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/build_fig3_proteome.py",
+ "dataset_tag": "fig3_proteome",
+ "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_proteome",
+ "query_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/experiments/019-simb-multimodal/queries/fig3_proteome.cql",
+ "neo4j_uri": "bolt://localhost:7687",
+ "host": "gilahyper",
+ "build_seconds": 4.80574893951416,
+ "n_records": 4681,
+ "n_raw_records": 6260,
+ "n_converted_records": 6260,
+ "n_records_by_label": {
+  "expression_log2_ratio": 1554,
+  "protein_abundance": 4476
+ },
+ "n_records_with_proteome_and_expression": 1349,
+ "first_proteome_record": {
+  "index": 0,
+  "n_experiments_in_record": 2,
+  "measurement_type": "log2_ratio_to_reference(swath_ms_maxlfq_batch_corrected_quantity)",
+  "n_proteins": 1819,
+  "log2_ratio_min": -1.6948246794069595,
+  "log2_ratio_median": 0.0013056460000748942,
+  "log2_ratio_max": 0.8480207088373352,
+  "reference_all_zero": true
+ }
+}

@@ -64,6 +64,12 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--seeds", type=int, nargs="+", required=True)
     p.add_argument("--dataset-tag", default="fig3_core")
+    p.add_argument(
+        "--label",
+        default=EXPRESSION_LABEL,
+        help="phenotype label whose per-split record counts the manifest records "
+        "(expression_log2_ratio for fig3_core, protein_abundance for fig3_proteome)",
+    )
     return p.parse_args()
 
 
@@ -115,9 +121,14 @@ def main() -> None:
         transform=None,
     )
     cache_dir = osp.join(dataset_root, "data_module_cache")
+    # One manifest per dataset tag; fig3_core keeps its original file name.
+    manifest_name = (
+        "split_indices_manifest.json"
+        if args.dataset_tag == "fig3_core"
+        else f"split_indices_manifest_{args.dataset_tag}.json"
+    )
     manifest_path = osp.join(
-        experiment_results_dir("019-simb-multimodal", __file__),
-        "split_indices_manifest.json",
+        experiment_results_dir("019-simb-multimodal", __file__), manifest_name
     )
     manifest: dict[str, object] = {}
     if osp.exists(manifest_path):
@@ -127,6 +138,7 @@ def main() -> None:
         "experiments/019-simb-multimodal/scripts/make_split_indices.py"
     )
     manifest.setdefault("dataset_tag", args.dataset_tag)
+    manifest.setdefault("label", args.label)
     per_seed = manifest.setdefault("seeds", {})
     assert isinstance(per_seed, dict)
     for seed in args.seeds:
@@ -148,9 +160,7 @@ def main() -> None:
         with open(details_path) as f:
             details = json.load(f)
         counts = {
-            split: int(
-                details[split]["phenotype_label_index"][EXPRESSION_LABEL]["count"]
-            )
+            split: int(details[split]["phenotype_label_index"][args.label]["count"])
             for split in ("train", "val", "test")
         }
         record = {
@@ -163,13 +173,14 @@ def main() -> None:
                 "val": len(dm.index.val),
                 "test": len(dm.index.test),
             },
-            "n_expression_records": counts,
+            "n_label_records": counts,
+            "label": args.label,
         }
         per_seed[str(seed)] = record
         print(
             f"seed {seed}: records train/val/test "
             f"{record['n_records']['train']}/{record['n_records']['val']}/"
-            f"{record['n_records']['test']}; expression "
+            f"{record['n_records']['test']}; {args.label} "
             f"{counts['train']}/{counts['val']}/{counts['test']}; "
             f"{'existing' if existed else 'NEW'} index sha256 "
             f"{record['index_sha256'][:12]}"

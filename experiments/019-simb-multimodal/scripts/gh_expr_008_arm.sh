@@ -548,6 +548,15 @@ case "$ARM" in
                      ARM_TAGS=(readout-shared-mlp "split${ARM##*_s}" stage-split round-split) ;;
   V_concat_s[0-9])   OVERRIDES=(multitask.concat_context=true data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(readout-concat "split${ARM##*_s}" stage-split round-split) ;;
+  # ============================ PROTEOME ROUND (2026.09.15, v14) ===========================
+  # The split round's two readouts on the Messner 2023 knockout proteome
+  # (conf/cgt_expr_v14_proteome.yaml carries the dataset, label and namespace; the arm only
+  # sets the partition and the readout). Same pairing as V_*: one card, one split, two
+  # readouts, two seeds.
+  P_ref_s[0-9])      OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(readout-shared-mlp "split${ARM##*_s}" proteome stage-proteome round-proteome) ;;
+  P_concat_s[0-9])   OVERRIDES=(multitask.concat_context=true data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(readout-concat "split${ARM##*_s}" proteome stage-proteome round-proteome) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

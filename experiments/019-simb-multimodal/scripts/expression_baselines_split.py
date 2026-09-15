@@ -74,10 +74,20 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="train on train+test against the same val set (the 90/10 arm); no test score",
     )
+    # The proteome round (v14) reads the same baselines on the fig3_proteome build, whose
+    # label is the log2 ratio of protein abundance to the HIS3 reference. The two
+    # arguments travel together; results land in baselines_split_<tag>/ for any tag
+    # other than fig3_core.
+    p.add_argument("--dataset-tag", default=DATASET_TAG)
+    p.add_argument(
+        "--label",
+        default=EXPRESSION_LABEL,
+        help="phenotype label to predict (expression_log2_ratio or protein_abundance)",
+    )
     return p.parse_args()
 
 
-def _load_split(cache_dir: str, seed: int) -> dict[str, list[int]]:
+def _load_split(cache_dir: str, seed: int, label: str) -> dict[str, list[int]]:
     path = osp.join(cache_dir, f"index_details_seed_{seed}.json")
     if not osp.exists(path):
         raise FileNotFoundError(
@@ -87,15 +97,13 @@ def _load_split(cache_dir: str, seed: int) -> dict[str, list[int]]:
     with open(path) as f:
         details = json.load(f)
     return {
-        split: list(
-            details[split]["phenotype_label_index"][EXPRESSION_LABEL]["indices"]
-        )
+        split: list(details[split]["phenotype_label_index"][label]["indices"])
         for split in ("train", "val", "test")
     }
 
 
 def _load_records(
-    base: str, indices: list[int]
+    base: str, indices: list[int], label: str
 ) -> tuple[list[list[str]], np.ndarray, list[str]]:
     """Expression rows for the given record indices, in that order.
 
@@ -118,15 +126,11 @@ def _load_records(
             if isinstance(recs, dict):
                 recs = [recs]
             expr = [
-                r
-                for r in recs
-                if r["experiment"]["phenotype"]["label_name"] == EXPRESSION_LABEL
+                r for r in recs if r["experiment"]["phenotype"]["label_name"] == label
             ]
             if len(expr) != 1:
-                raise ValueError(
-                    f"record {idx} carries {len(expr)} expression experiments"
-                )
-            d = expr[0]["experiment"]["phenotype"][EXPRESSION_LABEL]
+                raise ValueError(f"record {idx} carries {len(expr)} {label} experiments")
+            d = expr[0]["experiment"]["phenotype"][label]
             if keys is None:
                 keys = sorted(d)
             if set(d) != set(keys):
@@ -161,9 +165,11 @@ def main() -> None:
     args = parse_args()
     data_root = os.environ["DATA_ROOT"]
     base = osp.join(
-        data_root, "data/torchcell/experiments/019-simb-multimodal", DATASET_TAG
+        data_root, "data/torchcell/experiments/019-simb-multimodal", args.dataset_tag
     )
-    split = _load_split(osp.join(base, "data_module_cache"), args.split_seed)
+    split = _load_split(
+        osp.join(base, "data_module_cache"), args.split_seed, args.label
+    )
     if args.fold_test_into_train:
         split = {
             "train": split["train"] + split["test"],
@@ -176,7 +182,7 @@ def main() -> None:
     for name, idx in split.items():
         if not idx:
             continue
-        p, mat, k = _load_records(base, idx)
+        p, mat, k = _load_records(base, idx, args.label)
         if keys is None:
             keys = k
         elif k != keys:
@@ -195,7 +201,8 @@ def main() -> None:
     r = {s: y[s] - mu for s in y}
     out: dict[str, object] = {
         "generated_by": "experiments/019-simb-multimodal/scripts/expression_baselines_split.py",
-        "dataset_tag": DATASET_TAG,
+        "dataset_tag": args.dataset_tag,
+        "label": args.label,
         "split": {
             "kind": "CellDataModule index_details_seed",
             "split_seed": args.split_seed,
@@ -328,7 +335,9 @@ def main() -> None:
     tag = f"seed{args.split_seed}" + ("_fold90" if args.fold_test_into_train else "")
     dst_dir = osp.join(
         experiment_results_dir("019-simb-multimodal", __file__),
-        "expression_baselines_split",
+        "expression_baselines_split"
+        if args.dataset_tag == DATASET_TAG
+        else f"baselines_split_{args.dataset_tag}",
     )
     os.makedirs(dst_dir, exist_ok=True)
     dst = osp.join(dst_dir, f"{tag}.json")

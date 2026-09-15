@@ -1,0 +1,75 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/make_split_indices.py",
+ "dataset_tag": "fig3_proteome",
+ "label": "protein_abundance",
+ "seeds": {
+  "0": {
+   "index_file": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_proteome/data_module_cache/index_seed_0.json",
+   "index_sha256": "d49627b95c989ebe5ec30d5a7c843938c9acba08576d672c06e363ead658b124",
+   "details_sha256": "fd1b78302adc3ae4d4ca3f733edceb39ad7a5a80e2ebd337d730ccb6a3e96bf5",
+   "existed_before_this_run": false,
+   "n_records": {
+    "train": 3722,
+    "val": 478,
+    "test": 481
+   },
+   "n_label_records": {
+    "train": 3581,
+    "val": 448,
+    "test": 447
+   },
+   "label": "protein_abundance"
+  },
+  "1": {
+   "index_file": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_proteome/data_module_cache/index_seed_1.json",
+   "index_sha256": "0ed25dba41874b8708a97dbfdde5b24e56fd972e81506e078a226262607edd32",
+   "details_sha256": "d07d5fd78af098dbf86e1bd9e58cf07a22bb04c0c6f27a4ccb4f606e2d74f6f8",
+   "existed_before_this_run": false,
+   "n_records": {
+    "train": 3726,
+    "val": 477,
+    "test": 478
+   },
+   "n_label_records": {
+    "train": 3581,
+    "val": 448,
+    "test": 447
+   },
+   "label": "protein_abundance"
+  },
+  "2": {
+   "index_file": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_proteome/data_module_cache/index_seed_2.json",
+   "index_sha256": "0671f8e24e30bcb77efe4a71984273135913fb3437b5e6abe12e73796cebb701",
+   "details_sha256": "df3b6383b1111838908a6a55da1f5e8e2174d129fe4ca9e314566e9671d7f098",
+   "existed_before_this_run": false,
+   "n_records": {
+    "train": 3723,
+    "val": 484,
+    "test": 474
+   },
+   "n_label_records": {
+    "train": 3581,
+    "val": 448,
+    "test": 447
+   },
+   "label": "protein_abundance"
+  },
+  "3": {
+   "index_file": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_proteome/data_module_cache/index_seed_3.json",
+   "index_sha256": "0d45c1ff0132f3034e9004c49d470325869fcbbdadf8f60007ad57fe4098d74f",
+   "details_sha256": "ad5db65219c9511c0151bcbda537c43707c5a01b0e9ec876af0f9e6f4d2154e8",
+   "existed_before_this_run": false,
+   "n_records": {
+    "train": 3717,
+    "val": 481,
+    "test": 483
+   },
+   "n_label_records": {
+    "train": 3581,
+    "val": 448,
+    "test": 447
+   },
+   "label": "protein_abundance"
+  }
+ }
+}

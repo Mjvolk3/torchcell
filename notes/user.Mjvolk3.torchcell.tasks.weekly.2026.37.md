@@ -93,3 +93,12 @@ created: 1788904951158
 - [x] Checked the deposits: de Boer GSE104878 carries the full random-promoter expression tables (883/830/548/451/402 MB gzipped), Vaishnav GSE163045 637 MB plus Zenodo 4436477 with 3.59 GB and 2.47 GB training corpora; both are sequence-to-expression, not genotype-to-phenotype [[torchcell.datasets.scerevisiae.promoter-expression-gpra]]
 - [x] **Tryptophan data found and mirrored**: our OCR had truncated the data-availability statement; the real one names a GitHub copy of the JBEI ICE and EDD records. 576 strains x 3 replicates, GFP and OD600, 289,152 rows, 5-slot promoter designs. In `$DATA_ROOT/torchcell-raw/zhangCombiningMechanisticMachine2020/` with a sha256 manifest pinned to commit f95f7d10 [[torchcell.datasets.scerevisiae.zhang2020]]
 - [ ] Next for tryptophan: schema for a promoter-replacement-plus-relocation perturbation and a biosensor time-series phenotype, then loader + adapter
+
+## 2026.09.15
+
+- [x] Messner proteome IS in the served store on GilaHyper (4,699 experiments, `graph_level node`); what was missing was the query, the log2 ratio and the head binding, all done today
+- [x] `ProteinAbundanceLog2RatioConverter`: build-time `log2(strain / HIS3 reference)` per protein, reference to zero, SE by the delta method, `measurement_type` renamed; 5 tests; verified on a real Messner record [[torchcell.datamodels.protein_abundance_log2_ratio_conversion]]
+- [x] `fig3_proteome` built on the GilaHyper served store (Kemmeren + Sameith Sm/Dm + Messner, 16 min): 4,681 genotype records, 4,476 proteome, 1,554 expression, 1,349 both; raw = converted = 6,260 [[experiments.019-simb-multimodal.scripts.build_fig3_proteome]]
+- [x] v14 proteome round config and arms: the v13 design (P_ref, P_concat on split seeds 0-3, two init seeds, four per card) on the proteome, per_gene head pointed at `protein_abundance` and logged as `val/proteome/...` (new `multitask.head_phenotype_names`), 2,000 epochs [[experiments.019-simb-multimodal.conf.cgt_expr_v14_proteome]]
+- [x] proteome partitions materialized and hashed for seeds 0-3 (3,581 / 448 / 447 proteome records per split) [[experiments.019-simb-multimodal.scripts.make_split_indices]]
+- [x] Kemmeren-vs-Messner agreement is already in the expression document (per strain 0.036 over 1,350 shared deletions, per protein 0.075, gene co-variation Spearman 0.31; Zelezniak reproduces Messner at 0.08): the proteome is a target of its own, not a proxy

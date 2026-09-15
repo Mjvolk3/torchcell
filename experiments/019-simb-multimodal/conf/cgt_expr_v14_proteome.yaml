@@ -1,0 +1,61 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v14_proteome.yaml
+# THE PROTEOME ROUND -- project v14, the v13 split design on the Messner 2023 knockout
+# proteome instead of the Kemmeren transcriptome, on the cabbi RTX 6000 Ada cards.
+#
+# WHY. Every expression round since _006 has trained on 1,244 Kemmeren strains against a
+# replicate ceiling of 0.775 and sits at 25% of it. The knockout proteome is the same
+# collection measured three times over: 4,549 deletion ORFs, 1,830 proteins, one
+# measurement per strain against a 388-replicate HIS3 reference (Messner et al. 2023,
+# doi:10.1016/j.cell.2023.03.026, SM medium, 30 C). Its per-strain agreement with Kemmeren
+# on the 1,350 shared deletions is 0.04 (proteome_expression_eda.py; 2-readouts.tex,
+# sec. proteome), so it is a target of its own, not a proxy: whether a graph-masked
+# transformer over gene tokens predicts a deletion's protein profile better than a
+# bilinear ridge on ProtT5 is a question the expression rounds cannot answer.
+#
+# THE DATA. `fig3_proteome` (queries/fig3_proteome.cql, built by build_fig3_proteome.py)
+# unions Kemmeren, Sameith Sm/Dm and Messner into one genotype-keyed store. The proteome
+# values are converted AT BUILD TIME to log2(strain / HIS3 reference) per protein
+# (torchcell/datamodels/protein_abundance_log2_ratio_conversion.py), the same form as the
+# expression log2 ratio, so the per-gene head, the pinball loss, the per-feature z-score
+# and the masked-conditioning objective all apply unchanged. `require_modalities` keeps
+# only genotypes carrying the proteome, so a Kemmeren-only strain never enters a batch.
+#
+# THE HEAD IS THE EXPRESSION HEAD, pointed at another label. `head_phenotypes.per_gene`
+# names `protein_abundance`; `head_phenotype_names` logs it under `val/proteome/...` so the
+# W&B namespace says what was predicted. The checkpoint monitor follows.
+#
+# THE ARMS (gh_expr_008_arm.sh, P_* arms): P_ref_s<k> is H_ref (shared MLP over gene tokens,
+# E_full input, pinball) and P_concat_s<k> is H_concat, the one readout the v12 round
+# resolved over the reference (+0.0135, 4/4 seeds), on split seeds 0 to 3, two
+# initialization seeds each. Sixteen runs, four per card, each card one split's two arms
+# for two seeds, so ref/concat is paired within card and seed exactly as in v13.
+#
+# BUDGET. The proteome train set is about 3.6k records against Kemmeren's 1,244, so one
+# epoch is about 2.9x the gradient steps; 2,000 epochs here is roughly v13's 6,000 in
+# steps. Hypothesis (unmeasured): four runs per card at ~13 epochs/h/run puts 2,000
+# epochs at about 6.5 days; the 10-day wall is the guard, not the plan.
+defaults:
+  - cgt_expr_v13_split
+  - _self_
+
+wandb:
+  project: torchcell_019_prot_v14
+  tags: [proteome-round, v14]
+
+cell_dataset:
+  query_file: fig3_proteome.cql
+  dataset_tag: fig3_proteome
+  require_modalities: [protein_abundance]
+
+multitask:
+  head_phenotypes:
+    per_gene: [protein_abundance]
+  # Metric namespace per head (default: per_gene -> expression). Declared so the
+  # per-gene head's metrics say what label they score.
+  head_phenotype_names:
+    per_gene: proteome
+
+trainer:
+  max_epochs: 2000
+  checkpoint:
+    monitor: val/proteome/pearson_per_feature

@@ -54,10 +54,17 @@ export PYTHONUNBUFFERED=1
 TASK="${SLURM_ARRAY_TASK_ID:?submit with --array}"
 #   task 5-12   split seeds 4-11, the extra partitions that exist only for the linear
 #               models (no GPU run), so the split spread rests on twelve draws
+#
+# Another build and label (the proteome round, v14):
+#   sbatch --array=0-3 --export=ALL,BASELINES_TAG=fig3_proteome,BASELINES_LABEL=protein_abundance \
+#       experiments/019-simb-multimodal/scripts/gh_expression_baselines_split.slurm
+BASELINES_TAG="${BASELINES_TAG:-fig3_core}"
+BASELINES_LABEL="${BASELINES_LABEL:-expression_log2_ratio}"
+COMMON=(--dataset-tag "$BASELINES_TAG" --label "$BASELINES_LABEL")
 case "$TASK" in
-  0|1|2|3) ARGS=(--split-seed "$TASK") ;;
-  4)       ARGS=(--split-seed 0 --fold-test-into-train) ;;
-  5|6|7|8|9|10|11|12) ARGS=(--split-seed "$((TASK - 1))") ;;
+  0|1|2|3) ARGS=(--split-seed "$TASK" "${COMMON[@]}") ;;
+  4)       ARGS=(--split-seed 0 --fold-test-into-train "${COMMON[@]}") ;;
+  5|6|7|8|9|10|11|12) ARGS=(--split-seed "$((TASK - 1))" "${COMMON[@]}") ;;
   *) echo "unknown task $TASK" >&2; exit 1 ;;
 esac
 

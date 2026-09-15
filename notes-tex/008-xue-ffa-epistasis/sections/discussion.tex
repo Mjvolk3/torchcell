@@ -43,7 +43,11 @@ be trained on combinations, and the enrichment result says the existing interact
 will not stand in for that training data: across 28 graph-by-model tests, the interacting
 triples are never enriched for connectivity in any graph, and are significantly depleted in
 five. Whatever determines which combinations interact is not recorded in physical,
-regulatory, genetic, TFLink or STRING connectivity among these ten genes.
+regulatory, genetic, TFLink or STRING connectivity among these ten genes. Nor is it carried
+by combinations measured on a different readout: a transformer trained on trigenic growth
+interactions predicts neither the magnitude nor the rank of the titer interactions, and at
+most their sign. The combinations a predictor learns from have to be measured on the
+phenotype it is asked to predict.
 
 \subsection*{What this design can and cannot support}
 

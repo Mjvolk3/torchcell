@@ -32,7 +32,10 @@ DEPS     := $(DOC).tex content.tex preamble.tex $(SECTIONS)
 # perspective, the images directory for the experiment, so unlike every other notes-tex
 # document these two differ and the slug has to be written out.
 PLOT_SLUG := 008-xue-ffa
-PLOT_SRC  := $(REPO)/notes/assets/images/$(PLOT_SLUG)
+# The growth-model figure (ffa_panel_model_score) is written by the 010 experiment's
+# script into its own image directory; `make plots` searches both, first match wins.
+PLOT_SLUGS := 008-xue-ffa 010-kuzmin-tmi
+PLOT_SRCS := $(foreach slug,$(PLOT_SLUGS),$(REPO)/notes/assets/images/$(slug))
 DRAWIO_SRC := $(REPO)/notes/assets/drawio
 
 ifeq ($(shell uname -s),Darwin)
@@ -64,8 +67,10 @@ plots: $(SHARED)
 	@mkdir -p figures
 	@for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(DEPS) 2>/dev/null | sort -u); do \
 	  n=$$(basename $$f .pdf); \
-	  s="$(PLOT_SRC)/$$n.svg"; \
-	  if [ -f "$$s" ]; then $(SVG2PDF) "$$s" "$$f"; fi; \
+	  for d in $(PLOT_SRCS); do \
+	    s="$$d/$$n.svg"; \
+	    if [ -f "$$s" ]; then $(SVG2PDF) "$$s" "$$f"; break; fi; \
+	  done; \
 	done
 
 # Re-export any draw.io source this document references as figures/NAME.pdf. Use this once

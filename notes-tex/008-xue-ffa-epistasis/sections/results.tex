@@ -6,7 +6,9 @@
 %%   experiments/008-xue-ffa/scripts/perspective_figure_panels.py       (panels a-j)
 %%   experiments/008-xue-ffa/scripts/notable_interaction_selection.py   (consensus panels)
 %%   experiments/008-xue-ffa/scripts/ffa_epistatic_path_panels.py       (path enumeration)
-%% Re-run those three and the panels and the numbers move together. Nothing here is
+%%   experiments/010-kuzmin-tmi/scripts/ffa_panel_model_score.py        (growth-model scoring;
+%%       results/ffa_panel_model_score.{csv,json}, figure ffa_panel_model_score.svg)
+%% Re-run those four and the panels and the numbers move together. Nothing here is
 %% transcribed by hand from a figure.
 %%
 %% FIGURES. Each panel is a true-size PDF converted by `make plots` from the SVG its plot
@@ -240,4 +242,60 @@ catalyze, the intermediates those reactions consume or produce, and the 31 measu
 species, one node per compartment (peroxisome, ER membrane, lipid particle) with a bracket
 per species. LPA, 1-acyl-sn-glycerol 3-phosphate; PA, phosphatidate, written as the two
 acyl chains.}{fig:network}
+\end{figure*}
+
+\subsection*{A model trained on growth interactions does not predict the titer interactions}
+
+The other place a campaign could look for a predictor is a model trained on measured
+combinations rather than on a graph. The torchcell equivariant cell graph transformer is
+trained on the trigenic growth interaction screens of Kuzmin et al.\ (2018, 2020), where
+each triple deletion is scored by colony fitness in a wild-type background. All ten
+factors here are in its gene space, and seven of them were deleted somewhere in its
+training data; GCN5, RPD3 and TFC7 were not. We scored each of the 120 triples as a
+three-gene deletion and asked whether the predicted growth interaction tracks the measured
+titer interaction under the multiplicative model (Fig.~\ref{fig:model-score}). The two
+quantities differ in readout and in background, so a null here does not separate a model
+that cannot rank trigenic interactions from a growth interaction that does not carry over to
+titer. The question is only whether this predictor, as it stands, would help choose
+combinations.
+
+Neither magnitude nor rank transfers. Across the 120 triples the ensemble mean of three
+checkpoints correlates with the measured $\tau$ at $r = 0.16$ ($P = 0.08$) and Spearman
+$\rho = 0.13$ ($P = 0.17$), and the measured $\tau$ shows no trend across quartiles of the
+prediction (Kruskal-Wallis $P = 0.39$). The three checkpoints agree with each other ($r$
+0.62 to 0.71) far better than any of them agrees with titer ($r$ 0.08 to 0.20), so the miss
+is a property of what the model learned rather than of one training run. Restricting to
+the 86 triples called at a 5\% false discovery rate, to the 84 free of the contested TFC7
+locus, or to the 35 whose three factors were all deleted in training moves $r$ between 0.12
+and 0.16 without moving it out of the noise, and the top quartile by predicted $\tau$ holds
+no more called interactions than the rest (22 of 30 against 64 of 90).
+
+The one signal is the sign. Of the 20 triples the model predicts positive, 9 measure
+positive, against 18 of the 100 it predicts non-positive: 45\% against 18\% (Fisher
+$P = 0.016$). The same split holds in the 84 triples without TFC7 ($P = 0.005$) and in the
+35 fully trained ones ($P = 0.04$). Every $P$ in this subsection is nominal among ten
+related tests on one set of 120 triples, so the sign association is a lead to test on a new
+panel, not a result. Read with the graph result, the training data a useful predictor needs
+are combinations measured on the readout of interest: a model trained on growth
+combinations carries over to titer at most the direction of the interaction.
+
+\begin{figure*}[t]
+\tcfig{figures/ffa_panel_model_score.pdf}{\textbf{A growth-trained transformer does not
+predict the titer interactions.} Three checkpoints of the torchcell equivariant cell graph
+transformer, trained on the Kuzmin 2018 and 2020 trigenic growth screens, scored each
+transcription factor triple as a three-gene deletion in a wild-type background; the measured
+quantity is the multiplicative titer interaction $\tau$ of the same triple on the
+pox1$\Delta$ faa1$\Delta$ faa4$\Delta$ chassis, total titer. ``FFA titer FDR'' is
+Benjamini-Hochberg over the 119 testable triples within total titer. \textbf{a}, Coverage:
+120 scorable, 35 with all three factors seen as deletions in training (7 of 10 factors), 84
+free of the contested TFC7 locus. \textbf{b}, Ensemble-mean predicted growth $\tau$ against
+measured titer $\tau$, Pearson $r = 0.16$, $P = 0.08$; the key's classes number 86, 33 and
+1. \textbf{c}, The same as ranks, Spearman $\rho = 0.13$, $P = 0.17$. \textbf{d}, Measured
+$\tau$ by quartile bin of predicted $\tau$, bar at the bin mean, Kruskal-Wallis $P = 0.39$.
+\textbf{e}, Pearson (filled) and Spearman (open) correlations: between checkpoints on the
+same triples; each checkpoint, the ensemble mean and the worst of three against titer; the
+ensemble on three subsets. \textbf{f}, Measured $\tau$ split by predicted sign (blue at or
+below zero, purple above; filled where the titer interaction is FDR-called), 45\% against
+18\% measured positive, Fisher $P = 0.016$. Every $P$ is nominal among ten related tests on
+one set of 120 triples.}{fig:model-score}
 \end{figure*}

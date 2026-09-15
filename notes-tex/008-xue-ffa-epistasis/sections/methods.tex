@@ -89,13 +89,31 @@ from Fig.~\ref{fig:models}b, which is a statement about those graphs' coverage o
 set and not about epistasis
 (\file{interaction_graph_enrichment_analysis.py}).
 
+\subsection*{Scoring the triples with a growth-trained model}
+
+Each of the 120 triples was scored by the torchcell equivariant cell graph transformer
+trained on the Kuzmin 2018 and 2020 trigenic growth screens, as a three-gene deletion in a
+wild-type background, the perturbation form the model was trained on. The three chassis
+deletions were not part of the scored genotype, and no single or double was scored. Three
+independently trained checkpoints were scored on CPU with a parity guard against stored GPU
+predictions of the same genotypes (18 values, largest deviation 0.0012 at a tolerance of
+0.005), and the prediction is the ensemble mean of the three. The predicted quantity is the
+trigenic growth interaction $\tau$ on the synthetic genetic array selection medium. It was
+compared with the measured multiplicative titer interaction by Pearson and Spearman
+correlation, by a Kruskal-Wallis test of measured $\tau$ across quartiles of the prediction,
+by Fisher's exact test of the predicted sign against the measured sign, and by Fisher's
+exact test of the top predicted quartile against the false-discovery-rate call
+(\file{experiments/010-kuzmin-tmi/scripts/ffa_panel_model_score.py}, tables in
+\file{experiments/010-kuzmin-tmi/results/ffa_panel_model_score.\{csv,json\}}).
+
 \subsection*{Figures}
 
 Every panel is produced by a committed script and written as a true-size SVG at one of the
 standard panel widths, then converted to PDF for this document. Panels come from
 \file{perspective_figure_panels.py}, \file{notable_interaction_selection.py} and
 \file{ffa_epistatic_path_panels.py}; the network overlay comes from
-\file{ffa_network_overlay_panel.py}. The multi-panel arrangements are assembled from
+\file{ffa_network_overlay_panel.py}; the growth-model figure comes from
+\file{experiments/010-kuzmin-tmi/scripts/ffa_panel_model_score.py}. The multi-panel arrangements are assembled from
 the same SVGs by \file{build_perspective_drawio.py} into editable draw.io sources under
 \file{notes/assets/drawio/}.
 

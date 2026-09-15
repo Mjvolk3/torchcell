@@ -21,6 +21,4 @@ ZOTERO_PERSONAL_COLLECTION := AC8MFJXK
 # assignment fails loudly instead of quietly resolving to the wrong directory.
 PLOT_SLUG := 024-perturb-seq-costing
 
-PYTHON ?= /Users/michaelvolk/miniconda3/bin/python
-
 include ../common/Makefile.common

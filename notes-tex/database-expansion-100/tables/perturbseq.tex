@@ -39,27 +39,27 @@ cell, sampled widely.}
 \addlinespace[5pt]
 25 & \textbf{Jaffe 2019 (multiplexed CRISPR interference epistasis)} & Two guides per cell, so the perturbation space is combinatorial rather than one edit at a time. This is the shape a Perturb-seq input axis should have, measured here against fitness only. \\
 \addlinespace[5pt]
-54 & \textbf{de Boer 2020 (100M random promoters)} & The largest sequence-to-phenotype dataset in yeast by orders of magnitude, and every genotype is an exactly known 80mer. The perturbation space is continuous rather than a gene list, which is what a model of regulatory grammar needs and no deletion collection can supply. \\
+53 & \textbf{de Boer 2020 (100M random promoters)} & The largest sequence-to-phenotype dataset in yeast by orders of magnitude, and every genotype is an exactly known 80mer. The perturbation space is continuous rather than a gene list, which is what a model of regulatory grammar needs and no deletion collection can supply. \\
 \addlinespace[5pt]
-55 & \textbf{Vaishnav 2022 (regulatory DNA fitness landscape)} & Extends de Boer from measurement to a fitness landscape, and tests native and natural-isolate promoter variants against the random library. The bridge between synthetic sequence space and the natural variation the isolate panels carry. \\
+54 & \textbf{Vaishnav 2022 (regulatory DNA fitness landscape)} & Extends de Boer from measurement to a fitness landscape, and tests native and natural-isolate promoter variants against the random library. The bridge between synthetic sequence space and the natural variation the isolate panels carry. \\
 \addlinespace[5pt]
-57 & \textbf{Nguyen Ba 2022 (barcoded bulk QTL, 100k segregants)} & The largest genotyped recombinant panel in yeast, each segregant barcoded and low-coverage sequenced against known parents. Two orders of magnitude more genotypes than Bloom 2013 on the same kind of cross, which is what makes small-effect and epistatic loci detectable. \\
+56 & \textbf{Nguyen Ba 2022 (barcoded bulk QTL, 100k segregants)} & The largest genotyped recombinant panel in yeast, each segregant barcoded and low-coverage sequenced against known parents. Two orders of magnitude more genotypes than Bloom 2013 on the same kind of cross, which is what makes small-effect and epistatic loci detectable. \\
 \addlinespace[5pt]
-61 & \textbf{Li 2016 (tRNA fitness landscape)} & A near-complete fitness landscape of one native yeast gene. Every genotype is a known sequence and the sampling is exhaustive rather than one allele per gene, which is the opposite of what a deletion collection provides. \\
+60 & \textbf{Li 2016 (tRNA fitness landscape)} & A near-complete fitness landscape of one native yeast gene. Every genotype is a known sequence and the sampling is exhaustive rather than one allele per gene, which is the opposite of what a deletion collection provides. \\
 \addlinespace[5pt]
-63 & \textbf{Domingo 2018 (tRNA double-mutant landscape)} & Pairwise epistasis at nucleotide resolution inside one gene. The higher-order structure Costanzo and Kuzmin map between genes, measured within a gene, which is the resolution inverse design actually needs. \\
+62 & \textbf{Domingo 2018 (tRNA double-mutant landscape)} & Pairwise epistasis at nucleotide resolution inside one gene. The higher-order structure Costanzo and Kuzmin map between genes, measured within a gene, which is the resolution inverse design actually needs. \\
 \addlinespace[5pt]
-74 & \textbf{Bloom 2025 (global epistasis in a yeast cross)} & Reports that many natural variants have effects that scale with background fitness, which is a specific, testable claim about how genotype effects compose. Directly relevant to whether a model trained on one background transfers. \\
+73 & \textbf{Bloom 2025 (global epistasis in a yeast cross)} & Reports that many natural variants have effects that scale with background fitness, which is a specific, testable claim about how genotype effects compose. Directly relevant to whether a model trained on one background transfers. \\
 \addlinespace[5pt]
-78 & \textbf{Faure 2022 (doubledeepPCA)} & Separates a variant's effect on folding from its effect on binding by measuring both in the same library. That decomposition is what turns a fitness landscape into a mechanistic one. \\
+77 & \textbf{Faure 2022 (doubledeepPCA)} & Separates a variant's effect on folding from its effect on binding by measuring both in the same library. That decomposition is what turns a fitness landscape into a mechanistic one. \\
 \addlinespace[5pt]
-81 & \textbf{Diss 2018 (Fos-Jun interaction double mutants)} & Exhaustive pairwise mutation of an interaction interface, read out in yeast. The genotype is a heterologous domain rather than a yeast gene, so it enters as an engineered chassis, but the epistasis structure is the deepest in the table. \\
+80 & \textbf{Diss 2018 (Fos-Jun interaction double mutants)} & Exhaustive pairwise mutation of an interaction interface, read out in yeast. The genotype is a heterologous domain rather than a yeast gene, so it enters as an engineered chassis, but the epistasis structure is the deepest in the table. \\
 \addlinespace[5pt]
-84 & \textbf{Puchta 2016 (snoRNA U3 landscape)} & The companion landscape on a non-coding RNA, published alongside Li 2016. Two exhaustive landscapes on different molecule classes is a stronger test of a sequence model than either alone. \\
+83 & \textbf{Puchta 2016 (snoRNA U3 landscape)} & The companion landscape on a non-coding RNA, published alongside Li 2016. Two exhaustive landscapes on different molecule classes is a stronger test of a sequence model than either alone. \\
 \addlinespace[5pt]
-103 & \textbf{Renganaath 2020 (natural promoter-variant MPRA)} & Native promoter variation measured allele by allele rather than sampled randomly, with 451 variants called causal. The row that joins the synthetic MPRA libraries to the natural-isolate panels: same readout, real alleles. \\
+102 & \textbf{Renganaath 2020 (natural promoter-variant MPRA)} & Native promoter variation measured allele by allele rather than sampled randomly, with 451 variants called causal. The row that joins the synthetic MPRA libraries to the natural-isolate panels: same readout, real alleles. \\
 \addlinespace[5pt]
-109 & \textbf{Zhang 2022 (GCE-SCRaMbLE recombination outcomes)} & Each cell carries tens of simultaneous structural edits, sequenced afterwards. The deepest per-cell perturbation in the table: a genotype here is a rearranged chromosome, not an allele, which is what inverse strain design eventually has to predict on. \\
+108 & \textbf{Zhang 2022 (GCE-SCRaMbLE recombination outcomes)} & Each cell carries tens of simultaneous structural edits, sequenced afterwards. The deepest per-cell perturbation in the table: a genotype here is a rearranged chromosome, not an allele, which is what inverse strain design eventually has to predict on. \\
 \addlinespace[5pt]
 \addlinespace[4pt]
 \multicolumn{3}{@{}l}{\textbf{Transcriptome-scale or per-cell readout, low-dimensional perturbation}}\\
@@ -86,19 +86,19 @@ cell, sampled widely.}
 \addlinespace[5pt]
 27 & \textbf{Brettner 2024 (ultra-high-throughput yeast scRNA-seq)} & The platform the costing model in experiments/024 is built on. Not a dataset to ingest; the reason it is here is that a yeast Perturb-seq proposal has to name its chemistry. \\
 \addlinespace[5pt]
-79 & \textbf{Chong 2015 / CYCLoPs (single-cell proteome dynamics)} & Per-cell rather than per-strain-mean labels, over 20 million cells. The distributional readout a Perturb-seq design has to be scored against. \\
+78 & \textbf{Chong 2015 / CYCLoPs (single-cell proteome dynamics)} & Per-cell rather than per-strain-mean labels, over 20 million cells. The distributional readout a Perturb-seq design has to be scored against. \\
 \addlinespace[5pt]
-112 & \textbf{Smith 2008 (gene-environment interaction eQTL)} & Transcriptomes on the same segregants in two carbon sources, so an expression QTL can be shown to be condition-dependent. Small, and it is the design Boocock 2025 scales up. \\
+111 & \textbf{Smith 2008 (gene-environment interaction eQTL)} & Transcriptomes on the same segregants in two carbon sources, so an expression QTL can be shown to be condition-dependent. Small, and it is the design Boocock 2025 scales up. \\
 \addlinespace[5pt]
-114 & \textbf{Breker 2013 (GFP library under stress)} & The GFP collection re-imaged under stress rather than at baseline, so relocalization is measured as a response. Feeds LoQAtE, and adds the condition axis Huh 2003 lacks. \\
+113 & \textbf{Breker 2013 (GFP library under stress)} & The GFP collection re-imaged under stress rather than at baseline, so relocalization is measured as a response. Feeds LoQAtE, and adds the condition axis Huh 2003 lacks. \\
 \addlinespace[5pt]
-115 & \textbf{Tkach 2012 (protein relocalization under DNA damage)} & The GFP collection imaged under damage, giving a second condition axis on the imaging layer alongside Breker's stress panel. Relocalization is a response no abundance measurement captures. \\
+114 & \textbf{Tkach 2012 (protein relocalization under DNA damage)} & The GFP collection imaged under damage, giving a second condition axis on the imaging layer alongside Breker's stress panel. Relocalization is a response no abundance measurement captures. \\
 \addlinespace[5pt]
-117 & \textbf{Denervaud 2013 (microfluidic GFP dynamics)} & Single-cell protein dynamics under controlled environmental switches, rather than endpoint snapshots. The temporal axis every other imaging row lacks. \\
+116 & \textbf{Denervaud 2013 (microfluidic GFP dynamics)} & Single-cell protein dynamics under controlled environmental switches, rather than endpoint snapshots. The temporal axis every other imaging row lacks. \\
 \addlinespace[5pt]
-122 & \textbf{Yvert 2013 (single-cell trait variation across isolates)} & CalMorph morphology on natural isolates rather than deletion strains, in the same feature space as the already-built Ohya and Ohnuki datasets. Joins the morphology layer to the natural-variation axis without harmonization. \\
+121 & \textbf{Yvert 2013 (single-cell trait variation across isolates)} & CalMorph morphology on natural isolates rather than deletion strains, in the same feature space as the already-built Ohya and Ohnuki datasets. Joins the morphology layer to the natural-variation axis without harmonization. \\
 \addlinespace[5pt]
-151 & \textbf{Levy 2008 (morphology and phenotypic capacitance)} & Scores how much a deletion increases cell-to-cell variability rather than shifting the mean, identifying capacitor genes. Variance as the phenotype is a readout only per-cell data supports, which is the argument the Perturb-seq proposal rests on. \\
+150 & \textbf{Levy 2008 (morphology and phenotypic capacitance)} & Scores how much a deletion increases cell-to-cell variability rather than shifting the mean, identifying capacitor genes. Variance as the phenotype is a readout only per-cell data supports, which is the argument the Perturb-seq proposal rests on. \\
 \addlinespace[5pt]
 \addlinespace[4pt]
 \end{longtable}

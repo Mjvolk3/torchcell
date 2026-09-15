@@ -230,3 +230,40 @@ Measured on the file (pandas, tab-separated, `-` = missing):
 - Tables 3A/3B carry per-replicate peak integrations, so whether a strain had one or two
   quality traces IS recoverable per record; `n_replicates` per record comes from them if the
   join is exact, else the conservative 1.
+
+## 2026.09.15 - Implemented
+
+Landed in the worktree as `AminoAcidCooper2010Dataset` (loader, adapter, yaml, three
+registrations, `METABOLITE_DATASETS` entry, both table scripts, two test files, two notes, raw
+mirror deposit, dev build of 4,313 records, L0-L4 PASS, admit dry run). Full record in
+[[torchcell.datasets.scerevisiae.cooper2010]]. What changed from the plan:
+
+- Decision 3 (keys): Table 4's 17 headers, not Fig. 1's 18 peaks, decide the key set. Fig. 4B's
+  column labels bridge the two (`RPS19` = Lysine-related, `arg1` = Arginine, `gshbiotin` =
+  Biotin, `LeuIleCit` merges Fig. 1 peaks 3 and 4). Keys: `lysine_related_peak1`, `arginine`,
+  `gshbiotin` (raw label; identity gap on `target_metabolite_ids`), `n_acetylornithine`,
+  `leucine+isoleucine+citrulline`, `glutamine+valine`, `methionine+proline`, `threonine`,
+  `alanine`, `serine`, `asparagine+tyrosine`, `glycine`, `lysine_a`, `ornithine`, `lysine_b`,
+  `glutamate`, `aspartate`. `lysine_peak12`/`lysine_peak14` were not used: the A/B to peak
+  mapping is not stated.
+- Decision 4 (reference): 1.0 per key and `reference_centered=False`, because the released
+  values are the linear ratio (dense-column means within 0.03 of 1.0), not the log2 the legend
+  claims. `measurement_type = "ce_lif_peak_area_ratio_to_plate_mean"`.
+- Replicate rows: the "distinct records keyed by strain_id" reading is not implementable without
+  a schema or verifier edit (`KanMxDeletionPerturbation` has no `strain_id`; metabolite L1 keys
+  on the deletion set). First row served, 47 second rows in the `duplicate_strain_rows` ledger.
+- Decision 6 (tet-promoter / essentiality): Table 4 holds no essential-gene row (no CDC28, ACT1,
+  TUB2, RPB1, FAS1/2, GLC7, CMD1, CDC42); the SGD store's 21 hits are conditionally inviable
+  viable deletions (ATG1 ... VPS30), so they are flagged and kept, not excluded. Exclusion
+  count 0.
+- Open Question 3: `n_replicates = 1` everywhere; Tables 3A/3B are not a row-exact join and are
+  not consumed or deposited.
+- Verification passed on the first complete build; `expected_count = 4313`.
+- Admit: BLOCKED, for pre-existing drift between the served commit and `main` (`DoseBasis`,
+  `environment perturbation`, environment/media/temperature adapter methods); a control run for
+  `Bloom2019Dataset` blocks identically. `value_surface_changed = []`. Cooper waits for the full
+  rebuild.
+- Candidate tables regenerated: `counts.tex` moves Cooper out of the Metabolite / precursor
+  candidates (5 -> 4), `swaps.tex` carries one removal row (rank 15 -> built), no
+  removal-plus-addition pair from the CE-MS -> CE-LIF rename; `candidates.tex` caption now reads
+  "from 51 supported datasets".

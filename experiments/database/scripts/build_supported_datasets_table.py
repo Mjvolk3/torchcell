@@ -113,6 +113,7 @@ CURATED: list[CuratedRow] = [
     CuratedRow(section="Environmental / chemogenomic", name="Bloom 2019 (16-cross segregant panel)", genotypes="13,950", env="38", phenotype="colony size residual / absolute", data_subpath="data/torchcell/bloom2019"),
     CuratedRow(section="Metabolite", name="Cachera 2023 (CRI-SPA betaxanthin)", genotypes="4,735", env="1", phenotype="betaxanthin (product proxy)", data_subpath="data/torchcell/betaxanthin_cachera2023"),
     CuratedRow(section="Metabolite", name="Mülleder 2016 (amino-acid metabolome)", genotypes="4,678", env="1", phenotype="amino-acid concentrations", data_subpath="data/torchcell/amino_acid_mulleder2016"),
+    CuratedRow(section="Metabolite", name="Cooper 2010 (CE-LIF amino-acid metabolome)", genotypes="4,313", env="1", phenotype="amino-acid peak ratios to plate mean", data_subpath="data/torchcell/amino_acid_cooper2010"),
     CuratedRow(section="Metabolite", name="Zelezniak 2018 (metabolome)", genotypes="95", env="1", phenotype="metabolite levels", data_subpath="data/torchcell/metabolite_zelezniak2018"),
     CuratedRow(section="Protein abundance", name="Zelezniak 2018 (SWATH proteome)", genotypes="97", env="1", phenotype="protein abundance", data_subpath="data/torchcell/proteome_zelezniak2018"),
     CuratedRow(section="Protein abundance", name="Messner 2023 (proteome)", genotypes="4,699", env="1", phenotype="protein abundance", data_subpath="data/torchcell/proteome_messner2023"),

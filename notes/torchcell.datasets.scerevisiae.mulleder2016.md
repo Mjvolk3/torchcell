@@ -109,3 +109,15 @@ restoration) not yet modeled as a GeneAddition -- ReferenceGenome strain="BY4741
 - [x] loader + build + L0-L4 verify + registration
 - [ ] target_metabolite_ids (amino acid -> Yeast9 s_NNNN) follow-up
 - [ ] prototrophy-restoring marker as GeneAddition (ties to plasmid-sequence store)
+
+## 2026.09.15 - Cross-platform partner: Cooper 2010
+
+Cooper 2010 ([[torchcell.datasets.scerevisiae.cooper2010]]) measures amino-acid pools of the
+same deletion collection by CE-LIF (4,051 ORFs shared with this dataset on the deposit) as a
+linear ratio to the plate mean, against this dataset's absolute mM. The join is exact on seven
+keys (`arginine`, `alanine`, `threonine`, `serine`, `glycine`, `glutamate`, `aspartate`); Cooper's
+composite peaks (`leucine+isoleucine+citrulline`, `glutamine+valine`, `methionine+proline`,
+`asparagine+tyrosine`) need an aggregation rule on this side (sum of member mM is the obvious
+candidate, the author decides), its two lysine peaks need a peak rule, and its
+`lysine_related_peak1`, `gshbiotin`, `n_acetylornithine`, `ornithine` have no partner here.
+Compare by rank or by log ratio to each dataset's own center, never by value.

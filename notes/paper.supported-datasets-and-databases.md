@@ -33,7 +33,7 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Costanzo 2016 smf | 20,484 | 2 | 20,484 | single-mutant fitness | scalar | global | 5.4×10⁶ |
+| Costanzo 2016 smf | 20,484 | 2 | 20,484 | single-mutant fitness | scalar | global | 5.5×10⁶ |
 | Costanzo 2016 dmf | 20.7M | 2 | 20,705,612 | double-mutant fitness | scalar | global | 7.1×10⁹ |
 | Costanzo 2016 dmi | 20.7M | 2 | 20,705,612 | digenic interaction | scalar | edge | 5.8×10⁹ |
 | Kuzmin 2018 smf | 1,539 | 1 | 1,539 | single-mutant fitness | scalar | global | 3.5×10⁵ |
@@ -41,13 +41,13 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 | Kuzmin 2018 tmf | 91,111 | 1 | 91,111 | triple-mutant fitness | scalar | global | 3.9×10⁷ |
 | Kuzmin 2018 dmi | 410,399 | 1 | 410,399 | digenic interaction | scalar | edge | 1.3×10⁸ |
 | Kuzmin 2018 tmi | 91,111 | 1 | 91,111 | trigenic interaction | scalar | hyperedge | 3.2×10⁷ |
-| Kuzmin 2020 smf | 472 | 1 | 472 | single-mutant fitness | scalar | global | 9.1×10⁴ |
+| Kuzmin 2020 smf | 472 | 1 | 472 | single-mutant fitness | scalar | global | 9.2×10⁴ |
 | Kuzmin 2020 dmf | 632,797 | 1 | 632,797 | double-mutant fitness | scalar | global | 2.3×10⁸ |
 | Kuzmin 2020 tmf | 301,798 | 1 | 301,798 | triple-mutant fitness | scalar | global | 1.1×10⁸ |
 | Kuzmin 2020 dmi | 632,797 | 1 | 632,797 | digenic interaction | scalar | edge | 2.0×10⁸ |
 | Kuzmin 2020 tmi | 301,798 | 1 | 301,798 | trigenic interaction | scalar | hyperedge | 1.1×10⁸ |
 | Baryshnikova 2010 (smf) | 5,993 | 1 | 5,993 | single-mutant fitness | scalar | global | 1.7×10⁶ |
-| O'Duibhir 2014 (smf) | 1,312 | 1 | 1,312 | single-mutant fitness | scalar | global | 2.8×10⁵ |
+| O'Duibhir 2014 (smf) | 1,312 | 1 | 1,312 | single-mutant fitness | scalar | global | 2.0×10⁶ |
 
 ### Environmental / chemogenomic
 
@@ -102,15 +102,16 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Cachera 2023 (CRI-SPA betaxanthin) | 4,735 | 1 | 4,735 | betaxanthin (product proxy) | scalar | bipartite node | 2.2×10⁶ |
+| Cachera 2023 (CRI-SPA betaxanthin) | 4,735 | 1 | 4,719 | betaxanthin (product proxy) | scalar | bipartite node | 2.2×10⁶ |
 | Mülleder 2016 (amino-acid metabolome) | 4,678 | 1 | 4,678 | amino-acid concentrations | vector (19) | bipartite node | 8.1×10⁶ |
+| Cooper 2010 (CE-LIF amino-acid metabolome) | 4,313 | 1 | 4,313 | amino-acid peak ratios to plate mean | vector (16) | bipartite node | 5.1×10⁶ |
 | Zelezniak 2018 (metabolome) | 95 | 1 | 95 | metabolite levels | vector (25) | bipartite node | 3.1×10⁵ |
 | Ozaydin 2013 (β-carotene screen) | 4,474 | 1 | 4,474 | β-carotene (colony-color visual score) | scalar | global | 1.0×10⁶ |
 | da Silveira 2014 (lipidomics) | 127 | 1 | 127 | lipid-species relative abundance | vector (135) | bipartite node | 1.0×10⁶ |
 | Yoshida 2012 (organic acids) | 17 | 1 | 17 | organic-acid titer | vector (6) | bipartite node | 1.4×10⁴ |
 | Xue 2025 (free fatty acids, private) | 176 | 1 | 176 | free-fatty-acid titer | vector (5) | bipartite node | 1.8×10⁵ |
 | Lopez 2024 (isobutanol screen, private) | 4,554 | 1 | 4,554 | isobutanol biosensor fold-change | scalar | bipartite node | 9.5×10⁵ |
-| Lopez 2024 (isobutanol validated, private) | 224 | 1 | 224 | isobutanol biosensor fold-change (validated) | scalar | bipartite node | 7.6×10⁴ |
+| Lopez 2024 (isobutanol validated, private) | 224 | 1 | 224 | isobutanol biosensor fold-change (validated) | scalar | bipartite node | 7.7×10⁴ |
 
 ### Protein abundance
 
@@ -123,7 +124,7 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| **Total (50 datasets)** |  |  | **52,738,566** |  |  |  | **2.6×10¹⁰** |
+| **Total (51 datasets)** |  |  | **52,742,863** |  |  |  | **2.6×10¹⁰** |
 
 ### In progress (not yet built/verified)
 

@@ -29,3 +29,13 @@ doi:10.15252/msb.20145172, PMID 24952590. Per-deletion relative growth rates →
 - Adds a new fitness verifier `torchcell/verification/fitness.py` (L3 `reference_one`) +
   `FITNESS_DATASETS` / `run_fitness` in runners.
 - FLAG: mating type (BY4741 vs BY4742) not resolvable per strain from S2 → BY4741 representative.
+
+## 2026.09.14 - Medium moved to the shared library SC
+
+The pre-rebuild sweep verified the rebuilt store and L3 `media_membership` failed: the loader
+built `Media(name="SC", state="liquid", is_synthetic=True)` inline, a free-text medium that is
+its own node in the graph and joins nothing. It now uses `torchcell.datamodels.media.SC` (the
+defined synthetic complete recipe: YNB, 20 amino acids, uracil, adenine, 20 g/L glucose,
+liquid), the same object Mormino 2022 and Wildenhain 2015 resolve to. The paper states SC
+without a recipe (the Kemmeren 2014 setup), so the library's sourced recipe stands in for it.
+Store rebuilt under the current schema before the 2026.09.14 full KG rebuild.

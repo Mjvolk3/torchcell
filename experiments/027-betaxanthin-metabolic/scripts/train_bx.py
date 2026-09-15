@@ -3907,9 +3907,17 @@ def build_model_for_cell(
         if arm["flux"]:
             # THE BIOMASS READOUT declares no model head: the prediction is an affine of
             # the layer's own growth column, injected by `FluxBiomassReadout` below.
-            assert flux_layer is not None and flux_layer.biomass_index is not None, (
-                "--head essentiality on a flux arm reads the GEM's objective column, and "
-                "this layer declares no biomass index."
+            # The layer publishes `rxn_ids`, not the GEM's own `biomass_index`: that
+            # attribute belongs to the gem tensors `build_flux_layer` consumes and does not
+            # survive onto the module. Resolving the column by reaction id is also what
+            # makes the readout state which column it took.
+            assert flux_layer is not None, (
+                "--head essentiality on a flux arm reads the GEM's objective column, so it "
+                "needs a flux layer."
+            )
+            assert BIOMASS_REACTION in flux_layer.rxn_ids, (
+                f"--head essentiality on a flux arm reads {BIOMASS_REACTION}, which this "
+                f"layer's {len(flux_layer.rxn_ids)} reactions do not include."
             )
         else:
             heads_config[ESSENTIALITY_HEAD] = {
@@ -4071,7 +4079,7 @@ def build_model_for_cell(
 
     if main_head == ESSENTIALITY_HEAD and arm["flux"]:
         assert flux_layer is not None
-        biomass_index = int(flux_layer.biomass_index)
+        biomass_index = int(flux_layer.rxn_ids.index(BIOMASS_REACTION))
         flux_meta["essentiality"] = {
             "readout": "flux_biomass",
             "biomass_reaction": BIOMASS_REACTION,

@@ -54,8 +54,6 @@ from expression_baselines import (  # noqa: E402
     RIDGE_GRID,
     _bilinear,
     _embedding_matrix,
-    nmse,
-    per_feature_pearson,
 )
 
 from torchcell.graph import SCerevisiaeGraph  # noqa: E402
@@ -64,6 +62,40 @@ from torchcell.utils.paths import experiment_results_dir  # noqa: E402
 
 DATASET_TAG = "fig3_core"
 EXPRESSION_LABEL = "expression_log2_ratio"
+
+
+def per_feature_pearson(pred: np.ndarray, true: np.ndarray) -> float:
+    """Per-gene Pearson across strains over each gene's FINITE pairs, averaged over genes.
+
+    The expression matrices are complete and this equals expression_baselines'
+    function on them. The proteome matrix is not: a strain carries NaN for a protein it
+    did not quantify (1,441 to 1,850 of 1,850 per strain), and the training metric scores
+    each protein over its finite pairs, so this does too. Genes with fewer than 3 pairs
+    or a (near-)constant column are dropped, as in the training metric.
+    """
+    ok_pair = np.isfinite(pred) & np.isfinite(true)
+    n = ok_pair.sum(axis=0)
+    p0 = np.where(ok_pair, pred, 0.0)
+    t0 = np.where(ok_pair, true, 0.0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        pm = p0.sum(axis=0) / np.maximum(n, 1)
+        tm = t0.sum(axis=0) / np.maximum(n, 1)
+    p = np.where(ok_pair, p0 - pm, 0.0)
+    t = np.where(ok_pair, t0 - tm, 0.0)
+    num = (p * t).sum(axis=0)
+    den = np.linalg.norm(p, axis=0) * np.linalg.norm(t, axis=0)
+    ok = (den > 1e-8) & (n >= 3)
+    if not ok.any():
+        return 0.0
+    return float((num[ok] / den[ok]).mean())
+
+
+def nmse(pred: np.ndarray, true: np.ndarray, mu_fit: np.ndarray) -> float:
+    """MSE over finite target entries, divided by their variance about the fit mean."""
+    ok = np.isfinite(true) & np.isfinite(pred)
+    num = float(((pred - true) ** 2)[ok].mean())
+    den = float(((true - mu_fit) ** 2)[ok].mean())
+    return num / den
 
 
 def parse_args() -> argparse.Namespace:
@@ -197,8 +229,16 @@ def main() -> None:
         + f"; genes={n_gene}"
     )
 
-    mu = y["train"].mean(axis=0, keepdims=True)
+    # Per-gene TRAIN mean over finite entries; residuals keep NaN where the target is
+    # unmeasured. The fits below see the residuals with NaN replaced by 0 (the per-gene
+    # mean, the least-informative imputation) and every score runs on finite entries only.
+    with np.errstate(invalid="ignore"):
+        mu = np.nanmean(y["train"], axis=0, keepdims=True)
+    if not np.isfinite(mu).all():
+        raise ValueError("a gene has no finite training value; cannot center it")
     r = {s: y[s] - mu for s in y}
+    r_dense = {s: np.nan_to_num(r[s], nan=0.0) for s in y}
+    frac_missing = {s: float(np.isnan(y[s]).mean()) for s in y}
     out: dict[str, object] = {
         "generated_by": "experiments/019-simb-multimodal/scripts/expression_baselines_split.py",
         "dataset_tag": args.dataset_tag,
@@ -213,6 +253,7 @@ def main() -> None:
             "n_double_deletion": {
                 s: int(sum(len(p) == 2 for p in perts[s])) for s in perts
             },
+            "fraction_missing": frac_missing,
         },
     }
 
@@ -268,7 +309,7 @@ def main() -> None:
         ps = p["train"][ok["train"]].std(axis=0, keepdims=True) + 1e-8
         for s in y:
             p[s] = (p[s] - pm) / ps
-        r_tr, p_tr = r["train"][ok["train"]], p["train"][ok["train"]]
+        r_tr, p_tr = r_dense["train"][ok["train"]], p["train"][ok["train"]]
 
         # ---- B2: every (rank, ridge) cell scored on every eval split -------------------
         cells: list[dict[str, object]] = []
@@ -278,7 +319,7 @@ def main() -> None:
             for ridge in RIDGE_GRID:
                 cell: dict[str, object] = {"k_gene": k_rank, "ridge": ridge}
                 for s in eval_splits:
-                    r_hat = _bilinear(r_tr, r[s], p_tr, p[s], k_rank, ridge)
+                    r_hat = _bilinear(r_tr, r_dense[s], p_tr, p[s], k_rank, ridge)
                     cell[f"{s}_pearson_per_feature"] = per_feature_pearson(
                         r_hat[ok[s]], r[s][ok[s]]
                     )
@@ -300,7 +341,11 @@ def main() -> None:
             for s in eval_splits:
                 e_s = p[s] / (np.linalg.norm(p[s], axis=1, keepdims=True) + 1e-12)
                 nn = np.argsort(-(e_s @ e_tr.T), axis=1)[:, :k]
-                preds = r_tr[nn].mean(axis=1)
+                # Mean over the neighbours that measured the gene; a gene no neighbour
+                # measured is the per-gene mean (residual 0), the same imputation as B2's.
+                r_nn = r["train"][ok["train"]][nn]
+                with np.errstate(invalid="ignore"):
+                    preds = np.nan_to_num(np.nanmean(r_nn, axis=1), nan=0.0)
                 cell[f"{s}_pearson_per_feature"] = per_feature_pearson(
                     preds[ok[s]], r[s][ok[s]]
                 )

@@ -299,6 +299,13 @@ def per_feature_pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tenso
         target = target.unsqueeze(1)
     p = pred.float()
     t = target.float()
+    finite = torch.isfinite(p) & torch.isfinite(t)
+    if not bool(finite.all()):
+        # SPARSE TARGET (unmeasured entries NaN, e.g. the Messner proteome): each feature
+        # is correlated over its own finite pairs, and a feature with fewer than 3 pairs is
+        # dropped rather than scored on a line through two points. Identical to the
+        # all-finite branch when nothing is missing.
+        return _per_feature_pearson_sparse(p, t, finite)
     pc = p - p.mean(dim=0, keepdim=True)
     tc = t - t.mean(dim=0, keepdim=True)
     num = (pc * tc).sum(dim=0)
@@ -306,6 +313,25 @@ def per_feature_pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tenso
     valid = denom > 1e-8
     if not bool(valid.any()):
         return torch.zeros((), device=pred.device)
+    r = num[valid] / denom[valid]
+    return cast(torch.Tensor, r.mean())
+
+
+def _per_feature_pearson_sparse(
+    p: torch.Tensor, t: torch.Tensor, finite: torch.Tensor, dim: int = 0
+) -> torch.Tensor:
+    """Per-column (``dim=0``) or per-row (``dim=1``) Pearson over finite pairs, averaged."""
+    zeros = torch.zeros_like(p)
+    n = finite.sum(dim=dim, keepdim=True).to(p.dtype)
+    p0 = torch.where(finite, p, zeros)
+    t0 = torch.where(finite, t, zeros)
+    pc = torch.where(finite, p0 - p0.sum(dim=dim, keepdim=True) / n.clamp_min(1), zeros)
+    tc = torch.where(finite, t0 - t0.sum(dim=dim, keepdim=True) / n.clamp_min(1), zeros)
+    num = (pc * tc).sum(dim=dim)
+    denom = pc.norm(dim=dim) * tc.norm(dim=dim)
+    valid = (denom > 1e-8) & (n.squeeze(dim) >= 3)
+    if not bool(valid.any()):
+        return torch.zeros((), device=p.device)
     r = num[valid] / denom[valid]
     return cast(torch.Tensor, r.mean())
 
@@ -320,7 +346,9 @@ def _rank(x: torch.Tensor) -> torch.Tensor:
     """
     from scipy.stats import rankdata
 
-    arr = rankdata(x.detach().cpu().numpy(), axis=0)
+    # nan_policy="omit": a NaN (unmeasured) entry stays NaN and the finite entries of its
+    # column are ranked among themselves, so the sparse Pearson branch scores the ranks.
+    arr = rankdata(x.detach().cpu().numpy(), axis=0, nan_policy="omit")
     return torch.as_tensor(arr, dtype=torch.float32)
 
 
@@ -368,6 +396,9 @@ def per_strain_pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor
         target = target.unsqueeze(1)
     p = pred.float()
     t = target.float()
+    finite = torch.isfinite(p) & torch.isfinite(t)
+    if not bool(finite.all()):
+        return _per_feature_pearson_sparse(p, t, finite, dim=1)
     pc = p - p.mean(dim=1, keepdim=True)
     tc = t - t.mean(dim=1, keepdim=True)
     num = (pc * tc).sum(dim=1)
@@ -1188,7 +1219,9 @@ class MultitaskCGTTask(L.LightningModule):
         vals = target_feat.new_zeros(target_feat.shape[0], n_nodes)
         msk = target_feat.new_zeros(target_feat.shape[0], n_nodes)
         obs_f = obs_feat.to(target_feat.dtype)
-        vals[:, col] = target_feat * obs_f
+        # where(), not multiply: a NaN target entry times 0 is NaN, and an unobserved
+        # entry must enter the encoder as exactly zero.
+        vals[:, col] = torch.where(obs_feat, target_feat, torch.zeros_like(target_feat))
         msk[:, col] = obs_f
         return vals, msk
 
@@ -1221,7 +1254,11 @@ class MultitaskCGTTask(L.LightningModule):
         n_rows, n_feat = target.shape
 
         # Shared random key -> NESTED observed sets across k (M_1 subset M_2 subset ...).
+        # An unmeasured (NaN) entry can never be revealed: its key is +inf, so it is never
+        # among the n_reveal smallest, and it is excluded from the observed set outright.
+        finite = torch.isfinite(target)
         scores = torch.rand(n_rows, n_feat, device=target.device)
+        scores = torch.where(finite, scores, torch.full_like(scores, float("inf")))
         if stage == "train":
             ks = [int(torch.randint(len(self.mask_schedule), (1,)).item())]
         else:
@@ -1233,7 +1270,7 @@ class MultitaskCGTTask(L.LightningModule):
             obs_feat = self._observed_feature_mask(n_rows, n_feat, n_reveal, scores)
             # Only SUPERVISED rows may reveal: an unsupervised row has no ground truth to
             # teacher-force, and handing it zeros would teach "unmeasured == 0".
-            obs_feat = obs_feat & row_mask.unsqueeze(1)
+            obs_feat = obs_feat & row_mask.unsqueeze(1) & finite
             obs_vals, obs_msk = self._to_token_space(obs_feat, target, col)
 
             predictions, reps = self(
@@ -1460,8 +1497,17 @@ class MultitaskCGTTask(L.LightningModule):
             # all -- such an arm simply logs no calib/* keys, which is the honest answer.
             if stage != "train" and dist_head is not None and dist_head.has_pit:
                 with torch.no_grad():
+                    pit = dist_head.pit(pred, targets[name], m).float()
+                    # SPARSE TARGET: a NaN observation has no PIT (the quantile PIT would
+                    # read it as 0 and pull coverage down); keep the finite entries only.
+                    t_fin = torch.isfinite(targets[name][m])
+                    if pit.shape != t_fin.shape:
+                        raise ValueError(
+                            f"PIT shape {tuple(pit.shape)} != target shape "
+                            f"{tuple(t_fin.shape)} for head '{name}'"
+                        )
                     self._calib_cache.setdefault(stage, {}).setdefault(name, []).append(
-                        dist_head.pit(pred, targets[name], m).float().cpu()
+                        pit[t_fin].reshape(-1).cpu()
                     )
 
     def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
@@ -1521,11 +1567,19 @@ class MultitaskCGTTask(L.LightningModule):
             # collapse to the per-feature mean drives sd(pred) -> 0 while Pearson is scale-free
             # and cannot see it. ~1 means the head spans the target's range; << 1 means it is
             # hedging toward the mean even when the correlation still looks acceptable.
-            sd_ratio = (
-                (pred.std(dim=0) / target.std(dim=0).clamp_min(1e-8))
-                .mean()
-                .to(self.device)
+            # SPARSE-TARGET AWARE: every statistic of the target below runs over its finite
+            # entries per feature (unmeasured proteome entries are NaN); with a fully
+            # finite target the expressions reduce exactly to std / mean / var.
+            t_finite = torch.isfinite(target)
+            t_zero = torch.where(t_finite, target, torch.zeros_like(target))
+            n_col = t_finite.sum(dim=0).to(target.dtype)
+            t_mean = t_zero.sum(dim=0) / n_col.clamp_min(1)
+            t_dev2 = torch.where(
+                t_finite, (t_zero - t_mean) ** 2, torch.zeros_like(target)
             )
+            t_std = (t_dev2.sum(dim=0) / (n_col - 1).clamp_min(1)).sqrt()
+            t_var = t_dev2.sum(dim=0) / n_col.clamp_min(1)
+            sd_ratio = (pred.std(dim=0) / t_std.clamp_min(1e-8)).mean().to(self.device)
             self.log(f"{stage}/{pheno}/pred_sd_ratio", sd_ratio, sync_dist=True)
             # MSE AND NMSE -- added because the training LOSS moves OPPOSITE the metric we
             # actually care about on this task, so neither one alone is readable.
@@ -1541,13 +1595,11 @@ class MultitaskCGTTask(L.LightningModule):
             # and anything below 1.0 is real predictive value. Unlike pearson it is NOT
             # invariant to scale, so the two together separate "right ordering" from "right
             # magnitude" -- which is the distinction the loss/metric divergence turns on.
-            mse = ((pred - target) ** 2).mean().to(self.device)
+            sq = torch.where(t_finite, (pred - t_zero) ** 2, torch.zeros_like(target))
+            mse = (sq.sum() / t_finite.sum().clamp_min(1)).to(self.device)
             self.log(f"{stage}/{pheno}/mse", mse, sync_dist=True)
             nmse = (
-                (
-                    ((pred - target) ** 2).mean(dim=0)
-                    / target.var(dim=0, unbiased=False).clamp_min(1e-8)
-                )
+                ((sq.sum(dim=0) / n_col.clamp_min(1)) / t_var.clamp_min(1e-8))
                 .mean()
                 .to(self.device)
             )

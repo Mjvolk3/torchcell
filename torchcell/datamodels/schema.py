@@ -2682,8 +2682,13 @@ class ProteinAbundancePhenotype(Phenotype, ModelStrict):
         if set(self.n_replicates) != set(self.protein_abundance):
             raise ValueError("n_replicates keys must match protein_abundance keys")
         for key, n in self.n_replicates.items():
-            if n < 1:
+            # A NaN abundance marks a protein the strain did not quantify inside a
+            # fixed-key vector (a build-time fill over the key union); it carries zero
+            # samples. A measured value still needs at least one.
+            if n < 1 and not math.isnan(self.protein_abundance[key]):
                 raise ValueError(f"n_replicates for {key} must be >= 1")
+            if n < 0:
+                raise ValueError(f"n_replicates for {key} must be >= 0")
         if self.protein_abundance_se is not None:
             for key, se in self.protein_abundance_se.items():
                 if key not in self.protein_abundance:

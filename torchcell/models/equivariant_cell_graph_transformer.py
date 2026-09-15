@@ -2015,6 +2015,15 @@ class MaskedMultitaskLoss(nn.Module):
                 else None
             )
             fmask = feature_masks.get(name)
+            # SPARSE TARGETS. An unmeasured entry of a fixed-key vector target arrives as
+            # NaN (the Messner proteome quantifies 1,441 to 1,850 proteins per strain over
+            # an 1,850-key vector). Such entries are excluded from the score through the
+            # feature mask and zeroed in the target so no NaN reaches the arithmetic; a
+            # fully finite target (expression, morphology) is untouched.
+            finite = torch.isfinite(target)
+            if not bool(finite.all()):
+                fmask = finite if fmask is None else (fmask & finite)
+                target = torch.where(finite, target, torch.zeros_like(target))
             if dist_head is not None:
                 # Distributional head: it owns the row mask, the feature mask and the
                 # empty-supervision guard.

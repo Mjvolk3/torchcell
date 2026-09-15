@@ -7,6 +7,7 @@
 
 import hashlib
 import logging
+import math
 from typing import Any, cast
 
 import numpy as np
@@ -54,14 +55,19 @@ _VECTOR_EXPERIMENT_TYPES = frozenset(
 
 
 def _mean_float_dict(dicts: list[dict[str, float]]) -> dict[str, float]:
-    """Elementwise mean over the union of keys, averaging only the present values."""
+    """Elementwise mean over the union of keys, averaging only the present FINITE values.
+
+    A ``NaN`` marks an unmeasured entry of a fixed-key vector phenotype (the Messner
+    proteome after ``ProteinAbundanceLog2RatioConverter`` fills every strain to the key
+    union), so it is skipped like an absent key; a key with no finite value stays ``NaN``.
+    """
     keys: set[str] = set()
     for d in dicts:
         keys.update(d.keys())
     out: dict[str, float] = {}
     for k in sorted(keys):
-        vals = [d[k] for d in dicts if k in d]
-        out[k] = float(np.mean(vals))
+        vals = [d[k] for d in dicts if k in d and math.isfinite(d[k])]
+        out[k] = float(np.mean(vals)) if vals else float("nan")
     return out
 
 
@@ -81,8 +87,8 @@ def _rms_pool_float_dict(
         keys.update(d.keys())
     out: dict[str, float] = {}
     for k in sorted(keys):
-        vals = [d[k] for d in present if k in d]
-        out[k] = float(np.sqrt(np.mean(np.array(vals) ** 2)))
+        vals = [d[k] for d in present if k in d and math.isfinite(d[k])]
+        out[k] = float(np.sqrt(np.mean(np.array(vals) ** 2))) if vals else float("nan")
     return out
 
 

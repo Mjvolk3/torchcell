@@ -1,14 +1,18 @@
 """Tests for the build-time log2-ratio conversion of protein-abundance records."""
 
+import json
 import math
 from pathlib import Path
 
+import lmdb
 import pytest
 
 from torchcell.datamodels.protein_abundance_log2_ratio_conversion import (
     ProteinAbundanceLog2RatioConverter,
+    ReferenceProfile,
     convert_protein_abundance_pair,
     measurement_type_for_log2_ratio,
+    scan_reference_union,
 )
 from torchcell.datamodels.schema import (
     Environment,
@@ -107,6 +111,58 @@ def test_double_conversion_raises() -> None:
     once_exp, once_ref = convert_protein_abundance_pair(exp, ref)
     with pytest.raises(ValueError, match="already a log2 ratio"):
         convert_protein_abundance_pair(once_exp, once_ref)
+
+
+def test_profile_fills_the_key_union_with_nan() -> None:
+    exp, ref = _pair(
+        {"YA": 4.0, "YB": 1.0}, {"YA": 1.0, "YB": 1.0}, {"YA": 0.1, "YB": 0.2}
+    )
+    profile = ReferenceProfile(
+        abundance={"YA": 1.0, "YB": 1.0, "YC": 8.0},
+        se={"YA": 0.1, "YB": 0.2, "YC": 0.4},
+        n_replicates={"YA": 388, "YB": 388, "YC": 388},
+    )
+    new_exp, new_ref = convert_protein_abundance_pair(exp, ref, profile)
+    ab = new_exp.phenotype.protein_abundance
+    assert sorted(ab) == ["YA", "YB", "YC"]
+    assert ab["YA"] == 2.0 and ab["YB"] == 0.0 and math.isnan(ab["YC"])
+    assert new_exp.phenotype.n_replicates == {"YA": 1, "YB": 1, "YC": 0}
+    assert new_ref.phenotype_reference.protein_abundance == {
+        "YA": 0.0,
+        "YB": 0.0,
+        "YC": 0.0,
+    }
+    se = new_ref.phenotype_reference.protein_abundance_se
+    assert se is not None and se["YC"] == pytest.approx(0.4 / (8.0 * math.log(2.0)))
+    assert new_ref.phenotype_reference.n_replicates["YC"] == 388
+    # the filled record round-trips through JSON, NaN included
+    dumped = json.loads(json.dumps(new_exp.model_dump()))
+    assert math.isnan(dumped["phenotype"]["protein_abundance"]["YC"])
+
+
+def test_scan_reference_union_reads_the_raw_store(tmp_path: Path) -> None:
+    exp_a, ref_a = _pair({"YA": 4.0}, {"YA": 1.0}, {"YA": 0.1})
+    exp_b, ref_b = _pair({"YB": 2.0}, {"YB": 5.0}, {"YB": 0.5})
+    raw = tmp_path / "raw" / "lmdb"
+    raw.mkdir(parents=True)
+    env = lmdb.open(str(raw), map_size=int(1e8))
+    with env.begin(write=True) as txn:
+        for i, (e, r) in enumerate([(exp_a, ref_a), (exp_b, ref_b)]):
+            txn.put(
+                str(i).encode(),
+                json.dumps(
+                    {
+                        "experiment": e.model_dump(),
+                        "experiment_reference": r.model_dump(),
+                    }
+                ).encode(),
+            )
+    env.close()
+    profile = scan_reference_union(str(raw))
+    assert profile.keys == ["YA", "YB"]
+    assert profile.abundance == {"YA": 1.0, "YB": 5.0}
+    assert profile.se == {"YA": 0.1, "YB": 0.5}
+    assert profile.n_replicates == {"YA": 388, "YB": 388}
 
 
 def test_converter_passes_other_types_through(tmp_path: Path) -> None:

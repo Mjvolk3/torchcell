@@ -304,9 +304,15 @@ environment response phenotype:
 # PHENOTYPES END
 
 # RELATIONSHIPS
+# Two sources (a segregant genotype IS a genotype but is its own node class), so
+# BioCypher builds one virtual leaf per source and needs input_label: with a list
+# source and no input_label, OntologyMapping._horizontal_inheritance_source zips a
+# None and the build dies before the first node is written (rehearsal job 1953,
+# 2026-09-14). The label is the adapter's relationship_label, broadcast to both leaves.
 genotype member of:
     is_a: participates in
     represented_as: edge
+    input_label: genotype member of
     source: [genotype, segregant genotype]
     target: experiment
 

@@ -374,3 +374,93 @@ Two routes, and they differ in what the LABEL is:
 exact labels and any label we derive ourselves is a different experiment from the one the
 table reports. It is not implemented: the head currently decodes `is_essential` from the
 batch, and no cell was submitted.
+
+## 2026.09.15 - Union build, label from the split, two cells submitted
+
+### The build (job 1989, 54 s)
+
+`essentiality_build` rebuilt as the UNION of `GeneEssentialitySgdDataset`,
+`SmfCostanzo2016Dataset` and `SmfKuzmin2018Dataset`, single deletions, `converter=None`,
+`DeletionKeyedGenotypeAggregator`. The SGD-only root was moved aside rather than deleted and
+is named in the manifest as `superseded_root`.
+
+| quantity | value |
+|---|---:|
+| genotypes | **5,656** |
+| phenotype labels present, ALL ignored by this head | `fitness` 4,540, `is_essential` 1,140 |
+| FCL split genotype coverage | **982 / 1,121** |
+| found essential / nonessential | **156 / 826** |
+| absent essential / nonessential | 1 / 138 |
+
+Three coverages are distinct and all three matter:
+
+* **cell-graph gene coverage 1,121 / 1,121** (157 essential, 964 nonessential): every split
+  gene is a node, so no label is lost to the gene set;
+* **genotype coverage 982 / 1,121**: only those have a single-deletion genotype to attach a
+  prediction to;
+* **test-gene coverage 195 / 223**, giving 195 records pinned to test, 3.4 percent of the
+  build, of which **31 are essential**, matching the paper's own held-out essential count.
+
+### The label comes from the split, not from the graph
+
+`--head essentiality` no longer decodes a phenotype. `essentiality_gene_labels` builds one
+value and one `known` flag per gene node from `read_fcl_essentiality_split` (inversion
+applied once, counts asserted), and `gene_keyed_target` joins it per genotype through
+`deletion_indices`, the deletion-only field added earlier the same day. A genotype whose
+gene the split does not name, or which does not delete exactly one gene, arrives masked
+False and contributes to no loss, no selection metric and no test score. `extract_targets`
+is not called for this head at all, which is exactly why the union's fitness merge is
+harmless: nothing reads the merged column.
+
+The held-out set is Merzbacher's own 223-gene list rather than the betaxanthin 639-gene pin,
+routed through a new per-head `held_out_mask`.
+
+### Smoke, and the bug it caught
+
+One CPU epoch of the `ess_pool` cell's exact command. The first run died AFTER training, in
+the headline print: `result['test']['pinned']['spearman']`, a key `binary_block` does not
+emit and should not, since a rank correlation between a logit and a 0/1 label is not the
+endpoint. Fixed in both the headline and the W&B summary, which now report AUROC, accuracy,
+the majority rate and per-class recall. The rerun:
+
+```
+[pooled s2700] ep 0 loss 1.4478 data 0.4751 val_loss 0.3725 val_r +0.4327 sd_ratio 0.0002
+  held-out AUROC +0.4386 (accuracy 0.8410 against a majority rate of 0.8410; n=195, 31 essential)
+```
+
+At one epoch the head predicts the majority class on every gene (recall_essential 0.000,
+recall_nonessential 1.000, accuracy exactly the majority rate), so the 0.4386 is not a
+result, it is one epoch. `val_r` is the validation AUROC under the centered 5-epoch rule.
+
+### Submitted
+
+| job | cell |
+|---:|---|
+| **1990** | `gh_wave9_ess_pool_e80_s2700.slurm` |
+| **1991** | `gh_wave9_ess_flux_e80_s2700.slurm` |
+
+Both through `freeze_and_submit.sh`, queued behind the running cells. The other eight
+essentiality cells are preflighted against the new root and NOT submitted.
+
+### The 11 genes SGD calls essential and Merzbacher's labels call nonessential
+
+`YBR121C, YBR128C, YCL004W, YCR068W, YFR021W, YJL012C, YKL192C, YKL212W, YNL280C, YPL120W,
+YPL268W`
+
+These are in the build as SGD-essential and carry a nonessential label in the released split,
+which Merzbacher took "from the literature". Since the trainer uses the SPLIT's label, these
+11 train and score as nonessential. They are 11 of 1,121, so they cannot move a headline on
+their own, but they are a real disagreement between two label sources and worth a look
+before the comparison is written up: GRC1/YBR121C, ERG13/YBR128C is a candidate misread, and
+YKL212W is SAC1, all of which have essentiality that is known to be condition-dependent.
+Hypothesis (untested): the disagreement is medium-dependent essentiality rather than error
+in either source.
+
+### Deviation to flag
+
+The coordinator asked for train and validation to be class-stratified over the non-test
+genes. They are NOT: the data module takes its own seeded random draw over the remaining
+records, and I did not replace that. With 86/14 imbalance over roughly 800 labeled non-test
+records a random draw is close to stratified in expectation, but it is not guaranteed, and
+the realized per-split class balance should be read out of the result before any contrast is
+believed.

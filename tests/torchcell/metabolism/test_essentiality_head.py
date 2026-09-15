@@ -181,3 +181,65 @@ def test_the_biomass_readout_reads_exactly_the_objective_column():
 
 def test_the_biomass_reaction_is_the_gems_objective():
     assert train_bx.BIOMASS_REACTION == "r_2111"
+
+
+class _GeneKeyed:
+    """A batch whose genotypes delete zero, one or two genes."""
+
+    def __init__(self) -> None:
+        # rows: 0 deletes gene 1, 1 deletes gene 3, 2 deletes genes 4 and 5, 3 deletes none
+        self.deletion_indices = torch.tensor([1, 3, 4, 5])
+        self.deletion_indices_batch = torch.tensor([0, 1, 2, 2])
+        self.perturbation_indices = torch.tensor([1, 3, 4, 5])
+        self.perturbation_indices_batch = torch.tensor([0, 1, 2, 2])
+
+
+class _GeneKeyedBatch:
+    def __init__(self, n: int = 4) -> None:
+        self._gene = _GeneKeyed()
+        self.num_graphs = n
+
+    def __getitem__(self, key: str) -> _GeneKeyed:
+        assert key == "gene"
+        return self._gene
+
+
+def test_the_gene_keyed_target_joins_by_the_single_deleted_gene():
+    value = torch.zeros(6)
+    known = torch.zeros(6, dtype=torch.bool)
+    value[1], known[1] = 1.0, True  # gene 1 is essential and known
+    value[3], known[3] = 0.0, True  # gene 3 is nonessential and known
+    value[4], known[4] = 1.0, True  # gene 4 is known but its genotype is a double
+    target, mask = train_bx.gene_keyed_target(_GeneKeyedBatch(), value, known)
+    assert target.shape == (4, 1) and mask.shape == (4, 1)
+    assert mask[:, 0].tolist() == [True, True, False, False]
+    assert target[0, 0].item() == 1.0 and target[1, 0].item() == 0.0
+
+
+def test_a_gene_absent_from_the_split_is_masked_out():
+    value = torch.zeros(6)
+    known = torch.zeros(6, dtype=torch.bool)
+    value[1], known[1] = 1.0, True
+    # gene 3 is deliberately left unknown: the split does not name it.
+    target, mask = train_bx.gene_keyed_target(_GeneKeyedBatch(), value, known)
+    assert mask[:, 0].tolist() == [True, False, False, False]
+    assert target[1, 0].item() == 0.0
+
+
+def test_targets_in_space_routes_a_gene_keyed_head_past_extract_targets():
+    value = torch.zeros(6)
+    known = torch.zeros(6, dtype=torch.bool)
+    value[1], known[1] = 1.0, True
+    spec = {
+        train_bx.ESSENTIALITY_HEAD: {
+            "label": train_bx.ESSENTIALITY_LABEL,
+            "width": 1,
+            "gene_label": value,
+            "gene_known": known,
+        }
+    }
+    # The batch carries NO phenotype tensors at all; a gene-keyed head must not need them.
+    out = train_bx.targets_in_space(_GeneKeyedBatch(), spec, False)
+    target, mask = out[train_bx.ESSENTIALITY_HEAD]
+    assert mask[:, 0].tolist() == [True, False, False, False]
+    assert target[0, 0].item() == 1.0

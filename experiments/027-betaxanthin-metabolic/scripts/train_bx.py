@@ -1629,6 +1629,105 @@ def read_fcl_essentiality_split(path: str) -> tuple[dict[str, int], dict[str, An
     return labels, report
 
 
+def essentiality_gene_labels(
+    dataset: Any,
+) -> tuple[torch.Tensor, torch.Tensor, dict[str, Any]]:
+    """``(value, known, report)`` over the cell graph's gene nodes, from the released split.
+
+    The label is Merzbacher 2025's, inverted once by `read_fcl_essentiality_split` and
+    asserted against the paper's Methods counts. A gene the split does not name is `known`
+    False and is masked out of the loss, the selection metric and the test score, so the
+    arms are scored on exactly the genes the comparator table was computed on.
+    """
+    path = osp.join(DATA_ROOT, FCL_ESSENTIALITY_SPLIT)
+    labels, split_report = read_fcl_essentiality_split(path)
+    node_ids = list(dataset.cell_graph["gene"].node_ids)
+    position = {name: i for i, name in enumerate(node_ids)}
+    value = torch.zeros(len(node_ids))
+    known = torch.zeros(len(node_ids), dtype=torch.bool)
+    found: list[str] = []
+    absent: list[str] = []
+    for gene, essential in labels.items():
+        index = position.get(gene)
+        if index is None:
+            absent.append(gene)
+            continue
+        found.append(gene)
+        value[index] = float(essential)
+        known[index] = True
+    found_essential = sum(1 for g in found if labels[g] == 1)
+    absent_essential = sum(1 for g in absent if labels[g] == 1)
+    report = {
+        "split": split_report,
+        "requested": len(labels),
+        "found": len(found),
+        "absent": len(absent),
+        "found_essential": found_essential,
+        "found_nonessential": len(found) - found_essential,
+        "absent_essential": absent_essential,
+        "absent_nonessential": len(absent) - absent_essential,
+        "note": (
+            "the label is joined per genotype by its deleted gene; a gene the split does "
+            "not name is masked out of the loss, the selection metric and the test score."
+        ),
+    }
+    print(
+        f"[essentiality] split labels on {len(found)}/{len(labels)} cell-graph genes "
+        f"({found_essential} essential, {len(found) - found_essential} nonessential); "
+        f"{len(absent)} absent ({absent_essential} essential)",
+        flush=True,
+    )
+    return value, known, report
+
+
+def resolve_fcl_test_indices(dataset: Any) -> tuple[set[int], dict[str, Any]]:
+    """Record indices of the genes Merzbacher held out, pinned as OUR test split.
+
+    The comparator numbers are computed on those 223 genes, so the comparison is only a
+    comparison if they are the held-out set here too. Train and validation come from the
+    remaining labeled genes through the data module's own seeded draw.
+    """
+    import csv
+
+    path = osp.join(DATA_ROOT, FCL_ESSENTIALITY_SPLIT)
+    test_genes = {
+        str(row["knockout"]).strip()
+        for row in csv.DictReader(open(path))
+        if str(row["test"]).strip() == "1" and str(row["essential"]).strip()
+    }
+    gene_index = dataset.is_any_deletion_gene_index
+    indices: set[int] = set()
+    found: list[str] = []
+    for gene in sorted(test_genes):
+        hits = gene_index.get(gene)
+        if hits:
+            found.append(gene)
+            indices.update(int(h) for h in hits)
+    fraction = len(indices) / len(dataset)
+    assert indices, (
+        "none of the released test genes resolve in this build, so the comparison has no "
+        "held-out set."
+    )
+    assert fraction < 0.5, (
+        f"the FCL test genes select {fraction:.1%} of the dataset "
+        f"({len(indices)}/{len(dataset)}), which cannot be right for 223 genes."
+    )
+    report = {
+        "path": path,
+        "requested": len(test_genes),
+        "found": len(found),
+        "absent": sorted(test_genes - set(found)),
+        "records": len(indices),
+        "fraction_of_dataset": fraction,
+    }
+    print(
+        f"[fcl-test] {len(found)}/{len(test_genes)} released test genes present -> "
+        f"{len(indices)} records pinned to TEST ({fraction:.1%} of {len(dataset)})",
+        flush=True,
+    )
+    return indices, report
+
+
 def binary_auroc(score: np.ndarray, label: np.ndarray) -> float:
     """Rank-based AUROC over the observed rows; ``nan`` when one class is absent.
 
@@ -1672,6 +1771,42 @@ def heldout_rows(batch: Any, flags: torch.Tensor) -> torch.Tensor:
     return out
 
 
+def gene_keyed_target(
+    batch: Any, value: torch.Tensor, known: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """``([B, 1], [B, 1])`` target and mask from a PER-GENE label, by deleted gene.
+
+    The essentiality target is not in the graph. It comes from Merzbacher 2025's released
+    split, which is keyed on one knockout per row, so the label is looked up per genotype
+    through the gene its deletion names. `value` and `known` are one entry per gene node of
+    the cell graph, so the lookup runs on the same integer indices the model perturbs with
+    rather than on gene-name strings the batch does not carry.
+
+    THE DELETION INDEX, not the perturbation index: an addition is not a knockout, and a
+    genotype is keyed by what it removes. Genotypes whose gene is absent from the split, or
+    which do not delete exactly one gene, arrive masked False and contribute no loss, no
+    selection metric and no test score.
+    """
+    gene = batch["gene"]
+    indices = gene.deletion_indices
+    assignment = gene.deletion_indices_batch
+    n = int(batch.num_graphs)
+    device = indices.device
+    counts = torch.zeros(n, dtype=torch.long, device=device)
+    counts.index_add_(0, assignment, torch.ones_like(assignment))
+    target = torch.zeros(n, 1, device=value.device)
+    mask = torch.zeros(n, 1, dtype=torch.bool, device=value.device)
+    single = counts == 1
+    if bool(single.any()):
+        # The one deleted gene of each single-deletion genotype, in batch-row order.
+        rows = assignment[single[assignment]]
+        genes = indices[single[assignment]]
+        known_here = known.to(device)[genes]
+        target[rows[known_here], 0] = value.to(device)[genes[known_here]]
+        mask[rows[known_here], 0] = True
+    return target, mask
+
+
 def targets_in_space(
     batch: Any, head_specs: dict[str, dict[str, Any]], log10_molar: bool
 ) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
@@ -1704,9 +1839,19 @@ def targets_in_space(
         Spearman is invariant to the monotone change, so a log10 arm and a linear arm are
         directly comparable on the primary endpoint.
     """
-    raw: dict[str, tuple[torch.Tensor, torch.Tensor]] = extract_targets(
-        batch, head_specs
+    # A GENE-KEYED head reads no phenotype from the batch at all, so `extract_targets` is
+    # not called for it: its target is a per-gene label joined by the deleted gene name.
+    gene_keyed = {
+        name: spec for name, spec in head_specs.items() if "gene_label" in spec
+    }
+    decoded = {
+        name: spec for name, spec in head_specs.items() if "gene_label" not in spec
+    }
+    raw: dict[str, tuple[torch.Tensor, torch.Tensor]] = (
+        extract_targets(batch, decoded) if decoded else {}
     )
+    for name, spec in gene_keyed.items():
+        raw[name] = gene_keyed_target(batch, spec["gene_label"], spec["gene_known"])
     out: dict[str, tuple[torch.Tensor, torch.Tensor]] = {}
     for name, (t, m) in raw.items():
         spec = head_specs[name]
@@ -3671,10 +3816,20 @@ def build_model_for_cell(
     main_head = cell.head
     head_specs: dict[str, dict[str, Any]]
     if main_head == ESSENTIALITY_HEAD:
-        # A CLASS, not a magnitude: the label is the boolean `GeneEssentialityPhenotype`
-        # emits, arriving as a width-1 group of 0.0/1.0 under its own label, so it cannot
-        # collide with `metabolite_level` at all.
-        head_specs = {main_head: {"label": ESSENTIALITY_LABEL, "width": 1}}
+        # THE TARGET IS NOT IN THE GRAPH. It is Merzbacher 2025's released label, joined
+        # per genotype by its deleted gene, which is what FCL itself trained on. The build
+        # supplies the genotype and the cell graph; every phenotype column it carries is
+        # ignored here, which is also why the union build's fitness merge is harmless.
+        gene_value, gene_known, essentiality_report = essentiality_gene_labels(dataset)
+        head_specs = {
+            main_head: {
+                "label": ESSENTIALITY_LABEL,
+                "width": 1,
+                "gene_label": gene_value,
+                "gene_known": gene_known,
+            }
+        }
+        flux_meta["essentiality_labels"] = essentiality_report
     elif main_head == ISOBUTANOL_HEAD:
         # THE BIOSENSOR IS ONE COLUMN OF THE MERGED 20-VALUE BLOCK, not a width-1 group;
         # see `ISOBUTANOL_BLOCK_KEYS` for the measurement that forces it. The held-out
@@ -4745,7 +4900,7 @@ def run_cell(
         dist_head,
     )
     if pit.size:
-        pinned_rows = pinned_test_mask(dm, dataset)
+        pinned_rows = held_out_mask(dm, dataset, main_head)
         result["calibration"] = build_calibration_block(
             pit[pinned_rows],
             pit_mask[pinned_rows],
@@ -4787,7 +4942,7 @@ def run_cell(
             log_weights.to(device),
             source=CONC_SOURCE_CONTEXT if context_readout else CONC_SOURCE_FLUX,
         )
-        pinned_mask = pinned_test_mask(dm, dataset)
+        pinned_mask = held_out_mask(dm, dataset, main_head)
         if context_readout:
             lo = float(readout.conc_lower_m)
             hi = float(readout.conc_upper_m)
@@ -4856,7 +5011,9 @@ def run_cell(
             block = build_feasibility_block(
                 per_all,
                 per_test,
-                np.repeat(pinned_test_mask(dm, dataset), int(layer.config.draws)),
+                np.repeat(
+                    held_out_mask(dm, dataset, main_head), int(layer.config.draws)
+                ),
                 layer,
                 main_head,
             )
@@ -5139,6 +5296,39 @@ def _masked_loss(
     return total / max(count, 1.0)
 
 
+def held_out_mask(dm: Any, dataset: Any, head: str) -> np.ndarray:
+    """The rows the reported number is computed on, per head.
+
+    Betaxanthin, the amino acids and isobutanol are scored on Merzbacher's 639-gene
+    betaxanthin pin; essentiality is scored on the 223 genes the FCL essentiality split
+    held out, because those are the genes its published table was computed on.
+    """
+    if head == ESSENTIALITY_HEAD:
+        return fcl_test_mask(dm, dataset)
+    return pinned_test_mask(dm, dataset)
+
+
+def fcl_test_mask(dm: Any, dataset: Any) -> np.ndarray:
+    """Which rows of the TEST loader belong to a released FCL test gene."""
+    import csv
+
+    order = [int(i) for i in dm.test_dataset.indices]
+    path = osp.join(DATA_ROOT, FCL_ESSENTIALITY_SPLIT)
+    test_genes = {
+        str(row["knockout"]).strip()
+        for row in csv.DictReader(open(path))
+        if str(row["test"]).strip() == "1" and str(row["essential"]).strip()
+    }
+    idx_to_genes: dict[int, list[str]] = {}
+    for gene, rows in dataset.is_any_deletion_gene_index.items():
+        for row in rows:
+            idx_to_genes.setdefault(int(row), []).append(str(gene))
+    mask = np.zeros(len(order), dtype=bool)
+    for i, rec in enumerate(order):
+        mask[i] = any(g in test_genes for g in idx_to_genes.get(rec, []))
+    return mask
+
+
 def pinned_test_mask(dm: Any, dataset: Any) -> np.ndarray:
     """Which rows of the TEST loader's fixed order belong to a pinned Merzbacher gene.
 
@@ -5264,7 +5454,7 @@ def _score_test(
         for row in rows:
             idx_to_genes.setdefault(int(row), []).append(str(gene))
 
-    is_pinned = pinned_test_mask(dm, dataset)
+    is_pinned = held_out_mask(dm, dataset, head_name)
     all_rows = np.ones(len(order), dtype=bool)
 
     records: list[dict[str, Any]]
@@ -5765,7 +5955,12 @@ def main() -> None:
     )
     dataset = build_dataset(cell.head)
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)
-    pinned, report = resolve_pinned_test(dataset, cfg)
+    if cell.head == ESSENTIALITY_HEAD:
+        # THE COMPARATOR'S OWN HELD-OUT SET. Merzbacher's numbers are computed on those 223
+        # genes; pinning anything else would compare two different experiments.
+        pinned, report = resolve_fcl_test_indices(dataset)
+    else:
+        pinned, report = resolve_pinned_test(dataset, cfg)
 
     run = None
     if args.wandb_group:
@@ -5827,7 +6022,23 @@ def main() -> None:
             "select_val_pearson": result["select_val_pearson"],
             "wall_time_s": result["wall_time_s"],
         }
-        if cell.head in SCALAR_HEADS:
+        if cell.head in BINARY_HEADS:
+            # A CLASSIFIER REPORTS A CLASSIFIER'S METRICS. The scalar branch below reads
+            # `spearman`, which `binary_block` does not emit and should not: a rank
+            # correlation between a logit and a 0/1 label is not the endpoint, AUROC is.
+            summary.update(
+                {
+                    "test_auroc_pinned": pin["auroc"],
+                    "test_accuracy_pinned": pin["accuracy"],
+                    "test_majority_rate_pinned": pin["majority_class_rate"],
+                    "test_recall_essential_pinned": pin["recall_essential"],
+                    "test_recall_nonessential_pinned": pin["recall_nonessential"],
+                    "test_auroc_all": result["test"]["all"]["auroc"],
+                    "n_test_pinned": pin["n"],
+                    "n_test_pinned_essential": pin["n_essential"],
+                }
+            )
+        elif cell.head in SCALAR_HEADS:
             summary.update(
                 {
                     "test_spearman_pinned": pin["spearman"],
@@ -5868,17 +6079,26 @@ def main() -> None:
     path = osp.join(RESULTS_DIR, out)
     with open(path, "w") as fh:
         json.dump(result, fh, indent=2, default=str)
-    headline = (
-        f"  pinned test spearman {result['test']['pinned']['spearman']:+.4f} "
-        f"(n={result['test']['pinned']['n']})"
-        if cell.head in SCALAR_HEADS
-        else (
-            f"  pinned test mean per-feature spearman "
-            f"{result['test']['pinned']['mean_spearman']:+.4f} "
-            f"({result['test']['pinned']['n_measurements']} measurements on "
-            f"{result['test']['pinned']['n_records_with_any_feature']} genotypes)"
+    pinned_block = result["test"]["pinned"]
+    if cell.head in BINARY_HEADS:
+        headline = (
+            f"  held-out AUROC {pinned_block['auroc']:+.4f} "
+            f"(accuracy {pinned_block['accuracy']:.4f} against a majority rate of "
+            f"{pinned_block['majority_class_rate']:.4f}; n={pinned_block['n']}, "
+            f"{pinned_block['n_essential']} essential)"
         )
-    )
+    else:
+        headline = (
+            f"  pinned test spearman {result['test']['pinned']['spearman']:+.4f} "
+            f"(n={result['test']['pinned']['n']})"
+            if cell.head in SCALAR_HEADS
+            else (
+                f"  pinned test mean per-feature spearman "
+                f"{result['test']['pinned']['mean_spearman']:+.4f} "
+                f"({result['test']['pinned']['n_measurements']} measurements on "
+                f"{result['test']['pinned']['n_records_with_any_feature']} genotypes)"
+            )
+        )
     conc_line = ""
     if result["concentration_audit"]["available"]:
         pinned = result["concentration_audit"]["groups"]["pinned_test"]

@@ -45,6 +45,20 @@ sys.path.insert(0, osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "scrip
 
 import train_bx as t  # noqa: E402
 
+#: The three datasets whose single-deletion genotypes make up the build. The first is the
+#: essential-gene list and the other two are viable deletion collections, so together they
+#: carry both of the released split's classes; alone, the first carries only one.
+ESSENTIALITY_UNION = [
+    "GeneEssentialitySgdDataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+]
+#: Recorded in the manifest so the replaced build is traceable rather than just gone.
+SUPERSEDED_ROOT = (
+    "$DATA_ROOT/data/torchcell/experiments/027-betaxanthin-metabolic/"
+    "essentiality_build-sgd-only-20260915-003142"
+)
+
 from torchcell.database.connection import neo4j_connection_settings  # noqa: E402
 
 
@@ -79,17 +93,22 @@ def main() -> None:
     with driver.session(database=settings.database) as session:
         n_experiments = session.run(
             "MATCH (d:Dataset)<-[:ExperimentMemberOf]-(e:Experiment) "
-            "WHERE d.id = 'GeneEssentialitySgdDataset' RETURN count(e) AS n"
+            "WHERE d.id IN $ds RETURN count(e) AS n",
+            ds=ESSENTIALITY_UNION,
         ).single()["n"]
     driver.close()
     assert n_experiments > 0, (
         f"the graph at {settings.uri} database {settings.database!r} carries 0 "
-        "GeneEssentialitySgdDataset experiments, so "
+        f"experiments across {ESSENTIALITY_UNION}, so "
         "this build would write an empty LMDB and report success. Repopulate the served "
         "store (the manifest at $DATA_ROOT/database/kg_manifest.json lists the dataset as "
         "served, so the manifest and the live store disagree) and rerun."
     )
-    print(f"[build] graph carries {n_experiments} essentiality experiments", flush=True)
+    print(
+        f"[build] graph carries {n_experiments} experiments across "
+        f"{len(ESSENTIALITY_UNION)} datasets",
+        flush=True,
+    )
 
     started = time.time()
     dataset = t.build_dataset(t.ESSENTIALITY_HEAD)
@@ -97,12 +116,12 @@ def main() -> None:
         f"[build] {len(dataset)} genotypes in {time.time() - started:.0f} s", flush=True
     )
 
+    # NO LABEL CHECK, DELIBERATELY. The essentiality target comes from the released split
+    # and not from this build; whatever phenotype columns the union carries are ignored by
+    # the head. The labels present are recorded in the manifest so a reader can see what was
+    # dropped, and `GeneEssentialitySgdDataset` alone was single class anyway (all 1,140 of
+    # its records read `is_essential: True`), which is why the union exists.
     labels_present = dataset.phenotype_label_index
-    assert t.ESSENTIALITY_LABEL in labels_present, (
-        f"the build's phenotype labels are {sorted(labels_present)}, which does not "
-        f"include {t.ESSENTIALITY_LABEL!r}. That is the converter defect this build "
-        "exists to avoid; open the dataset with converter=None."
-    )
 
     split_path = osp.join(os.environ["DATA_ROOT"], t.FCL_ESSENTIALITY_SPLIT)
     fcl_labels, fcl_report = t.read_fcl_essentiality_split(split_path)
@@ -111,6 +130,7 @@ def main() -> None:
     found = [g for g in fcl_labels if g in gene_index]
     absent = sorted(g for g in fcl_labels if g not in gene_index)
     found_essential = sum(1 for g in found if fcl_labels[g] == 1)
+    absent_essential = sum(1 for g in absent if fcl_labels[g] == 1)
     manifest: dict[str, Any] = {
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "root": root,
@@ -128,7 +148,15 @@ def main() -> None:
             "absent_genes": absent,
             "found_essential": found_essential,
             "found_nonessential": len(found) - found_essential,
+            "absent_essential": absent_essential,
+            "absent_nonessential": len(absent) - absent_essential,
         },
+        "superseded_root": SUPERSEDED_ROOT,
+        "superseded_note": (
+            "the SGD-only build this replaces, moved aside rather than deleted. It held "
+            "1,140 genotypes whose is_essential was True on every one of them, i.e. no "
+            "negative class, which is what forced the union."
+        ),
         "code_provenance": t.code_provenance(),
     }
     os.makedirs(root, exist_ok=True)

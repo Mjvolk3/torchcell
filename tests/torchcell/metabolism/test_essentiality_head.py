@@ -195,8 +195,16 @@ class _GeneKeyed:
 
 
 class _GeneKeyedBatch:
-    def __init__(self, n: int = 4) -> None:
+    def __init__(self, n: int = 4, device: str = "cpu") -> None:
         self._gene = _GeneKeyed()
+        if device != "cpu":
+            for name in (
+                "deletion_indices",
+                "deletion_indices_batch",
+                "perturbation_indices",
+                "perturbation_indices_batch",
+            ):
+                setattr(self._gene, name, getattr(self._gene, name).to(device))
         self.num_graphs = n
 
     def __getitem__(self, key: str) -> _GeneKeyed:
@@ -214,6 +222,25 @@ def test_the_gene_keyed_target_joins_by_the_single_deleted_gene():
     assert target.shape == (4, 1) and mask.shape == (4, 1)
     assert mask[:, 0].tolist() == [True, True, False, False]
     assert target[0, 0].item() == 1.0 and target[1, 0].item() == 0.0
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU to mix devices")
+def test_the_target_lands_on_the_batch_device_not_the_label_device():
+    """The labels live on the host and the batch does not, which crashed two cells.
+
+    ``value`` and ``known`` are built once from the released split and stay on the CPU,
+    while the indices that address them come off a CUDA batch. Allocating the target beside
+    the LABELS therefore indexed a CPU tensor with CUDA rows, which every CPU-only test
+    passes and every real run fails 30 seconds in (jobs 1990, 1991, 1997, 1998).
+    """
+    value = torch.zeros(6)
+    known = torch.zeros(6, dtype=torch.bool)
+    value[1], known[1] = 1.0, True
+    batch = _GeneKeyedBatch(device="cuda")
+    target, mask = train_bx.gene_keyed_target(batch, value, known)
+    assert target.device.type == "cuda" and mask.device.type == "cuda"
+    assert mask[:, 0].tolist() == [True, False, False, False]
+    assert target[0, 0].item() == 1.0
 
 
 def test_a_gene_absent_from_the_split_is_masked_out():

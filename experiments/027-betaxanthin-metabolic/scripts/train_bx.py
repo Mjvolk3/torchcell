@@ -1805,8 +1805,13 @@ def gene_keyed_target(
     device = indices.device
     counts = torch.zeros(n, dtype=torch.long, device=device)
     counts.index_add_(0, assignment, torch.ones_like(assignment))
-    target = torch.zeros(n, 1, device=value.device)
-    mask = torch.zeros(n, 1, dtype=torch.bool, device=value.device)
+    # On the BATCH's device, not the label's. `value` and `known` are built once on the host
+    # from the released split and never move; the indices that address them come off the
+    # batch, so a target allocated beside the labels is a CPU tensor being indexed by CUDA
+    # rows. Every other head's target is already on the batch device, which is where the
+    # loss reads it.
+    target = torch.zeros(n, 1, device=device)
+    mask = torch.zeros(n, 1, dtype=torch.bool, device=device)
     single = counts == 1
     if bool(single.any()):
         # The one deleted gene of each single-deletion genotype, in batch-row order.

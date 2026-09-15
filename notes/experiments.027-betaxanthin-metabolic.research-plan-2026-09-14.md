@@ -362,3 +362,26 @@ inflated by selection on extremes. Measured by `isobutanol_retest_reliability.py
 - Consequence for rank 3: kNN +0.198 and ibpool s2700 +0.128 sit against a Spearman retest of
   about 0.31, not against a near-perfect label. The re-screen's 225 strains are the only
   replicated readout, and they are held out.
+
+## 2026.09.15 - Ceilings for every metabolic target, and what they reorder
+
+`target_reliability_table.py` estimates each target's reliability from its own repeats and
+writes `results/target_reliability.json` plus the notes-tex table
+`tables/target_reliability.tex` (Table 15 of the 027 document).
+
+| target | repeats | reliability of the stored value | Pearson ceiling | one measurement |
+|---|---:|---:|---:|---:|
+| betaxanthin | 4,722 genes, median 15 colonies | 0.84 | 0.91 | 0.28 (ceiling 0.53) |
+| amino acids (19) | 194 ORFs in two batches | 0.42 | 0.62 | same |
+| isobutanol | 190 ORFs on two or more screen rows | 0.11 | 0.33 | same |
+
+- **Betaxanthin's label is the best of the three**, because the release averages a median of
+  15 colonies per gene over screen replicates 1, 2, 4 and 6. The flat betaxanthin result is
+  therefore not label noise: kNN reads +0.145 and the module's arms near zero against a label
+  that supports 0.91 Pearson. Caveat: colonies are assumed independent within a gene, and a
+  shared plate or position effect would inflate the estimate.
+- **This reverses item 8 of the ranking.** Isobutanol was called the best-conditioned target
+  on the strength of a selection-inflated 0.915; genome-wide it is the weakest of the three.
+- Rank 3's kill rule is unchanged, but its interpretation is: an isobutanol arm reading
+  +0.13 is already near half of the 0.31 retest Spearman, while a betaxanthin arm reading
+  near zero has no label-noise excuse.

@@ -259,3 +259,118 @@ Spec, so the row is comparable to both the published FBA number and our own arms
    a threshold rule reapplied rather than copied.
 
 It is a CPU job, minutes, and it needs no GPU.
+
+## 2026.09.15 - CORRECTION: the store was never empty, my probe read the wrong database
+
+The 2026-09-15 blocker section above is **wrong and is retracted**. The served store was not
+empty; my probe queried the wrong Neo4j database.
+
+The server at `bolt://localhost:7687` hosts three databases: `neo4j` (the default, EMPTY),
+`system`, and **`torchcell`**, which holds the build. A `driver.session()` opened without
+`database=` goes to `neo4j` and returns zero rows for every query, which is
+indistinguishable from an empty or mid-rebuild store, and that is exactly what I reported.
+Re-measured with `database="torchcell"`:
+
+| check | wrong database (`neo4j`) | right database (`torchcell`) |
+|---|---:|---:|
+| `MATCH (n) RETURN count(n)` | 0 | **83,066,931** |
+| `MATCH (d:Dataset)` | 0 | **36** |
+| `GeneEssentialitySgdDataset` experiments | 0 | **1,140** |
+| phenotype rows | none | 1,140 at `graph_level` node, label `is_essential` |
+| deletions per genotype | none | 1,140 genotypes, all with exactly **1** |
+
+`neo4j_query_raw.py:174` has hardcoded `database="torchcell"` at its session all along,
+which is why every dataset build worked while my ad-hoc probe saw nothing. The dataset build
+was never blocked; only my reading of the store was.
+
+**The fix, so this cannot recur.** `Neo4jConnectionSettings` gains a `database` field
+resolved from `NEO4J_DATABASE` with the default `torchcell`, alongside the URI, user and
+password it already resolves. Nothing is hardcoded in a committed file: the credentials come
+from the environment exactly as before. `build_essentiality_dataset.py` opens its preflight
+session with `database=settings.database` and records the database name in the build
+manifest beside the URI.
+
+Not copied from `query_fig6.py`: that script hardcodes the NCSA URI
+`neo4j+s://torchcell-database.ncsa.illinois.edu:7687` together with a readonly credential
+pair. The NCSA host has been faulting on I/O since 2026-08-08, and a password in a committed
+file is not a pattern to spread.
+
+**The lesson worth keeping.** A query against the wrong Neo4j database does not error, it
+returns an empty result. "0 nodes" and "the store is being rebuilt" look identical from the
+client, and I reported the second when the first was true. Any future probe that reads zero
+should check `SHOW DATABASES` before concluding anything about the store.
+
+**Build submitted: job 1988**, `gh_cpu_build_essentiality.slurm`, nice 1000, 8 cores, 24 GB,
+4 h limit.
+
+### Build ran (job 1988, 14 s) and the dataset has NO negative class
+
+`gh_cpu_build_essentiality.slurm`, job **1988**, COMPLETED in 14 seconds. 1,140 genotypes,
+0 deduplicated, `phenotype_label_index` is `{"is_essential": 1140}`, so the converter defect
+is gone and the label survives as itself. Manifest at
+`$DATA_ROOT/data/torchcell/experiments/027-betaxanthin-metabolic/essentiality_build/build_manifest.json`.
+
+Then the numbers that stop the endpoint as designed:
+
+| quantity | value |
+|---|---:|
+| records in the build | 1,140 |
+| **distinct `is_essential` values** | **`True` only, 1,140 of 1,140** |
+| FCL split genes found | 166 / 1,121 |
+| of those, essential | 155 |
+| of those, nonessential | 11 |
+| FCL split genes absent | 955 |
+
+**`GeneEssentialitySgdDataset` is the ESSENTIAL-gene list, not an essentiality label over
+genes.** It records essential genes and almost nothing else, so the build is single-class: a
+binary classifier has no negative class, the cross entropy has nothing to separate, and
+AUROC is undefined. The `found_essential > 0` assert passed and did not catch this, because
+it guards the opposite failure. **The four arms cannot train on this build.**
+
+The 11 genes the split calls nonessential and the build calls essential are a genuine
+disagreement between SGD and the labels Merzbacher took "from the literature", and they are
+worth a look on their own.
+
+### Where the negative class is, measured
+
+Single-deletion genotype coverage of the split's two classes, per dataset in the served
+graph:
+
+| dataset | nonessential covered | essential covered |
+|---|---:|---:|
+| `GeneEssentialitySgdDataset` | 11 / 964 | 155 / 157 |
+| `SmfCostanzo2016Dataset` | 820 / 964 | 1 / 157 |
+| `SmfKuzmin2018Dataset` | 192 / 964 | 0 / 157 |
+| **union of the three** | **826 / 964 (85.7 %)** | **156 / 157 (99.4 %)** |
+
+The union reaches **982 of the 1,121** split genes. So the negative class lives in the
+single-mutant fitness datasets, which is what a viable deletion collection IS, and the
+positive class lives in the SGD essential list.
+
+### The fork this creates, and I am not choosing it silently
+
+A union build reintroduces exactly the defect the dedicated query was written to avoid: with
+a fitness dataset co-grouped, `MeanExperimentDeduplicator` merges `is_essential` into a
+`fitness` record, which is what produced `fitness`-only labels in the 003 and 025 builds.
+
+Two routes, and they differ in what the LABEL is:
+
+1. **Label from the released split, genotypes from the union build.** The binary label is
+   joined per gene from
+   `yeast_essentiality_test_split.csv`, and the dataset supplies only the genotype and the
+   graph. This is what Flux Cone Learning itself did: it trained on flux cones keyed by
+   knockout with labels taken from the literature, not from a phenotype record in a graph.
+   It gets 982 of 1,121 genes and both classes, and it sidesteps the deduplicator entirely
+   because no phenotype is being decoded. It requires changing `--head essentiality` to read
+   its target from the split file rather than from `is_essential` in the batch, which is a
+   real change to what I built today.
+2. **Label from the graph, union build with the merge suppressed.** Keeps the head as built,
+   but needs the union query to avoid the fitness merge, which means either a converter-free
+   aggregator for this build or a post-hoc reconstruction of the boolean. More machinery,
+   and the label still has to be reconciled against the split for the comparison to mean
+   anything.
+
+**Route 1 is the recommendation**, because the comparator numbers were computed on those
+exact labels and any label we derive ourselves is a different experiment from the one the
+table reports. It is not implemented: the head currently decodes `is_essential` from the
+batch, and no cell was submitted.

@@ -54,7 +54,11 @@ def main() -> None:
     settings = neo4j_connection_settings()
     print(f"[build] root {root}", flush=True)
     print(f"[build] query {query_path}", flush=True)
-    print(f"[build] neo4j {settings.uri} as {settings.username}", flush=True)
+    print(
+        f"[build] neo4j {settings.uri} database {settings.database!r} "
+        f"as {settings.username}",
+        flush=True,
+    )
 
     # THE PREFLIGHT THAT SAVES A QUEUE WAIT. A reachable but EMPTY graph is the state this
     # build met on 2026-09-14 (0 nodes, while kg_manifest.json still claimed 36 served
@@ -65,14 +69,22 @@ def main() -> None:
     driver = GraphDatabase.driver(
         settings.uri, auth=(settings.username, settings.password)
     )
-    with driver.session() as session:
+    # THE DATABASE NAME IS LOAD-BEARING. The server hosts `neo4j` (the default, EMPTY),
+    # `system`, and `torchcell`, which is the one holding the build. A session opened
+    # without `database=` goes to `neo4j` and returns zero rows for every query, which is
+    # indistinguishable from an empty or mid-rebuild store; that is exactly how this probe
+    # reported "0 nodes" on 2026-09-14 against a graph holding 83,066,931 of them.
+    # `neo4j_query_raw.py` has always passed "torchcell" at its own session, which is why
+    # dataset builds worked while the probe saw nothing.
+    with driver.session(database=settings.database) as session:
         n_experiments = session.run(
             "MATCH (d:Dataset)<-[:ExperimentMemberOf]-(e:Experiment) "
             "WHERE d.id = 'GeneEssentialitySgdDataset' RETURN count(e) AS n"
         ).single()["n"]
     driver.close()
     assert n_experiments > 0, (
-        f"the graph at {settings.uri} carries 0 GeneEssentialitySgdDataset experiments, so "
+        f"the graph at {settings.uri} database {settings.database!r} carries 0 "
+        "GeneEssentialitySgdDataset experiments, so "
         "this build would write an empty LMDB and report success. Repopulate the served "
         "store (the manifest at $DATA_ROOT/database/kg_manifest.json lists the dataset as "
         "served, so the manifest and the live store disagree) and rerun."
@@ -81,7 +93,9 @@ def main() -> None:
 
     started = time.time()
     dataset = t.build_dataset(t.ESSENTIALITY_HEAD)
-    print(f"[build] {len(dataset)} genotypes in {time.time() - started:.0f} s", flush=True)
+    print(
+        f"[build] {len(dataset)} genotypes in {time.time() - started:.0f} s", flush=True
+    )
 
     labels_present = dataset.phenotype_label_index
     assert t.ESSENTIALITY_LABEL in labels_present, (
@@ -102,6 +116,7 @@ def main() -> None:
         "root": root,
         "query_path": query_path,
         "neo4j_uri": settings.uri,
+        "neo4j_database": settings.database,
         "neo4j_user": settings.username,
         "n_genotypes": len(dataset),
         "phenotype_labels": {k: len(v) for k, v in labels_present.items()},

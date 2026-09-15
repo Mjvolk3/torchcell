@@ -1,0 +1,53 @@
+{
+  "source_xlsx": "/scratch/projects/torchcell-scratch/data/torchcell/isobutanol_screen_lopez2024/raw/supplementary_tables.xlsx",
+  "within_first_screen": {
+    "n_rows": 4805,
+    "n_orfs": 4607,
+    "n_orfs_on_two_or_more_rows": 190,
+    "pairs": {
+      "n": 190,
+      "pearson_log10": 0.10641389363966347,
+      "spearman_log10": 0.30855074359144413
+    },
+    "pairs_within_one_decade": {
+      "n": 186,
+      "pearson_log10": 0.289159427633943,
+      "spearman_log10": 0.35041906597501393
+    },
+    "sd_single_measurement_log10": 0.20358943307378102,
+    "sd_single_measurement_log10_robust": 0.12242011109843765,
+    "sd_across_rows_log10": 0.21592140623287362,
+    "sd_across_rows_log10_robust": 0.17322286986443533,
+    "reliability_estimate": 0.11096457584092734,
+    "reliability_estimate_robust": 0.500546478430989,
+    "pearson_ceiling": 0.33311345791025515,
+    "pearson_ceiling_robust": 0.7074930942638161
+  },
+  "first_vs_rescreen": {
+    "n_rescreened_orfs": 227,
+    "n_in_first_screen": 225,
+    "pooled": {
+      "n": 225,
+      "pearson_log10": 0.922357472699086,
+      "spearman_log10": 0.7041993554042617
+    },
+    "up_block": {
+      "n": 64,
+      "pearson_log10": 0.4139879417712551,
+      "spearman_log10": 0.27559523809523806
+    },
+    "down_block": {
+      "n": 161,
+      "pearson_log10": 0.6806254201072943,
+      "spearman_log10": 0.26064852290187246
+    },
+    "direction_agreement_fraction": 0.9955555555555555
+  },
+  "rescreen_triplicate": {
+    "n": 227,
+    "median_cv": 0.08553312074991512,
+    "median_sd_log10": 0.03714656236165266,
+    "up_block_median_sd_log10": 0.04337925623662772,
+    "down_block_median_sd_log10": 0.03456843733127465
+  }
+}

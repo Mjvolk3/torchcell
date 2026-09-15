@@ -336,3 +336,29 @@ rank order above.
 - `BETAXANTHIN_PRECURSORS` in 026 still lists s_0188 (2-phospho-D-glycerate) as an aromatic
   intermediate; the scalar head that "costs -0.023" reads that list.
 - The isobutanol screen LMDB is mid-rebuild (job 1894); anything reading it records which copy.
+
+## 2026.09.15 - Correction: the isobutanol label is not well conditioned genome-wide
+
+Item 8's "test-retest Pearson 0.915, reliability 0.6 to 0.8" was the pooled first-screen vs
+re-screen correlation over the 225 strong hits, which spans two blocks a decade apart and is
+inflated by selection on extremes. Measured by `isobutanol_retest_reliability.py`
+(`results/isobutanol_retest_reliability.json`), on log10 fold change:
+
+| read | n | Pearson | Spearman |
+|---|---:|---:|---:|
+| first screen, ORFs on two or more rows (unselected) | 190 | 0.106 | 0.309 |
+| same, dropping 4 pairs disagreeing by more than 1 decade | 186 | 0.289 | 0.350 |
+| first screen vs re-screen, pooled hits | 225 | 0.922 | 0.704 |
+| same, up block only (FC >= 2) | 64 | 0.414 | 0.276 |
+| same, down block only (FC <= 0.5) | 161 | 0.681 | 0.261 |
+
+- Single-measurement reliability genome-wide: 0.11 by sd, 0.50 by MAD; Pearson ceiling
+  0.33 / 0.71. The pinned Spearman is scored genome-wide, so the unselected row applies.
+- Direction is reproducible: 99.6 percent of re-screened hits keep their side of FC 1.
+- The triplicate re-screen is tight: median sd 0.037 log10 against a genome-wide spread of
+  0.216, so the first screen's disagreement is larger than culture-to-culture noise.
+  Hypothesis (untested): plate or position effects in the one-shot screen, or duplicate rows
+  that are distinct YKO isolates (YBL071W-A sits in both re-screen blocks).
+- Consequence for rank 3: kNN +0.198 and ibpool s2700 +0.128 sit against a Spearman retest of
+  about 0.31, not against a near-perfect label. The re-screen's 225 strains are the only
+  replicated readout, and they are held out.

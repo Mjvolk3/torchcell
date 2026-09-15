@@ -1,0 +1,110 @@
+"""Per-perturbation-order metrics of RegressionTask (torchcell.trainers.int_transformer_cell)."""
+
+from typing import Any
+
+import torch
+from torch_geometric.data import HeteroData
+
+from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
+from torchcell.trainers.int_transformer_cell import RegressionTask
+
+GENE_NUM = 8
+
+
+def _cell_graph() -> HeteroData:
+    cg = HeteroData()
+    cg["gene"].num_nodes = GENE_NUM
+    cg["gene", "physical", "gene"].edge_index = torch.tensor(
+        [[0, 1, 2, 3], [1, 2, 3, 4]], dtype=torch.long
+    )
+    return cg
+
+
+def _task(**kwargs: Any) -> tuple[RegressionTask, list[tuple[str, float]]]:
+    torch.manual_seed(0)
+    model = CellGraphTransformer(
+        gene_num=GENE_NUM,
+        hidden_channels=16,
+        num_transformer_layers=1,
+        num_attention_heads=4,
+        cell_graph=_cell_graph(),
+    )
+    task = RegressionTask(
+        model=model,
+        cell_graph=_cell_graph(),
+        optimizer_config={"type": "AdamW", "lr": 1e-3, "weight_decay": 0.0},
+        lr_scheduler_config=None,
+        device="cpu",
+        **kwargs,
+    )
+    logged: list[tuple[str, float]] = []
+    task.log = lambda name, value, **kw: logged.append((name, float(value)))  # type: ignore[method-assign]
+    return task, logged
+
+
+def _batch() -> HeteroData:
+    # row 0 perturbs {1, 2} (order 2), row 1 perturbs {3} (order 1), row 2 {0, 4, 5} (order 3)
+    b = HeteroData()
+    b["gene"].perturbation_indices = torch.tensor([1, 2, 3, 0, 4, 5])
+    b["gene"].perturbation_indices_batch = torch.tensor([0, 0, 1, 2, 2, 2])
+    return b
+
+
+def test_per_order_metrics_split_rows_by_perturbation_count() -> None:
+    task, logged = _task(per_order_metrics=True)
+    assert task._perturbation_order(_batch(), 3).tolist() == [2, 1, 3]
+    mask = torch.ones(3, 1, dtype=torch.bool)
+    for preds, targets in [
+        (torch.tensor([[0.1], [0.5], [0.9]]), torch.tensor([[0.2], [0.4], [1.0]])),
+        (torch.tensor([[0.3], [0.7], [0.2]]), torch.tensor([[0.3], [0.6], [0.1]])),
+    ]:
+        task._update_order_metrics(
+            "train", "train_order_metrics", _batch(), 3, preds, targets, mask
+        )
+    assert task._order_counts["train"] == {1: 2, 2: 2, 3: 2}
+    task._log_order_epoch_metrics("train")
+    names = {n for n, _ in logged}
+    for k in (1, 2, 3):
+        assert f"train/gene_interaction/order{k}/MSE" in names
+        assert f"train/gene_interaction/order{k}/Pearson" in names
+        assert f"train/n_records/order{k}" in names
+    counts = {n: v for n, v in logged if n.startswith("train/n_records/")}
+    assert counts == {f"train/n_records/order{k}": 2.0 for k in (1, 2, 3)}
+    assert task._order_counts["train"] == {1: 0, 2: 0, 3: 0}
+
+
+def test_orders_without_samples_are_not_logged() -> None:
+    task, logged = _task(per_order_metrics=True)
+    # A label-present mask that drops the order-1 row.
+    mask = torch.tensor([[True], [False], [True]])
+    for _ in range(2):
+        task._update_order_metrics(
+            "val",
+            "val_order_metrics",
+            _batch(),
+            3,
+            torch.tensor([[0.1], [0.5], [0.9]]),
+            torch.tensor([[0.2], [0.4], [1.0]]),
+            mask,
+        )
+    task._log_order_epoch_metrics("val")
+    names = {n for n, _ in logged}
+    assert "val/gene_interaction/order2/MSE" in names
+    assert "val/gene_interaction/order3/MSE" in names
+    assert "val/gene_interaction/order1/MSE" not in names
+
+
+def test_flag_off_adds_no_modules_and_logs_nothing() -> None:
+    task, logged = _task(per_order_metrics=False)
+    assert not hasattr(task, "train_order_metrics")
+    task._update_order_metrics(
+        "train",
+        "train_order_metrics",
+        _batch(),
+        3,
+        torch.zeros(3, 1),
+        torch.zeros(3, 1),
+        torch.ones(3, 1, dtype=torch.bool),
+    )
+    task._log_order_epoch_metrics("train")
+    assert logged == []

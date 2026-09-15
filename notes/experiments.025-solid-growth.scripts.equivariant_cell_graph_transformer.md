@@ -820,3 +820,18 @@ are also printed to the SLURM log. `cgt_s0_r_kl_000` now carries
 probe, and every Delta job still pending picks it up at start (Delta jobs read the
 training script and configs from the worktree when they begin; only the sbatch launcher
 is copied at submission). The IGB chain runs from its own frozen worktrees and does not.
+
+## 2026.09.15 - Per-order metrics for the mixed-order arms
+
+`RegressionTask(per_order_metrics=True)` (config `regression_task.per_order_metrics`, on
+in `cgt_s5_r_kl_fit_029` and so in the closure arm `_030`) keeps a second set of the
+MSE / RMSE / Pearson collections per perturbation order, fed with the rows of each batch
+whose record perturbs 1, 2 or 3 genes (`bincount` of `perturbation_indices_batch`), and
+logs them at epoch end as `<stage>/gene_interaction/order<k>/<metric>` and, on the joint
+path, `<stage>/fitness/order<k>/<metric>`, plus `<stage>/n_records/order<k>`; an order
+that received no row in the epoch is skipped. The pooled metrics are unchanged. On the
+closure and whole-build arms the pooled training Pearson mixes dmi and tmi; the order-3
+line is the trigenic fit alone, the order-2 line the digenic one. Validation and test on
+the pinned trigenic splits are order 3 only, so there the order-3 line equals the pooled
+one, which is the check that the split is what it claims. Three tests in
+`tests/torchcell/trainers/test_int_transformer_cell_per_order_metrics.py`.

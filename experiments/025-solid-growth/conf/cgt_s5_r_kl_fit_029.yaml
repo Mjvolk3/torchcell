@@ -36,3 +36,9 @@ subset:
   split_file: pinned_splits_from_010_seed_42.json.gz
   split_key: pinned
   unpinned_to_train: true
+
+regression_task:
+  # Training pools doubles and triples: report MSE / RMSE / Pearson per perturbation
+  # order (train/gene_interaction/order{1,2,3}/*, train/fitness/order{k}/*) so the
+  # trigenic fit is read apart from the digenic one. Val and test are order 3 only.
+  per_order_metrics: true

@@ -42,7 +42,7 @@ class RegressionTask(L.LightningModule):
         model: nn.Module,
         cell_graph: torch.Tensor,
         optimizer_config: dict[str, Any],
-        lr_scheduler_config: dict[str, Any],
+        lr_scheduler_config: dict[str, Any] | None,
         batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
@@ -57,8 +57,19 @@ class RegressionTask(L.LightningModule):
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
         fitness_lambda: float | None = None,
         gradient_probe_epochs: list[int] | None = None,
+        per_order_metrics: bool = False,
     ):
         """Set up the model, cloned cell graph, loss, metrics, and execution mode.
+
+        ``per_order_metrics`` adds, for every stage, the same MSE / RMSE / Pearson
+        collections split by perturbation order (the number of perturbed genes in the
+        record: 1, 2, 3), logged as ``<stage>/gene_interaction/order<k>/<metric>`` and,
+        on the joint path, ``<stage>/fitness/order<k>/<metric>``, for the orders that
+        received samples in the epoch. An arm whose training pool mixes doubles and
+        triples (the closure and whole-build arms) otherwise reports one training
+        Pearson over dmi and tmi together; this separates the trigenic fit from the
+        digenic one. Validation and test on the pinned trigenic splits are order 3
+        only, so there the order-3 line equals the overall one.
 
         ``gradient_probe_epochs`` lists epochs at whose FIRST training batch the
         gradient of each weighted loss term (point, distribution, graph penalty,
@@ -132,6 +143,42 @@ class RegressionTask(L.LightningModule):
                     f"{stage}_transformed_fitness_metrics",
                     reg_metrics.clone(prefix=f"{stage}/transformed/fitness/"),
                 )
+
+        # Per-perturbation-order metrics (opt-in, see __init__). Orders 1 to 3 cover
+        # every record of the 025 build; a count per order says which ones to log.
+        self.per_order_metrics = per_order_metrics
+        self.metric_orders = (1, 2, 3)
+        self._order_counts: dict[str, dict[int, int]] = {
+            stage: dict.fromkeys(self.metric_orders, 0)
+            for stage in ("train", "val", "test")
+        }
+        if per_order_metrics:
+            for stage in ("train", "val", "test"):
+                setattr(
+                    self,
+                    f"{stage}_order_metrics",
+                    nn.ModuleDict(
+                        {
+                            str(k): reg_metrics.clone(
+                                prefix=f"{stage}/gene_interaction/order{k}/"
+                            )
+                            for k in self.metric_orders
+                        }
+                    ),
+                )
+                if fitness_lambda is not None:
+                    setattr(
+                        self,
+                        f"{stage}_order_fitness_metrics",
+                        nn.ModuleDict(
+                            {
+                                str(k): reg_metrics.clone(
+                                    prefix=f"{stage}/fitness/order{k}/"
+                                )
+                                for k in self.metric_orders
+                            }
+                        ),
+                    )
 
         # Separate accumulators for train, validation, and test samples
         self.train_samples: dict[str, Any] = {
@@ -276,8 +323,77 @@ class RegressionTask(L.LightningModule):
         getattr(self, f"{stage}_fitness_metrics").update(
             inv_fit[mask].view(-1), fit_orig[mask].view(-1)
         )
+        self._update_order_metrics(
+            stage,
+            f"{stage}_order_fitness_metrics",
+            batch,
+            batch_size,
+            inv_fit,
+            fit_orig,
+            mask,
+        )
         assert self.fitness_lambda is not None
         return self.fitness_lambda * fitness_loss
+
+    def _perturbation_order(self, batch: HeteroData, batch_size: int) -> torch.Tensor:
+        """Number of perturbed genes per batch row, ``[batch_size]`` long."""
+        return torch.bincount(
+            batch["gene"].perturbation_indices_batch, minlength=batch_size
+        )
+
+    def _update_order_metrics(
+        self,
+        stage: str,
+        attr: str,
+        batch: HeteroData,
+        batch_size: int,
+        preds: torch.Tensor,
+        targets: torch.Tensor,
+        mask: torch.Tensor,
+    ) -> None:
+        """Feed ``preds``/``targets`` rows of each perturbation order to its metrics.
+
+        ``mask`` is the ``[batch_size, 1]`` label-present mask already used for the
+        pooled collection; ``attr`` names the ModuleDict (``<stage>_order_metrics`` or
+        ``<stage>_order_fitness_metrics``).
+        """
+        if not self.per_order_metrics:
+            return
+        order = self._perturbation_order(batch, batch_size)
+        present = mask.view(-1)
+        collections = getattr(self, attr)
+        for k in self.metric_orders:
+            sel = present & (order == k)
+            n = int(sel.sum())
+            if n == 0:
+                continue
+            collections[str(k)].update(preds[sel].view(-1), targets[sel].view(-1))
+            if attr == f"{stage}_order_metrics":
+                self._order_counts[stage][k] += n
+
+    def _log_order_epoch_metrics(self, stage: str) -> None:
+        """Compute, log and reset the per-order collections of ``stage``."""
+        if not self.per_order_metrics:
+            return
+        attrs = [f"{stage}_order_metrics"]
+        if self.fitness_lambda is not None:
+            attrs.append(f"{stage}_order_fitness_metrics")
+        for attr in attrs:
+            collections = getattr(self, attr)
+            for k in self.metric_orders:
+                collection = collections[str(k)]
+                if self._order_counts[stage][k] > 0:
+                    for key, value in self._compute_metrics_safely(collection).items():
+                        self.log(key, value, sync_dist=True)
+                collection.reset()
+        for k in self.metric_orders:
+            self.log(
+                f"{stage}/n_records/order{k}",
+                float(self._order_counts[stage][k]),
+                sync_dist=True,
+                reduce_fx="sum",
+            )
+            self._order_counts[stage][k] = 0
 
     def _log_fitness_epoch_metrics(self, stage: str) -> None:
         """Compute, log and reset the two fitness metric collections of ``stage``."""
@@ -1237,6 +1353,15 @@ class RegressionTask(L.LightningModule):
             metrics.update(
                 inv_predictions[mask].view(-1), gene_interaction_orig[mask].view(-1)
             )
+            self._update_order_metrics(
+                stage,
+                f"{stage}_order_metrics",
+                batch,
+                batch_size,
+                inv_predictions,
+                gene_interaction_orig,
+                mask,
+            )
 
         # Collect samples for visualization
         if stage == "train" and self._is_scheduled(self.hparams["plot_every_n_epochs"]):
@@ -1570,6 +1695,7 @@ class RegressionTask(L.LightningModule):
             self.log(name, value, sync_dist=True)
         self.train_transformed_metrics.reset()
         self._log_fitness_epoch_metrics("train")
+        self._log_order_epoch_metrics("train")
 
         # Plot training samples
         if (
@@ -1662,6 +1788,7 @@ class RegressionTask(L.LightningModule):
             self.log(name, value, sync_dist=True)
         self.val_transformed_metrics.reset()
         self._log_fitness_epoch_metrics("val")
+        self._log_order_epoch_metrics("val")
 
         # Log edge recovery metrics (now includes layer and head info)
         for metric_key, acc in self.edge_recovery_accumulators.items():
@@ -1732,6 +1859,7 @@ class RegressionTask(L.LightningModule):
             self.log(name, value, sync_dist=True)
         self.test_transformed_metrics.reset()
         self._log_fitness_epoch_metrics("test")
+        self._log_order_epoch_metrics("test")
 
         # Plot test samples
         if self.test_samples["true_values"]:

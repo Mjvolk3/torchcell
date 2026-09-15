@@ -748,6 +748,9 @@ def main(cfg: DictConfig) -> None:
             gradient_probe_epochs=wandb_cfg["regression_task"].get(
                 "gradient_probe_epochs"
             ),
+            per_order_metrics=bool(
+                wandb_cfg["regression_task"].get("per_order_metrics", False)
+            ),
         )
 
     # Try to compile the model for better performance (PyTorch 2.0+)

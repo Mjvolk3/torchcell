@@ -22,6 +22,7 @@ from .dasilveira2014 import (
 from .hillenmeyer2008 import HetHillenmeyer2008Dataset as HetHillenmeyer2008Dataset
 from .hillenmeyer2008 import HomHillenmeyer2008Dataset as HomHillenmeyer2008Dataset
 from .hoepfner2014 import EnvChemgenHoepfner2014Dataset as EnvChemgenHoepfner2014Dataset
+from .kemmeren2014 import MicroarrayKemmeren2014Dataset as MicroarrayKemmeren2014Dataset
 from .kuzmin2018 import DmfKuzmin2018Dataset as DmfKuzmin2018Dataset
 from .kuzmin2018 import SmfKuzmin2018Dataset as SmfKuzmin2018Dataset
 from .kuzmin2018 import TmfKuzmin2018Dataset as TmfKuzmin2018Dataset
@@ -127,6 +128,8 @@ xue_datasets = ["FattyAcidXue2025Dataset"]
 
 nadal_ribelles_datasets = ["NadalRibellesPerturbSeq2025Dataset"]
 
+kemmeren_datasets = ["MicroarrayKemmeren2014Dataset"]
+
 yeastphenome_datasets = ["YeastPhenomeDataset"]
 
 bloom_datasets = ["Bloom2019Dataset"]
@@ -162,6 +165,7 @@ __all__ = (
     + lopez_datasets
     + xue_datasets
     + nadal_ribelles_datasets
+    + kemmeren_datasets
     + yeastphenome_datasets
     + bloom_datasets
     + smith2016_datasets

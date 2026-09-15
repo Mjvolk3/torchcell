@@ -121,3 +121,19 @@ Pearson peak (\cref{sec:findings-state}). The one-parameter rescale argument of
 \cref{sec:strand-model}'s source, multiplying every prediction by $r/s$ estimated on
 train, changes no correlation and takes \file{nmse} to $1 - r^2$; it has not been applied
 to any run of the campaign, costs nothing, and belongs at the point a figure is drawn.
+
+\pfstep{The proteome round, submitted 2026-09-15 on cabbi} The split round's design on
+the Messner 2023 knockout proteome (\cref{sec:readouts-proteome}): \file{P_ref} and
+\file{P_concat} on split seeds 0 to 3, two initialization seeds, four runs per RTX 6000
+card, 2{,}000 epochs, job 2400350 (\file{cgt_expr_v14_proteome.yaml}). The build
+\file{fig3_proteome} unions Kemmeren, Sameith and Messner in one genotype-keyed store;
+the proteome label is $\log_2$ of the strain over the 388-replicate HIS3 reference,
+converted at build time, over the union of 1,850 proteins with a strain's unmeasured
+proteins carried as missing and excluded from every loss and metric (strains quantify
+1{,}441 to 1{,}850). The per-gene head reads that label unchanged and logs under
+\file{val/proteome}. The linear baselines on the same four partitions read $0.058$ to
+$0.074$ for the bilinear ridge on ProtT5 and $0.057$ to $0.083$ for the neighbor mean
+(validation), against a ceiling of $0.40$ to $0.70$ (\cref{sec:findings-ceilings}); the
+round is read as v13 is, the paired contrast at a matched epoch and the test score at the
+best-validation checkpoint. Nothing about it is a result until the runs finish.
+\src{experiments/019-simb-multimodal/results/baselines_split_fig3_proteome/seed0.json to seed3.json}

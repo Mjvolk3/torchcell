@@ -5,7 +5,11 @@
 %% loss_min_vs_pearson_peak.json (loss_min_vs_pearson_peak.py); expression_baselines
 %% (expression_baselines.py); the objective-round table as read on 2026-09-06 and recorded
 %% in notes/experiments.019-simb-multimodal.expression-strand-retrospective.md. The ceiling
-%% is the replicate-based figure of the SIMB retrospective (section 2 there).
+%% is the replicate-based figure of the SIMB retrospective (section 2 there); the ceilings
+%% of every panel are results/expression_ceiling_all.json (expression_ceiling_all.py), which
+%% reads expression_ceiling_replicate.json, the mirrored Caudal replicate table, the
+%% Caudal, Zelezniak and fig3_proteome LMDBs, and the 028 results
+%% proteome_messner_replicates.json and nadal_replication_coverage.json.
 
 \section{The state of the strand, claim by claim\secstatus{todo}}
 \label{sec:findings}
@@ -42,6 +46,92 @@ reference at epochs $\le 4{,}079$ (\cref{sec:readouts-mech}). Baselines that nee
 embedding-neighbor $0.0908$. The incumbent clears the bilinear by $0.093$, about $4.2$
 standard deviations. On squared error no live run beats the per-gene mean at its Pearson
 peak: the best \file{nmse} at peak is $1.005$.
+
+\subsection{The ceiling of every panel, from its own reproducibility\secstatus{todo}}
+\label{sec:findings-ceilings}
+
+The per-gene Pearson a perfect predictor can reach is bounded by how reproducibly the
+panel measures each gene. Write one measurement of gene $g$ in strain $b$ as
+$x_{bg} = s_{bg} + e_{bg}$, signal and noise with variances $\sigma_{s,g}^2$ and
+$\sigma_{e,g}^2$ across strains. A predictor that recovers $s$ exactly scores
+%
+\begin{equation}
+  c_g = \operatorname{corr}(s_{\cdot g}, x_{\cdot g})
+      = \sqrt{\frac{\sigma_{s,g}^2}{\sigma_{s,g}^2 + \sigma_{e,g}^2}}
+      = \sqrt{\rho_g},
+  \qquad
+  \text{ceiling} = \frac{1}{|G|} \sum_{g \in G} \sqrt{\rho_g},
+  \label{eq:ceiling}
+\end{equation}
+%
+with $\rho_g$ the reliability of gene $g$ and the average taken over genes as the metric
+takes it. Two estimators of $\rho_g$ are available, and the panels differ in which one
+their design allows. With two independent measurements $x$ and $y$ of the same strains,
+the test-retest correlation across strains estimates $\rho_g$ directly,
+$\hat\rho_g = \operatorname{corr}(x_{\cdot g}, y_{\cdot g})$, since
+$\operatorname{corr}(s + e, s + e') = \sigma_s^2 / (\sigma_s^2 + \sigma_e^2)$. With
+replicate measurements of one genotype but no paired panel, the noise variance comes from
+the replicates and the total variance from the panel,
+$\hat\rho_g = 1 - \sigma_{e,g}^2 / \sigma_{g}^2$ (the decomposition). Both clip
+$\hat\rho_g$ to $[0, 1]$ before the square root; a negative estimate is a gene whose
+replicate disagreement exceeds its spread across the panel and counts as zero.
+\cref{tab:ceiling-all} gives every panel both ways where the data admit it, next to what
+each paper reports about its own reproducibility.
+\src{experiments/019-simb-multimodal/results/expression_ceiling_all.json}
+
+\input{tables/expression_ceiling_all.tex}
+
+\pfstep{Kemmeren and Sameith} No replicate correlation is reported by either paper; both
+state the design, two cultures in dye swap for Kemmeren and four profiles per mutant for
+Sameith. The 82 deletions both studies profiled are the test-retest pair: per-gene $r$
+of $0.611$ across those strains, ceiling $0.775$ by \cref{eq:ceiling}, $0.862$ by the
+decomposition, the numbers the strand has scored against throughout
+(\file{expression_ceiling_replicate.py}).
+
+\pfstep{Caudal} The paper's $0.94$ is a per-sample correlation across genes between the
+two cultures of an isolate, which the mirrored replicate table reproduces at $0.947$
+over 29 isolates; it says the profiles are the same shape, not that each gene's
+variation across isolates is reproducible. Per gene across the 29 pairs the test-retest
+$r$ averages $0.40$ (median $0.42$), a ceiling of $0.60$; the decomposition against the
+943-isolate variance gives $0.46$, with 17\,\% of genes at a negative reliability, so the
+two estimators disagree more here than on Kemmeren, and the 29 pairs are the reason:
+a per-gene correlation over 29 points has a standard error near $0.18$, and the noise
+variance of a gene from 29 differences is no better determined. The isolate panel's
+ceiling is therefore $0.5$ to $0.6$, known to about $\pm 0.1$.
+
+\pfstep{Messner} One proteome per strain, so no replicate pair exists; the panel reports
+CVs of $8.1\,\%$ technical, $11.3\,\%$ across the 388 wild-type replicates and
+$16.2\,\%$ across knockouts. The decomposition takes the single-measurement noise to be
+the wild-type replicate variance per protein, carried on the log2 scale in the converted
+records, against the variance of the log2 ratio across the 4,476 deletions: mean
+reliability $0.50$, ceiling $0.70$, and the paper's own CVs give the same answer,
+$\sqrt{1 - (0.113 / 0.162)^2} = 0.72$. The 146 ORFs present as strains of different
+origin are a harsher test, since they differ in origin and not only in culture: per
+protein $r$ of $0.20$, ceiling $0.40$. The proteome's ceiling lies between $0.40$ and
+$0.70$, the first a lower bound that includes strain-of-origin differences and the second
+the bound a true replicate would set if knockout noise equals wild-type noise.
+
+\pfstep{Zelezniak} Two to seven cultures per kinase deletion with a per-strain standard
+error stored; the target is the replicate mean, whose noise variance is $\mathrm{se}^2$,
+and the decomposition gives a ceiling of $0.92$ over 726 proteins. That the two proteomes
+agree at $0.08$ per deletion (\cref{sec:readouts-proteome}) while each is reproducible
+within itself says the disagreement is between the studies, not within either.
+
+\pfstep{Nadal-Ribelles} The paper validates against Kemmeren by the count of
+differentially expressed genes per genotype and reports no genotype-level replicate
+correlation. Same-genotype pseudobulk profiles measured in different batches correlate at
+a median $0.043$ against $0.022$ for different genotypes (\file{nadal_replication_coverage.py}),
+a ceiling of $0.21$ against a null of $0.15$; the panel does not reproduce its own
+genotype signal above chance, which is why it is not a target.
+
+\pfstep{What the ceilings say about the campaign} The incumbent's $0.1965 \pm 0.0222$ on
+Kemmeren is a quarter of that panel's ceiling. The proteome's ceiling is lower and less
+certain, $0.40$ to $0.70$, and its linear floor on the same partitions is $0.06$ to
+$0.09$ (\cref{sec:baselines}), so a proteome score has less room above the linear model
+than an expression score does; the v14 round (\cref{sec:next}) reads against both bounds.
+The isolate panel sits at a ceiling of $0.5$ to $0.6$ with 943 strains and a
+perturbation set of thousands of variants per isolate, a different task from a single
+deletion.
 
 \subsection{The head is not load-bearing\secstatus{todo}}
 \label{sec:findings-head}

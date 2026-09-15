@@ -174,10 +174,13 @@ def main() -> None:
             "index": first,
             "n_experiments_in_record": len(recs),
             "measurement_type": ph["measurement_type"],
+            # The vector spans the protein union; NaN marks a protein this strain did
+            # not quantify, so the range is over the finite entries.
             "n_proteins": int(len(vals)),
-            "log2_ratio_min": float(vals.min()),
-            "log2_ratio_median": float(np.median(vals)),
-            "log2_ratio_max": float(vals.max()),
+            "n_measured": int(np.isfinite(vals).sum()),
+            "log2_ratio_min": float(np.nanmin(vals)),
+            "log2_ratio_median": float(np.nanmedian(vals)),
+            "log2_ratio_max": float(np.nanmax(vals)),
             "reference_all_zero": bool(np.all(ref_vals == 0.0)),
         },
     }

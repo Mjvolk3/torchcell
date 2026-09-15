@@ -60,6 +60,36 @@
       },
       "mean_spearman": 0.08733325481064103,
       "sd_spearman": 0.018997089222228213
+    },
+    {
+      "arm": "crps_sigma_fixed_0.40",
+      "seeds_present": [
+        2700,
+        2701,
+        2702
+      ],
+      "spearman_by_seed": {
+        "2700": 0.10320778806005879,
+        "2701": 0.00021778723802227148,
+        "2702": 0.020570394010578506
+      },
+      "pearson_by_seed": {
+        "2700": 0.3162093162536621,
+        "2701": 0.09275463968515396,
+        "2702": 0.09365662932395935
+      },
+      "select_epoch_by_seed": {
+        "2700": 73,
+        "2701": 75,
+        "2702": 112
+      },
+      "prediction_sd_ratio_by_seed": {
+        "2700": 0.4037874639034271,
+        "2701": 0.21948012709617615,
+        "2702": 0.19453825056552887
+      },
+      "mean_spearman": 0.041331989769553185,
+      "sd_spearman": 0.05454372522275204
     }
   ],
   "contrasts": [
@@ -75,6 +105,19 @@
       "mean_difference": -0.027839241236967436,
       "sd_difference": 0.027761814329779522,
       "seeds_agreeing_in_sign": 3
+    },
+    {
+      "arm": "crps_sigma_fixed_0.40",
+      "against": "crps_learned_sigma",
+      "n_pairs": 3,
+      "difference_by_seed": {
+        "2700": 0.02383011418857575,
+        "2701": -0.13486654938109835,
+        "2702": -0.11048508364164325
+      },
+      "mean_difference": -0.07384050627805529,
+      "sd_difference": 0.08545920982933068,
+      "seeds_agreeing_in_sign": 2
     }
   ],
   "note": "Paired by seed. At three seeds the minimum detectable paired difference on this endpoint is about 0.03, so a mean difference below that is a direction rather than a result, and all three agreeing in sign is p = 0.25 under the null."

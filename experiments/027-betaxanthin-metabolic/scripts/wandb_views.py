@@ -411,7 +411,9 @@ def line_panels(metrics: list[str], groupby: str | None) -> list[Any]:
         panels.append(
             wr.LinePlot(
                 title=metric,
-                x="Step",
+                # Every row train_bx logs carries `epoch`, and the user reads curves by
+                # epoch, never by W&B's step counter.
+                x="epoch",
                 y=[metric],
                 groupby=groupby,
                 groupby_aggfunc="mean" if groupby else None,

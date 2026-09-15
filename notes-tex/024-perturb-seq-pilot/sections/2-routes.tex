@@ -4,27 +4,30 @@
 %%         sections/5-application.tex (Sec. 5.5, the core meeting). No new
 %%         numbers; each is cross-referenced to the section that derives it.
 
-\section{The Two Bench Routes\secstatus{todo}}
+\section{The Three Bench Routes\secstatus{todo}}
 \label{sec:routes}
 
-Both routes end in the same object, a table of cells by genes with a
+All three routes end in the same object, a table of cells by genes with a
 perturbation label on each cell. They differ in how a cell keeps its identity
 while its RNA is being converted to a sequencing library, and that difference
-decides who does the work.
+decides who does the work. Two of them are the familiar pair, plate barcoding
+and droplet isolation. The third composes them, and it is the one this program
+is aiming at.
 
 %% SOURCE: notes/assets/drawio/perturb-seq-workflow.drawio.svg, exported by
 %% `make figures`. Panel numbering and content are unchanged from Fig. 5 of
 %% 024-perturb-seq-costing.
 \tcfigfit[1.0]{figures/perturb-seq-workflow.pdf}{%
   \textbf{The whole experiment, from library to count matrix, and the one stage
-  where the two routes differ.} Read left to right. Two symbols recur in panel
+  where the three routes differ.} Read left to right. Two symbols recur in panel
   (b): \textbf{H} is the PCR handle, attached at one end only during barcoding,
   and \textbf{CB} is the cell barcode. The color key is repeated at the foot of
   the figure.
-  \textbf{(a)} The stages. Every wet-lab step is common to both method families
-  except the shaded block, where the droplet route isolates single cells in an
-  emulsion and the plate route keeps them intact while barcoding them
-  combinatorially across wells. Fragmentation is drawn as its own stage for two
+  \textbf{(a)} The stages. Every wet-lab step is common to all three routes
+  except the shaded block, where split-pool barcodes cells across three rounds of
+  plates, unmodified droplet gives each cell its own bead, and preindexing does
+  one plate round first and then a droplet, so several cells can share a droplet
+  and still be told apart. Fragmentation is drawn as its own stage for two
   reasons: its position relative to ribosomal RNA depletion decides how much
   that depletion is worth, roughly \$99{,}000 at genome scale, and it determines
   what a count means.
@@ -64,14 +67,50 @@ the protocol handles up to 96 samples and, at a full plate, roughly 480{,}000
 cells. The reagents are cheap and the labor is not: about a week of skilled
 bench work per run, against a channel the core runs.
 
-\notesec{The plate's real advantage is the well index} Round one is a plate of
-wells, and its index is read out of every cell whether or not it has been given
-a meaning. Growing 96 conditions in a deep-well plate and barcoding them into
-the same run therefore costs no barcode space at all
-(\cref{fig:pilots}b). A droplet channel has no equivalent, so each condition
-buys its own channel. That single property is what makes the plate route the
-one to use when the experiment is about growth media, and it is why the
-\org{P.\ kudriavzevii} run should not be a single condition.
+\notesec{Preindexed droplet, which is one plate round and then a droplet}
+\label{sec:preindexed}
+The third route composes the other two, and it is the one worth aiming at.
+Permeabilized cells are barcoded once on a 384-well plate, where a well-specific
+primer reverse transcribes inside the still-intact cell and writes round one into
+the complementary DNA. The cells are then pooled and deliberately overloaded into
+a single droplet channel, where a bead writes round
+two~\citep{datlingerUltrahighthroughputSinglecellRNA2021}. Neither round
+identifies a cell on its own, and that is the entire trick: a droplet may hold
+several cells, because the plate already told them apart.
+
+What that removes is the constraint that makes droplet screening expensive. An
+ordinary channel runs at low occupancy so that two cells rarely share a droplet,
+which leaves most droplets empty and most of the reagent unused. Datlinger et
+al.\ loaded 100-fold over the recommendation, filled 95.5\% of droplets at an
+average of 9.6 nuclei each, and recovered \textbf{151{,}788} transcriptomes from
+one channel, which is 7.6 times the 20{,}000 the core quotes. Since reagent is
+sold per channel, a genome-scale screen falls from 137 channels and \$364{,}000
+to 18 channels and \$109{,}000. Depleted split-pool is still cheaper at
+\$57{,}500, but a factor of 1.9 is small enough to be decided by things the
+dollar column does not hold, and all of them favor this route: the core runs the
+droplet platform as a service and owns its quality control, the 384-well plate
+labels growth conditions for nothing, and an accurate cell count matters far less
+when the channel is saturated on purpose.
+
+\textbf{The catch is that it has never been run in any microbe.} Every
+demonstration is human or mouse. It also inherits the plate route's sample
+preparation rather than the droplet route's: writing a barcode inside a cell
+needs reagents to reach the transcriptome in situ, which in yeast means fixation
+and wall digestion rather than the in-droplet zymolyase above.
+\textbf{Hypothesis (untested):} the two halves compose, since in-cell reverse
+transcription on fixed yeast and droplet capture of yeast are each established
+separately.
+
+\notesec{A first barcode round on a plate is what makes growth media cheap}
+Wherever round one is a plate of wells, its index is read out of every cell
+whether or not it has been given a meaning. Growing conditions in a deep-well
+plate and barcoding them into the same run therefore costs no barcode space at
+all (\cref{fig:pilots}b), and this is the property the two plate-first routes
+share: split-pool carries 96 such labels and preindexing carries 384. Only the
+unmodified droplet route lacks them, so there each condition buys its own
+channel. That is what makes a plate-first route the one to use when the
+experiment is about growth media, and it is why the \org{P.\ kudriavzevii} run
+should not be a single condition.
 
 \notesec{The guide readout, which is the whole \org{S.\ cerevisiae} question}
 \label{sec:guide}

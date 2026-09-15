@@ -86,6 +86,21 @@ sample preparation rather than in the platform, and the next attempt varies the
 digestion rather than the sequencing. Nothing else in the plan depends on it,
 which is why it is worth running now.
 
+\notesec{Why neither first run is preindexed, and what would change that} Both
+runs above are plain droplet channels, which is deliberate rather than an
+oversight about \cref{sec:preindexed}. Preindexing buys cells per channel, so it
+pays at genome scale and returns nothing on a single channel of 20{,}000 cells;
+it also has no microbial precedent, so putting it in the first run would risk the
+measurement on an unproven chemistry.
+
+What the first runs can do is test its prerequisite, cheaply. Preindexing needs a
+barcode written inside a fixed, wall-digested cell, which is the same in-cell
+reverse transcription the split-pool route needs, so a fixed-and-digested arm
+beside the live-cell channel answers whether yeast tolerates it at all. The part
+that stays untested either way is whether such a cell survives the pressures of a
+microfluidic chip, and that is one channel to run once in-cell reverse
+transcription is known to work.
+
 \notesec{If both work} The two tracks converge on one question, which is whether
 to spend the next budget on more perturbations per cell or on more growth media.
 The arithmetic favors media, and the model that would consume the data needs

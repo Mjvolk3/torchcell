@@ -120,3 +120,34 @@ the fitness chain (whose three controls are lambda 1e-3), the 21-job sweep, and 
 three random-graph seeds; 32 jobs, all on bfjt-delta-gpu. The gradient probe is in the
 worktree they read at start. What remains is readout code over the finished runs and
 their checkpoints, not more training.
+
+## 2026.09.14 - The first two heads of both chains OOM'd; the KL arms were at 96 percent of the card
+
+22034665 (ctrl_013 seed 1) and 22055147 (lambda 0 seed 1) each staged in about 830 s and
+then FAILED at their first training batch with `torch.OutOfMemoryError` in a
+transformer layer's softmax: 43.08 GiB in use on a 44.42 GiB A40, 1.46 GiB requested
+(the fp32 [9, 6608, 6608] attention of one layer). W&B system metrics for the run that
+succeeded on the same code path, 22030924 (b3n4ax4a), show GPU memory at 94.8 to 96.5
+percent for the whole run, so every KL arm has been training within about 0.3 GiB of the
+card, and what tips it is not code but the few hundred MB of CUDA context and NCCL
+buffers that vary from node to node. The two failures are on gpub nodes other than
+22030924's gpub051.
+
+The bulk is a design leftover: `need_attention_for_graph_reg = graph_reg_lambda > 0`
+made every KL arm take the manual attention path in ALL eight layers, saving scores,
+probabilities and dropout mask (about 5 GB per layer) for backward, while the KL reads
+layer 1 only and `compute_graph_regularization_loss` skips the other seven. Fixed in the
+model: the manual path is taken only at layers named by a regularized head
+(`regularized_layers`, {1} for every 025 KL arm); the other layers use the fused SDPA
+kernel, which is what the mask arms already use in their unmasked layers. `graph_reg_loss`
+is unchanged in value (it only ever read layer 1); layers 0 and 2 to 7 change kernel,
+which moves their arithmetic at bf16 rounding and consumes dropout RNG differently, so a
+run at the same seed is not bit-identical to a run under the old path. The trainer now
+logs `train/cuda_peak_allocated_gb` and `train/cuda_peak_reserved_gb` at every epoch end
+and prints them, so the margin is a number in every log from here on.
+
+Consequence for comparability: 22030924 (fit_014 seed 1) is the only complete run on the
+old all-layers path; every other job in the three chains starts under the new path. It is
+resubmitted at the end of the fitness chain so the fitness experiment is read from one
+code path; the old run stays on W&B as a check that the kernel change does not move the
+number.

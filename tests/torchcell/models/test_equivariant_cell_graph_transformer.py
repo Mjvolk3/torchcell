@@ -282,3 +282,40 @@ def test_perturbation_head_cls_perturbed_changes_interaction_input() -> None:
 
     with pytest.raises(ValueError, match="needs perturb_cls"):
         _make_model(heads, seed=3, perturbation_head_cls="perturbed")
+
+
+def _kl_config(layer_spec: Any) -> dict[str, Any]:
+    return {
+        "graph_reg_lambda": 1e-3,
+        "graph_reg_layer": 1,
+        "row_sampling_rate": 1.0,
+        "regularized_heads": {
+            "physical": {"layer": layer_spec, "head": 0, "lambda": 1e-3}
+        },
+    }
+
+
+def test_kl_arm_materializes_attention_only_in_regularized_layers() -> None:
+    """The KL penalty reads one layer, so only that layer takes the manual path.
+
+    The other layers run the fused kernel; a KL arm no longer keeps eight
+    [1, heads, N+1, N+1] matrices for backward (the 2026-09-14 Delta OOM).
+    """
+    model = _make_model(
+        None, graph_regularization_config=_kl_config(1), graph_reg_lambda=1.0
+    )
+    assert model.regularized_layers == {1}
+    model.train()
+    _, reps = model(_make_cell_graph(), _make_batch())
+    assert reps["graph_reg_loss"].requires_grad
+    assert float(reps["graph_reg_loss"]) > 0.0
+    assert reps.get("attention_weights") is None or len(reps["attention_weights"]) == 0
+
+    both = _make_model(
+        None, graph_regularization_config=_kl_config([0, 1]), graph_reg_lambda=1.0
+    )
+    assert both.regularized_layers == {0, 1}
+    off = _make_model(
+        None, graph_regularization_config=_kl_config(1), graph_reg_lambda=0.0
+    )
+    assert off.regularized_layers == set()

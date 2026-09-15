@@ -1544,6 +1544,18 @@ class RegressionTask(L.LightningModule):
 
     def on_train_epoch_end(self) -> None:
         """Log metrics, plot samples, step the scheduler, and clear CUDA cache."""
+        # Peak GPU memory of the epoch, so the margin to the card is a logged number
+        # rather than something read off an OOM traceback after the fact.
+        if torch.cuda.is_available():
+            peak_gb = torch.cuda.max_memory_allocated() / 2**30
+            reserved_gb = torch.cuda.max_memory_reserved() / 2**30
+            print(
+                f"epoch {self.current_epoch} rank {self.global_rank}: peak allocated "
+                f"{peak_gb:.2f} GiB, peak reserved {reserved_gb:.2f} GiB"
+            )
+            self.log("train/cuda_peak_allocated_gb", peak_gb, sync_dist=True)
+            self.log("train/cuda_peak_reserved_gb", reserved_gb, sync_dist=True)
+            torch.cuda.reset_peak_memory_stats()
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
         for name, value in computed_metrics.items():

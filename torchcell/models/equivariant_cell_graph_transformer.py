@@ -2088,6 +2088,20 @@ class CellGraphTransformer(nn.Module):
             self.adjacency_matrices = None
             self.regularized_head_config = None
             self.row_sampling_rate = 1.0
+        # The layers whose attention the KL penalty reads. Only these need the manual
+        # [1, heads, N+1, N+1] attention path during training; every other layer runs the
+        # fused kernel, as the mask arms already do. Before this, a KL arm materialized
+        # and saved the 9 x 6608^2 matrix in ALL eight layers (about 5 GB each with the
+        # scores, probabilities and dropout mask kept for backward), which put the
+        # 025 runs at 95 to 96 percent of an A40's memory and OOM'd two Delta jobs
+        # (22034665, 22055147) at their first training batch on 2026-09-14.
+        self.regularized_layers: set[int] = set()
+        if self.regularized_head_config:
+            for head_cfg in self.regularized_head_config.values():
+                spec = head_cfg["layer"]
+                self.regularized_layers.update(
+                    [spec] if isinstance(spec, int) else list(spec)
+                )
 
         # Transformer encoder layers
         self.transformer_layers = nn.ModuleList(
@@ -2794,7 +2808,9 @@ class CellGraphTransformer(nn.Module):
             # CRITICAL FIX: Only compute attention when actually needed
             # - During training: need for graph_reg_loss (if graph_reg_lambda > 0)
             # - During validation with return_attention=True: need for diagnostics
-            need_attention_for_graph_reg = self.graph_reg_lambda > 0.0
+            need_attention_for_graph_reg = (
+                self.graph_reg_lambda > 0.0 and layer_idx in self.regularized_layers
+            )
             should_return_attention = need_attention_for_graph_reg or return_attention
 
             layer_mask = (

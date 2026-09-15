@@ -14,7 +14,7 @@ name a metric that older runs lack without producing an empty chart.
 
 Usage, from the worktree root::
 
-    python experiments/027-betaxanthin-metabolic/scripts/wandb_views.py --contrast all
+    python experiments/027-betaxanthin-metabolic/scripts/wandb_views.py --contrast all   # views only; add --report for reports
     python experiments/027-betaxanthin-metabolic/scripts/wandb_views.py --contrast kdraw
     python experiments/027-betaxanthin-metabolic/scripts/wandb_views.py --name "my view" \
         --tags gh_wave8_samp --groupby flux_draws --metrics val_pearson,latent_sigma_p50
@@ -563,7 +563,15 @@ def main() -> None:
     )
     parser.add_argument("--scalars", default=None, help="Comma-separated bar metrics.")
     parser.add_argument("--description", default=None)
-    parser.add_argument("--no-report", action="store_true")
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help=(
+            "Also build (or update) the paired report. Off by default since 2026-09-14: "
+            "the saved workspace view, the project page with the filters, grouping and "
+            "panels applied, is what gets reviewed; a report is opt-in."
+        ),
+    )
     parser.add_argument("--no-workspace", action="store_true")
     parser.add_argument(
         "--per-row",
@@ -614,10 +622,12 @@ def main() -> None:
             entry["workspace_url"] = build_workspace(
                 spec, curves, scalars, prior.get("workspace_url")
             )
-        if not args.no_report:
+        if args.report:
             entry["report_url"] = build_report(
                 spec, curves, scalars, prior.get("report_url")
             )
+        elif prior.get("report_url"):
+            entry["report_url"] = prior["report_url"]
         entry["panels_per_row"] = PANELS_PER_ROW
         record[spec.key] = entry
         print(

@@ -81,3 +81,16 @@ sbatch -J 025-kl-fit0.1 experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm 
 Runs log offline; sync from the login node with
 `experiments/019-simb-multimodal/scripts/igb_login_wandb_sync.sh` and read progress from
 W&B on GilaHyper, never from the IGB logs.
+
+## 2026.09.15 - Fitness seed 2 on cabbi
+
+`cgt_s0_r_kl_fit_014 +seed=2` (joint interaction + fitness on the random split, weight
+1.0) submitted 00:05 as cabbi 2400109 from a fourth login-node worktree
+`~/projects/torchcell.worktrees/025-fitness-joint-head-d` at 0f476a6c, the first IGB
+run carrying the layer-restricted attention path, the gradient probe and the peak-memory
+log. compute-3-3 (8 x RTX 6000) had five GPUs free after the flanks run 2395008 finished
+its 100 epochs (COMPLETED, 1 d 12 h 28 m). Delta holds the same arm as 22034667 (chain
+head, waiting on Priority); whichever finishes first is seed 2, the other a fourth
+replicate. The only complete run of this arm so far is Delta 22030924 (seed 1, W&B
+b3n4ax4a): validation Pearson 0.4523 at epoch 18, a max over 30 epochs, against 0.447
+to 0.462 for 010's interaction-only checkpoints.

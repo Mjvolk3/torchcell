@@ -17,3 +17,8 @@ created: 1789365911262
 - [x] Random-graph seeds submitted on Delta behind the sweep: 22056267 to 22056269 (`delta_submit_sweep.sh random`, after 22055169). Everything the figure trains on is now queued, 32 jobs ([[experiments.025-solid-growth.scripts.delta_cgt]])
 - [ ] Panel readouts from checkpoints: divergence at lambda 0 and at the mask (a), off-graph edge recovery (d), attention on Costanzo digenic edges (e)
 - [x] Both chain heads (22034665 ctrl s1, 22055147 lambda 0 s1) OOM'd at their first batch: the KL arms ran at 95 to 96 percent of the A40 (W&B system metrics of b3n4ax4a) because every layer materialized the full attention matrix while only layer 1 is regularized. Model fixed to take the manual path only in regularized layers (13.5 GiB peak at 64 records per GPU, measured on GilaHyper, against 41 GiB before); peak memory now logged per epoch. Delta worktree at 14c02243; resubmitted 22080055 (ctrl s1), 22080056 (fit_014 s1 rerun, one code path for the fitness experiment), 22080057 (lambda 0 s1). 33 jobs queued ([[experiments.025-solid-growth.scripts.delta_cgt]])
+
+## 2026.09.15
+
+- [x] Fitness seed 2 (`fit_014`) on cabbi as 2400109 from worktree `-d` at 0f476a6c, five GPUs free there after the flanks run 2395008 completed its 100 epochs ([[experiments.025-solid-growth.scripts.igb_mmli_cgt]])
+- [ ] Sync the flanks run (2395008, 100 epochs) and rerun the disjoint readout

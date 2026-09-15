@@ -1,0 +1,98 @@
+%% notes-tex/024-perturb-seq-pilot/sections/4-open.tex
+%% SOURCE: hand-authored synthesis. The environment arithmetic is
+%%         experiments/024-perturb-seq-costing/scripts/scaling_analysis.py
+%%         (Sec. 7.3 of the costing review) and pilot_options.py (Fig. 1b); the
+%%         delivery facts are Sec. 7.1 of the same review. No new numbers.
+
+\section{The Two Decisions That Were Open\secstatus{todo}}
+\label{sec:open}
+
+\subsection{Growth Media, or the Readout First\secstatus{todo}}
+\label{sec:media}
+
+Both, and the split falls along the two hosts rather than along a preference.
+
+Growth media are the cheap axis. Cell demand grows in proportion to the number
+of conditions, where covering named pairs of genes grows with the square of the
+panel, and any route whose first barcode is a plate of wells labels conditions
+for nothing (\cref{fig:pilots}b). A model that proposes strain designs also
+needs both halves of its input to vary, and a dataset that varies only genotype
+in one medium constrains only the genotype half.
+
+What media cannot do is multiply an assay that does not exist yet. Running four
+conditions through a readout whose guide detection is unmeasured produces four
+copies of the same unanswered question, at four times the price. So the ordering
+is not a judgment about which is more interesting.
+
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=2pt]
+  \item \textbf{\org{S.\ cerevisiae} spends its first run on the readout}, in
+    one condition, because the library exists and $q$ is the gate
+    (\cref{sec:guide}). Media come second, and by then the plate route is the
+    way to buy them.
+  \item \textbf{\org{P.\ kudriavzevii} spends its first run on media}, because it
+    has no library to gate on. A single unperturbed condition under-uses a
+    channel that has already been paid for, and the honest way to thicken that
+    run is more conditions rather than genetics that do not exist yet.
+\end{itemize}
+
+On the plate route eight media ride in one protocol run for \$4{,}990 plus the
+one-time plate purchase, against \$12{,}550 for four media as four droplet
+channels (\cref{tab:pilots}). That comparison is the argument for the plate, and
+it only applies once the plate chemistry is known to work on this cell wall,
+which nobody has shown. Running the \org{P.\ kudriavzevii} first experiment on
+droplet across a few media, rather than on the plate across many, buys the wall
+answer on a platform the core supports and leaves the plate for run two.
+
+\subsection{Plasmid Copy Number\secstatus{todo}}
+\label{sec:copy}
+
+Not early, with one exception worth building into the first run.
+
+\notesec{Copy number is not guide diversity, and conflating them is the trap} A
+cell that takes up one plasmid molecule and amplifies it to fifty copies carries
+fifty copies of \emph{one} guide. Diversity comes only from the number of
+independent uptake events at transformation. Raising average copy number by
+weakening the selection marker is well established and finely tunable in yeast,
+over ``5--100 copies per
+cell''~\citep{lianConstructionPlasmidsTunable2016}, and it does not by itself
+put two guides in a cell.
+
+\notesec{Three reasons to keep the pilot low-copy} A single-guide screen is
+interpretable precisely because one cell means one guide, and the field builds
+its libraries in ``typically, low-copy number vectors to prevent multiple guide
+plasmids in a single
+cell''~\citep{robertsonAdvancesCRISPRenabledGenomewide2025}. Multiple plasmids
+per cell are also transient: multi-vector transformants segregate over roughly a
+day of outgrowth~\citep{scanlonQuantifyingResolvingMultiple2009}, and 2$\mu$
+plasmids are retained in only about 60\% of cells even in a laboratory
+strain~\citep{haysNaturalVariantEssential2020}, so a high-copy pilot measures a
+population that is changing while it is being measured. And a cell carrying two
+guides at unknown copy number confounds the one number the first run exists to
+produce, since a guide missed in such a cell and a guide missed in a
+single-guide cell are not the same failure.
+
+\notesec{The exception, and it is a hypothesis} Guide detection depends on how
+much guide transcript is present, and copy number raises that.
+\textbf{Hypothesis (untested):} a higher-copy vector raises $q$ by putting more
+guide RNA in each cell. Nothing measures this, and it is directly testable in
+the run already planned, as a second channel carrying the same library on a
+higher-copy backbone (\cref{tab:pilots}, row two, \$8{,}576 for the pair rather
+than \$4{,}493). Worth doing if the budget allows, and worth skipping if the
+first channel returns a high $q$ on its own.
+
+\notesec{When copy number does become the right lever} Once $q$ is known and
+single-guide screening works, putting several guides in one cell is what makes
+combinations affordable, and the multi-plasmid route is the only way past the
+two-to-four guide ceiling that cloning arrays into one vector imposes. The
+missing measurement then is the per-cell distribution of distinct guides under
+tuned delivery, which the literature does not report for yeast. That is the
+second pilot, not the first.
+
+\begin{keybox}
+\textbf{Keep the first library low-copy, and treat high copy as a detection
+experiment rather than a multiplexing one.} Copy number buys guide transcript
+per cell, not guides per cell, so it cannot deliver combinations and it can
+confound the measurement of $q$. The one version worth running now is a second
+channel of the same library on a higher-copy backbone, purely to see whether $q$
+rises with it.
+\end{keybox}

@@ -1,0 +1,103 @@
+%% notes-tex/024-perturb-seq-pilot/sections/5-checkpoints.tex
+%% SOURCE: hand-authored synthesis. Sequencing prices and cell counts are from
+%%         experiments/024-perturb-seq-costing/scripts/pilot_options.py and
+%%         uiuc_core_data.py; the counting and core-service facts are Sec. 5.5 of
+%%         the costing review; the three checks are Sec. 3 of this document.
+
+\section{Running It\secstatus{todo}}
+\label{sec:checkpoints}
+
+\subsection{What Each Run Must Return\secstatus{todo}}
+\label{sec:returns}
+
+A run is finished when it has produced these, and not when it has produced data.
+
+\notesec{\org{S.\ cerevisiae}, one 5$'$ channel on the existing CRISPRi library}
+\begin{enumerate}[leftmargin=1.6em,itemsep=2pt,topsep=2pt]
+  \item $q$, the fraction of quality-controlled cells carrying exactly one
+    identified guide. This is the number the run exists for.
+  \item The targeted gene's own transcript in the cells carrying its guide,
+    against cells carrying other guides. Interference should reduce it, and this
+    is the positive control whose absence went unnoticed in \cref{sec:nadal}.
+  \item Messenger RNA molecules and genes per cell, and the fraction of reads
+    that are ribosomal.
+  \item Guide representation: how many of the library's guides appear at all, and
+    how unevenly.
+\end{enumerate}
+
+\notesec{\org{P.\ kudriavzevii}, one channel, several media, no library}
+\begin{enumerate}[leftmargin=1.6em,itemsep=2pt,topsep=2pt]
+  \item Whether the wall yields, read as cells recovered against cells loaded.
+  \item Messenger RNA molecules and genes per cell.
+  \item Ribosomal fraction, which is the largest single lever on the cost of
+    every later experiment and is a proportion, so it is answerable at any
+    sequencing depth.
+  \item Whether the media separate, which is both a biological result and the
+    evidence that condition labels survive the protocol.
+\end{enumerate}
+
+\subsection{Three Things to Get Right at the Bench\secstatus{todo}}
+\label{sec:counting}
+
+\notesec{Count the cells on an instrument that can see yeast}
+\org{S.\ cerevisiae} runs about 3.5 to 5\,\textmu m
+across\external{vendor sizing notes; no primary in the mirror}, at or below the
+stated floor of most brightfield counters, and 10x's own guidance is that cells
+under 10\,\textmu m ``may be difficult to distinguish from debris'' and that a
+fluorescent viability stain rather than trypan blue is ``strongly
+recommended''\external{10x CG00053}. Two instruments are validated on this
+organism by their makers, the Logos LUNA-FX7 and the ChemoMetec
+NC-203\external{Logos and ChemoMetec application notes}. The Bio-Rad TC20
+specifies a 6\,\textmu m floor\external{Bio-Rad TC20 brochure}, which excludes
+yeast. The count sets the droplet loading rate and therefore the doublet rate,
+and the core named it as the single most critical step.
+
+\notesec{Replicate one genotype across two independent wells} Not a second
+channel and not a technical resequencing. Two wells, or two cartridges, with
+wild-type cells in each, so that a profile can be compared against itself with a
+reference from its own batch. This is the check that would have caught the
+published screen, it costs a handful of wells, and without it a null result
+later cannot be told from a broken assay.
+
+\notesec{Sequence twice, shallow then deep} A MiSeq run confirms the chemistry
+worked, and the questions it answers are proportions, so they need almost no
+depth. A NovaSeq X 10B split lane then buys 600 million read pairs for \$1{,}160,
+which is less than the MiSeq run costs and 24 times the reads. There is no
+earlier checkpoint than sequencing something: complementary DNA traces and
+library concentration do not predict whether barcoding
+worked~\citep{brettnerUltraHighthroughputMassively2024}.
+
+\subsection{What Happens Next, Under Each Outcome\secstatus{todo}}
+\label{sec:next}
+
+\notesec{If $q$ is high in \org{S.\ cerevisiae}} The library needs no rebuilding.
+Run a focused single-guide pilot on a metabolic sub-library at 100 cells per
+gene, and add growth media to it through the plate route, where they are close
+to free.
+
+\notesec{If $q$ is near zero} The 5$'$ scaffold primer does not engage a
+polymerase III transcript. Build the polyadenylated guide barcode and validate
+it on about ten arrayed strains with known knockdown phenotypes against bulk RNA
+sequencing of the same strains. Ground truth is only available while the design
+is arrayed, since a pool cannot say what was in a given cell.
+
+\notesec{If the \org{P.\ kudriavzevii} wall does not yield} The failure is in
+sample preparation rather than in the platform, and the next attempt varies the
+digestion rather than the sequencing. Nothing else in the plan depends on it,
+which is why it is worth running now.
+
+\notesec{If both work} The two tracks converge on one question, which is whether
+to spend the next budget on more perturbations per cell or on more growth media.
+The arithmetic favors media, and the model that would consume the data needs
+both, so the first crossed design is a small metabolic panel across a handful of
+conditions rather than a genome-scale screen in one.
+
+\begin{keybox}
+\textbf{Two runs, two people, about \$8{,}300, and every later decision depends
+on what they return.} The \org{S.\ cerevisiae} channel decides whether a
+construction project stands between us and a screen. The
+\org{P.\ kudriavzevii} channel decides whether the assay works on that organism
+at all. Build the three quality checks of \cref{sec:nadal} into both, because
+the published screen they come from is the design this plan would otherwise have
+copied.
+\end{keybox}

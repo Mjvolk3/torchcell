@@ -250,6 +250,10 @@ def _parse_title(tex_path: str) -> tuple[str, str | None, list[tuple[str, str]]]
     raw = re.sub(r"\\cb\{[^}]*\}", "", raw)
     raw = re.sub(r"\\vspace\{[^}]*\}", "", raw)
     raw = re.sub(r"\{\\large\s*", "", raw)
+    # Font commands are unwrapped rather than deleted, since a title may set an
+    # organism name in italic and the braces are stripped below: without this,
+    # `\textit{S. cerevisiae}` reaches Zotero as `\textitS. cerevisiae`.
+    raw = re.sub(r"\\(?:textit|textbf|emph|org|gene)\s*\{", "{", raw)
     raw = raw.replace("\\\\", "\x00").replace("}", "").replace("{", "")
     # Collapse whitespace PER LINE. Doing it across the whole string eats the
     # title/subtitle break and silently yields one run-on title.

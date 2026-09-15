@@ -1,0 +1,70 @@
+%% notes-tex/024-perturb-seq-pilot/024-perturb-seq-pilot.tex
+%% [[experiments.024-perturb-seq-costing.pilot-plan]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/024-perturb-seq-pilot/024-perturb-seq-pilot.tex
+%%
+%% The bench plan that falls out of notes-tex/024-perturb-seq-costing. That
+%% document prices a genome-scale screen and ranks what is unknown; this one
+%% names the two runs to start, one per host, and answers the two questions the
+%% costing does not: whether to buy environments or a readout first, and whether
+%% to raise plasmid copy number early.
+%%
+%% Written for the people who will run it. Every number is cross-referenced to
+%% the section or script that derives it, and nothing new is asserted here.
+%%
+%% Build:  make            -> 024-perturb-seq-pilot.pdf       (draft view)
+%%         make clean-view -> 024-perturb-seq-pilot-clean.pdf (share view)
+%%         make check      -> formatting / provenance / citation gate
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+
+\title{\vspace{-1.5em}First Perturb-seq Experiments in Two Yeasts\\
+  {\large A bench plan for \textit{S. cerevisiae} and \textit{P. kudriavzevii}}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Two first runs are ready to start, one per host, and they do not depend on each
+other. In \org{S.\ cerevisiae} the guide library already exists, so the open
+question is whether perturbation identity can be read out of a cell at all, and
+one droplet channel answers it for \$4{,}493. In \org{P.\ kudriavzevii} no
+pooled library is reachable yet, so the first run carries no guides and instead
+measures whether the assay works on that cell wall, which is worth doing across
+several growth media rather than one. Both are sized against a published
+genome-scale yeast screen whose data, on reanalysis, does not reproduce itself,
+and the three checks that would have caught that are built into the designs
+here.
+\end{abstract}
+
+\vspace{0.5em}
+{\small\color{tcgray}
+\textbf{How to read this.} \Cref{sec:plan} is the plan and the costs.
+\Cref{sec:routes} is what the bench actually does on each of the two routes.
+\Cref{sec:nadal} is the published screen and what went wrong with it, which is
+where the quality checks in \cref{sec:checkpoints} come from. \Cref{sec:open}
+answers the two decisions that were open: media against readout, and plasmid
+copy number.\par\smallskip
+
+Costing and method review: \file{notes-tex/024-perturb-seq-costing/}\par
+Generating scripts: \file{experiments/024-perturb-seq-costing/scripts/pilot\_options.py}\par
+References: Zotero \file{torchcell/microbe-perturb-seq} (group $\cup$ personal)\par}
+
+\vspace{1em}
+\tccontents
+
+\input{sections/1-plan}
+\input{sections/2-routes}
+\input{sections/3-nadal}
+\input{sections/4-open}
+\input{sections/5-checkpoints}
+
+\clearpage
+\small
+\bibliography{references}
+
+\end{document}

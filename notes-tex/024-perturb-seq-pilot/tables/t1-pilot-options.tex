@@ -1,0 +1,17 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/024-perturb-seq-costing/scripts/pilot_options.py
+\begin{table}[htbp]\centering
+\footnotesize
+\caption[]{\textbf{The candidate first runs, priced end to end.} Usable cells are those expected to survive quality control, 55\% of a droplet channel's 20{,}000 and 25\% of a protocol run's 480{,}000. Recurring cost is reagents plus sequencing at the cheapest configuration the Carver Center sells that holds the reads, which at this scale is never the flow cell a genome-scale screen would use. The one-time column is the split-pool barcode plate set, which covers about 215 protocol runs. The route is the plate one for the eight-media row and 10x droplet for every other.}\label{tab:pilots}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{40mm}>{\raggedright\arraybackslash}p{23mm}rrr>{\raggedright\arraybackslash}p{44mm}@{}}
+\toprule
+run & host & usable cells & recurring & one-time & returns \\
+\midrule
+Guide capture, 1 channel & \org{S. cerevisiae} & 11,000 & \$4,493 & -- & q, the per-cell guide detection rate \\
+Guide capture, low vs high copy & \org{S. cerevisiae} & 22,000 & \$8,576 & -- & q on two vector backbones \\
+Unperturbed profile, 1 medium & \org{P. kudriavzevii} & 11,000 & \$3,810 & -- & wall digestion, UMIs per cell, rRNA fraction \\
+Unperturbed profile, 4 media & \org{P. kudriavzevii} & 44,000 & \$12,550 & -- & the same three, plus a 4-condition response atlas \\
+Plate route, 8 media in one run & \org{P. kudriavzevii} & 20,000 & \$4,990 & \$10,000 & the same three, across 8 media, plus the plate chemistry \\
+\bottomrule
+\end{tabular}
+\end{table}

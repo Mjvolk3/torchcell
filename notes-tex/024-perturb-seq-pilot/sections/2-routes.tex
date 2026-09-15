@@ -1,0 +1,93 @@
+%% notes-tex/024-perturb-seq-pilot/sections/2-routes.tex
+%% SOURCE: hand-authored synthesis of notes-tex/024-perturb-seq-costing/
+%%         sections/3-method-explainers.tex (Secs. 3.1, 3.2, 3.7) and
+%%         sections/5-application.tex (Sec. 5.5, the core meeting). No new
+%%         numbers; each is cross-referenced to the section that derives it.
+
+\section{The Two Bench Routes\secstatus{todo}}
+\label{sec:routes}
+
+Both routes end in the same object, a table of cells by genes with a
+perturbation label on each cell. They differ in how a cell keeps its identity
+while its RNA is being converted to a sequencing library, and that difference
+decides who does the work.
+
+%% SOURCE: notes/assets/drawio/perturb-seq-workflow.drawio.svg, exported by
+%% `make figures`. Panel numbering and content are unchanged from Fig. 5 of
+%% 024-perturb-seq-costing.
+\tcfigfit[1.0]{figures/perturb-seq-workflow.pdf}{%
+  \textbf{The whole experiment, from library to count matrix, with the step each
+  route replaces marked.} The pooled library is transformed once and grown
+  under the chosen condition; from there the droplet route isolates single cells
+  in an emulsion and the plate route keeps them intact while barcoding them
+  combinatorially across wells. Everything downstream of library preparation is
+  shared, including the sequencer and the alignment. Redrawn from Fig. 5 of the
+  costing review; source
+  \file{notes/assets/drawio/perturb-seq-workflow.drawio.svg}.}{fig:workflow}
+
+\notesec{Droplet, which the core runs as a service} A microfluidic chip
+co-encapsulates one cell with one barcoded bead, and every molecule released
+inside that droplet picks up the bead's barcode. The Carver Center owns the
+instrument, the GEM-X 5$'$ kit and the quality control, so our bench work
+ends when fixed cells are delivered. Yeast needs one modification, roughly
+a microlitre of zymolyase in the reaction to digest the cell
+wall~\citep{jarianiNewProtocolSinglecell2020}, and the core has said it accepts
+that. A channel recovers about 20{,}000 cells and costs \$2{,}650 for the first
+library and \$2{,}240 for each of the next six.
+
+\notesec{Plate, which we would run ourselves} Cells are fixed and permeabilized,
+then distributed across a 96-well plate where each well appends a different
+barcode; the wells are pooled, re-split and barcoded again, twice more. A cell's
+identity is the sequence of wells it visited, so no instrument ever has to
+isolate it~\citep{brettnerUltraHighthroughputMassively2024}. One pass through
+the protocol handles up to 96 samples and, at a full plate, roughly 480{,}000
+cells. The reagents are cheap and the labor is not: about a week of skilled
+bench work per run, against a channel the core runs.
+
+\notesec{The plate's real advantage is the well index} Round one is a plate of
+wells, and its index is read out of every cell whether or not it has been given
+a meaning. Growing 96 conditions in a deep-well plate and barcoding them into
+the same run therefore costs no barcode space at all
+(\cref{fig:pilots}b). A droplet channel has no equivalent, so each condition
+buys its own channel. That single property is what makes the plate route the
+one to use when the experiment is about growth media, and it is why the
+\org{P.\ kudriavzevii} run should not be a single condition.
+
+\notesec{The guide readout, which is the whole \org{S.\ cerevisiae} question}
+\label{sec:guide}
+Guide RNAs are transcribed by RNA polymerase III, so they are neither capped nor
+polyadenylated, and an assay that captures messenger RNA by its poly(A) tail
+sees nothing. That is why our library is read today by amplifying the plasmid
+rather than the RNA. The 5$'$ kit may not have the problem: it captures the
+guide with a primer against the guide's own scaffold, carried in the
+reverse-transcription mix, and 10x state the requirement as an architectural one,
+that guides be ``engineered for use with standard Cas9 systems with a
+protospacer on the 5$'$ end''\external{10x CG000735}. A conventional polymerase
+III cassette, including ours, has exactly that architecture.
+
+\textbf{Hypothesis (untested):} the scaffold primer reverse transcribes a yeast
+polymerase III guide, and perturbation identity is therefore readable from an
+unmodified library. Two things have to hold and neither is established. The
+primer set is proprietary and validated against the standard \gene{SpCas9}
+scaffold, and 10x say plainly that ``alternate sgRNA structures \dots\ have not
+been tested''\external{10x CG000735}, so our scaffold has to match theirs. And
+the poly-dT half of that primer mix contributes nothing to a guide with no tail,
+so capture rests entirely on the scaffold primer. If it fails, the fallback is a
+polyadenylated guide barcode transcribed by polymerase II, which is a
+construction project of several months.
+
+The guide library is sequenced far more shallowly than the transcriptome, 5{,}000
+read pairs per cell against 20{,}000, and 10x warn against sequencing it
+alone\external{10x CG000735}, so it is pooled with the expression library rather
+than submitted separately. It is in the price in \cref{tab:pilots}.
+
+\begin{keybox}
+\textbf{One channel, one existing library, and the answer is a number.} The
+\org{S.\ cerevisiae} run is worth starting before anything else because it is
+the cheapest way to find out whether the whole program needs a new construct.
+If $q$ comes back near the 0.71 a published yeast screen reports, single-guide
+screening works today and multiplexing is merely expensive. If it comes back
+near zero, the 5$'$ scaffold primer does not engage a polymerase III transcript
+and a polyadenylated guide barcode has to be built before any screen is
+designed.
+\end{keybox}

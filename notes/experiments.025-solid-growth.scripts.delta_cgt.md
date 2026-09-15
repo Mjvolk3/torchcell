@@ -151,3 +151,11 @@ old all-layers path; every other job in the three chains starts under the new pa
 resubmitted at the end of the fitness chain so the fitness experiment is read from one
 code path; the old run stays on W&B as a check that the kernel change does not move the
 number.
+
+Resubmitted 21:50 CDT from 14c02243, after the Delta worktree was fast-forwarded so
+every pending job starts under the fix: 22080055 ctrl_013 seed 1 (after the fitness
+chain's 22034673), 22080056 fit_014 seed 1 rerun (after it), 22080057 lambda 0 seed 1
+(after the random-graph 22056269). 33 jobs queued. Measured on one RTX 6000 Ada at 64
+records per GPU, the KL control now peaks at 13.5 GiB allocated, 14.8 GiB reserved,
+against 41 GiB on the old path; the probe printed point 6.19, dist 0.15, graph penalty
+1.01 at epoch 0 there.

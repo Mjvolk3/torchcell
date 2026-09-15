@@ -20,5 +20,5 @@ created: 1789365911262
 
 ## 2026.09.15
 
-- [x] Fitness seed 2 (`fit_014`) on cabbi as 2400109 from worktree `-d` at 0f476a6c, five GPUs free there after the flanks run 2395008 completed its 100 epochs ([[experiments.025-solid-growth.scripts.igb_mmli_cgt]])
+- [x] cabbi: `fit_014` seed 2 (2400109) started, then cancelled in favor of the closure composite: 2400200 = `cgt_s3_r_kl_fit_030` seed 1, joint fitness + interaction on S3 (1,121,645 records: all singles, the 739,222 doubles inside some triple, the triples; 694 synthetic-lethal doubles; no essentiality in the build), evaluated on the pinned trigenic splits. About 36 h expected ([[experiments.025-solid-growth.scripts.igb_mmli_cgt]])
 - [ ] Sync the flanks run (2395008, 100 epochs) and rerun the disjoint readout

@@ -94,3 +94,14 @@ head, waiting on Priority); whichever finishes first is seed 2, the other a four
 replicate. The only complete run of this arm so far is Delta 22030924 (seed 1, W&B
 b3n4ax4a): validation Pearson 0.4523 at epoch 18, a max over 30 epochs, against 0.447
 to 0.462 for 010's interaction-only checkpoints.
+
+### Replaced by the closure composite, 00:20
+
+2400109 cancelled at 25 min (Delta already holds `fit_014` seed 2 as 22034667) and
+cabbi 2400200 submitted in its place: `cgt_s3_r_kl_fit_030 +seed=1`, the joint objective
+on S3, the closure composite of the 376,732 triples: every single (5,691), every double
+whose gene pair lies inside some triple (739,222 doubles, dmf + dmi, 694 of them carrying
+a SynthLethDB record) and the triples (tmf + tmi); 1,121,645 records, of which 1,046,299
+train and the pinned 37,673 + 37,673 triples are validation and test. No essentiality:
+the build holds none. First run of the `unpinned_to_train` path on a GPU. Expected about
+36 h on this node by scaling from the S0 rate, unmeasured.

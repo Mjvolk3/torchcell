@@ -356,15 +356,29 @@ screen's own disagreement is therefore much larger than culture-to-culture varia
 re-screen, which is consistent with plate or position effects in a one-shot screen, though
 the release carries nothing that separates those from strain-level error.
 
-Ordering the three by headroom puts betaxanthin first, the amino acids second and isobutanol
-last, which reverses the ranking the research plan used when it called isobutanol the
-best-conditioned target.
+\textbf{Essentiality is bounded differently, and its bound is high.} The fourth endpoint the
+module now trains on is gene essentiality, whose label comes from the yeast split released
+with Merzbacher 2025, the same file the published comparator numbers were computed on. A
+binary label has no correlation ceiling, so the analogous bound is how far two independently
+curated sources agree: a predictor that reproduced one perfectly would score that agreement
+against the other. Over the split's 1{,}121 genes, the Saccharomyces Genome Database
+essential-gene list disagrees with the split on 13, eleven that the database calls essential
+and the split does not, and two the other way, for an agreement of \textbf{98.8 percent
+against a majority rate of 86.0 percent}. Nearly 13 points of headroom separate a constant
+predictor from the label's own limit, which is far more room than any of the three
+metabolite targets offers. The database list carries no negative class, so absence from it
+counts as nonessential only for genes the split names.
+
+Ordering the three metabolite targets by headroom puts betaxanthin first, the amino acids
+second and isobutanol last, which reverses the ranking the research plan used when it called
+isobutanol the best-conditioned target.
 
 The table is built by \texttt{target\_reliability\_table.py} into the result file
 \texttt{target\_reliability.json}. The isobutanol repeats are measured by
 \texttt{isobutanol\_retest\_reliability.py}, and the amino-acid repeats by the script named
-in the paragraph above. Every result file sits in the experiment's \texttt{results}
-directory.
+in the paragraph above. The essentiality comparison is
+\texttt{essentiality\_label\_agreement.py}. Every result file sits in the experiment's
+\texttt{results} directory.
 
 \subsection{Betaxanthin parity, and the criterion that has never been met\secstatus{todo}}
 

@@ -189,14 +189,10 @@ FIGURES = [
              ("e", "panel_readout_sign.svg")],
         ],
     ),
-    (
-        "ffa-epistasis-fig4-network-overlay",
-        "The interactions drawn on the pathway they act through.",
-        [
-            [(None, "panel_network_overlay.svg")],
-        ],
-    ),
 ]
+# Fig. 4, the network overlay, is not in this list: ffa_network_overlay_drawio.py writes
+# ffa-epistasis-fig4-network-overlay.drawio as NATIVE shapes and edges rather than an
+# embedded picture, so it can be rearranged node by node.
 
 
 def main():

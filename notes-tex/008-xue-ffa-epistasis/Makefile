@@ -39,14 +39,20 @@ PLOT_SRCS := $(foreach slug,$(PLOT_SLUGS),$(REPO)/notes/assets/images/$(slug))
 DRAWIO_SRC := $(REPO)/notes/assets/drawio
 
 ifeq ($(shell uname -s),Darwin)
-  DRAWIO        ?= /Applications/draw.io.app/Contents/MacOS/draw.io
-  DRAWIO_EXPORT  = "$(DRAWIO)" -x -f pdf --crop -o
+  DRAWIO ?= /Applications/draw.io.app/Contents/MacOS/draw.io
+  drawio_export = "$(DRAWIO)" -x -f pdf --crop -o "$(2)" "$(1)"
 else
-  DRAWIO        ?= /tmp/drawio.AppImage
-  DRAWIO_EXPORT  = APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a $(DRAWIO) --no-sandbox --disable-gpu -x -f pdf --crop -o
+  # Linux: the AppImage is extracted once into DRAWIO_ROOT and its inner binary is called
+  # with the INPUT PATH FIRST. drawio-desktop 24.7 rejects an input placed after the
+  # Electron flags ("input file/directory not found"), and APPIMAGE_EXTRACT_AND_RUN prints
+  # the extraction listing without running the export.
+  DRAWIO_APPIMAGE ?= /tmp/drawio.AppImage
+  DRAWIO_ROOT     ?= /tmp/drawio-squashfs
+  DRAWIO           = $(DRAWIO_ROOT)/squashfs-root/drawio
+  drawio_export = xvfb-run -a "$(DRAWIO)" "$(1)" --no-sandbox --disable-gpu -x -f pdf --crop -o "$(2)"
 endif
 
-.PHONY: all plots figures clean
+.PHONY: all plots figures drawio-bin clean
 
 all: $(DOC).pdf
 
@@ -76,12 +82,17 @@ plots: $(SHARED)
 # Re-export any draw.io source this document references as figures/NAME.pdf. Use this once
 # a figure's arrangement is settled in draw.io and its \panelrow block has been replaced by
 # a single \tcfig on the exported PDF.
-figures:
+drawio-bin:
+ifneq ($(shell uname -s),Darwin)
+	@test -x "$(DRAWIO)" || (mkdir -p "$(DRAWIO_ROOT)" && cd "$(DRAWIO_ROOT)" && "$(DRAWIO_APPIMAGE)" --appimage-extract >/dev/null)
+endif
+
+figures: drawio-bin
 	@for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(DEPS) 2>/dev/null | sort -u); do \
 	  n=$$(basename $$f .pdf); \
 	  for ext in drawio.svg drawio.png drawio; do \
 	    s="$(DRAWIO_SRC)/$$n.$$ext"; \
-	    if [ -f "$$s" ]; then echo "  $$s -> $$f"; $(DRAWIO_EXPORT) "$$f" "$$s"; break; fi; \
+	    if [ -f "$$s" ]; then echo "  $$s -> $$f"; $(call drawio_export,$$s,$$f) >/dev/null; break; fi; \
 	  done; \
 	done
 

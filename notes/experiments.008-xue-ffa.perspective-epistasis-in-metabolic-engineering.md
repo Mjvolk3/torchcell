@@ -124,3 +124,16 @@ rewritten to match.
 The other three figures were checked page by page at this pass and match the standard
 (palette, 6 pt Arial, boxed axes, standard widths). Still open: authorship, citations, and
 headless draw.io export.
+
+## 2026.09.15 - Fig. 4 is a native draw.io figure
+
+`experiments/008-xue-ffa/scripts/ffa_network_overlay_drawio.py`
+([[experiments.008-xue-ffa.scripts.ffa_network_overlay_drawio]]) writes
+`ffa-epistasis-fig4-network-overlay.drawio` as native shapes and connectors from the same
+layout as the matplotlib panel, and the document now includes the draw.io export
+(`make figures`) rather than the panel PDF. Export measured 176.4 x 112.2 mm, inside the
+179.4 x 170 mm cap. The builder script no longer writes Fig. 4.
+
+Headless draw.io export works on this machine after all: the AppImage has to be extracted
+and the input path placed before the Electron flags. The Makefile's `figures` rule does
+both, which closes the export item above.

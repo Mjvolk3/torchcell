@@ -232,9 +232,12 @@ def rounded_box(ax, x, y, w, h, fill, z):
         facecolor=fill, edgecolor="black", linewidth=0.5, zorder=z))
 
 
-def draw(model, readout, graph, out_stem):
-    apply_paper_style()
+def layout(model, readout, graph):
+    """Everything the drawing needs: nodes, edges, and positions in millimetres.
 
+    Shared by the matplotlib panel and the draw.io generator so the two renderings place
+    every node at the same spot.
+    """
     triples = significant_triples(model, readout, graph)
     pos_mult, neg_mult = pair_multiplicity(triples)
     n_pos = sum(1 for _, s in triples if s > 0)
@@ -299,6 +302,25 @@ def draw(model, readout, graph, out_stem):
                                                     COMPARTMENT_ORDER[comp_of[m]]))
     for m, y in zip(species_sorted, spread(len(species_sorted))):
         pos[m] = (X_SPECIES, y)
+
+    return {
+        "pos": pos, "triples": triples, "pos_mult": pos_mult, "neg_mult": neg_mult,
+        "n_pos": n_pos, "n_neg": n_neg, "G": G, "core_sorted": core_sorted,
+        "rxns": rxns, "intermediates": intermediates, "species_sorted": species_sorted,
+        "gene_std": gene_std, "tf_sys": tf_sys, "reg": reg, "name_of": name_of,
+        "label_of": label_of,
+    }
+
+
+def draw(model, readout, graph, out_stem):
+    apply_paper_style()
+    L = layout(model, readout, graph)
+    pos, pos_mult, neg_mult = L["pos"], L["pos_mult"], L["neg_mult"]
+    n_pos, n_neg, G, core_sorted = L["n_pos"], L["n_neg"], L["G"], L["core_sorted"]
+    rxns, intermediates, species_sorted = L["rxns"], L["intermediates"], L["species_sorted"]
+    gene_std, tf_sys, reg, name_of, label_of = (L["gene_std"], L["tf_sys"], L["reg"],
+                                                L["name_of"], L["label_of"])
+    species = species_sorted
 
     # --- canvas ------------------------------------------------------------------------
     fig = plt.figure(figsize=(mm_to_in(W_MM), mm_to_in(H_MM)))

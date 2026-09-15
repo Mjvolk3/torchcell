@@ -85,7 +85,12 @@ segregant genotype:
 # `perturbation` is in the served graph and adding properties to it would force a full
 # rebuild; a new class is additive. Without it the effector, spacer and pool of every
 # CRISPRi/CRISPRa/CRISPRd record are reachable only by parsing serialized_data.
+# is_a: a class BioCypher cannot find in Biolink (3.2.1 is its pinned head ontology)
+# needs an is_a to a Biolink class or the ontology build raises before the first node
+# is written (rehearsal job 1956, 2026-09-14); a guide + effector plasmid is a nucleic
+# acid entity there.
 crispr construct:
+    is_a: nucleic acid entity
     represented_as: node
     properties:
         effector: str

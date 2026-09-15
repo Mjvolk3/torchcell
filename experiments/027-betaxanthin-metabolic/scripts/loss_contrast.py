@@ -50,6 +50,8 @@ REFERENCE = "crps_learned_sigma"
 
 
 class ArmResult(BaseModel):
+    """One loss arm's per-seed scores on the pinned test split."""
+
     model_config = ConfigDict(extra="forbid")
     arm: str
     seeds_present: list[int]
@@ -64,6 +66,8 @@ class ArmResult(BaseModel):
 
 
 class PairedContrast(BaseModel):
+    """One arm against the reference arm, differenced within each seed."""
+
     model_config = ConfigDict(extra="forbid")
     arm: str
     against: str
@@ -75,6 +79,8 @@ class PairedContrast(BaseModel):
 
 
 class LossContrastReport(BaseModel):
+    """Every loss arm and every paired contrast on one endpoint."""
+
     model_config = ConfigDict(extra="forbid")
     endpoint: str = "betaxanthin pinned-test Spearman, context-precursor readout"
     arms: list[ArmResult]
@@ -127,7 +133,9 @@ def main() -> None:
         if arm.arm == REFERENCE:
             continue
         shared = sorted(set(arm.spearman_by_seed) & set(reference.spearman_by_seed))
-        diffs = {s: arm.spearman_by_seed[s] - reference.spearman_by_seed[s] for s in shared}
+        diffs = {
+            s: arm.spearman_by_seed[s] - reference.spearman_by_seed[s] for s in shared
+        }
         values = np.array(list(diffs.values()), dtype=float)
         sign = int(max((values > 0).sum(), (values < 0).sum())) if values.size else 0
         contrasts.append(
@@ -156,7 +164,9 @@ def main() -> None:
         json.dump(report.model_dump(), fh, indent=2)
     for arm in report.arms:
         per = " ".join(f"{s}:{v:+.4f}" for s, v in arm.spearman_by_seed.items())
-        print(f"{arm.arm:24s} mean {arm.mean_spearman:+.4f} sd {arm.sd_spearman:.4f} | {per}")
+        print(
+            f"{arm.arm:24s} mean {arm.mean_spearman:+.4f} sd {arm.sd_spearman:.4f} | {per}"
+        )
     for c in report.contrasts:
         per = " ".join(f"{s}:{v:+.4f}" for s, v in c.difference_by_seed.items())
         print(

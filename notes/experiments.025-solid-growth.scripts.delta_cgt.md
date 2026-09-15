@@ -159,3 +159,21 @@ chain's 22034673), 22080056 fit_014 seed 1 rerun (after it), 22080057 lambda 0 s
 records per GPU, the KL control now peaks at 13.5 GiB allocated, 14.8 GiB reserved,
 against 41 GiB on the old path; the probe printed point 6.19, dist 0.15, graph penalty
 1.01 at epoch 0 there.
+
+### Re-chained into six parallel chains, 22:40 CDT
+
+One chain per seed instead of one chain per experiment, changed in place with
+`scontrol update Dependency` so no job lost its queue age. Sequential chains would
+have taken the 21-job sweep about two weeks at one node at a time; with a chain per
+seed Delta can run up to six of these at once, and the stagger that motivated the single
+chain (filelock contention on Taiga) no longer applies because each job stages its own
+LMDB and holds its own locks on node-local disk.
+
+| chain | order |
+|---|---|
+| fitness s1 | 22034666 fit_015 -> 22080055 ctrl -> 22080056 fit_014 rerun |
+| fitness s2 | 22034667 fit_014 -> 22034668 ctrl -> 22034669 fit_015 |
+| fitness s3 | 22034670 fit_014 -> 22034671 ctrl -> 22034673 fit_015 |
+| sweep s1 | 22055149 mask -> 22055151 1e-2 -> 22055152 1e-1 -> 22055153 1e-4 -> 22055154 1e-5 -> 22055155 1 -> 22056267 random -> 22080057 lambda 0 |
+| sweep s2 | 22055156 lambda 0 -> 22055157 mask -> 22055158 -> 22055159 -> 22055160 -> 22055161 -> 22055162 -> 22056268 random |
+| sweep s3 | 22055163 lambda 0 -> 22055164 mask -> 22055165 -> 22055166 -> 22055167 -> 22055168 -> 22055169 -> 22056269 random |

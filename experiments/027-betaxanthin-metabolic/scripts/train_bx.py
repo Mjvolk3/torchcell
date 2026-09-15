@@ -5541,11 +5541,15 @@ def _score_test(
             HEAD: (cell.bx_readout, BX_READOUT_FLUX_SCALAR),
             ISOBUTANOL_HEAD: (cell.ib_readout, IB_READOUT_FLUX_SCALAR),
             AUX_HEAD: (cell.aa_readout, AA_READOUT_TURNOVER),
+            # The essentiality head has exactly one readout, the biomass column on a flux arm
+            # and the scalar head otherwise, and no flag varies it. It contributes no suffix,
+            # and the arm name already separates the two cells that run it.
+            ESSENTIALITY_HEAD: None,
         }[head_name]
         parts = [cell.arm]
         if head_name != HEAD:
             parts.append(head_name)
-        if readout[0] != readout[1]:
+        if readout is not None and readout[0] != readout[1]:
             parts.append(readout[0])
         stem = "_".join([*parts, f"s{cell.seed}"])
         path = osp.join(TEST_PRED_DIR, f"{stem}.json")

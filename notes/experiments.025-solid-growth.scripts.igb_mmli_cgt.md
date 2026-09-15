@@ -105,3 +105,16 @@ a SynthLethDB record) and the triples (tmf + tmi); 1,121,645 records, of which 1
 train and the pinned 37,673 + 37,673 triples are validation and test. No essentiality:
 the build holds none. First run of the `unpinned_to_train` path on a GPU. Expected about
 36 h on this node by scaling from the S0 rate, unmeasured.
+
+### 01:47: restarted for the per-order metrics, and lost the GPUs to a 019 array
+
+2400200 was not hung: its first batch took about an hour of cold reads (the closure's
+1,046,299 records are spread over the 554 GB LMDB, `num_workers=0`, so every record is
+a serial random read until the page cache holds them), then ran at about 25 s per batch,
+which is a 7 h first epoch; later epochs should be cache-warm and far faster. Cancelled
+at 1 h 10 m so the run carries the per-order metrics from the start, and resubmitted as
+2401111 from worktree `-d` advanced to 6bee6bde. The four freed GPUs were taken within a
+minute by a 019 wave-5 array (2400350, one GPU each) queued at 00:39 from another
+session, so 2401111 is pending on Resources behind vkp5's three tasks and the four 019
+tasks; it starts when four GPUs free. Check `squeue -p cabbi` before cancelling a job
+that holds GPUs another queue wants.

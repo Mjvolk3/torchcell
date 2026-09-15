@@ -22,3 +22,4 @@ created: 1789365911262
 
 - [x] cabbi: `fit_014` seed 2 (2400109) started, then cancelled in favor of the closure composite: 2400200 = `cgt_s3_r_kl_fit_030` seed 1, joint fitness + interaction on S3 (1,121,645 records: all singles, the 739,222 doubles inside some triple, the triples; 694 synthetic-lethal doubles; no essentiality in the build), evaluated on the pinned trigenic splits. About 36 h expected ([[experiments.025-solid-growth.scripts.igb_mmli_cgt]])
 - [ ] Sync the flanks run (2395008, 100 epochs) and rerun the disjoint readout
+- [x] Per-order metrics (`per_order_metrics`) landed and the closure arm restarted to carry them: 2401111, pending on cabbi behind a 019 wave-5 array that took the freed GPUs; 2400200 had reached batch 14 at 25 s/batch (cold reads) ([[experiments.025-solid-growth.scripts.igb_mmli_cgt]])

@@ -23,6 +23,13 @@ The arm must have been trained with a stochastic head for the draws to mean anyt
 ``--stochastic`` on a deterministic arm switches on a ``log_std`` output that was never
 supervised, and the script says so in its output rather than hiding it.
 
+THE REFERENCE COLUMN (2026-09-14). Every table now carries a pFBA solution of the same GEM,
+solved here and put through the same statistics, because none of these numbers has a
+natural zero. That column also settles the naming: the reference passes the
+turnover-thresholded rule and FAILS the plain max over all rows, so only the thresholded
+rule at the primary threshold is called Genesis and the plain max is reported as the
+solver-noise diagnostic it is. See :class:`ReferenceFlux` and :data:`STRICT_DEFINITIONS`.
+
 Run from the repo root::
 
     PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
@@ -41,6 +48,7 @@ from typing import Any
 
 import numpy as np
 import torch
+from cobra.flux_analysis import pfba
 from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -73,6 +81,7 @@ from train_bx import (  # noqa: E402
 )
 
 from torchcell.datamodules import CellDataModule  # noqa: E402
+from torchcell.metabolism.yeast_GEM import YeastGEM  # noqa: E402
 
 DATA_ROOT = os.environ["DATA_ROOT"]
 
@@ -100,36 +109,48 @@ def _threshold_tag(threshold: float) -> str:
 
 STRICT_DEFINITIONS: dict[str, str] = {
     "why": (
-        "The trainer's Genesis criterion tests the MEDIAN relative balance residual over "
-        "the independent rows of S. A flux vector that is zero on most reactions passes "
-        "that test on the zeros alone: the median row of a mostly-off vector has no "
-        "production to fail to consume. The max over the same rows is the honest form of "
-        "'this vector balances', and the fraction of reactions carrying flux says whether "
-        "there was anything to balance."
+        "Three statistics of the same per-row balance residual were reported side by side "
+        "for three waves, all three called Genesis, and none of them had ever been "
+        "calibrated against a flux known to be right. Calibrating them settles which one "
+        "is the rule: a real pFBA solution on this GEM reads 1e-7 under the "
+        "turnover-thresholded statistic and FAILS the plain max at ~0.1, so the plain max "
+        "cannot be a feasibility criterion, and the median passes trivially on a mostly-zero "
+        "flux because the median row of an off vector has no production to fail to consume. "
+        "The reference row is recomputed from the GEM by this script and reported beside "
+        "every table, so no number here is quoted without a scale."
+    ),
+    "reference": (
+        "a pFBA solution of the unperturbed GEM, put through the SAME statistics as the "
+        "audited fluxes. Recomputed here with cobra rather than transcribed, and reported "
+        "as a fixed column beside every group: it is the value each statistic takes on a "
+        "flux that is known to be feasible and known to be sparse."
     ),
     "balance_max_ratio": (
-        "max over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon), "
-        "the same ratio the trainer takes the median of. Computed by "
-        "train_bx._per_sample_feasibility, which every wave-6 cell already recorded the "
-        "distribution of; only the CRITERION built on it is new."
+        "max over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon). "
+        "SOLVER-NOISE DIAGNOSTIC, not a feasibility rule, and no longer called Genesis: a "
+        "row whose turnover sits at the balance_epsilon floor has a denominator of 1e-6 and "
+        "a numerator of solver residue, so the statistic is decided by idle metabolites. "
+        "The reference pFBA flux fails it. Kept because a sudden move in it still says "
+        "something about the solve."
     ),
     "flux_active_frac": (
-        "fraction of the 4,131 reactions with |v| > 1e-6 * flux_scale = 1e-4 mmol/gDW/h."
+        "fraction of the 4,131 reactions with |v| > 1e-6 * flux_scale = 1e-4 mmol/gDW/h. "
+        "Read against the reference column, not against zero."
     ),
-    "genesis_median_rule": (
-        "the trainer's criterion: balance_median_ratio <= 1e-2 AND no active reaction "
-        "running uphill at standard state."
+    "median_rule": (
+        "the trainer's original criterion: balance_median_ratio <= 1e-2 AND no active "
+        "reaction running uphill at standard state. DIAGNOSTIC, not Genesis: a flux that is "
+        "zero on most reactions passes the balance half on the zeros alone."
     ),
-    "genesis_max_rule": (
-        "the same criterion with balance_max_ratio <= 1e-2 in place of the median, so "
-        "EVERY independent row must balance, not the typical one."
+    "solver_noise_max_rule": (
+        "the same criterion with balance_max_ratio <= 1e-2 in place of the median. "
+        "DIAGNOSTIC, not Genesis, for the reason under balance_max_ratio: the reference "
+        "pFBA flux does not pass it."
     ),
     "balance_active_max_ratio_<t>": (
         "max of the same ratio over the independent rows whose turnover omega_i exceeds "
-        "t * flux_scale. The plain max is decided by rows at the balance_epsilon floor, "
-        "where two tiny same-sign fluxes give a ratio of exactly 2, so it fails every head "
-        "for a reason unrelated to the flux the model carries; restricting to rows that "
-        "turn over is the rule that separates the heads."
+        "t * flux_scale. Restricting to rows that turn over is what makes the statistic a "
+        "statement about the flux the model carries rather than about its zeros."
     ),
     "balance_active_p95_ratio_<t>": (
         "the 95th percentile of the same ratio over the same rows, which is the max with "
@@ -141,9 +162,18 @@ STRICT_DEFINITIONS: dict[str, str] = {
         "three rows is not a statement about the flux vector, so the count is reported "
         "beside every thresholded ratio."
     ),
-    "genesis_active_rule": (
-        "the Genesis criterion with balance_active_max_ratio at the primary threshold "
-        "(1e-3 * flux_scale) <= 1e-2 in place of the median or the plain max."
+    "genesis_turnover_rule_1e-03": (
+        "THE Genesis rule, and the only criterion this script calls Genesis: "
+        "balance_active_max_ratio at the primary turnover threshold (1e-3 * flux_scale) "
+        "<= 1e-2 AND no active reaction running uphill. The other thresholds and the p95 "
+        "are reported beside it as sensitivity under turnover_rule_<stat>_<t>, never as "
+        "the criterion."
+    ),
+    "renamed_2026_09_14": (
+        "genesis_median_rule_* became median_rule_*, genesis_max_rule_* became "
+        "solver_noise_max_rule_*, and genesis_active_max_1e-03_rule_* became "
+        "genesis_turnover_rule_1e-03_*. Audits written before this date carry the old "
+        "names and are unchanged; nothing about how a number is computed moved."
     ),
 }
 
@@ -244,12 +274,20 @@ def _nan_stats(x: np.ndarray) -> FeasibilityStats:
 
 
 def strict_criteria_flags(per: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
-    """Per-genotype feasibility under the MAX and the turnover-thresholded balance rules.
+    """Per-genotype feasibility under every balance statistic, with ONE of them named Genesis.
 
     The thermodynamic half is unchanged in every rule, so the rows differ in exactly one
     thing: which statistic of the per-row balance residual has to clear 1 percent. A NaN
     ratio (no row above the turnover threshold) compares False, so a genotype whose flux
     vector turns nothing over is never counted as balanced.
+
+    NAMING, and it is load-bearing rather than cosmetic (2026-09-14). Only
+    ``genesis_turnover_rule_1e-03_<thermo>`` is called Genesis: the reference pFBA row this
+    script now computes reads 1e-7 under that statistic and about 0.1 under the plain max,
+    so a criterion built on the plain max rejects a flux that a solver produced and a
+    textbook would accept. The plain max survives as ``solver_noise_max_rule_*`` and the
+    median as ``median_rule_*``, both diagnostics. The other thresholds and the p95 are
+    ``turnover_rule_<stat>_<t>_<thermo>`` and are sensitivity, not criteria.
     """
     out: dict[str, np.ndarray] = {}
     median = per["balance_median_ratio"]
@@ -277,17 +315,97 @@ def strict_criteria_flags(per: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         if key not in per:
             continue
         downhill = per[key] <= 0.0
-        out[f"genesis_median_rule_{label}"] = (
-            median <= BOTH_BALANCE_TOLERANCE
-        ) & downhill
-        out[f"genesis_max_rule_{label}"] = (
+        out[f"median_rule_{label}"] = (median <= BOTH_BALANCE_TOLERANCE) & downhill
+        out[f"solver_noise_max_rule_{label}"] = (
             maximum <= BOTH_BALANCE_TOLERANCE
         ) & downhill
+        primary = f"max_{_threshold_tag(PRIMARY_TURNOVER_THRESHOLD)}"
         for name, values in active.items():
-            out[f"genesis_active_{name}_rule_{label}"] = (
+            passes = (
                 np.nan_to_num(values, nan=np.inf) <= BOTH_BALANCE_TOLERANCE
             ) & downhill
+            if name == primary:
+                out[
+                    f"genesis_turnover_rule_"
+                    f"{_threshold_tag(PRIMARY_TURNOVER_THRESHOLD)}_{label}"
+                ] = passes
+            else:
+                out[f"turnover_rule_{name}_{label}"] = passes
     return out
+
+
+class ReferenceFlux(BaseModel):
+    """A known-feasible, known-sparse flux put through the audit's own statistics.
+
+    WHY EVERY TABLE CARRIES THIS COLUMN. Every balance and density number this script
+    reports is an order statistic with no natural zero: 810 active rows and a flux-carrying
+    fraction of 0.32 read as large or small only against something. The something is a pFBA
+    solution of the same GEM, which is feasible by construction and is the sparsest flux
+    reaching maximum growth, so it is simultaneously the target for the density statistics
+    and the calibration of the balance ones.
+
+    RECOMPUTED, NOT TRANSCRIBED. cobra solves it here, from the GEM the layer was built on,
+    through the layer's own ``_s_matmul`` and ``turnover``. A reference hard-coded from a
+    note would drift silently the first time the GEM version or the statistic moved.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    source: str
+    n_reactions: int
+    biomass_reaction: str | None
+    biomass_flux: float | None
+    #: Reactions of the reference whose magnitude exceeds the layer's working flux scale,
+    #: i.e. the part of it the layer's box could not hold. Reported rather than clipped.
+    n_reactions_above_flux_scale: int
+    flux_active_frac: float
+    balance_median_ratio: float
+    balance_max_ratio: float
+    #: Keyed exactly as the group statistics are, e.g. ``balance_active_max_ratio_1e-03``.
+    balance_active: dict[str, float]
+
+
+def pfba_reference(layer: Any) -> ReferenceFlux:
+    """Solve pFBA on the audited GEM and score it with the audit's own statistics."""
+    source = YeastGEM()
+    model = source.model
+    ids = [r.id for r in model.reactions]
+    assert list(layer.rxn_ids) == ids, (
+        "the reference GEM's reaction order differs from the layer's, so the reference "
+        "flux cannot be scored on this layer's S. The audit and the reference must be "
+        "built from the same GEM."
+    )
+    solution = pfba(model)
+    scale = float(layer.config.flux_scale)
+    v = torch.tensor(
+        [float(solution.fluxes[r]) for r in layer.rxn_ids], dtype=torch.float32
+    ).unsqueeze(0)
+    residual = layer._s_matmul(v)[:, layer.independent_rows].abs()
+    omega = layer.turnover(v)[:, layer.independent_rows]
+    ratio = residual / (omega + layer.config.balance_epsilon)
+    extras = _per_sample_extras(layer, {"v": v})
+    objective = [r.id for r in model.reactions if abs(r.objective_coefficient) > 0]
+    return ReferenceFlux(
+        source=(
+            "pFBA (cobra.flux_analysis.pfba) on the unperturbed "
+            f"{osp.basename(source.model_dir)} model, the same GEM this layer was built "
+            "from, scored through the layer's own _s_matmul and turnover"
+        ),
+        n_reactions=int(v.shape[1]),
+        biomass_reaction=objective[0] if objective else None,
+        biomass_flux=(
+            float(solution.fluxes[objective[0]]) if objective else None
+        ),
+        n_reactions_above_flux_scale=int((v.abs() > scale).sum()),
+        flux_active_frac=float(extras["flux_active_frac"][0]),
+        balance_median_ratio=float(ratio.median()),
+        balance_max_ratio=float(ratio.max()),
+        balance_active={
+            key: float(value[0])
+            for key, value in extras.items()
+            if key.startswith("balance_active_")
+        },
+    )
 
 
 class StrictGroup(BaseModel):
@@ -314,6 +432,9 @@ class StrictFeasibility(BaseModel):
     n_independent_balance_rows: int
     n_reactions: int
     groups: dict[str, StrictGroup] = Field(default_factory=dict)
+    #: The fixed reference column of every table. Optional so that audits written before
+    #: 2026-09-14, which carry no reference, still parse into this model.
+    reference: ReferenceFlux | None = None
 
 
 def _strict_group(
@@ -344,6 +465,7 @@ def build_strict_block(
     test_pinned: np.ndarray,
     layer: Any,
     head_name: str,
+    reference: ReferenceFlux | None = None,
 ) -> StrictFeasibility:
     """The same four groups the trainer reports, under the median AND the max rule."""
     rank_note = "predicted betaxanthin, descending" if head_name == HEAD else None
@@ -373,6 +495,7 @@ def build_strict_block(
         n_independent_balance_rows=int(layer.independent_rows.numel()),
         n_reactions=int(layer.n_reactions),
         groups=groups,
+        reference=reference,
     )
 
 
@@ -538,8 +661,9 @@ def main() -> None:
     block = build_feasibility_block(
         trainer_keys, trainer_keys_test, pinned_mask, model.flux_layer, main_head
     )
+    reference = pfba_reference(model.flux_layer)
     strict = build_strict_block(
-        per_all, per_test, pinned_mask, model.flux_layer, main_head
+        per_all, per_test, pinned_mask, model.flux_layer, main_head, reference
     )
 
     # AGREEMENT. The trainer computed the same block inside the training process; this one
@@ -673,25 +797,45 @@ def main() -> None:
     print(f"wrote {out_path}")
     key = "all_top100" if "all_top100" in block.groups else "all"
     print(f"recomputed feasibility[{key}]: {block.groups[key].fractions}")
-    strict_group = strict.groups[key]
-    print(f"strict feasibility[{key}], n={strict_group.n}")
     primary = _threshold_tag(PRIMARY_TURNOVER_THRESHOLD)
-    for stat_name in (
-        "balance_median_ratio",
-        "balance_max_ratio",
-        f"balance_active_max_ratio_{primary}",
-        f"balance_active_p95_ratio_{primary}",
-        f"balance_active_rows_{primary}",
-        "flux_active_frac",
-    ):
-        stat = strict_group.stats[stat_name]
-        print(
-            f"  {stat_name:34s} median {stat.median:.4g} p90 {stat.p90:.4g} "
-            f"max {stat.max:.4g}"
-        )
-    for flag_name, fraction in sorted(strict_group.fractions.items()):
-        if flag_name.startswith(("genesis_", "balance_max_ratio_le_")):
-            print(f"  {flag_name:52s} {fraction:.3f}")
+    print(
+        f"reference (pFBA, biomass {reference.biomass_flux:.4f}): "
+        f"active rows {reference.balance_active[f'balance_active_rows_{primary}']:.0f}, "
+        f"flux_active_frac {reference.flux_active_frac:.4f}, "
+        f"turnover max {reference.balance_active[f'balance_active_max_ratio_{primary}']:.3g}, "
+        f"all-rows max {reference.balance_max_ratio:.3g} "
+        f"({reference.n_reactions_above_flux_scale} reactions above the flux scale)"
+    )
+    # THE REFERENCE AS A COLUMN IN EVERY TABLE, not only in the group that happens to be
+    # printed. A number with no scale beside it is how four waves were read.
+    reference_column: dict[str, float] = {
+        "balance_median_ratio": reference.balance_median_ratio,
+        "balance_max_ratio": reference.balance_max_ratio,
+        "flux_active_frac": reference.flux_active_frac,
+        **reference.balance_active,
+    }
+    for group_name, strict_group in strict.groups.items():
+        print(f"strict feasibility[{group_name}], n={strict_group.n}")
+        for stat_name in (
+            "balance_median_ratio",
+            "balance_max_ratio",
+            f"balance_active_max_ratio_{primary}",
+            f"balance_active_p95_ratio_{primary}",
+            f"balance_active_rows_{primary}",
+            "flux_active_frac",
+        ):
+            stat = strict_group.stats[stat_name]
+            ref = reference_column.get(stat_name)
+            ref_text = "  n/a" if ref is None else f"{ref:.4g}"
+            print(
+                f"  {stat_name:34s} median {stat.median:.4g} p90 {stat.p90:.4g} "
+                f"max {stat.max:.4g} | pFBA reference {ref_text}"
+            )
+        for flag_name, fraction in sorted(strict_group.fractions.items()):
+            if flag_name.startswith(
+                ("genesis_", "median_rule_", "solver_noise_", "balance_max_ratio_le_")
+            ):
+                print(f"  {flag_name:52s} {fraction:.3f}")
     if agreement["checked"]:
         print(
             f"agreement with the trainer: max |delta| {agreement['max_abs_delta']:.3e}"

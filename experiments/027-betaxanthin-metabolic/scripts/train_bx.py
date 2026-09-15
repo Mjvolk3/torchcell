@@ -148,6 +148,23 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noq
 
 HEAD = "betaxanthin"
 
+#: WAVE 9 (2026-09-14). THE ISOBUTANOL BIOSENSOR (Montano Lopez 2024), the third product
+#: target and the only one whose measured quantity is a single NAMED yeast-GEM metabolite
+#: pool. The dissertation states the ligand verbatim (mirrored `paper.md` line 425): "This
+#: biosensor works by expressing green fluorescent protein (GFP) proportionally to the
+#: amount α- isopropylmalate (α-IPM) in the cell, which is a precursor of leucine and a
+#: byproduct in the isobutanol pathway ... As more α-IPM accumulates, it binds to Leu3p,
+#: both of which activate transcription of GFP which is under control of the Leu1
+#: promoter." So the reporter reads the 2-isopropylmalate POOL, which yeast-GEM 9.0.2
+#: carries as `s_0162` [c] and `s_0164` [m], and the product isobutanol has a native
+#: secretion exchange `r_1866`: this target can be read as a pool AND as a product flux,
+#: which neither betaxanthin (a product with no pool) nor the amino acids (pools with no
+#: product) can do.
+ISOBUTANOL_HEAD = "isobutanol"
+#: The heads whose phenotype is ONE number per genotype, so the scalar scoring, dumping and
+#: reporting branches take them together. `mulleder19` is the vector head.
+SCALAR_HEADS = (HEAD, ISOBUTANOL_HEAD)
+
 #: WAVE 7 (2026-09-11). The two mechanistic amino-acid readouts, named so a result file says
 #: which one it ran rather than leaving it to be inferred from the arm.
 AA_READOUT_TURNOVER = "flux_metabolite"
@@ -179,7 +196,36 @@ LN10 = math.log(10.0)
 #: How the betaxanthin scalar is read off the layer.
 BX_READOUT_FLUX_SCALAR = "flux_scalar"
 BX_READOUT_PRECURSOR_CONCENTRATION = "flux_precursor_concentration"
-BX_READOUTS = (BX_READOUT_FLUX_SCALAR, BX_READOUT_PRECURSOR_CONCENTRATION)
+#: WAVE 9. THE BETAXANTHIN IS-THE-MODULE-ON CONTROL, the exact analogue of
+#: `context_concentration` for the precursor readout: the same five-precursor whole-cell
+#: mixture and the same affine, computed from a concentration the POOLED backbone
+#: parameterizes, with no flux layer. The established wave-8 result is that the precursor
+#: readout beats 026's scalar flux head by +0.0399 (sd 0.0123, n = 3); this arm says
+#: whether that is aromatic-precursor physics or a five-dimensional bottleneck on the
+#: genotype context.
+BX_READOUT_CONTEXT_PRECURSOR_CONCENTRATION = "context_precursor_concentration"
+BX_READOUTS = (
+    BX_READOUT_FLUX_SCALAR,
+    BX_READOUT_PRECURSOR_CONCENTRATION,
+    BX_READOUT_CONTEXT_PRECURSOR_CONCENTRATION,
+)
+
+#: How the isobutanol scalar is read. The three arms of the wave-9 three-way; `pooled` is
+#: implied by `--arm pooled`, which builds no layer and falls to the ordinary scalar head.
+IB_READOUT_FLUX_SCALAR = "flux_scalar"
+IB_READOUT_PRECURSOR_CONCENTRATION = "flux_precursor_concentration"
+IB_READOUTS = (IB_READOUT_FLUX_SCALAR, IB_READOUT_PRECURSOR_CONCENTRATION)
+#: Which anchors the isobutanol precursor readout reads. `one` is the PRIMARY arm and is
+#: literally what the biosensor binds; `three` adds the two pools upstream and downstream
+#: of it on the valine branch, and is the secondary.
+IB_ANCHORS_ONE = "one"
+IB_ANCHORS_THREE = "three"
+IB_ANCHOR_SETS = (IB_ANCHORS_ONE, IB_ANCHORS_THREE)
+
+#: Whether the dataset's growth medium is written onto the GEM's exchange bounds.
+MEDIA_NONE = "none"
+MEDIA_DATASET = "dataset"
+APPLY_MEDIA_CHOICES = (MEDIA_NONE, MEDIA_DATASET)
 
 #: Distributional losses this trainer can score a head with. 'crps' is the Gaussian CRPS
 #: every 027 cell before 2026-09-11 ran and stays the default. 'quantile' is the 019
@@ -217,6 +263,32 @@ QUERY_PATH = osp.join(
     "019-simb-multimodal/queries/fig6_pigment_transfer.cql",
 )
 
+#: WAVE 9. THE ISOBUTANOL BUILD, and it is a DIFFERENT on-disk dataset. The biosensor
+#: screen is not in `fig6_pigment_transfer`: `generate_fig6_pigment_transfer_cql.py` drops
+#: it by name. It IS in `fig6_build` (13,948 aggregated genotypes, built 2026-07-22), which
+#: is the seven-dataset union. Nothing is rebuilt; both roots are opened read-only and the
+#: dataset class skips `process()` when `processed/` exists.
+ISOBUTANOL_DATASET_ROOT = osp.join(
+    DATA_ROOT, "data/torchcell/experiments/019-simb-multimodal/fig6_build"
+)
+ISOBUTANOL_QUERY_PATH = osp.join(
+    os.environ["EXPERIMENT_ROOT"], "019-simb-multimodal/queries/fig6_build.cql"
+)
+
+
+def dataset_paths(head: str = HEAD) -> tuple[str, str]:
+    """``(root, query path)`` for the build a head's phenotype lives in.
+
+    Keyed off the HEAD rather than off a flag, because the phenotype decides which build
+    contains it and a cell that named the wrong one would train on a dataset that does not
+    carry its target at all. Every betaxanthin and amino-acid cell keeps the wave-1 to
+    wave-8 pair unchanged.
+    """
+    if head == ISOBUTANOL_HEAD:
+        return ISOBUTANOL_DATASET_ROOT, ISOBUTANOL_QUERY_PATH
+    return DATASET_ROOT, QUERY_PATH
+
+
 # The nine graphs and the protein embedding that separate the 0.43 runs from the 0.13 ones.
 # Copied from experiments/019-simb-multimodal/conf/gh_metabolism_000.yaml rather than
 # retyped, so the backbone is the one that was actually measured.
@@ -239,8 +311,13 @@ STRONG_NODE_EMBEDDINGS: tuple[str, ...] = ("prot_T5_all",)
 _NODE_EMBEDDINGS: dict[str, Any] = {}
 
 
-def build_dataset() -> "Neo4jCellDataset":
-    """Open the pigment dataset with the nine-graph, prot_T5 backbone. Never rebuilds."""
+def build_dataset(head: str = HEAD) -> "Neo4jCellDataset":
+    """Open the head's dataset with the nine-graph, prot_T5 backbone. Never rebuilds.
+
+    The default is the pigment build every wave-1 to wave-8 cell and every audit script
+    opens; ``--head isobutanol`` opens ``fig6_build`` instead (see :func:`dataset_paths`).
+    """
+    root, query_path = dataset_paths(head)
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
@@ -269,10 +346,10 @@ def build_dataset() -> "Neo4jCellDataset":
             graph=graph,
         )
     )
-    with open(QUERY_PATH) as handle:
+    with open(query_path) as handle:
         query = handle.read()
     return Neo4jCellDataset(
-        root=DATASET_ROOT,
+        root=root,
         query=query,
         gene_set=genome.gene_set,
         graphs=build_gene_multigraph(graph=graph, graph_names=STRONG_GRAPHS),
@@ -679,6 +756,39 @@ class BxCell(BaseModel):
             "of the arm it is supposed to test."
         ),
     )
+    flux_parsimony_weight: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Weight on the flux layer's parsimony term, added OUTSIDE the constraint "
+            "scale. The `weights['parsimony']` entry is inside the ramp, and this recipe "
+            "holds that ramp at 0.0, so parsimony has never actually been applied."
+        ),
+    )
+    flux_thermo_exempt_path: str | None = Field(
+        default=None,
+        description=(
+            "JSON list of reaction ids (with route, window and table sha256) that no "
+            "concentration in the window can make downhill, exempted from the second-law "
+            "tightening after construction. Written by thermo_exempt_gate.py; None is off."
+        ),
+    )
+    flux_log_c_init_path: str | None = Field(
+        default=None,
+        description=(
+            "JSON log-concentration vector under which the reference flux is sign "
+            "consistent, used to initialize log_c_base after construction. Written by "
+            "thermo_exempt_gate.py; None is off."
+        ),
+    )
+    flux_availability_fold: str = Field(
+        default="softmin",
+        description=(
+            "How gene gates fold up an AND in the GPR: 'softmin' (the shipped fold, which "
+            "reads 1 - log(n)/beta on an intact n-subunit complex) or 'normalized_softmin' "
+            "(divided by its all-ones value, so an intact complex reads exactly 1)."
+        ),
+    )
     # WAVE 8 (2026-09-12). K draws per genotype per forward pass, the simplest form of the
     # question Flux Cone Learning answers with 124 OptGPSampler samples per deletion cone.
     # All three default to what every earlier cell ran, so an older result file deserializes
@@ -718,6 +828,72 @@ class BxCell(BaseModel):
             "because the KL is the only term pushing sigma up: at an effective 1e-4 the "
             "objective shrank the median posterior sd 130x over 80 epochs on the one 027 "
             "cell that trained it."
+        ),
+    )
+    # WAVE 9 (2026-09-14). The isobutanol target, the two missing is-the-module-on controls,
+    # the held-out amino-acid columns and the medium. Every field defaults to what wave 8
+    # ran, so an earlier result file deserializes unchanged and an earlier cell is
+    # bit-identical.
+    ib_readout: str = Field(
+        default=IB_READOUT_FLUX_SCALAR,
+        description=(
+            "How the isobutanol biosensor fold change is read off a FLUX arm. "
+            "'flux_scalar' is 026's head, w^T v over all 4,131 reactions plus the log "
+            "turnover of the named precursors and of the product species whose turnover is "
+            "the r_1866 secretion flux. 'flux_precursor_concentration' reads the layer's "
+            "learned whole-cell CONCENTRATION of the anchors instead, through one weight "
+            "per anchor and an intercept; that affine is required because the target is a "
+            "GFP fold change and no unit-free map takes log10 molar to it. Ignored on "
+            "--arm pooled, which has no layer and uses the ordinary scalar head."
+        ),
+    )
+    ib_anchors: str = Field(
+        default=IB_ANCHORS_ONE,
+        description=(
+            "Which anchors the isobutanol precursor readout reads. 'one' is the PRIMARY "
+            "arm, alpha-isopropylmalate alone, which is literally what Leu3p binds; "
+            "'three' adds 2-keto-isovalerate and L-valine and is the secondary."
+        ),
+    )
+    target_log10: bool = Field(
+        default=False,
+        description=(
+            "Standardize and score the target as log10 of its STORED value, with no unit "
+            "conversion. Set by `build_cell` for --head isobutanol and only for it: the "
+            "biosensor number is a fold change, which is multiplicative, so a Gaussian "
+            "CRPS is well posed in log10 and not in linear FC. Distinct from "
+            "`target_log10_molar`, which additionally divides by 1000 to turn Mulleder's "
+            "stored mM into molar."
+        ),
+    )
+    aa_supervise_columns: list[str] | None = Field(
+        default=None,
+        description=(
+            "Which of the 19 amino-acid columns the LOSS is charged on. None supervises "
+            "all 19 and is what every wave-6 to wave-8 cell ran. A subset holds the rest "
+            "out: a physical concentration latent is ONE object linked by stoichiometry "
+            "and thermodynamics, so supervision at 13 columns should reach the other 6 "
+            "through S and the reaction energies, while a bank of independent per-metabolite "
+            "sigmoids cannot -- the rows the mixture never reads receive no gradient and "
+            "stay at their initialization (asserted in "
+            "tests/torchcell/metabolism/test_context_concentration_readout.py). The epoch "
+            "is selected on the SUPERVISED columns' validation Pearson so the held-out "
+            "columns never enter selection; the test scorer is unchanged and reports all "
+            "19 per-column, with the two groups summarized in `aa_column_split`."
+        ),
+    )
+    apply_media: str = Field(
+        default=MEDIA_NONE,
+        description=(
+            "Whether the dataset's recorded GROWTH MEDIUM is written onto the GEM's "
+            "exchange bounds before the flux layer is built. 'none' is the shipped "
+            "yeast-GEM boundary every 026 and 027 arm has run on, where all 20 amino-acid "
+            "exchanges have lower_bound 0, i.e. effectively synthetic minimal; it is the "
+            "default so every earlier cell is bit-identical. 'dataset' applies "
+            "`media_to_bounds(FBA_MEDIA[name], model).apply(model)` for the medium the "
+            "head's dataset was grown in (SM for Mulleder, YPD for Cachera, SC for Lopez), "
+            "and records the wild-type growth rate before and after in flux_meta. The "
+            "shipped bounds are RIGHT for Mulleder by accident and wrong for the other two."
         ),
     )
     flux_log_c_from_latent: bool = Field(
@@ -994,6 +1170,176 @@ BETAXANTHIN_PRECURSOR_ANCHORS: dict[str, str] = {
 }
 
 
+#: WAVE 9. THE ISOBUTANOL ANCHORS, all three native yeast-GEM 9.0.2 species, verified
+#: against the model on 2026-09-14 (ids, names and compartments read from
+#: `yeast-GEM.xml`): `s_0162` 2-isopropylmalate [c] (also [m] `s_0164`; [e] `s_0163` is
+#: dropped by `NON_CELL_COMPARTMENTS`), `s_0232` 3-methyl-2-oxobutanoate [c] -- the GEM's
+#: name for 2-keto-isovalerate -- (also [m] `s_0233`), and `s_1056` L-valine [c] (also [m]
+#: `s_1058`). As with the betaxanthin anchors, the id NAMES the chemical and
+#: `compartment_species_for` derives the rest of its compartments from the GEM at run time,
+#: so the readout cannot drift from the model the layer was built on.
+#:
+#: THE PRIMARY ARM READS alpha-isopropylmalate ALONE, because that is literally the ligand
+#: Leu3p binds; the three-anchor set is the secondary and adds the pool one step upstream
+#: (the keto acid both the leucine and the isobutanol branch draw on) and the transaminase
+#: product that competes for it.
+ISOBUTANOL_PRECURSOR_ANCHORS: dict[str, str] = {
+    "alpha_isopropylmalate": "s_0162",
+    "keto_isovalerate": "s_0232",
+    "valine": "s_1056",
+}
+ISOBUTANOL_PRIMARY_ANCHOR = "alpha_isopropylmalate"
+
+#: The yeast-GEM secretion exchange for the PRODUCT, `isobutanol [e] -->`. Unlike
+#: betaxanthin, this route needs no heterologous cassette: the full pathway exists with
+#: real ORFs on every step (ILV2/ILV6 r_0097, ILV5 r_0096, ILV3 r_0352, BAT1/BAT2
+#: r_1087/r_1088, PDC1/5/6 r_0062, ADH r_0182/r_0183/r_0184), so the flux arm has a real
+#: product column to read rather than a proxy.
+ISOBUTANOL_PRODUCT_EXCHANGE = "r_1866"
+
+#: The metabolite rows 026's `FluxScalarHead` reads the TURNOVER of on an isobutanol flux
+#: arm, the analogue of `BETAXANTHIN_PRECURSORS`. Two groups, and the difference matters:
+#: the first six are the intracellular PRECURSOR pools, and the last three are the PRODUCT.
+#: `s_0933` is isobutanol [e], and the only two reactions touching it are the transport
+#: `r_1868` and the exchange `r_1866` (measured on the GEM, 2026-09-14), so its turnover
+#: IS the secretion flux this arm is supposed to read. The head also carries a dense
+#: `w^T v` term over all 4,131 reactions, in which `r_1866` is column 1307, so the product
+#: flux is reachable twice over; naming it here is what makes the arm a hypothesis rather
+#: than an unrestricted read.
+ISOBUTANOL_PRECURSORS: list[str] = [
+    "s_0162",  # 2-isopropylmalate [c], the biosensor ligand
+    "s_0164",  # 2-isopropylmalate [m]
+    "s_0232",  # 3-methyl-2-oxobutanoate (2-keto-isovalerate) [c]
+    "s_0233",  # 3-methyl-2-oxobutanoate [m]
+    "s_1056",  # L-valine [c]
+    "s_1058",  # L-valine [m]
+    "s_0932",  # isobutanol [c]
+    "s_0934",  # isobutanol [m]
+    "s_0933",  # isobutanol [e]; its turnover is the r_1866 secretion flux
+]
+
+#: HOW THE ISOBUTANOL TARGET IS DECODED, and it is NOT by width 1. Measured on
+#: `fig6_build` (2026-09-14, over all 13,948 genotypes): `MeanExperimentDeduplicator` has
+#: already MERGED the Lopez screen into the Mulleder record wherever both were measured, so
+#: 4,244 genotypes carry ONE `metabolite_level` group of width 20 -- the 19 amino acids
+#: plus `isobutanol`, key-sorted by the graph processor -- while the width-1 groups in that
+#: build are 4,669 betaxanthin records against 189 isobutanol-only ones. A width-1
+#: isobutanol head would therefore have read betaxanthin colony color on 96 percent of the
+#: rows it matched. The head is decoded as one COLUMN of the width-20 block instead, which
+#: is identity-based: no other combination of datasets in that build produces width 20.
+ISOBUTANOL_BLOCK_KEYS: list[str] = sorted([*AA_KEYS, ISOBUTANOL_HEAD])
+ISOBUTANOL_BLOCK_WIDTH = len(ISOBUTANOL_BLOCK_KEYS)
+ISOBUTANOL_COLUMN = ISOBUTANOL_BLOCK_KEYS.index(ISOBUTANOL_HEAD)
+
+#: The dataset whose records are HELD BACK from the isobutanol loss. The 224-strain
+#: validated re-screen (n = 3) is the external direction check, and on `fig6_build` its
+#: value is not separable from the screen's: the deduplicator averaged the two into one
+#: `isobutanol` entry on every genotype where both were measured (208 of the 4,244 width-20
+#: blocks). Supervising those rows would train on a number that partly IS the external
+#: check, so every genotype deleting a gene the validated panel measured is masked out of
+#: the loss and out of the test score, and its prediction is what the check reads.
+ISOBUTANOL_HELDOUT_DATASET = "IsobutanolValidatedLopez2024Dataset"
+
+#: The medium each head's dataset was GROWN IN, as a key of
+#: `torchcell.metabolism.media.FBA_MEDIA`, used only under `--apply-media dataset`.
+#:
+#: PROVENANCE IS NOT UNIFORM ACROSS THE THREE, and a result file has to say so.
+#: * Mulleder 2016 is synthetic MINIMAL agar, and `SM_FBA` is YNB + ammonium + glucose with
+#:   no amino acids. That is what the shipped bounds already are, so this entry is the NULL
+#:   control: applying it should leave the amino-acid arm where it was.
+#: * Cachera 2023 is solid YPD + G418. `YPD_APPROX_FBA` is Suthers' defined stand-in, whose
+#:   quote is carried in `torchcell/metabolism/media.py`; peptone is not modeled by anyone.
+#: * Montano Lopez 2024 is SC liquid at 30 C. `SC_FBA` carries NO provenance and NO
+#:   concentrations: its composition is the standard Difco/Sigma formulation named in
+#:   `torchcell/datamodels/media.py` and only the uptake magnitudes are sourced (Suthers).
+#:   An SC-bounded cell is therefore running on an UNSOURCED medium and is labeled as such
+#:   in `flux_meta.media`.
+HEAD_MEDIUM: dict[str, str] = {HEAD: "YPD", AUX_HEAD: "SM", ISOBUTANOL_HEAD: "SC"}
+
+
+def isobutanol_anchors(anchor_set: str) -> dict[str, str]:
+    """``{label -> GEM species id}`` for the isobutanol precursor readout.
+
+    The one-anchor set is the PRIMARY arm and holds only alpha-isopropylmalate, which is
+    the metabolite Leu3p binds and therefore the quantity the reporter is proportional to.
+    """
+    assert anchor_set in IB_ANCHOR_SETS, (
+        f"--ib-anchors must be one of {IB_ANCHOR_SETS}, got {anchor_set!r}."
+    )
+    if anchor_set == IB_ANCHORS_ONE:
+        return {
+            ISOBUTANOL_PRIMARY_ANCHOR: ISOBUTANOL_PRECURSOR_ANCHORS[
+                ISOBUTANOL_PRIMARY_ANCHOR
+            ]
+        }
+    return dict(ISOBUTANOL_PRECURSOR_ANCHORS)
+
+
+def isobutanol_heldout_flags(dataset: Any) -> tuple[torch.Tensor, dict[str, Any]]:
+    """``([n_genes] bool, report)``: which genes the validated re-screen measured.
+
+    The panel is held back as an EXTERNAL direction check, and on ``fig6_build`` that has
+    to be done by gene rather than by value: ``MeanExperimentDeduplicator`` averaged the
+    screen and the re-screen into one ``isobutanol`` entry wherever both were measured, so
+    those records carry a label that partly IS the check. Every genotype deleting a gene
+    the panel measured is therefore masked out of the loss, the validation curve and the
+    test score, and only its PREDICTION is read.
+
+    The membership is taken from the dataset's own ``dataset_name_index``, which records
+    which source datasets each aggregated genotype came from, so no second copy of the
+    Lopez gene list is kept anywhere.
+    """
+    held_records: set[int] = set()
+    for combination, rows in dataset.dataset_name_index.items():
+        if ISOBUTANOL_HELDOUT_DATASET in str(combination).split("+"):
+            held_records.update(int(r) for r in rows)
+    assert held_records, (
+        f"no record of {ISOBUTANOL_HELDOUT_DATASET!r} in this build's dataset_name_index "
+        f"({sorted(dataset.dataset_name_index)[:3]} ...). The isobutanol head is defined "
+        "on fig6_build, which carries the validated re-screen; without it the external "
+        "direction check has no strains and the hold-out is silently a no-op."
+    )
+    fraction = len(held_records) / len(dataset)
+    assert fraction < 0.1, (
+        f"the held-back panel is {fraction:.1%} of the dataset "
+        f"({len(held_records)}/{len(dataset)}); the validated re-screen is 224 strains and "
+        "should be a small minority, so this is resolving something else."
+    )
+    node_ids = list(dataset.cell_graph["gene"].node_ids)
+    position = {name: i for i, name in enumerate(node_ids)}
+    flags = torch.zeros(len(node_ids), dtype=torch.bool)
+    held_genes: list[str] = []
+    absent: list[str] = []
+    for gene, rows in dataset.is_any_deletion_gene_index.items():
+        if not held_records.intersection(int(r) for r in rows):
+            continue
+        held_genes.append(str(gene))
+        if str(gene) in position:
+            flags[position[str(gene)]] = True
+        else:
+            absent.append(str(gene))
+    report = {
+        "dataset": ISOBUTANOL_HELDOUT_DATASET,
+        "records": len(held_records),
+        "genes": len(held_genes),
+        "genes_absent_from_cell_graph": absent,
+        "gene_nodes_flagged": int(flags.sum()),
+        "fraction_of_dataset": fraction,
+        "why": (
+            "the validated re-screen is the external direction check; on this build its "
+            "value was averaged into the screen's by MeanExperimentDeduplicator, so the "
+            "strains are held out by gene rather than by value."
+        ),
+    }
+    print(
+        f"[isobutanol-holdout] {len(held_records)} records / {len(held_genes)} genes of "
+        f"{ISOBUTANOL_HELDOUT_DATASET} masked out of the loss and the score "
+        f"({fraction:.1%} of {len(dataset)}); {len(absent)} absent from the cell graph",
+        flush=True,
+    )
+    return flags, report
+
+
 def mixture_weights(
     met_index: dict[str, int], space: str, volume_table: str = VOLUMES_ASSUMED
 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, list[tuple[str, str, float]]]]:
@@ -1067,10 +1413,34 @@ def mixture_log10_molar(
     return torch.logsumexp(per_compartment + log_w.unsqueeze(0), dim=-1) / LN10
 
 
+def scored_width(spec: dict[str, Any]) -> int:
+    """How many columns a head's target has AFTER the decode, which is what is scored.
+
+    A head that names a ``column`` reads one column of a wider decoded block, so its
+    prediction and its target are width 1 whatever the block's width.
+    """
+    return 1 if spec.get("column") is not None else int(spec["width"])
+
+
+def heldout_rows(batch: Any, flags: torch.Tensor) -> torch.Tensor:
+    """``[B]`` bool: which genotypes of this batch delete a HELD-BACK gene.
+
+    ``flags`` is one bool per gene node of the cell graph, so the membership test runs on
+    the same integer indices the model perturbs with, rather than on gene-name strings that
+    the batch does not carry. A genotype is held back if ANY of its perturbed genes is.
+    """
+    gene = batch["gene"]
+    indices = gene.perturbation_indices
+    hit = flags.to(indices.device)[indices]
+    out = torch.zeros(int(batch.num_graphs), dtype=torch.bool, device=indices.device)
+    out[gene.perturbation_indices_batch[hit]] = True
+    return out
+
+
 def targets_in_space(
     batch: Any, head_specs: dict[str, dict[str, Any]], log10_molar: bool
 ) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
-    """``extract_targets``, optionally moved into log10 MOLAR.
+    """``extract_targets``, then the per-head column slice and change of variable.
 
     Mulleder's values are stored as ``intracellular_concentration_mM``. The concentration
     readout predicts ``log10`` of a molar concentration, so its target has to live there
@@ -1082,14 +1452,53 @@ def targets_in_space(
     1 before the log, which the mask then discards. Observed entries must be strictly
     positive; a non-positive measured concentration is a data error and is asserted, not
     clipped.
+
+    TWO PER-HEAD KEYS, both absent from every head spec before wave 9, so the decode of an
+    earlier cell is untouched:
+
+    ``column``
+        take one column of the decoded block as the head's whole target. This is how the
+        isobutanol biosensor is read: on ``fig6_build`` it was merged into the Mulleder
+        record, so it is column ``ISOBUTANOL_COLUMN`` of a width-20 ``metabolite_level``
+        group rather than a width-1 group of its own (see ``ISOBUTANOL_BLOCK_KEYS``).
+
+    ``transform``
+        ``"log10"`` puts the target in log10 of its STORED unit, with no unit conversion.
+        The biosensor number is a fold change, which is multiplicative (sd 0.213 in log10
+        over the screen), so CRPS on a Gaussian is well posed there and not in linear FC.
+        Spearman is invariant to the monotone change, so a log10 arm and a linear arm are
+        directly comparable on the primary endpoint.
     """
     raw: dict[str, tuple[torch.Tensor, torch.Tensor]] = extract_targets(
         batch, head_specs
     )
-    if not log10_molar:
-        return raw
     out: dict[str, tuple[torch.Tensor, torch.Tensor]] = {}
     for name, (t, m) in raw.items():
+        spec = head_specs[name]
+        column = spec.get("column")
+        if column is not None:
+            t, m = t[:, column : column + 1], m[:, column : column + 1]
+        flags = spec.get("heldout_gene_flags")
+        if flags is not None:
+            # THE HELD-BACK STRAINS, masked at the one place targets enter the run so no
+            # consumer can forget: the loss, the validation curve, the test score and the
+            # calibration pass all read this mask.
+            m = m & ~heldout_rows(batch, flags).unsqueeze(1)
+        transform = spec.get("transform")
+        if transform == "log10":
+            assert bool((t[m] > 0).all()), (
+                f"head {name!r} carries a non-positive observed value, which has no "
+                "log10. The Lopez biosensor column is a fold change and is positive by "
+                "construction (measured minimum 0.0386 over the 4,244 fig6_build blocks)."
+            )
+            out[name] = (torch.log10(torch.where(m, t, torch.ones_like(t))), m)
+            continue
+        assert transform is None, (
+            f"head {name!r} names transform {transform!r}, which is not implemented."
+        )
+        if not log10_molar:
+            out[name] = (t, m)
+            continue
         assert bool((t[m] > 0).all()), (
             f"head {name!r} carries a non-positive observed concentration, which has no "
             "log10. The Mulleder column is an absolute concentration in mM."
@@ -1147,10 +1556,18 @@ def build_cell(
     conc_upper_m: float = CONC_UPPER_M,
     flux_density_weight: float = 0.0,
     flux_balance_active_weight: float = 0.0,
+    flux_parsimony_weight: float = 0.0,
+    flux_thermo_exempt_path: str | None = None,
+    flux_log_c_init_path: str | None = None,
+    flux_availability_fold: str = "softmin",
     flux_draws: int = 1,
     flux_latent_stochastic: bool = False,
     flux_kl_weight: float | None = None,
     flux_log_c_from_latent: bool = False,
+    ib_readout: str = IB_READOUT_FLUX_SCALAR,
+    ib_anchors: str = IB_ANCHORS_ONE,
+    aa_supervise_columns: list[str] | None = None,
+    apply_media: str = MEDIA_NONE,
 ) -> BxCell:
     """Merge ``base.yaml`` with one arm file into a fully specified cell."""
     with open(osp.join(CONF_DIR, f"arm_{arm}.yaml")) as fh:
@@ -1158,6 +1575,33 @@ def build_cell(
     assert aa_readout in AA_READOUTS, (
         f"--aa-readout must be one of {AA_READOUTS}, got {aa_readout!r}."
     )
+    assert ib_readout in IB_READOUTS, (
+        f"--ib-readout must be one of {IB_READOUTS}, got {ib_readout!r}."
+    )
+    assert ib_anchors in IB_ANCHOR_SETS, (
+        f"--ib-anchors must be one of {IB_ANCHOR_SETS}, got {ib_anchors!r}."
+    )
+    assert apply_media in APPLY_MEDIA_CHOICES, (
+        f"--apply-media must be one of {APPLY_MEDIA_CHOICES}, got {apply_media!r}."
+    )
+    if aa_supervise_columns is not None:
+        unknown = sorted(set(aa_supervise_columns) - set(AA_KEYS))
+        assert not unknown, (
+            f"--aa-supervise-columns names {unknown}, which are not Mulleder columns. "
+            f"The 19 are {AA_KEYS}."
+        )
+        assert len(set(aa_supervise_columns)) == len(aa_supervise_columns), (
+            "--aa-supervise-columns repeats a column."
+        )
+        assert 0 < len(aa_supervise_columns) < len(AA_KEYS), (
+            f"--aa-supervise-columns holds out "
+            f"{len(AA_KEYS) - len(aa_supervise_columns)} of {len(AA_KEYS)} columns; a "
+            "mask that holds out none or all is not an experiment."
+        )
+        assert head == AUX_HEAD, (
+            f"--aa-supervise-columns masks the amino-acid loss and needs --head "
+            f"{AUX_HEAD}; this cell is on head {head!r}."
+        )
     assert conc_space in CONC_SPACES, (
         f"--conc-space must be one of {CONC_SPACES}, got {conc_space!r}."
     )
@@ -1207,6 +1651,9 @@ def build_cell(
         # concentration, so the target it is scored against has to be in that space, and no
         # other readout may silently change the space its numbers are reported in.
         target_log10_molar=aa_readout in AA_LOG10_MOLAR_READOUTS,
+        # DERIVED for the same reason: the biosensor target is a fold change and is trained
+        # and scored in log10 of it, on every isobutanol cell and no other.
+        target_log10=head == ISOBUTANOL_HEAD,
         dist=dist,
         conc_space=conc_space,
         volume_table=volume_table,
@@ -1219,10 +1666,18 @@ def build_cell(
         flux_balance_active_row_set=armcfg.flux_balance_active_row_set,
         flux_density_weight=flux_density_weight,
         flux_balance_active_weight=flux_balance_active_weight,
+        flux_parsimony_weight=flux_parsimony_weight,
+        flux_thermo_exempt_path=flux_thermo_exempt_path,
+        flux_log_c_init_path=flux_log_c_init_path,
+        flux_availability_fold=flux_availability_fold,
         flux_draws=flux_draws,
         flux_latent_stochastic=flux_latent_stochastic,
         flux_kl_weight=flux_kl_weight,
         flux_log_c_from_latent=flux_log_c_from_latent,
+        ib_readout=ib_readout,
+        ib_anchors=ib_anchors,
+        aa_supervise_columns=aa_supervise_columns,
+        apply_media=apply_media,
     )
 
 
@@ -1570,9 +2025,9 @@ def collect_feasibility(
             batch = batch.to(device)
             _, reps = model(dataset.cell_graph.to(device), batch)
             per = _per_sample_feasibility(layer, reps["flux"])
-            if head_name == HEAD:
+            if head_name in SCALAR_HEADS:
                 # The scalar the ranking is defined on: the head's mean, denormalized back
-                # into the units the betaxanthin measurement is reported in.
+                # into the units the phenotype is reported in.
                 #
                 # ONE ROW PER DRAW, not per genotype, when the arm draws. Feasibility is a
                 # property of a FLUX and there are K of those per genotype, while the
@@ -1667,7 +2122,9 @@ def build_feasibility_block(
     head_name: str,
 ) -> FeasibilityBlock:
     """Assemble the feasibility JSON block from two completed passes."""
-    rank_note = "predicted betaxanthin, descending" if head_name == HEAD else None
+    rank_note = (
+        f"predicted {head_name}, descending" if head_name in SCALAR_HEADS else None
+    )
     groups: dict[str, FeasibilityGroup] = {
         "all": _group(
             per_all, np.ones(per_all["balance_median_ratio"].size, bool), None
@@ -1889,6 +2346,24 @@ class FluxConcentrationReadout(ConcentrationReadoutBase):
         return predictions, reps
 
 
+def anchored_log_concentration(
+    base: torch.Tensor,
+    from_context: nn.Linear,
+    context: torch.Tensor,
+    conc_lower_m: float,
+    conc_upper_m: float,
+) -> torch.Tensor:
+    r"""``log c = lo + (hi - lo) sigmoid(base + W context)``, ``[B, d] -> [B, m]``.
+
+    Term for term the ANCHORED branch of ``FluxLayer.reaction_potential`` with the latent
+    term absent, in natural log of molar. The two context-only readouts own their own
+    parameters and share this FORMULA, so the ablation and the arm it ablates cannot come
+    to disagree about what the concentration parameterization is.
+    """
+    lo, hi = math.log(conc_lower_m), math.log(conc_upper_m)
+    return lo + (hi - lo) * torch.sigmoid(base.unsqueeze(0) + from_context(context))
+
+
 class ContextConcentrationReadout(ConcentrationReadoutBase):
     r"""The flux layer's concentration head, on the pooled backbone, with no flux layer.
 
@@ -1977,9 +2452,13 @@ class ContextConcentrationReadout(ConcentrationReadoutBase):
         Term for term the ANCHORED branch of ``FluxLayer.reaction_potential`` with the
         latent term absent.
         """
-        lo, hi = math.log(self.conc_lower_m), math.log(self.conc_upper_m)
-        raw = self.log_c_base.unsqueeze(0) + self.log_c_from_context(context)
-        return lo + (hi - lo) * torch.sigmoid(raw)
+        return anchored_log_concentration(
+            self.log_c_base,
+            self.log_c_from_context,
+            context,
+            self.conc_lower_m,
+            self.conc_upper_m,
+        )
 
     def forward(
         self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
@@ -2162,6 +2641,7 @@ class FluxPrecursorConcentrationReadout(nn.Module):
         metabolite_indices: torch.Tensor,
         mixture_log_weights: torch.Tensor,
         param_dim: int,
+        head_name: str = HEAD,
     ) -> None:
         """Bind the readout to the precursors' compartment species.
 
@@ -2171,12 +2651,17 @@ class FluxPrecursorConcentrationReadout(nn.Module):
                 of each precursor.
             mixture_log_weights: ``[P, C]``, log fractional volumes, ``-inf`` on padding.
             param_dim: Distributional parameters the head emits per output.
+            head_name: Which head's output this writes. ``betaxanthin`` by default, so
+                every wave-8 cell is unchanged; ``isobutanol`` for the wave-9 ``ibprec``
+                arm, whose target is the same shape (one arbitrary-unit number per
+                genotype read off named pools) and whose only difference is which pools.
         """
         super().__init__()
         self.model = model
         self.register_buffer("metabolite_indices", metabolite_indices)
         self.register_buffer("mixture_log_weights", mixture_log_weights)
         self.param_dim = param_dim
+        self.head_name = head_name
         self.readout = nn.Linear(int(metabolite_indices.shape[0]), param_dim)
 
     @property
@@ -2189,7 +2674,7 @@ class FluxPrecursorConcentrationReadout(nn.Module):
         """The wrapped model's counts, plus this head's weight and intercept."""
         counts: dict[str, int] = dict(self.model.num_parameters)
         extra = sum(p.numel() for p in self.readout.parameters() if p.requires_grad)
-        counts[f"{HEAD}_head"] = extra
+        counts[f"{self.head_name}_head"] = extra
         counts["total"] = counts["total"] + extra
         return counts
 
@@ -2222,7 +2707,144 @@ class FluxPrecursorConcentrationReadout(nn.Module):
             flux["thermo_log_c"], self.metabolite_indices, self.mixture_log_weights
         )
         out = self.readout(log10_c)
-        reps["head_outputs"][HEAD] = out.unsqueeze(1)
+        # THE READOUT'S OWN INPUT, kept so the audit can ask whether the concentration
+        # VARIES across genotypes. Wave 9 measured an isobutanol precursor arm whose
+        # validation prediction spread stayed at 1e-4 of the target's for 200 epochs while
+        # its concentration-head weights were healthy, and nothing in the result file said
+        # whether the pool was constant or the affine was dead.
+        reps["precursor_log10_c"] = log10_c
+        reps["head_outputs"][self.head_name] = out.unsqueeze(1)
+        return predictions, reps
+
+
+class ContextPrecursorConcentrationReadout(nn.Module):
+    r"""The precursor readout's head, on the pooled backbone, with no flux layer.
+
+    THE QUESTION IT ANSWERS. The only ESTABLISHED betaxanthin contrast of wave 8 is that
+    the precursor-concentration readout beats 026's scalar flux head by +0.0399 (per seed
+    +0.0377, +0.0532, +0.0288; sd 0.0123, n = 3), and the scalar head is itself BELOW the
+    no-module control by -0.0233. So the established statement is that the concentration
+    readout recovers what the flux head lost, and whether the flux layer contributes
+    anything to it has never been measured. `FluxPrecursorConcentrationReadout` reads
+    ``thermo_log_c``, which is ``lo + (hi - lo) sigmoid(base + W context)``, a function of
+    the pooled genotype context alone; the flux touches it only through the thermodynamic
+    penalty. Hypothesis (untested until this arm runs): the whole +0.0399 is the
+    five-dimensional concentration bottleneck and the affine on top of it.
+
+    THE CONSTRUCTION is the same pair of objects ``ContextConcentrationReadout`` builds --
+    a zero base per GEM metabolite and a default-initialized ``Linear(d, m)`` from the
+    perturbed-gene pool, squashed into the window by
+    :func:`anchored_log_concentration` -- followed by the SAME whole-cell mixture over the
+    precursors' compartment species and the SAME ``Linear(P, param_dim)`` affine. The two
+    readouts differ only in whether a flux layer stands between the context and the
+    concentration.
+
+    NOT a ``ConcentrationReadoutBase``, deliberately. That base standardizes a
+    parameter-free prediction against the train-split statistics of a target measured in
+    the same units; this head's target is an arbitrary-unit intensity, so its affine does
+    that job and the trainer's standardization pass must not also write into it.
+    """
+
+    metabolite_indices: torch.Tensor
+    mixture_log_weights: torch.Tensor
+    log_c_base: torch.Tensor
+    model: CellGraphTransformerMetabolism
+
+    def __init__(
+        self,
+        model: CellGraphTransformerMetabolism,
+        metabolite_indices: torch.Tensor,
+        mixture_log_weights: torch.Tensor,
+        param_dim: int,
+        hidden: int,
+        n_metabolites: int,
+        conc_lower_m: float,
+        conc_upper_m: float,
+        head_name: str = HEAD,
+    ) -> None:
+        """Bind the head to the GEM's metabolite axis, the window and the precursors.
+
+        Args:
+            model: The pooled backbone, built with NO flux layer.
+            metabolite_indices: ``[P, C]`` rows into the ``n_metabolites`` axis.
+            mixture_log_weights: ``[P, C]`` log fractional volumes, ``-inf`` on padding.
+            param_dim: Distributional parameters the head emits.
+            hidden: ``d``, the width of the context vector.
+            n_metabolites: ``m``, the GEM metabolite count the head has one row for.
+            conc_lower_m: Floor of the concentration window, in molar.
+            conc_upper_m: Ceiling of the window, in molar.
+            head_name: Which head's output this writes.
+        """
+        super().__init__()
+        assert model.flux_layer is None, (
+            "the context-only precursor readout was built on a model that carries a flux "
+            "layer; the ablation is defined on the pooled backbone."
+        )
+        assert int(metabolite_indices.max()) < n_metabolites, (
+            f"a mixture index {int(metabolite_indices.max())} is outside the head's "
+            f"{n_metabolites} metabolite rows."
+        )
+        assert 0.0 < conc_lower_m < conc_upper_m, (
+            f"window [{conc_lower_m}, {conc_upper_m}] M is not an increasing positive pair."
+        )
+        self.model = model
+        self.register_buffer("metabolite_indices", metabolite_indices)
+        self.register_buffer("mixture_log_weights", mixture_log_weights)
+        self.param_dim = param_dim
+        self.head_name = head_name
+        self.conc_lower_m = float(conc_lower_m)
+        self.conc_upper_m = float(conc_upper_m)
+        self.log_c_base = nn.Parameter(torch.zeros(n_metabolites))
+        self.log_c_from_context = nn.Linear(hidden, n_metabolites)
+        self.readout = nn.Linear(int(metabolite_indices.shape[0]), param_dim)
+
+    @property
+    def flux_layer(self) -> Any:
+        """``None``: this ablation is defined on the layer-free backbone."""
+        return self.model.flux_layer
+
+    @property
+    def num_parameters(self) -> dict[str, int]:
+        """The backbone's counts, plus the concentration head and the affine."""
+        counts: dict[str, int] = dict(self.model.num_parameters)
+        extra = sum(int(p.numel()) for p in self.parameters()) - sum(
+            int(p.numel()) for p in self.model.parameters()
+        )
+        counts[f"{self.head_name}_head"] = extra
+        counts["total"] = counts["total"] + extra
+        return counts
+
+    def log_concentration(self, context: torch.Tensor) -> torch.Tensor:
+        """``[B, d]`` context -> ``[B, m]`` natural-log molar, inside the window."""
+        return anchored_log_concentration(
+            self.log_c_base,
+            self.log_c_from_context,
+            context,
+            self.conc_lower_m,
+            self.conc_upper_m,
+        )
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Run the pooled backbone, then read the phenotype off the precursor pools."""
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        assert "flux" not in reps, (
+            "the context-only precursor readout received a flux output; the model was "
+            "built with a layer, which this ablation excludes."
+        )
+        context = perturbed_gene_pool(
+            reps["H_genes_pert"],
+            batch["gene"].perturbation_indices,
+            batch["gene"].perturbation_indices_batch,
+        )
+        log_c = self.log_concentration(context)
+        reps["context_log_c"] = log_c
+        log10_c = mixture_log10_molar(
+            log_c, self.metabolite_indices, self.mixture_log_weights
+        )
+        reps["precursor_log10_c"] = log10_c
+        reps["head_outputs"][self.head_name] = self.readout(log10_c).unsqueeze(1)
         return predictions, reps
 
 
@@ -2539,8 +3161,27 @@ def build_model_for_cell(
     # call-time read is the same value.
     arm["latent_stochastic"] = cell.flux_latent_stochastic
     arm["log_c_from_latent"] = cell.flux_log_c_from_latent
+    # THE MEDIUM, written into the arm dict for the same reason the channel is: 026's
+    # `build_flux_layer` owns the cobra model (it constructs its own `YeastGEM()` and reads
+    # the exchange bounds into the box through `build_gem_tensors`), so the bounds have to
+    # be applied there, before the tensors are taken. `None` is the shipped boundary and is
+    # the default, so every cell before wave 9 builds a bit-identical layer.
+    assert cell.apply_media in APPLY_MEDIA_CHOICES, (
+        f"apply_media must be one of {APPLY_MEDIA_CHOICES}, got {cell.apply_media!r}."
+    )
+    if cell.apply_media == MEDIA_DATASET:
+        assert cell.head in HEAD_MEDIUM, (
+            f"--apply-media dataset needs a recorded medium for head {cell.head!r}; "
+            f"HEAD_MEDIUM covers {sorted(HEAD_MEDIUM)}."
+        )
+        arm["media_name"] = HEAD_MEDIUM[cell.head]
     gene_ids = list(dataset.cell_graph["gene"].node_ids)
     flux_layer, flux_meta = build_flux_layer(arm, gene_ids, cell.hidden)
+    if cell.apply_media == MEDIA_DATASET:
+        assert arm["flux"] and flux_meta["media"]["applied"], (
+            "--apply-media dataset is a statement about the GEM's exchange bounds, which "
+            f"only a FLUX arm has; arm {cell.base_arm!r} built no layer."
+        )
 
     if flux_layer is not None:
         # THE CONCENTRATION WINDOW, written onto the built layer rather than passed into
@@ -2554,6 +3195,7 @@ def build_model_for_cell(
         # as every cell before wave 8 computed it.
         flux_layer.config.density_weight = cell.flux_density_weight
         flux_layer.config.balance_active_weight = cell.flux_balance_active_weight
+        flux_layer.config.parsimony_outside_ramp_weight = cell.flux_parsimony_weight
         # The layer validates this at construction, and it is assigned after, so the
         # check is repeated here rather than letting a typo pass as 'dynamic'.
         assert cell.flux_balance_active_row_set in {"dynamic", "frozen"}, (
@@ -2563,6 +3205,16 @@ def build_model_for_cell(
         flux_layer.config.balance_active_row_set = cell.flux_balance_active_row_set
         flux_layer.config.conc_lower_m = cell.conc_lower_m
         flux_layer.config.conc_upper_m = cell.conc_upper_m
+        # THE WARM-START GEOMETRY SWITCHES (wave 9). The fold is read off config at call
+        # time. ORDER MATTERS for the two files: apply_log_c_init reads conc_lower_m and
+        # conc_upper_m, assigned just above, and refuses a window that disagrees with the
+        # one the witness was solved in. Both default to None, so every earlier cell is
+        # unchanged.
+        flux_layer.config.availability_fold = cell.flux_availability_fold
+        if cell.flux_thermo_exempt_path is not None:
+            flux_layer.apply_thermo_exempt_list(cell.flux_thermo_exempt_path)
+        if cell.flux_log_c_init_path is not None:
+            flux_layer.apply_log_c_init(cell.flux_log_c_init_path)
         # THE K-DRAW SWITCHES, written before the layer is used but AFTER it is built, for
         # the same reason as the three above: 026's `build_flux_layer` owns the construction
         # and forwards only the fields its own registry names. `draws` and `kl_weight` are
@@ -2611,8 +3263,8 @@ def build_model_for_cell(
             "empty, so every kcat has silently become the organism default."
         )
 
-    assert cell.head in (HEAD, AUX_HEAD), (
-        f"--head must be one of {(HEAD, AUX_HEAD)}, got {cell.head!r}."
+    assert cell.head in (HEAD, AUX_HEAD, ISOBUTANOL_HEAD), (
+        f"--head must be one of {(HEAD, AUX_HEAD, ISOBUTANOL_HEAD)}, got {cell.head!r}."
     )
     assert not (cell.head == AUX_HEAD and cell.aux_mulleder), (
         "--head mulleder19 makes the amino-acid head the PRIMARY supervised head; "
@@ -2631,6 +3283,25 @@ def build_model_for_cell(
     ), (
         f"bx_readout {BX_READOUT_PRECURSOR_CONCENTRATION!r} is defined only for a FLUX "
         f"arm on --head {HEAD}; this cell is arm {cell.base_arm!r} on head {cell.head!r}."
+    )
+    # THE BETAXANTHIN ABLATION IS DEFINED ON THE POOLED BACKBONE ONLY, exactly as the
+    # amino-acid one is: a flux arm would put the layer back and the contrast would be gone.
+    assert not (
+        cell.bx_readout == BX_READOUT_CONTEXT_PRECURSOR_CONCENTRATION
+        and not (cell.head == HEAD and cell.base_arm == "pooled" and not arm["flux"])
+    ), (
+        f"bx_readout {BX_READOUT_CONTEXT_PRECURSOR_CONCENTRATION!r} is defined only for "
+        f"--arm pooled with --head {HEAD}; this cell is arm {cell.base_arm!r} on head "
+        f"{cell.head!r}."
+    )
+    assert not (
+        cell.ib_readout == IB_READOUT_PRECURSOR_CONCENTRATION
+        and cell.head == ISOBUTANOL_HEAD
+        and not arm["flux"]
+    ), (
+        f"ib_readout {IB_READOUT_PRECURSOR_CONCENTRATION!r} reads the layer's learned "
+        f"concentration and needs a FLUX arm; arm {cell.base_arm!r} builds none. The "
+        "no-module isobutanol control is --arm pooled, which uses the scalar head."
     )
     assert cell.aa_readout in AA_READOUTS, (
         f"aa_readout must be one of {AA_READOUTS}, got {cell.aa_readout!r}."
@@ -2658,14 +3329,53 @@ def build_model_for_cell(
         "concentration readouts predict log10 molar and every other readout predicts the "
         "target in its stored units."
     )
+    assert cell.target_log10 == (cell.head == ISOBUTANOL_HEAD), (
+        "target_log10 is derived from the head and must not be set by hand: the biosensor "
+        "fold change is trained and scored in log10 and every other target is not."
+    )
     main_head = cell.head
-    main_width = 1 if main_head == HEAD else AUX_WIDTH
-    head_specs: dict[str, dict[str, Any]] = {
-        # Betaxanthin and the Mulleder metabolome both carry the label `metabolite_level`;
-        # WIDTH is what separates them. Declaring only the width-1 spec supervises betaxanthin
-        # alone, and a Mulleder-only genotype simply matches nothing and arrives masked False.
-        main_head: {"label": "metabolite_level", "width": main_width}
-    }
+    head_specs: dict[str, dict[str, Any]]
+    if main_head == ISOBUTANOL_HEAD:
+        # THE BIOSENSOR IS ONE COLUMN OF THE MERGED 20-VALUE BLOCK, not a width-1 group;
+        # see `ISOBUTANOL_BLOCK_KEYS` for the measurement that forces it. The held-out
+        # flags mask every genotype the validated re-screen measured, so the 224-strain
+        # panel stays an external check rather than a training label.
+        heldout_flags, heldout_report = isobutanol_heldout_flags(dataset)
+        head_specs = {
+            main_head: {
+                "label": "metabolite_level",
+                "width": ISOBUTANOL_BLOCK_WIDTH,
+                "column": ISOBUTANOL_COLUMN,
+                "transform": "log10",
+                "heldout_gene_flags": heldout_flags,
+            }
+        }
+        flux_meta["isobutanol"] = {
+            "dataset_root": dataset_paths(ISOBUTANOL_HEAD)[0],
+            "block_keys": ISOBUTANOL_BLOCK_KEYS,
+            "block_width": ISOBUTANOL_BLOCK_WIDTH,
+            "column": ISOBUTANOL_COLUMN,
+            "target_space": "log10_fold_change",
+            "held_out": heldout_report,
+            "note": (
+                "the Lopez biosensor fold change was merged into the Mulleder record by "
+                "MeanExperimentDeduplicator wherever both were measured, so it is read as "
+                "column 8 of a key-sorted width-20 metabolite_level block rather than as "
+                "a width-1 group; in fig6_build the width-1 metabolite_level groups are "
+                "4,669 betaxanthin records against 189 isobutanol-only ones."
+            ),
+        }
+    else:
+        head_specs = {
+            # Betaxanthin and the Mulleder metabolome both carry the label
+            # `metabolite_level`; WIDTH is what separates them. Declaring only the width-1
+            # spec supervises betaxanthin alone, and a Mulleder-only genotype simply
+            # matches nothing and arrives masked False.
+            main_head: {
+                "label": "metabolite_level",
+                "width": 1 if main_head == HEAD else AUX_WIDTH,
+            }
+        }
     # THE HEAD'S OUTPUT WIDTH follows the distributional loss: 2 for the Gaussian CRPS's
     # (mu, log_sigma) and K = 19 for the quantile grid. `dist_param_dim` is the same
     # function 019's trainer uses, so the two experiments cannot disagree about the width.
@@ -2676,7 +3386,40 @@ def build_model_for_cell(
     )
     heads_config: dict[str, Any] = {}
     met_index = flux_meta["met_index"] if arm["flux"] else {}
-    if main_head == HEAD:
+    if main_head == ISOBUTANOL_HEAD:
+        if arm["flux"] and cell.ib_readout == IB_READOUT_PRECURSOR_CONCENTRATION:
+            # THE PRECURSOR-CONCENTRATION READOUT declares no model head; the prediction is
+            # the affine of the layer's own `thermo_log_c` at the anchor rows, injected by
+            # `FluxPrecursorConcentrationReadout` below.
+            assert flux_layer is not None and (
+                flux_layer.thermo_mode is ThermoMode.ANCHORED
+            ), (
+                f"--ib-readout {IB_READOUT_PRECURSOR_CONCENTRATION} needs an arm whose "
+                f"thermo_mode is ANCHORED; arm {cell.base_arm!r} is "
+                f"{'not a flux arm' if flux_layer is None else str(flux_layer.thermo_mode)}."
+            )
+        elif arm["flux"]:
+            missing = [m for m in ISOBUTANOL_PRECURSORS if m not in met_index]
+            assert not missing, (
+                f"the isobutanol precursor species {missing} are not in the layer's "
+                "metabolite index, so the flux layer and the GEM disagree about the model."
+            )
+            heads_config[ISOBUTANOL_HEAD] = {
+                "kind": "flux_scalar",
+                "output_dim": 1,
+                "param_dim": param_dim,
+                "precursor_indices": [met_index[m] for m in ISOBUTANOL_PRECURSORS],
+                "normalize_inputs": cell.head_normalize,
+            }
+            flux_meta["isobutanol"]["precursor_species"] = ISOBUTANOL_PRECURSORS
+            flux_meta["isobutanol"]["product_exchange"] = ISOBUTANOL_PRODUCT_EXCHANGE
+        else:
+            heads_config[ISOBUTANOL_HEAD] = {
+                "kind": "scalar",
+                "output_dim": 1,
+                "param_dim": param_dim,
+            }
+    elif main_head == HEAD:
         if arm["flux"] and cell.bx_readout == BX_READOUT_PRECURSOR_CONCENTRATION:
             # THE PRECURSOR-CONCENTRATION READOUT declares no model head: the prediction
             # is a linear map of the layer's own `thermo_log_c` at the precursor rows,
@@ -2698,6 +3441,15 @@ def build_model_for_cell(
                 ],
                 "normalize_inputs": cell.head_normalize,
             }
+        elif cell.bx_readout == BX_READOUT_CONTEXT_PRECURSOR_CONCENTRATION:
+            # THE CONTEXT-ONLY PRECURSOR READOUT declares no head either: the prediction is
+            # injected by `ContextPrecursorConcentrationReadout` below, so the only
+            # parameterized map from the context to the loss is the concentration head and
+            # its affine. The `pooled` arm's own scalar head is deliberately NOT built.
+            assert flux_layer is None, (
+                f"--bx-readout {BX_READOUT_CONTEXT_PRECURSOR_CONCENTRATION} excludes the "
+                f"flux layer; arm {cell.base_arm!r} built one."
+            )
         else:
             heads_config[HEAD] = {
                 "kind": "scalar",
@@ -2786,6 +3538,48 @@ def build_model_for_cell(
         **graph_reg_kwargs,
     ).to(device)
 
+    if (
+        main_head == ISOBUTANOL_HEAD
+        and cell.ib_readout == IB_READOUT_PRECURSOR_CONCENTRATION
+        and arm["flux"]
+    ):
+        assert flux_layer is not None
+        anchors = isobutanol_anchors(cell.ib_anchors)
+        indices, log_weights, described = species_mixture_weights(
+            compartment_species_for(anchors),
+            list(anchors),
+            met_index,
+            cell.conc_space,
+            cell.volume_table,
+        )
+        flux_meta["isobutanol"]["anchor_set"] = cell.ib_anchors
+        flux_meta["isobutanol"]["anchors"] = anchors
+        flux_meta["isobutanol_precursor_mixture"] = {
+            name: [
+                {"compartment": c, "species": sid, "fractional_volume": w}
+                for c, sid, w in entries
+            ]
+            for name, entries in described.items()
+        }
+        flux_meta["compartment_volume_fractions"] = compartment_volume_fractions(
+            cell.volume_table
+        ).model_dump()
+        wrapped_ib = FluxPrecursorConcentrationReadout(
+            model,
+            indices.to(device),
+            log_weights.to(device),
+            param_dim,
+            head_name=ISOBUTANOL_HEAD,
+        ).to(device)
+        print(
+            "[precursor-readout] isobutanol from the whole-cell concentrations of "
+            f"{ {n: [c for c, _, _ in v] for n, v in described.items()} }, window "
+            f"[{flux_layer.config.conc_lower_m:.0e}, "
+            f"{flux_layer.config.conc_upper_m:.0e}] M, volume table {cell.volume_table}",
+            flush=True,
+        )
+        return wrapped_ib, head_specs, main_head, flux_meta
+
     if main_head == HEAD and cell.bx_readout == BX_READOUT_PRECURSOR_CONCENTRATION:
         assert flux_layer is not None
         indices, log_weights, described = species_mixture_weights(
@@ -2816,6 +3610,66 @@ def build_model_for_cell(
             flush=True,
         )
         return wrapped_bx, head_specs, main_head, flux_meta
+
+    if (
+        main_head == HEAD
+        and cell.bx_readout == BX_READOUT_CONTEXT_PRECURSOR_CONCENTRATION
+    ):
+        assert flux_layer is None and cell.flux_draws == 1, (
+            "the context-only precursor readout is deterministic and layer-free; "
+            f"got flux_draws={cell.flux_draws} on arm {cell.base_arm!r}."
+        )
+        # THE SAME METABOLITE AXIS THE LAYER WOULD HAVE, read from the GEM without building
+        # the layer, exactly as the amino-acid ablation reads it.
+        met_index = gem_metabolite_index()
+        flux_meta["met_index"] = met_index
+        indices, log_weights, described = species_mixture_weights(
+            compartment_species_for(BETAXANTHIN_PRECURSOR_ANCHORS),
+            list(BETAXANTHIN_PRECURSOR_ANCHORS),
+            met_index,
+            cell.conc_space,
+            cell.volume_table,
+        )
+        flux_meta["betaxanthin_precursor_mixture"] = {
+            name: [
+                {"compartment": c, "species": sid, "fractional_volume": w}
+                for c, sid, w in entries
+            ]
+            for name, entries in described.items()
+        }
+        flux_meta["compartment_volume_fractions"] = compartment_volume_fractions(
+            cell.volume_table
+        ).model_dump()
+        flux_meta["context_concentration"] = {
+            "n_metabolites": len(met_index),
+            "conc_lower_m": cell.conc_lower_m,
+            "conc_upper_m": cell.conc_upper_m,
+            "note": (
+                "the flux layer's ANCHORED concentration head on the pooled backbone with "
+                "no flux layer, no stoichiometry, no kcat, no thermodynamics and no "
+                "constraint term, read at the five betaxanthin precursor rows through the "
+                "same whole-cell mixture and the same affine; the ablation of "
+                "`flux_precursor_concentration`."
+            ),
+        }
+        wrapped_ctx_bx = ContextPrecursorConcentrationReadout(
+            model,
+            indices.to(device),
+            log_weights.to(device),
+            param_dim,
+            cell.hidden,
+            len(met_index),
+            cell.conc_lower_m,
+            cell.conc_upper_m,
+        ).to(device)
+        print(
+            "[context-precursor-readout] NO flux layer; betaxanthin from the whole-cell "
+            f"concentrations of { {n: [c for c, _, _ in v] for n, v in described.items()} }"
+            f", window [{cell.conc_lower_m:.0e}, {cell.conc_upper_m:.0e}] M over "
+            f"{len(met_index)} GEM metabolite rows",
+            flush=True,
+        )
+        return wrapped_ctx_bx, head_specs, main_head, flux_meta
 
     if main_head == AUX_HEAD and cell.aa_readout == AA_READOUT_CONCENTRATION:
         assert flux_layer is not None
@@ -2977,7 +3831,11 @@ def run_cell(
 
     dm = CellDataModule(
         dataset=dataset,
-        cache_dir=osp.join(DATA_ROOT, cfg.data.dataset_subdir, "data_module_cache"),
+        # The split cache belongs to the BUILD, not to the config: a head whose phenotype
+        # lives in another build opens another root, and a shared cache would hand it the
+        # first build's split indices. For every head but isobutanol this is exactly
+        # `cfg.data.dataset_subdir` under DATA_ROOT, so the path is unchanged.
+        cache_dir=osp.join(dataset_paths(cell.head)[0], "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
         batch_size=cell.batch_size,
         # THE PINNED PARTITION. `random_seed` selects train/val/test, so it is held at
@@ -3047,6 +3905,29 @@ def run_cell(
         s = torch.nanmean(centered * centered, dim=0).sqrt().clamp(min=1e-6)
         stats[name] = (mu.to(device), s.to(device))
     mean, sd = stats[main_head]
+    # THE SUPERVISED COLUMNS. None is all of them and is what every cell before wave 9 ran,
+    # so `supervised` is then the identity and every tensor below is unchanged. A subset
+    # masks the LOSS and the epoch-selection metric; the test scorer still reports all 19
+    # per-column, with the two groups summarized in `aa_column_split`.
+    supervised_columns = (
+        list(range(scored_width(head_specs[main_head])))
+        if cell.aa_supervise_columns is None
+        else [AA_KEYS.index(name) for name in cell.aa_supervise_columns]
+    )
+    held_out_columns = [
+        i
+        for i in range(scored_width(head_specs[main_head]))
+        if i not in supervised_columns
+    ]
+    column_mask = torch.zeros(scored_width(head_specs[main_head]), dtype=torch.bool)
+    column_mask[supervised_columns] = True
+    column_mask = column_mask.to(device)
+    if held_out_columns:
+        print(
+            f"[aa-columns] supervising {len(supervised_columns)} of {len(AA_KEYS)} "
+            f"columns; held out {[AA_KEYS[i] for i in held_out_columns]}",
+            flush=True,
+        )
     # A K-draw concentration cell is the readout inside the draw ensemble; the
     # standardization belongs to the readout either way.
     readout = model.model if isinstance(model, FluxDrawEnsemble) else model
@@ -3114,6 +3995,10 @@ def run_cell(
                 m = m.repeat_interleave(cell.flux_draws, dim=0)
             else:
                 pred = _head_params(reps["head_outputs"][main_head])
+            # THE COLUMN MASK, applied to the LOSS only. An all-True mask leaves `m`
+            # unchanged, so a cell that supervises every column computes the same number
+            # the wave-8 cells did.
+            m = m & column_mask.unsqueeze(0)
             data_loss = (loss_fn(pred, z) * m).sum() / m.sum().clamp(min=1)
             loss = data_loss + reps["graph_reg_loss"]
             if cell.aux_mulleder:
@@ -3177,7 +4062,13 @@ def run_cell(
             cell.target_log10_molar,
             dist_head,
         )
-        val_r = _mean_pearson(preds, trues)
+        # SELECTION READS THE SUPERVISED COLUMNS ONLY. With no mask this is every column
+        # and the curve is the wave-8 curve; with one, selecting on a held-out column's
+        # validation Pearson would be choosing the epoch by the very quantity the arm is
+        # asking about.
+        val_r = _mean_pearson(
+            preds[:, supervised_columns], trues[:, supervised_columns]
+        )
         val_curve.append(val_r)
         ring.append((epoch, _params_snapshot(model)))
         # THE COLLAPSE DIAGNOSTIC. Pearson and Spearman are scale-free, so a head that
@@ -3220,6 +4111,7 @@ def run_cell(
                 sd,
                 loss_fn,
                 cell.target_log10_molar,
+                column_mask,
             ),
             "val_pearson": val_r,
             "val_pred_sd_ratio": pred_sd_ratio,
@@ -3288,6 +4180,27 @@ def run_cell(
         "flux_meta": {k: v for k, v in flux_meta.items() if k != "met_index"}
         | _sampling_meta(model, cell),
         "pinned_split": pinned_report,
+        # THE TARGET SCALE THE HEAD WAS TRAINED AGAINST. Every head is standardized on the
+        # TRAIN split (the pass above), and the loss is charged on `(t - mean) / sd`, so a
+        # CRPS sigma head always sees a unit-variance target whatever the phenotype's raw
+        # units. It lived only in the checkpoint until wave 9, which meant answering "was
+        # the log10 fold change standardized?" needed a 2 GB file rather than the result.
+        "target_standardization": {
+            "head": main_head,
+            "columns": AA_KEYS if main_head == AUX_HEAD else [main_head],
+            "space": (
+                "log10_molar"
+                if cell.target_log10_molar
+                else ("log10" if cell.target_log10 else "stored_units")
+            ),
+            "mean": [float(x) for x in mean],
+            "sd": [float(x) for x in sd],
+            "note": (
+                "train-split mean and sd; the loss and every reported metric are computed "
+                "on the standardized target, so the head is never asked to match a raw "
+                "scale."
+            ),
+        },
         "n_parameters": model.num_parameters,
         "wall_time_s": time.time() - t0,
         "code_provenance": code_provenance(),
@@ -3317,6 +4230,77 @@ def run_cell(
             **_score_test_vector(vp, vt, np.ones(len(vp), dtype=bool), AA_KEYS),
         }
 
+    if main_head == AUX_HEAD:
+        # WHICH COLUMNS WERE SUPERVISED AND WHICH WERE NOT, summarized from the per-feature
+        # lists the scorer already produced, so the held-out-column arm is read without
+        # re-deriving anything. On a cell that supervises all 19 the held-out group is
+        # empty and both means are the group mean.
+        result["aa_column_split"] = {
+            "supervised": [AA_KEYS[i] for i in supervised_columns],
+            "held_out": [AA_KEYS[i] for i in held_out_columns],
+            "note": (
+                "the loss and the epoch-selection metric were charged on the supervised "
+                "columns only; the test scorer is unchanged and reports all 19."
+            ),
+            **{
+                f"{group}_{name}_mean_spearman": (
+                    float(
+                        np.mean(
+                            [
+                                result["test"][group]["spearman_per_feature"][i]
+                                for i in idx
+                            ]
+                        )
+                    )
+                    if idx
+                    else float("nan")
+                )
+                for group in ("pinned", "all")
+                for name, idx in (
+                    ("supervised", supervised_columns),
+                    ("held_out", held_out_columns),
+                )
+            },
+        }
+
+    if isinstance(
+        readout,
+        (FluxPrecursorConcentrationReadout, ContextPrecursorConcentrationReadout),
+    ):
+        # THE PRECURSOR POOL ITSELF, so a flat prediction can be attributed to a flat
+        # concentration rather than to the affine on top of it.
+        if main_head == ISOBUTANOL_HEAD:
+            anchor_names = list(isobutanol_anchors(cell.ib_anchors))
+        else:
+            anchor_names = list(BETAXANTHIN_PRECURSOR_ANCHORS)
+        layer_for_window: Any = model.flux_layer
+        lo_c = (
+            float(layer_for_window.config.conc_lower_m)
+            if layer_for_window is not None
+            else float(readout.conc_lower_m)
+        )
+        hi_c = (
+            float(layer_for_window.config.conc_upper_m)
+            if layer_for_window is not None
+            else float(readout.conc_upper_m)
+        )
+        spread = collect_precursor_spread(
+            model, dm.test_dataloader(), dataset, anchor_names, lo_c, hi_c
+        )
+        result["precursor_concentration"] = spread.model_dump()
+        print(
+            f"[precursor-spread] across-genotype sd of log10 c per anchor "
+            f"{dict(zip(spread.anchors, [round(x, 6) for x in spread.sd_log10_c]))}; "
+            f"frac at ceiling {spread.frac_at_ceiling:.3f}, floor "
+            f"{spread.frac_at_floor:.3f}",
+            flush=True,
+        )
+
+    if main_head == ISOBUTANOL_HEAD:
+        result["isobutanol_external_check"] = isobutanol_external_check(
+            model, dm, dataset, head_specs, mean, sd, cell, dist_head
+        )
+
     # CALIBRATION at the selected epoch, on the pinned Merzbacher test genes. Reported for
     # every distributional head, so the CRPS and pinball arms are compared on what their
     # distribution does as well as on where its point estimate lands.
@@ -3337,7 +4321,7 @@ def run_cell(
             pit[pinned_rows],
             pit_mask[pinned_rows],
             cell,
-            AA_KEYS if main_head == AUX_HEAD else [HEAD],
+            AA_KEYS if main_head == AUX_HEAD else [main_head],
             "pinned_test",
         ).model_dump()
     else:
@@ -3474,6 +4458,157 @@ def run_cell(
     return result
 
 
+class PrecursorConcentrationSpread(BaseModel):
+    """Does the precursor readout's INPUT vary across genotypes, or is it a constant?
+
+    WHY THIS EXISTS (wave 9, 2026-09-14). Job 1928's isobutanol precursor arm held a
+    validation prediction spread of 1e-4 of the target's for all 200 epochs while its
+    concentration-head weight row at the anchor was 0.844 against a global median of 0.583,
+    i.e. the head was not dead. Nothing in the result file could tell a flat CONCENTRATION
+    apart from a dead AFFINE, and answering it needed the checkpoint plus a rebuild. One
+    forward pass over the test split answers it directly: a near-zero `sd_log10_c` means the
+    layer's pool is constant across strains and no affine on top of it can rank anything.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    anchors: list[str]
+    #: Across-genotype sd of the whole-cell log10 molar concentration, per anchor. This is
+    #: the number that says whether there is anything for the affine to read.
+    sd_log10_c: list[float]
+    median_log10_c: list[float]
+    min_log10_c: list[float]
+    max_log10_c: list[float]
+    #: Saturation of the layer's sigmoid window, which is the mechanism that would flatten
+    #: the pool: within 0.01 of a decade of an edge the head cannot move the value further.
+    frac_at_ceiling: float
+    frac_at_floor: float
+    conc_lower_m: float
+    conc_upper_m: float
+    n_records: int
+
+
+def collect_precursor_spread(
+    model: nn.Module,
+    loader: Any,
+    dataset: Any,
+    anchors: list[str],
+    conc_lower_m: float,
+    conc_upper_m: float,
+) -> PrecursorConcentrationSpread:
+    """One forward pass, reading the precursor readout's own ``precursor_log10_c``."""
+    device = next(model.parameters()).device
+    was_training = model.training
+    model.eval()
+    parts: list[np.ndarray] = []
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch.to(device)
+            _, reps = model(dataset.cell_graph.to(device), batch)
+            assert "precursor_log10_c" in reps, (
+                "the model did not emit `precursor_log10_c`; this audit is defined only "
+                "for the precursor-concentration readouts."
+            )
+            parts.append(reps["precursor_log10_c"].cpu().numpy())
+    model.train(was_training)
+    values = np.concatenate(parts)
+    return PrecursorConcentrationSpread(
+        anchors=anchors,
+        sd_log10_c=[float(values[:, i].std()) for i in range(values.shape[1])],
+        median_log10_c=[float(np.median(values[:, i])) for i in range(values.shape[1])],
+        min_log10_c=[float(values[:, i].min()) for i in range(values.shape[1])],
+        max_log10_c=[float(values[:, i].max()) for i in range(values.shape[1])],
+        frac_at_ceiling=float((values >= math.log10(conc_upper_m) - 0.01).mean()),
+        frac_at_floor=float((values <= math.log10(conc_lower_m) + 0.01).mean()),
+        conc_lower_m=conc_lower_m,
+        conc_upper_m=conc_upper_m,
+        n_records=int(values.shape[0]),
+    )
+
+
+EXTERNAL_CHECK_K = 30
+
+
+def isobutanol_external_check(
+    model: nn.Module,
+    dm: Any,
+    dataset: Any,
+    head_specs: dict[str, dict[str, Any]],
+    mean: torch.Tensor,
+    sd: torch.Tensor,
+    cell: BxCell,
+    dist_head: "DistHead | None",
+) -> dict[str, Any]:
+    """The model's prediction for every strain the validated re-screen measured.
+
+    THE PRE-REGISTERED READ, in two halves. This half produces the predictions: one pass
+    over the WHOLE dataset (``all_dataloader`` iterates ``self.dataset`` with
+    ``shuffle=False``, so row ``i`` is record ``i``), restricted to the records the
+    validated panel measured, which carry no label in this run because they are held out.
+    The other half joins them to the independent re-screen's fold changes and reports what
+    fraction of the predicted top and bottom 30 reproduced at FC >= 2 and FC <= 0.5; that
+    lives in an analysis script, so this cell takes no dependency on the Lopez validated
+    LMDB (which is being rebuilt as of 2026-09-14) and cannot die at the end of a 3-hour
+    run because a build moved.
+
+    The empirical ceilings the fractions are read against are the re-screen's own
+    reproducibility, measured over the 222 genes that appear in both rounds: 59 of 60
+    screen-up strains stayed at FC >= 2 and 150 of 150 screen-down strains stayed at
+    FC <= 0.5.
+    """
+    preds, _ = _predict(
+        model,
+        dm.all_dataloader(),
+        dataset,
+        head_specs,
+        ISOBUTANOL_HEAD,
+        mean,
+        sd,
+        cell.target_log10_molar,
+        dist_head,
+    )
+    assert len(preds) == len(dataset), (
+        f"the external-check pass covered {len(preds)}/{len(dataset)} records; a short "
+        "count would silently rank a subset."
+    )
+    held_records: set[int] = set()
+    for combination, rows in dataset.dataset_name_index.items():
+        if ISOBUTANOL_HELDOUT_DATASET in str(combination).split("+"):
+            held_records.update(int(r) for r in rows)
+    idx_to_genes: dict[int, list[str]] = {}
+    for gene, rows in dataset.is_any_deletion_gene_index.items():
+        for row in rows:
+            idx_to_genes.setdefault(int(row), []).append(str(gene))
+    rows_out = [
+        {
+            "record_index": rec,
+            "genes": idx_to_genes.get(rec, []),
+            "pred_log10_fold_change": float(preds[rec, 0]),
+        }
+        for rec in sorted(held_records)
+    ]
+    ranked = sorted(rows_out, key=lambda r: r["pred_log10_fold_change"], reverse=True)
+    return {
+        "note": (
+            "predictions only; the fractions are computed by "
+            "analyze_wave9_ib_external.py against the validated re-screen's own fold "
+            "changes. These strains carry no label in this run: they are masked out of "
+            "the loss, the validation curve and the test score."
+        ),
+        "held_out_dataset": ISOBUTANOL_HELDOUT_DATASET,
+        "n_records": len(rows_out),
+        "top_k": EXTERNAL_CHECK_K,
+        "top": ranked[:EXTERNAL_CHECK_K],
+        "bottom": ranked[-EXTERNAL_CHECK_K:],
+        "predictions": rows_out,
+        "reproducibility_ceiling": {
+            "screen_up_stayed_up": "59/60",
+            "screen_down_stayed_down": "150/150",
+            "source": "the 222 genes measured in both the screen and the re-screen",
+        },
+    }
+
+
 def _predict(
     model: nn.Module,
     loader: Any,
@@ -3499,7 +4634,7 @@ def _predict(
     model.eval()
     ps: list[np.ndarray] = []
     ts: list[np.ndarray] = []
-    width = int(head_specs[head_name]["width"])
+    width = scored_width(head_specs[head_name])
     with torch.no_grad():
         for batch in loader:
             batch = batch.to(device)
@@ -3540,6 +4675,7 @@ def _masked_loss(
     sd: torch.Tensor,
     loss_fn: Any,
     log10_molar: bool = False,
+    column_mask: torch.Tensor | None = None,
 ) -> float:
     """The DATA-FIT loss on a held-out loader, in the same units as training.
 
@@ -3562,6 +4698,10 @@ def _masked_loss(
             _, reps = model(dataset.cell_graph.to(device), batch)
             t, m = targets_in_space(batch, head_specs, log10_molar)[head_name]
             t, m = t.to(device), m.to(device)
+            if column_mask is not None:
+                # The same columns the training loss was charged on, so `val_loss` and
+                # `train_data_loss` stay comparable.
+                m = m & column_mask.to(m.device).unsqueeze(0)
             z = (t - mean) / sd
             pred = _head_params(reps["head_outputs"][head_name])
             total += float((loss_fn(pred, z) * m).sum())
@@ -3667,7 +4807,7 @@ def _score_test(
     all_rows = np.ones(len(order), dtype=bool)
 
     records: list[dict[str, Any]]
-    if head_name == HEAD:
+    if head_name in SCALAR_HEADS:
         p1, t1 = preds[:, 0], trues[:, 0]
         records = [
             {
@@ -3712,9 +4852,23 @@ def _score_test(
 
     if dump_predictions:
         os.makedirs(TEST_PRED_DIR, exist_ok=True)
-        stem = f"{cell.arm}_s{cell.seed}"
+        # THE STEM HAS TO NAME THE READOUT, or two arms collide on one file. Wave 8 ran
+        # `bxprec` and `bxscalar` on the SAME base arm and the same seed, so both dumped to
+        # `flux_projection_anchored_s2700.json` and the second overwrote the first; wave 9
+        # would do the same with `ibprec` and `ibscalar`. Only a NON-DEFAULT readout adds
+        # the suffix, so every file the existing Merzbacher head-to-head scripts read keeps
+        # the name it has.
+        readout = {
+            HEAD: (cell.bx_readout, BX_READOUT_FLUX_SCALAR),
+            ISOBUTANOL_HEAD: (cell.ib_readout, IB_READOUT_FLUX_SCALAR),
+            AUX_HEAD: (cell.aa_readout, AA_READOUT_TURNOVER),
+        }[head_name]
+        parts = [cell.arm]
         if head_name != HEAD:
-            stem = f"{cell.arm}_{head_name}_s{cell.seed}"
+            parts.append(head_name)
+        if readout[0] != readout[1]:
+            parts.append(readout[0])
+        stem = "_".join([*parts, f"s{cell.seed}"])
         path = osp.join(TEST_PRED_DIR, f"{stem}.json")
         with open(path, "w") as fh:
             json.dump(
@@ -3823,12 +4977,52 @@ def main() -> None:
     )
     parser.add_argument(
         "--head",
-        choices=(HEAD, AUX_HEAD),
+        choices=(HEAD, AUX_HEAD, ISOBUTANOL_HEAD),
         default=HEAD,
         help=(
             "Which phenotype the cell trains, selects and scores on. 'betaxanthin' is the "
             "wave-1 to wave-5 protocol and the default; 'mulleder19' moves all three to "
-            "the 19 amino acids."
+            "the 19 amino acids; 'isobutanol' moves them to the Montano Lopez 2024 "
+            "biosensor fold change, which lives in the fig6_build dataset rather than in "
+            "fig6_pigment_transfer and is trained on log10 of the fold change."
+        ),
+    )
+    parser.add_argument(
+        "--ib-readout",
+        choices=IB_READOUTS,
+        default=IB_READOUT_FLUX_SCALAR,
+        help=(
+            "Isobutanol from 026's flux scalar head (default) or from the learned "
+            "whole-cell concentrations of its anchors. Ignored on --arm pooled."
+        ),
+    )
+    parser.add_argument(
+        "--ib-anchors",
+        choices=IB_ANCHOR_SETS,
+        default=IB_ANCHORS_ONE,
+        help=(
+            "'one' reads alpha-isopropylmalate alone, which is what Leu3p binds, and is "
+            "the primary arm; 'three' adds 2-keto-isovalerate and L-valine."
+        ),
+    )
+    parser.add_argument(
+        "--aa-supervise-columns",
+        default=None,
+        help=(
+            "Comma-separated amino-acid columns the LOSS is charged on; the rest are held "
+            "out and reported separately. Omitted supervises all 19, which is what every "
+            "earlier cell ran."
+        ),
+    )
+    parser.add_argument(
+        "--apply-media",
+        choices=APPLY_MEDIA_CHOICES,
+        default=MEDIA_NONE,
+        help=(
+            "Write the head's dataset medium onto the GEM's exchange bounds before the "
+            "flux layer is built (SM for Mulleder, YPD for Cachera, SC for Lopez), and "
+            "record the wild-type growth before and after. 'none' is the shipped boundary "
+            "every earlier cell ran on."
         ),
     )
     parser.add_argument(
@@ -3937,6 +5131,44 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--flux-parsimony-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Weight on the flux layer's parsimony term, added outside the constraint "
+            "scale. Parsimony is what makes an FBA flux sparse and it has never been "
+            "applied: the recipe these cells run holds the ramp at 0.0."
+        ),
+    )
+    parser.add_argument(
+        "--flux-thermo-exempt-path",
+        type=str,
+        default=None,
+        help=(
+            "JSON exemption list from thermo_exempt_gate.py: reactions no concentration "
+            "in the window can make downhill, exempted from the second-law tightening."
+        ),
+    )
+    parser.add_argument(
+        "--flux-log-c-init-path",
+        type=str,
+        default=None,
+        help=(
+            "JSON log-concentration witness from thermo_exempt_gate.py used to "
+            "initialize log_c_base so the tightening licenses the reference flux."
+        ),
+    )
+    parser.add_argument(
+        "--flux-availability-fold",
+        type=str,
+        default="softmin",
+        choices=["softmin", "normalized_softmin"],
+        help=(
+            "GPR AND fold: 'softmin' (shipped) or 'normalized_softmin' (an intact "
+            "complex reads exactly 1 instead of 1 - log(n)/beta)."
+        ),
+    )
+    parser.add_argument(
         "--flux-draws",
         type=int,
         default=1,
@@ -4006,12 +5238,24 @@ def main() -> None:
         conc_upper_m=args.conc_upper_m,
         flux_density_weight=args.flux_density_weight,
         flux_balance_active_weight=args.flux_balance_active_weight,
+        flux_parsimony_weight=args.flux_parsimony_weight,
+        flux_thermo_exempt_path=args.flux_thermo_exempt_path,
+        flux_log_c_init_path=args.flux_log_c_init_path,
+        flux_availability_fold=args.flux_availability_fold,
         flux_draws=args.flux_draws,
         flux_latent_stochastic=args.flux_latent_stochastic,
         flux_kl_weight=args.flux_kl_weight,
         flux_log_c_from_latent=args.flux_log_c_from_latent,
+        ib_readout=args.ib_readout,
+        ib_anchors=args.ib_anchors,
+        aa_supervise_columns=(
+            None
+            if args.aa_supervise_columns is None
+            else [c.strip() for c in args.aa_supervise_columns.split(",") if c.strip()]
+        ),
+        apply_media=args.apply_media,
     )
-    dataset = build_dataset()
+    dataset = build_dataset(cell.head)
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)
     pinned, report = resolve_pinned_test(dataset, cfg)
 
@@ -4075,7 +5319,7 @@ def main() -> None:
             "select_val_pearson": result["select_val_pearson"],
             "wall_time_s": result["wall_time_s"],
         }
-        if cell.head == HEAD:
+        if cell.head in SCALAR_HEADS:
             summary.update(
                 {
                     "test_spearman_pinned": pin["spearman"],
@@ -4119,7 +5363,7 @@ def main() -> None:
     headline = (
         f"  pinned test spearman {result['test']['pinned']['spearman']:+.4f} "
         f"(n={result['test']['pinned']['n']})"
-        if cell.head == HEAD
+        if cell.head in SCALAR_HEADS
         else (
             f"  pinned test mean per-feature spearman "
             f"{result['test']['pinned']['mean_spearman']:+.4f} "

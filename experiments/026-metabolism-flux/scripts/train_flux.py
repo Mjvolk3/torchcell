@@ -329,6 +329,24 @@ ARMS: dict[str, dict[str, Any]] = {
         "use_dissipation_limit": True,
         "use_abundance_head": True,
     },
+    # THE NOMINAL ABUNDANCE PATH WITH THE WIDENED KCAT CEILING. `flux_nullspace`'s switches
+    # with a 2-sigma widening of the k_cat table, which is the only rule that lifts all
+    # three reactions the pFBA reference carries above their box ceiling: no subunit
+    # aggregation rule reaches r_0961, a single-gene unit. The channel is overridden by the
+    # 027 arm file, so the parameterization named here is not what the warm-start cells run.
+    #
+    # It exists as a registry entry rather than as a field in the 027 arm file because
+    # ArmConfig forbids extra keys, so `base_arm` is the only channel an 027 cell has for a
+    # k_cat rule, and `base_arm` is serialized into the result file with the cell.
+    "flux_nullspace_kcat_sigma2": {
+        "flux": True,
+        "parameterization": "nullspace",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "kcat_ceiling_sigma_k": 2.0,
+    },
     "flux_projection_anchored_k20": {
         "flux": True,
         "parameterization": "projection_k20",
@@ -374,6 +392,70 @@ def build_dataset() -> Neo4jCellDataset:
     )
 
 
+#: Media whose recipe object carries NO provenance and NO concentrations: the composition
+#: is the standard Difco/Sigma formulation named in `torchcell/datamodels/media.py` and
+#: only the uptake magnitudes are sourced (Suthers). A cell bounded by one of these is
+#: running on an UNSOURCED medium, and its result file says so rather than leaving a reader
+#: to assume the bound vector is as well sourced as the kcat table.
+UNSOURCED_MEDIA = frozenset({"SC", "SC-URA"})
+
+
+def media_report(model: Any, media_name: str | None) -> dict[str, Any]:
+    """Apply a medium to ``model``'s exchange bounds, or record that none was applied.
+
+    MUTATES ``model`` when a medium is named: ``MediaBounds.apply`` closes every exchange
+    and opens exactly the named recipe, which is what makes a medium a statement about the
+    whole boundary rather than an additive patch. The wild-type growth rate is measured
+    before and after, because that single number is what says whether the change was a
+    no-op, a loosening or a starvation, and it is the first thing to check when an arm
+    moves after a medium is applied.
+
+    No fallback: a name the ontology does not carry is an error here rather than a silent
+    return to the shipped bounds, which would be a cell that reports a medium it never ran.
+    """
+    if media_name is None:
+        return {
+            "applied": False,
+            "note": (
+                "shipped yeast-GEM 9.0.2 exchange bounds, where all 20 amino-acid "
+                "exchanges have lower_bound 0, i.e. effectively synthetic minimal. This "
+                "is what every 026 and 027 arm before 2026-09-14 ran on."
+            ),
+        }
+    from torchcell.metabolism.media import FBA_MEDIA, media_to_bounds
+
+    assert media_name in FBA_MEDIA, (
+        f"medium {media_name!r} is not in FBA_MEDIA ({sorted(FBA_MEDIA)}). The bound "
+        "vector comes from the ontology recipe or the cell does not run; it is never "
+        "quietly replaced by the shipped bounds."
+    )
+    media = FBA_MEDIA[media_name]
+    growth_before = float(model.slim_optimize())
+    bounds = media_to_bounds(media, model)
+    bounds.apply(model)
+    growth_after = float(model.slim_optimize())
+    return {
+        "applied": True,
+        "media_name": media_name,
+        "recipe": media.name,
+        "state": media.state,
+        "n_components": bounds.n_components,
+        "n_resolved": bounds.n_resolved,
+        "n_exchanges_opened": len(bounds.bounds),
+        "unresolved": bounds.unresolved_names,
+        "excluded_by_role": bounds.excluded_names,
+        "wild_type_growth_before": growth_before,
+        "wild_type_growth_after": growth_after,
+        "provenance": (
+            "UNSOURCED: the recipe object carries no provenance and no concentrations; "
+            "its composition is the standard Difco/Sigma formulation named in "
+            "torchcell/datamodels/media.py and only the uptake magnitudes are Suthers'."
+            if media_name in UNSOURCED_MEDIA
+            else "see the recipe's docstring in torchcell/metabolism/media.py"
+        ),
+    }
+
+
 def build_flux_layer(
     arm: dict[str, Any], model_gene_ids: list[str], hidden_dim: int
 ) -> tuple[FluxLayer | None, dict[str, Any]]:
@@ -401,6 +483,16 @@ def build_flux_layer(
     if not arm["flux"]:
         return None, {}
     source = YeastGEM()
+    # THE GROWTH MEDIUM, applied BEFORE the tensors are taken and reported either way.
+    #
+    # Every 026 and 027 arm to date has run on the SHIPPED yeast-GEM boundary, where all 20
+    # amino-acid exchanges have lower_bound 0, i.e. effectively synthetic minimal. That is
+    # right for Mulleder, whose strains are prototrophs on minimal agar, and wrong for
+    # Cachera (solid YPD) and Montano Lopez (SC liquid), both of which supply the very
+    # amino acids their readouts depend on. `media_name` keys
+    # `torchcell.metabolism.media.FBA_MEDIA`; absent, nothing is touched and the layer is
+    # bit-identical to every earlier build.
+    media_meta = media_report(source.model, arm.get("media_name"))
     gem = build_gem_tensors(source.model, model_dir=source.model_dir)
     units = gem.catalytic_units
     mw = molecular_weight_table(source.model_dir, units.gene_ids)
@@ -410,12 +502,33 @@ def build_flux_layer(
         osp.join(kinetics_dir, VERIFIED_PAIRS_FEATURE)
     )
     homolog_mirror = HOMOLOG_MIRROR if arm.get("kcat_homolog_tier", True) else None
+    # THE TWO KCAT TABLE RULES, forwarded from the arm so they are serialized with the cell.
+    # Both default to what every arm before 2026-09-14 resolved, so an arm that names
+    # neither builds a bit-identical table.
+    #
+    # `complex_aggregation` is a CONVENTION: min is "a complex cannot turn over faster than
+    # its slowest subunit", max is GECKO 3's reading. It moves complexes and leaves the
+    # table's center alone, which is why the median k_cat is 4.27 under min and 4.38 under
+    # max while ATP synthase moves 65x.
+    #
+    # `kcat_ceiling_sigma_k` is an UNCERTAINTY statement on the shipped convention:
+    # k_cat <- k_cat * 10^(k sigma_u) with sigma from parameters.KCAT_SIGMA_LADDER. It is
+    # the only rule that reaches a single-gene unit, which is why r_0961 needs it.
+    #
+    # Applied to the k_cat side only. K_M keeps its own reduction, the maximum, because the
+    # affinity argument is a different one and the parameter review does not contest it.
+    complex_aggregation = arm.get("complex_aggregation", "min")
+    kcat_ceiling_sigma_k = float(arm.get("kcat_ceiling_sigma_k", 0.0))
     predicted_kcat = predicted_km = None
     km = None
     if kcat_tier == "predicted":
         plausibility = osp.join(EXPERIMENT_ROOT, PLAUSIBILITY_RESULT)
         predicted_kcat = load_predicted_unit_table(
-            "k_cat", units.n_units, kinetics_dir, plausibility
+            "k_cat",
+            units.n_units,
+            kinetics_dir,
+            plausibility,
+            complex_aggregation=complex_aggregation,
         )
         predicted_km = load_predicted_unit_table(
             "K_M", units.n_units, kinetics_dir, plausibility
@@ -439,6 +552,8 @@ def build_flux_layer(
         predicted=predicted_kcat,
         substrates=substrates,
         homolog_mirror_dir=homolog_mirror,
+        complex_aggregation=complex_aggregation,
+        kcat_ceiling_sigma_k=kcat_ceiling_sigma_k,
     )
     thermo_source = ThermoSource(arm.get("thermo_source", "shipped"))
     reaction_thermo = None
@@ -511,6 +626,8 @@ def build_flux_layer(
         # every unit it left empty.
         "kcat_experimental_fraction": float(kcat.experimental_coverage.fraction),
         "kcat_tier": kcat_tier,
+        "complex_aggregation": complex_aggregation,
+        "kcat_ceiling_sigma_k": kcat_ceiling_sigma_k,
         "kcat_tier_counts": kcat.tier_counts(),
         "kcat_notes": kcat.notes,
         "km_tier_counts": None if km is None else km.tier_counts(),
@@ -526,6 +643,7 @@ def build_flux_layer(
         ),
         "thermo_sha256": None if reaction_thermo is None else reaction_thermo.sha256,
         "mw_experimental_fraction": float(mw.experimental_coverage.fraction),
+        "media": media_meta,
         "met_index": {m: i for i, m in enumerate(gem.met_ids)},
     }
     return layer, meta
@@ -556,6 +674,25 @@ def extract_targets(
        ~11 % of the co-measured genotypes -- so splitting a 20-value block by position is
        wrong roughly nine times in ten. Grouping and matching on width is what makes the
        assignment identity-based.
+
+    THE LIMIT OF WIDTH AS AN IDENTITY, and the guard that makes it audible. Width separates
+    two groups only while no two groups under one label have the SAME width. Two width-1
+    ``metabolite_level`` groups on one genotype -- betaxanthin beside an isobutanol
+    biosensor fold change, say -- both match a width-1 head and are AVERAGED by the
+    ``torch.stack(matched).mean`` below, producing a plausible number from two different
+    assays. A width-1 head that meets such a genotype is therefore refused rather than
+    decoded, with the group sizes in the message.
+
+    THE GUARD IS SCOPED TO WIDTH 1, and deliberately: averaging several groups of the SAME
+    wider width is the intended behavior for genuine replicate experiments, and a head that
+    does not read the colliding groups averages nothing. Measured 2026-09-14 over both
+    builds: ``fig6_pigment_transfer`` carries group-size multisets (1, 19) on 4,432
+    genotypes, (19,) on 246, (1,) on 237 and () on 15, so no 026 or 027 cell run to date
+    meets the condition; ``fig6_build`` carries exactly ONE colliding genotype, record 3363,
+    where two Cachera strains (the ARO4 and the ARO7 deletion, each inside the betaxanthin
+    cassette) aggregate to one deletion key and contribute two width-1 betaxanthin values.
+    A betaxanthin head on that build is refused, which is right; the isobutanol head reads a
+    width-20 column there and is unaffected.
     """
     gene = batch["gene"]
     values = gene.phenotype_values
@@ -596,6 +733,18 @@ def extract_targets(
                 for s in cand_samp.unique(sorted=True).tolist()
             ]
             matched = [g for g in groups if g.numel() == width]
+            if width == 1 and len(matched) > 1:
+                raise AssertionError(
+                    f"genotype {b} of this batch carries {len(matched)} width-1 {label!r} "
+                    f"groups (group sizes {[int(g.numel()) for g in groups]}) and head "
+                    f"{name!r} is width 1, so the two would be averaged into one target -- "
+                    "a betaxanthin colony-color z-score with an isobutanol biosensor fold "
+                    "change, say. Heads sharing a label are separated by group WIDTH "
+                    "because the phenotype dict keys are dropped in collation, and width "
+                    "cannot separate these. Build the dataset from a query carrying at "
+                    "most one width-1 dataset for this label, or decode this head as a "
+                    "column of a wider block."
+                )
             if not matched:
                 continue
             target[b] = torch.stack(matched, dim=0).mean(dim=0)

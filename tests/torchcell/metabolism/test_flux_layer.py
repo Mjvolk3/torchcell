@@ -14,6 +14,7 @@ checkout is absent.
 
 import os
 import os.path as osp
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -2035,3 +2036,513 @@ def test_an_unknown_row_set_is_refused():
     """A typo must not silently fall back to the set the cell did not ask for."""
     with pytest.raises(ValueError, match="balance_active_row_set"):
         _layer(thermo_mode=ThermoMode.ANCHORED, balance_active_row_set="active")
+
+
+# ---------------------------------------------------------------------------------------
+# THE WARM-STARTED RESIDUAL HEAD
+#
+# Measured motivation, in one line each, because the tests below are assertions about a
+# design whose whole justification is a measurement:
+#   * from a uniform random point of the box the alternation leaves the turnover-thresholded
+#     balance ratio at 2.0 for K = 20 .. 5000, von Neumann and Dykstra alike (probe_projrate);
+#   * from a proposal 1 percent from feasible the SAME K = 100 reaches 0.0012 (probe_warmstart);
+#   * the trained boxforce head of job 1784 proposes at a relative distance of 0.990, i.e. the
+#     projection discards 99 percent of it (probe_trained_proposal_distance).
+# ---------------------------------------------------------------------------------------
+
+
+def _warmstart_layer(seed: int = 5, **overrides: Any) -> FluxLayer:
+    """The residual head on the toy network, built from a fixed seed."""
+    torch.manual_seed(seed)
+    return _layer(parameterization="warmstart_k20_box", **overrides)
+
+
+def test_parse_parameterization_reads_the_warmstart_channel():
+    """The channel, its step count, its exact end and its method all ride in the string."""
+    from torchcell.metabolism.flux_layer import parse_parameterization
+
+    plain = parse_parameterization("warmstart", 5)
+    assert (plain.kind, plain.projection_steps, plain.projection_end) == (
+        "warmstart",
+        5,
+        None,
+    )
+    full = parse_parameterization("warmstart_k100_boxforce_dykstra", 5)
+    assert (full.kind, full.projection_steps) == ("warmstart", 100)
+    assert (full.projection_end, full.projection_method) == ("boxforce", "dykstra")
+    with pytest.raises(ValueError, match="parameterization"):
+        parse_parameterization("warmstart_k100_bx", 5)
+
+
+def test_the_reference_flux_is_solved_from_the_gem_and_is_feasible():
+    r"""The reference is solved INSIDE the build step, from S and the bounds, and balances.
+
+    This is what keeps the head organism-independent: no reference vector is accepted from
+    a caller, so porting to another GEM brings its own reference and no yeast constant
+    enters. On the toy network the parsimonious optimum is unique: import 10 through r0,
+    carry it through r1, run nothing around the futile cycle, export 10 through r3.
+    """
+    layer = _warmstart_layer()
+    record = layer.reference_flux
+    assert record is not None
+    assert record.objective_value == pytest.approx(10.0)
+    assert record.v.tolist() == pytest.approx([10.0, 10.0, 0.0, 10.0])
+    # The futile cycle carries nothing, which is the parsimony half doing its job.
+    assert record.v[2].abs() < 1e-9
+    balance = layer._s_matmul(record.v.unsqueeze(0))[:, layer.independent_rows]
+    assert float(balance.abs().max()) < 1e-6
+    report = layer.coverage_report()["warm_start_reference"]
+    assert report["route"] == "pfba"
+    assert report["growth_fraction"] == 1.0
+    assert report["n_reactions_carrying_flux"] == 3
+
+
+def test_a_caller_supplied_reference_route_is_refused():
+    """There is no second route, and no silent fall back to one."""
+    with pytest.raises(ValueError, match="warm_start_reference"):
+        _warmstart_layer(warm_start_reference="measured")
+
+
+def test_alpha_is_exactly_the_proposals_relative_distance_at_init():
+    r"""The one learned scalar is on the same axis as the probes' ``rel``.
+
+    The null-space direction is normalized before it is scaled, so
+    :math:`\lVert v_{pre}-v_{ref}\rVert/\lVert v_{ref}\rVert=\alpha` identically. Without
+    that normalization alpha would be readable only through the norm of an MLP output, and
+    the arm's central number would not be comparable to the table it was designed against.
+    """
+    layer = _warmstart_layer(warm_start_init_rel=0.01)
+    assert float(layer.warm_alpha()) == pytest.approx(0.01, rel=1e-5)
+    h, ctx, idx, idx_batch = _inputs()
+    gamma = layer.gene_availability(h, idx, idx_batch)
+    lb, ub, _ = layer.dynamic_box(layer.reaction_availability(gamma))
+    v_pre, _, _, reference = layer._warmstart_flux(ctx, lb, ub, draw=False)
+    # Only where the clip does not bite, since the clip is what the box is for.
+    interior = (v_pre > lb + 1e-6) & (v_pre < ub - 1e-6)
+    if bool(interior.all(dim=1).any()):
+        row = int(torch.nonzero(interior.all(dim=1))[0])
+        rel = (v_pre[row] - reference[row]).norm() / reference[row].norm()
+        assert float(rel) == pytest.approx(0.01, rel=1e-3)
+
+
+def test_the_warm_start_proposal_is_closer_to_the_feasible_set_than_a_cold_one():
+    """The projection discards less of the proposal than it does of a null-space start.
+
+    The comparison is the point of the whole channel: both layers run the same K clips into
+    the same box and differ only in where the alternation begins.
+
+    WHAT THIS TOY CANNOT SHOW, stated so the test is not read as more than it is. The
+    network has two independent rows and a box the capacity bound narrows to a fraction of
+    the reference, so the clip breaks the reference's balance and ``c_balance`` does NOT
+    come out lower here than for the cold start. The balance claim is a genome-scale one
+    and its number lives in
+    ``experiments/026-metabolism-flux/results/probe_warmstart_init.json``, measured on the
+    real GEM through 026's own ``build_flux_layer``.
+    """
+    inputs = _inputs()
+    warm = _warmstart_layer(seed=11, projection_steps=20)
+    warm_out = warm(*inputs)
+    warm_pre = warm_out["v_pre_projection"]
+    warm_rel = float(
+        ((warm_out["v"] - warm_pre).norm(dim=1) / warm_pre.norm(dim=1)).mean()
+    )
+    cold = _projection_layer(seed=11, projection_steps=20, projection_end="box")
+    cold_out = cold(*inputs)
+    cold_pre = (cold._latent(inputs[1])[0] * cold.config.flux_scale) @ (
+        cold.null_basis.t()
+    )
+    cold_rel = float(
+        ((cold_out["v"] - cold_pre).norm(dim=1) / cold_pre.norm(dim=1)).mean()
+    )
+    assert warm_rel < cold_rel, (warm_rel, cold_rel)
+
+
+def test_a_deletion_still_zeroes_its_reaction_under_the_warm_start():
+    """The reference is clipped into the genotype box, so the knockout still bites hard.
+
+    A warm start that ignored the box would reinstate a deleted reaction's wild-type flux,
+    which is the one thing a residual head must not do.
+    """
+    layer = _warmstart_layer()
+    # g2 catalyzes r2 alone; delete it and r2's box collapses to the point 0.
+    out = layer(*_inputs(deleted=2))
+    assert float(out["v"][:, 2].abs().max()) < 1e-6
+    assert float(out["feas_warm_reference_active_frac"]) > 0.0
+
+
+def test_the_warm_start_diagnostics_are_scalars_the_trainer_logs():
+    """Every number the arm is read by is a 0-dim ``feas_`` entry, logged every epoch."""
+    layer = _warmstart_layer()
+    out = layer(*_inputs())
+    for key in (
+        "feas_warm_alpha",
+        "feas_warm_proposal_rel",
+        "feas_warm_reference_clipped_frac",
+        "feas_warm_reference_active_frac",
+    ):
+        assert key in out, key
+        assert out[key].dim() == 0
+    assert float(out["feas_warm_alpha"]) == pytest.approx(0.01, rel=1e-5)
+
+
+def test_alpha_is_learned_and_the_gradient_reaches_the_gene_tokens():
+    """The residual scale is a parameter, and the genotype still reaches the flux."""
+    layer = _warmstart_layer()
+    assert any(name == "warm_log_alpha" for name, _ in layer.named_parameters())
+    h, ctx, idx, idx_batch = _inputs()
+    h.requires_grad_(True)
+    out = layer(h, ctx, idx, idx_batch)
+    out["v"].sum().backward()
+    assert layer.warm_log_alpha.grad is not None
+    assert h.grad is not None and float(h.grad.abs().sum()) > 0.0
+
+
+def test_the_warm_start_ends_exactly_on_the_box_it_names():
+    """``_box`` means the bounds hold to machine precision, as on every other channel."""
+    layer = _warmstart_layer(projection_steps=20)
+    out = layer(*_inputs())
+    assert float(layer.feasibility(out)["box_violation_frac"].max()) == 0.0
+    assert layer.coverage_report()["projection_end"] == "box"
+
+
+def test_the_directional_end_needs_a_thermodynamic_table():
+    """``boxforce`` tightens the box by delta_r_G, so it refuses a layer that has none."""
+    with pytest.raises(ValueError, match="ThermoMode.ANCHORED"):
+        _layer(parameterization="warmstart_k20_boxforce", thermo_mode=ThermoMode.OFF)
+
+
+def test_the_warm_start_adds_no_parameter_to_any_other_channel():
+    """Bit-identical when off: no buffer, no parameter, no state_dict entry.
+
+    An empty ``v_reference`` registered on every layer would change the state_dict of every
+    arm already trained, for a tensor none of them reads.
+    """
+    plain = _layer(thermo_mode=ThermoMode.OFF)
+    assert plain.reference_flux is None
+    assert "v_reference" not in dict(plain.named_buffers())
+    assert "warm_log_alpha" not in dict(plain.named_parameters())
+    assert plain.coverage_report()["warm_start_reference"] is None
+
+
+def test_the_warm_start_samples_a_different_direction_per_draw():
+    """Every draw leaves the same reference in a different direction."""
+    layer = _warmstart_layer(latent_stochastic=True, projection_steps=20)
+    assert layer.latent_stochastic
+    h, ctx, idx, idx_batch = _inputs()
+    sample = layer.sample(h, ctx, idx, idx_batch, n_samples=4)
+    assert sample.v.shape[0] == 4
+    spread = sample.v.std(dim=0)
+    assert float(spread.max()) > 0.0
+
+
+def test_parsimony_can_be_priced_outside_the_ramp():
+    r"""Parsimony has never been applied, because it sits inside a product that is zero.
+
+    ``constraint_loss`` multiplies the whole physics sum by ``constraint_scale``, and every
+    wave-7 and wave-8 cell runs that scale at exactly 0.0, so ``weights['parsimony']``
+    contributes nothing to those runs. This is the same escape the density and active-row
+    balance terms already take, and it matters because parsimony is what makes an FBA flux
+    sparse: the pFBA reference carries flux on 10.3 percent of reactions against the
+    boxforce head's 28 to 32.
+    """
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    out = layer(*_inputs())
+    layer.set_constraint_epoch(0)
+    layer.config.constraint_final_scale = 0.0
+    layer.constraint_scale = 0.0
+    inside = float(layer.constraint_loss(out))
+    assert inside == pytest.approx(0.0, abs=1e-12)
+
+    layer.config.parsimony_outside_ramp_weight = 1.0e-2
+    outside = float(layer.constraint_loss(out))
+    assert outside == pytest.approx(1.0e-2 * float(out["c_parsimony"]), rel=1e-6)
+    assert outside > 0.0
+    assert layer.coverage_report()["parsimony_outside_ramp_weight"] == 1.0e-2
+
+
+def test_parsimony_outside_the_ramp_is_zero_by_default():
+    """Every arm before this option must compute the loss it always did."""
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    assert layer.config.parsimony_outside_ramp_weight == 0.0
+    out = layer(*_inputs())
+    with_flag = float(layer.constraint_loss(out))
+    layer.config.parsimony_outside_ramp_weight = 0.0
+    assert float(layer.constraint_loss(out)) == with_flag
+
+
+def test_the_thermo_exemption_list_extends_box_2_and_records_its_provenance(tmp_path):
+    r"""A reaction the table cannot defend is exempted, and the run records which list.
+
+    MEASURED motivation (results/thermo_exempt_candidates.json, job 1906): with a real flux
+    fixed, the total L1 slack on the second-law sign constraints is 2,641.5 kJ under
+    union_external, and removing the 47 reactions the LP puts its violation on leaves 0.000
+    kJ over the remaining 378. The list is a claim about ONE table under ONE window, so the
+    route, the window and the table's hashes are recorded beside the file's own hash.
+    """
+    import json
+
+    path = tmp_path / "exempt.json"
+    path.write_text(
+        json.dumps(
+            {
+                "provenance": {
+                    "route": "union_external",
+                    "window_m": [1e-7, 1e-2],
+                    "epsilon_kj": 1e-3,
+                    "thermo_table_sha256": {"met": "abc"},
+                },
+                "selected_method": "l1_violated",
+                "gate_met": True,
+                # r1 is priced and not exempt on the toy; r0 and r3 are exchanges and are
+                # already exempt under Box 2, so listing r1 alone makes the count of NEWLY
+                # exempted reactions exactly one.
+                "exempt_reaction_ids": ["r1"],
+            }
+        )
+    )
+    base = _layer(thermo_mode=ThermoMode.ANCHORED)
+    listed = _layer(thermo_mode=ThermoMode.ANCHORED, thermo_exempt_path=str(path))
+    assert not bool(base.thermo_exempt[1])
+    assert bool(listed.thermo_exempt[1])
+    assert listed.n_thermo_reactions == base.n_thermo_reactions - 1
+
+    report = listed.coverage_report()["thermo_exempt_file"]
+    assert report["n_reactions_listed"] == 1
+    assert report["n_reactions_newly_exempted"] == 1
+    assert report["route"] == "union_external"
+    assert report["window_m"] == [1e-7, 1e-2]
+    assert report["gate_met"] is True
+    assert len(report["sha256"]) == 64
+    # The exempt set is what the hinge and the directional box read, so the layer must
+    # report one number and not two.
+    assert int(listed.thermo_exempt.sum()) == int(base.thermo_exempt.sum()) + 1
+    assert base.coverage_report()["thermo_exempt_file"] is None
+
+
+def test_an_exemption_list_from_another_model_is_refused(tmp_path):
+    """A list applied by silent omission would exempt nothing and report that it had."""
+    import json
+
+    path = tmp_path / "exempt.json"
+    path.write_text(json.dumps({"exempt_reaction_ids": ["r1", "r_9999"]}))
+    with pytest.raises(ValueError, match="does not have"):
+        _layer(thermo_mode=ThermoMode.ANCHORED, thermo_exempt_path=str(path))
+
+    missing = tmp_path / "nope.json"
+    with pytest.raises(ValueError, match="thermo_exempt_path"):
+        _layer(thermo_mode=ThermoMode.ANCHORED, thermo_exempt_path=str(missing))
+
+    wrong = tmp_path / "wrong.json"
+    wrong.write_text(json.dumps({"methods": []}))
+    with pytest.raises(ValueError, match="not an exemption list"):
+        _layer(thermo_mode=ThermoMode.ANCHORED, thermo_exempt_path=str(wrong))
+
+
+def test_no_exemption_path_is_bit_identical():
+    """Off is the default and must leave the exempt set exactly as Box 2 built it."""
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    assert layer.config.thermo_exempt_path is None
+    assert layer.thermo_exempt_list is None
+    assert layer.n_thermo_exempt_from_file == 0
+    # r0 and r3 are the toy's exchanges, r3 is also the objective; r1 and r2 are priced.
+    assert layer.thermo_exempt.tolist() == [True, False, False, True]
+
+
+def test_the_exemption_list_can_be_applied_after_construction(tmp_path):
+    """026's build_flux_layer owns the construction, so the switch has a post-hoc door.
+
+    The same door 027's trainer already uses for the density weight and the concentration
+    window. It has to rebuild a buffer rather than assign a float, which is the only reason
+    it is a method.
+    """
+    import json
+
+    path = tmp_path / "exempt.json"
+    path.write_text(
+        json.dumps({"exempt_reaction_ids": ["r1"], "selected_method": "l1_violated"})
+    )
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    before = int(layer.thermo_exempt.sum())
+    added = layer.apply_thermo_exempt_list(str(path))
+    assert added == 1
+    assert int(layer.thermo_exempt.sum()) == before + 1
+    assert layer.coverage_report()["thermo_exempt_file"]["path"] == str(path)
+    # The hinge reads the set at call time, so the exempted reaction leaves the term.
+    out = layer(*_inputs())
+    assert not bool(layer._thermo_active()[1])
+    assert "c_thermo" in out
+
+
+def _log_c_init_file(
+    tmp_path: Path, layer: FluxLayer, targets: dict[str, float]
+) -> tuple[Path, list[float]]:
+    """Write a concentration witness in this layer's own metabolite order."""
+    import json
+    import math
+
+    lo = math.log(layer.config.conc_lower_m)
+    hi = math.log(layer.config.conc_upper_m)
+    middle = 0.5 * (lo + hi)
+    vector = [targets.get(m, middle) for m in layer.met_ids]
+    path = tmp_path / "log_c.json"
+    path.write_text(
+        json.dumps(
+            {
+                "met_ids": list(layer.met_ids),
+                "ln_c": vector,
+                "route": "union_external",
+                "window_m": [layer.config.conc_lower_m, layer.config.conc_upper_m],
+                "exempt_file": "thermo_exempt_candidates.json",
+                "exempt_file_sha256": "0" * 64,
+                "n_constraints_satisfied": 378,
+                "residual_total_slack_kj": 0.0,
+            }
+        )
+    )
+    return path, vector
+
+
+def test_the_concentration_init_starts_the_layer_at_the_witness(tmp_path):
+    r"""The directional box is only as good as the concentration it is evaluated at.
+
+    MEASURED motivation (results/probe_warmstart_init.json): at a random initialization the
+    tightening forbids the direction of 145 of the 495 reactions the pFBA reference carries,
+    because the box takes the sign of delta_r_G at concentrations that license nothing in
+    particular. The LP behind the exemption list also produces the concentrations under
+    which that flux IS sign-consistent, and this is how the layer starts there.
+    """
+    import math
+
+    probe = _layer(thermo_mode=ThermoMode.ANCHORED)
+    path, vector = _log_c_init_file(tmp_path, probe, {"A": math.log(1e-3)})
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED, log_c_init_path=str(path))
+    context = torch.randn(4, 8)
+    log_c = layer.reaction_potential(context)[2]["log_c"]
+    # Every genotype starts at the same vector, because the context term starts at zero.
+    assert float(log_c.std(dim=0).max()) == pytest.approx(0.0, abs=1e-6)
+    assert float((log_c[0] - torch.tensor(vector)).abs().max()) < 1e-4
+    assert layer.log_c_init_max_error < 1e-4
+
+    report = layer.coverage_report()["log_c_init_file"]
+    assert report["route"] == "union_external"
+    assert report["n_constraints_satisfied"] == 378
+    assert len(report["sha256"]) == 64
+    # And both are learned parameters that START at the witness, not frozen at it: the
+    # concentrations are free to move during training, which is why the second-law
+    # violation fraction is a number to watch every epoch rather than a guarantee.
+    assert layer.log_c_from_context.weight.requires_grad
+    assert layer.log_c_base.requires_grad
+    out = layer(*_inputs())
+    out["thermo_log_c"].sum().backward()
+    assert layer.log_c_base.grad is not None
+    assert float(layer.log_c_base.grad.abs().sum()) > 0.0
+
+
+def test_the_concentration_init_is_off_by_default_and_checked_when_on(tmp_path):
+    """Off is bit-identical; on, a vector from another model or window is refused."""
+    import json
+
+    plain = _layer(thermo_mode=ThermoMode.ANCHORED)
+    assert plain.config.log_c_init_path is None
+    assert plain.log_c_init is None
+    assert plain.coverage_report()["log_c_init_file"] is None
+    assert float(plain.log_c_base.abs().max()) == 0.0
+
+    wrong_model = tmp_path / "wrong.json"
+    wrong_model.write_text(json.dumps({"met_ids": ["X", "Y"], "ln_c": [0.0, 0.0]}))
+    with pytest.raises(ValueError, match="different metabolite list"):
+        _layer(thermo_mode=ThermoMode.ANCHORED, log_c_init_path=str(wrong_model))
+
+    path, _ = _log_c_init_file(tmp_path, plain, {})
+    with pytest.raises(ValueError, match="window"):
+        _layer(
+            thermo_mode=ThermoMode.ANCHORED, log_c_init_path=str(path), conc_upper_m=1.0
+        )
+    with pytest.raises(ValueError, match="ThermoMode.ANCHORED"):
+        _layer(thermo_mode=ThermoMode.FREE, log_c_init_path=str(path))
+
+
+def test_the_concentration_init_can_be_applied_after_construction(tmp_path):
+    """The same post-construction door the exemption list has, for the same reason."""
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    path, vector = _log_c_init_file(tmp_path, layer, {})
+    error = layer.apply_log_c_init(str(path))
+    assert error < 1e-4
+    context = torch.randn(2, 8)
+    log_c = layer.reaction_potential(context)[2]["log_c"]
+    assert float((log_c[0] - torch.tensor(vector)).abs().max()) < 1e-4
+    assert layer.coverage_report()["log_c_init_file"]["path"] == str(path)
+
+
+def test_the_normalized_fold_returns_exactly_one_on_an_intact_complex():
+    r"""The softmin charges a complex for having subunits, and that is a bug not a feature.
+
+    :math:`-\log\sum_g e^{-\beta\gamma_g}/\beta` evaluated with every gate at 1 is
+    :math:`1-\log(n_u)/\beta`, so at the shipped beta of 8 a 2-subunit complex reads 0.913
+    and a 17-subunit one 0.646 on a WILD TYPE where nothing is deleted. MEASURED consequence
+    (results/probe_warmstart_init.json): with untrained gates ATP synthase's availability
+    reads 0.0447, which held its box ceiling at 4.47 against a reference flux of 5.95 even
+    after the enzyme capacity had been raised past it.
+    """
+    import math
+
+    layer = _layer(thermo_mode=ThermoMode.OFF, availability_fold="normalized_softmin")
+    plain = _layer(thermo_mode=ThermoMode.OFF)
+    intact = torch.ones(1, 3)
+    # r1 is the two-gene complex {g0, g1}; r2 is the single-gene unit {g2}.
+    assert float(plain.reaction_availability(intact)[0, 1]) == pytest.approx(
+        1.0 - math.log(2.0) / plain.config.softmin_beta, abs=1e-5
+    )
+    assert float(layer.reaction_availability(intact)[0, 1]) == pytest.approx(
+        1.0, abs=1e-6
+    )
+    # A one-gene unit has nothing to normalize, so the two folds agree there exactly.
+    assert float(layer.reaction_availability(intact)[0, 2]) == pytest.approx(
+        float(plain.reaction_availability(intact)[0, 2]), abs=1e-7
+    )
+
+
+def test_the_normalized_fold_still_kills_a_deleted_subunit():
+    """The deletion is the property the obvious alternative would have broken.
+
+    Shifting by log(n)/beta, which makes the fold a log-MEAN-exp, also returns 1 on the
+    intact complex and returns 0.354 for one deleted subunit among sixteen present. Dividing
+    by the all-ones value leaves the deletion at zero, because the raw softmin goes
+    non-positive the moment any gate is 0.
+    """
+    layer = _layer(thermo_mode=ThermoMode.OFF, availability_fold="normalized_softmin")
+    deleted = torch.tensor([[0.0, 1.0, 1.0]])
+    assert float(layer.reaction_availability(deleted)[0, 1]) == pytest.approx(
+        0.0, abs=1e-6
+    )
+    # And through the whole chain, the flux of the complex's reaction is exactly zero.
+    out = layer(*_inputs(deleted=0))
+    assert float(out["v"][:, 1].abs().max()) == 0.0
+
+
+def test_the_normalized_fold_preserves_the_ordering_of_partial_gates():
+    """Dividing by a positive per-unit constant is monotone, so nothing is reordered."""
+    layer = _layer(thermo_mode=ThermoMode.OFF, availability_fold="normalized_softmin")
+    plain = _layer(thermo_mode=ThermoMode.OFF)
+    generator = torch.Generator().manual_seed(3)
+    gamma = torch.rand(32, 3, generator=generator)
+    normalized = layer.reaction_availability(gamma)[:, 1]
+    original = plain.reaction_availability(gamma)[:, 1]
+    # Rank correlation of 1: same order, different scale.
+    assert torch.equal(torch.argsort(normalized), torch.argsort(original))
+    assert float((normalized - original).abs().max()) > 0.0
+    assert float(normalized.max()) <= 1.0 + 1e-6
+
+
+def test_the_default_fold_is_unchanged_and_a_typo_is_refused():
+    """Off is the default and must be bit-identical; an unknown fold is an error."""
+    layer = _layer(thermo_mode=ThermoMode.ANCHORED)
+    assert layer.config.availability_fold == "softmin"
+    assert layer.coverage_report()["availability_fold"] == "softmin"
+    inputs = _inputs()
+    before = layer(*inputs)["v"].clone()
+    layer.config.availability_fold = "softmin"
+    assert torch.equal(layer(*inputs)["v"], before)
+    layer.config.availability_fold = "normalised_softmin"
+    with pytest.raises(ValueError, match="availability_fold"):
+        layer(*inputs)

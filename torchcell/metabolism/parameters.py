@@ -72,8 +72,9 @@ import hashlib
 import json
 import os.path as osp
 import re
+from collections.abc import Callable
 from enum import StrEnum
-from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
+from typing import TYPE_CHECKING, Any, Literal, Protocol, cast, runtime_checkable
 
 import numpy as np
 import pandas as pd
@@ -98,6 +99,27 @@ DEFAULT_OED_MIRROR = "data/enzyme_kinetics/open_enzyme_database"
 #: Median k_cat of the OED S. cerevisiae slice is computed at load time; this is only the
 #: floor used when the slice itself is empty, i.e. for an organism with no measurements.
 FALLBACK_KCAT_PER_S = 13.7
+
+
+#: How a complex's per-subunit values become one value for the complex. ``min`` is what
+#: every table before 2026-09-14 used, "a complex cannot turn over faster than its slowest
+#: subunit"; ``max`` is GECKO 3's reading, "the highest predicted k_cat across its
+#: subunits", which treats the per-subunit spread as noise around one complex rate. The
+#: convention is contested and the reaction it decides is ATP synthase, a 17-subunit complex
+#: whose predictors disagree by 0.993 decades.
+ComplexAggregation = Literal["min", "max", "median"]
+
+
+def _median_by(hits: list[Any], key: Callable[[Any], float]) -> Any:
+    r"""The element at the LOWER median of ``hits`` under ``key``.
+
+    An aggregation over subunits has to return one of the members rather than a synthetic
+    average, because each hit carries the substrate the value was assayed on and an averaged
+    value would have no substrate. The lower median is taken on an even count so the rule is
+    deterministic and errs toward the slower subunit, which is the direction ``min`` points.
+    """
+    ordered = sorted(hits, key=key)
+    return ordered[(len(ordered) - 1) // 2]
 
 
 class ParameterProvenance(StrEnum):
@@ -181,6 +203,30 @@ class PredictorRegistry(BaseModel):
         return None
 
 
+class KcatCeilingWidening(BaseModel):
+    r"""The record of a table whose ceiling was widened from a point value to a k-sigma edge.
+
+    Today's capacity bound takes a point estimate and presents it as a ceiling. Widening it to
+    :math:`10^{\mu_u+k\sigma_u}` is strictly looser and is the honest version of the same
+    bound: the value was never known to better than half a decade, so a ceiling placed at the
+    median asserts a precision nobody has. This record is what distinguishes a widened table
+    from a table whose k_cat values happen to be larger.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    sigma_k: float = Field(
+        description="k in 10^(mu + k sigma); 1.0 is an 84th percentile."
+    )
+    ladder_version: str
+    n_units: int
+    median_log10_shift: float
+    min_log10_shift: float
+    max_log10_shift: float
+    median_fold_change: float
+    sigma_by_tier: dict[str, float] = Field(default_factory=dict)
+
+
 class ParameterTable(BaseModel):
     """One resolved parameter per entity, with a per-entity provenance tag.
 
@@ -203,6 +249,20 @@ class ParameterTable(BaseModel):
     coverage: TableCoverage
     experimental_coverage: TableCoverage
     notes: str = ""
+    #: ADDITIVE, and ``None`` on every table built before the sigma ladder existed. The
+    #: per-entity width of the value in decades, :math:`\log_{10}` scale, so a draw is
+    #: ``10 ** (log10(value) + log10_sigma * eps)``. It is a SEPARATE array rather than a
+    #: replacement for ``values`` precisely so a table that carries it is bit-identical in
+    #: ``values``, ``provenance``, ``known_mask`` and ``experimental_mask`` to one that does
+    #: not; see :class:`KcatSigmaLadder` for where each rung's number comes from.
+    log10_sigma: torch.Tensor | None = Field(
+        default=None,
+        description="[n] per-entity uncertainty in decades, or None when not computed.",
+    )
+    #: ADDITIVE, and ``None`` on every table whose values are the point estimate. Present
+    #: only when the values were widened to a k-sigma ceiling, so a table cannot be widened
+    #: silently: the record travels with the values that were changed.
+    ceiling: KcatCeilingWidening | None = None
 
     def tier_counts(self) -> dict[str, int]:
         """The four-way split the coverage report has to print.
@@ -238,6 +298,8 @@ class ParameterTable(BaseModel):
         provenance: list[ParameterProvenance],
         unit: str,
         notes: str = "",
+        log10_sigma: torch.Tensor | None = None,
+        ceiling: KcatCeilingWidening | None = None,
     ) -> ParameterTable:
         """Derive both masks and both coverages from the provenance list."""
         known = torch.tensor(
@@ -253,6 +315,8 @@ class ParameterTable(BaseModel):
             coverage=TableCoverage.of(known.numpy()),
             experimental_coverage=TableCoverage.of(experimental.numpy()),
             notes=notes,
+            log10_sigma=log10_sigma,
+            ceiling=ceiling,
         )
 
 
@@ -507,6 +571,7 @@ def _database_tiers(
     substrates: SubstrateMatch,
     kind: KineticKind,
     target_temperature_c: float,
+    complex_aggregation: ComplexAggregation = "min",
 ) -> dict[int, tuple[float, ParameterProvenance, str]]:
     r"""Per catalytic unit, the best database value and which tier it came from.
 
@@ -523,9 +588,13 @@ def _database_tiers(
     rather than about this protein, and it is tagged
     :attr:`ParameterProvenance.OPEN_ENZYME_DATABASE_EC_HOMOLOG` so the two never merge.
 
-    A unit's value is the minimum over member genes for turnover and the maximum for
-    affinity: a complex cannot turn over faster than its slowest subunit, and its weakest
-    binding step sets where it saturates.
+    A unit's value is reduced over member genes by ``complex_aggregation`` for turnover and
+    by the maximum for affinity: a complex cannot turn over faster than its slowest subunit,
+    and its weakest binding step sets where it saturates. **The turnover rule is applied to
+    the measured and homolog tiers as well as to the predictions**, because a convention that
+    held for predicted values and not for measured ones would make the tiers incomparable
+    inside one table. ``K_M`` keeps its ``max`` whatever is passed: the affinity argument is a
+    different one and is not contested.
     """
     by_accession = index_by_uniprot(organism_records)
     by_ec: dict[str, list[OedKineticRecord]] = {}
@@ -540,7 +609,13 @@ def _database_tiers(
         unit_genes.setdefault(u, []).append(units.gene_ids[g])
 
     cache: dict[str, str | None] = {}
-    take = min if kind is KineticKind.KCAT else max
+    reducers: dict[str, Callable[..., Any]] = {
+        "min": min,
+        "max": max,
+        "median": _median_by,
+    }
+    reduce_kcat = reducers[complex_aggregation]
+    take: Callable[..., Any] = reduce_kcat if kind is KineticKind.KCAT else max
     out: dict[int, tuple[float, ParameterProvenance, str]] = {}
     for unit_id in range(units.n_units):
         hits: list[tuple[float, str]] = []
@@ -618,19 +693,38 @@ class PredictedUnitTable(BaseModel):
     #: it is the only object the resolver already receives that knows the structures, and a
     #: measured value cannot be accepted without checking what it was assayed on.
     substrates: SubstrateMatch = Field(default_factory=lambda: SubstrateMatch())
+    #: ADDITIVE. The across-predictor sample standard deviation of the SAME stack the
+    #: median is taken over, in decades, ``nan`` where fewer than two admitted predictors
+    #: covered the unit. The stack was already computed and thrown away; keeping its width
+    #: is what lets the predicted rung of :class:`KcatSigmaLadder` be per-unit rather than
+    #: per-tier. It never touches ``values``.
+    log10_sd: torch.Tensor | None = Field(
+        default=None,
+        description="[n_units] across-predictor sd in decades, nan where n_predictors<2.",
+    )
+    #: ADDITIVE, default ``"min"``, which is what every table built before 2026-09-14 used.
+    #: Recorded on the table rather than inferred, because two tables built under different
+    #: subunit conventions are not comparable and nothing else in the object says which rule
+    #: produced it.
+    complex_aggregation: ComplexAggregation = "min"
 
 
 def _per_unit_from_predictor(
-    parquet_path: str, column: str, n_units: int
+    parquet_path: str,
+    column: str,
+    n_units: int,
+    complex_aggregation: ComplexAggregation = "min",
 ) -> tuple[np.ndarray, np.ndarray]:
     r"""One predictor's :math:`\log_{10}` value per catalytic unit.
 
     Two aggregations, in this order and for stated reasons. **Over substrates**, the median:
     a reaction with several substrates gets one prediction each and none of them is the
     reaction's value, so the central one is taken rather than the largest. **Over the unit's
-    genes**, the minimum: a complex cannot turn over faster than its slowest subunit, which is
-    the same rule :func:`resolve_kcat_table` applies to the measured tier and the same logic
-    the availability softmin uses one level up.
+    genes**, ``complex_aggregation``, defaulting to the minimum: a complex cannot turn over
+    faster than its slowest subunit, which is the same rule :func:`resolve_kcat_table`
+    applies to the measured tier and the same logic the availability softmin uses one level
+    up. ``max`` is GECKO 3's opposite reading and ``median`` sits between them; the default
+    reproduces every table built before the option existed, byte for byte.
 
     ``unit_id`` in these tables is the index
     :func:`~torchcell.metabolism.constraints.parse_catalytic_units` assigns, verified against
@@ -639,7 +733,10 @@ def _per_unit_from_predictor(
     frame = pd.read_parquet(parquet_path, columns=["unit_id", "gene_id", column])
     frame = frame[np.isfinite(frame[column]) & (frame[column] > 0)]
     per_gene = frame.groupby(["unit_id", "gene_id"], as_index=False)[column].median()
-    per_unit = per_gene.groupby("unit_id")[column].min()
+    grouped = per_gene.groupby("unit_id")[column]
+    per_unit = {"min": grouped.min, "max": grouped.max, "median": grouped.median}[
+        complex_aggregation
+    ]()
     values = np.full(n_units, np.nan)
     index = per_unit.index.to_numpy().astype(int)
     if index.size and index.max() >= n_units:
@@ -657,6 +754,7 @@ def load_predicted_unit_table(
     kinetics_dir: str,
     plausibility_json: str,
     version: str = KINETICS_VERSION,
+    complex_aggregation: ComplexAggregation = "min",
 ) -> PredictedUnitTable:
     """Median prediction per catalytic unit over the predictors the study admits.
 
@@ -673,6 +771,8 @@ def load_predicted_unit_table(
         kinetics_dir: ``$DATA_ROOT/data/torchcell/kinetics``.
         plausibility_json: The within-class study's result file.
         version: Version subdirectory of each predictor's mirror.
+        complex_aggregation: How a complex's per-subunit predictions become one value.
+            ``"min"`` is the shipped convention and reproduces every existing table.
     """
     selection = PredictorSelection.from_study(parameter, plausibility_json)
     if not selection.selected:
@@ -686,7 +786,9 @@ def load_predicted_unit_table(
     hashes: dict[str, str] = {}
     for name in selection.selected:
         path = osp.join(kinetics_dir, name, version, f"{parameter}.parquet")
-        values, _ = _per_unit_from_predictor(path, parameter, n_units)
+        values, _ = _per_unit_from_predictor(
+            path, parameter, n_units, complex_aggregation
+        )
         stacked.append(values)
         paths[name] = path
         hashes[name] = _sha256_of(path)
@@ -697,15 +799,23 @@ def load_predicted_unit_table(
     log_median[mask] = np.nanmedian(matrix[:, mask], axis=0)
     values = np.zeros(n_units)
     values[mask] = np.power(10.0, log_median[mask])
+    # The width of the same stack, kept alongside the median. `ddof=1` because the
+    # predictors are a sample of the admitted set, and a two-predictor unit's width is a
+    # one-degree-of-freedom estimate that must not be reported as if it were a population sd.
+    spread = n_predictors >= 2
+    log_sd = np.full(n_units, np.nan)
+    log_sd[spread] = np.nanstd(matrix[:, spread], axis=0, ddof=1)
     return PredictedUnitTable(
         values=torch.from_numpy(values).float(),
         mask=torch.from_numpy(mask),
+        log10_sd=torch.from_numpy(log_sd).float(),
         n_predictors=torch.from_numpy(n_predictors.astype(np.int64)),
         selection=selection,
         unit="1/s" if parameter == "k_cat" else "mM",
         source_paths=paths,
         sha256=hashes,
         version=version,
+        complex_aggregation=complex_aggregation,
         substrates=SubstrateMatch.from_verified_pairs(
             osp.join(kinetics_dir, VERIFIED_PAIRS_FEATURE)
         ),
@@ -734,6 +844,289 @@ def _organism_default(
     )
 
 
+SigmaTier = Literal["measured", "homolog", "predicted", "default"]
+
+
+class KcatSigmaRung(BaseModel):
+    r"""One rung of the :math:`\log_{10}k_{cat}` width ladder, with what measured it.
+
+    A rung is a NUMBER plus the statistic that produced it. It carries no default: a rung
+    whose ``source`` is empty is a guess wearing a pydantic model, and the whole reason this
+    class exists is that the tier hierarchy is a provenance ordering and NOT an accuracy
+    ordering, so each tier's width has to be measured separately rather than assumed to
+    decrease down the cascade.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    tier: SigmaTier
+    log10_sigma: float = Field(
+        description=(
+            "Width in decades. For the predicted rung this is a FLOOR: the per-unit "
+            "across-predictor sd is used where it is larger, because spread between "
+            "predictors is agreement and must never narrow the width below the measured "
+            "residual of the ensemble against a measurement."
+        )
+    )
+    per_unit: bool = Field(
+        default=False,
+        description="True when the rung takes max(log10_sigma, per-unit sd).",
+    )
+    statistic: str = Field(description="The estimator, named so its bias is readable.")
+    n_groups: int | None = None
+    n_rows: int | None = None
+    source: str = Field(
+        description="Dataset or result file the number was measured on."
+    )
+    quote: str = Field(
+        default="",
+        description="Verbatim corroboration from a mirrored paper, unaltered.",
+    )
+    quote_source: str = ""
+
+
+class KcatSigmaLadder(BaseModel):
+    r"""The four-rung tier ladder for :math:`\sigma_u`, as a provenance record.
+
+    The rungs are sourced, in order, from the Open Enzyme Database's own replicate spread
+    (measured), its cross-organism spread at a shared EC and substrate (homolog), the
+    residual of the admitted ensemble against the 58 measured yeast pairs (predicted), and
+    the whole-slice width of the yeast wild-type rows (default). The numbers are regenerated
+    by ``experiments/026-metabolism-flux/scripts/kcat_sigma_table.py``, which recomputes each
+    statistic and asserts it against the rung it ships.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    version: str
+    rungs: list[KcatSigmaRung]
+    generated_by: str
+    notes: str = ""
+
+    def rung(self, tier: SigmaTier) -> KcatSigmaRung:
+        """The rung for one tier. Raises when the ladder does not carry it."""
+        for candidate in self.rungs:
+            if candidate.tier == tier:
+                return candidate
+        raise KeyError(f"the ladder carries no rung for tier {tier!r}")
+
+    def tier_of(self, provenance: ParameterProvenance) -> SigmaTier:
+        """Map one provenance tag onto the rung that prices it."""
+        if provenance in EXPERIMENTAL_SOURCES:
+            return "measured"
+        if provenance is ParameterProvenance.OPEN_ENZYME_DATABASE_EC_HOMOLOG:
+            return "homolog"
+        if provenance is ParameterProvenance.ORGANISM_DEFAULT:
+            return "default"
+        return "predicted"
+
+    def sigma(
+        self,
+        provenance: list[ParameterProvenance],
+        per_unit_sd: np.ndarray | torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        r"""``[n]`` per-entity width in decades for one resolved table.
+
+        Args:
+            provenance: The table's own provenance list, one tag per entity.
+            per_unit_sd: ``[n]`` across-predictor sd, ``nan`` where it does not exist. Only
+                the predicted rung reads it, and only where the rung is ``per_unit``. A
+                ``nan`` falls back to the rung's floor, which is the honest answer for a
+                unit one predictor covered: no spread was observed, so none is claimed.
+        """
+        sd = (
+            per_unit_sd.detach().cpu().numpy()
+            if isinstance(per_unit_sd, torch.Tensor)
+            else per_unit_sd
+        )
+        out = np.empty(len(provenance), dtype=np.float64)
+        for i, tag in enumerate(provenance):
+            rung = self.rung(self.tier_of(tag))
+            value = rung.log10_sigma
+            if rung.per_unit and sd is not None and np.isfinite(sd[i]):
+                value = max(value, float(sd[i]))
+            out[i] = value
+        return torch.from_numpy(out).float()
+
+
+#: The shipped ladder. Every number is regenerated and re-asserted by
+#: ``experiments/026-metabolism-flux/scripts/kcat_sigma_table.py``; the statistics behind
+#: them were first measured in the 2026-09-14 parameter review.
+KCAT_SIGMA_LADDER = KcatSigmaLadder(
+    version="2026.09.14",
+    generated_by="experiments/026-metabolism-flux/scripts/kcat_sigma_table.py",
+    notes=(
+        "The tiers are a provenance ordering, not an accuracy ordering. On the general "
+        "population the homolog rung is the WIDEST of the three evidence tiers, so a "
+        "cascade that treats a measured value as near-exact and a predicted one as "
+        "uncertain would be reporting the provenance rather than the uncertainty."
+    ),
+    rungs=[
+        KcatSigmaRung(
+            tier="measured",
+            log10_sigma=0.50,
+            statistic=(
+                "pooled within-group sample sd of log10 k_cat over (accession, substrate) "
+                "groups reduced to one value per (accession, substrate, pubmed id) so a "
+                "within-paper condition series cannot count as replication, wild-type rows "
+                "only, assay temperature within 25-35 C"
+            ),
+            n_groups=492,
+            n_rows=1157,
+            source="Open Enzyme Database, all organisms",
+            quote=(
+                "When comparing a single measurement to the geometric mean of all other "
+                "measurements for the same enzyme-reaction pair, we found an average "
+                "deviation of 3.3-fold (mean deviation on $\\log_{10}$-scale $= 0.52$)."
+            ),
+            quote_source="krollTurnoverNumberPredictions2023 paper.md L142",
+        ),
+        KcatSigmaRung(
+            tier="homolog",
+            log10_sigma=0.73,
+            statistic=(
+                "pooled within-group sample sd of log10 k_cat over (EC, substrate) groups "
+                "across organisms, wild-type rows only"
+            ),
+            n_groups=2789,
+            n_rows=16588,
+            source="Open Enzyme Database, all organisms",
+        ),
+        KcatSigmaRung(
+            tier="predicted",
+            log10_sigma=0.47,
+            per_unit=True,
+            statistic=(
+                "sd of the signed residual log10(ensemble median) - log10(measured) of the "
+                "admitted predictors on the matched yeast pairs; used as a FLOOR under the "
+                "per-unit across-predictor sd"
+            ),
+            n_groups=58,
+            n_rows=58,
+            source="experiments/026-metabolism-flux/results/predictor_vs_measured.csv",
+            quote=(
+                "This compares to an average deviation of 4.8-fold (mean deviation on "
+                "$\\log_{10}$-scale $= 0.69$) of TurNuP $k_{cat}$ predictions"
+            ),
+            quote_source="krollTurnoverNumberPredictions2023 paper.md L142",
+        ),
+        KcatSigmaRung(
+            tier="default",
+            log10_sigma=1.23,
+            statistic=(
+                "sample sd of log10 k_cat over every wild-type row of the yeast slice; the "
+                "organism default is a central value for a unit nothing is known about, so "
+                "its width is the width of the organism's whole turnover distribution"
+            ),
+            n_rows=826,
+            source="Open Enzyme Database, S. cerevisiae slice",
+        ),
+    ],
+)
+
+
+class ProteinPoolProvenance(BaseModel):
+    r"""Where one value of the metabolic protein budget :math:`p_{avail}` came from.
+
+    GECKO factorizes the pool as :math:`\sigma\,f\,P_{tot}`, and the three factors are
+    different kinds of object: :math:`P_{tot}` is measurable by a total-protein assay,
+    :math:`f` by proteomics against the model's gene set, and :math:`\sigma` is an average
+    in vivo saturation that is fitted rather than measured. Recording the factors separately
+    is what makes it possible to say which part of a pool number is an assumption.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    p_avail_g_per_gdw: float = Field(
+        description="The pool the model enforces, g metabolic protein / gDW."
+    )
+    saturation_sigma: float | None = Field(
+        default=None,
+        description="GECKO's sigma. None when the record does not factorize.",
+    )
+    metabolic_fraction_f: float | None = None
+    total_protein_g_per_gdw: float | None = None
+    citation_key: str = ""
+    artifact_path: str = ""
+    artifact_sha256: str = ""
+    source_line: str = ""
+    quote: str = ""
+    notes: str = ""
+
+
+#: GECKO 3's yeast default, the only pool value in the mirror with a stated derivation.
+#: ``0.5 x 0.5 x 0.5 = 0.125`` g/gDCW of usable metabolic enzyme; the ``f P_tot`` product
+#: alone, before saturation, is 0.25.
+GECKO3_YEAST_PROTEIN_POOL = ProteinPoolProvenance(
+    name="gecko3_yeast_default",
+    p_avail_g_per_gdw=0.125,
+    saturation_sigma=0.5,
+    metabolic_fraction_f=0.5,
+    total_protein_g_per_gdw=0.5,
+    citation_key="chenReconstructionSimulationAnalysis2024",
+    artifact_path="$DATA_ROOT/torchcell-library/chenReconstructionSimulationAnalysis2024/paper.md",
+    artifact_sha256="3c340a8d1d4f57b86620b5f091b2f622272837943e96d571a5f0c9219b98a2c4",
+    source_line="paper.md L132 and L964",
+    quote=(
+        "If the total cellular protein content $P _ { t o t }$ is $0 . 5 \\mathrm { g } / "
+        "\\mathrm { g } \\mathrm { D } \\mathrm { C W } ,$ the metabolic enzyme fraction "
+        "over all proteins f is 0.5 and the average saturation $\\sigma$ factor is 0.5, "
+        "then the 'ecModel.lb' entry for 'prot_pool_exchange' is $- 1 2 5 \\mathrm { mg / "
+        "gDCW } .$"
+    ),
+    notes=(
+        "L132 states the same product as a rule: 'the default maximum constraint without "
+        "knowledge of any factors is $0 . 5 \\times 0 . 5 \\times 0 . 5 = 0 . 1 2 5 .$'. "
+        "Both factors of 0.5 that are not P_tot are GECKO defaults rather than yeast "
+        "measurements, so 0.125 is a sourced convention and not a measured pool."
+    ),
+)
+
+#: What ``FluxLayerConfig.p_avail`` has always been. Recorded so the number stops being
+#: anonymous; it is NOT changed here, and no arm's recorded provenance moves.
+TORCHCELL_DEFAULT_PROTEIN_POOL = ProteinPoolProvenance(
+    name="torchcell_flux_layer_default",
+    p_avail_g_per_gdw=0.35,
+    notes=(
+        "The shipped default of FluxLayerConfig.p_avail, carried unchanged. It is above "
+        "GECKO's yeast pool of 0.125 and above the f P_tot product of 0.25, and no "
+        "derivation for it is recorded anywhere in the repository. It is kept as the "
+        "default because every measured 027 arm ran under it; the sweep in "
+        "experiments/026-metabolism-flux/scripts/fva_kcat_uncertainty.py is what prices "
+        "the difference."
+    ),
+)
+
+#: The three pool settings the E6 sweep runs, keyed by the value in g/gDW.
+PROTEIN_POOL_SETTINGS: dict[float, ProteinPoolProvenance] = {
+    0.125: GECKO3_YEAST_PROTEIN_POOL,
+    0.25: ProteinPoolProvenance(
+        name="gecko3_yeast_f_ptot_unsaturated",
+        p_avail_g_per_gdw=0.25,
+        metabolic_fraction_f=0.5,
+        total_protein_g_per_gdw=0.5,
+        citation_key="chenReconstructionSimulationAnalysis2024",
+        artifact_path=(
+            "$DATA_ROOT/torchcell-library/chenReconstructionSimulationAnalysis2024/paper.md"
+        ),
+        artifact_sha256=(
+            "3c340a8d1d4f57b86620b5f091b2f622272837943e96d571a5f0c9219b98a2c4"
+        ),
+        source_line="paper.md L132",
+        quote=(
+            "the value of the maximum constraint is calculated by ${ \\boldsymbol { "
+            "\\sigma } } { \\times } { f } { \\times } { P _ { \\mathrm { t o t } } } ,$"
+        ),
+        notes=(
+            "f P_tot with saturation carried separately, so a sweep over the saturation "
+            "factor does not double-count it."
+        ),
+    ),
+    0.35: TORCHCELL_DEFAULT_PROTEIN_POOL,
+}
+
+
 def resolve_kcat_table(
     units: CatalyticUnits,
     model_dir: str,
@@ -744,6 +1137,8 @@ def resolve_kcat_table(
     substrates: SubstrateMatch | None = None,
     homolog_mirror_dir: str | None = None,
     target_temperature_c: float = 30.0,
+    complex_aggregation: ComplexAggregation = "min",
+    kcat_ceiling_sigma_k: float = 0.0,
 ) -> ParameterTable:
     r"""One :math:`k_{cat}` per catalytic unit, database-first and substrate-matched.
 
@@ -763,12 +1158,42 @@ def resolve_kcat_table(
     key admitted. Without ``substrates`` no row can be checked, so no row is accepted: an
     empty :class:`SubstrateMatch` yields an empty measured tier rather than an unchecked one.
 
-    A unit's value is the **minimum** over its member genes, because a complex cannot turn
-    over faster than its slowest constituent, and this is the same "scarcest subunit limits"
-    logic the availability softmin uses one level up.
+    A unit's value is reduced over its member genes by ``complex_aggregation``, defaulting to
+    the **minimum**, because a complex cannot turn over faster than its slowest constituent,
+    and this is the same "scarcest subunit limits" logic the availability softmin uses one
+    level up. The rule is applied to every tier of this table, so a caller that changes it
+    changes a convention rather than one tier's values. **It does not change the predicted
+    tier by itself**: the predicted values arrive already reduced inside ``predicted``, so a
+    caller that wants the convention applied end to end passes the same keyword to
+    :func:`load_predicted_unit_table` as well.
+
+    TWO WAYS TO TREAT THE SAME UNCERTAINTY, AND THEY ARE NOT INTERCHANGEABLE.
+    ``complex_aggregation`` is a CONVENTION change on the same predictions: it moves
+    complexes and leaves the table's center where it was. ``kcat_ceiling_sigma_k`` is an
+    UNCERTAINTY statement about the committed convention: it multiplies every unit by
+    :math:`10^{k\sigma_u}` with :math:`\sigma_u` from :data:`KCAT_SIGMA_LADDER`, so the
+    ceiling sits at the :math:`k`-sigma upper edge of what the value is known to instead of
+    at a point estimate presented as a ceiling. ``k = 1`` is an 84th-percentile bound. At the
+    default ``k = 0.0`` the values are bit-identical to the table that has always shipped.
+
+    Args:
+        units: The catalytic units of the GEM, one per GPR conjunct.
+        model_dir: The GEM directory (the SwissProt table and the shipped tables live there).
+        oed_mirror_dir: The Open Enzyme Database mirror for the measured tier.
+        registry: The admitted predictor registry for the predicted tier; ``None`` skips it.
+        predicted: A pre-reduced predicted table, if the caller already loaded one.
+        substrates: The substrate-match table that gates the measured and homolog tiers.
+        homolog_mirror_dir: The mirror for the cross-organism homolog tier; ``None`` skips it.
+        target_temperature_c: Assay temperature the measured tier is selected nearest to.
+        complex_aggregation: ``"min"`` (shipped), ``"max"`` (GECKO 3) or ``"median"`` over a
+            complex's subunits.
+        kcat_ceiling_sigma_k: Widen every value to :math:`10^{\mu_u+k\sigma_u}`. ``0.0``
+            leaves the table exactly as it was and attaches no widening record.
 
     Returns:
-        A :class:`ParameterTable` of length ``units.n_units``, in units of 1/s.
+        A :class:`ParameterTable` of length ``units.n_units``, in units of 1/s. It carries
+        ``log10_sigma`` from the tier ladder whether or not the ceiling was widened, and a
+        :class:`KcatCeilingWidening` record when it was.
     """
     records = load_mirrored_records(oed_mirror_dir)
     homolog_records = (
@@ -789,6 +1214,7 @@ def resolve_kcat_table(
         match,
         KineticKind.KCAT,
         target_temperature_c,
+        complex_aggregation,
     )
 
     # A registered in-process predictor is a different mechanism from the parquet tier and
@@ -825,7 +1251,13 @@ def resolve_kcat_table(
             predictor = cast(KcatPredictor, registry.predictors[0])
             scored = [float(predictor.predict(sequences[g])[0]) for g in genes]
             if scored:
-                values.append(min(scored))
+                scored_reducers: dict[str, Callable[[list[float]], float]] = {
+                    "min": min,
+                    "max": max,
+                    "median": lambda xs: sorted(xs)[(len(xs) - 1) // 2],
+                }
+                reduce_scored = scored_reducers[complex_aggregation]
+                values.append(reduce_scored(scored))
                 provenance.append(
                     ParameterProvenance(getattr(predictor, "name", "kcatnet"))
                 )
@@ -845,16 +1277,64 @@ def resolve_kcat_table(
             f"against the EC-median lookup at {predicted.selection.baseline_fraction:.3f})"
         )
     )
+    per_unit_sd = (
+        predicted.log10_sd
+        if predicted is not None and predicted.log10_sd is not None
+        else None
+    )
+    sigma = KCAT_SIGMA_LADDER.sigma(provenance, per_unit_sd)
+    resolved = torch.tensor(values, dtype=torch.float32)
+    ceiling: KcatCeilingWidening | None = None
+    if kcat_ceiling_sigma_k != 0.0:
+        widened = resolved * torch.pow(torch.tensor(10.0), kcat_ceiling_sigma_k * sigma)
+        moved = torch.log10(widened / resolved)
+        ceiling = KcatCeilingWidening(
+            sigma_k=float(kcat_ceiling_sigma_k),
+            ladder_version=KCAT_SIGMA_LADDER.version,
+            n_units=int(resolved.numel()),
+            median_log10_shift=float(moved.median()),
+            min_log10_shift=float(moved.min()),
+            max_log10_shift=float(moved.max()),
+            median_fold_change=float(torch.pow(torch.tensor(10.0), moved.median())),
+            sigma_by_tier={
+                tier: float(
+                    sigma[
+                        torch.tensor(
+                            [KCAT_SIGMA_LADDER.tier_of(p) == tier for p in provenance]
+                        )
+                    ].median()
+                )
+                for tier in ("measured", "homolog", "predicted", "default")
+                if any(KCAT_SIGMA_LADDER.tier_of(p) == tier for p in provenance)
+            },
+        )
+        resolved = widened
+    aggregation_note = (
+        "A complex takes the min over its subunits."
+        if complex_aggregation == "min"
+        else f"A complex takes the {complex_aggregation} over its subunits."
+    )
+    ceiling_note = (
+        ""
+        if ceiling is None
+        else (
+            f" Every value is widened to 10^(mu + {kcat_ceiling_sigma_k} sigma) with sigma "
+            f"from the {KCAT_SIGMA_LADDER.version} tier ladder, a median "
+            f"{ceiling.median_fold_change:.3g}x."
+        )
+    )
     return ParameterTable.build(
-        torch.tensor(values, dtype=torch.float32),
+        resolved,
         provenance,
         unit="1/s",
         notes=(
             f"Open Enzyme Database first ({len(records)} organism rows, substrate-matched "
             f"against {len(match.keys)} units), then the EC homolog tier "
             f"({len(homolog_records)} rows, any organism), then {predicted_note}, then "
-            f"{default_note}. A complex takes the min over its subunits."
+            f"{default_note}. {aggregation_note}{ceiling_note}"
         ),
+        log10_sigma=sigma,
+        ceiling=ceiling,
     )
 
 

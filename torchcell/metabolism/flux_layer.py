@@ -125,6 +125,39 @@ SPENDING THE EXACTNESS BUDGET: BOX, NULL SPACE, PROJECTION
     can still move a reaction across zero after the fact, which is the one second-law
     violation this channel produces, and ``feas_sign_flip_frac`` counts it.
 
+``warmstart``
+    A **residual** head. The proposal is a feasible reference flux plus a small step inside
+    :math:`\ker S`,
+
+    .. math::
+        v_{\mathrm{pre}} = \mathrm{clip}(v_{\mathrm{ref}},v^\ell,v^u)
+            + \alpha\,\lVert \mathrm{clip}(v_{\mathrm{ref}})\rVert\,
+              \frac{\mathcal N z}{\lVert\mathcal N z\rVert},
+
+    so the relative distance from the reference is exactly :math:`\alpha`, one learned
+    scalar, and the direction is whatever the genotype asks for. The same clip and the same
+    alternating projection follow, so the head differs from ``projection`` and ``fluxforce``
+    in **where the alternation starts** and in nothing else.
+
+    **Why, and it is measured rather than argued.** The alternation cannot repair a proposal
+    that is an O(1) distance from the polytope at any K: from a uniform random point of the
+    box, K from 20 to 5,000, von Neumann and Dykstra alike, the turnover-thresholded balance
+    ratio stays at 2.0, the worst value the statistic takes
+    (``experiments/026-metabolism-flux/results/probe_projrate.json``). From a proposal within
+    1 percent of a feasible flux the EXISTING K = 100 alternation reaches 0.0012 on that same
+    statistic (``probe_warmstart.json``). And the trained ``fluxforce_k100_boxforce`` head of
+    job 1784 proposes at a relative distance of 0.990, i.e. the projection discards 99 percent
+    of what the head emits
+    (``probe_trained_proposal_distance_wave8_dens_d2p0_boxforce_k100_e80_s2700.json``, 32
+    genotypes). The proposal, not the projection, is what fails.
+
+    :math:`v_{\mathrm{ref}}` is a pFBA solution computed **inside the build step from the
+    GEM's own tensors** by :func:`parsimonious_reference_flux`, never supplied by the caller.
+    That is what keeps the head organism-independent: parsimonious flux balance is a property
+    of a stoichiometric model, so a new GEM brings its own reference and no yeast constant
+    enters. The reference is clipped into each genotype's ``dynamic_box``, so a deletion
+    still zeroes its reactions exactly.
+
 ``latent_stochastic`` turns the last two into an amortized sampler: :math:`z=\mu+\sigma
 \epsilon` with a :math:`\mathrm{KL}(\mathcal N(\mu,\sigma)\Vert\mathcal N(0,I))` term
 returned as ``c_kl``, and :meth:`FluxLayer.sample` draws :math:`S` fluxes per genotype and
@@ -368,6 +401,106 @@ class FluxLayerConfig(BaseModel):
             "'alternating' -- von Neumann, a point OF the intersection. 'dykstra' -- the "
             "NEAREST point of the intersection to v0, at one extra pair of correction "
             "tensors. Both converge; only Dykstra's limit is the metric projection."
+        ),
+    )
+    thermo_exempt_path: str | None = Field(
+        default=None,
+        description=(
+            "JSON naming reactions to EXEMPT from the second law on top of Thermo-Flux's "
+            "Box 2 set, written by "
+            "`experiments/026-metabolism-flux/scripts/thermo_exempt_gate.py` and read by "
+            "`read_thermo_exempt_list`. None is off and is what every run to date did.\n\n"
+            "WHY A REACTION MAY BE EXEMPTED, and it is the same argument "
+            "`thermo_box_margin_kj` already makes. A tabulated standard energy that no "
+            "concentration in the physiological window can reconcile with a real flux is "
+            "not a measurement of a direction; pricing it asserts one the data does not "
+            "have. MEASURED (results/thermo_exempt_candidates.json, union_external, window "
+            "1e-7 to 1e-2 M): with the flux fixed at a cobra FBA optimum the total L1 slack "
+            "on the sign constraints is 2,641.5 kJ over 425 reactions, and removing the 47 "
+            "the LP puts its violation on leaves 0.000 kJ over the remaining 378. The "
+            "infeasibility is concentrated in those 47.\n\n"
+            "PRECEDENT: yETFL applies no thermodynamic constraint at all to its 1,304 "
+            "membrane reactions, and its thermodynamics did not change its essentiality "
+            "predictions. Exempting 47 is more conservative than the published practice.\n\n"
+            "The file's own route, window and table sha256 travel into `coverage_report` "
+            "with the file's sha256, because an exemption list is a claim about a specific "
+            "thermodynamic table and is meaningless beside a different one."
+        ),
+    )
+    log_c_init_path: str | None = Field(
+        default=None,
+        description=(
+            "JSON holding a log-concentration vector to INITIALIZE the anchored "
+            "concentration at, written by "
+            "`experiments/026-metabolism-flux/scripts/thermo_exempt_gate.py` as its LP's "
+            "witness and read by `read_log_c_init`. None is off and is what every run to "
+            "date did.\n\n"
+            "WHY IT MATTERS, MEASURED. The directional box takes the sign of the layer's "
+            "OWN delta_r_G, which is evaluated at its own learned concentrations. At "
+            "initialization those are a zero-centered parameter plus a random linear head, "
+            "so the box is tightened against a concentration vector that licenses nothing "
+            "in particular: of the 495 reactions the pFBA reference carries, the tightening "
+            "forbids the direction of 145 outright "
+            "(`results/probe_warmstart_init.json`). The LP that produced the exemption list "
+            "also produced the concentrations under which that flux IS sign-consistent, so "
+            "starting there makes the box agree with the reference by construction.\n\n"
+            "WHAT IT DOES, AND WHAT IT IS NOT. It sets `log_c_base` so the squashed "
+            "concentration equals the vector, and zeroes `log_c_from_context` so the "
+            "genotype term starts at no deviation rather than at a random one. Both are "
+            "INITIAL VALUES of learned parameters: training is free to move the "
+            "concentrations anywhere in the window, which is why "
+            "`feas_thermo_violation_frac` is logged every epoch rather than assumed.\n\n"
+            "It is a per-GEM quantity: the vector is solved from this GEM's stoichiometry, "
+            "this thermodynamic route and this exemption list, all named in the file and "
+            "recorded in `coverage_report`. Another GEM brings its own."
+        ),
+    )
+    warm_start_reference: str = Field(
+        default="pfba",
+        description=(
+            "How the 'warmstart' parameterization builds its reference flux. 'pfba' -- a "
+            "parsimonious flux balance solution of the UNPERTURBED model, computed at "
+            "construction by `parsimonious_reference_flux` from the GEM's own S, bounds and "
+            "objective column. There is no other route and no caller-supplied vector: a "
+            "reference passed in from outside would be a per-organism constant smuggled "
+            "into a module that has none, and pFBA is a property of the stoichiometric "
+            "model rather than of yeast. Read only when the parameterization is "
+            "'warmstart'."
+        ),
+    )
+    warm_start_init_rel: float = Field(
+        default=0.01,
+        gt=0.0,
+        description=(
+            "The initial value of alpha, the residual head's one learned scalar, which IS "
+            "the relative distance of the proposal from the reference: "
+            "||v_pre - v_ref|| / ||v_ref|| = alpha exactly, because the null-space direction "
+            "is normalized before it is scaled. MEASURED motivation: at a proposal "
+            "displacement of 0.008 the existing K = 100 alternation reaches a "
+            "turnover-thresholded balance ratio of 0.00118 with 82 active rows, and at 0.60 "
+            "it reads 1.80 (`experiments/026-metabolism-flux/results/probe_warmstart.json`). "
+            "0.01 starts the head inside the regime that works and lets the data term buy "
+            "its way out."
+        ),
+    )
+    warm_start_growth_fraction: float = Field(
+        default=1.0,
+        gt=0.0,
+        le=1.0,
+        description=(
+            "The fraction of the maximum objective value the parsimonious reference must "
+            "still reach. 1.0 is pFBA proper: minimize total flux subject to OPTIMAL "
+            "growth. Below 1.0 trades growth for sparsity, which is a different reference "
+            "and is recorded as one."
+        ),
+    )
+    warm_start_cache_path: str | None = Field(
+        default=None,
+        description=(
+            "Where the reference flux is cached. None recomputes it at every construction, "
+            "which is two LP solves of a 2,806 x 4,131 model. The cache stores a digest of "
+            "S, the bounds and the objective alongside the flux and recomputes when they "
+            "disagree, so a cache cannot silently outlive the GEM it was built from."
         ),
     )
     latent_stochastic: bool = Field(
@@ -690,6 +823,25 @@ class FluxLayerConfig(BaseModel):
             "density term prices, so the two are meant to run together."
         ),
     )
+    parsimony_outside_ramp_weight: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Weight on `c_parsimony` added OUTSIDE the constraint ramp, beside the density "
+            "and active-row balance terms. 0.0 is off and is what every cell to date ran.\n\n"
+            "WHY IT IS NOT THE `weights['parsimony']` ENTRY. That one is inside the product "
+            "`constraint_loss` multiplies by `constraint_scale`, and every wave-7 and "
+            "wave-8 cell runs that scale at exactly 0.0, so the parsimony term those cells "
+            "report is identically zero. Parsimony has therefore NEVER been applied in this "
+            "experiment, which matters because parsimony is what makes an FBA flux sparse: "
+            "the pFBA reference carries flux on 10.3 percent of reactions "
+            "(`results/probe_fba_rule.json`) against the boxforce head's 28 to 32 percent. "
+            "A term that is switched off cannot be the reason the head is dense.\n\n"
+            "It is a countermeasure to a specific degenerate solution rather than a physical "
+            "constraint being ramped in, which is the same argument `density_weight` and "
+            "`balance_active_weight` already make, and it is added the same way."
+        ),
+    )
     density_turnover_threshold: float = Field(
         default=1.0e-3,
         gt=0.0,
@@ -714,6 +866,32 @@ class FluxLayerConfig(BaseModel):
         description=(
             "Complex softmin temperature. Too soft and a complex behaves like a mean, so "
             "a deletion stops being lethal; too hard and gradients reach one subunit only."
+        ),
+    )
+    availability_fold: str = Field(
+        default="softmin",
+        description=(
+            "How a complex's per-gene availabilities fold into the unit's. 'softmin' is "
+            "the log-sum-exp softmin every run to date used. 'normalized_softmin' divides "
+            "it by its own value on the all-ones vector, which is the only place the two "
+            "differ.\n\n"
+            "WHY IT MATTERS, MEASURED. The softmin is "
+            "-log(sum_g exp(-beta gamma_g))/beta, and on an INTACT complex, every gate at "
+            "1, that is 1 - log(n_u)/beta rather than 1: it charges a complex for having "
+            "subunits. At the shipped beta of 8 a 17-subunit complex reads 0.646 on a "
+            "wild type where nothing is deleted, and with untrained gates near 0.4 it "
+            "reads 0.0447, which is what set ATP synthase's box ceiling to 4.47 against a "
+            "reference flux of 5.95 AFTER the enzyme capacity had been raised past it "
+            "(`results/probe_warmstart_init.json`). It is the second 'minimum over 17 "
+            "subunits' rule stacked on the same reaction.\n\n"
+            "WHY NORMALIZING RATHER THAN SHIFTING. The obvious alternative, adding "
+            "log(n_u)/beta to make the fold a log-MEAN-exp, also returns 1 on the intact "
+            "complex and destroys the deletion: one gate at 0 among 16 at 1 then returns "
+            "0.354 instead of 0. Dividing by the all-ones value is a per-unit POSITIVE "
+            "constant, so it preserves the ordering and the gradient everywhere, returns "
+            "exactly 1 on the intact complex, and leaves a deleted subunit at 0, because "
+            "the raw softmin goes non-positive the moment any gate is 0 and the existing "
+            "clamp catches it."
         ),
     )
     thermo_epsilon: float = 1.0e-3
@@ -768,6 +946,15 @@ _FLUXFORCE_PATTERN = re.compile(
     r"^fluxforce(?:_k(\d+))?(?:_(balance|box|force|boxforce))?(?:_(dykstra))?$"
 )
 
+#: ``warmstart``, with the same three suffixes: ``warmstart_k100_boxforce`` is the residual
+#: head whose box is tightened to the licensed direction before an alternation of 100 clips.
+#: The step count, the exact end and the method are all read off the string for the same
+#: reason the other two channels read them there: it is the only field 026's
+#: ``build_flux_layer`` forwards, so an arm can name its whole channel and nothing else.
+_WARMSTART_PATTERN = re.compile(
+    r"^warmstart(?:_k(\d+))?(?:_(balance|box|force|boxforce))?(?:_(dykstra))?$"
+)
+
 
 class ParameterizationSpec(BaseModel):
     """The parsed form of ``FluxLayerConfig.parameterization``.
@@ -806,6 +993,18 @@ def parse_parameterization(raw: str, default_steps: int) -> ParameterizationSpec
     """
     if raw in {"box", "nullspace"}:
         return ParameterizationSpec(kind=raw, projection_steps=default_steps, raw=raw)
+    warm = _WARMSTART_PATTERN.match(raw)
+    if warm is not None:
+        warm_steps = default_steps if warm.group(1) is None else int(warm.group(1))
+        if warm_steps < 1:
+            raise ValueError(f"warmstart needs at least one step; got {warm_steps}.")
+        return ParameterizationSpec(
+            kind="warmstart",
+            projection_steps=warm_steps,
+            projection_end=warm.group(2),
+            projection_method=warm.group(3),
+            raw=raw,
+        )
     force = _FLUXFORCE_PATTERN.match(raw)
     if force is not None:
         force_steps = default_steps if force.group(1) is None else int(force.group(1))
@@ -822,8 +1021,9 @@ def parse_parameterization(raw: str, default_steps: int) -> ParameterizationSpec
     if match is None:
         raise ValueError(
             f"parameterization={raw!r} is not one of 'box', 'nullspace', "
-            "'projection[_k<N>][_balance|_box][_tdg][_dykstra]', or "
-            "'fluxforce[_k<N>][_balance|_box]'."
+            "'projection[_k<N>][_balance|_box][_tdg][_dykstra]', "
+            "'fluxforce[_k<N>][_balance|_box|_force|_boxforce][_dykstra]', or "
+            "'warmstart[_k<N>][_balance|_box|_force|_boxforce][_dykstra]'."
         )
     steps = default_steps if match.group(1) is None else int(match.group(1))
     if steps < 1:
@@ -914,6 +1114,284 @@ def reaction_sqrt_covariance(
         n_reactions_covered=int(complete.sum()),
         source_path=path,
         sha256=digest.hexdigest(),
+    )
+
+
+class ThermoExemptList(BaseModel):
+    """Reactions exempted from the second law by an external, provenance-carrying file.
+
+    The list is a claim about ONE thermodynamic table under ONE concentration window: a
+    reaction that no concentration can make downhill under ``union_external`` may be
+    perfectly satisfiable under ``equilibrator``. So the route, the window and the table's
+    own hashes are carried beside the ids and are recorded by ``coverage_report``, and the
+    file's sha256 with them, because two runs citing "the exemption list" have to be able to
+    prove they cited the same one.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    reaction_ids: list[str]
+    route: str | None = None
+    window_m: list[float] | None = None
+    epsilon_kj: float | None = None
+    method: str | None = None
+    gate_met: bool | None = None
+    thermo_table_sha256: dict[str, str] | None = None
+    source_path: str
+    sha256: str
+
+
+def read_thermo_exempt_list(path: str) -> ThermoExemptList:
+    """Read the JSON ``thermo_exempt_gate.py`` writes, with its provenance and its hash.
+
+    Only the fields that describe WHAT was exempted and UNDER WHAT are read; the LP's
+    intermediate results stay in the file. A file with no ``exempt_reaction_ids`` is an
+    error rather than an empty list, because an exemption path that silently exempts
+    nothing would report a route it did not take.
+    """
+    import json
+    import os.path as osp
+
+    if not osp.isfile(path):
+        raise ValueError(
+            f"thermo_exempt_path={path!r} does not exist. Build it with "
+            "experiments/026-metabolism-flux/scripts/thermo_exempt_gate.py."
+        )
+    with open(path) as handle:
+        raw = handle.read()
+    payload = json.loads(raw)
+    if "exempt_reaction_ids" not in payload:
+        raise ValueError(
+            f"{path} carries no 'exempt_reaction_ids'. It is not an exemption list."
+        )
+    provenance = payload.get("provenance", {})
+    return ThermoExemptList(
+        reaction_ids=[str(r) for r in payload["exempt_reaction_ids"]],
+        route=provenance.get("route"),
+        window_m=provenance.get("window_m"),
+        epsilon_kj=provenance.get("epsilon_kj"),
+        method=payload.get("selected_method"),
+        gate_met=payload.get("gate_met"),
+        thermo_table_sha256=provenance.get("thermo_table_sha256"),
+        source_path=path,
+        sha256=hashlib.sha256(raw.encode()).hexdigest(),
+    )
+
+
+class LogConcentrationInit(BaseModel):
+    """A log-concentration vector to start the anchored concentration at, with its origin.
+
+    The vector is only meaningful beside the route, the window and the exemption list it was
+    solved under: it is the LP's answer to "which concentrations make THIS flux downhill
+    under THIS table once THOSE reactions are exempted", and none of those three is implied
+    by the numbers.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    ln_c: list[float]
+    met_ids: list[str]
+    route: str | None = None
+    window_m: list[float] | None = None
+    exempt_file: str | None = None
+    exempt_file_sha256: str | None = None
+    n_constraints_satisfied: int | None = None
+    residual_total_slack_kj: float | None = None
+    source_path: str
+    sha256: str
+
+
+def read_log_c_init(path: str) -> LogConcentrationInit:
+    """Read the concentration witness ``thermo_exempt_gate.py`` writes, with its hash."""
+    import json
+    import os.path as osp
+
+    if not osp.isfile(path):
+        raise ValueError(
+            f"log_c_init_path={path!r} does not exist. Build it with "
+            "experiments/026-metabolism-flux/scripts/thermo_exempt_gate.py, which writes "
+            "it beside the exemption list."
+        )
+    with open(path) as handle:
+        raw = handle.read()
+    payload = json.loads(raw)
+    for key in ("ln_c", "met_ids"):
+        if key not in payload:
+            raise ValueError(
+                f"{path} carries no {key!r}. It is not a concentration init."
+            )
+    return LogConcentrationInit(
+        ln_c=[float(x) for x in payload["ln_c"]],
+        met_ids=[str(m) for m in payload["met_ids"]],
+        route=payload.get("route"),
+        window_m=payload.get("window_m"),
+        exempt_file=payload.get("exempt_file"),
+        exempt_file_sha256=payload.get("exempt_file_sha256"),
+        n_constraints_satisfied=payload.get("n_constraints_satisfied"),
+        residual_total_slack_kj=payload.get("residual_total_slack_kj"),
+        source_path=path,
+        sha256=hashlib.sha256(raw.encode()).hexdigest(),
+    )
+
+
+class ReferenceFluxRecord(BaseModel):
+    """A parsimonious reference flux with the solve that produced it.
+
+    Carried beside the buffer so ``coverage_report`` can say what the warm start starts
+    from without re-solving: a head whose reference is a degenerate or zero-growth solution
+    would train perfectly happily and report nothing about it.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+    v: torch.Tensor = Field(description="[r] mmol/gDW/h.")
+    objective_index: int
+    objective_value: float
+    growth_fraction: float
+    total_absolute_flux: float
+    n_reactions_carrying_flux: int
+    digest: str
+    from_cache: bool
+
+
+def parsimonious_reference_flux(
+    s: torch.Tensor,
+    lb: torch.Tensor,
+    ub: torch.Tensor,
+    objective_index: int,
+    growth_fraction: float = 1.0,
+    cache_path: str | None = None,
+) -> ReferenceFluxRecord:
+    r"""Parsimonious flux balance, solved from the GEM's tensors alone.
+
+    Two linear programs, which is the textbook pFBA:
+
+    .. math::
+        z^\star=\max\{v_{b}:\ Sv=0,\ v^\ell\le v\le v^u\},\qquad
+        \min\Big\{\sum_j|v_j|:\ Sv=0,\ v^\ell\le v\le v^u,\ v_b\ge\gamma z^\star\Big\}.
+
+    The absolute value is handled by splitting :math:`v=p-n` with :math:`p,n\ge0`, and the
+    split **preserves the original box exactly** rather than relaxing it: a reaction with
+    :math:`v^\ell\ge0` gets :math:`p\in[v^\ell,v^u]` and :math:`n=0`, one with
+    :math:`v^u\le0` gets the mirror, and only a genuinely reversible reaction gets both
+    halves. Writing it the lazy way, :math:`p\in[0,\max(v^u,0)]` and
+    :math:`n\in[0,\max(-v^\ell,0)]`, silently drops every forced-flux bound the medium
+    imposes.
+
+    NO SOLVER OBJECT, NO COBRA MODEL, NO ORGANISM. The inputs are the stoichiometric matrix,
+    the bounds the layer has already clamped to its own flux scale, and the index of the
+    objective column. That is what makes the warm start portable: the reference is
+    recomputed for whatever GEM the layer is built on.
+
+    Args:
+        s: ``[m, r]`` stoichiometric matrix, sparse or dense.
+        lb: ``[r]`` lower bounds, as the layer holds them.
+        ub: ``[r]`` upper bounds.
+        objective_index: Column of the growth reaction.
+        growth_fraction: The fraction of :math:`z^\star` the parsimonious solution must
+            still reach. 1.0 is pFBA proper.
+        cache_path: Optional ``.npz`` cache. It stores a digest of the inputs and is
+            recomputed when they disagree, so it cannot outlive the GEM it was built from.
+
+    Returns:
+        The flux and the record of the solve.
+    """
+    import os
+    import os.path as osp
+
+    import numpy as np
+    from scipy.optimize import linprog
+    from scipy.sparse import csr_matrix, hstack
+
+    dense = (s.to_dense() if s.is_sparse else s).double().numpy()
+    lower = lb.double().numpy()
+    upper = ub.double().numpy()
+    digest = hashlib.sha256()
+    for array in (dense, lower, upper, np.array([objective_index, growth_fraction])):
+        digest.update(np.ascontiguousarray(array).tobytes())
+    key = digest.hexdigest()
+
+    if cache_path is not None and osp.exists(cache_path):
+        cached = np.load(cache_path, allow_pickle=False)
+        if str(cached["digest"]) == key:
+            flux = cached["v"].astype(np.float64)
+            return ReferenceFluxRecord(
+                v=torch.from_numpy(flux).float(),
+                objective_index=objective_index,
+                objective_value=float(flux[objective_index]),
+                growth_fraction=growth_fraction,
+                total_absolute_flux=float(np.abs(flux).sum()),
+                n_reactions_carrying_flux=int((np.abs(flux) > 1e-9).sum()),
+                digest=key,
+                from_cache=True,
+            )
+
+    n_reactions = dense.shape[1]
+    sparse_s = csr_matrix(dense)
+    b_eq = np.zeros(dense.shape[0])
+    objective = np.zeros(n_reactions)
+    objective[objective_index] = -1.0
+    first = linprog(
+        objective,
+        A_eq=sparse_s,
+        b_eq=b_eq,
+        bounds=list(zip(lower, upper, strict=True)),
+        method="highs",
+    )
+    if not first.success:
+        raise ValueError(
+            "the reference growth LP did not solve, so there is no parsimonious reference "
+            f"to warm start from: {first.message}. The bounds the layer holds, clamped to "
+            "its flux scale, may not admit growth."
+        )
+    z_star = float(-first.fun)
+
+    # The split box, exactly equal to the original one.
+    p_bounds: list[tuple[float, float]] = []
+    n_bounds: list[tuple[float, float]] = []
+    for j in range(n_reactions):
+        low, high = float(lower[j]), float(upper[j])
+        if low >= 0.0:
+            p_bounds.append((low, high))
+            n_bounds.append((0.0, 0.0))
+        elif high <= 0.0:
+            p_bounds.append((0.0, 0.0))
+            n_bounds.append((-high, -low))
+        else:
+            p_bounds.append((0.0, high))
+            n_bounds.append((0.0, -low))
+    a_eq = hstack([sparse_s, -sparse_s], format="csr")
+    growth_row = np.zeros(2 * n_reactions)
+    growth_row[objective_index] = -1.0
+    growth_row[n_reactions + objective_index] = 1.0
+    second = linprog(
+        np.ones(2 * n_reactions),
+        A_eq=a_eq,
+        b_eq=b_eq,
+        A_ub=csr_matrix(growth_row.reshape(1, -1)),
+        b_ub=np.array([-growth_fraction * z_star]),
+        bounds=p_bounds + n_bounds,
+        method="highs",
+    )
+    if not second.success:
+        raise ValueError(
+            f"the parsimonious LP did not solve: {second.message}. The growth floor "
+            f"{growth_fraction} x {z_star:.6g} may be unreachable at LP tolerance; lower "
+            "warm_start_growth_fraction rather than relaxing the bounds."
+        )
+    flux = second.x[:n_reactions] - second.x[n_reactions:]
+    if cache_path is not None:
+        os.makedirs(osp.dirname(cache_path) or ".", exist_ok=True)
+        np.savez(cache_path, v=flux, digest=np.array(key))
+    return ReferenceFluxRecord(
+        v=torch.from_numpy(flux).float(),
+        objective_index=objective_index,
+        objective_value=float(flux[objective_index]),
+        growth_fraction=growth_fraction,
+        total_absolute_flux=float(np.abs(flux).sum()),
+        n_reactions_carrying_flux=int((np.abs(flux) > 1e-9).sum()),
+        digest=key,
+        from_cache=False,
     )
 
 
@@ -1017,6 +1495,7 @@ class FluxLayer(nn.Module):
     log_e0: torch.Tensor
     delta_g_q: torch.Tensor
     frozen_active_rows: torch.Tensor
+    v_reference: torch.Tensor
 
     def __init__(
         self,
@@ -1087,6 +1566,9 @@ class FluxLayer(nn.Module):
         # constraints exactly as every run before 2026-09-10 did.
         self.constraint_scale = float(cfg.constraint_final_scale)
 
+        # Cached by `unit_gene_count` on first use; a plain attribute so no arm's
+        # state_dict gains a key for a tensor it does not read.
+        self._unit_gene_count: torch.Tensor | None = None
         self.n_reactions = gem.n_reactions
         self.n_metabolites = gem.n_metabolites
         self.rxn_ids = gem.rxn_ids
@@ -1144,6 +1626,13 @@ class FluxLayer(nn.Module):
         for j, rid in enumerate(gem.rxn_ids):
             if "H2O" in rid.upper() or "water" in rid.lower():
                 exempt[j] = True
+        # THE EXTERNAL EXEMPTION LIST, on top of Box 2. Applied here so that everything
+        # downstream, the hinge, the directional tightening, the flux-force channel and the
+        # feasibility report, sees one exempt set and cannot disagree about it.
+        self.thermo_exempt_list: ThermoExemptList | None = None
+        self.n_thermo_exempt_from_file = 0
+        if cfg.thermo_exempt_path is not None:
+            exempt = self._extend_exempt(exempt, cfg.thermo_exempt_path, gem.rxn_ids)
         self.register_buffer("thermo_exempt", exempt)
         self.n_thermo_reactions = int((~exempt).sum())
 
@@ -1297,10 +1786,10 @@ class FluxLayer(nn.Module):
                 "box is enforced by the clip, so a head that ends on the balance "
                 "projection would report the second law as exact while leaving it soft."
             )
-        if spec.kind in {"projection", "fluxforce"}:
+        if spec.kind in {"projection", "fluxforce", "warmstart"}:
             allowed = (
                 {"balance", "box", "force", "boxforce"}
-                if spec.kind == "fluxforce"
+                if spec.kind in {"fluxforce", "warmstart"}
                 else {"balance", "box"}
             )
             if self.projection_end not in allowed:
@@ -1322,7 +1811,17 @@ class FluxLayer(nn.Module):
                 "factor off delta_r_G, so with no tabulated energies it would be the box "
                 "head wearing a thermodynamic name."
             )
-        if spec.kind in {"nullspace", "projection", "fluxforce"}:
+        if (
+            spec.kind == "warmstart"
+            and self.projection_end in {"force", "boxforce"}
+            and self.thermo_mode is not ThermoMode.ANCHORED
+        ):
+            raise ValueError(
+                f"projection_end={self.projection_end!r} tightens the box to the direction "
+                "the reaction energy licenses, which needs ThermoMode.ANCHORED (got "
+                f"{self.thermo_mode}). Use 'warmstart_k<N>_box' when there is no table."
+            )
+        if spec.kind in {"nullspace", "projection", "fluxforce", "warmstart"}:
             if null_space is None:
                 if spec.kind == "nullspace":
                     raise ValueError(
@@ -1353,7 +1852,7 @@ class FluxLayer(nn.Module):
             # and a head created lazily at that point would not be in the checkpoint. On
             # 'nullspace' the head is built only when asked for, so the existing arm's
             # parameter set and its consumption of the init RNG are untouched.
-            if spec.kind == "projection" or cfg.latent_stochastic:
+            if spec.kind in {"projection", "warmstart"} or cfg.latent_stochastic:
                 # Zero weights and a constant bias, so every genotype starts at the same
                 # spread and the posterior widens only where the data asks it to.
                 self.latent_log_std = nn.Linear(d, self.n_latent)
@@ -1366,6 +1865,46 @@ class FluxLayer(nn.Module):
             self.n_latent = 0
             self.null_basis_orthonormality_error = 0.0
             self.null_basis_balance_error = 0.0
+
+        # -- the warm start's reference flux, solved HERE and not passed in -----
+        self.reference_flux: ReferenceFluxRecord | None = None
+        if spec.kind == "warmstart":
+            if cfg.warm_start_reference != "pfba":
+                raise ValueError(
+                    f"warm_start_reference={cfg.warm_start_reference!r} is not 'pfba', "
+                    "which is the only route implemented. A caller-supplied reference is "
+                    "deliberately not accepted: it would be an organism-specific constant "
+                    "in a module that has none."
+                )
+            if gem.biomass_index is None:
+                raise ValueError(
+                    "the warm start needs the GEM's objective column to solve pFBA, and "
+                    "this GEM declares none. build_gem_tensors detects it by objective "
+                    "coefficient or takes biomass_id."
+                )
+            # THE BOUNDS ARE THE LAYER'S OWN, already clamped to flux_scale, so the
+            # reference is inside the box the head will clip it into rather than being a
+            # vector the parameterization cannot represent.
+            self.reference_flux = parsimonious_reference_flux(
+                gem.s,
+                self.lb,
+                self.ub,
+                int(gem.biomass_index),
+                growth_fraction=float(cfg.warm_start_growth_fraction),
+                cache_path=cfg.warm_start_cache_path,
+            )
+            self.register_buffer("v_reference", self.reference_flux.v.clone())
+            # ALPHA IS THE PROPOSAL'S RELATIVE DISTANCE, exactly, because the null-space
+            # direction is normalized before it is scaled. Learned in log space so it
+            # stays positive without a clamp, and so a multiplicative step in it is what
+            # gradient descent takes.
+            self.warm_log_alpha = nn.Parameter(
+                torch.tensor(math.log(float(cfg.warm_start_init_rel)))
+            )
+        # NO BUFFER AND NO PARAMETER ON ANY OTHER KIND, deliberately: registering an empty
+        # `v_reference` everywhere would change the state_dict of every arm already trained,
+        # for a tensor none of them reads.
+
         if cfg.balance_active_row_set not in {"dynamic", "frozen"}:
             raise ValueError(
                 f"balance_active_row_set={cfg.balance_active_row_set!r} is not 'dynamic' "
@@ -1484,6 +2023,15 @@ class FluxLayer(nn.Module):
                 )
             nn.init.zeros_(self.log_c_from_latent.weight)
 
+        # -- where the anchored concentration STARTS -----------------------------
+        # Last, because it writes into `log_c_base` and `log_c_from_context`, which the
+        # ANCHORED branch above creates. A layer built with the field set therefore begins
+        # at the witness rather than at a random deviation from it.
+        self.log_c_init: LogConcentrationInit | None = None
+        self.log_c_init_max_error = 0.0
+        if cfg.log_c_init_path is not None:
+            self.apply_log_c_init(cfg.log_c_init_path)
+
     # -- construction helpers -------------------------------------------------
 
     @property
@@ -1505,9 +2053,124 @@ class FluxLayer(nn.Module):
             return bool(self.config.latent_stochastic or self.config.stochastic)
         if not hasattr(self, "latent_log_std"):
             return False
-        if self.parameterization == "projection":
+        if self.parameterization in {"projection", "warmstart"}:
             return bool(self.config.latent_stochastic or self.config.stochastic)
         return bool(self.config.latent_stochastic)
+
+    def _extend_exempt(
+        self, exempt: torch.Tensor, path: str, rxn_ids: list[str]
+    ) -> torch.Tensor:
+        """Fold an external exemption list into the Box 2 mask, and record what it was."""
+        listed = read_thermo_exempt_list(path)
+        position = {rid: j for j, rid in enumerate(rxn_ids)}
+        unknown = sorted(set(listed.reaction_ids) - set(position))
+        if unknown:
+            raise ValueError(
+                f"the exemption list at {path} names reactions this GEM does not have: "
+                f"{unknown[:10]}. A list built against another model must not be applied "
+                "by index or by silent omission."
+            )
+        added = 0
+        for rid in listed.reaction_ids:
+            j = position[rid]
+            if not bool(exempt[j]):
+                added += 1
+            exempt[j] = True
+        self.thermo_exempt_list = listed
+        self.n_thermo_exempt_from_file = added
+        return exempt
+
+    def apply_log_c_init(self, path: str) -> float:
+        r"""Start the anchored concentration at a vector that licenses a real flux.
+
+        The layer squashes its concentration into the window,
+        :math:`\log c = lo + (hi-lo)\,\sigma(\text{base} + W\,\text{context})`, so setting
+        the concentration to a target :math:`\log c^\star` means inverting the sigmoid on
+        the base and starting the context term at zero:
+
+        .. math::
+            \text{base} = \operatorname{logit}
+                \frac{\log c^\star - lo}{hi - lo},\qquad W \leftarrow 0.
+
+        BOTH HALVES ARE NEEDED AND BOTH ARE INITIAL VALUES. Leaving :math:`W` at its random
+        initialization would add an arbitrary per-genotype deviation to the very vector
+        being set, so the concentration the directional box sees would not be the witness.
+        Zeroing it starts the genotype term at no deviation; the gradient reaches it from
+        the first step, so the genotype dependence is learned rather than removed.
+
+        The target is clamped a hair inside the window, since a value ON the boundary has an
+        infinite logit, and the clamp distance is returned so a caller can see whether the
+        witness sat at a bound.
+
+        Returns:
+            The largest absolute difference, in log-concentration units, between the
+            realized initial concentration and the file's vector. Zero to floating point
+            unless the witness sat on the window boundary.
+        """
+        if self.thermo_mode is not ThermoMode.ANCHORED:
+            raise ValueError(
+                f"log_c_init needs ThermoMode.ANCHORED (got {self.thermo_mode}); no "
+                "concentration is learned otherwise."
+            )
+        record = read_log_c_init(path)
+        if record.met_ids != list(self.met_ids):
+            raise ValueError(
+                f"the concentration init at {path} is indexed by a different metabolite "
+                f"list ({len(record.met_ids)} entries against this GEM's "
+                f"{len(self.met_ids)}). A vector applied by position to another model's "
+                "metabolites is not a concentration, it is noise."
+            )
+        lo = math.log(self.config.conc_lower_m)
+        hi = math.log(self.config.conc_upper_m)
+        if record.window_m is not None:
+            wanted = [math.log(record.window_m[0]), math.log(record.window_m[1])]
+            if abs(wanted[0] - lo) > 1e-9 or abs(wanted[1] - hi) > 1e-9:
+                raise ValueError(
+                    f"the concentration init was solved in the window {record.window_m} M "
+                    f"and this layer squashes into [{self.config.conc_lower_m:g}, "
+                    f"{self.config.conc_upper_m:g}] M. A vector rescaled into a different "
+                    "window is a different concentration."
+                )
+        target = torch.tensor(record.ln_c, dtype=torch.float32)
+        span = hi - lo
+        # A hair inside the window: the logit of 0 or 1 is infinite, and the witness sits ON
+        # a bound for every metabolite the LP did not care about.
+        margin = 1.0e-6
+        fraction = ((target - lo) / span).clamp(min=margin, max=1.0 - margin)
+        with torch.no_grad():
+            self.log_c_base.copy_(torch.log(fraction) - torch.log1p(-fraction))
+            nn.init.zeros_(self.log_c_from_context.weight)
+            nn.init.zeros_(self.log_c_from_context.bias)
+            realized = lo + span * torch.sigmoid(self.log_c_base)
+            error = float((realized - target).abs().max())
+        self.log_c_init = record
+        self.log_c_init_max_error = error
+        self.config.log_c_init_path = path
+        return error
+
+    def apply_thermo_exempt_list(self, path: str) -> int:
+        """Switch the exemption list on for a layer that is already built.
+
+        WHY THIS EXISTS AND IS NOT A SMELL. 026's ``build_flux_layer`` owns the
+        construction of every layer these experiments train and forwards only the fields its
+        own registry names, so a caller that wants a construction-time switch it does not
+        forward has exactly two options: edit that registry, or set the switch on the built
+        object. 027's trainer already takes the second for the density weight, the
+        active-row balance weight and the concentration window. This is the same move for
+        the exemption list, and unlike those it has to rebuild a buffer, which is why it is
+        a method rather than an assignment.
+
+        The exempt set is read by the hinge, by the directional tightening and by
+        ``feasibility``, all at call time, so the change takes effect everywhere at once.
+
+        Returns:
+            How many reactions this call newly exempted.
+        """
+        exempt = self._extend_exempt(self.thermo_exempt.clone(), path, self.rxn_ids)
+        self.thermo_exempt = exempt
+        self.n_thermo_reactions = int((~exempt).sum())
+        self.config.thermo_exempt_path = path
+        return self.n_thermo_exempt_from_file
 
     def _validate_null_basis(self, probes: int = 8) -> tuple[float, float]:
         r"""Measure the two properties the projection rests on, rather than assuming them.
@@ -1710,6 +2373,53 @@ class FluxLayer(nn.Module):
         v_pre = torch.where(priced, v_force, v_box)
         return torch.minimum(torch.maximum(v_pre, lb), ub), priced
 
+    def warm_alpha(self) -> torch.Tensor:
+        r"""The residual head's one learned scalar, :math:`\alpha=e^{\log\alpha}>0`."""
+        return torch.exp(self.warm_log_alpha)
+
+    def _warmstart_flux(
+        self, context: torch.Tensor, lb: torch.Tensor, ub: torch.Tensor, draw: bool
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None, torch.Tensor]:
+        r"""The pre-projection flux of the ``warmstart`` channel, and its reference.
+
+        .. math::
+            v_{\mathrm{ref}}^{(g)}=\mathrm{clip}(v_{\mathrm{ref}},v^\ell_g,v^u_g),\qquad
+            v_{\mathrm{pre}} = v_{\mathrm{ref}}^{(g)}
+                + \alpha\,\lVert v_{\mathrm{ref}}^{(g)}\rVert\,
+                  \frac{\mathcal N z}{\lVert\mathcal N z\rVert}.
+
+        THREE PROPERTIES, AND EACH IS THE REASON FOR ONE LINE.
+
+        **The genotype still bites exactly.** The reference is clipped into the box the
+        genotype chain built, so a deleted gene's reaction has :math:`v^\ell=v^u=0` and its
+        reference flux is exactly zero, the same hard zero every other channel gets. Nothing
+        about the warm start is a prior the deletion has to argue with.
+
+        **The residual is already balanced.** :math:`\mathcal Nz\in\ker S` and the reference
+        satisfies :math:`Sv=0` up to the LP's tolerance, so the only thing that breaks mass
+        balance before the projection runs is the CLIP, and at small :math:`\alpha` the clip
+        is small. That is the whole mechanism.
+
+        **Alpha means something.** Normalizing the direction before scaling makes
+        :math:`\lVert v_{\mathrm{pre}}-v_{\mathrm{ref}}\rVert/\lVert v_{\mathrm{ref}}\rVert
+        =\alpha` identically, so the one learned scalar is on the same axis as the
+        ``rel`` of ``probe_warmstart.json`` and the trained-proposal distance of
+        ``probe_trained_proposal_distance.py``. A magnitude folded into an unnormalized
+        :math:`z` would be readable only through the norm of an MLP output.
+
+        Returns:
+            ``(v_pre, kl, latent_std, v_ref_clipped)``, the first ``[B, r]`` inside the box.
+        """
+        latent, kl, latent_std = self._latent(context, force_sample=draw)
+        reference = torch.minimum(
+            torch.maximum(self.v_reference.unsqueeze(0).expand_as(lb), lb), ub
+        )
+        direction = latent @ self.null_basis.t()
+        direction = direction / direction.norm(dim=1, keepdim=True).clamp(min=1e-12)
+        step = self.warm_alpha() * reference.norm(dim=1, keepdim=True)
+        v_pre = reference + step * direction
+        return (torch.minimum(torch.maximum(v_pre, lb), ub), kl, latent_std, reference)
+
     def _latent(
         self, context: torch.Tensor, force_sample: bool = False
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]:
@@ -1850,6 +2560,19 @@ class FluxLayer(nn.Module):
             gamma = gamma * keep
         return gamma
 
+    def unit_gene_count(self) -> torch.Tensor:
+        r"""``[n_units]`` how many genes each catalytic unit has, cached on first use.
+
+        A plain attribute rather than a registered buffer, deliberately: it is a function of
+        the GPR the layer was already built from, and registering it would add a key to the
+        ``state_dict`` of every arm already trained for a tensor those arms do not read.
+        """
+        if self._unit_gene_count is None:
+            self._unit_gene_count = torch.bincount(
+                self.unit_gene_unit, minlength=self.n_units
+            ).to(self.lb.dtype)
+        return self._unit_gene_count
+
     def reaction_availability(self, gamma: torch.Tensor) -> torch.Tensor:
         r"""Fold :math:`\gamma_g` up the GPR: softmin over complexes, sum over isozymes.
 
@@ -1860,6 +2583,15 @@ class FluxLayer(nn.Module):
         Reactions with no GPR keep availability 1: an unannotated reaction is not one that
         no gene catalyzes, it is one nobody has assigned a gene to, and setting it to zero
         would let a missing annotation delete a reaction.
+
+        **The softmin does not return 1 on an intact complex**, and that is what
+        ``availability_fold='normalized_softmin'`` corrects. Evaluated with every gate at 1
+        the expression above is :math:`1-\log(n_u)/\beta`, so a complex is charged for
+        having subunits: at the shipped :math:`\beta=8` a 17-subunit complex reads 0.646 on
+        a wild type. Dividing by that same all-ones value makes the fold exact there,
+        leaves the ordering and the gradient alone because the divisor is a positive
+        per-unit constant, and keeps a deleted subunit at zero: one gate at 0 sends the raw
+        softmin non-positive, which the clamp below already catches.
         """
         beta = self.config.softmin_beta
         b = gamma.shape[0]
@@ -1868,6 +2600,21 @@ class FluxLayer(nn.Module):
         acc.index_add_(1, self.unit_gene_unit, torch.exp(-beta * gathered))
         # Units with no genes would give log(0); the parser never emits them, but guard.
         c_u = -torch.log(acc.clamp(min=1e-30)) / beta
+        if self.config.availability_fold == "normalized_softmin":
+            # The all-ones value, 1 - log(n_u)/beta, which is what the softmin returns on an
+            # intact complex. It is positive for every unit with fewer than exp(beta) genes,
+            # which at the shipped beta is 2,981 against a largest unit of a few dozen; the
+            # clamp is there so a pathological GPR cannot divide by zero rather than because
+            # any real one does.
+            denominator = (
+                1.0 - torch.log(self.unit_gene_count().clamp(min=1.0)) / beta
+            ).clamp(min=1e-6)
+            c_u = c_u / denominator.unsqueeze(0)
+        elif self.config.availability_fold != "softmin":
+            raise ValueError(
+                f"availability_fold={self.config.availability_fold!r} is not 'softmin' or "
+                "'normalized_softmin'."
+            )
         c_j = gamma.new_zeros(b, self.n_reactions)
         c_j.index_add_(1, self.unit_reaction, c_u.clamp(min=0.0))
         c_j = c_j.clamp(max=1.0)
@@ -2176,7 +2923,45 @@ class FluxLayer(nn.Module):
                 lb, ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
         sign_flip_frac: torch.Tensor | None = None
         v_pre_projection: torch.Tensor | None = None
-        if self.parameterization == "fluxforce":
+        warm_stats: dict[str, torch.Tensor] | None = None
+        if self.parameterization == "warmstart":
+            # THE RESIDUAL HEAD. Everything here is the boxforce recipe with one thing
+            # changed: where the alternation starts. The box is tightened to the licensed
+            # direction FIRST, exactly as `boxforce` does, so every clip in the loop is
+            # already the directional one; then the reference flux is clipped into that box
+            # and displaced by alpha of its own norm inside ker S.
+            box_lb, box_ub = lb, ub
+            if self.projection_end == "boxforce":
+                box_lb, box_ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
+            v_pre_projection, kl, latent_std, reference = self._warmstart_flux(
+                context, box_lb, box_ub, draw=draws > 1
+            )
+            v = self._project_feasible(v_pre_projection, box_lb, box_ub)
+            if self.projection_end == "force":
+                lb_force, ub_force, thermo_emptied = self._thermo_tighten(
+                    lb, ub, delta_g
+                )
+                v = torch.minimum(torch.maximum(v, lb_force), ub_force)
+            # WHAT THE PROJECTION STILL DISCARDS, LOGGED EVERY EPOCH. This is the statistic
+            # the whole arm rests on: 0.990 on the trained boxforce head of job 1784, and
+            # 0.008 on the proposal whose projection clears the turnover rule at 0.0012. An
+            # arm that does not watch it cannot tell a warm start from a cold one.
+            pre_norm = v_pre_projection.norm(dim=1).clamp(min=1e-12)
+            warm_stats = {
+                "feas_warm_proposal_rel": (
+                    (v - v_pre_projection).norm(dim=1) / pre_norm
+                ).mean(),
+                "feas_warm_alpha": self.warm_alpha().detach(),
+                "feas_warm_reference_clipped_frac": (
+                    (self.v_reference.unsqueeze(0) != reference).float().mean()
+                ),
+                "feas_warm_reference_active_frac": (
+                    (reference.abs() > 1.0e-6 * cfg.flux_scale).float().mean()
+                ),
+            }
+            out_of_box = torch.relu(v - ub) + torch.relu(lb - v)
+            box_penalty = (out_of_box / cfg.flux_scale).mean()
+        elif self.parameterization == "fluxforce":
             box_lb, box_ub = lb, ub
             if self.projection_end == "boxforce":
                 # THE DIRECTION IN THE BOX FROM THE START, so the alternation converges
@@ -2280,6 +3065,8 @@ class FluxLayer(nn.Module):
             # Two-dimensional, so the trainer's scalar log leaves it alone; an audit that
             # wants to price the projection's own cost reads it.
             out["v_pre_projection"] = v_pre_projection
+        if warm_stats is not None:
+            out.update(warm_stats)
         if sign_flip_frac is not None:
             out["feas_sign_flip_frac"] = sign_flip_frac
         out["feas_box_violation_frac"] = (
@@ -2550,11 +3337,16 @@ class FluxLayer(nn.Module):
         deterministic fall back: a "sampler" that returned ``n_samples`` copies of one flux
         would report a feasibility fraction of 0 or 1 and look like a measurement.
         """
-        if self.parameterization not in {"nullspace", "projection", "fluxforce"}:
+        if self.parameterization not in {
+            "nullspace",
+            "projection",
+            "fluxforce",
+            "warmstart",
+        }:
             raise ValueError(
-                f"sample() needs parameterization 'nullspace', 'projection' or "
-                f"'fluxforce'; this layer is {self.parameterization!r}. The box head's draw "
-                "is per reaction and carries no balance guarantee at all."
+                f"sample() needs parameterization 'nullspace', 'projection', 'fluxforce' "
+                f"or 'warmstart'; this layer is {self.parameterization!r}. The box head's "
+                "draw is per reaction and carries no balance guarantee at all."
             )
         if not self.latent_stochastic:
             raise ValueError(
@@ -2600,6 +3392,21 @@ class FluxLayer(nn.Module):
                 v = (latent * cfg.flux_scale) @ self.null_basis.t()
                 if self.parameterization == "projection":
                     v = self._project_feasible(v, draw_lb, draw_ub)
+            elif self.parameterization == "warmstart":
+                # EVERY DRAW IS A DIFFERENT DIRECTION OUT OF THE SAME REFERENCE, which is
+                # what makes the sampler's support a neighborhood of the polytope rather
+                # than a Gaussian somewhere near it.
+                box_lb, box_ub = lb, ub
+                if self.projection_end == "boxforce":
+                    box_lb, box_ub, _ = self._thermo_tighten(lb, ub, delta_g)
+                v_pre, _, _, _ = self._warmstart_flux(
+                    context, box_lb, box_ub, draw=True
+                )
+                v = self._project_feasible(v_pre, box_lb, box_ub)
+                if self.projection_end == "force":
+                    lb_force, ub_force, _ = self._thermo_tighten(lb, ub, delta_g)
+                    v = torch.minimum(torch.maximum(v, lb_force), ub_force)
+                draw_lb, draw_ub = box_lb, box_ub
             elif self.parameterization == "fluxforce":
                 box_lb, box_ub = lb, ub
                 if self.projection_end == "boxforce":
@@ -2707,7 +3514,16 @@ class FluxLayer(nn.Module):
             w.get("balance_active", self.config.balance_active_weight)
             * out["c_balance_active"]
         )
-        return total * self.constraint_scale + density + active_balance
+        # PARSIMONY OUTSIDE THE RAMP, for the third time and for the same reason. The
+        # `weights['parsimony']` entry above is inside the product, and the recipe these
+        # cells run holds `constraint_scale` at 0.0, so parsimony has never actually been
+        # applied in this experiment. Zero at the default weight, so every arm before this
+        # computes the loss it always did.
+        parsimony = (
+            w.get("parsimony_outside_ramp", self.config.parsimony_outside_ramp_weight)
+            * out["c_parsimony"]
+        )
+        return total * self.constraint_scale + density + active_balance + parsimony
 
     def coverage_report(self) -> dict[str, Any]:
         """What fraction of the layer rests on data rather than on a default.
@@ -2729,6 +3545,45 @@ class FluxLayer(nn.Module):
                 (self.delta_r_g0_mask & (~self.thermo_exempt)).sum()
             ),
             "n_reactions_second_law_exempt": int(self.thermo_exempt.sum()),
+            # WHERE THE CONCENTRATION STARTS, which is what decides the directional box at
+            # initialization. A run that does not record this cannot say whether its box
+            # licensed a real flux or a random one.
+            "log_c_init_file": (
+                None
+                if self.log_c_init is None
+                else {
+                    "path": self.log_c_init.source_path,
+                    "sha256": self.log_c_init.sha256,
+                    "route": self.log_c_init.route,
+                    "window_m": self.log_c_init.window_m,
+                    "exempt_file": self.log_c_init.exempt_file,
+                    "exempt_file_sha256": self.log_c_init.exempt_file_sha256,
+                    "n_constraints_satisfied": self.log_c_init.n_constraints_satisfied,
+                    "residual_total_slack_kj": (
+                        self.log_c_init.residual_total_slack_kj
+                    ),
+                    "max_realized_error_ln_c": self.log_c_init_max_error,
+                }
+            ),
+            # THE EXEMPTION LIST, with what it is a claim ABOUT. A list built against one
+            # thermodynamic route says nothing about another, so the route, the window and
+            # the table's hashes travel with the file's own hash.
+            "thermo_exempt_file": (
+                None
+                if self.thermo_exempt_list is None
+                else {
+                    "path": self.thermo_exempt_list.source_path,
+                    "sha256": self.thermo_exempt_list.sha256,
+                    "n_reactions_listed": len(self.thermo_exempt_list.reaction_ids),
+                    "n_reactions_newly_exempted": self.n_thermo_exempt_from_file,
+                    "route": self.thermo_exempt_list.route,
+                    "window_m": self.thermo_exempt_list.window_m,
+                    "epsilon_kj": self.thermo_exempt_list.epsilon_kj,
+                    "method": self.thermo_exempt_list.method,
+                    "gate_met": self.thermo_exempt_list.gate_met,
+                    "thermo_table_sha256": self.thermo_exempt_list.thermo_table_sha256,
+                }
+            ),
             "n_reactions_delta_g_known": int(self.delta_r_g0_mask.sum()),
             "frac_reactions_delta_g_known": float(self.delta_r_g0_mask.float().mean()),
             "n_metabolites_delta_f_g_known": int(self.met_g_mask.sum()),
@@ -2770,25 +3625,54 @@ class FluxLayer(nn.Module):
             "parameterization_raw": self.config.parameterization,
             "projection_steps": (
                 self.projection_steps
-                if self.parameterization in {"projection", "fluxforce"}
+                if self.parameterization in {"projection", "fluxforce", "warmstart"}
                 else None
             ),
             "projection_end": (
                 self.projection_end
-                if self.parameterization in {"projection", "fluxforce"}
+                if self.parameterization in {"projection", "fluxforce", "warmstart"}
                 else None
             ),
             "projection_method": (
                 self.projection_method
-                if self.parameterization in {"projection", "fluxforce"}
+                if self.parameterization in {"projection", "fluxforce", "warmstart"}
                 else None
+            ),
+            # THE WARM START'S REFERENCE, so a run records what it started from. A pFBA
+            # solution at zero growth, or one carrying flux on every reaction, would train
+            # without complaint and mean something entirely different.
+            "warm_start_reference": (
+                None
+                if self.reference_flux is None
+                else {
+                    "route": self.config.warm_start_reference,
+                    "growth_fraction": self.reference_flux.growth_fraction,
+                    "objective_index": self.reference_flux.objective_index,
+                    "objective_value": self.reference_flux.objective_value,
+                    "total_absolute_flux": self.reference_flux.total_absolute_flux,
+                    "n_reactions_carrying_flux": (
+                        self.reference_flux.n_reactions_carrying_flux
+                    ),
+                    "frac_reactions_carrying_flux": (
+                        self.reference_flux.n_reactions_carrying_flux
+                        / float(self.n_reactions)
+                    ),
+                    "digest": self.reference_flux.digest,
+                    "from_cache": self.reference_flux.from_cache,
+                    "init_rel": self.config.warm_start_init_rel,
+                    "alpha_now": float(self.warm_alpha()),
+                }
             ),
             # The temperature the flux-force relation is evaluated at, in kJ/mol, so a
             # reported efficacy can be reproduced from the number the run actually used.
             "rt_kj_per_mol": self.rt,
+            "availability_fold": self.config.availability_fold,
             "balance_active_row_set": self.config.balance_active_row_set,
             "balance_active_weight": self.config.balance_active_weight,
             "density_weight": self.config.density_weight,
+            "parsimony_outside_ramp_weight": (
+                self.config.parsimony_outside_ramp_weight
+            ),
             "density_turnover_threshold": self.config.density_turnover_threshold,
             # The frozen set, so an audit can tell whether it was scored on the training
             # one: the checkpoint carries parameters and no buffers, and a rebuild

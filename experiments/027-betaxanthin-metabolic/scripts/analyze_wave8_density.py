@@ -88,9 +88,26 @@ ARMS: dict[str, tuple[str, str, float]] = {
 }
 ESCAPE_SD_RATIO = 0.05
 ESCAPE_RUN_EPOCHS = 3
-MEDIAN_RULE = "genesis_median_rule_thermo_model"
-MAX_RULE = "genesis_max_rule_thermo_model"
-ACTIVE_RULE = "genesis_active_max_1e-03_rule_thermo_model"
+# THE AUDIT RENAMED THESE ON 2026-09-14 and did not change how any of them is computed:
+# only the turnover-thresholded rule at 1e-3 is called Genesis now, because the pFBA
+# reference the audit computes passes it and fails the plain max. Each entry is read as a
+# preference order so audits written on either side of that rename load unchanged.
+MEDIAN_RULE = ("median_rule_thermo_model", "genesis_median_rule_thermo_model")
+MAX_RULE = ("solver_noise_max_rule_thermo_model", "genesis_max_rule_thermo_model")
+ACTIVE_RULE = (
+    "genesis_turnover_rule_1e-03_thermo_model",
+    "genesis_active_max_1e-03_rule_thermo_model",
+)
+
+
+def _first_present(
+    fractions: dict[str, float], names: tuple[str, ...]
+) -> float | None:
+    """The first of ``names`` the audit carries, or None when it carries neither."""
+    for name in names:
+        if name in fractions:
+            return float(fractions[name])
+    return None
 TRAINER_MEDIAN_KEY = "both_balance_le_1e-02_and_thermo_model_eq_0"
 TOP_GROUP = "all_top100"
 
@@ -277,12 +294,8 @@ def _cell(
         active_row_frac_first=a_first,
         active_row_frac_last=a_last,
         genesis_median_rule=float(trainer[TRAINER_MEDIAN_KEY]),
-        genesis_max_rule=(
-            None if MAX_RULE not in fractions else float(fractions[MAX_RULE])
-        ),
-        genesis_active_rule=(
-            None if ACTIVE_RULE not in fractions else float(fractions[ACTIVE_RULE])
-        ),
+        genesis_max_rule=_first_present(fractions, MAX_RULE),
+        genesis_active_rule=_first_present(fractions, ACTIVE_RULE),
         flux_active_frac=_median_stat(stats, "flux_active_frac"),
         balance_active_rows_1e_03=_median_stat(stats, "balance_active_rows_1e-03"),
         balance_active_max_ratio_1e_03=_median_stat(

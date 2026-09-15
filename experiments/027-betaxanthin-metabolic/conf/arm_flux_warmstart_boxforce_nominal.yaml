@@ -1,0 +1,39 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_warmstart_boxforce_nominal.yaml
+# [[experiments.026-metabolism-flux.physics-gates-2026-09-14]]
+#
+# THE WARM-STARTED RESIDUAL HEAD ON THE NOMINAL ABUNDANCE PATH.
+#
+# The only difference from arm_flux_warmstart_boxforce.yaml is `base_arm`, and it is the
+# axis the 2x2 measured. `flux_nullspace` is the registry twin of
+# `flux_projection_anchored_k20_boxend`: the probe checks mechanically that the two differ
+# in `use_abundance_head` and `parameterization` alone, and the channel string below
+# overrides the second of those, so naming it here selects the NOMINAL E_bar capacity path
+# and changes nothing else.
+#
+# WHY THE NOMINAL PATH, MEASURED (results/probe_warmstart_init.json). At the budget-
+# consistent prior abundance the capacity ceiling has a median of 0.0485 mmol/gDW/h over GPR
+# reactions, 82 of the reference's 495 flux-carrying reactions sit above their own ceiling,
+# and the box admits no balanced point at all: the reachability LP is infeasible there with
+# or without the directional tightening. On the nominal path the ceiling median is 8.22, the
+# over-ceiling count is 3, and the box is feasible as built.
+#
+# THE FROZEN ROW SET. `--flux-balance-active-weight` prices the relative residual over the
+# rows the thresholded rule is evaluated on, and under the DYNAMIC set that set is a
+# function of the flux being penalized, so a head can leave the penalty by killing the row.
+# Job 1795 did exactly that: rows above the threshold fell from 0.00501 to 0.00225 while
+# `c_density` did not move. Frozen, a row that goes quiet stays in the sum at the ratio its
+# residual earns.
+#
+# PROVENANCE HAZARD that comes with freezing, restated because the audit depends on it: the
+# checkpoint stores parameters and no buffers, so a rebuild re-freezes on ITS first batch.
+# `coverage_report` records the frozen row count and a digest of the row indices, and an
+# audit whose digest differs was scored on a different set.
+# THE KCAT RULE RIDES IN `base_arm`, NOT IN A KEY HERE. `ArmConfig` forbids extra keys, so
+# an 027 arm file cannot name `kcat_ceiling_sigma_k` directly; `flux_nullspace_kcat_sigma2`
+# is `flux_nullspace` with that one field set to 2.0 and nothing else changed, verified by a
+# key-diff against its twin. `base_arm` is serialized into the result file with the cell, so
+# the rule travels with the run either way.
+base_arm: flux_nullspace_kcat_sigma2
+permute_train_targets: false
+flux_parameterization: warmstart_k100_boxforce
+flux_balance_active_row_set: frozen

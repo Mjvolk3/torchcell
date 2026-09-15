@@ -138,7 +138,7 @@ SPECS: dict[str, ViewSpec] = {
             "at the validation-selected epoch."
         ),
         tags_any=["gh_wave7_aa", "gh_wave8_aa"],
-        groupby=["aa_readout", "thermo_source", "volume_table", "conc_space"],
+        groupby=["readout_group", "thermo_source", "volume_table", "conc_space"],
         curves=[
             "val_pearson",
             "val_loss",
@@ -177,7 +177,7 @@ SPECS: dict[str, ViewSpec] = {
             "gh_wave8_aasamp",
         ],
         groupby=[
-            "aa_readout",
+            "readout_group",
             "arm",
             "epochs",
             "thermo_source",
@@ -237,7 +237,7 @@ SPECS: dict[str, ViewSpec] = {
             "the pinned test Spearman at the validation-selected epoch."
         ),
         tags_any=["gh_wave8_bx"],
-        groupby=["bx_readout"],
+        groupby=["readout_group"],
         curves=[
             "val_pearson",
             "val_loss",
@@ -262,7 +262,7 @@ SPECS: dict[str, ViewSpec] = {
             "module is off for this readout. Group by readout, then arm."
         ),
         tags_any=["w7aa", "w8aa_ctxconc", "w8aa_nodiss"],
-        groupby=["aa_readout", "arm"],
+        groupby=["readout_group", "arm"],
         curves=[
             "val_pearson",
             "val_pred_sd_ratio",
@@ -289,7 +289,7 @@ SPECS: dict[str, ViewSpec] = {
             "target; seed 2700 reads 0.079 vs 0.140 (job 1932). Group by readout."
         ),
         tags_any=["gh_wave8_bx", "gh_wave9_bx"],
-        groupby=["bx_readout", "arm"],
+        groupby=["readout_group", "arm"],
         curves=[
             "val_pearson",
             "val_pred_sd_ratio",
@@ -313,7 +313,7 @@ SPECS: dict[str, ViewSpec] = {
             "chromatin-pathway embeddings, job 1912). Group by readout and constraint scale."
         ),
         tags_any=["gh_wave9_ib"],
-        groupby=["ib_readout", "constraint_scale", "arm"],
+        groupby=["readout_group", "constraint_scale", "arm"],
         curves=[
             "val_pearson",
             "val_pred_sd_ratio",
@@ -361,6 +361,39 @@ SPECS: dict[str, ViewSpec] = {
         ],
     ),
 }
+
+
+#: Which readout key each head records. A pooled cell still records the head's DEFAULT
+#: readout (aa_readout=flux_metabolite, bx_readout=flux_scalar, ib_readout=flux_scalar)
+#: although it builds no flux layer, so grouping by the raw key files the no-module
+#: controls under a flux readout. `readout_group` is the honest label, written onto each
+#: run's config once so the workspace can group by it.
+READOUT_KEY_BY_HEAD = {"mulleder19": "aa_readout", "isobutanol": "ib_readout"}
+POOLED_NO_MODULE = "pooled_no_module"
+
+
+def readout_group(run: Any) -> str:
+    """The label a run is grouped under: its readout, or the no-module control."""
+    cfg = run.config
+    key = READOUT_KEY_BY_HEAD.get(str(cfg.get("head")), "bx_readout")
+    readout = cfg.get(key)
+    if isinstance(readout, str) and readout.startswith("context_"):
+        return readout
+    if cfg.get("arm") == "pooled":
+        return POOLED_NO_MODULE
+    return str(readout or cfg.get("arm") or "unknown")
+
+
+def annotate_readout_group(runs: list[Any]) -> int:
+    """Write `readout_group` onto every matched run whose label is missing or stale."""
+    changed = 0
+    for run in runs:
+        label = readout_group(run)
+        if run.config.get("readout_group") != label:
+            run.config["readout_group"] = label
+            run.update()
+            changed += 1
+    return changed
 
 
 def matched_runs(api: wandb.Api, spec: ViewSpec) -> list[Any]:
@@ -607,6 +640,9 @@ def main() -> None:
 
     for spec in specs:
         runs = matched_runs(api, spec)
+        relabeled = annotate_readout_group(runs)
+        if relabeled:
+            print(f"[{spec.key}] readout_group written on {relabeled} runs")
         curves = present_metrics(runs, spec.curves)
         scalars = present_metrics(runs, spec.scalars)
         missing = [m for m in spec.curves + spec.scalars if m not in curves + scalars]

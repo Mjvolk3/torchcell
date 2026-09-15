@@ -70,7 +70,7 @@
       "gh_wave8_aa"
     ],
     "groupby": [
-      "aa_readout",
+      "readout_group",
       "thermo_source",
       "volume_table",
       "conc_space"
@@ -102,7 +102,7 @@
       "gh_wave8_bx"
     ],
     "groupby": [
-      "bx_readout"
+      "readout_group"
     ],
     "curves": [
       "val_pearson",
@@ -160,7 +160,7 @@
       "gh_wave8_aasamp"
     ],
     "groupby": [
-      "aa_readout",
+      "readout_group",
       "arm",
       "epochs",
       "thermo_source",
@@ -195,7 +195,7 @@
       "w8aa_nodiss"
     ],
     "groupby": [
-      "aa_readout",
+      "readout_group",
       "arm"
     ],
     "curves": [
@@ -225,7 +225,7 @@
       "gh_wave9_bx"
     ],
     "groupby": [
-      "bx_readout",
+      "readout_group",
       "arm"
     ],
     "curves": [
@@ -253,7 +253,7 @@
       "gh_wave9_ib"
     ],
     "groupby": [
-      "ib_readout",
+      "readout_group",
       "constraint_scale",
       "arm"
     ],

@@ -163,3 +163,99 @@ families, AUROC as a rank statistic (perfect, inverted, tied at chance, single-c
 the per-class block against a hand-checked confusion matrix, the released split's inversion
 and counts, the comparators being the yeast numbers, and `FluxBiomassReadout` reading
 exactly the objective column and holding exactly two parameters.
+
+## 2026.09.15 - Build BLOCKED on an empty graph; cells preflighted; FBA row specified
+
+### The blocker, checked twice
+
+The served Neo4j is **reachable and EMPTY**. Measured at 2026-09-14 22:5x and again on
+2026-09-15:
+
+| check | result |
+|---|---|
+| `bolt://localhost:7687` reachable | yes, container listening on 7687 and 7474 |
+| `MATCH (n) RETURN count(n)` | **0** |
+| `MATCH (d:Dataset) RETURN d.id` | **0 datasets** |
+| `GeneEssentialitySgdDataset` experiments | **0** |
+| `$DATA_ROOT/database/kg_manifest.json` | still lists **36** served datasets, including `GeneEssentialitySgdDataset` (file dated Sep 11) |
+| KG rebuild jobs in the queue | none (1896 `kg_rehearsal_50` and 1897 `live_rebuild_kg` are gone from `squeue`) |
+
+So the manifest and the live store disagree: the store was cleared and not repopulated, and
+nothing is currently repopulating it. **The query has NOT been run and the dataset has NOT
+been built.** There are no job ids to report for the build, and no class counts or split
+coverage, because both come from the build.
+
+`build_essentiality_dataset.py` refuses an empty graph before it opens the dataset, rather
+than letting `Neo4jCellDataset` write an empty LMDB that reports success. That is why
+`gh_cpu_build_essentiality.slurm` was not submitted: it would fail in its first seconds.
+
+**What the build will report once the store is back**, all of it asserted rather than
+printed: the four released-split class counts against the paper's Methods sentence (772 / 126
+train, 192 / 31 test, with the label inversion applied), the build's own
+`phenotype_label_index` containing `is_essential`, and the FCL split's coverage as
+found/absent per class. `found_essential > 0` is a hard assert, because a build covering no
+essential genes can only score the majority class.
+
+### The shuffled-kcat control did not exist, and now does
+
+`gh_wave9_ess_shuffled_*` referenced `--flux-shuffle-kcat`, which I had written into the
+cells on an assumption. It did not exist anywhere: no flag, no arm, no mechanism. Implemented
+now on the construction-time pattern, permuting the resolved kcat vector ACROSS catalytic
+units with a recorded seed, in `build_flux_layer` right after `resolve_kcat_table`. The
+architecture, the parameter count, the tier counts and the value DISTRIBUTION are all
+unchanged; only the correspondence between a turnover number and its reaction is destroyed.
+`flux_meta.kcat_shuffle` records the seed, the unit count, how many units moved, and the
+value sum before and after as the multiset witness.
+
+### The four cells, preflighted
+
+All ten essentiality cells pass both checks with no dataset present: every flag resolves
+against the real argparse parser, and every configuration constructs through `build_cell`
+(41 call-site keywords accepted).
+
+| cell | arm resolved | media | shuffle seed |
+|---|---|---|---|
+| `gh_wave9_ess_pool_e80_s270{0,1,2}` | `pooled` | none (no layer) | none |
+| `gh_wave9_ess_flux_e80_s270{0,1,2}` | `flux_projection_anchored` | dataset (YPD) | none |
+| `gh_wave9_ess_shuffled_e80_s270{0,1,2}` | `flux_projection_anchored` | dataset (YPD) | 2700 |
+| `gh_wave9_ess_genoref_e80_s2700` | `flux_nullspace_kcat_sigma2` + channel `warmstart_k100_boxforce` | dataset (YPD) | none |
+
+The genoref arm's `base_arm` resolves through its arm file to `flux_nullspace_kcat_sigma2`,
+and the file's `flux_parameterization: warmstart_k100_boxforce` is what selects the warm
+start, so the three warm-start flags are live on it.
+
+None submitted. They cannot run until the dataset exists.
+
+### FBA essentiality on both media: SPEC for the baselines owner
+
+`cbm_baseline_bx.py` cannot do this without edits. Its `--target` choices are
+`betaxanthin`, `amino_acids`, `isobutanol`; it has a `CONDITIONS` registry keyed on those,
+it builds a bench model per medium through `build_bench_model(media_key, cassette=...)`, and
+it never calls `single_gene_deletion`. What it already has that makes the addition small:
+`FBA_MEDIA` and `media_to_bounds` are imported, and `build_bench_model` already refuses a
+medium with unresolved components.
+
+Spec, so the row is comparable to both the published FBA number and our own arms:
+
+1. Add `--target essentiality` with `CONDITIONS["essentiality"]` carrying TWO conditions
+   rather than one: `glucose_minimal` (`media_key` `SM`) and `rich` (`media_key` `YPD`).
+   The first reproduces the published baseline's medium, the second matches the medium the
+   SGD phenotype was scored on and the medium our flux arms run.
+2. For each condition: `cobra.flux_analysis.single_gene_deletion(model)` over the genes of
+   the released split, then threshold the predicted growth. Merzbacher used a fraction of
+   wild-type growth (its E. coli cutoff was 0.41 against a wild-type 0.81, i.e. 50 percent);
+   apply the same RULE, 50 percent of the wild-type growth on that medium, and record both
+   the wild-type value and the absolute cutoff per condition, since they differ between the
+   two media (measured: shipped bounds 0.0858, SM 0.3138, YPD-approx 0.5352 1/h).
+3. Score with the same block the trainer uses, `train_bx.binary_block`, so the FBA row and
+   the arm rows are computed by one function: AUROC (on the negated growth rate, since lower
+   growth means more essential), accuracy, and per-class precision and recall, beside the
+   majority-class rate.
+4. Read labels through `train_bx.read_fcl_essentiality_split`, which applies the column
+   inversion once and asserts the counts. A baseline that reads the CSV directly scores the
+   opposite class from the arms.
+5. Report against the published yeast row (FBA accuracy 0.81, ROC AUC 0.69), and expect our
+   glucose-minimal number to differ from it: different GEM version, different gene list, and
+   a threshold rule reapplied rather than copied.
+
+It is a CPU job, minutes, and it needs no GPU.

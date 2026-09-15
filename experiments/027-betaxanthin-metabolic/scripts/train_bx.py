@@ -830,6 +830,19 @@ class BxCell(BaseModel):
     # the way `log_c_from_latent` does and CANNOT be assigned onto a built layer's config.
     # An assignment after construction would be silently ignored, which is the failure mode
     # worth naming: the cell would report a reference table it never loaded.
+    flux_shuffle_kcat_seed: int | None = Field(
+        default=None,
+        description=(
+            "Permute the resolved kcat vector ACROSS catalytic units with this seed before "
+            "the layer is built, which is the shuffled-parameter control the review asks "
+            "for. Architecture, parameter count, tier counts and the value DISTRIBUTION "
+            "are unchanged; only the correspondence between a turnover number and its "
+            "reaction is destroyed. An arm that still beats its pooled control under the "
+            "permutation gained something from the architecture rather than from the "
+            "measured kinetics. Construction-time, so it travels through the arm dict. "
+            "None is off and is what every cell before wave 9 ran."
+        ),
+    )
     flux_reference_table: str | None = Field(
         default=None,
         description=(
@@ -1782,6 +1795,7 @@ def build_cell(
     flux_thermo_exempt_path: str | None = None,
     flux_log_c_init_path: str | None = None,
     flux_availability_fold: str = "softmin",
+    flux_shuffle_kcat_seed: int | None = None,
     flux_reference_table: str | None = None,
     flux_alpha_frozen: bool = False,
     flux_warm_start_init_rel: float = 0.01,
@@ -1895,6 +1909,7 @@ def build_cell(
         flux_thermo_exempt_path=flux_thermo_exempt_path,
         flux_log_c_init_path=flux_log_c_init_path,
         flux_availability_fold=flux_availability_fold,
+        flux_shuffle_kcat_seed=flux_shuffle_kcat_seed,
         flux_reference_table=flux_reference_table,
         flux_alpha_frozen=flux_alpha_frozen,
         flux_warm_start_init_rel=flux_warm_start_init_rel,
@@ -3478,6 +3493,7 @@ def build_model_for_cell(
     # the built config: `FluxLayer.__init__` reads all three while it solves the reference
     # and creates `warm_log_alpha`, so a post-construction assignment would be ignored and
     # the cell would claim a reference table it never opened.
+    arm["shuffle_kcat_seed"] = cell.flux_shuffle_kcat_seed
     arm["warm_start_reference_table_path"] = cell.flux_reference_table
     arm["warm_start_alpha_learnable"] = not cell.flux_alpha_frozen
     arm["warm_start_init_rel"] = cell.flux_warm_start_init_rel
@@ -5608,6 +5624,17 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--flux-shuffle-kcat",
+        dest="flux_shuffle_kcat_seed",
+        type=int,
+        default=None,
+        help=(
+            "Permute the kcat vector across catalytic units with this seed: the "
+            "shuffled-parameter control. Same architecture, same parameter count, same "
+            "value distribution, no unit-to-value correspondence."
+        ),
+    )
+    parser.add_argument(
         "--flux-reference-table",
         default=None,
         help=(
@@ -5719,6 +5746,7 @@ def main() -> None:
         flux_thermo_exempt_path=args.flux_thermo_exempt_path,
         flux_log_c_init_path=args.flux_log_c_init_path,
         flux_availability_fold=args.flux_availability_fold,
+        flux_shuffle_kcat_seed=args.flux_shuffle_kcat_seed,
         flux_reference_table=args.flux_reference_table,
         flux_alpha_frozen=args.flux_alpha_frozen,
         flux_warm_start_init_rel=args.flux_warm_start_init_rel,

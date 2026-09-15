@@ -504,3 +504,41 @@ arm.
 - Jobs 2016 to 2018 rerun the arm at a 10-epoch budget on three seeds, which forces selection
   inside the early window and makes the audit a statement about an epoch we chose rather than
   one the selector wandered into.
+
+## 2026.09.15 - The penalties are what collapse the predictor, with a dose-response
+
+Every readout that goes through the flux layer collapses and no readout on the pooled context
+does. Measured at each cell's selected epoch, the validation prediction spread ratio is 0.37
+to 0.46 on the three context-precursor cells and 0.0000 to 0.06 on every flux cell. The cause
+is not the layer's presence. It is the price put on the physics, and the wave-5 cells already
+carried the dose-response.
+
+| constraint scale | cells | prediction spread ratio | pinned Spearman |
+|---:|---|---|---|
+| 0.0 | wave5 g7, six seeds | 0.16 to 0.40 | 0.023 to 0.142 |
+| 0.025 | wave5 g10 | 0.084 | 0.045 |
+| 0.1 | wave5 g1, g6 | 0.0012 and 0.0000008 | 0.020 and -0.016 |
+| n/a (no layer) | wave5 g8 pooled, three seeds | 0.34 to 0.50 | 0.072 to 0.169 |
+
+The same ordering holds for the other physics terms. The frozen-scale warm-start cells run
+the constraint scale at 0 but carry an active-row balance weight of 0.5 and a parsimony weight
+of 1e-3, and they collapse; at balance weight 2.0 the spread ratio reads 0.0000 and Genesis
+drops to 0.00.
+
+**What the collapse looks like inside the layer** (`probe_flux_genotype_spread.py`, job 2029,
+the frozen warm-start cell at seed 2700, 933 genotypes): the per-reaction standard deviation
+of the flux ACROSS genotypes, divided by the layer's own flux scale of 100, reads a median of
+2.5e-7, a p90 of 3.1e-5 and a maximum of 6.5e-3. Every strain is being assigned nearly the
+same flux vector, so the head is starved rather than lazy, and no loss, spread or schedule can
+recover a signal that is not in its input.
+
+Correction to the first reading of this probe: the statistic that divides a reaction's spread
+by its OWN mean reported a median of 6.7, which is noise on near-zero fluxes and not signal.
+The scale-normalized version above is the headline, and the script now reports it as such.
+
+**The ladder now running** varies only the active-row balance weight on one arm and one seed:
+0.0 (job 2026), 0.1 (2027), 0.5 (job 1986, already read) and 2.0 (job 2001, already read),
+plus a cell with every flux penalty off (2030) that also gives the probe a checkpoint for the
+penalty-free configuration, which the wave-5 cells predate. Each gets the feasibility audit
+and the spread probe, so the output is the tradeoff curve between a flux that satisfies the
+physics and a model that predicts anything.

@@ -251,6 +251,38 @@ rank order above.
   1915 to 1918). The "1.5e-7 box width" figure does not reproduce (median 0.093; job 1921).
   The parameters module now carries `complex_aggregation` and `kcat_ceiling_sigma_k`.
 
+### 2026.09.14 night - the warm start, the reference, and a defect in the genotype path
+
+- **Rank 2 (job 1946, run 6s8r3aov) never left the plateau and lost feasibility as it
+  trained.** Training-batch p95 started at 0.007 and density at 0.175, but the active-row max
+  was about 1.0 from epoch 0 on real genotypes (the init probe's 0.03 was on four wild types;
+  on 32 real genotypes the same head reads 0.70, job 1958), the learned residual scale grew
+  from 0.010 to 0.087 and the balance max hit 2.0 at epoch 45; validation Pearson flat at
+  -0.05, spread ratio under 0.012, data loss flat at 0.527. Dissipation stayed at 1,300 to
+  1,570 J/gDW/h with the penalty off, the first held-out dissipation readout.
+- **A per-genotype pFBA reference (job 1957) exposed a defect upstream of the module.**
+  Every betaxanthin genotype carries YBR249C (ARO4) and YPR060C (ARO7) in its perturbed
+  gene set, so every knockout reference had growth 0.0 on the shipped bounds. The Cachera
+  loader records those two as GeneAddition (the cassette's feedback-resistant alleles), but
+  the graph processor collects every perturbation's gene regardless of type, so the flux
+  layer's availability gate has treated ARO4 and ARO7 as deleted in every betaxanthin flux
+  cell since wave 5, shutting chorismate mutase in strains that overproduce through it. The
+  backbone removes both nodes from every Cachera cell graph too, a constant across strains.
+  Fix in flight: an additive deletion-only index on the batch, routed to the gate and the
+  reference lookup; the reference table keyed on deletion-only sets, on the dataset's medium.
+- **Rank 4 at two seeds: +0.061 then +0.003.** The betaxanthin context control matched the
+  flux-coupled readout at seed 2701 (0.135 vs 0.138; job 1943); seed 2702 queued (job 1959).
+- **Essentiality (rank 11) corrected before it runs.** The 93.5 and 95 percent figures are
+  E. coli; for yeast FCL reports AUROC 0.73 against FBA 0.69 on 223 test genes with a
+  majority rate of 0.861. The released split's essential column is inverted (1.0 =
+  nonessential); the loader fixes it and asserts the class counts. The dataset needs a
+  graph query with the boolean kept as a boolean; head, biomass readout and tests landed.
+- **The amino-acid target's ceiling is measured** (`mulleder_retest_reliability.py`): 194
+  strains measured twice give retest Pearson 0.43 and Spearman 0.20, reliability 0.42; the
+  QC sample disagrees with itself by 0.03 to 0.05 log10 while two cultures disagree by 0.16
+  to 0.27. Models at 0.02 to 0.08 are far below the ceiling; the target is weak because most
+  deletions move pools by less than one culture's noise. Amino-acid GPU work stops here.
+
 ### Housekeeping the review surfaced
 
 - `TC_LIT_URL` and `TC_LIT_API_KEY` are absent from the worktree `.env` on GilaHyper; the

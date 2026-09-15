@@ -53,6 +53,30 @@ cost. Full account, contrasts and caveats in the 027 document.
   \textbf{f}, The same contrast at the 80-epoch budget, two seeds. Figure 5 of the 027
   document, from \texttt{analyze\_wave7\_aa.py}.}{fig:wave7-aa}
 
+\textbf{What each target can support, measured from each source's own repeats.} A model
+cannot correlate with a measurement better than the measurement correlates with itself, so
+the square root of a target's reliability is the highest Pearson correlation any predictor
+of the true level can reach, and it is what a flat result has to be read against. Six
+metabolite datasets enter the build, three of them decoded by a trained head
+(Table~\ref{tab:target-reliability}). Betaxanthin is the strongest of the three at a
+reliability of 0.84 and a ceiling of 0.92, because the CRI-SPA release averages a median of
+15 colonies per gene; Cachera's own trial-to-trial correlation of 0.765, carried to four
+screens by the Spearman-Brown relation, agrees at 0.93. The flat betaxanthin results are
+therefore a property of the predictor and not of the label. The amino acids sit at 0.42 and
+0.62, and the isobutanol screen at 0.11 and 0.33, which reverses the earlier reading that
+called isobutanol the best-conditioned target: its widely quoted retest of 0.92 was computed
+on the re-screened strong hits alone, and selecting both tails inflates it. Of the three
+context datasets, the lipids and the metabolome could support a head at 0.91 and 0.79, while
+the carotenoid screen's six-level visual score reaches only 0.33. The fourth endpoint,
+essentiality, is bounded instead by how far two curated sources agree, which is 98.8 percent
+of 1{,}121 genes against a majority rate of 86.0 percent.
+%% SOURCE: experiments/027-betaxanthin-metabolic/results/target_reliability.json and
+%% essentiality_label_agreement.json, written by target_reliability_table.py,
+%% isobutanol_retest_reliability.py, mulleder_retest_reliability.py and
+%% essentiality_label_agreement.py.
+
+\input{tables/target_reliability}
+
 \textbf{The parameter tables are closed and the trainer is not.} As of 2026-09-11 the
 formation energies stand at 3{,}801 of 4{,}131 reactions and 2{,}724 of the 2{,}845 that can
 carry flux, and the kinetic tables at 97 measured, 782 homolog, 2{,}831 predicted and 18

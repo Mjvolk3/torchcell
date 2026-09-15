@@ -30,6 +30,7 @@ from __future__ import annotations
 import os
 import os.path as osp
 import re
+import subprocess
 import sys
 from collections import Counter
 
@@ -229,6 +230,27 @@ def check_provenance(srcs: dict[str, str]) -> list[tuple[str, str]]:
     return findings
 
 
+def figure_vector_report(rel: str) -> tuple[int, int] | None:
+    """``(raster images, embedded fonts)`` in a figure PDF, or None without poppler.
+
+    Both halves matter and they fail differently. Raster images mean the figure was
+    rasterized somewhere on its way in, so it blurs when the reader zooms. Zero fonts on a
+    figure that carries no raster means its text was OUTLINED to paths, which is what the
+    ``mmdc`` SVG round trip does: the page still looks right and the text is no longer text.
+    A mermaid or draw.io diagram must be neither, so the mmdc PDF is copied in directly.
+    """
+    try:
+        images = subprocess.run(
+            ["pdfimages", "-list", rel], capture_output=True, text=True, check=True
+        ).stdout.splitlines()
+        fonts = subprocess.run(
+            ["pdffonts", rel], capture_output=True, text=True, check=True
+        ).stdout.splitlines()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return None
+    return max(0, len(images) - 2), max(0, len(fonts) - 2)
+
+
 def check_figure_widths(srcs: dict[str, str]) -> list[tuple[str, str]]:
     """Figures placed at true size must fit the text block.
 
@@ -264,15 +286,31 @@ def check_figure_widths(srcs: dict[str, str]) -> list[tuple[str, str]]:
             continue
         x0, _y0, x1, _y1 = (float(v) for v in boxes[0])
         mm = (x1 - x0) * MM_PER_PT
+        vector = figure_vector_report(rel)
+        note = ""
+        if vector is not None:
+            raster, fonts = vector
+            note = f", vector, {fonts} fonts" if raster == 0 else f", {raster} raster image(s)"
+            if raster:
+                findings.append(
+                    ("WARN", f"{rel} carries {raster} raster image(s); that is right for a dense "
+                             f"heatmap or a photograph and wrong for a diagram or a line plot -- "
+                             f"a mermaid or draw.io figure goes in as the vector PDF its renderer wrote")
+                )
+            elif fonts == 0:
+                findings.append(
+                    ("WARN", f"{rel} has no embedded fonts, so its text is outlined to paths "
+                             f"-- copy in the mmdc PDF itself rather than a PDF made from its SVG")
+                )
         if rel in fitted:
-            print(f"  {GRY}fig{RST} {rel} {mm:.1f} mm (scaled by \\tcfigfit)")
+            print(f"  {GRY}fig{RST} {rel} {mm:.1f} mm (scaled by \\tcfigfit){note}")
         elif mm > TEXT_BLOCK_MM + 0.5:
             findings.append(
                 ("ERROR", f"{rel} is {mm:.1f} mm wide, text block is {TEXT_BLOCK_MM:.0f} mm "
                           f"-- redraw to <=180 mm or place with \\tcfigfit")
             )
         else:
-            print(f"  {GRY}fig{RST} {rel} {mm:.1f} mm")
+            print(f"  {GRY}fig{RST} {rel} {mm:.1f} mm{note}")
     return findings
 
 

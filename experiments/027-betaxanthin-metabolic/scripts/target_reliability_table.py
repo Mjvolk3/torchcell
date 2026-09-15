@@ -66,7 +66,12 @@ DASILVEIRA_XLSX = osp.join(RAW, "metabolite_dasilveira2014", "raw", "TableS4_com
 MULLEDER_JSON = osp.join(RESULTS, "mulleder_retest_reliability.json")
 ISOBUTANOL_JSON = osp.join(RESULTS, "isobutanol_retest_reliability.json")
 OUT_JSON = osp.join(RESULTS, "target_reliability.json")
-OUT_TEX = osp.join(REPO_ROOT, "notes-tex", "027-metabolic-flux-module", "tables", "target_reliability.tex")
+#: Both metabolic documents carry this table: the module document in full, and the digest,
+#: which is the short post-conference account of the same work.
+OUT_TEX_PATHS = [
+    osp.join(REPO_ROOT, "notes-tex", "027-metabolic-flux-module", "tables", "target_reliability.tex"),
+    osp.join(REPO_ROOT, "notes-tex", "metabolic-module-report", "tables", "target_reliability.tex"),
+]
 CACHERA_BASE = "corrected_mean_intensity.24"
 #: Cachera's reported trial-to-trial correlation of the yellowness score, paper.md line 139:
 #: "The clear linear correlation between the two trials (PCC = 0.765) demonstrates the
@@ -331,9 +336,10 @@ def write_tex(report: ReliabilityReport) -> None:
                 f"{t.reliability_stored_value:.2f} & {t.pearson_ceiling_stored_value:.2f} \\\\"
             )
     lines += [r"    \bottomrule", r"  \end{tabular}", r"\end{table}", ""]
-    os.makedirs(osp.dirname(OUT_TEX), exist_ok=True)
-    with open(OUT_TEX, "w") as fh:
-        fh.write("\n".join(lines))
+    for path in OUT_TEX_PATHS:
+        os.makedirs(osp.dirname(path), exist_ok=True)
+        with open(path, "w") as fh:
+            fh.write("\n".join(lines))
 
 
 def main() -> None:
@@ -376,7 +382,8 @@ def main() -> None:
         f"reliability {combined:.3f}, ceiling {np.sqrt(combined):.3f}"
     )
     print(OUT_JSON)
-    print(OUT_TEX)
+    for path in OUT_TEX_PATHS:
+        print(path)
 
 
 if __name__ == "__main__":

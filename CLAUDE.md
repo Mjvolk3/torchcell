@@ -399,6 +399,17 @@ rescaled page: `cgt_metabolic_module.pdf` arrived that way at 510 pt with 0 font
 the source's 600 pt with 8. Check with `pdffonts <file>.pdf` — **0 fonts on a diagram means
 the text was outlined and you took the lossy path.**
 
+**A mermaid diagram that lands in ANY built PDF is VECTOR, always, with no exception**
+(user, 2026-09-15: "when we put mermaid diagrams in pdf ... vector graphic ver ... from now
+on and forever"). A PNG of a diagram never goes into a document, and neither does a PDF made
+by rasterizing one: the reader zooms and it blurs, which is exactly the complaint that
+started this rule. Two properties define it and `make check` now prints both per figure and
+warns on either failure — **zero raster images** (`pdfimages -list` lists none) and
+**embedded fonts** (`pdffonts` lists some, so the text is text rather than outlined paths).
+Raster content is legitimate only for a dense heatmap or a photograph, never for a diagram
+or a line plot. The check is in `notes-tex/common/check_doc.py`, so it covers every
+`notes-tex` document, and a figure line reading `vector, N fonts` is the passing form.
+
 **Then check the printed text size, because mermaid does not.** `mmdc` emits a fixed
 600 pt canvas whatever the diagram's complexity, so a busy diagram shrinks its own labels:
 the 29-node module diagram printed near **2 pt** at `\textwidth`, while the 15-node

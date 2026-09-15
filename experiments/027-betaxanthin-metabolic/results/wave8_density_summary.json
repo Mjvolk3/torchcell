@@ -1,0 +1,297 @@
+{
+  "built_at": "2026-09-12-19-52-46",
+  "seeds": [
+    2700,
+    2701,
+    2702
+  ],
+  "rules": {
+    "median": "the trainer's own criterion, balance_median_ratio <= 1e-2 and no active reaction uphill; a mostly-off flux passes it on the zeros",
+    "max": "balance_max_ratio <= 1e-2, every independent row; reads 2.0, the statistic's largest value, on every head measured in waves 6 to 8",
+    "turnover_1e-3": "the same ratio over the rows whose turnover exceeds 1e-3 * flux_scale, reported beside the count of rows that clear the threshold",
+    "scoring": "test Spearman on the 629 pinned Merzbacher genes at the epoch the trainer selected by a centered 5-epoch moving average of the validation Pearson, never a maximum over epochs"
+  },
+  "missing_results": [
+    "wave8_dens_d0p5_boxforce_k100_e80_s2702",
+    "wave8_dens_d2p0_boxforce_k100_e80_s2701",
+    "wave8_dens_d2p0_boxforce_k100_e80_s2702"
+  ],
+  "missing_audits": [
+    "audit_wave7_ff_boxforce_k100_s2701_activerule",
+    "audit_wave7_ff_boxforce_k100_s2702_activerule",
+    "audit_wave8_dens_d0p5_s2701"
+  ],
+  "cells": [
+    {
+      "arm": "density_0.0",
+      "density_weight": 0.0,
+      "seed": 2700,
+      "stem": "wave7_ff_fluxforce_k100_boxforce_e80_s2700",
+      "job_id": 1767,
+      "select_epoch": 53,
+      "epochs_run": 80,
+      "test_spearman_pinned": -0.03123283288844603,
+      "escape_epoch": null,
+      "escape_sustained": false,
+      "val_pred_sd_ratio_max": 0.06792949140071869,
+      "c_density_first": null,
+      "c_density_last": null,
+      "active_row_frac_first": null,
+      "active_row_frac_last": null,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "flux_active_frac": 0.28019851446151733,
+      "balance_active_rows_1e_03": 422.0,
+      "balance_active_max_ratio_1e_03": 1.9999995231628418,
+      "balance_active_p95_ratio_1e_03": 1.9999914169311523,
+      "balance_max_ratio": 1.9999995231628418,
+      "second_law_eq_0_frac": 1.0,
+      "sign_flip_frac_last": 1.4929086523023153e-6
+    },
+    {
+      "arm": "density_0.0",
+      "density_weight": 0.0,
+      "seed": 2701,
+      "stem": "wave7_ff_fluxforce_k100_boxforce_e80_s2701",
+      "job_id": 1770,
+      "select_epoch": 19,
+      "epochs_run": 80,
+      "test_spearman_pinned": 0.09957606543246442,
+      "escape_epoch": null,
+      "escape_sustained": false,
+      "val_pred_sd_ratio_max": 0.07493836432695389,
+      "c_density_first": null,
+      "c_density_last": null,
+      "active_row_frac_first": null,
+      "active_row_frac_last": null,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": null,
+      "genesis_active_rule": null,
+      "flux_active_frac": null,
+      "balance_active_rows_1e_03": null,
+      "balance_active_max_ratio_1e_03": null,
+      "balance_active_p95_ratio_1e_03": null,
+      "balance_max_ratio": null,
+      "second_law_eq_0_frac": 1.0,
+      "sign_flip_frac_last": 2.3596083118373543e-6
+    },
+    {
+      "arm": "density_0.0",
+      "density_weight": 0.0,
+      "seed": 2702,
+      "stem": "wave7_ff_fluxforce_k100_boxforce_e80_s2702",
+      "job_id": 1771,
+      "select_epoch": 43,
+      "epochs_run": 80,
+      "test_spearman_pinned": 0.10043012557062764,
+      "escape_epoch": 41,
+      "escape_sustained": false,
+      "val_pred_sd_ratio_max": 0.13237830996513367,
+      "c_density_first": null,
+      "c_density_last": null,
+      "active_row_frac_first": null,
+      "active_row_frac_last": null,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": null,
+      "genesis_active_rule": null,
+      "flux_active_frac": null,
+      "balance_active_rows_1e_03": null,
+      "balance_active_max_ratio_1e_03": null,
+      "balance_active_p95_ratio_1e_03": null,
+      "balance_max_ratio": null,
+      "second_law_eq_0_frac": 1.0,
+      "sign_flip_frac_last": 1.6936059778502033e-6
+    },
+    {
+      "arm": "density_0.5",
+      "density_weight": 0.5,
+      "seed": 2700,
+      "stem": "wave8_dens_d0p5_boxforce_k100_e80_s2700",
+      "job_id": 1781,
+      "select_epoch": 77,
+      "epochs_run": 80,
+      "test_spearman_pinned": 0.11550419444761895,
+      "escape_epoch": 56,
+      "escape_sustained": true,
+      "val_pred_sd_ratio_max": 0.1882839798927307,
+      "c_density_first": 0.7014285778177196,
+      "c_density_last": 0.6134035977823981,
+      "active_row_frac_first": 0.20095413692038636,
+      "active_row_frac_last": 0.2982016483257557,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "flux_active_frac": 0.30622124671936035,
+      "balance_active_rows_1e_03": 691.0,
+      "balance_active_max_ratio_1e_03": 1.9999998807907104,
+      "balance_active_p95_ratio_1e_03": 1.9999966621398926,
+      "balance_max_ratio": 1.9999998807907104,
+      "second_law_eq_0_frac": 1.0,
+      "sign_flip_frac_last": 2.8189359015633615e-6
+    },
+    {
+      "arm": "density_0.5",
+      "density_weight": 0.5,
+      "seed": 2701,
+      "stem": "wave8_dens_d0p5_boxforce_k100_e80_s2701",
+      "job_id": 1786,
+      "select_epoch": 43,
+      "epochs_run": 80,
+      "test_spearman_pinned": 0.08734466415245731,
+      "escape_epoch": 35,
+      "escape_sustained": true,
+      "val_pred_sd_ratio_max": 0.2948387563228607,
+      "c_density_first": 0.695705849548866,
+      "c_density_last": 0.6009116275557156,
+      "active_row_frac_first": 0.20175562375064554,
+      "active_row_frac_last": 0.2951171274842887,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": null,
+      "genesis_active_rule": null,
+      "flux_active_frac": null,
+      "balance_active_rows_1e_03": null,
+      "balance_active_max_ratio_1e_03": null,
+      "balance_active_p95_ratio_1e_03": null,
+      "balance_max_ratio": null,
+      "second_law_eq_0_frac": 1.0,
+      "sign_flip_frac_last": 4.066975093494342e-6
+    },
+    {
+      "arm": "density_2.0",
+      "density_weight": 2.0,
+      "seed": 2700,
+      "stem": "wave8_dens_d2p0_boxforce_k100_e80_s2700",
+      "job_id": 1784,
+      "select_epoch": 77,
+      "epochs_run": 80,
+      "test_spearman_pinned": 0.1333920657262733,
+      "escape_epoch": null,
+      "escape_sustained": false,
+      "val_pred_sd_ratio_max": 0.045172516256570816,
+      "c_density_first": 0.7070487799315617,
+      "c_density_last": 0.5887130601652737,
+      "active_row_frac_first": 0.19268692079289207,
+      "active_row_frac_last": 0.31055303688707026,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "flux_active_frac": 0.31965625286102295,
+      "balance_active_rows_1e_03": 810.0,
+      "balance_active_max_ratio_1e_03": 1.9999998807907104,
+      "balance_active_p95_ratio_1e_03": 1.9999970197677612,
+      "balance_max_ratio": 1.9999998807907104,
+      "second_law_eq_0_frac": 1.0,
+      "sign_flip_frac_last": 2.733577651991348e-6
+    }
+  ],
+  "arms": [
+    {
+      "arm": "density_0.0",
+      "density_weight": 0.0,
+      "n": 3,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "job_ids": [
+        1767,
+        1770,
+        1771
+      ],
+      "test_spearman_mean": 0.056257786038215345,
+      "test_spearman_sd": 0.07577030193161174,
+      "test_spearman_by_seed": {
+        "2700": -0.03123283288844603,
+        "2701": 0.09957606543246442,
+        "2702": 0.10043012557062764
+      },
+      "escaped_sustained": 0,
+      "genesis_median_rule_mean": 1.0,
+      "genesis_max_rule_mean": 0.0,
+      "genesis_active_rule_mean": 0.0,
+      "flux_active_frac_mean": 0.28019851446151733,
+      "active_row_frac_last_mean": null
+    },
+    {
+      "arm": "density_0.5",
+      "density_weight": 0.5,
+      "n": 2,
+      "seeds": [
+        2700,
+        2701
+      ],
+      "job_ids": [
+        1781,
+        1786
+      ],
+      "test_spearman_mean": 0.10142442930003813,
+      "test_spearman_sd": 0.019911794826736814,
+      "test_spearman_by_seed": {
+        "2700": 0.11550419444761895,
+        "2701": 0.08734466415245731
+      },
+      "escaped_sustained": 2,
+      "genesis_median_rule_mean": 1.0,
+      "genesis_max_rule_mean": 0.0,
+      "genesis_active_rule_mean": 0.0,
+      "flux_active_frac_mean": 0.30622124671936035,
+      "active_row_frac_last_mean": 0.2966593879050222
+    },
+    {
+      "arm": "density_2.0",
+      "density_weight": 2.0,
+      "n": 1,
+      "seeds": [
+        2700
+      ],
+      "job_ids": [
+        1784
+      ],
+      "test_spearman_mean": 0.1333920657262733,
+      "test_spearman_sd": null,
+      "test_spearman_by_seed": {
+        "2700": 0.1333920657262733
+      },
+      "escaped_sustained": 0,
+      "genesis_median_rule_mean": 1.0,
+      "genesis_max_rule_mean": 0.0,
+      "genesis_active_rule_mean": 0.0,
+      "flux_active_frac_mean": 0.31965625286102295,
+      "active_row_frac_last_mean": 0.31055303688707026
+    }
+  ],
+  "contrasts": [
+    {
+      "arm": "density_0.5",
+      "against": "density_0.0",
+      "n_pairs": 2,
+      "seeds": [
+        2700,
+        2701
+      ],
+      "mean_diff": 0.06725281302802893,
+      "sd_diff": 0.11240765386899418,
+      "diffs_by_seed": {
+        "2700": 0.14673702733606497,
+        "2701": -0.012231401280007104
+      }
+    },
+    {
+      "arm": "density_2.0",
+      "against": "density_0.0",
+      "n_pairs": 1,
+      "seeds": [
+        2700
+      ],
+      "mean_diff": 0.16462489861471932,
+      "sd_diff": null,
+      "diffs_by_seed": {
+        "2700": 0.16462489861471932
+      }
+    }
+  ],
+  "figure_svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave8_density_2026-09-12-19-52-45.svg",
+  "figure_png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave8_density_2026-09-12-19-52-45.png"
+}

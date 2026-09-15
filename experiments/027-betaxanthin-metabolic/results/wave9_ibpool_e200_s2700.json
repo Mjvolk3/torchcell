@@ -1,0 +1,4618 @@
+{
+  "cell": {
+    "arm": "pooled",
+    "base_arm": "pooled",
+    "seed": 2700,
+    "permute_train_targets": false,
+    "epochs": 200,
+    "hidden": 90,
+    "layers": 2,
+    "attention_heads": 9,
+    "batch_size": 128,
+    "num_workers": 2,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5,
+    "crps": true,
+    "graph_reg": true,
+    "abort_on_collapse": false,
+    "aux_mulleder": false,
+    "attention_mask": false,
+    "learnable_embedding": false,
+    "pert_heads": 6,
+    "kcat_tier": "measured",
+    "thermo_source": "shipped",
+    "constraint_warmup_epochs": 0,
+    "constraint_scale": 1.0,
+    "constraint_delay_epochs": 0,
+    "head_normalize": false,
+    "head": "isobutanol",
+    "aa_readout": "flux_metabolite",
+    "target_log10_molar": false,
+    "dist": "crps",
+    "bx_readout": "flux_scalar",
+    "volume_table": "assumed",
+    "conc_space": "mixture",
+    "conc_lower_m": 1e-07,
+    "conc_upper_m": 0.01,
+    "flux_parameterization": null,
+    "flux_balance_active_row_set": "dynamic",
+    "flux_balance_active_weight": 0.0,
+    "flux_density_weight": 0.0,
+    "flux_draws": 1,
+    "flux_latent_stochastic": false,
+    "flux_kl_weight": null,
+    "ib_readout": "flux_scalar",
+    "ib_anchors": "one",
+    "target_log10": true,
+    "aa_supervise_columns": null,
+    "apply_media": "none",
+    "flux_log_c_from_latent": false
+  },
+  "select_epoch": 21,
+  "select_rule": "centered_ma_5",
+  "select_val_pearson": 0.08031164854764938,
+  "test": {
+    "pinned": {
+      "n": 504,
+      "spearman": 0.12776969969230445,
+      "pearson": 0.12881901860237122,
+      "top10": {
+        "hits": 1.0,
+        "enrichment": 1.008
+      },
+      "top25": {
+        "hits": 3.0,
+        "enrichment": 1.2096
+      },
+      "top50": {
+        "hits": 5.0,
+        "enrichment": 1.008
+      }
+    },
+    "all": {
+      "n": 789,
+      "spearman": 0.0961522615775586,
+      "pearson": 0.09204455465078354,
+      "top10": {
+        "hits": 2.0,
+        "enrichment": 1.9974683544303797
+      },
+      "top25": {
+        "hits": 2.0,
+        "enrichment": 0.7989873417721519
+      },
+      "top50": {
+        "hits": 5.0,
+        "enrichment": 0.9987341772151899
+      }
+    },
+    "dump_path": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_isobutanol_s2700.json"
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 1.494214423291095,
+      "train_data_loss": 0.5525753498077393,
+      "val_loss": 0.5542840406410676,
+      "val_pearson": -0.04905899986624718,
+      "val_pred_sd_ratio": 0.00042201366159133613,
+      "n_val": 266,
+      "graph_reg_loss": 0.7773182988166809,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 1,
+      "train_loss": 1.161349369333936,
+      "train_data_loss": 0.5476901353179634,
+      "val_loss": 0.5545766801762402,
+      "val_pearson": 0.01127527840435505,
+      "val_pred_sd_ratio": 0.0003358923422638327,
+      "n_val": 266,
+      "graph_reg_loss": 0.5164040923118591,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.0033437625154273,
+      "train_data_loss": 0.5398606832151289,
+      "val_loss": 0.555412923483024,
+      "val_pearson": 0.038996417075395584,
+      "val_pred_sd_ratio": 0.0002687876403797418,
+      "n_val": 266,
+      "graph_reg_loss": 0.4126959443092346,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.9421551417220723,
+      "train_data_loss": 0.5378004622149777,
+      "val_loss": 0.555333631827419,
+      "val_pearson": -0.003063564421609044,
+      "val_pred_sd_ratio": 0.00010912056313827634,
+      "n_val": 266,
+      "graph_reg_loss": 0.38884785771369934,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.9274496350969587,
+      "train_data_loss": 0.5369589379081479,
+      "val_loss": 0.5557156720555815,
+      "val_pearson": -0.054192014038562775,
+      "val_pred_sd_ratio": 7.417039887513965e-05,
+      "n_val": 266,
+      "graph_reg_loss": 0.3770819902420044,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.9267527646832652,
+      "train_data_loss": 0.5401759879155592,
+      "val_loss": 0.5525400499652203,
+      "val_pearson": -0.027496926486492157,
+      "val_pred_sd_ratio": 0.0003801707352977246,
+      "n_val": 266,
+      "graph_reg_loss": 0.38358408212661743,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.9083765505196212,
+      "train_data_loss": 0.5422299411389735,
+      "val_loss": 0.5528129106177423,
+      "val_pearson": -0.007438954431563616,
+      "val_pred_sd_ratio": 0.0052733635529875755,
+      "n_val": 266,
+      "graph_reg_loss": 0.34040752053260803,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.8762055140037042,
+      "train_data_loss": 0.5399421372196891,
+      "val_loss": 0.5526598127264726,
+      "val_pearson": -0.02268257923424244,
+      "val_pred_sd_ratio": 0.009541686624288559,
+      "n_val": 266,
+      "graph_reg_loss": 0.32612788677215576,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.8634683992955592,
+      "train_data_loss": 0.5405020489321126,
+      "val_loss": 0.5531155749371177,
+      "val_pearson": -0.0021479097194969654,
+      "val_pred_sd_ratio": 0.00961776077747345,
+      "n_val": 266,
+      "graph_reg_loss": 0.3164294958114624,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.8463102850047025,
+      "train_data_loss": 0.5394079290427171,
+      "val_loss": 0.5522650793979043,
+      "val_pearson": -0.05666236951947212,
+      "val_pred_sd_ratio": 0.003039914183318615,
+      "n_val": 266,
+      "graph_reg_loss": 0.29641100764274597,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.8255749797666228,
+      "train_data_loss": 0.5354734361171722,
+      "val_loss": 0.553108939550873,
+      "val_pearson": -0.0685429647564888,
+      "val_pred_sd_ratio": 0.005478002596646547,
+      "n_val": 266,
+      "graph_reg_loss": 0.27569320797920227,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.8132818774743513,
+      "train_data_loss": 0.5373808122300482,
+      "val_loss": 0.5537149547634268,
+      "val_pearson": -0.08260299265384674,
+      "val_pred_sd_ratio": 0.00671731773763895,
+      "n_val": 266,
+      "graph_reg_loss": 0.26777541637420654,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.8127619902808945,
+      "train_data_loss": 0.5472810841225958,
+      "val_loss": 0.5533646219655087,
+      "val_pearson": 0.05974673852324486,
+      "val_pred_sd_ratio": 0.007304915226995945,
+      "n_val": 266,
+      "graph_reg_loss": 0.2554762065410614,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.794795664486947,
+      "train_data_loss": 0.5353658567001294,
+      "val_loss": 0.5519860458553285,
+      "val_pearson": 0.021218296140432358,
+      "val_pred_sd_ratio": 0.023074854165315628,
+      "n_val": 266,
+      "graph_reg_loss": 0.2572652995586395,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.7892688741157581,
+      "train_data_loss": 0.5370207757918866,
+      "val_loss": 0.5514690270997528,
+      "val_pearson": 0.010505075566470623,
+      "val_pred_sd_ratio": 0.023657629266381264,
+      "n_val": 266,
+      "graph_reg_loss": 0.25138068199157715,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.7834426814859564,
+      "train_data_loss": 0.536662493046228,
+      "val_loss": 0.5526373718017922,
+      "val_pearson": -0.01029287464916706,
+      "val_pred_sd_ratio": 0.046695515513420105,
+      "n_val": 266,
+      "graph_reg_loss": 0.23804451525211334,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.7890723471517687,
+      "train_data_loss": 0.5375713578292302,
+      "val_loss": 0.5501807986345506,
+      "val_pearson": 0.09288325905799866,
+      "val_pred_sd_ratio": 0.0960395336151123,
+      "n_val": 266,
+      "graph_reg_loss": 0.27464237809181213,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.7967381307056972,
+      "train_data_loss": 0.5447349304502661,
+      "val_loss": 0.5521664171290577,
+      "val_pearson": 0.0656219944357872,
+      "val_pred_sd_ratio": 0.037268444895744324,
+      "n_val": 266,
+      "graph_reg_loss": 0.24917565286159515,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.7853572747924111,
+      "train_data_loss": 0.5424008342352781,
+      "val_loss": 0.5542121655062625,
+      "val_pearson": 0.040861912071704865,
+      "val_pred_sd_ratio": 0.030531592667102814,
+      "n_val": 266,
+      "graph_reg_loss": 0.23888760805130005,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.7939483283402083,
+      "train_data_loss": 0.5449637569390334,
+      "val_loss": 0.5694919555707085,
+      "val_pearson": 0.11351316422224045,
+      "val_pred_sd_ratio": 0.11365734785795212,
+      "n_val": 266,
+      "graph_reg_loss": 0.2696554362773895,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.7973011132184561,
+      "train_data_loss": 0.5396182248731712,
+      "val_loss": 0.552641987352443,
+      "val_pearson": 0.07760094851255417,
+      "val_pred_sd_ratio": 0.020850567147135735,
+      "n_val": 266,
+      "graph_reg_loss": 0.23144669830799103,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.7748060466407182,
+      "train_data_loss": 0.538554823630816,
+      "val_loss": 0.548997319730601,
+      "val_pearson": 0.08031164854764938,
+      "val_pred_sd_ratio": 0.06322231143712997,
+      "n_val": 266,
+      "graph_reg_loss": 0.25019288063049316,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.7819761362942782,
+      "train_data_loss": 0.5419261099456193,
+      "val_loss": 0.552094084427769,
+      "val_pearson": 0.06485290825366974,
+      "val_pred_sd_ratio": 0.05892442911863327,
+      "n_val": 266,
+      "graph_reg_loss": 0.23844896256923676,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.777591572953509,
+      "train_data_loss": 0.5381538515741174,
+      "val_loss": 0.5525348831836442,
+      "val_pearson": 0.0814056470990181,
+      "val_pred_sd_ratio": 0.037470947951078415,
+      "n_val": 266,
+      "graph_reg_loss": 0.2328607439994812,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.7749919279829248,
+      "train_data_loss": 0.5393763850261639,
+      "val_loss": 0.5521063195135361,
+      "val_pearson": 0.04536614567041397,
+      "val_pred_sd_ratio": 0.08639214187860489,
+      "n_val": 266,
+      "graph_reg_loss": 0.23837587237358093,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.7880494989357986,
+      "train_data_loss": 0.540615923605956,
+      "val_loss": 0.551126009539554,
+      "val_pearson": 0.07933881133794785,
+      "val_pred_sd_ratio": 0.05509746074676514,
+      "n_val": 266,
+      "graph_reg_loss": 0.24477477371692657,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 26,
+      "train_loss": 0.7811807308878217,
+      "train_data_loss": 0.540856915634948,
+      "val_loss": 0.5503984255001957,
+      "val_pearson": 0.07886157184839249,
+      "val_pred_sd_ratio": 0.06459749490022659,
+      "n_val": 266,
+      "graph_reg_loss": 0.2356901466846466,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 27,
+      "train_loss": 0.7751723764004645,
+      "train_data_loss": 0.5366912567383283,
+      "val_loss": 0.5517600541724298,
+      "val_pearson": 0.04191552847623825,
+      "val_pred_sd_ratio": 0.08307800441980362,
+      "n_val": 266,
+      "graph_reg_loss": 0.2389887124300003,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 28,
+      "train_loss": 0.7753277072658786,
+      "train_data_loss": 0.5383259332799292,
+      "val_loss": 0.5587500338267563,
+      "val_pearson": 0.06678702682256699,
+      "val_pred_sd_ratio": 0.02073240466415882,
+      "n_val": 266,
+      "graph_reg_loss": 0.25043514370918274,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 29,
+      "train_loss": 0.7748219034114441,
+      "train_data_loss": 0.53670638141694,
+      "val_loss": 0.55265966752418,
+      "val_pearson": 0.033274415880441666,
+      "val_pred_sd_ratio": 0.08288109302520752,
+      "n_val": 266,
+      "graph_reg_loss": 0.23756393790245056,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 30,
+      "train_loss": 0.7653489588917076,
+      "train_data_loss": 0.5310597268791942,
+      "val_loss": 0.5521008538124257,
+      "val_pearson": 0.06581905484199524,
+      "val_pred_sd_ratio": 0.07219498604536057,
+      "n_val": 266,
+      "graph_reg_loss": 0.22678908705711365,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 31,
+      "train_loss": 0.7724823928498602,
+      "train_data_loss": 0.5385442465156703,
+      "val_loss": 0.5536979750583046,
+      "val_pearson": 0.006844290066510439,
+      "val_pred_sd_ratio": 0.06475543975830078,
+      "n_val": 266,
+      "graph_reg_loss": 0.232383593916893,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 32,
+      "train_loss": 0.767525906686659,
+      "train_data_loss": 0.5350480497657478,
+      "val_loss": 0.5509626166264814,
+      "val_pearson": 0.0610220842063427,
+      "val_pred_sd_ratio": 0.09907257556915283,
+      "n_val": 266,
+      "graph_reg_loss": 0.22826330363750458,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 33,
+      "train_loss": 0.7667105360464617,
+      "train_data_loss": 0.5357210818049195,
+      "val_loss": 0.5508721278126079,
+      "val_pearson": 0.07140244543552399,
+      "val_pred_sd_ratio": 0.128496453166008,
+      "n_val": 266,
+      "graph_reg_loss": 0.23407402634620667,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 34,
+      "train_loss": 0.7791944084229407,
+      "train_data_loss": 0.5446246281846777,
+      "val_loss": 0.5536811109772302,
+      "val_pearson": 0.04931603744626045,
+      "val_pred_sd_ratio": 0.09238747507333755,
+      "n_val": 266,
+      "graph_reg_loss": 0.22940093278884888,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 35,
+      "train_loss": 0.7665361885900621,
+      "train_data_loss": 0.5314735089029584,
+      "val_loss": 0.5589905054049384,
+      "val_pearson": -0.018102623522281647,
+      "val_pred_sd_ratio": 0.1443500816822052,
+      "n_val": 266,
+      "graph_reg_loss": 0.24259668588638306,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 36,
+      "train_loss": 0.7759128897995143,
+      "train_data_loss": 0.5354870820974375,
+      "val_loss": 0.555888149075042,
+      "val_pearson": 0.03595557436347008,
+      "val_pred_sd_ratio": 0.12011701613664627,
+      "n_val": 266,
+      "graph_reg_loss": 0.23178541660308838,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 37,
+      "train_loss": 0.7750852998200949,
+      "train_data_loss": 0.5338938932914239,
+      "val_loss": 0.553919530004487,
+      "val_pearson": 0.04860227182507515,
+      "val_pred_sd_ratio": 0.13818468153476715,
+      "n_val": 266,
+      "graph_reg_loss": 0.2379743754863739,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 38,
+      "train_loss": 0.7734351889653639,
+      "train_data_loss": 0.532131777568297,
+      "val_loss": 0.556175989315922,
+      "val_pearson": 0.05457404628396034,
+      "val_pred_sd_ratio": 0.08590789884328842,
+      "n_val": 266,
+      "graph_reg_loss": 0.23467329144477844,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 39,
+      "train_loss": 0.7819414634209174,
+      "train_data_loss": 0.5416466675021432,
+      "val_loss": 0.5489693252663863,
+      "val_pearson": 0.07600568234920502,
+      "val_pred_sd_ratio": 0.11885834485292435,
+      "n_val": 266,
+      "graph_reg_loss": 0.24033641815185547,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 40,
+      "train_loss": 0.7694580229845914,
+      "train_data_loss": 0.536341300645432,
+      "val_loss": 0.5576126683027225,
+      "val_pearson": -0.002893558470532298,
+      "val_pred_sd_ratio": 0.14219532907009125,
+      "n_val": 266,
+      "graph_reg_loss": 0.2475123107433319,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 41,
+      "train_loss": 0.7631647288799286,
+      "train_data_loss": 0.5263597353712305,
+      "val_loss": 0.5527684867830205,
+      "val_pearson": 0.02892121858894825,
+      "val_pred_sd_ratio": 0.118260957300663,
+      "n_val": 266,
+      "graph_reg_loss": 0.22985437512397766,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 42,
+      "train_loss": 0.7644335821077421,
+      "train_data_loss": 0.5309482772241939,
+      "val_loss": 0.5522934758573547,
+      "val_pearson": 0.04442569613456726,
+      "val_pred_sd_ratio": 0.11360972374677658,
+      "n_val": 266,
+      "graph_reg_loss": 0.23904919624328613,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 43,
+      "train_loss": 0.7626656270646429,
+      "train_data_loss": 0.5306420829389003,
+      "val_loss": 0.553693946142842,
+      "val_pearson": 0.06623394787311554,
+      "val_pred_sd_ratio": 0.1556733399629593,
+      "n_val": 266,
+      "graph_reg_loss": 0.24223294854164124,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 44,
+      "train_loss": 0.7927177594853686,
+      "train_data_loss": 0.53376869334803,
+      "val_loss": 0.5513032898867041,
+      "val_pearson": 0.04241373762488365,
+      "val_pred_sd_ratio": 0.13222521543502808,
+      "n_val": 266,
+      "graph_reg_loss": 0.24188008904457092,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 45,
+      "train_loss": 0.7791805476337285,
+      "train_data_loss": 0.5343467775103333,
+      "val_loss": 0.5520477729632443,
+      "val_pearson": 0.020024755969643593,
+      "val_pred_sd_ratio": 0.0913078710436821,
+      "n_val": 266,
+      "graph_reg_loss": 0.2378126084804535,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 46,
+      "train_loss": 0.7681297241867363,
+      "train_data_loss": 0.5335294430132036,
+      "val_loss": 0.5519518986680454,
+      "val_pearson": 0.029162755236029625,
+      "val_pred_sd_ratio": 0.11447441577911377,
+      "n_val": 266,
+      "graph_reg_loss": 0.23271222412586212,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 47,
+      "train_loss": 0.7796975645152006,
+      "train_data_loss": 0.5352655447922744,
+      "val_loss": 0.5484956762844458,
+      "val_pearson": 0.08018818497657776,
+      "val_pred_sd_ratio": 0.11767903715372086,
+      "n_val": 266,
+      "graph_reg_loss": 0.22937613725662231,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 48,
+      "train_loss": 0.7620235209341173,
+      "train_data_loss": 0.5282821841054148,
+      "val_loss": 0.5578339521149943,
+      "val_pearson": -0.01535390131175518,
+      "val_pred_sd_ratio": 0.12289521098136902,
+      "n_val": 266,
+      "graph_reg_loss": 0.23856596648693085,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 49,
+      "train_loss": 0.7596865354420302,
+      "train_data_loss": 0.5262045898994843,
+      "val_loss": 0.5585560646272243,
+      "val_pearson": 0.028810227289795876,
+      "val_pred_sd_ratio": 0.183593288064003,
+      "n_val": 266,
+      "graph_reg_loss": 0.2307034432888031,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 50,
+      "train_loss": 0.7660892481927748,
+      "train_data_loss": 0.5327580621490231,
+      "val_loss": 0.5561854480800772,
+      "val_pearson": -0.014524837955832481,
+      "val_pred_sd_ratio": 0.10939007252454758,
+      "n_val": 266,
+      "graph_reg_loss": 0.2399905025959015,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 51,
+      "train_loss": 0.7700947074147014,
+      "train_data_loss": 0.5345900194211439,
+      "val_loss": 0.5575546012785202,
+      "val_pearson": 0.019283726811408997,
+      "val_pred_sd_ratio": 0.16341134905815125,
+      "n_val": 266,
+      "graph_reg_loss": 0.23740263283252716,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 52,
+      "train_loss": 0.7657541005642383,
+      "train_data_loss": 0.5266489862621605,
+      "val_loss": 0.5598390160646654,
+      "val_pearson": 0.02616339921951294,
+      "val_pred_sd_ratio": 0.1842496544122696,
+      "n_val": 266,
+      "graph_reg_loss": 0.22781729698181152,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 53,
+      "train_loss": 0.764774472682507,
+      "train_data_loss": 0.5323866029064377,
+      "val_loss": 0.5606232173460767,
+      "val_pearson": 0.030377261340618134,
+      "val_pred_sd_ratio": 0.20790566504001617,
+      "n_val": 266,
+      "graph_reg_loss": 0.2325325310230255,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 54,
+      "train_loss": 0.7873897165447087,
+      "train_data_loss": 0.5369637581435117,
+      "val_loss": 0.5535198297715724,
+      "val_pearson": -0.0011789730051532388,
+      "val_pred_sd_ratio": 0.058298058807849884,
+      "n_val": 266,
+      "graph_reg_loss": 0.2410813271999359,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 55,
+      "train_loss": 0.7735938576908855,
+      "train_data_loss": 0.543053540316495,
+      "val_loss": 0.554875245667938,
+      "val_pearson": -0.008298162370920181,
+      "val_pred_sd_ratio": 0.07296940684318542,
+      "n_val": 266,
+      "graph_reg_loss": 0.23699666559696198,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 56,
+      "train_loss": 0.7739064917935954,
+      "train_data_loss": 0.5360714495182037,
+      "val_loss": 0.5639554463831106,
+      "val_pearson": -0.03251872956752777,
+      "val_pred_sd_ratio": 0.1501023918390274,
+      "n_val": 266,
+      "graph_reg_loss": 0.23612108826637268,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 57,
+      "train_loss": 0.7681453545372208,
+      "train_data_loss": 0.5310558908945554,
+      "val_loss": 0.56153620902757,
+      "val_pearson": -0.01292094774544239,
+      "val_pred_sd_ratio": 0.16544103622436523,
+      "n_val": 266,
+      "graph_reg_loss": 0.23151521384716034,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 58,
+      "train_loss": 0.7627412897425813,
+      "train_data_loss": 0.5307451954909733,
+      "val_loss": 0.5588302047629106,
+      "val_pearson": 0.03786962106823921,
+      "val_pred_sd_ratio": 0.13718079030513763,
+      "n_val": 266,
+      "graph_reg_loss": 0.23038870096206665,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 59,
+      "train_loss": 0.7620764157988809,
+      "train_data_loss": 0.5290270621900435,
+      "val_loss": 0.5663952155220777,
+      "val_pearson": -0.07082881778478622,
+      "val_pred_sd_ratio": 0.13873881101608276,
+      "n_val": 266,
+      "graph_reg_loss": 0.2415822297334671,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 60,
+      "train_loss": 0.7723357298157432,
+      "train_data_loss": 0.5338877462721491,
+      "val_loss": 0.5571404175650805,
+      "val_pearson": 0.019545329734683037,
+      "val_pred_sd_ratio": 0.1425994336605072,
+      "n_val": 266,
+      "graph_reg_loss": 0.23531383275985718,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 61,
+      "train_loss": 0.7801366990262811,
+      "train_data_loss": 0.5325887176123533,
+      "val_loss": 0.5547382042820292,
+      "val_pearson": 0.03079414926469326,
+      "val_pred_sd_ratio": 0.13537393510341644,
+      "n_val": 266,
+      "graph_reg_loss": 0.22911347448825836,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 62,
+      "train_loss": 0.7638340940723172,
+      "train_data_loss": 0.5281825429433352,
+      "val_loss": 0.5591544997423215,
+      "val_pearson": 0.01866929978132248,
+      "val_pred_sd_ratio": 0.19651104509830475,
+      "n_val": 266,
+      "graph_reg_loss": 0.24569395184516907,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 63,
+      "train_loss": 0.7708417904841436,
+      "train_data_loss": 0.5342197104707941,
+      "val_loss": 0.5598371719059191,
+      "val_pearson": 0.004233951680362225,
+      "val_pred_sd_ratio": 0.15112817287445068,
+      "n_val": 266,
+      "graph_reg_loss": 0.23441998660564423,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 64,
+      "train_loss": 0.7620737583606274,
+      "train_data_loss": 0.5280588106675581,
+      "val_loss": 0.5593129535366718,
+      "val_pearson": 0.0013771889498457313,
+      "val_pred_sd_ratio": 0.1366707980632782,
+      "n_val": 266,
+      "graph_reg_loss": 0.2291419953107834,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 65,
+      "train_loss": 0.7700770288318782,
+      "train_data_loss": 0.5401286188658182,
+      "val_loss": 0.557336225545496,
+      "val_pearson": 0.020410330966114998,
+      "val_pred_sd_ratio": 0.17208677530288696,
+      "n_val": 266,
+      "graph_reg_loss": 0.23049437999725342,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 66,
+      "train_loss": 0.7503921575360484,
+      "train_data_loss": 0.5206890384872238,
+      "val_loss": 0.5751994565913552,
+      "val_pearson": -0.01002831943333149,
+      "val_pred_sd_ratio": 0.2618490755558014,
+      "n_val": 266,
+      "graph_reg_loss": 0.22625461220741272,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 67,
+      "train_loss": 0.7755290478854985,
+      "train_data_loss": 0.5391407628338059,
+      "val_loss": 0.5649695127530205,
+      "val_pearson": 0.002329875947907567,
+      "val_pred_sd_ratio": 0.21160948276519775,
+      "n_val": 266,
+      "graph_reg_loss": 0.23346595466136932,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 68,
+      "train_loss": 0.7645475910855578,
+      "train_data_loss": 0.5279089583979024,
+      "val_loss": 0.573750758977761,
+      "val_pearson": -0.056023016571998596,
+      "val_pred_sd_ratio": 0.20059411227703094,
+      "n_val": 266,
+      "graph_reg_loss": 0.23535451292991638,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 69,
+      "train_loss": 0.7542662992105855,
+      "train_data_loss": 0.5218974042248417,
+      "val_loss": 0.579040711535547,
+      "val_pearson": -0.03955945000052452,
+      "val_pred_sd_ratio": 0.247087761759758,
+      "n_val": 266,
+      "graph_reg_loss": 0.23518772423267365,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 70,
+      "train_loss": 0.7531882052297716,
+      "train_data_loss": 0.5199417518330859,
+      "val_loss": 0.5627593734210595,
+      "val_pearson": 0.00566913140937686,
+      "val_pred_sd_ratio": 0.2020806521177292,
+      "n_val": 266,
+      "graph_reg_loss": 0.2376520037651062,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 71,
+      "train_loss": 0.751455854285847,
+      "train_data_loss": 0.5169862574571139,
+      "val_loss": 0.560907554805727,
+      "val_pearson": 0.0001504931424278766,
+      "val_pred_sd_ratio": 0.2125471830368042,
+      "n_val": 266,
+      "graph_reg_loss": 0.23585358262062073,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 72,
+      "train_loss": 0.7503337682067573,
+      "train_data_loss": 0.5148720404544433,
+      "val_loss": 0.5691558140561097,
+      "val_pearson": 0.02602161094546318,
+      "val_pred_sd_ratio": 0.27243858575820923,
+      "n_val": 266,
+      "graph_reg_loss": 0.23811286687850952,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 73,
+      "train_loss": 0.7472929397186676,
+      "train_data_loss": 0.5151433269311856,
+      "val_loss": 0.566275988306318,
+      "val_pearson": 0.037957217544317245,
+      "val_pred_sd_ratio": 0.2730857729911804,
+      "n_val": 266,
+      "graph_reg_loss": 0.22550907731056213,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 74,
+      "train_loss": 0.7507050937259352,
+      "train_data_loss": 0.5169434353902742,
+      "val_loss": 0.5668374864678634,
+      "val_pearson": 0.005903561599552631,
+      "val_pred_sd_ratio": 0.25507691502571106,
+      "n_val": 266,
+      "graph_reg_loss": 0.23054207861423492,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 75,
+      "train_loss": 0.7511448093823024,
+      "train_data_loss": 0.5163546014915813,
+      "val_loss": 0.5653121426589507,
+      "val_pearson": -0.003690557088702917,
+      "val_pred_sd_ratio": 0.1829802542924881,
+      "n_val": 266,
+      "graph_reg_loss": 0.22435781359672546,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 76,
+      "train_loss": 0.7530188452113759,
+      "train_data_loss": 0.5188021659851074,
+      "val_loss": 0.5666842846045816,
+      "val_pearson": 0.03380059823393822,
+      "val_pred_sd_ratio": 0.26131877303123474,
+      "n_val": 266,
+      "graph_reg_loss": 0.2415362149477005,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 77,
+      "train_loss": 0.7479982335459102,
+      "train_data_loss": 0.5110687845713132,
+      "val_loss": 0.587812204109995,
+      "val_pearson": -0.07421856373548508,
+      "val_pred_sd_ratio": 0.28225061297416687,
+      "n_val": 266,
+      "graph_reg_loss": 0.23489879071712494,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 78,
+      "train_loss": 0.753940436747167,
+      "train_data_loss": 0.5226463629053785,
+      "val_loss": 0.5741861718041557,
+      "val_pearson": -0.03807288035750389,
+      "val_pred_sd_ratio": 0.2533503472805023,
+      "n_val": 266,
+      "graph_reg_loss": 0.2240981012582779,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 79,
+      "train_loss": 0.7476769352888132,
+      "train_data_loss": 0.5143573396391683,
+      "val_loss": 0.5702452260748785,
+      "val_pearson": 0.0009693407919257879,
+      "val_pred_sd_ratio": 0.2780449688434601,
+      "n_val": 266,
+      "graph_reg_loss": 0.2287689596414566,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 80,
+      "train_loss": 0.7301115560067164,
+      "train_data_loss": 0.49967926701942045,
+      "val_loss": 0.5961069110640906,
+      "val_pearson": -0.021666398271918297,
+      "val_pred_sd_ratio": 0.3712073266506195,
+      "n_val": 266,
+      "graph_reg_loss": 0.22808822989463806,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 81,
+      "train_loss": 0.7508681106877018,
+      "train_data_loss": 0.5153570508028006,
+      "val_loss": 0.5708343942362563,
+      "val_pearson": 0.047638267278671265,
+      "val_pred_sd_ratio": 0.27306675910949707,
+      "n_val": 266,
+      "graph_reg_loss": 0.2381383180618286,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 82,
+      "train_loss": 0.8079853050120465,
+      "train_data_loss": 0.552615793107392,
+      "val_loss": 0.5714890338424453,
+      "val_pearson": 0.05893898755311966,
+      "val_pred_sd_ratio": 0.3176404535770416,
+      "n_val": 266,
+      "graph_reg_loss": 0.2356453686952591,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 83,
+      "train_loss": 0.8349549607797102,
+      "train_data_loss": 0.5367810362345212,
+      "val_loss": 0.5721562813995476,
+      "val_pearson": -0.035865284502506256,
+      "val_pred_sd_ratio": 0.23392832279205322,
+      "n_val": 266,
+      "graph_reg_loss": 0.27630066871643066,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 84,
+      "train_loss": 0.7831432091725337,
+      "train_data_loss": 0.5293271886063861,
+      "val_loss": 0.57795298458042,
+      "val_pearson": -0.03290489315986633,
+      "val_pred_sd_ratio": 0.2599729895591736,
+      "n_val": 266,
+      "graph_reg_loss": 0.24854031205177307,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 85,
+      "train_loss": 0.7646789790748002,
+      "train_data_loss": 0.5239848804164242,
+      "val_loss": 0.5725275699357341,
+      "val_pearson": -0.039611950516700745,
+      "val_pred_sd_ratio": 0.2408580482006073,
+      "n_val": 266,
+      "graph_reg_loss": 0.23860059678554535,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 86,
+      "train_loss": 0.7475399313034949,
+      "train_data_loss": 0.5119324670983599,
+      "val_loss": 0.5870208820902315,
+      "val_pearson": -0.04406328871846199,
+      "val_pred_sd_ratio": 0.30021798610687256,
+      "n_val": 266,
+      "graph_reg_loss": 0.2406717985868454,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 87,
+      "train_loss": 0.7451170613239337,
+      "train_data_loss": 0.5079400376840071,
+      "val_loss": 0.5728054898125785,
+      "val_pearson": -0.018300605937838554,
+      "val_pred_sd_ratio": 0.23529186844825745,
+      "n_val": 266,
+      "graph_reg_loss": 0.24019962549209595,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 88,
+      "train_loss": 0.7427886035535243,
+      "train_data_loss": 0.5081107918318216,
+      "val_loss": 0.5740775268776972,
+      "val_pearson": 0.04888754338026047,
+      "val_pred_sd_ratio": 0.29730117321014404,
+      "n_val": 266,
+      "graph_reg_loss": 0.24381309747695923,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 89,
+      "train_loss": 0.7423301853916862,
+      "train_data_loss": 0.5065769224197834,
+      "val_loss": 0.607595255500392,
+      "val_pearson": 0.0004773987166117877,
+      "val_pred_sd_ratio": 0.41874822974205017,
+      "n_val": 266,
+      "graph_reg_loss": 0.24293950200080872,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 90,
+      "train_loss": 0.7399318736869019,
+      "train_data_loss": 0.5029124466629772,
+      "val_loss": 0.5852454972446413,
+      "val_pearson": -0.025592288002371788,
+      "val_pred_sd_ratio": 0.30226436257362366,
+      "n_val": 266,
+      "graph_reg_loss": 0.23952440917491913,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 91,
+      "train_loss": 0.746210630837973,
+      "train_data_loss": 0.5106030640664039,
+      "val_loss": 0.5945310964620203,
+      "val_pearson": -0.047565191984176636,
+      "val_pred_sd_ratio": 0.3329089879989624,
+      "n_val": 266,
+      "graph_reg_loss": 0.2415773570537567,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 92,
+      "train_loss": 0.7377138145558246,
+      "train_data_loss": 0.5026569776720815,
+      "val_loss": 0.5923460354482321,
+      "val_pearson": -0.026074547320604324,
+      "val_pred_sd_ratio": 0.3576878011226654,
+      "n_val": 266,
+      "graph_reg_loss": 0.23101253807544708,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 93,
+      "train_loss": 0.7376875420669456,
+      "train_data_loss": 0.5027908771843105,
+      "val_loss": 0.5896066212116328,
+      "val_pearson": -0.021186955273151398,
+      "val_pred_sd_ratio": 0.3405957818031311,
+      "n_val": 266,
+      "graph_reg_loss": 0.23423175513744354,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 94,
+      "train_loss": 0.7535420346569706,
+      "train_data_loss": 0.506428256824419,
+      "val_loss": 0.5825786805690679,
+      "val_pearson": -0.03147869557142258,
+      "val_pred_sd_ratio": 0.28664541244506836,
+      "n_val": 266,
+      "graph_reg_loss": 0.23442342877388,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 95,
+      "train_loss": 0.7434132308154912,
+      "train_data_loss": 0.5073160285299475,
+      "val_loss": 0.5816638532437777,
+      "val_pearson": -0.015714071691036224,
+      "val_pred_sd_ratio": 0.28893139958381653,
+      "n_val": 266,
+      "graph_reg_loss": 0.23199209570884705,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 96,
+      "train_loss": 0.7382173886546841,
+      "train_data_loss": 0.5023701444461748,
+      "val_loss": 0.6010659856903822,
+      "val_pearson": -0.015629973262548447,
+      "val_pred_sd_ratio": 0.3767188787460327,
+      "n_val": 266,
+      "graph_reg_loss": 0.23138919472694397,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 97,
+      "train_loss": 0.73075086962093,
+      "train_data_loss": 0.4943481300558363,
+      "val_loss": 0.587679884487525,
+      "val_pearson": 0.0017233832040801644,
+      "val_pred_sd_ratio": 0.33673131465911865,
+      "n_val": 266,
+      "graph_reg_loss": 0.23952828347682953,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 98,
+      "train_loss": 0.7341611215046474,
+      "train_data_loss": 0.4974667302199772,
+      "val_loss": 0.6023193741203251,
+      "val_pearson": -0.030325522646307945,
+      "val_pred_sd_ratio": 0.37512263655662537,
+      "n_val": 266,
+      "graph_reg_loss": 0.23503364622592926,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 99,
+      "train_loss": 0.7328639796801976,
+      "train_data_loss": 0.4974935050908621,
+      "val_loss": 0.6057140468654776,
+      "val_pearson": -0.054401736706495285,
+      "val_pred_sd_ratio": 0.3781183063983917,
+      "n_val": 266,
+      "graph_reg_loss": 0.22585132718086243,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 100,
+      "train_loss": 0.7439850421694966,
+      "train_data_loss": 0.5091842118795816,
+      "val_loss": 0.5772431013279391,
+      "val_pearson": -0.04269523173570633,
+      "val_pred_sd_ratio": 0.24511374533176422,
+      "n_val": 266,
+      "graph_reg_loss": 0.23483942449092865,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 101,
+      "train_loss": 0.7209967247077397,
+      "train_data_loss": 0.4867679619943941,
+      "val_loss": 0.5980981610771409,
+      "val_pearson": -0.018713632598519325,
+      "val_pred_sd_ratio": 0.383105993270874,
+      "n_val": 266,
+      "graph_reg_loss": 0.23314526677131653,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 102,
+      "train_loss": 0.7201156058868805,
+      "train_data_loss": 0.48747172951698303,
+      "val_loss": 0.5903447418284595,
+      "val_pearson": -0.015218378975987434,
+      "val_pred_sd_ratio": 0.3314130902290344,
+      "n_val": 266,
+      "graph_reg_loss": 0.23750247061252594,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 103,
+      "train_loss": 0.7373742886951992,
+      "train_data_loss": 0.4981671765253141,
+      "val_loss": 0.5937804974111399,
+      "val_pearson": -0.021375462412834167,
+      "val_pred_sd_ratio": 0.3482286036014557,
+      "n_val": 266,
+      "graph_reg_loss": 0.2364262193441391,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 104,
+      "train_loss": 0.732266628122949,
+      "train_data_loss": 0.49701238917065904,
+      "val_loss": 0.6068857769320782,
+      "val_pearson": -0.07587272673845291,
+      "val_pred_sd_ratio": 0.3611583709716797,
+      "n_val": 266,
+      "graph_reg_loss": 0.22794793546199799,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 105,
+      "train_loss": 0.7180424599678485,
+      "train_data_loss": 0.4820006058200613,
+      "val_loss": 0.5963171845988223,
+      "val_pearson": -0.04531645029783249,
+      "val_pred_sd_ratio": 0.3320372998714447,
+      "n_val": 266,
+      "graph_reg_loss": 0.23401202261447906,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 106,
+      "train_loss": 0.7198149499955115,
+      "train_data_loss": 0.48656768109891324,
+      "val_loss": 0.6065311709741005,
+      "val_pearson": -0.023510385304689407,
+      "val_pred_sd_ratio": 0.38320988416671753,
+      "n_val": 266,
+      "graph_reg_loss": 0.23360231518745422,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 107,
+      "train_loss": 0.7189911929043856,
+      "train_data_loss": 0.48393984467952283,
+      "val_loss": 0.6152592583706504,
+      "val_pearson": -0.02182100899517536,
+      "val_pred_sd_ratio": 0.4225417375564575,
+      "n_val": 266,
+      "graph_reg_loss": 0.23519083857536316,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 108,
+      "train_loss": 0.7096861078367604,
+      "train_data_loss": 0.4767712079859399,
+      "val_loss": 0.6238812607033808,
+      "val_pearson": -0.04728785157203674,
+      "val_pred_sd_ratio": 0.41294363141059875,
+      "n_val": 266,
+      "graph_reg_loss": 0.22996675968170166,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 109,
+      "train_loss": 0.7245911940351709,
+      "train_data_loss": 0.4883188527899903,
+      "val_loss": 0.6377229645736235,
+      "val_pearson": -0.10482265800237656,
+      "val_pred_sd_ratio": 0.44149571657180786,
+      "n_val": 266,
+      "graph_reg_loss": 0.24028989672660828,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 110,
+      "train_loss": 0.7062556550100252,
+      "train_data_loss": 0.47232596363340107,
+      "val_loss": 0.6111589311657095,
+      "val_pearson": 0.0014759816695004702,
+      "val_pred_sd_ratio": 0.4207780063152313,
+      "n_val": 266,
+      "graph_reg_loss": 0.23758894205093384,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 111,
+      "train_loss": 0.7113694515708205,
+      "train_data_loss": 0.477084614626773,
+      "val_loss": 0.6138037806166742,
+      "val_pearson": -0.033440183848142624,
+      "val_pred_sd_ratio": 0.4135889708995819,
+      "n_val": 266,
+      "graph_reg_loss": 0.22590194642543793,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 112,
+      "train_loss": 0.7002386564945245,
+      "train_data_loss": 0.46800475306325146,
+      "val_loss": 0.6173301343631027,
+      "val_pearson": -0.03643633797764778,
+      "val_pred_sd_ratio": 0.4385496973991394,
+      "n_val": 266,
+      "graph_reg_loss": 0.23111765086650848,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 113,
+      "train_loss": 0.7088418068823876,
+      "train_data_loss": 0.47561513022942975,
+      "val_loss": 0.6083096848394638,
+      "val_pearson": -0.061441339552402496,
+      "val_pred_sd_ratio": 0.35294055938720703,
+      "n_val": 266,
+      "graph_reg_loss": 0.24151457846164703,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 114,
+      "train_loss": 0.7176001606049476,
+      "train_data_loss": 0.47787372245417015,
+      "val_loss": 0.6496865821063966,
+      "val_pearson": -0.07446952909231186,
+      "val_pred_sd_ratio": 0.46008870005607605,
+      "n_val": 266,
+      "graph_reg_loss": 0.23041316866874695,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 115,
+      "train_loss": 0.7170674615092092,
+      "train_data_loss": 0.48126864510697204,
+      "val_loss": 0.6034269090881921,
+      "val_pearson": -0.03096129186451435,
+      "val_pred_sd_ratio": 0.3587140440940857,
+      "n_val": 266,
+      "graph_reg_loss": 0.23989829421043396,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 116,
+      "train_loss": 0.7144387271497157,
+      "train_data_loss": 0.47874619860153694,
+      "val_loss": 0.6157005415823227,
+      "val_pearson": -0.04593830555677414,
+      "val_pred_sd_ratio": 0.4101855158805847,
+      "n_val": 266,
+      "graph_reg_loss": 0.23429745435714722,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 117,
+      "train_loss": 0.7012452347712084,
+      "train_data_loss": 0.4666581300946025,
+      "val_loss": 0.6227274765645651,
+      "val_pearson": -0.0037860835436731577,
+      "val_pred_sd_ratio": 0.45773351192474365,
+      "n_val": 266,
+      "graph_reg_loss": 0.22772231698036194,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 118,
+      "train_loss": 0.7078025170734951,
+      "train_data_loss": 0.4746225139537415,
+      "val_loss": 0.6666227341594553,
+      "val_pearson": -0.08731808513402939,
+      "val_pred_sd_ratio": 0.5252513289451599,
+      "n_val": 266,
+      "graph_reg_loss": 0.2320011556148529,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 119,
+      "train_loss": 0.7039951279565886,
+      "train_data_loss": 0.46834158413595967,
+      "val_loss": 0.6250630339285485,
+      "val_pearson": -0.029094437137246132,
+      "val_pred_sd_ratio": 0.43620020151138306,
+      "n_val": 266,
+      "graph_reg_loss": 0.24032673239707947,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 120,
+      "train_loss": 0.7011528108027074,
+      "train_data_loss": 0.4655418773363163,
+      "val_loss": 0.6343511818046856,
+      "val_pearson": -0.020265420898795128,
+      "val_pred_sd_ratio": 0.46600836515426636,
+      "n_val": 266,
+      "graph_reg_loss": 0.23119112849235535,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 121,
+      "train_loss": 0.7030621743821478,
+      "train_data_loss": 0.46759664586612154,
+      "val_loss": 0.6446391532295629,
+      "val_pearson": -0.05856667831540108,
+      "val_pred_sd_ratio": 0.48133203387260437,
+      "n_val": 266,
+      "graph_reg_loss": 0.2345796525478363,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 122,
+      "train_loss": 0.6926931553072744,
+      "train_data_loss": 0.45957484493007905,
+      "val_loss": 0.6373091707552286,
+      "val_pearson": -0.046064939349889755,
+      "val_pred_sd_ratio": 0.46168264746665955,
+      "n_val": 266,
+      "graph_reg_loss": 0.23523201048374176,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 123,
+      "train_loss": 0.7026308116974769,
+      "train_data_loss": 0.46861412037502637,
+      "val_loss": 0.6627427231996579,
+      "val_pearson": -0.0886533334851265,
+      "val_pred_sd_ratio": 0.4874791204929352,
+      "n_val": 266,
+      "graph_reg_loss": 0.2373466193675995,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 124,
+      "train_loss": 0.691878582750048,
+      "train_data_loss": 0.4584970288462453,
+      "val_loss": 0.632267283317738,
+      "val_pearson": -0.02892366424202919,
+      "val_pred_sd_ratio": 0.4587532877922058,
+      "n_val": 266,
+      "graph_reg_loss": 0.22929321229457855,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 125,
+      "train_loss": 0.7020379374553631,
+      "train_data_loss": 0.4658823694501604,
+      "val_loss": 0.6482542968334112,
+      "val_pearson": -0.032504212111234665,
+      "val_pred_sd_ratio": 0.5164897441864014,
+      "n_val": 266,
+      "graph_reg_loss": 0.23585453629493713,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 126,
+      "train_loss": 0.6908323520963843,
+      "train_data_loss": 0.4562298028500049,
+      "val_loss": 0.6081621288356924,
+      "val_pearson": -0.009937469847500324,
+      "val_pred_sd_ratio": 0.41989636421203613,
+      "n_val": 266,
+      "graph_reg_loss": 0.2355290651321411,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 127,
+      "train_loss": 0.6832445178713117,
+      "train_data_loss": 0.4511563955963432,
+      "val_loss": 0.6435070073694215,
+      "val_pearson": -0.06809674203395844,
+      "val_pred_sd_ratio": 0.4581153988838196,
+      "n_val": 266,
+      "graph_reg_loss": 0.2353987693786621,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 128,
+      "train_loss": 0.6809135029068241,
+      "train_data_loss": 0.4479868257200563,
+      "val_loss": 0.6303745252745492,
+      "val_pearson": -0.03364802524447441,
+      "val_pred_sd_ratio": 0.44168606400489807,
+      "n_val": 266,
+      "graph_reg_loss": 0.2276339828968048,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 129,
+      "train_loss": 0.6854122389446605,
+      "train_data_loss": 0.45307761353331727,
+      "val_loss": 0.6595817356181324,
+      "val_pearson": -0.07193563878536224,
+      "val_pred_sd_ratio": 0.49531683325767517,
+      "n_val": 266,
+      "graph_reg_loss": 0.23596590757369995,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 130,
+      "train_loss": 0.6983316974206404,
+      "train_data_loss": 0.46121375243385115,
+      "val_loss": 0.6382327142514681,
+      "val_pearson": -0.06580519676208496,
+      "val_pred_sd_ratio": 0.43168169260025024,
+      "n_val": 266,
+      "graph_reg_loss": 0.23645928502082825,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 131,
+      "train_loss": 0.6914464630089797,
+      "train_data_loss": 0.4574186585166238,
+      "val_loss": 0.6434333606770164,
+      "val_pearson": -0.025981204584240913,
+      "val_pred_sd_ratio": 0.4827779531478882,
+      "n_val": 266,
+      "graph_reg_loss": 0.2272261083126068,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 132,
+      "train_loss": 0.6996924474641875,
+      "train_data_loss": 0.46481008111656485,
+      "val_loss": 0.6528401513745014,
+      "val_pearson": -0.03292936831712723,
+      "val_pred_sd_ratio": 0.48716482520103455,
+      "n_val": 266,
+      "graph_reg_loss": 0.22872769832611084,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 133,
+      "train_loss": 0.6914205597592639,
+      "train_data_loss": 0.4569738069912056,
+      "val_loss": 0.6448585279005811,
+      "val_pearson": -0.06924355775117874,
+      "val_pred_sd_ratio": 0.4437158703804016,
+      "n_val": 266,
+      "graph_reg_loss": 0.23453682661056519,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 134,
+      "train_loss": 0.6762670355957824,
+      "train_data_loss": 0.4415236127066922,
+      "val_loss": 0.6414705254977807,
+      "val_pearson": -0.015924081206321716,
+      "val_pred_sd_ratio": 0.47996070981025696,
+      "n_val": 266,
+      "graph_reg_loss": 0.23385679721832275,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 135,
+      "train_loss": 0.6888628710399974,
+      "train_data_loss": 0.4542914195494218,
+      "val_loss": 0.6485281671796527,
+      "val_pearson": -0.022451236844062805,
+      "val_pred_sd_ratio": 0.5029328465461731,
+      "n_val": 266,
+      "graph_reg_loss": 0.23768232762813568,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 136,
+      "train_loss": 0.7047408130261805,
+      "train_data_loss": 0.4653467528231732,
+      "val_loss": 0.6758658675322855,
+      "val_pearson": -0.04837213084101677,
+      "val_pred_sd_ratio": 0.5336948037147522,
+      "n_val": 266,
+      "graph_reg_loss": 0.23267695307731628,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 137,
+      "train_loss": 0.6855658555959726,
+      "train_data_loss": 0.4486829054045987,
+      "val_loss": 0.6701970378259071,
+      "val_pearson": -0.04040422663092613,
+      "val_pred_sd_ratio": 0.5384617447853088,
+      "n_val": 266,
+      "graph_reg_loss": 0.23078328371047974,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 138,
+      "train_loss": 0.6742739855469048,
+      "train_data_loss": 0.44185000077470554,
+      "val_loss": 0.6643501421562711,
+      "val_pearson": -0.06115163117647171,
+      "val_pred_sd_ratio": 0.5059973001480103,
+      "n_val": 266,
+      "graph_reg_loss": 0.2275991588830948,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 139,
+      "train_loss": 0.6807149060360798,
+      "train_data_loss": 0.4450975445570884,
+      "val_loss": 0.673845776937958,
+      "val_pearson": -0.0898505374789238,
+      "val_pred_sd_ratio": 0.5098487734794617,
+      "n_val": 266,
+      "graph_reg_loss": 0.23414352536201477,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 140,
+      "train_loss": 0.6651504167488643,
+      "train_data_loss": 0.43319373045648846,
+      "val_loss": 0.6585489412895719,
+      "val_pearson": -0.03490531072020531,
+      "val_pred_sd_ratio": 0.5168336629867554,
+      "n_val": 266,
+      "graph_reg_loss": 0.23063477873802185,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 141,
+      "train_loss": 0.6674038527847884,
+      "train_data_loss": 0.43432786596285833,
+      "val_loss": 0.6944381773919988,
+      "val_pearson": -0.057979829609394073,
+      "val_pred_sd_ratio": 0.5806320905685425,
+      "n_val": 266,
+      "graph_reg_loss": 0.2306365668773651,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 142,
+      "train_loss": 0.6908163676014194,
+      "train_data_loss": 0.45335585304668974,
+      "val_loss": 0.6847693400275439,
+      "val_pearson": -0.0632808580994606,
+      "val_pred_sd_ratio": 0.5325740575790405,
+      "n_val": 266,
+      "graph_reg_loss": 0.23443332314491272,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 143,
+      "train_loss": 0.6953578831313493,
+      "train_data_loss": 0.45468550223808785,
+      "val_loss": 0.6570588417519304,
+      "val_pearson": -0.05568989738821983,
+      "val_pred_sd_ratio": 0.4698821008205414,
+      "n_val": 266,
+      "graph_reg_loss": 0.24153369665145874,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 144,
+      "train_loss": 0.6789409696281731,
+      "train_data_loss": 0.44165089068474706,
+      "val_loss": 0.6785591374662586,
+      "val_pearson": -0.08872848749160767,
+      "val_pred_sd_ratio": 0.5147526264190674,
+      "n_val": 266,
+      "graph_reg_loss": 0.23852945864200592,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 145,
+      "train_loss": 0.6730809227212683,
+      "train_data_loss": 0.439155208987075,
+      "val_loss": 0.665902054399476,
+      "val_pearson": -0.08090577274560928,
+      "val_pred_sd_ratio": 0.5018236041069031,
+      "n_val": 266,
+      "graph_reg_loss": 0.2419370412826538,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 146,
+      "train_loss": 0.6887556384136151,
+      "train_data_loss": 0.4487695326278736,
+      "val_loss": 0.6677280870595372,
+      "val_pearson": -0.044691480696201324,
+      "val_pred_sd_ratio": 0.5345377922058105,
+      "n_val": 266,
+      "graph_reg_loss": 0.2349613755941391,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 147,
+      "train_loss": 0.6846978958550985,
+      "train_data_loss": 0.44594885853977945,
+      "val_loss": 0.687014483419576,
+      "val_pearson": -0.04857192933559418,
+      "val_pred_sd_ratio": 0.5488011240959167,
+      "n_val": 266,
+      "graph_reg_loss": 0.22986435890197754,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 148,
+      "train_loss": 0.6680844364228187,
+      "train_data_loss": 0.4340952220675233,
+      "val_loss": 0.6648481905012202,
+      "val_pearson": -0.020026443526148796,
+      "val_pred_sd_ratio": 0.5153647065162659,
+      "n_val": 266,
+      "graph_reg_loss": 0.23052604496479034,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 149,
+      "train_loss": 0.6849373339058517,
+      "train_data_loss": 0.45039513126596226,
+      "val_loss": 0.6787294489996774,
+      "val_pearson": -0.03411524370312691,
+      "val_pred_sd_ratio": 0.5442261695861816,
+      "n_val": 266,
+      "graph_reg_loss": 0.23366543650627136,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 150,
+      "train_loss": 0.7173855885282739,
+      "train_data_loss": 0.4622249943869455,
+      "val_loss": 0.6629485425196195,
+      "val_pearson": -0.0474618636071682,
+      "val_pred_sd_ratio": 0.5203314423561096,
+      "n_val": 266,
+      "graph_reg_loss": 0.2403581142425537,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 151,
+      "train_loss": 0.6820930227056726,
+      "train_data_loss": 0.44312592179744276,
+      "val_loss": 0.6798742843749828,
+      "val_pearson": 0.0089754369109869,
+      "val_pred_sd_ratio": 0.6067928075790405,
+      "n_val": 266,
+      "graph_reg_loss": 0.24135930836200714,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 152,
+      "train_loss": 0.7181623415513472,
+      "train_data_loss": 0.4649565123118363,
+      "val_loss": 0.6368297168186733,
+      "val_pearson": -0.03306322917342186,
+      "val_pred_sd_ratio": 0.44621649384498596,
+      "n_val": 266,
+      "graph_reg_loss": 0.24025817215442657,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 153,
+      "train_loss": 0.7527948896606247,
+      "train_data_loss": 0.481962609213668,
+      "val_loss": 0.6501422600638598,
+      "val_pearson": -0.10165876895189285,
+      "val_pred_sd_ratio": 0.422838419675827,
+      "n_val": 266,
+      "graph_reg_loss": 0.24700936675071716,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 154,
+      "train_loss": 0.6886177310695896,
+      "train_data_loss": 0.4476697944201432,
+      "val_loss": 0.6721600473375249,
+      "val_pearson": -0.020253047347068787,
+      "val_pred_sd_ratio": 0.5372958183288574,
+      "n_val": 266,
+      "graph_reg_loss": 0.237532377243042,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 155,
+      "train_loss": 0.6686465047396623,
+      "train_data_loss": 0.43090930639149305,
+      "val_loss": 0.6554583821977887,
+      "val_pearson": -0.04166131839156151,
+      "val_pred_sd_ratio": 0.47317782044410706,
+      "n_val": 266,
+      "graph_reg_loss": 0.23255951702594757,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 156,
+      "train_loss": 0.6659736401074893,
+      "train_data_loss": 0.4302961392836137,
+      "val_loss": 0.6709147960619819,
+      "val_pearson": -0.05095905065536499,
+      "val_pred_sd_ratio": 0.51737380027771,
+      "n_val": 266,
+      "graph_reg_loss": 0.22763580083847046,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 157,
+      "train_loss": 0.6555074288860544,
+      "train_data_loss": 0.4218306363403023,
+      "val_loss": 0.6760413467435908,
+      "val_pearson": -0.0557340644299984,
+      "val_pred_sd_ratio": 0.5163589715957642,
+      "n_val": 266,
+      "graph_reg_loss": 0.23451952636241913,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 158,
+      "train_loss": 0.6553286639126864,
+      "train_data_loss": 0.42184743401292085,
+      "val_loss": 0.6566175177581328,
+      "val_pearson": -0.034490566700696945,
+      "val_pred_sd_ratio": 0.4914895296096802,
+      "n_val": 266,
+      "graph_reg_loss": 0.23026347160339355,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 159,
+      "train_loss": 0.6518093695888272,
+      "train_data_loss": 0.4182226162452202,
+      "val_loss": 0.6706463699054,
+      "val_pearson": -0.06046406179666519,
+      "val_pred_sd_ratio": 0.4918821156024933,
+      "n_val": 266,
+      "graph_reg_loss": 0.23394890129566193,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 160,
+      "train_loss": 0.6608347451532042,
+      "train_data_loss": 0.42677818877356394,
+      "val_loss": 0.6835578487331706,
+      "val_pearson": -0.06055409088730812,
+      "val_pred_sd_ratio": 0.5331268906593323,
+      "n_val": 266,
+      "graph_reg_loss": 0.23053590953350067,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 161,
+      "train_loss": 0.6575842840330941,
+      "train_data_loss": 0.42239911447871814,
+      "val_loss": 0.6754606128635263,
+      "val_pearson": -0.06561263650655746,
+      "val_pred_sd_ratio": 0.5093008279800415,
+      "n_val": 266,
+      "graph_reg_loss": 0.23065873980522156,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 162,
+      "train_loss": 0.6485274317976716,
+      "train_data_loss": 0.41517429460178723,
+      "val_loss": 0.6855013383958573,
+      "val_pearson": -0.06682181358337402,
+      "val_pred_sd_ratio": 0.5149320363998413,
+      "n_val": 266,
+      "graph_reg_loss": 0.23470409214496613,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 163,
+      "train_loss": 0.6521019440192681,
+      "train_data_loss": 0.41900098285117704,
+      "val_loss": 0.6723589695485911,
+      "val_pearson": -0.03913348168134689,
+      "val_pred_sd_ratio": 0.528407096862793,
+      "n_val": 266,
+      "graph_reg_loss": 0.23728659749031067,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 164,
+      "train_loss": 0.6471239057454196,
+      "train_data_loss": 0.41201705785540793,
+      "val_loss": 0.7086342904800759,
+      "val_pearson": -0.05293213576078415,
+      "val_pred_sd_ratio": 0.587151825428009,
+      "n_val": 266,
+      "graph_reg_loss": 0.2316962331533432,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 165,
+      "train_loss": 0.6475274849247623,
+      "train_data_loss": 0.41374028890163866,
+      "val_loss": 0.699375986156607,
+      "val_pearson": -0.0370846726000309,
+      "val_pred_sd_ratio": 0.5800489187240601,
+      "n_val": 266,
+      "graph_reg_loss": 0.2294207513332367,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 166,
+      "train_loss": 0.6636341067103596,
+      "train_data_loss": 0.4236830914175356,
+      "val_loss": 0.6780318774675068,
+      "val_pearson": -0.09865348041057587,
+      "val_pred_sd_ratio": 0.48186659812927246,
+      "n_val": 266,
+      "graph_reg_loss": 0.23282748460769653,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 167,
+      "train_loss": 0.6500598629573723,
+      "train_data_loss": 0.4154915310345687,
+      "val_loss": 0.6959017712370794,
+      "val_pearson": -0.058322396129369736,
+      "val_pred_sd_ratio": 0.5591732263565063,
+      "n_val": 266,
+      "graph_reg_loss": 0.2349834144115448,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 168,
+      "train_loss": 0.6417234512892637,
+      "train_data_loss": 0.408506489806361,
+      "val_loss": 0.7272857140777702,
+      "val_pearson": -0.07435663789510727,
+      "val_pred_sd_ratio": 0.6239010095596313,
+      "n_val": 266,
+      "graph_reg_loss": 0.22983136773109436,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 169,
+      "train_loss": 0.6316392828117717,
+      "train_data_loss": 0.39888096668503503,
+      "val_loss": 0.699438951069251,
+      "val_pearson": -0.05415336787700653,
+      "val_pred_sd_ratio": 0.5655028223991394,
+      "n_val": 266,
+      "graph_reg_loss": 0.2357504665851593,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 170,
+      "train_loss": 0.6324524515635007,
+      "train_data_loss": 0.399239039846829,
+      "val_loss": 0.6814286852241459,
+      "val_pearson": -0.022898636758327484,
+      "val_pred_sd_ratio": 0.5483376979827881,
+      "n_val": 266,
+      "graph_reg_loss": 0.23354239761829376,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 171,
+      "train_loss": 0.6444631420172654,
+      "train_data_loss": 0.4121650352880552,
+      "val_loss": 0.7186523223281803,
+      "val_pearson": -0.060855284333229065,
+      "val_pred_sd_ratio": 0.5931893587112427,
+      "n_val": 266,
+      "graph_reg_loss": 0.22885508835315704,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 172,
+      "train_loss": 0.6901231421665712,
+      "train_data_loss": 0.43475863182699526,
+      "val_loss": 0.6655793091408292,
+      "val_pearson": -0.014263751916587353,
+      "val_pred_sd_ratio": 0.5111698508262634,
+      "n_val": 266,
+      "graph_reg_loss": 0.2375144213438034,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 173,
+      "train_loss": 0.6473643909414093,
+      "train_data_loss": 0.4087203230176653,
+      "val_loss": 0.6659706499343528,
+      "val_pearson": -0.03113928996026516,
+      "val_pred_sd_ratio": 0.5105843544006348,
+      "n_val": 266,
+      "graph_reg_loss": 0.2323072999715805,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 174,
+      "train_loss": 0.6419064758659957,
+      "train_data_loss": 0.40573330359025434,
+      "val_loss": 0.7063068209734178,
+      "val_pearson": -0.03435597941279411,
+      "val_pred_sd_ratio": 0.6021591424942017,
+      "n_val": 266,
+      "graph_reg_loss": 0.23809994757175446,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 175,
+      "train_loss": 0.6442143839675111,
+      "train_data_loss": 0.40757037679870406,
+      "val_loss": 0.6559486393641708,
+      "val_pearson": -0.009068932384252548,
+      "val_pred_sd_ratio": 0.478399395942688,
+      "n_val": 266,
+      "graph_reg_loss": 0.23153215646743774,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 176,
+      "train_loss": 0.6244157219862009,
+      "train_data_loss": 0.3889472933558675,
+      "val_loss": 0.7392177008148423,
+      "val_pearson": -0.055964235216379166,
+      "val_pred_sd_ratio": 0.6421316266059875,
+      "n_val": 266,
+      "graph_reg_loss": 0.23427289724349976,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 177,
+      "train_loss": 0.6290931662955841,
+      "train_data_loss": 0.39385025338693097,
+      "val_loss": 0.6972370264225436,
+      "val_pearson": -0.044491007924079895,
+      "val_pred_sd_ratio": 0.559135913848877,
+      "n_val": 266,
+      "graph_reg_loss": 0.23694007098674774,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 178,
+      "train_loss": 0.6349594546602918,
+      "train_data_loss": 0.40040111928791194,
+      "val_loss": 0.7252740671760157,
+      "val_pearson": -0.04046979919075966,
+      "val_pred_sd_ratio": 0.6168073415756226,
+      "n_val": 266,
+      "graph_reg_loss": 0.2346060574054718,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 179,
+      "train_loss": 0.6452367746984804,
+      "train_data_loss": 0.40691493819286295,
+      "val_loss": 0.7200844305798524,
+      "val_pearson": -0.06516997516155243,
+      "val_pred_sd_ratio": 0.6016457080841064,
+      "n_val": 266,
+      "graph_reg_loss": 0.2435254603624344,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 180,
+      "train_loss": 0.6277919574217363,
+      "train_data_loss": 0.3925115086815574,
+      "val_loss": 0.726993039138335,
+      "val_pearson": -0.0431390106678009,
+      "val_pred_sd_ratio": 0.6366670727729797,
+      "n_val": 266,
+      "graph_reg_loss": 0.2383781373500824,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 181,
+      "train_loss": 0.6562078997686311,
+      "train_data_loss": 0.41533045954518505,
+      "val_loss": 0.7366452539773812,
+      "val_pearson": -0.05987202003598213,
+      "val_pred_sd_ratio": 0.6281211972236633,
+      "n_val": 266,
+      "graph_reg_loss": 0.23091766238212585,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 182,
+      "train_loss": 0.6402016405935411,
+      "train_data_loss": 0.403412789106369,
+      "val_loss": 0.695205044925661,
+      "val_pearson": -0.04848197102546692,
+      "val_pred_sd_ratio": 0.5416303873062134,
+      "n_val": 266,
+      "graph_reg_loss": 0.2357863336801529,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 183,
+      "train_loss": 0.6441706329971165,
+      "train_data_loss": 0.40495657766020143,
+      "val_loss": 0.6769838198683316,
+      "val_pearson": -0.04083265736699104,
+      "val_pred_sd_ratio": 0.5277407169342041,
+      "n_val": 266,
+      "graph_reg_loss": 0.2448410987854004,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 184,
+      "train_loss": 0.6287566465990884,
+      "train_data_loss": 0.3937296820925428,
+      "val_loss": 0.705154075658411,
+      "val_pearson": -0.019462555646896362,
+      "val_pred_sd_ratio": 0.6011385917663574,
+      "n_val": 266,
+      "graph_reg_loss": 0.23148593306541443,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 185,
+      "train_loss": 0.6233243350084726,
+      "train_data_loss": 0.38956073894129173,
+      "val_loss": 0.7002688691132051,
+      "val_pearson": -0.03702141344547272,
+      "val_pred_sd_ratio": 0.5796307921409607,
+      "n_val": 266,
+      "graph_reg_loss": 0.23519930243492126,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 186,
+      "train_loss": 0.6071515996734818,
+      "train_data_loss": 0.37433388442188115,
+      "val_loss": 0.7455500682493797,
+      "val_pearson": -0.05233432725071907,
+      "val_pred_sd_ratio": 0.6382012963294983,
+      "n_val": 266,
+      "graph_reg_loss": 0.227338969707489,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 187,
+      "train_loss": 0.6308019579230965,
+      "train_data_loss": 0.392196572833247,
+      "val_loss": 0.6685924225283745,
+      "val_pearson": -0.027873408049345016,
+      "val_pred_sd_ratio": 0.5163303017616272,
+      "n_val": 266,
+      "graph_reg_loss": 0.23719286918640137,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 188,
+      "train_loss": 0.6171383339089233,
+      "train_data_loss": 0.38407957786089414,
+      "val_loss": 0.6859923157476842,
+      "val_pearson": -0.005917958449572325,
+      "val_pred_sd_ratio": 0.571908712387085,
+      "n_val": 266,
+      "graph_reg_loss": 0.23432224988937378,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 189,
+      "train_loss": 0.62592123235975,
+      "train_data_loss": 0.3887964430954549,
+      "val_loss": 0.6865329478020058,
+      "val_pearson": -0.03390724956989288,
+      "val_pred_sd_ratio": 0.5348155498504639,
+      "n_val": 266,
+      "graph_reg_loss": 0.2406182438135147,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 190,
+      "train_loss": 0.6136335873758638,
+      "train_data_loss": 0.38049721659778,
+      "val_loss": 0.7171887840543475,
+      "val_pearson": -0.007237986195832491,
+      "val_pred_sd_ratio": 0.6055632829666138,
+      "n_val": 266,
+      "graph_reg_loss": 0.23031502962112427,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 191,
+      "train_loss": 0.624337485084286,
+      "train_data_loss": 0.38905777791877844,
+      "val_loss": 0.7378940295456047,
+      "val_pearson": 0.021456358954310417,
+      "val_pred_sd_ratio": 0.7125706672668457,
+      "n_val": 266,
+      "graph_reg_loss": 0.23911353945732117,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 192,
+      "train_loss": 0.6235832544890317,
+      "train_data_loss": 0.3876411895473282,
+      "val_loss": 0.7280362575574029,
+      "val_pearson": -0.02654852531850338,
+      "val_pred_sd_ratio": 0.6367567181587219,
+      "n_val": 266,
+      "graph_reg_loss": 0.23586180806159973,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 193,
+      "train_loss": 0.6097034970661263,
+      "train_data_loss": 0.37517582286487927,
+      "val_loss": 0.7337511553800196,
+      "val_pearson": -0.039515841752290726,
+      "val_pred_sd_ratio": 0.619244396686554,
+      "n_val": 266,
+      "graph_reg_loss": 0.24158348143100739,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 194,
+      "train_loss": 0.6038530604405836,
+      "train_data_loss": 0.37032096842666723,
+      "val_loss": 0.7249758691716015,
+      "val_pearson": -0.03132376819849014,
+      "val_pred_sd_ratio": 0.6095589399337769,
+      "n_val": 266,
+      "graph_reg_loss": 0.23470404744148254,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 195,
+      "train_loss": 0.6132595113345555,
+      "train_data_loss": 0.3788977431786525,
+      "val_loss": 0.7167964098148776,
+      "val_pearson": -0.029442835599184036,
+      "val_pred_sd_ratio": 0.6110620498657227,
+      "n_val": 266,
+      "graph_reg_loss": 0.23181958496570587,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 196,
+      "train_loss": 0.6440096698798142,
+      "train_data_loss": 0.40163504206514977,
+      "val_loss": 0.6693968342659169,
+      "val_pearson": 0.002769693499431014,
+      "val_pred_sd_ratio": 0.5149250626564026,
+      "n_val": 266,
+      "graph_reg_loss": 0.23809826374053955,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 197,
+      "train_loss": 0.602942386230865,
+      "train_data_loss": 0.3687779802780647,
+      "val_loss": 0.7302777229395128,
+      "val_pearson": -0.0019198789959773421,
+      "val_pred_sd_ratio": 0.6573545932769775,
+      "n_val": 266,
+      "graph_reg_loss": 0.23605389893054962,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 198,
+      "train_loss": 0.6079674502471825,
+      "train_data_loss": 0.37525452576674423,
+      "val_loss": 0.7339042680604118,
+      "val_pearson": -0.013697211630642414,
+      "val_pred_sd_ratio": 0.6621282696723938,
+      "n_val": 266,
+      "graph_reg_loss": 0.23230363428592682,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 199,
+      "train_loss": 0.6053213190722775,
+      "train_data_loss": 0.37088537061369264,
+      "val_loss": 0.7120427184535149,
+      "val_pearson": -0.04349019378423691,
+      "val_pred_sd_ratio": 0.5571147203445435,
+      "n_val": 266,
+      "graph_reg_loss": 0.23348554968833923,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    }
+  ],
+  "flux_meta": {
+    "isobutanol": {
+      "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig6_build",
+      "block_keys": [
+        "alanine",
+        "arginine",
+        "asparagine",
+        "aspartate",
+        "glutamate",
+        "glutamine",
+        "glycine",
+        "histidine",
+        "isobutanol",
+        "isoleucine",
+        "leucine",
+        "lysine",
+        "methionine",
+        "phenylalanine",
+        "proline",
+        "serine",
+        "threonine",
+        "tryptophan",
+        "tyrosine",
+        "valine"
+      ],
+      "block_width": 20,
+      "column": 8,
+      "target_space": "log10_fold_change",
+      "held_out": {
+        "dataset": "IsobutanolValidatedLopez2024Dataset",
+        "records": 224,
+        "genes": 224,
+        "genes_absent_from_cell_graph": [],
+        "gene_nodes_flagged": 224,
+        "fraction_of_dataset": 0.01605965012905076,
+        "why": "the validated re-screen is the external direction check; on this build its value was averaged into the screen's by MeanExperimentDeduplicator, so the strains are held out by gene rather than by value."
+      },
+      "note": "the Lopez biosensor fold change was merged into the Mulleder record by MeanExperimentDeduplicator wherever both were measured, so it is read as column 8 of a key-sorted width-20 metabolite_level block rather than as a width-1 group; in fig6_build the width-1 metabolite_level groups are 4,669 betaxanthin records against 189 isobutanol-only ones."
+    },
+    "sampling": {
+      "flux_draws": 1,
+      "latent_stochastic": false
+    }
+  },
+  "pinned_split": {
+    "path": "/scratch/projects/torchcell-scratch/job-snapshots/20260914-034435-gh_wave9_ibpool_e200_s2700/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "requested": 639,
+    "found": 639,
+    "absent": [],
+    "records": 1801,
+    "fraction_of_dataset": 0.129122454832234
+  },
+  "n_parameters": {
+    "gene_embedding": 0,
+    "embedding_preprocessor": 622439,
+    "cls_token": 90,
+    "transformer_layers": 196740,
+    "perturbation_transform": 98370,
+    "perturbation_head": 16381,
+    "isobutanol_head": 24572,
+    "total": 958592
+  },
+  "wall_time_s": 16926.20841693878,
+  "code_provenance": {
+    "train_bx.py": "5cb352b4ae6ed9e42337e5d47d69bea847bdf64a1d54a704272fabbeeedcc995",
+    "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260914-034435-gh_wave9_ibpool_e200_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+    "flux_layer.py": "2af23e14c56f776d83ac5c8a28c3c9ace4cfe089fe0519cd25a21ab23e30396c",
+    "flux_layer.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260914-034435-gh_wave9_ibpool_e200_s2700/torchcell/metabolism/flux_layer.py"
+  },
+  "isobutanol_external_check": {
+    "note": "predictions only; the fractions are computed by analyze_wave9_ib_external.py against the validated re-screen's own fold changes. These strains carry no label in this run: they are masked out of the loss, the validation curve and the test score.",
+    "held_out_dataset": "IsobutanolValidatedLopez2024Dataset",
+    "n_records": 224,
+    "top_k": 30,
+    "top": [
+      {
+        "record_index": 6496,
+        "genes": [
+          "YBR196C-A"
+        ],
+        "pred_log10_fold_change": 0.03954663127660751
+      },
+      {
+        "record_index": 11173,
+        "genes": [
+          "YKL163W"
+        ],
+        "pred_log10_fold_change": 0.039007678627967834
+      },
+      {
+        "record_index": 6396,
+        "genes": [
+          "YKR042W"
+        ],
+        "pred_log10_fold_change": 0.03896455466747284
+      },
+      {
+        "record_index": 6699,
+        "genes": [
+          "YIL011W"
+        ],
+        "pred_log10_fold_change": 0.038945455104112625
+      },
+      {
+        "record_index": 7270,
+        "genes": [
+          "YKR013W"
+        ],
+        "pred_log10_fold_change": 0.038943998515605927
+      },
+      {
+        "record_index": 6392,
+        "genes": [
+          "YPR079W"
+        ],
+        "pred_log10_fold_change": 0.03889119252562523
+      },
+      {
+        "record_index": 6526,
+        "genes": [
+          "YLR414C"
+        ],
+        "pred_log10_fold_change": 0.0388244092464447
+      },
+      {
+        "record_index": 5593,
+        "genes": [
+          "YMR154C"
+        ],
+        "pred_log10_fold_change": 0.03879566118121147
+      },
+      {
+        "record_index": 4869,
+        "genes": [
+          "YHL028W"
+        ],
+        "pred_log10_fold_change": 0.03878193348646164
+      },
+      {
+        "record_index": 13504,
+        "genes": [
+          "YPR017C"
+        ],
+        "pred_log10_fold_change": 0.03866180032491684
+      },
+      {
+        "record_index": 8067,
+        "genes": [
+          "YHL042W"
+        ],
+        "pred_log10_fold_change": 0.038378991186618805
+      },
+      {
+        "record_index": 7439,
+        "genes": [
+          "YKR075C"
+        ],
+        "pred_log10_fold_change": 0.038363173604011536
+      },
+      {
+        "record_index": 5324,
+        "genes": [
+          "YLR187W"
+        ],
+        "pred_log10_fold_change": 0.038206201046705246
+      },
+      {
+        "record_index": 7081,
+        "genes": [
+          "YCL032W"
+        ],
+        "pred_log10_fold_change": 0.03809407353401184
+      },
+      {
+        "record_index": 4677,
+        "genes": [
+          "YOL019W"
+        ],
+        "pred_log10_fold_change": 0.03809165209531784
+      },
+      {
+        "record_index": 6704,
+        "genes": [
+          "YDR257C"
+        ],
+        "pred_log10_fold_change": 0.03808986395597458
+      },
+      {
+        "record_index": 5432,
+        "genes": [
+          "YOR213C"
+        ],
+        "pred_log10_fold_change": 0.03802303224802017
+      },
+      {
+        "record_index": 9241,
+        "genes": [
+          "YOR230W"
+        ],
+        "pred_log10_fold_change": 0.037952717393636703
+      },
+      {
+        "record_index": 7094,
+        "genes": [
+          "YPR032W"
+        ],
+        "pred_log10_fold_change": 0.03782009705901146
+      },
+      {
+        "record_index": 8657,
+        "genes": [
+          "YIL014W"
+        ],
+        "pred_log10_fold_change": 0.03779096156358719
+      },
+      {
+        "record_index": 5615,
+        "genes": [
+          "YCL010C"
+        ],
+        "pred_log10_fold_change": 0.03766440600156784
+      },
+      {
+        "record_index": 9229,
+        "genes": [
+          "YPL072W"
+        ],
+        "pred_log10_fold_change": 0.03758572041988373
+      },
+      {
+        "record_index": 6264,
+        "genes": [
+          "YOR162C"
+        ],
+        "pred_log10_fold_change": 0.03756166994571686
+      },
+      {
+        "record_index": 4589,
+        "genes": [
+          "YGR209C"
+        ],
+        "pred_log10_fold_change": 0.037467118352651596
+      },
+      {
+        "record_index": 5625,
+        "genes": [
+          "YOR138C"
+        ],
+        "pred_log10_fold_change": 0.037444427609443665
+      },
+      {
+        "record_index": 7731,
+        "genes": [
+          "YDR245W"
+        ],
+        "pred_log10_fold_change": 0.03741748631000519
+      },
+      {
+        "record_index": 4739,
+        "genes": [
+          "YDR251W"
+        ],
+        "pred_log10_fold_change": 0.03736766427755356
+      },
+      {
+        "record_index": 4550,
+        "genes": [
+          "YBR074W"
+        ],
+        "pred_log10_fold_change": 0.037351734936237335
+      },
+      {
+        "record_index": 7695,
+        "genes": [
+          "YNL264C"
+        ],
+        "pred_log10_fold_change": 0.03733934834599495
+      },
+      {
+        "record_index": 4753,
+        "genes": [
+          "YCL029C"
+        ],
+        "pred_log10_fold_change": 0.03732699900865555
+      }
+    ],
+    "bottom": [
+      {
+        "record_index": 5878,
+        "genes": [
+          "YHL016C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5894,
+        "genes": [
+          "YJR144W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5985,
+        "genes": [
+          "YNL109W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6109,
+        "genes": [
+          "YJR001W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6140,
+        "genes": [
+          "YOR364W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6280,
+        "genes": [
+          "YDR401W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6369,
+        "genes": [
+          "YML034C-A"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6501,
+        "genes": [
+          "YJR106W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6562,
+        "genes": [
+          "YKL076C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6633,
+        "genes": [
+          "YDR294C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 7269,
+        "genes": [
+          "YOR115C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 7293,
+        "genes": [
+          "YDR337W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 7475,
+        "genes": [
+          "YGL107C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 7623,
+        "genes": [
+          "YPR067W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 8134,
+        "genes": [
+          "YJR139C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 10073,
+        "genes": [
+          "YHL031C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 10729,
+        "genes": [
+          "YBR296C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 11206,
+        "genes": [
+          "YOL047C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 11284,
+        "genes": [
+          "YML070W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 11729,
+        "genes": [
+          "YGL214W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 3503,
+        "genes": [
+          "YJR087W"
+        ],
+        "pred_log10_fold_change": 0.006272290833294392
+      },
+      {
+        "record_index": 7364,
+        "genes": [
+          "YML048W"
+        ],
+        "pred_log10_fold_change": 0.006163745187222958
+      },
+      {
+        "record_index": 8525,
+        "genes": [
+          "YOR297C"
+        ],
+        "pred_log10_fold_change": 0.006130338180810213
+      },
+      {
+        "record_index": 4657,
+        "genes": [
+          "YJR080C"
+        ],
+        "pred_log10_fold_change": 0.0060970415361225605
+      },
+      {
+        "record_index": 6234,
+        "genes": [
+          "YPR098C"
+        ],
+        "pred_log10_fold_change": 0.005970104597508907
+      },
+      {
+        "record_index": 5316,
+        "genes": [
+          "YPL261C"
+        ],
+        "pred_log10_fold_change": 0.005815073382109404
+      },
+      {
+        "record_index": 6171,
+        "genes": [
+          "YKR006C"
+        ],
+        "pred_log10_fold_change": 0.005770416930317879
+      },
+      {
+        "record_index": 5496,
+        "genes": [
+          "YML116W-A"
+        ],
+        "pred_log10_fold_change": 0.005643119104206562
+      },
+      {
+        "record_index": 7468,
+        "genes": [
+          "YML112W"
+        ],
+        "pred_log10_fold_change": 0.005579411052167416
+      },
+      {
+        "record_index": 7580,
+        "genes": [
+          "YGL005C"
+        ],
+        "pred_log10_fold_change": 0.005544330459088087
+      }
+    ],
+    "predictions": [
+      {
+        "record_index": 203,
+        "genes": [
+          "YBR169C"
+        ],
+        "pred_log10_fold_change": 0.030962876975536346
+      },
+      {
+        "record_index": 348,
+        "genes": [
+          "YKL055C"
+        ],
+        "pred_log10_fold_change": 0.011556380428373814
+      },
+      {
+        "record_index": 481,
+        "genes": [
+          "YPR127W"
+        ],
+        "pred_log10_fold_change": 0.009900687262415886
+      },
+      {
+        "record_index": 669,
+        "genes": [
+          "YIR027C"
+        ],
+        "pred_log10_fold_change": 0.016052773222327232
+      },
+      {
+        "record_index": 1069,
+        "genes": [
+          "YML129C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 1381,
+        "genes": [
+          "YNL104C"
+        ],
+        "pred_log10_fold_change": 0.01832336187362671
+      },
+      {
+        "record_index": 1436,
+        "genes": [
+          "YKL053W"
+        ],
+        "pred_log10_fold_change": 0.007106729317456484
+      },
+      {
+        "record_index": 1559,
+        "genes": [
+          "YER143W"
+        ],
+        "pred_log10_fold_change": 0.03628716245293617
+      },
+      {
+        "record_index": 1570,
+        "genes": [
+          "YMR098C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 1869,
+        "genes": [
+          "YPL038W"
+        ],
+        "pred_log10_fold_change": 0.03718285262584686
+      },
+      {
+        "record_index": 2125,
+        "genes": [
+          "YNL049C"
+        ],
+        "pred_log10_fold_change": 0.022796733304858208
+      },
+      {
+        "record_index": 2459,
+        "genes": [
+          "YGR238C"
+        ],
+        "pred_log10_fold_change": 0.03551556169986725
+      },
+      {
+        "record_index": 2525,
+        "genes": [
+          "YOR014W"
+        ],
+        "pred_log10_fold_change": 0.028981653973460197
+      },
+      {
+        "record_index": 3014,
+        "genes": [
+          "YLR353W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 3503,
+        "genes": [
+          "YJR087W"
+        ],
+        "pred_log10_fold_change": 0.006272290833294392
+      },
+      {
+        "record_index": 3780,
+        "genes": [
+          "YOR354C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 3803,
+        "genes": [
+          "YPL068C"
+        ],
+        "pred_log10_fold_change": 0.009718569926917553
+      },
+      {
+        "record_index": 4058,
+        "genes": [
+          "YNL250W"
+        ],
+        "pred_log10_fold_change": 0.032726384699344635
+      },
+      {
+        "record_index": 4180,
+        "genes": [
+          "YKL066W"
+        ],
+        "pred_log10_fold_change": 0.013529589399695396
+      },
+      {
+        "record_index": 4405,
+        "genes": [
+          "YAL013W"
+        ],
+        "pred_log10_fold_change": 0.03498365730047226
+      },
+      {
+        "record_index": 4442,
+        "genes": [
+          "YGR291C"
+        ],
+        "pred_log10_fold_change": 0.008949256502091885
+      },
+      {
+        "record_index": 4550,
+        "genes": [
+          "YBR074W"
+        ],
+        "pred_log10_fold_change": 0.037351734936237335
+      },
+      {
+        "record_index": 4589,
+        "genes": [
+          "YGR209C"
+        ],
+        "pred_log10_fold_change": 0.037467118352651596
+      },
+      {
+        "record_index": 4651,
+        "genes": [
+          "YML099C"
+        ],
+        "pred_log10_fold_change": 0.036663711071014404
+      },
+      {
+        "record_index": 4652,
+        "genes": [
+          "YJL118W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 4657,
+        "genes": [
+          "YJR080C"
+        ],
+        "pred_log10_fold_change": 0.0060970415361225605
+      },
+      {
+        "record_index": 4672,
+        "genes": [
+          "YEL065W"
+        ],
+        "pred_log10_fold_change": 0.013286502100527287
+      },
+      {
+        "record_index": 4677,
+        "genes": [
+          "YOL019W"
+        ],
+        "pred_log10_fold_change": 0.03809165209531784
+      },
+      {
+        "record_index": 4687,
+        "genes": [
+          "YLR364W"
+        ],
+        "pred_log10_fold_change": 0.03721430152654648
+      },
+      {
+        "record_index": 4739,
+        "genes": [
+          "YDR251W"
+        ],
+        "pred_log10_fold_change": 0.03736766427755356
+      },
+      {
+        "record_index": 4741,
+        "genes": [
+          "YKL023W"
+        ],
+        "pred_log10_fold_change": 0.021806247532367706
+      },
+      {
+        "record_index": 4753,
+        "genes": [
+          "YCL029C"
+        ],
+        "pred_log10_fold_change": 0.03732699900865555
+      },
+      {
+        "record_index": 4774,
+        "genes": [
+          "YPL258C"
+        ],
+        "pred_log10_fold_change": 0.006666137371212244
+      },
+      {
+        "record_index": 4783,
+        "genes": [
+          "YNL065W"
+        ],
+        "pred_log10_fold_change": 0.008517053909599781
+      },
+      {
+        "record_index": 4800,
+        "genes": [
+          "YOR298W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 4867,
+        "genes": [
+          "YER155C"
+        ],
+        "pred_log10_fold_change": 0.013847984373569489
+      },
+      {
+        "record_index": 4869,
+        "genes": [
+          "YHL028W"
+        ],
+        "pred_log10_fold_change": 0.03878193348646164
+      },
+      {
+        "record_index": 4957,
+        "genes": [
+          "YPL212C"
+        ],
+        "pred_log10_fold_change": 0.03370797634124756
+      },
+      {
+        "record_index": 5005,
+        "genes": [
+          "YFR047C"
+        ],
+        "pred_log10_fold_change": 0.024234790354967117
+      },
+      {
+        "record_index": 5017,
+        "genes": [
+          "YOR087W"
+        ],
+        "pred_log10_fold_change": 0.026332665234804153
+      },
+      {
+        "record_index": 5031,
+        "genes": [
+          "YKR055W"
+        ],
+        "pred_log10_fold_change": 0.03367745131254196
+      },
+      {
+        "record_index": 5082,
+        "genes": [
+          "YPL101W"
+        ],
+        "pred_log10_fold_change": 0.03161171078681946
+      },
+      {
+        "record_index": 5125,
+        "genes": [
+          "YMR263W"
+        ],
+        "pred_log10_fold_change": 0.03427800163626671
+      },
+      {
+        "record_index": 5219,
+        "genes": [
+          "YJR099W"
+        ],
+        "pred_log10_fold_change": 0.03720788285136223
+      },
+      {
+        "record_index": 5235,
+        "genes": [
+          "YNL127W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5251,
+        "genes": [
+          "YOR216C"
+        ],
+        "pred_log10_fold_change": 0.0321691557765007
+      },
+      {
+        "record_index": 5254,
+        "genes": [
+          "YER111C"
+        ],
+        "pred_log10_fold_change": 0.035244956612586975
+      },
+      {
+        "record_index": 5276,
+        "genes": [
+          "YLR410W"
+        ],
+        "pred_log10_fold_change": 0.028569230809807777
+      },
+      {
+        "record_index": 5284,
+        "genes": [
+          "YKL217W"
+        ],
+        "pred_log10_fold_change": 0.00835832767188549
+      },
+      {
+        "record_index": 5306,
+        "genes": [
+          "YGL043W"
+        ],
+        "pred_log10_fold_change": 0.03639368340373039
+      },
+      {
+        "record_index": 5316,
+        "genes": [
+          "YPL261C"
+        ],
+        "pred_log10_fold_change": 0.005815073382109404
+      },
+      {
+        "record_index": 5324,
+        "genes": [
+          "YLR187W"
+        ],
+        "pred_log10_fold_change": 0.038206201046705246
+      },
+      {
+        "record_index": 5357,
+        "genes": [
+          "YHR162W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5405,
+        "genes": [
+          "YJR121W"
+        ],
+        "pred_log10_fold_change": 0.02785111963748932
+      },
+      {
+        "record_index": 5407,
+        "genes": [
+          "YDR524C"
+        ],
+        "pred_log10_fold_change": 0.035687997937202454
+      },
+      {
+        "record_index": 5432,
+        "genes": [
+          "YOR213C"
+        ],
+        "pred_log10_fold_change": 0.03802303224802017
+      },
+      {
+        "record_index": 5482,
+        "genes": [
+          "YGR281W"
+        ],
+        "pred_log10_fold_change": 0.01475241594016552
+      },
+      {
+        "record_index": 5485,
+        "genes": [
+          "YPR073C"
+        ],
+        "pred_log10_fold_change": 0.03632616996765137
+      },
+      {
+        "record_index": 5492,
+        "genes": [
+          "YGR078C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5496,
+        "genes": [
+          "YML116W-A"
+        ],
+        "pred_log10_fold_change": 0.005643119104206562
+      },
+      {
+        "record_index": 5500,
+        "genes": [
+          "YJL067W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5503,
+        "genes": [
+          "YOR369C"
+        ],
+        "pred_log10_fold_change": 0.03554343432188034
+      },
+      {
+        "record_index": 5528,
+        "genes": [
+          "YJL064W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5548,
+        "genes": [
+          "YJR094W-A"
+        ],
+        "pred_log10_fold_change": 0.03562198579311371
+      },
+      {
+        "record_index": 5583,
+        "genes": [
+          "YPL141C"
+        ],
+        "pred_log10_fold_change": 0.03205668926239014
+      },
+      {
+        "record_index": 5586,
+        "genes": [
+          "YKR036C"
+        ],
+        "pred_log10_fold_change": 0.03535514697432518
+      },
+      {
+        "record_index": 5591,
+        "genes": [
+          "YJL082W"
+        ],
+        "pred_log10_fold_change": 0.0367276668548584
+      },
+      {
+        "record_index": 5593,
+        "genes": [
+          "YMR154C"
+        ],
+        "pred_log10_fold_change": 0.03879566118121147
+      },
+      {
+        "record_index": 5615,
+        "genes": [
+          "YCL010C"
+        ],
+        "pred_log10_fold_change": 0.03766440600156784
+      },
+      {
+        "record_index": 5625,
+        "genes": [
+          "YOR138C"
+        ],
+        "pred_log10_fold_change": 0.037444427609443665
+      },
+      {
+        "record_index": 5676,
+        "genes": [
+          "YDL094C"
+        ],
+        "pred_log10_fold_change": 0.037268009036779404
+      },
+      {
+        "record_index": 5702,
+        "genes": [
+          "YJR009C"
+        ],
+        "pred_log10_fold_change": 0.025096874684095383
+      },
+      {
+        "record_index": 5763,
+        "genes": [
+          "YPL161C"
+        ],
+        "pred_log10_fold_change": 0.03731711953878403
+      },
+      {
+        "record_index": 5785,
+        "genes": [
+          "YBR261C"
+        ],
+        "pred_log10_fold_change": 0.03687021881341934
+      },
+      {
+        "record_index": 5814,
+        "genes": [
+          "YDR227W"
+        ],
+        "pred_log10_fold_change": 0.018784143030643463
+      },
+      {
+        "record_index": 5820,
+        "genes": [
+          "YER056C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5878,
+        "genes": [
+          "YHL016C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5889,
+        "genes": [
+          "YER072W"
+        ],
+        "pred_log10_fold_change": 0.006376283243298531
+      },
+      {
+        "record_index": 5894,
+        "genes": [
+          "YJR144W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 5898,
+        "genes": [
+          "YGL168W"
+        ],
+        "pred_log10_fold_change": 0.02259616181254387
+      },
+      {
+        "record_index": 5922,
+        "genes": [
+          "YNL280C"
+        ],
+        "pred_log10_fold_change": 0.010900354944169521
+      },
+      {
+        "record_index": 5985,
+        "genes": [
+          "YNL109W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6109,
+        "genes": [
+          "YJR001W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6140,
+        "genes": [
+          "YOR364W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6156,
+        "genes": [
+          "YLR125W"
+        ],
+        "pred_log10_fold_change": 0.035655174404382706
+      },
+      {
+        "record_index": 6171,
+        "genes": [
+          "YKR006C"
+        ],
+        "pred_log10_fold_change": 0.005770416930317879
+      },
+      {
+        "record_index": 6219,
+        "genes": [
+          "YKL090W"
+        ],
+        "pred_log10_fold_change": 0.0172139760106802
+      },
+      {
+        "record_index": 6234,
+        "genes": [
+          "YPR098C"
+        ],
+        "pred_log10_fold_change": 0.005970104597508907
+      },
+      {
+        "record_index": 6252,
+        "genes": [
+          "YNL279W"
+        ],
+        "pred_log10_fold_change": 0.03578603267669678
+      },
+      {
+        "record_index": 6264,
+        "genes": [
+          "YOR162C"
+        ],
+        "pred_log10_fold_change": 0.03756166994571686
+      },
+      {
+        "record_index": 6265,
+        "genes": [
+          "YOR156C"
+        ],
+        "pred_log10_fold_change": 0.035785697400569916
+      },
+      {
+        "record_index": 6280,
+        "genes": [
+          "YDR401W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6286,
+        "genes": [
+          "YLR182W"
+        ],
+        "pred_log10_fold_change": 0.035643577575683594
+      },
+      {
+        "record_index": 6289,
+        "genes": [
+          "YGL216W"
+        ],
+        "pred_log10_fold_change": 0.032201528549194336
+      },
+      {
+        "record_index": 6295,
+        "genes": [
+          "YNL162W"
+        ],
+        "pred_log10_fold_change": 0.03603094071149826
+      },
+      {
+        "record_index": 6310,
+        "genes": [
+          "YER068W"
+        ],
+        "pred_log10_fold_change": 0.036639805883169174
+      },
+      {
+        "record_index": 6330,
+        "genes": [
+          "YHR004C"
+        ],
+        "pred_log10_fold_change": 0.029573824256658554
+      },
+      {
+        "record_index": 6346,
+        "genes": [
+          "YNL197C"
+        ],
+        "pred_log10_fold_change": 0.035349056124687195
+      },
+      {
+        "record_index": 6362,
+        "genes": [
+          "YOR229W"
+        ],
+        "pred_log10_fold_change": 0.03694674372673035
+      },
+      {
+        "record_index": 6369,
+        "genes": [
+          "YML034C-A"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6392,
+        "genes": [
+          "YPR079W"
+        ],
+        "pred_log10_fold_change": 0.03889119252562523
+      },
+      {
+        "record_index": 6396,
+        "genes": [
+          "YKR042W"
+        ],
+        "pred_log10_fold_change": 0.03896455466747284
+      },
+      {
+        "record_index": 6496,
+        "genes": [
+          "YBR196C-A"
+        ],
+        "pred_log10_fold_change": 0.03954663127660751
+      },
+      {
+        "record_index": 6501,
+        "genes": [
+          "YJR106W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6502,
+        "genes": [
+          "YHR044C"
+        ],
+        "pred_log10_fold_change": 0.03422952815890312
+      },
+      {
+        "record_index": 6505,
+        "genes": [
+          "YNL274C"
+        ],
+        "pred_log10_fold_change": 0.022947607561945915
+      },
+      {
+        "record_index": 6521,
+        "genes": [
+          "YDR482C"
+        ],
+        "pred_log10_fold_change": 0.014894832856953144
+      },
+      {
+        "record_index": 6526,
+        "genes": [
+          "YLR414C"
+        ],
+        "pred_log10_fold_change": 0.0388244092464447
+      },
+      {
+        "record_index": 6562,
+        "genes": [
+          "YKL076C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6633,
+        "genes": [
+          "YDR294C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 6665,
+        "genes": [
+          "YHR029C"
+        ],
+        "pred_log10_fold_change": 0.03085397742688656
+      },
+      {
+        "record_index": 6699,
+        "genes": [
+          "YIL011W"
+        ],
+        "pred_log10_fold_change": 0.038945455104112625
+      },
+      {
+        "record_index": 6704,
+        "genes": [
+          "YDR257C"
+        ],
+        "pred_log10_fold_change": 0.03808986395597458
+      },
+      {
+        "record_index": 6725,
+        "genes": [
+          "YBR059C"
+        ],
+        "pred_log10_fold_change": 0.031926266849040985
+      },
+      {
+        "record_index": 6731,
+        "genes": [
+          "YKL204W"
+        ],
+        "pred_log10_fold_change": 0.02457793429493904
+      },
+      {
+        "record_index": 6734,
+        "genes": [
+          "YML074C"
+        ],
+        "pred_log10_fold_change": 0.034337855875492096
+      },
+      {
+        "record_index": 6748,
+        "genes": [
+          "YDR277C"
+        ],
+        "pred_log10_fold_change": 0.014905550517141819
+      },
+      {
+        "record_index": 6777,
+        "genes": [
+          "YAL056W"
+        ],
+        "pred_log10_fold_change": 0.025904826819896698
+      },
+      {
+        "record_index": 6827,
+        "genes": [
+          "YGL211W"
+        ],
+        "pred_log10_fold_change": 0.03377251327037811
+      },
+      {
+        "record_index": 6882,
+        "genes": [
+          "YBR042C"
+        ],
+        "pred_log10_fold_change": 0.02747694030404091
+      },
+      {
+        "record_index": 6901,
+        "genes": [
+          "YOR173W"
+        ],
+        "pred_log10_fold_change": 0.017080221325159073
+      },
+      {
+        "record_index": 6908,
+        "genes": [
+          "YPR013C"
+        ],
+        "pred_log10_fold_change": 0.03456179052591324
+      },
+      {
+        "record_index": 6961,
+        "genes": [
+          "YPL178W"
+        ],
+        "pred_log10_fold_change": 0.03606085851788521
+      },
+      {
+        "record_index": 6994,
+        "genes": [
+          "YBR150C"
+        ],
+        "pred_log10_fold_change": 0.0356992706656456
+      },
+      {
+        "record_index": 7065,
+        "genes": [
+          "YJL127C"
+        ],
+        "pred_log10_fold_change": 0.03562760353088379
+      },
+      {
+        "record_index": 7077,
+        "genes": [
+          "YPL245W"
+        ],
+        "pred_log10_fold_change": 0.03272000700235367
+      },
+      {
+        "record_index": 7081,
+        "genes": [
+          "YCL032W"
+        ],
+        "pred_log10_fold_change": 0.03809407353401184
+      },
+      {
+        "record_index": 7094,
+        "genes": [
+          "YPR032W"
+        ],
+        "pred_log10_fold_change": 0.03782009705901146
+      },
+      {
+        "record_index": 7107,
+        "genes": [
+          "YJR134C"
+        ],
+        "pred_log10_fold_change": 0.02967204339802265
+      },
+      {
+        "record_index": 7121,
+        "genes": [
+          "YLR451W"
+        ],
+        "pred_log10_fold_change": 0.03716887906193733
+      },
+      {
+        "record_index": 7176,
+        "genes": [
+          "YNR032W"
+        ],
+        "pred_log10_fold_change": 0.03443044424057007
+      },
+      {
+        "record_index": 7210,
+        "genes": [
+          "YPL080C"
+        ],
+        "pred_log10_fold_change": 0.03252492845058441
+      },
+      {
+        "record_index": 7269,
+        "genes": [
+          "YOR115C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 7270,
+        "genes": [
+          "YKR013W"
+        ],
+        "pred_log10_fold_change": 0.038943998515605927
+      },
+      {
+        "record_index": 7278,
+        "genes": [
+          "YCR098C"
+        ],
+        "pred_log10_fold_change": 0.020656082779169083
+      },
+      {
+        "record_index": 7293,
+        "genes": [
+          "YDR337W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 7314,
+        "genes": [
+          "YNL119W"
+        ],
+        "pred_log10_fold_change": 0.028426937758922577
+      },
+      {
+        "record_index": 7364,
+        "genes": [
+          "YML048W"
+        ],
+        "pred_log10_fold_change": 0.006163745187222958
+      },
+      {
+        "record_index": 7365,
+        "genes": [
+          "YLR453C"
+        ],
+        "pred_log10_fold_change": 0.02933853305876255
+      },
+      {
+        "record_index": 7432,
+        "genes": [
+          "YNL010W"
+        ],
+        "pred_log10_fold_change": 0.033965885639190674
+      },
+      {
+        "record_index": 7439,
+        "genes": [
+          "YKR075C"
+        ],
+        "pred_log10_fold_change": 0.038363173604011536
+      },
+      {
+        "record_index": 7442,
+        "genes": [
+          "YPL185W"
+        ],
+        "pred_log10_fold_change": 0.03544725105166435
+      },
+      {
+        "record_index": 7468,
+        "genes": [
+          "YML112W"
+        ],
+        "pred_log10_fold_change": 0.005579411052167416
+      },
+      {
+        "record_index": 7475,
+        "genes": [
+          "YGL107C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 7491,
+        "genes": [
+          "YDR490C"
+        ],
+        "pred_log10_fold_change": 0.03329380601644516
+      },
+      {
+        "record_index": 7510,
+        "genes": [
+          "YNL183C"
+        ],
+        "pred_log10_fold_change": 0.03169609606266022
+      },
+      {
+        "record_index": 7518,
+        "genes": [
+          "YKR080W"
+        ],
+        "pred_log10_fold_change": 0.02506854012608528
+      },
+      {
+        "record_index": 7543,
+        "genes": [
+          "YGR262C"
+        ],
+        "pred_log10_fold_change": 0.036782898008823395
+      },
+      {
+        "record_index": 7550,
+        "genes": [
+          "YLR172C"
+        ],
+        "pred_log10_fold_change": 0.027461471036076546
+      },
+      {
+        "record_index": 7580,
+        "genes": [
+          "YGL005C"
+        ],
+        "pred_log10_fold_change": 0.005544330459088087
+      },
+      {
+        "record_index": 7623,
+        "genes": [
+          "YPR067W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 7688,
+        "genes": [
+          "YCR076C"
+        ],
+        "pred_log10_fold_change": 0.03663478419184685
+      },
+      {
+        "record_index": 7695,
+        "genes": [
+          "YNL264C"
+        ],
+        "pred_log10_fold_change": 0.03733934834599495
+      },
+      {
+        "record_index": 7731,
+        "genes": [
+          "YDR245W"
+        ],
+        "pred_log10_fold_change": 0.03741748631000519
+      },
+      {
+        "record_index": 7751,
+        "genes": [
+          "YKR027W"
+        ],
+        "pred_log10_fold_change": 0.03304484486579895
+      },
+      {
+        "record_index": 7770,
+        "genes": [
+          "YBL024W"
+        ],
+        "pred_log10_fold_change": 0.034921273589134216
+      },
+      {
+        "record_index": 7798,
+        "genes": [
+          "YJR098C"
+        ],
+        "pred_log10_fold_change": 0.03136803209781647
+      },
+      {
+        "record_index": 7834,
+        "genes": [
+          "YPL069C"
+        ],
+        "pred_log10_fold_change": 0.012380671687424183
+      },
+      {
+        "record_index": 7849,
+        "genes": [
+          "YLR039C"
+        ],
+        "pred_log10_fold_change": 0.037042826414108276
+      },
+      {
+        "record_index": 7887,
+        "genes": [
+          "YML055W"
+        ],
+        "pred_log10_fold_change": 0.03640463203191757
+      },
+      {
+        "record_index": 7905,
+        "genes": [
+          "YJR145C"
+        ],
+        "pred_log10_fold_change": 0.03285172954201698
+      },
+      {
+        "record_index": 8007,
+        "genes": [
+          "YGR208W"
+        ],
+        "pred_log10_fold_change": 0.030409596860408783
+      },
+      {
+        "record_index": 8012,
+        "genes": [
+          "YDL160C"
+        ],
+        "pred_log10_fold_change": 0.032167114317417145
+      },
+      {
+        "record_index": 8048,
+        "genes": [
+          "YPR101W"
+        ],
+        "pred_log10_fold_change": 0.029810830950737
+      },
+      {
+        "record_index": 8067,
+        "genes": [
+          "YHL042W"
+        ],
+        "pred_log10_fold_change": 0.038378991186618805
+      },
+      {
+        "record_index": 8092,
+        "genes": [
+          "YDR501W"
+        ],
+        "pred_log10_fold_change": 0.03721252828836441
+      },
+      {
+        "record_index": 8098,
+        "genes": [
+          "YCL036W"
+        ],
+        "pred_log10_fold_change": 0.03288736566901207
+      },
+      {
+        "record_index": 8116,
+        "genes": [
+          "YNL023C"
+        ],
+        "pred_log10_fold_change": 0.036279745399951935
+      },
+      {
+        "record_index": 8133,
+        "genes": [
+          "YDR270W"
+        ],
+        "pred_log10_fold_change": 0.014588983729481697
+      },
+      {
+        "record_index": 8134,
+        "genes": [
+          "YJR139C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 8163,
+        "genes": [
+          "YJL065C"
+        ],
+        "pred_log10_fold_change": 0.02528488263487816
+      },
+      {
+        "record_index": 8183,
+        "genes": [
+          "YDL112W"
+        ],
+        "pred_log10_fold_change": 0.031662508845329285
+      },
+      {
+        "record_index": 8188,
+        "genes": [
+          "YML111W"
+        ],
+        "pred_log10_fold_change": 0.03464677929878235
+      },
+      {
+        "record_index": 8249,
+        "genes": [
+          "YKR044W"
+        ],
+        "pred_log10_fold_change": 0.03657720983028412
+      },
+      {
+        "record_index": 8262,
+        "genes": [
+          "YDL229W"
+        ],
+        "pred_log10_fold_change": 0.025735249742865562
+      },
+      {
+        "record_index": 8268,
+        "genes": [
+          "YDL035C"
+        ],
+        "pred_log10_fold_change": 0.03200855851173401
+      },
+      {
+        "record_index": 8320,
+        "genes": [
+          "YJL006C"
+        ],
+        "pred_log10_fold_change": 0.03364909440279007
+      },
+      {
+        "record_index": 8434,
+        "genes": [
+          "YGL007C-A"
+        ],
+        "pred_log10_fold_change": 0.03437844291329384
+      },
+      {
+        "record_index": 8436,
+        "genes": [
+          "YNL201C"
+        ],
+        "pred_log10_fold_change": 0.008046384900808334
+      },
+      {
+        "record_index": 8448,
+        "genes": [
+          "YNL153C"
+        ],
+        "pred_log10_fold_change": 0.030281884595751762
+      },
+      {
+        "record_index": 8454,
+        "genes": [
+          "YHR121W"
+        ],
+        "pred_log10_fold_change": 0.03506385535001755
+      },
+      {
+        "record_index": 8464,
+        "genes": [
+          "YGR289C"
+        ],
+        "pred_log10_fold_change": 0.026413725689053535
+      },
+      {
+        "record_index": 8488,
+        "genes": [
+          "YDL225W"
+        ],
+        "pred_log10_fold_change": 0.027696186676621437
+      },
+      {
+        "record_index": 8525,
+        "genes": [
+          "YOR297C"
+        ],
+        "pred_log10_fold_change": 0.006130338180810213
+      },
+      {
+        "record_index": 8527,
+        "genes": [
+          "YGL026C"
+        ],
+        "pred_log10_fold_change": 0.013541487976908684
+      },
+      {
+        "record_index": 8578,
+        "genes": [
+          "YDR320C"
+        ],
+        "pred_log10_fold_change": 0.03470198065042496
+      },
+      {
+        "record_index": 8643,
+        "genes": [
+          "YKL162C-A"
+        ],
+        "pred_log10_fold_change": 0.03535833954811096
+      },
+      {
+        "record_index": 8657,
+        "genes": [
+          "YIL014W"
+        ],
+        "pred_log10_fold_change": 0.03779096156358719
+      },
+      {
+        "record_index": 8689,
+        "genes": [
+          "YGL020C"
+        ],
+        "pred_log10_fold_change": 0.01281590573489666
+      },
+      {
+        "record_index": 8767,
+        "genes": [
+          "YOR234C"
+        ],
+        "pred_log10_fold_change": 0.031591493636369705
+      },
+      {
+        "record_index": 8787,
+        "genes": [
+          "YHR123W"
+        ],
+        "pred_log10_fold_change": 0.019338160753250122
+      },
+      {
+        "record_index": 8798,
+        "genes": [
+          "YMR275C"
+        ],
+        "pred_log10_fold_change": 0.03431782126426697
+      },
+      {
+        "record_index": 8807,
+        "genes": [
+          "YGL110C"
+        ],
+        "pred_log10_fold_change": 0.030292697250843048
+      },
+      {
+        "record_index": 8819,
+        "genes": [
+          "YKL011C"
+        ],
+        "pred_log10_fold_change": 0.03192097321152687
+      },
+      {
+        "record_index": 8878,
+        "genes": [
+          "YJL138C"
+        ],
+        "pred_log10_fold_change": 0.03184305876493454
+      },
+      {
+        "record_index": 8884,
+        "genes": [
+          "YCR068W"
+        ],
+        "pred_log10_fold_change": 0.03635718300938606
+      },
+      {
+        "record_index": 9056,
+        "genes": [
+          "YHR031C"
+        ],
+        "pred_log10_fold_change": 0.032796185463666916
+      },
+      {
+        "record_index": 9085,
+        "genes": [
+          "YIR017C"
+        ],
+        "pred_log10_fold_change": 0.032875530421733856
+      },
+      {
+        "record_index": 9088,
+        "genes": [
+          "YKR051W"
+        ],
+        "pred_log10_fold_change": 0.027107682079076767
+      },
+      {
+        "record_index": 9157,
+        "genes": [
+          "YBR046C"
+        ],
+        "pred_log10_fold_change": 0.011906362138688564
+      },
+      {
+        "record_index": 9190,
+        "genes": [
+          "YLR438W"
+        ],
+        "pred_log10_fold_change": 0.014449755661189556
+      },
+      {
+        "record_index": 9201,
+        "genes": [
+          "YKL211C"
+        ],
+        "pred_log10_fold_change": 0.026039155200123787
+      },
+      {
+        "record_index": 9217,
+        "genes": [
+          "YCR044C"
+        ],
+        "pred_log10_fold_change": 0.018500491976737976
+      },
+      {
+        "record_index": 9229,
+        "genes": [
+          "YPL072W"
+        ],
+        "pred_log10_fold_change": 0.03758572041988373
+      },
+      {
+        "record_index": 9241,
+        "genes": [
+          "YOR230W"
+        ],
+        "pred_log10_fold_change": 0.037952717393636703
+      },
+      {
+        "record_index": 9255,
+        "genes": [
+          "YCR053W"
+        ],
+        "pred_log10_fold_change": 0.01070039626210928
+      },
+      {
+        "record_index": 10073,
+        "genes": [
+          "YHL031C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 10106,
+        "genes": [
+          "YBR035C"
+        ],
+        "pred_log10_fold_change": 0.0330081433057785
+      },
+      {
+        "record_index": 10350,
+        "genes": [
+          "YBR133C"
+        ],
+        "pred_log10_fold_change": 0.029155416414141655
+      },
+      {
+        "record_index": 10472,
+        "genes": [
+          "YBR069C"
+        ],
+        "pred_log10_fold_change": 0.006545162294059992
+      },
+      {
+        "record_index": 10729,
+        "genes": [
+          "YBR296C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 11117,
+        "genes": [
+          "YER040W"
+        ],
+        "pred_log10_fold_change": 0.026627518236637115
+      },
+      {
+        "record_index": 11173,
+        "genes": [
+          "YKL163W"
+        ],
+        "pred_log10_fold_change": 0.039007678627967834
+      },
+      {
+        "record_index": 11206,
+        "genes": [
+          "YOL047C"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 11284,
+        "genes": [
+          "YML070W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 11550,
+        "genes": [
+          "YCL023C"
+        ],
+        "pred_log10_fold_change": 0.012403847649693489
+      },
+      {
+        "record_index": 11729,
+        "genes": [
+          "YGL214W"
+        ],
+        "pred_log10_fold_change": 0.006305313669145107
+      },
+      {
+        "record_index": 12727,
+        "genes": [
+          "YKL030W"
+        ],
+        "pred_log10_fold_change": 0.013604221865534782
+      },
+      {
+        "record_index": 12838,
+        "genes": [
+          "YML063W"
+        ],
+        "pred_log10_fold_change": 0.03237511217594147
+      },
+      {
+        "record_index": 12905,
+        "genes": [
+          "YPL256C"
+        ],
+        "pred_log10_fold_change": 0.03523789718747139
+      },
+      {
+        "record_index": 13016,
+        "genes": [
+          "YML051W"
+        ],
+        "pred_log10_fold_change": 0.012150265276432037
+      },
+      {
+        "record_index": 13149,
+        "genes": [
+          "YDL201W"
+        ],
+        "pred_log10_fold_change": 0.036046795547008514
+      },
+      {
+        "record_index": 13504,
+        "genes": [
+          "YPR017C"
+        ],
+        "pred_log10_fold_change": 0.03866180032491684
+      },
+      {
+        "record_index": 13582,
+        "genes": [
+          "YPL086C"
+        ],
+        "pred_log10_fold_change": 0.031768132001161575
+      }
+    ],
+    "reproducibility_ceiling": {
+      "screen_up_stayed_up": "59/60",
+      "screen_down_stayed_down": "150/150",
+      "source": "the 222 genes measured in both the screen and the re-screen"
+    }
+  },
+  "calibration": {
+    "available": false,
+    "reason": "the head emitted a point prediction; there is no PIT for it.",
+    "dist": "crps",
+    "group": null,
+    "n_measurements": null,
+    "columns": [],
+    "coverage": {},
+    "coverage_per_feature": {},
+    "pit_ks": null,
+    "pit_ks_per_feature": [],
+    "pit_mean": null,
+    "pit_histogram": []
+  },
+  "concentration_audit": {
+    "available": false,
+    "reason": "the learned log concentration exists only on a flux arm whose thermo_mode is ANCHORED, scored against the amino-acid phenotype; this cell is arm 'pooled' on head 'isobutanol'.",
+    "supervised": false,
+    "conc_space": null,
+    "conc_lower_m": null,
+    "conc_upper_m": null,
+    "volume_fractions": null,
+    "mixture": {},
+    "groups": {}
+  },
+  "feasibility": {
+    "available": false,
+    "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+    "definitions": {
+      "balance_median_ratio": "median over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon), with omega_i = 0.5 sum_j |S_ij v_j| the layer's own turnover. This is FluxLayer.forward's feas_balance_median, per sample instead of batch-reduced.",
+      "balance_max_ratio": "the same ratio, maximized over the independent rows.",
+      "box_violation_frac": "fraction of the 4,131 reactions with v > ub + 1e-4 or v < lb - 1e-4, where (lb, ub) is FluxLayer.dynamic_box at this sample's availability and abundance. The box parameterization satisfies this by construction, so a nonzero value is a bug rather than an infeasibility.",
+      "thermo_model_violation_frac": "fraction of active reactions (delta_r_g0_mask and not thermo_exempt) with v * delta_r_G > thermo_epsilon, using the layer's OWN delta_r_G from reaction_potential, which includes the learned concentration term. Available only when the arm's thermo_mode is not OFF.",
+      "thermo_model_uphill_frac": "mean over active reactions of relu(v dG + eps) / (|v||dG| + eps), the per-sample form of the layer's c_thermo. Available only when thermo_mode is not OFF.",
+      "thermo_standard_state_violation_frac": "fraction of active reactions with v * (delta_r_G0 + delta_r_G_transport) > thermo_epsilon. An AUDIT REFERENCE, not the layer's own term: it evaluates the second law at standard state because an arm with thermo_mode OFF learns no concentrations, so the concentration term RT S^T ln c is absent rather than zero.",
+      "thermo_standard_state_uphill_frac": "the same standard-state driving force in the c_thermo normalization.",
+      "fractions": "fraction of the genotypes in the group meeting each named criterion. 'both_balance_le_1e-02_and_<thermo>_eq_0' is the Genesis criterion: mass balance within 1 percent and no uphill active reaction.",
+      "rank_by": "top-100 groups are the 100 genotypes with the HIGHEST predicted betaxanthin (denormalized head mean), i.e. the strains the model nominates as producers."
+    },
+    "tolerances": {},
+    "n_independent_balance_rows": null,
+    "n_reactions_second_law_applied": null,
+    "thermo_mode": null,
+    "thermo_source": null,
+    "groups": {}
+  },
+  "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave9_ibpool_e200_s2700.pt",
+  "wandb_run_id": "6z2ovude",
+  "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/6z2ovude"
+}

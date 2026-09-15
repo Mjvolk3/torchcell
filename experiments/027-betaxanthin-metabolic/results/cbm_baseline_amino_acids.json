@@ -1,0 +1,589 @@
+{
+ "generated_by": "experiments/027-betaxanthin-metabolic/scripts/cbm_baseline_bx.py",
+ "target": "amino_acids",
+ "primary_condition": "sm_none",
+ "growth_fraction": 0.9,
+ "solver": "optlang.glpk_interface",
+ "cobra_version": "0.30.0",
+ "python": "3.13.0",
+ "host": "gilahyper",
+ "slurm_job_id": "1902",
+ "target_source": {
+  "dumps": [
+   "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_mulleder19_s2700.json",
+   "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_mulleder19_s2701.json",
+   "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_mulleder19_s2702.json"
+  ]
+ },
+ "n_pinned_with_measurement": 639,
+ "n_pinned_in_gem": 638,
+ "n_scored": 638,
+ "max_genes_smoke_limit": 0,
+ "medium_note": "Cachera 2023 grew the screen on YPD + G418. torchcell/datasets/scerevisiae/cachera2023.py:321 emits Media(name='SC', state='solid'), which does not match the paper. The GEM stand-in for YPD (YPD_APPROX_FBA) omits uracil and adenine because yeast extract is not modeled, which makes the ura3D0 marker lethal in silico; SC_FBA is that same bound vector plus the two nucleobases. Both are run and reported.",
+ "conditions": {
+  "sm_none": {
+   "provenance": {
+    "base_reactions": 4131,
+    "base_metabolites": 2806,
+    "base_genes": 1161,
+    "media_key": "SM",
+    "media_name": "SM (synthetic minimal): YNB vitamins + ammonium sulfate + D-glucose",
+    "media_n_bounds": 25,
+    "model_reactions": 4131,
+    "model_genes": 1161,
+    "markers_applied": false,
+    "marker_genes": {
+     "HIS3": {
+      "orf": "YOR202W",
+      "in_gem": true
+     },
+     "LEU2": {
+      "orf": "YCL018W",
+      "in_gem": true
+     },
+     "MET15/MET17": {
+      "orf": "YLR303W",
+      "in_gem": true
+     },
+     "URA3": {
+      "orf": "YEL021W",
+      "in_gem": true
+     }
+    },
+    "growth_reaction": "r_2111",
+    "growth_reaction_lower_bound": 0.0,
+    "wild_type_growth_per_h": 0.3137814574016475,
+    "background_growth_per_h": 0.3137814574016475,
+    "background_knockouts": [],
+    "wall_clock_s": 898.2,
+    "s_per_genotype": 1.4078
+   },
+   "scores": {
+    "aa_at_90pct_reference_growth": {
+     "mean_spearman": 0.003648833622318371,
+     "n_features": 19,
+     "n_per_feature": [
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540,
+      540
+     ],
+     "per_feature": {
+      "alanine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.4668813801628195,
+       "max": 0.7281891104074661,
+       "spearman": -0.028838447465064126,
+       "permutation_p": 0.52,
+       "permutation_null_sd": 0.04341781681040302,
+       "bootstrap_ci95": [
+        -0.1218179044246141,
+        0.06049387232123376
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.1,
+        "25": 0.2,
+        "50": 0.18
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 6.648680850863457
+      },
+      "arginine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.15737230356927476,
+       "max": 0.2705998956912822,
+       "spearman": 0.025368872499276385,
+       "permutation_p": 0.563,
+       "permutation_null_sd": 0.04244284274333844,
+       "bootstrap_ci95": [
+        -0.060782750261753005,
+        0.10761451202060199
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.1,
+        "25": 0.08,
+        "50": 0.08
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 4.196030795574188
+      },
+      "asparagine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.3817203088131746,
+       "max": 0.5085683874535669,
+       "spearman": -0.010957856334017723,
+       "permutation_p": 0.805,
+       "permutation_null_sd": 0.04325218421051474,
+       "bootstrap_ci95": [
+        -0.09918118351217349,
+        0.07543626043032708
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.2,
+        "25": 0.2,
+        "50": 0.12
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 1.300543136894703
+      },
+      "aspartate": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.4345645406692884,
+       "max": 0.6365584182711199,
+       "spearman": 0.0004028417699540064,
+       "permutation_p": 0.9885,
+       "permutation_null_sd": 0.042774282144498604,
+       "bootstrap_ci95": [
+        -0.08917475594248933,
+        0.08867008174379344
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.2,
+        "25": 0.12,
+        "50": 0.2
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 5.517066493630409
+      },
+      "glutamate": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.2557761674868745,
+       "max": 0.4381559698584362,
+       "spearman": 0.0016716500657541558,
+       "permutation_p": 0.968,
+       "permutation_null_sd": 0.042801591657204284,
+       "bootstrap_ci95": [
+        -0.08439940934560931,
+        0.08732690369355268
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.1,
+        "25": 0.12,
+        "50": 0.12
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 23.376931071281433
+      },
+      "glutamine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.2481925211618309,
+       "max": 0.41142936440165523,
+       "spearman": 0.027951913312821482,
+       "permutation_p": 0.515,
+       "permutation_null_sd": 0.043766647045699256,
+       "bootstrap_ci95": [
+        -0.061438057805524665,
+        0.11642200628769002
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.0,
+        "25": 0.12,
+        "50": 0.08
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 30.66839289665222
+      },
+      "glycine": {
+       "n": 540,
+       "n_distinct_values": 19,
+       "frac_at_mode": 0.9574074074074074,
+       "min": 0.8038071889126651,
+       "max": 1.164073320818444,
+       "spearman": 0.0011813691170388962,
+       "permutation_p": 0.98,
+       "permutation_null_sd": 0.04333179847881354,
+       "bootstrap_ci95": [
+        -0.08469098528959267,
+        0.08365394999747472
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.3,
+        "25": 0.16,
+        "50": 0.16
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 2.2162735760211945
+      },
+      "histidine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.1585709815840223,
+       "max": 0.27351877534472063,
+       "spearman": 0.019172905654118617,
+       "permutation_p": 0.666,
+       "permutation_null_sd": 0.04283922669302331,
+       "bootstrap_ci95": [
+        -0.07154383455007159,
+        0.10834720593091529
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.2,
+        "25": 0.16,
+        "50": 0.2
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 5.538305640220642
+      },
+      "isoleucine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.19623830332265516,
+       "max": 0.28511933211219875,
+       "spearman": -0.03614105642914251,
+       "permutation_p": 0.407,
+       "permutation_null_sd": 0.042891397399131136,
+       "bootstrap_ci95": [
+        -0.11922010126868557,
+        0.05234498615548478
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.3,
+        "25": 0.2,
+        "50": 0.14
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 0.4218314979225397
+      },
+      "leucine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.1697142371845413,
+       "max": 0.2891942118050881,
+       "spearman": 0.09618657496853268,
+       "permutation_p": 0.0245,
+       "permutation_null_sd": 0.04373389111283083,
+       "bootstrap_ci95": [
+        0.00929282549127826,
+        0.18087642954146502
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.2,
+        "25": 0.24,
+        "50": 0.18
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 0.3132393453270197
+      },
+      "lysine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.16395043269132303,
+       "max": 0.2691815968712062,
+       "spearman": -0.061072725531926476,
+       "permutation_p": 0.1635,
+       "permutation_null_sd": 0.04346011966734566,
+       "bootstrap_ci95": [
+        -0.15044381106732893,
+        0.023097616430574244
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.0,
+        "25": 0.0,
+        "50": 0.1
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 0.970243675634265
+      },
+      "methionine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.09022091872215621,
+       "max": 0.23002067750373353,
+       "spearman": 0.04876981576704992,
+       "permutation_p": 0.249,
+       "permutation_null_sd": 0.04310782454721822,
+       "bootstrap_ci95": [
+        -0.03767915901021092,
+        0.13278171097457883
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.2,
+        "25": 0.2,
+        "50": 0.16
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 0.1437448738142848
+      },
+      "phenylalanine": {
+       "n": 540,
+       "n_distinct_values": 23,
+       "frac_at_mode": 0.95,
+       "min": 0.1387744013936554,
+       "max": 0.19565766167568083,
+       "spearman": -0.08928110763869547,
+       "permutation_p": 0.041,
+       "permutation_null_sd": 0.04342779272870917,
+       "bootstrap_ci95": [
+        -0.17580310415589084,
+        -0.0022784833311087506
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.2,
+        "25": 0.2,
+        "50": 0.12
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 0.3142601605504751
+      },
+      "proline": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.22875818175042645,
+       "max": 0.35021840492924433,
+       "spearman": 0.02973654348563481,
+       "permutation_p": 0.4915,
+       "permutation_null_sd": 0.044031800261155954,
+       "bootstrap_ci95": [
+        -0.05591765910572453,
+        0.11212456187823637
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.1,
+        "25": 0.08,
+        "50": 0.16
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 1.209974855184555
+      },
+      "serine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.4866346606224755,
+       "max": 0.7497191181919891,
+       "spearman": 0.015115342017654545,
+       "permutation_p": 0.715,
+       "permutation_null_sd": 0.04283059955127931,
+       "bootstrap_ci95": [
+        -0.07047473877304715,
+        0.10068414881362253
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.3,
+        "25": 0.16,
+        "50": 0.18
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 2.471401035785675
+      },
+      "threonine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.35179614025827294,
+       "max": 0.445860193019615,
+       "spearman": -0.033891430650478116,
+       "permutation_p": 0.4385,
+       "permutation_null_sd": 0.04326677121687926,
+       "bootstrap_ci95": [
+        -0.11678591115607656,
+        0.05295169096108103
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.3,
+        "25": 0.2,
+        "50": 0.16
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 4.274231985211372
+      },
+      "tryptophan": {
+       "n": 540,
+       "n_distinct_values": 23,
+       "frac_at_mode": 0.95,
+       "min": 0.12141454731705409,
+       "max": 0.15485307267234344,
+       "spearman": 0.0012827605996778904,
+       "permutation_p": 0.9685,
+       "permutation_null_sd": 0.042366441642353876,
+       "bootstrap_ci95": [
+        -0.09011626827421777,
+        0.08934898836645275
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.4,
+        "25": 0.36,
+        "50": 0.22
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 0.044767981860786676
+      },
+      "tyrosine": {
+       "n": 540,
+       "n_distinct_values": 23,
+       "frac_at_mode": 0.95,
+       "min": 0.1425541017710798,
+       "max": 0.20512464964202312,
+       "spearman": -0.0011768421728374028,
+       "permutation_p": 0.9725,
+       "permutation_null_sd": 0.042905029636748214,
+       "bootstrap_ci95": [
+        -0.09211284098707095,
+        0.0836098595267991
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.3,
+        "25": 0.16,
+        "50": 0.18
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 3.226129189133644
+      },
+      "valine": {
+       "n": 540,
+       "n_distinct_values": 22,
+       "frac_at_mode": 0.9518518518518518,
+       "min": 0.23344069008142096,
+       "max": 0.36409455520372136,
+       "spearman": 0.06384671578869748,
+       "permutation_p": 0.133,
+       "permutation_null_sd": 0.04273791328846284,
+       "bootstrap_ci95": [
+        -0.024502844220482347,
+        0.1561881593232295
+       ],
+       "n_bootstrap_used": 2000,
+       "topk_precision": {
+        "10": 0.2,
+        "25": 0.36,
+        "50": 0.28
+       },
+       "base_rate": 0.1574074074074074,
+       "high_threshold": 1.4226949997246265
+      }
+     }
+    },
+    "growth": {
+     "n": 563,
+     "n_distinct_values": 26,
+     "frac_at_mode": 0.9129662522202486,
+     "min": -4.837710681123632e-33,
+     "max": 0.31378145740884367,
+     "spearman": -0.013892835059164516,
+     "permutation_p": 0.753,
+     "permutation_null_sd": 0.04151514440040555,
+     "bootstrap_ci95": [
+      -0.09933432041631415,
+      0.06898250408055698
+     ],
+     "n_bootstrap_used": 2000,
+     "topk_precision": {
+      "10": 0.1,
+      "25": 0.08,
+      "50": 0.18
+     },
+     "base_rate": 0.15630550621669628,
+     "high_threshold": 4.701421603615591
+    },
+    "shadow_price_tyrosine_c": {
+     "n": 563,
+     "n_distinct_values": 26,
+     "frac_at_mode": 0.91651865008881,
+     "min": -8.534977859515468,
+     "max": 2.075731760326094e-12,
+     "spearman": -0.010118091529724465,
+     "permutation_p": 0.8125,
+     "permutation_null_sd": 0.04204135192789862,
+     "bootstrap_ci95": [
+      -0.09625632118584655,
+      0.0778119470859627
+     ],
+     "n_bootstrap_used": 2000,
+     "topk_precision": {
+      "10": 0.1,
+      "25": 0.16,
+      "50": 0.18
+     },
+     "base_rate": 0.15630550621669628,
+     "high_threshold": 4.701421603615591
+    },
+    "pfba_total_flux": {
+     "n": 554,
+     "n_distinct_values": 31,
+     "frac_at_mode": 0.9151624548736462,
+     "min": 109.32524174199825,
+     "max": 499.17774221046216,
+     "spearman": -0.02933312465242908,
+     "permutation_p": 0.4905,
+     "permutation_null_sd": 0.042522216007035984,
+     "bootstrap_ci95": [
+      -0.11465958855735295,
+      0.058718678077733295
+     ],
+     "n_bootstrap_used": 2000,
+     "topk_precision": {
+      "10": 0.1,
+      "25": 0.16,
+      "50": 0.2
+     },
+     "base_rate": 0.15703971119133575,
+     "high_threshold": 4.702967512007729
+    },
+    "control_constant_readout": {
+     "n": 563,
+     "n_distinct_values": 1,
+     "frac_at_mode": 1.0,
+     "min": 0.3137814574016475,
+     "max": 0.3137814574016475,
+     "spearman": null,
+     "permutation_p": null,
+     "bootstrap_ci95": null,
+     "topk_precision": null,
+     "base_rate": null,
+     "note": "degenerate readout: constant, or fewer than 10 scorable genes"
+    }
+   }
+  }
+ }
+}

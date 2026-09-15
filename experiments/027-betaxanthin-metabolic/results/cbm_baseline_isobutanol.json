@@ -1,0 +1,242 @@
+{
+ "generated_by": "experiments/027-betaxanthin-metabolic/scripts/cbm_baseline_bx.py",
+ "target": "isobutanol",
+ "primary_condition": "sc_markers",
+ "growth_fraction": 0.9,
+ "solver": "optlang.glpk_interface",
+ "cobra_version": "0.30.0",
+ "python": "3.13.0",
+ "host": "gilahyper",
+ "slurm_job_id": "1941",
+ "target_source": {
+  "dumps": [
+   "/scratch/projects/torchcell-scratch/data/torchcell/isobutanol_screen_lopez2024/processed/lmdb"
+  ],
+  "lmdb_entries": 4554,
+  "lmdb_mtime": "2026-09-14 02:29:03",
+  "n_screen_genes": 4554,
+  "n_pinned_requested": 639
+ },
+ "n_pinned_with_measurement": 581,
+ "n_pinned_in_gem": 581,
+ "n_scored": 581,
+ "max_genes_smoke_limit": 0,
+ "medium_note": "Cachera 2023 grew the screen on YPD + G418. torchcell/datasets/scerevisiae/cachera2023.py:321 emits Media(name='SC', state='solid'), which does not match the paper. The GEM stand-in for YPD (YPD_APPROX_FBA) omits uracil and adenine because yeast extract is not modeled, which makes the ura3D0 marker lethal in silico; SC_FBA is that same bound vector plus the two nucleobases. Both are run and reported.",
+ "conditions": {
+  "sc_markers": {
+   "provenance": {
+    "base_reactions": 4131,
+    "base_metabolites": 2806,
+    "base_genes": 1161,
+    "media_key": "SC",
+    "media_name": "SC (synthetic complete): SM + 20 amino acids + uracil + adenine",
+    "media_n_bounds": 47,
+    "model_reactions": 4131,
+    "model_genes": 1161,
+    "markers_applied": true,
+    "marker_genes": {
+     "HIS3": {
+      "orf": "YOR202W",
+      "in_gem": true
+     },
+     "LEU2": {
+      "orf": "YCL018W",
+      "in_gem": true
+     },
+     "MET15/MET17": {
+      "orf": "YLR303W",
+      "in_gem": true
+     },
+     "URA3": {
+      "orf": "YEL021W",
+      "in_gem": true
+     }
+    },
+    "growth_reaction": "r_2111",
+    "growth_reaction_lower_bound": 0.0,
+    "wild_type_growth_per_h": 0.5427815290195283,
+    "background_growth_per_h": 0.4846277650452627,
+    "background_knockouts": [
+     "YOR202W",
+     "YCL018W",
+     "YLR303W",
+     "YEL021W"
+    ],
+    "wall_clock_s": 534.2,
+    "s_per_genotype": 0.9195
+   },
+   "scores": {
+    "growth": {
+     "n": 581,
+     "n_distinct_values": 5,
+     "frac_at_mode": 0.9569707401032702,
+     "min": -9.385218452668438e-20,
+     "max": 0.4846277650468661,
+     "spearman": -0.015013033185146997,
+     "topk_precision": {
+      "10": 0.2,
+      "25": 0.16,
+      "50": 0.16
+     },
+     "base_rate": 0.1566265060240964,
+     "high_threshold": 0.18425899481716695,
+     "permutation_p": 0.721,
+     "permutation_null_sd": 0.04129130614273291,
+     "bootstrap_ci95": [
+      -0.10150024386286335,
+      0.0665022863792592
+     ],
+     "n_bootstrap_used": 2000
+    },
+    "shadow_price_tyrosine_c": {
+     "n": 581,
+     "n_distinct_values": 3,
+     "frac_at_mode": 0.9741824440619621,
+     "min": -0.011499863717132994,
+     "max": 1.2096677849667478e-14,
+     "spearman": -0.03385426630775464,
+     "topk_precision": {
+      "10": 0.3,
+      "25": 0.24,
+      "50": 0.18
+     },
+     "base_rate": 0.1566265060240964,
+     "high_threshold": 0.18425899481716695,
+     "permutation_p": 0.426,
+     "permutation_null_sd": 0.041479378184671054,
+     "bootstrap_ci95": [
+      -0.11826134300412929,
+      0.05089369962556418
+     ],
+     "n_bootstrap_used": 2000
+    },
+    "isobutanol_at_90pct_reference_growth": {
+     "n": 558,
+     "n_distinct_values": 29,
+     "frac_at_mode": 0.931899641577061,
+     "min": 0.9414290040171209,
+     "max": 1.0901986479071222,
+     "spearman": 0.06799395072279328,
+     "topk_precision": {
+      "10": 0.2,
+      "25": 0.16,
+      "50": 0.16
+     },
+     "base_rate": 0.15770609318996415,
+     "high_threshold": 0.18093078229668733,
+     "permutation_p": 0.11,
+     "permutation_null_sd": 0.041735501964763624,
+     "bootstrap_ci95": [
+      -0.013531308184107367,
+      0.1533703046664756
+     ],
+     "n_bootstrap_used": 2000
+    },
+    "isobutanol_at_90pct_own_growth": {
+     "n": 581,
+     "n_distinct_values": 34,
+     "frac_at_mode": 0.891566265060241,
+     "min": 0.94142900401717,
+     "max": 4.9362500000000065,
+     "spearman": 0.07841181548075946,
+     "topk_precision": {
+      "10": 0.3,
+      "25": 0.2,
+      "50": 0.22
+     },
+     "base_rate": 0.1566265060240964,
+     "high_threshold": 0.18425899481716695,
+     "permutation_p": 0.056,
+     "permutation_null_sd": 0.04129336216489823,
+     "bootstrap_ci95": [
+      -0.0071993704194265986,
+      0.1622965372111716
+     ],
+     "n_bootstrap_used": 2000
+    },
+    "ipm_c_at_90pct_reference_growth": {
+     "n": 558,
+     "n_distinct_values": 30,
+     "frac_at_mode": 0.9301075268817204,
+     "min": 0.7151024103629653,
+     "max": 0.8266723010225798,
+     "spearman": 0.07381575921445142,
+     "topk_precision": {
+      "10": 0.0,
+      "25": 0.2,
+      "50": 0.28
+     },
+     "base_rate": 0.15770609318996415,
+     "high_threshold": 0.18093078229668733,
+     "permutation_p": 0.0795,
+     "permutation_null_sd": 0.04210919353385433,
+     "bootstrap_ci95": [
+      -0.010562905878144412,
+      0.15592433323415011
+     ],
+     "n_bootstrap_used": 2000
+    },
+    "ipm_m_at_90pct_reference_growth": {
+     "n": 558,
+     "n_distinct_values": 29,
+     "frac_at_mode": 0.931899641577061,
+     "min": 0.7151024103629533,
+     "max": 0.8266723010225943,
+     "spearman": 0.12005527680105033,
+     "topk_precision": {
+      "10": 0.2,
+      "25": 0.28,
+      "50": 0.24
+     },
+     "base_rate": 0.15770609318996415,
+     "high_threshold": 0.18093078229668733,
+     "permutation_p": 0.005,
+     "permutation_null_sd": 0.04107210745283848,
+     "bootstrap_ci95": [
+      0.03900196411154472,
+      0.19800988969578046
+     ],
+     "n_bootstrap_used": 2000
+    },
+    "pfba_total_flux": {
+     "n": 573,
+     "n_distinct_values": 29,
+     "frac_at_mode": 0.9162303664921466,
+     "min": 126.74589912735196,
+     "max": 677.4586116039526,
+     "spearman": 0.008439755214750348,
+     "topk_precision": {
+      "10": 0.2,
+      "25": 0.08,
+      "50": 0.14
+     },
+     "base_rate": 0.15706806282722513,
+     "high_threshold": 0.18157633636543452,
+     "permutation_p": 0.8395,
+     "permutation_null_sd": 0.04075126891060379,
+     "bootstrap_ci95": [
+      -0.07352131213132936,
+      0.09436364925955074
+     ],
+     "n_bootstrap_used": 2000
+    },
+    "control_constant_readout": {
+     "n": 581,
+     "n_distinct_values": 1,
+     "frac_at_mode": 1.0,
+     "min": 0.5427815290195283,
+     "max": 0.5427815290195283,
+     "spearman": null,
+     "permutation_p": null,
+     "bootstrap_ci95": null,
+     "topk_precision": null,
+     "base_rate": null,
+     "note": "degenerate readout: constant, or fewer than 10 scorable genes"
+    }
+   }
+  }
+ },
+ "conditions_requested": [
+  "sc_markers"
+ ]
+}

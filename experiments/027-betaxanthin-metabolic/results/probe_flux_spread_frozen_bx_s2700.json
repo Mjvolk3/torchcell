@@ -1,0 +1,37 @@
+{
+  "result_file": "wave9_warmstart_frozen_k100_boxforce_e200_s2700.json",
+  "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-027/wave9_warmstart_frozen_k100_boxforce_e200_s2700.pt",
+  "arm": "flux_warmstart_boxforce_nominal",
+  "seed": 2700,
+  "head": "betaxanthin",
+  "select_epoch": 7,
+  "n_genotypes": 933,
+  "n_reactions": 4131,
+  "flux_relative_spread": {
+    "n": 3331,
+    "median": 6.741862773895264,
+    "p90": 20.609777450561523,
+    "maximum": 30.529006958007812,
+    "n_above_threshold": 3331
+  },
+  "flux_absolute_sd": {
+    "n": 4131,
+    "median": 2.4664563170517795e-05,
+    "p90": 0.003053688909858465,
+    "maximum": 0.6510085463523865,
+    "n_above_threshold": 3329
+  },
+  "context_relative_spread": {
+    "n": 90,
+    "median": 0.19923177361488342,
+    "p90": 1.1264351606369019,
+    "maximum": 2.3780858516693115,
+    "n_above_threshold": 90
+  },
+  "head_input_sd": 0.0007837561424821615,
+  "head_input_mean_abs": 0.0012643345398828387,
+  "head_input_name": "none",
+  "prediction_sd": 0.0007837561424821615,
+  "target_sd": 1.0,
+  "prediction_sd_ratio": 0.0007837561424821615
+}

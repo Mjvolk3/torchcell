@@ -464,3 +464,32 @@ records, and I did not replace that. With 86/14 imbalance over roughly 800 label
 records a random draw is close to stratified in expectation, but it is not guaranteed, and
 the realized per-split class balance should be read out of the result before any contrast is
 believed.
+
+## 2026.09.15 - First reads: the backbone beats the published comparators and the module destroys it
+
+Both seed-2700 cells landed after three crashes (a missing medium entry, a biomass index read
+off the wrong object, and a target allocated on the host while indexed from the GPU; the last
+is now covered by a GPU-gated test).
+
+| arm | job | select ep | AUROC | accuracy | majority | recall essential | prediction spread ratio |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `pooled`, no flux layer | 2009 | 60 | **0.7927** | 0.8564 | 0.8410 | 0.323 | 3.12 |
+| `flux_projection_anchored` | 2008 | 26 | 0.5398 | 0.8410 | 0.8410 | 0.000 | 0.0005 |
+
+Published on this split, from the mirrored paper: flux cone learning 0.73, flux balance
+analysis 0.69.
+
+* **The no-module control beats both published numbers**, at n = 195 of the split's 223 test
+  genes, 31 of them essential. This is the first endpoint in 026 or 027 where the backbone
+  clears a published flux-model comparator rather than a null.
+* **The flux arm is at chance and calls every gene nonessential.** Its accuracy equals the
+  majority rate to four decimals and its recall on essential genes is 0.000, which is what a
+  constant predictor scores. The paired difference at seed 2700 is -0.253 AUROC.
+* **Caveats, all of which matter before this is quoted.** One seed each, so jobs 2021 to 2024
+  replicate both arms at 2701 and 2702. Our test set is 195 of the paper's 223 genes, the
+  subset the union build covers, so the comparison to 0.73 and 0.69 is close but not
+  like-for-like. Train and validation are not class stratified. The label is the released
+  split's, with its inversion fixed.
+* **It fits the collapse pattern exactly.** The pooled arm's prediction spread ratio is 3.12
+  and the flux arm's is 0.0005. Every readout through the flux layer collapses; no readout on
+  the pooled context does.

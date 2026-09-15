@@ -100,6 +100,15 @@ class ProbeReport(BaseModel):
     flux_absolute_sd: SpreadStats = Field(
         description="Per reaction, sd across genotypes."
     )
+    flux_sd_over_scale: SpreadStats = Field(
+        description=(
+            "Per reaction, sd across genotypes divided by the layer's flux_scale. THIS is "
+            "the headline: dividing instead by a reaction's own mean, as "
+            "flux_relative_spread does, reports noise on near-zero fluxes as a huge spread "
+            "(median 6.7 on a cell whose absolute spread is 2.5e-5 against a scale of 100)."
+        )
+    )
+    flux_scale: float
     context_relative_spread: SpreadStats = Field(
         description="The same statistic on the pooled perturbed-gene context, the control."
     )
@@ -215,6 +224,11 @@ def main() -> None:
     flux_mag = np.abs(flux).mean(axis=0) if flux.size else np.zeros(0)
     context_sd = context.std(axis=0)
     context_mag = np.abs(context).mean(axis=0)
+    scale = (
+        float(model.flux_layer.config.flux_scale)
+        if model.flux_layer is not None
+        else float("nan")
+    )
     report = ProbeReport(
         result_file=args.result,
         checkpoint=ckpt_path,
@@ -232,6 +246,10 @@ def main() -> None:
         flux_absolute_sd=_stats(flux_sd, flux_mag)
         if flux.size
         else _stats(np.zeros(0)),
+        flux_sd_over_scale=_stats(flux_sd / scale)
+        if flux.size
+        else _stats(np.zeros(0)),
+        flux_scale=scale,
         context_relative_spread=_stats(
             np.divide(context_sd, np.where(context_mag > 0, context_mag, np.nan)), None
         ),

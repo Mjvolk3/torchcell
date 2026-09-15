@@ -1,0 +1,1566 @@
+{
+  "cell": {
+    "arm": "pooled",
+    "base_arm": "pooled",
+    "seed": 2700,
+    "permute_train_targets": false,
+    "epochs": 1,
+    "hidden": 90,
+    "layers": 2,
+    "attention_heads": 9,
+    "batch_size": 128,
+    "num_workers": 2,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5,
+    "crps": true,
+    "graph_reg": true,
+    "abort_on_collapse": false,
+    "aux_mulleder": false,
+    "attention_mask": false,
+    "learnable_embedding": false,
+    "pert_heads": 6,
+    "kcat_tier": "measured",
+    "thermo_source": "shipped",
+    "constraint_warmup_epochs": 0,
+    "constraint_scale": 1.0,
+    "constraint_delay_epochs": 0,
+    "head_normalize": false,
+    "head": "mulleder19",
+    "aa_readout": "context_concentration",
+    "target_log10_molar": true,
+    "dist": "crps",
+    "bx_readout": "flux_scalar",
+    "volume_table": "assumed",
+    "conc_space": "mixture",
+    "conc_lower_m": 1e-07,
+    "conc_upper_m": 1.0,
+    "flux_parameterization": null,
+    "flux_balance_active_row_set": "dynamic",
+    "flux_balance_active_weight": 0.0,
+    "flux_density_weight": 0.0,
+    "flux_draws": 1,
+    "flux_latent_stochastic": false,
+    "flux_kl_weight": null,
+    "flux_log_c_from_latent": false
+  },
+  "select_epoch": 0,
+  "select_rule": "raw_argmax_short_run",
+  "select_val_pearson": -0.0008451800646358414,
+  "test": {
+    "pinned": {
+      "n_records": 639,
+      "n_records_with_any_feature": 564,
+      "n_measurements": 10716,
+      "mean_spearman": 0.003977911533448859,
+      "mean_pearson": 0.009352847039209385,
+      "columns": [
+        "alanine",
+        "arginine",
+        "asparagine",
+        "aspartate",
+        "glutamate",
+        "glutamine",
+        "glycine",
+        "histidine",
+        "isoleucine",
+        "leucine",
+        "lysine",
+        "methionine",
+        "phenylalanine",
+        "proline",
+        "serine",
+        "threonine",
+        "tryptophan",
+        "tyrosine",
+        "valine"
+      ],
+      "spearman_per_feature": [
+        0.04737388084567087,
+        -0.08323763046806928,
+        0.012340853876291457,
+        -0.0022775156143525132,
+        -0.02247346409019065,
+        0.011293139934487178,
+        0.02236017001020722,
+        -0.015762844654438245,
+        0.002741501068298777,
+        0.10580347453201441,
+        0.020081180424870775,
+        -0.04277153170493265,
+        0.028447920797918694,
+        -0.013058129144372764,
+        0.01530438081189603,
+        -0.013902478024090665,
+        0.08057724230055452,
+        -0.03990528174323166,
+        -0.03735455002300319
+      ],
+      "pearson_per_feature": [
+        0.015376395545899868,
+        -0.06983719766139984,
+        -0.009172030724585056,
+        0.002059102291241288,
+        -0.05143394321203232,
+        0.04664904996752739,
+        -0.01487379427999258,
+        -0.014433885924518108,
+        -0.008089381270110607,
+        0.11797793209552765,
+        0.011303691193461418,
+        -0.026797043159604073,
+        0.034871239215135574,
+        -0.005804773885756731,
+        0.07283832877874374,
+        0.011471650563180447,
+        0.05916561931371689,
+        -0.024378828704357147,
+        0.030811963602900505
+      ],
+      "n_per_feature": [
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564
+      ]
+    },
+    "all": {
+      "n_records": 933,
+      "n_records_with_any_feature": 842,
+      "n_measurements": 15998,
+      "mean_spearman": -0.0020859990616852774,
+      "mean_pearson": -0.0013417619599127456,
+      "columns": [
+        "alanine",
+        "arginine",
+        "asparagine",
+        "aspartate",
+        "glutamate",
+        "glutamine",
+        "glycine",
+        "histidine",
+        "isoleucine",
+        "leucine",
+        "lysine",
+        "methionine",
+        "phenylalanine",
+        "proline",
+        "serine",
+        "threonine",
+        "tryptophan",
+        "tyrosine",
+        "valine"
+      ],
+      "spearman_per_feature": [
+        -0.024952965525372735,
+        -0.08679287718075993,
+        -0.008339743112788907,
+        0.00010048473362589083,
+        -0.014236133418877252,
+        0.012611278474402575,
+        0.014105703314527861,
+        0.012761061392009216,
+        0.012985712801292239,
+        0.06263474190471045,
+        8.3284619972665e-05,
+        -0.04768355801588355,
+        0.0399082417623674,
+        -0.01161861111805889,
+        -0.0016103324599783765,
+        0.0020925441064361065,
+        0.027536123470666328,
+        -0.038762568674289705,
+        0.00954363075397833
+      ],
+      "pearson_per_feature": [
+        -0.0471857413649559,
+        -0.07904494553804398,
+        -0.026294926181435585,
+        -0.032558292150497437,
+        -0.0524304024875164,
+        0.011973027139902115,
+        0.006739446427673101,
+        0.04262508079409599,
+        0.013791424222290516,
+        0.06132582947611809,
+        -0.017079073935747147,
+        -0.018555397167801857,
+        0.05919862166047096,
+        0.003425412578508258,
+        0.02434270828962326,
+        -0.009188919328153133,
+        0.011742343194782734,
+        -0.028011349961161613,
+        0.04969167709350586
+      ],
+      "n_per_feature": [
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842
+      ]
+    }
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 3.5484925426285843,
+      "train_data_loss": 2.5740181043230255,
+      "val_loss": 0.7018426192434211,
+      "val_pearson": -0.0008451800646358414,
+      "val_pred_sd_ratio": 0.0018861475584440325,
+      "n_val": 5130,
+      "graph_reg_loss": 0.9744486808776855,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    }
+  ],
+  "flux_meta": {
+    "concentration_mixture": {
+      "alanine": [
+        {
+          "compartment": "c",
+          "species": "s_0955",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0957",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3759",
+          "fractional_volume": 0.18
+        }
+      ],
+      "arginine": [
+        {
+          "compartment": "c",
+          "species": "s_0965",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0967",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_0968",
+          "fractional_volume": 0.18
+        }
+      ],
+      "asparagine": [
+        {
+          "compartment": "c",
+          "species": "s_0969",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0971",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_0972",
+          "fractional_volume": 0.18
+        }
+      ],
+      "aspartate": [
+        {
+          "compartment": "c",
+          "species": "s_0973",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0975",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "p",
+          "species": "s_0976",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_0977",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glutamate": [
+        {
+          "compartment": "c",
+          "species": "s_0991",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0993",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "n",
+          "species": "s_0994",
+          "fractional_volume": 0.1
+        },
+        {
+          "compartment": "p",
+          "species": "s_0995",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_0996",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glutamine": [
+        {
+          "compartment": "c",
+          "species": "s_0999",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_3755",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "n",
+          "species": "s_1001",
+          "fractional_volume": 0.1
+        },
+        {
+          "compartment": "v",
+          "species": "s_1002",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glycine": [
+        {
+          "compartment": "c",
+          "species": "s_1003",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1005",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3839",
+          "fractional_volume": 0.18
+        }
+      ],
+      "histidine": [
+        {
+          "compartment": "c",
+          "species": "s_1006",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1008",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1009",
+          "fractional_volume": 0.18
+        }
+      ],
+      "isoleucine": [
+        {
+          "compartment": "c",
+          "species": "s_1016",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1018",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1019",
+          "fractional_volume": 0.18
+        }
+      ],
+      "leucine": [
+        {
+          "compartment": "c",
+          "species": "s_1021",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1023",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1024",
+          "fractional_volume": 0.18
+        }
+      ],
+      "lysine": [
+        {
+          "compartment": "c",
+          "species": "s_1025",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1027",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1028",
+          "fractional_volume": 0.18
+        }
+      ],
+      "methionine": [
+        {
+          "compartment": "c",
+          "species": "s_1029",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1031",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3758",
+          "fractional_volume": 0.18
+        }
+      ],
+      "phenylalanine": [
+        {
+          "compartment": "c",
+          "species": "s_1032",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1034",
+          "fractional_volume": 0.05
+        }
+      ],
+      "proline": [
+        {
+          "compartment": "c",
+          "species": "s_1035",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1037",
+          "fractional_volume": 0.05
+        }
+      ],
+      "serine": [
+        {
+          "compartment": "c",
+          "species": "s_1039",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "er",
+          "species": "s_1040",
+          "fractional_volume": 0.015
+        },
+        {
+          "compartment": "m",
+          "species": "s_1042",
+          "fractional_volume": 0.05
+        }
+      ],
+      "threonine": [
+        {
+          "compartment": "c",
+          "species": "s_1045",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1047",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_4043",
+          "fractional_volume": 0.18
+        }
+      ],
+      "tryptophan": [
+        {
+          "compartment": "c",
+          "species": "s_1048",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1050",
+          "fractional_volume": 0.05
+        }
+      ],
+      "tyrosine": [
+        {
+          "compartment": "c",
+          "species": "s_1051",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1053",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "p",
+          "species": "s_1054",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_1055",
+          "fractional_volume": 0.18
+        }
+      ],
+      "valine": [
+        {
+          "compartment": "c",
+          "species": "s_1056",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1058",
+          "fractional_volume": 0.05
+        }
+      ]
+    },
+    "compartment_volume_fractions": {
+      "fractions": {
+        "c": 0.65,
+        "v": 0.18,
+        "n": 0.1,
+        "m": 0.05,
+        "er": 0.015,
+        "p": 0.005
+      },
+      "sourced": {
+        "c": false,
+        "v": false,
+        "n": true,
+        "m": false,
+        "er": false,
+        "p": false
+      },
+      "source": "Nucleus: Milo and Phillips 2016, Cell Biology by the Numbers, mirrored paper.md sha256 a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae, 'How big is a yeast cell?', citing BNID 100491 and 103952. Every other compartment: textbook exponential-phase values, ASSUMED, not sourced.",
+      "quote": "Prominent components of the cell volume include the nucleus, which takes up about $1 0 \\%$ of the total cell volume (BNID 100491, 103952), the cell wall, often ignored but making up $1 0 { - } 2 5 \\%$ (BNID 104593, 104592) of the total dry mass, and the endoplasmic reticulum and vacuole, which are usually the largest organelles.",
+      "sha256": "a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae",
+      "note": "Five of the six entries are assumed and NEED CURATION. The weights set which compartment dominates a whole-cell average, so they change the physical reading of the prediction; they do not limit what the model can fit, because each compartment's concentration is free inside the window and can compensate for a wrong weight. The fractions sum to 1 over the intracellular compartments, and a compartment where the GEM has no species for an amino acid contributes nothing to that amino acid's average."
+    },
+    "context_concentration": {
+      "n_metabolites": 2806,
+      "conc_lower_m": 1e-07,
+      "conc_upper_m": 1.0,
+      "note": "the flux layer's ANCHORED concentration head (zero base per GEM metabolite + Linear(hidden, n_metabolites) from the perturbed-gene pool, sigmoid into the window) on the pooled backbone with no flux layer, no stoichiometry, no kcat, no thermodynamics and no constraint term; the ablation of `flux_concentration`."
+    },
+    "sampling": {
+      "flux_draws": 1,
+      "latent_stochastic": false
+    }
+  },
+  "pinned_split": {
+    "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "requested": 639,
+    "found": 639,
+    "absent": [],
+    "records": 639,
+    "fraction_of_dataset": 0.12961460446247464
+  },
+  "n_parameters": {
+    "gene_embedding": 0,
+    "embedding_preprocessor": 622439,
+    "cls_token": 90,
+    "transformer_layers": 196740,
+    "perturbation_transform": 98370,
+    "perturbation_head": 16381,
+    "total": 1192191,
+    "mulleder19_head": 258171
+  },
+  "wall_time_s": 434.01371240615845,
+  "code_provenance": {
+    "train_bx.py": "3f457f6fc99c13e2d07044b001c3d407f8cdb680d3f23330508297947bf15324",
+    "train_bx.py_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+    "flux_layer.py": "bb601a89413ce4ed4b1c1089cad8c6cf5f984741194fdb4c890d494d92617006",
+    "flux_layer.py_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/torchcell/metabolism/flux_layer.py"
+  },
+  "validation_selection_split": {
+    "note": "the split the epoch was SELECTED on, so this is not held out; reported beside the test block because the pinned test genes carry few amino-acid measurements.",
+    "n_records": 294,
+    "n_records_with_any_feature": 270,
+    "n_measurements": 5130,
+    "mean_spearman": -0.019910361720045747,
+    "mean_pearson": -0.0008451800646358414,
+    "columns": [
+      "alanine",
+      "arginine",
+      "asparagine",
+      "aspartate",
+      "glutamate",
+      "glutamine",
+      "glycine",
+      "histidine",
+      "isoleucine",
+      "leucine",
+      "lysine",
+      "methionine",
+      "phenylalanine",
+      "proline",
+      "serine",
+      "threonine",
+      "tryptophan",
+      "tyrosine",
+      "valine"
+    ],
+    "spearman_per_feature": [
+      -0.08730042483864954,
+      -0.033206622302602566,
+      -0.07171896155601673,
+      -0.014589682806733393,
+      -0.08109731831592282,
+      -0.011743994604869893,
+      -0.021806325095195377,
+      -0.03150587194214059,
+      -0.04535758218135532,
+      -0.00895224145173994,
+      0.028691086357312368,
+      0.0073667323415303534,
+      -0.030357663302537134,
+      -0.036243328904403606,
+      0.0499321171073887,
+      -0.07981264029595381,
+      0.03457025970877198,
+      0.06561151561694485,
+      -0.01077592621469669
+    ],
+    "pearson_per_feature": [
+      -0.11142904311418533,
+      -0.019572272896766663,
+      -0.09293888509273529,
+      0.0314965657889843,
+      -0.07353754341602325,
+      0.09441806375980377,
+      0.009029206819832325,
+      0.06893894076347351,
+      -0.07612346857786179,
+      -0.014091185294091702,
+      0.11762403696775436,
+      0.05568443238735199,
+      -0.06038504093885422,
+      -0.005900954362004995,
+      0.08143705874681473,
+      -0.09761057794094086,
+      -0.024699855595827103,
+      0.11134016513824463,
+      -0.009738064371049404
+    ],
+    "n_per_feature": [
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270
+    ]
+  },
+  "calibration": {
+    "available": true,
+    "reason": null,
+    "dist": "crps",
+    "group": "pinned_test",
+    "n_measurements": 10716,
+    "columns": [
+      "alanine",
+      "arginine",
+      "asparagine",
+      "aspartate",
+      "glutamate",
+      "glutamine",
+      "glycine",
+      "histidine",
+      "isoleucine",
+      "leucine",
+      "lysine",
+      "methionine",
+      "phenylalanine",
+      "proline",
+      "serine",
+      "threonine",
+      "tryptophan",
+      "tyrosine",
+      "valine"
+    ],
+    "coverage": {
+      "alpha_0.50": 0.47984322905540466,
+      "alpha_0.80": 0.7578387260437012,
+      "alpha_0.90": 0.8505039215087891
+    },
+    "coverage_per_feature": {
+      "alpha_0.50": [
+        0.5319148898124695,
+        0.576241135597229,
+        0.73758864402771,
+        0.5939716100692749,
+        0.728723406791687,
+        0.7695035338401794,
+        0.466312050819397,
+        0.36347517371177673,
+        0.10992907732725143,
+        0.6347517967224121,
+        0.5620567202568054,
+        0.6081560254096985,
+        0.173758864402771,
+        0.7429078221321106,
+        0.2943262457847595,
+        0.19680851697921753,
+        0.06737588346004486,
+        0.664893627166748,
+        0.2943262457847595
+      ],
+      "alpha_0.80": [
+        0.8953900933265686,
+        0.8457446694374084,
+        0.945035457611084,
+        0.8847517967224121,
+        0.9166666865348816,
+        0.9308510422706604,
+        0.7801418304443359,
+        0.6968085169792175,
+        0.32092198729515076,
+        0.8847517967224121,
+        0.8421986103057861,
+        0.9042553305625916,
+        0.4166666567325592,
+        0.9166666865348816,
+        0.7393617033958435,
+        0.5780141949653625,
+        0.21099290251731873,
+        0.8847517967224121,
+        0.804964542388916
+      ],
+      "alpha_0.90": [
+        0.9379432797431946,
+        0.9166666865348816,
+        0.9609929323196411,
+        0.932624101638794,
+        0.9468085169792175,
+        0.9680851101875305,
+        0.8918439745903015,
+        0.8209219574928284,
+        0.588652491569519,
+        0.9379432797431946,
+        0.9290780425071716,
+        0.957446813583374,
+        0.6631205677986145,
+        0.9485815763473511,
+        0.8226950168609619,
+        0.7304964661598206,
+        0.3617021143436432,
+        0.9219858050346375,
+        0.9219858050346375
+      ]
+    },
+    "pit_ks": 0.08247634768486023,
+    "pit_ks_per_feature": [
+      0.34219568967819214,
+      0.04748895764350891,
+      0.15961122512817383,
+      0.23292237520217896,
+      0.12640243768692017,
+      0.2444673776626587,
+      0.2927163243293762,
+      0.41892296075820923,
+      0.636526346206665,
+      0.07781971991062164,
+      0.18392284214496613,
+      0.29121702909469604,
+      0.5743123292922974,
+      0.22946619987487793,
+      0.47446930408477783,
+      0.5117622017860413,
+      0.6950154900550842,
+      0.11148352175951004,
+      0.49244651198387146
+    ],
+    "pit_mean": 0.4473007619380951,
+    "pit_histogram": [
+      1.819708819468772,
+      1.0209033069224802,
+      1.1795445007368455,
+      1.192609253615846,
+      1.248600298386543,
+      1.0246358139384681,
+      1.1552822347363378,
+      0.9630456830459919,
+      0.9723781006423782,
+      0.9985066674992358,
+      0.9518474774291782,
+      0.9835757266768174,
+      0.9537149819485637,
+      0.8212017452330165,
+      0.7726761875601564,
+      0.6457631905695993,
+      0.668159601803227,
+      0.6252338922754772,
+      0.8323999508498303,
+      1.1702124869570485
+    ]
+  },
+  "concentration_audit": {
+    "available": true,
+    "reason": null,
+    "supervised": true,
+    "conc_space": "mixture",
+    "conc_lower_m": 1e-07,
+    "conc_upper_m": 1.0,
+    "volume_fractions": {
+      "fractions": {
+        "c": 0.65,
+        "v": 0.18,
+        "n": 0.1,
+        "m": 0.05,
+        "er": 0.015,
+        "p": 0.005
+      },
+      "sourced": {
+        "c": false,
+        "v": false,
+        "n": true,
+        "m": false,
+        "er": false,
+        "p": false
+      },
+      "source": "Nucleus: Milo and Phillips 2016, Cell Biology by the Numbers, mirrored paper.md sha256 a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae, 'How big is a yeast cell?', citing BNID 100491 and 103952. Every other compartment: textbook exponential-phase values, ASSUMED, not sourced.",
+      "quote": "Prominent components of the cell volume include the nucleus, which takes up about $1 0 \\%$ of the total cell volume (BNID 100491, 103952), the cell wall, often ignored but making up $1 0 { - } 2 5 \\%$ (BNID 104593, 104592) of the total dry mass, and the endoplasmic reticulum and vacuole, which are usually the largest organelles.",
+      "sha256": "a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae",
+      "note": "Five of the six entries are assumed and NEED CURATION. The weights set which compartment dominates a whole-cell average, so they change the physical reading of the prediction; they do not limit what the model can fit, because each compartment's concentration is free inside the window and can compensate for a wrong weight. The fractions sum to 1 over the intracellular compartments, and a compartment where the GEM has no species for an amino acid contributes nothing to that amino acid's average."
+    },
+    "mixture": {
+      "alanine": [
+        {
+          "compartment": "c",
+          "species": "s_0955",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0957",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3759",
+          "fractional_volume": 0.18
+        }
+      ],
+      "arginine": [
+        {
+          "compartment": "c",
+          "species": "s_0965",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0967",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_0968",
+          "fractional_volume": 0.18
+        }
+      ],
+      "asparagine": [
+        {
+          "compartment": "c",
+          "species": "s_0969",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0971",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_0972",
+          "fractional_volume": 0.18
+        }
+      ],
+      "aspartate": [
+        {
+          "compartment": "c",
+          "species": "s_0973",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0975",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "p",
+          "species": "s_0976",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_0977",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glutamate": [
+        {
+          "compartment": "c",
+          "species": "s_0991",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0993",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "n",
+          "species": "s_0994",
+          "fractional_volume": 0.1
+        },
+        {
+          "compartment": "p",
+          "species": "s_0995",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_0996",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glutamine": [
+        {
+          "compartment": "c",
+          "species": "s_0999",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_3755",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "n",
+          "species": "s_1001",
+          "fractional_volume": 0.1
+        },
+        {
+          "compartment": "v",
+          "species": "s_1002",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glycine": [
+        {
+          "compartment": "c",
+          "species": "s_1003",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1005",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3839",
+          "fractional_volume": 0.18
+        }
+      ],
+      "histidine": [
+        {
+          "compartment": "c",
+          "species": "s_1006",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1008",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1009",
+          "fractional_volume": 0.18
+        }
+      ],
+      "isoleucine": [
+        {
+          "compartment": "c",
+          "species": "s_1016",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1018",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1019",
+          "fractional_volume": 0.18
+        }
+      ],
+      "leucine": [
+        {
+          "compartment": "c",
+          "species": "s_1021",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1023",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1024",
+          "fractional_volume": 0.18
+        }
+      ],
+      "lysine": [
+        {
+          "compartment": "c",
+          "species": "s_1025",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1027",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1028",
+          "fractional_volume": 0.18
+        }
+      ],
+      "methionine": [
+        {
+          "compartment": "c",
+          "species": "s_1029",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1031",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3758",
+          "fractional_volume": 0.18
+        }
+      ],
+      "phenylalanine": [
+        {
+          "compartment": "c",
+          "species": "s_1032",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1034",
+          "fractional_volume": 0.05
+        }
+      ],
+      "proline": [
+        {
+          "compartment": "c",
+          "species": "s_1035",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1037",
+          "fractional_volume": 0.05
+        }
+      ],
+      "serine": [
+        {
+          "compartment": "c",
+          "species": "s_1039",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "er",
+          "species": "s_1040",
+          "fractional_volume": 0.015
+        },
+        {
+          "compartment": "m",
+          "species": "s_1042",
+          "fractional_volume": 0.05
+        }
+      ],
+      "threonine": [
+        {
+          "compartment": "c",
+          "species": "s_1045",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1047",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_4043",
+          "fractional_volume": 0.18
+        }
+      ],
+      "tryptophan": [
+        {
+          "compartment": "c",
+          "species": "s_1048",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1050",
+          "fractional_volume": 0.05
+        }
+      ],
+      "tyrosine": [
+        {
+          "compartment": "c",
+          "species": "s_1051",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1053",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "p",
+          "species": "s_1054",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_1055",
+          "fractional_volume": 0.18
+        }
+      ],
+      "valine": [
+        {
+          "compartment": "c",
+          "species": "s_1056",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1058",
+          "fractional_volume": 0.05
+        }
+      ]
+    },
+    "groups": {
+      "pinned_test": {
+        "n_records": 639,
+        "n_measurements": 10716,
+        "mean_spearman": 0.003977911533448859,
+        "mean_pearson": 0.009352847039209385,
+        "columns": [
+          "alanine",
+          "arginine",
+          "asparagine",
+          "aspartate",
+          "glutamate",
+          "glutamine",
+          "glycine",
+          "histidine",
+          "isoleucine",
+          "leucine",
+          "lysine",
+          "methionine",
+          "phenylalanine",
+          "proline",
+          "serine",
+          "threonine",
+          "tryptophan",
+          "tyrosine",
+          "valine"
+        ],
+        "spearman_per_feature": [
+          0.04737388084567087,
+          -0.08323763046806928,
+          0.012340853876291457,
+          -0.0022775156143525132,
+          -0.02247346409019065,
+          0.011293139934487178,
+          0.02236017001020722,
+          -0.015762844654438245,
+          0.002741501068298777,
+          0.10580347453201441,
+          0.020081180424870775,
+          -0.04277153170493265,
+          0.028447920797918694,
+          -0.013058129144372764,
+          0.01530438081189603,
+          -0.013902478024090665,
+          0.08057724230055452,
+          -0.03990528174323166,
+          -0.03735455002300319
+        ],
+        "pearson_per_feature": [
+          0.015376395545899868,
+          -0.06983719766139984,
+          -0.009172030724585056,
+          0.002059102291241288,
+          -0.05143394321203232,
+          0.04664904996752739,
+          -0.01487379427999258,
+          -0.014433885924518108,
+          -0.008089381270110607,
+          0.11797793209552765,
+          0.011303691193461418,
+          -0.026797043159604073,
+          0.034871239215135574,
+          -0.005804773885756731,
+          0.07283832877874374,
+          0.011471650563180447,
+          0.05916561931371689,
+          -0.024378828704357147,
+          0.030811963602900505
+        ],
+        "n_per_feature": [
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564
+        ],
+        "median_pred_log10_m": [
+          -2.1817824840545654,
+          -2.535656213760376,
+          -2.911066770553589,
+          -2.2748594284057617,
+          -1.6694992780685425,
+          -1.5363682508468628,
+          -2.6766433715820312,
+          -2.2397162914276123,
+          -3.45538067817688,
+          -3.5729100704193115,
+          -3.1514971256256104,
+          -3.944577932357788,
+          -3.6471457481384277,
+          -2.9625229835510254,
+          -2.5884876251220703,
+          -2.353001356124878,
+          -4.271445274353027,
+          -2.577312469482422,
+          -2.8272545337677
+        ],
+        "median_true_log10_m": [
+          -2.214411735534668,
+          -2.527892589569092,
+          -2.9120676517486572,
+          -2.297950029373169,
+          -1.6682575941085815,
+          -1.549070954322815,
+          -2.737980842590332,
+          -2.3219804763793945,
+          -3.3986294269561768,
+          -3.572357416152954,
+          -3.1126627922058105,
+          -3.897916555404663,
+          -3.553074598312378,
+          -2.947680711746216,
+          -2.642657995223999,
+          -2.398325204849243,
+          -4.409867286682129,
+          -2.5657994747161865,
+          -2.869544506072998
+        ],
+        "median_abs_error_log10": [
+          0.040345191955566406,
+          0.10708200931549072,
+          0.021209120750427246,
+          0.02929556369781494,
+          0.02225404977798462,
+          0.024039626121520996,
+          0.06787562370300293,
+          0.08227121829986572,
+          0.056723833084106445,
+          0.04182314872741699,
+          0.07301938533782959,
+          0.0585709810256958,
+          0.09409546852111816,
+          0.023787856101989746,
+          0.05453765392303467,
+          0.04534435272216797,
+          0.13915801048278809,
+          0.05447864532470703,
+          0.043779850006103516
+        ],
+        "frac_pred_at_ceiling": 0.0,
+        "frac_pred_at_floor": 0.0
+      },
+      "test_all": {
+        "n_records": 933,
+        "n_measurements": 15998,
+        "mean_spearman": -0.0020859990616852774,
+        "mean_pearson": -0.0013417619599127456,
+        "columns": [
+          "alanine",
+          "arginine",
+          "asparagine",
+          "aspartate",
+          "glutamate",
+          "glutamine",
+          "glycine",
+          "histidine",
+          "isoleucine",
+          "leucine",
+          "lysine",
+          "methionine",
+          "phenylalanine",
+          "proline",
+          "serine",
+          "threonine",
+          "tryptophan",
+          "tyrosine",
+          "valine"
+        ],
+        "spearman_per_feature": [
+          -0.024952965525372735,
+          -0.08679287718075993,
+          -0.008339743112788907,
+          0.00010048473362589083,
+          -0.014236133418877252,
+          0.012611278474402575,
+          0.014105703314527861,
+          0.012761061392009216,
+          0.012985712801292239,
+          0.06263474190471045,
+          8.3284619972665e-05,
+          -0.04768355801588355,
+          0.0399082417623674,
+          -0.01161861111805889,
+          -0.0016103324599783765,
+          0.0020925441064361065,
+          0.027536123470666328,
+          -0.038762568674289705,
+          0.00954363075397833
+        ],
+        "pearson_per_feature": [
+          -0.0471857413649559,
+          -0.07904494553804398,
+          -0.026294926181435585,
+          -0.032558292150497437,
+          -0.0524304024875164,
+          0.011973027139902115,
+          0.006739446427673101,
+          0.04262508079409599,
+          0.013791424222290516,
+          0.06132582947611809,
+          -0.017079073935747147,
+          -0.018555397167801857,
+          0.05919862166047096,
+          0.003425412578508258,
+          0.02434270828962326,
+          -0.009188919328153133,
+          0.011742343194782734,
+          -0.028011349961161613,
+          0.04969167709350586
+        ],
+        "n_per_feature": [
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842
+        ],
+        "median_pred_log10_m": [
+          -2.181771993637085,
+          -2.535665988922119,
+          -2.911073923110962,
+          -2.2748708724975586,
+          -1.6694954633712769,
+          -1.5363621711730957,
+          -2.6766316890716553,
+          -2.239705801010132,
+          -3.45538067817688,
+          -3.57291841506958,
+          -3.1515026092529297,
+          -3.944567918777466,
+          -3.647156000137329,
+          -2.9625399112701416,
+          -2.5884814262390137,
+          -2.3530025482177734,
+          -4.271459102630615,
+          -2.5773234367370605,
+          -2.8272435665130615
+        ],
+        "median_true_log10_m": [
+          -2.2148683071136475,
+          -2.5345921516418457,
+          -2.9120676517486572,
+          -2.297950029373169,
+          -1.6682575941085815,
+          -1.549070954322815,
+          -2.737452745437622,
+          -2.3200843334198,
+          -3.3986294269561768,
+          -3.572357416152954,
+          -3.110743999481201,
+          -3.897916555404663,
+          -3.553074598312378,
+          -2.947680711746216,
+          -2.642561674118042,
+          -2.398325204849243,
+          -4.4104228019714355,
+          -2.5644474029541016,
+          -2.869807481765747
+        ],
+        "median_abs_error_log10": [
+          0.04116523265838623,
+          0.10492336750030518,
+          0.020911574363708496,
+          0.030013084411621094,
+          0.023404955863952637,
+          0.025797784328460693,
+          0.06742644309997559,
+          0.08221721649169922,
+          0.05669546127319336,
+          0.0419621467590332,
+          0.07333981990814209,
+          0.059166550636291504,
+          0.09402930736541748,
+          0.02601802349090576,
+          0.05459582805633545,
+          0.045348167419433594,
+          0.13914728164672852,
+          0.056716203689575195,
+          0.04418158531188965
+        ],
+        "frac_pred_at_ceiling": 0.0,
+        "frac_pred_at_floor": 0.0
+      }
+    }
+  },
+  "feasibility": {
+    "available": false,
+    "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+    "definitions": {
+      "balance_median_ratio": "median over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon), with omega_i = 0.5 sum_j |S_ij v_j| the layer's own turnover. This is FluxLayer.forward's feas_balance_median, per sample instead of batch-reduced.",
+      "balance_max_ratio": "the same ratio, maximized over the independent rows.",
+      "box_violation_frac": "fraction of the 4,131 reactions with v > ub + 1e-4 or v < lb - 1e-4, where (lb, ub) is FluxLayer.dynamic_box at this sample's availability and abundance. The box parameterization satisfies this by construction, so a nonzero value is a bug rather than an infeasibility.",
+      "thermo_model_violation_frac": "fraction of active reactions (delta_r_g0_mask and not thermo_exempt) with v * delta_r_G > thermo_epsilon, using the layer's OWN delta_r_G from reaction_potential, which includes the learned concentration term. Available only when the arm's thermo_mode is not OFF.",
+      "thermo_model_uphill_frac": "mean over active reactions of relu(v dG + eps) / (|v||dG| + eps), the per-sample form of the layer's c_thermo. Available only when thermo_mode is not OFF.",
+      "thermo_standard_state_violation_frac": "fraction of active reactions with v * (delta_r_G0 + delta_r_G_transport) > thermo_epsilon. An AUDIT REFERENCE, not the layer's own term: it evaluates the second law at standard state because an arm with thermo_mode OFF learns no concentrations, so the concentration term RT S^T ln c is absent rather than zero.",
+      "thermo_standard_state_uphill_frac": "the same standard-state driving force in the c_thermo normalization.",
+      "fractions": "fraction of the genotypes in the group meeting each named criterion. 'both_balance_le_1e-02_and_<thermo>_eq_0' is the Genesis criterion: mass balance within 1 percent and no uphill active reaction.",
+      "rank_by": "top-100 groups are the 100 genotypes with the HIGHEST predicted betaxanthin (denormalized head mean), i.e. the strains the model nominates as producers."
+    },
+    "tolerances": {},
+    "n_independent_balance_rows": null,
+    "n_reactions_second_law_applied": null,
+    "thermo_mode": null,
+    "thermo_source": null,
+    "groups": {}
+  }
+}

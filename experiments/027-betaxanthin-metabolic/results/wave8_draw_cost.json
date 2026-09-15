@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-12-16-08-18",
+  "generated_at": "2026-09-12-22-44-00",
   "device": "cpu",
   "note": "CPU forward plus backward of the flux layer alone. The backbone is unaffected by K, so this is the whole of the added cost; the GPU ratio is measured from the submitted pairs' epoch times.",
   "rows": [
@@ -7,28 +7,37 @@
       "draws": 1,
       "batch": 128,
       "rows": 128,
-      "seconds_median": 0.07274742191657424,
-      "seconds_min": 0.07158955791965127,
+      "seconds_median": 0.11217256169766188,
+      "seconds_min": 0.09439444402232766,
       "ratio_to_one_draw": 1.0,
       "flux_tensor_mib": 2.01708984375
-    },
-    {
-      "draws": 4,
-      "batch": 128,
-      "rows": 512,
-      "seconds_median": 0.18187504122033715,
-      "seconds_min": 0.16580595867708325,
-      "ratio_to_one_draw": 2.500089163694474,
-      "flux_tensor_mib": 8.068359375
     },
     {
       "draws": 16,
       "batch": 128,
       "rows": 2048,
-      "seconds_median": 0.8133509652689099,
-      "seconds_min": 0.7931455289945006,
-      "ratio_to_one_draw": 11.180478205834563,
+      "seconds_median": 1.594458928797394,
+      "seconds_min": 1.4221663502976298,
+      "ratio_to_one_draw": 14.214339983559713,
       "flux_tensor_mib": 32.2734375
+    },
+    {
+      "draws": 64,
+      "batch": 128,
+      "rows": 8192,
+      "seconds_median": 7.332740307785571,
+      "seconds_min": 6.973754451144487,
+      "ratio_to_one_draw": 65.37017784749774,
+      "flux_tensor_mib": 129.09375
+    },
+    {
+      "draws": 128,
+      "batch": 128,
+      "rows": 16384,
+      "seconds_median": 13.815569757018238,
+      "seconds_min": 10.747270610183477,
+      "ratio_to_one_draw": 123.16353970996286,
+      "flux_tensor_mib": 258.1875
     }
   ]
 }

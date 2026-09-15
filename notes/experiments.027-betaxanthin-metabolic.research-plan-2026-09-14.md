@@ -283,6 +283,41 @@ rank order above.
   to 0.27. Models at 0.02 to 0.08 are far below the ceiling; the target is weak because most
   deletions move pools by less than one culture's noise. Amino-acid GPU work stops here.
 
+### 2026.09.15 - What the warm-start line established, and where it stops
+
+- **Rank 2 fails on its one seed and the cell is invalid anyway.** Job 1946 selected at
+  epoch 3 (pinned -0.028, a constant predictor); on the top 100 the box and the model second
+  law are exact and the balance median is 7e-8, but the balance maximum sits at the 2.0
+  ceiling in every strain. It ran under the old gate (ARO4 and ARO7 closed) and on the
+  shipped bounds, and its init numbers came from four wild types. Seeds 2701 and 2702 are
+  not run; the active-row audit is job 1983.
+- **The 50x between the probe and the real batch is the medium and the gene universe, not
+  the genotypes.** The 2x2 (jobs 1974 and 1980) crosses shipped bounds against YPD and wild
+  types against 32 real deletion genotypes with the gate fixed: wild type to deletions moves
+  the active-row maximum by 1.00x on both media; YPD moves the p95 by 20.5x; and a third
+  axis nobody had varied, initializing the layer's heads over the transformer's 6,607 gene
+  tokens rather than the GEM's 1,161 genes, moves it by 10.6x. Re-solving the exemption list
+  and the concentration witness on YPD against the YPD reference (job 1975) closes the sign
+  axis (forbidden reference reactions 73 to 4) and leaves the balance at the ceiling; what
+  remains is capacity, because the YPD reference has norm 103 against 20 on the shipped
+  bounds and ATP synthase is 3.4x over its ceiling again. Best real-genotype cell: shipped
+  bounds, maximum 0.75 and p95 0.024, short by 7.5x and 2.4x. No cell is ready.
+- **A per-genotype reference does not carry the genotype, by arithmetic.** Of the 4,930
+  deleted genes, 3,991 are not in the GEM; of the 939 that are, 201 move the pFBA optimum on
+  YPD (221 on the shipped bounds), and on a random batch of 32 that is 2 references that
+  differ from the wild type (job 1971). MOMA is not a different reference: it sits 0.006 of
+  the wild-type norm from the wild type and 0.39 from the pFBA knockout, and 11 of 28
+  "moved" pFBA references moved only by LP degeneracy (job 1982). A flux reference that
+  varies with the genotype has to come from somewhere other than a knockout optimum.
+- **What this leaves for the feasibility program.** The proposal-not-projection diagnosis
+  holds on wild types and is untested on real genotypes at the reference's own medium; the
+  next lever is the capacity ceiling at YPD (a 2-sigma kcat widening was enough on the
+  shipped bounds and is 3.4x short on YPD), and the honest statement for the paper is that
+  no head has produced a balanced, sign-consistent, non-zero flux on a real deletion
+  genotype. The isobutanol pooled cells escape the plateau and every flux readout on that
+  target does not, so the endpoint that can show the module working is essentiality, where
+  the flux itself (growth) is the label.
+
 ### Housekeeping the review surfaced
 
 - `TC_LIT_URL` and `TC_LIT_API_KEY` are absent from the worktree `.env` on GilaHyper; the

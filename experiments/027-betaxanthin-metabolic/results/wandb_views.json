@@ -64,7 +64,7 @@
   },
   "aa": {
     "title": "027 waves 7 and 8: amino-acid readouts on the anchored projection head",
-    "n_runs": 29,
+    "n_runs": 34,
     "tags_any": [
       "gh_wave7_aa",
       "gh_wave8_aa"
@@ -97,7 +97,7 @@
   },
   "bxread": {
     "title": "027 wave 8: betaxanthin readouts, precursor concentration vs scalar vs pooled",
-    "n_runs": 3,
+    "n_runs": 9,
     "tags_any": [
       "gh_wave8_bx"
     ],
@@ -151,7 +151,7 @@
   },
   "aa_all": {
     "title": "027: every amino-acid run, all waves",
-    "n_runs": 45,
+    "n_runs": 50,
     "tags_any": [
       "mulleder19",
       "gh_wave6_aa",
@@ -184,6 +184,134 @@
     "metrics_not_logged_by_any_run": [],
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=9wgb2y25y4r",
     "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027:-every-amino-acid-run,-all-waves--VmlldzoxNzkyNzA5MA==",
+    "panels_per_row": 6
+  },
+  "aa_moduleon": {
+    "title": "027: is the metabolic module on for amino acids? pooled vs flux-coupled vs context-only",
+    "n_runs": 21,
+    "tags_any": [
+      "w7aa",
+      "w8aa_ctxconc",
+      "w8aa_nodiss"
+    ],
+    "groupby": [
+      "aa_readout",
+      "arm"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "val_loss",
+      "train_data_loss",
+      "train_loss"
+    ],
+    "scalars": [
+      "test_mean_spearman_pinned",
+      "conc/pinned_test/mean_spearman",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=yxntcreb2vq",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027:-is-the-metabolic-module-on-for-amino-acids?-pooled-vs-flux-coupled-vs-context-only--VmlldzoxNzkzNDA5Mw==",
+    "panels_per_row": 6
+  },
+  "bxctx": {
+    "title": "027 wave 9: betaxanthin, precursor concentration vs its context-only control vs scalar vs pooled",
+    "n_runs": 11,
+    "tags_any": [
+      "gh_wave8_bx",
+      "gh_wave9_bx"
+    ],
+    "groupby": [
+      "bx_readout",
+      "arm"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "val_loss",
+      "train_data_loss",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=sbb0xwvbysg",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-9:-betaxanthin,-precursor-concentration-vs-its-context-only-control-vs-scalar-vs-pooled--VmlldzoxNzkzNDA5NQ==",
+    "panels_per_row": 6
+  },
+  "ib": {
+    "title": "027 wave 9: isobutanol (Lopez 2024 biosensor), pooled vs scalar flux vs precursor concentration",
+    "n_runs": 5,
+    "tags_any": [
+      "gh_wave9_ib"
+    ],
+    "groupby": [
+      "ib_readout",
+      "constraint_scale",
+      "arm"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "val_loss",
+      "train_data_loss",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=dudjpfaxvpd",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-9:-isobutanol-(Lopez-2024-biosensor),-pooled-vs-scalar-flux-vs-precursor-concentration--VmlldzoxNzkzNDA5Nw==",
+    "panels_per_row": 6
+  },
+  "warmstart": {
+    "title": "027 wave 9: the warm-started residual head against the boxforce controls (feasibility first)",
+    "n_runs": 14,
+    "tags_any": [
+      "gh_wave9_warmstart",
+      "gh_wave8_dens",
+      "gh_wave8_densbal",
+      "gh_wave7_ff"
+    ],
+    "groupby": [
+      "flux_parameterization",
+      "arm",
+      "flux_balance_active_weight"
+    ],
+    "curves": [
+      "feas_balance_active_max",
+      "feas_balance_active_p95",
+      "feas_flux_active_frac",
+      "feas_active_row_frac",
+      "feas_thermo_violation_frac",
+      "feas_box_violation_frac",
+      "c_balance_active",
+      "c_parsimony",
+      "val_pred_sd_ratio",
+      "val_pearson",
+      "train_data_loss"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "feas/pinned_test_top100/balance_max_ratio_median",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=pyqmq58ihgr",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-9:-the-warm-started-residual-head-against-the-boxforce-controls-(feasibility-first)--VmlldzoxNzkzNDA5OQ==",
     "panels_per_row": 6
   }
 }

@@ -248,6 +248,118 @@ SPECS: dict[str, ViewSpec] = {
         ],
         scalars=["test_spearman_pinned", "select_val_pearson"],
     ),
+    "aa_moduleon": ViewSpec(
+        key="aa_moduleon",
+        title="027: is the metabolic module on for amino acids? pooled vs flux-coupled vs context-only",
+        description=(
+            "Mulleder amino acids, 200 epochs, seeds 2700 to 2702 (plus 2703 on the "
+            "concentration arm). The rank-1 read of the 2026-09-14 plan: the flux-coupled "
+            "concentration readout (flux_concentration, wave 7) against the context-only "
+            "concentration readout with no flux layer (context_concentration, wave 8) and "
+            "the pooled control, plus the no-dissipation twin of the concentration arm. "
+            "The kill rule was |ctxconc - conc| under 0.010 on the mean per-feature pinned "
+            "test Spearman; measured paired mean +0.0019 (jobs 1899/1930/1931), so the "
+            "module is off for this readout. Group by readout, then arm."
+        ),
+        tags_any=["w7aa", "w8aa_ctxconc", "w8aa_nodiss"],
+        groupby=["aa_readout", "arm"],
+        curves=[
+            "val_pearson",
+            "val_pred_sd_ratio",
+            "val_loss",
+            "train_data_loss",
+            "train_loss",
+            "latent_sigma_p50",
+        ],
+        scalars=[
+            "test_mean_spearman_pinned",
+            "conc/pinned_test/mean_spearman",
+            "select_val_pearson",
+        ],
+    ),
+    "bxctx": ViewSpec(
+        key="bxctx",
+        title="027 wave 9: betaxanthin, precursor concentration vs its context-only control vs scalar vs pooled",
+        description=(
+            "Betaxanthin (Cachera), 200 epochs, matched settings at each seed. The wave-8 "
+            "three-way (precursor-concentration readout, 026 scalar flux head, pooled) "
+            "plus the wave-9 context-only precursor readout on the pooled backbone with no "
+            "flux layer (bxctxprec). Rank-4 read of the 2026-09-14 plan: |bxctxprec - "
+            "bxprec| above the 0.012 paired sd means the layer does the work on this "
+            "target; seed 2700 reads 0.079 vs 0.140 (job 1932). Group by readout."
+        ),
+        tags_any=["gh_wave8_bx", "gh_wave9_bx"],
+        groupby=["bx_readout", "arm"],
+        curves=[
+            "val_pearson",
+            "val_pred_sd_ratio",
+            "val_loss",
+            "train_data_loss",
+            "latent_sigma_p50",
+            "feas_flux_active_frac",
+        ],
+        scalars=["test_spearman_pinned", "select_val_pearson"],
+    ),
+    "ib": ViewSpec(
+        key="ib",
+        title="027 wave 9: isobutanol (Lopez 2024 biosensor), pooled vs scalar flux vs precursor concentration",
+        description=(
+            "Isobutanol YKO biosensor screen (log10 fold change, 504 pinned Merzbacher "
+            "test genes, the 224 validated re-screen genes masked). Arms: pooled control, "
+            "scalar flux head on the isobutanol pathway with product column r_1866, and "
+            "the precursor-concentration readout on the 2-isopropylmalate pool the Leu3p "
+            "biosensor binds; the scale-0 precursor cell is the mechanism test for the "
+            "flat seed-2700 cell (job 1928). The linear baseline to clear is 0.198 (kNN on "
+            "chromatin-pathway embeddings, job 1912). Group by readout and constraint scale."
+        ),
+        tags_any=["gh_wave9_ib"],
+        groupby=["ib_readout", "constraint_scale", "arm"],
+        curves=[
+            "val_pearson",
+            "val_pred_sd_ratio",
+            "val_loss",
+            "train_data_loss",
+            "latent_sigma_p50",
+            "feas_flux_active_frac",
+        ],
+        scalars=["test_spearman_pinned", "select_val_pearson"],
+    ),
+    "warmstart": ViewSpec(
+        key="warmstart",
+        title="027 wave 9: the warm-started residual head against the boxforce controls (feasibility first)",
+        description=(
+            "Betaxanthin, 200 epochs. The warm-started head (v_pre = pFBA reference + "
+            "alpha N z, nominal abundance path, the 47-reaction thermo exemption, the "
+            "TFA-consistent concentration init, the normalized availability fold, a "
+            "two-sigma kcat ceiling, active-row balance 0.5 on a frozen row set, parsimony "
+            "1e-3) against the wave-7 and wave-8 boxforce cells. At initialization it reads "
+            "active-row balance max 0.031 and p95 0.002 with 82 active rows against the "
+            "pFBA reference's 82 (jobs 1937 and 1945); the honest rule is max and p95 "
+            "under 1e-2 on the top 100 at the selected epoch. Read the feasibility curves "
+            "before the score."
+        ),
+        tags_any=["gh_wave9_warmstart", "gh_wave8_dens", "gh_wave8_densbal", "gh_wave7_ff"],
+        groupby=["flux_parameterization", "arm", "flux_balance_active_weight"],
+        curves=[
+            "feas_balance_active_max",
+            "feas_balance_active_p95",
+            "feas_flux_active_frac",
+            "feas_active_row_frac",
+            "feas_thermo_violation_frac",
+            "feas_box_violation_frac",
+            "c_balance_active",
+            "c_parsimony",
+            "val_pred_sd_ratio",
+            "val_pearson",
+            "train_data_loss",
+            "latent_sigma_p50",
+        ],
+        scalars=[
+            "test_spearman_pinned",
+            "feas/pinned_test_top100/balance_max_ratio_median",
+            "select_val_pearson",
+        ],
+    ),
 }
 
 

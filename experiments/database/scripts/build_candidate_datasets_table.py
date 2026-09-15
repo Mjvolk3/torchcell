@@ -47,7 +47,7 @@ SOURCE_LINE = (
 # the long-run recommended set is the first 150 rows; everything after is a ranked
 # reserve bench, kept because the cut line moves whenever one of the 150 turns out
 # to have no recoverable per-strain data.
-BUILT_COUNT = 50
+BUILT_COUNT = 51
 TARGET_COUNT = 200
 CUT = TARGET_COUNT - BUILT_COUNT  # 150
 
@@ -436,23 +436,24 @@ CANDIDATES: list[Candidate] = [
         accession="ENA/SRA; phenotype tables via the paper and France Genomique",
     ),
     Candidate(
-        name="Cooper 2010 (CE-MS amino-acid metabolome)",
+        name="Cooper 2010 (CE-LIF amino-acid metabolome)",
         citation="Cooper SJ, Finney GL, Brown SL, Nelson SI, Hesse J, MacCoss MJ, Fields S. Genome Res 2010;20:1288-1296.",
         url="https://doi.org/10.1101/gr.105825.110",
         klass="Metabolite / precursor",
         tier=1,
-        genotypes_n=4700,
-        genotypes="~4,700 YKO",
+        genotypes_n=4382,
+        genotypes="4,382 YKO samples (4,334 ORFs)",
         env_n=1,
         env="1",
-        instances_n=4700,
+        instances_n=4382,
         instances_basis="reported",
-        phenotype="free amino-acid pools (capillary electrophoresis)",
-        shape="vector (~20)",
-        dim=20,
+        phenotype="free amino-acid pools (capillary electrophoresis, laser-induced fluorescence)",
+        shape="vector (17)",
+        dim=17,
         seq_basis="S288C-KO",
-        why="An independent platform measuring the same trait class as the already-built Mulleder 2016 on an overlapping genotype axis. Two independent measurements of one phenotype is the cleanest available test of whether a model has learned biology or a batch.",
-        accession="Genome Research SI tables",
+        why="An independent platform measuring the same trait class as the already-built Mulleder 2016 on an overlapping genotype axis. Two independent measurements of one phenotype is the cleanest available test of whether a model has learned biology or a batch. Built since the previous pass as the 51st supported dataset, so it leaves the list here and enters the supported table.",
+        accession="Genome Research SI Supplemental Table 4 (manual browser deposit); built as torchcell/datasets/scerevisiae/cooper2010.py",
+        status="built",
     ),
     Candidate(
         name="Chica 2026 (AutoDRY autophagy screen)",
@@ -3541,7 +3542,12 @@ REMOVAL_REASON: dict[str, str] = {
         "Built since the previous pass as the 50th supported dataset, 13,950 "
         "segregants over 38 traits, L0-L4 verified. It is now a join partner "
         "rather than a candidate."
-    )
+    ),
+    "Cooper 2010 (CE-LIF amino-acid metabolome)": (
+        "Built since the previous pass as the 51st supported dataset, 4,313 "
+        "deletion strains over 17 CE-LIF peaks, L0-L4 verified. It is now the "
+        "cross-platform partner of Mulleder 2016 rather than a candidate."
+    ),
 }
 
 EXCLUDED: list[Excluded] = [
@@ -3906,7 +3912,7 @@ BANDS: dict[str, tuple[Band, str]] = {
         "The transcriptome half of the segregant panel that Jakobson 2025, "
         "Gerke 2017 and Eder 2020 measure protein, metabolite and flux on.",
     ),
-    "Cooper 2010 (CE-MS amino-acid metabolome)": (
+    "Cooper 2010 (CE-LIF amino-acid metabolome)": (
         "molecular layers",
         "Amino-acid pools on the deletion collection by capillary electrophoresis, "
         "the same trait class the supported Mulleder 2016 measures by mass "
@@ -4578,7 +4584,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "produces it.",
         ),
     ],
-    "Cooper 2010 (CE-MS amino-acid metabolome)": [
+    "Cooper 2010 (CE-LIF amino-acid metabolome)": [
         _syn(
             "Mulleder 2016 (amino-acid metabolome)",
             "supported",

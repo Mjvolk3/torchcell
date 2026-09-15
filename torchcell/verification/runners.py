@@ -468,6 +468,26 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="Mendeley 10.17632/bnzdhd6ck8.1 Table_S3 intracellular_concentration_mM",
         ),
     },
+    "amino_acid_cooper2010": {
+        "root": "data/torchcell/amino_acid_cooper2010",
+        # 4382 Table 4 rows - 22 resolver drops (non-gene / retired) - 47 duplicate
+        # identifier rows (ledgered, not averaged) = 4313 kept records.
+        "expected_count": 4313,
+        # linear ratio to the plate mean, reference 1.0 per key; NOT centered on 0
+        "reference_centered": False,
+        "provenance": Provenance(
+            source_uri="torchcell-raw/cooperHighthroughputProfilingAmino2010/data/SupplementalTable4.txt",
+            citation_key="cooperHighthroughputProfilingAmino2010",
+            sha256="3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb",
+            method=(
+                "manual_browser deposit of Genome Research Supplemental Table 4 (login "
+                "wall); CE-LIF NBD-F peak area as a linear ratio to the plate mean, "
+                "duplicate traces averaged by the authors; legends .doc sha256 "
+                "ca4983cda4c34318dbc3a05d10edf8e05df11f1560ffc99442df83a6a4399184"
+            ),
+            page="Genome Res 20:1288 Supplemental Table 4 (DC1 gr.105825.110)",
+        ),
+    },
     "metabolite_zelezniak2018": {
         "root": "data/torchcell/metabolite_zelezniak2018",
         "expected_count": 95,

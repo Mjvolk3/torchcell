@@ -13,6 +13,7 @@ from .cachera2023 import BetaxanthinCachera2023Dataset as BetaxanthinCachera2023
 from .caudal2024 import (
     CaudalPanTranscriptome2024Dataset as CaudalPanTranscriptome2024Dataset,
 )
+from .cooper2010 import AminoAcidCooper2010Dataset as AminoAcidCooper2010Dataset
 from .costanzo2016 import DmfCostanzo2016Dataset as DmfCostanzo2016Dataset
 from .costanzo2016 import SmfCostanzo2016Dataset as SmfCostanzo2016Dataset
 from .costanzo2021 import EnvChemgenCostanzo2021Dataset as EnvChemgenCostanzo2021Dataset
@@ -95,6 +96,8 @@ cachera_datasets = ["BetaxanthinCachera2023Dataset"]
 
 mulleder_datasets = ["AminoAcidMulleder2016Dataset"]
 
+cooper_datasets = ["AminoAcidCooper2010Dataset"]
+
 zelezniak_datasets = ["ProteomeZelezniak2018Dataset", "MetaboliteZelezniak2018Dataset"]
 
 messner_datasets = ["ProteomeMessner2023Dataset"]
@@ -148,6 +151,7 @@ __all__ = (
     + ozaydin_datasets
     + cachera_datasets
     + mulleder_datasets
+    + cooper_datasets
     + zelezniak_datasets
     + messner_datasets
     + vanacloig_datasets

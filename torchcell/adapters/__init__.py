@@ -14,6 +14,7 @@ from .caudal2024_adapter import (
     CaudalPanTranscriptome2024Adapter as CaudalPanTranscriptome2024Adapter,
 )
 from .cell_adapter import CellAdapter as CellAdapter
+from .cooper2010_adapter import AminoAcidCooper2010Adapter as AminoAcidCooper2010Adapter
 from .costanzo2016_adapter import DmfCostanzo2016Adapter as DmfCostanzo2016Adapter
 from .costanzo2016_adapter import DmiCostanzo2016Adapter as DmiCostanzo2016Adapter
 from .costanzo2016_adapter import SmfCostanzo2016Adapter as SmfCostanzo2016Adapter
@@ -162,6 +163,7 @@ proteome_metabolome_adapters = [
     "ProteomeZelezniak2018Adapter",
     "ProteomeMessner2023Adapter",
     "AminoAcidMulleder2016Adapter",
+    "AminoAcidCooper2010Adapter",
 ]
 
 segregant_adapters = ["Bloom2019Adapter"]

@@ -401,3 +401,20 @@ modality 5, tolerance 4, regulatory DNA 2. Bases: reference-only 16, S288C-KO 13
 segregant-WGS 11, S288C+guide 7, isolate-WGS 6, designed-edit 3, reporter-locus 2, tag 1,
 engineered-chassis 1. 110 named joins, 58 to a built dataset, on 42 of the sixty rows.
 Confidence: 34 sourced, 26 recall. One blocked row (Lee 2014, 56).
+
+## 2026.09.15 - Cooper 2010 moves from candidate to built; CE-MS corrected to CE-LIF
+
+Cooper 2010 is the 51st supported dataset ([[torchcell.datasets.scerevisiae.cooper2010]]):
+4,313 deletion strains over 17 peaks, L0-L4 PASS. Its candidate row carried the label "CE-MS",
+which was wrong: detection is laser-induced fluorescence of NBD-F adducts after capillary
+electrophoresis (the paper's GC-MS is a validation experiment), so the row, its band key and its
+synergy key are renamed "Cooper 2010 (CE-LIF amino-acid metabolome)" together, the row is
+`status="built"` with the measured counts (4,382 samples, 4,334 ORFs, 17 peaks), and
+`BUILT_COUNT` is 51. Regenerated tables: `counts.tex` drops the Metabolite / precursor
+candidates from 5 to 4 and the molecular-layers band from 3 to 2 (Total candidates 168 -> 167);
+`candidates.tex` now reads "from 51 supported datasets to 200" with ranks 1-149 recommended;
+`swaps.tex` carries a single removal row (previous rank 15, "Built since the previous pass as
+the 51st supported dataset"), not a removal-plus-addition pair, since the removal reason is keyed
+on the new name; `summary.tex` counts 109 named joins, 56 to a built dataset. The Cooper vs
+Mulleder transfer test the 2026.08.25 list named is now runnable; the join rule is in the loader
+note.

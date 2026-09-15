@@ -1,6 +1,7 @@
 """Mapping from S. cerevisiae dataset classes to their BioCypher adapters."""
 
 from torchcell.adapters import (
+    AminoAcidCooper2010Adapter,
     AminoAcidMulleder2016Adapter,
     BetaxanthinCachera2023Adapter,
     Bloom2019Adapter,
@@ -59,6 +60,7 @@ from torchcell.datasets.scerevisiae.baryshnikova2010 import SmfBaryshnikova2010D
 from torchcell.datasets.scerevisiae.bloom2019 import Bloom2019Dataset
 from torchcell.datasets.scerevisiae.cachera2023 import BetaxanthinCachera2023Dataset
 from torchcell.datasets.scerevisiae.caudal2024 import CaudalPanTranscriptome2024Dataset
+from torchcell.datasets.scerevisiae.cooper2010 import AminoAcidCooper2010Dataset
 from torchcell.datasets.scerevisiae.costanzo2016 import (
     DmfCostanzo2016Dataset,
     DmiCostanzo2016Dataset,
@@ -159,6 +161,7 @@ dataset_adapter_map = {
     ProteomeMessner2023Dataset: ProteomeMessner2023Adapter,
     ProteomeZelezniak2018Dataset: ProteomeZelezniak2018Adapter,
     AminoAcidMulleder2016Dataset: AminoAcidMulleder2016Adapter,
+    AminoAcidCooper2010Dataset: AminoAcidCooper2010Adapter,
     OrganicAcidYoshida2012Dataset: OrganicAcidYoshida2012Adapter,
     IsobutanolScreenLopez2024Dataset: IsobutanolScreenLopez2024Adapter,
     IsobutanolValidatedLopez2024Dataset: IsobutanolValidatedLopez2024Adapter,

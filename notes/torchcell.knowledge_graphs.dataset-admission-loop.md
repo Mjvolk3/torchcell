@@ -123,3 +123,24 @@ Bloom 2019 is built as `Bloom2019Dataset` ([[torchcell.datasets.scerevisiae.bloo
 The one caveat the plan named: the `MeasurementType` fingerprint moved, and that is safe only because no served closure contains it today. If a chemogenomic dataset is admitted before this branch lands, `admit` must be re-run.
 
 The admission result and the L0-L4 report are recorded in the loader note once the build finishes.
+
+## 2026.09.15 - The 51st dataset at the gate: Cooper 2010, and a store behind main
+
+Cooper 2010 is built as `AminoAcidCooper2010Dataset` ([[torchcell.datasets.scerevisiae.cooper2010]]),
+4,313 records, L0-L4 PASS, no schema, media, adapter-code or yaml edit (the medium is a
+loader-local `dropout(SC, ...)`, the first of its kind, precisely so `media.py` stays still). The
+dry run against a copy of the served manifest with the dev data root:
+
+`Admission check: AminoAcidCooper2010Dataset  ->  BLOCKED`
+
+`value_surface_changed = []`, `novel_symbols = []`, `dev_lmdb_status = fresh`,
+`in_adapter_map = True`. The three reasons are all drift between the served commit `513cbfa1`
+and current `main` `53c869e9`: 36 served datasets' closures changed on `DoseBasis`
+(Nadal-Ribelles also on `EnvironmentPerturbation`), the graph class `environment perturbation`
+changed, and the environment/media/temperature node and edge methods drifted (36 served
+datasets). A control run for `Bloom2019Dataset`, which landed on `main` on 2026-09-12 and was
+never served, is BLOCKED with the same three reasons, so the block belongs to the served store,
+not to the Cooper branch. Consequence: Cooper (and Bloom) enter with the next full rebuild, or by
+increment once the store has been rebuilt on current `main`. The production manifest was not
+touched (sha256 `7cfae7e4b3ea5c5ff94486cb8788a946ba09a4b9de240531c5f1cc3295d781ea` before and
+after).

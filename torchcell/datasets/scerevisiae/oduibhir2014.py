@@ -84,6 +84,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -93,7 +94,6 @@ from torchcell.datamodels.schema import (
     FitnessPhenotype,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     Publication,
     ReferenceGenome,
     SampleUnit,
@@ -240,10 +240,9 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
                 )
             ]
         )
-        environment = Environment(
-            media=Media(name="SC", state="liquid", is_synthetic=True),
-            temperature=Temperature(value=30),
-        )
+        # The shared library SC (liquid, defined) rather than a name-only medium: a
+        # free-text "SC" would be its own media node in the graph and join nothing.
+        environment = Environment(media=SC, temperature=Temperature(value=30))
         # No per-strain uncertainty is released in Dataset S2 -> all uncertainty fields None.
         phenotype = FitnessPhenotype(
             fitness=fitness,

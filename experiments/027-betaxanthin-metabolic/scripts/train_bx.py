@@ -161,9 +161,27 @@ HEAD = "betaxanthin"
 #: which neither betaxanthin (a product with no pool) nor the amino acids (pools with no
 #: product) can do.
 ISOBUTANOL_HEAD = "isobutanol"
+
+#: WAVE 9 (2026-09-14). GENE ESSENTIALITY, the endpoint where the published methods are far
+#: enough apart to decide something. The amino-acid target's ceiling is about 0.17 Pearson
+#: and every arm sits at 0.05 to 0.07, which is why it cannot; on YEAST essentiality the
+#: mirrored Merzbacher 2025 Supplementary Table S5 puts FBA at ROC AUC 0.69 and Flux Cone
+#: Learning at 0.73 on the released test split (0.78 +/- 0.065 across its 5 CV folds).
+ESSENTIALITY_HEAD = "essentiality"
+#: The phenotype label `GeneEssentialityPhenotype` emits (schema.py: `label_name` default).
+ESSENTIALITY_LABEL = "is_essential"
+#: yeast-GEM 9.0.2's objective column, verified on the model 2026-09-14: `r_2111` ("growth"),
+#: reaction index 1499, and `build_gem_tensors` resolves `gem.biomass_index` to exactly it.
+#: `r_4041` is the biomass PSEUDOREACTION and is not the objective.
+BIOMASS_REACTION = "r_2111"
+
 #: The heads whose phenotype is ONE number per genotype, so the scalar scoring, dumping and
 #: reporting branches take them together. `mulleder19` is the vector head.
-SCALAR_HEADS = (HEAD, ISOBUTANOL_HEAD)
+SCALAR_HEADS = (HEAD, ISOBUTANOL_HEAD, ESSENTIALITY_HEAD)
+#: The heads whose target is a CLASS rather than a magnitude. They are scored with a
+#: log-loss and selected on AUROC, and their target is never standardized: subtracting a
+#: mean from a 0/1 label and dividing by its sd would make the log-loss meaningless.
+BINARY_HEADS = (ESSENTIALITY_HEAD,)
 
 #: WAVE 7 (2026-09-11). The two mechanistic amino-acid readouts, named so a result file says
 #: which one it ran rather than leaving it to be inferred from the arm.
@@ -787,6 +805,53 @@ class BxCell(BaseModel):
             "How gene gates fold up an AND in the GPR: 'softmin' (the shipped fold, which "
             "reads 1 - log(n)/beta on an intact n-subunit complex) or 'normalized_softmin' "
             "(divided by its all-ones value, so an intact complex reads exactly 1)."
+        ),
+    )
+    # THE GENOTYPE-KEYED WARM START (2026-09-14). All three are CONSTRUCTION-TIME: the flux
+    # layer reads them in `FluxLayer.__init__`, where it solves or loads the reference and
+    # creates `warm_log_alpha`, so they travel through the arm dict into `build_flux_layer`
+    # the way `log_c_from_latent` does and CANNOT be assigned onto a built layer's config.
+    # An assignment after construction would be silently ignored, which is the failure mode
+    # worth naming: the cell would report a reference table it never loaded.
+    flux_reference_table: str | None = Field(
+        default=None,
+        description=(
+            "Path to the per-genotype reference flux table (npz) written by "
+            "`probe_reference_flux_table.py`, setting "
+            "`FluxLayerConfig.warm_start_reference_table_path`. The layer looks each batch "
+            "row's reference up by its sorted deleted-gene SET through "
+            "`read_reference_flux_table` and `FluxLayer.genotype_reference`, falling back "
+            "to the single wild-type reference for a key the table misses and reporting "
+            "the fallback RATE in `coverage_report`. None keeps the one-reference behavior "
+            "job 1946 ran, where the proposal `v_ref + alpha N z` was very nearly the same "
+            "vector for every genotype and the head reading it was close to a constant. "
+            "A table indexed by another GEM's reaction list is refused rather than applied "
+            "by position."
+        ),
+    )
+    flux_alpha_frozen: bool = Field(
+        default=False,
+        description=(
+            "Freeze the warm start's residual scale: sets "
+            "`FluxLayerConfig.warm_start_alpha_learnable = False`, which holds "
+            "`warm_log_alpha` at `warm_start_init_rel` with no gradient. It stays a "
+            "PARAMETER and stays in the state dict, so a frozen cell and a learned cell "
+            "load each other's checkpoints and the arm is a one-boolean diff. This is the "
+            "control for job 1946's failure mode, where alpha grew 0.0099 to 0.087 and "
+            "took the active-row balance from about 1.0 to 2.0 with it: with alpha fixed, "
+            "genotype information has to come from the reference rather than from the "
+            "residual's size."
+        ),
+    )
+    flux_warm_start_init_rel: float = Field(
+        default=0.01,
+        gt=0.0,
+        description=(
+            "`FluxLayerConfig.warm_start_init_rel`, the proposal's initial relative "
+            "distance from the reference. Alpha is learned in log space so it stays "
+            "positive without a clamp; under `--flux-alpha-frozen` this is the value it is "
+            "held at for the whole run. The default equals the shipped constant, so a cell "
+            "that does not name one builds a bit-identical layer."
         ),
     )
     # WAVE 8 (2026-09-12). K draws per genotype per forward pass, the simplest form of the
@@ -1413,6 +1478,146 @@ def mixture_log10_molar(
     return torch.logsumexp(per_compartment + log_w.unsqueeze(0), dim=-1) / LN10
 
 
+#: Merzbacher 2025's released yeast essentiality split, the file the comparator numbers were
+#: computed on. Columns `knockout`, `essential`, `test`.
+FCL_ESSENTIALITY_SPLIT = (
+    "data/merzbacher2025_fcl/deletionprediction-main/data/"
+    "yeast_essentiality_test_split.csv"
+)
+#: THE COLUMN NAMED `essential` CARRIES 1.0 FOR A NONESSENTIAL GENE, and nothing in the file
+#: says so. Counted on the released CSV 2026-09-14: 1,159 rows, of which `test=0` holds 772
+#: at 1.0 and 126 at 0.0, and `test=1` holds 192 at 1.0 and 31 at 0.0. The paper's Methods
+#: describe exactly those splits with the labels the other way round: "a classstratified
+#: $20 \%$ of deletions (192 nonessential; 31 essential) was held out as a test set" and
+#: "The remaining $80 \%$ of deletions (772 nonessential; 126 essential)". Supplementary
+#: Table S4 agrees at the total, N=964 nonessential and N=157 essential. So the column is a
+#: VIABILITY flag and reading it at face value inverts every label, which a classifier will
+#: happily fit and report as a plausible AUROC.
+FCL_ESSENTIAL_VALUE = 0.0
+#: What the counts must be, so a re-released file with different contents is caught rather
+#: than silently changing the comparison.
+FCL_EXPECTED_COUNTS = {
+    ("0", "nonessential"): 772,
+    ("0", "essential"): 126,
+    ("1", "nonessential"): 192,
+    ("1", "essential"): 31,
+}
+
+
+class FclEssentialityComparators(BaseModel):
+    r"""Merzbacher 2025's published YEAST numbers, read from the mirrored paper.
+
+    Recorded here as data rather than as prose so a result file carries the comparison it
+    claims to make. Source: the mirrored `si/si1.md`, Supplementary Table S5 (the table is
+    at line 33 and its caption at line 35, "Classification performance metrics for Flux Cone
+    Learning (FCL) and Flux Balance Analysis (FBA) in yeast (S. cerevisiae) and Chinese
+    Hamster Ovary (CHO) cells (Figure 3)"), with the protocol from `paper.md` line 122.
+
+    NOT the 93.5 and 95 percent figures: those are the E. COLI accuracies from `paper.md`
+    line 54 ("FBA delivers a maximal accuracy of $9 3 . 5 \\%$ correctly predicted genes for
+    E. coli growing aerobically in glucose" and "achieving an average $9 5 \\%$ accuracy for
+    all test genes across training repeats"). Yeast is a harder target and the gap is much
+    narrower there.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    source: str = (
+        "$DATA_ROOT/torchcell-library/merzbacherAccuratePredictionGene2025/si/si1.md, "
+        "Supplementary Table S5 (line 33; caption line 35); protocol paper.md line 122"
+    )
+    fba_accuracy: float = 0.81
+    fba_precision: float = 0.91
+    fba_recall: float = 0.97
+    fba_roc_auc: float = 0.69
+    fcl_cv_accuracy: float = 0.90
+    fcl_cv_roc_auc: float = 0.78
+    fcl_cv_roc_auc_sd: float = 0.065
+    fcl_test_accuracy: float = 0.89
+    fcl_test_precision: float = 0.89
+    fcl_test_recall: float = 0.99
+    fcl_test_roc_auc: float = 0.73
+    #: 192 of the 223 released test genes are nonessential.
+    majority_class_rate_test: float = 192.0 / 223.0
+    note: str = (
+        "FBA's accuracy of 0.81 is BELOW the 0.861 majority-class rate on the same test "
+        "genes, so accuracy is the wrong headline here and ROC AUC is the comparator: "
+        "0.69 for FBA against 0.73 for FCL on the released test split. The FBA baseline is "
+        "cobrapy `single_gene_deletion` for all genes with glucose as the carbon source "
+        "and the standard biomass reaction (paper.md line 122)."
+    )
+
+
+def read_fcl_essentiality_split(path: str) -> tuple[dict[str, int], dict[str, Any]]:
+    """``({gene -> 1 if essential else 0}, report)`` from the released FCL split.
+
+    The label inversion described at :data:`FCL_ESSENTIAL_VALUE` is applied here, ONCE, and
+    the resulting class counts are checked against the paper's own Methods sentence. A file
+    whose counts disagree is refused rather than used, because every number downstream is a
+    comparison against a table computed on these exact genes.
+    """
+    import csv
+
+    labels: dict[str, int] = {}
+    test_genes: set[str] = set()
+    counts: dict[tuple[str, str], int] = {}
+    unlabeled = 0
+    with open(path) as handle:
+        for row in csv.DictReader(handle):
+            gene = str(row["knockout"]).strip()
+            raw = str(row["essential"]).strip()
+            if not raw:
+                unlabeled += 1
+                continue
+            essential = int(float(raw) == FCL_ESSENTIAL_VALUE)
+            labels[gene] = essential
+            split = str(row["test"]).strip()
+            if split == "1":
+                test_genes.add(gene)
+            key = (split, "essential" if essential else "nonessential")
+            counts[key] = counts.get(key, 0) + 1
+    assert counts == FCL_EXPECTED_COUNTS, (
+        f"the released split at {path} has class counts {counts}, not "
+        f"{FCL_EXPECTED_COUNTS}. Those counts are the paper's own Methods sentence (192 "
+        "nonessential and 31 essential held out; 772 and 126 kept), and every comparator "
+        "number is computed on exactly these genes, so a file that disagrees is a "
+        "different experiment."
+    )
+    report = {
+        "path": path,
+        "n_labeled": len(labels),
+        "n_unlabeled_rows": unlabeled,
+        "n_test_genes": len(test_genes),
+        "n_essential": sum(labels.values()),
+        "n_nonessential": len(labels) - sum(labels.values()),
+        "label_convention": (
+            "the CSV column `essential` is a VIABILITY flag: 1.0 marks a NONESSENTIAL "
+            "gene. It is inverted here once, and the counts are asserted against the "
+            "paper's Methods."
+        ),
+    }
+    return labels, report
+
+
+def binary_auroc(score: np.ndarray, label: np.ndarray) -> float:
+    """Rank-based AUROC over the observed rows; ``nan`` when one class is absent.
+
+    The Mann-Whitney form, so ties are handled by mid-ranks rather than by a sweep over
+    thresholds, and the number matches the probability that a random essential gene scores
+    above a random nonessential one.
+    """
+    from scipy.stats import rankdata
+
+    keep = np.isfinite(score) & np.isfinite(label)
+    s, y = score[keep], label[keep]
+    n_pos = float((y == 1).sum())
+    n_neg = float((y == 0).sum())
+    if n_pos == 0.0 or n_neg == 0.0:
+        return float("nan")
+    ranks = rankdata(s)
+    return float((ranks[y == 1].sum() - n_pos * (n_pos + 1.0) / 2.0) / (n_pos * n_neg))
+
+
 def scored_width(spec: dict[str, Any]) -> int:
     """How many columns a head's target has AFTER the decode, which is what is scored.
 
@@ -1560,6 +1765,9 @@ def build_cell(
     flux_thermo_exempt_path: str | None = None,
     flux_log_c_init_path: str | None = None,
     flux_availability_fold: str = "softmin",
+    flux_reference_table: str | None = None,
+    flux_alpha_frozen: bool = False,
+    flux_warm_start_init_rel: float = 0.01,
     flux_draws: int = 1,
     flux_latent_stochastic: bool = False,
     flux_kl_weight: float | None = None,
@@ -1670,6 +1878,9 @@ def build_cell(
         flux_thermo_exempt_path=flux_thermo_exempt_path,
         flux_log_c_init_path=flux_log_c_init_path,
         flux_availability_fold=flux_availability_fold,
+        flux_reference_table=flux_reference_table,
+        flux_alpha_frozen=flux_alpha_frozen,
+        flux_warm_start_init_rel=flux_warm_start_init_rel,
         flux_draws=flux_draws,
         flux_latent_stochastic=flux_latent_stochastic,
         flux_kl_weight=flux_kl_weight,
@@ -2717,6 +2928,79 @@ class FluxPrecursorConcentrationReadout(nn.Module):
         return predictions, reps
 
 
+class FluxBiomassReadout(nn.Module):
+    r"""Essentiality from the layer's own predicted GROWTH rate, through one affine.
+
+    WHY THIS READOUT AND NOT ``FluxScalarHead``. Essentiality is the statement that a
+    deletion stops growth, so the physically meaningful quantity is the flux through the
+    GEM's objective column, ``r_2111`` ("growth"), on the medium the phenotype was scored
+    on. ``FluxScalarHead`` reads a dense ``w^T v`` over all 4,131 reactions plus named
+    turnovers, which can reach growth but is not a statement about it. This head reads ONE
+    column and maps it to a logit with a scale and an intercept, so what is being tested is
+    whether the layer's growth prediction ranks essential genes below nonessential ones,
+    which is exactly what FBA's `single_gene_deletion` baseline does with a threshold.
+
+    The affine is two parameters and is required: the layer's flux is in mmol/gDW/h and the
+    target is a class, so a threshold has to be learned rather than assumed. It cannot
+    manufacture a ranking that the growth column does not already carry, which is what
+    keeps the arm a test of the module.
+    """
+
+    model: CellGraphTransformerMetabolism
+
+    def __init__(
+        self,
+        model: CellGraphTransformerMetabolism,
+        biomass_index: int,
+        head_name: str = ESSENTIALITY_HEAD,
+    ) -> None:
+        """Bind the readout to the GEM's objective column."""
+        super().__init__()
+        self.model = model
+        self.biomass_index = int(biomass_index)
+        self.head_name = head_name
+        self.readout = nn.Linear(1, 1)
+
+    @property
+    def flux_layer(self) -> Any:
+        """The wrapped model's layer, so every caller that reaches for it is unchanged."""
+        return self.model.flux_layer
+
+    @property
+    def num_parameters(self) -> dict[str, int]:
+        """The wrapped model's counts, plus this head's scale and intercept."""
+        counts: dict[str, int] = dict(self.model.num_parameters)
+        extra = sum(p.numel() for p in self.readout.parameters() if p.requires_grad)
+        counts[f"{self.head_name}_head"] = extra
+        counts["total"] = counts["total"] + extra
+        return counts
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Run the wrapped model, then read the growth column off the predicted flux."""
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        if "flux" not in reps:
+            layer = self.model.flux_layer
+            assert layer is not None, (
+                "the biomass readout was built on a model with no flux layer."
+            )
+            reps["flux"] = layer(
+                reps["H_genes_pert"],
+                perturbed_gene_pool(
+                    reps["H_genes_pert"],
+                    batch["gene"].perturbation_indices,
+                    batch["gene"].perturbation_indices_batch,
+                ),
+                batch["gene"].perturbation_indices,
+                batch["gene"].perturbation_indices_batch,
+            )
+        growth = reps["flux"]["v"][:, self.biomass_index : self.biomass_index + 1]
+        reps["biomass_flux"] = growth
+        reps["head_outputs"][self.head_name] = self.readout(growth).unsqueeze(1)
+        return predictions, reps
+
+
 class ContextPrecursorConcentrationReadout(nn.Module):
     r"""The precursor readout's head, on the pooled backbone, with no flux layer.
 
@@ -3161,6 +3445,13 @@ def build_model_for_cell(
     # call-time read is the same value.
     arm["latent_stochastic"] = cell.flux_latent_stochastic
     arm["log_c_from_latent"] = cell.flux_log_c_from_latent
+    # THE WARM-START SWITCHES, in the arm dict for the same reason and NOT assigned onto
+    # the built config: `FluxLayer.__init__` reads all three while it solves the reference
+    # and creates `warm_log_alpha`, so a post-construction assignment would be ignored and
+    # the cell would claim a reference table it never opened.
+    arm["warm_start_reference_table_path"] = cell.flux_reference_table
+    arm["warm_start_alpha_learnable"] = not cell.flux_alpha_frozen
+    arm["warm_start_init_rel"] = cell.flux_warm_start_init_rel
     # THE MEDIUM, written into the arm dict for the same reason the channel is: 026's
     # `build_flux_layer` owns the cobra model (it constructs its own `YeastGEM()` and reads
     # the exchange bounds into the box through `build_gem_tensors`), so the bounds have to
@@ -3263,9 +3554,8 @@ def build_model_for_cell(
             "empty, so every kcat has silently become the organism default."
         )
 
-    assert cell.head in (HEAD, AUX_HEAD, ISOBUTANOL_HEAD), (
-        f"--head must be one of {(HEAD, AUX_HEAD, ISOBUTANOL_HEAD)}, got {cell.head!r}."
-    )
+    heads = (HEAD, AUX_HEAD, ISOBUTANOL_HEAD, ESSENTIALITY_HEAD)
+    assert cell.head in heads, f"--head must be one of {heads}, got {cell.head!r}."
     assert not (cell.head == AUX_HEAD and cell.aux_mulleder), (
         "--head mulleder19 makes the amino-acid head the PRIMARY supervised head; "
         "--aux-mulleder would then declare it twice."
@@ -3335,7 +3625,12 @@ def build_model_for_cell(
     )
     main_head = cell.head
     head_specs: dict[str, dict[str, Any]]
-    if main_head == ISOBUTANOL_HEAD:
+    if main_head == ESSENTIALITY_HEAD:
+        # A CLASS, not a magnitude: the label is the boolean `GeneEssentialityPhenotype`
+        # emits, arriving as a width-1 group of 0.0/1.0 under its own label, so it cannot
+        # collide with `metabolite_level` at all.
+        head_specs = {main_head: {"label": ESSENTIALITY_LABEL, "width": 1}}
+    elif main_head == ISOBUTANOL_HEAD:
         # THE BIOSENSOR IS ONE COLUMN OF THE MERGED 20-VALUE BLOCK, not a width-1 group;
         # see `ISOBUTANOL_BLOCK_KEYS` for the measurement that forces it. The held-out
         # flags mask every genotype the validated re-screen measured, so the 224-strain
@@ -3386,7 +3681,32 @@ def build_model_for_cell(
     )
     heads_config: dict[str, Any] = {}
     met_index = flux_meta["met_index"] if arm["flux"] else {}
-    if main_head == ISOBUTANOL_HEAD:
+    if main_head == ESSENTIALITY_HEAD:
+        assert not cell.aux_mulleder, (
+            "--head essentiality skips the train-split standardization pass, so the "
+            "amino-acid co-head would have no mean and sd to standardize against. The "
+            "two are refused together rather than failing on a KeyError mid-epoch."
+        )
+        assert not cell.crps, (
+            "--head essentiality is a CLASSIFIER scored with a binary cross entropy on one "
+            "logit. CRPS is a proper scoring rule for a CONTINUOUS target and a Gaussian "
+            "over a 0/1 label is not the right object, so --crps is refused here rather "
+            "than quietly producing a (mu, log_sigma) pair nothing reads."
+        )
+        if arm["flux"]:
+            # THE BIOMASS READOUT declares no model head: the prediction is an affine of
+            # the layer's own growth column, injected by `FluxBiomassReadout` below.
+            assert flux_layer is not None and flux_layer.biomass_index is not None, (
+                "--head essentiality on a flux arm reads the GEM's objective column, and "
+                "this layer declares no biomass index."
+            )
+        else:
+            heads_config[ESSENTIALITY_HEAD] = {
+                "kind": "scalar",
+                "output_dim": 1,
+                "param_dim": 1,
+            }
+    elif main_head == ISOBUTANOL_HEAD:
         if arm["flux"] and cell.ib_readout == IB_READOUT_PRECURSOR_CONCENTRATION:
             # THE PRECURSOR-CONCENTRATION READOUT declares no model head; the prediction is
             # the affine of the layer's own `thermo_log_c` at the anchor rows, injected by
@@ -3537,6 +3857,26 @@ def build_model_for_cell(
         flux_layer=flux_layer,
         **graph_reg_kwargs,
     ).to(device)
+
+    if main_head == ESSENTIALITY_HEAD and arm["flux"]:
+        assert flux_layer is not None
+        biomass_index = int(flux_layer.biomass_index)
+        flux_meta["essentiality"] = {
+            "readout": "flux_biomass",
+            "biomass_reaction": BIOMASS_REACTION,
+            "biomass_index": biomass_index,
+            "note": (
+                "essentiality is read off the flux through the GEM's objective column, "
+                "which is the quantity FBA thresholds in its own baseline."
+            ),
+        }
+        wrapped_ess = FluxBiomassReadout(model, biomass_index).to(device)
+        print(
+            f"[biomass-readout] essentiality from the predicted growth flux at column "
+            f"{biomass_index} ({BIOMASS_REACTION})",
+            flush=True,
+        )
+        return wrapped_ess, head_specs, main_head, flux_meta
 
     if (
         main_head == ISOBUTANOL_HEAD
@@ -3864,7 +4204,16 @@ def run_cell(
         make_dist_head(cell.dist).to(device) if cell.dist == "quantile" else None
     )
 
+    binary = main_head in BINARY_HEADS
+
     def loss_fn(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if binary:
+            # ONE LOGIT AGAINST A 0/1 LABEL. `binary_cross_entropy_with_logits` is the
+            # numerically stable form, and `reduction="none"` keeps the elementwise shape
+            # the caller's masked mean expects.
+            return nn.functional.binary_cross_entropy_with_logits(
+                prediction, target, reduction="none"
+            )
         if dist_head is not None:
             # Pinball, elementwise over the K quantiles and then averaged over them, so the
             # caller's `(loss * mask).sum() / mask.sum()` keeps meaning the masked mean.
@@ -3891,19 +4240,32 @@ def run_cell(
 
     # Target standardization from the TRAIN split only. A metric computed against
     # test-informed statistics is not a held-out metric.
-    chunks: dict[str, list[torch.Tensor]] = {name: [] for name in head_specs}
-    for batch in dm.train_dataloader():
-        for name, (t, m) in targets_in_space(
-            batch, head_specs, cell.target_log10_molar
-        ).items():
-            chunks[name].append(torch.where(m, t, torch.nan))
+    # A CLASS LABEL IS NEVER STANDARDIZED. Subtracting a train-split mean from a 0/1 label
+    # and dividing by its sd would leave the cross entropy scoring a rescaled variable that
+    # is no longer a probability's target, so the binary head is handed the identity and the
+    # pass below is skipped. Every other head is unchanged.
     stats: dict[str, tuple[torch.Tensor, torch.Tensor]] = {}
-    for name, parts in chunks.items():
-        cat = torch.cat(parts, dim=0)
-        mu = torch.nanmean(cat, dim=0)
-        centered = cat - mu
-        s = torch.nanmean(centered * centered, dim=0).sqrt().clamp(min=1e-6)
-        stats[name] = (mu.to(device), s.to(device))
+    if main_head in BINARY_HEADS:
+        width = scored_width(head_specs[main_head])
+        stats[main_head] = (torch.zeros(width).to(device), torch.ones(width).to(device))
+        print(
+            f"[binary-head] {main_head}: target left unstandardized (mean 0, sd 1) and "
+            "scored with a binary cross entropy on one logit",
+            flush=True,
+        )
+    else:
+        chunks: dict[str, list[torch.Tensor]] = {name: [] for name in head_specs}
+        for batch in dm.train_dataloader():
+            for name, (t, m) in targets_in_space(
+                batch, head_specs, cell.target_log10_molar
+            ).items():
+                chunks[name].append(torch.where(m, t, torch.nan))
+        for name, parts in chunks.items():
+            cat = torch.cat(parts, dim=0)
+            mu = torch.nanmean(cat, dim=0)
+            centered = cat - mu
+            s = torch.nanmean(centered * centered, dim=0).sqrt().clamp(min=1e-6)
+            stats[name] = (mu.to(device), s.to(device))
     mean, sd = stats[main_head]
     # THE SUPERVISED COLUMNS. None is all of them and is what every cell before wave 9 ran,
     # so `supervised` is then the identity and every tensor below is unchanged. A subset
@@ -4066,9 +4428,17 @@ def run_cell(
         # and the curve is the wave-8 curve; with one, selecting on a held-out column's
         # validation Pearson would be choosing the epoch by the very quantity the arm is
         # asking about.
-        val_r = _mean_pearson(
-            preds[:, supervised_columns], trues[:, supervised_columns]
-        )
+        if binary:
+            # THE SELECTION RULE'S BINARY ANALOG. Pearson between a logit and a 0/1 label
+            # is not the endpoint; AUROC is what the comparator table reports, so the epoch
+            # is chosen on validation AUROC under the SAME centered 5-epoch moving average.
+            # A validation split carrying one class returns nan, which `_select_epoch`
+            # already treats as unselectable.
+            val_r = binary_auroc(preds[:, 0], trues[:, 0])
+        else:
+            val_r = _mean_pearson(
+                preds[:, supervised_columns], trues[:, supervised_columns]
+            )
         val_curve.append(val_r)
         ring.append((epoch, _params_snapshot(model)))
         # THE COLLAPSE DIAGNOSTIC. Pearson and Spearman are scale-free, so a head that
@@ -4762,6 +5132,38 @@ def _score_test_vector(
     }
 
 
+def binary_block(logit: np.ndarray, label: np.ndarray) -> dict[str, Any]:
+    """Deletion-level classification metrics at the 0.5 probability threshold.
+
+    Reported per class because the yeast essentiality classes are 86/14 imbalanced, and
+    reported beside the majority-class rate because FBA's published accuracy on these
+    genes, 0.81, is BELOW the 0.861 a constant "nonessential" predictor scores. AUROC is
+    the threshold-free comparator and is what the note reads.
+    """
+    if label.size == 0:
+        return {"n": 0, "auroc": float("nan")}
+    predicted = (logit > 0.0).astype(int)
+    positive = label == 1
+    negative = label == 0
+    true_pos = float((predicted[positive] == 1).sum())
+    true_neg = float((predicted[negative] == 0).sum())
+    pred_pos = float((predicted == 1).sum())
+    pred_neg = float((predicted == 0).sum())
+    return {
+        "n": int(label.size),
+        "n_essential": int(positive.sum()),
+        "n_nonessential": int(negative.sum()),
+        "auroc": binary_auroc(logit, label),
+        "accuracy": float((predicted == label).mean()),
+        "majority_class_rate": float(max(positive.mean(), negative.mean())),
+        "recall_essential": true_pos / max(float(positive.sum()), 1.0),
+        "recall_nonessential": true_neg / max(float(negative.sum()), 1.0),
+        "precision_essential": true_pos / pred_pos if pred_pos else float("nan"),
+        "precision_nonessential": true_neg / pred_neg if pred_neg else float("nan"),
+        "threshold": "logit > 0, i.e. predicted probability > 0.5",
+    }
+
+
 def _score_test(
     model: nn.Module,
     dm: Any,
@@ -4823,6 +5225,10 @@ def _score_test(
         def block(sel: np.ndarray) -> dict[str, Any]:
             p, t = p1[sel], t1[sel]
             obs = np.isfinite(t)
+            if head_name in BINARY_HEADS:
+                # DELETION-LEVEL metrics, the level the comparator table reports at, and
+                # per class because the classes are 86/14 imbalanced.
+                return binary_block(p[obs], t[obs])
             return {
                 "n": int(obs.sum()),
                 "spearman": _masked_spearman(p, t),
@@ -4977,7 +5383,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--head",
-        choices=(HEAD, AUX_HEAD, ISOBUTANOL_HEAD),
+        choices=(HEAD, AUX_HEAD, ISOBUTANOL_HEAD, ESSENTIALITY_HEAD),
         default=HEAD,
         help=(
             "Which phenotype the cell trains, selects and scores on. 'betaxanthin' is the "
@@ -5159,6 +5565,34 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--flux-reference-table",
+        default=None,
+        help=(
+            "Per-genotype reference flux table (npz) from probe_reference_flux_table.py. "
+            "The layer looks each row's reference up by its sorted deleted-gene set and "
+            "reports the wild-type fallback rate; without it every genotype shares one "
+            "reference, which is what job 1946 ran."
+        ),
+    )
+    parser.add_argument(
+        "--flux-alpha-frozen",
+        action="store_true",
+        help=(
+            "Hold the warm start's residual scale at --flux-warm-start-init-rel with no "
+            "gradient. It stays in the state dict, so frozen and learned checkpoints "
+            "interchange."
+        ),
+    )
+    parser.add_argument(
+        "--flux-warm-start-init-rel",
+        type=float,
+        default=0.01,
+        help=(
+            "Initial relative distance of the proposal from the reference, and the value "
+            "alpha is held at under --flux-alpha-frozen. Default is the shipped constant."
+        ),
+    )
+    parser.add_argument(
         "--flux-availability-fold",
         type=str,
         default="softmin",
@@ -5242,6 +5676,9 @@ def main() -> None:
         flux_thermo_exempt_path=args.flux_thermo_exempt_path,
         flux_log_c_init_path=args.flux_log_c_init_path,
         flux_availability_fold=args.flux_availability_fold,
+        flux_reference_table=args.flux_reference_table,
+        flux_alpha_frozen=args.flux_alpha_frozen,
+        flux_warm_start_init_rel=args.flux_warm_start_init_rel,
         flux_draws=args.flux_draws,
         flux_latent_stochastic=args.flux_latent_stochastic,
         flux_kl_weight=args.flux_kl_weight,

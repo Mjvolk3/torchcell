@@ -2546,3 +2546,136 @@ def test_the_default_fold_is_unchanged_and_a_typo_is_refused():
     layer.config.availability_fold = "normalised_softmin"
     with pytest.raises(ValueError, match="availability_fold"):
         layer(*inputs)
+
+
+def _reference_table_file(tmp_path, layer, per_key):
+    """Write a per-genotype reference table in this layer's own reaction order."""
+    import json
+
+    import numpy as np
+
+    keys = list(per_key)
+    matrix = np.stack([np.asarray(per_key[k], dtype=np.float32) for k in keys])
+    path = tmp_path / "reference_table.npz"
+    np.savez(
+        path,
+        v=matrix,
+        keys=np.array(keys),
+        rxn_ids=np.array(list(layer.rxn_ids)),
+        provenance=np.array(json.dumps({"gem": "toy", "growth_fraction": 1.0})),
+    )
+    return path
+
+
+def test_the_reference_is_per_genotype_when_a_table_is_loaded(tmp_path):
+    r"""One wild-type reference makes the head a near-constant predictor.
+
+    MEASURED (job 1946, seed 2700, read at epoch 143 of 200): with a single reference the
+    cell never left the betaxanthin mean plateau, validation prediction spread 0.0004 to
+    0.012 and validation Pearson flat at -0.052 after epoch 5, while the only genotype
+    channel the data term had, alpha, grew from 0.0099 to 0.087 and took the training-batch
+    active-row balance max from about 1.0 to 2.0 with it.
+    """
+    probe = _layer(parameterization="warmstart_k20_box", thermo_mode=ThermoMode.OFF)
+    wild = probe.v_reference.numpy().copy()
+    # g2 catalyzes r2 alone, so a genotype deleting it gets a visibly different reference.
+    knocked = wild.copy()
+    knocked[0] = 5.0
+    path = _reference_table_file(
+        tmp_path, probe, {"": wild, "g2": knocked, "g0,g1": wild * 0.5}
+    )
+    layer = _layer(
+        parameterization="warmstart_k20_box",
+        thermo_mode=ThermoMode.OFF,
+        warm_start_reference_table_path=str(path),
+    )
+    assert layer.reference_table is not None
+    empty = torch.zeros(0, dtype=torch.long)
+    # Wild type: the empty key.
+    wild_rows = layer.genotype_reference(2, empty, empty)
+    assert float((wild_rows - torch.tensor(wild)).abs().max()) == 0.0
+    # One genotype deleting g2, one wild type, in one batch.
+    indices = torch.tensor([2], dtype=torch.long)
+    batch_of = torch.tensor([1], dtype=torch.long)
+    rows = layer.genotype_reference(2, indices, batch_of)
+    assert float((rows[0] - torch.tensor(wild)).abs().max()) == 0.0
+    assert float((rows[1] - torch.tensor(knocked)).abs().max()) == 0.0
+    # The rows differ, which is the property the whole table exists for.
+    assert float((rows[0] - rows[1]).abs().max()) > 0.0
+
+    report = layer.coverage_report()["warm_start_reference_table"]
+    assert report["n_genotypes"] == 3
+    assert report["fallback_frac"] == 0.0
+    assert len(report["sha256"]) == 64
+
+
+def test_an_unknown_genotype_falls_back_to_the_wild_type_and_is_counted(tmp_path):
+    """The fallback is the wild-type reference, and the rate is reported, not hidden."""
+    probe = _layer(parameterization="warmstart_k20_box", thermo_mode=ThermoMode.OFF)
+    wild = probe.v_reference.numpy().copy()
+    path = _reference_table_file(tmp_path, probe, {"": wild})
+    layer = _layer(
+        parameterization="warmstart_k20_box",
+        thermo_mode=ThermoMode.OFF,
+        warm_start_reference_table_path=str(path),
+    )
+    rows = layer.genotype_reference(
+        2, torch.tensor([2], dtype=torch.long), torch.tensor([1], dtype=torch.long)
+    )
+    assert float((rows[1] - torch.tensor(wild)).abs().max()) == 0.0
+    report = layer.coverage_report()["warm_start_reference_table"]
+    assert report["n_fallbacks"] == 1
+    assert report["fallback_frac"] == pytest.approx(0.5)
+
+
+def test_a_reference_table_for_another_model_is_refused(tmp_path):
+    """A flux applied by position to another model's reactions is not a flux."""
+    import json
+
+    import numpy as np
+
+    path = tmp_path / "wrong.npz"
+    np.savez(
+        path,
+        v=np.zeros((1, 2), dtype=np.float32),
+        keys=np.array([""]),
+        rxn_ids=np.array(["x", "y"]),
+        provenance=np.array(json.dumps({})),
+    )
+    with pytest.raises(ValueError, match="different reaction list"):
+        _layer(
+            parameterization="warmstart_k20_box",
+            thermo_mode=ThermoMode.OFF,
+            warm_start_reference_table_path=str(path),
+        )
+
+
+def test_alpha_can_be_frozen():
+    """The second arm: a small FIXED residual beside a genotype-carrying reference."""
+    learned = _layer(parameterization="warmstart_k20_box", thermo_mode=ThermoMode.OFF)
+    frozen = _layer(
+        parameterization="warmstart_k20_box",
+        thermo_mode=ThermoMode.OFF,
+        warm_start_alpha_learnable=False,
+        warm_start_init_rel=0.02,
+    )
+    assert learned.warm_log_alpha.requires_grad
+    assert not frozen.warm_log_alpha.requires_grad
+    assert float(frozen.warm_alpha()) == pytest.approx(0.02, rel=1e-5)
+    # It is FROZEN, not removed: both carry it, so the two arms' checkpoints interchange.
+    assert "warm_log_alpha" in dict(frozen.named_parameters())
+    out = frozen(*_inputs())
+    out["v"].sum().backward()
+    assert frozen.warm_log_alpha.grad is None
+    assert frozen.coverage_report()["warm_start_reference"]["alpha_learnable"] is False
+
+
+def test_no_reference_table_is_bit_identical():
+    """Off is the default: one reference, repeated, exactly as job 1946 ran it."""
+    layer = _layer(parameterization="warmstart_k20_box", thermo_mode=ThermoMode.OFF)
+    assert layer.config.warm_start_reference_table_path is None
+    assert layer.reference_table is None
+    assert layer.coverage_report()["warm_start_reference_table"] is None
+    empty = torch.zeros(0, dtype=torch.long)
+    rows = layer.genotype_reference(3, empty, empty)
+    assert float(rows.std(dim=0).max()) == 0.0

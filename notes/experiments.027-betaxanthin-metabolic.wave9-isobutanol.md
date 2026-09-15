@@ -465,3 +465,30 @@ drive `log c` toward a genotype-independent configuration, and with only two sup
 concentration rows out of 2,806 the data term cannot resist it. The three-anchor arm triples
 the supervised rows to six, which is what wave 9b tests; a cleaner test of the same idea would
 hold the anchors at one and drop the constraint scale to 0.
+
+### 2026.09.14 - Three warm-start flags, and essentiality moved forward
+
+**The three trainer flags the genotype-keyed warm start needed.** `--flux-reference-table`,
+`--flux-alpha-frozen` and `--flux-warm-start-init-rel`, patterned on the
+`--flux-parsimony-weight` patch (BxCell field, `build_cell` parameter and pass-through,
+argparse entry and call site) with ONE difference that is load-bearing.
+
+`parsimony_outside_ramp_weight` is read off `config` at CALL time, so it is assigned onto
+the built layer. All three warm-start fields are read in `FluxLayer.__init__` (flux_layer.py
+L1976-2025), where the layer solves or loads the reference and creates `warm_log_alpha`, so
+they must be on the config BEFORE construction. They therefore travel through the arm dict
+into `build_flux_layer`, the way `log_c_from_latent` does, and `build_flux_layer` forwards
+them into `FluxLayerConfig`. An assignment after construction would be silently ignored and
+the cell would report a reference table it never opened.
+
+Verified: `--help` accepts all three; every flag used by
+`gh_wave9_warmstart_genoref_e200_s2700.slurm` and
+`gh_wave9_warmstart_genoref_frozen_e200_s2700.slurm` is a known option; the freeze wrapper's
+two preflight checks pass (all 40 `build_cell` call-site keywords accepted), and both cells'
+own values round-trip through `build_cell` (`genoref`: table set, alpha learned, init_rel
+0.01; `genoref_frozen`: table set, alpha frozen, init_rel 0.02). Neither submitted.
+
+**Essentiality** is written up separately in
+[[experiments.027-betaxanthin-metabolic.wave9-essentiality]]: the head is built and tested,
+the dataset route is blocked on a build that does not exist, and the FCL comparator numbers
+the brief quoted turn out to be the E. coli ones rather than the yeast ones.

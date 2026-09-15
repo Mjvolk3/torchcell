@@ -972,6 +972,55 @@ maximum half**, and it is an experiment on whether the priced balance term close
 now that the geometry admits a balanced flux. It is not a pre-approved pass, and the kill
 rule in its header is the review's.
 
+### 2026.09.14 (follow-up 9) - job 1946 failed, and the reference has to carry the genotype
+
+**Job 1946, read at epoch 143 of 200 (W&B run `6s8r3aov`), never left the betaxanthin mean
+plateau.** Validation prediction spread 0.0004 to 0.012, validation Pearson flat at -0.052
+after epoch 5, training data loss flat at 0.527 from epoch 0. What moved instead was the
+residual scale: the learned alpha grew from 0.0099 to 0.087 (`feas_warm_proposal_rel` 0.0087
+to 0.116), and as it grew the training-batch active-row balance max went from about 1.0 to
+2.0 by epoch 45 with `c_balance_active` rising 0.001 to 0.17, p95 swinging 0.005 to 0.9 after
+epoch 110, and density 0.175 to 0.25. The box held at zero violation throughout and `g_diss`
+stayed between 1,314 and 1,568 J/gDW/h, under a 3,700 limit it was never penalized against.
+
+**A second number from that read matters as much.** The training-batch active-row max was
+already about 1.0 at epoch 0 while the init probe read 0.03. The init probe forwarded four
+WILD TYPES, so deletion genotypes fail the rule from the start and no wild-type-only check
+could see it. Every init number in this note before today carries that caveat.
+
+**The diagnosis under test, and it is a hypothesis.** With one wild-type reference the
+proposal is `v_ref + alpha N z`, so the flux is very nearly the same vector for every
+genotype, the head reading it is close to a constant predictor, and the only channel the data
+term has for genotype information is alpha. Growing alpha is what it did, and feasibility was
+the price. The reference has to carry the genotype, or the residual does, and only one of
+those is cheap.
+
+**What the dataset's genotypes are, and it settles a design choice.** Measured by the
+builder on the 027 dataset: **4,928 distinct deleted-gene sets over 4,930 records**, every
+record perturbed, and the sizes are **4,190 quadruple deletions, 479 triples, 213 doubles,
+48 singles**. So a table keyed on single genes with a fallback for everything else would have
+put about 99 percent of the dataset on the fallback and changed nothing. The table is keyed
+on the sorted gene SET and each set is solved as itself, because a double deletion's flux is
+not a composition of two single-deletion fluxes.
+
+**What landed in the layer.** `warm_start_reference_table_path` plus `ReferenceFluxTable`,
+`genotype_key`, `read_reference_flux_table` and `FluxLayer.genotype_reference`, which looks
+each batch row's reference up by its gene-set key; a table built for another GEM is refused
+on a reaction-list mismatch rather than applied by position. The fallback is the wild-type
+reference and `coverage_report` carries the fallback RATE, so a table that misses the dataset
+would say so instead of training as the single-reference head did.
+`warm_start_alpha_learnable` freezes alpha with no gradient while keeping it in the state
+dict, so the two arms' checkpoints interchange. Off is bit-identical: one reference,
+repeated, exactly as job 1946 ran it. Five new tests, 126 pass.
+
+**The builder** (`probe_reference_flux_table.py`) solves pFBA per gene set with the genes
+knocked out through the GPR by `cobra.manipulation.knock_out_model_genes`, inside a
+`with model:` scope so each genotype starts from the shipped bounds. A knockout whose growth
+LP is infeasible is recorded as the ZERO flux rather than dropped: a lethal genotype's
+reference is a cell that does not grow. The table is cached under
+`$DATA_ROOT/data/torchcell/reference_flux/` with the GEM version, the medium statement, the
+growth fraction, the flux sha256 and the dataset's own record counts.
+
 ### CPU jobs this session
 
 | job | cell | state |

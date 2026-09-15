@@ -582,6 +582,14 @@ def build_flux_layer(
         # sets either, and both default to what every earlier build ran.
         latent_stochastic=bool(arm.get("latent_stochastic", False)),
         log_c_from_latent=bool(arm.get("log_c_from_latent", False)),
+        # THE WARM START'S THREE CONSTRUCTION-TIME FIELDS. `FluxLayer.__init__` solves or
+        # loads the reference and creates `warm_log_alpha` from these, so they have to be
+        # on the config BEFORE the layer is built; an assignment afterwards is ignored.
+        # All three default to the shipped values, so an arm that names none builds a
+        # bit-identical layer, and a non-warmstart arm never reads them at all.
+        warm_start_reference_table_path=arm.get("warm_start_reference_table_path"),
+        warm_start_alpha_learnable=bool(arm.get("warm_start_alpha_learnable", True)),
+        warm_start_init_rel=float(arm.get("warm_start_init_rel", 0.01)),
         # The physics terms are dimensionless but not automatically COMMENSURATE with the
         # data term. Measured at init on a real batch, the unweighted constraint sum is
         # ~255 against a data loss of ~2, so at weight 1 the model spends every parameter

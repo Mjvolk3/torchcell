@@ -248,7 +248,7 @@ from __future__ import annotations
 import hashlib
 import math
 import re
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn as nn
@@ -466,6 +466,40 @@ class FluxLayerConfig(BaseModel):
             "into a module that has none, and pFBA is a property of the stoichiometric "
             "model rather than of yeast. Read only when the parameterization is "
             "'warmstart'."
+        ),
+    )
+    warm_start_reference_table_path: str | None = Field(
+        default=None,
+        description=(
+            "NPZ holding ONE reference flux PER GENOTYPE, keyed by the genotype's deleted "
+            "gene set, written by "
+            "`experiments/026-metabolism-flux/scripts/probe_reference_flux_table.py`. None "
+            "uses the single wild-type reference for every genotype, which is what job "
+            "1946 ran.\n\n"
+            "WHY IT EXISTS, MEASURED. With one wild-type reference the proposal is "
+            "v_ref + alpha N z, so the flux is very nearly the same vector for every "
+            "genotype and the head reading it is close to a constant predictor. Job 1946 "
+            "(seed 2700, 200 epochs) never left the betaxanthin mean plateau: validation "
+            "prediction spread 0.0004 to 0.012, validation Pearson flat at -0.052 after "
+            "epoch 5, training data loss flat at 0.527 from epoch 0. The one channel the "
+            "data term had for genotype information was alpha, which grew from 0.0099 to "
+            "0.087 while the training-batch active-row balance max went from about 1.0 to "
+            "2.0 and c_balance_active from 0.001 to 0.17. The reference has to carry the "
+            "genotype, or the residual has to, and only one of those is cheap.\n\n"
+            "A genotype whose gene set the table does not carry falls back to the "
+            "wild-type reference clipped into its own box, and the fallback rate is "
+            "reported by `coverage_report` rather than left to be inferred."
+        ),
+    )
+    warm_start_alpha_learnable: bool = Field(
+        default=True,
+        description=(
+            "Whether alpha, the residual scale, is trained. True is what job 1946 ran. "
+            "False freezes it at `warm_start_init_rel` with no gradient, which is the arm "
+            "that asks whether a genotype-carrying reference makes the residual unnecessary "
+            "rather than the only channel the data term has. The parameter is kept in the "
+            "state dict either way, so a frozen cell and a learned cell load each other's "
+            "checkpoints."
         ),
     )
     warm_start_init_rel: float = Field(
@@ -1234,6 +1268,69 @@ def read_log_c_init(path: str) -> LogConcentrationInit:
     )
 
 
+class ReferenceFluxTable(BaseModel):
+    """One reference flux per genotype, keyed by the genotype's deleted gene set.
+
+    The key is the SORTED tuple of GEM gene ids, joined by commas, so it is stable across
+    builds and across machines in a way a gene INDEX is not: an index is a property of the
+    parse order of the GPR, and a table keyed by index and applied to a differently ordered
+    GEM would silently attribute one knockout's flux to another gene.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+    v: torch.Tensor = Field(description="[n_sets, r] mmol/gDW/h.")
+    keys: list[str]
+    rxn_ids: list[str]
+    provenance: dict[str, Any]
+    source_path: str
+    sha256: str
+
+    def index(self) -> dict[str, int]:
+        """Key to row. Built once by the layer and held, not rebuilt per forward."""
+        return {key: row for row, key in enumerate(self.keys)}
+
+
+def genotype_key(gene_ids: list[str]) -> str:
+    """The canonical key for a genotype's deleted gene set.
+
+    Sorted and comma-joined, so the same knockout written in either order is one key, and
+    the wild type is the empty string.
+    """
+    return ",".join(sorted(gene_ids))
+
+
+def read_reference_flux_table(path: str) -> ReferenceFluxTable:
+    """Read the per-genotype reference table, with its provenance and its hash."""
+    import hashlib as _hashlib
+    import json
+    import os.path as osp
+
+    import numpy as np
+
+    if not osp.isfile(path):
+        raise ValueError(
+            f"warm_start_reference_table_path={path!r} does not exist. Build it with "
+            "experiments/026-metabolism-flux/scripts/probe_reference_flux_table.py."
+        )
+    payload = np.load(path, allow_pickle=False)
+    for key in ("v", "keys", "rxn_ids", "provenance"):
+        if key not in payload:
+            raise ValueError(f"{path} carries no {key!r}; it is not a reference table.")
+    digest = _hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return ReferenceFluxTable(
+        v=torch.from_numpy(payload["v"].astype("float32")),
+        keys=[str(k) for k in payload["keys"]],
+        rxn_ids=[str(r) for r in payload["rxn_ids"]],
+        provenance=json.loads(str(payload["provenance"])),
+        source_path=path,
+        sha256=digest.hexdigest(),
+    )
+
+
 class ReferenceFluxRecord(BaseModel):
     """A parsimonious reference flux with the solve that produced it.
 
@@ -1576,6 +1673,9 @@ class FluxLayer(nn.Module):
         cu = gem.catalytic_units
         self.n_units = cu.n_units
         self.n_gem_genes = len(cu.gene_ids)
+        # The GEM's own gene ids, held because the per-genotype reference table is keyed by
+        # them rather than by index: an index is a property of the GPR parse order.
+        self.gem_gene_ids = list(cu.gene_ids)
 
         # -- structural buffers (never learned) -------------------------------
         self.register_buffer("s_indices", gem.s.indices())
@@ -1868,6 +1968,10 @@ class FluxLayer(nn.Module):
 
         # -- the warm start's reference flux, solved HERE and not passed in -----
         self.reference_flux: ReferenceFluxRecord | None = None
+        self.reference_table: ReferenceFluxTable | None = None
+        self.reference_table_index: dict[str, int] = {}
+        self.n_reference_fallbacks = 0
+        self.n_reference_lookups = 0
         if spec.kind == "warmstart":
             if cfg.warm_start_reference != "pfba":
                 raise ValueError(
@@ -1901,6 +2005,24 @@ class FluxLayer(nn.Module):
             self.warm_log_alpha = nn.Parameter(
                 torch.tensor(math.log(float(cfg.warm_start_init_rel)))
             )
+            if not cfg.warm_start_alpha_learnable:
+                # FROZEN, NOT REMOVED. It stays a parameter and stays in the state dict, so
+                # a frozen cell and a learned cell load each other's checkpoints and the
+                # arm is a diff in one boolean rather than in a parameter set.
+                self.warm_log_alpha.requires_grad_(False)
+            # -- one reference per genotype, if a table was supplied ---------
+            if cfg.warm_start_reference_table_path is not None:
+                table = read_reference_flux_table(cfg.warm_start_reference_table_path)
+                if table.rxn_ids != list(gem.rxn_ids):
+                    raise ValueError(
+                        f"the reference table at {cfg.warm_start_reference_table_path} is "
+                        f"indexed by a different reaction list ({len(table.rxn_ids)} "
+                        f"entries against this GEM's {len(gem.rxn_ids)}). A flux applied "
+                        "by position to another model's reactions is not a flux."
+                    )
+                self.reference_table = table
+                self.reference_table_index = table.index()
+                self.register_buffer("v_reference_table", table.v.clone())
         # NO BUFFER AND NO PARAMETER ON ANY OTHER KIND, deliberately: registering an empty
         # `v_reference` everywhere would change the state_dict of every arm already trained,
         # for a tensor none of them reads.
@@ -2373,12 +2495,70 @@ class FluxLayer(nn.Module):
         v_pre = torch.where(priced, v_force, v_box)
         return torch.minimum(torch.maximum(v_pre, lb), ub), priced
 
+    def genotype_reference(
+        self,
+        batch: int,
+        perturbation_indices: torch.Tensor,
+        perturbation_indices_batch: torch.Tensor,
+    ) -> torch.Tensor:
+        r"""``[B, r]`` the reference flux for each genotype in the batch.
+
+        WITHOUT A TABLE this is the wild-type reference repeated, which is what job 1946
+        ran and what made the head a near-constant predictor: the proposal was the same
+        vector for every row, so the only genotype-dependent thing reaching the flux was the
+        residual, and the only way the data term could grow the residual was to grow alpha.
+
+        WITH A TABLE each row gets the pFBA solution of the GEM with THAT genotype's genes
+        knocked out through the GPR, looked up by the sorted gene-set key. The lookup is a
+        dict hit per row on a handful of gene ids, which is nothing beside the K = 100
+        alternation that follows.
+
+        THE FALLBACK IS THE WILD-TYPE REFERENCE, and it is counted rather than hidden. A
+        genotype the table does not carry, which on a built table means one whose gene set
+        was not in the dataset the table was built from, falls back to the wild type and the
+        clip into its own box is what applies the deletion. The alternative, solving an LP
+        inside the forward pass, would put a solver in the training loop, which is the cost
+        this whole module exists to avoid, and it would not be differentiable.
+        """
+        if self.reference_table is None:
+            return self.v_reference.unsqueeze(0).expand(batch, -1)
+        rows: list[list[str]] = [[] for _ in range(batch)]
+        gem_of_pert = self.model_to_gem[perturbation_indices]
+        in_gem = gem_of_pert >= 0
+        gene_ids = self.gem_gene_ids
+        for row, gene in zip(
+            perturbation_indices_batch[in_gem].tolist(),
+            gem_of_pert[in_gem].tolist(),
+            strict=True,
+        ):
+            if row < batch:
+                rows[row].append(gene_ids[gene])
+        selected = []
+        fallbacks = 0
+        table = cast(torch.Tensor, self.v_reference_table)
+        for row in range(batch):
+            key = genotype_key(rows[row])
+            position = self.reference_table_index.get(key)
+            if position is None:
+                fallbacks += 1
+                selected.append(self.v_reference)
+            else:
+                selected.append(table[position])
+        self.n_reference_lookups += batch
+        self.n_reference_fallbacks += fallbacks
+        return torch.stack(selected, dim=0)
+
     def warm_alpha(self) -> torch.Tensor:
         r"""The residual head's one learned scalar, :math:`\alpha=e^{\log\alpha}>0`."""
         return torch.exp(self.warm_log_alpha)
 
     def _warmstart_flux(
-        self, context: torch.Tensor, lb: torch.Tensor, ub: torch.Tensor, draw: bool
+        self,
+        context: torch.Tensor,
+        lb: torch.Tensor,
+        ub: torch.Tensor,
+        draw: bool,
+        reference: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None, torch.Tensor]:
         r"""The pre-projection flux of the ``warmstart`` channel, and its reference.
 
@@ -2411,9 +2591,12 @@ class FluxLayer(nn.Module):
             ``(v_pre, kl, latent_std, v_ref_clipped)``, the first ``[B, r]`` inside the box.
         """
         latent, kl, latent_std = self._latent(context, force_sample=draw)
-        reference = torch.minimum(
-            torch.maximum(self.v_reference.unsqueeze(0).expand_as(lb), lb), ub
+        raw_reference = (
+            self.v_reference.unsqueeze(0).expand_as(lb)
+            if reference is None
+            else reference
         )
+        reference = torch.minimum(torch.maximum(raw_reference, lb), ub)
         direction = latent @ self.null_basis.t()
         direction = direction / direction.norm(dim=1, keepdim=True).clamp(min=1e-12)
         step = self.warm_alpha() * reference.norm(dim=1, keepdim=True)
@@ -2933,8 +3116,16 @@ class FluxLayer(nn.Module):
             box_lb, box_ub = lb, ub
             if self.projection_end == "boxforce":
                 box_lb, box_ub, thermo_emptied = self._thermo_tighten(lb, ub, delta_g)
+            # THE REFERENCE IS PER GENOTYPE when a table is loaded, and the rows are picked
+            # BEFORE the draw expansion so a K-draw arm repeats each genotype's own
+            # reference rather than re-looking it up per draw.
+            genotype_reference = self.genotype_reference(
+                b // draws, perturbation_indices, perturbation_indices_batch
+            )
+            if draws > 1:
+                genotype_reference = genotype_reference.repeat_interleave(draws, dim=0)
             v_pre_projection, kl, latent_std, reference = self._warmstart_flux(
-                context, box_lb, box_ub, draw=draws > 1
+                context, box_lb, box_ub, draw=draws > 1, reference=genotype_reference
             )
             v = self._project_feasible(v_pre_projection, box_lb, box_ub)
             if self.projection_end == "force":
@@ -3400,7 +3591,15 @@ class FluxLayer(nn.Module):
                 if self.projection_end == "boxforce":
                     box_lb, box_ub, _ = self._thermo_tighten(lb, ub, delta_g)
                 v_pre, _, _, _ = self._warmstart_flux(
-                    context, box_lb, box_ub, draw=True
+                    context,
+                    box_lb,
+                    box_ub,
+                    draw=True,
+                    reference=self.genotype_reference(
+                        context.shape[0],
+                        perturbation_indices,
+                        perturbation_indices_batch,
+                    ),
                 )
                 v = self._project_feasible(v_pre, box_lb, box_ub)
                 if self.projection_end == "force":
@@ -3661,6 +3860,27 @@ class FluxLayer(nn.Module):
                     "from_cache": self.reference_flux.from_cache,
                     "init_rel": self.config.warm_start_init_rel,
                     "alpha_now": float(self.warm_alpha()),
+                    "alpha_learnable": self.config.warm_start_alpha_learnable,
+                }
+            ),
+            # THE PER-GENOTYPE REFERENCE TABLE, with the fallback rate measured rather than
+            # assumed: a table that misses most of the dataset's genotypes would train as
+            # the single-reference head did and report that it had not.
+            "warm_start_reference_table": (
+                None
+                if self.reference_table is None
+                else {
+                    "path": self.reference_table.source_path,
+                    "sha256": self.reference_table.sha256,
+                    "n_genotypes": len(self.reference_table.keys),
+                    "provenance": self.reference_table.provenance,
+                    "n_lookups": self.n_reference_lookups,
+                    "n_fallbacks": self.n_reference_fallbacks,
+                    "fallback_frac": (
+                        self.n_reference_fallbacks / self.n_reference_lookups
+                        if self.n_reference_lookups
+                        else None
+                    ),
                 }
             ),
             # The temperature the flux-force relation is evaluated at, in kJ/mol, so a

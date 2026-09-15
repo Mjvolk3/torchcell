@@ -474,3 +474,33 @@ and 1995, under the turnover-thresholded rule at 1e-3.
   fraction under a predictor that ranks, and the wave-10 cells have to be read that way.
 - Job 2001 raises the active-row balance weight from 0.5 to 2.0 at seed 2700 to test whether
   the remaining 12 points are reachable by pricing alone.
+
+### Correction, same day: the 0.88 does not replicate, and the selector picks the epoch
+
+Audits 2010, 2011 and 2012 put the other two seeds and the balance-weight variant through
+the same rule. The frozen-scale result is one seed at one early epoch, not a property of the
+arm.
+
+| cell | weight | select ep | Genesis top 100 | active balance rows | active reactions |
+|---|---:|---:|---:|---:|---:|
+| 1986 s2700 | 0.5 | 7 | 0.88 | 81 | 17.9 percent |
+| 1999 s2701 | 0.5 | 149 | 0.00 | 9 | 12.7 percent |
+| 2000 s2702 | 0.5 | 51 | 0.00 | 9 | 12.7 percent |
+| 2001 s2700 | 2.0 | 27 | 0.00 | 84 | 25.0 percent |
+| pFBA reference | -- | -- | exact | 82 | 10.3 percent |
+
+- **The two seeds that selected late emptied the network.** Nine balance rows turn over above
+  the threshold against the reference's 82, so those cells are not balancing a flux, they are
+  carrying almost none. The earlier reading that freezing the scale is the lever was
+  measured at one seed and is withdrawn.
+- **Epoch and seed are confounded in every one of these numbers**, because the audit scores
+  the checkpoint the selector kept and the selector runs on the validation Pearson of a
+  near-constant predictor, which is noise. Job 1986 was audited at epoch 7 only because its
+  selector happened to land there.
+- **More balance pricing made it worse, not better.** At weight 2.0 the flux got denser,
+  25.0 percent of reactions against 17.9, and Genesis went to 0.00. Hypothesis (untested):
+  the penalty is a ratio and raising turnover inflates its denominator, so pricing it harder
+  buys density rather than balance.
+- Jobs 2016 to 2018 rerun the arm at a 10-epoch budget on three seeds, which forces selection
+  inside the early window and makes the audit a statement about an epoch we chose rather than
+  one the selector wandered into.

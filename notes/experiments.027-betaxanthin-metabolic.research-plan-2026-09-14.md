@@ -385,3 +385,33 @@ writes `results/target_reliability.json` plus the notes-tex table
 - Rank 3's kill rule is unchanged, but its interpretation is: an isobutanol arm reading
   +0.13 is already near half of the 0.31 retest Spearman, while a betaxanthin arm reading
   near zero has no label-noise excuse.
+
+## 2026.09.15 - All six metabolite targets, and the carotenoid screen
+
+The generator now covers every metabolite dataset in the build, not only the trained three,
+and two details of the betaxanthin estimator were fixed: the control row (`gene == "0"`,
+87 colonies, sd 1.20) is excluded, and the within-gene variance is pooled with `n - 1`
+weights rather than averaged. The paper's own three-colony rule sets the inclusion cut.
+
+| target | head | estimator | repeats | features | reliability | ceiling |
+|---|---|---|---:|---:|---:|---:|
+| betaxanthin | yes | variance components | 4,696 | 1 | 0.84 | 0.92 |
+| amino acids | yes | retest | 194 | 19 | 0.42 | 0.62 |
+| isobutanol | yes | retest | 190 | 1 | 0.11 | 0.33 |
+| carotenoid (Ozaydin) | no | one-way ICC | 129 | 1 | 0.11 | 0.33 |
+| metabolome (Zelezniak) | no | one-way ICC | 18 | 43 | 0.62 | 0.79 |
+| lipids (da Silveira) | no | SSMD back-solve | 130 | 138 | 0.82 | 0.91 |
+
+- **Cross-check on betaxanthin**: Cachera reports a trial-to-trial correlation of 0.765, and
+  Spearman-Brown over four combined screens implies 0.93, a ceiling of 0.96. The variance
+  split reads 0.84 and 0.92, so the two routes agree that the label is strong.
+- **The carotenoid screen is a weak label**, 0.11 ICC on a 6-level visual score. Its second
+  round of transformations re-screened only strains scoring 2.5 or higher, so it cannot
+  improve the estimate. A carotenoid head would be scored against a ceiling of 0.33.
+- **The metabolome and the lipids are the context sets worth a head**, at 0.79 and 0.91,
+  with the caveats that the Zelezniak replicates exist only on the re-grown variable subset
+  and the lipid number is a back-solve rather than a measured repeat.
+- Two loader gaps found while surveying, neither blocking: the Ozaydin loader discards the
+  workbook sheet holding the second round of transformations, and the da Silveira loader
+  hardcodes two replicates with no standard error while the SSMD sheet carries a recoverable
+  dispersion for most cells.

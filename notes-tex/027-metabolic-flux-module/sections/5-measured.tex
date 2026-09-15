@@ -320,22 +320,28 @@ Source: \texttt{mulleder\_retest\_reliability.py}, \texttt{results/mulleder\_ret
 A model cannot correlate with a measurement better than the measurement correlates with
 itself. The square root of a target's reliability is therefore the highest Pearson
 correlation any predictor of the true level can reach against the stored value, and it is
-the number a flat result has to be read against. Each of the three metabolically relevant
-targets releases a different kind of repeat, so each is estimated from its own source rather
-than from a shared assumption (Table~\ref{tab:target-reliability}).
+the number a flat result has to be read against. Six metabolite datasets enter the build and
+each releases a different kind of repeat, so each is estimated from its own source rather
+than from a shared assumption (Table~\ref{tab:target-reliability}). Three are decoded by a
+trained head. The other three are present as genotype context, and their ceilings say which
+of them would repay a head of its own.
 
 \input{tables/target_reliability}
 
-\textbf{Betaxanthin is the best measured of the three, not the worst.} The CRI-SPA release
-gives a per-gene mean, standard deviation and colony count over screen replicates 1, 2, 4
-and 6, with a median of 15 colonies per gene across 4{,}722 genes. Splitting the variance
-into a within-gene and a between-gene part puts the reliability of the stored gene mean at
-\textbf{0.84, a Pearson ceiling of 0.91}; one colony on its own carries 0.28, a ceiling of
-0.53. Averaging is what buys the difference. The consequence is that the flat betaxanthin
-results are not a label-noise story: the nearest-neighbor baseline reads $+0.145$ pinned
-Spearman and the module's arms read near zero against a label that supports far more, so the
-gap is in the predictor. This estimate assumes colonies of one gene are independent draws
-around that gene's level, and a shared plate or position effect would inflate it.
+\textbf{Betaxanthin is the best measured of the three trained targets, not the worst.} The
+CRI-SPA release gives a per-gene mean, standard deviation and colony count over screens 1,
+2, 4 and 6, with a median of 15 colonies per gene across the 4{,}696 genes that clear the
+paper's own three-colony rule. Splitting the variance into a within-gene and a between-gene
+part puts the reliability of the stored gene mean at \textbf{0.84, a Pearson ceiling of
+0.92}; one colony on its own carries 0.29, a ceiling of 0.54. Averaging is what buys the
+difference. Cachera's own trial-to-trial correlation gives an independent check that lands
+in the same place: a reported 0.765 between two trials implies 0.93 for a score combining
+four screens by the Spearman-Brown relation, a ceiling of 0.96. The consequence is that the
+flat betaxanthin results are not a label-noise story: the nearest-neighbor baseline reads
+$+0.145$ pinned Spearman and the module's arms read near zero against a label that supports
+far more, so the gap is in the predictor. This estimate assumes colonies of one gene are
+independent draws around that gene's level, and a shared plate or position effect would
+inflate it.
 
 \textbf{The amino acids sit in the middle}, at a reliability of 0.42 and a Pearson ceiling
 of 0.62 with a retest Spearman of 0.20, detailed above.
@@ -356,6 +362,25 @@ screen's own disagreement is therefore much larger than culture-to-culture varia
 re-screen, which is consistent with plate or position effects in a one-shot screen, though
 the release carries nothing that separates those from strain-level error.
 
+\textbf{The three context datasets split into two that could carry a head and one that
+cannot.} The Zelezniak metabolome reaches a median intraclass correlation of 0.62 over 43
+metabolites, a ceiling of 0.79, measured on the two protocols that re-grew independent
+cultures; the protocol covering all 96 genotypes carries no replicate at all, and the two
+that do re-grew only strains that varied in the first, so the estimate comes from a
+deliberately variable subset. The da Silveira lipids release no replicate either, and
+recovering the within-mutant spread from the released strictly standardized mean difference
+puts the median per-lipid reliability at 0.82 over 138 lipids, a ceiling of 0.91. That is
+the weakest estimate in the table, because it inherits whatever definition the dispersion
+column was computed under rather than measuring a repeat.
+
+\textbf{The carotenoid screen is the one context target whose label cannot support a head.}
+Ozaydin 2013 scores colony color on a 6-level visual scale, and 129 strains appear in more
+than one batch. Their intraclass correlation is \textbf{0.11, a ceiling of 0.33}, the
+weakest label of the six and the same magnitude as the isobutanol screen. The published
+second round of transformations cannot extend that estimate, because it re-screened only
+strains that had already scored 2.5 or higher. A coarse ordinal score read by eye is what
+this bound is measuring, so the limit is the assay rather than the biology.
+
 \textbf{Essentiality is bounded differently, and its bound is high.} The fourth endpoint the
 module now trains on is gene essentiality, whose label comes from the yeast split released
 with Merzbacher 2025, the same file the published comparator numbers were computed on. A
@@ -369,9 +394,11 @@ predictor from the label's own limit, which is far more room than any of the thr
 metabolite targets offers. The database list carries no negative class, so absence from it
 counts as nonessential only for genes the split names.
 
-Ordering the three metabolite targets by headroom puts betaxanthin first, the amino acids
-second and isobutanol last, which reverses the ranking the research plan used when it called
-isobutanol the best-conditioned target.
+Ordering the three trained metabolite targets by headroom puts betaxanthin first, the amino
+acids second and isobutanol last, which reverses the ranking the research plan used when it
+called isobutanol the best-conditioned target. Across all six, betaxanthin and the lipids
+are the labels that can support a strong correlation, and the carotenoid and isobutanol
+screens are the two that cannot.
 
 The table is built by \texttt{target\_reliability\_table.py} into the result file
 \texttt{target\_reliability.json}. The isobutanol repeats are measured by

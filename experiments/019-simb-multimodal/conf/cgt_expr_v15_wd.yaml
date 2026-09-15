@@ -1,0 +1,29 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v15_wd.yaml
+# THE WEIGHT-DECAY ROUND -- project v15, strong L2 on the incumbent at the full budget, on
+# the harder partitions, on cabbi.
+#
+# WHY. Weight decay has been measured once (v10 grid, 2-readouts.tex): AdamW at 1e-4 against
+# the incumbent's 1e-8, 16 runs a side at epochs <= 990, +0.005 at t 0.5, a null against a
+# resolution of 0.02. Two things that measurement did not cover: 1e-4 is small for AdamW,
+# whose usual range is 1e-2 to 1e-1, and 990 epochs is where the validation loss has
+# already bottomed while the metric is a fifth of the way up its curve. The v13 read at
+# epoch 1,547 puts the largest generalization effect on which strains are held out (the
+# partition, five times the within-partition spread), which no regularizer changes; this
+# round asks whether strong decay moves the score at all at 6,000 epochs.
+#
+# THE ARMS (gh_expr_008_arm.sh, W_* arms): W_ref_s<k> is the v13 reference (E_full input,
+# pinball, shared MLP readout, decay 1e-8); W_wd1e2_s<k> sets weight_decay 1e-2 and
+# W_wd1e1_s<k> 1e-1, everything else identical. Split seeds 1 and 2, the two draws below
+# split 0, so the contrast is read where the model has the most to gain; two init seeds.
+# Twelve runs on three cards, four per card; every contrast is paired within split and
+# seed (the card is not a block here, unlike v13).
+#
+# BUDGET: v13's, 6,000 epochs, so the reference arms are also two more draws of v13's
+# reference on splits 1 and 2 at the same budget. W&B project torchcell_019_expr_v15.
+defaults:
+  - cgt_expr_v13_split
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v15
+  tags: [wd-round, v15]

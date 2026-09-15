@@ -397,6 +397,24 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=4; STAGE_CONFIG=cgt_expr_v14_proteome
           EXTRA_OV="" ;;
+  # ------------------------------------------------------------- WEIGHT-DECAY ROUND (2026.09.15)
+  # Strong AdamW weight decay (1e-2, 1e-1) against the incumbent's 1e-8 on split seeds 1 and
+  # 2, two init seeds, 6,000 epochs (conf/cgt_expr_v15_wd.yaml). Twelve runs on three cabbi
+  # cards; the contrast is paired within split and seed, and the run list is laid out so
+  # each card mixes arms rather than holding one arm.
+  #
+  #   H=$(git rev-parse HEAD); D=$(git diff HEAD | sha256sum | cut -d" " -f1)
+  #   sbatch -p cabbi --gres=gpu:1 --cpus-per-task=12 --mem=120g --time=10-00:00:00 \
+  #       --array=0-2 --export=ALL,W5_STAGE=wd,TORCHCELL_SOURCE_GIT_HASH=$H,\
+  #   TORCHCELL_SOURCE_DIFF_SHA256=$D experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  wd)     JOBS=(
+            W_ref_s1:0 W_wd1e2_s1:0 W_wd1e1_s1:0 W_ref_s1:1
+            W_wd1e2_s1:1 W_wd1e1_s1:1 W_ref_s2:0 W_wd1e2_s2:0
+            W_wd1e1_s2:0 W_ref_s2:1 W_wd1e2_s2:1 W_wd1e1_s2:1
+          )
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=4; STAGE_CONFIG=cgt_expr_v15_wd
+          EXTRA_OV="" ;;
   # CANARY -- one fast_dev_run to prove container + conda + PYTHONPATH + LMDB path before a
   # wave is committed to the queue. Exits in minutes.
   canary) ARMS=(X_mix); SEEDS=(0)
@@ -409,7 +427,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head|split|proteome)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head|split|proteome|wd)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

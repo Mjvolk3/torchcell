@@ -557,6 +557,15 @@ case "$ARM" in
                      ARM_TAGS=(readout-shared-mlp "split${ARM##*_s}" proteome stage-proteome round-proteome) ;;
   P_concat_s[0-9])   OVERRIDES=(multitask.concat_context=true data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(readout-concat "split${ARM##*_s}" proteome stage-proteome round-proteome) ;;
+  # ============================ WEIGHT-DECAY ROUND (2026.09.15, v15) =======================
+  # Strong AdamW weight decay on the v13 reference at the full budget, split seeds 1 and 2
+  # (conf/cgt_expr_v15_wd.yaml explains the round). The reference keeps the incumbent's 1e-8.
+  W_ref_s[0-9])      OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(wd-1e-8 "split${ARM##*_s}" stage-wd round-wd) ;;
+  W_wd1e2_s[0-9])    OVERRIDES=(regression_task.optimizer.weight_decay=1e-2 data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(wd-1e-2 "split${ARM##*_s}" stage-wd round-wd) ;;
+  W_wd1e1_s[0-9])    OVERRIDES=(regression_task.optimizer.weight_decay=1e-1 data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(wd-1e-1 "split${ARM##*_s}" stage-wd round-wd) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

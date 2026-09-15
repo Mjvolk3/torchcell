@@ -111,7 +111,7 @@ def main() -> None:
         dataset,
         batch_size=min(args.genotypes, 32),
         shuffle=False,
-        follow_batch=["perturbation_indices", "phenotype_values"],
+        follow_batch=["perturbation_indices", "deletion_indices", "phenotype_values"],
     )
     batch = next(iter(loader)).to(device)
     cell_graph = dataset.cell_graph.to(device)

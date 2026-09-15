@@ -555,6 +555,35 @@ def build_flux_layer(
         complex_aggregation=complex_aggregation,
         kcat_ceiling_sigma_k=kcat_ceiling_sigma_k,
     )
+    # THE SHUFFLED-PARAMETER CONTROL. Permuting the resolved kcat vector ACROSS catalytic
+    # units keeps the architecture, the parameter count, the coverage tiers and the value
+    # DISTRIBUTION exactly as they are, and destroys only the correspondence between a
+    # turnover number and the reaction it was measured for. An arm that still beats its
+    # pooled control under this permutation gained something from the architecture rather
+    # than from the measured kinetics, which is the question the control exists to ask.
+    # Seeded and recorded, so the permutation is reproducible from the result file.
+    kcat_shuffle_seed = arm.get("shuffle_kcat_seed")
+    kcat_shuffle_meta: dict[str, Any] = {"applied": False}
+    if kcat_shuffle_seed is not None:
+        generator = np.random.default_rng(int(kcat_shuffle_seed))
+        order = generator.permutation(kcat.values.shape[0])
+        before = float(np.nansum(kcat.values))
+        kcat.values = kcat.values[order]
+        kcat_shuffle_meta = {
+            "applied": True,
+            "seed": int(kcat_shuffle_seed),
+            "n_units": int(order.shape[0]),
+            "n_moved": int((order != np.arange(order.shape[0])).sum()),
+            # The multiset is preserved by construction; the sum is the cheap witness.
+            "value_sum_before": before,
+            "value_sum_after": float(np.nansum(kcat.values)),
+            "note": (
+                "kcat values permuted across catalytic units. Architecture, parameter "
+                "count, tier counts and value distribution are unchanged; only the "
+                "unit-to-value correspondence is destroyed."
+            ),
+        }
+
     thermo_source = ThermoSource(arm.get("thermo_source", "shipped"))
     reaction_thermo = None
     if thermo_source is not ThermoSource.SHIPPED:
@@ -652,6 +681,7 @@ def build_flux_layer(
         "thermo_sha256": None if reaction_thermo is None else reaction_thermo.sha256,
         "mw_experimental_fraction": float(mw.experimental_coverage.fraction),
         "media": media_meta,
+        "kcat_shuffle": kcat_shuffle_meta,
         "met_index": {m: i for i, m in enumerate(gem.met_ids)},
     }
     return layer, meta
@@ -908,7 +938,7 @@ def run_arm(
         num_workers=args.num_workers,
         pin_memory=True,
         prefetch=False,
-        follow_batch=["perturbation_indices", "phenotype_values"],
+        follow_batch=["perturbation_indices", "deletion_indices", "phenotype_values"],
     )
     dm.setup()
 

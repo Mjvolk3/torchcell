@@ -256,7 +256,7 @@ def audit_cell(result_file: str, tbx: Any, dataset: Any, cfg: Any) -> CapacityAu
         num_workers=0,
         pin_memory=False,
         prefetch=False,
-        follow_batch=["perturbation_indices", "phenotype_values"],
+        follow_batch=["perturbation_indices", "deletion_indices", "phenotype_values"],
         pinned_test_indices=pinned,
     )
     dm.setup()

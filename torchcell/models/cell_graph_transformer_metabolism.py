@@ -325,7 +325,12 @@ def gene_removal_indices(batch: Any) -> tuple[torch.Tensor, torch.Tensor, str]:
     CHOICE IS RETURNED rather than silently taken, so a run records which one it gated on.
     """
     gene = batch["gene"]
-    if hasattr(gene, "deletion_indices"):
+    # Both halves are needed: the per-graph attribute exists on every batch built from a
+    # processed graph that carries it, but the `_batch` assignment exists only when the
+    # DataModule listed `deletion_indices` in follow_batch. A script that builds its own
+    # DataModule without it (the audits) must fall back and record that it did, not raise
+    # (job 1984 died on exactly this).
+    if hasattr(gene, "deletion_indices") and hasattr(gene, "deletion_indices_batch"):
         return gene.deletion_indices, gene.deletion_indices_batch, "deletion_indices"
     return (
         gene.perturbation_indices,

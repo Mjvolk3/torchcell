@@ -609,7 +609,7 @@ def audit_draws(
         num_workers=0,
         pin_memory=True,
         prefetch=False,
-        follow_batch=["perturbation_indices", "phenotype_values"],
+        follow_batch=["perturbation_indices", "deletion_indices", "phenotype_values"],
         pinned_test_indices=pinned,
     )
     dm.setup()

@@ -1,0 +1,51 @@
+{
+  "sources": {
+    "betaxanthin": "/scratch/projects/torchcell-scratch/data/torchcell/betaxanthin_cachera2023/raw/GA1_2_4_6.csv",
+    "amino_acids": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/mulleder_retest_reliability.json",
+    "isobutanol": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/isobutanol_retest_reliability.json"
+  },
+  "targets": [
+    {
+      "target": "Betaxanthin",
+      "source": "BetaxanthinCachera2023Dataset",
+      "repeat_unit": "colonies per gene across screen replicates 1, 2, 4 and 6 (median 15)",
+      "n_repeated": 4722,
+      "retest_pearson": null,
+      "retest_spearman": null,
+      "reliability_stored_value": 0.836213986780797,
+      "pearson_ceiling_stored_value": 0.9144473668729092,
+      "reliability_single_measurement": 0.2819864142929608,
+      "pearson_ceiling_single_measurement": 0.531023930056792,
+      "scale": "corrected mean colony intensity at 24 h",
+      "caveat": "Colonies are assumed independent within a gene; a shared plate or position effect inflates this."
+    },
+    {
+      "target": "Amino acids (19)",
+      "source": "AminoAcidMulleder2016Dataset",
+      "repeat_unit": "ORFs measured in two batches, averaged over the 19 amino acids",
+      "n_repeated": 194,
+      "retest_pearson": 0.43381440433242785,
+      "retest_spearman": 0.20103117980165705,
+      "reliability_stored_value": 0.4234034945307094,
+      "pearson_ceiling_stored_value": 0.6150903296146693,
+      "reliability_single_measurement": 0.4234034945307094,
+      "pearson_ceiling_single_measurement": 0.6150903296146693,
+      "scale": "log10 intracellular mM",
+      "caveat": "One culture per strain, so the stored value IS a single measurement; batch median scaling only, no PQN, so this is a lower bound."
+    },
+    {
+      "target": "Isobutanol biosensor",
+      "source": "IsobutanolScreenLopez2024Dataset",
+      "repeat_unit": "ORFs appearing on two or more rows of the genome-wide screen",
+      "n_repeated": 190,
+      "retest_pearson": 0.10641389363966347,
+      "retest_spearman": 0.30855074359144413,
+      "reliability_stored_value": 0.11096457584092734,
+      "pearson_ceiling_stored_value": 0.33311345791025515,
+      "reliability_single_measurement": 0.11096457584092734,
+      "pearson_ceiling_single_measurement": 0.33311345791025515,
+      "scale": "log10 fold change of biosensor fluorescence",
+      "caveat": "Heavy tailed: 4 of 190 pairs disagree by more than a decade, and dropping them raises the retest Pearson to 0.29; the robust reliability is 0.50 (ceiling 0.71)."
+    }
+  ]
+}

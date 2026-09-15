@@ -315,6 +315,57 @@ Source: \texttt{mulleder\_retest\_reliability.py}, \texttt{results/mulleder\_ret
 %% experiments/027-betaxanthin-metabolic/results/wave8_aa_ctxconc_e200_s270{0,1,2}.json
 %% and wave7_aa_conc_e200_s270{0,1,2}.json (W&B view nw=yxntcreb2vq).
 
+\subsection{What each target can support\secstatus{todo}}
+
+A model cannot correlate with a measurement better than the measurement correlates with
+itself. The square root of a target's reliability is therefore the highest Pearson
+correlation any predictor of the true level can reach against the stored value, and it is
+the number a flat result has to be read against. Each of the three metabolically relevant
+targets releases a different kind of repeat, so each is estimated from its own source rather
+than from a shared assumption (Table~\ref{tab:target-reliability}).
+
+\input{tables/target_reliability}
+
+\textbf{Betaxanthin is the best measured of the three, not the worst.} The CRI-SPA release
+gives a per-gene mean, standard deviation and colony count over screen replicates 1, 2, 4
+and 6, with a median of 15 colonies per gene across 4{,}722 genes. Splitting the variance
+into a within-gene and a between-gene part puts the reliability of the stored gene mean at
+\textbf{0.84, a Pearson ceiling of 0.91}; one colony on its own carries 0.28, a ceiling of
+0.53. Averaging is what buys the difference. The consequence is that the flat betaxanthin
+results are not a label-noise story: the nearest-neighbor baseline reads $+0.145$ pinned
+Spearman and the module's arms read near zero against a label that supports far more, so the
+gap is in the predictor. This estimate assumes colonies of one gene are independent draws
+around that gene's level, and a shared plate or position effect would inflate it.
+
+\textbf{The amino acids sit in the middle}, at a reliability of 0.42 and a Pearson ceiling
+of 0.62 with a retest Spearman of 0.20, detailed above.
+
+\textbf{Isobutanol is the weakest genome-wide, and the figure quoted for it earlier was the
+wrong one.} The first screen and the validated re-screen agree at Pearson 0.92 over their
+225 shared strains, which is the number the research plan used, but the re-screen measured
+only strong hits, and selecting the extremes of both tails inflates that correlation: within
+the up block alone it falls to 0.41, and within the down block to 0.68. The unselected
+estimate comes from 190 genes that appear on two or more rows of the genome-wide screen,
+where the two rows correlate at Pearson 0.11 and Spearman 0.31, giving a reliability of 0.11
+and a ceiling of 0.33. The pairs are heavy tailed, and dropping the four that disagree by
+more than a decade raises the Pearson to 0.29 and a median-based reliability to 0.50, a
+ceiling of 0.71. Two things are reproducible even so: direction, with 99.6 percent of
+re-screened hits keeping their side of a fold change of 1, and the triplicate re-screen
+itself, whose median spread is 0.037 decades against a genome-wide spread of 0.216. The
+screen's own disagreement is therefore much larger than culture-to-culture variation in the
+re-screen, which is consistent with plate or position effects in a one-shot screen, though
+the release carries nothing that separates those from strain-level error.
+
+Ordering the three by headroom puts betaxanthin first, the amino acids second and isobutanol
+last, which reverses the ranking the research plan used when it called isobutanol the
+best-conditioned target.
+
+The table is built by \texttt{target\_reliability\_table.py} into the result file
+\texttt{target\_reliability.json}. The isobutanol repeats are measured by
+\texttt{isobutanol\_retest\_reliability.py}, and the amino-acid repeats by the script named
+in the paragraph above. Every result file sits in the experiment's \texttt{results}
+directory.
+
 \subsection{Betaxanthin parity, and the criterion that has never been met\secstatus{todo}}
 
 On the endpoint the module was built for, the same wave is flat. \textbf{Betaxanthin parity

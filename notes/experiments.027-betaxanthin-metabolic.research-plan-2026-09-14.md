@@ -445,3 +445,32 @@ satisfies it outright.
   reads 100 percent on the second law under the layer's own potentials there, so its Genesis
   fraction of 46 percent is entirely the balance half. At standard state no cell passes,
   which is the learned concentration term doing the work.
+
+## 2026.09.15 - Freezing the constraint scale nearly closes Genesis, and the medium decides it
+
+Jobs 1986 and 1987 ran the warm-started boxforce arm with the constraint scale frozen, the
+lever the 09-15 note proposed after job 1946 lost feasibility as its scale grew. Audits 1994
+and 1995, under the turnover-thresholded rule at 1e-3.
+
+| cell | medium | select ep | Genesis, all 4,930 | Genesis, top 100 | Genesis, pinned test top 100 | active rows | active reactions |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 1946 shipped, scale free | shipped | 3 | 0.98 | 0.46 | 0.64 | 81 | 17.1 percent |
+| 1986 shipped, scale frozen | shipped | 7 | 0.98 | **0.88** | 0.74 | 81 | 17.9 percent |
+| 1987 YPD, scale frozen | YPD | 4 | 0.01 | 0.10 | 0.05 | 207 | 23.9 percent |
+| pFBA reference | shipped | -- | exact | exact | exact | 82 | 10.3 percent |
+
+- **Freezing the scale is the lever.** Top-100 Genesis moves 0.46 to 0.88 at matched seed,
+  medium and arm, with the box exact throughout and the second law at 1.00 under the layer's
+  own potentials. The criterion is 0.95 on 2 of 3 seeds, so this is close and not met; seeds
+  2701 and 2702 are jobs 1999 and 2000.
+- **YPD destroys it.** The same cell on the dataset's own medium reads 0.10 on the top 100,
+  because open uptake gives a denser flux: 207 active balance rows against 81, and 23.9
+  percent of reactions carrying flux against pFBA's 10.3. Feasibility on the shipped bounds
+  is therefore partly an artifact of a closed medium, and the honest version of the Genesis
+  claim has to name which medium it was met on.
+- **The predictor is a constant in both.** Pinned Spearman 0.027 (shipped) and 0.053 (YPD),
+  so the top 100 is a near-arbitrary subset rather than the strains the model believes in.
+  A feasibility fraction measured on a collapsed ranking is weaker evidence than the same
+  fraction under a predictor that ranks, and the wave-10 cells have to be read that way.
+- Job 2001 raises the active-row balance weight from 0.5 to 2.0 at seed 2700 to test whether
+  the remaining 12 points are reachable by pricing alone.

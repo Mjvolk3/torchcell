@@ -39,5 +39,11 @@ export PYTHONHASHSEED=0
 export OMP_NUM_THREADS=8
 export MKL_NUM_THREADS=8
 
+# The medium and the output name ride in the environment so one cell builds both tables:
+#   sbatch --export=ALL,TC_MEDIUM=YPD,TC_TABLE_OUT=reference_flux_table_ypd.npz ...
+#   sbatch --export=ALL,TC_MEDIUM=none,TC_TABLE_OUT=reference_flux_table_minimal.npz ...
+MEDIUM="${TC_MEDIUM:-YPD}"
+TABLE_OUT="${TC_TABLE_OUT:-reference_flux_table_ypd.npz}"
 ~/miniconda3/envs/torchcell/bin/python \
-    experiments/026-metabolism-flux/scripts/probe_reference_flux_table.py
+    experiments/026-metabolism-flux/scripts/probe_reference_flux_table.py \
+    --medium "$MEDIUM" --out "$TABLE_OUT"

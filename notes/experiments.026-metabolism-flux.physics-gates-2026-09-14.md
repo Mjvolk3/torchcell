@@ -1087,6 +1087,67 @@ LMDB handle and closes it, so a handle opened before that call is closed underne
 caller and the next read fails on a `None` env. The builder takes the length first, then
 opens its handle.
 
+### 2026.09.14 (follow-up 11) - the re-keyed tables, and the reference barely moves
+
+**The gate is fixed and the key rides on it.** `deletion_indices` landed, the model routes
+the flux layer's gate through `gene_removal_indices`, and the reference lookup reads the same
+tensor, so the gate and the key cannot disagree. The probe records which index it took:
+`deletion_indices`, **32 removal entries against 128 perturbation entries** on a batch of 32,
+which is one deletion plus three cassette additions per genotype and confirms the
+single-deletion structure from the other side. Table fallback rate **0.0**.
+
+The silent skip of background genes is gone. A background gene reaching `genotype_reference`
+is now a **ValueError** naming the cause, because since `deletion_indices` exists, a cassette
+gene arriving there means the caller wired the perturbation set and the availability gate is
+wrong too. Hiding that would hide the defect the field was added to fix. `attach_reference_table`
+replaces the four hand-assignments that let a first pass set three of four and fall back on
+100 percent of the batch while looking like it worked.
+
+**Both tables, re-keyed on deletions only.**
+
+| table | medium | wild-type growth | sets | lethal | sets whose gene is outside the GEM | moved > 1 percent |
+|---|---|---|---|---|---|---|
+| `reference_flux_table_ypd.npz` | YPD | 0.5352 | 4,931 | **0** | 3,991 | **201 of 939 (21.4 percent)** |
+| `reference_flux_table_minimal.npz` | shipped bounds | 0.0858 | 4,931 | **0** | 3,991 | **221 of 939 (23.5 percent)** |
+
+**That settles the medium question the other way round from my last report.** With the
+deletion-only key there are **zero lethal knockouts on either medium**, so the earlier
+"every genotype has growth exactly 0" was the FALSE KNOCKOUT, not the medium. Deleting ARO4
+plus ARO7 plus, in the beta-carotene records, the essential BTS1 is lethal on any medium. YPD
+remains right for Cachera on its own merits and the minimal table exists so the two terms can
+never be confused again.
+
+**The init check on 32 real genotypes, YPD, gate through `deletion_indices`.**
+
+| row | max | p95 | rows | density | rel | flux sd | reference sd |
+|---|---|---|---|---|---|---|---|
+| single wild-type reference | 1.5898 | 0.3343 | 206.7 | 0.3055 | 0.520 | 0.02116 | 0 |
+| per-genotype | 1.5903 | 0.3348 | 206.3 | 0.3058 | 0.520 | **0.02279** | 0.005238 |
+
+**The per-genotype reference changes essentially nothing, and the reason is arithmetic
+rather than plumbing.** Only **2 of the 32 genotypes (6.25 percent)** get a reference that
+differs from the wild type by more than 1 percent, median difference 0.0, max 0.3906. That is
+what the table predicts: 3,991 of 4,930 deleted genes are not in the GEM at all, and of the
+939 that are, only 201 move the pFBA solution, so a random batch should show about 4 percent.
+The across-genotype flux sd rises from 0.02116 to **0.02279**, 7.7 percent, and normalized by
+the mean flux magnitude from 0.2090 to 0.2255. The five feasibility statistics are identical
+to three decimals.
+
+So the diagnosis that the reference must carry the genotype is not refuted, but **this
+reference does not carry it**: a single metabolic deletion on rich medium mostly leaves the
+parsimonious optimum where it was, which is a property of the GEM's redundancy rather than a
+defect in the table. A reference that actually varied per genotype would have to come from
+something other than pFBA at the knockout's own optimum, MOMA or ROOM being the standard
+choices, since both are defined as a minimal ADJUSTMENT from the wild-type flux and therefore
+move whenever the knockout forces any rerouting at all.
+
+**One more thing the corrected run shows.** With the gate correct and YPD applied, the
+warm-start head's init read on REAL genotypes is max 1.5898, p95 0.3343, 207 rows, density
+0.306, proposal distance 0.520. Against the target row of 0.00118 / 0.00038 / 82 / 0.21 /
+0.008, and against the 0.0306 that four wild types on the shipped bounds reported, that is a
+different regime entirely. Two changes drove it and they are not separated here: the medium
+widens the box, and these are deletion genotypes rather than wild types.
+
 ### CPU jobs this session
 
 | job | cell | state |

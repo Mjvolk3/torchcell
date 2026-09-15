@@ -2719,14 +2719,18 @@ def test_the_reference_key_ignores_the_engineered_background(tmp_path):
         warm_start_reference_table_path=str(path),
     )
     assert layer.reference_background_genes == {"g0"}
-    # A genotype carrying the cassette (g0) AND deleting g2 must resolve to the g2 row.
-    indices = torch.tensor([0, 2], dtype=torch.long)
-    batch_of = torch.tensor([0, 0], dtype=torch.long)
-    rows = layer.genotype_reference(1, indices, batch_of)
+    # THE DELETION SET resolves to its row: g2 deleted, cassette not named.
+    rows = layer.genotype_reference(
+        1, torch.tensor([2], dtype=torch.long), torch.tensor([0], dtype=torch.long)
+    )
     assert float((rows[0] - torch.tensor(knocked)).abs().max()) == 0.0
     assert layer.coverage_report()["warm_start_reference_table"]["n_fallbacks"] == 0
-    # And the cassette alone is the wild type, not a missing key.
-    rows = layer.genotype_reference(
-        1, torch.tensor([0], dtype=torch.long), torch.tensor([0], dtype=torch.long)
-    )
-    assert float((rows[0] - torch.tensor(wild)).abs().max()) == 0.0
+    # THE PERTURBATION SET, which names the cassette, is an ERROR rather than a silent
+    # fallback: since deletion_indices landed, a background gene arriving here means the
+    # caller wired the wrong index set and the availability gate is wrong too.
+    with pytest.raises(ValueError, match="engineered background"):
+        layer.genotype_reference(
+            1,
+            torch.tensor([0, 2], dtype=torch.long),
+            torch.tensor([0, 0], dtype=torch.long),
+        )

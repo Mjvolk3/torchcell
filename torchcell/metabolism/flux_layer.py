@@ -2221,6 +2221,34 @@ class FluxLayer(nn.Module):
         self.n_thermo_exempt_from_file = added
         return exempt
 
+    def attach_reference_table(self, path: str) -> int:
+        """Load a per-genotype reference table onto a layer that is already built.
+
+        ONE ENTRY POINT, because the table needs four things set together: the record, the
+        key index, the background gene set and the buffer. Setting three of the four is
+        silent and looks like it worked: the lookup simply misses every row and falls back
+        to the wild type on 100 percent of the batch, which is exactly what a first pass
+        through this probe did before this method existed. `coverage_report` reports the
+        fallback rate so the failure is visible, but it is better not to have it.
+
+        Returns:
+            How many genotypes the table carries.
+        """
+        table = read_reference_flux_table(path)
+        if table.rxn_ids != list(self.rxn_ids):
+            raise ValueError(
+                f"the reference table at {path} is indexed by a different reaction list "
+                f"({len(table.rxn_ids)} entries against this GEM's {len(self.rxn_ids)})."
+            )
+        self.reference_table = table
+        self.reference_table_index = table.index()
+        self.reference_background_genes = table.background_genes()
+        self.register_buffer("v_reference_table", table.v.clone())
+        self.config.warm_start_reference_table_path = path
+        self.n_reference_lookups = 0
+        self.n_reference_fallbacks = 0
+        return len(table.keys)
+
     def apply_log_c_init(self, path: str) -> float:
         r"""Start the anchored concentration at a vector that licenses a real flux.
 
@@ -2550,8 +2578,25 @@ class FluxLayer(nn.Module):
             gem_of_pert[in_gem].tolist(),
             strict=True,
         ):
-            if row < batch and gene_ids[gene] not in self.reference_background_genes:
-                rows[row].append(gene_ids[gene])
+            if row >= batch:
+                continue
+            name = gene_ids[gene]
+            if name in self.reference_background_genes:
+                # THE CONSISTENCY CHECK, and it is an error rather than a skip. Since
+                # `deletion_indices` landed, the model passes the DELETION set to this
+                # layer through `gene_removal_indices`, so a background gene arriving here
+                # means the caller passed the perturbation set instead and both the
+                # availability gate and this key are reading a cassette the strain HAS as a
+                # gene it LACKS. Skipping it silently would hide exactly the defect the
+                # deletion index was added to fix.
+                raise ValueError(
+                    f"the gene set for this batch names {name!r}, which the reference "
+                    "table records as an engineered background rather than a deletion. "
+                    "The caller passed perturbation indices where deletion indices were "
+                    "expected; route them through "
+                    "cell_graph_transformer_metabolism.gene_removal_indices."
+                )
+            rows[row].append(name)
         selected = []
         fallbacks = 0
         table = cast(torch.Tensor, self.v_reference_table)

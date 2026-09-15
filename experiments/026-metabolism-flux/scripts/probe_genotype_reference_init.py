@@ -50,8 +50,12 @@ RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "026-metabolism-flux", "results")
 BX_SCRIPTS = osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "scripts")
 BX_CONF = osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "conf")
 SCRIPTS_026 = osp.join(EXPERIMENT_ROOT, "026-metabolism-flux", "scripts")
+#: The YPD table. The shipped-bounds table it replaced is kept on disk and is a measurement
+#: of the medium rather than of the genotypes: on the GEM's own boundary every one of this
+#: dataset's strains has growth exactly 0, because almost all of them delete ARO4 and ARO7
+#: and nothing supplies aromatic amino acids.
 TABLE_PATH = osp.join(
-    DATA_ROOT, "data/torchcell/reference_flux/reference_flux_table.npz"
+    DATA_ROOT, "data/torchcell/reference_flux/reference_flux_table_ypd.npz"
 )
 sys.path.insert(0, BX_SCRIPTS)
 sys.path.insert(0, SCRIPTS_026)
@@ -60,6 +64,9 @@ from train_bx import build_dataset, load_config, resolve_pinned_test  # noqa: E4
 from train_flux import ARMS, build_flux_layer  # noqa: E402
 
 from torchcell.datamodules import CellDataModule  # noqa: E402
+from torchcell.models.cell_graph_transformer_metabolism import (  # noqa: E402
+    gene_removal_indices,
+)
 
 TURNOVER_THRESHOLD = 1.0e-3
 FLUX_ACTIVE_RELATIVE_THRESHOLD = 1.0e-6
@@ -121,6 +128,7 @@ def main() -> None:
     parser.add_argument("--hidden", type=int, default=90)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--table", default=TABLE_PATH)
+    parser.add_argument("--medium", default="YPD")
     parser.add_argument("--arm-file", default="arm_flux_warmstart_boxforce_nominal.yaml")
     parser.add_argument("--out", default="probe_genotype_reference_init.json")
     args = parser.parse_args()
@@ -147,15 +155,24 @@ def main() -> None:
         num_workers=0,
         pin_memory=False,
         prefetch=False,
-        follow_batch=["perturbation_indices", "phenotype_values"],
+        # `deletion_indices` needs its own batch vector, exactly as the trainer collates it;
+        # without it the helper finds the field but not its row assignment.
+        follow_batch=["perturbation_indices", "deletion_indices", "phenotype_values"],
         pinned_test_indices=pinned,
     )
     dm.setup()
     batch = next(iter(dm.all_dataloader()))
+    # THE SAME HELPER THE MODEL USES, so the availability gate, the reference key and this
+    # probe read one gene set. It returns which index it took, and the answer is recorded:
+    # a batch built before `deletion_indices` existed falls back to the perturbation index,
+    # and every number below would then be measured on a layer that reads the betaxanthin
+    # cassette as a knockout.
+    gate_indices, gate_batch, gate_source = gene_removal_indices(batch)
+    print(f"gene removal source: {gate_source}; {int(gate_indices.numel())} entries")
     gene_ids = list(dataset.cell_graph["gene"].node_ids)
-    n_perturbed = int(batch["gene"].perturbation_indices.numel())
     print(
-        f"batch: {int(batch.num_graphs)} genotypes, {n_perturbed} perturbation entries"
+        f"batch: {int(batch.num_graphs)} genotypes, "
+        f"{int(batch['gene'].perturbation_indices.numel())} perturbation entries"
     )
 
     rows: list[dict[str, object]] = []
@@ -164,6 +181,10 @@ def main() -> None:
         arm["parameterization"] = arm_file["flux_parameterization"]
         arm["kcat_tier"] = "predicted"
         arm["thermo_source"] = "union_external"
+        # THE SAME MEDIUM THE REFERENCE WAS SOLVED ON. A reference solved on YPD and
+        # clipped into a box built on the shipped boundary is two different cells, and the
+        # shipped boundary is the one on which every strain in this dataset is dead.
+        arm["media_name"] = args.medium if args.medium != "none" else None
         torch.manual_seed(args.seed)
         layer, meta = build_flux_layer(arm, gene_ids, args.hidden)
         assert layer is not None
@@ -173,16 +194,14 @@ def main() -> None:
         )
         layer.apply_log_c_init(osp.join(RESULTS_DIR, "thermo_consistent_log_c.json"))
         if table is not None:
-            # Construction-time on a real cell; set here because 026's build_flux_layer
-            # forwards only its own registry's fields.
-            layer.config.warm_start_reference_table_path = table
-            from torchcell.metabolism.flux_layer import read_reference_flux_table
-
-            loaded = read_reference_flux_table(table)
-            assert loaded.rxn_ids == list(layer.rxn_ids)
-            layer.reference_table = loaded
-            layer.reference_table_index = loaded.index()
-            layer.register_buffer("v_reference_table", loaded.v.clone())
+            # ONE CALL, because setting the record without the background gene set misses
+            # every row and falls back to the wild type on the whole batch, silently.
+            n_rows = layer.attach_reference_table(table)
+            assert layer.reference_background_genes, (
+                f"the table at {table} carries no background_genes in its provenance, so "
+                "the key would name the engineered cassette and miss every row."
+            )
+            print(f"   attached {n_rows} rows, background {sorted(layer.reference_background_genes)}")
         layer.n_reference_lookups = 0
         layer.n_reference_fallbacks = 0
 
@@ -191,16 +210,9 @@ def main() -> None:
         context = torch.randn(int(batch.num_graphs), args.hidden)
         with torch.no_grad():
             reference_rows = layer.genotype_reference(
-                int(batch.num_graphs),
-                batch["gene"].perturbation_indices,
-                batch["gene"].perturbation_indices_batch,
+                int(batch.num_graphs), gate_indices, gate_batch
             )
-            flux = layer(
-                h,
-                context,
-                batch["gene"].perturbation_indices,
-                batch["gene"].perturbation_indices_batch,
-            )
+            flux = layer(h, context, gate_indices, gate_batch)
             flux["warm_reference"] = reference_rows
         stats = statistics(layer, flux)
         wild = layer.v_reference
@@ -213,6 +225,7 @@ def main() -> None:
             "coverage_warm_start_reference_table": layer.coverage_report()[
                 "warm_start_reference_table"
             ],
+            "media": meta.get("media"),
             "n_genotypes": int(batch.num_graphs),
             "deletion_effect": {
                 "fraction_reference_differs_from_wild_type_by_1pct": float(
@@ -245,6 +258,10 @@ def main() -> None:
         "genotypes": int(batch.num_graphs),
         "seed": args.seed,
         "arm_file": args.arm_file,
+        "medium": args.medium,
+        "gene_removal_source": gate_source,
+        "n_removal_entries": int(gate_indices.numel()),
+        "n_perturbation_entries": int(batch["gene"].perturbation_indices.numel()),
         "python_hash_seed": os.environ.get("PYTHONHASHSEED"),
         "rows": rows,
     }

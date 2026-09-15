@@ -16,14 +16,34 @@ decides who does the work.
 %% `make figures`. Panel numbering and content are unchanged from Fig. 5 of
 %% 024-perturb-seq-costing.
 \tcfigfit[1.0]{figures/perturb-seq-workflow.pdf}{%
-  \textbf{The whole experiment, from library to count matrix, with the step each
-  route replaces marked.} The pooled library is transformed once and grown
-  under the chosen condition; from there the droplet route isolates single cells
-  in an emulsion and the plate route keeps them intact while barcoding them
-  combinatorially across wells. Everything downstream of library preparation is
-  shared, including the sequencer and the alignment. Redrawn from Fig. 5 of the
-  costing review; source
-  \file{notes/assets/drawio/perturb-seq-workflow.drawio.svg}.}{fig:workflow}
+  \textbf{The whole experiment, from library to count matrix, and the one stage
+  where the two routes differ.} Read left to right. Two symbols recur in panel
+  (b): \textbf{H} is the PCR handle, attached at one end only during barcoding,
+  and \textbf{CB} is the cell barcode. The color key is repeated at the foot of
+  the figure.
+  \textbf{(a)} The stages. Every wet-lab step is common to both method families
+  except the shaded block, where the droplet route isolates single cells in an
+  emulsion and the plate route keeps them intact while barcoding them
+  combinatorially across wells. Fragmentation is drawn as its own stage for two
+  reasons: its position relative to ribosomal RNA depletion decides how much
+  that depletion is worth, roughly \$99{,}000 at genome scale, and it determines
+  what a count means.
+  \textbf{(b)} The same physical cutting, with opposite consequences, which is
+  the reason this figure is worth reading rather than skimming. In bulk RNA
+  sequencing every piece of a molecule can be sequenced, so a long transcript
+  yields proportionally more reads and the length has to be divided back out,
+  which is what FPKM and TPM exist to do. In a 3$'$-counting single-cell assay
+  only the barcode-proximal piece keeps the outer handle, so exactly one
+  fragment survives per molecule whatever its length. Applying TPM or FPKM to a
+  count matrix from either route is therefore an error rather than a stylistic
+  choice.
+  \textbf{(c)} The funnel, which is what a budget is actually made of. Cells are
+  lost at recovery, at quality control and at guide assignment, and reads are
+  lost separately to the spike-in, to ribosomal sequence and to cells that are
+  discarded later. Composed from the protocols rather than traced from a
+  published figure, and shared with the costing review, where the numbers drawn
+  in it are sourced individually. Source
+  \file{notes/assets/drawio/perturb-seq-workflow.drawio}.}{fig:workflow}
 
 \notesec{Droplet, which the core runs as a service} A microfluidic chip
 co-encapsulates one cell with one barcoded bead, and every molecule released

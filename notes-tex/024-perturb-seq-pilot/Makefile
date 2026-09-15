@@ -16,6 +16,4 @@ ZOTERO_PERSONAL_COLLECTION := AC8MFJXK
 # (PR #265) and whose built PDFs are committed here.
 PLOT_SLUGS := 024-perturb-seq-costing 028-knockout-expression
 
-PYTHON ?= /home/michaelvolk/miniconda3/envs/torchcell/bin/python
-
 include ../common/Makefile.common

@@ -31,7 +31,13 @@
 # the Zotero collection is (see zotero_publish.py): a directory rename then carries
 # the document name with it and nothing has to be kept in sync by hand.
 TECTONIC ?= $(shell command -v tectonic 2>/dev/null || echo /tmp/tectonic)
-PYTHON   ?= python
+# Resolved per machine rather than pinned in each document's Makefile. Every
+# document used to carry its own absolute interpreter path, which meant the one
+# written on the Mac could not run `make check` on Linux and vice versa: the
+# gate failed with "No such file or directory" rather than with a finding.
+# $(HOME) covers both layouts without naming either user.
+PYTHON   ?= $(firstword $(wildcard $(HOME)/miniconda3/envs/torchcell/bin/python \
+                                   $(HOME)/miniconda3/bin/python) python)
 DOC      ?= $(notdir $(CURDIR))
 COMMON   := ../common
 REPO     := ../..

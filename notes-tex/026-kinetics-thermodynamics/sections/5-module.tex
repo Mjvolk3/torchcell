@@ -180,7 +180,7 @@ binary variable, which is what a loopless flux balance program needs one for.
   box and the capacity bound are, or relaxed to a smooth penalty; nothing is enforced by a
   binary variable, which is what makes the layer differentiable and what removes the
   mixed-integer cost a per-genotype thermodynamic program pays.
-  \textbf{Two things are still unwired and neither of them is a parameter table.}
+  \textbf{One thing is still unwired, and it is not a parameter table.}
   \texttt{FluxLayer} accepts the reaction square-root covariance as
   \texttt{delta\_g\_sqrt\_cov} and builds the correlated error term from it;
   \texttt{build\_flux\_layer} constructs none and \texttt{train\_bx.py} passes none, so every

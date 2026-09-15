@@ -57,6 +57,8 @@ from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     PLOT_PALETTE_FILL,
+    PLOT_REGION_FILL,
+    PLOT_REGION_STROKE,
     apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
@@ -256,7 +258,8 @@ def main() -> None:
     # no-labels-inside-the-axes rule in CLAUDE.md.
     ax.set_xlabel(
         f"across-predictor spread of {symbol},  "
-        r"$\log_{10}(\mathrm{max}/\mathrm{min})$" "\n(orders of magnitude)"
+        r"$\log_{10}(\mathrm{max}/\mathrm{min})$"
+        "\n(orders of magnitude)"
     )
     ax.set_ylabel("genes")
     box(ax)
@@ -287,7 +290,11 @@ def main() -> None:
     high = complete.max(axis=1).to_numpy()[order]
     percentile = np.linspace(0, 100, len(order))
     ax.fill_between(
-        percentile, low, high, color=PLOT_PALETTE_FILL[slot], linewidth=0,
+        percentile,
+        low,
+        high,
+        color=PLOT_PALETTE_FILL[slot],
+        linewidth=0,
         label="predictor min-max",
     )
     for edge in (low, high):
@@ -321,8 +328,7 @@ def main() -> None:
             if len(both) >= 3:
                 grid[i, j] = both[left].corr(both[right], method="spearman")
     agreement_cmap = LinearSegmentedColormap.from_list(
-        "tc_orange",
-        ["#FFFFFF", PLOT_PALETTE_FILL[0], PLOT_PALETTE[0], PLOT_PALETTE[6]],
+        "tc_orange", ["#FFFFFF", PLOT_PALETTE_FILL[0], PLOT_PALETTE[0], PLOT_PALETTE[6]]
     )
     agreement_cmap.set_bad("#FFFFFF")
     # aspect="auto" lets the matrix fill the panel it is given. With the default equal
@@ -341,12 +347,20 @@ def main() -> None:
     for i in range(n):
         for j in range(n):
             if np.isfinite(grid[i, j]):
-                ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center",
-                        fontsize=6, color="black")
+                ax.text(
+                    j,
+                    i,
+                    f"{grid[i, j]:.2f}",
+                    ha="center",
+                    va="center",
+                    fontsize=6,
+                    color="black",
+                )
     # The colorbar takes its own strip to the right rather than the gap below, which is
     # what had squeezed the heatmap to a third of the panel height.
-    bar = fig.colorbar(image, ax=ax, location="right", fraction=0.05, pad=0.04,
-                       aspect=22)
+    bar = fig.colorbar(
+        image, ax=ax, location="right", fraction=0.05, pad=0.04, aspect=22
+    )
     bar.set_label("gene-level Spearman", fontsize=6)
     bar.ax.tick_params(labelsize=6, width=0.5)
     bar.outline.set_linewidth(0.5)
@@ -376,15 +390,25 @@ def main() -> None:
         for k, predictor in enumerate(predictors):
             value = table.loc[orf, predictor]
             if np.isfinite(value):
-                ax.scatter(value, row, s=9, color=predictor_color(predictor),
-                           edgecolors="black", linewidths=0.3, zorder=3,
-                           label=DISPLAY.get(predictor, predictor) if row == 2 else None)
+                ax.scatter(
+                    value,
+                    row,
+                    s=9,
+                    color=predictor_color(predictor),
+                    edgecolors="black",
+                    linewidths=0.3,
+                    zorder=3,
+                    label=DISPLAY.get(predictor, predictor) if row == 2 else None,
+                )
     if absent_rows:
         # The shaded band marks the heterologous genes; what it means is said in the
         # caption, not written across the panel.
         ax.axhspan(
-            min(absent_rows) - 0.45, max(absent_rows) + 0.45,
-            color=PLOT_PALETTE_FILL[5], linewidth=0, zorder=0,
+            min(absent_rows) - 0.45,
+            max(absent_rows) + 0.45,
+            color=PLOT_PALETTE_FILL[5],
+            linewidth=0,
+            zorder=0,
         )
     ax.set_yticks(offsets)
     ax.set_yticklabels(labels)
@@ -413,9 +437,13 @@ def main() -> None:
     for k, predictor in enumerate(sorted(scored, key=lambda p: -scored[p]["spearman"])):
         rows = subset[subset["predictor"] == predictor]
         ax.scatter(
-            np.log10(rows["measured"]), np.log10(rows["predicted"]),
-            s=6, color=to_rgba(predictor_color(predictor), 0.85), edgecolors="black",
-            linewidths=0.2, zorder=3,
+            np.log10(rows["measured"]),
+            np.log10(rows["predicted"]),
+            s=6,
+            color=to_rgba(predictor_color(predictor), 0.85),
+            edgecolors="black",
+            linewidths=0.2,
+            zorder=3,
             label=DISPLAY.get(predictor, predictor),
         )
     lo = float(np.log10(subset["measured"].min())) - 0.4
@@ -430,10 +458,13 @@ def main() -> None:
             "median_within_class_sd_decades"
         ]
     ax.fill_between(
-        [lo, hi], [lo - within_class_sd, hi - within_class_sd],
+        [lo, hi],
+        [lo - within_class_sd, hi - within_class_sd],
         [lo + within_class_sd, hi + within_class_sd],
-        color=PLOT_PALETTE_FILL[BAND_SLOT], edgecolor=PLOT_PALETTE[BAND_SLOT],
-        linewidth=0.4, zorder=1,
+        color=PLOT_REGION_FILL,
+        edgecolor=PLOT_REGION_STROKE,
+        linewidth=0.4,
+        zorder=1,
         label=f"within-class spread (±{within_class_sd:.2f})",
     )
     ax.plot([lo, hi], [lo, hi], color="black", linewidth=0.6, linestyle="--", zorder=2)
@@ -463,14 +494,25 @@ def main() -> None:
     ordered = sorted(scored, key=lambda p: -scored[p]["spearman"])
     positions = np.arange(len(ordered))
     width = 0.38
-    ax.bar(positions - width / 2, [scored[p]["spearman"] for p in ordered], width,
-           color=PLOT_PALETTE[0], edgecolor="black", linewidth=0.4,
-           label="Spearman against measured")
+    ax.bar(
+        positions - width / 2,
+        [scored[p]["spearman"] for p in ordered],
+        width,
+        color=PLOT_PALETTE[0],
+        edgecolor="black",
+        linewidth=0.4,
+        label="Spearman against measured",
+    )
     # Two series, so the second takes the SECOND palette slot rather than the third.
-    ax.bar(positions + width / 2,
-           [scored[p]["median_abs_error_decades"] for p in ordered], width,
-           color=PLOT_PALETTE[1], edgecolor="black", linewidth=0.4,
-           label="median |error| (orders of magnitude)")
+    ax.bar(
+        positions + width / 2,
+        [scored[p]["median_abs_error_decades"] for p in ordered],
+        width,
+        color=PLOT_PALETTE[1],
+        edgecolor="black",
+        linewidth=0.4,
+        label="median |error| (orders of magnitude)",
+    )
     ax.set_xticks(positions)
     ax.set_xticklabels([DISPLAY.get(p, p) for p in ordered], rotation=35, ha="right")
     # Two different quantities share the axis, so the label names both rather than calling
@@ -491,8 +533,15 @@ def main() -> None:
     )
 
     for letter, ax in zip("abcdef", axes.flatten()):
-        ax.text(-0.14, 1.14, letter, transform=ax.transAxes, fontsize=8,
-                fontweight="bold", va="top")
+        ax.text(
+            -0.14,
+            1.14,
+            letter,
+            transform=ax.transAxes,
+            fontsize=8,
+            fontweight="bold",
+            va="top",
+        )
 
     fig.tight_layout(w_pad=2.6, h_pad=2.8)
     base = f"per_gene_agreement_{parameter}{stamp}"

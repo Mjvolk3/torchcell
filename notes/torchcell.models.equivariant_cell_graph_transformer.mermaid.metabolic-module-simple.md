@@ -61,13 +61,13 @@ graph TD
     direction TB
     Kcat["$$\begin{gathered}k_{cat},\ \text{four tiers}\\\ 97\,/\,782\,/\,2831\,/\,18\end{gathered}$$"]
     Km["$$\begin{gathered}K_M\\\ \text{same four tiers}\end{gathered}$$"]
-    Thermo["$$\begin{gathered}\Delta_r G'^{\circ}\\\ \texttt{shipped}\ \text{to}\ \texttt{union\_external}\end{gathered}$$"]
+    Thermo["$$\begin{gathered}\Delta_r G'^{\circ}\\\ \texttt{shipped}\ \text{to}\ \texttt{verified}\end{gathered}$$"]
+    Curated["$$\begin{gathered}\text{Curated}\ \Delta_f G\ \text{tables}\\\ \texttt{ThermoSource.VERIFIED}\end{gathered}$$"]
   end
 
   subgraph Unwired["$$\text{Built, read by nothing}$$"]
     direction TB
     Qcov["$$\begin{gathered}\text{Covariance}\ Q\\\ \texttt{delta\_g\_sqrt\_cov}\end{gathered}$$"]
-    Curated["$$\begin{gathered}\text{Curated}\ \Delta_f G\ \text{tables}\\\ \text{no enum member}\end{gathered}$$"]
   end
 
   subgraph Soft["$$\text{Soft constraints}$$"]
@@ -84,7 +84,7 @@ graph TD
   Km -.->|"$$\text{carried, not consumed}$$"| Flux
   Thermo --> Second
   Qcov -.->|"$$\text{not wired}$$"| Second
-  Curated -.->|"$$\text{not wired}$$"| Thermo
+  Curated -->|"$$\text{selectable, unrequested}$$"| Thermo
   Flux --> Soft
   Flux --> Out
 
@@ -97,8 +97,8 @@ graph TD
 
   class Hpert,Avail,Enzyme learned
   class Stoich,GPR,Bounds fixed
-  class Kcat,Km,Thermo wired
-  class Qcov,Curated unwired
+  class Kcat,Km,Thermo,Curated wired
+  class Qcov unwired
   class Flux flux
   class Mass,Second pen
   class Out learned
@@ -133,3 +133,18 @@ Regenerate the figure asset (name matches this note):
 ```bash
 bash notes/assets/publish/scripts/mermaid_pdf.sh notes/torchcell.models.equivariant_cell_graph_transformer.mermaid.metabolic-module-simple.md
 ```
+
+## 2026.09.15 - Correction: the curated tables have an enum member now
+
+The 2026.09.11 revision said `ThermoSource` had no member for the curated tables. It does:
+`ThermoSource.VERIFIED` (parameters.py), which reads the tables under
+`thermo_equilibrator/verified/` through their manifest sha256 and takes reaction values from
+the verified REACTION table rather than re-summing, because three of the routes behind it are
+reaction-level facts a stoichiometric sum cannot reproduce. `train_flux.py` selects it from
+the arm's `thermo_source`, so it is reachable; what is true is that no arm has asked for it,
+which is a scheduling fact and not a wiring one. The diagram now draws the curated tables
+inside the read set with a solid edge labeled selectable but unrequested.
+
+The square-root covariance is still genuinely unwired: `reaction_sqrt_covariance` is called
+only from the test suite, no experiment script constructs it, and `thermo_uncertainty` stays
+at `isotropic` in every arm, so the correlated error term has never run.

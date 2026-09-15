@@ -42,7 +42,12 @@
 
 import os.path as osp
 
-from torchcell.utils import PLOT_PALETTE, PLOT_PALETTE_FILL, PLOT_PALETTE_NAMES
+from torchcell.utils import (
+    PLOT_NONSERIES_COLORS,
+    PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
+    PLOT_PALETTE_NAMES,
+)
 
 OUT = osp.abspath(osp.join(osp.dirname(__file__), "..", "images", "color-palette.svg"))
 
@@ -94,7 +99,9 @@ def main() -> None:
     n = len(PLOT_PALETTE)
     width = X0 * 2 + n * PITCH - GAP
     y_title, y_sub = 26, 46
-    y_tier = y_sub + len(SUB) * 13 + 12  # tracks the subtitle, however many lines it takes
+    y_tier = (
+        y_sub + len(SUB) * 13 + 12
+    )  # tracks the subtitle, however many lines it takes
     y_role = y_tier + 20  # role band sits between the tier bracket and the swatches
     y_sw = y_role + 18
     sw_h = 44
@@ -107,7 +114,9 @@ def main() -> None:
     for t, size in [(TITLE, 15.0), *((s_, 10.0) for s_ in SUB)]:
         if X0 + _width(t, size) > width - 10:
             raise ValueError(f"text overflows the {width}px canvas: {t[:60]}...")
-    name_lines = [_wrap(nm, 7.4, PITCH - 2) for nm in PLOT_PALETTE_NAMES]  # raises if too wide
+    name_lines = [
+        _wrap(nm, 7.4, PITCH - 2) for nm in PLOT_PALETTE_NAMES
+    ]  # raises if too wide
 
     s = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
@@ -182,18 +191,29 @@ def main() -> None:
                 f'text-anchor="middle" fill="#444">{part}</text>'
             )
 
+    # The NON-SERIES colors, read from torchcell.utils rather than retyped here. They are not a
+    # 19th and 20th color: each is a job (mark a reference region, tint a background) and
+    # the region pair is palette slot 13. The beige pair lived only in this script until
+    # 2026-09-15, which is why a plot that wanted it had to copy the hex out of an image.
     s.append(
         f'<text x="{X0}" y="{y_bg + 15}" font-size="10.5" font-weight="bold" fill="#444">'
-        f"Background</text>"
+        f"Non-series</text>"
     )
-    s.append(
-        f'<rect x="120" y="{y_bg + 4}" width="{PW}" height="20" rx="3" fill="#F5EEDD" '
-        f'stroke="#E0D6BE" stroke-width="2"/>'
-    )
-    s.append(
-        f'<text x="{120 + PW + 8}" y="{y_bg + 15}" font-size="8.5" fill="#333">'
-        f"F5EEDD fill / E0D6BE stroke</text>"
-    )
+    x_role = 120
+    for label, (fill, stroke) in PLOT_NONSERIES_COLORS.items():
+        s.append(
+            f'<rect x="{x_role}" y="{y_bg + 4}" width="{PW}" height="20" rx="3" '
+            f'fill="{fill}" stroke="{stroke}" stroke-width="2"/>'
+        )
+        s.append(
+            f'<text x="{x_role + PW + 8}" y="{y_bg + 11}" font-size="8.5" fill="#333">'
+            f"{label}</text>"
+        )
+        s.append(
+            f'<text x="{x_role + PW + 8}" y="{y_bg + 21}" font-size="7.6" fill="#888">'
+            f"{fill.lstrip('#')} / {stroke.lstrip('#')}</text>"
+        )
+        x_role += PW + 130
     s.append("</svg>")
 
     with open(OUT, "w") as f:

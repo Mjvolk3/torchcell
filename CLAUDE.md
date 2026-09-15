@@ -649,6 +649,16 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   - **7–12 dark** — a uniform `0.73` shade of the vivid tier.
   - **13–18 muted earth** — chroma-reduced siblings: terracotta, rose-brown, dusty
     mauve, sand, slate, taupe.
+- **Two NON-SERIES colors, for the jobs no data series does.** `PLOT_REGION_FILL` /
+  `PLOT_REGION_STROKE` (`#F9D0BE` / `#C48161`, palette slot 13) marks a reference REGION a
+  series is read against, such as the within-class spread band in the kinetic figures;
+  `PLOT_BACKGROUND` / `PLOT_BACKGROUND_STROKE` (`#F5EEDD` / `#E0D6BE`) is the beige, used
+  for a tinted background and for the mermaid diagram canvas. Both are in
+  `torchcell.utils` and both appear in the palette image's Non-series row. Neither is a 19th
+  color: the region pair IS slot 13, and the beige had been drawn in the palette image since
+  the start while living only inside the generator script, which is why plots retyped its
+  hex. Reach for them by name, never by index, and never by putting `alpha` on a line color
+  to fake a region tint, which invents a tone the palette does not define.
 - **PRIMARY four vs SECONDARY two, and this decides which color a series reaches for.**
   Within every cycle of six, **orange, red, purple and yellow are the primaries**: they
   are interchangeable, a series may mix them uniformly in any order, and nothing is

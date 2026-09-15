@@ -51,6 +51,7 @@ from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     PLOT_PALETTE_FILL,
+    PLOT_REGION_FILL,
     apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
@@ -64,7 +65,6 @@ OUT_DIR = osp.join(ASSET_IMAGES_DIR, "026-metabolism-flux")
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 from plot_per_gene_predictor_agreement import (  # noqa: E402
-    BAND_SLOT,
     DISPLAY,
     PREDICTOR_COLOR_INDEX,
     predictor_color,
@@ -83,8 +83,16 @@ def legend_above(ax: plt.Axes, ncol: int, handles=None, names=None) -> None:
     if handles is None:
         handles, names = ax.get_legend_handles_labels()
     ax.legend(
-        handles, names, loc="lower left", bbox_to_anchor=(0.0, 1.01), ncol=ncol,
-        frameon=False, fontsize=6, handlelength=1.2, handletextpad=0.4, borderpad=0.0,
+        handles,
+        names,
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.01),
+        ncol=ncol,
+        frameon=False,
+        fontsize=6,
+        handlelength=1.2,
+        handletextpad=0.4,
+        borderpad=0.0,
         columnspacing=1.0,
     )
 
@@ -100,7 +108,9 @@ def tenths(ax: plt.Axes) -> None:
 
 
 def whiskers(fraction: dict) -> tuple[float, float]:
-    return fraction["frac"] - fraction["ci95"][0], fraction["ci95"][1] - fraction["frac"]
+    return fraction["frac"] - fraction["ci95"][0], fraction["ci95"][1] - fraction[
+        "frac"
+    ]
 
 
 def panel_a(ax: plt.Axes, block: dict, ordered: list[str]) -> None:
@@ -108,14 +118,24 @@ def panel_a(ax: plt.Axes, block: dict, ordered: list[str]) -> None:
     for predictor in ordered:
         levels = block["shared_band"][predictor]
         ax.plot(
-            positions, [levels[k]["frac"] for k in LEVELS], marker="o", markersize=3,
-            color=predictor_color(predictor), linewidth=1.0, markeredgecolor="black",
-            markeredgewidth=0.3, label=DISPLAY[predictor],
+            positions,
+            [levels[k]["frac"] for k in LEVELS],
+            marker="o",
+            markersize=3,
+            color=predictor_color(predictor),
+            linewidth=1.0,
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            label=DISPLAY[predictor],
         )
     baseline = block["ec_median_lookup"]["shared"]
     ax.plot(
-        positions, [baseline[k]["frac"] for k in LEVELS], color="black", linewidth=0.8,
-        linestyle="--", label="EC-median lookup",
+        positions,
+        [baseline[k]["frac"] for k in LEVELS],
+        color="black",
+        linewidth=0.8,
+        linestyle="--",
+        label="EC-median lookup",
     )
     ax.set_xticks(positions)
     ax.set_xticklabels(
@@ -134,26 +154,46 @@ def panel_b(ax: plt.Axes, block: dict, ordered: list[str]) -> None:
     shared = [block["shared_band"][p]["ec4"] for p in ordered]
     own = [block["own_class_band"]["predictors"][p] for p in ordered]
     ax.bar(
-        positions - width / 2, [f["frac"] for f in shared], width,
-        color=[predictor_color(p) for p in ordered], edgecolor="black", linewidth=0.4,
+        positions - width / 2,
+        [f["frac"] for f in shared],
+        width,
+        color=[predictor_color(p) for p in ordered],
+        edgecolor="black",
+        linewidth=0.4,
         yerr=np.array([whiskers(f) for f in shared]).T,
-        error_kw={"elinewidth": 0.5, "capsize": 1.2, "capthick": 0.5, "ecolor": "black"},
+        error_kw={
+            "elinewidth": 0.5,
+            "capsize": 1.2,
+            "capthick": 0.5,
+            "ecolor": "black",
+        },
         label="shared EC4 band",
     )
     # The lighter member of a two-level bar takes the fill color, which is the one use the
     # palette reserves it for.
     ax.bar(
-        positions + width / 2, [f["frac"] for f in own], width,
-        color=[PLOT_PALETTE_FILL[PREDICTOR_COLOR_INDEX[p] % len(PLOT_PALETTE_FILL)]
-               for p in ordered],
-        edgecolor="black", linewidth=0.4,
+        positions + width / 2,
+        [f["frac"] for f in own],
+        width,
+        color=[
+            PLOT_PALETTE_FILL[PREDICTOR_COLOR_INDEX[p] % len(PLOT_PALETTE_FILL)]
+            for p in ordered
+        ],
+        edgecolor="black",
+        linewidth=0.4,
         yerr=np.array([whiskers(f) for f in own]).T,
-        error_kw={"elinewidth": 0.5, "capsize": 1.2, "capthick": 0.5, "ecolor": "black"},
+        error_kw={
+            "elinewidth": 0.5,
+            "capsize": 1.2,
+            "capthick": 0.5,
+            "ecolor": "black",
+        },
         label="own EC4 class band",
     )
     baseline = block["ec_median_lookup"]
-    ax.axhline(baseline["shared"]["ec4"]["frac"], color="black", linewidth=0.7,
-               linestyle="--")
+    ax.axhline(
+        baseline["shared"]["ec4"]["frac"], color="black", linewidth=0.7, linestyle="--"
+    )
     ax.set_xticks(positions)
     ax.set_xticklabels([DISPLAY[p] for p in ordered], rotation=35, ha="right")
     ax.set_ylabel("fraction of measured pairs\ninside the band")
@@ -176,23 +216,40 @@ def panel_c(ax: plt.Axes, units: pd.DataFrame, ordered: list[str], symbol: str) 
     lower = (units["class_median_log10"] - units["class_sd_log10"]).to_numpy()
     upper = (units["class_median_log10"] + units["class_sd_log10"]).to_numpy()
     ax.bar(
-        positions[scorable], (upper - lower)[scorable], 0.7, bottom=lower[scorable],
+        positions[scorable],
+        (upper - lower)[scorable],
+        0.7,
+        bottom=lower[scorable],
         # The class band is a reference REGION, not a series, so it takes BAND_SLOT, the
         # muted orange (terracotta) no predictor uses, rather than the gray slot EZKinetics
         # is drawn in. Solid fill rather than a 25 percent alpha on a line color: alpha
         # makes a tone the palette does not define and changes with whatever sits behind it.
-        color=PLOT_PALETTE_FILL[BAND_SLOT], linewidth=0, zorder=1,
+        color=PLOT_REGION_FILL,
+        linewidth=0,
+        zorder=1,
         label="EC4 class, median ± 1 s.d.",
     )
     ax.hlines(
-        units["class_median_log10"].to_numpy()[scorable], positions[scorable] - 0.35,
-        positions[scorable] + 0.35, color="black", linewidth=0.8, zorder=2,
+        units["class_median_log10"].to_numpy()[scorable],
+        positions[scorable] - 0.35,
+        positions[scorable] + 0.35,
+        color="black",
+        linewidth=0.8,
+        zorder=2,
     )
     for predictor in ordered:
-        values = units["predicted_log10"].map(lambda d: d.get(predictor, np.nan)).to_numpy()
+        values = (
+            units["predicted_log10"].map(lambda d: d.get(predictor, np.nan)).to_numpy()
+        )
         ax.scatter(
-            positions, values, s=9, color=predictor_color(predictor), edgecolors="black",
-            linewidths=0.3, zorder=3, label=DISPLAY[predictor],
+            positions,
+            values,
+            s=9,
+            color=predictor_color(predictor),
+            edgecolors="black",
+            linewidths=0.3,
+            zorder=3,
+            label=DISPLAY[predictor],
         )
     ax.set_xticks(positions)
     ax.set_xticklabels([unit_label(r) for _, r in units.iterrows()], rotation=90)
@@ -207,10 +264,19 @@ def panel_d(ax: plt.Axes, block: dict, ordered: list[str]) -> None:
     positions = np.arange(len(ordered))
     fractions = [per[p] for p in ordered]
     ax.bar(
-        positions, [f["frac"] for f in fractions], 0.7,
-        color=[predictor_color(p) for p in ordered], edgecolor="black", linewidth=0.4,
+        positions,
+        [f["frac"] for f in fractions],
+        0.7,
+        color=[predictor_color(p) for p in ordered],
+        edgecolor="black",
+        linewidth=0.4,
         yerr=np.array([whiskers(f) for f in fractions]).T,
-        error_kw={"elinewidth": 0.5, "capsize": 1.2, "capthick": 0.5, "ecolor": "black"},
+        error_kw={
+            "elinewidth": 0.5,
+            "capsize": 1.2,
+            "capthick": 0.5,
+            "ecolor": "black",
+        },
     )
     ax.set_xticks(positions)
     ax.set_xticklabels([DISPLAY[p] for p in ordered], rotation=35, ha="right")
@@ -224,18 +290,32 @@ def panel_e(ax: plt.Axes, units: pd.DataFrame, block: dict) -> None:
     positions = np.arange(len(scorable))
     # One series takes the FIRST primary, not the gray slot: gray is a secondary and enters
     # a series at its sixth color.
-    ax.bar(positions, scorable["class_sd_log10"].to_numpy(), 0.7, color=PLOT_PALETTE[0],
-           edgecolor="black", linewidth=0.4)
-    ax.axhline(block["band_half_width_by_level"]["ec4"], color="black", linewidth=0.7,
-               linestyle="--")
+    ax.bar(
+        positions,
+        scorable["class_sd_log10"].to_numpy(),
+        0.7,
+        color=PLOT_PALETTE[0],
+        edgecolor="black",
+        linewidth=0.4,
+    )
+    ax.axhline(
+        block["band_half_width_by_level"]["ec4"],
+        color="black",
+        linewidth=0.7,
+        linestyle="--",
+    )
     ax.set_xticks(positions)
     ax.set_xticklabels(
-        [f"{r['common_name']} {r['reaction_id'].replace('r_', 'r')}"
-         for _, r in scorable.iterrows()], rotation=90,
+        [
+            f"{r['common_name']} {r['reaction_id'].replace('r_', 'r')}"
+            for _, r in scorable.iterrows()
+        ],
+        rotation=90,
     )
     ax.set_ylabel("class band half width\n(orders of magnitude)")
     legend_above(
-        ax, ncol=1,
+        ax,
+        ncol=1,
         handles=[plt.Line2D([0], [0], color="black", linewidth=0.7, linestyle="--")],
         names=["shared EC4 band"],
     )
@@ -276,7 +356,9 @@ def main() -> None:
         lambda s: json.loads(s.replace("'", '"'))
     )
 
-    fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(158)), dpi=300)
+    fig = plt.figure(
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(158)), dpi=300
+    )
     grid = fig.add_gridspec(3, 2, height_ratios=[1.0, 1.25, 1.0])
     ax_a = fig.add_subplot(grid[0, 0])
     ax_b = fig.add_subplot(grid[0, 1])
@@ -289,10 +371,18 @@ def main() -> None:
     panel_d(ax_d, block, ordered)
     panel_e(ax_e, units, block)
 
-    for letter, ax, dx in zip("abcde", (ax_a, ax_b, ax_c, ax_d, ax_e),
-                              (-0.14, -0.14, -0.065, -0.14, -0.14)):
-        ax.text(dx, 1.16, letter, transform=ax.transAxes, fontsize=8, fontweight="bold",
-                va="top")
+    for letter, ax, dx in zip(
+        "abcde", (ax_a, ax_b, ax_c, ax_d, ax_e), (-0.14, -0.14, -0.065, -0.14, -0.14)
+    ):
+        ax.text(
+            dx,
+            1.16,
+            letter,
+            transform=ax.transAxes,
+            fontsize=8,
+            fontweight="bold",
+            va="top",
+        )
 
     fig.tight_layout(w_pad=2.6, h_pad=2.4)
     base = f"within_class_plausibility_{parameter}{stamp}"

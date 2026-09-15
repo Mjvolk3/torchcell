@@ -104,6 +104,31 @@ PLOT_PALETTE_NAMES = [
     "taupe",  # 18
 ]
 
+# NON-SERIES colors. "Role" already means primary vs secondary within the hue order, so
+# these are named non-series: a figure needs two jobs done that no data series does, marking a reference REGION
+# a series is read against, and tinting a background behind data. Both are named here and
+# both are pinned to an EXISTING palette fill, so the palette stays at 18 and no plot has to
+# reach into PLOT_PALETTE_FILL by index for a color it is choosing by role.
+#
+# PLOT_REGION_FILL is the within-class spread band in the kinetic figures: the muted-earth
+# orange that no predictor series draws, solid rather than an alpha over a line color, since
+# alpha invents a tone the palette does not define and shifts with whatever sits behind it.
+# PLOT_BACKGROUND is the beige, light enough to carry 6 pt black text and desaturated enough
+# that series colors stay separable on top of it.
+PLOT_REGION_FILL = PLOT_PALETTE_FILL[12]  # "#F9D0BE", terracotta fill
+PLOT_REGION_STROKE = PLOT_PALETTE[
+    12
+]  # "#C48161", its line color, for a bordered region
+# The beige. It lived only inside generate_color_palette.py, drawn in the palette image but
+# absent from the code, so a plot that wanted it had to retype the hex. Same pair as the
+# image has always shown.
+PLOT_BACKGROUND = "#F5EEDD"
+PLOT_BACKGROUND_STROKE = "#E0D6BE"
+PLOT_NONSERIES_COLORS = {
+    "region fill": (PLOT_REGION_FILL, PLOT_REGION_STROKE),
+    "background": (PLOT_BACKGROUND, PLOT_BACKGROUND_STROKE),
+}
+
 # Display-name overrides for node representations, applied ONLY at plot-label time; the
 # data keys / model names in code stay unchanged. `fudt_*` is torchcell's internal name for
 # the Gagneur-lab species-aware DNA language model (HuggingFace gagneurlab/SpeciesLM), which

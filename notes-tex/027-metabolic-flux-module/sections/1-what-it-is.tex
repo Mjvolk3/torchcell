@@ -30,10 +30,11 @@ $\nu$ is a latent physical state rather than a phenotype: the phenotypes are rea
   read by nothing; blue the flux vector; red the soft constraints. Every hard constraint is
   either exact by construction, as the box and the capacity bound are, or relaxed to a
   smooth penalty; nothing is enforced by a binary variable, which is what makes the layer
-  differentiable. Three of the five parameter tables are drawn dashed because no arm
-  reported here consumes one: $k_{cat}$ resolves from the Open Enzyme Database at 4.0
-  percent measured and $\Delta_f G$ from the table shipped with the GEM. The predicted
-  $k_{cat}$ tier and the merged energy route now exist in the resolvers and are under test.
+  differentiable. One box is dashed, the reaction square-root covariance, which the layer
+  accepts and no run constructs. The curated formation-energy tables are solid because
+  \texttt{ThermoSource} gained a \texttt{verified} member that selects them, though no arm
+  reported here asks for it: every measured run took $k_{cat}$ from the Open Enzyme Database
+  at 4.0 percent measured and $\Delta_f G$ from the table shipped with the GEM.
   Section~\ref{sec:parameters} gives the tables and Section~\ref{sec:coverage} their coverage.
   Same diagram as in the 026 document; source
   \texttt{notes/torchcell.models.equivariant\_cell\_graph\_transformer.mermaid.metabolic-module-simple.md}.}{fig:module}

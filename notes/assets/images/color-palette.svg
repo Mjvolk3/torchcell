@@ -113,7 +113,11 @@
 <text x="857" y="204" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#A29682">A29682</text>
 <text x="857" y="213" font-size="7.6" text-anchor="middle" fill="#888">DFD8CD</text>
 <text x="857" y="226" font-size="7.4" text-anchor="middle" fill="#444">taupe</text>
-<text x="20" y="270" font-size="10.5" font-weight="bold" fill="#444">Background</text>
-<rect x="120" y="259" width="42" height="20" rx="3" fill="#F5EEDD" stroke="#E0D6BE" stroke-width="2"/>
-<text x="170" y="270" font-size="8.5" fill="#333">F5EEDD fill / E0D6BE stroke</text>
+<text x="20" y="270" font-size="10.5" font-weight="bold" fill="#444">Non-series</text>
+<rect x="120" y="259" width="42" height="20" rx="3" fill="#F9D0BE" stroke="#C48161" stroke-width="2"/>
+<text x="170" y="266" font-size="8.5" fill="#333">region fill</text>
+<text x="170" y="276" font-size="7.6" fill="#888">F9D0BE / C48161</text>
+<rect x="292" y="259" width="42" height="20" rx="3" fill="#F5EEDD" stroke="#E0D6BE" stroke-width="2"/>
+<text x="342" y="266" font-size="8.5" fill="#333">background</text>
+<text x="342" y="276" font-size="7.6" fill="#888">F5EEDD / E0D6BE</text>
 </svg>

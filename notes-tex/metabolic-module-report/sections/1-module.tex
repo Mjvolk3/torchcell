@@ -32,9 +32,9 @@ penalty: the Niebel 2019 limit is an empirical plateau, not a law.
   and what feeds them.} Orange, the path from the perturbed gene state to enzyme
   availability; purple, the fixed yeast-GEM 9.0.2 stoichiometry and bounds; yellow, the
   parameter tables, a \textbf{dashed} border marking one built and read by nothing; blue,
-  the flux vector; red, the soft constraints. Three of the five tables are
-  dashed: $k_{cat}$ resolves from the Open Enzyme
-  Database at 3.7 percent of catalytic units and $\Delta_f G$ from the table shipped with
-  the GEM. A predicted $k_{cat}$ tier and a merged energy route exist in the resolvers,
-  under test. Source
+  the flux vector; red, the soft constraints. One box is dashed, the reaction square-root
+  covariance, which the layer accepts and no run constructs. The curated formation-energy
+  tables are solid: \texttt{ThermoSource.VERIFIED} selects them and no arm has asked for it
+  yet. Every measured run took $k_{cat}$ from the Open Enzyme Database at 3.7 percent of
+  catalytic units and $\Delta_f G$ from the table shipped with the GEM. Source
   \texttt{notes/torchcell.models.equivariant\_cell\_graph\_transformer.mermaid.metabolic-module-simple.md}.}{fig:module}

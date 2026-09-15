@@ -1,82 +1,234 @@
 # experiments/019-simb-multimodal/scripts/wandb_v13_report.py
 # [[experiments.019-simb-multimodal.scripts.wandb_v13_report]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/scripts/wandb_v13_report
-"""Name the v13 split-round runs, tag them for grouping, and build the comparison report.
+"""Name a split-design round's runs, tag them for grouping, and build its W&B views.
 
-The offline runs arrive on W&B named after their sync directory
-(``run_compute-0-1-2397311_<hash>``), which says nothing about the arm, and the arm is
-only recoverable from the tags. This script (1) renames every run in the project to
-``<arm>_seed<k>`` and writes four top-level config keys the UI can group and filter on
-(``arm``, ``split``, ``readout``, ``partition``), (2) writes a W&B report with one panel
-grid per question (headline by arm, per split with both readouts, every validation
-metric by arm, the train side, split against partition), and (3) overwrites the saved Charts
-view with six sections in rank order of importance, grouped by arm with
-epoch on the x axis. Rerun after every sync; it is idempotent.
+Written for the v13 split round and parameterized by ``--round`` for the rounds that reuse
+its design (v14, the same arms on the Messner proteome). The offline runs arrive on W&B
+named after their sync directory (``run_compute-0-1-2397311_<hash>``), which says nothing
+about the arm, and the arm is only recoverable from the tags. This script (1) renames
+every run in the project to ``<arm>_seed<k>`` and writes four top-level config keys the UI
+can group and filter on (``arm``, ``split``, ``readout``, ``partition``), (2) writes a W&B
+report with one panel grid per question (headline by arm, per split with both readouts,
+every validation metric by arm, the train side, split against partition), and (3)
+overwrites the round's saved Charts view with six sections in rank order of importance,
+grouped by arm with epoch on the x axis. Rerun after every sync; it is idempotent.
+
+A round whose saved view does not exist yet (``view_id`` None) gets one created on the
+first run; the script prints its id, which then goes into ``ROUNDS`` so later runs
+overwrite it in place rather than creating another.
 
 Run from the repo root:
-    python experiments/019-simb-multimodal/scripts/wandb_v13_report.py
+    python experiments/019-simb-multimodal/scripts/wandb_v13_report.py --round v13
+    python experiments/019-simb-multimodal/scripts/wandb_v13_report.py --round v14
 """
 
 from __future__ import annotations
 
+import argparse
 import re
+from dataclasses import dataclass, field
 
 import wandb
 import wandb_workspaces.reports.v2 as wr
 import wandb_workspaces.workspaces as ws
 
 ENTITY = "zhao-group"
-PROJECT = "torchcell_019_expr_v13"
-REPORT_TITLE = "v13 split round: H_ref and H_concat on four partitions and a 90/10 fold"
-# The saved Charts view this script owns. The workspace API refuses the personal default
-# view ("does not currently support user views"), so a saved view is the nearest thing:
-# open the project, pick "v13 split round by arm" in the view dropdown. Created once with
-# save_as_new_view(); every later run overwrites it in place.
-VIEW_ID = "ywphnc96tfh"
 X = "epoch"
-PF = "val/expression/pearson_per_feature"
-SPLITS = ["s0", "s0_90", "s1", "s2", "s3"]
-SPLIT_LABEL = {
-    "s0": "split 0, 80/10/10",
-    "s0_90": "split 0, test folded into train (90/10)",
-    "s1": "split 1",
-    "s2": "split 2",
-    "s3": "split 3",
+
+
+@dataclass(frozen=True)
+class Round:
+    """What differs between the rounds that share the split design."""
+
+    project: str
+    report_title: str
+    view_name: str
+    # The saved Charts view this script owns. The workspace API refuses the personal
+    # default view ("does not currently support user views"), so a saved view is the
+    # nearest thing: open the project and pick the view in the dropdown.
+    view_id: str | None
+    arm_re: str
+    phenotype: str
+    splits: list[str]
+    split_label: dict[str, str]
+    intro: str
+    max_runs: int
+    label_key: str = "expression_log2_ratio"
+    partitions: dict[str, str] = field(default_factory=dict)
+
+
+ROUNDS: dict[str, Round] = {
+    "v13": Round(
+        project="torchcell_019_expr_v13",
+        report_title="v13 split round: H_ref and H_concat on four partitions and a 90/10 fold",
+        view_name="v13 split round by arm",
+        view_id="ywphnc96tfh",
+        arm_re=r"V_(ref|concat)_(s\d+(?:_90)?)",
+        phenotype="expression",
+        splits=["s0", "s0_90", "s1", "s2", "s3"],
+        split_label={
+            "s0": "split 0, 80/10/10",
+            "s0_90": "split 0, test folded into train (90/10)",
+            "s1": "split 1",
+            "s2": "split 2",
+            "s3": "split 3",
+        },
+        intro=(
+            "24 runs, four per A40 card on the IGB gpu partition, 6,000 epochs "
+            "(job 2397311, config cgt_expr_v13_split). H_ref is the v12 reference "
+            "(E_full input, pinball, shared MLP readout); H_concat hands the readout "
+            "[h_pert ; h_i ; c] instead of h_pert. Each card holds one split's two "
+            "readouts for two seeds. Grouped lines are the mean over seeds with the "
+            "min-max band. Nothing here is a result until the runs finish."
+        ),
+        max_runs=24,
+    ),
+    "v14": Round(
+        project="torchcell_019_prot_v14",
+        report_title="v14 proteome round: P_ref and P_concat on four partitions of the Messner knockout proteome",
+        view_name="v14 proteome round by arm",
+        view_id=None,
+        arm_re=r"P_(ref|concat)_(s\d+)",
+        phenotype="proteome",
+        splits=["s0", "s1", "s2", "s3"],
+        split_label={
+            "s0": "split 0",
+            "s1": "split 1",
+            "s2": "split 2",
+            "s3": "split 3",
+        },
+        intro=(
+            "16 runs, four per RTX 6000 Ada card on cabbi, 2,000 epochs (config "
+            "cgt_expr_v14_proteome): the v13 split design on the Messner 2023 knockout "
+            "proteome, log2(strain / HIS3 reference) over the 1,850-protein union with "
+            "NaN where a strain did not quantify a protein (scored on finite entries). "
+            "P_ref is the v12 reference readout, P_concat hands the readout "
+            "[h_pert ; h_i ; c]. Each card holds one split's two readouts for two seeds. "
+            "Grouped lines are the mean over seeds with the min-max band. Nothing here "
+            "is a result until the runs finish."
+        ),
+        max_runs=16,
+        label_key="protein_abundance",
+    ),
 }
-VAL_METRICS = [
-    PF,
-    "val/expression/spearman_per_feature",
-    "val/expression/pearson_per_instance",
-    "val/expression/pred_sd_ratio",
-    "val/loss",
-    "val/expression/nmse",
-    "val/expression/mse",
-    "val/expression/pearson_per_feature@k1",
-    "val/expression/pearson_per_feature@k2",
-    "val/expression/pearson_per_feature@k3",
-    "val/expression/calib/coverage_50",
-    "val/expression/calib/coverage_80",
-    "val/expression/calib/pit_ks",
-    "val/mean/pearson_per_feature",
-]
-TRAIN_METRICS = [
-    "traineval/expression/pearson_per_feature",
-    "traineval/expression/pred_sd_ratio",
-    "traineval/expression/nmse",
-    "train/loss",
-    "train/grad_norm",
-    "train/grad_norm_clip_frac",
-]
 
 
-def label_runs(api: wandb.Api) -> int:
+def val_metrics(pheno: str) -> list[str]:
+    return [
+        f"val/{pheno}/pearson_per_feature",
+        f"val/{pheno}/spearman_per_feature",
+        f"val/{pheno}/pearson_per_instance",
+        f"val/{pheno}/pred_sd_ratio",
+        "val/loss",
+        f"val/{pheno}/nmse",
+        f"val/{pheno}/mse",
+        f"val/{pheno}/pearson_per_feature@k1",
+        f"val/{pheno}/pearson_per_feature@k2",
+        f"val/{pheno}/pearson_per_feature@k3",
+        f"val/{pheno}/calib/coverage_50",
+        f"val/{pheno}/calib/coverage_80",
+        f"val/{pheno}/calib/pit_ks",
+        "val/mean/pearson_per_feature",
+    ]
+
+
+def train_metrics(pheno: str) -> list[str]:
+    return [
+        f"traineval/{pheno}/pearson_per_feature",
+        f"traineval/{pheno}/pred_sd_ratio",
+        f"traineval/{pheno}/nmse",
+        "train/loss",
+        "train/grad_norm",
+        "train/grad_norm_clip_frac",
+    ]
+
+
+def chart_sections(pheno: str) -> list[tuple[str, list[str]]]:
+    """The Charts tab, in rank order of importance.
+
+    Section 1 is what decides the round; every later section is what to read when
+    section 1 moves or fails to.
+    """
+    return [
+        (
+            "1 headline: validation",
+            [
+                f"val/{pheno}/pearson_per_feature",
+                f"val/{pheno}/spearman_per_feature",
+                f"val/{pheno}/pearson_per_instance",
+                f"val/{pheno}/pred_sd_ratio",
+                "val/loss",
+                "val/mean/pearson_per_feature",
+            ],
+        ),
+        (
+            "2 train side, the generalization gap",
+            [
+                f"traineval/{pheno}/pearson_per_feature",
+                f"traineval/{pheno}/pred_sd_ratio",
+                f"traineval/{pheno}/spearman_per_feature",
+                f"traineval/{pheno}/pearson_per_instance",
+                "traineval/loss",
+                f"traineval/{pheno}/nmse",
+            ],
+        ),
+        (
+            "3 masked conditioning, revealed 0 / 10 / 100 / 1000 genes",
+            [
+                f"val/{pheno}/pearson_per_feature@k0",
+                f"val/{pheno}/pearson_per_feature@k1",
+                f"val/{pheno}/pearson_per_feature@k2",
+                f"val/{pheno}/pearson_per_feature@k3",
+                "val/mask/loss@k0",
+                "val/mask/loss@k1",
+                "val/mask/loss@k2",
+                "val/mask/loss@k3",
+            ],
+        ),
+        (
+            "4 error and calibration",
+            [
+                f"val/{pheno}/nmse",
+                f"val/{pheno}/mse",
+                f"val/{pheno}/calib/coverage_50",
+                f"val/{pheno}/calib/coverage_80",
+                f"val/{pheno}/calib/pit_ks",
+                f"traineval/{pheno}/mse",
+            ],
+        ),
+        (
+            "5 optimization",
+            [
+                "train/loss",
+                "train/grad_norm",
+                "train/grad_norm_clip_frac",
+                "train/mask/loss@k0",
+                "train/mask/loss@k3",
+                "perf/epoch_seconds",
+            ],
+        ),
+        (
+            "6 bookkeeping",
+            [
+                f"val/{pheno}/n_scored_genes@k0",
+                "val/mask/n_revealed@k1",
+                "val/mask/n_revealed@k3",
+                "trainer/global_step",
+            ],
+        ),
+    ]
+
+
+def label_runs(api: wandb.Api, rnd: Round) -> int:
     n = 0
-    for run in api.runs(f"{ENTITY}/{PROJECT}"):
-        arms = [t for t in run.tags if t.startswith("V_")]
+    prefix = rnd.arm_re.split("_")[0]
+    for run in api.runs(f"{ENTITY}/{rnd.project}"):
+        arms = [t for t in run.tags if t.startswith(f"{prefix}_")]
         if len(arms) != 1:
-            raise ValueError(f"{run.id}: expected one V_* tag, got {arms}")
+            raise ValueError(f"{run.id}: expected one {prefix}_* tag, got {arms}")
         arm = arms[0]
-        m = re.fullmatch(r"V_(ref|concat)_(s\d+(?:_90)?)", arm)
+        m = re.fullmatch(rnd.arm_re, arm)
         if m is None:
             raise ValueError(f"{run.id}: arm tag {arm} does not parse")
         readout, split = m.group(1), m.group(2)
@@ -113,49 +265,45 @@ def line(title: str, y: str, groupby: str | None = "arm") -> wr.LinePlot:
     )
 
 
-def runset(name: str, filters: str | None = None) -> wr.Runset:
-    return wr.Runset(entity=ENTITY, project=PROJECT, name=name, filters=filters or "")
+def runset(rnd: Round, name: str, filters: str | None = None) -> wr.Runset:
+    return wr.Runset(entity=ENTITY, project=rnd.project, name=name, filters=filters or "")
 
 
-def build_report() -> wr.Report:
+def build_report(rnd: Round) -> wr.Report:
+    pf = f"val/{rnd.phenotype}/pearson_per_feature"
     blocks: list = [
-        wr.H1(REPORT_TITLE),
-        wr.P(
-            "24 runs, four per A40 card on the IGB gpu partition, 6,000 epochs "
-            "(job 2397311, config cgt_expr_v13_split). H_ref is the v12 reference "
-            "(E_full input, pinball, shared MLP readout); H_concat hands the readout "
-            "[h_pert ; h_i ; c] instead of h_pert. Each card holds one split's two "
-            "readouts for two seeds. Grouped lines are the mean over seeds with the "
-            "min-max band. Nothing here is a result until the runs finish."
-        ),
+        wr.H1(rnd.report_title),
+        wr.P(rnd.intro),
         wr.TableOfContents(),
         wr.H2("Headline: validation Pearson by arm"),
         wr.PanelGrid(
-            runsets=[runset("all runs")],
+            runsets=[runset(rnd, "all runs")],
             panels=[
-                line("val pearson_per_feature, mean over seeds by arm", PF, "arm"),
-                line("val pearson_per_feature, every run", PF, None),
+                line("val pearson_per_feature, mean over seeds by arm", pf, "arm"),
+                line("val pearson_per_feature, every run", pf, None),
                 line(
                     "val pearson_per_feature by split (both readouts, all seeds)",
-                    PF,
+                    pf,
                     "split",
                 ),
-                line("val pearson_per_feature by readout (all splits)", PF, "readout"),
+                line("val pearson_per_feature by readout (all splits)", pf, "readout"),
             ],
         ),
-        wr.H2("Per split: H_ref against H_concat on the same partition"),
+        wr.H2("Per split: the reference against the concat readout on the same partition"),
     ]
-    for split in SPLITS:
-        blocks.append(wr.H3(SPLIT_LABEL[split]))
+    for split in rnd.splits:
+        blocks.append(wr.H3(rnd.split_label[split]))
         blocks.append(
             wr.PanelGrid(
-                runsets=[runset(SPLIT_LABEL[split], f"Config('split') == '{split}'")],
+                runsets=[
+                    runset(rnd, rnd.split_label[split], f"Config('split') == '{split}'")
+                ],
                 panels=[
-                    line(f"{split}: val pearson by readout", PF, "readout"),
-                    line(f"{split}: val pearson, every run", PF, None),
+                    line(f"{split}: val pearson by readout", pf, "readout"),
+                    line(f"{split}: val pearson, every run", pf, None),
                     line(
                         f"{split}: pred_sd_ratio",
-                        "val/expression/pred_sd_ratio",
+                        f"val/{rnd.phenotype}/pred_sd_ratio",
                         "readout",
                     ),
                     line(f"{split}: val loss", "val/loss", "readout"),
@@ -165,120 +313,49 @@ def build_report() -> wr.Report:
     blocks.append(wr.H2("Every validation metric, by arm"))
     blocks.append(
         wr.PanelGrid(
-            runsets=[runset("all runs")],
-            panels=[line(m, m, "arm") for m in VAL_METRICS],
+            runsets=[runset(rnd, "all runs")],
+            panels=[line(m, m, "arm") for m in val_metrics(rnd.phenotype)],
         )
     )
     blocks.append(wr.H2("Train side, by arm"))
     blocks.append(
         wr.PanelGrid(
-            runsets=[runset("all runs")],
-            panels=[line(m, m, "arm") for m in TRAIN_METRICS],
+            runsets=[runset(rnd, "all runs")],
+            panels=[line(m, m, "arm") for m in train_metrics(rnd.phenotype)],
         )
     )
-    blocks.append(wr.H2("Split 0: 90/10 against 80/10/10"))
-    blocks.append(
-        wr.PanelGrid(
-            runsets=[runset("split 0 only", "Config('split') in ['s0', 's0_90']")],
-            panels=[
-                line("split 0: val pearson by partition", PF, "partition"),
-                line("split 0: val pearson by arm", PF, "arm"),
-                line(
-                    "split 0: traineval pearson by partition",
-                    "traineval/expression/pearson_per_feature",
-                    "partition",
-                ),
-                line("split 0: val loss by partition", "val/loss", "partition"),
-            ],
+    if any(s.endswith("_90") for s in rnd.splits):
+        blocks.append(wr.H2("Split 0: 90/10 against 80/10/10"))
+        blocks.append(
+            wr.PanelGrid(
+                runsets=[
+                    runset(rnd, "split 0 only", "Config('split') in ['s0', 's0_90']")
+                ],
+                panels=[
+                    line("split 0: val pearson by partition", pf, "partition"),
+                    line("split 0: val pearson by arm", pf, "arm"),
+                    line(
+                        "split 0: traineval pearson by partition",
+                        f"traineval/{rnd.phenotype}/pearson_per_feature",
+                        "partition",
+                    ),
+                    line("split 0: val loss by partition", "val/loss", "partition"),
+                ],
+            )
         )
-    )
     return wr.Report(
         entity=ENTITY,
-        project=PROJECT,
-        title=REPORT_TITLE,
+        project=rnd.project,
+        title=rnd.report_title,
         description="Generated by experiments/019-simb-multimodal/scripts/wandb_v13_report.py",
         blocks=blocks,
         width="fluid",
     )
 
 
-# The Charts tab, in rank order of importance. Section 1 is what decides the round;
-# every later section is what to read when section 1 moves or fails to.
-CHART_SECTIONS: list[tuple[str, list[str]]] = [
-    (
-        "1 headline: validation",
-        [
-            PF,
-            "val/expression/spearman_per_feature",
-            "val/expression/pearson_per_instance",
-            "val/expression/pred_sd_ratio",
-            "val/loss",
-            "val/mean/pearson_per_feature",
-        ],
-    ),
-    (
-        "2 train side, the generalization gap",
-        [
-            "traineval/expression/pearson_per_feature",
-            "traineval/expression/pred_sd_ratio",
-            "traineval/expression/spearman_per_feature",
-            "traineval/expression/pearson_per_instance",
-            "traineval/loss",
-            "traineval/expression/nmse",
-        ],
-    ),
-    (
-        "3 masked conditioning, revealed 0 / 10 / 100 / 1000 genes",
-        [
-            "val/expression/pearson_per_feature@k0",
-            "val/expression/pearson_per_feature@k1",
-            "val/expression/pearson_per_feature@k2",
-            "val/expression/pearson_per_feature@k3",
-            "val/mask/loss@k0",
-            "val/mask/loss@k1",
-            "val/mask/loss@k2",
-            "val/mask/loss@k3",
-        ],
-    ),
-    (
-        "4 error and calibration",
-        [
-            "val/expression/nmse",
-            "val/expression/mse",
-            "val/expression/calib/coverage_50",
-            "val/expression/calib/coverage_80",
-            "val/expression/calib/pit_ks",
-            "traineval/expression/mse",
-        ],
-    ),
-    (
-        "5 optimization",
-        [
-            "train/loss",
-            "train/grad_norm",
-            "train/grad_norm_clip_frac",
-            "train/mask/loss@k0",
-            "train/mask/loss@k3",
-            "perf/epoch_seconds",
-        ],
-    ),
-    (
-        "6 bookkeeping",
-        [
-            "val/expression/n_scored_genes@k0",
-            "val/mask/n_revealed@k1",
-            "val/mask/n_revealed@k3",
-            "trainer/global_step",
-        ],
-    ),
-]
-
-
-def populate_view() -> str:
-    """Overwrite the saved Charts view with the ranked sections above."""
-    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={VIEW_ID}")
-    view.name = "v13 split round by arm"
-    view.sections = [
+def populate_view(rnd: Round) -> str:
+    """Overwrite (or create) the round's saved Charts view with the ranked sections."""
+    sections = [
         ws.Section(
             name=name,
             is_open=True,
@@ -291,33 +368,61 @@ def populate_view() -> str:
                 for m in metrics
             ],
         )
-        for i, (name, metrics) in enumerate(CHART_SECTIONS)
+        for name, metrics in chart_sections(rnd.phenotype)
     ]
-    view.settings = ws.WorkspaceSettings(
+    settings = ws.WorkspaceSettings(
         x_axis=X,
         smoothing_type="none",
-        max_runs=24,
+        max_runs=rnd.max_runs,
         sort_panels_alphabetically=False,
     )
-    view.runset_settings = ws.RunsetSettings(
+    runset_settings = ws.RunsetSettings(
         groupby=[ws.Config("arm")],
         order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
     )
+    if rnd.view_id is None:
+        view = ws.Workspace(
+            entity=ENTITY,
+            project=rnd.project,
+            name=rnd.view_name,
+            sections=sections,
+            settings=settings,
+            runset_settings=runset_settings,
+        )
+        view.save_as_new_view()
+        print(
+            f"NEW saved view created: {view.url}\n"
+            "  pin its `nw=` id into ROUNDS[...].view_id so later runs overwrite it"
+        )
+        return view.url
+    view = ws.Workspace.from_url(
+        f"https://wandb.ai/{ENTITY}/{rnd.project}?nw={rnd.view_id}"
+    )
+    view.name = rnd.view_name
+    view.sections = sections
+    view.settings = settings
+    view.runset_settings = runset_settings
     view.save()
     return view.url
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--round", choices=sorted(ROUNDS), default="v13")
+    args = parser.parse_args()
+    rnd = ROUNDS[args.round]
     api = wandb.Api()
-    n = label_runs(api)
+    n = label_runs(api, rnd)
     print(f"labeled runs: {n} changed")
-    report = build_report()
+    report = build_report(rnd)
     existing = [
-        r for r in api.reports(f"{ENTITY}/{PROJECT}") if r.display_name == REPORT_TITLE
+        r
+        for r in api.reports(f"{ENTITY}/{rnd.project}")
+        if r.display_name == rnd.report_title
     ]
     if existing:
         live = wr.Report.from_url(
-            f"https://wandb.ai/{ENTITY}/{PROJECT}/reports/x--{existing[0].id}"
+            f"https://wandb.ai/{ENTITY}/{rnd.project}/reports/x--{existing[0].id}"
         )
         live.blocks = report.blocks
         live.width = report.width
@@ -326,7 +431,7 @@ def main() -> None:
     else:
         report.save()
         print(f"report created: {report.url}")
-    print(f"charts view: {populate_view()}")
+    print(f"charts view: {populate_view(rnd)}")
 
 
 if __name__ == "__main__":

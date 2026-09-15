@@ -291,6 +291,25 @@ minus pooled is $-0.0494$ (n = 2), and the wave-6 box flux head is $-0.039$ agai
 (n = 3). At three seeds the minimum detectable paired effect on this endpoint is about
 0.03, so this is a null at every size the design can see rather than a measured zero.
 
+\textbf{How reliable the target is, from the paper's own repeats.} The screen is one culture
+per strain, but the raw sheet of Table S3 holds 194 ORFs measured in two batches and 237
+injections of a pooled quality-control sample. After per-batch median scaling and a log10,
+the two measurements of the same strain correlate at a mean Pearson of 0.43 and a mean
+Spearman of 0.20 over the 19 amino acids (glutamine 0.67, glutamate 0.67, proline 0.64 at
+the top; glycine 0.12, methionine 0.19, tyrosine 0.20 at the bottom), and the implied
+reliability of a single measurement averages 0.42, a Pearson ceiling of about 0.62 for a
+perfect predictor of the true value. The quality-control sample disagrees with itself by
+only 0.03 to 0.05 log10 units (0.12 for histidine, arginine and tyrosine), while two
+cultures of the same strain disagree by 0.16 to 0.27, so the noise is culture-to-culture
+rather than instrumental, and it is comparable to the spread across all strains (0.21 to
+0.43). Every model in Table~\ref{tab:wave7-aa} and the linear ladder sits at a
+mean Spearman of 0.02 to 0.08 against a retest Spearman of 0.20, so the models are far
+below what the measurement supports; the target is weak because most deletions move the
+pools by less than one culture's worth of noise, not because the assay is. Repeated
+strains are the authors' choice rather than a random sample and the scaling omits the
+paper's dilution correction, so these are lower bounds on the released table's reliability.
+Source: \texttt{mulleder\_retest\_reliability.py}, \texttt{results/mulleder\_retest\_reliability.json}.
+
 %% SOURCE: notes/experiments.027-betaxanthin-metabolic.mermaid.aa-readouts.md (mermaid),
 %% rendered by notes/assets/publish/scripts/mermaid_pdf.sh; the numbers are read from
 %% experiments/027-betaxanthin-metabolic/results/wave8_aa_ctxconc_e200_s270{0,1,2}.json

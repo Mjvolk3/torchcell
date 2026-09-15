@@ -686,6 +686,18 @@ class BxCell(BaseModel):
             "separate head and would break the tie that arm exists to make."
         ),
     )
+    crps_sigma_fixed: float | None = Field(
+        default=None,
+        description=(
+            "Hold the CRPS predictive spread at this value, in standardized target units, "
+            "instead of letting the head predict it. Under a learned spread, widening sigma "
+            "lowers the loss without fitting signal, which is one route to the constant "
+            "predictor. The value that is not an escape comes from the label's own "
+            "reliability rho as sqrt(1 - rho): 0.40 for betaxanthin at rho 0.84, 0.76 for "
+            "the amino acids, 0.94 for the isobutanol screen "
+            "(results/target_reliability.json)."
+        ),
+    )
     bx_readout: str = Field(
         default=BX_READOUT_FLUX_SCALAR,
         description=(
@@ -1947,6 +1959,7 @@ def build_cell(
     dist: str = "crps",
     conc_space: str = CONC_SPACE_MIXTURE,
     volume_table: str = VOLUMES_ASSUMED,
+    crps_sigma_fixed: float | None = None,
     bx_readout: str = BX_READOUT_FLUX_SCALAR,
     conc_lower_m: float = CONC_LOWER_M,
     conc_upper_m: float = CONC_UPPER_M,
@@ -2057,6 +2070,7 @@ def build_cell(
         dist=dist,
         conc_space=conc_space,
         volume_table=volume_table,
+        crps_sigma_fixed=crps_sigma_fixed,
         bx_readout=bx_readout,
         conc_lower_m=conc_lower_m,
         conc_upper_m=conc_upper_m,
@@ -3250,6 +3264,7 @@ class ContextPrecursorConcentrationReadout(nn.Module):
         conc_lower_m: float,
         conc_upper_m: float,
         head_name: str = HEAD,
+        sigma_fixed: float | None = None,
     ) -> None:
         """Bind the head to the GEM's metabolite axis, the window and the precursors.
 
@@ -3263,6 +3278,13 @@ class ContextPrecursorConcentrationReadout(nn.Module):
             conc_lower_m: Floor of the concentration window, in molar.
             conc_upper_m: Ceiling of the window, in molar.
             head_name: Which head's output this writes.
+            sigma_fixed: Predictive spread to HOLD CONSTANT, in standardized target units,
+                or None to let the affine predict it. Under CRPS the affine emits
+                ``(mu, log_sigma)`` and widening ``sigma`` lowers the loss without fitting
+                anything, which is one route to the constant predictor this experiment keeps
+                meeting. Classical test theory gives the value that is not an escape: with
+                reliability ``rho`` the irreducible residual spread is ``sqrt(1 - rho)``, so
+                betaxanthin's 0.84 fixes it at 0.40. The affine then emits ``mu`` alone.
         """
         super().__init__()
         assert model.flux_layer is None, (
@@ -3285,7 +3307,24 @@ class ContextPrecursorConcentrationReadout(nn.Module):
         self.conc_upper_m = float(conc_upper_m)
         self.log_c_base = nn.Parameter(torch.zeros(n_metabolites))
         self.log_c_from_context = nn.Linear(hidden, n_metabolites)
-        self.readout = nn.Linear(int(metabolite_indices.shape[0]), param_dim)
+        assert sigma_fixed is None or sigma_fixed > 0.0, (
+            f"--crps-sigma-fixed must be a positive spread, got {sigma_fixed}."
+        )
+        assert sigma_fixed is None or param_dim == 2, (
+            f"--crps-sigma-fixed fixes the spread of a (mu, log_sigma) pair, but this head "
+            f"emits {param_dim} parameter(s); it is meaningful only under CRPS."
+        )
+        self.sigma_fixed = sigma_fixed
+        # With the spread held constant the affine emits the MEAN only, and the constant is
+        # concatenated in `forward`. Predicting a value the loss cannot move would leave a
+        # dead column in the head and a gradient path that does nothing.
+        self.readout = nn.Linear(
+            int(metabolite_indices.shape[0]), 1 if sigma_fixed is not None else param_dim
+        )
+        if sigma_fixed is not None:
+            self.register_buffer(
+                "log_sigma_fixed", torch.tensor(float(math.log(sigma_fixed)))
+            )
 
     @property
     def flux_layer(self) -> Any:
@@ -3333,7 +3372,12 @@ class ContextPrecursorConcentrationReadout(nn.Module):
             log_c, self.metabolite_indices, self.mixture_log_weights
         )
         reps["precursor_log10_c"] = log10_c
-        reps["head_outputs"][self.head_name] = self.readout(log10_c).unsqueeze(1)
+        out = self.readout(log10_c)
+        if self.sigma_fixed is not None:
+            out = torch.cat(
+                [out, self.log_sigma_fixed.expand_as(out)], dim=-1
+            )
+        reps["head_outputs"][self.head_name] = out.unsqueeze(1)
         return predictions, reps
 
 
@@ -3820,6 +3864,17 @@ def build_model_for_cell(
         f"aa_readout {AA_READOUT_CONTEXT_CONCENTRATION!r} is defined only for --arm pooled "
         f"with --head {AUX_HEAD}; this cell is arm {cell.base_arm!r} on head {cell.head!r}."
     )
+    # A FIXED SPREAD MUST REACH A HEAD THAT HONORS IT. Only the context-precursor readout
+    # reads `sigma_fixed`; on any other head the flag would be accepted, recorded in the
+    # result file and do nothing, which is the kind of silent no-op that makes a contrast
+    # look null.
+    assert cell.crps_sigma_fixed is None or (
+        cell.crps and cell.bx_readout == BX_READOUT_CONTEXT_PRECURSOR_CONCENTRATION
+    ), (
+        "--crps-sigma-fixed fixes the spread of the CRPS pair emitted by the "
+        f"{BX_READOUT_CONTEXT_PRECURSOR_CONCENTRATION!r} readout, so it needs --crps and that readout; "
+        f"this cell has crps={cell.crps} and bx_readout={cell.bx_readout!r}."
+    )
     assert cell.target_log10_molar == (cell.aa_readout in AA_LOG10_MOLAR_READOUTS), (
         "target_log10_molar is derived from the readout and must not be set by hand: the "
         "concentration readouts predict log10 molar and every other readout predicts the "
@@ -4225,6 +4280,7 @@ def build_model_for_cell(
             len(met_index),
             cell.conc_lower_m,
             cell.conc_upper_m,
+            sigma_fixed=cell.crps_sigma_fixed,
         ).to(device)
         print(
             "[context-precursor-readout] NO flux layer; betaxanthin from the whole-cell "
@@ -5732,6 +5788,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--crps-sigma-fixed",
+        type=float,
+        default=None,
+        help=(
+            "Hold the CRPS spread at this value in standardized units rather than "
+            "predicting it; sqrt(1 - reliability) is the value the label supports."
+        ),
+    )
+    parser.add_argument(
         "--bx-readout",
         choices=BX_READOUTS,
         default=BX_READOUT_FLUX_SCALAR,
@@ -5955,6 +6020,7 @@ def main() -> None:
         dist=args.dist,
         conc_space=args.conc_space,
         volume_table=args.volume_table,
+        crps_sigma_fixed=args.crps_sigma_fixed,
         bx_readout=args.bx_readout,
         conc_lower_m=args.conc_lower_m,
         conc_upper_m=args.conc_upper_m,

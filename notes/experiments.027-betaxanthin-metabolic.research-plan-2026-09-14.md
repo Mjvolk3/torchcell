@@ -415,3 +415,33 @@ weights rather than averaged. The paper's own three-colony rule sets the inclusi
   workbook sheet holding the second round of transformations, and the da Silveira loader
   hardcodes two replicates with no standard error while the SSMD sheet carries a recoverable
   dispersion for most cells.
+
+## 2026.09.15 - Which runs satisfy plain FBA feasibility, with no thermodynamics
+
+Scanned all 31 audit files in `results/` for the two halves of ordinary FBA feasibility:
+bounds (`box_violation_frac_eq_0`, which includes the capacity bound) and steady state
+(`balance_active_max_ratio_1e-03 <= 1e-2`, the turnover-thresholded rule calibrated against
+pFBA). No cell satisfies both halves on the top-100 strains. Each half has a family that
+satisfies it outright.
+
+| family | cells | bounds | steady state, all 4,930 | steady state, top 100 | active reactions |
+|---|---|---|---|---|---|
+| `flux_projection` (wave 6, seeds 2700-2702) | 3 | 0 percent | 100 percent | 100 percent | 88 percent |
+| warm start `boxforce` (job 1946, epoch 3) | 1 | 100 percent | 98 percent | 46 percent | 17 percent |
+| every other audited cell | 24 | 100 percent | 0 percent | 0 percent | varies |
+| pFBA reference on the same GEM | -- | exact | exact | exact | 10.3 percent |
+
+- **The projection arm solves steady state and nothing else.** Its balance residual is
+  essentially exact (median ratio 0.0, active-row max 1.1e-5, tighter than the pFBA
+  reference reads on the plain max rule), because a null-space projection enforces Sv = 0 by
+  construction. It pays for it everywhere else: half of all reactions sit outside their
+  bounds (median box violation 0.4994, and 0.598 on the top 100) and 88 percent of reactions
+  carry flux against pFBA's 10.3, so it is a dense out-of-bounds circulation rather than a
+  flux a cell could run.
+- **The box family solves bounds and approximates steady state.** Bounds and capacity hold
+  exactly by the sigmoid parameterization in every cell. Only the warm-started cell then
+  gets the balance residual down, and only for 3 epochs.
+- **On the top 100 the binding constraint is mass balance, not thermodynamics.** Job 1946
+  reads 100 percent on the second law under the layer's own potentials there, so its Genesis
+  fraction of 46 percent is entirely the balance half. At standard state no cell passes,
+  which is the learned concentration term doing the work.

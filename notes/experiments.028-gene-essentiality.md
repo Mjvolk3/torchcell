@@ -57,3 +57,18 @@ Pooled arm, width 12, one block, one-layer preprocessor, 80 epochs, seeds 2700 t
 | `w12fclb32` | batch 32 (base 128) | whether 20 steps per epoch instead of 5 changes the curve |
 
 Launcher: `scripts/gh_train_essentiality.slurm` through `scripts/freeze_and_submit.sh`, one environment per cell. Views: `scripts/wandb_views.py --contrast w12`.
+
+### Wave 13, queued 2026-09-16 01:20 (jobs 2113 to 2130): the prediction routed through the module
+
+Same width-12 cell, same fcl split and base hyperparameters as `w12fcl`, so every cell pairs by seed with a pooled cell. The flux arm is the wave-9 recipe (`flux_projection_anchored`, predicted kcat tier, union thermodynamics, YPD-approx bounds written onto the GEM, 20-epoch constraint warmup). Two readouts, two constraint scales, and the physics-off arm:
+
+| arm tag | arm | readout | constraint scale | what the backbone's gradient passes through |
+|---|---|---|---|---|
+| `w13fluxbio` | anchored | growth column only | 0.1 | the flux layer only (wave-9 design) |
+| `w13fluxbio_s0` | anchored | growth column only | 0 | the flux layer only, no physics penalty |
+| `w13fluxctx` | anchored | context head + growth column | 0.1 | both paths |
+| `w13fluxctx_s0` | anchored | context head + growth column | 0 | both paths, no physics penalty |
+| `w13fluxoff` | stoichiometry only | growth column only | 0.1 | the flux layer with no thermodynamics or capacity |
+| `w13fluxoffctx` | stoichiometry only | context head + growth column | 0.1 | both paths |
+
+Per-module gradient norms are logged every epoch (`grad_norm_flux_layer_mean`, `grad_norm_readout_mean` beside the transformer's and the preprocessor's); on the CPU smoke of the context-plus-growth readout the flux layer carried 0.82 against the transformer's 0.68 at epoch 0 (anchored) and 6.6 against 0.45 (stoichiometry only). `--ess-readout` selects the readout (`ContextBiomassReadout` in `train_essentiality.py`).

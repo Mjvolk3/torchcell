@@ -36,6 +36,12 @@ Do NOT list individual runs. An individual run link appears only as the example 
 named phenomenon (a collapse, an early peak), and then as `<id> <arm> <what it shows>`
 followed by its URL on the next line.
 
+**A phenomenon named in chat gets a panel in the saved view first.** Before citing runs
+for something seen in the curves, add a section or panel to `chart_sections` that shows
+it (overlay the metrics on one panel when the point is a contrast, e.g. train against
+validation for the interpolation watch), rerun the script, verify through the API, and
+give the view link. The user reads the charts, not the run pages.
+
 ## Keeping the view populated
 
 The personal default workspace cannot be written by the API ("does not currently

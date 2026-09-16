@@ -151,8 +151,12 @@ def panel_digenic_volcano(ax):
     if np.isfinite(p_cut):
         ax.axhline(-np.log10(p_cut), color="black", linewidth=0.5, linestyle="--",
                    zorder=2)
+        # On a 45-point panel there is no empty corner to put this in, so it sits under
+        # the line at the left on an opaque ground rather than on top of the pairs.
         ax.text(0.02, -np.log10(p_cut), " BH FDR < 0.05",
-                transform=ax.get_yaxis_transform(), va="top", ha="left", fontsize=5)
+                transform=ax.get_yaxis_transform(), va="top", ha="left", fontsize=5,
+                zorder=5,
+                bbox=dict(facecolor="white", edgecolor="none", pad=0.6))
     ax.axvline(0, color=C_GRAY, linewidth=0.4, zorder=1)
     ax.set_xlabel("$\\varepsilon$ (digenic interaction)")
     ax.set_ylabel("$-\\log_{10}$ $P$")

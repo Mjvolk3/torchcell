@@ -29,6 +29,12 @@ SHARED := sn-jnl.cls sn-nature.bst
 
 SECTIONS := $(wildcard sections/*.tex)
 DEPS     := $(DOC).tex content.tex preamble.tex $(SECTIONS)
+# The figure PDFs are a build dependency, not just an input. Without them here, a run of
+# `make plots && make` after regenerating a panel leaves editing.pdf untouched, because
+# none of the .tex files changed: the document then SHIPS the previous render of the panel
+# and nothing says so. FIGS is expanded at parse time, so a brand new figure still needs
+# one `make` to be noticed.
+FIGS     := $(wildcard figures/*.pdf)
 BIB      := references.bib
 
 # Where `make plots` looks for the matplotlib SVGs. The document directory is named for the
@@ -76,7 +82,7 @@ sn-jnl.cls: $(PAPER)/sn-jnl.cls
 sn-nature.bst: $(PAPER)/sn-nature.bst
 	@ln -sf ../../paper/nature-biotech/sn-nature.bst $@
 
-$(DOC).pdf: $(DEPS) $(SHARED) $(BIB)
+$(DOC).pdf: $(DEPS) $(FIGS) $(SHARED) $(BIB)
 	$(TECTONIC) -X compile $(DOC).tex --keep-logs --synctex --outdir .
 
 # Conversion goes through svg_true_size_pdf.py, NOT bare rsvg-convert. rsvg misreads both

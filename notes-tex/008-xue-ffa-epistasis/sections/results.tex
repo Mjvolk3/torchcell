@@ -183,6 +183,29 @@ local step led to a dead end. Being reachable is necessary for a stepwise campai
 combination, and it is not sufficient.
 
 \begin{figure*}[t]
+\tcfig{figures/ffa-epistasis-fig3-model-intuition.pdf}{\textbf{What each null expects, and
+what choosing one commits to.} \textbf{a}, One measured double deletion on a titer axis,
+MED4 and RPD3, the pair whose two expectations are furthest apart. The additive and the
+multiplicative expectation differ by $(1 - f_i)(1 - f_j)$, which is an identity rather than
+a property of this pair. \textbf{b}, All 45 doubles against both expectations; distance
+from the dashed line is the digenic interaction under that model. Forty-three of the 45 sit
+above both, by a median $+0.40$ against the multiplicative expectation and $+0.45$ against
+the additive one, so the two nulls agree on the direction at two deletions and differ in
+magnitude. \textbf{c}, Replicate standard deviation against strain mean over the 165
+strains with a nonzero replicate spread, on log axes. The fitted slope is 1.10, against 0
+for a constant spread and 1 for a spread proportional to the mean, which is the Gamma
+family and is the assumption behind a log link. \textbf{d}, The two families of null as
+statements about the system. A multiplicative null says each deletion keeps a fraction of
+what reaches it, which is how independent steps of one flux compose and is the convention
+the growth interaction screens use. An additive null says each deletion removes an amount
+from a shared pool. The second counts the part of the first deletion's loss that the second
+would have taken again, and that double-counted term is the entire difference between them.
+\textbf{e}, The four models fit here: what each expects, the scale its residual is measured
+on, what it is fit to, and the reading of the system under which it is the natural null.
+Equations in the Methods.}{fig:model-intuition}
+\end{figure*}
+
+\begin{figure*}[t]
 \panelrow{%
   \panel{a}{figures/panel_model_agreement.pdf}\hfill
   \panel{b}{figures/panel_graph_enrichment.pdf}%
@@ -207,28 +230,6 @@ species, and none of them survives on their sum.}
 \label{fig:models}
 \end{figure*}
 
-\begin{figure*}[t]
-\tcfig{figures/ffa-epistasis-fig3-model-intuition.pdf}{\textbf{What each null expects, and
-what choosing one commits to.} \textbf{a}, One measured double deletion on a titer axis,
-MED4 and RPD3, the pair whose two expectations are furthest apart. The additive and the
-multiplicative expectation differ by $(1 - f_i)(1 - f_j)$, which is an identity rather than
-a property of this pair. \textbf{b}, All 45 doubles against both expectations; distance
-from the dashed line is the digenic interaction under that model. Forty-three of the 45 sit
-above both, by a median $+0.40$ against the multiplicative expectation and $+0.45$ against
-the additive one, so the two nulls agree on the direction at two deletions and differ in
-magnitude. \textbf{c}, Replicate standard deviation against strain mean over the 165
-strains with a nonzero replicate spread, on log axes. The fitted slope is 1.10, against 0
-for a constant spread and 1 for a spread proportional to the mean, which is the Gamma
-family and is the assumption behind a log link. \textbf{d}, The two families of null as
-statements about the system. A multiplicative null says each deletion keeps a fraction of
-what reaches it, which is how independent steps of one flux compose and is the convention
-the growth interaction screens use. An additive null says each deletion removes an amount
-from a shared pool. The second counts the part of the first deletion's loss that the second
-would have taken again, and that double-counted term is the entire difference between them.
-\textbf{e}, The four models fit here: what each expects, the scale its residual is measured
-on, what it is fit to, and the reading of the system under which it is the natural null.
-Equations in the Methods.}{fig:model-intuition}
-\end{figure*}
 
 \FloatBarrier
 \subsection*{What counts as an interaction depends on the null and on the scale}

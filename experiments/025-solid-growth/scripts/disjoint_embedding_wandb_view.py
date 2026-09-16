@@ -99,6 +99,9 @@ def label_runs(api: wandb.Api) -> int:
             for i, run in enumerate(ranked):
                 rank0 = "val/gene_interaction/Pearson" in run.summary
                 run.name = f"{arm}_seed{seed}" + ("" if rank0 else f"_rank{i}")
+                # The W&B GROUP is the arm too, so each arm has a group page
+                # (`/groups/<arm>`) showing its seeds together with aggregated curves.
+                run.group = arm
                 run.config["arm"] = arm
                 run.config["seed_"] = seed
                 run.config["split"] = "Q"

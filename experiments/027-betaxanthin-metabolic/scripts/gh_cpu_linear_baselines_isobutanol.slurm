@@ -26,7 +26,7 @@
 #            hunting for a fifth embedding.
 #SBATCH -p main
 #SBATCH --nice=1000
-#SBATCH --mem=24g
+#SBATCH --mem=16g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8

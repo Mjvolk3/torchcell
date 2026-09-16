@@ -67,7 +67,7 @@
 # rule is unchanged: the pinned test Spearman at the epoch the centered 5-epoch moving
 # average of the validation Pearson selects, never a maximum over epochs.
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

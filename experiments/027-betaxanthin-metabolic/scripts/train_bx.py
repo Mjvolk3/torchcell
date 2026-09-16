@@ -515,6 +515,18 @@ class BxCell(BaseModel):
     weight_decay: float
     split_seed: int
     select_smoothing_window: int = Field(ge=1)
+    preprocessor_layers: int = Field(
+        default=2,
+        ge=1,
+        description=(
+            "Depth of the MLP that maps the concatenated gene embedding onto the "
+            "transformer width. THIS IS WHERE THE PARAMETERS ARE: at two layers the first "
+            "Linear is input_dim by (input_dim + hidden)/2, which does not shrink when the "
+            "width does, so the preprocessor is 65 percent of the 90-wide model and 97 "
+            "percent of the 24-wide one. At one layer it is a single input_dim by hidden "
+            "projection, so the width finally controls the size."
+        ),
+    )
     # RECIPE SWITCHES, added 2026-09-09 after the collapse audit. Both default to what the
     # 144-cell grid ran, so a grid cell deserializes unchanged; both are ON in the 019 run
     # that reached 0.434 (job 1344), and the grid had dropped them without recording it.
@@ -1064,6 +1076,9 @@ GRAPH_REG_CONFIG: dict[str, Any] = {
 #: escaped; the 027 grid's 200 epochs on Delta were also inside that window for most seeds.
 COLLAPSE_SD_RATIO = 0.01
 COLLAPSE_PATIENCE_EPOCHS = int(os.getenv("COLLAPSE_PATIENCE_EPOCHS", "200"))
+#: The clip on the global gradient norm, unchanged since 026; logged beside the pre-clip
+#: norm so `grad_clipped_frac` says how often it binds.
+GRAD_CLIP_NORM = 10.0
 
 
 def point_estimate(
@@ -1947,6 +1962,9 @@ def build_cell(
     attention_mask: bool = False,
     pert_heads: int = 6,
     layers: int | None = None,
+    hidden: int | None = None,
+    attention_heads: int | None = None,
+    preprocessor_layers: int = 2,
     learnable_embedding: bool = False,
     kcat_tier: str = "measured",
     thermo_source: str = "shipped",
@@ -2025,6 +2043,15 @@ def build_cell(
         f"--bx-readout must be one of {BX_READOUTS}, got {bx_readout!r}."
     )
     assert dist in DISTS, f"--dist must be one of {DISTS}, got {dist!r}."
+    width = hidden if hidden is not None else cfg.model.hidden
+    n_heads = (
+        attention_heads if attention_heads is not None else cfg.model.attention_heads
+    )
+    assert width % n_heads == 0, (
+        f"the transformer width {width} is not divisible by the attention head count "
+        f"{n_heads}. Pass --hidden and --attention-heads together; the ladder is "
+        "90/9, 45/9 and 24/8."
+    )
     assert armcfg.base_arm in ARMS, (
         f"arm {arm!r} names base_arm={armcfg.base_arm!r}, which is not in 026's ARMS "
         f"registry ({sorted(ARMS)}). The registry is the single source of truth for what "
@@ -2036,9 +2063,14 @@ def build_cell(
         seed=seed,
         permute_train_targets=armcfg.permute_train_targets,
         epochs=epochs if epochs is not None else cfg.train.epochs,
-        hidden=cfg.model.hidden,
+        hidden=hidden if hidden is not None else cfg.model.hidden,
         layers=layers if layers is not None else cfg.model.layers,
-        attention_heads=cfg.model.attention_heads,
+        attention_heads=(
+            attention_heads
+            if attention_heads is not None
+            else cfg.model.attention_heads
+        ),
+        preprocessor_layers=preprocessor_layers,
         batch_size=cfg.model.batch_size,
         num_workers=int(os.getenv("NUM_WORKERS", str(cfg.train.num_workers))),
         lr=cfg.model.lr,
@@ -2177,6 +2209,25 @@ def code_provenance() -> dict[str, str]:
     return out
 
 
+def _module_grad_norms(model: nn.Module) -> dict[str, float]:
+    """L2 gradient norm per top-level submodule, before clipping.
+
+    Grouped by the FIRST path segment of each parameter name, which is exactly the grouping
+    the result file's `n_parameters` block already uses (embedding_preprocessor,
+    transformer_layers, perturbation_transform, the head, the flux layer). A spiky
+    validation curve is read against these: one module carrying the whole norm says the
+    instability has an address, while a norm spread evenly says the step size is simply too
+    large for the batch.
+    """
+    sums: dict[str, float] = {}
+    for name, param in model.named_parameters():
+        if param.grad is None:
+            continue
+        group = name.split(".", 1)[0]
+        sums[group] = sums.get(group, 0.0) + float(param.grad.detach().pow(2).sum())
+    return {k: v**0.5 for k, v in sums.items()}
+
+
 def _params_snapshot(model: nn.Module) -> dict[str, torch.Tensor]:
     """CPU copy of the TRAINABLE parameters only.
 
@@ -2185,6 +2236,25 @@ def _params_snapshot(model: nn.Module) -> dict[str, torch.Tensor]:
     buffers would carry ~46 MB of constant S matrix five times per worker for nothing.
     """
     return {k: v.detach().to("cpu", copy=True) for k, v in model.named_parameters()}
+
+
+def _module_grad_norms(model: nn.Module) -> dict[str, float]:
+    """L2 norm of the gradient per TOP-LEVEL module, keyed the way `n_parameters` is.
+
+    The key is the first component of the parameter name (``transformer_layers``,
+    ``essentiality_head``, ``flux_layer``, ...), so the logged curve lines up with the
+    parameter-count block in the result file. Parameters with no gradient this step (a
+    frozen block, an unused head) are skipped rather than counted as zero.
+    """
+    squares: dict[str, float] = {}
+    for name, param in model.named_parameters():
+        if param.grad is None:
+            continue
+        module = name.split(".", 1)[0]
+        squares[module] = squares.get(module, 0.0) + float(
+            param.grad.detach().pow(2).sum()
+        )
+    return {k: v**0.5 for k, v in squares.items()}
 
 
 def _restore(model: nn.Module, snap: dict[str, torch.Tensor]) -> None:
@@ -4122,7 +4192,7 @@ def build_model_for_cell(
         learnable_embedding_config={
             "enabled": cell.learnable_embedding,
             "size": cell.hidden,
-            "preprocessor": {"num_layers": 2, "dropout": 0.1},
+            "preprocessor": {"num_layers": cell.preprocessor_layers, "dropout": 0.1},
         },
         # 6, from 019's conf, or 9 as the 020 grid ran. The default is 8, and 90 is not
         # divisible by 8, so the perturbation head's cross-attention refuses to build.
@@ -4615,6 +4685,9 @@ def run_cell(
             constraint_scale = epoch_layer.set_constraint_epoch(epoch)
         train_constraint_loss = 0.0
         feas: dict[str, float] = {}
+        # Per-epoch extrema and counts that must not be divided by the batch count the way
+        # `feas` sums are: the largest pre-clip gradient norm, and how many batches clipped.
+        grad_max: dict[str, float] = {}
         for batch in dm.train_dataloader():
             batch = batch.to(device)
             optimizer.zero_grad(set_to_none=True)
@@ -4691,7 +4764,24 @@ def run_cell(
                     reps["flux_draw_pred_sd"].detach()
                 )
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+            # GRADIENT TRACKING. The global norm BEFORE clipping (clip_grad_norm_ returns
+            # it), accumulated as a per-epoch mean and max, and the same norm per top-level
+            # module (embedding_preprocessor, transformer_layers, the head, the flux layer)
+            # so a spiky validation curve can be read against whether the update itself is
+            # spiky and where it lands. Requested 2026-09-15 for the essentiality cells.
+            total_norm = float(
+                torch.nn.utils.clip_grad_norm_(model.parameters(), GRAD_CLIP_NORM)
+            )
+            feas["grad_norm_mean"] = feas.get("grad_norm_mean", 0.0) + total_norm
+            grad_max["grad_norm_max"] = max(
+                grad_max.get("grad_norm_max", 0.0), total_norm
+            )
+            grad_max["grad_clipped_frac"] = grad_max.get(
+                "grad_clipped_frac", 0.0
+            ) + float(total_norm > GRAD_CLIP_NORM)
+            for module_name, module_norm in _module_grad_norms(model).items():
+                key = f"grad_norm_{module_name}_mean"
+                feas[key] = feas.get(key, 0.0) + module_norm
             optimizer.step()
             train_loss += float(loss.detach())
             n_batches += 1
@@ -4778,6 +4868,9 @@ def run_cell(
         }
         for k, v in feas.items():
             row[k] = v / max(n_batches, 1)
+        if grad_max:
+            row["grad_norm_max"] = grad_max["grad_norm_max"]
+            row["grad_clipped_frac"] = grad_max["grad_clipped_frac"] / max(n_batches, 1)
         history.append(row)
         if on_epoch is not None:
             on_epoch(row)
@@ -5672,6 +5765,32 @@ def main() -> None:
     )
     parser.add_argument("--layers", type=int, default=None)
     parser.add_argument(
+        "--hidden",
+        type=int,
+        default=None,
+        help=(
+            "Override the transformer width (base.yaml: 90). The model-size ladder on "
+            "essentiality runs 90, 45 and 24; the width must be divisible by the head count."
+        ),
+    )
+    parser.add_argument(
+        "--attention-heads",
+        type=int,
+        default=None,
+        help="Override the attention head count (base.yaml: 9); pair with --hidden.",
+    )
+    parser.add_argument(
+        "--preprocessor-layers",
+        type=int,
+        default=2,
+        help=(
+            "Depth of the embedding preprocessor MLP (default 2). At 2 its first Linear is "
+            "input_dim by (input_dim + hidden)/2 and carries most of the model whatever the "
+            "width; 1 makes it a single input_dim by hidden projection, which is what a "
+            "genuinely small cell needs."
+        ),
+    )
+    parser.add_argument(
         "--kcat-tier",
         choices=("measured", "predicted"),
         default="measured",
@@ -6012,6 +6131,9 @@ def main() -> None:
         attention_mask=args.attention_mask,
         pert_heads=args.pert_heads,
         layers=args.layers,
+        hidden=args.hidden,
+        attention_heads=args.attention_heads,
+        preprocessor_layers=args.preprocessor_layers,
         learnable_embedding=args.learnable_embedding,
         kcat_tier=args.kcat_tier,
         thermo_source=args.thermo_source,

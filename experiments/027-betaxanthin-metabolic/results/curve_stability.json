@@ -1,0 +1,86 @@
+{
+  "metric": "per-epoch validation AUROC (logged as val_pearson on a binary head)",
+  "cells": [
+    {
+      "result_file": "wave9_ess_pool_e80_s2700.json",
+      "hidden": 90,
+      "preprocessor_layers": 2,
+      "layers": 2,
+      "attention_heads": 9,
+      "seed": 2700,
+      "n_parameters": 958501,
+      "n_epochs": 80,
+      "select_epoch": 60,
+      "median_abs_step": 0.03367003367003363,
+      "curve_range": 0.49831649831649827,
+      "step_to_range": 0.06756756756756749,
+      "diff_autocorrelation": -0.3370039231200116,
+      "final_minus_peak": -0.03872053872053871,
+      "grad_norm_mean": null,
+      "grad_clipped_frac": null
+    },
+    {
+      "result_file": "wave9_ess_pool_e80_s2701.json",
+      "hidden": 90,
+      "preprocessor_layers": 2,
+      "layers": 2,
+      "attention_heads": 9,
+      "seed": 2701,
+      "n_parameters": 958501,
+      "n_epochs": 80,
+      "select_epoch": 60,
+      "median_abs_step": 0.0572390572390572,
+      "curve_range": 0.606060606060606,
+      "step_to_range": 0.0944444444444444,
+      "diff_autocorrelation": -0.4494324802855748,
+      "final_minus_peak": -0.031986531986531896,
+      "grad_norm_mean": null,
+      "grad_clipped_frac": null
+    },
+    {
+      "result_file": "wave9_ess_pool_e80_s2702.json",
+      "hidden": 90,
+      "preprocessor_layers": 2,
+      "layers": 2,
+      "attention_heads": 9,
+      "seed": 2702,
+      "n_parameters": 958501,
+      "n_epochs": 80,
+      "select_epoch": 28,
+      "median_abs_step": 0.07154882154882158,
+      "curve_range": 0.6346801346801347,
+      "step_to_range": 0.11273209549071622,
+      "diff_autocorrelation": -0.2282461956863021,
+      "final_minus_peak": -0.2592592592592593,
+      "grad_norm_mean": null,
+      "grad_clipped_frac": null
+    }
+  ],
+  "configurations": [
+    {
+      "label": "h90_p2_l2",
+      "hidden": 90,
+      "preprocessor_layers": 2,
+      "layers": 2,
+      "n_parameters": 958501,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "median_abs_step_by_seed": {
+        "2700": 0.03367003367003363,
+        "2701": 0.0572390572390572,
+        "2702": 0.07154882154882158
+      },
+      "mean_median_abs_step": 0.0541526374859708,
+      "select_epoch_by_seed": {
+        "2700": 60,
+        "2701": 60,
+        "2702": 28
+      },
+      "select_epoch_spread": 32
+    }
+  ],
+  "note": "The endpoint of the size ladder is the curve, not the test AUROC: at 31 essential genes among 195 the AUROC bootstrap interval is about 0.17 wide and cannot separate these cells. A median absolute step that falls with model size says capacity drove the instability; one that does not says the cause is elsewhere, and the 16 percent positive rate and the batch size of 128 against about 851 training rows are the next candidates."
+}

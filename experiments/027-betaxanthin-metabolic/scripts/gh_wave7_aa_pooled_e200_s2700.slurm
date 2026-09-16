@@ -25,7 +25,7 @@
 #       experiments/027-betaxanthin-metabolic/scripts/gh_wave7_aa_pooled_e200_s2700.slurm
 #
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

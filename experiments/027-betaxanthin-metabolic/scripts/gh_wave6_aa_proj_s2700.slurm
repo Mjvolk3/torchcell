@@ -25,7 +25,7 @@
 # WAVE 6 amino-acid cell: flux_projection arm (balance exact by construction) at constraint scale 0, --head mulleder19, seed 2700. Driver-authored 2026-09-11 after the box head read below pooled at all three seeds.
 #
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

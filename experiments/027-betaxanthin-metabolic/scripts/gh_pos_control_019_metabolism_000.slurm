@@ -12,7 +12,7 @@
 #   cd <worktree-root> && sbatch experiments/027-betaxanthin-metabolic/scripts/gh_pos_control_019_metabolism_000.slurm
 #
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=6

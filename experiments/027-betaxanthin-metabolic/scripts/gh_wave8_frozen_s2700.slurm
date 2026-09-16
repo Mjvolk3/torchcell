@@ -144,7 +144,7 @@
 # against 2.0 (moved, not by shrinkage). Holding the rows and still reading 2.0 is the
 # finding that balance on the carrying rows is out of this head's reach on these bounds.
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

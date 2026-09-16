@@ -135,7 +135,7 @@
 # what the 0.5 cell does to the active-row p95: this is the follow-up either way, as the
 # next step if the p95 moved and as the harder ask if it did not.
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

@@ -109,7 +109,7 @@
 # for the plain projection, and the data loss is about 0.53. The two strengths are therefore
 # 0.5 (term comparable to the data term) and 2.0 (term dominant over it).
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

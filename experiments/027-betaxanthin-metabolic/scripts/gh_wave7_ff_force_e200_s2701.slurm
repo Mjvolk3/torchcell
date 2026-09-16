@@ -74,7 +74,7 @@
 # open is the balance residual: median 1.05 on the top 100, so the Genesis key reads 0.00.
 # These two seeds are the replication of that single cell.
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

@@ -100,7 +100,7 @@
 # failure mode on an arm that HAS the concentration gradient, so the gradient is not what the
 # clamp cost. These seeds are the replication of both halves of that.
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

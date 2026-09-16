@@ -138,7 +138,7 @@
 # active-balance weights rather than without, so it is a lever added to the recipe under
 # test rather than a fourth arm to compare against nothing.
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

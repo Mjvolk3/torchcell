@@ -129,7 +129,7 @@
 # rule, and the number to read is `balance_active_p95_1e-03` on the top 100: below 2.0 would
 # be the first movement of that rule in three waves.
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

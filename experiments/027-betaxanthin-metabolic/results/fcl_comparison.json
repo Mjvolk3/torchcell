@@ -1,0 +1,340 @@
+{
+  "gene_sets": {
+    "all_labeled_1121": 1121,
+    "released_held_out_223": 223,
+    "ours_scored": 195
+  },
+  "reproduction_check": {
+    "fcl_test_223": 0.7308467741935483,
+    "fba_all_1121": 0.6931310621878056
+  },
+  "scored": [
+    {
+      "method": "FCL",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 223,
+      "n_essential": 31,
+      "auroc": 0.7308467741935483,
+      "ci_low": 0.618370039194875,
+      "ci_high": 0.838479795171723,
+      "seed": null
+    },
+    {
+      "method": "FBA",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 1121,
+      "n_essential": 157,
+      "auroc": 0.6931310621878056,
+      "ci_low": 0.6424905266620087,
+      "ci_high": 0.742600162716854,
+      "seed": null
+    },
+    {
+      "method": "pooled_no_module",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7926829268292683,
+      "ci_low": 0.7072914200442381,
+      "ci_high": 0.8803353821231179,
+      "seed": 2700
+    },
+    {
+      "method": "pooled_no_module",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7881589299763966,
+      "ci_low": 0.7007445877813343,
+      "ci_high": 0.8765477661326971,
+      "seed": 2701
+    },
+    {
+      "method": "pooled_no_module",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5783831628638867,
+      "ci_low": 0.45764193151088384,
+      "ci_high": 0.6918375521140824,
+      "seed": 2702
+    },
+    {
+      "method": "flux_biomass",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5398308418568056,
+      "ci_low": 0.4193742743341734,
+      "ci_high": 0.6568603156994295,
+      "seed": 2700
+    },
+    {
+      "method": "flux_biomass",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7578678206136901,
+      "ci_low": 0.665889394763208,
+      "ci_high": 0.8534683552752219,
+      "seed": 2701
+    },
+    {
+      "method": "flux_biomass",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5115066876475216,
+      "ci_low": 0.38759819706549664,
+      "ci_high": 0.6300236844513044,
+      "seed": 2702
+    },
+    {
+      "method": "FCL",
+      "gene_set": "released_held_out_223",
+      "n_genes": 223,
+      "n_essential": 31,
+      "auroc": 0.7308467741935483,
+      "ci_low": 0.618370039194875,
+      "ci_high": 0.838479795171723,
+      "seed": null
+    },
+    {
+      "method": "FBA",
+      "gene_set": "released_held_out_223",
+      "n_genes": 223,
+      "n_essential": 31,
+      "auroc": 0.629956317204301,
+      "ci_low": 0.5177475066706438,
+      "ci_high": 0.7411205132459489,
+      "seed": null
+    },
+    {
+      "method": "pooled_no_module",
+      "gene_set": "released_held_out_223",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7926829268292683,
+      "ci_low": 0.7072914200442381,
+      "ci_high": 0.8803353821231179,
+      "seed": 2700
+    },
+    {
+      "method": "pooled_no_module",
+      "gene_set": "released_held_out_223",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7881589299763966,
+      "ci_low": 0.7007445877813343,
+      "ci_high": 0.8765477661326971,
+      "seed": 2701
+    },
+    {
+      "method": "pooled_no_module",
+      "gene_set": "released_held_out_223",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5783831628638867,
+      "ci_low": 0.45764193151088384,
+      "ci_high": 0.6918375521140824,
+      "seed": 2702
+    },
+    {
+      "method": "flux_biomass",
+      "gene_set": "released_held_out_223",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5398308418568056,
+      "ci_low": 0.4193742743341734,
+      "ci_high": 0.6568603156994295,
+      "seed": 2700
+    },
+    {
+      "method": "flux_biomass",
+      "gene_set": "released_held_out_223",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7578678206136901,
+      "ci_low": 0.665889394763208,
+      "ci_high": 0.8534683552752219,
+      "seed": 2701
+    },
+    {
+      "method": "flux_biomass",
+      "gene_set": "released_held_out_223",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5115066876475216,
+      "ci_low": 0.38759819706549664,
+      "ci_high": 0.6300236844513044,
+      "seed": 2702
+    },
+    {
+      "method": "FCL",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.74213217938631,
+      "ci_low": 0.634456337108014,
+      "ci_high": 0.8447953999582288,
+      "seed": null
+    },
+    {
+      "method": "FBA",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.6400472069236822,
+      "ci_low": 0.5190704355381774,
+      "ci_high": 0.7546372814823831,
+      "seed": null
+    },
+    {
+      "method": "pooled_no_module",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7926829268292683,
+      "ci_low": 0.7072914200442381,
+      "ci_high": 0.8803353821231179,
+      "seed": 2700
+    },
+    {
+      "method": "pooled_no_module",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7881589299763966,
+      "ci_low": 0.7007445877813343,
+      "ci_high": 0.8765477661326971,
+      "seed": 2701
+    },
+    {
+      "method": "pooled_no_module",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5783831628638867,
+      "ci_low": 0.45764193151088384,
+      "ci_high": 0.6918375521140824,
+      "seed": 2702
+    },
+    {
+      "method": "flux_biomass",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5398308418568056,
+      "ci_low": 0.4193742743341734,
+      "ci_high": 0.6568603156994295,
+      "seed": 2700
+    },
+    {
+      "method": "flux_biomass",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7578678206136901,
+      "ci_low": 0.665889394763208,
+      "ci_high": 0.8534683552752219,
+      "seed": 2701
+    },
+    {
+      "method": "flux_biomass",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5115066876475216,
+      "ci_low": 0.38759819706549664,
+      "ci_high": 0.6300236844513044,
+      "seed": 2702
+    }
+  ],
+  "arms_across_seeds": [
+    {
+      "arm": "pooled_no_module",
+      "gene_set": "ours_scored",
+      "auroc_by_seed": {
+        "2700": 0.7926829268292683,
+        "2701": 0.7881589299763966,
+        "2702": 0.5783831628638867
+      },
+      "mean": 0.7197416732231838,
+      "sd": 0.122440957098231,
+      "minimum": 0.5783831628638867,
+      "maximum": 0.7926829268292683
+    },
+    {
+      "arm": "flux_biomass",
+      "gene_set": "ours_scored",
+      "auroc_by_seed": {
+        "2700": 0.5398308418568056,
+        "2701": 0.7578678206136901,
+        "2702": 0.5115066876475216
+      },
+      "mean": 0.6030684500393392,
+      "sd": 0.13480615073348565,
+      "minimum": 0.5115066876475216,
+      "maximum": 0.7578678206136901
+    }
+  ],
+  "head_to_head": [
+    {
+      "arm": "pooled_no_module",
+      "baseline": "FCL",
+      "gene_set": "ours_scored",
+      "baseline_auroc": 0.74213217938631,
+      "difference_by_seed": {
+        "2700": 0.05055074744295829,
+        "2701": 0.04602675059008654,
+        "2702": -0.16374901652242335
+      },
+      "seeds_above_baseline": 2,
+      "n_seeds": 3,
+      "verdict": "2 of 3 seeds above FCL; the arm's across-seed range is 0.578 to 0.793, so a single seed above the baseline is not evidence the arm beats it."
+    },
+    {
+      "arm": "pooled_no_module",
+      "baseline": "FBA",
+      "gene_set": "ours_scored",
+      "baseline_auroc": 0.6400472069236822,
+      "difference_by_seed": {
+        "2700": 0.1526357199055861,
+        "2701": 0.14811172305271436,
+        "2702": -0.06166404405979553
+      },
+      "seeds_above_baseline": 2,
+      "n_seeds": 3,
+      "verdict": "2 of 3 seeds above FBA; the arm's across-seed range is 0.578 to 0.793, so a single seed above the baseline is not evidence the arm beats it."
+    },
+    {
+      "arm": "flux_biomass",
+      "baseline": "FCL",
+      "gene_set": "ours_scored",
+      "baseline_auroc": 0.74213217938631,
+      "difference_by_seed": {
+        "2700": -0.2023013375295044,
+        "2701": 0.015735641227380026,
+        "2702": -0.23062549173878844
+      },
+      "seeds_above_baseline": 1,
+      "n_seeds": 3,
+      "verdict": "1 of 3 seeds above FCL; the arm's across-seed range is 0.512 to 0.758, so a single seed above the baseline is not evidence the arm beats it."
+    },
+    {
+      "arm": "flux_biomass",
+      "baseline": "FBA",
+      "gene_set": "ours_scored",
+      "baseline_auroc": 0.6400472069236822,
+      "difference_by_seed": {
+        "2700": -0.10021636506687659,
+        "2701": 0.11782061369000785,
+        "2702": -0.12854051927616061
+      },
+      "seeds_above_baseline": 1,
+      "n_seeds": 3,
+      "verdict": "1 of 3 seeds above FBA; the arm's across-seed range is 0.512 to 0.758, so a single seed above the baseline is not evidence the arm beats it."
+    }
+  ],
+  "note": "Every AUROC on one row of a gene set is computed on the same genes. The published FCL 0.73 is the 223 held-out genes and the published FBA 0.69 is all 1,121 labeled genes, so the published pair is not a head-to-head; on the held-out genes FBA scores about 0.63. Bootstrap intervals resample genes and hold the method fixed, so they capture sampling error and not seed noise; for our arms the across-seed spread is the larger of the two."
+}

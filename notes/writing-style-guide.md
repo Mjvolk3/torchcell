@@ -295,3 +295,40 @@ The pattern, established for the 027 document:
 
 The 019 documents and the paper's Methods should adopt the same pattern when they next
 report a trained result.
+
+## 2026.09.15 - Showing W&B: grouped runs, train against validation, and a structured takeaway
+
+"Show me the W&B data", "the W&B view", "the W&B groups" are all one request: **the recent
+experiments grouped by the axis that distinguishes them, with a link per group.** A saved
+workspace view and a list of individual run links are both answers to a different question.
+
+**Group by arm, and the W&B group is the unit.** One W&B group holds every seed of one arm,
+and its page at `https://wandb.ai/<entity>/<project>/groups/<group>` shows those seeds with
+aggregated curves. The trainer sets the group from the launcher's arm tag (027's
+`train_bx.py`); a per-job group puts one run in each group and makes the page useless.
+`wandb_views.py` rewrites the group of older runs to the same rule and records each group's
+URL in `results/wandb_views.json`. Give the group URLs first, each alone on its line, then
+the cross-arm saved view. Individual run links stay for naming one example of a phenomenon.
+
+**Every view carries train against validation THREE ways, per pair.** The two curves
+overlaid, then each alone. The overlay is the only place the train-validation gap can be
+read, since a gap cannot be seen across two panels with independent y axes; the isolated
+panels are the only place each curve's shape can be read, since the overlay's axis is set by
+whichever curve has the larger range and flattens the other. In 027 this is
+`TRAIN_VAL_PAIRS` and `train_val_panels` in `wandb_views.py`, placed as the first section of
+the view, above the single-metric curves and the summary bars.
+
+**Answer in the terminal with a structured block, not prose.** Two labeled lines per group:
+
+```
+description: <what was run, in one sentence: arm, target, budget, seeds>
+takeaway:    <what it means, including what it does NOT establish>
+```
+
+then the group URL on its own line. The description is the experiment; the takeaway is the
+reading, and it names the uncertainty that would overturn it (seed spread, a bootstrap
+interval, a collapsed cell) rather than leaving that for the reader to ask.
+
+**Filter failed and crashed runs out of a view.** A crashed run carries the round's tags and
+no epochs, so it sits as an empty row in every group and drags a bar chart's group mean
+toward nothing. Running runs stay in; a launcher smoke goes to its own group.

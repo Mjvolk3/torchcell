@@ -243,6 +243,55 @@ def test_the_target_lands_on_the_batch_device_not_the_label_device():
     assert target[0, 0].item() == 1.0
 
 
+def test_module_grad_norms_group_by_the_first_path_segment():
+    """The gradient norm is reported per top-level module, the way n_parameters is."""
+    model = nn.Sequential()
+    model.add_module("encoder", nn.Linear(4, 4))
+    model.add_module("head", nn.Linear(4, 1))
+    model(torch.ones(2, 4)).sum().backward()
+    norms = train_bx._module_grad_norms(model)
+    assert set(norms) == {"encoder", "head"}
+    # Each value is the L2 norm over that module's parameter gradients.
+    total = 0.0
+    for name, param in model.named_parameters():
+        grad = param.grad
+        if name.startswith("head") and grad is not None:
+            total += float(grad.pow(2).sum())
+    assert norms["head"] == pytest.approx(total**0.5)
+
+
+def test_a_parameter_without_a_gradient_is_skipped_not_counted_as_zero():
+    """A frozen module must be absent from the report rather than reported as a zero norm."""
+    frozen = nn.Linear(4, 4)
+    model = nn.Sequential()
+    model.add_module("frozen", frozen)
+    model.add_module("head", nn.Linear(4, 1))
+    for param in frozen.parameters():
+        param.requires_grad_(False)
+    model(torch.ones(2, 4)).sum().backward()
+    assert set(train_bx._module_grad_norms(model)) == {"head"}
+
+
+def test_the_width_must_divide_by_the_head_count():
+    """A width the heads do not divide fails at build, not inside attention."""
+    cfg = train_bx.load_config()
+    with pytest.raises(
+        AssertionError, match="not divisible by the attention head count"
+    ):
+        train_bx.build_cell("pooled", 1, cfg, epochs=1, hidden=90, attention_heads=8)
+    # The ladder's own pairings all divide.
+    for hidden, heads in ((90, 9), (45, 9), (24, 8), (12, 4)):
+        assert hidden % heads == 0
+
+
+def test_the_preprocessor_depth_defaults_to_two_and_is_overridable():
+    """Depth 2 is what every wave before 11 ran, so an old result file deserializes."""
+    cfg = train_bx.load_config()
+    assert train_bx.build_cell("pooled", 1, cfg, epochs=1).preprocessor_layers == 2
+    shallow = train_bx.build_cell("pooled", 1, cfg, epochs=1, preprocessor_layers=1)
+    assert shallow.preprocessor_layers == 1
+
+
 def test_a_gene_absent_from_the_split_is_masked_out():
     value = torch.zeros(6)
     known = torch.zeros(6, dtype=torch.bool)

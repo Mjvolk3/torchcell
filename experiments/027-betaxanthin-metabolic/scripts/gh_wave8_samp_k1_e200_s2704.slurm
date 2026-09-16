@@ -23,7 +23,7 @@
 #       experiments/027-betaxanthin-metabolic/scripts/gh_wave8_samp_k1_e200_s2704.slurm
 #
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

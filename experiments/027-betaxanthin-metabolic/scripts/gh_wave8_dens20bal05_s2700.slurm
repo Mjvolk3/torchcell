@@ -141,7 +141,7 @@
 # too while `c_density` holds, no weighting of these two terms fixes it and the row set
 # has to be frozen rather than recomputed from the flux under test.
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

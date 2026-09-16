@@ -1,0 +1,1078 @@
+{
+  "cell": {
+    "arm": "flux_warmstart_boxforce_nominal",
+    "base_arm": "flux_nullspace_kcat_sigma2",
+    "seed": 2700,
+    "permute_train_targets": false,
+    "epochs": 10,
+    "hidden": 90,
+    "layers": 2,
+    "attention_heads": 9,
+    "batch_size": 128,
+    "num_workers": 2,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5,
+    "crps": true,
+    "graph_reg": true,
+    "abort_on_collapse": false,
+    "aux_mulleder": false,
+    "attention_mask": false,
+    "learnable_embedding": false,
+    "pert_heads": 6,
+    "kcat_tier": "predicted",
+    "thermo_source": "union_external",
+    "constraint_warmup_epochs": 20,
+    "constraint_scale": 0.0,
+    "constraint_delay_epochs": 0,
+    "head_normalize": true,
+    "head": "betaxanthin",
+    "aa_readout": "flux_metabolite",
+    "target_log10_molar": false,
+    "dist": "crps",
+    "crps_sigma_fixed": null,
+    "bx_readout": "flux_scalar",
+    "volume_table": "assumed",
+    "conc_space": "mixture",
+    "conc_lower_m": 1e-07,
+    "conc_upper_m": 0.01,
+    "flux_parameterization": "warmstart_k100_boxforce",
+    "flux_balance_active_row_set": "frozen",
+    "flux_balance_active_weight": 0.5,
+    "flux_density_weight": 0.0,
+    "flux_parsimony_weight": 0.001,
+    "flux_thermo_exempt_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260915-133135-gh_wave10_warmstart_frozen_e10_s2700/experiments/026-metabolism-flux/results/thermo_exempt_candidates.json",
+    "flux_log_c_init_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260915-133135-gh_wave10_warmstart_frozen_e10_s2700/experiments/026-metabolism-flux/results/thermo_consistent_log_c.json",
+    "flux_availability_fold": "normalized_softmin",
+    "flux_shuffle_kcat_seed": null,
+    "flux_reference_table": null,
+    "flux_alpha_frozen": true,
+    "flux_warm_start_init_rel": 0.01,
+    "flux_draws": 1,
+    "flux_latent_stochastic": false,
+    "flux_kl_weight": null,
+    "ib_readout": "flux_scalar",
+    "ib_anchors": "one",
+    "target_log10": false,
+    "aa_supervise_columns": null,
+    "apply_media": "none",
+    "flux_log_c_from_latent": false
+  },
+  "select_epoch": 6,
+  "select_rule": "centered_ma_5",
+  "select_val_pearson": 0.07871659100055695,
+  "test": {
+    "pinned": {
+      "n": 629,
+      "spearman": 0.012863665771531385,
+      "pearson": -0.2347710281610489,
+      "top10": {
+        "hits": 1.0,
+        "enrichment": 0.9984126984126984
+      },
+      "top25": {
+        "hits": 1.0,
+        "enrichment": 0.39936507936507937
+      },
+      "top50": {
+        "hits": 6.0,
+        "enrichment": 1.198095238095238
+      }
+    },
+    "all": {
+      "n": 905,
+      "spearman": 0.0412306249564428,
+      "pearson": -0.18866412341594696,
+      "top10": {
+        "hits": 1.0,
+        "enrichment": 1.0055555555555558
+      },
+      "top25": {
+        "hits": 1.0,
+        "enrichment": 0.40222222222222226
+      },
+      "top50": {
+        "hits": 7.0,
+        "enrichment": 1.407777777777778
+      }
+    },
+    "dump_path": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/flux_warmstart_boxforce_nominal_s2700.json"
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 1.5569449005455807,
+      "train_data_loss": 0.5926570851227333,
+      "val_loss": 0.5678711361355252,
+      "val_pearson": 0.05647428333759308,
+      "val_pred_sd_ratio": 0.000459756440250203,
+      "n_val": 270,
+      "graph_reg_loss": 0.8976840376853943,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.009525796801332536,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.030605425175022464,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.0034015358923452682,
+      "feas_warm_reference_active_frac": 0.0997256366857167,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.6834195728959709,
+      "feas_balance_median": 1.1997368373091789e-07,
+      "c_density": 0.9455302665973532,
+      "feas_active_row_frac": 0.03174796347217313,
+      "feas_flux_active_frac": 0.17879661506619945,
+      "c_balance_active": 0.019051108328783123,
+      "feas_balance_active_max": 1.113233068636779,
+      "feas_balance_active_p95": 0.07600807461181078,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.746323077843107,
+      "feas_thermo_violation_frac": 0.0014987061570944458,
+      "g_diss_mean": 1314.6077544113684,
+      "g_diss": 1314.6077544113684,
+      "c_dissipation": 0.0,
+      "protein_used": 7.399815939575562e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.0002114233221649995,
+      "c_parsimony": 0.00024244267140226117,
+      "c_thermo_prior": 0.0
+    },
+    {
+      "epoch": 1,
+      "train_loss": 1.4677101784739002,
+      "train_data_loss": 0.574121068263876,
+      "val_loss": 0.5520350279631439,
+      "val_pearson": 0.05506337434053421,
+      "val_pred_sd_ratio": 0.0006140664918348193,
+      "n_val": 270,
+      "graph_reg_loss": 0.7942995429039001,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0005620559425018466,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.008185906399940622,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.0033932488716753393,
+      "feas_warm_reference_active_frac": 0.09973026683618283,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.6810414729447201,
+      "feas_balance_median": 5.129418597151463e-08,
+      "c_density": 0.9458568301694147,
+      "feas_active_row_frac": 0.03126839002401664,
+      "feas_flux_active_frac": 0.1749723923617396,
+      "c_balance_active": 0.0011236239346983673,
+      "feas_balance_active_max": 1.1066366665322205,
+      "feas_balance_active_p95": 0.009446238023068371,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.7418113165888293,
+      "feas_thermo_violation_frac": 0.0008353184736012642,
+      "g_diss_mean": 1311.857809132543,
+      "g_diss": 1311.857809132543,
+      "c_dissipation": 0.0,
+      "protein_used": 7.426886566400784e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.00021219676248086938,
+      "c_parsimony": 0.00024397156034708666,
+      "c_thermo_prior": 0.0
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.26351732221143,
+      "train_data_loss": 0.5613991104323288,
+      "val_loss": 0.540058347913954,
+      "val_pearson": 0.058661218732595444,
+      "val_pred_sd_ratio": 0.0006849110359326005,
+      "n_val": 270,
+      "graph_reg_loss": 0.625432014465332,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0006206072476774791,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.008120770004160446,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.0033932537932334274,
+      "feas_warm_reference_active_frac": 0.09973026221168452,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.6841910666432874,
+      "feas_balance_median": 2.8515644665473332e-08,
+      "c_density": 0.9457000884516485,
+      "feas_active_row_frac": 0.031291462095647024,
+      "feas_flux_active_frac": 0.17408403291784483,
+      "c_balance_active": 0.0012407265121823754,
+      "feas_balance_active_max": 1.1266162534212243,
+      "feas_balance_active_p95": 0.006973814251350945,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.7429832137864212,
+      "feas_thermo_violation_frac": 0.0006699806996540906,
+      "g_diss_mean": 1312.3947290880926,
+      "g_diss": 1312.3947290880926,
+      "c_dissipation": 0.0,
+      "protein_used": 7.427427747110226e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.0002122122266506455,
+      "c_parsimony": 0.00024398715799305075,
+      "c_thermo_prior": 0.0
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.1078428276653947,
+      "train_data_loss": 0.5517228399885112,
+      "val_loss": 0.5308210302282262,
+      "val_pearson": 0.06137729063630104,
+      "val_pred_sd_ratio": 0.0005844486877322197,
+      "n_val": 270,
+      "graph_reg_loss": 0.4958779215812683,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0005651409604477772,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.008020499175221756,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.00339326365240689,
+      "feas_warm_reference_active_frac": 0.09973025707335308,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.6760065288379274,
+      "feas_balance_median": 1.9022068962127918e-08,
+      "c_density": 0.9454199774511929,
+      "feas_active_row_frac": 0.03126804132399888,
+      "feas_flux_active_frac": 0.17636614935151462,
+      "c_balance_active": 0.0011297935594358995,
+      "feas_balance_active_max": 1.1631968054791977,
+      "feas_balance_active_p95": 0.007483145286296976,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.7411673253980177,
+      "feas_thermo_violation_frac": 0.0006355706407640386,
+      "g_diss_mean": 1313.6612675107758,
+      "g_diss": 1313.6612675107758,
+      "c_dissipation": 0.0,
+      "protein_used": 7.459412304812977e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.00021312606886254046,
+      "c_parsimony": 0.0002441714529815162,
+      "c_thermo_prior": 0.0
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.0034960076726716,
+      "train_data_loss": 0.544796286985792,
+      "val_loss": 0.52412781185574,
+      "val_pearson": 0.06468929350376129,
+      "val_pred_sd_ratio": 0.0005218768492341042,
+      "n_val": 270,
+      "graph_reg_loss": 0.4177071750164032,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0005627186621244744,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.007850845633395788,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.0033932587228201585,
+      "feas_warm_reference_active_frac": 0.09973025733026965,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.6718865324710978,
+      "feas_balance_median": 9.280394537138991e-09,
+      "c_density": 0.9449991624930809,
+      "feas_active_row_frac": 0.031267721912470355,
+      "feas_flux_active_frac": 0.17626235711163488,
+      "c_balance_active": 0.0011249484297626748,
+      "feas_balance_active_max": 1.039006616534858,
+      "feas_balance_active_p95": 0.008178277727987232,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.7405278497728808,
+      "feas_thermo_violation_frac": 0.0005943729975742513,
+      "g_diss_mean": 1314.760077114763,
+      "g_diss": 1314.760077114763,
+      "c_dissipation": 0.0,
+      "protein_used": 7.470543140039683e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.0002134440934430037,
+      "c_parsimony": 0.0002444429194618916,
+      "c_thermo_prior": 0.0
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.9279949891156164,
+      "train_data_loss": 0.5396278644430226,
+      "val_loss": 0.5189565305356626,
+      "val_pearson": 0.0748317763209343,
+      "val_pred_sd_ratio": 0.00030540762236341834,
+      "n_val": 270,
+      "graph_reg_loss": 0.3698294162750244,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0005409522164286343,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.007653663914393762,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.0033932636684641756,
+      "feas_warm_reference_active_frac": 0.09973025270577135,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.6827276061321127,
+      "feas_balance_median": 7.432507406470034e-09,
+      "c_density": 0.9446169898427766,
+      "feas_active_row_frac": 0.03126689078735894,
+      "feas_flux_active_frac": 0.1752181489919794,
+      "c_balance_active": 0.001081415126589428,
+      "feas_balance_active_max": 0.878178461358465,
+      "feas_balance_active_p95": 0.0076781182614123,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.740350199156794,
+      "feas_thermo_violation_frac": 0.0006753964116796851,
+      "g_diss_mean": 1315.321676320043,
+      "g_diss": 1315.321676320043,
+      "c_dissipation": 0.0,
+      "protein_used": 7.4732961115058e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.00021352274805018357,
+      "c_parsimony": 0.0002446509641795901,
+      "c_thermo_prior": 0.0
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.8924749843005476,
+      "train_data_loss": 0.5358160600580019,
+      "val_loss": 0.5154278296011465,
+      "val_pearson": 0.07871659100055695,
+      "val_pred_sd_ratio": 0.00027767178835347295,
+      "n_val": 270,
+      "graph_reg_loss": 0.3390076756477356,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0005321890942562684,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.007298738615394667,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.003393273527637638,
+      "feas_warm_reference_active_frac": 0.0997302521919382,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.6980006838666981,
+      "feas_balance_median": 6.014304012668076e-09,
+      "c_density": 0.9441250439347892,
+      "feas_active_row_frac": 0.031267039028221165,
+      "feas_flux_active_frac": 0.17323771427417622,
+      "c_balance_active": 0.0010638883660280484,
+      "feas_balance_active_max": 1.129000641148666,
+      "feas_balance_active_p95": 0.0050868887277641175,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.7426235429171858,
+      "feas_thermo_violation_frac": 0.0011210862029311728,
+      "g_diss_mean": 1315.6251220703125,
+      "g_diss": 1315.6251220703125,
+      "c_dissipation": 0.0,
+      "protein_used": 7.49049770469167e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.0002140142254386868,
+      "c_parsimony": 0.0002449079876332062,
+      "c_thermo_prior": 0.0
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.8765117279414473,
+      "train_data_loss": 0.5330732639493614,
+      "val_loss": 0.5126419279310438,
+      "val_pearson": 0.1025756448507309,
+      "val_pred_sd_ratio": 0.00014125487359706312,
+      "n_val": 270,
+      "graph_reg_loss": 0.3541843295097351,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0005401485913635356,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.007026958937660374,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.0033932537852047846,
+      "feas_warm_reference_active_frac": 0.09973026221168452,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.7073978123993709,
+      "feas_balance_median": 1.1081388971185671e-08,
+      "c_density": 0.9437334003119633,
+      "feas_active_row_frac": 0.0312674547834643,
+      "feas_flux_active_frac": 0.17533737061352567,
+      "c_balance_active": 0.0010798069028608332,
+      "feas_balance_active_max": 1.0693881668407341,
+      "feas_balance_active_p95": 0.004809630745700721,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.742615190045587,
+      "feas_thermo_violation_frac": 0.0011614278151557363,
+      "g_diss_mean": 1316.6873021619074,
+      "g_diss": 1316.6873021619074,
+      "c_dissipation": 0.0,
+      "protein_used": 7.501201416116914e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.0002143200419658538,
+      "c_parsimony": 0.00024513611549929044,
+      "c_thermo_prior": 0.0
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.866568425606037,
+      "train_data_loss": 0.5313396453857422,
+      "val_loss": 0.510528889408818,
+      "val_pearson": 0.16002175211906433,
+      "val_pred_sd_ratio": 5.991713987896219e-05,
+      "n_val": 270,
+      "graph_reg_loss": 0.3289215862751007,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0005278864607354425,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.006849427611149591,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.0033932537852047846,
+      "feas_warm_reference_active_frac": 0.09973026683618283,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.7240395258212912,
+      "feas_balance_median": 5.8309155358499695e-09,
+      "c_density": 0.9434239371069546,
+      "feas_active_row_frac": 0.0312676626289713,
+      "feas_flux_active_frac": 0.17898930814759484,
+      "c_balance_active": 0.001055282298003821,
+      "feas_balance_active_max": 0.7747247450310608,
+      "feas_balance_active_p95": 0.005081573822375001,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.7414451344259854,
+      "feas_thermo_violation_frac": 0.0011695840171185032,
+      "g_diss_mean": 1317.814768824084,
+      "g_diss": 1317.814768824084,
+      "c_dissipation": 0.0,
+      "protein_used": 7.528576328507464e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.00021510218733777133,
+      "c_parsimony": 0.0002453245176403815,
+      "c_thermo_prior": 0.0
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.8563900302196371,
+      "train_data_loss": 0.5301701755359255,
+      "val_loss": 0.5091633125587746,
+      "val_pearson": 0.03842775523662567,
+      "val_pred_sd_ratio": 9.555578435538337e-05,
+      "n_val": 270,
+      "graph_reg_loss": 0.3182032108306885,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0005219606897957545,
+      "c_box": 0.0,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_warm_proposal_rel": 0.006718006113479878,
+      "feas_warm_alpha": 0.009999999776482582,
+      "feas_warm_reference_clipped_frac": 0.0033932488556180536,
+      "feas_warm_reference_active_frac": 0.0997302670930994,
+      "feas_box_violation_frac": 0.0,
+      "feas_capacity_active_frac": 0.0,
+      "c_balance": 0.7323294713579375,
+      "feas_balance_median": 5.87577470204008e-09,
+      "c_density": 0.9431732687456854,
+      "feas_active_row_frac": 0.03126735060379423,
+      "feas_flux_active_frac": 0.17710858429300375,
+      "c_balance_active": 0.001043430456712517,
+      "feas_balance_active_max": 1.019079329895562,
+      "feas_balance_active_p95": 0.004362596841207866,
+      "feas_thermo_box_emptied_frac": 0.0,
+      "c_thermo": 0.7402637004852295,
+      "feas_thermo_violation_frac": 0.0011139420856689584,
+      "g_diss_mean": 1317.446604761584,
+      "g_diss": 1317.446604761584,
+      "c_dissipation": 0.0,
+      "protein_used": 7.542814925947259e-05,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.00021550900369063662,
+      "c_parsimony": 0.00024544949952416635,
+      "c_thermo_prior": 0.0
+    }
+  ],
+  "flux_meta": {
+    "coverage": {
+      "n_reactions": 4131,
+      "n_metabolites": 2806,
+      "n_catalytic_units": 3728,
+      "n_gem_genes": 1161,
+      "n_gem_genes_in_model_universe": 1161,
+      "n_constitutive_genes": 0,
+      "n_reactions_with_gpr": 2709,
+      "n_independent_balance_rows": 2593,
+      "n_reactions_second_law_applied": 3514,
+      "n_reactions_second_law_exempt": 274,
+      "log_c_init_file": null,
+      "thermo_exempt_file": null,
+      "n_reactions_delta_g_known": 3779,
+      "frac_reactions_delta_g_known": 0.9147906303405762,
+      "n_metabolites_delta_f_g_known": 2389,
+      "frac_metabolites_delta_f_g_known": 0.8513898849487305,
+      "kcat_is_default_for_all_units": false,
+      "kcat_tier_counts": {
+        "measured": 97,
+        "predicted": 3613,
+        "default": 18,
+        "unknown": 0
+      },
+      "km_tier_counts": {
+        "measured": 97,
+        "predicted": 3613,
+        "default": 18,
+        "unknown": 0
+      },
+      "km_table_present": true,
+      "thermo_source": "union_external",
+      "thermo_route_counts": {
+        "none": 352,
+        "equilibrator": 3777,
+        "shipped_reaction_column": 2,
+        "known": 3779,
+        "n_reactions": 4131,
+        "sigma_known": 1755,
+        "shipped_reaction_rows_unit_corrected": 33,
+        "shipped_reaction_rows_unit_corrected_and_used": 1
+      },
+      "thermo_metabolite_counts": {
+        "n_metabolites": 2806,
+        "known": 2561,
+        "shipped": 2389,
+        "equilibrator": 2561
+      },
+      "n_reactions_delta_g_sigma_known": 1755,
+      "constraint_warmup_epochs": 20,
+      "constraint_final_scale": 0.0,
+      "constraint_scale_now": 0.0,
+      "mw_is_default_for_all_genes": false,
+      "use_abundance_head": false,
+      "abundance_prior_is_default": true,
+      "abundance_prior_median_mmol_per_gdw": null,
+      "n_transport_terms_sourced": 0,
+      "transport_term_is_zero": true,
+      "thermo_mode": "anchored",
+      "parameterization": "warmstart",
+      "parameterization_raw": "warmstart_k100_boxforce",
+      "projection_steps": 100,
+      "projection_end": "boxforce",
+      "projection_method": "alternating",
+      "warm_start_reference": {
+        "route": "pfba",
+        "growth_fraction": 1.0,
+        "objective_index": 1499,
+        "objective_value": 0.08584393867663438,
+        "total_absolute_flux": 100.06129014712307,
+        "n_reactions_carrying_flux": 495,
+        "frac_reactions_carrying_flux": 0.11982570806100218,
+        "digest": "78489c5ec15bd016bab69c05b5f496e9c18cf6903d58f14a9913e800dcbc97a5",
+        "from_cache": false,
+        "init_rel": 0.01,
+        "alpha_now": 0.009999999776482582,
+        "alpha_learnable": false
+      },
+      "warm_start_reference_table": null,
+      "rt_kj_per_mol": 2.5205293426466997,
+      "availability_fold": "softmin",
+      "balance_active_row_set": "dynamic",
+      "balance_active_weight": 0.0,
+      "density_weight": 0.0,
+      "parsimony_outside_ramp_weight": 0.0,
+      "density_turnover_threshold": 0.001,
+      "frozen_active_row_count": 0,
+      "frozen_active_row_digest": "1bf8c3a20e22f59e",
+      "n_latent": 1538,
+      "null_basis_orthonormality_error": 1.6689300537109375e-06,
+      "null_basis_balance_error": 6.4580476701387975e-06,
+      "thermo_box": false,
+      "thermo_box_margin_kj": 0.0,
+      "latent_stochastic": false,
+      "kl_weight": 0.001,
+      "thermo_uncertainty": "isotropic",
+      "n_delta_g_components": 0,
+      "n_reactions_covariance_covered": 0,
+      "delta_g_sqrt_cov_sha256": null
+    },
+    "kcat_experimental_fraction": 0.02601931330472103,
+    "kcat_tier": "predicted",
+    "complex_aggregation": "min",
+    "kcat_ceiling_sigma_k": 2.0,
+    "kcat_tier_counts": {
+      "measured": 97,
+      "homolog": 782,
+      "predicted": 2831,
+      "default": 18
+    },
+    "kcat_notes": "Open Enzyme Database first (1126 organism rows, substrate-matched against 3710 units), then the EC homolog tier (35753 rows, any organism), then predicted tier = median over ezkinetics, eitlem, unikp (verified tables, admitted by own_class_band against the EC-median lookup at 0.532), then the median of the 879 database-tier values, 9.6 1/s. A complex takes the min over its subunits. Every value is widened to 10^(mu + 2.0 sigma) with sigma from the 2026.09.14 tier ladder, a median 10x.",
+    "km_tier_counts": {
+      "measured": 97,
+      "homolog": 782,
+      "predicted": 2831,
+      "default": 18
+    },
+    "predicted_kcat_selection": {
+      "parameter": "k_cat",
+      "statistic": "own_class_band",
+      "baseline_fraction": 0.5319148936170213,
+      "ranked": [
+        [
+          "ezkinetics",
+          0.8297872340425532,
+          0.6986022390928663
+        ],
+        [
+          "eitlem",
+          0.7659574468085106,
+          0.6277574233192427
+        ],
+        [
+          "unikp",
+          0.7446808510638298,
+          0.6049182435213335
+        ],
+        [
+          "dlkcat",
+          0.6595744680851063,
+          0.5167092444816402
+        ],
+        [
+          "turnup",
+          0.6590909090909091,
+          0.5113914110064497
+        ],
+        [
+          "deepenzyme",
+          0.5531914893617021,
+          0.4124545973257825
+        ]
+      ],
+      "selected": [
+        "ezkinetics",
+        "eitlem",
+        "unikp"
+      ],
+      "source_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260915-133135-gh_wave10_warmstart_frozen_e10_s2700/experiments/026-metabolism-flux/results/within_class_plausibility.json",
+      "sha256": "7184ea9488bb2570d2c53aa12891faf0f1052b8e6f60cc159e06d249bd29a58b"
+    },
+    "predicted_km_selection": {
+      "parameter": "K_M",
+      "statistic": "own_class_band",
+      "baseline_fraction": 0.48936170212765956,
+      "ranked": [
+        [
+          "ezkinetics",
+          0.6595744680851063,
+          0.5167092444816402
+        ],
+        [
+          "eitlem",
+          0.5106382978723404,
+          0.37242453646853413
+        ],
+        [
+          "unikp",
+          0.46808510638297873,
+          0.3333168698001677
+        ],
+        [
+          "boost_km",
+          0.44680851063829785,
+          0.3141096617157729
+        ]
+      ],
+      "selected": [
+        "ezkinetics"
+      ],
+      "source_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260915-133135-gh_wave10_warmstart_frozen_e10_s2700/experiments/026-metabolism-flux/results/within_class_plausibility.json",
+      "sha256": "7184ea9488bb2570d2c53aa12891faf0f1052b8e6f60cc159e06d249bd29a58b"
+    },
+    "thermo_source": "union_external",
+    "thermo_route_counts": {
+      "none": 352,
+      "equilibrator": 3777,
+      "shipped_reaction_column": 2,
+      "known": 3779,
+      "n_reactions": 4131,
+      "sigma_known": 1755,
+      "shipped_reaction_rows_unit_corrected": 33,
+      "shipped_reaction_rows_unit_corrected_and_used": 1
+    },
+    "thermo_sha256": {
+      "met": "179a5aac4221ded673a5bba798870ca4cac9b9d19e955de6a0f25de65a3cee8f",
+      "rxn": "7a66ef5d7892bd65229e908e5eff4cd95e741d6c493ee8645d480a53e2da5796",
+      "dgpredictor_rows": "6a2de44497653d771c01f46f3fc80a2417f50ff9bdf898e14741a1aba5e529d5",
+      "equilibrator_met": "f9b564844e5b3b0946de179672ae7f6b78f2560821a2e3423059ff16400e8871",
+      "shipped_reaction_unit_correction": "6a2de44497653d771c01f46f3fc80a2417f50ff9bdf898e14741a1aba5e529d5",
+      "equilibrator_sigma": "c7f2ff7367a0599a207d86f04e15f817617c2c0c266af025c7a1dc883a6fc4be"
+    },
+    "mw_experimental_fraction": 1.0,
+    "media": {
+      "applied": false,
+      "note": "shipped yeast-GEM 9.0.2 exchange bounds, where all 20 amino-acid exchanges have lower_bound 0, i.e. effectively synthetic minimal. This is what every 026 and 027 arm before 2026-09-14 ran on."
+    },
+    "kcat_shuffle": {
+      "applied": false
+    },
+    "sampling": {
+      "flux_draws": 1,
+      "latent_stochastic": false,
+      "log_c_from_latent": false,
+      "latent_log_std_init": -3.0,
+      "kl_weight": 0.001,
+      "constraint_final_scale": 0.0,
+      "effective_kl_weight": 0.0
+    }
+  },
+  "gene_removal_source": "deletion_indices",
+  "pinned_split": {
+    "path": "/scratch/projects/torchcell-scratch/job-snapshots/20260915-133135-gh_wave10_warmstart_frozen_e10_s2700/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "requested": 639,
+    "found": 639,
+    "absent": [],
+    "records": 639,
+    "fraction_of_dataset": 0.12961460446247464
+  },
+  "target_standardization": {
+    "head": "betaxanthin",
+    "columns": [
+      "betaxanthin"
+    ],
+    "space": "stored_units",
+    "mean": [
+      -0.03182099759578705
+    ],
+    "sd": [
+      0.5738089680671692
+    ],
+    "note": "train-split mean and sd; the loss and every reported metric are computed on the standardized target, so the head is never asked to match a raw scale."
+  },
+  "n_parameters": {
+    "gene_embedding": 0,
+    "embedding_preprocessor": 622439,
+    "cls_token": 90,
+    "transformer_layers": 196740,
+    "perturbation_transform": 98370,
+    "perturbation_head": 16381,
+    "betaxanthin_head": 8272,
+    "total": 942292
+  },
+  "wall_time_s": 619.3442261219025,
+  "code_provenance": {
+    "train_bx.py": "1447df4f7674ca25feab95e2d728d975db1e192bad7fa19840bc5108679a0ad8",
+    "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260915-133135-gh_wave10_warmstart_frozen_e10_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+    "flux_layer.py": "e0764931b410ce84c5bca3ec666948702726f86786411527b5f82c7a0176ef93",
+    "flux_layer.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260915-133135-gh_wave10_warmstart_frozen_e10_s2700/torchcell/metabolism/flux_layer.py"
+  },
+  "calibration": {
+    "available": false,
+    "reason": "the head emitted a point prediction; there is no PIT for it.",
+    "dist": "crps",
+    "group": null,
+    "n_measurements": null,
+    "columns": [],
+    "coverage": {},
+    "coverage_per_feature": {},
+    "pit_ks": null,
+    "pit_ks_per_feature": [],
+    "pit_mean": null,
+    "pit_histogram": []
+  },
+  "concentration_audit": {
+    "available": false,
+    "reason": "the learned log concentration exists only on a flux arm whose thermo_mode is ANCHORED, scored against the amino-acid phenotype; this cell is arm 'flux_warmstart_boxforce_nominal' on head 'betaxanthin'.",
+    "supervised": false,
+    "conc_space": null,
+    "conc_lower_m": null,
+    "conc_upper_m": null,
+    "volume_fractions": null,
+    "mixture": {},
+    "groups": {}
+  },
+  "feasibility": {
+    "available": true,
+    "reason": null,
+    "definitions": {
+      "balance_median_ratio": "median over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon), with omega_i = 0.5 sum_j |S_ij v_j| the layer's own turnover. This is FluxLayer.forward's feas_balance_median, per sample instead of batch-reduced.",
+      "balance_max_ratio": "the same ratio, maximized over the independent rows.",
+      "box_violation_frac": "fraction of the 4,131 reactions with v > ub + 1e-4 or v < lb - 1e-4, where (lb, ub) is FluxLayer.dynamic_box at this sample's availability and abundance. The box parameterization satisfies this by construction, so a nonzero value is a bug rather than an infeasibility.",
+      "thermo_model_violation_frac": "fraction of active reactions (delta_r_g0_mask and not thermo_exempt) with v * delta_r_G > thermo_epsilon, using the layer's OWN delta_r_G from reaction_potential, which includes the learned concentration term. Available only when the arm's thermo_mode is not OFF.",
+      "thermo_model_uphill_frac": "mean over active reactions of relu(v dG + eps) / (|v||dG| + eps), the per-sample form of the layer's c_thermo. Available only when thermo_mode is not OFF.",
+      "thermo_standard_state_violation_frac": "fraction of active reactions with v * (delta_r_G0 + delta_r_G_transport) > thermo_epsilon. An AUDIT REFERENCE, not the layer's own term: it evaluates the second law at standard state because an arm with thermo_mode OFF learns no concentrations, so the concentration term RT S^T ln c is absent rather than zero.",
+      "thermo_standard_state_uphill_frac": "the same standard-state driving force in the c_thermo normalization.",
+      "fractions": "fraction of the genotypes in the group meeting each named criterion. 'both_balance_le_1e-02_and_<thermo>_eq_0' is the Genesis criterion: mass balance within 1 percent and no uphill active reaction.",
+      "rank_by": "top-100 groups are the 100 genotypes with the HIGHEST predicted betaxanthin (denormalized head mean), i.e. the strains the model nominates as producers."
+    },
+    "tolerances": {
+      "balance_median_ratio": [
+        0.1,
+        0.01,
+        0.001
+      ],
+      "thermo_violation_frac": [
+        0.0,
+        0.01
+      ],
+      "both_balance_median_ratio": [
+        0.01
+      ]
+    },
+    "n_independent_balance_rows": 2593,
+    "n_reactions_second_law_applied": 3467,
+    "thermo_mode": "anchored",
+    "thermo_source": "union_external",
+    "groups": {
+      "all": {
+        "n": 4930,
+        "rank_by": null,
+        "stats": {
+          "balance_median_ratio": {
+            "median": 4.614239212941129e-09,
+            "mean": 7.421065539858773e-09,
+            "p90": 4.927443786328922e-09,
+            "max": 1.2949359415870276e-06
+          },
+          "balance_max_ratio": {
+            "median": 1.9983940124511719,
+            "mean": 1.9983962774276733,
+            "p90": 1.9984186887741089,
+            "max": 1.9999725818634033
+          },
+          "box_violation_frac": {
+            "median": 0.0,
+            "mean": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "thermo_model_violation_frac": {
+            "median": 0.0,
+            "mean": 5.265525828690443e-07,
+            "p90": 0.0,
+            "max": 0.00028843380277976394
+          },
+          "thermo_model_uphill_frac": {
+            "median": 0.742512047290802,
+            "mean": 0.7423506379127502,
+            "p90": 0.743145763874054,
+            "max": 0.7681930065155029
+          },
+          "thermo_standard_state_violation_frac": {
+            "median": 0.03172772005200386,
+            "mean": 0.0316854789853096,
+            "p90": 0.03172772005200386,
+            "max": 0.03749639540910721
+          },
+          "thermo_standard_state_uphill_frac": {
+            "median": 0.77644944190979,
+            "mean": 0.7762702107429504,
+            "p90": 0.7771801948547363,
+            "max": 0.7889582514762878
+          }
+        },
+        "fractions": {
+          "balance_median_ratio_le_1e-01": 1.0,
+          "balance_median_ratio_le_1e-02": 1.0,
+          "balance_median_ratio_le_1e-03": 1.0,
+          "box_violation_frac_eq_0": 1.0,
+          "thermo_model_violation_frac_eq_0": 0.9981744421906694,
+          "thermo_model_violation_frac_le_1e-02": 1.0,
+          "both_balance_le_1e-02_and_thermo_model_eq_0": 0.9981744421906694,
+          "thermo_standard_state_violation_frac_eq_0": 0.0,
+          "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+          "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+        }
+      },
+      "pinned_test": {
+        "n": 639,
+        "rank_by": null,
+        "stats": {
+          "balance_median_ratio": {
+            "median": 4.614200577179872e-09,
+            "mean": 1.5564351585339864e-08,
+            "p90": 5.010845516295603e-09,
+            "max": 2.9288701171026332e-06
+          },
+          "balance_max_ratio": {
+            "median": 1.9983841180801392,
+            "mean": 1.9984875917434692,
+            "p90": 1.9984289407730103,
+            "max": 1.9999725818634033
+          },
+          "box_violation_frac": {
+            "median": 0.0,
+            "mean": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "thermo_model_violation_frac": {
+            "median": 0.0,
+            "mean": 4.0624481698614545e-06,
+            "p90": 0.0,
+            "max": 0.00028843380277976394
+          },
+          "thermo_model_uphill_frac": {
+            "median": 0.7429715394973755,
+            "mean": 0.7419999837875366,
+            "p90": 0.7435752153396606,
+            "max": 0.7682477235794067
+          },
+          "thermo_standard_state_violation_frac": {
+            "median": 0.03172772005200386,
+            "mean": 0.03159095346927643,
+            "p90": 0.03172772005200386,
+            "max": 0.03749639540910721
+          },
+          "thermo_standard_state_uphill_frac": {
+            "median": 0.7769882678985596,
+            "mean": 0.7758685946464539,
+            "p90": 0.7774203419685364,
+            "max": 0.7890341281890869
+          }
+        },
+        "fractions": {
+          "balance_median_ratio_le_1e-01": 1.0,
+          "balance_median_ratio_le_1e-02": 1.0,
+          "balance_median_ratio_le_1e-03": 1.0,
+          "box_violation_frac_eq_0": 1.0,
+          "thermo_model_violation_frac_eq_0": 0.9859154929577465,
+          "thermo_model_violation_frac_le_1e-02": 1.0,
+          "both_balance_le_1e-02_and_thermo_model_eq_0": 0.9859154929577465,
+          "thermo_standard_state_violation_frac_eq_0": 0.0,
+          "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+          "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+        }
+      },
+      "all_top100": {
+        "n": 100,
+        "rank_by": "predicted betaxanthin, descending",
+        "stats": {
+          "balance_median_ratio": {
+            "median": 6.486553516538152e-09,
+            "mean": 5.7623264382300476e-08,
+            "p90": 9.218472030170233e-08,
+            "max": 1.1324846127536148e-06
+          },
+          "balance_max_ratio": {
+            "median": 1.9983346462249756,
+            "mean": 1.9984309673309326,
+            "p90": 1.9997769594192505,
+            "max": 1.9999725818634033
+          },
+          "box_violation_frac": {
+            "median": 0.0,
+            "mean": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "thermo_model_violation_frac": {
+            "median": 0.0,
+            "mean": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "thermo_model_uphill_frac": {
+            "median": 0.7392303943634033,
+            "mean": 0.7353739738464355,
+            "p90": 0.7418801188468933,
+            "max": 0.7508423328399658
+          },
+          "thermo_standard_state_violation_frac": {
+            "median": 0.03143928572535515,
+            "mean": 0.032073840498924255,
+            "p90": 0.034612055867910385,
+            "max": 0.03749639540910721
+          },
+          "thermo_standard_state_uphill_frac": {
+            "median": 0.7732728719711304,
+            "mean": 0.7698537707328796,
+            "p90": 0.7758219242095947,
+            "max": 0.7842248678207397
+          }
+        },
+        "fractions": {
+          "balance_median_ratio_le_1e-01": 1.0,
+          "balance_median_ratio_le_1e-02": 1.0,
+          "balance_median_ratio_le_1e-03": 1.0,
+          "box_violation_frac_eq_0": 1.0,
+          "thermo_model_violation_frac_eq_0": 1.0,
+          "thermo_model_violation_frac_le_1e-02": 1.0,
+          "both_balance_le_1e-02_and_thermo_model_eq_0": 1.0,
+          "thermo_standard_state_violation_frac_eq_0": 0.0,
+          "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+          "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+        }
+      },
+      "pinned_test_top100": {
+        "n": 100,
+        "rank_by": "predicted betaxanthin, descending",
+        "stats": {
+          "balance_median_ratio": {
+            "median": 4.672778164405145e-09,
+            "mean": 3.097920853178948e-08,
+            "p90": 9.249861676607907e-08,
+            "max": 5.968341838524793e-07
+          },
+          "balance_max_ratio": {
+            "median": 1.9983994960784912,
+            "mean": 1.998643398284912,
+            "p90": 1.9997693300247192,
+            "max": 1.9999725818634033
+          },
+          "box_violation_frac": {
+            "median": 0.0,
+            "mean": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "thermo_model_violation_frac": {
+            "median": 0.0,
+            "mean": 0.0,
+            "p90": 0.0,
+            "max": 0.0
+          },
+          "thermo_model_uphill_frac": {
+            "median": 0.7420316934585571,
+            "mean": 0.7376317381858826,
+            "p90": 0.7426210641860962,
+            "max": 0.7445870637893677
+          },
+          "thermo_standard_state_violation_frac": {
+            "median": 0.03172772005200386,
+            "mean": 0.032111335545778275,
+            "p90": 0.03377559781074524,
+            "max": 0.03749639540910721
+          },
+          "thermo_standard_state_uphill_frac": {
+            "median": 0.7758746147155762,
+            "mean": 0.7720350027084351,
+            "p90": 0.7765385508537292,
+            "max": 0.7785332798957825
+          }
+        },
+        "fractions": {
+          "balance_median_ratio_le_1e-01": 1.0,
+          "balance_median_ratio_le_1e-02": 1.0,
+          "balance_median_ratio_le_1e-03": 1.0,
+          "box_violation_frac_eq_0": 1.0,
+          "thermo_model_violation_frac_eq_0": 1.0,
+          "thermo_model_violation_frac_le_1e-02": 1.0,
+          "both_balance_le_1e-02_and_thermo_model_eq_0": 1.0,
+          "thermo_standard_state_violation_frac_eq_0": 0.0,
+          "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+          "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+        }
+      }
+    }
+  },
+  "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave10_warmstart_frozen_e10_k100_boxforce_e10_s2700.pt",
+  "wandb_run_id": "5998e9az",
+  "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/5998e9az"
+}

@@ -18,7 +18,7 @@
 #   sbatch --nice=1000 experiments/027-betaxanthin-metabolic/scripts/gh_cpu_build_essentiality.slurm
 #
 #SBATCH -p main
-#SBATCH --mem=24g
+#SBATCH --mem=16g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8

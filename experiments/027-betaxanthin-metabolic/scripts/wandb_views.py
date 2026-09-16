@@ -435,6 +435,50 @@ SPECS: dict[str, ViewSpec] = {
         ],
         scalars=["test_spearman_pinned", "test_pearson_pinned", "select_val_pearson"],
     ),
+    "esssize": ViewSpec(
+        key="esssize",
+        title="027 wave 11: model size against curve stability on gene essentiality",
+        description=(
+            "Gene essentiality, pooled arm with no flux layer, 80 epochs, seeds 2700 to "
+            "2702. The wave-9 backbone at width 90 carries 958,501 parameters against about "
+            "926 supervised genotypes, and its validation AUROC moves by a median of 0.034 "
+            "to 0.072 between ADJACENT epochs. The ladder drops the width to 45, 24 and 12, "
+            "and the lower two rungs also drop the embedding preprocessor to one layer, "
+            "which is what actually shrinks the model: at width 12 with a shallow "
+            "preprocessor the cell is 16,874 parameters, 57 times smaller than the "
+            "baseline. Read the validation curve's smoothness and the gradient-norm panels, "
+            "not the test AUROC, which at 31 essential genes among 195 has a bootstrap "
+            "interval about 0.17 wide and cannot separate these cells. Group by width, then "
+            "preprocessor depth."
+        ),
+        tags_any=[
+            "w11esssize_h45p2",
+            "w11esssize_h24p1",
+            "w11esssize_h12p1",
+            "w9esspool",
+        ],
+        groupby=["hidden", "preprocessor_layers", "layers"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "train_data_loss",
+            "train_loss",
+            "val_pred_sd_ratio",
+            "grad_norm_mean",
+            "grad_norm_max",
+            "grad_clipped_frac",
+            "grad_norm_embedding_preprocessor_mean",
+            "grad_norm_transformer_layers_mean",
+            "grad_norm_essentiality_head_mean",
+            "graph_reg_loss",
+        ],
+        scalars=[
+            "test_auroc_pinned",
+            "test_accuracy_pinned",
+            "test_recall_essential_pinned",
+            "select_val_pearson",
+        ],
+    ),
     "feasladder": ViewSpec(
         key="feasladder",
         title="027 wave 10: the frozen warm-start head, penalty ladder and the 10-epoch window",
@@ -657,6 +701,44 @@ def rows_for(n_panels: int) -> int:
     return (n_panels + PANELS_PER_ROW - 1) // PANELS_PER_ROW
 
 
+#: Train/validation pairs drawn as a TRIPLE: the two overlaid, then each alone. The overlay
+#: is where overfitting is read, because the gap between the curves is the quantity and a
+#: gap cannot be seen across two panels with independent y axes. The isolated panels are
+#: where the shape of each curve is read, because the overlay's axis is set by whichever
+#: curve has the larger range and flattens the other. Convention requested 2026-09-15: a
+#: W&B view of a training round carries both.
+TRAIN_VAL_PAIRS = (("train_data_loss", "val_loss"), ("train_loss", "val_loss"))
+
+
+def train_val_panels(present: list[str], groupby: str | None) -> list[Any]:
+    """For each train/val pair both runs have logged: overlay, train alone, val alone."""
+    panels: list[Any] = []
+    index = 0
+    for train_metric, val_metric in TRAIN_VAL_PAIRS:
+        if train_metric not in present or val_metric not in present:
+            continue
+        for title, ys in (
+            (f"{train_metric} vs {val_metric}", [train_metric, val_metric]),
+            (train_metric, [train_metric]),
+            (val_metric, [val_metric]),
+        ):
+            panels.append(
+                wr.LinePlot(
+                    title=title,
+                    x="epoch",
+                    y=list(ys),
+                    groupby=groupby,
+                    groupby_aggfunc="mean" if groupby else None,
+                    groupby_rangefunc="minmax" if groupby else None,
+                    smoothing_type="none",
+                    legend_position="south",
+                    layout=panel_layout(index),
+                )
+            )
+            index += 1
+    return panels
+
+
 def line_panels(metrics: list[str], groupby: str | None) -> list[Any]:
     panels: list[Any] = []
     for i, metric in enumerate(metrics):
@@ -693,14 +775,28 @@ def bar_panels(metrics: list[str], offset_rows: int) -> list[Any]:
 
 
 def workspace_sections(curves: list[str], scalars: list[str]) -> list[Any]:
-    return [
+    """Ranked sections: the train/validation triples first, then the curves, then the bars.
+
+    Each W&B section carries its own panel grid, so the layouts restart at zero per section
+    rather than needing a running offset.
+    """
+    sections: list[Any] = []
+    paired = train_val_panels(curves, groupby=None)
+    if paired:
+        sections.append(
+            ws.Section(name="train vs validation", panels=paired, is_open=True)
+        )
+    sections.append(
         ws.Section(
             name="curves", panels=line_panels(curves, groupby=None), is_open=True
-        ),
+        )
+    )
+    sections.append(
         ws.Section(
             name="scalars", panels=bar_panels(scalars, offset_rows=0), is_open=True
-        ),
-    ]
+        )
+    )
+    return sections
 
 
 def workspace_runset(spec: ViewSpec) -> Any:

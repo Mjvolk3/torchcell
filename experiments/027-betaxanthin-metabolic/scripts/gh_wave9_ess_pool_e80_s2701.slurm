@@ -46,7 +46,7 @@
 #       experiments/027-betaxanthin-metabolic/scripts/gh_wave9_ess_pool_e80_s2701.slurm
 #
 #SBATCH -p main
-#SBATCH --mem=60g
+#SBATCH --mem=12g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

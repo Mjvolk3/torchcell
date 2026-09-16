@@ -21,6 +21,14 @@
     "maximum": 0.6510085463523865,
     "n_above_threshold": 3329
   },
+  "flux_sd_over_scale": {
+    "n": 4131,
+    "median": 2.4664564080012497e-07,
+    "p90": 3.053688851650804e-05,
+    "maximum": 0.006510085426270962,
+    "n_above_threshold": 3331
+  },
+  "flux_scale": 100.0,
   "context_relative_spread": {
     "n": 90,
     "median": 0.19923177361488342,

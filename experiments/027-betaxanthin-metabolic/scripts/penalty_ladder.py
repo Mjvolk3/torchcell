@@ -102,11 +102,32 @@ class CellLadderRow(BaseModel):
     at_ceiling_at_select: bool
 
 
+class AcrossCells(BaseModel):
+    """What predicts a cell's feasibility and score: the epoch it stopped at, or the weight.
+
+    Computed ACROSS cells, over the long runs, which is the comparison the ladder was built
+    to make. Both candidate explanations are scored the same way so neither is privileged.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    n_cells: int
+    select_epoch_vs_balance_spearman: float = Field(
+        description="Selected epoch against balance max AT that epoch; the epoch explanation."
+    )
+    balance_weight_vs_balance_spearman: float = Field(
+        description="Penalty weight against balance max at select; the penalty explanation."
+    )
+    select_epoch_vs_score_spearman: float
+    balance_weight_vs_score_spearman: float
+    verdict: str
+
+
 class PenaltyLadderReport(BaseModel):
     """The ladder, and the epoch-decay finding that replaces the tradeoff it was built for."""
 
     model_config = ConfigDict(extra="forbid")
     rows: list[CellLadderRow]
+    across_cells: AcrossCells
     finding: str
     note: str
 
@@ -183,8 +204,38 @@ def main() -> None:
     # nowhere left to decay to and the correlation is measuring noise around a pinned value.
     decaying = [r for r in long_runs if r.epoch_vs_balance_spearman > 0]
     best_epochs = [r.best_balance_epoch for r in long_runs]
+    # THE LADDER'S ACTUAL QUESTION, asked across cells: does the penalty weight or the
+    # stopping epoch explain where a cell lands? Both are scored the same way.
+    epochs = [float(r.select_epoch) for r in long_runs]
+    weights = [r.balance_weight for r in long_runs]
+    balances = [r.balance_max_at_select for r in long_runs]
+    scores = [r.test_spearman for r in long_runs]
+
+    def rank(a: list[float], b: list[float]) -> float:
+        return float(stats.spearmanr(a, b).statistic)
+
+    across = AcrossCells(
+        n_cells=len(long_runs),
+        select_epoch_vs_balance_spearman=rank(epochs, balances),
+        balance_weight_vs_balance_spearman=rank(weights, balances),
+        select_epoch_vs_score_spearman=rank(epochs, scores),
+        balance_weight_vs_score_spearman=rank(weights, scores),
+        verdict=(
+            "READ THE WITHIN-CELL TRAJECTORIES, NOT THIS TABLE. These correlations are over "
+            "five cells, where the 5 percent critical value for Spearman is about 0.90, so "
+            "only the epoch-against-score entry reaches it and the two balance entries "
+            "(+0.60 for the epoch, +0.46 for the weight) are not distinguishable from each "
+            "other or from zero. What is strong is the per-cell evidence, which has 200 "
+            "epochs per cell rather than five points: every cell reaches its best balance "
+            "within 8 epochs and degrades after, at every weight. The across-cell direction "
+            "agrees with that reading, a late-selected cell being infeasible and scoring "
+            "better, but on its own it would not establish it."
+        ),
+    )
+
     report = PenaltyLadderReport(
         rows=rows,
+        across_cells=across,
         finding=(
             f"The best balance of the whole run is reached at epoch {min(best_epochs)} to "
             f"{max(best_epochs)} in ALL {len(long_runs)} long cells, whatever the penalty "
@@ -221,6 +272,17 @@ def main() -> None:
             f"{r.val_pred_sd_ratio_at_select:7.4f} {r.balance_max_at_select:8.4f} "
             f"{at10:9.4f} {best:>12s} {r.epoch_vs_balance_spearman:+7.3f}"
         )
+    a = report.across_cells
+    print(f"\nACROSS THE {a.n_cells} LONG CELLS (Spearman):")
+    print(
+        f"  selected epoch  vs balance-at-select {a.select_epoch_vs_balance_spearman:+.3f}"
+        f"   |  vs score {a.select_epoch_vs_score_spearman:+.3f}"
+    )
+    print(
+        f"  balance weight  vs balance-at-select {a.balance_weight_vs_balance_spearman:+.3f}"
+        f"   |  vs score {a.balance_weight_vs_score_spearman:+.3f}"
+    )
+    print(f"  {a.verdict}")
     print(f"\nFINDING: {report.finding}")
     print(f"\n{OUT}")
 

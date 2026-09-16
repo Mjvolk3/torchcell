@@ -621,3 +621,25 @@ in mind.
 Power, stated plainly: at n = 629 the null standard error on Spearman is 0.040, so +0.088 is
 2.2 standard errors (p = 0.027) and +0.034 is 0.84 (p = 0.40). One seed. The ladder
 separates the low-weight from the high-weight cells weakly at best.
+
+**The penalty-free cell completes the ladder** (job 2030, every flux penalty off). It is
+selected at epoch 8 and reads the best balance maximum of any cell at its selected epoch,
+0.9806, with a pinned Spearman of +0.0186 that is indistinguishable from the null
+(p = 0.641). A cell with no physics term in its loss at all is the most feasible one in the
+table, which is the finding stated as sharply as the data allow: what the loss charges for
+the physics is not what determines whether the flux balances.
+
+| cell | selected epoch | Spearman | p | balance max at select |
+|---|---:|---:|---:|---:|
+| balance 0.0 | 158 | +0.0882 | 0.027 | 2.0000 |
+| balance 0.1 | 103 | +0.0812 | 0.042 | 1.9997 |
+| balance 0.5 | 7 | +0.0271 | 0.497 | 1.0091 |
+| balance 2.0 | 27 | +0.0336 | 0.400 | 2.0000 |
+| all penalties off | 8 | +0.0186 | 0.641 | 0.9806 |
+
+Across the five cells the selected epoch tracks the score at Spearman +0.90 and the balance
+at +0.60, against +0.46 and -0.10 for the penalty weight. **Those across-cell numbers are
+five points and should not be leaned on**: the 5 percent critical value for Spearman at
+n = 5 is about 0.90, so only the epoch-against-score entry reaches it. The strong evidence is
+per-cell, where each trajectory carries 200 epochs rather than five points, and there every
+cell peaks in balance within 8 epochs and degrades after.

@@ -113,6 +113,34 @@
       "at_ceiling_at_select": true
     },
     {
+      "label": "all_penalties_off",
+      "balance_weight": 0.0,
+      "parsimony_weight": 0.0,
+      "constraint_scale": 0.0,
+      "epochs_run": 200,
+      "select_epoch": 8,
+      "test_spearman": 0.018611949188183218,
+      "n_test": 629,
+      "spearman_z": 0.4664141098020586,
+      "spearman_p": 0.6409191137730923,
+      "val_pred_sd_ratio_at_select": 0.00021310121519491076,
+      "balance_max_at_select": 0.9806332894568813,
+      "balance_p95_at_select": 0.0027325186348552332,
+      "balance_max_by_epoch": {
+        "0": 1.259524103767913,
+        "5": 1.1087950278908527,
+        "10": 1.3027184938305412,
+        "25": 1.729799356953851,
+        "50": 1.995657259020312,
+        "100": 1.9997565294134205,
+        "final": 1.9998173713684082
+      },
+      "best_balance_epoch": 8,
+      "best_balance_max": 0.9806332894568813,
+      "epoch_vs_balance_spearman": 0.7990324758118954,
+      "at_ceiling_at_select": false
+    },
+    {
       "label": "short_budget_e10_s2700",
       "balance_weight": 0.5,
       "parsimony_weight": 0.001,
@@ -185,6 +213,14 @@
       "at_ceiling_at_select": false
     }
   ],
-  "finding": "The best balance of the whole run is reached at epoch 2 to 8 in ALL 4 long cells, whatever the penalty weight. In 3 of them the balance maximum then rises with the epoch (rank correlation +0.79, +0.79, +0.78); the remaining 1 is already at the ceiling of 2.0 by epoch 10 and so cannot decay further. The one cell that looks feasible at its selected epoch is the one selected at epoch 7. So the penalty weight is not what buys feasibility; stopping early is, which is the same phenomenon as the 10-epoch cells reading 0.98 population feasibility.",
+  "across_cells": {
+    "n_cells": 5,
+    "select_epoch_vs_balance_spearman": 0.6,
+    "balance_weight_vs_balance_spearman": 0.46169025843831935,
+    "select_epoch_vs_score_spearman": 0.8999999999999998,
+    "balance_weight_vs_score_spearman": -0.10259783520851543,
+    "verdict": "READ THE WITHIN-CELL TRAJECTORIES, NOT THIS TABLE. These correlations are over five cells, where the 5 percent critical value for Spearman is about 0.90, so only the epoch-against-score entry reaches it and the two balance entries (+0.60 for the epoch, +0.46 for the weight) are not distinguishable from each other or from zero. What is strong is the per-cell evidence, which has 200 epochs per cell rather than five points: every cell reaches its best balance within 8 epochs and degrades after, at every weight. The across-cell direction agrees with that reading, a late-selected cell being infeasible and scoring better, but on its own it would not establish it."
+  },
+  "finding": "The best balance of the whole run is reached at epoch 2 to 8 in ALL 5 long cells, whatever the penalty weight. In 4 of them the balance maximum then rises with the epoch (rank correlation +0.79, +0.79, +0.78, +0.80); the remaining 1 is already at the ceiling of 2.0 by epoch 10 and so cannot decay further. The one cell that looks feasible at its selected epoch is the one selected at epoch 7. So the penalty weight is not what buys feasibility; stopping early is, which is the same phenomenon as the 10-epoch cells reading 0.98 population feasibility.",
   "note": "The balance ratio is bounded above by 2, so a cell reading 2.000 is at the ceiling and not merely large. A Spearman of 0.088 on 629 genotypes is 2.2 null standard errors (p = 0.027) and one of 0.034 is 0.84 (p = 0.40), so the score column separates the low-weight cells from the high-weight ones only weakly and at one seed."
 }

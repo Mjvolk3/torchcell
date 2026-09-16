@@ -111,6 +111,24 @@ ROUNDS: dict[str, Round] = {
         max_runs=16,
         label_key="protein_abundance",
     ),
+    "v15": Round(
+        project="torchcell_019_expr_v15",
+        report_title="v15 weight-decay round: 1e-2 and 1e-1 against 1e-8 on split seeds 1 and 2",
+        view_name="v15 weight-decay round by arm",
+        view_id=None,
+        arm_re=r"W_(ref|wd1e2|wd1e1)_(s\d+)",
+        phenotype="expression",
+        splits=["s1", "s2"],
+        split_label={"s1": "split 1", "s2": "split 2"},
+        intro=(
+            "12 runs, four per RTX 6000 Ada card on cabbi, 6,000 epochs (config "
+            "cgt_expr_v15_wd): the v13 reference under AdamW weight decay 1e-8 (W_ref), "
+            "1e-2 (W_wd1e2) and 1e-1 (W_wd1e1) on split seeds 1 and 2, two init seeds. "
+            "Grouped lines are the mean over seeds with the min-max band. Nothing here "
+            "is a result until the runs finish."
+        ),
+        max_runs=12,
+    ),
 }
 
 

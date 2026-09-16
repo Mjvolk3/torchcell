@@ -73,6 +73,28 @@
       "test_auroc_in_result": 0.7958300550747442
     },
     {
+      "label": "pooled_h54l2p2",
+      "seed": 2700,
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h54l2p2_e80_s2700.json",
+      "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h54l2p2_e80_s2700.json",
+      "hidden": 54,
+      "layers": 2,
+      "preprocessor_layers": 2,
+      "n_parameters": 704755,
+      "test_auroc_in_result": 0.790912667191188
+    },
+    {
+      "label": "pooled_h54l2p2",
+      "seed": 2701,
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h54l2p2_e80_s2701.json",
+      "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h54l2p2_e80_s2701.json",
+      "hidden": 54,
+      "layers": 2,
+      "preprocessor_layers": 2,
+      "n_parameters": 704755,
+      "test_auroc_in_result": 0.7916994492525571
+    },
+    {
       "label": "flux_biomass_h90l2p2",
       "seed": 2700,
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_flux_e80_s2700.json",
@@ -166,6 +188,26 @@
       "seed": 2702
     },
     {
+      "method": "pooled_h54l2p2",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.790912667191188,
+      "ci_low": 0.6976767269033362,
+      "ci_high": 0.8818362974444196,
+      "seed": 2700
+    },
+    {
+      "method": "pooled_h54l2p2",
+      "gene_set": "all_labeled_1121",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7916994492525571,
+      "ci_low": 0.7047523288513542,
+      "ci_high": 0.8767291358227741,
+      "seed": 2701
+    },
+    {
       "method": "flux_biomass_h90l2p2",
       "gene_set": "all_labeled_1121",
       "n_genes": 195,
@@ -244,6 +286,26 @@
       "ci_low": 0.7129003628687326,
       "ci_high": 0.8754312232677504,
       "seed": 2702
+    },
+    {
+      "method": "pooled_h54l2p2",
+      "gene_set": "released_held_out_223",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.790912667191188,
+      "ci_low": 0.6976767269033362,
+      "ci_high": 0.8818362974444196,
+      "seed": 2700
+    },
+    {
+      "method": "pooled_h54l2p2",
+      "gene_set": "released_held_out_223",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7916994492525571,
+      "ci_low": 0.7047523288513542,
+      "ci_high": 0.8767291358227741,
+      "seed": 2701
     },
     {
       "method": "flux_biomass_h90l2p2",
@@ -326,6 +388,26 @@
       "seed": 2702
     },
     {
+      "method": "pooled_h54l2p2",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.790912667191188,
+      "ci_low": 0.6976767269033362,
+      "ci_high": 0.8818362974444196,
+      "seed": 2700
+    },
+    {
+      "method": "pooled_h54l2p2",
+      "gene_set": "ours_scored",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.7916994492525571,
+      "ci_low": 0.7047523288513542,
+      "ci_high": 0.8767291358227741,
+      "seed": 2701
+    },
+    {
       "method": "flux_biomass_h90l2p2",
       "gene_set": "ours_scored",
       "n_genes": 195,
@@ -371,6 +453,18 @@
       "maximum": 0.8011408339889852
     },
     {
+      "arm": "pooled_h54l2p2",
+      "gene_set": "ours_scored",
+      "auroc_by_seed": {
+        "2700": 0.790912667191188,
+        "2701": 0.7916994492525571
+      },
+      "mean": 0.7913060582218725,
+      "sd": 0.0005563389309099944,
+      "minimum": 0.790912667191188,
+      "maximum": 0.7916994492525571
+    },
+    {
       "arm": "flux_biomass_h90l2p2",
       "gene_set": "ours_scored",
       "auroc_by_seed": {
@@ -412,6 +506,32 @@
       "seeds_above_baseline": 3,
       "n_seeds": 3,
       "verdict": "3 of 3 seeds above FBA; the arm's across-seed range is 0.786 to 0.801, so a single seed above the baseline is not evidence the arm beats it."
+    },
+    {
+      "arm": "pooled_h54l2p2",
+      "baseline": "FCL",
+      "gene_set": "ours_scored",
+      "baseline_auroc": 0.74213217938631,
+      "difference_by_seed": {
+        "2700": 0.04878048780487798,
+        "2701": 0.04956726986624704
+      },
+      "seeds_above_baseline": 2,
+      "n_seeds": 2,
+      "verdict": "2 of 2 seeds above FCL; the arm's across-seed range is 0.791 to 0.792, so a single seed above the baseline is not evidence the arm beats it."
+    },
+    {
+      "arm": "pooled_h54l2p2",
+      "baseline": "FBA",
+      "gene_set": "ours_scored",
+      "baseline_auroc": 0.6400472069236822,
+      "difference_by_seed": {
+        "2700": 0.1508654602675058,
+        "2701": 0.15165224232887486
+      },
+      "seeds_above_baseline": 2,
+      "n_seeds": 2,
+      "verdict": "2 of 2 seeds above FBA; the arm's across-seed range is 0.791 to 0.792, so a single seed above the baseline is not evidence the arm beats it."
     },
     {
       "arm": "flux_biomass_h90l2p2",

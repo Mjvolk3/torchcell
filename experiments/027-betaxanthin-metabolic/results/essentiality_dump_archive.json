@@ -31,10 +31,10 @@
         "head": "essentiality",
         "arm": "pooled",
         "seed": 2700,
-        "hidden": 12,
-        "layers": 1,
-        "attention_heads": 4,
-        "preprocessor_layers": 1,
+        "hidden": 54,
+        "layers": 2,
+        "attention_heads": 9,
+        "preprocessor_layers": 2,
         "epochs": 80
       }
     },
@@ -47,10 +47,10 @@
         "head": "essentiality",
         "arm": "pooled",
         "seed": 2701,
-        "hidden": 12,
-        "layers": 1,
-        "attention_heads": 4,
-        "preprocessor_layers": 1,
+        "hidden": 54,
+        "layers": 2,
+        "attention_heads": 9,
+        "preprocessor_layers": 2,
         "epochs": 80
       }
     },
@@ -69,6 +69,20 @@
         "preprocessor_layers": 1,
         "epochs": 80
       }
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h54l2p2_e80_s2700.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h54l2p2_e80_s2700.json",
+      "status": "archived",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2700.json",
+      "legacy_holds": null
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h54l2p2_e80_s2701.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h54l2p2_e80_s2701.json",
+      "status": "archived",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2701.json",
+      "legacy_holds": null
     },
     {
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_flux_e80_s2700.json",
@@ -100,10 +114,10 @@
         "head": "essentiality",
         "arm": "pooled",
         "seed": 2700,
-        "hidden": 12,
-        "layers": 1,
-        "attention_heads": 4,
-        "preprocessor_layers": 1,
+        "hidden": 54,
+        "layers": 2,
+        "attention_heads": 9,
+        "preprocessor_layers": 2,
         "epochs": 80
       }
     },
@@ -116,10 +130,10 @@
         "head": "essentiality",
         "arm": "pooled",
         "seed": 2701,
-        "hidden": 12,
-        "layers": 1,
-        "attention_heads": 4,
-        "preprocessor_layers": 1,
+        "hidden": 54,
+        "layers": 2,
+        "attention_heads": 9,
+        "preprocessor_layers": 2,
         "epochs": 80
       }
     },

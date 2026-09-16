@@ -173,24 +173,45 @@ def logistic_baselines() -> str | None:
         return None
     with open(src) as fh:
         report = json.load(fh)
+    # The table carries the FBA rungs and, per encoding, the best model with and without
+    # the FBA ratios; the full grid is the figure's job.
     rows = []
     for r in report["rows"]:
-        emb = (r["embedding"] or "--").replace("_", "\\_")
-        hp = (r["hyperparameter"] or "--").replace("_", "\\_")
-        rows.append(
-            f"    {r['rung']} & {emb} & {hp} & {r['val_auroc']:.3f} & "
-            f"{r['test_auroc']:.3f} [{r['test_ci_low']:.2f}, {r['test_ci_high']:.2f}] \\\\"
-        )
+        if r["model"] == "FBA growth":
+            rows.append(
+                f"    FBA growth & {r['encoding'].replace('_', chr(92) + '_')} & -- & -- & "
+                f"{r['val_auroc']:.3f} & {r['test_auroc']:.3f} "
+                f"[{r['test_ci_low']:.2f}, {r['test_ci_high']:.2f}] \\\\"
+            )
+    fitted = [r for r in report["rows"] if r["model"] != "FBA growth"]
+    encodings = list(dict.fromkeys(r["encoding"] for r in fitted))
+    for enc in encodings:
+        for with_fba in (False, True):
+            cands = [
+                r for r in fitted if r["encoding"] == enc and r["with_fba"] == with_fba
+            ]
+            if not cands:
+                continue
+            r = max(cands, key=lambda x: x["cv_auroc"])
+            rows.append(
+                f"    {enc.replace('_', chr(92) + '_')}{' $+$ FBA' if with_fba else ''} & "
+                f"{r['model']} ({r['hyperparameter'].replace('_', chr(92) + '_')}) & "
+                f"{r['dim']:,} & {r['cv_auroc']:.3f} & {r['val_auroc']:.3f} & "
+                f"{r['test_auroc']:.3f} [{r['test_ci_low']:.2f}, {r['test_ci_high']:.2f}] \\\\"
+            )
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
         "  \\caption[Classical ladder]{The classical ladder on the released-label split "
-        f"(\\texttt{{{report['split_file'].replace('_', chr(92) + '_')}}}): fit on the "
-        "train genes, hyperparameter chosen on the validation genes, scored once on the "
-        f"195 held-out genes ({report['n_test_essential']} essential) with a 2,000-draw "
-        "gene bootstrap. B1 is FBA's growth ratio with no fitting.}\n"
+        f"(\\texttt{{{report['split_file'].replace('_', chr(92) + '_')}}}). Per encoding, "
+        "the model class whose five-fold cross-validation AUROC inside the 629 training "
+        "genes is highest, with and without FBA's four growth ratios appended; the "
+        "validation genes and the 195 held-out genes "
+        f"({report['n_test_essential']} essential) are scored once, on genes no fit "
+        "touched, the held-out number with a 2,000-draw gene bootstrap. FBA alone is not "
+        "fitted. Every model and encoding is in Figure~\\ref{fig:ladder}.}\n"
         "  \\label{tab:ladder}\n"
-        "  \\begin{tabular}{@{}lllrl@{}}\n    \\hline\n"
-        "    rung & embedding & chosen & val AUROC & held-out AUROC [95\\% CI] \\\\\n"
+        "  \\begin{tabular}{@{}llrrrl@{}}\n    \\hline\n"
+        "    encoding & best model (chosen) & dim & CV & val & held-out [95\\% CI] \\\\\n"
         "    \\hline\n"
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"

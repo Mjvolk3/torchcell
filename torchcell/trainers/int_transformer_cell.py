@@ -961,7 +961,15 @@ class RegressionTask(L.LightningModule):
             ) or self._is_scheduled(
                 self.hparams.get("plot_edge_recovery_every_n_epochs", 10)
             )
-            return_attention = is_diagnostic_epoch
+            # The attention the diagnostics read is computed on the wild-type graph
+            # before any perturbation, and validation runs in eval mode, so it is the
+            # same tensor for every validation batch of the epoch. One batch carries
+            # it; the other batches take the fused path. Returning it for all 37 batches
+            # of a 256-record validation held eight [1, 9, 6608, 6608] fp32 matrices
+            # (11.7 GiB) beside every batch's per-record tensors, the pass that OOM'd
+            # Delta 22034666 and 22055149 at epoch 10 (2026-09-15); the diagnostic
+            # values themselves were 37 identical samples averaged.
+            return_attention = is_diagnostic_epoch and batch_idx == 0
 
             # Debug: Log attention storage decision (only on rank 0, once per epoch)
             # Commented out to reduce output clutter - these are debug messages, not warnings
@@ -1776,6 +1784,18 @@ class RegressionTask(L.LightningModule):
 
     def on_validation_epoch_end(self) -> None:
         """Log and reset validation metrics and plot validation samples periodically."""
+        # Peak GPU memory of the validation pass. On a diagnostic epoch the model
+        # returns every layer's [1, heads, N+1, N+1] attention, so validation, not
+        # training, is where a run is closest to the card (Delta 22034666 and 22055149
+        # OOM'd at the epoch-10 diagnostic validation, 2026-09-15).
+        if torch.cuda.is_available():
+            peak_gb = torch.cuda.max_memory_allocated() / 2**30
+            print(
+                f"val epoch {self.current_epoch} rank {self.global_rank}: peak "
+                f"allocated {peak_gb:.2f} GiB"
+            )
+            self.log("val/cuda_peak_allocated_gb", peak_gb, sync_dist=True)
+            torch.cuda.reset_peak_memory_stats()
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
         for name, value in computed_metrics.items():

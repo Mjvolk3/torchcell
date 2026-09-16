@@ -73,6 +73,13 @@ data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 10000
   batch_size: 256  # Limited by transformer memory requirements
+  # Validation at the training batch size (256 per rank) on a diagnostic epoch, when
+  # every layer returns its attention, allocated 42 GiB on an A40 and OOM'd Delta
+  # 22034666 and 22055149 at the epoch-10 validation (2026-09-15). The attention
+  # storage is batch-independent (and now returned for one batch only); the
+  # per-record tensors are not. Validation batch size changes no metric (torchmetrics
+  # accumulate over records) and no training step.
+  val_batch_size: 32
   num_workers: 16
   pin_memory: true
   prefetch: false

@@ -177,3 +177,29 @@ LMDB and holds its own locks on node-local disk.
 | sweep s1 | 22055149 mask -> 22055151 1e-2 -> 22055152 1e-1 -> 22055153 1e-4 -> 22055154 1e-5 -> 22055155 1 -> 22056267 random -> 22080057 lambda 0 |
 | sweep s2 | 22055156 lambda 0 -> 22055157 mask -> 22055158 -> 22055159 -> 22055160 -> 22055161 -> 22055162 -> 22056268 random |
 | sweep s3 | 22055163 lambda 0 -> 22055164 mask -> 22055165 -> 22055166 -> 22055167 -> 22055168 -> 22055169 -> 22056269 random |
+
+## 2026.09.15 - Second OOM, at the diagnostic validation; queue ages
+
+22034666 (fit_015 seed 1, started 03:37 after 40 h in the queue) and 22055149 (mask
+seed 1, started 04:04 after 26 h) both trained ten epochs at 20 to 25 min per epoch on
+the layer-restricted path and then died in `validation_step` at validation batch 2 of
+37 of the epoch-10 diagnostic pass: `torch.OutOfMemoryError`, 42.1 GiB allocated,
+1.46 GiB requested. On a diagnostic epoch (`plot_transformer_diagnostics_every_n_epochs:
+10`, `_is_scheduled` fires when `(epoch + 1) % 10 == 0`) validation asks every layer for
+its attention, so all eight layers take the manual path and the model returns eight
+[1, 9, 6608, 6608] fp32 matrices (11.7 GiB) on top of the per-record tensors of a
+256-record validation batch. That is the true peak of a run; the training-side fix of
+2026-09-14 did not touch it, and 22030924's 96.5 percent W&B memory reading was this
+pass, not training. Validation batch size is not part of the protocol (torchmetrics
+accumulate over records; no training step changes), so `cgt_s0_r_kl_000` now sets
+`data_module.val_batch_size: 64`, and the trainer logs `val/cuda_peak_allocated_gb` at
+every validation end.
+
+Two changes, both outside the protocol: the trainer returns the diagnostic attention for
+the first validation batch only (the attention is computed on the wild-type graph in
+eval mode, so every batch of the epoch carried the same eight matrices and the
+accumulators averaged 37 identical samples), and `cgt_s0_r_kl_000` validates at 32
+records per rank. Measured on one RTX 6000 Ada with diagnostics on every epoch: the
+diagnostic validation peaks at 16.4 GiB allocated (14.5 in the sanity check), the
+training epoch at 6.8 GiB, against 42 GiB before. `val/cuda_peak_allocated_gb` is logged
+at every validation end.

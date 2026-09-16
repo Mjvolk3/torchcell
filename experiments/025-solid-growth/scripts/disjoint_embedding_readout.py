@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/025-solid-growth/scripts/disjoint_embedding_readout
 """Read out the query-pair-disjoint sequence-embedding arms from W&B.
 
-One row per config tag: the rank-0 run (the one carrying `val/gene_interaction/Pearson`),
+One row per rank-0 run of each config tag (one per seed): the run (the one carrying `val/gene_interaction/Pearson`),
 epochs logged, max validation Pearson and its epoch (an upward-biased order statistic over
 the epochs run), the value at epoch 29 (the protocol's fixed reading), the mean over epochs
 10 to 29 (a window average that is not a max), the mean over epochs 60 to 99 for the
@@ -29,6 +29,8 @@ PROJECT = "zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transfor
 ARMS = [
     ("cgt_s0_q_kl_ctrl_016", "learnable table (control)", 30),
     ("cgt_s0_q_kl_emb_017", "composite: promoter + CaLM + ProtT5 + terminator", 30),
+    ("cgt_s0_q_kl_rand_018", "random 1,000-vector (matched control)", 30),
+    ("cgt_s0_q_kl_embfit_027", "composite + fitness head (1.0)", 30),
     ("cgt_s0_q_kl_calm_020", "CaLM alone", 30),
     ("cgt_s0_q_kl_prot_021", "ProtT5 alone", 30),
     ("cgt_s0_q_kl_emb_022", "composite", 100),
@@ -41,6 +43,7 @@ KEYS = (
     "val/point_loss",
     "train/gene_interaction/Pearson",
     "train/graph_reg_loss",
+    "val/fitness/Pearson",
 )
 
 
@@ -66,71 +69,92 @@ def main() -> None:
     rows = []
     for cfg, label, budget in ARMS:
         runs = list(api.runs(PROJECT, filters={"tags": {"$in": [cfg]}}))
-        picked = None
+        # One row per rank-0 run (the run carrying validation history): a config run
+        # at several seeds yields several rows.
+        picked = []
         for r in runs:
             h = per_epoch(r)
             if h["val/gene_interaction/Pearson"]:
-                picked = (r, h)
-                break
-        if picked is None:
+                picked.append((r, h))
+        if not picked:
             print(f"{cfg}: no rank-0 run with validation history yet")
             continue
-        r, h = picked
-        val = h["val/gene_interaction/Pearson"]
-        best_epoch = max(val, key=val.get)
-        last = max(val)
-        rows.append(
-            {
-                "config": cfg,
-                "arm": label,
-                "budget_epochs": budget,
-                "run_id": r.id,
-                "run_url": r.url,
-                "epochs_logged": len(val),
-                "complete": len(val) >= budget,
-                "val_pearson_max": round(val[best_epoch], 4),
-                "val_pearson_max_epoch": best_epoch,
-                "val_pearson_epoch29": round(val[29], 4) if 29 in val else None,
-                "val_pearson_mean_ep10_29": (
-                    round(m, 4) if (m := window_mean(val, 10, 29)) is not None else None
-                ),
-                "val_pearson_mean_ep60_99": (
-                    round(m, 4) if (m := window_mean(val, 60, 99)) is not None else None
-                ),
-                "val_point_loss_epoch29": (
-                    round(h["val/point_loss"][29], 4) if 29 in h["val/point_loss"] else None
-                ),
-                "val_point_loss_last": round(h["val/point_loss"][max(h["val/point_loss"])], 4),
-                "train_pearson_last": round(
-                    h["train/gene_interaction/Pearson"][
-                        max(h["train/gene_interaction/Pearson"])
-                    ],
-                    4,
-                ),
-                "graph_reg_loss_last": round(
-                    h["train/graph_reg_loss"][max(h["train/graph_reg_loss"])], 3
-                ),
-                "last_epoch": last,
-            }
-        )
+        for r, h in sorted(picked, key=lambda rh: int(rh[0].config.get("seed", 42))):
+            rows.append(_row(cfg, label, budget, r, h))
+    _write(rows)
+
+
+def _row(cfg: str, label: str, budget: int, r, h) -> dict:
+    val = h["val/gene_interaction/Pearson"]
+    best_epoch = max(val, key=val.get)
+    last = max(val)
+    fit = h["val/fitness/Pearson"]
+    return {
+        "config": cfg,
+        "arm": label,
+        "budget_epochs": budget,
+        "seed": int(r.config.get("seed", 42)),
+        "run_id": r.id,
+        "run_url": r.url,
+        "epochs_logged": len(val),
+        "complete": len(val) >= budget,
+        "val_pearson_max": round(val[best_epoch], 4),
+        "val_pearson_max_epoch": best_epoch,
+        "val_pearson_epoch29": round(val[29], 4) if 29 in val else None,
+        "val_pearson_mean_ep10_29": (
+            round(m, 4) if (m := window_mean(val, 10, 29)) is not None else None
+        ),
+        "val_pearson_mean_ep60_99": (
+            round(m, 4) if (m := window_mean(val, 60, 99)) is not None else None
+        ),
+        "val_point_loss_epoch29": (
+            round(h["val/point_loss"][29], 4) if 29 in h["val/point_loss"] else None
+        ),
+        "val_point_loss_last": round(h["val/point_loss"][max(h["val/point_loss"])], 4),
+        "train_pearson_last": round(
+            h["train/gene_interaction/Pearson"][
+                max(h["train/gene_interaction/Pearson"])
+            ],
+            4,
+        ),
+        "graph_reg_loss_last": round(
+            h["train/graph_reg_loss"][max(h["train/graph_reg_loss"])], 3
+        ),
+        "val_fitness_pearson_max": round(max(fit.values()), 4) if fit else None,
+        "last_epoch": last,
+    }
+
+
+def _write(rows: list[dict]) -> None:
     df = pd.DataFrame(rows)
     os.makedirs(RESULTS_DIR, exist_ok=True)
     path = osp.join(RESULTS_DIR, "disjoint_embedding_readout.csv")
     df.to_csv(path, index=False)
     cols = [
-        "config", "budget_epochs", "epochs_logged", "val_pearson_max",
-        "val_pearson_max_epoch", "val_pearson_epoch29", "val_pearson_mean_ep10_29",
-        "val_pearson_mean_ep60_99", "val_point_loss_epoch29", "val_point_loss_last",
-        "train_pearson_last", "graph_reg_loss_last",
+        "config",
+        "seed",
+        "budget_epochs",
+        "epochs_logged",
+        "val_pearson_max",
+        "val_pearson_max_epoch",
+        "val_pearson_epoch29",
+        "val_pearson_mean_ep10_29",
+        "val_pearson_mean_ep60_99",
+        "val_point_loss_epoch29",
+        "val_point_loss_last",
+        "train_pearson_last",
+        "graph_reg_loss_last",
     ]
     sub = df[cols]
     print("| " + " | ".join(cols) + " |")
     print("|" + "---|" * len(cols))
     for _, r in sub.iterrows():
-        print("| " + " | ".join("" if pd.isna(v) else str(v) for v in r.tolist()) + " |")
+        print(
+            "| " + " | ".join("" if pd.isna(v) else str(v) for v in r.tolist()) + " |"
+        )
     print()
     for _, r in df.iterrows():
-        print(r["config"], r["run_url"])
+        print(r["config"], "seed", r["seed"], r["run_url"])
     print("wrote", path)
 
 

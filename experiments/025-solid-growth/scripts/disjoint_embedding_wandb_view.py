@@ -132,6 +132,12 @@ def populate_view() -> str:
         x_axis=X, smoothing_type="none", max_runs=60, sort_panels_alphabetically=False
     )
     runset_settings = ws.RunsetSettings(
+        # ONLY THE DISJOINT-SPLIT ARMS. The project also holds the random-split (R) cells
+        # from Delta and GilaHyper (fit_014, ctrl_013, the graph-regularization sweep);
+        # unfiltered, they sat in the table under an empty arm group and made the view
+        # read as if the disjoint arms had run on Delta. `split` is written by
+        # `label_runs`, so a run lacking it is not one of these arms.
+        filters=[ws.Config("split") == "Q"],
         groupby=[ws.Config("arm")],
         order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
     )

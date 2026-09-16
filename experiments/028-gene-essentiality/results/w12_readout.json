@@ -920,35 +920,8 @@
       ]
     },
     {
-      "arm": "fcl_lr3e-3",
-      "label": "fcl_lr3e-3",
-      "n_seeds": 3,
-      "seeds": [
-        2700,
-        2701,
-        2702
-      ],
-      "test_auroc_mean": 0.6859100445843168,
-      "test_auroc_sd": 0.04326656813694401,
-      "test_auroc_values": [
-        0.7175452399685287,
-        0.703579858379229,
-        0.6366050354051928
-      ],
-      "pooled_auroc": 0.7128245476003147,
-      "pooled_ci_low": 0.6163228888515236,
-      "pooled_ci_high": 0.8113849419490817,
-      "median_abs_step_mean": 0.002406015037593967,
-      "n_val": 158,
-      "select_epochs": [
-        77,
-        77,
-        50
-      ]
-    },
-    {
       "arm": "fcl_lr3e-4",
-      "label": "fcl_lr3e-4",
+      "label": "lr 3e-4",
       "n_seeds": 3,
       "seeds": [
         2700,
@@ -974,35 +947,35 @@
       ]
     },
     {
-      "arm": "fcl_noreg",
-      "label": "fcl_noreg",
+      "arm": "fcl_lr3e-3",
+      "label": "lr 3e-3",
       "n_seeds": 3,
       "seeds": [
         2700,
         2701,
         2702
       ],
-      "test_auroc_mean": 0.7252819302386572,
-      "test_auroc_sd": 0.018654299596138613,
+      "test_auroc_mean": 0.6859100445843168,
+      "test_auroc_sd": 0.04326656813694401,
       "test_auroc_values": [
-        0.7454760031471283,
-        0.721675845790716,
-        0.7086939417781275
+        0.7175452399685287,
+        0.703579858379229,
+        0.6366050354051928
       ],
-      "pooled_auroc": 0.7376081825334382,
-      "pooled_ci_low": 0.6453969255596474,
-      "pooled_ci_high": 0.825857989442802,
-      "median_abs_step_mean": 0.0025563909774436087,
+      "pooled_auroc": 0.7128245476003147,
+      "pooled_ci_low": 0.6163228888515236,
+      "pooled_ci_high": 0.8113849419490817,
+      "median_abs_step_mean": 0.002406015037593967,
       "n_val": 158,
       "select_epochs": [
-        66,
         77,
-        77
+        77,
+        50
       ]
     },
     {
       "arm": "fcl_posw",
-      "label": "fcl_posw",
+      "label": "class weight 772/126",
       "n_seeds": 3,
       "seeds": [
         2700,
@@ -1026,6 +999,33 @@
         75,
         53
       ]
+    },
+    {
+      "arm": "fcl_noreg",
+      "label": "graph regularization off",
+      "n_seeds": 3,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "test_auroc_mean": 0.7252819302386572,
+      "test_auroc_sd": 0.018654299596138613,
+      "test_auroc_values": [
+        0.7454760031471283,
+        0.721675845790716,
+        0.7086939417781275
+      ],
+      "pooled_auroc": 0.7376081825334382,
+      "pooled_ci_low": 0.6453969255596474,
+      "pooled_ci_high": 0.825857989442802,
+      "median_abs_step_mean": 0.0025563909774436087,
+      "n_val": 158,
+      "select_epochs": [
+        66,
+        77,
+        77
+      ]
     }
   ],
   "comparators_on_195": {
@@ -1048,6 +1048,16 @@
       "auroc": 0.6638473642800944,
       "ci_low": 0.5718939393939394,
       "ci_high": 0.7559709101382487
+    },
+    "FCL": {
+      "auroc": 0.74213217938631,
+      "ci_low": 0.634456337108014,
+      "ci_high": 0.8447953999582288
+    },
+    "FBA (released)": {
+      "auroc": 0.6400472069236822,
+      "ci_low": 0.5190704355381774,
+      "ci_high": 0.7546372814823831
     }
   },
   "bootstrap": {

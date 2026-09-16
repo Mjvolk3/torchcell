@@ -185,4 +185,6 @@ Example runs, gated scale 0 seed 2701 and forced scale 0 seed 2701 (the stalled 
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/z2cmvk14>
 
-<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/235hi61k>
+<<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/235hi61k>
+
+**Round 4, jobs 2237 to 2245 (9 cells), queued 16:41.** The three round-2 module readouts at constraint scale 0 on top of the round-3 levers (batch 32, class weight 772/126, 200 epochs, `ESS_WORKERS=0`), seeds 2700 to 2702, paired against the round-3 `b32posw200` pooled cell: `w15gate_s0` (gated), `w15bio_s0` (forced growth column), `w15shuf_s0` (forced, kcat shuffled by the seed). Read with `wave12_readout.py --round w15`. Pre-registered reads are the round-2 ones: not hurt is gated against the pooled cell paired by seed; help is forced above the pooled cell on three of three seeds and above the shuffled control. Round 3 (2224 to 2236) is still draining ahead of it; its partial numbers at 16:40 are b32posw at 80 epochs 0.780 / 0.769 / 0.700, b32posw200 seed 2700 0.780, b32e200 seed 2700 0.766.>

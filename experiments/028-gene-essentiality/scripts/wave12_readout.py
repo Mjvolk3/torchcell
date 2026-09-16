@@ -109,6 +109,13 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "fluxoffctx",
         ],
     ),
+    # Wave 15 (round 4, jobs 2237-2245): the round-2 module readouts on top of the round-3
+    # levers (batch 32, class weight, 200 epochs), paired by seed against the round-3
+    # b32posw200 pooled cell, which is the first arm of the round.
+    "w15": (
+        ["w14_b32posw200_h12l1p1_e200_s*.json", "w15_*_e200_s*.json"],
+        ["b32posw200", "gate_s0", "bio_s0", "shuf_s0"],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -142,6 +149,9 @@ ARM_LABELS = {
     "fluxgate": "gated growth column, constraints 0.1",
     "fluxgate_s0": "gated growth column, constraints 0",
     "fluxshuf_s0": "growth column only, kcat shuffled, constraints 0",
+    "gate_s0": "gated growth column, constraints 0, batch 32 + class weight, 200 epochs",
+    "bio_s0": "growth column only, constraints 0, batch 32 + class weight, 200 epochs",
+    "shuf_s0": "growth column only, kcat shuffled, batch 32 + class weight, 200 epochs",
 }
 
 

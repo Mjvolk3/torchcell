@@ -129,6 +129,13 @@ ROUND_CAPTIONS = {
         "Batch 32 with the class weight at 80 and 200 epochs, batch 32 alone at 200 epochs, "
         "and the five fold models of the cross-validation files, each on its own fold.",
     ),
+    "w15": (
+        "Round 4, the module on the round-3 levers",
+        "The round-3 pooled cell (batch 32, class weight, 200 epochs) and the same cell with "
+        "the prediction routed through the flux layer at constraint scale 0: the gated "
+        "readout, the forced growth column, and the forced growth column with the kcat "
+        "vector shuffled.",
+    ),
 }
 
 

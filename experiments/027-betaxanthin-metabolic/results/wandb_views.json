@@ -313,5 +313,108 @@
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=pyqmq58ihgr",
     "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-9:-the-warm-started-residual-head-against-the-boxforce-controls-(feasibility-first)--VmlldzoxNzkzNDA5OQ==",
     "panels_per_row": 6
+  },
+  "ess": {
+    "title": "027 wave 9: gene essentiality, pooled backbone vs biomass flux readout",
+    "n_runs": 15,
+    "tags_any": [
+      "w9esspool",
+      "w9essflux",
+      "w9essshuffled",
+      "w9essgenoref"
+    ],
+    "groupby": [
+      "arm",
+      "flux_shuffle_kcat_seed"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "train_loss",
+      "feas_balance_active_max",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_auroc_pinned",
+      "test_accuracy_pinned",
+      "test_majority_rate_pinned",
+      "test_recall_essential_pinned",
+      "test_auroc_all",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=i2i6b7eonfw",
+    "panels_per_row": 6
+  },
+  "loss": {
+    "title": "027 wave 10: betaxanthin loss contrast, CRPS learned sigma vs MSE vs CRPS fixed sigma 0.40",
+    "n_runs": 9,
+    "tags_any": [
+      "w9bxctxprec",
+      "w10bxctxprecmse",
+      "w10bxctxprecsfix"
+    ],
+    "groupby": [
+      "loss_arm"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "train_loss",
+      "graph_reg_loss"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "test_pearson_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=4k3un065zoc",
+    "panels_per_row": 6
+  },
+  "feasladder": {
+    "title": "027 wave 10: the frozen warm-start head, penalty ladder and the 10-epoch window",
+    "n_runs": 10,
+    "tags_any": [
+      "warmstart_frozen",
+      "warmstart_frozen_e10",
+      "warmstart_frozen_bw00",
+      "warmstart_frozen_bw01",
+      "warmstart_frozen_bw2",
+      "warmstart_frozen_nopen"
+    ],
+    "groupby": [
+      "epochs",
+      "flux_balance_active_weight",
+      "constraint_scale",
+      "flux_parsimony_weight"
+    ],
+    "curves": [
+      "val_pred_sd_ratio",
+      "feas_balance_active_max",
+      "feas_balance_active_p95",
+      "feas_active_row_frac",
+      "feas_flux_active_frac",
+      "feas_box_violation_frac",
+      "feas_thermo_violation_frac",
+      "c_balance_active",
+      "c_parsimony",
+      "c_density",
+      "val_pearson",
+      "train_data_loss"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "feas/pinned_test_top100/balance_max_ratio_median",
+      "feas/pinned_test_top100/box_violation_frac_median",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=mwzavkv9d8w",
+    "panels_per_row": 6
   }
 }

@@ -70,6 +70,15 @@ class ViewSpec(BaseModel):
         default_factory=list,
         description="Summary metrics drawn as bar charts, one bar per group.",
     )
+    drop_failed: bool = Field(
+        default=True,
+        description=(
+            "Filter out runs whose state is failed or crashed. The four essentiality "
+            "crashes (jobs 1990, 1991, 1997, 1998) carry the round's tags and no epochs; "
+            "left in, they sit as empty rows in every group and pull the group mean of a "
+            "bar chart toward nothing. Running runs stay in."
+        ),
+    )
 
 
 SPECS: dict[str, ViewSpec] = {
@@ -360,6 +369,117 @@ SPECS: dict[str, ViewSpec] = {
             "select_val_pearson",
         ],
     ),
+    "ess": ViewSpec(
+        key="ess",
+        title="027 wave 9: gene essentiality, pooled backbone vs biomass flux readout",
+        description=(
+            "Gene essentiality on the released Merzbacher FCL split (195 pinned test "
+            "genes, 31 essential), 80 epochs, seeds 2700 to 2702. Arms: the pooled "
+            "backbone with no metabolic module, and the anchored projection head read "
+            "on the biomass column r_2111 of the flux vector. Headline is the pinned "
+            "test AUROC at the validation-selected epoch against the published "
+            "comparators, FCL 0.73 and FBA 0.69; accuracy is reported beside the "
+            "majority-class rate of 0.841 because a constant predictor matches it. "
+            "Measured so far: pooled 0.793, 0.788, 0.578 and flux 0.540, 0.758 (jobs "
+            "2008, 2009, 2021 to 2023); both arms swing by about 0.2 across seeds, so "
+            "read the paired contrast and not one pair. Group by arm."
+        ),
+        tags_any=["w9esspool", "w9essflux", "w9essshuffled", "w9essgenoref"],
+        groupby=["arm", "flux_shuffle_kcat_seed"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "val_pred_sd_ratio",
+            "train_data_loss",
+            "train_loss",
+            "feas_balance_active_max",
+            "feas_flux_active_frac",
+        ],
+        scalars=[
+            "test_auroc_pinned",
+            "test_accuracy_pinned",
+            "test_majority_rate_pinned",
+            "test_recall_essential_pinned",
+            "test_auroc_all",
+            "select_val_pearson",
+        ],
+    ),
+    "loss": ViewSpec(
+        key="loss",
+        title="027 wave 10: betaxanthin loss contrast, CRPS learned sigma vs MSE vs CRPS fixed sigma 0.40",
+        description=(
+            "Betaxanthin, context-precursor readout on the pooled backbone, 200 epochs, "
+            "seeds 2700 to 2702, byte-identical apart from the loss. Arms: Gaussian CRPS "
+            "with a learned spread (wave 9), squared error, and CRPS with the spread held "
+            "at sqrt(1 - reliability) = 0.40 from the measured retest reliability of 0.84. "
+            "Paired by seed on the pinned test Spearman: CRPS 0.115, MSE 0.087 (minus "
+            "0.028, 3 of 3 negative), fixed 0.041 (minus 0.074, 2 of 3 negative), from "
+            "loss_contrast.py. The prediction spread ratio shows whether an arm is "
+            "collapsed rather than merely worse. Group by loss arm."
+        ),
+        tags_any=["w9bxctxprec", "w10bxctxprecmse", "w10bxctxprecsfix"],
+        groupby=["loss_arm"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "val_pred_sd_ratio",
+            "train_data_loss",
+            "train_loss",
+            "graph_reg_loss",
+        ],
+        scalars=["test_spearman_pinned", "test_pearson_pinned", "select_val_pearson"],
+    ),
+    "feasladder": ViewSpec(
+        key="feasladder",
+        title="027 wave 10: the frozen warm-start head, penalty ladder and the 10-epoch window",
+        description=(
+            "Betaxanthin, warm-started residual head with the frozen active-row set "
+            "(K = 100, boxforce). Cells: the wave-9 200-epoch frozen cells at seeds 2700 "
+            "to 2702, the 10-epoch cells at the same seeds (selection forced into the "
+            "window where feasibility survives; the audits read 0.98 of the whole "
+            "population inside Genesis at all three seeds with 81 active balance rows "
+            "against the reference's 82, and 0.43 to 0.71 on the model's own top 100), "
+            "and the seed-2700 balance-weight ladder 0.0, 0.1, 0.5 (the wave-9 value), "
+            "2.0 plus the cell with every penalty off. The prediction spread ratio and "
+            "the active-row balance max are the two curves to read together: the "
+            "penalties buy balance by flattening the flux across genotypes. Group by "
+            "budget, then balance weight, then constraint scale."
+        ),
+        tags_any=[
+            "warmstart_frozen",
+            "warmstart_frozen_e10",
+            "warmstart_frozen_bw00",
+            "warmstart_frozen_bw01",
+            "warmstart_frozen_bw2",
+            "warmstart_frozen_nopen",
+        ],
+        groupby=[
+            "epochs",
+            "flux_balance_active_weight",
+            "constraint_scale",
+            "flux_parsimony_weight",
+        ],
+        curves=[
+            "val_pred_sd_ratio",
+            "feas_balance_active_max",
+            "feas_balance_active_p95",
+            "feas_active_row_frac",
+            "feas_flux_active_frac",
+            "feas_box_violation_frac",
+            "feas_thermo_violation_frac",
+            "c_balance_active",
+            "c_parsimony",
+            "c_density",
+            "val_pearson",
+            "train_data_loss",
+        ],
+        scalars=[
+            "test_spearman_pinned",
+            "feas/pinned_test_top100/balance_max_ratio_median",
+            "feas/pinned_test_top100/box_violation_frac_median",
+            "select_val_pearson",
+        ],
+    ),
 }
 
 
@@ -384,16 +504,42 @@ def readout_group(run: Any) -> str:
     return str(readout or cfg.get("arm") or "unknown")
 
 
+def loss_arm(run: Any) -> str:
+    """The loss a run trained under, as one label the workspace can group by.
+
+    The config carries it as two fields, `crps` (bool) and `crps_sigma_fixed` (float or
+    absent on runs that predate the flag), and W&B groups on one key at a time.
+    """
+    cfg = run.config
+    if not cfg.get("crps"):
+        return "mse"
+    fixed = cfg.get("crps_sigma_fixed")
+    if fixed is None:
+        return "crps_learned_sigma"
+    return f"crps_sigma_fixed_{float(fixed):.2f}"
+
+
 def annotate_readout_group(runs: list[Any]) -> int:
-    """Write `readout_group` onto every matched run whose label is missing or stale."""
+    """Write `readout_group` and `loss_arm` onto every matched run where missing or stale."""
     changed = 0
     for run in runs:
-        label = readout_group(run)
-        if run.config.get("readout_group") != label:
-            run.config["readout_group"] = label
+        labels = {"readout_group": readout_group(run), "loss_arm": loss_arm(run)}
+        stale = {k: v for k, v in labels.items() if run.config.get(k) != v}
+        if stale:
+            for k, v in stale.items():
+                run.config[k] = v
             run.update()
             changed += 1
     return changed
+
+
+def runset_filters(spec: ViewSpec) -> list[Any]:
+    """The tag filter, plus the state filter that drops failed and crashed runs."""
+    filters: list[Any] = [ws.Tags().isin(spec.tags_any)]
+    if spec.drop_failed:
+        filters.append(ws.Metric("State") != "failed")
+        filters.append(ws.Metric("State") != "crashed")
+    return filters
 
 
 def matched_runs(api: wandb.Api, spec: ViewSpec) -> list[Any]:
@@ -486,7 +632,7 @@ def workspace_sections(curves: list[str], scalars: list[str]) -> list[Any]:
 
 def workspace_runset(spec: ViewSpec) -> Any:
     return ws.RunsetSettings(
-        filters=[ws.Tags().isin(spec.tags_any)],
+        filters=runset_filters(spec),
         groupby=[ws.Config(k) for k in spec.groupby],
         order=[ws.Ordering(ws.Config("seed"), ascending=True)],
     )
@@ -530,7 +676,7 @@ def report_blocks(spec: ViewSpec, curves: list[str], scalars: list[str]) -> list
             entity=ENTITY,
             project=PROJECT,
             name=f"{spec.title} ({label})",
-            filters=[ws.Tags().isin(spec.tags_any)],
+            filters=runset_filters(spec),
             groupby=[group_key],
         )
         grids.append(wr.H2(text=label))
@@ -586,7 +732,7 @@ def main() -> None:
     parser.add_argument(
         "--contrast",
         default=None,
-        help="kdraw | densbal | aa | aa_all | aasamp | bxread | all",
+        help=" | ".join([*SPECS, "all"]),
     )
     parser.add_argument("--name", default=None, help="Ad-hoc view title (with --tags).")
     parser.add_argument(

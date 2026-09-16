@@ -87,7 +87,7 @@ Reads, pre-registered: (1) the bumpy-curve hypothesis is decided by `w12fcl` aga
 
 ## 2026.09.16 - Round 1 read: the cells are under-trained, the class weight helps, weight decay and graph regularization do nothing
 
-All 33 round-1 cells completed (jobs 2149 to 2181; `results/w12_readout.json`, figure `notes/assets/images/028-gene-essentiality/w12_readout_2026-09-16-10-32-55.svg`). Held-out AUROC on the 195 genes, seed mean over 2700 to 2702, with the pooled-logit gene bootstrap:
+All 33 round-1 cells completed (jobs 2149 to 2181; `results/w12_readout.json`, figure `notes/assets/images/028-gene-essentiality/w12_readout_2026-09-16-17-54-44.svg`). Held-out AUROC on the 195 genes, seed mean over 2700 to 2702, with the pooled-logit gene bootstrap:
 
 | arm | mean | sd | pooled [95% CI] | selected epochs | median val step |
 |---|---:|---:|---|---|---:|
@@ -139,7 +139,7 @@ Round 3, jobs 2209 to 2222 (14 cells), all width 12 on the fcl split with graph 
 
 **The ladder table above is superseded.** Its hyperparameters were chosen on the validation genes, which makes the validation column a selection statistic. `logistic_baselines.py` now chooses each rung's hyperparameter by five-fold stratified cross-validation inside the 629 training genes and scores the validation and held-out genes once. The ladder is also full: four model classes (logistic, random forest, RBF SVC, cosine kNN) on 24 encodings (the fitness ladder's 17, plus a one-hot gene identity and standard normal vectors of width 1, 10, 100, 1,000, 6,607 and 8,192), each with and without FBA's four growth ratios, 192 fitted rungs plus FBA on four media. Figure and table: `notes-tex/028-gene-essentiality/` section 2; the figure below is every rung.
 
-![](./assets/images/028-gene-essentiality/classical_ladder_2026-09-16-16-32-40.svg)
+![](./assets/images/028-gene-essentiality/classical_ladder_2026-09-16-17-56-09.svg)
 
 Held-out AUROC on the 195 genes, the rung per encoding with the highest CV AUROC (`results/logistic_baselines.csv`):
 
@@ -161,7 +161,7 @@ Held-out AUROC on the 195 genes, the rung per encoding with the highest CV AUROC
 
 **Round 2 (jobs 2182 to 2208), the module on the width-12 cell, paired by seed against the round-1 pooled cell on the same split, batch and budget (`wave12_readout.py --round w13`):**
 
-![](./assets/images/028-gene-essentiality/w13_readout_2026-09-16-17-04-34.svg)
+![](./assets/images/028-gene-essentiality/w13_readout_2026-09-16-17-54-53.svg)
 
 | arm | seeds 2700, 2701, 2702 | mean | pooled [95% CI] |
 |---|---|---|---|
@@ -195,7 +195,7 @@ Example runs, gated scale 0 seed 2701 and forced scale 0 seed 2701 (the stalled 
 
 Jobs 2209 and 2224 to 2236, all width 12 on the released-label split, `ESS_WORKERS=0` (10.5 to 11 min per 200-epoch cell). `wave12_readout.py --round w14`, `cv_ensemble_readout.py --prefix w14_cv`.
 
-![](./assets/images/028-gene-essentiality/w14_readout_2026-09-16-17-04-40.svg)
+![](./assets/images/028-gene-essentiality/w14_readout_2026-09-16-17-54-59.svg)
 
 | arm | seeds 2700, 2701, 2702 | mean | sd | pooled [95% CI] |
 |---|---|---|---|---|
@@ -220,7 +220,7 @@ Example runs, batch 32 + class weight at 200 epochs seed 2702 (selected epoch 14
 
 Pack jobs 2246 to 2248 (three cells per GPU, 29 min per pack; the cards ran at 80 to 98 percent utilization and 11 GB against 10 percent for a single cell). Paired by seed against the round-3 `b32posw200` cell (`wave12_readout.py --round w15`).
 
-![](./assets/images/028-gene-essentiality/w15_readout_2026-09-16-17-30-43.svg)
+![](./assets/images/028-gene-essentiality/w15_readout_2026-09-16-17-55-03.svg)
 
 | arm (all batch 32 + class weight, 200 epochs, scale 0) | seeds 2700, 2701, 2702 | mean | sd | pooled [95% CI] |
 |---|---|---|---|---|

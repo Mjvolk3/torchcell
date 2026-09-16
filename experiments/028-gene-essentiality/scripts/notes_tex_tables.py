@@ -213,8 +213,11 @@ def logistic_baselines() -> str | None:
                 f"{r['dim']:,} & {r['cv_auroc']:.3f} & {r['val_auroc']:.3f} & "
                 f"{r['test_auroc']:.3f} [{r['test_ci_low']:.2f}, {r['test_ci_high']:.2f}] \\\\"
             )
+    # A longtable: 52 rows at \footnotesize plus the caption overran a page as a fixed
+    # [H] float once the ladder figure grew to 95 mm.
     body = (
-        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "\\begingroup\n\\footnotesize\n"
+        "\\begin{longtable}{@{}llrrrl@{}}\n"
         "  \\caption[Classical ladder]{The classical ladder on the released-label split "
         f"(\\texttt{{{report['split_file'].replace('_', chr(92) + '_')}}}). Per encoding, "
         "the model class whose five-fold cross-validation AUROC inside the 629 training "
@@ -223,12 +226,17 @@ def logistic_baselines() -> str | None:
         f"({report['n_test_essential']} essential) are scored once, on genes no fit "
         "touched, the held-out number with a 2,000-draw gene bootstrap. FBA alone is not "
         "fitted. Every model and encoding is in Figure~\\ref{fig:ladder}.}\n"
-        "  \\label{tab:ladder}\n"
-        "  \\begin{tabular}{@{}llrrrl@{}}\n    \\hline\n"
-        "    encoding & best model (chosen) & dim & CV & val & held-out [95\\% CI] \\\\\n"
+        "  \\label{tab:ladder}\\\\\n"
         "    \\hline\n"
+        "    encoding & best model (chosen) & dim & CV & val & held-out [95\\% CI] \\\\\n"
+        "    \\hline\n  \\endfirsthead\n"
+        "    \\hline\n"
+        "    encoding & best model (chosen) & dim & CV & val & held-out [95\\% CI] \\\\\n"
+        "    \\hline\n  \\endhead\n"
+        "    \\hline\n  \\endfoot\n"
+        "    \\hline\n  \\endlastfoot\n"
         + "\n".join(rows)
-        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+        + "\n\\end{longtable}\n\\endgroup\n"
     )
     return write("ladder", body, "results/logistic_baselines.json")
 

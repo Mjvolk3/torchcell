@@ -46,6 +46,7 @@ from torchcell.timestamp import timestamp  # noqa: E402
 from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -393,20 +394,8 @@ def comparators() -> dict[str, tuple[float, float, float]]:
 
 
 def style() -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.labelsize": 6,
-            "axes.titlesize": 6,
-            "xtick.labelsize": 6,
-            "ytick.labelsize": 6,
-            "legend.fontsize": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-            "lines.linewidth": 0.8,
-        }
-    )
+    apply_paper_style()
+    plt.rcParams.update({"legend.fontsize": 6, "lines.linewidth": 0.8})
 
 
 def figure(
@@ -440,10 +429,33 @@ def figure(
             )
     ax_a.set_xlabel("epoch")
     ax_a.set_ylabel("validation AUROC")
+    # The axis runs to 1.0 whatever the round reached, so the panels of every round read
+    # on one scale; the floor drops to the lowest curve in tenths.
+    floor = min(
+        0.3,
+        float(
+            np.floor(
+                10
+                * np.nanmin(
+                    [
+                        np.nanmin([e["val_pearson"] for e in h["history"]])
+                        for hs in histories.values()
+                        for h in hs
+                    ]
+                )
+            )
+            / 10
+        ),
+    )
+    ax_a.set_ylim(floor, 1.0)
     ax_a.yaxis.set_major_locator(MultipleLocator(0.2))
     ax_a.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax_a.grid(axis="y", which="both", linewidth=0.3, color="0.85")
-    ax_a.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, frameon=False)
+    # The arm legend is a FIGURE legend across the top, not an axes legend on a: with two
+    # columns of long arm labels an axes legend ran over panel b.
+    legend_handles, legend_labels = ax_a.get_legend_handles_labels()
+    legend_ncol = 3
+    legend_rows = int(np.ceil(len(legend_labels) / legend_ncol))
 
     # b: stability vs validation size
     for s in summaries:
@@ -572,8 +584,8 @@ def figure(
         for side in ("top", "right", "bottom", "left"):
             ax.spines[side].set_visible(True)
         ax.text(
-            -0.12,
-            1.12,
+            -0.14,
+            1.08,
             letter,
             transform=ax.transAxes,
             fontsize=8,
@@ -581,7 +593,25 @@ def figure(
             va="top",
             ha="left",
         )
-    fig.tight_layout()
+    # Fixed margins rather than tight_layout: the figure legend needs `legend_rows` lines
+    # above the top row (about 3.2 mm each at 6 pt plus the row's own letter), and the
+    # two columns sit at one gap whatever the length of b's axis label.
+    height_mm = 120.0
+    top = 1.0 - (legend_rows * 3.2 + 6.0) / height_mm
+    fig.subplots_adjust(
+        left=0.07, right=0.99, bottom=0.12, top=top, wspace=0.22, hspace=0.55
+    )
+    fig.legend(
+        legend_handles,
+        legend_labels,
+        loc="upper left",
+        bbox_to_anchor=(0.07, 1.0),
+        ncol=legend_ncol,
+        frameon=False,
+        borderaxespad=0.0,
+        handlelength=1.6,
+        columnspacing=1.2,
+    )
     os.makedirs(IMAGE_DIR, exist_ok=True)
     base = osp.join(IMAGE_DIR, f"{round_key}_readout_{timestamp()}")
     fig.savefig(f"{base}.png", dpi=300)

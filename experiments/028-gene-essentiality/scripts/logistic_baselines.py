@@ -80,6 +80,7 @@ from torchcell.timestamp import timestamp  # noqa: E402
 from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -305,16 +306,16 @@ def cv_select(fitter: Fitter, x_tr: np.ndarray, y_tr: np.ndarray) -> tuple[Any, 
 def figure(rows: list[LadderRow], fba_rows: list[LadderRow]) -> str:
     """Held-out AUROC per encoding, one marker per model; FBA-augmented cells hollow."""
     os.makedirs(IMAGE_DIR, exist_ok=True)
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "svg.fonttype": "none",
-            "axes.linewidth": 0.5,
-        }
-    )
+    # The repo style, set EXPLICITLY after every import: `torchcell.graph` applies a style
+    # sheet at import time whose absolute label sizes (14 to 16 pt) and tight recrop
+    # survive a bare `font.size` = 6, which is how the first render of this figure came
+    # out with 14 pt ticks on a 186.6 mm canvas.
+    apply_paper_style()
+    plt.rcParams["legend.fontsize"] = 6
     encodings = list(ENCODINGS)
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(70)))
+    # 95 mm tall: the encoding names run to 30 characters and stand vertical under the
+    # axis at 6 pt, which takes 34 mm of the bottom margin.
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(95)))
     x = np.arange(len(encodings))
     width = 0.19
     for i, model in enumerate(MODELS):
@@ -348,7 +349,7 @@ def figure(rows: list[LadderRow], fba_rows: list[LadderRow]) -> str:
     ax.axhline(fba_best, color=PLOT_PALETTE[5], lw=0.6, ls="--", zorder=1)
     ax.axhline(0.5, color="black", lw=0.4, zorder=1)
     ax.set_xticks(x)
-    ax.set_xticklabels(encodings, rotation=60, ha="right")
+    ax.set_xticklabels(encodings, rotation=90, ha="center")
     ax.set_ylabel("held-out AUROC (195 genes)")
     ax.set_ylim(0.3, 0.9)
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
@@ -357,10 +358,8 @@ def figure(rows: list[LadderRow], fba_rows: list[LadderRow]) -> str:
     ax.tick_params(which="minor", length=0)
     for s in ax.spines.values():
         s.set_visible(True)
-    ax.legend(
-        loc="lower left", bbox_to_anchor=(0, 1.02), ncol=4, frameon=False, fontsize=6
-    )
-    fig.subplots_adjust(left=0.07, right=0.99, top=0.85, bottom=0.36)
+    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=4, frameon=False)
+    fig.subplots_adjust(left=0.07, right=0.99, top=0.88, bottom=0.43)
     base = osp.join(IMAGE_DIR, f"classical_ladder_{timestamp()}")
     savefig_true_size_svg(fig, base + ".svg")
     fig.savefig(base + ".png", dpi=300)
@@ -371,7 +370,26 @@ def figure(rows: list[LadderRow], fba_rows: list[LadderRow]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--split", default="ess_fcl_val0.2_s0.json.gz")
+    parser.add_argument(
+        "--plot-only",
+        action="store_true",
+        help="Redraw the figure from results/logistic_baselines.json without refitting.",
+    )
     args = parser.parse_args()
+    report_path = osp.join(RESULTS, "logistic_baselines.json")
+    if args.plot_only:
+        with open(report_path) as fh:
+            saved = json.load(fh)
+        saved_rows = [LadderRow(**r) for r in saved["rows"]]
+        fig_path = figure(
+            [r for r in saved_rows if r.model != "FBA growth"],
+            [r for r in saved_rows if r.model == "FBA growth"],
+        )
+        saved["figure"] = fig_path
+        with open(report_path, "w") as fh:
+            json.dump(saved, fh, indent=2)
+        print(fig_path)
+        return
     with gzip.open(osp.join(SPLITS, args.split), "rt") as fh:
         split = json.load(fh)
     labels: dict[str, int] = {g: int(v) for g, v in split["labels"].items()}

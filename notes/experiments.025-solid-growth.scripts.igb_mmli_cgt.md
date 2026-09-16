@@ -118,3 +118,7 @@ minute by a 019 wave-5 array (2400350, one GPU each) queued at 00:39 from anothe
 session, so 2401111 is pending on Resources behind vkp5's three tasks and the four 019
 tasks; it starts when four GPUs free. Check `squeue -p cabbi` before cancelling a job
 that holds GPUs another queue wants.
+
+## 2026.09.16 - Second mmli chain: the joint arm and the matched control to three seeds
+
+Worktree `-e` at b2602cca (val batch 32, gradient probe, per-order metrics all included). Chain, `afterany`, 4 GPUs each: 2408604 `cgt_s0_q_kl_embfit_027 +seed=1`, 2408605 `+seed=2`, 2408606 `cgt_s0_q_kl_rand_018 +seed=1`, 2408607 `+seed=2`. The node's four A100s are held by another user's array with no time limit, so the chain starts when four free at once. The seed sets `seed_everything` (weights, dropout, loader workers) and the data module's shuffle order; the split is pinned by the Q artifact and does not move with it.

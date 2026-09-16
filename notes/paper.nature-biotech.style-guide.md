@@ -154,6 +154,23 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   the finding on their own: negatives reach all 45 pairs, positives reach 17 and miss
   three factors entirely. Keep the orientation identical across the copies, or the
   reader has to re-find each node before comparing; labels belong on the main copy only.
+  **Follow-up (2026.09.16): on the small unlabeled copies the unit becomes the TRIPLE.**
+  Each interaction is one translucent triangle at the same opacity in both rings, so ink is
+  proportional to how many interactions land there and the two signs are read on one scale.
+  Translucent triangles failed on the 23 mm labeled circle and work on an 8 mm ring beside
+  its opposite sign, because there the contrast between the two IS the reading. An arrow
+  beside each ring, in the ring's own color, gives its sign without a label.
+- **Type size governs what a borrowed figure may carry.** A reference map, pathway diagram
+  or screenshot brings its own labels at its own scale. Placed at panel width they usually
+  print below the 5 pt floor: iPath3's global metabolic map at 100 mm puts its largest
+  label near 2.5 pt. Strip the borrowed text and re-set what the reader needs at 5.98 pt in
+  a key beside the panel. Measure before assuming a borrowed label survives the reduction.
+- **A headless draw.io export's success cannot be read from its exit code or its output
+  file.** `xvfb-run` returns 1 after a success, drawio-desktop returns 0 after writing
+  nothing, and the previous export's file is still on disk, so a failed run silently
+  reports the LAST good figure's size. Require the file to have been written during the
+  call (an mtime stamp taken before the run). A ~300 kB base64 image in one style attribute
+  is enough to make the export fail; assemble such a panel as SVG instead.
 
 ## Tables
 

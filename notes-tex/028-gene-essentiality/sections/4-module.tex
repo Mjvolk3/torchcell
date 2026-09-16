@@ -104,3 +104,43 @@ rather than what starve it, the opposite of the betaxanthin reading. Adding the 
 head beside the growth affine without a gate costs 0.06 on the seed mean (0.666 and
 0.667 against 0.725) and puts one seed at 0.56; the same sum behind the zero-initialized
 gate loses nothing.
+
+\subsection{Round 4: the module on the best backbone\secstatus{todo}}
+
+Round 4 (jobs 2246 to 2248, three cells per GPU) repeats the gated readout, the forced
+readout and the shuffled-$k_{cat}$ control at constraint scale 0 on the round-3 cell,
+batch 32 with the class weight at 200 epochs, paired by seed against it
+(Table~\ref{tab:w15}, Figure~\ref{fig:w15}). The reads are the round-2 reads.
+
+\input{tables/round_w15}
+
+\tcfigfit[1.0]{figures/w15_readout_2026-09-16-17-30-43.pdf}{\textbf{Round 4, the module on
+  the round-3 cell.} \textbf{a}, Validation AUROC per epoch, one thin line per seed and the
+  seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step per cell against
+  the validation size, 158 for every cell. \textbf{c}, Held-out AUROC per cell (points),
+  the seed mean and the gene bootstrap of the pooled per-gene logits (square with
+  interval), beside FBA on four media, Flux Cone Learning and the released FBA predictions
+  on the same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean; the
+  dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w15}.}{fig:w15}
+
+Every arm lands within 0.015 of the pooled cell on every seed. The gated readout scores
+0.766, 0.782 and 0.765 against 0.780, 0.769 and 0.773, one of three above; the forced
+readout 0.772, 0.781 and 0.778, two of three above by 0.005 and 0.012 and one below by
+0.008; the shuffled-$k_{cat}$ control 0.785, 0.781 and 0.772, two of three above, a seed
+mean of 0.779 against the real table's 0.777. The gate now moves: it leaves zero after
+epoch 10 and climbs steadily to $-0.17$, $+0.20$ and $+0.11$ at epoch 200, of either sign,
+with the flux layer's gradient at 0.06 to 0.12 against 0.22 to 0.65 in the forced arm.
+The stalled seed of round 2 does not recur under batch 32 with the class weight. On every
+arm the validation curve peaks between epochs 60 and 110 and falls afterwards
+(Figure~\ref{fig:w15}a), so the 200-epoch budget is more than the cell uses and the
+smoothed selection rule is what the number rests on.
+
+The two rounds together answer the two questions. The module does not hurt: on the
+stable backbone and on the best one, the gated cell is the pooled cell to within seed
+noise. The module does not help: the forced growth column, which carries the whole
+prediction, matches the pooled MLP head to within 0.01, and it matches it equally well
+with the catalytic constants permuted, so the growth column is as expressive a readout as
+the head but its $k_{cat}$ content is not what it reads. On this endpoint, at this
+width, the enzyme-constrained flux is a learned nonlinearity over the context rather than
+a physical prior that ranks genes.

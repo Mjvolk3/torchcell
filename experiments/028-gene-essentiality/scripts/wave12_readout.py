@@ -149,9 +149,9 @@ ARM_LABELS = {
     "fluxgate": "gated growth column, constraints 0.1",
     "fluxgate_s0": "gated growth column, constraints 0",
     "fluxshuf_s0": "growth column only, kcat shuffled, constraints 0",
-    "gate_s0": "gated growth column, constraints 0, batch 32 + class weight, 200 epochs",
-    "bio_s0": "growth column only, constraints 0, batch 32 + class weight, 200 epochs",
-    "shuf_s0": "growth column only, kcat shuffled, batch 32 + class weight, 200 epochs",
+    "gate_s0": "gated growth column, constraints 0 (round-3 levers)",
+    "bio_s0": "growth column only, constraints 0 (round-3 levers)",
+    "shuf_s0": "growth column only, kcat shuffled (round-3 levers)",
 }
 
 

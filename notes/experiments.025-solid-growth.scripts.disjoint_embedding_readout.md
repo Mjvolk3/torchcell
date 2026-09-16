@@ -38,3 +38,13 @@ column) and covers the random-vector control (`_018`) and the composite-plus-fit
 (`_027`, with `val_fitness_pearson_max`). The report labels each line with its seed.
 Republished version:
 <https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/reports/025-disjoint-split:-sequence-embeddings-against-the-learnable-table--VmlldzoxNzk0MTc0Nw==>
+
+### Grouped Charts view
+
+`disjoint_embedding_wandb_view.py` renames every disjoint-split run `<arm>_seed<k>`
+(`_rank<r>` for the three non-rank-0 runs of a job), writes the config keys `arm`,
+`seed_`, `split`, `rank0`, and overwrites the saved workspace view
+`025 disjoint split: arms grouped` (id `paezdq4q5ex`), runset grouped by `arm`, four
+sections in rank order: held-out query pairs, training side, operator and probe,
+bookkeeping. Rerun after every sync:
+<https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer?nw=paezdq4q5ex>

@@ -1,0 +1,124 @@
+{
+  "endpoint": "pinned-test AUROC on the released FCL split, 195 genes, 31 essential",
+  "cells": [
+    {
+      "arm": "pooled",
+      "seed": 2700,
+      "select_epoch": 60,
+      "auroc": 0.7926829268292683,
+      "accuracy": 0.8564102564102564,
+      "majority_class_rate": 0.841025641025641,
+      "recall_essential": 0.3225806451612903,
+      "val_pred_sd_ratio": 3.123852491378784,
+      "collapsed": false,
+      "wandb_run_id": "v62zo8ij",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/v62zo8ij"
+    },
+    {
+      "arm": "pooled",
+      "seed": 2701,
+      "select_epoch": 60,
+      "auroc": 0.7881589299763966,
+      "accuracy": 0.8615384615384616,
+      "majority_class_rate": 0.841025641025641,
+      "recall_essential": 0.25806451612903225,
+      "val_pred_sd_ratio": 2.6002397537231445,
+      "collapsed": false,
+      "wandb_run_id": "9lmlnzui",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/9lmlnzui"
+    },
+    {
+      "arm": "pooled",
+      "seed": 2702,
+      "select_epoch": 28,
+      "auroc": 0.5783831628638867,
+      "accuracy": 0.841025641025641,
+      "majority_class_rate": 0.841025641025641,
+      "recall_essential": 0.0,
+      "val_pred_sd_ratio": 1.776526914909482e-05,
+      "collapsed": true,
+      "wandb_run_id": "fytcivaw",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/fytcivaw"
+    },
+    {
+      "arm": "flux",
+      "seed": 2700,
+      "select_epoch": 26,
+      "auroc": 0.5398308418568056,
+      "accuracy": 0.841025641025641,
+      "majority_class_rate": 0.841025641025641,
+      "recall_essential": 0.0,
+      "val_pred_sd_ratio": 0.0004835297295358032,
+      "collapsed": true,
+      "wandb_run_id": "0f5yjgf3",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/0f5yjgf3"
+    },
+    {
+      "arm": "flux",
+      "seed": 2701,
+      "select_epoch": 77,
+      "auroc": 0.75786782061369,
+      "accuracy": 0.8358974358974359,
+      "majority_class_rate": 0.841025641025641,
+      "recall_essential": 0.0,
+      "val_pred_sd_ratio": 0.7853826880455017,
+      "collapsed": false,
+      "wandb_run_id": "s8g1cuwm",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/s8g1cuwm"
+    },
+    {
+      "arm": "flux",
+      "seed": 2702,
+      "select_epoch": 40,
+      "auroc": 0.5115066876475216,
+      "accuracy": 0.841025641025641,
+      "majority_class_rate": 0.841025641025641,
+      "recall_essential": 0.0,
+      "val_pred_sd_ratio": 9.688453428680077e-05,
+      "collapsed": true,
+      "wandb_run_id": "7jjuuw1n",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/7jjuuw1n"
+    }
+  ],
+  "all_seeds": {
+    "seeds": [
+      2700,
+      2701,
+      2702
+    ],
+    "difference_by_seed": {
+      "2700": -0.2528520849724627,
+      "2701": -0.030291109362706625,
+      "2702": -0.06687647521636508
+    },
+    "mean_difference": -0.11667322318384481,
+    "sd_difference": 0.11934460208653816,
+    "seeds_agreeing_in_sign": 3
+  },
+  "uncollapsed_seeds": {
+    "seeds": [
+      2701
+    ],
+    "difference_by_seed": {
+      "2701": -0.030291109362706625
+    },
+    "mean_difference": -0.030291109362706625,
+    "sd_difference": NaN,
+    "seeds_agreeing_in_sign": 1
+  },
+  "collapsed_cells": [
+    "pooled_s2702",
+    "flux_s2700",
+    "flux_s2702"
+  ],
+  "comparators": {
+    "fcl_test": 0.73,
+    "fba": 0.69
+  },
+  "cells_above_fcl": [
+    "pooled_s2700",
+    "pooled_s2701",
+    "flux_s2701"
+  ],
+  "note": "A collapsed cell (spread ratio below 0.05) predicts a constant: its accuracy equals the majority rate and its AUROC ranks noise. Collapse is not confined to the flux arm on this target: pooled seed 2702 collapsed as well. Three seeds agreeing in sign is p = 0.25 under the null."
+}

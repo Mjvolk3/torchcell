@@ -542,3 +542,37 @@ plus a cell with every flux penalty off (2030) that also gives the probe a check
 penalty-free configuration, which the wave-5 cells predate. Each gets the feasibility audit
 and the spread probe, so the output is the tradeoff curve between a flux that satisfies the
 physics and a model that predicts anything.
+
+## 2026.09.15 - Essentiality at three seeds: a direction against the module, and the pooled arm collapses too
+
+All six cells of rank 11 have landed (jobs 2008, 2009, 2021 to 2024; released FCL split, 195
+pinned test genes, 31 essential, 80 epochs, selection on validation). Paired by seed with
+`essentiality_contrast.py`, which writes `results/essentiality_contrast.json`:
+
+| seed | pooled AUROC | flux AUROC | flux minus pooled | collapsed |
+|---:|---:|---:|---:|---|
+| 2700 | 0.7927 | 0.5398 | -0.2529 | flux (spread ratio 0.0005) |
+| 2701 | 0.7882 | 0.7579 | -0.0303 | neither (2.60 and 0.79) |
+| 2702 | 0.5784 | 0.5115 | -0.0669 | BOTH (0.0000 and 0.0001) |
+
+Mean difference -0.117 with sd 0.119, 3 of 3 negative (p = 0.25 under the null). On the one
+seed where neither arm collapsed the gap is -0.030, inside the seed-to-seed spread. So the
+finding is a direction against the module and not a size: the first seed pair's -0.25 was the
+one pairing where only the flux arm collapsed.
+
+Three cells clear the published FCL test AUROC of 0.73: pooled 2700, pooled 2701, and flux
+2701. No cell of either arm recalls a single essential gene at the 0.5 threshold except the
+two live pooled cells (0.32 and 0.26), which is why accuracy sits at the majority rate 0.841
+everywhere else.
+
+**Correction to the section above.** "No readout on the pooled context collapses" was true
+of the betaxanthin context-precursor cells and is false on essentiality: pooled seed 2702
+collapsed with a spread ratio of 0.0000 at its selected epoch 28. The flux arm collapses more
+often (2 of 3 against 1 of 3), and the penalty dose-response on betaxanthin stands, but
+collapse on this endpoint is not a property of the layer alone. Hypothesis (untested): the
+binary target with 16 percent positives gives the selector a flat validation surface early,
+and whichever arm lands on the constant first stays there.
+
+W&B, one group per arm:
+`https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool` and
+`https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9essflux`.

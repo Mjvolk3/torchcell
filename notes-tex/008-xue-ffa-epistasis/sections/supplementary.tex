@@ -7,14 +7,9 @@
 %%       -> notes/assets/images/008-xue-ffa/si_panel_*.svg  (all six SI panels)
 %%       -> experiments/008-xue-ffa/results/supplementary_readout_counts.csv
 %%          (the per-readout call counts and medians quoted in Notes 2 and 3)
-%%   experiments/008-xue-ffa/scripts/free_fatty_acid_interactions.py            (multiplicative)
-%%   experiments/008-xue-ffa/scripts/additive_free_fatty_acid_interactions.py   (additive)
-%%   experiments/008-xue-ffa/scripts/glm_log_link_epistatic_interactions.py     (GLM log-link)
-%%   experiments/008-xue-ffa/scripts/log_ols_wt_differencing_epistatic_interactions.py (log-OLS)
-%%   experiments/008-xue-ffa/scripts/linear_vs_log_scale_sign_test.py           (scale equivalence)
-%% The four model equations below are transcribed from those four scripts and from no
-%% other source; linear_vs_log_scale_sign_test.py asserts the log-scale equivalence in
-%% code rather than leaving it as a claim here.
+%% The four model equations moved to the Methods section (review 2026.09.16): they define
+%% what every figure measures, so they belong with the measurement description rather than
+%% behind the main text.
 
 \clearpage
 \section*{Supplementary Information\secstatus{todo}}
@@ -23,142 +18,17 @@
 %% The second column is a wrapping p{} rather than an `l' column, which cannot break, and
 %% the 13em reserves what "Supplementary Note~N" plus the column gap actually occupies.
 \begin{tabular}{@{}lp{\dimexpr\linewidth-13em\relax}@{}}
-\suppnoteref{note:models}   & What each epistasis model estimates, and what the choice costs\\
 \suppnoteref{note:digenic}  & The digenic layer the trigenic score is measured against (with \suppfig{fig:si-digenic})\\
 \suppnoteref{note:species}  & The five species under the summed total (with \suppfig{fig:si-species})\\[4pt]
 Supplementary Figs.\ & A figure supporting a Note sits with that Note\\
 \end{tabular}
 
-%% SI numbering, set ONCE: Supplementary Figures and Supplementary Equations both restart
-%% at 1 and carry the word "Supplementary" rather than an S prefix, which is the Nature
-%% Portfolio form ([[paper.proof-writing-standard]]).
+%% SI numbering, set ONCE: Supplementary Figures restart at 1 and carry the word
+%% "Supplementary" rather than an S prefix, which is the Nature Portfolio form
+%% ([[paper.proof-writing-standard]]). There is no equation counter to reset: every
+%% equation in this document is now in the main text or in Methods.
 \setcounter{figure}{0}
 \renewcommand{\figurename}{Supplementary Figure}
-\setcounter{equation}{0}
-
-\suppnote{note:models}{What each epistasis model estimates, and what the choice costs\secstatus{todo}}
-
-An interaction score is a residual, and a residual is only defined once the expectation is
-written down. The four models in this document write down four different expectations for
-the same seven measured strains, so a triple can be an interaction under one and not under
-another without either fit being wrong. This Note gives each expectation explicitly and
-names what the reader buys and gives up by choosing it.
-
-\notesec{Setting} Write $f_S$ for the titer of the strain carrying deletion set $S$,
-divided by the titer of the base strain in the same experiment, so $f_\emptyset = 1$ by
-construction. Single, double and triple deletions are $f_i$, $f_{ij}$ and $f_{ijk}$. All
-four models are fit on these same normalized quantities, and none of them sees a
-combination the design did not build.
-
-\notesec{Multiplicative} The expected phenotype of a combination is the product of its
-parts, which is the null of the yeast genetic interaction maps:
-%
-\begin{equation}
-\varepsilon^{\times}_{ij} = f_{ij} - f_i f_j ,
-\qquad
-\tau^{\times}_{ijk} = f_{ijk} - f_{ij} f_k - f_{ik} f_j - f_{jk} f_i + 2 f_i f_j f_k .
-\label{eq:si-mult}
-\end{equation}
-%
-Independence on this scale means that a deletion multiplies titer by the same factor
-whatever else is deleted. The trigenic term is the one used throughout the main text.
-
-\notesec{Additive} The same construction with sums in place of products:
-%
-\begin{equation}
-\varepsilon^{+}_{ij} = f_{ij} - f_i - f_j + 1 ,
-\qquad
-\tau^{+}_{ijk} = f_{ijk} - (f_{ij} + f_{ik} + f_{jk}) + (f_i + f_j + f_k) - 1 .
-\label{eq:si-add}
-\end{equation}
-%
-Independence here means that a deletion shifts titer by the same amount whatever else is
-deleted. The $+1$ and $-1$ are the base strain entering at $f_\emptyset = 1$.
-
-\notesec{GLM log-link} A generalized linear model with a Gamma family and a log link, fit
-on the replicate-level titers rather than on strain means, with $x_i \in \{0,1\}$ marking
-deletion $i$ and $r$ indexing replicate:
-%
-\begin{equation}
-\log \mathbb{E}[y_{S,r}] = \mu + \sum_i \alpha_i x_i + \sum_{i<j} \beta_{ij} x_i x_j
-+ \sum_{i<j<k} \gamma_{ijk} x_i x_j x_k + \rho_r .
-\label{eq:si-glm}
-\end{equation}
-%
-The interaction is $\gamma_{ijk}$. The base strain is excluded from the fit and enters
-through $\mu$. Gamma sets the variance proportional to the square of the mean, which is
-the right shape for a titer that cannot go negative and whose spread grows with its level.
-
-\notesec{Log-OLS} Ordinary least squares on log titer differenced against the base strain
-within each replicate, with $\delta = 10^{-6}$ a pseudocount:
-%
-\begin{equation}
-g_{S,r} = \log(y_{S,r} + \delta) - \log(\bar{y}_{\emptyset,r} + \delta) ,
-\label{eq:si-logols}
-\end{equation}
-%
-regressed on the same saturated design as \suppeq{eq:si-glm}. Its three-way coefficient
-estimates the saturated log-scale interaction
-%
-\begin{equation}
-\tau^{\log}_{ijk} = g_{ijk} - g_{ij} - g_{ik} - g_{jk} + g_i + g_j + g_k ,
-\qquad g_S = \log f_S ,
-\label{eq:si-logtau}
-\end{equation}
-%
-and that equivalence is checked in code rather than assumed: the scale test recomputes
-\suppeq{eq:si-logtau} from the strain means and raises unless it agrees with both fitted
-log-scale models at $r > 0.99$.
-
-\notesec{The scale is the first tradeoff, and it is not a matter of taste} Equations
-\ref{eq:si-mult} and \ref{eq:si-logtau} are different quantities, not two estimates of one
-quantity. They agree in magnitude across the 119 testable triples at $r = 0.91$ and
-Spearman $\rho = 0.84$ and disagree near zero, which is exactly where a call is made: 15 of
-the 27 triples with a positive linear-scale score are non-positive on the log scale, and
-none of the reverse. A three-way interaction is not invariant under a monotone transform of
-the phenotype, so a positive trigenic interaction on titer is a linear-scale statement and
-has to be reported as one. Which scale is appropriate depends on what the reader will do
-with the number. A campaign that asks how many milligrams per liter a third deletion adds
-is asking a linear-scale question; a campaign that asks whether a deletion's fold effect is
-preserved in a new background is asking a log-scale one.
-
-\notesec{The second tradeoff is what carries the pairwise information} The multiplicative
-trigenic score can be written with the digenic scores in it,
-%
-\begin{equation}
-\tau^{\times}_{ijk} = f_{ijk} - f_i f_j f_k
-- \left( \varepsilon^{\times}_{ij} f_k + \varepsilon^{\times}_{ik} f_j
-+ \varepsilon^{\times}_{jk} f_i \right) ,
-\label{eq:si-tau-eps}
-\end{equation}
-%
-which is Eq.~\ref{eq:tau-eps} of the main text and is an identity, not an approximation.
-Each pairwise deviation enters weighted by the remaining single-deletion phenotype, so a
-pair that interacts strongly in a background where the third deletion is nearly neutral
-contributes almost its full $\varepsilon$, and the same pair contributes little when the
-third deletion is severe. The log-scale interaction in \suppeq{eq:si-logtau} weights every
-term equally. Neither weighting is more correct; they encode different ideas of how a pair
-is expected to act in the presence of a third deletion, and the weighted form is the one
-that keeps comparability with the published yeast interaction maps.
-
-\notesec{The third tradeoff is power against assumption} The two linear-scale models are
-fit on strain means and propagate the replicate standard errors through
-Eqs.~\ref{eq:si-mult} and \ref{eq:si-add} by the delta method, so they assume nothing about
-the shape of the noise beyond a standard error per strain, and they pay for it in degrees
-of freedom: a trigenic score combines seven independently measured strains at three
-replicates each, giving a median Welch-Satterthwaite effective degrees of freedom of 4.28.
-The two regression models are fit on the replicate-level values and borrow strength across
-the whole design, which raises power and buys a mean-variance assumption in exchange, Gamma
-for \suppeq{eq:si-glm} and homoscedastic on the log scale for \suppeq{eq:si-logols}. A
-count of significant interactions is therefore not comparable across the two families
-without saying which is which, and that is why the main text reports agreement on the
-identity of the interacting triples separately from agreement on their sign.
-
-\notesec{What this document uses, and why} The multiplicative model is the reported one
-throughout, for comparability with the trigenic screens the field already has, and every
-claim that rests on a sign is stated with the scale attached. The other three exist here to
-answer how much of a claim is the modeling choice, which is a question the reader can only
-settle if all four expectations are on the page.
 
 \suppnote{note:digenic}{The digenic layer the trigenic score is measured against\secstatus{todo}}
 
@@ -181,7 +51,7 @@ of its 9 to TFC7 in 8 of its 9, so no single factor carries the positive digenic
 and none is exempt from it.
 
 \notesec{The third deletion undoes it} Writing the multiplicative expectation for a triple
-with the pairs included, as in \suppeq{eq:si-tau-eps}, gives a prediction of the triple
+with the pairs included, as in Eq.~\ref{eq:tau-eps}, gives a prediction of the triple
 from its singles and its pairs alone. Ninety-three of the 120 triples fall below that
 prediction (\suppfig{fig:si-digenic}c), and the vertical distance to the diagonal in that
 panel is $\tau$. The negative trigenic median reported in the main text is therefore not a
@@ -191,9 +61,9 @@ third deletion reverses the direction.
 \begin{figure*}[t]
 \panelrow{%
   \panel{a}{figures/si_panel_digenic_volcano.pdf}\hfill
-  \panel{b}{figures/si_panel_digenic_matrix.pdf}%
+  \panel{b}{figures/si_panel_digenic_matrix.pdf}\hfill
+  \panel{c}{figures/si_panel_digenic_contribution.pdf}%
 }
-\panelrow{\panel{c}{figures/si_panel_digenic_contribution.pdf}}
 \caption{\textbf{The digenic layer on total fatty acid titer.} \textbf{a}, Digenic score
 $\varepsilon$ against evidence for the 45 double deletions under the multiplicative model.
 The dashed line marks the largest $P$ that Benjamini-Hochberg rejects at a 5\% false
@@ -249,9 +119,9 @@ carry out.
 \begin{figure*}[t]
 \panelrow{%
   \panel{a}{figures/si_panel_species_counts.pdf}\hfill
-  \panel{b}{figures/si_panel_species_agreement.pdf}%
+  \panel{b}{figures/si_panel_species_agreement.pdf}\hfill
+  \panel{c}{figures/si_panel_species_medians.pdf}%
 }
-\panelrow{\panel{c}{figures/si_panel_species_medians.pdf}}
 \caption{\textbf{The five measured species behind the summed total.} \textbf{a},
 Interactions called at a 5\% false discovery rate within each readout, digenic (solid) and
 trigenic (hatched), stacked by sign, blue positive and brick negative. Counts above each

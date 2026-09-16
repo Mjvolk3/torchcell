@@ -13,6 +13,10 @@
 # Nature full-page box is 179.4 x 170 mm, and the content here is 178 x 118 mm so the
 # 1-unit export border per side stays inside the cap. y is flipped (draw.io grows downward).
 #
+# The mxGraph writer and the unit constants come from drawio_doc, shared with the
+# epistasis-model explainer so the two native figures cannot drift apart on page size,
+# units or geometry.
+#
 # Style follows the draw.io house rules ([[paper.nature-biotech.style-guide]]): Arial,
 # fontSize 8.3 (5.98 pt) for labels and 11.1 for a panel letter, palette stroke/fill pairs
 # (purple = deleted factor, yellow = pathway gene, amber = measured species, gray =
@@ -45,22 +49,26 @@ import os.path as osp
 import re
 import subprocess
 import sys
-import xml.etree.ElementTree as ET
 
 from dotenv import load_dotenv
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 import ffa_network_overlay_panel as panel  # noqa: E402
+from drawio_doc import (  # noqa: E402
+    FONT,
+    LETTER_FONT,
+    PT,
+    U,
+    Doc,
+    letter_style,
+    line_style,
+    text_style,
+)
 
 load_dotenv()
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 IMAGES_DIR = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
 DRAWIO_DIR = osp.join(osp.dirname(ASSET_IMAGES_DIR), "drawio")
-
-U = 706.6915 / 179.4  # canvas units per mm
-PT = 1 / 0.72  # canvas units per point
-FONT = "8.3"
-LETTER_FONT = "11.1"
 
 STROKE = {"purple": "#9673A6", "yellow": "#D6B656", "amber": "#D79B00", "gray": "#666666"}
 FILL = {"purple": "#E1D5E7", "yellow": "#FFF2CC", "amber": "#FFE6CC", "gray": "#F5F5F5"}
@@ -77,82 +85,10 @@ def uy(y_mm):
     return (panel.H_MM - y_mm) * U
 
 
-class Doc:
-    """An mxGraph document: one diagram, cells appended in draw order."""
-
-    def __init__(self, name):
-        """Start a diagram named ``name`` on a Nature full-page canvas."""
-        self.mxfile = ET.Element("mxfile", {"host": "app.diagrams.net", "agent": "torchcell"})
-        diagram = ET.SubElement(self.mxfile, "diagram", {"name": name, "id": name})
-        model = ET.SubElement(diagram, "mxGraphModel", {
-            "dx": "1400", "dy": "1000", "grid": "0", "gridSize": "10", "guides": "1",
-            "tooltips": "1", "connect": "1", "arrows": "1", "fold": "1", "page": "1",
-            "pageScale": "1", "pageWidth": f"{179.4 * U:.0f}", "pageHeight": f"{170 * U:.0f}",
-            "math": "0", "shadow": "0",
-        })
-        self.root = ET.SubElement(model, "root")
-        ET.SubElement(self.root, "mxCell", {"id": "0"})
-        ET.SubElement(self.root, "mxCell", {"id": "1", "parent": "0"})
-        self.n = 0
-
-    def layer(self, cid, name, visible=True):
-        """Add a layer; a hidden one is visible in the GUI toggle and absent from exports."""
-        attrs = {"id": cid, "value": name, "style": "", "parent": "0"}
-        if not visible:
-            attrs["visible"] = "0"
-        ET.SubElement(self.root, "mxCell", attrs)
-
-    def vertex(self, cid, value, style, x, y, w, h, parent="1"):
-        """Add a shape at (x, y) with size (w, h), all in canvas units."""
-        c = ET.SubElement(self.root, "mxCell", {
-            "id": cid, "value": value, "style": style, "vertex": "1", "parent": parent})
-        ET.SubElement(c, "mxGeometry", {
-            "x": f"{x:.2f}", "y": f"{y:.2f}", "width": f"{w:.2f}", "height": f"{h:.2f}",
-            "as": "geometry"})
-
-    def edge(self, cid, style, source=None, target=None, points=None, parent="1"):
-        """Add a connector, attached to cell ids or routed through explicit points."""
-        attrs = {"id": cid, "value": "", "style": style, "edge": "1", "parent": parent}
-        if source is not None:
-            attrs["source"] = source
-        if target is not None:
-            attrs["target"] = target
-        c = ET.SubElement(self.root, "mxCell", attrs)
-        g = ET.SubElement(c, "mxGeometry", {"relative": "1", "as": "geometry"})
-        if points:
-            ET.SubElement(g, "mxPoint", {"x": f"{points[0][0]:.2f}",
-                                         "y": f"{points[0][1]:.2f}", "as": "sourcePoint"})
-            ET.SubElement(g, "mxPoint", {"x": f"{points[-1][0]:.2f}",
-                                         "y": f"{points[-1][1]:.2f}", "as": "targetPoint"})
-            if len(points) > 2:
-                arr = ET.SubElement(g, "Array", {"as": "points"})
-                for x, y in points[1:-1]:
-                    ET.SubElement(arr, "mxPoint", {"x": f"{x:.2f}", "y": f"{y:.2f}"})
-
-    def write(self, path):
-        """Write the indented XML."""
-        ET.indent(self.mxfile)
-        ET.ElementTree(self.mxfile).write(path, encoding="utf-8", xml_declaration=True)
-
-
 def node_style(color, shape, extra=""):
     return (f"{shape}whiteSpace=wrap;html=1;fillColor={FILL[color]};"
             f"strokeColor={STROKE[color]};strokeWidth={0.5 * PT:.2f};fontFamily=Arial;"
             f"fontSize={FONT};fontColor=#000000;{extra}")
-
-
-def text_style(align="center"):
-    return (f"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align={align};"
-            f"verticalAlign=middle;fontFamily=Arial;fontSize={FONT};fontColor=#000000;")
-
-
-def line_style(color, width_pt, dashed=False, arrow=False):
-    s = (f"edgeStyle=none;html=1;strokeColor={color};strokeWidth={width_pt * PT:.2f};"
-         f"endArrow={'classic' if arrow else 'none'};startArrow=none;"
-         f"endFill=1;endSize=2.5;rounded=0;")
-    if dashed:
-        s += "dashed=1;dashPattern=1 2;"
-    return s
 
 
 def polygon_cell(points_mm, color):
@@ -324,10 +260,7 @@ def build(model, readout, graph, letter, out_path):
 
     # --- panel letter, only if asked for: a single-panel figure carries none
     if letter:
-        doc.vertex("letter", letter,
-                   f"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;"
-                   f"verticalAlign=top;fontFamily=Arial;fontSize={LETTER_FONT};fontStyle=1;",
-                   0, 0, 24, 18)
+        doc.vertex("letter", letter, letter_style(), 0, 0, 24, 18)
 
     doc.write(out_path)
     print(f"wrote {out_path}")

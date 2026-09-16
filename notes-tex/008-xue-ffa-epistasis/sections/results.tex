@@ -206,13 +206,44 @@ species, and none of them survives on their sum.}
 \label{fig:models}
 \end{figure*}
 
+\begin{figure*}[t]
+\tcfig{figures/ffa-epistasis-fig3-model-intuition.pdf}{\textbf{What each null expects, and
+what choosing one commits to.} \textbf{a}, One measured double deletion on a titer axis,
+MED4 and RPD3, the pair whose two expectations are furthest apart. The additive and the
+multiplicative expectation differ by $(1 - f_i)(1 - f_j)$, which is an identity rather than
+a property of this pair. \textbf{b}, All 45 doubles against both expectations; distance
+from the dashed line is the digenic interaction under that model. Forty-three of the 45 sit
+above both, by a median $+0.40$ against the multiplicative expectation and $+0.45$ against
+the additive one, so the two nulls agree on the direction at two deletions and differ in
+magnitude. \textbf{c}, Replicate standard deviation against strain mean over the 165
+strains with a nonzero replicate spread, on log axes. The fitted slope is 1.10, against 0
+for a constant spread and 1 for a spread proportional to the mean, which is the Gamma
+family and is the assumption behind a log link. \textbf{d}, The two families of null as
+statements about the system. A multiplicative null says each deletion keeps a fraction of
+what reaches it, which is how independent steps of one flux compose and is the convention
+the growth interaction screens use. An additive null says each deletion removes an amount
+from a shared pool. The second counts the part of the first deletion's loss that the second
+would have taken again, and that double-counted term is the entire difference between them.
+\textbf{e}, The four models fit here: what each expects, the scale its residual is measured
+on, what it is fit to, and the reading of the system under which it is the natural null.
+Equations in the Methods.}{fig:model-intuition}
+\end{figure*}
+
 \subsection*{What counts as an interaction depends on the null and on the scale}
 
 Equation~\ref{eq:tau} is one choice among several, and a claim that rests on it should say
 how much of the claim is the choice. We fit three alternatives on the same normalized strain
 means: an additive null, in which expected phenotypes add rather than multiply; a
 generalized linear model with a log link and a Gamma family; and ordinary least squares on
-log titer differenced against the base strain.
+log titer differenced against the base strain. The four are not four estimates of one
+quantity. They encode different statements about how two deletions are expected to combine,
+and they measure their residuals on different scales
+(Fig.~\ref{fig:model-intuition}). A multiplicative null says a deletion keeps a fraction of
+what reaches it, which is how independent steps of a single flux compose and is why the
+growth interaction screens use it; an additive null says a deletion removes an amount from a
+shared pool, which is the reading a titer in milligrams per liter invites. The two differ by
+exactly $(1 - f_i)(1 - f_j)$ at two deletions, so they separate most where both single
+deletions are severe (Fig.~\ref{fig:model-intuition}a,d).
 
 The four models agree on which combinations interact far more than they agree on the sign.
 Ninety-seven triples are called by at least one model at a 5\% false discovery rate within
@@ -239,7 +270,7 @@ on one pattern: the number of triples called within a species runs from 3 to 80,
 reverses sign between the digenic and the trigenic layer, and the summed total sits at
 $r = 0.91$ from C16:0 and C18:1 but at $r = -0.28$ from C14:0
 (\suppnoteref{note:species}). The four expectations themselves, and what each one costs to
-adopt, are set out in \suppnoteref{note:models}.
+adopt, are written out in the Methods.
 
 \subsection*{No interaction network on hand predicts which combinations interact}
 

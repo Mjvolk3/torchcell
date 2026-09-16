@@ -57,31 +57,124 @@ quantity a titer-screened campaign selects on.
 
 \subsection*{Epistasis models}
 
-Four nulls were fit on the same normalized strain means.
+An interaction score is a residual, and a residual is only defined once the expectation is
+written down. The four models below write down four different expectations for the same
+seven measured strains, so a triple can be an interaction under one and not under another
+without either fit being wrong. Figure~\ref{fig:model-intuition} draws the four side by
+side on one worked pair of deletions.
 
-Each is written out in \suppnoteref{note:models}, which also sets out what the choice
-between them costs.
+\notesec{Setting} Write $f_S$ for the titer of the strain carrying deletion set $S$, divided
+by the titer of the base strain in the same experiment, so $f_\emptyset = 1$ by
+construction. Single, double and triple deletions are $f_i$, $f_{ij}$ and $f_{ijk}$. All
+four models are fit on these same normalized quantities, and none of them sees a
+combination the design did not build.
 
 \notesec{Multiplicative} The expected phenotype of a combination is the product of its
-parts. Digenic $\varepsilon_{ij} = f_{ij} - f_i f_j$; trigenic as in Eq.~\ref{eq:tau}. This
-is the form used by the yeast genetic interaction maps and is the model every figure uses
-unless it says otherwise
+parts, which is the null of the yeast genetic interaction maps:
+%
+\begin{equation}
+\varepsilon^{\times}_{ij} = f_{ij} - f_i f_j ,
+\qquad
+\tau^{\times}_{ijk} = f_{ijk} - f_{ij} f_k - f_{ik} f_j - f_{jk} f_i + 2 f_i f_j f_k .
+\label{eq:mult}
+\end{equation}
+%
+Independence on this scale means that a deletion multiplies titer by the same factor
+whatever else is deleted. These are Eqs.~\ref{eq:eps} and \ref{eq:tau}, and this is the
+model every figure uses unless it says otherwise
 (\file{free_fatty_acid_interactions.py}).
 
-\notesec{Additive} The same construction with sums in place of products
+\notesec{Additive} The same construction with sums in place of products:
+%
+\begin{equation}
+\varepsilon^{+}_{ij} = f_{ij} - f_i - f_j + 1 ,
+\qquad
+\tau^{+}_{ijk} = f_{ijk} - (f_{ij} + f_{ik} + f_{jk}) + (f_i + f_j + f_k) - 1 .
+\label{eq:add}
+\end{equation}
+%
+Independence here means that a deletion shifts titer by the same amount whatever else is
+deleted. The $+1$ and $-1$ are the base strain entering at $f_\emptyset = 1$
 (\file{additive_free_fatty_acid_interactions.py}).
 
-\notesec{GLM log-link} A generalized linear model with a Gamma family and a log link, whose
-three-way coefficient is the interaction
+\notesec{GLM log-link} A generalized linear model with a Gamma family and a log link, fit
+on the replicate-level titers rather than on strain means, with $x_i \in \{0,1\}$ marking
+deletion $i$ and $r$ indexing replicate:
+%
+\begin{equation}
+\log \mathbb{E}[y_{S,r}] = \mu + \sum_i \alpha_i x_i + \sum_{i<j} \beta_{ij} x_i x_j
++ \sum_{i<j<k} \gamma_{ijk} x_i x_j x_k + \rho_r .
+\label{eq:glm}
+\end{equation}
+%
+The interaction is $\gamma_{ijk}$. The base strain is excluded from the fit and enters
+through $\mu$. Gamma sets the variance proportional to the square of the mean, which is the
+right shape for a titer that cannot go negative and whose spread grows with its level
 (\file{glm_log_link_epistatic_interactions.py}).
 
-\notesec{Log-OLS} Ordinary least squares on $\log$ titer differenced against the base strain
-(\file{log_ols_wt_differencing_epistatic_interactions.py}).
+\notesec{Log-OLS} Ordinary least squares on log titer differenced against the base strain
+within each replicate, with $\delta = 10^{-6}$ a pseudocount:
+%
+\begin{equation}
+g_{S,r} = \log(y_{S,r} + \delta) - \log(\bar{y}_{\emptyset,r} + \delta) ,
+\label{eq:logols}
+\end{equation}
+%
+regressed on the same saturated design as Eq.~\ref{eq:glm}. Its three-way coefficient
+estimates the saturated log-scale interaction
+%
+\begin{equation}
+\tau^{\log}_{ijk} = g_{ijk} - g_{ij} - g_{ik} - g_{jk} + g_i + g_j + g_k ,
+\qquad g_S = \log f_S ,
+\label{eq:logtau}
+\end{equation}
+%
+and that equivalence, which Fig.~\ref{fig:models}c,d rests on, is checked in code rather
+than assumed: \file{linear_vs_log_scale_sign_test.py} recomputes Eq.~\ref{eq:logtau} from
+the strain means and raises unless it agrees with both fitted log-scale models at
+$r > 0.99$ (\file{log_ols_wt_differencing_epistatic_interactions.py}).
 
-The equivalence used in Fig.~\ref{fig:models}c,d, that the saturated three-way interaction
-on log titer reproduces the shipped GLM and log-OLS coefficients, is asserted in code rather
-than assumed: \file{linear_vs_log_scale_sign_test.py} recomputes it from the strain means
-and raises unless it agrees with both fitted models to $r > 0.99$.
+\notesec{The scale is the first tradeoff, and it is not a matter of taste} Equations
+\ref{eq:mult} and \ref{eq:logtau} are different quantities, not two estimates of one
+quantity. They agree in magnitude across the 119 testable triples at $r = 0.91$ and
+Spearman $\rho = 0.84$ and disagree near zero, which is exactly where a call is made: 15 of
+the 27 triples with a positive linear-scale score are non-positive on the log scale, and
+none of the reverse. A three-way interaction is not invariant under a monotone transform of
+the phenotype, so a positive trigenic interaction on titer is a linear-scale statement and
+has to be reported as one. Which scale is appropriate depends on what the reader will do
+with the number. A campaign that asks how many milligrams per liter a third deletion adds
+is asking a linear-scale question; a campaign that asks whether a deletion's fold effect is
+preserved in a new background is asking a log-scale one.
+
+\notesec{The second tradeoff is what carries the pairwise information} The multiplicative
+trigenic score can be written with the digenic scores in it, which is Eq.~\ref{eq:tau-eps}
+and is an identity rather than an approximation. Each pairwise deviation enters weighted by
+the remaining single-deletion phenotype, so a pair that interacts strongly in a background
+where the third deletion is nearly neutral contributes almost its full $\varepsilon$, and
+the same pair contributes little when the third deletion is severe. The log-scale
+interaction in Eq.~\ref{eq:logtau} weights every term equally. Neither weighting is more
+correct; they encode different ideas of how a pair is expected to act in the presence of a
+third deletion, and the weighted form is the one that keeps comparability with the
+published yeast interaction maps.
+
+\notesec{The third tradeoff is power against assumption} The two linear-scale models are
+fit on strain means and propagate the replicate standard errors through
+Eqs.~\ref{eq:mult} and \ref{eq:add} by the delta method, so they assume nothing about the
+shape of the noise beyond a standard error per strain, and they pay for it in degrees of
+freedom: a trigenic score combines seven independently measured strains at three replicates
+each, giving a median Welch-Satterthwaite effective degrees of freedom of 4.28. The two
+regression models are fit on the replicate-level values and borrow strength across the
+whole design, which raises power and buys a mean-variance assumption in exchange, Gamma for
+Eq.~\ref{eq:glm} and homoscedastic on the log scale for Eq.~\ref{eq:logols}. A count of
+significant interactions is therefore not comparable across the two families without saying
+which is which, and that is why the Results report agreement on the identity of the
+interacting triples separately from agreement on their sign.
+
+\notesec{What this document uses, and why} The multiplicative model is the reported one
+throughout, for comparability with the trigenic screens the field already has, and every
+claim that rests on a sign is stated with the scale attached. The other three exist here to
+answer how much of a claim is the modeling choice, which is a question the reader can only
+settle if all four expectations are on the page.
 
 \subsection*{Uncertainty and multiple testing}
 

@@ -119,7 +119,7 @@ ROUND_CAPTIONS = {
     ),
     "w13": (
         "Round 2, the metabolic module",
-        "The same cell on the released-label split with the prediction routed through the "
+        "The round-1 pooled cell on the released-label split (\\texttt{fcl}) and the same cell with the prediction routed through the "
         "flux layer: the growth column alone (forced), the context head plus the growth "
         "affine, and that affine behind a zero-initialized gate, at constraint scale 0.1 and "
         "0, with the shuffled-kcat control and the stoichiometry-only layer.",

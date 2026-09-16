@@ -36,20 +36,49 @@ with the 0.73 line, never with that one.
 
 The fitness and expression lines each carry a ladder of models that need no graph and no
 training beyond a solve, and essentiality gets the classification form of it: FBA's growth
-ratio with no fitting, then $L_2$ logistic regression, cosine nearest neighbors and a random
-forest on each of four external gene embeddings, and logistic regression on an embedding
-with the four FBA growth ratios appended. Every fitted rung is fit on the split file's
-training genes, its one hyperparameter chosen on the validation genes, and scored once on
-the 195 held-out genes, the protocol of every transformer cell in
-Sections~\ref{sec:backbone} and~\ref{sec:module} (Table~\ref{tab:ladder}).
+ratio with no fitting, then four model classes ($L_2$ logistic regression, a random
+forest, a radial-basis support vector classifier, cosine nearest neighbors) on each of
+twenty-four gene encodings, every pair fit twice, with and without the four FBA growth
+ratios appended. The encodings are the seventeen the fitness ladder carries (codon
+frequency, the chromosome and pathway indicator, six nucleotide windows, the two FUDT
+embeddings, the species language model, CaLM, ProtT5 and ESM2 with and without dubious
+genes, and their concatenation, \texttt{mixed}) plus seven controls: a one-hot gene
+identity, and standard normal vectors of dimension 1, 10, 100, 1,000, 6,607 (the one-hot's
+width) and 8,192, drawn once at seed 0. A one-hot rung must score chance on held-out genes,
+since every held-out column is zero in training, and a random vector must score chance at
+every width; either scoring above chance would mean the split leaks. Every fitted rung is
+fit on the split file's 629 training genes, its one hyperparameter chosen by five-fold
+stratified cross-validation inside those genes, and scored once on the 158 validation and
+195 held-out genes, on which nothing was chosen. The transformer cells in
+Sections~\ref{sec:backbone} and~\ref{sec:module} train on the same 629 genes and score on
+the same 195. Figure~\ref{fig:ladder} shows all 192 fitted rungs;
+Table~\ref{tab:ladder} keeps, per encoding, the model class whose cross-validation AUROC
+is highest.
+
+\tcfigfit[1.0]{figures/classical_ladder_2026-09-16-16-32-40.pdf}{\textbf{The classical
+  ladder on the released-label split.} Held-out AUROC on the 195 genes for every model
+  class (color) on every encoding (column), filled without and open with the four FBA
+  growth ratios appended; the dashed line is FBA alone on the shipped medium (0.654), the
+  solid line chance. The hyperparameter of each mark was chosen by five-fold
+  cross-validation inside the 629 training genes. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/logistic\_baselines.py}.}{fig:ladder}
 
 \input{tables/ladder}
 
-Two rows set the bar for everything that follows. Logistic regression on the ProtT5 protein
-embedding alone scores 0.763, level with Flux Cone Learning's 0.742 and with the best
-round-1 transformer cell, and the same regression with the four FBA growth ratios appended
-scores 0.803 [0.72, 0.88]; the CaLM embedding with FBA reads 0.803 as well. Neither the
-embedding nor the solver reaches 0.80 alone. FBA's ratio is a feature the ontology
-computes for every gene at no training cost, so the transformer is measured against 0.80
-from here on, not against the published 0.73, and any cell that scores below the logistic
-rung is scoring below a model with 1,025 parameters.
+The controls behave. The one-hot rung scores 0.506 and the six random widths score 0.45
+to 0.59, chance within the 195-gene noise, and with FBA appended they score 0.56 to 0.69,
+FBA's own number, so no rung reads anything but its features. Without FBA the protein and
+codon language models are the only encodings clear of 0.70: ProtT5 0.732, CaLM 0.734, the
+concatenation 0.768, and the chromosome-pathway indicator 0.775 [0.68, 0.86], each
+level with Flux Cone Learning's 0.742 on the same genes. FBA lifts every one of them:
+logistic regression on ProtT5 with the ratios scores 0.821 [0.74, 0.90] from 1,029
+parameters, the support vector classifier on 64 codon frequencies 0.818 [0.73, 0.90], the
+random forest on CaLM 0.806 [0.72, 0.89], and logistic regression on the 197-dimensional
+chromosome-pathway indicator 0.830 [0.75, 0.90]. The rung with the highest
+cross-validation AUROC, the random forest on CaLM with FBA at 0.850, scores 0.806 on the
+held-out genes; the highest held-out number in the figure, 0.841 for cosine nearest
+neighbors on codon frequency with FBA, is the maximum over 192 rungs and is not a
+selected model. Neither an embedding nor the solver reaches 0.80 alone, and their sum
+does on four encodings. FBA's ratio is a feature the ontology computes for every gene at
+no training cost, so the transformer is measured against 0.80 to 0.83 from here on, not
+against the published 0.73.

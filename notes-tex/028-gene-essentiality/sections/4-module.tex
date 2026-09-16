@@ -51,11 +51,56 @@ architecture, no unit-to-value correspondence), and the stoichiometry-only layer
 (\texttt{flux\_off}: no thermodynamics, no capacity) with the forced and context readouts.
 Every flux arm carries the wave-9 flux configuration otherwise: the predicted $k_{cat}$
 tier, the union-external thermodynamic source, twenty warmup epochs, the dataset medium,
-the mixture concentration space. The round's table and figure enter here when its readout
-runs.
+the mixture concentration space. The paired comparator is the round-1 pooled cell on the
+same split at the same batch, weight decay and budget (Table~\ref{tab:w13},
+Figure~\ref{fig:w13}).
 
-The reads are fixed before the numbers: \emph{not hurt} is the gated arm against the
+The reads were fixed before the numbers: \emph{not hurt} is the gated arm against the
 pooled cell paired by seed, with the gate's trajectory beside it; \emph{help} is the forced
 arm above the pooled cell on three of three seeds and above its shuffled-$k_{cat}$ control;
 the \emph{collapse's cause} is the forced arm at scale 0.1 against scale 0, since on the
 betaxanthin targets the penalty scale was the dose that starved the layer's input.
+
+\input{tables/round_w13}
+
+\tcfigfit[1.0]{figures/w13_readout_2026-09-16-16-36-15.pdf}{\textbf{Round 2, the
+  metabolic module.} \textbf{a}, Validation AUROC per epoch, one thin line per seed and the
+  seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step of that curve per
+  cell, against the number of labeled validation genes, 158 for every cell in this round.
+  \textbf{c}, Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the
+  pooled per-gene logits (square with interval), beside FBA on four media, Flux Cone
+  Learning and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm
+  per module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w13}.}{fig:w13}
+
+\emph{Not hurt} holds. The gated arm at scale 0 scores 0.714, 0.744 and 0.747 against the
+pooled cell's 0.745, 0.722 and 0.708 on the same seeds, two of three above by 0.02 to
+0.04 and one below by 0.03, a seed mean of 0.735 against 0.725; at scale 0.1 the same
+comparison is one of three above. The gate leaves zero and stops: at epoch 80 it reads
+$-0.056$ to $-0.063$ on all six gated cells, and the flux layer's gradient norm sits at
+0.01 to 0.07 against 0.22 to 0.36 on the forced arm's two seeds that train. The optimizer takes a small negative
+weight on the growth affine and the layer receives a tenth of the forced arm's gradient,
+so the gated cell is a pooled cell with a small correction, and it scores like one.
+
+\emph{Help} does not hold. The forced arm at scale 0 scores 0.770, 0.653 and 0.772, two
+of three seeds above the pooled cell and one seed 0.07 below; at scale 0.1 the split is the
+same and the low seed reads 0.585. The shuffled-$k_{cat}$ control, the same layer with the
+catalytic constants permuted across units, scores 0.771, 0.718 and 0.765, a seed mean of
+0.751 against the real table's 0.732, so whatever the growth column carries here does not
+come from the correspondence between units and constants. The forced arm's pooled
+bootstrap, 0.773 [0.68, 0.86], is above Flux Cone Learning's 0.742 and FBA's 0.640 to
+0.666 on the same genes, level with the pooled cell's 0.738, and below the ladder's
+0.80 line.
+
+The collapse on this endpoint is not the penalty's. Seed 2701 falls at both scales, to
+0.585 at 0.1 and 0.653 at 0, and the two runs are the same run: the gradient norms start
+where the other seeds' do, decay within ten epochs to a hundredth of them (preprocessor
+0.002, transformer 0.003 at epoch 80, against 1.0 and 0.5 on seed 2700) and stay there,
+with the training loss flat at 0.46 against 0.34, which is a stalled seed rather than a
+starved layer. The
+stoichiometry-only layer collapses on all three seeds (0.524, 0.631, 0.661), so the
+capacity bound and the thermodynamic term are what keep the growth column informative
+rather than what starve it, the opposite of the betaxanthin reading. Adding the context
+head beside the growth affine without a gate costs 0.06 on the seed mean (0.666 and
+0.667 against 0.725) and puts one seed at 0.56; the same sum behind the zero-initialized
+gate loses nothing.

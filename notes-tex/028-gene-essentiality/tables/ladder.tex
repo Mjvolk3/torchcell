@@ -4,33 +4,64 @@
 \begin{table}[H]
   \centering
   \footnotesize
-  \caption[Classical ladder]{The classical ladder on the released-label split (\texttt{ess\_fcl\_val0.2\_s0.json.gz}): fit on the train genes, hyperparameter chosen on the validation genes, scored once on the 195 held-out genes (31 essential) with a 2,000-draw gene bootstrap. B1 is FBA's growth ratio with no fitting.}
+  \caption[Classical ladder]{The classical ladder on the released-label split (\texttt{ess\_fcl\_val0.2\_s0.json.gz}). Per encoding, the model class whose five-fold cross-validation AUROC inside the 629 training genes is highest, with and without FBA's four growth ratios appended; the validation genes and the 195 held-out genes (31 essential) are scored once, on genes no fit touched, the held-out number with a 2,000-draw gene bootstrap. FBA alone is not fitted. Every model and encoding is in Figure~\ref{fig:ladder}.}
   \label{tab:ladder}
-  \begin{tabular}{@{}lllrl@{}}
+  \begin{tabular}{@{}llrrrl@{}}
     \hline
-    rung & embedding & chosen & val AUROC & held-out AUROC [95\% CI] \\
+    encoding & best model (chosen) & dim & CV & val & held-out [95\% CI] \\
     \hline
-    B0 prior & -- & -- & 0.500 & 0.500 [0.50, 0.50] \\
-    B1 FBA growth & -- & medium=shipped & 0.683 & 0.654 [0.56, 0.75] \\
-    B1 FBA growth & -- & medium=SM & 0.710 & 0.666 [0.57, 0.76] \\
-    B1 FBA growth & -- & medium=SC & 0.726 & 0.666 [0.57, 0.76] \\
-    B1 FBA growth & -- & medium=YPD & 0.714 & 0.664 [0.57, 0.76] \\
-    B2 logistic & prot\_T5\_all & C=0.001 & 0.722 & 0.763 [0.67, 0.85] \\
-    B3 cosine kNN & prot\_T5\_all & k=25 & 0.772 & 0.684 [0.56, 0.81] \\
-    B4 random forest & prot\_T5\_all & max\_depth=4 & 0.743 & 0.768 [0.68, 0.86] \\
-    B5 logistic + FBA & prot\_T5\_all & C=0.1 & 0.833 & 0.803 [0.72, 0.87] \\
-    B2 logistic & calm & C=0.1 & 0.790 & 0.737 [0.64, 0.82] \\
-    B3 cosine kNN & calm & k=10 & 0.731 & 0.692 [0.58, 0.80] \\
-    B4 random forest & calm & max\_depth=8 & 0.785 & 0.715 [0.61, 0.81] \\
-    B5 logistic + FBA & calm & C=10 & 0.839 & 0.803 [0.72, 0.88] \\
-    B2 logistic & species\_lm\_5p\_3p & C=0.001 & 0.631 & 0.571 [0.47, 0.68] \\
-    B3 cosine kNN & species\_lm\_5p\_3p & k=50 & 0.631 & 0.588 [0.48, 0.69] \\
-    B4 random forest & species\_lm\_5p\_3p & max\_depth=8 & 0.689 & 0.603 [0.50, 0.71] \\
-    B5 logistic + FBA & species\_lm\_5p\_3p & C=0.001 & 0.747 & 0.686 [0.58, 0.79] \\
-    B2 logistic & normalized\_chrom\_pathways & C=10 & 0.722 & 0.775 [0.68, 0.86] \\
-    B3 cosine kNN & normalized\_chrom\_pathways & k=50 & 0.687 & 0.584 [0.47, 0.70] \\
-    B4 random forest & normalized\_chrom\_pathways & max\_depth=None & 0.801 & 0.724 [0.62, 0.82] \\
-    B5 logistic + FBA & normalized\_chrom\_pathways & C=10 & 0.820 & 0.796 [0.70, 0.88] \\
+    FBA growth & medium=shipped & -- & -- & 0.683 & 0.654 [0.56, 0.75] \\
+    FBA growth & medium=SM & -- & -- & 0.710 & 0.666 [0.57, 0.76] \\
+    FBA growth & medium=SC & -- & -- & 0.726 & 0.666 [0.57, 0.76] \\
+    FBA growth & medium=YPD & -- & -- & 0.714 & 0.664 [0.57, 0.76] \\
+    one\_hot\_gene & logistic (C=10) & 6,579 & 0.504 & 0.508 & 0.506 [0.50, 0.52] \\
+    one\_hot\_gene $+$ FBA & random forest (max\_depth=8) & 6,583 & 0.775 & 0.730 & 0.679 [0.59, 0.77] \\
+    random\_1 & random forest (max\_depth=4) & 1 & 0.598 & 0.560 & 0.577 [0.46, 0.69] \\
+    random\_1 $+$ FBA & cosine kNN (k=10) & 5 & 0.806 & 0.699 & 0.689 [0.56, 0.80] \\
+    random\_10 & cosine kNN (k=50) & 10 & 0.549 & 0.481 & 0.455 [0.35, 0.56] \\
+    random\_10 $+$ FBA & logistic (C=0.001) & 14 & 0.786 & 0.684 & 0.596 [0.46, 0.72] \\
+    random\_100 & random forest (max\_depth=None) & 100 & 0.522 & 0.376 & 0.454 [0.34, 0.57] \\
+    random\_100 $+$ FBA & random forest (max\_depth=4) & 104 & 0.773 & 0.662 & 0.560 [0.42, 0.70] \\
+    random\_1000 & random forest (max\_depth=4) & 1,000 & 0.475 & 0.490 & 0.509 [0.40, 0.62] \\
+    random\_1000 $+$ FBA & random forest (max\_depth=None) & 1,004 & 0.778 & 0.749 & 0.655 [0.53, 0.78] \\
+    random\_6607 & cosine kNN (k=1) & 6,607 & 0.549 & 0.477 & 0.575 [0.49, 0.66] \\
+    random\_6607 $+$ FBA & random forest (max\_depth=None) & 6,611 & 0.734 & 0.713 & 0.628 [0.50, 0.75] \\
+    random\_8192 & cosine kNN (k=50) & 8,192 & 0.523 & 0.515 & 0.588 [0.49, 0.69] \\
+    random\_8192 $+$ FBA & random forest (max\_depth=8) & 8,196 & 0.768 & 0.748 & 0.680 [0.57, 0.79] \\
+    codon\_frequency & SVC (C=1) & 64 & 0.700 & 0.663 & 0.695 [0.59, 0.79] \\
+    codon\_frequency $+$ FBA & SVC (C=1) & 68 & 0.849 & 0.772 & 0.818 [0.73, 0.90] \\
+    normalized\_chrom\_pathways & logistic (C=10) & 197 & 0.705 & 0.722 & 0.775 [0.68, 0.86] \\
+    normalized\_chrom\_pathways $+$ FBA & logistic (C=0.01) & 201 & 0.802 & 0.791 & 0.830 [0.75, 0.90] \\
+    nt\_window\_5979 & logistic (C=0.01) & 2,560 & 0.579 & 0.532 & 0.570 [0.46, 0.67] \\
+    nt\_window\_5979 $+$ FBA & logistic (C=0.01) & 2,564 & 0.743 & 0.705 & 0.669 [0.55, 0.79] \\
+    nt\_window\_5979\_max & logistic (C=0.001) & 2,560 & 0.626 & 0.608 & 0.636 [0.54, 0.73] \\
+    nt\_window\_5979\_max $+$ FBA & logistic (C=0.01) & 2,564 & 0.777 & 0.786 & 0.663 [0.54, 0.78] \\
+    nt\_window\_three\_prime\_5979 & logistic (C=0.001) & 2,560 & 0.555 & 0.580 & 0.526 [0.41, 0.64] \\
+    nt\_window\_three\_prime\_5979 $+$ FBA & logistic (C=0.001) & 2,564 & 0.732 & 0.720 & 0.637 [0.51, 0.76] \\
+    nt\_window\_five\_prime\_5979 & cosine kNN (k=25) & 2,560 & 0.594 & 0.518 & 0.427 [0.32, 0.54] \\
+    nt\_window\_five\_prime\_5979 $+$ FBA & logistic (C=0.01) & 2,564 & 0.733 & 0.657 & 0.693 [0.59, 0.79] \\
+    nt\_window\_three\_prime\_300 & random forest (max\_depth=4) & 2,560 & 0.564 & 0.537 & 0.503 [0.39, 0.62] \\
+    nt\_window\_three\_prime\_300 $+$ FBA & random forest (max\_depth=None) & 2,564 & 0.752 & 0.757 & 0.659 [0.53, 0.78] \\
+    nt\_window\_five\_prime\_1003 & logistic (C=0.001) & 2,560 & 0.541 & 0.485 & 0.550 [0.43, 0.68] \\
+    nt\_window\_five\_prime\_1003 $+$ FBA & logistic (C=0.01) & 2,564 & 0.727 & 0.665 & 0.636 [0.52, 0.75] \\
+    fudt\_upstream & SVC (C=1) & 768 & 0.611 & 0.583 & 0.578 [0.47, 0.69] \\
+    fudt\_upstream $+$ FBA & random forest (max\_depth=None) & 772 & 0.775 & 0.747 & 0.707 [0.60, 0.81] \\
+    fudt\_downstream & SVC (C=10) & 768 & 0.589 & 0.553 & 0.469 [0.36, 0.58] \\
+    fudt\_downstream $+$ FBA & logistic (C=0.1) & 772 & 0.770 & 0.735 & 0.706 [0.59, 0.81] \\
+    species\_lm\_5p\_3p & logistic (C=0.001) & 1,536 & 0.634 & 0.631 & 0.571 [0.47, 0.68] \\
+    species\_lm\_5p\_3p $+$ FBA & logistic (C=0.01) & 1,540 & 0.763 & 0.733 & 0.679 [0.56, 0.79] \\
+    calm & SVC (C=1) & 768 & 0.755 & 0.777 & 0.734 [0.64, 0.82] \\
+    calm $+$ FBA & random forest (max\_depth=8) & 772 & 0.850 & 0.833 & 0.806 [0.72, 0.89] \\
+    prot\_T5\_all & SVC (C=10) & 1,024 & 0.781 & 0.767 & 0.732 [0.62, 0.83] \\
+    prot\_T5\_all $+$ FBA & logistic (C=0.01) & 1,028 & 0.842 & 0.826 & 0.821 [0.74, 0.90] \\
+    prot\_T5\_no\_dubious & SVC (C=10) & 1,024 & 0.781 & 0.767 & 0.732 [0.62, 0.83] \\
+    prot\_T5\_no\_dubious $+$ FBA & logistic (C=0.01) & 1,028 & 0.842 & 0.826 & 0.821 [0.74, 0.90] \\
+    esm2\_t33\_650M\_UR50D\_all & random forest (max\_depth=8) & 1,280 & 0.731 & 0.694 & 0.708 [0.61, 0.80] \\
+    esm2\_t33\_650M\_UR50D\_all $+$ FBA & random forest (max\_depth=8) & 1,284 & 0.815 & 0.794 & 0.758 [0.66, 0.86] \\
+    esm2\_t33\_650M\_UR50D\_no\_dubious & random forest (max\_depth=8) & 1,280 & 0.731 & 0.694 & 0.708 [0.61, 0.80] \\
+    esm2\_t33\_650M\_UR50D\_no\_dubious $+$ FBA & random forest (max\_depth=8) & 1,284 & 0.815 & 0.794 & 0.758 [0.66, 0.86] \\
+    mixed & logistic (C=10) & 6,149 & 0.788 & 0.794 & 0.768 [0.66, 0.87] \\
+    mixed $+$ FBA & logistic (C=10) & 6,153 & 0.833 & 0.837 & 0.792 [0.69, 0.89] \\
     \hline
   \end{tabular}
 \end{table}

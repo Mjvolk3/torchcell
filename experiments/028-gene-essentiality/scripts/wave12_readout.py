@@ -62,11 +62,12 @@ FCL_JSON = osp.join(RESULTS, "fcl_comparison.json")
 N_BOOTSTRAP = 2000
 BOOTSTRAP_SEED = 0
 
-#: Round -> (result glob, arm order for the figure). The arm of a result is the part of
-#: its stem between the round prefix and the architecture suffix.
-ROUNDS: dict[str, tuple[str, list[str]]] = {
+#: Round -> (result globs, arm order for the figure). The arm of a result is the part of
+#: its stem between the wave prefix and the architecture suffix; a round may pull a cell
+#: from another wave in as its paired comparator.
+ROUNDS: dict[str, tuple[list[str], list[str]]] = {
     "w12": (
-        "w12_*_e80_s*.json",
+        ["w12_*_e80_s*.json"],
         [
             "base",
             "fcl",
@@ -87,18 +88,30 @@ ROUNDS: dict[str, tuple[str, list[str]]] = {
     # non-test genes whose fold models are averaged on the held-out genes, which is FCL's
     # own test protocol (`cv_ensemble_readout.py` scores the ensemble).
     "w14": (
-        "w14_*_s*.json",
+        ["w14_*_s*.json"],
         ["b32posw", "b32posw200", "b32e200", "cv0", "cv1", "cv2", "cv3", "cv4"],
     ),
     # Wave 13: the prediction routed through the metabolic module, on the fcl split at
-    # the base hyperparameters, paired by seed against w12 fcl.
+    # the base hyperparameters (batch 128, wd 1e-4, 80 epochs), paired by seed against the
+    # w12 fcl pooled cell, which is the first arm of the round.
     "w13": (
-        "w13_*_e80_s*.json",
-        ["fluxbio", "fluxbio_s0", "fluxctx", "fluxctx_s0", "fluxoff", "fluxoffctx"],
+        ["w12_fcl_h12l1p1_e80_s*.json", "w13_*_e80_s*.json"],
+        [
+            "fcl",
+            "fluxbio",
+            "fluxbio_s0",
+            "fluxshuf_s0",
+            "fluxctx",
+            "fluxctx_s0",
+            "fluxgate",
+            "fluxgate_s0",
+            "fluxoff",
+            "fluxoffctx",
+        ],
     ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
-    "wave11": ("wave11_ess_pool_h*_e80_s*.json", ["ess_pool"]),
+    "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
 }
 ARM_LABELS = {
     "base": "wave-11 protocol (75-gene val)",
@@ -126,6 +139,9 @@ ARM_LABELS = {
     "fluxctx_s0": "context + growth column, constraints 0",
     "fluxoff": "growth column only, stoichiometry only",
     "fluxoffctx": "context + growth column, stoichiometry only",
+    "fluxgate": "gated growth column, constraints 0.1",
+    "fluxgate_s0": "gated growth column, constraints 0",
+    "fluxshuf_s0": "growth column only, kcat shuffled, constraints 0",
 }
 
 
@@ -193,8 +209,8 @@ def bootstrap_ci(score: np.ndarray, label: np.ndarray) -> tuple[float, float]:
     return float(np.percentile(draws, 2.5)), float(np.percentile(draws, 97.5))
 
 
-def arm_of(stem: str, round_key: str) -> str:
-    body = stem[len(round_key) + 1 :]
+def arm_of(stem: str) -> str:
+    body = stem.split("_", 1)[1]
     return body.split("_h")[0]
 
 
@@ -237,11 +253,12 @@ def pinned_predictions(
 def load_round(
     round_key: str,
 ) -> tuple[list[CellRow], dict[str, list[dict[str, Any]]], dict[str, list[np.ndarray]]]:
-    pattern, _ = ROUNDS[round_key]
+    patterns, _ = ROUNDS[round_key]
     rows: list[CellRow] = []
     histories: dict[str, list[dict[str, Any]]] = {}
     preds: dict[str, list[np.ndarray]] = {}
-    for path in sorted(glob.glob(osp.join(RESULTS, pattern))):
+    paths = [p for pat in patterns for p in sorted(glob.glob(osp.join(RESULTS, pat)))]
+    for path in paths:
         with open(path) as fh:
             result = json.load(fh)
         stem = osp.splitext(osp.basename(path))[0]
@@ -249,9 +266,9 @@ def load_round(
         hist = result["history"]
         curve = np.array([h["val_pearson"] for h in hist], dtype=float)
         steps = np.abs(np.diff(curve))
-        arm = arm_of(stem, round_key)
+        arm = arm_of(stem)
         pinned = result["test"]["pinned"]
-        ci = (None, None)
+        ci: tuple[float | None, float | None] = (None, None)
         pp = pinned_predictions(result)
         if pp is not None:
             ci = bootstrap_ci(pp[0], pp[1])
@@ -295,7 +312,7 @@ def summarize(
     for arm in arms:
         cells = sorted([r for r in rows if r.arm == arm], key=lambda r: r.seed)
         values = [r.test_auroc_pinned for r in cells]
-        pooled = (None, None, None)
+        pooled: tuple[float | None, float | None, float | None] = (None, None, None)
         if arm in preds:
             # Per-gene predictions averaged over seeds (a logit mean), then one AUROC with
             # its gene bootstrap: the interval on the arm's prediction rather than on one
@@ -341,15 +358,14 @@ def comparators() -> dict[str, tuple[float, float, float]]:
     if osp.isfile(FCL_JSON):
         with open(FCL_JSON) as fh:
             fcl = json.load(fh)
-        ours = fcl.get("on_our_genes") or fcl.get("ours_195") or {}
-        for name, key in (("FCL", "fcl"), ("FBA (released)", "fba")):
-            block = ours.get(key)
-            if isinstance(block, dict) and "auroc" in block:
-                out[name] = (
-                    block["auroc"],
-                    block.get("ci_low", block["auroc"]),
-                    block.get("ci_high", block["auroc"]),
-                )
+        # `scored` rows: method x gene_set; ours_scored is the 195 genes every cell scores.
+        for row in fcl["scored"]:
+            if row["gene_set"] != "ours_scored" or row.get("seed") is not None:
+                continue
+            name = {"FCL": "FCL", "FBA": "FBA (released)"}.get(row["method"])
+            if name is None:
+                continue
+            out[name] = (row["auroc"], row["ci_low"], row["ci_high"])
     return out
 
 
@@ -435,7 +451,11 @@ def figure(
             linewidths=0.3,
             zorder=3,
         )
-        if s.pooled_auroc is not None:
+        if (
+            s.pooled_auroc is not None
+            and s.pooled_ci_low is not None
+            and s.pooled_ci_high is not None
+        ):
             ax_c.errorbar(
                 [x + 0.25],
                 [s.pooled_auroc],
@@ -515,7 +535,7 @@ def figure(
         ["preprocessor", "transformer", "essentiality head", "flux layer"],
         loc="lower left",
         bbox_to_anchor=(0, 1.02),
-        ncol=4,
+        ncol=2,
         frameon=False,
     )
 

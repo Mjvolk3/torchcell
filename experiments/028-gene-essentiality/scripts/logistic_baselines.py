@@ -247,12 +247,13 @@ class Fitter:
 
     def label(self, hp: Any) -> str:
         """The chosen value as it appears in the table."""
-        return {
-            "logistic": f"C={hp:g}",
-            "random forest": f"max_depth={hp}",
-            "SVC": f"C={hp:g}",
-            "cosine kNN": f"k={hp}",
-        }[self.model]
+        # Branches, not a dict of f-strings: a dict would format every entry, and the
+        # forest's depth can be None, which `:g` refuses.
+        if self.model == "random forest":
+            return f"max_depth={hp}"
+        if self.model == "cosine kNN":
+            return f"k={hp}"
+        return f"C={hp:g}"
 
     def fit_score(
         self, hp: Any, x_fit: np.ndarray, y_fit: np.ndarray, x_evals: list[np.ndarray]

@@ -48,3 +48,15 @@ Republished version:
 sections in rank order: held-out query pairs, training side, operator and probe,
 bookkeeping. Rerun after every sync:
 <https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer?nw=paezdq4q5ex>
+
+## 2026.09.16 - The last two mmli cells synced: composite at three seeds, composite plus fitness at one
+
+IGB mmli jobs 2397848 (`cgt_s0_q_kl_emb_017` seed 2, finished 02:01 CDT) and 2397876 (`cgt_s0_q_kl_embfit_027` seed 42, finished 10:03 CDT) synced from the login node and folded into `results/disjoint_embedding_readout.csv` and the grouped view (55 runs labeled). The mmli GPUs are now held by another user's array, so nothing of ours is queued there.
+
+| arm | seed | val Pearson mean ep 10-29 | max (epoch) | epoch 29 |
+|---|---|---|---|---|
+| composite (emb_017) | 1 / 2 / 42 | 0.235 / 0.203 / 0.215 | 0.275 (15) / 0.270 (2) / 0.263 (2) | 0.173 / 0.170 / 0.222 |
+| composite + fitness (embfit_027) | 42 | 0.209 | 0.254 (2) | 0.158 |
+| learnable table (ctrl_016) | 1 / 2 / 42 | 0.144 / 0.125 / 0.140 | 0.226 / 0.163 / 0.195 | 0.136 / 0.123 / 0.130 |
+
+The composite arm's three-seed window mean is 0.218 against the control's 0.136; the joint fitness objective at one seed (0.209, fitness val Pearson max 0.730) sits inside the composite arm's seed spread and does not move the interaction score. Grouped view: `?nw=paezdq4q5ex`.

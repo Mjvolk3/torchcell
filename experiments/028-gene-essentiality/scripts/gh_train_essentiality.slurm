@@ -55,7 +55,12 @@ export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
 export WANDB_DIR=/scratch/projects/torchcell-scratch/experiments/028-gene-essentiality/wandb
 export WANDB_PROJECT=torchcell_028_gene_essentiality
-export NUM_WORKERS=2
+# DATA LOADER WORKERS, and why the default moved to 0 on 2026-09-16. Measured on a
+# three-epoch CPU smoke of the width-12 split cell: 185 s wall with two spawned workers,
+# 59 s with none, so about 42 s of every epoch was the workers re-importing the package
+# (the multiprocessing context is spawn, and the loaders are rebuilt every epoch). A split
+# cell holds 787 records; there is nothing to parallelize.
+export NUM_WORKERS="${ESS_WORKERS:-0}"
 export COLLAPSE_PATIENCE_EPOCHS=200
 export TC_TEST_PRED_DIR=$DATA_ROOT/test-predictions-028
 export TC_CHECKPOINT_DIR=$DATA_ROOT/checkpoints-028

@@ -1,8 +1,61 @@
 %% notes-tex/028-gene-essentiality/sections/4-module.tex
-%% [[experiments.028-gene-essentiality]]
+%% [[experiments.028-gene-essentiality.mermaid.readouts]]
 %% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/4-module.tex
 
-\section{Routing the prediction through the metabolic module\secstatus{todo}}
+\section{The metabolic module: three ways to read essentiality off it\secstatus{todo}}
 \label{sec:module}
 
-Filled from the wave-13 readout when the round returns.
+The pooled backbone reads its logit from an MLP on the perturbed context
+(Figure~\ref{fig:readout-pooled}). A flux arm builds the enzyme-constrained thermodynamic
+flux layer on the same context and exposes one physically named quantity, the flux through
+the growth reaction \texttt{r\_2111}. Three readouts put that quantity to different uses,
+and they differ in what the backbone's gradient has to pass through.
+
+\begin{description}
+  \item[biomass (forced)] $\ell = a\,v_{\text{growth}} + b$. The growth column is the
+    only path from the context to the logit, so the module carries the whole prediction or
+    the cell scores chance (Figure~\ref{fig:readout-biomass}). This is FBA's own reading of
+    essentiality with a learned threshold, and it is the wave-9 design.
+  \item[context + growth] $\ell = \mathrm{MLP}(h) + a\,v_{\text{growth}} + b$. Both paths
+    from the first step; the per-module gradient norms say how much of each update the
+    module carries when it is not forced to carry all of it.
+  \item[gated] $\ell = \mathrm{MLP}(h) + g\,(a\,v_{\text{growth}} + b)$ with $g_0 = 0$
+    (Figure~\ref{fig:readout-gated}). At initialization the cell is the pooled model
+    exactly; the gate's trajectory, logged every epoch, says whether the optimizer chose
+    the flux path, and the \texttt{flux\_layer} gradient line says whether gradient reached
+    the layer, which at $g = 0$ it cannot.
+\end{description}
+
+\tcfigfit[0.75]{figures/readout_1.pdf}{\textbf{The pooled readout.} The backbone alone: one
+  MLP from the perturbed context to a logit, binary cross entropy against the released
+  label. No stoichiometry, no kinetic parameters, no flux. Rendered from
+  \texttt{notes/experiments.028-gene-essentiality.mermaid.readouts.md}.}{fig:readout-pooled}
+
+\tcfigfit[1.0]{figures/readout_2.pdf}{\textbf{The forced biomass readout.} The context sets
+  each enzyme's abundance (a deleted gene's is zero), the $k_{cat}$ table turns abundances
+  into capacities, and the flux is the projection onto $Sv = 0$ of the capacity-clipped
+  proposal; the logit is an affine of the growth column alone. The thermodynamic penalty
+  is a loss on the flux with no path to the prediction, at scale 0.1 or 0.}{fig:readout-biomass}
+
+\tcfigfit[1.0]{figures/readout_3.pdf}{\textbf{The gated readout.} The pooled MLP's logit
+  plus the growth affine behind a gate initialized at zero. The gate is a parameter of the
+  readout; its value is written into every epoch row as \texttt{ess\_gate}.}{fig:readout-gated}
+
+\subsection{Round 2: the module on the stable backbone, with and without the penalties\secstatus{todo}}
+
+Round 2 (jobs 2182 to 2208) puts the three readouts on the width-12 cell of
+Section~\ref{sec:backbone}, on the released-label split, at three seeds each: the forced
+and gated readouts at constraint scale 0.1 and 0, the context readout at both scales, the
+forced readout at scale 0 with the $k_{cat}$ vector permuted across catalytic units (same
+architecture, no unit-to-value correspondence), and the stoichiometry-only layer
+(\texttt{flux\_off}: no thermodynamics, no capacity) with the forced and context readouts.
+Every flux arm carries the wave-9 flux configuration otherwise: the predicted $k_{cat}$
+tier, the union-external thermodynamic source, twenty warmup epochs, the dataset medium,
+the mixture concentration space. The round's table and figure enter here when its readout
+runs.
+
+The reads are fixed before the numbers: \emph{not hurt} is the gated arm against the
+pooled cell paired by seed, with the gate's trajectory beside it; \emph{help} is the forced
+arm above the pooled cell on three of three seeds and above its shuffled-$k_{cat}$ control;
+the \emph{collapse's cause} is the forced arm at scale 0.1 against scale 0, since on the
+betaxanthin targets the penalty scale was the dose that starved the layer's input.

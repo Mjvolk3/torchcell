@@ -2,7 +2,21 @@
 %% [[experiments.028-gene-essentiality]]
 %% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/5-open.tex
 
-\section{Open questions\secstatus{todo}}
+\section{Open\secstatus{todo}}
 \label{sec:open}
 
-Filled as the rounds return.
+\begin{itemize}
+  \item Round 3 (jobs 2209 to 2222): batch 32 with the class weight at 80 and 200 epochs,
+    batch 32 alone at 200 epochs, and five fold models on the cross-validation files whose
+    logits are averaged on the held-out genes, which is the protocol behind the published
+    FCL number.
+  \item The classical ladder (Section~\ref{sec:comparators}) on the same split: FBA's
+    growth ratio, logistic regression, cosine nearest neighbors and a random forest on the
+    four external gene embeddings, and logistic regression on an embedding with the FBA
+    ratios appended.
+  \item The module's own hyperparameters have not been moved on this endpoint: the
+    $k_{cat}$ tier (measured against predicted), the thermodynamic source, the
+    parameterization (projection against nullspace), the number of alternations.
+  \item Every cell here is width 12. The depth-against-width isolation (width 90 at one
+    block, width 12 at two) has not run on the split-file protocol.
+\end{itemize}

@@ -27,4 +27,29 @@ The medium moves the number of lethal deletions by a factor of two and the AUROC
 Recomputed from the authors' released per-gene predictions: 0.7308 on the 223 held-out
 genes (published 0.73) and 0.742 on the 195 genes the model scores. On those same 195 genes
 the released FBA predictions score 0.640, so the published pair overstates FBA by about
-0.06 relative to a head-to-head on one gene set.
+0.06 relative to a head-to-head on one gene set. The paper prints a third number, 0.78
+$\pm$ 0.065 in the legend of its Figure 3a, which is the mean over five cross-validation
+folds drawn inside its 898 training genes; a model scored on the held-out genes is compared
+with the 0.73 line, never with that one.
+
+\subsection{The classical ladder on the same split\secstatus{todo}}
+
+The fitness and expression lines each carry a ladder of models that need no graph and no
+training beyond a solve, and essentiality gets the classification form of it: FBA's growth
+ratio with no fitting, then $L_2$ logistic regression, cosine nearest neighbors and a random
+forest on each of four external gene embeddings, and logistic regression on an embedding
+with the four FBA growth ratios appended. Every fitted rung is fit on the split file's
+training genes, its one hyperparameter chosen on the validation genes, and scored once on
+the 195 held-out genes, the protocol of every transformer cell in
+Sections~\ref{sec:backbone} and~\ref{sec:module} (Table~\ref{tab:ladder}).
+
+\input{tables/ladder}
+
+Two rows set the bar for everything that follows. Logistic regression on the ProtT5 protein
+embedding alone scores 0.763, level with Flux Cone Learning's 0.742 and with the best
+round-1 transformer cell, and the same regression with the four FBA growth ratios appended
+scores 0.803 [0.72, 0.88]; the CaLM embedding with FBA reads 0.803 as well. Neither the
+embedding nor the solver reaches 0.80 alone. FBA's ratio is a feature the ontology
+computes for every gene at no training cost, so the transformer is measured against 0.80
+from here on, not against the published 0.73, and any cell that scores below the logistic
+rung is scoring below a model with 1,025 parameters.

@@ -1,0 +1,202 @@
+{
+  "round": "wave11",
+  "n_cells": 6,
+  "cells": [
+    {
+      "stem": "wave11_ess_pool_h12l1p1_e80_s2700",
+      "arm": "ess_pool",
+      "seed": 2700,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 128,
+      "split_file": null,
+      "n_parameters": 16874,
+      "n_val": 75,
+      "select_epoch": 43,
+      "select_val_auroc": 0.803030303030303,
+      "test_auroc_pinned": 0.8011408339889851,
+      "test_auroc_ci_low": 0.6984091079390056,
+      "test_auroc_ci_high": 0.877912243502052,
+      "test_accuracy_pinned": 0.8666666666666667,
+      "test_recall_essential_pinned": 0.25806451612903225,
+      "median_abs_step": 0.006734006734006703,
+      "val_curve_range": 0.531986531986532,
+      "wall_time_min": 63.88053225278854,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/bjlk7m7g"
+    },
+    {
+      "stem": "wave11_ess_pool_h12l1p1_e80_s2701",
+      "arm": "ess_pool",
+      "seed": 2701,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 128,
+      "split_file": null,
+      "n_parameters": 16874,
+      "n_val": 75,
+      "select_epoch": 77,
+      "select_val_auroc": 0.8148148148148148,
+      "test_auroc_pinned": 0.7859952793076318,
+      "test_auroc_ci_low": 0.7034765733778892,
+      "test_auroc_ci_high": 0.8755721675354228,
+      "test_accuracy_pinned": 0.8461538461538461,
+      "test_recall_essential_pinned": 0.45161290322580644,
+      "median_abs_step": 0.005050505050504972,
+      "val_curve_range": 0.3905723905723906,
+      "wall_time_min": 64.41822089751561,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/0ojod7g4"
+    },
+    {
+      "stem": "wave11_ess_pool_h12l1p1_e80_s2702",
+      "arm": "ess_pool",
+      "seed": 2702,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 128,
+      "split_file": null,
+      "n_parameters": 16874,
+      "n_val": 75,
+      "select_epoch": 49,
+      "select_val_auroc": 0.7996632996632996,
+      "test_auroc_pinned": 0.7958300550747442,
+      "test_auroc_ci_low": 0.7126784511784512,
+      "test_auroc_ci_high": 0.875331479897348,
+      "test_accuracy_pinned": 0.841025641025641,
+      "test_recall_essential_pinned": 0.0,
+      "median_abs_step": 0.006734006734006703,
+      "val_curve_range": 0.5404040404040404,
+      "wall_time_min": 64.17170662085215,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ixk44vrk"
+    },
+    {
+      "stem": "wave11_ess_pool_h24l1p1_e80_s2700",
+      "arm": "ess_pool",
+      "seed": 2700,
+      "hidden": 24,
+      "weight_decay": 0.0001,
+      "batch_size": 128,
+      "split_file": null,
+      "n_parameters": 42098,
+      "n_val": 75,
+      "select_epoch": 5,
+      "select_val_auroc": 0.8215488215488216,
+      "test_auroc_pinned": 0.742918961447679,
+      "test_auroc_ci_low": 0.6984091079390056,
+      "test_auroc_ci_high": 0.877912243502052,
+      "test_accuracy_pinned": 0.841025641025641,
+      "test_recall_essential_pinned": 0.0,
+      "median_abs_step": 0.005050505050505083,
+      "val_curve_range": 0.11784511784511786,
+      "wall_time_min": 65.76592419544856,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/dqlt6h1c"
+    },
+    {
+      "stem": "wave11_ess_pool_h24l1p1_e80_s2701",
+      "arm": "ess_pool",
+      "seed": 2701,
+      "hidden": 24,
+      "weight_decay": 0.0001,
+      "batch_size": 128,
+      "split_file": null,
+      "n_parameters": 42098,
+      "n_val": 75,
+      "select_epoch": 4,
+      "select_val_auroc": 0.8636363636363636,
+      "test_auroc_pinned": 0.739771833202203,
+      "test_auroc_ci_low": 0.7034765733778892,
+      "test_auroc_ci_high": 0.8755721675354228,
+      "test_accuracy_pinned": 0.841025641025641,
+      "test_recall_essential_pinned": 0.0,
+      "median_abs_step": 0.006734006734006703,
+      "val_curve_range": 0.15656565656565657,
+      "wall_time_min": 65.27053892612457,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/w7cc2x38"
+    },
+    {
+      "stem": "wave11_ess_pool_h24l1p1_e80_s2702",
+      "arm": "ess_pool",
+      "seed": 2702,
+      "hidden": 24,
+      "weight_decay": 0.0001,
+      "batch_size": 128,
+      "split_file": null,
+      "n_parameters": 42098,
+      "n_val": 75,
+      "select_epoch": 47,
+      "select_val_auroc": 0.8063973063973064,
+      "test_auroc_pinned": 0.8072383949645948,
+      "test_auroc_ci_low": 0.7126784511784512,
+      "test_auroc_ci_high": 0.875331479897348,
+      "test_accuracy_pinned": 0.8666666666666667,
+      "test_recall_essential_pinned": 0.2903225806451613,
+      "median_abs_step": 0.008417508417508324,
+      "val_curve_range": 0.3114478114478114,
+      "wall_time_min": 65.13686821460723,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/su5zilbk"
+    }
+  ],
+  "arms": [
+    {
+      "arm": "ess_pool",
+      "label": "ess_pool",
+      "n_seeds": 6,
+      "seeds": [
+        2700,
+        2700,
+        2701,
+        2701,
+        2702,
+        2702
+      ],
+      "test_auroc_mean": 0.7788158929976396,
+      "test_auroc_sd": 0.029867357456979375,
+      "test_auroc_values": [
+        0.8011408339889851,
+        0.742918961447679,
+        0.7859952793076318,
+        0.739771833202203,
+        0.7958300550747442,
+        0.8072383949645948
+      ],
+      "pooled_auroc": 0.7958300550747442,
+      "pooled_ci_low": 0.7061832101896204,
+      "pooled_ci_high": 0.8803532298169181,
+      "median_abs_step_mean": 0.006453423120089748,
+      "n_val": 75,
+      "select_epochs": [
+        43,
+        5,
+        77,
+        4,
+        49,
+        47
+      ]
+    }
+  ],
+  "comparators_on_195": {
+    "FBA shipped": {
+      "auroc": 0.6543076317859953,
+      "ci_low": 0.5617373633852306,
+      "ci_high": 0.747709049823633
+    },
+    "FBA SM": {
+      "auroc": 0.6655192761605035,
+      "ci_low": 0.5714285714285714,
+      "ci_high": 0.7591164975254618
+    },
+    "FBA SC": {
+      "auroc": 0.6657159716758458,
+      "ci_low": 0.5735277316161197,
+      "ci_high": 0.7586017602687547
+    },
+    "FBA YPD": {
+      "auroc": 0.6638473642800944,
+      "ci_low": 0.5718939393939394,
+      "ci_high": 0.7559709101382487
+    }
+  },
+  "bootstrap": {
+    "n": 2000,
+    "seed": 0
+  }
+}

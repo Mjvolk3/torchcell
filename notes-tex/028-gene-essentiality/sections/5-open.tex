@@ -6,10 +6,12 @@
 \label{sec:open}
 
 \begin{itemize}
-  \item FBA's growth ratio as an input to the transformer. The ladder's top rungs are
-    frozen encodings with the four ratios appended (0.81 to 0.83), and neither half
-    reaches that alone; a cell that concatenates the ratios to the readout, or carries
-    them as a node feature, tests whether the transformer gains the same complement.
+  \item Round 5 (jobs 2249 and 2250): FBA's growth ratio as an input to the transformer.
+    The ladder's top rungs are frozen encodings with the four ratios appended (0.81 to
+    0.83), and neither half reaches that alone. The \texttt{fba} readout adds an affine of
+    the deleted gene's four ratios to the context head, on the round-3 cell at three seeds
+    and on the five folds; the transformer gains the same complement if its seed mean
+    moves from 0.774 toward 0.82 and the fold ensemble from 0.795 toward 0.81 to 0.83.
   \item The module's own hyperparameters have not been moved on this endpoint: the
     $k_{cat}$ tier (measured against predicted), the thermodynamic source, the
     parameterization (projection against nullspace), the number of alternations.

@@ -431,6 +431,13 @@ class StrictFeasibility(BaseModel):
     flux_scale: float
     n_independent_balance_rows: int
     n_reactions: int
+    #: Spearman and Pearson between the model's prediction and the audited balance ratio,
+    #: over every genotype. The Genesis fraction is read on the strains the model NOMINATES,
+    #: so a model whose ranking tracks infeasibility reports a worse top-100 than population
+    #: even when its predictions are nearly constant, and that is a property of the model
+    #: rather than of the audit. NaN balance rows (no row above the turnover threshold) are
+    #: dropped before the correlation.
+    prediction_vs_balance: dict[str, float] = Field(default_factory=dict)
     groups: dict[str, StrictGroup] = Field(default_factory=dict)
     #: The fixed reference column of every table. Optional so that audits written before
     #: 2026-09-14, which carry no reference, still parse into this model.
@@ -459,6 +466,25 @@ def _strict_group(
     )
 
 
+def _prediction_vs_balance(per: dict[str, np.ndarray]) -> dict[str, float]:
+    """How the model's own ranking lines up with the balance residual, over all genotypes."""
+    from scipy.stats import pearsonr, spearmanr
+
+    key = "balance_active_max_ratio_1e-03"
+    if "prediction" not in per or key not in per:
+        return {}
+    prediction = np.asarray(per["prediction"], dtype=float)
+    balance = np.asarray(per[key], dtype=float)
+    ok = np.isfinite(prediction) & np.isfinite(balance)
+    if int(ok.sum()) < 10 or float(np.std(prediction[ok])) == 0.0:
+        return {"n": float(int(ok.sum())), "spearman": float("nan"), "pearson": float("nan")}
+    return {
+        "n": float(int(ok.sum())),
+        "spearman": float(spearmanr(prediction[ok], balance[ok]).statistic),
+        "pearson": float(pearsonr(prediction[ok], balance[ok]).statistic),
+    }
+
+
 def build_strict_block(
     per_all: dict[str, np.ndarray],
     per_test: dict[str, np.ndarray],
@@ -469,6 +495,7 @@ def build_strict_block(
 ) -> StrictFeasibility:
     """The same four groups the trainer reports, under the median AND the max rule."""
     rank_note = "predicted betaxanthin, descending" if head_name == HEAD else None
+    correlation = _prediction_vs_balance(per_all)
     groups: dict[str, StrictGroup] = {
         "all": _strict_group(
             per_all, np.ones(per_all["balance_median_ratio"].size, bool), None
@@ -494,6 +521,7 @@ def build_strict_block(
         flux_scale=float(layer.config.flux_scale),
         n_independent_balance_rows=int(layer.independent_rows.numel()),
         n_reactions=int(layer.n_reactions),
+        prediction_vs_balance=correlation,
         groups=groups,
         reference=reference,
     )

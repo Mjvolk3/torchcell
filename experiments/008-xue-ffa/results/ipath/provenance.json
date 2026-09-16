@@ -1,0 +1,153 @@
+{
+  "modules": [
+    {
+      "pathway": "sce00010",
+      "label": "glycolysis and gluconeogenesis",
+      "color": "#9673A6",
+      "genes": 55,
+      "ko_selected": 26
+    },
+    {
+      "pathway": "sce00620",
+      "label": "pyruvate metabolism",
+      "color": "#D6B656",
+      "genes": 52,
+      "ko_selected": 17
+    },
+    {
+      "pathway": "sce00020",
+      "label": "citrate cycle",
+      "color": "#B85450",
+      "genes": 31,
+      "ko_selected": 12
+    },
+    {
+      "pathway": "sce00061",
+      "label": "fatty acid biosynthesis",
+      "color": "#D79B00",
+      "genes": 13,
+      "ko_selected": 8
+    },
+    {
+      "pathway": "sce00062",
+      "label": "fatty acid elongation",
+      "color": "#D79B00",
+      "genes": 8,
+      "ko_selected": 6
+    },
+    {
+      "pathway": "sce01040",
+      "label": "unsaturated fatty acid biosynthesis",
+      "color": "#D79B00",
+      "genes": 10,
+      "ko_selected": 3
+    },
+    {
+      "pathway": "sce00071",
+      "label": "fatty acid degradation",
+      "color": "#666666",
+      "genes": 20,
+      "ko_selected": 1
+    }
+  ],
+  "species": [
+    {
+      "compound": "C06424",
+      "label": "C14:0 myristate",
+      "color": "#6C8EBF",
+      "drawn_on_map": true
+    },
+    {
+      "compound": "C00249",
+      "label": "C16:0 palmitate",
+      "color": "#6C8EBF",
+      "drawn_on_map": true
+    },
+    {
+      "compound": "C08362",
+      "label": "C16:1 palmitoleate",
+      "color": "#6C8EBF",
+      "drawn_on_map": false
+    },
+    {
+      "compound": "C01530",
+      "label": "C18:0 stearate",
+      "color": "#6C8EBF",
+      "drawn_on_map": false
+    },
+    {
+      "compound": "C00712",
+      "label": "C18:1 oleate",
+      "color": "#6C8EBF",
+      "drawn_on_map": false
+    }
+  ],
+  "waypoints": [
+    {
+      "compound": "C00022",
+      "label": "pyruvate",
+      "drawn_on_map": true
+    },
+    {
+      "compound": "C00024",
+      "label": "acetyl-CoA",
+      "drawn_on_map": true
+    },
+    {
+      "compound": "C00158",
+      "label": "citrate",
+      "drawn_on_map": true
+    },
+    {
+      "compound": "C00083",
+      "label": "malonyl-CoA",
+      "drawn_on_map": true
+    }
+  ],
+  "retrieved_at": "2026-09-16T22:42:30+00:00",
+  "retrieval_method": "direct_url",
+  "kegg_api": "https://rest.kegg.jp",
+  "ipath_endpoint": "https://pathways.embl.de/mapping.cgi",
+  "ipath_post_fields": {
+    "map": "metabolic",
+    "export_type": "svg",
+    "default_opacity": 0.12,
+    "default_width": 3,
+    "default_radius": 7,
+    "default_color": "#999999",
+    "keep_colors": 1
+  },
+  "selection_sha256": "d6ab627423595800ada32eacede89985cc221cd306fa463d6a3c0a398f2ea2ad",
+  "selection_entries": 82,
+  "response_sha256": "881c34576c4568496625e97ada58a9050d9270cb79b79540d90660b75fd6dd28",
+  "stored": {
+    "compound_positions.json": "0684a7a02348deee94d2d699ebcef7f4fef7ab40a86a5a144e0d8f0deea94d76",
+    "ipath3_metabolic.svg": "9326e5e6847c0b41db772a8d30646cee32786de3b7a6d674e96aeef436a5c075",
+    "ipath3_metabolic_5ed9777a8780.svg": "a7b57a687ea621def3421c90503a9e89d00b0d27f2a667e31c0fd9a617f2dade",
+    "ipath3_metabolic_d6ab62742359.svg": "306f18bd11ae735d6bbebdb8c5cdea0bb1e7bda44033359fdcf28a4b7ccc1006",
+    "kegg_link_ko_sce.tsv": "233049a88fa624ee1190f40a7dca5ca91b706f68a2c3171b46faacb0828fb812",
+    "kegg_link_sce_sce00010.tsv": "5dc47f3e5731601763b4fa05a00ed4c35ed0a2d7e5ee18f11f5bc86c8f42e77d",
+    "kegg_link_sce_sce00020.tsv": "bda1a957f87bd354947c1a2ef8b1aca292dddd03b2f8c6e08b9e41c570127273",
+    "kegg_link_sce_sce00061.tsv": "28789c67e4a2398b1e5a8bb8fa91a38d120a1ce38fcd74fc6c64f3fe4aae317a",
+    "kegg_link_sce_sce00062.tsv": "14342d7b9d37418318e2465355631d4c3b3137aa19c0895eae2ef9e1b11ab83d",
+    "kegg_link_sce_sce00071.tsv": "35b4d38fe4c9e379dd30e86d65231bb1b972452d6635de6f49dc9e76e94392ba",
+    "kegg_link_sce_sce00620.tsv": "fbb7424b8996bd211710a40f877e91a13fd3c807a2c2114161595931cdb323e7",
+    "kegg_link_sce_sce01040.tsv": "ff5f908ccdc88e35a9da750f614238903ab0b1541e518442f3078617d48a3595",
+    "label_anchors.json": "b44324c742b4d48032a381cf0957e87fb3d6667b493e25508ab74ca95080c4a1",
+    "provenance.json": "c4cccef9b9890aff2e5b14beda7ac7ebd8068ca36fd98fd40840ed10ed3de3bc",
+    "selection.txt": "d6ab627423595800ada32eacede89985cc221cd306fa463d6a3c0a398f2ea2ad"
+  },
+  "panel_mm": [
+    179.0,
+    52.0
+  ],
+  "species_drawn": [
+    "C14:0 myristate",
+    "C16:0 palmitate"
+  ],
+  "species_not_on_map": [
+    "C16:1 palmitoleate",
+    "C18:0 stearate",
+    "C18:1 oleate"
+  ]
+}

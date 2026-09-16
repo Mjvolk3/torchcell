@@ -27,7 +27,6 @@ import base64
 import os
 import os.path as osp
 import re
-import subprocess
 import sys
 
 from dotenv import load_dotenv
@@ -38,6 +37,7 @@ from drawio_doc import (  # noqa: E402
     PT,
     U,
     Doc,
+    export,
     letter_style,
     line_style,
     text_style,
@@ -234,29 +234,6 @@ def build(out_path):
     print(f"wrote {out_path}  (content to {bottom:.1f} mm)")
 
 
-def export(drawio_bin, src, out_stem):
-    os.makedirs(IMAGES_DIR, exist_ok=True)
-    svg = osp.join(IMAGES_DIR, out_stem + ".svg")
-    png = osp.join(IMAGES_DIR, out_stem + ".png")
-    for fmt, out, extra in (("svg", svg, []), ("png", png, ["-s", "3"])):
-        if sys.platform == "darwin":
-            cmd = [drawio_bin, "-x", "-f", fmt, *extra, "-o", out, src]
-        else:
-            cmd = ["xvfb-run", "-a", drawio_bin, src, "--no-sandbox", "--disable-gpu",
-                   "-x", "-f", fmt, *extra, "-o", out]
-        subprocess.run(cmd, capture_output=True)
-        if not osp.exists(out) or osp.getsize(out) == 0:
-            raise RuntimeError(f"draw.io export wrote nothing: {' '.join(cmd)}")
-    head = open(svg, encoding="utf-8").read(2000)
-    m = re.search(r'width="([\d.]+)px" height="([\d.]+)px"', head)
-    if m is None:
-        raise ValueError(f"{svg}: no px width/height on the <svg> element")
-    w_mm, h_mm = float(m.group(1)) / U, float(m.group(2)) / U
-    print(f"exported {w_mm:.1f} x {h_mm:.1f} mm -> {svg}\n         {png}")
-    if w_mm > 179.4 or h_mm > 170:
-        raise ValueError(f"export is {w_mm:.1f} x {h_mm:.1f} mm, over the 179.4 x 170 cap")
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=osp.join(
@@ -266,7 +243,9 @@ def main():
     os.makedirs(osp.dirname(args.out), exist_ok=True)
     build(args.out)
     if args.drawio:
-        export(args.drawio, args.out, osp.splitext(osp.basename(args.out))[0])
+        stem = osp.splitext(osp.basename(args.out))[0]
+        export(args.drawio, args.out, osp.join(IMAGES_DIR, stem + ".svg"),
+               osp.join(IMAGES_DIR, stem + ".png"))
 
 
 if __name__ == "__main__":

@@ -12,6 +12,12 @@
 # A point is 1 / 0.72 units, which is why a font typed as 8.3 prints at 5.98 pt and a
 # 0.4 pt line is strokeWidth 0.56.
 
+import os
+import os.path as osp
+import re
+import subprocess
+import sys
+import time
 import xml.etree.ElementTree as ET
 
 U = 706.6915 / 179.4  # canvas units per mm
@@ -97,3 +103,42 @@ def line_style(color, width_pt, dashed=False, arrow=False):
     if dashed:
         s += "dashed=1;dashPattern=1 2;"
     return s
+
+
+def export(drawio_bin, src, svg_path, png_path, scale=3):
+    """Export `src` to a true-size SVG and a scaled PNG, and measure it against the cap.
+
+    THE EXIT CODE CANNOT BE USED. xvfb-run returns 1 after a successful export because its
+    own cleanup kill finds no process, and drawio-desktop returns 0 in cases where it wrote
+    nothing. The presence of the output file cannot be used either: a previous export's
+    file is still sitting there, so a failed run reports the size of the LAST good figure
+    and everything downstream keeps using it. The condition is therefore that the file be
+    written DURING this call, which is what the mtime stamp below checks.
+
+    On Linux the input path goes FIRST: drawio-desktop 24.7 rejects an input placed after
+    the Electron flags.
+    """
+    stamp = time.time()
+    for fmt, out, extra in (("svg", svg_path, []), ("png", png_path, ["-s", str(scale)])):
+        os.makedirs(osp.dirname(out), exist_ok=True)
+        if sys.platform == "darwin":
+            cmd = [drawio_bin, "-x", "-f", fmt, *extra, "-o", out, src]
+        else:
+            cmd = ["xvfb-run", "-a", drawio_bin, src, "--no-sandbox", "--disable-gpu",
+                   "-x", "-f", fmt, *extra, "-o", out]
+        r = subprocess.run(cmd, capture_output=True)
+        fresh = osp.exists(out) and osp.getmtime(out) >= stamp and osp.getsize(out) > 0
+        if not fresh:
+            raise RuntimeError(
+                f"draw.io wrote no {fmt}: {' '.join(cmd)}\n"
+                f"{r.stdout.decode(errors='replace')}{r.stderr.decode(errors='replace')}")
+    head = open(svg_path, encoding="utf-8").read(2000)
+    m = re.search(r'width="([\d.]+)px" height="([\d.]+)px"', head)
+    if m is None:
+        raise ValueError(f"{svg_path}: no px width/height on the <svg> element")
+    w_mm, h_mm = float(m.group(1)) / U, float(m.group(2)) / U
+    print(f"exported {w_mm:.1f} x {h_mm:.1f} mm -> {svg_path}\n         {png_path}")
+    if w_mm > PAGE_W_MM or h_mm > PAGE_H_MM:
+        raise ValueError(f"export is {w_mm:.1f} x {h_mm:.1f} mm, over the "
+                         f"{PAGE_W_MM} x {PAGE_H_MM} cap")
+    return w_mm, h_mm

@@ -126,7 +126,7 @@ change of direction rather than the continuation of a trend.
 \panelrow{\panel{d}{figures/ffa_epistatic_path_panels_top.pdf}}
 \caption{\textbf{Improving combinations exist, and almost none of them is reachable one
 deletion at a time.} \textbf{a}, Percentage of combinations exceeding the base strain at
-one, two and three deletions (bars, counts above), with the best titer at each order (lilac
+one, two and three deletions (bars, counts above), with the best titer at each order (amber
 line, right axis). One of ten single deletions improves titer; the best triple reaches
 $2.05\times$. \textbf{b}, A greedy campaign (brick) takes the best strictly improving single
 deletion each round and stops when none improves. It reaches $1.80\times$ after two
@@ -142,6 +142,7 @@ None of the six has a monotone route. Error bars are standard errors of the stra
 \label{fig:inaccessible}
 \end{figure*}
 
+\FloatBarrier
 \subsection*{Improving combinations are not reachable one deletion at a time}
 
 An interaction score says a combination is surprising. It does not say whether a campaign
@@ -229,6 +230,7 @@ on, what it is fit to, and the reading of the system under which it is the natur
 Equations in the Methods.}{fig:model-intuition}
 \end{figure*}
 
+\FloatBarrier
 \subsection*{What counts as an interaction depends on the null and on the scale}
 
 Equation~\ref{eq:tau} is one choice among several, and a claim that rests on it should say
@@ -272,6 +274,7 @@ $r = 0.91$ from C16:0 and C18:1 but at $r = -0.28$ from C14:0
 (\suppnoteref{note:species}). The four expectations themselves, and what each one costs to
 adopt, are written out in the Methods.
 
+\FloatBarrier
 \subsection*{No interaction network on hand predicts which combinations interact}
 
 If interactions were predictable from prior knowledge, a campaign could avoid the problem by
@@ -292,8 +295,18 @@ set with no visible relation to which factors regulate which fatty acid genes
 (Fig.~\ref{fig:network}).
 
 \begin{figure*}[t]
-\tcfig{figures/ffa-epistasis-fig4-network-overlay.pdf}{\textbf{Trigenic interactions on total fatty acid
-titer, drawn upstream of the pathway they act through.} The ten deleted transcription
+\panelrow{\panel{a}{figures/ffa_ipath_map.pdf}}
+\panelrow{\panel{b}{figures/ffa-epistasis-fig4-network-overlay.pdf}}
+\caption{\textbf{Trigenic interactions on total fatty acid
+titer, drawn upstream of the pathway they act through.} \textbf{a}, Where the measured
+chemistry sits in metabolism, on the iPath3 reference map of KEGG's global metabolic
+pathways. Colored are the yeast reactions of glycolysis and gluconeogenesis, pyruvate
+metabolism, the citrate cycle, fatty acid biosynthesis, elongation and desaturation, and
+fatty acid degradation, taken from KEGG's own gene lists for those pathways rather than
+chosen here. The two measured species the reference map carries a node for are marked, as
+are four named intermediates on the route; the other three measured species have no node
+on that map. The map's own labels are not reproduced, because at this size they would
+print below the minimum type size. \textbf{b}, The ten deleted transcription
 factors are arranged in a circle at left. Edges within the circle are the 86 trigenic
 interactions significant at a 5\% false discovery rate within the total-titer readout under
 the multiplicative model, 75 negative (brick) and 11 positive (blue), each drawn as the
@@ -312,9 +325,11 @@ The columns to the right are the 13 core fatty acid pathway genes, the 64 reacti
 catalyze, the intermediates those reactions consume or produce, and the 31 measured
 species, one node per compartment (peroxisome, ER membrane, lipid particle) with a bracket
 per species. LPA, 1-acyl-sn-glycerol 3-phosphate; PA, phosphatidate, written as the two
-acyl chains.}{fig:network}
+acyl chains.}
+\label{fig:network}
 \end{figure*}
 
+\FloatBarrier
 \subsection*{A model trained on growth interactions does not predict the titer interactions}
 
 The other place a campaign could look for a predictor is a model trained on measured
@@ -374,3 +389,5 @@ below zero, purple above; filled where the titer interaction is FDR-called), 45\
 18\% measured positive, Fisher $P = 0.016$. Every $P$ is nominal among ten related tests on
 one set of 120 triples.}{fig:model-score}
 \end{figure*}
+
+\FloatBarrier

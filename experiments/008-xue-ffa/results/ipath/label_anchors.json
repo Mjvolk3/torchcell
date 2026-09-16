@@ -1,0 +1,94 @@
+[
+  {
+    "compound": "C00022",
+    "label": "pyruvate",
+    "color": "#666666",
+    "positions_mm": [
+      [
+        71.54,
+        19.6
+      ],
+      [
+        51.98,
+        42.41
+      ]
+    ]
+  },
+  {
+    "compound": "C00024",
+    "label": "acetyl-CoA",
+    "color": "#666666",
+    "positions_mm": [
+      [
+        71.54,
+        24.64
+      ]
+    ]
+  },
+  {
+    "compound": "C00158",
+    "label": "citrate",
+    "color": "#666666",
+    "positions_mm": [
+      [
+        74.25,
+        30.61
+      ]
+    ]
+  },
+  {
+    "compound": "C00083",
+    "label": "malonyl-CoA",
+    "color": "#666666",
+    "positions_mm": [
+      [
+        25.75,
+        9.59
+      ],
+      [
+        66.83,
+        27.23
+      ]
+    ]
+  },
+  {
+    "compound": "C06424",
+    "label": "C14:0 myristate",
+    "color": "#6C8EBF",
+    "positions_mm": [
+      [
+        34.51,
+        28.98
+      ]
+    ]
+  },
+  {
+    "compound": "C00249",
+    "label": "C16:0 palmitate",
+    "color": "#6C8EBF",
+    "positions_mm": [
+      [
+        49.31,
+        26.52
+      ]
+    ]
+  },
+  {
+    "compound": "C08362",
+    "label": "C16:1 palmitoleate",
+    "color": "#6C8EBF",
+    "positions_mm": []
+  },
+  {
+    "compound": "C01530",
+    "label": "C18:0 stearate",
+    "color": "#6C8EBF",
+    "positions_mm": []
+  },
+  {
+    "compound": "C00712",
+    "label": "C18:1 oleate",
+    "color": "#6C8EBF",
+    "positions_mm": []
+  }
+]

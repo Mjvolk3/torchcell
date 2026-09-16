@@ -22,8 +22,9 @@
 #
 #   hidden 90, 9 heads, 2 layers, preproc 2   the wave-9 baseline (jobs 2009, 2021, 2022)
 #   hidden 54, 9 heads, 2 layers, preproc 2   0.6x the width (54, not 45: the perturbation
-#                                             head has 6 cross-attention heads and 45 is
-#                                             not a multiple of 6; jobs 2039-2041 died on it)
+#                                             transform has 6 cross-attention heads and 45
+#                                             is not a multiple of 6; jobs 2039-2041 died
+#                                             on it)
 #   hidden 24, 8 heads, 1 layer,  preproc 1   a quarter of the width and one block
 #   hidden 12, 4 heads, 1 layer,  preproc 1   the floor
 #
@@ -55,6 +56,16 @@
 #   ESS_HIDDEN=54 ESS_HEADS=9 ESS_LAYERS=2 ESS_SEED=2700 \
 #       bash experiments/027-betaxanthin-metabolic/scripts/freeze_and_submit.sh \
 #       experiments/027-betaxanthin-metabolic/scripts/gh_wave11_ess_size.slurm
+#
+# THE 2026-09-16 RERUNS CARRY ESS_SUFFIX=_nohead. Two things changed under the ladder that
+# day. The inherited perturbation readout head, 16,381 parameters at width 90 that no 027
+# readout uses and that received no gradient on any cell, is no longer built, which shifts
+# the RNG stream at construction, so a rerun is not bit-identical to the cell it repeats.
+# And the per-gene prediction dump is now named after the result file: under the old
+# `pooled_essentiality_s<seed>.json` name every width of this ladder overwrote the others,
+# and the width-24 and wave-9 width-90 per-gene predictions are gone (see
+# archive_essentiality_dumps.py). The suffix keeps the rerun's result file from
+# overwriting the old cell's, which still holds that cell's curves and test metrics.
 #
 # MEMORY. 12g, against a measured peak resident set of 5.4 GB on the wave-10 cells (cgroup
 # memory.peak on jobs 2026, 2027 and 2030, 2026-09-15). The node holds 513 GB and the
@@ -96,7 +107,8 @@ LAYERS="${ESS_LAYERS:-2}"
 PREPROC="${ESS_PREPROC:-2}"
 SEED="${ESS_SEED:-2700}"
 EPOCHS="${ESS_EPOCHS:-80}"
-echo "host $(hostname) gpu $CUDA_VISIBLE_DEVICES; hidden $HIDDEN heads $HEADS layers $LAYERS preproc $PREPROC seed $SEED"
+SUFFIX="${ESS_SUFFIX:-}"
+echo "host $(hostname) gpu $CUDA_VISIBLE_DEVICES; hidden $HIDDEN heads $HEADS layers $LAYERS preproc $PREPROC seed $SEED suffix '$SUFFIX'"
 
 python experiments/027-betaxanthin-metabolic/scripts/train_bx.py \
     --arm pooled \
@@ -104,5 +116,5 @@ python experiments/027-betaxanthin-metabolic/scripts/train_bx.py \
     --head essentiality \
     --hidden "$HIDDEN" --attention-heads "$HEADS" --layers "$LAYERS" \
     --preprocessor-layers "$PREPROC" \
-    --wandb-group gh_wave11_esssize --tag "_w11esssize_h${HIDDEN}p${PREPROC}" \
-    --out "wave11_ess_pool_h${HIDDEN}l${LAYERS}p${PREPROC}_e${EPOCHS}_s${SEED}.json"
+    --wandb-group gh_wave11_esssize --tag "_w11esssize_h${HIDDEN}p${PREPROC}${SUFFIX}" \
+    --out "wave11_ess_pool_h${HIDDEN}l${LAYERS}p${PREPROC}_e${EPOCHS}_s${SEED}${SUFFIX}.json"

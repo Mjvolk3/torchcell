@@ -283,12 +283,14 @@ def record_genes(dataset: Any) -> dict[int, list[str]]:
 
 def dump_targets(head: str) -> dict[str, Any]:
     """{gene -> pinned target} from the wave-7 ``pooled`` dumps, for the identity check."""
+    # Selected by CONTENT, not by file name: since 2026-09-16 a dump is named after its
+    # result file, so the arm no longer appears as a prefix.
     for name in sorted(os.listdir(DUMP_DIR)):
-        if not name.startswith("pooled") or not name.endswith(".json"):
+        if not name.endswith(".json"):
             continue
         with open(osp.join(DUMP_DIR, name)) as fh:
             dump = json.load(fh)
-        if dump["head"] != head:
+        if dump["head"] != head or dump["cell"]["arm"] != "pooled":
             continue
         return {
             rec["genes"][0]: rec["target"]

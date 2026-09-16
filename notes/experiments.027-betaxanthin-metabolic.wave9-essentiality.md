@@ -493,3 +493,61 @@ analysis 0.69.
 * **It fits the collapse pattern exactly.** The pooled arm's prediction spread ratio is 3.12
   and the flux arm's is 0.0005. Every readout through the flux layer collapses; no readout on
   the pooled context does.
+
+## 2026.09.16 - FCL reread, the dead readout head removed, and the dumps that collided
+
+**Correction to the comparator above.** "Published on this split: flux cone learning 0.73,
+flux balance analysis 0.69" mixes three gene sets. Reread against the authors' own
+`fig3a.ipynb` and Supplementary Table S5, the paper prints three yeast AUROCs: the Fig. 3a
+legend's 0.78 +/- 0.065 is five cross-validation folds INSIDE the 898 training genes, Table
+S5's 0.73 is the 223 held-out genes, and FBA's 0.69 is all labeled genes. All three are now
+reproduced by `fcl_comparison.py` (0.7770 +/- 0.0650, 0.7308, 0.6931) before it reports
+anything. On the held-out genes FBA is 0.630; on the 195 of them our cell graph resolves, FCL
+is 0.742 and FBA 0.640, and those are the comparators for a cell scored on the held-out
+genes. Full table in [[experiments.027-betaxanthin-metabolic.scripts.fcl_comparison]].
+
+**Whose labels.** Ours are theirs: the trainer joins Merzbacher's released split to each
+single-deletion genotype by deleted gene, the graph build contributes genotypes and the cell
+graph only, the 223 held-out genes are pinned as test and validation is drawn from the 898.
+SGD's list agrees with the released label on 98.8 percent of the 1,121 genes.
+
+**The perturbation readout head is no longer built** (`perturbation_head_config={"enabled":
+False}` on every 027 cell). No 027 readout used it, every call site discarded the first
+return value, and the per-module gradient report showed it received no gradient; it held
+16,381 parameters at width 90 and 1,201 at width 24. Job 2054, the two-epoch smoke on the
+new code, reports 942,120 parameters at width 90 against 958,501 before, and no
+`perturbation_head` line in the tally. Removing it shifts the RNG stream at construction,
+so a cell built from today is not bit-identical at a seed to one built before; reruns carry
+`_nohead` in the result name and in the comparison label.
+
+**The per-gene prediction dumps collided across widths.** The dump was named
+`<arm>_essentiality_s<seed>.json`, so every width of the wave-11 ladder wrote the same three
+files and the last cell to finish won. Found when the comparison's "pooled" seeds moved
+without a rerun: `pooled_essentiality_s2700.json` held the width-12 cell. Lost for good, the
+per-gene predictions of the wave-9 width-90 pooled cells (jobs 2009, 2021, 2022) and the
+width-24 cells (2042 to 2044); their result files keep every curve and metric, including the
+0.7927 / 0.7882 / 0.5784 and 0.8072 test AUROCs quoted from them. The trainer now names the
+dump after the result file, and `fcl_comparison.py` resolves a dump only through its result
+and checks cell identity plus the result's own AUROC. Details in
+[[experiments.027-betaxanthin-metabolic.scripts.archive_essentiality_dumps]].
+
+**Queue.** Jobs 2050 to 2053 (width-54 seed 2702 and the three width-90 baselines) were
+cancelled at under ten minutes because they would have overwritten the surviving dumps
+under the old name and still carried the dead head. Resubmitted on the new code from frozen
+snapshots, all pooled, 80 epochs, `_nohead`:
+
+| job | width | heads | layers | preprocessor | seed |
+|---|---:|---:|---:|---:|---:|
+| 2062 | 54 | 9 | 2 | 2 | 2702 |
+| 2063, 2064, 2065 | 90 | 9 | 2 | 2 | 2700, 2701, 2702 |
+| 2066, 2067, 2068 | 24 | 8 | 1 | 1 | 2700, 2701, 2702 |
+
+Jobs 2048 and 2049 (width 54, seeds 2700 and 2701, old code) were left running; a watcher
+runs the archive script the moment they leave the queue so their dumps are captured under
+their result names before anything else can touch the legacy files.
+
+**Scored today on the 195 genes, verified dumps only** (`results/fcl_comparison.json`): the
+width-12 pooled cells at 0.8011, 0.7860 and 0.7958 against FCL 0.7421, three of three seeds
+above it by 0.044 to 0.059 with gene-bootstrap intervals about 0.17 wide; the wave-9 flux
+biomass cells at 0.5398, 0.7579 and 0.5115. The width-90 and width-24 pooled rungs are
+unscored until the reruns land.

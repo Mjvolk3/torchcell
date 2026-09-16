@@ -157,18 +157,16 @@ def _dump_targets(head: str, arm: str) -> dict[str, Any]:
     agree; a disagreement means two dumps were written against different builds and the
     comparison would be silently across gene sets.
     """
-    files = sorted(
-        f
-        for f in os.listdir(DUMP_DIR)
-        if f.endswith(".json") and f.startswith(arm)
-    )
+    # Selected by CONTENT, not by file name: since 2026-09-16 a dump is named after its
+    # result file, so the arm no longer appears as a prefix.
+    files = sorted(f for f in os.listdir(DUMP_DIR) if f.endswith(".json"))
     picked: list[str] = []
     targets: dict[str, Any] | None = None
     for name in files:
         path = osp.join(DUMP_DIR, name)
         with open(path) as fh:
             dump = json.load(fh)
-        if dump["head"] != head:
+        if dump["head"] != head or dump["cell"]["arm"] != arm:
             continue
         here = {
             rec["genes"][0]: rec["target"]

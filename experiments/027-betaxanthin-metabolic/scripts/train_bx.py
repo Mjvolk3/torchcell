@@ -583,8 +583,10 @@ class BxCell(BaseModel):
     pert_heads: int = Field(
         default=6,
         description=(
-            "Perturbation-head attention heads. 6 is what 019's gh_metabolism_000 and the "
-            "027 grid used; 9 is what the 020 grid that trained used. Must divide hidden."
+            "Cross-attention heads of the perturbation TRANSFORM (the readout head that "
+            "shares the config key is not built in 027). 6 is what 019's gh_metabolism_000 "
+            "and the 027 grid used; 9 is what the 020 grid that trained used. Must divide "
+            "hidden."
         ),
     )
     # WAVE 5 (2026-09-10). Three knobs on the module itself, all defaulting to what waves 1
@@ -2048,20 +2050,21 @@ def build_cell(
         attention_heads if attention_heads is not None else cfg.model.attention_heads
     )
     # BOTH HEAD COUNTS DIVIDE THE WIDTH, and the second one is easy to forget. The
-    # transformer's self-attention uses `attention_heads`; the perturbation head's
-    # cross-attention uses `pert_heads`, which defaults to 6 and is NOT the same number.
-    # Jobs 2039 to 2041 asked for width 45 with 9 attention heads, which divides, and died
-    # 17 seconds in on `embed_dim must be divisible by num_heads` from the perturbation
-    # head, because 45 is not a multiple of 6. A width must be a multiple of the least
-    # common multiple of the two: with the defaults 9 and 6 that is 18, so the ladder runs
-    # 90, 54, 36 and 18 unless the head counts move with it.
+    # transformer's self-attention uses `attention_heads`; the perturbation TRANSFORM's
+    # cross-attention (the equivariant operator that injects the deletion, not the readout
+    # head, which 027 no longer builds) uses `pert_heads`, which defaults to 6 and is NOT
+    # the same number. Jobs 2039 to 2041 asked for width 45 with 9 attention heads, which
+    # divides, and died 17 seconds in on `embed_dim must be divisible by num_heads` from
+    # that cross-attention, because 45 is not a multiple of 6. A width must be a multiple
+    # of the least common multiple of the two: with the defaults 9 and 6 that is 18, so
+    # the ladder runs 90, 54, 36 and 18 unless the head counts move with it.
     for label, count in (("attention head count", n_heads), ("pert_heads", pert_heads)):
         assert width % count == 0, (
             f"the transformer width {width} is not divisible by the {label} {count}. "
             f"Both attention head counts must divide the width: --attention-heads "
             f"({n_heads}) for the transformer and --pert-heads ({pert_heads}) for the "
-            "perturbation head's cross-attention. With the defaults the width must be a "
-            "multiple of 18."
+            "perturbation transform's cross-attention. With the defaults the width must "
+            "be a multiple of 18."
         )
     assert armcfg.base_arm in ARMS, (
         f"arm {arm!r} names base_arm={armcfg.base_arm!r}, which is not in 026's ARMS "
@@ -2240,7 +2243,7 @@ def _module_path(name: str) -> str:
 
     EVERY flux readout stores the backbone as ``self.model``, so on a flux arm the raw
     parameter names all begin ``model.`` and grouping on the first component puts the
-    embedding preprocessor, the transformer, the perturbation head AND THE FLUX LAYER into
+    embedding preprocessor, the transformer, the perturbation transform AND THE FLUX LAYER into
     one bucket called ``model``. Measured 2026-09-15 on a synthetic wrapper: the groups came
     back as ``{'model': ..., 'readout': ...}``, two numbers for a seven-module network. The
     pooled cells are unwrapped, which is why wave 11 looked correct and hid this.
@@ -4210,9 +4213,21 @@ def build_model_for_cell(
             "size": cell.hidden,
             "preprocessor": {"num_layers": cell.preprocessor_layers, "dropout": 0.1},
         },
-        # 6, from 019's conf, or 9 as the 020 grid ran. The default is 8, and 90 is not
-        # divisible by 8, so the perturbation head's cross-attention refuses to build.
-        perturbation_head_config={"num_heads": cell.pert_heads, "dropout": 0.1},
+        # `num_heads` feeds the perturbation TRANSFORM's cross-attention: 6 from 019's
+        # conf, or 9 as the 020 grid ran; the default 8 does not divide 90. `enabled: False`
+        # builds no perturbation READOUT head. Every 027 readout lives in `heads_config` or
+        # in a wrapper, every call site here discards the first return value, and the head
+        # received no gradient on any cell (per-module gradient report, wave 11,
+        # 2026-09-15), so it was 16,381 dead parameters at width 90 and 1,201 at width 24
+        # (job 2054: the width-90 tally went from 958,501 to 942,120). Removing it shifts the
+        # RNG stream at construction: a cell built after 2026-09-16 is not bit-identical at
+        # the same seed to one built before, which is why the wave-11 cells are not mixed
+        # with later ones in a seed-paired comparison.
+        perturbation_head_config={
+            "num_heads": cell.pert_heads,
+            "dropout": 0.1,
+            "enabled": False,
+        },
         attention_mask_config=ATTENTION_MASK_CONFIG if cell.attention_mask else None,
         # The model reads cell_graph["gene"].x only when it is TOLD it has precomputed
         # embeddings; without this it looks for a learnable table that is now disabled and
@@ -4527,8 +4542,13 @@ def run_cell(
     dump_predictions: bool = True,
     compute_feasibility: bool = True,
     checkpoint_stem: str | None = None,
+    dump_stem: str | None = None,
 ) -> dict[str, Any]:
-    """Train one cell, select an epoch on validation, score it on the pinned test genes."""
+    """Train one cell, select an epoch on validation, score it on the pinned test genes.
+
+    ``dump_stem`` names the per-gene prediction dump under ``TEST_PRED_DIR`` and is the
+    result file's stem, so it is required whenever ``dump_predictions`` is True.
+    """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, head_specs, main_head, flux_meta = build_model_for_cell(
         cell, cfg, dataset, device
@@ -4931,6 +4951,7 @@ def run_cell(
         cell,
         dump_predictions,
         dist_head,
+        dump_stem,
     )
     result: dict[str, Any] = {
         "cell": cell.model_dump(),
@@ -5612,6 +5633,7 @@ def _score_test(
     cell: BxCell,
     dump_predictions: bool,
     dist_head: "DistHead | None" = None,
+    dump_stem: str | None = None,
 ) -> dict[str, Any]:
     """The prespecified test metrics, on the pinned genes and on the whole test split.
 
@@ -5694,29 +5716,24 @@ def _score_test(
         }
 
     if dump_predictions:
+        assert dump_stem is not None, (
+            "dump_predictions=True needs dump_stem, the result file's stem, to name the dump."
+        )
         os.makedirs(TEST_PRED_DIR, exist_ok=True)
-        # THE STEM HAS TO NAME THE READOUT, or two arms collide on one file. Wave 8 ran
-        # `bxprec` and `bxscalar` on the SAME base arm and the same seed, so both dumped to
-        # `flux_projection_anchored_s2700.json` and the second overwrote the first; wave 9
-        # would do the same with `ibprec` and `ibscalar`. Only a NON-DEFAULT readout adds
-        # the suffix, so every file the existing Merzbacher head-to-head scripts read keeps
-        # the name it has.
-        readout = {
-            HEAD: (cell.bx_readout, BX_READOUT_FLUX_SCALAR),
-            ISOBUTANOL_HEAD: (cell.ib_readout, IB_READOUT_FLUX_SCALAR),
-            AUX_HEAD: (cell.aa_readout, AA_READOUT_TURNOVER),
-            # The essentiality head has exactly one readout, the biomass column on a flux arm
-            # and the scalar head otherwise, and no flag varies it. It contributes no suffix,
-            # and the arm name already separates the two cells that run it.
-            ESSENTIALITY_HEAD: None,
-        }[head_name]
-        parts = [cell.arm]
-        if head_name != HEAD:
-            parts.append(head_name)
-        if readout is not None and readout[0] != readout[1]:
-            parts.append(readout[0])
-        stem = "_".join([*parts, f"s{cell.seed}"])
-        path = osp.join(TEST_PRED_DIR, f"{stem}.json")
+        # THE DUMP IS NAMED AFTER THE RESULT FILE, so two cells whose results are distinct
+        # cannot share a dump. The stem used to be arm + head + readout + seed, which
+        # carries no architecture: the wave-11 size ladder ran widths 12, 24, 54 and 90 on
+        # the pooled essentiality arm, every one of them wrote
+        # `pooled_essentiality_s<seed>.json`, and the last to finish won. Measured
+        # 2026-09-16: the file fcl_comparison.py read as the wave-9 width-90 arm held the
+        # width-12 cell, and the width-24 and wave-9 width-90 per-gene predictions were
+        # gone (the result files keep their metrics; only the per-gene dumps were lost).
+        # Wave 8 had already hit the same collision between `bxprec` and `bxscalar` on one
+        # base arm and patched the stem with the readout name; naming by the result closes
+        # every variant of it. `test.dump_path` records the file, and a reader resolves a
+        # dump THROUGH the result that produced it, checking the dump's `cell` against the
+        # result's, rather than by guessing a name.
+        path = osp.join(TEST_PRED_DIR, f"{dump_stem}.json")
         with open(path, "w") as fh:
             json.dump(
                 {
@@ -6256,6 +6273,7 @@ def main() -> None:
         on_epoch=(lambda row: wandb.log(row, step=int(row["epoch"]))) if run else None,
         compute_feasibility=not args.no_feasibility,
         checkpoint_stem=None if args.no_checkpoint else osp.splitext(out)[0],
+        dump_stem=osp.splitext(out)[0],
     )
     if run is not None:
         pin = result["test"]["pinned"]

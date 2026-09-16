@@ -588,7 +588,7 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData, *args: Any, **kwargs: Any
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor | None, dict[str, torch.Tensor]]:
         """Run the inherited forward, then append the metabolism head outputs.
 
         The encoder, graph-regularization loss and equivariant perturbation operator are

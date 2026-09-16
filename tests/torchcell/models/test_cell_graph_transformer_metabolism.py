@@ -185,6 +185,54 @@ def test_num_parameters_includes_metabolism_heads() -> None:
     assert counts["total"] == sum(v for k, v in counts.items() if k != "total")
 
 
+def test_perturbation_readout_head_can_be_left_out() -> None:
+    """``perturbation_head_config={"enabled": False}`` builds no readout head at all.
+
+    027 reads every prediction from ``head_outputs`` and discards the first return value,
+    so the inherited gene-interaction head was 16,381 parameters at width 90 that received
+    no gradient on any cell. Left out, it must be absent from the parameters, absent from
+    the tally, and the forward must still emit every configured head with a gradient path.
+    """
+    torch.manual_seed(3)
+    model = CellGraphTransformerMetabolism(
+        gene_num=GENE_NUM,
+        hidden_channels=HIDDEN,
+        num_transformer_layers=NUM_LAYERS,
+        num_attention_heads=NUM_HEADS,
+        cell_graph=_make_cell_graph(),
+        heads_config=_metabolism_heads_config(),
+        perturbation_head_config={"num_heads": NUM_HEADS, "enabled": False},
+    )
+    assert model.perturbation_head is None
+    assert not any(
+        name.startswith("perturbation_head.") for name, _ in model.named_parameters()
+    )
+    counts = model.num_parameters
+    assert "perturbation_head" not in counts
+    assert counts["total"] == sum(v for k, v in counts.items() if k != "total")
+    # The transform that injects the deletion is still there; only the readout is gone.
+    assert counts["perturbation_transform"] > 0
+
+    predictions, reps = model(_make_cell_graph(), _make_batch())
+    assert predictions is None
+    assert set(reps["head_outputs"]) == {"betaxanthin", "beta_carotene", "mulleder19"}
+    sum(out.sum() for out in reps["head_outputs"].values()).backward()
+    assert any(
+        p.grad is not None for p in model.get_submodule("betaxanthin_head").parameters()
+    )
+    for layer in model.transformer_layers:
+        assert any(p.grad is not None for p in layer.parameters())
+
+
+def test_perturbation_readout_head_is_built_by_default() -> None:
+    """Omitting the key keeps the head, so every trainer that reads ``predictions`` stands."""
+    model = _build(CellGraphTransformerMetabolism, _metabolism_heads_config())
+    assert model.perturbation_head is not None
+    assert model.num_parameters["perturbation_head"] > 0
+    predictions, _ = model(_make_cell_graph(), _make_batch())
+    assert predictions is not None and predictions.shape == (BATCH_SIZE, 1)
+
+
 def test_forward_accepts_every_parent_keyword() -> None:
     """The subclass must not pin the parent's forward signature.
 

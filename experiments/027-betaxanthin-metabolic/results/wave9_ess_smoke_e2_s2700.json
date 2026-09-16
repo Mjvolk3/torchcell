@@ -14,6 +14,7 @@
     "weight_decay": 0.0001,
     "split_seed": 0,
     "select_smoothing_window": 5,
+    "preprocessor_layers": 2,
     "crps": false,
     "graph_reg": true,
     "abort_on_collapse": false,
@@ -31,6 +32,7 @@
     "aa_readout": "flux_metabolite",
     "target_log10_molar": false,
     "dist": "crps",
+    "crps_sigma_fixed": null,
     "bx_readout": "flux_scalar",
     "volume_table": "assumed",
     "conc_space": "mixture",
@@ -60,13 +62,13 @@
   },
   "select_epoch": 1,
   "select_rule": "raw_argmax_short_run",
-  "select_val_pearson": 0.7188552188552189,
+  "select_val_pearson": 0.38215488215488214,
   "test": {
     "pinned": {
       "n": 195,
       "n_essential": 31,
       "n_nonessential": 164,
-      "auroc": 0.5340283241542093,
+      "auroc": 0.6310975609756098,
       "accuracy": 0.841025641025641,
       "majority_class_rate": 0.841025641025641,
       "recall_essential": 0.0,
@@ -79,7 +81,7 @@
       "n": 268,
       "n_essential": 43,
       "n_nonessential": 225,
-      "auroc": 0.5088372093023256,
+      "auroc": 0.6395865633074935,
       "accuracy": 0.8395522388059702,
       "majority_class_rate": 0.8395522388059702,
       "recall_essential": 0.0,
@@ -88,32 +90,48 @@
       "precision_nonessential": 0.8395522388059702,
       "threshold": "logit > 0, i.e. predicted probability > 0.5"
     },
-    "dump_path": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2700.json"
+    "dump_path": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_smoke_e2_s2700.json"
   },
   "history": [
     {
       "epoch": 0,
-      "train_loss": 1.4415244238717215,
-      "train_data_loss": 0.4692334413528442,
-      "val_loss": 0.3698675092061361,
-      "val_pearson": 0.6691919191919192,
-      "val_pred_sd_ratio": 0.0002193437539972365,
+      "train_loss": 1.4319496018545967,
+      "train_data_loss": 0.4601759889296123,
+      "val_loss": 0.3742205238342285,
+      "val_pearson": 0.3686868686868687,
+      "val_pred_sd_ratio": 0.0001596728543518111,
       "n_val": 75,
-      "graph_reg_loss": 0.9706706404685974,
+      "graph_reg_loss": 0.9696375727653503,
       "constraint_scale": 1.0,
-      "train_constraint_loss": 0.0
+      "train_constraint_loss": 0.0,
+      "grad_norm_mean": 1.0756147218602043,
+      "grad_norm_cls_token_mean": 0.015846250102491608,
+      "grad_norm_embedding_preprocessor_mean": 0.29889572657551766,
+      "grad_norm_transformer_layers_mean": 0.22430548297777286,
+      "grad_norm_perturbation_transform_mean": 0.1494197403181135,
+      "grad_norm_essentiality_head_mean": 0.9008773334322827,
+      "grad_norm_max": 7.1103196144104,
+      "grad_clipped_frac": 0.0
     },
     {
       "epoch": 1,
-      "train_loss": 1.4161032097680228,
-      "train_data_loss": 0.4525585632239069,
-      "val_loss": 0.40861145973205565,
-      "val_pearson": 0.7188552188552189,
-      "val_pred_sd_ratio": 0.0002957897959277034,
+      "train_loss": 1.3878481439181736,
+      "train_data_loss": 0.45237634969609125,
+      "val_loss": 0.37385571161905923,
+      "val_pearson": 0.38215488215488214,
+      "val_pred_sd_ratio": 0.0002578493731562048,
       "n_val": 75,
-      "graph_reg_loss": 0.9467463493347168,
+      "graph_reg_loss": 0.8904322981834412,
       "constraint_scale": 1.0,
-      "train_constraint_loss": 0.0
+      "train_constraint_loss": 0.0,
+      "grad_norm_mean": 0.9513388761452266,
+      "grad_norm_cls_token_mean": 0.0059092014138039314,
+      "grad_norm_embedding_preprocessor_mean": 0.16873743543203834,
+      "grad_norm_transformer_layers_mean": 0.2679539755945326,
+      "grad_norm_perturbation_transform_mean": 0.10077895462275213,
+      "grad_norm_essentiality_head_mean": 0.8092492784765815,
+      "grad_norm_max": 4.875886917114258,
+      "grad_clipped_frac": 0.0
     }
   ],
   "flux_meta": {
@@ -199,16 +217,15 @@
     "cls_token": 90,
     "transformer_layers": 196740,
     "perturbation_transform": 98370,
-    "perturbation_head": 16381,
     "essentiality_head": 24481,
-    "total": 958501
+    "total": 942120
   },
-  "wall_time_s": 133.1996364593506,
+  "wall_time_s": 130.52391028404236,
   "code_provenance": {
-    "train_bx.py": "9ef410bc108b7dfe5ef9196d3a5e35e92eac43100e9648f7fdfb1e6af9ebbd11",
-    "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260915-120741-gh_ess_smoke_e2_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+    "train_bx.py": "a8e042a1b76d35090faa31d132f690924c6546d26ec7db01bb13fcab5796a50a",
+    "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260916-003057-gh_ess_smoke_e2_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
     "flux_layer.py": "e0764931b410ce84c5bca3ec666948702726f86786411527b5f82c7a0176ef93",
-    "flux_layer.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260915-120741-gh_ess_smoke_e2_s2700/torchcell/metabolism/flux_layer.py"
+    "flux_layer.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260916-003057-gh_ess_smoke_e2_s2700/torchcell/metabolism/flux_layer.py"
   },
   "calibration": {
     "available": false,
@@ -257,6 +274,6 @@
     "groups": {}
   },
   "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave9_ess_smoke_e2_s2700.pt",
-  "wandb_run_id": "540dihuc",
-  "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/540dihuc"
+  "wandb_run_id": "kar2jqdu",
+  "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/kar2jqdu"
 }

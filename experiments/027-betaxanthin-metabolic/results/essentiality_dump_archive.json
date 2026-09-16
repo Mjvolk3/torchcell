@@ -1,0 +1,151 @@
+{
+  "pred_dir": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7",
+  "statuses": [
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h12l1p1_e80_s2700.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h12l1p1_e80_s2700.json",
+      "status": "present",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2700.json",
+      "legacy_holds": null
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h12l1p1_e80_s2701.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h12l1p1_e80_s2701.json",
+      "status": "present",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2701.json",
+      "legacy_holds": null
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h12l1p1_e80_s2702.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h12l1p1_e80_s2702.json",
+      "status": "present",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2702.json",
+      "legacy_holds": null
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h24l1p1_e80_s2700.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h24l1p1_e80_s2700.json",
+      "status": "lost",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2700.json",
+      "legacy_holds": {
+        "head": "essentiality",
+        "arm": "pooled",
+        "seed": 2700,
+        "hidden": 12,
+        "layers": 1,
+        "attention_heads": 4,
+        "preprocessor_layers": 1,
+        "epochs": 80
+      }
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h24l1p1_e80_s2701.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h24l1p1_e80_s2701.json",
+      "status": "lost",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2701.json",
+      "legacy_holds": {
+        "head": "essentiality",
+        "arm": "pooled",
+        "seed": 2701,
+        "hidden": 12,
+        "layers": 1,
+        "attention_heads": 4,
+        "preprocessor_layers": 1,
+        "epochs": 80
+      }
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h24l1p1_e80_s2702.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h24l1p1_e80_s2702.json",
+      "status": "lost",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2702.json",
+      "legacy_holds": {
+        "head": "essentiality",
+        "arm": "pooled",
+        "seed": 2702,
+        "hidden": 12,
+        "layers": 1,
+        "attention_heads": 4,
+        "preprocessor_layers": 1,
+        "epochs": 80
+      }
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_flux_e80_s2700.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_flux_e80_s2700.json",
+      "status": "present",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/flux_projection_anchored_essentiality_s2700.json",
+      "legacy_holds": null
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_flux_e80_s2701.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_flux_e80_s2701.json",
+      "status": "present",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/flux_projection_anchored_essentiality_s2701.json",
+      "legacy_holds": null
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_flux_e80_s2702.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_flux_e80_s2702.json",
+      "status": "present",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/flux_projection_anchored_essentiality_s2702.json",
+      "legacy_holds": null
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_pool_e80_s2700.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_pool_e80_s2700.json",
+      "status": "lost",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2700.json",
+      "legacy_holds": {
+        "head": "essentiality",
+        "arm": "pooled",
+        "seed": 2700,
+        "hidden": 12,
+        "layers": 1,
+        "attention_heads": 4,
+        "preprocessor_layers": 1,
+        "epochs": 80
+      }
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_pool_e80_s2701.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_pool_e80_s2701.json",
+      "status": "lost",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2701.json",
+      "legacy_holds": {
+        "head": "essentiality",
+        "arm": "pooled",
+        "seed": 2701,
+        "hidden": 12,
+        "layers": 1,
+        "attention_heads": 4,
+        "preprocessor_layers": 1,
+        "epochs": 80
+      }
+    },
+    {
+      "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_pool_e80_s2702.json",
+      "expected_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_pool_e80_s2702.json",
+      "status": "lost",
+      "legacy_dump": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_essentiality_s2702.json",
+      "legacy_holds": {
+        "head": "essentiality",
+        "arm": "pooled",
+        "seed": 2702,
+        "hidden": 12,
+        "layers": 1,
+        "attention_heads": 4,
+        "preprocessor_layers": 1,
+        "epochs": 80
+      }
+    }
+  ],
+  "lost": [
+    "wave11_ess_pool_h24l1p1_e80_s2700",
+    "wave11_ess_pool_h24l1p1_e80_s2701",
+    "wave11_ess_pool_h24l1p1_e80_s2702",
+    "wave9_ess_pool_e80_s2700",
+    "wave9_ess_pool_e80_s2701",
+    "wave9_ess_pool_e80_s2702"
+  ]
+}

@@ -2097,11 +2097,21 @@ class CellGraphTransformer(nn.Module):
         # Perturbation readout head (Type II Virtual Instrument). `pooling` is read once
         # and shared with the per-gene z_S site so the two can never disagree.
         self.pert_pooling = str(pert_head_config.get("pooling", "sum"))
-        self.perturbation_head = PerturbationHead(
-            hidden_dim=hidden_channels,
-            dropout=pert_head_config.get("dropout", dropout),
-            pooling=self.pert_pooling,
-        )
+        # `enabled: False` builds NO readout head, for a model whose every readout lives in
+        # `heads_config` or a wrapper and whose call sites discard the first return value.
+        # 027's metabolism cells are that model: the head holds 16,381 parameters at width
+        # 90 and 1,201 at width 24, and receives no gradient on any cell (per-module
+        # gradient report, wave 11, 2026-09-15; the width-90 tally dropped from 958,501 to
+        # 942,120 on the 2026-09-16 smoke). Absent rather than frozen, so neither the tally
+        # nor the gradient report lists a module that does nothing. The default keeps the
+        # head, so every trainer that reads `predictions` is unchanged.
+        self.perturbation_head: PerturbationHead | None = None
+        if bool(pert_head_config.get("enabled", True)):
+            self.perturbation_head = PerturbationHead(
+                hidden_dim=hidden_channels,
+                dropout=pert_head_config.get("dropout", dropout),
+                pooling=self.pert_pooling,
+            )
 
         # === Hard graph masking: burn the graphs into attention STRUCTURALLY ===
         # An alternative to the KL, not a companion to it. The KL is a soft penalty whose
@@ -2642,7 +2652,7 @@ class CellGraphTransformer(nn.Module):
         return_attention: bool = False,
         observed_values: torch.Tensor | None = None,
         observed_mask: torch.Tensor | None = None,
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor | None, dict[str, torch.Tensor]]:
         """Forward pass of Equivariant Cell Graph Transformer.
 
         Args:
@@ -2660,7 +2670,8 @@ class CellGraphTransformer(nn.Module):
                 comparable across arms.
 
         Returns:
-            predictions: [batch_size, 1] gene interaction predictions
+            predictions: [batch_size, 1] gene interaction predictions, or None when the
+                model was built with ``perturbation_head_config={"enabled": False}``
             representations: Dict with embeddings, attention weights (if requested), losses, and H_genes_pert
         """
         # Get device from learnable embedding or CLS token
@@ -2852,12 +2863,17 @@ class CellGraphTransformer(nn.Module):
 
         # 6. Perturbation readout head (Type II Virtual Instrument)
         #    This is the ORIGINAL single (gene-interaction) head; kept as the first
-        #    returned element so single-head behavior is unchanged.
-        predictions = self.perturbation_head(
-            h_CLS,
-            H_genes_pert,
-            batch["gene"].perturbation_indices,
-            batch["gene"].perturbation_indices_batch,
+        #    returned element so single-head behavior is unchanged. None when the model
+        #    was built without it (`perturbation_head_config={"enabled": False}`).
+        predictions = (
+            self.perturbation_head(
+                h_CLS,
+                H_genes_pert,
+                batch["gene"].perturbation_indices,
+                batch["gene"].perturbation_indices_batch,
+            )
+            if self.perturbation_head is not None
+            else None
         )
 
         # 7. Multitask decoder heads (config-selectable). graph_level selects the
@@ -2971,8 +2987,11 @@ class CellGraphTransformer(nn.Module):
             "cls_token": self.cls_token.numel(),
             "transformer_layers": count_params(self.transformer_layers),
             "perturbation_transform": count_params(self.perturbation_transform),
-            "perturbation_head": count_params(self.perturbation_head),
         }
+        # Listed only when built, like the multitask heads below, so a model that has no
+        # readout head does not report a zero-parameter module.
+        if self.perturbation_head is not None:
+            counts["perturbation_head"] = count_params(self.perturbation_head)
         if self.global_head is not None:
             counts["global_head"] = count_params(self.global_head)
         if self.per_gene_head is not None:

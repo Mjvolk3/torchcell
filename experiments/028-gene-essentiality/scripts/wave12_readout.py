@@ -67,7 +67,28 @@ BOOTSTRAP_SEED = 0
 ROUNDS: dict[str, tuple[str, list[str]]] = {
     "w12": (
         "w12_*_e80_s*.json",
-        ["base", "fcl", "fcl_wd0", "fcl_wd1e-2", "fcl_wd1e-1", "fcl_b32", "gen"],
+        [
+            "base",
+            "fcl",
+            "fcl_wd0",
+            "fcl_wd1e-2",
+            "fcl_wd1e-1",
+            "fcl_b32",
+            "gen",
+            "fcl_lr3e-4",
+            "fcl_lr3e-3",
+            "fcl_posw",
+            "fcl_noreg",
+        ],
+    ),
+    # Wave 14: the two round-1 levers that moved three of three seeds (batch 32 and the
+    # class weight) combined, the epoch budget raised to 200 since every fcl cell selected
+    # its last smoothable epoch, and five-fold cross-validation on the 787 labeled
+    # non-test genes whose fold models are averaged on the held-out genes, which is FCL's
+    # own test protocol (`cv_ensemble_readout.py` scores the ensemble).
+    "w14": (
+        "w14_*_s*.json",
+        ["b32posw", "b32posw200", "b32e200", "cv0", "cv1", "cv2", "cv3", "cv4"],
     ),
     # Wave 13: the prediction routed through the metabolic module, on the fcl split at
     # the base hyperparameters, paired by seed against w12 fcl.
@@ -87,6 +108,18 @@ ARM_LABELS = {
     "fcl_wd1e-1": "weight decay 1e-1",
     "fcl_b32": "batch 32",
     "gen": "genome labels (5,795 genes)",
+    "fcl_lr3e-4": "lr 3e-4",
+    "fcl_lr3e-3": "lr 3e-3",
+    "fcl_posw": "class weight 772/126",
+    "fcl_noreg": "graph regularization off",
+    "b32posw": "batch 32 + class weight, 80 epochs",
+    "b32posw200": "batch 32 + class weight, 200 epochs",
+    "b32e200": "batch 32, 200 epochs",
+    "cv0": "5-fold, fold 0",
+    "cv1": "5-fold, fold 1",
+    "cv2": "5-fold, fold 2",
+    "cv3": "5-fold, fold 3",
+    "cv4": "5-fold, fold 4",
     "fluxbio": "growth column only, constraints 0.1",
     "fluxbio_s0": "growth column only, constraints 0",
     "fluxctx": "context + growth column, constraints 0.1",
@@ -181,7 +214,15 @@ def pinned_predictions(
     # THE DUMP MUST BE THIS CELL'S. Until 2026-09-16 every width wrote the same dump name,
     # so a result can point at a file another cell overwrote (the wave-11 width-24 dumps
     # hold the width-12 cell). A dump whose cell disagrees is treated as missing.
-    identity = ("arm", "head", "seed", "hidden", "layers", "preprocessor_layers", "epochs")
+    identity = (
+        "arm",
+        "head",
+        "seed",
+        "hidden",
+        "layers",
+        "preprocessor_layers",
+        "epochs",
+    )
     if any(dump["cell"].get(k) != result["cell"].get(k) for k in identity):
         return None
     recs = [r for r in dump["predictions"] if r["pinned"]]

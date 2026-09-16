@@ -44,9 +44,13 @@ the disjoint split, one in the 010 configuration and three with a fixed sequence
 embedding and a constant learning rate. Every one of them peaks on validation
 between epoch 2 and epoch 7, at 0.199 to 0.270 against an additive validation null
 of 0.150, and every one falls back afterward; the 010 configuration ends below the
-null at 0.131. None has a test score, so whether the transformer's margin over
-additivity survives held-out screens is not yet measured, and the measurements that
-would settle it are listed.
+null at 0.131. Its validation-selected checkpoint, scored on the 46 held-out test
+screens, reaches 0.139 against the additive ridge's 0.185, a paired gap of $-0.046$
+with a bootstrap interval of $[-0.056, -0.036]$, and is level with the nonlinear
+baseline. Under the prespecified criteria the transformer in the 010 configuration
+is not shown to beat the additive null on held-out screens, and the one scored
+checkpoint is below it; the seed replicates that would make this a statement about
+the model rather than about one run have not been run.
 \end{abstract}
 
 \vspace{0.5em}

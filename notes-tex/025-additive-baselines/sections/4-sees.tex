@@ -54,6 +54,18 @@ another. Whatever role they play, it is not to process the strain. What remains
 after Eq.~\ref{eq:encoder} is the strain-dependent part, Eq.~\ref{eq:cgt}, and that
 is a set function on the three perturbed gene identities. The models in the ladder
 differ in how expressive the set function is, not in what they are allowed to see.
+Figure~\ref{fig:forward} draws the pass with the two entry points marked.
+
+%% SOURCE: notes/experiments.025-solid-growth.mermaid.cgt-forward-pass.md, rendered
+%% by notes/assets/publish/scripts/mermaid_pdf.sh and scaled by `make diagrams`;
+%% the structure is read from torchcell/models/equivariant_cell_graph_transformer.py.
+\tcfig{figures/cgt_forward_pass.pdf}{The forward pass of the 010 configuration, and
+the additive null beside it. Yellow is a parameter block, orange a computation,
+purple what a record contributes and what comes out, red what exists only during
+training, blue the null on the same input. The record enters once, as three gene
+indices, at the perturbation transform; the graphs enter once, through the layer-1
+attention penalty, and reach the prediction only through the trained
+weights.}{fig:forward}
 
 \subsection{Where the nine graphs act, and where they do not\secstatus{todo}}
 \label{sec:graphs}

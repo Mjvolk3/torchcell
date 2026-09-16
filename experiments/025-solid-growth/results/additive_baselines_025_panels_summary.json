@@ -220,5 +220,14 @@
       "val_last": 0.1349957585334777
     }
   ],
-  "note": "validation maxima are upward-biased order statistics; no disjoint run has a test score"
+  "job_1640_epoch7_test": {
+    "pearson": 0.13923901168277275,
+    "spearman": 0.10895648794990466,
+    "mse": 0.003971793408946173,
+    "rmse": 0.06302216601280991,
+    "n": 37791,
+    "seconds": 417.6,
+    "seconds_per_1000": 11.05
+  },
+  "note": "validation maxima are upward-biased order statistics; the one arm Q test score is job 1640's epoch 7 checkpoint"
 }

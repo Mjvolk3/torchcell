@@ -35,3 +35,23 @@ $(SHORT).pdf: $(SHORT).tex $(SECTIONS) $(TABLES) $(COMMON)/tcdoc.sty references.
 
 check-short: $(SHORT).pdf
 	@$(PYTHON) $(COMMON)/check_doc.py $(SHORT)
+
+# The forward-pass diagram of the long version is a mermaid source
+# (notes/experiments.025-solid-growth.mermaid.cgt-forward-pass.md), rendered by
+# mermaid_pdf.sh to mmdc's 600 pt page and scaled to 510 pt with Ghostscript, which keeps
+# the fonts embedded (pdffonts lists them) so the figure stays vector.
+DIAGRAMS := experiments.025-solid-growth.mermaid.cgt-forward-pass
+PDF_OUT  := $(REPO)/notes/assets/pdf-output
+FIG_W_PT := 420
+
+.PHONY: diagrams
+diagrams:
+	@for d in $(DIAGRAMS); do \
+	  (cd $(REPO) && bash notes/assets/publish/scripts/mermaid_pdf.sh notes/$$d.md >/dev/null); \
+	  src=$(PDF_OUT)/$$d.pdf; dst=figures/cgt_forward_pass.pdf; \
+	  w=$$(pdfinfo $$src | awk '/Page size/{print $$3}'); h=$$(pdfinfo $$src | awk '/Page size/{print $$5}'); \
+	  H=$$(awk -v w=$$w -v h=$$h -v W=$(FIG_W_PT) 'BEGIN{printf "%.2f", h*W/w}'); \
+	  gs -q -o $$dst -sDEVICE=pdfwrite -dFIXEDMEDIA -dPDFFitPage \
+	     -dDEVICEWIDTHPOINTS=$(FIG_W_PT) -dDEVICEHEIGHTPOINTS=$$H $$src; \
+	  echo "  $$src ($$w x $$h pt) -> $$dst ($(FIG_W_PT) x $$H pt), $$(pdffonts $$dst | tail -n +3 | wc -l) fonts"; \
+	done

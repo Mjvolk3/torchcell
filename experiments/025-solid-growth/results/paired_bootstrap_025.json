@@ -1,0 +1,60 @@
+{
+  "run": "327csnlk",
+  "epoch": 7,
+  "n_test": 37791,
+  "n_boot": 2000,
+  "transformer_test_pearson": 0.13923901168277267,
+  "transformer_test_spearman": 0.10895648794990466,
+  "gains": [
+    {
+      "against": "B1 additive ridge",
+      "pearson_baseline": 0.18530589019381333,
+      "pearson_transformer": 0.13923901168277267,
+      "gain": -0.04606687851104066,
+      "ci_low": -0.056345480638405304,
+      "ci_high": -0.03582263179884188,
+      "residual_corr": 0.9442883264994216,
+      "prediction_corr": 0.6373954808181984
+    },
+    {
+      "against": "B2 additive plus pair",
+      "pearson_baseline": 0.18000174338230515,
+      "pearson_transformer": 0.13923901168277267,
+      "gain": -0.040762731699532484,
+      "ci_low": -0.051198139118520565,
+      "ci_high": -0.03014285812074517,
+      "residual_corr": 0.9427180589161277,
+      "prediction_corr": 0.6418013490355736
+    },
+    {
+      "against": "B5 embedding MLP, seed 0",
+      "pearson_baseline": 0.13802185196247116,
+      "pearson_transformer": 0.13923901168277267,
+      "gain": 0.0012171597203015083,
+      "ci_low": -0.007737994900667245,
+      "ci_high": 0.009704465646584571,
+      "residual_corr": 0.9598900377625225,
+      "prediction_corr": 0.7517108073282925
+    }
+  ],
+  "decisions": [
+    {
+      "criterion": "D1",
+      "statement": "transformer test Pearson at its validation-selected epoch exceeds B1's",
+      "value": "0.139 against 0.185",
+      "result": "FAIL"
+    },
+    {
+      "criterion": "D2",
+      "statement": "paired-bootstrap 95 percent interval of transformer minus B1 excludes zero",
+      "value": "-0.046, [-0.056, -0.036]",
+      "result": "FAIL"
+    },
+    {
+      "criterion": "D3",
+      "statement": "D1 and D2 hold over three seeds of the configuration",
+      "value": "one run, one checkpoint",
+      "result": "NOT RUN"
+    }
+  ]
+}

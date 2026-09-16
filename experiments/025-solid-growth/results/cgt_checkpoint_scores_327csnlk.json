@@ -1,0 +1,37 @@
+{
+  "run": "327csnlk",
+  "arm": "Q",
+  "checkpoint": "/scratch/projects/torchcell-scratch/models/checkpoints/gilahyper-1640_254c63640a44d1cf47eacc3e8ac2b684899d400f9c834e4b2bddf687afd7ca0a/327csnlk-best-pearson-epoch=07-val/gene_interaction/Pearson=0.1993.ckpt",
+  "checkpoint_sha256": "f513db3b11da42e1121bed50e87579d3cccd0701885057029f85f700ac04f625",
+  "epoch": 7,
+  "pooling": "sum",
+  "normalizer": {
+    "fit_on": "train_Q",
+    "n": 301236,
+    "mean": -0.007843738949062363,
+    "sd": 0.06377641767891505
+  },
+  "limit": null,
+  "parts": {
+    "val": {
+      "pearson": 0.1996533035991157,
+      "spearman": 0.17292843839259098,
+      "mse": 0.003994723551037935,
+      "rmse": 0.06320382544623336,
+      "n": 37705,
+      "seconds": 369.8,
+      "seconds_per_1000": 9.81,
+      "logged_val_pearson_at_epoch": 0.1993194222450256,
+      "pearson_minus_logged": 0.00033388135409009867
+    },
+    "test": {
+      "pearson": 0.13923901168277275,
+      "spearman": 0.10895648794990466,
+      "mse": 0.003971793408946173,
+      "rmse": 0.06302216601280991,
+      "n": 37791,
+      "seconds": 417.6,
+      "seconds_per_1000": 11.05
+    }
+  }
+}

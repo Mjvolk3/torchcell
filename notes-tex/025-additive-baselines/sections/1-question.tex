@@ -42,11 +42,14 @@ out to matter more than anything else below.
 numbers. On arm Q the additive ridge falls from 0.400 to 0.185, the screen-only
 model to zero, and the nonlinear baseline from 0.432 to 0.141, below the ridge.
 Four transformer runs on arm Q, every one peaking on validation by epoch 7 and
-declining afterward (Figure~\ref{fig:disjointruns}a,b).
+declining afterward (Figure~\ref{fig:disjointruns}a,b). One transformer test score
+on arm Q: GH 1640's validation-selected checkpoint at 0.139, below the ridge by
+0.046 with a paired interval that excludes zero, level with the nonlinear baseline
+(Table~\ref{tab:decision}).
 
-\textbf{Not measured.} Any transformer test score on arm Q, and any replicate of
-the 010 configuration on arm Q. Figure~\ref{fig:disjointruns}c is the placeholder
-for both.
+\textbf{Not measured.} Replicates of the 010 configuration on arm Q, which is
+what turns one checkpoint's number into a statement about the model, and the
+learnable-table control for the constant-learning-rate runs.
 \end{keybox}
 
 \notesec{Vocabulary}

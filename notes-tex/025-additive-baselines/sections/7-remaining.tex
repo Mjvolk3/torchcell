@@ -21,11 +21,14 @@ the penalty does not train.\fi
 
 \subsection{Not established\secstatus{todo}}
 
-\notesec{The transformer has not been measured on held-out screens}
-Table~\ref{tab:heldout} has no transformer test number on arm Q. Four runs give
-validation trajectories that peak by epoch 7 and decline, and none has been scored
-on test. Whether the $+0.04$ margin of the random split survives held-out screens
-is not measured, in either direction.
+\notesec{The transformer's capability on held-out screens is not measured}
+One checkpoint of one run has a test score on arm Q, and it is below the additive
+null with an interval that excludes zero (Table~\ref{tab:decision}). That is a
+measurement of GH 1640's epoch 7 checkpoint. Whether the configuration can do
+better, or whether a seed-averaged run lands where this one did, is D3, and it has
+not been run. Whether the $+0.04$ margin of the random split survives held-out
+screens is therefore answered for one draw of the optimizer and open for the
+model.
 
 \iflong
 \notesec{The reproduction is faithful but not bit-exact}
@@ -58,31 +61,18 @@ have a strain-dependent encoder path and would need its own reading.
 \subsection{What is left before this enters the main text\secstatus{todo}}
 
 \begin{enumerate}
-\item \textbf{Score GH 1640's epoch 7 checkpoint on the arm Q test part.} The
-  checkpoint survives
-  (\file{$DATA_ROOT/models/checkpoints/327csnlk-best-pearson-epoch=07-val*}). One
-  scoring pass fills the first slot of Figure~\ref{fig:disjointruns}c and gives the
-  first transformer test number against B1 0.185 and B5 0.141. The encoder runs
-  once and the per-record work is one cross-attention and a readout, so this runs
-  on CPU.
 \item \textbf{Replicate the 010 configuration on arm Q.} Three seeds of
   \texttt{cgt\_s0\_q\_kl\_004} with a test evaluation at the best validation epoch,
   under one fixed epoch budget. GH 1640 peaked at epoch 7 and 36 epochs cost the 12
   hour wall clock, so a 20 epoch budget with checkpoint-on-best is enough. These
-  fill the remaining slots of Figure~\ref{fig:disjointruns}c and give the
-  transformer row of Table~\ref{tab:heldout} a spread.
-\item \textbf{Decide whether the constant-learning-rate variants belong in the
-  ladder.} The IGB runs are a different model, readout and schedule. If they are to
-  be compared to the nulls they need the treatment of item 2: a learnable-table
-  control at constant learning rate on arm Q
-  (\texttt{cgt\_s0\_q\_kl\_ctrl\_016}, which had no run on W\&B as of
-  2026-09-11), seeds, and test scores. Otherwise they stay in
-  Figure~\ref{fig:disjointruns}a,b as validation trajectories and do not enter
-  Figure~\ref{fig:ladders}.
-\item \textbf{A paired bootstrap on arm Q test.} The same 2{,}000-resample
-  interval that established the random-split margin, on the arm Q predictions, is
-  what turns a transformer minus B1 difference into a claim. It follows from item
-  1 at no cost.
+  fill the empty slots of Figure~\ref{fig:disjointruns}c, decide D3 of
+  Table~\ref{tab:decision}, and give the transformer row of
+  Table~\ref{tab:heldout} a spread. The CPU scorer and the paired bootstrap run
+  unchanged on each.
+\item \textbf{Run the missing control.} \texttt{cgt\_s0\_q\_kl\_ctrl\_016}, the
+  learnable table under the IGB schedule and readout, with seeds and test scores;
+  without it the embedding variants of Table~\ref{tab:wandbruns} stay validation
+  trajectories and do not enter Figure~\ref{fig:ladders}.
 \item \textbf{Fold spread for the transformer, or an explicit statement that it is
   unaffordable.} Panel d of Figure~\ref{fig:ladders} is five folds for the nulls. A
   transformer fold costs about 12 hours of one GilaHyper node per 36 epochs, so five

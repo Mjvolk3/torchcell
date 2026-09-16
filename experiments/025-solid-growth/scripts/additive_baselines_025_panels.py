@@ -175,6 +175,8 @@ DISJOINT_RUNS = [
 ]
 RUN_COLORS = [PLOT_PALETTE[1], PLOT_PALETTE[2], PLOT_PALETTE[3], PLOT_PALETTE[4]]
 RUN_SHORT = ["GH 1640, table, cosine", "IGB 2391132, composite", "IGB 2391133, CaLM", "IGB 2391134, ProtT5"]
+# Tick labels for the narrow dumbbell panel: the job number alone, the gene input under it.
+RUN_TICK = ["1640\ntable", "2391132\ncomposite", "2391133\nCaLM", "2391134\nProtT5"]
 
 # The replicate set the disjoint comparison still needs: the 010 configuration on arm Q,
 # three seeds, each scored on test at its best validation epoch, plus the one surviving
@@ -359,8 +361,14 @@ def ladder(ax, agg: pd.DataFrame, arm: str, extra: list[tuple[str, float, bool]]
     ax.set_xticks(x)
     ax.set_xticklabels(cats, rotation=45, ha="right", fontsize=5)
     ax.set_ylabel("Held-out Pearson r")
-    ax.set_title(title, fontsize=6, pad=3)
     style_metric_axis(ax, 0.55)
+    # Nothing but data inside the axes: the legend sits above the panel and names the arm.
+    handles = [
+        Patch(facecolor=FILL[arm], label=f"{title}, test score", **BAR),
+        Patch(facecolor=COLOR[arm], label="validation max over epochs", **BAR),
+    ]
+    ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2,
+              handlelength=1.4, borderpad=0.4, columnspacing=1.0)
 
 
 def fold_spread(ax, cv: pd.DataFrame, agg_q: pd.DataFrame) -> dict[str, object]:
@@ -389,16 +397,16 @@ def fold_spread(ax, cv: pd.DataFrame, agg_q: pd.DataFrame) -> dict[str, object]:
     ax.set_xticks(x)
     ax.set_xticklabels([LABELS[m] for m in models], rotation=45, ha="right", fontsize=5)
     ax.set_ylabel("Test Pearson r, held-out screens")
-    ax.set_title("disjoint null across held-out screen sets", fontsize=6, pad=3)
     style_metric_axis(ax, 0.30)
     handles = [
-        Patch(facecolor=PLOT_PALETTE[5], label="5 folds on the 010 build, mean ± sd", **BAR),
+        Patch(facecolor=PLOT_PALETTE[5], label="5 disjoint folds, 010 build, mean ± sd", **BAR),
         Line2D([], [], linestyle="none", marker="o", markersize=2.2, markerfacecolor="white",
                markeredgecolor="black", markeredgewidth=0.5, label="one fold"),
         Line2D([], [], linestyle="none", marker="D", markersize=3.2, markerfacecolor=COLOR["Q"],
-               markeredgecolor="black", markeredgewidth=0.5, label="arm Q, the one split the transformer trains on"),
+               markeredgecolor="black", markeredgewidth=0.5, label="arm Q split"),
     ]
-    ax.legend(handles=handles, loc="upper center", ncol=1, handlelength=1.4, labelspacing=0.3, borderpad=0.4)
+    ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(0, 1.02), ncol=3,
+              handlelength=1.4, borderpad=0.4, columnspacing=1.0)
     return out
 
 
@@ -415,15 +423,14 @@ def val_curves(ax, df: pd.DataFrame, arm_history: pd.DataFrame, summary: dict) -
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Validation Pearson r")
     ax.set_xlim(left=0)
-    ax.set_title("the 010 configuration under each split", fontsize=6, pad=3)
     style_metric_axis(ax, 0.55)
-    # The band between the two arms is empty at every epoch.
-    ax.legend(loc="center right", handlelength=1.6, labelspacing=0.3, borderpad=0.4)
+    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, handlelength=1.6,
+              borderpad=0.4, columnspacing=1.0)
 
 
-def figure_1(df, agg, summary, arm_history, cv) -> dict[str, object]:
+def figure_1(df, agg, summary, arm_history, cv, test_1640: float) -> dict[str, object]:
     apply_paper_style()
-    fig, axes = plt.subplots(2, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(128.0)))
+    fig, axes = plt.subplots(2, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(134.0)))
     (ax_a, ax_b), (ax_c, ax_d) = axes
 
     cgt010 = summary["transformer"]["R"]["010_checkpoints_test_pearson"]
@@ -432,19 +439,16 @@ def figure_1(df, agg, summary, arm_history, cv) -> dict[str, object]:
     ladder(ax_a, agg["R"], "R",
            [(CGT_010[k], cgt010[k], False) for k in CGT_010] + [("CGT GH 1598\n(val max)", ref_r["val_pearson_best_epoch"], True)],
            "arm R, random over records")
-    handles = [
-        Patch(facecolor=FILL["R"], label="test score (light)", **BAR),
-        Patch(facecolor=COLOR["R"], label="validation max over epochs, no test score (dark)", **BAR),
-    ]
-    ax_a.legend(handles=handles, loc="upper left", handlelength=1.4, labelspacing=0.3, borderpad=0.4)
-    ladder(ax_b, agg["Q"], "Q", [("CGT GH 1640\n(val max)", ref_q["val_pearson_best_epoch"], True)],
+    ladder(ax_b, agg["Q"], "Q",
+           [("CGT GH 1640\n(val max)", ref_q["val_pearson_best_epoch"], True),
+            ("CGT GH 1640\n(epoch 7, test)", test_1640, False)],
            "arm Q, query-pair disjoint")
     val_curves(ax_c, df, arm_history, summary)
     spread = fold_spread(ax_d, cv, agg["Q"])
 
-    # rect leaves the top 4 percent free: the panel letters sit 12 pt above each axes box
-    # and were clipped off the top row without it.
-    fig.tight_layout(pad=0.4, w_pad=1.2, h_pad=1.6, rect=(0, 0, 1, 0.965))
+    # rect leaves the top free: the panel letters sit 12 pt above each axes box and the
+    # legends sit above the axes, and both were clipped off the top row without it.
+    fig.tight_layout(pad=0.4, w_pad=1.2, h_pad=2.2, rect=(0, 0, 1, 0.965))
     for ax, letter in zip((ax_a, ax_b, ax_c, ax_d), "abcd"):
         panel_label(ax, letter)
     stem = osp.join(IMAGES_DIR, "additive_baselines_025_fig1_ladders")
@@ -458,9 +462,9 @@ def figure_1(df, agg, summary, arm_history, cv) -> dict[str, object]:
 # --- figure 2: every transformer run on the disjoint split ---------------------------
 
 
-def figure_2(df, agg, history: pd.DataFrame, stats: dict[str, dict]) -> None:
+def figure_2(df, agg, history: pd.DataFrame, stats: dict[str, dict], test_1640: float) -> None:
     apply_paper_style()
-    fig, (ax_a, ax_b, ax_c) = plt.subplots(1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62.0)))
+    fig, (ax_a, ax_b, ax_c) = plt.subplots(1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(68.0)))
     nulls_val = val_nulls(df, "Q")
     b1_val, b5_val = nulls_val["B1_additive_gene"], nulls_val["B5_gene_embedding_mlp"]
     b1_test, b5_test = agg["Q"].loc["B1_additive_gene", "mean"], agg["Q"].loc["B5_gene_embedding_mlp", "mean"]
@@ -479,12 +483,11 @@ def figure_2(df, agg, history: pd.DataFrame, stats: dict[str, dict]) -> None:
     ax_a.set_xlabel("Epoch")
     ax_a.set_ylabel("Validation Pearson r")
     ax_a.set_xlim(left=0)
-    ax_a.set_title("arm Q, every transformer run", fontsize=6, pad=3)
     style_metric_axis(ax_a, top)
     ax_a.yaxis.set_major_locator(MultipleLocator(0.1))
     ax_a.yaxis.set_minor_locator(MultipleLocator(0.05))
-    # Legend in the band above every curve's maximum, which top leaves clear.
-    ax_a.legend(loc="upper center", ncol=2, handlelength=1.6, labelspacing=0.3, borderpad=0.4, columnspacing=0.8)
+    ax_a.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, handlelength=1.6,
+                borderpad=0.4, columnspacing=0.8)
 
     # b) best and last epoch per run, as a dumbbell
     x = np.arange(len(DISJOINT_RUNS))
@@ -498,10 +501,9 @@ def figure_2(df, agg, history: pd.DataFrame, stats: dict[str, dict]) -> None:
     ax_b.axhline(b1_val, color="black", linewidth=0.7, linestyle=(0, (4, 2)))
     ax_b.axhline(b5_val, color=PLOT_PALETTE[5], linewidth=0.7, linestyle=(0, (1, 1.5)))
     ax_b.set_xticks(x)
-    ax_b.set_xticklabels([s.replace(", ", "\n", 1) for s in RUN_SHORT], fontsize=5)
+    ax_b.set_xticklabels(RUN_TICK, fontsize=5)
     ax_b.set_xlim(-0.6, len(DISJOINT_RUNS) - 0.4)
     ax_b.set_ylabel("Validation Pearson r")
-    ax_b.set_title("best epoch (open) to last epoch (filled)", fontsize=6, pad=3)
     style_metric_axis(ax_b, top)
     ax_b.yaxis.set_major_locator(MultipleLocator(0.1))
     ax_b.yaxis.set_minor_locator(MultipleLocator(0.05))
@@ -511,25 +513,23 @@ def figure_2(df, agg, history: pd.DataFrame, stats: dict[str, dict]) -> None:
         Line2D([], [], linestyle="none", marker="o", markersize=4, markerfacecolor="black", markeredgecolor="black",
                markeredgewidth=0.5, label="last logged epoch"),
     ]
-    ax_b.legend(handles=handles, loc="upper center", handlelength=1.2, labelspacing=0.3, borderpad=0.4)
+    ax_b.legend(handles=handles, loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, handlelength=1.2,
+                borderpad=0.4, columnspacing=0.8)
 
-    # c) placeholder: the test comparison that has not been run
-    ax_c.axhline(b1_test, color="black", linewidth=0.7, linestyle=(0, (4, 2)), label=f"B1 additive ridge (test) {b1_test:.3f}")
-    ax_c.axhline(b5_test, color=PLOT_PALETTE[5], linewidth=0.7, linestyle=(0, (1, 1.5)), label=f"B5 MLP, 3 seeds (test) {b5_test:.3f}")
+    # c) the test comparison: the one scored checkpoint, and the empty slots the replicates
+    # will fill. The nulls are the arm Q test rows; the caption says what the slots are.
+    ax_c.bar(0, test_1640, 0.7, color=FILL["Q"], **BAR)
+    ax_c.axhline(b1_test, color="black", linewidth=0.7, linestyle=(0, (4, 2)), label="B1 additive ridge (test)")
+    ax_c.axhline(b5_test, color=PLOT_PALETTE[5], linewidth=0.7, linestyle=(0, (1, 1.5)), label="B5 MLP, 3 seeds (test)")
     ax_c.set_xticks(np.arange(len(PLANNED_TEST_SLOTS)))
     ax_c.set_xticklabels(PLANNED_TEST_SLOTS, fontsize=5)
     ax_c.set_xlim(-0.6, len(PLANNED_TEST_SLOTS) - 0.4)
     ax_c.set_ylabel("Test Pearson r")
-    ax_c.set_title("arm Q test scores: not yet run", fontsize=6, pad=3)
     style_metric_axis(ax_c, top)
     ax_c.yaxis.set_major_locator(MultipleLocator(0.1))
     ax_c.yaxis.set_minor_locator(MultipleLocator(0.05))
-    # The note sits in the band between the two null lines and the legend, so no line
-    # crosses it; the white patch keeps the gridlines off the letters.
-    ax_c.text(0.5, b1_test + 0.25 * (top - b1_test), "placeholder\ncgt_s0_q_kl_004, three seeds,\nscored on test at best val epoch;\njob 1640 epoch 7 checkpoint",
-              transform=ax_c.get_yaxis_transform(), ha="center", va="center", fontsize=5.5, color=PLOT_PALETTE[5],
-              bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0})
-    ax_c.legend(loc="upper center", handlelength=1.6, labelspacing=0.3, borderpad=0.4)
+    ax_c.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=1, handlelength=1.6,
+                borderpad=0.4)
 
     fig.tight_layout(pad=0.4, w_pad=1.2, rect=(0, 0, 1, 0.93))
     for ax, letter in zip((ax_a, ax_b, ax_c), "abc"):
@@ -581,7 +581,7 @@ def table_arms(sizes: dict) -> None:
     write_table("t1-arms.tex", "\n".join(body))
 
 
-def table_heldout(agg: dict, cgt010: dict, ref_r: dict, ref_q: dict, d010: pd.DataFrame) -> None:
+def table_heldout(agg: dict, cgt010: dict, ref_r: dict, ref_q: dict, d010: pd.DataFrame, scores: dict) -> None:
     t010 = d010[d010["split"] == "test"].groupby("model")["pearson"].agg(["mean", "std"])
     order = ["B0_train_mean", "B4_query_pair_only", "B3_hierarchical_mean", "B1_additive_gene",
              "B2_additive_plus_pair", "B5_gene_embedding_mlp"]
@@ -605,6 +605,7 @@ def table_heldout(agg: dict, cgt010: dict, ref_r: dict, ref_q: dict, d010: pd.Da
     body.append(f"CGT, three 010 checkpoints, test & {fmt(lo)} to {fmt(hi)} & & \\\\")
     body.append(f"CGT GH 1598, val max, epoch {ref_r['best_epoch']} of {ref_r['n_epochs_logged']} & & {fmt(ref_r['val_pearson_best_epoch'])} & \\\\")
     body.append(f"CGT GH 1640, val max, epoch {ref_q['best_epoch']} of {ref_q['n_epochs_logged']} & & & {fmt(ref_q['val_pearson_best_epoch'])} \\\\")
+    body.append(f"CGT GH 1640, epoch {scores['epoch']} checkpoint, test & & & {fmt(scores['parts']['test']['pearson'])} \\\\")
     body += ["\\bottomrule", "\\end{tabular}", ""]
     write_table("t2-heldout.tex", "\n".join(body))
 
@@ -664,16 +665,20 @@ def main() -> None:
     stats = {r["key"]: run_stats(history, r["key"]) for r in DISJOINT_RUNS}
     for r in DISJOINT_RUNS:
         print(f"{r['job']:<12s} {r['config']:<22s} {stats[r['key']]}")
+    # The one arm Q checkpoint scored on test (score_cgt_checkpoint_cpu.py, job 1846).
+    with open(osp.join(RESULTS_DIR, "cgt_checkpoint_scores_327csnlk.json")) as f:
+        scores = json.load(f)
+    test_1640 = float(scores["parts"]["test"]["pearson"])
 
-    spread = figure_1(df, agg, summary, arm_history, cv)
-    figure_2(df, agg, history, stats)
+    spread = figure_1(df, agg, summary, arm_history, cv, test_1640)
+    figure_2(df, agg, history, stats, test_1640)
 
     sizes = arm_sizes()
     cgt010 = summary["transformer"]["R"]["010_checkpoints_test_pearson"]
     ref_r = summary["transformer"]["R"]["job_1598_replication"]
     ref_q = summary["transformer"]["Q"]["job_1640_disjoint"]
     table_arms(sizes)
-    table_heldout(agg, cgt010, ref_r, ref_q, d010)
+    table_heldout(agg, cgt010, ref_r, ref_q, d010, scores)
     table_disjoint_runs(stats)
     sem = arm_q_gene_semantics()
     table_armq_genes(sem)
@@ -690,7 +695,8 @@ def main() -> None:
         "val_nulls": {arm: val_nulls(df, arm) for arm in ("R", "Q")},
         "disjoint_fold_spread_010": spread,
         "disjoint_runs": [dict(r, **stats[r["key"]]) for r in DISJOINT_RUNS],
-        "note": "validation maxima are upward-biased order statistics; no disjoint run has a test score",
+        "job_1640_epoch7_test": scores["parts"]["test"],
+        "note": "validation maxima are upward-biased order statistics; the one arm Q test score is job 1640's epoch 7 checkpoint",
     }
     path = osp.join(RESULTS_DIR, "additive_baselines_025_panels_summary.json")
     with open(path, "w") as f:

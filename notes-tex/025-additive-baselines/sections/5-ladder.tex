@@ -11,10 +11,11 @@
 \footnotesize
 \caption{Test Pearson for every model under both arms, beside the 010 numbers. B0
 through B4 are closed-form fits on a fixed split and carry no spread; B5 is the mean
-and standard deviation over three seeds. The three transformer rows stand on
-different footings, named in the row label: the 010 checkpoints were scored on the
-010 test split of 37{,}673 records; GH 1598 and GH 1640 are validation maxima over
-36 logged epochs, and neither has a test score.}
+and standard deviation over three seeds. The transformer rows stand on different
+footings, named in the row label: the 010 checkpoints were scored on the 010 test
+split of 37{,}673 records; the GH 1598 and GH 1640 validation maxima are over 36
+logged epochs; the last row is GH 1640's validation-selected checkpoint scored on
+the arm Q test part.}
 \label{tab:heldout}
 \input{tables/t2-heldout}
 \end{table}
@@ -29,8 +30,9 @@ splits. \textbf{a}, arm R, random over records: the six baselines on the 37{,}67
 test records, the three 010 checkpoints on the 010 test split, and the 025
 replication GH 1598 as a validation maximum. \textbf{b}, arm Q, query-pair
 disjoint, on the 37{,}791 test records of 46 held-out screens, with GH 1640 as a
-validation maximum. Within each arm, a light bar is a test score and a dark bar a
-validation maximum with no test score. Only B5 carries an error bar, the standard
+validation maximum and its epoch 7 checkpoint scored on test. Within each arm, a
+light bar is a test score and a dark bar a validation maximum. Only B5 carries an
+error bar, the standard
 deviation over its three seeds; every other bar is one deterministic fit.
 \textbf{c}, validation Pearson per epoch for the two arms of the 010 configuration,
 each against the additive ridge fit on its own validation part; open circles mark
@@ -103,7 +105,9 @@ reaching them through the genes that make up the query pairs.
 On arm Q the additive ridge falls from 0.400 to 0.185 and B4 to zero by
 construction. B5 falls from 0.432 to 0.141, below the ridge: the capacity that
 helped on unseen records of seen screens hurts on unseen screens. B3 falls back from
-a screen mean to a gene mean and lands at 0.142.
+a screen mean to a gene mean and lands at 0.142. The one transformer checkpoint
+with a test score on this split, GH 1640 at epoch 7, lands at 0.139, level with B5
+and below the ridge (Section~\ref{sec:disjoint}).
 
 \notesec{One disjoint split is a small sample of screens}
 Panel d is the reason arm Q's numbers are read as one draw rather than as the

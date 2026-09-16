@@ -25,3 +25,14 @@ Config: `experiments/019-simb-multimodal/conf/cgt_expr_v14_proteome.yaml`, inher
 **Hypotheses, unmeasured.** Throughput at four per card about 13 epochs/h/run, 2,000 epochs in about 6.5 days. Whether the trained arms beat the bilinear ridge on ProtT5 on the proteome partitions is what the round measures; the baselines run on GilaHyper CPU with `gh_expression_baselines_split.slurm` under `BASELINES_TAG=fig3_proteome BASELINES_LABEL=protein_abundance`.
 
 **Sparse target.** The proteome vector spans the 1,850-protein union with NaN where a strain did not quantify a protein (median 1,820 measured per strain); loss, metrics and masked conditioning score finite entries only. Details and the verification in [[torchcell.datamodels.protein_abundance_log2_ratio_conversion]]. `val/proteome/n_scored_genes@k0` on W&B says how many proteins survive the 3-pair floor each epoch.
+
+## 2026.09.16 - First read at the matched epoch 233 (PARTIAL, 16 runs, job 2400350)
+
+`v13_split_readout.py --round v14`, `results/v14_proteome_readout.json`. Rate: task 0 at 234 to 239 epochs after 20 h (about 12 per hour per run), tasks 1 to 3 at 327 to 342 after 19 h (about 17 per hour); 2,000 epochs lands at 5 to 7 days.
+
+- Partition means (both readouts, both seeds): split 0 0.114, split 1 0.078, split 2 0.112, split 3 0.085; between-split sd 0.019, range 0.036, within-split sd 0.004. The partition axis is as large on the proteome as on expression, and the order differs from Kemmeren's (split 2 is high here, low there).
+- P_concat minus P_ref: mean 0.000, sd 0.006 over 8 pairs, 5 of 8 positive. Nothing.
+- Against the split-matched linear baselines (val): the arms lead by 0.03 to 0.05 on splits 0, 2 and 3 (e.g. 0.114 against B3 0.071 on split 0) and by nothing on split 1 (0.079 against B3 0.082).
+- The curves peak EARLY and fall: `roll_max` epochs 66 to 207 with last values 0.02 to 0.03 below the peak by epoch 233 (e.g. `P_concat_s3` seed 0 peak 0.085 at epoch 66, last 0.050). The expression curves rise to thousands of epochs; the proteome's do not, at least at this point. Hypothesis (untested): with one measurement per strain and a ceiling of 0.40 to 0.70, the per-protein z-scored target has less recoverable signal per gradient step, and the model starts fitting noise early; the best-val checkpoint (monitor `val/proteome/pearson_per_feature`) will hold the peak, and the test read at that checkpoint is the number to trust.
+
+Report and ranked Charts view: `wandb_v13_report.py --round v14` (saved view `nw=yxor02gt7y9`). Task job ids are not contiguous (task0 2400351, task1 2401107, task2 2401108, task3 2400350); sync with `sync_019_live.sh <ids>` on the login node.

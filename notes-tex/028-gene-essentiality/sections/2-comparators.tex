@@ -1,0 +1,30 @@
+%% notes-tex/028-gene-essentiality/sections/2-comparators.tex
+%% [[experiments.028-gene-essentiality.scripts.fba_essentiality_baseline]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/2-comparators.tex
+
+\section{The comparators, computed rather than quoted\secstatus{todo}}
+\label{sec:comparators}
+
+\subsection{Flux balance analysis on four media\secstatus{todo}}
+
+The published FBA comparator is cobrapy \texttt{single\_gene\_deletion} with glucose as the
+carbon source, scored on all 1,121 labeled genes. The phenotype it is compared against was
+called on rich medium, and the model here is scored on the 195 held-out genes, so the
+comparison as published is neither on the same medium nor on the same genes.
+Table~\ref{tab:fba-media} recomputes it on yeast-GEM 9.0.2 under the exchange bounds the
+model ships with and under the three media the ontology defines, with the essentiality
+score being the negative knockout-to-wild-type growth ratio, rounded to $10^{-3}$ so that
+the roughly 900 deletions that grow at 0.99 to 1.00 of the wild type rank as the tie they
+are (without the rounding two identical runs differed by 0.03 AUROC on the held-out genes).
+
+\input{tables/fba_media}
+
+The medium moves the number of lethal deletions by a factor of two and the AUROC by about
+0.01. The published 0.69 on all labeled genes is reproduced to within 0.02.
+
+\subsection{Flux Cone Learning on the same genes\secstatus{todo}}
+
+Recomputed from the authors' released per-gene predictions: 0.7308 on the 223 held-out
+genes (published 0.73) and 0.742 on the 195 genes the model scores. On those same 195 genes
+the released FBA predictions score 0.640, so the published pair overstates FBA by about
+0.06 relative to a head-to-head on one gene set.

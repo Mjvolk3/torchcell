@@ -69,7 +69,12 @@ ROUNDS: dict[str, tuple[str, list[str]]] = {
         "w12_*_e80_s*.json",
         ["base", "fcl", "fcl_wd0", "fcl_wd1e-2", "fcl_wd1e-1", "fcl_b32", "gen"],
     ),
-    "w13": ("w13_*_e80_s*.json", []),
+    # Wave 13: the prediction routed through the metabolic module, on the fcl split at
+    # the base hyperparameters, paired by seed against w12 fcl.
+    "w13": (
+        "w13_*_e80_s*.json",
+        ["fluxbio", "fluxbio_s0", "fluxctx", "fluxctx_s0", "fluxoff", "fluxoffctx"],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": ("wave11_ess_pool_h*_e80_s*.json", ["ess_pool"]),
@@ -82,6 +87,12 @@ ARM_LABELS = {
     "fcl_wd1e-1": "weight decay 1e-1",
     "fcl_b32": "batch 32",
     "gen": "genome labels (5,795 genes)",
+    "fluxbio": "growth column only, constraints 0.1",
+    "fluxbio_s0": "growth column only, constraints 0",
+    "fluxctx": "context + growth column, constraints 0.1",
+    "fluxctx_s0": "context + growth column, constraints 0",
+    "fluxoff": "growth column only, stoichiometry only",
+    "fluxoffctx": "context + growth column, stoichiometry only",
 }
 
 

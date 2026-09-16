@@ -1,0 +1,52 @@
+%% notes-tex/028-gene-essentiality/sections/1-endpoint.tex
+%% [[experiments.028-gene-essentiality]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/1-endpoint.tex
+
+\section{The endpoint, its labels and its splits\secstatus{todo}}
+\label{sec:endpoint}
+
+\subsection{Vocabulary\secstatus{todo}}
+
+\begin{description}
+  \item[AUROC] Area under the receiver operating characteristic, computed as the
+    Mann-Whitney rank statistic with mid-ranks on ties: the probability that a randomly
+    drawn essential gene scores above a randomly drawn nonessential one.
+  \item[backbone] The cell graph transformer over the nine-graph perturbed gene graph with
+    \texttt{prot\_T5\_all} node features, read at the pooled perturbed tokens. The
+    \emph{pooled} arm is this backbone with a scalar head and no metabolic module.
+  \item[gene bootstrap] Resampling the scored genes with replacement (2,000 draws) and
+    reporting the 2.5 and 97.5 percentiles of the statistic.
+  \item[held-out genes] The 223 genes Merzbacher 2025 held out of its own training
+    (\texttt{test = 1} in the released split), of which 195 resolve as single-deletion
+    genotypes in the build. Every model number in this document is on those 195 unless
+    the gene set is named.
+  \item[metabolic module] The enzyme-constrained thermodynamic flux layer over yeast-GEM
+    9.0.2 that maps the perturbed representation to a flux vector; here it is read at the
+    objective column \texttt{r\_2111} (growth).
+  \item[released labels] The 1,121 essentiality calls in the released split. The column
+    named \texttt{essential} is a viability flag (1.0 marks a nonessential gene); it is
+    inverted once and the four class counts are asserted against the paper's Methods.
+  \item[selected epoch] The argmax of a centered five-epoch moving average of the
+    validation AUROC. The held-out genes are scored once, at that epoch.
+\end{description}
+
+\subsection{Where the labels come from\secstatus{todo}}
+
+The build is a union of the SGD essential-gene list (1,140 genotypes, all essential) and
+the single-mutant fitness screens (Costanzo 2016, Kuzmin 2018; 4,540 genotypes), 5,656
+single-deletion genotypes in all. No fitness value enters any objective: the head is one
+logit scored by binary cross entropy against a 0/1 label, and every genotype whose gene
+carries no label arrives masked. Two label sources are used and named throughout:
+
+\input{tables/splits}
+
+\subsection{The protocol inherited from 027, and what it got wrong\secstatus{todo}}
+
+The wave-9 protocol pinned the held-out genes and let the data module draw train and
+validation at 80/10/10 over the remaining 5,461 records. Of those, 926 carry a label, so
+the validation set held 75 labeled genes with about 12 essential, on which a single AUROC
+read has a Hanley-McNeil standard error near 0.07; 10 percent of the labeled genes sat in
+a random test block nothing reports; and 4,535 unlabeled records were forwarded every epoch
+under a False mask. A split file replaces the draw: it names every record's split, is
+class-stratified, carries the labels it was stratified on, and the trainer drops every
+record it does not name.

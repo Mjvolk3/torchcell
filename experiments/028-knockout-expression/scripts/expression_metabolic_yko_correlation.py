@@ -686,7 +686,7 @@ def main() -> None:
     for ax, letter in zip(axes.ravel(), "abcdef"):
         panel_label(ax, letter)
     fig.subplots_adjust(
-        left=0.06, right=0.99, top=0.95, bottom=0.12, wspace=0.35, hspace=0.75
+        left=0.06, right=0.99, top=0.91, bottom=0.12, wspace=0.35, hspace=0.8
     )
     stem = osp.join(images, f"expression_metabolic_yko_correlation_{timestamp()}")
     fig.savefig(stem + ".png", dpi=300)

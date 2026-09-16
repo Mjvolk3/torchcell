@@ -12,7 +12,7 @@ Script: `experiments/028-knockout-expression/scripts/expression_metabolic_yko_co
 
 The knockout collection is the bridge. Kemmeren 2014 (mRNA, 1,484 deletions) and Messner 2023 (protein, 4,549 deletions after averaging duplicate ORFs) profile the same single-gene deletions that the metabolic screens score. Three reads on the deletions each pair shares: per metabolite, the strongest single gene against a strain-permutation null of the same maximum; per metabolite, out-of-fold Pearson of a ridge from the whole profile (5 folds, alpha by an inner split, 20 label permutations for the null); and a Mantel read, the Spearman between deletion x deletion profile similarity and deletion x deletion amino-acid distance (99 permutations). Amino acids are log2; Cachera's corrected fluorescence and Ozaydin's colony score are used as stored. Messner proteins measured in fewer than 95% of the shared deletions are dropped, the rest mean-imputed.
 
-![](assets/images/028-knockout-expression/expression_metabolic_yko_correlation_2026-09-16-13-04-20.svg)
+![](assets/images/028-knockout-expression/expression_metabolic_yko_correlation_2026-09-16-16-15-28.svg)
 
 Figure: a, b, out-of-fold ridge Pearson per amino acid, mRNA in yellow, protein in red, black tick the permutation 95th percentile of the same statistic. c, the pigment screens. d, the strongest single gene per metabolite against the permutation null of that maximum, the four large panels. e, the strongest pair, prolyl-tRNA synthetase protein (YHR020W) against proline. f, deletion x deletion mRNA-profile Pearson against amino-acid distance over 1.0 million Kemmeren pairs.
 

@@ -68,32 +68,6 @@ mkdir -p "$WANDB_DIR" "$TC_TEST_PRED_DIR" "$TC_CHECKPOINT_DIR"
 echo "host $(hostname) gpu $CUDA_VISIBLE_DEVICES; DATA_ROOT=$DATA_ROOT; EXPERIMENT_ROOT=$EXPERIMENT_ROOT"
 echo "snapshot head: $(cat SNAPSHOT_GIT_HEAD 2>/dev/null || echo unfrozen)"
 
-ARM="${ESS_ARM:-pooled}"
-HIDDEN="${ESS_HIDDEN:-12}"
-HEADS="${ESS_HEADS:-4}"
-LAYERS="${ESS_LAYERS:-1}"
-PREPROC="${ESS_PREPROC:-1}"
-SEED="${ESS_SEED:-2700}"
-EPOCHS="${ESS_EPOCHS:-80}"
-TAG="${ESS_TAG:-_w12base}"
-OUT="${ESS_OUT:-w12_${ARM}_h${HIDDEN}l${LAYERS}p${PREPROC}_e${EPOCHS}_s${SEED}}"
-
-ARGS=()
-[ -n "${ESS_WD:-}" ] && ARGS+=(--weight-decay "$ESS_WD")
-[ -n "${ESS_LR:-}" ] && ARGS+=(--lr "$ESS_LR")
-[ -n "${ESS_BATCH:-}" ] && ARGS+=(--batch-size "$ESS_BATCH")
-[ -n "${ESS_SPLIT:-}" ] && ARGS+=(--split-file "$ESS_SPLIT")
-# Graph regularization is ON unless ESS_GRAPH_REG=0; the class weight is OFF unless
-# ESS_POSW=1. Both were fixed in every essentiality cell before wave 14.
-[ "${ESS_GRAPH_REG:-1}" = "1" ] && ARGS+=(--graph-reg)
-[ "${ESS_POSW:-0}" = "1" ] && ARGS+=(--pos-weight-balanced)
-
-# shellcheck disable=SC2086
-python experiments/028-gene-essentiality/scripts/train_essentiality.py \
-    --arm "$ARM" --head essentiality \
-    --seed "$SEED" --epochs "$EPOCHS" \
-    --hidden "$HIDDEN" --attention-heads "$HEADS" --layers "$LAYERS" \
-    --preprocessor-layers "$PREPROC" \
-    "${ARGS[@]}" ${ESS_EXTRA:-} \
-    --wandb-group gh_028_ess --tag "$TAG" \
-    --out "${OUT}.json"
+# The cell body (ESS_* -> one train_essentiality.py call) lives in ess_cell.sh, shared with
+# the pack launcher gh_train_essentiality_pack.slurm.
+bash experiments/028-gene-essentiality/scripts/ess_cell.sh

@@ -183,6 +183,15 @@ SCALAR_HEADS = (HEAD, ISOBUTANOL_HEAD, ESSENTIALITY_HEAD)
 #: log-loss and selected on AUROC, and their target is never standardized: subtracting a
 #: mean from a 0/1 label and dividing by its sd would make the log-loss meaningless.
 BINARY_HEADS = (ESSENTIALITY_HEAD,)
+#: How essentiality is read on a FLUX arm. `biomass` is the forced path: the logit is an
+#: affine of the layer's growth column and nothing else, so the module has to carry the
+#: signal or the cell scores chance. `gated` is the pooled scalar head PLUS a
+#: zero-initialized gate on that same growth affine: at initialization it is the pooled
+#: model exactly, the gate's trajectory says whether the optimizer chose to use the flux,
+#: and the per-module gradient report says whether gradient reaches the layer.
+ESS_READOUT_BIOMASS = "biomass"
+ESS_READOUT_GATED = "gated"
+ESS_READOUTS = (ESS_READOUT_BIOMASS, ESS_READOUT_GATED)
 
 #: WAVE 7 (2026-09-11). The two mechanistic amino-acid readouts, named so a result file says
 #: which one it ran rather than leaving it to be inferred from the arm.
@@ -976,6 +985,25 @@ class BxCell(BaseModel):
             "'three' adds 2-keto-isovalerate and L-valine and is the secondary."
         ),
     )
+    ess_readout: str = Field(
+        default=ESS_READOUT_BIOMASS,
+        description=(
+            "How essentiality is read on a FLUX arm: 'biomass' (the wave-9 forced path, an "
+            "affine of the growth column alone) or 'gated' (the pooled scalar head plus a "
+            "zero-initialized gate on that affine, so the flux path is optional and its "
+            "use is measurable). Ignored on --arm pooled."
+        ),
+    )
+    pos_weight_balanced: bool = Field(
+        default=False,
+        description=(
+            "Weight the essential class in the binary cross entropy by the released "
+            "split's training-side nonessential-to-essential ratio (772/126), so both "
+            "classes contribute equally to the loss. Off is the wave-9 to wave-11 "
+            "protocol, where 16 percent positives leave the loss dominated by the "
+            "majority class."
+        ),
+    )
     target_log10: bool = Field(
         default=False,
         description=(
@@ -1574,6 +1602,14 @@ FCL_EXPECTED_COUNTS = {
 }
 
 
+def fcl_train_pos_weight() -> float:
+    """Nonessential over essential on the released TRAINING side, 772 / 126."""
+    return (
+        FCL_EXPECTED_COUNTS[("0", "nonessential")]
+        / FCL_EXPECTED_COUNTS[("0", "essential")]
+    )
+
+
 class FclEssentialityComparators(BaseModel):
     r"""Merzbacher 2025's published YEAST numbers, read from the mirrored paper.
 
@@ -1999,6 +2035,10 @@ def build_cell(
     flux_log_c_from_latent: bool = False,
     ib_readout: str = IB_READOUT_FLUX_SCALAR,
     ib_anchors: str = IB_ANCHORS_ONE,
+    lr: float | None = None,
+    weight_decay: float | None = None,
+    ess_readout: str = ESS_READOUT_BIOMASS,
+    pos_weight_balanced: bool = False,
     aa_supervise_columns: list[str] | None = None,
     apply_media: str = MEDIA_NONE,
 ) -> BxCell:
@@ -2071,6 +2111,13 @@ def build_cell(
         f"registry ({sorted(ARMS)}). The registry is the single source of truth for what "
         "the flux layer does; this file never redefines it."
     )
+    assert ess_readout in ESS_READOUTS, (
+        f"--ess-readout must be one of {ESS_READOUTS}, got {ess_readout!r}."
+    )
+    assert ess_readout == ESS_READOUT_BIOMASS or ARMS[armcfg.base_arm]["flux"], (
+        f"--ess-readout {ess_readout} gates the flux layer's growth column, so it needs a "
+        f"flux arm; arm {arm!r} builds no layer."
+    )
     return BxCell(
         arm=arm,
         base_arm=armcfg.base_arm,
@@ -2087,8 +2134,10 @@ def build_cell(
         preprocessor_layers=preprocessor_layers,
         batch_size=cfg.model.batch_size,
         num_workers=int(os.getenv("NUM_WORKERS", str(cfg.train.num_workers))),
-        lr=cfg.model.lr,
-        weight_decay=cfg.model.weight_decay,
+        lr=lr if lr is not None else cfg.model.lr,
+        weight_decay=weight_decay
+        if weight_decay is not None
+        else cfg.model.weight_decay,
         split_seed=cfg.data.split_seed,
         select_smoothing_window=cfg.scoring.select_smoothing_window,
         crps=crps,
@@ -2140,6 +2189,8 @@ def build_cell(
         flux_log_c_from_latent=flux_log_c_from_latent,
         ib_readout=ib_readout,
         ib_anchors=ib_anchors,
+        ess_readout=ess_readout,
+        pos_weight_balanced=pos_weight_balanced,
         aa_supervise_columns=aa_supervise_columns,
         apply_media=apply_media,
     )
@@ -3284,28 +3335,100 @@ class FluxBiomassReadout(nn.Module):
     ) -> tuple[torch.Tensor, dict[str, Any]]:
         """Run the wrapped model, then read the growth column off the predicted flux."""
         predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
-        if "flux" not in reps:
-            layer = self.model.flux_layer
-            assert layer is not None, (
-                "the biomass readout was built on a model with no flux layer."
-            )
-            # THE GATE READS THE DELETION-ONLY INDEX, the pool reads every perturbed
-            # token: the context is a representation of what was changed, the gate is a
-            # statement about what is gone. See `gene_removal_indices`.
-            gate_indices, gate_batch, _ = gene_removal_indices(batch)
-            reps["flux"] = layer(
-                reps["H_genes_pert"],
-                perturbed_gene_pool(
-                    reps["H_genes_pert"],
-                    batch["gene"].perturbation_indices,
-                    batch["gene"].perturbation_indices_batch,
-                ),
-                gate_indices,
-                gate_batch,
-            )
+        _ensure_flux(self.model, reps, batch)
         growth = reps["flux"]["v"][:, self.biomass_index : self.biomass_index + 1]
         reps["biomass_flux"] = growth
         reps["head_outputs"][self.head_name] = self.readout(growth).unsqueeze(1)
+        return predictions, reps
+
+
+def _ensure_flux(model: Any, reps: dict[str, Any], batch: Any) -> None:
+    """Run the layer once when the model built no flux head, so ``reps["flux"]`` exists.
+
+    THE GATE READS THE DELETION-ONLY INDEX, the pool reads every perturbed token: the
+    context is a representation of what was changed, the gate is a statement about what is
+    gone. See ``gene_removal_indices``.
+    """
+    if "flux" in reps:
+        return
+    layer = model.flux_layer
+    assert layer is not None, "the readout was built on a model with no flux layer."
+    gate_indices, gate_batch, _ = gene_removal_indices(batch)
+    reps["flux"] = layer(
+        reps["H_genes_pert"],
+        perturbed_gene_pool(
+            reps["H_genes_pert"],
+            batch["gene"].perturbation_indices,
+            batch["gene"].perturbation_indices_batch,
+        ),
+        gate_indices,
+        gate_batch,
+    )
+
+
+class FluxGatedEssentialityReadout(nn.Module):
+    r"""The pooled scalar head PLUS a zero-initialized gate on the layer's growth affine.
+
+    .. math::
+
+        \ell = h(z) + g \,(a\, v_{\text{growth}} + b), \qquad g_0 = 0
+
+    where :math:`h` is the same ``ProductScalarHead`` the pooled arm trains and
+    :math:`(a, b)` the same affine ``FluxBiomassReadout`` learns. At initialization the
+    cell IS the pooled model, so whatever it does worse than the pooled arm it chose to do
+    through the gate, and whatever it does better it did with the flux. Two things are
+    then measurable rather than argued: the gate's trajectory (logged per epoch as
+    ``ess_gate``) says whether the optimizer used the flux path, and the per-module
+    gradient report's ``flux_layer`` line says whether gradient reached the layer at all,
+    which at :math:`g = 0` it cannot. This is the ReZero pattern the perturbation
+    propagation already uses, applied to the readout.
+    """
+
+    model: CellGraphTransformerMetabolism
+
+    def __init__(
+        self,
+        model: CellGraphTransformerMetabolism,
+        biomass_index: int,
+        head_name: str = ESSENTIALITY_HEAD,
+    ) -> None:
+        """Bind the readout to the GEM's objective column, with the gate closed."""
+        super().__init__()
+        self.model = model
+        self.biomass_index = int(biomass_index)
+        self.head_name = head_name
+        self.readout = nn.Linear(1, 1)
+        self.gate = nn.Parameter(torch.zeros(()))
+
+    @property
+    def flux_layer(self) -> Any:
+        """The wrapped model's layer, so every caller that reaches for it is unchanged."""
+        return self.model.flux_layer
+
+    @property
+    def num_parameters(self) -> dict[str, int]:
+        """The wrapped model's counts, plus the affine and the gate."""
+        counts: dict[str, int] = dict(self.model.num_parameters)
+        extra = sum(p.numel() for p in self.readout.parameters()) + self.gate.numel()
+        counts[f"{self.head_name}_flux_gate"] = extra
+        counts["total"] = counts["total"] + extra
+        return counts
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Pooled logit plus the gated growth affine, in the biomass readout's shape."""
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        _ensure_flux(self.model, reps, batch)
+        growth = reps["flux"]["v"][:, self.biomass_index : self.biomass_index + 1]
+        pooled = reps["head_outputs"][self.head_name]
+        assert pooled.dim() == 2 and pooled.shape[1] == 1, (
+            f"the pooled essentiality head emits [B, 1], got {tuple(pooled.shape)}."
+        )
+        reps["biomass_flux"] = growth
+        reps["ess_gate"] = self.gate.detach()
+        logit = pooled + self.gate * self.readout(growth)
+        reps["head_outputs"][self.head_name] = logit.unsqueeze(1)
         return predictions, reps
 
 
@@ -4067,7 +4190,9 @@ def build_model_for_cell(
                 f"--head essentiality on a flux arm reads {BIOMASS_REACTION}, which this "
                 f"layer's {len(flux_layer.rxn_ids)} reactions do not include."
             )
-        else:
+        # The pooled arm reads the scalar head alone; the GATED flux readout reads the same
+        # scalar head and adds the gated growth affine on top, so it is built there too.
+        if not arm["flux"] or cell.ess_readout == ESS_READOUT_GATED:
             heads_config[ESSENTIALITY_HEAD] = {
                 "kind": "scalar",
                 "output_dim": 1,
@@ -4241,20 +4366,36 @@ def build_model_for_cell(
         assert flux_layer is not None
         biomass_index = int(flux_layer.rxn_ids.index(BIOMASS_REACTION))
         flux_meta["essentiality"] = {
-            "readout": "flux_biomass",
+            "readout": (
+                "flux_biomass_gated"
+                if cell.ess_readout == ESS_READOUT_GATED
+                else "flux_biomass"
+            ),
             "biomass_reaction": BIOMASS_REACTION,
             "biomass_index": biomass_index,
             "note": (
                 "essentiality is read off the flux through the GEM's objective column, "
-                "which is the quantity FBA thresholds in its own baseline."
+                "which is the quantity FBA thresholds in its own baseline; the gated "
+                "variant adds that affine, through a zero-initialized gate, to the pooled "
+                "scalar head's logit."
             ),
         }
-        wrapped_ess = FluxBiomassReadout(model, biomass_index).to(device)
-        print(
-            f"[biomass-readout] essentiality from the predicted growth flux at column "
-            f"{biomass_index} ({BIOMASS_REACTION})",
-            flush=True,
-        )
+        wrapped_ess: nn.Module
+        if cell.ess_readout == ESS_READOUT_GATED:
+            wrapped_ess = FluxGatedEssentialityReadout(model, biomass_index).to(device)
+            print(
+                f"[gated-readout] essentiality from the pooled scalar head plus a gated "
+                f"growth affine at column {biomass_index} ({BIOMASS_REACTION}); the gate "
+                "starts at 0",
+                flush=True,
+            )
+        else:
+            wrapped_ess = FluxBiomassReadout(model, biomass_index).to(device)
+            print(
+                f"[biomass-readout] essentiality from the predicted growth flux at column "
+                f"{biomass_index} ({BIOMASS_REACTION})",
+                flush=True,
+            )
         return wrapped_ess, head_specs, main_head, flux_meta
 
     if (
@@ -4594,6 +4735,15 @@ def run_cell(
     )
 
     binary = main_head in BINARY_HEADS
+    # THE CLASS WEIGHT IS THE RELEASED SPLIT'S TRAINING-SIDE RATIO, 772 nonessential to
+    # 126 essential, not our own train rows': the two differ only by the genes the cell
+    # graph does not resolve and by the validation draw, and a constant read off the paper
+    # is reproducible without a pass over the loader. Recorded in the result.
+    pos_weight: torch.Tensor | None = (
+        torch.tensor([fcl_train_pos_weight()], device=device)
+        if cell.pos_weight_balanced
+        else None
+    )
 
     def loss_fn(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         if binary:
@@ -4601,7 +4751,7 @@ def run_cell(
             # numerically stable form, and `reduction="none"` keeps the elementwise shape
             # the caller's masked mean expects.
             return nn.functional.binary_cross_entropy_with_logits(
-                prediction, target, reduction="none"
+                prediction, target, reduction="none", pos_weight=pos_weight
             )
         if dist_head is not None:
             # Pinball, elementwise over the K quantiles and then averaged over them, so the
@@ -4907,6 +5057,9 @@ def run_cell(
         if grad_max:
             row["grad_norm_max"] = grad_max["grad_norm_max"]
             row["grad_clipped_frac"] = grad_max["grad_clipped_frac"] / max(n_batches, 1)
+        if isinstance(model, FluxGatedEssentialityReadout):
+            # The gate IS the usage readout: 0 is the pooled model exactly.
+            row["ess_gate"] = float(model.gate.detach())
         history.append(row)
         if on_epoch is not None:
             on_epoch(row)
@@ -5878,6 +6031,37 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--lr",
+        type=float,
+        default=None,
+        help="AdamW learning rate; default is base.yaml's 1e-3, the 026 incumbent.",
+    )
+    parser.add_argument(
+        "--weight-decay",
+        type=float,
+        default=None,
+        help="AdamW weight decay; default is base.yaml's 1e-4, the 026 incumbent.",
+    )
+    parser.add_argument(
+        "--ess-readout",
+        choices=ESS_READOUTS,
+        default=ESS_READOUT_BIOMASS,
+        help=(
+            "Essentiality on a FLUX arm: 'biomass' forces the logit through the growth "
+            "column alone; 'gated' adds a zero-initialized gate on that affine to the "
+            "pooled scalar head, so the flux path is optional and its use is logged as "
+            "ess_gate. Ignored on --arm pooled."
+        ),
+    )
+    parser.add_argument(
+        "--pos-weight-balanced",
+        action="store_true",
+        help=(
+            "Weight the essential class by the released split's training-side 772/126 in "
+            "the binary cross entropy."
+        ),
+    )
+    parser.add_argument(
         "--ib-readout",
         choices=IB_READOUTS,
         default=IB_READOUT_FLUX_SCALAR,
@@ -6199,6 +6383,10 @@ def main() -> None:
         flux_log_c_from_latent=args.flux_log_c_from_latent,
         ib_readout=args.ib_readout,
         ib_anchors=args.ib_anchors,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
+        ess_readout=args.ess_readout,
+        pos_weight_balanced=args.pos_weight_balanced,
         aa_supervise_columns=(
             None
             if args.aa_supervise_columns is None

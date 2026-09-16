@@ -80,6 +80,7 @@ import glob
 import json
 import os
 import os.path as osp
+import re
 from typing import Any
 
 import numpy as np
@@ -104,7 +105,11 @@ PRED_DIR = osp.join(DATA_ROOT, "test-predictions-027-wave7")
 #: found through its result, and its dump through the result's stem, never by a guessed
 #: dump name: the old name `<arm>_essentiality_s<seed>.json` was shared by every width of
 #: the wave-11 ladder and the last cell to finish overwrote the others (2026-09-16).
-RESULT_GLOBS = ("wave9_ess_*_e80_s*.json", "wave11_ess_*_e80_s*.json")
+RESULT_GLOBS = (
+    "wave9_ess_*_e80_s*.json",
+    "wave11_ess_*_e80_s*.json",
+    "wave12_ess_*_e80_s*.json",
+)
 #: What the arm is called in the report; the readout is what differs between the two.
 ARM_LABEL = {"pooled": "pooled", "flux_projection_anchored": "flux_biomass"}
 #: The fields on which a dump must agree with the result that claims it.
@@ -171,7 +176,9 @@ class OurCell(BaseModel):
     """One of our trained cells: where its result and its per-gene predictions live."""
 
     model_config = ConfigDict(extra="forbid")
-    label: str = Field(description="Arm plus architecture, e.g. pooled_h24l1p1.")
+    label: str = Field(
+        description="The result stem without its seed, e.g. wave11_ess_pool_h24l1p1_e80."
+    )
     seed: int
     result_file: str
     dump_file: str
@@ -372,17 +379,17 @@ def discover_cells() -> tuple[list[tuple[OurCell, pd.Series]], dict[str, str]]:
         preproc = cell.get("preprocessor_layers")
         if preproc is None:
             preproc = PREPROCESSOR_LAYERS_BEFORE_WAVE_11
-        # Cells built from 2026-09-16 carry no perturbation readout head, which shifts the
-        # initialization at a given seed; the parameter tally is where that shows, and the
-        # label says it so an old cell and its rerun are never averaged as one arm.
-        head_marker = "" if "perturbation_head" in result["n_parameters"] else "_nohead"
+        # THE LABEL IS THE RESULT STEM WITHOUT THE SEED. The stem is the one name that is
+        # unique per cell by construction (a launcher that reused one would overwrite its
+        # own result), and it carries every lever a wave chose to vary: architecture,
+        # regularizer, learning rate, class weight, readout, penalty scale, and the
+        # `_nohead` marker of the cells built after the readout head was removed. Deriving
+        # the label from a few cell fields instead would merge cells that differ in a
+        # field the label forgot, which the duplicate check below then catches too late.
         found.append(
             (
                 OurCell(
-                    label=(
-                        f"{ARM_LABEL[cell['arm']]}_h{cell['hidden']}l{cell['layers']}"
-                        f"p{preproc}{head_marker}"
-                    ),
+                    label=re.sub(r"_s\d+", "", stem),
                     seed=int(cell["seed"]),
                     result_file=result_file,
                     dump_file=dump_file,

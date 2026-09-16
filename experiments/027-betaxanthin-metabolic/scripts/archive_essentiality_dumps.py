@@ -46,7 +46,11 @@ OUT = osp.join(RESULTS, "essentiality_dump_archive.json")
 PRED_DIR = osp.join(DATA_ROOT, "test-predictions-027-wave7")
 #: The result files of every essentiality cell that trained to its full budget; the
 #: two-epoch canaries are left out because nothing reads their predictions.
-RESULT_GLOBS = ("wave9_ess_*_e80_s*.json", "wave11_ess_*_e80_s*.json")
+RESULT_GLOBS = (
+    "wave9_ess_*_e80_s*.json",
+    "wave11_ess_*_e80_s*.json",
+    "wave12_ess_*_e80_s*.json",
+)
 #: The fields on which a dump must agree with the result that claims it. A missing field
 #: on both sides (``preprocessor_layers`` predates wave 11) counts as agreement.
 IDENTITY_FIELDS = (
@@ -73,7 +77,8 @@ class DumpStatus(BaseModel):
     )
     legacy_dump: str | None = None
     legacy_holds: dict[str, object] | None = Field(
-        default=None, description="Identity of the cell in the legacy file, when it differs."
+        default=None,
+        description="Identity of the cell in the legacy file, when it differs.",
     )
 
 
@@ -98,14 +103,18 @@ def main() -> None:
         with open(result_file) as fh:
             result = json.load(fh)
         cell = result["cell"]
-        assert cell["head"] == "essentiality", f"{result_file} is not an essentiality cell."
+        assert cell["head"] == "essentiality", (
+            f"{result_file} is not an essentiality cell."
+        )
         stem = osp.splitext(osp.basename(result_file))[0]
         expected = osp.join(PRED_DIR, f"{stem}.json")
         legacy = result["test"].get("dump_path")
         if legacy is None:
             statuses.append(
                 DumpStatus(
-                    result_file=result_file, expected_dump=expected, status="no_dump_recorded"
+                    result_file=result_file,
+                    expected_dump=expected,
+                    status="no_dump_recorded",
                 )
             )
             continue

@@ -40,7 +40,7 @@
   ],
   "cells": [
     {
-      "label": "pooled_h12l1p1",
+      "label": "wave11_ess_pool_h12l1p1_e80",
       "seed": 2700,
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h12l1p1_e80_s2700.json",
       "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h12l1p1_e80_s2700.json",
@@ -51,7 +51,7 @@
       "test_auroc_in_result": 0.8011408339889851
     },
     {
-      "label": "pooled_h12l1p1",
+      "label": "wave11_ess_pool_h12l1p1_e80",
       "seed": 2701,
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h12l1p1_e80_s2701.json",
       "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h12l1p1_e80_s2701.json",
@@ -62,7 +62,7 @@
       "test_auroc_in_result": 0.7859952793076318
     },
     {
-      "label": "pooled_h12l1p1",
+      "label": "wave11_ess_pool_h12l1p1_e80",
       "seed": 2702,
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h12l1p1_e80_s2702.json",
       "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h12l1p1_e80_s2702.json",
@@ -73,7 +73,7 @@
       "test_auroc_in_result": 0.7958300550747442
     },
     {
-      "label": "pooled_h54l2p2",
+      "label": "wave11_ess_pool_h54l2p2_e80",
       "seed": 2700,
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h54l2p2_e80_s2700.json",
       "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h54l2p2_e80_s2700.json",
@@ -84,7 +84,7 @@
       "test_auroc_in_result": 0.790912667191188
     },
     {
-      "label": "pooled_h54l2p2",
+      "label": "wave11_ess_pool_h54l2p2_e80",
       "seed": 2701,
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave11_ess_pool_h54l2p2_e80_s2701.json",
       "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave11_ess_pool_h54l2p2_e80_s2701.json",
@@ -95,7 +95,7 @@
       "test_auroc_in_result": 0.7916994492525571
     },
     {
-      "label": "flux_biomass_h90l2p2",
+      "label": "wave9_ess_flux_e80",
       "seed": 2700,
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_flux_e80_s2700.json",
       "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_flux_e80_s2700.json",
@@ -106,7 +106,7 @@
       "test_auroc_in_result": 0.5398308418568056
     },
     {
-      "label": "flux_biomass_h90l2p2",
+      "label": "wave9_ess_flux_e80",
       "seed": 2701,
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_flux_e80_s2701.json",
       "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_flux_e80_s2701.json",
@@ -117,7 +117,7 @@
       "test_auroc_in_result": 0.75786782061369
     },
     {
-      "label": "flux_biomass_h90l2p2",
+      "label": "wave9_ess_flux_e80",
       "seed": 2702,
       "result_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave9_ess_flux_e80_s2702.json",
       "dump_file": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/wave9_ess_flux_e80_s2702.json",
@@ -158,7 +158,7 @@
       "seed": null
     },
     {
-      "method": "pooled_h12l1p1",
+      "method": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "all_labeled_1121",
       "n_genes": 195,
       "n_essential": 31,
@@ -168,7 +168,7 @@
       "seed": 2700
     },
     {
-      "method": "pooled_h12l1p1",
+      "method": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "all_labeled_1121",
       "n_genes": 195,
       "n_essential": 31,
@@ -178,7 +178,7 @@
       "seed": 2701
     },
     {
-      "method": "pooled_h12l1p1",
+      "method": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "all_labeled_1121",
       "n_genes": 195,
       "n_essential": 31,
@@ -188,7 +188,7 @@
       "seed": 2702
     },
     {
-      "method": "pooled_h54l2p2",
+      "method": "wave11_ess_pool_h54l2p2_e80",
       "gene_set": "all_labeled_1121",
       "n_genes": 195,
       "n_essential": 31,
@@ -198,7 +198,7 @@
       "seed": 2700
     },
     {
-      "method": "pooled_h54l2p2",
+      "method": "wave11_ess_pool_h54l2p2_e80",
       "gene_set": "all_labeled_1121",
       "n_genes": 195,
       "n_essential": 31,
@@ -208,7 +208,7 @@
       "seed": 2701
     },
     {
-      "method": "flux_biomass_h90l2p2",
+      "method": "wave9_ess_flux_e80",
       "gene_set": "all_labeled_1121",
       "n_genes": 195,
       "n_essential": 31,
@@ -218,7 +218,7 @@
       "seed": 2700
     },
     {
-      "method": "flux_biomass_h90l2p2",
+      "method": "wave9_ess_flux_e80",
       "gene_set": "all_labeled_1121",
       "n_genes": 195,
       "n_essential": 31,
@@ -228,7 +228,7 @@
       "seed": 2701
     },
     {
-      "method": "flux_biomass_h90l2p2",
+      "method": "wave9_ess_flux_e80",
       "gene_set": "all_labeled_1121",
       "n_genes": 195,
       "n_essential": 31,
@@ -258,7 +258,7 @@
       "seed": null
     },
     {
-      "method": "pooled_h12l1p1",
+      "method": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "released_held_out_223",
       "n_genes": 195,
       "n_essential": 31,
@@ -268,7 +268,7 @@
       "seed": 2700
     },
     {
-      "method": "pooled_h12l1p1",
+      "method": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "released_held_out_223",
       "n_genes": 195,
       "n_essential": 31,
@@ -278,7 +278,7 @@
       "seed": 2701
     },
     {
-      "method": "pooled_h12l1p1",
+      "method": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "released_held_out_223",
       "n_genes": 195,
       "n_essential": 31,
@@ -288,7 +288,7 @@
       "seed": 2702
     },
     {
-      "method": "pooled_h54l2p2",
+      "method": "wave11_ess_pool_h54l2p2_e80",
       "gene_set": "released_held_out_223",
       "n_genes": 195,
       "n_essential": 31,
@@ -298,7 +298,7 @@
       "seed": 2700
     },
     {
-      "method": "pooled_h54l2p2",
+      "method": "wave11_ess_pool_h54l2p2_e80",
       "gene_set": "released_held_out_223",
       "n_genes": 195,
       "n_essential": 31,
@@ -308,7 +308,7 @@
       "seed": 2701
     },
     {
-      "method": "flux_biomass_h90l2p2",
+      "method": "wave9_ess_flux_e80",
       "gene_set": "released_held_out_223",
       "n_genes": 195,
       "n_essential": 31,
@@ -318,7 +318,7 @@
       "seed": 2700
     },
     {
-      "method": "flux_biomass_h90l2p2",
+      "method": "wave9_ess_flux_e80",
       "gene_set": "released_held_out_223",
       "n_genes": 195,
       "n_essential": 31,
@@ -328,7 +328,7 @@
       "seed": 2701
     },
     {
-      "method": "flux_biomass_h90l2p2",
+      "method": "wave9_ess_flux_e80",
       "gene_set": "released_held_out_223",
       "n_genes": 195,
       "n_essential": 31,
@@ -358,7 +358,7 @@
       "seed": null
     },
     {
-      "method": "pooled_h12l1p1",
+      "method": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "ours_scored",
       "n_genes": 195,
       "n_essential": 31,
@@ -368,7 +368,7 @@
       "seed": 2700
     },
     {
-      "method": "pooled_h12l1p1",
+      "method": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "ours_scored",
       "n_genes": 195,
       "n_essential": 31,
@@ -378,7 +378,7 @@
       "seed": 2701
     },
     {
-      "method": "pooled_h12l1p1",
+      "method": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "ours_scored",
       "n_genes": 195,
       "n_essential": 31,
@@ -388,7 +388,7 @@
       "seed": 2702
     },
     {
-      "method": "pooled_h54l2p2",
+      "method": "wave11_ess_pool_h54l2p2_e80",
       "gene_set": "ours_scored",
       "n_genes": 195,
       "n_essential": 31,
@@ -398,7 +398,7 @@
       "seed": 2700
     },
     {
-      "method": "pooled_h54l2p2",
+      "method": "wave11_ess_pool_h54l2p2_e80",
       "gene_set": "ours_scored",
       "n_genes": 195,
       "n_essential": 31,
@@ -408,7 +408,7 @@
       "seed": 2701
     },
     {
-      "method": "flux_biomass_h90l2p2",
+      "method": "wave9_ess_flux_e80",
       "gene_set": "ours_scored",
       "n_genes": 195,
       "n_essential": 31,
@@ -418,7 +418,7 @@
       "seed": 2700
     },
     {
-      "method": "flux_biomass_h90l2p2",
+      "method": "wave9_ess_flux_e80",
       "gene_set": "ours_scored",
       "n_genes": 195,
       "n_essential": 31,
@@ -428,7 +428,7 @@
       "seed": 2701
     },
     {
-      "method": "flux_biomass_h90l2p2",
+      "method": "wave9_ess_flux_e80",
       "gene_set": "ours_scored",
       "n_genes": 195,
       "n_essential": 31,
@@ -440,7 +440,7 @@
   ],
   "arms_across_seeds": [
     {
-      "arm": "pooled_h12l1p1",
+      "arm": "wave11_ess_pool_h12l1p1_e80",
       "gene_set": "ours_scored",
       "auroc_by_seed": {
         "2700": 0.8011408339889852,
@@ -453,7 +453,7 @@
       "maximum": 0.8011408339889852
     },
     {
-      "arm": "pooled_h54l2p2",
+      "arm": "wave11_ess_pool_h54l2p2_e80",
       "gene_set": "ours_scored",
       "auroc_by_seed": {
         "2700": 0.790912667191188,
@@ -465,7 +465,7 @@
       "maximum": 0.7916994492525571
     },
     {
-      "arm": "flux_biomass_h90l2p2",
+      "arm": "wave9_ess_flux_e80",
       "gene_set": "ours_scored",
       "auroc_by_seed": {
         "2700": 0.5398308418568056,
@@ -480,7 +480,7 @@
   ],
   "head_to_head": [
     {
-      "arm": "pooled_h12l1p1",
+      "arm": "wave11_ess_pool_h12l1p1_e80",
       "baseline": "FCL",
       "gene_set": "ours_scored",
       "baseline_auroc": 0.74213217938631,
@@ -494,7 +494,7 @@
       "verdict": "3 of 3 seeds above FCL; the arm's across-seed range is 0.786 to 0.801, so a single seed above the baseline is not evidence the arm beats it."
     },
     {
-      "arm": "pooled_h12l1p1",
+      "arm": "wave11_ess_pool_h12l1p1_e80",
       "baseline": "FBA",
       "gene_set": "ours_scored",
       "baseline_auroc": 0.6400472069236822,
@@ -508,7 +508,7 @@
       "verdict": "3 of 3 seeds above FBA; the arm's across-seed range is 0.786 to 0.801, so a single seed above the baseline is not evidence the arm beats it."
     },
     {
-      "arm": "pooled_h54l2p2",
+      "arm": "wave11_ess_pool_h54l2p2_e80",
       "baseline": "FCL",
       "gene_set": "ours_scored",
       "baseline_auroc": 0.74213217938631,
@@ -521,7 +521,7 @@
       "verdict": "2 of 2 seeds above FCL; the arm's across-seed range is 0.791 to 0.792, so a single seed above the baseline is not evidence the arm beats it."
     },
     {
-      "arm": "pooled_h54l2p2",
+      "arm": "wave11_ess_pool_h54l2p2_e80",
       "baseline": "FBA",
       "gene_set": "ours_scored",
       "baseline_auroc": 0.6400472069236822,
@@ -534,7 +534,7 @@
       "verdict": "2 of 2 seeds above FBA; the arm's across-seed range is 0.791 to 0.792, so a single seed above the baseline is not evidence the arm beats it."
     },
     {
-      "arm": "flux_biomass_h90l2p2",
+      "arm": "wave9_ess_flux_e80",
       "baseline": "FCL",
       "gene_set": "ours_scored",
       "baseline_auroc": 0.74213217938631,
@@ -548,7 +548,7 @@
       "verdict": "1 of 3 seeds above FCL; the arm's across-seed range is 0.512 to 0.758, so a single seed above the baseline is not evidence the arm beats it."
     },
     {
-      "arm": "flux_biomass_h90l2p2",
+      "arm": "wave9_ess_flux_e80",
       "baseline": "FBA",
       "gene_set": "ours_scored",
       "baseline_auroc": 0.6400472069236822,

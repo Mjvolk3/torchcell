@@ -183,6 +183,77 @@ def test_the_biomass_reaction_is_the_gems_objective():
     assert train_bx.BIOMASS_REACTION == "r_2111"
 
 
+class _GatedBackbone(_FluxBackbone):
+    """A flux backbone that also carries the pooled scalar head's logit."""
+
+    def __init__(self, flux: torch.Tensor, pooled: torch.Tensor) -> None:
+        super().__init__(flux)
+        self._pooled = pooled
+
+    def forward(
+        self, cell_graph: Any, batch: Any
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        _, reps = super().forward(cell_graph, batch)
+        reps["head_outputs"] = {train_bx.ESSENTIALITY_HEAD: self._pooled}
+        return {}, reps
+
+
+def test_the_gated_readout_is_the_pooled_model_at_initialization():
+    """Gate 0: the logit is the pooled head's exactly, and only the gate gets gradient.
+
+    This is what makes the arm a test of whether the optimizer CHOOSES the flux: the flux
+    path can only enter through a parameter that starts at zero, so a gated cell that ends
+    below the pooled arm went there through the gate.
+    """
+    torch.manual_seed(0)
+    flux = torch.randn(B, R)
+    pooled = torch.randn(B, 1, requires_grad=True)
+    column = 7
+    readout = train_bx.FluxGatedEssentialityReadout(
+        _GatedBackbone(flux, pooled), column
+    )
+    _, reps = readout(None, _essentiality_batch())
+    out = reps["head_outputs"][train_bx.ESSENTIALITY_HEAD]
+    assert out.shape == (B, 1, 1)
+    assert torch.equal(out.squeeze(1), pooled)
+    assert torch.equal(reps["biomass_flux"], flux[:, column : column + 1])
+    assert float(reps["ess_gate"]) == 0.0
+    out.sum().backward()
+    assert readout.gate.grad is not None and float(readout.gate.grad) != 0.0
+    # d logit / d affine = gate * growth = 0: the flux path carries no gradient while the
+    # gate is closed, which is what the per-module gradient report will show.
+    assert torch.all(readout.readout.weight.grad == 0)
+    assert readout.num_parameters[f"{train_bx.ESSENTIALITY_HEAD}_flux_gate"] == 3
+
+
+def test_the_gated_readout_adds_the_growth_affine_once_open():
+    torch.manual_seed(1)
+    flux = torch.randn(B, R)
+    pooled = torch.randn(B, 1)
+    column = 3
+    readout = train_bx.FluxGatedEssentialityReadout(
+        _GatedBackbone(flux, pooled), column
+    )
+    with torch.no_grad():
+        readout.gate.fill_(1.0)
+    _, reps = readout(None, _essentiality_batch())
+    out = reps["head_outputs"][train_bx.ESSENTIALITY_HEAD].squeeze(1)
+    expected = pooled + readout.readout(flux[:, column : column + 1])
+    assert torch.allclose(out, expected)
+
+
+def test_the_gated_readout_needs_a_flux_arm():
+    cfg = train_bx.load_config()
+    with pytest.raises(AssertionError, match="needs a flux arm"):
+        train_bx.build_cell(
+            "pooled", 0, cfg, head=train_bx.ESSENTIALITY_HEAD, ess_readout="gated"
+        )
+
+
+def test_the_balanced_class_weight_is_the_released_training_ratio():
+    assert train_bx.fcl_train_pos_weight() == pytest.approx(772 / 126)
+
+
 class _GeneKeyed:
     """A batch whose genotypes delete zero, one or two genes."""
 

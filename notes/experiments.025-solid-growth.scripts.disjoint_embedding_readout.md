@@ -30,3 +30,11 @@ markdown, and epoch curves of validation Pearson, validation point loss, train P
 the graph penalty and the perturbed-CLS strain spread. Each run creates a new version:
 
 <https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/reports/025-disjoint-split:-sequence-embeddings-against-the-learnable-table--VmlldzoxNzkyNTI2OA==>
+
+## 2026.09.15 - One row per seed
+
+The readout now writes one row per rank-0 run of each config (one per seed, `seed`
+column) and covers the random-vector control (`_018`) and the composite-plus-fitness arm
+(`_027`, with `val_fitness_pearson_max`). The report labels each line with its seed.
+Republished version:
+<https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/reports/025-disjoint-split:-sequence-embeddings-against-the-learnable-table--VmlldzoxNzk0MTc0Nw==>

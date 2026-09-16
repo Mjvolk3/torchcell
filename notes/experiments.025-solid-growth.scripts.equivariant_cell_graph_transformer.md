@@ -835,3 +835,36 @@ line is the trigenic fit alone, the order-2 line the digenic one. Validation and
 the pinned trigenic splits are order 3 only, so there the order-3 line equals the pooled
 one, which is the check that the split is what it claims. Three tests in
 `tests/torchcell/trainers/test_int_transformer_cell_per_order_metrics.py`.
+
+## 2026.09.15 - Disjoint split at two and three seeds; the random-vector control
+
+Synced from IGB (20 offline runs of jobs 2397827, 2397845, 2397846, 2397847 and the
+100-epoch flanks run 2395008) and read with `disjoint_embedding_readout.py`, now one row
+per seed. Validation Pearson on the 420 held-out query pairs; max is a max over 30
+epochs and biased upward, the window mean over epochs 10 to 29 is the steadier reading:
+
+| arm | seed | max (epoch) | mean 10 to 29 | val point loss at 29 |
+|---|---|---|---|---|
+| learnable table, control | 42 | 0.195 (2) | 0.140 | 1.217 |
+| learnable table, control | 1 | 0.226 (3) | 0.144 | 1.193 |
+| learnable table, control | 2 | 0.163 (7) | 0.125 | 1.172 |
+| random 1,000-vector, matched | 42 | 0.187 (13) | 0.151 | 1.017 |
+| composite sequence embedding | 42 | 0.263 (2) | 0.215 | 0.950 |
+| composite sequence embedding | 1 | 0.275 (15) | 0.235 | 1.018 |
+| CaLM alone | 42 | 0.252 (7) | 0.204 | 0.950 |
+| ProtT5 alone | 42 | 0.270 (3) | 0.162 | 1.046 |
+| promoter + terminator alone, 100 ep | 42 | 0.208 (20) | 0.164; 0.157 over 60 to 99 | 1.013 |
+
+Three seeds of the control give window means 0.140, 0.144, 0.125 (spread 0.019); two
+seeds of the composite give 0.215 and 0.235. The gap between the arms, about 0.08 on the
+window mean, is four times the control's seed spread, so with two composite seeds the
+ordering is established even if a third composite seed is still owed for a proper
+interval. The random 1,000-vector control, parameter-matched like the composite, sits
+at 0.151, above the learnable table and well below the composite: a fixed input vector
+by itself removes some of the memorization (its validation loss holds near 1.02 where
+the table's climbs to 1.2), and the sequence content adds the rest. Flanks alone after
+100 epochs stay at 0.16, in the band of the random vector. The composite-plus-fitness
+arm (2397876) has not run yet; the composite seed-2 replicate (2397848) is at epoch 11.
+
+The report's run set (`split_Q` tag) is the group view of all of these:
+<https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/reports/025-disjoint-split:-sequence-embeddings-against-the-learnable-table--VmlldzoxNzk0MTc0Nw==> (version of 2026-09-15; the first version is VmlldzoxNzkyNTI2OA==)

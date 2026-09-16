@@ -27,6 +27,8 @@ PROJECT = "torchcell_025-solid-growth_equivariant_cell_graph_transformer"
 LABELS = {
     "cgt_s0_q_kl_ctrl_016": "learnable table, control, 30 ep",
     "cgt_s0_q_kl_emb_017": "composite (promoter + CaLM + ProtT5 + terminator), 30 ep",
+    "cgt_s0_q_kl_rand_018": "random 1,000-vector, matched control, 30 ep",
+    "cgt_s0_q_kl_embfit_027": "composite + fitness head, 30 ep",
     "cgt_s0_q_kl_calm_020": "CaLM alone, 30 ep",
     "cgt_s0_q_kl_prot_021": "ProtT5 alone, 30 ep",
     "cgt_s0_q_kl_emb_022": "composite, 100 ep",
@@ -40,17 +42,30 @@ LABELS = {
 def main() -> None:
     df = pd.read_csv(osp.join(RESULTS_DIR, "disjoint_embedding_readout.csv"))
     line_titles = {
-        row["run_id"]: LABELS.get(row["config"], row["config"]) for _, row in df.iterrows()
+        row[
+            "run_id"
+        ]: f"{LABELS.get(row['config'], row['config'])} (seed {row['seed']})"
+        for _, row in df.iterrows()
     }
     cols = [
-        "config", "budget_epochs", "epochs_logged", "val_pearson_max",
-        "val_pearson_max_epoch", "val_pearson_epoch29", "val_pearson_mean_ep10_29",
-        "val_pearson_mean_ep60_99", "val_point_loss_epoch29", "train_pearson_last",
+        "config",
+        "seed",
+        "budget_epochs",
+        "epochs_logged",
+        "val_pearson_max",
+        "val_pearson_max_epoch",
+        "val_pearson_epoch29",
+        "val_pearson_mean_ep10_29",
+        "val_pearson_mean_ep60_99",
+        "val_point_loss_epoch29",
+        "train_pearson_last",
         "graph_reg_loss_last",
     ]
     md = "| " + " | ".join(cols) + " |\n|" + "---|" * len(cols) + "\n"
     for _, r in df[cols].iterrows():
-        md += "| " + " | ".join("" if pd.isna(v) else str(v) for v in r.tolist()) + " |\n"
+        md += (
+            "| " + " | ".join("" if pd.isna(v) else str(v) for v in r.tolist()) + " |\n"
+        )
 
     runset = wr.Runset(
         entity=ENTITY,
@@ -99,10 +114,17 @@ def main() -> None:
             wr.PanelGrid(
                 runsets=[runset],
                 panels=[
-                    plot("val/gene_interaction/Pearson", "val/gene_interaction/Pearson"),
+                    plot(
+                        "val/gene_interaction/Pearson", "val/gene_interaction/Pearson"
+                    ),
                     plot("val/point_loss (z-scored MSE)", "val/point_loss"),
-                    plot("train/gene_interaction/Pearson", "train/gene_interaction/Pearson"),
-                    plot("train/graph_reg_loss (log)", "train/graph_reg_loss", log_y=True),
+                    plot(
+                        "train/gene_interaction/Pearson",
+                        "train/gene_interaction/Pearson",
+                    ),
+                    plot(
+                        "train/graph_reg_loss (log)", "train/graph_reg_loss", log_y=True
+                    ),
                     plot("val/cls_pert_strain_sd", "val/cls_pert_strain_sd"),
                 ],
             ),

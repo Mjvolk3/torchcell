@@ -195,15 +195,16 @@ class _FluxBackboneWithHead(_FluxBackbone):
 def test_the_context_biomass_readout_adds_the_growth_affine_to_the_context_logit():
     torch.manual_seed(0)
     flux = torch.randn(B, R)
-    context = torch.randn(B, 1, 1)
+    # The model's scalar head emits [B, 1]; the growth affine takes that shape.
+    context = torch.randn(B, 1)
     column = 7
     readout = train_bx.ContextBiomassReadout(
         _FluxBackboneWithHead(flux, context), column
     )
     _, reps = readout(None, _essentiality_batch())
     out = reps["head_outputs"][train_bx.ESSENTIALITY_HEAD]
-    assert out.shape == (B, 1, 1)
-    expected = context + readout.readout(flux[:, column : column + 1]).unsqueeze(1)
+    assert out.shape == (B, 1)
+    expected = context + readout.readout(flux[:, column : column + 1])
     assert torch.allclose(out, expected)
     # Both paths carry gradient: the context logit and the growth column.
     assert readout.num_parameters[f"{train_bx.ESSENTIALITY_HEAD}_head"] == 2

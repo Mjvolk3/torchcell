@@ -3392,11 +3392,13 @@ class ContextBiomassReadout(FluxBiomassReadout):
         )
         growth = self.growth_column(batch, reps)
         context_logit = reps["head_outputs"][self.head_name]
-        growth_logit = self.readout(growth).unsqueeze(1)
-        assert context_logit.shape == growth_logit.shape, (
+        # The model's scalar head emits [B, 1]; the growth affine is one number per
+        # genotype too, so it takes the head's shape whatever the head's convention.
+        assert context_logit.numel() == growth.shape[0], (
             context_logit.shape,
-            growth_logit.shape,
+            growth.shape,
         )
+        growth_logit = self.readout(growth).reshape(context_logit.shape)
         reps["head_outputs"][self.head_name] = context_logit + growth_logit
         return predictions, reps
 

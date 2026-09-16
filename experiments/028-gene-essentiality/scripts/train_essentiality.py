@@ -45,6 +45,7 @@ Run one cell by hand from the repo root::
 """
 
 import argparse
+import csv
 import hashlib
 import json
 import math
@@ -192,9 +193,25 @@ ESS_READOUT_CONTEXT_BIOMASS = "context_biomass"
 #: epoch as `ess_gate`) says whether the optimizer chose the flux path, and the per-module
 #: gradient report says whether gradient reached the layer, which at gate 0 it cannot.
 ESS_READOUT_GATED = "gated"
-ESS_READOUTS = (ESS_READOUT_BIOMASS, ESS_READOUT_CONTEXT_BIOMASS, ESS_READOUT_GATED)
+#: `fba` is a POOLED-arm readout (round 5, 2026-09-16): the context head's logit plus an
+#: affine of FBA's four knockout-to-wild-type growth ratios for the deleted gene, one per
+#: medium, read from `fba_essentiality_per_gene.csv` (the file the classical ladder appends
+#: to every encoding). The ladder's rungs cross 0.80 only with those four numbers appended,
+#: so this is the transformer given the same complement; the four weights are logged per
+#: epoch as `ess_fba_w_<medium>`.
+ESS_READOUT_FBA = "fba"
+ESS_READOUTS = (
+    ESS_READOUT_BIOMASS,
+    ESS_READOUT_CONTEXT_BIOMASS,
+    ESS_READOUT_GATED,
+    ESS_READOUT_FBA,
+)
 #: The readouts that keep the pooled arm's own context head beside the growth affine.
 ESS_READOUTS_WITH_CONTEXT = (ESS_READOUT_CONTEXT_BIOMASS, ESS_READOUT_GATED)
+#: The per-gene FBA table (`fba_essentiality_baseline.py`) and its medium columns, in the
+#: order the ladder uses them.
+FBA_PER_GENE_CSV = osp.join(RESULTS_DIR, "fba_essentiality_per_gene.csv")
+FBA_MEDIA = ("shipped", "SM", "SC", "YPD")
 
 #: WAVE 7 (2026-09-11). The two mechanistic amino-acid readouts, named so a result file says
 #: which one it ran rather than leaving it to be inferred from the arm.
@@ -993,7 +1010,9 @@ class BxCell(BaseModel):
         description=(
             "On a flux arm with the essentiality head: `biomass` reads the growth column "
             "alone (wave 9); `context_biomass` adds the growth affine to the pooled arm's "
-            "own context head. Inert on a pooled arm."
+            "own context head; `gated` puts it behind a zero-initialized gate. On a pooled "
+            "arm: `fba` adds an affine of FBA's four growth ratios for the deleted gene; "
+            "`biomass` (the default) is inert there."
         ),
     )
     ib_readout: str = Field(
@@ -3482,6 +3501,138 @@ class GatedBiomassReadout(ContextBiomassReadout):
         return predictions, reps
 
 
+def fba_growth_table(
+    gene_ids: list[str],
+) -> tuple[torch.Tensor, torch.Tensor, dict[str, Any]]:
+    """``([n_genes, 4], [n_genes] bool, meta)``: FBA's growth ratios per cell-graph gene.
+
+    One row per gene node in cell-graph order, so the lookup runs on the same integer
+    indices the model perturbs with. The ratio is knockout growth over wild-type growth on
+    each medium of ``FBA_MEDIA``, from the table ``fba_essentiality_baseline.py`` wrote for
+    the 1,121 labeled genes; a gene the table does not cover gets 1.0 (no growth defect)
+    under a False flag, and the flag count is written into the result so a cell states how
+    many of its genes had a solver value.
+    """
+    with open(FBA_PER_GENE_CSV, newline="") as fh:
+        ratios = {
+            row["gene"]: [float(row[m]) for m in FBA_MEDIA]
+            for row in csv.DictReader(fh)
+        }
+    table = torch.ones(len(gene_ids), len(FBA_MEDIA))
+    known = torch.zeros(len(gene_ids), dtype=torch.bool)
+    for i, gene in enumerate(gene_ids):
+        if gene in ratios:
+            table[i] = torch.tensor(ratios[gene], dtype=torch.float32)
+            known[i] = True
+    meta = {
+        "source": FBA_PER_GENE_CSV,
+        "media": list(FBA_MEDIA),
+        "n_genes": len(gene_ids),
+        "n_genes_with_fba": int(known.sum()),
+        "note": (
+            "knockout-to-wild-type growth ratio per medium; genes absent from the table "
+            "read 1.0 (no defect) and are flagged, and every labeled gene is in the table."
+        ),
+    }
+    return table, known, meta
+
+
+class FbaContextReadout(nn.Module):
+    r"""The pooled arm's context head PLUS an affine of FBA's four growth ratios.
+
+    .. math::
+
+        \ell = h(z) + w^\top r_{\text{gene}} + b, \qquad r \in [0, 1]^4
+
+    ``r`` is the knockout-to-wild-type growth ratio of the genotype's ONE deleted gene on
+    each of the four media (``FBA_MEDIA``), looked up through the deletion index exactly as
+    the essentiality label is (:func:`gene_keyed_target`). This is the transformer given the
+    complement the classical ladder shows carrying every encoding past 0.80: logistic
+    regression on a frozen embedding scores 0.73 to 0.78, and 0.81 to 0.83 with these four
+    numbers appended. A genotype with no single deleted gene reads the wild-type row (all
+    ones), which the intercept absorbs.
+
+    The four weights are read into every epoch row (``ess_fba_w_<medium>``), so the cell
+    states whether the optimizer used the solver's numbers and on which medium. No flux
+    layer: this is a POOLED-arm readout, asserted at construction.
+    """
+
+    fba_table: torch.Tensor
+    fba_known: torch.Tensor
+    model: CellGraphTransformerMetabolism
+
+    def __init__(
+        self,
+        model: CellGraphTransformerMetabolism,
+        fba_table: torch.Tensor,
+        fba_known: torch.Tensor,
+        head_name: str = ESSENTIALITY_HEAD,
+    ) -> None:
+        """Bind the readout to the per-gene ratio table, in cell-graph gene order."""
+        super().__init__()
+        assert model.flux_layer is None, (
+            "the FBA-ratio readout is defined on the pooled backbone; a flux arm has its "
+            "own growth column (`biomass`, `context_biomass`, `gated`)."
+        )
+        assert fba_table.shape[1] == len(FBA_MEDIA), fba_table.shape
+        self.model = model
+        self.head_name = head_name
+        self.register_buffer("fba_table", fba_table)
+        self.register_buffer("fba_known", fba_known)
+        self.readout = nn.Linear(len(FBA_MEDIA), 1)
+
+    @property
+    def flux_layer(self) -> Any:
+        """``None``: the pooled backbone carries no layer."""
+        return self.model.flux_layer
+
+    @property
+    def num_parameters(self) -> dict[str, int]:
+        """The backbone's counts, plus the four weights and the intercept."""
+        counts: dict[str, int] = dict(self.model.num_parameters)
+        extra = sum(int(p.numel()) for p in self.readout.parameters())
+        counts[f"{self.head_name}_head"] = (
+            counts.get(f"{self.head_name}_head", 0) + extra
+        )
+        counts["total"] = counts["total"] + extra
+        return counts
+
+    def growth_ratios(self, batch: Any) -> torch.Tensor:
+        """``[B, 4]`` ratios of each genotype's single deleted gene; ones otherwise."""
+        gene = batch["gene"]
+        indices = gene.deletion_indices
+        assignment = gene.deletion_indices_batch
+        n = int(batch.num_graphs)
+        counts = torch.zeros(n, dtype=torch.long, device=indices.device)
+        counts.index_add_(0, assignment, torch.ones_like(assignment))
+        ratios = torch.ones(n, self.fba_table.shape[1], device=self.fba_table.device)
+        single = counts == 1
+        if bool(single.any()):
+            rows = assignment[single[assignment]]
+            genes = indices[single[assignment]]
+            ratios[rows] = self.fba_table[genes]
+        return ratios
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Context logit plus the affine of the deleted gene's four growth ratios."""
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        assert self.head_name in reps["head_outputs"], (
+            "the context head was not built; `fba` needs it in heads_config."
+        )
+        context_logit = reps["head_outputs"][self.head_name]
+        ratios = self.growth_ratios(batch)
+        assert context_logit.numel() == ratios.shape[0], (
+            context_logit.shape,
+            ratios.shape,
+        )
+        fba_logit = self.readout(ratios).reshape(context_logit.shape)
+        reps["ess_fba_ratios"] = ratios
+        reps["head_outputs"][self.head_name] = context_logit + fba_logit
+        return predictions, reps
+
+
 class ContextPrecursorConcentrationReadout(nn.Module):
     r"""The precursor readout's head, on the pooled backbone, with no flux layer.
 
@@ -4441,6 +4592,10 @@ def build_model_for_cell(
                 + "."
             ),
         }
+        assert cell.ess_readout != ESS_READOUT_FBA, (
+            "--ess-readout fba is a pooled-arm readout (the context head plus FBA's four "
+            "growth ratios); a flux arm reads its own growth column."
+        )
         readout_cls: type[FluxBiomassReadout] = {
             ESS_READOUT_BIOMASS: FluxBiomassReadout,
             ESS_READOUT_CONTEXT_BIOMASS: ContextBiomassReadout,
@@ -4453,6 +4608,26 @@ def build_model_for_cell(
             flush=True,
         )
         return wrapped_ess, head_specs, main_head, flux_meta
+
+    if main_head == ESSENTIALITY_HEAD and cell.ess_readout == ESS_READOUT_FBA:
+        assert not arm["flux"]
+        fba_table, fba_known, fba_meta = fba_growth_table(gene_ids)
+        flux_meta["essentiality"] = {
+            "readout": cell.ess_readout,
+            "fba": fba_meta,
+            "note": (
+                "essentiality is the pooled arm's context logit plus an affine of FBA's "
+                "knockout-to-wild-type growth ratios for the deleted gene on four media, "
+                "the feature the classical ladder appends to every encoding."
+            ),
+        }
+        wrapped_fba = FbaContextReadout(model, fba_table, fba_known).to(device)
+        print(
+            f"[fba-readout] essentiality from the context head plus FBA's growth ratios on "
+            f"{FBA_MEDIA} for {fba_meta['n_genes_with_fba']} of {len(gene_ids)} genes",
+            flush=True,
+        )
+        return wrapped_fba, head_specs, main_head, flux_meta
 
     if (
         main_head == ISOBUTANOL_HEAD
@@ -5122,6 +5297,11 @@ def run_cell(
         if isinstance(model, GatedBiomassReadout):
             # The gate IS the usage readout: 0 is the pooled model exactly.
             row["ess_gate"] = float(model.gate.detach())
+        if isinstance(model, FbaContextReadout):
+            # The four weights say whether, and on which medium, the solver's number is used.
+            weights = model.readout.weight.detach().reshape(-1)
+            for medium, w in zip(FBA_MEDIA, weights.tolist(), strict=True):
+                row[f"ess_fba_w_{medium}"] = float(w)
         history.append(row)
         if on_epoch is not None:
             on_epoch(row)
@@ -5995,9 +6175,11 @@ def main() -> None:
         choices=ESS_READOUTS,
         default=ESS_READOUT_BIOMASS,
         help=(
-            "Flux arms only: `biomass` reads the growth column alone; `context_biomass` "
+            "Flux arms: `biomass` reads the growth column alone; `context_biomass` "
             "adds the growth affine to the pooled arm's context head; `gated` does the "
-            "same behind a zero-initialized gate, logged per epoch as ess_gate."
+            "same behind a zero-initialized gate, logged per epoch as ess_gate. Pooled "
+            "arm: `fba` adds an affine of FBA's four per-medium growth ratios for the "
+            "deleted gene to the context head, weights logged as ess_fba_w_<medium>."
         ),
     )
     parser.add_argument(

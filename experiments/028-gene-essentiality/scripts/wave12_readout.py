@@ -116,6 +116,13 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ["w14_b32posw200_h12l1p1_e200_s*.json", "w15_*_e200_s*.json"],
         ["b32posw200", "gate_s0", "bio_s0", "shuf_s0"],
     ),
+    # Wave 16 (round 5, packs): the pooled arm with FBA's four growth ratios added to the
+    # context head (`--ess-readout fba`) on the round-3 levers, paired by seed against the
+    # round-3 pooled cell, plus the same readout on the five cross-validation folds.
+    "w16": (
+        ["w14_b32posw200_h12l1p1_e200_s*.json", "w16_*_e200_s*.json"],
+        ["b32posw200", "fba", "fbacv0", "fbacv1", "fbacv2", "fbacv3", "fbacv4"],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -152,6 +159,12 @@ ARM_LABELS = {
     "gate_s0": "gated growth column, constraints 0 (round-3 levers)",
     "bio_s0": "growth column only, constraints 0 (round-3 levers)",
     "shuf_s0": "growth column only, kcat shuffled (round-3 levers)",
+    "fba": "context head + FBA growth ratios (round-3 levers)",
+    "fbacv0": "context head + FBA ratios, fold 0",
+    "fbacv1": "context head + FBA ratios, fold 1",
+    "fbacv2": "context head + FBA ratios, fold 2",
+    "fbacv3": "context head + FBA ratios, fold 3",
+    "fbacv4": "context head + FBA ratios, fold 4",
 }
 
 

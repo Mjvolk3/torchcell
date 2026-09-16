@@ -136,6 +136,13 @@ ROUND_CAPTIONS = {
         "readout, the forced growth column, and the forced growth column with the kcat "
         "vector shuffled.",
     ),
+    "w16": (
+        "Round 5, FBA's growth ratios as an input",
+        "The round-3 pooled cell and the same cell with an affine of FBA's four per-medium "
+        "growth ratios for the deleted gene added to the context head, at three seeds, and "
+        "that readout on the five cross-validation folds whose logits are averaged on the "
+        "held-out genes.",
+    ),
 }
 
 

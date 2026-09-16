@@ -50,10 +50,17 @@ real measurement would do.
 \tcfigfit[0.92]{figures/cross_study_ko_expression.pdf}{%
   \textbf{A deletion's microarray profile reproduces in a second microarray study
   at a median correlation of 0.74 and in the single-cell panel at 0.00.}
-  \textbf{(a, b)} The released single-cell values sit on a different scale, and
-  one cell in five is a sentinel produced when a gene's mean is zero in one
-  group, which the fold-change formula returns as roughly $\pm 23$. Those are
-  discarded before every comparison here. \textbf{(c)} Spread of each deletion's
+  \textbf{(a)} The values, with the sentinels described in (b) already removed.
+  The two platforms still sit on different scales, the single-cell values
+  spreading with a standard deviation of 0.89 against 0.23 and 0.18 for the two
+  microarrays, so the sentinels are not what separates them. \textbf{(b)} The
+  single-cell values exactly as released. A \term{sentinel} is a placeholder
+  the software writes in place of a measurement: the fold change is the log of a
+  ratio of two group means with a tiny pseudocount added to each, so whenever a
+  gene has zero counts in one group the result is about $\pm 23$, a number that
+  records only that one side was empty. One value in five is one, marked here by
+  the $\pm 20$ lines, and every comparison in this section drops them first.
+  \textbf{(c)} Spread of each deletion's
   profile. \textbf{(d)} Every shared deletion-by-gene value, with the fitted
   slope. \textbf{(e)} The headline: per-deletion agreement for the two
   microarrays against the microarray-to-single-cell comparison. \textbf{(f)} The

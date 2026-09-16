@@ -217,6 +217,53 @@ def test_the_context_biomass_readout_refuses_a_backbone_without_the_context_head
         readout(None, _essentiality_batch())
 
 
+def test_the_gated_readout_is_the_pooled_model_at_initialization():
+    """Gate 0: the logit is the context head's exactly, and only the gate gets gradient.
+
+    This is what makes the arm a test of whether the optimizer CHOOSES the flux: the flux
+    path can only enter through a parameter that starts at zero, so a gated cell that ends
+    below the pooled arm went there through the gate.
+    """
+    torch.manual_seed(0)
+    flux = torch.randn(B, R)
+    context = torch.randn(B, 1, requires_grad=True)
+    column = 7
+    readout = train_bx.GatedBiomassReadout(_FluxBackboneWithHead(flux, context), column)
+    _, reps = readout(None, _essentiality_batch())
+    out = reps["head_outputs"][train_bx.ESSENTIALITY_HEAD]
+    assert torch.equal(out, context)
+    assert torch.equal(reps["biomass_flux"], flux[:, column : column + 1])
+    assert float(reps["ess_gate"]) == 0.0
+    out.sum().backward()
+    assert readout.gate.grad is not None and float(readout.gate.grad) != 0.0
+    # d logit / d affine = gate * growth = 0: the flux path carries no gradient while the
+    # gate is closed, which is what the per-module gradient report will show.
+    assert torch.all(readout.readout.weight.grad == 0)
+    assert readout.num_parameters[f"{train_bx.ESSENTIALITY_HEAD}_head"] == 3
+
+
+def test_the_gated_readout_adds_the_growth_affine_once_open():
+    torch.manual_seed(1)
+    flux = torch.randn(B, R)
+    context = torch.randn(B, 1)
+    column = 3
+    readout = train_bx.GatedBiomassReadout(_FluxBackboneWithHead(flux, context), column)
+    with torch.no_grad():
+        readout.gate.fill_(1.0)
+    _, reps = readout(None, _essentiality_batch())
+    out = reps["head_outputs"][train_bx.ESSENTIALITY_HEAD]
+    expected = context + readout.readout(flux[:, column : column + 1])
+    assert torch.allclose(out, expected)
+
+
+def test_the_balanced_class_weight_is_the_released_training_ratio():
+    assert train_bx.fcl_train_pos_weight() == pytest.approx(772 / 126)
+    cfg = train_bx.load_config()
+    cell = train_bx.build_cell("pooled", 0, cfg, pos_weight_balanced=True)
+    assert cell.pos_weight_balanced is True
+    assert train_bx.build_cell("pooled", 0, cfg).pos_weight_balanced is False
+
+
 def test_the_biomass_reaction_is_the_gems_objective():
     assert train_bx.BIOMASS_REACTION == "r_2111"
 

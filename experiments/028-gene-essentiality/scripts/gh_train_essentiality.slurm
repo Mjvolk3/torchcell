@@ -40,10 +40,10 @@
 #SBATCH --gres=gpu:1
 #SBATCH --job-name=028-ess
 #SBATCH --time=06:00:00
-#SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/028-gene-essentiality/experiments/028-gene-essentiality/slurm/output/%x_%j.out
-#SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/028-gene-essentiality/experiments/028-gene-essentiality/slurm/output/%x_%j.out
+#SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/slurm/output/%x_%j.out
+#SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/slurm/output/%x_%j.out
 
-PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/028-gene-essentiality}"
+PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets}"
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 set -a; . "$PROJECT_ROOT/.env"; set +a
@@ -78,11 +78,15 @@ ARGS=()
 [ -n "${ESS_LR:-}" ] && ARGS+=(--lr "$ESS_LR")
 [ -n "${ESS_BATCH:-}" ] && ARGS+=(--batch-size "$ESS_BATCH")
 [ -n "${ESS_SPLIT:-}" ] && ARGS+=(--split-file "$ESS_SPLIT")
+# Graph regularization is ON unless ESS_GRAPH_REG=0; the class weight is OFF unless
+# ESS_POSW=1. Both were fixed in every essentiality cell before wave 14.
+[ "${ESS_GRAPH_REG:-1}" = "1" ] && ARGS+=(--graph-reg)
+[ "${ESS_POSW:-0}" = "1" ] && ARGS+=(--pos-weight-balanced)
 
 # shellcheck disable=SC2086
 python experiments/028-gene-essentiality/scripts/train_essentiality.py \
     --arm "$ARM" --head essentiality \
-    --seed "$SEED" --epochs "$EPOCHS" --graph-reg \
+    --seed "$SEED" --epochs "$EPOCHS" \
     --hidden "$HIDDEN" --attention-heads "$HEADS" --layers "$LAYERS" \
     --preprocessor-layers "$PREPROC" \
     "${ARGS[@]}" ${ESS_EXTRA:-} \

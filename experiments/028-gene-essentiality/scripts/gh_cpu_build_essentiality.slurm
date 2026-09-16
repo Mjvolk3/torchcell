@@ -25,10 +25,10 @@
 #SBATCH --nice=1000
 #SBATCH --job-name=028-build-essentiality
 #SBATCH --time=04:00:00
-#SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/028-gene-essentiality/experiments/028-gene-essentiality/slurm/output/%x_%j.out
-#SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/028-gene-essentiality/experiments/028-gene-essentiality/slurm/output/%x_%j.out
+#SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/slurm/output/%x_%j.out
+#SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/slurm/output/%x_%j.out
 
-PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/028-gene-essentiality}"
+PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets}"
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 set -a; . "$PROJECT_ROOT/.env"; set +a

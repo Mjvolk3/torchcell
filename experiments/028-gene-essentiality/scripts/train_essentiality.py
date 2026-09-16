@@ -187,7 +187,14 @@ BINARY_HEADS = (ESSENTIALITY_HEAD,)
 #: then say how much of the update the module carries when it is not the only path.
 ESS_READOUT_BIOMASS = "biomass"
 ESS_READOUT_CONTEXT_BIOMASS = "context_biomass"
-ESS_READOUTS = (ESS_READOUT_BIOMASS, ESS_READOUT_CONTEXT_BIOMASS)
+#: `gated` is `context_biomass` with the growth affine behind a ZERO-initialized gate: at
+#: initialization the cell is the pooled model exactly, so the gate's trajectory (logged per
+#: epoch as `ess_gate`) says whether the optimizer chose the flux path, and the per-module
+#: gradient report says whether gradient reached the layer, which at gate 0 it cannot.
+ESS_READOUT_GATED = "gated"
+ESS_READOUTS = (ESS_READOUT_BIOMASS, ESS_READOUT_CONTEXT_BIOMASS, ESS_READOUT_GATED)
+#: The readouts that keep the pooled arm's own context head beside the growth affine.
+ESS_READOUTS_WITH_CONTEXT = (ESS_READOUT_CONTEXT_BIOMASS, ESS_READOUT_GATED)
 
 #: WAVE 7 (2026-09-11). The two mechanistic amino-acid readouts, named so a result file says
 #: which one it ran rather than leaving it to be inferred from the arm.
@@ -971,6 +978,16 @@ class BxCell(BaseModel):
     # the held-out amino-acid columns and the medium. Every field defaults to what wave 8
     # ran, so an earlier result file deserializes unchanged and an earlier cell is
     # bit-identical.
+    pos_weight_balanced: bool = Field(
+        default=False,
+        description=(
+            "Weight the essential class in the binary cross entropy by the released "
+            "split's training-side nonessential-to-essential ratio (772/126), so both "
+            "classes contribute equally to the loss. Off is the wave-9 to wave-13 "
+            "protocol, where 16 percent positives leave the loss dominated by the "
+            "majority class."
+        ),
+    )
     ess_readout: str = Field(
         default=ESS_READOUT_BIOMASS,
         description=(
@@ -1598,6 +1615,14 @@ FCL_EXPECTED_COUNTS = {
 }
 
 
+def fcl_train_pos_weight() -> float:
+    """Nonessential over essential on the released TRAINING side, 772 / 126."""
+    return (
+        FCL_EXPECTED_COUNTS[("0", "nonessential")]
+        / FCL_EXPECTED_COUNTS[("0", "essential")]
+    )
+
+
 class FclEssentialityComparators(BaseModel):
     r"""Merzbacher 2025's published YEAST numbers, read from the mirrored paper.
 
@@ -1708,8 +1733,7 @@ def load_split_file(name: str) -> dict[str, Any]:
 
 
 def essentiality_gene_labels(
-    dataset: Any,
-    split_file: str | None = None,
+    dataset: Any, split_file: str | None = None
 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, Any]]:
     """``(value, known, report)`` over the cell graph's gene nodes, from the released split.
 
@@ -2053,6 +2077,7 @@ def build_cell(
     batch_size: int | None = None,
     split_file: str | None = None,
     ess_readout: str = ESS_READOUT_BIOMASS,
+    pos_weight_balanced: bool = False,
 ) -> BxCell:
     """Merge ``base.yaml`` with one arm file into a fully specified cell."""
     with open(osp.join(CONF_DIR, f"arm_{arm}.yaml")) as fh:
@@ -2146,6 +2171,7 @@ def build_cell(
         split_seed=cfg.data.split_seed,
         split_file=split_file,
         ess_readout=ess_readout,
+        pos_weight_balanced=pos_weight_balanced,
         select_smoothing_window=cfg.scoring.select_smoothing_window,
         crps=crps,
         graph_reg=graph_reg,
@@ -3403,6 +3429,59 @@ class ContextBiomassReadout(FluxBiomassReadout):
         return predictions, reps
 
 
+class GatedBiomassReadout(ContextBiomassReadout):
+    r"""``context_biomass`` with the growth affine behind a zero-initialized gate.
+
+    .. math::
+
+        \ell = h(z) + g\,(a\,v_{\text{growth}} + b), \qquad g_0 = 0
+
+    ``ContextBiomassReadout`` hands the flux path a nonzero weight from the first step, so a
+    cell that ends below the pooled arm cannot say whether the module cost it or whether the
+    optimizer simply started from a worse point. Here the cell IS the pooled model at
+    initialization (the ReZero pattern the perturbation propagation already uses): whatever
+    it does worse it chose to do through the gate, and whatever it does better it did with
+    the flux. ``ess_gate`` is written into every epoch row.
+    """
+
+    def __init__(
+        self,
+        model: CellGraphTransformerMetabolism,
+        biomass_index: int,
+        head_name: str = ESSENTIALITY_HEAD,
+    ) -> None:
+        """Bind the readout to the GEM's objective column, with the gate closed."""
+        super().__init__(model, biomass_index, head_name)
+        self.gate = nn.Parameter(torch.zeros(()))
+
+    @property
+    def num_parameters(self) -> dict[str, int]:
+        """The wrapped model's counts, plus the affine and the gate."""
+        counts = super().num_parameters
+        counts[f"{self.head_name}_head"] += self.gate.numel()
+        counts["total"] += self.gate.numel()
+        return counts
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Context logit plus the GATED growth affine."""
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        assert self.head_name in reps["head_outputs"], (
+            "the context head was not built; `gated` needs it in heads_config."
+        )
+        growth = self.growth_column(batch, reps)
+        context_logit = reps["head_outputs"][self.head_name]
+        assert context_logit.numel() == growth.shape[0], (
+            context_logit.shape,
+            growth.shape,
+        )
+        growth_logit = self.readout(growth).reshape(context_logit.shape)
+        reps["ess_gate"] = self.gate.detach()
+        reps["head_outputs"][self.head_name] = context_logit + self.gate * growth_logit
+        return predictions, reps
+
+
 class ContextPrecursorConcentrationReadout(nn.Module):
     r"""The precursor readout's head, on the pooled backbone, with no flux layer.
 
@@ -4163,9 +4242,9 @@ def build_model_for_cell(
                 f"--head essentiality on a flux arm reads {BIOMASS_REACTION}, which this "
                 f"layer's {len(flux_layer.rxn_ids)} reactions do not include."
             )
-            if cell.ess_readout == ESS_READOUT_CONTEXT_BIOMASS:
-                # THE CONTEXT HEAD IS BUILT TOO: `ContextBiomassReadout` adds the growth
-                # affine to its logit rather than replacing it.
+            if cell.ess_readout in ESS_READOUTS_WITH_CONTEXT:
+                # THE CONTEXT HEAD IS BUILT TOO: `ContextBiomassReadout` and its gated
+                # variant add the growth affine to its logit rather than replacing it.
                 heads_config[ESSENTIALITY_HEAD] = {
                     "kind": "scalar",
                     "output_dim": 1,
@@ -4351,19 +4430,22 @@ def build_model_for_cell(
             "note": (
                 "essentiality is read off the flux through the GEM's objective column, "
                 "which is the quantity FBA thresholds in its own baseline"
-                + (
-                    ", added to the pooled arm's context head"
-                    if cell.ess_readout == ESS_READOUT_CONTEXT_BIOMASS
-                    else ""
-                )
+                + {
+                    ESS_READOUT_BIOMASS: "",
+                    ESS_READOUT_CONTEXT_BIOMASS: ", added to the pooled arm's context head",
+                    ESS_READOUT_GATED: (
+                        ", added to the pooled arm's context head through a gate "
+                        "initialized at zero"
+                    ),
+                }[cell.ess_readout]
                 + "."
             ),
         }
-        readout_cls = (
-            ContextBiomassReadout
-            if cell.ess_readout == ESS_READOUT_CONTEXT_BIOMASS
-            else FluxBiomassReadout
-        )
+        readout_cls: type[FluxBiomassReadout] = {
+            ESS_READOUT_BIOMASS: FluxBiomassReadout,
+            ESS_READOUT_CONTEXT_BIOMASS: ContextBiomassReadout,
+            ESS_READOUT_GATED: GatedBiomassReadout,
+        }[cell.ess_readout]
         wrapped_ess = readout_cls(model, biomass_index).to(device)
         print(
             f"[{cell.ess_readout}-readout] essentiality from the predicted growth flux at "
@@ -4715,6 +4797,15 @@ def run_cell(
     )
 
     binary = main_head in BINARY_HEADS
+    # THE CLASS WEIGHT IS THE RELEASED SPLIT'S TRAINING-SIDE RATIO, 772 nonessential to
+    # 126 essential, not our own train rows': the two differ only by the genes the cell
+    # graph does not resolve and by the validation draw, and a constant read off the paper
+    # is reproducible without a pass over the loader. Recorded in the result's cell.
+    pos_weight: torch.Tensor | None = (
+        torch.tensor([fcl_train_pos_weight()], device=device)
+        if cell.pos_weight_balanced
+        else None
+    )
 
     def loss_fn(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         if binary:
@@ -4722,7 +4813,7 @@ def run_cell(
             # numerically stable form, and `reduction="none"` keeps the elementwise shape
             # the caller's masked mean expects.
             return nn.functional.binary_cross_entropy_with_logits(
-                prediction, target, reduction="none"
+                prediction, target, reduction="none", pos_weight=pos_weight
             )
         if dist_head is not None:
             # Pinball, elementwise over the K quantiles and then averaged over them, so the
@@ -5028,6 +5119,9 @@ def run_cell(
         if grad_max:
             row["grad_norm_max"] = grad_max["grad_norm_max"]
             row["grad_clipped_frac"] = grad_max["grad_clipped_frac"] / max(n_batches, 1)
+        if isinstance(model, GatedBiomassReadout):
+            # The gate IS the usage readout: 0 is the pooled model exactly.
+            row["ess_gate"] = float(model.gate.detach())
         history.append(row)
         if on_epoch is not None:
             on_epoch(row)
@@ -5902,7 +5996,16 @@ def main() -> None:
         default=ESS_READOUT_BIOMASS,
         help=(
             "Flux arms only: `biomass` reads the growth column alone; `context_biomass` "
-            "adds the growth affine to the pooled arm's context head."
+            "adds the growth affine to the pooled arm's context head; `gated` does the "
+            "same behind a zero-initialized gate, logged per epoch as ess_gate."
+        ),
+    )
+    parser.add_argument(
+        "--pos-weight-balanced",
+        action="store_true",
+        help=(
+            "Weight the essential class by the released split's training-side 772/126 in "
+            "the binary cross entropy, so both classes carry equal loss."
         ),
     )
     parser.add_argument(
@@ -6360,6 +6463,7 @@ def main() -> None:
         batch_size=args.batch_size,
         split_file=args.split_file,
         ess_readout=args.ess_readout,
+        pos_weight_balanced=args.pos_weight_balanced,
     )
     dataset = build_dataset(cell.head)
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)
@@ -6369,7 +6473,9 @@ def main() -> None:
         # held-out genes' records (the builder asserts it), so the comparison set is the
         # same one `resolve_fcl_test_indices` pins.
         split = load_split_file(cell.split_file)
-        pinned_splits = {k: {int(i) for i in split[k]} for k in ("train", "val", "test")}
+        pinned_splits = {
+            k: {int(i) for i in split[k]} for k in ("train", "val", "test")
+        }
         pinned = set(pinned_splits["test"])
         report = {"path": split["path"], **split["report"]}
         print(

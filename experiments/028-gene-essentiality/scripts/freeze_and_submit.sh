@@ -35,7 +35,7 @@
 # passed to sbatch after the script.
 set -euo pipefail
 
-WT="${TC_WORKTREE:-/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/028-gene-essentiality}"
+WT="${TC_WORKTREE:-/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets}"
 SCRIPT_REL="$1"; shift
 [ -f "$WT/$SCRIPT_REL" ] || { echo "no such script: $WT/$SCRIPT_REL" >&2; exit 2; }
 

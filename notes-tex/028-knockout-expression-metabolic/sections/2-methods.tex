@@ -1,0 +1,57 @@
+%% notes-tex/028-knockout-expression-metabolic/sections/2-methods.tex
+%% SOURCE: experiments/028-knockout-expression/scripts/expression_metabolic_yko_correlation.py;
+%% every constant named here is a module-level setting of that script.
+
+\section{The statistics\secstatus{todo}}
+\label{sec:methods}
+
+\subsection{Matrices\secstatus{todo}}
+\label{sec:methods-matrices}
+
+Each molecular source is a deletion $\times$ feature matrix. Kemmeren is the stored
+$\log_2$ ratio per reporter, with the $|\log_2| \ge 20$ sentinel cells dropped as absent.
+Messner is the $\log_2$ of the stored protein quantity over the HIS3 reference profile,
+duplicate strains of one ORF averaged. Nadal-Ribelles is the recomputed pseudobulk
+$\log_2$ fold change per deletion (the A statistic of the cross-study recompute),
+restricted to deletions with at least 50 cells. Each metabolic panel is a deletion
+$\times$ metabolite matrix whose deletion is the one \file{kanmx_deletion} perturbation
+of the record; the pathway cassettes carried by every strain of the pigment screens
+are the strain background and are ignored. Amino-acid concentrations and metabolite
+signals are $\log_2$-transformed, Cooper's zeros dropped first; the betaxanthin
+corrected fluorescence and the beta-carotene colony score are used as stored.
+\src{experiments/028-knockout-expression/scripts/expression_metabolic_yko_correlation.py}
+
+For one (source, panel) pair, the deletions are those present on both sides, features
+are kept when measured in at least 95\,\% of those deletions (this is what drops the
+Messner proteins quantified in few strains), the remainder mean-imputed, and features
+without variance dropped. A metabolite is scored when at least 40 shared deletions carry
+a finite value.
+
+\subsection{Three reads\secstatus{todo}}
+\label{sec:methods-reads}
+
+\notesec{Univariate} For each metabolite, the Pearson between the metabolite and every
+feature across the shared deletions. The report is the largest $|r|$ over features, the
+number of features past Benjamini-Hochberg FDR 5\,\% on the $t$ test, and the largest
+$|r|$ under 200 permutations of the deletion labels. The permutation null is the
+honest reference for a maximum over thousands of features: it sits far above zero, and
+it widens when the metabolite is heavy tailed, which is why the single-gene read is
+reported but not relied on.
+
+\notesec{Multivariate} A ridge from the whole profile to the metabolite, scored out of
+fold over five folds with the deletions shuffled once by seed; within each training
+fold the penalty is chosen from $\{10, 10^2, 10^3, 10^4\}$ by an inner three-fold split
+on the same statistic. The score is the Pearson between the out-of-fold predictions and
+the metabolite over all shared deletions. The null is the same procedure on 20
+permutations of the deletion labels; the folds and their factorizations are fixed by
+seed, so a permutation reuses them and the null measures the labels, not the split.
+Each training block is factored once by singular value decomposition, so every target
+and every penalty is a matrix-vector product.
+
+\notesec{Structure} A Mantel-style read that needs no choice of metabolite. For every
+pair of deletions, the Pearson between their two profiles across features (the
+\term{profile similarity}) and the Euclidean distance between their z-scored metabolite
+vectors over deletions with every metabolite present; the statistic is the Spearman
+between the two over all pairs, and the null is 99 permutations of the deletion labels
+on the metabolite side. A negative Spearman means that alike profiles go with alike
+metabolic phenotypes.

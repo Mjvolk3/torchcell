@@ -1,0 +1,33 @@
+%% notes-tex/028-knockout-expression-metabolic/sections/3-next.tex
+%% SOURCE: hand-authored; the proposals here are unmeasured and say so.
+
+\section{What the evidence leaves open\secstatus{todo}}
+\label{sec:next}
+
+\pfstep{A plate-aware null} Mulleder 2016 and Messner 2023 come from one laboratory
+on one prototrophic knockout collection, and both were measured plate by plate. A
+plate effect shared by the two would read as a protein-to-amino-acid signal under a
+deletion-label permutation, because permuting deletions also permutes plates. The
+enzyme identities at the top of every strong read argue for biology, but the test is a
+permutation within plate, which needs the plate assignment of each strain on both sides
+and has not been run.
+
+\pfstep{The encoder's cell vector} The proteome carries the amino-acid pools; whether
+the v14 encoder's hidden state does is the question that decides the joint head. The
+read is the same ridge, from the encoder's cell vector for each deletion to the
+Mulleder amino acids on the same shared deletions, against the same permutation null.
+A vector that reads near the proteome's $0.4$ has learned the metabolic phenotype on the
+way to the proteome; one that reads near zero has not, and the metabolic head would be
+fitting the encoder rather than reading it.
+
+\pfstep{A joint head on the shared deletions} Some 4{,}400 deletions carry both a
+Messner proteome and a Mulleder amino-acid vector. A second node-level head on the
+amino acids, trained with the proteome head on those deletions, is the direct test of
+whether the two heads help one another, scored by the proteome's per-feature Pearson
+and the amino acids' out-of-fold Pearson against each head alone.
+
+\pfstep{Spearman for the single-gene read} The maximum $|r|$ over features widens its
+permutation null under heavy-tailed metabolite values, which is what makes several
+Kemmeren amino acids show hundreds of features past FDR with a maximum under its null.
+A rank correlation removes the tails; it is the fix if the single-gene read is ever
+needed on its own rather than as the illustration it is here.

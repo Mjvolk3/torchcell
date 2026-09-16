@@ -12,7 +12,7 @@ Script: `experiments/028-knockout-expression/scripts/expression_metabolic_yko_co
 
 The knockout collection is the bridge. Kemmeren 2014 (mRNA, 1,484 deletions) and Messner 2023 (protein, 4,549 deletions after averaging duplicate ORFs) profile the same single-gene deletions that the metabolic screens score. Three reads on the deletions each pair shares: per metabolite, the strongest single gene against a strain-permutation null of the same maximum; per metabolite, out-of-fold Pearson of a ridge from the whole profile (5 folds, alpha by an inner split, 20 label permutations for the null); and a Mantel read, the Spearman between deletion x deletion profile similarity and deletion x deletion amino-acid distance (99 permutations). Amino acids are log2; Cachera's corrected fluorescence and Ozaydin's colony score are used as stored. Messner proteins measured in fewer than 95% of the shared deletions are dropped, the rest mean-imputed.
 
-![](assets/images/028-knockout-expression/expression_metabolic_yko_correlation_2026-09-16-16-15-28.svg)
+![](assets/images/028-knockout-expression/expression_metabolic_yko_correlation.svg)
 
 Figure: a, b, out-of-fold ridge Pearson per amino acid, mRNA in yellow, protein in red, black tick the permutation 95th percentile of the same statistic. c, the pigment screens. d, the strongest single gene per metabolite against the permutation null of that maximum, the four large panels. e, the strongest pair, prolyl-tRNA synthetase protein (YHR020W) against proline. f, deletion x deletion mRNA-profile Pearson against amino-acid distance over 1.0 million Kemmeren pairs.
 
@@ -27,3 +27,9 @@ Figure: a, b, out-of-fold ridge Pearson per amino acid, mRNA in yellow, protein 
 **Caveat, unmeasured.** Mulleder 2016 and Messner 2023 are from the same laboratory on the same prototrophic knockout collection. Shared plate layout or batch structure could contribute to the protein-to-amino-acid read; the enzyme identities of the top proteins argue for biology, but a plate-aware permutation has not been run.
 
 **What this says for the model.** The metabolic-module head would sit on exactly this information: an encoder that predicts the Messner proteome carries most of what a ridge needs for the amino-acid pools. Whether the encoder's hidden state carries it is not measured; the test is the same ridge from the v14 encoder's cell vector to the Mulleder amino acids on the same deletions.
+
+## 2026.09.16 - Nadal-Ribelles as a third source
+
+Added the perturb-seq pseudobulk (A statistic, deletions with at least 50 cells; 2,243 x 5,404) as a third source, and a `--plot-only` path that redraws from the saved JSON. The figure above is the three-source version under a stable name; the script also writes the two tables that `notes-tex/028-knockout-expression-metabolic/` inputs.
+
+Nadal-Ribelles reads the amino acids at a median ridge r of 0.10 (2,113 shared deletions, 17 of 19 above null; serine 0.20, arginine 0.19, alanine 0.18), Cooper at 0.01 (2 of 17 above null), betaxanthin at 0.41 (level with Kemmeren 0.35 and Messner 0.43), beta-carotene at 0.07. Every one of its reads runs through the same oxidative-stress reporters (TSA1, SOD1, AHP1, GPX2, TRR1, GRE2): one large program that survives the single-cell noise, which is what it carries about the metabolic phenotype. Full argument in the document: [[experiments.028-knockout-expression.metabolic-phenotype-correlation]].

@@ -1,0 +1,55 @@
+%% notes-tex/028-knockout-expression-metabolic/028-knockout-expression-metabolic.tex
+%% [[experiments.028-knockout-expression.metabolic-phenotype-correlation]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-knockout-expression-metabolic/028-knockout-expression-metabolic.tex
+%%
+%% Typeset counterpart of notes/experiments.028-knockout-expression.metabolic-phenotype-correlation.md.
+%% Does a deletion's gene-level readout (mRNA by microarray, mRNA by perturb-seq, protein
+%% by mass spectrometry) carry its metabolic phenotype (amino-acid pools, pigment titers)?
+%%
+%% Build:  make            -> 028-knockout-expression-metabolic.pdf         (draft view)
+%%         make clean-view -> 028-knockout-expression-metabolic-clean.pdf   (share view)
+%%         make check      -> formatting / provenance gate
+%%         make plots      -> refresh figures/ from the plot script's true-size SVG
+%%
+%% EVERY number in this document comes from
+%% experiments/028-knockout-expression/scripts/expression_metabolic_yko_correlation.py and
+%% its results JSON, and is marked with a `%% SOURCE:` comment.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+
+\title{\vspace{-1.5em}Gene-Level Readouts and the Metabolic Phenotype\\
+  {\large What a Deletion's Transcriptome or Proteome Says About Its Amino-Acid Pools\\
+   and Pigment Titers, Panel by Panel}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+\input{sections/abstract}
+\end{abstract}
+
+\vspace{0.5em}
+{\small\color{tcgray}
+\textbf{How to read this.} \cref{sec:question} is the question and the panels that
+can answer it. \cref{sec:findings} is the answer, read by read. \cref{sec:methods} is
+the statistics, and \cref{sec:next} is what the evidence leaves open.\par\smallskip
+
+Working note: \file{notes/experiments.028-knockout-expression.metabolic-phenotype-correlation.md}\par
+Generating script: \file{experiments/028-knockout-expression/scripts/expression_metabolic_yko_correlation.py}\par
+Results: \file{experiments/028-knockout-expression/results/expression_metabolic_yko_correlation.json}\par}
+
+\vspace{1em}
+\tccontents
+
+\clearpage
+\input{sections/0-question}
+\input{sections/1-findings}
+\input{sections/2-methods}
+\input{sections/3-next}
+
+\end{document}

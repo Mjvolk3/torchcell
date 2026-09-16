@@ -1,0 +1,27 @@
+%% notes-tex/028-knockout-expression-metabolic/sections/abstract.tex
+%% SOURCE: experiments/028-knockout-expression/results/expression_metabolic_yko_correlation.json
+A deletion's gene-level readout carries its metabolic phenotype, and how much of it
+depends on which readout. On the deletions the panels share, a ridge from the Messner
+2023 proteome to the 19 Mulleder 2016 amino-acid pools reads a median out-of-fold
+Pearson of $0.41$ over 4{,}400 deletions, every amino acid above its permutation null,
+proline at $0.61$ through the prolyl-tRNA synthetase and alanine at $0.55$ through
+\gene{ALT1}; the same ridge from the Kemmeren 2014 transcriptome reads $0.18$ over
+1{,}416 deletions, and from the Nadal-Ribelles 2025 perturb-seq pseudobulk $0.10$ over
+2{,}113. The single features behind the strong reads are the pathway's own enzymes and
+synthetases, with the sign a pool-and-flux picture predicts. On the betaxanthin titer
+proxy of Cachera 2023 the three sources read alike, $0.43$, $0.35$ and $0.41$, on a
+respiratory signature; the beta-carotene colony score reads $0.07$ to $0.16$. Alike
+transcriptomes have alike amino-acid profiles (Mantel Spearman $-0.20$ over a million
+Kemmeren pairs against a null of $0.03$), while the proteome, which predicts the
+individual amino acids best, has the weakest whole-profile read ($-0.05$).
+
+Nadal-Ribelles does not replicate itself across batches and barely agrees with either
+other source on the same deletions, yet it reads the betaxanthin phenotype as well as
+they do and half of the transcriptome's amino-acid signal. Agreement with an earlier
+compendium is therefore not the test of whether a readout is worth training on; the
+metabolic read is an independent one, and on it the perturb-seq atlas carries a
+large-effect program and little of the smaller ones. Zelezniak 2018 and da Silveira
+2014 share under 125 deletions with any source and read null, as their size predicts.
+Two things are not measured: whether a shared plate structure between the Mulleder and
+Messner panels contributes to the proteome's read, and whether the encoder trained on
+the proteome carries the amino acids in its cell vector.

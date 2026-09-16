@@ -179,6 +179,16 @@ SCALAR_HEADS = (HEAD, ISOBUTANOL_HEAD, ESSENTIALITY_HEAD)
 #: mean from a 0/1 label and dividing by its sd would make the log-loss meaningless.
 BINARY_HEADS = (ESSENTIALITY_HEAD,)
 
+#: HOW A FLUX ARM READS ESSENTIALITY (028, 2026-09-16). `biomass` is the wave-9 readout: the
+#: logit is an affine of the layer's growth column alone, so every gradient reaching the
+#: backbone passes through the flux layer. `context_biomass` keeps the pooled arm's own head
+#: on the perturbed context AND adds the growth affine, so the backbone receives both the
+#: direct gradient and the one routed through the module; the per-module gradient norms
+#: then say how much of the update the module carries when it is not the only path.
+ESS_READOUT_BIOMASS = "biomass"
+ESS_READOUT_CONTEXT_BIOMASS = "context_biomass"
+ESS_READOUTS = (ESS_READOUT_BIOMASS, ESS_READOUT_CONTEXT_BIOMASS)
+
 #: WAVE 7 (2026-09-11). The two mechanistic amino-acid readouts, named so a result file says
 #: which one it ran rather than leaving it to be inferred from the arm.
 AA_READOUT_TURNOVER = "flux_metabolite"
@@ -961,6 +971,14 @@ class BxCell(BaseModel):
     # the held-out amino-acid columns and the medium. Every field defaults to what wave 8
     # ran, so an earlier result file deserializes unchanged and an earlier cell is
     # bit-identical.
+    ess_readout: str = Field(
+        default=ESS_READOUT_BIOMASS,
+        description=(
+            "On a flux arm with the essentiality head: `biomass` reads the growth column "
+            "alone (wave 9); `context_biomass` adds the growth affine to the pooled arm's "
+            "own context head. Inert on a pooled arm."
+        ),
+    )
     ib_readout: str = Field(
         default=IB_READOUT_FLUX_SCALAR,
         description=(
@@ -2034,6 +2052,7 @@ def build_cell(
     weight_decay: float | None = None,
     batch_size: int | None = None,
     split_file: str | None = None,
+    ess_readout: str = ESS_READOUT_BIOMASS,
 ) -> BxCell:
     """Merge ``base.yaml`` with one arm file into a fully specified cell."""
     with open(osp.join(CONF_DIR, f"arm_{arm}.yaml")) as fh:
@@ -2126,6 +2145,7 @@ def build_cell(
         ),
         split_seed=cfg.data.split_seed,
         split_file=split_file,
+        ess_readout=ess_readout,
         select_smoothing_window=cfg.scoring.select_smoothing_window,
         crps=crps,
         graph_reg=graph_reg,
@@ -3315,11 +3335,8 @@ class FluxBiomassReadout(nn.Module):
         counts["total"] = counts["total"] + extra
         return counts
 
-    def forward(
-        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
-    ) -> tuple[torch.Tensor, dict[str, Any]]:
-        """Run the wrapped model, then read the growth column off the predicted flux."""
-        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+    def growth_column(self, batch: Any, reps: dict[str, Any]) -> torch.Tensor:
+        """``[B, 1]`` growth flux, running the layer when no model head already did."""
         if "flux" not in reps:
             layer = self.model.flux_layer
             assert layer is not None, (
@@ -3341,7 +3358,46 @@ class FluxBiomassReadout(nn.Module):
             )
         growth = reps["flux"]["v"][:, self.biomass_index : self.biomass_index + 1]
         reps["biomass_flux"] = growth
+        return growth
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Run the wrapped model, then read the growth column off the predicted flux."""
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        growth = self.growth_column(batch, reps)
         reps["head_outputs"][self.head_name] = self.readout(growth).unsqueeze(1)
+        return predictions, reps
+
+
+class ContextBiomassReadout(FluxBiomassReadout):
+    r"""Essentiality from the context head PLUS the layer's growth column.
+
+    The pooled arm's logit is an MLP of the perturbed context; the wave-9 flux arm's logit
+    is an affine of the predicted growth flux and nothing else, so on that arm the module
+    is the ONLY path a gradient can take to the backbone. This readout keeps both:
+    ``logit = head(context) + a * v_biomass + b``. The backbone then receives the direct
+    gradient and the one routed through the flux layer, and the per-module gradient norms
+    logged every epoch (``grad_norm_flux_layer_mean`` against the transformer's) say how
+    much of the update the module carries when it is not forced to carry all of it.
+    """
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Run the wrapped model with its context head, then add the growth affine."""
+        predictions, reps = self.model(cell_graph, batch, *args, **kwargs)
+        assert self.head_name in reps["head_outputs"], (
+            "the context head was not built; `context_biomass` needs it in heads_config."
+        )
+        growth = self.growth_column(batch, reps)
+        context_logit = reps["head_outputs"][self.head_name]
+        growth_logit = self.readout(growth).unsqueeze(1)
+        assert context_logit.shape == growth_logit.shape, (
+            context_logit.shape,
+            growth_logit.shape,
+        )
+        reps["head_outputs"][self.head_name] = context_logit + growth_logit
         return predictions, reps
 
 
@@ -4105,6 +4161,14 @@ def build_model_for_cell(
                 f"--head essentiality on a flux arm reads {BIOMASS_REACTION}, which this "
                 f"layer's {len(flux_layer.rxn_ids)} reactions do not include."
             )
+            if cell.ess_readout == ESS_READOUT_CONTEXT_BIOMASS:
+                # THE CONTEXT HEAD IS BUILT TOO: `ContextBiomassReadout` adds the growth
+                # affine to its logit rather than replacing it.
+                heads_config[ESSENTIALITY_HEAD] = {
+                    "kind": "scalar",
+                    "output_dim": 1,
+                    "param_dim": 1,
+                }
         else:
             heads_config[ESSENTIALITY_HEAD] = {
                 "kind": "scalar",
@@ -4279,18 +4343,29 @@ def build_model_for_cell(
         assert flux_layer is not None
         biomass_index = int(flux_layer.rxn_ids.index(BIOMASS_REACTION))
         flux_meta["essentiality"] = {
-            "readout": "flux_biomass",
+            "readout": cell.ess_readout,
             "biomass_reaction": BIOMASS_REACTION,
             "biomass_index": biomass_index,
             "note": (
                 "essentiality is read off the flux through the GEM's objective column, "
-                "which is the quantity FBA thresholds in its own baseline."
+                "which is the quantity FBA thresholds in its own baseline"
+                + (
+                    ", added to the pooled arm's context head"
+                    if cell.ess_readout == ESS_READOUT_CONTEXT_BIOMASS
+                    else ""
+                )
+                + "."
             ),
         }
-        wrapped_ess = FluxBiomassReadout(model, biomass_index).to(device)
+        readout_cls = (
+            ContextBiomassReadout
+            if cell.ess_readout == ESS_READOUT_CONTEXT_BIOMASS
+            else FluxBiomassReadout
+        )
+        wrapped_ess = readout_cls(model, biomass_index).to(device)
         print(
-            f"[biomass-readout] essentiality from the predicted growth flux at column "
-            f"{biomass_index} ({BIOMASS_REACTION})",
+            f"[{cell.ess_readout}-readout] essentiality from the predicted growth flux at "
+            f"column {biomass_index} ({BIOMASS_REACTION})",
             flush=True,
         )
         return wrapped_ess, head_specs, main_head, flux_meta
@@ -5820,6 +5895,15 @@ def main() -> None:
         "--batch-size", type=int, default=None, help="Batch size (base.yaml: 128)."
     )
     parser.add_argument(
+        "--ess-readout",
+        choices=ESS_READOUTS,
+        default=ESS_READOUT_BIOMASS,
+        help=(
+            "Flux arms only: `biomass` reads the growth column alone; `context_biomass` "
+            "adds the growth affine to the pooled arm's context head."
+        ),
+    )
+    parser.add_argument(
         "--split-file",
         default=None,
         help=(
@@ -6273,6 +6357,7 @@ def main() -> None:
         weight_decay=args.weight_decay,
         batch_size=args.batch_size,
         split_file=args.split_file,
+        ess_readout=args.ess_readout,
     )
     dataset = build_dataset(cell.head)
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)

@@ -177,6 +177,45 @@ def test_the_biomass_readout_reads_exactly_the_objective_column():
     assert readout.num_parameters[f"{train_bx.ESSENTIALITY_HEAD}_head"] == 2
 
 
+class _FluxBackboneWithHead(_FluxBackbone):
+    """The flux backbone that ALSO emits a context logit for the essentiality head."""
+
+    def __init__(self, flux: torch.Tensor, context_logit: torch.Tensor) -> None:
+        super().__init__(flux)
+        self._context = context_logit
+
+    def forward(
+        self, cell_graph: Any, batch: Any
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        predictions, reps = super().forward(cell_graph, batch)
+        reps["head_outputs"][train_bx.ESSENTIALITY_HEAD] = self._context
+        return predictions, reps
+
+
+def test_the_context_biomass_readout_adds_the_growth_affine_to_the_context_logit():
+    torch.manual_seed(0)
+    flux = torch.randn(B, R)
+    context = torch.randn(B, 1, 1)
+    column = 7
+    readout = train_bx.ContextBiomassReadout(
+        _FluxBackboneWithHead(flux, context), column
+    )
+    _, reps = readout(None, _essentiality_batch())
+    out = reps["head_outputs"][train_bx.ESSENTIALITY_HEAD]
+    assert out.shape == (B, 1, 1)
+    expected = context + readout.readout(flux[:, column : column + 1]).unsqueeze(1)
+    assert torch.allclose(out, expected)
+    # Both paths carry gradient: the context logit and the growth column.
+    assert readout.num_parameters[f"{train_bx.ESSENTIALITY_HEAD}_head"] == 2
+
+
+def test_the_context_biomass_readout_refuses_a_backbone_without_the_context_head():
+    torch.manual_seed(0)
+    readout = train_bx.ContextBiomassReadout(_FluxBackbone(torch.randn(B, R)), 7)
+    with pytest.raises(AssertionError, match="context head was not built"):
+        readout(None, _essentiality_batch())
+
+
 def test_the_biomass_reaction_is_the_gems_objective():
     assert train_bx.BIOMASS_REACTION == "r_2111"
 

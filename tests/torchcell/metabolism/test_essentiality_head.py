@@ -260,6 +260,52 @@ def test_module_grad_norms_group_by_the_first_path_segment():
     assert norms["head"] == pytest.approx(total**0.5)
 
 
+class _WrappedBackbone(nn.Module):
+    """The shape every flux readout has: the backbone held as `self.model`."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        inner = nn.Module()
+        inner.add_module("embedding_preprocessor", nn.Linear(4, 4))
+        inner.add_module("transformer_layers", nn.Linear(4, 4))
+        inner.add_module("flux_layer", nn.Linear(4, 4))
+        self.model = inner
+        self.readout = nn.Linear(4, 1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        inner: Any = self.model
+        out: torch.Tensor = self.readout(
+            inner.flux_layer(inner.transformer_layers(inner.embedding_preprocessor(x)))
+        )
+        return out
+
+
+def test_a_wrapped_flux_arm_still_resolves_per_module_and_names_the_flux_layer():
+    """Every readout holds the backbone as `self.model`, which hid six modules behind one.
+
+    Grouping on the raw first path component returned {'model', 'readout'} for a
+    seven-module network, so the flux layer had no line of its own on exactly the arms it
+    matters for. The pooled cells are unwrapped, which is why wave 11 looked correct.
+    """
+    model = _WrappedBackbone()
+    model(torch.ones(2, 4)).sum().backward()
+    norms = train_bx._module_grad_norms(model)
+    assert set(norms) == {
+        "embedding_preprocessor",
+        "transformer_layers",
+        "flux_layer",
+        "readout",
+    }
+    assert norms["flux_layer"] > 0.0
+
+
+def test_nested_wrappers_are_stripped_repeatedly():
+    assert train_bx._module_path("model.model.flux_layer.log_c_base") == "flux_layer"
+    assert train_bx._module_path("flux_layer.alpha") == "flux_layer"
+    # A module whose own name begins with the wrapper word is not over-stripped.
+    assert train_bx._module_path("model_head.weight") == "model_head"
+
+
 def test_a_parameter_without_a_gradient_is_skipped_not_counted_as_zero():
     """A frozen module must be absent from the report rather than reported as a zero norm."""
     frozen = nn.Linear(4, 4)

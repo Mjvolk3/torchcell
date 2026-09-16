@@ -2220,25 +2220,6 @@ def code_provenance() -> dict[str, str]:
     return out
 
 
-def _module_grad_norms(model: nn.Module) -> dict[str, float]:
-    """L2 gradient norm per top-level submodule, before clipping.
-
-    Grouped by the FIRST path segment of each parameter name, which is exactly the grouping
-    the result file's `n_parameters` block already uses (embedding_preprocessor,
-    transformer_layers, perturbation_transform, the head, the flux layer). A spiky
-    validation curve is read against these: one module carrying the whole norm says the
-    instability has an address, while a norm spread evenly says the step size is simply too
-    large for the batch.
-    """
-    sums: dict[str, float] = {}
-    for name, param in model.named_parameters():
-        if param.grad is None:
-            continue
-        group = name.split(".", 1)[0]
-        sums[group] = sums.get(group, 0.0) + float(param.grad.detach().pow(2).sum())
-    return {k: v**0.5 for k, v in sums.items()}
-
-
 def _params_snapshot(model: nn.Module) -> dict[str, torch.Tensor]:
     """CPU copy of the TRAINABLE parameters only.
 
@@ -2249,19 +2230,43 @@ def _params_snapshot(model: nn.Module) -> dict[str, torch.Tensor]:
     return {k: v.detach().to("cpu", copy=True) for k, v in model.named_parameters()}
 
 
+#: Attribute name every readout uses to hold the backbone it wraps. Stripped from a
+#: parameter path before grouping, because otherwise the wrapper IS the group.
+WRAPPER_PREFIX = "model."
+
+
+def _module_path(name: str) -> str:
+    """The parameter's module key with the readout wrappers stripped off the front.
+
+    EVERY flux readout stores the backbone as ``self.model``, so on a flux arm the raw
+    parameter names all begin ``model.`` and grouping on the first component puts the
+    embedding preprocessor, the transformer, the perturbation head AND THE FLUX LAYER into
+    one bucket called ``model``. Measured 2026-09-15 on a synthetic wrapper: the groups came
+    back as ``{'model': ..., 'readout': ...}``, two numbers for a seven-module network. The
+    pooled cells are unwrapped, which is why wave 11 looked correct and hid this.
+
+    Nested wrappers are stripped repeatedly, so a readout wrapping a readout still resolves.
+    """
+    while name.startswith(WRAPPER_PREFIX):
+        name = name[len(WRAPPER_PREFIX) :]
+    return name.split(".", 1)[0]
+
+
 def _module_grad_norms(model: nn.Module) -> dict[str, float]:
     """L2 norm of the gradient per TOP-LEVEL module, keyed the way `n_parameters` is.
 
-    The key is the first component of the parameter name (``transformer_layers``,
-    ``essentiality_head``, ``flux_layer``, ...), so the logged curve lines up with the
-    parameter-count block in the result file. Parameters with no gradient this step (a
-    frozen block, an unused head) are skipped rather than counted as zero.
+    The key is the module component of the parameter name (``transformer_layers``,
+    ``essentiality_head``, ``flux_layer``, ...) after the wrapper prefix is removed, so the
+    logged curve lines up with the parameter-count block in the result file and the flux
+    layer gets a line of its own. Parameters with no gradient this step (a frozen block, an
+    unused head) are skipped rather than counted as zero, so a module that is absent from
+    the report received no gradient at all, which is itself worth seeing.
     """
     squares: dict[str, float] = {}
     for name, param in model.named_parameters():
         if param.grad is None:
             continue
-        module = name.split(".", 1)[0]
+        module = _module_path(name)
         squares[module] = squares.get(module, 0.0) + float(
             param.grad.detach().pow(2).sum()
         )

@@ -1,0 +1,31 @@
+{
+  "split_path": "/scratch/projects/torchcell-scratch/data/merzbacher2025_fcl/deletionprediction-main/data/yeast_essentiality_test_split.csv",
+  "sgd_root": "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_sgd",
+  "n_split_genes": 1121,
+  "n_split_essential": 157,
+  "n_sgd_essential_genes": 1140,
+  "split_essential_in_sgd": 155,
+  "split_nonessential_in_sgd": 11,
+  "split_essential_absent_from_sgd": 2,
+  "n_disagreements": 13,
+  "agreement_rate": 0.9884032114183765,
+  "majority_rate": 0.8599464763603925,
+  "headroom_over_majority": 0.12845673505798405,
+  "disagreeing_genes_sgd_essential_split_not": [
+    "YBR121C",
+    "YBR128C",
+    "YCL004W",
+    "YCR068W",
+    "YFR021W",
+    "YJL012C",
+    "YKL192C",
+    "YKL212W",
+    "YNL280C",
+    "YPL120W",
+    "YPL268W"
+  ],
+  "disagreeing_genes_split_essential_sgd_not": [
+    "YMR108W",
+    "YNL036W"
+  ]
+}

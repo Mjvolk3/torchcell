@@ -10,10 +10,11 @@
     batch 32 alone at 200 epochs, and five fold models on the cross-validation files whose
     logits are averaged on the held-out genes, which is the protocol behind the published
     FCL number.
-  \item The classical ladder (Section~\ref{sec:comparators}) on the same split: FBA's
-    growth ratio, logistic regression, cosine nearest neighbors and a random forest on the
-    four external gene embeddings, and logistic regression on an embedding with the FBA
-    ratios appended.
+  \item FBA's growth ratio as an input to the transformer. The ladder's best rung is a
+    logistic regression on a frozen embedding with the four ratios appended (0.803), and
+    neither half reaches that alone; a cell that concatenates the ratios to the readout,
+    or carries them as a node feature, tests whether the transformer gains the same
+    complement.
   \item The module's own hyperparameters have not been moved on this endpoint: the
     $k_{cat}$ tier (measured against predicted), the thermodynamic source, the
     parameterization (projection against nullspace), the number of alternations.

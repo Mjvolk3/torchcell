@@ -31,13 +31,13 @@ and they differ in what the backbone's gradient has to pass through.
   label. No stoichiometry, no kinetic parameters, no flux. Rendered from
   \texttt{notes/experiments.028-gene-essentiality.mermaid.readouts.md}.}{fig:readout-pooled}
 
-\tcfigfit[1.0]{figures/readout_2.pdf}{\textbf{The forced biomass readout.} The context sets
+\tcfigfit[0.62]{figures/readout_2.pdf}{\textbf{The forced biomass readout.} The context sets
   each enzyme's abundance (a deleted gene's is zero), the $k_{cat}$ table turns abundances
   into capacities, and the flux is the projection onto $Sv = 0$ of the capacity-clipped
   proposal; the logit is an affine of the growth column alone. The thermodynamic penalty
   is a loss on the flux with no path to the prediction, at scale 0.1 or 0.}{fig:readout-biomass}
 
-\tcfigfit[1.0]{figures/readout_3.pdf}{\textbf{The gated readout.} The pooled MLP's logit
+\tcfigfit[0.62]{figures/readout_3.pdf}{\textbf{The gated readout.} The pooled MLP's logit
   plus the growth affine behind a gate initialized at zero. The gate is a parameter of the
   readout; its value is written into every epoch row as \texttt{ess\_gate}.}{fig:readout-gated}
 

@@ -32,7 +32,7 @@ flowchart LR
 ### 2. biomass (forced: the growth column is the only path to the logit)
 
 ```mermaid
-flowchart LR
+flowchart TB
   G["$$\text{Genotype (deleted gene)}$$"] --> B["$$\begin{gathered}\text{CGT pooled backbone}\\\ \text{context } h\end{gathered}$$"]
   B --> E["$$\begin{gathered}E_g = \gamma_g\,E^0_g\,e^{\,r\tanh(w^\top h_g)}\\\ \gamma_g = 0 \text{ for the deleted gene}\end{gathered}$$"]
   K["$$k_{cat}\ \text{table}$$"] --> CAP
@@ -60,7 +60,7 @@ flowchart LR
 ### 3. gated (optional: the pooled head plus a zero-initialized gate on the growth affine)
 
 ```mermaid
-flowchart LR
+flowchart TB
   G["$$\text{Genotype (deleted gene)}$$"] --> B["$$\begin{gathered}\text{CGT pooled backbone}\\\ \text{context } h\end{gathered}$$"]
   B --> H["$$\ell_0 = \mathrm{MLP}(h)$$"]
   B --> E["$$E_g = \gamma_g\,E^0_g\,e^{\,r\tanh(w^\top h_g)}$$"]

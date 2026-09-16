@@ -3319,7 +3319,8 @@ class ContextPrecursorConcentrationReadout(nn.Module):
         # concatenated in `forward`. Predicting a value the loss cannot move would leave a
         # dead column in the head and a gradient path that does nothing.
         self.readout = nn.Linear(
-            int(metabolite_indices.shape[0]), 1 if sigma_fixed is not None else param_dim
+            int(metabolite_indices.shape[0]),
+            1 if sigma_fixed is not None else param_dim,
         )
         if sigma_fixed is not None:
             self.register_buffer(
@@ -3374,9 +3375,7 @@ class ContextPrecursorConcentrationReadout(nn.Module):
         reps["precursor_log10_c"] = log10_c
         out = self.readout(log10_c)
         if self.sigma_fixed is not None:
-            out = torch.cat(
-                [out, self.log_sigma_fixed.expand_as(out)], dim=-1
-            )
+            out = torch.cat([out, self.log_sigma_fixed.expand_as(out)], dim=-1)
         reps["head_outputs"][self.head_name] = out.unsqueeze(1)
         return predictions, reps
 
@@ -5857,7 +5856,12 @@ def main() -> None:
         help="Log this cell to W&B under the given group (project from WANDB_PROJECT).",
     )
     parser.add_argument(
-        "--tag", default="", help="Suffix for the result file and the W&B run name."
+        "--tag",
+        default="",
+        help=(
+            "Suffix for the result file, a W&B tag, and (leading underscore stripped) the "
+            "W&B GROUP, so every seed of one arm lands on one group page."
+        ),
     )
     parser.add_argument(
         "--flux-balance-active-weight",
@@ -6060,18 +6064,24 @@ def main() -> None:
     if args.wandb_group:
         import wandb
 
-        # The repo's run-naming standard (019's train_cgt_multitask.py): the run NAME and
-        # GROUP are `<host>-<slurm job id>_<sha256 of the config>`, which is unique,
-        # reproducible and says nothing a reader has to parse; everything that
-        # distinguishes a run (wave, machine, head, arm, seed, free tag) goes in TAGS, so
-        # the W&B table is filtered by tag, never by parsing a name.
+        # The run NAME is `<host>-<slurm job id>_<sha256 of the config>` (019's standard):
+        # unique, reproducible, nothing to parse. The run GROUP is the ARM-LEVEL TAG the
+        # launcher passes (`--tag`, falling back to `--wandb-group`), so every seed of one
+        # arm shares a group and W&B's group page
+        # (`https://wandb.ai/<entity>/<project>/groups/<tag>`) shows the arm's runs
+        # together with their aggregated curves. Until 2026-09-15 the group was the
+        # per-job name, which put exactly one run in every group and made the group page
+        # useless; the user reviews by grouped runs, and wandb_views.py rewrites the group
+        # of older runs to the same rule. Everything else that distinguishes a run (wave,
+        # machine, head, arm, seed) stays in TAGS.
         wandb_config = cell.model_dump()
         job_id = os.environ.get("SLURM_JOB_ID") or str(uuid.uuid4())
         hostname = socket.gethostname()
         hashed_cfg = hashlib.sha256(
             json.dumps(wandb_config, sort_keys=True, default=str).encode("utf-8")
         ).hexdigest()
-        wandb_group = f"{hostname}-{job_id}_{hashed_cfg}"
+        wandb_name = f"{hostname}-{job_id}_{hashed_cfg}"
+        wandb_group = args.tag.lstrip("_") if args.tag else str(args.wandb_group)
         wandb_tags = [
             "027",
             "bxfx",
@@ -6092,7 +6102,7 @@ def main() -> None:
         run = wandb.init(
             project=os.getenv("WANDB_PROJECT", "torchcell_027_bxfx"),
             group=wandb_group,
-            name=f"run_{wandb_group}",
+            name=f"run_{wandb_name}",
             tags=wandb_tags,
             config=wandb_config,
             mode=cast(Any, os.getenv("WANDB_MODE", "online")),

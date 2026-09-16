@@ -31,6 +31,7 @@ import argparse
 import json
 import os
 import os.path as osp
+import re
 from typing import Any
 
 import wandb
@@ -347,7 +348,12 @@ SPECS: dict[str, ViewSpec] = {
             "under 1e-2 on the top 100 at the selected epoch. Read the feasibility curves "
             "before the score."
         ),
-        tags_any=["gh_wave9_warmstart", "gh_wave8_dens", "gh_wave8_densbal", "gh_wave7_ff"],
+        tags_any=[
+            "gh_wave9_warmstart",
+            "gh_wave8_dens",
+            "gh_wave8_densbal",
+            "gh_wave7_ff",
+        ],
         groupby=["flux_parameterization", "arm", "flux_balance_active_weight"],
         curves=[
             "feas_balance_active_max",
@@ -531,6 +537,73 @@ def annotate_readout_group(runs: list[Any]) -> int:
             run.update()
             changed += 1
     return changed
+
+
+#: Tags train_bx.py derives from the cell rather than from the launcher: the project
+#: markers, the host, the head, the arm, the seed, the draw count and the `--wandb-group`
+#: wave tag. Whatever tag is left after removing these is the launcher's `--tag`, the
+#: arm-level label that names the run's W&B group.
+HOSTS = ("gilahyper",)
+#: A run whose budget is at most this many epochs is a launcher smoke, not a cell.
+SMOKE_EPOCHS = 2
+
+
+def arm_tag(run: Any) -> str:
+    """The launcher's arm-level tag on a run, the name its W&B group takes.
+
+    Falls back to the wave tag (`--wandb-group`) for runs launched without a `--tag`.
+    """
+    cfg = run.config
+    derived = {
+        "027",
+        "bxfx",
+        str(cfg.get("head")),
+        str(cfg.get("arm")),
+        f"seed{cfg.get('seed')}",
+        f"k{cfg.get('flux_draws')}",
+        *HOSTS,
+    }
+    wave = [t for t in run.tags if t.startswith("gh_")]
+    rest = [
+        t
+        for t in run.tags
+        if t not in derived and t not in wave and not re.fullmatch(r"(seed|k)\d+", t)
+    ]
+    if len(rest) == 1:
+        return rest[0]
+    assert len(rest) == 0 and len(wave) == 1, (
+        f"run {run.id} has an ambiguous arm tag: {run.tags}"
+    )
+    return wave[0]
+
+
+def regroup_by_arm(runs: list[Any]) -> dict[str, list[str]]:
+    """Put every seed of one arm in one W&B group and name each run `<arm tag>_seed<k>`.
+
+    The trainer wrote a per-job group until 2026-09-15, so each group page held one run.
+    Failed and crashed runs keep their old group so the arm's page shows only runs that
+    produced epochs. Returns the group name -> run ids it now holds.
+    """
+    groups: dict[str, list[str]] = {}
+    for run in runs:
+        if run.state in ("failed", "crashed"):
+            continue
+        tag = arm_tag(run)
+        if int(run.config.get("epochs", 0)) <= SMOKE_EPOCHS:
+            # A launcher smoke (the 2-epoch essentiality check, job 2004) carries the
+            # arm's tag; it goes to its own group so the arm's page holds real budgets.
+            tag = f"{tag}_smoke"
+        name = f"{tag}_seed{run.config.get('seed')}"
+        if run.group != tag or run.display_name != name:
+            run.group = tag
+            run.display_name = name
+            run.update()
+        groups.setdefault(tag, []).append(run.id)
+    return groups
+
+
+def group_url(group: str) -> str:
+    return f"https://wandb.ai/{ENTITY}/{PROJECT}/groups/{group}"
 
 
 def runset_filters(spec: ViewSpec) -> list[Any]:
@@ -729,11 +802,7 @@ def adhoc_spec(args: argparse.Namespace) -> ViewSpec:
 def main() -> None:
     global PANELS_PER_ROW
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--contrast",
-        default=None,
-        help=" | ".join([*SPECS, "all"]),
-    )
+    parser.add_argument("--contrast", default=None, help=" | ".join([*SPECS, "all"]))
     parser.add_argument("--name", default=None, help="Ad-hoc view title (with --tags).")
     parser.add_argument(
         "--tags", default=None, help="Comma-separated tags, ANY matches."
@@ -789,6 +858,7 @@ def main() -> None:
         relabeled = annotate_readout_group(runs)
         if relabeled:
             print(f"[{spec.key}] readout_group written on {relabeled} runs")
+        groups = regroup_by_arm(runs)
         curves = present_metrics(runs, spec.curves)
         scalars = present_metrics(runs, spec.scalars)
         missing = [m for m in spec.curves + spec.scalars if m not in curves + scalars]
@@ -800,6 +870,12 @@ def main() -> None:
             "curves": curves,
             "scalars": scalars,
             "metrics_not_logged_by_any_run": missing,
+            # One W&B group per arm: the page at each URL shows that arm's seeds together
+            # with their aggregated curves, which is how the round is reviewed.
+            "groups": {
+                tag: {"url": group_url(tag), "run_ids": ids}
+                for tag, ids in sorted(groups.items())
+            },
         }
         prior = {} if args.new else record.get(spec.key, {})
         if not args.no_workspace:
@@ -820,6 +896,8 @@ def main() -> None:
         for label in ("workspace_url", "report_url"):
             if label in entry:
                 print(f"  {label}: {entry[label]}")
+        for tag, block in entry["groups"].items():
+            print(f"  group {tag} ({len(block['run_ids'])} runs): {block['url']}")
         if missing:
             print(f"  not logged by any matched run: {missing}")
 

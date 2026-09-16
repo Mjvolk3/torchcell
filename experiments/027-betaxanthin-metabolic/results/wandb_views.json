@@ -345,6 +345,30 @@
       "select_val_pearson"
     ],
     "metrics_not_logged_by_any_run": [],
+    "groups": {
+      "w9essflux": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9essflux",
+        "run_ids": [
+          "0f5yjgf3",
+          "s8g1cuwm",
+          "7jjuuw1n"
+        ]
+      },
+      "w9esspool": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool",
+        "run_ids": [
+          "v62zo8ij",
+          "9lmlnzui",
+          "fytcivaw"
+        ]
+      },
+      "w9esspool_smoke": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool_smoke",
+        "run_ids": [
+          "540dihuc"
+        ]
+      }
+    },
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=i2i6b7eonfw",
     "panels_per_row": 6
   },
@@ -373,6 +397,32 @@
       "select_val_pearson"
     ],
     "metrics_not_logged_by_any_run": [],
+    "groups": {
+      "w10bxctxprecmse": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w10bxctxprecmse",
+        "run_ids": [
+          "w0g5yg7j",
+          "kzt46r4k",
+          "57ojzd1o"
+        ]
+      },
+      "w10bxctxprecsfix": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w10bxctxprecsfix",
+        "run_ids": [
+          "37ei2657",
+          "2cppvy28",
+          "lb4irs2e"
+        ]
+      },
+      "w9bxctxprec": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9bxctxprec",
+        "run_ids": [
+          "oi8k8rno",
+          "7rl2fx2s",
+          "xt91nxqb"
+        ]
+      }
+    },
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=4k3un065zoc",
     "panels_per_row": 6
   },
@@ -414,6 +464,48 @@
       "select_val_pearson"
     ],
     "metrics_not_logged_by_any_run": [],
+    "groups": {
+      "warmstart_frozen": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen",
+        "run_ids": [
+          "hf3b27fg",
+          "ozyjqone",
+          "pz0aphkf"
+        ]
+      },
+      "warmstart_frozen_bw00": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_bw00",
+        "run_ids": [
+          "gmiqz57i"
+        ]
+      },
+      "warmstart_frozen_bw01": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_bw01",
+        "run_ids": [
+          "1qo2wet7"
+        ]
+      },
+      "warmstart_frozen_bw2": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_bw2",
+        "run_ids": [
+          "xhk2vv4q"
+        ]
+      },
+      "warmstart_frozen_e10": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_e10",
+        "run_ids": [
+          "5998e9az",
+          "wdmdjelt",
+          "kic49mtv"
+        ]
+      },
+      "warmstart_frozen_nopen": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_nopen",
+        "run_ids": [
+          "5w4y7jux"
+        ]
+      }
+    },
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=mwzavkv9d8w",
     "panels_per_row": 6
   }

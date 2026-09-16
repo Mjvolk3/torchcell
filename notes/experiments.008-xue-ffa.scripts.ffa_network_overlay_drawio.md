@@ -40,3 +40,42 @@ the draw.io source.
 
 Related: [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineering]],
 [[experiments.008-xue-ffa.scripts.build_perspective_drawio]]
+
+## 2026.09.16 - Three rings: the combined circle plus one per sign
+
+The combined circle could not show what each sign does. Every one of the 45 pairs carries
+at least one negative interaction, so the 17 pairs that also carry a positive one had their
+blue edge hidden under a brick one. Drawing the two signs as parallel offset lines made the
+positives visible but still left the reader tracing individual edges to see the shape.
+
+Two failed attempts, recorded so they are not retried:
+
+- **positive drawn over negative**: no positive edge visible anywhere, because the negative
+  edge under it is at least as wide.
+- **one translucent filled triangle per triple**: 75 overlapping negative triangles average
+  out into a single lens-shaped blob. Density is not structure, and the eleven positives on
+  top just tint it. Rejected on review.
+
+What works is repeating the ring. The labeled circle shrank from R 23 mm to 16.5 mm (boxes
+10.5 x 3.6 mm to 8.0 x 3.2 mm), and the same ten factors are drawn again at the SAME angles
+above and below it, unlabeled, at R 8 mm: positives above in blue, negatives below in
+brick. Same orientation is the whole point, since the reader compares shapes rather than
+looking up nodes.
+
+The shapes carry the result:
+
+| | pairs reached | factors reached | max interactions on one pair |
+|---|---|---|---|
+| negative | 45 of 45 | 10 of 10 | 8 |
+| positive | 17 of 45 | 7 of 10 | 4 |
+
+FKH1, GCN5 and MED4 take part in no positive interaction at all, which is invisible in the
+combined circle and obvious in the upper ring.
+
+Geometry lives in `ffa_network_overlay_panel.py` (`ring_positions`, `ring_edge_width_pt`,
+`R_RING`, `Y_RING_POS`, `Y_RING_NEG`) so the matplotlib panel and the draw.io generator
+place every node at the same millimetre. Ring edge widths reuse the multiplicity encoding
+scaled by `R_RING / R_TF`, floored at 0.25 pt: scaling alone puts a single interaction at
+0.19 pt, under the hairline print holds.
+
+![](./assets/images/008-xue-ffa/ffa-epistasis-fig4-network-overlay.svg)

@@ -141,6 +141,19 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   dataset`, `Samples`, `Test Pearson`, `Pearson`, `Spearman`, `MSE` (never lowercase
   `pearson`/`spearman`/`mse`). Applied 2026.08.17 across the traditional-ML plot
   scripts (`{"mse": "MSE"}.get(metric, metric.capitalize())` for metric axes).
+- **When two categories overlap heavily in one node-link diagram, repeat the diagram per
+  category rather than encoding both in one drawing.** A small unlabeled copy at the
+  SAME node positions, one per category, is read instantly; a combined drawing is not,
+  and no amount of color, opacity or z-order fixes it. Established 2026.09.16 on the FFA
+  network figure, where 45 pairs carry a negative interaction and 17 also carry a
+  positive one. Two attempts failed first: drawing positive over negative hid every
+  positive edge, and drawing each triple as a translucent filled triangle turned 75
+  overlapping negatives into one lens-shaped blob with no structure in it. What worked
+  was shrinking the labeled circle and adding the same ring twice beside it, positives
+  above and negatives below, unlabeled and at identical angles. The shapes then carry
+  the finding on their own: negatives reach all 45 pairs, positives reach 17 and miss
+  three factors entirely. Keep the orientation identical across the copies, or the
+  reader has to re-find each node before comparing; labels belong on the main copy only.
 
 ## Tables
 

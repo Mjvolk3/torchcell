@@ -27,9 +27,11 @@
 # the node shapes, added after the edges, cover the ends. Moving a factor box in draw.io
 # therefore does NOT move its edges; regenerate instead.
 #
-# --triangles writes a second view in which each significant triple is a translucent
-# filled triangle rather than three edges, for judging whether the triangle reading of the
-# circle is clearer than the edge reading. It is a review artifact, not the figure.
+# THREE RINGS, ONE ORIENTATION. The labeled ring in the middle carries both signs; above
+# and below it the same ten factors are drawn again at the same angles with one sign each
+# and no labels, so the shape a sign makes can be read on its own. An earlier review view
+# drew each triple as a translucent filled triangle instead; 75 overlapping negatives came
+# out as one lens-shaped blob with no structure in it, and it was dropped.
 #
 # A hidden layer named "print box" carries the 179.4 x 170 mm frame. Toggle it on in
 # draw.io to see the cap while arranging; hidden layers are not exported.
@@ -60,10 +62,6 @@ LETTER_FONT = "11.1"
 STROKE = {"purple": "#9673A6", "yellow": "#D6B656", "amber": "#D79B00", "gray": "#666666"}
 FILL = {"purple": "#E1D5E7", "yellow": "#FFF2CC", "amber": "#FFE6CC", "gray": "#F5F5F5"}
 C_POS, C_NEG = panel.C_POS, panel.C_NEG
-# Triangle view: fill opacity per sign, in percent. Seventy-five negative triangles overlap
-# in the circle, so each one is faint and their density is what reads; the eleven positive
-# ones sit on top and are darker.
-TRI_OPACITY = {-1: 6, +1: 22}
 C_REG = "#666666"
 C_PATH = "#BBBBBB"
 
@@ -154,13 +152,7 @@ def line_style(color, width_pt, dashed=False, arrow=False):
     return s
 
 
-def polygon_style(color, opacity):
-    """A filled polygon with no stroke; polyCoords are set per shape."""
-    return (f"shape=mxgraph.basic.polygon;html=1;fillColor={color};fillOpacity={opacity};"
-            f"strokeColor=none;")
-
-
-def build(model, readout, graph, letter, out_path, triangles=False):
+def build(model, readout, graph, letter, out_path):
     L = panel.layout(model, readout, graph)
     pos, G = L["pos"], L["G"]
     doc = Doc(osp.splitext(osp.basename(out_path))[0])
@@ -187,26 +179,26 @@ def build(model, readout, graph, letter, out_path, triangles=False):
 
     width = panel.edge_width_pt
 
-    if triangles:
-        for i, (sign, verts) in enumerate(sorted(
-                panel.interaction_triangles(pos, L["triples"]), key=lambda t: t[0])):
-            xs = [ux(x) for x, _ in verts]
-            ys = [uy(y) for _, y in verts]
-            x0, y0, w, h = min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)
-            # Plain JSON, not Python's repr: the node positions are numpy floats and
-            # repr would write np.float64(...), which draw.io cannot parse.
-            coords = ",".join(f"[{(x - x0) / w:.4f},{(y - y0) / h:.4f}]"
-                              for x, y in zip(xs, ys))
-            doc.vertex(f"tri{i}", "",
-                       polygon_style(C_POS if sign > 0 else C_NEG, TRI_OPACITY[sign])
-                       + f"polyCoords=[{coords}];",
-                       x0, y0, w, h)
-    else:
-        for i, (sign, k, (xa, ya), (xb, yb)) in enumerate(
-                panel.interaction_segments(pos, L["neg_mult"], L["pos_mult"])):
-            doc.edge(f"{'pos' if sign > 0 else 'neg'}{i}",
-                     line_style(C_POS if sign > 0 else C_NEG, width(k)),
-                     points=[(ux(xa), uy(ya)), (ux(xb), uy(yb))])
+    for i, (sign, k, (xa, ya), (xb, yb)) in enumerate(
+            panel.interaction_segments(pos, L["neg_mult"], L["pos_mult"])):
+        doc.edge(f"{'pos' if sign > 0 else 'neg'}{i}",
+                 line_style(C_POS if sign > 0 else C_NEG, width(k)),
+                 points=[(ux(xa), uy(ya)), (ux(xb), uy(yb))])
+
+    # the two sign-split rings, above and below the labeled one
+    for sign, mult, color in ((+1, L["pos_mult"], C_POS), (-1, L["neg_mult"], C_NEG)):
+        tag = "ringpos" if sign > 0 else "ringneg"
+        rpos = L["ring_pos"][sign]
+        for i, ((a, b), k) in enumerate(sorted(mult.items())):
+            doc.edge(f"{tag}e{i}", line_style(color, panel.ring_edge_width_pt(k)),
+                     points=[(ux(rpos[a][0]), uy(rpos[a][1])),
+                             (ux(rpos[b][0]), uy(rpos[b][1]))])
+        dia = 2 * panel.RING_NODE_R * U
+        for tf in panel.TF_GENES:
+            x, y = rpos[tf]
+            doc.vertex(f"{tag}n-{tf}", "",
+                       node_style("purple", "ellipse;", "strokeWidth=0.42;"),
+                       ux(x) - dia / 2, uy(y) - dia / 2, dia, dia)
 
     # --- nodes
     side = panel.RXN_SIDE * U
@@ -264,33 +256,23 @@ def build(model, readout, graph, letter, out_path, triangles=False):
         doc.vertex(f"header{k}", text, text_style("center"),
                    ux(x) - 20 * U, uy(panel.Y_HEADER) - 7, 40 * U, 14)
 
-    # --- legend: framed, bottom-left, under the factor circle. Sits 5 mm up from the
-    # canvas edge (was 2 mm), which keeps it clear of the caption below the figure.
+    # --- legend: framed, bottom-left, 1 mm up from the canvas edge, which is what leaves
+    # the lower sign-split ring clear.
     kmax = max(list(L["neg_mult"].values()) + list(L["pos_mult"].values()))
-    if triangles:
-        rows = [
-            (C_NEG, None, False, False,
-             f"negative trigenic interaction (n = {L['n_neg']}), one triangle each"),
-            (C_POS, None, False, False,
-             f"positive trigenic interaction (n = {L['n_pos']}), drawn on top"),
-        ]
-    else:
-        rows = [
-            (C_NEG, width(1), False, False,
-             f"negative trigenic interaction (n = {L['n_neg']})"),
-            (C_POS, width(1), False, False,
-             f"positive trigenic interaction (n = {L['n_pos']})"),
-            # The width row shows both ends of the scale: a 1-interaction line on the
-            # left of the swatch and a kmax-interaction line on the right.
-            (C_NEG, (width(1), width(kmax)), False, False,
-             f"width: interactions per pair, 1 (left) to {kmax} (right)"),
-        ]
-    rows += [
+    rows = [
+        (C_NEG, width(1), False, False,
+         f"negative trigenic interaction (n = {L['n_neg']})"),
+        (C_POS, width(1), False, False,
+         f"positive trigenic interaction (n = {L['n_pos']})"),
+        # The width row shows both ends of the scale: a 1-interaction line on the
+        # left of the swatch and a kmax-interaction line on the right.
+        (C_NEG, (width(1), width(kmax)), False, False,
+         f"width: interactions per pair, 1 (left) to {kmax} (right)"),
         (C_REG, 0.5, True, True, "factor regulates gene (SGD or TFLink)"),
         (C_PATH, 0.5, False, False, "catalyzes, consumes or produces"),
     ]
     row_h = 3.2 * U
-    lx, ly = ux(2.0), uy(5.0 + 3.2 * len(rows) + 2.0)
+    lx, ly = ux(2.0), uy(1.0 + 3.2 * len(rows) + 2.0)
     lw = 62 * U
     lh = row_h * len(rows) + 2 * U
     doc.vertex("legend-frame", "", "rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;"
@@ -298,12 +280,7 @@ def build(model, readout, graph, letter, out_path, triangles=False):
     for k, (color, wpt, dashed, arrow, label) in enumerate(rows):
         yc = ly + U + row_h * (k + 0.5)
         x_l, x_r = lx + 1.5 * U, lx + 7.5 * U
-        if wpt is None:
-            doc.vertex(f"legend-swatch{k}", "",
-                       polygon_style(color, TRI_OPACITY[+1 if color == C_POS else -1] * 2)
-                       + "polyCoords=[[0,1],[0.5,0],[1,1]];",
-                       x_l, yc - 1.1 * U, x_r - x_l, 2.2 * U)
-        elif isinstance(wpt, tuple):
+        if isinstance(wpt, tuple):
             x_mid = (x_l + x_r) / 2
             doc.edge(f"legend-line{k}a", line_style(color, wpt[0]),
                      points=[(x_l, yc), (x_mid - 0.5 * U, yc)])
@@ -369,19 +346,11 @@ def main():
                     help="path to the draw.io binary; when given, also export a true-size "
                          "SVG and a PNG under notes/assets/images/008-xue-ffa/ and check "
                          "the size against the Nature cap")
-    ap.add_argument("--triangles", action="store_true",
-                    help="review view: each significant triple as a translucent filled "
-                         "triangle instead of three edges; written beside --out with a "
-                         "-triangles suffix")
     args = ap.parse_args()
     os.makedirs(osp.dirname(args.out), exist_ok=True)
-    out = args.out
-    if args.triangles:
-        stem, ext = osp.splitext(out)
-        out = f"{stem}-triangles{ext}"
-    build(args.model, args.readout, args.graph, args.letter, out, triangles=args.triangles)
+    build(args.model, args.readout, args.graph, args.letter, args.out)
     if args.drawio:
-        export(args.drawio, out, osp.splitext(osp.basename(out))[0])
+        export(args.drawio, args.out, osp.splitext(osp.basename(args.out))[0])
 
 
 if __name__ == "__main__":

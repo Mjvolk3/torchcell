@@ -128,15 +128,26 @@ Y_TOP = 105.0  # top of the node columns
 Y_BOT = 8.0  # bottom of the node columns
 Y_HEADER = 112.0
 X_TF = 31.0  # center of the factor circle
-Y_TF = 64.0
-R_TF = 23.0
+Y_TF = 62.0
+R_TF = 16.5
 X_GENE = 86.0
 X_RXN = 111.0
 X_INT = 131.0
 X_SPECIES = 150.0
 X_BRACKET = 153.0
 X_LABEL = 154.5
-TF_BOX = (10.5, 3.6)
+TF_BOX = (8.0, 3.2)
+
+# The two sign-split rings. The labeled ring carries both signs at once, which answers
+# "is this pair in an interaction" but not "what shape does each sign make", because 45
+# brick edges and 17 blue ones in one circle read as a single mass. Each sign therefore
+# also gets its own ring, drawn at the SAME node angles and with no labels, so the two
+# shapes are comparable at a glance: positive above the labeled ring, negative below.
+# The labeled ring shrank from R 23 to 16.5 to make room, and its boxes with it.
+R_RING = 8.0
+RING_NODE_R = 0.75
+Y_RING_POS = 96.0
+Y_RING_NEG = 30.5
 GENE_BOX = (9.5, 3.4)
 RXN_SIDE = 1.1
 INT_R = 0.6
@@ -236,6 +247,32 @@ def edge_width_pt(k):
     return 0.4 + 0.25 * (k - 1)
 
 
+def ring_edge_width_pt(k):
+    """Edge width in a sign-split ring: the same encoding, scaled to the smaller radius.
+
+    Floored at 0.25 pt. Scaling alone would put a single interaction at 0.19 pt, under
+    the hairline that print holds, and a line thinner than that either drops out or is
+    rendered at whatever the device's minimum happens to be.
+    """
+    return max(0.25, edge_width_pt(k) * R_RING / R_TF)
+
+
+def ring_positions(center_y, radius):
+    """The ten factors on a circle of `radius` about (X_TF, `center_y`).
+
+    One function for every ring in the figure, so the labeled ring and the two
+    sign-split ones put each factor at the same angle and the shapes can be compared
+    without the reader checking which node is which.
+    """
+    return {
+        tf: (X_TF + radius * np.cos(ang), center_y - radius * np.sin(ang))
+        for tf, ang in (
+            (tf, -np.pi / 2 + 2 * np.pi * i / len(TF_GENES))
+            for i, tf in enumerate(sorted(TF_GENES))
+        )
+    }
+
+
 def interaction_segments(pos, neg_mult, pos_mult):
     """Every interaction edge as (sign, k, (x0, y0), (x1, y1)) in millimetres.
 
@@ -266,11 +303,6 @@ def interaction_segments(pos, neg_mult, pos_mult):
     # negative first so positive draws on top where the two still touch
     segments.sort(key=lambda s: s[0])
     return segments
-
-
-def interaction_triangles(pos, triples):
-    """Every significant triple as (sign, [(x, y), (x, y), (x, y)]) in millimetres."""
-    return [(sign, [pos[g] for g in genes]) for genes, sign in triples]
 
 
 def rounded_box(ax, x, y, w, h, fill, z):
@@ -318,10 +350,9 @@ def layout(model, readout, graph):
     print(f"{len(reg)} regulatory edges from {len({t for t, _ in reg})} factors")
 
     # --- positions -------------------------------------------------------------------
-    pos = {}
-    for i, tf in enumerate(sorted(TF_GENES)):
-        ang = -np.pi / 2 + 2 * np.pi * i / len(TF_GENES)
-        pos[tf] = (X_TF + R_TF * np.cos(ang), Y_TF - R_TF * np.sin(ang))
+    pos = dict(ring_positions(Y_TF, R_TF))
+    ring_pos = {+1: ring_positions(Y_RING_POS, R_RING),
+                -1: ring_positions(Y_RING_NEG, R_RING)}
     for gene, y in zip(core_sorted, spread(len(core_sorted))):
         pos[gene] = (X_GENE, y)
 
@@ -352,7 +383,8 @@ def layout(model, readout, graph):
         pos[m] = (X_SPECIES, y)
 
     return {
-        "pos": pos, "triples": triples, "pos_mult": pos_mult, "neg_mult": neg_mult,
+        "pos": pos, "ring_pos": ring_pos,
+        "triples": triples, "pos_mult": pos_mult, "neg_mult": neg_mult,
         "n_pos": n_pos, "n_neg": n_neg, "G": G, "core_sorted": core_sorted,
         "rxns": rxns, "intermediates": intermediates, "species_sorted": species_sorted,
         "gene_std": gene_std, "tf_sys": tf_sys, "reg": reg, "name_of": name_of,
@@ -401,6 +433,16 @@ def draw(model, readout, graph, out_stem):
     for sign, k, (x0, y0), (x1, y1) in interaction_segments(pos, neg_mult, pos_mult):
         ax.plot([x0, x1], [y0, y1], color=C_POS if sign > 0 else C_NEG,
                 linewidth=width(k), solid_capstyle="round", zorder=4 if sign > 0 else 3)
+
+    # the two sign-split rings: one sign each, same angles, no labels
+    for sign, mult, color in ((+1, pos_mult, C_POS), (-1, neg_mult, C_NEG)):
+        rpos = L["ring_pos"][sign]
+        for (a, b), k in sorted(mult.items()):
+            ax.plot([rpos[a][0], rpos[b][0]], [rpos[a][1], rpos[b][1]], color=color,
+                    linewidth=ring_edge_width_pt(k), solid_capstyle="round", zorder=3)
+        for tf in TF_GENES:
+            ax.add_patch(Circle(rpos[tf], RING_NODE_R, facecolor=FILL_TF,
+                                edgecolor="black", linewidth=0.3, zorder=5))
 
     # nodes
     for r in rxns:
@@ -462,7 +504,8 @@ def draw(model, readout, graph, out_stem):
         Line2D([], [], color=C_PATHWAY_EDGE, linewidth=0.5,
                label="catalyzes, consumes or produces"),
     ]
-    ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(2.0 / W_MM, 2.0 / H_MM),
+    # Bottom-left, 1 mm up from the canvas edge so it clears the lower sign-split ring.
+    ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(2.0 / W_MM, 1.0 / H_MM),
               fontsize=5, handlelength=2.2, borderpad=0.5, labelspacing=0.35)
 
     os.makedirs(IMAGES_DIR, exist_ok=True)

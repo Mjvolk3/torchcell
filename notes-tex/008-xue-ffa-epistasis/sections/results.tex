@@ -54,8 +54,9 @@ combinations do is the first sign that the effects are not composing.
 }
 \caption{\textbf{Interaction is the rule on total fatty acid titer, and the third deletion
 is where it bites.} \textbf{a}, Interaction scores against the multiplicative null for all
-45 double (fill) and 120 triple (hatched) deletions. The median moves from $+0.40$ at two
-deletions to $-0.72$ at three. \textbf{b}, Trigenic interaction score $\tau$ against
+45 double (lilac) and 120 triple (amber) deletions, as outline histograms on shared bins so
+the heavy overlap stays readable. The median moves from $+0.40$ at two deletions to $-0.72$
+at three. \textbf{b}, Trigenic interaction score $\tau$ against
 evidence for the 119 testable triples under the multiplicative model. The dashed line marks
 the largest $P$ that Benjamini-Hochberg rejects at a 5\% false discovery rate over the 119
 tests of this readout ($P = 0.036$); 86 triples clear it and 11 of those have $\tau > 0$.
@@ -77,10 +78,23 @@ digenic contributions before asking what remains:
 \label{eq:tau}
 \end{equation}
 %
-This is the trigenic score of the yeast genetic interaction maps, applied to titer in place
-of fitness. Standard errors propagate through Eq.~\ref{eq:tau} by the delta method, and each
-$t$ statistic is referred to the Welch-Satterthwaite effective degrees of freedom of that
-linear combination, which has a median of 4.28 across the 714 testable trigenic scores.
+This is the trigenic score of the yeast genetic interaction
+maps~\citep{kuzminSystematicAnalysisComplex2018,baryshnikovaQuantitativeAnalysisFitness2010},
+applied to titer in place of fitness. Substituting the digenic scores into
+Eq.~\ref{eq:tau} rewrites it as a residual against the pairs,
+%
+\begin{equation}
+\tau_{ijk} = f_{ijk} - f_i f_j f_k
+- \left( \varepsilon_{ij} f_k + \varepsilon_{ik} f_j + \varepsilon_{jk} f_i \right) ,
+\label{eq:tau-eps}
+\end{equation}
+%
+an identity rather than an approximation. Read this way, $\tau$ is what the third deletion
+adds once the singles and the pairs have been given their due, and each pairwise deviation
+enters weighted by the remaining single-deletion phenotype. Standard errors propagate
+through Eq.~\ref{eq:tau} by the delta method, and each $t$ statistic is referred to the
+Welch-Satterthwaite effective degrees of freedom of that linear combination, which has a
+median of 4.28 across the 714 testable trigenic scores.
 
 Deviations from the null are large and are mostly negative at three deletions. The median
 digenic score is $+0.40$ and the median trigenic score is $-0.72$
@@ -88,6 +102,13 @@ digenic score is $+0.40$ and the median trigenic score is $-0.72$
 reverses its typical direction. Of the 119 triples with a testable standard error, 86 depart
 from the null at a 5\% false discovery rate computed over the 119 tests of this readout, and
 11 of those 86 depart upward (Fig.~\ref{fig:landscape}b).
+
+The pairs are worth stating on their own, because they are what
+Eq.~\ref{eq:tau-eps} measures the triples against. On total titer 43 of the 45 doubles
+have a positive digenic score, 25 clear the same false discovery rate and all 25 of those
+are positive, and 93 of the 120 triples produce less titer than their own singles and pairs
+predict (\suppnoteref{note:digenic}). The reversal at the third deletion is therefore a
+change of direction rather than the continuation of a trend.
 
 \begin{figure*}[t]
 \panelrow{%
@@ -98,7 +119,7 @@ from the null at a 5\% false discovery rate computed over the 119 tests of this 
 \panelrow{\panel{d}{figures/ffa_epistatic_path_panels_top.pdf}}
 \caption{\textbf{Improving combinations exist, and almost none of them is reachable one
 deletion at a time.} \textbf{a}, Percentage of combinations exceeding the base strain at
-one, two and three deletions (bars, counts above), with the best titer at each order (amber
+one, two and three deletions (bars, counts above), with the best titer at each order (lilac
 line, right axis). One of ten single deletions improves titer; the best triple reaches
 $2.05\times$. \textbf{b}, A greedy campaign (brick) takes the best strictly improving single
 deletion each round and stops when none improves. It reaches $1.80\times$ after two
@@ -206,7 +227,12 @@ The readout matters as much as the scale. Thirty-one triples clear all four mode
 sign agreeing on at least one of the five individual species, and 20 of those are on C14:0,
 where every consensus interaction is positive. None survives on the summed total
 (Fig.~\ref{fig:models}e). Summing the five species is a modeling choice too, and it is the
-choice that removes the positive signal.
+choice that removes the positive signal. The five species behind the sum are not variations
+on one pattern: the number of triples called within a species runs from 3 to 80, C14:0
+reverses sign between the digenic and the trigenic layer, and the summed total sits at
+$r = 0.91$ from C16:0 and C18:1 but at $r = -0.28$ from C14:0
+(\suppnoteref{note:species}). The four expectations themselves, and what each one costs to
+adopt, are set out in \suppnoteref{note:models}.
 
 \subsection*{No interaction network on hand predicts which combinations interact}
 
@@ -232,10 +258,12 @@ set with no visible relation to which factors regulate which fatty acid genes
 titer, drawn upstream of the pathway they act through.} The ten deleted transcription
 factors are arranged in a circle at left. Edges within the circle are the 86 trigenic
 interactions significant at a 5\% false discovery rate within the total-titer readout under
-the multiplicative model, 75 negative (brick) and 11 positive (amber), each drawn as the
+the multiplicative model, 75 negative (brick) and 11 positive (blue), each drawn as the
 three edges of its triangle; edge width is the number of interactions the pair takes part
-in, from 1 to 8, and positive is drawn over negative. Every one of the 45 pairs is in at
-least one negative interaction. Dotted arrows are regulatory links from a factor to a
+in, from 0.40 pt at 1 to 2.15 pt at 8. Every one of the 45 pairs is in at least one
+negative interaction, so a pair that also carries a positive one would hide it: the two
+signs of a pair are therefore drawn as two parallel lines, offset perpendicular to the pair
+by half their combined width, and neither covers the other. Dotted arrows are regulatory links from a factor to a
 pathway gene in the SGD regulatory graph or TFLink; three of the ten factors have none.
 The columns to the right are the 13 core fatty acid pathway genes, the 64 reactions they
 catalyze, the intermediates those reactions consume or produce, and the 31 measured
@@ -247,9 +275,13 @@ acyl chains.}{fig:network}
 \subsection*{A model trained on growth interactions does not predict the titer interactions}
 
 The other place a campaign could look for a predictor is a model trained on measured
-combinations rather than on a graph. The torchcell equivariant cell graph transformer is
-trained on the trigenic growth interaction screens of Kuzmin et al.\ (2018, 2020), where
-each triple deletion is scored by colony fitness in a wild-type background. All ten
+combinations rather than on a graph. The torchcell equivariant cell graph transformer,
+described in a companion manuscript in preparation
+(\file{paper/nature-biotech/editing.pdf}), is trained on the trigenic growth interaction
+screens of Kuzmin et al.~\citep{kuzminSystematicAnalysisComplex2018,kuzminExploringWholegenomeDuplicate2020},
+where each triple deletion is scored by colony fitness in a wild-type background. What that
+model is measured against, and how it behaves on the additive nulls, is worked through
+in~\citep{volkWhat010Trigenic2026}. All ten
 factors here are in its gene space, and seven of them were deleted somewhere in its
 training data; GCN5, RPD3 and TFC7 were not. We scored each of the 120 triples as a
 three-gene deletion and asked whether the predicted growth interaction tracks the measured

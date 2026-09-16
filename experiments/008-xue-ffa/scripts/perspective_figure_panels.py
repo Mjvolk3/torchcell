@@ -67,6 +67,12 @@ plt.rcParams.update(
         "axes.linewidth": 0.5,
         "lines.linewidth": 0.7,
         "savefig.bbox": "standard",
+        # Math text in Arial as well, so a panel ships one typeface (PAPER_RC does the
+        # same repo-wide; restated here because this script sets its own rc block).
+        "mathtext.fontset": "custom",
+        "mathtext.rm": "Arial",
+        "mathtext.it": "Arial:italic",
+        "mathtext.bf": "Arial:bold",
     }
 )
 
@@ -95,12 +101,17 @@ MODEL_COLORS = {
     "glm_log_link": PLOT_PALETTE[2],
     "log_ols": PLOT_PALETTE[4],
 }
-# Sign encoding, held fixed across every panel in the document: amber = positive
-# interaction, brick = negative. Third and fourth categories take lilac and steel.
-C_POS = PLOT_PALETTE[0]
+# Sign encoding, held fixed across every panel in the document: blue = positive
+# interaction, brick = negative (review 2026.09.16: positive moved from amber to blue, and
+# amber is now free for objects such as the pathway genes in the network figure). Third
+# category takes lilac; the two series of the score histogram take amber and lilac, since
+# digenic-versus-trigenic is not a sign.
+C_POS = PLOT_PALETTE[4]
 C_NEG = PLOT_PALETTE[1]
 C_THIRD = PLOT_PALETTE[2]
-C_FOURTH = PLOT_PALETTE[4]
+C_DIGENIC = PLOT_PALETTE[2]
+C_TRIGENIC = PLOT_PALETTE[0]
+C_BEST = PLOT_PALETTE[2]
 C_GRAY = PLOT_PALETTE[5]
 
 # Reserved band above the tallest bar, so a value label never lands on the title and an
@@ -184,13 +195,16 @@ def panel_interaction_distribution(ax):
     lo = min(di["interaction_score"].min(), tri["interaction_score"].min())
     hi = max(di["interaction_score"].max(), tri["interaction_score"].max())
     bins = np.linspace(lo, hi, 26)
-    ax.hist(di["interaction_score"], bins=bins, color=C_FOURTH, edgecolor="black",
-            linewidth=0.3, alpha=1.0, label=f"digenic $\\varepsilon$ (n={len(di)})")
-    # Face left unfilled with a black hatch: the two distributions overlap heavily, and the
-    # repo standard draws representation in solid black rather than fading a fill with
-    # alpha, which would fade the hatch and the edge with it.
-    ax.hist(tri["interaction_score"], bins=bins, facecolor="none", edgecolor="black",
-            linewidth=0.6, hatch="///", label=f"trigenic $\\tau$ (n={len(tri)})")
+    # Two outline (step) histograms in two colors, the form the repo uses to compare
+    # distributions across datasets (e.g. the 025 recapitulation residuals): the two
+    # distributions overlap heavily, and an outline in each color shows both through the
+    # overlap where a fill-versus-hatch pair (the earlier form) hid one behind the other.
+    for sub, color, label in (
+        (di, C_DIGENIC, f"digenic $\\varepsilon$ (n={len(di)})"),
+        (tri, C_TRIGENIC, f"trigenic $\\tau$ (n={len(tri)})"),
+    ):
+        ax.hist(sub["interaction_score"], bins=bins, histtype="step", color=color,
+                linewidth=0.9, label=label, zorder=3)
     ax.axvline(0, color="black", linewidth=0.5, linestyle="--", zorder=1)
     ax.set_xlabel("interaction score (total FFA titer)")
     ax.set_ylabel("gene combinations")
@@ -230,8 +244,12 @@ def panel_volcano(ax):
     if np.isfinite(p_cut):
         ax.axhline(-np.log10(p_cut), color="black", linewidth=0.5, linestyle="--",
                    zorder=2)
+        # Below the line at the left: above it, the label sat on the cloud of called
+        # negatives, and below it on the right it sat on the uncalled positives. Every
+        # uncalled triple has |tau| < 0.7, so the region below the line at the far left
+        # is empty.
         ax.text(0.02, -np.log10(p_cut), " BH FDR < 0.05", transform=ax.get_yaxis_transform(),
-                va="bottom", ha="left", fontsize=5)
+                va="top", ha="left", fontsize=5)
     ax.axvline(0, color=C_GRAY, linewidth=0.4, zorder=1)
     ax.set_xlabel("$\\tau$ (trigenic interaction)")
     ax.set_ylabel("$-\\log_{10}$ $P$")
@@ -465,11 +483,11 @@ def panel_improving_by_order(ax):
         ax.text(xi, fr + ymax * 0.03, lab, ha="center", fontsize=5)
     best = [max(t.values()) for _, t in tables]
     ax2 = ax.twinx()
-    ax2.plot(x, best, color=C_POS, marker="o", markersize=2.6, linewidth=0.7,
+    ax2.plot(x, best, color=C_BEST, marker="o", markersize=2.6, linewidth=0.7,
              markeredgecolor="black", markeredgewidth=0.25, zorder=4,
              label="best combination")
-    ax2.set_ylabel("best titer (rel. base strain)", color=C_POS)
-    ax2.tick_params(axis="y", colors=C_POS, labelsize=6)
+    ax2.set_ylabel("best titer (rel. base strain)", color=C_BEST)
+    ax2.tick_params(axis="y", colors=C_BEST, labelsize=6)
     ax2.set_ylim(0.9, max(best) * 1.30)
     for spine in ax2.spines.values():
         spine.set_visible(False)
@@ -516,8 +534,9 @@ def panel_greedy_walk(ax):
             label="greedy campaign")
     ax.scatter([xs[-1]], [ys[-1]], s=26, marker="X", color=C_NEG, edgecolor="black",
                linewidth=0.3, zorder=5)
-    ax.annotate(" stops here", (xs[-1], ys[-1]), fontsize=5, va="center", ha="left",
-                xytext=(2, 0), textcoords="offset points")
+    # Above the marker, not beside it: beside, the text ran into the X it names.
+    ax.annotate("stops here", (xs[-1], ys[-1]), fontsize=5, va="bottom", ha="center",
+                xytext=(0, 5), textcoords="offset points")
     ax.scatter([3], [best_f], s=20, marker="*", color=C_POS, edgecolor="black",
                linewidth=0.3, zorder=5, label="best strain in the design")
 

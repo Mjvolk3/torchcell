@@ -15,9 +15,21 @@
 #
 # Style follows the draw.io house rules ([[paper.nature-biotech.style-guide]]): Arial,
 # fontSize 8.3 (5.98 pt) for labels and 11.1 for a panel letter, palette stroke/fill pairs
-# (purple = deleted factor, yellow = pathway gene, blue = measured species, gray = reaction
-# and intermediate), amber and brick reserved for the interaction edges. Line widths are
-# in canvas units, 1 unit = 0.72 pt, so a 0.4 pt line is strokeWidth 0.56.
+# (purple = deleted factor, yellow = pathway gene, amber = measured species, gray =
+# reaction and intermediate), blue and brick reserved for the positive and negative
+# interaction edges. Line widths are in canvas units, 1 unit = 0.72 pt, so a 0.4 pt line
+# is strokeWidth 0.56.
+#
+# EDGES ARE ROUTED, NOT ATTACHED. A pair in both a negative and a positive interaction
+# gets its two edges side by side (ffa_network_overlay_panel.interaction_segments), which
+# an attached draw.io connector cannot do: it always runs center to center. So every
+# interaction edge is drawn through explicit points from node center to node center, and
+# the node shapes, added after the edges, cover the ends. Moving a factor box in draw.io
+# therefore does NOT move its edges; regenerate instead.
+#
+# --triangles writes a second view in which each significant triple is a translucent
+# filled triangle rather than three edges, for judging whether the triangle reading of the
+# circle is clearer than the edge reading. It is a review artifact, not the figure.
 #
 # A hidden layer named "print box" carries the 179.4 x 170 mm frame. Toggle it on in
 # draw.io to see the cap while arranging; hidden layers are not exported.
@@ -45,9 +57,13 @@ PT = 1 / 0.72  # canvas units per point
 FONT = "8.3"
 LETTER_FONT = "11.1"
 
-STROKE = {"purple": "#9673A6", "yellow": "#D6B656", "blue": "#6C8EBF", "gray": "#666666"}
-FILL = {"purple": "#E1D5E7", "yellow": "#FFF2CC", "blue": "#DAE8FC", "gray": "#F5F5F5"}
+STROKE = {"purple": "#9673A6", "yellow": "#D6B656", "amber": "#D79B00", "gray": "#666666"}
+FILL = {"purple": "#E1D5E7", "yellow": "#FFF2CC", "amber": "#FFE6CC", "gray": "#F5F5F5"}
 C_POS, C_NEG = panel.C_POS, panel.C_NEG
+# Triangle view: fill opacity per sign, in percent. Seventy-five negative triangles overlap
+# in the circle, so each one is faint and their density is what reads; the eleven positive
+# ones sit on top and are darker.
+TRI_OPACITY = {-1: 6, +1: 22}
 C_REG = "#666666"
 C_PATH = "#BBBBBB"
 
@@ -138,7 +154,13 @@ def line_style(color, width_pt, dashed=False, arrow=False):
     return s
 
 
-def build(model, readout, graph, letter, out_path):
+def polygon_style(color, opacity):
+    """A filled polygon with no stroke; polyCoords are set per shape."""
+    return (f"shape=mxgraph.basic.polygon;html=1;fillColor={color};fillOpacity={opacity};"
+            f"strokeColor=none;")
+
+
+def build(model, readout, graph, letter, out_path, triangles=False):
     L = panel.layout(model, readout, graph)
     pos, G = L["pos"], L["G"]
     doc = Doc(osp.splitext(osp.basename(out_path))[0])
@@ -163,13 +185,28 @@ def build(model, readout, graph, letter, out_path):
         doc.edge(f"reg{i}", line_style(C_REG, 0.5, dashed=True, arrow=True),
                  source=f"n-{sys_to_tf[tf]}", target=f"n-{gene}")
 
-    def width(k):
-        return 0.4 + 0.25 * (k - 1)
+    width = panel.edge_width_pt
 
-    for tag, mult, color in (("neg", L["neg_mult"], C_NEG), ("pos", L["pos_mult"], C_POS)):
-        for i, ((a, b), k) in enumerate(sorted(mult.items())):
-            doc.edge(f"{tag}{i}", line_style(color, width(k)), source=f"n-{a}",
-                     target=f"n-{b}")
+    if triangles:
+        for i, (sign, verts) in enumerate(sorted(
+                panel.interaction_triangles(pos, L["triples"]), key=lambda t: t[0])):
+            xs = [ux(x) for x, _ in verts]
+            ys = [uy(y) for _, y in verts]
+            x0, y0, w, h = min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)
+            # Plain JSON, not Python's repr: the node positions are numpy floats and
+            # repr would write np.float64(...), which draw.io cannot parse.
+            coords = ",".join(f"[{(x - x0) / w:.4f},{(y - y0) / h:.4f}]"
+                              for x, y in zip(xs, ys))
+            doc.vertex(f"tri{i}", "",
+                       polygon_style(C_POS if sign > 0 else C_NEG, TRI_OPACITY[sign])
+                       + f"polyCoords=[{coords}];",
+                       x0, y0, w, h)
+    else:
+        for i, (sign, k, (xa, ya), (xb, yb)) in enumerate(
+                panel.interaction_segments(pos, L["neg_mult"], L["pos_mult"])):
+            doc.edge(f"{'pos' if sign > 0 else 'neg'}{i}",
+                     line_style(C_POS if sign > 0 else C_NEG, width(k)),
+                     points=[(ux(xa), uy(ya)), (ux(xb), uy(yb))])
 
     # --- nodes
     side = panel.RXN_SIDE * U
@@ -185,7 +222,7 @@ def build(model, readout, graph, letter, out_path):
     dia = 2 * panel.SPECIES_R * U
     for m in L["species_sorted"]:
         x, y = pos[m]
-        doc.vertex(f"n-{m}", "", node_style("blue", "ellipse;"),
+        doc.vertex(f"n-{m}", "", node_style("amber", "ellipse;"),
                    ux(x) - dia / 2, uy(y) - dia / 2, dia, dia)
     gw, gh = panel.GENE_BOX[0] * U, panel.GENE_BOX[1] * U
     for gene in L["core_sorted"]:
@@ -227,27 +264,54 @@ def build(model, readout, graph, letter, out_path):
         doc.vertex(f"header{k}", text, text_style("center"),
                    ux(x) - 20 * U, uy(panel.Y_HEADER) - 7, 40 * U, 14)
 
-    # --- legend: framed, bottom-left, under the factor circle
+    # --- legend: framed, bottom-left, under the factor circle. Sits 5 mm up from the
+    # canvas edge (was 2 mm), which keeps it clear of the caption below the figure.
     kmax = max(list(L["neg_mult"].values()) + list(L["pos_mult"].values()))
-    rows = [
-        (C_NEG, width(1), False, False,
-         f"negative trigenic interaction (n = {L['n_neg']})"),
-        (C_POS, width(1), False, False,
-         f"positive trigenic interaction (n = {L['n_pos']})"),
-        (C_NEG, width(kmax), False, False, f"width: interactions per pair, 1 to {kmax}"),
+    if triangles:
+        rows = [
+            (C_NEG, None, False, False,
+             f"negative trigenic interaction (n = {L['n_neg']}), one triangle each"),
+            (C_POS, None, False, False,
+             f"positive trigenic interaction (n = {L['n_pos']}), drawn on top"),
+        ]
+    else:
+        rows = [
+            (C_NEG, width(1), False, False,
+             f"negative trigenic interaction (n = {L['n_neg']})"),
+            (C_POS, width(1), False, False,
+             f"positive trigenic interaction (n = {L['n_pos']})"),
+            # The width row shows both ends of the scale: a 1-interaction line on the
+            # left of the swatch and a kmax-interaction line on the right.
+            (C_NEG, (width(1), width(kmax)), False, False,
+             f"width: interactions per pair, 1 (left) to {kmax} (right)"),
+        ]
+    rows += [
         (C_REG, 0.5, True, True, "factor regulates gene (SGD or TFLink)"),
         (C_PATH, 0.5, False, False, "catalyzes, consumes or produces"),
     ]
     row_h = 3.2 * U
-    lx, ly = ux(2.0), uy(2.0 + 3.2 * len(rows) + 2.0)
-    lw = 56 * U
+    lx, ly = ux(2.0), uy(5.0 + 3.2 * len(rows) + 2.0)
+    lw = 62 * U
     lh = row_h * len(rows) + 2 * U
     doc.vertex("legend-frame", "", "rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;"
                f"strokeColor=#000000;strokeWidth={0.5 * PT:.2f};", lx, ly, lw, lh)
     for k, (color, wpt, dashed, arrow, label) in enumerate(rows):
         yc = ly + U + row_h * (k + 0.5)
-        doc.edge(f"legend-line{k}", line_style(color, wpt, dashed=dashed, arrow=arrow),
-                 points=[(lx + 1.5 * U, yc), (lx + 7.5 * U, yc)])
+        x_l, x_r = lx + 1.5 * U, lx + 7.5 * U
+        if wpt is None:
+            doc.vertex(f"legend-swatch{k}", "",
+                       polygon_style(color, TRI_OPACITY[+1 if color == C_POS else -1] * 2)
+                       + "polyCoords=[[0,1],[0.5,0],[1,1]];",
+                       x_l, yc - 1.1 * U, x_r - x_l, 2.2 * U)
+        elif isinstance(wpt, tuple):
+            x_mid = (x_l + x_r) / 2
+            doc.edge(f"legend-line{k}a", line_style(color, wpt[0]),
+                     points=[(x_l, yc), (x_mid - 0.5 * U, yc)])
+            doc.edge(f"legend-line{k}b", line_style(color, wpt[1]),
+                     points=[(x_mid + 0.5 * U, yc), (x_r, yc)])
+        else:
+            doc.edge(f"legend-line{k}", line_style(color, wpt, dashed=dashed, arrow=arrow),
+                     points=[(x_l, yc), (x_r, yc)])
         doc.vertex(f"legend-text{k}", label, text_style("left"),
                    lx + 8.5 * U, yc - 7, lw - 9 * U, 14)
 
@@ -305,11 +369,19 @@ def main():
                     help="path to the draw.io binary; when given, also export a true-size "
                          "SVG and a PNG under notes/assets/images/008-xue-ffa/ and check "
                          "the size against the Nature cap")
+    ap.add_argument("--triangles", action="store_true",
+                    help="review view: each significant triple as a translucent filled "
+                         "triangle instead of three edges; written beside --out with a "
+                         "-triangles suffix")
     args = ap.parse_args()
     os.makedirs(osp.dirname(args.out), exist_ok=True)
-    build(args.model, args.readout, args.graph, args.letter, args.out)
+    out = args.out
+    if args.triangles:
+        stem, ext = osp.splitext(out)
+        out = f"{stem}-triangles{ext}"
+    build(args.model, args.readout, args.graph, args.letter, out, triangles=args.triangles)
     if args.drawio:
-        export(args.drawio, args.out, osp.splitext(osp.basename(args.out))[0])
+        export(args.drawio, out, osp.splitext(osp.basename(out))[0])
 
 
 if __name__ == "__main__":

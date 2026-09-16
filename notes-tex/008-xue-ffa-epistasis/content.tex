@@ -18,9 +18,9 @@ style, same print-approximate editing geometry, same section status chips. Keep 
 and when a convention changes in \file{paper/nature-biotech}, change it here too.
 \par\smallskip
 Two things are deliberately unfinished. Authorship is a placeholder and must include the
-authors of the source study. Citations are not wired: the document has no Zotero collection,
-so prior work is named in prose rather than through \verb|\cite|, and a bibliography needs
-that collection created first.
+authors of the source study. The bibliography is provisional: the document has no Zotero
+collection of its own, so \file{references.bib} is built from the served whole-library
+export, subset to the keys cited here, and only works already in the library can be cited.
 \par}
 
 \vspace{1em}
@@ -30,3 +30,9 @@ that collection created first.
 \input{sections/results}
 \input{sections/discussion}
 \input{sections/methods}
+\input{sections/supplementary}
+
+%% House order, matching paper/nature-biotech/sections/backmatter.tex: the Supplementary
+%% Information comes first and the bibliography closes the document.
+\clearpage
+\bibliography{references}

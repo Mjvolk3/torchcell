@@ -278,7 +278,7 @@ L 49.944145 46.888969
 L 49.944145 46.888969 
 L 33.082387 46.888969 
 z
-" clip-path="url(#p201688d3fa)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p201688d3fa)" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_10">
     <path d="M 54.159585 154.488031 
@@ -286,7 +286,7 @@ L 71.021343 154.488031
 L 71.021343 125.008836 
 L 54.159585 125.008836 
 z
-" clip-path="url(#p201688d3fa)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p201688d3fa)" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_11">
     <path d="M 75.236782 66.050446 
@@ -294,7 +294,7 @@ L 92.09854 66.050446
 L 92.09854 66.050446 
 L 75.236782 66.050446 
 z
-" clip-path="url(#p201688d3fa)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p201688d3fa)" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_12">
     <path d="M 96.31398 63.102526 
@@ -302,7 +302,7 @@ L 113.175738 63.102526
 L 113.175738 63.102526 
 L 96.31398 63.102526 
 z
-" clip-path="url(#p201688d3fa)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p201688d3fa)" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_13">
     <path d="M 117.391177 153.014072 
@@ -310,7 +310,7 @@ L 134.252935 153.014072
 L 134.252935 150.066152 
 L 117.391177 150.066152 
 z
-" clip-path="url(#p201688d3fa)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p201688d3fa)" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_14">
     <path d="M 138.468374 73.420245 
@@ -318,7 +318,7 @@ L 155.330132 73.420245
 L 155.330132 60.154607 
 L 138.468374 60.154607 
 z
-" clip-path="url(#p201688d3fa)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p201688d3fa)" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_15">
     <path d="M 26.97 154.488031 
@@ -364,16 +364,16 @@ L 161.44252 14.60925
    </g>
    <g id="legend_1">
     <g id="patch_19">
-     <path d="M 124.59252 21.70925 
-L 130.59252 21.70925 
-L 130.59252 18.20925 
-L 124.59252 18.20925 
+     <path d="M 125.74252 21.70925 
+L 131.74252 21.70925 
+L 131.74252 18.20925 
+L 125.74252 18.20925 
 z
 " style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_20">
      <!-- negative $\tau$ -->
-     <g transform="translate(134.59252 21.70925)">
+     <g transform="translate(135.74252 21.70925)">
       <text>
        <tspan x="0" y="-0.421875" style="font-size: 5px; font-family: 'Arial'">n</tspan>
        <tspan x="2.780762" y="-0.421875" style="font-size: 5px; font-family: 'Arial'">e</tspan>
@@ -384,21 +384,21 @@ z
        <tspan x="13.623047" y="-0.421875" style="font-size: 5px; font-family: 'Arial'">v</tspan>
        <tspan x="16.123047" y="-0.421875" style="font-size: 5px; font-family: 'Arial'">e</tspan>
        <tspan x="18.903809" y="-0.421875" style="font-size: 5px; font-family: 'Arial'"> </tspan>
-       <tspan x="20.292969" y="-0.421875" style="font-style: oblique; font-size: 5px; font-family: 'DejaVu Sans'">τ</tspan>
+       <tspan x="20.292969" y="-0.421875" style="font-style: italic; font-size: 5px; font-family: 'Arial'">τ</tspan>
       </text>
      </g>
     </g>
     <g id="patch_20">
-     <path d="M 124.59252 27.90925 
-L 130.59252 27.90925 
-L 130.59252 24.40925 
-L 124.59252 24.40925 
+     <path d="M 125.74252 27.90925 
+L 131.74252 27.90925 
+L 131.74252 24.40925 
+L 125.74252 24.40925 
 z
-" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_21">
      <!-- positive $\tau$ -->
-     <g transform="translate(134.59252 27.90925)">
+     <g transform="translate(135.74252 27.90925)">
       <text>
        <tspan x="0" y="-0.421875" style="font-size: 5px; font-family: 'Arial'">p</tspan>
        <tspan x="2.780762" y="-0.421875" style="font-size: 5px; font-family: 'Arial'">o</tspan>
@@ -409,7 +409,7 @@ z
        <tspan x="11.672363" y="-0.421875" style="font-size: 5px; font-family: 'Arial'">v</tspan>
        <tspan x="14.172363" y="-0.421875" style="font-size: 5px; font-family: 'Arial'">e</tspan>
        <tspan x="16.953125" y="-0.421875" style="font-size: 5px; font-family: 'Arial'"> </tspan>
-       <tspan x="18.342285" y="-0.421875" style="font-style: oblique; font-size: 5px; font-family: 'DejaVu Sans'">τ</tspan>
+       <tspan x="18.342285" y="-0.421875" style="font-style: italic; font-size: 5px; font-family: 'Arial'">τ</tspan>
       </text>
      </g>
     </g>

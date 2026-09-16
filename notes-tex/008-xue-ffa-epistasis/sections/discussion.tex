@@ -49,6 +49,36 @@ interactions predicts neither the magnitude nor the rank of the titer interactio
 most their sign. The combinations a predictor learns from have to be measured on the
 phenotype it is asked to predict.
 
+\subsection*{What theory predicts about where epistasis comes from}
+
+There is a body of theory on when deletions in a metabolic system should compose and when
+they should not, and it is worth asking what it predicts here. Flux balance analysis over
+the yeast metabolic network gives a trimodal distribution of pairwise epistasis and
+organizes the interactions into modules that interact monochromatically, meaning that the
+links between two functional modules are either all buffering or all
+aggravating~\citep{segreModularEpistasisYeast2005}. A complementary result derives how
+epistasis propagates in a hierarchical metabolic network with first-order kinetics, and
+finds that weak epistasis at a lower level is distorted as it moves to higher-level
+phenotypes, so pairwise interactions between genes should be common and should depend on
+the genetic background~\citep{kryazhimskiyEmergencePropagationEpistasis2021}. Both predict
+what is observed here at the level of prevalence. Interaction is common, and its sign is
+consistent within a readout.
+
+What neither predicts is the reachability result, and the reason is that both are theories
+about enzymes in a flux network rather than about transcription factors upstream of one.
+A factor deletion changes the expression of many pathway genes at once, and it also changes
+genes outside the pathway, so the module structure a flux model assigns to the pathway is
+not the structure the deletions act on. The one systematic study of epistasis between
+gene-specific transcription factors in yeast reached its mechanisms through expression
+profiling of the double deletions rather than through pathway
+topology~\citep{sameithHighresolutionGeneExpression2015}, and proposed two routes,
+buffering by induced dependency and alleviation by derepression, that connect genes in
+parallel pathways with no shared reaction. The enrichment result here is consistent with
+that: connectivity in a physical, regulatory, genetic or coexpression graph does not
+predict which of these triples interact. Applying the metabolic theory to a factor panel
+would require a model that maps a factor deletion to a distribution of flux changes first,
+and that model is what the field does not yet have for titer.
+
 \subsection*{What this design can and cannot support}
 
 The design is complete, which is what licenses the reachability claim, and it is small, which
@@ -67,6 +97,23 @@ should expect elsewhere. A single-gene-per-step campaign on enzymes may well fin
 route more often. What the design shows is that the question has an answer, and that the
 answer is measurable rather than assumable.
 
+The measurement itself carries one limitation that applies to every number in this
+document. Each strain contributes an endpoint titer in milligrams per liter from three
+replicate cultures, and the released data include no biomass measurement, so nothing here
+is normalized to cell density. A deletion that lowers final biomass and a deletion that
+lowers fatty acid output per cell are indistinguishable in this readout, and both appear as
+a lower $f$. Two consequences follow and neither is removable by reanalysis. Interaction
+scores mix specific productivity with growth, so a triple whose three deletions each cost
+biomass could show a negative $\tau$ with no change in per-cell output. And the valley
+depths that drive the reachability result are titer valleys, which is the right quantity
+for a campaign that screens on titer, and is not evidence about the yield or the rate. What
+the replicates do support is that the values are stable: the trigenic standard errors
+propagate from three replicates per strain through seven strains, and the monotone-route
+count moves only from 2 to 11 when a step is allowed to lose up to one standard error, so
+the result is not sitting on measurement noise. A design that reported optical density
+alongside titer would separate the two routes, and that is a property of the source
+experiment rather than of the analysis.
+
 \subsection*{What would settle it}
 
 Answering the general question needs more datasets of the same shape, and the shape is
@@ -80,6 +127,9 @@ matter how many strains they contain.
 The complementary route is theory. A production phenotype is the output of a metabolic
 network under constraints, and a network model that predicts where in a pathway deletions
 compose and where they do not would turn the reachability question into a calculation
-performed before the strains are built. That model does not exist yet for titer, and the
-enrichment result above says it will not be recovered from connectivity alone. Building it
-is the direction this line of work points.
+performed before the strains are built. The pieces exist for enzymes in a flux
+network~\citep{segreModularEpistasisYeast2005,kryazhimskiyEmergencePropagationEpistasis2021},
+and what is missing is the step from a regulator deletion to the flux changes it causes.
+That model does not exist yet for titer, and the enrichment result above says it will not
+be recovered from connectivity alone. Building it is the direction this line of work
+points.

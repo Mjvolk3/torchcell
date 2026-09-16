@@ -108,13 +108,15 @@ SPECIES_LABELS = [
 COMPARTMENT_ORDER = {"p": 0, "erm": 1, "lp": 2}
 
 # Colors: pale fills for objects, saturated lines for data, as in the other panels.
-C_POS = PLOT_PALETTE[0]
+# Positive interactions are blue and negative brick (the document-wide sign encoding);
+# the measured species take the amber object fill so no object shares a hue with a sign.
+C_POS = PLOT_PALETTE[4]
 C_NEG = PLOT_PALETTE[1]
 FILL_TF = PLOT_PALETTE_FILL[2]
 FILL_GENE = PLOT_PALETTE_FILL[3]
 FILL_RXN = PLOT_PALETTE_FILL[15]
 FILL_INTERMEDIATE = PLOT_PALETTE_FILL[11]
-FILL_SPECIES = PLOT_PALETTE_FILL[4]
+FILL_SPECIES = PLOT_PALETTE_FILL[0]
 C_REGULATES = PLOT_PALETTE[5]
 C_PATHWAY_EDGE = "#BBBBBB"
 
@@ -223,6 +225,52 @@ def barycenter_order(nodes, neighbors_y):
 
 def spread(n):
     return np.linspace(Y_TOP, Y_BOT, n) if n > 1 else np.array([(Y_TOP + Y_BOT) / 2])
+
+
+PT_MM = 25.4 / 72.0  # millimetres per point
+EDGE_GAP_MM = 0.15  # clear space between a pair's negative and positive edge
+
+
+def edge_width_pt(k):
+    """Line width of an interaction edge, in points, from the pair's multiplicity."""
+    return 0.4 + 0.25 * (k - 1)
+
+
+def interaction_segments(pos, neg_mult, pos_mult):
+    """Every interaction edge as (sign, k, (x0, y0), (x1, y1)) in millimetres.
+
+    A pair that takes part in both a negative and a positive interaction gets its two
+    edges drawn side by side, offset perpendicular to the pair's axis by half the sum of
+    their widths plus a small gap, so neither hides the other. Every one of the 45 pairs
+    is in at least one negative interaction, so a positive edge always has a partner;
+    a pair with only a negative edge stays on the axis. Endpoints are the node centers,
+    which the node shapes then cover.
+    """
+    segments = []
+    for (a, b), k_neg in sorted(neg_mult.items()):
+        (xa, ya), (xb, yb) = pos[a], pos[b]
+        k_pos = pos_mult.get((a, b), 0)
+        if k_pos == 0:
+            segments.append((-1, k_neg, (xa, ya), (xb, yb)))
+            continue
+        dx, dy = xb - xa, yb - ya
+        norm = float(np.hypot(dx, dy))
+        nx_, ny_ = -dy / norm, dx / norm
+        d = (edge_width_pt(k_neg) + edge_width_pt(k_pos)) / 2 * PT_MM + EDGE_GAP_MM
+        for sign, k, s in ((-1, k_neg, -0.5), (+1, k_pos, +0.5)):
+            off = (s * d * nx_, s * d * ny_)
+            segments.append((sign, k, (xa + off[0], ya + off[1]), (xb + off[0], yb + off[1])))
+    for (a, b), k_pos in sorted(pos_mult.items()):
+        if (a, b) not in neg_mult:
+            segments.append((+1, k_pos, pos[a], pos[b]))
+    # negative first so positive draws on top where the two still touch
+    segments.sort(key=lambda s: s[0])
+    return segments
+
+
+def interaction_triangles(pos, triples):
+    """Every significant triple as (sign, [(x, y), (x, y), (x, y)]) in millimetres."""
+    return [(sign, [pos[g] for g in genes]) for genes, sign in triples]
 
 
 def rounded_box(ax, x, y, w, h, fill, z):
@@ -347,14 +395,12 @@ def draw(model, readout, graph, out_stem):
             arrowstyle="-|>", mutation_scale=4, color=C_REGULATES, linewidth=0.5,
             linestyle=(0, (0.8, 1.2)), shrinkA=0, shrinkB=0, zorder=2))
 
-    # interaction edges: negative under positive, width by multiplicity
-    def width(k):
-        return 0.4 + 0.25 * (k - 1)
-
-    for mult, color, z in ((neg_mult, C_NEG, 3), (pos_mult, C_POS, 4)):
-        for (a, b), k in mult.items():
-            ax.plot([pos[a][0], pos[b][0]], [pos[a][1], pos[b][1]],
-                    color=color, linewidth=width(k), solid_capstyle="round", zorder=z)
+    # interaction edges: negative under positive, width by multiplicity, a pair's two
+    # signs drawn side by side
+    width = edge_width_pt
+    for sign, k, (x0, y0), (x1, y1) in interaction_segments(pos, neg_mult, pos_mult):
+        ax.plot([x0, x1], [y0, y1], color=C_POS if sign > 0 else C_NEG,
+                linewidth=width(k), solid_capstyle="round", zorder=4 if sign > 0 else 3)
 
     # nodes
     for r in rxns:
@@ -409,7 +455,8 @@ def draw(model, readout, graph, out_stem):
         Line2D([], [], color=C_POS, linewidth=width(1),
                label=f"positive trigenic interaction (n = {n_pos})"),
         Line2D([], [], color=C_NEG, linewidth=width(k_max),
-               label=f"width: interactions per pair, 1 to {k_max}"),
+               label=f"width: interactions per pair, {width(1)} pt at 1 to "
+                     f"{width(k_max):.2f} pt at {k_max}"),
         Line2D([], [], color=C_REGULATES, linewidth=0.5, linestyle=(0, (0.8, 1.2)),
                label="factor regulates gene (SGD regulatory or TFLink)"),
         Line2D([], [], color=C_PATHWAY_EDGE, linewidth=0.5,

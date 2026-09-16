@@ -81,6 +81,12 @@ plt.rcParams.update(
         "lines.linewidth": 0.7,
         "patch.linewidth": 0.4,
         "savefig.bbox": "standard",
+        # Math text ($f_{ijk}$, $\tau_{ijk}$) in Arial as well, so the panel ships one
+        # typeface; the default mathtext font is DejaVu Sans.
+        "mathtext.fontset": "custom",
+        "mathtext.rm": "Arial",
+        "mathtext.it": "Arial:italic",
+        "mathtext.bf": "Arial:bold",
     }
 )
 
@@ -469,7 +475,9 @@ def plot_path_panels(path_df, selected, mode, out_stem, ncols=3, show_suptitle=T
             fontsize=6,
             y=0.997,
         )
-    fig.tight_layout(rect=(0, 0, 1, 0.98) if show_suptitle else None)
+    # The same tight pad the single panels use, so this grid sits as close under its
+    # panel letter as they do; the default pad left 1.5 mm of blank canvas above the titles.
+    fig.tight_layout(pad=0.4, rect=(0, 0, 1, 0.98) if show_suptitle else None)
 
     fig.savefig(f"{out_stem}.png", dpi=300)
     savefig_true_size_svg(fig, f"{out_stem}.svg")

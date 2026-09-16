@@ -6,10 +6,11 @@
 %% transcription factors) are properties of the design and are restated with provenance in
 %% the Results.
 %%
-%% CITATIONS ARE NOT WIRED YET. This document has no Zotero collection, so prior work is
-%% named in prose rather than through \cite. `make check` fails on a \cite key absent from
-%% references.bib, and references.bib is generated from Zotero rather than hand-edited, so
-%% adding citations means creating the collection first. Do that before the document
+%% CITATIONS. This document still has no Zotero collection of its own, so references.bib is
+%% built by notes-tex/common/bib_from_store.py from the sha256-verified whole-library export
+%% the tc-lit store serves, subset to the keys cited here (`make bib-store`). A work that is
+%% not already in the Zotero library therefore cannot be cited until someone decides to add
+%% it there, which is the intended gate. Create the document's own collection before it
 %% leaves the group.
 
 \section{Introduction\secstatus{todo}}
@@ -30,15 +31,27 @@ tell a combination that is genuinely bad from one it never reached.
 
 Epistasis is the name for the failure of that assumption. In its quantitative form it is
 the deviation of a combination's phenotype from what the phenotypes of its parts predict,
-and it is measured against a stated null. Systematic genetic interaction mapping in
-\org{Saccharomyces cerevisiae} established both the scale of the phenomenon on
-growth rate and the estimator now used for it: a digenic interaction score defined as the
-departure of a double mutant's fitness from the product of the two single-mutant
-fitnesses, and a trigenic score that removes the digenic contributions before asking what
-the third deletion adds. Those maps were built on fitness in rich medium. Whether their
-conclusions transfer to a production phenotype is not obvious, because fitness and titer
-are under different selection, are measured on different instruments, and need not share a
-null.
+and it is measured against a stated null~\citep{domingoCausesConsequencesGenetic2019}.
+Systematic genetic interaction mapping in \org{Saccharomyces cerevisiae} established both
+the scale of the phenomenon on growth rate and the estimator now used for it: a digenic
+interaction score defined as the departure of a double mutant's fitness from the product of
+the two single-mutant
+fitnesses~\citep{costanzoGlobalGeneticInteraction2016,baryshnikovaQuantitativeAnalysisFitness2010},
+and a trigenic score that removes the digenic contributions before asking what the third
+deletion adds~\citep{kuzminSystematicAnalysisComplex2018}. Those maps were built on fitness
+in rich medium, and the network they describe is itself environment
+dependent~\citep{costanzoEnvironmentalRobustnessGlobal2021}. Whether their conclusions
+transfer to a production phenotype is not obvious, because fitness and titer are under
+different selection, are measured on different instruments, and need not share a null.
+
+Combinatorially complete designs are what turn that question into a measurement, and they
+exist for other phenotypes: an enzyme active
+site~\citep{johnstonCombinatoriallyCompleteEpistatic2024}, a set of chromatin
+regulators~\citep{alcantarHighthroughputSyntheticBiology2024}, and the fitness of natural
+variants~\citep{goldsteinGlobalEpistasisBudding2025,matsuiInterplayAdditivityDominance2022}.
+Metabolic engineering has the multiplexed editing tools to build such a design in a
+producing strain~\citep{lianCombinatorialMetabolicEngineering2017}, and the case analyzed
+here is one.
 
 What has been missing for a production phenotype is a design in which every combination and
 every construction order is present. Without one, a claim that a combination was

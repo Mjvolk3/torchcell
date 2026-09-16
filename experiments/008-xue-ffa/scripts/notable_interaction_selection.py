@@ -78,6 +78,12 @@ plt.rcParams.update(
         "axes.linewidth": 0.5,
         "lines.linewidth": 0.7,
         "savefig.bbox": "standard",
+        # Math text ($\tau$) in Arial too; matplotlib's default mathtext font is DejaVu
+        # Sans, which is how these panels shipped two typefaces.
+        "mathtext.fontset": "custom",
+        "mathtext.rm": "Arial",
+        "mathtext.it": "Arial:italic",
+        "mathtext.bf": "Arial:bold",
     }
 )
 
@@ -110,7 +116,10 @@ N_TOP = 8
 LABEL_HEADROOM = 1.30
 LEGEND_ROWS_TOP = 2.6
 
-C_POS = PLOT_PALETTE[0]
+# Sign encoding, held fixed across every panel in the document: blue = positive
+# interaction, brick = negative (review 2026.09.16; positive was amber, which the network
+# figure now gives to the measured species).
+C_POS = PLOT_PALETTE[4]
 C_NEG = PLOT_PALETTE[1]
 C_ACCENT = PLOT_PALETTE[2]
 C_GRAY = PLOT_PALETTE[5]

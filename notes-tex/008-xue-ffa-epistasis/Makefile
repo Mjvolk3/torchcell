@@ -2,10 +2,11 @@
 # [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineering]]
 # https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/008-xue-ffa-epistasis/Makefile
 #
-#   make          -> editing.pdf, the drafting view (status chips, print-approximate margins)
-#   make plots    -> convert the true-size panel SVGs into figures/*.pdf
-#   make figures  -> re-export the draw.io sources this document references
-#   make clean    -> remove build artifacts
+#   make           -> editing.pdf, the drafting view (status chips, print-approximate margins)
+#   make plots     -> convert the true-size panel SVGs into figures/*.pdf
+#   make figures   -> re-export the draw.io sources this document references
+#   make bib-store -> rebuild references.bib from the served library, by cited key
+#   make clean     -> remove build artifacts
 #
 # This document does NOT include ../common/Makefile.common. That file is written for the
 # tcdoc article style: it symlinks tcdoc.sty, builds `main.pdf`, and runs a checker that
@@ -16,6 +17,7 @@
 DOC      := editing
 TECTONIC ?= $(shell command -v tectonic 2>/dev/null || echo /tmp/tectonic)
 PYTHON   ?= python
+BIBSTORE ?= library
 REPO     := ../..
 COMMON   := ../common
 PAPER    := $(REPO)/paper/nature-biotech
@@ -27,6 +29,7 @@ SHARED := sn-jnl.cls sn-nature.bst
 
 SECTIONS := $(wildcard sections/*.tex)
 DEPS     := $(DOC).tex content.tex preamble.tex $(SECTIONS)
+BIB      := references.bib
 
 # Where `make plots` looks for the matplotlib SVGs. The document directory is named for the
 # perspective, the images directory for the experiment, so unlike every other notes-tex
@@ -52,27 +55,49 @@ else
   drawio_export = xvfb-run -a "$(DRAWIO)" "$(1)" --no-sandbox --disable-gpu -x -f pdf --crop -o "$(2)"
 endif
 
-.PHONY: all plots figures drawio-bin clean
+.PHONY: all plots figures drawio-bin bib-store bib-check clean
 
 all: $(DOC).pdf
+
+# This document has no Zotero collection of its own, so neither `make bib` (Better BibTeX
+# export of a collection pair) nor `make bib-pull` (a bibliography tc-lit serves by the
+# document's name) applies. bib_from_store.py takes the served WHOLE-LIBRARY export,
+# verifies it against the store manifest's sha256, and writes only the keys this document
+# cites. Curation still happens in Zotero: a key that is not in the library is an error
+# here, never a stub, and adding it there is a separate human decision.
+bib-store:
+	@$(PYTHON) $(COMMON)/bib_from_store.py --name $(BIBSTORE) --out $(BIB)
+
+bib-check:
+	@$(PYTHON) $(COMMON)/bib_from_store.py --name $(BIBSTORE) --out $(BIB) --check
 
 sn-jnl.cls: $(PAPER)/sn-jnl.cls
 	@ln -sf ../../paper/nature-biotech/sn-jnl.cls $@
 sn-nature.bst: $(PAPER)/sn-nature.bst
 	@ln -sf ../../paper/nature-biotech/sn-nature.bst $@
 
-$(DOC).pdf: $(DEPS) $(SHARED)
+$(DOC).pdf: $(DEPS) $(SHARED) $(BIB)
 	$(TECTONIC) -X compile $(DOC).tex --keep-logs --synctex --outdir .
 
 # Conversion goes through svg_true_size_pdf.py, NOT bare rsvg-convert. rsvg misreads both
 # SVG forms this repo writes and silently oversizes a panel by 1.389 (unitless) or 1.25
 # (millimetres), which puts 6 pt panel type near 8 pt and breaks the panel widths chosen to
 # tile a 180 mm page. The script derives the correct zoom from each file's own header.
+#
+# A figure with a draw.io source is SKIPPED here and belongs to `make figures`. Both rules
+# match on the same stem, and the draw.io export writes its own true-size SVG next to the
+# matplotlib panels, so without the skip `make plots` would convert that SVG with
+# rsvg-convert, which cannot render the foreignObject text draw.io emits for HTML labels:
+# the figure then compiles to a PDF reading "Text is not SVG - cannot display" where its
+# labels should be. draw.io's own PDF export has no such problem.
 SVG2PDF := $(PYTHON) $(COMMON)/svg_true_size_pdf.py
 plots: $(SHARED)
 	@mkdir -p figures
 	@for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(DEPS) 2>/dev/null | sort -u); do \
 	  n=$$(basename $$f .pdf); \
+	  if [ -f "$(DRAWIO_SRC)/$$n.drawio" ] || [ -f "$(DRAWIO_SRC)/$$n.drawio.svg" ]; then \
+	    echo "  skip $$n (draw.io source; use \`make figures\`)"; continue; \
+	  fi; \
 	  for d in $(PLOT_SRCS); do \
 	    s="$$d/$$n.svg"; \
 	    if [ -f "$$s" ]; then $(SVG2PDF) "$$s" "$$f"; break; fi; \

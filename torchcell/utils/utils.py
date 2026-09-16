@@ -137,6 +137,15 @@ PAPER_RC: dict[str, object] = {
     "figure.titlesize": 6.5,
     "axes.linewidth": 0.5,
     "svg.fonttype": "none",
+    # Math text ($\tau$, $f_{ijk}$, $\times$) is set in Arial too. matplotlib's default
+    # mathtext font is DejaVu Sans, so a panel whose only math is an axis label silently
+    # ships two typefaces, and pdffonts on the converted panel lists DejaVuSans next to
+    # ArialMT. Custom fontset with the three Arial faces keeps every glyph in one family.
+    "mathtext.fontset": "custom",
+    "mathtext.rm": "Arial",
+    "mathtext.it": "Arial:italic",
+    "mathtext.bf": "Arial:bold",
+    "mathtext.default": "it",
     # Legends are framed: white face, 0.5 pt black edge, square corners
     # ([[paper.nature-biotech.style-guide]], Figures). The frame is a border, not a
     # license to cover data; the legend still has to sit in a clear region.

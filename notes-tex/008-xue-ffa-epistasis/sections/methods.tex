@@ -4,23 +4,63 @@
 %%
 %% SOURCE: this section describes the committed scripts by name; each named script is the
 %% authority for what it does. Nothing here restates a number that the Results did not
-%% already carry with its provenance.
+%% already carry with its provenance. The full map, script to artifact, so a reader of the
+%% .tex can find the code behind any panel or number without opening the document:
+%%
+%%   free_fatty_acid_interactions.py              loading, normalization, multiplicative null
+%%     -> results/multiplicative_{digenic,trigenic,all}_interactions_3_delta_normalized.csv
+%%   additive_free_fatty_acid_interactions.py     additive null
+%%     -> results/additive_{digenic,trigenic,all}_interactions_3_delta_normalized.csv
+%%   glm_log_link_epistatic_interactions.py       Gamma GLM, log link
+%%     -> results/glm_log_link/glm_log_link_{digenic,trigenic,all}_interactions.csv
+%%   log_ols_wt_differencing_epistatic_interactions.py   OLS on base-differenced log titer
+%%     -> results/glm_models/log_ols_{digenic,trigenic,all}_interactions.csv
+%%   linear_vs_log_scale_sign_test.py             linear-vs-log estimand test
+%%     -> results/linear_vs_log_scale_sign_test.csv
+%%   ffa_epistatic_path_panels.py                 route enumeration, monotonicity, Fig. 2d
+%%     -> results/ffa_epistatic_paths.csv, results/ffa_epistatic_path_accessibility.csv
+%%     -> images/008-xue-ffa/ffa_epistatic_path_panels_top.svg
+%%   interaction_graph_enrichment_analysis.py     graph overlap and Fisher tests
+%%     -> results/graph_enrichment/*.csv
+%%   notable_interaction_selection.py             the consensus gate
+%%     -> results/notable_interaction_selection.csv
+%%   perspective_figure_panels.py                 Figs. 1, 2a-c, 3
+%%     -> images/008-xue-ffa/panel_*.svg
+%%   supplementary_figure_panels.py               Supplementary Figs. 1 and 2
+%%     -> images/008-xue-ffa/si_panel_*.svg, results/supplementary_readout_counts.csv
+%%   ffa_network_overlay_panel.py                 Fig. 4 layout and matplotlib rendering
+%%   ffa_network_overlay_drawio.py                Fig. 4 as native draw.io shapes
+%%     -> notes/assets/drawio/ffa-epistasis-fig4-network-overlay.drawio (and -triangles)
+%%   experiments/010-kuzmin-tmi/scripts/ffa_panel_model_score.py   Fig. 5
+%%     -> results/ffa_panel_model_score.{csv,json}, images/010-kuzmin-tmi/ffa_panel_model_score.svg
 
 \section{Methods\secstatus{todo}}
 
 \subsection*{Data and normalization}
 
 Titers for five fatty acid species and their sum were taken from the source study's
-supplementary tables for the base strain and for all 175 deletion combinations. Every titer
-is divided by the base strain's titer for the same species in the same experiment, so all
-values below are ratios and the base strain is 1 by construction. The sum, referred to as
-total titer, is formed per replicate before averaging rather than by summing the five
-published species means, so it is a measured quantity and not a sixth derived one. Loading
-and normalization are in \file{experiments/008-xue-ffa/scripts/free_fatty_acid_interactions.py}.
+supplementary tables for the base strain and for all 175 deletion combinations. Each strain
+contributes three replicate measurements per species, in milligrams per liter at a single
+endpoint. Every titer is divided by the base strain's titer for the same species in the
+same experiment, so all values below are ratios and the base strain is 1 by construction.
+The sum, referred to as total titer, is formed per replicate before averaging rather than
+by summing the five published species means, so it is a measured quantity and not a sixth
+derived one. Loading and normalization are in
+\file{experiments/008-xue-ffa/scripts/free_fatty_acid_interactions.py}.
+
+The released measurements carry no biomass or optical density column, so no quantity in
+this document is normalized to cell number. Every $f$ is a volumetric titer ratio, and a
+deletion that lowers final biomass is not separable from one that lowers output per cell.
+This is a property of the released data rather than a choice made here, and it bounds what
+the interaction scores mean: they are interactions on volumetric titer, which is the
+quantity a titer-screened campaign selects on.
 
 \subsection*{Epistasis models}
 
 Four nulls were fit on the same normalized strain means.
+
+Each is written out in \suppnoteref{note:models}, which also sets out what the choice
+between them costs.
 
 \notesec{Multiplicative} The expected phenotype of a combination is the product of its
 parts. Digenic $\varepsilon_{ij} = f_{ij} - f_i f_j$; trigenic as in Eq.~\ref{eq:tau}. This
@@ -111,7 +151,9 @@ exact test of the top predicted quartile against the false-discovery-rate call
 Every panel is produced by a committed script and written as a true-size SVG at one of the
 standard panel widths, then converted to PDF for this document. Panels come from
 \file{perspective_figure_panels.py}, \file{notable_interaction_selection.py} and
-\file{ffa_epistatic_path_panels.py}; the network overlay comes from
+\file{ffa_epistatic_path_panels.py}; the supplementary panels and the per-readout count
+table behind \suppnoteref{note:digenic} and \suppnoteref{note:species} come from
+\file{supplementary_figure_panels.py}; the network overlay comes from
 \file{ffa_network_overlay_panel.py}, and \file{ffa_network_overlay_drawio.py} writes the
 same layout as native draw.io shapes, which is the source Fig.~\ref{fig:network} is exported
 from; the growth-model figure comes from

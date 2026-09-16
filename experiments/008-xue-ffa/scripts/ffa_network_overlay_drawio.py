@@ -27,11 +27,14 @@
 # the node shapes, added after the edges, cover the ends. Moving a factor box in draw.io
 # therefore does NOT move its edges; regenerate instead.
 #
-# THREE RINGS, ONE ORIENTATION. The labeled ring in the middle carries both signs; above
-# and below it the same ten factors are drawn again at the same angles with one sign each
-# and no labels, so the shape a sign makes can be read on its own. An earlier review view
-# drew each triple as a translucent filled triangle instead; 75 overlapping negatives came
-# out as one lens-shaped blob with no structure in it, and it was dropped.
+# THREE RINGS, ONE ORIENTATION. The labeled ring in the middle carries both signs as
+# pairwise edges, because the width encoding and the two-sign offset are properties of a
+# pair. Above and below it the same ten factors are drawn again at the same angles with no
+# labels, one sign each, and there the unit is the TRIPLE: one translucent triangle per
+# interaction, same opacity in both rings, so the ink is on one scale. Filled triangles
+# were tried once on the large labeled circle and failed there, because 75 of them over a
+# 23 mm radius fill it edge to edge; on an 8 mm ring beside its opposite sign the contrast
+# between the two is the point.
 #
 # A hidden layer named "print box" carries the 179.4 x 170 mm frame. Toggle it on in
 # draw.io to see the cap while arranging; hidden layers are not exported.
@@ -152,6 +155,29 @@ def line_style(color, width_pt, dashed=False, arrow=False):
     return s
 
 
+def polygon_cell(points_mm, color):
+    """(style, x, y, w, h) for a translucent triangle through `points_mm`.
+
+    draw.io's polygon shape takes its vertices as polyCoords, fractions of the cell's own
+    bounding box, so the box is computed here and each vertex normalized into it. The
+    coordinates MUST be formatted explicitly: a numpy float rendered through an f-string of
+    a Python list serializes as "np.float64(0.5)", which draw.io cannot parse and silently
+    drops, leaving a figure with no triangles and no error anywhere.
+    """
+    xs = [ux(x) for x, _ in points_mm]
+    ys = [uy(y) for _, y in points_mm]
+    x0, y0 = min(xs), min(ys)
+    w, h = max(xs) - x0, max(ys) - y0
+    coords = ",".join(f"[{(x - x0) / w:.4f},{(y - y0) / h:.4f}]" for x, y in zip(xs, ys))
+    # The shape name is mxgraph.basic.polygon. A bare "shape=polygon" is not a shape
+    # draw.io knows, and it falls back to the cell's bounding rectangle, so the ring comes
+    # out as a stack of squares with no error anywhere.
+    style = (f"shape=mxgraph.basic.polygon;polyCoords=[{coords}];html=1;fillColor={color};"
+             f"fillOpacity={panel.RING_TRI_ALPHA * 100:.0f};strokeColor={color};"
+             f"strokeOpacity=35;strokeWidth={panel.RING_TRI_EDGE_PT * PT:.2f};")
+    return style, x0, y0, w, h
+
+
 def build(model, readout, graph, letter, out_path):
     L = panel.layout(model, readout, graph)
     pos, G = L["pos"], L["G"]
@@ -185,20 +211,24 @@ def build(model, readout, graph, letter, out_path):
                  line_style(C_POS if sign > 0 else C_NEG, width(k)),
                  points=[(ux(xa), uy(ya)), (ux(xb), uy(yb))])
 
-    # the two sign-split rings, above and below the labeled one
-    for sign, mult, color in ((+1, L["pos_mult"], C_POS), (-1, L["neg_mult"], C_NEG)):
+    # the two sign-split rings, above and below the labeled one: one translucent triangle
+    # per interaction, and an arrow beside the ring giving its sign
+    for sign, color in ((+1, C_POS), (-1, C_NEG)):
         tag = "ringpos" if sign > 0 else "ringneg"
         rpos = L["ring_pos"][sign]
-        for i, ((a, b), k) in enumerate(sorted(mult.items())):
-            doc.edge(f"{tag}e{i}", line_style(color, panel.ring_edge_width_pt(k)),
-                     points=[(ux(rpos[a][0]), uy(rpos[a][1])),
-                             (ux(rpos[b][0]), uy(rpos[b][1]))])
+        for i, tri in enumerate(panel.ring_triangles(L["triples"], rpos, sign)):
+            doc.vertex(f"{tag}t{i}", "", *polygon_cell(tri, color))
         dia = 2 * panel.RING_NODE_R * U
         for tf in panel.TF_GENES:
             x, y = rpos[tf]
             doc.vertex(f"{tag}n-{tf}", "",
                        node_style("purple", "ellipse;", "strokeWidth=0.42;"),
                        ux(x) - dia / 2, uy(y) - dia / 2, dia, dia)
+        y_c = panel.Y_RING_POS if sign > 0 else panel.Y_RING_NEG
+        half = panel.RING_ARROW_HALF
+        doc.edge(f"{tag}arrow", line_style(color, 0.9, arrow=True),
+                 points=[(ux(panel.X_RING_ARROW), uy(y_c - sign * half)),
+                         (ux(panel.X_RING_ARROW), uy(y_c + sign * half))])
 
     # --- nodes
     side = panel.RXN_SIDE * U
@@ -256,8 +286,8 @@ def build(model, readout, graph, letter, out_path):
         doc.vertex(f"header{k}", text, text_style("center"),
                    ux(x) - 20 * U, uy(panel.Y_HEADER) - 7, 40 * U, 14)
 
-    # --- legend: framed, bottom-left, 1 mm up from the canvas edge, which is what leaves
-    # the lower sign-split ring clear.
+    # --- legend: framed, bottom-left, its lower edge level with the lowest pathway gene
+    # box and the lowest measured species, which is what the three rings were raised for.
     kmax = max(list(L["neg_mult"].values()) + list(L["pos_mult"].values()))
     rows = [
         (C_NEG, width(1), False, False,
@@ -272,7 +302,7 @@ def build(model, readout, graph, letter, out_path):
         (C_PATH, 0.5, False, False, "catalyzes, consumes or produces"),
     ]
     row_h = 3.2 * U
-    lx, ly = ux(2.0), uy(1.0 + 3.2 * len(rows) + 2.0)
+    lx, ly = ux(2.0), uy(panel.Y_LEGEND_BOT + 3.2 * len(rows) + 2.0)
     lw = 62 * U
     lh = row_h * len(rows) + 2 * U
     doc.vertex("legend-frame", "", "rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;"

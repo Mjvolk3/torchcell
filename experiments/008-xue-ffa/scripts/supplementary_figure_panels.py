@@ -448,9 +448,9 @@ def emit(name, width_key, height_mm, draw):
 def main():
     os.makedirs(IMAGES_DIR, exist_ok=True)
     emit("digenic_volcano", "third", 62.0, panel_digenic_volcano)
-    emit("digenic_matrix", "half", 72.0, panel_digenic_matrix)
+    emit("digenic_matrix", "third", 62.0, panel_digenic_matrix)
     emit("digenic_contribution", "third", 62.0, panel_digenic_contribution)
-    emit("species_counts", "half_plus", 62.0, panel_species_counts)
+    emit("species_counts", "third", 62.0, panel_species_counts)
     emit("species_agreement", "third", 62.0, panel_species_agreement)
     emit("species_medians", "third", 62.0, panel_species_medians)
     # The per-readout table the Supplementary Notes quote, so no count in the text is

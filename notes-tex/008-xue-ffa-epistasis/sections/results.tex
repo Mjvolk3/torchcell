@@ -70,8 +70,15 @@ and none of the 73 is positive.}
 
 We scored each combination against a multiplicative null, in which the expected phenotype of
 a combination is the product of its parts' phenotypes. For a double deletion the digenic
-score is $\varepsilon_{ij} = f_{ij} - f_i f_j$. For a triple, the trigenic score removes the
-digenic contributions before asking what remains:
+score is the deviation from the product of the two singles,
+%
+\begin{equation}
+\varepsilon_{ij} = f_{ij} - f_i f_j ,
+\label{eq:eps}
+\end{equation}
+%
+and for a triple the trigenic score removes the digenic contributions before asking what
+remains:
 %
 \begin{equation}
 \tau_{ijk} = f_{ijk} - f_{ij} f_k - f_{ik} f_j - f_{jk} f_i + 2 f_i f_j f_k .
@@ -80,7 +87,7 @@ digenic contributions before asking what remains:
 %
 This is the trigenic score of the yeast genetic interaction
 maps~\citep{kuzminSystematicAnalysisComplex2018,baryshnikovaQuantitativeAnalysisFitness2010},
-applied to titer in place of fitness. Substituting the digenic scores into
+applied to titer in place of fitness. Substituting Eq.~\ref{eq:eps} into
 Eq.~\ref{eq:tau} rewrites it as a residual against the pairs,
 %
 \begin{equation}

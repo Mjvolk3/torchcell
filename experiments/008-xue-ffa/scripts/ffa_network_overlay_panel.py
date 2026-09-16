@@ -24,7 +24,8 @@
 #     of the 45 pairs are involved in a significant three-way interaction and how often.
 #     Positive is drawn over negative. The old render restricted to triples connected in
 #     the genetic interaction graph, a leftover of the enrichment sweep; the default here is
-#     every significant triple, and --graph restores the restriction.
+#     every significant triple, and --graph restores the restriction. The two unlabeled
+#     rings above and below draw the same interactions one sign at a time, as triangles.
 #   - Regulatory links from a deleted factor to a pathway gene, from the SGD regulatory
 #     graph or TFLink, as dotted arrows.
 #   - The 13 core pathway genes, their 64 reactions, and the metabolites those reactions
@@ -39,7 +40,7 @@
 # STYLE. torchcell palette, Arial 6 pt, true-size SVG at PANEL_WIDTHS_MM["full"]. Node
 # fills are the pale draw.io companions with a black outline (lilac = deleted factor,
 # wheat = pathway gene, sand = reaction, gray = intermediate, steel = measured species);
-# the saturated line colors are reserved for the data, amber = positive and brick =
+# the saturated line colors are reserved for the data, blue = positive and brick =
 # negative, matching every other panel in the document. A network has no axes to box, so
 # this panel deviates from the boxed-axes rule.
 
@@ -57,7 +58,8 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.lines import Line2D
-from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle
+from matplotlib.patches import (Circle, FancyArrowPatch, FancyBboxPatch, Polygon,
+                                Rectangle)
 from statsmodels.stats.multitest import multipletests
 
 from torchcell.graph.graph import SCerevisiaeGraph
@@ -128,7 +130,7 @@ Y_TOP = 105.0  # top of the node columns
 Y_BOT = 8.0  # bottom of the node columns
 Y_HEADER = 112.0
 X_TF = 31.0  # center of the factor circle
-Y_TF = 62.0
+Y_TF = 66.0
 R_TF = 16.5
 X_GENE = 86.0
 X_RXN = 111.0
@@ -144,10 +146,23 @@ TF_BOX = (8.0, 3.2)
 # also gets its own ring, drawn at the SAME node angles and with no labels, so the two
 # shapes are comparable at a glance: positive above the labeled ring, negative below.
 # The labeled ring shrank from R 23 to 16.5 to make room, and its boxes with it.
+#
+# The rings draw TRIPLES, not pairs: one translucent triangle per significant interaction,
+# at the same opacity in both rings, so the ink is proportional to how many interactions
+# land there and the two signs are read on one scale. The labeled ring keeps the pairwise
+# edge form, because a pair's edge is what the width encoding and the offset are for.
 R_RING = 8.0
 RING_NODE_R = 0.75
-Y_RING_POS = 96.0
-Y_RING_NEG = 30.5
+RING_TRI_ALPHA = 0.10
+RING_TRI_EDGE_PT = 0.12
+Y_RING_POS = 97.0
+Y_RING_NEG = 35.0
+# The sign arrow beside each ring, on the empty left margin at the ring's own height.
+X_RING_ARROW = 19.0
+RING_ARROW_HALF = 4.0
+# Bottom of the legend frame, level with the lowest pathway gene box rather than with the
+# canvas edge, which is what "flush with the bottom row" means here.
+Y_LEGEND_BOT = 6.3
 GENE_BOX = (9.5, 3.4)
 RXN_SIDE = 1.1
 INT_R = 0.6
@@ -271,6 +286,17 @@ def ring_positions(center_y, radius):
             for i, tf in enumerate(sorted(TF_GENES))
         )
     }
+
+
+def ring_triangles(triples, ring_pos, sign):
+    """The three ring positions of every significant triple carrying `sign`.
+
+    One triangle per interaction, which is the unit the analysis tests. Drawn at low
+    opacity so overlap accumulates: where many interactions share a corner of the ring the
+    ink builds up, and where a factor takes part in none the ring stays clear.
+    """
+    return [[ring_pos[g] for g in genes]
+            for genes, s in sorted(triples) if s == sign]
 
 
 def interaction_segments(pos, neg_mult, pos_mult):
@@ -434,15 +460,23 @@ def draw(model, readout, graph, out_stem):
         ax.plot([x0, x1], [y0, y1], color=C_POS if sign > 0 else C_NEG,
                 linewidth=width(k), solid_capstyle="round", zorder=4 if sign > 0 else 3)
 
-    # the two sign-split rings: one sign each, same angles, no labels
-    for sign, mult, color in ((+1, pos_mult, C_POS), (-1, neg_mult, C_NEG)):
+    # the two sign-split rings: one sign each, same angles, no labels, one translucent
+    # triangle per interaction, with an arrow beside each ring giving its sign
+    for sign, color in ((+1, C_POS), (-1, C_NEG)):
         rpos = L["ring_pos"][sign]
-        for (a, b), k in sorted(mult.items()):
-            ax.plot([rpos[a][0], rpos[b][0]], [rpos[a][1], rpos[b][1]], color=color,
-                    linewidth=ring_edge_width_pt(k), solid_capstyle="round", zorder=3)
+        for tri in ring_triangles(L["triples"], rpos, sign):
+            ax.add_patch(Polygon(tri, closed=True, facecolor=color,
+                                 alpha=RING_TRI_ALPHA, edgecolor=color,
+                                 linewidth=RING_TRI_EDGE_PT, zorder=3))
         for tf in TF_GENES:
             ax.add_patch(Circle(rpos[tf], RING_NODE_R, facecolor=FILL_TF,
                                 edgecolor="black", linewidth=0.3, zorder=5))
+        y_c = Y_RING_POS if sign > 0 else Y_RING_NEG
+        ax.add_patch(FancyArrowPatch(
+            (X_RING_ARROW, y_c - sign * RING_ARROW_HALF),
+            (X_RING_ARROW, y_c + sign * RING_ARROW_HALF),
+            arrowstyle="-|>", mutation_scale=5, color=color, linewidth=0.9,
+            shrinkA=0, shrinkB=0, zorder=5))
 
     # nodes
     for r in rxns:
@@ -504,8 +538,9 @@ def draw(model, readout, graph, out_stem):
         Line2D([], [], color=C_PATHWAY_EDGE, linewidth=0.5,
                label="catalyzes, consumes or produces"),
     ]
-    # Bottom-left, 1 mm up from the canvas edge so it clears the lower sign-split ring.
-    ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(2.0 / W_MM, 1.0 / H_MM),
+    # Bottom-left, its lower edge level with the lowest pathway gene box.
+    ax.legend(handles=handles, loc="lower left",
+              bbox_to_anchor=(2.0 / W_MM, Y_LEGEND_BOT / H_MM),
               fontsize=5, handlelength=2.2, borderpad=0.5, labelspacing=0.35)
 
     os.makedirs(IMAGES_DIR, exist_ok=True)

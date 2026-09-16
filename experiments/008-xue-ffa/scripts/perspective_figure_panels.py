@@ -111,7 +111,10 @@ C_NEG = PLOT_PALETTE[1]
 C_THIRD = PLOT_PALETTE[2]
 C_DIGENIC = PLOT_PALETTE[2]
 C_TRIGENIC = PLOT_PALETTE[0]
-C_BEST = PLOT_PALETTE[2]
+# The best-combination line shares an axes with brick bars and nothing else, so it takes
+# the other member of the two-series palette prefix, amber. Lilac was tried here and reads
+# as a third category rather than as the second series of a two-series panel.
+C_BEST = PLOT_PALETTE[0]
 C_GRAY = PLOT_PALETTE[5]
 
 # Reserved band above the tallest bar, so a value label never lands on the title and an
@@ -537,7 +540,9 @@ def panel_greedy_walk(ax):
     # Above the marker, not beside it: beside, the text ran into the X it names.
     ax.annotate("stops here", (xs[-1], ys[-1]), fontsize=5, va="bottom", ha="center",
                 xytext=(0, 5), textcoords="offset points")
-    ax.scatter([3], [best_f], s=20, marker="*", color=C_POS, edgecolor="black",
+    # The star is the destination the panel is about, so it is drawn larger than the X that
+    # marks where the campaign stops; at equal area the X dominated it.
+    ax.scatter([3], [best_f], s=52, marker="*", color=C_POS, edgecolor="black",
                linewidth=0.3, zorder=5, label="best strain in the design")
 
     ax.axhline(1.0, color="black", linewidth=0.5, linestyle="--", zorder=1)

@@ -81,6 +81,7 @@ from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     apply_paper_style,
+    display_label,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -318,8 +319,11 @@ def figure(rows: list[LadderRow], fba_rows: list[LadderRow]) -> str:
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(95)))
     x = np.arange(len(encodings))
     width = 0.19
+    # Orange, red, purple, BLUE: the palette's fourth primary is yellow, which reads as
+    # a lighter orange next to the first, so the fourth model takes the first secondary.
+    model_colors = [PLOT_PALETTE[0], PLOT_PALETTE[1], PLOT_PALETTE[2], PLOT_PALETTE[4]]
     for i, model in enumerate(MODELS):
-        color = PLOT_PALETTE[i]
+        color = model_colors[i]
         for with_fba, filled in ((False, True), (True, False)):
             ys = []
             for enc in encodings:
@@ -349,7 +353,7 @@ def figure(rows: list[LadderRow], fba_rows: list[LadderRow]) -> str:
     ax.axhline(fba_best, color=PLOT_PALETTE[5], lw=0.6, ls="--", zorder=1)
     ax.axhline(0.5, color="black", lw=0.4, zorder=1)
     ax.set_xticks(x)
-    ax.set_xticklabels(encodings, rotation=90, ha="center")
+    ax.set_xticklabels([display_label(e) for e in encodings], rotation=90, ha="center")
     ax.set_ylabel("held-out AUROC (195 genes)")
     ax.set_ylim(0.3, 0.9)
     ax.yaxis.set_major_locator(MultipleLocator(0.2))

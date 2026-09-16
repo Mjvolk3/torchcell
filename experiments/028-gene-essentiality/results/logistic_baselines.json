@@ -2969,6 +2969,6 @@
       "n_test": 195
     }
   ],
-  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/classical_ladder_2026-09-16-17-56-09.svg",
+  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/classical_ladder_2026-09-16-18-15-47.svg",
   "note": "Hyperparameters chosen by five-fold stratified cross-validation inside the split's train genes; validation and the 195 held-out genes are scored once, on genes no fit touched. A single deletion is one gene, so the sum and mean aggregations of the fitness study coincide. random_6607 and random_8192 are Gaussian vectors at seed 0; the registry's random_* are torch.rand."
 }

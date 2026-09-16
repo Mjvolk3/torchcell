@@ -143,6 +143,15 @@ ROUND_CAPTIONS = {
         "that readout on the five cross-validation folds whose logits are averaged on the "
         "held-out genes.",
     ),
+    "w17": (
+        "Round 6, one medium, the layer on top of the solve, and two other embeddings",
+        "The round-3 pooled cell and the round-5 FBA-readout cell, then: the FBA affine on "
+        "the YPD ratio alone; the forced and the gated growth column of the flux layer "
+        "with the FBA affine beside them (constraint scale 0); and the pooled backbone "
+        "opened on codon frequency, and on the species-LM composite (5' and 3' species LM, "
+        "ProtT5, CaLM), with and without the FBA affine. Batch 32, class weight, 200 "
+        "epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

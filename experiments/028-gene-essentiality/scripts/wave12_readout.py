@@ -124,6 +124,27 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ["w14_b32posw200_h12l1p1_e200_s*.json", "w16_*_e200_s*.json"],
         ["b32posw200", "fba", "fbacv0", "fbacv1", "fbacv2", "fbacv3", "fbacv4"],
     ),
+    # Wave 17 (round 6, packs): one medium against four, the flux layer on top of the
+    # solve (forced and gated growth column plus the FBA affine), and two other node
+    # embeddings under the backbone (codon frequency; the species-LM composite), all on
+    # the round-3 levers and paired against the round-3 and round-5 pooled cells.
+    "w17": (
+        [
+            "w14_b32posw200_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w17_*_e200_s*.json",
+        ],
+        [
+            "b32posw200",
+            "fba",
+            "fbaypd",
+            "biofba",
+            "gatefba",
+            "codonfba",
+            "compfba",
+            "comp",
+        ],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -166,6 +187,12 @@ ARM_LABELS = {
     "fbacv2": "context head + FBA ratios, fold 2",
     "fbacv3": "context head + FBA ratios, fold 3",
     "fbacv4": "context head + FBA ratios, fold 4",
+    "fbaypd": "context head + FBA ratio, YPD only",
+    "biofba": "growth column + FBA ratios, no context head",
+    "gatefba": "gated growth column + FBA ratios",
+    "codonfba": "codon-frequency backbone + FBA ratios",
+    "compfba": "species-LM composite backbone + FBA ratios",
+    "comp": "species-LM composite backbone",
 }
 
 
@@ -407,7 +434,14 @@ def figure(
 ) -> str:
     style()
     arms = [s.arm for s in summaries]
-    color = {arm: PLOT_PALETTE[i % len(PLOT_PALETTE)] for i, arm in enumerate(arms)}
+    # Six hues per tier (orange, red, purple, blue, gray, yellow), and a second tier of
+    # arms takes the same six hues DASHED with hollow markers: the palette's darker tiers
+    # of the same hues (brown beside orange, maroon beside red) were not tellable apart
+    # in a ten-arm round. Yellow is last so a round of five arms never reaches it.
+    hues = [PLOT_PALETTE[i] for i in (0, 1, 2, 4, 5, 3)]
+    color = {arm: hues[i % len(hues)] for i, arm in enumerate(arms)}
+    tier = {arm: i // len(hues) for i, arm in enumerate(arms)}
+    dash = {arm: "-" if tier[arm] == 0 else "--" for arm in arms}
     width_in = mm_to_in(PANEL_WIDTHS_MM["full"])
     fig, axes = plt.subplots(2, 2, figsize=(width_in, mm_to_in(120)))
     (ax_a, ax_b), (ax_c, ax_d) = axes
@@ -425,6 +459,7 @@ def figure(
                 np.arange(n),
                 np.mean([c[:n] for c in curves], axis=0),
                 color=color[arm],
+                linestyle=dash[arm],
                 label=ARM_LABELS.get(arm, arm),
             )
     ax_a.set_xlabel("epoch")
@@ -463,13 +498,13 @@ def figure(
         ax_b.scatter(
             [r.n_val for r in cells],
             [r.median_abs_step for r in cells],
-            color=color[s.arm],
+            facecolors=color[s.arm] if tier[s.arm] == 0 else "white",
+            edgecolors=color[s.arm] if tier[s.arm] else "black",
             s=8,
-            edgecolors="black",
-            linewidths=0.3,
+            linewidths=0.5,
         )
     ax_b.set_xlabel("labeled validation genes")
-    ax_b.set_ylabel("median |step| of validation AUROC")
+    ax_b.set_ylabel("median |step|, validation AUROC")
     n_vals = [r.n_val for r in rows]
     # A log axis only when the round spans validation sizes (75 against 1,093 in round 1);
     # a round on one split file gets a linear axis with the one or two sizes it has.
@@ -486,10 +521,10 @@ def figure(
         ax_c.scatter(
             [x] * len(cells),
             [r.test_auroc_pinned for r in cells],
-            color=color[s.arm],
+            facecolors=color[s.arm] if tier[s.arm] == 0 else "white",
+            edgecolors=color[s.arm] if tier[s.arm] else "black",
             s=10,
-            edgecolors="black",
-            linewidths=0.3,
+            linewidths=0.5,
             zorder=3,
         )
         if (
@@ -567,7 +602,7 @@ def figure(
                 linewidth=0.7,
             )
     ax_d.set_xlabel("epoch")
-    ax_d.set_ylabel("gradient norm per module (seed mean)")
+    ax_d.set_ylabel("gradient norm, seed mean")
     ax_d.set_yscale("log")
     from matplotlib.lines import Line2D
 
@@ -584,8 +619,8 @@ def figure(
         for side in ("top", "right", "bottom", "left"):
             ax.spines[side].set_visible(True)
         ax.text(
-            -0.14,
-            1.08,
+            -0.17,
+            1.10,
             letter,
             transform=ax.transAxes,
             fontsize=8,

@@ -1,0 +1,42 @@
+%% notes-tex/publishing-system/sections/5-bibliography.tex
+
+\section{Bibliographies\secstatus{todo}}
+\label{sec:bib}
+
+\notesec{Two tiers}
+The manuscript's \texttt{references.bib} comes from the group's \texttt{paper}
+collection and nowhere else. That is the publication guarantee: every work the
+paper cites lives in a library the whole group holds, so citations stay
+recoverable after publication. A typeset note's \texttt{references.bib} is the
+union of the group and personal collections of the same name as the document,
+because technical notes cite more widely than the paper and much of that reading
+lands in the personal library first; on a clean overlap the group entry wins.
+
+\notesec{Two routes to the same file}
+\texttt{make bib} exports through Better BibTeX on a machine with Zotero desktop
+running, and \texttt{make bibcheck} reports the two collision cases first: one
+citekey naming two different works, which is fatal because some citation would
+point at the wrong paper, and one work under two citekeys, which only splits a
+reference in the PDF. \texttt{make bib-pull} is the headless route: a nightly job
+on the mirror host exports every declared bibliography over the Zotero Web API into
+the mirror, pins each file's sha256 in a manifest, and tc-lit serves them. The pull
+verifies the bytes against both the manifest and the response header and leaves
+the target untouched on a mismatch. The two routes agree on citekeys and format
+fields differently, so a switch between them shows as a diff.
+
+\notesec{The gate on citations}
+\texttt{make check} fails on any \texttt{\textbackslash cite} key that
+\texttt{references.bib} does not contain. That is the mechanical form of the rule
+that a paper is added to the library before it is cited, and it is the check that
+would have caught a citation to a work nobody held.
+
+\notesec{Who may write to the library}
+Almost nobody, and no agent. The library is curated by hand. The one sanctioned
+write is \texttt{zotero\_publish.py} uploading a document's own built PDF into that
+document's output collection. Papers that are retrieved go to the mirror through
+the literature subsystem, which reads Zotero and never writes to it. Adding a
+reference is a curation decision that needs an explicit instruction each time;
+noticing that one is missing is not that instruction. The reason is the loop
+above: \texttt{make bib} regenerates the file from the library and \texttt{make
+check} fails on any key the export no longer has, so both an unrequested addition
+and its later cleanup change what a document is permitted to cite.

@@ -1,0 +1,76 @@
+%% notes-tex/publishing-system/sections/2-manuscript.tex
+
+\section{The manuscript build\secstatus{todo}}
+\label{sec:manuscript}
+
+%% SOURCE: notes/publishing-system.mermaid.paper-build.md, rendered by
+%% notes/assets/publish/scripts/mermaid_pdf.sh and scaled to the text block by
+%% `make diagrams`; the targets and outputs are those of paper/nature-biotech/Makefile.
+\tcfig{figures/paper-build.pdf}{What \texttt{make} builds for the manuscript.
+Yellow boxes are source files, whether edited by hand or written by a script;
+orange boxes are make targets; purple boxes are built PDFs; blue boxes are outside
+the repository; red boxes are publish steps. One shared body reaches three views
+through three wrappers, and only the drafting view goes to Zotero.}{fig:paper}
+
+\notesec{One body, three views}
+\texttt{content.tex} holds the manuscript. \texttt{submission.tex},
+\texttt{editing.tex} and \texttt{twocolumn.tex} each include it and differ only in
+class options and in what the editing-only macros expand to: \texttt{\textbackslash
+secstatus} draws a chip in the editing view and nothing in the other two, and the
+word-budget tags are counted only there. So \texttt{make paper} produces three PDFs
+from one set of edits, and \texttt{make editing} alone is the fast loop while
+writing.
+
+%% SOURCE: hand-authored from paper/nature-biotech/Makefile.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Manuscript targets. Every view depends on \texttt{checkfigs}, so a figure
+out of spec stops all three builds before Tectonic runs.}
+\label{tab:papertargets}
+\begin{tabular}{lp{0.62\textwidth}}
+\toprule
+Target & Produces \\
+\midrule
+\texttt{make paper} & \texttt{submission.pdf}, \texttt{editing.pdf}, \texttt{twocolumn.pdf}, then the word-count report \\
+\texttt{make submission}, \texttt{editing}, \texttt{twocolumn} & one view \\
+\texttt{make figproto} & \texttt{figure-proto.pdf}, the true-scale figure-sizing canvas \\
+\texttt{make figlimits} & \texttt{figure-limits.pdf}, the Nature print-box card for collaborators \\
+\texttt{make all} & paper, figproto and figlimits \\
+\texttt{make figures} & re-exports every referenced figure whose draw.io source is newer than its PDF \\
+\texttt{make fig} & re-exports every referenced figure regardless of timestamps \\
+\texttt{make checkfigs} & the size and scale gate on \texttt{figures/*.pdf}, exit non-zero on a violation \\
+\texttt{make wordcount} & \texttt{wordcount.tex}, the per-section counts against the budgets \\
+\texttt{make bib-pull} & \texttt{references.bib} from the served \texttt{paper} bibliography \\
+\texttt{make publish} & \texttt{editing.pdf} into Zotero; \texttt{publish-dry}, \texttt{publish-list}, \texttt{publish-submission} \\
+\texttt{make flat} & \texttt{submission-flat.tex}, one file for the journal's upload \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\notesec{Figures}
+Every manuscript figure is composed in draw.io at Nature print size and kept as an
+editable SVG under \texttt{notes/assets/drawio/NAME.drawio.svg}. \texttt{make
+figures} exports it headless to \texttt{figures/{}NAME.pdf}, the same basename, so
+source and export are matched by name and nothing has to be listed. The set of
+figures to export is discovered from the \texttt{.tex}: any \texttt{figures/{}NAME.pdf}
+the body references that has a draw.io source on disk. A figure whose MathJax
+label rendered wider than its cell gets a crop-to-ink pass so the page lands at its
+true ink box without scaling the fonts. \texttt{check-figures.sh} then measures
+every PDF against the 180 by 240 mm print box and refuses any figure placed with a
+scaling macro; because every view depends on it, an out-of-spec figure cannot reach
+a PDF.
+
+\notesec{Word budgets}
+\texttt{wordcount.py} strips figure and table environments and the budget tags,
+counts the rest with \texttt{texcount}, and writes \texttt{wordcount.tex}, which the
+editing view embeds on its last page. \texttt{editing.pdf} depends on that file, so
+the embedded counts always match the compiled draft.
+
+\notesec{Two copies}
+The repository directory is the workshop: private, full, with the drafting
+scaffolding. \texttt{sync-overleaf.sh} copies a curated list of files into the
+Overleaf-backed clone that collaborators see, with \texttt{submission.tex}
+published as \texttt{main.tex}. It pulls first, so collaborators' additions
+survive, and it propagates the workshop's own deletions through a manifest without
+touching files it did not publish.

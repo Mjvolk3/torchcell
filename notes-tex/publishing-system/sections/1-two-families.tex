@@ -1,0 +1,68 @@
+%% notes-tex/publishing-system/sections/1-two-families.tex
+
+\section{Two document families, one machinery\secstatus{todo}}
+\label{sec:families}
+
+The \term{manuscript} is the Nature Biotechnology paper in
+\texttt{paper/nature-biotech/}. It uses the Springer Nature \texttt{sn-jnl} class
+with the Nature Portfolio style, keeps its body in one file that three thin
+wrappers include, and is the only document whose bibliography must come from the
+group library alone. A \term{typeset note} is any document under
+\texttt{notes-tex/<slug>/}: a design memo, a method review, an analysis report such
+as the additive-baselines documents. It uses the \texttt{article} class with the
+shared \texttt{tcdoc.sty}, which reproduces the manuscript's drafting look, status
+chips and figure macros on top of a plain class that tolerates numbered sections
+and a contents page.
+
+\notesec{What they share}
+Both are compiled by Tectonic, a single binary with no TeX Live install, which
+fetches packages deterministically. Both export \texttt{SOURCE\_DATE\_EPOCH} as the
+newest modification time among the build inputs, so hyperref writes no wall-clock
+creation date and two builds of identical sources are byte-identical; that is what
+lets a review copy be versioned by content hash. Both take a committed
+\texttt{references.bib} that \texttt{make bib-pull} fetches from the served
+bibliography store, verified against a manifest. Both publish through
+\file{notes-tex/common/zotero_publish.py}, which derives the Zotero collection from
+the directory path. And both obey the same rule about content: no figure, table or
+number is authored inside a document; each is produced by a committed script under
+\texttt{experiments/<id>/} and only converted, placed or checked by \texttt{make}.
+
+\notesec{What differs}
+
+%% SOURCE: hand-authored from paper/nature-biotech/Makefile and
+%% notes-tex/common/Makefile.common at the commit this document was built from.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The two families side by side.}
+\label{tab:families}
+\begin{tabular}{lp{0.36\textwidth}p{0.36\textwidth}}
+\toprule
+ & Manuscript & Typeset note \\
+\midrule
+Directory & \texttt{paper/nature-biotech/} & \texttt{notes-tex/<slug>/} \\
+Makefile & its own, 250 lines & four lines, includes \texttt{common/Makefile.common} \\
+Class & \texttt{sn-jnl}, Nature Portfolio style & \texttt{article} with \texttt{tcdoc.sty} \\
+Body & \texttt{content.tex}, included by three wrappers & \texttt{<slug>.tex} root, \texttt{sections/*.tex} \\
+Default build & \texttt{make paper}, three PDFs & \texttt{make}, one PDF named for the directory \\
+Figure sources & draw.io, exported headless & script-written SVG panels, converted; or draw.io \\
+Figure gate & hard: any view refuses to build while a figure is out of spec & \texttt{make check}, after the build \\
+Bibliography & group \texttt{paper} collection only & union of group and personal collections of the same name \\
+Publish & \texttt{make publish}, \texttt{editing.pdf} & \texttt{zotero\_publish.py <slug>}, the default PDF \\
+Collaborators & \texttt{sync-overleaf.sh} to the shared Overleaf clone & the Zotero review copy \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\notesec{Vocabulary}
+A \term{view} is one PDF rendering of the manuscript's shared body. The
+\term{gate} is a check that reads a build's log and sources and exits non-zero on
+a violation; the manuscript's runs before Tectonic and blocks the build, the note's
+runs after it and blocks nothing but the landing. A \term{status chip} is the
+colored mark after a heading, \texttt{todo}, \texttt{tent} or \texttt{final}, that
+appears in the contents so the contents page is the status board. A
+\term{provenance flag} is the visible marker \texttt{\textbackslash external} or
+\texttt{\textbackslash secondhand} on a fact not backed by the library mirror; it
+prints in every view. The \term{mirror} is the on-disk copy of the group's papers
+under \texttt{\$DATA\_ROOT/torchcell-library/}, and \term{tc-lit} is the read-only
+service that streams it and the bibliographies to any machine with a key.

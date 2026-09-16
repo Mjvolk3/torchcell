@@ -1,0 +1,47 @@
+%% notes-tex/publishing-system/sections/4-provenance.tex
+
+\section{Where figures, tables and numbers come from\secstatus{todo}}
+\label{sec:provenance}
+
+The rule is that any artifact used in a document, a figure, a table, a derived
+number, is produced by a committed script in the experiment folder where the data
+were generated, reading the real result files. A document never contains a
+hand-drawn plot or a retyped value. That is what makes ``where did this come from''
+answerable from the repository alone, and it is what \texttt{make} relies on:
+\texttt{make plots} converts what a script wrote, and nothing else.
+
+\notesec{Panels}
+A script under \texttt{experiments/<id>/scripts/} writes its panel to
+\texttt{\$ASSET\_IMAGES\_DIR/<slug>/NAME.svg} and \texttt{NAME.png} through
+\texttt{savefig\_true\_size\_svg}, at one of the standard Nature widths, Arial 6 pt,
+boxed axes, the ordered palette, panel letters at the outer top-left. The Dendron
+note paired with the script embeds the SVG. A document that reads panels from
+several experiments lists their slugs in \texttt{PLOT\_SLUGS}, and the first
+directory holding \texttt{NAME.svg} wins. The additive-baselines document reads
+from \texttt{025-solid-growth} and \texttt{010-kuzmin-tmi}.
+
+\notesec{Tables}
+The same script writes any table the document needs as a LaTeX fragment into the
+document's \texttt{tables/} directory, with a \texttt{\%\% SOURCE:} header naming
+itself, and the section \texttt{\textbackslash input}s it. Column widths for
+free-text columns are set in the generating script, since a fragment is never
+edited by hand.
+
+\notesec{Numbers in prose}
+A number quoted in the text traces to a result file the script wrote, usually a
+summary JSON beside the tables. The section that quotes it carries a
+\texttt{\%\% SOURCE:} comment naming the script and the file, invisible in the PDF
+and present for whoever edits the file. When a number is not backed by the mirror
+or by a repository result, it carries a visible flag: \texttt{\textbackslash
+external\{why\}} for a fact from outside the holdings, \texttt{\textbackslash
+secondhand\{source\}} for a value taken from a review's table rather than the
+primary paper. The flags render in every view.
+
+\notesec{Diagrams}
+A system diagram like the two in this document is not data, and the rule for it is
+the weaker one that applies to draw.io figures: the source is committed, the export
+is reproducible by a make target, and the caption's source comment names both.
+Mermaid sources live as Dendron notes and render through
+\file{notes/assets/publish/scripts/mermaid_pdf.sh}, which uses the global
+mermaid-cli so that KaTeX labels typeset; a multi-line label needs a triple
+backslash as its row separator, and plain text and math are not mixed on one line.

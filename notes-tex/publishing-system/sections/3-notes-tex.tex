@@ -1,0 +1,90 @@
+%% notes-tex/publishing-system/sections/3-notes-tex.tex
+
+\section{A typeset note\secstatus{todo}}
+\label{sec:notes}
+
+%% SOURCE: notes/publishing-system.mermaid.notes-tex-build.md, rendered by
+%% notes/assets/publish/scripts/mermaid_pdf.sh and scaled to the text block by
+%% `make diagrams`; the targets and outputs are those of notes-tex/common/Makefile.common.
+\tcfig{figures/notes-tex-build.pdf}{What \texttt{make} builds for a typeset note.
+Same colors as Figure~\ref{fig:paper}; gray is the gate, which builds nothing.
+Figures and tables enter from the experiment scripts on the left; the prose is
+the only thing edited in the document directory.}{fig:notes}
+
+\notesec{Layout of a document directory}
+\texttt{<slug>.tex} is the root and is named for the directory, so the
+\texttt{eqtl-data-model} directory builds \texttt{eqtl-data-model.pdf}; four
+documents named \texttt{main.pdf} would be four files a file-opener cannot tell
+apart. \texttt{sections/*.tex} hold the prose, one file per top-level section.
+\texttt{tables/*.tex} are written by scripts and never edited by hand.
+\texttt{figures/*.pdf} are converted from script-written SVG panels or exported
+from draw.io. \texttt{references.bib} is pulled, not written. The Makefile sets at
+most a collection key and the image directories to read, then includes the common
+file. \texttt{tcdoc.sty} is symlinked into the directory at build time, because
+Tectonic does not honor \texttt{TEXINPUTS}; the link is ignored by git and any
+build recreates it.
+
+%% SOURCE: hand-authored from notes-tex/common/Makefile.common and the
+%% 025-additive-baselines Makefile.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Targets every typeset note has, from the common Makefile, plus the two a
+document may add.}
+\label{tab:notetargets}
+\begin{tabular}{lp{0.66\textwidth}}
+\toprule
+Target & Produces \\
+\midrule
+\texttt{make} & \texttt{<slug>.pdf}, the draft view with status chips and source pointers \\
+\texttt{make clean-view} & \texttt{<slug>-clean.pdf}, chips and pointers hidden, provenance flags kept \\
+\texttt{make check} & nothing; the formatting, provenance, citation and style gate on the last build \\
+\texttt{make plots} & \texttt{figures/{}NAME.pdf} from each referenced \texttt{notes/assets/images/<slug>/NAME.svg} \\
+\texttt{make figures} & \texttt{figures/{}NAME.pdf} from each referenced draw.io source \\
+\texttt{make bib-pull} & \texttt{references.bib} for this document from the served store \\
+\texttt{make bib}, \texttt{bibcheck} & the same through Better BibTeX on a machine running Zotero; the collision report \\
+\texttt{make watch} & rebuild on save \\
+\midrule
+\texttt{make short} & \texttt{<slug>-short.pdf}, a second root over the same sections (025-additive-baselines) \\
+\texttt{make diagrams} & mermaid figures rendered and scaled to the text block (this document) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\notesec{The two views}
+The draft view carries the status chips in every heading, and so in the contents,
+which is the status board: \texttt{todo} may be edited freely, \texttt{tent} has
+been read by the author and is kept stable, \texttt{final} is ready. It also
+prints a gray source pointer under generated content. \texttt{make clean-view}
+rebuilds with the \texttt{clean} package option, which removes both, and keeps the
+provenance flags and their key, because an unverified number must not lose its
+flag when the document leaves the group.
+
+\notesec{Converting a panel}
+A plot script writes its panel as a true-size SVG whose width is in draw.io's unit
+of 100 per inch, a number no renderer interprets the same way twice: librsvg has
+read it as points in one version and as CSS pixels in another, so one 179 mm panel
+converted to a 249 mm PDF on one machine and a 186 mm PDF on another. \texttt{make
+plots} therefore measures rather than assumes: it converts a 100-unit probe square,
+reads the size that came out, and converts every panel at the zoom that maps the
+probe to 72 points. The result is the panel at its true millimeters, placed with
+\texttt{\textbackslash tcfig} at 1:1 so 6 pt type in the SVG is 6 pt on the page.
+
+\notesec{The gate}
+\texttt{make check} reads the last build's log and every \texttt{.tex} file and
+reports six things: any heading without a status chip; any referenced figure wider
+than the 182 mm text block; any \texttt{\textbackslash cite} key absent from
+\texttt{references.bib}; any file with a table but no \texttt{\%\% SOURCE:} line;
+British spelling and em-dashes in prose, with narration and self-reference as
+warnings; and overfull boxes above 5 pt from the log, which is how a table running
+off the page is caught without anyone reading page 8. Errors exit non-zero,
+warnings do not, since a \texttt{todo} section is allowed to be incomplete.
+Trailing restatement is not checked; an attempt ran at one true positive in ten and
+was removed.
+
+\notesec{A second build from the same sections}
+A document that needs a short version for sharing adds a second root that sets a
+switch, \texttt{\textbackslash longfalse}, and wraps the long-only material in
+\texttt{\textbackslash iflong \ldots \textbackslash fi}. Its Makefile adds
+\texttt{make short} and \texttt{make check-short}; nothing in the common file
+changes, and the short PDF publishes with \texttt{--pdf <slug>-short}.

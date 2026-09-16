@@ -1,0 +1,44 @@
+%% notes-tex/publishing-system/sections/7-recipes.tex
+
+\section{Recipes\secstatus{todo}}
+\label{sec:recipes}
+
+\notesec{Start a typeset note}
+Create \texttt{notes-tex/<slug>/} with \texttt{<slug>.tex}, \texttt{sections/},
+an empty \texttt{references.bib}, and a Makefile that sets \texttt{PYTHON}, any
+\texttt{ZOTERO\_COLLECTION}, and \texttt{PLOT\_SLUG} or \texttt{PLOT\_SLUGS} if the
+panels come from a directory not named for the document, then includes
+\texttt{../common/Makefile.common}. Give the root the three-line header every
+source file carries, pair it with a Dendron note of the same slug, and put
+\texttt{\textbackslash secstatus\{todo\}} inside every heading. \texttt{make}, then
+\texttt{make check}.
+
+\notesec{Add a panel}
+Write it from the experiment script with \texttt{savefig\_true\_size\_svg} into
+\texttt{\$ASSET\_IMAGES\_DIR/<slug>/}, reference \texttt{figures/{}NAME.pdf} in a
+section with a \texttt{\%\% SOURCE:} comment above it, place it with
+\texttt{\textbackslash tcfig}, and run \texttt{make plots} before \texttt{make}. A
+panel wider than the text block fails \texttt{make check}; redraw it at a standard
+width rather than scaling it.
+
+\notesec{Add a table}
+Have the script write \texttt{tables/NAME.tex} with a \texttt{\%\% SOURCE:} header,
+\texttt{\textbackslash input} it inside a \texttt{table} environment with a
+numbered caption above, and set free-text column widths in the script.
+
+\notesec{Cite}
+Add nothing to the library. If the work is already in a collection of the
+document's name, \texttt{make bib-pull} and \texttt{\textbackslash citep}. If it is
+not, name it by DOI in prose and record the missing reference; adding it is a
+separate decision for the author.
+
+\notesec{Publish and land}
+\texttt{make}, \texttt{make check}, read the rendered pages once, then
+\texttt{zotero\_publish.py <slug>}. Commit the sources with the built PDF and the
+converted figures, open the pull request, and enqueue the branch.
+
+\notesec{Build the manuscript}
+\texttt{make -C paper/nature-biotech paper}. If a figure changed, \texttt{make
+figures} first, or \texttt{make fig} to force every export; the size gate runs on
+every build regardless. \texttt{make publish} for the review copy;
+\texttt{sync-overleaf.sh} for collaborators.

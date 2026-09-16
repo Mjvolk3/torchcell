@@ -1,0 +1,63 @@
+%% notes-tex/publishing-system/publishing-system.tex
+%% [[publishing-system]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/publishing-system/publishing-system.tex
+%%
+%% How the manuscript and the typeset notes are built, checked and published: the
+%% two Makefiles, what each target produces, where figures, tables and
+%% bibliographies come from, and how a build reaches Zotero as a versioned review
+%% copy. The two figures are mermaid diagrams (make diagrams); the target tables are
+%% hand-authored from the Makefiles and say so.
+%%
+%% Build:  make            -> publishing-system.pdf
+%%         make diagrams   -> re-render the two mermaid figures
+%%         make check      -> the gate
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}The Build and Publishing System\\
+  {\large What \texttt{make} produces for the manuscript and for a typeset note,
+   where the inputs come from, and how a build becomes a review copy}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Two families of document are typeset from the repository, and both are built by
+\texttt{make}. The manuscript in \texttt{paper/nature-biotech/} has its own
+Makefile and produces three views of one shared body: the journal submission, a
+drafting view with status chips and word budgets, and a published-like double
+column. Every typeset note under \texttt{notes-tex/} has a four-line Makefile that
+includes one shared file, \texttt{notes-tex/common/Makefile.common}, and produces
+the note's PDF, a share view with the chips hidden, and a formatting, provenance
+and citation gate that builds nothing. Both families run the same engine, pin the
+same reproducibility variable so that identical sources give identical bytes, take
+their bibliographies from the same served store, and publish through the same
+script into a Zotero collection whose path is derived from the directory the files
+live in, with each build filed as a timestamped, content-hashed version. Neither
+Makefile ever produces a figure, a table or a number: those come from committed
+scripts in the experiment folders, and \texttt{make} only converts, assembles and
+checks.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-two-families}
+\input{sections/2-manuscript}
+\input{sections/3-notes-tex}
+\input{sections/4-provenance}
+\input{sections/5-bibliography}
+\input{sections/6-publishing}
+\input{sections/7-recipes}
+
+\end{document}

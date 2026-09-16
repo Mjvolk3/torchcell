@@ -33,17 +33,15 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  G["$$\text{Genotype (deleted gene)}$$"] --> B["$$\begin{gathered}\text{CGT pooled backbone}\\\ \text{context } h\end{gathered}$$"]
-  B --> E["$$\begin{gathered}E_g = \gamma_g\,E^0_g\,e^{\,r\tanh(w^\top h_g)}\\\ \gamma_g = 0 \text{ for the deleted gene}\end{gathered}$$"]
+  G["$$\begin{gathered}\text{Genotype}\\\ \text{(deleted gene)}\end{gathered}$$"] --> B["$$\begin{gathered}\text{CGT backbone}\\\ \text{context } h\end{gathered}$$"]
+  B --> E["$$\begin{gathered}E_g = \gamma_g E^0_g\\\ \times\, e^{r\tanh(w^\top h_g)}\\\ \gamma_g = 0 \text{ if deleted}\end{gathered}$$"]
   K["$$k_{cat}\ \text{table}$$"] --> CAP
-  E --> CAP["$$\mathrm{cap}_j = \sum_{u \in \mathrm{GPR}(j)} k_{cat,u}\,E_u$$"]
+  E --> CAP["$$\begin{gathered}\mathrm{cap}_j =\\\ \sum_{u \in \mathrm{GPR}(j)} k_{cat,u} E_u\end{gathered}$$"]
   GEM["$$\begin{gathered}\text{Yeast9 GEM}\\\ S,\ [\ell_j, u_j],\ \text{GPR}\end{gathered}$$"] --> V
-  CAP --> V["$$\begin{gathered}v = \Pi_{Sv=0}\!\big(\mathrm{clip}(v_z;\ \ell_j, u_j, \pm\mathrm{cap}_j)\big)\\\ \text{K alternations}\end{gathered}$$"]
-  V --> GR["$$v_{\text{growth}} = v_{r\_2111}$$"]
-  GR --> H["$$\ell = a\,v_{\text{growth}} + b$$"]
-  H --> L["$$\mathrm{BCE}\big(\ell,\ y_{\text{essential}}\big)$$"]
-  T["$$\lambda \sum_j \mathrm{relu}(v_j\,\Delta_r G'_j),\quad \lambda \in \{0, 0.1\}$$"]
-  V --> T
+  CAP --> V["$$\begin{gathered}v = \Pi_{Sv=0}\big(\mathrm{clip}(v_z)\big)\\\ \text{bounds } \ell_j, u_j, \pm\mathrm{cap}_j\\\ K \text{ alternations}\end{gathered}$$"]
+  V --> H["$$\begin{gathered}\ell = a\,v_{\text{growth}} + b\\\ v_{\text{growth}} = v_{r\_2111}\end{gathered}$$"]
+  H --> L["$$\mathrm{BCE}(\ell,\ y)$$"]
+  V --> T["$$\begin{gathered}\lambda \sum_j \mathrm{relu}(v_j\,\Delta_r G'_j)\\\ \lambda \in \{0, 0.1\}\end{gathered}$$"]
   style G fill:#FFFFFF,stroke:#666666
   style B fill:#FFE6CC,stroke:#D79B00
   style E fill:#FFE6CC,stroke:#D79B00
@@ -51,7 +49,6 @@ flowchart LR
   style K fill:#FFF2CC,stroke:#D6B656,stroke-dasharray:4 3
   style CAP fill:#FFF2CC,stroke:#D6B656
   style V fill:#FFF2CC,stroke:#D6B656
-  style GR fill:#FFF2CC,stroke:#D6B656
   style T fill:#FFF2CC,stroke:#D6B656
   style H fill:#F8CECC,stroke:#B85450
   style L fill:#F8CECC,stroke:#B85450
@@ -61,24 +58,20 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  G["$$\text{Genotype (deleted gene)}$$"] --> B["$$\begin{gathered}\text{CGT pooled backbone}\\\ \text{context } h\end{gathered}$$"]
+  G["$$\begin{gathered}\text{Genotype}\\\ \text{(deleted gene)}\end{gathered}$$"] --> B["$$\begin{gathered}\text{CGT backbone}\\\ \text{context } h\end{gathered}$$"]
   B --> H["$$\ell_0 = \mathrm{MLP}(h)$$"]
-  B --> E["$$E_g = \gamma_g\,E^0_g\,e^{\,r\tanh(w^\top h_g)}$$"]
+  B --> E["$$\begin{gathered}E_g = \gamma_g E^0_g\\\ \times\, e^{r\tanh(w^\top h_g)}\end{gathered}$$"]
   E --> V["$$\begin{gathered}\text{flux layer}\\\ v = \Pi_{Sv=0}(\cdots)\end{gathered}$$"]
-  V --> GR["$$v_{\text{growth}}$$"]
-  GR --> A["$$a\,v_{\text{growth}} + b$$"]
-  A --> S["$$\ell = \ell_0 + g\,(a\,v_{\text{growth}} + b),\quad g_0 = 0$$"]
+  V --> A["$$a\,v_{\text{growth}} + b$$"]
+  A --> S["$$\begin{gathered}\ell = \ell_0 + g\,(a\,v_{\text{growth}} + b)\\\ g_0 = 0,\ g \text{ logged}\end{gathered}$$"]
   H --> S
-  S --> L["$$\mathrm{BCE}\big(\ell,\ y_{\text{essential}}\big)$$"]
-  N["$$\begin{gathered}g \text{ logged per epoch};\\\ \partial\ell/\partial v = 0 \text{ at } g = 0\end{gathered}$$"]
+  S --> L["$$\mathrm{BCE}(\ell,\ y)$$"]
   style G fill:#FFFFFF,stroke:#666666
   style B fill:#FFE6CC,stroke:#D79B00
   style E fill:#FFE6CC,stroke:#D79B00
   style V fill:#FFF2CC,stroke:#D6B656
-  style GR fill:#FFF2CC,stroke:#D6B656
   style A fill:#FFF2CC,stroke:#D6B656
   style H fill:#F8CECC,stroke:#B85450
   style S fill:#F8CECC,stroke:#B85450
   style L fill:#F8CECC,stroke:#B85450
-  style N fill:#FFFFFF,stroke:#666666
 ```

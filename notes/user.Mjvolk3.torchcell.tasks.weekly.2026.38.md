@@ -14,3 +14,4 @@ created: 1789538541983
 - [ ] Wave 12 (jobs 2073 to 2093): port check, split file, genome labels, weight-decay ladder, batch 32
 - [ ] Flux-arm cells (gradients through the metabolic module) after the wave-12 read
 - [ ] notes-tex document `028-gene-essentiality` with the FBA-by-medium, AUROC-by-split and gradient figures
+- [x] 028 unified into one worktree; rounds 1 and 2 (60 cells, jobs 2149 to 2208) queued [[experiments.028-gene-essentiality]]

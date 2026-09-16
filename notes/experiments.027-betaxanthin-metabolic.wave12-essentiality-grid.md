@@ -56,3 +56,7 @@ Reads:
 ### Cost and order
 
 Thirty-six cells at 65 to 80 minutes each on one GPU, four GPUs, so about eleven hours of wall time after the seven wave-11 reruns finish. Phase A is submitted first because its reference cells are already in the queue, and a two-epoch smoke of the gated flux arm gates phase B, since the readout is new code. Launcher: `gh_wave12_ess_grid.slurm`, parameterized by environment and frozen per cell by `freeze_and_submit.sh`.
+
+## 2026.09.16 - Superseded by 028
+
+Every cell above was cancelled before it started (jobs 2094 to 2148) and requeued under `experiments/028-gene-essentiality/` with the split-file protocol, see [[experiments.028-gene-essentiality]]. The gated readout, the class weight, the graph-regularization switch and the learning-rate cells live in `train_essentiality.py` from here on; `gh_wave12_ess_grid.slurm` is not used again.

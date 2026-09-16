@@ -26,20 +26,30 @@ and they differ in what the backbone's gradient has to pass through.
     the layer, which at $g = 0$ it cannot.
 \end{description}
 
+\tcfigfit[0.8]{figures/readout_key.pdf}{\textbf{Color key for the readout diagrams.} White
+  is the input; orange a learned part of the backbone (the context, the abundance head);
+  yellow the flux layer and its capacity terms, dashed where the box is a fixed table
+  (the $k_{cat}$ table); purple the fixed stoichiometry of the GEM; red the prediction and
+  the loss. The key holds for Figures~\ref{fig:readout-pooled}
+  to~\ref{fig:readout-gated}. Rendered from
+  \texttt{notes/experiments.028-gene-essentiality.mermaid.readouts.md}.}{fig:readout-key}
+
 \tcfigfit[1.0]{figures/readout_1.pdf}{\textbf{The pooled readout.} The backbone alone: one
   MLP from the perturbed context to a logit, binary cross entropy against the released
-  label. No stoichiometry, no kinetic parameters, no flux. Rendered from
-  \texttt{notes/experiments.028-gene-essentiality.mermaid.readouts.md}.}{fig:readout-pooled}
+  label. No stoichiometry, no kinetic parameters, no flux. Colors as in
+  Figure~\ref{fig:readout-key}.}{fig:readout-pooled}
 
 \tcfigfit[1.0]{figures/readout_2.pdf}{\textbf{The forced biomass readout.} The context sets
   each enzyme's abundance (a deleted gene's is zero), the $k_{cat}$ table turns abundances
   into capacities, and the flux is the projection onto $Sv = 0$ of the capacity-clipped
   proposal; the logit is an affine of the growth column alone. The thermodynamic penalty
-  is a loss on the flux with no path to the prediction, at scale 0.1 or 0.}{fig:readout-biomass}
+  is a loss on the flux with no path to the prediction, at scale 0.1 or 0. Colors as in
+  Figure~\ref{fig:readout-key}.}{fig:readout-biomass}
 
 \tcfigfit[1.0]{figures/readout_3.pdf}{\textbf{The gated readout.} The pooled MLP's logit
   plus the growth affine behind a gate initialized at zero. The gate is a parameter of the
-  readout; its value is written into every epoch row as \texttt{ess\_gate}.}{fig:readout-gated}
+  readout; its value is written into every epoch row as \texttt{ess\_gate}. Colors as in
+  Figure~\ref{fig:readout-key}.}{fig:readout-gated}
 
 \subsection{Round 2: the module on the stable backbone, with and without the penalties\secstatus{todo}}
 

@@ -14,6 +14,19 @@ PDFs are the figures of notes-tex/028-gene-essentiality section 4. Colors follow
 figure: orange the gene-state path, purple the fixed stoichiometry, yellow the parameter
 tables and the flux layer (dashed border = a fixed table), red the prediction and the loss.
 
+### 0. color key (one row, rendered once and placed above the three readouts)
+
+```mermaid
+flowchart LR
+  A["$$\text{input}$$"] ~~~ B["$$\begin{gathered}\text{backbone,}\\\ \text{learned}\end{gathered}$$"] ~~~ C["$$\begin{gathered}\text{flux layer,}\\\ \text{learned}\end{gathered}$$"] ~~~ D["$$\begin{gathered}\text{fixed table}\\\ \text{(dashed)}\end{gathered}$$"] ~~~ E["$$\begin{gathered}\text{GEM,}\\\ \text{fixed}\end{gathered}$$"] ~~~ F["$$\begin{gathered}\text{prediction}\\\ \text{and loss}\end{gathered}$$"]
+  style A fill:#FFFFFF,stroke:#666666
+  style B fill:#FFE6CC,stroke:#D79B00
+  style C fill:#FFF2CC,stroke:#D6B656
+  style D fill:#FFF2CC,stroke:#D6B656,stroke-dasharray:4 3
+  style E fill:#E1D5E7,stroke:#9673A6,stroke-dasharray:4 3
+  style F fill:#F8CECC,stroke:#B85450
+```
+
 ### 1. pooled (the backbone alone, no flux layer)
 
 ```mermaid

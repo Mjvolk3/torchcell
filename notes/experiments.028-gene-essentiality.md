@@ -240,4 +240,26 @@ Example runs, gated seed 2701 (gate to +0.20) and shuffled-kcat seed 2700 (0.785
 
 <<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/jf3af715>
 
-**Round 5 (w16), packs 2249 and 2250, queued 17:38: FBA's growth ratios as an input to the transformer.** `--ess-readout fba` (new in `train_essentiality.py`, `FbaContextReadout`) adds an affine of the deleted gene's knockout-to-wild-type growth ratio on the four media (`fba_essentiality_per_gene.csv`, the same four numbers the ladder appends) to the pooled arm's context logit; the four weights are logged per epoch as `ess_fba_w_<medium>`. Cells: the round-3 levers (batch 32, class weight, 200 epochs) at seeds 2700 to 2702, paired against `b32posw200`, and the same readout on the five cross-validation folds (seed 2700) for the ensemble number (`cv_ensemble_readout.py --prefix w16_fbacv`). Pre-registered read: the ladder's logistic rung on ProtT5 gains 0.09 from the four ratios (0.732 to 0.821); the transformer gains the same complement if its seed mean moves from 0.774 toward 0.82 on three of three seeds, and the fold ensemble from 0.795 toward the ladder's 0.81 to 0.83. CPU smoke: two epochs already read 0.713 held-out, which is the affine on the ratios alone (FBA scores 0.65 to 0.67).>> Pre-registered reads are the round-2 ones: not hurt is gated against the pooled cell paired by seed; help is forced above the pooled cell on three of three seeds and above the shuffled control. Round 3 (2224 to 2236) is still draining ahead of it; its partial numbers at 16:40 are b32posw at 80 epochs 0.780 / 0.769 / 0.700, b32posw200 seed 2700 0.780, b32e200 seed 2700 0.766.>
+**Round 5 (w16), packs 2249 and 2250, queued 17:38: FBA's growth ratios as an input to the transformer.** `--ess-readout fba` (new in `train_essentiality.py`, `FbaContextReadout`) adds an affine of the deleted gene's knockout-to-wild-type growth ratio on the four media (`fba_essentiality_per_gene.csv`, the same four numbers the ladder appends) to the pooled arm's context logit; the four weights are logged per epoch as `ess_fba_w_<medium>`. Cells: the round-3 levers (batch 32, class weight, 200 epochs) at seeds 2700 to 2702, paired against `b32posw200`, and the same readout on the five cross-validation folds (seed 2700) for the ensemble number (`cv_ensemble_readout.py --prefix w16_fbacv`). Pre-registered read: the ladder's logistic rung on ProtT5 gains 0.09 from the four ratios (0.732 to 0.821); the transformer gains the same complement if its seed mean moves from 0.774 toward 0.82 on three of three seeds, and the fold ensemble from 0.795 toward the ladder's 0.81 to 0.83. CPU smoke: two epochs already read 0.713 held-out, which is the affine on the ratios alone (FBA scores 0.65 to 0.67).
+
+## 2026.09.16 - Round 5 read: FBA's growth ratios as an input lift the transformer to 0.82, the ladder's level, on three of three seeds
+
+Packs 2249 (three seeds, 27 min) and 2250 (five folds, 27 min), paired against the round-3 `b32posw200` cell. `wave12_readout.py --round w16`, `cv_ensemble_readout.py --prefix w16_fbacv`.
+
+![](./assets/images/028-gene-essentiality/w16_readout_2026-09-16-18-04-21.svg)
+
+| arm (batch 32 + class weight, 200 epochs) | seeds 2700, 2701, 2702 | mean | sd | pooled [95% CI] |
+|---|---|---|---|---|
+| pooled (round 3) | 0.780, 0.769, 0.773 | 0.774 | 0.006 | 0.780 [0.69, 0.87] |
+| context head + FBA ratios | 0.814, 0.805, 0.844 | 0.821 | 0.020 | 0.838 [0.76, 0.91] |
+| 5 fold models + FBA ratios | 0.814, 0.824, 0.839, 0.775, 0.853 | 0.821 | | ensemble 0.822 [0.74, 0.90] |
+
+- **Both pre-registered reads hold.** +0.034 / +0.037 / +0.071 on the three seeds (3 of 3), seed mean 0.774 -> 0.821; fold ensemble 0.795 -> 0.822. The transformer with the four solver numbers sits where the ladder's best rungs sit (0.806 to 0.830), 0.08 above FCL on the same genes.
+- **The weights end negative on every cell** (a deletion that stops growth is essential), largest on the shipped-bound and YPD columns (-0.5 to -0.7 at the selected epoch), near zero to -0.4 on SC. The cells select at epochs 28 to 70 (vs 68 to 148 without): the affine is learned in the first epochs and the context head fills in around it.
+- **Read across rounds 2, 4 and 5:** the learned flux layer's growth column matched the head and ignored its kcat table; the FBA solve's growth ratio adds 0.05. On this endpoint the module's value is in the solve, not in the learned layer. Next: the ratios as a node feature (every gene's, not only the deleted gene's), one medium against four, and a flux arm that receives the ratios beside its own growth column.
+
+Example runs, seed 2702 (0.844) and fold 4 (0.853):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/k1sfpylr>
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/7ysar8my>>> Pre-registered reads are the round-2 ones: not hurt is gated against the pooled cell paired by seed; help is forced above the pooled cell on three of three seeds and above the shuffled control. Round 3 (2224 to 2236) is still draining ahead of it; its partial numbers at 16:40 are b32posw at 80 epochs 0.780 / 0.769 / 0.700, b32posw200 seed 2700 0.780, b32e200 seed 2700 0.766.>

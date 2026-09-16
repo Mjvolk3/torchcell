@@ -110,3 +110,48 @@ the cross-validation files is the released-label split file exactly (same 629 tr
 [0.71, 0.88] (\texttt{cv\_ensemble\_readout.py}). That is the number to set beside the
 published 0.73 and beside 0.742 on these genes: the backbone under Flux Cone Learning's own
 protocol is 0.05 above it, and 0.01 to 0.04 below the ladder's rungs with FBA appended.
+
+\subsection{Round 5: FBA's growth ratios as an input\secstatus{todo}}
+
+The ladder's rungs cross 0.80 only with FBA's four growth ratios appended to the encoding,
+and no transformer cell has seen those numbers. Round 5 (jobs 2249 and 2250) gives the
+round-3 cell the same complement: the \texttt{fba} readout adds an affine of the deleted
+gene's knockout-to-wild-type growth ratio on the four media to the context head's logit,
+five parameters on top of the 16,561, with the four weights written into every epoch row.
+It runs at the three seeds, paired against the round-3 cell, and on the five
+cross-validation folds for the ensemble (Table~\ref{tab:w16}, Figure~\ref{fig:w16}). The
+read was fixed first: the transformer gains the ladder's complement if its seed mean moves
+from 0.774 toward 0.82 on three of three seeds and the fold ensemble from 0.795 toward the
+ladder's 0.81 to 0.83.
+
+\input{tables/round_w16}
+
+\tcfigfit[1.0]{figures/w16_readout_2026-09-16-18-04-21.pdf}{\textbf{Round 5, FBA's growth
+  ratios as an input.} \textbf{a}, Validation AUROC per epoch, one thin line per seed and
+  the seed mean per arm; each fold model reads its own fold. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out
+  AUROC per cell (points), the seed mean and the gene bootstrap of the pooled per-gene
+  logits (square with interval), beside FBA on four media, Flux Cone Learning and the
+  released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w16}.}{fig:w16}
+
+Both halves of the read hold. The cell scores 0.814, 0.805 and 0.844 against 0.780, 0.769
+and 0.773 on the same seeds, up by 0.034, 0.037 and 0.071, a seed mean of 0.821 and a
+pooled bootstrap of 0.838 [0.76, 0.91]. The five fold models score 0.814, 0.824, 0.839,
+0.775 and 0.853, a fold mean of 0.821, and their averaged logits 0.822 [0.74, 0.90] on
+the held-out genes, against 0.795 without the ratios. The transformer with the solver's
+four numbers sits where the ladder's best rungs sit (0.806 to 0.830), 0.08 above Flux
+Cone Learning on the same genes and 0.09 above its published number. The four weights
+end negative on every cell, largest on the shipped-bound and YPD columns (about $-0.5$
+to $-0.7$ at the selected epoch against $-0.3$ to $-0.5$ on SM and near zero to $-0.4$
+on SC), which is the direction a growth ratio must carry (a deletion that stops growth is
+essential), and the cells select earlier, at epochs 28 to 70 against 68 to 148: the affine
+is learned in the first epochs and the context head fills in around it.
+
+The two sources are complementary and the complement is the same for the transformer
+as for a logistic regression on a frozen embedding: the backbone alone reads 0.77, the
+solver alone 0.66, and the sum 0.82. What the flux layer could not supply in rounds 2 and
+4, where its growth column matched the head and its $k_{cat}$ content went unread, the
+FBA solve supplies as four numbers, which locates the module's value on this endpoint in
+the solve itself rather than in the learned layer.

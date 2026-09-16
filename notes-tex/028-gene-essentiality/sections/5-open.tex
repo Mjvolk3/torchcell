@@ -6,12 +6,14 @@
 \label{sec:open}
 
 \begin{itemize}
-  \item Round 5 (jobs 2249 and 2250): FBA's growth ratio as an input to the transformer.
-    The ladder's top rungs are frozen encodings with the four ratios appended (0.81 to
-    0.83), and neither half reaches that alone. The \texttt{fba} readout adds an affine of
-    the deleted gene's four ratios to the context head, on the round-3 cell at three seeds
-    and on the five folds; the transformer gains the same complement if its seed mean
-    moves from 0.774 toward 0.82 and the fold ensemble from 0.795 toward 0.81 to 0.83.
+  \item The FBA ratios enter as a readout affine (Round 5). Carrying them as a node
+    feature instead, so the transformer sees every gene's ratio and not only the deleted
+    gene's, is the untested form; and the ratio on the medium the phenotype was scored on
+    alone, against all four, says whether the four columns add anything beyond one.
+  \item The flux layer's growth column matched the head and ignored its $k_{cat}$ table
+    (Rounds 2 and 4) while the FBA solve added 0.05; a flux arm that receives the FBA
+    ratios beside its own growth column tests whether the learned layer adds anything on
+    top of the solve.
   \item The module's own hyperparameters have not been moved on this endpoint: the
     $k_{cat}$ tier (measured against predicted), the thermodynamic source, the
     parameterization (projection against nullspace), the number of alternations.

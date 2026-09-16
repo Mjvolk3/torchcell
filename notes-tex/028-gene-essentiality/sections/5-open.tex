@@ -6,10 +6,9 @@
 \label{sec:open}
 
 \begin{itemize}
-  \item Round 3 (jobs 2209 to 2222): batch 32 with the class weight at 80 and 200 epochs,
-    batch 32 alone at 200 epochs, and five fold models on the cross-validation files whose
-    logits are averaged on the held-out genes, which is the protocol behind the published
-    FCL number.
+  \item Round 4 (jobs 2246 to 2248, three cells per GPU): the gated, forced and
+    shuffled-$k_{cat}$ readouts at constraint scale 0 on the round-3 cell (batch 32, class
+    weight, 200 epochs), paired by seed against it. The reads are the round-2 reads.
   \item FBA's growth ratio as an input to the transformer. The ladder's top rungs are
     frozen encodings with the four ratios appended (0.81 to 0.83), and neither half
     reaches that alone; a cell that concatenates the ratios to the readout, or carries

@@ -73,3 +73,40 @@ On the split-file cells the preprocessor's gradient norm starts near $10^{-2}$ a
 about thirty-fold over 80 epochs while the head's stays flat near 0.4
 (Figure~\ref{fig:w12}d); the clip at 10 never binds. The rise tracks the validation curve's
 climb, which is the same under-training reading from the gradient side.
+
+\subsection{Round 3: the two levers combined, a longer budget, and the fold ensemble\secstatus{todo}}
+
+Round 3 (jobs 2209 and 2224 to 2236) combines the two round-1 levers that moved three of
+three seeds, batch 32 and the class weight, at 80 and at 200 epochs, runs batch 32 alone at
+200 epochs as the class weight's control, and trains five fold models on the
+cross-validation files, which partition the 787 labeled non-test genes five ways with the
+held-out genes fixed; their logits are averaged on the held-out genes, the protocol behind
+the published Flux Cone Learning number (Table~\ref{tab:w14}, Figure~\ref{fig:w14}). With
+the loader workers removed a 200-epoch cell takes 11 minutes.
+
+\input{tables/round_w14}
+
+\tcfigfit[1.0]{figures/w14_readout_2026-09-16-17-04-40.pdf}{\textbf{Round 3, the levers
+  combined and the fold models.} \textbf{a}, Validation AUROC per epoch, seed mean per arm;
+  each fold model reads its own validation fold. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size, 157 or 158 genes. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning and
+  the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module
+  per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w14}.}{fig:w14}
+
+Batch 32 with the class weight at 200 epochs scores 0.780, 0.769 and 0.773, a seed mean of
+0.774 with a spread of 0.006, the tightest cell of any round; the pooled bootstrap is 0.780
+[0.69, 0.87]. Batch 32 alone at 200 epochs scores 0.766, 0.761 and 0.755, so the class
+weight adds 0.01 to 0.02 on three of three seeds at the longer budget as it did at 80.
+The longer budget itself moves one seed: the 80- and 200-epoch cells share a trajectory
+through epoch 80 and select the same epoch on seeds 2700 and 2701 (75 and 68), while seed
+2702 selects epoch 31 at 80 epochs and epoch 148 at 200, 0.700 against 0.773. Fold 0 of
+the cross-validation files is the released-label split file exactly (same 629 training,
+158 validation and 195 held-out genes, both drawn at seed 0), so its fold model is the
+200-epoch cell's first seed. The five fold models score 0.780, 0.806, 0.797, 0.751 and
+0.789 on the held-out genes, a fold mean of 0.785, and their averaged logits score 0.795
+[0.71, 0.88] (\texttt{cv\_ensemble\_readout.py}). That is the number to set beside the
+published 0.73 and beside 0.742 on these genes: the backbone under Flux Cone Learning's own
+protocol is 0.05 above it, and 0.01 to 0.04 below the ladder's rungs with FBA appended.

@@ -445,7 +445,13 @@ def figure(
         )
     ax_b.set_xlabel("labeled validation genes")
     ax_b.set_ylabel("median |step| of validation AUROC")
-    ax_b.set_xscale("log")
+    n_vals = [r.n_val for r in rows]
+    # A log axis only when the round spans validation sizes (75 against 1,093 in round 1);
+    # a round on one split file gets a linear axis with the one or two sizes it has.
+    if max(n_vals) > 2 * min(n_vals):
+        ax_b.set_xscale("log")
+    else:
+        ax_b.set_xticks(sorted(set(n_vals)))
 
     # c: test AUROC per arm with comparators
     x = 0

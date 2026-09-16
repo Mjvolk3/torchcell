@@ -21,7 +21,9 @@
 # seeds 2700 to 2702:
 #
 #   hidden 90, 9 heads, 2 layers, preproc 2   the wave-9 baseline (jobs 2009, 2021, 2022)
-#   hidden 45, 9 heads, 2 layers, preproc 2   half the width
+#   hidden 54, 9 heads, 2 layers, preproc 2   0.6x the width (54, not 45: the perturbation
+#                                             head has 6 cross-attention heads and 45 is
+#                                             not a multiple of 6; jobs 2039-2041 died on it)
 #   hidden 24, 8 heads, 1 layer,  preproc 1   a quarter of the width and one block
 #   hidden 12, 4 heads, 1 layer,  preproc 1   the floor
 #
@@ -50,7 +52,7 @@
 #
 # PARAMETERIZED BY ENVIRONMENT, because nine near-identical files would drift apart:
 #
-#   ESS_HIDDEN=45 ESS_HEADS=9 ESS_LAYERS=2 ESS_SEED=2700 \
+#   ESS_HIDDEN=54 ESS_HEADS=9 ESS_LAYERS=2 ESS_SEED=2700 \
 #       bash experiments/027-betaxanthin-metabolic/scripts/freeze_and_submit.sh \
 #       experiments/027-betaxanthin-metabolic/scripts/gh_wave11_ess_size.slurm
 #
@@ -88,7 +90,7 @@ export COLLAPSE_PATIENCE_EPOCHS=200
 export TC_TEST_PRED_DIR=$DATA_ROOT/test-predictions-027-wave7
 mkdir -p "$WANDB_DIR"
 
-HIDDEN="${ESS_HIDDEN:?set ESS_HIDDEN, one of 90 45 24 12}"
+HIDDEN="${ESS_HIDDEN:?set ESS_HIDDEN, one of 90 54 24 12; must be a multiple of BOTH head counts}"
 HEADS="${ESS_HEADS:?set ESS_HEADS; the width must divide by it}"
 LAYERS="${ESS_LAYERS:-2}"
 PREPROC="${ESS_PREPROC:-2}"

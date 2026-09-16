@@ -2047,11 +2047,22 @@ def build_cell(
     n_heads = (
         attention_heads if attention_heads is not None else cfg.model.attention_heads
     )
-    assert width % n_heads == 0, (
-        f"the transformer width {width} is not divisible by the attention head count "
-        f"{n_heads}. Pass --hidden and --attention-heads together; the ladder is "
-        "90/9, 45/9 and 24/8."
-    )
+    # BOTH HEAD COUNTS DIVIDE THE WIDTH, and the second one is easy to forget. The
+    # transformer's self-attention uses `attention_heads`; the perturbation head's
+    # cross-attention uses `pert_heads`, which defaults to 6 and is NOT the same number.
+    # Jobs 2039 to 2041 asked for width 45 with 9 attention heads, which divides, and died
+    # 17 seconds in on `embed_dim must be divisible by num_heads` from the perturbation
+    # head, because 45 is not a multiple of 6. A width must be a multiple of the least
+    # common multiple of the two: with the defaults 9 and 6 that is 18, so the ladder runs
+    # 90, 54, 36 and 18 unless the head counts move with it.
+    for label, count in (("attention head count", n_heads), ("pert_heads", pert_heads)):
+        assert width % count == 0, (
+            f"the transformer width {width} is not divisible by the {label} {count}. "
+            f"Both attention head counts must divide the width: --attention-heads "
+            f"({n_heads}) for the transformer and --pert-heads ({pert_heads}) for the "
+            "perturbation head's cross-attention. With the defaults the width must be a "
+            "multiple of 18."
+        )
     assert armcfg.base_arm in ARMS, (
         f"arm {arm!r} names base_arm={armcfg.base_arm!r}, which is not in 026's ARMS "
         f"registry ({sorted(ARMS)}). The registry is the single source of truth for what "

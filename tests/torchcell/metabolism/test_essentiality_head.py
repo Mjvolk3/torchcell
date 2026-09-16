@@ -272,16 +272,26 @@ def test_a_parameter_without_a_gradient_is_skipped_not_counted_as_zero():
     assert set(train_bx._module_grad_norms(model)) == {"head"}
 
 
-def test_the_width_must_divide_by_the_head_count():
-    """A width the heads do not divide fails at build, not inside attention."""
+def test_the_width_must_divide_by_BOTH_head_counts():
+    """Jobs 2039-2041 died because only one of the two head counts was checked.
+
+    45 is divisible by the 9 transformer attention heads and NOT by the 6 perturbation
+    heads, so the cell built and then raised `embed_dim must be divisible by num_heads`
+    from the perturbation head's cross-attention 17 seconds into a GPU allocation.
+    """
     cfg = train_bx.load_config()
     with pytest.raises(
         AssertionError, match="not divisible by the attention head count"
     ):
         train_bx.build_cell("pooled", 1, cfg, epochs=1, hidden=90, attention_heads=8)
-    # The ladder's own pairings all divide.
-    for hidden, heads in ((90, 9), (45, 9), (24, 8), (12, 4)):
-        assert hidden % heads == 0
+    with pytest.raises(AssertionError, match="not divisible by the pert_heads"):
+        train_bx.build_cell("pooled", 1, cfg, epochs=1, hidden=45, attention_heads=9)
+    # The ladder's own rungs divide by BOTH counts, and each one builds.
+    for hidden, heads in ((90, 9), (54, 9), (24, 8), (12, 4)):
+        assert hidden % heads == 0 and hidden % 6 == 0
+        train_bx.build_cell(
+            "pooled", 1, cfg, epochs=1, hidden=hidden, attention_heads=heads
+        )
 
 
 def test_the_preprocessor_depth_defaults_to_two_and_is_overridable():

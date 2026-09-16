@@ -508,5 +508,71 @@
     },
     "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=mwzavkv9d8w",
     "panels_per_row": 6
+  },
+  "esssize": {
+    "title": "027 wave 11: model size against curve stability on gene essentiality",
+    "n_runs": 13,
+    "tags_any": [
+      "w11esssize_h45p2",
+      "w11esssize_h24p1",
+      "w11esssize_h12p1",
+      "w9esspool"
+    ],
+    "groupby": [
+      "hidden",
+      "preprocessor_layers",
+      "layers"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "train_data_loss",
+      "train_loss",
+      "val_pred_sd_ratio",
+      "grad_norm_mean",
+      "grad_norm_max",
+      "grad_clipped_frac",
+      "grad_norm_embedding_preprocessor_mean",
+      "grad_norm_transformer_layers_mean",
+      "grad_norm_essentiality_head_mean",
+      "graph_reg_loss"
+    ],
+    "scalars": [
+      "test_auroc_pinned",
+      "test_accuracy_pinned",
+      "test_recall_essential_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "groups": {
+      "w11esssize_h12p1_smoke": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h12p1_smoke",
+        "run_ids": [
+          "0a1k5wv7"
+        ]
+      },
+      "w11esssize_h24p1": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h24p1",
+        "run_ids": [
+          "dqlt6h1c"
+        ]
+      },
+      "w9esspool": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool",
+        "run_ids": [
+          "v62zo8ij",
+          "9lmlnzui",
+          "fytcivaw"
+        ]
+      },
+      "w9esspool_smoke": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool_smoke",
+        "run_ids": [
+          "540dihuc"
+        ]
+      }
+    },
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=zc8u9y9k6pb",
+    "panels_per_row": 6
   }
 }

@@ -442,7 +442,7 @@ SPECS: dict[str, ViewSpec] = {
             "Gene essentiality, pooled arm with no flux layer, 80 epochs, seeds 2700 to "
             "2702. The wave-9 backbone at width 90 carries 958,501 parameters against about "
             "926 supervised genotypes, and its validation AUROC moves by a median of 0.034 "
-            "to 0.072 between ADJACENT epochs. The ladder drops the width to 45, 24 and 12, "
+            "to 0.072 between ADJACENT epochs. The ladder drops the width to 54, 24 and 12, "
             "and the lower two rungs also drop the embedding preprocessor to one layer, "
             "which is what actually shrinks the model: at width 12 with a shallow "
             "preprocessor the cell is 16,874 parameters, 57 times smaller than the "
@@ -452,7 +452,7 @@ SPECS: dict[str, ViewSpec] = {
             "preprocessor depth."
         ),
         tags_any=[
-            "w11esssize_h45p2",
+            "w11esssize_h54p2",
             "w11esssize_h24p1",
             "w11esssize_h12p1",
             "w9esspool",

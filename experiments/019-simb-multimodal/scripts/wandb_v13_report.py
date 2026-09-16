@@ -162,11 +162,12 @@ def train_metrics(pheno: str) -> list[str]:
     ]
 
 
-def chart_sections(pheno: str) -> list[tuple[str, list[str]]]:
+def chart_sections(pheno: str) -> list[tuple[str, list[str | list[str]]]]:
     """The Charts tab, in rank order of importance.
 
     Section 1 is what decides the round; every later section is what to read when
-    section 1 moves or fails to.
+    section 1 moves or fails to. A list entry is one panel with several metrics
+    overlaid (train against validation).
     """
     return [
         (
@@ -189,6 +190,28 @@ def chart_sections(pheno: str) -> list[tuple[str, list[str]]]:
                 f"traineval/{pheno}/pearson_per_instance",
                 "traineval/loss",
                 f"traineval/{pheno}/nmse",
+            ],
+        ),
+        (
+            # Train and validation on ONE panel each, for the interpolation watch: an
+            # epoch-wise double descent would show as train MSE reaching zero while the
+            # validation curve worsens and later recovers. Read 2026-09-16 at epoch
+            # ~2,300: train MSE 0.015 and falling, val MSE flat at 0.040, val Pearson
+            # still rising; nowhere near the threshold.
+            "2b interpolation watch, train against validation",
+            [
+                [f"traineval/{pheno}/mse", f"val/{pheno}/mse"],
+                [
+                    f"traineval/{pheno}/pearson_per_feature",
+                    f"val/{pheno}/pearson_per_feature",
+                ],
+                ["train/loss", "traineval/loss", "val/loss"],
+                [f"traineval/{pheno}/nmse", f"val/{pheno}/nmse"],
+                [
+                    f"traineval/{pheno}/pred_sd_ratio",
+                    f"val/{pheno}/pred_sd_ratio",
+                ],
+                [f"traineval/{pheno}/spearman_per_feature", f"val/{pheno}/spearman_per_feature"],
             ],
         ),
         (
@@ -381,7 +404,11 @@ def populate_view(rnd: Round) -> str:
             panel_settings=ws.SectionPanelSettings(x_axis=X, smoothing_type="none"),
             panels=[
                 wr.LinePlot(
-                    x=X, y=[m], title=m, title_x="epoch", layout=wr.Layout(w=8, h=6)
+                    x=X,
+                    y=[m] if isinstance(m, str) else m,
+                    title=m if isinstance(m, str) else " | ".join(m),
+                    title_x="epoch",
+                    layout=wr.Layout(w=8, h=6),
                 )
                 for m in metrics
             ],

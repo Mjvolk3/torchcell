@@ -576,3 +576,48 @@ and whichever arm lands on the constant first stays there.
 W&B, one group per arm:
 `https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool` and
 `https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9essflux`.
+
+## 2026.09.15 - The balance-weight ladder draws no tradeoff, because the epoch is the lever
+
+The ladder was launched to price the physics: raise the active-row balance weight, watch
+feasibility improve and prediction fall. It does not do that. `penalty_ladder.py` reads all
+four long cells (seed 2700, frozen warm start, K=100 boxforce, 200 epochs, differing only in
+the penalty weights) and writes `results/penalty_ladder.json`:
+
+| weight | selected epoch | pinned Spearman | p | spread ratio | balance max at select | best balance (epoch) |
+|---:|---:|---:|---:|---:|---:|---|
+| 0.0 | 158 | +0.0882 | 0.027 | 0.0001 | 2.0000 | 1.015 (8) |
+| 0.1 | 103 | +0.0812 | 0.042 | 0.0387 | 1.9997 | 0.857 (8) |
+| 0.5 | 7 | +0.0271 | 0.497 | 0.0002 | 1.0091 | 0.749 (8) |
+| 2.0 | 27 | +0.0336 | 0.400 | 0.0000 | 2.0000 | 1.045 (2) |
+
+**Every cell reaches its best balance inside the first 8 epochs and gets worse afterwards.**
+In three of the four the rank correlation between epoch and the balance maximum is +0.78 to
++0.79; the fourth is already at the ceiling of 2.0 by epoch 10 and cannot decay further. The
+warm start begins near the pFBA reference, and training walks away from it whatever the
+penalty weight, including at weight 2.0.
+
+**So the cell that looks feasible is the one selected early.** Weight 0.5 reads a balance
+maximum of 1.0091 at its selected epoch, and that epoch is 7. This is the same phenomenon as
+the 10-epoch cells reading 0.98 population feasibility, seen from the other side: the short
+budget works because it makes an early stop compulsory, not because a short budget is a
+better recipe.
+
+**Correction to the section above.** "The penalties are what collapse the predictor, with a
+dose-response" is not supported by this ladder. The two lowest-penalty cells score +0.088
+and +0.081 against +0.027 and +0.034 for the two highest, which is the direction that
+section claimed, but the spread ratio does not order with the weight at all (0.0001, 0.0387,
+0.0002, 0.0000), so the mechanism named there is wrong even where the score ordering holds.
+The wave-5 constraint-scale dose-response stands as its own measurement; it does not
+generalize to the balance weight.
+
+**A Spearman of 0.088 with a spread ratio of 0.0001** is worth stating on its own, because
+it contradicts something I have been assuming. Spearman is rank based, so a head whose
+output spans one ten-thousandth of the target's spread can still rank genotypes correctly.
+A near-zero spread ratio therefore does NOT license the claim that a cell's ranking, or its
+top 100, is arbitrary. Every such claim made earlier in this note needs rereading with that
+in mind.
+
+Power, stated plainly: at n = 629 the null standard error on Spearman is 0.040, so +0.088 is
+2.2 standard errors (p = 0.027) and +0.034 is 0.84 (p = 0.40). One seed. The ladder
+separates the low-weight from the high-weight cells weakly at best.

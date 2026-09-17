@@ -506,3 +506,24 @@ Example runs, LP gated seed 2701 (0.837, gate +1.42) and LP forced seed 2700 (in
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/du086f04>
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/ht55h9nq>
+
+## 2026.09.17 - Round 15c: with calibrated capacity ceilings the forced layer that solves reads 0.84 alone on one seed; the infeasible state is absorbing
+
+Calibration (`capacity_calibration.py`, `--flux-capacity-scale`): anchored LP infeasible up to x10; feasible for 31/32 test genotypes from x30 (median growth 0.042), 0.10 at x100, 0.20 at x1000, 0.535 (= unconstrained WT) at x10000. Packs 2316-2318 (w30): gated x100, gated x1000, forced x100.
+
+| arm (anchored box, LP, scale 0) | seeds 2700, 2701, 2702 | mean | notes |
+|---|---|---|---|
+| forced, capacity x100 | 0.500, **0.8425**, 0.500 | 0.614 | seed 2701: 87% infeasible at start -> 0% by ep 50, sel ep 29; seeds 2700/2702: 97% infeasible from ep 5 (absorbing) |
+| gated, capacity x100 | 0.820, 0.795, 0.786 | 0.800 | 0% infeasible throughout; gates +0.05/+0.53/+0.71; 3/3 above round-4 gated |
+| gated, capacity x1000 | 0.809, 0.786, 0.791 | 0.795 | gates +0.09/+0.29/+1.04; 3/3 above round-4 gated |
+
+- Probe at init (x100): growth column 0.730 test, 10% zero (lethal), Spearman +0.49 to +0.55 vs FBA; capacity-active fraction 3-8% at the selected epochs (gene-owned bounds now bind).
+- **The forced seed 2701 is the module's upper bound so far: 0.8425 from the growth column of an LP under learned enzyme ceilings, no head, no appended ratio** = the affine's level, 0.17 above FBA on the same genes. The other two seeds never left infeasibility (gradient from the LP pushes the availability gate/ceilings into an infeasible box; an infeasible program returns zero gradient).
+- Gated with calibrated ceilings: 0.80, below the GEM-box gated (0.824) and the affine (0.821): the binding ceilings cost 0.02-0.03 while binding.
+- Round 15d (w31, packs 2319/2320): forced at x1000 (more slack) and at x100 with lr 3e-4, against the absorbing state.
+
+Example runs, forced x100 seed 2701 (0.8425) and seed 2700 (absorbed):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/u3hs1sz0>
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/ss3mk1qu>

@@ -192,6 +192,15 @@ ROUND_CAPTIONS = {
         "standardized over the labeled genes. Width 12, one block, batch 32, class "
         "weight, 200 epochs, seeds 2700 to 2702.",
     ),
+    "w24": (
+        "Round 13, the warm start on the stoichiometry-only layer",
+        "The pooled cell, the round-4 forced and gated columns and the round-10 "
+        "warm-started columns on the anchored layer, against the same warm start on the "
+        "stoichiometry-only layer, whose box is the GEM's own bounds rather than the "
+        "capacity- and second-law-tightened one, so the deletion's pFBA reference sits "
+        "inside it. Alpha frozen at 0.01, constraint scale 0, batch 32, class weight, "
+        "200 epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

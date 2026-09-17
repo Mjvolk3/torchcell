@@ -196,6 +196,19 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ["w16_fba_h12l1p1_e200_s*.json", "w22_*_e200_s*.json"],
         ["fba", "fbastats", "fbapfba", "fbastatspfba"],
     ),
+    # Round 13: the warm start on the stoichiometry-only layer, whose box is the GEM's
+    # own bounds, so the deletion's pFBA reference sits inside it.
+    "w24": (
+        [
+            "w14_b32posw200_h12l1p1_e200_s*.json",
+            "w15_bio_s0_h12l1p1_e200_s*.json",
+            "w15_gate_s0_h12l1p1_e200_s*.json",
+            "w21_warmbio_h12l1p1_e200_s*.json",
+            "w21_warmgate_h12l1p1_e200_s*.json",
+            "w24_*_e200_s*.json",
+        ],
+        ["b32posw200", "bio_s0", "gate_s0", "warmbio", "warmgate", "warmoffbio", "warmoffgate"],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -261,6 +274,8 @@ ARM_LABELS = {
     "fbastats": "context head + FBA ratios + eight reaction statistics",
     "fbapfba": "context head + FBA ratios + deletion pFBA vector",
     "fbastatspfba": "context head + FBA ratios + statistics + pFBA vector",
+    "warmoffbio": "growth column, GEM box only, pFBA warm start, alpha 0.01 frozen",
+    "warmoffgate": "gated column + context, GEM box only, pFBA warm start, alpha 0.01 frozen",
 }
 
 

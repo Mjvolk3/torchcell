@@ -8,7 +8,9 @@ from pydantic import SecretStr
 
 from torchcell.literature.backfill import library_root
 from torchcell.literature.sync import (
+    DEFAULT_PERSONAL_ROOTS,
     SyncMode,
+    parse_root_list,
     plan_collection_sync,
     plan_database_sync,
     sync_collection,
@@ -335,3 +337,22 @@ def test_sync_collection_tree_limit_is_shared_across_collections(
     captured = [r for rep in reports for r in rep.by_mode(SyncMode.CAPTURED)]
     assert len(captured) == 1
     assert not (lib_root / "paperB2021").exists()
+
+
+def test_parse_root_list_splits_trims_dedupes_and_keeps_order() -> None:
+    assert parse_root_list("torchcell, thesis") == ["torchcell", "thesis"]
+    assert parse_root_list(" thesis ,torchcell,thesis,, ") == ["thesis", "torchcell"]
+    assert parse_root_list(",".join(DEFAULT_PERSONAL_ROOTS)) == list(
+        DEFAULT_PERSONAL_ROOTS
+    )
+
+
+def test_parse_root_list_rejects_an_empty_list() -> None:
+    with pytest.raises(ValueError):
+        parse_root_list(" , ")
+
+
+def test_collection_tree_names_available_roots_when_missing() -> None:
+    lib = _tree_lib(_TREE, {})
+    with pytest.raises(ValueError, match="thesis"):
+        lib.collection_tree("thesis")

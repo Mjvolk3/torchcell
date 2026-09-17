@@ -10,8 +10,11 @@ Covers two sources, matching the union the bibliography is built from
 
 1. named **group** collections (default ``database`` + ``paper`` +
    ``microbe-perturb-seq``), and
-2. the **personal** ``torchcell`` collection tree, walked recursively, which is
-   where new reading is filed first.
+2. the **personal** collection trees, each walked recursively: ``torchcell``
+   (where new reading is filed first) and ``thesis`` (the dissertation's
+   primary-sources, biofoundry-ai and publications collections). The list is
+   ``--personal-root`` (repeatable), else the comma-separated
+   ``ZOTERO_USER_ROOT_COLLECTION``, else ``DEFAULT_PERSONAL_ROOTS``.
 
 Each is diffed against ``<DATA_ROOT>/torchcell-library/`` and any paper present in
 Zotero but missing from the mirror is captured (download PDF -> MinerU OCR ->
@@ -33,13 +36,18 @@ Usage::
     python scripts/lit_sync.py                        # group collections + personal tree
     python scripts/lit_sync.py --collection paper     # just the paper collection (+ tree)
     python scripts/lit_sync.py --no-personal          # group only, the pre-2026.08 behavior
+    python scripts/lit_sync.py --no-group --personal-root thesis   # one personal tree
     python scripts/lit_sync.py --dry-run              # report the gap, capture nothing
     python scripts/lit_sync.py --limit 5              # cap captures (see below)
     python scripts/lit_sync.py --no-ocr               # download only, skip OCR
 
 ``--limit`` is a per-collection cap for the group pass, but a single budget shared
-across the whole personal tree: a 25-collection tree under a per-collection cap
+across each personal tree: a 25-collection tree under a per-collection cap
 would authorize far more MinerU time than a nightly run should take.
+
+A personal root that does not exist in the library is logged as an error for that
+root and the run exits non-zero, after the other roots have been synced: one
+misnamed (or not yet created) tree must not hide the night's captures elsewhere.
 """
 
 import argparse
@@ -61,8 +69,10 @@ from pydantic import SecretStr  # noqa: E402
 from torchcell.literature.backfill import library_root  # noqa: E402
 from torchcell.literature.sync import (  # noqa: E402
     DEFAULT_COLLECTIONS,
+    DEFAULT_PERSONAL_ROOTS,
     SyncMode,
     SyncReport,
+    parse_root_list,
     sync_collection,
     sync_collection_tree,
 )
@@ -137,24 +147,28 @@ def main() -> None:
     parser.add_argument(
         "--no-personal",
         action="store_true",
-        help="Skip the personal torchcell tree; sync the group collections only.",
+        help="Skip the personal collection trees; sync the group collections only.",
     )
     parser.add_argument(
         "--no-group",
         action="store_true",
-        help="Skip the group collections; sync the personal torchcell tree only.",
+        help="Skip the group collections; sync the personal collection trees only.",
     )
     parser.add_argument(
         "--personal-root",
-        default=os.environ.get("ZOTERO_USER_ROOT_COLLECTION", "torchcell"),
+        action="append",
         metavar="NAME",
         help=(
-            "Personal collection tree to sync recursively "
-            "(default: $ZOTERO_USER_ROOT_COLLECTION)."
+            "Personal collection tree to sync recursively; repeatable. Default: "
+            "$ZOTERO_USER_ROOT_COLLECTION (comma-separated), else "
+            f"{','.join(DEFAULT_PERSONAL_ROOTS)}."
         ),
     )
     args = parser.parse_args()
     collections = args.collection or list(DEFAULT_COLLECTIONS)
+    personal_roots = args.personal_root or parse_root_list(
+        os.environ.get("ZOTERO_USER_ROOT_COLLECTION", ",".join(DEFAULT_PERSONAL_ROOTS))
+    )
 
     _acquire_lock()  # held until process exit
 
@@ -172,9 +186,9 @@ def main() -> None:
         _write_report(report, args.dry_run)
         any_failed = any_failed or bool(report.by_mode(SyncMode.FAILED))
 
-    # The personal torchcell tree is where new reading lands first, so a group-only
-    # sync mirrors it late or never. Same mirror, same keys: a paper in both
-    # libraries is captured once and reads `present` on the second pass.
+    # The personal trees are where new reading lands first, so a group-only sync
+    # mirrors them late or never. Same mirror, same keys: a paper filed in several
+    # trees or in both libraries is captured once and reads `present` after that.
     if not args.no_personal:
         user = ZoteroLibrary(
             ZoteroConfig(
@@ -183,16 +197,26 @@ def main() -> None:
                 api_key=SecretStr(os.environ["ZOTERO_API_KEY"]),
             )
         )
-        for report in sync_collection_tree(
-            user,
-            args.personal_root,
-            do_ocr=not args.no_ocr,
-            dry_run=args.dry_run,
-            limit=args.limit,
-            label_prefix="personal:",
-        ):
-            _write_report(report, args.dry_run)
-            any_failed = any_failed or bool(report.by_mode(SyncMode.FAILED))
+        for root in personal_roots:
+            try:
+                reports = sync_collection_tree(
+                    user,
+                    root,
+                    do_ocr=not args.no_ocr,
+                    dry_run=args.dry_run,
+                    limit=args.limit,
+                    label_prefix="personal:",
+                )
+            except ValueError as exc:
+                # collection_key() raises when the root is not in the library,
+                # naming what IS there. Report it and keep going: a tree not yet
+                # created in Zotero must not hide the other trees' captures.
+                log.error("personal root %r not synced: %s", root, exc)
+                any_failed = True
+                continue
+            for report in reports:
+                _write_report(report, args.dry_run)
+                any_failed = any_failed or bool(report.by_mode(SyncMode.FAILED))
 
     # Non-zero exit if any capture failed, so cron mail / logs surface it.
     if any_failed:

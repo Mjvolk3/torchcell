@@ -141,3 +141,35 @@ paper that gains a *new* collection membership after capture keeps a stale
 `collections` list. The mirror is collection-agnostic, so nothing about serving or
 retrieval breaks -- only that provenance field drifts. A `force` backfill is the fix;
 worth a periodic sweep if collection membership is ever used to select papers.
+
+## 2026.09.16 - Personal collection trees become a list; `thesis` joins `torchcell`
+
+The dissertation repo (`~/Documents/projects/thesis`, github `Mjvolk3/thesis`) cites
+from one personal-library tree, `thesis/` (`primary-sources`, `biofoundry-ai`,
+`publications`), pooled behind the manuscript's group `paper` collection. Those papers
+need the same treatment as torchcell's reading, mirror + MinerU OCR + tc-lit search,
+so the nightly sync now walks a LIST of personal roots instead of exactly one.
+
+- `torchcell/literature/sync.py`: `DEFAULT_PERSONAL_ROOTS = ("torchcell", "thesis")`
+  and `parse_root_list()` (comma-separated, trimmed, deduplicated, empty list is a
+  `ValueError`, not a silent no-op).
+- `scripts/lit_sync.py`: `--personal-root` is repeatable; with none given the list
+  comes from `ZOTERO_USER_ROOT_COLLECTION` (now comma-separated), else the default
+  pair. A root that is not in the library is logged as an error for that root and the
+  run exits 1 AFTER the other roots have synced, so one tree not yet created in Zotero
+  cannot hide the night's captures elsewhere. Verified against the live library while
+  `thesis` did not exist yet: `--dry-run --no-group --personal-root thesis` printed
+  `personal root 'thesis' not synced: Zotero collection 'thesis' not found. Available:
+  [...]`, wrote no report, exit 1.
+- `scripts/crontab.txt` + live crontab (GilaHyper): the 03:30 line passes
+  `--personal-root torchcell --personal-root thesis`. The flags ARE the list of
+  personal collections that get MinerU'd; add one flag per tree to mirror more.
+- Same mirror, same keys: a paper filed under both `torchcell/` and `thesis/` is
+  captured once. No server change; tc-lit serves the new keys, `/search`, and the
+  bibs read-through.
+
+Not done here: the `thesis` tree does not exist in Zotero yet (the library is curated
+by hand), so tonight's run logs the error above for that root until it is created.
+`lit_bib_store.py --root-collection` and `lit_bib.py` still take ONE personal root for
+the `library` bib; the thesis repo exports its own bibs with
+`common/zotero_bib_mirror.py`, so tc-lit does not need to serve them.

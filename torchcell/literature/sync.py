@@ -54,6 +54,31 @@ DEFAULT_COLLECTIONS: tuple[str, ...] = (
     MICROBE_PERTURB_SEQ_COLLECTION,
 )
 MANIFEST_FILENAME = "manifest.json"
+# The personal collection trees the nightly sync walks when none are given on the
+# command line. `torchcell` is where new torchcell reading is filed first; `thesis`
+# holds the dissertation's own sources (primary-sources, biofoundry-ai, publications),
+# which are personal-library collections and are mirrored + OCR'd the same way so
+# tc-lit can search them.
+DEFAULT_PERSONAL_ROOTS: tuple[str, ...] = ("torchcell", "thesis")
+
+
+def parse_root_list(value: str) -> list[str]:
+    """``"torchcell, thesis"`` -> ``["torchcell", "thesis"]``.
+
+    The list form of ``ZOTERO_USER_ROOT_COLLECTION``: comma-separated, whitespace
+    around each name ignored, empty names dropped, order kept, duplicates removed
+    (a tree named twice would spend the capture budget twice). Raises ``ValueError``
+    when nothing remains, so an empty variable is a config error rather than a
+    silent no-op.
+    """
+    roots: list[str] = []
+    for raw in value.split(","):
+        name = raw.strip()
+        if name and name not in roots:
+            roots.append(name)
+    if not roots:
+        raise ValueError(f"no personal collection roots in {value!r}")
+    return roots
 
 
 class SyncMode(StrEnum):

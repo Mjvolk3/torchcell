@@ -14,16 +14,19 @@
 # shell so conda/PATH and (optionally) SLACK_CLAUDE_WEBHOOK are present.
 */2 * * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/drain_merge_queue.py >> /tmp/torchcell-drain-merge-queue.log 2>&1'
 
-# literature sync: nightly mirror + MinerU OCR of new papers in the Zotero
-# `database` + `paper` + `microbe-perturb-seq` collections (diff vs
-# $DATA_ROOT/torchcell-library; captures only the new keys, and a key present in
-# more than one collection is captured once). The
-# mirror is served read-through by the tc-lit endpoint, so captured papers appear
-# there with no restart. Self-flocks against on-demand runs. Runs at 03:30 on the
+# literature sync: nightly mirror + MinerU OCR of new papers in the Zotero group
+# `database` + `paper` + `microbe-perturb-seq` collections AND the personal
+# collection trees `torchcell` + `thesis` (the flags below are the list; add a
+# `--personal-root NAME` per tree to mirror). Diff vs $DATA_ROOT/torchcell-library;
+# captures only the new keys, and a key present in more than one collection or
+# library is captured once. The mirror is served read-through by the tc-lit
+# endpoint, so captured papers appear there (keys, /search, /bib) with no restart.
+# A root missing from Zotero is logged as an error and the run exits 1; the other
+# roots still sync. Self-flocks against on-demand runs. Runs at 03:30 on the
 # GPU host so MinerU has the GPUs to itself. `--limit 10` bounds a big-backlog
 # night's GPU time (applied per collection); drop it once the backlog is drained.
 # Writes one JSON report per collection under torchcell-library/_sync_reports/.
-30 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_sync.py --limit 10 >> /tmp/torchcell-lit-sync.log 2>&1'
+30 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_sync.py --limit 10 --personal-root torchcell --personal-root thesis >> /tmp/torchcell-lit-sync.log 2>&1'
 
 # bibliography store: nightly headless Zotero Web API export of every repo-declared
 # bibliography (group `paper` collection, one per notes-tex document, the whole

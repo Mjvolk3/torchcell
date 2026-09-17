@@ -330,3 +330,33 @@ failure mode in miniature; $\alpha$ frozen at 0.1 reads 0.751. The warm start ha
 layer the solve and the anchored layer's constraint set does not keep it. Round 13 repeats
 the warm start on the stoichiometry-only layer, whose box is the GEM's own bounds, so the
 reference is inside it by construction.
+
+\subsection{Where the gradient goes\secstatus{todo}}
+
+Every cell logs a gradient norm per module each epoch, and read across the module arms
+(Figure~\ref{fig:gradflow}) they say which of the three failure modes each arm is in. On
+the forced arms the whole gradient passes through the layer and the layer passes it on:
+the flux layer carries 10 to 40 percent of the summed module norm and the preprocessor's
+norm climbs to 1 to 3, the same level as under the pooled head, so the backbone is
+trained through the layer and the growth column is a trained, free coordinate that ranks
+no better than the head. On the gated arms the layer carries 0.3 to 3 percent, the head
+carries the rest, and the gate drifts to $-0.1$ under constraint scale 0 and to $+0.2$
+with the FBA affine beside it, so the backbone is trained through the MLP and the flux
+path is a small correction. On the warm-started forced arm with $\alpha$ frozen the
+backbone receives no gradient at all: the preprocessor's norm sits at 0.02 to 0.1 for the
+whole run, two orders below every other arm, because the flux is 99 percent a fixed
+reference and only the two parameters of the growth affine train; the cell is the affine
+on the projected reference, and the projection reversed its sign. The warm-started gated
+arms leave the flux path at 0.3 percent of the gradient and push the gate to $-0.8$,
+which is the head learning to subtract a sign-reversed growth column. None of the arms is
+gradient-starved except the one that was meant to be a fixed function, so the module's
+null on this endpoint is not a gradient-flow problem; the gradient reaches the layer, and
+what the layer computes is not growth.
+
+\tcfigfit[1.0]{figures/grad_flow_2026-09-17-00-03-16.pdf}{\textbf{Where the gradient goes on the
+  module arms.} \textbf{a}, The flux layer's share of the summed per-module gradient norm
+  per epoch, seed mean, on every module arm of rounds 4 to 10; solid lines are the forced
+  arms and the pooled reference, dashed the gated arms. \textbf{b}, The preprocessor's
+  gradient norm per epoch, seed mean, on the same arms. \textbf{c}, The gate's value per
+  epoch on the gated arms. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/grad\_flow\_readout.py}.}{fig:gradflow}

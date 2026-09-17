@@ -1,0 +1,13 @@
+{
+  "n_triple_genes": 4352,
+  "n_singles": 5694,
+  "n_triples": 376732,
+  "n_doubles": 13142648,
+  "doubles_any_gene_in_triples": 13004824,
+  "doubles_both_genes_in_triples": 8237726,
+  "doubles_pair_in_some_triple": 739219,
+  "pool_S3any": 13387250,
+  "pool_S3both": 8620152,
+  "pool_S3": 1121645,
+  "note": "S3 (pair inside some triple) is the committed closure arm; S3both and S3any are the looser rules asked for 2026-09-16. Epoch cost scales with the pool; an S0 epoch (376,732 records) is ~12 min on four A100s."
+}

@@ -145,6 +145,17 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "comp",
         ],
     ),
+    # Wave 18 (round 7): the forced growth column on a layer whose bounds hold exactly
+    # (projection ending on the box; the pure box form), against the round-4 forced cell
+    # whose projection ends on the balance and leaves the box open, and the pooled cell.
+    "w18": (
+        [
+            "w14_b32posw200_h12l1p1_e200_s*.json",
+            "w15_bio_s0_h12l1p1_e200_s*.json",
+            "w18_*_e200_s*.json",
+        ],
+        ["b32posw200", "bio_s0", "bioprojbox", "biobox"],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -193,6 +204,8 @@ ARM_LABELS = {
     "codonfba": "codon-frequency backbone + FBA ratios",
     "compfba": "species-LM composite backbone + FBA ratios",
     "comp": "species-LM composite backbone",
+    "bioprojbox": "growth column only, projection ending on the box",
+    "biobox": "growth column only, box parameterization",
 }
 
 

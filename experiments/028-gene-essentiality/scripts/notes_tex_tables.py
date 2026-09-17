@@ -152,6 +152,14 @@ ROUND_CAPTIONS = {
         "ProtT5, CaLM), with and without the FBA affine. Batch 32, class weight, 200 "
         "epochs, seeds 2700 to 2702.",
     ),
+    "w18": (
+        "Round 7, the growth column with the bounds enforced",
+        "The round-3 pooled cell, the round-4 forced growth column (projection ending on "
+        "the balance, box open), and the forced growth column on two layers whose bounds "
+        "hold exactly: the projection ending on the box, and the pure box "
+        "parameterization. Constraint scale 0, batch 32, class weight, 200 epochs, seeds "
+        "2700 to 2702.",
+    ),
 }
 
 

@@ -271,10 +271,15 @@ def growth_probe() -> str | None:
         cell = stem.replace("_h12l1p1", "").replace("_", "\\_")
         for b in probe["blocks"]:
             sp = b["spearman_vs_fba"]
+
+            def rho(v: float) -> str:
+                # A constant column has no rank correlation; the cell says so.
+                return "--" if v != v else f"{v:+.2f}"
+
             rows.append(
                 f"    \\texttt{{{cell}}} & {b['weights']} & {b['growth_median']:.2f} & "
                 f"{b['auroc_train']:.3f} & {b['auroc_val']:.3f} & {b['auroc_test']:.3f} & "
-                f"{sp['shipped']:+.2f} & {sp['YPD']:+.2f} \\\\"
+                f"{rho(sp['shipped'])} & {rho(sp['YPD'])} \\\\"
             )
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"

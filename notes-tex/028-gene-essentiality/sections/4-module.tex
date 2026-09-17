@@ -233,6 +233,47 @@ cell), the growth reaction's floor of zero among them. $v_{\text{growth}}$ is th
 signed, unbounded coordinate the backbone writes through the abundance head, and the
 readout uses it as a free latent. That is the mechanism behind the shuffled-$k_{cat}$
 parity and behind the layer matching the head: the quantity the forced readout reads is
-not growth. Round 7 (jobs 2257 and 2258) puts the forced readout on two layers whose
-bounds hold exactly, the projection ending on the clip and the pure box form, and runs
-the probe on each.
+not growth.
+
+\subsection{Round 7: the growth column with the bounds enforced\secstatus{todo}}
+
+Round 7 (jobs 2257 and 2258, three cells per GPU) puts the forced readout on two layers
+whose bounds hold exactly: the same alternations ending on the clip instead of the
+balance, and the pure box form, $v = \ell + (u - \ell)\,\sigma(z)$, with no projection at
+all. Same cell otherwise, batch 32 with the class weight at 200 epochs, constraint scale
+0, three seeds, paired against the round-4 forced cell and the pooled cell
+(Table~\ref{tab:w18}, Figure~\ref{fig:w18}); the probe runs on every cell
+(Table~\ref{tab:growth-probe}).
+
+\input{tables/round_w18}
+
+\tcfigfit[1.0]{figures/w18_readout_2026-09-16-19-40-51.pdf}{\textbf{Round 7, the growth
+  column with the bounds enforced.} \textbf{a}, Validation AUROC per epoch, one thin line
+  per seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step
+  per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points), the
+  seed mean and the gene bootstrap of the pooled per-gene logits (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the same
+  195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean; the dash-dot line
+  is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w18}.}{fig:w18}
+
+With the clip last, the growth column is zero for every one of the 982 deletions, at
+initialization and after training: the clip pins the growth reaction at its floor, the
+cells score 0.500 exactly on three of three seeds and select epoch 2, and the balance
+residual, the loose end now, is 0.85 to 1.0 of the layer's own turnover. With the box
+form the column lives in $[0, u]$ and starts near $u/2$ (median 45 to 53 mmol/gDW/h
+against a wild-type 0.5); $Sv = 0$ is then never approached, the balance residual reads
+2.0 at every epoch, and the cells score 0.767, 0.609 and 0.785, a seed mean of 0.720
+below the pooled cell's 0.774. The probe on the trained box cells inverts the sign on two
+of three seeds as before (0.23 and 0.22 on the held-out genes, Spearman $-0.25$ and
+$-0.28$ with the solve) and reads 0.61 with $+0.10$ on the third.
+
+The rounds close the module question at the layer rather than at the readout. Whichever
+constraint the layer holds exactly, the other is violated by an amount comparable to the
+fluxes themselves: 58 percent of reactions out of bounds when the balance is exact, a
+balance residual of 0.85 to 2.0 when the bounds are. The alternations never reach the
+polytope that FBA optimizes over, so the growth column is either a free signed
+coordinate, a constant zero, or an unbalanced sigmoid, and none of them is the quantity
+whose optimum over that polytope ranks essential genes at 0.65 on its own and lifts the
+transformer by 0.05. On this endpoint the physics that helps is the solve, and the layer
+would have to reach feasibility before its growth column could carry it.

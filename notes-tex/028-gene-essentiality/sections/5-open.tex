@@ -6,12 +6,12 @@
 \label{sec:open}
 
 \begin{itemize}
-  \item Round 7 (jobs 2257 and 2258): the forced growth column on a layer whose bounds
-    hold exactly (the projection ending on the box; the pure box form), with the growth
-    probe on each. A bounded column that still matches the head and correlates positively
-    with the solve says the layer computes something growth-like and the readout was the
-    problem; a bounded column that collapses says the free coordinate was all the forced
-    arm had.
+  \item The layer's feasibility gap is the module's problem on this endpoint: with
+    balance exact the box is 58 percent violated, with the box exact the balance residual
+    is 0.85 to 2.0. Whether more alternations, Dykstra's correction, or a warm start from
+    the wild-type solve closes the gap enough for the growth column to become growth is
+    the layer question; the essentiality endpoint is the cheap place to test it, since
+    FBA's 0.65 is the number a feasible growth column has to reproduce at initialization.
   \item A solve-derived gene encoding: the per-deletion parsimonious FBA flux vector, or
     the wild-type flux and variability of the gene's own reactions, as a node feature or
     a ladder encoding, since one linear program per gene costs about 10 ms.

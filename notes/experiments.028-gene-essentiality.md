@@ -312,4 +312,24 @@ Example runs, gated + FBA seed 2702 (0.832) and codon seed 2701 (0.682):
 
 The same probe on the round-2 forced cell at constraint scale 0.1 (`w13_fluxbio` seed 2700, 80 epochs, selected epoch 77): trained AUROC(-v) 0.091 / 0.266 / 0.241 on train / val / test, Spearman -0.26 to -0.22 against FBA, median growth -2.4. The flip is the forced readout's habit, not one cell's.
 
-**Round 7 (w18), the growth column with the bounds enforced:** the forced readout at scale 0 on the round-3 levers with `--flux-parameterization projection_box` (the alternations end on the clip, so every bound including the growth reaction's zero floor holds exactly and the balance is the soft residual) and with `box` (v = lb + (ub - lb) sigmoid(z); bounds exact by construction, Sv = 0 soft), three seeds each, paired against the round-4 forced cell (balance-ending projection, 0.772 / 0.781 / 0.778) and the pooled cell. Then the probe on each. Reads: a bounded growth column that still matches the head, and whose trained column correlates positively with the solve, says the layer computes something growth-like and the readout was the problem; a bounded column that collapses says the balance-ending projection's free coordinate was the only thing the forced arm had.>>>> Pre-registered reads are the round-2 ones: not hurt is gated against the pooled cell paired by seed; help is forced above the pooled cell on three of three seeds and above the shuffled control. Round 3 (2224 to 2236) is still draining ahead of it; its partial numbers at 16:40 are b32posw at 80 epochs 0.780 / 0.769 / 0.700, b32posw200 seed 2700 0.780, b32e200 seed 2700 0.766.>
+**Round 7 (w18), the growth column with the bounds enforced:** the forced readout at scale 0 on the round-3 levers with `--flux-parameterization projection_box` (the alternations end on the clip, so every bound including the growth reaction's zero floor holds exactly and the balance is the soft residual) and with `box` (v = lb + (ub - lb) sigmoid(z); bounds exact by construction, Sv = 0 soft), three seeds each, paired against the round-4 forced cell (balance-ending projection, 0.772 / 0.781 / 0.778) and the pooled cell. Then the probe on each. Reads: a bounded growth column that still matches the head, and whose trained column correlates positively with the solve, says the layer computes something growth-like and the readout was the problem; a bounded column that collapses says the balance-ending projection's free coordinate was the only thing the forced arm had.
+
+## 2026.09.16 - Round 7 read: with the bounds enforced the growth column is dead (clip last) or unbalanced (box), and the module question closes at the layer
+
+Packs 2257 (`projection_box`, 28 min) and 2258 (`box`, 24 min). `wave12_readout.py --round w18`; the probe on all six cells (`results/flux_growth_probe_w18_*.json`).
+
+![](./assets/images/028-gene-essentiality/w18_readout_2026-09-16-19-40-51.svg)
+
+| arm (forced readout, scale 0, round-3 levers) | seeds 2700, 2701, 2702 | mean | box violation | balance residual |
+|---|---|---|---|---|
+| projection ending on balance (round 4) | 0.772, 0.781, 0.778 | 0.777 | 0.58 | 0.000 |
+| projection ending on the box | 0.500, 0.500, 0.500 | 0.500 | 0.00 | 0.85 to 1.0 |
+| box form, v = lb + (ub - lb) sigmoid(z) | 0.767, 0.609, 0.785 | 0.720 | 0.00 | 2.0 |
+
+- **Clip last: the growth column is identically zero** for all 982 deletions at init and after training (the clip pins r_2111 at its floor); the cells score exactly 0.5 and select epoch 2.
+- **Box form: growth in [0, ub], starts near ub/2 (median 45 to 53 vs a wild-type 0.5), Sv = 0 never approached** (balance residual 2.0 at every epoch); 0.720 mean, below the pooled cell; the probe flips the sign on 2 of 3 trained seeds (0.23 / 0.22 held-out, Spearman -0.25 / -0.28 vs FBA) and reads 0.61 / +0.10 on the third.
+- **Conclusion across rounds 2, 4, 5, 6, 7 and the probes:** whichever constraint is exact, the other is violated by as much as the fluxes themselves, so the K-alternation layer never reaches the polytope FBA optimizes over; its growth column is a free signed coordinate, a constant zero, or an unbalanced sigmoid, never growth. The module's value on essentiality is the solve's, and the layer has to reach feasibility before its column can carry it. That is a layer question (more alternations, Dykstra, a warm start from the wild-type solve), and essentiality is the cheap place to test it: a feasible growth column must reproduce FBA's 0.65 at initialization.
+
+Example runs, box seed 2701 (0.609) and clip-last seed 2700 (0.500):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/>>>>> Pre-registered reads are the round-2 ones: not hurt is gated against the pooled cell paired by seed; help is forced above the pooled cell on three of three seeds and above the shuffled control. Round 3 (2224 to 2236) is still draining ahead of it; its partial numbers at 16:40 are b32posw at 80 epochs 0.780 / 0.769 / 0.700, b32posw200 seed 2700 0.780, b32e200 seed 2700 0.766.>

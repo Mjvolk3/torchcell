@@ -249,6 +249,16 @@ ROUND_CAPTIONS = {
         "one-hot), all with the FBA affine. Width 12, one block, batch 32, class weight, "
         "200 epochs, seeds 2700 to 2702.",
     ),
+    "w26": (
+        "Round 15, the layer that solves",
+        "The pooled cell, the round-4 forced and gated growth columns and the round-5 "
+        "FBA affine, against a flux layer whose flux is the growth optimum of a linear "
+        "program under the layer's own bounds (availability and the enzyme-capacity "
+        "ceiling from the abundance head), with the bound duals as its gradient: the "
+        "forced growth column, the same with the box tightened to the second-law "
+        "direction before the solve, and the gated column with the context head. "
+        "Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

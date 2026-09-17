@@ -244,6 +244,19 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["fba", "chromfba", "chromprotfba", "nchromfba", "nchromprotfba"],
     ),
+    # Round 15: the layer that solves (growth LP under the layer's bounds, duals as the
+    # gradient), forced and gated, with and without the second-law box, against the
+    # pooled cell, the round-4 forced and gated columns, and the round-5 affine.
+    "w26": (
+        [
+            "w14_b32posw200_h12l1p1_e200_s*.json",
+            "w15_bio_s0_h12l1p1_e200_s*.json",
+            "w15_gate_s0_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w26_*_e200_s*.json",
+        ],
+        ["b32posw200", "bio_s0", "gate_s0", "fba", "lpbio", "lpbiotdg", "lpgate"],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -318,6 +331,9 @@ ARM_LABELS = {
     "chromprotcv4": "chrom-pathway + ProtT5 + FBA ratios, fold 4",
     "nchromfba": "gene properties + chromosome backbone + FBA ratios",
     "nchromprotfba": "gene properties + chromosome + ProtT5 backbone + FBA ratios",
+    "lpbio": "growth column, the layer that solves",
+    "lpbiotdg": "growth column, the layer that solves, second-law box",
+    "lpgate": "gated column + context, the layer that solves",
 }
 
 

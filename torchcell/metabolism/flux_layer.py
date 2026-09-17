@@ -261,6 +261,7 @@ from torchcell.metabolism.constraints import (
     ThermoMode,
     null_space_basis,
 )
+from torchcell.metabolism.lp_layer import GrowthLPSolver, growth_lp
 from torchcell.metabolism.parameters import (
     EXPERIMENTAL_SOURCES,
     ParameterProvenance,
@@ -1027,6 +1028,16 @@ def parse_parameterization(raw: str, default_steps: int) -> ParameterizationSpec
     """
     if raw in {"box", "nullspace"}:
         return ParameterizationSpec(kind=raw, projection_steps=default_steps, raw=raw)
+    if raw in {"lp", "lp_tdg"}:
+        # The layer that solves: the growth optimum under the layer's own bounds, with
+        # the bound duals as its gradient (torchcell.metabolism.lp_layer). `_tdg`
+        # tightens the box to the licensed direction before the solve.
+        return ParameterizationSpec(
+            kind="lp",
+            projection_steps=default_steps,
+            thermo_box=raw.endswith("_tdg"),
+            raw=raw,
+        )
     warm = _WARMSTART_PATTERN.match(raw)
     if warm is not None:
         warm_steps = default_steps if warm.group(1) is None else int(warm.group(1))
@@ -1895,7 +1906,8 @@ class FluxLayer(nn.Module):
             else spec.thermo_box_margin_kj
         )
         if self.thermo_box and not (
-            spec.kind == "projection" and self.projection_end == "box"
+            (spec.kind == "projection" and self.projection_end == "box")
+            or spec.kind == "lp"
         ):
             raise ValueError(
                 "thermo_box needs parameterization='projection...' ending on the box "
@@ -1938,6 +1950,14 @@ class FluxLayer(nn.Module):
                 "the reaction energy licenses, which needs ThermoMode.ANCHORED (got "
                 f"{self.thermo_mode}). Use 'warmstart_k<N>_box' when there is no table."
             )
+        self.lp_solver: GrowthLPSolver | None = None
+        if spec.kind == "lp":
+            if gem.biomass_index is None:
+                raise ValueError(
+                    "parameterization='lp' maximizes the GEM's objective column, and this "
+                    "GEM declares none; build_gem_tensors takes biomass_id."
+                )
+            self.lp_solver = GrowthLPSolver(gem.s, int(gem.biomass_index))
         if spec.kind in {"nullspace", "projection", "fluxforce", "warmstart"}:
             if null_space is None:
                 if spec.kind == "nullspace":
@@ -3264,6 +3284,15 @@ class FluxLayer(nn.Module):
                 v = torch.minimum(torch.maximum(v, lb_force), ub_force)
             out_of_box = torch.relu(v - ub) + torch.relu(lb - v)
             box_penalty = (out_of_box / cfg.flux_scale).mean()
+        elif self.parameterization == "lp":
+            # THE SOLVE. No proposal, no latent, no alternation: the flux is the growth
+            # optimum over the polytope the bounds define, and the backbone reaches the
+            # prediction only through those bounds (availability and capacity), with the
+            # gradient the bound duals give. The box holds by construction and the
+            # balance to the solver's tolerance, so both penalties are identically zero.
+            assert self.lp_solver is not None
+            v = growth_lp(lb, ub, self.lp_solver)
+            box_penalty = v.new_zeros(())
         elif self.parameterization in {"nullspace", "projection"}:
             # Mass balance is exact here, for any latent: S (N z) = (S N) z = 0.
             #

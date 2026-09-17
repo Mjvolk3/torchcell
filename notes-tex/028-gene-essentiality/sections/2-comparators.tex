@@ -171,5 +171,10 @@ indicator alone beside ProtT5 lifts the MLP to 0.817 and the convolution to 0.85
 ratios alone to 0.803 and 0.832. On this endpoint, then, the three inputs carry the
 number and the architectures on top of them are level: a two-layer MLP, graph
 convolution over the nine graphs, and the perturbed-graph transformer read 0.87 to
-0.88 per cell from the same inputs, and the 0.893 the transformer reports is its
-five-fold ensemble, an averaging the MLP and the convolution have not been given.
+0.88 per cell from the same inputs. Given the transformer's own averaging, five fold
+models on the cross-validation files with their logits averaged on the held-out genes,
+the MLP reads 0.886 [0.82, 0.94] from fold models of 0.870 to 0.892, and the
+convolution at 400 epochs 0.888 [0.83, 0.93] from fold models of 0.807 to 0.897
+(\texttt{graph\_baselines.py --arms folds}), against the transformer's 0.893 [0.84,
+0.94]. Three ensembles within 0.007 of one another, each inside the others' intervals,
+are one number at the resolution of 195 genes, and the MLP's costs thirty seconds.

@@ -286,9 +286,11 @@ gain is accounted for by an input the ontology computes for every gene at no tra
 cost: the four solver numbers (0.774 to 0.821 on the seed mean) and the pathway
 indicator concatenated with the protein embedding (0.821 to 0.869). The inputs are the
 number: a two-layer MLP on the same three inputs, with no graph and no perturbation,
-reads 0.870 per cell in six seconds of CPU (Section~\ref{sec:comparators}), so what
-the transformer's architecture adds on this endpoint is not measurable on 195 genes, and
-the 0.893 is the fold ensemble's averaging, which the MLP has not been given.
+reads 0.870 per cell in six seconds of CPU and 0.886 [0.82, 0.94] as a fold ensemble
+(Section~\ref{sec:comparators}), so what the transformer's architecture adds on this
+endpoint is not measurable on 195 genes. The 0.893 is reported as the document's number
+because it is the cell the rounds selected under the fixed reads; the MLP's 0.886 and
+the graph convolution's 0.888 are the same number.
 
 \subsection{Round 11: the affine widened with the solve\secstatus{todo}}
 

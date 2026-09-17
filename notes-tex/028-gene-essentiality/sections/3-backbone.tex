@@ -346,3 +346,32 @@ level. The 173 pathway columns are what lifts the cell from 0.82 to 0.87, and th
 it only with ProtT5 beside them: the full indicator alone reads 0.78 (round 9). A
 gene's pathway membership and its protein sequence are complementary inputs on this
 endpoint, and each is cheap.
+
+\subsection{Round 16: the round-9 backbone with the round-11 affine\secstatus{todo}}
+
+Round 16 (jobs 2309 and 2310) puts the widened affine on the round-9 backbone: the
+chromosome-pathway indicator with ProtT5, and the four ratios with the eight statistics
+and the deletion flux vector on the logit, and the same without the statistics, three
+seeds each, against round 9 (Table~\ref{tab:w27}, Figure~\ref{fig:w27}).
+
+\input{tables/round_w27}
+
+\tcfigfit[1.0]{figures/w27_readout_2026-09-17-01-56-08.pdf}{\textbf{Round 16, the round-9
+  backbone with the round-11 affine.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch
+  step per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points),
+  the seed mean and the gene bootstrap of the pooled per-gene logits (square with
+  interval), beside FBA on four media, Flux Cone Learning and the released FBA predictions
+  on the same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean. Written
+  by \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w27}.}{fig:w27}
+
+The two gains add, by a little. With the statistics and the vector the cell reads 0.863,
+0.878 and 0.898 against round 9's 0.860, 0.866 and 0.888, up by 0.003, 0.012 and 0.010
+on three of three seeds, a seed mean of 0.880 with a spread of 0.018 and a pooled
+bootstrap of 0.889 [0.83, 0.94]. The step is a fifth of the one the indicator gave and
+inside the seed spread, so it is the direction rather than the size that holds. Without
+the statistics the vector alone reads 0.769, 0.812 and 0.902, two seeds selecting
+epochs 6 and 13, the instability round 11 showed on the ProtT5 backbone, and the same
+cure. Round 17 runs the passing cell on the five folds, with the read fixed first: its
+ensemble replaces the round-12 ensemble's 0.893 as the reported number only if its fold
+models are above round 12's on at least four of the five folds; otherwise 0.893 stands.

@@ -230,6 +230,15 @@ ESS_READOUTS_WITH_FBA = (
 #: order the ladder uses them.
 FBA_PER_GENE_CSV = osp.join(RESULTS_DIR, "fba_essentiality_per_gene.csv")
 FBA_MEDIA = ("shipped", "SM", "SC", "YPD")
+#: Per-gene solve-derived features from `ess_reference_flux_table.py`, appended to the
+#: affine's table under `--ess-solve-features`: the eight statistics of the wild-type pFBA
+#: solve and its variability on the gene's own reactions (`stats`), the deletion's own
+#: pFBA flux vector (`pfba`, 4,131 columns), or both. Each column is standardized over the
+#: genes the file covers; a gene it does not cover reads the column mean (0).
+SOLVE_ENCODINGS_NPZ = osp.join(
+    DATA_ROOT, "data/torchcell/reference_flux/ess_solve_encodings_YPD.npz"
+)
+ESS_SOLVE_FEATURES = ("none", "stats", "pfba", "stats_pfba")
 
 #: WAVE 7 (2026-09-11). The two mechanistic amino-acid readouts, named so a result file says
 #: which one it ran rather than leaving it to be inferred from the arm.
@@ -1047,6 +1056,16 @@ class BxCell(BaseModel):
         description=(
             "The FBA media whose growth ratios the fba readouts carry, in this order; "
             "the default is all four."
+        ),
+    )
+    ess_solve_features: str = Field(
+        default="none",
+        description=(
+            "Solve-derived per-gene columns appended to the fba readouts' affine table "
+            "after the media ratios: 'stats' (eight wild-type pFBA and FVA statistics of "
+            "the gene's reactions), 'pfba' (the deletion's own pFBA flux vector, 4,131 "
+            "columns), 'stats_pfba' (both), from ess_reference_flux_table.py. 'none' is "
+            "the four ratios alone, bit-identical to round 5."
         ),
     )
     ib_readout: str = Field(
@@ -2132,6 +2151,7 @@ def build_cell(
     split_file: str | None = None,
     ess_readout: str = ESS_READOUT_BIOMASS,
     ess_fba_media: list[str] | None = None,
+    ess_solve_features: str = "none",
     node_embeddings: list[str] | None = None,
     pos_weight_balanced: bool = False,
 ) -> BxCell:
@@ -2228,6 +2248,7 @@ def build_cell(
         split_file=split_file,
         ess_readout=ess_readout,
         ess_fba_media=list(ess_fba_media) if ess_fba_media else list(FBA_MEDIA),
+        ess_solve_features=ess_solve_features,
         node_embeddings=(
             list(node_embeddings) if node_embeddings else list(STRONG_NODE_EMBEDDINGS)
         ),
@@ -3580,6 +3601,69 @@ def fba_growth_table(
     return table, known, meta
 
 
+def solve_feature_table(
+    gene_ids: list[str], kind: str
+) -> tuple[torch.Tensor, torch.Tensor, tuple[str, ...], dict[str, Any]]:
+    """``([n_genes, k], [n_genes] bool, column names, meta)``: solve-derived features.
+
+    Read from ``SOLVE_ENCODINGS_NPZ`` in cell-graph gene order and standardized per column
+    over the genes the file covers, as the ladder standardizes them; a gene the file does
+    not cover reads 0 in every column under a False flag.
+    """
+    assert kind in ESS_SOLVE_FEATURES and kind != "none", kind
+    payload = np.load(SOLVE_ENCODINGS_NPZ, allow_pickle=False)
+    genes = [str(g) for g in payload["genes"]]
+    blocks: list[np.ndarray] = []
+    names: list[str] = []
+    if kind in ("stats", "stats_pfba"):
+        blocks.append(payload["gene_flux_stats"])
+        names += [f"stat_{s}" for s in payload["stat_names"]]
+    if kind in ("pfba", "stats_pfba"):
+        blocks.append(payload["v_deletion"])
+        names += [f"pfba_{r}" for r in payload["rxn_ids"]]
+    raw = np.concatenate(blocks, axis=1).astype(np.float32)
+    mean = raw.mean(axis=0, keepdims=True)
+    std = raw.std(axis=0, keepdims=True)
+    std[std < 1e-8] = 1.0
+    standardized = (raw - mean) / std
+    row_of = {g: i for i, g in enumerate(genes)}
+    table = torch.zeros(len(gene_ids), raw.shape[1])
+    known = torch.zeros(len(gene_ids), dtype=torch.bool)
+    for i, gene in enumerate(gene_ids):
+        if gene in row_of:
+            table[i] = torch.from_numpy(standardized[row_of[gene]])
+            known[i] = True
+    meta = {
+        "source": SOLVE_ENCODINGS_NPZ,
+        "kind": kind,
+        "n_columns": int(raw.shape[1]),
+        "n_genes_with_solve": int(known.sum()),
+        "note": (
+            "columns standardized over the genes the file covers; uncovered genes read "
+            "the column mean (0) and are flagged."
+        ),
+    }
+    return table, known, tuple(names), meta
+
+
+def affine_table(
+    cell: BxCell, gene_ids: list[str]
+) -> tuple[torch.Tensor, torch.Tensor, tuple[str, ...], dict[str, Any]]:
+    """The fba readouts' per-gene table: the media ratios, then any solve features."""
+    media = tuple(cell.ess_fba_media)
+    table, known, meta = fba_growth_table(gene_ids, media)
+    columns: tuple[str, ...] = media
+    if cell.ess_solve_features != "none":
+        s_table, s_known, s_names, s_meta = solve_feature_table(
+            gene_ids, cell.ess_solve_features
+        )
+        table = torch.cat([table, s_table], dim=1)
+        known = known & s_known
+        columns = media + s_names
+        meta = {"fba": meta, "solve": s_meta, "n_columns": len(columns)}
+    return table, known, columns, meta
+
+
 def deleted_gene_ratios(batch: Any, table: torch.Tensor) -> torch.Tensor:
     """``[B, m]`` rows of ``table`` for each genotype's single deleted gene; ones otherwise.
 
@@ -3626,9 +3710,19 @@ class FbaAffine(nn.Module):
         return cast(torch.Tensor, self.linear(ratios).reshape(like.shape))
 
     def weights(self) -> dict[str, float]:
-        """``ess_fba_w_<medium>`` -> weight, for the epoch row."""
-        w = self.linear.weight.detach().reshape(-1).tolist()
-        return {f"ess_fba_w_{m}": float(v) for m, v in zip(self.media, w, strict=True)}
+        """``ess_fba_w_<column>`` -> weight, for the epoch row.
+
+        With more than 16 columns (the pFBA vector) only the first 16 are written by
+        name, plus the norm of the whole weight vector as ``ess_fba_w_norm``.
+        """
+        w = self.linear.weight.detach().reshape(-1)
+        out = {
+            f"ess_fba_w_{m}": float(v)
+            for m, v in zip(self.media[:16], w[:16].tolist(), strict=True)
+        }
+        if len(self.media) > 16:
+            out["ess_fba_w_norm"] = float(w.norm())
+        return out
 
 
 class FbaContextReadout(nn.Module):
@@ -4768,8 +4862,7 @@ def build_model_for_cell(
         )
         wrapped_ess: FluxBiomassReadout
         if cell.ess_readout in ESS_READOUTS_WITH_FBA:
-            fba_media = tuple(cell.ess_fba_media)
-            fba_table, fba_known, fba_meta = fba_growth_table(gene_ids, fba_media)
+            fba_table, fba_known, fba_media, fba_meta = affine_table(cell, gene_ids)
             flux_meta["essentiality"]["fba"] = fba_meta
             if cell.ess_readout == ESS_READOUT_BIOMASS_FBA:
                 wrapped_ess = BiomassFbaReadout(
@@ -4795,8 +4888,7 @@ def build_model_for_cell(
 
     if main_head == ESSENTIALITY_HEAD and cell.ess_readout == ESS_READOUT_FBA:
         assert not arm["flux"]
-        fba_media = tuple(cell.ess_fba_media)
-        fba_table, fba_known, fba_meta = fba_growth_table(gene_ids, fba_media)
+        fba_table, fba_known, fba_media, fba_meta = affine_table(cell, gene_ids)
         flux_meta["essentiality"] = {
             "readout": cell.ess_readout,
             "fba": fba_meta,
@@ -6389,6 +6481,16 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--ess-solve-features",
+        default="none",
+        choices=ESS_SOLVE_FEATURES,
+        help=(
+            "Solve-derived per-gene columns appended to the fba readouts' affine after "
+            "the media ratios: stats (eight wild-type pFBA/FVA statistics of the gene's "
+            "reactions), pfba (the deletion's own pFBA flux vector), or both."
+        ),
+    )
+    parser.add_argument(
         "--pos-weight-balanced",
         action="store_true",
         help=(
@@ -6863,6 +6965,7 @@ def main() -> None:
         split_file=args.split_file,
         ess_readout=args.ess_readout,
         ess_fba_media=args.ess_fba_media,
+        ess_solve_features=args.ess_solve_features,
         node_embeddings=args.node_embeddings,
         pos_weight_balanced=args.pos_weight_balanced,
     )

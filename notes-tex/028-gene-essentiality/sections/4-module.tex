@@ -512,6 +512,49 @@ solves therefore needs two more things the rounds name: bounds the genes own tha
 at the optimum (the capacity ceilings, once calibrated to admit growth), and a barrier
 that keeps the program feasible under training.
 
+\subsection{Round 15c: the layer that solves with calibrated capacity ceilings\secstatus{todo}}
+
+Round 15c (jobs 2316 to 2318) runs the solve on the anchored box with the capacity
+ceilings scaled by 100 and by 1,000, the range the calibration put growth in with the
+ceilings still binding, gated at both scales and forced at 100, three seeds each
+(Table~\ref{tab:w30}, Figure~\ref{fig:w30}). Bounds the genes own now bind at the
+optimum: the layer reports 3 to 8 percent of reactions at their capacity ceiling at the
+selected epoch, against zero on the GEM box.
+
+\input{tables/round_w30}
+
+\tcfigfit[1.0]{figures/w30_readout_2026-09-17-08-10-01.pdf}{\textbf{Round 15c, the layer
+  that solves with calibrated capacity ceilings.} \textbf{a}, Validation AUROC per epoch,
+  one thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w30}.}{fig:w30}
+
+The forced column carries the prediction alone on one seed. At scale 100 seed 2701
+starts with 87 percent of its genotypes infeasible, is pulled back to none by epoch 50
+by the gradient from the feasible rows, selects epoch 29 and reads 0.8425 on the
+held-out genes: the growth column of a linear program under learned enzyme ceilings,
+with no context head and no appended ratio, at the level of the affine (0.821) and of
+the round-9 backbone's seeds, 0.17 above FBA's own ranking on the same genes. The other
+two seeds enter the absorbing state within five epochs, 97 percent of genotypes
+infeasible from then on, and read 0.500. The probe at initialization reads the column at
+0.730 with a Spearman of $+0.49$ to $+0.55$ against the solve, the same start as the
+GEM box's. The gated cells stay feasible for every genotype throughout and read 0.820,
+0.795 and 0.786 at scale 100 and 0.809, 0.786 and 0.791 at 1,000, three of three seeds
+above the round-4 gated cell at both scales, with gates ending between $+0.05$ and
+$+1.04$, but below the GEM box's 0.824 and the affine's 0.821, so the calibrated
+ceilings cost the gated cell 0.02 to 0.03 against the plain box while binding.
+
+What the one seed shows is the module's upper bound so far: the solve with learned
+capacity ceilings is a 0.84 ranker on its own, and the physics is doing it, since the
+column is growth (10 percent of deletions at exactly zero, the lethal ones) and the
+ceilings bind. What the other two show is that the linear program's infeasible region
+is absorbing under gradient descent on its bounds, which round 15d tests with more slack
+and a smaller step.
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

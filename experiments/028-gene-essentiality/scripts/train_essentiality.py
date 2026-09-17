@@ -2114,6 +2114,7 @@ def build_cell(
     flux_log_c_init_path: str | None = None,
     flux_availability_fold: str = "softmin",
     flux_shuffle_kcat_seed: int | None = None,
+    flux_parameterization: str | None = None,
     flux_reference_table: str | None = None,
     flux_alpha_frozen: bool = False,
     flux_warm_start_init_rel: float = 0.01,
@@ -2261,9 +2262,11 @@ def build_cell(
         bx_readout=bx_readout,
         conc_lower_m=conc_lower_m,
         conc_upper_m=conc_upper_m,
-        # The channel comes from the arm FILE, which is where a parameterization belongs;
-        # the environment variable is read only when no arm file names one.
-        flux_parameterization=armcfg.flux_parameterization,
+        # The channel comes from the arm FILE, which is where a parameterization belongs,
+        # unless the command line names one (round 7 moves it per cell to test the box-
+        # ending projection against the balance-ending one); the environment variable is
+        # read only when neither names one.
+        flux_parameterization=flux_parameterization or armcfg.flux_parameterization,
         flux_balance_active_row_set=armcfg.flux_balance_active_row_set,
         flux_density_weight=flux_density_weight,
         flux_balance_active_weight=flux_balance_active_weight,
@@ -6701,6 +6704,16 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--flux-parameterization",
+        default=None,
+        help=(
+            "Override the arm file's flux parameterization for this cell: box, nullspace, "
+            "projection[_k<N>][_balance|_box][_tdg][_dykstra], ... (see "
+            "torchcell.metabolism.flux_layer.parse_parameterization). The arm file's value "
+            "stands when unset."
+        ),
+    )
+    parser.add_argument(
         "--flux-shuffle-kcat",
         dest="flux_shuffle_kcat_seed",
         type=int,
@@ -6828,6 +6841,7 @@ def main() -> None:
         flux_log_c_init_path=args.flux_log_c_init_path,
         flux_availability_fold=args.flux_availability_fold,
         flux_shuffle_kcat_seed=args.flux_shuffle_kcat_seed,
+        flux_parameterization=args.flux_parameterization,
         flux_reference_table=args.flux_reference_table,
         flux_alpha_frozen=args.flux_alpha_frozen,
         flux_warm_start_init_rel=args.flux_warm_start_init_rel,

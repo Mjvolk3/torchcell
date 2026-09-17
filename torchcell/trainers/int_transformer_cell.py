@@ -207,6 +207,8 @@ class RegressionTask(L.LightningModule):
             int, dict[str, float | int]
         ] = {}  # {layer_idx: {"entropy_sum": float, "effective_rank_sum": float, "top5_sum": float, "top10_sum": float, "top50_sum": float, "count": int}}
         self.gradient_norms: dict[int, float] = {}  # {layer_idx: norm_value}
+        #: Rows masked by `_coo_label` because they carried two values of one label.
+        self.coo_conflict_rows: dict[str, int] = {}
 
         # Residual update accumulators (Tier 1 - very cheap)
         self.residual_update_accumulators: dict[
@@ -221,8 +223,16 @@ class RegressionTask(L.LightningModule):
         Returns ``[batch_size, 1]`` with NaN where a row carries no value of that
         label. Rows come from ``phenotype_values_batch`` (``follow_batch``), NOT from
         ``phenotype_sample_indices``, which indexes experiments WITHIN a genotype and
-        is not offset across the batch. A row carrying two values of one label raises
-        rather than silently keeping the last one written.
+        is not offset across the batch.
+
+        A row carrying TWO values of one label is a data conflict, not a duplicate to
+        average: in the 025 build three single-deletion genotypes (YPL212C, YHL047C,
+        YKL117W) carry a measured Costanzo 2016 fitness near 1.0 beside a SynthLethDB
+        single-gene record at 0.0 (found by the S3 closure cell, IGB job 2408791,
+        2026-09-17). Such a row is masked (NaN, so it contributes no loss and no metric)
+        and counted in ``coo_conflict_rows``; the mean of 1.0 and 0.0 would be a value
+        nobody measured. Until 2026-09-17 this raised, which took the whole DDP job down
+        through an NCCL timeout on the other ranks.
         """
         gene = batch["gene"]
         types = gene.phenotype_types
@@ -232,11 +242,25 @@ class RegressionTask(L.LightningModule):
         sel = gene.phenotype_type_indices == types.index(label)
         rows = gene.phenotype_values_batch[sel]
         vals = values[sel]
-        if rows.unique().numel() != rows.numel():
-            raise ValueError(f"{label}: a batch row carries more than one value")
         out = torch.full(
             (batch_size,), float("nan"), device=vals.device, dtype=vals.dtype
         )
+        counts = torch.bincount(rows, minlength=batch_size)
+        conflict = counts > 1
+        if bool(conflict.any()):
+            n_conflict = int(conflict.sum())
+            self.coo_conflict_rows[label] = (
+                self.coo_conflict_rows.get(label, 0) + n_conflict
+            )
+            if self.coo_conflict_rows[label] == n_conflict:
+                print(
+                    f"[coo] {label}: {n_conflict} batch row(s) carry more than one "
+                    "value and are masked out of the loss and every metric "
+                    "(counted in coo_conflict_rows)",
+                    flush=True,
+                )
+            keep = ~conflict[rows]
+            rows, vals = rows[keep], vals[keep]
         out[rows] = vals
         return out.unsqueeze(1)
 

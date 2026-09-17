@@ -226,8 +226,13 @@ def round_table(round_key: str) -> str | None:
             f"{pooled} & {epochs} & {a['median_abs_step_mean']:.4f} \\\\"
         )
     short, long = ROUND_CAPTIONS[round_key]
+    # The seven columns fit the 182 mm block at \footnotesize up to arm labels of about
+    # 50 characters; a round with longer labels (the warm-start arms) drops one size
+    # rather than run 5 mm past the text block, which `make check` flags.
+    longest = max(len(a["label"]) for a in report["arms"])
+    size = "\\scriptsize" if longest > 50 else "\\footnotesize"
     body = (
-        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        f"\\begin{{table}}[H]\n  \\centering\n  {size}\n"
         f"  \\caption[{short}]{{{short}. {long}}}\n  \\label{{tab:{round_key}}}\n"
         "  \\begin{tabular}{@{}lrrlllr@{}}\n    \\hline\n"
         "    arm & mean & sd & seeds & pooled [95\\% CI] & selected epochs & val step \\\\\n"

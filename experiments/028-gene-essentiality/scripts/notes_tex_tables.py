@@ -292,6 +292,13 @@ ROUND_CAPTIONS = {
         "and gated. Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 "
         "to 2702.",
     ),
+    "w31": (
+        "Round 15d, the forced layer that solves against the absorbing state",
+        "The pooled cell, the round-5 FBA affine and the round-15c forced cell at "
+        "capacity scale 100, against the same cell at scale 1,000 and at scale 100 with "
+        "the learning rate at $3 \\times 10^{-4}$. Constraint scale 0, batch 32, class "
+        "weight, 200 epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

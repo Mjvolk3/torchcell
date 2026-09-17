@@ -287,6 +287,17 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "lpcapgate1000",
         ],
     ),
+    # Round 15d: the forced layer that solves against the absorbing infeasible state,
+    # with more capacity slack and with a third of the learning rate.
+    "w31": (
+        [
+            "w14_b32posw200_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w30_lpcapbio100_h12l1p1_e200_s*.json",
+            "w31_*_e200_s*.json",
+        ],
+        ["b32posw200", "fba", "lpcapbio100", "lpcapbio1000", "lpcapbio100lr"],
+    ),
     # Round 16: the round-9 backbone with the round-11 affine.
     "w27": (
         [
@@ -402,6 +413,8 @@ ARM_LABELS = {
     "lpcapbio100": "growth column, the layer that solves, capacity x100",
     "lpcapgate100": "gated column + context, the layer that solves, capacity x100",
     "lpcapgate1000": "gated column + context, the layer that solves, capacity x1000",
+    "lpcapbio1000": "growth column, the layer that solves, capacity x1000",
+    "lpcapbio100lr": "growth column, the layer that solves, capacity x100, lr 3e-4",
     "chromprotpfba": "chrom-pathway + ProtT5 backbone + FBA ratios + pFBA vector",
     "chromprotstatspfba": "chrom-pathway + ProtT5 backbone + ratios + statistics + pFBA",
     "cspcv0": "chrom-pathway + ProtT5 + widened affine, fold 0",

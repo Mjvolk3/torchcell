@@ -73,17 +73,21 @@ flowchart LR
 flowchart LR
   G["$$\begin{gathered}\text{Genotype}\\\ \text{(deleted gene)}\end{gathered}$$"] --> B["$$\begin{gathered}\text{CGT backbone}\\\ \text{context } h\end{gathered}$$"]
   B --> H["$$\ell_0 = \mathrm{MLP}(h)$$"]
-  B --> E["$$\begin{gathered}E_g = \gamma_g E^0_g\\\ \times\, e^{r\tanh(w^\top h_g)}\end{gathered}$$"]
-  E --> V["$$\begin{gathered}\text{flux layer}\\\ v = \Pi_{Sv=0}(\cdots)\end{gathered}$$"]
-  V --> A["$$a\,v_{\text{growth}} + b$$"]
-  A --> S["$$\begin{gathered}\ell = \ell_0 + g\,(a\,v_{\text{growth}} + b)\\\ g_0 = 0,\ g \text{ logged}\end{gathered}$$"]
+  B --> E["$$\begin{gathered}E_g = \gamma_g E^0_g\\\ \times\, e^{r\tanh(w^\top h_g)}\\\ \gamma_g = 0 \text{ if deleted}\end{gathered}$$"]
+  K["$$k_{cat}\ \text{table}$$"] --> CAP
+  E --> CAP["$$\begin{gathered}\mathrm{cap}_j =\\\ \sum_{u \in \mathrm{GPR}(j)} k_{cat,u} E_u\end{gathered}$$"]
+  GEM["$$\begin{gathered}\text{Yeast9 GEM}\\\ S,\ [\ell_j, u_j],\ \text{GPR}\end{gathered}$$"] --> V
+  CAP --> V["$$\begin{gathered}v = \Pi_{Sv=0}\big(\mathrm{clip}(v_z)\big)\\\ \text{bounds } \ell_j, u_j, \pm\mathrm{cap}_j\\\ K \text{ alternations}\end{gathered}$$"]
+  V --> S["$$\begin{gathered}\ell = \ell_0 + g\,(a\,v_{\text{growth}} + b)\\\ v_{\text{growth}} = v_{r\_2111}\\\ g_0 = 0,\ g \text{ logged}\end{gathered}$$"]
   H --> S
   S --> L["$$\mathrm{BCE}(\ell,\ y)$$"]
   style G fill:#FFFFFF,stroke:#666666
   style B fill:#FFE6CC,stroke:#D79B00
   style E fill:#FFE6CC,stroke:#D79B00
+  style GEM fill:#E1D5E7,stroke:#9673A6,stroke-dasharray:4 3
+  style K fill:#FFF2CC,stroke:#D6B656,stroke-dasharray:4 3
+  style CAP fill:#FFF2CC,stroke:#D6B656
   style V fill:#FFF2CC,stroke:#D6B656
-  style A fill:#FFF2CC,stroke:#D6B656
   style H fill:#F8CECC,stroke:#B85450
   style S fill:#F8CECC,stroke:#B85450
   style L fill:#F8CECC,stroke:#B85450

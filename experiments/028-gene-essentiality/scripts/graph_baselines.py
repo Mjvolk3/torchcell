@@ -147,7 +147,8 @@ def gene_graphs() -> tuple[list[str], dict[str, nx.Graph]]:
     return gene_ids, out
 
 
-def prot_t5(gene_ids: list[str]) -> np.ndarray:
+def embedding(name: str, gene_ids: list[str]) -> np.ndarray:
+    """One registry embedding per gene in cell-graph order; zeros where absent."""
     from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -164,14 +165,27 @@ def prot_t5(gene_ids: list[str]) -> np.ndarray:
         genome=genome,
     )
     built = NodeEmbeddingBuilder.build(
-        embedding_names=["prot_T5_all"], data_root=DATA_ROOT, genome=genome, graph=graph
-    )["prot_T5_all"]
+        embedding_names=[name], data_root=DATA_ROOT, genome=genome, graph=graph
+    )[name]
     table = {
         item.id: torch.cat([t.flatten() for t in item.embeddings.values()]).numpy()
         for item in built
     }
     dim = next(iter(table.values())).shape[0]
     return np.stack([table.get(g, np.zeros(dim, dtype=np.float32)) for g in gene_ids])
+
+
+def fba_ratios(gene_ids: list[str]) -> np.ndarray:
+    """The four FBA growth ratios per gene from the baseline's table; 1.0 where absent."""
+    import csv
+
+    path = osp.join(RESULTS, "fba_essentiality_per_gene.csv")
+    with open(path, newline="") as fh:
+        table = {
+            r["gene"]: [float(r[m]) for m in ("shipped", "SM", "SC", "YPD")]
+            for r in csv.DictReader(fh)
+        }
+    return np.array([table.get(g, [1.0] * 4) for g in gene_ids], dtype=np.float32)
 
 
 def structural(g: nx.Graph, gene_ids: list[str]) -> np.ndarray:
@@ -203,6 +217,7 @@ def run_arm(
     split: dict,
     index: dict[str, int],
     device: torch.device,
+    epochs: int = EPOCHS,
 ) -> ArmRow:
     labels = {k: int(v) for k, v in split["labels"].items()}
     parts = {
@@ -227,7 +242,7 @@ def run_arm(
         n_params = sum(p.numel() for p in net.parameters())
         opt = torch.optim.Adam(net.parameters(), lr=LR)
         val_curve, test_curve = [], []
-        for _ in range(EPOCHS):
+        for _ in range(epochs):
             net.train()
             opt.zero_grad()
             logit = net(xt, ei)
@@ -252,7 +267,7 @@ def run_arm(
     row = ArmRow(
         model=kind,
         graph=graph_name,
-        inputs=inputs,
+        inputs=inputs if epochs == EPOCHS else f"{inputs} ({epochs} epochs)",
         dim_in=int(x.shape[1]),
         n_parameters=n_params,
         test_auroc=tests,
@@ -272,39 +287,90 @@ def run_arm(
 
 
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--arms",
+        default="base",
+        choices=("base", "extra"),
+        help=(
+            "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
+            "GCN and GATv2. extra: graph convolution on the union with the transformer's "
+            "winning inputs (the chromosome-pathway indicator, the four FBA ratios) and a "
+            "400-epoch budget."
+        ),
+    )
+    args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     with gzip.open(SPLIT, "rt") as fh:
         split = json.load(fh)
     gene_ids, graphs = gene_graphs()
     index = {g: i for i, g in enumerate(gene_ids)}
     ones = np.ones((len(gene_ids), 1), dtype=np.float32)
-    t5 = prot_t5(gene_ids)
+    t5 = embedding("prot_T5_all", gene_ids)
     rows: list[ArmRow] = []
-    rows.append(
-        run_arm(
-            "MLP",
-            "none",
-            "ProtT5",
-            t5,
-            torch.zeros(2, 0, dtype=torch.long),
-            split,
-            index,
-            device,
-        )
-    )
-    for graph_name, g in graphs.items():
-        ei = edges(g, index)
-        feats = {
-            "ones": ones,
-            "degree+clustering": structural(g, gene_ids),
-            "ProtT5": t5,
+    no_edges = torch.zeros(2, 0, dtype=torch.long)
+    if args.arms == "extra":
+        chrom = embedding("normalized_chrom_pathways", gene_ids)
+        fba = fba_ratios(gene_ids)
+        feats_extra = {
+            "ProtT5+chrom-pathway": np.concatenate([t5, chrom], axis=1),
+            "ProtT5+FBA ratios": np.concatenate([t5, fba], axis=1),
+            "ProtT5+chrom-pathway+FBA ratios": np.concatenate([t5, chrom, fba], axis=1),
         }
-        for kind in ("GCN", "GATv2"):
-            for inputs, x in feats.items():
-                rows.append(
-                    run_arm(kind, graph_name, inputs, x, ei, split, index, device)
-                )
-    out = osp.join(RESULTS, "graph_baselines.json")
+        ei = edges(graphs["union of nine"], index)
+        for inputs, x in feats_extra.items():
+            rows.append(
+                run_arm("MLP", "none", inputs, x, no_edges, split, index, device)
+            )
+            rows.append(
+                run_arm("GCN", "union of nine", inputs, x, ei, split, index, device)
+            )
+        rows.append(
+            run_arm(
+                "GCN",
+                "union of nine",
+                "ProtT5",
+                t5,
+                ei,
+                split,
+                index,
+                device,
+                epochs=400,
+            )
+        )
+        rows.append(
+            run_arm(
+                "GCN",
+                "union of nine",
+                "ProtT5+chrom-pathway+FBA ratios",
+                feats_extra["ProtT5+chrom-pathway+FBA ratios"],
+                ei,
+                split,
+                index,
+                device,
+                epochs=400,
+            )
+        )
+        out = osp.join(RESULTS, "graph_baselines_extra.json")
+    else:
+        rows.append(
+            run_arm("MLP", "none", "ProtT5", t5, no_edges, split, index, device)
+        )
+        for graph_name, g in graphs.items():
+            ei = edges(g, index)
+            feats = {
+                "ones": ones,
+                "degree+clustering": structural(g, gene_ids),
+                "ProtT5": t5,
+            }
+            for kind in ("GCN", "GATv2"):
+                for inputs, x in feats.items():
+                    rows.append(
+                        run_arm(kind, graph_name, inputs, x, ei, split, index, device)
+                    )
+        out = osp.join(RESULTS, "graph_baselines.json")
     with open(out, "w") as fh:
         json.dump(
             {

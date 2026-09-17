@@ -467,21 +467,12 @@ VIOLATION_ARMS: list[tuple[str, str]] = [
     ("w15_bio_s0_h12l1p1_e200_s*.json", "r4 forced, scale 0"),
     ("w15_gate_s0_h12l1p1_e200_s*.json", "r4 gated, scale 0"),
     ("w17_biofba_h12l1p1_e200_s*.json", "r6 forced + FBA affine"),
-    (
-        "w18_bioprojbox_h12l1p1_e200_s*.json",
-        "r7 forced, clip last",
-    ),
+    ("w18_bioprojbox_h12l1p1_e200_s*.json", "r7 forced, clip last"),
     ("w18_biobox_h12l1p1_e200_s*.json", "r7 forced, box form"),
     ("w21_warmbio_h12l1p1_e200_s*.json", "r10 forced, warm start"),
     ("w21_warmgate_h12l1p1_e200_s*.json", "r10 gated, warm start"),
-    (
-        "w24_warmoffbio_h12l1p1_e200_s*.json",
-        "r13 forced, GEM box, warm start",
-    ),
-    (
-        "w24_warmoffgate_h12l1p1_e200_s*.json",
-        "r13 gated, GEM box, warm start",
-    ),
+    ("w24_warmoffbio_h12l1p1_e200_s*.json", "r13 forced, GEM box, warm start"),
+    ("w24_warmoffgate_h12l1p1_e200_s*.json", "r13 gated, GEM box, warm start"),
 ]
 VIOLATION_KEYS = (
     "feas_balance_median",
@@ -590,8 +581,47 @@ def confusion() -> str | None:
     return write("confusion", body, "results/essentiality_confusion.json")
 
 
+def graph_baselines() -> str | None:
+    """Message passing over the gene graph, no perturbation: the Gene_Graph design rerun."""
+    src = osp.join(RESULTS, "graph_baselines.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    rows_in = report["rows"]
+    best = max(r["mean"] for r in rows_in)
+    rows = []
+    for r in rows_in:
+        seeds = ", ".join(f"{v:.3f}" for v in r["test_auroc"])
+        epochs = ", ".join(str(e) for e in r["select_epoch"])
+        rows.append(
+            f"    {r['model']} & {r['graph']} & {r['inputs'].replace('+', ' $+$ ')} & "
+            f"{r['dim_in']:,} & {r['n_parameters']:,} & {fmt(r['mean'], best)} & "
+            f"{r['sd']:.3f} & {seeds} & {epochs} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[Graph-only baselines]{Graph-only baselines on the released split: "
+        "transductive node classification on one gene graph with no genotype perturbed, "
+        "two layers of width 64, class-weighted binary cross entropy, 200 epochs, the "
+        "epoch selected by a five-epoch moving average of the validation AUROC, scored "
+        "once on the 195 held-out genes at seeds 2700 to 2702. The graph is the physical "
+        "interaction graph or the union of the nine gene graphs the transformer reads; the "
+        "inputs are all ones (the Gene\\_Graph design), log degree with the clustering "
+        "coefficient, or ProtT5. The MLP row has no graph. "
+        f"{BEST_NOTE}}}\n  \\label{{tab:graph-baselines}}\n"
+        "  \\begin{tabular}{@{}lllrrrrll@{}}\n    \\hline\n"
+        "    model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("graph_baselines", body, "results/graph_baselines.json")
+
+
 def main() -> None:
     paths = [
+        graph_baselines(),
         fba_media(),
         splits(),
         logistic_baselines(),

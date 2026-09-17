@@ -134,3 +134,32 @@ gene's position in the wild-type flux solution and how much the solve moves when
 deleted rank essential genes about as well as its protein sequence does, and the two
 sources are different: no other encoding reaches 0.80 without the solve, and the eight
 statistics come within 0.003 of it with nothing else.
+
+\subsection{Graph-only baselines: message passing over the gene graph\secstatus{todo}}
+
+The Gene\_Graph project (2021 to 2023) classified essential genes by two-layer graph
+convolution and graph attention over YeastMine's physical, genetic and regulatory
+interaction graphs with all-ones node inputs, and saved no number. The same design is
+rerun here on the released split (\texttt{graph\_baselines.py}): transductive node
+classification on one gene graph, where every gene's logit is a function of its
+neighborhood and its own features and no genotype is perturbed, on the physical
+interaction graph and on the union of the nine graphs the transformer reads, with all
+ones, with log degree and the clustering coefficient, or with ProtT5 as inputs, beside
+an MLP on ProtT5 with no graph (Table~\ref{tab:graph-baselines}).
+
+\input{tables/graph_baselines}
+
+Structure alone carries little and structure with sequence carries a lot. With all-ones
+inputs the models read 0.50 to 0.61, chance to the ladder's random-vector level, and with
+degree and clustering 0.58 to 0.70. With ProtT5 the MLP reads 0.754, the ladder's
+logistic rung plus 0.02, and graph convolution over the union of the nine graphs reads
+0.836, 0.829 and 0.836, a seed mean of 0.834 with a spread of 0.003 from 69,825
+parameters: the edges add 0.08 to the protein embedding, the physical graph alone adds
+0.015, and attention adds nothing over convolution on either graph. That cell is above
+the pooled transformer (0.774) and level with the transformer with FBA's four ratios
+(0.821) with no solve at all, and its three seeds select epochs 196 to 197 of 200 with
+the validation curve still rising, so the budget is what bounds it. The transformer reads
+the same nine graphs and the same embedding; what it adds over this cell, 0.87 with the
+pathway indicator and the ratios, is the perturbed-graph reading and the two inputs, and
+the graph-convolution cell with those two inputs is the untested comparison
+(Section~\ref{sec:open}).

@@ -162,6 +162,34 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ["w16_fba_h12l1p1_e200_s*.json", "w19_*_e200_s*.json"],
         ["fba", "fbah24", "fbah48", "fbal2", "fbap2"],
     ),
+    # Round 9: the FBA affine on the ladder's other encodings (chromosome-pathway
+    # indicator, ESM2, the seven-encoding concatenation, chromosome-pathway + ProtT5).
+    "w20": (
+        ["w16_fba_h12l1p1_e200_s*.json", "w20_*_e200_s*.json"],
+        ["fba", "chromfba", "chromprotfba", "esmfba", "mixfba"],
+    ),
+    # Round 10: the flux layer warm-started from the deletion's own pFBA solution (one
+    # reference per genotype), against the pooled cell, the round-4 forced and gated
+    # columns, and the round-5 FBA affine.
+    "w21": (
+        [
+            "w14_b32posw200_h12l1p1_e200_s*.json",
+            "w15_bio_s0_h12l1p1_e200_s*.json",
+            "w15_gate_s0_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w21_*_e200_s*.json",
+        ],
+        [
+            "b32posw200",
+            "bio_s0",
+            "gate_s0",
+            "fba",
+            "warmbio",
+            "warmgate",
+            "warmgatealpha",
+            "warmgate10",
+        ],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -216,6 +244,14 @@ ARM_LABELS = {
     "fbah48": "context head + FBA ratios, width 48",
     "fbal2": "context head + FBA ratios, two blocks",
     "fbap2": "context head + FBA ratios, two-layer preprocessor",
+    "chromfba": "chromosome-pathway backbone + FBA ratios",
+    "chromprotfba": "chromosome-pathway + ProtT5 backbone + FBA ratios",
+    "esmfba": "ESM2 backbone + FBA ratios",
+    "mixfba": "seven-encoding concatenation backbone + FBA ratios",
+    "warmbio": "growth column, warm start from the deletion's pFBA, alpha 0.01 frozen",
+    "warmgate": "gated growth column, warm start from the deletion's pFBA, alpha 0.01 frozen",
+    "warmgatealpha": "gated growth column, warm start from the deletion's pFBA, alpha learned",
+    "warmgate10": "gated growth column, warm start from the deletion's pFBA, alpha 0.1 frozen",
 }
 
 

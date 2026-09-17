@@ -131,8 +131,16 @@ ENCODINGS: dict[str, tuple[str, ...]] = {
         "codon_frequency",
         "normalized_chrom_pathways",
     ),
+    # Solve-derived encodings, from ess_reference_flux_table.py: the deletion's own pFBA
+    # flux vector on YPD, its difference from the wild-type vector, and eight numbers
+    # about the gene's reactions under the wild-type solve and its variability.
+    "pfba_deletion_ypd": (),
+    "pfba_deletion_delta_ypd": (),
+    "gene_flux_stats_ypd": (),
 }
 RANDOM_DIMS = {"random_6607": 6607, "random_8192": 8192}
+SOLVE_NPZ = osp.join(DATA_ROOT, "data/torchcell/reference_flux/ess_solve_encodings_YPD.npz")
+SOLVE_ENCODINGS = ("pfba_deletion_ypd", "pfba_deletion_delta_ypd", "gene_flux_stats_ypd")
 C_GRID = [1e-3, 1e-2, 1e-1, 1.0, 10.0]
 SVC_C_GRID = [0.1, 1.0, 10.0]
 K_GRID = [1, 3, 5, 10, 25, 50]
@@ -218,6 +226,20 @@ def random_matrix(genes: list[str], dim: int) -> dict[str, np.ndarray]:
     """A fixed Gaussian vector per gene at seed 0: content-free by construction."""
     rng = np.random.default_rng(0)
     return {g: rng.standard_normal(dim).astype(np.float32) for g in sorted(genes)}
+
+
+def solve_matrix(enc_name: str) -> dict[str, np.ndarray]:
+    """Gene -> solve-derived vector, from the encodings file the reference table wrote."""
+    payload = np.load(SOLVE_NPZ, allow_pickle=False)
+    genes = [str(g) for g in payload["genes"]]
+    if enc_name == "pfba_deletion_ypd":
+        matrix = payload["v_deletion"]
+    elif enc_name == "pfba_deletion_delta_ypd":
+        matrix = payload["v_deletion"] - payload["v_wild_type"][None, :]
+    else:
+        assert enc_name == "gene_flux_stats_ypd", enc_name
+        matrix = payload["gene_flux_stats"]
+    return {g: matrix[i].astype(np.float32) for i, g in enumerate(genes)}
 
 
 def knn_scores(
@@ -379,6 +401,14 @@ def main() -> None:
         action="store_true",
         help="Redraw the figure from results/logistic_baselines.json without refitting.",
     )
+    parser.add_argument(
+        "--only-missing",
+        action="store_true",
+        help=(
+            "Keep the fitted rows of results/logistic_baselines.json and fit only the "
+            "encodings it has no rows for (the solve-derived ones, added later)."
+        ),
+    )
     args = parser.parse_args()
     report_path = osp.join(RESULTS, "logistic_baselines.json")
     if args.plot_only:
@@ -447,12 +477,24 @@ def main() -> None:
         genome=genome,
     )
     missing: dict[str, int] = {}
+    kept_rows: list[LadderRow] = []
+    if args.only_missing and osp.isfile(report_path):
+        with open(report_path) as fh:
+            saved = json.load(fh)
+        kept_rows = [
+            LadderRow(**r) for r in saved["rows"] if r["model"] != "FBA growth"
+        ]
+        missing = dict(saved["genes_without_vector"])
+    done = {r.encoding for r in kept_rows}
     for enc_name, parts in ENCODINGS.items():
-        table = (
-            random_matrix(all_labeled, RANDOM_DIMS[enc_name])
-            if enc_name in RANDOM_DIMS
-            else registry_matrix(parts, genome, graph)
-        )
+        if enc_name in done:
+            continue
+        if enc_name in RANDOM_DIMS:
+            table = random_matrix(all_labeled, RANDOM_DIMS[enc_name])
+        elif enc_name in SOLVE_ENCODINGS:
+            table = solve_matrix(enc_name)
+        else:
+            table = registry_matrix(parts, genome, graph)
         missing[enc_name] = sum(1 for g in all_labeled if g not in table)
         kept = {
             k: [g for g in genes[k] if g in table] for k in ("train", "val", "test")
@@ -498,6 +540,7 @@ def main() -> None:
                     flush=True,
                 )
 
+    rows = kept_rows + rows
     fig_path = figure(rows, fba_rows)
     report = LadderReport(
         split_file=args.split,

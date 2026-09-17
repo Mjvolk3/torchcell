@@ -167,6 +167,22 @@ ROUND_CAPTIONS = {
         "with the two-layer preprocessor. Batch 32, class weight, 200 epochs, seeds 2700 "
         "to 2702.",
     ),
+    "w20": (
+        "Round 9, the FBA affine on the ladder's other encodings",
+        "The round-5 cell (ProtT5 backbone, context head plus the FBA affine) against the "
+        "same cell opened on the chromosome-pathway indicator, on the indicator "
+        "concatenated with ProtT5, on ESM2, and on the ladder's seven-encoding "
+        "concatenation. Width 12, one block, batch 32, class weight, 200 epochs, seeds "
+        "2700 to 2702.",
+    ),
+    "w21": (
+        "Round 10, the flux layer warm-started from the deletion's own solve",
+        "The pooled cell, the round-4 forced and gated growth columns, and the round-5 "
+        "FBA affine, against the forced and gated growth columns whose layer proposes "
+        "the deletion's own parsimonious FBA flux on YPD plus a null-space residual of "
+        "relative size alpha, with alpha frozen at 0.01, learned, or frozen at 0.1. "
+        "Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

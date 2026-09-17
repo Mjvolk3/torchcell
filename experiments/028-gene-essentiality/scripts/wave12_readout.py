@@ -298,6 +298,39 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["b32posw200", "fba", "lpcapbio100", "lpcapbio1000", "lpcapbio100lr"],
     ),
+    # Round 18, the forced column: the ELASTIC layer that solves, feasible for every
+    # genotype by construction, against the round-4 forced column (the paired
+    # comparator), the affine and the hard program's forced cells of rounds 15c and 15d.
+    "w32": (
+        [
+            "w15_bio_s0_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w30_lpcapbio100_h12l1p1_e200_s*.json",
+            "w31_lpcapbio1000_h12l1p1_e200_s*.json",
+            "w32_lpelbio*_h12l1p1_e200_s*.json",
+        ],
+        [
+            "bio_s0",
+            "fba",
+            "lpcapbio100",
+            "lpcapbio1000",
+            "lpelbio100",
+            "lpelbio1000",
+            "lpelpoolbio100",
+        ],
+    ),
+    # Round 18, the gated column: the elastic layer that solves behind the gate against
+    # the round-4 gated cell (paired), the affine, and the hard program's gated cells.
+    "w33": (
+        [
+            "w15_gate_s0_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w29_lpoffgate_h12l1p1_e200_s*.json",
+            "w30_lpcapgate100_h12l1p1_e200_s*.json",
+            "w32_lpelgate100_h12l1p1_e200_s*.json",
+        ],
+        ["gate_s0", "fba", "lpoffgate", "lpcapgate100", "lpelgate100"],
+    ),
     # Round 16: the round-9 backbone with the round-11 affine.
     "w27": (
         [
@@ -415,6 +448,10 @@ ARM_LABELS = {
     "lpcapgate1000": "gated column + context, the layer that solves, capacity x1000",
     "lpcapbio1000": "growth column, the layer that solves, capacity x1000",
     "lpcapbio100lr": "growth column, the layer that solves, capacity x100, lr 3e-4",
+    "lpelbio100": "growth column, the elastic layer that solves, capacity x100",
+    "lpelbio1000": "growth column, the elastic layer that solves, capacity x1000",
+    "lpelpoolbio100": "growth column, elastic solve, capacity x100, pool by construction",
+    "lpelgate100": "gated column + context, the elastic layer that solves, capacity x100",
     "chromprotpfba": "chrom-pathway + ProtT5 backbone + FBA ratios + pFBA vector",
     "chromprotstatspfba": "chrom-pathway + ProtT5 backbone + ratios + statistics + pFBA",
     "cspcv0": "chrom-pathway + ProtT5 + widened affine, fold 0",

@@ -191,7 +191,8 @@ interaction graph and on the union of the nine graphs the transformer reads
 (Table~\ref{tab:wl}): for every labeled gene it hashes the graph with that gene's node
 removed by color refinement at one, two and three iterations with degree as the initial
 color, counts collisions, and fits logistic regression on the WL subtree kernel's
-feature map of each gene's 2-hop ego graph.
+feature map of each gene's 2-hop ego graph. Figure~\ref{fig:wl} illustrates the
+refinement and the kernel on a toy pair of six-node graphs, not the yeast graphs.
 
 \input{tables/wl_test}
 
@@ -206,3 +207,19 @@ graph and 0.564 on the union, chance on 195 genes, which is the same reading the
 graph-only baselines gave with all-ones and degree inputs: a gene's neighborhood
 structure, however finely refined, does not say whether the gene is essential, and every
 number above chance in this document comes from what is written on the nodes.
+
+\tcfigfit[1.0]{figures/wl_test.pdf}{\textbf{The 1-WL test and the WL subtree kernel
+  on a toy pair of graphs.} \textbf{a}, Two six-node graphs $G$ and $G'$ with six edges
+  each, every node given the initial color 1; each round of color refinement replaces a
+  node's color by the hash of the multiset $\beta$ of its own color and its neighbors'
+  colors, and the table counts the nodes of each color. \textbf{b}, Round $k = 0$: the
+  multiset at each node (left), the hashed colors (right) and the count of each color;
+  a node's new color is its degree in disguise, and $G'$ alone holds a degree-4 node.
+  \textbf{c}, Round $k = 1$: the same refinement on the round-0 colors, where the two
+  graphs share one of the ten colors. \textbf{d}, The count vector $\phi$ over the
+  colors of rounds 0 and 1, the WL subtree kernel's feature map. \textbf{e}, The kernel
+  of each graph with itself, $\phi^{\top}\phi$. \textbf{f}, The kernel across the pair;
+  the count vectors differ after one round, so the test declares the graphs
+  non-isomorphic. Drawn in draw.io from
+  \texttt{notes/assets/drawio/028-wl-test.drawio}; the yeast deletion graphs are hashed
+  the same way by \texttt{wl\_knockout\_test.py}.}{fig:wl}

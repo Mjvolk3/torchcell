@@ -1,0 +1,13 @@
+# experiments/028-gene-essentiality/conf/arm_flux_projection_anchored_nodiss.yaml
+# [[experiments.028-gene-essentiality]]
+#
+# The anchored constraint set with the Gibbs dissipation limit HELD OUT of the loss.
+# `flux_projection_anchored` carries `use_dissipation_limit: True`, so at any nonzero
+# constraint scale that arm trains against the limit; the dissipation rate is a diagnostic
+# (a verification readout, never an objective), and from round 18 every module cell runs on
+# this entry so the hinge is absent by construction rather than by a zero weight.
+# `g_diss_mean` is still logged every epoch. Everything else matches the anchored arm:
+# anchored thermodynamics, the enzyme-capacity ceilings through the abundance head, the
+# protein budget.
+base_arm: flux_projection_anchored_nodiss
+permute_train_targets: false

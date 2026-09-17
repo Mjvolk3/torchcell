@@ -61,12 +61,30 @@ class ScaleRow(BaseModel):
     growth_median: float
     growth_min: float
     growth_max: float
+    #: Under the elastic program (``--lp-slack-penalty > 0``): the value of the program
+    #: (growth minus the priced slack), the fraction of genotypes with unmet forced flux,
+    #: and the mean unmet flux, mmol/gDW/h. Zero under the hard program.
+    value_median: float = 0.0
+    slack_row_frac: float = 0.0
+    slack_mean: float = 0.0
+    #: The fraction of genotypes on which a bound the genes own carries a dual, which is
+    #: the fraction on which the backbone receives any gradient through the solve.
+    gene_dual_row_frac: float = 0.0
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--result", default="w26_lpbio_h12l1p1_e200_s2700.json")
     parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument(
+        "--lp-slack-penalty",
+        type=float,
+        default=0.0,
+        help=(
+            "Run the elastic program at this price per unit of unmet forced flux "
+            "(round 18); 0 is the hard program. The output file is suffixed _elastic."
+        ),
+    )
     args = parser.parse_args()
     with open(osp.join(RESULTS_DIR, args.result)) as fh:
         result = json.load(fh)
@@ -99,19 +117,35 @@ def main() -> None:
     model.eval()
     rows: list[ScaleRow] = []
     chosen: float | None = None
+    layer.config.lp_slack_penalty = args.lp_slack_penalty
+    forced = int((layer.lb > 0).sum() + (layer.ub < 0).sum())
+    print(
+        f"forced bounds on the GEM (lb > 0 or ub < 0): {forced}; "
+        f"slack penalty {args.lp_slack_penalty}",
+        flush=True,
+    )
     for scale in SCALES:
         layer.config.capacity_scale = scale
         with torch.no_grad():
             _, reps = model(dataset.cell_graph.to(device), batch)
-        growth = reps["biomass_flux"].reshape(-1).cpu().numpy()
-        feasible = growth > 0
+        last = layer.lp_solver.last
+        assert last is not None
+        growth = last.growth
+        gpr = layer.has_gpr.cpu().numpy()
+        gene_dual = np.abs(last.d_ub[:, gpr]).sum(axis=1) + np.abs(
+            last.d_lb[:, gpr]
+        ).sum(axis=1)
         row = ScaleRow(
             capacity_scale=scale,
             n_genotypes=int(growth.shape[0]),
-            feasible_frac=float(feasible.mean()),
+            feasible_frac=float(last.feasible.mean()),
             growth_median=float(np.median(growth)),
             growth_min=float(growth.min()),
             growth_max=float(growth.max()),
+            value_median=float(np.median(last.value)),
+            slack_row_frac=float((last.slack > 1e-9).mean()),
+            slack_mean=float(last.slack.mean()),
+            gene_dual_row_frac=float((gene_dual > 0).mean()),
         )
         rows.append(row)
         print(row.model_dump_json(), flush=True)
@@ -123,6 +157,8 @@ def main() -> None:
             chosen = scale
     out = {
         "result": args.result,
+        "lp_slack_penalty": args.lp_slack_penalty,
+        "n_forced_bounds": forced,
         "reference_growth": REFERENCE_GROWTH,
         "rule": (
             "the smallest scale with at least 90 percent of the batch feasible (the "
@@ -132,7 +168,8 @@ def main() -> None:
         "chosen_scale": chosen,
         "rows": [r.model_dump() for r in rows],
     }
-    path = osp.join(RESULTS_DIR, "capacity_calibration.json")
+    suffix = "_elastic" if args.lp_slack_penalty > 0 else ""
+    path = osp.join(RESULTS_DIR, f"capacity_calibration{suffix}.json")
     with open(path, "w") as fh:
         json.dump(out, fh, indent=2)
     print(f"chosen scale: {chosen}\n{path}")

@@ -299,6 +299,24 @@ ROUND_CAPTIONS = {
         "the learning rate at $3 \\times 10^{-4}$. Constraint scale 0, batch 32, class "
         "weight, 200 epochs, seeds 2700 to 2702.",
     ),
+    "w32": (
+        "Round 18, the forced column of the elastic layer that solves",
+        "The round-4 forced column of the alternating layer (the paired comparator), the "
+        "round-5 FBA affine and the hard program's forced cells at capacity scale 100 and "
+        "1,000 (rounds 15c and 15d), against the elastic program (every forced flux "
+        "priced at 1 per mmol/gDW/h of shortfall, feasible for every genotype by "
+        "construction) at scale 100 and 1,000, and at 100 with the protein pool held by "
+        "construction. Arm \\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint "
+        "scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w33": (
+        "Round 18, the gated column of the elastic layer that solves",
+        "The round-4 gated cell (the paired comparator), the round-5 FBA affine, the "
+        "gated hard program on the GEM box (round 15b) and at capacity scale 100 (round "
+        "15c), against the gated elastic program at scale 100. Arm "
+        "\\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint scale 0, batch 32, "
+        "class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

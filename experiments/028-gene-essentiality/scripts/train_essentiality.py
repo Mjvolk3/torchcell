@@ -1068,6 +1068,24 @@ class BxCell(BaseModel):
             "capacity_calibration.py finds the smallest scale that admits wild-type growth."
         ),
     )
+    flux_lp_slack_penalty: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Under --flux-parameterization lp, the price per unit of unmet forced flux in "
+            "the elastic program (`FluxLayerConfig.lp_slack_penalty`); 0 is the hard "
+            "program, whose infeasible state absorbed the forced cells of rounds 15b to "
+            "15d. With it every genotype's program is feasible by construction."
+        ),
+    )
+    flux_pool_by_construction: bool = Field(
+        default=False,
+        description=(
+            "Project the abundance head's output onto the protein budget before the "
+            "capacity ceilings are formed (`FluxLayerConfig.pool_by_construction`), so "
+            "the GECKO pool constraint holds exactly instead of as the soft hinge."
+        ),
+    )
     ess_solve_features: str = Field(
         default="none",
         description=(
@@ -2163,6 +2181,8 @@ def build_cell(
     ess_fba_media: list[str] | None = None,
     ess_solve_features: str = "none",
     flux_capacity_scale: float = 1.0,
+    flux_lp_slack_penalty: float = 0.0,
+    flux_pool_by_construction: bool = False,
     node_embeddings: list[str] | None = None,
     pos_weight_balanced: bool = False,
 ) -> BxCell:
@@ -2261,6 +2281,8 @@ def build_cell(
         ess_fba_media=list(ess_fba_media) if ess_fba_media else list(FBA_MEDIA),
         ess_solve_features=ess_solve_features,
         flux_capacity_scale=flux_capacity_scale,
+        flux_lp_slack_penalty=flux_lp_slack_penalty,
+        flux_pool_by_construction=flux_pool_by_construction,
         node_embeddings=(
             list(node_embeddings) if node_embeddings else list(STRONG_NODE_EMBEDDINGS)
         ),
@@ -2447,9 +2469,18 @@ def _module_grad_norms(model: nn.Module) -> dict[str, float]:
         if param.grad is None:
             continue
         module = _module_path(name)
-        squares[module] = squares.get(module, 0.0) + float(
-            param.grad.detach().pow(2).sum()
-        )
+        sq = float(param.grad.detach().pow(2).sum())
+        squares[module] = squares.get(module, 0.0) + sq
+        if module == "flux_layer":
+            # THE LAYER'S OWN PARTS, one level down (round 18): the abundance head, the
+            # availability gate, the concentration parameters, so a module arm can say
+            # which of them the gradient through the solve reaches.
+            stripped = name
+            while stripped.startswith(WRAPPER_PREFIX):
+                stripped = stripped[len(WRAPPER_PREFIX) :]
+            part = stripped.split(".", 2)[1]
+            key = f"flux_layer.{part}"
+            squares[key] = squares.get(key, 0.0) + sq
     return {k: v**0.5 for k, v in squares.items()}
 
 
@@ -4422,6 +4453,9 @@ def build_model_for_cell(
         # The capacity scale is read by dynamic_box at call time, so it is written onto
         # the built layer the same way.
         flux_layer.config.capacity_scale = cell.flux_capacity_scale
+        # So are the elastic program's price and the pool projection (round 18).
+        flux_layer.config.lp_slack_penalty = cell.flux_lp_slack_penalty
+        flux_layer.config.pool_by_construction = cell.flux_pool_by_construction
         # THE WARM-START GEOMETRY SWITCHES (wave 9). The fold is read off config at call
         # time. ORDER MATTERS for the two files: apply_log_c_init reads conc_lower_m and
         # conc_upper_m, assigned just above, and refuses a window that disagrees with the
@@ -6506,6 +6540,23 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--flux-lp-slack-penalty",
+        type=float,
+        default=0.0,
+        help=(
+            "Under --flux-parameterization lp, price per mmol/gDW/h of unmet forced flux "
+            "in the elastic program; 0 is the hard program (round 18)."
+        ),
+    )
+    parser.add_argument(
+        "--flux-pool-by-construction",
+        action="store_true",
+        help=(
+            "Project the abundance head's output onto the protein budget before the "
+            "capacity ceilings are formed, so the GECKO pool holds exactly (round 18)."
+        ),
+    )
+    parser.add_argument(
         "--ess-solve-features",
         default="none",
         choices=ESS_SOLVE_FEATURES,
@@ -6992,6 +7043,8 @@ def main() -> None:
         ess_fba_media=args.ess_fba_media,
         ess_solve_features=args.ess_solve_features,
         flux_capacity_scale=args.flux_capacity_scale,
+        flux_lp_slack_penalty=args.flux_lp_slack_penalty,
+        flux_pool_by_construction=args.flux_pool_by_construction,
         node_embeddings=args.node_embeddings,
         pos_weight_balanced=args.pos_weight_balanced,
     )

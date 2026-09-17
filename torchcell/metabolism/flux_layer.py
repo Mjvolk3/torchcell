@@ -250,6 +250,7 @@ import math
 import re
 from typing import Any, cast
 
+import numpy as np
 import torch
 import torch.nn as nn
 from pydantic import BaseModel, ConfigDict, Field
@@ -758,6 +759,30 @@ class FluxLayerConfig(BaseModel):
     #: 15: median ceiling 0.084 mmol/gDW/h); a scale that admits wild-type growth is
     #: GECKO's saturation calibration. Read at call time, so it can be set on a built layer.
     capacity_scale: float = Field(default=1.0, gt=0.0)
+    lp_slack_penalty: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Under parameterization='lp', the price M per mmol/gDW/h of unmet FORCED flux "
+            "(a positive lower bound, the ATP maintenance reaction) in the elastic program "
+            "of torchcell.metabolism.lp_layer. 0 is the hard program, which is infeasible "
+            "and gradient-free when the learned ceilings close the maintenance path (028 "
+            "rounds 15b to 15d, the absorbing state); M > 0 makes every genotype's program "
+            "feasible by construction, with the value going negative by M per unit of "
+            "maintenance the ceilings cannot carry. Read at call time."
+        ),
+    )
+    pool_by_construction: bool = Field(
+        default=False,
+        description=(
+            "Project the abundance head's E_g onto the protein budget before it sets the "
+            "capacity ceilings: E <- E * min(1, p_avail / sum_g MW_g E_g), so the GECKO "
+            "pool constraint sum_g MW_g E_g <= p_avail holds exactly rather than as the "
+            "soft `c_budget` hinge. The head then allocates a fixed proteome across "
+            "enzymes and cannot inflate every ceiling at once. `feas_pool_scale_mean` "
+            "logs the factor applied (1 when the budget is slack)."
+        ),
+    )
     use_protein_budget: bool = True
     use_abundance_head: bool = Field(
         default=False,
@@ -3117,8 +3142,20 @@ class FluxLayer(nn.Module):
         c_j = self.reaction_availability(gamma)
         e_g: torch.Tensor | None = None
         e_u: torch.Tensor | None = None
+        pool_scale: torch.Tensor | None = None
         if cfg.use_abundance_head:
             e_g = self.gene_abundance(h_genes, gamma)
+            if cfg.pool_by_construction:
+                # THE POOL, EXACTLY. The GECKO constraint sum_g MW_g E_g <= p_avail is
+                # enforced by scaling the whole abundance vector down when it exceeds the
+                # budget, a projection along the ray, so the head chooses the ALLOCATION
+                # of a fixed proteome and the total is never its to inflate. Differentiable
+                # through the factor, and the identity when the budget is slack.
+                protein_total = (e_g * self.mw_kda.unsqueeze(0)).sum(dim=1)
+                pool_scale = torch.clamp(
+                    cfg.p_avail / protein_total.clamp(min=1e-30), max=1.0
+                )
+                e_g = e_g * pool_scale.unsqueeze(1)
             e_u = self.unit_abundance(e_g)
         lb, ub, capacity = self.dynamic_box(c_j, e_u)
 
@@ -3299,14 +3336,42 @@ class FluxLayer(nn.Module):
             # gradient the bound duals give. The box holds by construction and the
             # balance to the solver's tolerance, so both penalties are identically zero.
             assert self.lp_solver is not None
-            v = growth_lp(lb, ub, self.lp_solver)
+            v = growth_lp(lb, ub, self.lp_solver, cfg.lp_slack_penalty)
             box_penalty = v.new_zeros(())
+            last = self.lp_solver.last
+            assert last is not None
             # An infeasible program returns the zero flux; the fraction of rows that
             # came back all-zero is the statistic that says whether the box holds any
-            # growing flux at all (028 round 15: 1.0 on every anchored-layer cell).
+            # growing flux at all (028 round 15: 1.0 on every anchored-layer cell). The
+            # rest is the program's own diagnosis, logged every epoch: how much forced
+            # flux the elastic program left unmet and on what fraction of genotypes, the
+            # value against the raw growth, and where the gradient can go, which is the
+            # dual of the bounds the GENES own (has_gpr) and nothing else.
+            gpr_np = self.has_gpr.detach().cpu().numpy()
+            gene_dual = np.abs(last.d_ub[:, gpr_np]).sum(axis=1) + np.abs(
+                last.d_lb[:, gpr_np]
+            ).sum(axis=1)
             warm_stats = {
-                "feas_lp_zero_flux_frac": (v.abs().sum(dim=1) == 0).float().mean()
+                "feas_lp_zero_flux_frac": (v.abs().sum(dim=1) == 0).float().mean(),
+                "feas_lp_infeasible_frac": v.new_tensor(
+                    1.0 - float(last.feasible.mean())
+                ),
+                "feas_lp_slack_mean": v.new_tensor(float(last.slack.mean())),
+                "feas_lp_slack_row_frac": v.new_tensor(
+                    float((last.slack > 1e-9).mean())
+                ),
+                "feas_lp_value_mean": v.new_tensor(float(last.value.mean())),
+                "feas_lp_growth_mean": v.new_tensor(float(last.growth.mean())),
+                "feas_lp_gene_dual_mean": v.new_tensor(float(gene_dual.mean())),
+                "feas_lp_gene_dual_row_frac": v.new_tensor(
+                    float((gene_dual > 0).mean())
+                ),
             }
+            if pool_scale is not None:
+                warm_stats["feas_pool_scale_mean"] = pool_scale.detach().mean()
+                warm_stats["feas_pool_active_frac"] = (
+                    (pool_scale.detach() < 1.0).float().mean()
+                )
         elif self.parameterization in {"nullspace", "projection"}:
             # Mass balance is exact here, for any latent: S (N z) = (S N) z = 0.
             #

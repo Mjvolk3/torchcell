@@ -275,6 +275,14 @@ ROUND_CAPTIONS = {
         "and the pFBA vector), whose logits are averaged on the held-out genes. Width 12, "
         "one block, batch 32, class weight, 200 epochs.",
     ),
+    "w29": (
+        "Round 15b, the layer that solves on the stoichiometry-only box",
+        "The pooled cell, the round-5 FBA affine and the round-13 warm-started columns on "
+        "the stoichiometry-only layer, against the growth LP under that layer's box (the "
+        "GEM's bounds scaled by availability, no capacity ceiling): the forced growth "
+        "column and the gated column with the context head. Constraint scale 0, batch "
+        "32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

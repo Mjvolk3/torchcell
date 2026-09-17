@@ -257,6 +257,17 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["b32posw200", "bio_s0", "gate_s0", "fba", "lpbio", "lpbiotdg", "lpgate"],
     ),
+    # Round 15b: the layer that solves on the stoichiometry-only box, beside the
+    # round-13 warm-start cells on the same box and the round-5 affine.
+    "w29": (
+        [
+            "w14_b32posw200_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w24_*_e200_s*.json",
+            "w29_*_e200_s*.json",
+        ],
+        ["b32posw200", "fba", "warmoffbio", "warmoffgate", "lpoffbio", "lpoffgate"],
+    ),
     # Round 16: the round-9 backbone with the round-11 affine.
     "w27": (
         [
@@ -367,6 +378,8 @@ ARM_LABELS = {
     "lpbio": "growth column, the layer that solves",
     "lpbiotdg": "growth column, the layer that solves, second-law box",
     "lpgate": "gated column + context, the layer that solves",
+    "lpoffbio": "growth column, the layer that solves, GEM box",
+    "lpoffgate": "gated column + context, the layer that solves, GEM box",
     "chromprotpfba": "chrom-pathway + ProtT5 backbone + FBA ratios + pFBA vector",
     "chromprotstatspfba": "chrom-pathway + ProtT5 backbone + ratios + statistics + pFBA",
     "cspcv0": "chrom-pathway + ProtT5 + widened affine, fold 0",

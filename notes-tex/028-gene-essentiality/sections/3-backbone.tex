@@ -286,3 +286,35 @@ excludes the ladder's best rung (0.830). The cell has 18,930 parameters. Every p
 gain is accounted for by an input the ontology computes for every gene at no training
 cost: the four solver numbers (0.774 to 0.821 on the seed mean) and the pathway
 indicator concatenated with the protein embedding (0.821 to 0.869).
+
+\subsection{Round 11: the affine widened with the solve\secstatus{todo}}
+
+The ladder's solve-derived encodings (Section~\ref{sec:comparators}) carry 0.15 AUROC
+beyond the growth ratio. Round 11 (jobs 2294 to 2296) appends them to the round-5 cell's
+affine, standardized column by column over the labeled genes: the eight reaction
+statistics (12 columns with the ratios), the deletion's pFBA flux vector (4,135), and
+both (4,139), each at the three seeds on the ProtT5 backbone (Table~\ref{tab:w22},
+Figure~\ref{fig:w22}), under the round-8 read.
+
+\input{tables/round_w22}
+
+\tcfigfit[1.0]{figures/w22_readout_2026-09-17-00-27-59.pdf}{\textbf{Round 11, the affine
+  widened with the solve.} \textbf{a}, Validation AUROC per epoch, one thin line per seed
+  and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points), the seed mean
+  and the gene bootstrap of the pooled per-gene logits (square with interval), beside FBA
+  on four media, Flux Cone Learning and the released FBA predictions on the same 195
+  genes. \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w22}.}{fig:w22}
+
+The statistics and the vector together pass; neither does alone. With both, the cell
+scores 0.850, 0.858 and 0.867 against 0.814, 0.805 and 0.844, up on three of three seeds
+by 0.036, 0.053 and 0.023, a seed mean of 0.858 with a spread of 0.008, and it selects
+late, at epochs 153 to 188, on a validation curve that is still level at 200. The eight
+statistics alone read 0.816, 0.790 and 0.779, down on three of three seeds, though a
+random forest on the same twelve numbers scores 0.817 on the ladder: through a linear
+affine the statistics do not add to what the context head already carries, and the
+random forest's gain on them is the tree's. The vector alone reads 0.877, 0.743 and
+0.874, two seeds at the level of the pair and one collapsed at epoch 7, so 4,131 columns
+on an affine over 629 training genes are unstable without the eight statistics beside
+them. Round 16 puts the passing affine on the round-9 backbone.

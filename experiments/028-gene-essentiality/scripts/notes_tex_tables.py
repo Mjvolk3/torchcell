@@ -451,12 +451,21 @@ VIOLATION_ARMS: list[tuple[str, str]] = [
     ("w15_bio_s0_h12l1p1_e200_s*.json", "round 4, forced, scale 0"),
     ("w15_gate_s0_h12l1p1_e200_s*.json", "round 4, gated, scale 0"),
     ("w17_biofba_h12l1p1_e200_s*.json", "round 6, forced + FBA affine"),
-    ("w18_bioprojbox_h12l1p1_e200_s*.json", "round 7, forced, projection ending on the box"),
+    (
+        "w18_bioprojbox_h12l1p1_e200_s*.json",
+        "round 7, forced, projection ending on the box",
+    ),
     ("w18_biobox_h12l1p1_e200_s*.json", "round 7, forced, box form"),
     ("w21_warmbio_h12l1p1_e200_s*.json", "round 10, forced, pFBA warm start"),
     ("w21_warmgate_h12l1p1_e200_s*.json", "round 10, gated, pFBA warm start"),
-    ("w24_warmoffbio_h12l1p1_e200_s*.json", "round 13, forced, GEM box, pFBA warm start"),
-    ("w24_warmoffgate_h12l1p1_e200_s*.json", "round 13, gated, GEM box, pFBA warm start"),
+    (
+        "w24_warmoffbio_h12l1p1_e200_s*.json",
+        "round 13, forced, GEM box, pFBA warm start",
+    ),
+    (
+        "w24_warmoffgate_h12l1p1_e200_s*.json",
+        "round 13, gated, GEM box, pFBA warm start",
+    ),
 ]
 VIOLATION_KEYS = (
     "feas_balance_median",
@@ -503,13 +512,77 @@ def violations() -> str:
         "  \\label{tab:violations}\n"
         "  \\begin{tabular}{@{}lrrrrrr@{}}\n    \\hline\n"
         "    arm & cells & $|Sv|$ median & box & second law & budget & dissipation \\\\\n"
-        "    \\hline\n" + "\n".join(rows) + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
     return write("violations", body, "results/<module arm>.json histories")
 
 
+def confusion() -> str | None:
+    """Every scorer at yeast-GEM's rule: the confusion matrix and its derived rates."""
+    src = osp.join(RESULTS, "essentiality_confusion.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    rows_in = report["rows"]
+    best = {
+        k: max(r[k] for r in rows_in)
+        for k in ("accuracy", "precision", "recall", "specificity", "balanced_accuracy")
+    }
+    rows = []
+    for r in rows_in:
+        rows.append(
+            f"    {r['scorer']} & {r['rule']} & {r['gene_set']} & {r['n_essential']}/{r['n']:,} & "
+            f"{r['tp']}/{r['fn']}/{r['fp']}/{r['tn']} & "
+            f"{fmt(r['accuracy'], best['accuracy'])} ({r['majority_accuracy']:.3f}) & "
+            f"{fmt(r['precision'], best['precision'])} & {fmt(r['recall'], best['recall'])} & "
+            f"{fmt(r['specificity'], best['specificity'])} & "
+            f"{fmt(r['balanced_accuracy'], best['balanced_accuracy'])} \\\\"
+        )
+    agree = report["label_agreement"]
+    body = (
+        "\\begingroup\n\\scriptsize\n"
+        "\\begin{longtable}{@{}p{30mm}p{20mm}p{24mm}rrrrrrr@{}}\n"
+        "  \\caption[Every scorer at yeast-GEM's rule]{Every scorer at the rule yeast-GEM "
+        "reports its benchmark with: a deletion is called essential when the criterion "
+        "in the rule column holds, and the call is scored against the label as a "
+        "confusion matrix with essential as the positive class (TP/FN/FP/TN). Accuracy "
+        "is followed by the majority class's share of the gene set in parentheses; "
+        "precision and recall are for the essential class; balanced accuracy is the mean "
+        "of recall and specificity. yeast-GEM 9.1.1's row is its own release file on its "
+        "own labels (the Stanford deletion project's inviable list over the model's "
+        f"verified ORFs); those labels and the released split agree on "
+        f"{int(agree['agree_frac'] * agree['n_genes_in_both'])} of the "
+        f"{agree['n_genes_in_both']:,} genes both name. Every other row is on the "
+        "released labels. The transformer is the round-12 fold ensemble at the loss's "
+        "decision boundary and at the threshold that calls as many genes essential as "
+        f"the labels hold. {BEST_NOTE}}}\n"
+        "  \\label{tab:confusion}\\\\\n"
+        "    \\hline\n"
+        "    scorer & rule & gene set & ess/n & TP/FN/FP/TN & acc (maj) & prec & rec & spec & bal \\\\\n"
+        "    \\hline\n  \\endfirsthead\n"
+        "    \\hline\n"
+        "    scorer & rule & gene set & ess/n & TP/FN/FP/TN & acc (maj) & prec & rec & spec & bal \\\\\n"
+        "    \\hline\n  \\endhead\n"
+        "    \\hline\n  \\endfoot\n"
+        "    \\hline\n  \\endlastfoot\n"
+        + "\n".join(rows)
+        + "\n\\end{longtable}\n\\endgroup\n"
+    )
+    return write("confusion", body, "results/essentiality_confusion.json")
+
+
 def main() -> None:
-    paths = [fba_media(), splits(), logistic_baselines(), growth_probe(), violations()]
+    paths = [
+        fba_media(),
+        splits(),
+        logistic_baselines(),
+        growth_probe(),
+        violations(),
+        confusion(),
+    ]
     paths.extend(round_table(k) for k in ROUND_CAPTIONS)
     for path in paths:
         if path is not None:

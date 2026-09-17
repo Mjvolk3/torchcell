@@ -1,0 +1,24 @@
+{
+  "source_url": "https://github.com/SysBioChalmers/yeast-GEM",
+  "retrieval_method": "git_clone",
+  "retrieval_command": "git clone --depth 1 https://github.com/SysBioChalmers/yeast-GEM.git; cp data/testResults/essentialGenes.tsv data/testResults/README.md data/essentialGenes/README.md .",
+  "commit": "2d594ae1c4a2d550ccef120d96a58c7bbf586255",
+  "commit_date": "2026-08-30T16:28:47+02:00",
+  "model_version": "9.1.1",
+  "retrieved_at": "2026-09-17",
+  "files": {
+    "essentialGenes.tsv": {
+      "sha256": "435b7623705bf526bdaf5ed7f4078f911704500eeadf8ce7c66bfe2441f3a5b9",
+      "note": "one row per gene of the 1,107 benchmark genes with the repository's own TP/TN/FP/FN label, where TP is 'true non-essential' (model and experiment viable) and TN 'true essential' (both inviable); counts TP 933, FP 94, TN 65, FN 15"
+    },
+    "README.md": {
+      "sha256": "8d303ea7c3b784e64966f6e66626d31daf28a56a540e2809edda4c6cdc3a18f6",
+      "note": "data/testResults/README.md; 'Latest release results' for 9.1.1: gene essentiality accuracy 0.9015356820234869, Python 3.12.14, cobrapy 0.32.1; caveat quoted: 'Note that the deletion collection was screened on complex medium supplemented for genetic markers, so it is not ideal ground truth; it is most useful for comparing model versions against each other.'"
+    },
+    "essentialGenes_data_README.md": {
+      "sha256": "0f82eb9208d8ebee4328d8242b8b0840681166001775e0e53cfa849d46b9fe45",
+      "note": "data/essentialGenes/README.md: inviable_orfs.txt, 1191 entries (1122 unique), 'Essential ORFs from the Stanford yeast deletion project (14 aug 2011 snapshot)', source http://www-sequence.stanford.edu/group/yeast_deletion_project/downloads.html; verified_orfs.txt, 5061 unique ORFs, 'The verified set from SGD (27 August 2013)'"
+    }
+  },
+  "method": "code/python/yeastgem/model_tests/essential_genes.py (and code/modelTests/essentialGenes.m): complete_Y7() sets the Kennedy synthetic complete medium (all exchanges closed, 28 constrained uptakes at -0.5, glucose r_1714 at -20, 15 unconstrained uptakes at -1000), cobra single_gene_deletion, growth ratio against the wild type, a gene is inviable when the ratio is below _KO_TOL = 1e-6; the 1,107 genes are the verified ORFs in the model; methodology 'Adapted from: https://doi.org/10.1371/journal.pcbi.1004530' (Heavner and Price 2015)"
+}

@@ -22,6 +22,40 @@ are (without the rounding two identical runs differed by 0.03 AUROC on the held-
 The medium moves the number of lethal deletions by a factor of two and the AUROC by about
 0.01. The published 0.69 on all labeled genes is reproduced to within 0.02.
 
+\subsection{yeast-GEM's own benchmark, and accuracy against balanced accuracy\secstatus{todo}}
+
+yeast-GEM ships its own essentiality benchmark and prints it in its README: on 1,107
+genes, an accuracy of 0.902 with 933 true non-essential, 65 true essential, 94 false
+non-essential and 15 false essential calls. Its release file
+(\texttt{results/external/yeast-GEM-9.1.1/}, version 9.1.1 at commit \texttt{2d594ae},
+2026-08-30) says how: the Kennedy synthetic complete medium is written onto the
+exchanges (every exchange closed, 28 uptakes at $-0.5$, glucose at $-20$, fifteen
+inorganic uptakes open), each gene is deleted through the gene-protein-reaction rules,
+and a deletion is inviable when its growth ratio is below $10^{-6}$; the genes are the
+SGD verified ORFs in the model, and the labels are the Stanford deletion project's
+inviable list of 2011, scored against the model at that one rule, a protocol the
+repository attributes to Heavner and Price (2015). The released split's labels are the
+same truth: on the 1,104 genes both name, the two sources agree on 1,102.
+
+Table~\ref{tab:confusion} puts every scorer in this document at that rule. Two things
+are visible at once. The first is that accuracy is the wrong statistic for this
+endpoint: 86 percent of the genes are nonessential, so a scorer that calls nothing
+essential reads 0.856 on yeast-GEM's set and 0.841 on the 195 held-out genes, and
+yeast-GEM's 0.902 is that floor plus four and a half points; its recall on the
+essential class is 0.41 and its balanced accuracy 0.70. FBA on the previous release, 9.0.2, under the ontology's own synthetic complete
+recipe reads 0.907 on the released labels with a recall of 0.46, the same rule on the
+same truth with a different medium composition, so the 9.1.1 number is reproduced to
+within half a point. The second is where the transformer sits at a threshold: at its loss's
+decision boundary it reads 0.856, the majority floor, with a recall of 0.68 and a
+balanced accuracy of 0.78, and at the threshold that calls 31 genes essential it reads
+0.867 with precision and recall both at 0.58. The released Flux Cone Learning
+predictions at $P(\text{viable}) < 0.5$ call eight genes essential on the 195, all eight
+correctly, for a recall of 0.26. A ranking statistic is what separates the scorers, and
+the balanced accuracies, 0.63 to 0.72 for the solvers and 0.78 for the transformer,
+order them the way the AUROCs do.
+
+\input{tables/confusion}
+
 \subsection{Flux Cone Learning on the same genes\secstatus{todo}}
 
 Recomputed from the authors' released per-gene predictions: 0.7308 on the 223 held-out

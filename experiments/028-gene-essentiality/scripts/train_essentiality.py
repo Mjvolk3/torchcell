@@ -3660,7 +3660,7 @@ def affine_table(
         table = torch.cat([table, s_table], dim=1)
         known = known & s_known
         columns = media + s_names
-        meta = {"fba": meta, "solve": s_meta, "n_columns": len(columns)}
+        meta = {**meta, "solve": s_meta, "n_columns": len(columns)}
     return table, known, columns, meta
 
 
@@ -4902,8 +4902,9 @@ def build_model_for_cell(
             device
         )
         print(
-            f"[fba-readout] essentiality from the context head plus FBA's growth ratios on "
-            f"{fba_media} for {fba_meta['n_genes_with_fba']} of {len(gene_ids)} genes",
+            f"[fba-readout] essentiality from the context head plus an affine of "
+            f"{len(fba_media)} columns ({', '.join(fba_media[:4])}, ...) for "
+            f"{fba_meta['n_genes_with_fba']} of {len(gene_ids)} genes",
             flush=True,
         )
         return wrapped_fba, head_specs, main_head, flux_meta

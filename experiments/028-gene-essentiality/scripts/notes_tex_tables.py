@@ -283,6 +283,15 @@ ROUND_CAPTIONS = {
         "column and the gated column with the context head. Constraint scale 0, batch "
         "32, class weight, 200 epochs, seeds 2700 to 2702.",
     ),
+    "w30": (
+        "Round 15c, the layer that solves with calibrated capacity ceilings",
+        "The pooled cell, the round-5 FBA affine and the round-15b cells on the GEM box, "
+        "against the growth LP on the anchored box with the enzyme-capacity ceilings "
+        "scaled by 100 and by 1,000 (capacity\\_calibration.py: the program admits "
+        "growth from a scale of 30 and the ceilings stop binding near 10,000), forced "
+        "and gated. Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 "
+        "to 2702.",
+    ),
 }
 
 

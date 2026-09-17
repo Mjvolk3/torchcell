@@ -752,6 +752,12 @@ class FluxLayerConfig(BaseModel):
         ),
     )
     use_enzyme_capacity: bool = True
+    #: Multiplies every enzyme-capacity ceiling before it enters the box. 1.0 is the
+    #: ceiling as parameterized (predicted k_cat times the abundance head's E_u), under
+    #: which the growth LP is infeasible for every genotype on yeast-GEM 9.0.2 (028 round
+    #: 15: median ceiling 0.084 mmol/gDW/h); a scale that admits wild-type growth is
+    #: GECKO's saturation calibration. Read at call time, so it can be set on a built layer.
+    capacity_scale: float = Field(default=1.0, gt=0.0)
     use_protein_budget: bool = True
     use_abundance_head: bool = Field(
         default=False,
@@ -2976,7 +2982,9 @@ class FluxLayer(nn.Module):
                 1, self.unit_reaction, per_unit.unsqueeze(0).expand(c_j.shape[0], -1)
             )
             cap = cap * c_j
-        capped = torch.where(self.has_gpr.unsqueeze(0), cap, ub.abs())
+        capped = torch.where(
+            self.has_gpr.unsqueeze(0), cap * self.config.capacity_scale, ub.abs()
+        )
         ub = torch.minimum(ub, capped)
         lb = torch.maximum(lb, -capped)
         return lb, ub, capped

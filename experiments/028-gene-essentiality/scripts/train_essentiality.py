@@ -1058,6 +1058,16 @@ class BxCell(BaseModel):
             "the default is all four."
         ),
     )
+    flux_capacity_scale: float = Field(
+        default=1.0,
+        gt=0.0,
+        description=(
+            "Multiplies the flux layer's enzyme-capacity ceilings before they enter the "
+            "box (`FluxLayerConfig.capacity_scale`). 1.0 is the ceiling as parameterized, "
+            "under which the growth LP is infeasible for every genotype (round 15); "
+            "capacity_calibration.py finds the smallest scale that admits wild-type growth."
+        ),
+    )
     ess_solve_features: str = Field(
         default="none",
         description=(
@@ -2152,6 +2162,7 @@ def build_cell(
     ess_readout: str = ESS_READOUT_BIOMASS,
     ess_fba_media: list[str] | None = None,
     ess_solve_features: str = "none",
+    flux_capacity_scale: float = 1.0,
     node_embeddings: list[str] | None = None,
     pos_weight_balanced: bool = False,
 ) -> BxCell:
@@ -2249,6 +2260,7 @@ def build_cell(
         ess_readout=ess_readout,
         ess_fba_media=list(ess_fba_media) if ess_fba_media else list(FBA_MEDIA),
         ess_solve_features=ess_solve_features,
+        flux_capacity_scale=flux_capacity_scale,
         node_embeddings=(
             list(node_embeddings) if node_embeddings else list(STRONG_NODE_EMBEDDINGS)
         ),
@@ -4407,6 +4419,9 @@ def build_model_for_cell(
         flux_layer.config.balance_active_row_set = cell.flux_balance_active_row_set
         flux_layer.config.conc_lower_m = cell.conc_lower_m
         flux_layer.config.conc_upper_m = cell.conc_upper_m
+        # The capacity scale is read by dynamic_box at call time, so it is written onto
+        # the built layer the same way.
+        flux_layer.config.capacity_scale = cell.flux_capacity_scale
         # THE WARM-START GEOMETRY SWITCHES (wave 9). The fold is read off config at call
         # time. ORDER MATTERS for the two files: apply_log_c_init reads conc_lower_m and
         # conc_upper_m, assigned just above, and refuses a window that disagrees with the
@@ -6482,6 +6497,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--flux-capacity-scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Multiply the flux layer's enzyme-capacity ceilings by this factor; 1.0 is "
+            "the ceiling as parameterized, which admits no growing flux (round 15)."
+        ),
+    )
+    parser.add_argument(
         "--ess-solve-features",
         default="none",
         choices=ESS_SOLVE_FEATURES,
@@ -6967,6 +6991,7 @@ def main() -> None:
         ess_readout=args.ess_readout,
         ess_fba_media=args.ess_fba_media,
         ess_solve_features=args.ess_solve_features,
+        flux_capacity_scale=args.flux_capacity_scale,
         node_embeddings=args.node_embeddings,
         pos_weight_balanced=args.pos_weight_balanced,
     )

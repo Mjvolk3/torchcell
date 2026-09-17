@@ -60,3 +60,16 @@ IGB mmli jobs 2397848 (`cgt_s0_q_kl_emb_017` seed 2, finished 02:01 CDT) and 239
 | learnable table (ctrl_016) | 1 / 2 / 42 | 0.144 / 0.125 / 0.140 | 0.226 / 0.163 / 0.195 | 0.136 / 0.123 / 0.130 |
 
 The composite arm's three-seed window mean is 0.218 against the control's 0.136; the joint fitness objective at one seed (0.209, fitness val Pearson max 0.730) sits inside the composite arm's seed spread and does not move the interaction score. Grouped view: `?nw=paezdq4q5ex`.
+
+## 2026.09.17 - Composite plus fitness at three seeds
+
+mmli 2408604 (seed 1, ended 01:43) and 2408605 (seed 2, ended 11:12) synced; 63 runs labeled in the grouped view. Window mean of validation Pearson over epochs 10 to 29, paired by seed against the composite arm without the fitness head:
+
+| seed | composite (emb_017) | composite + fitness (embfit_027) | difference |
+|---|---|---|---|
+| 1 | 0.235 | 0.237 | +0.002 |
+| 2 | 0.203 | 0.172 | -0.032 |
+| 42 | 0.215 | 0.209 | -0.006 |
+| mean | 0.218 | 0.206 | -0.012 |
+
+Two of three seeds below, one level; the mean difference is inside the across-seed spread (sd 0.016 on the composite arm), so the fitness objective neither helps nor measurably costs the interaction score on the disjoint split. Seed 1 of the joint arm holds 0.264 at epoch 29 with its maximum at epoch 25, the only cell of either arm whose curve did not decay after epoch 15. Fitness validation Pearson max 0.730 (seed 42); seeds 1 and 2 to be read from the same column.

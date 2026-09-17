@@ -538,7 +538,7 @@ starts with 87 percent of its genotypes infeasible, is pulled back to none by ep
 by the gradient from the feasible rows, selects epoch 29 and reads 0.8425 on the
 held-out genes: the growth column of a linear program under learned enzyme ceilings,
 with no context head and no appended ratio, at the level of the affine (0.821) and of
-the round-9 backbone's seeds, 0.17 above FBA's own ranking on the same genes. The other
+the round-9 backbone's seeds, 0.18 above FBA's own ranking on the same genes. The other
 two seeds enter the absorbing state within five epochs, 97 percent of genotypes
 infeasible from then on, and read 0.500. The probe at initialization reads the column at
 0.730 with a Spearman of $+0.49$ to $+0.55$ against the solve, the same start as the
@@ -574,9 +574,12 @@ reference and only the two parameters of the growth affine train; the cell is th
 on the projected reference, and the projection reversed its sign. The warm-started gated
 arms leave the flux path at 0.3 percent of the gradient and push the gate to $-0.8$,
 which is the head learning to subtract a sign-reversed growth column. None of the arms is
-gradient-starved except the one that was meant to be a fixed function, so the module's
-null on this endpoint is not a gradient-flow problem; the gradient reaches the layer, and
-what the layer computes is not growth.
+gradient-starved except the one that was meant to be a fixed function, so the alternating
+module's null on this endpoint is not a gradient-flow problem; the gradient reaches the
+layer, and what that layer computes is not growth. The layer that solves has the
+opposite gradient problem, which rounds 15b and 15c measure: its gradient is exactly the
+dual of the binding bounds, which is zero when no gene-owned bound binds and absent when
+the program is infeasible.
 
 \tcfigfit[1.0]{figures/grad_flow_2026-09-17-00-45-06.pdf}{\textbf{Where the gradient goes on the
   module arms.} \textbf{a}, The flux layer's share of the summed per-module gradient norm
@@ -626,6 +629,9 @@ both cases the gated module cell reaches the affine's level, 0.816 and 0.824, th
 three seeds above the round-4 gated cell, with the growth column entering through a
 positive gate. On the anchored box the projections reverse the solve (round 10) and the
 program has no feasible point (round 15), because the enzyme-capacity ceilings as
-parameterized exclude growth. The module helps, then, exactly when its flux is on the
-polytope the solve optimizes over, and the constraint set that was meant to make it
-more than the solve is what has kept it off.
+parameterized exclude growth; with those ceilings scaled to admit growth the program
+solves, the ceilings bind, and on one of three seeds the growth column alone ranks the
+held-out genes at 0.84 with no head and no appended ratio (round 15c), the module's
+upper bound so far. The module helps, then, exactly when its flux is on the polytope
+the solve optimizes over, and the constraint set that was meant to make it more than the
+solve is what kept it off until it was calibrated.

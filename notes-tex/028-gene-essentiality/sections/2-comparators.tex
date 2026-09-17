@@ -108,8 +108,8 @@ encoding, the model class whose cross-validation AUROC is highest.
 
 The controls behave. The one-hot rung scores 0.506 and the six random widths score 0.45
 to 0.59, chance within the 195-gene noise, and with FBA appended they score 0.56 to 0.69,
-FBA's own number, so no rung reads anything but its features. Without FBA the protein and
-codon language models are the only encodings clear of 0.70: ProtT5 0.732, CaLM 0.734, the
+FBA's own number, so no rung reads anything but its features. Without FBA four encodings
+are clear of 0.70: ProtT5 0.732, CaLM 0.734, the
 concatenation 0.768, and the chromosome-pathway indicator 0.775 [0.68, 0.86], each
 level with Flux Cone Learning's 0.742 on the same genes. FBA lifts every one of them:
 logistic regression on ProtT5 with the ratios scores 0.821 [0.74, 0.90] from 1,029
@@ -118,7 +118,7 @@ random forest on CaLM 0.806 [0.72, 0.89], and logistic regression on the 197-dim
 chromosome-pathway indicator 0.830 [0.75, 0.90]. The rung with the highest
 cross-validation AUROC, the random forest on CaLM with FBA at 0.850, scores 0.806 on the
 held-out genes; the highest held-out number in the figure, 0.841 for cosine nearest
-neighbors on codon frequency with FBA, is the maximum over 192 rungs and is not a
+neighbors on codon frequency with FBA, is the maximum over 216 rungs and is not a
 selected model. Neither an embedding nor the solver reaches 0.80 alone, and their sum
 does on four encodings. FBA's ratio is a feature the ontology computes for every gene at
 no training cost, so the transformer is measured against 0.80 to 0.83 from here on, not
@@ -173,7 +173,7 @@ number and the architectures on top of them are level: a two-layer MLP, graph
 convolution over the nine graphs, and the perturbed-graph transformer read 0.87 to
 0.88 per cell from the same inputs. Given the transformer's own averaging, five fold
 models on the cross-validation files with their logits averaged on the held-out genes,
-the MLP reads 0.886 [0.82, 0.94] from fold models of 0.870 to 0.892, and the
+the MLP reads 0.886 [0.82, 0.94] from fold models of 0.866 to 0.892, and the
 convolution at 400 epochs 0.888 [0.83, 0.93] from fold models of 0.807 to 0.897
 (\texttt{graph\_baselines.py --arms folds}), against the transformer's 0.893 [0.84,
 0.94]. Three ensembles within 0.007 of one another, each inside the others' intervals,

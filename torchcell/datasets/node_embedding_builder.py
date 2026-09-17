@@ -16,6 +16,7 @@ from torchcell.datasets.one_hot_gene import OneHotGeneDataset
 from torchcell.datasets.protT5 import ProtT5Dataset
 from torchcell.datasets.random_embedding import RandomEmbeddingDataset
 from torchcell.datasets.sgd_gene_graph import GraphEmbeddingDataset
+from torchcell.datasets.sgd_gene_graph_hot import OneHotGraphEmbeddingDataset
 
 
 class NodeEmbeddingBuilder:
@@ -148,7 +149,7 @@ class NodeEmbeddingBuilder:
         # The five scaled gene properties and the chromosome one-hot without the pathway
         # columns: the attribution control for normalized_chrom_pathways (028 round 14).
         "normalized_chrom": {
-            "class": GraphEmbeddingDataset,
+            "class": OneHotGraphEmbeddingDataset,
             "root_path": "data/scerevisiae/sgd_gene_graph_hot",
             "requires_graph": True,
             "model_name": "normalized_chrom",

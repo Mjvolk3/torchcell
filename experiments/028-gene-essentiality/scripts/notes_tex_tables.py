@@ -259,6 +259,14 @@ ROUND_CAPTIONS = {
         "direction before the solve, and the gated column with the context head. "
         "Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
     ),
+    "w27": (
+        "Round 16, the round-9 backbone with the round-11 affine",
+        "The round-5 cell, the round-9 cell (chromosome-pathway indicator with ProtT5), "
+        "the round-11 cell (ProtT5 with the widened affine), and the round-9 backbone "
+        "with the widened affine: the four ratios and the pFBA vector, and those plus "
+        "the eight statistics. Width 12, one block, batch 32, class weight, 200 epochs, "
+        "seeds 2700 to 2702.",
+    ),
 }
 
 

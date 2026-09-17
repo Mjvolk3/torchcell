@@ -15,9 +15,17 @@ rounds answer it in steps: the module neither helps nor hurts on the backbone (r
 and 4); it adds nothing on top of the solve (round 6); its growth column is not growth
 but a free coordinate, because the layer never reaches the polytope the solve optimizes
 over (the probe, round 7); handed the solve's own point on that polytope, the anchored
-layer's constraint set discards it (round 10); and the gradient reaches the layer
-throughout, so none of this is a gradient-flow failure. The section closes with what the
-comparison says a layer would have to compute to help.
+layer's constraint set discards it (round 10) while the GEM's own box keeps it, and the
+gated module cell then reaches the level of the solve appended as an input (round 13);
+a layer that solves the program instead of projecting toward it is infeasible on the
+anchored box, whose capacity ceilings exclude growth (round 15), and on the GEM's box it
+is feasible, ranks above FBA before training, and gated reaches the same level (round
+15b); with the ceilings calibrated to admit growth, the growth column alone ranks the
+held-out genes at 0.84 on one seed and the program's infeasible region absorbs the other
+two (round 15c). The gradient reaches the alternating layer throughout, so its null is
+not a gradient-flow failure; the layer that solves has the linear program's own
+gradient, the dual of the binding bounds. The section closes with what the comparison
+says a layer has to compute to help.
 
 The pooled backbone reads its logit from an MLP on the perturbed context
 (Figure~\ref{fig:readout-pooled}). A flux arm builds the enzyme-constrained thermodynamic

@@ -203,3 +203,36 @@ noise both times. The backbone on codon frequency with the affine scores 0.747, 
 rung with FBA (0.818), so the 64 codon numbers that a support vector classifier reads
 well are not read well through a 12-wide transformer; the selected epochs (16, 172, 14)
 and the step of 0.013 in panel b say the cell never settled.
+
+\subsection{The growth column is a signed free coordinate\secstatus{todo}}
+
+Four rounds put the layer's growth column level with the pooled head and blind to its
+own $k_{cat}$ table while one linear program per deletion lifts every model by 0.05. The
+probe in Table~\ref{tab:growth-probe} reads the column itself. It rebuilds a forced cell
+from its result file, deletes each of the 982 labeled genes through the same batches
+training used, and reads $v_{\text{growth}}$ at initialization and under the trained
+weights, scoring the negative column against the label (a deletion that stops growth is
+essential) and the column against FBA's ratio.
+
+\input{tables/growth_probe}
+
+At initialization the column carries a weak signal in the right direction: 0.55 on the
+held-out genes and a Spearman of $+0.11$ with the solve, nothing like FBA's 0.65, and no
+deletion reaches zero growth. Training inverts it. Under the round-4 forced cell's weights
+the negative column reads 0.23 on the held-out genes, which is that cell's 0.77 with the
+sign of growth reversed: the affine learned a positive slope, an essential deletion gets
+the \emph{higher} growth, and the column is anticorrelated with the solve ($-0.25$). The
+round-2 forced cell does the same ($0.24$, $-0.26$). The median growth under the trained
+weights is $-1.4$ and $-2.4$ mmol/gDW/h against a wild-type FVA range of 0.48 to 0.54 on
+YPD: for most deletions the column is negative, which growth cannot be.
+
+The column can do this because the arm's alternations end on the balance projection, so
+$Sv = 0$ holds to machine precision and the box does not: 58 percent of reactions sit
+outside their bounds at the selected epoch (0.64 on the round-2 cell, 0.59 on the round-6
+cell), the growth reaction's floor of zero among them. $v_{\text{growth}}$ is then a
+signed, unbounded coordinate the backbone writes through the abundance head, and the
+readout uses it as a free latent. That is the mechanism behind the shuffled-$k_{cat}$
+parity and behind the layer matching the head: the quantity the forced readout reads is
+not growth. Round 7 (jobs 2257 and 2258) puts the forced readout on two layers whose
+bounds hold exactly, the projection ending on the clip and the pure box form, and runs
+the probe on each.

@@ -258,8 +258,46 @@ def logistic_baselines() -> str | None:
     return write("ladder", body, "results/logistic_baselines.json")
 
 
+def growth_probe() -> str | None:
+    """The flux growth probe, one row per (cell, weights), from ``flux_growth_probe_*.json``."""
+    paths = sorted(glob.glob(osp.join(RESULTS, "flux_growth_probe_*.json")))
+    if not paths:
+        return None
+    rows = []
+    for path in paths:
+        with open(path) as fh:
+            probe = json.load(fh)
+        stem = osp.basename(path).replace("flux_growth_probe_", "").replace(".json", "")
+        cell = stem.replace("_h12l1p1", "").replace("_", "\\_")
+        for b in probe["blocks"]:
+            sp = b["spearman_vs_fba"]
+            rows.append(
+                f"    \\texttt{{{cell}}} & {b['weights']} & {b['growth_median']:.2f} & "
+                f"{b['auroc_train']:.3f} & {b['auroc_val']:.3f} & {b['auroc_test']:.3f} & "
+                f"{sp['shipped']:+.2f} & {sp['YPD']:+.2f} \\\\"
+            )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Flux growth probe]{The flux layer's growth column, read for every "
+        "labeled deletion at initialization and under the cell's trained weights "
+        "(\\texttt{flux\\_growth\\_probe.py}). Median $v_{\\text{growth}}$ over the 982 "
+        "labeled deletions (mmol/gDW/h; the wild type's FVA range on YPD is 0.48 to 0.54); "
+        "AUROC of the NEGATIVE growth column against the released label on the train, "
+        "validation and held-out genes, so 0.5 is chance and a value below 0.5 is a ranking "
+        "with the sign of growth inverted; Spearman of the column against FBA's "
+        "knockout-to-wild-type ratio on the shipped bounds and on YPD.}\n"
+        "  \\label{tab:growth-probe}\n"
+        "  \\begin{tabular}{@{}llrrrrrr@{}}\n    \\hline\n"
+        "    cell & weights & median $v$ & train & val & held-out & $\\rho$ shipped & "
+        "$\\rho$ YPD \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("growth_probe", body, "results/flux_growth_probe_*.json")
+
+
 def main() -> None:
-    paths = [fba_media(), splits(), logistic_baselines()]
+    paths = [fba_media(), splits(), logistic_baselines(), growth_probe()]
     paths.extend(round_table(k) for k in ROUND_CAPTIONS)
     for path in paths:
         if path is not None:

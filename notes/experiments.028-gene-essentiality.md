@@ -527,3 +527,7 @@ Example runs, forced x100 seed 2701 (0.8425) and seed 2700 (absorbed):
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/u3hs1sz0>
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/ss3mk1qu>
+
+## 2026.09.17 - The WL test on the deletion graphs: 1-WL separates every deletion, structure alone ranks at chance
+
+`wl_knockout_test.py` (8 h single-threaded CPU; the union's 1.5M edges dominate). Physical graph (139,463 edges): 1,118 distinct 1-WL signatures among 1,121 single-deletion graphs at k = 1, 2, 3 (three colliding pairs, none essential). Union of nine (1,516,034 edges): all 1,121 distinct at k = 1. WL subtree-kernel rung (2-hop ego graph, 3 iterations, 1,024 bins, logistic regression, CV-selected C): held-out 0.490 (physical), 0.564 (union) = chance. Reading: 1-WL expressivity does not bound a message-passing model here; the neighborhood's structure carries no essentiality signal; every number above chance comes from node features. Section 2 subsection + `tables/wl_test.tex`; vocabulary entry. The recolored figure source is `notes/assets/drawio/028-wl-test.drawio` (needs a re-layout and export in draw.io).

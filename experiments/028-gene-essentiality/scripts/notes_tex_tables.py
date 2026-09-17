@@ -638,11 +638,57 @@ def graph_baselines() -> str | None:
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write("graph_baselines", body, "results/graph_baselines.json, results/graph_baselines_extra.json")
+    return write(
+        "graph_baselines",
+        body,
+        "results/graph_baselines.json, results/graph_baselines_extra.json",
+    )
+
+
+def wl_test() -> str | None:
+    """1-WL on the single-deletion graphs, and the WL kernel as a rung."""
+    src = osp.join(RESULTS, "wl_knockout_test.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    rows = []
+    for r in report["tests"]:
+        rows.append(
+            f"    {r['graph']} & {r['n_edges']:,} & {r['iterations']} & "
+            f"{r['n_deletions']:,} & {r['n_distinct_hashes']:,} & {r['n_in_collision']} & "
+            f"{r['largest_collision']} & {r['essential_in_collision']} & "
+            f"{r['seconds'] / 60:.0f} \\\\"
+        )
+    kernel = "; ".join(
+        f"{k['graph']}: C = {k['C']:g}, CV {k['cv_auroc']:.3f}, validation "
+        f"{k['val_auroc']:.3f}, held-out {k['test_auroc']:.3f}"
+        for k in report["kernel_rungs"]
+    )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The 1-WL test on the deletion graphs]{The 1-WL test on the "
+        "single-deletion graphs. For every labeled gene the gene graph with that gene's "
+        "node removed is hashed by Weisfeiler-Leman color refinement with degree as the "
+        "initial color; a collision is a set of deletions with one hash, which no "
+        "1-WL-bounded message-passing model can tell apart by structure. The WL kernel "
+        f"rung is logistic regression on the bag of colors of each gene's 2-hop ego "
+        "graph refined for three iterations, hashed to 1,024 bins, with C chosen by "
+        f"five-fold cross-validation inside the training genes: {kernel}.}}\n"
+        "  \\label{tab:wl}\n"
+        "  \\begin{tabular}{@{}lrrrrrrrr@{}}\n    \\hline\n"
+        "    graph & edges & $k$ & deletions & distinct & in collision & largest & "
+        "essential & min \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("wl_test", body, "results/wl_knockout_test.json")
 
 
 def main() -> None:
     paths = [
+        wl_test(),
         graph_baselines(),
         fba_media(),
         splits(),

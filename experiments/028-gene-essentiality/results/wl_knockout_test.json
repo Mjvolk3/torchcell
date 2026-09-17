@@ -1,0 +1,101 @@
+{
+  "tests": [
+    {
+      "graph": "physical",
+      "n_nodes": 6607,
+      "n_edges": 139463,
+      "iterations": 1,
+      "n_deletions": 1121,
+      "n_distinct_hashes": 1118,
+      "n_in_collision": 6,
+      "largest_collision": 2,
+      "essential_in_collision": 0,
+      "seconds": 644.7550315856934
+    },
+    {
+      "graph": "physical",
+      "n_nodes": 6607,
+      "n_edges": 139463,
+      "iterations": 2,
+      "n_deletions": 1121,
+      "n_distinct_hashes": 1118,
+      "n_in_collision": 6,
+      "largest_collision": 2,
+      "essential_in_collision": 0,
+      "seconds": 623.9867537021637
+    },
+    {
+      "graph": "physical",
+      "n_nodes": 6607,
+      "n_edges": 139463,
+      "iterations": 3,
+      "n_deletions": 1121,
+      "n_distinct_hashes": 1118,
+      "n_in_collision": 6,
+      "largest_collision": 2,
+      "essential_in_collision": 0,
+      "seconds": 1098.2551579475403
+    },
+    {
+      "graph": "union of nine",
+      "n_nodes": 6607,
+      "n_edges": 1516034,
+      "iterations": 1,
+      "n_deletions": 1121,
+      "n_distinct_hashes": 1121,
+      "n_in_collision": 0,
+      "largest_collision": 1,
+      "essential_in_collision": 0,
+      "seconds": 7817.127247095108
+    },
+    {
+      "graph": "union of nine",
+      "n_nodes": 6607,
+      "n_edges": 1516034,
+      "iterations": 2,
+      "n_deletions": 1121,
+      "n_distinct_hashes": 1121,
+      "n_in_collision": 0,
+      "largest_collision": 1,
+      "essential_in_collision": 0,
+      "seconds": 5454.669828653336
+    },
+    {
+      "graph": "union of nine",
+      "n_nodes": 6607,
+      "n_edges": 1516034,
+      "iterations": 3,
+      "n_deletions": 1121,
+      "n_distinct_hashes": 1121,
+      "n_in_collision": 0,
+      "largest_collision": 1,
+      "essential_in_collision": 0,
+      "seconds": 5338.8669691085815
+    }
+  ],
+  "kernel_rungs": [
+    {
+      "graph": "physical",
+      "dim": 1024,
+      "C": 0.001,
+      "cv_auroc": 0.5779982030548068,
+      "val_auroc": 0.6255639097744361,
+      "test_auroc": 0.48977183320220297,
+      "n_train": 629,
+      "n_val": 158,
+      "n_test": 195
+    },
+    {
+      "graph": "union of nine",
+      "dim": 1024,
+      "C": 0.01,
+      "cv_auroc": 0.44342407906558845,
+      "val_auroc": 0.47789473684210526,
+      "test_auroc": 0.5635326514555468,
+      "n_train": 629,
+      "n_val": 158,
+      "n_test": 195
+    }
+  ],
+  "encodings": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_wl_encodings.npz"
+}

@@ -178,3 +178,31 @@ convolution at 400 epochs 0.888 [0.83, 0.93] from fold models of 0.807 to 0.897
 (\texttt{graph\_baselines.py --arms folds}), against the transformer's 0.893 [0.84,
 0.94]. Three ensembles within 0.007 of one another, each inside the others' intervals,
 are one number at the resolution of 195 genes, and the MLP's costs thirty seconds.
+
+\subsection{The Weisfeiler-Leman test on the deletion graphs\secstatus{todo}}
+
+A message-passing model over a gene graph is bounded by what color refinement can
+separate: two graphs that the 1-WL test assigns the same signature are the same graph to
+it, whatever the model's weights (Xu et al.\ 2019). The transformer's perturbed graph is
+the gene graph with the deleted gene's token removed, so the first question is whether
+single deletions are even distinguishable by structure, and the second is whether
+structure alone ranks them. \texttt{wl\_knockout\_test.py} answers both on the physical
+interaction graph and on the union of the nine graphs the transformer reads
+(Table~\ref{tab:wl}): for every labeled gene it hashes the graph with that gene's node
+removed by color refinement at one, two and three iterations with degree as the initial
+color, counts collisions, and fits logistic regression on the WL subtree kernel's
+feature map of each gene's 2-hop ego graph.
+
+\input{tables/wl_test}
+
+The test separates the deletions and the kernel does not rank them. On the physical
+graph, one iteration already gives 1,118 distinct signatures among 1,121 deletions, three
+pairs collide, none of the six genes in them is essential, and two more iterations change
+nothing; on the union every deletion has its own signature at one iteration. A single
+deletion changes the degree of every neighbor, and on graphs this dense (139,463 and
+1,516,034 edges) that is enough for the test, so 1-WL expressivity is not what bounds a
+message-passing model on this endpoint. The kernel rung reads 0.490 on the physical
+graph and 0.564 on the union, chance on 195 genes, which is the same reading the
+graph-only baselines gave with all-ones and degree inputs: a gene's neighborhood
+structure, however finely refined, does not say whether the gene is essential, and every
+number above chance in this document comes from what is written on the nodes.

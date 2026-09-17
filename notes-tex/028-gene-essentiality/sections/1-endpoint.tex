@@ -59,6 +59,11 @@
     null-space residual of relative size $\alpha$, $v = v_{\text{ref}} + \alpha N z$,
     before the alternations; with a per-genotype table the reference is the deletion's
     own pFBA flux.
+  \item[Weisfeiler-Leman test] Color refinement: every node starts with a color, and
+    each iteration replaces it by a hash of its own color and the multiset of its
+    neighbors' colors; the multiset of colors after $k$ iterations is the graph's 1-WL
+    signature. Different signatures prove two graphs non-isomorphic; equal signatures
+    prove nothing. A message-passing network is at most as expressive as the test.
 \end{description}
 
 \subsection{Where the labels come from\secstatus{todo}}

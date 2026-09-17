@@ -1,5 +1,5 @@
 {
-  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/grad_flow_2026-09-17-00-03-16.svg",
+  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/grad_flow_2026-09-17-00-45-06.svg",
   "arms": [
     {
       "arm": "b32posw200",
@@ -72,6 +72,20 @@
       "gate_last": 0.0
     },
     {
+      "arm": "warmoffbio",
+      "label": "growth column, GEM box only, pFBA warm start, alpha 0.01 frozen",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.013518523554783899,
+        0.0026012492730728824
+      ],
+      "preprocessor_first_last": [
+        0.03130308302202966,
+        7.479714420016473e-06
+      ],
+      "gate_last": 0.0
+    },
+    {
       "arm": "gate_s0",
       "label": "gated growth column, constraints 0 (round-3 levers)",
       "n_seeds": 3,
@@ -126,6 +140,20 @@
         3.531274391101469
       ],
       "gate_last": -0.8927787759651741
+    },
+    {
+      "arm": "warmoffgate",
+      "label": "gated column + context, GEM box only, pFBA warm start, alpha 0.01 frozen",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        8.994437833605552e-05,
+        0.014465673756239071
+      ],
+      "preprocessor_first_last": [
+        0.35458871389702235,
+        2.964815630214328
+      ],
+      "gate_last": 0.31463420391082764
     }
   ]
 }

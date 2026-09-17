@@ -374,3 +374,31 @@ Round 8 closed capacity as a lever, so the two levers left are the transformer's
 **Round 10 (w21, packs `w21_warm*.pack`, queued behind round 9).** `ess_reference_flux_table.py` solves one pFBA per labeled gene (1,121; genes outside the GEM get the wild type) on YPD through the same `media_report` the cell's box is built with, and writes the layer's per-genotype reference table (`$DATA_ROOT/data/torchcell/reference_flux/ess_reference_flux_table_YPD.npz`). Under `--flux-parameterization warmstart --flux-reference-table <that>` the layer proposes `v_ref(deletion) + alpha N z`, so the growth column starts at the deletion's own pFBA growth rather than at the free signed coordinate the probe found. Arms on the `flux_projection_anchored` arm at constraint scale 0: forced growth column with alpha frozen at 0.01 (`warmbio`), gated growth column + context head with alpha frozen at 0.01 (`warmgate`), alpha learned (`warmgatealpha`), alpha frozen at 0.1 (`warmgate10`). Pre-registered reads: (1) the probe at initialization must read the layer's growth column at FBA's level on YPD (AUROC of the negative column about 0.66 on the 195 genes) or the warm start did not reach the readout; (2) `warmgate` passes if its seed mean sits at the round-5 affine cell's 0.82 with three of three seeds above the round-4 gated cell (0.766 / 0.782 / 0.765), which would say the module carries the solve through the layer with gradients through it; (3) `warmgatealpha` against `warmgate` says whether training spends the feasibility the warm start bought (alpha growth, as in job 1946).
 
 **Ladder, solve-derived encodings.** The same script writes `ess_solve_encodings_YPD.npz`; `logistic_baselines.py --only-missing` fits three new encodings on the split: the deletion's pFBA flux vector (4,131-d), its difference from the wild-type vector, and eight per-gene statistics of the wild-type solve and its variability on the gene's own reactions (reaction count, reactions carrying flux, max and sum absolute flux, forced flux, min and max FVA range, growth ratio). The question is whether the solve has more to give than four growth ratios.
+
+## 2026.09.16 - Round 9 read: chromosome-pathway + ProtT5 with the FBA affine passes the ladder at 0.871; the solve's own encodings score 0.80 on the ladder with no sequence
+
+Packs 2280 to 2283 (19 min each). `wave12_readout.py --round w20`.
+
+![](./assets/images/028-gene-essentiality/w20_readout_2026-09-16-23-22-13.svg)
+
+| arm (context head + FBA affine, round-3 levers, width 12) | params | seeds 2700, 2701, 2702 | mean | sd | paired vs round 5 |
+|---|---|---|---|---|---|
+| ProtT5 (round 5) | 16,566 | 0.814, 0.805, 0.844 | 0.821 | 0.020 | |
+| chromosome-pathway indicator | 6,642 | 0.810, 0.759, 0.774 | 0.781 | 0.027 | -0.004, -0.046, -0.070 |
+| chromosome-pathway + ProtT5 | 18,930 | 0.860, 0.866, 0.888 | 0.871 | 0.015 | +0.046, +0.061, +0.044 |
+| ESM2 | 19,638 | 0.734, 0.736, 0.749 | 0.740 | 0.008 | -0.080, -0.069, -0.095 |
+| seven-encoding concatenation | 78,066 | 0.822, 0.810, 0.827 | 0.820 | 0.009 | +0.008, +0.005, -0.017 |
+
+- **PASSES the pre-registered read** (seed mean > 0.83, 3/3 above round 5): chromosome-pathway + ProtT5, 0.871, pooled 0.868 [0.80, 0.93]; the interval's lower end is the ladder's best rung. First cell to do so. Selects epochs 38 to 53; validation peaks ~0.85 at epochs 25-50 and drifts to 0.80.
+- The indicator ALONE is unstable through a 12-wide preprocessor (two seeds select epoch 2, validation falls from 0.73, preprocessor gradient norm ~5 all run) and scores 0.781; the ladder's logistic rung on it is 0.830. ESM2 0.740 (0.08 below ProtT5). The seven-way concatenation returns to ProtT5's number at 4.7x the parameters.
+- **Round 12 (w23, packs 2291 to 2293, queued)** confirms the passing cell: the five fold models (`chromprotcv0-4`, for the ensemble under FCL's protocol via `cv_ensemble_readout.py --prefix w23_chromprotcv`) and seeds 2703 to 2706 on the split file. The number is reported after that, not from one cell's three seeds.
+
+Example runs, chromosome-pathway + ProtT5 seed 2702 (0.888) and the indicator alone seed 2701 (0.759):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/bcd322yd>
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/1zxq5as9>
+
+**Ladder, solve-derived encodings (`logistic_baselines.py --only-missing`, from `ess_solve_encodings_YPD.npz`).** CV-selected rungs: eight reaction statistics (WT pFBA + FVA on the gene's reactions, incl. the growth ratio) random forest 0.797 [0.70, 0.88] alone, 0.817 [0.73, 0.90] + FBA (CV 0.847, highest in the ladder); the 4,131-d deletion pFBA vector RF 0.756 (logistic 0.771 [0.66, 0.87]); its delta from WT the same. The growth ratio alone is 0.645. So the solve carries ~0.15 AUROC beyond its growth ratio, level with ProtT5, from no sequence. Figure `classical_ladder_2026-09-16-23-16-30.svg`; section 2 updated.
+
+**Round 11 (w22, packs 2288 to 2290, queued)**: `--ess-solve-features {stats,pfba,stats_pfba}` appends those columns (standardized) to the fba readout's affine on the ProtT5 cell. Pre-registered: passes if seed mean > 0.83 with 3/3 above round 5. The winners of rounds 9 and 11 combine next if both pass.

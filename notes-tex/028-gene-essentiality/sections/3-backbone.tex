@@ -201,4 +201,49 @@ A width-12 transformer with FBA's four numbers reads 0.82 on these genes and nei
 four times the width, a second block, nor a wider preprocessor moves it by more than the
 seed noise. Capacity is not the lever on this endpoint and this split; the levers left
 untested are the gene encoding the transformer reads and what the solve supplies beyond
-four growth ratios (Section~\ref{sec:open}).
+four growth ratios.
+
+\subsection{Round 9: the FBA cell on the ladder's other encodings\secstatus{todo}}
+
+Every transformer cell so far reads ProtT5, and the ladder's best selected rung reads
+something else: logistic regression on the 197-dimensional chromosome-pathway indicator
+with the four ratios scores 0.830. Round 9 (jobs 2280 to 2283) opens the round-5 cell on
+the ladder's other encodings through \texttt{--node-embeddings}, with the readout, width,
+batch, class weight and budget fixed: the chromosome-pathway indicator alone, the
+indicator concatenated with ProtT5, ESM2, and the ladder's seven-encoding concatenation
+(ProtT5, CaLM, the two species-LM embeddings, the 5,979-base window, codon frequency and
+the indicator), each at the three seeds (Table~\ref{tab:w20}, Figure~\ref{fig:w20};
+\emph{chrom-pathway} in the figure is the chromosome-pathway indicator). The read is the
+round-8 one: a cell passes the ladder if its seed mean clears 0.83 with three of three
+seeds above the round-5 cell.
+
+\input{tables/round_w20}
+
+\tcfigfit[1.0]{figures/w20_readout_2026-09-16-23-22-13.pdf}{\textbf{Round 9, the FBA cell
+  on the ladder's other encodings.} \textbf{a}, Validation AUROC per epoch, one thin line
+  per seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step
+  per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points), the
+  seed mean and the gene bootstrap of the pooled per-gene logits (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the
+  same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w20}.}{fig:w20}
+
+The indicator concatenated with ProtT5 passes. It scores 0.860, 0.866 and 0.888 against
+the round-5 cell's 0.814, 0.805 and 0.844 on the same seeds, up by 0.046, 0.061 and
+0.044, a seed mean of 0.871 with a spread of 0.015 and a pooled bootstrap of 0.868
+[0.80, 0.93]; the lower end of that interval sits at the ladder's best rung. It is the
+first cell in this document whose seed mean clears 0.83 and whose weakest seed clears
+the round-5 cell's strongest. Its cells select epochs 38 to 53 on a validation curve that
+peaks near 0.85 between epochs 25 and 50 and drifts to 0.80 by epoch 200
+(Figure~\ref{fig:w20}a), and the cell has 18,930 parameters, 2,364 more than the round-5
+cell for the wider input. The indicator alone does not: 0.810, 0.759 and 0.774, a mean of
+0.781, with two seeds selecting epoch 2 and a validation curve that falls from 0.73 from
+the first epochs while its preprocessor's gradient norm sits near 5 for the whole run
+(Figure~\ref{fig:w20}d), against 0.1 to 3 on the other arms. The two encodings add
+through the transformer, 0.87 against 0.83 for the indicator's rung and 0.82 for
+ProtT5's; the ladder never fit the pair on its own. ESM2 with the affine scores
+0.740, below ProtT5 with the affine by 0.08 and level with ESM2's own ladder rung, and
+the seven-encoding concatenation 0.820, the round-5 cell's number from 78,066 parameters:
+adding five encodings to the two that pass returns the concatenation to where ProtT5
+alone sits. Round 12 confirms the passing cell under the fold protocol and on four more
+seeds before the number is reported, since 0.87 on 195 genes is one cell's draw.

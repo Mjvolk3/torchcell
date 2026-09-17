@@ -51,16 +51,23 @@ fit on the split file's 629 training genes, its one hyperparameter chosen by fiv
 stratified cross-validation inside those genes, and scored once on the 158 validation and
 195 held-out genes, on which nothing was chosen. The transformer cells in
 Sections~\ref{sec:backbone} and~\ref{sec:module} train on the same 629 genes and score on
-the same 195. Figure~\ref{fig:ladder} shows all 192 fitted rungs;
-Table~\ref{tab:ladder} keeps, per encoding, the model class whose cross-validation AUROC
-is highest.
+the same 195. Three further encodings come from the solve itself rather than from the
+sequence, added after round 8 (\texttt{ess\_reference\_flux\_table.py}): the deletion's
+own parsimonious FBA flux vector on YPD (4,131 reactions), that vector's difference from
+the wild-type vector, and eight numbers about the gene's own reactions under the
+wild-type solve and its flux variability at 90 percent of the optimum (reaction count,
+reactions carrying flux, the largest and the summed absolute flux, the largest forced
+flux, the smallest and largest variability range, and the deletion's growth ratio).
+Figure~\ref{fig:ladder} shows all 216 fitted rungs; Table~\ref{tab:ladder} keeps, per
+encoding, the model class whose cross-validation AUROC is highest.
 
-\tcfigfit[1.0]{figures/classical_ladder_2026-09-16-18-15-47.pdf}{\textbf{The classical
+\tcfigfit[1.0]{figures/classical_ladder_2026-09-16-23-16-30.pdf}{\textbf{The classical
   ladder on the released-label split.} Held-out AUROC on the 195 genes for every model
   class (color) on every encoding (column), filled without and open with the four FBA
   growth ratios appended; the dashed line is FBA alone on the shipped medium (0.654), the
-  solid line chance. The hyperparameter of each mark was chosen by five-fold
-  cross-validation inside the 629 training genes. Written by
+  solid line chance. The last three columns are the solve-derived encodings. The
+  hyperparameter of each mark was chosen by five-fold cross-validation inside the 629
+  training genes. Written by
   \texttt{experiments/028-gene-essentiality/scripts/logistic\_baselines.py}.}{fig:ladder}
 
 \input{tables/ladder}
@@ -82,3 +89,14 @@ selected model. Neither an embedding nor the solver reaches 0.80 alone, and thei
 does on four encodings. FBA's ratio is a feature the ontology computes for every gene at
 no training cost, so the transformer is measured against 0.80 to 0.83 from here on, not
 against the published 0.73.
+
+The solve carries more than its growth ratio. The eight reaction statistics under a
+random forest score 0.797 [0.70, 0.88] with no sequence information, and 0.817
+[0.73, 0.90] with the four ratios appended, at the highest cross-validation AUROC in the
+ladder (0.847); the growth ratio alone, which is one of the eight, scores 0.645 on the
+same genes. The full deletion flux vector scores 0.756 under its selected model and
+0.771 under logistic regression, level with ProtT5 and with the pooled transformer, so a
+gene's position in the wild-type flux solution and how much the solve moves when it is
+deleted rank essential genes about as well as its protein sequence does, and the two
+sources are different: no other encoding reaches 0.80 without the solve, and the eight
+statistics come within 0.003 of it with nothing else.

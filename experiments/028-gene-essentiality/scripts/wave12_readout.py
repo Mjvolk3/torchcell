@@ -267,6 +267,29 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["fba", "chromprotfba", "fbastatspfba", "chromprotpfba", "chromprotstatspfba"],
     ),
+    # Round 17: the round-16 cell on the five folds, beside the round-12 folds.
+    "w28": (
+        [
+            "w20_chromprotfba_h12l1p1_e200_s270[0-2].json",
+            "w23_chromprotcv*_h12l1p1_e200_s*.json",
+            "w27_chromprotstatspfba_h12l1p1_e200_s*.json",
+            "w28_*_e200_s*.json",
+        ],
+        [
+            "chromprotfba",
+            "chromprotstatspfba",
+            "chromprotcv0",
+            "chromprotcv1",
+            "chromprotcv2",
+            "chromprotcv3",
+            "chromprotcv4",
+            "cspcv0",
+            "cspcv1",
+            "cspcv2",
+            "cspcv3",
+            "cspcv4",
+        ],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -346,6 +369,11 @@ ARM_LABELS = {
     "lpgate": "gated column + context, the layer that solves",
     "chromprotpfba": "chrom-pathway + ProtT5 backbone + FBA ratios + pFBA vector",
     "chromprotstatspfba": "chrom-pathway + ProtT5 backbone + ratios + statistics + pFBA",
+    "cspcv0": "chrom-pathway + ProtT5 + widened affine, fold 0",
+    "cspcv1": "chrom-pathway + ProtT5 + widened affine, fold 1",
+    "cspcv2": "chrom-pathway + ProtT5 + widened affine, fold 2",
+    "cspcv3": "chrom-pathway + ProtT5 + widened affine, fold 3",
+    "cspcv4": "chrom-pathway + ProtT5 + widened affine, fold 4",
 }
 
 

@@ -267,6 +267,14 @@ ROUND_CAPTIONS = {
         "the eight statistics. Width 12, one block, batch 32, class weight, 200 epochs, "
         "seeds 2700 to 2702.",
     ),
+    "w28": (
+        "Round 17, the round-16 cell on the five folds",
+        "The round-9 and round-16 cells on the split file, the round-12 fold models of the "
+        "round-9 cell, and the five fold models of the round-16 cell (chromosome-pathway "
+        "indicator with ProtT5, the affine reading the four ratios, the eight statistics "
+        "and the pFBA vector), whose logits are averaged on the held-out genes. Width 12, "
+        "one block, batch 32, class weight, 200 epochs.",
+    ),
 }
 
 

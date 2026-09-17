@@ -334,4 +334,6 @@ Example runs, box seed 2701 (0.609) and clip-last seed 2700 (0.500):
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/q5etjawa>
 
-<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/kthpkk1r>
+<<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/kthpkk1r>
+
+**Round 8 (w19), packs 2259 to 2262, queued 20:02: width and depth on the FBA cell.** The round-5 cell (width 12, one block, one-layer preprocessor, context head + FBA affine, 0.814 / 0.805 / 0.844) against the same readout at width 24 and 48, at two blocks, and with the two-layer preprocessor, three seeds each on the round-3 levers. Read with `wave12_readout.py --round w19`. Pre-registered read: a cell passes the ladder if its seed mean clears 0.83 with three of three seeds above the round-5 cell; the wave-9 finding that width 90 collapsed one seed to a constant is the failure mode to watch at 48.>

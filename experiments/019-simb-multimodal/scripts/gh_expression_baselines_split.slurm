@@ -15,13 +15,13 @@
 # [1244, 6169] matrix and four embeddings: minutes, and the 32g is slack.
 #
 #SBATCH -p main
-#SBATCH --mem=32g
+#SBATCH --mem=48g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --job-name=019-baselines-split
 #SBATCH --array=0-4
-#SBATCH --time=04:00:00
+#SBATCH --time=12:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
 #SBATCH --output=/scratch/projects/torchcell-scratch/experiments/019-simb-multimodal/slurm/output/%x_%A_%a.out
@@ -60,7 +60,13 @@ TASK="${SLURM_ARRAY_TASK_ID:?submit with --array}"
 #       experiments/019-simb-multimodal/scripts/gh_expression_baselines_split.slurm
 BASELINES_TAG="${BASELINES_TAG:-fig3_core}"
 BASELINES_LABEL="${BASELINES_LABEL:-expression_log2_ratio}"
-COMMON=(--dataset-tag "$BASELINES_TAG" --label "$BASELINES_LABEL")
+# The full embedding study (every representation the builder serves, plus composites):
+#   sbatch --array=0-3 --export=ALL,BASELINES_TAG=fig3_proteome,BASELINES_LABEL=protein_abundance,BASELINES_EMBEDDING_SET=full \
+#       experiments/019-simb-multimodal/scripts/gh_expression_baselines_split.slurm
+#   sbatch --array=0-3 --export=ALL,BASELINES_EMBEDDING_SET=full \
+#       experiments/019-simb-multimodal/scripts/gh_expression_baselines_split.slurm
+BASELINES_EMBEDDING_SET="${BASELINES_EMBEDDING_SET:-gate}"
+COMMON=(--dataset-tag "$BASELINES_TAG" --label "$BASELINES_LABEL" --embedding-set "$BASELINES_EMBEDDING_SET")
 case "$TASK" in
   0|1|2|3) ARGS=(--split-seed "$TASK" "${COMMON[@]}") ;;
   4)       ARGS=(--split-seed 0 --fold-test-into-train "${COMMON[@]}") ;;

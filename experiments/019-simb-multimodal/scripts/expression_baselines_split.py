@@ -60,6 +60,72 @@ from torchcell.graph import SCerevisiaeGraph  # noqa: E402
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 from torchcell.utils.paths import experiment_results_dir  # noqa: E402
 
+# The FULL embedding study (2026-09-16), for the proteome round and the expression round
+# on the same partitions: every gene representation the builder serves, one per model
+# and one per composite, so B2 and B3 read which representation of the deleted gene
+# carries its protein and mRNA response. Protein language models (ProtT5, ESM2), coding
+# sequence (calm, codon frequency), regulatory DNA (the species-aware fungal transformer
+# over the 5' and 3' flanks, the Nucleotide Transformer over windows), the graph-derived
+# chromatin-pathway vector, random controls at three widths, and composites including
+# the four-embedding stack the trained model consumes. `EMBEDDINGS` (four entries) stays
+# the gate the split round reads; `--embedding-set full` selects this one and writes to
+# a `_full` results directory so the two never overwrite each other.
+EMBEDDINGS_FULL: dict[str, tuple[str, ...]] = {
+    # protein language models
+    "prot_T5_all": ("prot_T5_all",),
+    "prot_T5_no_dubious": ("prot_T5_no_dubious",),
+    "esm2_650M_all": ("esm2_t33_650M_UR50D_all",),
+    "esm2_650M_no_dubious": ("esm2_t33_650M_UR50D_no_dubious",),
+    # coding sequence
+    "calm": ("calm",),
+    "codon_frequency": ("codon_frequency",),
+    # regulatory DNA, species-aware fungal transformer (fudt)
+    "species_lm_five_prime": ("fudt_upstream",),
+    "species_lm_three_prime": ("fudt_downstream",),
+    "species_lm_5p_3p": ("fudt_upstream", "fudt_downstream"),
+    # regulatory DNA, Nucleotide Transformer windows
+    "nt_window_5979": ("nt_window_5979",),
+    "nt_window_5979_max": ("nt_window_5979_max",),
+    "nt_window_five_prime_1003": ("nt_window_five_prime_1003",),
+    "nt_window_three_prime_300": ("nt_window_three_prime_300",),
+    "nt_window_five_prime_5979": ("nt_window_five_prime_5979",),
+    "nt_window_three_prime_5979": ("nt_window_three_prime_5979",),
+    "nt_5prime_3prime": ("nt_window_five_prime_1003", "nt_window_three_prime_300"),
+    # graph-derived
+    "normalized_chrom_pathways": ("normalized_chrom_pathways",),
+    # controls
+    "random_1024": ("random_1024",),
+    "random_100": ("random_100",),
+    "random_10": ("random_10",),
+    # composites
+    "prot_T5+calm": ("prot_T5_all", "calm"),
+    "prot_T5+esm2": ("prot_T5_all", "esm2_t33_650M_UR50D_all"),
+    "prot_T5+species_lm_5p_3p": ("prot_T5_all", "fudt_upstream", "fudt_downstream"),
+    "esm2+calm": ("esm2_t33_650M_UR50D_all", "calm"),
+    "esm2+species_lm_5p_3p": (
+        "esm2_t33_650M_UR50D_all",
+        "fudt_upstream",
+        "fudt_downstream",
+    ),
+    "model_stack": ("fudt_upstream", "calm", "prot_T5_all", "fudt_downstream"),
+    "model_stack+esm2": (
+        "fudt_upstream",
+        "calm",
+        "prot_T5_all",
+        "fudt_downstream",
+        "esm2_t33_650M_UR50D_all",
+    ),
+    "all_sequence": (
+        "prot_T5_all",
+        "esm2_t33_650M_UR50D_all",
+        "calm",
+        "fudt_upstream",
+        "fudt_downstream",
+        "nt_window_5979",
+    ),
+}
+EMBEDDING_SETS = {"gate": EMBEDDINGS, "full": EMBEDDINGS_FULL}
+
 DATASET_TAG = "fig3_core"
 EXPRESSION_LABEL = "expression_log2_ratio"
 
@@ -116,6 +182,13 @@ def parse_args() -> argparse.Namespace:
         default=EXPRESSION_LABEL,
         help="phenotype label to predict (expression_log2_ratio or protein_abundance)",
     )
+    p.add_argument(
+        "--embedding-set",
+        choices=sorted(EMBEDDING_SETS),
+        default="gate",
+        help="gate: the four-entry baseline gate; full: every representation the builder "
+        "serves plus composites (results go to a _full directory)",
+    )
     return p.parse_args()
 
 
@@ -161,7 +234,9 @@ def _load_records(
                 r for r in recs if r["experiment"]["phenotype"]["label_name"] == label
             ]
             if len(expr) != 1:
-                raise ValueError(f"record {idx} carries {len(expr)} {label} experiments")
+                raise ValueError(
+                    f"record {idx} carries {len(expr)} {label} experiments"
+                )
             d = expr[0]["experiment"]["phenotype"][label]
             if keys is None:
                 keys = sorted(d)
@@ -295,8 +370,11 @@ def main() -> None:
 
     b2_by_emb: dict[str, object] = {}
     b3_by_emb: dict[str, object] = {}
-    for emb_name in EMBEDDINGS:
-        emb = _embedding_matrix(EMBEDDINGS[emb_name], data_root, genome, graph)
+    embeddings = EMBEDDING_SETS[args.embedding_set]
+    out["embedding_set"] = args.embedding_set
+    for emb_name in embeddings:
+        print(f"  embedding {emb_name}: {embeddings[emb_name]}", flush=True)
+        emb = _embedding_matrix(embeddings[emb_name], data_root, genome, graph)
         dim = len(next(iter(emb.values())))
         p: dict[str, np.ndarray] = {}
         ok: dict[str, np.ndarray] = {}
@@ -380,9 +458,12 @@ def main() -> None:
     tag = f"seed{args.split_seed}" + ("_fold90" if args.fold_test_into_train else "")
     dst_dir = osp.join(
         experiment_results_dir("019-simb-multimodal", __file__),
-        "expression_baselines_split"
-        if args.dataset_tag == DATASET_TAG
-        else f"baselines_split_{args.dataset_tag}",
+        (
+            "expression_baselines_split"
+            if args.dataset_tag == DATASET_TAG
+            else f"baselines_split_{args.dataset_tag}"
+        )
+        + ("" if args.embedding_set == "gate" else f"_{args.embedding_set}"),
     )
     os.makedirs(dst_dir, exist_ok=True)
     dst = osp.join(dst_dir, f"{tag}.json")

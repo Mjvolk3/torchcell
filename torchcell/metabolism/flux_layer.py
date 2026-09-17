@@ -3293,6 +3293,12 @@ class FluxLayer(nn.Module):
             assert self.lp_solver is not None
             v = growth_lp(lb, ub, self.lp_solver)
             box_penalty = v.new_zeros(())
+            # An infeasible program returns the zero flux; the fraction of rows that
+            # came back all-zero is the statistic that says whether the box holds any
+            # growing flux at all (028 round 15: 1.0 on every anchored-layer cell).
+            warm_stats = {
+                "feas_lp_zero_flux_frac": (v.abs().sum(dim=1) == 0).float().mean()
+            }
         elif self.parameterization in {"nullspace", "projection"}:
             # Mass balance is exact here, for any latent: S (N z) = (S N) z = 0.
             #

@@ -6,7 +6,7 @@
   \footnotesize
   \caption[Round 12, the passing cell confirmed]{Round 12, the passing cell confirmed. The round-5 cell (ProtT5 backbone, context head plus the FBA affine) and its five fold models, against the round-9 cell (chromosome-pathway indicator concatenated with ProtT5, same readout) on seven seeds, 2700 to 2706, and on the five cross-validation folds whose logits are averaged on the held-out genes. Width 12, one block, batch 32, class weight, 200 epochs. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w23}
-  \begin{tabular}{@{}lrrlllr@{}}
+  \begin{tabular}{@{}p{52mm}rrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

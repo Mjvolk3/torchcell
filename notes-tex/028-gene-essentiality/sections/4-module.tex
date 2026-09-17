@@ -154,3 +154,52 @@ with the catalytic constants permuted, so the growth column is as expressive a r
 the head but its $k_{cat}$ content is not what it reads. On this endpoint, at this
 width, the enzyme-constrained flux is a learned nonlinearity over the context rather than
 a physical prior that ranks genes.
+
+\subsection{Round 6: one medium against four, the layer on top of the solve, and two other embeddings\secstatus{todo}}
+
+Round 5 (Section~\ref{sec:backbone}) put FBA's four growth ratios beside the context head
+and reached the ladder's level. Round 6 (jobs 2251 to 2256, three cells per GPU) asks
+three questions of that result on the same cell, batch 32 with the class weight at 200
+epochs, three seeds each, paired against the round-5 cell (Table~\ref{tab:w17},
+Figure~\ref{fig:w17}): whether one medium's ratio carries what four do; whether the flux
+layer adds anything once the solve is present, with the forced growth column plus the
+affine (no context head) and the gated readout plus the affine, both at constraint scale
+0; and whether the backbone on another node embedding does better, on codon frequency (64
+dimensions, the encoding that reaches 0.82 with FBA on the ladder from a support vector
+classifier) and on the species-LM composite the expression line uses (the 5$'$ and 3$'$
+species language model, ProtT5 and CaLM, 3,332 dimensions), with and without the affine.
+
+\input{tables/round_w17}
+
+\tcfigfit[1.0]{figures/w17_readout_2026-09-16-19-00-53.pdf}{\textbf{Round 6.} \textbf{a},
+  Validation AUROC per epoch, one thin line per seed and the seed mean per arm; the second
+  tier of arms is dashed. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points, hollow for the
+  second tier), the seed mean and the gene bootstrap of the pooled per-gene logits (square
+  with interval), beside FBA on four media, Flux Cone Learning and the released FBA
+  predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed
+  mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w17}.}{fig:w17}
+
+Four media carry more than one. The YPD ratio alone scores 0.819, 0.775 and 0.789
+against 0.814, 0.805 and 0.844 with all four, two of three seeds below by 0.03 to 0.05,
+a seed mean of 0.795 against 0.821; the one column still lifts the pooled cell by 0.02.
+
+The learned layer adds nothing on top of the solve. The forced growth column with the
+affine beside it and no context head scores 0.834, 0.811 and 0.809, a mean of 0.818, and
+the gated readout with the affine 0.810, 0.821 and 0.832, a mean of 0.821, each one of
+three seeds above the round-5 cell and each within its seed spread. The growth column is
+as good a companion to the solve as the MLP head, and no better; its gradient norm, 0.4
+to 1.1 in the forced cells, says the layer trains rather than idles. Put beside rounds 2,
+4 and 5, the pattern is one statement: the module's ranking is what the backbone gives
+it, and the physics that ranks genes on this endpoint is the solve's optimum, which the
+projection layer does not compute.
+
+The embeddings do not move the ceiling. The species-LM composite scores 0.783, 0.779 and
+0.773 without the affine, against ProtT5's 0.780, 0.769 and 0.773 at 2.7 times the
+parameters, and 0.802, 0.825 and 0.822 with it, against 0.814, 0.805 and 0.844: within
+noise both times. The backbone on codon frequency with the affine scores 0.747, 0.682 and
+0.764, a mean of 0.731, below the pooled ProtT5 cell and 0.09 below the ladder's codon
+rung with FBA (0.818), so the 64 codon numbers that a support vector classifier reads
+well are not read well through a 12-wide transformer; the selected epochs (16, 172, 14)
+and the step of 0.013 in panel b say the cell never settled.

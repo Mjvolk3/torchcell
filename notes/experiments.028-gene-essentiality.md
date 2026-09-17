@@ -266,4 +266,32 @@ Example runs, seed 2702 (0.844) and fold 4 (0.853):
 
 **Round 6 (w17), packs 2251 to 2256, queued 18:22, six arms at three seeds on the round-3 levers, paired against `b32posw200` and the round-5 `fba` cell.** (1) `fbaypd`: the FBA affine on the YPD ratio alone (`--ess-fba-media YPD`), one medium against four. (2) `biofba`: the flux layer's forced growth column plus the FBA affine, no context head (`--ess-readout biomass_fba`, scale 0): the learned layer on top of the solve. (3) `gatefba`: the gated readout plus the affine (`gated_fba`). (4) `codonfba`: the backbone opened on codon frequency (64-d; `--node-embeddings codon_frequency`) plus the affine, since codon + FBA reaches 0.82 on the ladder from 64 numbers. (5) `compfba` and (6) `comp`: the backbone on the species-LM composite the expression line uses (`fudt_upstream fudt_downstream prot_T5_all calm`, 3,332-d) with and without the affine. Trainer additions: `--ess-fba-media`, `biomass_fba`, `gated_fba`, `--node-embeddings` (the dataset is opened on the named embeddings; the preprocessor projects their concatenation), and a guard that refuses a flux readout on a pooled arm (a CPU smoke had run one silently). Read with `wave12_readout.py --round w17`. Pre-registered reads: one medium is enough if `fbaypd` is within seed noise of `fba` (0.821); the layer adds to the solve if `biofba` or `gatefba` is above `fba` on three of three seeds; an embedding is better if its `+fba` cell is above `fba` on three of three.
 
-**Figure fixes (same commit, 6655a4cc):** the ladder takes blue for its fourth model (the palette's yellow read as a lighter orange) and the display names on its axis (`fudt_*` is the species LM 5' and 3' embedding); the readout figures use six hues per tier with a dashed, hollow second tier instead of the palette's darker siblings; panel labels shortened and letters moved clear of them; the two flux diagrams now read left to right.>>> Pre-registered reads are the round-2 ones: not hurt is gated against the pooled cell paired by seed; help is forced above the pooled cell on three of three seeds and above the shuffled control. Round 3 (2224 to 2236) is still draining ahead of it; its partial numbers at 16:40 are b32posw at 80 epochs 0.780 / 0.769 / 0.700, b32posw200 seed 2700 0.780, b32e200 seed 2700 0.766.>
+**Figure fixes (same commit, 6655a4cc):** the ladder takes blue for its fourth model (the palette's yellow read as a lighter orange) and the display names on its axis (`fudt_*` is the species LM 5' and 3' embedding); the readout figures use six hues per tier with a dashed, hollow second tier instead of the palette's darker siblings; panel labels shortened and letters moved clear of them; the two flux diagrams now read left to right.
+
+## 2026.09.16 - Round 6 read: four media beat one, the learned layer adds nothing on top of the solve, the composite embedding equals ProtT5, the codon backbone is poor
+
+Packs 2251 to 2256 (20 to 21 min each, three cells per GPU). Paired against the round-5 `fba` cell (0.814 / 0.805 / 0.844, mean 0.821) and the round-3 pooled cell (0.780 / 0.769 / 0.773). `wave12_readout.py --round w17`.
+
+![](./assets/images/028-gene-essentiality/w17_readout_2026-09-16-19-00-53.svg)
+
+| arm (batch 32 + class weight, 200 epochs) | seeds 2700, 2701, 2702 | mean | sd | pooled [95% CI] |
+|---|---|---|---|---|
+| context head + FBA ratios, four media (round 5) | 0.814, 0.805, 0.844 | 0.821 | 0.020 | 0.838 [0.76, 0.91] |
+| context head + FBA ratio, YPD only | 0.819, 0.775, 0.789 | 0.795 | 0.022 | 0.808 [0.73, 0.89] |
+| forced growth column + FBA ratios, no context head | 0.834, 0.811, 0.809 | 0.818 | 0.014 | 0.820 [0.74, 0.90] |
+| gated growth column + FBA ratios | 0.810, 0.821, 0.832 | 0.821 | 0.011 | 0.827 [0.75, 0.90] |
+| codon-frequency backbone + FBA ratios | 0.747, 0.682, 0.764 | 0.731 | 0.043 | 0.721 [0.62, 0.81] |
+| species-LM composite backbone + FBA ratios | 0.802, 0.825, 0.822 | 0.816 | 0.013 | 0.819 [0.73, 0.90] |
+| species-LM composite backbone | 0.783, 0.779, 0.773 | 0.778 | 0.005 | 0.776 [0.69, 0.85] |
+
+- **Four media > one.** YPD alone is 0.03 to 0.05 below the four-column cell on two of three seeds (mean 0.795 vs 0.821), still +0.02 over the pooled cell.
+- **The learned layer adds nothing on top of the solve.** Forced growth column + affine (no MLP head) 0.818, gated + affine 0.821, each 1 of 3 seeds above the round-5 cell, each within its spread. The flux layer trains (gradient norm 0.4 to 1.1 on the forced cells) but ranks no better than the head. Across rounds 2, 4, 5, 6: the module's ranking is the backbone's; the physics that ranks genes here is the solve's optimum, which the projection layer does not compute.
+- **Composite embedding = ProtT5** (0.778 vs 0.774 without FBA; 0.816 vs 0.821 with), at 44k vs 16.5k parameters.
+- **Codon backbone is poor**: 0.731 with FBA, below the pooled ProtT5 cell and 0.09 below the ladder's codon + FBA rung (0.818); selected epochs 16 / 172 / 14 and the largest validation step of any cell (0.013): the 12-wide transformer over 64 codon numbers never settles.
+- **Next:** the flux-layer probe at initialization (does the growth column rank essential genes at all before training?); a solve-derived gene encoding (per-deletion pFBA vector or the wild-type flux through the gene's reactions) as a node feature; and, if the transformer is to beat the ladder rather than tie it, width or depth on the FBA cell.
+
+Example runs, gated + FBA seed 2702 (0.832) and codon seed 2701 (0.682):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/zllkcndg>
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/san5c0l6>>>> Pre-registered reads are the round-2 ones: not hurt is gated against the pooled cell paired by seed; help is forced above the pooled cell on three of three seeds and above the shuffled control. Round 3 (2224 to 2236) is still draining ahead of it; its partial numbers at 16:40 are b32posw at 80 epochs 0.780 / 0.769 / 0.700, b32posw200 seed 2700 0.780, b32e200 seed 2700 0.766.>

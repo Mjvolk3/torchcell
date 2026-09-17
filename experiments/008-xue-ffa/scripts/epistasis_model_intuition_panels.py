@@ -27,6 +27,7 @@
 # scripts use, through free_fatty_acid_interactions.load_ffa_data and
 # normalize_by_reference, so a change in normalization moves these panels with the rest.
 
+import json
 import os
 import os.path as osp
 import sys
@@ -213,11 +214,106 @@ def panel_mean_variance(ax, means, sds):
     return {"n_strains": len(keys), "log_log_slope": round(float(slope), 3)}
 
 
-def emit(name, width_key, height_mm, draw):
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM[width_key]),
-                                    mm_to_in(height_mm)))
+# Every expression in this figure is set as MATH, not as HTML subscripts. draw.io's
+# <sub> is not typesetting: the variables come out upright rather than italic, the
+# subscripts sit at the wrong size, and the exported PDF carried a serif fallback for the
+# subscript runs, putting a fourth typeface in the figure. Rendering each expression here
+# gives real math, in Arial, in the same 6 pt as the rest of the figure text, and the
+# draw.io generator places the results as images.
+EQUATIONS = {
+    "f_i": r"$f_i$",
+    "f_j": r"$f_j$",
+    "mult": r"$f_i\,f_j$",
+    "add": r"$f_i + f_j - 1$",
+    "loss_i": r"$1 - f_i$",
+    "loss_j": r"$1 - f_j$",
+    "glm": r"$\exp(\alpha_i + \alpha_j)$",
+    "gap": r"$(1 - f_i)(1 - f_j)$",
+}
+
+
+def emit_equations():
+    """Each expression as a tight true-size SVG, with its size in millimetres.
+
+    Rendered on its own transparent canvas and cropped to the ink, so the draw.io
+    generator can center it in a cell without knowing anything about the expression. The
+    sizes are written to a JSON beside the panels; a changed expression changes its box.
+    """
+    sizes = {}
+    for name, tex in EQUATIONS.items():
+        fig = plt.figure(figsize=(2.0, 0.3))
+        t = fig.text(0, 0, tex, fontsize=6, ha="left", va="baseline")
+        fig.canvas.draw()
+        bb = t.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        pad = 0.01
+        fig.set_size_inches(bb.width + 2 * pad, bb.height + 2 * pad)
+        t.set_position((pad / (bb.width + 2 * pad),
+                        pad / (bb.height + 2 * pad) - bb.y0 / (bb.height + 2 * pad)))
+        t.set_transform(fig.transFigure)
+        out = osp.join(IMAGES_DIR, f"mi_eq_{name}.svg")
+        savefig_true_size_svg(fig, out, transparent=True)
+        plt.close(fig)
+        sizes[name] = [round((bb.width + 2 * pad) * 25.4, 3),
+                       round((bb.height + 2 * pad) * 25.4, 3)]
+    with open(osp.join(RESULTS_DIR, "epistasis_model_equation_sizes.json"), "w") as fh:
+        json.dump(sizes, fh, indent=2)
+    print(f"wrote {len(sizes)} equation SVGs")
+    return sizes
+
+
+def panel_surfaces(ax, n=41):
+    """The two expectations as surfaces over the unit square of single-deletion effects.
+
+    This is the theory picture the rest of the figure is about. Both surfaces meet along
+    the two edges where one deletion does nothing, because there the other deletion's
+    effect is the combination's whatever the null; they separate in the interior, and the
+    vertical gap between them is exactly (1 - f_i)(1 - f_j). The two log-scale models
+    predict the SAME surface as the multiplicative one, which is the point the panel makes
+    about where the four models do and do not differ: three share this expectation and
+    differ in the scale their residual is measured on.
+    """
+    g = np.linspace(0.0, 1.0, n)
+    fi, fj = np.meshgrid(g, g)
+    # Additive first and more opaque, multiplicative over it and translucent: the
+    # multiplicative surface is above the additive one everywhere on the square, so drawn
+    # solid it would hide the thing the panel is comparing it with.
+    ax.plot_surface(fi, fj, fi + fj - 1.0, color=C_ADD, alpha=0.85, linewidth=0,
+                    antialiased=True, rstride=2, cstride=2)
+    ax.plot_surface(fi, fj, fi * fj, color=C_MULT, alpha=0.55, linewidth=0,
+                    antialiased=True, rstride=2, cstride=2)
+    # The gap at the center of the square, drawn rather than described.
+    x0 = 0.5
+    ax.plot([x0, x0], [x0, x0], [x0 + x0 - 1.0, x0 * x0], color="black", linewidth=0.8,
+            zorder=10)
+    ax.text(x0, x0, (x0 * x0 + x0 + x0 - 1.0) / 2 + 0.06,
+            f"  {x0 * x0 - (x0 + x0 - 1.0):.2f}", fontsize=5, zorder=11)
+    ax.set_xlabel("$f_i$", labelpad=-8)
+    ax.set_ylabel("$f_j$", labelpad=-8)
+    ax.set_zlabel("")
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.set_ticks([0, 0.5, 1])
+        axis.set_tick_params(pad=-2, labelsize=5)
+    ax.set_zlim(-1, 1)
+    ax.set_zticks([-1, 0, 1])
+    ax.view_init(elev=24, azim=-132)
+    ax.set_box_aspect((1, 1, 0.78), zoom=1.04)
+    for pane in (ax.xaxis.pane, ax.yaxis.pane, ax.zaxis.pane):
+        pane.set_alpha(0.0)
+    ax.grid(True, linewidth=0.25)
+    ax.set_title("expected $f_{ij}$ over the single-deletion square;\n"
+                 "both log-scale models share the multiplicative surface",
+                 fontsize=6, pad=-1)
+    return {"gap_at_half": round(0.5 * 0.5 - (0.5 + 0.5 - 1.0), 3)}
+
+
+def emit(name, width_key, height_mm, draw, projection=None):
+    fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM[width_key]), mm_to_in(height_mm)))
+    ax = fig.add_subplot(projection=projection)
     info = draw(ax)
-    fig.tight_layout(pad=0.4)
+    if projection is None:
+        fig.tight_layout(pad=0.4)
+    else:
+        fig.subplots_adjust(left=0.02, right=0.98, bottom=0.07, top=0.91)
     png = osp.join(IMAGES_DIR, f"mi_panel_{name}.png")
     svg = osp.join(IMAGES_DIR, f"mi_panel_{name}.svg")
     fig.savefig(png, dpi=300)
@@ -236,6 +332,8 @@ def main():
     emit("null_fit", "third", 52.0, lambda ax: panel_null_fit(ax, pairs))
     emit("mean_variance", "third", 52.0,
          lambda ax: panel_mean_variance(ax, means, sds))
+    emit("surfaces", "third", 52.0, panel_surfaces, projection="3d")
+    emit_equations()
 
 
 if __name__ == "__main__":

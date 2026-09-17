@@ -34,14 +34,21 @@
 %% the \panelrow block with a single \tcfig on the exported PDF.
 %%
 %% \panel{a}{figures/x.pdf} places one lettered panel; \panelrow{...} sets a row of them.
+%% The letter is FIGURE text, not document text, so it is set in the figure's typeface.
+%% Left to \textbf it took the document font, Latin Modern Bold, and every panel letter
+%% placed by this macro printed serif beside Arial panels. Tectonic runs XeTeX, so
+%% fontspec can load the same Arial the panels themselves use; \panelletterfont is
+%% declared for this and nothing else, and the document's body font is untouched.
 \newcommand{\panel}[2]{%
   \begin{minipage}[t]{\widthof{\includegraphics{#2}}}%
-    {\fontsize{8bp}{9bp}\selectfont\textbf{#1}}\par\vspace{1pt}%
+    {\panelletterfont\fontsize{8bp}{9bp}\selectfont\bfseries #1}\par\vspace{1pt}%
     \includegraphics{#2}%
   \end{minipage}%
 }
 \newcommand{\panelrow}[1]{\noindent#1\par\vspace{3mm}}
 \usepackage{calc}
+\usepackage{fontspec}
+\newfontfamily\panelletterfont{Arial}[BoldFont={Arial Bold}]
 
 \usepackage{multirow}
 \usepackage{amsmath,amssymb,amsfonts}

@@ -2,11 +2,16 @@
 # [[experiments.008-xue-ffa.scripts.epistasis_model_intuition_drawio]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/008-xue-ffa/scripts/epistasis_model_intuition_drawio
 #
-# The epistasis-model figure as a native draw.io page: three embedded data panels across
-# the top (written by epistasis_model_intuition_panels.py), a schematic of where the two
-# families of null come from, and a table of what each of the four models assumes and
-# estimates. Everything except the three panels is an mxCell, so the wording and the
-# arrangement can be worked on in draw.io.
+# The epistasis-model figure as a native draw.io page: four embedded data panels (written
+# by epistasis_model_intuition_panels.py), a schematic of where the two families of null
+# come from, and a table of what each of the four models assumes and estimates. Everything
+# except the panels and the equations is an mxCell, so the wording and the arrangement can
+# be worked on in draw.io.
+#
+# EVERY EXPRESSION IS AN IMAGE, typeset as math by the panels script and placed here at its
+# recorded size. draw.io's HTML <sub> is not typesetting: the variables come out upright
+# where they should be italic, the subscripts sit at the wrong size, and the PDF export set
+# the subscript runs in a SERIF fallback, which put a fourth typeface into the figure.
 #
 # WHY A SCHEMATIC AT ALL. The four models are four lines of algebra in the Methods, and a
 # reader who takes the algebra at face value will read "multiplicative" as the default and
@@ -24,6 +29,7 @@
 
 import argparse
 import base64
+import json
 import os
 import os.path as osp
 import re
@@ -44,6 +50,8 @@ from drawio_doc import (  # noqa: E402
 )
 
 load_dotenv()
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
+RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "008-xue-ffa/results")
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 IMAGES_DIR = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
 DRAWIO_DIR = osp.join(osp.dirname(ASSET_IMAGES_DIR), "drawio")
@@ -59,13 +67,16 @@ C_RULE = "#666666"
 W_MM = 179.0
 PANEL_STEM = ["mi_panel_expectations", "mi_panel_null_fit", "mi_panel_mean_variance"]
 
-# Row geometry in millimetres from the top of the page.
-Y_ROW1 = 5.0          # top of the embedded panels
+# Row geometry in millimetres from the top of the page. Row 2 puts the surface panel and
+# the schematic side by side: both answer "how do the nulls differ", one as geometry and
+# one as a story, and they are read together.
+Y_ROW1 = 5.0          # top of the three measured panels
 H_ROW1 = 52.0
-Y_ROW2 = 62.0         # top of the schematic
-H_ROW2 = 40.0
-Y_ROW3 = 105.0        # top of the table
+Y_ROW2 = 63.0         # top of the surface panel and the schematic
+H_ROW2 = 52.0
+Y_ROW3 = 122.0        # top of the table
 LETTER_DY = 4.6       # a letter sits this far above its block
+X_SCHEMATIC = 63.0    # the schematic starts to the right of the surface panel
 
 TABLE_COLS = [
     ("model", 20.0),
@@ -74,31 +85,28 @@ TABLE_COLS = [
     ("fit to, and what that assumes", 44.0),
     ("the reading that makes it the natural null", 63.0),
 ]
+# (color, name, equation key, residual scale, what it is fit to, the reading)
 TABLE_ROWS = [
-    (C_MULT, "multiplicative",
-     "f<sub>i</sub> f<sub>j</sub>",
+    (C_MULT, "multiplicative", "mult",
      "linear titer",
-     "strain means, one standard error per strain, propagated by the delta method",
+     "strain means; one standard error per strain, propagated by the delta method",
      "each deletion keeps a fixed FRACTION of what reaches it, so independent steps of one "
-     "flux compose; this is the null of the growth screens"),
-    (C_ADD, "additive",
-     "f<sub>i</sub> + f<sub>j</sub> &#8722; 1",
+     "flux compose; the null of the growth screens"),
+    (C_ADD, "additive", "add",
      "linear titer",
-     "strain means, one standard error per strain, propagated by the delta method",
-     "each deletion removes a fixed AMOUNT from a shared pool, which is closer to how a "
-     "titer in mg/L is built up"),
-    (C_GLM, "GLM log-link",
-     "exp(&#945;<sub>i</sub> + &#945;<sub>j</sub>), the multiplicative null",
+     "strain means; one standard error per strain, propagated by the delta method",
+     "each deletion removes a fixed AMOUNT from a shared pool, closer to how a titer in "
+     "mg/L is built up"),
+    (C_GLM, "GLM log-link", "glm",
      "log titer",
-     "replicate titers, Gamma family: spread grows in proportion to the mean (panel c)",
-     "the readout is positive and noisier where it is larger, and every strain's "
-     "replicates are used rather than its mean"),
-    (C_OLS, "log-OLS",
-     "exp(&#945;<sub>i</sub> + &#945;<sub>j</sub>), the multiplicative null",
+     "replicate titers; Gamma family, spread proportional to the mean (panel c)",
+     "the readout is positive and noisier where it is larger, and every strain's replicates "
+     "are used rather than its mean"),
+    (C_OLS, "log-OLS", "glm",
      "log titer",
-     "replicate log ratios to the base strain, constant spread on the log scale",
-     "the question is whether a deletion's FOLD effect carries into a new background, "
-     "which is a log-scale question"),
+     "replicate log ratios to the base strain; constant spread on the log scale",
+     "the question is whether a deletion's FOLD effect carries into a new background, which "
+     "is a log-scale question"),
 ]
 
 
@@ -134,69 +142,111 @@ def mm(v):
     return v * U
 
 
-def schematic(doc, y0):
-    """Panel d: where the two families of null come from, side by side.
+EQ_SIZES = json.load(open(osp.join(RESULTS_DIR, "epistasis_model_equation_sizes.json")))
 
-    Left, a flux through two steps, each keeping a fraction. Right, one pool that each
-    deletion takes an absolute amount out of. Between them, the identity that is the whole
-    of their disagreement.
+
+def equation(doc, cid, name, cx_mm, cy_mm, scale=1.0):
+    """Place expression `name`, centered on (cx_mm, cy_mm), at its recorded size.
+
+    The size comes from the panels script, which measured the rendered ink, so a changed
+    expression changes its box here without anything being re-measured by hand.
     """
-    # --- left: fractions compose
+    w, h = (v * scale for v in EQ_SIZES[name])
+    payload = base64.b64encode(
+        open(osp.join(IMAGES_DIR, f"mi_eq_{name}.svg"), "rb").read()).decode("ascii")
+    doc.vertex(cid, "", "shape=image;imageAspect=0;aspect=fixed;html=1;"
+               f"image=data:image/svg+xml,{payload};",
+               mm(cx_mm - w / 2), mm(cy_mm - h / 2), mm(w), mm(h))
+    return w, h
+
+
+def schematic(doc, x0, y0, w):
+    """Where the two families of null come from, side by side with the surface panel.
+
+    Above, a flux through two steps, each keeping a fraction. Below, one pool that each
+    deletion takes an absolute amount out of. Then the identity that is the whole of their
+    disagreement, which the surface panel to the left shows as a distance.
+    """
+    right = x0 + w
+
+    # --- fractions compose
     doc.vertex("d-mult-title", "effects are FRACTIONS: two steps in series",
-               text_style("left", "fontStyle=1;"), mm(2), mm(y0), mm(80), 12)
-    xs = [4.0, 26.0, 48.0, 70.0]
-    labels = ["base<br>1.00", "keeps<br>f<sub>i</sub>", "keeps<br>f<sub>j</sub>",
-              "f<sub>i</sub> f<sub>j</sub>"]
-    for i, (x, label) in enumerate(zip(xs, labels)):
+               text_style("left", "fontStyle=1;"), mm(x0), mm(y0), mm(w), 12)
+    bw, gap = 24.0, 4.0
+    xs = [x0 + i * (bw + gap) for i in range(4)]
+    box_y, box_h = y0 + 5.0, 9.0
+    for i, x in enumerate(xs):
         color = C_MULT if 0 < i < 3 else C_RULE
-        doc.vertex(f"d-mult{i}", label, box_style(color), mm(x), mm(y0 + 6.5), mm(16), mm(9))
+        doc.vertex(f"d-mult{i}", "", box_style(color), mm(x), mm(box_y), mm(bw), mm(box_h))
     for i in range(3):
         doc.edge(f"d-multa{i}", line_style(C_RULE, 0.5, arrow=True),
                  source=f"d-mult{i}", target=f"d-mult{i + 1}")
+    # Box 0 is a number and boxes 1 and 2 are a word over an expression, so the word is a
+    # cell of its own above the image rather than part of a label draw.io would not typeset.
+    doc.vertex("d-mult0-t", "base 1.00", text_style("center"),
+               mm(xs[0]), mm(box_y + box_h / 2) - 7, mm(bw), 14)
+    for i, name in ((1, "f_i"), (2, "f_j")):
+        doc.vertex(f"d-mult{i}-t", "keeps", text_style("center"),
+                   mm(xs[i]), mm(box_y + 2.6) - 7, mm(bw), 14)
+        equation(doc, f"d-mult{i}-eq", name, xs[i] + bw / 2, box_y + 6.2)
+    equation(doc, "d-mult3-eq", "mult", xs[3] + bw / 2, box_y + box_h / 2)
     doc.vertex("d-mult-note",
-               "a fraction of a fraction: the second step only ever acts on what the first "
-               "let through",
-               text_style("left"), mm(2), mm(y0 + 18.5), mm(84), 22)
+               "a fraction of a fraction: the second step only ever acts on what the "
+               "first let through",
+               text_style("left"), mm(x0), mm(y0 + 15.5), mm(w), 22)
 
-    # --- right: amounts add
+    # --- amounts add
     doc.vertex("d-add-title", "effects are AMOUNTS: two draws on one pool",
-               text_style("left", "fontStyle=1;"), mm(95), mm(y0), mm(82), 12)
-    doc.vertex("d-pool", "", box_style(C_RULE), mm(97), mm(y0 + 6.5), mm(78), mm(9))
-    doc.vertex("d-pool-keep", "f<sub>i</sub> + f<sub>j</sub> &#8722; 1",
-               cell_style("#FFFFFF", "center"), mm(97), mm(y0 + 6.5), mm(40), mm(9))
-    doc.vertex("d-pool-i", "1 &#8722; f<sub>i</sub>", cell_style(FILL[C_ADD], "center"),
-               mm(137), mm(y0 + 6.5), mm(19), mm(9))
-    doc.vertex("d-pool-j", "1 &#8722; f<sub>j</sub>", cell_style(FILL[C_ADD], "center"),
-               mm(156), mm(y0 + 6.5), mm(19), mm(9))
+               text_style("left", "fontStyle=1;"), mm(x0), mm(y0 + 23.0), mm(w), 12)
+    pool_y, pool_h = y0 + 28.0, 9.0
+    keep_w = w - 2 * 27.0
+    doc.vertex("d-pool-keep", "", cell_style("#FFFFFF", "center"),
+               mm(x0), mm(pool_y), mm(keep_w), mm(pool_h))
+    doc.vertex("d-pool-i", "", cell_style(FILL[C_ADD], "center"),
+               mm(x0 + keep_w), mm(pool_y), mm(27.0), mm(pool_h))
+    doc.vertex("d-pool-j", "", cell_style(FILL[C_ADD], "center"),
+               mm(x0 + keep_w + 27.0), mm(pool_y), mm(27.0), mm(pool_h))
+    equation(doc, "d-pool-keep-eq", "add", x0 + keep_w / 2, pool_y + pool_h / 2)
+    equation(doc, "d-pool-i-eq", "loss_i", x0 + keep_w + 13.5, pool_y + pool_h / 2)
+    equation(doc, "d-pool-j-eq", "loss_j", x0 + keep_w + 40.5, pool_y + pool_h / 2)
     doc.vertex("d-add-note",
                "each loss is taken from the whole pool, so the part the first deletion "
                "already removed is counted a second time",
-               text_style("left"), mm(95), mm(y0 + 18.5), mm(84), 22)
+               text_style("left"), mm(x0), mm(y0 + 38.5), mm(w), 22)
 
-    # --- the identity that separates them
-    doc.vertex("d-gap",
-               "multiplicative expects (f<sub>i</sub> + f<sub>j</sub> &#8722; 1) + "
-               "(1 &#8722; f<sub>i</sub>)(1 &#8722; f<sub>j</sub>) : the two nulls differ by "
-               "exactly the double-counted loss, which is why they disagree most when both "
-               "single deletions are severe",
-               cell_style("#F5F5F5", "center"), mm(2), mm(y0 + 30.0), mm(175), mm(7.5))
+    # --- the identity, as three cells so the expression is typeset rather than spelled
+    eq_w = EQ_SIZES["gap"][0]
+    lead_w = 36.0
+    doc.vertex("d-gap-a", "the two nulls differ by exactly", text_style("right"),
+               mm(x0), mm(y0 + 47.0) - 7, mm(lead_w), 14)
+    equation(doc, "d-gap-eq", "gap", x0 + lead_w + 1.0 + eq_w / 2, y0 + 47.0)
+    doc.vertex("d-gap-b", ", the loss the second deletion would take again",
+               text_style("left"), mm(x0 + lead_w + 2.0 + eq_w), mm(y0 + 47.0) - 7,
+               mm(right - (x0 + lead_w + 2.0 + eq_w)), 14)
 
 
 def table(doc, y0):
-    """Panel e: the four models on one grid, one row each."""
-    head_h, row_h = 7.0, 13.0
+    """The four models on one grid, one row each.
+
+    Rows are sized to the two-line cells they actually hold; at 13 mm they carried a band
+    of empty space under every row and pushed the figure past the page.
+    """
+    head_h, row_h = 6.0, 10.0
     x = 2.0
     for j, (title, w) in enumerate(TABLE_COLS):
         doc.vertex(f"e-h{j}", title, cell_style("#F5F5F5", "left", bold=True),
                    mm(x), mm(y0), mm(w), mm(head_h))
         x += w
-    for i, (color, *cols) in enumerate(TABLE_ROWS):
+    for i, (color, name, eq, *cols) in enumerate(TABLE_ROWS):
         x = 2.0
         y = y0 + head_h + i * row_h
-        for j, ((_, w), value) in enumerate(zip(TABLE_COLS, cols)):
+        values = [name, ""] + list(cols)
+        for j, ((_, w), value) in enumerate(zip(TABLE_COLS, values)):
             fill = FILL[color] if j == 0 else "#FFFFFF"
             doc.vertex(f"e-r{i}c{j}", value, cell_style(fill, "left", bold=(j == 0)),
                        mm(x), mm(y), mm(w), mm(row_h))
+            if j == 1:
+                equation(doc, f"e-r{i}-eq", eq, x + w / 2, y + row_h / 2)
             x += w
     return y0 + head_h + len(TABLE_ROWS) * row_h
 
@@ -222,10 +272,18 @@ def build(out_path):
                    mm(x), mm(Y_ROW1), w_u, h_u)
         x += w_u / U + 1.0
 
+    # --- row 2: the surface panel, and the schematic beside it
+    svg = osp.join(IMAGES_DIR, "mi_panel_surfaces.svg")
+    w_u, h_u = svg_size_units(svg)
     doc.vertex("letter-d", "d", letter_style(), mm(2), mm(Y_ROW2 - LETTER_DY), 24, 18)
-    schematic(doc, Y_ROW2)
+    doc.vertex("panel-d", "", "shape=image;imageAspect=0;aspect=fixed;html=1;"
+               f"image={data_uri(svg)};", mm(2), mm(Y_ROW2), w_u, h_u)
 
-    doc.vertex("letter-e", "e", letter_style(), mm(2), mm(Y_ROW3 - LETTER_DY), 24, 18)
+    doc.vertex("letter-e", "e", letter_style(),
+               mm(X_SCHEMATIC - 2.0), mm(Y_ROW2 - LETTER_DY), 24, 18)
+    schematic(doc, X_SCHEMATIC, Y_ROW2, 177.0 - X_SCHEMATIC)
+
+    doc.vertex("letter-f", "f", letter_style(), mm(2), mm(Y_ROW3 - LETTER_DY), 24, 18)
     bottom = table(doc, Y_ROW3)
     if bottom > 170.0:
         raise ValueError(f"content reaches {bottom:.1f} mm, over the 170 mm cap")

@@ -33,9 +33,13 @@
 # aspect ratio, which buys surrounding context rather than distorting the drawing.
 #
 # TWO OF THE FIVE MEASURED SPECIES HAVE A NODE ON THIS MAP. Myristate and palmitate are
-# drawn; palmitoleate, stearate and oleate are not, and that is a property of the reference
-# map. The script reports which were placed and the caption says so; nothing is substituted
-# for a species the map does not carry.
+# drawn; palmitoleate, stearate and oleate are not. This is the KEGG global map's LAYOUT,
+# not a gap in KEGG's chemistry: all five have KEGG compound entries, and the map places
+# only some of them (dodecanoate, myristate and palmitate are on it; the C16:1, C18:0 and
+# C18:1 acids are not). The network panel beside this one has all five because its species
+# come from the yeast genome-scale model, which carries compartment-resolved acyl species.
+# The script reports which were placed and the caption says so; nothing is substituted for
+# a species the map does not carry.
 #
 # OPACITY. The service applies one opacity to every entry, so a per-entry O flag in the
 # selection is ignored. The background is therefore requested faint and the highlighted
@@ -97,10 +101,10 @@ WAYPOINTS = [
 
 C_SPECIES = "#6C8EBF"
 C_WAYPOINT = "#666666"
-W_REACTION = 8
-R_WAYPOINT = 20
-R_SPECIES = 22
-BACKGROUND_OPACITY = 0.12  # the reference map behind the route
+W_REACTION = 14
+R_WAYPOINT = 30
+R_SPECIES = 36
+BACKGROUND_OPACITY = 0.28  # the reference map behind the route
 CROP_MARGIN = 230.0  # map units around the named compounds
 
 HIGHLIGHT_COLORS = {c for _, _, c in MODULES} | {C_SPECIES}
@@ -223,16 +227,19 @@ def compound_nodes(svg):
 
 
 def opaque_route(svg):
-    """Set every element carrying a highlight color to full opacity.
+    """The route at full opacity, everything else at BACKGROUND_OPACITY.
 
-    iPath applies one opacity to the whole selection, so the request asks for a faint map
-    and the route is brought forward here.
+    iPath applies one opacity to the whole selection, so the returned map has the route
+    as faint as the background. Both are set here, in the returned SVG, which also means
+    the background level is a property of this script and not of the cached response: a
+    change to BACKGROUND_OPACITY re-renders without a refetch.
     """
     def sub(m):
         el = m.group(0)
-        if not is_highlighted(el):
-            return el
-        return re.sub(r"opacity:\s*[\d.]+", "opacity: 1", el)
+        level = "1" if is_highlighted(el) else f"{BACKGROUND_OPACITY}"
+        if "opacity:" in el:
+            return re.sub(r"opacity:\s*[\d.]+", f"opacity: {level}", el)
+        return el
     return ELEMENT.sub(sub, svg)
 
 
@@ -318,18 +325,36 @@ def prune(svg, x0, y0, w, h):
     def drop_labels(parent):
         """Every label, and the colored pill each one sat on.
 
-        The pills are the only fully opaque rects in the drawing, which is what identifies
-        them now that their text is gone; left in, they are five bright empty lozenges.
+        The pills are the only ROUNDED rects in the drawing (they carry rx), which is
+        what identifies them now that their text is gone; left in, they are five empty
+        lozenges. Opacity cannot be the test, because opaque_route has already reset it.
         """
         for child in list(parent):
             if child.tag.endswith("}text") or child.findall(".//{*}text"):
                 parent.remove(child)
-            elif child.tag.endswith("}rect") and "opacity: 1" in (child.get("style") or ""):
+            elif child.tag.endswith("}rect") and child.get("rx") is not None:
                 parent.remove(child)
             elif len(child):
                 drop_labels(child)
     drop_labels(root)
     return ET.tostring(root, encoding="unicode")
+
+
+def whole(svg, width_mm):
+    """The whole drawing at `width_mm`, keeping its own aspect ratio.
+
+    Returns the resized SVG, the height it takes, and a map from map units to panel
+    millimetres, the same contract as crop().
+    """
+    head = re.search(r"<svg[^>]*>", svg).group(0)
+    vb = re.search(r'viewBox="([^"]*)"', head).group(1).split()
+    x0, y0, w, h = (float(v) for v in vb)
+    height_mm = width_mm * h / w
+    px_per_mm = 100.0 / 25.4
+    new = re.sub(r"height='[\d.]+'", f"height='{height_mm * px_per_mm:.2f}'", head)
+    new = re.sub(r"width='[\d.]+'", f"width='{width_mm * px_per_mm:.2f}'", new)
+    to_mm = lambda x, y: ((x - x0) / w * width_mm, (y - y0) / h * height_mm)  # noqa: E731
+    return prune(svg.replace(head, new, 1), x0, y0, w, h), height_mm, to_mm
 
 
 def crop(svg, points, width_mm, height_mm):
@@ -400,11 +425,11 @@ def panel(map_svg, anchors, width_mm, map_w_mm, height_mm, key_x_mm):
 
     # A compound drawn in more than one place is labeled once, at the copy furthest from
     # the panel edge. Every label sits to the RIGHT of its node and they are pushed apart
-    # vertically until none overlaps another, so no leader crosses another leader and no
-    # label leaves the map. The halo is drawn as a second copy of the text underneath
-    # rather than with paint-order, which rsvg ignores: with paint-order ignored the white
-    # stroke paints OVER the glyphs and the label disappears.
-    LEAD, GAP, HALO = 5.0, 3.6, 1.1
+    # vertically until none overlaps another, so no leader crosses another leader. Each
+    # label is set on an opaque rounded plate: a white halo on the glyphs alone is not
+    # enough over this map, where a label routinely crosses two or three pathway lines.
+    LEAD, GAP, PAD = 5.0, 4.0, 0.8
+    CHAR_MM = 0.50 * FONT_UNITS / u  # Arial's mean advance is about half the type size
     items = []
     for a in anchors:
         if not a["positions_mm"]:
@@ -417,12 +442,17 @@ def panel(map_svg, anchors, width_mm, map_w_mm, height_mm, key_x_mm):
         ly = max(y, placed + GAP)
         placed = ly
         lx = x + LEAD
+        tw = len(label) * CHAR_MM
+        th = FONT_UNITS / u
         parts.append(f'<path d="M{x * u:.2f},{y * u:.2f} L{lx * u:.2f},{ly * u:.2f}" '
-                     f'fill="none" stroke="#000000" stroke-width="0.42"/>')
-        for extra in (f'stroke="#FFFFFF" stroke-width="{HALO:.1f}" '
-                      f'stroke-linejoin="round"', 'fill="#000000"'):
-            parts.append(f'<text x="{(lx + 0.6) * u:.2f}" y="{ly * u:.2f}" '
-                         f'dominant-baseline="middle" {extra}>{esc(label)}</text>')
+                     f'fill="none" stroke="#000000" stroke-width="0.5"/>')
+        parts.append(f'<rect x="{(lx + 0.4 - PAD) * u:.2f}" '
+                     f'y="{(ly - th / 2 - PAD * 0.6) * u:.2f}" '
+                     f'width="{(tw + 2 * PAD) * u:.2f}" '
+                     f'height="{(th + 1.2 * PAD) * u:.2f}" rx="{0.5 * u:.2f}" '
+                     f'fill="#FFFFFF" fill-opacity="0.88" stroke="none"/>')
+        parts.append(f'<text x="{(lx + 0.4) * u:.2f}" y="{ly * u:.2f}" '
+                     f'dominant-baseline="middle">{esc(label)}</text>')
 
     parts.append(f'<text x="{key_x_mm * u:.2f}" y="{3.0 * u:.2f}" font-weight="bold" '
                  f'dominant-baseline="middle">'
@@ -458,8 +488,11 @@ def main():
                     help="re-fetch every response and fail if any has changed upstream")
     ap.add_argument("--width-mm", type=float, default=PANEL_WIDTHS_MM["full"],
                     help="width of the finished panel, map plus key")
-    ap.add_argument("--map-width-mm", type=float, default=100.0)
-    ap.add_argument("--height-mm", type=float, default=52.0)
+    ap.add_argument("--map-width-mm", type=float, default=87.0)
+    ap.add_argument("--crop", action="store_true",
+                    help="crop to the named compounds instead of showing the whole map")
+    ap.add_argument("--height-mm", type=float, default=52.0,
+                    help="panel height; with the whole map the map's own aspect sets it")
     ap.add_argument("--out", default="ffa_ipath_map")
     args = ap.parse_args()
 
@@ -469,7 +502,11 @@ def main():
     anchor_pts = [p for cid, _ in WAYPOINTS + SPECIES for p in positions[cid]]
     if not anchor_pts:
         raise ValueError("none of the named compounds is drawn on this map")
-    cropped, to_mm = crop(svg, anchor_pts, args.map_width_mm, args.height_mm)
+    if args.crop:
+        sized, to_mm = crop(svg, anchor_pts, args.map_width_mm, args.height_mm)
+        height_mm = args.height_mm
+    else:
+        sized, height_mm, to_mm = whole(svg, args.map_width_mm)
 
     # Where each named compound sits inside the panel, so the figure can label it.
     species_ids = {cid for cid, _ in SPECIES}
@@ -488,9 +525,9 @@ def main():
     os.makedirs(IMAGES_DIR, exist_ok=True)
     out_svg = osp.join(IMAGES_DIR, args.out + ".svg")
     open(out_svg, "w", encoding="utf-8").write(
-        panel(cropped, anchors, args.width_mm, args.map_width_mm, args.height_mm,
-              args.map_width_mm + 5.0))
-    w_mm, h_mm = args.width_mm, args.height_mm
+        panel(sized, anchors, args.width_mm, args.map_width_mm, height_mm,
+              args.map_width_mm + 4.0))
+    w_mm, h_mm = args.width_mm, height_mm
     json.dump(anchors, open(osp.join(IPATH_DIR, "label_anchors.json"), "w"), indent=2)
 
     record.update({

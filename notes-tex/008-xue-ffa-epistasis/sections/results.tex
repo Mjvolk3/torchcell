@@ -194,15 +194,19 @@ the additive one, so the two nulls agree on the direction at two deletions and d
 magnitude. \textbf{c}, Replicate standard deviation against strain mean over the 165
 strains with a nonzero replicate spread, on log axes. The fitted slope is 1.10, against 0
 for a constant spread and 1 for a spread proportional to the mean, which is the Gamma
-family and is the assumption behind a log link. \textbf{d}, The two families of null as
-statements about the system. A multiplicative null says each deletion keeps a fraction of
-what reaches it, which is how independent steps of one flux compose and is the convention
-the growth interaction screens use. An additive null says each deletion removes an amount
-from a shared pool. The second counts the part of the first deletion's loss that the second
-would have taken again, and that double-counted term is the entire difference between them.
-\textbf{e}, The four models fit here: what each expects, the scale its residual is measured
-on, what it is fit to, and the reading of the system under which it is the natural null.
-Equations in the Methods.}{fig:model-intuition}
+family and is the assumption behind a log link. \textbf{d}, The two expectations as
+surfaces over the square of single-deletion phenotypes. They meet along the two edges where
+one deletion does nothing and separate in the interior, by exactly
+$(1 - f_i)(1 - f_j)$, which is $0.25$ at the center. Both log-scale models predict the same
+surface as the multiplicative one, so the four models differ there in the scale their
+residual is measured on rather than in what they expect. \textbf{e}, The two families of
+null as statements about the system. A multiplicative null says each deletion keeps a
+fraction of what reaches it, which is how independent steps of one flux compose and is the
+convention the growth interaction screens use. An additive null says each deletion removes
+an amount from a shared pool, and so counts the part of the first deletion's loss that the
+second would have taken again. \textbf{f}, The four models fit here: what each expects, the
+scale its residual is measured on, what it is fit to, and the reading of the system under
+which it is the natural null. Equations in the Methods.}{fig:model-intuition}
 \end{figure*}
 
 \begin{figure*}[t]
@@ -300,14 +304,17 @@ set with no visible relation to which factors regulate which fatty acid genes
 \panelrow{\panel{b}{figures/ffa-epistasis-fig4-network-overlay.pdf}}
 \caption{\textbf{Trigenic interactions on total fatty acid
 titer, drawn upstream of the pathway they act through.} \textbf{a}, Where the measured
-chemistry sits in metabolism, on the iPath3 reference map of KEGG's global metabolic
-pathways. Colored are the yeast reactions of glycolysis and gluconeogenesis, pyruvate
-metabolism, the citrate cycle, fatty acid biosynthesis, elongation and desaturation, and
-fatty acid degradation, taken from KEGG's own gene lists for those pathways rather than
-chosen here. The two measured species the reference map carries a node for are marked, as
-are four named intermediates on the route; the other three measured species have no node
-on that map. The map's own labels are not reproduced, because at this size they would
-print below the minimum type size. \textbf{b}, The ten deleted transcription
+chemistry sits in metabolism, on the whole of the iPath3 reference map of KEGG's global
+metabolic pathways. Colored are the yeast reactions of glycolysis and gluconeogenesis,
+pyruvate metabolism, the citrate cycle, fatty acid biosynthesis, elongation and
+desaturation, and fatty acid degradation, taken from KEGG's own gene lists for those
+pathways rather than chosen here. Marked are the two measured species the reference map
+places a node for and four named intermediates on the route. The other three measured
+species are absent from that map's layout rather than from KEGG: all five have compound
+entries, and the global map draws only some of the fatty acids. Panel \textbf{b} has all
+five because its species come from the yeast genome-scale model, which resolves acyl
+species by compartment. The map's own labels are not reproduced, because at this size they
+would print below the minimum type size. \textbf{b}, The ten deleted transcription
 factors are arranged in a circle at left. Edges within the circle are the 86 trigenic
 interactions significant at a 5\% false discovery rate within the total-titer readout under
 the multiplicative model, 75 negative (brick) and 11 positive (blue), each drawn as the

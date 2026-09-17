@@ -1,0 +1,26 @@
+# experiments/025-solid-growth/conf/cgt_s3_r_kl_fit_031.yaml
+#
+# THE CLOSURE ARM WITH A GENEROUS BUDGET: cgt_s3_r_kl_fit_030 (S3 = triples + every single
+# + the 739,219 pair-in-triple doubles, 1,121,645 records; joint fitness + interaction; the
+# 010 random split pinned over the triples, everything else in train; per-order metrics)
+# with the epoch ceiling raised from 30 to 130.
+#
+# WHY 130. The rate is constant (2.5e-4, no cycle to rescale), so the ceiling is only a
+# clock. On four mmli A100s an S0 epoch is 12 min (jobs 2397848, 2397876, 2408604) and S3 is
+# 2.98x the records, so about 36 min per epoch; 130 epochs is about 78 h plus the every-
+# tenth-epoch diagnostic validations, inside the partition's 4-day limit with margin. There
+# is no early-stopping callback: the run is stopped by hand if the curve is clearly done,
+# and the best-Pearson, best-MSE and last checkpoints under
+# $DATA_ROOT/models/checkpoints/<group>/ keep the selected epoch either way.
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 025-s3-fit1-e130 \
+#       experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s3_r_kl_fit_031 +seed=1
+defaults:
+  - cgt_s3_r_kl_fit_030
+  - _self_
+
+wandb:
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_130]
+
+trainer:
+  max_epochs: 130

@@ -340,9 +340,10 @@ the flux layer carries 10 to 40 percent of the summed module norm and the prepro
 norm climbs to 1 to 3, the same level as under the pooled head, so the backbone is
 trained through the layer and the growth column is a trained, free coordinate that ranks
 no better than the head. On the gated arms the layer carries 0.3 to 3 percent, the head
-carries the rest, and the gate drifts to $-0.1$ under constraint scale 0 and to $+0.2$
-with the FBA affine beside it, so the backbone is trained through the MLP and the flux
-path is a small correction. On the warm-started forced arm with $\alpha$ frozen the
+carries the rest, and the gate ends between $-0.2$ and $+0.2$ across seeds under
+constraint scale 0 (seed mean $+0.05$) and at $+0.2$ on every seed with the FBA affine
+beside it, so the backbone is trained through the MLP and the flux path is a small
+correction. On the warm-started forced arm with $\alpha$ frozen the
 backbone receives no gradient at all: the preprocessor's norm sits at 0.02 to 0.1 for the
 whole run, two orders below every other arm, because the flux is 99 percent a fixed
 reference and only the two parameters of the growth affine train; the cell is the affine

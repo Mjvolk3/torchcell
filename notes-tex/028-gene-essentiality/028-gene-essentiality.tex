@@ -48,8 +48,13 @@ transformer's per-cell number in six seconds and 0.886 as the same fold ensemble
 second is why the solve helps and the metabolic
 module, which is built on the same genome-scale model, does not: routed through the
 module's growth column the prediction never beats the backbone alone, and the rounds
-locate the reason in the layer, whose alternating projections never reach the polytope
-FBA optimizes over and which discards the solve when handed it. Every number here is at a
+locate the reason in the layer's constraint set, whose enzyme-capacity ceilings as
+parameterized contain no growing flux, so its alternating projections never reach the
+polytope FBA optimizes over and a linear program under its bounds is infeasible. On the
+genome-scale model's own bounds the module carries the solve, whether handed it as a
+warm start or solving for it in the forward pass with the gradient through the dual,
+and the gated module cell reaches the level of the solve appended as an input. Every
+number here is at a
 validation-selected epoch on a pinned test set, with a gene bootstrap and the across-seed
 range, and every table is generated from the result files.
 \end{abstract}

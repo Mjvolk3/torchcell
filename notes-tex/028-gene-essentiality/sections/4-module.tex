@@ -456,6 +456,56 @@ Round 15b runs the solve on the stoichiometry-only box, where round 13 showed th
 polytope holds growth, and a capacity ceiling that admits growth (the pool scaled so the
 wild type is feasible, GECKO's saturation calibration) is the module's next construction.
 
+\subsection{Round 15b: the layer that solves on the stoichiometry-only box\secstatus{todo}}
+
+Round 15b (jobs 2314 and 2315) runs the same solve on the stoichiometry-only layer,
+whose bounds are the GEM's scaled by the availability gate, forced and gated, three
+seeds each, beside the round-13 warm-started columns on the same box and the round-5
+affine (Table~\ref{tab:w29}, Figure~\ref{fig:w29}); the read is round 10's.
+
+\input{tables/round_w29}
+
+\tcfigfit[1.0]{figures/w29_readout_2026-09-17-05-13-17.pdf}{\textbf{Round 15b, the layer
+  that solves on the stoichiometry-only box.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w29}.}{fig:w29}
+
+The program is feasible here and its growth column is growth from the first forward
+pass: the probe at initialization finds a positive column with 10 percent of the 982
+deletions at exactly zero growth, the lethal ones, a Spearman of $+0.40$ to $+0.50$ with
+FBA's ratio across the four media, and a ranking of 0.734 on the held-out genes, above
+FBA's own 0.654 to 0.666 on the same genes. The layer that solves under the
+availability-scaled box is a better ranker than the unscaled solve before any
+training, which is the uniform enzyme ceiling the gate imposes doing GECKO's work in
+miniature. The gated cells read 0.800, 0.837 and 0.835 against the round-4 gated cell's
+0.766, 0.782 and 0.765, up by 0.034, 0.055 and 0.070 on three of three seeds, a seed
+mean of 0.824 against the affine's 0.821 and a pooled bootstrap of 0.837 [0.76, 0.91]:
+both halves of the read hold, and this is a module cell at the affine's level with the
+solve inside the forward pass and the gradient through it. The seed that trains longest
+(2701, epoch 103) ends with its gate at $+1.42$, the largest positive gate in the
+document, and its growth column ranks the held-out genes at 0.768 on its own after
+training, above its 0.734 at initialization; the other two seeds select epochs 2 and 4
+with gates near zero, so on those the number is the head's early ranking and the
+column's contribution is not read.
+
+The forced cells fail in two ways that are the linear program's own. On two seeds the
+gradient into the backbone is $10^{-14}$ for the whole run and the cell reads 0.669, the
+solve's number with a learned threshold: at the optimum the binding constraints are the
+exchange bounds, which no gene owns, so the duals on the learnable bounds are zero and
+the backbone has nothing to move. On the third seed the early gradient moves the
+availability gate until the program is infeasible for every genotype (epoch 11), the
+column is zero from then on, and the cell reads 0.500; an infeasible program returns no
+gradient, so the state is absorbing. The gated cell avoids both because the head
+carries the loss while the column contributes where its duals are live. A layer that
+solves therefore needs two more things the rounds name: bounds the genes own that bind
+at the optimum (the capacity ceilings, once calibrated to admit growth), and a barrier
+that keeps the program feasible under training.
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms
@@ -520,8 +570,13 @@ endpoint would therefore have to solve rather than project, with the backbone se
 the bounds it solves under (the capacity ceilings from the abundance head are that
 interface already), and read more of the resulting flux than its growth column. The
 first of those is a linear program per genotype per forward pass with the gradient taken
-through its dual, about 50 milliseconds each; it is untested here and is the one
-construction the rounds have not ruled out. Round 13, the warm start on the
-stoichiometry-only layer, is the last test of the projection route: its box is the
-GEM's, so the reference sits inside it, and if the growth column still leaves the
-solve's ranking there, the alternations themselves are what moves it.
+through its dual, about 50 milliseconds each. Rounds 13, 15 and 15b test both routes on
+both boxes. On the GEM's own box the solve survives the projections (round 13) and the
+program that solves is feasible and ranks at 0.73 before training (round 15b), and in
+both cases the gated module cell reaches the affine's level, 0.816 and 0.824, three of
+three seeds above the round-4 gated cell, with the growth column entering through a
+positive gate. On the anchored box the projections reverse the solve (round 10) and the
+program has no feasible point (round 15), because the enzyme-capacity ceilings as
+parameterized exclude growth. The module helps, then, exactly when its flux is on the
+polytope the solve optimizes over, and the constraint set that was meant to make it
+more than the solve is what has kept it off.

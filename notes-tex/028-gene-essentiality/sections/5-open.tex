@@ -26,12 +26,19 @@ weight, six encodings). What remains is attribution and the module.
     column reads at the solve's level at initialization and keeps it, the projection
     route carries the solve and the anchored constraint set was the loss; if not, the
     alternations are.
-  \item A layer that solves. The one module construction the rounds have not ruled out is
-    a linear program per genotype inside the forward pass, with the backbone's capacity
-    ceilings as its bounds and the gradient through the LP's dual prices, reading the
-    optimal flux rather than a growth column. One solve costs about 50 milliseconds, so a
-    200-epoch cell at batch 32 is about two hours of CPU per seed. Untested.
+  \item The layer that solves works on the GEM's box and is infeasible on the anchored
+    one (rounds 15 and 15b). Two constructions follow from what it showed and are
+    untested: the enzyme-capacity ceilings scaled so that the wild type is feasible,
+    GECKO's saturation calibration, which would make bounds the genes own bind at the
+    optimum and give the duals something to move; and a barrier on the availability gate
+    that keeps the program feasible under training, since an infeasible program returns
+    no gradient and the forced cell that reached one stayed there.
+  \item The solve's flux vector read through a head rather than its growth column, which
+    on the ladder carries 0.11 to 0.13 more AUROC than the growth ratio and would take
+    the biomass objective out of the readout; and the growth LP with an objective other
+    than biomass, since the layer that solves accepts any objective column.
   \item The module's own hyperparameters have not been moved on this endpoint: the
-    $k_{cat}$ tier (measured against predicted), the thermodynamic source, the number of
-    alternations. Given the probe and round 10, none of them reaches the polytope.
+    $k_{cat}$ tier (measured against predicted) and the thermodynamic source. Given
+    round 15, the $k_{cat}$ tier is the one that sets whether the capacity box holds a
+    growing flux at all.
 \end{itemize}

@@ -241,11 +241,10 @@ cell for the wider input. The indicator alone does not: 0.810, 0.759 and 0.774, 
 the first epochs while its preprocessor's gradient norm sits near 5 for the whole run
 (Figure~\ref{fig:w20}d), against 0.1 to 3 on the other arms. The two encodings add
 through the transformer, 0.87 against 0.83 for the indicator's rung and 0.82 for
-ProtT5's; the ladder never fit the pair on its own. Which of the indicator's columns
-carry the gain is not measured: beside the chromosome and pathway indicators it holds
-five continuous gene properties, two of them the gene's expression level and
-dispersion, and the attribution is an open item (Section~\ref{sec:open}). ESM2 with the
-affine scores
+ProtT5's; the ladder never fit the pair on its own. Beside the chromosome and pathway
+indicators the encoding holds five continuous gene properties, two of them the gene's
+expression level and dispersion, and round 14 below says which columns carry the gain.
+ESM2 with the affine scores
 0.740, below ProtT5 with the affine by 0.08 and level with ESM2's own ladder rung, and
 the seven-encoding concatenation 0.820, the round-5 cell's number from 78,066 parameters:
 adding five encodings to the two that pass returns the concatenation to where ProtT5
@@ -318,3 +317,32 @@ random forest's gain on them is the tree's. The vector alone reads 0.877, 0.743 
 0.874, two seeds at the level of the pair and one collapsed at epoch 7, so 4,131 columns
 on an affine over 629 training genes are unstable without the eight statistics beside
 them. Round 16 puts the passing affine on the round-9 backbone.
+
+\subsection{Round 14: which columns of the indicator carry the gain\secstatus{todo}}
+
+The chromosome-pathway indicator is three things: five scaled gene properties, a
+chromosome one-hot, and a multi-hot over 173 SGD pathways. Round 14 (jobs 2307 and 2308)
+drops the pathway columns (\texttt{normalized\_chrom}, 24 dimensions) and runs the
+round-9 cell with and without ProtT5 beside it (Table~\ref{tab:w25},
+Figure~\ref{fig:w25}).
+
+\input{tables/round_w25}
+
+\tcfigfit[1.0]{figures/w25_readout_2026-09-17-01-19-24.pdf}{\textbf{Round 14, attribution
+  inside the chromosome-pathway indicator.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w25}.}{fig:w25}
+
+The pathways carry it. Without them, the properties and the chromosome beside ProtT5
+read 0.811, 0.816 and 0.810, a seed mean of 0.813 against 0.871 with the pathways and
+0.821 for ProtT5 alone, so the five properties and the chromosome add nothing to the
+protein embedding, expression included; on their own they read 0.669, the solver's
+level. The 173 pathway columns are what lifts the cell from 0.82 to 0.87, and they do
+it only with ProtT5 beside them: the full indicator alone reads 0.78 (round 9). A
+gene's pathway membership and its protein sequence are complementary inputs on this
+endpoint, and each is cheap.

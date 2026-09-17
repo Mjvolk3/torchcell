@@ -160,6 +160,13 @@ ROUND_CAPTIONS = {
         "parameterization. Constraint scale 0, batch 32, class weight, 200 epochs, seeds "
         "2700 to 2702.",
     ),
+    "w19": (
+        "Round 8, width and depth on the FBA cell",
+        "The round-5 cell (width 12, one block, one-layer preprocessor, context head plus "
+        "the FBA affine) against the same readout at width 24 and 48, at two blocks, and "
+        "with the two-layer preprocessor. Batch 32, class weight, 200 epochs, seeds 2700 "
+        "to 2702.",
+    ),
 }
 
 

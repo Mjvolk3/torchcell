@@ -156,6 +156,12 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["b32posw200", "bio_s0", "bioprojbox", "biobox"],
     ),
+    # Wave 19 (round 8): width and depth on the FBA-readout cell, paired against the
+    # round-5 width-12 cell.
+    "w19": (
+        ["w16_fba_h12l1p1_e200_s*.json", "w19_*_e200_s*.json"],
+        ["fba", "fbah24", "fbah48", "fbal2", "fbap2"],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -206,6 +212,10 @@ ARM_LABELS = {
     "comp": "species-LM composite backbone",
     "bioprojbox": "growth column only, projection ending on the box",
     "biobox": "growth column only, box parameterization",
+    "fbah24": "context head + FBA ratios, width 24",
+    "fbah48": "context head + FBA ratios, width 48",
+    "fbal2": "context head + FBA ratios, two blocks",
+    "fbap2": "context head + FBA ratios, two-layer preprocessor",
 }
 
 

@@ -102,9 +102,14 @@
       "compound": "C00083",
       "label": "malonyl-CoA",
       "drawn_on_map": true
+    },
+    {
+      "compound": "C00154",
+      "label": "palmitoyl-CoA",
+      "drawn_on_map": true
     }
   ],
-  "retrieved_at": "2026-09-17T04:57:32+00:00",
+  "retrieved_at": "2026-09-17T19:13:58+00:00",
   "retrieval_method": "direct_url",
   "kegg_api": "https://rest.kegg.jp",
   "ipath_endpoint": "https://pathways.embl.de/mapping.cgi",
@@ -117,15 +122,274 @@
     "default_color": "#999999",
     "keep_colors": 1
   },
-  "selection_sha256": "b1861ef3ae6e2c60ae9d0a8b8431dff4d9858f544acae21335d0e87c6124b901",
-  "selection_entries": 82,
-  "response_sha256": "c2999c18f4fff343cc358c13f80987c013de7470130281694cd52b4335b1d471",
+  "selection_sha256": "c896bed85399ab5edc924b6cbc7ceeea020c68b534dd99f87aef8d5a4a60399c",
+  "selection_entries": 83,
+  "response_sha256": "a1472cc9ea2d6043eca76389994042f9a6ad62edf0d78a9aebbd8994e76efd21",
+  "species_acyl_coa_on_map": {
+    "myristoyl-CoA": true,
+    "palmitoyl-CoA": true,
+    "palmitoleoyl-CoA": false,
+    "stearoyl-CoA": false,
+    "oleoyl-CoA": false
+  },
+  "attachments": [
+    {
+      "species": "palmitoleate",
+      "anchor": "palmitoyl-CoA",
+      "path": [
+        "palmitoyl-CoA",
+        "palmitoleoyl-CoA(4-)",
+        "palmitoleate"
+      ],
+      "genes": [
+        "OLE1",
+        "FAA2",
+        "FAA4",
+        "FAA1"
+      ],
+      "candidates": [
+        "palmitoyl-CoA"
+      ]
+    },
+    {
+      "species": "stearate",
+      "anchor": "acetyl-CoA",
+      "path": [
+        "acetyl-CoA",
+        "stearoyl-CoA",
+        "stearate"
+      ],
+      "genes": [
+        "FAS1",
+        "FAS2",
+        "FAA2",
+        "FAA4",
+        "FAA1"
+      ],
+      "candidates": [
+        "acetyl-CoA",
+        "malonyl-CoA"
+      ]
+    },
+    {
+      "species": "oleate",
+      "anchor": "stearate",
+      "path": [
+        "stearate",
+        "stearoyl-CoA",
+        "oleoyl-CoA",
+        "oleate"
+      ],
+      "genes": [
+        "FAA2",
+        "FAA4",
+        "FAA1",
+        "OLE1"
+      ],
+      "candidates": [
+        "stearate",
+        "acetyl-CoA",
+        "malonyl-CoA"
+      ]
+    }
+  ],
+  "genes": [
+    {
+      "gene": "FKH1",
+      "orf": "YIL131C",
+      "ko": "K24664",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "GCN5",
+      "orf": "YGR252W",
+      "ko": "K06062",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "MED4",
+      "orf": "YOR174W",
+      "ko": "K15146",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "OPI1",
+      "orf": "YHL020C",
+      "ko": "K21642",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "RFX1",
+      "orf": "YLR176C",
+      "ko": "K09173",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "RGR1",
+      "orf": "YLR071C",
+      "ko": "K15156",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "RPD3",
+      "orf": "YNL330C",
+      "ko": "K06067",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "SPT3",
+      "orf": "YDR392W",
+      "ko": "K11313",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "YAP6",
+      "orf": "YDR259C",
+      "ko": "K09043",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "TFC7",
+      "orf": "YOR110W",
+      "ko": "K15206",
+      "role": "regulator",
+      "map_elements": 0
+    },
+    {
+      "gene": "ACC1",
+      "orf": "YNR016C",
+      "ko": "K11262",
+      "role": "pathway",
+      "map_elements": 1
+    },
+    {
+      "gene": "FAS1",
+      "orf": "YKL182W",
+      "ko": "K00668",
+      "role": "pathway",
+      "map_elements": 17
+    },
+    {
+      "gene": "FAS2",
+      "orf": "YPL231W",
+      "ko": "K00667",
+      "role": "pathway",
+      "map_elements": 21
+    },
+    {
+      "gene": "ELO1",
+      "orf": "YJL196C",
+      "ko": "K10245",
+      "role": "pathway",
+      "map_elements": 0
+    },
+    {
+      "gene": "ELO2",
+      "orf": "YCR034W",
+      "ko": "K10245",
+      "role": "pathway",
+      "map_elements": 0
+    },
+    {
+      "gene": "ELO3",
+      "orf": "YLR372W",
+      "ko": "K10246",
+      "role": "pathway",
+      "map_elements": 0
+    },
+    {
+      "gene": "OLE1",
+      "orf": "YGL055W",
+      "ko": "K00507",
+      "role": "pathway",
+      "map_elements": 0
+    },
+    {
+      "gene": "FAA1",
+      "orf": "YOR317W",
+      "ko": "K01897",
+      "role": "pathway",
+      "map_elements": 1
+    },
+    {
+      "gene": "FAA2",
+      "orf": "YER015W",
+      "ko": "K01897",
+      "role": "pathway",
+      "map_elements": 1
+    },
+    {
+      "gene": "FAA3",
+      "orf": "YIL009W",
+      "ko": "K01897",
+      "role": "pathway",
+      "map_elements": 1
+    },
+    {
+      "gene": "FAA4",
+      "orf": "YMR246W",
+      "ko": "K01897",
+      "role": "pathway",
+      "map_elements": 1
+    },
+    {
+      "gene": "POX1",
+      "orf": "YGL205W",
+      "ko": "K00232",
+      "role": "pathway",
+      "map_elements": 10
+    },
+    {
+      "gene": "SLC1",
+      "orf": "YDL052C",
+      "ko": "K13509",
+      "role": "pathway",
+      "map_elements": 1
+    }
+  ],
+  "panel_mm": [
+    179.0,
+    53.2
+  ],
+  "map_mm": [
+    89.0,
+    53.2
+  ],
   "stored": {
-    "compound_positions.json": "0684a7a02348deee94d2d699ebcef7f4fef7ab40a86a5a144e0d8f0deea94d76",
-    "ipath3_metabolic.svg": "9326e5e6847c0b41db772a8d30646cee32786de3b7a6d674e96aeef436a5c075",
-    "ipath3_metabolic_5ed9777a8780.svg": "a7b57a687ea621def3421c90503a9e89d00b0d27f2a667e31c0fd9a617f2dade",
-    "ipath3_metabolic_b1861ef3ae6e.svg": "9dd877283e056151ff0b70e0ee11dd28c1e15f8ff4b24b0597b5e6829a4bba31",
-    "ipath3_metabolic_d6ab62742359.svg": "306f18bd11ae735d6bbebdb8c5cdea0bb1e7bda44033359fdcf28a4b7ccc1006",
+    "ipath3_metabolic_c896bed85399.svg": "3d9b57619a570afde636945749fad17ed4c8094e3200e1432742d183b394624d",
+    "ipath_probes.json": "ceab5e1136f28220df4dea1b08b61ae97b106a240862df32f5447ebb75bc104b",
+    "kegg_find_sce_ACC1.tsv": "42d53d17ee933bc2f202add904252c0677eb64d27c51bfe07be4cf55ba6faa0a",
+    "kegg_find_sce_ELO1.tsv": "f33c471a3817e364a106136011f3c1aabc636f461d63169af08b4d253de10c99",
+    "kegg_find_sce_ELO2.tsv": "1c11c90daa7692bcd83698bfca474d436d05e7ad6ed5771fd8b8a790cd347e9c",
+    "kegg_find_sce_ELO3.tsv": "0cff7d60660bd9064c30819a0db454dbed2e00b2c106372167b483678dff7b7c",
+    "kegg_find_sce_FAA1.tsv": "efc8354b08991bda132e08f27998dc3f73e46e88bbe6d111a3132f948ffd22ff",
+    "kegg_find_sce_FAA2.tsv": "a59586ddcfb9287f8dba88bdb6ab1efa707ea14db71e7d5a5cbad8e0c2c942e8",
+    "kegg_find_sce_FAA3.tsv": "6ba2455a23940e4c8af2c49e5e43e36eda5198360539b5c3c57619ff58010cdb",
+    "kegg_find_sce_FAA4.tsv": "ae8b8c9d342366e1715fdb9dc0c3da046d85d8af5c9bd57fe40998816ad5b1bd",
+    "kegg_find_sce_FAS1.tsv": "cfa14edb2b7aa6174de675a44804affed3ad63ff7e2366b67434cfc33571a992",
+    "kegg_find_sce_FAS2.tsv": "347cc035b9f9b95685068cfa993d7da9c7b64ad92cd2288b60814bf7053f5722",
+    "kegg_find_sce_FKH1.tsv": "6e4173776992703ad84d2c7d62f4da1554a64ee63fc30b49517e76aafbe46153",
+    "kegg_find_sce_GCN5.tsv": "86d43ae79c79f71c3140a792cf695be0ac8b223d1054bbdf6da443b485ac34ae",
+    "kegg_find_sce_MED4.tsv": "59c6f229b4314ab6cb944072ac4a663a7fafd6e91904cb6ee3ae1b097e9c74a3",
+    "kegg_find_sce_OLE1.tsv": "8660c4c1eeab33eca2780a5e788d1c1e6350a75b49e4999cf9cb8b16dd97317c",
+    "kegg_find_sce_OPI1.tsv": "3e10de9a011bbe98ef08c6192b5c2f30902ca5f66d19b86479407255bfe5b237",
+    "kegg_find_sce_POX1.tsv": "67f5809cfdc9c6cea5dc5c745702f2cdb37100f68d43b6b9268bc51518ed94b9",
+    "kegg_find_sce_RFX1.tsv": "ea57f0fe6447e5231ecd3b359d00acce0c152a2f6ac3d4e92108f3d6028f46e0",
+    "kegg_find_sce_RGR1.tsv": "8cdaad0c6ac0b1a0d06082fa054ca00524367ad91e48b09a448544066c6d2ee4",
+    "kegg_find_sce_RPD3.tsv": "48d70cca92715b5ed1b4f121a1042db285997f0fdbdfd70b2093232b0d1303b7",
+    "kegg_find_sce_SLC1.tsv": "1a52d752569e20fbbc73ffab4ead5e1cf0a21526146b1e32f4cffb60441eadd9",
+    "kegg_find_sce_SPT3.tsv": "cd60b34006afcb35068dab96146a9e50c0790e905d88e8fac3a2563187243fcf",
+    "kegg_find_sce_TFC7.tsv": "367fb87d93264a1d1123563996a61fb7bc82d40cb13891e848d59d100655f535",
+    "kegg_find_sce_YAP6.tsv": "650045248ccce7ea6fc99aef75d7f39bad749a081ffb78b0859b3facbb18a813",
     "kegg_link_ko_sce.tsv": "233049a88fa624ee1190f40a7dca5ca91b706f68a2c3171b46faacb0828fb812",
     "kegg_link_sce_sce00010.tsv": "5dc47f3e5731601763b4fa05a00ed4c35ed0a2d7e5ee18f11f5bc86c8f42e77d",
     "kegg_link_sce_sce00020.tsv": "bda1a957f87bd354947c1a2ef8b1aca292dddd03b2f8c6e08b9e41c570127273",
@@ -134,21 +398,8 @@
     "kegg_link_sce_sce00071.tsv": "35b4d38fe4c9e379dd30e86d65231bb1b972452d6635de6f49dc9e76e94392ba",
     "kegg_link_sce_sce00620.tsv": "fbb7424b8996bd211710a40f877e91a13fd3c807a2c2114161595931cdb323e7",
     "kegg_link_sce_sce01040.tsv": "ff5f908ccdc88e35a9da750f614238903ab0b1541e518442f3078617d48a3595",
-    "label_anchors.json": "426e12b16a396bbb1d9d565024617f9c11cbf2380d301124a3ee66424693ab71",
-    "provenance.json": "828281ea4427278b69d2af5b43992dc662cd04b35adea594b873dc8d68739f40",
-    "selection.txt": "b1861ef3ae6e2c60ae9d0a8b8431dff4d9858f544acae21335d0e87c6124b901"
-  },
-  "panel_mm": [
-    179.0,
-    52.1
-  ],
-  "species_drawn": [
-    "C14:0 myristate",
-    "C16:0 palmitate"
-  ],
-  "species_not_on_map": [
-    "C16:1 palmitoleate",
-    "C18:0 stearate",
-    "C18:1 oleate"
-  ]
+    "label_anchors.json": "7b5881a4d8965a70b3536bf0ec3478bb592b5028ba187266ec6b28d42e3ccf06",
+    "provenance.json": "01b33d62359ed4642ea51d90f4a542fdb0dc93e54f4cece0579a4be8c74bcb78",
+    "selection.txt": "c896bed85399ab5edc924b6cbc7ceeea020c68b534dd99f87aef8d5a4a60399c"
+  }
 }

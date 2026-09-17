@@ -1,94 +1,142 @@
 [
   {
-    "compound": "C00022",
-    "label": "pyruvate",
-    "color": "#666666",
-    "positions_mm": [
-      [
-        39.68,
-        27.96
-      ],
-      [
-        28.93,
-        40.51
-      ]
-    ]
-  },
-  {
-    "compound": "C00024",
-    "label": "acetyl-CoA",
-    "color": "#666666",
-    "positions_mm": [
-      [
-        39.68,
-        30.74
-      ]
-    ]
-  },
-  {
-    "compound": "C00158",
-    "label": "citrate",
-    "color": "#666666",
-    "positions_mm": [
-      [
-        41.17,
-        34.02
-      ]
-    ]
-  },
-  {
-    "compound": "C00083",
-    "label": "malonyl-CoA",
-    "color": "#666666",
-    "positions_mm": [
-      [
-        14.5,
-        22.46
-      ],
-      [
-        37.09,
-        32.16
-      ]
-    ]
-  },
-  {
-    "compound": "C06424",
-    "label": "C14:0 myristate",
-    "color": "#6C8EBF",
-    "positions_mm": [
-      [
-        19.32,
-        33.12
-      ]
-    ]
-  },
-  {
-    "compound": "C00249",
-    "label": "C16:0 palmitate",
-    "color": "#6C8EBF",
-    "positions_mm": [
-      [
-        27.46,
-        31.77
-      ]
-    ]
-  },
-  {
-    "compound": "C08362",
+    "name": "palmitoleate",
     "label": "C16:1 palmitoleate",
-    "color": "#6C8EBF",
-    "positions_mm": []
+    "node_mm": [
+      27.5,
+      3.8
+    ],
+    "attached": true,
+    "label_mm": [
+      3.55,
+      3.8
+    ],
+    "genes": "OLE1, FAA1/2/4"
   },
   {
-    "compound": "C01530",
+    "name": "stearate",
     "label": "C18:0 stearate",
-    "color": "#6C8EBF",
-    "positions_mm": []
+    "node_mm": [
+      27.5,
+      10.6
+    ],
+    "attached": true,
+    "label_mm": [
+      4.18,
+      10.6
+    ],
+    "genes": "FAS1/2, FAA1/2/4"
   },
   {
-    "compound": "C00712",
+    "name": "oleate",
     "label": "C18:1 oleate",
-    "color": "#6C8EBF",
-    "positions_mm": []
+    "node_mm": [
+      27.5,
+      17.4
+    ],
+    "attached": true,
+    "label_mm": [
+      1.8,
+      17.4
+    ],
+    "genes": "FAA1/2/4, OLE1"
+  },
+  {
+    "name": "myristate",
+    "label": "C14:0 myristate",
+    "node_mm": [
+      19.76,
+      33.89
+    ],
+    "attached": false,
+    "label_mm": [
+      1.77,
+      38.04
+    ],
+    "genes": null
+  },
+  {
+    "name": "palmitate",
+    "label": "C16:0 palmitate",
+    "node_mm": [
+      28.09,
+      32.5
+    ],
+    "attached": false,
+    "label_mm": [
+      6.99,
+      44.14
+    ],
+    "genes": null
+  },
+  {
+    "name": "pyruvate",
+    "label": "pyruvate",
+    "node_mm": [
+      40.59,
+      28.61
+    ],
+    "attached": false,
+    "label_mm": [
+      42.72,
+      24.45
+    ],
+    "genes": null
+  },
+  {
+    "name": "palmitoyl-CoA",
+    "label": "palmitoyl-CoA",
+    "node_mm": [
+      32.08,
+      30.74
+    ],
+    "attached": false,
+    "label_mm": [
+      25.2,
+      50.22
+    ],
+    "genes": null
+  },
+  {
+    "name": "acetyl-CoA",
+    "label": "acetyl-CoA",
+    "node_mm": [
+      40.59,
+      31.45
+    ],
+    "attached": false,
+    "label_mm": [
+      53.59,
+      31.45
+    ],
+    "genes": null
+  },
+  {
+    "name": "citrate",
+    "label": "citrate",
+    "node_mm": [
+      42.12,
+      34.8
+    ],
+    "attached": false,
+    "label_mm": [
+      46.68,
+      36.52
+    ],
+    "genes": null
+  },
+  {
+    "name": "malonyl-CoA",
+    "label": "malonyl-CoA",
+    "node_mm": [
+      37.94,
+      32.9
+    ],
+    "attached": false,
+    "label_mm": [
+      45.23,
+      49.53
+    ],
+    "genes": null
   }
 ]

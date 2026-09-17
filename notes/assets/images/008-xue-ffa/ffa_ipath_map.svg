@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="704.72" height="204.93" viewBox="0 0 704.72 204.93">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="704.72" height="209.65" viewBox="0 0 704.72 209.65">
 <style>text { font-family: Arial; font-size: 8.33px; }</style>
-<svg x="0" y="0" width="342.52" height="204.93" viewBox="-10 -10 3794 2270" preserveAspectRatio="none">
+<svg x="0" y="0" width="350.39" height="209.65" viewBox="-10 -10 3794 2270" preserveAspectRatio="none">
 <style type="text/css">text { font-family: Arial; font-weight: normal; font-style: normal; } path {stroke-miterlimit: 10; stroke-linecap: round;}&gt;</style>
 
 <rect stroke-width="1" stroke="black" fill="#ffffff" x="0" y="0" width="3774" height="2250" /><g id="layer1">
@@ -11364,7 +11364,7 @@
 
 </g>
 <g>
-<ellipse style="opacity: 0.28; " rx="7" ry="7" fill="#80CCCC" cx="1357.50" cy="1300.50" />
+<ellipse style="opacity: 1; " rx="30" ry="30" fill="#666666" cx="1357.50" cy="1300.50" />
 
 </g>
 <g>
@@ -13268,7 +13268,7 @@
 
 </g>
 <g>
-<ellipse style="opacity: 1; " rx="30" ry="30" fill="#666666" cx="622.50" cy="969.50" />
+<ellipse style="opacity: 0.28; " rx="7" ry="7" fill="#999999" cx="622.50" cy="969.50" />
 
 </g>
 <g>
@@ -14368,7 +14368,7 @@
 
 </g>
 <g>
-<ellipse style="opacity: 1; " rx="30" ry="30" fill="#666666" cx="1251.50" cy="1756.50" />
+<ellipse style="opacity: 0.28; " rx="7" ry="7" fill="#999999" cx="1251.50" cy="1756.50" />
 
 </g>
 <g>
@@ -17439,40 +17439,66 @@
 
 </g>
 </svg>
-<path d="M156.22,110.08 L175.91,110.08" fill="none" stroke="#000000" stroke-width="0.5"/>
-<rect x="174.33" y="104.02" width="39.63" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.88" stroke="none"/>
-<text x="177.48" y="110.08" dominant-baseline="middle">pyruvate</text>
-<path d="M156.22,121.02 L175.91,125.83" fill="none" stroke="#000000" stroke-width="0.5"/>
-<rect x="174.33" y="119.77" width="47.97" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.88" stroke="none"/>
-<text x="177.48" y="125.83" dominant-baseline="middle">acetyl-CoA</text>
-<path d="M108.11,125.08 L127.80,141.57" fill="none" stroke="#000000" stroke-width="0.5"/>
-<rect x="126.22" y="135.52" width="68.80" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.88" stroke="none"/>
-<text x="129.37" y="141.57" dominant-baseline="middle">C16:0 palmitate</text>
-<path d="M146.02,126.61 L165.71,157.32" fill="none" stroke="#000000" stroke-width="0.5"/>
-<rect x="164.13" y="151.27" width="52.13" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.88" stroke="none"/>
-<text x="167.28" y="157.32" dominant-baseline="middle">malonyl-CoA</text>
-<path d="M76.06,130.39 L95.75,173.07" fill="none" stroke="#000000" stroke-width="0.5"/>
-<rect x="94.17" y="167.01" width="68.80" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.88" stroke="none"/>
-<text x="97.32" y="173.07" dominant-baseline="middle">C14:0 myristate</text>
-<path d="M162.09,133.94 L181.77,188.82" fill="none" stroke="#000000" stroke-width="0.5"/>
-<rect x="180.20" y="182.76" width="35.47" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.88" stroke="none"/>
-<text x="183.35" y="188.82" dominant-baseline="middle">citrate</text>
-<text x="358.27" y="11.81" font-weight="bold" dominant-baseline="middle">the route from central carbon to the measured lipids</text>
-<line x1="360.24" y1="31.50" x2="379.92" y2="31.50" stroke="#9673A6" stroke-width="1.6"/>
-<text x="387.80" y="31.50" dominant-baseline="middle">glycolysis and gluconeogenesis</text>
-<line x1="360.24" y1="49.61" x2="379.92" y2="49.61" stroke="#D6B656" stroke-width="1.6"/>
-<text x="387.80" y="49.61" dominant-baseline="middle">pyruvate metabolism</text>
-<line x1="360.24" y1="67.72" x2="379.92" y2="67.72" stroke="#B85450" stroke-width="1.6"/>
-<text x="387.80" y="67.72" dominant-baseline="middle">citrate cycle</text>
-<line x1="360.24" y1="85.83" x2="379.92" y2="85.83" stroke="#D79B00" stroke-width="1.6"/>
-<text x="387.80" y="85.83" dominant-baseline="middle">fatty acid biosynthesis, elongation and desaturation</text>
-<line x1="360.24" y1="103.94" x2="379.92" y2="103.94" stroke="#666666" stroke-width="1.6"/>
-<text x="387.80" y="103.94" dominant-baseline="middle">fatty acid degradation</text>
-<circle cx="370.08" cy="122.05" r="4.33" fill="#6C8EBF"/>
-<text x="387.80" y="122.05" dominant-baseline="middle">measured species drawn on this map</text>
-<circle cx="370.08" cy="140.16" r="4.33" fill="#666666"/>
-<text x="387.80" y="140.16" dominant-baseline="middle">named intermediate</text>
-<text x="358.27" y="158.27" dominant-baseline="middle">C16:1 palmitoleate, C18:0 stearate and C18:1 oleate are measured here</text>
-<text x="358.27" y="171.65" dominant-baseline="middle">and have no node on the reference map. The map carries no labels of its</text>
-<text x="358.27" y="185.04" dominant-baseline="middle">own: at this size they would print at about 2.5 pt.</text>
+<path d="M126.30,121.03 L108.27,14.96" fill="none" stroke="#000000" stroke-width="0.6" stroke-dasharray="2.2,1.6"/>
+<path d="M159.82,123.80 L108.27,41.73" fill="none" stroke="#000000" stroke-width="0.6" stroke-dasharray="2.2,1.6"/>
+<path d="M108.27,41.73 L108.27,68.50" fill="none" stroke="#000000" stroke-width="0.6" stroke-dasharray="2.2,1.6"/>
+<path d="M108.27,14.96 L90.56,14.96" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="10.83" y="8.90" width="81.30" height="20.29" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="13.98" y="14.96" dominant-baseline="middle">C16:1 palmitoleate</text>
+<text x="13.98" y="23.14" font-size="7.00px" dominant-baseline="middle">OLE1, FAA1/2/4</text>
+<path d="M108.27,41.73 L76.38,41.73" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="13.32" y="35.68" width="64.63" height="20.29" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="16.47" y="41.73" dominant-baseline="middle">C18:0 stearate</text>
+<text x="16.47" y="49.91" font-size="7.00px" dominant-baseline="middle">FAS1/2, FAA1/2/4</text>
+<path d="M108.27,68.50 L58.67,68.50" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="3.94" y="62.45" width="56.30" height="20.29" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="7.09" y="68.50" dominant-baseline="middle">C18:1 oleate</text>
+<text x="7.09" y="76.69" font-size="7.00px" dominant-baseline="middle">FAA1/2/4, OLE1</text>
+<circle cx="108.27" cy="41.73" r="3.34" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
+<circle cx="108.27" cy="68.50" r="3.34" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
+<circle cx="108.27" cy="14.96" r="3.34" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
+<path d="M77.81,133.41 L71.03,149.77" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="3.80" y="143.72" width="68.80" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="6.95" y="149.77" dominant-baseline="middle">C14:0 myristate</text>
+<path d="M110.59,127.96 L91.61,173.79" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="24.39" y="167.73" width="68.80" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="27.54" y="173.79" dominant-baseline="middle">C16:0 palmitate</text>
+<path d="M159.82,112.63 L166.60,96.26" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="165.02" y="90.20" width="39.63" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="168.17" y="96.26" dominant-baseline="middle">pyruvate</text>
+<path d="M126.30,121.03 L126.30,191.90" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="96.06" y="191.67" width="60.47" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="99.21" y="197.73" dominant-baseline="middle">palmitoyl-CoA</text>
+<path d="M159.82,123.80 L209.43,123.80" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="207.85" y="117.75" width="47.97" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="211.00" y="123.80" dominant-baseline="middle">acetyl-CoA</text>
+<path d="M165.82,137.01 L182.19,143.79" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="180.62" y="137.73" width="35.47" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="183.77" y="143.79" dominant-baseline="middle">citrate</text>
+<path d="M149.38,129.53 L176.50,195.00" fill="none" stroke="#000000" stroke-width="0.5"/>
+<rect x="174.93" y="188.94" width="52.13" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
+<text x="178.08" y="195.00" dominant-baseline="middle">malonyl-CoA</text>
+<text x="366.14" y="11.81" font-weight="bold" dominant-baseline="middle">the route from central carbon to the measured lipids</text>
+<line x1="368.11" y1="31.50" x2="387.80" y2="31.50" stroke="#9673A6" stroke-width="1.6"/>
+<text x="395.67" y="31.50" dominant-baseline="middle">glycolysis and gluconeogenesis</text>
+<line x1="368.11" y1="45.67" x2="387.80" y2="45.67" stroke="#D6B656" stroke-width="1.6"/>
+<text x="395.67" y="45.67" dominant-baseline="middle">pyruvate metabolism</text>
+<line x1="368.11" y1="59.84" x2="387.80" y2="59.84" stroke="#B85450" stroke-width="1.6"/>
+<text x="395.67" y="59.84" dominant-baseline="middle">citrate cycle</text>
+<line x1="368.11" y1="74.02" x2="387.80" y2="74.02" stroke="#D79B00" stroke-width="1.6"/>
+<text x="395.67" y="74.02" dominant-baseline="middle">fatty acid biosynthesis, elongation and desaturation</text>
+<line x1="368.11" y1="88.19" x2="387.80" y2="88.19" stroke="#666666" stroke-width="1.6"/>
+<text x="395.67" y="88.19" dominant-baseline="middle">fatty acid degradation</text>
+<circle cx="377.95" cy="102.36" r="4.33" fill="#6C8EBF"/>
+<text x="395.67" y="102.36" dominant-baseline="middle">measured species, a node of the reference map</text>
+<circle cx="377.95" cy="116.54" r="3.94" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
+<text x="395.67" y="116.54" dominant-baseline="middle">measured species attached from the yeast GEM</text>
+<circle cx="377.95" cy="130.71" r="4.33" fill="#666666"/>
+<text x="395.67" y="130.71" dominant-baseline="middle">named intermediate</text>
+<line x1="368.11" y1="144.88" x2="387.80" y2="144.88" stroke="#000000" stroke-width="0.6" stroke-dasharray="2.2,1.6"/>
+<text x="395.67" y="144.88" dominant-baseline="middle">the GEM's shortest path from a drawn compound; its genes under the name</text>
+<text x="366.14" y="159.06" dominant-baseline="middle">Palmitoleate, stearate and oleate have no node on the reference map, as acids</text>
+<text x="366.14" y="170.87" dominant-baseline="middle">or acyl-CoAs; each is attached along the yeast GEM's shortest path from a drawn</text>
+<text x="366.14" y="182.68" dominant-baseline="middle">compound. Of the 10 deleted regulators, 0 draw a reaction on this map; of the</text>
+<text x="366.14" y="194.49" dominant-baseline="middle">13 pathway genes of b, 9 do and ELO1/2/3, OLE1 do not.</text>
 </svg>

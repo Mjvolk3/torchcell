@@ -79,3 +79,77 @@ from this figure's path. Two details of that hand-written SVG:
 
 See [[experiments.008-xue-ffa.scripts.drawio_doc]] for the export check that made the
 draw.io failure visible.
+
+## 2026.09.17 - Species parity with panel b, and the regulator check
+
+Review asked three things of this panel: why panel b shows five species and this one two,
+that labels stop clashing with route lines, and that the claim behind the figure be
+verified: the ten deleted genes are regulators and should not appear on a metabolic map.
+
+### The inspiration is iPath3, not the Yeast9 map
+
+Fig. 2d of Wu et al. (Yeast-MetaTwin) is drawn with iPath3, the paper says so in its
+Results ("We then used iPath3 to visualize ..."), so the reference map behind that figure
+is KEGG's global map as iPath3 draws it, not the genome-scale model's own map. Panel b's
+species come from the yeast GEM, which is why b had all five and a had two.
+
+### Where the three missing species went, measured
+
+Probed one identifier at a time on iPath3 (`ipath_probes.json`):
+
+| species | free acid | acyl-CoA | on iPath3 |
+|---|---|---|---|
+| C14:0 myristate | C06424 | C02593 | acid yes, CoA yes |
+| C16:0 palmitate | C00249 | C00154 | acid yes, CoA yes |
+| C16:1 palmitoleate | C08362 | C21072 | neither |
+| C18:0 stearate | C01530 | C00412 | neither |
+| C18:1 oleate | C00712 | C00510 | neither |
+
+KEGG's own `link/pathway` puts C08362 and C01530 on map01100, and puts the elongase and
+desaturase orthology groups (K10245, K10246, K00507) there too, yet iPath3 draws none of
+them. The earlier note said the absence was "the KEGG global map's layout"; it is iPath3's
+drawing specifically, and the same drawing lacks ELO1/2/3 and OLE1 (0 elements each in the
+per-KO probes) while the other nine pathway genes draw 1 to 21 elements.
+
+### The three are attached from the GEM, by shortest path
+
+So that a and b show the same five species, the script collapses the pathway subgraph panel
+b reads (`ffa_bipartite_network.graphml`) to metabolites by name, currency metabolites
+dropped, substrates joined to products of each reaction (not substrate to substrate: that
+put ELO2/3 on the FAS step once), and takes for each missing species the shortest path from
+any compound the map draws or any species already attached:
+
+- palmitoleate from palmitoyl-CoA via palmitoleoyl-CoA: OLE1, FAA1/2/4
+- stearate from acetyl-CoA or malonyl-CoA via stearoyl-CoA (equal length, the panel takes the
+  nearer copy): FAS1/2, FAA1/2/4
+- oleate from stearate via stearoyl-CoA and oleoyl-CoA: FAA1/2/4, OLE1
+
+They are drawn as open rings so they cannot be read as nodes of the map, with the genes of
+the path on a second 5 pt line under the name, and a dashed link to the anchor.
+
+### The regulator check
+
+For each of the ten deleted genes: KEGG `find/sce/<name>` gives the systematic name (the
+entry whose FIRST symbol is the name; TFC7 is the standard name of YOR110W and an alias of
+YNL039W), `link/ko/sce` its orthology group, and a single-identifier iPath3 probe counts the
+elements that group draws. All ten draw 0. This is what the key and the caption state, from
+`provenance.json["genes"]`, not from a hand-written sentence.
+
+### Label placement is now a search, and every rule it needed
+
+Every drawn element is binned into a 0.5 mm ink grid, the route weighted 1 and the faint
+background 0.08 (a label over gray lines costs nothing; a label over the route hides the
+panel's content). A label tries 16 directions at 4 leader lengths and takes the least-inked
+candidate whose plate stays on the map, overlaps no plate, covers no node and no drawn
+line, and whose leader crosses no plate and no other leader or link. Labels of a crowded
+group (the five intermediates) are placed in the best of all orders rather than greedily.
+The attachment column tries both sides (labels left or right of the rings) at every 1 mm
+window position and is scored by the ink under it plus the ink each link would cross, with
+any window whose link would pass through its own labels rejected. Each rule above was added
+after a render showed the failure it prevents (a leader through "palmitate", a plate on the
+myristate node, two leaders crossing in an X, an unlabeled second copy of malonyl-CoA at the
+start of a link). A compound the map draws twice keeps its large node only at the labeled
+copy; the other copy is returned to the map's own faint style.
+
+The map is 89 mm wide (53.2 mm tall at its own aspect ratio) so that with panel b under it
+the figure stays inside the 170 mm cap; the key beside it holds four note lines at 3.0 mm.

@@ -188,6 +188,27 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   answers that only for a reader who already knows the map. Size the panel to the drawing's
   own aspect ratio, and put its labels on opaque plates rather than a halo on the glyphs:
   over a dense map a label routinely crosses three lines and a stroke halo is not enough.
+- **Two panels that show "the same" entities must show the same set, and a borrowed map
+  that lacks some of them gets those attached from the panel that has them.** Fig 5 had two
+  measured species on the iPath3 map and five in the GEM network beside it; a reviewer read
+  the mismatch as an error. Attach the missing ones from the same source the other panel
+  uses, by a computed rule (the GEM's shortest path from a drawn compound, genes named),
+  drawn in a style that cannot be mistaken for the map's own (open rings, dashed links),
+  and say in the key what was attached and why. Never drop entities from the richer panel
+  to match the poorer one.
+- **A label may not sit on the route, cover a node, or cross another leader; place by
+  search, not by a fixed side.** Over a dense map "all labels to the right, pushed apart"
+  put a leader through a neighboring label and a plate on a neighboring node. Sample the
+  drawing into an ink grid with the route weighted far above the faint background, try
+  many directions and leader lengths per label, reject any candidate that covers a node or
+  a drawn line or whose leader crosses a plate or another leader, and place a crowded
+  group in the best of all orders rather than greedily. `ffa_ipath_map.py` is the worked
+  implementation, and each rule in it was added after a render showed the failure.
+- **A negative claim in a caption ("none of the deleted genes is on this map") is measured,
+  not asserted.** Probe each gene's orthology group on the map and record the count in the
+  provenance file; the caption and key are generated from those counts. The same probe
+  found that the map lacks four of the thirteen pathway genes, a fact the caption now
+  carries instead of the assumed "all thirteen".
 
 ## Tables
 

@@ -308,13 +308,19 @@ chemistry sits in metabolism, on the whole of the iPath3 reference map of KEGG's
 metabolic pathways. Colored are the yeast reactions of glycolysis and gluconeogenesis,
 pyruvate metabolism, the citrate cycle, fatty acid biosynthesis, elongation and
 desaturation, and fatty acid degradation, taken from KEGG's own gene lists for those
-pathways rather than chosen here. Marked are the two measured species the reference map
-places a node for and four named intermediates on the route. The other three measured
-species are absent from that map's layout rather than from KEGG: all five have compound
-entries, and the global map draws only some of the fatty acids. Panel \textbf{b} has all
-five because its species come from the yeast genome-scale model, which resolves acyl
-species by compartment. The map's own labels are not reproduced, because at this size they
-would print below the minimum type size. \textbf{b}, The ten deleted transcription
+pathways rather than chosen here. Filled blue nodes are the two measured species the
+reference map draws, myristate and palmitate; gray nodes are five named intermediates on
+the route. Palmitoleate, stearate and oleate have no node on that map, as free acids or
+as acyl-CoA thioesters, and the map likewise draws none of the four yeast elongation and
+desaturation genes (ELO1, ELO2, ELO3, OLE1) although KEGG's current global map lists them
+all: the gap is in iPath3's drawing, not in KEGG. So that both panels show the same five
+species, those three are attached as open rings along the shortest path of the yeast
+genome-scale model, the same model panel \textbf{b} is built from, each from the drawn
+compound that path starts at, with the genes of the path's reactions under its name. Of
+the ten deleted regulators, none has an orthology group drawn anywhere on this map, which
+is the point of the panel: the deletions act on metabolism from outside it. The map's own
+labels are not reproduced, because at this size they would print below the minimum type
+size. \textbf{b}, The ten deleted transcription
 factors are arranged in a circle at left. Edges within the circle are the 86 trigenic
 interactions significant at a 5\% false discovery rate within the total-titer readout under
 the multiplicative model, 75 negative (brick) and 11 positive (blue), each drawn as the

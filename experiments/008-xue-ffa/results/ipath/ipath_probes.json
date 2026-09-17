@@ -1,0 +1,182 @@
+{
+  "C00022": {
+    "nodes": [
+      [
+        1720.5,
+        1209.5
+      ],
+      [
+        1251.5,
+        1756.5
+      ]
+    ],
+    "reaction_lines": 0
+  },
+  "C00024": {
+    "nodes": [
+      [
+        1720.5,
+        1330.5
+      ]
+    ],
+    "reaction_lines": 0
+  },
+  "C00158": {
+    "nodes": [
+      [
+        1785.5,
+        1473.5
+      ]
+    ],
+    "reaction_lines": 0
+  },
+  "C00083": {
+    "nodes": [
+      [
+        622.5,
+        969.5
+      ],
+      [
+        1607.5,
+        1392.5
+      ]
+    ],
+    "reaction_lines": 0
+  },
+  "C00154": {
+    "nodes": [
+      [
+        1357.5,
+        1300.5
+      ]
+    ],
+    "reaction_lines": 0
+  },
+  "C06424": {
+    "nodes": [
+      [
+        832.5,
+        1434.5
+      ]
+    ],
+    "reaction_lines": 0
+  },
+  "C00249": {
+    "nodes": [
+      [
+        1187.5,
+        1375.5
+      ]
+    ],
+    "reaction_lines": 0
+  },
+  "C08362": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "C01530": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "C00712": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "C02593": {
+    "nodes": [
+      [
+        1296.5,
+        1300.5
+      ]
+    ],
+    "reaction_lines": 0
+  },
+  "C21072": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "C00412": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "C00510": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K24664": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K06062": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K15146": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K21642": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K09173": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K15156": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K06067": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K11313": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K09043": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K15206": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K11262": {
+    "nodes": [],
+    "reaction_lines": 1
+  },
+  "K00668": {
+    "nodes": [],
+    "reaction_lines": 17
+  },
+  "K00667": {
+    "nodes": [],
+    "reaction_lines": 21
+  },
+  "K10245": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K10246": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K00507": {
+    "nodes": [],
+    "reaction_lines": 0
+  },
+  "K01897": {
+    "nodes": [],
+    "reaction_lines": 1
+  },
+  "K00232": {
+    "nodes": [],
+    "reaction_lines": 10
+  },
+  "K13509": {
+    "nodes": [],
+    "reaction_lines": 1
+  }
+}

@@ -4,7 +4,7 @@
 \begingroup
 \footnotesize
 \begin{longtable}{@{}llrrrl@{}}
-  \caption[Classical ladder]{The classical ladder on the released-label split (\texttt{ess\_fcl\_val0.2\_s0.json.gz}). Per encoding, the model class whose five-fold cross-validation AUROC inside the 629 training genes is highest, with and without FBA's four growth ratios appended; the validation genes and the 195 held-out genes (31 essential) are scored once, on genes no fit touched, the held-out number with a 2,000-draw gene bootstrap. FBA alone is not fitted. Every model and encoding is in Figure~\ref{fig:ladder}.}
+  \caption[Classical ladder]{The classical ladder on the released-label split (\texttt{ess\_fcl\_val0.2\_s0.json.gz}). Per encoding, the model class whose five-fold cross-validation AUROC inside the 629 training genes is highest, with and without FBA's four growth ratios appended; the validation genes and the 195 held-out genes (31 essential) are scored once, on genes no fit touched, the held-out number with a 2,000-draw gene bootstrap. FBA alone is not fitted. Every model and encoding is in Figure~\ref{fig:ladder}. Bold marks the highest value in a column.}
   \label{tab:ladder}\\
     \hline
     encoding & best model (chosen) & dim & CV & val & held-out [95\% CI] \\
@@ -39,7 +39,7 @@
     codon\_frequency & SVC (C=1) & 64 & 0.700 & 0.663 & 0.695 [0.59, 0.79] \\
     codon\_frequency $+$ FBA & SVC (C=1) & 68 & 0.849 & 0.772 & 0.818 [0.73, 0.90] \\
     normalized\_chrom\_pathways & logistic (C=10) & 197 & 0.705 & 0.722 & 0.775 [0.68, 0.86] \\
-    normalized\_chrom\_pathways $+$ FBA & logistic (C=0.01) & 201 & 0.802 & 0.791 & 0.830 [0.75, 0.90] \\
+    normalized\_chrom\_pathways $+$ FBA & logistic (C=0.01) & 201 & 0.802 & 0.791 & \textbf{0.830} [0.75, 0.90] \\
     nt\_window\_5979 & logistic (C=0.01) & 2,560 & 0.579 & 0.532 & 0.570 [0.46, 0.67] \\
     nt\_window\_5979 $+$ FBA & logistic (C=0.01) & 2,564 & 0.743 & 0.705 & 0.669 [0.55, 0.79] \\
     nt\_window\_5979\_max & logistic (C=0.001) & 2,560 & 0.626 & 0.608 & 0.636 [0.54, 0.73] \\
@@ -59,7 +59,7 @@
     species\_lm\_5p\_3p & logistic (C=0.001) & 1,536 & 0.634 & 0.631 & 0.571 [0.47, 0.68] \\
     species\_lm\_5p\_3p $+$ FBA & logistic (C=0.01) & 1,540 & 0.763 & 0.733 & 0.679 [0.56, 0.79] \\
     calm & SVC (C=1) & 768 & 0.755 & 0.777 & 0.734 [0.64, 0.82] \\
-    calm $+$ FBA & random forest (max\_depth=8) & 772 & 0.850 & 0.833 & 0.806 [0.72, 0.89] \\
+    calm $+$ FBA & random forest (max\_depth=8) & 772 & \textbf{0.850} & 0.833 & 0.806 [0.72, 0.89] \\
     prot\_T5\_all & SVC (C=10) & 1,024 & 0.781 & 0.767 & 0.732 [0.62, 0.83] \\
     prot\_T5\_all $+$ FBA & logistic (C=0.01) & 1,028 & 0.842 & 0.826 & 0.821 [0.74, 0.90] \\
     prot\_T5\_no\_dubious & SVC (C=10) & 1,024 & 0.781 & 0.767 & 0.732 [0.62, 0.83] \\
@@ -69,7 +69,7 @@
     esm2\_t33\_650M\_UR50D\_no\_dubious & random forest (max\_depth=8) & 1,280 & 0.731 & 0.694 & 0.708 [0.61, 0.80] \\
     esm2\_t33\_650M\_UR50D\_no\_dubious $+$ FBA & random forest (max\_depth=8) & 1,284 & 0.815 & 0.794 & 0.758 [0.66, 0.86] \\
     mixed & logistic (C=10) & 6,149 & 0.788 & 0.794 & 0.768 [0.66, 0.87] \\
-    mixed $+$ FBA & logistic (C=10) & 6,153 & 0.833 & 0.837 & 0.792 [0.69, 0.89] \\
+    mixed $+$ FBA & logistic (C=10) & 6,153 & 0.833 & \textbf{0.837} & 0.792 [0.69, 0.89] \\
     pfba\_deletion\_ypd & random forest (max\_depth=None) & 4,131 & 0.770 & 0.723 & 0.756 [0.65, 0.86] \\
     pfba\_deletion\_ypd $+$ FBA & random forest (max\_depth=None) & 4,135 & 0.776 & 0.736 & 0.764 [0.66, 0.86] \\
     pfba\_deletion\_delta\_ypd & random forest (max\_depth=None) & 4,131 & 0.769 & 0.723 & 0.756 [0.65, 0.86] \\

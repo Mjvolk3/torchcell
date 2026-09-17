@@ -4,7 +4,7 @@
 \begin{table}[H]
   \centering
   \scriptsize
-  \caption[Round 10, the flux layer warm-started from the deletion's own solve]{Round 10, the flux layer warm-started from the deletion's own solve. The pooled cell, the round-4 forced and gated growth columns, and the round-5 FBA affine, against the forced and gated growth columns whose layer proposes the deletion's own parsimonious FBA flux on YPD plus a null-space residual of relative size alpha, with alpha frozen at 0.01, learned, or frozen at 0.1. Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.}
+  \caption[Round 10, the flux layer warm-started from the deletion's own solve]{Round 10, the flux layer warm-started from the deletion's own solve. The pooled cell, the round-4 forced and gated growth columns, and the round-5 FBA affine, against the forced and gated growth columns whose layer proposes the deletion's own parsimonious FBA flux on YPD plus a null-space residual of relative size alpha, with alpha frozen at 0.01, learned, or frozen at 0.1. Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w21}
   \begin{tabular}{@{}lrrlllr@{}}
     \hline
@@ -13,7 +13,7 @@
     batch 32 $+$ class weight, 200 epochs & 0.774 & 0.006 & 0.780, 0.769, 0.773 & 0.780 [0.69, 0.87] & 75, 68, 148 & 0.0031 \\
     growth column only, constraints 0 (round-3 levers) & 0.777 & 0.005 & 0.772, 0.781, 0.778 & 0.778 [0.69, 0.86] & 108, 74, 84 & 0.0057 \\
     gated growth column, constraints 0 (round-3 levers) & 0.771 & 0.010 & 0.766, 0.782, 0.765 & 0.768 [0.68, 0.85] & 67, 71, 77 & 0.0040 \\
-    context head $+$ FBA growth ratios (round-3 levers) & 0.821 & 0.020 & 0.814, 0.805, 0.844 & 0.838 [0.76, 0.91] & 28, 70, 61 & 0.0036 \\
+    context head $+$ FBA growth ratios (round-3 levers) & \textbf{0.821} & 0.020 & 0.814, 0.805, 0.844 $\uparrow$ & \textbf{0.838} [0.76, 0.91] & 28, 70, 61 & 0.0036 \\
     growth column, pFBA warm start, alpha 0.01 frozen & 0.704 & 0.073 & 0.629, 0.706, 0.776 & 0.801 [0.71, 0.90] & 112, 144, 157 & 0.0222 \\
     gated column $+$ context, pFBA warm start, alpha 0.01 frozen & 0.776 & 0.034 & 0.810, 0.776, 0.742 & 0.784 [0.70, 0.87] & 181, 70, 4 & 0.0037 \\
     gated column $+$ context, pFBA warm start, alpha learned & 0.775 & 0.035 & 0.812, 0.772, 0.741 & 0.796 [0.72, 0.87] & 146, 71, 4 & 0.0036 \\

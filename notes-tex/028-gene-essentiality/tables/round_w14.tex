@@ -4,7 +4,7 @@
 \begin{table}[H]
   \centering
   \footnotesize
-  \caption[Round 3, more optimization and the fold ensemble]{Round 3, more optimization and the fold ensemble. Batch 32 with the class weight at 80 and 200 epochs, batch 32 alone at 200 epochs, and the five fold models of the cross-validation files, each on its own fold.}
+  \caption[Round 3, more optimization and the fold ensemble]{Round 3, more optimization and the fold ensemble. Batch 32 with the class weight at 80 and 200 epochs, batch 32 alone at 200 epochs, and the five fold models of the cross-validation files, each on its own fold. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w14}
   \begin{tabular}{@{}lrrlllr@{}}
     \hline
@@ -14,7 +14,7 @@
     batch 32 $+$ class weight, 200 epochs & 0.774 & 0.006 & 0.780, 0.769, 0.773 & 0.780 [0.69, 0.87] & 75, 68, 148 & 0.0031 \\
     batch 32, 200 epochs & 0.761 & 0.005 & 0.766, 0.761, 0.755 & 0.764 [0.67, 0.85] & 74, 100, 181 & 0.0026 \\
     5-fold, fold 0 & 0.780 & 0.000 & 0.780 & 0.780 [0.69, 0.86] & 75 & 0.0033 \\
-    5-fold, fold 1 & 0.806 & 0.000 & 0.806 & 0.806 [0.72, 0.89] & 50 & 0.0036 \\
+    5-fold, fold 1 & \textbf{0.806} & 0.000 & 0.806 & \textbf{0.806} [0.72, 0.89] & 50 & 0.0036 \\
     5-fold, fold 2 & 0.797 & 0.000 & 0.797 & 0.797 [0.72, 0.87] & 14 & 0.0033 \\
     5-fold, fold 3 & 0.751 & 0.000 & 0.751 & 0.751 [0.66, 0.84] & 184 & 0.0021 \\
     5-fold, fold 4 & 0.789 & 0.000 & 0.789 & 0.789 [0.70, 0.87] & 108 & 0.0039 \\

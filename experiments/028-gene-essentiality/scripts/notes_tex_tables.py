@@ -34,6 +34,32 @@ MEDIUM_LABEL = {
     "YPD": "YPD approximation (no peptone)",
 }
 
+#: Every table marks the best value of a column in bold, and a round table marks an arm
+#: whose seeds are all above (or all below) the first arm's on the same seeds with an
+#: arrow, which is the paired sign test the pre-registered reads use.
+BEST_NOTE = "Bold marks the highest value in a column."
+PAIRED_NOTE = (
+    " $\\uparrow$ ($\\downarrow$) marks an arm whose held-out AUROC is above (below) the "
+    "first arm's on every one of the same three seeds."
+)
+
+
+def fmt(v: float, best: float, digits: int = 3) -> str:
+    """``v`` to ``digits`` places, in bold when it is the column's best."""
+    text = f"{v:.{digits}f}"
+    return f"\\textbf{{{text}}}" if abs(v - best) < 10 ** -(digits + 1) else text
+
+
+def paired_mark(seeds: list[float], reference: list[float]) -> str:
+    """The arrow for three of three seeds above or below the reference arm's."""
+    if len(seeds) != 3 or len(reference) != 3:
+        return ""
+    if all(a > b for a, b in zip(seeds, reference, strict=True)):
+        return " $\\uparrow$"
+    if all(a < b for a, b in zip(seeds, reference, strict=True)):
+        return " $\\downarrow$"
+    return ""
+
 
 def write(name: str, body: str, source: str) -> str:
     os.makedirs(TABLES, exist_ok=True)
@@ -52,13 +78,19 @@ def fba_media() -> str:
     with open(src) as fh:
         report = json.load(fh)
     rows = []
-    for row in report["rows"]:
-        by = {s["gene_set"]: s for s in row["scores"]}
+    scored = [{s["gene_set"]: s for s in row["scores"]} for row in report["rows"]]
+    best = {
+        k: max(by[k]["auroc"] for by in scored)
+        for k in ("all_labeled", "held_out_223", "ours_195")
+    }
+    for row, by in zip(report["rows"], scored, strict=True):
         a, h, o = by["all_labeled"], by["held_out_223"], by["ours_195"]
         rows.append(
             f"    {MEDIUM_LABEL[row['medium']]} & {row['wild_type_growth']:.3f} & "
-            f"{row['n_zero_growth']} & {a['auroc']:.3f} & {h['auroc']:.3f} & "
-            f"{o['auroc']:.3f} [{o['auroc_ci_low']:.2f}, {o['auroc_ci_high']:.2f}] \\\\"
+            f"{row['n_zero_growth']} & {fmt(a['auroc'], best['all_labeled'])} & "
+            f"{fmt(h['auroc'], best['held_out_223'])} & "
+            f"{fmt(o['auroc'], best['ours_195'])} [{o['auroc_ci_low']:.2f}, "
+            f"{o['auroc_ci_high']:.2f}] \\\\"
         )
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
@@ -68,7 +100,7 @@ def fba_media() -> str:
         f"{report['n_labeled']:,} labeled genes, on the 223 held-out genes, and on the 195 "
         "held-out genes the model scores with a 2,000-draw gene bootstrap interval. "
         f"{report['n_labeled_in_gem']} of the labeled genes are in the GEM; the rest keep "
-        "wild-type growth.}\n  \\label{tab:fba-media}\n"
+        f"wild-type growth. {BEST_NOTE}}}\n  \\label{{tab:fba-media}}\n"
         "  \\begin{tabular}{@{}lrrrrl@{}}\n    \\hline\n"
         "    medium & WT growth (1/h) & lethal & all 1,121 & held-out 223 & our 195 [95\\% CI] \\\\\n"
         "    \\hline\n"
@@ -212,18 +244,28 @@ def round_table(round_key: str) -> str | None:
     with open(src) as fh:
         report = json.load(fh)
     rows = []
-    for a in report["arms"]:
+    arms = report["arms"]
+    best_mean = max(a["test_auroc_mean"] for a in arms)
+    best_pooled = max(
+        a["pooled_auroc"] for a in arms if a.get("pooled_auroc") is not None
+    )
+    reference = list(arms[0]["test_auroc_values"])
+    for i, a in enumerate(arms):
         seeds = ", ".join(f"{v:.3f}" for v in a["test_auroc_values"])
+        if i > 0:
+            seeds += paired_mark(list(a["test_auroc_values"]), reference)
         pooled = (
-            f"{a['pooled_auroc']:.3f} [{a['pooled_ci_low']:.2f}, {a['pooled_ci_high']:.2f}]"
+            f"{fmt(a['pooled_auroc'], best_pooled)} [{a['pooled_ci_low']:.2f}, "
+            f"{a['pooled_ci_high']:.2f}]"
             if a.get("pooled_auroc") is not None
             else "--"
         )
         epochs = ", ".join(str(e) for e in a["select_epochs"])
         label = a["label"].replace("_", "\\_").replace("+", "$+$")
         rows.append(
-            f"    {label} & {a['test_auroc_mean']:.3f} & {a['test_auroc_sd']:.3f} & {seeds} & "
-            f"{pooled} & {epochs} & {a['median_abs_step_mean']:.4f} \\\\"
+            f"    {label} & {fmt(a['test_auroc_mean'], best_mean)} & "
+            f"{a['test_auroc_sd']:.3f} & {seeds} & {pooled} & {epochs} & "
+            f"{a['median_abs_step_mean']:.4f} \\\\"
         )
     short, long = ROUND_CAPTIONS[round_key]
     # The seven columns fit the 182 mm block at \footnotesize up to arm labels of about
@@ -233,7 +275,8 @@ def round_table(round_key: str) -> str | None:
     size = "\\scriptsize" if longest > 50 else "\\footnotesize"
     body = (
         f"\\begin{{table}}[H]\n  \\centering\n  {size}\n"
-        f"  \\caption[{short}]{{{short}. {long}}}\n  \\label{{tab:{round_key}}}\n"
+        f"  \\caption[{short}]{{{short}. {long} {BEST_NOTE}{PAIRED_NOTE}}}\n"
+        f"  \\label{{tab:{round_key}}}\n"
         "  \\begin{tabular}{@{}lrrlllr@{}}\n    \\hline\n"
         "    arm & mean & sd & seeds & pooled [95\\% CI] & selected epochs & val step \\\\\n"
         "    \\hline\n"
@@ -262,6 +305,7 @@ def logistic_baselines() -> str | None:
             )
     fitted = [r for r in report["rows"] if r["model"] != "FBA growth"]
     encodings = list(dict.fromkeys(r["encoding"] for r in fitted))
+    chosen: list[tuple[str, bool, dict]] = []
     for enc in encodings:
         for with_fba in (False, True):
             cands = [
@@ -270,12 +314,20 @@ def logistic_baselines() -> str | None:
             if not cands:
                 continue
             r = max(cands, key=lambda x: x["cv_auroc"])
-            rows.append(
-                f"    {enc.replace('_', chr(92) + '_')}{' $+$ FBA' if with_fba else ''} & "
-                f"{r['model']} ({r['hyperparameter'].replace('_', chr(92) + '_')}) & "
-                f"{r['dim']:,} & {r['cv_auroc']:.3f} & {r['val_auroc']:.3f} & "
-                f"{r['test_auroc']:.3f} [{r['test_ci_low']:.2f}, {r['test_ci_high']:.2f}] \\\\"
-            )
+            chosen.append((enc, with_fba, r))
+    best = {
+        k: max(r[k] for _, _, r in chosen)
+        for k in ("cv_auroc", "val_auroc", "test_auroc")
+    }
+    for enc, with_fba, r in chosen:
+        rows.append(
+            f"    {enc.replace('_', chr(92) + '_')}{' $+$ FBA' if with_fba else ''} & "
+            f"{r['model']} ({r['hyperparameter'].replace('_', chr(92) + '_')}) & "
+            f"{r['dim']:,} & {fmt(r['cv_auroc'], best['cv_auroc'])} & "
+            f"{fmt(r['val_auroc'], best['val_auroc'])} & "
+            f"{fmt(r['test_auroc'], best['test_auroc'])} [{r['test_ci_low']:.2f}, "
+            f"{r['test_ci_high']:.2f}] \\\\"
+        )
     # A longtable: 52 rows at \footnotesize plus the caption overran a page as a fixed
     # [H] float once the ladder figure grew to 95 mm.
     body = (
@@ -288,7 +340,7 @@ def logistic_baselines() -> str | None:
         "validation genes and the 195 held-out genes "
         f"({report['n_test_essential']} essential) are scored once, on genes no fit "
         "touched, the held-out number with a 2,000-draw gene bootstrap. FBA alone is not "
-        "fitted. Every model and encoding is in Figure~\\ref{fig:ladder}.}\n"
+        f"fitted. Every model and encoding is in Figure~\\ref{{fig:ladder}}. {BEST_NOTE}}}\n"
         "  \\label{tab:ladder}\\\\\n"
         "    \\hline\n"
         "    encoding & best model (chosen) & dim & CV & val & held-out [95\\% CI] \\\\\n"

@@ -4,23 +4,23 @@
 \begin{table}[H]
   \centering
   \footnotesize
-  \caption[Round 1, the backbone]{Round 1, the backbone. Width 12, one block, one-layer preprocessor, 80 epochs, seeds 2700 to 2702. Held-out AUROC on the 195 genes: the seed mean with its standard deviation, the three seeds, the gene bootstrap of the pooled per-gene logits, the epochs selected on validation, and the median absolute epoch-to-epoch step of the validation curve.}
+  \caption[Round 1, the backbone]{Round 1, the backbone. Width 12, one block, one-layer preprocessor, 80 epochs, seeds 2700 to 2702. Held-out AUROC on the 195 genes: the seed mean with its standard deviation, the three seeds, the gene bootstrap of the pooled per-gene logits, the epochs selected on validation, and the median absolute epoch-to-epoch step of the validation curve. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w12}
   \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
     wave-11 protocol (75-gene val) & 0.759 & 0.020 & 0.781, 0.755, 0.741 & 0.760 [0.67, 0.84] & 18, 38, 14 & 0.0056 \\
-    released labels, 158-gene val & 0.725 & 0.019 & 0.745, 0.722, 0.708 & 0.738 [0.65, 0.83] & 66, 77, 77 & 0.0026 \\
-    weight decay 0 & 0.725 & 0.019 & 0.745, 0.720, 0.709 & 0.735 [0.64, 0.82] & 66, 77, 77 & 0.0027 \\
-    weight decay 1e-2 & 0.726 & 0.017 & 0.745, 0.722, 0.711 & 0.735 [0.64, 0.83] & 65, 77, 77 & 0.0029 \\
-    weight decay 1e-1 & 0.725 & 0.018 & 0.746, 0.721, 0.709 & 0.735 [0.64, 0.82] & 66, 77, 77 & 0.0025 \\
-    batch 32 & 0.765 & 0.005 & 0.766, 0.770, 0.759 & 0.764 [0.67, 0.85] & 74, 73, 77 & 0.0032 \\
-    genome labels (5,795 genes) & 0.704 & 0.024 & 0.706, 0.726, 0.679 & 0.705 [0.61, 0.80] & 77, 77, 69 & 0.0020 \\
-    lr 3e-4 & 0.658 & 0.093 & 0.737, 0.682, 0.556 & 0.732 [0.64, 0.82] & 77, 77, 74 & 0.0023 \\
-    lr 3e-3 & 0.686 & 0.043 & 0.718, 0.704, 0.637 & 0.713 [0.62, 0.81] & 77, 77, 50 & 0.0024 \\
-    class weight 772/126 & 0.759 & 0.016 & 0.764, 0.772, 0.741 & 0.769 [0.68, 0.86] & 77, 75, 53 & 0.0034 \\
-    graph regularization off & 0.725 & 0.019 & 0.745, 0.722, 0.709 & 0.738 [0.65, 0.83] & 66, 77, 77 & 0.0026 \\
+    released labels, 158-gene val & 0.725 & 0.019 & 0.745, 0.722, 0.708 $\downarrow$ & 0.738 [0.65, 0.83] & 66, 77, 77 & 0.0026 \\
+    weight decay 0 & 0.725 & 0.019 & 0.745, 0.720, 0.709 $\downarrow$ & 0.735 [0.64, 0.82] & 66, 77, 77 & 0.0027 \\
+    weight decay 1e-2 & 0.726 & 0.017 & 0.745, 0.722, 0.711 $\downarrow$ & 0.735 [0.64, 0.83] & 65, 77, 77 & 0.0029 \\
+    weight decay 1e-1 & 0.725 & 0.018 & 0.746, 0.721, 0.709 $\downarrow$ & 0.735 [0.64, 0.82] & 66, 77, 77 & 0.0025 \\
+    batch 32 & \textbf{0.765} & 0.005 & 0.766, 0.770, 0.759 & 0.764 [0.67, 0.85] & 74, 73, 77 & 0.0032 \\
+    genome labels (5,795 genes) & 0.704 & 0.024 & 0.706, 0.726, 0.679 $\downarrow$ & 0.705 [0.61, 0.80] & 77, 77, 69 & 0.0020 \\
+    lr 3e-4 & 0.658 & 0.093 & 0.737, 0.682, 0.556 $\downarrow$ & 0.732 [0.64, 0.82] & 77, 77, 74 & 0.0023 \\
+    lr 3e-3 & 0.686 & 0.043 & 0.718, 0.704, 0.637 $\downarrow$ & 0.713 [0.62, 0.81] & 77, 77, 50 & 0.0024 \\
+    class weight 772/126 & 0.759 & 0.016 & 0.764, 0.772, 0.741 & \textbf{0.769} [0.68, 0.86] & 77, 75, 53 & 0.0034 \\
+    graph regularization off & 0.725 & 0.019 & 0.745, 0.722, 0.709 $\downarrow$ & 0.738 [0.65, 0.83] & 66, 77, 77 & 0.0026 \\
     \hline
   \end{tabular}
 \end{table}

@@ -1,0 +1,62 @@
+%% notes-tex/028-gene-essentiality/sections/5-findings.tex
+%% [[experiments.028-gene-essentiality]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/5-findings.tex
+
+\section{Findings\secstatus{todo}}
+\label{sec:findings}
+
+The two questions the document opened with have the following answers on the released
+Merzbacher 2025 split, every number at a validation-selected epoch on the 195 held-out
+genes with a gene bootstrap, and every gain attributed by a paired, pre-registered read.
+
+\begin{description}
+  \item[The held-out number is 0.893 {[0.84, 0.94]}.] A width-12 cell graph transformer
+    reading the chromosome-pathway indicator and ProtT5, with FBA's four growth ratios on
+    its logit, under Flux Cone Learning's own five-fold ensemble protocol; 0.15 above
+    Flux Cone Learning's 0.742 on the same genes and 0.06 above the classical ladder's
+    best rung. Its per-cell mean over seven seeds is 0.869.
+  \item[The inputs are the number.] The gain over the backbone alone (0.774) is the four
+    solver ratios (to 0.821) and the pathway multi-hot beside the protein embedding (to
+    0.871); the five gene properties in the same encoding, expression included, add
+    nothing, and neither do width, depth, the preprocessor, ESM2, codon frequency or the
+    species-LM composite. A two-layer MLP on the same three inputs reads 0.870 per cell in
+    six seconds and 0.886 as a fold ensemble; graph convolution over the nine gene graphs
+    reads 0.888. Three architectures are one number at this resolution.
+  \item[Structure is not the signal.] The 1-WL test separates 1,118 of 1,121
+    single-deletion graphs on the physical graph and all of them on the union, so
+    expressivity does not bound a message-passing model here, and the WL kernel, all-ones
+    and degree inputs all rank at chance. What is written on the nodes carries the number.
+  \item[Accuracy is the wrong statistic.] yeast-GEM's own benchmark reports 0.902 on a
+    gene set whose majority class alone gives 0.856, with recall 0.41; FBA on 9.0.2
+    reproduces it at 0.907, the released labels agree with the Stanford list on 1,102 of
+    1,104 shared genes, and the transformer's balanced accuracy at the loss's decision
+    boundary is 0.78 against 0.63 to 0.72 for the solvers.
+  \item[The solve carries the module's value, and the alternating layer cannot compute it.]
+    Routed through the module's growth column the prediction never beats the backbone
+    alone. The layer's alternating projections never reach the polytope the solve
+    optimizes over: with the balance exact the box is violated on 58 percent of reactions,
+    the second law on half, the protein pool by up to seven times, the dissipation limit
+    by three; the growth column is a free signed coordinate the readout learns to use
+    with either sign; the $k_{cat}$ content is unread (the shuffled table matches); and
+    handed the solve's own point, the anchored constraint set discards it.
+  \item[The enzyme-capacity box as parameterized contains no growing flux.] A linear
+    program under the layer's bounds is infeasible for every genotype, because the
+    predicted $k_{cat}$ tier times the nominal abundances caps the median reaction at
+    0.084 mmol/gDW/h. Every anchored arm in this document read a flux off the polytope
+    for that reason. Scaled by 30 or more the box admits growth; the ceilings still bind
+    up to a scale near 3,000.
+  \item[On the polytope, the module helps.] On the GEM's own box the solve survives the
+    projections and the program that solves is feasible and ranks the held-out genes at
+    0.73 before training, above FBA's 0.66; the gated module cell reaches the level of the
+    solve appended as an input, 0.816 by warm start and 0.824 by the layer that solves,
+    three of three seeds above the round-4 gated cell, with the growth column entering
+    through a positive gate. With the ceilings calibrated, the growth column alone reads
+    0.83 to 0.84 on two of nine seeds, the affine's level from the solve with no head and
+    no appended ratio, and 0.5 to 0.7 on the rest; the linear program's infeasible region
+    absorbs the forced cell unless the ceilings leave slack, and its gradient is the dual
+    of the binding bounds, zero when no gene-owned bound binds.
+  \item[Where the gradient goes is not the problem.] On the alternating layer the
+    gradient reaches the flux layer on every arm that lets it; the backbone's
+    preprocessor, three quarters of the parameters, is where fitting continues after the
+    validation curve peaks.
+\end{description}

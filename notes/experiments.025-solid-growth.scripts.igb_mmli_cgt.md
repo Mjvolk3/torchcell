@@ -126,3 +126,7 @@ Worktree `-e` at b2602cca (val batch 32, gradient probe, per-order metrics all i
 ## 2026.09.16 - S3 closure arm moves from cabbi to the mmli chain
 
 cabbi 2401111 was cancelled (its start estimate had slipped to 2026-09-25 behind another user's jobs and the 019 array) and resubmitted on mmli as 2408785 (`cgt_s3_r_kl_fit_030 +seed=1`, worktree `-e`), inserted after the second composite-plus-fitness seed and ahead of the random-vector seeds: 2408604 -> 2408605 -> 2408785 -> 2408606 -> 2408607. S3 is 1,121,645 records; the 010 random split pins the triples, every other record trains, and `per_order_metrics` writes train metrics per order so the triple fit reads apart from the doubles. Expected about 19 hours at 4 A100s.
+
+## 2026.09.16 - S3 at 130 epochs, first in line
+
+The 30-epoch S3 cell (2408785) was replaced by `cgt_s3_r_kl_fit_031` (2408791, seed 1, worktree `-f` at 5efb7f34): the same closure arm with the epoch ceiling at 130 under the constant 2.5e-4 rate, about 3.3 days at the measured S0 rate scaled by 2.98x, inside the 4-day clock. It starts as soon as the running composite-plus-fitness seed 1 (2408604) ends; the second composite-plus-fitness seed and the two random-vector seeds now queue behind it. The trainer keeps best-Pearson, best-MSE and last checkpoints per run under `$IGB_DATA_ROOT/models/checkpoints/<group>/`; there is no early-stopping callback, so a run that is clearly finished is stopped by hand and its best checkpoint stands.

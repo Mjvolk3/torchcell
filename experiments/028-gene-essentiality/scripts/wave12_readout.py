@@ -190,6 +190,12 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "warmgate10",
         ],
     ),
+    # Round 11: the affine widened with the solve-derived columns (eight statistics of
+    # the deleted gene's reactions under the wild-type solve, the deletion's pFBA vector).
+    "w22": (
+        ["w16_fba_h12l1p1_e200_s*.json", "w22_*_e200_s*.json"],
+        ["fba", "fbastats", "fbapfba", "fbastatspfba"],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -252,6 +258,9 @@ ARM_LABELS = {
     "warmgate": "gated growth column, warm start from the deletion's pFBA, alpha 0.01 frozen",
     "warmgatealpha": "gated growth column, warm start from the deletion's pFBA, alpha learned",
     "warmgate10": "gated growth column, warm start from the deletion's pFBA, alpha 0.1 frozen",
+    "fbastats": "context head + FBA ratios + eight reaction statistics",
+    "fbapfba": "context head + FBA ratios + deletion pFBA vector",
+    "fbastatspfba": "context head + FBA ratios + statistics + pFBA vector",
 }
 
 

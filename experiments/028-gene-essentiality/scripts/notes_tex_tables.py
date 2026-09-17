@@ -183,6 +183,15 @@ ROUND_CAPTIONS = {
         "relative size alpha, with alpha frozen at 0.01, learned, or frozen at 0.1. "
         "Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
     ),
+    "w22": (
+        "Round 11, the affine widened with the solve",
+        "The round-5 cell (context head plus an affine of the four FBA growth ratios) "
+        "against the same cell whose affine also reads the eight statistics of the "
+        "deleted gene's reactions under the wild-type pFBA solve and its variability, "
+        "the deletion's own pFBA flux vector (4,131 columns), or both; every column "
+        "standardized over the labeled genes. Width 12, one block, batch 32, class "
+        "weight, 200 epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

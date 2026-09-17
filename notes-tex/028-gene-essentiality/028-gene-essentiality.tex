@@ -43,7 +43,8 @@ asks two questions. The first is how far the held-out AUROC goes: a width-12 tra
 reading the chromosome-pathway indicator and ProtT5, with FBA's four growth ratios on its
 logit, scores 0.893 [0.84, 0.94] under Flux Cone Learning's own fold protocol, 0.15 above
 it on the same genes, and every part of the gain is an input the ontology computes for
-every gene at no training cost. The second is why the solve helps and the metabolic
+every gene at no training cost: a two-layer MLP on the same three inputs reads the
+transformer's per-cell number in six seconds. The second is why the solve helps and the metabolic
 module, which is built on the same genome-scale model, does not: routed through the
 module's growth column the prediction never beats the backbone alone, and the rounds
 locate the reason in the layer, whose alternating projections never reach the polytope

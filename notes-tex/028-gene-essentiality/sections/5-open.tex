@@ -18,6 +18,9 @@ weight, six encodings). What remains is attribution and the module.
     cell are one cell to the resolution of 195 genes (rounds 16 and 17); a larger
     held-out set, such as the genome-wide labels scored on genes the released split
     never touched, is what would separate them.
+  \item The MLP on the three inputs reads the transformer's per-cell number in seconds
+    and the graph convolution passes it at 400 epochs; their five-fold ensembles are the
+    fair comparison to the reported 0.893 and cost minutes. Untested.
   \item Round 13: the pFBA warm start on the stoichiometry-only layer. If its growth
     column reads at the solve's level at initialization and keeps it, the projection
     route carries the solve and the anchored constraint set was the loss; if not, the

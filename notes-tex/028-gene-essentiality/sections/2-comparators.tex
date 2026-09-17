@@ -158,8 +158,18 @@ parameters: the edges add 0.08 to the protein embedding, the physical graph alon
 0.015, and attention adds nothing over convolution on either graph. That cell is above
 the pooled transformer (0.774) and level with the transformer with FBA's four ratios
 (0.821) with no solve at all, and its three seeds select epochs 196 to 197 of 200 with
-the validation curve still rising, so the budget is what bounds it. The transformer reads
-the same nine graphs and the same embedding; what it adds over this cell, 0.87 with the
-pathway indicator and the ratios, is the perturbed-graph reading and the two inputs, and
-the graph-convolution cell with those two inputs is the untested comparison
-(Section~\ref{sec:open}).
+the validation curve still rising; at 400 epochs the same cell reads 0.857 and selects
+epochs 392 to 397, so the budget is what bounds it.
+
+The transformer's inputs move these cells the way they move the transformer, and the
+comparison says where the transformer's number comes from. Given the chromosome-pathway
+indicator and the four FBA ratios as node features beside ProtT5, the MLP with no graph
+reads 0.870, 0.872 and 0.869, a seed mean of 0.870 with a spread of 0.001 in six seconds
+of CPU, which is the round-9 transformer's 0.871 from the same three inputs; graph
+convolution on the union reads 0.847 at 200 epochs and 0.877 at 400, still rising. The
+indicator alone beside ProtT5 lifts the MLP to 0.817 and the convolution to 0.850, the
+ratios alone to 0.803 and 0.832. On this endpoint, then, the three inputs carry the
+number and the architectures on top of them are level: a two-layer MLP, graph
+convolution over the nine graphs, and the perturbed-graph transformer read 0.87 to
+0.88 per cell from the same inputs, and the 0.893 the transformer reports is its
+five-fold ensemble, an averaging the MLP and the convolution have not been given.

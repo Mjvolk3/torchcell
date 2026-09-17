@@ -588,7 +588,11 @@ def graph_baselines() -> str | None:
         return None
     with open(src) as fh:
         report = json.load(fh)
-    rows_in = report["rows"]
+    rows_in = list(report["rows"])
+    extra = osp.join(RESULTS, "graph_baselines_extra.json")
+    if osp.isfile(extra):
+        with open(extra) as fh:
+            rows_in += json.load(fh)["rows"]
     best = max(r["mean"] for r in rows_in)
     rows = []
     for r in rows_in:
@@ -608,15 +612,17 @@ def graph_baselines() -> str | None:
         "once on the 195 held-out genes at seeds 2700 to 2702. The graph is the physical "
         "interaction graph or the union of the nine gene graphs the transformer reads; the "
         "inputs are all ones (the Gene\\_Graph design), log degree with the clustering "
-        "coefficient, or ProtT5. The MLP row has no graph. "
+        "coefficient, ProtT5, or ProtT5 with the chromosome-pathway indicator and the four "
+        "FBA growth ratios as node features; two arms run 400 epochs. The MLP rows have no "
+        "graph. "
         f"{BEST_NOTE}}}\n  \\label{{tab:graph-baselines}}\n"
-        "  \\begin{tabular}{@{}lllrrrrll@{}}\n    \\hline\n"
+        "  \\begin{tabular}{@{}llp{30mm}rrrrll@{}}\n    \\hline\n"
         "    model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\\\\n"
         "    \\hline\n"
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write("graph_baselines", body, "results/graph_baselines.json")
+    return write("graph_baselines", body, "results/graph_baselines.json, results/graph_baselines_extra.json")
 
 
 def main() -> None:

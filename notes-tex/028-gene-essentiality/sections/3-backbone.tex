@@ -284,7 +284,11 @@ Learning's own protocol on its own held-out genes, is 0.15 above it, and its int
 excludes the ladder's best rung (0.830). The cell has 18,930 parameters. Every part of the
 gain is accounted for by an input the ontology computes for every gene at no training
 cost: the four solver numbers (0.774 to 0.821 on the seed mean) and the pathway
-indicator concatenated with the protein embedding (0.821 to 0.869).
+indicator concatenated with the protein embedding (0.821 to 0.869). The inputs are the
+number: a two-layer MLP on the same three inputs, with no graph and no perturbation,
+reads 0.870 per cell in six seconds of CPU (Section~\ref{sec:comparators}), so what
+the transformer's architecture adds on this endpoint is not measurable on 195 genes, and
+the 0.893 is the fold ensemble's averaging, which the MLP has not been given.
 
 \subsection{Round 11: the affine widened with the solve\secstatus{todo}}
 

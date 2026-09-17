@@ -444,3 +444,21 @@ Example runs, forced warm start seed 2700 (0.629) and gated warm start seed 2702
 **Repositories read (agents):** yeast-GEM as above. Gene_Graph (2021-2023): YeastMine graphs (regulatory, physical, genetic), SGD phenotype labels from an old backend endpoint, featureless 2-layer GCN / GATv2 / DPGCNN node classifiers (`notebooks/n41-n43`), no saved essentiality results; rerunnable on this split as graph-only baselines (GCN/GATv2 on the cell graph's physical/regulatory edges, featureless and ProtT5). MATH-490: WL color refinement definition (`notes/2-theory.md`) and a draw.io figure with embedded XML (`notes/assets/drawio/WL-test.drawio.png`), no code; the WL test on knockout graphs is new code here, the figure a restyle.
 
 **Document restructure:** the spine is "the solve helps, so why not the layer": abstract, section-4 opening and closing argument, vocabulary (chromosome-pathway indicator, FBA affine, fold ensemble, pFBA, solve-derived encodings, warm start, anchored vs stoichiometry-only layer), open list. Tables bold the best value per column and mark 3/3-seed direction with arrows.
+
+## 2026.09.17 - Rounds 13 to 16: the GEM box carries the solve, the anchored box holds no growing flux, pathways carry the round-9 gain, the combined cell reads 0.880
+
+**Round 13 (w24, packs 2297/2298).** pFBA warm start on `flux_off` (GEM bounds scaled by availability, no capacity, no thermo). Probe at INIT: growth column median +0.38, AUROC(-v) test 0.683 (train 0.80), Spearman +0.47 to +0.57 vs FBA; the reference survives the projections (proposal moved 0.3 percent of its norm). Trained forced 0.654/0.726/0.612 (= FBA level); trained gated **0.794/0.829/0.825 (0.816)** vs round-4 gated 0.766/0.782/0.765, 3/3 up, gates end +0.97/+0.90 on the two seeds that train (third selects epoch 5). First module cell that carries the solve. Compared with round 10 (same reference, anchored layer, sign reversed): the capacity + second-law tightening applied after the solve destroyed the reference.
+
+**Round 15 (w26, packs 2304-2306): the LP layer on the anchored box is INFEASIBLE.** Every cell 0.500, selects epoch 2, `feas_flux_active_frac` 0.0 all run. Diagnosed on one genotype's bounds captured from the layer (`scratchpad/debug_lp.py`): HiGHS status 8 infeasible; the same S with the GEM's own bounds solves at 0.0858; reopening the deleted reactions or releasing the maintenance lb (0.7) does not help. Cause: the capacity ceilings (predicted kcat x nominal abundance from the abundance head) give upper bounds with median 0.084 mmol/gDW/h and 10 percent below 0.007 (GEM: 100). The anchored box contains no growing flux; every anchored arm has been reading a flux off the polytope. Round 15b (w29, packs 2314/2315): the LP on `flux_off` (forced, gated). Next construction if that works: a capacity ceiling scaled so the WT is feasible (GECKO saturation calibration). The lp branch now logs `feas_lp_zero_flux_frac`.
+
+**Round 14 (w25, packs 2307/2308).** `normalized_chrom` (5 properties + chromosome, 24-d, no pathways): + ProtT5 + FBA affine 0.811/0.816/0.810 (0.813 = ProtT5's 0.821); alone 0.669. The 173 pathway columns carry the round-9 gain, and only with ProtT5 beside them.
+
+**Round 16 (w27, packs 2309/2310).** chromprot backbone + `stats_pfba` affine: 0.863/0.878/0.898 (**0.880**, sd 0.018, pooled 0.889 [0.83, 0.94]) vs round 9 0.860/0.866/0.888, 3/3 up by 0.003 to 0.012. + `pfba` only: 0.769/0.812/0.902 (two seeds select epochs 6 and 13). Round 17 (w28, packs 2312/2313): the round-16 cell on the five folds; pre-registered: replaces 0.893 only if above round 12's fold models on 4 of 5 folds.
+
+**Also:** `essentiality_confusion.py` + `tables/confusion.tex` (yeast-GEM's rule for every scorer); `wl_knockout_test.py` and `graph_baselines.py` running on CPU (~1.5 h so far); `notes/assets/drawio/028-wl-test.drawio` recolored (needs re-layout at print size in draw.io; no CLI here). Note: `SBATCH_CPUS_PER_TASK` and sbatch CLI args are ignored by `freeze_and_submit.sh` (they become script args) -- LP packs ran 24 workers on 12 CPUs (~75 min per pack).
+
+Example runs, round 13 gated seed 2701 (0.829) and round 16 seed 2702 (0.898):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/dtggj7l9>
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/rwyu7dk6>

@@ -402,3 +402,29 @@ Example runs, chromosome-pathway + ProtT5 seed 2702 (0.888) and the indicator al
 **Ladder, solve-derived encodings (`logistic_baselines.py --only-missing`, from `ess_solve_encodings_YPD.npz`).** CV-selected rungs: eight reaction statistics (WT pFBA + FVA on the gene's reactions, incl. the growth ratio) random forest 0.797 [0.70, 0.88] alone, 0.817 [0.73, 0.90] + FBA (CV 0.847, highest in the ladder); the 4,131-d deletion pFBA vector RF 0.756 (logistic 0.771 [0.66, 0.87]); its delta from WT the same. The growth ratio alone is 0.645. So the solve carries ~0.15 AUROC beyond its growth ratio, level with ProtT5, from no sequence. Figure `classical_ladder_2026-09-16-23-16-30.svg`; section 2 updated.
 
 **Round 11 (w22, packs 2288 to 2290, queued)**: `--ess-solve-features {stats,pfba,stats_pfba}` appends those columns (standardized) to the fba readout's affine on the ProtT5 cell. Pre-registered: passes if seed mean > 0.83 with 3/3 above round 5. The winners of rounds 9 and 11 combine next if both pass.
+
+## 2026.09.16 - Round 10 read: the pFBA warm start on the anchored layer arrives with its sign reversed; the anchored box does not hold the reference
+
+Packs 2284 to 2287 (28 min each). `wave12_readout.py --round w21`; `flux_growth_probe.py` on `w21_warmbio_s2700/s2702` and `w21_warmgate_s2700`.
+
+![](./assets/images/028-gene-essentiality/w21_readout_2026-09-16-23-52-33.svg)
+
+| arm (anchored layer, scale 0, round-3 levers) | seeds 2700, 2701, 2702 | mean | paired comparator |
+|---|---|---|---|
+| forced growth column (round 4) | 0.772, 0.781, 0.778 | 0.777 | |
+| forced, pFBA warm start, alpha 0.01 frozen | 0.629, 0.706, 0.776 | 0.704 | 3/3 DOWN vs round 4 |
+| gated + context (round 4) | 0.766, 0.782, 0.765 | 0.771 | |
+| gated, pFBA warm start, alpha 0.01 frozen | 0.810, 0.776, 0.742 | 0.776 | +0.044, -0.006, -0.023; seed 2702 selects ep 4 |
+| gated, alpha learned | 0.812, 0.772, 0.741 | 0.775 | alpha -> 0.19 / 0.02 / 0.11 |
+| gated, alpha 0.1 frozen | 0.784, 0.767, 0.701 | 0.751 | |
+
+- **Both pre-registered reads FAIL.** Probe at INIT: growth column median -0.07 to -0.10 (references 0 to 0.5), Spearman -0.43 vs the YPD ratio, AUROC(-v) test 0.34 to 0.39 = the solve's ranking SIGN-REVERSED. Trained forced cells invert further (0.22 to 0.41).
+- **Cause, measured in the layer's own diagnostics:** `feas_box_violation_frac` 0.28 to 0.39 at init (the reference violates the anchored layer's capacity- and second-law-tightened box), `feas_warm_proposal_rel` 0.45 to 0.57 (the alternations return a point half the reference's norm away at alpha 0.01). The projections that balance the flux move it off the handed point and reverse the growth column's correlation with the solve.
+- alpha learned: no change on held-out; alpha grows to 0.19 on seed 2700, box violation rises 0.30 -> 0.45 on seed 2701 (job-1946 mode).
+- **Round 13 (w24, packs 2297/2298, queued):** the same warm start on the stoichiometry-only layer (`ESS_ARM=flux_off`, GEM box), forced and gated, alpha 0.01 frozen. Read: the probe at init must show ~0.65 (the reference is inside the GEM box by construction, so if it still does not, the alternations themselves move it); the gated cell passes at ~0.82 with 3/3 above round-4 gated.
+
+Example runs, forced warm start seed 2700 (0.629) and gated warm start seed 2702 (0.742, epoch 4):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/2rcqcnv5>
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/635swwnr>

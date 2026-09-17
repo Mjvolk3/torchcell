@@ -277,3 +277,56 @@ coordinate, a constant zero, or an unbalanced sigmoid, and none of them is the q
 whose optimum over that polytope ranks essential genes at 0.65 on its own and lifts the
 transformer by 0.05. On this endpoint the physics that helps is the solve, and the layer
 would have to reach feasibility before its growth column could carry it.
+
+\subsection{Round 10: the layer warm-started from the deletion's own solve\secstatus{todo}}
+
+If the layer cannot reach the polytope from a free proposal, it can be handed a point on
+it. One parsimonious FBA solve per labeled gene on YPD, the medium the essentiality cell's
+box is built on, gives a reference flux per deletion (\texttt{ess\_reference\_flux\_table.py},
+1,121 genes, 104 of them with zero growth, about eight minutes of CPU), and under the
+warm-start parameterization the layer proposes that reference plus a null-space residual
+of relative size $\alpha$ before its alternations. The growth column then starts at the
+deletion's own pFBA growth rather than at a free coordinate, and the negative of that
+growth ranks the 195 held-out genes at 0.645 on its own. Round 10 (jobs 2284 to 2287)
+runs the forced growth column and the gated column with the context head on the
+anchored layer at constraint scale 0, with $\alpha$ frozen at 0.01, learned from 0.01,
+and frozen at 0.1, each at the three seeds, paired against the round-4 forced and gated
+cells and the round-5 affine (Table~\ref{tab:w21}, Figure~\ref{fig:w21}). Two reads were
+fixed first: the probe at initialization must find the growth column at the solve's level,
+about 0.65 on the held-out genes, or the warm start did not reach the readout; and the
+gated cell passes if it sits at the round-5 affine's 0.82 with three of three seeds above
+the round-4 gated cell.
+
+\input{tables/round_w21}
+
+\tcfigfit[1.0]{figures/w21_readout_2026-09-16-23-52-33.pdf}{\textbf{Round 10, the layer
+  warm-started from the deletion's own solve.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w21}.}{fig:w21}
+
+Neither read holds. The probe at initialization finds the growth column negative (median
+$-0.07$ to $-0.10$ mmol/gDW/h against references of 0 to 0.5) and anti-correlated with
+the solve it was started from: Spearman $-0.43$ to $-0.44$ against the YPD ratio, and the
+negative column ranks the held-out genes at 0.34 to 0.39, which is the solve's ranking
+with its sign reversed. The layer's own diagnostics say where the reference goes: the
+anchored layer's box is the GEM's bounds tightened by the enzyme-capacity ceilings and the
+second-law directions, the reference violates it on 28 to 39 percent of reactions at
+initialization, and the proposal the alternations return sits 0.45 to 0.57 of the
+reference's norm away from it at $\alpha = 0.01$. The projections that make the flux
+balanced move it half its length off the point it was handed and reverse the growth
+column's correlation with the solve on the way. Trained, the forced cells read 0.629,
+0.706 and 0.776 against the round-4 forced cell's 0.772, 0.781 and 0.778, down on three of
+three seeds, and the probe on their trained weights inverts further (0.22 to 0.41); the
+gated cell reads 0.810, 0.776 and 0.742 against 0.766, 0.782 and 0.765, one seed up and
+two down, with seed 2702 selecting epoch 4 and its gate ending at $-2.0$. Letting $\alpha$
+learn changes nothing on the held-out genes (0.812, 0.772, 0.741) while $\alpha$ grows to
+0.19, 0.02 and 0.11 and the box violation on one seed rises from 0.30 to 0.45, the job-1946
+failure mode in miniature; $\alpha$ frozen at 0.1 reads 0.751. The warm start hands the
+layer the solve and the anchored layer's constraint set does not keep it. Round 13 repeats
+the warm start on the stoichiometry-only layer, whose box is the GEM's own bounds, so the
+reference is inside it by construction.

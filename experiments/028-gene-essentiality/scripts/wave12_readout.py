@@ -572,7 +572,10 @@ def figure(
     # The arm legend is a FIGURE legend across the top, not an axes legend on a: with two
     # columns of long arm labels an axes legend ran over panel b.
     legend_handles, legend_labels = ax_a.get_legend_handles_labels()
-    legend_ncol = 3
+    # Three columns of 6 pt labels fit the 179 mm width up to about 46 characters per
+    # label; longer labels (the warm-start arms) wrap to two columns rather than run off
+    # the right edge, which is what the three-column round-10 figure did.
+    legend_ncol = 3 if max(len(label) for label in legend_labels) <= 46 else 2
     legend_rows = int(np.ceil(len(legend_labels) / legend_ncol))
 
     # b: stability vs validation size

@@ -26,13 +26,13 @@ weight, six encodings). What remains is attribution and the module.
     column reads at the solve's level at initialization and keeps it, the projection
     route carries the solve and the anchored constraint set was the loss; if not, the
     alternations are.
-  \item The layer that solves works on the GEM's box and is infeasible on the anchored
-    one (rounds 15 and 15b). Two constructions follow from what it showed and are
-    untested: the enzyme-capacity ceilings scaled so that the wild type is feasible,
-    GECKO's saturation calibration, which would make bounds the genes own bind at the
-    optimum and give the duals something to move; and a barrier on the availability gate
-    that keeps the program feasible under training, since an infeasible program returns
-    no gradient and the forced cell that reached one stayed there.
+  \item The layer that solves is feasible on the GEM's box and, with the capacity
+    ceilings calibrated, on the anchored one (rounds 15b to 15d). What remains is
+    variance: the forced column reaches 0.83 to 0.84 on two of nine seeds and 0.5 to 0.7
+    on the rest, with the absorbing infeasible state removed by slack rather than by step
+    size. A seed-robust construction is untested: a barrier on the ceilings, the gated
+    form with the ceilings binding (0.80 at scale 100), or the solve on more genes than
+    the 629 the split trains on.
   \item The solve's flux vector read through a head rather than its growth column, which
     on the ladder carries 0.11 to 0.13 more AUROC than the growth ratio and would take
     the biomass objective out of the readout; and the growth LP with an objective other

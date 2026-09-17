@@ -563,6 +563,37 @@ ceilings bind. What the other two show is that the linear program's infeasible r
 is absorbing under gradient descent on its bounds, which round 15d tests with more slack
 and a smaller step.
 
+\subsection{Round 15d: the forced layer that solves against the absorbing state\secstatus{todo}}
+
+Round 15d (jobs 2319 and 2320) reruns the forced cell at capacity scale 1,000, where
+the calibration leaves ten times the slack, and at scale 100 with the learning rate at
+$3 \times 10^{-4}$, three seeds each (Table~\ref{tab:w31}, Figure~\ref{fig:w31}).
+
+\input{tables/round_w31}
+
+\tcfigfit[1.0]{figures/w31_readout_2026-09-17-10-51-43.pdf}{\textbf{Round 15d, the forced
+  layer that solves against the absorbing state.} \textbf{a}, Validation AUROC per epoch,
+  one thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w31}.}{fig:w31}
+
+Slack removes the absorbing state and the step size does not. At scale 1,000 no
+genotype's program is infeasible at any epoch on any seed, and the forced column reads
+0.615, 0.826 and 0.702, a mean of 0.714 with a spread of 0.106: one seed near the
+affine's level and two near the solve's, from a column that is growth throughout. At
+scale 100 with the smaller step two seeds are absorbed by epoch 5 as before and the
+third is infeasible on 73 to 97 percent of genotypes until epoch 100, recovers, and
+selects epoch 119 at 0.745. The absorbing state is a property of how much room the
+ceilings leave, and with room the forced column is a 0.62 to 0.83 ranker whose spread
+across seeds is the largest in the document. Across rounds 15c and 15d the forced
+layer that solves has reached 0.84 and 0.83 on two of nine seeds, so the module can
+carry the whole prediction at the affine's level, and does so unreliably; the gated form
+is the reliable one, and it reads the affine's level on the GEM box.
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

@@ -425,8 +425,73 @@ def growth_probe() -> str | None:
     return write("growth_probe", body, "results/flux_growth_probe_*.json")
 
 
+#: (result glob, label) for the constraint-violation table, in figure order.
+VIOLATION_ARMS: list[tuple[str, str]] = [
+    ("w13_fluxbio_h12l1p1_e80_s*.json", "round 2, forced, scale 0.1"),
+    ("w13_fluxbio_s0_h12l1p1_e80_s*.json", "round 2, forced, scale 0"),
+    ("w13_fluxgate_h12l1p1_e80_s*.json", "round 2, gated, scale 0.1"),
+    ("w15_bio_s0_h12l1p1_e200_s*.json", "round 4, forced, scale 0"),
+    ("w15_gate_s0_h12l1p1_e200_s*.json", "round 4, gated, scale 0"),
+    ("w17_biofba_h12l1p1_e200_s*.json", "round 6, forced + FBA affine"),
+    ("w18_bioprojbox_h12l1p1_e200_s*.json", "round 7, forced, projection ending on the box"),
+    ("w18_biobox_h12l1p1_e200_s*.json", "round 7, forced, box form"),
+    ("w21_warmbio_h12l1p1_e200_s*.json", "round 10, forced, pFBA warm start"),
+    ("w21_warmgate_h12l1p1_e200_s*.json", "round 10, gated, pFBA warm start"),
+    ("w24_warmoffbio_h12l1p1_e200_s*.json", "round 13, forced, GEM box, pFBA warm start"),
+    ("w24_warmoffgate_h12l1p1_e200_s*.json", "round 13, gated, GEM box, pFBA warm start"),
+]
+VIOLATION_KEYS = (
+    "feas_balance_median",
+    "feas_box_violation_frac",
+    "feas_thermo_violation_frac",
+    "feas_budget_ratio",
+    "g_diss",
+)
+
+
+def violations() -> str:
+    """What the layer's flux violates at the selected epoch, seed mean per module arm."""
+    rows = []
+    for pattern, label in VIOLATION_ARMS:
+        files = sorted(glob.glob(osp.join(RESULTS, pattern)))
+        if not files:
+            continue
+        per_key: dict[str, list[float]] = {k: [] for k in VIOLATION_KEYS}
+        for f in files:
+            with open(f) as fh:
+                r = json.load(fh)
+            row = next(x for x in r["history"] if x.get("epoch") == r["select_epoch"])
+            for k in VIOLATION_KEYS:
+                if row.get(k) is not None:
+                    per_key[k].append(float(row[k]))
+        mean = {k: sum(v) / len(v) if v else float("nan") for k, v in per_key.items()}
+        rows.append(
+            f"    {label} & {len(files)} & {mean['feas_balance_median']:.1e} & "
+            f"{mean['feas_box_violation_frac']:.2f} & "
+            f"{mean['feas_thermo_violation_frac']:.2f} & {mean['feas_budget_ratio']:.1f} & "
+            f"{mean['g_diss']:,.0f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[What the layer's flux violates]{What the layer's flux violates at the "
+        "selected epoch, seed mean per module arm: the median mass-balance residual "
+        "$|Sv|$ over metabolites; the fraction of reactions outside their bounds; the "
+        "fraction of reactions running against their reaction energy "
+        "($v_j\\,\\Delta_r G'_j > 0$); the enzyme budget used as a multiple of the "
+        "protein pool; and the Gibbs dissipation in J/gDW/h against the 3,700 limit. "
+        "Every arm builds the anchored layer (predicted $k_{cat}$ tier, union-external "
+        "$\\Delta G$) unless it names the GEM box. Constraint scale 0 means no penalty "
+        "on any of these terms; 0.1 penalizes all of them.}\n"
+        "  \\label{tab:violations}\n"
+        "  \\begin{tabular}{@{}lrrrrrr@{}}\n    \\hline\n"
+        "    arm & cells & $|Sv|$ median & box & second law & budget & dissipation \\\\\n"
+        "    \\hline\n" + "\n".join(rows) + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("violations", body, "results/<module arm>.json histories")
+
+
 def main() -> None:
-    paths = [fba_media(), splits(), logistic_baselines(), growth_probe()]
+    paths = [fba_media(), splits(), logistic_baselines(), growth_probe(), violations()]
     paths.extend(round_table(k) for k in ROUND_CAPTIONS)
     for path in paths:
         if path is not None:

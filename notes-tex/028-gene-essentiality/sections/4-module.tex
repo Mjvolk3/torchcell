@@ -65,6 +65,26 @@ and they differ in what the backbone's gradient has to pass through.
   readout; its value is written into every epoch row as \texttt{ess\_gate}. Colors as in
   Figure~\ref{fig:readout-key}.}{fig:readout-gated}
 
+\subsection{What the layer's flux violates\secstatus{todo}}
+
+Every flux arm in this document builds the anchored layer: the predicted $k_{cat}$ tier
+(97 measured, 782 homolog, 2,831 predicted, 18 default catalytic units), the
+union-external reaction energies (3,779 of 4,131 reactions with a $\Delta_r G'$), the
+enzyme-capacity ceiling from the abundance head in the box, and the second law, the
+protein budget and the Gibbs dissipation as penalty terms at the constraint scale. The
+layer logs every one of those residuals each epoch, and Table~\ref{tab:violations}
+reads them at the selected epoch across the module arms. With the balance exact, the
+flux is outside its bounds on 58 to 63 percent of reactions, runs against its reaction
+energy on 44 to 51 percent, uses 0.2 to 7 times the protein pool, and dissipates 5,000
+to 12,000 J/gDW/h against the 3,700 limit, with the penalty on or off; with the bounds
+exact (round 7) the second-law violation falls to a third and the dissipation rises to
+100,000. No arm's flux satisfies the constraints the layer was built to hold, so on
+this endpoint the $k_{cat}$ table and the reaction energies are inputs to a
+projection that does not honor them, which is the precise sense in which the module
+is not the solve.
+
+\input{tables/violations}
+
 \subsection{Round 2: the module on the stable backbone, with and without the penalties\secstatus{todo}}
 
 Round 2 (jobs 2182 to 2208) puts the three readouts on the width-12 cell of

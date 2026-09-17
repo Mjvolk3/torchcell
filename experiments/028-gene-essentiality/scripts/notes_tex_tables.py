@@ -233,6 +233,14 @@ ROUND_CAPTIONS = {
         "inside it. Alpha frozen at 0.01, constraint scale 0, batch 32, class weight, "
         "200 epochs, seeds 2700 to 2702.",
     ),
+    "w23": (
+        "Round 12, the passing cell confirmed",
+        "The round-5 cell (ProtT5 backbone, context head plus the FBA affine) and its "
+        "five fold models, against the round-9 cell (chromosome-pathway indicator "
+        "concatenated with ProtT5, same readout) on seven seeds, 2700 to 2706, and on the "
+        "five cross-validation folds whose logits are averaged on the held-out genes. "
+        "Width 12, one block, batch 32, class weight, 200 epochs.",
+    ),
 }
 
 
@@ -251,16 +259,26 @@ def round_table(round_key: str) -> str | None:
     )
     reference = list(arms[0]["test_auroc_values"])
     for i, a in enumerate(arms):
-        seeds = ", ".join(f"{v:.3f}" for v in a["test_auroc_values"])
+        values = list(a["test_auroc_values"])
+        # Seven seeds do not fit the column; give the range and the count instead.
+        seeds = (
+            ", ".join(f"{v:.3f}" for v in values)
+            if len(values) <= 3
+            else f"{min(values):.3f} to {max(values):.3f} ({len(values)})"
+        )
         if i > 0:
-            seeds += paired_mark(list(a["test_auroc_values"]), reference)
+            seeds += paired_mark(values, reference)
         pooled = (
             f"{fmt(a['pooled_auroc'], best_pooled)} [{a['pooled_ci_low']:.2f}, "
             f"{a['pooled_ci_high']:.2f}]"
             if a.get("pooled_auroc") is not None
             else "--"
         )
-        epochs = ", ".join(str(e) for e in a["select_epochs"])
+        epochs = (
+            ", ".join(str(e) for e in a["select_epochs"])
+            if len(values) <= 3
+            else f"{min(a['select_epochs'])} to {max(a['select_epochs'])}"
+        )
         label = a["label"].replace("_", "\\_").replace("+", "$+$")
         rows.append(
             f"    {label} & {fmt(a['test_auroc_mean'], best_mean)} & "

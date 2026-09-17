@@ -209,6 +209,29 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["b32posw200", "bio_s0", "gate_s0", "warmbio", "warmgate", "warmoffbio", "warmoffgate"],
     ),
+    # Round 12: the round-9 passing cell on four more seeds (seven with round 9's) and on
+    # the five folds, beside the round-5 cell and its folds.
+    "w23": (
+        [
+            "w16_fba*_h12l1p1_e200_s*.json",
+            "w20_chromprotfba_h12l1p1_e200_s*.json",
+            "w23_*_e200_s*.json",
+        ],
+        [
+            "fba",
+            "chromprotfba",
+            "fbacv0",
+            "fbacv1",
+            "fbacv2",
+            "fbacv3",
+            "fbacv4",
+            "chromprotcv0",
+            "chromprotcv1",
+            "chromprotcv2",
+            "chromprotcv3",
+            "chromprotcv4",
+        ],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -276,6 +299,11 @@ ARM_LABELS = {
     "fbastatspfba": "context head + FBA ratios + statistics + pFBA vector",
     "warmoffbio": "growth column, GEM box only, pFBA warm start, alpha 0.01 frozen",
     "warmoffgate": "gated column + context, GEM box only, pFBA warm start, alpha 0.01 frozen",
+    "chromprotcv0": "chrom-pathway + ProtT5 + FBA ratios, fold 0",
+    "chromprotcv1": "chrom-pathway + ProtT5 + FBA ratios, fold 1",
+    "chromprotcv2": "chrom-pathway + ProtT5 + FBA ratios, fold 2",
+    "chromprotcv3": "chrom-pathway + ProtT5 + FBA ratios, fold 3",
+    "chromprotcv4": "chrom-pathway + ProtT5 + FBA ratios, fold 4",
 }
 
 

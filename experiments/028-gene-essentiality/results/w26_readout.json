@@ -1,6 +1,6 @@
 {
   "round": "w26",
-  "n_cells": 19,
+  "n_cells": 21,
   "cells": [
     {
       "stem": "w14_b32posw200_h12l1p1_e200_s2700",
@@ -419,6 +419,50 @@
       "val_curve_range": 0.24601503759398502,
       "wall_time_min": 88.11916332244873,
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/navoz8s4"
+    },
+    {
+      "stem": "w26_lpgate_h12l1p1_e200_s2701",
+      "arm": "lpgate",
+      "seed": 2701,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 16564,
+      "n_val": 158,
+      "select_epoch": 81,
+      "select_val_auroc": 0.7410526315789474,
+      "test_auroc_pinned": 0.7856018882769473,
+      "test_auroc_ci_low": 0.6996299955701355,
+      "test_auroc_ci_high": 0.8699020392605299,
+      "test_accuracy_pinned": 0.8102564102564103,
+      "test_recall_essential_pinned": 0.41935483870967744,
+      "median_abs_step": 0.002706766917293213,
+      "val_curve_range": 0.25533834586466164,
+      "wall_time_min": 105.06849978764852,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/xam9t3kr"
+    },
+    {
+      "stem": "w26_lpgate_h12l1p1_e200_s2702",
+      "arm": "lpgate",
+      "seed": 2702,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 16564,
+      "n_val": 158,
+      "select_epoch": 63,
+      "select_val_auroc": 0.7452631578947368,
+      "test_auroc_pinned": 0.762588512981904,
+      "test_auroc_ci_low": 0.6708910495179667,
+      "test_auroc_ci_high": 0.8513711505238606,
+      "test_accuracy_pinned": 0.7435897435897436,
+      "test_recall_essential_pinned": 0.5483870967741935,
+      "median_abs_step": 0.002706766917293213,
+      "val_curve_range": 0.14887218045112782,
+      "wall_time_min": 109.3421811024348,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/61gq1p89"
     }
   ],
   "arms": [
@@ -587,22 +631,28 @@
     {
       "arm": "lpgate",
       "label": "gated column + context, the layer that solves",
-      "n_seeds": 1,
+      "n_seeds": 3,
       "seeds": [
-        2700
+        2700,
+        2701,
+        2702
       ],
-      "test_auroc_mean": 0.7714398111723053,
-      "test_auroc_sd": 0.0,
+      "test_auroc_mean": 0.7732100708103856,
+      "test_auroc_sd": 0.011608368748764383,
       "test_auroc_values": [
-        0.7714398111723053
+        0.7714398111723053,
+        0.7856018882769473,
+        0.762588512981904
       ],
-      "pooled_auroc": 0.7714398111723053,
-      "pooled_ci_low": 0.6809946575103761,
-      "pooled_ci_high": 0.8590623832748469,
-      "median_abs_step_mean": 0.003007518796992459,
+      "pooled_auroc": 0.769669551534225,
+      "pooled_ci_low": 0.6799717522141451,
+      "pooled_ci_high": 0.859401819737149,
+      "median_abs_step_mean": 0.002807017543859628,
       "n_val": 158,
       "select_epochs": [
-        78
+        78,
+        81,
+        63
       ]
     }
   ],

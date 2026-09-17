@@ -422,12 +422,26 @@ against finite differences on the GEM). On the anchored layer the bounds are the
 scaled by availability and capped by the enzyme-capacity ceilings from the abundance
 head, so this is the GECKO construction with a learned enzyme pool. Round 15 (jobs 2304
 to 2306) runs it forced, forced with the second-law box, and gated, three seeds each
-(Table~\ref{tab:w26}).
+(Table~\ref{tab:w26}, Figure~\ref{fig:w26}).
 
 \input{tables/round_w26}
 
-Every cell scores 0.500 exactly and selects epoch 2, because the program is infeasible
-for every genotype at every epoch. The cause is measured on one genotype's bounds taken
+\tcfigfit[1.0]{figures/w26_readout_2026-09-17-02-26-02.pdf}{\textbf{Round 15, the layer
+  that solves on the anchored box.} \textbf{a}, Validation AUROC per epoch, one thin line
+  per seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step
+  per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points), the
+  seed mean and the gene bootstrap of the pooled per-gene logits (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the
+  same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean; the dash-dot
+  line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w26}.}{fig:w26}
+
+Every forced cell scores 0.500 exactly and selects epoch 2, because the program is
+infeasible for every genotype at every epoch: the probe finds the growth column at zero
+for all 982 deletions at initialization and under the trained weights. The gated cells
+read 0.771, 0.786 and 0.763, the pooled cell's 0.774, with gates within 0.07 of zero,
+which is the head working alone beside a dead path. The cause is measured on one
+genotype's bounds taken
 from the layer: under the GEM's own bounds the program solves at the wild-type growth of
 0.0858, and under the layer's bounds it has no feasible point, with or without the
 maintenance flux released and with the deleted gene's reactions reopened. What differs

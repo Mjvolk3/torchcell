@@ -16,11 +16,13 @@
     the wild-type flux and variability of the gene's own reactions, as a node feature or
     a ladder encoding, since one linear program per gene costs about 10 ms.
   \item The transformer ties the ladder's best rungs with FBA (0.82 against 0.81 to
-    0.83) and does not pass them; width and depth on the FBA cell, under the split
-    protocol, is the untested lever for passing them.
+    0.83) and does not pass them, and round 8 rules capacity out as the lever: width 24
+    and 48, two blocks and the two-layer preprocessor all read 0.81 to 0.82. Round 6
+    moved the input to codon frequency and to the species-LM composite without gain.
+    The ladder's highest selected rung, logistic regression on the 197-dimensional
+    chromosome-pathway indicator with FBA (0.830), and the seventeen-encoding
+    concatenation have not been given to the transformer with the FBA affine.
   \item The module's own hyperparameters have not been moved on this endpoint: the
     $k_{cat}$ tier (measured against predicted), the thermodynamic source, the
     parameterization (projection against nullspace), the number of alternations.
-  \item Every cell here is width 12. The depth-against-width isolation (width 90 at one
-    block, width 12 at two) has not run on the split-file protocol.
 \end{itemize}

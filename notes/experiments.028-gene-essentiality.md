@@ -185,7 +185,7 @@ Example runs, gated scale 0 seed 2701 and forced scale 0 seed 2701 (the stalled 
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/z2cmvk14>
 
-<<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/235hi61k>
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/235hi61k>
 
 **Round 4 (9 cells), queued 16:41 as jobs 2237 to 2245, cancelled unstarted and requeued 16:47 as three pack jobs 2246 to 2248.** The three round-2 module readouts at constraint scale 0 on top of the round-3 levers (batch 32, class weight 772/126, 200 epochs, `ESS_WORKERS=0`), seeds 2700 to 2702, paired against the round-3 `b32posw200` pooled cell: `w15gate_s0` (gated), `w15bio_s0` (forced growth column), `w15shuf_s0` (forced, kcat shuffled by the seed). Read with `wave12_readout.py --round w15`. Pre-registered reads are the round-2 ones: not hurt is gated against the pooled cell paired by seed; help is forced above the pooled cell on three of three seeds and above the shuffled control. Round 3 (2224 to 2236) is still draining ahead of it; its partial numbers at 16:40 are b32posw at 80 epochs 0.780 / 0.769 / 0.700, b32posw200 seed 2700 0.780, b32e200 seed 2700 0.766.
 
@@ -214,7 +214,7 @@ Example runs, batch 32 + class weight at 200 epochs seed 2702 (selected epoch 14
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/zp335f43>
 
-<<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/mkrk5vb5>
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/mkrk5vb5>
 
 ## 2026.09.16 - Round 4 read: on the best backbone the module neither helps nor hurts, and the shuffled kcat table scores the same as the real one
 
@@ -238,7 +238,7 @@ Example runs, gated seed 2701 (gate to +0.20) and shuffled-kcat seed 2700 (0.785
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/tvbw3cg9>
 
-<<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/jf3af715>
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/jf3af715>
 
 **Round 5 (w16), packs 2249 and 2250, queued 17:38: FBA's growth ratios as an input to the transformer.** `--ess-readout fba` (new in `train_essentiality.py`, `FbaContextReadout`) adds an affine of the deleted gene's knockout-to-wild-type growth ratio on the four media (`fba_essentiality_per_gene.csv`, the same four numbers the ladder appends) to the pooled arm's context logit; the four weights are logged per epoch as `ess_fba_w_<medium>`. Cells: the round-3 levers (batch 32, class weight, 200 epochs) at seeds 2700 to 2702, paired against `b32posw200`, and the same readout on the five cross-validation folds (seed 2700) for the ensemble number (`cv_ensemble_readout.py --prefix w16_fbacv`). Pre-registered read: the ladder's logistic rung on ProtT5 gains 0.09 from the four ratios (0.732 to 0.821); the transformer gains the same complement if its seed mean moves from 0.774 toward 0.82 on three of three seeds, and the fold ensemble from 0.795 toward the ladder's 0.81 to 0.83. CPU smoke: two epochs already read 0.713 held-out, which is the affine on the ratios alone (FBA scores 0.65 to 0.67).
 
@@ -262,7 +262,7 @@ Example runs, seed 2702 (0.844) and fold 4 (0.853):
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/k1sfpylr>
 
-<<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/7ysar8my>
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/7ysar8my>
 
 **Round 6 (w17), packs 2251 to 2256, queued 18:22, six arms at three seeds on the round-3 levers, paired against `b32posw200` and the round-5 `fba` cell.** (1) `fbaypd`: the FBA affine on the YPD ratio alone (`--ess-fba-media YPD`), one medium against four. (2) `biofba`: the flux layer's forced growth column plus the FBA affine, no context head (`--ess-readout biomass_fba`, scale 0): the learned layer on top of the solve. (3) `gatefba`: the gated readout plus the affine (`gated_fba`). (4) `codonfba`: the backbone opened on codon frequency (64-d; `--node-embeddings codon_frequency`) plus the affine, since codon + FBA reaches 0.82 on the ladder from 64 numbers. (5) `compfba` and (6) `comp`: the backbone on the species-LM composite the expression line uses (`fudt_upstream fudt_downstream prot_T5_all calm`, 3,332-d) with and without the affine. Trainer additions: `--ess-fba-media`, `biomass_fba`, `gated_fba`, `--node-embeddings` (the dataset is opened on the named embeddings; the preprocessor projects their concatenation), and a guard that refuses a flux readout on a pooled arm (a CPU smoke had run one silently). Read with `wave12_readout.py --round w17`. Pre-registered reads: one medium is enough if `fbaypd` is within seed noise of `fba` (0.821); the layer adds to the solve if `biofba` or `gatefba` is above `fba` on three of three seeds; an embedding is better if its `+fba` cell is above `fba` on three of three.
 
@@ -294,7 +294,7 @@ Example runs, gated + FBA seed 2702 (0.832) and codon seed 2701 (0.682):
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/zllkcndg>
 
-<<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/san5c0l6>
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/san5c0l6>
 
 ## 2026.09.16 - Flux growth probe: the layer's growth column is a signed free coordinate, and the trained forced cell ranks essential genes with it upside down
 
@@ -334,8 +334,33 @@ Example runs, box seed 2701 (0.609) and clip-last seed 2700 (0.500):
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/q5etjawa>
 
-<<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/kthpkk1r>
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/kthpkk1r>
 
 **Round 8 (w19), packs 2259 to 2262, queued 20:02: width and depth on the FBA cell.** The round-5 cell (width 12, one block, one-layer preprocessor, context head + FBA affine, 0.814 / 0.805 / 0.844) against the same readout at width 24 and 48, at two blocks, and with the two-layer preprocessor, three seeds each on the round-3 levers. Read with `wave12_readout.py --round w19`. Pre-registered read: a cell passes the ladder if its seed mean clears 0.83 with three of three seeds above the round-5 cell; the wave-9 finding that width 90 collapsed one seed to a constant is the failure mode to watch at 48.
 
-**Job 2261 (two blocks) failed at the first step: `IndexError: index 4 is out of bounds for dimension 1 with size 4` in `compute_graph_regularization`.** `GRAPH_REG_CONFIG` pins the nine gene graphs to attention heads 0 to 8 of layer index 1, the SECOND block. Two consequences: (1) every one-block cell in this experiment never evaluated the term, which is why round 1's "graph regularization off" reproduced the base cell to the third decimal (both were the same cell), and the section-3 sentence is corrected accordingly; (2) a two-block cell with four heads dies on head 4. The pack is resubmitted with `ESS_GRAPH_REG=0`. Using the term on this backbone would need nine heads (width 90 at 019's settings) or a remapped config; neither is a lever worth spending on here given (1).>
+**Job 2261 (two blocks) failed at the first step: `IndexError: index 4 is out of bounds for dimension 1 with size 4` in `compute_graph_regularization`.** `GRAPH_REG_CONFIG` pins the nine gene graphs to attention heads 0 to 8 of layer index 1, the SECOND block. Two consequences: (1) every one-block cell in this experiment never evaluated the term, which is why round 1's "graph regularization off" reproduced the base cell to the third decimal (both were the same cell), and the section-3 sentence is corrected accordingly; (2) a two-block cell with four heads dies on head 4. The pack is resubmitted with `ESS_GRAPH_REG=0`. Using the term on this backbone would need nine heads (width 90 at 019's settings) or a remapped config; neither is a lever worth spending on here given (1).
+
+## 2026.09.16 - Round 8 read: width and depth on the FBA cell do not pass the ladder, capacity is not the lever
+
+Packs 2259 (width 24), 2260 (width 48), 2262 (two-layer preprocessor), 2263 (two blocks, graph regularization off; 2261 was the failed first submit), three cells per card, 19 min per pack and 26 for the two-block one. `wave12_readout.py --round w19`; tables regenerated by `notes_tex_tables.py`; section 3 gains the round-8 subsection and the open list drops width and depth.
+
+![](./assets/images/028-gene-essentiality/w19_readout_2026-09-16-20-26-18.svg)
+
+| arm (context head + FBA affine, round-3 levers) | params | seeds 2700, 2701, 2702 | mean | sd | paired vs round 5 |
+|---|---|---|---|---|---|
+| width 12, one block (round 5) | 16,566 | 0.814, 0.805, 0.844 | 0.821 | 0.020 | |
+| width 24 | 40,902 | 0.818, 0.822, 0.812 | 0.817 | 0.005 | +0.004, +0.017, -0.032 |
+| width 48 | 112,902 | 0.827, 0.819, 0.826 | 0.824 | 0.004 | +0.013, +0.014, -0.018 |
+| two blocks, width 12 | 18,450 | 0.810, 0.820, 0.806 | 0.812 | 0.007 | -0.004, +0.015, -0.038 |
+| two-layer preprocessor, width 12 | 542,480 | 0.804, 0.829, 0.828 | 0.821 | 0.014 | -0.010, +0.024, -0.016 |
+
+- **Pre-registered read: pass if seed mean > 0.83 with 3/3 seeds above round 5.** No arm passes. Width 48 is the best seed mean (0.824) and the tightest (sd 0.004), up on two seeds and down on 2702; every arm is below the round-5 cell's 0.844 on seed 2702, which is the highest single seed in the document. Every round-8 mean lies inside round 5's pooled bootstrap 0.84 [0.76, 0.91].
+- **Seed spread narrows with width** (0.020 at 12, 0.005 at 24, 0.004 at 48); the wave-9 collapse at width 90 did not recur at 48.
+- **Validation curves peak 0.80 to 0.82 between epochs 40 and 90 on every arm and drift down**, most at width 24 (to 0.75 by epoch 200); selected epochs 41 to 144.
+- **Read:** capacity is not the lever on this endpoint. The transformer with FBA's four ratios sits at 0.81 to 0.82 whatever its size, level with the ladder's best rungs (0.806 to 0.830). Left on the transformer side: the chromosome-pathway indicator (the ladder's best selected rung with FBA, 0.830) and the 17-encoding concatenation as inputs, neither given to the transformer yet; and a solve-derived encoding.
+
+Example runs, width 48 seed 2700 (0.827) and two blocks seed 2702 (0.806):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/8ju0l6vd>
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/ftluim1i>

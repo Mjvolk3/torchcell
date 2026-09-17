@@ -160,3 +160,45 @@ solver alone 0.66, and the sum 0.82. What the flux layer could not supply in rou
 4, where its growth column matched the head and its $k_{cat}$ content went unread, the
 FBA solve supplies as four numbers, which locates the module's value on this endpoint in
 the solve itself rather than in the learned layer.
+
+\subsection{Round 8: width and depth on the FBA cell\secstatus{todo}}
+
+The round-5 cell ties the ladder's best rungs and does not pass them, and it is the
+smallest transformer in the document. Round 8 (jobs 2259, 2260, 2262 and 2263) moves its
+size one axis at a time with the readout, batch, class weight and budget fixed: width 24
+and width 48 at one block (40,902 and 112,902 parameters against 16,566), two blocks at
+width 12 (18,450), and the two-layer preprocessor (542,480, most of it in the
+preprocessor's first layer), each at the three seeds, three cells packed on one card
+(Table~\ref{tab:w19}, Figure~\ref{fig:w19}). The read was fixed first: a cell passes the
+ladder if its seed mean clears 0.83 with three of three seeds above the round-5 cell.
+
+\input{tables/round_w19}
+
+\tcfigfit[1.0]{figures/w19_readout_2026-09-16-20-26-18.pdf}{\textbf{Round 8, width and
+  depth on the FBA cell.} \textbf{a}, Validation AUROC per epoch, one thin line per seed
+  and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points), the seed mean
+  and the gene bootstrap of the pooled per-gene logits (square with interval), beside FBA
+  on four media, Flux Cone Learning and the released FBA predictions on the same 195
+  genes. \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w19}.}{fig:w19}
+
+No cell passes. Width 48 has the highest seed mean of the four, 0.824 against 0.821,
+with a seed spread of 0.004, and it is up on seeds 2700 and 2701 by 0.013 and 0.014 and
+down on seed 2702 by 0.018; width 24 scores 0.817, the two-layer preprocessor 0.821, and
+two blocks 0.812, the last down on two of three seeds. Seed 2702 of the round-5 cell,
+0.844, is the highest single seed in the document and every round-8 cell is below it on
+that seed, so no arm clears the bar on all three. The seed spread narrows with width, from
+0.020 at width 12 to 0.005 at 24 and 0.004 at 48, and every round-8 seed mean lies inside
+the round-5 cell's pooled bootstrap of 0.84 [0.76, 0.91]. The validation curves peak at
+0.80 to 0.82 between epochs 40 and 90 on every arm and drift down from there, most at width
+24, and the cells select epochs 41 to 144. The two-block cells run with graph
+regularization off, since the term indexes a second-block head that a four-head block
+does not have (the failed job 2261); it was inert on every one-block cell, so the
+comparison is like for like.
+
+A width-12 transformer with FBA's four numbers reads 0.82 on these genes and neither
+four times the width, a second block, nor a wider preprocessor moves it by more than the
+seed noise. Capacity is not the lever on this endpoint and this split; the levers left
+untested are the gene encoding the transformer reads and what the solve supplies beyond
+four growth ratios (Section~\ref{sec:open}).

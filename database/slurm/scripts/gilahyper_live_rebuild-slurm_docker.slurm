@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=live_rebuild_kg
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
-#SBATCH --mem=200G
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=256G
 #SBATCH --time=4-00:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
@@ -12,6 +12,19 @@
 # then swap the two by renaming directories.
 #
 #   sbatch database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm
+#
+# RESUME after a failure past the import. When a job dies after its import has
+# completed (job 2032 did, at the post-import restart), the CSVs and the imported store
+# are intact and generation (29 h) need not be repeated:
+#
+#   sbatch --export=ALL,RESUME_JOB=<old job id> database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm
+#
+# The resume reads the old job's logs for the generation commit, the CSV directory, and
+# the dataset count, requires the build container to exist and be stopped with the
+# imported database under $NEXT_ROOT/data, then starts the container and continues from
+# the restart: count, validate, swap, record. The manifest is bootstrapped at the
+# generation commit (kg_manifest reads the schema surface with git show at that ref), so
+# the checkout may be ahead of it.
 #
 # HOW IT DIFFERS from gilahyper_uncapped_build-slurm_docker.slurm, which stops the
 # serving container first and rebuilds in place (a day of downtime, and no way back):
@@ -37,17 +50,19 @@
 #   record    kg_manifest bootstrap from the live store (the old manifest is kept beside
 #             it), CSVs archived to /bulk.
 #
-# RESOURCES. 32 CPUs and 200 G: MaxMemPerCPU=4100 turns 200 G into a 50-CPU floor, so
-# with the four 4-CPU/60 G GPU jobs that usually run the node keeps 62 CPUs and ~70 G
-# free; 320 G (the uncapped script) would not start beside them. The build's measured
-# peak private memory with the gc.freeze fix is ~41 G at 29 workers (kg_uncapped.yaml);
-# the rest is page cache, which the kernel reclaims. neo4j-admin sizes its heap and
-# off-heap from the container limit and imported job 1558's 83 M nodes in 19 min at
-# 320 G.
+# RESOURCES. 24 CPUs and 256 G, measured. The generation container's anonymous memory
+# scales with the adapter worker count (SLURM_CPUS_PER_TASK sets it): job 1996 at 32
+# CPUs / 200 G was OOM-killed 15 min in at the Costanzo dmf experiment chunk with the
+# memcg at 206 G of anonymous memory, one worker holding 45 G. Job 2032 at 24 CPUs /
+# 256 G generated all 51 datasets (472 M node rows, 525 M edge rows) in 28 h 40 min with
+# the container sampled at 84 to 155 GiB, and imported 99.7 M nodes and 361.9 M
+# relationships in 17 min (neo4j-admin sizes its heap and off-heap from the container
+# limit). 320 G (job 1558) also works but pends behind queued GPU jobs. MaxMemPerCPU=4100
+# makes 256 G a 63-CPU floor, which fits beside the 4-CPU GPU sweeps.
 #
-# DISK. Job 1558 wrote 526 G of CSV for 36 datasets; the new store is ~535 G. Both land
-# on /db (the CSVs under $SERVE_ROOT/biocypher-out, the store under $NEXT_ROOT), so /db
-# needs ~1.2 T free on top of the old store, which stays until the superseded copy is
+# DISK. Job 2032 wrote 634 G of CSV for 51 datasets; the imported store is 682 G. Both
+# land on /db (the CSVs under $SERVE_ROOT/biocypher-out, the store under $NEXT_ROOT), so
+# /db needs ~1.4 T free on top of the old store, which stays until the superseded copy is
 # removed. The preflight refuses below MIN_FREE_GB (1500).
 
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -76,30 +91,52 @@ JOB="${SLURM_JOB_ID:-nojob}"
 OUTDIR="$BUILD_ROOT/database/slurm/output"
 mem_mb=$((SLURM_MEM_PER_NODE))
 CS='cypher-shell -u neo4j -p torchcell'
+RESUME_JOB="${RESUME_JOB:-}"
 # The container installs torchcell from GitHub at this commit; the manifest records it.
+# A resume takes the commit the CSVs were generated at from the old job's log.
 git -C "$TORCHCELL_SRC" fetch origin main --quiet
-BUILD_COMMIT="${BUILD_COMMIT:-$(git -C "$TORCHCELL_SRC" rev-parse origin/main)}"
+if [ -n "$RESUME_JOB" ]; then
+    PREV_OUT="$OUTDIR/${RESUME_JOB}_live_rebuild_kg.out"
+    GEN_LOG="$OUTDIR/${RESUME_JOB}_generate.log"
+    for f in "$PREV_OUT" "$GEN_LOG"; do [ -f "$f" ] || { echo "job $RESUME_JOB left no $f"; exit 1; }; done
+    BUILD_COMMIT="${BUILD_COMMIT:-$(grep -oE '; commit [0-9a-f]{40}' "$PREV_OUT" | head -1 | grep -oE '[0-9a-f]{40}')}"
+else
+    BUILD_COMMIT="${BUILD_COMMIT:-$(git -C "$TORCHCELL_SRC" rev-parse origin/main)}"
+fi
 PIP_REF="git+https://github.com/Mjvolk3/torchcell.git@$BUILD_COMMIT"
 
-echo "Running on $(hostname) at $(date); job $JOB"
+echo "Running on $(hostname) at $(date); job $JOB${RESUME_JOB:+ (resuming job $RESUME_JOB)}"
 echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; serve $SERVE_ROOT; next $NEXT_ROOT"
 echo "SLURM_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK SLURM_MEM_PER_NODE=$SLURM_MEM_PER_NODE"
 cd "$TORCHCELL_SRC"
 export PYTHONPATH="$TORCHCELL_SRC"
 
 echo "---------------- 0 PREFLIGHT"
+docker inspect "$NEO4J_CONTAINER" --format '{{.State.Status}}' | grep -qx running \
+    || { echo "$NEO4J_CONTAINER is not running"; exit 1; }
+BEFORE=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (n) RETURN count(n);" | tail -1)
+BEFORE_DS=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (d:Dataset) RETURN count(d);" | tail -1)
+echo "served now: $BEFORE nodes, $BEFORE_DS datasets"
+NEXT_PARENT=$(dirname "$NEXT_ROOT"); NEXT_NAME=$(basename "$NEXT_ROOT")
+if [ -n "$RESUME_JOB" ]; then
+    # The old job's preflight counted the mapped datasets against fresh dev stores and its
+    # generation covered them all; the import into $NEXT_ROOT/data completed and the
+    # build container was left stopped. Nothing here regenerates or reimports.
+    N_DATASETS=$(grep -oE '^[0-9]+ mapped datasets' "$PREV_OUT" | head -1 | grep -oE '[0-9]+')
+    grep -q '^IMPORT DONE in ' "$PREV_OUT" || { echo "job $RESUME_JOB did not finish its import"; exit 1; }
+    STATE=$(docker inspect "$BUILD_CONTAINER" --format '{{.State.Status}}' 2>/dev/null || echo absent)
+    [ "$STATE" = "exited" ] || { echo "$BUILD_CONTAINER is $STATE, expected exited"; exit 1; }
+    if docker inspect "$GEN_CONTAINER" >/dev/null 2>&1; then echo "$GEN_CONTAINER still exists"; exit 1; fi
+    [ -d "$NEXT_ROOT/data/databases/$NEO4J_DATABASE" ] || { echo "no imported $NEO4J_DATABASE under $NEXT_ROOT/data"; exit 1; }
+    echo "resuming: $N_DATASETS mapped datasets, imported store $(du -sh "$NEXT_ROOT/data" | cut -f1)"
+else
 # The fingerprint repo must carry the same code the container installs.
 if ! git -C "$TORCHCELL_SRC" diff --quiet "$BUILD_COMMIT" HEAD -- torchcell biocypher; then
     echo "$TORCHCELL_SRC HEAD differs from $BUILD_COMMIT under torchcell/ or biocypher/"; exit 1
 fi
-docker inspect "$NEO4J_CONTAINER" --format '{{.State.Status}}' | grep -qx running \
-    || { echo "$NEO4J_CONTAINER is not running"; exit 1; }
 for c in "$BUILD_CONTAINER" "$GEN_CONTAINER"; do
     if docker inspect "$c" >/dev/null 2>&1; then echo "$c already exists; remove it first"; exit 1; fi
 done
-BEFORE=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (n) RETURN count(n);" | tail -1)
-BEFORE_DS=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (d:Dataset) RETURN count(d);" | tail -1)
-echo "served now: $BEFORE nodes, $BEFORE_DS datasets"
 FREE_GB=$(df --output=avail -BG /db | tail -1 | tr -dc 0-9)
 [ "$FREE_GB" -ge "$MIN_FREE_GB" ] || { echo "/db has ${FREE_GB}G free, need ${MIN_FREE_GB}G"; exit 1; }
 if [ -e "$NEXT_ROOT/data" ] && [ -n "$(ls -A "$NEXT_ROOT/data")" ]; then
@@ -133,7 +170,6 @@ print(len(dataset_adapter_map))
 EOF
 )
 echo "$N_DATASETS mapped datasets, every dev store fresh"
-NEXT_PARENT=$(dirname "$NEXT_ROOT"); NEXT_NAME=$(basename "$NEXT_ROOT")
 docker run --rm --entrypoint bash -v "$NEXT_PARENT":/parent "$IMAGE" -c \
     "mkdir -p /parent/$NEXT_NAME/data /parent/$NEXT_NAME/logs /parent/$NEXT_NAME/metrics \
      && chown -R 7474:7474 /parent/$NEXT_NAME && ls -la /parent/$NEXT_NAME"
@@ -144,7 +180,9 @@ DATA_ROOT="$BUILD_ROOT" python -m torchcell.database.directory_setup --env-file 
 cmp "$TORCHCELL_SRC/biocypher/config/torchcell_schema_config.yaml" \
     "$BUILD_ROOT/database/biocypher/config/torchcell_schema_config.yaml"
 df -h /db /scratch
+fi
 
+if [ -z "$RESUME_JOB" ]; then
 echo "---------------- 1 GENERATE (ephemeral container; dev tree read-only) $(date)"
 # The dev tree's data/torchcell shadows the build tree's copy read-only (loaders open
 # LMDB readonly, lock=False); genome/graph caches (data/sgd, go, string, tflink) come
@@ -175,6 +213,7 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
         chown -R 7474:7474 /var/lib/neo4j/\$OUT_DIR && chmod -R a+rX /var/lib/neo4j/\$OUT_DIR
         echo GENERATION_CALL=\$CALL" 2>&1 | tee "$GEN_LOG"
 echo "CSV generation completed at $(date)"
+fi
 N_ADAPTERS=$(grep -oE 'across [0-9]+ adapters' "$GEN_LOG" | tail -1 | grep -oE '[0-9]+')
 [ "$N_ADAPTERS" = "$N_DATASETS" ] || { echo "generation covered '$N_ADAPTERS' adapters, expected $N_DATASETS"; exit 1; }
 CALL_REL=$(grep -oE '^GENERATION_CALL=.*' "$GEN_LOG" | tail -1 | cut -d= -f2-)
@@ -185,6 +224,7 @@ OUT_CONT="/var/lib/neo4j/biocypher-out/$OUT_TS"
 echo "CSVs: $OUT_HOST ($CALL_REL)"
 df -h /db
 
+if [ -z "$RESUME_JOB" ]; then
 echo "---------------- 2 IMPORT into $NEXT_ROOT ($BUILD_CONTAINER, no host ports) $(date)"
 docker run \
     --cpus="$SLURM_CPUS_PER_TASK" --memory="${mem_mb}m" \
@@ -215,16 +255,23 @@ for i in $(seq 1 180); do
     echo "  $NEO4J_DATABASE is $STATUS ($((i*10))s)"; sleep 10
 done
 [ "$STATUS" = "online" ] || { echo "$NEO4J_DATABASE never came online in $BUILD_CONTAINER"; exit 1; }
-# the index-stats file the read-only container needs is written on a stop/start + query
-docker exec "$BUILD_CONTAINER" neo4j stop
-docker exec "$BUILD_CONTAINER" neo4j start
+else
+echo "---------------- 2 IMPORT done by job $RESUME_JOB; restarting $BUILD_CONTAINER $(date)"
+fi
+# The index-stats file the read-only container needs is written on a stop/start + query.
+# Restart the CONTAINER: the image entrypoint runs neo4j as PID 1, so `neo4j stop` inside
+# it ends the container, and with --restart=no it stays down (job 2032 died on the
+# `neo4j start` that followed). docker stop on an already-exited container is a no-op.
+docker stop "$BUILD_CONTAINER"
+docker start "$BUILD_CONTAINER"
 sleep 60
 for i in $(seq 1 60); do
     STATUS=$(docker exec "$BUILD_CONTAINER" $CS -d system --format plain \
         "SHOW DATABASE $NEO4J_DATABASE YIELD currentStatus RETURN currentStatus;" 2>/dev/null | tail -1 | tr -d '"')
     [ "$STATUS" = "online" ] && break
-    sleep 10
+    echo "  $NEO4J_DATABASE is ${STATUS:-starting} after restart ($((i*10))s)"; sleep 10
 done
+[ "$STATUS" = "online" ] || { echo "$NEO4J_DATABASE did not come back online in $BUILD_CONTAINER; see docker logs $BUILD_CONTAINER"; exit 1; }
 NEW_COUNT=$(docker exec "$BUILD_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (n) RETURN count(n);" | tail -1)
 echo "imported store: $NEW_COUNT nodes (served store: $BEFORE)"
 

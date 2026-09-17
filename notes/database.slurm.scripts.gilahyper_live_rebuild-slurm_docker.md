@@ -71,3 +71,38 @@ beside the usual four 4-CPU/60 G GPU jobs, which 320 G would not. Job 1558 (36 d
 
 Queued as job 1897 on 2026.09.14 behind the stale-store rebuild chain recorded in
 [[user.Mjvolk3.torchcell.tasks.weekly.2026.38.live-rebuild]]; its outcome is recorded there.
+
+## 2026.09.17 - Memory envelope measured, and a resume mode after the restart bug
+
+Three full-build attempts fix the resources paragraph above, which was written from the
+41 G private-memory profile and is wrong: the generation container's anonymous memory
+scales with the adapter worker count, which `SLURM_CPUS_PER_TASK` sets.
+
+| job | CPUs / memory | outcome |
+|---|---|---|
+| 1996 | 32 / 200 G | OOM-killed 15 min in at the Costanzo dmf experiment chunk; memcg anonymous memory 206 G, one worker at 45 G (kernel log) |
+| 2031 | 32 / 320 G | never started; pended on Priority behind queued 60 G GPU jobs, cancelled |
+| 2032 | 24 / 256 G | generated all 51 datasets (472,298,282 node rows, 525,064,964 edge rows) in 28 h 40 min, container sampled between 84 and 155 GiB; imported 99,723,455 nodes and 361,895,230 relationships in 16 min 55 s; FAILED at the post-import restart |
+
+The defaults are now 24 CPUs and 256 G. The 256 G request leaves the node room for the
+GPU sweeps, which is why the user chose it over 320 G.
+
+**The restart bug.** After `CREATE DATABASE` the script stopped and started neo4j to get
+the index-stats file written, with `docker exec tc-neo4j-build neo4j stop` then
+`neo4j start`. The image entrypoint runs neo4j as PID 1, so the stop ended the container,
+and with `--restart=no` it stayed down; the `neo4j start` that followed failed under
+`set -e` and the job exited 9 at 00:36 CDT. The in-place script survived the same pair
+only because its container has `--restart=unless-stopped`, so docker relaunched it. The
+fix restarts the container (`docker stop` then `docker start`) and fails loudly if the
+database does not come back online. The imported store was intact: the debug log shows
+`torchcell` STARTED at 05:36:25 UTC and checkpointed cleanly at shutdown.
+
+**Resume mode.** `sbatch --export=ALL,RESUME_JOB=<old job>` skips generation and import.
+It reads the generation commit, the dataset count, and the CSV directory from the old
+job's `.out` and `_generate.log`, requires the `IMPORT DONE` line, the build container
+`exited`, the generation container gone, and `$NEXT_ROOT/data/databases/torchcell`
+present, then continues from the restart: count, validate, swap, record. The manifest is
+bootstrapped at the generation commit (`kg_manifest` reads the schema surface and
+adapters with `git show` at that ref), so the checkout may be ahead of the build commit;
+the fresh-run preflight's HEAD-equals-commit check is not applied on a resume. Job 2032
+is resumed this way rather than regenerated.

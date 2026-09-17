@@ -80,6 +80,8 @@ class ArmRow(BaseModel):
     mean: float
     sd: float
     seconds: float
+    test_genes: list[str] = []
+    test_logits: list[list[float]] = []
 
 
 class Net(nn.Module):
@@ -235,13 +237,14 @@ def run_arm(
     pos = float(ys["train"].sum())
     pos_weight = torch.tensor((len(ys["train"]) - pos) / pos, device=device)
     tests, vals, sel, n_params = [], [], [], 0
+    logits_at_sel: list[np.ndarray] = []
     t0 = time.time()
     for seed in SEEDS:
         torch.manual_seed(seed)
         net = Net(kind, x.shape[1]).to(device)
         n_params = sum(p.numel() for p in net.parameters())
         opt = torch.optim.Adam(net.parameters(), lr=LR)
-        val_curve, test_curve = [], []
+        val_curve, test_curve, test_logits = [], [], []
         for _ in range(epochs):
             net.train()
             opt.zero_grad()
@@ -260,7 +263,9 @@ def run_arm(
             test_curve.append(
                 float(roc_auc_score(ys["test"].numpy(), logit[parts["test"]].numpy()))
             )
+            test_logits.append(logit[parts["test"]].numpy().copy())
         e = smoothed_argmax(val_curve)
+        logits_at_sel.append(test_logits[e])
         sel.append(e)
         vals.append(val_curve[e])
         tests.append(test_curve[e])
@@ -277,6 +282,8 @@ def run_arm(
         sd=float(np.std(tests)),
         seconds=time.time() - t0,
     )
+    row.test_genes = [g for g in split["genes"]["test"] if g in index]
+    row.test_logits = [x.tolist() for x in logits_at_sel]
     print(
         f"{kind:6s} {graph_name:15s} {inputs:14s} test "
         + ", ".join(f"{t:.3f}" for t in tests)
@@ -286,6 +293,85 @@ def run_arm(
     return row
 
 
+def fold_ensembles(device: torch.device) -> None:
+    """The MLP and the 400-epoch graph convolution on the five folds, logits averaged.
+
+    The transformer's reported 0.893 is a five-fold ensemble; this gives the two cheap
+    architectures on the same three inputs the same averaging, one seed per fold as in
+    ``cv_ensemble_readout.py``.
+    """
+    gene_ids, graphs = gene_graphs()
+    index = {g: i for i, g in enumerate(gene_ids)}
+    x = np.concatenate(
+        [
+            embedding("prot_T5_all", gene_ids),
+            embedding("normalized_chrom_pathways", gene_ids),
+            fba_ratios(gene_ids),
+        ],
+        axis=1,
+    )
+    ei = edges(graphs["union of nine"], index)
+    no_edges = torch.zeros(2, 0, dtype=torch.long)
+    arms = {"MLP": ("MLP", no_edges, EPOCHS), "GCN": ("GCN", ei, 400)}
+    report: dict[str, object] = {
+        "inputs": "ProtT5+chrom-pathway+FBA ratios",
+        "arms": {},
+    }
+    for name, (kind, edge_index, epochs) in arms.items():
+        per_fold: list[dict[str, float]] = []
+        fold_aurocs: list[float] = []
+        labels: dict[str, int] = {}
+        for k in range(5):
+            with gzip.open(
+                osp.join(RESULTS, "splits", f"ess_fcl_fold{k}of5_s0.json.gz"), "rt"
+            ) as fh:
+                split = json.load(fh)
+            labels = {g: int(v) for g, v in split["labels"].items()}
+            row = run_arm(
+                kind,
+                "union of nine" if kind == "GCN" else "none",
+                f"fold {k}",
+                x,
+                edge_index,
+                split,
+                index,
+                device,
+                epochs=epochs,
+            )
+            # one seed per fold, the first
+            per_fold.append(dict(zip(row.test_genes, row.test_logits[0], strict=True)))
+            fold_aurocs.append(row.test_auroc[0])
+        genes = sorted(per_fold[0])
+        mean_logit = np.array([np.mean([f[g] for f in per_fold]) for g in genes])
+        y = np.array([labels[g] for g in genes])
+        auroc = float(roc_auc_score(y, mean_logit))
+        rng = np.random.default_rng(0)
+        draws = []
+        for _ in range(2000):
+            idx = rng.integers(0, len(y), len(y))
+            if len(np.unique(y[idx])) == 2:
+                draws.append(float(roc_auc_score(y[idx], mean_logit[idx])))
+        lo, hi = np.percentile(draws, [2.5, 97.5])
+        report["arms"][name] = {  # type: ignore[index]
+            "kind": kind,
+            "epochs": epochs,
+            "fold_aurocs": fold_aurocs,
+            "fold_mean": float(np.mean(fold_aurocs)),
+            "ensemble_auroc": auroc,
+            "ensemble_ci": [float(lo), float(hi)],
+            "n_genes": len(genes),
+        }
+        print(
+            f"{name}: folds {[round(a, 3) for a in fold_aurocs]} mean "
+            f"{np.mean(fold_aurocs):.3f}; ensemble {auroc:.4f} [{lo:.3f}, {hi:.3f}]",
+            flush=True,
+        )
+    out = osp.join(RESULTS, "graph_baselines_folds.json")
+    with open(out, "w") as fh:
+        json.dump(report, fh, indent=2)
+    print(out)
+
+
 def main() -> None:
     import argparse
 
@@ -293,7 +379,7 @@ def main() -> None:
     parser.add_argument(
         "--arms",
         default="base",
-        choices=("base", "extra"),
+        choices=("base", "extra", "folds"),
         help=(
             "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
             "GCN and GATv2. extra: graph convolution on the union with the transformer's "
@@ -303,6 +389,9 @@ def main() -> None:
     )
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if args.arms == "folds":
+        fold_ensembles(device)
+        return
     with gzip.open(SPLIT, "rt") as fh:
         split = json.load(fh)
     gene_ids, graphs = gene_graphs()
@@ -380,7 +469,9 @@ def main() -> None:
                     "epoch selected by a five-epoch moving average of the validation "
                     "AUROC; scored once on the 195 held-out genes"
                 ),
-                "rows": [r.model_dump() for r in rows],
+                "rows": [
+                    r.model_dump(exclude={"test_genes", "test_logits"}) for r in rows
+                ],
             },
             fh,
             indent=2,

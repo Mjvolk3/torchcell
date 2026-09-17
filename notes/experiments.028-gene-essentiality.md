@@ -462,3 +462,25 @@ Example runs, round 13 gated seed 2701 (0.829) and round 16 seed 2702 (0.898):
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/dtggj7l9>
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/rwyu7dk6>
+
+## 2026.09.17 - Round 17, graph-only baselines, and the reading that the inputs are the number
+
+**Round 17 (w28, packs 2312/2313).** The round-16 cell on the five folds: 0.863/0.860/0.887/0.841/0.882 (mean 0.867) vs round-12 folds 0.860/0.899/0.889/0.876/0.884 (below on 4 of 5); ensemble 0.901 [0.85, 0.95] vs 0.893. By the rule fixed before the round (replace only if above on 4 of 5 folds) **0.893 stands**.
+
+**Round 15 complete.** lpgate on the anchored box 0.771/0.786/0.763 (= pooled 0.774), gates within 0.07 of zero; probe: growth 0 for all 982 deletions at init and trained (LP infeasible under the capacity ceilings).
+
+**Graph-only baselines (`graph_baselines.py`, `--arms base|extra|folds`; section 2, `tables/graph_baselines.tex`).** Transductive node classification on one gene graph, no perturbation, 2 layers width 64, 200 epochs, 3 seeds:
+
+| model | graph | inputs | mean |
+|---|---|---|---|
+| MLP | none | ProtT5 | 0.754 |
+| GCN | union of nine | ones / degree+clustering / ProtT5 | 0.613 / 0.638 / **0.834** (sel ep 197) |
+| GATv2 | union of nine | ProtT5 | 0.796 |
+| GCN | physical | ProtT5 | 0.769 |
+| MLP | none | ProtT5 + chrom-pathway + FBA ratios | **0.870** (sd 0.001, 6 s CPU) |
+| GCN | union of nine | ProtT5 + chrom-pathway + FBA ratios | 0.847 (200 ep) / **0.877** (400 ep, sel 381-396) |
+| GCN | union of nine | ProtT5 | 0.857 (400 ep) |
+
+- **The inputs are the number.** An MLP on ProtT5 + the pathway indicator + the four ratios reads 0.870 per cell, the round-9 transformer's 0.871; graph convolution on the same inputs passes it at 400 epochs. The transformer's 0.893 is its fold ENSEMBLE; the MLP/GCN fold ensembles are running (`--arms folds`, `results/graph_baselines_folds.json`) as the fair comparison.
+- Structure alone (ones, degree) is chance to 0.70; the union of nine adds 0.08 to ProtT5 under GCN; GATv2 < GCN; the physical graph alone adds 0.015.
+- This redeems the Gene_Graph design (featureless GCN/GATv2 on interaction graphs, never scored): featureless is chance here, with sequence it is competitive.

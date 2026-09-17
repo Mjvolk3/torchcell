@@ -5,24 +5,30 @@
 \section{Open\secstatus{todo}}
 \label{sec:open}
 
+The held-out number is close to saturated: the round-12 ensemble's interval, 0.893
+[0.84, 0.94], spans what 195 genes with 31 essential can resolve, and every lever on the
+transformer side has been moved (width, depth, the preprocessor, the budget, the class
+weight, six encodings). What remains is attribution and the module.
+
 \begin{itemize}
-  \item The layer's feasibility gap is the module's problem on this endpoint: with
-    balance exact the box is 58 percent violated, with the box exact the balance residual
-    is 0.85 to 2.0. Whether more alternations, Dykstra's correction, or a warm start from
-    the wild-type solve closes the gap enough for the growth column to become growth is
-    the layer question; the essentiality endpoint is the cheap place to test it, since
-    FBA's 0.65 is the number a feasible growth column has to reproduce at initialization.
-  \item A solve-derived gene encoding: the per-deletion parsimonious FBA flux vector, or
-    the wild-type flux and variability of the gene's own reactions, as a node feature or
-    a ladder encoding, since one linear program per gene costs about 10 ms.
-  \item The transformer ties the ladder's best rungs with FBA (0.82 against 0.81 to
-    0.83) and does not pass them, and round 8 rules capacity out as the lever: width 24
-    and 48, two blocks and the two-layer preprocessor all read 0.81 to 0.82. Round 6
-    moved the input to codon frequency and to the species-LM composite without gain.
-    The ladder's highest selected rung, logistic regression on the 197-dimensional
-    chromosome-pathway indicator with FBA (0.830), and the seventeen-encoding
-    concatenation have not been given to the transformer with the FBA affine.
+  \item Which columns of the chromosome-pathway indicator carry the round-9 gain. The
+    encoding holds five continuous gene properties, two of them expression, beside the
+    chromosome and pathway indicators; the registry's \texttt{normalized\_chrom}
+    (properties and chromosome, no pathways) drops the pathways, so the pair of cells
+    separates the annotation from the properties. Untested.
+  \item Whether the solve's other columns add to the transformer what they add to the
+    ladder: round 11 puts the eight reaction statistics and the deletion flux vector on
+    the affine of the ProtT5 cell, and the round-9 backbone takes them next if they pass.
+  \item Round 13: the pFBA warm start on the stoichiometry-only layer. If its growth
+    column reads at the solve's level at initialization and keeps it, the projection
+    route carries the solve and the anchored constraint set was the loss; if not, the
+    alternations are.
+  \item A layer that solves. The one module construction the rounds have not ruled out is
+    a linear program per genotype inside the forward pass, with the backbone's capacity
+    ceilings as its bounds and the gradient through the LP's dual prices, reading the
+    optimal flux rather than a growth column. One solve costs about 50 milliseconds, so a
+    200-epoch cell at batch 32 is about two hours of CPU per seed. Untested.
   \item The module's own hyperparameters have not been moved on this endpoint: the
-    $k_{cat}$ tier (measured against predicted), the thermodynamic source, the
-    parameterization (projection against nullspace), the number of alternations.
+    $k_{cat}$ tier (measured against predicted), the thermodynamic source, the number of
+    alternations. Given the probe and round 10, none of them reaches the polytope.
 \end{itemize}

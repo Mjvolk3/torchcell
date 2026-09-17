@@ -12,8 +12,23 @@
     Mann-Whitney rank statistic with mid-ranks on ties: the probability that a randomly
     drawn essential gene scores above a randomly drawn nonessential one.
   \item[backbone] The cell graph transformer over the nine-graph perturbed gene graph with
-    \texttt{prot\_T5\_all} node features, read at the pooled perturbed tokens. The
-    \emph{pooled} arm is this backbone with a scalar head and no metabolic module.
+    \texttt{prot\_T5\_all} node features unless another encoding is named, read at the
+    pooled perturbed tokens. The \emph{pooled} arm is this backbone with a scalar head and
+    no metabolic module.
+  \item[chromosome-pathway indicator] The 197-dimensional per-gene encoding
+    \texttt{normalized\_chrom\_pathways} (\texttt{sgd\_gene\_graph\_hot.py}): five SGD
+    numeric gene features scaled to $[0, 1]$ (protein length, molecular weight,
+    isoelectric point, the median and the median absolute deviation of the gene's
+    expression), a one-hot of the gene's chromosome, and a multi-hot over the SGD
+    pathways it is annotated to. \emph{chrom-pathway} in figure labels; the name
+    understates it, since five of its columns are continuous gene properties and two of
+    those are expression.
+  \item[FBA affine] The readout that adds $w^\top r + b$ to the backbone's logit, where $r$
+    holds the deleted gene's knockout-to-wild-type growth ratio on each of four media from
+    one FBA solve per gene; the \emph{fba} arm.
+  \item[fold ensemble] Five models trained on the five cross-validation files (each a
+    different fifth of the 787 labeled non-test genes held for validation), their logits
+    averaged on the held-out genes; Flux Cone Learning's own test protocol.
   \item[gene bootstrap] Resampling the scored genes with replacement (2,000 draws) and
     reporting the 2.5 and 97.5 percentiles of the statistic.
   \item[held-out genes] The 223 genes Merzbacher 2025 held out of its own training
@@ -21,13 +36,29 @@
     genotypes in the build. Every model number in this document is on those 195 unless
     the gene set is named.
   \item[metabolic module] The enzyme-constrained thermodynamic flux layer over yeast-GEM
-    9.0.2 that maps the perturbed representation to a flux vector; here it is read at the
-    objective column \texttt{r\_2111} (growth).
+    9.0.2 that maps the perturbed representation to a flux vector by $K$ alternating
+    projections onto the mass balance $Sv = 0$ and the box of bounds; here it is read at
+    the objective column \texttt{r\_2111} (growth). The \emph{anchored} layer tightens the
+    GEM's box by the enzyme-capacity ceilings and the second-law directions; the
+    \emph{stoichiometry-only} layer keeps the GEM's box.
+  \item[parsimonious FBA] Two linear programs: the growth optimum over the polytope
+    $\{Sv = 0,\ \ell \le v \le u\}$ with the deleted gene's reactions closed through the
+    gene-protein-reaction rules, then the flux of least total absolute value at that
+    optimum. \emph{pFBA}; \emph{the solve} when the object is the optimum rather than the
+    method.
   \item[released labels] The 1,121 essentiality calls in the released split. The column
     named \texttt{essential} is a viability flag (1.0 marks a nonessential gene); it is
     inverted once and the four class counts are asserted against the paper's Methods.
   \item[selected epoch] The argmax of a centered five-epoch moving average of the
     validation AUROC. The held-out genes are scored once, at that epoch.
+  \item[solve-derived encodings] Per-gene vectors computed from pFBA rather than from
+    sequence: the deletion's own flux vector, its difference from the wild-type vector,
+    and eight statistics of the gene's reactions under the wild-type solve and its flux
+    variability (\texttt{ess\_reference\_flux\_table.py}).
+  \item[warm start] The flux layer's proposal written as a reference flux plus a
+    null-space residual of relative size $\alpha$, $v = v_{\text{ref}} + \alpha N z$,
+    before the alternations; with a per-genotype table the reference is the deletion's
+    own pFBA flux.
 \end{description}
 
 \subsection{Where the labels come from\secstatus{todo}}

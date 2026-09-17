@@ -2,8 +2,22 @@
 %% [[experiments.028-gene-essentiality.mermaid.readouts]]
 %% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/4-module.tex
 
-\section{The metabolic module: three ways to read essentiality off it\secstatus{todo}}
+\section{The metabolic module: the solve helps, so why not the layer?\secstatus{todo}}
 \label{sec:module}
+
+One linear program per deletion on yeast-GEM ranks essential genes at 0.65 on its own and
+lifts every model in this document by 0.05 when its four growth ratios are appended
+(Sections~\ref{sec:comparators} and~\ref{sec:backbone}). The metabolic module is built on
+the same genome-scale model: the same stoichiometry, the same bounds, the same
+gene-protein-reaction rules closing the deleted gene's reactions. The question of this
+section is why routing the prediction through it does not do what the solve does. The
+rounds answer it in steps: the module neither helps nor hurts on the backbone (rounds 2
+and 4); it adds nothing on top of the solve (round 6); its growth column is not growth
+but a free coordinate, because the layer never reaches the polytope the solve optimizes
+over (the probe, round 7); handed the solve's own point on that polytope, the anchored
+layer's constraint set discards it (round 10); and the gradient reaches the layer
+throughout, so none of this is a gradient-flow failure. The section closes with what the
+comparison says a layer would have to compute to help.
 
 The pooled backbone reads its logit from an MLP on the perturbed context
 (Figure~\ref{fig:readout-pooled}). A flux arm builds the enzyme-constrained thermodynamic
@@ -361,3 +375,42 @@ what the layer computes is not growth.
   gradient norm per epoch, seed mean, on the same arms. \textbf{c}, The gate's value per
   epoch on the gated arms. Written by
   \texttt{experiments/028-gene-essentiality/scripts/grad\_flow\_readout.py}.}{fig:gradflow}
+
+\subsection{Why the solve helps and the layer does not\secstatus{todo}}
+
+What FBA contributes to the prediction is one number per deletion: the maximum of growth
+over the polytope $\{Sv = 0,\ \ell \le v \le u\}$ with the deleted gene's reactions
+closed. That number ranks the held-out genes at 0.65 alone, its four-medium version
+lifts a logistic regression, a random forest and the transformer by 0.05 each, and the
+solve has more to give than the number: eight statistics of the gene's reactions under
+the wild-type solve reach 0.80 with no sequence, and the whole deletion flux vector
+0.77. The value is in the optimum over the constraint set and in the flux that attains
+it.
+
+The module holds the same constraint set and computes something else. Its flux is $K$
+alternating projections of a proposal the backbone writes, and the rounds measure, in
+order, that the projections stop short of the polytope (58 percent of reactions out of
+bounds when the balance is exact, a balance residual of 0.85 to 2.0 when the bounds
+are), that the growth column of a flux off the polytope is a free coordinate the readout
+learns to use with either sign (the probe: 0.23 on the held-out genes under trained
+weights, Spearman $-0.25$ with the solve), that the learned parts of the layer are not
+what the column carries (the shuffled-$k_{cat}$ control matches the real table), and
+that the layer's constraint set rejects the solve when the solve is supplied as the
+proposal (round 10: the reference violates the anchored box on a third of its reactions
+and the returned flux sits half the reference's norm away, sign reversed). The gradient
+is not the cause; it reaches the layer on every arm that lets it.
+
+The comparison also bounds what a feasible layer could add. A layer that reached the
+polytope would return a feasible flux, not the optimal one, unless the backbone learned
+to write proposals whose projection is the optimum; the solve finds the optimum by
+construction. And a growth column is one number, where the solve's flux vector scores
+0.11 to 0.13 more AUROC on the ladder than its growth ratio does. A module that helped on this
+endpoint would therefore have to solve rather than project, with the backbone setting
+the bounds it solves under (the capacity ceilings from the abundance head are that
+interface already), and read more of the resulting flux than its growth column. The
+first of those is a linear program per genotype per forward pass with the gradient taken
+through its dual, about 50 milliseconds each; it is untested here and is the one
+construction the rounds have not ruled out. Round 13, the warm start on the
+stoichiometry-only layer, is the last test of the projection route: its box is the
+GEM's, so the reference sits inside it, and if the growth column still leaves the
+solve's ranking there, the alternations themselves are what moves it.

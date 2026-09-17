@@ -23,8 +23,8 @@
 \emergencystretch=3.5em
 
 \title{\vspace{-1.5em}Gene Essentiality from the Cell Graph\\
-  {\large The backbone against flux balance analysis and Flux Cone Learning,\\and what
-  routing the prediction through the metabolic module does}}
+  {\large The backbone against flux balance analysis and Flux Cone Learning,\\and why
+  the solve helps the prediction where the metabolic module does not}}
 \author{Michael Volk}
 \date{\today}
 
@@ -38,11 +38,18 @@ Gene essentiality is the one endpoint on which a flux model has a published, non
 score: on the released Merzbacher 2025 yeast split, flux balance analysis reads an AUROC of
 0.69 over all 1,121 labeled genes and Flux Cone Learning 0.73 on the 223 held-out genes.
 This document scores the cell graph transformer on the same held-out genes, puts FBA on
-every medium the ontology defines, and asks two questions of the metabolic module: whether a
-prediction read off its growth column ranks essential genes better than the backbone alone,
-and where the gradient goes when the module is one of two paths rather than the only one.
-Every number here is at a validation-selected epoch on a pinned test set, with a gene
-bootstrap and the across-seed range, and every table is generated from the result files.
+every medium the ontology defines and a classical ladder of models on the same split, and
+asks two questions. The first is how far the held-out AUROC goes: a width-12 transformer
+reading the chromosome-pathway indicator and ProtT5, with FBA's four growth ratios on its
+logit, scores 0.893 [0.84, 0.94] under Flux Cone Learning's own fold protocol, 0.15 above
+it on the same genes, and every part of the gain is an input the ontology computes for
+every gene at no training cost. The second is why the solve helps and the metabolic
+module, which is built on the same genome-scale model, does not: routed through the
+module's growth column the prediction never beats the backbone alone, and the rounds
+locate the reason in the layer, whose alternating projections never reach the polytope
+FBA optimizes over and which discards the solve when handed it. Every number here is at a
+validation-selected epoch on a pinned test set, with a gene bootstrap and the across-seed
+range, and every table is generated from the result files.
 \end{abstract}
 
 \vspace{0.5em}

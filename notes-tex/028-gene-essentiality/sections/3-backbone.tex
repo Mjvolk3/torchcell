@@ -50,8 +50,13 @@ lifts them by 0.019, 0.051 and 0.033. Round 3 combines the two and raises the ep
 
 Weight decay at 0, $10^{-2}$ and $10^{-1}$ reproduces the base cell to the third decimal on
 every seed, and so does removing graph regularization. At 400 updates with learning rate
-$10^{-3}$, a decay of $10^{-1}$ shrinks a weight by four percent; the graph term's
-$\lambda$ is $6.5 \times 10^{-5}$. Neither is a lever on this endpoint at this budget.
+$10^{-3}$, a decay of $10^{-1}$ shrinks a weight by four percent, so it is not a lever at
+this budget. Graph regularization is a different case: its configuration pins the nine
+gene graphs to attention heads 0 to 8 of the \emph{second} transformer block, so on a
+one-block cell the term is never evaluated, and the arm with it off reproduces the arm
+with it on because both are the same cell. The term was inert on every one-block cell in
+this document; a two-block cell with four heads indexes a head it does not have and
+fails (round 8, job 2261), so the two-block cells run with it off.
 The learning rate at $3 \times 10^{-4}$ and $3 \times 10^{-3}$ is worse than $10^{-3}$ on
 the seed mean, with seed spreads of 0.09 and 0.04 that put the pooled numbers inside the
 base interval.

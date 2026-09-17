@@ -484,3 +484,25 @@ Example runs, round 13 gated seed 2701 (0.829) and round 16 seed 2702 (0.898):
 - **The inputs are the number.** An MLP on ProtT5 + the pathway indicator + the four ratios reads 0.870 per cell, the round-9 transformer's 0.871; graph convolution on the same inputs passes it at 400 epochs. The transformer's 0.893 is its fold ENSEMBLE; the MLP/GCN fold ensembles are running (`--arms folds`, `results/graph_baselines_folds.json`) as the fair comparison.
 - Structure alone (ones, degree) is chance to 0.70; the union of nine adds 0.08 to ProtT5 under GCN; GATv2 < GCN; the physical graph alone adds 0.015.
 - This redeems the Gene_Graph design (featureless GCN/GATv2 on interaction graphs, never scored): featureless is chance here, with sequence it is competitive.
+
+## 2026.09.17 - Round 15b: the layer that solves works on the GEM box; the module reaches the affine's level with the solve inside the forward pass
+
+Packs 2314/2315 (`flux_off`, `--flux-parameterization lp`, 4 LP workers per cell, ~2.8 h per pack at 12 CPUs). `wave12_readout.py --round w29`; probes on `lpoffbio`/`lpoffgate` s2700.
+
+| arm (stoichiometry-only box, scale 0) | seeds 2700, 2701, 2702 | mean | note |
+|---|---|---|---|
+| round-4 gated (anchored, alternations) | 0.766, 0.782, 0.765 | 0.771 | comparator |
+| round-13 gated, pFBA warm start | 0.794, 0.829, 0.825 | 0.816 | |
+| **LP gated** | 0.800, 0.837, 0.835 | **0.824** | 3/3 above round 4; seed 2701 sel ep 103, gate +1.42; seeds 2700/2702 sel ep 2/4, gates ~0 |
+| LP forced | 0.500, 0.669, 0.669 | 0.613 | seed 2700 infeasible from ep 11 (absorbing); 2701/2702 = FBA level, backbone grad 1e-14 |
+
+- **Probe at INIT (LP on the availability-scaled GEM box):** feasible; zero growth on 10 percent of deletions (the lethal ones), median 0.185; AUROC(-v) test **0.734** (train 0.744, val 0.767), Spearman +0.40 to +0.50 vs FBA per medium. Above FBA's own 0.654-0.666 on the 195 before any training: the availability gate's uniform scaling acts like a uniform enzyme ceiling.
+- **Gated LP cell passes both pre-registered reads** (column at the solve's level at init; 0.82 with 3/3 above round-4 gated). Seed 2701's trained column ranks 0.768 alone.
+- **Forced LP fails for LP reasons:** at the optimum the binding constraints are exchange bounds (no gene owns them) → duals on learnable bounds are zero → backbone gradient 1e-14, cell = FBA with a threshold (0.669); or the gate is driven into infeasibility (all-zero flux, no gradient, absorbing) → 0.5. Validation curve is a step function (LP outputs piecewise constant in the bounds).
+- **Reading across 10/13/15/15b:** the module helps exactly when its flux is on the polytope; the anchored constraint set (capacity ceilings from predicted kcat x nominal abundance) excludes growth entirely (LP infeasible), which is what kept every anchored arm off it. Next constructions (open list): GECKO-style pool calibration so gene-owned bounds bind at the optimum; a feasibility barrier on the availability gate; reading the flux vector instead of the growth column; non-biomass objectives.
+
+Example runs, LP gated seed 2701 (0.837, gate +1.42) and LP forced seed 2700 (infeasible from epoch 11):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/du086f04>
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/ht55h9nq>

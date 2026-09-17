@@ -145,6 +145,14 @@ class NodeEmbeddingBuilder:
             "requires_graph": True,
             "model_name": "chrom_pathways",
         },
+        # The five scaled gene properties and the chromosome one-hot without the pathway
+        # columns: the attribution control for normalized_chrom_pathways (028 round 14).
+        "normalized_chrom": {
+            "class": GraphEmbeddingDataset,
+            "root_path": "data/scerevisiae/sgd_gene_graph_hot",
+            "requires_graph": True,
+            "model_name": "normalized_chrom",
+        },
         # Random embeddings
         "random_1000": {
             "class": RandomEmbeddingDataset,

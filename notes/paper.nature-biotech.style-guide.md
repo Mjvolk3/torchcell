@@ -172,6 +172,23 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   call (an mtime stamp taken before the run). A ~300 kB base64 image in one style attribute
   is enough to make the export fail; assemble such a panel as SVG instead.
 
+- **A panel letter placed by LaTeX is set in the DOCUMENT font, not the figure's.** `\textbf{a}`
+  in a `\panel`-style macro prints Latin Modern Bold next to Arial panels, and it is easy to
+  miss because the letter is one glyph. Tectonic runs XeTeX, so declare a fontspec family for
+  the letter alone (`\newfontfamily\panelletterfont{Arial}[BoldFont={Arial Bold}]`) and leave
+  the body font untouched. Audit with `pdffonts <doc>.pdf`: anything outside Arial and the
+  document's own Latin Modern / CM families is a figure shipping a foreign typeface.
+- **draw.io's HTML `<sub>` is not math typesetting.** Variables come out upright where they
+  should be italic, subscripts sit at the wrong size, and the PDF export sets the subscript
+  runs in a serif fallback. Render each expression as math (matplotlib mathtext with the
+  Arial families, which is how every other panel sets `$\tau$`), record its measured size,
+  and place it as an image. A serif subset containing only a space is a different thing and
+  is harmless: draw.io emits it for whitespace inside an embedded image.
+- **A borrowed reference map goes in whole when the point is "where does this sit".** A crop
+  answers that only for a reader who already knows the map. Size the panel to the drawing's
+  own aspect ratio, and put its labels on opaque plates rather than a halo on the glyphs:
+  over a dense map a label routinely crosses three lines and a stroke halo is not enough.
+
 ## Tables
 
 - **Every paper table comes from a committed script** in the relevant `experiments/<id>/`

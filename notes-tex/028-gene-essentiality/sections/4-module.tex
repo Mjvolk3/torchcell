@@ -453,8 +453,14 @@ because it never satisfied the box; the solve cannot proceed without it. That is
 same fact as round 10's, read exactly: the enzyme-capacity box as parameterized contains
 no growing flux, and every arm built on it has been reading a flux off the polytope.
 Round 15b runs the solve on the stoichiometry-only box, where round 13 showed the
-polytope holds growth, and a capacity ceiling that admits growth (the pool scaled so the
-wild type is feasible, GECKO's saturation calibration) is the module's next construction.
+polytope holds growth. The capacity ceiling that admits growth is then calibrated the
+way GECKO calibrates its pool, by one scale on every ceiling
+(\texttt{capacity\_calibration.py}, through the layer's own forward pass on a batch of
+32 held-out genotypes at initialization): the program is infeasible up to a scale of
+10, feasible for 31 of the 32 from a scale of 30 (the thirty-second is lethal) with a
+median growth of 0.042, reaches 0.10 at 100 and 0.20 at 1,000, and at 10,000 returns
+the unconstrained wild type's 0.535, where the ceilings no longer bind. Round 15c runs
+the layer that solves at 100 and 1,000, where bounds the genes own bind at the optimum.
 
 \subsection{Round 15b: the layer that solves on the stoichiometry-only box\secstatus{todo}}
 

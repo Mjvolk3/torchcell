@@ -86,6 +86,7 @@ class Net(nn.Module):
     """Two message-passing layers and a linear head, or an MLP when the graph is absent."""
 
     def __init__(self, kind: str, dim_in: int) -> None:
+        """``kind`` is GCN, GATv2 or MLP; ``dim_in`` the node input width."""
         super().__init__()
         self.kind = kind
         if kind == "GCN":
@@ -100,6 +101,7 @@ class Net(nn.Module):
         self.head = nn.Linear(WIDTH, 1)
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
+        """One logit per node."""
         if self.kind == "MLP":
             h = F.relu(self.c1(x))
             h = F.relu(self.c2(h))

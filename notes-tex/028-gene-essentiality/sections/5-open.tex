@@ -14,9 +14,10 @@ weight, six encodings). What remains is attribution and the module.
   \item The pathway multi-hot carries the round-9 gain (round 14); which pathways, and
     whether a pathway-level flux statistic from the solve would substitute for the
     annotation, is not measured.
-  \item Round 16 puts the round-11 affine (the four ratios, the eight statistics and
-    the deletion flux vector) on the round-9 backbone; the fold ensemble of whichever
-    cell wins is the number to report in its place.
+  \item The round-16 cell (the round-11 affine on the round-9 backbone) and the round-9
+    cell are one cell to the resolution of 195 genes (rounds 16 and 17); a larger
+    held-out set, such as the genome-wide labels scored on genes the released split
+    never touched, is what would separate them.
   \item Round 13: the pFBA warm start on the stoichiometry-only layer. If its growth
     column reads at the solve's level at initialization and keeps it, the projection
     route carries the solve and the anchored constraint set was the loss; if not, the

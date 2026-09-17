@@ -410,6 +410,38 @@ flux that was solved without them, are what the projections could not reconcile,
 the layer that solves (round 15) applies those constraints inside the solve instead of
 after it.
 
+\subsection{Round 15: the layer that solves\secstatus{todo}}
+
+The projection route carries the solve only when handed it. Round 15 replaces the
+alternations with the solve: under the \texttt{lp} parameterization the layer's flux is
+the growth optimum of the linear program $\max\{v_{\text{growth}} : Sv = 0,\ \ell \le v
+\le u\}$ over the layer's own bounds, one HiGHS solve per genotype in a forked pool, and
+the backbone reaches the prediction through the bounds alone, with the gradient the
+bound duals give (\texttt{torchcell.metabolism.lp\_layer}; the envelope theorem, checked
+against finite differences on the GEM). On the anchored layer the bounds are the GEM's
+scaled by availability and capped by the enzyme-capacity ceilings from the abundance
+head, so this is the GECKO construction with a learned enzyme pool. Round 15 (jobs 2304
+to 2306) runs it forced, forced with the second-law box, and gated, three seeds each
+(Table~\ref{tab:w26}).
+
+\input{tables/round_w26}
+
+Every cell scores 0.500 exactly and selects epoch 2, because the program is infeasible
+for every genotype at every epoch. The cause is measured on one genotype's bounds taken
+from the layer: under the GEM's own bounds the program solves at the wild-type growth of
+0.0858, and under the layer's bounds it has no feasible point, with or without the
+maintenance flux released and with the deleted gene's reactions reopened. What differs
+is the capacity ceiling: the layer's upper bounds have a median of 0.084 mmol/gDW/h and
+a tenth of the reactions below 0.007, against 100 on the GEM, because the predicted
+$k_{cat}$ tier multiplied by the abundance head's nominal abundances gives ceilings two
+to four orders below the fluxes growth needs. The alternating layer never noticed,
+because it never satisfied the box; the solve cannot proceed without it. That is the
+same fact as round 10's, read exactly: the enzyme-capacity box as parameterized contains
+no growing flux, and every arm built on it has been reading a flux off the polytope.
+Round 15b runs the solve on the stoichiometry-only box, where round 13 showed the
+polytope holds growth, and a capacity ceiling that admits growth (the pool scaled so the
+wild type is feasible, GECKO's saturation calibration) is the module's next construction.
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

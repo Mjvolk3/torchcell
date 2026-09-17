@@ -375,3 +375,31 @@ epochs 6 and 13, the instability round 11 showed on the ProtT5 backbone, and the
 cure. Round 17 runs the passing cell on the five folds, with the read fixed first: its
 ensemble replaces the round-12 ensemble's 0.893 as the reported number only if its fold
 models are above round 12's on at least four of the five folds; otherwise 0.893 stands.
+
+\subsection{Round 17: the round-16 cell on the five folds\secstatus{todo}}
+
+Round 17 (jobs 2312 and 2313) trains the round-16 cell on the five cross-validation
+files (Table~\ref{tab:w28}, Figure~\ref{fig:w28}). Its fold models score 0.863, 0.860,
+0.887, 0.841 and 0.882 on the held-out genes, a fold mean of 0.867, against round 12's
+0.860, 0.899, 0.889, 0.876 and 0.884: above on fold 0 by 0.003 and below on the other
+four, by 0.002 to 0.039. Their averaged logits score 0.901 [0.85, 0.95], above the
+round-12 ensemble's 0.893 by 0.008, with the two intervals almost coincident.
+
+\input{tables/round_w28}
+
+\tcfigfit[1.0]{figures/w28_readout_2026-09-17-02-17-47.pdf}{\textbf{Round 17, the
+  round-16 cell on the five folds.} \textbf{a}, Validation AUROC per epoch, one thin line
+  per seed and the seed mean per arm; each fold model reads its own fold. \textbf{b}, The
+  median absolute epoch-to-epoch step per cell against the validation size, 157 or 158
+  genes. \textbf{c}, Held-out AUROC per cell (points), the seed mean and the gene
+  bootstrap of the pooled per-gene logits (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w28}.}{fig:w28}
+
+By the rule fixed before the round, 0.893 stands: the widened affine's fold models are
+below round 12's on four of five folds, and an ensemble 0.008 higher from fold models
+0.014 lower on average is the kind of draw the rule exists to refuse. The two cells are
+one cell to the resolution of 195 genes, and the reported number for this document is
+the round-12 ensemble, 0.893 [0.84, 0.94], from the chromosome-pathway indicator with
+ProtT5 and the four FBA growth ratios.

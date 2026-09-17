@@ -232,6 +232,18 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "chromprotcv4",
         ],
     ),
+    # Round 14: attribution of the round-9 gain inside the chromosome-pathway indicator,
+    # dropping its pathway columns (normalized_chrom keeps the five properties and the
+    # chromosome one-hot), with and without ProtT5.
+    "w25": (
+        [
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w20_chromfba_h12l1p1_e200_s*.json",
+            "w20_chromprotfba_h12l1p1_e200_s270[0-2].json",
+            "w25_*_e200_s*.json",
+        ],
+        ["fba", "chromfba", "chromprotfba", "nchromfba", "nchromprotfba"],
+    ),
     # The 027 wave-11 width-12 and width-24 pooled cells, for a dry run of this script and
     # as the pre-move reference (same protocol as `base`).
     "wave11": (["wave11_ess_pool_h*_e80_s*.json"], ["ess_pool"]),
@@ -304,6 +316,8 @@ ARM_LABELS = {
     "chromprotcv2": "chrom-pathway + ProtT5 + FBA ratios, fold 2",
     "chromprotcv3": "chrom-pathway + ProtT5 + FBA ratios, fold 3",
     "chromprotcv4": "chrom-pathway + ProtT5 + FBA ratios, fold 4",
+    "nchromfba": "gene properties + chromosome backbone + FBA ratios",
+    "nchromprotfba": "gene properties + chromosome + ProtT5 backbone + FBA ratios",
 }
 
 

@@ -241,6 +241,14 @@ ROUND_CAPTIONS = {
         "five cross-validation folds whose logits are averaged on the held-out genes. "
         "Width 12, one block, batch 32, class weight, 200 epochs.",
     ),
+    "w25": (
+        "Round 14, attribution inside the chromosome-pathway indicator",
+        "The round-5 cell, the round-9 cells on the indicator alone and with ProtT5, and "
+        "the same two cells on the indicator without its pathway columns "
+        "(\\texttt{normalized\\_chrom}: the five gene properties and the chromosome "
+        "one-hot), all with the FBA affine. Width 12, one block, batch 32, class weight, "
+        "200 epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

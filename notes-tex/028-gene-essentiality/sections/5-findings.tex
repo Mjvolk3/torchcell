@@ -194,7 +194,11 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     solvers' vectors, at chance on the other exact vertex; fitted within each solver it
     reads 0.65 to 0.78, the interior point's 0.776 level with the vertex's. The store
     and the head must come from one solver, and a point inside the face, which is
-    what a first-order solve on the card returns, ranks as well as a vertex
+    what a first-order solve on the card returns, ranks as well as a vertex; across
+    tolerances of one such solver the point is the same point (PDLP at $10^{-4}$ and
+    $10^{-6}$ move 0.6 percent of the reactions against each other and a probe
+    fitted on either scores the other at its own number), so the solver and not the
+    tolerance is what the store and the head must share
     (Section~\ref{sec:solve-tolerance}). Trained over such a store the layer-free
     cell reads 0.911 on six of six seeds, the pFBA store's number, and 0.912 as a
     three-seed fold ensemble against the pFBA store's 0.919; over the PDLP store, the

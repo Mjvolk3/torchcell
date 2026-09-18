@@ -1688,6 +1688,29 @@ with. On the CPU the PDLP solve took 11.7 s a program against 0.1 for the simple
 interior-point solve without crossover is the CPU form that returns the same kind of
 point at the simplex's cost.
 
+The read above left the change of tolerance together with the change of point, and
+the transfer read separates them (\texttt{solve\_tolerance\_transfer.py}, job 2436, 93
+minutes at twenty workers; Tables~\ref{tab:solve-tolerance-transfer-solvers},
+\ref{tab:solve-tolerance-transfer} and \ref{tab:solve-tolerance-transfer-moved}): the
+same programs under the interior point without crossover and under PDLP at KKT
+$10^{-4}$, $10^{-6}$ and $10^{-8}$, with a probe fitted on every solver's training
+vectors and scored on every solver's held-out vectors. Two of the six settings do not
+certify: the interior point without crossover reports 1,115 programs optimal at
+$10^{-4}$ and 112 at $10^{-6}$ and $10^{-8}$, and PDLP certifies 1,109, 1,051 and 801
+at 19, 21 and 25 s a program, the $10^{-8}$ shortfall the 120 s cap. Across
+tolerances of one first-order solver the point is the same point: PDLP's $10^{-4}$
+and $10^{-6}$ vectors move 0.6 percent of the reactions against each other (3 percent
+against $10^{-8}$), and the probe fitted at $10^{-4}$ scores the $10^{-6}$ vectors at
+0.709 against its own 0.716, the probe fitted at $10^{-6}$ the $10^{-4}$ vectors at
+0.717 against its own 0.702. Across solvers the same probes lose 0.05 to 0.35 (the
+reference vertex's probe 0.68 on PDLP's points, PDLP's 0.55 on the vertex, the
+interior point's 0.39). So a head trained on a first-order store at one tolerance is
+served at another without loss, and the solver, not the tolerance, is what the store
+and the head must share; the $10^{-6}$ store is written (70 programs uncertified and
+kept as zero flux) for the training read.
+
+\input{tables/solve_tolerance_transfer}
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

@@ -425,6 +425,14 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w69": (
+        "Round 53, the PDLP store at KKT $10^{-6}$",
+        "The round-33 cell over the pFBA store and over the PDLP store at KKT "
+        "$10^{-4}$ (round 38) as the comparators, against the same cell over the PDLP "
+        "store at KKT $10^{-6}$ written by the transfer read (70 of 1,121 programs "
+        "uncertified within 120 s and kept as zero flux). Batch 32, class weight, 200 "
+        "epochs, seeds 2700 to 2705.",
+    ),
     "w67": (
         "Round 51, the hash seed fixed on the old one-hot code",
         "The round-9 pooled cell (pathway multi-hot and ProtT5, the plain pooled head) "
@@ -1635,10 +1643,20 @@ def solve_tolerance_transfer() -> str | None:
         "pdlp_1e-6": "PDLP $10^{-6}$",
         "pdlp_1e-8": "PDLP $10^{-8}$",
     }
-    # Solvers that certified no program have all-zero vectors; the probe over them is
-    # not a read, so those rows and columns are dropped from the transfer matrix and
-    # reported in the summary table's optimal count.
-    live = [x["solver"] for x in r["solvers"] if x["n_optimal"] > 0]
+    short = {
+        "simplex_exact": "simplex",
+        "ipm_nocross_1e-4": "ipm $10^{-4}$",
+        "ipm_nocross_1e-6": "ipm $10^{-6}$",
+        "ipm_nocross_1e-8": "ipm $10^{-8}$",
+        "pdlp_1e-4": "PDLP $10^{-4}$",
+        "pdlp_1e-6": "PDLP $10^{-6}$",
+        "pdlp_1e-8": "PDLP $10^{-8}$",
+    }
+    # A setting that certified fewer than half the programs served mostly zero
+    # vectors (the interior point at 1e-6 and 1e-8: 112 of 1,121); the probe over them
+    # is not a read of a store, so those rows and columns are dropped from the
+    # matrices and reported in the summary table's optimal count.
+    live = [x["solver"] for x in r["solvers"] if x["n_optimal"] * 2 >= r["n_genes"]]
     pair = {(p["fit"], p["score"]): p for p in r["pairs"]}
     summary_rows = []
     for x in r["solvers"]:
@@ -1659,15 +1677,15 @@ def solve_tolerance_transfer() -> str | None:
             if fit == score:
                 cell = fmt(v, diag_best)
             cells.append(cell)
-        matrix_rows.append(f"    {labels[fit]} & " + " & ".join(cells) + " \\\\")
+        matrix_rows.append(f"    {short[fit]} & " + " & ".join(cells) + " \\\\")
     dist_rows = []
     for fit in live:
         cells = []
         for score in live:
             p = pair[(fit, score)]
             cells.append(f"{p['frac_reactions_moved_gt_0_01_mean'] * 100:.1f}")
-        dist_rows.append(f"    {labels[fit]} & " + " & ".join(cells) + " \\\\")
-    head = " & ".join(labels[s] for s in live)
+        dist_rows.append(f"    {short[fit]} & " + " & ".join(cells) + " \\\\")
+    head = " & ".join(short[s] for s in live)
     n_live = len(live)
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
@@ -1693,7 +1711,7 @@ def solve_tolerance_transfer() -> str | None:
         "and scored on the 195 held-out genes' vectors from the column's, AUROC; the "
         "diagonal is the within-solver read, an off-diagonal cell within a family is the "
         "transfer across tolerance and across families the transfer across point. "
-        "Solvers that certified no program are omitted. Bold marks the highest "
+        "Settings that certified fewer than half the programs are omitted. Bold marks the highest "
         "within-solver probe. Written by \\texttt{solve\\_tolerance\\_transfer.py}.}\n"
         "  \\label{tab:solve-tolerance-transfer}\n"
         f"  \\begin{{tabular}}{{@{{}}p{{34mm}}{'r' * n_live}@{{}}}}\n    \\hline\n"

@@ -650,6 +650,16 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 53: the layer-free cell over the PDLP store at KKT 1e-6, beside the pFBA
+    # store (round 33) and the PDLP 1e-4 store (round 38).
+    "w69": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w54_pathlogpdlp_h12l1p1_e200_s*.json",
+            "w69_pathlogpdlp6_h12l1p1_e200_s*.json",
+        ],
+        ["pathfbapfbalogfree", "pathlogpdlp", "pathlogpdlp6"],
+    ),
     # Rounds 51 and 52: the round-9 pooled cell and the round-33 layer-free cell, each
     # pinned twice, with the hash seed fixed on the old one-hot code (w67) and without
     # it on the fixed code (w68).
@@ -944,6 +954,7 @@ ARM_LABELS = {
     "protpathfbadet2": "the same, pinned, second run",
     "protlogdet1": "layer-free cell on ProtT5 alone (no pathway block), seed 2700, kernels pinned, first run",
     "protlogdet2": "the same, pinned, second run",
+    "pathlogpdlp6": "the round-33 cell over the PDLP store at KKT 1e-6 (70 uncertified rows kept as zero flux)",
     "pathpoolhash1": "round-9 pooled cell, kernels pinned, PYTHONHASHSEED=0, old one-hot code, first run",
     "pathpoolhash2": "the same, second run",
     "pathloghash1": "round-33 layer-free cell, kernels pinned, PYTHONHASHSEED=0, old one-hot code, first run",

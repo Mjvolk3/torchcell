@@ -230,6 +230,19 @@ class NodeEmbeddingBuilder:
             "requires_genome": True,
             "model_name": "solve_log1p_sc",
         },
+        # The pFBA vector reduced by PCA before the node (028 round 44).
+        "solve_log1p_pca64": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_pca64",
+        },
+        "solve_log1p_pca16": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_pca16",
+        },
         "normalized_props": {
             "class": OneHotGraphEmbeddingDataset,
             "root_path": "data/scerevisiae/sgd_gene_graph_hot",

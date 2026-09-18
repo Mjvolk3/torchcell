@@ -45,9 +45,19 @@ class SolveVectorEmbeddingDataset(BaseEmbeddingDataset):
         "solve_log1p_pdlp": "ess_solve_encodings_YPD_pdlp.npz",
         "solve_log1p_sc": "ess_solve_encodings_SC.npz",
     }
-    #: The base class validates ``model_name`` against this name; the stores are the
-    #: "windows" here.
-    MODEL_TO_WINDOW = MODEL_TO_STORE
+    #: Reduced forms (028 round 44): model name -> (the full-vector model it reduces,
+    #: the number of principal components). The components are fitted on the covered
+    #: genes' ``log(1 + |v|)`` rows, centered; every gene's row (the zero row for an
+    #: uncovered gene) is projected onto them, so the embedding is k columns whose
+    #: scale is the store's. The preprocessor then learns 12 weights per component
+    #: rather than per reaction.
+    MODEL_TO_PCA: dict[str, tuple[str, int]] = {
+        "solve_log1p_pca64": ("solve_log1p", 64),
+        "solve_log1p_pca16": ("solve_log1p", 16),
+    }
+    #: The base class validates ``model_name`` against this name; the stores and
+    #: their reductions are the "windows" here.
+    MODEL_TO_WINDOW = {**MODEL_TO_STORE, **MODEL_TO_PCA}
 
     def __init__(
         self,
@@ -58,7 +68,7 @@ class SolveVectorEmbeddingDataset(BaseEmbeddingDataset):
         pre_transform: Callable[..., Any] | None = None,
     ) -> None:
         """Store the genome (its gene set orders the rows) and process."""
-        assert model_name in self.MODEL_TO_STORE, model_name
+        assert model_name in self.MODEL_TO_WINDOW, model_name
         self.genome = genome
         super().__init__(root, model_name, transform, pre_transform)
         self.process()
@@ -78,10 +88,10 @@ class SolveVectorEmbeddingDataset(BaseEmbeddingDataset):
     def store_path(self) -> str:
         """The solve store this embedding is built from."""
         data_root = os.environ["DATA_ROOT"]
+        name = cast(str, self.model_name)
+        base = self.MODEL_TO_PCA[name][0] if name in self.MODEL_TO_PCA else name
         return osp.join(
-            data_root,
-            "data/torchcell/reference_flux",
-            self.MODEL_TO_STORE[cast(str, self.model_name)],
+            data_root, "data/torchcell/reference_flux", self.MODEL_TO_STORE[base]
         )
 
     @property
@@ -96,7 +106,28 @@ class SolveVectorEmbeddingDataset(BaseEmbeddingDataset):
         payload = np.load(self.store_path, allow_pickle=False)
         store_genes = [str(g) for g in payload["genes"]]
         v = payload["v_deletion"].astype(np.float32)
-        enc = torch.from_numpy(np.log1p(np.abs(v)))
+        enc_np = np.log1p(np.abs(v)).astype(np.float64)
+        name = cast(str, self.model_name)
+        reduction: dict[str, Any] = {}
+        if name in self.MODEL_TO_PCA:
+            k = self.MODEL_TO_PCA[name][1]
+            mean = enc_np.mean(axis=0, keepdims=True)
+            centered = enc_np - mean
+            _u, s, vt = np.linalg.svd(centered, full_matrices=False)
+            components = vt[:k]
+            explained = float((s[:k] ** 2).sum() / (s**2).sum())
+            zero_row = (np.zeros((1, enc_np.shape[1])) - mean) @ components.T
+            enc = torch.from_numpy((centered @ components.T).astype(np.float32))
+            uncovered_row = torch.from_numpy(zero_row.astype(np.float32))[0]
+            reduction = {
+                "n_components": k,
+                "explained_variance_fraction": explained,
+                "singular_values": [float(x) for x in s[:k]],
+                "fitted_on": "the covered genes' log(1 + |v|) rows, centered",
+            }
+        else:
+            enc = torch.from_numpy(enc_np.astype(np.float32))
+            uncovered_row = torch.zeros(enc.shape[1], dtype=torch.float)
         row_of = {g: i for i, g in enumerate(store_genes)}
         data_list = []
         covered = 0
@@ -105,7 +136,7 @@ class SolveVectorEmbeddingDataset(BaseEmbeddingDataset):
                 row = enc[row_of[gene_id]]
                 covered += 1
             else:
-                row = torch.zeros(enc.shape[1], dtype=torch.float)
+                row = uncovered_row
             data = Data(id=gene_id)
             data.embeddings = {self.model_name: row.unsqueeze(0)}
             data_list.append(data)
@@ -122,6 +153,7 @@ class SolveVectorEmbeddingDataset(BaseEmbeddingDataset):
                     ).hexdigest(),
                     "store_provenance": json.loads(str(payload["provenance"])),
                     "encoding": "log(1 + |v|), v in mmol/gDW/h as stored",
+                    "reduction": reduction,
                     "n_columns": int(enc.shape[1]),
                     "n_genes": len(data_list),
                     "n_genes_covered": covered,
@@ -143,7 +175,7 @@ if __name__ == "__main__":
         go_root=osp.join(data_root, "data/go"),
         overwrite=False,
     )
-    for name in SolveVectorEmbeddingDataset.MODEL_TO_STORE:
+    for name in SolveVectorEmbeddingDataset.MODEL_TO_WINDOW:
         ds = SolveVectorEmbeddingDataset(
             root=osp.join(data_root, "data/scerevisiae/solve_vector"),
             genome=genome,

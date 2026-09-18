@@ -75,6 +75,43 @@ ARMS: dict[str, list[str]] = {
     "ProtT5 + affine (round 5)": ["w16_fba_h12l1p1_e200_s*.json"],
 }
 
+#: Arm label -> (graph-baselines result file, the row's ``inputs``): cheap models whose
+#: rows carry per-gene logits (written with ``--save-logits``), one cell per seed.
+GRAPH_ARMS: dict[str, tuple[str, str]] = {
+    "GO convolution, 400 epochs": ("graph_baselines_go400.json", "GO (400 epochs)")
+}
+
+
+def load_graph_rows(
+    fname: str, inputs: str
+) -> list[tuple[dict[str, float], dict[str, int]]]:
+    """Per-seed gene -> logit and gene -> label from a graph-baselines row, if saved."""
+    path = osp.join(RESULTS, fname)
+    if not osp.isfile(path):
+        return []
+    with open(path) as fh:
+        report = json.load(fh)
+    labels = split_labels()
+    out: list[tuple[dict[str, float], dict[str, int]]] = []
+    for row in report["rows"]:
+        if row["inputs"] != inputs or not row.get("test_genes"):
+            continue
+        for logits in row["test_logits"]:
+            lg = dict(zip(row["test_genes"], [float(v) for v in logits], strict=True))
+            out.append((lg, {g: labels[g] for g in lg}))
+    return out
+
+
+def split_labels() -> dict[str, int]:
+    """Gene -> label of the released split (the held-out genes' labels)."""
+    import gzip
+
+    with gzip.open(
+        osp.join(RESULTS, "splits", "ess_fcl_val0.2_s0.json.gz"), "rt"
+    ) as fh:
+        split = json.load(fh)
+    return {g: int(v) for g, v in split["labels"].items()}
+
 
 class GeneRow(BaseModel):
     """One held-out gene's misrank per arm and what the gene is."""
@@ -255,6 +292,14 @@ def main() -> None:
                 cells.append(misrank(logits, labels))
         assert cells, f"no dumps for {arm}"
         per_arm[arm] = cells
+    for arm, (fname, inputs) in GRAPH_ARMS.items():
+        cells = []
+        for logits, labels in load_graph_rows(fname, inputs):
+            assert labels_all is None or labels == labels_all, arm
+            labels_all = labels
+            cells.append(misrank(logits, labels))
+        if cells:
+            per_arm[arm] = cells
     assert labels_all is not None
     genes = sorted(labels_all)
     n_path, n_go = gene_annotations()

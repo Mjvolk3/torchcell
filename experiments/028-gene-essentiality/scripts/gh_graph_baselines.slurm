@@ -30,4 +30,5 @@ export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
 export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
 echo "host $(hostname) gpu ${CUDA_VISIBLE_DEVICES:-none}; arms ${ARMS:?set ARMS}"
-python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS"
+# EXTRA_ARGS: further flags, e.g. --save-logits.
+python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS" ${EXTRA_ARGS:-}

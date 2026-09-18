@@ -481,6 +481,14 @@ def main() -> None:
             "400-epoch budget."
         ),
     )
+    parser.add_argument(
+        "--save-logits",
+        action="store_true",
+        help=(
+            "Keep each row's per-gene held-out logits (one list per seed) in the "
+            "result file, for hard_genes.py; off by default to keep the files small."
+        ),
+    )
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.arms in ("folds", "go_folds"):
@@ -741,7 +749,12 @@ def main() -> None:
                     "AUROC; scored once on the 195 held-out genes"
                 ),
                 "rows": [
-                    r.model_dump(exclude={"test_genes", "test_logits"}) for r in rows
+                    r.model_dump(
+                        exclude=set()
+                        if args.save_logits
+                        else {"test_genes", "test_logits"}
+                    )
+                    for r in rows
                 ],
             },
             fh,

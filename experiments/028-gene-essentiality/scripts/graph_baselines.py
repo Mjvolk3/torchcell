@@ -472,6 +472,7 @@ def main() -> None:
             "go400",
             "go800",
             "go_folds",
+            "go_rel",
         ),
         help=(
             "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
@@ -619,6 +620,55 @@ def main() -> None:
                 )
             )
         out = osp.join(RESULTS, f"graph_baselines_{args.arms}.json")
+    elif args.arms == "go_rel":
+        # The typed-edge models on GO alone at 400 epochs (RGAT beat convolution on the
+        # three inputs), and convolution on GO with the pathway multi-hot.
+        go = embedding("go", gene_ids)
+        pathways = embedding("pathways", gene_ids)
+        ei = edges(graphs["union of nine"], index)
+        ei_typed, et_typed = typed_edges(graphs, index)
+        for kind in ("RGCN", "RGAT"):
+            rows.append(
+                run_arm(
+                    kind,
+                    "nine typed",
+                    "GO (400 epochs)",
+                    go,
+                    ei_typed,
+                    split,
+                    index,
+                    device,
+                    edge_type=et_typed,
+                    epochs=400,
+                )
+            )
+        rows.append(
+            run_arm(
+                "GCN",
+                "union of nine",
+                "GO+pathways (400 epochs)",
+                np.concatenate([go, pathways], axis=1),
+                ei,
+                split,
+                index,
+                device,
+                epochs=400,
+            )
+        )
+        rows.append(
+            run_arm(
+                "GraphSAGE",
+                "union of nine",
+                "GO (400 epochs)",
+                go,
+                ei,
+                split,
+                index,
+                device,
+                epochs=400,
+            )
+        )
+        out = osp.join(RESULTS, "graph_baselines_go_rel.json")
     elif args.arms == "extra":
         chrom = embedding("normalized_chrom_pathways", gene_ids)
         fba = fba_ratios(gene_ids)

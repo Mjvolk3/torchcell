@@ -394,6 +394,13 @@ ROUND_CAPTIONS = {
         "(the comparators), against the statistics beside the $\\log(1 + |v|)$ vector. "
         "Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w57": (
+        "Round 41, a hidden layer in the affine over the log1p vector",
+        "Round 33's cell, the linear affine over the media ratios and the "
+        "$\\log(1 + |v|)$ vector (the comparator), against the same cell with one GELU "
+        "hidden layer of width 64 or 256 between that input and the logit. Batch 32, "
+        "class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
     "w48": (
         "Round 32, the unfit seed with the card's kernels pinned",
         "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "

@@ -401,6 +401,13 @@ ROUND_CAPTIONS = {
         "hidden layer of width 64 or 256 between that input and the logit. Batch 32, "
         "class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w58": (
+        "Round 42, the store on synthetic complete medium",
+        "Round 33's cell over the pFBA store built on YPD (the comparator) against the "
+        "same cell over the pFBA store built on synthetic complete medium, the solve's "
+        "exchanges set to SC and everything else the same. Batch 32, class weight, 200 "
+        "epochs, seeds 2700 to 2705.",
+    ),
     "w48": (
         "Round 32, the unfit seed with the card's kernels pinned",
         "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "

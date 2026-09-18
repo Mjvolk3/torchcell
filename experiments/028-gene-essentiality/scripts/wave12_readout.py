@@ -610,6 +610,15 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["pathfbapfbalogfree", "pathloghead64", "pathloghead256"],
     ),
+    # Round 42: the round-33 cell over the pFBA store built on synthetic complete
+    # medium, against the YPD store.
+    "w58": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w58_pathlogsc_h12l1p1_e200_s*.json",
+        ],
+        ["pathfbapfbalogfree", "pathlogsc"],
+    ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
     "w44": (
@@ -773,6 +782,7 @@ ARM_LABELS = {
     "pathlogstats": "the round-33 cell with the eight wild-type solve statistics beside the log1p vector",
     "pathloghead64": "the round-33 cell with a GELU hidden layer of width 64 in the affine",
     "pathloghead256": "the round-33 cell with a GELU hidden layer of width 256 in the affine",
+    "pathlogsc": "the round-33 cell over the pFBA store built on synthetic complete medium (SC) instead of YPD",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",

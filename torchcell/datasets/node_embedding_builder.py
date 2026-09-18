@@ -8,6 +8,7 @@ from torchcell.datasets.codon_frequency import CodonFrequencyDataset
 from torchcell.datasets.codon_language_model import CalmDataset
 from torchcell.datasets.esm2 import Esm2Dataset
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
+from torchcell.datasets.go_term_hot import GOTermEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 
 # Import from sibling submodules directly, not the package __init__, to avoid a
@@ -167,6 +168,39 @@ class NodeEmbeddingBuilder:
             "root_path": "data/scerevisiae/sgd_gene_graph_hot",
             "requires_graph": True,
             "model_name": "chromosome",
+        },
+        # Gene Ontology multi-hot (028 round 26): the SGD annotations propagated to
+        # ancestors (is_a and part_of) over terms with ten or more genes, the direct
+        # annotations alone, and one namespace at a time.
+        "go": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go",
+        },
+        "go_direct": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go_direct",
+        },
+        "go_bp": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go_bp",
+        },
+        "go_mf": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go_mf",
+        },
+        "go_cc": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go_cc",
         },
         "normalized_props": {
             "class": OneHotGraphEmbeddingDataset,

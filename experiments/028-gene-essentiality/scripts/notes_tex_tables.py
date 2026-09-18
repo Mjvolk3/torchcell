@@ -362,6 +362,16 @@ ROUND_CAPTIONS = {
         "2,709 gene-owned fluxes, and the head over the flux of the GEM-box solve with "
         "no learned ceilings. Constraint scale 0, batch 32, class weight, 200 epochs.",
     ),
+    "w42": (
+        "Round 26, the Gene Ontology multi-hot as a backbone input",
+        "The round-5 affine on ProtT5, the round-9 indicator cell and the round-22 "
+        "pathway cell (the comparators), against the round-9 recipe with the GO "
+        "multi-hot beside ProtT5 (the SGD annotations propagated to their ancestors "
+        "over terms with ten or more genes, 2,362 columns), the biological-process "
+        "namespace alone beside ProtT5 (1,580 columns), the GO multi-hot alone, and GO "
+        "with the pathway multi-hot beside ProtT5. Batch 32, class weight, 200 epochs, "
+        "seeds 2700 to 2702.",
+    ),
     "w39": (
         "Round 23, the gated module forms on the ladder's top input",
         "The pooled cell on ProtT5 with the pathway multi-hot and no readout (the "

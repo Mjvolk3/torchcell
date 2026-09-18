@@ -108,6 +108,13 @@ ENCODINGS: dict[str, tuple[str, ...]] = {
     "random_8192": (),
     "codon_frequency": ("codon_frequency",),
     "normalized_chrom_pathways": ("normalized_chrom_pathways",),
+    # The indicator's blocks and the GO multi-hots (round 22 split, round 26), so the
+    # ladder has a linear rung on each annotation vector alone.
+    "pathways": ("pathways",),
+    "chromosome": ("chromosome",),
+    "go": ("go",),
+    "go_direct": ("go_direct",),
+    "go_bp": ("go_bp",),
     "nt_window_5979": ("nt_window_5979",),
     "nt_window_5979_max": ("nt_window_5979_max",),
     "nt_window_three_prime_5979": ("nt_window_three_prime_5979",),

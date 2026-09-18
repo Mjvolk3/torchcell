@@ -460,6 +460,25 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "lpoffgateflux",
         ],
     ),
+    # Round 26: the GO multi-hot as a backbone input on the round-9 recipe, against the
+    # round-5 affine on ProtT5, the round-22 pathway cell, and the round-9 indicator.
+    "w42": (
+        [
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w20_chromprotfba_h12l1p1_e200_s270[0-2].json",
+            "w38_protpathfba_h12l1p1_e200_s*.json",
+            "w42_*_e200_s*.json",
+        ],
+        [
+            "fba",
+            "chromprotfba",
+            "protpathfba",
+            "protgofba",
+            "protgobpfba",
+            "gofba",
+            "protgopathfba",
+        ],
+    ),
     # Round 16: the round-9 backbone with the round-11 affine.
     "w27": (
         [
@@ -590,6 +609,10 @@ ARM_LABELS = {
     "protpropsfba": "seven gene properties + ProtT5 backbone + FBA ratios",
     "pathfba": "pathway multi-hot backbone + FBA ratios",
     "pathpool": "pathway multi-hot + ProtT5 backbone, no readout",
+    "protgofba": "GO multi-hot (propagated, 2,362) + ProtT5 backbone + FBA ratios",
+    "protgobpfba": "GO biological process (1,580) + ProtT5 backbone + FBA ratios",
+    "gofba": "GO multi-hot backbone + FBA ratios",
+    "protgopathfba": "GO + pathway multi-hots + ProtT5 backbone + FBA ratios",
     "pathlpoffgate": "pathway multi-hot + ProtT5; gated column + context, the layer that solves, GEM box",
     "pathlpelgate100": "pathway multi-hot + ProtT5; gated column + context, elastic solve, x100",
     "pathlpelgateflux": "pathway multi-hot + ProtT5; gated + a head over the solved flux (all reactions)",

@@ -452,7 +452,7 @@ def main() -> None:
     parser.add_argument(
         "--arms",
         default="base",
-        choices=("base", "extra", "folds", "relational", "split"),
+        choices=("base", "extra", "folds", "relational", "split", "go"),
         help=(
             "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
             "GCN and GATv2. extra: graph convolution on the union with the transformer's "
@@ -533,6 +533,35 @@ def main() -> None:
                 run_arm("GCN", "union of nine", inputs, x, ei, split, index, device)
             )
         out = osp.join(RESULTS, "graph_baselines_split.json")
+    elif args.arms == "go":
+        # THE GO MULTI-HOT (round 26): propagated over terms with ten or more genes,
+        # the biological-process namespace alone, and the direct annotations, each
+        # beside ProtT5 and the ratios; GO alone with the ratios and alone; and GO with
+        # the pathway multi-hot, on the MLP and on GCN.
+        go = embedding("go", gene_ids)
+        go_bp = embedding("go_bp", gene_ids)
+        go_direct = embedding("go_direct", gene_ids)
+        pathways = embedding("pathways", gene_ids)
+        fba = fba_ratios(gene_ids)
+        feats_go = {
+            "ProtT5+GO+FBA ratios": np.concatenate([t5, go, fba], axis=1),
+            "ProtT5+GO BP+FBA ratios": np.concatenate([t5, go_bp, fba], axis=1),
+            "ProtT5+GO direct+FBA ratios": np.concatenate([t5, go_direct, fba], axis=1),
+            "GO+FBA ratios": np.concatenate([go, fba], axis=1),
+            "GO": go,
+            "ProtT5+GO+pathways+FBA ratios": np.concatenate(
+                [t5, go, pathways, fba], axis=1
+            ),
+        }
+        ei = edges(graphs["union of nine"], index)
+        for inputs, x in feats_go.items():
+            rows.append(
+                run_arm("MLP", "none", inputs, x, no_edges, split, index, device)
+            )
+            rows.append(
+                run_arm("GCN", "union of nine", inputs, x, ei, split, index, device)
+            )
+        out = osp.join(RESULTS, "graph_baselines_go.json")
     elif args.arms == "extra":
         chrom = embedding("normalized_chrom_pathways", gene_ids)
         fba = fba_ratios(gene_ids)

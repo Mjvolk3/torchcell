@@ -27,3 +27,9 @@ created: 1789365911262
 - [x] IGB disjoint runs synced (20 offline runs) and read at two to three seeds: control window means 0.140 / 0.144 / 0.125, composite 0.215 / 0.235, random-vector matched control 0.151, flanks 100 ep 0.157; report republished ([[experiments.025-solid-growth.scripts.equivariant_cell_graph_transformer]])
 - [x] 2026.09.16 synced mmli 2397848 / 2397876; composite Q at three seeds (window mean 0.218 vs control 0.136); composite+fitness 0.209 at one seed [[experiments.025-solid-growth.scripts.disjoint_embedding_readout]]
 - [x] 2026.09.16 Delta: fit_014 seeds 2 and 3 and lambda-0 seed 2 completed; joint arm 0.4523 / 0.4476 / 0.4522 max; 30 jobs still pending, heads estimated Wed 09-17
+
+## 2026.09.18
+
+- [x] S3 closure seed 1 (mmli 2408888, `cgt_s3_r_kl_fit_031`) synced at epoch 4 as W&B group `s3_fit_031` (rank 0 `kj03xx8y`): cold epoch 0 4 h 21 min, epoch 1 on 36 min 24 s, projected end Sunday morning inside the 4-day clock. Partial, no result yet ([[experiments.025-solid-growth.scripts.igb_mmli_cgt]])
+- [x] Order-1 fitness was never logged: the per-order counter only advanced for the interaction collection and gated the fitness collection on it, so the 5,694 singles' fitness metrics were dropped each epoch. Fixed in 2e96f24f (own count per collection, key `n_records/<label>/order<k>`, test added); replicates resubmitted from IGB worktree `-h` as 2409031 (seed 2) and 2409032 (seed 3)
+- [ ] Read seed 1's order-1 fitness from its checkpoints once it finishes, since the running job carries the old logging

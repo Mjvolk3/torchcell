@@ -1155,10 +1155,10 @@ runs are.
 
 \input{tables/round_w48}
 
-\tcfigfit[1.0]{figures/w48_readout_2026-09-18-14-33-34.pdf}{\textbf{Round 32, seed 2701
-  with the card's kernels pinned and free, and three more pinned seeds.} \textbf{a},
+\tcfigfit[1.0]{figures/w48_readout_2026-09-18-16-09-37.pdf}{\textbf{Round 32, seed 2701
+  with the card's kernels pinned and free, and the other five seeds pinned.} \textbf{a},
   Validation AUROC per epoch for the four runs of seed 2701, the pinned runs of seeds
-  2700, 2702 and 2703, and the six free round-27 cells. \textbf{b}, The median absolute epoch-to-epoch step per cell against
+  2700 and 2702 to 2705, and the six free round-27 cells. \textbf{b}, The median absolute epoch-to-epoch step per cell against
   the validation size. \textbf{c}, Held-out AUROC per cell (points) and the gene
   bootstrap (square with interval), beside FBA on four media, Flux Cone Learning and
   the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
@@ -1178,10 +1178,12 @@ about five percent of wall time (205 minutes per cell against 195 at four per ca
 With the run reproducible, whether a seed fits becomes a property of the seed, and
 the fit rate over seeds is round 32's second read: pinned once each, seeds 2700, 2702
 and 2703 fit at epochs 49, 65 and 65 and read 0.897, 0.908 and 0.901 (job 2413; mean
-0.902 over the three, pooled 0.911 [0.86, 0.95]), so with seed 2701's 0.894 four
-pinned seeds fit four times, at the level of the free runs of the same seeds (0.902,
-0.897, 0.917), at 157 minutes per cell at three per card; seeds 2704 and 2705 run at
-the time of writing (job 2419).
+0.902 over the three), and seeds 2704 and 2705 fit at epochs 40 and 57 and read 0.913
+and 0.901 (job 2419), so the five pinned seeds beside 2701 read 0.897 to 0.913 (mean
+0.904, sd 0.006; pooled 0.911 [0.86, 0.95]) and six pinned seeds fit six times where
+the six free runs of the same seeds fit five (0.882 mean with the miss, 0.917
+pooled). Pinned, the form's number is the seed's, at 141 to 157 minutes per cell at
+two or three per card.
 
 \subsection{Round 31: the layer-free form\secstatus{todo}}
 \label{sec:round31}

@@ -1,6 +1,6 @@
 {
   "round": "w48",
-  "n_cells": 13,
+  "n_cells": 15,
   "cells": [
     {
       "stem": "w43_pathlpoffgateflux_h12l1p1_e200_s2700",
@@ -287,6 +287,50 @@
       "val_curve_range": 0.23789473684210527,
       "wall_time_min": 158.33083724180858,
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/1mtz8eav"
+    },
+    {
+      "stem": "w48_pathlpoffgatefluxdet_h12l1p1_e200_s2704",
+      "arm": "pathlpoffgatefluxdet",
+      "seed": 2704,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22772,
+      "n_val": 158,
+      "select_epoch": 38,
+      "select_val_auroc": 0.8520300751879699,
+      "test_auroc_pinned": 0.9134539732494099,
+      "test_auroc_ci_low": 0.8663252591706538,
+      "test_auroc_ci_high": 0.953978166797797,
+      "test_accuracy_pinned": 0.7435897435897436,
+      "test_recall_essential_pinned": 0.9354838709677419,
+      "median_abs_step": 0.014135338345864668,
+      "val_curve_range": 0.2327819548872181,
+      "wall_time_min": 141.3426376859347,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/uyzei6su"
+    },
+    {
+      "stem": "w48_pathlpoffgatefluxdet_h12l1p1_e200_s2705",
+      "arm": "pathlpoffgatefluxdet",
+      "seed": 2705,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22772,
+      "n_val": 158,
+      "select_epoch": 56,
+      "select_val_auroc": 0.849624060150376,
+      "test_auroc_pinned": 0.9012588512981904,
+      "test_auroc_ci_low": 0.8514884090758286,
+      "test_auroc_ci_high": 0.9442041394628716,
+      "test_accuracy_pinned": 0.764102564102564,
+      "test_recall_essential_pinned": 0.8387096774193549,
+      "median_abs_step": 0.01624060150375939,
+      "val_curve_range": 0.23037593984962412,
+      "wall_time_min": 141.74517163038254,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/oex7fxqj"
     }
   ],
   "arms": [
@@ -413,28 +457,34 @@
     {
       "arm": "pathlpoffgatefluxdet",
       "label": "round-27 cell, the card's kernels pinned, one run per seed (seeds 2700, 2702 to 2705)",
-      "n_seeds": 3,
+      "n_seeds": 5,
       "seeds": [
         2700,
         2702,
-        2703
+        2703,
+        2704,
+        2705
       ],
-      "test_auroc_mean": 0.901914503015998,
-      "test_auroc_sd": 0.0052644382811817296,
+      "test_auroc_mean": 0.9040912667191188,
+      "test_auroc_sd": 0.006428965161273736,
       "test_auroc_values": [
         0.8971282454760031,
         0.9075531077891424,
-        0.9010621557828482
+        0.9010621557828482,
+        0.9134539732494099,
+        0.9012588512981904
       ],
-      "pooled_auroc": 0.911093627065303,
-      "pooled_ci_low": 0.863837209817473,
-      "pooled_ci_high": 0.9539139955365541,
-      "median_abs_step_mean": 0.01624060150375939,
+      "pooled_auroc": 0.9107002360346184,
+      "pooled_ci_low": 0.863192064372919,
+      "pooled_ci_high": 0.9531778955060285,
+      "median_abs_step_mean": 0.015819548872180445,
       "n_val": 158,
       "select_epochs": [
         41,
         58,
-        60
+        60,
+        38,
+        56
       ]
     }
   ],

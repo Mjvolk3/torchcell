@@ -870,3 +870,9 @@ Round 39 (job 2420, pack `w55_pathlogpdlpcv`): the PDLP store on the five folds,
 ## 2026.09.18 - Round 39 read: the PDLP store under the reported protocol
 
 Job 2420 (27 min; `cv_ensemble_readout.py --prefix w55_pathlogpdlpcv`): folds 0.921, 0.859, 0.887, 0.878, 0.907 (mean 0.890), ensemble 0.909 [0.86, 0.95], the interior-point store's single-seed 0.909, against the pFBA store's 0.920; fold 1 selects late (epoch 187) and low on both first-order stores. Fold family 0.915 alone, 0.949 with the GO fold models. Written into `sec:round36` and the findings.
+
+## 2026.09.18 - Round 40 read, and the pinned seeds
+
+Round 40 (job 2421, 31 min; `wave12_readout.py --round w56`): the eight solve statistics beside the log1p vector read 0.882, 0.890, 0.897, 0.893, 0.892, 0.879 (mean 0.889, pooled 0.891 [0.83, 0.95]), under the vector alone (0.908 / 0.912) on every seed; they had lifted the standardized vector from 0.871 to 0.901. The store the cell wants is the encoded vector alone. Table `round_w56`, figure `w56_readout_2026-09-18-14-32-16`, appended to `sec:round33`.
+
+Pinned seeds (job 2413, 157 min per cell at three per card): seeds 2700, 2702, 2703 with the kernels pinned fit at epochs 49, 65, 65 and read 0.897, 0.908, 0.901 (pooled 0.911); with seed 2701's 0.894, four pinned seeds fit four times, at the level of the free runs of the same seeds (0.902, 0.897, 0.917). The round-32 figure is now `w48_readout_2026-09-18-14-33-34` (the readout carries the free six-seed cells and the pinned seeds). Seeds 2704 and 2705 (job 2419) run.

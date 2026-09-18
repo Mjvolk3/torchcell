@@ -425,6 +425,24 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w64": (
+        "Round 48, the capacity of the layer-free cell",
+        "The round-33 cell (width 12, one block, one-layer preprocessor, the "
+        "$\\log(1 + |v|)$ vector in the affine) against the same cell at width 24, with "
+        "two transformer blocks, and at width 24 with the two-layer preprocessor (the "
+        "round-28 wide recipe). Batch 32, class weight, 200 epochs; seeds 2700 to 2705 "
+        "for the comparator, 2700 to 2702 for the rest.",
+    ),
+    "w63": (
+        "Round 47, the GO multi-hot beside the layer-free solve in one transformer",
+        "The round-33 cell and the round-26 GO cells (GO beside ProtT5, and GO beside "
+        "the pathway block and ProtT5, the four ratios only) as the comparators, "
+        "against GO beside the pathway block and ProtT5 with the $\\log(1 + |v|)$ vector "
+        "in the affine, GO in place of the pathway block with the vector, and GO beside "
+        "the pathway block and ProtT5 without the vector run in the same pack. Batch 32, "
+        "class weight, 200 epochs; seeds 2700 to 2705 for the round-33 cell, 2700 to "
+        "2702 for the rest.",
+    ),
     "w62": (
         "Round 46, bracketing the pooled cell's divergence",
         "Two pinned pairs on seed 2700: the round-22 affine cell (pathway multi-hot and "
@@ -1565,9 +1583,107 @@ def solve_tolerance() -> str | None:
     return write("solve_tolerance", body, "results/solve_tolerance_read.json")
 
 
+def solve_tolerance_transfer() -> str | None:
+    """The same solver at three tolerances: a probe fitted on one, scored on another."""
+    src = osp.join(RESULTS, "solve_tolerance_transfer.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    labels = {
+        "simplex_exact": "dual simplex, default (anchor)",
+        "ipm_nocross_1e-4": "interior point $10^{-4}$",
+        "ipm_nocross_1e-6": "interior point $10^{-6}$",
+        "ipm_nocross_1e-8": "interior point $10^{-8}$",
+        "pdlp_1e-4": "PDLP $10^{-4}$",
+        "pdlp_1e-6": "PDLP $10^{-6}$",
+        "pdlp_1e-8": "PDLP $10^{-8}$",
+    }
+    # Solvers that certified no program have all-zero vectors; the probe over them is
+    # not a read, so those rows and columns are dropped from the transfer matrix and
+    # reported in the summary table's optimal count.
+    live = [x["solver"] for x in r["solvers"] if x["n_optimal"] > 0]
+    pair = {(p["fit"], p["score"]): p for p in r["pairs"]}
+    summary_rows = []
+    for x in r["solvers"]:
+        summary_rows.append(
+            f"    {labels[x['solver']]} & {x['n_optimal']}/{r['n_genes']} & "
+            f"{x['seconds_median']:.2f} & {x['iterations_median']:.0f} & "
+            f"{x['growth_ratio_max_abs_diff_vs_reference']:.1e} & "
+            f"{x['growth_ratio_auroc_test']:.3f} \\\\"
+        )
+    diag_best = max(pair[(s, s)]["probe_auroc_test"] for s in live)
+    matrix_rows = []
+    for fit in live:
+        cells = []
+        for score in live:
+            p = pair[(fit, score)]
+            v = p["probe_auroc_test"]
+            cell = f"{v:.3f}"
+            if fit == score:
+                cell = fmt(v, diag_best)
+            cells.append(cell)
+        matrix_rows.append(f"    {labels[fit]} & " + " & ".join(cells) + " \\\\")
+    dist_rows = []
+    for fit in live:
+        cells = []
+        for score in live:
+            p = pair[(fit, score)]
+            cells.append(f"{p['frac_reactions_moved_gt_0_01_mean'] * 100:.1f}")
+        dist_rows.append(f"    {labels[fit]} & " + " & ".join(cells) + " \\\\")
+    head = " & ".join(labels[s] for s in live)
+    n_live = len(live)
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The solve across tolerances]{The round-27 program for the 1,121 "
+        f"labeled genes under HiGHS {r['highs_version']}'s dual simplex, its interior "
+        "point without crossover and its PDLP, the last two at KKT tolerances "
+        "$10^{-4}$, $10^{-6}$ and $10^{-8}$, one thread each, "
+        f"{r['time_limit_s']:.0f} s per solve. ``Optimal'' counts the programs the "
+        "solver certified; a program it did not certify keeps the zero flux. ``s'' and "
+        "``iterations'' are medians per solve; ``growth diff.'' is the largest absolute "
+        "difference of the knockout-to-wild-type growth ratio from the simplex's, and "
+        "``growth AUROC'' scores $1 - $ that ratio on the 195 held-out genes. Written "
+        "by \\texttt{solve\\_tolerance\\_transfer.py}.}\n"
+        "  \\label{tab:solve-tolerance-transfer-solvers}\n"
+        "  \\begin{tabular}{@{}p{40mm}rrrrr@{}}\n    \\hline\n"
+        "    solver & optimal & s & iterations & growth diff. & growth AUROC \\\\\n"
+        "    \\hline\n" + "\n".join(summary_rows) + "\n    \\hline\n  \\end{tabular}\n"
+        "\\end{table}\n\n"
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The probe across tolerances]{A logistic regression over "
+        "$\\log(1 + |v|)$ ($C = 0.01$, balanced, standardized on the fitting solver's "
+        "training genes) fitted on the 629 training genes' vectors from the row's solver "
+        "and scored on the 195 held-out genes' vectors from the column's, AUROC; the "
+        "diagonal is the within-solver read, an off-diagonal cell within a family is the "
+        "transfer across tolerance and across families the transfer across point. "
+        "Solvers that certified no program are omitted. Bold marks the highest "
+        "within-solver probe. Written by \\texttt{solve\\_tolerance\\_transfer.py}.}\n"
+        "  \\label{tab:solve-tolerance-transfer}\n"
+        f"  \\begin{{tabular}}{{@{{}}p{{34mm}}{'r' * n_live}@{{}}}}\n    \\hline\n"
+        f"    fitted on / scored on & {head} \\\\\n    \\hline\n"
+        + "\n".join(matrix_rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n\n"
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The vectors across tolerances]{The mean percentage of the 4,131 "
+        "reactions whose $\\log(1 + |v|)$ differs by more than 0.01 between the row's "
+        "and the column's solver, over the 1,121 programs. Written by "
+        "\\texttt{solve\\_tolerance\\_transfer.py}.}\n"
+        "  \\label{tab:solve-tolerance-transfer-moved}\n"
+        f"  \\begin{{tabular}}{{@{{}}p{{34mm}}{'r' * n_live}@{{}}}}\n    \\hline\n"
+        f"    solver & {head} \\\\\n    \\hline\n"
+        + "\n".join(dist_rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "solve_tolerance_transfer", body, "results/solve_tolerance_transfer.json"
+    )
+
+
 def main() -> None:
     paths = [
         wl_test(),
+        solve_tolerance_transfer(),
         solve_tolerance(),
         store_stats(),
         graph_baselines(),

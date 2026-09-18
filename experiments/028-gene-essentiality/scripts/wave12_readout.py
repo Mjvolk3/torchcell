@@ -650,6 +650,40 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 48: the capacity of the layer-free cell: width 24; two transformer layers;
+    # width 24 with the two-layer preprocessor (the round-28 wide recipe); beside the
+    # round-33 cell.
+    "w64": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w64_pathlogh24_h24l1p1_e200_s*.json",
+            "w64_pathlogl2_h12l2p1_e200_s*.json",
+            "w64_pathlogwide_h24l1p2_e200_s*.json",
+        ],
+        ["pathfbapfbalogfree", "pathlogh24", "pathlogl2", "pathlogwide"],
+    ),
+    # Round 47: the GO multi-hot beside the layer-free solve in one transformer: GO +
+    # pathway + ProtT5 with the log1p vector in the affine; GO in place of the pathway
+    # block with the vector; GO + pathway + ProtT5 without the vector (the control);
+    # beside the round-33 cell and the round-26 GO cells.
+    "w63": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w42_protgofba_h12l1p1_e200_s*.json",
+            "w42_protgopathfba_h12l1p1_e200_s*.json",
+            "w63_pathgofba_h12l1p1_e200_s*.json",
+            "w63_protgolog_h12l1p1_e200_s*.json",
+            "w63_pathgolog_h12l1p1_e200_s*.json",
+        ],
+        [
+            "pathfbapfbalogfree",
+            "protgofba",
+            "protgopathfba",
+            "pathgofba",
+            "protgolog",
+            "pathgolog",
+        ],
+    ),
     # Round 46: bracketing the pooled cell's divergence under the pinned kernels: the
     # affine cell (no solve columns) pinned twice, and the layer-free cell on ProtT5
     # alone (no pathway block) pinned twice.
@@ -851,6 +885,12 @@ ARM_LABELS = {
     "protpathfbadet2": "the same, pinned, second run",
     "protlogdet1": "layer-free cell on ProtT5 alone (no pathway block), seed 2700, kernels pinned, first run",
     "protlogdet2": "the same, pinned, second run",
+    "pathgolog": "GO multi-hot + pathway multi-hot + ProtT5, the log(1 + |v|) vector in the affine, no layer",
+    "protgolog": "GO multi-hot + ProtT5 (no pathway block), the log(1 + |v|) vector in the affine",
+    "pathgofba": "GO multi-hot + pathway multi-hot + ProtT5, the four ratios only (round 47 control)",
+    "pathlogh24": "the round-33 cell at width 24",
+    "pathlogl2": "the round-33 cell with two transformer layers",
+    "pathlogwide": "the round-33 cell at width 24 with the two-layer preprocessor",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",

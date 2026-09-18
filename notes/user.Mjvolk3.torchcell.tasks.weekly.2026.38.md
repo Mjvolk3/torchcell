@@ -40,3 +40,5 @@ created: 1789365911262
 - [x] 029 deletion-only build prepared: query validated on the served graph (deletion predicate, SynthLethDB self-pairs dropped by node count), no dedup stage, root on /db; launched under slurm ([[experiments.029-solid-growth-ko]])
 - [ ] Label policy at read time (precedence Kuzmin > Costanzo 30 C > 26 C, converted 0 only without a measurement, Stouffer over source p) before any 029 training
 - [ ] 025 build intermediates archived to /bulk (tar.zst, in progress); delete from /db once verified
+- [ ] 029 essentiality-overlap arm: train S3 (pilot S2) minus every record containing a gene of the 028 `ess_fcl_val0.2_s0` val/test set (353 genes), trigenic splits unchanged, essentiality AUROC on the 195 test genes from predicted single-deletion fitness, 3 seeds x {table, composite}; plan in [[experiments.029-solid-growth-ko]]
+- [ ] Port the additive null to 029 (policy label table, log-additive fitness model, interaction ridge, recompute null)

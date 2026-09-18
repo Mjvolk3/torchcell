@@ -125,7 +125,8 @@ if [ -n "$RESUME_JOB" ]; then
     N_DATASETS=$(grep -oE '^[0-9]+ mapped datasets' "$PREV_OUT" | head -1 | grep -oE '[0-9]+')
     grep -q '^IMPORT DONE in ' "$PREV_OUT" || { echo "job $RESUME_JOB did not finish its import"; exit 1; }
     STATE=$(docker inspect "$BUILD_CONTAINER" --format '{{.State.Status}}' 2>/dev/null || echo absent)
-    [ "$STATE" = "exited" ] || { echo "$BUILD_CONTAINER is $STATE, expected exited"; exit 1; }
+    # exited after the import, or still running from an earlier resume that failed later
+    [ "$STATE" = "exited" ] || [ "$STATE" = "running" ] || { echo "$BUILD_CONTAINER is $STATE, expected exited or running"; exit 1; }
     if docker inspect "$GEN_CONTAINER" >/dev/null 2>&1; then echo "$GEN_CONTAINER still exists"; exit 1; fi
     [ -d "$NEXT_ROOT/data/databases/$NEO4J_DATABASE" ] || { echo "no imported $NEO4J_DATABASE under $NEXT_ROOT/data"; exit 1; }
     echo "resuming: $N_DATASETS mapped datasets, imported store $(du -sh "$NEXT_ROOT/data" | cut -f1)"
@@ -280,7 +281,13 @@ VALIDATION="$OUTDIR/${JOB}_validation.txt"
 NEW_DS=$(docker exec "$BUILD_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (d:Dataset) RETURN count(d);" | tail -1)
 echo "Dataset nodes: $NEW_DS (expected $N_DATASETS)" | tee "$VALIDATION"
 [ "$NEW_DS" = "$N_DATASETS" ] || { echo "dataset count mismatch"; exit 1; }
-# ExperimentMemberOf rows per Dataset in the CSVs are what the store must hold
+# ExperimentMemberOf rows per Dataset in the CSVs are what the store must hold. The CSVs
+# are read on the HOST as the dev user, and every start of an entrypoint container
+# (the build container above, the serving container after the swap) runs
+# `chmod -R 700` on each top-level directory under NEO4J_HOME, the mounted
+# biocypher-out included (job 2311 failed here with Permission denied). Reopen it first.
+docker run --rm --entrypoint bash -v "$SERVE_ROOT/biocypher-out":/out "$IMAGE" -c \
+    "chmod 755 /out && chmod -R a+rX /out/$OUT_TS"
 EXPECTED="$OUTDIR/${JOB}_expected.txt"
 python - "$OUT_HOST" > "$EXPECTED" <<'EOF'
 import csv, sys

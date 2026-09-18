@@ -106,3 +106,17 @@ bootstrapped at the generation commit (`kg_manifest` reads the schema surface an
 adapters with `git show` at that ref), so the checkout may be ahead of the build commit;
 the fresh-run preflight's HEAD-equals-commit check is not applied on a resume. Job 2032
 is resumed this way rather than regenerated.
+
+**Second resume failure, the CSV directory mode.** The first resume (job 2311) restarted
+the build container, counted 99,723,455 nodes and 51 Dataset nodes, then failed reading
+the CSVs on the host: `PermissionError` on `/db/database/biocypher-out/2026-09-16_00-44-53`.
+The image entrypoint runs `chmod 700 $NEO4J_HOME` and `chmod -R 700` on every top-level
+directory under it at each container start (lines 394 to 395 of
+`/startup/docker-entrypoint.sh`), and `biocypher-out` is mounted there in both the build
+and the serving container, so the dev user loses read access the moment either starts.
+The preflight's `chmod 755` was undone by the build container's first start at 00:18 CDT.
+The validate stage now reopens the directory (`chmod 755` on `biocypher-out`,
+`chmod -R a+rX` on the CSV directory) from a root ephemeral container right before the
+host-side read, and the resume preflight accepts a `running` build container as well as
+an `exited` one. After the swap the serving container closes the directory again; the
+archive step copies inside a container as uid 7474 and is unaffected.

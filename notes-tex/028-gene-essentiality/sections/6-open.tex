@@ -66,9 +66,13 @@ weight, six encodings). What remains is attribution and the module.
     divergence with the pathway multi-hot in the pooled arm (the ProtT5-alone
     layer-free pair is one trajectory, the pathway-and-ProtT5 affine pair with no
     solve columns is not, and the LP cell carries both embeddings under another arm
-    and was one trajectory), so which operation on the multi-hot in that arm lacks a
-    deterministic kernel that does not warn is what is unmeasured, though on the cell
-    every run fits;
+    and was one trajectory), and round 49 with the pathway embedding itself (the
+    pathway multi-hot alone with the affine and pathway-and-ProtT5 with the plain
+    pooled head both diverge pinned, GO-and-ProtT5 with the affine is one
+    trajectory); the pathway dataset is rebuilt at every launch and enumerates its
+    173 columns from a Python set, so a per-process column permutation under hash
+    randomization is the candidate, untested until round 51 pins the hash seed, though
+    on the cell every run fits;
     the cache's hit rate and where the wall time goes when the solve is cached, since
     six cached cells on one card ran no faster per cell than three uncached; and the
     multi-phenotype form, the flux in the cell representation rather than on the

@@ -1251,6 +1251,35 @@ multi-hot with ProtT5 and the affine, each pinned twice).
   same 195 genes. \textbf{d}, Gradient norm per module per epoch. Written by
   \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w62}.}{fig:w62}
 
+Round 49 narrows it to the pathway embedding itself (job 2437; Table~\ref{tab:w65},
+Figure~\ref{fig:w65}): three more pinned pairs on seed 2700 in the pooled arm. The
+round-9 cell (pathway and ProtT5, the plain pooled head, no affine) differs from epoch
+0 (1.2452 against 1.2560) and reads 0.848 and 0.850; the affine on the pathway
+multi-hot alone, with no ProtT5, differs from epoch 0 (1.2303 against 1.2374) and reads
+0.729 and 0.768 with epochs 186 and 57 selected; the affine on the GO multi-hot and
+ProtT5 is one trajectory (1.5831 in both at epoch 0, epoch 123 selected in both, 0.830
+in both, the same logits). So the divergence is neither the readout nor multi-hot
+inputs as a class but the pathway multi-hot's own path: a cell diverges pinned exactly
+when the pathway block is on the node. The pathway dataset is rebuilt at every launch
+(its cell log prints the pathway count each run) and the rebuild enumerates the 173
+pathway columns from a Python set, so the column order can differ between processes
+under Python's per-process hash randomization while the seeded weights do not;
+whether that is the divergence, a permutation of the input columns rather than a
+kernel, is round 51's read (the same two cells pinned twice with the hash seed fixed),
+and it is the reading the GO block supports, since that dataset sorts its columns.
+
+\input{tables/round_w65}
+
+\tcfigfit[1.0]{figures/w65_readout_2026-09-18-18-07-18.pdf}{\textbf{Round 49, three
+  pinned pairs in the pooled arm.} \textbf{a}, Validation AUROC per epoch for the
+  round-9 pooled pair, the pathway-alone affine pair and the GO-and-ProtT5 affine
+  pair, each run twice with the card's kernels pinned. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points) and the gene bootstrap (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w65}.}{fig:w65}
+
 \subsection{Round 31: the layer-free form\secstatus{todo}}
 \label{sec:round31}
 

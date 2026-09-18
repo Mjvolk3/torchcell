@@ -573,6 +573,16 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["pathfbapfbalogfree", "pathlogsimplex", "pathlogipm"],
     ),
+    # Round 38: the same cell over the PDLP store (the cuOpt algorithm's own point),
+    # beside the pFBA and interior-point stores.
+    "w54": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w52_pathlogipm_h12l1p1_e200_s*.json",
+            "w54_pathlogpdlp_h12l1p1_e200_s*.json",
+        ],
+        ["pathfbapfbalogfree", "pathlogipm", "pathlogpdlp"],
+    ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
     "w44": (
@@ -732,6 +742,7 @@ ARM_LABELS = {
     "protfbapfbalog": "ProtT5 alone; FBA affine + the deletion's pFBA vector as log(1 + |v|) (no pathway block, no layer)",
     "pathlogsimplex": "the round-33 cell over the growth program's dual-simplex vertex (store by HiGHS simplex)",
     "pathlogipm": "the round-33 cell over the growth program's interior point without crossover (store by HiGHS ipm, KKT 1e-4)",
+    "pathlogpdlp": "the round-33 cell over the growth program's PDLP point (store by HiGHS PDLP, KKT 1e-4; the cuOpt algorithm)",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",

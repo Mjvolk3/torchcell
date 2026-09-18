@@ -379,6 +379,14 @@ ROUND_CAPTIONS = {
         "and by its interior point without crossover at KKT $10^{-4}$ (a point inside "
         "the optimal face). Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w54": (
+        "Round 38, the layer-free cell over the PDLP store",
+        "The round-33 cell over the pFBA store and over the interior-point store (the "
+        "comparators), against the same cell over the growth program solved per gene "
+        "by HiGHS 1.15's PDLP without crossover at KKT $10^{-4}$, the algorithm a "
+        "batched solve on the card runs, written by \\texttt{solve\\_tolerance\\_read.py}. "
+        "Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
     "w48": (
         "Round 32, the unfit seed with the card's kernels pinned",
         "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "

@@ -855,6 +855,24 @@ the pass being three of three above it and a seed mean at or above the affine's 
 
 \input{tables/round_w37}
 
+\subsection{Round 23: the module on the ladder's top input\secstatus{todo}}
+\label{sec:round23}
+
+Every module cell so far sits on the ProtT5 backbone, where the affine adds 0.05 to the
+pooled cell (0.771 to 0.821). Section~\ref{sec:mp-architectures} found the input that
+carries the rest of the ladder, the 173-column pathway multi-hot beside ProtT5, and
+round 22 (Section~\ref{sec:round22}) runs the affine on it. Round 23 (jobs 2341 to
+2344) asks whether the module delivers the same bump there: the three gated forms of
+the layer that solves, the GEM-box solve of round 15b, the elastic solve of round 18
+and the elastic solve with the flux head of round 21, each on ProtT5 with the pathway
+multi-hot, beside the pooled cell on that input with no readout as the module-free
+control, three seeds (Table~\ref{tab:w39}, Figure~\ref{fig:w39}). The read pairs each
+form by seed against the control and against the round-22 affine on the same input: a
+form passes if it is above the control on three seeds of three and at or above the
+affine on three of three.
+
+\input{tables/round_w39}
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

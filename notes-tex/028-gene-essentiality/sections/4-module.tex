@@ -901,6 +901,23 @@ affine on three of three.
 
 \input{tables/round_w39}
 
+\subsection{Round 24: what carries the head over the solved flux\secstatus{todo}}
+\label{sec:round24}
+
+Round 21's first pack passed its read (Section~\ref{sec:round21}), and three things
+could be carrying it: the flux vector the program returns under the deletion, which
+the ladder's pFBA-vector encoding put at 0.77 on its own; the learned ceilings, which
+shape that vector per genotype through the abundance head; and the linear head's
+choice of reactions. Round 24 (jobs 2347 to 2349) separates them. The same head over
+the flux of the GEM-box solve (round 15b's program, no ceilings and no abundance head)
+says whether the enzyme-constrained part is needed: at or above round 21 on three seeds
+of three and it is not, below on three of three and it is, anything else undecided at
+this size. The head over the 2,709 gene-owned reactions only says whether the
+exchange and transport columns matter. And the passing cell runs on seeds 2703 to
+2705, so its read stands on six (Table~\ref{tab:w40}, Figure~\ref{fig:w40}).
+
+\input{tables/round_w40}
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

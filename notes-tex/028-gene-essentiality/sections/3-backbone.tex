@@ -396,6 +396,27 @@ it. The best single cell in this section is now the pathway block with ProtT5 an
 affine at 0.895, which puts the input, not the architecture, 0.02 above the ensemble
 the document reports.
 
+\subsection{Round 26: the Gene Ontology multi-hot as a backbone input\secstatus{todo}}
+\label{sec:round26}
+
+If 173 pathway memberships carry the gain over the protein embedding, the larger
+annotation of the same kind is the Gene Ontology, and the same question applies to it.
+The GO multi-hot (Section~\ref{sec:endpoint}) is built as its own dataset beside the
+chromosome, pathway and property vectors (Table~\ref{tab:gene-encodings}), so each is a
+starting vector any model can take. Round 26 (jobs 2363 and 2364) runs the round-9
+recipe with it: GO beside ProtT5 with the affine, the biological-process namespace
+alone beside ProtT5, GO alone with the affine, and GO with the pathway multi-hot beside
+ProtT5, three seeds each (Table~\ref{tab:w42}, Figure~\ref{fig:w42}). The read pairs
+each cell against the round-22 pathway cell by seed: GO beside ProtT5 at or above it on
+three seeds of three says GO carries at least what the pathways carry; GO with the
+pathways above it on three of three says the two annotations add. The cheap models run
+the same inputs on the MLP and on graph convolution (Table~\ref{tab:graph-go}), and the
+ladder gains a linear rung on each annotation vector alone.
+
+\input{tables/gene_encodings}
+
+\input{tables/round_w42}
+
 \subsection{Round 16: the round-9 backbone with the round-11 affine\secstatus{todo}}
 
 Round 16 (jobs 2309 and 2310) puts the widened affine on the round-9 backbone: the

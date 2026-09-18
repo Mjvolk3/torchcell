@@ -797,6 +797,24 @@ def graph_baselines_split() -> str | None:
     )
 
 
+def graph_baselines_go() -> str | None:
+    """The GO multi-hot on the MLP and on GCN."""
+    return graph_baselines_more(
+        "go",
+        "The GO multi-hot, cheap models",
+        "The Gene Ontology multi-hot on the MLP with no graph and on graph convolution "
+        "over the union of the nine graphs, the protocol of "
+        "Table~\\ref{tab:graph-baselines}: the propagated vector (2,362 columns), the "
+        "biological-process namespace (1,580) and the direct annotations (2,887), each "
+        "beside ProtT5 and the four FBA ratios; the propagated vector with the ratios "
+        "and alone; the propagated vector with the pathway multi-hot beside ProtT5 "
+        "and the ratios; and, as the control for the pathway block, one column that "
+        "marks a gene annotated to any pathway (517 of 6,607 genes) beside ProtT5 and "
+        "the ratios. Seeds 2700 to 2702.",
+        "tab:graph-go",
+    )
+
+
 def wl_test() -> str | None:
     """1-WL on the single-deletion graphs, and the WL kernel as a rung."""
     src = osp.join(RESULTS, "wl_knockout_test.json")
@@ -884,13 +902,120 @@ def fold_ensembles() -> str | None:
     return write("fold_ensembles", body, "results/<prefix>_ensemble.json")
 
 
+#: The per-gene starting vectors built as datasets in the source tree: registry name ->
+#: (what it is, how it is built, the source module). Widths are read from the built
+#: tensors, never typed.
+GENE_ENCODINGS = {
+    "prot_T5_all": (
+        "protein language model embedding",
+        "ProtT5 mean-pooled over the protein sequence",
+        "protT5.py",
+    ),
+    "pathways": (
+        "pathway multi-hot",
+        "one column per SGD pathway a gene is annotated to",
+        "sgd\\_gene\\_graph\\_hot.py",
+    ),
+    "chromosome": (
+        "chromosome one-hot",
+        "one column per chromosome",
+        "sgd\\_gene\\_graph\\_hot.py",
+    ),
+    "normalized_props": (
+        "scaled gene properties",
+        "protein length, molecular weight, isoelectric point, expression median and "
+        "median absolute deviation, scaled to [0, 1]",
+        "sgd\\_gene\\_graph\\_hot.py",
+    ),
+    "normalized_chrom_pathways": (
+        "chromosome-pathway indicator",
+        "the three blocks above concatenated",
+        "sgd\\_gene\\_graph\\_hot.py",
+    ),
+    "go": (
+        "GO multi-hot, propagated",
+        "SGD GO annotations propagated to ancestors (is\\_a, part\\_of), roots "
+        "dropped, terms with ten or more genes",
+        "go\\_term\\_hot.py",
+    ),
+    "go_direct": (
+        "GO multi-hot, direct",
+        "the annotated terms only, terms with two or more genes",
+        "go\\_term\\_hot.py",
+    ),
+    "go_bp": (
+        "GO biological process",
+        "the propagated vector restricted to one namespace",
+        "go\\_term\\_hot.py",
+    ),
+    "go_mf": ("GO molecular function", "as above", "go\\_term\\_hot.py"),
+    "go_cc": ("GO cellular component", "as above", "go\\_term\\_hot.py"),
+}
+
+
+def gene_encodings() -> str | None:
+    """The gene starting vectors as datasets: name, width, genes covered, construction."""
+    import torch
+
+    root = osp.join(os.environ["DATA_ROOT"], "data/scerevisiae")
+    paths = {
+        "prot_T5_all": "protT5_embedding/processed/prot_t5_xl_uniref50_all.pt",
+        "pathways": "sgd_gene_graph_hot/processed/pathways.pt",
+        "chromosome": "sgd_gene_graph_hot/processed/chromosome.pt",
+        "normalized_props": "sgd_gene_graph_hot/processed/normalized_props.pt",
+        "normalized_chrom_pathways": (
+            "sgd_gene_graph_hot/processed/normalized_chrom_pathways.pt"
+        ),
+        "go": "go_term_hot/processed/go.pt",
+        "go_direct": "go_term_hot/processed/go_direct.pt",
+        "go_bp": "go_term_hot/processed/go_bp.pt",
+        "go_mf": "go_term_hot/processed/go_mf.pt",
+        "go_cc": "go_term_hot/processed/go_cc.pt",
+    }
+    rows = []
+    for name, (what, how, module) in GENE_ENCODINGS.items():
+        path = osp.join(root, paths[name])
+        if not osp.isfile(path):
+            continue
+        data, _slices = torch.load(path, weights_only=False)
+        # One embedding per file; its key is the dataset's model name, which for
+        # ProtT5 differs from the registry name.
+        emb = next(iter(data.embeddings.values()))
+        n_genes = emb.shape[0]
+        width = emb.shape[1]
+        nonzero = int((emb.abs().sum(dim=1) > 0).sum())
+        rows.append(
+            f"    \\texttt{{{name.replace('_', chr(92) + '_')}}} & {what} & {width:,} & "
+            f"{nonzero:,} / {n_genes:,} & {how} & \\texttt{{{module}}} \\\\"
+        )
+    if not rows:
+        return None
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[Gene starting vectors as datasets]{The per-gene starting vectors "
+        "used in this document, each a dataset in the source tree registered under its "
+        "name in \\texttt{NodeEmbeddingBuilder} so any model opens it by name. Width is "
+        "the column count of the built tensor; covered is the number of genes with a "
+        "nonzero row over the genes the dataset holds. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from the built tensors.}\n"
+        "  \\label{tab:gene-encodings}\n"
+        "  \\begin{tabular}{@{}lp{28mm}rrp{58mm}l@{}}\n    \\hline\n"
+        "    name & what & width & covered & construction & module \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("gene_encodings", body, "the built embedding tensors under DATA_ROOT")
+
+
 def main() -> None:
     paths = [
         wl_test(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),
+        graph_baselines_go(),
         fold_ensembles(),
+        gene_encodings(),
         fba_media(),
         splits(),
         logistic_baselines(),

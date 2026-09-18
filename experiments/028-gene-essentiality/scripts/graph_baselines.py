@@ -543,7 +543,14 @@ def main() -> None:
         go_direct = embedding("go_direct", gene_ids)
         pathways = embedding("pathways", gene_ids)
         fba = fba_ratios(gene_ids)
+        # The pathway multi-hot is nonzero for 517 of 6,607 genes, so one column that
+        # says "annotated to any pathway" is the control for whether the 173 columns
+        # carry which pathway or only that there is one.
+        pathway_any = (pathways.sum(axis=1, keepdims=True) > 0).astype(np.float32)
         feats_go = {
+            "ProtT5+pathway any+FBA ratios": np.concatenate(
+                [t5, pathway_any, fba], axis=1
+            ),
             "ProtT5+GO+FBA ratios": np.concatenate([t5, go, fba], axis=1),
             "ProtT5+GO BP+FBA ratios": np.concatenate([t5, go_bp, fba], axis=1),
             "ProtT5+GO direct+FBA ratios": np.concatenate([t5, go_direct, fba], axis=1),

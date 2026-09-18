@@ -31,6 +31,15 @@
     averaged on the held-out genes; Flux Cone Learning's own test protocol.
   \item[gene bootstrap] Resampling the scored genes with replacement (2,000 draws) and
     reporting the 2.5 and 97.5 percentiles of the statistic.
+  \item[GO multi-hot] The per-gene encoding over Gene Ontology terms
+    (\texttt{go\_term\_hot.py}): one column per term, a gene's row marking the terms SGD
+    annotates it to, propagated to every ancestor through \emph{is\_a} and
+    \emph{part\_of} (the true-path rule), the three namespace roots dropped, and a term
+    kept only if ten or more genes carry it: 2,362 columns over 5,501 annotated genes.
+    \emph{GO direct} keeps the annotated terms alone (2,887 columns, two or more genes);
+    \emph{GO BP}, \emph{MF} and \emph{CC} keep one namespace (1,580, 430, 352). The SGD
+    file carries no evidence codes, so annotations inferred from mutant phenotypes are
+    in the vector.
   \item[held-out genes] The 223 genes Merzbacher 2025 held out of its own training
     (\texttt{test = 1} in the released split), of which 195 resolve as single-deletion
     genotypes in the build. Every model number in this document is on those 195 unless

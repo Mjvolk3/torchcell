@@ -350,11 +350,11 @@ def main() -> None:
     out["baselines"] = base
     print("\n4. trained arms against the linear baselines on the same partition (val):")
     for s in SPLITS:
-        sub = df[(df["split"] == s) & (df["roll_max_matched"] >= PLATEAU)]
-        if s not in base or sub.empty:
+        arms = df[(df["split"] == s) & (df["roll_max_matched"] >= PLATEAU)]
+        if s not in base or arms.empty:
             continue
-        ref = sub[sub["readout"] == REF]["roll_max_matched"].mean()
-        con = sub[sub["readout"] == ALT]["roll_max_matched"].mean()
+        ref = arms[arms["readout"] == REF]["roll_max_matched"].mean()
+        con = arms[arms["readout"] == ALT]["roll_max_matched"].mean()
         print(
             f"   {s:<6} {REF} {ref:.4f}  {ALT} {con:.4f}  |  B2 ProtT5 {base[s]['B2_prot_T5_val']:.4f}  "
             f"B3 ProtT5 {base[s]['B3_prot_T5_val']:.4f}"

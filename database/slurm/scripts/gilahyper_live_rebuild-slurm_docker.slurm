@@ -38,7 +38,8 @@
 #             mount under /var/lib/neo4j/data would turn into a restart loop.
 #   import    a build container (tc-neo4j-build, NO host ports) runs neo4j-admin import +
 #             CREATE DATABASE against a FRESH neo4j data root, $NEXT_ROOT/data, on the
-#             same /db filesystem as the served store.
+#             same /db filesystem as the served store, then makes torchcell the default
+#             database of that store (its system database moves with it in the swap).
 #   validate  the new store is queried before anything served is touched: every mapped
 #             dataset has a Dataset node and its live ExperimentMemberOf count equals its
 #             CSV rows.
@@ -79,7 +80,8 @@ NEXT_ROOT="${NEXT_ROOT:-/db/database-next}"
 NEO4J_CONTAINER="${NEO4J_CONTAINER:-tc-neo4j-readonly}"
 BUILD_CONTAINER="${BUILD_CONTAINER:-tc-neo4j-build}"
 GEN_CONTAINER="${GEN_CONTAINER:-tc-neo4j-gen}"
-IMAGE="${IMAGE:-michaelvolk/tc-neo4j:5.26.28}"
+# The base image plus the Browser styling seed (database/docker/Dockerfile.tc-neo4j-browser).
+IMAGE="${IMAGE:-michaelvolk/tc-neo4j:5.26.28-browser.1}"
 ARCHIVE_ROOT="${ARCHIVE_ROOT:-/bulk/biocypher-out}"
 KG_MANIFEST="${KG_MANIFEST:-$BUILD_ROOT/database/kg_manifest.json}"
 SERVE_CPUS="${SERVE_CPUS:-16}"
@@ -275,6 +277,19 @@ done
 [ "$STATUS" = "online" ] || { echo "$NEO4J_DATABASE did not come back online in $BUILD_CONTAINER; see docker logs $BUILD_CONTAINER"; exit 1; }
 NEW_COUNT=$(docker exec "$BUILD_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (n) RETURN count(n);" | tail -1)
 echo "imported store: $NEW_COUNT nodes (served store: $BEFORE)"
+# Make torchcell the default database of the new store, so a Browser or driver session
+# that names no database lands on it and nobody types `:use torchcell`. The setting
+# lives in the system database, which travels with the data directory through the swap.
+# The procedure needs the old default (the empty `neo4j`) stopped; it is started again.
+# Guarded so a resume of a store that already has it does not stop a default in use.
+DEFAULT_DB=$(docker exec "$BUILD_CONTAINER" $CS -d system --format plain "SHOW DEFAULT DATABASE YIELD name RETURN name;" | tail -1 | tr -d '"')
+if [ "$DEFAULT_DB" != "$NEO4J_DATABASE" ]; then
+    docker exec "$BUILD_CONTAINER" $CS -d system \
+        "STOP DATABASE $DEFAULT_DB; CALL dbms.setDefaultDatabase('$NEO4J_DATABASE'); START DATABASE $DEFAULT_DB;"
+fi
+DEFAULT_DB=$(docker exec "$BUILD_CONTAINER" $CS -d system --format plain "SHOW DEFAULT DATABASE YIELD name RETURN name;" | tail -1 | tr -d '"')
+[ "$DEFAULT_DB" = "$NEO4J_DATABASE" ] || { echo "default database is $DEFAULT_DB, expected $NEO4J_DATABASE"; exit 1; }
+echo "default database: $DEFAULT_DB"
 
 echo "---------------- 3 VALIDATE before touching the served store"
 VALIDATION="$OUTDIR/${JOB}_validation.txt"
@@ -367,7 +382,12 @@ done
 SERVED=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (n) RETURN count(n);" | tail -1)
 echo "SERVING $SERVED nodes (validated $NEW_COUNT) at $(date)"
 [ "$SERVED" = "$NEW_COUNT" ] || { echo "served count differs from the validated store"; exit 1; }
-docker exec "$NEO4J_CONTAINER" $CS -d system "SHOW DATABASES YIELD name, currentStatus, access;"
+docker exec "$NEO4J_CONTAINER" $CS -d system "SHOW DATABASES YIELD name, default, home, currentStatus, access;"
+SERVED_DEFAULT=$(docker exec "$NEO4J_CONTAINER" $CS -d system --format plain "SHOW DEFAULT DATABASE YIELD name RETURN name;" | tail -1 | tr -d '"')
+[ "$SERVED_DEFAULT" = "$NEO4J_DATABASE" ] || { echo "served default database is $SERVED_DEFAULT, expected $NEO4J_DATABASE"; exit 1; }
+# The served Browser page must carry the styling seed (the image is the one that has it).
+curl -sf http://localhost:7474/browser/ | grep -q 'torchcell-seed.js' \
+    || { echo "served Browser page has no torchcell-seed.js tag: is $IMAGE the seeded image?"; exit 1; }
 
 echo "---------------- 5 RECORD + ARCHIVE"
 if [ -f "$KG_MANIFEST" ]; then

@@ -406,3 +406,10 @@ docker run --env-file /path/to/your/.env your_image
 ```
 
 This seems to work ok. I verified that it was copied over to `cypher-shell` for apptainer. still need to check for docker.
+
+## 2026.09.18 - Serving tag with the Browser styling seed
+
+The serving containers run `michaelvolk/tc-neo4j:5.26.28-browser.1`: the 5.26.28 image
+plus one layer that puts the torchcell Browser styling seed into the Browser jar. Build
+and push recipe in [[database.docker.Dockerfile.tc-neo4j-browser]]; the seed and the
+stylesheet come from [[torchcell.database.browser_style]].

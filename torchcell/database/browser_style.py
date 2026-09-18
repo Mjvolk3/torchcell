@@ -26,19 +26,40 @@ blue for provenance. The served Browser reads ``color``, ``caption``, ``diameter
 ``shaft-width`` from a GraSS file and derives border and text colors from ``color``; the
 other properties are kept for the classic Browser.
 
-    python -m torchcell.database.browser_style           # writes database/conf/torchcell.grass
-    python -m torchcell.database.browser_style --check   # exit 1 when that file is stale
+    python -m torchcell.database.browser_style           # writes the stylesheet and the seed
+    python -m torchcell.database.browser_style --check   # exit 1 when either file is stale
 
-Load it from the graph result's styling panel, "Upload GraSS styles" (the file input
-accepts ``.grass``, ``.style``, ``.txt``); "Reset styles to default" undoes it. The
-stylesheet lives in that browser's local storage, so each person loads it once.
+Two files come out of one render:
+
+``database/conf/torchcell.grass``
+    The GraSS stylesheet. Load it by hand from the graph result's styling panel,
+    "Upload GraSS styles" (the file input accepts ``.grass``, ``.style``, ``.txt``);
+    "Reset styles to default" undoes it. The stylesheet lives in that browser's local
+    storage, so each person loads it once.
+
+``database/browser/torchcell-seed.js``
+    The same styling as the Browser stores it after an upload, wrapped in a script that
+    writes it into local storage before the Browser boots. The Browser keeps its styling
+    in a redux-persist slice keyed ``graphStyling`` under the ``nx.v1.nx.`` prefix
+    (``W9(rI, "graphStyling", qF)`` in the served ``src.*.js``; whitelist ``nodeStyles``,
+    ``relStyles``, ``stylingPriorityOrder``, version 1) and rehydrates it on load, so a
+    value planted there first is what every visitor sees. The image built by
+    ``database/docker/Dockerfile.tc-neo4j-browser`` adds this file to the Browser jar and
+    a ``<script>`` tag for it to ``browser/index.html`` (the page's CSP allows scripts
+    from the server itself and nothing inline). The seed runs once per browser per
+    stylesheet: it records the stylesheet's sha256 and steps aside while that matches,
+    so a person's own restyling survives until the stylesheet changes.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
+import math
 import sys
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field
@@ -49,6 +70,15 @@ from torchcell.utils import PLOT_PALETTE, PLOT_PALETTE_FILL
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_CONFIG = REPO_ROOT / "biocypher" / "config" / "torchcell_schema_config.yaml"
 DEFAULT_OUTPUT = REPO_ROOT / "database" / "conf" / "torchcell.grass"
+DEFAULT_SEED_OUTPUT = REPO_ROOT / "database" / "browser" / "torchcell-seed.js"
+
+# Local-storage keys of the served Browser: redux-persist key "graphStyling" through the
+# framework-scoped storage (createKey(framework, key) -> "nx.v1.nx.<key>", keyPrefix "").
+STYLING_STORAGE_KEY = "nx.v1.nx.graphStyling"
+SEED_SHA_STORAGE_KEY = "nx.v1.nx.torchcellGrassSha256"
+STYLING_PERSIST_VERSION = 1
+# The Browser's GraSS importer sizes a node as floor(diameter / 2 / 0.93).
+DIAMETER_TO_SIZE = 2 * 0.93
 
 # Biolink 3.2.1 ancestor labels the served nodes carry beside their class label
 # (``CALL db.labels()`` on the store served 2026-09-18). Their rules go FIRST so that any
@@ -237,32 +267,138 @@ def render(schema_config: Path = SCHEMA_CONFIG) -> str:
     return "\n".join(blocks)
 
 
+class Caption(BaseModel):
+    """One caption entry as the Browser stores it (``Z9`` in the served bundle)."""
+
+    type: Literal["id", "type", "property"]
+    captionKey: str | None = None  # noqa: N815  # the Browser's own field name
+
+
+class SeedNodeStyle(BaseModel):
+    """What the Browser stores for one label after importing a ``node.<Label>`` rule."""
+
+    color: str = Field(pattern=r"^#[0-9A-F]{6}$")
+    size: int
+    captions: list[Caption]
+
+
+class SeedState(BaseModel):
+    """The persisted ``graphStyling`` slice: the whitelist of its redux-persist config."""
+
+    nodeStyles: dict[str, SeedNodeStyle]  # noqa: N815
+    relStyles: dict[str, dict[str, object]]  # noqa: N815
+    stylingPriorityOrder: list[str]  # noqa: N815
+
+
+def _caption(caption: str) -> Caption:
+    """The GraSS caption string as the importer reads it."""
+    if caption == "<id>":
+        return Caption(type="id")
+    if caption == "<type>":
+        return Caption(type="type")
+    if caption.startswith("{") and caption.endswith("}"):
+        return Caption(type="property", captionKey=caption[1:-1])
+    raise ValueError(f"caption {caption!r} is not one the Browser imports")
+
+
+def seed_state(schema_config: Path = SCHEMA_CONFIG) -> SeedState:
+    """The styling the Browser would hold after "Upload GraSS styles" of :func:`render`.
+
+    The importer (``phe``) prepends each ``node.<Label>`` rule to the priority list, so
+    the last rule in the file is first in the list; the bare ``node`` and ``relationship``
+    blocks carry no label and are skipped, so ``relStyles`` stays empty.
+    """
+    rules = node_rules(schema_config)
+    return SeedState(
+        nodeStyles={
+            rule.label: SeedNodeStyle(
+                color=rule.fill,
+                size=math.floor(rule.diameter_px / DIAMETER_TO_SIZE),
+                captions=[_caption(rule.caption)],
+            )
+            for rule in rules
+        },
+        relStyles={},
+        stylingPriorityOrder=[rule.label for rule in reversed(rules)],
+    )
+
+
+def persisted_value(state: SeedState) -> str:
+    """The local-storage value redux-persist writes.
+
+    Every slice field is JSON-encoded on its own, beside a ``_persist`` record at the
+    slice's version.
+    """
+    fields = {
+        name: json.dumps(value, separators=(",", ":"))
+        for name, value in state.model_dump(exclude_none=True).items()
+    }
+    fields["_persist"] = json.dumps(
+        {"version": STYLING_PERSIST_VERSION, "rehydrated": True}, separators=(",", ":")
+    )
+    return json.dumps(fields, separators=(",", ":"))
+
+
+def stylesheet_sha256(schema_config: Path = SCHEMA_CONFIG) -> str:
+    """sha256 of the rendered stylesheet; the seed re-runs when it changes."""
+    return hashlib.sha256(render(schema_config).encode("utf-8")).hexdigest()
+
+
+def render_seed_js(schema_config: Path = SCHEMA_CONFIG) -> str:
+    """The script the patched Browser page loads before its own bundle."""
+    value = json.dumps(persisted_value(seed_state(schema_config)))
+    return (
+        "/* torchcell Neo4j Browser styling seed. Generated by\n"
+        " * python -m torchcell.database.browser_style; do not edit by hand.\n"
+        " * Plants the torchcell.grass styling in this browser's local storage before the\n"
+        " * Browser rehydrates its graphStyling slice. Runs once per stylesheet: the\n"
+        " * stylesheet's sha256 is recorded and the seed steps aside while it matches. */\n"
+        "(function () {\n"
+        f"  var STYLING_KEY = {json.dumps(STYLING_STORAGE_KEY)};\n"
+        f"  var SHA_KEY = {json.dumps(SEED_SHA_STORAGE_KEY)};\n"
+        f"  var SHA = {json.dumps(stylesheet_sha256(schema_config))};\n"
+        f"  var VALUE = {value};\n"
+        "  if (window.localStorage.getItem(SHA_KEY) === SHA) {\n"
+        "    return;\n"
+        "  }\n"
+        "  window.localStorage.setItem(STYLING_KEY, VALUE);\n"
+        "  window.localStorage.setItem(SHA_KEY, SHA);\n"
+        "})();\n"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Write the stylesheet, or with ``--check`` report whether the written one is current."""
+    """Write the stylesheet and the seed, or with ``--check`` report whether both are current."""
     parser = argparse.ArgumentParser(
         prog="python -m torchcell.database.browser_style",
         description=__doc__.split("\n\n")[0],
     )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--seed-output", type=Path, default=DEFAULT_SEED_OUTPUT)
     parser.add_argument(
         "--check",
         action="store_true",
-        help="exit 1 if --output differs from the render",
+        help="exit 1 if --output or --seed-output differs from the render",
     )
     args = parser.parse_args(argv)
-    text = render()
+    outputs = {args.output: render(), args.seed_output: render_seed_js()}
     if args.check:
-        if not args.output.is_file() or args.output.read_text(encoding="utf-8") != text:
-            print(
-                f"{args.output} is stale; run python -m torchcell.database.browser_style"
-            )
+        stale = [
+            path
+            for path, text in outputs.items()
+            if not path.is_file() or path.read_text(encoding="utf-8") != text
+        ]
+        for path in stale:
+            print(f"{path} is stale; run python -m torchcell.database.browser_style")
+        if stale:
             return 1
-        print(f"{args.output} is current")
+        print(f"{args.output} and {args.seed_output} are current")
         return 0
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(text, encoding="utf-8")
+    for path, text in outputs.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
     n_rules = len(node_rules())
-    print(f"wrote {args.output} ({n_rules} node rules)")
+    print(f"wrote {args.output} ({n_rules} node rules) and {args.seed_output}")
     return 0
 
 

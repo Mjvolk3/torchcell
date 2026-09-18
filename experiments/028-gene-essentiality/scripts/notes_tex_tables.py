@@ -755,9 +755,10 @@ def graph_baselines_relational() -> str | None:
         "The message-passing architectures of the MATH-490 and Gene\\_Graph projects on "
         "the released split, the protocol of Table~\\ref{tab:graph-baselines}: GIN and "
         "GraphSAGE on the union of the nine graphs, and RGCN and RGAT with the nine "
-        "graphs as nine edge types (basis decomposition with four bases), with ProtT5 "
-        "alone and with the transformer's three inputs as node features, 200 epochs, "
-        "seeds 2700 to 2702.",
+        "graphs as nine edge types (basis decomposition with four bases; RGAT behind a "
+        "linear projection of the input to width 64, since it gathers the input per "
+        "edge), with ProtT5 alone and with the transformer's three inputs as node "
+        "features, 200 epochs, seeds 2700 to 2702.",
         "tab:graph-relational",
     )
 

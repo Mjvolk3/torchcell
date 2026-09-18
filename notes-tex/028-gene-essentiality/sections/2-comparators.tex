@@ -217,7 +217,9 @@ and the differences are what the 1-WL result of the next subsection bears on.
   \item[RGAT] the same relation-typed neighborhoods with attention within each
     relation, $h_i' = \sum_{r \in \mathcal{R}} \sum_{j \in \mathcal{N}_r(i)}
     \alpha_{ij}^{(r)}\,\Theta_r h_j$, the relational form Gene\_Graph ran on its
-    two-relation graph.
+    two-relation graph; here behind a linear projection of the input to the width,
+    since the layer gathers the input vector per edge and 4.87 million typed edges
+    times 1,024 columns is 20 GB.
 \end{description}
 
 The nine gene graphs the transformer reads enter the relational models as nine edge

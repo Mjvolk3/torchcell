@@ -127,8 +127,13 @@ class Net(nn.Module):
             self.c1 = RGCNConv(dim_in, WIDTH, num_relations=N_RELATIONS, num_bases=4)
             self.c2 = RGCNConv(WIDTH, WIDTH, num_relations=N_RELATIONS, num_bases=4)
         elif kind == "RGAT":
+            # RGATConv gathers the RAW input per edge before the per-relation weight, so
+            # on the 4.87M typed edges a 1,024-wide input is 20 GB (job 2340 OOM on a
+            # 44 GiB card); a linear projection to the width first keeps the gather at
+            # 1.2 GB.
+            self.pre = nn.Linear(dim_in, WIDTH)
             self.c1 = RGATConv(
-                dim_in, WIDTH // 4, num_relations=N_RELATIONS, heads=4, num_bases=4
+                WIDTH, WIDTH // 4, num_relations=N_RELATIONS, heads=4, num_bases=4
             )
             self.c2 = RGATConv(
                 WIDTH, WIDTH // 4, num_relations=N_RELATIONS, heads=4, num_bases=4
@@ -150,6 +155,8 @@ class Net(nn.Module):
             h = F.relu(self.c2(h))
         elif self.kind in ("RGCN", "RGAT"):
             assert edge_type is not None, "relational kinds need edge_type"
+            if self.kind == "RGAT":
+                x = self.pre(x)
             h = F.relu(self.c1(x, edge_index, edge_type))
             h = F.dropout(h, 0.2, self.training)
             h = F.relu(self.c2(h, edge_index, edge_type))

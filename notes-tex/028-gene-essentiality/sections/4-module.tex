@@ -1267,6 +1267,12 @@ under Python's per-process hash randomization while the seeded weights do not;
 whether that is the divergence, a permutation of the input columns rather than a
 kernel, is round 51's read (the same two cells pinned twice with the hash seed fixed),
 and it is the reading the GO block supports, since that dataset sorts its columns.
+The rebuild at every launch is an unconditional call to the dataset's own process
+step after the base constructor has loaded the cached file, so each run served the
+column order the previous launch wrote and rewrote the file for the next; with the
+enumeration sorted and the call removed, two processes under different hash seeds
+build the same 6,607 by 173 matrix (identical bytes), and the cached file's columns
+differ from both.
 
 \input{tables/round_w65}
 

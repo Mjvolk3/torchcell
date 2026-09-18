@@ -91,6 +91,53 @@ STAT_NAMES = (
 )
 
 
+#: ``--solver`` -> the solver entry of ``solve_tolerance_read.SOLVERS`` (``pfba`` is the
+#: scipy two-stage solve and needs no entry).
+SOLVER_KEYS = {"pfba": None, "simplex": "simplex_exact", "ipm": "ipm_nocross_1e-4"}
+
+
+class GrowthSolve(BaseModel):
+    """One growth-maximizing solve by a named HiGHS solver: the flux and whether it solved."""
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    v: np.ndarray
+    growth: float
+    optimal: bool
+    status: str
+
+
+def growth_solve(lb: np.ndarray, ub: np.ndarray, key: str, biomass: int) -> GrowthSolve:
+    """The round-27 program under one solver, through ``solve_tolerance_read``'s LP.
+
+    The split form in micromoles that ``lp_layer`` solves, with a fresh Highs object per
+    solve (its time limit counts the object's lifetime). A non-optimal status returns the
+    zero flux and is counted by the caller; the interior point at KKT 1e-4 reported 6 of
+    1,121 programs non-optimal in the tolerance read.
+    """
+    import highspy
+    from solve_tolerance_read import UNIT_SCALE, _fresh_highs, split_bounds
+
+    ub = np.maximum(ub, lb)
+    lo, hi = split_bounds(lb * UNIT_SCALE, ub * UNIT_SCALE)
+    n = lo.size
+    r = n // 2
+    h = _fresh_highs(key)
+    h.changeColsBounds(n, np.arange(n, dtype=np.int32), lo, hi)
+    h.run()
+    status = h.getModelStatus()
+    if status != highspy.HighsModelStatus.kOptimal:
+        return GrowthSolve(
+            v=np.zeros(r),
+            growth=0.0,
+            optimal=False,
+            status=h.modelStatusToString(status),
+        )
+    x = np.asarray(h.getSolution().col_value, dtype=np.float64) / UNIT_SCALE
+    v = x[:r] - x[r:]
+    return GrowthSolve(v=v, growth=float(v[biomass]), optimal=True, status="Optimal")
+
+
 class DeletionRow(BaseModel):
     """One single-gene deletion's solve."""
 
@@ -119,7 +166,9 @@ def gene_stats(
     v = np.abs(wild[idx])
     lo = fva.loc[rxns, "minimum"].to_numpy()
     hi = fva.loc[rxns, "maximum"].to_numpy()
-    forced = np.where(np.sign(lo) == np.sign(hi), np.minimum(np.abs(lo), np.abs(hi)), 0.0)
+    forced = np.where(
+        np.sign(lo) == np.sign(hi), np.minimum(np.abs(lo), np.abs(hi)), 0.0
+    )
     rng = hi - lo
     return np.array(
         [
@@ -140,9 +189,24 @@ def main() -> None:
     parser.add_argument("--medium", default="YPD", choices=sorted(FBA_MEDIA) + ["none"])
     parser.add_argument("--split-file", default="ess_fcl_val0.2_s0.json.gz")
     parser.add_argument("--growth-fraction", type=float, default=1.0)
+    parser.add_argument(
+        "--solver",
+        default="pfba",
+        choices=sorted(SOLVER_KEYS),
+        help=(
+            "pfba (default): the two-stage parsimonious solve through scipy's HiGHS, the "
+            "table every round through 33 read. simplex / ipm: the plain growth-maximizing "
+            "program (the round-27 flux head's, no parsimony stage) solved by HiGHS 1.15's "
+            "dual simplex at default tolerances or its interior point without crossover "
+            "at KKT 1e-4, through solve_tolerance_read.py's program; the outputs carry "
+            "the solver's name. Round 36: a store built from the kind of point a "
+            "first-order solve on the card returns."
+        ),
+    )
     args = parser.parse_args()
     if os.environ.get("PYTHONHASHSEED") != "0":
         raise SystemExit("PYTHONHASHSEED must be 0, as for the 026 reference table.")
+    suffix = "" if args.solver == "pfba" else f"_{args.solver}"
 
     started = time.time()
     os.makedirs(TABLE_DIR, exist_ok=True)
@@ -159,15 +223,40 @@ def main() -> None:
     biomass = int(gem.biomass_index)
 
     genes = labeled_genes(args.split_file)
-    print(f"{len(genes)} labeled genes, {sum(g in gem_genes for g in genes)} in the GEM")
-
-    wild = parsimonious_reference_flux(
-        gem.s, lb, ub, biomass, growth_fraction=args.growth_fraction
+    print(
+        f"{len(genes)} labeled genes, {sum(g in gem_genes for g in genes)} in the GEM"
     )
-    wild_v = wild.v.numpy()
-    print(f"wild-type growth {wild.objective_value:.4f}")
+
+    solver_key = SOLVER_KEYS[args.solver]
+    if solver_key is None:
+        wild = parsimonious_reference_flux(
+            gem.s, lb, ub, biomass, growth_fraction=args.growth_fraction
+        )
+        wild_v = wild.v.numpy()
+        wild_growth = wild.objective_value
+    else:
+        import scipy.sparse as sp
+        from solve_tolerance_read import _init_worker
+
+        s_dense = (gem.s.to_dense() if gem.s.is_sparse else gem.s).double().numpy()
+        a_csc = sp.hstack([sp.csr_matrix(s_dense), -sp.csr_matrix(s_dense)]).tocsc()
+        c = np.zeros(2 * len(rxn_ids))
+        c[biomass] = 1.0
+        c[len(rxn_ids) + biomass] = -1.0
+        _init_worker(a_csc, c)
+        wild_solve = growth_solve(
+            lb.double().numpy(), ub.double().numpy(), solver_key, biomass
+        )
+        assert wild_solve.optimal, wild_solve.status
+        wild_v = wild_solve.v.astype(np.float32)
+        wild_growth = wild_solve.growth
+    print(f"wild-type growth {wild_growth:.4f} ({args.solver})")
+    n_nonoptimal = 0
     fva = flux_variability_analysis(
-        model, reaction_list=model.reactions, fraction_of_optimum=FVA_FRACTION, processes=8
+        model,
+        reaction_list=model.reactions,
+        fraction_of_optimum=FVA_FRACTION,
+        processes=8,
     )
     print(f"FVA on {len(fva)} reactions, {time.time() - started:.0f}s")
 
@@ -179,7 +268,7 @@ def main() -> None:
     n_lethal = 0
     for count, gene in enumerate(genes, start=1):
         if gene not in gem_genes:
-            flux, growth, n_knocked = wild_v, wild.objective_value, 0
+            flux, growth, n_knocked = wild_v, wild_growth, 0
         else:
             with model:
                 knocked = knock_out_model_genes(model, [gene])
@@ -190,17 +279,33 @@ def main() -> None:
                     [r.upper_bound for r in model.reactions], dtype=torch.float32
                 ).clamp(-FLUX_SCALE, FLUX_SCALE)
                 n_knocked = len(knocked)
-            try:
-                record = parsimonious_reference_flux(
-                    gem.s, k_lb, k_ub, biomass, growth_fraction=args.growth_fraction
+            if solver_key is None:
+                try:
+                    record = parsimonious_reference_flux(
+                        gem.s, k_lb, k_ub, biomass, growth_fraction=args.growth_fraction
+                    )
+                    flux, growth = record.v.numpy(), record.objective_value
+                except ValueError:
+                    # A lethal knockout is a result: the zero flux, as in the 026 table.
+                    n_lethal += 1
+                    flux, growth = np.zeros(len(rxn_ids), dtype=np.float32), 0.0
+            else:
+                solve = growth_solve(
+                    k_lb.double().numpy(), k_ub.double().numpy(), solver_key, biomass
                 )
-                flux, growth = record.v.numpy(), record.objective_value
-            except ValueError:
-                # A lethal knockout is a result: the zero flux, as in the 026 table.
-                n_lethal += 1
-                flux, growth = np.zeros(len(rxn_ids), dtype=np.float32), 0.0
-        ratio = growth / wild.objective_value
-        moved = float(np.linalg.norm(flux - wild_v) / max(float(wild.v.norm()), 1e-12))
+                flux, growth = solve.v.astype(np.float32), solve.growth
+                if not solve.optimal:
+                    # The growth program is feasible for every deletion (the zero flux
+                    # with the medium's exchanges is always admissible), so a non-optimal
+                    # status here is the solver stopping short, not a lethal call; the
+                    # row keeps the zero flux and the count is in the provenance.
+                    n_nonoptimal += 1
+                elif growth < 1e-6:
+                    n_lethal += 1
+        ratio = growth / wild_growth
+        moved = float(
+            np.linalg.norm(flux - wild_v) / max(float(np.linalg.norm(wild_v)), 1e-12)
+        )
         keys.append(genotype_key([gene]))
         fluxes.append(flux)
         per_gene_v.append(flux)
@@ -230,11 +335,19 @@ def main() -> None:
         "method": (
             "pFBA (parsimonious_reference_flux, two scipy HiGHS LPs) with the gene "
             "deleted through cobra.manipulation.knock_out_model_genes"
+            if solver_key is None
+            else (
+                f"growth-maximizing LP (the round-27 program, split form in micromoles) "
+                f"by HiGHS {solver_key} through solve_tolerance_read.py, with the gene "
+                "deleted through cobra.manipulation.knock_out_model_genes"
+            )
         ),
+        "solver": args.solver,
+        "n_nonoptimal_zero_flux": n_nonoptimal,
         "medium": args.medium,
         "media_report": media,
         "split_file": args.split_file,
-        "wild_type_growth": wild.objective_value,
+        "wild_type_growth": wild_growth,
         "wild_type_key": keys[0],
         "n_sets": len(keys),
         "n_lethal_zero_flux": n_lethal,
@@ -243,7 +356,9 @@ def main() -> None:
         "python_hash_seed": os.environ.get("PYTHONHASHSEED"),
         "flux_sha256": hashlib.sha256(matrix.tobytes()).hexdigest(),
     }
-    table_path = osp.join(TABLE_DIR, f"ess_reference_flux_table_{args.medium}.npz")
+    table_path = osp.join(
+        TABLE_DIR, f"ess_reference_flux_table_{args.medium}{suffix}.npz"
+    )
     np.savez(
         table_path,
         v=matrix,
@@ -251,7 +366,7 @@ def main() -> None:
         rxn_ids=np.array(rxn_ids),
         provenance=np.array(json.dumps(provenance)),
     )
-    enc_path = osp.join(TABLE_DIR, f"ess_solve_encodings_{args.medium}.npz")
+    enc_path = osp.join(TABLE_DIR, f"ess_solve_encodings_{args.medium}{suffix}.npz")
     np.savez(
         enc_path,
         genes=np.array(genes),
@@ -269,7 +384,7 @@ def main() -> None:
         "seconds": time.time() - started,
         "rows": [r.model_dump() for r in rows],
     }
-    out = osp.join(RESULTS_DIR, f"ess_reference_flux_table_{args.medium}.json")
+    out = osp.join(RESULTS_DIR, f"ess_reference_flux_table_{args.medium}{suffix}.json")
     with open(out, "w") as fh:
         json.dump(summary, fh, indent=2)
     print(

@@ -244,8 +244,12 @@ FBA_MEDIA = ("shipped", "SM", "SC", "YPD")
 #: solve and its variability on the gene's own reactions (`stats`), the deletion's own
 #: pFBA flux vector (`pfba`, 4,131 columns), or both. Each column is standardized over the
 #: genes the file covers; a gene it does not cover reads the column mean (0).
-SOLVE_ENCODINGS_NPZ = osp.join(
-    DATA_ROOT, "data/torchcell/reference_flux/ess_solve_encodings_YPD.npz"
+#: `ESS_SOLVE_TABLE` names another table, such as the same program solved by another
+#: solver (`ess_reference_flux_table.py --solver ipm`, round 36); the path is recorded in
+#: the result's `flux_meta.essentiality.fba.solve.source`.
+SOLVE_ENCODINGS_NPZ = os.environ.get(
+    "ESS_SOLVE_TABLE",
+    osp.join(DATA_ROOT, "data/torchcell/reference_flux/ess_solve_encodings_YPD.npz"),
 )
 ESS_SOLVE_FEATURES = ("none", "stats", "pfba", "stats_pfba")
 #: How the pFBA vector enters the affine (round 33). 'standardized' is round 31: each of

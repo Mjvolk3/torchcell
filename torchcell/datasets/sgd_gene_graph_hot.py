@@ -20,11 +20,18 @@ from torchcell.data.embedding import BaseEmbeddingDataset
 class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
     """Embedding dataset of per-gene numeric, chromosome, and pathway one-hot features."""
 
+    #: model name -> (normalize the seven numeric properties, include the properties,
+    #: include the chromosome one-hot, include the pathway multi-hot). The first three
+    #: entries are the shipped ones; the single-block entries (028 round 22) split the
+    #: indicator so each block can be attributed on its own.
     MODEL_TO_WINDOW = {
-        "normalized_chrom_pathways": (True, True),
-        "normalized_chrom": (True, False),
-        "chrom_pathways": (False, True),
-        "chrom": (False, False),
+        "normalized_chrom_pathways": (True, True, True, True),
+        "normalized_chrom": (True, True, True, False),
+        "chrom_pathways": (False, True, True, True),
+        "chrom": (False, True, True, False),
+        "pathways": (False, False, False, True),
+        "chromosome": (False, False, True, False),
+        "normalized_props": (True, True, False, False),
     }
 
     def __init__(
@@ -72,9 +79,9 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
         unique_chromosomes: set[Any] = set()
         unique_pathways: set[Any] = set()
 
-        normalize_data, include_pathways = self.MODEL_TO_WINDOW[
-            cast(str, self.model_name)
-        ]
+        normalize_data, include_props, include_chromosome, include_pathways = (
+            self.MODEL_TO_WINDOW[cast(str, self.model_name)]
+        )
 
         # Collect feature values for each node
         feature_values: dict[str, list[Any]] = {
@@ -163,10 +170,15 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
                         feature_max - feature_min
                     )
 
+            if not include_props:
+                node_features = torch.tensor([])
+
             # One-hot encode chromosome
             chromosome_one_hot = torch.zeros(len(unique_chromosomes), dtype=torch.float)
             chromosome_index = chromosome_to_index[chromosome]
             chromosome_one_hot[chromosome_index] = 1.0
+            if not include_chromosome:
+                chromosome_one_hot = torch.tensor([])
 
             # One-hot encode pathways if include_pathways is True
             if include_pathways:

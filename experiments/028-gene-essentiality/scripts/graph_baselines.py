@@ -42,7 +42,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from sklearn.metrics import roc_auc_score
 from torch import nn
-from torch_geometric.nn import GATv2Conv, GCNConv
+from torch_geometric.nn import GATv2Conv, GCNConv, GINConv, RGATConv, RGCNConv, SAGEConv
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -84,12 +84,22 @@ class ArmRow(BaseModel):
     test_logits: list[list[float]] = []
 
 
+#: The message-passing kinds, each two layers of width 64 and a linear head:
+#: GCN, the symmetric-normalized mean; GATv2, four attention heads; GIN, the
+#: injective sum with a two-layer MLP (the 1-WL-matching aggregator of Xu et al. 2019);
+#: RGCN and RGAT, one weight (or one attention) per relation over the nine graphs as
+#: typed edges, with basis decomposition to keep the parameter count near GCN's.
+KINDS = ("MLP", "GCN", "GATv2", "GIN", "GraphSAGE", "RGCN", "RGAT")
+N_RELATIONS = len(GRAPH_NAMES)
+
+
 class Net(nn.Module):
     """Two message-passing layers and a linear head, or an MLP when the graph is absent."""
 
     def __init__(self, kind: str, dim_in: int) -> None:
-        """``kind`` is GCN, GATv2 or MLP; ``dim_in`` the node input width."""
+        """``kind`` is one of ``KINDS``; ``dim_in`` the node input width."""
         super().__init__()
+        assert kind in KINDS, kind
         self.kind = kind
         if kind == "GCN":
             self.c1: nn.Module = GCNConv(dim_in, WIDTH)
@@ -97,16 +107,52 @@ class Net(nn.Module):
         elif kind == "GATv2":
             self.c1 = GATv2Conv(dim_in, WIDTH // 4, heads=4)
             self.c2 = GATv2Conv(WIDTH, WIDTH // 4, heads=4)
+        elif kind == "GIN":
+            self.c1 = GINConv(
+                nn.Sequential(
+                    nn.Linear(dim_in, WIDTH), nn.ReLU(), nn.Linear(WIDTH, WIDTH)
+                ),
+                train_eps=True,
+            )
+            self.c2 = GINConv(
+                nn.Sequential(
+                    nn.Linear(WIDTH, WIDTH), nn.ReLU(), nn.Linear(WIDTH, WIDTH)
+                ),
+                train_eps=True,
+            )
+        elif kind == "GraphSAGE":
+            self.c1 = SAGEConv(dim_in, WIDTH)
+            self.c2 = SAGEConv(WIDTH, WIDTH)
+        elif kind == "RGCN":
+            self.c1 = RGCNConv(dim_in, WIDTH, num_relations=N_RELATIONS, num_bases=4)
+            self.c2 = RGCNConv(WIDTH, WIDTH, num_relations=N_RELATIONS, num_bases=4)
+        elif kind == "RGAT":
+            self.c1 = RGATConv(
+                dim_in, WIDTH // 4, num_relations=N_RELATIONS, heads=4, num_bases=4
+            )
+            self.c2 = RGATConv(
+                WIDTH, WIDTH // 4, num_relations=N_RELATIONS, heads=4, num_bases=4
+            )
         else:
             self.c1 = nn.Linear(dim_in, WIDTH)
             self.c2 = nn.Linear(WIDTH, WIDTH)
         self.head = nn.Linear(WIDTH, 1)
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
-        """One logit per node."""
+    def forward(
+        self,
+        x: torch.Tensor,
+        edge_index: torch.Tensor,
+        edge_type: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """One logit per node; ``edge_type`` is read by the relational kinds only."""
         if self.kind == "MLP":
             h = F.relu(self.c1(x))
             h = F.relu(self.c2(h))
+        elif self.kind in ("RGCN", "RGAT"):
+            assert edge_type is not None, "relational kinds need edge_type"
+            h = F.relu(self.c1(x, edge_index, edge_type))
+            h = F.dropout(h, 0.2, self.training)
+            h = F.relu(self.c2(h, edge_index, edge_type))
         else:
             h = F.relu(self.c1(x, edge_index))
             h = F.dropout(h, 0.2, self.training)
@@ -142,11 +188,24 @@ def gene_graphs() -> tuple[list[str], dict[str, nx.Graph]]:
             for u, v in getattr(graph, f"G_{name}").graph.edges()
             if u in keep and v in keep
         )
+        out[f"one:{name}"] = g
         if name == "physical":
             out["physical"] = g
         union.add_edges_from(g.edges())
     out["union of nine"] = union
     return gene_ids, out
+
+
+def typed_edges(
+    graphs: dict[str, nx.Graph], index: dict[str, int]
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """The nine graphs as one edge set with a relation type per graph, both directions."""
+    parts, types = [], []
+    for r, name in enumerate(GRAPH_NAMES):
+        e = edges(graphs[f"one:{name}"], index)
+        parts.append(e)
+        types.append(torch.full((e.shape[1],), r, dtype=torch.long))
+    return torch.cat(parts, dim=1), torch.cat(types)
 
 
 def embedding(name: str, gene_ids: list[str]) -> np.ndarray:
@@ -220,6 +279,7 @@ def run_arm(
     index: dict[str, int],
     device: torch.device,
     epochs: int = EPOCHS,
+    edge_type: torch.Tensor | None = None,
 ) -> ArmRow:
     labels = {k: int(v) for k, v in split["labels"].items()}
     parts = {
@@ -234,6 +294,7 @@ def run_arm(
     }
     xt = torch.from_numpy(x).to(device)
     ei = edge_index.to(device)
+    et = edge_type.to(device) if edge_type is not None else None
     pos = float(ys["train"].sum())
     pos_weight = torch.tensor((len(ys["train"]) - pos) / pos, device=device)
     tests, vals, sel, n_params = [], [], [], 0
@@ -248,7 +309,7 @@ def run_arm(
         for _ in range(epochs):
             net.train()
             opt.zero_grad()
-            logit = net(xt, ei)
+            logit = net(xt, ei, et)
             loss = F.binary_cross_entropy_with_logits(
                 logit[parts["train"]], ys["train"].to(device), pos_weight=pos_weight
             )
@@ -256,7 +317,7 @@ def run_arm(
             opt.step()
             net.eval()
             with torch.no_grad():
-                logit = net(xt, ei).cpu()
+                logit = net(xt, ei, et).cpu()
             val_curve.append(
                 float(roc_auc_score(ys["val"].numpy(), logit[parts["val"]].numpy()))
             )
@@ -379,7 +440,7 @@ def main() -> None:
     parser.add_argument(
         "--arms",
         default="base",
-        choices=("base", "extra", "folds"),
+        choices=("base", "extra", "folds", "relational", "split"),
         help=(
             "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
             "GCN and GATv2. extra: graph convolution on the union with the transformer's "
@@ -400,7 +461,67 @@ def main() -> None:
     t5 = embedding("prot_T5_all", gene_ids)
     rows: list[ArmRow] = []
     no_edges = torch.zeros(2, 0, dtype=torch.long)
-    if args.arms == "extra":
+    if args.arms == "relational":
+        # THE MATH-490 AND GENE_GRAPH ARCHITECTURES ON THIS SPLIT: GIN (the 1-WL
+        # aggregator), GraphSAGE, and the two relational kinds over the nine graphs as
+        # typed edges (RGCN with basis decomposition, RGAT), each with ProtT5 alone and
+        # with the transformer's three inputs, 200 epochs, beside GCN on the same edges.
+        chrom = embedding("normalized_chrom_pathways", gene_ids)
+        fba = fba_ratios(gene_ids)
+        feats_rel = {
+            "ProtT5": t5,
+            "ProtT5+chrom-pathway+FBA ratios": np.concatenate([t5, chrom, fba], axis=1),
+        }
+        ei = edges(graphs["union of nine"], index)
+        ei_typed, et_typed = typed_edges(graphs, index)
+        for inputs, x in feats_rel.items():
+            for kind in ("GIN", "GraphSAGE"):
+                rows.append(
+                    run_arm(kind, "union of nine", inputs, x, ei, split, index, device)
+                )
+            for kind in ("RGCN", "RGAT"):
+                rows.append(
+                    run_arm(
+                        kind,
+                        "nine typed",
+                        inputs,
+                        x,
+                        ei_typed,
+                        split,
+                        index,
+                        device,
+                        edge_type=et_typed,
+                    )
+                )
+        out = osp.join(RESULTS, "graph_baselines_relational.json")
+    elif args.arms == "split":
+        # THE INDICATOR SPLIT INTO ITS BLOCKS: the pathway multi-hot, the chromosome
+        # one-hot and the seven scaled properties, each beside ProtT5 and the four FBA
+        # ratios, and the pathway block alone with the ratios, on the MLP and on GCN.
+        blocks = {
+            "pathways": embedding("pathways", gene_ids),
+            "chromosome": embedding("chromosome", gene_ids),
+            "properties": embedding("normalized_props", gene_ids),
+        }
+        fba = fba_ratios(gene_ids)
+        feats_split = {
+            f"ProtT5+{name}+FBA ratios": np.concatenate([t5, block, fba], axis=1)
+            for name, block in blocks.items()
+        }
+        feats_split["pathways+FBA ratios"] = np.concatenate(
+            [blocks["pathways"], fba], axis=1
+        )
+        feats_split["pathways"] = blocks["pathways"]
+        ei = edges(graphs["union of nine"], index)
+        for inputs, x in feats_split.items():
+            rows.append(
+                run_arm("MLP", "none", inputs, x, no_edges, split, index, device)
+            )
+            rows.append(
+                run_arm("GCN", "union of nine", inputs, x, ei, split, index, device)
+            )
+        out = osp.join(RESULTS, "graph_baselines_split.json")
+    elif args.arms == "extra":
         chrom = embedding("normalized_chrom_pathways", gene_ids)
         fba = fba_ratios(gene_ids)
         feats_extra = {
@@ -448,6 +569,8 @@ def main() -> None:
             run_arm("MLP", "none", "ProtT5", t5, no_edges, split, index, device)
         )
         for graph_name, g in graphs.items():
+            if graph_name.startswith("one:"):
+                continue  # the single graphs serve the typed edge set only
             ei = edges(g, index)
             feats = {
                 "ones": ones,

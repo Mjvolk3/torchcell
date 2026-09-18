@@ -154,6 +154,26 @@ class NodeEmbeddingBuilder:
             "requires_graph": True,
             "model_name": "normalized_chrom",
         },
+        # The indicator split into its blocks (028 round 22): the pathway multi-hot
+        # alone, the chromosome one-hot alone, the seven scaled properties alone.
+        "pathways": {
+            "class": OneHotGraphEmbeddingDataset,
+            "root_path": "data/scerevisiae/sgd_gene_graph_hot",
+            "requires_graph": True,
+            "model_name": "pathways",
+        },
+        "chromosome": {
+            "class": OneHotGraphEmbeddingDataset,
+            "root_path": "data/scerevisiae/sgd_gene_graph_hot",
+            "requires_graph": True,
+            "model_name": "chromosome",
+        },
+        "normalized_props": {
+            "class": OneHotGraphEmbeddingDataset,
+            "root_path": "data/scerevisiae/sgd_gene_graph_hot",
+            "requires_graph": True,
+            "model_name": "normalized_props",
+        },
         # Random embeddings
         "random_1000": {
             "class": RandomEmbeddingDataset,

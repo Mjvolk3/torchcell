@@ -632,3 +632,13 @@ Round 19 early read (4 of 12 cells): lr x10 0.629/0.697 (seeds 2701/2702), two-l
 Round 20 partial (22:30, W&B poll by job id, `val` = validation AUROC at the latest logged epoch): 2332 gated elastic x100 seeds 2703-2705 at epoch 167, 0.72-0.74, dual rows on 88 percent of genotypes; 2333 gated GEM box seeds 2703-2705 at epoch 81, 0.75-0.76; 2334 forced elastic x30 lr x10 at epoch 98-103, 0.32/0.73/0.56 with one cell at slack row fraction 1.00 (the ATP maintenance bound unmet on every genotype); 2335 forced x100 reach e^6 lr x10 at epoch 98-106, 0.28/0.35/0.56, again one cell at slack fraction 1.00. Partial; the read waits for the selected epoch.
 
 The W&B display names are `run_gilahyper-<job>_<hash>` (the arm sits in the tags), so a `display_name` regex on the round tag finds nothing; poll by job id (`poll_round.py <job>...`).
+
+Pre-registered reads, written before the cells finish (also in `4-module.tex`, sec:round20 and sec:round21):
+
+- Round 20 gated forms (six seeds each): PASS = every seed above its paired round-4 gated cell without the solve (gate_s0, 0.771) AND seed mean >= 0.824 (the GEM-box gated cell's round-15b mean). Forced probes: round 18's read (3/3 above the paired comparator lpelbio100 by seed AND none below 0.80).
+- Round 21 gated_flux (all reactions; exchanges): PASS = 3/3 above the round-18 gated elastic cell by seed (lpelgate100 seeds 2700-2702: 0.816/0.810/0.783) AND seed mean >= 0.821 (the affine).
+- Round 20 first pack (2332, gated elastic x100 seeds 2703-2705): 0.795/0.808/0.814, selected epochs 88/89/92, gate -1.0/-1.4/-0.8; six-seed mean 0.804 sd 0.013, pooled 0.803 [0.724, 0.880]. Six of six above 0.771; mean below 0.824. The elastic gated cell is reliable and sits 0.02 under the GEM-box gated cell.
+
+The module diagram for round 21 is `notes/assets/drawio/028-module-gated-flux.drawio` (from `028-module.gen.py`), exported to `notes-tex/028-gene-essentiality/figures/module_gated_flux.pdf`:
+
+![](./assets/drawio/028-module-gated-flux.svg)

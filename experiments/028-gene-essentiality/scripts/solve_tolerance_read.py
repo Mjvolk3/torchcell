@@ -299,7 +299,10 @@ def main() -> None:
     growth = {name: np.array([row[name]["growth"] for row in rows]) for name in SOLVERS}
     flux = {name: np.stack([row[name]["v"] for row in rows]) for name in SOLVERS}
     enc = {name: np.log1p(np.abs(flux[name])) for name in SOLVERS}
-    wild_growth = float(_wild_type_growth(a_csc, c, lb0, ub0, highspy))
+    _init_worker(a_csc, c)
+    wild_row = _solve_gene(("wild_type", lb0, ub0))
+    assert wild_row[REFERENCE]["status"] == "Optimal", wild_row[REFERENCE]["status"]
+    wild_growth = float(wild_row[REFERENCE]["growth"])
     ratio = {name: growth[name] / wild_growth for name in SOLVERS}
 
     ref_enc = enc[REFERENCE]
@@ -365,8 +368,57 @@ def main() -> None:
         )
         print(reads[-1].model_dump_json(indent=None))
 
+    # THE PDLP STORE. The one store no other script builds: the cuOpt algorithm's own
+    # point for every labeled gene, written in the shape ess_reference_flux_table.py
+    # writes (genes, v_deletion, v_wild_type, rxn_ids, provenance; no statistics
+    # block, so only the `pfba` feature kind reads it), for the training test of a
+    # first-order store (round 38). Programs PDLP reported non-optimal keep the zero
+    # flux and are counted.
+    table_dir = osp.join(DATA_ROOT, "data/torchcell/reference_flux")
+    os.makedirs(table_dir, exist_ok=True)
+    pdlp = "pdlp_1e-4"
+    store_path = osp.join(table_dir, f"ess_solve_encodings_{MEDIUM}_pdlp.npz")
+    store_provenance = {
+        "gem": osp.basename(source.model_dir),
+        "flux_scale": FLUX_SCALE,
+        "method": (
+            f"growth-maximizing LP (the round-27 program, split form in micromoles) by "
+            f"HiGHS {highspy.Highs().version()} PDLP, no crossover, KKT 1e-4, with the "
+            "gene deleted through cobra.manipulation.knock_out_model_genes; written by "
+            "solve_tolerance_read.py"
+        ),
+        "solver": "pdlp",
+        "options": SOLVERS[pdlp],
+        "medium": MEDIUM,
+        "split_file": SPLIT_FILE,
+        "wild_type_growth": float(wild_row[pdlp]["growth"]),
+        "wild_type_status": wild_row[pdlp]["status"],
+        "n_nonoptimal_zero_flux": int(
+            sum(row[pdlp]["status"] != "Optimal" for row in rows)
+        ),
+        "n_lethal_zero_flux": int(
+            sum(
+                row[pdlp]["status"] == "Optimal" and row[pdlp]["growth"] < 1e-6
+                for row in rows
+            )
+        ),
+    }
+    np.savez(
+        store_path,
+        genes=np.array(ordered),
+        v_deletion=flux[pdlp].astype(np.float32),
+        v_wild_type=wild_row[pdlp]["v"].astype(np.float32),
+        rxn_ids=np.array(list(gem.rxn_ids)),
+        provenance=np.array(json.dumps(store_provenance)),
+    )
+    print(
+        f"PDLP store {store_path}: {store_provenance['n_nonoptimal_zero_flux']} non-optimal rows"
+    )
+
     out = {
         "script": "solve_tolerance_read.py",
+        "pdlp_store": store_path,
+        "pdlp_store_provenance": store_provenance,
         "program": (
             "GEM box clamped to +/-100 mmol/gDW/h, YPD on the exchanges, the gene's "
             "reactions closed through the GPR, split variables in micromoles, maximize "
@@ -396,16 +448,6 @@ def main() -> None:
     with open(path, "w") as fh:
         json.dump(out, fh, indent=2)
     print(f"{time.time() - started:.0f}s\n{path}")
-
-
-def _wild_type_growth(
-    a_csc: sp.csc_matrix, c: np.ndarray, lb: np.ndarray, ub: np.ndarray, highspy: Any
-) -> float:
-    """The reference solver's wild-type growth, for the ratios."""
-    _init_worker(a_csc, c)
-    row = _solve_gene(("wild_type", lb, ub))
-    assert row[REFERENCE]["status"] == "Optimal", row[REFERENCE]["status"]
-    return float(row[REFERENCE]["growth"])
 
 
 if __name__ == "__main__":

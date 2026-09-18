@@ -263,6 +263,29 @@ def fba_ratios(gene_ids: list[str]) -> np.ndarray:
     return np.array([table.get(g, [1.0] * 4) for g in gene_ids], dtype=np.float32)
 
 
+def solve_log1p(gene_ids: list[str], store: str | None = None) -> np.ndarray:
+    """The deletion's solved flux vector as ``log(1 + |v|)`` per gene, 0 where absent.
+
+    The round-33 encoding over the store ``ess_reference_flux_table.py`` writes (the
+    pFBA vector by default; ``ESS_SOLVE_TABLE`` or ``store`` names another, such as
+    the interior-point store). The store covers the 1,121 labeled genes; every other
+    gene reads the zero vector, which under this encoding is the flux of a gene with
+    no reaction, not a column mean.
+    """
+    path = store or os.environ.get(
+        "ESS_SOLVE_TABLE",
+        osp.join(DATA_ROOT, "data/torchcell/reference_flux/ess_solve_encodings_YPD.npz"),
+    )
+    payload = np.load(path, allow_pickle=False)
+    rows = {str(g): i for i, g in enumerate(payload["genes"])}
+    v = np.log1p(np.abs(payload["v_deletion"].astype(np.float32)))
+    out = np.zeros((len(gene_ids), v.shape[1]), dtype=np.float32)
+    for i, g in enumerate(gene_ids):
+        if g in rows:
+            out[i] = v[rows[g]]
+    return out
+
+
 def structural(g: nx.Graph, gene_ids: list[str]) -> np.ndarray:
     deg = dict(g.degree())
     clust = nx.clustering(g)
@@ -496,6 +519,7 @@ def main() -> None:
             "go800",
             "go_folds",
             "go_rel",
+            "go_solve",
         ),
         help=(
             "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
@@ -688,6 +712,44 @@ def main() -> None:
         # A non-default seed list writes its own file, so the three-seed read stays.
         suffix = ("" if seeds == SEEDS else f"_s{len(seeds)}") + split_tag
         out = osp.join(RESULTS, f"graph_baselines_{args.arms}{suffix}.json")
+    elif args.arms == "go_solve":
+        # ONE MODEL THAT HOLDS BOTH (the open item of the family averages): the
+        # annotation through the graph and the deletion's solved flux, as the
+        # round-33 cell reads it, on the same node. Graph convolution over the union
+        # on GO with the log1p vector, with the ratios beside them, and the solve
+        # alone; 400 epochs as the GO rows; and the MLP on the same inputs as the
+        # no-graph control.
+        go = embedding("go", gene_ids)
+        fba = fba_ratios(gene_ids)
+        solve = solve_log1p(gene_ids)
+        ei = edges(graphs["union of nine"], index)
+        feats_solve = {
+            "solve log1p": solve,
+            "GO+solve log1p": np.concatenate([go, solve], axis=1),
+            "GO+FBA ratios+solve log1p": np.concatenate([go, fba, solve], axis=1),
+        }
+        for inputs, x in feats_solve.items():
+            rows.append(
+                run_arm(
+                    "MLP", "none", inputs, x, no_edges, split, index, device, seeds=seeds
+                )
+            )
+            rows.append(
+                run_arm(
+                    "GCN",
+                    "union of nine",
+                    inputs,
+                    x,
+                    ei,
+                    split,
+                    index,
+                    device,
+                    epochs=400,
+                    seeds=seeds,
+                )
+            )
+        suffix = ("" if seeds == SEEDS else f"_s{len(seeds)}") + split_tag
+        out = osp.join(RESULTS, f"graph_baselines_go_solve{suffix}.json")
     elif args.arms == "go_rel":
         # The typed-edge models on GO alone at 400 epochs (RGAT beat convolution on the
         # three inputs), and convolution on GO with the pathway multi-hot.

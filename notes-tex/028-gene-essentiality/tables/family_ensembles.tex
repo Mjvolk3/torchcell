@@ -15,11 +15,13 @@
     pathway + ProtT5 + affine (round 22, 3 seeds) & 3 & 0.891 [0.83, 0.94] \\
     flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds) & 6 & 0.911 [0.86, 0.95] \\
     cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds) & 6 & 0.918 [0.87, 0.96] \\
-    GO convolution (400 epochs, 6 seeds) $+$ cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds) & 12 & \textbf{0.946} [0.91, 0.98] \\
+    layer-free log1p vector + affine, pathway + ProtT5 (round 33, 6 seeds) & 6 & 0.910 [0.86, 0.95] \\
+    GO convolution (400 epochs, 6 seeds) $+$ layer-free log1p vector + affine, pathway + ProtT5 (round 33, 6 seeds) & 12 & \textbf{0.947} [0.91, 0.98] \\
+    GO convolution (400 epochs, 6 seeds) $+$ cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds) & 12 & 0.946 [0.91, 0.98] \\
     GO convolution (400 epochs, 6 seeds) $+$ pathway + ProtT5 + affine (round 22, 3 seeds) $+$ cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds) & 15 & 0.939 [0.90, 0.97] \\
     GO convolution (400 epochs, 3 seeds) $+$ pathway + ProtT5 + affine (round 22, 3 seeds) & 6 & 0.933 [0.89, 0.97] \\
     GO convolution (400 epochs, 3 seeds) $+$ flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds) & 9 & 0.941 [0.90, 0.97] \\
-    GO convolution (400 epochs, 3 seeds) $+$ flux head, ProtT5 (rounds 21 and 24, 6 seeds) & 9 & 0.923 [0.87, 0.96] \\
+    GO convolution (400 epochs, 3 seeds) $+$ flux head, ProtT5 (rounds 21 and 24, 6 seeds) & 9 & 0.923 [0.87, 0.97] \\
     GO convolution (400 epochs, 3 seeds) $+$ pathway + ProtT5 + affine (round 22, 3 seeds) $+$ flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds) & 12 & 0.935 [0.89, 0.97] \\
     \hline
   \end{tabular}

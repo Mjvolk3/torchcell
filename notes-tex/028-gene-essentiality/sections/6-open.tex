@@ -79,11 +79,14 @@ weight, six encodings). What remains is attribution and the module.
     form: the deletion's pFBA vector precomputed and appended to the affine reads
     0.871 pooled alone and 0.901 with the solve statistics at 31 minutes per cell
     against 83 for the solve inside the graph, under the cached-solve head's 0.917,
-    with four of six vector cells selecting an epoch before the fitting transition over
-    a default-initialized 4,135-column affine; whether the head's construction (zero
-    initialization over $\log(1 + |v|)$, round 33) closes the 0.05 is in flight. The
-    count that sizes the store, the distinct (genotype, medium) pairs across the
-    database, is not measured.
+    with four of six vector cells selecting an epoch before the fitting transition;
+    round 33 closed the 0.05 with the encoding alone: as $\log(1 + |v|)$ the vector
+    reads 0.896 to 0.919 on twelve of twelve runs, 0.912 pooled, with nothing in the
+    graph and 11 minutes a cell. What remains open on the form is why standardized
+    columns make the backbone peak before it fits, its fold read (job 2409, in
+    flight), whether the vector substitutes for the pathway annotation (the same form
+    on ProtT5 alone, job 2410, in flight), and the count that sizes the store, the
+    distinct (genotype, medium) pairs across the database, which is not measured.
     Where a solve must stay in the loop, the fine-tuning form with learned ceilings,
     three constructions would remove the synchronization, in order of how much they
     change: a batched first-order solve on the card, which NVIDIA's cuOpt offers as

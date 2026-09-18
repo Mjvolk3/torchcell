@@ -1188,6 +1188,49 @@ each). The wall time is 31 minutes per cell at six per card, against 40 for the 
 at three and 83 for the cached-solve head at two: with the vector precomputed the cell
 costs what the affine costs, and nothing on the card waits on a solver.
 
+\subsection{Round 33: the encoding is the layer-free form's number\secstatus{todo}}
+\label{sec:round33}
+
+Round 31's affine differs from the cached-solve head in two ways, a default rather
+than zero initialization and standardized columns rather than $\log(1 + |v|)$, and
+round 33 crosses them: the same pFBA vector with the solve columns zero-initialized,
+as $\log(1 + |v|)$ under the default initialization, and as $\log(1 + |v|)$
+zero-initialized, six seeds each paired against round 31's cell (jobs 2406, 2407 and
+2408; Table~\ref{tab:w49}, Figure~\ref{fig:w49}).
+
+\input{tables/round_w49}
+
+\tcfigfit[1.0]{figures/w49_readout_2026-09-18-11-11-40.pdf}{\textbf{Round 33, the
+  layer-free form's encoding and initialization.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w49}.}{fig:w49}
+
+The encoding is the whole effect and the initialization is none of it. The
+standardized vector reads 0.832 under the default initialization and 0.836
+zero-initialized (0.802, 0.793, 0.820, 0.890, 0.916 and 0.792 on seeds 2700 to 2705;
+pooled 0.868 [0.78, 0.94]), and the zero-initialized cells peak early exactly as the
+default ones did: five of six reach their validation maximum between epochs 1 and 13,
+before the training loss falls, and select epochs 9 to 13 on three, so the early
+peak is not the affine's random projection but what the standardized columns do to
+the backbone's fitting. As $\log(1 + |v|)$ the same vector reads 0.910, 0.919, 0.911,
+0.906, 0.896 and 0.907 under the default initialization (mean 0.908, sd 0.008; pooled
+0.912 [0.87, 0.95]) and 0.913, 0.910, 0.909, 0.913, 0.909 and 0.906 zero-initialized
+(mean 0.910, sd 0.003; pooled 0.910 [0.87, 0.95]), every one of the twelve selecting
+after the transition (epochs 33 to 66), no miss, and the lowest seed-to-seed spread of
+any arm in the document. That is the cached-solve head's number (0.917 pooled from
+0.882 mean with one miss in six) with no layer in the graph, no solver in training and
+no chance of the run to miss the transition, at 31 minutes per cell in a pack of six
+and 11 minutes alone (job 2408). Under the family protocol the form reads 0.910 alone
+and 0.948 [0.91, 0.98] averaged with the six-seed GO convolution, the maximum of the
+thirteen split-file averages tried (Section~\ref{sec:family-ensembles}). The fold
+read of this form runs at the time of writing (job 2409), as does the vector on ProtT5
+alone, which asks whether the solve substitutes for the pathway annotation (job 2410).
+
 \subsection{The solve across solvers: the argmax is not unique\secstatus{todo}}
 \label{sec:solve-tolerance}
 

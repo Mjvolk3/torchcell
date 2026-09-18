@@ -60,11 +60,12 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     Isozyme redundancy, read the wrong way in both directions, is where the remaining
     AUROC sits, and the two model families miss different halves of it
     (Section~\ref{sec:hard-genes}). Averaging their existing predictions with equal
-    weight and nothing fitted scores 0.946 [0.91, 0.98] on the split-file cells (the
-    six-seed GO convolution with the six-seed scalable form, from 0.905 and 0.918
-    alone) and 0.954 [0.92, 0.98] under the fold protocol, from families at 0.917 and
-    0.922 alone (the GO convolution's fold models with the scalable form's): the
-    maximum of the eleven and nine post hoc averages tried, reported as such
+    weight and nothing fitted scores 0.948 [0.91, 0.98] on the split-file cells (the
+    six-seed GO convolution with the six-seed layer-free form, from 0.905 and 0.910
+    alone; 0.946 with the scalable form) and 0.954 [0.92, 0.98] under the fold
+    protocol, from families at 0.917 and 0.922 alone (the GO convolution's fold models
+    with the scalable form's): the maximum of the thirteen and nine post hoc averages
+    tried, reported as such
     (Section~\ref{sec:family-ensembles}).
   \item[Off the metabolic genes, only the graph transfers.] On the 4,674 genome-wide
     genes the released split never labeled (974 essential by SGD, 3,700 nonessential by
@@ -152,9 +153,12 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     statistics beside it, at 31 minutes per cell against 83, and four of the six
     vector cells select an epoch before the backbone's fitting transition over a
     default-initialized 4,135-column affine, where the two that select after it read
-    0.923 and 0.911; whether the head's construction, zero-initialized over
-    $\log(1 + |v|)$, closes the 0.05 to the cached-solve head is in flight
-    (Section~\ref{sec:round31}).
+    0.923 and 0.911 (Section~\ref{sec:round31}). The encoding is the whole of that
+    gap: the same vector as $\log(1 + |v|)$ reads 0.896 to 0.919 on twelve of twelve
+    runs (0.912 pooled; zero initialization changes nothing, standardized columns
+    zero-initialized still peak early), the cached-solve head's number with no layer,
+    no solver in training, no missed transition and the lowest spread in the
+    document, at 11 minutes alone on a card (Section~\ref{sec:round33}).
   \item[The solve's argmax is not unique, and the head reads the solver's point.]
     The round-27 program solved for every labeled gene by five solvers gives one
     growth value (to $10^{-5}$, FBA's 0.60 to 0.68 on the 195 whichever solver) and

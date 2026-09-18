@@ -287,6 +287,19 @@ Section~\ref{sec:round26}.
 
 \input{tables/graph_baselines_go}
 
+Graph convolution on the GO multi-hot alone reads 0.888, with no sequence embedding
+and no solve, and 0.891 with the four ratios: level with the transformer's best
+single cell and above the MLP on all three of its inputs (0.870). On the MLP the
+same vector beside ProtT5 and the ratios reads 0.855, 0.025 under the pathway block,
+so without the graph GO carries less than the pathways and with it more; the
+propagated form beats the direct annotations on both models (0.887 against 0.877 on
+convolution), and the biological-process namespace alone loses nothing on convolution
+(0.885) and 0.036 on the MLP. Every convolution cell on GO selects its epoch between
+183 and 197, still rising at the end of the budget. The one-column control that marks a
+gene as annotated to any pathway reads 0.774 on the MLP and 0.832 on convolution, the
+level of ProtT5 with the ratios, so the pathway block's gain is which pathway rather
+than whether there is one.
+
 \subsection{The Weisfeiler-Leman test on the deletion graphs\secstatus{todo}}
 
 A message-passing model over a gene graph is bounded by what color refinement can

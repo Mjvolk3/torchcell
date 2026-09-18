@@ -17,16 +17,23 @@
     {
       "pathway": "sce00020",
       "label": "citrate cycle",
-      "color": "#B85450",
+      "color": "#4F688B",
       "genes": 31,
       "ko_selected": 12
+    },
+    {
+      "pathway": "sce00071",
+      "label": "fatty acid degradation",
+      "color": "#B85450",
+      "genes": 20,
+      "ko_selected": 4
     },
     {
       "pathway": "sce00061",
       "label": "fatty acid biosynthesis",
       "color": "#D79B00",
       "genes": 13,
-      "ko_selected": 8
+      "ko_selected": 7
     },
     {
       "pathway": "sce00062",
@@ -40,13 +47,6 @@
       "label": "unsaturated fatty acid biosynthesis",
       "color": "#D79B00",
       "genes": 10,
-      "ko_selected": 3
-    },
-    {
-      "pathway": "sce00071",
-      "label": "fatty acid degradation",
-      "color": "#666666",
-      "genes": 20,
       "ko_selected": 1
     }
   ],
@@ -109,7 +109,7 @@
       "drawn_on_map": true
     }
   ],
-  "retrieved_at": "2026-09-18T02:02:10+00:00",
+  "retrieved_at": "2026-09-18T06:44:28+00:00",
   "retrieval_method": "direct_url",
   "kegg_api": "https://rest.kegg.jp",
   "ipath_endpoint": "https://pathways.embl.de/mapping.cgi",
@@ -122,9 +122,9 @@
     "default_color": "#999999",
     "keep_colors": 1
   },
-  "selection_sha256": "c896bed85399ab5edc924b6cbc7ceeea020c68b534dd99f87aef8d5a4a60399c",
+  "selection_sha256": "4d5785d104a33a98076059360f514c89035e392bdfd0011910289b1c09803d4b",
   "selection_entries": 83,
-  "response_sha256": "a1472cc9ea2d6043eca76389994042f9a6ad62edf0d78a9aebbd8994e76efd21",
+  "response_sha256": "500c788ac8bfd5a8d9b870e85455be234ccbd5fa79a0c2f97d52c768388b9ddf",
   "species_acyl_coa_on_map": {
     "myristoyl-CoA": true,
     "palmitoyl-CoA": true,
@@ -365,6 +365,7 @@
     53.2
   ],
   "stored": {
+    "ipath3_metabolic_4d5785d104a3.svg": "fae0b25284537e8b0f62421b6ffc52c874147ec37b900ce3fe73ccf9fd32d31a",
     "ipath3_metabolic_c896bed85399.svg": "3d9b57619a570afde636945749fad17ed4c8094e3200e1432742d183b394624d",
     "ipath_probes.json": "ceab5e1136f28220df4dea1b08b61ae97b106a240862df32f5447ebb75bc104b",
     "kegg_find_sce_ACC1.tsv": "42d53d17ee933bc2f202add904252c0677eb64d27c51bfe07be4cf55ba6faa0a",
@@ -398,8 +399,8 @@
     "kegg_link_sce_sce00071.tsv": "35b4d38fe4c9e379dd30e86d65231bb1b972452d6635de6f49dc9e76e94392ba",
     "kegg_link_sce_sce00620.tsv": "fbb7424b8996bd211710a40f877e91a13fd3c807a2c2114161595931cdb323e7",
     "kegg_link_sce_sce01040.tsv": "ff5f908ccdc88e35a9da750f614238903ab0b1541e518442f3078617d48a3595",
-    "label_anchors.json": "7b5881a4d8965a70b3536bf0ec3478bb592b5028ba187266ec6b28d42e3ccf06",
-    "provenance.json": "0432c34efd6365c4b99ee93ea2bf470d9b5105eb473c2312c95d8e398ab52eb0",
+    "label_anchors.json": "1306a2764a6d39b2a938d7d0e784be422051b0003f998a20a70f6d877e307bf8",
+    "provenance.json": "8137f0eb01a949b929837423efcd255fb6350c5701cf4e630b17c651850e596a",
     "selection.txt": "c896bed85399ab5edc924b6cbc7ceeea020c68b534dd99f87aef8d5a4a60399c"
   }
 }

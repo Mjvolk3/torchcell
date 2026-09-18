@@ -3,13 +3,13 @@
     "name": "palmitoleate",
     "label": "C16:1 palmitoleate",
     "node_mm": [
-      27.5,
-      3.8
+      60.65,
+      8.8
     ],
     "attached": true,
     "label_mm": [
-      3.55,
-      3.8
+      65.55,
+      8.8
     ],
     "genes": "OLE1, FAA1/2/4"
   },
@@ -17,13 +17,13 @@
     "name": "stearate",
     "label": "C18:0 stearate",
     "node_mm": [
-      27.5,
-      10.6
+      60.65,
+      15.6
     ],
     "attached": true,
     "label_mm": [
-      4.18,
-      10.6
+      65.55,
+      15.6
     ],
     "genes": "FAS1/2, FAA1/2/4"
   },
@@ -31,13 +31,13 @@
     "name": "oleate",
     "label": "C18:1 oleate",
     "node_mm": [
-      27.5,
-      17.4
+      60.65,
+      22.4
     ],
     "attached": true,
     "label_mm": [
-      1.8,
-      17.4
+      65.55,
+      22.4
     ],
     "genes": "FAA1/2/4, OLE1"
   },
@@ -78,22 +78,8 @@
     ],
     "attached": false,
     "label_mm": [
-      42.72,
-      24.45
-    ],
-    "genes": null
-  },
-  {
-    "name": "palmitoyl-CoA",
-    "label": "palmitoyl-CoA",
-    "node_mm": [
-      32.08,
-      30.74
-    ],
-    "attached": false,
-    "label_mm": [
-      25.2,
-      50.22
+      36.36,
+      48.09
     ],
     "genes": null
   },
@@ -106,7 +92,7 @@
     ],
     "attached": false,
     "label_mm": [
-      53.59,
+      49.09,
       31.45
     ],
     "genes": null
@@ -120,8 +106,8 @@
     ],
     "attached": false,
     "label_mm": [
-      46.68,
-      36.52
+      49.41,
+      51.43
     ],
     "genes": null
   },
@@ -134,8 +120,22 @@
     ],
     "attached": false,
     "label_mm": [
-      45.23,
+      19.01,
       49.53
+    ],
+    "genes": null
+  },
+  {
+    "name": "palmitoyl-CoA",
+    "label": "palmitoyl-CoA",
+    "node_mm": [
+      32.08,
+      30.74
+    ],
+    "attached": false,
+    "label_mm": [
+      13.1,
+      19.1
     ],
     "genes": null
   }

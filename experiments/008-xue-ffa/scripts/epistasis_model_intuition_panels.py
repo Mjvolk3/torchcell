@@ -136,21 +136,22 @@ def panel_expectations(ax, pairs):
         ax.plot([0, x], [y, y], color=color, linewidth=0.7, zorder=2)
         ax.plot([x], [y], marker="o", markersize=3.0, color=color, markeredgecolor="black",
                 markeredgewidth=0.25, zorder=3)
-        ax.text(x + 0.02, y, f"{label} {x:.2f}", va="center", ha="left", fontsize=5)
+        # Clear of the marker rather than against it: at 0.02 the text touched the dot
+        # it belongs to, which read as one mark (author review, 2026.09.18).
+        ax.text(x + 0.055, y, f"{label} {x:.2f}", va="center", ha="left", fontsize=5)
     # The gap between the two nulls is exactly the product of the two singles' losses.
     # It is drawn on its own row between them so it crosses neither label.
     gap = r["mult"] - r["add"]
     ax.annotate("", xy=(r["add"], 1.5), xytext=(r["mult"], 1.5),
                 arrowprops=dict(arrowstyle="<->", linewidth=0.5, color="black",
                                 shrinkA=0, shrinkB=0))
-    ax.text(r["mult"] + 0.03, 1.5, f"$(1-f_i)(1-f_j) = {gap:.2f}$",
+    ax.text(r["mult"] + 0.065, 1.5, f"$(1-f_i)(1-f_j) = {gap:.2f}$",
             ha="left", va="center", fontsize=5)
     ax.set_yticks([])
     ax.set_xlim(0, 1.75)
     ax.set_ylim(-0.7, len(marks) - 0.4)
     ax.set_xlabel("titer (rel. base strain)")
-    ax.set_title(f"one double deletion, {a} and {b}:\nthe two nulls expect different things",
-                 fontsize=6, pad=3)
+    ax.set_title(f"the two nulls expect different things of {a} {b}", fontsize=6, pad=3)
     return {"pair": r["pair"], "null_gap": round(float(gap), 3)}
 
 
@@ -175,8 +176,10 @@ def panel_null_fit(ax, pairs):
     ax.set_ylabel("measured titer of the double")
     above = {c: int((pairs["f_ij"] > pairs[c]).sum()) for c in ("mult", "add")}
     med = {c: float((pairs["f_ij"] - pairs[c]).median()) for c in ("mult", "add")}
-    ax.set_title(f"{above['mult']} and {above['add']} of 45 doubles sit above the two\n"
-                 f"expectations, by a median {med['mult']:+.2f} and {med['add']:+.2f}",
+    # One line, and short enough to print inside the panel: a title wider than the panel
+    # is not wrapped by matplotlib, it is cut off by the figure's own edge. The two
+    # median residuals it used to carry are in the caption.
+    ax.set_title(f"{above['mult']} and {above['add']} of 45 doubles beat the two nulls",
                  fontsize=6, pad=3)
     ax.legend(loc="lower right", frameon=False, handlelength=1.2, fontsize=5,
               labelspacing=0.25, borderaxespad=0.3, scatterpoints=1)
@@ -207,8 +210,7 @@ def panel_mean_variance(ax, means, sds):
     ax.set_yscale("log")
     ax.set_xlabel("strain mean titer (rel. base strain)")
     ax.set_ylabel("replicate standard deviation")
-    ax.set_title(f"spread grows with level across {len(keys)} strains,\n"
-                 "which is what a log link assumes", fontsize=6, pad=3)
+    ax.set_title(f"spread grows with level across {len(keys)} strains", fontsize=6, pad=3)
     ax.legend(loc="upper left", frameon=False, handlelength=1.6, fontsize=5,
               labelspacing=0.25, borderaxespad=0.3, scatterpoints=1)
     return {"n_strains": len(keys), "log_log_slope": round(float(slope), 3)}
@@ -261,59 +263,83 @@ def emit_equations():
     return sizes
 
 
-def panel_surfaces(ax, n=41):
-    """The two expectations as surfaces over the unit square of single-deletion effects.
+# The four models as four level-set maps, drawn on the same square and in the same order
+# as the table. Each entry is (key, color, title, surface, the scale its residual is
+# measured on). Three of the four expect the same surface, which is the panel's first
+# point; what separates them is the second column of the table, and it is drawn here as
+# the SPACING of the contours, since a model's contours are evenly spaced on the scale it
+# measures its residual on.
+LEVEL_SET_MODELS = [
+    ("multiplicative", C_MULT, "multiplicative", lambda a, b: a * b, "linear"),
+    ("additive", C_ADD, "additive", lambda a, b: a + b - 1.0, "linear"),
+    ("glm_log_link", C_GLM, "GLM log-link", lambda a, b: a * b, "log"),
+    ("log_ols", C_OLS, "log-OLS", lambda a, b: a * b, "log"),
+]
+LEVELS_LINEAR = [0.2, 0.4, 0.6, 0.8, 1.0]
+# The same span, evenly spaced in the logarithm, which is what an equal residual means
+# to a model fit on log titer.
+LEVELS_LOG = [round(float(v), 2) for v in np.exp(np.linspace(np.log(0.1), 0.0, 5))]
+# Where a contour's own value is written: on the diagonal of the square, which for both
+# surfaces is the point of that contour closest to the origin, so the numbers run in a
+# line up the panel instead of landing wherever a contour happens to leave it.
+ON_DIAGONAL = {"multiplicative": np.sqrt, "additive": lambda v: (v + 1.0) / 2.0}
 
-    This is the theory picture the rest of the figure is about. Both surfaces meet along
-    the two edges where one deletion does nothing, because there the other deletion's
-    effect is the combination's whatever the null; they separate in the interior, and the
-    vertical gap between them is exactly (1 - f_i)(1 - f_j). The two log-scale models
-    predict the SAME surface as the multiplicative one, which is the point the panel makes
-    about where the four models do and do not differ: three share this expectation and
-    differ in the scale their residual is measured on.
+
+def panel_level_sets(axes, n=181):
+    """What each model expects of a double, as level sets over the square of its singles.
+
+    One axes per model, in the order the table lists them, so the four are read across and
+    any one point on the square is read down. The center of the square is marked in every
+    panel with the value that model expects there, which is the comparison in one number:
+    0.25, 0.00, 0.25, 0.25.
+
+    Two differences are visible and they are different kinds of thing. The additive
+    surface is not the multiplicative one: its level sets are straight where theirs are
+    hyperbolas, and the two surfaces differ by (1 - f_i)(1 - f_j), which is largest where
+    both deletions are severe and is 0.25 at the center. The two log-scale models expect
+    the same surface as the multiplicative one, and differ in where they put equal
+    residuals: their contours are evenly spaced in the logarithm, so they crowd near 1
+    and spread out where titer is low.
     """
-    g = np.linspace(0.0, 1.0, n)
+    g = np.linspace(0.0, 1.1, n)
     fi, fj = np.meshgrid(g, g)
-    # Additive first and more opaque, multiplicative over it and translucent: the
-    # multiplicative surface is above the additive one everywhere on the square, so drawn
-    # solid it would hide the thing the panel is comparing it with.
-    ax.plot_surface(fi, fj, fi + fj - 1.0, color=C_ADD, alpha=0.85, linewidth=0,
-                    antialiased=True, rstride=2, cstride=2)
-    ax.plot_surface(fi, fj, fi * fj, color=C_MULT, alpha=0.55, linewidth=0,
-                    antialiased=True, rstride=2, cstride=2)
-    # The gap at the center of the square, drawn rather than described.
-    x0 = 0.5
-    ax.plot([x0, x0], [x0, x0], [x0 + x0 - 1.0, x0 * x0], color="black", linewidth=0.8,
-            zorder=10)
-    ax.text(x0, x0, (x0 * x0 + x0 + x0 - 1.0) / 2 + 0.06,
-            f"  {x0 * x0 - (x0 + x0 - 1.0):.2f}", fontsize=5, zorder=11)
-    ax.set_xlabel("$f_i$", labelpad=-8)
-    ax.set_ylabel("$f_j$", labelpad=-8)
-    ax.set_zlabel("")
-    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-        axis.set_ticks([0, 0.5, 1])
-        axis.set_tick_params(pad=-2, labelsize=5)
-    ax.set_zlim(-1, 1)
-    ax.set_zticks([-1, 0, 1])
-    ax.view_init(elev=24, azim=-132)
-    ax.set_box_aspect((1, 1, 0.78), zoom=1.04)
-    for pane in (ax.xaxis.pane, ax.yaxis.pane, ax.zaxis.pane):
-        pane.set_alpha(0.0)
-    ax.grid(True, linewidth=0.25)
-    ax.set_title("expected $f_{ij}$ over the single-deletion square;\n"
-                 "both log-scale models share the multiplicative surface",
-                 fontsize=6, pad=-1)
-    return {"gap_at_half": round(0.5 * 0.5 - (0.5 + 0.5 - 1.0), 3)}
+    out = {}
+    for ax, (key, color, title, surface, scale) in zip(axes, LEVEL_SET_MODELS):
+        levels = LEVELS_LINEAR if scale == "linear" else LEVELS_LOG
+        diagonal = ON_DIAGONAL["additive" if key == "additive" else "multiplicative"]
+        cs = ax.contour(fi, fj, surface(fi, fj), levels=levels, colors=color,
+                        linewidths=0.6)
+        ax.clabel(cs, cs.levels, inline=True, inline_spacing=1, fontsize=5,
+                  fmt=lambda v: f"{v:g}",
+                  manual=[(diagonal(v), diagonal(v)) for v in levels])
+        mid = float(surface(0.5, 0.5))
+        ax.plot([0.5], [0.5], marker="o", markersize=2.2, color="black", zorder=5)
+        # Bottom right, the one corner every surface leaves empty: beside the dot the
+        # note landed on the nearest contour's own number.
+        ax.text(0.97, 0.03, f"expects {mid:.2f} at (0.5, 0.5)", transform=ax.transAxes,
+                va="bottom", ha="right", fontsize=5, zorder=6)
+        ax.set_xlim(0, 1.1)
+        ax.set_ylim(0, 1.1)
+        ax.set_xticks([0, 0.5, 1.0])
+        ax.set_yticks([0, 0.5, 1.0])
+        ax.set_aspect("equal")
+        ax.set_xlabel("$f_i$", labelpad=1)
+        ax.set_title(f"{title}, residual on {scale} titer", fontsize=6, pad=3)
+        out[key] = {"levels": levels, "at_half": round(mid, 3)}
+    axes[0].set_ylabel("$f_j$", labelpad=1)
+    out["gap_at_half"] = round(out["multiplicative"]["at_half"] - out["additive"]["at_half"], 3)
+    return out
 
 
-def emit(name, width_key, height_mm, draw, projection=None):
-    fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM[width_key]), mm_to_in(height_mm)))
-    ax = fig.add_subplot(projection=projection)
-    info = draw(ax)
-    if projection is None:
-        fig.tight_layout(pad=0.4)
-    else:
-        fig.subplots_adjust(left=0.02, right=0.98, bottom=0.07, top=0.91)
+def emit(name, width_key, height_mm, draw, ncols=1):
+    fig, axes = plt.subplots(
+        1, ncols, figsize=(mm_to_in(PANEL_WIDTHS_MM[width_key]), mm_to_in(height_mm)))
+    axes = np.atleast_1d(axes)
+    info = draw(*axes) if ncols > 1 else draw(axes[0])
+    for ax in axes:
+        for spine in ax.spines.values():
+            spine.set_linewidth(0.5)
+    fig.tight_layout(pad=0.4)
     png = osp.join(IMAGES_DIR, f"mi_panel_{name}.png")
     svg = osp.join(IMAGES_DIR, f"mi_panel_{name}.svg")
     fig.savefig(png, dpi=300)
@@ -332,7 +358,7 @@ def main():
     emit("null_fit", "third", 52.0, lambda ax: panel_null_fit(ax, pairs))
     emit("mean_variance", "third", 52.0,
          lambda ax: panel_mean_variance(ax, means, sds))
-    emit("surfaces", "third", 52.0, panel_surfaces, projection="3d")
+    emit("level_sets", "full", 36.0, lambda *axes: panel_level_sets(axes), ncols=4)
     emit_equations()
 
 

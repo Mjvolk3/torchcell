@@ -61,3 +61,50 @@ tall) to keep Fig 5 inside the 170 mm cap with panel b at 107.9 mm. Labels are p
 prints, and the gene rows. `--refresh` refetches and raises on drift. KEGG's KGML is served
 under KEGG's academic-use terms; a published redraw cites KEGG, which this document does not
 yet do.
+
+## 2026.09.18 - Review round 6: colors, label plates, and a left gutter
+
+### The route colors changed, and the module order is now load bearing
+
+Fatty acid degradation was `#666666`, the same gray the Yeast9 tier is drawn in, so the
+arm this chassis engineered away was invisible against the background. It is now brick
+`#B85450`, the palette color that had been on the citrate cycle. The citrate cycle went to
+terracotta `#C48161` first and that failed a render: dE 22 (CIE76) separates two swatches
+and does not separate two 0.3 mm lines running near each other, and the TCA circle read as
+more degradation. It is now dark blue `#4F688B`, dE 60 from brick and 25 from the purple
+beside it, at the cost of dE 17 from the blue of the measured species, which are five
+filled circles rather than lines. The tiers lightened with it: Yeast9 `#8C8C8C` at 0.75,
+everything else `#CCCCCC` at 0.5, so no route color is a gray now.
+
+`MODULES` in [[experiments.008-xue-ffa.scripts.ffa_ipath_map]] is a PRIORITY order, first
+list wins, and both ends of it matter. Degradation has to outrank the three anabolic
+lists: KEGG puts POX1 on `sce01040` as well, and ordered last the whole beta-oxidation
+comb took the anabolic amber (measured: 1 red line instead of 21). It must not outrank
+central carbon: KEGG's degradation list also carries the alcohol and aldehyde
+dehydrogenases, and above `sce00010` it took 20 of glycolysis's 61 lines with it. The
+order that holds is central carbon, degradation, biosynthesis.
+
+### Label plates are drawn boxes now
+
+Rounded rectangles, `rx` 0.55 mm, stroked `#666666` at 0.12 mm over white at 0.94 opacity.
+The padding is even because the plate is built around the text's INK (`INK_H` 0.74 of the
+em, shifted up by `INK_DY` 0.07 for the caps that reach above the x-height that an SVG
+`dominant-baseline="middle"` centers on), not around the em box. Around the em box the
+plate carried a visible band under the text and nothing beside it.
+
+A plate is also sized on its widest LINE, not on its name. The oleate plate holds
+`FAA1/2/4, OLE1` at 5.04 pt under a 6 pt name, and the gene line is the wider of the two:
+with no stroke the overflow was invisible, and the first stroked render showed `OLE1`
+printing outside its own box.
+
+### A 5 mm gutter, and one narrowed search
+
+Label bounds now span a 5 mm gutter to the left of the drawing that the drawing itself may
+not use, because the compounds this panel names sit at the left end of the fatty acid comb
+and their labels were being pushed back over it. The map narrowed 83 to 80 mm to pay for
+it, which keeps the key's longest line inside 179 mm; the panel is still 54.1 mm tall
+because the key, not the map, sets that.
+
+`LABEL_PREF` narrows ONE label's search: pyruvate to upward directions and the two longest
+leaders. The ink search still chooses among what is left, so this is a smaller candidate
+set rather than a hand-placed label, and it is in the script rather than in a render.

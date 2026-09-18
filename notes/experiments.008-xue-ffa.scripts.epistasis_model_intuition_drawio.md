@@ -29,3 +29,22 @@ null.
   exported, and the page comes out 179.4 x 170 mm plus a border regardless of the content.
 - The table columns must sum to the panel width minus the left inset. A first pass summed
   to 179 starting at x = 2 and exported 181.5 mm wide, over the cap.
+
+## 2026.09.18 - Four full-width rows
+
+The page was three rows with the surface panel and the schematic sharing row 2. It is now
+four rows, each the full width: a b c at 5 mm, the four models' level sets at 63 mm, the
+schematic at 104 mm, the table at 131 mm, content to 168.5 mm of the 170 mm cap.
+
+The schematic is a row of its own and its two halves sit side by side, fractions left and
+amounts right, with the identity that separates them centered underneath. Stacked in half
+the page width it ran 52 mm tall for 22 mm of content and made the reader meet the second
+story only after the first, though the two are a pair.
+
+Table rows went 10 mm to 8 mm and the header 6 to 5.5. Two lines of 5.98 pt type occupy
+4.2 mm, so 8 mm is the text plus a millimetre of air above and below it; at 10 mm every row
+carried a visible band of empty space (author review).
+
+Every expression in the schematic and in the table is still a rendered math image placed at
+its measured size. draw.io's HTML `<sub>` is not typesetting, and it put a serif fallback in
+the exported PDF.

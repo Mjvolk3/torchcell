@@ -76,11 +76,24 @@ C_SPECIES = "#6C8EBF"
 C_WAYPOINT = "#666666"
 # Three tiers of the drawing. What Yeast9 contains is the mid gray; what KEGG draws for
 # yeast (or for any organism) but Yeast9 lacks is the faint tier; the route is in color.
+# The mid gray was the palette's #666666 and read as a sixth route color beside the
+# colored ones, which is what made fatty acid degradation ambiguous while degradation was
+# itself drawn in gray. Lightening the tier separates the background from the route by
+# value as well as by hue, and no route color is a gray now.
 TIER = {
-    "yeast9": {"color": "#666666", "opacity": 0.75, "width": 0.15, "r": 0.17},
-    "other": {"color": "#BBBBBB", "opacity": 0.45, "width": 0.09, "r": 0.11},
+    "yeast9": {"color": "#8C8C8C", "opacity": 0.75, "width": 0.15, "r": 0.17},
+    "other": {"color": "#CCCCCC", "opacity": 0.5, "width": 0.09, "r": 0.11},
 }
 W_ROUTE = 0.30  # mm, the colored route
+# A gutter to the left of the drawing that labels may use but the map may not. The
+# compounds this panel names sit at the left end of the fatty acid comb, so without it
+# their labels are pushed back over the drawing they are meant to point into.
+GUTTER_MM = 5.0
+# One label whose search is narrowed, after a review asked for it to move: pyruvate's
+# plate sat directly over the glycolysis lines that run above its node. Upward directions
+# and the two longest leaders lift it clear of them; the ink search still chooses among
+# what is left, so the label is not hand-placed.
+LABEL_PREF = {"pyruvate": ([d for d in ml.DIRECTIONS if d[1] < -0.3], (2.8, 4.0))}
 # KEGG places the measured acids a few units apart at the end of the fatty acid comb, so
 # the species nodes are kept small enough not to merge there.
 R_SPECIES, R_WAYPOINT = 0.62, 0.52  # mm
@@ -197,13 +210,19 @@ def gene_check(lines, refresh):
 
 
 KEY_ROW, KEY_NOTE_ROW = 3.4, 2.9
+# One key row per color of the route, named by the KEGG pathway whose color it takes, so
+# the key cannot drift from MODULES. The three fatty acid modules share one color and one
+# row; the row is named for what the three of them are.
+MODULE_COLOR = {p: c for p, _, c in MODULES}
 PANEL_KEY = [
-    ("#9673A6", "glycolysis and gluconeogenesis"),
-    ("#D6B656", "pyruvate metabolism"),
-    ("#B85450", "citrate cycle"),
-    ("#D79B00", "fatty acid biosynthesis, elongation and desaturation"),
-    ("#666666", "fatty acid degradation"),
+    (MODULE_COLOR["sce00010"], "glycolysis and gluconeogenesis"),
+    (MODULE_COLOR["sce00620"], "pyruvate metabolism"),
+    (MODULE_COLOR["sce00020"], "citrate cycle"),
+    (MODULE_COLOR["sce00061"], "fatty acid biosynthesis, elongation and desaturation"),
+    (MODULE_COLOR["sce00071"], "fatty acid degradation"),
 ]
+if len({c for c, _ in PANEL_KEY}) != len(PANEL_KEY):
+    raise ValueError("two key rows share a color; the map cannot be read from the key")
 KEY_EXTRA = 6  # species (2 kinds), intermediate, two tiers, the link
 KEY_NOTE_LINES = 3
 
@@ -226,7 +245,7 @@ def panel(attrs, lines, compounds, y9, mods, gene_rows, attachments, width_mm, m
     x0, y0 = min(xs) - m, min(ys) - m
     scale = map_w_mm / (max(xs) + m - x0)
     map_h_mm = (max(ys) + m - y0) * scale
-    to_mm = lambda x, y: ((x - x0) * scale, (y - y0) * scale)  # noqa: E731
+    to_mm = lambda x, y: ((x - x0) * scale + GUTTER_MM, (y - y0) * scale)  # noqa: E731
     panel_h_mm = max(map_h_mm, key_height_mm())
 
     y9_genes, y9_rxns, y9_cpds = set(y9["genes"]), set(y9["kegg_reactions"]), set(y9["kegg_compounds"])
@@ -285,11 +304,18 @@ def panel(attrs, lines, compounds, y9, mods, gene_rows, attachments, width_mm, m
     counts["compounds_yeast9"] = sum(c["cid"] in y9_cpds for c in compounds)
 
     # The attached species: rings in the window whose rings and links cover the least ink.
+    # A plate holds the species name over the genes of the path that attaches it, and the
+    # gene line can be the wider of the two, so the column is sized on the wider line of
+    # the widest candidate path rather than on the name.
     node_r = R_SPECIES
-    col_w = ml.column_width(attachments, labels)
-    layout, col_h = ml.column_layout(attachments, labels, col_w, node_r)
-    bounds = (0.3, 0.3, map_w_mm - 0.3, map_h_mm - 0.3)
-    inset = (bounds[0] + 2.0, bounds[1] + 2.0, bounds[2] - 2.0, bounds[3] - 2.0)
+    sub_w = {a["species"]: max(len(gene_run(c["genes"])) for c in a["candidates"]) * ml.CHAR_SMALL_MM
+             for a in attachments}
+    col_w = ml.column_width(attachments, labels, sub_w)
+    layout, col_h = ml.column_layout(attachments, labels, sub_w, col_w, node_r)
+    # Labels may use the gutter, the attached-species column may not: a ring is part of
+    # the drawing and has to sit where the map is.
+    bounds = (0.3, 0.3, GUTTER_MM + map_w_mm - 0.3, map_h_mm - 0.3)
+    inset = (GUTTER_MM + 2.3, 2.3, GUTTER_MM + map_w_mm - 2.3, map_h_mm - 2.3)
     wx, wy, side, chosen = ml.attachment_window(pts, attachments, copies, list(node_at.values()),
                                                 col_w, col_h, layout, inset)
     rings, _ = layout(wx, wy, side)
@@ -332,10 +358,11 @@ def panel(attrs, lines, compounds, y9, mods, gene_rows, attachments, width_mm, m
     if attachments:
         placer.group([a["species"] for a in attachments],
                      directions=ml.RIGHT if side == "right" else ml.LEFT,
-                     sub={a["species"]: gene_run(a["genes"]) for a in resolved}, attached=attached)
+                     sub={a["species"]: gene_run(a["genes"]) for a in resolved},
+                     sub_w=sub_w, attached=attached)
     rest = [n for n in node_at if n not in attached]
     placer.group([n for n in rest if n in species_names])
-    placer.group([n for n in rest if n not in species_names])
+    placer.group([n for n in rest if n not in species_names], pref=LABEL_PREF)
     parts += placer.svg
     # Rings go over the leaders, which start at the ring's center.
     for name in attached:
@@ -397,7 +424,7 @@ def panel(attrs, lines, compounds, y9, mods, gene_rows, attachments, width_mm, m
         line2 = "All five measured species are nodes of the map."
     note = [
         f"The map draws {counts['yeast_genes_drawn']} yeast genes, {counts['yeast_genes_drawn_in_yeast9']} "
-        f"in Yeast9; {counts['lines_yeast9']} of its {counts['lines']} reaction lines are in Yeast9.",
+        f"in Yeast9; {counts['lines_yeast9']} of its {counts['lines']} lines are in Yeast9.",
         line2,
         f"Of the {n_reg} deleted regulators, {reg_on} draw a reaction here; of the {n_pw} pathway genes "
         f"of b, {pw_on} do.",
@@ -417,9 +444,11 @@ def main():
     ap.add_argument("--refresh", action="store_true",
                     help="re-fetch every KEGG response and fail if any has changed upstream")
     ap.add_argument("--width-mm", type=float, default=PANEL_WIDTHS_MM["full"])
-    # KEGG's yeast map is 1.55 times wider than tall; 83 mm keeps the panel at 54 mm so
-    # the figure, with the network panel under it, stays inside the 170 mm page cap.
-    ap.add_argument("--map-width-mm", type=float, default=83.0)
+    # KEGG's yeast map is 1.55 times wider than tall. At 80 mm the drawing plus its label
+    # gutter is as wide as the key's longest line is long, which is what sets the panel's
+    # height at 54 mm and keeps the figure, with the network panel under it, inside the
+    # 170 mm page cap.
+    ap.add_argument("--map-width-mm", type=float, default=80.0)
     ap.add_argument("--out", default="ffa_kegg_map")
     args = ap.parse_args()
 
@@ -436,7 +465,7 @@ def main():
 
     svg, records, resolved, counts, dims = panel(
         attrs, lines, compounds, y9, mods, gene_rows, attachments, args.width_mm,
-        args.map_width_mm, args.map_width_mm + 4.0, orf_to_name)
+        args.map_width_mm, GUTTER_MM + args.map_width_mm + 4.0, orf_to_name)
 
     os.makedirs(IMAGES_DIR, exist_ok=True)
     out_svg = osp.join(IMAGES_DIR, args.out + ".svg")

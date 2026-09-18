@@ -217,6 +217,43 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   found that the map lacks four of the thirteen pathway genes, a fact the caption now
   carries instead of the assumed "all thirteen".
 
+- **A label plate is padded around the text's INK, and it is a drawn box.** An em box
+  carries leading above and below the glyphs, so a plate padded evenly around it prints
+  with a band of white under the text and none beside it, which is exactly what a reviewer
+  reports as "more white on the bottom". Pad `0.74 * em` (plus any second line), shifted up
+  about `0.07 * em` for the capitals that reach above the x-height an SVG
+  `dominant-baseline="middle"` centers on. Stroke the plate: on a dense drawing an
+  unstroked white patch reads as a gap in the network rather than as something placed over
+  it, and the stroke is also what makes an overflowing line visible. Size the plate on its
+  WIDEST line, not on its title line, or a smaller second line prints outside its own box.
+- **When the background of a figure is gray, no series in it may be gray, and the palette
+  has only five usable route hues.** Blue is usually spent on the measured entities and
+  gray on the background tiers, which leaves purple, yellow, amber and brick for pathways.
+  A fifth route color has to come from the muted earth tones, and dE 22 (CIE76) that
+  separates two swatches in a key does NOT separate two 0.3 mm lines running near each
+  other on a map: terracotta beside brick read as one pathway. Verify a new route color at
+  the line weight it will print at, not in the key.
+- **A pathway-membership priority order is load-bearing and belongs in the code with its
+  reason.** A gene on two of KEGG's pathway lists takes the color of whichever list is
+  checked first. Ordering fatty acid degradation last hid the whole beta-oxidation arm,
+  because KEGG also lists POX1 with the unsaturated fatty acids; ordering it first took
+  twenty glycolysis lines with it, because KEGG's degradation list also carries the alcohol
+  and aldehyde dehydrogenases. Both failures are silent, and both are visible only in a
+  count of lines per module.
+- **A panel title that is wider than the panel is not wrapped, it is cut off.** Matplotlib
+  does not clip a title to the axes; it runs off the figure canvas and the draw.io embed
+  crops it at the image edge, so the sentence simply ends. Keep titles to one line that
+  fits the panel width and move the numbers that do not fit into the caption.
+- **Comparing models: draw each one's level sets, spaced on the scale it measures its
+  residual on.** A pair of 3D surfaces is hard to read and cannot hold four models. One
+  small contour panel per model, in a row and in the same order as the accompanying table,
+  lets the reader compare across and read one point of the domain down the column. Spacing
+  the contours evenly on each model's own residual scale makes the difference between
+  models that share an expectation visible, which a surface plot cannot show at all.
+- **Never leave a bare number floating beside a rule in a figure.** A `0.25` beside a short
+  vertical tick came back from review as "what is I 0.24". Write what it is
+  ("expects 0.25 at (0.5, 0.5)") or take it out.
+
 ## Tables
 
 - **Every paper table comes from a committed script** in the relevant `experiments/<id>/`

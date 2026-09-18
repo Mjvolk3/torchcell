@@ -46,6 +46,7 @@ import torchcell
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -111,10 +112,13 @@ C_NEG = PLOT_PALETTE[1]
 C_THIRD = PLOT_PALETTE[2]
 C_DIGENIC = PLOT_PALETTE[2]
 C_TRIGENIC = PLOT_PALETTE[0]
-# The best-combination line shares an axes with brick bars and nothing else, so it takes
-# the other member of the two-series palette prefix, amber. Lilac was tried here and reads
-# as a third category rather than as the second series of a two-series panel.
-C_BEST = PLOT_PALETTE[0]
+# The best-combination line shares an axes with brick bars and nothing else. It was amber,
+# the other member of the two-series palette prefix, and amber type on white does not read
+# at 6 pt: the right axis label and its tick numbers took the line's color and disappeared
+# (author review, 2026.09.18). Lilac carries the same series at a lightness that prints.
+C_BEST = PLOT_PALETTE[2]
+# The base strain a campaign starts from, as the pale companion of the campaign's brick.
+C_START = PLOT_PALETTE_FILL[1]
 C_GRAY = PLOT_PALETTE[5]
 
 # Reserved band above the tallest bar, so a value label never lands on the title and an
@@ -250,9 +254,11 @@ def panel_volcano(ax):
         # Below the line at the left: above it, the label sat on the cloud of called
         # negatives, and below it on the right it sat on the uncalled positives. Every
         # uncalled triple has |tau| < 0.7, so the region below the line at the far left
-        # is empty.
-        ax.text(0.02, -np.log10(p_cut), " BH FDR < 0.05", transform=ax.get_yaxis_transform(),
-                va="top", ha="left", fontsize=5)
+        # is empty. The extra two points of drop keep the cap heights of the text clear
+        # of the dashes rather than touching them.
+        ax.annotate(" BH FDR < 0.05", xy=(0.02, -np.log10(p_cut)),
+                    xycoords=ax.get_yaxis_transform(), xytext=(0, -2),
+                    textcoords="offset points", va="top", ha="left", fontsize=5)
     ax.axvline(0, color=C_GRAY, linewidth=0.4, zorder=1)
     ax.set_xlabel("$\\tau$ (trigenic interaction)")
     ax.set_ylabel("$-\\log_{10}$ $P$")
@@ -537,6 +543,11 @@ def panel_greedy_walk(ax):
             label="greedy campaign")
     ax.scatter([xs[-1]], [ys[-1]], s=26, marker="X", color=C_NEG, edgecolor="black",
                linewidth=0.3, zorder=5)
+    # Where the campaign starts, in the pale companion of the campaign's own brick: the
+    # base strain is a member of that series rather than a third thing, and filled brick
+    # it read as one more step of the walk.
+    ax.scatter([xs[0]], [ys[0]], s=22, marker="o", facecolor=C_START, edgecolor=C_NEG,
+               linewidth=0.6, zorder=6, label="base strain")
     # Above the marker, not beside it: beside, the text ran into the X it names.
     ax.annotate("stops here", (xs[-1], ys[-1]), fontsize=5, va="bottom", ha="center",
                 xytext=(0, 5), textcoords="offset points")

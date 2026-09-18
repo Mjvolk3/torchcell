@@ -51,3 +51,16 @@ Only `Total Titer` agrees between them, which is why the defect went unnoticed w
 work stayed on that readout.
 
 Related: [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineering]]
+
+## 2026.09.18 - Review round 6: three small panel fixes
+
+- `panel_volcano` (Fig 1b): the BH threshold label is an `annotate` with a 2 pt downward
+  offset instead of a `text` sitting on the line. At `va="top"` on the line itself the cap
+  heights touched the dashes.
+- `panel_improving_by_order` (Fig 2a): `C_BEST` moved from amber `PLOT_PALETTE[0]` to lilac
+  `PLOT_PALETTE[2]`. The right axis label and its tick numbers take the line's color, and
+  amber type on white does not read at 6 pt (author review). The earlier comment said lilac
+  reads as a third category here; unreadable beats miscategorized.
+- `panel_greedy_walk` (Fig 2b): the base strain the campaign starts from is now its own
+  marker, filled `PLOT_PALETTE_FILL[1]` with a brick edge, so the start is a member of the
+  campaign's series rather than one more step of the walk.

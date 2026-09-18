@@ -66,9 +66,12 @@ consistent within a readout.
 
 What neither predicts is the reachability result, and the reason is that both are theories
 about enzymes in a flux network rather than about transcription factors upstream of one.
-A factor deletion changes the expression of many pathway genes at once, and it also changes
-genes outside the pathway, so the module structure a flux model assigns to the pathway is
-not the structure the deletions act on. The one systematic study of epistasis between
+The first says so in its own words, excluding ``beneficial mutations, partial loss of
+function, regulatory genes or multicellular developmental
+networks'' from its scope~\citep{segreModularEpistasisYeast2005}. A factor deletion
+changes the expression of many pathway genes at once, and it also changes genes outside
+the pathway, so the module structure a flux model assigns to the pathway is not the
+structure the deletions act on. The one systematic study of epistasis between
 gene-specific transcription factors in yeast reached its mechanisms through expression
 profiling of the double deletions rather than through pathway
 topology~\citep{sameithHighresolutionGeneExpression2015}, and proposed two routes,
@@ -78,6 +81,78 @@ that: connectivity in a physical, regulatory, genetic or coexpression graph does
 predict which of these triples interact. Applying the metabolic theory to a factor panel
 would require a model that maps a factor deletion to a distribution of flux changes first,
 and that model is what the field does not yet have for titer.
+
+\subsection*{Why a regulator panel might interact more than an enzyme panel would}
+
+The interactions reported here are dense, and the perturbations that produced them are
+regulators rather than enzymes. Whether those two facts are connected is worth separating
+into what the literature supports and what it does not, because the connection is easy to
+assert and has consequences for which panels a campaign should expect trouble from.
+
+Two things are established. The first is that an interaction score measured several steps
+away from where a mutation acts does not require the mutations to interact. Nonspecific
+epistasis, which arises from the curvature of the map between the layer a mutation acts on
+and the layer that is assayed, applies to every combination rather than to particular
+ones, and it is scored as specific and higher-order interaction whenever the curvature is
+not modeled~\citep{domingoCausesConsequencesGenetic2019}. In a hierarchical metabolic
+network with linear kinetics, epistasis at a higher-level phenotype is forced even when
+there is none at the lower-level one, because the map between the two is
+nonlinear~\citep{kryazhimskiyEmergencePropagationEpistasis2021}. The second is that a
+single scalar readout aggregates contributions that are not separately measured, and that
+a large fraction of an apparently rugged landscape can be the aggregation rather than the
+biology: in a combinatorially complete enzyme landscape, a single global nonlinearity
+accounts for three quarters of the variance in
+fitness~\citep{johnstonCombinatoriallyCompleteEpistatic2024}. A titer in milligrams per
+liter is exactly such an aggregate.
+
+The step from there to ``a regulator interacts more than an enzyme'' is a hypothesis, and
+it is ours rather than the literature's. Stated precisely, it has three parts: a regulator
+acts on the measured flux through more intervening reactions than an enzyme of that flux
+does, each of which can contribute curvature; a regulator changes many reactions at once,
+most of them not measured here; and one measurement at one metabolic locus therefore
+reports the combined effect of many small unmeasured changes, which is scored as an
+emergent deviation. None of the three is tested in the mirrored literature, and the
+closest measured statements cut both ways. The mixed-epistasis argument that more
+intervening steps give ``additional possibilities for
+interconnectivity'' is made about kinases against transcription
+factors, with a transcription factor as the short-distance case, because the readout there
+is expression rather than a metabolite~\citep{sameithHighresolutionGeneExpression2015}.
+Genetic interaction degree does track multifunctionality and pleiotropy, and chromatin
+organization and transcription are named hub processes of the nonessential
+network~\citep{costanzoGlobalGeneticInteraction2016,costanzoEnvironmentalRobustnessGlobal2021},
+which supports the prevalence half; both are measured on fitness, and lipid metabolism is
+itself in the high-pleiotropy bracket of the same analysis, which is awkward for a
+fatty-acid panel in particular.
+
+What the hypothesis must not assume is that enzymes are the additive baseline. They are
+not. The flux through a pathway is a concave saturating function of any one enzyme's
+activity, which is the classical result behind dominance and is itself a source of
+epistasis between enzymes of one
+pathway~\citep{domingoCausesConsequencesGenetic2019}; in the hierarchical treatment a
+mutation in any enzyme interacts with a mutation in any other enzyme of its
+module~\citep{kryazhimskiyEmergencePropagationEpistasis2021}; and the enzyme landscape in
+which epistasis is largest is one where the interacting residues share an active site, at
+no network distance at all~\citep{johnstonCombinatoriallyCompleteEpistatic2024}. A
+regulator-against-enzyme claim has to beat that baseline rather than assume it away. The
+sign is open too. Where a perturbation that degrades many components at once has been read
+out at one phenotype, the result was large positive epistasis, because the measurement
+reports whichever component is limiting rather than the sum of the
+damage~\citep{goldsteinGlobalEpistasisBudding2025}.
+
+Settling this needs a comparison the design here cannot make: an enzyme panel of the same
+shape, combinatorially complete, in the same chassis, on the same readout. Simulating that
+comparison instead does not substitute for it. Running both arms through a flux model of
+yeast metabolism, with a deletion scaling the capacity of every reaction it touches and no
+interaction term anywhere in the perturbation, produces nothing at all at the capacity
+multipliers a reader would try first, and below those it produces scores that are
+arithmetic on strains which have stopped growing rather than a graded response. In that
+model the regulator arm also sits closer to the readout than the enzyme arm, not further,
+because a regulator's reaction set is the union over hundreds of targets
+(\suppnoteref{note:fluxmodel}). Until the measured comparison exists, the honest form of
+the claim is that interaction was pervasive in a regulator panel measured at one metabolic
+locus, that a nonlinear map from the perturbed layer to the measured one is sufficient to
+produce it, and that neither the amount nor the sign is predicted from the panel's
+distance to the readout.
 
 \subsection*{What this design can and cannot support}
 

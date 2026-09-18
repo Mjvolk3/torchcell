@@ -239,6 +239,105 @@ exact test of the top predicted quartile against the false-discovery-rate call
 (\file{experiments/010-kuzmin-tmi/scripts/ffa_panel_model_score.py}, tables in
 \file{experiments/010-kuzmin-tmi/results/ffa_panel_model_score.\{csv,json\}}).
 
+\subsection*{The metabolic map panel}
+
+Figure~\ref{fig:network}a is KEGG's global map of yeast metabolism, redrawn from the
+coordinates KEGG publishes for it and overlaid with the yeast genome-scale model. No part
+of it is hand-placed. The generating script is
+\file{experiments/008-xue-ffa/scripts/ffa_kegg_map.py} and every response it reads is
+stored with its sha256 under \file{experiments/008-xue-ffa/results/kegg_map/}.
+
+\notesec{Why a reference map and not a layout of the model} A metabolic map that reads as
+one, with the citrate cycle drawn as a circle and glycolysis as a spine, is a hand-drawn
+artifact. No layout algorithm produces one from a stoichiometric model, the yeast
+genome-scale model ships no map, and the only published yeast map in Escher is of an
+earlier model and covers central carbon alone. What is available is the coordinates of a
+map somebody already drew. KEGG publishes its yeast global map \texttt{sce01100} as KGML,
+which carries the vertex list of every reaction line and the center of every compound
+circle, so the drawing can be taken and the rendering replaced.
+
+\notesec{What is fetched} Three kinds of response, each cached and hashed, and re-fetched
+only under \texttt{-{}-refresh}, which raises rather than overwrites if the bytes have
+changed upstream. The KGML of \texttt{sce01100} gives 3{,}878 polylines and 3{,}562
+compound circles on a canvas of 4{,}858 by 3{,}137 units. One gene list per pathway
+(\texttt{link/sce/<pathway>}) gives the yeast genes KEGG assigns to each of the seven
+modules the route passes through. One lookup per named gene (\texttt{find/sce/<name>})
+resolves a gene name to its systematic name, preferring the entry whose first symbol is
+that name, which is what distinguishes TFC7 as YOR110W from the YNL039W that carries TFC7
+only as an alias.
+
+\notesec{What is overlaid} The yeast genome-scale model, Yeast9 (yeast-GEM 9.0.2), is read
+from its SBML with cobrapy, and its gene identifiers, its \texttt{kegg.reaction}
+annotations and its \texttt{kegg.compound} annotations are cached under the sha256 of the
+model file. A drawn line counts as being in the model when any gene KEGG attaches to it is
+a gene of the model or any reaction it carries is one of the model's KEGG reaction
+identifiers; a drawn circle counts when its compound identifier is one of the model's KEGG
+compounds. The map draws 814 yeast genes, of which 745 are in the model, and 889 of its
+3{,}878 lines and 684 of its 3{,}562 circles are in the model. The remainder is the
+reference map's coverage of chemistry the model does not carry, and it is drawn faint
+rather than dropped, since the panel is about where the measured chemistry sits in
+metabolism rather than about the model's boundaries. The model's own transport, exchange
+and lipid-chain reactions, 1{,}110, 274 and 188 of its 4{,}131, have no place on a map of
+chemistry and are part of what Fig.~\ref{fig:network}b carries instead.
+
+\notesec{The route} The colored modules are KEGG's gene lists for glycolysis and
+gluconeogenesis (\texttt{sce00010}), pyruvate metabolism (\texttt{sce00620}), the citrate
+cycle (\texttt{sce00020}), fatty acid degradation (\texttt{sce00071}), fatty acid
+biosynthesis (\texttt{sce00061}), fatty acid elongation (\texttt{sce00062}) and
+unsaturated fatty acid biosynthesis (\texttt{sce01040}), the last three sharing one color.
+A gene on more than one list takes the first list it appears on, in that order, and the
+order is load-bearing in both directions. Degradation has to outrank the biosynthetic
+lists because KEGG assigns POX1, the acyl-CoA oxidase the chassis deleted, to the
+unsaturated fatty acid list as well, and ordered last it takes the biosynthetic color and
+the whole beta-oxidation arm goes with it. Degradation must not outrank central carbon,
+because KEGG's degradation list also carries the alcohol and aldehyde dehydrogenases, and
+above glycolysis it takes twenty of that module's lines with it.
+
+\notesec{Species the map does not draw} Four of the five measured species have a compound
+circle on the map. Oleate has none, as the free acid or as either C18 acyl-CoA, so it is
+attached along the shortest path of the same genome-scale model from a compound the map
+does draw. That path is computed on the pathway subgraph of the model with currency
+metabolites removed and with substrates joined to products only, so a shared cofactor
+cannot make two species adjacent; every anchor at the minimal path length is kept as a
+candidate and the choice among them is made by the placement search below. Oleate resolves
+to stearate by way of stearoyl-CoA and oleoyl-CoA, and the genes of that path, FAA1, FAA2,
+FAA4 and OLE1, are printed under its name. An attached species is drawn as an open ring so
+it cannot be read as a node of the map.
+
+\notesec{Where the labels go} Every drawn element is sampled onto a half-millimetre grid,
+the route weighted an order of magnitude above the faint background, so that a query
+returns how much ink lies under a rectangle or along a line. A label tries sixteen
+directions at four leader lengths from its node and takes the candidate whose plate and
+leader cover the least ink. A candidate is rejected outright if the plate leaves the
+panel, overlaps a placed plate, covers a labeled node, sits on a leader already drawn, or
+if its leader passes through a placed plate or crosses another leader. A crowded group is
+placed in the best of all orders rather than greedily, since a fixed order strands the
+last label of a cluster. The attached species go into the window of the map whose rings
+and links cover the least ink, scored over both sides of the column. Labels may use a
+5 mm gutter to the left of the drawing, which the drawing itself may not, because the
+compounds this panel names sit at the left end of the fatty acid comb. One label, pyruvate,
+has its search narrowed to upward directions after review; the search still chooses among
+what is left, and the narrowing is recorded in the script.
+
+\notesec{What the caption's counts are} Every count in the caption of
+Fig.~\ref{fig:network}a and in the panel's own key is computed by the run that draws the
+panel and written to \file{results/kegg_map/provenance.json}, together with the sha256 of
+the KGML, of the model file and of every stored response, the resolved systematic name of
+each of the twenty-three named genes, and the number of map lines each one draws. That the
+ten deleted regulators draw nothing is read off the KGML's own gene entries rather than
+asserted: none of the ten appears on any line, and all thirteen pathway genes do.
+
+\notesec{The earlier version of this panel} The same panel was first drawn on iPath3's
+reference map, which is the map Wu et al.\ use, requested from the iPath3 web service with
+a selection of KEGG identifiers. That drawing is older and thinner than KEGG's current
+one: probing it one identifier at a time showed it has no node for palmitoleate, stearate
+or oleate, as free acids or as acyl-CoAs, and draws nothing for ELO1, ELO2, ELO3 or OLE1,
+so four of the thirteen pathway genes and three of the five measured species were missing
+from it. The KGML redraw carries all thirteen genes and four of the five species. The
+iPath3 client is kept at \file{experiments/008-xue-ffa/scripts/ffa_ipath_map.py} with its
+stored responses, and the two scripts share the label placement module
+\file{map\_labels.py}.
+
 \subsection*{Figures}
 
 Every panel is produced by a committed script and written as a true-size SVG at one of the

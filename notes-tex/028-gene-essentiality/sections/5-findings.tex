@@ -174,7 +174,11 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     reads 0.65 to 0.78, the interior point's 0.776 level with the vertex's. The store
     and the head must come from one solver, and a point inside the face, which is
     what a first-order solve on the card returns, ranks as well as a vertex
-    (Section~\ref{sec:solve-tolerance}).
+    (Section~\ref{sec:solve-tolerance}). Trained over such a store the layer-free
+    cell reads 0.911 on six of six seeds, the pFBA store's number, where the growth
+    program's own dual-simplex vertex reads 0.840 with two early peaks
+    (Section~\ref{sec:round36}): the store can be built by the batched solver on the
+    card, and not every point of the face is a good store.
   \item[Where the gradient goes is not the problem.] On the alternating layer the
     gradient reaches the flux layer on every arm that lets it; the backbone's
     preprocessor, three quarters of the parameters, is where fitting continues after the

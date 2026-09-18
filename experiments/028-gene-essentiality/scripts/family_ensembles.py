@@ -51,6 +51,9 @@ TRANSFORMER_FAMILIES: dict[str, list[str]] = {
     "layer-free log1p vector + affine, pathway + ProtT5 (round 33, 6 seeds)": [
         "w49_pathfbapfbalog_h12l1p1_e200_s*.json"
     ],
+    "layer-free log1p, interior-point store (round 36, 6 seeds)": [
+        "w52_pathlogipm_h12l1p1_e200_s*.json"
+    ],
     "cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)": [
         "w43_pathlpoffgateflux_h12l1p1_e200_s*.json"
     ],
@@ -77,6 +80,11 @@ COMBINATIONS: list[list[str]] = [
     [
         "GO convolution (400 epochs, 6 seeds)",
         "layer-free log1p vector + affine, pathway + ProtT5 (round 33, 6 seeds)",
+    ],
+    ["layer-free log1p, interior-point store (round 36, 6 seeds)"],
+    [
+        "GO convolution (400 epochs, 6 seeds)",
+        "layer-free log1p, interior-point store (round 36, 6 seeds)",
     ],
     [
         "GO convolution (400 epochs, 6 seeds)",

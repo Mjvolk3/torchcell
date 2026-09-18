@@ -75,6 +75,9 @@ ARMS: dict[str, list[str]] = {
     "cached solve + flux head, pathway + ProtT5 (round 27)": [
         "w43_pathlpoffgateflux_h12l1p1_e200_s*.json"
     ],
+    "layer-free log1p vector + affine, pathway + ProtT5 (round 33)": [
+        "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json"
+    ],
     "ProtT5 + affine (round 5)": ["w16_fba_h12l1p1_e200_s*.json"],
 }
 

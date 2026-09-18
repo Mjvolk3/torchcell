@@ -488,15 +488,16 @@ scoring below it. One minus the class mean of the misrank is that class's share 
 AUROC, and averaging over an arm's cells separates the genes an arm gets wrong from the
 ones a seed gets wrong (Figure~\ref{fig:hard-genes}, Table~\ref{tab:hard-genes}).
 
-\tcfigfit[1.0]{figures/hard_genes_2026-09-18-08-25-51.pdf}{\textbf{Which held-out genes
+\tcfigfit[1.0]{figures/hard_genes_2026-09-18-16-45-03.pdf}{\textbf{Which held-out genes
   the best cells misrank.} \textbf{a}, The 31 essential held-out genes sorted by their
-  mean misrank over six arms, one marker per arm (the mean over that arm's cells), the
-  line the mean over arms. \textbf{b}, The same for the 164 nonessential genes.
+  mean misrank over seven arms, one marker per arm (the mean over that arm's cells),
+  the line the mean over arms. \textbf{b}, The same for the 164 nonessential genes.
   \textbf{c}, The Spearman correlation of the per-gene misrank between arms. Arms:
   the pathway multi-hot with ProtT5 and the affine (round 22, three seeds), the
   round-12 fold models (five), the head over the solved flux on ProtT5 (rounds 21 and
   24, six seeds) and on the pathway input (rounds 23 and 25, six), the same head over
-  the cached GEM-box solve on the pathway input (round 27, six), and ProtT5 with the
+  the cached GEM-box solve on the pathway input (round 27, six), the layer-free cell
+  with the $\log(1 + |v|)$ vector in the affine (round 33, six), and ProtT5 with the
   affine (round 5, three). Written by
   \texttt{experiments/028-gene-essentiality/scripts/hard\_genes.py}.}{fig:hard-genes}
 
@@ -519,7 +520,9 @@ annotation vectors make look essential. The arms agree on the genes they fail: t
 affine cells at a Spearman of 0.81, the flux head on ProtT5 with the affine on ProtT5
 at 0.88, the two flux heads on the pathway input with each other at 0.77, and those
 two least aligned with the rest (0.43 to 0.76), the arms whose means carry an unfit
-seed.
+seed; the layer-free cell of round 33 sits with the transformer family, at 0.82 with
+the pathway affine and 0.81 with the cached-solve head, and at 0.28 with the GO
+convolution.
 Hypothesis, untested: a paralog-aware input, the GPR disjunction with an expression
 weight or the isozyme count of a gene's reactions, is what would move the fourteen; the
 solve's own vector cannot, since the solve reroutes through the paralog.
@@ -550,9 +553,10 @@ families of the later rounds, the GO convolution on six seeds (0.905 as a family
 the scalable module form of round 27 (0.918 as a family, the highest single family)
 average to 0.946 [0.91, 0.98], and with the pathway affine beside them to 0.939; the
 layer-free form of round 33 (0.910 as a family) with the six-seed GO convolution
-averages to 0.948 [0.91, 0.98]. Every average tried is in the table, so 0.948 is the
-maximum of thirteen post hoc choices and carries that bias, and the held-out genes
-were used to choose nothing else. It says
+averages to 0.948 [0.91, 0.98], and the same cell over the interior-point store
+(round 36, 0.912 as a family) to 0.944. Every average tried is in the table, so 0.948
+is the maximum of fifteen post hoc choices and carries that bias, and the held-out
+genes were used to choose nothing else. It says
 what the per-gene
 analysis said: the two families carry different information about the same genes, and
 the sum of the annotation read through the graph and the solve read through the

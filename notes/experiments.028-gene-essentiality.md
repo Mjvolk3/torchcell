@@ -888,3 +888,7 @@ Job 2424 (31 min; `wave12_readout.py --round w58`): the round-33 cell over the p
 ## 2026.09.18 - Round 43 read: the solve on the node
 
 Jobs 2425 and 2426 (31 min each; `wave12_readout.py --round w59`): the log1p vector as a gene embedding (`torchcell/datasets/solve_vector.py`, registry `solve_log1p`) beside the pathway multi-hot and ProtT5 with the four-ratio affine reads 0.864, 0.886, 0.873, 0.863, 0.885, 0.880 (mean 0.875, pooled 0.894 [0.82, 0.95]), under the affine alone (0.890) and 0.03 under the vector in the affine (0.912); with the vector in the affine as well 0.875, 0.895, 0.892, 0.890, 0.883, 0.901 (mean 0.889, pooled 0.893). Both node arms fit late (transitions at epochs 71 to 120). The 4,131 raw columns enter the width-12 preprocessor as 12 weights per reaction learned from 629 genes. New section `sec:round43` (table `round_w59`, figure `w59_readout_2026-09-18-15-45-16`); findings and 6-open updated. Next: the vector reduced by PCA before the node (`solve_log1p_pca64`).
+
+## 2026.09.18 - Round 32 complete: six pinned seeds fit six times
+
+Job 2419 (147 min at two per card): pinned seeds 2704 and 2705 fit at epochs 40 and 57 and read 0.913 and 0.901. The five pinned seeds beside 2701 read 0.897 to 0.913 (mean 0.904, sd 0.006; pooled 0.911 [0.86, 0.95]); with 2701's 0.894, six pinned seeds fit six times where the six free runs of the same seeds fit five (mean 0.882, pooled 0.917). The round-32 figure is `w48_readout_2026-09-18-16-09-37`; findings and 6-open updated (the miss is a property of the free run, not of any seed).

@@ -128,3 +128,13 @@ python experiments/025-solid-growth/scripts/s3_closure_readout.py
 
 Rerun it as seeds 2 and 3 land, and again when the cell reaches epoch 129, at which point
 the 100 to 129 window fills and the paired comparison becomes computable.
+
+## 2026.09.18 - Curated random-split view
+
+`experiments/025-solid-growth/scripts/random_split_wandb_view.py` labels the R-split runs by
+arm and seed (S3 closure, S0 joint fitness 1.0 and 0.1, control, lambda 0 and 1e-2 ladder,
+hard mask), sets the W&B group to the arm, and overwrites saved view `vo1fa9efqdf` with six
+ranked sections: interaction Pearson across arms (val, train and val together, train, MSE),
+fitness the same way, per-order metrics, losses as train and val pairs, the operator and
+gradient probe, bookkeeping. The curation rule itself is the `wandb-curate` skill
+(`.claude/skills/wandb-curate/SKILL.md`). Rerun after every sync.

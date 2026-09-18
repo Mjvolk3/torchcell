@@ -828,12 +828,59 @@ def wl_test() -> str | None:
     return write("wl_test", body, "results/wl_knockout_test.json")
 
 
+#: Fold-ensemble prefixes (``results/<prefix>_ensemble.json``) and what the cell is.
+ENSEMBLE_LABELS = {
+    "w14_cv": "round 3: pooled transformer, ProtT5, no readout",
+    "w16_fbacv": "round 5: ProtT5 + FBA affine",
+    "w23_chromprotcv": "round 12: chromosome-pathway indicator + ProtT5 + FBA affine (the reported number)",
+    "w28_cspcv": "round 17: chromosome-pathway indicator + ProtT5 + the widened affine (ratios, statistics, pFBA vector)",
+    "w41_pathfluxcv": "round 25: pathway multi-hot + ProtT5, gated elastic solve + the head over the solved flux",
+}
+
+
+def fold_ensembles() -> str | None:
+    """Every five-fold ensemble scored on the held-out genes, one row per cell."""
+    rows = []
+    for prefix, label in ENSEMBLE_LABELS.items():
+        src = osp.join(RESULTS, f"{prefix}_ensemble.json")
+        if not osp.isfile(src):
+            continue
+        with open(src) as fh:
+            e = json.load(fh)
+        folds = ", ".join(f"{f['auroc']:.3f}" for f in e["folds"])
+        rows.append((label, e["n_folds"], folds, e["fold_mean_auroc"], e["ensemble_auroc"], e["ensemble_ci_low"], e["ensemble_ci_high"]))
+    if not rows:
+        return None
+    best = max(r[4] for r in rows)
+    body_rows = [
+        f"    {label} & {n} & {folds} & {fmean:.3f} & {fmt(ens, best)} [{lo:.2f}, {hi:.2f}] \\\\"
+        for label, n, folds, fmean, ens, lo, hi in rows
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Fold ensembles]{Every fold ensemble in the document on the 195 "
+        "held-out genes: five models trained on the five cross-validation files (each "
+        "a different fifth of the 787 labeled non-test genes held for validation), their "
+        "per-gene logits averaged and scored once, Flux Cone Learning's own test "
+        "protocol. Fold AUROCs are the single models on the held-out genes; the "
+        "ensemble carries a 2,000-draw gene bootstrap. "
+        "Written by \\texttt{cv\\_ensemble\\_readout.py}. " + BEST_NOTE + "}\n"
+        "  \\label{tab:ensembles}\n"
+        "  \\begin{tabular}{@{}p{62mm}rlrl@{}}\n    \\hline\n"
+        "    cell & folds & fold AUROCs & fold mean & ensemble [95\\% CI] \\\\\n    \\hline\n"
+        + "\n".join(body_rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("fold_ensembles", body, "results/<prefix>_ensemble.json")
+
+
 def main() -> None:
     paths = [
         wl_test(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),
+        fold_ensembles(),
         fba_media(),
         splits(),
         logistic_baselines(),

@@ -979,6 +979,21 @@ exchange and transport columns matter. And the passing cell runs on seeds 2703 t
 
 \input{tables/round_w40}
 
+\subsection{Round 25: the flux head under the reported protocol\secstatus{todo}}
+\label{sec:round25}
+
+The document's number is a fold ensemble (Section~\ref{sec:backbone}): five models
+trained on the five cross-validation files, their logits averaged on the held-out
+genes. Round 25 (jobs 2352 to 2354) runs the round-23 flux-head cell, the gated
+elastic solve with the head over every solved flux on ProtT5 with the pathway
+multi-hot, under that protocol, and on seeds 2703 to 2705 of the split file so the
+single-split read stands on six seeds and the number of seeds that miss the fitting
+transition is counted out of six rather than three. The ensemble is read beside the
+round-12 ensemble's 0.893 with its gene bootstrap, with no pass rule
+(Table~\ref{tab:ensembles}); the six-seed read is round 23's.
+
+\input{tables/fold_ensembles}
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

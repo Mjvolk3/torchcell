@@ -550,6 +550,29 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathfbapfbalog",
         ],
     ),
+    # Round 35: the layer-free log1p form on ProtT5 alone, against the affine on ProtT5
+    # (round 5), the cached-solve head on ProtT5 (round 24) and the same form with the
+    # pathway block (round 33): does the vector substitute for the annotation.
+    "w51": (
+        [
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w40_lpoffgateflux_h12l1p1_e200_s*.json",
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w51_protfbapfbalog_h12l1p1_e200_s*.json",
+        ],
+        ["fba", "lpoffgateflux", "pathfbapfbalogfree", "protfbapfbalog"],
+    ),
+    # Round 36: the layer-free log1p cell over a store built by another solver of the
+    # same growth program (dual simplex vertex; interior point without crossover),
+    # paired by seed against the pFBA store.
+    "w52": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w52_pathlogsimplex_h12l1p1_e200_s*.json",
+            "w52_pathlogipm_h12l1p1_e200_s*.json",
+        ],
+        ["pathfbapfbalogfree", "pathlogsimplex", "pathlogipm"],
+    ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
     "w44": (
@@ -706,6 +729,9 @@ ARM_LABELS = {
     "pathfbapfbazero": "the same vector, the affine's solve columns zero-initialized",
     "pathfbapfbalogfree": "the vector as log(1 + |v|), default initialization",
     "pathfbapfbalog": "the vector as log(1 + |v|), solve columns zero-initialized (the flux head's construction, no layer)",
+    "protfbapfbalog": "ProtT5 alone; FBA affine + the deletion's pFBA vector as log(1 + |v|) (no pathway block, no layer)",
+    "pathlogsimplex": "the round-33 cell over the growth program's dual-simplex vertex (store by HiGHS simplex)",
+    "pathlogipm": "the round-33 cell over the growth program's interior point without crossover (store by HiGHS ipm, KKT 1e-4)",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",

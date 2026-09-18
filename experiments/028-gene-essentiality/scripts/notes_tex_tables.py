@@ -363,6 +363,22 @@ ROUND_CAPTIONS = {
         "2,709 gene-owned fluxes, and the head over the flux of the GEM-box solve with "
         "no learned ceilings. Constraint scale 0, batch 32, class weight, 200 epochs.",
     ),
+    "w51": (
+        "Round 35, the layer-free form on ProtT5 alone",
+        "The round-5 affine on ProtT5, the round-24 head over the cached GEM-box solve "
+        "on ProtT5 and the round-33 layer-free cell with the pathway multi-hot (the "
+        "comparators), against the deletion's pFBA vector as $\\log(1 + |v|)$ appended "
+        "to the affine on ProtT5 alone. Batch 32, class weight, 200 epochs, seeds 2700 "
+        "to 2705 where run.",
+    ),
+    "w52": (
+        "Round 36, the layer-free cell over a store from another solver",
+        "The round-33 cell (the pFBA vector as $\\log(1 + |v|)$ appended to the affine, "
+        "pathway multi-hot and ProtT5, no layer; the comparator) against the same cell "
+        "over the growth program solved per gene by HiGHS 1.15's dual simplex (a vertex) "
+        "and by its interior point without crossover at KKT $10^{-4}$ (a point inside "
+        "the optimal face). Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
     "w48": (
         "Round 32, the unfit seed with the card's kernels pinned",
         "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "
@@ -1087,6 +1103,7 @@ ENSEMBLE_LABELS = {
     "w28_cspcv": "round 17: chromosome-pathway indicator + ProtT5 + the widened affine (ratios, statistics, pFBA vector)",
     "w41_pathfluxcv": "round 25: pathway multi-hot + ProtT5, gated elastic solve + the head over the solved flux",
     "w43_pathoffcv": "round 27: pathway multi-hot + ProtT5, the head over the cached GEM-box solve (nothing learned in the layer)",
+    "w50_pathlogfreecv": "round 34: pathway multi-hot + ProtT5, the deletion's pFBA vector as $\\log(1 + |v|)$ appended to the affine (no layer)",
 }
 
 

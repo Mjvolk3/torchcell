@@ -765,3 +765,14 @@ The module diagram for round 21 is `notes/assets/drawio/028-module-gated-flux.dr
 Job 2387 (pack `w45_unfit_seed_e400.pack`): the round-23 flux-head cell on ProtT5 with the pathway multi-hot, seed 2701, rerun for 400 epochs. Its 200-epoch run (round 23) never fit, training loss 0.95 throughout, held-out AUROC 0.716. The 400-epoch run of the same program and seed fits between epochs 60 and 80 (training loss 0.98 at 60, 0.50 at 80, 0.07 at 399), selects epoch 82 and reads 0.889 [0.84, 0.94]. The learning rate is constant, so the first 200 epochs are the same program; the two runs diverge from the first epoch (train loss 1.128 vs 1.125) and are unrelated by epoch 50. The transition is a chance event of the run, not the seed. Across the seventeen elastic flux-head cells (w37 six seeds, w39 six seeds, w41 five folds) the training loss first falls under 0.6 at epochs 39 to 137 in fourteen and never in three; the two latest fits (136, 137) read 0.864 and 0.702 held out. Past the transition the 400-epoch run overfits (val 0.836 at 82, 0.70 at 399). Readout `wave12_readout.py --round w45` (the arm tag takes a `400` suffix for `_e400_` stems); section `sec:round29` in `notes-tex/028-gene-essentiality/sections/4-module.tex`.
 
 - <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/26nt67f2>
+
+## 2026.09.18 - Round 27 rerun on six seeds (jobs 2388 to 2390)
+
+The scalable form (cached GEM-box solve, nothing learned in the layer, zero-init flux head) on ProtT5 with the pathway multi-hot, seeds 2700 to 2705 in pairs at 40 GB: 0.902, 0.772, 0.897, 0.917, 0.903, 0.901 (pooled 0.917 [0.87, 0.96], above the elastic form's 0.910 on the same six seeds); selected epochs 42 to 61; 83 min per cell at two per card. Seed 2701 did NOT fit this time (train loss 1.04) after fitting in the first attempt (0.911, job 2368): the chance event of round 29 repeats on a form with the solve cached, so the layer's ceilings are not where it enters. The first attempt's three survivors are kept as arm `pathlpoffgatefluxfirst` (result copies without `dump_path`, since the rerun overwrote the per-gene dumps under the same stems). Nine runs of the form: eight fit at 0.897 to 0.917. Fold pack resubmitted at 120 GB as job 2391. Readout `wave12_readout.py --round w43`.
+
+- <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/8k2gr4hd>
+- <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/6790li4r>
+- <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/uiujnhyi>
+- <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/qtdfayw7>
+- <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/gkr9i7wg>
+- <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/xgurl6hd>

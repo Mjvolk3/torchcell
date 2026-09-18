@@ -40,13 +40,15 @@ weight, six encodings). What remains is attribution and the module.
     accepts any objective column, is untested.
   \item The head over the solved flux is the module's number, and the form that scales
     (round 27: the program solved once per genotype, nothing learned in the layer, a
-    zero-initialized head) reads 0.90 on every seed where the learned-ceiling form
-    misses the fitting transition on three cells in seventeen. Open on it: its fold
-    read, lost to the launcher's memory ceiling; what in the elastic form's forward
-    makes the transition a chance event of the run rather than of the seed (round 29:
-    the same seed and program fit at epoch 70 in one run and never in another, the two
-    diverging from the first epoch), and whether pinning the solve's path (a
-    deterministic solver order, deterministic kernels) makes the seed reproducible;
+    zero-initialized head) reads 0.90 to 0.92 on eight runs of nine and misses the
+    fitting transition on one, where the learned-ceiling form misses it on three cells
+    in seventeen. Open on it: its fold read, lost to the launcher's memory ceiling and
+    in flight at 120 GB; what in the forward makes the transition a chance event of
+    the run rather than of the seed (round 29: the same seed and program fit at epoch
+    70 in one run and never in another, the two diverging from the first epoch, and
+    the scalable form repeats it with the solve cached and nothing learned in the
+    layer), and whether pinning the sampler and the card's kernels makes the seed
+    reproducible;
     the cache's hit rate and where the wall time goes when the solve is cached, since
     six cached cells on one card ran no faster per cell than three uncached; and the
     flux entering the cell representation as a token rather than the logit as a head,

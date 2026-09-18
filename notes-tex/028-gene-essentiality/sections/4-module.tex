@@ -1048,14 +1048,15 @@ above the affine; and with nothing learned the flux is a function of the genotyp
 the medium alone, so the program need only be solved once per genotype. Round 27 adds
 that cache to the solver (a solved program is reused whenever its bounds carry no
 gradient) and runs the cached GEM-box head on ProtT5 with the pathway multi-hot on six
-seeds (jobs 2368) and on the five folds (2369), the cells of rounds 23 and 25 with
-the learned ceilings removed (Table~\ref{tab:w43}, Figure~\ref{fig:w43};
+seeds (job 2368, then 2388 to 2390) and on the five folds (2369, then 2391), the cells
+of rounds 23 and 25 with the learned ceilings removed (Table~\ref{tab:w43},
+Figure~\ref{fig:w43};
 Table~\ref{tab:ensembles}). The read is round 23's, and the wall time per cell is
 reported beside the number, since that is what the form is for.
 
 \input{tables/round_w43}
 
-\tcfigfit[1.0]{figures/w43_readout_2026-09-18-06-40-29.pdf}{\textbf{Round 27, the scalable
+\tcfigfit[1.0]{figures/w43_readout_2026-09-18-08-09-10.pdf}{\textbf{Round 27, the scalable
   form on the pathway input.} \textbf{a}, Validation AUROC per epoch, one thin line per
   seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step
   per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points),
@@ -1065,21 +1066,28 @@ reported beside the number, since that is what the form is for.
   seed mean; the dash-dot line is the flux layer. Written by
   \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w43}.}{fig:w43}
 
-The scalable form fits on every seed and matches the best cells. With nothing learned
-in the layer, the head over the cached GEM-box solve on ProtT5 with the pathway
-multi-hot reads 0.911, 0.901 and 0.903 on seeds 2701 to 2703 (mean 0.905, sd 0.005;
-pooled 0.911 with a gene bootstrap of 0.867 to 0.950), above the control on every seed
-and above the affine on both paired seeds, with training losses of 0.53 to 0.77 and
-selected epochs 55 to 78. Seed 2701 is the seed the elastic form never fit (0.716);
-here it reads 0.911. So the form that can be a data transform, the program solved once
-per genotype and read through a zero-initialized head, carries the pathway flux head's
-0.90 without the cells that miss the transition, on three seeds; three more seeds run
-in pairs at the time of writing, since the six-cell pack that produced these three lost
-its other three to the launcher's memory ceiling. The wall time was 139 minutes per
-cell at six cells on one card, no less per cell than the uncached form at three, with
-the card at 92 percent: at this packing the layer's own forward on the card, not the
-solve, is the cost, and the cache's hit rate was not logged. The fold read of this form
-was lost to the same ceiling and is not measured.
+The scalable form matches the best cells and, on nine runs, misses the fitting
+transition once. The six-cell pack (job 2368) lost three cells to the launcher's memory
+ceiling; its three survivors, seeds 2701 to 2703, read 0.911, 0.901 and 0.903 (mean
+0.905, sd 0.005) with training losses of 0.53 to 0.77 and selected epochs 55 to 78, and
+their per-gene dumps were overwritten by the rerun, so the table carries their pinned
+numbers without a bootstrap. The rerun of all six seeds in pairs (jobs 2388 to 2390,
+40 GB each) reads 0.902, 0.772, 0.897, 0.917, 0.903 and 0.901 on seeds 2700 to 2705
+(mean 0.882, sd 0.055; pooled 0.917 with a gene bootstrap of 0.871 to 0.957, above
+the elastic form's 0.910 on the same six seeds), selected epochs 42 to 61, training
+losses 0.05 to 0.18 on the five that fit and 1.04 on seed 2701, which never fit. Seed
+2701 is the seed the elastic form never fit at 200 epochs (0.716); the scalable form
+fit it in the first attempt (0.911) and not in the second (0.772), which is round 29's
+finding again, on a form with nothing learned in the layer and the solve cached: the
+miss is a chance event of the run and not of the seed or of the layer's ceilings. Over
+the nine runs of this form, eight fit and read 0.897 to 0.917; over the twelve runs of
+the elastic form on the same input (six seeds, five folds and the 400-epoch rerun),
+nine fit (Section~\ref{sec:round29}). The wall time
+was 139 minutes per cell at six cells on one card and 83 minutes at two, against 86
+for the uncached elastic form at three: at either packing the layer's own forward on
+the card, not the solve, is the cost, and the cache's hit rate was not logged. The
+fold read of this form was lost to the same ceiling and reruns at 120 GB (job 2391) at
+the time of writing.
 
 \subsection{Round 29: the unfit seed under a longer budget\secstatus{todo}}
 \label{sec:round29}
@@ -1119,9 +1127,9 @@ the two latest transitions (epochs 136 and 137) read 0.864 and 0.702 held out, s
 late transition is no guarantee either. Past the transition the 400-epoch run overfits
 (validation AUROC 0.836 at epoch 82, 0.70 at 399, with the prediction spread growing
 twelvefold), so the longer budget buys nothing after the selected epoch. The scalable
-form of round 27 fit on every seed run (three of three; three more in flight at the
-time of writing), and whether it is free of this chance is the count those seeds add
-to.
+form of round 27 is not free of the chance: its rerun of the same seed fit in one
+attempt and not in the other (0.911 against 0.772), with the solve cached and nothing
+learned in the layer, so the layer's ceilings are not where the chance enters.
 
 \subsection{Where the gradient goes\secstatus{todo}}
 

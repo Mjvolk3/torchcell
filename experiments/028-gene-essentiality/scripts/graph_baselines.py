@@ -294,6 +294,7 @@ def run_arm(
     device: torch.device,
     epochs: int = EPOCHS,
     edge_type: torch.Tensor | None = None,
+    seeds: tuple[int, ...] = SEEDS,
 ) -> ArmRow:
     labels = {k: int(v) for k, v in split["labels"].items()}
     parts = {
@@ -314,7 +315,7 @@ def run_arm(
     tests, vals, sel, n_params = [], [], [], 0
     logits_at_sel: list[np.ndarray] = []
     t0 = time.time()
-    for seed in SEEDS:
+    for seed in seeds:
         torch.manual_seed(seed)
         net = Net(kind, x.shape[1]).to(device)
         n_params = sum(p.numel() for p in net.parameters())
@@ -369,7 +370,10 @@ def run_arm(
 
 
 def fold_ensembles(
-    device: torch.device, which: str = "three", save_logits: bool = False
+    device: torch.device,
+    which: str = "three",
+    save_logits: bool = False,
+    seeds: tuple[int, ...] = (SEEDS[0],),
 ) -> None:
     """Cheap architectures on the five folds, logits averaged on the held-out genes.
 
@@ -378,6 +382,8 @@ def fold_ensembles(
     ``cv_ensemble_readout.py``. ``which`` selects the input and the arms: ``three``
     is the MLP and the 400-epoch convolution on the transformer's three inputs;
     ``go`` is convolution on the propagated GO multi-hot alone at 400 and 800 epochs.
+    With more than one seed, each fold's logit is the mean over its seeds before the
+    folds are averaged, and the report goes to its own file, suffixed ``_s<n>``.
     """
     gene_ids, graphs = gene_graphs()
     index = {g: i for i, g in enumerate(gene_ids)}
@@ -401,7 +407,13 @@ def fold_ensembles(
         arms = {"GCN400": ("GCN", ei, 400), "GCN800": ("GCN", ei, 800)}
         inputs_label = "GO"
         out_name = "graph_baselines_go_folds.json"
-    report: dict[str, object] = {"inputs": inputs_label, "arms": {}}
+    if len(seeds) > 1:
+        out_name = out_name.replace(".json", f"_s{len(seeds)}.json")
+    report: dict[str, object] = {
+        "inputs": inputs_label,
+        "seeds_per_fold": list(seeds),
+        "arms": {},
+    }
     for name, (kind, edge_index, epochs) in arms.items():
         per_fold: list[dict[str, float]] = []
         fold_aurocs: list[float] = []
@@ -422,10 +434,13 @@ def fold_ensembles(
                 index,
                 device,
                 epochs=epochs,
+                seeds=seeds,
             )
-            # one seed per fold, the first
-            per_fold.append(dict(zip(row.test_genes, row.test_logits[0], strict=True)))
-            fold_aurocs.append(row.test_auroc[0])
+            # The fold's logit is the mean over its seeds (one seed by default).
+            fold_logit = np.mean(np.array(row.test_logits, dtype=float), axis=0)
+            per_fold.append(dict(zip(row.test_genes, fold_logit, strict=True)))
+            fold_y = np.array([labels[g] for g in row.test_genes])
+            fold_aurocs.append(float(roc_auc_score(fold_y, fold_logit)))
         genes = sorted(per_fold[0])
         mean_logit = np.array([np.mean([f[g] for f in per_fold]) for g in genes])
         y = np.array([labels[g] for g in genes])
@@ -497,11 +512,26 @@ def main() -> None:
             "result file, for hard_genes.py; off by default to keep the files small."
         ),
     )
+    parser.add_argument(
+        "--seeds",
+        type=int,
+        nargs="+",
+        default=None,
+        help=(
+            "Seeds per arm (default 2700 2701 2702). A non-default list writes to its "
+            "own result file, suffixed _s<n>. Under --arms folds/go_folds these are the "
+            "seeds per fold, whose logits are averaged before the fold ensemble."
+        ),
+    )
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    seeds: tuple[int, ...] = tuple(args.seeds) if args.seeds else SEEDS
     if args.arms in ("folds", "go_folds"):
         fold_ensembles(
-            device, "three" if args.arms == "folds" else "go", args.save_logits
+            device,
+            "three" if args.arms == "folds" else "go",
+            args.save_logits,
+            seeds=(SEEDS[0],) if args.seeds is None else seeds,
         )
         return
     with gzip.open(SPLIT, "rt") as fh:
@@ -634,9 +664,12 @@ def main() -> None:
                     index,
                     device,
                     epochs=n_epochs,
+                    seeds=seeds,
                 )
             )
-        out = osp.join(RESULTS, f"graph_baselines_{args.arms}.json")
+        # A non-default seed list writes its own file, so the three-seed read stays.
+        suffix = "" if seeds == SEEDS else f"_s{len(seeds)}"
+        out = osp.join(RESULTS, f"graph_baselines_{args.arms}{suffix}.json")
     elif args.arms == "go_rel":
         # The typed-edge models on GO alone at 400 epochs (RGAT beat convolution on the
         # three inputs), and convolution on GO with the pathway multi-hot.

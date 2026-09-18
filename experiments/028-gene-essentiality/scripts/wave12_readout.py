@@ -487,9 +487,16 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "w39_pathpool_h12l1p1_e200_s*.json",
             "w38_protpathfba_h12l1p1_e200_s*.json",
             "w39_pathlpelgateflux_h12l1p1_e200_s*.json",
+            "w43_pathlpoffgatefluxfirst_h12l1p1_e200_s*.json",
             "w43_pathlpoffgateflux_h12l1p1_e200_s*.json",
         ],
-        ["pathpool", "protpathfba", "pathlpelgateflux", "pathlpoffgateflux"],
+        [
+            "pathpool",
+            "protpathfba",
+            "pathlpelgateflux",
+            "pathlpoffgatefluxfirst",
+            "pathlpoffgateflux",
+        ],
     ),
     # Round 29: the round-23 seed that never fit, rerun with a 400-epoch budget, beside
     # its 200-epoch run; the same program and seed, so the read is whether the fitting
@@ -650,6 +657,7 @@ ARM_LABELS = {
     "protpropsfba": "seven gene properties + ProtT5 backbone + FBA ratios",
     "pathfba": "pathway multi-hot backbone + FBA ratios",
     "pathpool": "pathway multi-hot + ProtT5 backbone, no readout",
+    "pathlpoffgatefluxfirst": "the same cell, first attempt (three survivors of the six-cell pack; per-gene dumps overwritten)",
     "pathlpoffgateflux": "pathway multi-hot + ProtT5; gated + a head over the GEM-box solve's flux (cached, nothing learned in the layer)",
     "protgofba": "GO multi-hot (propagated, 2,362) + ProtT5 backbone + FBA ratios",
     "protgobpfba": "GO biological process (1,580) + ProtT5 backbone + FBA ratios",

@@ -979,6 +979,33 @@ exchange and transport columns matter. And the passing cell runs on seeds 2703 t
 
 \input{tables/round_w40}
 
+\tcfigfit[1.0]{figures/w40_readout_2026-09-18-03-40-22.pdf}{\textbf{Round 24, what
+  carries the head over the solved flux.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w40}.}{fig:w40}
+
+The vector carries it, the ceilings sharpen it a little, and the gene-owned columns are
+where it lives. On six seeds the head over every solved flux reads 0.862 (sd 0.013,
+pooled 0.866 with a gene bootstrap of 0.789 to 0.933), every seed above its paired
+gated elastic cell, so the round-21 read holds on six. The same head over the GEM-box
+solve, with nothing learned in the layer, reads 0.873, 0.836 and 0.847 (mean 0.852),
+below the elastic cell on three seeds of three by 0.010, 0.017 and 0.021: by the read
+as written the learned ceilings are needed, and what they add is inside one seed
+standard deviation of either arm. With nothing learned the flux is a function of the
+genotype and the medium alone, and a linear head over it still sits 0.03 above the
+affine and 0.08 above the ladder's linear rung on the deletion pFBA vector (0.771);
+which of the transformer's context head, the class-weighted training, or the
+difference between the program's argmax and the parsimonious point accounts for that
+gap is not measured. The head over the 2,709 gene-owned reactions reads 0.871, 0.860
+and 0.853 (mean 0.861), level with the full head (below on two seeds, above on one),
+where the 274 exchange fluxes alone read 0.835: the uptake and secretion profile is
+the part of the vector that carries least.
+
 \subsection{Round 25: the flux head under the reported protocol\secstatus{todo}}
 \label{sec:round25}
 

@@ -798,7 +798,7 @@ def main() -> None:
                     rows.append(
                         run_arm(kind, graph_name, inputs, x, ei, split, index, device)
                     )
-        out = osp.join(RESULTS, "graph_baselines.json")
+        out = osp.join(RESULTS, f"graph_baselines{split_tag}.json")
     with open(out, "w") as fh:
         json.dump(
             {

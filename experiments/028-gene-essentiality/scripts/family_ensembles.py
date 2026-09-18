@@ -183,6 +183,7 @@ FOLD_TRANSFORMER_FAMILIES: dict[str, str] = {
     "indicator + ProtT5 + affine, five folds (round 12)": "w23_chromprotcv{k}_h12l1p1_e200_s2700.json",
     "cached solve + flux head, pathway + ProtT5, five folds (round 27)": "w43_pathoffcv{k}_h12l1p1_e200_s2700.json",
     "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)": "w50_pathlogfreecv{k}_h12l1p1_e200_s2700.json",
+    "layer-free log1p, interior-point store, five folds (round 37)": "w53_pathlogipmcv{k}_h12l1p1_e200_s2700.json",
 }
 FOLD_GRAPH_FAMILY = ("GO convolution, five folds (400 epochs)", "GCN400")
 FOLD_COMBINATIONS: list[list[str]] = [
@@ -194,6 +195,11 @@ FOLD_COMBINATIONS: list[list[str]] = [
     [
         FOLD_GRAPH_FAMILY[0],
         "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)",
+    ],
+    ["layer-free log1p, interior-point store, five folds (round 37)"],
+    [
+        FOLD_GRAPH_FAMILY[0],
+        "layer-free log1p, interior-point store, five folds (round 37)",
     ],
     [FOLD_GRAPH_FAMILY[0], "indicator + ProtT5 + affine, five folds (round 12)"],
     [FOLD_GRAPH_FAMILY[0], "flux head, pathway + ProtT5, five folds (round 25)"],

@@ -1105,6 +1105,8 @@ ENSEMBLE_LABELS = {
     "w43_pathoffcv": "round 27: pathway multi-hot + ProtT5, the head over the cached GEM-box solve (nothing learned in the layer)",
     "w50_pathlogfreecv": "round 34: pathway multi-hot + ProtT5, the deletion's pFBA vector as $\\log(1 + |v|)$ appended to the affine (no layer)",
     "w50_pathlogfreecv_s3": "round 34: the same, three seeds per fold (each fold model the seed-mean logit)",
+    "w53_pathlogipmcv": "round 37: the same cell over the interior-point store (HiGHS ipm, no crossover, KKT $10^{-4}$)",
+    "w53_pathlogipmcv_s3": "round 37: the interior-point store, three seeds per fold",
 }
 
 

@@ -650,6 +650,17 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Rounds 51 and 52: the round-9 pooled cell and the round-33 layer-free cell, each
+    # pinned twice, with the hash seed fixed on the old one-hot code (w67) and without
+    # it on the fixed code (w68).
+    "w67": (
+        ["w67_*_h12l1p1_e200_s2700.json"],
+        ["pathpoolhash1", "pathpoolhash2", "pathloghash1", "pathloghash2"],
+    ),
+    "w68": (
+        ["w68_*_h12l1p1_e200_s2700.json"],
+        ["pathpoolfix1", "pathpoolfix2", "pathlogfix1", "pathlogfix2"],
+    ),
     # Round 50: GO on the logit instead of the node, through the solve store path
     # (go_affine_store.py): GO alone as affine columns, GO appended to the pFBA vector,
     # the same on ProtT5 alone, and the round-47 GO-on-node cell at 400 epochs; beside
@@ -933,6 +944,14 @@ ARM_LABELS = {
     "protpathfbadet2": "the same, pinned, second run",
     "protlogdet1": "layer-free cell on ProtT5 alone (no pathway block), seed 2700, kernels pinned, first run",
     "protlogdet2": "the same, pinned, second run",
+    "pathpoolhash1": "round-9 pooled cell, kernels pinned, PYTHONHASHSEED=0, old one-hot code, first run",
+    "pathpoolhash2": "the same, second run",
+    "pathloghash1": "round-33 layer-free cell, kernels pinned, PYTHONHASHSEED=0, old one-hot code, first run",
+    "pathloghash2": "the same, second run",
+    "pathpoolfix1": "round-9 pooled cell, kernels pinned, no hash seed, fixed one-hot code, first run",
+    "pathpoolfix2": "the same, second run",
+    "pathlogfix1": "round-33 layer-free cell, kernels pinned, no hash seed, fixed one-hot code, first run",
+    "pathlogfix2": "the same, second run",
     "pathpooldet1": "round-9 pooled cell (pathway + ProtT5, no affine readout), seed 2700, kernels pinned, first run",
     "pathpooldet2": "the same, pinned, second run",
     "pathfbadet1": "affine cell on the pathway multi-hot alone (no ProtT5), seed 2700, kernels pinned, first run",

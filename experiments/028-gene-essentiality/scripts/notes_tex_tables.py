@@ -425,6 +425,21 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w67": (
+        "Round 51, the hash seed fixed on the old one-hot code",
+        "The round-9 pooled cell (pathway multi-hot and ProtT5, the plain pooled head) "
+        "and the round-33 layer-free cell, each run twice on seed 2700 with the card's "
+        "kernels pinned and Python's hash seed fixed, on the code that rebuilt the "
+        "pathway one-hot from a set at every launch. Batch 32, class weight, 200 "
+        "epochs; the read is per pair.",
+    ),
+    "w68": (
+        "Round 52, the fixed one-hot code without a hash seed",
+        "The same two cells run twice each on seed 2700 with the card's kernels pinned "
+        "and no hash seed, on the code that enumerates the one-hot's columns sorted and "
+        "processes only when the file is absent. Batch 32, class weight, 200 epochs; "
+        "the read is per pair.",
+    ),
     "w66": (
         "Round 50, GO on the logit instead of the node",
         "The round-33 cell and the round-47 GO-on-node cells as the comparators, against "

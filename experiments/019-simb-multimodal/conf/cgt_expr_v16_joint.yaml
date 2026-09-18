@@ -27,8 +27,23 @@
 #
 # THE ARMS (gh_expr_008_arm.sh, J_* arms): J_ref_s<k> is P_ref (aux head off, proteome
 # strains only, so byte-for-byte the v14 reference at this budget), J_joint_s<k> the two
-# heads at weight 1, on split seeds 0, 1, 2, two init seeds each. Twelve runs, four per
-# card, three cards, ref/joint paired within card and seed.
+# heads at weight 1, and J_expr_s<k> (added 2026-09-18 after the split audit) the
+# expression-only reference on the SAME partition: the masked `per_gene` head re-pointed at
+# `expression_log2_ratio`, no aux head, `require_modalities []`, so the three arms differ in
+# nothing but the active heads. Split seeds 0, 1, 2, two init seeds each. Eighteen runs,
+# three per card (one arm each of one split and seed), six cards.
+#
+# THE PARTITION (split_gene_overlap_audit.py, 2026-09-18). The draw shuffles record indices
+# per index key after `random.seed(split_seed)` and never looks at gene identity; one record
+# is one deletion gene set, so exact duplicates cannot cross the split (0 on every seed).
+# The proteome rows of every seed are exactly v14's (3,581 / 448 / 447) and gene-disjoint
+# by construction (Messner is singles). The 155 held-out expression genotypes per seed
+# include 17 to 20 that share a deleted gene with train, all single-versus-double relations
+# among the 72 Sameith doubles; the expression metric is to be read on all rows AND on the
+# gene-disjoint rows. v13's partition is NOT reproducible on this store: the same 1,554
+# expression genotypes sit in a different record order, so the held-out overlap with v13 at
+# the same seed is at chance (6 to 15%). The expression head is therefore compared to
+# J_expr, not to v13.
 #
 # BUDGET 500 epochs. v14's validation Pearson peaks at a median epoch of 150 and nothing
 # after 300 gains; the best-validation checkpoint is scored on test at the end.
@@ -67,3 +82,6 @@ trainer:
   checkpoint:
     monitor: val/proteome/pearson_per_feature
     metric_monitor: val/expression/pearson_per_feature
+    # Keep the loss-minimum model too (v13 and v14 saved none): the early-dip model against
+    # the best-metric model on the loud proteins and on calibration is an open read.
+    save_loss_min: true

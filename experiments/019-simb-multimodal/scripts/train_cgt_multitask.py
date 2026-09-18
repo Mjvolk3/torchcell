@@ -3217,6 +3217,23 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             filename=f"{job_id}-last",
         ),
     ]
+    # BEST-BY-LOSS, opt-in. Once `checkpoint.monitor` points at the metric (every
+    # expression and proteome round since v13), NO loss-minimum checkpoint is saved at all,
+    # so "is the early loss-minimum model better calibrated, or better on the top
+    # fold-change genes?" (asked 2026-09-18) cannot be answered from the v13 files. The
+    # curves put the loss minimum at epochs 243 to 1,137 with val Pearson 9 to 13% below its
+    # later peak there (expression-fit review, report 05); what that model does on the other
+    # metrics is unmeasured. `save_loss_min: true` keeps that one extra file per run.
+    if bool(_ckpt_cfg.get("save_loss_min", False)):
+        checkpoint_callbacks.append(
+            ModelCheckpoint(
+                dirpath=osp.join(model_base_path, group),
+                save_top_k=1,
+                monitor=str(_ckpt_cfg.get("loss_monitor", "val/loss")),
+                mode="min",
+                filename=f"{job_id}-best-loss-{{epoch:02d}}",
+            )
+        )
 
     # EarlyStopping: OFF unless a config asks for it, and it must name its own monitor.
     #

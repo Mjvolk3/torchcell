@@ -1,0 +1,64 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v17_locality.yaml
+# [[experiments.019-simb-multimodal.conf.cgt_expr_v17_locality]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/conf/cgt_expr_v17_locality
+#
+# PERTURBATION-LOCALITY ROUND (2026-09-18), project v17. The v13 reference against two
+# arms that give the deletion a location on the gene tokens, on the knockout transcriptome.
+#
+# WHY. In the v13 reference the deletion enters as ONE 90-d vector added identically to
+# every gene token (a one-key cross-attention at a single deletion), followed by a
+# LayerNorm; nothing marks WHICH gene was deleted, and the graphs reach the model only as
+# an attention mask on one encoder layer. Measured on the V_ref_s0 dump (expression-fit
+# review, 2026-09-17): the deleted gene's own value, the largest signal in every profile
+# (true mean -2.42), is predicted at chance (+0.036), and writing a constant -1.0 into that
+# one cell per strain moves val 0.2227 to 0.2366 and test 0.1095 to 0.1241 with no
+# retraining. The committed B4 baseline (graph_retrieval_baseline.py, 2026-09-18) says the
+# deleted gene's interaction-graph NEIGHBORHOOD is the strongest retrieval key on this
+# task: on gene-disjoint strains the STRING-experimental adjacency row scores 0.194 +/-
+# 0.015 val / 0.175 +/- 0.028 test over four split seeds against ProtT5 0.099 / 0.116 and
+# the two CGT reference dumps 0.178 and 0.100 val / 0.097 and 0.134 test, and
+# degree-preserving rewiring drops every graph to -0.003 to +0.020. The model is handed
+# the same nine graphs and never routes the deletion along them.
+#
+# THE ARMS (gh_expr_008_arm.sh, L_* arms). All three keep v13's trunk, objective, mask
+# schedule, optimizer and E_full input; only the perturbation pathway differs.
+#   L_ref_s<k>    the v13 reference (V_ref) at this budget.
+#   L_self_s<k>   `model.perturbation_propagation` enabled at hops=0 with the gate forced
+#                 on: ONE extra feature per gene token, the hop-0 indicator "gene i is
+#                 itself deleted in this strain" (PerturbationGraphPropagation). Its only
+#                 prior test, wave-1 A2_self, ran with a ReZero gate closed at init, n=1;
+#                 a closed gate is not evidence against the mechanism.
+#   L_prop2_s<k>  the same module at hops=2 over every gene-gene relation in the cell
+#                 graph (nine graphs, 19 features): self + 1-hop + 2-hop reachability of
+#                 the deletion along each graph, gate forced on. Sparse mat-vecs, O(|E|).
+# L_self against L_ref is "identify the deleted gene"; L_prop2 against L_self is "route
+# along the graphs". Both are gated on the review's template: adopt only above +0.02 with
+# the 12-pair CI excluding 0, 3 of 4 partitions positive, and the test sign agreeing.
+#
+# DESIGN. Split seeds 0 to 3, init seeds 0 to 2, the three arms co-resident on one card
+# per (split, seed): 12 tasks of three runs on the `gpu` A40s (and cabbi as cards free),
+# so every contrast is paired within card, split and seed. 36 runs.
+#
+# BUDGET 1,200 epochs, scored as the MEAN validation Pearson over epochs 1,000 to 1,200
+# (the review's fixed-window score; roll_max over thousands of epochs is an order
+# statistic biased by +0.007 to +0.013). The v13 arms reach 89 to 91% of their epoch-3,754
+# level by epoch 1,000, and the k>0 branches of the masked objective peak at 214 / 606 /
+# 1,099. The best-by-metric checkpoint is scored on test at the end (run_test), the
+# closing read of the template.
+#
+# HYDRA. `gate_mode` is set on the command line as the literal string `on`; in YAML the
+# bare token `on` parses as boolean true and would silently fall back to ReZero.
+defaults:
+  - cgt_expr_v13_split
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v17
+  tags: [locality-round, v17]
+
+trainer:
+  max_epochs: 1200
+  checkpoint:
+    # Keep the loss-minimum model too (v13 saved none): the early-dip model against the
+    # best-metric model on the top fold-change genes and on calibration is an open read.
+    save_loss_min: true

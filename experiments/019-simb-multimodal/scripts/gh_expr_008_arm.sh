@@ -570,6 +570,21 @@ case "$ARM" in
                      ARM_TAGS=(heads-proteome "split${ARM##*_s}" proteome stage-joint round-joint) ;;
   J_joint_s[0-9])    OVERRIDES=(data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(heads-proteome-expression aux-w1 "split${ARM##*_s}" proteome stage-joint round-joint) ;;
+  # J_expr (2026.09.18): the EXPRESSION-ONLY reference on the SAME fig3_proteome partition,
+  # so proteome-only, expression-only and joint differ in nothing but the active heads. The
+  # masked `per_gene` head is re-pointed at the expression label (same head, loss, reveal
+  # schedule and z-score as v13); the 3,127 proteome-only genotypes ride along with the row
+  # mask off and contribute no loss (split audit, 2026-09-18, GilaHyper smoke job 2366).
+  # v13's partition cannot be reproduced on this store (record order differs; the overlap of
+  # held-out genotypes is at chance), so this arm is the expression reference of the round.
+  J_expr_s[0-9])     OVERRIDES=("multitask.active_heads=[per_gene]"
+                                "multitask.head_phenotypes.per_gene=[expression_log2_ratio]"
+                                multitask.head_phenotype_names.per_gene=expression
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                trainer.checkpoint.monitor=val/expression/pearson_per_feature
+                                trainer.checkpoint.metric_monitor=val/mean/pearson_per_feature
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(heads-expression "split${ARM##*_s}" expression stage-joint round-joint) ;;
   J_joint05_s[0-9])  OVERRIDES=(multitask.head_weights.per_gene_aux=0.5 data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(heads-proteome-expression aux-w05 "split${ARM##*_s}" proteome stage-joint round-joint) ;;
   # ============================ WEIGHT-DECAY ROUND (2026.09.15, v15) =======================
@@ -581,6 +596,24 @@ case "$ARM" in
                      ARM_TAGS=(wd-1e-2 "split${ARM##*_s}" stage-wd round-wd) ;;
   W_wd1e1_s[0-9])    OVERRIDES=(regression_task.optimizer.weight_decay=1e-1 data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(wd-1e-1 "split${ARM##*_s}" stage-wd round-wd) ;;
+  # ======================== PERTURBATION-LOCALITY ROUND (2026.09.18, v17) ==================
+  # The v13 reference against a deletion that has a LOCATION on the gene tokens
+  # (conf/cgt_expr_v17_locality.yaml). L_self adds the hop-0 self-indicator ("gene i is
+  # itself deleted"), L_prop2 the self-indicator plus 1- and 2-hop reachability of the
+  # deletion along every gene-gene relation. Both force the gate on: wave-1 A2_self ran
+  # with a ReZero gate closed at init, and a closed gate is not evidence against a
+  # mechanism. `gate_mode=on` is passed here as a literal string; YAML would read it as
+  # boolean true and fall back to ReZero.
+  L_ref_s[0-9])      OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(pert-broadcast "split${ARM##*_s}" stage-locality round-locality) ;;
+  L_self_s[0-9])     OVERRIDES=("$PROP=true" model.perturbation_propagation.hops=0
+                                model.perturbation_propagation.gate_mode=on
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(pert-self-hop0 "split${ARM##*_s}" stage-locality round-locality) ;;
+  L_prop2_s[0-9])    OVERRIDES=("$PROP=true" model.perturbation_propagation.hops=2
+                                model.perturbation_propagation.gate_mode=on
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(pert-prop-hop2 "split${ARM##*_s}" stage-locality round-locality) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

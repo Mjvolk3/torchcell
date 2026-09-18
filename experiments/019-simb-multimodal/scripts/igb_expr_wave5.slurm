@@ -417,21 +417,56 @@ case "$STAGE" in
           EXTRA_OV="" ;;
   # ------------------------------------------------------------- JOINT ROUND (2026.09.17)
   # The proteome head with the transcriptome as a second per-gene head on the same trunk,
-  # against the proteome-only reference, split seeds 0 to 2, two init seeds, 500 epochs
-  # (conf/cgt_expr_v16_joint.yaml). Twelve runs on three cabbi cards, one split per card,
-  # ref/joint paired within card and seed.
+  # against the proteome-only reference AND the expression-only reference on the same
+  # partition, split seeds 0 to 2, two init seeds, 500 epochs (conf/cgt_expr_v16_joint.yaml).
+  # Eighteen runs as six tasks of three: the three arms of one (split, seed) share a card,
+  # so every contrast is paired within card, split and seed. Tasks are split-major; send
+  # any subset to whichever partition has cards (cabbi as v14 ends, the gpu A40s as v13
+  # ends) with the same stage and a different --array.
   #
   #   H=$(git rev-parse HEAD); D=$(git diff HEAD | sha256sum | cut -d" " -f1)
   #   sbatch -p cabbi --gres=gpu:1 --cpus-per-task=12 --mem=120g --time=4-00:00:00 \
-  #       --array=0-2 --export=ALL,W5_STAGE=joint,TORCHCELL_SOURCE_GIT_HASH=$H,\
+  #       --array=0-5 --export=ALL,W5_STAGE=joint,TORCHCELL_SOURCE_GIT_HASH=$H,\
   #   TORCHCELL_SOURCE_DIFF_SHA256=$D experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
   joint)  JOBS=(
-            J_ref_s0:0 J_joint_s0:0 J_ref_s0:1 J_joint_s0:1
-            J_ref_s1:0 J_joint_s1:0 J_ref_s1:1 J_joint_s1:1
-            J_ref_s2:0 J_joint_s2:0 J_ref_s2:1 J_joint_s2:1
+            J_ref_s0:0 J_expr_s0:0 J_joint_s0:0
+            J_ref_s0:1 J_expr_s0:1 J_joint_s0:1
+            J_ref_s1:0 J_expr_s1:0 J_joint_s1:0
+            J_ref_s1:1 J_expr_s1:1 J_joint_s1:1
+            J_ref_s2:0 J_expr_s2:0 J_joint_s2:0
+            J_ref_s2:1 J_expr_s2:1 J_joint_s2:1
           )
           JOBS_EXPLICIT=1
-          RUNS_PER_GPU=4; STAGE_CONFIG=cgt_expr_v16_joint
+          RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_v16_joint
+          EXTRA_OV="" ;;
+  # ------------------------------------------------------- PERTURBATION-LOCALITY ROUND (2026.09.18)
+  # The v13 reference against the hop-0 self-indicator and 2-hop graph propagation of the
+  # deletion, split seeds 0 to 3, init seeds 0 to 2, 1,200 epochs (conf/cgt_expr_v17_locality.yaml).
+  # 36 runs as twelve tasks of three: the three arms of one (split, seed) share a card, so
+  # every contrast is paired within card, split and seed. Tasks are split-major, so
+  # `--array=0-2` is split 0 and any subset of tasks can be sent to whichever partition
+  # has cards (the gpu A40s as v13 ends; cabbi as v14 ends).
+  #
+  #   H=$(git rev-parse HEAD); D=$(git diff HEAD | sha256sum | cut -d" " -f1)
+  #   sbatch -p gpu --gres=gpu:1 --cpus-per-task=12 --mem=120g --time=4-00:00:00 \
+  #       --array=0-11 --export=ALL,W5_STAGE=locality,TORCHCELL_SOURCE_GIT_HASH=$H,\
+  #   TORCHCELL_SOURCE_DIFF_SHA256=$D experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  locality) JOBS=(
+            L_ref_s0:0 L_self_s0:0 L_prop2_s0:0
+            L_ref_s0:1 L_self_s0:1 L_prop2_s0:1
+            L_ref_s0:2 L_self_s0:2 L_prop2_s0:2
+            L_ref_s1:0 L_self_s1:0 L_prop2_s1:0
+            L_ref_s1:1 L_self_s1:1 L_prop2_s1:1
+            L_ref_s1:2 L_self_s1:2 L_prop2_s1:2
+            L_ref_s2:0 L_self_s2:0 L_prop2_s2:0
+            L_ref_s2:1 L_self_s2:1 L_prop2_s2:1
+            L_ref_s2:2 L_self_s2:2 L_prop2_s2:2
+            L_ref_s3:0 L_self_s3:0 L_prop2_s3:0
+            L_ref_s3:1 L_self_s3:1 L_prop2_s3:1
+            L_ref_s3:2 L_self_s3:2 L_prop2_s3:2
+          )
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_v17_locality
           EXTRA_OV="" ;;
   # CANARY -- one fast_dev_run to prove container + conda + PYTHONPATH + LMDB path before a
   # wave is committed to the queue. Exits in minutes.
@@ -445,7 +480,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head|split|proteome|wd|joint)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head|split|proteome|wd|joint|locality)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

@@ -38,13 +38,20 @@ weight, six encodings). What remains is attribution and the module.
     that changes which bounds bind per genotype, such as ceilings the deleted gene's
     neighbors own, or an objective other than biomass, since the layer that solves
     accepts any objective column, is untested.
-  \item The head over the solved flux (rounds 21 and 23) is the module's number, and
-    three things about it are open. Which part of the cell makes the vector informative,
-    the deletion's closure of its reactions, the learned ceilings, or the head's reach
-    over the exchange columns, is round 24. Why one seed in three on the pathway input
-    never passes the fitting transition the other two pass near epoch 80 is not
-    measured; a longer budget on that seed is the direct test. And what the cell reads
-    under the fold-ensemble protocol beside the reported 0.893 is round 25.
+  \item The head over the solved flux is the module's number, and the form that scales
+    (round 27: the program solved once per genotype, nothing learned in the layer, a
+    zero-initialized head) reads 0.90 on every seed where the learned-ceiling form
+    misses the fitting transition on a third of its cells. Open on it: its fold read,
+    lost to the launcher's memory ceiling; why the elastic form's seeds miss the
+    transition (a 400-epoch run of one unfit seed was in flight at the time of
+    writing); the cache's hit rate and where the wall time goes when the solve is
+    cached, since six cached cells on one card ran no faster per cell than three
+    uncached; and the flux entering the cell representation as a token rather than
+    the logit as a head, which is the multi-phenotype form.
+  \item The two model families, annotation through the graph and the solve through
+    the transformer, miss different genes, and their post hoc average reads 0.949 under
+    the fold protocol. A model trained to hold both, or a learned weighting, is untested,
+    and the average's number carries the selection of the best of six.
   \item The layer that solves has the wrong shape for a training loop: the program runs
     on the CPU inside the forward pass, the GPU waits on it (0 to 13 percent
     utilization sampled during round 19, against a 1.6 hour cell where the alternating

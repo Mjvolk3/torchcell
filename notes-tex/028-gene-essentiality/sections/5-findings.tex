@@ -37,11 +37,15 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     and the graph isomorphism network 0.705, against the MLP's 0.870. The 1-WL-expressive
     aggregator is the weakest, and the typed-edge attention is level with the
     transformer's best single cell.
-  \item[GO carries the number too, through the graph.] Graph convolution on the
-    propagated GO multi-hot alone, no sequence and no solve, reads 0.888, and 0.891
-    with the ratios; on the ladder GO is the strongest single encoding (0.808 linear,
-    0.844 with a random forest and the ratios). The transformer is the one model that
-    does not take it: 0.833 beside ProtT5 and a cost of 0.04 beside the pathway block.
+  \item[GO through the graph is the highest single model.] Two layers of graph
+    convolution over the union of the nine gene graphs on the propagated GO multi-hot
+    alone, no sequence and no solve, read 0.912, 0.910 and 0.904 at 400 epochs, 43
+    seconds per seed, above the transformer's best cell (0.895) and the reported
+    ensemble's point (0.893, inside its interval), and still rising at the end of the
+    budget; the sequence embedding and the ratios add nothing to it. On the ladder GO is
+    the strongest single encoding (0.808 linear, 0.844 with a random forest and the
+    ratios). The transformer is the one model that does not take it: 0.833 beside
+    ProtT5 and a cost of 0.04 beside the pathway block.
   \item[The genes every model misses are the ones the solve misses.] Fourteen of the
     fifteen hardest essential held-out genes have a knockout growth ratio of 1.0 (CDC19
     covered by PYK2, PET9 by AAC1 and AAC3), and the hardest nonessential genes are

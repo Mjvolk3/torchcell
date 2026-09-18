@@ -64,10 +64,12 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
+import map_labels as ml
 import networkx as nx
 from dotenv import load_dotenv
-
 from ffa_network_overlay_panel import GENE_ORDER, TF_GENES
+from map_labels import FONT_UNITS, UNITS_PER_MM, Ink, attachment_window, esc
+
 from torchcell.utils import PANEL_WIDTHS_MM
 
 load_dotenv()
@@ -459,6 +461,24 @@ def prune(svg, x0, y0, w, h):
     return ET.tostring(root, encoding="unicode")
 
 
+def ink_from_svg(map_svg, to_mm):
+    """The returned map's elements as an Ink grid: the route weighted 1, the rest faint."""
+    pts = Ink()
+    for m in ELEMENT.finditer(map_svg):
+        el = m.group(0)
+        w = 1.0 if is_highlighted(el) else Ink.BACKGROUND_WEIGHT
+        d = re.search(r'\bd="([^"]*)"', el)
+        if d:
+            n = [float(v) for v in NUMBER.findall(d.group(1))]
+            pts.add_polyline([to_mm(x, y) for x, y in zip(n[0::2], n[1::2])], w)
+            continue
+        cx = re.search(r'cx="(-?[\d.]+)"', el)
+        cy = re.search(r'cy="(-?[\d.]+)"', el)
+        if cx and cy:
+            pts.add(*to_mm(float(cx.group(1)), float(cy.group(1))), w)
+    return pts
+
+
 def demote_copies(map_svg, points_mm, to_mm):
     """Return the map with the nodes at `points_mm` restyled as background nodes.
 
@@ -500,118 +520,6 @@ def whole(svg, width_mm):
     return prune(svg.replace(head, new, 1), x0, y0, w, h), height_mm, to_mm
 
 
-def segment_points(a, b, step_mm=0.4):
-    (ax, ay), (bx, by) = a, b
-    k = max(1, int(math.hypot(bx - ax, by - ay) / step_mm))
-    return [(ax + (bx - ax) * i / k, ay + (by - ay) * i / k) for i in range(k + 1)]
-
-
-class Ink:
-    """How much of the drawing lies under a rectangle or along a line, in panel mm.
-
-    Every drawn element is sampled into points, the route weighted 1 and the faint
-    background BACKGROUND_WEIGHT, and the points are binned on a CELL mm grid so a query
-    sums a few cells rather than scanning thirty thousand points. The background weighs
-    much less than its opacity would say: a label over faint gray lines costs the reader
-    nothing, a label over the route hides the content of the panel. A path contributes
-    points along each of its segments every STEP mm, so a long straight line counts
-    along its whole length and not only at its ends.
-    """
-    CELL, STEP = 0.5, 0.4
-    BACKGROUND_WEIGHT = 0.08
-
-    def __init__(self, map_svg, to_mm):
-        self.cells = {}
-        for m in ELEMENT.finditer(map_svg):
-            el = m.group(0)
-            w = 1.0 if is_highlighted(el) else self.BACKGROUND_WEIGHT
-            d = re.search(r'\bd="([^"]*)"', el)
-            if d:
-                n = [float(v) for v in NUMBER.findall(d.group(1))]
-                verts = [to_mm(x, y) for x, y in zip(n[0::2], n[1::2])]
-                for a, b in zip(verts, verts[1:]):
-                    for x, y in segment_points(a, b, self.STEP):
-                        self.add(x, y, w)
-                continue
-            cx = re.search(r'cx="(-?[\d.]+)"', el)
-            cy = re.search(r'cy="(-?[\d.]+)"', el)
-            if cx and cy:
-                self.add(*to_mm(float(cx.group(1)), float(cy.group(1))), w)
-
-    def add(self, x, y, w):
-        key = (int(x // self.CELL), int(y // self.CELL))
-        self.cells[key] = self.cells.get(key, 0.0) + w
-
-    def add_line(self, a, b, w=1.0):
-        for x, y in segment_points(a, b, self.STEP):
-            self.add(x, y, w)
-
-    def rect(self, x, y, w, h, pad=0.3):
-        i0, i1 = int((x - pad) // self.CELL), int((x + w + pad) // self.CELL)
-        j0, j1 = int((y - pad) // self.CELL), int((y + h + pad) // self.CELL)
-        return sum(self.cells.get((i, j), 0.0)
-                   for i in range(i0, i1 + 1) for j in range(j0, j1 + 1))
-
-    def line(self, a, b, halo=0.35):
-        seen, total = set(), 0.0
-        r = int(math.ceil(halo / self.CELL))
-        for x, y in segment_points(a, b, self.STEP):
-            ci, cj = int(x // self.CELL), int(y // self.CELL)
-            for i in range(ci - r, ci + r + 1):
-                for j in range(cj - r, cj + r + 1):
-                    if (i, j) not in seen:
-                        seen.add((i, j))
-                        total += self.cells.get((i, j), 0.0)
-        return total
-
-
-def overlaps(r, others, gap=0.4):
-    x, y, w, h = r
-    return any(x < ox + ow + gap and ox < x + w + gap and y < oy + oh + gap and oy < y + h + gap
-               for ox, oy, ow, oh in others)
-
-
-def inside(p, r, gap=0.3):
-    x, y, w, h = r
-    return x - gap <= p[0] <= x + w + gap and y - gap <= p[1] <= y + h + gap
-
-
-def crosses(segment, rects):
-    """Whether a leader or link passes through any of the plates."""
-    return any(inside(p, r) for p in segment_points(*segment) for r in rects)
-
-
-def covers(rect, segments):
-    """Whether a plate would sit on any leader or link already drawn."""
-    return any(inside(p, rect) for s in segments for p in segment_points(*s))
-
-
-def intersects(s1, s2):
-    """Whether two segments cross (proper intersection, shared endpoints excluded)."""
-    (p1, p2), (p3, p4) = s1, s2
-
-    def orient(a, b, c):
-        v = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
-        return (v > 1e-9) - (v < -1e-9)
-    if p1 in (p3, p4) or p2 in (p3, p4):
-        return False
-    return (orient(p1, p2, p3) * orient(p1, p2, p4) < 0
-            and orient(p3, p4, p1) * orient(p3, p4, p2) < 0)
-
-
-UNITS_PER_MM = 100.0 / 25.4  # the panel is written in draw.io's 100-units-per-inch canvas
-FONT_UNITS = 6.0 / 0.72  # 6 pt, the figure-text size everywhere in this document
-FONT_SMALL_UNITS = 7.0  # 5.04 pt, the floor, for the gene names along an attachment link
-CHAR_MM = 0.50 * FONT_UNITS / UNITS_PER_MM  # Arial's mean advance is about half the size
-CHAR_SMALL_MM = 0.50 * FONT_SMALL_UNITS / UNITS_PER_MM
-LEAD, PAD = 4.5, 0.8
-SUB_H = FONT_SMALL_UNITS / UNITS_PER_MM + 0.3  # the second line under an attached species
-# Sixteen directions a label may take from its node, as (dx, dy, bias): the bias is a
-# small preference for the right-hand side, so that with equal ink the labels read the
-# same way. Exact 1 and -1 on the axes let the ring column pick "right" and "left".
-DIRECTIONS = [(round(math.cos(k * math.pi / 8), 6), round(math.sin(k * math.pi / 8), 6),
-               0.25 * (1 - math.cos(k * math.pi / 8))) for k in range(16)]
-LEADS = (1.0, 1.8, 2.8, 4.0)  # multiples of LEAD a leader may run
 PANEL_KEY = [
     ("#9673A6", "glycolysis and gluconeogenesis"),
     ("#D6B656", "pyruvate metabolism"),
@@ -619,113 +527,6 @@ PANEL_KEY = [
     ("#D79B00", "fatty acid biosynthesis, elongation and desaturation"),
     ("#666666", "fatty acid degradation"),
 ]
-
-
-def esc(text):
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-
-def place_label(pts, placed, lines, nodes, x, y, label, bounds, char_mm=CHAR_MM,
-                font_units=FONT_UNITS, lead=LEAD, directions=DIRECTIONS, leader=True,
-                why=None, sub_h=0.0):
-    """The least-inked placement of `label` beside the point (x, y).
-
-    Sixteen directions at four distances. The plate sits on the far side of the leader's end
-    from the node, so the leader never crosses its own label. A candidate is rejected if
-    its plate leaves the map, overlaps a placed plate, covers a labeled node, or sits on
-    a leader or link already drawn, or if its leader passes through a placed plate or
-    crosses a leader or link already drawn. A rejected candidate is tallied in `why` by
-    reason. Returns the score, the
-    leader end, the plate rectangle and the text origin, or None when nothing fits; the
-    caller records the plate and leader in `placed` and `lines` once it commits to one.
-    """
-    tw, th = len(label) * char_mm, font_units / UNITS_PER_MM
-    x0, y0, x1, y1 = bounds
-    best = None
-    for dx, dy, bias in directions:
-        for k in LEADS:
-            dist = lead * k
-            lx, ly = x + dx * dist, y + dy * dist
-            if dx > 0.01:
-                px = lx + 0.4
-            elif dx < -0.01:
-                px = lx - 0.4 - tw
-            else:
-                px = lx - tw / 2
-            py = ly - th / 2 + (0.0 if abs(dx) > 0.01 else dy * th * 0.7)
-            rect = (px - PAD, py - PAD * 0.6, tw + 2 * PAD, th + 1.2 * PAD + sub_h)
-            reasons = {
-                "off map": rect[0] < x0 or rect[1] < y0 or rect[0] + rect[2] > x1 or rect[1] + rect[3] > y1,
-                "on a plate": overlaps(rect, placed),
-                "on a node": any(inside(p, rect, gap=0.8) for p in nodes if p != (x, y)),
-                "on a line": covers(rect, lines),
-                "leader through a plate": leader and crosses(((x, y), (lx, ly)), placed),
-                "leader across a line": leader and any(intersects(((x, y), (lx, ly)), s)
-                                                       for s in lines),
-            }
-            if any(reasons.values()):
-                if why is not None:
-                    for k, v in reasons.items():
-                        why[k] = why.get(k, 0) + int(v)
-                continue
-            score = pts.rect(*rect) + pts.line((x, y), (lx, ly)) + bias * 3 + dist * 0.2
-            if best is None or score < best[0]:
-                best = (score, (lx, ly), rect, px, py + th / 2)
-    return best
-
-
-def nearest(points, to):
-    return min(points, key=lambda p: math.hypot(p[0] - to[0], p[1] - to[1]))
-
-
-def attachment_window(pts, attachments, copies, labeled, w, h, layout, bounds, step=1.0,
-                      pull=1.0):
-    """Where the attached species go: the window whose rings and links cover the least ink.
-
-    Each candidate window is scored by the ink under it plus the ink along the link
-    from every ring to the nearest copy of its nearest candidate anchor, so a window
-    that is empty but reached only across the map's densest region loses to a slightly
-    busier one beside its anchors. `pull` is a small cost per millimetre of link length
-    that breaks ties toward the shorter link. Both sides of the column are tried, labels
-    right of the rings and labels left of them, and a candidate whose links would pass
-    through its own ring labels is rejected. Returns the window origin, the side, and
-    per attachment the anchor chosen.
-    """
-    x0, y0, x1, y1 = bounds
-    best = None
-    for side in ("right", "left"):
-        x = x0
-        while x + w <= x1:
-            y = y0
-            while y + h <= y1:
-                # A labeled compound needs room for its own label, so no window comes
-                # within 3 mm of one.
-                if any(inside(p, (x, y, w, h), gap=3.0) for p in labeled):
-                    y += step
-                    continue
-                rings, plates = layout(x, y, side)
-                score, chosen, ok = pts.rect(x, y, w, h, pad=0.0), [], True
-                for a in attachments:
-                    dst = rings[a["species"]]
-                    options = []
-                    for c in a["candidates"]:
-                        src = nearest(copies.get(c["anchor"]) or [rings[c["anchor"]]], dst)
-                        if crosses((src, dst), plates):
-                            continue
-                        options.append((pts.line(src, dst) + pull * math.hypot(src[0] - dst[0], src[1] - dst[1]), c, src))
-                    if not options:
-                        ok = False
-                        break
-                    cost, c, src = min(options, key=lambda t: t[0])
-                    score += cost
-                    chosen.append((c, src))
-                if ok and (best is None or score < best[0]):
-                    best = (score, x, y, side, chosen)
-                y += step
-            x += step
-    if best is None:
-        raise ValueError("no window places the attached species without a link through a label")
-    return best[1], best[2], best[3], best[4]
 
 
 KEY_ROW = 3.6  # mm between key rows
@@ -758,7 +559,7 @@ def panel(map_svg, to_mm, positions, attachments, gene_rows, width_mm, map_w_mm,
         f'<style>text {{ font-family: Arial; font-size: {FONT_UNITS:.2f}px; }}</style>',
         None,  # the map, inserted once the copies to demote are known
     ]
-    pts = Ink(map_svg, to_mm)
+    pts = ink_from_svg(map_svg, to_mm)
     bounds = (0.3, 0.3, map_w_mm - 0.3, map_h_mm - 0.3)
 
     # Every drawn copy of each labeled compound, and the one that carries the label: the
@@ -772,54 +573,32 @@ def panel(map_svg, to_mm, positions, attachments, gene_rows, width_mm, map_w_mm,
     # cover the least ink, each joined to its anchor by a dashed link that names the
     # path's genes.
     labels = {name: label for _, label, name in WAYPOINTS + SPECIES}
-    # Each ring's plate carries the name and, under it, the genes of its path, 5.4 mm
-    # tall in all; rings 6.8 mm apart keep the plates clear of each other.
-    DY, NODE_R = 6.8, R_SPECIES / 3774 * map_w_mm
-    th = FONT_UNITS / u
-    plate_h = th + 1.2 * PAD + SUB_H
-    col_w = 1.5 + LEAD + max(len(labels[a["species"]]) for a in attachments) * CHAR_MM + 2.5
-    col_h = DY * (len(attachments) - 1) + plate_h + 1.0
+    NODE_R = R_SPECIES / 3774 * map_w_mm
+    col_w = ml.column_width(attachments, labels)
+    layout, col_h = ml.column_layout(attachments, labels, col_w, NODE_R)
     inset = (bounds[0] + 2.0, bounds[1] + 2.0, bounds[2] - 2.0, bounds[3] - 2.0)
-
-    def layout(x, y, side):
-        """Ring centers and label plates of the column at (x, y), labels on `side`."""
-        rings, plates = {}, []
-        for i, a in enumerate(attachments):
-            cy = y + 1.5 + i * DY
-            tw = len(labels[a["species"]]) * CHAR_MM
-            if side == "right":
-                cx = x + 1.5 + NODE_R
-                px = cx + LEAD + 0.4
-            else:
-                cx = x + col_w - 1.5 - NODE_R
-                px = cx - LEAD - 0.4 - tw
-            rings[a["species"]] = (cx, cy)
-            plates.append((px - PAD, cy - th / 2 - PAD * 0.6, tw + 2 * PAD, plate_h))
-        return rings, plates
 
     wx, wy, side, chosen = attachment_window(pts, attachments, copies, list(node_at.values()),
                                              col_w, col_h, layout, inset)
     rings, _ = layout(wx, wy, side)
     print(f"attachment window at ({wx:.1f}, {wy:.1f}) mm, {col_w:.1f} x {col_h:.1f} mm, "
           f"labels {side} of the rings, ink {pts.rect(wx, wy, col_w, col_h, pad=0.0):.0f}")
-    placed, lines = [], []
     for a in attachments:
         node_at[a["species"]] = rings[a["species"]]
         copies[a["species"]] = [node_at[a["species"]]]
-    links, resolved = [], []
+    resolved = []
+    for a, (c, src) in zip(attachments, chosen):
+        node_at[c["anchor"]] = src  # the label goes on the copy the link starts from
+        resolved.append({"species": a["species"], "anchor": c["anchor"], "path": c["path"],
+                         "genes": c["genes"], "candidates": [x["anchor"] for x in a["candidates"]]})
+    placer = ml.Placer(pts, node_at, labels, bounds)
     for a, (c, src) in zip(attachments, chosen):
         dst = node_at[a["species"]]
-        node_at[c["anchor"]] = src  # the label goes on the copy the link starts from
         parts.append(f'<path d="M{src[0] * u:.2f},{src[1] * u:.2f} L{dst[0] * u:.2f},'
                      f'{dst[1] * u:.2f}" fill="none" stroke="#000000" stroke-width="0.6" '
                      f'stroke-dasharray="2.2,1.6"/>')
-        links.append((src, dst, gene_run(c["genes"])))
-        lines.append((src, dst))
-        resolved.append({"species": a["species"], "anchor": c["anchor"], "path": c["path"],
-                         "genes": c["genes"], "candidates": [x["anchor"] for x in a["candidates"]]})
-        pts.add_line(src, dst)
-    for a in attachments:
-        pts.add(*node_at[a["species"]], 2.0)
+        placer.add_line(src, dst)
+        pts.add(*dst, 2.0)
 
     # A compound the map draws in more than one place keeps its large node only at the
     # labeled copy; the other copies are returned to the map's own faint node style, so
@@ -830,81 +609,27 @@ def panel(map_svg, to_mm, positions, attachments, gene_rows, width_mm, map_w_mm,
     parts[2] = (f'<svg x="0" y="0" width="{map_w_mm * u:.2f}" height="{map_h_mm * u:.2f}" '
                 f'viewBox="{view}" preserveAspectRatio="none">{inner}</svg>')
 
-    nodes = list(node_at.values())
-
-    def label_group(names, directions=DIRECTIONS, sub=None):
-        """Place the labels of `names` together, in the best order.
-
-        Greedy placement in one fixed order can strand the last label of a crowded
-        cluster, so every order is tried and the order that fits all of them with the
-        least total ink is kept. Plates and leaders are committed only for that order.
-        `sub` maps a name to a second, smaller line set under its label on the same
-        plate: the genes of the path that attaches a species.
-        """
-        sub = sub or {}
-        best = None
-        for order in itertools.permutations(names):
-            plates, segs, trial, total = list(placed), list(lines), [], 0.0
-            for name in order:
-                x, y = node_at[name]
-                fit = place_label(pts, plates, segs, nodes, x, y, labels[name], bounds,
-                                  directions=directions, sub_h=SUB_H if name in sub else 0.0)
-                if fit is None:
-                    break
-                plates.append(fit[2])
-                segs.append(((x, y), fit[1]))
-                total += fit[0]
-                trial.append((name, fit))
-            else:
-                if best is None or total < best[0]:
-                    best = (total, trial, plates, segs)
-        if best is None:
-            why = {}
-            for name in names:
-                place_label(pts, placed, lines, nodes, *node_at[name], labels[name], bounds,
-                            directions=directions, why=why)
-            raise ValueError(f"no order places the labels {names}: candidates rejected {why}")
-        _, trial, placed[:], lines[:] = best
-        out = []
-        for name, (_, (lx, ly), rect, tx, ty) in trial:
-            x, y = node_at[name]
-            parts.append(f'<path d="M{x * u:.2f},{y * u:.2f} L{lx * u:.2f},{ly * u:.2f}" '
-                         f'fill="none" stroke="#000000" stroke-width="0.5"/>')
-            parts.append(f'<rect x="{rect[0] * u:.2f}" y="{rect[1] * u:.2f}" '
-                         f'width="{rect[2] * u:.2f}" height="{rect[3] * u:.2f}" '
-                         f'rx="{0.5 * u:.2f}" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>')
-            parts.append(f'<text x="{tx * u:.2f}" y="{ty * u:.2f}" '
-                         f'dominant-baseline="middle">{esc(labels[name])}</text>')
-            if name in sub:
-                parts.append(f'<text x="{tx * u:.2f}" y="{(ty + SUB_H) * u:.2f}" '
-                             f'font-size="{FONT_SMALL_UNITS:.2f}px" '
-                             f'dominant-baseline="middle">{esc(sub[name])}</text>')
-            out.append({"name": name, "label": labels[name], "node_mm": [round(x, 2), round(y, 2)],
-                        "attached": name in attached, "label_mm": [round(tx, 2), round(ty, 2)],
-                        "genes": sub.get(name)})
-        return out
-
-    # The attached species are labeled first and always to the right of their ring, so
-    # the column reads as one list. The genes of the path that attaches each species go
-    # on a second, smaller line under its name: a label floating beside a link is
+    # The attached species are labeled first and always beside their ring, so the
+    # column reads as one list. The genes of the path that attaches each species go on
+    # a second, smaller line under its name: a label floating beside a link is
     # ambiguous where two links run nearly parallel, a line under the name is not.
     attached = {a["species"] for a in attachments}
-    ring_side = [d for d in DIRECTIONS if d[:2] == ((1.0, 0.0) if side == "right" else (-1.0, 0.0))]
-    if len(ring_side) != 1:
-        raise ValueError(f"expected one {side} direction, found {ring_side}")
-    anchors_out = label_group([a["species"] for a in attachments], directions=ring_side,
-                              sub={a["species"]: gene_run(a["genes"]) for a in resolved})
-
-    for name in attached:
-        x, y = node_at[name]
-        parts.append(f'<circle cx="{x * u:.2f}" cy="{y * u:.2f}" r="{NODE_R * u:.2f}" '
-                     f'fill="#FFFFFF" stroke="{C_SPECIES}" stroke-width="1.6"/>')
+    placer.group([a["species"] for a in attachments],
+                 directions=ml.RIGHT if side == "right" else ml.LEFT,
+                 sub={a["species"]: gene_run(a["genes"]) for a in resolved}, attached=attached)
 
     # Every other compound label: the drawn species first, then the intermediates.
     species_names = {name for _, _, name in SPECIES}
     rest = [n for n in node_at if n not in attached]
-    anchors_out += label_group([n for n in rest if n in species_names])
-    anchors_out += label_group([n for n in rest if n not in species_names])
+    placer.group([n for n in rest if n in species_names])
+    placer.group([n for n in rest if n not in species_names])
+    anchors_out = placer.records
+    parts += placer.svg
+    # Rings go over the leaders, which start at the ring's center.
+    for name in attached:
+        x, y = node_at[name]
+        parts.append(f'<circle cx="{x * u:.2f}" cy="{y * u:.2f}" r="{NODE_R * u:.2f}" '
+                     f'fill="#FFFFFF" stroke="{C_SPECIES}" stroke-width="1.6"/>')
 
     # The key.
     parts.append(f'<text x="{key_x_mm * u:.2f}" y="{3.0 * u:.2f}" font-weight="bold" '

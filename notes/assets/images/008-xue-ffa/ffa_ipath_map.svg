@@ -17454,9 +17454,6 @@
 <rect x="3.94" y="62.45" width="56.30" height="20.29" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
 <text x="7.09" y="68.50" dominant-baseline="middle">C18:1 oleate</text>
 <text x="7.09" y="76.69" font-size="7.00px" dominant-baseline="middle">FAA1/2/4, OLE1</text>
-<circle cx="108.27" cy="41.73" r="3.34" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
-<circle cx="108.27" cy="68.50" r="3.34" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
-<circle cx="108.27" cy="14.96" r="3.34" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
 <path d="M77.81,133.41 L71.03,149.77" fill="none" stroke="#000000" stroke-width="0.5"/>
 <rect x="3.80" y="143.72" width="68.80" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
 <text x="6.95" y="149.77" dominant-baseline="middle">C14:0 myristate</text>
@@ -17478,6 +17475,9 @@
 <path d="M149.38,129.53 L176.50,195.00" fill="none" stroke="#000000" stroke-width="0.5"/>
 <rect x="174.93" y="188.94" width="52.13" height="12.11" rx="1.97" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>
 <text x="178.08" y="195.00" dominant-baseline="middle">malonyl-CoA</text>
+<circle cx="108.27" cy="68.50" r="3.34" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
+<circle cx="108.27" cy="41.73" r="3.34" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
+<circle cx="108.27" cy="14.96" r="3.34" fill="#FFFFFF" stroke="#6C8EBF" stroke-width="1.6"/>
 <text x="366.14" y="11.81" font-weight="bold" dominant-baseline="middle">the route from central carbon to the measured lipids</text>
 <line x1="368.11" y1="31.50" x2="387.80" y2="31.50" stroke="#9673A6" stroke-width="1.6"/>
 <text x="395.67" y="31.50" dominant-baseline="middle">glycolysis and gluconeogenesis</text>

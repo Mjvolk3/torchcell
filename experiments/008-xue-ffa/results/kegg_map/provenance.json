@@ -1,0 +1,260 @@
+{
+  "retrieved_at": "2026-09-18T02:02:24+00:00",
+  "retrieval_method": "direct_url",
+  "kegg_api": "https://rest.kegg.jp",
+  "map": "sce01100",
+  "map_title": "Metabolic pathways",
+  "kgml_url": "https://rest.kegg.jp/get/sce01100/kgml",
+  "kgml_sha256": "c8d8180219803a5178cc2ed87064e04ffef74e3b65e1b46f3d47630f844cc4e6",
+  "yeast9": {
+    "model_path": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+    "model_sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+    "model_id": "yeastGEM_v9__46__0__46__2",
+    "n_reactions": 4131,
+    "n_metabolites": 2806,
+    "n_genes": 1161,
+    "n_core_reactions": 2375
+  },
+  "modules": [
+    {
+      "pathway": "sce00010",
+      "label": "glycolysis and gluconeogenesis",
+      "color": "#9673A6"
+    },
+    {
+      "pathway": "sce00620",
+      "label": "pyruvate metabolism",
+      "color": "#D6B656"
+    },
+    {
+      "pathway": "sce00020",
+      "label": "citrate cycle",
+      "color": "#B85450"
+    },
+    {
+      "pathway": "sce00061",
+      "label": "fatty acid biosynthesis",
+      "color": "#D79B00"
+    },
+    {
+      "pathway": "sce00062",
+      "label": "fatty acid elongation",
+      "color": "#D79B00"
+    },
+    {
+      "pathway": "sce01040",
+      "label": "unsaturated fatty acid biosynthesis",
+      "color": "#D79B00"
+    },
+    {
+      "pathway": "sce00071",
+      "label": "fatty acid degradation",
+      "color": "#666666"
+    }
+  ],
+  "counts": {
+    "lines": 3878,
+    "lines_yeast9": 889,
+    "lines_route": 168,
+    "lines_yeast_gene": 838,
+    "compounds": 3562,
+    "compounds_yeast9": 684,
+    "yeast_genes_drawn": 814,
+    "yeast_genes_drawn_in_yeast9": 745
+  },
+  "species_drawn": [
+    "pyruvate",
+    "acetyl-CoA",
+    "citrate",
+    "malonyl-CoA",
+    "palmitoyl-CoA",
+    "myristate",
+    "palmitate",
+    "palmitoleate",
+    "stearate"
+  ],
+  "species_attached": [
+    {
+      "species": "oleate",
+      "anchor": "stearate",
+      "path": [
+        "stearate",
+        "stearoyl-CoA",
+        "oleoyl-CoA",
+        "oleate"
+      ],
+      "genes": [
+        "FAA2",
+        "FAA4",
+        "FAA1",
+        "OLE1"
+      ],
+      "candidates": [
+        "acetyl-CoA",
+        "malonyl-CoA",
+        "stearate"
+      ]
+    }
+  ],
+  "genes": [
+    {
+      "gene": "FKH1",
+      "orf": "YIL131C",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "GCN5",
+      "orf": "YGR252W",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "MED4",
+      "orf": "YOR174W",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "OPI1",
+      "orf": "YHL020C",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "RFX1",
+      "orf": "YLR176C",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "RGR1",
+      "orf": "YLR071C",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "RPD3",
+      "orf": "YNL330C",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "SPT3",
+      "orf": "YDR392W",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "YAP6",
+      "orf": "YDR259C",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "TFC7",
+      "orf": "YOR110W",
+      "role": "regulator",
+      "map_lines": 0
+    },
+    {
+      "gene": "ACC1",
+      "orf": "YNR016C",
+      "role": "pathway",
+      "map_lines": 2
+    },
+    {
+      "gene": "FAS1",
+      "orf": "YKL182W",
+      "role": "pathway",
+      "map_lines": 16
+    },
+    {
+      "gene": "FAS2",
+      "orf": "YPL231W",
+      "role": "pathway",
+      "map_lines": 14
+    },
+    {
+      "gene": "ELO1",
+      "orf": "YJL196C",
+      "role": "pathway",
+      "map_lines": 4
+    },
+    {
+      "gene": "ELO2",
+      "orf": "YCR034W",
+      "role": "pathway",
+      "map_lines": 4
+    },
+    {
+      "gene": "ELO3",
+      "orf": "YLR372W",
+      "role": "pathway",
+      "map_lines": 4
+    },
+    {
+      "gene": "OLE1",
+      "orf": "YGL055W",
+      "role": "pathway",
+      "map_lines": 1
+    },
+    {
+      "gene": "FAA1",
+      "orf": "YOR317W",
+      "role": "pathway",
+      "map_lines": 1
+    },
+    {
+      "gene": "FAA2",
+      "orf": "YER015W",
+      "role": "pathway",
+      "map_lines": 1
+    },
+    {
+      "gene": "FAA3",
+      "orf": "YIL009W",
+      "role": "pathway",
+      "map_lines": 1
+    },
+    {
+      "gene": "FAA4",
+      "orf": "YMR246W",
+      "role": "pathway",
+      "map_lines": 1
+    },
+    {
+      "gene": "POX1",
+      "orf": "YGL205W",
+      "role": "pathway",
+      "map_lines": 13
+    },
+    {
+      "gene": "SLC1",
+      "orf": "YDL052C",
+      "role": "pathway",
+      "map_lines": 1
+    }
+  ],
+  "panel_mm": [
+    179.0,
+    54.1
+  ],
+  "map_mm": [
+    83.0,
+    53.6
+  ],
+  "stored": {
+    "kegg_link_sce_sce00010.tsv": "5dc47f3e5731601763b4fa05a00ed4c35ed0a2d7e5ee18f11f5bc86c8f42e77d",
+    "kegg_link_sce_sce00020.tsv": "bda1a957f87bd354947c1a2ef8b1aca292dddd03b2f8c6e08b9e41c570127273",
+    "kegg_link_sce_sce00061.tsv": "28789c67e4a2398b1e5a8bb8fa91a38d120a1ce38fcd74fc6c64f3fe4aae317a",
+    "kegg_link_sce_sce00062.tsv": "14342d7b9d37418318e2465355631d4c3b3137aa19c0895eae2ef9e1b11ab83d",
+    "kegg_link_sce_sce00071.tsv": "35b4d38fe4c9e379dd30e86d65231bb1b972452d6635de6f49dc9e76e94392ba",
+    "kegg_link_sce_sce00620.tsv": "fbb7424b8996bd211710a40f877e91a13fd3c807a2c2114161595931cdb323e7",
+    "kegg_link_sce_sce01040.tsv": "ff5f908ccdc88e35a9da750f614238903ab0b1541e518442f3078617d48a3595",
+    "label_anchors.json": "98f707dc1eb69d5e310106bc2d005d44f3b360ad6e8f1f4f93a0e0da41133539",
+    "provenance.json": "fad51859e2cd113250943eb95bdf21867afd68e14e0a0832795c927e7f0b5b46",
+    "sce01100.kgml": "c8d8180219803a5178cc2ed87064e04ffef74e3b65e1b46f3d47630f844cc4e6",
+    "yeast9_ids.json": "3d2c5ff557ac6d7b1612466686f4a0d9ec0bbbcaaba173a58b683dcc07f6c25f"
+  }
+}

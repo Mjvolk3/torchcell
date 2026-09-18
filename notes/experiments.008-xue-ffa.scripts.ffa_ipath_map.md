@@ -153,3 +153,11 @@ copy; the other copy is returned to the map's own faint style.
 
 The map is 89 mm wide (53.2 mm tall at its own aspect ratio) so that with panel b under it
 the figure stays inside the 170 mm cap; the key beside it holds four note lines at 3.0 mm.
+
+## 2026.09.17 - Superseded by the KEGG redraw; placement code moved out
+
+Fig 5a is now [[experiments.008-xue-ffa.scripts.ffa_kegg_map]]: KEGG's yeast global map
+redrawn from KGML coordinates with Yeast9 overlaid, which has the nodes and genes iPath3's
+older drawing lacked. This script stays as the record of the iPath3 panel and still runs;
+its label placement now lives in [[experiments.008-xue-ffa.scripts.map_labels]], and the
+panel regenerated pixel-identical after the move.

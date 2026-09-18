@@ -1,0 +1,142 @@
+[
+  {
+    "name": "oleate",
+    "label": "C18:1 oleate",
+    "node_mm": [
+      21.38,
+      44.8
+    ],
+    "attached": true,
+    "label_mm": [
+      3.78,
+      44.8
+    ],
+    "genes": "FAA1/2/4, OLE1"
+  },
+  {
+    "name": "stearate",
+    "label": "C18:0 stearate",
+    "node_mm": [
+      26.8,
+      32.74
+    ],
+    "attached": false,
+    "label_mm": [
+      5.86,
+      38.47
+    ],
+    "genes": null
+  },
+  {
+    "name": "palmitoleate",
+    "label": "C16:1 palmitoleate",
+    "node_mm": [
+      25.76,
+      32.74
+    ],
+    "attached": false,
+    "label_mm": [
+      2.15,
+      34.46
+    ],
+    "genes": null
+  },
+  {
+    "name": "palmitate",
+    "label": "C16:0 palmitate",
+    "node_mm": [
+      31.53,
+      31.73
+    ],
+    "attached": false,
+    "label_mm": [
+      36.75,
+      43.37
+    ],
+    "genes": null
+  },
+  {
+    "name": "myristate",
+    "label": "C14:0 myristate",
+    "node_mm": [
+      24.72,
+      32.74
+    ],
+    "attached": false,
+    "label_mm": [
+      2.72,
+      27.01
+    ],
+    "genes": null
+  },
+  {
+    "name": "palmitoyl-CoA",
+    "label": "palmitoyl-CoA",
+    "node_mm": [
+      34.43,
+      30.45
+    ],
+    "attached": false,
+    "label_mm": [
+      13.38,
+      13.82
+    ],
+    "genes": null
+  },
+  {
+    "name": "citrate",
+    "label": "citrate",
+    "node_mm": [
+      41.73,
+      33.4
+    ],
+    "attached": false,
+    "label_mm": [
+      49.61,
+      36.5
+    ],
+    "genes": null
+  },
+  {
+    "name": "malonyl-CoA",
+    "label": "malonyl-CoA",
+    "node_mm": [
+      38.69,
+      32.02
+    ],
+    "attached": false,
+    "label_mm": [
+      57.09,
+      32.02
+    ],
+    "genes": null
+  },
+  {
+    "name": "acetyl-CoA",
+    "label": "acetyl-CoA",
+    "node_mm": [
+      40.62,
+      30.97
+    ],
+    "attached": false,
+    "label_mm": [
+      44.12,
+      23.48
+    ],
+    "genes": null
+  },
+  {
+    "name": "pyruvate",
+    "label": "pyruvate",
+    "node_mm": [
+      40.62,
+      28.9
+    ],
+    "attached": false,
+    "label_mm": [
+      36.39,
+      9.42
+    ],
+    "genes": null
+  }
+]

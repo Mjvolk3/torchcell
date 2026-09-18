@@ -202,8 +202,15 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   drawing into an ink grid with the route weighted far above the faint background, try
   many directions and leader lengths per label, reject any candidate that covers a node or
   a drawn line or whose leader crosses a plate or another leader, and place a crowded
-  group in the best of all orders rather than greedily. `ffa_ipath_map.py` is the worked
-  implementation, and each rule in it was added after a render showed the failure.
+  group in the best of all orders rather than greedily. `experiments/008-xue-ffa/scripts/map_labels.py`
+  is the worked implementation, and each rule in it was added after a render showed the failure.
+- **Borrow a reference map's coordinates, not its rendering.** iPath3 returns a finished
+  drawing that is older than KEGG and cannot be restyled below its own type; KEGG's KGML
+  (`get/<org>01100/kgml`) gives every reaction polyline and compound circle with coordinates
+  and identifiers, so the map can be redrawn as vector in the document's palette, at the
+  document's line weights, with a genome-scale model's membership overlaid by id. A
+  coherent whole-metabolism map cannot be laid out from a stoichiometric model; the layout
+  has to be borrowed, and KGML is the form of it that can be re-rendered honestly.
 - **A negative claim in a caption ("none of the deleted genes is on this map") is measured,
   not asserted.** Probe each gene's orthology group on the map and record the count in the
   provenance file; the caption and key are generated from those counts. The same probe

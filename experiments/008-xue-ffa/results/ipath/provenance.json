@@ -109,7 +109,7 @@
       "drawn_on_map": true
     }
   ],
-  "retrieved_at": "2026-09-17T19:13:58+00:00",
+  "retrieved_at": "2026-09-18T02:02:10+00:00",
   "retrieval_method": "direct_url",
   "kegg_api": "https://rest.kegg.jp",
   "ipath_endpoint": "https://pathways.embl.de/mapping.cgi",
@@ -399,7 +399,7 @@
     "kegg_link_sce_sce00620.tsv": "fbb7424b8996bd211710a40f877e91a13fd3c807a2c2114161595931cdb323e7",
     "kegg_link_sce_sce01040.tsv": "ff5f908ccdc88e35a9da750f614238903ab0b1541e518442f3078617d48a3595",
     "label_anchors.json": "7b5881a4d8965a70b3536bf0ec3478bb592b5028ba187266ec6b28d42e3ccf06",
-    "provenance.json": "01b33d62359ed4642ea51d90f4a542fdb0dc93e54f4cece0579a4be8c74bcb78",
+    "provenance.json": "0432c34efd6365c4b99ee93ea2bf470d9b5105eb473c2312c95d8e398ab52eb0",
     "selection.txt": "c896bed85399ab5edc924b6cbc7ceeea020c68b534dd99f87aef8d5a4a60399c"
   }
 }

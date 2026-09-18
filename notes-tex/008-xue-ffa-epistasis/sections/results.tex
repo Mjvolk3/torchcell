@@ -300,27 +300,27 @@ set with no visible relation to which factors regulate which fatty acid genes
 (Fig.~\ref{fig:network}).
 
 \begin{figure*}[t]
-\panelrow{\panel{a}{figures/ffa_ipath_map.pdf}}
+\panelrow{\panel{a}{figures/ffa_kegg_map.pdf}}
 \panelrow{\panel{b}{figures/ffa-epistasis-fig4-network-overlay.pdf}}
 \caption{\textbf{Trigenic interactions on total fatty acid
 titer, drawn upstream of the pathway they act through.} \textbf{a}, Where the measured
-chemistry sits in metabolism, on the whole of the iPath3 reference map of KEGG's global
-metabolic pathways. Colored are the yeast reactions of glycolysis and gluconeogenesis,
-pyruvate metabolism, the citrate cycle, fatty acid biosynthesis, elongation and
-desaturation, and fatty acid degradation, taken from KEGG's own gene lists for those
-pathways rather than chosen here. Filled blue nodes are the two measured species the
-reference map draws, myristate and palmitate; gray nodes are five named intermediates on
-the route. Palmitoleate, stearate and oleate have no node on that map, as free acids or
-as acyl-CoA thioesters, and the map likewise draws none of the four yeast elongation and
-desaturation genes (ELO1, ELO2, ELO3, OLE1) although KEGG's current global map lists them
-all: the gap is in iPath3's drawing, not in KEGG. So that both panels show the same five
-species, those three are attached as open rings along the shortest path of the yeast
-genome-scale model, the same model panel \textbf{b} is built from, each from the drawn
-compound that path starts at, with the genes of the path's reactions under its name. Of
-the ten deleted regulators, none has an orthology group drawn anywhere on this map, which
-is the point of the panel: the deletions act on metabolism from outside it. The map's own
-labels are not reproduced, because at this size they would print below the minimum type
-size. \textbf{b}, The ten deleted transcription
+chemistry sits in metabolism: KEGG's global map of yeast metabolism, redrawn as vector
+from the coordinates KEGG publishes for it, with the yeast genome-scale model overlaid.
+Reactions and compounds the model contains are drawn in gray; what KEGG draws but the
+model lacks is fainter. The map places 814 yeast genes, 745 of them in the model, and 889
+of its 3,878 reaction lines; the model's transport, exchange and per-chain lipid reactions
+have no place on any such map and are the part panel \textbf{b} carries. Colored are the
+yeast reactions of glycolysis and gluconeogenesis, pyruvate metabolism, the citrate
+cycle, fatty acid biosynthesis, elongation and desaturation, and fatty acid degradation,
+taken from KEGG's own gene lists for those pathways rather than chosen here. Filled blue
+nodes are the four measured species the map draws; gray nodes are five named
+intermediates on the route. Oleate has no node on the map, as the free acid or as
+oleoyl-CoA, and is attached as an open ring along the shortest path of the same
+genome-scale model from stearate, with the genes of that path under its name. Of the ten
+deleted regulators, none is among the genes the map draws, which is the point of the
+panel: the deletions act on metabolism from outside it. All thirteen pathway genes of
+panel \textbf{b} are drawn. The map's own labels are not reproduced, because at this size
+they would print below the minimum type size. \textbf{b}, The ten deleted transcription
 factors are arranged in a circle at left. Edges within the circle are the 86 trigenic
 interactions significant at a 5\% false discovery rate within the total-titer readout under
 the multiplicative model, 75 negative (brick) and 11 positive (blue), each drawn as the

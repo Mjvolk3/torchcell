@@ -1264,15 +1264,53 @@ when the pathway block is on the node. The pathway dataset is rebuilt at every l
 (its cell log prints the pathway count each run) and the rebuild enumerates the 173
 pathway columns from a Python set, so the column order can differ between processes
 under Python's per-process hash randomization while the seeded weights do not;
-whether that is the divergence, a permutation of the input columns rather than a
-kernel, is round 51's read (the same two cells pinned twice with the hash seed fixed),
-and it is the reading the GO block supports, since that dataset sorts its columns.
-The rebuild at every launch is an unconditional call to the dataset's own process
-step after the base constructor has loaded the cached file, so each run served the
-column order the previous launch wrote and rewrote the file for the next; with the
-enumeration sorted and the call removed, two processes under different hash seeds
-build the same 6,607 by 173 matrix (identical bytes), and the cached file's columns
-differ from both.
+it is the reading the GO block supports, since that dataset sorts its columns. The
+rebuild at every launch is an unconditional call to the dataset's own process step
+after the base constructor has loaded the cached file, so each run served the column
+order the previous launch, or the previous cell of its own pack, wrote, and rewrote
+the file for the next; with the enumeration sorted and the call removed, two
+processes under different hash seeds build the same 6,607 by 173 matrix (identical
+bytes), and the cached file's columns differ from both.
+
+Rounds 51 and 52 close it (jobs 2441 and 2442; Tables~\ref{tab:w67} and \ref{tab:w68},
+Figures~\ref{fig:w67} and \ref{fig:w68}). On the old code with Python's hash seed
+fixed, the layer-free pair is one trajectory (identical at all 200 epochs, 1.1484 at
+epoch 0, epoch 39 selected, 0.913 in both) where without the hash seed it differed at
+every epoch (round 45), and the round-9 pooled pair still differs (1.2564 against
+1.2516, 0.860 and 0.853): under the old code the first cell of the pack served the
+file the previous launch had written under another hash seed and rewrote it, so the
+pair's two cells saw two column orders, while the pack's third and fourth cells both
+served files written under the fixed seed. On the fixed code with no hash seed, both
+pairs are one trajectory: the round-9 cell identical at all 200 epochs (1.2488 at
+epoch 0, epoch 33 selected, 0.865 in both) and the layer-free cell identical (1.1478,
+epoch 39, 0.912 in both). The chance in the pooled cell was the pathway one-hot's
+column order, an input permuted between processes and not a kernel; with the dataset
+fixed and the card's kernels pinned, every cell in the document is one trajectory
+per seed.
+
+\input{tables/round_w67}
+
+\input{tables/round_w68}
+
+\tcfigfit[1.0]{figures/w67_readout_2026-09-18-18-39-14.pdf}{\textbf{Round 51, the
+  hash seed fixed on the old one-hot code.} \textbf{a}, Validation AUROC per epoch for
+  the round-9 pooled pair and the layer-free pair, each run twice with the card's
+  kernels pinned and the hash seed fixed. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points) and the gene bootstrap (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w67}.}{fig:w67}
+
+\tcfigfit[1.0]{figures/w68_readout_2026-09-18-18-51-25.pdf}{\textbf{Round 52, the
+  fixed one-hot code without a hash seed.} \textbf{a}, Validation AUROC per epoch for
+  the same two pairs on the code that enumerates the one-hot's columns sorted, each
+  run twice with the card's kernels pinned. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points) and the gene bootstrap (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w68}.}{fig:w68}
 
 \input{tables/round_w65}
 

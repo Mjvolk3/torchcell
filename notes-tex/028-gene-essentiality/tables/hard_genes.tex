@@ -4,11 +4,11 @@
 \begin{table}[H]
   \centering
   \scriptsize
-  \caption[The hardest held-out genes]{The fifteen held-out genes of each class the best cells misrank most, sorted by the mean misrank over the arms. A gene's misrank in one cell is the fraction of the other class on the wrong side of it (for an essential gene, the nonessential genes scoring above it; for a nonessential gene, the essential genes scoring below it), averaged over the arm's cells; one minus the class mean of the misrank is that class's share of the AUROC. FBA is the knockout-to-wild-type growth ratio on YPD; pathways and GO the gene's counts in the pathway multi-hot and the propagated GO vector. Written by \texttt{hard\_genes.py} from the per-gene prediction dumps.}
+  \caption[The hardest held-out genes]{The fifteen held-out genes of each class the best cells misrank most, sorted by the mean misrank over the arms. A gene's misrank in one cell is the fraction of the other class on the wrong side of it (for an essential gene, the nonessential genes scoring above it; for a nonessential gene, the essential genes scoring below it), averaged over the arm's cells; one minus the class mean of the misrank is that class's share of the AUROC. FBA is the knockout-to-wild-type growth ratio on YPD; pathways and GO the gene's counts in the pathway multi-hot and the propagated GO vector. Arms: A1: pathway + ProtT5 + affine (round 22); A2: indicator + ProtT5 + affine, folds (round 12); A3: flux head, ProtT5 (rounds 21, 24); A4: flux head, pathway + ProtT5 (rounds 23, 25); A5: ProtT5 + affine (round 5). Written by \texttt{hard\_genes.py} from the per-gene prediction dumps.}
   \label{tab:hard-genes}
   \begin{tabular}{@{}lrrrrrrrr@{}}
     \hline
-    gene & pathway + ProtT5 + affine & indicator + ProtT5 + affine, folds & flux head, ProtT5 & flux head, pathway + ProtT5 & ProtT5 + affine & FBA & pathways & GO \\
+    gene & A1 & A2 & A3 & A4 & A5 & FBA & pathways & GO \\
     \hline
     \multicolumn{9}{@{}l}{\emph{essential genes}} \\
     YDR373W & 0.44 & 0.28 & 0.51 & 0.47 & 0.59 & 1.00 & 0 & 25 \\

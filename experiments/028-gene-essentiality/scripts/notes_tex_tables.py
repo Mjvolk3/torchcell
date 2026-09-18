@@ -964,6 +964,53 @@ def genome_heldout() -> str | None:
     return write("genome_heldout", body, "results/genome_heldout_readout.json")
 
 
+def degree_by_class() -> str | None:
+    """Raw degree as an essentiality score, per graph, on three gene sets."""
+    src = osp.join(RESULTS, "degree_by_class.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        reads = json.load(fh)["reads"]
+    # One row per graph, the three gene sets as columns; the single graphs drop the
+    # ``one:`` prefix and the physical graph appears once.
+    sets = ["genome held-out (4,674)", "released held-out (195)", "released train + val (787)"]
+    by_graph: dict[str, dict[str, dict[str, Any]]] = {}
+    for r in reads:
+        name = r["graph"].removeprefix("one:").replace("string12_0_", "STRING ")
+        by_graph.setdefault(name, {})[r["gene_set"]] = r
+    best = {s: max(by_graph[g][s]["auroc"] for g in by_graph) for s in sets}
+    rows = []
+    for name, cells in by_graph.items():
+        parts = []
+        for s in sets:
+            r = cells[s]
+            parts.append(
+                f"{fmt(r['auroc'], best[s])} [{r['ci'][0]:.2f}, {r['ci'][1]:.2f}] & "
+                f"{r['median_degree_essential']:.0f} / {r['median_degree_nonessential']:.0f}"
+            )
+        rows.append(f"    {name.replace('_', ' ')} & " + " & ".join(parts) + " \\\\")
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[Degree as the score]{The gene's degree in each graph as the "
+        "essentiality score, nothing trained, on the 4,674 genome-wide held-out genes "
+        "of round 30, the 195 released held-out genes, and the 787 released genes the "
+        "models train and validate on. AUROC of degree with a 2,000-draw gene "
+        "bootstrap, and the median degree of the essential against the nonessential "
+        "genes in that set. Bold marks the highest AUROC in a column. Written by "
+        "\\texttt{experiments/028-gene-essentiality/scripts/degree\\_by\\_class.py}.}\n"
+        "  \\label{tab:degree-by-class}\n"
+        "  \\begin{tabular}{@{}lllllll@{}}\n    \\hline\n"
+        "    & \\multicolumn{2}{l}{genome held-out (4,674)} & "
+        "\\multicolumn{2}{l}{released held-out (195)} & "
+        "\\multicolumn{2}{l}{released train + val (787)} \\\\\n"
+        "    graph & AUROC & median ess / non & AUROC & median ess / non & AUROC & "
+        "median ess / non \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("degree_by_class", body, "results/degree_by_class.json")
+
+
 def wl_test() -> str | None:
     """1-WL on the single-deletion graphs, and the WL kernel as a rung."""
     src = osp.join(RESULTS, "wl_knockout_test.json")
@@ -1308,6 +1355,7 @@ def main() -> None:
         graph_baselines_go800(),
         graph_baselines_go_rel(),
         genome_heldout(),
+        degree_by_class(),
         graph_baselines_go400_genome(),
         graph_baselines_extra_genome(),
         fold_ensembles(),

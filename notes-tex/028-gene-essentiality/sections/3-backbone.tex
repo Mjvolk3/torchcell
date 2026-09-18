@@ -587,6 +587,8 @@ without reading essentiality.
 
 \input{tables/genome_heldout}
 
+\input{tables/degree_by_class}
+
 The inputs do not transfer and the graph does. The MLP on the transformer's three
 inputs reads 0.509 on the 4,674 genes (0.486 on ProtT5 with the ratios), chance, from
 0.870 on the released 195; the same inputs through two layers of graph convolution read
@@ -605,7 +607,17 @@ through the physical graph at 200 epochs 0.544. On these genes the number is the
 degree of the gene in the protein interaction graph, which a convolution reads from
 any input that lets it count neighbors and a model without the graph cannot; whether
 that is essentiality or the deletion collection's own coverage the label origin does
-not let this set decide. The transformer does not transfer either: the
+not let this set decide. Degree needs no model to say so
+(Table~\ref{tab:degree-by-class}): the gene's degree in the physical graph, ranked as
+it is, reads 0.740 [0.72, 0.76] on the 4,674 genes, a median of 50 interactions for an
+essential gene against 16 for a nonessential one, and 0.594 [0.47, 0.71] on the
+released 195 and 0.591 on the 787 released training genes, where the medians are 27
+against 19 and 21 against 17. The STRING database channel's degree reads 0.714 on the
+genome-wide genes and 0.577 on the released ones, the union's 0.655 and 0.611, and no
+other graph's degree passes 0.69 anywhere. So the physical graph's degree is a
+genome-wide essentiality signal that the metabolic genes barely vary in, which is why
+no model in this document read it on the 195 and every graph model read it on the
+4,674. The transformer does not transfer either: the
 round-22 recipe, the pathway multi-hot with ProtT5 and the FBA affine, trained on the
 same 629 genes reads 0.574 [0.55, 0.59] on the 4,674 (0.570 to 0.578 over three seeds,
 job 2396), 0.07 above chance and 0.17 under the graph convolution on ProtT5 alone,

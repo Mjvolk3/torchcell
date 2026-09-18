@@ -1,0 +1,499 @@
+{
+  "reads": [
+    {
+      "graph": "one:physical",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.7398613963039015,
+      "ci": [
+        0.7221252151348655,
+        0.7578562239367981
+      ],
+      "median_degree_essential": 50.0,
+      "median_degree_nonessential": 16.0,
+      "zero_degree_essential": 67,
+      "zero_degree_nonessential": 440
+    },
+    {
+      "graph": "one:physical",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5937254130605822,
+      "ci": [
+        0.47099911291571106,
+        0.7085977078477078
+      ],
+      "median_degree_essential": 27.0,
+      "median_degree_nonessential": 19.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 0
+    },
+    {
+      "graph": "one:physical",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.5909003021148036,
+      "ci": [
+        0.5330099490738693,
+        0.6456307328831402
+      ],
+      "median_degree_essential": 21.0,
+      "median_degree_nonessential": 17.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 1
+    },
+    {
+      "graph": "physical",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.7398613963039015,
+      "ci": [
+        0.7221252151348655,
+        0.7578562239367981
+      ],
+      "median_degree_essential": 50.0,
+      "median_degree_nonessential": 16.0,
+      "zero_degree_essential": 67,
+      "zero_degree_nonessential": 440
+    },
+    {
+      "graph": "physical",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5937254130605822,
+      "ci": [
+        0.47099911291571106,
+        0.7085977078477078
+      ],
+      "median_degree_essential": 27.0,
+      "median_degree_nonessential": 19.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 0
+    },
+    {
+      "graph": "physical",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.5909003021148036,
+      "ci": [
+        0.5330099490738693,
+        0.6456307328831402
+      ],
+      "median_degree_essential": 21.0,
+      "median_degree_nonessential": 17.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 1
+    },
+    {
+      "graph": "one:regulatory",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.4779049891780898,
+      "ci": [
+        0.45771194618359096,
+        0.49691547063435515
+      ],
+      "median_degree_essential": 4.0,
+      "median_degree_nonessential": 5.0,
+      "zero_degree_essential": 30,
+      "zero_degree_nonessential": 177
+    },
+    {
+      "graph": "one:regulatory",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5131785995279308,
+      "ci": [
+        0.40568249023837843,
+        0.61877513524363
+      ],
+      "median_degree_essential": 6.0,
+      "median_degree_nonessential": 7.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 2
+    },
+    {
+      "graph": "one:regulatory",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.47430815709969787,
+      "ci": [
+        0.41928744450381145,
+        0.5276905033443343
+      ],
+      "median_degree_essential": 6.0,
+      "median_degree_nonessential": 6.0,
+      "zero_degree_essential": 2,
+      "zero_degree_nonessential": 13
+    },
+    {
+      "graph": "one:tflink",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.5623350352405795,
+      "ci": [
+        0.5454506551909184,
+        0.5789507039246198
+      ],
+      "median_degree_essential": 30.0,
+      "median_degree_nonessential": 27.0,
+      "zero_degree_essential": 73,
+      "zero_degree_nonessential": 986
+    },
+    {
+      "graph": "one:tflink",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.42358379228953574,
+      "ci": [
+        0.30988123550328506,
+        0.5321045289496268
+      ],
+      "median_degree_essential": 37.0,
+      "median_degree_nonessential": 46.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 3
+    },
+    {
+      "graph": "one:tflink",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.4241389728096677,
+      "ci": [
+        0.368595682442303,
+        0.47831161852536624
+      ],
+      "median_degree_essential": 37.0,
+      "median_degree_nonessential": 42.5,
+      "zero_degree_essential": 2,
+      "zero_degree_nonessential": 7
+    },
+    {
+      "graph": "one:string12_0_neighborhood",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.5142946334424774,
+      "ci": [
+        0.4977471059593162,
+        0.530087360514689
+      ],
+      "median_degree_essential": 0.0,
+      "median_degree_nonessential": 0.0,
+      "zero_degree_essential": 695,
+      "zero_degree_nonessential": 2735
+    },
+    {
+      "graph": "one:string12_0_neighborhood",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.6180173092053501,
+      "ci": [
+        0.5027887298986801,
+        0.7296108128834355
+      ],
+      "median_degree_essential": 175.0,
+      "median_degree_nonessential": 67.0,
+      "zero_degree_essential": 6,
+      "zero_degree_nonessential": 48
+    },
+    {
+      "graph": "one:string12_0_neighborhood",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.6286404833836856,
+      "ci": [
+        0.5724970674053298,
+        0.6810960888866147
+      ],
+      "median_degree_essential": 142.0,
+      "median_degree_nonessential": 68.0,
+      "zero_degree_essential": 18,
+      "zero_degree_nonessential": 180
+    },
+    {
+      "graph": "one:string12_0_fusion",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.6253160552749875,
+      "ci": [
+        0.6065005389261531,
+        0.6441740538771883
+      ],
+      "median_degree_essential": 1.0,
+      "median_degree_nonessential": 0.0,
+      "zero_degree_essential": 411,
+      "zero_degree_nonessential": 2339
+    },
+    {
+      "graph": "one:string12_0_fusion",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.6048387096774194,
+      "ci": [
+        0.4918524662038729,
+        0.7132304167026388
+      ],
+      "median_degree_essential": 7.0,
+      "median_degree_nonessential": 4.0,
+      "zero_degree_essential": 3,
+      "zero_degree_nonessential": 21
+    },
+    {
+      "graph": "one:string12_0_fusion",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.5553716012084592,
+      "ci": [
+        0.4983533807168225,
+        0.607667140539157
+      ],
+      "median_degree_essential": 6.0,
+      "median_degree_nonessential": 5.0,
+      "zero_degree_essential": 10,
+      "zero_degree_nonessential": 92
+    },
+    {
+      "graph": "one:string12_0_cooccurence",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.4967860314112881,
+      "ci": [
+        0.47966985868571804,
+        0.5144703987604876
+      ],
+      "median_degree_essential": 0.0,
+      "median_degree_nonessential": 0.0,
+      "zero_degree_essential": 624,
+      "zero_degree_nonessential": 2348
+    },
+    {
+      "graph": "one:string12_0_cooccurence",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.3558221872541306,
+      "ci": [
+        0.2666072985538854,
+        0.4476478466386554
+      ],
+      "median_degree_essential": 0.0,
+      "median_degree_nonessential": 1.0,
+      "zero_degree_essential": 17,
+      "zero_degree_nonessential": 56
+    },
+    {
+      "graph": "one:string12_0_cooccurence",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.3678126888217523,
+      "ci": [
+        0.31613744900956936,
+        0.4184217784180755
+      ],
+      "median_degree_essential": 0.0,
+      "median_degree_nonessential": 1.0,
+      "zero_degree_essential": 65,
+      "zero_degree_nonessential": 192
+    },
+    {
+      "graph": "one:string12_0_coexpression",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.6805392918585936,
+      "ci": [
+        0.6618709401454024,
+        0.6997265985559726
+      ],
+      "median_degree_essential": 394.0,
+      "median_degree_nonessential": 182.5,
+      "zero_degree_essential": 2,
+      "zero_degree_nonessential": 34
+    },
+    {
+      "graph": "one:string12_0_coexpression",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.6167387883556256,
+      "ci": [
+        0.49498478396344,
+        0.7279750879416522
+      ],
+      "median_degree_essential": 477.0,
+      "median_degree_nonessential": 292.5,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 0
+    },
+    {
+      "graph": "one:string12_0_coexpression",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.5847069486404833,
+      "ci": [
+        0.5227301477942471,
+        0.6424292881134445
+      ],
+      "median_degree_essential": 385.0,
+      "median_degree_nonessential": 299.5,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 0
+    },
+    {
+      "graph": "one:string12_0_experimental",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.6376684333203841,
+      "ci": [
+        0.619245556487608,
+        0.6563388745997661
+      ],
+      "median_degree_essential": 263.0,
+      "median_degree_nonessential": 121.0,
+      "zero_degree_essential": 33,
+      "zero_degree_nonessential": 212
+    },
+    {
+      "graph": "one:string12_0_experimental",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.5939221085759245,
+      "ci": [
+        0.466750133621491,
+        0.6999573624116205
+      ],
+      "median_degree_essential": 203.0,
+      "median_degree_nonessential": 158.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 0
+    },
+    {
+      "graph": "one:string12_0_experimental",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.5165679758308157,
+      "ci": [
+        0.4644134446612605,
+        0.5700943528270062
+      ],
+      "median_degree_essential": 139.0,
+      "median_degree_nonessential": 149.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 0
+    },
+    {
+      "graph": "one:string12_0_database",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.7144233864254398,
+      "ci": [
+        0.6969016176267561,
+        0.7323875737239027
+      ],
+      "median_degree_essential": 22.5,
+      "median_degree_nonessential": 1.0,
+      "zero_degree_essential": 170,
+      "zero_degree_nonessential": 1744
+    },
+    {
+      "graph": "one:string12_0_database",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.577006294256491,
+      "ci": [
+        0.47921941719031697,
+        0.6776514554923765
+      ],
+      "median_degree_essential": 41.0,
+      "median_degree_nonessential": 29.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 17
+    },
+    {
+      "graph": "one:string12_0_database",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.4851661631419939,
+      "ci": [
+        0.43207625617106227,
+        0.5360259655191519
+      ],
+      "median_degree_essential": 24.0,
+      "median_degree_nonessential": 29.0,
+      "zero_degree_essential": 3,
+      "zero_degree_nonessential": 69
+    },
+    {
+      "graph": "union of nine",
+      "gene_set": "genome held-out (4,674)",
+      "n_genes": 4674,
+      "n_essential": 974,
+      "auroc": 0.6552151895221712,
+      "ci": [
+        0.6367146839954985,
+        0.6737124863715508
+      ],
+      "median_degree_essential": 533.5,
+      "median_degree_nonessential": 297.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 3
+    },
+    {
+      "graph": "union of nine",
+      "gene_set": "released held-out (195)",
+      "n_genes": 195,
+      "n_essential": 31,
+      "auroc": 0.6107395751376868,
+      "ci": [
+        0.49000772493061395,
+        0.7267320246060653
+      ],
+      "median_degree_essential": 660.0,
+      "median_degree_nonessential": 412.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 0
+    },
+    {
+      "graph": "union of nine",
+      "gene_set": "released train + val (787)",
+      "n_genes": 787,
+      "n_essential": 125,
+      "auroc": 0.5716495468277946,
+      "ci": [
+        0.5107486797275358,
+        0.6291116842802317
+      ],
+      "median_degree_essential": 540.0,
+      "median_degree_nonessential": 449.0,
+      "zero_degree_essential": 0,
+      "zero_degree_nonessential": 0
+    }
+  ]
+}

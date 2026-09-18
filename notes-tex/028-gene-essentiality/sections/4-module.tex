@@ -1368,6 +1368,29 @@ and differ in how the cell trains on two of the five folds. As a fold family it
 reads 0.913 alone and 0.951 [0.92, 0.98] with the GO fold models
 (Table~\ref{tab:family-ensembles-folds}).
 
+The PDLP store itself closes the question (round 38, job 2417; Table~\ref{tab:w54},
+Figure~\ref{fig:w54}). The same program solved per gene by HiGHS's PDLP without
+crossover at KKT $10^{-4}$, the algorithm cuOpt runs on the card, written by the
+solve read of Section~\ref{sec:solve-tolerance} (twelve of 1,121 programs stopped
+short and keep the zero flux), trains the round-33 cell to 0.906, 0.901, 0.910,
+0.899, 0.897 and 0.908 (mean 0.903, sd 0.005; pooled 0.907 [0.86, 0.95]), every
+seed selecting after the transition (epochs 41 to 85), one number with the pFBA
+store's 0.912 and the interior point's 0.911. Three stores from three solvers that
+stop inside or at the parsimonious edge of the optimal face train the cell to one
+number; the growth vertex alone does not.
+
+\input{tables/round_w54}
+
+\tcfigfit[1.0]{figures/w54_readout_2026-09-18-13-58-16.pdf}{\textbf{Round 38, the
+  layer-free cell over the PDLP store.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w54}.}{fig:w54}
+
 \subsection{The solve across solvers: the argmax is not unique\secstatus{todo}}
 \label{sec:solve-tolerance}
 

@@ -226,9 +226,11 @@ def figure(
                 color="white" if m[i, j] > 0.6 else "black",
             )
     ax.set_title("c", loc="left", fontweight="bold")
-    fig.colorbar(
+    cb = fig.colorbar(
         im, ax=ax, fraction=0.046, pad=0.04, label="Spearman of per-gene misrank"
     )
+    # The colorbar's gradient is rasterized by default; the document wants vector.
+    cb.solids.set_rasterized(False)
     os.makedirs(IMAGE_DIR, exist_ok=True)
     base = osp.join(IMAGE_DIR, f"hard_genes_{timestamp()}")
     savefig_true_size_svg(fig, base + ".svg")

@@ -25,6 +25,19 @@ CHAR_MM = 0.50 * FONT_UNITS / UNITS_PER_MM  # Arial's mean advance is about half
 CHAR_SMALL_MM = 0.50 * FONT_SMALL_UNITS / UNITS_PER_MM
 LEAD, PAD = 4.5, 0.8
 SUB_H = FONT_SMALL_UNITS / UNITS_PER_MM + 0.3  # the second line under an attached species
+# A label's plate is drawn around the INK of the text, not around its em box. An em box
+# carries leading above and below the glyphs, so a plate padded evenly around it prints
+# with a visible band under the text and none beside it, which is what the white plates
+# looked like before this. INK_H is the fraction of the em a mixed-case line with digits
+# actually covers, and INK_DY is how far the ink's center sits above the point that an
+# SVG dominant-baseline of "middle" aligns to, since capitals reach higher than the
+# x-height that baseline centers on.
+INK_H, INK_DY = 0.74, 0.07
+# The plate is a drawn box, not only a hole in the drawing: on a map this dense a white
+# patch with no edge reads as a gap in the network rather than as something placed over
+# it. Radius is a quarter of the plate's own height, which keeps the corner the same
+# shape whether or not the label carries a second line.
+PLATE_RADIUS, PLATE_WIDTH, PLATE_STROKE = 0.55, 0.12, "#666666"
 # Sixteen directions a label may take from its node, as (dx, dy, bias): the bias is a
 # small preference for the right-hand side, so that with equal ink the labels read the
 # same way. Exact 1 and -1 on the axes let the ring column pick "right" and "left".
@@ -129,9 +142,20 @@ def nearest(points, to):
     return min(points, key=lambda p: math.hypot(p[0] - to[0], p[1] - to[1]))
 
 
+def plate_rect(px, yc, tw, th, sub_h=0.0):
+    """The rounded plate that goes behind a label, padded evenly around the text's ink.
+
+    `yc` is the vertical center the text is drawn on; `th` is the em height, of which
+    only INK_H is glyph. The plate is that ink box grown by PAD on all four sides, so
+    the white around a label is the same width everywhere rather than a band under it.
+    """
+    ink = INK_H * th + sub_h
+    return (px - PAD, yc - INK_DY * th - ink / 2 - PAD, tw + 2 * PAD, ink + 2 * PAD)
+
+
 def place_label(pts, placed, lines, nodes, x, y, label, bounds, char_mm=CHAR_MM,
-                font_units=FONT_UNITS, lead=LEAD, directions=DIRECTIONS, leader=True,
-                why=None, sub_h=0.0):
+                font_units=FONT_UNITS, lead=LEAD, directions=DIRECTIONS, leads=LEADS,
+                leader=True, why=None, sub_h=0.0, sub_w=0.0):
     """The least-inked placement of `label` beside the point (x, y).
 
     Sixteen directions at four distances. The plate sits on the far side of the leader's
@@ -140,11 +164,13 @@ def place_label(pts, placed, lines, nodes, x, y, label, bounds, char_mm=CHAR_MM,
     or None when nothing fits; the caller records the plate and leader in `placed` and
     `lines` once it commits to one.
     """
-    tw, th = len(label) * char_mm, font_units / UNITS_PER_MM
+    # The plate holds whichever line is wider. A second line set in the smaller size can
+    # be the wider one, and sized to the first it prints outside its own box.
+    tw, th = max(len(label) * char_mm, sub_w), font_units / UNITS_PER_MM
     x0, y0, x1, y1 = bounds
     best = None
     for dx, dy, bias in directions:
-        for k in LEADS:
+        for k in leads:
             dist = lead * k
             lx, ly = x + dx * dist, y + dy * dist
             if dx > 0.01:
@@ -154,7 +180,7 @@ def place_label(pts, placed, lines, nodes, x, y, label, bounds, char_mm=CHAR_MM,
             else:
                 px = lx - tw / 2
             py = ly - th / 2 + (0.0 if abs(dx) > 0.01 else dy * th * 0.7)
-            rect = (px - PAD, py - PAD * 0.6, tw + 2 * PAD, th + 1.2 * PAD + sub_h)
+            rect = plate_rect(px, py + th / 2, tw, th, sub_h)
             reasons = {
                 "off map": rect[0] < x0 or rect[1] < y0 or rect[0] + rect[2] > x1 or rect[1] + rect[3] > y1,
                 "on a plate": overlaps(rect, placed),
@@ -175,7 +201,12 @@ def place_label(pts, placed, lines, nodes, x, y, label, bounds, char_mm=CHAR_MM,
     return best
 
 
-def column_layout(attachments, labels, col_w, node_r, dy=6.8):
+def text_width(labels, sub_w, name):
+    """How wide a label's plate has to be to hold both of its lines."""
+    return max(len(labels[name]) * CHAR_MM, sub_w.get(name, 0.0))
+
+
+def column_layout(attachments, labels, sub_w, col_w, node_r, dy=6.8):
     """The attached-species column: rings and their label plates as a function of origin.
 
     Each ring's plate carries the name and, under it, the genes of its path; rings `dy`
@@ -183,14 +214,14 @@ def column_layout(attachments, labels, col_w, node_r, dy=6.8):
     layout(x, y, side) gives ring centers by species and the plate rectangles.
     """
     th = FONT_UNITS / UNITS_PER_MM
-    plate_h = th + 1.2 * PAD + SUB_H
+    plate_h = plate_rect(0.0, 0.0, 0.0, th, SUB_H)[3]
     col_h = dy * (len(attachments) - 1) + plate_h + 1.0
 
     def layout(x, y, side):
         rings, plates = {}, []
         for i, a in enumerate(attachments):
             cy = y + 1.5 + i * dy
-            tw = len(labels[a["species"]]) * CHAR_MM
+            tw = text_width(labels, sub_w, a["species"])
             if side == "right":
                 cx = x + 1.5 + node_r
                 px = cx + LEAD + 0.4
@@ -198,13 +229,14 @@ def column_layout(attachments, labels, col_w, node_r, dy=6.8):
                 cx = x + col_w - 1.5 - node_r
                 px = cx - LEAD - 0.4 - tw
             rings[a["species"]] = (cx, cy)
-            plates.append((px - PAD, cy - th / 2 - PAD * 0.6, tw + 2 * PAD, plate_h))
+            plates.append(plate_rect(px, cy, tw, th, SUB_H))
         return rings, plates
     return layout, col_h
 
 
-def column_width(attachments, labels):
-    return 1.5 + LEAD + max(len(labels[a["species"]]) for a in attachments) * CHAR_MM + 2.5
+def column_width(attachments, labels, sub_w):
+    return 1.5 + LEAD + max(text_width(labels, sub_w, a["species"])
+                            for a in attachments) + 2.5
 
 
 def attachment_window(pts, attachments, copies, labeled, w, h, layout, bounds, step=1.0,
@@ -272,24 +304,30 @@ class Placer:
         self.lines.append((src, dst))
         self.pts.add_line(src, dst)
 
-    def group(self, names, directions=DIRECTIONS, sub=None, attached=frozenset()):
+    def group(self, names, directions=DIRECTIONS, sub=None, sub_w=None,
+              attached=frozenset(), pref=None):
         """Place the labels of `names` together, in the best order.
 
         Greedy placement in one fixed order can strand the last label of a crowded
         cluster, so every order is tried and the order that fits all of them with the
         least total ink is kept. `sub` maps a name to a second, smaller line set under
         its label on the same plate: the genes of the path that attaches a species.
+        `pref` narrows the search for one named label to (directions, leads), which is
+        how a review asking for one label to move is answered without hand-placing it:
+        the search still chooses among the candidates, from a smaller set.
         """
         u = UNITS_PER_MM
-        sub = sub or {}
+        sub, sub_w, pref = sub or {}, sub_w or {}, pref or {}
         best = None
         for order in itertools.permutations(names):
             plates, segs, trial, total = list(self.placed), list(self.lines), [], 0.0
             for name in order:
                 x, y = self.node_at[name]
+                dirs, leads = pref.get(name, (directions, LEADS))
                 fit = place_label(self.pts, plates, segs, self.nodes, x, y, self.labels[name],
-                                  self.bounds, directions=directions,
-                                  sub_h=SUB_H if name in sub else 0.0)
+                                  self.bounds, directions=dirs, leads=leads,
+                                  sub_h=SUB_H if name in sub else 0.0,
+                                  sub_w=sub_w.get(name, 0.0))
                 if fit is None:
                     break
                 plates.append(fit[2])
@@ -302,8 +340,10 @@ class Placer:
         if best is None:
             why = {}
             for name in names:
+                dirs, leads = pref.get(name, (directions, LEADS))
                 place_label(self.pts, self.placed, self.lines, self.nodes, *self.node_at[name],
-                            self.labels[name], self.bounds, directions=directions, why=why)
+                            self.labels[name], self.bounds, directions=dirs, leads=leads,
+                            why=why)
             raise ValueError(f"no order places the labels {names}: candidates rejected {why}")
         _, trial, self.placed[:], self.lines[:] = best
         for name, (_, (lx, ly), rect, tx, ty) in trial:
@@ -312,7 +352,8 @@ class Placer:
                             f'fill="none" stroke="#000000" stroke-width="0.5"/>')
             self.svg.append(f'<rect x="{rect[0] * u:.2f}" y="{rect[1] * u:.2f}" '
                             f'width="{rect[2] * u:.2f}" height="{rect[3] * u:.2f}" '
-                            f'rx="{0.5 * u:.2f}" fill="#FFFFFF" fill-opacity="0.9" stroke="none"/>')
+                            f'rx="{PLATE_RADIUS * u:.2f}" fill="#FFFFFF" fill-opacity="0.94" '
+                            f'stroke="{PLATE_STROKE}" stroke-width="{PLATE_WIDTH * u:.2f}"/>')
             self.svg.append(f'<text x="{tx * u:.2f}" y="{ty * u:.2f}" '
                             f'dominant-baseline="middle">{esc(self.labels[name])}</text>')
             if name in sub:

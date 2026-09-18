@@ -6,7 +6,11 @@
 %%   experiments/008-xue-ffa/scripts/supplementary_figure_panels.py
 %%       -> notes/assets/images/008-xue-ffa/si_panel_*.svg  (all six SI panels)
 %%       -> experiments/008-xue-ffa/results/supplementary_readout_counts.csv
-%%          (the per-readout call counts and medians quoted in Notes 2 and 3)
+%%          (the per-readout call counts and medians quoted in Notes 1 and 2)
+%%   experiments/008-xue-ffa/scripts/regulator_vs_enzyme_epistasis_model.py
+%%       -> notes/assets/images/008-xue-ffa/regulator_vs_enzyme_epistasis.svg
+%%       -> experiments/008-xue-ffa/results/regulator_vs_enzyme/{singles,pairs,triples,
+%%          genes}.csv and summary.json  (every number in Note 3, and its caveat list)
 %% The four model equations moved to the Methods section (review 2026.09.16): they define
 %% what every figure measures, so they belong with the measurement description rather than
 %% behind the main text.
@@ -19,7 +23,8 @@
 %% the 13em reserves what "Supplementary Note~N" plus the column gap actually occupies.
 \begin{tabular}{@{}lp{\dimexpr\linewidth-13em\relax}@{}}
 \suppnoteref{note:digenic}  & The digenic layer the trigenic score is measured against (with \suppfig{fig:si-digenic})\\
-\suppnoteref{note:species}  & The five species under the summed total (with \suppfig{fig:si-species})\\[4pt]
+\suppnoteref{note:species}  & The five species under the summed total (with \suppfig{fig:si-species})\\
+\suppnoteref{note:fluxmodel}  & A minimal flux model of the regulator-against-enzyme comparison (with \suppfig{fig:si-fluxmodel})\\[4pt]
 Supplementary Figs.\ & A figure supporting a Note sits with that Note\\
 \end{tabular}
 
@@ -131,4 +136,78 @@ false discovery rate in both readouts. \textbf{c}, Median interaction score per 
 both orders. The gap between the two lines is the quantity the main text reports on total
 titer, and its sign is not the same on every species.}
 \label{fig:si-species}
+\end{figure*}
+
+\suppnote{note:fluxmodel}{A minimal flux model of the regulator-against-enzyme comparison\secstatus{todo}}
+
+The Discussion says the comparison this design cannot make is an enzyme panel of the same
+shape on the same readout. That comparison can be attempted in a model, and attempting it
+is worth reporting, because what the model does is not what it was asked.
+
+\notesec{The model} The network is Yeast9, with the chassis deletions POX1, FAA1 and FAA4
+applied first. The readout is the maximum of the summed export flux of the five measured
+species with growth held at half the base strain's maximum growth, divided by the base
+strain's value, so the base strain reads 1 as it does throughout this document. Two arms
+of ten genes are perturbed. The regulator arm is the ten deleted factors, none of which is
+a gene of the model, so each acts through its targets in the SGD regulatory graph and
+TFLink, taken in the factor to target direction and restricted to genes of the model. The
+enzyme arm is the ten of the thirteen pathway genes with the most reactions in the model,
+each acting on the reactions it catalyzes. A deletion multiplies both bounds of every
+reaction in its set by a capacity multiplier, or sets them to zero in the binary arm, and
+on a reaction hit by two deletions the multipliers multiply. The perturbation model
+therefore contains no interaction term of any kind, so anything the readout shows is
+produced by the network and by the choice to measure one locus. Interaction scores are
+Eqs.~\ref{eq:eps} and \ref{eq:tau} on that readout.
+
+\notesec{At the multipliers a reader would try first, nothing happens} At 0.75, 0.5 and
+0.25 every digenic and every trigenic score in both arms is exactly zero. About seven in
+ten of the model's flux bounds sit at its $\pm 1000$ placeholder rather than at a measured
+capacity, and scaling a placeholder binds nothing. This is a property of the model's
+parameterization, not a result about composability.
+
+\notesec{Below that the readout falls off a cliff rather than responding} At 0.1, 0.05,
+0.01 and 0.005 the regulator arm scores a nonzero $\tau$ on all 120 triples and the enzyme
+arm on none, 480 against 0 over the whole sweep. Of those 480, two are graded, meaning
+that all seven readouts the score is computed from clear the growth floor. In the rest the
+score is arithmetic on zeros: $\tau$ is exactly $-1$ at 0.1, where the triples alone fail
+to grow, and exactly $+2$ at 0.05 and 0.01, where the pairs fail too. At 0.005 it is
+exactly twice the product of the three singles, for the same reason. The only nonzero
+enzyme-arm score anywhere is FAS1 with FAS2, the two subunits of fatty acid synthase,
+which share reactions so their multipliers compound.
+
+\notesec{The distance part of the hypothesis fails in this model} Counting hops on the
+model's reaction-metabolite graph with currency metabolites dropped, the regulator arm
+sits a median of 3 reactions from the five readout exchanges and the enzyme arm a median
+of 4. The reason is mechanical: a regulator's reaction set is the union over 125 to 605
+model genes, 323 to 1{,}401 reactions, and a union that large nearly always contains
+something adjacent to the fatty acid exchanges, while an enzyme acts on 2 to 18. Within
+the regulator arm the rank correlation between a triple's mean hop count and $|\tau|$
+changes sign across settings, from $\rho = -0.33$ at 0.05 to $\rho = +0.52$ at 0.01, so
+there is no stable relation to report.
+
+\notesec{What this establishes} Not which arm interacts more. It establishes what a model
+would need to answer that: graded capacities rather than placeholder bounds, a readout
+that does not collapse onto a feasibility boundary, and a map from a factor deletion to a
+distribution of expression changes rather than an all-or-nothing scaling of every target.
+The last of these is the step the Discussion identifies as missing, and this is what its
+absence costs. Everything in this note is a property of the model defined in
+\file{experiments/008-xue-ffa/scripts/regulator\_vs\_enzyme\_epistasis\_model.py}; no
+number in it is a titer, and none of it is evidence about the measured strains. The model
+also ignores whether a factor activates or represses its target, treats every target
+equally, and reads an optimum rather than a titer, and each of those would have to be
+fixed before the comparison means anything.
+
+\begin{figure*}[t]
+\tcfig{figures/regulator_vs_enzyme_epistasis.pdf}{\textbf{A minimal flux model does not
+settle the regulator-against-enzyme comparison.} \textbf{a}, Distance from the perturbed
+reactions to the five readout exchanges, counted in reactions on the model's
+reaction-metabolite graph with currency metabolites dropped. The regulator arm is closer
+than the enzyme arm, not further, because a regulator's reaction set is the union over
+hundreds of targets. \textbf{b},~\textbf{c}, The fraction of combinations at each order
+that miss the growth floor and export nothing, per capacity multiplier. In the regulator
+arm this is where every nonzero interaction score comes from. \textbf{d}, The fraction of
+the 120 triples with $|\tau|$ above a numerical tolerance. The regulator arm scores on
+every triple in a four-setting window and on none outside it, and the enzyme arm scores
+nowhere; two of the 480 regulator-arm scores are computed entirely from strains that
+clear the growth floor.}{fig:si-fluxmodel}
 \end{figure*}

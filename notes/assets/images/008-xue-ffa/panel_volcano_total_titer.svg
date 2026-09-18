@@ -445,7 +445,7 @@ z
     </g>
    </g>
    <g id="text_14">
-    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="33.444333" y="133.923062" transform="rotate(-0 33.444333 133.923062)"> BH FDR &lt; 0.05</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="33.444333" y="135.923062" transform="rotate(-0 33.444333 135.923062)"> BH FDR &lt; 0.05</text>
    </g>
    <g id="text_15">
     <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(40.914822 5.105063)">86/119 trigenic interactions at FDR &lt; 0.05</text>

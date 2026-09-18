@@ -67,16 +67,18 @@ C_RULE = "#666666"
 W_MM = 179.0
 PANEL_STEM = ["mi_panel_expectations", "mi_panel_null_fit", "mi_panel_mean_variance"]
 
-# Row geometry in millimetres from the top of the page. Row 2 puts the surface panel and
-# the schematic side by side: both answer "how do the nulls differ", one as geometry and
-# one as a story, and they are read together.
+# Row geometry in millimetres from the top of the page. Four rows, each the full width:
+# the three measured panels, then the level sets of all four models side by side, then
+# the schematic, then the table. The schematic shared a row with a single surface panel
+# before, which made it half as wide and twice as tall as it needed to be and put two
+# unlike things on one line (author review, 2026.09.18).
 Y_ROW1 = 5.0          # top of the three measured panels
 H_ROW1 = 52.0
-Y_ROW2 = 63.0         # top of the surface panel and the schematic
-H_ROW2 = 52.0
-Y_ROW3 = 122.0        # top of the table
+Y_ROW2 = 63.0         # top of the level-set row
+Y_ROW3 = 104.0        # top of the schematic
+H_ROW3 = 22.0
+Y_ROW4 = 131.0        # top of the table
 LETTER_DY = 4.6       # a letter sits this far above its block
-X_SCHEMATIC = 63.0    # the schematic starts to the right of the surface panel
 
 TABLE_COLS = [
     ("model", 20.0),
@@ -161,20 +163,25 @@ def equation(doc, cid, name, cx_mm, cy_mm, scale=1.0):
 
 
 def schematic(doc, x0, y0, w):
-    """Where the two families of null come from, side by side with the surface panel.
+    """Where the two families of null come from, as one row of its own.
 
-    Above, a flux through two steps, each keeping a fraction. Below, one pool that each
-    deletion takes an absolute amount out of. Then the identity that is the whole of their
-    disagreement, which the surface panel to the left shows as a distance.
+    Left, a flux through two steps, each keeping a fraction. Right, one pool that each
+    deletion takes an absolute amount out of. Under both, the identity that is the whole
+    of their disagreement, which the level sets above show as two shapes.
+
+    The two halves sit side by side rather than stacked. Stacked in half the page width
+    they ran to 52 mm of height for 22 mm of content, and the reader met the second story
+    only after scrolling past the first, though the two are a pair.
     """
-    right = x0 + w
+    half = (w - 8.0) / 2.0
+    x1 = x0 + half + 8.0
 
     # --- fractions compose
     doc.vertex("d-mult-title", "effects are FRACTIONS: two steps in series",
-               text_style("left", "fontStyle=1;"), mm(x0), mm(y0), mm(w), 12)
-    bw, gap = 24.0, 4.0
+               text_style("left", "fontStyle=1;"), mm(x0), mm(y0), mm(half), 12)
+    bw, gap = 17.0, 3.0
     xs = [x0 + i * (bw + gap) for i in range(4)]
-    box_y, box_h = y0 + 5.0, 9.0
+    box_y, box_h = y0 + 4.0, 8.0
     for i, x in enumerate(xs):
         color = C_MULT if 0 < i < 3 else C_RULE
         doc.vertex(f"d-mult{i}", "", box_style(color), mm(x), mm(box_y), mm(bw), mm(box_h))
@@ -187,51 +194,55 @@ def schematic(doc, x0, y0, w):
                mm(xs[0]), mm(box_y + box_h / 2) - 7, mm(bw), 14)
     for i, name in ((1, "f_i"), (2, "f_j")):
         doc.vertex(f"d-mult{i}-t", "keeps", text_style("center"),
-                   mm(xs[i]), mm(box_y + 2.6) - 7, mm(bw), 14)
-        equation(doc, f"d-mult{i}-eq", name, xs[i] + bw / 2, box_y + 6.2)
+                   mm(xs[i]), mm(box_y + 2.3) - 7, mm(bw), 14)
+        equation(doc, f"d-mult{i}-eq", name, xs[i] + bw / 2, box_y + 5.7)
     equation(doc, "d-mult3-eq", "mult", xs[3] + bw / 2, box_y + box_h / 2)
     doc.vertex("d-mult-note",
-               "a fraction of a fraction: the second step only ever acts on what the "
-               "first let through",
-               text_style("left"), mm(x0), mm(y0 + 15.5), mm(w), 22)
+               "a fraction of a fraction: the second step acts only on what the first "
+               "let through",
+               text_style("left"), mm(x0), mm(y0 + 13.0), mm(half), 16)
 
     # --- amounts add
     doc.vertex("d-add-title", "effects are AMOUNTS: two draws on one pool",
-               text_style("left", "fontStyle=1;"), mm(x0), mm(y0 + 23.0), mm(w), 12)
-    pool_y, pool_h = y0 + 28.0, 9.0
-    keep_w = w - 2 * 27.0
+               text_style("left", "fontStyle=1;"), mm(x1), mm(y0), mm(half), 12)
+    pool_y, pool_h = y0 + 4.0, 8.0
+    loss_w = 21.0
+    keep_w = half - 2 * loss_w
     doc.vertex("d-pool-keep", "", cell_style("#FFFFFF", "center"),
-               mm(x0), mm(pool_y), mm(keep_w), mm(pool_h))
+               mm(x1), mm(pool_y), mm(keep_w), mm(pool_h))
     doc.vertex("d-pool-i", "", cell_style(FILL[C_ADD], "center"),
-               mm(x0 + keep_w), mm(pool_y), mm(27.0), mm(pool_h))
+               mm(x1 + keep_w), mm(pool_y), mm(loss_w), mm(pool_h))
     doc.vertex("d-pool-j", "", cell_style(FILL[C_ADD], "center"),
-               mm(x0 + keep_w + 27.0), mm(pool_y), mm(27.0), mm(pool_h))
-    equation(doc, "d-pool-keep-eq", "add", x0 + keep_w / 2, pool_y + pool_h / 2)
-    equation(doc, "d-pool-i-eq", "loss_i", x0 + keep_w + 13.5, pool_y + pool_h / 2)
-    equation(doc, "d-pool-j-eq", "loss_j", x0 + keep_w + 40.5, pool_y + pool_h / 2)
+               mm(x1 + keep_w + loss_w), mm(pool_y), mm(loss_w), mm(pool_h))
+    equation(doc, "d-pool-keep-eq", "add", x1 + keep_w / 2, pool_y + pool_h / 2)
+    equation(doc, "d-pool-i-eq", "loss_i", x1 + keep_w + loss_w / 2, pool_y + pool_h / 2)
+    equation(doc, "d-pool-j-eq", "loss_j", x1 + keep_w + 1.5 * loss_w, pool_y + pool_h / 2)
     doc.vertex("d-add-note",
                "each loss is taken from the whole pool, so the part the first deletion "
-               "already removed is counted a second time",
-               text_style("left"), mm(x0), mm(y0 + 38.5), mm(w), 22)
+               "removed is counted a second time",
+               text_style("left"), mm(x1), mm(y0 + 13.0), mm(half), 16)
 
     # --- the identity, as three cells so the expression is typeset rather than spelled
     eq_w = EQ_SIZES["gap"][0]
-    lead_w = 36.0
+    lead_w = 70.0
+    y_gap = y0 + 19.0
     doc.vertex("d-gap-a", "the two nulls differ by exactly", text_style("right"),
-               mm(x0), mm(y0 + 47.0) - 7, mm(lead_w), 14)
-    equation(doc, "d-gap-eq", "gap", x0 + lead_w + 1.0 + eq_w / 2, y0 + 47.0)
+               mm(x0), mm(y_gap) - 7, mm(lead_w), 14)
+    equation(doc, "d-gap-eq", "gap", x0 + lead_w + 1.0 + eq_w / 2, y_gap)
     doc.vertex("d-gap-b", ", the loss the second deletion would take again",
-               text_style("left"), mm(x0 + lead_w + 2.0 + eq_w), mm(y0 + 47.0) - 7,
-               mm(right - (x0 + lead_w + 2.0 + eq_w)), 14)
+               text_style("left"), mm(x0 + lead_w + 2.0 + eq_w), mm(y_gap) - 7,
+               mm(x0 + w - (x0 + lead_w + 2.0 + eq_w)), 14)
 
 
 def table(doc, y0):
     """The four models on one grid, one row each.
 
     Rows are sized to the two-line cells they actually hold; at 13 mm they carried a band
-    of empty space under every row and pushed the figure past the page.
+    of empty space under every row and pushed the figure past the page, and at 10 mm they
+    still carried one (author review, 2026.09.18). Two lines of 5.98 pt type occupy
+    4.2 mm, so 8 mm is the text plus a millimetre of air above and below it.
     """
-    head_h, row_h = 6.0, 10.0
+    head_h, row_h = 5.5, 8.0
     x = 2.0
     for j, (title, w) in enumerate(TABLE_COLS):
         doc.vertex(f"e-h{j}", title, cell_style("#F5F5F5", "left", bold=True),
@@ -272,19 +283,19 @@ def build(out_path):
                    mm(x), mm(Y_ROW1), w_u, h_u)
         x += w_u / U + 1.0
 
-    # --- row 2: the surface panel, and the schematic beside it
-    svg = osp.join(IMAGES_DIR, "mi_panel_surfaces.svg")
+    # --- row 2: the four models' level sets, side by side and to one scale
+    svg = osp.join(IMAGES_DIR, "mi_panel_level_sets.svg")
     w_u, h_u = svg_size_units(svg)
     doc.vertex("letter-d", "d", letter_style(), mm(2), mm(Y_ROW2 - LETTER_DY), 24, 18)
     doc.vertex("panel-d", "", "shape=image;imageAspect=0;aspect=fixed;html=1;"
                f"image={data_uri(svg)};", mm(2), mm(Y_ROW2), w_u, h_u)
 
-    doc.vertex("letter-e", "e", letter_style(),
-               mm(X_SCHEMATIC - 2.0), mm(Y_ROW2 - LETTER_DY), 24, 18)
-    schematic(doc, X_SCHEMATIC, Y_ROW2, 177.0 - X_SCHEMATIC)
+    # --- row 3: where the two families of null come from
+    doc.vertex("letter-e", "e", letter_style(), mm(2), mm(Y_ROW3 - LETTER_DY), 24, 18)
+    schematic(doc, 6.0, Y_ROW3, 171.0)
 
-    doc.vertex("letter-f", "f", letter_style(), mm(2), mm(Y_ROW3 - LETTER_DY), 24, 18)
-    bottom = table(doc, Y_ROW3)
+    doc.vertex("letter-f", "f", letter_style(), mm(2), mm(Y_ROW4 - LETTER_DY), 24, 18)
+    bottom = table(doc, Y_ROW4)
     if bottom > 170.0:
         raise ValueError(f"content reaches {bottom:.1f} mm, over the 170 mm cap")
 

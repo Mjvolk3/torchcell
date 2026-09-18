@@ -161,3 +161,19 @@ redrawn from KGML coordinates with Yeast9 overlaid, which has the nodes and gene
 older drawing lacked. This script stays as the record of the iPath3 panel and still runs;
 its label placement now lives in [[experiments.008-xue-ffa.scripts.map_labels]], and the
 panel regenerated pixel-identical after the move.
+
+## 2026.09.18 - Follows the shared modules and the shared label module
+
+`MODULES` moved here is still the single source for both map panels, so the round-6 color
+change (fatty acid degradation to brick, citrate cycle to dark blue) and the new priority
+order reach this panel too. The posted selection therefore changed, the service returned a
+different response, and the cached map is now `ipath3_metabolic_4d5785d104a3.svg`; the
+response for the previous selection was retired, since no run can request it again.
+
+The call sites also follow `map_labels`: `column_width` and `column_layout` take the
+sub-line widths, so the attached-species plates are sized on whichever of their two lines
+is wider.
+
+This panel is still superseded by [[experiments.008-xue-ffa.scripts.ffa_kegg_map]] and is
+kept because it is the client for the map Wu et al. use, and because the Methods cite what
+probing it measured.

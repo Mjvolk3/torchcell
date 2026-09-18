@@ -26,3 +26,26 @@ regenerated pixel-identical after the move (rsvg render, `ImageChops.difference`
 
 Each rule was added after a render showed the failure it prevents; the list is in the
 2026.09.17 section of the iPath note.
+
+## 2026.09.18 - Plates around the ink, and a per-label search narrowing
+
+`plate_rect(px, yc, tw, th, sub_h)` is the one place a label's box is computed, used by
+`place_label` and by `column_layout`, so the collision rectangle and the drawn rectangle
+cannot drift apart. It pads `INK_H * th + sub_h` evenly by `PAD`, where `INK_H` is the
+fraction of the em that a mixed-case line with digits actually covers and `INK_DY` shifts
+the box up for the caps that reach above the x-height an SVG `dominant-baseline="middle"`
+centers on. Padding the em box instead put a band of white under every label and none
+beside it.
+
+`place_label` takes `sub_w` and sizes the plate on `max(label width, sub width)`. A second
+line set in the smaller size can be the wider one; sized to the first it prints outside its
+own box, which only became visible once the plates were stroked.
+
+`Placer.group(..., pref={name: (directions, leads)})` narrows the search for one named
+label. A review that asks for one label to move is answered by giving that label a smaller
+candidate set, not by placing it: the ink search still picks among what is left, and the
+narrowing lives in the calling script.
+
+Plates are drawn with `PLATE_RADIUS` 0.55 mm and a `PLATE_STROKE` `#666666` edge at
+`PLATE_WIDTH` 0.12 mm. On a drawing this dense an unstroked white patch reads as a gap in
+the network rather than as something placed over it.

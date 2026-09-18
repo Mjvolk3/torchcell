@@ -35,3 +35,34 @@ deletion's loss that the second would have taken again.
 - `apply_paper_style` sets `mathtext.fontset=custom`, which leaves `mathtext.cal` at
   cursive and prints a findfont warning on every run. Harmless here, no calligraphic
   symbol is used.
+
+## 2026.09.18 - The surface panel became four level-set panels
+
+The 3D surface pair was hard to read and carried a floating `0.25` beside a short rule that
+read as an unexplained `I 0.24` in the PDF (author review). It is replaced by
+`panel_level_sets`: one axes per model, in the table's order, level sets of what that model
+expects of a double over the square of its two singles.
+
+Two differences are visible and they are different kinds of thing.
+
+- The additive surface is not the multiplicative one. Straight level sets against
+  hyperbolas, and the two differ by `(1 - f_i)(1 - f_j)`.
+- The two log-scale models expect the multiplicative surface and differ in where equal
+  residuals lie. Each panel's contours are spaced evenly ON THE SCALE THAT MODEL MEASURES
+  ITS RESIDUAL ON: 0.2 to 1.0 in steps of 0.2 for the linear pair, the same span in five
+  equal steps of the logarithm for the log pair, so those crowd near 1 and open out low.
+
+Every panel marks (0.5, 0.5) and prints what that model expects there: 0.25, 0.00, 0.25,
+0.25. That is the old floating number, said out loud, and it is the whole comparison in one
+row.
+
+Contour labels are placed with `manual=` at the point of each contour on the diagonal,
+which for both surfaces is that contour's closest point to the origin (`sqrt(L)` for the
+multiplicative surface, `(L+1)/2` for the additive one). Left to matplotlib the labels
+landed wherever a contour left the axes and were clipped to `631` and `.1`.
+
+### Titles are one line each
+
+A title wider than the panel is NOT wrapped by matplotlib and is not clipped by the axes
+either: it runs off the figure canvas and the draw.io embed cuts it at the image edge. Panel
+b lost its two median residuals to the caption for this reason.

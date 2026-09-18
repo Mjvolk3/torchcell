@@ -83,15 +83,35 @@ KEGG = "https://rest.kegg.jp"
 IPATH = "https://pathways.embl.de/mapping.cgi"
 
 # The modules the route passes through, in the order the legend lists them, each with the
-# color it takes. Palette primaries; blue is reserved for the measured species.
+# color it takes. Palette colors; blue is reserved for the measured species and gray for
+# the background tiers of the redrawn map.
+#
+# THE TWO FATTY ACID MODULES TAKE THE TWO STRONGEST COLORS, which is the document's
+# subject rather than a default: biosynthesis is amber and degradation is brick, and in
+# this chassis (pox1 faa1 faa4) degradation is the arm that was engineered away. Neither
+# may be gray, because gray is what the whole background of the redrawn map is drawn in.
+# That pushes the citrate cycle off brick, and the palette has no sixth hue: terracotta,
+# the nearest unused color, is dE 22 from brick (CIE76), which separates two swatches and
+# does not separate two 0.3 mm lines that run near each other. Dark blue is dE 60 from
+# brick and 25 from the purple beside it in the drawing. It is close to the blue of the
+# measured species (dE 17), and those are five filled circles rather than lines.
+#
+# THE ORDER IS A PRIORITY, not the order of the route: a gene on two of these lists takes
+# the color of the first list it appears on. Central carbon comes first, then degradation,
+# then the three anabolic fatty acid lists. Degradation has to outrank the anabolic three
+# or it disappears: KEGG puts POX1, the acyl-CoA oxidase the chassis deleted, on both the
+# degradation list and the unsaturated-fatty-acid list, and ordered last it took the
+# anabolic color and the whole beta-oxidation arm went with it. It must NOT outrank
+# central carbon, because KEGG's degradation list also carries the alcohol and aldehyde
+# dehydrogenases, and above glycolysis it takes twenty of that module's lines with it.
 MODULES = [
     ("sce00010", "glycolysis and gluconeogenesis", "#9673A6"),
     ("sce00620", "pyruvate metabolism", "#D6B656"),
-    ("sce00020", "citrate cycle", "#B85450"),
+    ("sce00020", "citrate cycle", "#4F688B"),
+    ("sce00071", "fatty acid degradation", "#B85450"),
     ("sce00061", "fatty acid biosynthesis", "#D79B00"),
     ("sce00062", "fatty acid elongation", "#D79B00"),
     ("sce01040", "unsaturated fatty acid biosynthesis", "#D79B00"),
-    ("sce00071", "fatty acid degradation", "#666666"),
 ]
 
 # The five measured species: the KEGG compound the titer is of, the label, and the name
@@ -574,8 +594,13 @@ def panel(map_svg, to_mm, positions, attachments, gene_rows, width_mm, map_w_mm,
     # path's genes.
     labels = {name: label for _, label, name in WAYPOINTS + SPECIES}
     NODE_R = R_SPECIES / 3774 * map_w_mm
-    col_w = ml.column_width(attachments, labels)
-    layout, col_h = ml.column_layout(attachments, labels, col_w, NODE_R)
+    # The plate holds the species name over the genes of its path, and the gene line can
+    # be the wider of the two, so the column is sized on the widest line of the widest
+    # candidate path rather than on the name.
+    sub_w = {a["species"]: max(len(gene_run(c["genes"])) for c in a["candidates"]) * ml.CHAR_SMALL_MM
+             for a in attachments}
+    col_w = ml.column_width(attachments, labels, sub_w)
+    layout, col_h = ml.column_layout(attachments, labels, sub_w, col_w, NODE_R)
     inset = (bounds[0] + 2.0, bounds[1] + 2.0, bounds[2] - 2.0, bounds[3] - 2.0)
 
     wx, wy, side, chosen = attachment_window(pts, attachments, copies, list(node_at.values()),
@@ -616,7 +641,8 @@ def panel(map_svg, to_mm, positions, attachments, gene_rows, width_mm, map_w_mm,
     attached = {a["species"] for a in attachments}
     placer.group([a["species"] for a in attachments],
                  directions=ml.RIGHT if side == "right" else ml.LEFT,
-                 sub={a["species"]: gene_run(a["genes"]) for a in resolved}, attached=attached)
+                 sub={a["species"]: gene_run(a["genes"]) for a in resolved},
+                 sub_w=sub_w, attached=attached)
 
     # Every other compound label: the drawn species first, then the intermediates.
     species_names = {name for _, _, name in SPECIES}

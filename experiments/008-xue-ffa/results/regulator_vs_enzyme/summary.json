@@ -1,0 +1,779 @@
+{
+  "what_this_is": "A property of the model defined in this script, not evidence about the measured strains. No number here is a titer.",
+  "model_path": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+  "model_sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+  "yeast9": {
+    "n_reactions": 4131,
+    "n_metabolites": 2806,
+    "n_genes": 1161
+  },
+  "chassis": {
+    "POX1": "YGL205W",
+    "FAA1": "YOR317W",
+    "FAA4": "YMR246W"
+  },
+  "readout_exchanges": {
+    "r_1993": "palmitate",
+    "r_1994": "palmitoleate",
+    "r_2055": "stearate",
+    "r_2189": "oleate",
+    "r_2193": "myristate"
+  },
+  "biomass_reaction": "r_2111",
+  "growth_fraction": 0.5,
+  "base_growth": 0.0858400911780771,
+  "base_readout": 0.10400137978613343,
+  "tolerance": 1e-06,
+  "alphas": [
+    0.75,
+    0.5,
+    0.25,
+    0.1,
+    0.05,
+    0.01,
+    0.005,
+    0.002
+  ],
+  "currency_metabolites": [
+    "ADP",
+    "AMP",
+    "ATP",
+    "H+",
+    "H2O",
+    "NAD",
+    "NADH",
+    "NADP(+)",
+    "NADPH",
+    "carbon dioxide",
+    "coenzyme A",
+    "diphosphate",
+    "oxygen",
+    "phosphate"
+  ],
+  "arm_genes": {
+    "regulator": [
+      "FKH1",
+      "GCN5",
+      "MED4",
+      "OPI1",
+      "RFX1",
+      "RGR1",
+      "RPD3",
+      "SPT3",
+      "TFC7",
+      "YAP6"
+    ],
+    "enzyme": [
+      "ELO2",
+      "ELO3",
+      "FAA1",
+      "FAA2",
+      "FAA3",
+      "FAA4",
+      "FAS1",
+      "FAS2",
+      "POX1",
+      "SLC1"
+    ]
+  },
+  "enzyme_arm_rule": "the ten of the thirteen core pathway genes with the most Yeast9 reactions, ties broken by pathway order in GENE_ORDER",
+  "hop_distribution": {
+    "regulator": {
+      "2": 3,
+      "3": 7
+    },
+    "enzyme": {
+      "4": 4,
+      "3": 3,
+      "7": 1,
+      "5": 2
+    }
+  },
+  "per_setting": [
+    {
+      "arm": "regulator",
+      "modulation": "linear",
+      "alpha": 0.75,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.7763568394002505e-15,
+      "p90_abs_eps": 1.7763568394002505e-15,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.7763568394002505e-15,
+      "p90_abs_tau": 1.7763568394002505e-15,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 1.0000000000000018,
+      "spearman_mean_hops_vs_abs_tau": null,
+      "spearman_max_hops_vs_abs_tau": null
+    },
+    {
+      "arm": "enzyme",
+      "modulation": "linear",
+      "alpha": 0.75,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.7763568394002505e-15,
+      "p90_abs_eps": 1.7763568394002505e-15,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.7763568394002505e-15,
+      "p90_abs_tau": 1.7763568394002505e-15,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 1.0000000000000018,
+      "spearman_mean_hops_vs_abs_tau": null,
+      "spearman_max_hops_vs_abs_tau": null
+    },
+    {
+      "arm": "regulator",
+      "modulation": "linear",
+      "alpha": 0.5,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.7763568394002505e-15,
+      "p90_abs_eps": 1.7763568394002505e-15,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.7763568394002505e-15,
+      "p90_abs_tau": 1.7763568394002505e-15,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 1.0000000000000018,
+      "spearman_mean_hops_vs_abs_tau": null,
+      "spearman_max_hops_vs_abs_tau": null
+    },
+    {
+      "arm": "enzyme",
+      "modulation": "linear",
+      "alpha": 0.5,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.7763568394002505e-15,
+      "p90_abs_eps": 1.7763568394002505e-15,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.7763568394002505e-15,
+      "p90_abs_tau": 1.7763568394002505e-15,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 1.0000000000000018,
+      "spearman_mean_hops_vs_abs_tau": null,
+      "spearman_max_hops_vs_abs_tau": null
+    },
+    {
+      "arm": "regulator",
+      "modulation": "linear",
+      "alpha": 0.25,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.7763568394002505e-15,
+      "p90_abs_eps": 1.7763568394002505e-15,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.7763568394002505e-15,
+      "p90_abs_tau": 1.7763568394002505e-15,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 1.0000000000000018,
+      "spearman_mean_hops_vs_abs_tau": null,
+      "spearman_max_hops_vs_abs_tau": null
+    },
+    {
+      "arm": "enzyme",
+      "modulation": "linear",
+      "alpha": 0.25,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.7763568394002505e-15,
+      "p90_abs_eps": 1.7763568394002505e-15,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.7763568394002505e-15,
+      "p90_abs_tau": 1.7763568394002505e-15,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 1.0000000000000018,
+      "spearman_mean_hops_vs_abs_tau": null,
+      "spearman_max_hops_vs_abs_tau": null
+    },
+    {
+      "arm": "regulator",
+      "modulation": "linear",
+      "alpha": 0.1,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.9833333333333333,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.7763568394002505e-15,
+      "p90_abs_eps": 1.7763568394002505e-15,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 120,
+      "n_triples_graded": 2,
+      "n_triples_interacting_graded": 2,
+      "frac_triples_interacting": 1.0,
+      "median_abs_tau": 1.0,
+      "p90_abs_tau": 1.0,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 120,
+        "zero": 0
+      },
+      "median_f_single": 1.0000000000000018,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": -0.17583166703702557,
+        "p": 0.054735135013390376,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": -0.01193397651255002,
+        "p": 0.897067718977264,
+        "n": 120
+      }
+    },
+    {
+      "arm": "enzyme",
+      "modulation": "linear",
+      "alpha": 0.1,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.8564730863701584e-09,
+      "p90_abs_eps": 1.8577444027556567e-09,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.856472975347856e-09,
+      "p90_abs_tau": 1.8577444027556567e-09,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 0.9999999981435269,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": -0.05433158354246702,
+        "p": 0.5556073080486014,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": -0.16795262012999768,
+        "p": 0.06671053411649812,
+        "n": 120
+      }
+    },
+    {
+      "arm": "regulator",
+      "modulation": "linear",
+      "alpha": 0.05,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.8,
+      "frac_triples_zero": 1.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 45,
+      "frac_pairs_interacting": 1.0,
+      "median_abs_eps": 0.9999999962858951,
+      "p90_abs_eps": 0.9999999962869267,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 45,
+        "zero": 0
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 120,
+      "n_triples_graded": 0,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 1.0,
+      "median_abs_tau": 1.9999999888572644,
+      "p90_abs_tau": 1.9999999888600903,
+      "tau_sign_split": {
+        "positive": 120,
+        "negative": 0,
+        "zero": 0
+      },
+      "median_f_single": 0.9999999981432629,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": -0.3287465249738016,
+        "p": 0.0002463909906841032,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": -0.11511720416997122,
+        "p": 0.21056497530228238,
+        "n": 120
+      }
+    },
+    {
+      "arm": "enzyme",
+      "modulation": "linear",
+      "alpha": 0.05,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.856107156861242e-09,
+      "p90_abs_eps": 1.856107156861242e-09,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.8561070458389395e-09,
+      "p90_abs_tau": 1.8561070458389395e-09,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 0.9999999981438928,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": 0.05433158354246702,
+        "p": 0.5556073080486014,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": 0.16795262012999768,
+        "p": 0.06671053411649812,
+        "n": 120
+      }
+    },
+    {
+      "arm": "regulator",
+      "modulation": "linear",
+      "alpha": 0.01,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 1.0,
+      "frac_triples_zero": 1.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 45,
+      "frac_pairs_interacting": 1.0,
+      "median_abs_eps": 0.9999999962884295,
+      "p90_abs_eps": 0.999999996293983,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 45,
+        "zero": 0
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 120,
+      "n_triples_graded": 0,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 1.0,
+      "median_abs_tau": 1.9999999888656952,
+      "p90_abs_tau": 1.9999999888780204,
+      "tau_sign_split": {
+        "positive": 120,
+        "negative": 0,
+        "zero": 0
+      },
+      "median_f_single": 0.9999999981442147,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": 0.5188996312330666,
+        "p": 1.267033764586438e-09,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": 0.1389345567568618,
+        "p": 0.13018535650122534,
+        "n": 120
+      }
+    },
+    {
+      "arm": "enzyme",
+      "modulation": "linear",
+      "alpha": 0.01,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 1,
+      "frac_pairs_interacting": 0.022222222222222223,
+      "median_abs_eps": 1.8537721357958503e-09,
+      "p90_abs_eps": 1.8594337181099263e-09,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 1,
+        "zero": 44
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.8587820171944713e-09,
+      "p90_abs_tau": 1.865006327150809e-09,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 0.9999999981462279,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": -0.04020092456515336,
+        "p": 0.6628759429537168,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": -0.14282148204694253,
+        "p": 0.11967387323824573,
+        "n": 120
+      }
+    },
+    {
+      "arm": "regulator",
+      "modulation": "linear",
+      "alpha": 0.005,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 1.0,
+      "frac_triples_zero": 1.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 45,
+      "frac_pairs_interacting": 1.0,
+      "median_abs_eps": 0.1656029291088105,
+      "p90_abs_eps": 0.4062656987877222,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 45,
+        "zero": 0
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 120,
+      "n_triples_graded": 0,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 1.0,
+      "median_abs_tau": 0.1347820373553349,
+      "p90_abs_tau": 0.3306542878463429,
+      "tau_sign_split": {
+        "positive": 120,
+        "negative": 0,
+        "zero": 0
+      },
+      "median_f_single": 0.4069433979168987,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": 0.3013688201847043,
+        "p": 0.0008231384826513543,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": 0.09394622409273512,
+        "p": 0.30743602629712624,
+        "n": 120
+      }
+    },
+    {
+      "arm": "enzyme",
+      "modulation": "linear",
+      "alpha": 0.005,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.0,
+      "frac_triples_zero": 0.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 1,
+      "frac_pairs_interacting": 0.022222222222222223,
+      "median_abs_eps": 1.8735352158572027e-09,
+      "p90_abs_eps": 1.8735352158572027e-09,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 1,
+        "zero": 44
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 120,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.876263144851009e-09,
+      "p90_abs_tau": 1.87855575539686e-09,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 0.9999999981264648,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": 0.06001958799762825,
+        "p": 0.5149256129915121,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": 0.105295683627124,
+        "p": 0.2523880448232237,
+        "n": 120
+      }
+    },
+    {
+      "arm": "regulator",
+      "modulation": "linear",
+      "alpha": 0.002,
+      "frac_singles_zero": 1.0,
+      "frac_pairs_zero": 1.0,
+      "frac_triples_zero": 1.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 0.0,
+      "p90_abs_eps": 0.0,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 0,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 0.0,
+      "p90_abs_tau": 0.0,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 0.0,
+      "spearman_mean_hops_vs_abs_tau": null,
+      "spearman_max_hops_vs_abs_tau": null
+    },
+    {
+      "arm": "enzyme",
+      "modulation": "linear",
+      "alpha": 0.002,
+      "frac_singles_zero": 0.0,
+      "frac_pairs_zero": 0.022222222222222223,
+      "frac_triples_zero": 0.06666666666666667,
+      "n_pairs": 45,
+      "n_pairs_interacting": 1,
+      "frac_pairs_interacting": 0.022222222222222223,
+      "median_abs_eps": 1.880770095219475e-09,
+      "p90_abs_eps": 1.928616200075339e-09,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 1,
+        "zero": 44
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 112,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 1.9075363510978605e-09,
+      "p90_abs_tau": 1.9614974089421366e-09,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 0.9999999981192299,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": 0.07537220517078141,
+        "p": 0.4132522959338477,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": -0.005543286080661956,
+        "p": 0.9520851306177811,
+        "n": 120
+      }
+    },
+    {
+      "arm": "regulator",
+      "modulation": "binary",
+      "alpha": 0.0,
+      "frac_singles_zero": 1.0,
+      "frac_pairs_zero": 1.0,
+      "frac_triples_zero": 1.0,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 0.0,
+      "p90_abs_eps": 0.0,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 0,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 0.0,
+      "p90_abs_tau": 0.0,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 0.0,
+      "spearman_mean_hops_vs_abs_tau": null,
+      "spearman_max_hops_vs_abs_tau": null
+    },
+    {
+      "arm": "enzyme",
+      "modulation": "binary",
+      "alpha": 0.0,
+      "frac_singles_zero": 0.2,
+      "frac_pairs_zero": 0.37777777777777777,
+      "frac_triples_zero": 0.5333333333333333,
+      "n_pairs": 45,
+      "n_pairs_interacting": 0,
+      "frac_pairs_interacting": 0.0,
+      "median_abs_eps": 1.8567769544119983e-09,
+      "p90_abs_eps": 1.8568173665300947e-09,
+      "eps_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 45
+      },
+      "n_triples": 120,
+      "n_triples_interacting": 0,
+      "n_triples_graded": 56,
+      "n_triples_interacting_graded": 0,
+      "frac_triples_interacting": 0.0,
+      "median_abs_tau": 0.0,
+      "p90_abs_tau": 1.8568146131769935e-09,
+      "tau_sign_split": {
+        "positive": 0,
+        "negative": 0,
+        "zero": 120
+      },
+      "median_f_single": 0.9999999981431855,
+      "spearman_mean_hops_vs_abs_tau": {
+        "rho": -0.24495712823271568,
+        "p": 0.007007347518306554,
+        "n": 120
+      },
+      "spearman_max_hops_vs_abs_tau": {
+        "rho": -0.18961742707629028,
+        "p": 0.03805415465466744,
+        "n": 120
+      }
+    }
+  ],
+  "caveats": [
+    "Everything reported here is a property of this model. It is not evidence about the measured strains and no number here is a titer.",
+    "FBA maximizes a readout under a growth floor. The optimum is what the network COULD export, not what a strain does export, and the map from capacity to titer is not modeled.",
+    "Capacity scaling is not transcription. Multiplying a reaction's bounds by alpha is a stand-in for lowered expression that ignores enzyme kinetics, protein cost, isozyme redundancy and every regulatory response to the deletion.",
+    "About 70% of Yeast9 bounds sit at the +-1000 placeholder, which is not a measured capacity. Scaling a placeholder is scaling nothing until alpha is small enough to bring it below the flux the optimum wants.",
+    "The regulatory graphs are incomplete. SGD regulatory and TFLink disagree on which targets a factor has, neither is a complete target list, and a factor with no Yeast9 target would act on nothing here for a reason about the graph rather than about the cell.",
+    "A regulator's targets are treated as all-or-nothing and equal. Activation versus repression, which the edges carry, is ignored, so a deletion always lowers capacity even where the factor represses.",
+    "An LP optimal value is piecewise linear in the bounds, so exact zeros in eps and tau are expected and are not the same statement as a small measured interaction.",
+    "Three enzyme-arm genes, POX1, FAA1 and FAA4, are the chassis knockouts. Their own-reaction capacity is already zero or shared with an isozyme in the base strain, so their perturbation is weaker than the arm's other members by construction.",
+    "Hops are counted on a structural graph. A reaction with zero capacity in the chassis still carries a path, so hops measure network topology and not flux."
+  ]
+}

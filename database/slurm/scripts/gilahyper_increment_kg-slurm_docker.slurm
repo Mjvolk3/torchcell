@@ -107,7 +107,7 @@ NEO4J_DATABASE="${NEO4J_DATABASE:-torchcell}"
 NEO4J_BOLT_URI="${NEO4J_BOLT_URI:-bolt://localhost:7687}"
 ARCHIVE_ROOT="${ARCHIVE_ROOT:-/bulk/biocypher-out}"
 DATABASE_ENV_FILE="${DATABASE_ENV_FILE:-/home/michaelvolk/Documents/projects/torchcell/database/database.env}"
-IMAGE=michaelvolk/tc-neo4j:5.26.28
+IMAGE=michaelvolk/tc-neo4j:5.26.28-browser.1
 CS='cypher-shell -u neo4j -p torchcell'
 
 cd "$TORCHCELL_SRC"

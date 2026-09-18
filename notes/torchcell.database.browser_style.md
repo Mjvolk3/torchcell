@@ -64,3 +64,49 @@ GitHub at
 for anyone to download and upload. `--check` fails when the committed file is behind the
 generator, and `tests/torchcell/database/test_browser_style.py` covers lane assignment,
 rule order, the palette, and the committed file.
+
+## 2026.09.18 - Seeded from the image, so nobody uploads anything
+
+The upload route above still works, but it is no longer needed. The Browser persists
+its styling with redux-persist: the slice `styling` is registered as
+`graphStyling: W9(rI, "graphStyling", qF)` in the served `src.DKmcIxc2.js`, where `W9`
+is `persistReducer({key, storage: U9, version: 1, whitelist: qF, keyPrefix: ""})`,
+`qF = ["nodeStyles", "relStyles", "stylingPriorityOrder"]`, and `U9 = new nw(framework)`
+maps the key to `localStorage["nx.v1.nx.graphStyling"]`. On load redux-persist reads
+that value (each field JSON-encoded on its own, plus `_persist`) and reconciles it over
+the empty initial state. So a value planted under that key before the bundle runs IS
+the styling every visitor sees, the same state "Upload GraSS styles" would leave behind.
+
+`python -m torchcell.database.browser_style` now writes a second file,
+`database/browser/torchcell-seed.js`: the stylesheet's rules converted exactly as the
+importer converts them (`phe`: `color` kept, `diameter` to `size = floor(d / 2 / 0.93)`,
+`caption: "{prop}"` to `[{type: "property", captionKey: "prop"}]`, and the priority
+list is the rules in reverse file order, `NamedThing` last; the bare `node` and
+`relationship` blocks carry no label and are skipped, so `relStyles` stays empty). The
+script writes that value and records the stylesheet's sha256 under
+`nx.v1.nx.torchcellGrassSha256`; while the recorded sha matches it does nothing, so a
+person's own restyling survives until the stylesheet changes. Checked in node with a
+fake `localStorage`: 38 labels seeded, top priority `VisualScorePhenotype`, bottom
+`NamedThing`, a second run changes nothing, a sha change reseeds.
+
+The page's CSP allows scripts only from the server itself (`script-src 'self'
+cdn.segment.com canny.io`), so the seed cannot be inline and there is no static
+directory beside the jar: `database/browser/patch_browser_jar.py`
+([[database.browser.patch_browser_jar]]) adds the file to `neo4j-browser-2026.06.30+0.jar`
+and tags `browser/index.html` ahead of the module script, inside the image build
+`database/docker/Dockerfile.tc-neo4j-browser` ([[database.docker.Dockerfile.tc-neo4j-browser]]),
+tag `michaelvolk/tc-neo4j:5.26.28-browser.1`. The serving container was relaunched on
+it at 03:02 CDT (stop 03:02:22, torchcell online 03:03:03, 41 s of downtime, 99,723,455
+nodes served after as before); `GET /browser/` carries the tag on line 16 and
+`GET /browser/torchcell-seed.js` answers 200 with `Cache-Control: no-store`. The
+live rebuild script defaults `IMAGE` to the new tag and, after the swap, refuses a served
+page without the tag. `--check` covers both generated files; three tests cover the seed
+state, the redux-persist shape, and the committed seed.
+
+The same relaunch made `torchcell` the default and home database of the served store
+(`STOP DATABASE neo4j; CALL dbms.setDefaultDatabase('torchcell'); START DATABASE neo4j`
+on the system database, Enterprise; the `neo4j` database holds 0 nodes), so a Browser
+session lands on torchcell without `:use torchcell`. The setting lives in the system
+database inside `/db/database/data`, so it moves with the store through a swap, and the
+live rebuild now sets it in the build container after `CREATE DATABASE` and asserts it
+on the served store.

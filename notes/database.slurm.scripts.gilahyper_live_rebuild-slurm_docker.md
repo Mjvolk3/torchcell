@@ -149,3 +149,21 @@ store at commit 7715ee35 (51 datasets), and the CSVs copied to `/bulk/biocypher-
 | store | `data.superseded.2026-09-17_20-35-08` (535 G, rollback) | `/db/database/data` (682 G) |
 | generation commit | job 1558 + Nadal increment | 7715ee35 |
 | CSVs | `biocypher-out/2026-09-11_07-02-12` | `biocypher-out/2026-09-16_00-44-53` (634 G) |
+
+## 2026.09.18 - Default database and the seeded Browser image
+
+Two additions after the swap, both applied by hand to the served store first:
+
+- **Default database.** After the imported `torchcell` is online in the build container,
+  the script runs `STOP DATABASE neo4j; CALL dbms.setDefaultDatabase('torchcell'); START
+  DATABASE neo4j` (guarded on `SHOW DEFAULT DATABASE`, so a resume of a store that already
+  has it does nothing) and asserts the default both there and on the served store after
+  the swap. The setting is in the system database under `data/`, so it travels with the
+  store. On the served store it was set by hand on 2026.09.18 (`neo4j` has 0 nodes; the
+  `neo4j` database is started again afterwards and stays online, read-only).
+- **Image.** `IMAGE` defaults to `michaelvolk/tc-neo4j:5.26.28-browser.1`, the base image
+  plus the Browser styling seed ([[database.docker.Dockerfile.tc-neo4j-browser]],
+  [[torchcell.database.browser_style]]). After the swap the script fetches
+  `http://localhost:7474/browser/` and fails if the page has no `torchcell-seed.js` tag,
+  which would mean the serving container came up on an unseeded image. The serving
+  container was relaunched on the new tag by hand (03:02:22 stop, online 03:03:03, 41 s).

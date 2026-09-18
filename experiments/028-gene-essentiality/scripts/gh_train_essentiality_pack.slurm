@@ -70,6 +70,14 @@ while IFS= read -r line || [ -n "$line" ]; do
     ( eval "export $line"; exec bash "$CELL_SH" ) > "$LOG_DIR/028-pack_${JOB}_${stem}.out" 2>&1 &
     pids+=($!)
     names+=("$stem")
+    # STAGGER THE LAUNCHES. Twelve or more cells started at once read the same
+    # processed embedding file (sgd_gene_graph_hot/processed/*.pt) in the same
+    # second, and one of them died in torch.load with "PytorchStreamReader failed
+    # reading file data/2 ... internal miniz error" while its siblings read the same
+    # bytes and went on (jobs 2406, 2414 and 2416 on 2026-09-18, one cell each).
+    # A few seconds between launches puts the readers out of step; the cells still
+    # share the card for the whole run.
+    sleep "${ESS_STAGGER_S:-5}"
 done < "$PACK"
 
 status=0

@@ -145,4 +145,7 @@ echo "snapshot $SNAP"
 # ESS_MEM sizes the job's memory; the launcher's own #SBATCH line is the 36g default and
 # a command-line --mem overrides it. Until 2026-09-18 nothing passed it and every pack ran
 # at 36g (three packs died out of memory); confirm with `sacct -j <id> -o ReqMem`.
-sbatch --mem="${ESS_MEM:-36g}" "$SCRIPT_REL" "$@"
+# ESS_CPUS sizes the job's cores the same way (the launcher's #SBATCH line is 24); pooled
+# cells with no loader workers and no LP workers need far fewer, and a 24-core request
+# pends behind a CPU-heavy job on the node while a card sits idle (2403 on 2026-09-18).
+sbatch --mem="${ESS_MEM:-36g}" --cpus-per-task="${ESS_CPUS:-24}" "$SCRIPT_REL" "$@"

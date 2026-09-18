@@ -1,6 +1,6 @@
 {
   "round": "w39",
-  "n_cells": 15,
+  "n_cells": 18,
   "cells": [
     {
       "stem": "w38_protpathfba_h12l1p1_e200_s2700",
@@ -199,6 +199,72 @@
       "val_curve_range": 0.21894736842105267,
       "wall_time_min": 90.9225519657135,
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/5rr2mzbz"
+    },
+    {
+      "stem": "w39_pathlpelgateflux_h12l1p1_e200_s2703",
+      "arm": "pathlpelgateflux",
+      "seed": 2703,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22772,
+      "n_val": 158,
+      "select_epoch": 67,
+      "select_val_auroc": 0.8427067669172932,
+      "test_auroc_pinned": 0.8898505114083399,
+      "test_auroc_ci_low": 0.8347272941222188,
+      "test_auroc_ci_high": 0.9392479982305941,
+      "test_accuracy_pinned": 0.8205128205128205,
+      "test_recall_essential_pinned": 0.7096774193548387,
+      "median_abs_step": 0.009624060150375868,
+      "val_curve_range": 0.26375939849624064,
+      "wall_time_min": 85.39139066139857,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/ycozyo9g"
+    },
+    {
+      "stem": "w39_pathlpelgateflux_h12l1p1_e200_s2704",
+      "arm": "pathlpelgateflux",
+      "seed": 2704,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22772,
+      "n_val": 158,
+      "select_epoch": 11,
+      "select_val_auroc": 0.7891729323308271,
+      "test_auroc_pinned": 0.7519669551534225,
+      "test_auroc_ci_low": 0.631299566171489,
+      "test_auroc_ci_high": 0.8577980392156861,
+      "test_accuracy_pinned": 0.1641025641025641,
+      "test_recall_essential_pinned": 1.0,
+      "median_abs_step": 0.04030075187969928,
+      "val_curve_range": 0.2231578947368421,
+      "wall_time_min": 91.05827546914419,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/1rj1zlxq"
+    },
+    {
+      "stem": "w39_pathlpelgateflux_h12l1p1_e200_s2705",
+      "arm": "pathlpelgateflux",
+      "seed": 2705,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22772,
+      "n_val": 158,
+      "select_epoch": 35,
+      "select_val_auroc": 0.8396992481203007,
+      "test_auroc_pinned": 0.9108969315499607,
+      "test_auroc_ci_low": 0.8600783221915956,
+      "test_auroc_ci_high": 0.9560004044489383,
+      "test_accuracy_pinned": 0.8666666666666667,
+      "test_recall_essential_pinned": 0.7096774193548387,
+      "median_abs_step": 0.009323308270676733,
+      "val_curve_range": 0.20300751879699253,
+      "wall_time_min": 91.1269397497177,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/tp0lboxw"
     },
     {
       "stem": "w39_pathlpoffgate_h12l1p1_e200_s2700",
@@ -445,28 +511,37 @@
     {
       "arm": "pathlpelgateflux",
       "label": "pathway multi-hot + ProtT5; gated + a head over the solved flux (all reactions)",
-      "n_seeds": 3,
+      "n_seeds": 6,
       "seeds": [
         2700,
         2701,
-        2702
+        2702,
+        2703,
+        2704,
+        2705
       ],
-      "test_auroc_mean": 0.8386441122475742,
-      "test_auroc_sd": 0.10644341572966895,
+      "test_auroc_mean": 0.8447744558090743,
+      "test_auroc_sd": 0.08693722977572423,
       "test_auroc_values": [
         0.8973249409913454,
         0.7157749803304485,
-        0.9028324154209284
+        0.9028324154209284,
+        0.8898505114083399,
+        0.7519669551534225,
+        0.9108969315499607
       ],
-      "pooled_auroc": 0.9065696302124312,
-      "pooled_ci_low": 0.8562412525987252,
-      "pooled_ci_high": 0.9516705077240477,
-      "median_abs_step_mean": 0.020751879699248115,
+      "pooled_auroc": 0.9099134539732494,
+      "pooled_ci_low": 0.8613184824434824,
+      "pooled_ci_high": 0.9540444738572268,
+      "median_abs_step_mean": 0.020250626566416036,
       "n_val": 158,
       "select_epochs": [
         100,
         150,
-        81
+        81,
+        67,
+        11,
+        35
       ]
     }
   ],

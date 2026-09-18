@@ -836,6 +836,34 @@ above the GEM-box gated cell's 0.824. The forced read is unchanged.
 
 \input{tables/round_w36}
 
+\tcfigfit[1.0]{figures/w36_readout_2026-09-17-23-33-07.pdf}{\textbf{Round 20, the gated
+  forms on six seeds and the last forced probes.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w36}.}{fig:w36}
+
+The gated forms are reliable and stop short of the affine. On seeds 2703 to 2705 the
+GEM-box gated cell reads 0.818, 0.807 and 0.787 and the elastic gated cell 0.795,
+0.808 and 0.814; over six seeds the two arms read 0.814 (sd 0.020) and 0.804 (sd 0.013),
+pooled 0.816 and 0.803, twelve seeds of twelve above the gated cell without the solve
+(0.771). Neither reaches the second clause: the GEM-box form's three-seed 0.824 was the
+top of its spread, and six seeds put both forms 0.01 to 0.02 under the affine's 0.821
+(0.814, 0.805 and 0.844 by seed), a gap inside one seed standard deviation of either
+arm. The gate ends at $-0.95$, $0.68$ and $0.80$ on the GEM box and $-1.01$, $-1.41$
+and $-0.79$ on the elastic program: the head uses the column with either sign, and the
+sign is not what the seeds agree on. The forced probes fail as the probe of
+Section~\ref{sec:dual-overlap} predicts. At scale 30 with the faster layer the column
+reads 0.653, 0.548 and 0.690, the middle seed selected at epoch 2 with the maintenance
+slack active on every genotype; at scale 100 with the head's reach at $e^{6}$ it reads
+0.669, 0.619 and 0.669, and the two better seeds end with no gene-owned dual at all,
+the head having pushed every ceiling off the optimum, while the third sits in full
+slack. A wider reach hands the head both exits from the ceilings, above the optimum
+and below the maintenance, and neither one ranks the deletions.
+
 \subsection{Round 21: the gated cell with a head over the solved flux\secstatus{todo}}
 \label{sec:round21}
 

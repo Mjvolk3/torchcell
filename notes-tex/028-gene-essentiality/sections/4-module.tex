@@ -1234,10 +1234,15 @@ as the fold ensemble, the highest transformer ensemble in the document and one n
 with the GO convolution's 0.917 and the scalable form's 0.912
 (Table~\ref{tab:ensembles}); as a fold family it reads 0.920 alone and 0.953
 [0.92, 0.98] with the GO fold models, level with the scalable form's 0.954
-(Table~\ref{tab:family-ensembles-folds}). The 0.838 fold selected epoch 6 with its
-training loss at 1.05, an early peak of the kind the standardized encoding produced
-on every cell, here once in the seventeen $\log(1 + |v|)$ cells run, so the encoding
-makes the early peak rare and not impossible.
+(Table~\ref{tab:family-ensembles-folds}). With three seeds per fold (job 2412, each
+fold model the seed-mean logit) the folds read 0.913, 0.905, 0.921, 0.904 and 0.910
+(mean 0.911) and the ensemble 0.919 [0.87, 0.96], the single-seed number. The 0.838
+fold selected epoch 6 with its training loss at 1.05, an early peak of the kind the
+standardized encoding produced on every cell; its seed 2702 did the same (epoch 22,
+loss 1.02, 0.841) and its seed 2701 did not (epoch 40, 0.908), and no other fold or
+seed did in the twenty-seven $\log(1 + |v|)$ cells run, so the early peak is rare
+under this encoding and, where it occurs, sits with one fold's validation fifth
+rather than with the seed.
 
 \subsection{Round 35: the solve does not substitute for the annotation\secstatus{todo}}
 \label{sec:round35}

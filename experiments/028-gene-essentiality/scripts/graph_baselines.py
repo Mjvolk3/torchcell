@@ -454,7 +454,7 @@ def main() -> None:
     parser.add_argument(
         "--arms",
         default="base",
-        choices=("base", "extra", "folds", "relational", "split", "go"),
+        choices=("base", "extra", "folds", "relational", "split", "go", "go400"),
         help=(
             "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
             "GCN and GATv2. extra: graph convolution on the union with the transformer's "
@@ -571,6 +571,33 @@ def main() -> None:
                 run_arm("GCN", "union of nine", inputs, x, ei, split, index, device)
             )
         out = osp.join(RESULTS, "graph_baselines_go.json")
+    elif args.arms == "go400":
+        # Graph convolution on GO selects epochs 183 to 197 at a 200-epoch budget, so
+        # the three GO rows that matter run to 400 (the round-8 table's 400-epoch rows
+        # are the precedent).
+        go = embedding("go", gene_ids)
+        fba = fba_ratios(gene_ids)
+        ei = edges(graphs["union of nine"], index)
+        feats_go400 = {
+            "GO (400 epochs)": go,
+            "GO+FBA ratios (400 epochs)": np.concatenate([go, fba], axis=1),
+            "ProtT5+GO+FBA ratios (400 epochs)": np.concatenate([t5, go, fba], axis=1),
+        }
+        for inputs, x in feats_go400.items():
+            rows.append(
+                run_arm(
+                    "GCN",
+                    "union of nine",
+                    inputs,
+                    x,
+                    ei,
+                    split,
+                    index,
+                    device,
+                    epochs=400,
+                )
+            )
+        out = osp.join(RESULTS, "graph_baselines_go400.json")
     elif args.arms == "extra":
         chrom = embedding("normalized_chrom_pathways", gene_ids)
         fba = fba_ratios(gene_ids)

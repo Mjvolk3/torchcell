@@ -150,7 +150,10 @@ def gene_annotations() -> tuple[dict[str, int], dict[str, int]]:
 
     root = osp.join(DATA_ROOT, "data/scerevisiae")
     counts: list[dict[str, int]] = []
-    for rel in ("sgd_gene_graph_hot/processed/pathways.pt", "go_term_hot/processed/go.pt"):
+    for rel in (
+        "sgd_gene_graph_hot/processed/pathways.pt",
+        "go_term_hot/processed/go.pt",
+    ):
         data, slices = torch.load(osp.join(root, rel), weights_only=False)
         emb = next(iter(data.embeddings.values()))
         ids = list(data.id)
@@ -168,13 +171,17 @@ def fba_ratios() -> dict[str, float]:
     return {str(g): float(r) for g, r in zip(df["gene"], df["YPD"])}
 
 
-def figure(rows: list[GeneRow], arms: list[str], agreement: dict[str, dict[str, float]]) -> str:
+def figure(
+    rows: list[GeneRow], arms: list[str], agreement: dict[str, dict[str, float]]
+) -> str:
     apply_paper_style()
     fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(110)))
     gs = fig.add_gridspec(1, 3, width_ratios=[2.2, 2.2, 1.3], wspace=0.35)
     for k, (essential, title) in enumerate(((1, "essential"), (0, "nonessential"))):
         ax = fig.add_subplot(gs[0, k])
-        sub = sorted([r for r in rows if r.essential == essential], key=lambda r: -r.mean_misrank)
+        sub = sorted(
+            [r for r in rows if r.essential == essential], key=lambda r: -r.mean_misrank
+        )
         x = np.arange(len(sub))
         for j, arm in enumerate(arms):
             y = [r.misrank[arm] for r in sub]
@@ -188,7 +195,20 @@ def figure(rows: list[GeneRow], arms: list[str], agreement: dict[str, dict[str, 
             ax.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, frameon=False)
     ax = fig.add_subplot(gs[0, 2])
     m = np.array([[agreement[a][b] for b in arms] for a in arms])
-    im = ax.imshow(m, vmin=0, vmax=1, cmap="Greys")
+    # pcolormesh draws the cells as vector rectangles; imshow would rasterize them.
+    im = ax.pcolormesh(
+        np.arange(len(arms) + 1) - 0.5,
+        np.arange(len(arms) + 1) - 0.5,
+        m,
+        vmin=0,
+        vmax=1,
+        cmap="Greys",
+        edgecolors="white",
+        linewidth=0.3,
+    )
+    ax.set_xlim(-0.5, len(arms) - 0.5)
+    ax.set_ylim(len(arms) - 0.5, -0.5)
+    ax.set_aspect("equal")
     short = [a.split(" (")[0] for a in arms]
     ax.set_xticks(range(len(arms)))
     ax.set_xticklabels(short, rotation=90)
@@ -196,10 +216,19 @@ def figure(rows: list[GeneRow], arms: list[str], agreement: dict[str, dict[str, 
     ax.set_yticklabels(short)
     for i in range(len(arms)):
         for j in range(len(arms)):
-            ax.text(j, i, f"{m[i, j]:.2f}", ha="center", va="center", fontsize=6,
-                    color="white" if m[i, j] > 0.6 else "black")
+            ax.text(
+                j,
+                i,
+                f"{m[i, j]:.2f}",
+                ha="center",
+                va="center",
+                fontsize=6,
+                color="white" if m[i, j] > 0.6 else "black",
+            )
     ax.set_title("c", loc="left", fontweight="bold")
-    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Spearman of per-gene misrank")
+    fig.colorbar(
+        im, ax=ax, fraction=0.046, pad=0.04, label="Spearman of per-gene misrank"
+    )
     os.makedirs(IMAGE_DIR, exist_ok=True)
     base = osp.join(IMAGE_DIR, f"hard_genes_{timestamp()}")
     savefig_true_size_svg(fig, base + ".svg")
@@ -248,13 +277,19 @@ def main() -> None:
     arms = list(per_arm)
     agreement = {
         a: {
-            b: float(spearmanr([r.misrank[a] for r in rows], [r.misrank[b] for r in rows])[0])
+            b: float(
+                spearmanr([r.misrank[a] for r in rows], [r.misrank[b] for r in rows])[0]
+            )
             for b in arms
         }
         for a in arms
     }
-    ess_sorted = sorted([r for r in rows if r.essential == 1], key=lambda r: -r.mean_misrank)
-    non_sorted = sorted([r for r in rows if r.essential == 0], key=lambda r: -r.mean_misrank)
+    ess_sorted = sorted(
+        [r for r in rows if r.essential == 1], key=lambda r: -r.mean_misrank
+    )
+    non_sorted = sorted(
+        [r for r in rows if r.essential == 0], key=lambda r: -r.mean_misrank
+    )
     fig_path = figure(rows, arms, agreement)
     report = Report(
         arms=ARMS,
@@ -272,10 +307,14 @@ def main() -> None:
     print("arms:", {a: len(c) for a, c in per_arm.items()})
     print("hardest essential (mean misrank, pathways, GO terms, FBA ratio YPD):")
     for r in ess_sorted[:15]:
-        print(f"  {r.gene} {r.mean_misrank:.2f} p{r.n_pathways} g{r.n_go_terms} fba {r.fba_ratio_ypd}")
+        print(
+            f"  {r.gene} {r.mean_misrank:.2f} p{r.n_pathways} g{r.n_go_terms} fba {r.fba_ratio_ypd}"
+        )
     print("hardest nonessential:")
     for r in non_sorted[:15]:
-        print(f"  {r.gene} {r.mean_misrank:.2f} p{r.n_pathways} g{r.n_go_terms} fba {r.fba_ratio_ypd}")
+        print(
+            f"  {r.gene} {r.mean_misrank:.2f} p{r.n_pathways} g{r.n_go_terms} fba {r.fba_ratio_ypd}"
+        )
     print("agreement (Spearman of per-gene misrank):")
     for a in arms:
         print("  ", a, {b.split(" (")[0]: round(v, 2) for b, v in agreement[a].items()})

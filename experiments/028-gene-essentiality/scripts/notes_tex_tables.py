@@ -1024,7 +1024,9 @@ def hard_genes() -> str | None:
     with open(src) as fh:
         report = json.load(fh)
     arms = list(report["arms"])
-    short = {a: a.split(" (")[0] for a in arms}
+    # Column codes, spelled out in the caption, so nine columns fit the text block.
+    short = {a: f"A{k + 1}" for k, a in enumerate(arms)}
+    legend = "; ".join(f"{short[a]}: {a}" for a in arms)
     by_gene = {g["gene"]: g for g in report["genes"]}
     rows = []
     for label, genes in (
@@ -1050,6 +1052,7 @@ def hard_genes() -> str | None:
         "the arm's cells; one minus the class mean of the misrank is that class's share "
         "of the AUROC. FBA is the knockout-to-wild-type growth ratio on YPD; pathways "
         "and GO the gene's counts in the pathway multi-hot and the propagated GO vector. "
+        f"Arms: {legend}. "
         "Written by \\texttt{hard\\_genes.py} from the per-gene prediction dumps.}\n"
         "  \\label{tab:hard-genes}\n"
         f"  \\begin{{tabular}}{{@{{}}l{'r' * len(arms)}rrr@{{}}}}\n    \\hline\n"

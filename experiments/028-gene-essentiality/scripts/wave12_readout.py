@@ -508,6 +508,19 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["pathlpelgateflux", "pathlpelgateflux400"],
     ),
+    # Round 31: the layer-free form. The deletion's own pFBA vector precomputed and
+    # appended to the FBA affine (no flux layer in the graph), with and without the
+    # eight wild-type solve statistics, against the affine and the cached-solve flux
+    # head on the same pathway input; six seeds each.
+    "w47": (
+        [
+            "w38_protpathfba_h12l1p1_e200_s*.json",
+            "w43_pathlpoffgateflux_h12l1p1_e200_s*.json",
+            "w47_pathfbapfba_h12l1p1_e200_s*.json",
+            "w47_pathfbastatspfba_h12l1p1_e200_s*.json",
+        ],
+        ["protpathfba", "pathlpoffgateflux", "pathfbapfba", "pathfbastatspfba"],
+    ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
     "w44": (
@@ -659,6 +672,8 @@ ARM_LABELS = {
     "pathpool": "pathway multi-hot + ProtT5 backbone, no readout",
     "pathlpoffgatefluxfirst": "the same cell, first attempt (three survivors of the six-cell pack; per-gene dumps overwritten)",
     "pathlpoffgateflux": "pathway multi-hot + ProtT5; gated + a head over the GEM-box solve's flux (cached, nothing learned in the layer)",
+    "pathfbapfba": "pathway multi-hot + ProtT5; FBA affine + the deletion's pFBA vector as an input (no flux layer)",
+    "pathfbastatspfba": "the same, with the eight wild-type solve statistics beside the pFBA vector",
     "protgofba": "GO multi-hot (propagated, 2,362) + ProtT5 backbone + FBA ratios",
     "protgobpfba": "GO biological process (1,580) + ProtT5 backbone + FBA ratios",
     "gofba": "GO multi-hot backbone + FBA ratios",

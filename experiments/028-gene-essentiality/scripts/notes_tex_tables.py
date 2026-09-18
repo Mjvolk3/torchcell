@@ -18,6 +18,7 @@ import gzip
 import json
 import os
 import os.path as osp
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -361,6 +362,14 @@ ROUND_CAPTIONS = {
         "2705 land; the head over the 274 exchange fluxes), against the head over the "
         "2,709 gene-owned fluxes, and the head over the flux of the GEM-box solve with "
         "no learned ceilings. Constraint scale 0, batch 32, class weight, 200 epochs.",
+    ),
+    "w47": (
+        "Round 31, the layer-free form",
+        "The round-22 affine on ProtT5 with the pathway multi-hot and the round-27 head "
+        "over the cached GEM-box solve (the comparators), against the deletion's own "
+        "pFBA flux vector precomputed and appended to the affine's input with no flux "
+        "layer in the graph, and the same with the eight wild-type solve statistics "
+        "beside it. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
     "w45": (
         "Round 29, the unfit seed under a 400-epoch budget",

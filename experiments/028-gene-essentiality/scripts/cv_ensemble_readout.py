@@ -81,6 +81,7 @@ class EnsembleReport(BaseModel):
     ensemble_auroc: float = Field(description="AUROC of the per-gene mean logit.")
     ensemble_ci_low: float
     ensemble_ci_high: float
+    seeds_per_fold: int = 1
     note: str
 
 
@@ -144,20 +145,71 @@ def load_fold(result_file: str) -> tuple[FoldScore, dict[str, float], dict[str, 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--prefix", default="w14_cv")
+    parser.add_argument(
+        "--seeds",
+        type=int,
+        nargs="+",
+        default=[2700],
+        help=(
+            "Seeds per fold. With more than one, each fold model is the per-gene mean "
+            "logit over its seeds (as graph_baselines.py --seeds averages), the fold "
+            "AUROC scores that mean, and the ensemble averages the K seed-averaged "
+            "folds; the report is written as <prefix>_s<n>_ensemble.json."
+        ),
+    )
     args = parser.parse_args()
     files = sorted(glob.glob(osp.join(RESULTS, f"{args.prefix}*_s*.json")))
-    files = [f for f in files if re.search(r"_s\d+\.json$", f)]
-    assert files, f"no {args.prefix}* result files under {RESULTS}."
+    files = [
+        f
+        for f in files
+        if (m := re.search(r"_s(\d+)\.json$", f)) and int(m.group(1)) in args.seeds
+    ]
+    assert files, (
+        f"no {args.prefix}* result files for seeds {args.seeds} under {RESULTS}."
+    )
     folds: list[FoldScore] = []
     per_fold_logits: list[dict[str, float]] = []
     labels: dict[str, int] | None = None
+    # Group by fold index (the digits between the prefix and the first underscore).
+    by_fold: dict[str, list[str]] = {}
     for f in files:
-        score, logits, lab = load_fold(f)
-        folds.append(score)
-        per_fold_logits.append(logits)
-        # Every fold pins the SAME released held-out genes with the same labels.
-        assert labels is None or lab == labels, f"{f} scores a different gene set."
-        labels = lab
+        fold_id = re.match(rf".*{re.escape(args.prefix)}(\d+)_", osp.basename(f))
+        assert fold_id, f
+        by_fold.setdefault(fold_id.group(1), []).append(f)
+    for fold_id in sorted(by_fold, key=int):
+        seed_files = by_fold[fold_id]
+        assert len(seed_files) == len(args.seeds), (fold_id, seed_files, args.seeds)
+        scores, seed_logits = [], []
+        for f in seed_files:
+            score, logits, lab = load_fold(f)
+            scores.append(score)
+            seed_logits.append(logits)
+            # Every fold pins the SAME released held-out genes with the same labels.
+            assert labels is None or lab == labels, f"{f} scores a different gene set."
+            labels = lab
+        assert labels is not None
+        fold_genes = sorted(labels)
+        fold_logit = {
+            g: float(np.mean([lg[g] for lg in seed_logits])) for g in fold_genes
+        }
+        if len(seed_files) == 1:
+            folds.append(scores[0])
+        else:
+            y_f = np.array([labels[g] for g in fold_genes])
+            s_f = np.array([fold_logit[g] for g in fold_genes])
+            point_f, lo_f, hi_f = bootstrap(y_f, s_f)
+            folds.append(
+                FoldScore(
+                    stem=f"{args.prefix}{fold_id} (seeds {', '.join(map(str, args.seeds))})",
+                    split_file=scores[0].split_file,
+                    select_epoch=-1,
+                    n_genes=len(fold_genes),
+                    auroc=point_f,
+                    ci_low=lo_f,
+                    ci_high=hi_f,
+                )
+            )
+        per_fold_logits.append(fold_logit)
     assert labels is not None
     genes = sorted(labels)
     mean_logit = np.array(
@@ -175,14 +227,22 @@ def main() -> None:
         ensemble_auroc=point,
         ensemble_ci_low=lo,
         ensemble_ci_high=hi,
+        seeds_per_fold=len(args.seeds),
         note=(
             "The ensemble is the per-gene mean of the fold models' logits on the released "
             "held-out genes, scored once; this is the protocol behind FCL's published test "
             "AUROC. The fold mean is the average of K single-model AUROCs and is the "
             "number to compare with a single-split cell."
+            + (
+                f" Each fold model is the mean logit over seeds {args.seeds}, and the "
+                "fold AUROC scores that mean."
+                if len(args.seeds) > 1
+                else ""
+            )
         ),
     )
-    out = osp.join(RESULTS, f"{args.prefix}_ensemble.json")
+    suffix = f"_s{len(args.seeds)}" if len(args.seeds) > 1 else ""
+    out = osp.join(RESULTS, f"{args.prefix}{suffix}_ensemble.json")
     with open(out, "w") as fh:
         json.dump(report.model_dump(), fh, indent=2)
     for s in folds:

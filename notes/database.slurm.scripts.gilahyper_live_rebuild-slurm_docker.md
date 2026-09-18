@@ -120,3 +120,11 @@ The validate stage now reopens the directory (`chmod 755` on `biocypher-out`,
 host-side read, and the resume preflight accepts a `running` build container as well as
 an `exited` one. After the swap the serving container closes the directory again; the
 archive step copies inside a container as uid 7474 and is unaffected.
+
+**Third resume failure, the count query.** Job 2325 read the CSVs (51 expected rows) and
+then failed on the live-count query: Neo4j 5.26 rejects
+`RETURN d.id + '=' + toString(count(e))` as an aggregation expression that contains an
+implicit grouping key. The query now returns `d.id` and `count(e)` as two columns and the
+shell joins them; both sides are sorted in the C locale. Run by hand against the build
+container before the fix landed, the rewritten query matched the CSV counts for all 51
+datasets (`diff` empty), so the store is validated and the next resume proceeds to the swap.

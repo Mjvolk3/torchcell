@@ -306,9 +306,14 @@ for part in group.part_paths:
 for name, n in sorted(counts.items()):
     print(f"{name}={n}")
 EOF
+# Neo4j 5.26 rejects an aggregation expression that also carries a grouping key
+# (d.id + '=' + toString(count(e)) failed job 2325 as "implicit grouping"), so the id and
+# the count are returned as two columns and joined here. Both files are sorted in the C
+# locale, the order Python's sorted() produced for the CSV side.
 docker exec "$BUILD_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain \
-    "MATCH (d:Dataset)<-[:ExperimentMemberOf]-(e:Experiment) RETURN d.id + '=' + toString(count(e)) AS row ORDER BY row;" \
-    | tail -n +2 | tr -d '"' | sort > "$OUTDIR/${JOB}_live.txt"
+    "MATCH (d:Dataset)<-[:ExperimentMemberOf]-(e:Experiment) RETURN d.id AS id, count(e) AS n ORDER BY id;" \
+    | tail -n +2 | tr -d '" ' | tr ',' '=' | LC_ALL=C sort > "$OUTDIR/${JOB}_live.txt"
+LC_ALL=C sort -o "$EXPECTED" "$EXPECTED"
 if diff "$EXPECTED" "$OUTDIR/${JOB}_live.txt" | tee -a "$VALIDATION"; then
     echo "per-dataset experiment counts: live == CSV for all $N_DATASETS datasets" | tee -a "$VALIDATION"
 else

@@ -1,0 +1,2816 @@
+{
+  "what_this_is": "A descriptive count of how far a perturbation seed reaches on annotation graphs, and how many of the Yeast9 reactions in that reach sit off the measured locus. It is not a titer, a flux, or an interaction score, and it does not test any mechanism connecting reach to an interaction.",
+  "model_path": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+  "model_sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+  "yeast9": {
+    "n_reactions": 4131,
+    "n_metabolites": 2806,
+    "n_genes": 1161
+  },
+  "class_sizes": {
+    "regulator": 10,
+    "pathway enzyme": 13,
+    "adjacent enzyme": 62
+  },
+  "adjacent_enzyme_rule": "a Yeast9 gene that is not one of the thirteen pathway genes and whose reactions share at least one non-currency metabolite with a reaction catalyzed by a pathway gene",
+  "n_shared_metabolites": 113,
+  "readout_locus": {
+    "n_reactions": 69,
+    "exchanges": {
+      "r_1993": "palmitate",
+      "r_1994": "palmitoleate",
+      "r_2055": "stearate",
+      "r_2189": "oleate",
+      "r_2193": "myristate"
+    }
+  },
+  "currency_metabolites": [
+    "ADP",
+    "AMP",
+    "ATP",
+    "H+",
+    "H2O",
+    "NAD",
+    "NADH",
+    "NADP(+)",
+    "NADPH",
+    "carbon dioxide",
+    "coenzyme A",
+    "diphosphate",
+    "oxygen",
+    "phosphate"
+  ],
+  "graphs": {
+    "physical": {
+      "directed": false,
+      "n_nodes": 5721,
+      "n_edges": 139463
+    },
+    "regulatory": {
+      "directed": true,
+      "n_nodes": 6582,
+      "n_edges": 39636
+    },
+    "tflink": {
+      "directed": true,
+      "n_nodes": 5074,
+      "n_edges": 200801
+    },
+    "string12_0_neighborhood": {
+      "directed": false,
+      "n_nodes": 2191,
+      "n_edges": 146713
+    },
+    "string12_0_fusion": {
+      "directed": false,
+      "n_nodes": 3081,
+      "n_edges": 11787
+    },
+    "string12_0_cooccurence": {
+      "directed": false,
+      "n_nodes": 2601,
+      "n_edges": 11085
+    },
+    "string12_0_coexpression": {
+      "directed": false,
+      "n_nodes": 6474,
+      "n_edges": 996199
+    },
+    "string12_0_experimental": {
+      "directed": false,
+      "n_nodes": 6016,
+      "n_edges": 822094
+    },
+    "string12_0_database": {
+      "directed": false,
+      "n_nodes": 4027,
+      "n_edges": 72617
+    },
+    "yeast9_metabolic": {
+      "directed": false,
+      "n_nodes": 1101,
+      "n_edges": 11319,
+      "currency_incidences_dropped": 7220
+    },
+    "union": {
+      "directed": false,
+      "n_nodes": 6997,
+      "n_edges_directed_count": 2847665
+    }
+  },
+  "depths": [
+    1,
+    2,
+    3
+  ],
+  "per_graph": {
+    "physical": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 49.5,
+            "q1": 30.75,
+            "q3": 68.5,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2.0,
+            "q1": 0.25,
+            "q3": 11.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 0.8538461538461539,
+            "q3": 1.0,
+            "n": 7
+          },
+          "out_degree": {
+            "median": 49.5,
+            "q1": 30.75,
+            "q3": 68.5,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 5207.0,
+            "q1": 5024.0,
+            "q3": 5236.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2487.0,
+            "q1": 2366.0,
+            "q3": 2518.75,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9786093229951967,
+            "q1": 0.9759626382005337,
+            "q3": 0.9831286427976685,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 49.5,
+            "q1": 30.75,
+            "q3": 68.5,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 5718.0,
+            "q1": 5717.25,
+            "q3": 5718.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.976375046142488,
+            "q1": 0.976375046142488,
+            "q3": 0.976375046142488,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 49.5,
+            "q1": 30.75,
+            "q3": 68.5,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 52.0,
+            "q1": 39.0,
+            "q3": 93.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 29.0,
+            "q1": 7.0,
+            "q3": 128.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9877300613496932,
+            "q1": 0.9637681159420289,
+            "q3": 1.0,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 52.0,
+            "q1": 39.0,
+            "q3": 93.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 5136.0,
+            "q1": 4754.0,
+            "q3": 5352.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 2499.0,
+            "q1": 2362.0,
+            "q3": 2594.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9760029996250469,
+            "q1": 0.9754098360655737,
+            "q3": 0.9792785878741366,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 52.0,
+            "q1": 39.0,
+            "q3": 93.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 5718.0,
+            "q1": 5716.0,
+            "q3": 5718.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9767355982274741,
+            "q1": 0.976375046142488,
+            "q3": 0.9770964166974511,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 52.0,
+            "q1": 39.0,
+            "q3": 93.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 21.5,
+            "q1": 13.0,
+            "q3": 37.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2.0,
+            "q1": 0.0,
+            "q3": 19.5,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 43
+          },
+          "out_degree": {
+            "median": 21.5,
+            "q1": 13.0,
+            "q3": 37.0,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 5009.5,
+            "q1": 4646.0,
+            "q3": 5290.5,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2451.5,
+            "q1": 2303.0,
+            "q3": 2517.5,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.981781119750871,
+            "q1": 0.9761576160576386,
+            "q3": 0.9835012567051475,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 21.5,
+            "q1": 13.0,
+            "q3": 37.0,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 5718.0,
+            "q1": 5715.0,
+            "q3": 5718.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2644.0,
+            "q1": 2638.0,
+            "q3": 2645.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9763663220088626,
+            "q1": 0.9763138415988157,
+            "q3": 0.976375046142488,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 21.5,
+            "q1": 13.0,
+            "q3": 37.0,
+            "n": 62
+          }
+        }
+      }
+    },
+    "regulatory": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 672.5,
+            "q1": 436.75,
+            "q3": 869.5,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 482.5,
+            "q1": 343.25,
+            "q3": 617.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9879098958840129,
+            "q1": 0.9749684098676086,
+            "q3": 0.9971857410881801,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 672.5,
+            "q1": 436.75,
+            "q3": 869.5,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 2605.0,
+            "q1": 2275.5,
+            "q3": 3382.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 1457.0,
+            "q1": 1155.5,
+            "q3": 1770.25,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.965640387691459,
+            "q1": 0.9597583493898523,
+            "q3": 0.9704691979914144,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 672.5,
+            "q1": 436.75,
+            "q3": 869.5,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 5397.5,
+            "q1": 4724.25,
+            "q3": 5647.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2424.0,
+            "q1": 2280.0,
+            "q3": 2484.5,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9745920674283561,
+            "q1": 0.9740969269732545,
+            "q3": 0.9753491022869738,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 672.5,
+            "q1": 436.75,
+            "q3": 869.5,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": NaN,
+            "q1": NaN,
+            "q3": NaN,
+            "n": 0
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": NaN,
+            "q1": NaN,
+            "q3": NaN,
+            "n": 0
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": NaN,
+            "q1": NaN,
+            "q3": NaN,
+            "n": 0
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 1
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.8440366972477065,
+            "q1": 0.8440366972477065,
+            "q3": 0.8440366972477065,
+            "n": 1
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9710391822827938,
+            "q1": 0.9710391822827938,
+            "q3": 0.9710391822827938,
+            "n": 1
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          }
+        }
+      }
+    },
+    "tflink": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 484.0,
+            "q1": 62.75,
+            "q3": 800.25,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 475.5,
+            "q1": 43.25,
+            "q3": 621.5,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.972805410736931,
+            "q1": 0.9561293698162934,
+            "q3": 0.9907178217821782,
+            "n": 8
+          },
+          "out_degree": {
+            "median": 484.0,
+            "q1": 62.75,
+            "q3": 800.25,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 4939.5,
+            "q1": 1042.25,
+            "q3": 5032.75,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2591.5,
+            "q1": 624.5,
+            "q3": 2612.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.976083707025411,
+            "q1": 0.9759013454949743,
+            "q3": 0.9760881723527028,
+            "n": 8
+          },
+          "out_degree": {
+            "median": 484.0,
+            "q1": 62.75,
+            "q3": 800.25,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 5073.0,
+            "q1": 1267.75,
+            "q3": 5073.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2614.0,
+            "q1": 655.0,
+            "q3": 2614.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9761015683345781,
+            "q1": 0.9761015683345781,
+            "q3": 0.9761015683345781,
+            "n": 8
+          },
+          "out_degree": {
+            "median": 484.0,
+            "q1": 62.75,
+            "q3": 800.25,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": NaN,
+            "q1": NaN,
+            "q3": NaN,
+            "n": 0
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": NaN,
+            "q1": NaN,
+            "q3": NaN,
+            "n": 0
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": NaN,
+            "q1": NaN,
+            "q3": NaN,
+            "n": 0
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9909784871616932,
+            "q1": 0.9909784871616932,
+            "q3": 0.9909784871616932,
+            "n": 1
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9759939984996249,
+            "q1": 0.9759939984996249,
+            "q3": 0.9759939984996249,
+            "n": 1
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9759939984996249,
+            "q1": 0.9759939984996249,
+            "q3": 0.9759939984996249,
+            "n": 1
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 62
+          }
+        }
+      }
+    },
+    "string12_0_neighborhood": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 2
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.961897016669385,
+            "q1": 0.9617824020804894,
+            "q3": 0.9620116312582805,
+            "n": 2
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9652862362971986,
+            "q1": 0.9652862362971986,
+            "q3": 0.9652862362971986,
+            "n": 2
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 105.0,
+            "q1": 92.0,
+            "q3": 126.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 265.0,
+            "q1": 112.0,
+            "q3": 299.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9047485135786598,
+            "q1": 0.9000713188501207,
+            "q3": 0.9393828279499011,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 105.0,
+            "q1": 92.0,
+            "q3": 126.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 1807.0,
+            "q1": 1742.0,
+            "q3": 1878.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 1503.0,
+            "q1": 1479.0,
+            "q3": 1514.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9649346473771152,
+            "q1": 0.9637342135476464,
+            "q3": 0.9666322931952945,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 105.0,
+            "q1": 92.0,
+            "q3": 126.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 2187.0,
+            "q1": 2184.0,
+            "q3": 2188.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 1585.0,
+            "q1": 1584.0,
+            "q3": 1585.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9664634146341463,
+            "q1": 0.9652862362971986,
+            "q3": 0.9676434676434676,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 105.0,
+            "q1": 92.0,
+            "q3": 126.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 64.5,
+            "q1": 2.5,
+            "q3": 188.5,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 115.5,
+            "q1": 1.0,
+            "q3": 314.5,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9777205461532172,
+            "q1": 0.9304439221895953,
+            "q3": 1.0,
+            "n": 48
+          },
+          "out_degree": {
+            "median": 64.5,
+            "q1": 2.5,
+            "q3": 188.5,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 1695.0,
+            "q1": 151.0,
+            "q3": 1958.75,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 1464.5,
+            "q1": 186.0,
+            "q3": 1529.75,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9640605296343001,
+            "q1": 0.9627085258030403,
+            "q3": 0.9645356950468565,
+            "n": 48
+          },
+          "out_degree": {
+            "median": 64.5,
+            "q1": 2.5,
+            "q3": 188.5,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 2184.5,
+            "q1": 1930.5,
+            "q3": 2188.75,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 1580.0,
+            "q1": 1507.75,
+            "q3": 1584.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9652439024390244,
+            "q1": 0.9651109386348424,
+            "q3": 0.9652650822669104,
+            "n": 48
+          },
+          "out_degree": {
+            "median": 64.5,
+            "q1": 2.5,
+            "q3": 188.5,
+            "n": 62
+          }
+        }
+      }
+    },
+    "string12_0_fusion": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 4.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.75,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 3
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 4.0,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 18.75,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 10.75,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 4
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 4.0,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 146.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 69.75,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9748444976076556,
+            "q1": 0.9608819439616214,
+            "q3": 0.9914772727272727,
+            "n": 4
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 4.0,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 6.0,
+            "q1": 4.0,
+            "q3": 7.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 3.0,
+            "q1": 0.0,
+            "q3": 7.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.7222222222222222,
+            "q1": 0.39999999999999997,
+            "q3": 0.9615384615384616,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 6.0,
+            "q1": 4.0,
+            "q3": 7.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 51.0,
+            "q1": 45.0,
+            "q3": 96.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 56.0,
+            "q1": 20.0,
+            "q3": 83.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.8537057522123894,
+            "q1": 0.6768292682926829,
+            "q3": 0.9751414027149321,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 6.0,
+            "q1": 4.0,
+            "q3": 7.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 466.0,
+            "q1": 340.0,
+            "q3": 769.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 360.0,
+            "q1": 275.0,
+            "q3": 494.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9513569547320142,
+            "q1": 0.9374363686027166,
+            "q3": 0.962702536104262,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 6.0,
+            "q1": 4.0,
+            "q3": 7.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 3.0,
+            "q1": 2.0,
+            "q3": 6.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2.0,
+            "q1": 0.0,
+            "q3": 5.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 39
+          },
+          "out_degree": {
+            "median": 3.0,
+            "q1": 2.0,
+            "q3": 6.0,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 39.5,
+            "q1": 13.0,
+            "q3": 77.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 29.0,
+            "q1": 6.25,
+            "q3": 61.75,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 50
+          },
+          "out_degree": {
+            "median": 3.0,
+            "q1": 2.0,
+            "q3": 6.0,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 312.0,
+            "q1": 111.5,
+            "q3": 565.75,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 252.0,
+            "q1": 74.75,
+            "q3": 461.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9753520362776367,
+            "q1": 0.9585538752362949,
+            "q3": 0.9954381105425636,
+            "n": 50
+          },
+          "out_degree": {
+            "median": 3.0,
+            "q1": 2.0,
+            "q3": 6.0,
+            "n": 62
+          }
+        }
+      }
+    },
+    "string12_0_cooccurence": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 2.5,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 1
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 2.5,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 6.25,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.75,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 3
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 2.5,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 18.25,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 1.5,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 3
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 2.5,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 2.0,
+            "q1": 1.0,
+            "q3": 3.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.30000000000000004,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 2.0,
+            "q1": 1.0,
+            "q3": 3.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 3.0,
+            "q1": 1.0,
+            "q3": 3.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 1.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.6666666666666666,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 2.0,
+            "q1": 1.0,
+            "q3": 3.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 3.0,
+            "q1": 1.0,
+            "q3": 3.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 1.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.7083333333333333,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 2.0,
+            "q1": 1.0,
+            "q3": 3.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 1.0,
+            "q1": 0.0,
+            "q3": 1.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 1.0,
+            "q1": 0.0,
+            "q3": 2.75,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 34
+          },
+          "out_degree": {
+            "median": 1.0,
+            "q1": 0.0,
+            "q3": 1.0,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 1.0,
+            "q1": 0.0,
+            "q3": 2.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 1.0,
+            "q1": 0.0,
+            "q3": 6.25,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 35
+          },
+          "out_degree": {
+            "median": 1.0,
+            "q1": 0.0,
+            "q3": 1.0,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 1.0,
+            "q1": 0.0,
+            "q3": 2.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 1.0,
+            "q1": 0.0,
+            "q3": 9.25,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 35
+          },
+          "out_degree": {
+            "median": 1.0,
+            "q1": 0.0,
+            "q3": 1.0,
+            "n": 62
+          }
+        }
+      }
+    },
+    "string12_0_coexpression": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 240.0,
+            "q1": 148.25,
+            "q3": 373.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 85.0,
+            "q1": 46.75,
+            "q3": 115.5,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9916666666666667,
+            "q1": 0.9401266766020865,
+            "q3": 1.0,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 240.0,
+            "q1": 148.25,
+            "q3": 373.0,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 5475.5,
+            "q1": 5291.0,
+            "q3": 5559.75,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2627.0,
+            "q1": 2463.25,
+            "q3": 2641.5,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.976216546750966,
+            "q1": 0.9746653967954823,
+            "q3": 0.9763444810349126,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 240.0,
+            "q1": 148.25,
+            "q3": 373.0,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 6411.5,
+            "q1": 6403.25,
+            "q3": 6414.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.976375046142488,
+            "q1": 0.976375046142488,
+            "q3": 0.976375046142488,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 240.0,
+            "q1": 148.25,
+            "q3": 373.0,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 558.0,
+            "q1": 413.0,
+            "q3": 644.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 898.0,
+            "q1": 796.0,
+            "q3": 989.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9398843930635838,
+            "q1": 0.9366700715015321,
+            "q3": 0.9531428571428572,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 558.0,
+            "q1": 413.0,
+            "q3": 644.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 5810.0,
+            "q1": 5695.0,
+            "q3": 5873.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2644.0,
+            "q3": 2645.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9767355982274741,
+            "q1": 0.976375046142488,
+            "q3": 0.9770964166974511,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 558.0,
+            "q1": 413.0,
+            "q3": 644.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 6429.0,
+            "q1": 6424.0,
+            "q3": 6437.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9767355982274741,
+            "q1": 0.976375046142488,
+            "q3": 0.9770964166974511,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 558.0,
+            "q1": 413.0,
+            "q3": 644.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 290.5,
+            "q1": 194.0,
+            "q3": 499.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 545.5,
+            "q1": 341.75,
+            "q3": 751.5,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9454534576489346,
+            "q1": 0.9316297979000392,
+            "q3": 0.9736827625671274,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 290.5,
+            "q1": 194.0,
+            "q3": 499.0,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 5486.5,
+            "q1": 5328.25,
+            "q3": 5723.75,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2636.0,
+            "q1": 2626.0,
+            "q3": 2642.75,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9762962962962963,
+            "q1": 0.9762081784386617,
+            "q3": 0.9763554071716288,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 290.5,
+            "q1": 194.0,
+            "q3": 499.0,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 6415.5,
+            "q1": 6392.25,
+            "q3": 6430.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2644.0,
+            "q1": 2638.0,
+            "q3": 2645.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9763663220088626,
+            "q1": 0.9763138415988157,
+            "q3": 0.976375046142488,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 290.5,
+            "q1": 194.0,
+            "q3": 499.0,
+            "n": 62
+          }
+        }
+      }
+    },
+    "string12_0_experimental": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 342.5,
+            "q1": 202.0,
+            "q3": 590.25,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 116.5,
+            "q1": 55.0,
+            "q3": 171.5,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.964881009731188,
+            "q1": 0.9052012578616353,
+            "q3": 1.0,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 342.5,
+            "q1": 202.0,
+            "q3": 590.25,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 5549.5,
+            "q1": 5447.75,
+            "q3": 5654.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2629.0,
+            "q1": 2616.25,
+            "q3": 2643.75,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9763181582055473,
+            "q1": 0.9761638634589455,
+            "q3": 0.9763663220088626,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 342.5,
+            "q1": 202.0,
+            "q3": 590.25,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 6007.0,
+            "q1": 6004.0,
+            "q3": 6010.75,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.976375046142488,
+            "q1": 0.976375046142488,
+            "q3": 0.976375046142488,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 342.5,
+            "q1": 202.0,
+            "q3": 590.25,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 388.0,
+            "q1": 309.0,
+            "q3": 521.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 463.0,
+            "q1": 316.0,
+            "q3": 517.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9204339963833634,
+            "q1": 0.8947368421052632,
+            "q3": 0.9590909090909091,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 388.0,
+            "q1": 309.0,
+            "q3": 521.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 5562.0,
+            "q1": 5445.0,
+            "q3": 5629.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 2640.0,
+            "q1": 2629.0,
+            "q3": 2641.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9764749813293503,
+            "q1": 0.9763575914296269,
+            "q3": 0.9770625231224566,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 388.0,
+            "q1": 309.0,
+            "q3": 521.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 6007.0,
+            "q1": 6004.0,
+            "q3": 6010.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9767355982274741,
+            "q1": 0.976375046142488,
+            "q3": 0.9770964166974511,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 388.0,
+            "q1": 309.0,
+            "q3": 521.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 150.0,
+            "q1": 76.0,
+            "q3": 256.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 188.5,
+            "q1": 89.5,
+            "q3": 320.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9728346093533807,
+            "q1": 0.9113053613053613,
+            "q3": 1.0,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 150.0,
+            "q1": 76.0,
+            "q3": 256.0,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 5270.0,
+            "q1": 5083.5,
+            "q3": 5452.75,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2595.5,
+            "q1": 2529.5,
+            "q3": 2620.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9759579229783681,
+            "q1": 0.9753419352253935,
+            "q3": 0.9761705290276779,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 150.0,
+            "q1": 76.0,
+            "q3": 256.0,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 6001.5,
+            "q1": 5993.0,
+            "q3": 6006.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2644.0,
+            "q1": 2638.0,
+            "q3": 2645.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9763663220088626,
+            "q1": 0.9763138415988157,
+            "q3": 0.976375046142488,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 150.0,
+            "q1": 76.0,
+            "q3": 256.0,
+            "n": 62
+          }
+        }
+      }
+    },
+    "string12_0_database": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 19.5,
+            "q1": 10.0,
+            "q3": 27.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 1.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 1.0,
+            "q1": 1.0,
+            "q3": 1.0,
+            "n": 4
+          },
+          "out_degree": {
+            "median": 19.5,
+            "q1": 10.0,
+            "q3": 27.0,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 186.0,
+            "q1": 114.0,
+            "q3": 377.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 63.5,
+            "q1": 20.5,
+            "q3": 378.5,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9836363636363636,
+            "q1": 0.9548455106330788,
+            "q3": 1.0,
+            "n": 8
+          },
+          "out_degree": {
+            "median": 19.5,
+            "q1": 10.0,
+            "q3": 27.0,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 1629.0,
+            "q1": 972.75,
+            "q3": 2084.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 974.0,
+            "q1": 599.75,
+            "q3": 1659.5,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9859649122807017,
+            "q1": 0.9661117717003567,
+            "q3": 0.9880184331797235,
+            "n": 9
+          },
+          "out_degree": {
+            "median": 19.5,
+            "q1": 10.0,
+            "q3": 27.0,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 96.0,
+            "q1": 42.0,
+            "q3": 102.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 230.0,
+            "q1": 25.0,
+            "q3": 237.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.8200692041522492,
+            "q1": 0.48,
+            "q3": 0.8528610354223434,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 96.0,
+            "q1": 42.0,
+            "q3": 102.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 829.0,
+            "q1": 672.0,
+            "q3": 845.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 1249.0,
+            "q1": 848.0,
+            "q3": 1384.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9527078565980168,
+            "q1": 0.9318681318681319,
+            "q3": 0.9584775086505191,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 96.0,
+            "q1": 42.0,
+            "q3": 102.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 2835.0,
+            "q1": 2576.0,
+            "q3": 2871.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 2361.0,
+            "q1": 2058.0,
+            "q3": 2364.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9736082474226804,
+            "q1": 0.9698397737983034,
+            "q3": 0.9751900760304122,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 96.0,
+            "q1": 42.0,
+            "q3": 102.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 35.0,
+            "q1": 15.25,
+            "q3": 91.5,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 116.5,
+            "q1": 16.25,
+            "q3": 255.5,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9565217391304348,
+            "q1": 0.8888888888888888,
+            "q3": 1.0,
+            "n": 61
+          },
+          "out_degree": {
+            "median": 35.0,
+            "q1": 15.25,
+            "q3": 91.5,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 616.5,
+            "q1": 264.25,
+            "q3": 1132.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 1033.5,
+            "q1": 429.25,
+            "q3": 1416.5,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9604205318491033,
+            "q1": 0.9494855004677268,
+            "q3": 0.9667013527575442,
+            "n": 61
+          },
+          "out_degree": {
+            "median": 35.0,
+            "q1": 15.25,
+            "q3": 91.5,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 2668.0,
+            "q1": 1812.5,
+            "q3": 3072.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2214.0,
+            "q1": 1811.75,
+            "q3": 2387.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9724967769660507,
+            "q1": 0.9676604345629105,
+            "q3": 0.9738882088943288,
+            "n": 61
+          },
+          "out_degree": {
+            "median": 35.0,
+            "q1": 15.25,
+            "q3": 91.5,
+            "n": 62
+          }
+        }
+      }
+    },
+    "yeast9_metabolic": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": NaN,
+            "q1": NaN,
+            "q3": NaN,
+            "n": 0
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": NaN,
+            "q1": NaN,
+            "q3": NaN,
+            "n": 0
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": NaN,
+            "q1": NaN,
+            "q3": NaN,
+            "n": 0
+          },
+          "out_degree": {
+            "median": 0.0,
+            "q1": 0.0,
+            "q3": 0.0,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 14.0,
+            "q1": 11.0,
+            "q3": 25.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 95.0,
+            "q1": 42.0,
+            "q3": 119.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.8439716312056738,
+            "q1": 0.7923076923076923,
+            "q3": 0.9047619047619048,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 14.0,
+            "q1": 11.0,
+            "q3": 25.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 43.0,
+            "q1": 37.0,
+            "q3": 82.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 426.0,
+            "q1": 303.0,
+            "q3": 451.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9100418410041841,
+            "q1": 0.8901960784313725,
+            "q3": 0.9145833333333333,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 14.0,
+            "q1": 11.0,
+            "q3": 25.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 75.0,
+            "q1": 74.0,
+            "q3": 425.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 847.0,
+            "q1": 758.0,
+            "q3": 847.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9320388349514563,
+            "q1": 0.9243902439024391,
+            "q3": 0.9421579532814238,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 14.0,
+            "q1": 11.0,
+            "q3": 25.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 18.0,
+            "q1": 9.25,
+            "q3": 38.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 71.5,
+            "q1": 43.0,
+            "q3": 114.25,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9050299657534246,
+            "q1": 0.8327485380116959,
+            "q3": 0.9590312143129044,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 18.0,
+            "q1": 9.25,
+            "q3": 38.0,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 98.5,
+            "q1": 35.0,
+            "q3": 259.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 408.5,
+            "q1": 292.25,
+            "q3": 474.25,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9419280944246001,
+            "q1": 0.8925,
+            "q3": 0.9929905388728918,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 18.0,
+            "q1": 9.25,
+            "q3": 38.0,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 489.5,
+            "q1": 70.25,
+            "q3": 664.75,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 870.5,
+            "q1": 657.25,
+            "q3": 976.75,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9569848027098782,
+            "q1": 0.9192998267709163,
+            "q3": 0.969100371739814,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 18.0,
+            "q1": 9.25,
+            "q3": 38.0,
+            "n": 62
+          }
+        }
+      }
+    },
+    "union": {
+      "regulator": {
+        "1": {
+          "n_reached": {
+            "median": 1416.0,
+            "q1": 888.5,
+            "q3": 1915.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 903.5,
+            "q1": 666.5,
+            "q3": 1052.5,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.9700634249471458,
+            "q1": 0.9567735071427834,
+            "q3": 0.9871946452999805,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 1416.0,
+            "q1": 888.5,
+            "q3": 1915.0,
+            "n": 10
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 6680.5,
+            "q1": 6481.25,
+            "q3": 6849.0,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.976375046142488,
+            "q1": 0.976375046142488,
+            "q3": 0.976375046142488,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 1416.0,
+            "q1": 888.5,
+            "q3": 1915.0,
+            "n": 10
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 6960.5,
+            "q1": 6960.0,
+            "q3": 6961.75,
+            "n": 10
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 10
+          },
+          "share_off_locus": {
+            "median": 0.976375046142488,
+            "q1": 0.976375046142488,
+            "q3": 0.976375046142488,
+            "n": 10
+          },
+          "out_degree": {
+            "median": 1416.0,
+            "q1": 888.5,
+            "q3": 1915.0,
+            "n": 10
+          }
+        }
+      },
+      "pathway enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 701.0,
+            "q1": 535.0,
+            "q3": 885.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 975.0,
+            "q1": 921.0,
+            "q3": 1179.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9479522184300341,
+            "q1": 0.9421052631578948,
+            "q3": 0.9503775620280475,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 701.0,
+            "q1": 535.0,
+            "q3": 885.0,
+            "n": 13
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 6390.0,
+            "q1": 6215.0,
+            "q3": 6533.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9767355982274741,
+            "q1": 0.976375046142488,
+            "q3": 0.9770964166974511,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 701.0,
+            "q1": 535.0,
+            "q3": 885.0,
+            "n": 13
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 6957.0,
+            "q1": 6955.0,
+            "q3": 6958.0,
+            "n": 13
+          },
+          "n_reactions_off_locus": {
+            "median": 2645.0,
+            "q1": 2645.0,
+            "q3": 2645.0,
+            "n": 13
+          },
+          "share_off_locus": {
+            "median": 0.9767355982274741,
+            "q1": 0.976375046142488,
+            "q3": 0.9770964166974511,
+            "n": 13
+          },
+          "out_degree": {
+            "median": 701.0,
+            "q1": 535.0,
+            "q3": 885.0,
+            "n": 13
+          }
+        }
+      },
+      "adjacent enzyme": {
+        "1": {
+          "n_reached": {
+            "median": 390.0,
+            "q1": 264.25,
+            "q3": 640.5,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 667.0,
+            "q1": 475.0,
+            "q3": 946.5,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9468662464985994,
+            "q1": 0.9364115512560849,
+            "q3": 0.9622314622314623,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 390.0,
+            "q1": 264.25,
+            "q3": 640.5,
+            "n": 62
+          }
+        },
+        "2": {
+          "n_reached": {
+            "median": 6024.5,
+            "q1": 5881.0,
+            "q3": 6155.5,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2644.0,
+            "q1": 2638.0,
+            "q3": 2645.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9763663220088626,
+            "q1": 0.9763138415988157,
+            "q3": 0.976375046142488,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 390.0,
+            "q1": 264.25,
+            "q3": 640.5,
+            "n": 62
+          }
+        },
+        "3": {
+          "n_reached": {
+            "median": 6950.5,
+            "q1": 6947.0,
+            "q3": 6953.0,
+            "n": 62
+          },
+          "n_reactions_off_locus": {
+            "median": 2644.0,
+            "q1": 2638.0,
+            "q3": 2645.0,
+            "n": 62
+          },
+          "share_off_locus": {
+            "median": 0.9763663220088626,
+            "q1": 0.9763138415988157,
+            "q3": 0.976375046142488,
+            "n": 62
+          },
+          "out_degree": {
+            "median": 390.0,
+            "q1": 264.25,
+            "q3": 640.5,
+            "n": 62
+          }
+        }
+      }
+    }
+  },
+  "mann_whitney_n_reactions_off_locus_union": {
+    "k1": {
+      "regulator vs pathway enzyme": {
+        "u": 42.0,
+        "p": 0.1628980349177952,
+        "n_regulator": 10,
+        "n_pathway_enzyme": 13,
+        "median_regulator": 903.5,
+        "median_pathway_enzyme": 975.0
+      },
+      "regulator vs adjacent enzyme": {
+        "u": 414.0,
+        "p": 0.09193334190083134,
+        "n_regulator": 10,
+        "n_adjacent_enzyme": 62,
+        "median_regulator": 903.5,
+        "median_adjacent_enzyme": 667.0
+      }
+    },
+    "k2": {
+      "regulator vs pathway enzyme": {
+        "u": 65.0,
+        "p": 1.0,
+        "n_regulator": 10,
+        "n_pathway_enzyme": 13,
+        "median_regulator": 2645.0,
+        "median_pathway_enzyme": 2645.0
+      },
+      "regulator vs adjacent enzyme": {
+        "u": 500.0,
+        "p": 0.0010620738070806505,
+        "n_regulator": 10,
+        "n_adjacent_enzyme": 62,
+        "median_regulator": 2645.0,
+        "median_adjacent_enzyme": 2644.0
+      }
+    }
+  },
+  "caveats": [
+    "Every number here is a count on annotation graphs. None of it is a titer, a flux, or an interaction score.",
+    "The graphs are incomplete and unevenly curated. A transcription factor with a long TFLink target list and one with a short list differ in how much the resource has recorded as well as in what the cell does.",
+    "Reach is not effect. A gene one hop away on a coexpression graph need not change when the seed is deleted, and the size of any change is not modeled.",
+    "Edge direction is used only where the graph carries it. The regulatory and TFLink edges are followed factor to target; activation versus repression is ignored.",
+    "The metabolic graph is structural. A reaction with zero capacity in the study's chassis still carries an edge here.",
+    "The adjacent enzyme class is defined by shared non-currency metabolites, so it depends on which metabolites the currency list drops."
+  ]
+}

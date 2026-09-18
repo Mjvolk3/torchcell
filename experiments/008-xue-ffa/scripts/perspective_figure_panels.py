@@ -97,10 +97,13 @@ MODEL_LABELS = {
     "log_ols": "log-OLS",
 }
 MODEL_COLORS = {
-    "multiplicative": PLOT_PALETTE[0],
+    # The same four as epistasis_model_intuition_panels: multiplicative blue, additive
+    # brick, so the two nulls every panel contrasts are the pair that separates best;
+    # log-OLS takes the orange (author review, 2026.09.18).
+    "multiplicative": PLOT_PALETTE[4],
     "additive": PLOT_PALETTE[1],
     "glm_log_link": PLOT_PALETTE[2],
-    "log_ols": PLOT_PALETTE[4],
+    "log_ols": PLOT_PALETTE[0],
 }
 # Sign encoding, held fixed across every panel in the document: blue = positive
 # interaction, brick = negative (review 2026.09.16: positive moved from amber to blue, and
@@ -115,9 +118,12 @@ C_TRIGENIC = PLOT_PALETTE[0]
 # The best-combination line shares an axes with brick bars and nothing else. It was amber,
 # the other member of the two-series palette prefix, and amber type on white does not read
 # at 6 pt: the right axis label and its tick numbers took the line's color and disappeared
-# (author review, 2026.09.18). Lilac carries the same series at a lightness that prints.
-C_BEST = PLOT_PALETTE[2]
+# (author review, 2026.09.18). Blue carries the same series at a lightness that prints;
+# lilac was tried and orange before it, and neither was kept.
+C_BEST = PLOT_PALETTE[4]
 # The base strain a campaign starts from, as the pale companion of the campaign's brick.
+# The star that marks the best strain takes the same pale fill: the two endpoints of the
+# panel are one kind of thing, and a blue star was a third color on a brick panel.
 C_START = PLOT_PALETTE_FILL[1]
 C_GRAY = PLOT_PALETTE[5]
 
@@ -553,8 +559,8 @@ def panel_greedy_walk(ax):
                 xytext=(0, 5), textcoords="offset points")
     # The star is the destination the panel is about, so it is drawn larger than the X that
     # marks where the campaign stops; at equal area the X dominated it.
-    ax.scatter([3], [best_f], s=52, marker="*", color=C_POS, edgecolor="black",
-               linewidth=0.3, zorder=5, label="best strain in the design")
+    ax.scatter([3], [best_f], s=52, marker="*", facecolor=C_START, edgecolor=C_NEG,
+               linewidth=0.6, zorder=5, label="best strain in the design")
 
     ax.axhline(1.0, color="black", linewidth=0.5, linestyle="--", zorder=1)
     ax.set_xticks([0, 1, 2, 3])

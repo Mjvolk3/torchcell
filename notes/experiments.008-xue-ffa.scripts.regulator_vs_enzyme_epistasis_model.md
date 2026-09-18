@@ -64,3 +64,7 @@ floor.
 Written up as Supplementary Note 3 of `notes-tex/008-xue-ffa-epistasis`, with the caveat
 list from `summary.json`. Related: [[experiments.008-xue-ffa.scripts.ffa_kegg_map]],
 [[experiments.008-xue-ffa.scripts.interaction_graph_enrichment_analysis]].
+
+## 2026.09.18 - Review round 7: the letters were cut off
+
+`subplots_adjust(top=0.84)` instead of 0.88: the panel letters sat on the canvas edge and printed cut in half in Supplementary Fig. 3. The sweep was rerun in full to redraw the figure; every number is unchanged. The caption now describes b and c separately.

@@ -71,3 +71,7 @@ across the five species, none on their sum".
 Supplementary Notes 2 and 3 of `notes-tex/008-xue-ffa-epistasis`, each with its figure.
 Note 1 of the same SI writes out all four model expectations with numbered equations; it
 cites this script only for the counts.
+
+## 2026.09.18 - Review round 7: the BH label finds its own gap
+
+The "BH FDR < 0.05" label of the digenic volcano is centered under the dashed line on the widest stretch of it with no pair in the 0.7-decade band just below; the gap is computed from the data. At the left it sat on the pairs near 0.2.

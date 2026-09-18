@@ -48,3 +48,9 @@ carried a visible band of empty space (author review).
 Every expression in the schematic and in the table is still a rendered math image placed at
 its measured size. draw.io's HTML `<sub>` is not typesetting, and it put a serif fallback in
 the exported PDF.
+
+## 2026.09.18 - Review round 7: two schematic panels on top, eight panels in five rows
+
+- New row 0 (31 mm): panel a, the motivation (a cell drawn as a cross-linked web against a bioreactor with one arrow out; the Wu 2026 underground-metabolism numbers in the text and caption), and panel b, the classic picture (base, two singles, expected double as a dashed outline, measured double filled, the interaction bracketed and defined as `eps_ij = f_ij - f_i f_j`; the Costanzo 2016 and Kuzmin 2018 genome-wide counts on growth at the right). The two glyphs are native shapes in fixed boxes (`a-cell`, `a-vessel`) so an illustration can replace either.
+- Old a-f are now c-h. The schematic (g) lost its two titles and its second sentence per half; one line under each pair of boxes and the identity line under both, 15.5 mm instead of 22. The table (h): "expects, for a double" 18 mm (was 27), "residual measured on" 30 mm (was 21), rows 6.4 mm (were 8), the multiplicative "reading" cell shortened so it stays at two lines.
+- Layout rule learned: a text cell with `verticalAlign=middle` and more lines than its height overflows both up and down; the schematic panels use `verticalAlign=top` with the full remaining height. Content reaches 169.1 mm; the export is 179.2 x 169.1 mm.

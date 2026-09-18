@@ -1,0 +1,86 @@
+class,gene,orf,in_yeast9
+regulator,FKH1,YIL131C,False
+regulator,GCN5,YGR252W,False
+regulator,MED4,YOR174W,False
+regulator,OPI1,YHL020C,False
+regulator,RFX1,YLR176C,False
+regulator,RGR1,YLR071C,False
+regulator,RPD3,YNL330C,False
+regulator,SPT3,YDR392W,False
+regulator,TFC7,YOR110W,False
+regulator,YAP6,YDR259C,False
+pathway enzyme,ACC1,YNR016C,True
+pathway enzyme,FAS1,YKL182W,True
+pathway enzyme,FAS2,YPL231W,True
+pathway enzyme,ELO1,YJL196C,True
+pathway enzyme,ELO2,YCR034W,True
+pathway enzyme,ELO3,YLR372W,True
+pathway enzyme,OLE1,YGL055W,True
+pathway enzyme,FAA1,YOR317W,True
+pathway enzyme,FAA2,YER015W,True
+pathway enzyme,FAA3,YIL009W,True
+pathway enzyme,FAA4,YMR246W,True
+pathway enzyme,POX1,YGL205W,True
+pathway enzyme,SLC1,YDL052C,True
+adjacent enzyme,YAL054C,YAL054C,True
+adjacent enzyme,YAR035W,YAR035W,True
+adjacent enzyme,YBL011W,YBL011W,True
+adjacent enzyme,YBR029C,YBR029C,True
+adjacent enzyme,YBR041W,YBR041W,True
+adjacent enzyme,YBR042C,YBR042C,True
+adjacent enzyme,YBR159W,YBR159W,True
+adjacent enzyme,YBR204C,YBR204C,True
+adjacent enzyme,YBR208C,YBR208C,True
+adjacent enzyme,YBR218C,YBR218C,True
+adjacent enzyme,YCR048W,YCR048W,True
+adjacent enzyme,YCR068W,YCR068W,True
+adjacent enzyme,YDL015C,YDL015C,True
+adjacent enzyme,YDL040C,YDL040C,True
+adjacent enzyme,YDL141W,YDL141W,True
+adjacent enzyme,YDR071C,YDR071C,True
+adjacent enzyme,YDR256C,YDR256C,True
+adjacent enzyme,YEL066W,YEL066W,True
+adjacent enzyme,YER024W,YER024W,True
+adjacent enzyme,YFL017C,YFL017C,True
+adjacent enzyme,YGL062W,YGL062W,True
+adjacent enzyme,YGL169W,YGL169W,True
+adjacent enzyme,YGR015C,YGR015C,True
+adjacent enzyme,YGR177C,YGR177C,True
+adjacent enzyme,YGR209C,YGR209C,True
+adjacent enzyme,YHR013C,YHR013C,True
+adjacent enzyme,YIL124W,YIL124W,True
+adjacent enzyme,YIL160C,YIL160C,True
+adjacent enzyme,YIR031C,YIR031C,True
+adjacent enzyme,YJL130C,YJL130C,True
+adjacent enzyme,YJR019C,YJR019C,True
+adjacent enzyme,YJR109C,YJR109C,True
+adjacent enzyme,YKL094W,YKL094W,True
+adjacent enzyme,YKL140W,YKL140W,True
+adjacent enzyme,YKL188C,YKL188C,True
+adjacent enzyme,YKR009C,YKR009C,True
+adjacent enzyme,YKR067W,YKR067W,True
+adjacent enzyme,YKR089C,YKR089C,True
+adjacent enzyme,YLL012W,YLL012W,True
+adjacent enzyme,YLR043C,YLR043C,True
+adjacent enzyme,YLR109W,YLR109W,True
+adjacent enzyme,YLR153C,YLR153C,True
+adjacent enzyme,YLR284C,YLR284C,True
+adjacent enzyme,YML059C,YML059C,True
+adjacent enzyme,YMR165C,YMR165C,True
+adjacent enzyme,YMR313C,YMR313C,True
+adjacent enzyme,YNL036W,YNL036W,True
+adjacent enzyme,YNL104C,YNL104C,True
+adjacent enzyme,YNL117W,YNL117W,True
+adjacent enzyme,YNL277W,YNL277W,True
+adjacent enzyme,YNR019W,YNR019W,True
+adjacent enzyme,YOR081C,YOR081C,True
+adjacent enzyme,YOR108W,YOR108W,True
+adjacent enzyme,YOR175C,YOR175C,True
+adjacent enzyme,YOR245C,YOR245C,True
+adjacent enzyme,YOR253W,YOR253W,True
+adjacent enzyme,YOR303W,YOR303W,True
+adjacent enzyme,YOR311C,YOR311C,True
+adjacent enzyme,YOR377W,YOR377W,True
+adjacent enzyme,YPL028W,YPL028W,True
+adjacent enzyme,YPL147W,YPL147W,True
+adjacent enzyme,YPR193C,YPR193C,True

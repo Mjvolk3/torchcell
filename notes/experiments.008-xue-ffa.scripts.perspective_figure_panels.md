@@ -64,3 +64,8 @@ Related: [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineerin
 - `panel_greedy_walk` (Fig 2b): the base strain the campaign starts from is now its own
   marker, filled `PLOT_PALETTE_FILL[1]` with a brick edge, so the start is a member of the
   campaign's series rather than one more step of the walk.
+
+## 2026.09.18 - Review round 7: model colors, and Fig. 2's line and star
+
+- `MODEL_COLORS`: multiplicative blue, log-OLS orange (see the panels note above for why); Fig. 4a's dots follow.
+- Fig. 2a's best-titer line is blue (`C_BEST = PLOT_PALETTE[4]`); lilac and orange were both tried and not kept. Fig. 2b's star takes the base strain's pale brick fill with a brick edge, so the two endpoints of the panel are one kind of thing. The earlier "start ... background color 2" review note was about the star.

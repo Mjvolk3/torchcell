@@ -37,6 +37,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
@@ -67,11 +68,16 @@ RAW_XLSX = osp.join(DATA_ROOT,
 
 TOTAL = "Total Titer"
 
-# One color per model, fixed across this figure and Fig. 3's model panels.
-C_MULT = PLOT_PALETTE[0]
+# One color per model, fixed across this figure and the model panel of Fig. 1
+# (perspective_figure_panels.MODEL_COLORS carries the same four). The multiplicative model
+# is blue and the additive one brick: as orange and brick the two nulls of panel b sat on
+# one another at 5 pt marker size (author review, 2026.09.18), and those two are the pair
+# every panel of the figure contrasts. Log-OLS takes the orange the multiplicative model
+# gave up.
+C_MULT = PLOT_PALETTE[4]
 C_ADD = PLOT_PALETTE[1]
 C_GLM = PLOT_PALETTE[2]
-C_OLS = PLOT_PALETTE[4]
+C_OLS = PLOT_PALETTE[0]
 C_MEASURED = PLOT_PALETTE[5]
 
 
@@ -129,7 +135,7 @@ def panel_expectations(ax, pairs):
         (r["f_j"], C_MEASURED, f"$f$ {b}"),
         (r["add"], C_ADD, "additive expects"),
         (r["mult"], C_MULT, "multiplicative expects"),
-        (r["f_ij"], PLOT_PALETTE[4], "measured double"),
+        (r["f_ij"], "#000000", "measured double"),
     ]
     for i, (x, color, label) in enumerate(marks):
         y = len(marks) - 1 - i
@@ -199,17 +205,32 @@ def panel_mean_variance(ax, means, sds):
     ax.scatter(x, y, s=4, facecolor=C_MEASURED, edgecolor="none", alpha=0.65, zorder=3)
     slope, intercept = np.polyfit(np.log(x), np.log(y), 1)
     grid = np.linspace(x.min(), x.max(), 50)
-    ax.plot(grid, np.exp(intercept) * grid ** slope, color=C_GLM, linewidth=0.9, zorder=4,
-            label=f"fitted slope {slope:.2f}")
+    # The same symbol as panels a and b: the strain's titer is f, and the spread is the
+    # spread of f. Naming it "strain mean" here and "slope 0" and "slope 1" in the key put
+    # three vocabularies on one panel (author review, 2026.09.18). The two reference lines
+    # are the two noise assumptions the four models divide over, and each is named by the
+    # assumption and colored by the family that makes it.
+    # A tilde, not \propto: Arial has no proportionality glyph and the SVG fell back to a
+    # slash for it.
+    ax.plot(grid, np.exp(intercept) * grid ** slope, color="#000000", linewidth=0.9,
+            zorder=4, label=f"fit: SD ~ $f^{{\\,{slope:.2f}}}$")
     ref = float(np.median(y / x))
-    ax.plot(grid, ref * grid, color=C_OLS, linewidth=0.7, linestyle=(0, (2, 1.5)),
-            zorder=4, label="slope 1: spread scales with mean")
-    ax.plot(grid, np.full_like(grid, float(np.median(y))), color=C_ADD, linewidth=0.7,
-            linestyle=(0, (1, 1.5)), zorder=4, label="slope 0: constant spread")
+    ax.plot(grid, ref * grid, color=C_GLM, linewidth=0.7, linestyle=(0, (2, 1.5)),
+            zorder=4, label="SD ~ $f$: the log-scale models")
+    ax.plot(grid, np.full_like(grid, float(np.median(y))), color=C_MULT, linewidth=0.7,
+            linestyle=(0, (1, 1.5)), zorder=4, label="SD constant: the linear-scale models")
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("strain mean titer (rel. base strain)")
-    ax.set_ylabel("replicate standard deviation")
+    # Plain tick numbers. The default log formatter wrote 6 x 10^-1 and 2 x 10^0 for an
+    # axis that spans half to twice the base strain.
+    ax.set_xticks([0.5, 1.0, 2.0])
+    ax.set_xticklabels(["0.5", "1", "2"])
+    ax.set_yticks([0.01, 0.1])
+    ax.set_yticklabels(["0.01", "0.1"])
+    ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+    ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+    ax.set_xlabel("$f$, strain mean titer (rel. base strain)")
+    ax.set_ylabel("replicate SD of $f$")
     ax.set_title(f"spread grows with level across {len(keys)} strains", fontsize=6, pad=3)
     ax.legend(loc="upper left", frameon=False, handlelength=1.6, fontsize=5,
               labelspacing=0.25, borderaxespad=0.3, scatterpoints=1)
@@ -231,6 +252,10 @@ EQUATIONS = {
     "loss_j": r"$1 - f_j$",
     "glm": r"$\exp(\alpha_i + \alpha_j)$",
     "gap": r"$(1 - f_i)(1 - f_j)$",
+    # The classic picture in the figure's panel b: the interaction as the departure of
+    # the measured double from what the singles predict.
+    "f_ij": r"$f_{ij}$",
+    "eps_def": r"$\varepsilon_{ij} = f_{ij} - f_i\,f_j$",
 }
 
 
@@ -275,14 +300,33 @@ LEVEL_SET_MODELS = [
     ("glm_log_link", C_GLM, "GLM log-link", lambda a, b: a * b, "log"),
     ("log_ols", C_OLS, "log-OLS", lambda a, b: a * b, "log"),
 ]
-LEVELS_LINEAR = [0.2, 0.4, 0.6, 0.8, 1.0]
-# The same span, evenly spaced in the logarithm, which is what an equal residual means
-# to a model fit on log titer.
-LEVELS_LOG = [round(float(v), 2) for v in np.exp(np.linspace(np.log(0.1), 0.0, 5))]
+# The square runs to 1.5 on each axis, since a single deletion in this design can raise
+# titer as well as lower it and the level sets above 1 are where the two surfaces part
+# most (author review, 2026.09.18). Five contours each: evenly spaced in titer for the
+# two linear-scale models, and a doubling apart for the two log-scale ones, which is what
+# an equal residual means to a model fit on log titer.
+SQUARE = 1.5
+# The top level of each set still crosses the square as an arc, not a corner scrap: at
+# 2.0 the additive surface touched only the corner point and its label sat on the 1.6.
+LEVELS_LINEAR = [0.3, 0.6, 0.9, 1.2, 1.5]
+LEVELS_LOG = [0.1, 0.2, 0.4, 0.8, 1.6]
 # Where a contour's own value is written: on the diagonal of the square, which for both
 # surfaces is the point of that contour closest to the origin, so the numbers run in a
-# line up the panel instead of landing wherever a contour happens to leave it.
+# line up the panel instead of landing wherever a contour happens to leave it. A contour
+# whose diagonal point is within 0.2 of the marked center is labeled on the steeper ray
+# f_j = 1.8 f_i instead, so no number sits on the dot.
 ON_DIAGONAL = {"multiplicative": np.sqrt, "additive": lambda v: (v + 1.0) / 2.0}
+RAY = 1.8
+ON_RAY = {"multiplicative": lambda v: np.sqrt(v / RAY),
+          "additive": lambda v: (v + 1.0) / (1.0 + RAY)}
+
+
+def label_point(kind, v, center=0.5, keep_clear=0.2):
+    d = float(ON_DIAGONAL[kind](v))
+    if abs(d - center) * np.sqrt(2.0) > keep_clear:
+        return (d, d)
+    x = float(ON_RAY[kind](v))
+    return (x, RAY * x)
 
 
 def panel_level_sets(axes, n=181):
@@ -301,27 +345,30 @@ def panel_level_sets(axes, n=181):
     residuals: their contours are evenly spaced in the logarithm, so they crowd near 1
     and spread out where titer is low.
     """
-    g = np.linspace(0.0, 1.1, n)
+    g = np.linspace(0.0, SQUARE, n)
     fi, fj = np.meshgrid(g, g)
     out = {}
     for ax, (key, color, title, surface, scale) in zip(axes, LEVEL_SET_MODELS):
         levels = LEVELS_LINEAR if scale == "linear" else LEVELS_LOG
-        diagonal = ON_DIAGONAL["additive" if key == "additive" else "multiplicative"]
+        kind = "additive" if key == "additive" else "multiplicative"
         cs = ax.contour(fi, fj, surface(fi, fj), levels=levels, colors=color,
                         linewidths=0.6)
         ax.clabel(cs, cs.levels, inline=True, inline_spacing=1, fontsize=5,
                   fmt=lambda v: f"{v:g}",
-                  manual=[(diagonal(v), diagonal(v)) for v in levels])
+                  manual=[label_point(kind, v) for v in levels])
         mid = float(surface(0.5, 0.5))
         ax.plot([0.5], [0.5], marker="o", markersize=2.2, color="black", zorder=5)
-        # Bottom right, the one corner every surface leaves empty: beside the dot the
-        # note landed on the nearest contour's own number.
-        ax.text(0.97, 0.03, f"expects {mid:.2f} at (0.5, 0.5)", transform=ax.transAxes,
-                va="bottom", ha="right", fontsize=5, zorder=6)
-        ax.set_xlim(0, 1.1)
-        ax.set_ylim(0, 1.1)
-        ax.set_xticks([0, 0.5, 1.0])
-        ax.set_yticks([0, 0.5, 1.0])
+        # Bottom left and left-justified, so the four notes start on one vertical line and
+        # read as one row across the panels; right-justified at bottom right they ended
+        # at four different places (author review, 2026.09.18). The white ground covers
+        # the tail of the lowest hyperbola, which hugs the axis there.
+        ax.text(0.03, 0.03, f"expects {mid:.2f} at (0.5, 0.5)", transform=ax.transAxes,
+                va="bottom", ha="left", fontsize=5, zorder=6,
+                bbox=dict(facecolor="white", edgecolor="none", pad=0.6))
+        ax.set_xlim(0, SQUARE)
+        ax.set_ylim(0, SQUARE)
+        ax.set_xticks([0, 0.5, 1.0, 1.5])
+        ax.set_yticks([0, 0.5, 1.0, 1.5])
         ax.set_aspect("equal")
         ax.set_xlabel("$f_i$", labelpad=1)
         ax.set_title(f"{title}, residual on {scale} titer", fontsize=6, pad=3)
@@ -354,11 +401,14 @@ def main():
     means, sds = strain_titers()
     pairs = pair_frame(means)
     pairs.to_csv(osp.join(RESULTS_DIR, "epistasis_model_intuition_pairs.csv"), index=False)
-    emit("expectations", "third", 52.0, lambda ax: panel_expectations(ax, pairs))
-    emit("null_fit", "third", 52.0, lambda ax: panel_null_fit(ax, pairs))
-    emit("mean_variance", "third", 52.0,
+    # Heights: the figure gained a row of two schematic panels above these (the motivation
+    # and the classic expectation-against-observation picture), and the 170 mm cap did not
+    # move, so the three measured panels give up 14 mm and the level sets 5 mm.
+    emit("expectations", "third", 38.0, lambda ax: panel_expectations(ax, pairs))
+    emit("null_fit", "third", 38.0, lambda ax: panel_null_fit(ax, pairs))
+    emit("mean_variance", "third", 38.0,
          lambda ax: panel_mean_variance(ax, means, sds))
-    emit("level_sets", "full", 36.0, lambda *axes: panel_level_sets(axes), ncols=4)
+    emit("level_sets", "full", 31.0, lambda *axes: panel_level_sets(axes), ncols=4)
     emit_equations()
 
 

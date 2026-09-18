@@ -4,14 +4,28 @@
     "label": "C18:1 oleate",
     "node_mm": [
       33.24,
-      42.8
+      41.8
     ],
     "attached": true,
     "label_mm": [
       5.18,
-      42.8
+      41.8
     ],
     "genes": "FAA1/2/4, OLE1"
+  },
+  {
+    "name": "myristate",
+    "label": "C14:0 myristate",
+    "node_mm": [
+      28.83,
+      31.56
+    ],
+    "attached": false,
+    "label_mm": [
+      10.83,
+      35.71
+    ],
+    "genes": null
   },
   {
     "name": "palmitoleate",
@@ -22,8 +36,8 @@
     ],
     "attached": false,
     "label_mm": [
-      4.65,
-      37.28
+      2.28,
+      31.56
     ],
     "genes": null
   },
@@ -42,20 +56,6 @@
     "genes": null
   },
   {
-    "name": "myristate",
-    "label": "C14:0 myristate",
-    "node_mm": [
-      28.83,
-      31.56
-    ],
-    "attached": false,
-    "label_mm": [
-      4.45,
-      31.56
-    ],
-    "genes": null
-  },
-  {
     "name": "stearate",
     "label": "C18:0 stearate",
     "node_mm": [
@@ -66,48 +66,6 @@
     "label_mm": [
       23.43,
       12.07
-    ],
-    "genes": null
-  },
-  {
-    "name": "malonyl-CoA",
-    "label": "malonyl-CoA",
-    "node_mm": [
-      25.37,
-      23.91
-    ],
-    "attached": false,
-    "label_mm": [
-      6.44,
-      7.28
-    ],
-    "genes": null
-  },
-  {
-    "name": "acetyl-CoA",
-    "label": "acetyl-CoA",
-    "node_mm": [
-      44.15,
-      29.85
-    ],
-    "attached": false,
-    "label_mm": [
-      51.44,
-      13.22
-    ],
-    "genes": null
-  },
-  {
-    "name": "pyruvate",
-    "label": "pyruvate",
-    "node_mm": [
-      44.15,
-      27.86
-    ],
-    "attached": false,
-    "label_mm": [
-      39.92,
-      8.37
     ],
     "genes": null
   },
@@ -126,6 +84,48 @@
     "genes": null
   },
   {
+    "name": "malonyl-CoA",
+    "label": "malonyl-CoA",
+    "node_mm": [
+      25.37,
+      23.91
+    ],
+    "attached": false,
+    "label_mm": [
+      6.44,
+      7.28
+    ],
+    "genes": null
+  },
+  {
+    "name": "pyruvate",
+    "label": "pyruvate",
+    "node_mm": [
+      44.15,
+      27.86
+    ],
+    "attached": false,
+    "label_mm": [
+      51.44,
+      11.23
+    ],
+    "genes": null
+  },
+  {
+    "name": "acetyl-CoA",
+    "label": "acetyl-CoA",
+    "node_mm": [
+      44.15,
+      29.85
+    ],
+    "attached": false,
+    "label_mm": [
+      50.28,
+      24.12
+    ],
+    "genes": null
+  },
+  {
     "name": "citrate",
     "label": "citrate",
     "node_mm": [
@@ -134,8 +134,8 @@
     ],
     "attached": false,
     "label_mm": [
-      58.35,
-      19.47
+      49.78,
+      33.92
     ],
     "genes": null
   }

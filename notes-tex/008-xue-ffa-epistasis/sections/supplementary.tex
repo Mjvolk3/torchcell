@@ -11,6 +11,10 @@
 %%       -> notes/assets/images/008-xue-ffa/regulator_vs_enzyme_epistasis.svg
 %%       -> experiments/008-xue-ffa/results/regulator_vs_enzyme/{singles,pairs,triples,
 %%          genes}.csv and summary.json  (every number in Note 3, and its caveat list)
+%%   experiments/008-xue-ffa/scripts/perturbation_reach_analysis.py
+%%       -> notes/assets/images/008-xue-ffa/perturbation_reach.svg
+%%       -> experiments/008-xue-ffa/results/perturbation_reach/{reach,classes}.csv and
+%%          summary.json  (every number in Note 4)
 %% The four model equations moved to the Methods section (review 2026.09.16): they define
 %% what every figure measures, so they belong with the measurement description rather than
 %% behind the main text.
@@ -24,7 +28,8 @@
 \begin{tabular}{@{}lp{\dimexpr\linewidth-13em\relax}@{}}
 \suppnoteref{note:digenic}  & The digenic layer the trigenic score is measured against (with \suppfig{fig:si-digenic})\\
 \suppnoteref{note:species}  & The five species under the summed total (with \suppfig{fig:si-species})\\
-\suppnoteref{note:fluxmodel}  & A minimal flux model of the regulator-against-enzyme comparison (with \suppfig{fig:si-fluxmodel})\\[4pt]
+\suppnoteref{note:fluxmodel}  & A minimal flux model of the regulator-against-enzyme comparison (with \suppfig{fig:si-fluxmodel})\\
+\suppnoteref{note:reach}  & How far a perturbation reaches on the annotation graphs (with \suppfig{fig:si-reach})\\[4pt]
 Supplementary Figs.\ & A figure supporting a Note sits with that Note\\
 \end{tabular}
 
@@ -203,11 +208,86 @@ settle the regulator-against-enzyme comparison.} \textbf{a}, Distance from the p
 reactions to the five readout exchanges, counted in reactions on the model's
 reaction-metabolite graph with currency metabolites dropped. The regulator arm is closer
 than the enzyme arm, not further, because a regulator's reaction set is the union over
-hundreds of targets. \textbf{b},~\textbf{c}, The fraction of combinations at each order
-that miss the growth floor and export nothing, per capacity multiplier. In the regulator
-arm this is where every nonzero interaction score comes from. \textbf{d}, The fraction of
-the 120 triples with $|\tau|$ above a numerical tolerance. The regulator arm scores on
-every triple in a four-setting window and on none outside it, and the enzyme arm scores
-nowhere; two of the 480 regulator-arm scores are computed entirely from strains that
-clear the growth floor.}{fig:si-fluxmodel}
+hundreds of targets. \textbf{b}, The fraction of regulator-arm combinations at each order
+that miss the growth floor and export nothing, per capacity multiplier; every nonzero
+interaction score in that arm is arithmetic on these zeros. \textbf{c}, The same for the
+enzyme arm, which misses the floor only at 0.002 and at the binary setting, and at no
+order completely. \textbf{d}, The fraction of the 120 triples with $|\tau|$ above a
+numerical tolerance. The regulator arm scores on every triple in a four-setting window and
+on none outside it, and the enzyme arm scores nowhere; two of the 480 regulator-arm scores
+are computed entirely from strains that clear the growth floor.}{fig:si-fluxmodel}
+\end{figure*}
+
+\suppnote{note:reach}{How far a perturbation reaches on the annotation graphs\secstatus{todo}}
+
+The flux model of \suppnoteref{note:fluxmodel} tested distance. The other half of the
+hypothesis in the Discussion is reach: a factor deletion touches many genes, each of those
+touches reactions, and most of those reactions are nowhere near the one locus the titer
+measures, so one measurement sums many small unmeasured changes. Reach can be counted on
+the graphs this document already uses, and the count is reported here for what it is, a
+property of the annotation rather than a measurement of the cell.
+
+\notesec{Three kinds of seed} The regulator class is the ten deleted factors, none of
+which is a gene of Yeast9. The pathway enzyme class is the thirteen core fatty acid genes
+of Fig.~\ref{fig:network}b, a direct hit on the measured locus. The adjacent enzyme class
+is every Yeast9 gene outside those thirteen whose reactions share at least one
+non-currency metabolite with a reaction a pathway gene catalyzes: one reaction away from
+the pathway, which is where a campaign that blocks a competing flux to divert it toward
+the product makes its deletions. Computed on the model with the fourteen currency
+metabolites of \suppnoteref{note:fluxmodel} dropped, that class has 62 genes, sharing 113
+metabolites with the pathway. The measured locus is the 69 model reactions the thirteen
+genes catalyze plus the five fatty acid exchanges; any other reaction is a place the
+titer does not look.
+
+\notesec{Ten graphs and their union} Nine are the gene graphs the interaction models of
+Fig.~\ref{fig:models}b draw on: physical association, the SGD regulatory graph, TFLink,
+and the six STRING 12.0 channels. The regulatory and TFLink graphs are directed and are
+followed factor to target only. The tenth is the model's own gene-reaction-metabolite
+graph with the same currency metabolites dropped, on which one gene hop is gene to
+reaction to metabolite to reaction to gene. The union carries an edge wherever any of the
+ten does. For every seed, every graph and hop depths one to three, the count is of genes
+reached, of model reactions those genes catalyze, and of how many of those reactions lie
+off the locus.
+
+\notesec{On the union the classes do not separate, and two hops reach everything} At one
+hop a factor reaches a median of 1,416 genes, a pathway enzyme 701 and an adjacent enzyme
+390, but the reactions those genes carry outside the locus are 904, 975 and 667
+respectively, and neither regulator comparison separates (Mann-Whitney $P = 0.16$ against
+the pathway enzymes and $0.09$ against the adjacent ones). The share of touched reactions
+that lie off the locus is 0.97, 0.95 and 0.95. At two hops every class reaches the
+2,645 gene-annotated reactions the model has outside the locus, so a two-hop comparison is
+a comparison of ceilings, and at three hops the classes reach 6,950 to 6,960 of the
+union's 6,997 genes (\suppfig{fig:si-reach}a,~c).
+
+\notesec{What separates them is the graph, not the amount} The factors reach off-locus
+reactions through the two regulatory graphs only, 482 through SGD and 476 through TFLink at
+one hop, and through the metabolic graph not at all, because none of them is a model gene.
+The two enzyme classes are the mirror image: nothing through either regulatory graph, and
+their reach carried by coexpression (898 and 546), experimental association (463 and 188),
+neighborhood, database and the metabolic graph (95 and 72)
+(\suppfig{fig:si-reach}b,~d). Twenty-four of the 99 graph-by-class-by-depth cells have a
+median reach of zero.
+
+\notesec{What this establishes} That on these graphs a factor is not further-reaching than
+an enzyme in the sense the hypothesis needs; the union of curated graphs is dense enough
+that one hop from anything reaches a quarter of the model's reactions and two hops reach
+all of them. It does not establish that reach is irrelevant to the readout, because a gene
+one hop away on a coexpression graph need not change when the seed is deleted, no size of
+change is modeled, and the graphs are unevenly curated: a factor with a long TFLink list
+differs from one with a short list in what the resource recorded as well as in what the
+cell does. Every number in this note is produced by
+\file{experiments/008-xue-ffa/scripts/perturbation\_reach\_analysis.py} from the graphs and
+the model as stored, and none of it is a titer.
+
+\begin{figure*}[t]
+\tcfig{figures/perturbation_reach.pdf}{\textbf{Reach on the annotation graphs does not
+separate a factor from an enzyme.} \textbf{a}, Genes within one, two and three hops of a
+seed on the union of the ten graphs, median per class with the interquartile range shaded,
+on a log axis. Every class saturates at two hops. \textbf{b}, Median number of Yeast9
+reactions outside the measured locus carried by the genes reached at one hop, per graph
+and per class. The factors reach through the two regulatory graphs and the enzymes
+through coexpression, association and the metabolic graph; on the union the three
+medians are within a factor of 1.5. \textbf{c}, The share of touched reactions that lie
+off the locus, per seed, at one and two hops on the union. \textbf{d}, Median out-degree
+of a seed per graph, the first-hop fan-out behind \textbf{b}.}{fig:si-reach}
 \end{figure*}

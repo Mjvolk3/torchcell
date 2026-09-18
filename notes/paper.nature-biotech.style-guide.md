@@ -254,6 +254,25 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   vertical tick came back from review as "what is I 0.24". Write what it is
   ("expects 0.25 at (0.5, 0.5)") or take it out.
 
+- **Place SVG label text by baseline, never by `dominant-baseline="middle"`.** That
+  attribute centers the x-height, so text with capitals sits high in its plate and a
+  two-line plate leaves a band under the second line. Compute the ink box from the font's
+  cap height and descender (Arial: 0.716 and 0.212 em), pad that, and write the baseline
+  (`experiments/008-xue-ffa/scripts/map_labels.py`). The same rule fixes a rule under a
+  table header that otherwise cuts through the first row.
+- **Counts that belong to a figure go in a small table in its key, not in sentences.** Three
+  sentences of numbers under a key read as prose where the eye wants a number; a header
+  and two rows with right-aligned figures (the form `FigS-yeast9-fba` uses) says the same
+  in less height. One sentence at most for what a table cannot hold.
+- **One color per model across a document, and the pair a figure contrasts must
+  separate.** The four nulls of 008 are blue (multiplicative), brick (additive), lilac
+  (GLM) and orange (log-OLS) in every panel and in the table; orange against brick did not
+  separate at 5 pt marker size, and the two most-contrasted series take the two most
+  distant hues.
+- **The endpoints of a route panel are one series.** Fig. 2b's base strain and best strain
+  are both the pale companion of the campaign's brick, with a brick edge; a blue star was
+  a third color on a two-color panel.
+
 ## Tables
 
 - **Every paper table comes from a committed script** in the relevant `experiments/<id>/`

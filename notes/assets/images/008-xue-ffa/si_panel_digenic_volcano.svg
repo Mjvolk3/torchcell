@@ -404,15 +404,7 @@ z
     <text style="font-size: 6px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif" transform="translate(68.904269 11.60925)">25 of them positive</text>
    </g>
    <g id="text_17">
-    <g id="patch_7">
-     <path d="M 29.651767 119.906518 
-L 66.280673 119.906518 
-L 66.280673 114.133862 
-L 29.651767 114.133862 
-z
-" style="fill: #ffffff"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="30.251767" y="118.312768" transform="rotate(-0 30.251767 118.312768)"> BH FDR &lt; 0.05</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="107.781921" y="118.312768" transform="rotate(-0 107.781921 118.312768)">BH FDR &lt; 0.05</text>
    </g>
    <g id="legend_1">
     <g id="PathCollection_3">

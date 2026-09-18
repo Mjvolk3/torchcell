@@ -108,3 +108,8 @@ because the key, not the map, sets that.
 `LABEL_PREF` narrows ONE label's search: pyruvate to upward directions and the two longest
 leaders. The ink search still chooses among what is left, so this is a smaller candidate
 set rather than a hand-placed label, and it is in the script rather than in a render.
+
+## 2026.09.18 - Review round 7: a coverage table in the key, and two labels at lower right
+
+- The three count sentences under the key are a small table (header, "yeast genes 814 / 745", "reaction lines 3,878 / 889") plus one sentence on the deleted genes, in the form the manuscript's flux-baseline figure uses. Key rows tightened from 3.4 to 3.1 mm to pay for it; the panel is 179.0 x 54.7 mm. The table text is placed by baseline so the rule under the header clears both rows.
+- `LABEL_PREF` gained palmitate and palmitoyl-CoA: directions with a rightward and a downward part, every leader length, and the preference is now passed to the species group as well as the intermediates.

@@ -151,12 +151,18 @@ def panel_digenic_volcano(ax):
     if np.isfinite(p_cut):
         ax.axhline(-np.log10(p_cut), color="black", linewidth=0.5, linestyle="--",
                    zorder=2)
-        # On a 45-point panel there is no empty corner to put this in, so it sits under
-        # the line at the left on an opaque ground rather than on top of the pairs.
-        ax.text(0.02, -np.log10(p_cut), " BH FDR < 0.05",
-                transform=ax.get_yaxis_transform(), va="top", ha="left", fontsize=5,
-                zorder=5,
-                bbox=dict(facecolor="white", edgecolor="none", pad=0.6))
+        # Under the line, centered on the widest stretch of it that has no pair within
+        # the band just below it, found from the data rather than fixed: at the left it
+        # sat on the pairs near 0.2 (author review, 2026.09.18).
+        y_cut = -np.log10(p_cut)
+        near = di[(-np.log10(di["p_value"]) < y_cut) & (-np.log10(di["p_value"]) > y_cut - 0.7)]
+        xs = np.sort(np.concatenate([[float(di["interaction_score"].min())],
+                                     near["interaction_score"].to_numpy(dtype=float),
+                                     [float(di["interaction_score"].max())]]))
+        gaps = np.diff(xs)
+        k = int(np.argmax(gaps))
+        ax.text(0.5 * (xs[k] + xs[k + 1]), y_cut, "BH FDR < 0.05", va="top", ha="center",
+                fontsize=5, zorder=5)
     ax.axvline(0, color=C_GRAY, linewidth=0.4, zorder=1)
     ax.set_xlabel("$\\varepsilon$ (digenic interaction)")
     ax.set_ylabel("$-\\log_{10}$ $P$")

@@ -49,3 +49,7 @@ narrowing lives in the calling script.
 Plates are drawn with `PLATE_RADIUS` 0.55 mm and a `PLATE_STROKE` `#666666` edge at
 `PLATE_WIDTH` 0.12 mm. On a drawing this dense an unstroked white patch reads as a gap in
 the network rather than as something placed over it.
+
+## 2026.09.18 - Review round 7: text placed by baseline, plates around the real ink
+
+`dominant-baseline="middle"` centers the x-height, so a label with capitals sat high in its plate and a two-line plate left a band under its gene line. Now `ink(text, em)` gives each line's glyph box from Arial's cap height (0.716 em) and descender (0.212 em, only when the text has one of `gjpqy,;`), `line_stack` stacks the lines with `LINE_GAP` 0.6 mm, `plate_rect(px, yc, tw, label, sub)` pads that stack, and `baselines(yc, label, sub)` returns where each `<text>` goes. No `dominant-baseline` on plate text anymore. `place_label` takes `sub=` (the text) instead of `sub_h=`; `column_layout` sizes for the tallest possible plate ("Xy" over "Xy").

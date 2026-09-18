@@ -66,3 +66,10 @@ landed wherever a contour left the axes and were clipped to `631` and `.1`.
 A title wider than the panel is NOT wrapped by matplotlib and is not clipped by the axes
 either: it runs off the figure canvas and the draw.io embed cuts it at the image edge. Panel
 b lost its two median residuals to the caption for this reason.
+
+## 2026.09.18 - Review round 7: colors, notation, and a 1.5 square
+
+- Model colors moved: multiplicative is now blue (`PLOT_PALETTE[4]`) and log-OLS orange (`PLOT_PALETTE[0]`); additive stays brick and GLM lilac. Orange against brick did not separate at 5 pt marker size in panel d, and those two nulls are the pair every panel contrasts. `perspective_figure_panels.MODEL_COLORS` carries the same four so Fig. 4a agrees. The measured double in panel c is black.
+- Panel e (mean-variance) uses the same symbol as c and d: the axis is `f`, the y axis "replicate SD of f", and the three lines are named by the assumption ("fit: SD ~ f^1.10", "SD ~ f: the log-scale models", "SD constant: the linear-scale models"). Ticks are plain numbers (0.5, 1, 2 and 0.01, 0.1) instead of the log formatter's `6 x 10^-1`. A `\propto` was tried and Arial has no glyph for it; the SVG showed a slash.
+- Level sets run to 1.5 on both axes (single deletions in this design raise titer). Levels: 0.3 to 1.5 in steps of 0.3 for the linear-scale models, a doubling apart from 0.1 to 1.6 for the log-scale ones, chosen so the top contour crosses the square as an arc rather than a corner scrap (at 2.0 the additive surface touched only the corner and its label sat on the 1.6). Labels sit on the diagonal unless that point is within 0.2 of the marked center, in which case they go on the ray `f_j = 1.8 f_i` (`label_point`). The "expects ... at (0.5, 0.5)" note is bottom-left, left-justified, on a white ground.
+- Heights: the three measured panels 38 mm (were 52), the level sets 31 mm (were 36), to pay for the new top row of the figure. Two new equation images, `f_ij` and `eps_def`, for the drawio's panel b.

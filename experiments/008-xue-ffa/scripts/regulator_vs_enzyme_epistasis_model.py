@@ -741,7 +741,9 @@ def make_figure(
         4,
         figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(52.0)),
     )
-    fig.subplots_adjust(left=0.045, right=0.995, bottom=0.30, top=0.88, wspace=0.42)
+    # Room above the titles for the panel letters: at top=0.88 the letters sat on the
+    # canvas edge and printed cut in half (author review, 2026.09.18).
+    fig.subplots_adjust(left=0.045, right=0.995, bottom=0.30, top=0.84, wspace=0.42)
 
     # (a) hop count from the perturbed reactions to the readout, per arm.
     ax = axes[0]

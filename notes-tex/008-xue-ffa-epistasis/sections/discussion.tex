@@ -109,9 +109,12 @@ The step from there to ``a regulator interacts more than an enzyme'' is a hypoth
 it is ours rather than the literature's. Stated precisely, it has three parts: a regulator
 acts on the measured flux through more intervening reactions than an enzyme of that flux
 does, each of which can contribute curvature; a regulator changes many reactions at once,
-most of them not measured here; and one measurement at one metabolic locus therefore
-reports the combined effect of many small unmeasured changes, which is scored as an
-emergent deviation. None of the three is tested in the mirrored literature, and the
+most of them not measured here, and much of what a cell does is not on the curated map at
+all, since retrobiosynthesis with predicted enzyme annotation places 55,734 reactions
+beside the 4,131 of Yeast9, at predicted affinities about twofold weaker than the known
+network's~\citep{wuSystematicallyExploringYeast2026}; and one measurement at one metabolic
+locus therefore reports the combined effect of many small unmeasured changes, which is
+scored as an emergent deviation. None of the three is tested in the mirrored literature, and the
 closest measured statements cut both ways. The mixed-epistasis argument that more
 intervening steps give ``additional possibilities for
 interconnectivity'' is made about kinases against transcription
@@ -148,11 +151,23 @@ multipliers a reader would try first, and below those it produces scores that ar
 arithmetic on strains which have stopped growing rather than a graded response. In that
 model the regulator arm also sits closer to the readout than the enzyme arm, not further,
 because a regulator's reaction set is the union over hundreds of targets
-(\suppnoteref{note:fluxmodel}). Until the measured comparison exists, the honest form of
-the claim is that interaction was pervasive in a regulator panel measured at one metabolic
-locus, that a nonlinear map from the perturbed layer to the measured one is sufficient to
-produce it, and that neither the amount nor the sign is predicted from the panel's
-distance to the readout.
+(\suppnoteref{note:fluxmodel}). Reach is not the explanation either, at least not on the
+annotation graphs. Counting, on the nine gene graphs the interaction models of this
+document use and on the model's own gene-reaction-metabolite graph, how many genes and how
+many model reactions lie within one hop of a deleted factor, of a pathway enzyme, and of an
+enzyme one reaction away from the pathway, the ten factors reach about twice as many genes
+as the pathway enzymes (median 1,416 against 701) but no more reactions outside the
+measured locus (904 against 975, Mann-Whitney $P = 0.16$), and at two hops every class
+reaches every gene-annotated reaction in the model (\suppnoteref{note:reach}). What
+separates the classes is not how far they reach but through which graph they reach it: a
+factor touches metabolism only through its targets, an enzyme through coexpression and
+association, and the union of the curated graphs is dense enough that the difference is
+gone one hop later. Whether reach on an annotation graph stands in for effect at the
+readout is not tested by any of this. Until the measured comparison exists, the honest
+form of the claim is that interaction was pervasive in a regulator panel measured at one
+metabolic locus, that a nonlinear map from the perturbed layer to the measured one is
+sufficient to produce it, and that neither the amount nor the sign is predicted from the
+panel's distance to the readout or from its reach.
 
 \subsection*{What this design can and cannot support}
 

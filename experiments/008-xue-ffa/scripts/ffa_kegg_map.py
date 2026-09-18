@@ -94,6 +94,12 @@ GUTTER_MM = 5.0
 # and the two longest leaders lift it clear of them; the ink search still chooses among
 # what is left, so the label is not hand-placed.
 LABEL_PREF = {"pyruvate": ([d for d in ml.DIRECTIONS if d[1] < -0.3], (2.8, 4.0))}
+# Palmitate and palmitoyl-CoA sit at the bottom of the comb, and their plates went up and
+# left into the route; the review asked for both at the lower right, where the map is
+# sparse (2026.09.18). Directions with a rightward and a downward part, every leader
+# length.
+LABEL_PREF.update({name: ([d for d in ml.DIRECTIONS if d[0] > 0.3 and d[1] > 0.3], ml.LEADS)
+                   for name in ("palmitate", "palmitoyl-CoA")})
 # KEGG places the measured acids a few units apart at the end of the fatty acid comb, so
 # the species nodes are kept small enough not to merge there.
 R_SPECIES, R_WAYPOINT = 0.62, 0.52  # mm
@@ -209,7 +215,7 @@ def gene_check(lines, refresh):
     return rows
 
 
-KEY_ROW, KEY_NOTE_ROW = 3.4, 2.9
+KEY_ROW, KEY_NOTE_ROW = 3.1, 2.9
 # One key row per color of the route, named by the KEGG pathway whose color it takes, so
 # the key cannot drift from MODULES. The three fatty acid modules share one color and one
 # row; the row is named for what the three of them are.
@@ -224,11 +230,17 @@ PANEL_KEY = [
 if len({c for c, _ in PANEL_KEY}) != len(PANEL_KEY):
     raise ValueError("two key rows share a color; the map cannot be read from the key")
 KEY_EXTRA = 6  # species (2 kinds), intermediate, two tiers, the link
-KEY_NOTE_LINES = 3
+# Under the key, the map's coverage as a small table (a header and two rows) and one
+# sentence on the deleted genes. Three sentences of counts stood here and read as prose
+# in a place the eye wants a number (author review, 2026.09.18); the table is the form the
+# manuscript's flux-baseline figure uses for the same kind of fact. The key rows tightened
+# from 3.4 to 3.1 mm to pay for the header, so the panel's height did not move.
+KEY_NOTE_LINES = 4  # table header, two table rows, one sentence
+KEY_TABLE_COLS = (22.0, 34.0)  # right edges, from the key's left, of the two number columns
 
 
 def key_height_mm():
-    return 8.0 + KEY_ROW * (len(PANEL_KEY) + KEY_EXTRA) + KEY_NOTE_ROW * KEY_NOTE_LINES
+    return 8.0 + KEY_ROW * (len(PANEL_KEY) + KEY_EXTRA) + KEY_NOTE_ROW * KEY_NOTE_LINES + 1.0
 
 
 def panel(attrs, lines, compounds, y9, mods, gene_rows, attachments, width_mm, map_w_mm,
@@ -361,7 +373,7 @@ def panel(attrs, lines, compounds, y9, mods, gene_rows, attachments, width_mm, m
                      sub={a["species"]: gene_run(a["genes"]) for a in resolved},
                      sub_w=sub_w, attached=attached)
     rest = [n for n in node_at if n not in attached]
-    placer.group([n for n in rest if n in species_names])
+    placer.group([n for n in rest if n in species_names], pref=LABEL_PREF)
     placer.group([n for n in rest if n not in species_names], pref=LABEL_PREF)
     parts += placer.svg
     # Rings go over the leaders, which start at the ring's center.
@@ -415,26 +427,38 @@ def panel(attrs, lines, compounds, y9, mods, gene_rows, attachments, width_mm, m
     reg_on = sum(r["role"] == "regulator" and r["map_lines"] > 0 for r in gene_rows)
     n_pw = sum(r["role"] == "pathway" for r in gene_rows)
     pw_on = sum(r["role"] == "pathway" and r["map_lines"] > 0 for r in gene_rows)
-    if resolved:
-        att = " and ".join(f"{labels[a['species']].split(' ', 1)[1]} from {labels[a['anchor']].split(' ', 1)[-1]}"
-                           for a in resolved)
-        line2 = (f"{att[0].upper() + att[1:]} is attached along the GEM's shortest path: "
-                 f"the map has no node for it.")
-    else:
-        line2 = "All five measured species are nodes of the map."
-    note = [
-        f"The map draws {counts['yeast_genes_drawn']} yeast genes, {counts['yeast_genes_drawn_in_yeast9']} "
-        f"in Yeast9; {counts['lines_yeast9']} of its {counts['lines']} lines are in Yeast9.",
-        line2,
-        f"Of the {n_reg} deleted regulators, {reg_on} draw a reaction here; of the {n_pw} pathway genes "
-        f"of b, {pw_on} do.",
+    # The coverage table: what the map draws, and how much of it the model contains. The
+    # attached species needs no sentence here, since the dashed key row above names the
+    # attachment and the caption gives the path.
+    table = [
+        ("", "drawn", "in Yeast9"),
+        ("yeast genes", f"{counts['yeast_genes_drawn']:,}", f"{counts['yeast_genes_drawn_in_yeast9']:,}"),
+        ("reaction lines", f"{counts['lines']:,}", f"{counts['lines_yeast9']:,}"),
     ]
-    if len(note) != KEY_NOTE_LINES:
-        raise ValueError(f"note has {len(note)} lines, KEY_NOTE_LINES says {KEY_NOTE_LINES}")
-    for i, text in enumerate(note):
-        parts.append(f'<text x="{key_x_mm * u:.2f}" '
-                     f'y="{(8.0 + KEY_ROW * len(rows) + KEY_NOTE_ROW * i) * u:.2f}" '
-                     f'dominant-baseline="middle">{ml.esc(text)}</text>')
+    sentence = (f"{reg_on} of the {n_reg} deleted regulators and {pw_on} of the {n_pw} pathway "
+                f"genes of b draw a reaction here.")
+    if len(table) + 1 != KEY_NOTE_LINES:
+        raise ValueError(f"table has {len(table)} rows, KEY_NOTE_LINES says {KEY_NOTE_LINES}")
+    # Placed by baseline, as the labels are: a row's caps then span half a cap height
+    # either side of its center, and the rule under the header clears both rows.
+    y_top = 8.0 + KEY_ROW * len(rows) + 0.6
+    half_cap = 0.5 * ml.CAP_H * ml.FONT_UNITS / u
+    for i, (name, drawn_n, in_model) in enumerate(table):
+        base = (y_top + KEY_NOTE_ROW * i + half_cap) * u
+        style = ' font-weight="bold"' if i == 0 else ""
+        parts.append(f'<text x="{key_x_mm * u:.2f}" y="{base:.2f}"{style}>'
+                     f'{ml.esc(name)}</text>')
+        for text, right in ((drawn_n, KEY_TABLE_COLS[0]), (in_model, KEY_TABLE_COLS[1])):
+            parts.append(f'<text x="{(key_x_mm + right) * u:.2f}" y="{base:.2f}" '
+                         f'text-anchor="end"{style}>{ml.esc(text)}</text>')
+        if i == 0:
+            y_rule = (y_top + KEY_NOTE_ROW * 0.5) * u
+            parts.append(f'<line x1="{key_x_mm * u:.2f}" y1="{y_rule:.2f}" '
+                         f'x2="{(key_x_mm + KEY_TABLE_COLS[1] + 0.5) * u:.2f}" y2="{y_rule:.2f}" '
+                         f'stroke="#666666" stroke-width="0.5"/>')
+    parts.append(f'<text x="{key_x_mm * u:.2f}" '
+                 f'y="{(y_top + KEY_NOTE_ROW * len(table) + half_cap) * u:.2f}">'
+                 f'{ml.esc(sentence)}</text>')
     parts.append("</svg>")
     return "\n".join(parts), placer.records, resolved, counts, (map_w_mm, map_h_mm, panel_h_mm)
 

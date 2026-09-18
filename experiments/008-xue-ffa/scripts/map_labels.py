@@ -24,15 +24,19 @@ FONT_SMALL_UNITS = 7.0  # 5.04 pt, the floor, for the gene names under an attach
 CHAR_MM = 0.50 * FONT_UNITS / UNITS_PER_MM  # Arial's mean advance is about half the size
 CHAR_SMALL_MM = 0.50 * FONT_SMALL_UNITS / UNITS_PER_MM
 LEAD, PAD = 4.5, 0.8
-SUB_H = FONT_SMALL_UNITS / UNITS_PER_MM + 0.3  # the second line under an attached species
-# A label's plate is drawn around the INK of the text, not around its em box. An em box
-# carries leading above and below the glyphs, so a plate padded evenly around it prints
-# with a visible band under the text and none beside it, which is what the white plates
-# looked like before this. INK_H is the fraction of the em a mixed-case line with digits
-# actually covers, and INK_DY is how far the ink's center sits above the point that an
-# SVG dominant-baseline of "middle" aligns to, since capitals reach higher than the
-# x-height that baseline centers on.
-INK_H, INK_DY = 0.74, 0.07
+LINE_GAP = 0.6  # between the ink of a label and the ink of its gene line
+# A label's plate is drawn around the INK of the text, not around its em box, and the
+# text is placed by its BASELINE, not by an SVG dominant-baseline. An em box carries
+# leading above and below the glyphs, so a plate padded evenly around it prints with a
+# visible band under the text and none beside it. Centering on dominant-baseline="middle"
+# was the first fix and it centered the x-height, not the ink, so a label with capitals
+# sat high in its plate and a two-line plate left a band under its gene line (author
+# review, 2026.09.18). The ink of a line is the cap height above the baseline, which in
+# Arial the ascenders share, plus the descender below it when the text has one, and the
+# plate is that box grown by PAD; the baseline follows from the same numbers, so the
+# text lands where the plate expects it in every renderer.
+CAP_H, DESC_H = 0.716, 0.212  # Arial, in em
+DESCENDERS = set("gjpqy,;")
 # The plate is a drawn box, not only a hole in the drawing: on a map this dense a white
 # patch with no edge reads as a gap in the network rather than as something placed over
 # it. Radius is a quarter of the plate's own height, which keeps the corner the same
@@ -142,20 +146,47 @@ def nearest(points, to):
     return min(points, key=lambda p: math.hypot(p[0] - to[0], p[1] - to[1]))
 
 
-def plate_rect(px, yc, tw, th, sub_h=0.0):
+def ink(text, em):
+    """(height, descender depth) in mm of one line's glyphs, set at `em` mm."""
+    d = DESC_H * em if any(ch in DESCENDERS for ch in text) else 0.0
+    return CAP_H * em + d, d
+
+
+def line_stack(label, sub=None):
+    """The lines a plate holds, top to bottom, as (text, em, ink height, descender)."""
+    em = FONT_UNITS / UNITS_PER_MM
+    rows = [(label, em, *ink(label, em))]
+    if sub:
+        em2 = FONT_SMALL_UNITS / UNITS_PER_MM
+        rows.append((sub, em2, *ink(sub, em2)))
+    total = sum(r[2] for r in rows) + LINE_GAP * (len(rows) - 1)
+    return rows, total
+
+
+def plate_rect(px, yc, tw, label, sub=None):
     """The rounded plate that goes behind a label, padded evenly around the text's ink.
 
-    `yc` is the vertical center the text is drawn on; `th` is the em height, of which
-    only INK_H is glyph. The plate is that ink box grown by PAD on all four sides, so
-    the white around a label is the same width everywhere rather than a band under it.
+    `yc` is the vertical center of the ink of every line the plate holds. The plate is
+    that ink box grown by PAD on all four sides, so the white around a label is the same
+    width everywhere rather than a band under it.
     """
-    ink = INK_H * th + sub_h
-    return (px - PAD, yc - INK_DY * th - ink / 2 - PAD, tw + 2 * PAD, ink + 2 * PAD)
+    _, total = line_stack(label, sub)
+    return (px - PAD, yc - total / 2 - PAD, tw + 2 * PAD, total + 2 * PAD)
+
+
+def baselines(yc, label, sub=None):
+    """Where each line's baseline goes for the ink stack to be centered on `yc`."""
+    rows, total = line_stack(label, sub)
+    y, out = yc - total / 2, []
+    for text, em, h, d in rows:
+        out.append((text, em, y + h - d))
+        y += h + LINE_GAP
+    return out
 
 
 def place_label(pts, placed, lines, nodes, x, y, label, bounds, char_mm=CHAR_MM,
                 font_units=FONT_UNITS, lead=LEAD, directions=DIRECTIONS, leads=LEADS,
-                leader=True, why=None, sub_h=0.0, sub_w=0.0):
+                leader=True, why=None, sub=None, sub_w=0.0):
     """The least-inked placement of `label` beside the point (x, y).
 
     Sixteen directions at four distances. The plate sits on the far side of the leader's
@@ -180,7 +211,7 @@ def place_label(pts, placed, lines, nodes, x, y, label, bounds, char_mm=CHAR_MM,
             else:
                 px = lx - tw / 2
             py = ly - th / 2 + (0.0 if abs(dx) > 0.01 else dy * th * 0.7)
-            rect = plate_rect(px, py + th / 2, tw, th, sub_h)
+            rect = plate_rect(px, py + th / 2, tw, label, sub)
             reasons = {
                 "off map": rect[0] < x0 or rect[1] < y0 or rect[0] + rect[2] > x1 or rect[1] + rect[3] > y1,
                 "on a plate": overlaps(rect, placed),
@@ -213,8 +244,9 @@ def column_layout(attachments, labels, sub_w, col_w, node_r, dy=6.8):
     apart keep the plates clear of each other. Returns (layout, col_h) where
     layout(x, y, side) gives ring centers by species and the plate rectangles.
     """
-    th = FONT_UNITS / UNITS_PER_MM
-    plate_h = plate_rect(0.0, 0.0, 0.0, th, SUB_H)[3]
+    # Sized for the tallest plate a species can carry: a name and a gene line that both
+    # have a descender. The plate drawn later may be a little shorter; never taller.
+    plate_h = plate_rect(0.0, 0.0, 0.0, "Xy", "Xy")[3]
     col_h = dy * (len(attachments) - 1) + plate_h + 1.0
 
     def layout(x, y, side):
@@ -229,7 +261,7 @@ def column_layout(attachments, labels, sub_w, col_w, node_r, dy=6.8):
                 cx = x + col_w - 1.5 - node_r
                 px = cx - LEAD - 0.4 - tw
             rings[a["species"]] = (cx, cy)
-            plates.append(plate_rect(px, cy, tw, th, SUB_H))
+            plates.append(plate_rect(px, cy, tw, "Xy", "Xy"))
         return rings, plates
     return layout, col_h
 
@@ -326,8 +358,7 @@ class Placer:
                 dirs, leads = pref.get(name, (directions, LEADS))
                 fit = place_label(self.pts, plates, segs, self.nodes, x, y, self.labels[name],
                                   self.bounds, directions=dirs, leads=leads,
-                                  sub_h=SUB_H if name in sub else 0.0,
-                                  sub_w=sub_w.get(name, 0.0))
+                                  sub=sub.get(name), sub_w=sub_w.get(name, 0.0))
                 if fit is None:
                     break
                 plates.append(fit[2])
@@ -354,12 +385,11 @@ class Placer:
                             f'width="{rect[2] * u:.2f}" height="{rect[3] * u:.2f}" '
                             f'rx="{PLATE_RADIUS * u:.2f}" fill="#FFFFFF" fill-opacity="0.94" '
                             f'stroke="{PLATE_STROKE}" stroke-width="{PLATE_WIDTH * u:.2f}"/>')
-            self.svg.append(f'<text x="{tx * u:.2f}" y="{ty * u:.2f}" '
-                            f'dominant-baseline="middle">{esc(self.labels[name])}</text>')
-            if name in sub:
-                self.svg.append(f'<text x="{tx * u:.2f}" y="{(ty + SUB_H) * u:.2f}" '
-                                f'font-size="{FONT_SMALL_UNITS:.2f}px" '
-                                f'dominant-baseline="middle">{esc(sub[name])}</text>')
+            for i, (text, em, base) in enumerate(baselines(ty, self.labels[name],
+                                                             sub.get(name))):
+                size = f' font-size="{em * u:.2f}px"' if i > 0 else ""
+                self.svg.append(f'<text x="{tx * u:.2f}" y="{base * u:.2f}"{size}>'
+                                f'{esc(text)}</text>')
             self.records.append({"name": name, "label": self.labels[name],
                                  "node_mm": [round(x, 2), round(y, 2)],
                                  "attached": name in attached,

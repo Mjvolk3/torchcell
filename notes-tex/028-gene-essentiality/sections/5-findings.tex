@@ -113,8 +113,11 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     the ceilings add 0.01 to 0.02, and the gene-owned columns hold it (0.861 against
     0.835 for the exchanges). Under the fold-ensemble protocol on the pathway input it
     reads 0.897 [0.84, 0.95], one number with the reported 0.893, from three fold
-    models at 0.90 and two that never fit; a third of this form's cells miss the
-    fitting transition (Sections~\ref{sec:round24} and~\ref{sec:round25}). The form
+    models at 0.90 and two that never fit; three of this form's seventeen cells miss
+    the fitting transition within 200 epochs, and the miss is a chance event of the run
+    and not of the seed: the unfit seed rerun under the same program fits at epoch 70
+    and reads 0.889, the two runs diverging from their first epoch
+    (Sections~\ref{sec:round24}, \ref{sec:round25} and~\ref{sec:round29}). The form
     that scales, the program solved once per genotype with nothing learned in the
     layer and its flux read through a zero-initialized head, reads 0.911, 0.901 and
     0.903 on the same input with every seed fit, the seed the elastic form never fit

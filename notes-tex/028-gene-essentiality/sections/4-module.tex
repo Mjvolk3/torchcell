@@ -1081,6 +1081,48 @@ the card at 92 percent: at this packing the layer's own forward on the card, not
 solve, is the cost, and the cache's hit rate was not logged. The fold read of this form
 was lost to the same ceiling and is not measured.
 
+\subsection{Round 29: the unfit seed under a longer budget\secstatus{todo}}
+\label{sec:round29}
+
+A third of the elastic flux-head cells never fit within 200 epochs (rounds 23 to 25),
+and the constant learning rate leaves two readings open: the fitting transition is
+delayed on those seeds, or it is absent. Round 29 reruns the round-23 cell on seed 2701,
+the seed whose 200-epoch run never fit, with the same program and a 400-epoch budget
+(job 2387; Table~\ref{tab:w45}, Figure~\ref{fig:w45}). Because the learning rate is
+constant, the first 200 epochs of the two runs are the same program on the same seed,
+so the pair also reads whether a run is reproducible.
+
+\input{tables/round_w45}
+
+\tcfigfit[1.0]{figures/w45_readout_2026-09-18-07-25-47.pdf}{\textbf{Round 29, the unfit
+  seed under a 400-epoch budget.} \textbf{a}, Validation AUROC per epoch for the two
+  runs of seed 2701. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points) and the gene
+  bootstrap (square with interval), beside FBA on four media, Flux Cone Learning and the
+  released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module
+  per epoch; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w45}.}{fig:w45}
+
+The transition is neither delayed nor absent on the seed; it is a chance event of the
+run. The 400-epoch run fits between epochs 60 and 80 (training loss 0.98 at epoch 60,
+0.50 at 80, 0.07 at 399), selects epoch 82 and reads 0.889 [0.84, 0.94] on the held-out
+genes, against 0.716 for the 200-epoch run of the same seed, which never left a training
+loss of 0.95. The two runs are not the same trajectory: their training losses differ
+from the first epoch (1.128 against 1.125) and are unrelated by epoch 50 (0.987 against
+0.951), so the seed fixes the initialization and not the path, and the solve inside the
+forward, the sampler and the card's kernels leave the path to chance. What the 200-epoch
+budget could not tell apart, a seed that fits late from a seed that does not fit, is
+therefore the wrong question. Across the seventeen elastic flux-head cells of rounds
+21, 23 and 25 (six on ProtT5, six on the pathway input, five folds), the training loss
+first falls under 0.6 between epochs 39 and 137 in fourteen and never in three, and
+the two latest transitions (epochs 136 and 137) read 0.864 and 0.702 held out, so a
+late transition is no guarantee either. Past the transition the 400-epoch run overfits
+(validation AUROC 0.836 at epoch 82, 0.70 at 399, with the prediction spread growing
+twelvefold), so the longer budget buys nothing after the selected epoch. The scalable
+form of round 27 fit on every seed run (three of three; three more in flight at the
+time of writing), and whether it is free of this chance is the count those seeds add
+to.
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

@@ -759,3 +759,9 @@ Round 24 (w40, submitted 00:30, three LP packs): what carries round 21. (a) `w40
 The module diagram for round 21 is `notes/assets/drawio/028-module-gated-flux.drawio` (from `028-module.gen.py`), exported to `notes-tex/028-gene-essentiality/figures/module_gated_flux.pdf`:
 
 ![](./assets/drawio/028-module-gated-flux.svg)
+
+## 2026.09.18 - Round 29: the unfit seed under a 400-epoch budget
+
+Job 2387 (pack `w45_unfit_seed_e400.pack`): the round-23 flux-head cell on ProtT5 with the pathway multi-hot, seed 2701, rerun for 400 epochs. Its 200-epoch run (round 23) never fit, training loss 0.95 throughout, held-out AUROC 0.716. The 400-epoch run of the same program and seed fits between epochs 60 and 80 (training loss 0.98 at 60, 0.50 at 80, 0.07 at 399), selects epoch 82 and reads 0.889 [0.84, 0.94]. The learning rate is constant, so the first 200 epochs are the same program; the two runs diverge from the first epoch (train loss 1.128 vs 1.125) and are unrelated by epoch 50. The transition is a chance event of the run, not the seed. Across the seventeen elastic flux-head cells (w37 six seeds, w39 six seeds, w41 five folds) the training loss first falls under 0.6 at epochs 39 to 137 in fourteen and never in three; the two latest fits (136, 137) read 0.864 and 0.702 held out. Past the transition the 400-epoch run overfits (val 0.836 at 82, 0.70 at 399). Readout `wave12_readout.py --round w45` (the arm tag takes a `400` suffix for `_e400_` stems); section `sec:round29` in `notes-tex/028-gene-essentiality/sections/4-module.tex`.
+
+- <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/26nt67f2>

@@ -41,13 +41,16 @@ weight, six encodings). What remains is attribution and the module.
   \item The head over the solved flux is the module's number, and the form that scales
     (round 27: the program solved once per genotype, nothing learned in the layer, a
     zero-initialized head) reads 0.90 on every seed where the learned-ceiling form
-    misses the fitting transition on a third of its cells. Open on it: its fold read,
-    lost to the launcher's memory ceiling; why the elastic form's seeds miss the
-    transition (a 400-epoch run of one unfit seed was in flight at the time of
-    writing); the cache's hit rate and where the wall time goes when the solve is
-    cached, since six cached cells on one card ran no faster per cell than three
-    uncached; and the flux entering the cell representation as a token rather than
-    the logit as a head, which is the multi-phenotype form.
+    misses the fitting transition on three cells in seventeen. Open on it: its fold
+    read, lost to the launcher's memory ceiling; what in the elastic form's forward
+    makes the transition a chance event of the run rather than of the seed (round 29:
+    the same seed and program fit at epoch 70 in one run and never in another, the two
+    diverging from the first epoch), and whether pinning the solve's path (a
+    deterministic solver order, deterministic kernels) makes the seed reproducible;
+    the cache's hit rate and where the wall time goes when the solve is cached, since
+    six cached cells on one card ran no faster per cell than three uncached; and the
+    flux entering the cell representation as a token rather than the logit as a head,
+    which is the multi-phenotype form.
   \item The two model families, annotation through the graph and the solve through
     the transformer, miss different genes, and their post hoc average reads 0.949 under
     the fold protocol. A model trained to hold both, or a learned weighting, is untested,

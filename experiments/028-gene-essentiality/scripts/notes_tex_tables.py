@@ -362,6 +362,13 @@ ROUND_CAPTIONS = {
         "2,709 gene-owned fluxes, and the head over the flux of the GEM-box solve with "
         "no learned ceilings. Constraint scale 0, batch 32, class weight, 200 epochs.",
     ),
+    "w45": (
+        "Round 29, the unfit seed under a 400-epoch budget",
+        "The round-23 flux-head cell on ProtT5 with the pathway multi-hot, seed 2701, "
+        "whose 200-epoch run never fit, beside the same program and seed run for 400 "
+        "epochs. Batch 32, class weight, one seed; the two runs diverge from the first "
+        "epoch, so the pair reads a chance event, not a delay.",
+    ),
     "w44": (
         "Round 28, the GO cells with a wider cell",
         "The round-5 affine on ProtT5, the round-22 pathway cell and the two round-26 "

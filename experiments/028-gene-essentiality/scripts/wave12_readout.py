@@ -491,6 +491,16 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["pathpool", "protpathfba", "pathlpelgateflux", "pathlpoffgateflux"],
     ),
+    # Round 29: the round-23 seed that never fit, rerun with a 400-epoch budget, beside
+    # its 200-epoch run; the same program and seed, so the read is whether the fitting
+    # transition is delayed or absent on that seed.
+    "w45": (
+        [
+            "w39_pathlpelgateflux_h12l1p1_e200_s2701.json",
+            "w45_pathlpelgateflux_h12l1p1_e400_s2701.json",
+        ],
+        ["pathlpelgateflux", "pathlpelgateflux400"],
+    ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
     "w44": (
@@ -650,6 +660,7 @@ ARM_LABELS = {
     "pathlpoffgate": "pathway multi-hot + ProtT5; gated column + context, the layer that solves, GEM box",
     "pathlpelgate100": "pathway multi-hot + ProtT5; gated column + context, elastic solve, x100",
     "pathlpelgateflux": "pathway multi-hot + ProtT5; gated + a head over the solved flux (all reactions)",
+    "pathlpelgateflux400": "the same cell, 400 epochs",
     "lpelbio30lr10": "growth column, elastic solve, x30, flux layer lr x10",
     "lpelbio100r6lr10": "growth column, elastic solve, x100, reach $e^{6}$, flux layer lr x10",
     "lpelgateflux": "gated column + context + a head over the solved flux (all reactions)",
@@ -732,7 +743,12 @@ def bootstrap_ci(score: np.ndarray, label: np.ndarray) -> tuple[float, float]:
 
 def arm_of(stem: str) -> str:
     body = stem.split("_", 1)[1]
-    return body.split("_h")[0]
+    arm = body.split("_h")[0]
+    # A cell run past the 200-epoch budget is its own arm, so a 400-epoch rerun of one
+    # seed reads beside the 200-epoch cell instead of pooling into it.
+    if "_e400_" in stem:
+        arm += "400"
+    return arm
 
 
 def pinned_predictions(

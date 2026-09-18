@@ -1143,6 +1143,37 @@ def hard_genes() -> str | None:
     return write("hard_genes", body, "results/hard_genes.json")
 
 
+def family_ensembles() -> str | None:
+    """Post hoc averages of the two model families, from ``results/family_ensembles.json``."""
+    src = osp.join(RESULTS, "family_ensembles.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    best = max(c["auroc"] for c in report["combinations"])
+    rows = [
+        f"    {' $+$ '.join(c['families'])} & {c['n_cells']} & "
+        f"{fmt(c['auroc'], best)} [{c['ci_low']:.2f}, {c['ci_high']:.2f}] \\\\"
+        for c in report["combinations"]
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Averages of the two model families]{Post hoc averages of existing "
+        "predictions on the 195 held-out genes: each family's per-cell logits are "
+        "standardized and averaged over its seeds, families are averaged with equal "
+        "weight, and the mean is scored once with a 2,000-draw gene bootstrap. Nothing "
+        "is fitted and every average tried is listed, so the best row is the maximum "
+        "of seven post hoc choices, not a selected model. Written by "
+        "\\texttt{family\\_ensembles.py}. " + BEST_NOTE + "}\n"
+        "  \\label{tab:family-ensembles}\n"
+        "  \\begin{tabular}{@{}p{118mm}rl@{}}\n    \\hline\n"
+        "    average of & cells & AUROC [95\\% CI] \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("family_ensembles", body, "results/family_ensembles.json")
+
+
 def main() -> None:
     paths = [
         wl_test(),
@@ -1156,6 +1187,7 @@ def main() -> None:
         fold_ensembles(),
         gene_encodings(),
         hard_genes(),
+        family_ensembles(),
         fba_media(),
         splits(),
         logistic_baselines(),

@@ -1,0 +1,80 @@
+{
+ "n_genes": 195,
+ "n_essential": 31,
+ "families": {
+  "pathway + ProtT5 + affine (round 22, 3 seeds)": 3,
+  "flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)": 6,
+  "flux head, ProtT5 (rounds 21 and 24, 6 seeds)": 6,
+  "GO convolution (400 epochs, 3 seeds)": 3
+ },
+ "combinations": [
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)"
+   ],
+   "n_cells": 3,
+   "auroc": 0.9091266719118803,
+   "ci_low": 0.8521992567181246,
+   "ci_high": 0.9544366364013186
+  },
+  {
+   "families": [
+    "pathway + ProtT5 + affine (round 22, 3 seeds)"
+   ],
+   "n_cells": 3,
+   "auroc": 0.8914240755310778,
+   "ci_low": 0.8308055900621117,
+   "ci_high": 0.9390241301907969
+  },
+  {
+   "families": [
+    "flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)"
+   ],
+   "n_cells": 6,
+   "auroc": 0.9108969315499607,
+   "ci_low": 0.8591764164779683,
+   "ci_high": 0.9532783295195011
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)",
+    "pathway + ProtT5 + affine (round 22, 3 seeds)"
+   ],
+   "n_cells": 6,
+   "auroc": 0.9331235247836349,
+   "ci_low": 0.8880341481572259,
+   "ci_high": 0.9702958956869706
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)",
+    "flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)"
+   ],
+   "n_cells": 9,
+   "auroc": 0.9405979543666405,
+   "ci_low": 0.8952032908971972,
+   "ci_high": 0.9747579463381741
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)",
+    "flux head, ProtT5 (rounds 21 and 24, 6 seeds)"
+   ],
+   "n_cells": 9,
+   "auroc": 0.9230920535011802,
+   "ci_low": 0.871907734754957,
+   "ci_high": 0.9654099485420241
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)",
+    "pathway + ProtT5 + affine (round 22, 3 seeds)",
+    "flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)"
+   ],
+   "n_cells": 12,
+   "auroc": 0.9352871754523997,
+   "ci_low": 0.890335085291037,
+   "ci_high": 0.9700958584771062
+  }
+ ]
+}

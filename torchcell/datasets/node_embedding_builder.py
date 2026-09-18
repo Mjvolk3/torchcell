@@ -18,6 +18,7 @@ from torchcell.datasets.protT5 import ProtT5Dataset
 from torchcell.datasets.random_embedding import RandomEmbeddingDataset
 from torchcell.datasets.sgd_gene_graph import GraphEmbeddingDataset
 from torchcell.datasets.sgd_gene_graph_hot import OneHotGraphEmbeddingDataset
+from torchcell.datasets.solve_vector import SolveVectorEmbeddingDataset
 
 
 class NodeEmbeddingBuilder:
@@ -201,6 +202,33 @@ class NodeEmbeddingBuilder:
             "root_path": "data/scerevisiae/go_term_hot",
             "requires_genome": True,
             "model_name": "go_cc",
+        },
+        # The deletion's solved flux as a gene embedding (028 round 43): log(1 + |v|)
+        # over the GEM's reactions from a solve store, the pFBA store on YPD and the
+        # stores by other solvers and on synthetic complete medium.
+        "solve_log1p": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p",
+        },
+        "solve_log1p_ipm": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_ipm",
+        },
+        "solve_log1p_pdlp": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_pdlp",
+        },
+        "solve_log1p_sc": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_sc",
         },
         "normalized_props": {
             "class": OneHotGraphEmbeddingDataset,

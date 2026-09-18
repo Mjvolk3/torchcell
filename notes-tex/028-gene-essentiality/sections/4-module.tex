@@ -743,6 +743,55 @@ stiffness directly, with the layer's parameters at ten times the learning rate a
 a two-layer abundance head, and reads the training loss at the selected epoch against
 round 18's 1.25 beside the score.
 
+\subsection{Round 19: the step and the head's capacity\secstatus{todo}}
+\label{sec:round19}
+
+Round 19 (jobs 2326 to 2329) moves the two things that make the path through the
+solve stiff: the flux layer's parameters at ten times the learning rate (a second
+optimizer group), a two-layer abundance head in place of the twelve-weight linear map,
+and both, on the forced elastic column at ceiling scale 100, with both changes behind
+the gate as well, three seeds each (Tables~\ref{tab:w34} and~\ref{tab:w35},
+Figures~\ref{fig:w34} and~\ref{fig:w35}); the read is round 18's, paired against the
+round-18 elastic cells.
+
+\input{tables/round_w34}
+
+\tcfigfit[1.0]{figures/w34_readout_2026-09-17-20-53-08.pdf}{\textbf{Round 19, the forced
+  elastic column with a faster layer and a deeper head.} \textbf{a}, Validation AUROC
+  per epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w34}.}{fig:w34}
+
+\input{tables/round_w35}
+
+\tcfigfit[1.0]{figures/w35_readout_2026-09-17-20-57-56.pdf}{\textbf{Round 19, the gated
+  elastic column with a faster layer and a deeper head.} \textbf{a}, Validation AUROC
+  per epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w35}.}{fig:w35}
+
+Neither lever is the limit. The faster layer reads 0.705, 0.629 and 0.697, below round
+18 on two seeds; the deeper head 0.823, 0.754 and 0.678, above on two, with its best
+seed selected at epoch 2; both together 0.799, 0.691 and 0.669. The training loss at
+the selected epoch is 1.24 to 1.26 in every cell, round 18's number, and where the
+deeper head does fit further later in the run (to 1.07 on two seeds) the validation
+curve has already peaked and decays, so the extra capacity memorizes and does not
+rank. Behind the gate the two changes cost the cell: 0.786, 0.790 and 0.745 against
+the round-18 gated cell's 0.816, 0.810 and 0.783, with the gate ending negative on
+every seed ($-0.51$, $-0.45$, $-0.09$), the head learning to subtract a column the
+faster layer has bent toward the training set. No arm passes either clause. Rounds 18
+and 19 together say that the forced column cannot be fit through the ceilings by any
+of feasibility, slack, step size or head capacity, and the next subsection measures
+why.
+
 \subsection{Why the ceilings cannot carry the ranking\secstatus{todo}}
 \label{sec:dual-overlap}
 

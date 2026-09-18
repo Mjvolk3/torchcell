@@ -206,6 +206,11 @@ ESS_READOUT_FBA = "fba"
 #: affine (context head, gated growth column, FBA ratios).
 ESS_READOUT_BIOMASS_FBA = "biomass_fba"
 ESS_READOUT_GATED_FBA = "gated_fba"
+#: The gated readout plus a linear head over the solved FLUX VECTOR (round 21): the
+#: solve's flux carries more of the ranking than its growth column on the ladder, and
+#: the dual-overlap probe says the growth column cannot be moved between genotypes
+#: through the ceilings, so this reads what the solve returns rather than one number.
+ESS_READOUT_GATED_FLUX = "gated_flux"
 ESS_READOUTS = (
     ESS_READOUT_BIOMASS,
     ESS_READOUT_CONTEXT_BIOMASS,
@@ -213,13 +218,17 @@ ESS_READOUTS = (
     ESS_READOUT_FBA,
     ESS_READOUT_BIOMASS_FBA,
     ESS_READOUT_GATED_FBA,
+    ESS_READOUT_GATED_FLUX,
 )
 #: The readouts that keep the pooled arm's own context head beside the growth affine.
 ESS_READOUTS_WITH_CONTEXT = (
     ESS_READOUT_CONTEXT_BIOMASS,
     ESS_READOUT_GATED,
     ESS_READOUT_GATED_FBA,
+    ESS_READOUT_GATED_FLUX,
 )
+#: Which reactions the flux head of `gated_flux` reads.
+ESS_FLUX_HEAD_REACTIONS = ("all", "exchange", "gene")
 #: The readouts that carry the FBA affine, on either arm.
 ESS_READOUTS_WITH_FBA = (
     ESS_READOUT_FBA,
@@ -1112,6 +1121,13 @@ class BxCell(BaseModel):
             "The abundance head's reach r in E_g = E0_g exp(r tanh(.)), e^r either side "
             "of the prior (`FluxLayerConfig.abundance_log_range`, read at call time); "
             "3.0 is the shipped value. Round 20."
+        ),
+    )
+    ess_flux_head_reactions: str = Field(
+        default="all",
+        description=(
+            "Which reactions the `gated_flux` readout's flux head reads: 'all', "
+            "'exchange' (uptake and secretion), or 'gene' (gene-owned). Round 21."
         ),
     )
     ess_solve_features: str = Field(
@@ -2214,6 +2230,7 @@ def build_cell(
     flux_lr_mult: float = 1.0,
     flux_abundance_head_layers: int = 1,
     flux_abundance_log_range: float = 3.0,
+    ess_flux_head_reactions: str = "all",
     node_embeddings: list[str] | None = None,
     pos_weight_balanced: bool = False,
 ) -> BxCell:
@@ -2317,6 +2334,7 @@ def build_cell(
         flux_lr_mult=flux_lr_mult,
         flux_abundance_head_layers=flux_abundance_head_layers,
         flux_abundance_log_range=flux_abundance_log_range,
+        ess_flux_head_reactions=ess_flux_head_reactions,
         node_embeddings=(
             list(node_embeddings) if node_embeddings else list(STRONG_NODE_EMBEDDINGS)
         ),
@@ -3642,6 +3660,68 @@ class GatedBiomassReadout(ContextBiomassReadout):
         return predictions, reps
 
 
+class GatedFluxReadout(GatedBiomassReadout):
+    r"""``gated`` plus a zero-initialized linear head over the solved flux vector.
+
+    .. math::
+
+        \ell = h(z) + g\,(a\,z^* + b) + w^\top \log(1 + |v^*_{\mathcal{R}}|),
+        \qquad w_0 = 0
+
+    ``v^*`` is the flux the layer that solves returns (the argmax, piecewise constant in
+    the bounds, so it carries no gradient to the backbone and the head reads it as a
+    fixed feature of the current solve), restricted to the reactions
+    :math:`\mathcal{R}` named by ``reactions``: every reaction, the exchange reactions
+    (the uptake and secretion profile), or the gene-owned ones. The growth column keeps
+    its gated affine so the cell is the round-18 gated cell at initialization; the flux
+    head's weight norm is written into every epoch row as ``ess_flux_head_w_norm``.
+    The ladder measured the deletion pFBA vector at 0.77 against its growth ratio at
+    0.65 (round 11), and the dual-overlap probe measured that the ceilings cannot move
+    the growth column between genotypes; this reads what the solve returns.
+    """
+
+    flux_mask: torch.Tensor
+
+    def __init__(
+        self,
+        model: CellGraphTransformerMetabolism,
+        biomass_index: int,
+        flux_mask: torch.Tensor,
+        head_name: str = ESSENTIALITY_HEAD,
+    ) -> None:
+        """Bind the growth column, the gate, and the flux head over ``flux_mask``."""
+        super().__init__(model, biomass_index, head_name)
+        self.register_buffer("flux_mask", flux_mask.bool())
+        self.flux_head = nn.Linear(int(flux_mask.sum()), 1)
+        nn.init.zeros_(self.flux_head.weight)
+        nn.init.zeros_(self.flux_head.bias)
+
+    @property
+    def num_parameters(self) -> dict[str, int]:
+        """The gated cell's counts plus the flux head."""
+        counts = super().num_parameters
+        extra = sum(p.numel() for p in self.flux_head.parameters())
+        counts[f"{self.head_name}_head"] += extra
+        counts["total"] += extra
+        return counts
+
+    def forward(
+        self, cell_graph: Any, batch: Any, *args: Any, **kwargs: Any
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """The gated logit plus the flux head over the solved flux."""
+        predictions, reps = super().forward(cell_graph, batch, *args, **kwargs)
+        v = reps["flux"]["v"].detach()
+        features = torch.log1p(v[:, self.flux_mask].abs())
+        flux_logit = self.flux_head(features).reshape(
+            reps["head_outputs"][self.head_name].shape
+        )
+        reps["ess_flux_head_w_norm"] = self.flux_head.weight.detach().norm()
+        reps["head_outputs"][self.head_name] = (
+            reps["head_outputs"][self.head_name] + flux_logit
+        )
+        return predictions, reps
+
+
 def fba_growth_table(
     gene_ids: list[str], media: tuple[str, ...] = FBA_MEDIA
 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, Any]]:
@@ -4938,6 +5018,11 @@ def build_model_for_cell(
                         "initialized at zero, plus an affine of FBA's growth ratios for "
                         "the deleted gene"
                     ),
+                    ESS_READOUT_GATED_FLUX: (
+                        ", added to the pooled arm's context head through a gate "
+                        "initialized at zero, plus a zero-initialized linear head over "
+                        "the solved flux vector"
+                    ),
                 }[cell.ess_readout]
                 + "."
             ),
@@ -4958,6 +5043,21 @@ def build_model_for_cell(
                 wrapped_ess = GatedFbaReadout(
                     model, biomass_index, fba_table, fba_known, fba_media
                 ).to(device)
+        elif cell.ess_readout == ESS_READOUT_GATED_FLUX:
+            assert flux_layer.parameterization == "lp", (
+                "gated_flux reads the flux the layer that solves returns; on a projection "
+                f"layer ({flux_layer.parameterization!r}) the vector is off the polytope."
+            )
+            flux_mask = {
+                "all": torch.ones(flux_layer.n_reactions, dtype=torch.bool),
+                "exchange": flux_layer.is_exchange.detach().cpu().bool(),
+                "gene": flux_layer.has_gpr.detach().cpu().bool(),
+            }[cell.ess_flux_head_reactions]
+            flux_meta["essentiality"]["flux_head"] = {
+                "reactions": cell.ess_flux_head_reactions,
+                "n_features": int(flux_mask.sum()),
+            }
+            wrapped_ess = GatedFluxReadout(model, biomass_index, flux_mask).to(device)
         else:
             readout_cls: type[FluxBiomassReadout] = {
                 ESS_READOUT_BIOMASS: FluxBiomassReadout,
@@ -5335,13 +5435,12 @@ def run_cell(
     flux_ids = {id(p) for p in flux_params}
     other_params = [p for p in model.parameters() if id(p) not in flux_ids]
     if cell.flux_lr_mult != 1.0 and flux_params:
+        groups: list[dict[str, Any]] = [
+            {"params": other_params},
+            {"params": flux_params, "lr": cell.lr * cell.flux_lr_mult},
+        ]
         optimizer = torch.optim.AdamW(
-            [
-                {"params": other_params},
-                {"params": flux_params, "lr": cell.lr * cell.flux_lr_mult},
-            ],
-            lr=cell.lr,
-            weight_decay=cell.weight_decay,
+            groups, lr=cell.lr, weight_decay=cell.weight_decay
         )
     else:
         optimizer = torch.optim.AdamW(
@@ -5684,6 +5783,8 @@ def run_cell(
         if isinstance(model, GatedBiomassReadout):
             # The gate IS the usage readout: 0 is the pooled model exactly.
             row["ess_gate"] = float(model.gate.detach())
+        if isinstance(model, GatedFluxReadout):
+            row["ess_flux_head_w_norm"] = float(model.flux_head.weight.detach().norm())
         if isinstance(model, FbaContextReadout | BiomassFbaReadout | GatedFbaReadout):
             # The weights say whether, and on which medium, the solver's number is used.
             row.update(model.fba_readout.weights())
@@ -6626,6 +6727,12 @@ def main() -> None:
         help="The abundance head's reach r (e^r either side of the prior); 3.0 shipped.",
     )
     parser.add_argument(
+        "--ess-flux-head-reactions",
+        default="all",
+        choices=ESS_FLUX_HEAD_REACTIONS,
+        help="Reactions the gated_flux readout's flux head reads (round 21).",
+    )
+    parser.add_argument(
         "--flux-pool-by-construction",
         action="store_true",
         help=(
@@ -7125,6 +7232,7 @@ def main() -> None:
         flux_lr_mult=args.flux_lr_mult,
         flux_abundance_head_layers=args.flux_abundance_head_layers,
         flux_abundance_log_range=args.flux_abundance_log_range,
+        ess_flux_head_reactions=args.ess_flux_head_reactions,
         node_embeddings=args.node_embeddings,
         pos_weight_balanced=args.pos_weight_balanced,
     )

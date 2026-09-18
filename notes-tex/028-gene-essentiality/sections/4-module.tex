@@ -1237,9 +1237,40 @@ with the GO convolution's 0.917 and the scalable form's 0.912
 (Table~\ref{tab:family-ensembles-folds}). The 0.838 fold selected epoch 6 with its
 training loss at 1.05, an early peak of the kind the standardized encoding produced
 on every cell, here once in the seventeen $\log(1 + |v|)$ cells run, so the encoding
-makes the early peak rare and not impossible. The vector on ProtT5 alone, which asks
-whether the solve substitutes for the pathway annotation, runs at the time of writing
-(job 2410).
+makes the early peak rare and not impossible.
+
+\subsection{Round 35: the solve does not substitute for the annotation\secstatus{todo}}
+\label{sec:round35}
+
+Since round 14 the open question on the pathway multi-hot has been whether a
+solve-derived quantity would substitute for the annotation. The layer-free form is the
+direct test: the same $\log(1 + |v|)$ vector appended to the affine on ProtT5 alone,
+with no pathway block, six seeds (job 2410; Table~\ref{tab:w51},
+Figure~\ref{fig:w51}), against the affine on ProtT5 (round 5), the cached-solve head on
+ProtT5 (round 24) and the same form with the pathway block (round 33).
+
+\input{tables/round_w51}
+
+\tcfigfit[1.0]{figures/w51_readout_2026-09-18-11-44-05.pdf}{\textbf{Round 35, the
+  layer-free form on ProtT5 alone.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean; the dash-dot line is the flux layer where there is one. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w51}.}{fig:w51}
+
+On ProtT5 alone the vector reads 0.878, 0.869, 0.875, 0.829, 0.864 and 0.860 (mean
+0.863, sd 0.018; pooled 0.868 [0.79, 0.94]), above the affine's 0.821 (pooled 0.838)
+and level with the cached-solve head's 0.852 (pooled 0.860) on the same backbone, and
+0.045 under the same form with the pathway block (0.908, pooled 0.912). The six cells
+fit later than their pathway counterparts (training loss under 0.6 at epochs 79 to
+160 against 33 to 66) and select epochs 66 to 160. So the solve adds what the layer's
+head added on this backbone, 0.03 to 0.04 over the affine, and the annotation adds
+0.045 on top of it: the two are not one signal, and the vector does not substitute
+for the pathway block any more than the block substitutes for the vector (0.890 with
+the block and the ratios alone, round 22).
 
 \subsection{The solve across solvers: the argmax is not unique\secstatus{todo}}
 \label{sec:solve-tolerance}

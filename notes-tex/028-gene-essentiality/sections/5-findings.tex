@@ -29,7 +29,10 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     (0.798, 0.824) sit at the level of ProtT5 with the ratios. On the transformer the
     pathway columns need the sequence embedding beside them (0.766 alone); on the MLP
     they do not (0.828). The pooled transformer on ProtT5 with the pathway multi-hot and
-    no readout reads 0.860.
+    no readout reads 0.860. The solve does not substitute for the annotation: the
+    deletion's flux vector on ProtT5 alone reads 0.868 pooled, the same vector with
+    the pathway block 0.912, and the block with the ratios alone 0.890
+    (Section~\ref{sec:round35}).
   \item[Keeping the edge type is the one architectural choice that registers.] Of the
     message-passing forms of MATH-490 and Gene\_Graph on the transformer's three inputs,
     relational attention over the nine graphs as nine edge types reads 0.889, GraphSAGE

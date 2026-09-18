@@ -12,8 +12,10 @@ weight, six encodings). What remains is attribution and the module.
 
 \begin{itemize}
   \item The pathway multi-hot carries the round-9 gain (rounds 14 and 22, and the split
-    on the cheap models); which pathways, and whether a pathway-level flux statistic from
-    the solve would substitute for the annotation, is not measured.
+    on the cheap models); the deletion's own flux vector does not substitute for it
+    (round 35: 0.868 on ProtT5 alone against 0.912 with the block, and the block
+    without the vector 0.890), so the two carry different information. Which
+    pathways, and what in the annotation the solve cannot see, is not measured.
   \item The round-16 cell (the round-11 affine on the round-9 backbone) and the round-9
     cell are one cell to the resolution of 195 genes (rounds 16 and 17); a larger
     held-out set, such as the genome-wide labels scored on genes the released split
@@ -84,10 +86,9 @@ weight, six encodings). What remains is attribution and the module.
     reads 0.896 to 0.919 on twelve of twelve runs, 0.912 pooled, with nothing in the
     graph and 11 minutes a cell, and 0.920 as a fold ensemble. What remains open on
     the form is why standardized columns make the backbone peak before it fits (and
-    why one $\log(1 + |v|)$ fold cell in seventeen still did), whether the vector
-    substitutes for the pathway annotation (the same form on ProtT5 alone, job 2410,
-    in flight), and the count that sizes the store, the distinct (genotype, medium)
-    pairs across the database, which is not measured.
+    why one $\log(1 + |v|)$ fold cell in seventeen still did), and the count that
+    sizes the store, the distinct (genotype, medium) pairs across the database, which
+    is not measured.
     Where a solve must stay in the loop, the fine-tuning form with learned ceilings,
     three constructions would remove the synchronization, in order of how much they
     change: a batched first-order solve on the card, which NVIDIA's cuOpt offers as

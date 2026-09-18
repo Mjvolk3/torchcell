@@ -19,9 +19,11 @@ weight, six encodings). What remains is attribution and the module.
     held-out set, such as the genome-wide labels scored on genes the released split
     never touched, is what would separate them.
   \item The MLP, the graph convolution and the transformer on the same three inputs are
-    one number as fold ensembles (0.886, 0.888, 0.893). What separates architectures on
-    this endpoint is not measurable on 195 genes; the genome-wide labels on genes the
-    released split never touched are the larger held-out set that could.
+    one number as fold ensembles (0.886, 0.888, 0.893), and graph convolution on GO
+    alone is 0.917 above them with overlapping intervals. What separates architectures
+    on this endpoint is not measurable on 195 genes; the genome-wide labels on genes
+    the released split never touched are the larger held-out set that could, and the
+    first question to put to it is whether the GO convolution's margin survives.
   \item The GO multi-hot is the ladder's strongest encoding and the cheap models take
     it (graph convolution 0.887), and the transformer does not (0.833 beside ProtT5,
     a cost of 0.04 beside the pathway block, round 26). What separates 173 sparse

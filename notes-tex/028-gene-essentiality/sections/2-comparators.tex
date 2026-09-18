@@ -318,6 +318,19 @@ to it at either budget, where on every other input they were the gain.
 
 \input{tables/graph_baselines_go800}
 
+Under the reported protocol it is the highest number in this document. Five fold
+models of the 400-epoch convolution on GO alone score 0.910, 0.893, 0.918, 0.916 and
+0.907 on the held-out genes, a fold mean of 0.909, and their averaged logits score
+0.917 [0.87, 0.96]; at 800 epochs 0.915 [0.87, 0.95]. Against the transformer's
+reported ensemble (folds 0.860, 0.899, 0.889, 0.876, 0.884; 0.893 [0.84, 0.94]) the
+folds are above on four of five, the fold mean by 0.028 and the ensemble by 0.024,
+with the two intervals overlapping (Table~\ref{tab:ensembles}). The five folds take
+two minutes on one card. So the three architectures on the three inputs that were one
+number (0.886, 0.888, 0.893) now have a fourth point above them, and what moved it is
+the input and the graph together, not the architecture: the same convolution on the
+three inputs reads 0.888 as an ensemble, and the GO vector without the graph reads
+0.855 on the MLP.
+
 \subsection{The Weisfeiler-Leman test on the deletion graphs\secstatus{todo}}
 
 A message-passing model over a gene graph is bounded by what color refinement can

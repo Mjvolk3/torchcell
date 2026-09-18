@@ -911,6 +911,40 @@ def fold_ensembles() -> str | None:
             e = json.load(fh)
         folds = ", ".join(f"{f['auroc']:.3f}" for f in e["folds"])
         rows.append((label, e["n_folds"], folds, e["fold_mean_auroc"], e["ensemble_auroc"], e["ensemble_ci_low"], e["ensemble_ci_high"]))
+    # The cheap architectures' fold ensembles (graph_baselines.py --arms folds|go_folds)
+    # are written in their own shape; they sit in the same table.
+    cheap = {
+        "graph_baselines_folds.json": {
+            "MLP": "MLP on the transformer's three inputs (no graph)",
+            "GCN": "graph convolution on the three inputs, 400 epochs",
+        },
+        "graph_baselines_go_folds.json": {
+            "GCN400": "graph convolution on the GO multi-hot alone, 400 epochs",
+            "GCN800": "graph convolution on the GO multi-hot alone, 800 epochs",
+        },
+    }
+    for fname, labels in cheap.items():
+        src = osp.join(RESULTS, fname)
+        if not osp.isfile(src):
+            continue
+        with open(src) as fh:
+            report = json.load(fh)
+        for arm, label in labels.items():
+            a = report["arms"].get(arm)
+            if a is None:
+                continue
+            folds = ", ".join(f"{v:.3f}" for v in a["fold_aurocs"])
+            rows.append(
+                (
+                    label,
+                    len(a["fold_aurocs"]),
+                    folds,
+                    a["fold_mean"],
+                    a["ensemble_auroc"],
+                    a["ensemble_ci"][0],
+                    a["ensemble_ci"][1],
+                )
+            )
     if not rows:
         return None
     best = max(r[4] for r in rows)

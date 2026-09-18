@@ -30,8 +30,10 @@ from torchcell.timestamp import timestamp
 from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, PLOT_PALETTE_FILL, mm_to_in, savefig_true_size_svg
 
 ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
+# red is the primary series color of this document: the hexbin ramp runs white ->
+# red fill -> red -> dark red (palette slots 2, 2 fill, 8).
 CMAP = LinearSegmentedColormap.from_list(
-    "tc_orange", ["#FFFFFF", PLOT_PALETTE[3], PLOT_PALETTE[0], PLOT_PALETTE[6]]
+    "tc_red", ["#FFFFFF", PLOT_PALETTE_FILL[1], PLOT_PALETTE[1], PLOT_PALETTE[7]]
 )
 plt.rcParams.update(
     {
@@ -132,12 +134,12 @@ def make_figures(singles: pd.DataFrame, doubles: pd.DataFrame, triples: pd.DataF
         _box(ax)
 
     _logp(axes[0], single["gi_p"].to_numpy(), single["p_rec_obs"].to_numpy(),
-          "stored p (= source p)", "z-test p, double's own sd / sqrt(4)", "doubles, one screen",
+          "stored p (= source p)", r"z-test p, double's own sd / $\sqrt{4}$", "doubles, one screen",
           c["spearman_single_screen_stored_vs_obs"], c["n_single_screen"])
     tsingle = triples[~triples["merged"]]
     ct = summary["trigenic_confidence"]
     _logp(axes[1], tsingle["gi_p"].to_numpy(), tsingle["p_rec_obs"].to_numpy(),
-          "stored p (= source p)", "z-test p, triple's own sd / sqrt(4)", "triples, one screen",
+          "stored p (= source p)", r"z-test p, triple's own sd / $\sqrt{4}$", "triples, one screen",
           ct["spearman_p_stored_vs_obs_only"], ct["n"])
     merged = dm[dm["merged"] & np.isfinite(dm["p_source_median"])]
     cm = summary["merged_p_against_sources"]
@@ -155,16 +157,16 @@ def make_figures(singles: pd.DataFrame, doubles: pd.DataFrame, triples: pd.DataF
     stored = [r[1]["stored_called"] / r[1]["n"] for r in rows]
     recomp = [r[1]["recomputed_called"] / r[1]["n"] for r in rows]
     both = [r[1]["both"] / r[1]["n"] for r in rows]
-    ax.bar(xs - 0.27, stored, 0.25, color=ORANGE, edgecolor="black", lw=0.5, label="stored")
-    ax.bar(xs, recomp, 0.25, color=RED, edgecolor="black", lw=0.5, label="recomputed / source")
-    ax.bar(xs + 0.27, both, 0.25, color=PLOT_PALETTE_FILL[0], edgecolor="black", lw=0.5, hatch="////", label="both")
+    ax.bar(xs - 0.27, stored, 0.25, color=RED, edgecolor="black", lw=0.5, label="stored")
+    ax.bar(xs, recomp, 0.25, color=ORANGE, edgecolor="black", lw=0.5, label="recomputed / source")
+    ax.bar(xs + 0.27, both, 0.25, color=PURPLE, edgecolor="black", lw=0.5, label="both")
     ax.set_xticks(xs)
     ax.set_xticklabels([r[0] for r in rows])
     ax.set_ylabel("fraction called (|score| > 0.08, p < 0.05)")
     ax.set_title("interaction calls")
     ax.set_yscale("log")
-    ax.set_ylim(1e-3, 1.0)
-    ax.legend(frameon=False, loc="upper left", fontsize=5)
+    ax.set_ylim(1e-3, 3.0)
+    ax.legend(frameon=False, loc="upper center", fontsize=5, ncol=1, bbox_to_anchor=(0.5, 1.0))
     ax.grid(axis="y", which="major", lw=0.3, color="#DDDDDD")
     ax.set_axisbelow(True)
     _box(ax)
@@ -186,16 +188,16 @@ def make_figures(singles: pd.DataFrame, doubles: pd.DataFrame, triples: pd.DataF
                label=f"essentiality only, no measurement (n = {len(only):,})")
     ax.plot([0, 1.3], [0, 1.3], color="black", lw=0.5, ls="--")
     ax.set_xlim(0, 1.3)
-    ax.set_ylim(-0.02, 1.3)
+    ax.set_ylim(-0.02, 1.6)
     ax.set_xlabel("measured single-mutant fitness (0 taken back out)")
     ax.set_ylabel("stored fitness of the single")
     ax.set_title("singles: an essentiality 0 in the mean")
-    ax.legend(frameon=False, loc="lower right", fontsize=5)
+    ax.legend(frameon=False, loc="upper left", fontsize=5)
     _box(ax)
     ax = axes[1]
     dup = doubles["gi_dup"].clip(upper=8)
     counts = dup.value_counts().sort_index()
-    ax.bar(counts.index, counts.values, color=ORANGE, edgecolor="black", lw=0.5)
+    ax.bar(counts.index, counts.values, color=RED, edgecolor="black", lw=0.5)
     ax.set_xticks(range(1, 9))
     ax.set_xticklabels([str(i) for i in range(1, 8)] + ["8+"])
     ax.set_xlabel("screens merged into one closure double")

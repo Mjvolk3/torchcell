@@ -353,6 +353,15 @@ ROUND_CAPTIONS = {
         "chromosome one-hot, the seven scaled properties, and the pathway block alone "
         "without ProtT5. Batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
     ),
+    "w39": (
+        "Round 23, the gated module forms on the ladder's top input",
+        "The pooled cell on ProtT5 with the pathway multi-hot and no readout (the "
+        "module-free control) and the round-22 FBA affine on that input (the paired "
+        "comparator), against the three gated forms of the layer that solves on the same "
+        "input: the GEM-box solve (round 15b), the elastic solve at capacity scale 100 "
+        "(round 18) and the elastic solve with the head over the solved flux (round 21). "
+        "Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
     "w35": (
         "Round 19, the gated elastic column with a faster layer and a deeper head",
         "The round-18 gated elastic cell at capacity scale 100 (the paired comparator), "

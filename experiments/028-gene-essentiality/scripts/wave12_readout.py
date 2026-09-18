@@ -422,6 +422,22 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathfba",
         ],
     ),
+    # Round 23: the gated module forms on the ladder's top input (ProtT5 + the pathway
+    # multi-hot), paired against the round-22 affine on that input and against the
+    # pooled cell on that input with no readout.
+    "w39": (
+        [
+            "w38_protpathfba_h12l1p1_e200_s*.json",
+            "w39_*_e200_s*.json",
+        ],
+        [
+            "pathpool",
+            "protpathfba",
+            "pathlpoffgate",
+            "pathlpelgate100",
+            "pathlpelgateflux",
+        ],
+    ),
     # Round 16: the round-9 backbone with the round-11 affine.
     "w27": (
         [
@@ -551,6 +567,10 @@ ARM_LABELS = {
     "protchromfba": "chromosome one-hot + ProtT5 backbone + FBA ratios",
     "protpropsfba": "seven gene properties + ProtT5 backbone + FBA ratios",
     "pathfba": "pathway multi-hot backbone + FBA ratios",
+    "pathpool": "pathway multi-hot + ProtT5 backbone, no readout",
+    "pathlpoffgate": "pathway multi-hot + ProtT5; gated column + context, the layer that solves, GEM box",
+    "pathlpelgate100": "pathway multi-hot + ProtT5; gated column + context, elastic solve, x100",
+    "pathlpelgateflux": "pathway multi-hot + ProtT5; gated + a head over the solved flux (all reactions)",
     "lpelbio30lr10": "growth column, elastic solve, x30, flux layer lr x10",
     "lpelbio100r6lr10": "growth column, elastic solve, x100, reach e^6, flux layer lr x10",
     "lpelgateflux": "gated column + context + a head over the solved flux (all reactions)",

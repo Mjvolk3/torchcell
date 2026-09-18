@@ -1,5 +1,23 @@
 {
   "script": "solve_tolerance_read.py",
+  "pdlp_store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_pdlp.npz",
+  "pdlp_store_provenance": {
+    "gem": "yeast-GEM-9.0.2",
+    "flux_scale": 100.0,
+    "method": "growth-maximizing LP (the round-27 program, split form in micromoles) by HiGHS 1.15.1 PDLP, no crossover, KKT 1e-4, with the gene deleted through cobra.manipulation.knock_out_model_genes; written by solve_tolerance_read.py",
+    "solver": "pdlp",
+    "options": {
+      "solver": "pdlp",
+      "run_crossover": "off",
+      "kkt_tolerance": 0.0001
+    },
+    "medium": "YPD",
+    "split_file": "ess_fcl_val0.2_s0.json.gz",
+    "wild_type_growth": 0.5352012416092755,
+    "wild_type_status": "Optimal",
+    "n_nonoptimal_zero_flux": 12,
+    "n_lethal_zero_flux": 93
+  },
   "program": "GEM box clamped to +/-100 mmol/gDW/h, YPD on the exchanges, the gene's reactions closed through the GPR, split variables in micromoles, maximize growth (the round-27 program)",
   "gem": "yeast-GEM-9.0.2",
   "medium": {
@@ -33,8 +51,8 @@
       },
       "n_optimal": 1121,
       "n_genes": 1121,
-      "seconds_median": 0.09827110404148698,
-      "seconds_total": 111.75483841774985,
+      "seconds_median": 0.11091860802844167,
+      "seconds_total": 132.1278405105695,
       "iterations_median": 1821.0,
       "growth_ratio_max_abs_diff": 0.0,
       "growth_ratio_auroc_test": 0.6315892997639654,
@@ -62,8 +80,8 @@
       },
       "n_optimal": 1121,
       "n_genes": 1121,
-      "seconds_median": 0.17381876101717353,
-      "seconds_total": 193.73069781577215,
+      "seconds_median": 0.19493129290640354,
+      "seconds_total": 226.0996084138751,
       "iterations_median": 2793.0,
       "growth_ratio_max_abs_diff": 2.862061140706238e-10,
       "growth_ratio_auroc_test": 0.6349331235247837,
@@ -92,8 +110,8 @@
       },
       "n_optimal": 1121,
       "n_genes": 1121,
-      "seconds_median": 0.1501475377008319,
-      "seconds_total": 161.67458280408755,
+      "seconds_median": 0.16405875934287906,
+      "seconds_total": 190.8433320815675,
       "iterations_median": 3476.0,
       "growth_ratio_max_abs_diff": 3.73344128723474e-07,
       "growth_ratio_auroc_test": 0.64771833202203,
@@ -122,8 +140,8 @@
       },
       "n_optimal": 1115,
       "n_genes": 1121,
-      "seconds_median": 0.09220340941101313,
-      "seconds_total": 104.12708143517375,
+      "seconds_median": 0.10389557294547558,
+      "seconds_total": 124.28089800989255,
       "iterations_median": 32.0,
       "growth_ratio_max_abs_diff": 6.505598553085967e-06,
       "growth_ratio_auroc_test": 0.6016915814319435,
@@ -152,8 +170,8 @@
       },
       "n_optimal": 1109,
       "n_genes": 1121,
-      "seconds_median": 11.716041854582727,
-      "seconds_total": 15978.134957636707,
+      "seconds_median": 13.566772881895304,
+      "seconds_total": 18179.416850002017,
       "iterations_median": 422720.0,
       "growth_ratio_max_abs_diff": 0.9999999933100241,
       "growth_ratio_auroc_test": 0.6750590086546027,
@@ -174,5 +192,5 @@
       "probe_spearman_with_reference_scores": 0.19151508492821537
     }
   ],
-  "seconds": 2184.343640089035
+  "seconds": 2489.4905967712402
 }

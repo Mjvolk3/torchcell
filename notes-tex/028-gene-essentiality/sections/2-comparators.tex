@@ -95,7 +95,7 @@ flux, the smallest and largest variability range, and the deletion's growth rati
 Figure~\ref{fig:ladder} shows all 216 fitted rungs; Table~\ref{tab:ladder} keeps, per
 encoding, the model class whose cross-validation AUROC is highest.
 
-\tcfigfit[1.0]{figures/classical_ladder_2026-09-16-23-16-30.pdf}{\textbf{The classical
+\tcfigfit[1.0]{figures/classical_ladder_2026-09-18-03-11-54.pdf}{\textbf{The classical
   ladder on the released-label split.} Held-out AUROC on the 195 genes for every model
   class (color) on every encoding (column), filled without and open with the four FBA
   growth ratios appended; the dashed line is FBA alone on the shipped medium (0.654), the
@@ -123,6 +123,18 @@ selected model. Neither an embedding nor the solver reaches 0.80 alone, and thei
 does on four encodings. FBA's ratio is a feature the ontology computes for every gene at
 no training cost, so the transformer is measured against 0.80 to 0.83 from here on, not
 against the published 0.73.
+
+The annotation vectors on their own. Logistic regression on the 173-column pathway
+multi-hot alone scores 0.771 [0.68, 0.85] with a cross-validation AUROC of 0.673, and
+with the four ratios 0.822, the level ProtT5 with the ratios reaches from 1,029
+parameters; the chromosome one-hot alone is below chance (0.421) and 0.692 with the
+ratios. The GO multi-hot is the strongest single encoding on the ladder: logistic
+regression on the propagated vector scores 0.808 [0.72, 0.89] with no solve at all,
+above every other encoding without FBA, and 0.833 with the ratios; the random forest on
+it with the ratios scores 0.844 [0.77, 0.91] at a cross-validation AUROC of 0.877, the
+highest of any rung. The propagated form beats the direct annotations under every model
+(0.808 against 0.739 linear without the ratios), and the biological-process namespace
+alone reaches 0.812 with them.
 
 The solve carries more than its growth ratio. The eight reaction statistics under a
 random forest score 0.797 [0.70, 0.88] with no sequence information, and 0.817

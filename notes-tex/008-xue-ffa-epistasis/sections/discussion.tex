@@ -26,9 +26,9 @@ Three consequences follow for how a campaign is designed.
 \notesec{Retain losses} A rule that keeps only strains better than their parent discards the
 approach to almost every improvement in this design. Carrying a fixed number of
 non-improving intermediates forward per round costs build capacity in proportion, and it is
-the only change to the procedure itself that addresses the reachability problem. How many to
-carry is set by the depth of the valleys, which here have a median of 31\% of the base
-titer.
+the only change to the procedure itself that addresses the reachability problem. How far
+down to keep looking is set by the depth of the valleys: a median of 8\% of the base titer
+on each triple's shallowest route, and 31\% on its deepest.
 
 \notesec{Build combinations, not sequences} If the intermediates are uninformative about the
 endpoint, then building them is a cost with no return, and a campaign is better served by
@@ -41,8 +41,8 @@ phenotype from its parts' phenotypes fails on exactly the combinations that matt
 because those are the combinations where the parts do not compose. A useful predictor has to
 be trained on combinations, and the enrichment result says the existing interaction graphs
 will not stand in for that training data: across 28 graph-by-model tests, the interacting
-triples are never enriched for connectivity in any graph, and are significantly depleted in
-five. Whatever determines which combinations interact is not recorded in physical,
+triples are never enriched for connectivity in any graph, and are depleted in five at an
+uncorrected $P < 0.05$. Whatever determines which combinations interact is not recorded in physical,
 regulatory, genetic, TFLink or STRING connectivity among these ten genes. Nor is it carried
 by combinations measured on a different readout: a transformer trained on trigenic growth
 interactions predicts neither the magnitude nor the rank of the titer interactions, and at
@@ -114,33 +114,32 @@ all, since retrobiosynthesis with predicted enzyme annotation places 55,734 reac
 beside the 4,131 of Yeast9, at predicted affinities about twofold weaker than the known
 network's~\citep{wuSystematicallyExploringYeast2026}; and one measurement at one metabolic
 locus therefore reports the combined effect of many small unmeasured changes, which is
-scored as an emergent deviation. None of the three is tested in the mirrored literature, and the
-closest measured statements cut both ways. The mixed-epistasis argument that more
+scored as an emergent deviation. None of the three is tested in the literature cited here,
+and the closest measured statements cut both ways. The mixed-epistasis argument that more
 intervening steps give ``additional possibilities for
 interconnectivity'' is made about kinases against transcription
 factors, with a transcription factor as the short-distance case, because the readout there
 is expression rather than a metabolite~\citep{sameithHighresolutionGeneExpression2015}.
 Genetic interaction degree does track multifunctionality and pleiotropy, and chromatin
 organization and transcription are named hub processes of the nonessential
-network~\citep{costanzoGlobalGeneticInteraction2016,costanzoEnvironmentalRobustnessGlobal2021},
-which supports the prevalence half; both are measured on fitness, and lipid metabolism is
-itself in the high-pleiotropy bracket of the same analysis, which is awkward for a
-fatty-acid panel in particular.
+network~\citep{costanzoGlobalGeneticInteraction2016}, which supports the prevalence half;
+it is measured on fitness, and lipid metabolism is itself in the high-pleiotropy bracket of
+the same analysis, which is awkward for a fatty-acid panel in particular.
 
 What the hypothesis must not assume is that enzymes are the additive baseline. They are
 not. The flux through a pathway is a concave saturating function of any one enzyme's
-activity, which is the classical result behind dominance and is itself a source of
-epistasis between enzymes of one
-pathway~\citep{domingoCausesConsequencesGenetic2019}; in the hierarchical treatment a
+activity rather than a linear one~\citep{domingoCausesConsequencesGenetic2019}, so two
+enzymes of one pathway need not compose even when nothing connects them but the flux; in the hierarchical treatment a
 mutation in any enzyme interacts with a mutation in any other enzyme of its
-module~\citep{kryazhimskiyEmergencePropagationEpistasis2021}; and the enzyme landscape in
-which epistasis is largest is one where the interacting residues share an active site, at
-no network distance at all~\citep{johnstonCombinatoriallyCompleteEpistatic2024}. A
+module~\citep{kryazhimskiyEmergencePropagationEpistasis2021}; and the combinatorially complete
+landscape in which epistasis was measured is four residues of one active site, which is no
+network distance at all~\citep{johnstonCombinatoriallyCompleteEpistatic2024}. A
 regulator-against-enzyme claim has to beat that baseline rather than assume it away. The
-sign is open too. Where a perturbation that degrades many components at once has been read
-out at one phenotype, the result was large positive epistasis, because the measurement
-reports whichever component is limiting rather than the sum of the
-damage~\citep{goldsteinGlobalEpistasisBudding2025}.
+sign is open too. Where single-gene knockdowns were crossed into segregants of differing
+fitness, the fitter backgrounds were the more sensitive to a perturbation, so the cost of
+a perturbation depends on how much headroom the background
+has~\citep{goldsteinGlobalEpistasisBudding2025}. Whether a regulator panel sits at the
+sensitive end of such a relation is not something this design can say.
 
 Settling this needs a comparison the design here cannot make: an enzyme panel of the same
 shape, combinatorially complete, in the same chassis, on the same readout. Simulating that
@@ -152,13 +151,13 @@ arithmetic on strains which have stopped growing rather than a graded response. 
 model the regulator arm also sits closer to the readout than the enzyme arm, not further,
 because a regulator's reaction set is the union over hundreds of targets
 (\suppnoteref{note:fluxmodel}). Reach is not the explanation either, at least not on the
-annotation graphs. Counting, on the nine gene graphs the interaction models of this
-document use and on the model's own gene-reaction-metabolite graph, how many genes and how
+annotation graphs. Counting, on nine of the ten gene graphs the enrichment
+above scans and on the model's own gene-reaction-metabolite graph, how many genes and how
 many model reactions lie within one hop of a deleted factor, of a pathway enzyme, and of an
 enzyme one reaction away from the pathway, the ten factors reach about twice as many genes
 as the pathway enzymes (median 1,416 against 701) but no more reactions outside the
-measured locus (904 against 975, Mann-Whitney $P = 0.16$), and at two hops every class
-reaches every gene-annotated reaction in the model (\suppnoteref{note:reach}). What
+measured locus (904 against 975, Mann-Whitney $P = 0.16$), and at two hops every class reaches all but one
+of the model's gene-annotated reactions outside that locus (\suppnoteref{note:reach}). What
 separates the classes is not how far they reach but through which graph they reach it: a
 factor touches metabolism only through its targets, an enzyme through coexpression and
 association, and the union of the curated graphs is dense enough that the difference is
@@ -188,8 +187,8 @@ route more often. What the design shows is that the question has an answer, and 
 answer is measurable rather than assumable.
 
 The measurement itself carries one limitation that applies to every number in this
-document. Each strain contributes an endpoint titer in milligrams per liter from three
-replicate cultures, and the released data include no biomass measurement, so nothing here
+document. Each strain contributes an endpoint titer in milligrams per liter from at most
+three replicate cultures, and the released data include no biomass measurement, so nothing here
 is normalized to cell density. A deletion that lowers final biomass and a deletion that
 lowers fatty acid output per cell are indistinguishable in this readout, and both appear as
 a lower $f$. Two consequences follow and neither is removable by reanalysis. Interaction
@@ -198,8 +197,8 @@ biomass could show a negative $\tau$ with no change in per-cell output. And the 
 depths that drive the reachability result are titer valleys, which is the right quantity
 for a campaign that screens on titer, and is not evidence about the yield or the rate. What
 the replicates do support is that the values are stable: the trigenic standard errors
-propagate from three replicates per strain through seven strains, and the monotone-route
-count moves only from 2 to 11 when a step is allowed to lose up to one standard error, so
+propagate from up to three replicates per strain through seven strains, and the
+monotone-route count moves only from 2 to 11 when a step is allowed to lose up to one standard error, so
 the result is not sitting on measurement noise. A design that reported optical density
 alongside titer would separate the two routes, and that is a property of the source
 experiment rather than of the analysis.

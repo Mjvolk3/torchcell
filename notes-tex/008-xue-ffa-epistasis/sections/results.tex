@@ -27,12 +27,11 @@ RPD3, SPT3, TFC7 and YAP6) were deleted in every combination of one, two and thr
 giving 10 single, 45 double and 120 triple deletion strains alongside the undeleted base
 strain. The base strain is itself an engineered chassis, an FFA-overproducing
 \org{S.\ cerevisiae} carrying pox1$\Delta$ faa1$\Delta$ faa4$\Delta$, and the ten
-transcription factor deletions are additional to those three. Every titer below is relative
-to that chassis, so a triple deletion strain carries six deletions in total. Six quantities
-were measured per strain: the titers of myristate (C14:0), palmitate
-(C16:0), stearate (C18:0), palmitoleate (C16:1) and oleate (C18:1), and their sum, which we
-refer to as total titer. All titers below are normalized to the base strain, so a value of
-1 is no change and 2 is a doubling.
+transcription factor deletions are additional to those three, so a triple deletion strain
+carries six deletions in total. Six quantities were measured per strain: the titers of
+myristate (C14:0), palmitate (C16:0), stearate (C18:0), palmitoleate (C16:1) and oleate
+(C18:1), and their sum, referred to as total titer. Every titer below is divided by the
+base strain's, so a value of 1 is no change and 2 is a doubling.
 
 Completeness is what makes the design usable for the question at hand. Because every
 sub-combination of every triple was built, each triple can be reached by six distinct
@@ -41,9 +40,9 @@ than modeled. The design therefore contains 720 fully measured construction rout
 
 Only one of the ten single deletions raises titer at all. Deleting GCN5 gives
 $1.06\times$; the other nine lose ground, and deleting RPD3 costs nearly half the titer at
-$0.52\times$ (Fig.~\ref{fig:inaccessible}a). Combinations behave very differently: 29 of the
-45 doubles and 51 of the 120 triples exceed the base strain, and the best strain in the
-design is a triple at $2.05\times$. The gap between what single deletions do and what
+$0.52\times$. Combinations behave very differently: 29 of the 45 doubles and 51 of the 120
+triples exceed the base strain, and the best strain in the design is a triple at
+$2.05\times$ (Fig.~\ref{fig:inaccessible}a). The gap between what single deletions do and what
 combinations do is the first sign that the effects are not composing.
 
 \begin{figure*}[t]
@@ -67,8 +66,9 @@ product; the coupling that made the cell robust is still there and is not measur
 \textbf{b}, An interaction is the departure of a measured combination from an expectation,
 drawn for the multiplicative null with a negative departure, the common case on growth:
 genome-wide, about 550,000 negative and 350,000 positive digenic
-interactions~\citep{costanzoGlobalGeneticInteraction2016}, and an estimated hundred times as
-many trigenic ones, about 25\% weaker~\citep{kuzminSystematicAnalysisComplex2018}.
+interactions~\citep{costanzoGlobalGeneticInteraction2016}, and an estimated hundred times
+as many negative trigenic ones, about 25\%
+weaker~\citep{kuzminSystematicAnalysisComplex2018}.
 Predicted, an interaction is a step a design can climb; unpredicted, a campaign is left to
 trial and error. \textbf{c}, Interaction scores against the multiplicative null for all
 45 double (lilac) and 120 triple (amber) deletions, as outline histograms on shared bins so
@@ -176,11 +176,15 @@ destination rather than by route: 51 of the 120 triples beat the base strain, an
 51 sit at the end of a monotone route (Fig.~\ref{fig:inaccessible}c). The other 49
 improvements exist in the design and are invisible to a stepwise campaign.
 
-The obstacle is a valley rather than a plateau. For each triple we took its shallowest
-route, meaning the one whose worst intermediate is highest, and measured how far that worst
-intermediate falls below the base strain. The median shallowest route dips 31\% below the
-starting titer, and the deepest dips 48\%. A campaign built to discard anything worse than
-its parent will discard the route at the first step.
+The obstacle is a valley rather than a plateau. Every route has a worst intermediate, and
+how far that intermediate falls below the base strain is the loss a campaign has to accept
+to follow the route to its end. Each triple has six routes, so it has a best case and a
+worst case. Taking each triple's shallowest route, the one whose worst intermediate is
+highest, the median dips 8\% below the starting titer and the deepest such best case dips
+22\%: no choice of deletion order avoids a loss. Taking the deepest route of each triple
+instead, which is what a campaign that picks badly gets, the median dips 31\% and the
+worst 48\%. A campaign built to discard anything worse than its parent discards the route
+at the first step either way.
 
 Simulating the campaign directly gives the same answer in one number. Starting from the base
 strain and taking the best strictly improving single deletion each round, with full
@@ -221,8 +225,8 @@ at $0.3$ to $1.5$ in steps of $0.3$ for the two linear-scale models, and a doubl
 from $0.1$ to $1.6$ for the two log-scale ones, which is why those crowd near $1$ and open
 out at low titer. Three of the four expect the same surface, and the additive null is the
 one that does not: its level sets are straight where the others are hyperbolas. The two
-surfaces differ by $(1 - f_i)(1 - f_j)$, which is $0.25$ at the center of the square,
-marked in every panel with what that model expects there. \textbf{e}, The two families of
+surfaces differ by $(1 - f_i)(1 - f_j)$, which is $0.25$ where both singles halve the
+titer; that point is marked in every panel with what the model expects there. \textbf{e}, The two families of
 null as statements about the system. A multiplicative null says each deletion keeps a
 fraction of what reaches it, which is how independent steps of one flux compose and is the
 convention the growth interaction screens use. An additive null says each deletion removes
@@ -291,9 +295,9 @@ are non-positive on the log scale, while no negative linear-scale score becomes 
 linear-scale statement, and reporting one without naming the scale is reporting the modeling
 choice as a result.
 
-The readout matters as much as the scale. Thirty-one triples clear all four models with the
-sign agreeing on at least one of the five individual species, and 20 of those are on C14:0,
-where every consensus interaction is positive. None survives on the summed total
+The readout matters as much as the scale. Thirty-one positive consensus interactions, over
+29 distinct triples, clear all four models with the sign agreeing on one of the five
+individual species, and 20 of the 31 are on C14:0. None survives on the summed total
 (Fig.~\ref{fig:models}e). Summing the five species is a modeling choice too, and it is the
 choice that removes the positive signal. The five species behind the sum are not variations
 on one pattern: the number of triples called within a species runs from 3 to 80, C14:0
@@ -314,8 +318,9 @@ and database channels of STRING 12.0. For each graph and each model we compared 
 of significant triples whose three genes form a connected subgraph to the same fraction
 among the non-significant triples.
 
-Nothing is enriched. Across 28 graph-by-model tests, 5 reach $P < 0.05$ and every one of the
-5 is a depletion rather than an excess (Fig.~\ref{fig:models}b). The largest excess anywhere
+Nothing is enriched. Across 28 graph-by-model tests, 5 reach an uncorrected $P < 0.05$ and
+every one of the 5 is a depletion rather than an excess (Fig.~\ref{fig:models}b); none of
+the 5 survives a Benjamini-Hochberg correction over the 28 tests. The largest excess anywhere
 is the STRING database channel under the multiplicative model at 1.31-fold, which does not
 reach significance ($P = 0.13$). Drawing the significant interactions onto the pathway
 itself makes the same point visually: the interacting triples span the transcription factor
@@ -396,8 +401,8 @@ prediction (Kruskal-Wallis $P = 0.39$). The three checkpoints agree with each ot
 0.62 to 0.71) far better than any of them agrees with titer ($r$ 0.08 to 0.20), so the miss
 is a property of what the model learned rather than of one training run. Restricting to
 the 86 triples called at a 5\% false discovery rate, to the 84 free of the contested TFC7
-locus, or to the 35 whose three factors were all deleted in training moves $r$ between 0.12
-and 0.16 without moving it out of the noise, and the top quartile by predicted $\tau$ holds
+locus, or to the 35 whose three factors were all deleted in training leaves $r$ between
+0.12 and 0.15, no further from zero than the full set, and the top quartile by predicted $\tau$ holds
 no more called interactions than the rest (22 of 30 against 64 of 90).
 
 The one signal is the sign. Of the 20 triples the model predicts positive, 9 measure

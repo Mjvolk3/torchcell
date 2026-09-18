@@ -585,34 +585,40 @@ def panel_greedy_walk(ax):
 def panel_path_valley(ax):
     """How deep the best available route has to dip before it comes back up.
 
-    Valley depth is the shortfall of the worst intermediate on a triple's shallowest route,
-    as a fraction of the base strain. It is the quantity a stop-early screening rule pays:
-    a campaign that discards any strain below its parent never sees the far side.
+    Valley depth is the shortfall of the worst intermediate on a route, as a fraction of
+    the base strain, and a triple has six routes. The SHALLOWEST of the six is what this
+    panel draws: it is the best approach a campaign with perfect foresight could take, so
+    a dip there is a loss no choice of deletion order avoids. The panel drew the DEEPEST
+    of the six until an author review found the mismatch (2026.09.18); the deepest is the
+    worst a campaign could do by choosing badly, which is a different claim.
     """
     acc = pd.read_csv(osp.join(RESULTS_DIR, "ffa_epistatic_path_accessibility.csv"))
     beats = acc["f_triple"] > 1.0
-    bins = np.linspace(0, acc["max_valley_depth"].max() * 1.02, 22)
-    ax.hist(acc.loc[~beats, "max_valley_depth"], bins=bins, color=C_GRAY,
+    col = "min_valley_depth"
+    bins = np.linspace(0, acc[col].max() * 1.02, 22)
+    ax.hist(acc.loc[~beats, col], bins=bins, color=C_GRAY,
             edgecolor="black", linewidth=0.3,
             label=f"does not beat base (n={int((~beats).sum())})")
-    ax.hist(acc.loc[beats, "max_valley_depth"], bins=bins,
-            bottom=np.histogram(acc.loc[~beats, "max_valley_depth"], bins=bins)[0],
+    ax.hist(acc.loc[beats, col], bins=bins,
+            bottom=np.histogram(acc.loc[~beats, col], bins=bins)[0],
             color=C_NEG, edgecolor="black", linewidth=0.3,
             label=f"beats base (n={int(beats.sum())})")
-    med = acc["max_valley_depth"].median()
+    med = acc[col].median()
     ax.axvline(med, color="black", linewidth=0.5, linestyle="--", zorder=3)
     ax.set_xlabel("valley depth of the shallowest route\n(fraction of base strain titer)")
     ax.set_ylabel("triple deletions")
     ymax = ax.get_ylim()[1]
     ax.set_ylim(0, ymax * 1.30)
     ax.set_title(
-        f"median route dips {med * 100:.0f}% below the base strain\n"
-        "before the third deletion recovers it",
+        f"the shallowest route still dips {med * 100:.0f}% below\n"
+        "the base strain for the median triple",
         fontsize=6, pad=3,
     )
     ax.legend(loc="upper right", frameon=False, handlelength=1.2, labelspacing=0.3,
               borderaxespad=0.3)
-    return {"median_valley": float(med), "max_valley": float(acc["max_valley_depth"].max())}
+    return {"median_shallowest": float(med), "max_shallowest": float(acc[col].max()),
+            "median_deepest": float(acc["max_valley_depth"].median()),
+            "max_deepest": float(acc["max_valley_depth"].max())}
 
 
 # ---------------------------------------------------------------------------------------

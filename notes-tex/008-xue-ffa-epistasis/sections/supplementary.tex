@@ -15,6 +15,11 @@
 %%       -> notes/assets/images/008-xue-ffa/perturbation_reach.svg
 %%       -> experiments/008-xue-ffa/results/perturbation_reach/{reach,classes}.csv and
 %%          summary.json  (every number in Note 4)
+%%   experiments/008-xue-ffa/scripts/tf_single_mutant_fitness.py
+%%       -> experiments/008-xue-ffa/results/tf_single_mutant_fitness.csv (the audit trail,
+%%          one row per gene x screen x strain), tf_single_mutant_fitness.tex (that table
+%%          in full) and tf-single-mutant-fitness-compact.tex (\input by Note 5; hyphens, since
+%%          LaTeX cannot \input a path with underscores)
 %% The four model equations moved to the Methods section (review 2026.09.16): they define
 %% what every figure measures, so they belong with the measurement description rather than
 %% behind the main text.
@@ -29,7 +34,8 @@
 \suppnoteref{note:digenic}  & The digenic layer the trigenic score is measured against (with \suppfig{fig:si-digenic})\\
 \suppnoteref{note:species}  & The five species under the summed total (with \suppfig{fig:si-species})\\
 \suppnoteref{note:fluxmodel}  & A minimal flux model of the regulator-against-enzyme comparison (with \suppfig{fig:si-fluxmodel})\\
-\suppnoteref{note:reach}  & How far a perturbation reaches on the annotation graphs (with \suppfig{fig:si-reach})\\[4pt]
+\suppnoteref{note:reach}  & How far a perturbation reaches on the annotation graphs (with \suppfig{fig:si-reach})\\
+\suppnoteref{note:fitness}  & What each deleted factor costs on its own, in the growth screens\\[4pt]
 Supplementary Figs.\ & A figure supporting a Note sits with that Note\\
 \end{tabular}
 
@@ -165,7 +171,8 @@ produced by the network and by the choice to measure one locus. Interaction scor
 Eqs.~\ref{eq:eps} and \ref{eq:tau} on that readout.
 
 \notesec{At the multipliers a reader would try first, nothing happens} At 0.75, 0.5 and
-0.25 every digenic and every trigenic score in both arms is exactly zero. About seven in
+0.25 every digenic and every trigenic score in both arms is zero to numerical tolerance,
+$2 \times 10^{-15}$ against a tolerance of $10^{-6}$. About seven in
 ten of the model's flux bounds sit at its $\pm 1000$ placeholder rather than at a measured
 capacity, and scaling a placeholder binds nothing. This is a property of the model's
 parameterization, not a result about composability.
@@ -196,7 +203,7 @@ that does not collapse onto a feasibility boundary, and a map from a factor dele
 distribution of expression changes rather than an all-or-nothing scaling of every target.
 The last of these is the step the Discussion identifies as missing, and this is what its
 absence costs. Everything in this note is a property of the model defined in
-\file{experiments/008-xue-ffa/scripts/regulator\_vs\_enzyme\_epistasis\_model.py}; no
+\file{experiments/008-xue-ffa/scripts/regulator_vs_enzyme_epistasis_model.py}; no
 number in it is a titer, and none of it is evidence about the measured strains. The model
 also ignores whether a factor activates or represses its target, treats every target
 equally, and reads an optimum rather than a titer, and each of those would have to be
@@ -239,9 +246,11 @@ metabolites with the pathway. The measured locus is the 69 model reactions the t
 genes catalyze plus the five fatty acid exchanges; any other reaction is a place the
 titer does not look.
 
-\notesec{Ten graphs and their union} Nine are the gene graphs the interaction models of
-Fig.~\ref{fig:models}b draw on: physical association, the SGD regulatory graph, TFLink,
-and the six STRING 12.0 channels. The regulatory and TFLink graphs are directed and are
+\notesec{Ten graphs and their union} Nine are gene graphs, all but one of the ten the
+enrichment of Fig.~\ref{fig:models}b scans: physical association, the SGD regulatory
+graph, TFLink, and the six STRING 12.0 channels. The genetic interaction graph is left
+out, since a genetic interaction is a measured epistasis and using it here would answer
+the question with its own answer. The regulatory and TFLink graphs are directed and are
 followed factor to target only. The tenth is the model's own gene-reaction-metabolite
 graph with the same currency metabolites dropped, on which one gene hop is gene to
 reaction to metabolite to reaction to gene. The union carries an edge wherever any of the
@@ -254,17 +263,19 @@ hop a factor reaches a median of 1,416 genes, a pathway enzyme 701 and an adjace
 390, but the reactions those genes carry outside the locus are 904, 975 and 667
 respectively, and neither regulator comparison separates (Mann-Whitney $P = 0.16$ against
 the pathway enzymes and $0.09$ against the adjacent ones). The share of touched reactions
-that lie off the locus is 0.97, 0.95 and 0.95. At two hops every class reaches the
-2,645 gene-annotated reactions the model has outside the locus, so a two-hop comparison is
-a comparison of ceilings, and at three hops the classes reach 6,950 to 6,960 of the
-union's 6,997 genes (\suppfig{fig:si-reach}a,~c).
+that lie off the locus is 0.97, 0.95 and 0.95. At two hops the median class reaches essentially every
+gene-annotated reaction the model has outside the locus, 2,645 for the regulators and the
+pathway enzymes and 2,644 for the adjacent enzymes, so a two-hop comparison is a
+comparison of ceilings rather than of reach. At three hops the class medians run from
+6,950 to 6,961 of the union's 6,997 genes (\suppfig{fig:si-reach}a,~c).
 
 \notesec{What separates them is the graph, not the amount} The factors reach off-locus
-reactions through the two regulatory graphs only, 482 through SGD and 476 through TFLink at
-one hop, and through the metabolic graph not at all, because none of them is a model gene.
-The two enzyme classes are the mirror image: nothing through either regulatory graph, and
-their reach carried by coexpression (898 and 546), experimental association (463 and 188),
-neighborhood, database and the metabolic graph (95 and 72)
+reactions through the two regulatory graphs only, a median of 483 through the SGD graph and
+476 through TFLink at one hop, and through the metabolic graph not at all, because none of
+them is a gene of the model. The two enzyme classes are the mirror image: nothing through
+either regulatory graph, and their reach, quoted as pathway enzyme against adjacent enzyme,
+carried by STRING coexpression (898 and 546), experimental association (463 and 189),
+neighborhood (265 and 116), database (230 and 117) and the metabolic graph (95 and 72)
 (\suppfig{fig:si-reach}b,~d). Twenty-four of the 99 graph-by-class-by-depth cells have a
 median reach of zero.
 
@@ -276,8 +287,9 @@ one hop away on a coexpression graph need not change when the seed is deleted, n
 change is modeled, and the graphs are unevenly curated: a factor with a long TFLink list
 differs from one with a short list in what the resource recorded as well as in what the
 cell does. Every number in this note is produced by
-\file{experiments/008-xue-ffa/scripts/perturbation\_reach\_analysis.py} from the graphs and
+\file{experiments/008-xue-ffa/scripts/perturbation_reach_analysis.py} from the graphs and
 the model as stored, and none of it is a titer.
+
 
 \begin{figure*}[t]
 \tcfig{figures/perturbation_reach.pdf}{\textbf{Reach on the annotation graphs does not
@@ -291,3 +303,63 @@ medians are within a factor of 1.5. \textbf{c}, The share of touched reactions t
 off the locus, per seed, at one and two hops on the union. \textbf{d}, Median out-degree
 of a seed per graph, the first-hop fan-out behind \textbf{b}.}{fig:si-reach}
 \end{figure*}
+
+\suppnote{note:fitness}{What each deleted factor costs on its own, in the growth screens\secstatus{todo}}
+
+Every titer here is a volumetric measurement with no biomass column, so a deletion that
+slows growth and a deletion that lowers output per cell read the same. What each of the
+ten factors does to growth on its own is measured elsewhere, in the genetic interaction
+screens, and putting those values beside the panel says which deletions bring a growth
+cost into the readout.
+
+\notesec{Where the numbers come from} Single-mutant fitness relative to wild type, from
+the strain-level tables of Costanzo et al.~\citep{costanzoGlobalGeneticInteraction2016} at
+both assay temperatures and from the array single-mutant columns of Kuzmin et
+al.~\citep{kuzminSystematicAnalysisComplex2018,kuzminExploringWholegenomeDuplicate2020}.
+The Costanzo uncertainty is a bootstrap standard error over 17 control screens, and the
+Kuzmin array columns carry no uncertainty at all, so none is quoted. Essentiality is the
+mirrored SGD record, counting a null allele scored inviable. The lookup, every strain it
+found and the file and column each value was read from are in
+\file{experiments/008-xue-ffa/scripts/tf_single_mutant_fitness.py} and its CSV; the
+table below is one row per gene, and it names an allele class only where the classes
+disagree.
+
+\begin{table}[h]
+\centering\footnotesize
+\input{tables/tf-single-mutant-fitness-compact.tex}
+\caption{Single-mutant fitness of the ten deleted transcription factors in the growth
+screens, relative to wild type. A dash is a gene the screen carries no fitness value for,
+either because it has no strain there or because the released table leaves the value
+empty. ``inviable'' marks a gene whose null allele SGD records as inviable, which is why
+the screens carry a temperature-sensitive or DAmP allele for it rather than a deletion.}
+\end{table}
+
+\notesec{Three of the ten are not deletable in a laboratory background} MED4, RGR1 and
+TFC7 all carry an inviable null in SGD, and no screen has a deletion strain for any of
+them: Costanzo represents MED4 by temperature-sensitive alleles, RGR1 by a DAmP allele and
+a temperature-sensitive one, and TFC7 by a DAmP allele with no fitness reported. Where the
+hypomorphs do carry a value they are the sickest strains in the set, 0.52 for MED4 and
+0.50 for the RGR1 temperature-sensitive allele against 0.97 for the RGR1 DAmP allele,
+which is the difference between two perturbation strengths rather than two estimates of
+one quantity. The source study nonetheless reports viable deletion strains for all three
+in its producing background. Reconciling that is outside what these data can do, and the
+possibilities, a different background, a partial deletion, or a suppressor, are not
+distinguishable from the released tables. What follows for this document is narrower: for
+these three factors the titer of a strain carrying them is not comparable to a
+laboratory-background deletion of the same gene.
+
+\notesec{The rest are mild, and one is absent} FKH1 and YAP6 are at or within a percent of
+wild-type fitness, RFX1 at 0.97, OPI1 at 0.85 and SPT3 at 0.73, the largest measured cost
+among the seven non-essential factors. RPD3 has a strain in Costanzo but no reported
+fitness, and GCN5 has no strain in any of the five tables, checked both by systematic name
+and by allele name. GCN5 is the one factor whose single deletion raises titer here, so the
+screens offer no growth value for the single most useful deletion in the panel.
+
+\notesec{What this does and does not license} It does not convert any titer into a
+per-cell quantity, and it is not a measurement in the producing background. It bounds one
+reading of the results: the two single deletions that cost the most titer, RPD3 at
+$0.52\times$ and MED4, are a gene with no reported growth value and a gene whose null is
+inviable in a laboratory strain, so a growth contribution to those two titers cannot be
+ruled out from these data. The factors with mild growth costs, FKH1, YAP6 and RFX1, lose
+titer in this chassis anyway, which is a titer effect rather than a growth one.
+

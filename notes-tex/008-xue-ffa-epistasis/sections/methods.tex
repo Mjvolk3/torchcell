@@ -24,15 +24,22 @@
 %%     -> results/graph_enrichment/*.csv
 %%   notable_interaction_selection.py             the consensus gate
 %%     -> results/notable_interaction_selection.csv
-%%   perspective_figure_panels.py                 Figs. 1, 2a-c, 3
+%%   perspective_figure_panels.py                 Figs. 1c-e, 2a-c, 4
 %%     -> images/008-xue-ffa/panel_*.svg
+%%   perspective_motivation_drawio.py             Fig. 1a-b as native draw.io shapes
+%%   epistasis_model_intuition_panels.py          Fig. 3a-d and every typeset expression
+%%   epistasis_model_intuition_drawio.py          Fig. 3 as a draw.io page
 %%   supplementary_figure_panels.py               Supplementary Figs. 1 and 2
 %%     -> images/008-xue-ffa/si_panel_*.svg, results/supplementary_readout_counts.csv
-%%   ffa_network_overlay_panel.py                 Fig. 4 layout and matplotlib rendering
-%%   ffa_network_overlay_drawio.py                Fig. 4 as native draw.io shapes
+%%   ffa_kegg_map.py, map_labels.py               Fig. 5a
+%%   ffa_network_overlay_panel.py                 Fig. 5b layout and matplotlib rendering
+%%   ffa_network_overlay_drawio.py                Fig. 5b as native draw.io shapes
 %%     -> notes/assets/drawio/ffa-epistasis-fig4-network-overlay.drawio (and -triangles)
-%%   experiments/010-kuzmin-tmi/scripts/ffa_panel_model_score.py   Fig. 5
+%%   experiments/010-kuzmin-tmi/scripts/ffa_panel_model_score.py   Fig. 6
 %%     -> results/ffa_panel_model_score.{csv,json}, images/010-kuzmin-tmi/ffa_panel_model_score.svg
+%%   regulator_vs_enzyme_epistasis_model.py       Supplementary Note 3 and Fig. 3
+%%   perturbation_reach_analysis.py               Supplementary Note 4 and Fig. 4
+%%   tf_single_mutant_fitness.py                  the single-mutant fitness table of the SI
 
 \section{Methods\secstatus{todo}}
 
@@ -40,8 +47,10 @@
 
 Titers for five fatty acid species and their sum were taken from the source study's
 supplementary tables for the base strain and for all 175 deletion combinations. Each strain
-contributes three replicate measurements per species, in milligrams per liter at a single
-endpoint. Every titer is divided by the base strain's titer for the same species in the
+contributes up to three replicate measurements per species, in milligrams per liter at a
+single endpoint: three for all but twelve strains, two for eleven of those twelve, and one
+for the triple GCN5 OPI1 TFC7, which is why 119 of the 120 triples carry a testable
+standard error. Every titer is divided by the base strain's titer for the same species in the
 same experiment, so all values below are ratios and the base strain is 1 by construction.
 The sum, referred to as total titer, is formed per replicate before averaging rather than
 by summing the five published species means, so it is a measured quantity and not a sixth
@@ -136,7 +145,7 @@ $r > 0.99$ (\file{log_ols_wt_differencing_epistatic_interactions.py}).
 
 \notesec{The scale is the first tradeoff, and it is not a matter of taste} Equations
 \ref{eq:mult} and \ref{eq:logtau} are different quantities, not two estimates of one
-quantity. They agree in magnitude across the 119 testable triples at $r = 0.91$ and
+quantity. They agree in magnitude across all 120 triples at $r = 0.91$ and
 Spearman $\rho = 0.84$ and disagree near zero, which is exactly where a call is made: 15 of
 the 27 triples with a positive linear-scale score are non-positive on the log scale, and
 none of the reverse. A three-way interaction is not invariant under a monotone transform of
@@ -201,9 +210,11 @@ For each triple, all six orders of introducing its three deletions were expanded
 four-rung trajectory: base strain, one deletion, two deletions, three deletions, taking the
 measured strain at each rung. A route is monotone when every step is strictly positive, and
 monotone within one standard error when every step exceeds the negative of that step's
-propagated standard error. Valley depth is $1 - \min(\text{rungs})$ on a route, and a
-triple's valley depth is the minimum over its six routes, meaning its shallowest available
-approach. The greedy campaign in Fig.~\ref{fig:inaccessible}b starts at the base strain,
+propagated standard error. Valley depth on a route is $1 - \min(f_i, f_{ij})$, the
+shortfall of its worst intermediate, taken over the two intermediate rungs only, since the
+base strain and the destination are not intermediates. A triple has six routes, so both
+ends of that set are reported: the minimum over the six is its shallowest approach, the
+best a campaign with perfect foresight could take, and the maximum is its deepest. The greedy campaign in Fig.~\ref{fig:inaccessible}b starts at the base strain,
 evaluates every combination reachable by one further deletion, takes the highest if it
 exceeds the current strain, and stops otherwise. Enumeration and monotonicity are in
 \file{ffa_epistatic_path_panels.py}; the greedy simulation is in
@@ -315,9 +326,12 @@ placed in the best of all orders rather than greedily, since a fixed order stran
 last label of a cluster. The attached species go into the window of the map whose rings
 and links cover the least ink, scored over both sides of the column. Labels may use a
 5 mm gutter to the left of the drawing, which the drawing itself may not, because the
-compounds this panel names sit at the left end of the fatty acid comb. One label, pyruvate,
-has its search narrowed to upward directions after review; the search still chooses among
-what is left, and the narrowing is recorded in the script.
+compounds this panel names sit at the left end of the fatty acid comb. Three labels have
+their search narrowed after review, pyruvate to upward directions and palmitate and
+palmitoyl-CoA to the lower right; the search still chooses among what is left, and each
+narrowing is recorded in the script. Label text is placed by its baseline from the
+typeface's cap height and descender, so the plate around a label is padded evenly around
+its ink rather than around its line box.
 
 \notesec{What the caption's counts are} Every count in the caption of
 Fig.~\ref{fig:network}a and in the panel's own key is computed by the run that draws the
@@ -336,7 +350,7 @@ so four of the thirteen pathway genes and three of the five measured species wer
 from it. The KGML redraw carries all thirteen genes and four of the five species. The
 iPath3 client is kept at \file{experiments/008-xue-ffa/scripts/ffa_ipath_map.py} with its
 stored responses, and the two scripts share the label placement module
-\file{map\_labels.py}.
+\file{map_labels.py}.
 
 \subsection*{Figures}
 
@@ -349,10 +363,14 @@ table behind \suppnoteref{note:digenic} and \suppnoteref{note:species} come from
 \file{ffa_network_overlay_panel.py}, and \file{ffa_network_overlay_drawio.py} writes the
 same layout as native draw.io shapes, which is the source Fig.~\ref{fig:network} is exported
 from; the growth-model figure comes from
-\file{experiments/010-kuzmin-tmi/scripts/ffa_panel_model_score.py}. The multi-panel
-arrangements are assembled from the panel SVGs by \file{build_perspective_drawio.py} into
-editable draw.io sources under
-\file{notes/assets/drawio/}.
+\file{experiments/010-kuzmin-tmi/scripts/ffa_panel_model_score.py}. The two schematic
+panels that open Fig.~\ref{fig:landscape} and the schematic and table of
+Fig.~\ref{fig:model-intuition} are native draw.io shapes written by
+\file{perspective_motivation_drawio.py} and \file{epistasis_model_intuition_drawio.py},
+with every expression in them typeset by \file{epistasis_model_intuition_panels.py} and
+placed as an image at its measured size. The remaining multi-panel arrangements are
+assembled from the panel SVGs by \file{build_perspective_drawio.py} into editable draw.io
+sources under \file{notes/assets/drawio/}.
 
 \subsection*{Code and data availability}
 

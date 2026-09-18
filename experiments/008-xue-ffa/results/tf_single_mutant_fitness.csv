@@ -1,0 +1,85 @@
+gene,orf,source,allele,strain_id,fitness,uncertainty,uncertainty_type,n,essential,file,column
+FKH1,YIL131C,costanzo2016_26C,KanMX_deletion,YIL131C_dma5310,1.0085,0.0435,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+FKH1,YIL131C,costanzo2016_30C,KanMX_deletion,YIL131C_dma5310,1.0085,0.0435,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+FKH1,YIL131C,kuzmin2018_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+FKH1,YIL131C,kuzmin2018_query,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+FKH1,YIL131C,kuzmin2020_S1_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,
+FKH1,YIL131C,kuzmin2020_S3_array,KanMX_deletion,YIL131C_dma5310,1.0085,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,Array single mutant fitness
+FKH1,YIL131C,kuzmin2020_S5_single,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,
+GCN5,YGR252W,costanzo2016_26C,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,
+GCN5,YGR252W,costanzo2016_30C,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,
+GCN5,YGR252W,kuzmin2018_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+GCN5,YGR252W,kuzmin2018_query,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+GCN5,YGR252W,kuzmin2020_S1_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,
+GCN5,YGR252W,kuzmin2020_S3_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,
+GCN5,YGR252W,kuzmin2020_S5_single,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,
+MED4,YOR174W,costanzo2016_26C,temperature_sensitive,YOR174W_tsa738,0.5199,0.0114,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+MED4,YOR174W,costanzo2016_26C,temperature_sensitive,YOR174W_tsq738,0.5199,0.0114,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+MED4,YOR174W,costanzo2016_26C,temperature_sensitive,YOR174W_tsq956,,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+MED4,YOR174W,costanzo2016_30C,temperature_sensitive,YOR174W_tsa738,0.4157,0.0282,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+MED4,YOR174W,costanzo2016_30C,temperature_sensitive,YOR174W_tsq738,0.4157,0.0282,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+MED4,YOR174W,costanzo2016_30C,temperature_sensitive,YOR174W_tsq956,,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+MED4,YOR174W,kuzmin2018_array,temperature_sensitive,YOR174W_tsa738,0.5097,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,Array single mutant fitness
+MED4,YOR174W,kuzmin2018_query,absent,,,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+MED4,YOR174W,kuzmin2020_S1_array,temperature_sensitive,YOR174W_tsa738,0.547,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,Array single mutant fitness
+MED4,YOR174W,kuzmin2020_S3_array,temperature_sensitive,YOR174W_tsa738,0.5199,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,Array single mutant fitness
+MED4,YOR174W,kuzmin2020_S5_single,absent,,,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,
+OPI1,YHL020C,costanzo2016_26C,KanMX_deletion,YHL020C_dma2042,0.8545,0.0976,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+OPI1,YHL020C,costanzo2016_26C,NatMX_deletion,YHL020C_sn1938,0.8545,0.0976,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+OPI1,YHL020C,costanzo2016_30C,KanMX_deletion,YHL020C_dma2042,0.8545,0.0976,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+OPI1,YHL020C,costanzo2016_30C,NatMX_deletion,YHL020C_sn1938,0.8545,0.0976,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+OPI1,YHL020C,kuzmin2018_array,KanMX_deletion,YHL020C_dma2042,0.845,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,Array single mutant fitness
+OPI1,YHL020C,kuzmin2018_query,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+OPI1,YHL020C,kuzmin2020_S1_array,KanMX_deletion,YHL020C_dma2042,0.859,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,Array single mutant fitness
+OPI1,YHL020C,kuzmin2020_S3_array,KanMX_deletion,YHL020C_dma2042,0.8545,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,Array single mutant fitness
+OPI1,YHL020C,kuzmin2020_S5_single,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,
+RFX1,YLR176C,costanzo2016_26C,KanMX_deletion,YLR176C_dma3249,0.9732,0.1016,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+RFX1,YLR176C,costanzo2016_26C,NatMX_deletion,YLR176C_sn1882,0.9732,0.1016,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+RFX1,YLR176C,costanzo2016_30C,KanMX_deletion,YLR176C_dma3249,0.9732,0.1016,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+RFX1,YLR176C,costanzo2016_30C,NatMX_deletion,YLR176C_sn1882,0.9732,0.1016,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+RFX1,YLR176C,kuzmin2018_array,KanMX_deletion,YLR176C_dma3249,0.962,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,Array single mutant fitness
+RFX1,YLR176C,kuzmin2018_query,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+RFX1,YLR176C,kuzmin2020_S1_array,KanMX_deletion,YLR176C_dma3249,0.923,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,Array single mutant fitness
+RFX1,YLR176C,kuzmin2020_S3_array,KanMX_deletion,YLR176C_dma3249,0.9732,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,Array single mutant fitness
+RFX1,YLR176C,kuzmin2020_S5_single,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,
+RGR1,YLR071C,costanzo2016_26C,damp,YLR071C_damp750,0.974,0.007,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+RGR1,YLR071C,costanzo2016_26C,temperature_sensitive,YLR071C_tsa908,0.5006,0.098,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+RGR1,YLR071C,costanzo2016_26C,temperature_sensitive,YLR071C_tsq1208,0.5006,0.098,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+RGR1,YLR071C,costanzo2016_30C,damp,YLR071C_damp750,0.974,0.007,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+RGR1,YLR071C,costanzo2016_30C,temperature_sensitive,YLR071C_tsa908,0.5294,0.1626,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+RGR1,YLR071C,costanzo2016_30C,temperature_sensitive,YLR071C_tsq1208,0.5294,0.1626,bootstrap_se,17,"yes (SGD null inviable, S288C)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+RGR1,YLR071C,kuzmin2018_array,absent,,,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+RGR1,YLR071C,kuzmin2018_query,absent,,,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+RGR1,YLR071C,kuzmin2020_S1_array,absent,,,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,
+RGR1,YLR071C,kuzmin2020_S3_array,temperature_sensitive,YLR071C_tsa908,0.5006,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,Array single mutant fitness
+RGR1,YLR071C,kuzmin2020_S5_single,absent,,,,,,"yes (SGD null inviable, S288C)",data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,
+RPD3,YNL330C,costanzo2016_26C,NatMX_deletion,YNL330C_sn1795,,,,,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+RPD3,YNL330C,costanzo2016_30C,NatMX_deletion,YNL330C_sn1795,,,,,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+RPD3,YNL330C,kuzmin2018_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+RPD3,YNL330C,kuzmin2018_query,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+RPD3,YNL330C,kuzmin2020_S1_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,
+RPD3,YNL330C,kuzmin2020_S3_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,
+RPD3,YNL330C,kuzmin2020_S5_single,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,
+SPT3,YDR392W,costanzo2016_26C,NatMX_deletion,YDR392W_sn2072,0.7258,0.1806,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+SPT3,YDR392W,costanzo2016_30C,NatMX_deletion,YDR392W_sn2072,0.7258,0.1806,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+SPT3,YDR392W,kuzmin2018_array,KanMX_deletion,YDR392W_dma1125,0.7185,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,Array single mutant fitness
+SPT3,YDR392W,kuzmin2018_query,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+SPT3,YDR392W,kuzmin2020_S1_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,
+SPT3,YDR392W,kuzmin2020_S3_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,
+SPT3,YDR392W,kuzmin2020_S5_single,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,
+TFC7,YOR110W,costanzo2016_26C,damp,YOR110W_damp967,,,,,"yes (SGD null inviable, strain Other; no S288C record)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+TFC7,YOR110W,costanzo2016_30C,damp,YOR110W_damp967,,,,,"yes (SGD null inviable, strain Other; no S288C record)",data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+TFC7,YOR110W,kuzmin2018_array,absent,,,,,,"yes (SGD null inviable, strain Other; no S288C record)",data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+TFC7,YOR110W,kuzmin2018_query,absent,,,,,,"yes (SGD null inviable, strain Other; no S288C record)",data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+TFC7,YOR110W,kuzmin2020_S1_array,absent,,,,,,"yes (SGD null inviable, strain Other; no S288C record)",data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,
+TFC7,YOR110W,kuzmin2020_S3_array,absent,,,,,,"yes (SGD null inviable, strain Other; no S288C record)",data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,
+TFC7,YOR110W,kuzmin2020_S5_single,absent,,,,,,"yes (SGD null inviable, strain Other; no S288C record)",data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,
+YAP6,YDR259C,costanzo2016_26C,KanMX_deletion,YDR259C_dma1013,0.9952,0.061,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+YAP6,YDR259C,costanzo2016_26C,NatMX_deletion,YDR259C_sn1920,0.9952,0.061,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (26°)
+YAP6,YDR259C,costanzo2016_30C,KanMX_deletion,YDR259C_dma1013,0.9952,0.061,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+YAP6,YDR259C,costanzo2016_30C,NatMX_deletion,YDR259C_sn1920,0.9952,0.061,bootstrap_se,17,no (no SGD null-inviable record),data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx,Single mutant fitness (30°)
+YAP6,YDR259C,kuzmin2018_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+YAP6,YDR259C,kuzmin2018_query,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv,
+YAP6,YDR259C,kuzmin2020_S1_array,absent,,,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx,
+YAP6,YDR259C,kuzmin2020_S3_array,KanMX_deletion,YDR259C_dma1013,0.9952,,,,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx,Array single mutant fitness
+YAP6,YDR259C,kuzmin2020_S5_single,KanMX_deletion,tm691,1.0069,0.004,sample_sd,4,no (no SGD null-inviable record),data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx,Fitness

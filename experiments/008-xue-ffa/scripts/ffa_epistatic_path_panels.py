@@ -231,7 +231,15 @@ def summarize_triples(path_df):
         tau_multiplicative=("tau_multiplicative", "first"),
         n_monotone=("monotone", "sum"),
         n_monotone_within_se=("monotone_within_se", "sum"),
+        # BOTH ENDS OF THE ROUTE SET, and they answer different questions. The MAX is the
+        # deepest of the six orders, the worst a campaign could do by choosing badly. The
+        # MIN is the shallowest, the best approach available to a campaign with perfect
+        # foresight, and it is the one that bounds reachability: if even the shallowest
+        # route dips, no order of deletions avoids the loss. Only the max was recorded
+        # before, and the document described it as the shallowest (author review,
+        # 2026.09.18).
         max_valley_depth=("valley_depth", "max"),
+        min_valley_depth=("valley_depth", "min"),
     ).reset_index()
     # Spread of the intermediate rungs across the 6 orderings: how much the ROUTE
     # matters when the destination is fixed.

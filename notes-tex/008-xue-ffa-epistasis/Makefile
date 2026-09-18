@@ -36,6 +36,11 @@ DEPS     := $(DOC).tex content.tex preamble.tex $(SECTIONS)
 # one `make` to be noticed.
 FIGS     := $(wildcard figures/*.pdf)
 BIB      := references.bib
+# Generated table bodies, copied in beside the document. A .tex file cannot \input a path
+# with `..` in it reliably under Tectonic, and a table body belongs to the run that made it
+# rather than to the document, so the copy is a build step like `make plots`.
+TABLE_SRC := $(REPO)/experiments/008-xue-ffa/results
+TABLES    := tables/tf-single-mutant-fitness-compact.tex
 
 # Where `make plots` looks for the matplotlib SVGs. The document directory is named for the
 # perspective, the images directory for the experiment, so unlike every other notes-tex
@@ -61,9 +66,11 @@ else
   drawio_export = xvfb-run -a "$(DRAWIO)" "$(1)" --no-sandbox --disable-gpu -x -f pdf --crop -o "$(2)"
 endif
 
-.PHONY: all plots figures drawio-bin bib-store bib-check clean
+.PHONY: all plots figures drawio-bin bib-store bib-check tables clean
 
 all: $(DOC).pdf
+
+tables: $(TABLES)
 
 # This document has no Zotero collection of its own, so neither `make bib` (Better BibTeX
 # export of a collection pair) nor `make bib-pull` (a bibliography tc-lit serves by the
@@ -82,7 +89,10 @@ sn-jnl.cls: $(PAPER)/sn-jnl.cls
 sn-nature.bst: $(PAPER)/sn-nature.bst
 	@ln -sf ../../paper/nature-biotech/sn-nature.bst $@
 
-$(DOC).pdf: $(DEPS) $(FIGS) $(SHARED) $(BIB)
+tables/%.tex: $(TABLE_SRC)/%.tex
+	@mkdir -p tables && cp $< $@
+
+$(DOC).pdf: $(DEPS) $(FIGS) $(SHARED) $(BIB) $(TABLES)
 	$(TECTONIC) -X compile $(DOC).tex --keep-logs --synctex --outdir .
 
 # Conversion goes through svg_true_size_pdf.py, NOT bare rsvg-convert. rsvg misreads both

@@ -73,3 +73,7 @@ Related: [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineerin
 ## 2026.09.18 - Review round 8: the two endpoints of Fig. 2b in lilac
 
 Base strain and best strain are `PLOT_PALETTE[2]` with a black edge. The pale brick read as red beside the campaign's brick.
+
+## 2026.09.18 - Valley depth was the deepest route, labeled as the shallowest
+
+A fact check of the document found that `panel_path_valley` plotted `max_valley_depth`, the deepest of a triple's six routes, under the axis label "valley depth of the shallowest route", and that the Results and the abstract carried the same inversion. `ffa_epistatic_path_panels.py` now records `min_valley_depth` beside the max, the panel plots the min, and the document quotes both: a median 8% dip on the shallowest route and 31% on the deepest. The shallowest is the one that bounds reachability, since it is the best a campaign with perfect foresight could do.

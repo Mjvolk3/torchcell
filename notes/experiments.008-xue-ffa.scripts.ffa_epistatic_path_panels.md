@@ -232,3 +232,9 @@ epistasis here is a linear-scale phenomenon; any claim about it must name the mo
 What does NOT change: the accessibility result. Only 2 of 120 triples have a strictly
 monotone path, 90% of paths dip below the base strain, and the top producers still sit
 behind a valley. That analysis never used the p-values.
+
+## 2026.09.18 - Both ends of the route set, not just the deepest
+
+`summarize_triples` now records `min_valley_depth` beside `max_valley_depth`. The max is the deepest of a triple's six routes, the worst a campaign could do by choosing badly; the min is the shallowest, the best approach available with perfect foresight, and it is the one that bounds reachability. Only the max was recorded before, and the document described it as the shallowest, so the reported valley depth (median 31%, max 48%) was the wrong end of the set. The correct pair is a median 8% on the shallowest route and 31% on the deepest.
+
+Note also that a route's valley depth is `1 - min(f_single, f_double)`, over the two intermediate rungs only. The base strain and the destination are not intermediates, and the Methods had written it as `1 - min(rungs)` over all four.

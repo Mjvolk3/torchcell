@@ -200,7 +200,10 @@ and the differences are what the 1-WL result of the next subsection bears on.
     \hat A_{ji}\,(\hat d_j \hat d_i)^{-1/2}\, h_j$.
   \item[GAT and GATv2] attention over the neighborhood,
     $h_i' = \alpha_{ii}\Theta h_i + \sum_{j \in \mathcal{N}(i)} \alpha_{ij}\Theta h_j$,
-    with $\alpha_{ij} = \mathrm{softmax}_j\big(a^{\top}\mathrm{LeakyReLU}(\Theta[h_i \| h_j])\big)$
+    with
+    \begin{equation*}
+      \alpha_{ij} = \mathrm{softmax}_j\big(a^{\top}\mathrm{LeakyReLU}(\Theta[h_i \| h_j])\big)
+    \end{equation*}
     in the original form and the nonlinearity applied before the scoring vector in the
     v2 form, which is what makes the attention a function of both endpoints rather
     than a ranking of the neighbors alone; four heads here.

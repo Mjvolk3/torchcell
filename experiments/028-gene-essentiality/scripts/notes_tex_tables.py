@@ -436,10 +436,11 @@ ROUND_CAPTIONS = {
     "w64": (
         "Round 48, the capacity of the layer-free cell",
         "The round-33 cell (width 12, one block, one-layer preprocessor, the "
-        "$\\log(1 + |v|)$ vector in the affine) against the same cell at width 24, with "
-        "two transformer blocks, and at width 24 with the two-layer preprocessor (the "
-        "round-28 wide recipe). Batch 32, class weight, 200 epochs; seeds 2700 to 2705 "
-        "for the comparator, 2700 to 2702 for the rest.",
+        "$\\log(1 + |v|)$ vector in the affine) against the same cell at widths 24 and "
+        "48, with two transformer blocks (graph regularization off, as every two-block "
+        "cell runs), and at width 24 with the two-layer preprocessor (the round-28 wide "
+        "recipe). Batch 32, class weight, 200 epochs, seeds 2700 to 2705 (2700 to 2702 "
+        "at width 48 and with two blocks).",
     ),
     "w63": (
         "Round 47, the GO multi-hot beside the layer-free solve in one transformer",

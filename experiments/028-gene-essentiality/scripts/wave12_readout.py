@@ -672,10 +672,11 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         [
             "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
             "w64_pathlogh24_h24l1p1_e200_s*.json",
+            "w64_pathlogh48_h48l1p1_e200_s*.json",
             "w64_pathlogl2_h12l2p1_e200_s*.json",
             "w64_pathlogwide_h24l1p2_e200_s*.json",
         ],
-        ["pathfbapfbalogfree", "pathlogh24", "pathlogl2", "pathlogwide"],
+        ["pathfbapfbalogfree", "pathlogh24", "pathlogh48", "pathlogl2", "pathlogwide"],
     ),
     # Round 47: the GO multi-hot beside the layer-free solve in one transformer: GO +
     # pathway + ProtT5 with the log1p vector in the affine; GO in place of the pathway
@@ -910,7 +911,8 @@ ARM_LABELS = {
     "protgolog": "GO multi-hot + ProtT5 (no pathway block), the log(1 + |v|) vector in the affine",
     "pathgofba": "GO multi-hot + pathway multi-hot + ProtT5, the four ratios only (round 47 control)",
     "pathlogh24": "the round-33 cell at width 24",
-    "pathlogl2": "the round-33 cell with two transformer layers",
+    "pathlogh48": "the round-33 cell at width 48",
+    "pathlogl2": "the round-33 cell with two transformer blocks (graph regularization off)",
     "pathlogwide": "the round-33 cell at width 24 with the two-layer preprocessor",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",

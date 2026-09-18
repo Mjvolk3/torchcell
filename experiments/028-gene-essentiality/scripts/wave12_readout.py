@@ -653,8 +653,18 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
     # Round 45: the layer-free pooled cell on seed 2700 twice with the card's kernels
     # pinned and twice free, as round 32 read the LP form.
     "w61": (
-        ["w61_pathlog*_h12l1p1_e200_s2700.json"],
-        ["pathlogdet1", "pathlogdet2", "pathlogfree1", "pathlogfree2"],
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w61_pathlog*_h12l1p1_e200_s*.json",
+        ],
+        [
+            "pathfbapfbalogfree",
+            "pathlogdet1",
+            "pathlogdet2",
+            "pathlogfree1",
+            "pathlogfree2",
+            "pathlogdet",
+        ],
     ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
@@ -829,6 +839,7 @@ ARM_LABELS = {
     "pathlogdet2": "the same, pinned, second run",
     "pathlogfree1": "the same, kernels free, first run",
     "pathlogfree2": "the same, free, second run",
+    "pathlogdet": "the round-33 cell, the card's kernels pinned, one run per seed (seeds 2701 to 2705)",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",

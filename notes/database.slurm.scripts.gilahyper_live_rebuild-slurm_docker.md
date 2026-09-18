@@ -128,3 +128,24 @@ implicit grouping key. The query now returns `d.id` and `count(e)` as two column
 shell joins them; both sides are sorted in the C locale. Run by hand against the build
 container before the fix landed, the rewritten query matched the CSV counts for all 51
 datasets (`diff` empty), so the store is validated and the next resume proceeds to the swap.
+
+**Fourth resume, the swap, and one more poll bug.** Resume job 2331 (4 CPUs, 16 G; a
+resume needs no more, and 256 G pends on its 63-CPU floor behind 24-CPU jobs) validated
+the store (live == CSV for all 51 datasets), swapped at 20:35 CDT, and relaunched
+`tc-neo4j-readonly` on the new store. The job then died on the first status poll: under
+`set -e` with `pipefail`, `STATUS=$(docker exec ... | tail | tr)` exits the script when
+cypher-shell fails, and it fails until neo4j accepts connections. Serving came up on its
+own within the minute. The loop now waits 60 s first and tolerates a failing poll. Stage 5
+was run by hand with the script's own commands: the production manifest moved to
+`kg_manifest.json.superseded.2026-09-17_20-35-08` and a new one bootstrapped from the live
+store at commit 7715ee35 (51 datasets), and the CSVs copied to `/bulk/biocypher-out/`.
+
+### Served after the swap (2026.09.17 20:35 CDT)
+
+| | before | after |
+|---|---|---|
+| nodes | 83,066,931 | 99,723,455 |
+| datasets | 36 | 51 |
+| store | `data.superseded.2026-09-17_20-35-08` (535 G, rollback) | `/db/database/data` (682 G) |
+| generation commit | job 1558 + Nadal increment | 7715ee35 |
+| CSVs | `biocypher-out/2026-09-11_07-02-12` | `biocypher-out/2026-09-16_00-44-53` (634 G) |

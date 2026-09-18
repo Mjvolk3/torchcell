@@ -352,11 +352,16 @@ docker run \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_server_databases_default__to__read__only=true \
     "$IMAGE"
+# Under set -e + pipefail an assignment from a failing pipeline exits the job, and
+# cypher-shell fails until neo4j accepts connections, so the first poll ran too early and
+# killed job 2331 AFTER the swap (serving came up fine on its own). Wait first, and let a
+# not-yet-listening poll read as "starting".
+sleep 60
 for i in $(seq 1 120); do
     STATUS=$(docker exec "$NEO4J_CONTAINER" $CS -d system --format plain \
-        "SHOW DATABASE $NEO4J_DATABASE YIELD currentStatus RETURN currentStatus;" 2>/dev/null | tail -1 | tr -d '"')
+        "SHOW DATABASE $NEO4J_DATABASE YIELD currentStatus RETURN currentStatus;" 2>/dev/null | tail -1 | tr -d '"' || true)
     [ "$STATUS" = "online" ] && break
-    echo "  serving $NEO4J_DATABASE is ${STATUS:-starting} ($((i*10))s)"; sleep 10
+    echo "  serving $NEO4J_DATABASE is ${STATUS:-starting} ($((60 + i*10))s)"; sleep 10
 done
 [ "$STATUS" = "online" ] || { echo "served $NEO4J_DATABASE did not come online; see docker logs $NEO4J_CONTAINER"; exit 1; }
 SERVED=$(docker exec "$NEO4J_CONTAINER" $CS -d "$NEO4J_DATABASE" --format plain "MATCH (n) RETURN count(n);" | tail -1)

@@ -148,9 +148,13 @@ class RegressionTask(L.LightningModule):
         # every record of the 025 build; a count per order says which ones to log.
         self.per_order_metrics = per_order_metrics
         self.metric_orders = (1, 2, 3)
+        # Records fed to each per-order collection this epoch, keyed by the ModuleDict
+        # attribute name; the interaction and fitness collections count separately
+        # because a single-gene record carries fitness but no interaction label.
         self._order_counts: dict[str, dict[int, int]] = {
-            stage: dict.fromkeys(self.metric_orders, 0)
+            f"{stage}_order{kind}": dict.fromkeys(self.metric_orders, 0)
             for stage in ("train", "val", "test")
+            for kind in ("_metrics", "_fitness_metrics")
         }
         if per_order_metrics:
             for stage in ("train", "val", "test"):
@@ -392,8 +396,7 @@ class RegressionTask(L.LightningModule):
             if n == 0:
                 continue
             collections[str(k)].update(preds[sel].view(-1), targets[sel].view(-1))
-            if attr == f"{stage}_order_metrics":
-                self._order_counts[stage][k] += n
+            self._order_counts[attr][k] += n
 
     def _log_order_epoch_metrics(self, stage: str) -> None:
         """Compute, log and reset the per-order collections of ``stage``."""
@@ -404,20 +407,22 @@ class RegressionTask(L.LightningModule):
             attrs.append(f"{stage}_order_fitness_metrics")
         for attr in attrs:
             collections = getattr(self, attr)
+            label = (
+                "gene_interaction" if attr == f"{stage}_order_metrics" else "fitness"
+            )
             for k in self.metric_orders:
                 collection = collections[str(k)]
-                if self._order_counts[stage][k] > 0:
+                if self._order_counts[attr][k] > 0:
                     for key, value in self._compute_metrics_safely(collection).items():
                         self.log(key, value, sync_dist=True)
                 collection.reset()
-        for k in self.metric_orders:
-            self.log(
-                f"{stage}/n_records/order{k}",
-                float(self._order_counts[stage][k]),
-                sync_dist=True,
-                reduce_fx="sum",
-            )
-            self._order_counts[stage][k] = 0
+                self.log(
+                    f"{stage}/n_records/{label}/order{k}",
+                    float(self._order_counts[attr][k]),
+                    sync_dist=True,
+                    reduce_fx="sum",
+                )
+                self._order_counts[attr][k] = 0
 
     def _log_fitness_epoch_metrics(self, stage: str) -> None:
         """Compute, log and reset the two fitness metric collections of ``stage``."""

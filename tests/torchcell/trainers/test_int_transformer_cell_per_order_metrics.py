@@ -61,16 +61,55 @@ def test_per_order_metrics_split_rows_by_perturbation_count() -> None:
         task._update_order_metrics(
             "train", "train_order_metrics", _batch(), 3, preds, targets, mask
         )
-    assert task._order_counts["train"] == {1: 2, 2: 2, 3: 2}
+    assert task._order_counts["train_order_metrics"] == {1: 2, 2: 2, 3: 2}
     task._log_order_epoch_metrics("train")
     names = {n for n, _ in logged}
     for k in (1, 2, 3):
         assert f"train/gene_interaction/order{k}/MSE" in names
         assert f"train/gene_interaction/order{k}/Pearson" in names
-        assert f"train/n_records/order{k}" in names
+        assert f"train/n_records/gene_interaction/order{k}" in names
     counts = {n: v for n, v in logged if n.startswith("train/n_records/")}
-    assert counts == {f"train/n_records/order{k}": 2.0 for k in (1, 2, 3)}
-    assert task._order_counts["train"] == {1: 0, 2: 0, 3: 0}
+    assert counts == {
+        f"train/n_records/gene_interaction/order{k}": 2.0 for k in (1, 2, 3)
+    }
+    assert task._order_counts["train_order_metrics"] == {1: 0, 2: 0, 3: 0}
+
+
+def test_single_gene_fitness_is_logged_without_an_interaction_label() -> None:
+    """A single carries fitness but no interaction; its fitness metrics must still log.
+
+    Before 2026-09-18 the fitness collection was gated on the interaction record count,
+    so order-1 fitness was computed every epoch and silently discarded (S3 run
+    kj03xx8y logged no ``train/fitness/order1/*`` despite 5,694 singles in the pool).
+    """
+    task, logged = _task(per_order_metrics=True, fitness_lambda=1.0)
+    gi_mask = torch.tensor([[True], [False], [True]])  # the single has no interaction
+    fit_mask = torch.ones(3, 1, dtype=torch.bool)  # every row carries fitness
+    for preds, targets in [
+        (torch.tensor([[0.1], [0.5], [0.9]]), torch.tensor([[0.2], [0.4], [1.0]])),
+        (torch.tensor([[0.3], [0.7], [0.2]]), torch.tensor([[0.3], [0.6], [0.1]])),
+    ]:
+        task._update_order_metrics(
+            "train", "train_order_metrics", _batch(), 3, preds, targets, gi_mask
+        )
+        task._update_order_metrics(
+            "train",
+            "train_order_fitness_metrics",
+            _batch(),
+            3,
+            preds,
+            targets,
+            fit_mask,
+        )
+    assert task._order_counts["train_order_metrics"] == {1: 0, 2: 2, 3: 2}
+    assert task._order_counts["train_order_fitness_metrics"] == {1: 2, 2: 2, 3: 2}
+    task._log_order_epoch_metrics("train")
+    names = {n for n, _ in logged}
+    assert "train/fitness/order1/Pearson" in names
+    assert "train/gene_interaction/order1/Pearson" not in names
+    counts = {n: v for n, v in logged if n.startswith("train/n_records/")}
+    assert counts["train/n_records/fitness/order1"] == 2.0
+    assert counts["train/n_records/gene_interaction/order1"] == 0.0
 
 
 def test_orders_without_samples_are_not_logged() -> None:

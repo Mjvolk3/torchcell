@@ -1,0 +1,129 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/proteome_ceiling_replicate.py",
+ "estimand": "per-protein corr(prediction, measured log2 ratio); ceiling = sqrt(reliability)",
+ "observed": {
+  "v14_partition_mean": 0.099,
+  "b3_prot_T5_val_mean": 0.073
+ },
+ "route_w_his3_replicate": {
+  "n_proteins": 1850,
+  "mean_ceiling": 0.6136105808684416,
+  "median_ceiling": 0.6651239062806824,
+  "iqr": [
+   0.5061128912805295,
+   0.7907245660768225
+  ],
+  "mean_reliability": 0.4336006798698321,
+  "median_reliability": 0.4423898902239763,
+  "frac_above": {
+   "0.30": 0.892972972972973,
+   "0.50": 0.7567567567567568,
+   "0.70": 0.43405405405405406,
+   "0.90": 0.05081081081081081
+  },
+  "v14_frac_of_ceiling": 0.16134011225798217,
+  "b3_frac_of_ceiling": 0.11896796156396663,
+  "n_his3_columns": 388,
+  "n_ko_columns": 4699,
+  "median_sd_log2_his3": 0.1659103276497684,
+  "median_sd_log2_ko": 0.23670925580813473,
+  "median_cv_pct_his3": 11.538154711372181,
+  "frac_ko_entries_beyond_2sd_his3": 0.10609387851354227
+ },
+ "route_d_duplicate_strains": {
+  "n_proteins": 1850,
+  "mean_ceiling": 0.41691205076594634,
+  "median_ceiling": 0.4437156266957014,
+  "iqr": [
+   0.29846216999639563,
+   0.5711586015930757
+  ],
+  "mean_reliability": 0.2109910859972393,
+  "median_reliability": 0.1968835581255537,
+  "frac_above": {
+   "0.30": 0.7475675675675676,
+   "0.50": 0.37783783783783786,
+   "0.70": 0.0654054054054054,
+   "0.90": 0.001081081081081081
+  },
+  "v14_frac_of_ceiling": 0.23746015452927846,
+  "b3_frac_of_ceiling": 0.17509688162259926,
+  "n_duplicate_pairs": 149,
+  "n_orfs_duplicated": 145,
+  "frac_pairs_on_different_plates": 0.9865771812080537,
+  "frac_proteins_r_above_0.3": 0.29027027027027025,
+  "per_strain_median_r": 0.028306550542402657
+ },
+ "plate_anova": {
+  "n_plates": 57,
+  "median_r2_plate": 0.010492596830815232,
+  "mean_r2_plate": 0.011875528214531696,
+  "q75_r2_plate": 0.013614714021194081
+ },
+ "route_z_zelezniak_cross_study": {
+  "n_proteins": 714,
+  "n_strains": 89,
+  "median_reliability": 0.08564961524478465,
+  "median_ceiling": 0.29265955519132575,
+  "frac_proteins_r_above_0.3": 0.06722689075630252,
+  "source": "experiments/028-knockout-expression/results/proteome_replication_zelezniak.json"
+ },
+ "rank_ceiling_knockout_matrix": {
+  "n_strains": 4537,
+  "n_proteins": 1654,
+  "split": "90/10 strains, seed 0, train-basis SVD",
+  "frac_entries_mean_filled": 0.008296156364744107,
+  "curve": [
+   {
+    "rank": 1,
+    "ceiling_pearson_per_feature": 0.30855241597947036,
+    "frac_fit_variance": 0.13390526449881454
+   },
+   {
+    "rank": 2,
+    "ceiling_pearson_per_feature": 0.3939462410538354,
+    "frac_fit_variance": 0.20231793363153264
+   },
+   {
+    "rank": 4,
+    "ceiling_pearson_per_feature": 0.5013812694830371,
+    "frac_fit_variance": 0.2877505036068883
+   },
+   {
+    "rank": 8,
+    "ceiling_pearson_per_feature": 0.5766090554559528,
+    "frac_fit_variance": 0.3685520580581731
+   },
+   {
+    "rank": 16,
+    "ceiling_pearson_per_feature": 0.629825352513477,
+    "frac_fit_variance": 0.4395633959690407
+   },
+   {
+    "rank": 32,
+    "ceiling_pearson_per_feature": 0.6656576594595546,
+    "frac_fit_variance": 0.5015693130952996
+   },
+   {
+    "rank": 64,
+    "ceiling_pearson_per_feature": 0.6989138917052946,
+    "frac_fit_variance": 0.5605380709189991
+   },
+   {
+    "rank": 128,
+    "ceiling_pearson_per_feature": 0.733967228166502,
+    "frac_fit_variance": 0.6254913249120495
+   },
+   {
+    "rank": 256,
+    "ceiling_pearson_per_feature": 0.7844299694117575,
+    "frac_fit_variance": 0.7195722744509738
+   },
+   {
+    "rank": 512,
+    "ceiling_pearson_per_feature": 0.8564861848172273,
+    "frac_fit_variance": 0.8456071253817445
+   }
+  ]
+ }
+}

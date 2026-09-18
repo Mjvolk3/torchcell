@@ -488,7 +488,7 @@ scoring below it. One minus the class mean of the misrank is that class's share 
 AUROC, and averaging over an arm's cells separates the genes an arm gets wrong from the
 ones a seed gets wrong (Figure~\ref{fig:hard-genes}, Table~\ref{tab:hard-genes}).
 
-\tcfigfit[1.0]{figures/hard_genes_2026-09-18-04-41-10.pdf}{\textbf{Which held-out genes
+\tcfigfit[1.0]{figures/hard_genes_2026-09-18-05-26-10.pdf}{\textbf{Which held-out genes
   the best cells misrank.} \textbf{a}, The 31 essential held-out genes sorted by their
   mean misrank over five arms, one marker per arm (the mean over that arm's cells), the
   line the mean over arms. \textbf{b}, The same for the 164 nonessential genes.
@@ -520,6 +520,17 @@ least aligned with the rest (0.44 to 0.67), the arm whose mean carries an unfit 
 Hypothesis, untested: a paralog-aware input, the GPR disjunction with an expression
 weight or the isozyme count of a gene's reactions, is what would move the fourteen; the
 solve's own vector cannot, since the solve reroutes through the paralog.
+
+Graph convolution on GO fails on different genes. Its per-gene misrank correlates
+with the transformer arms' at 0.20 to 0.42 where those arms correlate with one another
+at 0.6 to 0.9, and its class mean misrank on the essential genes is 0.091 against the
+pathway cell's 0.110. On the hardest essential genes it halves the misrank the solve
+leaves: FRQ1 from 0.44 to 0.17, AUR1 from 0.48 to 0.22, PGA3 from 0.37 to 0.11, LCB1
+from 0.14 to 0.03, LCB2 from 0.15 to 0.01, while it does worse on NEO1 (0.17 to 0.60)
+and PET9 (0.30 to 0.38). Among the nonessential genes it repairs twelve the pathway
+cell misranks by more than 0.3 (TDH1, ACS1, ATP2, FBP1, TRR2 among them) and breaks six
+the pathway cell had right. Two models that read the same genes wrong for different
+reasons are the case for averaging them, which is not measured here.
 
 \subsection{Round 16: the round-9 backbone with the round-11 affine\secstatus{todo}}
 

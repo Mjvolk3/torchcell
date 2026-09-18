@@ -331,6 +331,17 @@ the input and the graph together, not the architecture: the same convolution on 
 three inputs reads 0.888 as an ensemble, and the GO vector without the graph reads
 0.855 on the MLP.
 
+It is the convolution, not message passing in general. On GO alone at 400 epochs
+relational convolution reads 0.843, relational attention 0.844 and GraphSAGE 0.823
+(Table~\ref{tab:graph-go-rel}), 0.07 to 0.09 under the symmetric-normalized mean, where
+on the three inputs those same forms were level with or above it. The pathway
+multi-hot added to GO reads 0.905, nothing on top of GO alone. What the normalized
+mean does that the others do not, on this input, is not measured; hypothesis,
+untested: the signal is the neighborhood's annotations smoothed over the graph, and a
+form with a separate path for the node's own 2,362 columns fits those instead.
+
+\input{tables/graph_baselines_go_rel}
+
 \subsection{The Weisfeiler-Leman test on the deletion graphs\secstatus{todo}}
 
 A message-passing model over a gene graph is bounded by what color refinement can

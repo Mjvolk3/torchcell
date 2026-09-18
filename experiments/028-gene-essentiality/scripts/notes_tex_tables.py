@@ -774,10 +774,14 @@ def graph_baselines_more(stem: str, short: str, caption: str, label: str) -> str
             f"{r['dim_in']:,} & {r['n_parameters']:,} & {fmt(r['mean'], best)} & "
             f"{r['sd']:.3f} & {seeds} & {epochs} \\\\"
         )
+    # Six seeds per row overflow the text block as one-line columns, so past three
+    # seeds the seed and epoch columns wrap.
+    wide = max(len(r["test_auroc"]) for r in rows_in) > 3
+    spec = "@{}llp{26mm}rrrrp{34mm}p{26mm}@{}" if wide else "@{}llp{30mm}rrrrll@{}"
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
         f"  \\caption[{short}]{{{caption} {BEST_NOTE}}}\n  \\label{{{label}}}\n"
-        "  \\begin{tabular}{@{}llp{30mm}rrrrll@{}}\n    \\hline\n"
+        f"  \\begin{{tabular}}{{{spec}}}\n    \\hline\n"
         "    model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\\\\n"
         "    \\hline\n"
         + "\n".join(rows)
@@ -848,6 +852,19 @@ def graph_baselines_go400() -> str | None:
         "ProtT5 with the ratios. The protocol of Table~\\ref{tab:graph-baselines} "
         "otherwise; seeds 2700 to 2702.",
         "tab:graph-go400",
+    )
+
+
+def graph_baselines_go400_s6() -> str | None:
+    """Graph convolution on GO at 400 epochs, six seeds."""
+    return graph_baselines_more(
+        "go400_s6",
+        "Graph convolution on GO, 400 epochs, six seeds",
+        "The three rows of Table~\\ref{tab:graph-go400} on seeds 2700 to 2705, so the "
+        "graph convolution's count matches the six-seed module arms of "
+        "Section~\\ref{sec:round27}. The first three seeds are reruns of the "
+        "Table~\\ref{tab:graph-go400} cells and differ from them in the third decimal.",
+        "tab:graph-go400-s6",
     )
 
 
@@ -949,6 +966,10 @@ def fold_ensembles() -> str | None:
         "graph_baselines_go_folds.json": {
             "GCN400": "graph convolution on the GO multi-hot alone, 400 epochs",
             "GCN800": "graph convolution on the GO multi-hot alone, 800 epochs",
+        },
+        "graph_baselines_go_folds_s3.json": {
+            "GCN400": "graph convolution on GO alone, 400 epochs, three seeds per fold",
+            "GCN800": "graph convolution on GO alone, 800 epochs, three seeds per fold",
         },
     }
     for fname, labels in cheap.items():
@@ -1212,6 +1233,7 @@ def main() -> None:
         graph_baselines_split(),
         graph_baselines_go(),
         graph_baselines_go400(),
+        graph_baselines_go400_s6(),
         graph_baselines_go800(),
         graph_baselines_go_rel(),
         fold_ensembles(),

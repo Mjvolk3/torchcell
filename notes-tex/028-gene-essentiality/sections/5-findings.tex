@@ -42,8 +42,9 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     multi-hot alone, no sequence and no solve, read 0.912, 0.910 and 0.904 at 400
     epochs, 43 seconds per seed, and under the reported five-fold protocol 0.917
     [0.87, 0.96] against the transformer's 0.893 [0.84, 0.94], the folds above on four
-    of five; the curve is flat past 400 epochs, and the sequence embedding and the
-    ratios add nothing to it. On the ladder GO is
+    of five; the curve is flat past 400 epochs, the sequence embedding and the
+    ratios add nothing to it, and on six seeds it reads 0.898 to 0.912 (mean 0.905,
+    sd 0.005) with no run that misses. On the ladder GO is
     the strongest single encoding (0.808 linear, 0.844 with a random forest and the
     ratios). The transformer is the one model that does not take it: 0.833 beside
     ProtT5 and a cost of 0.04 beside the pathway block.

@@ -318,6 +318,18 @@ to it at either budget, where on every other input they were the gain.
 
 \input{tables/graph_baselines_go800}
 
+On six seeds the number holds. Rerun on seeds 2700 to 2705 so its count matches the
+six-seed module arms (Table~\ref{tab:graph-go400-s6}), the 400-epoch convolution on GO
+alone reads 0.912, 0.909, 0.902, 0.898, 0.901 and 0.905 (mean 0.905, sd 0.005), with
+the ratios 0.899 to 0.913 (mean 0.907) and beside ProtT5 with the ratios 0.895 to
+0.905 (mean 0.900); the first three seeds differ from their earlier runs in the third
+decimal, and every one of the eighteen cells is above the transformer's seed mean on
+any input. The spread over seeds is 0.005, against 0.055 for the module's scalable
+form on the same six seeds (Section~\ref{sec:round27}), whose one unfit run is the
+difference.
+
+\input{tables/graph_baselines_go400_s6}
+
 Under the reported protocol it is the highest number in this document. Five fold
 models of the 400-epoch convolution on GO alone score 0.910, 0.893, 0.918, 0.916 and
 0.907 on the held-out genes, a fold mean of 0.909, and their averaged logits score

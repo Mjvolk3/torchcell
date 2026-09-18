@@ -546,10 +546,18 @@ in the table, so 0.941 is the maximum of seven post hoc choices and carries that
 and the held-out genes were used to choose nothing else. It says what the per-gene
 analysis said: the two families carry different information about the same genes, and
 the sum of the annotation read through the graph and the solve read through the
-transformer is more than either. Under the reported protocol the average is not
-measured, since the GO fold models' logits were not kept.
+transformer is more than either. Under the reported protocol the same average holds
+(Table~\ref{tab:family-ensembles-folds}): the five GO fold models and the five
+pathway flux-head fold models, each family 0.917 and 0.897 as its own ensemble,
+average to 0.949 [0.91, 0.98]; the GO fold models with the reported cell's fold models
+(0.893 alone) to 0.944; all three to 0.945. Six averages tried, all listed, the best
+the maximum of six. The interval of 0.949 excludes the reported 0.893 point, and the
+two families' own intervals overlap it, which is what two models that fail on
+different genes produce when averaged and what neither produces alone.
 
 \input{tables/family_ensembles}
+
+\input{tables/family_ensembles_folds}
 
 \subsection{Round 16: the round-9 backbone with the round-11 affine\secstatus{todo}}
 

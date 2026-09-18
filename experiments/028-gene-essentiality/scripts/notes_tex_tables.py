@@ -1143,9 +1143,8 @@ def hard_genes() -> str | None:
     return write("hard_genes", body, "results/hard_genes.json")
 
 
-def family_ensembles() -> str | None:
-    """Post hoc averages of the two model families, from ``results/family_ensembles.json``."""
-    src = osp.join(RESULTS, "family_ensembles.json")
+def _family_table(stem: str, short: str, caption: str, label: str) -> str | None:
+    src = osp.join(RESULTS, f"{stem}.json")
     if not osp.isfile(src):
         return None
     with open(src) as fh:
@@ -1158,20 +1157,44 @@ def family_ensembles() -> str | None:
     ]
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
-        "  \\caption[Averages of the two model families]{Post hoc averages of existing "
-        "predictions on the 195 held-out genes: each family's per-cell logits are "
-        "standardized and averaged over its seeds, families are averaged with equal "
-        "weight, and the mean is scored once with a 2,000-draw gene bootstrap. Nothing "
-        "is fitted and every average tried is listed, so the best row is the maximum "
-        "of seven post hoc choices, not a selected model. Written by "
-        "\\texttt{family\\_ensembles.py}. " + BEST_NOTE + "}\n"
-        "  \\label{tab:family-ensembles}\n"
+        f"  \\caption[{short}]{{{caption} " + BEST_NOTE + "}\n"
+        f"  \\label{{{label}}}\n"
         "  \\begin{tabular}{@{}p{118mm}rl@{}}\n    \\hline\n"
         "    average of & cells & AUROC [95\\% CI] \\\\\n    \\hline\n"
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write("family_ensembles", body, "results/family_ensembles.json")
+    return write(stem, body, f"results/{stem}.json")
+
+
+def family_ensembles() -> str | None:
+    """Post hoc averages of the two model families, split-file cells."""
+    return _family_table(
+        "family_ensembles",
+        "Averages of the two model families",
+        "Post hoc averages of existing predictions on the 195 held-out genes: each "
+        "family's per-cell logits are standardized and averaged over its seeds, "
+        "families are averaged with equal weight, and the mean is scored once with a "
+        "2,000-draw gene bootstrap. Nothing is fitted and every average tried is "
+        "listed, so the best row is the maximum of seven post hoc choices, not a "
+        "selected model. Written by \\texttt{family\\_ensembles.py}.",
+        "tab:family-ensembles",
+    )
+
+
+def family_ensembles_folds() -> str | None:
+    """The same averages under the fold protocol."""
+    return _family_table(
+        "family_ensembles_folds",
+        "Averages of the two model families, fold protocol",
+        "The same post hoc averages under the reported protocol: each family is its "
+        "five fold models (one seed per fold, the cross-validation files of "
+        "Section~\\ref{sec:backbone}), standardized per fold and averaged, families "
+        "averaged with equal weight, scored once on the 195 held-out genes with a "
+        "2,000-draw gene bootstrap. Six averages tried, all listed. Written by "
+        "\\texttt{family\\_ensembles.py --folds}.",
+        "tab:family-ensembles-folds",
+    )
 
 
 def main() -> None:
@@ -1188,6 +1211,7 @@ def main() -> None:
         gene_encodings(),
         hard_genes(),
         family_ensembles(),
+        family_ensembles_folds(),
         fba_media(),
         splits(),
         logistic_baselines(),

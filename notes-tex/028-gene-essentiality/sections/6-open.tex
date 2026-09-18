@@ -22,6 +22,13 @@ weight, six encodings). What remains is attribution and the module.
     one number as fold ensembles (0.886, 0.888, 0.893). What separates architectures on
     this endpoint is not measurable on 195 genes; the genome-wide labels on genes the
     released split never touched are the larger held-out set that could.
+  \item The GO multi-hot is the ladder's strongest encoding and the cheap models take
+    it (graph convolution 0.887), and the transformer does not (0.833 beside ProtT5,
+    a cost of 0.04 beside the pathway block, round 26). What separates 173 sparse
+    pathway columns from 2,362 dense GO columns inside a width-12 preprocessor is not
+    measured; a wider preprocessor, a per-block projection, or the GO vector entering
+    as its own token are the untested constructions, and the answer decides whether
+    annotation vectors scale as inputs to this backbone.
   \item The forced growth column is closed by the dual-overlap probe
     (Section~\ref{sec:dual-overlap}): the ceilings that bind are the same for every
     genotype, so no step size, head or reach trains it (rounds 18 to 20). A construction

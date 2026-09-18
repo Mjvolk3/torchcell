@@ -425,6 +425,13 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w62": (
+        "Round 46, bracketing the pooled cell's divergence",
+        "Two pinned pairs on seed 2700: the round-22 affine cell (pathway multi-hot and "
+        "ProtT5, the four ratios only, no solve columns) and the layer-free cell on "
+        "ProtT5 alone (no pathway block), each run twice with the card's kernels pinned "
+        "as in round 32. Batch 32, class weight, 200 epochs; the read is per pair.",
+    ),
     "w61": (
         "Round 45, the layer-free cell with the card's kernels pinned",
         "The round-33 cell (the $\\log(1 + |v|)$ vector in the affine, pathway multi-hot "

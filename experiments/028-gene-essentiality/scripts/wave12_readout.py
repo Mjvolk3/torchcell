@@ -650,6 +650,13 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 46: bracketing the pooled cell's divergence under the pinned kernels: the
+    # affine cell (no solve columns) pinned twice, and the layer-free cell on ProtT5
+    # alone (no pathway block) pinned twice.
+    "w62": (
+        ["w62_*_h12l1p1_e200_s2700.json"],
+        ["protpathfbadet1", "protpathfbadet2", "protlogdet1", "protlogdet2"],
+    ),
     # Round 45: the layer-free pooled cell on seed 2700 twice with the card's kernels
     # pinned and twice free, as round 32 read the LP form.
     "w61": (
@@ -840,6 +847,10 @@ ARM_LABELS = {
     "pathlogfree1": "the same, kernels free, first run",
     "pathlogfree2": "the same, free, second run",
     "pathlogdet": "the round-33 cell, the card's kernels pinned, one run per seed (seeds 2701 to 2705)",
+    "protpathfbadet1": "round-22 affine cell (pathway + ProtT5, the four ratios, no solve columns), seed 2700, kernels pinned, first run",
+    "protpathfbadet2": "the same, pinned, second run",
+    "protlogdet1": "layer-free cell on ProtT5 alone (no pathway block), seed 2700, kernels pinned, first run",
+    "protlogdet2": "the same, pinned, second run",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",

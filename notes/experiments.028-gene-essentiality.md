@@ -816,3 +816,9 @@ Solve-tolerance read complete (`solve_tolerance_read.py`, 2,184 s with eight spa
 Round 33 partial: the log1p arm under the default initialization (job 2407, 31 min) reads 0.910, 0.919, 0.911, 0.906, 0.896, 0.907, all six selecting after the transition (epochs 33 to 58). The encoding alone removes round 31's early peak. The zero-init arms (job 2406) land near 11:15; the one-cell rerun (job 2408) completed 200 epochs in 11 minutes alone on a card.
 
 Round 34 launched (job 2409, pack `w50_pathlogfreecv`): the layer-free log1p form on the five folds, for the fold ensemble beside the scalable form's 0.912.
+
+## 2026.09.18 - Round 33 read: the encoding is the layer-free form's number
+
+Round 33 (jobs 2406, 2407, 2408; `wave12_readout.py --round w49`): standardized vector, default init (round 31) 0.832 mean / 0.871 pooled; standardized, zero init 0.836 / 0.868 (0.802, 0.793, 0.820, 0.890, 0.916, 0.792; five of six peak at epochs 1 to 13, so the early peak is not the random projection); log1p, default init 0.908 / 0.912 (0.910, 0.919, 0.911, 0.906, 0.896, 0.907); log1p, zero init 0.910 / 0.910 (0.913, 0.910, 0.909, 0.913, 0.909, 0.906, sd 0.003). Twelve of twelve log1p cells select after the transition (epochs 33 to 66). The cached-solve head's number (0.917 pooled, mean 0.882 with a miss) with no layer, no solver in training, 31 min per six-cell pack and 11 min alone. Family protocol: 0.910 alone, 0.948 [0.91, 0.98] with the six-seed GO convolution (max of 13 split-file averages). Section `sec:round33`, table `round_w49`, figure `w49_readout_2026-09-18-11-11-40`. Hypothesis retracted: the initialization was not the gap.
+
+Launched: round 34 (job 2409) the log1p form on the five folds; round 35 (job 2410, pack `w51_protfbapfbalog`) the log1p form on ProtT5 alone, the substitution read against the pathway annotation (comparators: affine on ProtT5 0.821, cached head on ProtT5 0.852).

@@ -1179,6 +1179,14 @@ class BxCell(BaseModel):
             "weights and the bias keep their default initialization."
         ),
     )
+    ess_solve_head_hidden: int = Field(
+        default=0,
+        description=(
+            "Width of one GELU hidden layer between the affine's input (the media ratios "
+            "and the solve columns) and its logit; 0 is the linear affine of every round "
+            "through 40. Round 41 asks whether the linear read is the vector's ceiling."
+        ),
+    )
     ib_readout: str = Field(
         default=IB_READOUT_FLUX_SCALAR,
         description=(
@@ -2265,6 +2273,7 @@ def build_cell(
     ess_solve_features: str = "none",
     ess_solve_encoding: str = "standardized",
     ess_solve_zero_init: bool = False,
+    ess_solve_head_hidden: int = 0,
     flux_capacity_scale: float = 1.0,
     flux_lp_slack_penalty: float = 0.0,
     flux_pool_by_construction: bool = False,
@@ -2371,6 +2380,7 @@ def build_cell(
         ess_solve_features=ess_solve_features,
         ess_solve_encoding=ess_solve_encoding,
         ess_solve_zero_init=ess_solve_zero_init,
+        ess_solve_head_hidden=ess_solve_head_hidden,
         flux_capacity_scale=flux_capacity_scale,
         flux_lp_slack_penalty=flux_lp_slack_penalty,
         flux_pool_by_construction=flux_pool_by_construction,
@@ -3924,6 +3934,11 @@ class FbaAffine(nn.Module):
         With more than 16 columns (the pFBA vector) only the first 16 are written by
         name, plus the norm of the whole weight vector as ``ess_fba_w_norm``.
         """
+        if not hasattr(self.linear, "weight"):
+            # A hidden layer (round 41): no per-column weight to name; the norm of the
+            # whole head stands in.
+            params = [p.detach().reshape(-1) for p in self.linear.parameters()]
+            return {"ess_fba_w_norm": float(torch.cat(params).norm())}
         w = self.linear.weight.detach().reshape(-1)
         out = {
             f"ess_fba_w_{m}": float(v)
@@ -3951,6 +3966,27 @@ def apply_solve_zero_init(cell: BxCell, affine: FbaAffine) -> None:
     print(
         f"[solve-zero-init] affine weights zeroed on {affine.linear.weight.shape[1] - n_media} "
         f"solve-feature columns; the {n_media} media ratios keep their initialization"
+    )
+
+
+def apply_solve_head(cell: BxCell, affine: FbaAffine) -> None:
+    """Round 41: one GELU hidden layer in the affine, when the cell asks for it.
+
+    The affine's ``Linear(m, 1)`` becomes ``Linear(m, h) -> GELU -> Linear(h, 1)`` over
+    the same input (the media ratios and the solve columns), so the readout's forward
+    and its place in the logit are unchanged and only the read of the columns is
+    nonlinear. Applied after ``apply_solve_zero_init``, which it supersedes: the hidden
+    layer starts at its default initialization. No-op at width 0.
+    """
+    if cell.ess_solve_head_hidden <= 0:
+        return
+    m = affine.linear.in_features
+    h = cell.ess_solve_head_hidden
+    affine.linear = nn.Sequential(nn.Linear(m, h), nn.GELU(), nn.Linear(h, 1)).to(
+        affine.fba_table.device
+    )
+    print(
+        f"[solve-head] affine over {m} columns replaced by Linear({m}, {h}) -> GELU -> Linear({h}, 1)"
     )
 
 
@@ -5116,6 +5152,7 @@ def build_model_for_cell(
                     model, biomass_index, fba_table, fba_known, fba_media
                 ).to(device)
             apply_solve_zero_init(cell, wrapped_ess.fba_readout)
+            apply_solve_head(cell, wrapped_ess.fba_readout)
         elif cell.ess_readout == ESS_READOUT_GATED_FLUX:
             assert flux_layer.parameterization == "lp", (
                 "gated_flux reads the flux the layer that solves returns; on a projection "
@@ -5161,6 +5198,7 @@ def build_model_for_cell(
             device
         )
         apply_solve_zero_init(cell, wrapped_fba.fba_readout)
+        apply_solve_head(cell, wrapped_fba.fba_readout)
         print(
             f"[fba-readout] essentiality from the context head plus an affine of "
             f"{len(fba_media)} columns ({', '.join(fba_media[:4])}, ...) for "
@@ -6857,6 +6895,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--ess-solve-head-hidden",
+        type=int,
+        default=0,
+        help=(
+            "Width of one GELU hidden layer in the fba readout's affine over the media "
+            "ratios and the solve columns; 0 is the linear affine (round 41)."
+        ),
+    )
+    parser.add_argument(
         "--pos-weight-balanced",
         action="store_true",
         help=(
@@ -7344,6 +7391,7 @@ def main() -> None:
         ess_solve_features=args.ess_solve_features,
         ess_solve_encoding=args.ess_solve_encoding,
         ess_solve_zero_init=args.ess_solve_zero_init,
+        ess_solve_head_hidden=args.ess_solve_head_hidden,
         flux_capacity_scale=args.flux_capacity_scale,
         flux_lp_slack_penalty=args.flux_lp_slack_penalty,
         flux_pool_by_construction=args.flux_pool_by_construction,

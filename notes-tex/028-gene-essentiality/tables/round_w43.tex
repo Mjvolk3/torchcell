@@ -11,8 +11,9 @@
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
     pathway multi-hot $+$ ProtT5 backbone, no readout & 0.860 & 0.002 & 0.859, 0.859, 0.862 & 0.861 [0.79, 0.92] & 36, 56, 46 & 0.0040 \\
-    pathway multi-hot $+$ ProtT5 backbone $+$ FBA ratios & \textbf{0.890} & 0.005 & 0.889, 0.895, 0.885 $\uparrow$ & 0.890 [0.83, 0.94] & 31, 45, 55 & 0.0054 \\
-    pathway multi-hot $+$ ProtT5; gated $+$ a head over the solved flux (all reactions) & 0.839 & 0.106 & 0.897, 0.716, 0.903 & \textbf{0.907} [0.86, 0.95] & 100, 150, 81 & 0.0208 \\
+    pathway multi-hot $+$ ProtT5 backbone $+$ FBA ratios & 0.890 & 0.005 & 0.889, 0.895, 0.885 $\uparrow$ & 0.890 [0.83, 0.94] & 31, 45, 55 & 0.0054 \\
+    pathway multi-hot $+$ ProtT5; gated $+$ a head over the solved flux (all reactions) & 0.845 & 0.087 & 0.716 to 0.911 (6) & 0.910 [0.86, 0.95] & 11 to 150 & 0.0203 \\
+    pathway multi-hot $+$ ProtT5; gated $+$ a head over the GEM-box solve's flux (cached, nothing learned in the layer) & \textbf{0.905} & 0.005 & 0.911, 0.901, 0.903 $\uparrow$ & \textbf{0.911} [0.87, 0.95] & 55, 76, 78 & 0.0174 \\
     \hline
   \end{tabular}
 \end{table}

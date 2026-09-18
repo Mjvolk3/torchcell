@@ -1055,6 +1055,32 @@ reported beside the number, since that is what the form is for.
 
 \input{tables/round_w43}
 
+\tcfigfit[1.0]{figures/w43_readout_2026-09-18-06-40-29.pdf}{\textbf{Round 27, the scalable
+  form on the pathway input.} \textbf{a}, Validation AUROC per epoch, one thin line per
+  seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step
+  per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points),
+  the seed mean and the gene bootstrap of the pooled per-gene logits (square with
+  interval), beside FBA on four media, Flux Cone Learning and the released FBA
+  predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w43}.}{fig:w43}
+
+The scalable form fits on every seed and matches the best cells. With nothing learned
+in the layer, the head over the cached GEM-box solve on ProtT5 with the pathway
+multi-hot reads 0.911, 0.901 and 0.903 on seeds 2701 to 2703 (mean 0.905, sd 0.005;
+pooled 0.911 with a gene bootstrap of 0.867 to 0.950), above the control on every seed
+and above the affine on both paired seeds, with training losses of 0.53 to 0.77 and
+selected epochs 55 to 78. Seed 2701 is the seed the elastic form never fit (0.716);
+here it reads 0.911. So the form that can be a data transform, the program solved once
+per genotype and read through a zero-initialized head, carries the pathway flux head's
+0.90 without the cells that miss the transition, on three seeds; three more seeds run
+in pairs at the time of writing, since the six-cell pack that produced these three lost
+its other three to the launcher's memory ceiling. The wall time was 139 minutes per
+cell at six cells on one card, no less per cell than the uncached form at three, with
+the card at 92 percent: at this packing the layer's own forward on the card, not the
+solve, is the cost, and the cache's hit rate was not logged. The fold read of this form
+was lost to the same ceiling and is not measured.
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

@@ -114,8 +114,13 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     0.835 for the exchanges). Under the fold-ensemble protocol on the pathway input it
     reads 0.897 [0.84, 0.95], one number with the reported 0.893, from three fold
     models at 0.90 and two that never fit; a third of this form's cells miss the
-    fitting transition, and that, not the ceiling, is its open problem
-    (Sections~\ref{sec:round24} and~\ref{sec:round25}).
+    fitting transition (Sections~\ref{sec:round24} and~\ref{sec:round25}). The form
+    that scales, the program solved once per genotype with nothing learned in the
+    layer and its flux read through a zero-initialized head, reads 0.911, 0.901 and
+    0.903 on the same input with every seed fit, the seed the elastic form never fit
+    among them (Section~\ref{sec:round27}). Metabolism enters the cell as a
+    perturbation-conditional transform that holds mass balance and the bounds exactly,
+    costs nothing on the card, and cannot hurt at initialization.
   \item[Where the gradient goes is not the problem.] On the alternating layer the
     gradient reaches the flux layer on every arm that lets it; the backbone's
     preprocessor, three quarters of the parameters, is where fitting continues after the

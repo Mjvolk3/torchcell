@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=40
 #SBATCH --mem=160G
 #SBATCH --time=3-00:00:00
-#SBATCH --output=/home/michaelvolk/Documents/projects/torchcell/experiments/029-solid-growth-ko/slurm/output/%j_%x.out
-#SBATCH --error=/home/michaelvolk/Documents/projects/torchcell/experiments/029-solid-growth-ko/slurm/output/%j_%x.out
+#SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/029-build/experiments/029-solid-growth-ko/slurm/output/%j_%x.out
+#SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/029-build/experiments/029-solid-growth-ko/slurm/output/%j_%x.out
 #SBATCH --no-requeue
 
 # Build the 029 deletion-only solid-growth dataset from the served graph.
@@ -27,13 +27,19 @@
 # The dataset root symlinks to /db (the SN850X): a build is regenerable, which is
 # the /db rule, and /scratch has no room for the stage copies.
 #
-#   PROJECT_ROOT=<worktree> sbatch experiments/029-solid-growth-ko/scripts/gh_query_build_001.slurm
+# The job reads its code from a DETACHED worktree pinned at the build commit
+# (~/Documents/projects/torchcell.worktrees/029-build), so the branch worktree can keep
+# moving while the build runs:
+#
+#   git worktree add --detach ~/Documents/projects/torchcell.worktrees/029-build <sha>
+#   cp <branch worktree>/.env ~/Documents/projects/torchcell.worktrees/029-build/.env
+#   sbatch ~/Documents/projects/torchcell.worktrees/029-build/experiments/029-solid-growth-ko/scripts/gh_query_build_001.slurm
 
 echo "Running on $(hostname) at $(date)"
 source ~/.zshrc
 conda activate ~/miniconda3/envs/torchcell
 
-PROJECT_ROOT="${PROJECT_ROOT:-/home/michaelvolk/Documents/projects/torchcell}"
+PROJECT_ROOT="${PROJECT_ROOT:-/home/michaelvolk/Documents/projects/torchcell.worktrees/029-build}"
 cd "$PROJECT_ROOT" || exit 1
 echo "PROJECT_ROOT=$PROJECT_ROOT ($(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2>/dev/null))"
 export PYTHONPATH="$PROJECT_ROOT"

@@ -523,9 +523,22 @@ def main() -> None:
             "seeds per fold, whose logits are averaged before the fold ensemble."
         ),
     )
+    parser.add_argument(
+        "--split",
+        default=None,
+        help=(
+            "A split file under results/splits other than the released one "
+            "(ess_fcl_val0.2_s0), such as ess_genome_heldout_val0.2_s0.json.gz; the "
+            "result file is then suffixed with the file's label source."
+        ),
+    )
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     seeds: tuple[int, ...] = tuple(args.seeds) if args.seeds else SEEDS
+    split_path = SPLIT if args.split is None else osp.join(RESULTS, "splits", args.split)
+    split_tag = ""
+    if args.split is not None:
+        split_tag = "_" + args.split.split("_val")[0].removeprefix("ess_")
     if args.arms in ("folds", "go_folds"):
         fold_ensembles(
             device,
@@ -534,8 +547,13 @@ def main() -> None:
             seeds=(SEEDS[0],) if args.seeds is None else seeds,
         )
         return
-    with gzip.open(SPLIT, "rt") as fh:
+    with gzip.open(split_path, "rt") as fh:
         split = json.load(fh)
+    print(
+        f"split {osp.basename(split_path)}: "
+        + ", ".join(f"{k} {len(v)}" for k, v in split["genes"].items()),
+        flush=True,
+    )
     gene_ids, graphs = gene_graphs()
     index = {g: i for i, g in enumerate(gene_ids)}
     ones = np.ones((len(gene_ids), 1), dtype=np.float32)
@@ -668,7 +686,7 @@ def main() -> None:
                 )
             )
         # A non-default seed list writes its own file, so the three-seed read stays.
-        suffix = "" if seeds == SEEDS else f"_s{len(seeds)}"
+        suffix = ("" if seeds == SEEDS else f"_s{len(seeds)}") + split_tag
         out = osp.join(RESULTS, f"graph_baselines_{args.arms}{suffix}.json")
     elif args.arms == "go_rel":
         # The typed-edge models on GO alone at 400 epochs (RGAT beat convolution on the
@@ -761,7 +779,7 @@ def main() -> None:
                 epochs=400,
             )
         )
-        out = osp.join(RESULTS, "graph_baselines_extra.json")
+        out = osp.join(RESULTS, f"graph_baselines_extra{split_tag}.json")
     else:
         rows.append(
             run_arm("MLP", "none", "ProtT5", t5, no_edges, split, index, device)

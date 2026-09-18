@@ -59,7 +59,21 @@ sys.path.insert(0, osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "scripts")
 import train_essentiality as t  # noqa: E402
 
 SPLITS_DIR = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results", "splits")
-LABEL_SOURCES = ("fcl", "genome")
+LABEL_SOURCES = ("fcl", "genome", "genome_heldout")
+#: The genome-wide labels as a LARGER HELD-OUT SET: train and val on the released
+#: labeled genes (the 195 released held-out genes dropped, so the read is not on them),
+#: test on every gene the released file never touched (SGD-essential, or present in a
+#: fitness screen and so nonessential). Label origin is the class on this test set:
+#: every essential test gene is an SGD annotation and every nonessential one a
+#: deletion-collection fitness record, which the report and every read of it must say.
+GENOME_HELDOUT_NOTE = (
+    "record indices are into the 028 essentiality build; train and val are the released "
+    "labeled genes outside the released held-out set (val class-stratified), the released "
+    "held-out genes are dropped, and test is every gene the released file never labeled: "
+    "essential from SGD, nonessential from a fitness record, so label origin coincides "
+    "with class on the test set; every record the file does not name is dropped by the "
+    "trainer."
+)
 
 
 class SplitReport(BaseModel):
@@ -158,6 +172,7 @@ def write_split(
     val_genes: set[str],
     args: argparse.Namespace,
     fold: int | None,
+    note: str | None = None,
 ) -> str:
     gene_index = dataset.is_any_deletion_gene_index
     split_records: dict[str, list[int]] = {"train": [], "val": [], "test": []}
@@ -196,6 +211,7 @@ def write_split(
         train_genes=len(split_genes["train"]),
         train_essential=sum(labels[g] for g in split_genes["train"]),
         n_records={k: len(v) for k, v in split_records.items()},
+        **({"note": note} if note else {}),
     )
     stem = (
         f"ess_{args.labels}_"
@@ -252,6 +268,19 @@ def main() -> None:
         }
     assert len(test_genes) == 223
     gene_index = dataset.is_any_deletion_gene_index
+    note: str | None = None
+    if args.labels == "genome_heldout":
+        # The genome-wide labels as the test set; the released held-out genes leave the
+        # file, so train and val are the released labeled genes outside them.
+        assert not args.folds, "the genome held-out split has no fold form"
+        released_test = test_genes
+        labels = {g: v for g, v in labels.items() if g not in released_test}
+        provenance = {g: p for g, p in provenance.items() if g in labels}
+        test_genes = {g for g, p in provenance.items() if p != "released"}
+        assert all(
+            (provenance[g] == "sgd") == bool(labels[g]) for g in test_genes
+        ), "label origin no longer coincides with class on the genome test set"
+        note = GENOME_HELDOUT_NOTE
     pool = sorted(g for g in labels if g not in test_genes and gene_index.get(g))
     rng = np.random.default_rng(args.seed)
     paths: list[str] = []
@@ -283,6 +312,7 @@ def main() -> None:
                 set(blocks[0]),
                 args,
                 None,
+                note=note,
             )
         )
     for p in paths:

@@ -408,6 +408,14 @@ ROUND_CAPTIONS = {
         "exchanges set to SC and everything else the same. Batch 32, class weight, 200 "
         "epochs, seeds 2700 to 2705.",
     ),
+    "w59": (
+        "Round 43, the solved flux on the node",
+        "The round-22 affine on ProtT5 with the pathway multi-hot and the round-33 cell "
+        "with the $\\log(1 + |v|)$ vector appended to the affine (the comparators), "
+        "against the same vector entering as a node embedding beside the pathway "
+        "multi-hot and ProtT5, with the four-ratio affine only. Batch 32, class weight, "
+        "200 epochs, seeds 2700 to 2705.",
+    ),
     "w48": (
         "Round 32, the unfit seed with the card's kernels pinned",
         "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "

@@ -425,6 +425,14 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w61": (
+        "Round 45, the layer-free cell with the card's kernels pinned",
+        "The round-33 cell (the $\\log(1 + |v|)$ vector in the affine, pathway multi-hot "
+        "and ProtT5, no layer) on seed 2700 run twice with cuDNN's autotuner off, its "
+        "deterministic kernels on, torch's deterministic algorithms on and cuBLAS's "
+        "workspace pinned, and twice without, in one pack on one card. Batch 32, class "
+        "weight, 200 epochs; the read is per pair.",
+    ),
     "w48": (
         "Round 32, the unfit seed with the card's kernels pinned",
         "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "

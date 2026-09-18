@@ -650,6 +650,12 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 45: the layer-free pooled cell on seed 2700 twice with the card's kernels
+    # pinned and twice free, as round 32 read the LP form.
+    "w61": (
+        ["w61_pathlog*_h12l1p1_e200_s2700.json"],
+        ["pathlogdet1", "pathlogdet2", "pathlogfree1", "pathlogfree2"],
+    ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
     "w44": (
@@ -819,6 +825,10 @@ ARM_LABELS = {
     "pathsolvepca64": "the vector reduced by PCA to 64 components as the node embedding; the four-ratio affine only",
     "pathsolvepca16": "the vector reduced by PCA to 16 components as the node embedding; the four-ratio affine only",
     "pathsolvepca64aff": "the 64-component node embedding, with the full log1p vector in the affine as well",
+    "pathlogdet1": "round-33 cell (log1p vector in the affine, no layer), seed 2700, the card's kernels pinned, first run",
+    "pathlogdet2": "the same, pinned, second run",
+    "pathlogfree1": "the same, kernels free, first run",
+    "pathlogfree2": "the same, free, second run",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",

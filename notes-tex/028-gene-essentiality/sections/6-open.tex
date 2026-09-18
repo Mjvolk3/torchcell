@@ -27,11 +27,12 @@ weight, six encodings). What remains is attribution and the module.
     that set: whether a model trained on the metabolic genes transfers because it
     reads essentiality or because it reads what the graph encodes about SGD-annotated
     against deletion-collection genes (label origin coincides with class there, and
-    for a viable deletion the two are close to one definition); the structure-only
-    inputs of the ladder (all-ones, degree) on that set say whether the graph's
-    neighborhoods alone carry the 0.75, and a genome-wide set whose nonessential
-    labels come from the same source as the essential ones would separate origin from
-    class.
+    for a viable deletion the two are close to one definition). Degree and clustering
+    alone reach the 0.75 on that set, so the question is what degree in the physical
+    graph measures there; a genome-wide set whose nonessential labels come from the
+    same source as the essential ones would separate origin from class, and the
+    physical graph's own coverage of the deletion collection against the SGD
+    inviable set is the first thing to count.
   \item The GO multi-hot is the ladder's strongest encoding and the cheap models take
     it (graph convolution 0.887), and the transformer does not (0.833 beside ProtT5,
     a cost of 0.04 beside the pathway block, round 26), and a cell 350 times wider

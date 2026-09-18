@@ -595,10 +595,17 @@ through the graph 0.702, under the three-input convolution here where on the 195
 was 0.02 above it. The graph convolution on GO does not keep its margin off the
 metabolic genes; the graph itself carries what transfers, and the ratios add 0.01 to a
 convolution on ProtT5 when every ratio in the test set is 1.0, which measures the
-training set and not the test set. Plausible mechanism, unverified: essential genes
-sit in denser neighborhoods of the physical and genetic graphs, a property the
-convolution reads from the graph and the MLP cannot, and one the label origin does not
-separate from essentiality on this set. The transformer does not transfer either: the
+training set and not the test set. What the graph carries is the gene's neighborhood
+in the physical graph, measured directly with the ladder's structure-only inputs
+(job 2401): degree and clustering alone, through two layers of convolution over the
+physical graph, read 0.753 [0.74, 0.78], level with ProtT5 through the union graph
+(0.755) and with the best number on the set, while the all-ones input reads 0.686 on
+the physical graph and 0.643 on the union, ProtT5 without a graph 0.534, and ProtT5
+through the physical graph at 200 epochs 0.544. On these genes the number is the
+degree of the gene in the protein interaction graph, which a convolution reads from
+any input that lets it count neighbors and a model without the graph cannot; whether
+that is essentiality or the deletion collection's own coverage the label origin does
+not let this set decide. The transformer does not transfer either: the
 round-22 recipe, the pathway multi-hot with ProtT5 and the FBA affine, trained on the
 same 629 genes reads 0.574 [0.55, 0.59] on the 4,674 (0.570 to 0.578 over three seeds,
 job 2396), 0.07 above chance and 0.17 under the graph convolution on ProtT5 alone,

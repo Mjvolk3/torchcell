@@ -24,6 +24,30 @@
       "wall_minutes": null
     },
     {
+      "label": "MLP on ProtT5 alone",
+      "kind": "MLP",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.5388141683778234,
+        0.5313628669737499,
+        0.5321031966257839
+      ],
+      "mean": 0.5340934106591191,
+      "sd": 0.003351734583510454,
+      "pooled_auroc": 0.534005216715689,
+      "pooled_ci": [
+        0.514181648137595,
+        0.5537615170178174
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        62,
+        58,
+        56
+      ],
+      "wall_minutes": 0.041802382469177245
+    },
+    {
       "label": "MLP on ProtT5 + FBA ratios",
       "kind": "MLP",
       "n_cells": 3,
@@ -70,6 +94,198 @@
         55
       ],
       "wall_minutes": 0.03861931562423706
+    },
+    {
+      "label": "graph convolution, physical graph, all-ones input",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.6840235307175759,
+        0.683074254953105,
+        0.6915813863144459
+      ],
+      "mean": 0.6862263906617089,
+      "sd": 0.0038063337522149863,
+      "pooled_auroc": 0.6857403296520339,
+      "pooled_ci": [
+        0.6678909058381006,
+        0.7039774101470632
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        91,
+        100,
+        77
+      ],
+      "wall_minutes": 0.06960405906041463
+    },
+    {
+      "label": "graph convolution, physical graph, degree and clustering",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.7570704534102892,
+        0.7520998668072589,
+        0.7490145124590709
+      ],
+      "mean": 0.7527282775588731,
+      "sd": 0.0033187066965849996,
+      "pooled_auroc": 0.7585006104667296,
+      "pooled_ci": [
+        0.7404162666044708,
+        0.7769856959967055
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        28,
+        31,
+        3
+      ],
+      "wall_minutes": 0.06842995484670003
+    },
+    {
+      "label": "graph convolution, physical graph, ProtT5",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.5449531050557745,
+        0.541536988734114,
+        0.5440489205838283
+      ],
+      "mean": 0.543513004791239,
+      "sd": 0.001445191332970318,
+      "pooled_auroc": 0.5441234252733226,
+      "pooled_ci": [
+        0.5232052806774341,
+        0.5656133674425025
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        192,
+        197,
+        188
+      ],
+      "wall_minutes": 0.06960308949152628
+    },
+    {
+      "label": "graph convolution, union of nine, all-ones input",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.6430685665131249,
+        0.6432116099672567,
+        0.6431602752649981
+      ],
+      "mean": 0.6431468172484599,
+      "sd": 5.916753670350765e-05,
+      "pooled_auroc": 0.6431197624729452,
+      "pooled_ci": [
+        0.6243599169020022,
+        0.6614224281103751
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        20,
+        5,
+        3
+      ],
+      "wall_minutes": 0.3507462938626607
+    },
+    {
+      "label": "graph convolution, union of nine, degree and clustering",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.6603707197957711,
+        0.6672176591375769,
+        0.6602791497863366
+      ],
+      "mean": 0.6626225095732282,
+      "sd": 0.0032494764609813163,
+      "pooled_auroc": 0.6634272157167435,
+      "pooled_ci": [
+        0.6437352038737257,
+        0.6829051870926821
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        197,
+        196,
+        197
+      ],
+      "wall_minutes": 0.35360248883565265
+    },
+    {
+      "label": "graph convolution, union of nine, ProtT5",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.7547026749542151,
+        0.7533661690437871,
+        0.7562850324657306
+      ],
+      "mean": 0.7547846254879108,
+      "sd": 0.001193029152052268,
+      "pooled_auroc": 0.7551162661634941,
+      "pooled_ci": [
+        0.7365736020555965,
+        0.7733663107447724
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        197,
+        197,
+        197
+      ],
+      "wall_minutes": 0.35609935919443764
+    },
+    {
+      "label": "graph attention, physical graph, degree and clustering",
+      "kind": "GATv2",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.7085938453854266,
+        0.6923573727731839,
+        0.7203028747433265
+      ],
+      "mean": 0.707084697633979,
+      "sd": 0.01145850238302215,
+      "pooled_auroc": 0.7082941617181864,
+      "pooled_ci": [
+        0.6892617645515566,
+        0.7275822439818878
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        179,
+        190,
+        119
+      ],
+      "wall_minutes": 0.15221927960713705
+    },
+    {
+      "label": "graph attention, union of nine, degree and clustering",
+      "kind": "GATv2",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.715351573339253,
+        0.7039830179255231,
+        0.7193093401409624
+      ],
+      "mean": 0.7128813104685795,
+      "sd": 0.006496187966827833,
+      "pooled_auroc": 0.7168266829457794,
+      "pooled_ci": [
+        0.6985055782679495,
+        0.7350959329955422
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        197,
+        197,
+        197
+      ],
+      "wall_minutes": 1.3548837780952454
     },
     {
       "label": "graph convolution on ProtT5 alone, 400 epochs",

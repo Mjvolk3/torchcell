@@ -46,22 +46,43 @@ TRANSFORMER_ARMS: dict[str, str] = {
         "w46_genomepathlpoffgateflux_h12l1p1_e200_s*.json"
     ),
 }
-#: Cheap models: (result file, model, row inputs) -> label.
+#: Cheap models: (result file, model, graph, row inputs) -> label.
+BASE = "graph_baselines_genome_heldout.json"
 EXTRA = "graph_baselines_extra_genome_heldout.json"
 GO400 = "graph_baselines_go400_genome_heldout.json"
-GRAPH_ARMS: dict[tuple[str, str, str], str] = {
-    (EXTRA, "MLP", "ProtT5+FBA ratios"): "MLP on ProtT5 + FBA ratios",
-    (EXTRA, "MLP", "ProtT5+chrom-pathway+FBA ratios"): "MLP on the three inputs",
-    (EXTRA, "GCN", "ProtT5 (400 epochs)"): "graph convolution on ProtT5 alone, 400 epochs",
-    (EXTRA, "GCN", "ProtT5+FBA ratios"): "graph convolution on ProtT5 + FBA ratios",
-    (EXTRA, "GCN", "ProtT5+chrom-pathway+FBA ratios (400 epochs)"): (
+UNION = "union of nine"
+GRAPH_ARMS: dict[tuple[str, str, str, str], str] = {
+    (BASE, "MLP", "none", "ProtT5"): "MLP on ProtT5 alone",
+    (EXTRA, "MLP", "none", "ProtT5+FBA ratios"): "MLP on ProtT5 + FBA ratios",
+    (EXTRA, "MLP", "none", "ProtT5+chrom-pathway+FBA ratios"): "MLP on the three inputs",
+    (BASE, "GCN", "physical", "ones"): "graph convolution, physical graph, all-ones input",
+    (BASE, "GCN", "physical", "degree+clustering"): (
+        "graph convolution, physical graph, degree and clustering"
+    ),
+    (BASE, "GCN", "physical", "ProtT5"): "graph convolution, physical graph, ProtT5",
+    (BASE, "GCN", UNION, "ones"): "graph convolution, union of nine, all-ones input",
+    (BASE, "GCN", UNION, "degree+clustering"): (
+        "graph convolution, union of nine, degree and clustering"
+    ),
+    (BASE, "GCN", UNION, "ProtT5"): "graph convolution, union of nine, ProtT5",
+    (BASE, "GATv2", "physical", "degree+clustering"): (
+        "graph attention, physical graph, degree and clustering"
+    ),
+    (BASE, "GATv2", UNION, "degree+clustering"): (
+        "graph attention, union of nine, degree and clustering"
+    ),
+    (EXTRA, "GCN", UNION, "ProtT5 (400 epochs)"): (
+        "graph convolution on ProtT5 alone, 400 epochs"
+    ),
+    (EXTRA, "GCN", UNION, "ProtT5+FBA ratios"): "graph convolution on ProtT5 + FBA ratios",
+    (EXTRA, "GCN", UNION, "ProtT5+chrom-pathway+FBA ratios (400 epochs)"): (
         "graph convolution on the three inputs, 400 epochs"
     ),
-    (GO400, "GCN", "GO (400 epochs)"): "graph convolution on GO alone, 400 epochs",
-    (GO400, "GCN", "GO+FBA ratios (400 epochs)"): (
+    (GO400, "GCN", UNION, "GO (400 epochs)"): "graph convolution on GO alone, 400 epochs",
+    (GO400, "GCN", UNION, "GO+FBA ratios (400 epochs)"): (
         "graph convolution on GO + FBA ratios, 400 epochs"
     ),
-    (GO400, "GCN", "ProtT5+GO+FBA ratios (400 epochs)"): (
+    (GO400, "GCN", UNION, "ProtT5+GO+FBA ratios (400 epochs)"): (
         "graph convolution on ProtT5 + GO + FBA ratios, 400 epochs"
     ),
 }
@@ -157,14 +178,19 @@ def transformer_reads(labels: dict[str, int]) -> list[ArmRead]:
 
 def graph_reads(labels: dict[str, int]) -> list[ArmRead]:
     reads: list[ArmRead] = []
-    for (fname, model, inputs), label in GRAPH_ARMS.items():
+    for (fname, model, graph, inputs), label in GRAPH_ARMS.items():
         src = osp.join(RESULTS, fname)
         if not osp.isfile(src):
             continue
         with open(src) as fh:
             rows = json.load(fh)["rows"]
         row = next(
-            (r for r in rows if r["model"] == model and r["inputs"] == inputs), None
+            (
+                r
+                for r in rows
+                if r["model"] == model and r["graph"] == graph and r["inputs"] == inputs
+            ),
+            None,
         )
         if row is None:
             continue

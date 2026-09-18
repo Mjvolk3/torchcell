@@ -11,8 +11,17 @@
     arm & cells & per cell & mean & sd & pooled [95\% CI] & selected epochs \\
     \hline
     pathway multi-hot + ProtT5 + FBA affine (round 22 recipe) & 3 & 0.571, 0.571, 0.579 & 0.574 & 0.004 & 0.572 [0.55, 0.59] & -- \\
+    MLP on ProtT5 alone & 3 & 0.539, 0.531, 0.532 & 0.534 & 0.003 & 0.534 [0.51, 0.55] & 62, 58, 56 \\
     MLP on ProtT5 + FBA ratios & 3 & 0.494, 0.476, 0.488 & 0.486 & 0.008 & 0.481 [0.46, 0.50] & 71, 197, 76 \\
     MLP on the three inputs & 3 & 0.511, 0.508, 0.507 & 0.509 & 0.002 & 0.509 [0.49, 0.53] & 55, 58, 55 \\
+    graph convolution, physical graph, all-ones input & 3 & 0.684, 0.683, 0.692 & 0.686 & 0.004 & 0.686 [0.67, 0.70] & 91, 100, 77 \\
+    graph convolution, physical graph, degree and clustering & 3 & 0.757, 0.752, 0.749 & 0.753 & 0.003 & 0.759 [0.74, 0.78] & 28, 31, 3 \\
+    graph convolution, physical graph, ProtT5 & 3 & 0.545, 0.542, 0.544 & 0.544 & 0.001 & 0.544 [0.52, 0.57] & 192, 197, 188 \\
+    graph convolution, union of nine, all-ones input & 3 & 0.643, 0.643, 0.643 & 0.643 & 0.000 & 0.643 [0.62, 0.66] & 20, 5, 3 \\
+    graph convolution, union of nine, degree and clustering & 3 & 0.660, 0.667, 0.660 & 0.663 & 0.003 & 0.663 [0.64, 0.68] & 197, 196, 197 \\
+    graph convolution, union of nine, ProtT5 & 3 & 0.755, 0.753, 0.756 & 0.755 & 0.001 & 0.755 [0.74, 0.77] & 197, 197, 197 \\
+    graph attention, physical graph, degree and clustering & 3 & 0.709, 0.692, 0.720 & 0.707 & 0.011 & 0.708 [0.69, 0.73] & 179, 190, 119 \\
+    graph attention, union of nine, degree and clustering & 3 & 0.715, 0.704, 0.719 & 0.713 & 0.006 & 0.717 [0.70, 0.74] & 197, 197, 197 \\
     graph convolution on ProtT5 alone, 400 epochs & 3 & 0.746, 0.753, 0.749 & 0.749 & 0.003 & 0.749 [0.73, 0.77] & 373, 380, 393 \\
     graph convolution on ProtT5 + FBA ratios & 3 & 0.759, 0.758, 0.758 & \textbf{0.759} & 0.000 & 0.759 [0.74, 0.78] & 196, 197, 197 \\
     graph convolution on the three inputs, 400 epochs & 3 & 0.742, 0.744, 0.744 & 0.744 & 0.001 & 0.744 [0.72, 0.76] & 380, 396, 380 \\

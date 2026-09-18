@@ -837,6 +837,17 @@ def graph_baselines_go400() -> str | None:
     )
 
 
+def graph_baselines_go800() -> str | None:
+    """Graph convolution on GO at 800 epochs."""
+    return graph_baselines_more(
+        "go800",
+        "Graph convolution on GO, 800 epochs",
+        "The three rows of Table~\\ref{tab:graph-go400} at an 800-epoch budget, since "
+        "at 400 the three seeds still selected epochs 382 to 397. Seeds 2700 to 2702.",
+        "tab:graph-go800",
+    )
+
+
 def wl_test() -> str | None:
     """1-WL on the single-deletion graphs, and the WL kernel as a rung."""
     src = osp.join(RESULTS, "wl_knockout_test.json")
@@ -1085,6 +1096,7 @@ def main() -> None:
         graph_baselines_split(),
         graph_baselines_go(),
         graph_baselines_go400(),
+        graph_baselines_go800(),
         fold_ensembles(),
         gene_encodings(),
         hard_genes(),

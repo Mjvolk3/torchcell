@@ -307,11 +307,16 @@ the four ratios 0.908, and beside ProtT5 with the ratios 0.901
 gene graphs on 2,362 annotation columns, no sequence embedding and no solve, 43
 seconds per seed on one card, above the transformer's best single cell (0.895) and
 above the reported fold ensemble's point (0.893) inside its interval. The three seeds
-still select epochs 382 to 397, so 400 is not the end of the curve either. The
-sequence embedding and the solve add nothing to it (0.901 with both), where on every
-other input they were the gain.
+still select epochs 382 to 397, but at 800 epochs the number does not move: 0.905,
+0.911 and 0.901 (mean 0.906), 0.907 with the ratios, 0.903 beside ProtT5
+(Table~\ref{tab:graph-go800}), the selected epochs again near the end of the budget
+and the held-out number the same, so the curve is flat past 400 and the selection
+rule is reading noise on its plateau. The sequence embedding and the solve add nothing
+to it at either budget, where on every other input they were the gain.
 
 \input{tables/graph_baselines_go400}
+
+\input{tables/graph_baselines_go800}
 
 \subsection{The Weisfeiler-Leman test on the deletion graphs\secstatus{todo}}
 

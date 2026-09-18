@@ -1,0 +1,80 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO (800 epochs) (800 epochs)",
+      "dim_in": 2362,
+      "n_parameters": 155457,
+      "test_auroc": [
+        0.9053894571203777,
+        0.9105035405192762,
+        0.9012588512981904
+      ],
+      "val_auroc": [
+        0.8511278195488722,
+        0.8574436090225563,
+        0.8466165413533835
+      ],
+      "select_epoch": [
+        777,
+        797,
+        788
+      ],
+      "mean": 0.9057172829792814,
+      "sd": 0.003781240717360677,
+      "seconds": 85.0802104473114
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO+FBA ratios (800 epochs) (800 epochs)",
+      "dim_in": 2366,
+      "n_parameters": 155713,
+      "test_auroc": [
+        0.9055861526357198,
+        0.9089299763965382,
+        0.9079464988198269
+      ],
+      "val_auroc": [
+        0.8517293233082707,
+        0.8595488721804512,
+        0.8598496240601503
+      ],
+      "select_epoch": [
+        768,
+        791,
+        768
+      ],
+      "mean": 0.9074875426173618,
+      "sd": 0.0014031559506316007,
+      "seconds": 85.20956563949585
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+GO+FBA ratios (800 epochs) (800 epochs)",
+      "dim_in": 3390,
+      "n_parameters": 221249,
+      "test_auroc": [
+        0.9044059795436664,
+        0.9002753737214791,
+        0.9042092840283241
+      ],
+      "val_auroc": [
+        0.8475187969924813,
+        0.8430075187969925,
+        0.8381954887218046
+      ],
+      "select_epoch": [
+        769,
+        755,
+        791
+      ],
+      "mean": 0.9029635457644899,
+      "sd": 0.0019025200797989643,
+      "seconds": 85.29426217079163
+    }
+  ]
+}

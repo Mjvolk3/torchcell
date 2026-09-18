@@ -70,11 +70,20 @@ weight, six encodings). What remains is attribution and the module.
     on the CPU inside the forward pass, the GPU waits on it (0 to 13 percent
     utilization sampled during round 19, against a 1.6 hour cell where the alternating
     layer takes 19 minutes), and the bytes moved are not the cost, the synchronization
-    is. Three constructions would remove it, in order of how much they change: a
-    per-genotype basis warm start of the simplex through HiGHS's own interface, which
-    keeps the exact solve and the exact duals; a batched first-order solve on the GPU;
-    a smooth interior-point solve at a fixed barrier, which changes what the layer
-    computes and belongs to its own rounds.
+    is. With nothing learned in the solve (round 27) the cost leaves the loop
+    entirely: the program is solved once per distinct genotype and medium, offline,
+    and stored as a feature, and no solver runs in training. The count that sizes that
+    store, the distinct (genotype, medium) pairs across the database, is not measured.
+    Where a solve must stay in the loop, the fine-tuning form with learned ceilings,
+    three constructions would remove the synchronization, in order of how much they
+    change: a batched first-order solve on the card, which NVIDIA's cuOpt offers as
+    PDLP with a batch mode for many small programs at a benchmark tolerance of
+    $10^{-4}$ relative, so the first read is whether the head over a $10^{-4}$ flux
+    ranks the genes as the exact one does, which HiGHS at a loose tolerance can answer
+    on the CPU before any card is involved; a per-genotype basis warm start of the
+    simplex through HiGHS's own interface, which keeps the exact solve and the exact
+    duals; a smooth interior-point solve at a fixed barrier, which changes what the
+    layer computes and belongs to its own rounds.
   \item The module's own hyperparameters have not been moved on this endpoint: the
     $k_{cat}$ tier (measured against predicted) and the thermodynamic source. Given
     round 15, the $k_{cat}$ tier is the one that sets whether the capacity box holds a

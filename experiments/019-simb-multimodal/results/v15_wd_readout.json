@@ -1,0 +1,185 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/v13_split_readout.py",
+ "project": "zhao-group/torchcell_019_expr_v15",
+ "statistic": "max of a centered 5-epoch rolling mean of val/expression/pearson_per_feature",
+ "matched_epoch": 444,
+ "n_runs": 4,
+ "runs": [
+  {
+   "id": "dabvh5po",
+   "arm": "W_ref_s1",
+   "readout": "ref",
+   "split": "s1",
+   "seed": 0,
+   "state": "finished",
+   "epoch": 444,
+   "last": 0.07713434100151062,
+   "roll_max": 0.09179335534572601,
+   "roll_max_epoch": 403,
+   "test_at_best_val": null,
+   "roll_max_matched": 0.09179335534572601
+  },
+  {
+   "id": "mv5zd8bu",
+   "arm": "W_ref_s1",
+   "readout": "ref",
+   "split": "s1",
+   "seed": 1,
+   "state": "finished",
+   "epoch": 444,
+   "last": 0.09516478329896927,
+   "roll_max": 0.10941439718008042,
+   "roll_max_epoch": 374,
+   "test_at_best_val": null,
+   "roll_max_matched": 0.10941439718008042
+  },
+  {
+   "id": "ax2dedpj",
+   "arm": "W_wd1e1_s1",
+   "readout": "wd1e1",
+   "split": "s1",
+   "seed": 0,
+   "state": "finished",
+   "epoch": 447,
+   "last": 0.07994845509529114,
+   "roll_max": 0.0933220624923706,
+   "roll_max_epoch": 363,
+   "test_at_best_val": null,
+   "roll_max_matched": 0.0933220624923706
+  },
+  {
+   "id": "223ce8px",
+   "arm": "W_wd1e2_s1",
+   "readout": "wd1e2",
+   "split": "s1",
+   "seed": 0,
+   "state": "finished",
+   "epoch": 451,
+   "last": 0.08376613259315491,
+   "roll_max": 0.11029489487409591,
+   "roll_max_epoch": 328,
+   "test_at_best_val": null,
+   "roll_max_matched": 0.11029489487409591
+  }
+ ],
+ "partition": {
+  "per_split": {
+   "s1": {
+    "mean": 0.10120617747306823,
+    "sd_within": 0.010012328137254438,
+    "n": 4
+   },
+   "s2": {
+    "mean": NaN,
+    "sd_within": NaN,
+    "n": 0
+   }
+  },
+  "sd_between_partitions": NaN,
+  "range_between_partitions": NaN,
+  "sd_within_partition_pooled": NaN
+ },
+ "concat_minus_ref": {
+  "pairs": [
+   {
+    "split": "s1",
+    "seed": 0,
+    "ref": 0.09179335534572601,
+    "concat": 0.11029489487409591,
+    "diff": 0.0185015395283699
+   }
+  ],
+  "mean": 0.0185015395283699,
+  "sd": null,
+  "t": null,
+  "n_positive": 1,
+  "n": 1
+ },
+ "concat_minus_ref_excluding_plateau": {
+  "pairs": [
+   {
+    "split": "s1",
+    "seed": 0,
+    "ref": 0.09179335534572601,
+    "concat": 0.11029489487409591,
+    "diff": 0.0185015395283699
+   }
+  ],
+  "mean": 0.0185015395283699,
+  "sd": null,
+  "t": null,
+  "n_positive": 1,
+  "n": 1
+ },
+ "plateau_runs": [],
+ "wd1e1_minus_ref": {
+  "pairs": [
+   {
+    "split": "s1",
+    "seed": 0,
+    "ref": 0.09179335534572601,
+    "concat": 0.0933220624923706,
+    "diff": 0.0015287071466445895
+   }
+  ],
+  "mean": 0.0015287071466445895,
+  "sd": null,
+  "t": null,
+  "n_positive": 1,
+  "n": 1
+ },
+ "wd1e1_minus_ref_excluding_plateau": {
+  "pairs": [
+   {
+    "split": "s1",
+    "seed": 0,
+    "ref": 0.09179335534572601,
+    "concat": 0.0933220624923706,
+    "diff": 0.0015287071466445895
+   }
+  ],
+  "mean": 0.0015287071466445895,
+  "sd": null,
+  "t": null,
+  "n_positive": 1,
+  "n": 1
+ },
+ "fold90_minus_80": {
+  "pairs": [],
+  "mean": null,
+  "sd": null,
+  "n": 0
+ },
+ "baselines": {
+  "s0": {
+   "B2_prot_T5_val": 0.1349428304976303,
+   "B2_prot_T5_test": 0.08473269350631071,
+   "B3_prot_T5_val": 0.13004112708281723,
+   "B3_prot_T5_test": 0.04563767716439801
+  },
+  "s1": {
+   "B2_prot_T5_val": 0.07622869698546657,
+   "B2_prot_T5_test": 0.14755926843195627,
+   "B3_prot_T5_val": 0.11327554882512904,
+   "B3_prot_T5_test": 0.1622753809348779
+  },
+  "s2": {
+   "B2_prot_T5_val": 0.11730534346748187,
+   "B2_prot_T5_test": 0.11134499029317775,
+   "B3_prot_T5_val": 0.11066755362945734,
+   "B3_prot_T5_test": 0.12411938185723265
+  },
+  "s3": {
+   "B2_prot_T5_val": 0.09371871815588093,
+   "B2_prot_T5_test": 0.09662005793418663,
+   "B3_prot_T5_val": 0.12596752006076106,
+   "B3_prot_T5_test": 0.1417795334454475
+  },
+  "s0_90": {
+   "B2_prot_T5_val": 0.1369584441696282,
+   "B2_prot_T5_test": null,
+   "B3_prot_T5_val": 0.14130511684743677,
+   "B3_prot_T5_test": null
+  }
+ }
+}

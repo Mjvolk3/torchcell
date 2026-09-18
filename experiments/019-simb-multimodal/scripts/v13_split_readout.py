@@ -80,6 +80,7 @@ ROUNDS: dict[str, dict[str, Any]] = {
         "arm_re": r"W_(ref|wd1e2|wd1e1)_(s\d+)",
         "ref": "ref",
         "alt": "wd1e2",
+        "alt_extra": ["wd1e1"],
         "splits": ["s1", "s2"],
         "baselines_dir": "expression_baselines_split",
         "out": "v15_wd_readout.json",
@@ -107,7 +108,9 @@ def main() -> None:
     rows: list[dict[str, Any]] = []
     hist: dict[str, pd.DataFrame] = {}
     for r in api.runs(PROJECT):
-        arm = r.config.get("arm") or next(t for t in r.tags if t.startswith(ROUND["prefix"]))
+        arm = r.config.get("arm") or next(
+            t for t in r.tags if t.startswith(ROUND["prefix"])
+        )
         m = re.fullmatch(ROUND["arm_re"], arm)
         if m is None:
             raise ValueError(f"{r.id}: arm {arm} does not parse")
@@ -150,14 +153,27 @@ def main() -> None:
     pd.set_option("display.width", 220)
     print(
         df[
-            ["arm", "seed", "state", "epoch", "roll_max_matched", "roll_max", "roll_max_epoch", "last", "test_at_best_val", "id"]
+            [
+                "arm",
+                "seed",
+                "state",
+                "epoch",
+                "roll_max_matched",
+                "roll_max",
+                "roll_max_epoch",
+                "last",
+                "test_at_best_val",
+                "id",
+            ]
         ].to_string(index=False)
     )
 
     # 1. partition spread at the matched epoch (80/10/10 splits only)
     per_split: dict[str, Any] = {}
     for s in [x for x in SPLITS if not x.endswith("_90")]:
-        sub = df[(df["split"] == s) & (df["roll_max_matched"] >= PLATEAU)]["roll_max_matched"]
+        sub = df[(df["split"] == s) & (df["roll_max_matched"] >= PLATEAU)][
+            "roll_max_matched"
+        ]
         per_split[s] = {
             "mean": float(sub.mean()),
             "sd_within": float(sub.std(ddof=1)),
@@ -171,7 +187,9 @@ def main() -> None:
         "range_between_partitions": float(means.max() - means.min()),
         "sd_within_partition_pooled": float(np.sqrt((within**2).mean())),
     }
-    print("\n1. partition (mean over both readouts and seeds at the matched epoch, plateau runs excluded):")
+    print(
+        "\n1. partition (mean over both readouts and seeds at the matched epoch, plateau runs excluded):"
+    )
     for s, v in per_split.items():
         print(f"   {s}: {v['mean']:.4f} (within sd {v['sd_within']:.4f}, n={v['n']})")
     print(
@@ -180,44 +198,75 @@ def main() -> None:
         f"pooled within-partition sd {out['partition']['sd_within_partition_pooled']:.4f}"
     )
 
-    # 2. paired H_concat - H_ref within card and seed
-    pairs: list[dict[str, Any]] = []
-    for s in SPLITS:
-        ref = df[(df["split"] == s) & (df["readout"] == REF)].set_index("seed")
-        con = df[(df["split"] == s) & (df["readout"] == ALT)].set_index("seed")
-        for seed in sorted(set(ref.index) & set(con.index)):
-            pairs.append(
-                {
-                    "split": s,
-                    "seed": int(seed),
-                    "ref": float(ref.loc[seed, "roll_max_matched"]),
-                    "concat": float(con.loc[seed, "roll_max_matched"]),
-                    "diff": float(con.loc[seed, "roll_max_matched"] - ref.loc[seed, "roll_max_matched"]),
-                }
-            )
-    # A run that never left the plateau (roll_max under PLATEAU) is a training failure,
-    # not a readout measurement; the pair it sits in is reported and then set aside.
-    def _pair_stats(ps: list[dict[str, Any]]) -> dict[str, Any]:
-        d = np.array([p["diff"] for p in ps])
-        return {
-            "pairs": ps,
-            "mean": float(d.mean()),
-            "sd": float(d.std(ddof=1)) if len(d) > 1 else None,
-            "t": float(d.mean() / (d.std(ddof=1) / np.sqrt(len(d)))) if len(d) > 1 else None,
-            "n_positive": int((d > 0).sum()),
-            "n": int(len(d)),
-        }
+    # 2. paired alt - ref within card and seed, for the primary alt and any extra alt
+    def _section2(alt: str, key: str) -> None:
+        pairs: list[dict[str, Any]] = []
+        for s in SPLITS:
+            ref = df[(df["split"] == s) & (df["readout"] == REF)].set_index("seed")
+            con = df[(df["split"] == s) & (df["readout"] == alt)].set_index("seed")
+            for seed in sorted(set(ref.index) & set(con.index)):
+                pairs.append(
+                    {
+                        "split": s,
+                        "seed": int(seed),
+                        "ref": float(ref.loc[seed, "roll_max_matched"]),
+                        "concat": float(con.loc[seed, "roll_max_matched"]),
+                        "diff": float(
+                            con.loc[seed, "roll_max_matched"]
+                            - ref.loc[seed, "roll_max_matched"]
+                        ),
+                    }
+                )
 
-    clean = [p for p in pairs if min(p["ref"], p["concat"]) >= PLATEAU]
-    out["concat_minus_ref"] = _pair_stats(pairs)
-    out["concat_minus_ref_excluding_plateau"] = _pair_stats(clean)
-    out["plateau_runs"] = df[df["roll_max_matched"] < PLATEAU][["arm", "seed", "id", "roll_max_matched"]].to_dict(orient="records")
-    print(f"\n2. {ALT} minus {REF}, paired within split and seed at the matched epoch:")
-    for p in pairs:
-        flag = "  (plateau run in pair)" if min(p["ref"], p["concat"]) < PLATEAU else ""
-        print(f"   {p['split']:<6} seed {p['seed']}: {p['diff']:+.4f} (ref {p['ref']:.4f}, concat {p['concat']:.4f}){flag}")
-    for label, c in [("all pairs", out["concat_minus_ref"]), ("excluding plateau pairs", out["concat_minus_ref_excluding_plateau"])]:
-        print(f"   {label}: mean {c['mean']:+.4f}, sd {c['sd']:.4f}, t {c['t']:+.2f}, {c['n_positive']}/{c['n']} positive")
+        # A run that never left the plateau (roll_max under PLATEAU) is a training failure,
+        # not a readout measurement; the pair it sits in is reported and then set aside.
+        def _pair_stats(ps: list[dict[str, Any]]) -> dict[str, Any]:
+            d = np.array([p["diff"] for p in ps])
+            return {
+                "pairs": ps,
+                "mean": float(d.mean()),
+                "sd": float(d.std(ddof=1)) if len(d) > 1 else None,
+                "t": float(d.mean() / (d.std(ddof=1) / np.sqrt(len(d))))
+                if len(d) > 1
+                else None,
+                "n_positive": int((d > 0).sum()),
+                "n": int(len(d)),
+            }
+
+        clean = [p for p in pairs if min(p["ref"], p["concat"]) >= PLATEAU]
+        out[f"{key}_minus_ref"] = _pair_stats(pairs)
+        out[f"{key}_minus_ref_excluding_plateau"] = _pair_stats(clean)
+        out["plateau_runs"] = df[df["roll_max_matched"] < PLATEAU][
+            ["arm", "seed", "id", "roll_max_matched"]
+        ].to_dict(orient="records")
+        print(
+            f"\n2. {alt} minus {REF}, paired within split and seed at the matched epoch:"
+        )
+        for p in pairs:
+            flag = (
+                "  (plateau run in pair)"
+                if min(p["ref"], p["concat"]) < PLATEAU
+                else ""
+            )
+            print(
+                f"   {p['split']:<6} seed {p['seed']}: {p['diff']:+.4f} (ref {p['ref']:.4f}, concat {p['concat']:.4f}){flag}"
+            )
+        for label, c in [
+            ("all pairs", out[f"{key}_minus_ref"]),
+            ("excluding plateau pairs", out[f"{key}_minus_ref_excluding_plateau"]),
+        ]:
+            if c["n"] == 0:
+                print(f"   {label}: no pairs yet")
+                continue
+            sd = f"{c['sd']:.4f}" if c["sd"] is not None else "--"
+            t = f"{c['t']:+.2f}" if c["t"] is not None else "--"
+            print(
+                f"   {label}: mean {c['mean']:+.4f}, sd {sd}, t {t}, {c['n_positive']}/{c['n']} positive"
+            )
+
+    _section2(ALT, "concat")
+    for extra in ROUND.get("alt_extra", []):
+        _section2(extra, extra)
 
     # 3. 90/10 minus 80/10/10 on split 0, same seeds
     fold: list[dict[str, Any]] = []
@@ -231,7 +280,10 @@ def main() -> None:
                     "seed": int(seed),
                     "80_10_10": float(a.loc[seed, "roll_max_matched"]),
                     "90_10": float(b.loc[seed, "roll_max_matched"]),
-                    "diff": float(b.loc[seed, "roll_max_matched"] - a.loc[seed, "roll_max_matched"]),
+                    "diff": float(
+                        b.loc[seed, "roll_max_matched"]
+                        - a.loc[seed, "roll_max_matched"]
+                    ),
                 }
             )
     fd = np.array([p["diff"] for p in fold])
@@ -241,16 +293,26 @@ def main() -> None:
         "sd": float(fd.std(ddof=1)) if len(fd) > 1 else None,
         "n": int(len(fd)),
     }
-    print("\n3. split 0, test folded into train (90/10) minus 80/10/10, same val strains and seed:")
+    print(
+        "\n3. split 0, test folded into train (90/10) minus 80/10/10, same val strains and seed:"
+    )
     for p in fold:
-        print(f"   {p['readout']:<6} seed {p['seed']}: {p['diff']:+.4f} (80/10/10 {p['80_10_10']:.4f}, 90/10 {p['90_10']:.4f})")
+        print(
+            f"   {p['readout']:<6} seed {p['seed']}: {p['diff']:+.4f} (80/10/10 {p['80_10_10']:.4f}, 90/10 {p['90_10']:.4f})"
+        )
     if len(fd):
         print(f"   mean {fd.mean():+.4f} over {len(fd)} pairs")
 
     # 4. linear baselines on the same partitions
     res_dir = experiment_results_dir("019-simb-multimodal", __file__)
     base: dict[str, Any] = {}
-    for s, name in [("s0", "seed0"), ("s1", "seed1"), ("s2", "seed2"), ("s3", "seed3"), ("s0_90", "seed0_fold90")]:
+    for s, name in [
+        ("s0", "seed0"),
+        ("s1", "seed1"),
+        ("s2", "seed2"),
+        ("s3", "seed3"),
+        ("s0_90", "seed0_fold90"),
+    ]:
         path = osp.join(res_dir, ROUND["baselines_dir"], f"{name}.json")
         if not osp.exists(path):
             continue

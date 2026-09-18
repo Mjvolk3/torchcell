@@ -12,7 +12,6 @@
     \hline
     \texttt{prot\_T5\_all} & protein language model embedding & 1,024 & 6,607 / 6,607 & ProtT5 mean-pooled over the protein sequence & \texttt{protT5.py} \\
     \texttt{pathways} & pathway multi-hot & 173 & 517 / 6,607 & one column per SGD pathway a gene is annotated to & \texttt{sgd\_gene\_graph\_hot.py} \\
-    \texttt{chromosome} & chromosome one-hot & 17 & 6,607 / 6,607 & one column per chromosome & \texttt{sgd\_gene\_graph\_hot.py} \\
     \texttt{normalized\_props} & scaled gene properties & 7 & 6,607 / 6,607 & protein length, molecular weight, isoelectric point, expression median and median absolute deviation, scaled to [0, 1] & \texttt{sgd\_gene\_graph\_hot.py} \\
     \texttt{normalized\_chrom\_pathways} & chromosome-pathway indicator & 197 & 6,607 / 6,607 & the three blocks above concatenated & \texttt{sgd\_gene\_graph\_hot.py} \\
     \texttt{go} & GO multi-hot, propagated & 2,362 & 5,501 / 6,607 & SGD GO annotations propagated to ancestors (is\_a, part\_of), roots dropped, terms with ten or more genes & \texttt{go\_term\_hot.py} \\

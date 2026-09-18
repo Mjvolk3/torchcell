@@ -591,6 +591,32 @@ over these graphs extracts from the same columns.
 
 \input{tables/graph_baselines_go_solve}
 
+The transformer side of the same question is round 47 (jobs 2434 and 2438;
+Table~\ref{tab:w63}, Figure~\ref{fig:w63}): the GO multi-hot on the node beside the
+pathway block and ProtT5 with the $\log(1 + |v|)$ vector in the affine, six seeds, and
+the same with GO in place of the pathway block, beside a same-pack control with GO on
+the node and the four ratios only. GO costs the transformer what it cost in round 26,
+with the solve in the affine as with the ratios: 0.866 (sd 0.009; pooled 0.872 [0.81,
+0.93]) against the round-33 cell's 0.908 and 0.912, with GO in place of the pathway
+block 0.846 (pooled 0.855), and the control 0.852 (pooled 0.854), the round-26 cells'
+0.849; the GO cells select at epochs 42 to 194 where the round-33 cell selects at 33
+to 58. So neither family takes the other's input as the input enters it now, the
+convolution nothing from the solve columns on the node and the transformer a cost
+from GO on the node; whether GO enters the transformer the way the solve does, on the
+logit through the affine rather than on the node, is round 50's read.
+
+\input{tables/round_w63}
+
+\tcfigfit[1.0]{figures/w63_readout_2026-09-18-18-21-21.pdf}{\textbf{Round 47, the GO
+  multi-hot beside the layer-free solve in one transformer.} \textbf{a}, Validation
+  AUROC per epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The
+  median absolute epoch-to-epoch step per cell against the validation size.
+  \textbf{c}, Held-out AUROC per cell (points), the seed mean and the gene bootstrap
+  of the pooled per-gene logits (square with interval), beside FBA on four media,
+  Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w63}.}{fig:w63}
+
 \subsection{Round 30: the genome-wide labels as a larger held-out set\secstatus{todo}}
 \label{sec:round30}
 

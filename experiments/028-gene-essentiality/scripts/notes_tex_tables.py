@@ -425,6 +425,17 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w66": (
+        "Round 50, GO on the logit instead of the node",
+        "The round-33 cell and the round-47 GO-on-node cells as the comparators, against "
+        "the GO multi-hot (2,362 propagated terms) entering as affine columns through the "
+        "solve store path, encoded as $\\log(1 + |v|)$ (0 or 0.693 per term): GO alone "
+        "beside the four ratios with pathway and ProtT5 on the node, GO appended to the "
+        "pFBA vector (the one-model GO + layer-free form on the logit), the same on "
+        "ProtT5 alone, and the round-47 GO-on-node cell run to 400 epochs. Batch 32, "
+        "class weight; seeds 2700 to 2705 for the round-33 cell, 2700 to 2702 for the "
+        "rest.",
+    ),
     "w65": (
         "Round 49, the second bracket of the pooled cell's divergence",
         "Three pinned pairs on seed 2700 in the pooled arm: the round-9 cell (pathway "

@@ -650,6 +650,30 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 50: GO on the logit instead of the node, through the solve store path
+    # (go_affine_store.py): GO alone as affine columns, GO appended to the pFBA vector,
+    # the same on ProtT5 alone, and the round-47 GO-on-node cell at 400 epochs; beside
+    # the round-33 cell and the round-47 cells.
+    "w66": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w63_pathgofba_h12l1p1_e200_s*.json",
+            "w63_pathgolog_h12l1p1_e200_s*.json",
+            "w66_pathgolog400_h12l1p1_e400_s*.json",
+            "w66_pathgoaff_h12l1p1_e200_s*.json",
+            "w66_pathgopfbaaff_h12l1p1_e200_s*.json",
+            "w66_protgopfbaaff_h12l1p1_e200_s*.json",
+        ],
+        [
+            "pathfbapfbalogfree",
+            "pathgofba",
+            "pathgolog",
+            "pathgolog400",
+            "pathgoaff",
+            "pathgopfbaaff",
+            "protgopfbaaff",
+        ],
+    ),
     # Round 49: the second bracket of the pooled cell's divergence (round 46 placed it
     # with the pathway multi-hot in the pooled arm): the plain pooled head on pathway +
     # ProtT5, the affine on the pathway multi-hot alone, and the affine on GO + ProtT5,
@@ -910,6 +934,10 @@ ARM_LABELS = {
     "pathgolog": "GO multi-hot + pathway multi-hot + ProtT5, the log(1 + |v|) vector in the affine, no layer",
     "protgolog": "GO multi-hot + ProtT5 (no pathway block), the log(1 + |v|) vector in the affine",
     "pathgofba": "GO multi-hot + pathway multi-hot + ProtT5, the four ratios only (round 47 control)",
+    "pathgolog400": "the round-47 GO + pathway + ProtT5 layer-free cell at 400 epochs",
+    "pathgoaff": "pathway + ProtT5 on the node; the GO multi-hot as affine columns (no solve)",
+    "pathgopfbaaff": "pathway + ProtT5 on the node; the log(1 + |v|) vector and the GO multi-hot as affine columns",
+    "protgopfbaaff": "ProtT5 alone on the node; the log(1 + |v|) vector and the GO multi-hot as affine columns",
     "pathlogh24": "the round-33 cell at width 24",
     "pathlogh48": "the round-33 cell at width 48",
     "pathlogl2": "the round-33 cell with two transformer blocks (graph regularization off)",

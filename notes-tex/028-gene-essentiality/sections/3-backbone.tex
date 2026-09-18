@@ -353,6 +353,22 @@ it only with ProtT5 beside them: the full indicator alone reads 0.78 (round 9). 
 gene's pathway membership and its protein sequence are complementary inputs on this
 endpoint, and each is cheap.
 
+\subsection{Round 22: the indicator split into its blocks\secstatus{todo}}
+\label{sec:round22}
+
+Round 14 attributes the gain by subtraction, the indicator without its pathway
+columns; round 22 (job 2338) attributes it by addition, one block at a time on the
+round-9 recipe. The 197-column indicator is three blocks, the 173-column pathway
+multi-hot, the 17-column chromosome one-hot and the seven scaled gene properties, and
+each is built as an embedding of its own (\texttt{pathways}, \texttt{chromosome},
+\texttt{normalized\_props} in the embedding registry) and run beside ProtT5 with the
+FBA affine, three seeds each, with the pathway block also run without ProtT5. The read
+is paired against round 9's cell: the block whose three seeds match round 9's is the
+block that carries the gain, and a block that reads at the ProtT5-alone level (0.821)
+carries none. On the cheap models the same split runs on the MLP and on graph
+convolution (Table~\ref{tab:graph-split}), where the pathway block beside ProtT5 and
+the ratios reads 0.876, 0.885 and 0.878 on the MLP, above the full indicator's 0.870.
+
 \subsection{Round 16: the round-9 backbone with the round-11 affine\secstatus{todo}}
 
 Round 16 (jobs 2309 and 2310) puts the widened affine on the round-9 backbone: the

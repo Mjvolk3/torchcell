@@ -35,6 +35,17 @@
     (\texttt{test = 1} in the released split), of which 195 resolve as single-deletion
     genotypes in the build. Every model number in this document is on those 195 unless
     the gene set is named.
+  \item[layer that solves] The metabolic module with its flux replaced by the growth
+    optimum of the linear program under the layer's own bounds, one solve per genotype
+    in the forward pass, the bound duals as its gradient. Its \emph{elastic} form lets
+    the model's one forced flux (ATP maintenance) go unmet at a price, so the program is
+    feasible for every genotype by construction.
+  \item[message passing] The update of a node's representation from an aggregate of its
+    neighbors' representations, $h_i' = \gamma(h_i, \bigoplus_{j \in \mathcal{N}(i)}
+    \phi(h_i, h_j))$; graph convolution (GCN), graph attention (GAT, GATv2), GraphSAGE
+    and the graph isomorphism network (GIN) are choices of $\phi$, $\bigoplus$ and
+    $\gamma$. \emph{Relational} message passing (RGCN, RGAT) keeps one weight or one
+    attention per edge type over a multigraph.
   \item[metabolic module] The enzyme-constrained thermodynamic flux layer over yeast-GEM
     9.0.2 that maps the perturbed representation to a flux vector by $K$ alternating
     projections onto the mass balance $Sv = 0$ and the box of bounds; here it is read at

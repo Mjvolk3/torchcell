@@ -326,6 +326,33 @@ ROUND_CAPTIONS = {
         "\\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint scale 0, batch 32, "
         "class weight, 200 epochs, seeds 2700 to 2702.",
     ),
+    "w36": (
+        "Round 20, the gated forms on six seeds and the last forced probes",
+        "The round-4 gated cell (the paired comparator) and the round-5 affine, against "
+        "the gated layer that solves on the GEM box (round 15b, seeds 2700 to 2702) and "
+        "on seeds 2703 to 2705, the gated elastic cell at capacity scale 100 (round 18) "
+        "and on seeds 2703 to 2705, and two last probes of the forced elastic column: "
+        "at ceiling scale 30 with the flux layer at ten times the learning rate, and at "
+        "100 with the abundance head's reach doubled to $e^6$. Constraint scale 0, "
+        "batch 32, class weight, 200 epochs.",
+    ),
+    "w37": (
+        "Round 21, the gated elastic cell with a head over the solved flux",
+        "The round-18 gated elastic cell (the paired comparator) and the round-5 affine, "
+        "against the same cell with a zero-initialized linear head over "
+        "$\\log(1 + |v^*|)$ of the solved flux, over all 4,131 reactions and over the "
+        "274 exchange reactions. Constraint scale 0, batch 32, class weight, 200 epochs, "
+        "seeds 2700 to 2702.",
+    ),
+    "w38": (
+        "Round 22, the chromosome-pathway indicator split into its blocks",
+        "The round-9 cell (the paired comparator: the 197-column indicator beside ProtT5 "
+        "with the FBA affine), the round-5 affine on ProtT5 alone, and the round-14 "
+        "cell (properties and chromosome, no pathways), against the same recipe with "
+        "one block at a time: the 173-column pathway multi-hot, the 17-column "
+        "chromosome one-hot, the seven scaled properties, and the pathway block alone "
+        "without ProtT5. Batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
     "w35": (
         "Round 19, the gated elastic column with a faster layer and a deeper head",
         "The round-18 gated elastic cell at capacity scale 100 (the paired comparator), "
@@ -680,6 +707,67 @@ def graph_baselines() -> str | None:
     )
 
 
+def graph_baselines_more(stem: str, short: str, caption: str, label: str) -> str | None:
+    """One more graph-baselines table from ``results/graph_baselines_<stem>.json``."""
+    src = osp.join(RESULTS, f"graph_baselines_{stem}.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        rows_in = list(json.load(fh)["rows"])
+    best = max(r["mean"] for r in rows_in)
+    rows = []
+    for r in rows_in:
+        seeds = ", ".join(f"{v:.3f}" for v in r["test_auroc"])
+        epochs = ", ".join(str(e) for e in r["select_epoch"])
+        rows.append(
+            f"    {r['model']} & {r['graph']} & {r['inputs'].replace('+', ' $+$ ')} & "
+            f"{r['dim_in']:,} & {r['n_parameters']:,} & {fmt(r['mean'], best)} & "
+            f"{r['sd']:.3f} & {seeds} & {epochs} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        f"  \\caption[{short}]{{{caption} {BEST_NOTE}}}\n  \\label{{{label}}}\n"
+        "  \\begin{tabular}{@{}llp{30mm}rrrrll@{}}\n    \\hline\n"
+        "    model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        f"graph_baselines_{stem}", body, f"results/graph_baselines_{stem}.json"
+    )
+
+
+def graph_baselines_relational() -> str | None:
+    """GIN, GraphSAGE, RGCN and RGAT on the split."""
+    return graph_baselines_more(
+        "relational",
+        "Message-passing architectures",
+        "The message-passing architectures of the MATH-490 and Gene\\_Graph projects on "
+        "the released split, the protocol of Table~\\ref{tab:graph-baselines}: GIN and "
+        "GraphSAGE on the union of the nine graphs, and RGCN and RGAT with the nine "
+        "graphs as nine edge types (basis decomposition with four bases), with ProtT5 "
+        "alone and with the transformer's three inputs as node features, 200 epochs, "
+        "seeds 2700 to 2702.",
+        "tab:graph-relational",
+    )
+
+
+def graph_baselines_split() -> str | None:
+    """The chromosome-pathway indicator split into its blocks on the MLP and on GCN."""
+    return graph_baselines_more(
+        "split",
+        "The indicator split, cheap models",
+        "The chromosome-pathway indicator split into its three blocks (the 173-column "
+        "pathway multi-hot, the 17-column chromosome one-hot, the seven scaled gene "
+        "properties), each beside ProtT5 and the four FBA ratios, and the pathway block "
+        "with the ratios and alone, on the MLP with no graph and on graph convolution "
+        "over the union of the nine graphs, the protocol of "
+        "Table~\\ref{tab:graph-baselines}, seeds 2700 to 2702.",
+        "tab:graph-split",
+    )
+
+
 def wl_test() -> str | None:
     """1-WL on the single-deletion graphs, and the WL kernel as a rung."""
     src = osp.join(RESULTS, "wl_knockout_test.json")
@@ -725,6 +813,8 @@ def main() -> None:
     paths = [
         wl_test(),
         graph_baselines(),
+        graph_baselines_relational(),
+        graph_baselines_split(),
         fba_media(),
         splits(),
         logistic_baselines(),

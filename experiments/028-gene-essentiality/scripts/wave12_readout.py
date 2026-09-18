@@ -207,7 +207,15 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "w21_warmgate_h12l1p1_e200_s*.json",
             "w24_*_e200_s*.json",
         ],
-        ["b32posw200", "bio_s0", "gate_s0", "warmbio", "warmgate", "warmoffbio", "warmoffgate"],
+        [
+            "b32posw200",
+            "bio_s0",
+            "gate_s0",
+            "warmbio",
+            "warmgate",
+            "warmoffbio",
+            "warmoffgate",
+        ],
     ),
     # Round 12: the round-9 passing cell on four more seeds (seven with round 9's) and on
     # the five folds, beside the round-5 cell and its folds.
@@ -362,6 +370,60 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["lpelgate100", "gate_s0", "fba", "lpelgate100mlplr10"],
     ),
+    # Round 20: the two gated forms on six seeds (rounds 15b and 18 plus seeds 2703 to
+    # 2705), and the last two probes of the forced elastic column (scale 30; reach e^6).
+    "w36": (
+        [
+            "w15_gate_s0_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w29_lpoffgate_h12l1p1_e200_s*.json",
+            "w36_lpoffgates3_h12l1p1_e200_s*.json",
+            "w32_lpelgate100_h12l1p1_e200_s*.json",
+            "w36_lpelgate100s3_h12l1p1_e200_s*.json",
+            "w32_lpelbio100_h12l1p1_e200_s*.json",
+            "w36_lpelbio30lr10_h12l1p1_e200_s*.json",
+            "w36_lpelbio100r6lr10_h12l1p1_e200_s*.json",
+        ],
+        [
+            "gate_s0",
+            "fba",
+            "lpoffgate",
+            "lpoffgates3",
+            "lpelgate100",
+            "lpelgate100s3",
+            "lpelbio100",
+            "lpelbio30lr10",
+            "lpelbio100r6lr10",
+        ],
+    ),
+    # Round 21: the gated elastic cell plus a head over the solved flux vector.
+    "w37": (
+        [
+            "w32_lpelgate100_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w37_*_e200_s*.json",
+        ],
+        ["lpelgate100", "fba", "lpelgateflux", "lpelgatefluxexch"],
+    ),
+    # Round 22: the chromosome-pathway indicator split into its blocks on the round-9
+    # recipe, paired against round 9 and beside round 14 (properties + chromosome).
+    "w38": (
+        [
+            "w20_chromprotfba_h12l1p1_e200_s270[0-2].json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w25_nchromprotfba_h12l1p1_e200_s*.json",
+            "w38_*_e200_s*.json",
+        ],
+        [
+            "chromprotfba",
+            "fba",
+            "nchromprotfba",
+            "protpathfba",
+            "protchromfba",
+            "protpropsfba",
+            "pathfba",
+        ],
+    ),
     # Round 16: the round-9 backbone with the round-11 affine.
     "w27": (
         [
@@ -487,6 +549,16 @@ ARM_LABELS = {
     "lpelbio100mlp": "growth column, elastic solve, x100, two-layer abundance head",
     "lpelbio100mlplr10": "growth column, elastic solve, x100, two-layer head + lr x10",
     "lpelgate100mlplr10": "gated column + context, elastic solve, x100, two-layer head + lr x10",
+    "protpathfba": "pathway multi-hot + ProtT5 backbone + FBA ratios",
+    "protchromfba": "chromosome one-hot + ProtT5 backbone + FBA ratios",
+    "protpropsfba": "seven gene properties + ProtT5 backbone + FBA ratios",
+    "pathfba": "pathway multi-hot backbone + FBA ratios",
+    "lpelgate100s3": "gated column + context, elastic solve, x100, seeds 2703 to 2705",
+    "lpoffgates3": "gated column + context, the layer that solves, GEM box, seeds 2703 to 2705",
+    "lpelbio30lr10": "growth column, elastic solve, x30, flux layer lr x10",
+    "lpelbio100r6lr10": "growth column, elastic solve, x100, reach e^6, flux layer lr x10",
+    "lpelgateflux": "gated column + context + a head over the solved flux (all reactions)",
+    "lpelgatefluxexch": "gated column + context + a head over the solved exchange fluxes",
     "chromprotpfba": "chrom-pathway + ProtT5 backbone + FBA ratios + pFBA vector",
     "chromprotstatspfba": "chrom-pathway + ProtT5 backbone + ratios + statistics + pFBA",
     "cspcv0": "chrom-pathway + ProtT5 + widened affine, fold 0",

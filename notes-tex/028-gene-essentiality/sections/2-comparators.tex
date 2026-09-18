@@ -179,6 +179,62 @@ convolution at 400 epochs 0.888 [0.83, 0.93] from fold models of 0.807 to 0.897
 0.94]. Three ensembles within 0.007 of one another, each inside the others' intervals,
 are one number at the resolution of 195 genes, and the MLP's costs thirty seconds.
 
+\subsection{The message-passing architectures, as equations and as baselines\secstatus{todo}}
+\label{sec:mp-architectures}
+
+Every graph model in this document is an instance of message passing: a node's
+representation is updated from an aggregate of its neighbors' representations,
+\begin{equation}
+  h_i^{(k)} = \gamma^{(k)}\Big(h_i^{(k-1)},\ \bigoplus_{j \in \mathcal{N}(i)}
+  \phi^{(k)}\big(h_i^{(k-1)}, h_j^{(k-1)}, e_{ji}\big)\Big),
+\end{equation}
+with $\phi$ the message, $\bigoplus$ a permutation-invariant aggregation and $\gamma$
+the update, which is the form the MATH-490 project set out from and the form the
+Gene\_Graph project's models take. The architectures differ in the three functions,
+and the differences are what the 1-WL result of the next subsection bears on.
+
+\begin{description}
+  \item[GCN] the symmetric-normalized mean with self-loops, $\hat A = A + I$,
+    $\hat d_i = \sum_j \hat A_{ij}$:
+    $h_i' = \Theta^{\top} \sum_{j \in \mathcal{N}(i) \cup \{i\}}
+    \hat A_{ji}\,(\hat d_j \hat d_i)^{-1/2}\, h_j$.
+  \item[GAT and GATv2] attention over the neighborhood,
+    $h_i' = \alpha_{ii}\Theta h_i + \sum_{j \in \mathcal{N}(i)} \alpha_{ij}\Theta h_j$,
+    with $\alpha_{ij} = \mathrm{softmax}_j\big(a^{\top}\mathrm{LeakyReLU}(\Theta[h_i \| h_j])\big)$
+    in the original form and the nonlinearity applied before the scoring vector in the
+    v2 form, which is what makes the attention a function of both endpoints rather
+    than a ranking of the neighbors alone; four heads here.
+  \item[GraphSAGE] the mean of the neighbors concatenated with the node's own
+    representation, $h_i' = \Theta_1 h_i + \Theta_2\,\mathrm{mean}_{j \in \mathcal{N}(i)} h_j$.
+  \item[GIN] the injective sum with a learned self-weight and a two-layer MLP,
+    $h_i' = \mathrm{MLP}\big((1 + \epsilon)\,h_i + \sum_{j \in \mathcal{N}(i)} h_j\big)$,
+    the aggregator Xu et al.\ (2019) show to be as expressive as the 1-WL test, which
+    the mean and the attention are not.
+  \item[RGCN] one weight per relation over a multigraph, $\mathcal{R}$ the relation set,
+    $h_i' = \Theta_0 h_i + \sum_{r \in \mathcal{R}} \sum_{j \in \mathcal{N}_r(i)}
+    \frac{1}{c_{i,r}}\,\Theta_r h_j$, with $\Theta_r$ a combination of $B$ shared bases
+    so the parameter count does not grow with the relation count ($B = 4$ here).
+  \item[RGAT] the same relation-typed neighborhoods with attention within each
+    relation, $h_i' = \sum_{r \in \mathcal{R}} \sum_{j \in \mathcal{N}_r(i)}
+    \alpha_{ij}^{(r)}\,\Theta_r h_j$, the relational form Gene\_Graph ran on its
+    two-relation graph.
+\end{description}
+
+The nine gene graphs the transformer reads enter the relational models as nine edge
+types on one node set, which is the multigraph the cell graph holds; the union of the
+nine loses the type. Gene\_Graph's dual-primal convolution, which passes messages on
+the line graph as well as the graph, is described there and not rerun, since its
+attention on the primal graph reduces to GAT with self-loops. Table~\ref{tab:graph-relational}
+runs GIN, GraphSAGE, RGCN and RGAT under the protocol of Table~\ref{tab:graph-baselines},
+with ProtT5 alone and with the transformer's three inputs, and
+Table~\ref{tab:graph-split} runs the MLP and GCN with the chromosome-pathway indicator
+split into its blocks, the cheap half of the attribution that Section~\ref{sec:backbone}
+completes on the transformer.
+
+\input{tables/graph_baselines_relational}
+
+\input{tables/graph_baselines_split}
+
 \subsection{The Weisfeiler-Leman test on the deletion graphs\secstatus{todo}}
 
 A message-passing model over a gene graph is bounded by what color refinement can

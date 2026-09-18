@@ -1,0 +1,803 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/split_gene_overlap_audit.py",
+ "fig3_proteome_full": {
+  "0": {
+   "train": {
+    "n": 3722,
+    "prot_only": 2478,
+    "expr_only": 141,
+    "both": 1103,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 478,
+    "prot_only": 323,
+    "expr_only": 30,
+    "both": 125,
+    "share_gene_w_train": 18,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 14,
+    "sgl_w_train_dbl": 4,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 1,
+     "MicroarrayKemmeren2014Dataset+SmMicroarraySameith2015Dataset": 3,
+     "DmMicroarraySameith2015Dataset": 14
+    }
+   },
+   "test": {
+    "n": 481,
+    "prot_only": 326,
+    "expr_only": 34,
+    "both": 121,
+    "share_gene_w_train": 15,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 14,
+    "sgl_w_train_dbl": 1,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 1,
+     "DmMicroarraySameith2015Dataset": 14
+    }
+   }
+  },
+  "1": {
+   "train": {
+    "n": 3726,
+    "prot_only": 2482,
+    "expr_only": 145,
+    "both": 1099,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 477,
+    "prot_only": 322,
+    "expr_only": 29,
+    "both": 126,
+    "share_gene_w_train": 17,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 11,
+    "sgl_w_train_dbl": 5,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 5,
+     "DmMicroarraySameith2015Dataset": 12
+    }
+   },
+   "test": {
+    "n": 478,
+    "prot_only": 323,
+    "expr_only": 31,
+    "both": 124,
+    "share_gene_w_train": 20,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 14,
+    "sgl_w_train_dbl": 6,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 5,
+     "ProteomeMessner2023Dataset+ProteomeMessner2023Dataset": 1,
+     "DmMicroarraySameith2015Dataset": 14
+    }
+   }
+  },
+  "2": {
+   "train": {
+    "n": 3723,
+    "prot_only": 2479,
+    "expr_only": 142,
+    "both": 1102,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 484,
+    "prot_only": 329,
+    "expr_only": 36,
+    "both": 119,
+    "share_gene_w_train": 19,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 13,
+    "sgl_w_train_dbl": 6,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 2,
+     "MicroarrayKemmeren2014Dataset+SmMicroarraySameith2015Dataset": 4,
+     "DmMicroarraySameith2015Dataset": 13
+    }
+   },
+   "test": {
+    "n": 474,
+    "prot_only": 319,
+    "expr_only": 27,
+    "both": 128,
+    "share_gene_w_train": 17,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 12,
+    "sgl_w_train_dbl": 4,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 4,
+     "DmMicroarraySameith2015Dataset": 13
+    }
+   }
+  },
+  "3": {
+   "train": {
+    "n": 3717,
+    "prot_only": 2473,
+    "expr_only": 136,
+    "both": 1108,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 481,
+    "prot_only": 326,
+    "expr_only": 33,
+    "both": 122,
+    "share_gene_w_train": 20,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 14,
+    "sgl_w_train_dbl": 6,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 4,
+     "ProteomeMessner2023Dataset+ProteomeMessner2023Dataset": 1,
+     "MicroarrayKemmeren2014Dataset+SmMicroarraySameith2015Dataset": 1,
+     "DmMicroarraySameith2015Dataset": 14
+    }
+   },
+   "test": {
+    "n": 483,
+    "prot_only": 328,
+    "expr_only": 36,
+    "both": 119,
+    "share_gene_w_train": 22,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 16,
+    "sgl_w_train_dbl": 5,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 4,
+     "MicroarrayKemmeren2014Dataset+SmMicroarraySameith2015Dataset": 1,
+     "DmMicroarraySameith2015Dataset": 17
+    }
+   }
+  }
+ },
+ "fig3_proteome_prot": {
+  "0": {
+   "train": {
+    "n": 3581,
+    "prot_only": 2478,
+    "expr_only": 0,
+    "both": 1103,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 448,
+    "prot_only": 323,
+    "expr_only": 0,
+    "both": 125,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "test": {
+    "n": 447,
+    "prot_only": 326,
+    "expr_only": 0,
+    "both": 121,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   }
+  },
+  "1": {
+   "train": {
+    "n": 3581,
+    "prot_only": 2482,
+    "expr_only": 0,
+    "both": 1099,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 448,
+    "prot_only": 322,
+    "expr_only": 0,
+    "both": 126,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "test": {
+    "n": 447,
+    "prot_only": 323,
+    "expr_only": 0,
+    "both": 124,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   }
+  },
+  "2": {
+   "train": {
+    "n": 3581,
+    "prot_only": 2479,
+    "expr_only": 0,
+    "both": 1102,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 448,
+    "prot_only": 329,
+    "expr_only": 0,
+    "both": 119,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "test": {
+    "n": 447,
+    "prot_only": 319,
+    "expr_only": 0,
+    "both": 128,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   }
+  },
+  "3": {
+   "train": {
+    "n": 3581,
+    "prot_only": 2473,
+    "expr_only": 0,
+    "both": 1108,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 448,
+    "prot_only": 326,
+    "expr_only": 0,
+    "both": 122,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "test": {
+    "n": 447,
+    "prot_only": 328,
+    "expr_only": 0,
+    "both": 119,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   }
+  }
+ },
+ "fig3_proteome_expr": {
+  "0": {
+   "train": {
+    "n": 1244,
+    "prot_only": 0,
+    "expr_only": 141,
+    "both": 1103,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 30,
+    "both": 125,
+    "share_gene_w_train": 18,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 14,
+    "sgl_w_train_dbl": 4,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 1,
+     "MicroarrayKemmeren2014Dataset+SmMicroarraySameith2015Dataset": 3,
+     "DmMicroarraySameith2015Dataset": 14
+    }
+   },
+   "test": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 34,
+    "both": 121,
+    "share_gene_w_train": 15,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 14,
+    "sgl_w_train_dbl": 1,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 1,
+     "DmMicroarraySameith2015Dataset": 14
+    }
+   }
+  },
+  "1": {
+   "train": {
+    "n": 1244,
+    "prot_only": 0,
+    "expr_only": 145,
+    "both": 1099,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 29,
+    "both": 126,
+    "share_gene_w_train": 17,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 11,
+    "sgl_w_train_dbl": 5,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 5,
+     "DmMicroarraySameith2015Dataset": 12
+    }
+   },
+   "test": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 31,
+    "both": 124,
+    "share_gene_w_train": 20,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 14,
+    "sgl_w_train_dbl": 6,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 5,
+     "ProteomeMessner2023Dataset+ProteomeMessner2023Dataset": 1,
+     "DmMicroarraySameith2015Dataset": 14
+    }
+   }
+  },
+  "2": {
+   "train": {
+    "n": 1244,
+    "prot_only": 0,
+    "expr_only": 142,
+    "both": 1102,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 36,
+    "both": 119,
+    "share_gene_w_train": 19,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 13,
+    "sgl_w_train_dbl": 6,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 2,
+     "MicroarrayKemmeren2014Dataset+SmMicroarraySameith2015Dataset": 4,
+     "DmMicroarraySameith2015Dataset": 13
+    }
+   },
+   "test": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 27,
+    "both": 128,
+    "share_gene_w_train": 17,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 12,
+    "sgl_w_train_dbl": 4,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 4,
+     "DmMicroarraySameith2015Dataset": 13
+    }
+   }
+  },
+  "3": {
+   "train": {
+    "n": 1244,
+    "prot_only": 0,
+    "expr_only": 136,
+    "both": 1108,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 33,
+    "both": 122,
+    "share_gene_w_train": 20,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 14,
+    "sgl_w_train_dbl": 6,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 4,
+     "ProteomeMessner2023Dataset+ProteomeMessner2023Dataset": 1,
+     "MicroarrayKemmeren2014Dataset+SmMicroarraySameith2015Dataset": 1,
+     "DmMicroarraySameith2015Dataset": 14
+    }
+   },
+   "test": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 36,
+    "both": 119,
+    "share_gene_w_train": 22,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 16,
+    "sgl_w_train_dbl": 5,
+    "share_by_dataset": {
+     "ProteomeMessner2023Dataset": 4,
+     "MicroarrayKemmeren2014Dataset+SmMicroarraySameith2015Dataset": 1,
+     "DmMicroarraySameith2015Dataset": 17
+    }
+   }
+  }
+ },
+ "fig3_core_expr": {
+  "0": {
+   "train": {
+    "n": 1244,
+    "prot_only": 0,
+    "expr_only": 1244,
+    "both": 0,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 155,
+    "both": 0,
+    "share_gene_w_train": 21,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 15,
+    "sgl_w_train_dbl": 6,
+    "share_by_dataset": {
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 4,
+     "ScmdOhya2005Dataset": 2,
+     "DmfCostanzo2016Dataset": 3,
+     "DmMicroarraySameith2015Dataset": 3,
+     "DmfCostanzo2016Dataset+DmfCostanzo2016Dataset": 9
+    }
+   },
+   "test": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 155,
+    "both": 0,
+    "share_gene_w_train": 13,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 3,
+    "sgl_w_train_dbl": 10,
+    "share_by_dataset": {
+     "ScmdOhya2005Dataset": 4,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfKuzmin2020Dataset": 2,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 3,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 1,
+     "DmfCostanzo2016Dataset": 2,
+     "DmMicroarraySameith2015Dataset": 1
+    }
+   }
+  },
+  "1": {
+   "train": {
+    "n": 1253,
+    "prot_only": 0,
+    "expr_only": 1253,
+    "both": 0,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 151,
+    "prot_only": 0,
+    "expr_only": 151,
+    "both": 0,
+    "share_gene_w_train": 19,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 10,
+    "sgl_w_train_dbl": 7,
+    "share_by_dataset": {
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 2,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 3,
+     "ScmdOhya2005Dataset": 2,
+     "DmfCostanzo2016Dataset+DmfCostanzo2016Dataset": 6,
+     "DmfCostanzo2016Dataset": 4,
+     "DmMicroarraySameith2015Dataset": 2
+    }
+   },
+   "test": {
+    "n": 150,
+    "prot_only": 0,
+    "expr_only": 150,
+    "both": 0,
+    "share_gene_w_train": 12,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 6,
+    "sgl_w_train_dbl": 6,
+    "share_by_dataset": {
+     "ScmdOhya2005Dataset": 1,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfKuzmin2020Dataset": 2,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 3,
+     "DmfCostanzo2016Dataset+DmfCostanzo2016Dataset": 2,
+     "DmMicroarraySameith2015Dataset": 3,
+     "DmfCostanzo2016Dataset": 1
+    }
+   }
+  },
+  "2": {
+   "train": {
+    "n": 1244,
+    "prot_only": 0,
+    "expr_only": 1244,
+    "both": 0,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 155,
+    "both": 0,
+    "share_gene_w_train": 14,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 5,
+    "sgl_w_train_dbl": 7,
+    "share_by_dataset": {
+     "ScmdOhya2005Dataset": 3,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 3,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 1,
+     "DmfCostanzo2016Dataset+DmfCostanzo2016Dataset": 4,
+     "DmfCostanzo2016Dataset": 2,
+     "DmMicroarraySameith2015Dataset": 1
+    }
+   },
+   "test": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 155,
+    "both": 0,
+    "share_gene_w_train": 16,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 5,
+    "sgl_w_train_dbl": 10,
+    "share_by_dataset": {
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfKuzmin2020Dataset": 6,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 1,
+     "ScmdOhya2005Dataset": 3,
+     "DmfCostanzo2016Dataset": 2,
+     "DmfCostanzo2016Dataset+DmfCostanzo2016Dataset": 2,
+     "DmMicroarraySameith2015Dataset": 2
+    }
+   }
+  },
+  "3": {
+   "train": {
+    "n": 1244,
+    "prot_only": 0,
+    "expr_only": 1244,
+    "both": 0,
+    "share_gene_w_train": 0,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 0,
+    "sgl_w_train_dbl": 0,
+    "share_by_dataset": {}
+   },
+   "val": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 155,
+    "both": 0,
+    "share_gene_w_train": 18,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 8,
+    "sgl_w_train_dbl": 8,
+    "share_by_dataset": {
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfKuzmin2020Dataset": 1,
+     "ScmdOhya2005Dataset": 2,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfKuzmin2018Dataset+SmfKuzmin2018Dataset": 1,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 4,
+     "DmfCostanzo2016Dataset": 6,
+     "DmMicroarraySameith2015Dataset": 3,
+     "DmfCostanzo2016Dataset+DmfCostanzo2016Dataset": 1
+    }
+   },
+   "test": {
+    "n": 155,
+    "prot_only": 0,
+    "expr_only": 155,
+    "both": 0,
+    "share_gene_w_train": 16,
+    "exact_dup": 0,
+    "dbl_share1_w_train_single": 8,
+    "sgl_w_train_dbl": 7,
+    "share_by_dataset": {
+     "ScmdOhya2005Dataset": 2,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 3,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfCostanzo2016Dataset+SmfKuzmin2020Dataset": 1,
+     "SmfCostanzo2016Dataset+SmfCostanzo2016Dataset": 1,
+     "DmMicroarraySameith2015Dataset": 4,
+     "DmfCostanzo2016Dataset+DmfCostanzo2016Dataset": 5
+    }
+   }
+  }
+ },
+ "v13_v16_overlap": {
+  "n_expression_records": {
+   "fig3_core": 1554,
+   "fig3_proteome": 1554
+  },
+  "same_genotype_set": true,
+  "same_record_order": false,
+  "positions_with_identical_genotype": 2,
+  "seeds": {
+   "0": {
+    "train": {
+     "v13_n": 1244,
+     "v16_n": 1244,
+     "overlap": 991,
+     "frac_of_v13": 0.7966237942122186
+    },
+    "val": {
+     "v13_n": 155,
+     "v16_n": 155,
+     "overlap": 9,
+     "frac_of_v13": 0.05806451612903226
+    },
+    "test": {
+     "v13_n": 155,
+     "v16_n": 155,
+     "overlap": 12,
+     "frac_of_v13": 0.07741935483870968
+    }
+   },
+   "1": {
+    "train": {
+     "v13_n": 1253,
+     "v16_n": 1244,
+     "overlap": 1003,
+     "frac_of_v13": 0.8004788507581804
+    },
+    "val": {
+     "v13_n": 151,
+     "v16_n": 155,
+     "overlap": 22,
+     "frac_of_v13": 0.1456953642384106
+    },
+    "test": {
+     "v13_n": 150,
+     "v16_n": 155,
+     "overlap": 13,
+     "frac_of_v13": 0.08666666666666667
+    }
+   },
+   "2": {
+    "train": {
+     "v13_n": 1244,
+     "v16_n": 1244,
+     "overlap": 992,
+     "frac_of_v13": 0.797427652733119
+    },
+    "val": {
+     "v13_n": 155,
+     "v16_n": 155,
+     "overlap": 13,
+     "frac_of_v13": 0.08387096774193549
+    },
+    "test": {
+     "v13_n": 155,
+     "v16_n": 155,
+     "overlap": 12,
+     "frac_of_v13": 0.07741935483870968
+    }
+   },
+   "3": {
+    "train": {
+     "v13_n": 1244,
+     "v16_n": 1244,
+     "overlap": 986,
+     "frac_of_v13": 0.792604501607717
+    },
+    "val": {
+     "v13_n": 155,
+     "v16_n": 155,
+     "overlap": 10,
+     "frac_of_v13": 0.06451612903225806
+    },
+    "test": {
+     "v13_n": 155,
+     "v16_n": 155,
+     "overlap": 9,
+     "frac_of_v13": 0.05806451612903226
+    }
+   }
+  }
+ },
+ "gene_share_components": {
+  "fig3_proteome": {
+   "genotypes": 4681,
+   "components": 4545,
+   "size_distribution": {
+    "1": 4527,
+    "3": 12,
+    "5": 2,
+    "7": 1,
+    "9": 1,
+    "11": 1,
+    "81": 1
+   },
+   "genotypes_in_multi_member_components": 154,
+   "doubles": 72,
+   "genes_in_a_double": 82,
+   "double_genes_also_a_single": 82,
+   "genes_in_two_or_more_doubles": 32,
+   "max_doubles_per_gene": 9,
+   "modality_of_multi_member_genotypes": {
+    "both": 70,
+    "expr_only": 84
+   }
+  }
+ }
+}

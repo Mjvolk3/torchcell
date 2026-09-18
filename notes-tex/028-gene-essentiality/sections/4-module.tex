@@ -1227,9 +1227,19 @@ any arm in the document. That is the cached-solve head's number (0.917 pooled fr
 no chance of the run to miss the transition, at 31 minutes per cell in a pack of six
 and 11 minutes alone (job 2408). Under the family protocol the form reads 0.910 alone
 and 0.948 [0.91, 0.98] averaged with the six-seed GO convolution, the maximum of the
-thirteen split-file averages tried (Section~\ref{sec:family-ensembles}). The fold
-read of this form runs at the time of writing (job 2409), as does the vector on ProtT5
-alone, which asks whether the solve substitutes for the pathway annotation (job 2410).
+thirteen split-file averages tried (Section~\ref{sec:family-ensembles}). Under the
+reported protocol (job 2409, 26 minutes per cell at five per card) the form reads
+0.912, 0.901, 0.838, 0.912 and 0.913 on the folds (mean 0.895) and 0.920 [0.87, 0.96]
+as the fold ensemble, the highest transformer ensemble in the document and one number
+with the GO convolution's 0.917 and the scalable form's 0.912
+(Table~\ref{tab:ensembles}); as a fold family it reads 0.920 alone and 0.953
+[0.92, 0.98] with the GO fold models, level with the scalable form's 0.954
+(Table~\ref{tab:family-ensembles-folds}). The 0.838 fold selected epoch 6 with its
+training loss at 1.05, an early peak of the kind the standardized encoding produced
+on every cell, here once in the seventeen $\log(1 + |v|)$ cells run, so the encoding
+makes the early peak rare and not impossible. The vector on ProtT5 alone, which asks
+whether the solve substitutes for the pathway annotation, runs at the time of writing
+(job 2410).
 
 \subsection{The solve across solvers: the argmax is not unique\secstatus{todo}}
 \label{sec:solve-tolerance}

@@ -1256,7 +1256,9 @@ def gene_encodings() -> str | None:
         path = osp.join(root, paths[name])
         if not osp.isfile(path):
             continue
-        data, _slices = torch.load(path, weights_only=False)
+        # On the CPU: the files were saved from a card, and this script counts
+        # columns; with every card allocated to a slurm job the default load fails.
+        data, _slices = torch.load(path, weights_only=False, map_location="cpu")
         # One embedding per file; its key is the dataset's model name, which for
         # ProtT5 differs from the registry name.
         emb = next(iter(data.embeddings.values()))

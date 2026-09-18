@@ -5,6 +5,7 @@
   "flux head, pathway + ProtT5, five folds (round 25)": 5,
   "indicator + ProtT5 + affine, five folds (round 12)": 5,
   "cached solve + flux head, pathway + ProtT5, five folds (round 27)": 5,
+  "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)": 5,
   "GO convolution, five folds (400 epochs)": 5
  },
  "combinations": [
@@ -46,13 +47,32 @@
   },
   {
    "families": [
+    "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9197482297403619,
+   "ci_low": 0.872535264668011,
+   "ci_high": 0.9572524662038728
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9531864673485444,
+   "ci_low": 0.9202450379696347,
+   "ci_high": 0.9787244799173891
+  },
+  {
+   "families": [
     "GO convolution, five folds (400 epochs)",
     "indicator + ProtT5 + affine, five folds (round 12)"
    ],
    "n_cells": 10,
    "auroc": 0.9435483870967742,
-   "ci_low": 0.9024466268450513,
-   "ci_high": 0.9755575048732943
+   "ci_low": 0.9049963539546874,
+   "ci_high": 0.9758947861552028
   },
   {
    "families": [
@@ -61,8 +81,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9494492525570417,
-   "ci_low": 0.9134500303893577,
-   "ci_high": 0.9776487029594446
+   "ci_low": 0.9154369361569401,
+   "ci_high": 0.977782675891646
   },
   {
    "families": [
@@ -71,8 +91,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9537765538945713,
-   "ci_low": 0.9225146801400089,
-   "ci_high": 0.9795471619983592
+   "ci_low": 0.9220974438735435,
+   "ci_high": 0.9797404805458556
   },
   {
    "families": [
@@ -82,8 +102,8 @@
    ],
    "n_cells": 15,
    "auroc": 0.9445318646734855,
-   "ci_low": 0.9090175225803162,
-   "ci_high": 0.9736844919184189
+   "ci_low": 0.9089569120617496,
+   "ci_high": 0.972776364342498
   },
   {
    "families": [
@@ -93,8 +113,8 @@
    ],
    "n_cells": 15,
    "auroc": 0.9468922108575925,
-   "ci_low": 0.9133791619902731,
-   "ci_high": 0.9751921879469334
+   "ci_low": 0.9109599665417275,
+   "ci_high": 0.9754228954015278
   }
  ]
 }

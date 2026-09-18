@@ -1356,7 +1356,17 @@ loops and the parallel routes, which pFBA's minimum-flux stage removes and the
 interior point spreads, and that extremal flux is what the head cannot use. What the
 round settles for the store is that the point a first-order solve on the card
 returns trains the cell to the number the CPU's parsimonious solve does, so the store
-can be built with the batched solver and nothing on the CPU.
+can be built with the batched solver and nothing on the CPU. Under the reported
+protocol (round 37, jobs 2414, 2416 and 2418: five folds, three seeds per fold, each
+fold model the seed-mean logit) the interior-point store reads 0.915, 0.852, 0.887,
+0.884 and 0.926 on the folds (mean 0.893) and 0.912 [0.86, 0.95] as the ensemble,
+0.909 on one seed, against the pFBA store's 0.919 (Table~\ref{tab:ensembles}); folds
+1 and 2 select late on every seed (epochs 95 to 196, training loss 0.05 to 0.30 at
+selection) and read 0.84 to 0.89, where the pFBA store's cells on the same folds
+selected epochs 6 to 60, so the two stores' fold models are one number as ensembles
+and differ in how the cell trains on two of the five folds. As a fold family it
+reads 0.913 alone and 0.951 [0.92, 0.98] with the GO fold models
+(Table~\ref{tab:family-ensembles-folds}).
 
 \subsection{The solve across solvers: the argmax is not unique\secstatus{todo}}
 \label{sec:solve-tolerance}

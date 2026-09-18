@@ -241,7 +241,9 @@ def embedding(name: str, gene_ids: list[str]) -> np.ndarray:
         embedding_names=[name], data_root=DATA_ROOT, genome=genome, graph=graph
     )[name]
     table = {
-        item.id: torch.cat([t.flatten() for t in item.embeddings.values()]).numpy()
+        item.id: torch.cat([t.flatten() for t in item.embeddings.values()])
+        .cpu()
+        .numpy()
         for item in built
     }
     dim = next(iter(table.values())).shape[0]

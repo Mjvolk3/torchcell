@@ -919,6 +919,21 @@ def graph_baselines_go400_s6() -> str | None:
     )
 
 
+def graph_baselines_go_solve() -> str | None:
+    """Graph convolution on GO with the deletion's solved flux on the same node."""
+    return graph_baselines_more(
+        "go_solve",
+        "One model over the annotation and the solve",
+        "The deletion's pFBA flux vector as $\\log(1 + |v|)$ (the round-33 encoding, "
+        "4,131 columns, zero for a gene the store does not cover) as a node input: "
+        "alone, beside the GO multi-hot, and beside GO with the four FBA ratios, on the "
+        "MLP (200 epochs) and on graph convolution over the union of the nine graphs "
+        "(400 epochs, as Table~\\ref{tab:graph-go400}). The protocol of "
+        "Table~\\ref{tab:graph-baselines} otherwise; seeds 2700 to 2702.",
+        "tab:graph-go-solve",
+    )
+
+
 def graph_baselines_go400_genome() -> str | None:
     """Graph convolution on GO trained on the genome-wide labels, read on the released 195."""
     return graph_baselines_more(
@@ -1469,6 +1484,7 @@ def main() -> None:
         graph_baselines_go(),
         graph_baselines_go400(),
         graph_baselines_go400_s6(),
+        graph_baselines_go_solve(),
         graph_baselines_go800(),
         graph_baselines_go_rel(),
         genome_heldout(),

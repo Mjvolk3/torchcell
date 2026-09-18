@@ -68,9 +68,12 @@ weight, six encodings). What remains is attribution and the module.
     which is the multi-phenotype form.
   \item The two model families, annotation through the graph and the solve through
     the transformer, miss different genes, and their post hoc average reads 0.954 under
-    the fold protocol (the GO convolution with the scalable form). A model trained to
-    hold both, or a learned weighting, is untested, and the average's number carries
-    the selection of the best of eleven.
+    the fold protocol (the GO convolution with the scalable form). The one model
+    tried, the solve's columns on the node beside GO under the convolution, reads the
+    GO-alone number (0.909), so the average's gain is not the graph model's to take
+    from those columns; a learned weighting of the two families' logits, or the
+    transformer's affine read of the solve beside a graph-convolved GO token, is
+    untested, and the average's number carries the selection of the best of eleven.
   \item The layer that solves has the wrong shape for a training loop: the program runs
     on the CPU inside the forward pass, the GPU waits on it (0 to 13 percent
     utilization sampled during round 19, against a 1.6 hour cell where the alternating

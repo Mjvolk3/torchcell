@@ -574,6 +574,19 @@ that fail on different genes produce when averaged and what neither produces alo
 
 \input{tables/family_ensembles_folds}
 
+One model over both inputs does not recover the average. The deletion's solved flux
+as the round-33 cell encodes it, $\log(1 + |v|)$ over 4,131 reactions, put on the
+node beside the GO multi-hot and convolved over the union graph at 400 epochs reads
+0.900, 0.912 and 0.914 (mean 0.909), the GO-alone rows' 0.909, and 0.910 with the
+ratios beside them; alone through the graph it reads 0.773 and on the MLP 0.709, and
+GO with it on the MLP 0.851 (Table~\ref{tab:graph-go-solve}). The convolution takes
+nothing from the solve columns that the average of the two families took (0.948),
+so what the average adds is not a matter of the graph model seeing the solve; the
+solve's ranking, as the transformer's affine reads it, is not what a convolution
+over these graphs extracts from the same columns.
+
+\input{tables/graph_baselines_go_solve}
+
 \subsection{Round 30: the genome-wide labels as a larger held-out set\secstatus{todo}}
 \label{sec:round30}
 

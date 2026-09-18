@@ -197,10 +197,26 @@ class Neo4jQueryRaw:
         with self.env.begin(write=True) as txn:
             txn.put(key, value)
 
+    #: Records per LMDB write transaction in :meth:`process`. One transaction per
+    #: record commits (and syncs the B-tree) 43.8 million times on a build the size
+    #: of 025; one per few thousand records keeps the same durability at stage end
+    #: (the STAGE_COMPLETE marker is written after the last commit) at a small
+    #: fraction of the write cost.
+    WRITE_BATCH = 4096
+
     def process(self) -> None:
-        """Stream query results into LMDB and build the reference and gene-set indices."""
+        """Stream query results into LMDB and build the gene-set index.
+
+        Writes are committed in batches of :attr:`WRITE_BATCH` records. The
+        experiment-reference index is NOT computed here: it is a second full pass
+        over the raw store (a JSON parse and a sorted-dump hash per record) that no
+        consumer of the build reads, and the property computes and caches it on
+        first access for the callers that do.
+        """
         log.info("Processing data...")
         i = -1
+        genes_seen: set[str] = set()
+        txn = self.env.begin(write=True)
         for i, record in tqdm(enumerate(self.fetch_data())):
             # Two record shapes, by what the query RETURNs. Property shape
             # (e_serialized/ref_serialized strings) is REQUIRED at scale: returning
@@ -249,17 +265,23 @@ class Neo4jQueryRaw:
             # Generate a key for the data
             data_key = f"data_{i}".encode()
 
-            # Write the serialized dictionary to LMDB
-            self.write_to_lmdb(data_key, data_json.encode())
+            # Write the serialized dictionary to LMDB, committing per batch
+            txn.put(data_key, data_json.encode())
+            if (i + 1) % self.WRITE_BATCH == 0:
+                txn.commit()
+                txn = self.env.begin(write=True)
+            # The gene set is accumulated here, from the validated experiment,
+            # instead of by a second full pass over the store (compute_gene_set).
+            for pert in experiment.genotype.perturbations:
+                genes_seen.add(pert.systematic_gene_name)
 
-            # Log progress every log_batch_size records
-            # if (i + 1) % log_batch_size == 0:
-            #     log.info(f"Processed {i + 1} records")
-
+        txn.commit()
         log.info(f"Total records processed: {i + 1}")
 
-        self.experiment_reference_index
-        self.gene_set = self.compute_gene_set()
+        gene_set = GeneSet()
+        for gene in genes_seen:
+            gene_set.add(gene)
+        self.gene_set = gene_set
 
     def __getitem__(self, index: int | slice | list[int]) -> Any:
         """Return the record(s) for an int, slice, or list of indices."""

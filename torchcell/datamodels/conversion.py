@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import os.path as osp
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
@@ -142,14 +143,50 @@ class Converter(ABC):
         """Compute a SHA256 hash of the input data."""
         return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
+    @property
+    def convertible_experiment_types(self) -> frozenset[str]:
+        """The ``experiment_type`` strings this converter can change.
+
+        Read off the conversion map's input classes. A record whose experiment type
+        is not in this set cannot be touched by :meth:`convert`, so
+        :meth:`process` copies its stored bytes through unchanged instead of
+        parsing, validating, hashing twice and re-serializing it. On the 025 build
+        that was 43.8 million records for a few thousand conversions.
+        """
+        return frozenset(
+            entry.experiment_input_type.model_fields["experiment_type"].default
+            for entry in self.conversion_map.entries
+        )
+
+    _TYPE_RE = re.compile(rb'"experiment_type":\s*"([^"]*)"')
+
+    @classmethod
+    def _experiment_type_of(cls, value: bytes) -> str | None:
+        """The experiment's ``experiment_type`` read off the stored bytes.
+
+        The stored record is ``{"experiment": {"experiment_type": ..., ...},
+        "experiment_reference": {...}}`` written by ``json.dumps`` of a
+        ``model_dump``, so the first ``experiment_type`` key in the bytes belongs to
+        the experiment. Returns None when the pattern is absent, in which case the
+        caller falls back to the full parse.
+        """
+        m = cls._TYPE_RE.search(value)
+        return m.group(1).decode("utf-8") if m else None
+
     def process(self, input_path: str, output_path: str) -> None:
-        """Convert every record from the input LMDB and write results to output."""
+        """Convert every record from the input LMDB and write results to output.
+
+        Records whose experiment type is not convertible (see
+        :attr:`convertible_experiment_types`) are copied byte for byte.
+        """
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         self._init_lmdb(readonly=False)  # Initialize LMDB for writing
 
         env_input = lmdb.open(input_path, readonly=True)
         converted_count = 0
         total_count = 0
+        passthrough_count = 0
+        convertible = self.convertible_experiment_types
 
         with (
             env_input.begin() as txn_input,
@@ -161,6 +198,12 @@ class Converter(ABC):
             for idx, (key, value) in enumerate(
                 tqdm(cursor, desc="Converting and writing to LMDB")
             ):
+                exp_type = self._experiment_type_of(value)
+                if exp_type is not None and exp_type not in convertible:
+                    txn_output.put(key, value)
+                    total_count += 1
+                    passthrough_count += 1
+                    continue
                 try:
                     data_dict = json.loads(value.decode("utf-8"))
 

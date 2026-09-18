@@ -1,6 +1,7 @@
 """Aggregators that group experiments by their genotype perturbation set."""
 
 import hashlib
+import re
 from collections.abc import Iterable
 from typing import Any, cast
 
@@ -76,6 +77,24 @@ class GenotypeAggregator(Aggregator):
             for pert in record["experiment"]["genotype"]["perturbations"]
         )
 
+    def aggregate_key_bytes(self, value: bytes) -> str:
+        """Return the gene-set grouping key straight from the stored bytes.
+
+        A stored record is ``{"experiment": {...}, "experiment_reference": {...}}``
+        in that key order (json.dumps of a dict built in that order), and only the
+        experiment's genotype carries ``systematic_gene_name`` keys, so the gene
+        set is every such value before the ``"experiment_reference"`` key. This
+        skips a full JSON parse of a 20 to 40 KB record per key; ``process``
+        checks it against :meth:`aggregate_key_raw` on its guard records.
+        """
+        cut = value.find(_REFERENCE_KEY)
+        head = value if cut < 0 else value[:cut]
+        return _hash_gene_set(m.decode("utf-8") for m in _GENE_RE.findall(head))
+
+
+_REFERENCE_KEY = b'"experiment_reference"'
+_GENE_RE = re.compile(rb'"systematic_gene_name":\s*"([^"]*)"')
+
 
 class DeletionKeyedGenotypeAggregator(GenotypeAggregator):
     """Aggregator keyed on the DELETION gene set only; other axes are background.
@@ -125,3 +144,7 @@ class DeletionKeyedGenotypeAggregator(GenotypeAggregator):
             for pert in record["experiment"]["genotype"]["perturbations"]
             if pert["perturbation_type"].endswith(DELETION_TYPE_SUFFIX)
         )
+
+    def aggregate_key_bytes(self, value: bytes) -> str:
+        """Parse, because the key depends on each perturbation's type."""
+        return Aggregator.aggregate_key_bytes(self, value)

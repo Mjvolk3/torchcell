@@ -56,6 +56,21 @@ class Aggregator(ABC):
         """
         pass
 
+    #: Records at the head of ``process`` that are keyed BOTH by
+    #: :meth:`aggregate_key_bytes` and :meth:`aggregate_key_raw`; a disagreement
+    #: aborts the stage.
+    GUARD_RECORDS = 1000
+
+    def aggregate_key_bytes(self, value: bytes) -> str:
+        """Return the grouping key for one stored record from its bytes.
+
+        Default: parse the JSON and defer to :meth:`aggregate_key_raw`, which is
+        always correct. Subclasses whose key can be read without a full parse
+        override this; ``process`` checks the override against the parse on the
+        first :attr:`GUARD_RECORDS` records.
+        """
+        return self.aggregate_key_raw(json.loads(value.decode("utf-8")))
+
     def create_aggregate_entry(
         self,
         experiments_to_aggregate: list[
@@ -135,12 +150,26 @@ class Aggregator(ABC):
 
         env_input = lmdb.open(input_path, readonly=True, readahead=False)
 
-        # Pass 1: group input keys by the raw-record aggregation hash.
+        # Pass 1: group input keys by the raw-record aggregation hash. The key is
+        # read off the stored bytes (aggregate_key_bytes) rather than a full JSON
+        # parse of every 20 to 40 KB record; the first GUARD_RECORDS records are
+        # keyed both ways and the run stops if the two ever disagree, so a stored
+        # shape the byte reader does not cover fails loudly instead of misgrouping.
         key_groups: dict[str, list[bytes]] = {}
         with env_input.begin(write=False) as txn_input:
             cursor = txn_input.cursor()
-            for key, value in tqdm(cursor, desc="Aggregation pass 1: grouping"):
-                agg_key = self.aggregate_key_raw(json.loads(value.decode("utf-8")))
+            for n, (key, value) in enumerate(
+                tqdm(cursor, desc="Aggregation pass 1: grouping")
+            ):
+                agg_key = self.aggregate_key_bytes(value)
+                if n < self.GUARD_RECORDS:
+                    parsed = self.aggregate_key_raw(json.loads(value.decode("utf-8")))
+                    if parsed != agg_key:
+                        raise ValueError(
+                            f"aggregate_key_bytes disagrees with aggregate_key_raw on "
+                            f"record {key!r}; the byte reader does not cover this "
+                            "record shape"
+                        )
                 key_groups.setdefault(agg_key, []).append(bytes(key))
 
         # Pass 2: write each group as a JSON array of the stored records.

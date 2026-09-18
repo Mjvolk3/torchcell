@@ -1,5 +1,5 @@
 {
-  "retrieved_at": "2026-09-18T07:46:24+00:00",
+  "retrieved_at": "2026-09-18T08:34:11+00:00",
   "retrieval_method": "direct_url",
   "kegg_api": "https://rest.kegg.jp",
   "map": "sce01100",
@@ -24,7 +24,7 @@
     {
       "pathway": "sce00620",
       "label": "pyruvate metabolism",
-      "color": "#D6B656"
+      "color": "#6C8EBF"
     },
     {
       "pathway": "sce00020",
@@ -253,7 +253,7 @@
     "kegg_link_sce_sce00620.tsv": "fbb7424b8996bd211710a40f877e91a13fd3c807a2c2114161595931cdb323e7",
     "kegg_link_sce_sce01040.tsv": "ff5f908ccdc88e35a9da750f614238903ab0b1541e518442f3078617d48a3595",
     "label_anchors.json": "4f864327ac848276f0dca173f683971855331161db33d4a1595f53c697ef90bd",
-    "provenance.json": "c1db4476eb137d778d1a35644751edc3d7c6ba8551f2b56de2437e8c51fcd90a",
+    "provenance.json": "257eedd94eb708303d1674cdbacd92168ff3ec4cb6b3e1e877b5aeeb66da820b",
     "sce01100.kgml": "c8d8180219803a5178cc2ed87064e04ffef74e3b65e1b46f3d47630f844cc4e6",
     "yeast9_ids.json": "3d2c5ff557ac6d7b1612466686f4a0d9ec0bbbcaaba173a58b683dcc07f6c25f"
   }

@@ -69,3 +69,7 @@ Related: [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineerin
 
 - `MODEL_COLORS`: multiplicative blue, log-OLS orange (see the panels note above for why); Fig. 4a's dots follow.
 - Fig. 2a's best-titer line is blue (`C_BEST = PLOT_PALETTE[4]`); lilac and orange were both tried and not kept. Fig. 2b's star takes the base strain's pale brick fill with a brick edge, so the two endpoints of the panel are one kind of thing. The earlier "start ... background color 2" review note was about the star.
+
+## 2026.09.18 - Review round 8: the two endpoints of Fig. 2b in lilac
+
+Base strain and best strain are `PLOT_PALETTE[2]` with a black edge. The pale brick read as red beside the campaign's brick.

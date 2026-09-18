@@ -46,7 +46,6 @@ import torchcell
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
-    PLOT_PALETTE_FILL,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -121,10 +120,11 @@ C_TRIGENIC = PLOT_PALETTE[0]
 # (author review, 2026.09.18). Blue carries the same series at a lightness that prints;
 # lilac was tried and orange before it, and neither was kept.
 C_BEST = PLOT_PALETTE[4]
-# The base strain a campaign starts from, as the pale companion of the campaign's brick.
-# The star that marks the best strain takes the same pale fill: the two endpoints of the
-# panel are one kind of thing, and a blue star was a third color on a brick panel.
-C_START = PLOT_PALETTE_FILL[1]
+# The base strain a campaign starts from, and the star that marks the best strain: the
+# two endpoints of the panel are one kind of thing and take one color, the palette's
+# lilac. A pale brick read as red beside the campaign's brick (author review,
+# 2026.09.18), and a blue star was a third color on a brick panel.
+C_START = PLOT_PALETTE[2]
 C_GRAY = PLOT_PALETTE[5]
 
 # Reserved band above the tallest bar, so a value label never lands on the title and an
@@ -552,14 +552,14 @@ def panel_greedy_walk(ax):
     # Where the campaign starts, in the pale companion of the campaign's own brick: the
     # base strain is a member of that series rather than a third thing, and filled brick
     # it read as one more step of the walk.
-    ax.scatter([xs[0]], [ys[0]], s=22, marker="o", facecolor=C_START, edgecolor=C_NEG,
+    ax.scatter([xs[0]], [ys[0]], s=22, marker="o", facecolor=C_START, edgecolor="black",
                linewidth=0.6, zorder=6, label="base strain")
     # Above the marker, not beside it: beside, the text ran into the X it names.
     ax.annotate("stops here", (xs[-1], ys[-1]), fontsize=5, va="bottom", ha="center",
                 xytext=(0, 5), textcoords="offset points")
     # The star is the destination the panel is about, so it is drawn larger than the X that
     # marks where the campaign stops; at equal area the X dominated it.
-    ax.scatter([3], [best_f], s=52, marker="*", facecolor=C_START, edgecolor=C_NEG,
+    ax.scatter([3], [best_f], s=52, marker="*", facecolor=C_START, edgecolor="black",
                linewidth=0.6, zorder=5, label="best strain in the design")
 
     ax.axhline(1.0, color="black", linewidth=0.5, linestyle="--", zorder=1)

@@ -14,17 +14,13 @@
 # where they should be italic, the subscripts sit at the wrong size, and the PDF export set
 # the subscript runs in a SERIF fallback, which put a fourth typeface into the figure.
 #
-# WHY TWO SCHEMATIC PANELS ON TOP (author review, 2026.09.18). The data panels answer how
-# the four nulls differ; they do not say why a reader of a metabolic engineering paper
-# should care which null is chosen. Panel a is the motivation: a yeast in nature carries
-# robustness and cross-coupling that a factory does not need and cannot switch off, and
-# most of that coupling is not on the curated map at all (Wu et al. 2026 predict a
-# reaction space fourteen times the model's, with weaker predicted affinities). Panel b is
-# the classic picture: an interaction is the departure of a measured combination from an
-# expectation, and whether such departures can be predicted decides whether a design
-# climbs or tinkers. The genome-wide counts on growth (Costanzo 2016, Kuzmin 2018) say
-# what kind of landscape that is: mostly negative, and a hundred times denser at three
-# genes than at two.
+# THE TWO SCHEMATIC PANELS (author review, 2026.09.18). The motivation (a yeast in nature
+# against a yeast in a bioreactor; Wu et al. 2026 on the underground reaction space) and
+# the classic picture (an interaction as the departure of a measured combination from an
+# expectation, with the genome-wide counts on growth from Costanzo 2016 and Kuzmin 2018)
+# are drawn by `motivation` and `classic` below but placed at the top of Fig. 1 by
+# perspective_motivation_drawio.py, which imports them. They sat at the top of this figure
+# for one build; the review put them where the document opens.
 #
 # WHY A SCHEMATIC OF THE NULLS AT ALL. The four models are four lines of algebra in the
 # Methods, and a reader who takes the algebra at face value will read "multiplicative" as
@@ -83,17 +79,16 @@ FILL = {C_MULT: "#DAE8FC", C_ADD: "#F8CECC", C_GLM: "#E1D5E7", C_OLS: "#FFE6CC",
 W_MM = 179.0
 PANEL_STEM = ["mi_panel_expectations", "mi_panel_null_fit", "mi_panel_mean_variance"]
 
-# Row geometry in millimetres from the top of the page. Five rows, each the full width:
-# the two schematic panels, the three measured panels, the level sets of all four models
-# side by side, the schematic of the two nulls, and the table. The heights of the
-# measured panels and the level sets were cut (52 to 38 mm, 36 to 31 mm) to pay for the
-# new top row inside the 170 mm cap; the table's rows were cut from 8.0 to 6.4 mm.
-Y_ROW0 = 5.0          # top of the two schematic panels
-H_ROW0 = 31.0
-Y_ROW1 = 40.5         # top of the three measured panels (38 mm tall)
-Y_ROW2 = 83.0         # top of the level-set row (31 mm tall)
-Y_ROW3 = 118.5        # top of the schematic of the nulls
-Y_ROW4 = 138.5        # top of the table
+# Row geometry in millimetres from the top of the page. Four rows, each the full width:
+# the three measured panels, the level sets of all four models side by side, the
+# schematic of the two nulls, and the table. The level sets are 40 mm tall, up from 36,
+# since the review asked for larger plots there, and the table's rows 6.4 mm rather than
+# 8, which held a band of air.
+H_ROW0 = 31.0         # the height of the two schematic panels, wherever they are placed
+Y_ROW1 = 5.0          # top of the three measured panels (52 mm tall)
+Y_ROW2 = 62.0         # top of the level-set row (40 mm tall)
+Y_ROW3 = 107.0        # top of the schematic of the nulls
+Y_ROW4 = 125.0        # top of the table
 LETTER_DY = 4.6       # a letter sits this far above its block
 
 # The "expects" column carries a short expression and the "residual" column a two-word
@@ -119,7 +114,7 @@ TABLE_ROWS = [
      "mg/L is built up"),
     (C_GLM, "GLM log-link", "glm",
      "log titer",
-     "replicate titers; Gamma family, spread proportional to the mean (panel e)",
+     "replicate titers; Gamma family, spread proportional to the mean (panel c)",
      "the readout is positive and noisier where it is larger, and every strain's replicates "
      "are used rather than its mean"),
     (C_OLS, "log-OLS", "glm",
@@ -374,7 +369,7 @@ def schematic(doc, x0, y0, w):
         equation(doc, f"d-mult{i}-eq", name, xs[i] + bw / 2, box_y + 5.7)
     equation(doc, "d-mult3-eq", "mult", xs[3] + bw / 2, box_y + box_h / 2)
     doc.vertex("d-mult-note",
-               "FRACTIONS in series: the second step acts only on what the first let through",
+               "multiplicative: the second deletion acts only on what the first let through",
                text_style("left"), mm(x0), mm(y0 + 8.6), mm(half), 12)
 
     # --- amounts add
@@ -391,17 +386,17 @@ def schematic(doc, x0, y0, w):
     equation(doc, "d-pool-i-eq", "loss_i", x1 + keep_w + loss_w / 2, pool_y + pool_h / 2)
     equation(doc, "d-pool-j-eq", "loss_j", x1 + keep_w + 1.5 * loss_w, pool_y + pool_h / 2)
     doc.vertex("d-add-note",
-               "AMOUNTS from one pool: the two losses overlap, and the overlap is counted twice",
+               "additive: each loss comes off the whole pool, so their overlap is removed twice",
                text_style("left"), mm(x1), mm(y0 + 8.6), mm(half), 12)
 
     # --- the identity, as three cells so the expression is typeset rather than spelled
     eq_w = EQ_SIZES["gap"][0]
     lead_w = 70.0
-    y_gap = y0 + 13.5
+    y_gap = y0 + 13.0
     doc.vertex("d-gap-a", "the two nulls differ by exactly", text_style("right"),
                mm(x0), mm(y_gap) - 7, mm(lead_w), 14)
     equation(doc, "d-gap-eq", "gap", x0 + lead_w + 1.0 + eq_w / 2, y_gap)
-    doc.vertex("d-gap-b", ", the loss the second deletion would take again",
+    doc.vertex("d-gap-b", ", what the second deletion would take again from the part the first removed",
                text_style("left"), mm(x0 + lead_w + 2.0 + eq_w), mm(y_gap) - 7,
                mm(x0 + w - (x0 + lead_w + 2.0 + eq_w)), 14)
 
@@ -440,19 +435,9 @@ def build(out_path):
                "strokeColor=#B85450;strokeWidth=1;dashed=1;", 0, 0, mm(179.4), mm(170),
                parent="printbox")
 
-    # --- row 0: the two schematic panels, half the width each
-    # Letters at 2 and 90.5 mm, content indented 4 mm past each, and both panels end
-    # inside the 177 mm the other rows use.
-    half = (W_MM - 6.0) / 2.0
-    doc.vertex("letter-a", "a", letter_style(), mm(2), mm(Y_ROW0 - LETTER_DY), 24, 18)
-    motivation(doc, 6.0, Y_ROW0, half - 4.0, H_ROW0)
-    xb = 2.0 + half + 2.0
-    doc.vertex("letter-b", "b", letter_style(), mm(xb), mm(Y_ROW0 - LETTER_DY), 24, 18)
-    classic(doc, xb + 4.0, Y_ROW0, 177.0 - (xb + 4.0), H_ROW0)
-
     # --- row 1: the three embedded data panels
     x = 2.0
-    for letter, stem in zip("cde", PANEL_STEM):
+    for letter, stem in zip("abc", PANEL_STEM):
         svg = osp.join(IMAGES_DIR, stem + ".svg")
         w_u, h_u = svg_size_units(svg)
         doc.vertex(f"letter-{letter}", letter, letter_style(),
@@ -466,15 +451,15 @@ def build(out_path):
     # --- row 2: the four models' level sets, side by side and to one scale
     svg = osp.join(IMAGES_DIR, "mi_panel_level_sets.svg")
     w_u, h_u = svg_size_units(svg)
-    doc.vertex("letter-f", "f", letter_style(), mm(2), mm(Y_ROW2 - LETTER_DY), 24, 18)
-    doc.vertex("panel-f", "", "shape=image;imageAspect=0;aspect=fixed;html=1;"
+    doc.vertex("letter-d", "d", letter_style(), mm(2), mm(Y_ROW2 - LETTER_DY), 24, 18)
+    doc.vertex("panel-d", "", "shape=image;imageAspect=0;aspect=fixed;html=1;"
                f"image={data_uri(svg)};", mm(2), mm(Y_ROW2), w_u, h_u)
 
     # --- row 3: where the two families of null come from
-    doc.vertex("letter-g", "g", letter_style(), mm(2), mm(Y_ROW3 - LETTER_DY), 24, 18)
+    doc.vertex("letter-e", "e", letter_style(), mm(2), mm(Y_ROW3 - LETTER_DY), 24, 18)
     schematic(doc, 6.0, Y_ROW3, 171.0)
 
-    doc.vertex("letter-h", "h", letter_style(), mm(2), mm(Y_ROW4 - LETTER_DY), 24, 18)
+    doc.vertex("letter-f", "f", letter_style(), mm(2), mm(Y_ROW4 - LETTER_DY), 24, 18)
     bottom = table(doc, Y_ROW4)
     if bottom > 170.0:
         raise ValueError(f"content reaches {bottom:.1f} mm, over the 170 mm cap")

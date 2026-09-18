@@ -269,9 +269,10 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   (GLM) and orange (log-OLS) in every panel and in the table; orange against brick did not
   separate at 5 pt marker size, and the two most-contrasted series take the two most
   distant hues.
-- **The endpoints of a route panel are one series.** Fig. 2b's base strain and best strain
-  are both the pale companion of the campaign's brick, with a brick edge; a blue star was
-  a third color on a two-color panel.
+- **The endpoints of a route panel are one series, in a hue the panel does not already
+  use.** Fig. 2b's base strain and best strain are both lilac with a black edge; a blue
+  star was a third color on a two-color panel, and a pale brick read as red beside the
+  campaign's brick.
 
 ## Tables
 

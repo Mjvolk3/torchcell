@@ -497,7 +497,7 @@ z
    </g>
    <g id="PathCollection_2">
     <defs>
-     <path id="m010ed00d69" d="M 0 -3.605551 
+     <path id="md3c538576f" d="M 0 -3.605551 
 L -0.809497 -1.114177 
 L -3.429083 -1.114177 
 L -1.309793 0.425578 
@@ -508,10 +508,10 @@ L 1.309793 0.425578
 L 3.429083 -1.114177 
 L 0.809497 -1.114177 
 z
-" style="stroke: #b85450; stroke-width: 0.6"/>
+" style="stroke: #000000; stroke-width: 0.6"/>
     </defs>
     <g clip-path="url(#p3860d04db3)">
-     <use xlink:href="#m010ed00d69" x="142.759342" y="56.785141" style="fill: #f8cecc; stroke: #b85450; stroke-width: 0.6"/>
+     <use xlink:href="#md3c538576f" x="142.759342" y="56.785141" style="fill: #9673a6; stroke: #000000; stroke-width: 0.6"/>
     </g>
    </g>
    <g id="legend_1">
@@ -541,7 +541,7 @@ L 41.85875 30.753562
     </g>
     <g id="PathCollection_3">
      <defs>
-      <path id="m635713cc8e" d="M 0 2.345208 
+      <path id="m5404ddd400" d="M 0 2.345208 
 C 0.621956 2.345208 1.218523 2.098102 1.658312 1.658312 
 C 2.098102 1.218523 2.345208 0.621956 2.345208 0 
 C 2.345208 -0.621956 2.098102 -1.218523 1.658312 -1.658312 
@@ -551,10 +551,10 @@ C -2.098102 -1.218523 -2.345208 -0.621956 -2.345208 0
 C -2.345208 0.621956 -2.098102 1.218523 -1.658312 1.658312 
 C -1.218523 2.098102 -0.621956 2.345208 0 2.345208 
 z
-" style="stroke: #b85450; stroke-width: 0.6"/>
+" style="stroke: #000000; stroke-width: 0.6"/>
      </defs>
      <g>
-      <use xlink:href="#m635713cc8e" x="38.85875" y="37.072312" style="fill: #f8cecc; stroke: #b85450; stroke-width: 0.6"/>
+      <use xlink:href="#m5404ddd400" x="38.85875" y="37.072312" style="fill: #9673a6; stroke: #000000; stroke-width: 0.6"/>
      </g>
     </g>
     <g id="text_19">
@@ -562,7 +562,7 @@ z
     </g>
     <g id="PathCollection_4">
      <g>
-      <use xlink:href="#m010ed00d69" x="38.85875" y="42.894969" style="fill: #f8cecc; stroke: #b85450; stroke-width: 0.6"/>
+      <use xlink:href="#md3c538576f" x="38.85875" y="42.894969" style="fill: #9673a6; stroke: #000000; stroke-width: 0.6"/>
      </g>
     </g>
     <g id="text_20">
@@ -571,7 +571,7 @@ z
    </g>
    <g id="PathCollection_5">
     <g clip-path="url(#p3860d04db3)">
-     <use xlink:href="#m635713cc8e" x="40.851103" y="124.026571" style="fill: #f8cecc; stroke: #b85450; stroke-width: 0.6"/>
+     <use xlink:href="#m5404ddd400" x="40.851103" y="124.026571" style="fill: #9673a6; stroke: #000000; stroke-width: 0.6"/>
     </g>
    </g>
   </g>

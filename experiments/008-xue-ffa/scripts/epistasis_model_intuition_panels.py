@@ -221,6 +221,10 @@ def panel_mean_variance(ax, means, sds):
             linestyle=(0, (1, 1.5)), zorder=4, label="SD constant: the linear-scale models")
     ax.set_xscale("log")
     ax.set_yscale("log")
+    # Headroom for the key: at 38 mm the three rows of the key sat on the constant-spread
+    # line and the points under it (author review, 2026.09.18). The top of the axis is
+    # raised so the key sits above every point.
+    ax.set_ylim(y.min() * 0.6, y.max() * 4.5)
     # Plain tick numbers. The default log formatter wrote 6 x 10^-1 and 2 x 10^0 for an
     # axis that spans half to twice the base strain.
     ax.set_xticks([0.5, 1.0, 2.0])
@@ -401,14 +405,14 @@ def main():
     means, sds = strain_titers()
     pairs = pair_frame(means)
     pairs.to_csv(osp.join(RESULTS_DIR, "epistasis_model_intuition_pairs.csv"), index=False)
-    # Heights: the figure gained a row of two schematic panels above these (the motivation
-    # and the classic expectation-against-observation picture), and the 170 mm cap did not
-    # move, so the three measured panels give up 14 mm and the level sets 5 mm.
-    emit("expectations", "third", 38.0, lambda ax: panel_expectations(ax, pairs))
-    emit("null_fit", "third", 38.0, lambda ax: panel_null_fit(ax, pairs))
-    emit("mean_variance", "third", 38.0,
+    # Heights: the two schematic panels that briefly sat above these moved to Fig. 1
+    # (author review, 2026.09.18), so the three measured panels are back at 52 mm and the
+    # level sets, which the review asked to be larger, at 40.
+    emit("expectations", "third", 52.0, lambda ax: panel_expectations(ax, pairs))
+    emit("null_fit", "third", 52.0, lambda ax: panel_null_fit(ax, pairs))
+    emit("mean_variance", "third", 52.0,
          lambda ax: panel_mean_variance(ax, means, sds))
-    emit("level_sets", "full", 31.0, lambda *axes: panel_level_sets(axes), ncols=4)
+    emit("level_sets", "full", 40.0, lambda *axes: panel_level_sets(axes), ncols=4)
     emit_equations()
 
 

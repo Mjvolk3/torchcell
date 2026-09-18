@@ -47,20 +47,37 @@ design is a triple at $2.05\times$. The gap between what single deletions do and
 combinations do is the first sign that the effects are not composing.
 
 \begin{figure*}[t]
+%% The top row is one draw.io export carrying its own letters a and b
+%% (perspective_motivation_drawio.py); the three measured panels under it are lettered
+%% here, as c, d, e.
+\panelrow{\includegraphics{figures/ffa-epistasis-fig1-motivation.pdf}}
 \panelrow{%
-  \panel{a}{figures/panel_interaction_distribution.pdf}\hfill
-  \panel{b}{figures/panel_volcano_total_titer.pdf}\hfill
-  \panel{c}{figures/panel_consensus_agreement.pdf}%
+  \panel{c}{figures/panel_interaction_distribution.pdf}\hfill
+  \panel{d}{figures/panel_volcano_total_titer.pdf}\hfill
+  \panel{e}{figures/panel_consensus_agreement.pdf}%
 }
 \caption{\textbf{Interaction is the rule on total fatty acid titer, and the third deletion
-is where it bites.} \textbf{a}, Interaction scores against the multiplicative null for all
+is where it bites.} \textbf{a}, Why interactions matter for a factory. A yeast in nature
+is robust and cross-coupled, and most of its chemistry is off the curated map:
+retrobiosynthesis with predicted enzyme annotation places 55,734 reactions beside the
+4,131 of Yeast9, with median predicted Michaelis constants about twofold higher in that
+underground network than in the known one~\citep{wuSystematicallyExploringYeast2026}. A
+campaign deletes or overexpresses a few genes and keeps the strain that makes more of one
+product; the coupling that made the cell robust is still there and is not measured.
+\textbf{b}, An interaction is the departure of a measured combination from an expectation,
+drawn for the multiplicative null with a negative departure, the common case on growth:
+genome-wide, about 550,000 negative and 350,000 positive digenic
+interactions~\citep{costanzoGlobalGeneticInteraction2016}, and an estimated hundred times as
+many trigenic ones, about 25\% weaker~\citep{kuzminSystematicAnalysisComplex2018}.
+Predicted, an interaction is a step a design can climb; unpredicted, a campaign is left to
+trial and error. \textbf{c}, Interaction scores against the multiplicative null for all
 45 double (lilac) and 120 triple (amber) deletions, as outline histograms on shared bins so
 the heavy overlap stays readable. The median moves from $+0.40$ at two deletions to $-0.72$
-at three. \textbf{b}, Trigenic interaction score $\tau$ against
+at three. \textbf{d}, Trigenic interaction score $\tau$ against
 evidence for the 119 testable triples under the multiplicative model. The dashed line marks
 the largest $P$ that Benjamini-Hochberg rejects at a 5\% false discovery rate over the 119
 tests of this readout ($P = 0.036$); 86 triples clear it and 11 of those have $\tau > 0$.
-\textbf{c}, How many of the four epistasis models call each triple significant, split by
+\textbf{e}, How many of the four epistasis models call each triple significant, split by
 the sign of $\tau$. Seventy-three triples are called by all four with the sign agreeing,
 and none of the 73 is positive.}
 \label{fig:landscape}
@@ -105,10 +122,10 @@ median of 4.28 across the 714 testable trigenic scores.
 
 Deviations from the null are large and are mostly negative at three deletions. The median
 digenic score is $+0.40$ and the median trigenic score is $-0.72$
-(Fig.~\ref{fig:landscape}a), so adding a third deletion does not damp the interaction, it
+(Fig.~\ref{fig:landscape}c), so adding a third deletion does not damp the interaction, it
 reverses its typical direction. Of the 119 triples with a testable standard error, 86 depart
 from the null at a 5\% false discovery rate computed over the 119 tests of this readout, and
-11 of those 86 depart upward (Fig.~\ref{fig:landscape}b).
+11 of those 86 depart upward (Fig.~\ref{fig:landscape}d).
 
 The pairs are worth stating on their own, because they are what
 Eq.~\ref{eq:tau-eps} measures the triples against. On total titer 43 of the 45 doubles
@@ -184,32 +201,20 @@ combination, and it is not sufficient.
 
 \begin{figure*}[t]
 \tcfig{figures/ffa-epistasis-fig3-model-intuition.pdf}{\textbf{What each null expects, and
-what choosing one commits to.} \textbf{a}, Why the null matters for a factory. A yeast in
-nature is robust and cross-coupled, and most of its chemistry is off the curated map:
-retrobiosynthesis with predicted enzyme annotation places 55,734 reactions beside the
-4,131 of Yeast9, with median predicted Michaelis constants about twofold higher in that
-underground network than in the known one~\citep{wuSystematicallyExploringYeast2026}. A
-campaign deletes or overexpresses a few genes and keeps the strain that makes more of one
-product; the coupling that made the cell robust is still there and is not measured.
-\textbf{b}, An interaction is the departure of a measured combination from an expectation,
-drawn for the multiplicative null with a negative departure, the common case on growth:
-genome-wide, about 550,000 negative and 350,000 positive digenic
-interactions~\citep{costanzoGlobalGeneticInteraction2016}, and an estimated hundred times as
-many trigenic ones, about 25\% weaker~\citep{kuzminSystematicAnalysisComplex2018}.
-Predicted, an interaction is a step a design can climb; unpredicted, a campaign is left to
-trial and error. \textbf{c}, One measured double deletion on a titer axis, MED4 and RPD3,
-the pair whose two expectations are furthest apart. The additive and the multiplicative
-expectation differ by $(1 - f_i)(1 - f_j)$, which is an identity rather than a property of
-this pair. \textbf{d}, All 45 doubles against both expectations; distance from the dashed
-line is the digenic interaction under that model. Forty-three of the 45 sit above both, by
-a median $+0.40$ against the multiplicative expectation and $+0.45$ against the additive
-one, so the two nulls agree on the direction at two deletions and differ in magnitude.
-\textbf{e}, Replicate standard deviation of $f$ against $f$ over the 165 strains with a
-nonzero replicate spread, on log axes. The fitted line has slope 1.10 in the logarithms;
-the two reference lines are the noise assumptions the models divide over, a spread
-proportional to $f$, which is the Gamma family behind a log link, and a constant spread.
-\textbf{f}, What each model expects of a double deletion, as level sets over the square of
-single-deletion phenotypes, one panel per model in the order of \textbf{h}. The square
+what choosing one commits to.} \textbf{a}, One measured double deletion on a titer axis,
+MED4 and RPD3, the pair whose two expectations are furthest apart. The additive and the
+multiplicative expectation differ by $(1 - f_i)(1 - f_j)$, which is an identity rather
+than a property of this pair. \textbf{b}, All 45 doubles against both expectations;
+distance from the dashed line is the digenic interaction under that model. Forty-three of
+the 45 sit above both, by a median $+0.40$ against the multiplicative expectation and
+$+0.45$ against the additive one, so the two nulls agree on the direction at two deletions
+and differ in magnitude. \textbf{c}, Replicate standard deviation of $f$ against $f$ over
+the 165 strains with a nonzero replicate spread, on log axes. The fitted line has slope
+1.10 in the logarithms; the two reference lines are the noise assumptions the models
+divide over, a spread proportional to $f$, which is the Gamma family behind a log link,
+and a constant spread. \textbf{d}, What each model expects of a double deletion, as level
+sets over the square of single-deletion phenotypes, one panel per model in the order of
+\textbf{f}. The square
 runs to $1.5$ because single deletions in this design raise titer as well as lower it.
 Each panel's contours are evenly spaced on the scale that model measures its residual on:
 at $0.3$ to $1.5$ in steps of $0.3$ for the two linear-scale models, and a doubling apart
@@ -217,12 +222,12 @@ from $0.1$ to $1.6$ for the two log-scale ones, which is why those crowd near $1
 out at low titer. Three of the four expect the same surface, and the additive null is the
 one that does not: its level sets are straight where the others are hyperbolas. The two
 surfaces differ by $(1 - f_i)(1 - f_j)$, which is $0.25$ at the center of the square,
-marked in every panel with what that model expects there. \textbf{g}, The two families of
+marked in every panel with what that model expects there. \textbf{e}, The two families of
 null as statements about the system. A multiplicative null says each deletion keeps a
 fraction of what reaches it, which is how independent steps of one flux compose and is the
 convention the growth interaction screens use. An additive null says each deletion removes
 an amount from a shared pool, and so counts the part of the first deletion's loss that the
-second would have taken again. \textbf{h}, The four models fit here: what each expects, the
+second would have taken again. \textbf{f}, The four models fit here: what each expects, the
 scale its residual is measured on, what it is fit to, and the reading of the system under
 which it is the natural null. Equations in the Methods.}{fig:model-intuition}
 \end{figure*}
@@ -268,7 +273,7 @@ what reaches it, which is how independent steps of a single flux compose and is 
 growth interaction screens use it; an additive null says a deletion removes an amount from a
 shared pool, which is the reading a titer in milligrams per liter invites. The two differ by
 exactly $(1 - f_i)(1 - f_j)$ at two deletions, so they separate most where both single
-deletions are severe (Fig.~\ref{fig:model-intuition}c,f).
+deletions are severe (Fig.~\ref{fig:model-intuition}a,d).
 
 The four models agree on which combinations interact far more than they agree on the sign.
 Ninety-seven triples are called by at least one model at a 5\% false discovery rate within

@@ -96,6 +96,16 @@ IPATH = "https://pathways.embl.de/mapping.cgi"
 # brick and 25 from the purple beside it in the drawing. It is close to the blue of the
 # measured species (dE 17), and those are five filled circles rather than lines.
 #
+# PYRUVATE METABOLISM IS THE PRIMARY BLUE, not the yellow it had (author review,
+# 2026.09.18): yellow beside the amber comb took the pop out of amber and brick, which
+# are the panel's subject, and the review asked for a blue or a purple. Every cool color
+# in the palette is within dE 25 of one of the two already on the route (lilac for
+# glycolysis, dark blue for the citrate cycle), and the primary blue against the dark blue
+# (dE 16) separates by lightness where the citrate cycle is one compact loop and pyruvate
+# metabolism a few short runs beside acetyl-CoA. Yellow was tried on the citrate loop
+# instead and put yellow back beside the combs. The blue is the species' blue; those are
+# filled circles and this is a line.
+#
 # THE ORDER IS A PRIORITY, not the order of the route: a gene on two of these lists takes
 # the color of the first list it appears on. Central carbon comes first, then degradation,
 # then the three anabolic fatty acid lists. Degradation has to outrank the anabolic three
@@ -106,7 +116,7 @@ IPATH = "https://pathways.embl.de/mapping.cgi"
 # dehydrogenases, and above glycolysis it takes twenty of that module's lines with it.
 MODULES = [
     ("sce00010", "glycolysis and gluconeogenesis", "#9673A6"),
-    ("sce00620", "pyruvate metabolism", "#D6B656"),
+    ("sce00620", "pyruvate metabolism", "#6C8EBF"),
     ("sce00020", "citrate cycle", "#4F688B"),
     ("sce00071", "fatty acid degradation", "#B85450"),
     ("sce00061", "fatty acid biosynthesis", "#D79B00"),

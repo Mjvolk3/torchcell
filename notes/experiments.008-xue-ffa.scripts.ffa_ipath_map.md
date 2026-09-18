@@ -177,3 +177,7 @@ is wider.
 This panel is still superseded by [[experiments.008-xue-ffa.scripts.ffa_kegg_map]] and is
 kept because it is the client for the map Wu et al. use, and because the Methods cite what
 probing it measured.
+
+## 2026.09.18 - Pyruvate metabolism in the primary blue
+
+`MODULES` gives pyruvate metabolism `#6C8EBF` instead of yellow: yellow beside the amber comb took the pop out of amber and brick, and the review asked for a blue or a purple. Every cool palette color is within dE 25 of lilac (glycolysis) or dark blue (citrate cycle); the primary blue against the dark blue is dE 16 and separates by lightness, where the citrate cycle is one compact loop and pyruvate metabolism a few short runs beside acetyl-CoA. Yellow on the citrate loop was rendered and rejected for the same reason. Both map scripts read this list.

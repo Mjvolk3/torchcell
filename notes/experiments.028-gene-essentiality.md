@@ -570,3 +570,24 @@ draw.io exports headlessly on GilaHyper from the extracted desktop .deb under `x
 ![](./assets/images/028-gene-essentiality/028-module-elastic.svg)
 
 ![](./assets/images/028-gene-essentiality/lp_probe_2026-09-17-13-46-18.svg)
+
+## 2026.09.17 - Round 18 READ: the elastic program removes the absorbing state; the forced column underfits, not overfits
+
+Packs 2321-2324 (w32), 1.6 h each at 24 CPUs. Every cell: 0 infeasible genotypes at every epoch, no unmet maintenance at the selected epoch, a gene-owned dual on 88-90 percent of genotypes, 6-11 percent of gene-owned reactions at their ceiling.
+
+| arm (elastic LP, nodiss arm, scale 0) | seeds 2700, 2701, 2702 | mean | read |
+|---|---|---|---|
+| forced, x100 | 0.704, 0.741, 0.697 | 0.714 | FAIL (3/3 below bio_s0 0.772/0.781/0.778; none >= 0.80) |
+| forced, x1000 | 0.607, 0.826, 0.707 | 0.713 | = the hard program at x1000 (0.615/0.826/0.702): never infeasible there, so elastic == hard |
+| forced, x100, pool by construction | 0.704, 0.743, 0.670 | 0.706 | pool never active (factor 1 throughout); = the cell without it |
+| gated, x100 | 0.816, 0.810, 0.783 | 0.803 | 3/3 above gate_s0; mean < 0.824 -> FAIL the second clause; = the hard gated x100 (0.800) |
+
+Diagnosis from the histories (the "go deep" read): the forced column UNDERFITS. Its training loss moves 1.41 -> 1.25 (seed 2701) and 1.26 -> 1.25 (2702) in 200 epochs, against 1.33 -> 0.31 for the round-4 free coordinate and 1.26 -> 0.17 for the gated cell; the validation AUROC of the column sits at 0.72-0.79 = the solve's own ranking at initialization (0.73) with a learned sign (seeds 2700/2702 spend epochs 0-60 at 0.23-0.30, the inverted affine, then flip). The gradient is not missing (duals on 90 percent of genotypes, the abundance head receives 10^-3 to 10^-2 of the norm); the path is stiff: a 12-weight linear abundance head shared by every gene, trained at the backbone's rate, moving ceilings whose duals are ~0.01 per mmol/gDW/h. Hypothesis (tested in round 19): the step and the head's capacity, not the path, limit the forced solve.
+
+Round 19 (w34, jobs 2326-2329, submitted 19:20): forced elastic x100 with `--flux-lr-mult 10`; with `--flux-abundance-head-layers 2`; with both; gated with both. Pre-registered: forced PASS = 3/3 above the round-18 elastic cell (paired) AND none below 0.80; the diagnostic is the training loss at the selected epoch against round 18's 1.25.
+
+Example runs (forced elastic x100 seed 2701; gated elastic x100 seed 2701):
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/qpaw0oai>
+
+<https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/kxjcktxy>

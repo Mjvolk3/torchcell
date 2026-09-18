@@ -1,5 +1,5 @@
 {
-  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/lp_probe_2026-09-17-13-46-18.svg",
+  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/lp_probe_2026-09-17-19-03-13.svg",
   "arms": [
     {
       "arm": "lpcapbio100",
@@ -26,6 +26,58 @@
       "capacity_active_last": 0.026011014978090923,
       "gene_dual_row_frac_last": 0.0,
       "flux_share_last": 6.670136006099233e-14
+    },
+    {
+      "arm": "lpelbio100",
+      "label": "growth column, the elastic layer that solves, capacity x100",
+      "n_seeds": 3,
+      "infeasible_first_last": [
+        0.0,
+        0.0005208333333333333
+      ],
+      "slack_row_frac_last": 0.003397817475100358,
+      "capacity_active_last": 0.09292982642849286,
+      "gene_dual_row_frac_last": 0.8929315477609635,
+      "flux_share_last": 0.0005307506659626191
+    },
+    {
+      "arm": "lpelbio1000",
+      "label": "growth column, the elastic layer that solves, capacity x1000",
+      "n_seeds": 3,
+      "infeasible_first_last": [
+        0.0,
+        0.0010416666666666667
+      ],
+      "slack_row_frac_last": 0.0,
+      "capacity_active_last": 0.025885716018577417,
+      "gene_dual_row_frac_last": 0.005208333333333333,
+      "flux_share_last": 0.0
+    },
+    {
+      "arm": "lpelpoolbio100",
+      "label": "growth column, elastic solve, capacity x100, pool by construction",
+      "n_seeds": 3,
+      "infeasible_first_last": [
+        0.0,
+        0.0
+      ],
+      "slack_row_frac_last": 0.003397817475100358,
+      "capacity_active_last": 0.10535852511723837,
+      "gene_dual_row_frac_last": 0.8976190477609635,
+      "flux_share_last": 0.022979191595371522
+    },
+    {
+      "arm": "lpelgate100",
+      "label": "gated column + context, the elastic layer that solves, capacity x100",
+      "n_seeds": 3,
+      "infeasible_first_last": [
+        0.0,
+        0.0005208333333333333
+      ],
+      "slack_row_frac_last": 0.0,
+      "capacity_active_last": 0.06438622033844392,
+      "gene_dual_row_frac_last": 0.878298611442248,
+      "flux_share_last": 0.0014903357674491706
     }
   ]
 }

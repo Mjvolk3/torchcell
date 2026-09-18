@@ -1086,6 +1086,25 @@ class BxCell(BaseModel):
             "the GECKO pool constraint holds exactly instead of as the soft hinge."
         ),
     )
+    flux_lr_mult: float = Field(
+        default=1.0,
+        gt=0.0,
+        description=(
+            "Learning-rate multiplier on the flux layer's parameters (a second AdamW "
+            "group); 1.0 is one group. Round 19: the forced column under the solve "
+            "underfits at the backbone's rate."
+        ),
+    )
+    flux_abundance_head_layers: int = Field(
+        default=1,
+        ge=1,
+        le=2,
+        description=(
+            "Depth of the abundance head E_g(h_g): 1 is the shipped linear map (one "
+            "weight vector shared by every gene), 2 a hidden layer of the token width "
+            "(`FluxLayerConfig.abundance_head_layers`). Round 19."
+        ),
+    )
     ess_solve_features: str = Field(
         default="none",
         description=(
@@ -2183,6 +2202,8 @@ def build_cell(
     flux_capacity_scale: float = 1.0,
     flux_lp_slack_penalty: float = 0.0,
     flux_pool_by_construction: bool = False,
+    flux_lr_mult: float = 1.0,
+    flux_abundance_head_layers: int = 1,
     node_embeddings: list[str] | None = None,
     pos_weight_balanced: bool = False,
 ) -> BxCell:
@@ -2283,6 +2304,8 @@ def build_cell(
         flux_capacity_scale=flux_capacity_scale,
         flux_lp_slack_penalty=flux_lp_slack_penalty,
         flux_pool_by_construction=flux_pool_by_construction,
+        flux_lr_mult=flux_lr_mult,
+        flux_abundance_head_layers=flux_abundance_head_layers,
         node_embeddings=(
             list(node_embeddings) if node_embeddings else list(STRONG_NODE_EMBEDDINGS)
         ),
@@ -4375,6 +4398,8 @@ def build_model_for_cell(
         "constraint_warmup_epochs": cell.constraint_warmup_epochs,
         "constraint_final_scale": cell.constraint_scale,
         "constraint_delay_epochs": cell.constraint_delay_epochs,
+        # Construction-time (round 19): the abundance head's depth.
+        "abundance_head_layers": cell.flux_abundance_head_layers,
     }
     # THE CHANNEL OVERRIDE. `fluxforce` is a parameterization of
     # torchcell.metabolism.flux_layer, not a new physics switch, and 026's ARMS stays the
@@ -5286,9 +5311,30 @@ def run_cell(
     )
     dm.setup()
 
-    optimizer = torch.optim.AdamW(
-        model.parameters(), lr=cell.lr, weight_decay=cell.weight_decay
-    )
+    # THE FLUX LAYER'S OWN LEARNING RATE (round 19). Under the layer that solves the
+    # backbone's path to the prediction is the bound duals, sparse and small, and the
+    # forced column's training loss barely moves at the backbone's rate (round 18: 1.41
+    # to 1.25 in 200 epochs against 1.33 to 0.31 for the free coordinate). A multiplier
+    # on the layer's parameters is the smallest change that tests whether the step, not
+    # the path, is the limit; 1.0 is one group and every earlier cell byte-identical.
+    flux_params = [
+        p for n, p in model.named_parameters() if _module_path(n) == "flux_layer"
+    ]
+    flux_ids = {id(p) for p in flux_params}
+    other_params = [p for p in model.parameters() if id(p) not in flux_ids]
+    if cell.flux_lr_mult != 1.0 and flux_params:
+        optimizer = torch.optim.AdamW(
+            [
+                {"params": other_params},
+                {"params": flux_params, "lr": cell.lr * cell.flux_lr_mult},
+            ],
+            lr=cell.lr,
+            weight_decay=cell.weight_decay,
+        )
+    else:
+        optimizer = torch.optim.AdamW(
+            model.parameters(), lr=cell.lr, weight_decay=cell.weight_decay
+        )
 
     # CRPS, not MSE. The head emits (mu, log_sigma) and is scored as a distribution;
     # 019 measured 0.413 -> 0.434 from this single change, and 020 measured crps 0.275
@@ -6549,6 +6595,19 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--flux-lr-mult",
+        type=float,
+        default=1.0,
+        help="Learning-rate multiplier on the flux layer's parameters (round 19).",
+    )
+    parser.add_argument(
+        "--flux-abundance-head-layers",
+        type=int,
+        default=1,
+        choices=(1, 2),
+        help="Depth of the abundance head: 1 linear (shipped), 2 with a hidden layer.",
+    )
+    parser.add_argument(
         "--flux-pool-by-construction",
         action="store_true",
         help=(
@@ -7045,6 +7104,8 @@ def main() -> None:
         flux_capacity_scale=args.flux_capacity_scale,
         flux_lp_slack_penalty=args.flux_lp_slack_penalty,
         flux_pool_by_construction=args.flux_pool_by_construction,
+        flux_lr_mult=args.flux_lr_mult,
+        flux_abundance_head_layers=args.flux_abundance_head_layers,
         node_embeddings=args.node_embeddings,
         pos_weight_balanced=args.pos_weight_balanced,
     )

@@ -317,6 +317,23 @@ ROUND_CAPTIONS = {
         "\\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint scale 0, batch 32, "
         "class weight, 200 epochs, seeds 2700 to 2702.",
     ),
+    "w34": (
+        "Round 19, the forced elastic column with a faster layer and a deeper head",
+        "The round-18 forced elastic cell at capacity scale 100 (the paired comparator), "
+        "the round-4 forced column and the round-5 FBA affine, against the same elastic "
+        "cell with the flux layer's parameters at ten times the learning rate, with a "
+        "two-layer abundance head, and with both. Arm "
+        "\\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint scale 0, batch 32, "
+        "class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w35": (
+        "Round 19, the gated elastic column with a faster layer and a deeper head",
+        "The round-18 gated elastic cell at capacity scale 100 (the paired comparator), "
+        "the round-4 gated cell and the round-5 FBA affine, against the gated elastic "
+        "cell with the two-layer abundance head and the flux layer at ten times the "
+        "learning rate. Arm \\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint "
+        "scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
 }
 
 

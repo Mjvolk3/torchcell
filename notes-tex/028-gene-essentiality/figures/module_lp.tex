@@ -1,12 +1,12 @@
 %% notes-tex/028-gene-essentiality/figures/module_lp.tex
 %% Generated figure source: notes/assets/drawio/028-module.gen.py -> 028-module-lp.drawio
 \tcfigfit[1.0]{figures/module_lp.pdf}{\textbf{The layer that solves, rounds 15 to 15d.}
-  The abundance head (red) sets each gene's enzyme abundance with availability a hard
-  fact, the unit abundance and the $k_{cat}$ ceilings form the box (purple), and the flux
-  is the growth optimum of the linear program over that box (yellow), one HiGHS solve per
-  genotype; the program's value $z^*$ enters the readout (blue). Mass balance and the
-  box hold exactly at the optimum. The dashed path is the backward pass: the derivative of
-  $z^*$ in a bound is that bound's dual, nonzero only where the bound binds, so the
-  backbone is trained through the ceilings and only through them; an infeasible program
-  returns no flux and no gradient. Drawn in draw.io from
+  The abundance head sets each gene's enzyme abundance with availability a hard fact,
+  the unit abundance and the $k_{cat}$ ceilings form the box, and the flux is the growth
+  optimum of the linear program over that box, one HiGHS solve per genotype; the
+  program's value $z^*$ enters the readout. Mass balance and the box hold exactly at the
+  optimum. The dashed path is the backward pass: the derivative of $z^*$ in a bound is
+  that bound's dual, nonzero only where the bound binds, so the backbone is trained
+  through the ceilings and only through them; an infeasible program returns no flux and
+  no gradient. Colors as in Figure~\ref{fig:readout-key}. Drawn in draw.io from
   \texttt{notes/assets/drawio/028-module.gen.py}.}{fig:module-lp}

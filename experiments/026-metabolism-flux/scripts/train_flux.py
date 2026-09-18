@@ -603,6 +603,8 @@ def build_flux_layer(
         use_protein_budget=arm["use_protein_budget"],
         use_dissipation_limit=arm["use_dissipation_limit"],
         use_abundance_head=bool(arm.get("use_abundance_head", False)),
+        # Construction-time: the head's depth (028 round 19); 1 is the shipped linear map.
+        abundance_head_layers=int(arm.get("abundance_head_layers", 1)),
         stochastic=bool(arm.get("stochastic", False)),
         # CONSTRUCTION-TIME SWITCHES 027's trainer writes into the arm dict before this
         # call (wave 8). `latent_stochastic` was assigned onto the built layer's config

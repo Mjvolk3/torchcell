@@ -672,7 +672,7 @@ gradient through the solve), and the gradient norm of each part of the layer
 
 \input{figures/module_elastic}
 
-\tcfigfit[1.0]{figures/lp_probe_2026-09-17-13-46-18.pdf}{\textbf{The layer that solves,
+\tcfigfit[1.0]{figures/lp_probe_2026-09-17-19-03-13.pdf}{\textbf{The layer that solves,
   probed per epoch.} Seed mean per arm on the cells whose flux is a linear program.
   \textbf{a}, Validation AUROC. \textbf{b}, The fraction of genotypes whose program was
   infeasible (solid) and, on the elastic program, the fraction with unmet maintenance
@@ -682,6 +682,66 @@ gradient through the solve), and the gradient norm of each part of the layer
   (solid) and the abundance head's share (dotted, round 18). \textbf{f}, The
   preprocessor's gradient norm. Written by
   \texttt{experiments/028-gene-essentiality/scripts/lp\_probe\_readout.py}.}{fig:lpprobe}
+
+\input{tables/round_w32}
+
+\tcfigfit[1.0]{figures/w32_readout_2026-09-17-20-00-56.pdf}{\textbf{Round 18, the forced
+  column of the elastic layer that solves.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w32}.}{fig:w32}
+
+\input{tables/round_w33}
+
+\tcfigfit[1.0]{figures/w33_readout_2026-09-17-19-03-14.pdf}{\textbf{Round 18, the gated
+  column of the elastic layer that solves.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w33}.}{fig:w33}
+
+The construction did what it was built to do and the score did not follow. On every
+cell no genotype's program is infeasible at any epoch, the maintenance flux is met on
+every genotype at the selected epoch, and a gene-owned bound carries a dual on 88 to 90
+percent of genotypes, so the two seeds that the hard program absorbed at scale 100 now
+train from the first step (Figure~\ref{fig:lpprobe}b, d). The forced column reads 0.704,
+0.741 and 0.697 at scale 100, a seed mean of 0.714 with a spread of 0.02 where the hard
+program's was 0.20, three of three seeds below the round-4 forced column, and none at
+0.80: the read fails on both clauses. At scale 1,000 the elastic cell reads 0.607, 0.826
+and 0.707, the hard program's 0.615, 0.826 and 0.702 to within a seed's noise, which is
+what the construction promises when no program is infeasible, since the two programs are
+then the same program. With the pool held by construction the column reads 0.704, 0.743
+and 0.670: the projection never engaged (the factor stayed at 1 on every batch), so the
+abundance head never asked for more protein than the budget and the cell is the one
+without it. The gated cell reads 0.816, 0.810 and 0.783, three of three above the
+round-4 gated cell and level with the hard gated cell at the same scale (0.800), below
+the GEM box's 0.824, so its read fails on the second clause.
+
+What the histories add is the diagnosis the score alone would not give. The forced
+column is not overfitting through the abundance head: its training loss barely moves,
+from 1.41 to 1.25 on the seed that trains best and from 1.26 to 1.25 on another, against
+1.33 to 0.31 for the alternating layer's forced coordinate (round 4) and 1.26 to 0.17
+for the gated cell beside it, and its validation curve sits at 0.72 to 0.79, the solve's
+own ranking at initialization (0.73) with a learned sign: two seeds spend their first
+sixty epochs at 0.23 to 0.30, the inverted affine, before the sign flips
+(Figure~\ref{fig:w32}a). The gradient is present, since the duals reach the abundance
+head on nine genotypes in ten and it carries $10^{-3}$ to $10^{-2}$ of the summed norm
+(Figure~\ref{fig:lpprobe}e), but the path it travels is stiff: the head is one linear
+map of the width-12 token, twelve weights shared by every gene, trained at the
+backbone's rate, and each step moves ceilings whose duals are of order 0.01 per
+mmol/gDW/h. Under the hard program at scale 1,000 the same probe shows the other
+failure, the backbone's gradient collapsing to $10^{-13}$ after epoch 78 when no
+gene-owned bound binds any longer (Figure~\ref{fig:lpprobe}d, e). Round 19 tests the
+stiffness directly, with the layer's parameters at ten times the learning rate and with
+a two-layer abundance head, and reads the training loss at the selected epoch against
+round 18's 1.25 beside the score.
 
 \subsection{Where the gradient goes\secstatus{todo}}
 

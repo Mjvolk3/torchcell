@@ -772,6 +772,17 @@ class FluxLayerConfig(BaseModel):
             "maintenance the ceilings cannot carry. Read at call time."
         ),
     )
+    abundance_head_layers: int = Field(
+        default=1,
+        ge=1,
+        le=2,
+        description=(
+            "Depth of the abundance head w(h_g): 1 is a linear map of the gene token, a "
+            "single weight vector shared by every gene (the shipped head); 2 adds a "
+            "hidden layer of the token width with a GELU. Construction-time; 028 round "
+            "19 asks whether the head's capacity is what limits the forced solve."
+        ),
+    )
     pool_by_construction: bool = Field(
         default=False,
         description=(
@@ -2133,7 +2144,11 @@ class FluxLayer(nn.Module):
         # deviation from the prior; the prior carries the units and the budget carries the
         # scale, so the head learns only relative abundance.
         if cfg.use_abundance_head:
-            self.abundance = nn.Linear(d, 1)
+            self.abundance: nn.Module = (
+                nn.Linear(d, 1)
+                if cfg.abundance_head_layers == 1
+                else nn.Sequential(nn.Linear(d, d), nn.GELU(), nn.Linear(d, 1))
+            )
             if abundance_prior_mmol_per_gdw is None:
                 # Equal molar abundance across GEM genes filling a fraction of the budget:
                 # protein mass is sum_g MW_g[g/mmol] E_g[mmol/gDW], so E0 = frac p_avail /

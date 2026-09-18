@@ -308,6 +308,7 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "w30_lpcapbio100_h12l1p1_e200_s*.json",
             "w31_lpcapbio1000_h12l1p1_e200_s*.json",
             "w32_lpelbio*_h12l1p1_e200_s*.json",
+            "w32_lpelpoolbio100_h12l1p1_e200_s*.json",
         ],
         [
             "bio_s0",
@@ -330,6 +331,36 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "w32_lpelgate100_h12l1p1_e200_s*.json",
         ],
         ["gate_s0", "fba", "lpoffgate", "lpcapgate100", "lpelgate100"],
+    ),
+    # Round 19, the forced column: the elastic solve with the layer at ten times the
+    # learning rate and with a two-layer abundance head, against the round-18 elastic
+    # cell (paired), the round-4 forced column and the affine.
+    "w34": (
+        [
+            "w32_lpelbio100_h12l1p1_e200_s*.json",
+            "w15_bio_s0_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w34_lpelbio100*_h12l1p1_e200_s*.json",
+        ],
+        [
+            "lpelbio100",
+            "bio_s0",
+            "fba",
+            "lpelbio100lr10",
+            "lpelbio100mlp",
+            "lpelbio100mlplr10",
+        ],
+    ),
+    # Round 19, the gated column: the same two changes behind the gate against the
+    # round-18 gated elastic cell (paired), the round-4 gated cell and the affine.
+    "w35": (
+        [
+            "w32_lpelgate100_h12l1p1_e200_s*.json",
+            "w15_gate_s0_h12l1p1_e200_s*.json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w34_lpelgate100mlplr10_h12l1p1_e200_s*.json",
+        ],
+        ["lpelgate100", "gate_s0", "fba", "lpelgate100mlplr10"],
     ),
     # Round 16: the round-9 backbone with the round-11 affine.
     "w27": (
@@ -452,6 +483,10 @@ ARM_LABELS = {
     "lpelbio1000": "growth column, the elastic layer that solves, capacity x1000",
     "lpelpoolbio100": "growth column, elastic solve, capacity x100, pool by construction",
     "lpelgate100": "gated column + context, the elastic layer that solves, capacity x100",
+    "lpelbio100lr10": "growth column, elastic solve, x100, flux layer lr x10",
+    "lpelbio100mlp": "growth column, elastic solve, x100, two-layer abundance head",
+    "lpelbio100mlplr10": "growth column, elastic solve, x100, two-layer head + lr x10",
+    "lpelgate100mlplr10": "gated column + context, elastic solve, x100, two-layer head + lr x10",
     "chromprotpfba": "chrom-pathway + ProtT5 backbone + FBA ratios + pFBA vector",
     "chromprotstatspfba": "chrom-pathway + ProtT5 backbone + ratios + statistics + pFBA",
     "cspcv0": "chrom-pathway + ProtT5 + widened affine, fold 0",

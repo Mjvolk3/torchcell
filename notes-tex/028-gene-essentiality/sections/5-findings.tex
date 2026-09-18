@@ -174,8 +174,10 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     0.909 pooled at widths 64 and 256) (Section~\ref{sec:round33}). On the node
     instead of the logit, as a gene embedding through the preprocessor, the same
     vector reads 0.875 (pooled 0.894) alone and 0.889 with the affine columns too,
-    under the affine without any vector, and fits late
-    (Section~\ref{sec:round43}).
+    under the affine without any vector, and fits late; reduced to 64 or 16
+    principal components it fits on time and reads 0.894 and 0.901 pooled, the
+    affine-alone level, and 0.909 with the full vector in the affine as well, the
+    logit form's number and no more (Section~\ref{sec:round43}).
   \item[The solve's argmax is not unique, and the head reads the solver's point.]
     The round-27 program solved for every labeled gene by five solvers gives one
     growth value (to $10^{-5}$, FBA's 0.60 to 0.68 on the 195 whichever solver) and

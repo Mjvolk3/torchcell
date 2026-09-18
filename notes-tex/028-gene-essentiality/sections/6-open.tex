@@ -65,10 +65,14 @@ weight, six encodings). What remains is attribution and the module.
     six cached cells on one card ran no faster per cell than three uncached; and the
     multi-phenotype form, the flux in the cell representation rather than on the
     logit: a hidden layer over the vector reads no more than the linear affine
-    (round 41), and the raw vector as a node embedding through the preprocessor reads
-    0.03 under the logit form and under no vector at all (round 43), so what is open
-    is a compact representation of the vector on the node, a reduced vector or a
-    learned bottleneck, and the vector as its own token.
+    (round 41), the raw vector as a node embedding through the preprocessor reads
+    0.03 under the logit form and under no vector at all (round 43), and reduced to
+    64 or 16 principal components it fits on time and reads the affine-alone number
+    on the node and the logit form's number only when the vector is in the affine as
+    well (round 44). So the representation path carries the vector without cost once
+    it is compact and reads nothing from it that the logit does not; what is open is
+    a head that reads a representation-borne vector, the deleted gene's own token
+    rather than the pooled context, and the vector as its own token.
   \item The two model families, annotation through the graph and the solve through
     the transformer, miss different genes, and their post hoc average reads 0.954 under
     the fold protocol (the GO convolution with the scalable form). The one model

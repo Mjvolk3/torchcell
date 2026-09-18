@@ -1400,7 +1400,35 @@ select epochs 69 to 118. The 4,131 columns enter the width-12 preprocessor as ra
 input, so the vector's read is a projection with 12 weights per reaction learned
 from 629 genes, most of the cell's parameters, where the affine reads it with one
 weight per reaction on the logit; what the representation path needs is a compact
-vector, and the next round reduces it before the node.
+vector, and round 44 reduces it before the node.
+
+A compact vector on the node fits on time and still reads nothing the backbone did
+not have (round 44, jobs 2427 to 2429; Table~\ref{tab:w60}, Figure~\ref{fig:w60}).
+The 1,121 $\log(1 + |v|)$ rows are close to low rank: principal components fitted on
+them hold an explained variance of 1.000 at 64 and 0.999 at 16. As the node
+embedding, the 64-component vector reads 0.879, 0.872, 0.888, 0.908, 0.905 and 0.897
+(mean 0.892, sd 0.014; pooled 0.894 [0.84, 0.94]) and the 16-component vector 0.906,
+0.891, 0.906, 0.892, 0.895 and 0.891 (mean 0.897; pooled 0.901 [0.85, 0.95]), the
+affine-alone level (0.890), with transitions at epochs 27 to 57 as the logit form's;
+with the full vector in the affine as well, the 64-component node embedding reads
+0.908, 0.914, 0.907, 0.903, 0.906 and 0.909 (mean 0.908, sd 0.004; pooled 0.909),
+the logit form's number and no more. So the representation path carries the vector
+without cost once it is compact, and carries nothing the logit path does not: at this
+resolution the solve's information about the deleted gene is read at the logit, and
+a representation-borne vector would need a head that reads it there, which the
+context head over the pooled tokens does not.
+
+\input{tables/round_w60}
+
+\tcfigfit[1.0]{figures/w60_readout_2026-09-18-16-20-21.pdf}{\textbf{Round 44, the
+  reduced vector on the node.} \textbf{a}, Validation AUROC per epoch, one thin line
+  per seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch
+  step per cell against the validation size. \textbf{c}, Held-out AUROC per cell
+  (points), the seed mean and the gene bootstrap of the pooled per-gene logits (square
+  with interval), beside FBA on four media, Flux Cone Learning and the released FBA
+  predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w60}.}{fig:w60}
 
 \subsection{Round 36: a store from another solver's point\secstatus{todo}}
 \label{sec:round36}

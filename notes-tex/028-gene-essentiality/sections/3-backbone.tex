@@ -417,6 +417,51 @@ ladder gains a linear rung on each annotation vector alone.
 
 \input{tables/round_w42}
 
+\subsection{Which genes the best cells misrank\secstatus{todo}}
+\label{sec:hard-genes}
+
+At 195 genes the AUROC is a sum over a few dozen misrankings, so the genes behind it
+can be named. For every cell of the five best arms, \texttt{hard\_genes.py} reads the
+per-gene logits on the held-out genes and scores each gene's \emph{misrank}, the
+fraction of the other class on the wrong side of it: for an essential gene the
+nonessential genes scoring above it, for a nonessential gene the essential genes
+scoring below it. One minus the class mean of the misrank is that class's share of the
+AUROC, and averaging over an arm's cells separates the genes an arm gets wrong from the
+ones a seed gets wrong (Figure~\ref{fig:hard-genes}, Table~\ref{tab:hard-genes}).
+
+\tcfigfit[1.0]{figures/hard_genes_2026-09-18-03-26-39.pdf}{\textbf{Which held-out genes
+  the best cells misrank.} \textbf{a}, The 31 essential held-out genes sorted by their
+  mean misrank over five arms, one marker per arm (the mean over that arm's cells), the
+  line the mean over arms. \textbf{b}, The same for the 164 nonessential genes.
+  \textbf{c}, The Spearman correlation of the per-gene misrank between arms. Arms:
+  the pathway multi-hot with ProtT5 and the affine (round 22, three seeds), the
+  round-12 fold models (five), the head over the solved flux on ProtT5 (rounds 21 and
+  24, six seeds) and on the pathway input (round 23, three), and ProtT5 with the affine
+  (round 5, three). Written by
+  \texttt{experiments/028-gene-essentiality/scripts/hard\_genes.py}.}{fig:hard-genes}
+
+\input{tables/hard_genes}
+
+The solve's own call splits the essential genes. Nineteen of the 31 essential held-out
+genes have a knockout growth ratio of 1.0 on YPD, the solve calling them dispensable,
+and fourteen of the fifteen hardest are among those nineteen, while eight of the
+fifteen easiest have a ratio of 0. The hardest essential genes are the ones FBA misses,
+and every model misses them with it: FRQ1, AUR1, PGA3, CDC19 (pyruvate kinase, covered
+in the GEM by its paralog PYK2), PET9 (the ADP/ATP carrier, covered by AAC1 and AAC3),
+LCB1 and LCB2 (serine palmitoyltransferase), NEO1, TPI1, IPP1. The hardest
+nonessential genes are metabolic enzymes the models call essential: the three
+glyceraldehyde-3-phosphate dehydrogenase isozymes TDH1, TDH2 and TDH3, ERG4, ATP2,
+GSH2, TRR2, FBP1, HMG2 and ACS1, twelve of the fifteen with a ratio of 1.0 and most
+with 26 to 125 GO terms. Both failure sets are isozyme redundancy read the wrong way: an
+essential gene whose paralog covers it in the solve, and a nonessential paralog of an
+essential metabolic function that the annotation vectors make look essential. The arms
+agree on the genes they fail: the two affine cells at a Spearman of 0.81, the flux head
+on ProtT5 with the affine on ProtT5 at 0.88, and the flux head on the pathway input
+least aligned with the rest (0.44 to 0.67), the arm whose mean carries an unfit seed.
+Hypothesis, untested: a paralog-aware input, the GPR disjunction with an expression
+weight or the isozyme count of a gene's reactions, is what would move the fourteen; the
+solve's own vector cannot, since the solve reroutes through the paralog.
+
 \subsection{Round 16: the round-9 backbone with the round-11 affine\secstatus{todo}}
 
 Round 16 (jobs 2309 and 2310) puts the widened affine on the round-9 backbone: the

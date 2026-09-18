@@ -1007,6 +1007,50 @@ def gene_encodings() -> str | None:
     return write("gene_encodings", body, "the built embedding tensors under DATA_ROOT")
 
 
+def hard_genes() -> str | None:
+    """The fifteen hardest held-out genes of each class, from ``results/hard_genes.json``."""
+    src = osp.join(RESULTS, "hard_genes.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    arms = list(report["arms"])
+    short = {a: a.split(" (")[0] for a in arms}
+    by_gene = {g["gene"]: g for g in report["genes"]}
+    rows = []
+    for label, genes in (
+        ("essential", report["hardest_essential"]),
+        ("nonessential", report["hardest_nonessential"]),
+    ):
+        rows.append(f"    \\multicolumn{{{4 + len(arms)}}}{{@{{}}l}}{{\\emph{{{label} genes}}}} \\\\")
+        for gene in genes:
+            g = by_gene[gene]
+            cells = " & ".join(f"{g['misrank'][a]:.2f}" for a in arms)
+            ratio = "" if g["fba_ratio_ypd"] is None else f"{g['fba_ratio_ypd']:.2f}"
+            rows.append(
+                f"    {gene} & {cells} & {ratio} & {g['n_pathways']} & {g['n_go_terms']} \\\\"
+            )
+    head = " & ".join(short[a] for a in arms)
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The hardest held-out genes]{The fifteen held-out genes of each "
+        "class the best cells misrank most, sorted by the mean misrank over the arms. "
+        "A gene's misrank in one cell is the fraction of the other class on the wrong "
+        "side of it (for an essential gene, the nonessential genes scoring above it; "
+        "for a nonessential gene, the essential genes scoring below it), averaged over "
+        "the arm's cells; one minus the class mean of the misrank is that class's share "
+        "of the AUROC. FBA is the knockout-to-wild-type growth ratio on YPD; pathways "
+        "and GO the gene's counts in the pathway multi-hot and the propagated GO vector. "
+        "Written by \\texttt{hard\\_genes.py} from the per-gene prediction dumps.}\n"
+        "  \\label{tab:hard-genes}\n"
+        f"  \\begin{{tabular}}{{@{{}}l{'r' * len(arms)}rrr@{{}}}}\n    \\hline\n"
+        f"    gene & {head} & FBA & pathways & GO \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("hard_genes", body, "results/hard_genes.json")
+
+
 def main() -> None:
     paths = [
         wl_test(),
@@ -1016,6 +1060,7 @@ def main() -> None:
         graph_baselines_go(),
         fold_ensembles(),
         gene_encodings(),
+        hard_genes(),
         fba_media(),
         splits(),
         logistic_baselines(),

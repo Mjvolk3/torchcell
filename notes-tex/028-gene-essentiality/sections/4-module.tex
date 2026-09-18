@@ -883,6 +883,36 @@ the pass being three of three above it and a seed mean at or above the affine's 
 
 \input{tables/round_w37}
 
+\tcfigfit[1.0]{figures/w37_readout_2026-09-18-01-00-11.pdf}{\textbf{Round 21, the gated
+  elastic cell with a head over the solved flux.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w37}.}{fig:w37}
+
+Both heads pass, and the head over every reaction passes by more. Over all 4,131
+reactions the cell reads 0.883, 0.853 and 0.868 (mean 0.868, sd 0.015; pooled 0.868
+with a gene bootstrap of 0.792 to 0.934), above the round-18 gated elastic cell on
+every seed (0.816, 0.810, 0.783) and 0.047 above the affine's 0.821, which is the first
+module cell to pass a pre-registered read in this document and the first to sit above
+the affine on the ProtT5 backbone. Over the 274 exchange reactions it reads 0.831,
+0.856 and 0.817 (mean 0.835), also above its comparator on every seed and above the
+affine's mean, with one seed selected at epoch 197. Two logged quantities say what
+changed. The training loss at the selected epoch is 0.61 to 0.79, where every forced
+cell of rounds 15 to 20 sat at 1.24 to 1.26: the head fits, and the growth column
+never did. The gate on the growth column ends at 0.01, 0.05 and 0.09 under the full
+head and 0.24 to 0.42 under the exchange head, so the growth column is used little or
+not at all once the head can read the vector behind it, and the head's weight norm
+grows to 3.3 to 5.6 from zero. What is measured is that the flux vector the elastic
+program returns for a deletion, read linearly, ranks the held-out genes at 0.87 on a
+backbone whose own pooled cell ranks them at 0.77. Which part of the cell makes that
+vector informative, the deletion's closure of its reactions through the GPR rules,
+the learned ceilings that reshape the optimum per genotype, or the head's reach over
+the exchange and transport columns, is what Section~\ref{sec:round24} separates.
+
 \subsection{Round 23: the module on the ladder's top input\secstatus{todo}}
 \label{sec:round23}
 

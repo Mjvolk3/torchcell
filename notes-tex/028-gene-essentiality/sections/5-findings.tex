@@ -51,9 +51,12 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     fifteen hardest essential held-out genes have a knockout growth ratio of 1.0 (CDC19
     covered by PYK2, PET9 by AAC1 and AAC3), and the hardest nonessential genes are
     metabolic paralogs (TDH1, TDH2, TDH3) the annotation vectors make look essential;
-    the best arms agree on their failures at a Spearman of 0.6 to 0.9. Isozyme
-    redundancy, read the wrong way in both directions, is where the remaining AUROC
-    sits (Section~\ref{sec:hard-genes}).
+    the transformer arms agree on their failures at a Spearman of 0.6 to 0.9, and the
+    GO convolution fails elsewhere (0.2 to 0.4 with them), halving the misrank on
+    FRQ1, AUR1, PGA3, LCB1 and LCB2 and repairing twelve of the misranked paralogs.
+    Isozyme redundancy, read the wrong way in both directions, is where the remaining
+    AUROC sits, and the two model families miss different halves of it
+    (Section~\ref{sec:hard-genes}).
   \item[Structure is not the signal.] The 1-WL test separates 1,118 of 1,121
     single-deletion graphs on the physical graph and all of them on the union, so
     expressivity does not bound a message-passing model here, and the WL kernel, all-ones

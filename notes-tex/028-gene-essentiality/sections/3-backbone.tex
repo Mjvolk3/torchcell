@@ -456,6 +456,26 @@ the limit; level and it is not.
 
 \input{tables/round_w44}
 
+\tcfigfit[1.0]{figures/w44_readout_2026-09-18-05-17-16.pdf}{\textbf{Round 28, the GO
+  cells with a wider cell.} \textbf{a}, Validation AUROC per epoch, one thin line per
+  seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step
+  per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points),
+  the seed mean and the gene bootstrap of the pooled per-gene logits (square with
+  interval), beside FBA on four media, Flux Cone Learning and the released FBA
+  predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w44}.}{fig:w44}
+
+The preprocessor is not the limit. At width 24 with a two-layer preprocessor, 5.8
+million parameters against 17 thousand, GO beside ProtT5 reads 0.847, 0.841 and
+0.838 against the width-12 cell's 0.830, 0.827 and 0.842, above on two seeds by 0.01
+to 0.02 and level on the third; GO with the pathways beside ProtT5 reads 0.849, 0.855
+and 0.853 against 0.852, 0.852 and 0.844, level. A cell 350 times larger reads the
+GO vector the same, so whatever keeps the transformer at 0.84 on an input that gives
+graph convolution 0.91 is not capacity. What it is, is not measured; the pooled
+readout, which averages the perturbed tokens, and the density of the GO rows against
+the pathway rows are the untested candidates.
+
 \subsection{Which genes the best cells misrank\secstatus{todo}}
 \label{sec:hard-genes}
 

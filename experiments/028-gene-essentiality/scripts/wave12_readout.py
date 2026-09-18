@@ -594,7 +594,7 @@ ARM_LABELS = {
     "pathlpelgate100": "pathway multi-hot + ProtT5; gated column + context, elastic solve, x100",
     "pathlpelgateflux": "pathway multi-hot + ProtT5; gated + a head over the solved flux (all reactions)",
     "lpelbio30lr10": "growth column, elastic solve, x30, flux layer lr x10",
-    "lpelbio100r6lr10": "growth column, elastic solve, x100, reach e^6, flux layer lr x10",
+    "lpelbio100r6lr10": "growth column, elastic solve, x100, reach $e^{6}$, flux layer lr x10",
     "lpelgateflux": "gated column + context + a head over the solved flux (all reactions)",
     "lpelgatefluxexch": "gated column + context + a head over the solved exchange fluxes",
     "lpelgatefluxgene": "gated column + context + a head over the solved gene-owned fluxes",

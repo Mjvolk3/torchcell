@@ -780,7 +780,7 @@
     },
     {
       "arm": "lpelbio100r6lr10",
-      "label": "growth column, elastic solve, x100, reach e^6, flux layer lr x10",
+      "label": "growth column, elastic solve, x100, reach $e^{6}$, flux layer lr x10",
       "n_seeds": 3,
       "seeds": [
         2700,

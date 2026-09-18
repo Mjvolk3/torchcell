@@ -182,7 +182,7 @@ are one number at the resolution of 195 genes, and the MLP's costs thirty second
 \subsection{The message-passing architectures, as equations and as baselines\secstatus{todo}}
 \label{sec:mp-architectures}
 
-Every graph model in this document is an instance of message passing: a node's
+Every graph model in the comparator set is an instance of message passing: a node's
 representation is updated from an aggregate of its neighbors' representations,
 \begin{equation}
   h_i^{(k)} = \gamma^{(k)}\Big(h_i^{(k-1)},\ \bigoplus_{j \in \mathcal{N}(i)}
@@ -234,6 +234,22 @@ split into its blocks, the cheap half of the attribution that Section~\ref{sec:b
 completes on the transformer.
 
 \input{tables/graph_baselines_relational}
+
+Keeping the edge type is worth more than any choice of aggregator. On ProtT5 alone
+the relational models read 0.852 (RGAT) and 0.836 (RGCN) against 0.834 for graph
+convolution over the untyped union at the same 200 epochs, 0.783 for GraphSAGE and
+0.665 for GIN; on the transformer's three inputs RGAT reads 0.887, 0.885 and 0.895
+(mean 0.889), GraphSAGE 0.887, RGCN 0.860, GIN 0.705, against 0.847 for graph
+convolution. RGAT on the three inputs is the strongest of the cheap models in this
+document, level with the transformer's best single cell on the pathway input
+(Section~\ref{sec:round22}) and 0.019 above the MLP on the same three inputs. GIN, the
+aggregator as expressive as the 1-WL test, is the weakest on both inputs and selects
+epochs 171 to 195 on five seeds of six, the sign of a model still moving at the end
+of its budget rather than of a converged one; what the next subsection measures is
+that 1-WL expressiveness is not the axis this endpoint turns on, so the ranking of
+the aggregators here says nothing about it. GraphSAGE, whose only difference from
+graph convolution is the separate weight on the node's own representation, gains
+0.04 on the three inputs and loses 0.05 on ProtT5 alone.
 
 \input{tables/graph_baselines_split}
 

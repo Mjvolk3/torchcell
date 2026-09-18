@@ -674,6 +674,18 @@ Round 23 READ (02:04, `--round w39`, figure `w39_readout_2026-09-18-02-04-19`): 
 
 Round 25 (w41, submitted 02:08): the round-23 flux-head cell on ProtT5 + pathways (a) on the five cross-validation folds (`w41_pathfluxcv_a` folds 0-2, `w41_pathfluxcv_b` folds 3-4; scored by `cv_ensemble_readout.py --prefix w41_pathfluxcv`, the protocol of the reported 0.893) and (b) on seeds 2703-2705 (`w41_pathlpelgatefluxs3`, stems `w39_pathlpelgateflux_*_s2703-2705` so `--round w39` pools six seeds). Pre-registered read: (a) the fold ensemble is read against the reported 0.893 (chromprotcv, round 12) as the headline comparison, no pass rule, the number is what it is with its gene bootstrap; (b) the six-seed read of the pathway flux head against the control and the affine by seed, and the count of seeds that do not fit (training loss above 0.9 at the selected epoch) out of six.
 
+Relational baselines DONE (job 2350, 12.5 min on one card; `results/graph_baselines_relational.json`, table `tables/graph_baselines_relational.tex`, prose in `2-comparators.tex` sec:mp-architectures). Held-out AUROC, three seeds, 200 epochs:
+
+| model | ProtT5 | ProtT5 + chrom-pathway + FBA |
+|---|---|---|
+| GCN, union (round-8 table) | 0.834 | 0.847 |
+| GIN, union | 0.665 | 0.705 |
+| GraphSAGE, union | 0.783 | 0.887 |
+| RGCN, nine typed | 0.836 | 0.860 |
+| RGAT, nine typed (one GATv2 per relation) | 0.852 | 0.889 (0.887/0.885/0.895) |
+
+RGAT on the three inputs is the strongest cheap model (level with protpathfba on the transformer, 0.890; MLP 0.870). GIN is the weakest and selects epochs 171-195 on 5/6 seeds (still moving at 200 epochs).
+
 Round 24 (w40, submitted 00:30, three LP packs): what carries round 21. (a) `w40_lpoffgateflux`: the same flux head over the GEM-box solve (`flux_off` + LP, no learned ceilings, no abundance head); if it matches round 21 the solved flux vector alone carries the result and the enzyme-constrained part adds nothing; if it falls to the ladder's pFBA-vector level (0.77) the learned ceilings are doing the work. (b) `w40_lpelgatefluxgene`: the head over the 2,709 gene-owned reactions only (`--ess-flux-head-reactions gene`). (c) `w40_lpelgatefluxs3`: the passing cell on seeds 2703-2705 (ESS_OUT keeps the `w37_lpelgateflux` stem so the readout pools six seeds). Pre-registered read: (a) and (b) are read against the round-21 cell by seed; (a) at or above round 21 on 3/3 means the ceilings are not needed; (a) below on 3/3 means they are; anything else is undecided at n=3. (c) extends the round-21 read to six seeds (6/6 above 0.816/0.810/0.783 paired where seeds match, mean >= 0.821).
 
 The module diagram for round 21 is `notes/assets/drawio/028-module-gated-flux.drawio` (from `028-module.gen.py`), exported to `notes-tex/028-gene-essentiality/figures/module_gated_flux.pdf`:

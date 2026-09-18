@@ -1569,8 +1569,11 @@ store's 0.912 and the interior point's 0.911. Under the reported protocol (round
 job 2420, one seed) it reads 0.921, 0.859, 0.887, 0.878 and 0.907 on the folds and
 0.909 [0.86, 0.95] as the ensemble, the interior-point store's single-seed 0.909
 against the pFBA store's 0.920, with the same fold, the second, selecting late (epoch
-187) and low on both first-order stores; as a fold family 0.915 alone and 0.949
-[0.91, 0.98] with the GO fold models. Three stores from three solvers that stop
+187) and low on both first-order stores; with three seeds per fold (job 2432, each
+fold model the seed-mean logit) the folds read 0.915, 0.881, 0.884, 0.880 and 0.908
+and the ensemble 0.911 [0.86, 0.95], the interior-point store's three-seed 0.912
+(Table~\ref{tab:ensembles}); as a fold family 0.915 alone and 0.949 [0.91, 0.98]
+with the GO fold models. Three stores from three solvers that stop
 inside or at the parsimonious edge of the optimal face train the cell to one number
 on the split file and to numbers within each other's intervals under the fold
 protocol; the growth vertex alone does not.

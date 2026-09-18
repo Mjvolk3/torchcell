@@ -368,30 +368,38 @@ def run_arm(
     return row
 
 
-def fold_ensembles(device: torch.device) -> None:
-    """The MLP and the 400-epoch graph convolution on the five folds, logits averaged.
+def fold_ensembles(device: torch.device, which: str = "three") -> None:
+    """Cheap architectures on the five folds, logits averaged on the held-out genes.
 
-    The transformer's reported 0.893 is a five-fold ensemble; this gives the two cheap
-    architectures on the same three inputs the same averaging, one seed per fold as in
-    ``cv_ensemble_readout.py``.
+    The transformer's reported 0.893 is a five-fold ensemble; this gives the cheap
+    architectures the same averaging, one seed per fold as in
+    ``cv_ensemble_readout.py``. ``which`` selects the input and the arms: ``three``
+    is the MLP and the 400-epoch convolution on the transformer's three inputs;
+    ``go`` is convolution on the propagated GO multi-hot alone at 400 and 800 epochs.
     """
     gene_ids, graphs = gene_graphs()
     index = {g: i for i, g in enumerate(gene_ids)}
-    x = np.concatenate(
-        [
-            embedding("prot_T5_all", gene_ids),
-            embedding("normalized_chrom_pathways", gene_ids),
-            fba_ratios(gene_ids),
-        ],
-        axis=1,
-    )
     ei = edges(graphs["union of nine"], index)
     no_edges = torch.zeros(2, 0, dtype=torch.long)
-    arms = {"MLP": ("MLP", no_edges, EPOCHS), "GCN": ("GCN", ei, 400)}
-    report: dict[str, object] = {
-        "inputs": "ProtT5+chrom-pathway+FBA ratios",
-        "arms": {},
-    }
+    if which == "three":
+        x = np.concatenate(
+            [
+                embedding("prot_T5_all", gene_ids),
+                embedding("normalized_chrom_pathways", gene_ids),
+                fba_ratios(gene_ids),
+            ],
+            axis=1,
+        )
+        arms = {"MLP": ("MLP", no_edges, EPOCHS), "GCN": ("GCN", ei, 400)}
+        inputs_label = "ProtT5+chrom-pathway+FBA ratios"
+        out_name = "graph_baselines_folds.json"
+    else:
+        assert which == "go", which
+        x = embedding("go", gene_ids)
+        arms = {"GCN400": ("GCN", ei, 400), "GCN800": ("GCN", ei, 800)}
+        inputs_label = "GO"
+        out_name = "graph_baselines_go_folds.json"
+    report: dict[str, object] = {"inputs": inputs_label, "arms": {}}
     for name, (kind, edge_index, epochs) in arms.items():
         per_fold: list[dict[str, float]] = []
         fold_aurocs: list[float] = []
@@ -441,7 +449,7 @@ def fold_ensembles(device: torch.device) -> None:
             f"{np.mean(fold_aurocs):.3f}; ensemble {auroc:.4f} [{lo:.3f}, {hi:.3f}]",
             flush=True,
         )
-    out = osp.join(RESULTS, "graph_baselines_folds.json")
+    out = osp.join(RESULTS, out_name)
     with open(out, "w") as fh:
         json.dump(report, fh, indent=2)
     print(out)
@@ -454,7 +462,17 @@ def main() -> None:
     parser.add_argument(
         "--arms",
         default="base",
-        choices=("base", "extra", "folds", "relational", "split", "go", "go400"),
+        choices=(
+            "base",
+            "extra",
+            "folds",
+            "relational",
+            "split",
+            "go",
+            "go400",
+            "go800",
+            "go_folds",
+        ),
         help=(
             "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
             "GCN and GATv2. extra: graph convolution on the union with the transformer's "
@@ -464,8 +482,8 @@ def main() -> None:
     )
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if args.arms == "folds":
-        fold_ensembles(device)
+    if args.arms in ("folds", "go_folds"):
+        fold_ensembles(device, "three" if args.arms == "folds" else "go")
         return
     with gzip.open(SPLIT, "rt") as fh:
         split = json.load(fh)
@@ -571,19 +589,22 @@ def main() -> None:
                 run_arm("GCN", "union of nine", inputs, x, ei, split, index, device)
             )
         out = osp.join(RESULTS, "graph_baselines_go.json")
-    elif args.arms == "go400":
+    elif args.arms in ("go400", "go800"):
         # Graph convolution on GO selects epochs 183 to 197 at a 200-epoch budget, so
         # the three GO rows that matter run to 400 (the round-8 table's 400-epoch rows
-        # are the precedent).
+        # are the precedent), and, still selecting 382 to 397 there, to 800.
+        n_epochs = 400 if args.arms == "go400" else 800
         go = embedding("go", gene_ids)
         fba = fba_ratios(gene_ids)
         ei = edges(graphs["union of nine"], index)
-        feats_go400 = {
-            "GO (400 epochs)": go,
-            "GO+FBA ratios (400 epochs)": np.concatenate([go, fba], axis=1),
-            "ProtT5+GO+FBA ratios (400 epochs)": np.concatenate([t5, go, fba], axis=1),
+        feats_long = {
+            f"GO ({n_epochs} epochs)": go,
+            f"GO+FBA ratios ({n_epochs} epochs)": np.concatenate([go, fba], axis=1),
+            f"ProtT5+GO+FBA ratios ({n_epochs} epochs)": np.concatenate(
+                [t5, go, fba], axis=1
+            ),
         }
-        for inputs, x in feats_go400.items():
+        for inputs, x in feats_long.items():
             rows.append(
                 run_arm(
                     "GCN",
@@ -594,10 +615,10 @@ def main() -> None:
                     split,
                     index,
                     device,
-                    epochs=400,
+                    epochs=n_epochs,
                 )
             )
-        out = osp.join(RESULTS, "graph_baselines_go400.json")
+        out = osp.join(RESULTS, f"graph_baselines_{args.arms}.json")
     elif args.arms == "extra":
         chrom = embedding("normalized_chrom_pathways", gene_ids)
         fba = fba_ratios(gene_ids)

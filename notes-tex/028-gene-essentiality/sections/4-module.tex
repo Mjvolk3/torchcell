@@ -1384,9 +1384,15 @@ solve read of Section~\ref{sec:solve-tolerance} (twelve of 1,121 programs stoppe
 short and keep the zero flux), trains the round-33 cell to 0.906, 0.901, 0.910,
 0.899, 0.897 and 0.908 (mean 0.903, sd 0.005; pooled 0.907 [0.86, 0.95]), every
 seed selecting after the transition (epochs 41 to 85), one number with the pFBA
-store's 0.912 and the interior point's 0.911. Three stores from three solvers that
-stop inside or at the parsimonious edge of the optimal face train the cell to one
-number; the growth vertex alone does not.
+store's 0.912 and the interior point's 0.911. Under the reported protocol (round 39,
+job 2420, one seed) it reads 0.921, 0.859, 0.887, 0.878 and 0.907 on the folds and
+0.909 [0.86, 0.95] as the ensemble, the interior-point store's single-seed 0.909
+against the pFBA store's 0.920, with the same fold, the second, selecting late (epoch
+187) and low on both first-order stores; as a fold family 0.915 alone and 0.949
+[0.91, 0.98] with the GO fold models. Three stores from three solvers that stop
+inside or at the parsimonious edge of the optimal face train the cell to one number
+on the split file and to numbers within each other's intervals under the fold
+protocol; the growth vertex alone does not.
 
 \input{tables/round_w54}
 

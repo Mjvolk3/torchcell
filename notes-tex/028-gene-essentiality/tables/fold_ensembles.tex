@@ -20,6 +20,7 @@
     round 34: the same, three seeds per fold (each fold model the seed-mean logit) & 5 & 0.913, 0.905, 0.921, 0.904, 0.910 & 0.910 & 0.919 [0.87, 0.96] \\
     round 37: the same cell over the interior-point store (HiGHS ipm, no crossover, KKT $10^{-4}$) & 5 & 0.913, 0.836, 0.881, 0.897, 0.911 & 0.888 & 0.909 [0.86, 0.95] \\
     round 37: the interior-point store, three seeds per fold & 5 & 0.915, 0.851, 0.887, 0.884, 0.926 & 0.893 & 0.912 [0.86, 0.95] \\
+    round 39: the same cell over the PDLP store (HiGHS PDLP, no crossover, KKT $10^{-4}$) & 5 & 0.921, 0.859, 0.887, 0.878, 0.907 & 0.890 & 0.909 [0.86, 0.95] \\
     MLP on the transformer's three inputs (no graph) & 5 & 0.870, 0.892, 0.880, 0.866, 0.884 & 0.878 & 0.886 [0.82, 0.94] \\
     graph convolution on the three inputs, 400 epochs & 5 & 0.874, 0.807, 0.897, 0.888, 0.882 & 0.870 & 0.887 [0.83, 0.93] \\
     graph convolution on the GO multi-hot alone, 400 epochs & 5 & 0.914, 0.893, 0.918, 0.916, 0.906 & 0.909 & 0.918 [0.87, 0.95] \\

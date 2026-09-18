@@ -6,6 +6,8 @@
   "indicator + ProtT5 + affine, five folds (round 12)": 5,
   "cached solve + flux head, pathway + ProtT5, five folds (round 27)": 5,
   "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)": 5,
+  "layer-free log1p, interior-point store, five folds (round 37)": 5,
+  "layer-free log1p, PDLP store, five folds (round 39)": 5,
   "GO convolution, five folds (400 epochs)": 5
  },
  "combinations": [
@@ -66,13 +68,51 @@
   },
   {
    "families": [
+    "layer-free log1p, interior-point store, five folds (round 37)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9130605822187254,
+   "ci_low": 0.8639341675016495,
+   "ci_high": 0.9541514431859699
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "layer-free log1p, interior-point store, five folds (round 37)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9508261211644373,
+   "ci_low": 0.9173623936175965,
+   "ci_high": 0.9783182088920394
+  },
+  {
+   "families": [
+    "layer-free log1p, PDLP store, five folds (round 39)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9154209284028324,
+   "ci_low": 0.8713325644590496,
+   "ci_high": 0.9542347378072985
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "layer-free log1p, PDLP store, five folds (round 39)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9486624704956726,
+   "ci_low": 0.9135743296977961,
+   "ci_high": 0.9762640463012119
+  },
+  {
+   "families": [
     "GO convolution, five folds (400 epochs)",
     "indicator + ProtT5 + affine, five folds (round 12)"
    ],
    "n_cells": 10,
    "auroc": 0.9435483870967742,
-   "ci_low": 0.9049963539546874,
-   "ci_high": 0.9758947861552028
+   "ci_low": 0.9041135906535152,
+   "ci_high": 0.9753034390144216
   },
   {
    "families": [
@@ -81,8 +121,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9494492525570417,
-   "ci_low": 0.9154369361569401,
-   "ci_high": 0.977782675891646
+   "ci_low": 0.9129343268385246,
+   "ci_high": 0.9773773684915505
   },
   {
    "families": [
@@ -91,8 +131,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9537765538945713,
-   "ci_low": 0.9220974438735435,
-   "ci_high": 0.9797404805458556
+   "ci_low": 0.9226679530094024,
+   "ci_high": 0.9797764705882352
   },
   {
    "families": [
@@ -102,8 +142,8 @@
    ],
    "n_cells": 15,
    "auroc": 0.9445318646734855,
-   "ci_low": 0.9089569120617496,
-   "ci_high": 0.972776364342498
+   "ci_low": 0.9077852294764059,
+   "ci_high": 0.9741075438408896
   },
   {
    "families": [
@@ -113,8 +153,8 @@
    ],
    "n_cells": 15,
    "auroc": 0.9468922108575925,
-   "ci_low": 0.9109599665417275,
-   "ci_high": 0.9754228954015278
+   "ci_low": 0.9118070147942956,
+   "ci_high": 0.9745041762537238
   }
  ]
 }

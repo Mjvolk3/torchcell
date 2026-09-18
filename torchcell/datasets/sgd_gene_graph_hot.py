@@ -53,8 +53,13 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
             pre_transform: Optional transform applied before saving.
         """
         self.graph = graph
+        # The base constructor processes when the model's file is absent and loads it.
+        # An unconditional `self.process()` used to follow it: every construction
+        # rewrote `<model_name>.pt` (the file's mtime moved at every 028 launch, and
+        # cells of one pack raced torch.load against a neighbor's rewrite), while the
+        # data this instance served stayed the previously written file's. The rewrite
+        # is what let the unsorted column order above change from run to run.
         super().__init__(root, model_name, transform, pre_transform)
-        self.process()
 
     def initialize_model(self) -> None:
         """Return nothing; this dataset uses no learned model."""
@@ -108,11 +113,21 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
             unique_chromosomes.add(chromosome)
             unique_pathways.update(pathways)
 
-        # Create dictionaries to map chromosomes and pathways to their indices
+        # Create dictionaries to map chromosomes and pathways to their indices. SORTED:
+        # enumerating the sets directly gave every process its own column order under
+        # Python's per-process hash randomization of str, and since process() ran at
+        # every construction (see __init__), two runs of one seed saw the 173 pathway
+        # columns in two permutations. Measured 2026-09-18 (028 rounds 45, 46, 49): with
+        # cuDNN, cuBLAS and torch's deterministic algorithms all pinned, every pinned
+        # pair with this multi-hot on the node diverged from epoch 0, and every pair
+        # without it (ProtT5 alone, GO + ProtT5, whose columns are sorted) was one
+        # trajectory.
         chromosome_to_index = {
-            chrom: idx for idx, chrom in enumerate(unique_chromosomes)
+            chrom: idx for idx, chrom in enumerate(sorted(unique_chromosomes, key=str))
         }
-        pathway_to_index = {pathway: idx for idx, pathway in enumerate(unique_pathways)}
+        pathway_to_index = {
+            pathway: idx for idx, pathway in enumerate(sorted(unique_pathways, key=str))
+        }
 
         # Compute median values for each feature
         feature_medians = {

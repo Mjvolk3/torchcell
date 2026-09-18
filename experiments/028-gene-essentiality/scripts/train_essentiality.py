@@ -248,6 +248,12 @@ SOLVE_ENCODINGS_NPZ = osp.join(
     DATA_ROOT, "data/torchcell/reference_flux/ess_solve_encodings_YPD.npz"
 )
 ESS_SOLVE_FEATURES = ("none", "stats", "pfba", "stats_pfba")
+#: How the pFBA vector enters the affine (round 33). 'standardized' is round 31: each of
+#: the 4,131 columns to mean 0 and sd 1 over the covered genes. 'log1p' is the flux
+#: head's own encoding (round 21 onward): log(1 + |v|) with v in mmol/gDW/h, unscaled,
+#: so a zero flux reads 0 and the affine sees what GatedFluxReadout sees. The
+#: statistics block stays standardized under both.
+ESS_SOLVE_ENCODINGS = ("standardized", "log1p")
 
 #: Round 32 (2026-09-18). The fitting transition of the flux-head cells is a chance event
 #: of the RUN and not of the seed (round 29: the same seed and program fit at epoch 70 in
@@ -1151,6 +1157,22 @@ class BxCell(BaseModel):
             "the gene's reactions), 'pfba' (the deletion's own pFBA flux vector, 4,131 "
             "columns), 'stats_pfba' (both), from ess_reference_flux_table.py. 'none' is "
             "the four ratios alone, bit-identical to round 5."
+        ),
+    )
+    ess_solve_encoding: str = Field(
+        default="standardized",
+        description=(
+            "How the pFBA vector's columns enter the affine: 'standardized' (round 31) or "
+            "'log1p' (log(1 + |v|), the flux head's encoding; round 33)."
+        ),
+    )
+    ess_solve_zero_init: bool = Field(
+        default=False,
+        description=(
+            "Zero the affine's weights on the solve-feature columns at construction, as "
+            "the flux head is zero-initialized, so the cell starts as the four-ratio "
+            "affine and the vector enters by gradient only (round 33). The media ratios' "
+            "weights and the bias keep their default initialization."
         ),
     )
     ib_readout: str = Field(
@@ -2237,6 +2259,8 @@ def build_cell(
     ess_readout: str = ESS_READOUT_BIOMASS,
     ess_fba_media: list[str] | None = None,
     ess_solve_features: str = "none",
+    ess_solve_encoding: str = "standardized",
+    ess_solve_zero_init: bool = False,
     flux_capacity_scale: float = 1.0,
     flux_lp_slack_penalty: float = 0.0,
     flux_pool_by_construction: bool = False,
@@ -2341,6 +2365,8 @@ def build_cell(
         ess_readout=ess_readout,
         ess_fba_media=list(ess_fba_media) if ess_fba_media else list(FBA_MEDIA),
         ess_solve_features=ess_solve_features,
+        ess_solve_encoding=ess_solve_encoding,
+        ess_solve_zero_init=ess_solve_zero_init,
         flux_capacity_scale=flux_capacity_scale,
         flux_lp_slack_penalty=flux_lp_slack_penalty,
         flux_pool_by_construction=flux_pool_by_construction,
@@ -3772,7 +3798,7 @@ def fba_growth_table(
 
 
 def solve_feature_table(
-    gene_ids: list[str], kind: str
+    gene_ids: list[str], kind: str, encoding: str = "standardized"
 ) -> tuple[torch.Tensor, torch.Tensor, tuple[str, ...], dict[str, Any]]:
     """``([n_genes, k], [n_genes] bool, column names, meta)``: solve-derived features.
 
@@ -3781,36 +3807,45 @@ def solve_feature_table(
     not cover reads 0 in every column under a False flag.
     """
     assert kind in ESS_SOLVE_FEATURES and kind != "none", kind
+    assert encoding in ESS_SOLVE_ENCODINGS, encoding
     payload = np.load(SOLVE_ENCODINGS_NPZ, allow_pickle=False)
     genes = [str(g) for g in payload["genes"]]
     blocks: list[np.ndarray] = []
     names: list[str] = []
+
+    def standardize(raw: np.ndarray) -> np.ndarray:
+        mean = raw.mean(axis=0, keepdims=True)
+        std = raw.std(axis=0, keepdims=True)
+        std[std < 1e-8] = 1.0
+        return cast(np.ndarray, (raw - mean) / std)
+
     if kind in ("stats", "stats_pfba"):
-        blocks.append(payload["gene_flux_stats"])
+        blocks.append(standardize(payload["gene_flux_stats"].astype(np.float32)))
         names += [f"stat_{s}" for s in payload["stat_names"]]
     if kind in ("pfba", "stats_pfba"):
-        blocks.append(payload["v_deletion"])
+        v = payload["v_deletion"].astype(np.float32)
+        # The flux head's encoding (round 21 onward) or the ladder's; the flux is in
+        # mmol/gDW/h clamped to the layer's scale, exactly what the head reads.
+        blocks.append(np.log1p(np.abs(v)) if encoding == "log1p" else standardize(v))
         names += [f"pfba_{r}" for r in payload["rxn_ids"]]
-    raw = np.concatenate(blocks, axis=1).astype(np.float32)
-    mean = raw.mean(axis=0, keepdims=True)
-    std = raw.std(axis=0, keepdims=True)
-    std[std < 1e-8] = 1.0
-    standardized = (raw - mean) / std
+    encoded = np.concatenate(blocks, axis=1).astype(np.float32)
     row_of = {g: i for i, g in enumerate(genes)}
-    table = torch.zeros(len(gene_ids), raw.shape[1])
+    table = torch.zeros(len(gene_ids), encoded.shape[1])
     known = torch.zeros(len(gene_ids), dtype=torch.bool)
     for i, gene in enumerate(gene_ids):
         if gene in row_of:
-            table[i] = torch.from_numpy(standardized[row_of[gene]])
+            table[i] = torch.from_numpy(encoded[row_of[gene]])
             known[i] = True
     meta = {
         "source": SOLVE_ENCODINGS_NPZ,
         "kind": kind,
-        "n_columns": int(raw.shape[1]),
+        "encoding": encoding,
+        "n_columns": int(encoded.shape[1]),
         "n_genes_with_solve": int(known.sum()),
         "note": (
-            "columns standardized over the genes the file covers; uncovered genes read "
-            "the column mean (0) and are flagged."
+            "statistics standardized over the genes the file covers; the pFBA vector "
+            f"{'as log(1 + |v|)' if encoding == 'log1p' else 'standardized the same way'}; "
+            "uncovered genes read 0 in every column and are flagged."
         ),
     }
     return table, known, tuple(names), meta
@@ -3825,7 +3860,7 @@ def affine_table(
     columns: tuple[str, ...] = media
     if cell.ess_solve_features != "none":
         s_table, s_known, s_names, s_meta = solve_feature_table(
-            gene_ids, cell.ess_solve_features
+            gene_ids, cell.ess_solve_features, cell.ess_solve_encoding
         )
         table = torch.cat([table, s_table], dim=1)
         known = known & s_known
@@ -3893,6 +3928,26 @@ class FbaAffine(nn.Module):
         if len(self.media) > 16:
             out["ess_fba_w_norm"] = float(w.norm())
         return out
+
+
+def apply_solve_zero_init(cell: BxCell, affine: FbaAffine) -> None:
+    """Round 33: zero the affine's weights on every column after the media ratios.
+
+    The flux head over the solve is zero-initialized (round 21 onward), so the cell
+    starts as the backbone plus the four-ratio affine and the vector enters by gradient
+    alone; the round-31 affine started with a default ``Linear(4135, 1)`` over 4,131
+    standardized columns, a logit of about 0.6 sd before any training, and four of its
+    six pFBA-vector cells selected an epoch before 14. No-op unless the cell asks.
+    """
+    if not cell.ess_solve_zero_init:
+        return
+    n_media = len(cell.ess_fba_media)
+    with torch.no_grad():
+        affine.linear.weight[:, n_media:].zero_()
+    print(
+        f"[solve-zero-init] affine weights zeroed on {affine.linear.weight.shape[1] - n_media} "
+        f"solve-feature columns; the {n_media} media ratios keep their initialization"
+    )
 
 
 class FbaContextReadout(nn.Module):
@@ -5056,6 +5111,7 @@ def build_model_for_cell(
                 wrapped_ess = GatedFbaReadout(
                     model, biomass_index, fba_table, fba_known, fba_media
                 ).to(device)
+            apply_solve_zero_init(cell, wrapped_ess.fba_readout)
         elif cell.ess_readout == ESS_READOUT_GATED_FLUX:
             assert flux_layer.parameterization == "lp", (
                 "gated_flux reads the flux the layer that solves returns; on a projection "
@@ -5100,6 +5156,7 @@ def build_model_for_cell(
         wrapped_fba = FbaContextReadout(model, fba_table, fba_known, fba_media).to(
             device
         )
+        apply_solve_zero_init(cell, wrapped_fba.fba_readout)
         print(
             f"[fba-readout] essentiality from the context head plus an affine of "
             f"{len(fba_media)} columns ({', '.join(fba_media[:4])}, ...) for "
@@ -6779,6 +6836,23 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--ess-solve-encoding",
+        default="standardized",
+        choices=ESS_SOLVE_ENCODINGS,
+        help=(
+            "How the pFBA vector's columns enter the affine: standardized (round 31) or "
+            "log1p, the flux head's own encoding (round 33)."
+        ),
+    )
+    parser.add_argument(
+        "--ess-solve-zero-init",
+        action="store_true",
+        help=(
+            "Zero the affine's weights on the solve-feature columns at construction, as "
+            "the flux head is zero-initialized (round 33)."
+        ),
+    )
+    parser.add_argument(
         "--pos-weight-balanced",
         action="store_true",
         help=(
@@ -7264,6 +7338,8 @@ def main() -> None:
         ess_readout=args.ess_readout,
         ess_fba_media=args.ess_fba_media,
         ess_solve_features=args.ess_solve_features,
+        ess_solve_encoding=args.ess_solve_encoding,
+        ess_solve_zero_init=args.ess_solve_zero_init,
         flux_capacity_scale=args.flux_capacity_scale,
         flux_lp_slack_penalty=args.flux_lp_slack_penalty,
         flux_pool_by_construction=args.flux_pool_by_construction,

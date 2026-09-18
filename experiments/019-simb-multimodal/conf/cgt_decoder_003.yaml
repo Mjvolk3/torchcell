@@ -68,6 +68,8 @@ trainer:
   # NOTE max_epochs is ABSOLUTE under resume, not additional; the training script refuses a
   # resume whose max_epochs would train ~nothing.
   resume_ckpt_path: null
+  # Evaluation only: load these weights, score val, dump val/test predictions, no fit.
+  eval_ckpt_path: null
   early_stopping:
     enabled: true
     monitor: val/loss

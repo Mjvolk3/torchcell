@@ -216,7 +216,7 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
         spec["param_dim"] = param_dim
         if head == "global":
             spec["decoder"] = decoder
-        if head == "per_gene":
+        if head.startswith("per_gene"):
             # FREE OUTPUT-GENE EMBEDDING width (0 = the original S0 head). This is the
             # capacity-only decoder arm: it unties output-gene identity from h_k without
             # touching what information reaches the decoder.
@@ -226,22 +226,16 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
             # versus our one shared MLP). Distinct from free_gene_dim, which appends a
             # per-gene row to the head's INPUT where it enters additively; this one
             # multiplies. Zero-gated, so it is an exact identity at init.
-            spec["per_gene_weight"] = bool(
-                cfg.multitask.get("per_gene_weight", False)
-            )
+            spec["per_gene_weight"] = bool(cfg.multitask.get("per_gene_weight", False))
             # Linear readout: drop the head's hidden layer and nonlinearity, leaving one
             # affine map per gene token. A readout-shape lever, not a capacity one -- it
             # removes 8,190 of 1,194,509 parameters.
-            spec["linear_readout"] = bool(
-                cfg.multitask.get("linear_readout", False)
-            )
+            spec["linear_readout"] = bool(cfg.multitask.get("linear_readout", False))
             # State-form readout: a per-gene affine row over the strain context c_b,
             # zero-gated. GEARS's row (per_gene_weight) reads the gene's own token; this
             # one reads the strain vector, as State's W_recon and the benchmark's ridge
             # decoder do.
-            spec["context_readout"] = bool(
-                cfg.multitask.get("context_readout", False)
-            )
+            spec["context_readout"] = bool(cfg.multitask.get("context_readout", False))
             # CONCAT arm: feed the head [h_pert ; h_i ; c] instead of h_pert alone, so it
             # can learn arbitrary (h_i, c_b) interactions rather than only functions of
             # their sum. Equivariant (shared MLP per token) and graph-free.
@@ -595,7 +589,7 @@ def build_head_alignments(
                 "dropped_features": [],
             }
             continue
-        if head == "per_gene":
+        if head.startswith("per_gene"):
             keep = torch.tensor([k in nid_to_pos for k in keys], dtype=torch.bool)
             col = torch.tensor(
                 [nid_to_pos[k] for k in keys if k in nid_to_pos], dtype=torch.long
@@ -936,6 +930,10 @@ class MultitaskCGTTask(L.LightningModule):
         self.train_eval_every: int = 0
         # Reveal schedule for the masked-label objective; None = objective off (default).
         self.mask_schedule: list[int] | None = None
+        # The per-gene head the reveal schedule teacher-forces (`multitask.mask_head`).
+        # Any other per-gene head (the joint round's `per_gene_aux`) is supervised on all
+        # its genes at every step, so it never sees its own label as input.
+        self.mask_head: str = "per_gene"
         # Wall clock for perf/epoch_seconds; None until the first epoch starts.
         self._epoch_t0: float | None = None
         self.save_hyperparameters(
@@ -1233,11 +1231,11 @@ class MultitaskCGTTask(L.LightningModule):
         rewards copying input to output -- train loss collapses and nothing transfers to
         validation, where nothing is revealed.
         """
-        head = "per_gene"
+        head = self.mask_head
         col = self.head_align.get(head, {}).get("col_idx")
         if col is None:
             raise ValueError(
-                "mask_schedule requires the per_gene head with a col_idx alignment; "
+                f"mask_schedule requires the {head} head with a col_idx alignment; "
                 f"head_align has {sorted(self.head_align)}"
             )
         bsz = self._batch_size(batch)
@@ -2261,10 +2259,18 @@ def _pinned_test_indices(
     return indices
 
 
-def _dump_test_predictions(
-    task: Any, data_module: Any, dataset: Any, cfg: DictConfig, out_path: str
+def _dump_split_predictions(
+    task: Any,
+    data_module: Any,
+    dataset: Any,
+    cfg: DictConfig,
+    out_path: str,
+    split: str = "test",
 ) -> dict[str, int]:
-    """Write per-GENE test predictions for every active head to ``out_path`` (JSON).
+    """Write per-GENE predictions on one split for every active head to ``out_path`` (JSON).
+
+    ``split`` is ``test`` (the end-of-run dump) or ``val`` (the evaluation-only path,
+    ``trainer.eval_ckpt_path``), both served by loaders built with ``shuffle=False``.
 
     WHY THIS EXISTS. ``data_module.pinned_test_split_file`` reproduces somebody else's split
     inside ours, but until now nothing ever SCORED that split -- ``run_training`` called
@@ -2291,14 +2297,17 @@ def _dump_test_predictions(
     for gene, rows in dataset.is_any_deletion_gene_index.items():
         for row in rows:
             idx_to_genes.setdefault(int(row), []).append(str(gene))
-    order = [int(i) for i in data_module.test_dataset.indices]
+    if split not in ("val", "test"):
+        raise ValueError(f"split must be 'val' or 'test', got {split!r}")
+    order = [int(i) for i in getattr(data_module, f"{split}_dataset").indices]
+    loader = getattr(data_module, f"{split}_dataloader")()
 
     device = next(task.parameters()).device
     task.eval()
     records: dict[str, list[dict[str, Any]]] = {h: [] for h in task.active_heads}
     cursor = 0
     with torch.no_grad():
-        for batch in data_module.test_dataloader():
+        for batch in loader:
             batch = batch.to(device)
             _, reps = task(batch)
             bsz = task._batch_size(batch)
@@ -2329,7 +2338,7 @@ def _dump_test_predictions(
                     )
             cursor += bsz
     # A short count is a silent truncation of the comparison set, so it is an error.
-    assert cursor == len(order), f"test dump covered {cursor}/{len(order)} records"
+    assert cursor == len(order), f"{split} dump covered {cursor}/{len(order)} records"
 
     os.makedirs(osp.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as fh:
@@ -2343,7 +2352,9 @@ def _dump_test_predictions(
                 "seed": int(cfg.get("seed", 42)),
                 "wandb_tags": list(cfg.wandb.get("tags", [])),
                 "dist": str(cfg.multitask.get("dist", "point")),
+                "split": split,
                 "n_test_records": len(order),
+                "n_records": len(order),
                 "active_heads": list(task.active_heads),
                 "head_keys": {
                     h: list(task.head_align.get(h, {}).get("keys", []) or [])
@@ -2354,7 +2365,7 @@ def _dump_test_predictions(
             fh,
         )
     counts = {h: len(v) for h, v in records.items()}
-    print(f"[test-dump] wrote {out_path} ({counts})", flush=True)
+    print(f"[{split}-dump] wrote {out_path} ({counts})", flush=True)
     return counts
 
 
@@ -2986,7 +2997,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             continue
         model_head = getattr(model, f"{h}_head", None)
         out_dim = getattr(model_head, "output_dim", None)
-        if h == "per_gene":
+        if h.startswith("per_gene"):
             continue  # per_gene output is [B, N] gathered to feat_dim; out_dim is 1
         if out_dim is not None and int(out_dim) != int(a["feat_dim"]):
             raise ValueError(
@@ -3130,6 +3141,11 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     _sched = cfg.multitask.get("mask_schedule", None)
     if _sched is not None:
         task.mask_schedule = [int(x) for x in _sched]
+        task.mask_head = str(cfg.multitask.get("mask_head", "per_gene"))
+        if task.mask_head not in active_heads:
+            raise ValueError(
+                f"multitask.mask_head={task.mask_head!r} is not an active head {active_heads}"
+            )
         # A step that reveals EVERY gene has U_k = {} and therefore scores nothing: its
         # loss is a graph-connected zero, it contributes no gradient, and in training --
         # where one k is sampled per batch -- landing on it wastes the batch outright.
@@ -3347,6 +3363,56 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         precision=cfg.trainer.get("precision", "32-true"),
         fast_dev_run=cfg.trainer.get("fast_dev_run", False),
     )
+    # EVALUATION ONLY. `trainer.eval_ckpt_path` loads a saved checkpoint's weights into the
+    # task built above (same config, same partition) and, instead of training, scores the
+    # validation split through the ordinary validation path (so `val/...` metrics are the
+    # ones the run logged; a mismatch against W&B at the checkpoint's epoch means the
+    # config or the partition differs from the run's) and writes per-gene point predictions
+    # for the validation and test splits under $DATA_ROOT/{val,test}-predictions/. The
+    # dumps are named by the checkpoint's own run group so they join back to the W&B run.
+    eval_ckpt_path = cfg.trainer.get("eval_ckpt_path")
+    if eval_ckpt_path:
+        eval_ckpt_path = str(eval_ckpt_path)
+        if not osp.exists(eval_ckpt_path):
+            raise FileNotFoundError(
+                f"trainer.eval_ckpt_path does not exist: {eval_ckpt_path}"
+            )
+        _ck = torch.load(eval_ckpt_path, map_location="cpu", weights_only=False)
+        missing, unexpected = task.load_state_dict(_ck["state_dict"], strict=True)
+        if missing or unexpected:
+            raise RuntimeError(
+                f"checkpoint keys do not match the task: missing {missing[:5]}, "
+                f"unexpected {unexpected[:5]}"
+            )
+        src_group = osp.basename(osp.dirname(eval_ckpt_path))
+        print(
+            f"[eval] {eval_ckpt_path}\n[eval] checkpoint at epoch {int(_ck.get('epoch', -1))};"
+            f" source group {src_group}; no training"
+        )
+        del _ck
+        trainer.validate(model=task, datamodule=data_module)
+        eval_metrics = {
+            k: float(v) for k, v in trainer.callback_metrics.items() if v is not None
+        }
+        for k, v in sorted(eval_metrics.items()):
+            if k.startswith("val/") and "@k" not in k:
+                print(f"[eval] {k} = {v:.6f}")
+        task.to(trainer.strategy.root_device)
+        for split in ("val", "test"):
+            if len(getattr(data_module, f"{split}_dataset").indices) == 0:
+                continue
+            _dump_split_predictions(
+                task,
+                data_module,
+                dataset,
+                cfg,
+                osp.join(data_root, f"{split}-predictions", f"{src_group}.json"),
+                split=split,
+            )
+        if run is not None:
+            wandb.finish()
+        return eval_metrics
+
     trainer.fit(model=task, datamodule=data_module, ckpt_path=resume_ckpt_path)
     # Snapshot the final logged metrics BEFORE wandb.finish() so an external driver
     # (e.g. the Optuna sweep) can read the objective (e.g. val/global/pearson_per_gene).
@@ -3397,12 +3463,13 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             }
         )
         if bool(cfg.trainer.get("dump_test_predictions", False)):
-            _dump_test_predictions(
+            _dump_split_predictions(
                 task,
                 data_module,
                 dataset,
                 cfg,
                 osp.join(data_root, "test-predictions", f"{group}.json"),
+                split="test",
             )
     if run is not None:
         wandb.finish()

@@ -557,6 +557,21 @@ case "$ARM" in
                      ARM_TAGS=(readout-shared-mlp "split${ARM##*_s}" proteome stage-proteome round-proteome) ;;
   P_concat_s[0-9])   OVERRIDES=(multitask.concat_context=true data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(readout-concat "split${ARM##*_s}" proteome stage-proteome round-proteome) ;;
+  # ============================ JOINT ROUND (2026.09.17, v16) ==============================
+  # The proteome head with the knockout transcriptome as a second per-gene head on the same
+  # trunk (conf/cgt_expr_v16_joint.yaml). J_ref restores the v14 reference exactly (aux head
+  # off, proteome strains only); J_joint is the config's default; J_joint05 halves the
+  # auxiliary loss weight.
+  J_ref_s[0-9])      OVERRIDES=("multitask.active_heads=[per_gene]"
+                                "cell_dataset.require_modalities=[protein_abundance]"
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                trainer.checkpoint.metric_monitor=val/mean/pearson_per_feature
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(heads-proteome "split${ARM##*_s}" proteome stage-joint round-joint) ;;
+  J_joint_s[0-9])    OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(heads-proteome-expression aux-w1 "split${ARM##*_s}" proteome stage-joint round-joint) ;;
+  J_joint05_s[0-9])  OVERRIDES=(multitask.head_weights.per_gene_aux=0.5 data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(heads-proteome-expression aux-w05 "split${ARM##*_s}" proteome stage-joint round-joint) ;;
   # ============================ WEIGHT-DECAY ROUND (2026.09.15, v15) =======================
   # Strong AdamW weight decay on the v13 reference at the full budget, split seeds 1 and 2
   # (conf/cgt_expr_v15_wd.yaml explains the round). The reference keeps the incumbent's 1e-8.

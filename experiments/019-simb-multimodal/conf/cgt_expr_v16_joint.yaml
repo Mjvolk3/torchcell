@@ -1,0 +1,69 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v16_joint.yaml
+# THE JOINT ROUND -- project v16, the knockout proteome with the knockout transcriptome as
+# a second per-gene head on the same trunk, against the proteome-only reference, on cabbi.
+#
+# WHY. The proteome round (v14) peaks by epoch 100 to 200 on every partition at 0.08 to
+# 0.12 and holds there while train Pearson climbs to 0.61 (v14 readout, 2026-09-17); the
+# label's genotype ceiling is 0.42 (duplicate strains, proteome_ceiling_replicate.py), so
+# the model reaches a fifth of it, the fraction the expression rounds reach of theirs. The
+# two panels agree on which genes co-vary at Spearman 0.31 (2-readouts.tex, sec. proteome)
+# and 1,349 strains carry both labels, so the transcriptome is the one auxiliary label at
+# hand that is gene-keyed, large, and correlated at the gene-pair level. This round asks
+# whether supervising the trunk with it moves the proteome score.
+#
+# THE DATA. `fig3_proteome` already unions Kemmeren, Sameith Sm/Dm and Messner (4,681
+# genotypes: 4,476 with a proteome, 1,554 with expression, 1,349 both). v14 kept only
+# proteome-carrying genotypes by `require_modalities`, which filters each split AFTER the
+# partition is drawn, so dropping the filter here keeps every proteome validation and test
+# strain of v14's partition and adds the 205 expression-only strains (4% more rows); the
+# gain is the expression label on the 1,349 strains that carry both. The proteome contrast
+# is therefore paired with v14 on identical validation strains.
+#
+# THE HEADS. `per_gene` is the proteome head exactly as in v14 (pinball, shared MLP, the
+# reveal schedule teacher-forces it). `per_gene_aux` is a second PerGeneHead over the same
+# head input, bound to `expression_log2_ratio`, z-scored per gene on the train split, never
+# revealed (it is supervised on all its genes at every step), logged under
+# `val/expression/...`. Loss weight 1 on both; the arm J_joint05 halves the auxiliary weight.
+#
+# THE ARMS (gh_expr_008_arm.sh, J_* arms): J_ref_s<k> is P_ref (aux head off, proteome
+# strains only, so byte-for-byte the v14 reference at this budget), J_joint_s<k> the two
+# heads at weight 1, on split seeds 0, 1, 2, two init seeds each. Twelve runs, four per
+# card, three cards, ref/joint paired within card and seed.
+#
+# BUDGET 500 epochs. v14's validation Pearson peaks at a median epoch of 150 and nothing
+# after 300 gains; the best-validation checkpoint is scored on test at the end.
+defaults:
+  - cgt_expr_v14_proteome
+  - _self_
+
+wandb:
+  project: torchcell_019_prot_v16
+  tags: [joint-round, v16]
+
+cell_dataset:
+  require_modalities: []
+
+multitask:
+  active_heads: [per_gene, per_gene_aux]
+  mask_head: per_gene
+  heads:
+    per_gene_aux:
+      output_dim: 1
+  head_weights:
+    per_gene_aux: 1.0
+  head_phenotypes:
+    per_gene: [protein_abundance]
+    per_gene_aux: [expression_log2_ratio]
+  head_phenotype_names:
+    per_gene: proteome
+    per_gene_aux: expression
+  standardize_per_feature_target: [per_gene, per_gene_aux]
+
+trainer:
+  max_epochs: 500
+  # The test pass loads the FIRST checkpoint (best proteome Pearson). The second monitors
+  # the auxiliary head; two ModelCheckpoints on one key is a Lightning error, and the
+  # default `val/mean/...` would average the two heads. J_ref (no aux head) overrides it.
+  checkpoint:
+    monitor: val/proteome/pearson_per_feature
+    metric_monitor: val/expression/pearson_per_feature

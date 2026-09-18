@@ -2407,6 +2407,34 @@ class CellGraphTransformer(nn.Module):
                 linear_readout=bool(pg_cfg.get("linear_readout", False)),
                 context_readout=bool(pg_cfg.get("context_readout", False)),
             )
+        # AUXILIARY PER-GENE HEAD (joint round). A second PerGeneHead over the SAME head
+        # input as the primary, bound by the trainer to a second gene-keyed label (the
+        # knockout transcriptome beside the knockout proteome), so one trunk is supervised
+        # by both. It shares the primary head's input width (concat / pert-set / bilinear
+        # are properties of `pg_in`, built once below) and takes its own readout knobs.
+        self.per_gene_aux_head: PerGeneHead | None = None
+        if "per_gene_aux" in self.heads_config:
+            if self.per_gene_head is None:
+                raise ValueError("per_gene_aux requires the per_gene head")
+            pa_cfg = self.heads_config["per_gene_aux"] or {}
+            pg_primary = self.heads_config["per_gene"] or {}
+            self.per_gene_aux_head = PerGeneHead(
+                hidden_dim=hidden_channels,
+                output_dim=pa_cfg.get("output_dim", 1),
+                dropout=pa_cfg.get("dropout", dropout),
+                param_dim=int(pa_cfg.get("param_dim", 1)),
+                free_gene_dim=int(pa_cfg.get("free_gene_dim", 0)),
+                num_genes=gene_num,
+                in_mult=(3 if pg_primary.get("concat_context", False) else 1)
+                + (2 if pg_primary.get("pert_set_context", False) else 0),
+                extra_dim=int(pg_primary.get("bilinear_rank", 0)),
+                film_dim=hidden_channels
+                if pg_primary.get("film_on_pert_set", False)
+                else 0,
+                per_gene_weight=bool(pa_cfg.get("per_gene_weight", False)),
+                linear_readout=bool(pa_cfg.get("linear_readout", False)),
+                context_readout=bool(pa_cfg.get("context_readout", False)),
+            )
         pg_spec = self.heads_config.get("per_gene") or {}
         self.per_gene_concat_context = bool(pg_spec.get("concat_context", False))
         # State-form readout: the head also reads the attended context through per-gene
@@ -3094,6 +3122,12 @@ class CellGraphTransformer(nn.Module):
                 head_outputs["per_gene"] = head_outputs[
                     "per_gene"
                 ] + self.response_basis(H_genes_pert, pert_cond)
+            if self.per_gene_aux_head is not None:
+                head_outputs["per_gene_aux"] = self.per_gene_aux_head(
+                    pg_in,
+                    film_cond=z_S if self.per_gene_film else None,
+                    context=pert_context if self.per_gene_context_readout else None,
+                )
         if self.per_metabolite_head is not None:
             head_outputs["per_metabolite"] = self.per_metabolite_head(
                 H_genes_pert, self.gpr_incidence_T, self.mr_incidence

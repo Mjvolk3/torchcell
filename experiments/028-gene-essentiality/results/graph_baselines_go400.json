@@ -1,0 +1,80 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO (400 epochs) (400 epochs)",
+      "dim_in": 2362,
+      "n_parameters": 155457,
+      "test_auroc": [
+        0.9122738001573564,
+        0.9101101494885917,
+        0.9042092840283241
+      ],
+      "val_auroc": [
+        0.8228571428571428,
+        0.8243609022556391,
+        0.8168421052631579
+      ],
+      "select_epoch": [
+        397,
+        395,
+        382
+      ],
+      "mean": 0.9088644112247574,
+      "sd": 0.0034081278306758588,
+      "seconds": 42.604302644729614
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO+FBA ratios (400 epochs) (400 epochs)",
+      "dim_in": 2366,
+      "n_parameters": 155713,
+      "test_auroc": [
+        0.9049960660896932,
+        0.9044059795436664,
+        0.9132572777340677
+      ],
+      "val_auroc": [
+        0.821954887218045,
+        0.825563909774436,
+        0.8261654135338345
+      ],
+      "select_epoch": [
+        396,
+        393,
+        393
+      ],
+      "mean": 0.9075531077891424,
+      "sd": 0.004040644882803746,
+      "seconds": 43.089049339294434
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+GO+FBA ratios (400 epochs) (400 epochs)",
+      "dim_in": 3390,
+      "n_parameters": 221249,
+      "test_auroc": [
+        0.9004720692368214,
+        0.8988985051140834,
+        0.9047993705743509
+      ],
+      "val_auroc": [
+        0.8117293233082707,
+        0.8120300751879699,
+        0.8096240601503759
+      ],
+      "select_epoch": [
+        397,
+        368,
+        392
+      ],
+      "mean": 0.9013899816417519,
+      "sd": 0.0024949249397377793,
+      "seconds": 43.78849506378174
+    }
+  ]
+}

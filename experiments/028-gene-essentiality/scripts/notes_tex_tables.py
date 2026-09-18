@@ -823,6 +823,20 @@ def graph_baselines_go() -> str | None:
     )
 
 
+def graph_baselines_go400() -> str | None:
+    """Graph convolution on GO at 400 epochs."""
+    return graph_baselines_more(
+        "go400",
+        "Graph convolution on GO, 400 epochs",
+        "Graph convolution over the union of the nine graphs on the propagated GO "
+        "multi-hot at a 400-epoch budget, since every 200-epoch cell on it selected its "
+        "epoch between 183 and 197: GO alone, GO with the four FBA ratios, and GO beside "
+        "ProtT5 with the ratios. The protocol of Table~\\ref{tab:graph-baselines} "
+        "otherwise; seeds 2700 to 2702.",
+        "tab:graph-go400",
+    )
+
+
 def wl_test() -> str | None:
     """1-WL on the single-deletion graphs, and the WL kernel as a rung."""
     src = osp.join(RESULTS, "wl_knockout_test.json")
@@ -1070,6 +1084,7 @@ def main() -> None:
         graph_baselines_relational(),
         graph_baselines_split(),
         graph_baselines_go(),
+        graph_baselines_go400(),
         fold_ensembles(),
         gene_encodings(),
         hard_genes(),

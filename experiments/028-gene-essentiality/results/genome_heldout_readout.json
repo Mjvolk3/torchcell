@@ -24,6 +24,26 @@
       "wall_minutes": null
     },
     {
+      "label": "cached solve + flux head, pathway + ProtT5 (round 27 form)",
+      "kind": "transformer",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.5430483101170986,
+        0.48009032132748763,
+        0.5312189910649869
+      ],
+      "mean": 0.5181192075031911,
+      "sd": 0.0334608776802495,
+      "pooled_auroc": 0.5423852600033299,
+      "pooled_ci": [
+        0.5222551276870502,
+        0.5614747062311205
+      ],
+      "n_genes": 4674,
+      "select_epochs": [],
+      "wall_minutes": null
+    },
+    {
       "label": "MLP on ProtT5 alone",
       "kind": "MLP",
       "n_cells": 3,

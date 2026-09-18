@@ -628,10 +628,12 @@ from 0.890 on the released 195. Its inputs are the MLP's, and in this recipe the
 graphs enter training only through the graph regularizer, not as a message-passing
 input, so the three models that read 0.87 to 0.89 on the metabolic genes without the
 graph as an input all fall to chance or near it off them, and the one that convolves
-over the graph does not. The scalable module form on the same split runs at the time
-of writing; its solved flux is the wild-type vector on every one of these genes, a
-constant the head cannot rank by, so what it can add over the backbone's 0.574 is
-nothing by construction.
+over the graph does not. The scalable module form on the same split (job 2397, three
+seeds) reads 0.542 [0.52, 0.56] pooled (0.48 to 0.55 per seed), under the affine
+recipe: its solved flux is the wild-type vector on every one of these genes, a
+constant the head cannot rank by, so what it adds over the backbone is nothing by
+construction, and what it reads is the backbone with a head that fit the metabolic
+genes' flux.
 
 The other direction says the larger label set is not the missing training data for
 the metabolic genes (Tables~\ref{tab:graph-go400-genome}

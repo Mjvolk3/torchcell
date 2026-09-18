@@ -480,7 +480,7 @@ the pathway rows are the untested candidates.
 \label{sec:hard-genes}
 
 At 195 genes the AUROC is a sum over a few dozen misrankings, so the genes behind it
-can be named. For every cell of the five best arms, \texttt{hard\_genes.py} reads the
+can be named. For every cell of the six best arms, \texttt{hard\_genes.py} reads the
 per-gene logits on the held-out genes and scores each gene's \emph{misrank}, the
 fraction of the other class on the wrong side of it: for an essential gene the
 nonessential genes scoring above it, for a nonessential gene the essential genes
@@ -488,42 +488,46 @@ scoring below it. One minus the class mean of the misrank is that class's share 
 AUROC, and averaging over an arm's cells separates the genes an arm gets wrong from the
 ones a seed gets wrong (Figure~\ref{fig:hard-genes}, Table~\ref{tab:hard-genes}).
 
-\tcfigfit[1.0]{figures/hard_genes_2026-09-18-05-26-10.pdf}{\textbf{Which held-out genes
+\tcfigfit[1.0]{figures/hard_genes_2026-09-18-08-25-51.pdf}{\textbf{Which held-out genes
   the best cells misrank.} \textbf{a}, The 31 essential held-out genes sorted by their
-  mean misrank over five arms, one marker per arm (the mean over that arm's cells), the
+  mean misrank over six arms, one marker per arm (the mean over that arm's cells), the
   line the mean over arms. \textbf{b}, The same for the 164 nonessential genes.
   \textbf{c}, The Spearman correlation of the per-gene misrank between arms. Arms:
   the pathway multi-hot with ProtT5 and the affine (round 22, three seeds), the
   round-12 fold models (five), the head over the solved flux on ProtT5 (rounds 21 and
-  24, six seeds) and on the pathway input (round 23, three), and ProtT5 with the affine
-  (round 5, three). Written by
+  24, six seeds) and on the pathway input (rounds 23 and 25, six), the same head over
+  the cached GEM-box solve on the pathway input (round 27, six), and ProtT5 with the
+  affine (round 5, three). Written by
   \texttt{experiments/028-gene-essentiality/scripts/hard\_genes.py}.}{fig:hard-genes}
 
 \input{tables/hard_genes}
 
 The solve's own call splits the essential genes. Nineteen of the 31 essential held-out
 genes have a knockout growth ratio of 1.0 on YPD, the solve calling them dispensable,
-and fourteen of the fifteen hardest are among those nineteen, while eight of the
+and thirteen of the fifteen hardest are among those nineteen, while nine of the
 fifteen easiest have a ratio of 0. The hardest essential genes are the ones FBA misses,
-and every model misses them with it: FRQ1, AUR1, PGA3, CDC19 (pyruvate kinase, covered
-in the GEM by its paralog PYK2), PET9 (the ADP/ATP carrier, covered by AAC1 and AAC3),
-LCB1 and LCB2 (serine palmitoyltransferase), NEO1, TPI1, IPP1. The hardest
-nonessential genes are metabolic enzymes the models call essential: the three
-glyceraldehyde-3-phosphate dehydrogenase isozymes TDH1, TDH2 and TDH3, ERG4, ATP2,
-GSH2, TRR2, FBP1, HMG2 and ACS1, twelve of the fifteen with a ratio of 1.0 and most
-with 26 to 125 GO terms. Both failure sets are isozyme redundancy read the wrong way: an
-essential gene whose paralog covers it in the solve, and a nonessential paralog of an
-essential metabolic function that the annotation vectors make look essential. The arms
-agree on the genes they fail: the two affine cells at a Spearman of 0.81, the flux head
-on ProtT5 with the affine on ProtT5 at 0.88, and the flux head on the pathway input
-least aligned with the rest (0.44 to 0.67), the arm whose mean carries an unfit seed.
+and every model misses them with it: AUR1, FRQ1, PET9 (the ADP/ATP carrier, covered in
+the GEM by AAC1 and AAC3), NEO1, PGA3, CDC19 (pyruvate kinase, covered by its paralog
+PYK2), LCB1 and LCB2 (serine palmitoyltransferase), IPP1, TPI1. The hardest
+nonessential genes are metabolic enzymes the models call essential: ERG4, HMG2, GSH2,
+the three glyceraldehyde-3-phosphate dehydrogenase isozymes TDH3, TDH2 and TDH1, ATP2,
+the two phosphofructokinase subunits PFK1 and PFK2, TRR2, ERG2 and FBP1, twelve of the
+fifteen with a ratio of 1.0 and most with 26 to 125 GO terms. Both failure sets are
+isozyme redundancy read the wrong way: an essential gene whose paralog covers it in the
+solve, and a nonessential paralog of an essential metabolic function that the
+annotation vectors make look essential. The arms agree on the genes they fail: the two
+affine cells at a Spearman of 0.81, the flux head on ProtT5 with the affine on ProtT5
+at 0.88, the two flux heads on the pathway input with each other at 0.77, and those
+two least aligned with the rest (0.43 to 0.76), the arms whose means carry an unfit
+seed.
 Hypothesis, untested: a paralog-aware input, the GPR disjunction with an expression
 weight or the isozyme count of a gene's reactions, is what would move the fourteen; the
 solve's own vector cannot, since the solve reroutes through the paralog.
 
 Graph convolution on GO fails on different genes. Its per-gene misrank correlates
-with the transformer arms' at 0.20 to 0.42 where those arms correlate with one another
-at 0.6 to 0.9, and its class mean misrank on the essential genes is 0.091 against the
+with the transformer arms' at 0.15 to 0.42 where those arms correlate with one another
+at 0.4 to 0.9, the same on three seeds and on six, and its class mean misrank on the
+essential genes is 0.091 against the
 pathway cell's 0.110. On the hardest essential genes it halves the misrank the solve
 leaves: FRQ1 from 0.44 to 0.17, AUR1 from 0.48 to 0.22, PGA3 from 0.37 to 0.11, LCB1
 from 0.14 to 0.03, LCB2 from 0.15 to 0.01, while it does worse on NEO1 (0.17 to 0.60)
@@ -541,9 +545,13 @@ seeds, the families are averaged with equal weight, and the mean is scored once
 (Table~\ref{tab:family-ensembles}). The GO convolution and the pathway cell with the
 affine average to 0.933 [0.89, 0.97] from 0.909 and 0.891 alone; the GO convolution
 and the flux head on the pathway input, six seeds with two unfit among them, average
-to 0.941 [0.90, 0.98] from 0.909 and 0.911; all three to 0.935. Every average tried is
-in the table, so 0.941 is the maximum of seven post hoc choices and carries that bias,
-and the held-out genes were used to choose nothing else. It says what the per-gene
+to 0.941 [0.90, 0.98] from 0.909 and 0.911; all three to 0.935. With the six-seed
+families of the later rounds, the GO convolution on six seeds (0.905 as a family) and
+the scalable module form of round 27 (0.918 as a family, the highest single family)
+average to 0.946 [0.91, 0.98], and with the pathway affine beside them to 0.939. Every
+average tried is in the table, so 0.946 is the maximum of eleven post hoc choices and
+carries that bias, and the held-out genes were used to choose nothing else. It says
+what the per-gene
 analysis said: the two families carry different information about the same genes, and
 the sum of the annotation read through the graph and the solve read through the
 transformer is more than either. Under the reported protocol the same average holds

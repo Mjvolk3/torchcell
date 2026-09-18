@@ -49,19 +49,22 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     the strongest single encoding (0.808 linear, 0.844 with a random forest and the
     ratios). The transformer is the one model that does not take it: 0.833 beside
     ProtT5 and a cost of 0.04 beside the pathway block.
-  \item[The genes every model misses are the ones the solve misses.] Fourteen of the
+  \item[The genes every model misses are the ones the solve misses.] Thirteen of the
     fifteen hardest essential held-out genes have a knockout growth ratio of 1.0 (CDC19
     covered by PYK2, PET9 by AAC1 and AAC3), and the hardest nonessential genes are
-    metabolic paralogs (TDH1, TDH2, TDH3) the annotation vectors make look essential;
-    the transformer arms agree on their failures at a Spearman of 0.6 to 0.9, and the
-    GO convolution fails elsewhere (0.2 to 0.4 with them), halving the misrank on
+    metabolic paralogs (TDH1, TDH2, TDH3, PFK1, PFK2) the annotation vectors make look
+    essential; the six transformer arms agree on their failures at a Spearman of 0.4
+    to 0.9, and the GO convolution fails elsewhere (0.15 to 0.4 with them), halving the
+    misrank on
     FRQ1, AUR1, PGA3, LCB1 and LCB2 and repairing twelve of the misranked paralogs.
     Isozyme redundancy, read the wrong way in both directions, is where the remaining
     AUROC sits, and the two model families miss different halves of it
     (Section~\ref{sec:hard-genes}). Averaging their existing predictions with equal
-    weight and nothing fitted scores 0.941 on the split-file cells and 0.949 [0.91,
-    0.98] under the fold protocol, from families at 0.917 and 0.897 alone: the maximum
-    of the six or seven post hoc averages tried, reported as such
+    weight and nothing fitted scores 0.946 [0.91, 0.98] on the split-file cells (the
+    six-seed GO convolution with the six-seed scalable form, from 0.905 and 0.918
+    alone) and 0.949 [0.91, 0.98] under the fold protocol, from families at 0.917 and
+    0.897 alone: the maximum of the eleven and six post hoc averages tried, reported
+    as such
     (Section~\ref{sec:family-ensembles}).
   \item[Structure is not the signal.] The 1-WL test separates 1,118 of 1,121
     single-deletion graphs on the physical graph and all of them on the union, so

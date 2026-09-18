@@ -776,3 +776,7 @@ The scalable form (cached GEM-box solve, nothing learned in the layer, zero-init
 - <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/qtdfayw7>
 - <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/gkr9i7wg>
 - <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/xgurl6hd>
+
+## 2026.09.18 - Six-seed reads of the best models: GO convolution, hard genes, family averages
+
+GO GCN on six seeds (job 2392, `graph_baselines.py --arms go400 --seeds 2700..2705 --save-logits`, `results/graph_baselines_go400_s6.json`): GO alone 0.912, 0.909, 0.902, 0.898, 0.901, 0.905 (mean 0.905, sd 0.005); with the ratios mean 0.907; beside ProtT5 mean 0.900. Fold ensemble with three seeds per fold (job 2393, `--arms go_folds --seeds 2700 2701 2702`, `results/graph_baselines_go_folds_s3.json`): 0.917 [0.87, 0.95] at 400 epochs, 0.915 at 800, the same as one seed per fold. Hard genes rerun with the round-27 six-seed arm and the six-seed GO arm (`hard_genes.py`): thirteen of the fifteen hardest essential genes have FBA ratio 1.0 (was fourteen with five arms); PFK1, PFK2 and ERG2 enter the hardest nonessential fifteen, ACS1 leaves; the GO convolution's agreement with the transformer arms is 0.15 to 0.42 on three seeds and on six. Family averages (`family_ensembles.py`): the six-seed GO GCN (0.905) with the six-seed scalable form (0.918, the highest single family) average to 0.946 [0.91, 0.98], the maximum of eleven post hoc averages.

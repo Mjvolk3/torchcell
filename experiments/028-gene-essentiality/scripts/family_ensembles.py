@@ -48,19 +48,37 @@ TRANSFORMER_FAMILIES: dict[str, list[str]] = {
     "flux head, ProtT5 (rounds 21 and 24, 6 seeds)": [
         "w37_lpelgateflux_h12l1p1_e200_s*.json"
     ],
+    "cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)": [
+        "w43_pathlpoffgateflux_h12l1p1_e200_s*.json"
+    ],
 }
 #: Family -> (graph-baselines file, row inputs) for the cheap models with saved logits.
 GRAPH_FAMILIES: dict[str, tuple[str, str]] = {
     "GO convolution (400 epochs, 3 seeds)": (
         "graph_baselines_go400.json",
         "GO (400 epochs)",
-    )
+    ),
+    "GO convolution (400 epochs, 6 seeds)": (
+        "graph_baselines_go400_s6.json",
+        "GO (400 epochs)",
+    ),
 }
 #: The averages scored, as lists of family names.
 COMBINATIONS: list[list[str]] = [
     ["GO convolution (400 epochs, 3 seeds)"],
+    ["GO convolution (400 epochs, 6 seeds)"],
     ["pathway + ProtT5 + affine (round 22, 3 seeds)"],
     ["flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)"],
+    ["cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)"],
+    [
+        "GO convolution (400 epochs, 6 seeds)",
+        "cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)",
+    ],
+    [
+        "GO convolution (400 epochs, 6 seeds)",
+        "pathway + ProtT5 + affine (round 22, 3 seeds)",
+        "cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)",
+    ],
     [
         "GO convolution (400 epochs, 3 seeds)",
         "pathway + ProtT5 + affine (round 22, 3 seeds)",

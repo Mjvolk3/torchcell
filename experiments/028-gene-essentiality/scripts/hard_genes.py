@@ -72,13 +72,20 @@ ARMS: dict[str, list[str]] = {
     "flux head, pathway + ProtT5 (rounds 23, 25)": [
         "w39_pathlpelgateflux_h12l1p1_e200_s*.json"
     ],
+    "cached solve + flux head, pathway + ProtT5 (round 27)": [
+        "w43_pathlpoffgateflux_h12l1p1_e200_s*.json"
+    ],
     "ProtT5 + affine (round 5)": ["w16_fba_h12l1p1_e200_s*.json"],
 }
 
 #: Arm label -> (graph-baselines result file, the row's ``inputs``): cheap models whose
 #: rows carry per-gene logits (written with ``--save-logits``), one cell per seed.
 GRAPH_ARMS: dict[str, tuple[str, str]] = {
-    "GO convolution, 400 epochs": ("graph_baselines_go400.json", "GO (400 epochs)")
+    "GO convolution, 400 epochs": ("graph_baselines_go400.json", "GO (400 epochs)"),
+    "GO convolution, 400 epochs, six seeds": (
+        "graph_baselines_go400_s6.json",
+        "GO (400 epochs)",
+    ),
 }
 
 

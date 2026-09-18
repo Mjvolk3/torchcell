@@ -417,6 +417,32 @@ ladder gains a linear rung on each annotation vector alone.
 
 \input{tables/round_w42}
 
+\tcfigfit[1.0]{figures/w42_readout_2026-09-18-04-35-15.pdf}{\textbf{Round 26, the Gene
+  Ontology multi-hot as a backbone input.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w42}.}{fig:w42}
+
+The transformer takes nothing from GO that it did not have from ProtT5, and beside
+the pathway block GO costs it. GO with ProtT5 and the affine reads 0.830, 0.827 and
+0.842 (mean 0.833), level with ProtT5 and the affine alone (0.821) and 0.05 to 0.07
+under the pathway cell on every seed; the biological-process namespace alone reads
+0.821, and GO alone with the affine 0.800. GO added to the pathway cell reads 0.852,
+0.852 and 0.844 against that cell's 0.889, 0.895 and 0.885, a cost of 0.04 on three
+seeds of three. Both clauses of the read fail. The same vector is the strongest
+single encoding on the ladder (0.808 linear with no solve, 0.844 under a random forest
+with the ratios) and, on the cheap models under the same protocol, lifts the MLP to
+0.855 and graph convolution to 0.887 (Table~\ref{tab:graph-go}), so what fails is not
+the vector but the transformer's use of it; why a width-12 cell reads 173 sparse
+pathway columns and not 2,362 dense GO columns is not measured. The one-column
+control that marks a gene as annotated to any pathway reads 0.774 on the MLP and
+0.832 on graph convolution, the ProtT5-with-ratios level, so the pathway block's gain
+is which pathway, not whether there is one.
+
 \subsection{Which genes the best cells misrank\secstatus{todo}}
 \label{sec:hard-genes}
 

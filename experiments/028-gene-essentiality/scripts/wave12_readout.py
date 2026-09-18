@@ -627,8 +627,9 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "w38_protpathfba_h12l1p1_e200_s*.json",
             "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
             "w59_pathsolvenode_h12l1p1_e200_s*.json",
+            "w59_pathsolvenodeaff_h12l1p1_e200_s*.json",
         ],
-        ["protpathfba", "pathfbapfbalogfree", "pathsolvenode"],
+        ["protpathfba", "pathfbapfbalogfree", "pathsolvenode", "pathsolvenodeaff"],
     ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
@@ -795,6 +796,7 @@ ARM_LABELS = {
     "pathloghead256": "the round-33 cell with a GELU hidden layer of width 256 in the affine",
     "pathlogsc": "the round-33 cell over the pFBA store built on synthetic complete medium (SC) instead of YPD",
     "pathsolvenode": "pathway multi-hot + ProtT5 + the deletion's log1p flux vector as a NODE embedding; the four-ratio affine only",
+    "pathsolvenodeaff": "the same, with the log1p vector appended to the affine as well",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",

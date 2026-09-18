@@ -1086,8 +1086,17 @@ nine fit (Section~\ref{sec:round29}). The wall time
 was 139 minutes per cell at six cells on one card and 83 minutes at two, against 86
 for the uncached elastic form at three: at either packing the layer's own forward on
 the card, not the solve, is the cost, and the cache's hit rate was not logged. The
-fold read of this form was lost to the same ceiling and reruns at 120 GB (job 2391) at
-the time of writing.
+fold read of this form (job 2391, five cells at 120 GB, 144 minutes per cell at five
+per card) reads 0.912, 0.859, 0.918, 0.910 and 0.901 on the folds (mean 0.900) and
+0.912 [0.86, 0.95] as the fold ensemble, one number with the reported 0.893 and the
+elastic form's 0.897 and under the GO convolution's 0.917
+(Table~\ref{tab:ensembles}); all five folds fit, with the training loss under 0.6
+between epochs 51 and 61, and the fold at 0.859 is the one whose validation curve kept
+rising to its last epochs and selected epoch 192. Under the family protocol of
+Section~\ref{sec:family-ensembles}, the fold models' standardized logits averaged, the
+form reads 0.922 [0.88, 0.96] alone, the highest single transformer family, and 0.954
+[0.92, 0.98] with the GO convolution's fold models, the maximum of the nine fold
+combinations tried and reported as such.
 
 \subsection{Round 29: the unfit seed under a longer budget\secstatus{todo}}
 \label{sec:round29}
@@ -1130,6 +1139,54 @@ twelvefold), so the longer budget buys nothing after the selected epoch. The sca
 form of round 27 is not free of the chance: its rerun of the same seed fit in one
 attempt and not in the other (0.911 against 0.772), with the solve cached and nothing
 learned in the layer, so the layer's ceilings are not where the chance enters.
+
+\subsection{Round 31: the layer-free form\secstatus{todo}}
+\label{sec:round31}
+
+Round 27's form still carries a flux layer in the graph: the program is solved once per
+genotype and cached, but the solve runs inside the forward pass, the flux enters through
+the gated head, and the cell takes 83 minutes at two per card. With nothing learned in
+the layer the vector is a function of the genotype and the medium alone, so it can be
+precomputed and appended to the affine's input as columns, with no layer in the graph,
+which is the form a model over the database would use. Round 31 runs that form on the
+pathway input: the deletion's own pFBA flux vector from the reference table
+(\texttt{ess\_reference\_flux\_table.py}, YPD, 4,131 columns, each standardized over the
+labeled genes) appended to the four-ratio affine, alone and with the eight wild-type
+solve statistics beside it, six seeds each in two six-cell packs (jobs 2402 and 2404;
+Table~\ref{tab:w47}, Figure~\ref{fig:w47}). The comparators are the affine and the
+cached-solve head on the same input, and the wall time is the read beside the number.
+
+\input{tables/round_w47}
+
+\tcfigfit[1.0]{figures/w47_readout_2026-09-18-10-05-08.pdf}{\textbf{Round 31, the
+  layer-free form.} \textbf{a}, Validation AUROC per epoch, one thin line per seed and
+  the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points), the seed
+  mean and the gene bootstrap of the pooled per-gene logits (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the
+  same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w47}.}{fig:w47}
+
+The vector alone reads 0.804, 0.923, 0.741, 0.814, 0.911 and 0.797 on seeds 2700 to
+2705 (mean 0.832, sd 0.071; pooled 0.871 [0.79, 0.94]), under the affine's 0.890 and
+the cached-solve head's 0.917; with the statistics beside it 0.908, 0.849, 0.892,
+0.885, 0.907 and 0.911 (mean 0.892, sd 0.023; pooled 0.901 [0.85, 0.95]), one number
+with the affine. The vector-alone cells select early: four of the six select epochs 2
+to 13, where the training loss is still 0.84 to 0.91 and the fitting transition (the
+training loss under 0.6) comes at epochs 28 to 46, or never on seed 2702, whose loss
+ends at 0.76. On those four the validation curve peaks at 0.81 to 0.85 before the
+backbone fits and falls as it does, so the selected model is the affine's initial
+projection of the vector over an unfit backbone; the two cells that select after the
+transition (seeds 2701 and 2704, epochs 59 and 42) read 0.923 and 0.911, the level of
+the cached-solve head. The affine here is a default-initialized linear layer over
+4,135 columns, a weight norm of 0.59 before any training, where the cached-solve head
+is zero-initialized over $\log(1 + |v^\star|)$ and starts as the backbone alone; whether
+that construction and not the solve inside the graph is the 0.05 is round 33's
+question, in flight at the time of writing (job 2406: the same vector with the solve
+columns zero-initialized, and as $\log(1 + |v|)$ with zero initialization, six seeds
+each). The wall time is 31 minutes per cell at six per card, against 40 for the affine
+at three and 83 for the cached-solve head at two: with the vector precomputed the cell
+costs what the affine costs, and nothing on the card waits on a solver.
 
 \subsection{Where the gradient goes\secstatus{todo}}
 

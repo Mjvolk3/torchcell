@@ -51,29 +51,39 @@ weight, six encodings). What remains is attribution and the module.
     (round 27: the program solved once per genotype, nothing learned in the layer, a
     zero-initialized head) reads 0.90 to 0.92 on eight runs of nine and misses the
     fitting transition on one, where the learned-ceiling form misses it on three cells
-    in seventeen. Open on it: its fold read, lost to the launcher's memory ceiling and
-    in flight at 120 GB; what in the forward makes the transition a chance event of
+    in seventeen, and reads 0.912 [0.86, 0.95] under the fold protocol with all five
+    folds fit. Open on it: what in the forward makes the transition a chance event of
     the run rather than of the seed (round 29: the same seed and program fit at epoch
     70 in one run and never in another, the two diverging from the first epoch, and
     the scalable form repeats it with the solve cached and nothing learned in the
     layer), and whether pinning the sampler and the card's kernels makes the seed
-    reproducible;
+    reproducible (round 32, in flight: the unfit seed run twice with cuDNN's
+    autotuner off, its deterministic kernels on and cuBLAS's workspace pinned, and
+    twice without, job 2405);
     the cache's hit rate and where the wall time goes when the solve is cached, since
     six cached cells on one card ran no faster per cell than three uncached; and the
     flux entering the cell representation as a token rather than the logit as a head,
     which is the multi-phenotype form.
   \item The two model families, annotation through the graph and the solve through
-    the transformer, miss different genes, and their post hoc average reads 0.949 under
-    the fold protocol. A model trained to hold both, or a learned weighting, is untested,
-    and the average's number carries the selection of the best of six.
+    the transformer, miss different genes, and their post hoc average reads 0.954 under
+    the fold protocol (the GO convolution with the scalable form). A model trained to
+    hold both, or a learned weighting, is untested, and the average's number carries
+    the selection of the best of nine.
   \item The layer that solves has the wrong shape for a training loop: the program runs
     on the CPU inside the forward pass, the GPU waits on it (0 to 13 percent
     utilization sampled during round 19, against a 1.6 hour cell where the alternating
     layer takes 19 minutes), and the bytes moved are not the cost, the synchronization
     is. With nothing learned in the solve (round 27) the cost leaves the loop
     entirely: the program is solved once per distinct genotype and medium, offline,
-    and stored as a feature, and no solver runs in training. The count that sizes that
-    store, the distinct (genotype, medium) pairs across the database, is not measured.
+    and stored as a feature, and no solver runs in training. Round 31 measured that
+    form: the deletion's pFBA vector precomputed and appended to the affine reads
+    0.871 pooled alone and 0.901 with the solve statistics at 31 minutes per cell
+    against 83 for the solve inside the graph, under the cached-solve head's 0.917,
+    with four of six vector cells selecting an epoch before the fitting transition over
+    a default-initialized 4,135-column affine; whether the head's construction (zero
+    initialization over $\log(1 + |v|)$, round 33) closes the 0.05 is in flight. The
+    count that sizes the store, the distinct (genotype, medium) pairs across the
+    database, is not measured.
     Where a solve must stay in the loop, the fine-tuning form with learned ceilings,
     three constructions would remove the synchronization, in order of how much they
     change: a batched first-order solve on the card, which NVIDIA's cuOpt offers as

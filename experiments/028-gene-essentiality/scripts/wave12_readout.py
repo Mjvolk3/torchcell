@@ -650,6 +650,21 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 49: the second bracket of the pooled cell's divergence (round 46 placed it
+    # with the pathway multi-hot in the pooled arm): the plain pooled head on pathway +
+    # ProtT5, the affine on the pathway multi-hot alone, and the affine on GO + ProtT5,
+    # each pinned twice on seed 2700.
+    "w65": (
+        ["w65_*_h12l1p1_e200_s2700.json"],
+        [
+            "pathpooldet1",
+            "pathpooldet2",
+            "pathfbadet1",
+            "pathfbadet2",
+            "protgofbadet1",
+            "protgofbadet2",
+        ],
+    ),
     # Round 48: the capacity of the layer-free cell: width 24; two transformer layers;
     # width 24 with the two-layer preprocessor (the round-28 wide recipe); beside the
     # round-33 cell.
@@ -885,6 +900,12 @@ ARM_LABELS = {
     "protpathfbadet2": "the same, pinned, second run",
     "protlogdet1": "layer-free cell on ProtT5 alone (no pathway block), seed 2700, kernels pinned, first run",
     "protlogdet2": "the same, pinned, second run",
+    "pathpooldet1": "round-9 pooled cell (pathway + ProtT5, no affine readout), seed 2700, kernels pinned, first run",
+    "pathpooldet2": "the same, pinned, second run",
+    "pathfbadet1": "affine cell on the pathway multi-hot alone (no ProtT5), seed 2700, kernels pinned, first run",
+    "pathfbadet2": "the same, pinned, second run",
+    "protgofbadet1": "affine cell on GO + ProtT5 (no pathway block), seed 2700, kernels pinned, first run",
+    "protgofbadet2": "the same, pinned, second run",
     "pathgolog": "GO multi-hot + pathway multi-hot + ProtT5, the log(1 + |v|) vector in the affine, no layer",
     "protgolog": "GO multi-hot + ProtT5 (no pathway block), the log(1 + |v|) vector in the affine",
     "pathgofba": "GO multi-hot + pathway multi-hot + ProtT5, the four ratios only (round 47 control)",

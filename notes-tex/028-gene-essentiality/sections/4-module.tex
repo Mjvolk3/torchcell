@@ -1222,6 +1222,35 @@ settles is that the chance is harmless on this form: pinned once each, seeds 270
 and every one of the twenty-seven $\log(1 + |v|)$ cells on the split file, pinned or
 free, fit within the budget.
 
+Round 46 brackets the path (job 2433; Table~\ref{tab:w62},
+Figure~\ref{fig:w62}): two more pinned pairs on seed 2700, the layer-free cell on
+ProtT5 alone (no pathway block, the vector in the affine) and the round-22 affine cell
+(pathway multi-hot and ProtT5, the four ratios, no solve columns). The ProtT5-alone
+pair is one trajectory, identical in every logged quantity at every one of the 200
+epochs (training loss 1.2072 at epoch 0 in both, selected epoch 68 in both, 0.878
+[0.81, 0.94] held out, the same logits), so the solve columns, the affine and the
+ProtT5 path are covered by the switch; the pathway pair differs from epoch 0 (1.2322
+against 1.2530) at every epoch and ends at 0.884 and 0.874 with epochs 43 and 32
+selected. The divergence enters with the pathway multi-hot in the pooled arm, and not
+with the multi-hot as such, since the LP cell of round 32 carries the same two
+embeddings under the \texttt{flux\_off} arm and was one trajectory pinned. Which
+operation on the multi-hot in the pooled arm's path lacks a deterministic kernel that
+does not warn is the next bracket (round 49: the pooled arm on pathway and ProtT5 with
+no affine readout, on the pathway multi-hot alone with the affine, and on the GO
+multi-hot with ProtT5 and the affine, each pinned twice).
+
+\input{tables/round_w62}
+
+\tcfigfit[1.0]{figures/w62_readout_2026-09-18-17-27-14.pdf}{\textbf{Round 46, two
+  pinned pairs that bracket the pooled cell's divergence.} \textbf{a}, Validation
+  AUROC per epoch for the ProtT5-alone layer-free pair and the pathway-and-ProtT5
+  affine pair, each run twice with the card's kernels pinned. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points) and the gene bootstrap (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the
+  same 195 genes. \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w62}.}{fig:w62}
+
 \subsection{Round 31: the layer-free form\secstatus{todo}}
 \label{sec:round31}
 

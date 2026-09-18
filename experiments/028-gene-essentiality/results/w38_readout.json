@@ -1,6 +1,6 @@
 {
   "round": "w38",
-  "n_cells": 20,
+  "n_cells": 21,
   "cells": [
     {
       "stem": "w20_chromprotfba_h12l1p1_e200_s2700",
@@ -311,6 +311,28 @@
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/e5ix8np5"
     },
     {
+      "stem": "w38_protchromfba_h12l1p1_e200_s2702",
+      "arm": "protchromfba",
+      "seed": 2702,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 16770,
+      "n_val": 158,
+      "select_epoch": 55,
+      "select_val_auroc": 0.7909774436090226,
+      "test_auroc_pinned": 0.7885523210070811,
+      "test_auroc_ci_low": 0.6961481933179151,
+      "test_auroc_ci_high": 0.8732483624225438,
+      "test_accuracy_pinned": 0.7948717948717948,
+      "test_recall_essential_pinned": 0.5483870967741935,
+      "median_abs_step": 0.004511278195488688,
+      "val_curve_range": 0.515187969924812,
+      "wall_time_min": 10.824194534619648,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/hpi7wpvd"
+    },
+    {
       "stem": "w38_protpathfba_h12l1p1_e200_s2700",
       "arm": "protpathfba",
       "seed": 2700,
@@ -555,25 +577,28 @@
     {
       "arm": "protchromfba",
       "label": "chromosome one-hot + ProtT5 backbone + FBA ratios",
-      "n_seeds": 2,
+      "n_seeds": 3,
       "seeds": [
         2700,
-        2701
+        2701,
+        2702
       ],
-      "test_auroc_mean": 0.8220889063729346,
-      "test_auroc_sd": 0.002086270990912381,
+      "test_auroc_mean": 0.8109100445843168,
+      "test_auroc_sd": 0.019418473575202145,
       "test_auroc_values": [
         0.8235641227380016,
-        0.8206136900078678
+        0.8206136900078678,
+        0.7885523210070811
       ],
-      "pooled_auroc": 0.8223839496459481,
-      "pooled_ci_low": 0.7305957757165579,
-      "pooled_ci_high": 0.9024495264642252,
-      "median_abs_step_mean": 0.0036090225563909506,
+      "pooled_auroc": 0.8178599527930763,
+      "pooled_ci_low": 0.7283802893137932,
+      "pooled_ci_high": 0.8990448179550449,
+      "median_abs_step_mean": 0.0039097744360901965,
       "n_val": 158,
       "select_epochs": [
         40,
-        44
+        44,
+        55
       ]
     },
     {

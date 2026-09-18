@@ -371,7 +371,7 @@ the ratios reads 0.876, 0.885 and 0.878 on the MLP, above the full indicator's 0
 
 \input{tables/round_w38}
 
-\tcfigfit[1.0]{figures/w38_readout_2026-09-18-02-04-13.pdf}{\textbf{Round 22, the
+\tcfigfit[1.0]{figures/w38_readout_2026-09-18-02-28-07.pdf}{\textbf{Round 22, the
   chromosome-pathway indicator split into its blocks on the transformer.} \textbf{a},
   Validation AUROC per epoch, one thin line per seed and the seed mean per arm.
   \textbf{b}, The median absolute epoch-to-epoch step per cell against the validation
@@ -385,9 +385,9 @@ The transformer says what the MLP said. ProtT5 with the pathway block and the af
 reads 0.889, 0.895 and 0.885 (mean 0.890; pooled 0.890 with a gene bootstrap of 0.834
 to 0.942), against round 9's full indicator at 0.860, 0.866 and 0.888: above by 0.03 on
 two seeds and under by 0.003 on the third, the seed round 9 selected at its best.
-ProtT5 with the chromosome block reads 0.824 and 0.821 (two seeds; the third cell was
-lost to the memory limit twice and is rerun) and with the seven properties 0.816,
-0.846 and 0.809, both at the level of ProtT5 with the affine alone (0.821). The
+ProtT5 with the chromosome block reads 0.824, 0.821 and 0.789 and with the seven
+properties 0.816, 0.846 and 0.809, both at the level of ProtT5 with the affine alone
+(0.821). The
 pathway block without ProtT5 reads 0.773, 0.760 and 0.766 on the transformer where
 the MLP had it at 0.828, the one place the two models part: the transformer needs the
 sequence embedding to use the pathway columns, and the MLP does not. The block that

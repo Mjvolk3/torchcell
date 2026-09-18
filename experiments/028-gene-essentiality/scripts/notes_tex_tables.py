@@ -893,6 +893,50 @@ def graph_baselines_go_rel() -> str | None:
     )
 
 
+def genome_heldout() -> str | None:
+    """Round 30: every model on the 4,674 genome-wide genes the released split never labeled."""
+    src = osp.join(RESULTS, "genome_heldout_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    arms = report["arms"]
+    best = max(a["mean"] for a in arms)
+    rows = []
+    for a in arms:
+        cells = ", ".join(f"{v:.3f}" for v in a["cell_aurocs"])
+        if a["pooled_auroc"] is None:
+            pooled = "--"
+        else:
+            lo, hi = a["pooled_ci"]
+            pooled = f"{a['pooled_auroc']:.3f} [{lo:.2f}, {hi:.2f}]"
+        epochs = ", ".join(str(e) for e in a["select_epochs"]) or "--"
+        rows.append(
+            f"    {a['label']} & {a['n_cells']} & {cells} & {fmt(a['mean'], best)} & "
+            f"{a['sd']:.3f} & {pooled} & {epochs} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[Round 30, the genome-wide held-out genes]{Round 30, the genome-wide "
+        "labels as a larger held-out set. Every model is trained on the released labeled "
+        "genes outside the released held-out set (629 train, 158 val, the split "
+        "\\texttt{ess\\_genome\\_heldout\\_val0.2\\_s0}) and read once on the "
+        f"{report['n_test_genes']:,} genes the released file never labeled, "
+        f"{report['n_test_essential']:,} of them essential by SGD annotation and the rest "
+        "nonessential by a fitness record, so label origin coincides with class on this "
+        "set. None of these genes carries a yeast-GEM reaction, so FBA's knockout ratio "
+        "is 1.0 on every one and the solve has no call. Cells are seeds 2700 to 2702; the "
+        "pooled column scores the seed-mean logit with a 2,000-draw gene bootstrap. "
+        f"{BEST_NOTE}}}\n  \\label{{tab:genome-heldout}}\n"
+        "  \\begin{tabular}{@{}p{58mm}rlrrlp{22mm}@{}}\n    \\hline\n"
+        "    arm & cells & per cell & mean & sd & pooled [95\\% CI] & selected epochs \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("genome_heldout", body, "results/genome_heldout_readout.json")
+
+
 def wl_test() -> str | None:
     """1-WL on the single-deletion graphs, and the WL kernel as a rung."""
     src = osp.join(RESULTS, "wl_knockout_test.json")
@@ -1236,6 +1280,7 @@ def main() -> None:
         graph_baselines_go400_s6(),
         graph_baselines_go800(),
         graph_baselines_go_rel(),
+        genome_heldout(),
         fold_ensembles(),
         gene_encodings(),
         hard_genes(),

@@ -1,0 +1,217 @@
+{
+  "split": "ess_genome_heldout_val0.2_s0.json.gz",
+  "n_test_genes": 4674,
+  "n_test_essential": 974,
+  "arms": [
+    {
+      "label": "MLP on ProtT5 + FBA ratios",
+      "kind": "MLP",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.4942265109051557,
+        0.4760817747932738,
+        0.48773669460014424
+      ],
+      "mean": 0.4860149934328579,
+      "sd": 0.007506932499342813,
+      "pooled_auroc": 0.4809064043509629,
+      "pooled_ci": [
+        0.4616151634572222,
+        0.5017031882860618
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        71,
+        197,
+        76
+      ],
+      "wall_minutes": 0.03852348327636719
+    },
+    {
+      "label": "MLP on the three inputs",
+      "kind": "MLP",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.5114787169099284,
+        0.5083864254398135,
+        0.5073697208502137
+      ],
+      "mean": 0.5090782877333185,
+      "sd": 0.0017473727382498736,
+      "pooled_auroc": 0.5091503413063988,
+      "pooled_ci": [
+        0.49016801043762515,
+        0.5282037862532466
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        55,
+        58,
+        55
+      ],
+      "wall_minutes": 0.03861931562423706
+    },
+    {
+      "label": "graph convolution on ProtT5 alone, 400 epochs",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.7459243021255342,
+        0.7534380376269493,
+        0.7485504190021643
+      ],
+      "mean": 0.749304252918216,
+      "sd": 0.003113439092712821,
+      "pooled_auroc": 0.7493814862090016,
+      "pooled_ci": [
+        0.7312107601424676,
+        0.7678955729869353
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        373,
+        380,
+        393
+      ],
+      "wall_minutes": 0.715522829691569
+    },
+    {
+      "label": "graph convolution on ProtT5 + FBA ratios",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.7593781563904767,
+        0.7584134802153282,
+        0.7582890282479605
+      ],
+      "mean": 0.7586935549512551,
+      "sd": 0.00048674525916786514,
+      "pooled_auroc": 0.7586991508962762,
+      "pooled_ci": [
+        0.7403621325057244,
+        0.7771103416279068
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        196,
+        197,
+        197
+      ],
+      "wall_minutes": 0.35763468345006305
+    },
+    {
+      "label": "graph convolution on the three inputs, 400 epochs",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.7424771074976414,
+        0.7439622065597425,
+        0.744225817192963
+      ],
+      "mean": 0.7435550437501156,
+      "sd": 0.0007697759694808996,
+      "pooled_auroc": 0.7436634940895721,
+      "pooled_ci": [
+        0.724978730677905,
+        0.7624069870637179
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        380,
+        396,
+        380
+      ],
+      "wall_minutes": 0.7234765529632569
+    },
+    {
+      "label": "graph convolution on GO alone, 400 epochs",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.716076918807925,
+        0.6965683445252233,
+        0.6936744547422165
+      ],
+      "mean": 0.7021065726917882,
+      "sd": 0.009948922135003396,
+      "pooled_auroc": 0.7032449081525057,
+      "pooled_ci": [
+        0.6845105756783233,
+        0.722460374971394
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        397,
+        395,
+        379
+      ],
+      "wall_minutes": 0.7180599451065064
+    },
+    {
+      "label": "graph convolution on GO + FBA ratios, 400 epochs",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.698773516843332,
+        0.6932168821799212,
+        0.707140934569066
+      ],
+      "mean": 0.699710444530773,
+      "sd": 0.00572294701778334,
+      "pooled_auroc": 0.699861812531217,
+      "pooled_ci": [
+        0.6803209452469856,
+        0.719143924434252
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        397,
+        392,
+        397
+      ],
+      "wall_minutes": 0.7213367938995361
+    },
+    {
+      "label": "graph convolution on ProtT5 + GO + FBA ratios, 400 epochs",
+      "kind": "GCN",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.700156778955547,
+        0.6971258116432654,
+        0.7068941117709084
+      ],
+      "mean": 0.7013922341232401,
+      "sd": 0.0040824570991387825,
+      "pooled_auroc": 0.7015461457350575,
+      "pooled_ci": [
+        0.6822144907154744,
+        0.7210560343349532
+      ],
+      "n_genes": 4674,
+      "select_epochs": [
+        397,
+        368,
+        391
+      ],
+      "wall_minutes": 0.7257899920145671
+    },
+    {
+      "label": "FBA knockout ratio on YPD (0 of 4674 genes carry a reaction)",
+      "kind": "solver",
+      "n_cells": 1,
+      "cell_aurocs": [
+        0.5
+      ],
+      "mean": 0.5,
+      "sd": 0.0,
+      "pooled_auroc": 0.5,
+      "pooled_ci": [
+        0.5,
+        0.5
+      ],
+      "n_genes": 4674,
+      "select_epochs": [],
+      "wall_minutes": null
+    }
+  ]
+}

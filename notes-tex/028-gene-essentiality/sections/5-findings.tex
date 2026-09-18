@@ -150,3 +150,22 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     preprocessor, three quarters of the parameters, is where fitting continues after the
     validation curve peaks.
 \end{description}
+
+What carries forward to a model trained over every phenotype in the database is the
+part of this that did not depend on the 195 genes. Metabolism enters as a
+perturbation-conditional data transform: the genome-scale program solved once per
+genotype and medium on the GEM's own box, cached, and read through a zero-initialized
+head over $\log(1 + |v^*|)$, which cost nothing on the card, held mass balance and the
+bounds exactly, read 0.90 to 0.92 on eight runs of nine where the affine read 0.89, and
+cannot hurt at initialization; the learned enzyme-constrained layer, whose ceilings
+added 0.01 to 0.02 at five times the wall time and whose forced growth column could
+not be trained, is a fine-tuning module and not a backbone component. Annotation
+vectors enter through message passing over the gene graphs and not through the
+transformer's token: the GO multi-hot read 0.917 through two layers of convolution
+and 0.833 through the transformer, and the pathway block's gain on the transformer
+was the one annotation it took. The gene graphs enter as a message-passing input and
+not as a regularizer, since off the metabolic genes the models without the graph as
+an input fell to chance and the ones with it held 0.75. What the 195 genes could not
+decide, which of three architectures on the same inputs is better, the genome-wide
+set decided for the graph; what neither set can decide is whether that transfer is
+essentiality or the deletion collection's coverage.

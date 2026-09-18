@@ -1442,6 +1442,29 @@ inside or at the parsimonious edge of the optimal face train the cell to one num
 on the split file and to numbers within each other's intervals under the fold
 protocol; the growth vertex alone does not.
 
+The store's medium does not move the number either (round 42, job 2424;
+Table~\ref{tab:w58}, Figure~\ref{fig:w58}). Every store above is solved on YPD, the
+medium the essentiality calls were scored on; the same two-stage solve with the
+exchanges set to synthetic complete medium (wild-type growth 0.5428 against 0.5352)
+trains the cell to 0.918, 0.914, 0.908, 0.905, 0.915 and 0.901 (mean 0.910, sd 0.007;
+pooled 0.912 [0.87, 0.95]), the YPD store's 0.908 and 0.912, with every seed
+selecting near the transition (epochs 28 to 52). On this endpoint the vector's
+information is the deletion's, not the medium's; whether a store per medium carries
+anything for a phenotype scored across media is the question a database of media
+conditions asks, and the 195 genes scored on one medium cannot.
+
+\input{tables/round_w58}
+
+\tcfigfit[1.0]{figures/w58_readout_2026-09-18-15-17-15.pdf}{\textbf{Round 42, the
+  store on synthetic complete medium.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w58}.}{fig:w58}
+
 \input{tables/round_w54}
 
 \tcfigfit[1.0]{figures/w54_readout_2026-09-18-13-58-16.pdf}{\textbf{Round 38, the

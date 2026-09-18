@@ -1,0 +1,178 @@
+{
+  "script": "solve_tolerance_read.py",
+  "program": "GEM box clamped to +/-100 mmol/gDW/h, YPD on the exchanges, the gene's reactions closed through the GPR, split variables in micromoles, maximize growth (the round-27 program)",
+  "gem": "yeast-GEM-9.0.2",
+  "medium": {
+    "applied": true,
+    "media_name": "YPD",
+    "recipe": "YPD-approx (YNB + 20 amino acids; peptone NOT modeled)",
+    "state": "liquid",
+    "n_components": 45,
+    "n_resolved": 45,
+    "n_exchanges_opened": 45,
+    "excluded_by_role": [],
+    "wild_type_growth_before": 0.08584396972646902,
+    "wild_type_growth_after": 0.5352018656343418,
+    "provenance": "see the recipe's docstring in torchcell/metabolism/media.py"
+  },
+  "highs_version": "1.15.1",
+  "wild_type_growth": 0.5352018792595129,
+  "n_genes": 1121,
+  "n_test": 195,
+  "n_train": 629,
+  "n_genes_in_gem": 1121,
+  "reference": "simplex_exact",
+  "time_limit_s": 120.0,
+  "workers": 8,
+  "probe": "LogisticRegression(C=0.01, balanced) over log(1 + |v|) standardized on the training genes; 'fit_on_reference' is fitted on the reference solver's vectors and scored on each solver's held-out vectors, 'fit_within' fitted and scored on the same solver",
+  "reads": [
+    {
+      "solver": "simplex_exact",
+      "options": {
+        "solver": "simplex"
+      },
+      "n_optimal": 1121,
+      "n_genes": 1121,
+      "seconds_median": 0.09827110404148698,
+      "seconds_total": 111.75483841774985,
+      "iterations_median": 1821.0,
+      "growth_ratio_max_abs_diff": 0.0,
+      "growth_ratio_auroc_test": 0.6315892997639654,
+      "growth_ratio_auroc_all": 0.7225665354018553,
+      "log1p_flux_relative_l2_median": 0.0,
+      "log1p_flux_relative_l2_max": 0.0,
+      "frac_reactions_moved_gt_0_01_mean": 0.0,
+      "probe_auroc_test_fit_on_reference": 0.7555074744295831,
+      "probe_auroc_test_fit_on_reference_ci": [
+        0.6309337929539659,
+        0.8573472383526095
+      ],
+      "probe_auroc_test_fit_within": 0.7555074744295831,
+      "probe_auroc_test_fit_within_ci": [
+        0.6309337929539659,
+        0.8573472383526095
+      ],
+      "probe_spearman_with_reference_scores": 0.9999999999999999
+    },
+    {
+      "solver": "simplex_primal_exact",
+      "options": {
+        "solver": "simplex",
+        "simplex_strategy": 4
+      },
+      "n_optimal": 1121,
+      "n_genes": 1121,
+      "seconds_median": 0.17381876101717353,
+      "seconds_total": 193.73069781577215,
+      "iterations_median": 2793.0,
+      "growth_ratio_max_abs_diff": 2.862061140706238e-10,
+      "growth_ratio_auroc_test": 0.6349331235247837,
+      "growth_ratio_auroc_all": 0.7045253323466449,
+      "log1p_flux_relative_l2_median": 0.36754778027534485,
+      "log1p_flux_relative_l2_max": 0.48566657304763794,
+      "frac_reactions_moved_gt_0_01_mean": 0.039666575322764644,
+      "probe_auroc_test_fit_on_reference": 0.5428796223446106,
+      "probe_auroc_test_fit_on_reference_ci": [
+        0.41734566717791405,
+        0.6746564053230719
+      ],
+      "probe_auroc_test_fit_within": 0.672895357985838,
+      "probe_auroc_test_fit_within_ci": [
+        0.5466765181982188,
+        0.7859558660456863
+      ],
+      "probe_spearman_with_reference_scores": -0.34852263397183353
+    },
+    {
+      "solver": "simplex_1e-4",
+      "options": {
+        "solver": "simplex",
+        "primal_feasibility_tolerance": 0.0001,
+        "dual_feasibility_tolerance": 0.0001
+      },
+      "n_optimal": 1121,
+      "n_genes": 1121,
+      "seconds_median": 0.1501475377008319,
+      "seconds_total": 161.67458280408755,
+      "iterations_median": 3476.0,
+      "growth_ratio_max_abs_diff": 3.73344128723474e-07,
+      "growth_ratio_auroc_test": 0.64771833202203,
+      "growth_ratio_auroc_all": 0.7011291857176836,
+      "log1p_flux_relative_l2_median": 0.4130028188228607,
+      "log1p_flux_relative_l2_max": 0.4980368912220001,
+      "frac_reactions_moved_gt_0_01_mean": 0.03395488215880839,
+      "probe_auroc_test_fit_on_reference": 0.5034421715184894,
+      "probe_auroc_test_fit_on_reference_ci": [
+        0.36767374195852587,
+        0.6409855747414903
+      ],
+      "probe_auroc_test_fit_within": 0.6527340676632571,
+      "probe_auroc_test_fit_within_ci": [
+        0.5123799292214359,
+        0.7730083178273969
+      ],
+      "probe_spearman_with_reference_scores": 0.0489139325554278
+    },
+    {
+      "solver": "ipm_nocross_1e-4",
+      "options": {
+        "solver": "ipm",
+        "run_crossover": "off",
+        "kkt_tolerance": 0.0001
+      },
+      "n_optimal": 1115,
+      "n_genes": 1121,
+      "seconds_median": 0.09220340941101313,
+      "seconds_total": 104.12708143517375,
+      "iterations_median": 32.0,
+      "growth_ratio_max_abs_diff": 6.505598553085967e-06,
+      "growth_ratio_auroc_test": 0.6016915814319435,
+      "growth_ratio_auroc_all": 0.6808547189259191,
+      "log1p_flux_relative_l2_median": 0.8787012696266174,
+      "log1p_flux_relative_l2_max": 1.0,
+      "frac_reactions_moved_gt_0_01_mean": 0.16373167696391008,
+      "probe_auroc_test_fit_on_reference": 0.5772029897718332,
+      "probe_auroc_test_fit_on_reference_ci": [
+        0.4459422975688522,
+        0.70054012345679
+      ],
+      "probe_auroc_test_fit_within": 0.7756687647521637,
+      "probe_auroc_test_fit_within_ci": [
+        0.6724595057906205,
+        0.863928841991342
+      ],
+      "probe_spearman_with_reference_scores": 0.17685505104404967
+    },
+    {
+      "solver": "pdlp_1e-4",
+      "options": {
+        "solver": "pdlp",
+        "run_crossover": "off",
+        "kkt_tolerance": 0.0001
+      },
+      "n_optimal": 1109,
+      "n_genes": 1121,
+      "seconds_median": 11.716041854582727,
+      "seconds_total": 15978.134957636707,
+      "iterations_median": 422720.0,
+      "growth_ratio_max_abs_diff": 0.9999999933100241,
+      "growth_ratio_auroc_test": 0.6750590086546027,
+      "growth_ratio_auroc_all": 0.6887966804979253,
+      "log1p_flux_relative_l2_median": 0.9550199508666992,
+      "log1p_flux_relative_l2_max": 1.0,
+      "frac_reactions_moved_gt_0_01_mean": 0.13436277694963622,
+      "probe_auroc_test_fit_on_reference": 0.684697088906373,
+      "probe_auroc_test_fit_on_reference_ci": [
+        0.570410127189582,
+        0.7945715025197194
+      ],
+      "probe_auroc_test_fit_within": 0.7204956726986624,
+      "probe_auroc_test_fit_within_ci": [
+        0.6197492448495808,
+        0.8239434349270547
+      ],
+      "probe_spearman_with_reference_scores": 0.19151508492821537
+    }
+  ],
+  "seconds": 2184.343640089035
+}

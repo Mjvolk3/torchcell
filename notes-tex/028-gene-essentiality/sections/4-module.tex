@@ -1188,6 +1188,46 @@ each). The wall time is 31 minutes per cell at six per card, against 40 for the 
 at three and 83 for the cached-solve head at two: with the vector precomputed the cell
 costs what the affine costs, and nothing on the card waits on a solver.
 
+\subsection{The solve across solvers: the argmax is not unique\secstatus{todo}}
+\label{sec:solve-tolerance}
+
+The head over the solved flux reads one solver's answer. A batched solve on the card
+(NVIDIA's cuOpt) is a first-order method, PDLP, run to a $10^{-4}$ relative tolerance
+in its own benchmark, and it stops at a point of the optimal face rather than at a
+vertex, so before any card is involved the question is whether the head's columns
+survive the change of solver. HiGHS 1.15 carries the PDLP algorithm on the CPU, an
+interior-point solver that can stop before crossover, and the simplex at any
+tolerance, so the round-27 program was solved for every labeled gene five ways
+(Table~\ref{tab:solve-tolerance}). The read on each is the growth value, the
+flux vector's distance from the reference in the head's own encoding, and a linear
+probe over that encoding, fitted on the training genes' reference vectors and scored
+on each solver's held-out vectors, which is what a head trained on exact solves sees
+when it is served another solver's, beside the same probe fitted within each solver.
+
+\input{tables/solve_tolerance}
+
+The growth value is the same under every solver, to $3 \times 10^{-7}$ for the
+simplex at $10^{-4}$ and $7 \times 10^{-6}$ for the interior point, and its ranking of
+the 195 genes is FBA's 0.60 to 0.68 whichever solver produced it. The flux vector is
+not the same: the primal simplex, an exact solve at the same tolerances, lands on
+another vertex of the optimal face and moves 4 percent of the reactions by more than
+0.01 in $\log(1 + |v|)$ (median relative distance 0.37); the dual simplex at
+$10^{-4}$ moves 3 percent; the interior point without crossover and PDLP, which stop
+inside the face, move 16 and 13 percent (0.88 and 0.96). The probe fitted on the
+reference vertices reads 0.756 [0.63, 0.86] on the reference's own held-out vectors
+and 0.54, 0.50, 0.58 and 0.69 on the other four solvers', at chance on the other
+exact vertex, so a head trained on one solver's vertex does not read another's; and
+fitted within each solver it reads 0.67, 0.65, 0.78 and 0.72, the interior point's
+0.776 [0.67, 0.86] one number with the reference vertex's 0.756. The argmax of the
+program is degenerate and the ranking the head extracts is a property of the point
+the solver returns, not of the program; that point is as rankable from inside the
+face as from a vertex, and a head must be trained on the solver it will be served
+with. On the CPU the PDLP solve took 11.7 s a program against 0.1 for the simplex and
+0.09 for the interior point, and reported 12 of 1,121 programs non-optimal within
+120 s, so the card is where PDLP's batch would have to pay for itself; the
+interior-point solve without crossover is the CPU form that returns the same kind of
+point at the simplex's cost.
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

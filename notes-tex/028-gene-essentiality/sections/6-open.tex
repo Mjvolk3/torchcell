@@ -88,12 +88,18 @@ weight, six encodings). What remains is attribution and the module.
     three constructions would remove the synchronization, in order of how much they
     change: a batched first-order solve on the card, which NVIDIA's cuOpt offers as
     PDLP with a batch mode for many small programs at a benchmark tolerance of
-    $10^{-4}$ relative, so the first read is whether the head over a $10^{-4}$ flux
-    ranks the genes as the exact one does, which HiGHS at a loose tolerance can answer
-    on the CPU before any card is involved; a per-genotype basis warm start of the
-    simplex through HiGHS's own interface, which keeps the exact solve and the exact
-    duals; a smooth interior-point solve at a fixed barrier, which changes what the
-    layer computes and belongs to its own rounds.
+    $10^{-4}$ relative; a per-genotype basis warm start of the simplex through HiGHS's
+    own interface, which keeps the exact solve and the exact duals; a smooth
+    interior-point solve at a fixed barrier, which changes what the layer computes
+    and belongs to its own rounds. The read that had to come first is in
+    (Section~\ref{sec:solve-tolerance}): the program's argmax is degenerate, another
+    exact vertex already breaks a head trained on the reference vertex (the probe at
+    chance), and a point inside the optimal face, PDLP's or the interior point's, is
+    as rankable as a vertex when the head is trained on it. So the solver is part of
+    the module's definition, the store and the head must be built from one solver,
+    and what is open is whether a head trained on the interior point transfers across
+    tolerances of the same solver, which the $10^{-4}$ read did not separate from the
+    change of vertex.
   \item The module's own hyperparameters have not been moved on this endpoint: the
     $k_{cat}$ tier (measured against predicted) and the thermodynamic source. Given
     round 15, the $k_{cat}$ tier is the one that sets whether the capacity box holds a

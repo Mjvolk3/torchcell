@@ -1370,9 +1370,69 @@ def family_ensembles_folds() -> str | None:
     )
 
 
+def solve_tolerance() -> str | None:
+    """The round-27 program under five solvers: growth, the flux vector, and a probe."""
+    src = osp.join(RESULTS, "solve_tolerance_read.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    labels = {
+        "simplex_exact": "dual simplex, default tolerances (reference)",
+        "simplex_primal_exact": "primal simplex, default tolerances (another exact vertex)",
+        "simplex_1e-4": "dual simplex, feasibility tolerances $10^{-4}$",
+        "ipm_nocross_1e-4": "interior point, no crossover, KKT $10^{-4}$",
+        "pdlp_1e-4": "PDLP (the cuOpt algorithm, on the CPU), KKT $10^{-4}$",
+    }
+    reads = r["reads"]
+    best_within = max(x["probe_auroc_test_fit_within"] for x in reads)
+    rows = []
+    for x in reads:
+        rows.append(
+            f"    {labels[x['solver']]} & {x['n_optimal']}/{x['n_genes']} & "
+            f"{x['seconds_median']:.2f} & {x['growth_ratio_auroc_test']:.3f} & "
+            f"{x['frac_reactions_moved_gt_0_01_mean'] * 100:.1f} & "
+            f"{x['log1p_flux_relative_l2_median']:.2f} & "
+            f"{x['probe_auroc_test_fit_on_reference']:.3f} "
+            f"[{x['probe_auroc_test_fit_on_reference_ci'][0]:.2f}, "
+            f"{x['probe_auroc_test_fit_on_reference_ci'][1]:.2f}] & "
+            f"{fmt(x['probe_auroc_test_fit_within'], best_within)} "
+            f"[{x['probe_auroc_test_fit_within_ci'][0]:.2f}, "
+            f"{x['probe_auroc_test_fit_within_ci'][1]:.2f}] \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The solve across solvers]{The round-27 program (the GEM box "
+        "clamped to $\\pm100$ mmol/gDW/h, YPD on the exchanges, the gene's reactions "
+        "closed through the GPR, maximize growth) solved for every one of the 1,121 "
+        f"labeled genes by five solvers of HiGHS {r['highs_version']}, one thread each. "
+        "``Optimal'' counts the programs the solver reported optimal within "
+        f"{r['time_limit_s']:.0f} s; ``s'' is the median wall clock per solve; ``growth "
+        "AUROC'' scores $1 - $ the knockout-to-wild-type growth ratio on the 195 "
+        "held-out genes; ``moved'' is the mean fraction of the 4,131 reactions whose "
+        "$\\log(1 + |v|)$ differs from the reference's by more than 0.01, and ``rel. "
+        "$L_2$'' the median relative distance of that vector. The probe is a logistic "
+        "regression over $\\log(1 + |v|)$ ($C = 0.01$, balanced) fitted on the 629 "
+        "training genes: ``fit on reference'' is fitted on the reference solver's "
+        "vectors and scored on this solver's held-out vectors, what a head trained on "
+        "exact solves sees when served another solver's; ``fit within'' is fitted and "
+        "scored on this solver's own. Gene bootstrap, 2,000 draws. Written by "
+        "\\texttt{solve\\_tolerance\\_read.py}. Bold marks the highest within-solver "
+        "probe.}\n"
+        "  \\label{tab:solve-tolerance}\n"
+        "  \\begin{tabular}{@{}p{44mm}rrrrrll@{}}\n    \\hline\n"
+        "    solver & optimal & s & growth AUROC & moved (\\%) & rel. $L_2$ & "
+        "probe, fit on reference & probe, fit within \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("solve_tolerance", body, "results/solve_tolerance_read.json")
+
+
 def main() -> None:
     paths = [
         wl_test(),
+        solve_tolerance(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

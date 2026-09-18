@@ -155,6 +155,17 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     0.923 and 0.911; whether the head's construction, zero-initialized over
     $\log(1 + |v|)$, closes the 0.05 to the cached-solve head is in flight
     (Section~\ref{sec:round31}).
+  \item[The solve's argmax is not unique, and the head reads the solver's point.]
+    The round-27 program solved for every labeled gene by five solvers gives one
+    growth value (to $10^{-5}$, FBA's 0.60 to 0.68 on the 195 whichever solver) and
+    five flux vectors: another exact vertex moves 4 percent of the reactions in the
+    head's encoding, a point inside the optimal face 13 to 16 percent. A probe fitted
+    on the reference vertices reads 0.756 on them and 0.50 to 0.69 on the other
+    solvers' vectors, at chance on the other exact vertex; fitted within each solver it
+    reads 0.65 to 0.78, the interior point's 0.776 level with the vertex's. The store
+    and the head must come from one solver, and a point inside the face, which is
+    what a first-order solve on the card returns, ranks as well as a vertex
+    (Section~\ref{sec:solve-tolerance}).
   \item[Where the gradient goes is not the problem.] On the alternating layer the
     gradient reaches the flux layer on every arm that lets it; the backbone's
     preprocessor, three quarters of the parameters, is where fitting continues after the

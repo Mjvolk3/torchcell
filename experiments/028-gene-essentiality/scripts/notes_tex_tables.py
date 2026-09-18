@@ -353,6 +353,15 @@ ROUND_CAPTIONS = {
         "chromosome one-hot, the seven scaled properties, and the pathway block alone "
         "without ProtT5. Batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
     ),
+    "w40": (
+        "Round 24, what carries the head over the solved flux",
+        "The round-18 gated elastic cell, the round-5 affine on ProtT5 and the round-9 "
+        "affine on the chromosome-pathway indicator with ProtT5 (the comparators), the "
+        "round-21 cells (the head over all solved fluxes, on six seeds once seeds 2703 to "
+        "2705 land; the head over the 274 exchange fluxes), against the head over the "
+        "2,709 gene-owned fluxes, and the head over the flux of the GEM-box solve with "
+        "no learned ceilings. Constraint scale 0, batch 32, class weight, 200 epochs.",
+    ),
     "w39": (
         "Round 23, the gated module forms on the ladder's top input",
         "The pooled cell on ProtT5 with the pathway multi-hot and no readout (the "

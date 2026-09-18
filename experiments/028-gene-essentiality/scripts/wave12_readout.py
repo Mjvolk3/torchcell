@@ -438,6 +438,28 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathlpelgateflux",
         ],
     ),
+    # Round 24: what carries round 21. The flux head over the GEM-box solve (no learned
+    # ceilings), the head over the gene-owned reactions only, and the passing cell on
+    # seeds 2703 to 2705 (its stem stays w37_, so the arm pools to six seeds).
+    "w40": (
+        [
+            "w32_lpelgate100_h12l1p1_e200_s270[0-2].json",
+            "w16_fba_h12l1p1_e200_s*.json",
+            "w20_chromprotfba_h12l1p1_e200_s270[0-2].json",
+            "w37_lpelgateflux_h12l1p1_e200_s*.json",
+            "w37_lpelgatefluxexch_h12l1p1_e200_s*.json",
+            "w40_*_e200_s*.json",
+        ],
+        [
+            "lpelgate100",
+            "fba",
+            "chromprotfba",
+            "lpelgateflux",
+            "lpelgatefluxexch",
+            "lpelgatefluxgene",
+            "lpoffgateflux",
+        ],
+    ),
     # Round 16: the round-9 backbone with the round-11 affine.
     "w27": (
         [
@@ -575,6 +597,8 @@ ARM_LABELS = {
     "lpelbio100r6lr10": "growth column, elastic solve, x100, reach e^6, flux layer lr x10",
     "lpelgateflux": "gated column + context + a head over the solved flux (all reactions)",
     "lpelgatefluxexch": "gated column + context + a head over the solved exchange fluxes",
+    "lpelgatefluxgene": "gated column + context + a head over the solved gene-owned fluxes",
+    "lpoffgateflux": "gated column + context + a head over the GEM-box solve's flux (all reactions)",
     "chromprotpfba": "chrom-pathway + ProtT5 backbone + FBA ratios + pFBA vector",
     "chromprotstatspfba": "chrom-pathway + ProtT5 backbone + ratios + statistics + pFBA",
     "cspcv0": "chrom-pathway + ProtT5 + widened affine, fold 0",

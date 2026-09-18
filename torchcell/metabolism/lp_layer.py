@@ -56,7 +56,7 @@ from __future__ import annotations
 
 import multiprocessing as mp
 import os
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import scipy.sparse as sp
@@ -261,6 +261,22 @@ class GrowthLPSolver:
         self._pool: Any = None
         #: The last batch solved, for the layer's per-epoch statistics.
         self.last: LPBatch | None = None
+        #: Solved rows keyed by their bounds, filled only for rows whose bounds carry no
+        #: gradient (the GEM-box layer, where the program is a function of the genotype
+        #: and the medium alone and every epoch would re-solve the same 1,000 programs).
+        #: A row is about 100 KB, so the split's genotypes are a few hundred MB.
+        self.cache: dict[bytes, LPRow] = {}
+        self.cache_hits = 0
+        self.cache_misses = 0
+
+    @staticmethod
+    def row_key(lb: np.ndarray, ub: np.ndarray, slack_penalty: float) -> bytes:
+        """The cache key of one program: its bounds to 1e-9 and its slack penalty."""
+        return (
+            np.round(lb, 9).tobytes()
+            + np.round(ub, 9).tobytes()
+            + np.float64(slack_penalty).tobytes()
+        )
 
     def pool(self) -> Any:
         """The forked worker pool, created on first use so the parent may already hold CUDA."""
@@ -274,23 +290,55 @@ class GrowthLPSolver:
         return self._pool
 
     def solve_batch(
-        self, lb: np.ndarray, ub: np.ndarray, slack_penalty: float = 0.0
+        self,
+        lb: np.ndarray,
+        ub: np.ndarray,
+        slack_penalty: float = 0.0,
+        use_cache: bool = False,
     ) -> LPBatch:
-        """Solve every row of ``(lb, ub)``; ``slack_penalty > 0`` selects the elastic program."""
-        jobs = [(lb[i], ub[i], float(slack_penalty)) for i in range(lb.shape[0])]
-        if self.n_workers == 1:
-            _init_pool(self.a_eq, self.c, self.n_rxn)
-            rows = [_solve_one(j) for j in jobs]
-        else:
-            rows = self.pool().map(_solve_one, jobs, chunksize=1)
+        """Solve every row of ``(lb, ub)``; ``slack_penalty > 0`` selects the elastic program.
+
+        With ``use_cache`` a row whose bounds were solved before returns its stored
+        solution and only the new rows go to the pool; the caller sets it when the
+        bounds carry no gradient, since a cached row's duals are the stored ones.
+        """
+        n = lb.shape[0]
+        rows: list[LPRow | None] = [None] * n
+        keys: list[bytes | None] = [None] * n
+        todo: list[int] = []
+        for i in range(n):
+            if use_cache:
+                key = self.row_key(lb[i], ub[i], float(slack_penalty))
+                keys[i] = key
+                hit = self.cache.get(key)
+                if hit is not None:
+                    rows[i] = hit
+                    self.cache_hits += 1
+                    continue
+                self.cache_misses += 1
+            todo.append(i)
+        jobs = [(lb[i], ub[i], float(slack_penalty)) for i in todo]
+        if jobs:
+            if self.n_workers == 1:
+                _init_pool(self.a_eq, self.c, self.n_rxn)
+                solved = [_solve_one(j) for j in jobs]
+            else:
+                solved = self.pool().map(_solve_one, jobs, chunksize=1)
+            for i, row in zip(todo, solved):
+                rows[i] = row
+                stored_key = keys[i]
+                if stored_key is not None:
+                    self.cache[stored_key] = row
+        assert all(r is not None for r in rows)
+        solved_rows = cast(list[LPRow], rows)
         self.last = LPBatch(
-            v=np.stack([x.v for x in rows]),
-            value=np.array([x.value for x in rows]),
-            growth=np.array([x.growth for x in rows]),
-            d_lb=np.stack([x.d_lb for x in rows]),
-            d_ub=np.stack([x.d_ub for x in rows]),
-            feasible=np.array([x.feasible for x in rows]),
-            slack=np.array([x.slack for x in rows]),
+            v=np.stack([x.v for x in solved_rows]),
+            value=np.array([x.value for x in solved_rows]),
+            growth=np.array([x.growth for x in solved_rows]),
+            d_lb=np.stack([x.d_lb for x in solved_rows]),
+            d_ub=np.stack([x.d_ub for x in solved_rows]),
+            feasible=np.array([x.feasible for x in solved_rows]),
+            slack=np.array([x.slack for x in solved_rows]),
         )
         return self.last
 
@@ -306,10 +354,13 @@ class _GrowthLP(torch.autograd.Function):
         solver: GrowthLPSolver,
         slack_penalty: float,
     ) -> torch.Tensor:
+        # Bounds that carry no gradient make the program a function of the genotype and
+        # the medium alone, so its solution is reused across epochs.
         batch = solver.solve_batch(
             lb.detach().cpu().double().numpy(),
             ub.detach().cpu().double().numpy(),
             slack_penalty,
+            use_cache=not (lb.requires_grad or ub.requires_grad),
         )
         ctx.save_for_backward(
             torch.from_numpy(batch.d_lb).to(lb), torch.from_numpy(batch.d_ub).to(ub)

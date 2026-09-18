@@ -122,3 +122,22 @@ def test_elastic_program_equals_the_hard_one_when_feasible() -> None:
     elastic = growth_lp(lb.unsqueeze(0), ub.unsqueeze(0), solver, slack_penalty=1.0)
     assert solver.last is not None and abs(solver.last.slack[0]) < 1e-9
     assert abs(hard[0, obj].item() - elastic[0, obj].item()) < 1e-9
+
+
+def test_cache_reuses_a_solved_program_only_without_gradient() -> None:
+    s, lb, ub, obj = toy()
+    solver = GrowthLPSolver(s, obj, n_workers=1)
+    lb2 = torch.stack([lb, lb])
+    ub2 = torch.stack([ub, ub * 0.5])
+    first = growth_lp(lb2, ub2, solver)
+    assert solver.cache_misses == 2 and solver.cache_hits == 0
+    second = growth_lp(lb2, ub2, solver)
+    assert solver.cache_misses == 2 and solver.cache_hits == 2
+    assert torch.allclose(first, second)
+    # A different bound is a different program.
+    growth_lp(lb2, ub2 * 0.9, solver)
+    assert solver.cache_misses == 4
+    # Bounds with a gradient never touch the cache.
+    ub_grad = ub2.clone().requires_grad_(True)
+    growth_lp(lb2, ub_grad, solver)
+    assert solver.cache_misses == 4 and solver.cache_hits == 2

@@ -416,6 +416,15 @@ ROUND_CAPTIONS = {
         "multi-hot and ProtT5, with the four-ratio affine only. Batch 32, class weight, "
         "200 epochs, seeds 2700 to 2705.",
     ),
+    "w60": (
+        "Round 44, the reduced vector on the node",
+        "The round-33 cell (the vector in the affine) and the round-43 cell (the raw "
+        "4,131-column vector as the node embedding) as the comparators, against the "
+        "vector reduced by principal components fitted on the covered genes' "
+        "$\\log(1 + |v|)$ rows, 64 and 16 components, as the node embedding with the "
+        "four-ratio affine, and the 64-component embedding with the full vector in the "
+        "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
     "w48": (
         "Round 32, the unfit seed with the card's kernels pinned",
         "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "

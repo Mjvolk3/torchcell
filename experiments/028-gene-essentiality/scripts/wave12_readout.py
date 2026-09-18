@@ -631,6 +631,25 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["protpathfba", "pathfbapfbalogfree", "pathsolvenode", "pathsolvenodeaff"],
     ),
+    # Round 44: the vector reduced by PCA on the node, at 64 and 16 components, alone
+    # and with the vector in the affine, against the raw node embedding (round 43)
+    # and the vector in the affine (round 33).
+    "w60": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w59_pathsolvenode_h12l1p1_e200_s*.json",
+            "w60_pathsolvepca64_h12l1p1_e200_s*.json",
+            "w60_pathsolvepca16_h12l1p1_e200_s*.json",
+            "w60_pathsolvepca64aff_h12l1p1_e200_s*.json",
+        ],
+        [
+            "pathfbapfbalogfree",
+            "pathsolvenode",
+            "pathsolvepca64",
+            "pathsolvepca16",
+            "pathsolvepca64aff",
+        ],
+    ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
     "w44": (
@@ -797,6 +816,9 @@ ARM_LABELS = {
     "pathlogsc": "the round-33 cell over the pFBA store built on synthetic complete medium (SC) instead of YPD",
     "pathsolvenode": "pathway multi-hot + ProtT5 + the deletion's log1p flux vector as a NODE embedding; the four-ratio affine only",
     "pathsolvenodeaff": "the same, with the log1p vector appended to the affine as well",
+    "pathsolvepca64": "the vector reduced by PCA to 64 components as the node embedding; the four-ratio affine only",
+    "pathsolvepca16": "the vector reduced by PCA to 16 components as the node embedding; the four-ratio affine only",
+    "pathsolvepca64aff": "the 64-component node embedding, with the full log1p vector in the affine as well",
     "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",

@@ -1,0 +1,20 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_fudt_032.yaml
+#
+# FLANKS ALONE, 30 EPOCHS: cgt_s0_q_kl_fudt_026 (promoter + terminator, no ORF view, hidden
+# width 692, parameter-matched to the learnable table) with the epoch ceiling at 30, the
+# budget every other single-region arm ran at. The disjoint readout scores the window mean of
+# validation Pearson over epochs 10 to 29, so the 100-epoch seed-42 run of _026 and the
+# 30-epoch replicates here score on the same rule; _032 exists so the readout's
+# completeness check (epochs logged >= budget) reads the replicates as complete.
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 025-q-fudt-s1 \
+#       experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_fudt_032 +seed=1
+defaults:
+  - cgt_s0_q_kl_fudt_026
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, seq_embedding, fudt_only, flanks_only, param_matched, perturb_cls, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, igb_mmli]
+
+trainer:
+  max_epochs: 30

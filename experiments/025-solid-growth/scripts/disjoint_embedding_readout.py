@@ -33,6 +33,7 @@ ARMS = [
     ("cgt_s0_q_kl_embfit_027", "composite + fitness head (1.0)", 30),
     ("cgt_s0_q_kl_calm_020", "CaLM alone", 30),
     ("cgt_s0_q_kl_prot_021", "ProtT5 alone", 30),
+    ("cgt_s0_q_kl_fudt_032", "promoter + terminator alone", 30),
     ("cgt_s0_q_kl_emb_022", "composite", 100),
     ("cgt_s0_q_kl_calm_023", "CaLM alone", 100),
     ("cgt_s0_q_kl_prot_024", "ProtT5 alone", 100),

@@ -39,6 +39,7 @@ ARMS = {
     "cgt_s0_q_kl_calm_023": "calm_100ep",
     "cgt_s0_q_kl_prot_024": "prott5_100ep",
     "cgt_s0_q_kl_fudt_026": "flanks_100ep",
+    "cgt_s0_q_kl_fudt_032": "flanks_30ep",
     "cgt_s0_q_kl_embfit_027": "composite_fitness_30ep",
     "cgt_s0_q_kl_004": "learnable_table_cosine_job1640",
 }

@@ -931,6 +931,37 @@ affine on three of three.
 
 \input{tables/round_w39}
 
+\tcfigfit[1.0]{figures/w39_readout_2026-09-18-02-04-19.pdf}{\textbf{Round 23, the gated
+  module forms on ProtT5 with the pathway multi-hot.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w39}.}{fig:w39}
+
+The input does most of the work, the affine the rest, and the flux head is the one
+form that reaches past it. The pooled cell on ProtT5 with the pathway multi-hot and
+no readout reads 0.859, 0.859 and 0.862 (mean 0.860), 0.09 above the same cell on
+ProtT5 alone, and the affine on that input reads 0.889, 0.895 and 0.885 (mean 0.890,
+Section~\ref{sec:round22}). The two gated forms without the head sit between: the
+GEM-box solve at 0.862, 0.871 and 0.869 and the elastic solve at 0.859, 0.872 and
+0.869, above the control on three seeds and on two, and below the affine on three of
+three. On seed 2700 the elastic cell's gate ended at exactly zero and its held-out
+score is the control's to four decimals, which is what a closed gate means: the cell
+is the pooled model. The flux head on this input reads 0.897, 0.716 and 0.903. The
+two seeds that fit are the two highest single cells in this document, 0.008 and
+0.018 above the affine on their seeds, with the pooled per-gene logits of all three at
+0.907; the third seed never fit, its training loss 1.02 at the selected epoch against
+0.55 and 0.74, its validation curve flat at 0.69 to 0.72 for 200 epochs where the
+other two pass through a late transition near epoch 80 to a loss of 0.2 to 0.3. So the
+form fails the read as written, above the control on two seeds of three, and its seed
+mean of 0.839 is set by the seed that did not fit. Hypothesis, untested: the
+transition is delayed rather than absent on that seed, since the round-21 cells on
+ProtT5 alone fit by epoch 66 to 91 on all three seeds and the pathway input adds 173
+columns the head has to learn around; a longer budget or a fold ensemble would say.
+
 \subsection{Round 24: what carries the head over the solved flux\secstatus{todo}}
 \label{sec:round24}
 

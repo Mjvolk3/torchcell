@@ -369,6 +369,33 @@ carries none. On the cheap models the same split runs on the MLP and on graph
 convolution (Table~\ref{tab:graph-split}), where the pathway block beside ProtT5 and
 the ratios reads 0.876, 0.885 and 0.878 on the MLP, above the full indicator's 0.870.
 
+\input{tables/round_w38}
+
+\tcfigfit[1.0]{figures/w38_readout_2026-09-18-02-04-13.pdf}{\textbf{Round 22, the
+  chromosome-pathway indicator split into its blocks on the transformer.} \textbf{a},
+  Validation AUROC per epoch, one thin line per seed and the seed mean per arm.
+  \textbf{b}, The median absolute epoch-to-epoch step per cell against the validation
+  size. \textbf{c}, Held-out AUROC per cell (points), the seed mean and the gene
+  bootstrap of the pooled per-gene logits (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w38}.}{fig:w38}
+
+The transformer says what the MLP said. ProtT5 with the pathway block and the affine
+reads 0.889, 0.895 and 0.885 (mean 0.890; pooled 0.890 with a gene bootstrap of 0.834
+to 0.942), against round 9's full indicator at 0.860, 0.866 and 0.888: above by 0.03 on
+two seeds and under by 0.003 on the third, the seed round 9 selected at its best.
+ProtT5 with the chromosome block reads 0.824 and 0.821 (two seeds; the third cell was
+lost to the memory limit twice and is rerun) and with the seven properties 0.816,
+0.846 and 0.809, both at the level of ProtT5 with the affine alone (0.821). The
+pathway block without ProtT5 reads 0.773, 0.760 and 0.766 on the transformer where
+the MLP had it at 0.828, the one place the two models part: the transformer needs the
+sequence embedding to use the pathway columns, and the MLP does not. The block that
+carries the gain is the pathway multi-hot, and the 24 columns beside it carry none of
+it. The best single cell in this section is now the pathway block with ProtT5 and the
+affine at 0.895, which puts the input, not the architecture, 0.02 above the ensemble
+the document reports.
+
 \subsection{Round 16: the round-9 backbone with the round-11 affine\secstatus{todo}}
 
 Round 16 (jobs 2309 and 2310) puts the widened affine on the round-9 backbone: the

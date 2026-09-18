@@ -896,3 +896,9 @@ Job 2419 (147 min at two per card): pinned seeds 2704 and 2705 fit at epochs 40 
 ## 2026.09.18 - Round 44 read: the reduced vector on the node
 
 Jobs 2427 to 2429 (31 min each; `wave12_readout.py --round w60`): the pFBA vector reduced by PCA (`solve_log1p_pca64`, `solve_log1p_pca16`; explained variance 1.000 and 0.999, the 1,121 log1p rows are near-low-rank) as the node embedding with the four-ratio affine reads 0.892 mean / 0.894 pooled at 64 components and 0.897 / 0.901 at 16, the affine-alone level (0.890), with transitions at epochs 27 to 57 (the raw 4,131-column embedding fit at 96 to 120); the 64-component embedding with the full vector in the affine as well reads 0.908 / 0.909, the logit form's number. The representation path carries the vector without cost once compact and reads nothing from it the logit does not. Appended to `sec:round43` (table `round_w60`, figure `w60_readout_2026-09-18-16-20-21`); findings and 6-open updated (open: a head over the deleted gene's own token; the vector as its own token).
+
+## 2026.09.18 - Post hoc reads widened; rounds 45 and the PDLP fold seeds launched
+
+`hard_genes.py` now carries the layer-free log1p form (round 33): its per-gene misrank agrees with the transformer family (0.82 with the pathway affine, 0.81 with the cached-solve head, 0.76 with the round-12 folds) and 0.28 with the GO convolution; figure `hard_genes_2026-09-18-16-45-03`. `family_ensembles.py` carries the interior-point family (0.912 alone, 0.944 with the six-seed GO convolution; the maximum stays 0.948, now of fifteen). Commit 34da76528.
+
+Launched: round 45 (job 2430, pack `w61_pathlogdet`: the round-33 pooled cell on seed 2700 twice pinned and twice free; job 2431, `w61_pathlogdet_seeds`: seeds 2701 to 2705 pinned once each, the final recommended cell's six-seed number that is the seed's); round 39's seeds 2701 and 2702 of the PDLP store's folds (job 2432, `w55_pathlogpdlpcv_s2701_s2702`).

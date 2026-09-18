@@ -387,6 +387,13 @@ ROUND_CAPTIONS = {
         "batched solve on the card runs, written by \\texttt{solve\\_tolerance\\_read.py}. "
         "Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w56": (
+        "Round 40, the solve statistics beside the log1p vector",
+        "Round 31's cell with the eight wild-type solve statistics beside the "
+        "standardized vector and round 33's cell with the $\\log(1 + |v|)$ vector alone "
+        "(the comparators), against the statistics beside the $\\log(1 + |v|)$ vector. "
+        "Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
     "w48": (
         "Round 32, the unfit seed with the card's kernels pinned",
         "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "
@@ -1416,6 +1423,43 @@ def family_ensembles_folds() -> str | None:
     )
 
 
+def store_stats() -> str | None:
+    """What the four solve stores carry, per genotype."""
+    src = osp.join(RESULTS, "store_stats.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    rows = [
+        f"    {s['store']} & {s['n_zero_rows']} & {s['sum_abs_flux_median']:,.0f} & "
+        f"{s['n_carrying_median']:,.0f} & {s['n_at_clamp_median']:.0f} & "
+        f"{s['frac_genes_with_any_clamp'] * 100:.0f} & {s['growth_median']:.4f} & "
+        f"{s['log1p_rel_l2_to_pfba_median']:.2f} & "
+        f"{s['frac_moved_gt_0_01_vs_pfba_mean'] * 100:.1f} \\\\"
+        for s in r["stores"]
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[What the solve stores carry]{The four solve stores over the 1,121 "
+        "labeled genes, one flux vector per single-gene deletion of the same "
+        "growth-maximizing program (YPD, the GEM box clamped to $\\pm100$ mmol/gDW/h): "
+        "rows the solver reported non-optimal and stored as the zero flux; the median "
+        "total absolute flux per genotype; the median number of reactions carrying "
+        "flux above $10^{-6}$; the median number of reactions at the $\\pm100$ clamp, "
+        "and the share of genotypes with any; the median growth; and the vector's "
+        "distance from the pFBA store's in the head's encoding (median relative $L_2$ "
+        "of $\\log(1 + |v|)$, and the mean share of reactions moved by more than "
+        "0.01). Written by \\texttt{store\\_stats.py}.}\n"
+        "  \\label{tab:store-stats}\n"
+        "  \\begin{tabular}{@{}p{38mm}rrrrrrrr@{}}\n    \\hline\n"
+        "    store & zero rows & $\\sum|v|$ & carrying & at clamp & any clamp (\\%) & "
+        "growth & rel. $L_2$ & moved (\\%) \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("store_stats", body, "results/store_stats.json")
+
+
 def solve_tolerance() -> str | None:
     """The round-27 program under five solvers: growth, the flux vector, and a probe."""
     src = osp.join(RESULTS, "solve_tolerance_read.json")
@@ -1479,6 +1523,7 @@ def main() -> None:
     paths = [
         wl_test(),
         solve_tolerance(),
+        store_stats(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

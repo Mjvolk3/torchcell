@@ -1353,10 +1353,19 @@ the reactions the objective does not pin, and the vertex the dual simplex lands 
 is the one of the three the head reads worst. Plausible mechanism, unverified: a
 vertex of the growth face carries extremal flux through the free directions, the
 loops and the parallel routes, which pFBA's minimum-flux stage removes and the
-interior point spreads, and that extremal flux is what the head cannot use. What the
+interior point spreads, and that extremal flux is what the head cannot use. The
+vectors themselves say what the vertex is made of (Table~\ref{tab:store-stats},
+\texttt{store\_stats.py}): the dual-simplex vertex carries a median total absolute
+flux of 39,129 mmol/gDW/h per genotype with 339 reactions at the layer's $\pm100$
+clamp on every one of the 1,121 genotypes and on the wild type, where the pFBA
+vector carries 495 with none at the clamp, and the interior point and PDLP 2,463
+and 1,973 with nine; the vertex's flux is loops spinning at the bound. The
+description is measured; that this is why the head reads it worst is not. What the
 round settles for the store is that the point a first-order solve on the card
 returns trains the cell to the number the CPU's parsimonious solve does, so the store
-can be built with the batched solver and nothing on the CPU. Under the reported
+can be built with the batched solver and nothing on the CPU.
+
+\input{tables/store_stats} Under the reported
 protocol (round 37, jobs 2414, 2416 and 2418: five folds, three seeds per fold, each
 fold model the seed-mean logit) the interior-point store reads 0.915, 0.852, 0.887,
 0.884 and 0.926 on the folds (mean 0.893) and 0.912 [0.86, 0.95] as the ensemble,

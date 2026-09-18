@@ -609,3 +609,26 @@ User asks (21:00): every MATH-490 / Gene_Graph network as equations and as basel
 - Round 20 (w36, 2332-2335) and round 21 (w37, 2336-2337: `gated_flux`, the gated elastic cell plus a zero-initialized linear head over log(1+|v*|) of the solved flux, all reactions or the 274 exchanges) are queued behind a node-wide block: another session's `cp -a` of the KG output to /bulk holds ~75 GB dirty pages, the Slurm epilog's `sync` cannot return, and Slurm schedules nothing on a node with a COMPLETING job (jobs 2327-2329 sat in COMPLETING 24+ min; see memory `gilahyper-epilog-six-minutes`).
 
 Round 19 early read (4 of 12 cells): lr x10 0.629/0.697 (seeds 2701/2702), two-layer head 0.678 (2702), both 0.669 (2702); training loss 1.25 at the selected epoch in every cell. Round 20 (w36, jobs 2332-2335, submitted 21:00): gated elastic x100 and gated GEM-box seeds 2703-2705 (six seeds each for the reliable form); forced elastic at ceiling scale 30 with lr x10 (more binding reactions); forced at x100 with abundance reach e^6 and lr x10.
+
+## 2026.09.17 - The indicator split on the cheap models
+
+`graph_baselines.py --arms split` (CPU, 200 epochs, seeds 2700-2702; `results/graph_baselines_split.json`, table `tables/graph_baselines_split.tex`, prose in `2-comparators.tex` after the table). Held-out AUROC, mean of three seeds:
+
+| inputs | MLP | GCN (union of nine) |
+|---|---|---|
+| ProtT5 + FBA ratios (round-8 table) | 0.803 | 0.832 |
+| ProtT5 + full 197-column indicator + FBA (round-8 table) | 0.870 | 0.847 |
+| ProtT5 + pathways (173) + FBA | 0.880 | 0.846 |
+| ProtT5 + chromosome (17) + FBA | 0.809 | 0.834 |
+| ProtT5 + properties (7) + FBA | 0.798 | 0.834 |
+| pathways + FBA (no ProtT5) | 0.828 | 0.834 |
+| pathways alone | 0.749 | 0.871 |
+
+- The pathway multi-hot is the indicator: it carries the whole MLP gain (0.803 to 0.880), the chromosome one-hot and the seven properties carry none (0.809, 0.798, within one seed spread of 0.803), and the full indicator sits below the pathway block alone (0.870).
+- 177 columns of pathways + ratios without ProtT5 (0.828) beat ProtT5 + ratios (0.803).
+- The GCN at 200 epochs selects epoch 196-197 in every arm (still climbing; the 400-epoch rows of the round-8 table are the converged comparison). The pathway multi-hot alone is the one input where the graph adds a lot: 0.749 on the MLP, 0.871 on the GCN.
+- Round 22 (job 2338) runs the same split on the transformer (round-9 recipe, FBA affine).
+
+Round 20 partial (23:05, W&B poll by job id, `val` = validation AUROC at the latest logged epoch): 2332 gated elastic x100 seeds 2703-2705 at epoch 167, 0.72-0.74, dual rows on 88 percent of genotypes; 2333 gated GEM box seeds 2703-2705 at epoch 81, 0.75-0.76; 2334 forced elastic x30 lr x10 at epoch 98-103, 0.32/0.73/0.56 with one cell at slack row fraction 1.00 (the ATP maintenance bound unmet on every genotype); 2335 forced x100 reach e^6 lr x10 at epoch 98-106, 0.28/0.35/0.56, again one cell at slack fraction 1.00. Partial; the read waits for the selected epoch.
+
+The W&B display names are `run_gilahyper-<job>_<hash>` (the arm sits in the tags), so a `display_name` regex on the round tag finds nothing; poll by job id (`poll_round.py <job>...`).

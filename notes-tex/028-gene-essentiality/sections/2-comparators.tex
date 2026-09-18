@@ -235,6 +235,20 @@ completes on the transformer.
 
 \input{tables/graph_baselines_split}
 
+The pathway block is the indicator. On the MLP, ProtT5 with the FBA ratios reads 0.803
+(Table~\ref{tab:graph-baselines}); adding the 173-column pathway multi-hot lifts it to
+0.880, adding the chromosome one-hot leaves it at 0.809 and adding the seven gene
+properties at 0.798, both within one seed spread of the base, and the full 197-column
+indicator reads 0.870, below the pathway block alone. The pathway block with the four
+ratios and no ProtT5 reads 0.828, above ProtT5 with the ratios, so 177 columns carry
+more of the label than the 1,024-dimensional sequence embedding does. On graph
+convolution at 200 epochs the ordering is the same at a smaller spread (0.846 with the
+pathway block against 0.834 with either other block), with the selected epoch at 196 or
+197 on every seed, the sign that the 200-epoch GCN is still climbing, as the 400-epoch
+rows of Table~\ref{tab:graph-baselines} showed. The one row where the graph matters is
+the pathway multi-hot alone: 0.749 on the MLP and 0.871 with convolution over the union
+of the nine graphs, the largest gain the graph gives any input in this document.
+
 \subsection{The Weisfeiler-Leman test on the deletion graphs\secstatus{todo}}
 
 A message-passing model over a gene graph is bounded by what color refinement can

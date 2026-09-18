@@ -91,7 +91,50 @@ this endpoint the $k_{cat}$ table and the reaction energies are inputs to a
 projection that does not honor them, which is the precise sense in which the module
 is not the solve.
 
+The Gibbs dissipation is reported here as a diagnostic and nothing else. The Niebel
+limit is an empirical plateau of one organism's physiology, not a constraint of the
+network, and a model that stays under it because it was penalized for exceeding it has
+been told the answer. The anchored arm's registry entry carries the dissipation hinge,
+so the round-2 and round-4 cells at constraint scale 0.1 trained against it; every
+cell of the layer that solves ran at constraint scale 0, where the hinge has weight
+zero, and from round 18 the module cells run on the \texttt{nodiss} entry of the same
+arm, where the term is absent by construction and the rate is logged only.
+
 \input{tables/violations}
+
+\subsection{What holds by construction, and what does not\secstatus{todo}}
+\label{sec:by-construction}
+
+Three constructions of the module appear in this section, and they differ in which
+constraints their flux satisfies exactly, which it satisfies through a penalty, and
+which it satisfies only when the backbone finds a way to. The alternating layer
+(Figure~\ref{fig:module-projection}) writes a proposal in the null space of $S$, so mass
+balance holds at the start, and alternates the balance projection with the box clip
+$K$ times, so whichever of the two runs last holds exactly and the other is a residual;
+the second law, the protein pool and the capacity ceilings are hinges at the constraint
+scale, and Table~\ref{tab:violations} measures what the hinges leave. The layer that
+solves (Figure~\ref{fig:module-lp}) returns the growth optimum of the linear program
+under the layer's bounds, so mass balance, the box and every capacity ceiling hold
+exactly at once, with no penalty in the loss; what it does not guarantee is that a
+program exists, and rounds 15 to 15d measure what happens when it does not. The elastic
+layer that solves (Figure~\ref{fig:module-elastic}) keeps all of that and adds two
+things by construction: the protein pool, by projecting the abundance head's output onto
+the budget before the ceilings are formed, and feasibility, by letting the one forced
+flux in the model, the ATP maintenance reaction's lower bound of 0.7 mmol/gDW/h, go
+unmet at a price. Its zero flux with the maintenance fully unmet satisfies every
+constraint, so the program solves for every genotype at every ceiling, and a genotype
+that cannot meet its maintenance is not absent from the gradient but priced into it.
+Under every construction the second law enters only through the anchored reaction
+energies and the dissipation only as a logged rate. What ``the enzyme-capacity box
+contains no growing flux'' means, stated exactly with the elastic program in hand: at
+the ceilings as parameterized the maintenance flux the model forces cannot be carried,
+the shortfall is 0.54 of 0.70 with zero growth (\texttt{capacity\_calibration.py
+--lp-slack-penalty 1}, 32 held-out genotypes), the hard program's feasible set is
+therefore empty, and the solver returns nothing; from a ceiling scale of 10 the
+shortfall is zero and growth is 0.01, and from 30 the box admits the growth the rounds
+train on.
+
+\input{figures/module_projection}
 
 \subsection{Round 2: the module on the stable backbone, with and without the penalties\secstatus{todo}}
 
@@ -430,7 +473,10 @@ against finite differences on the GEM). On the anchored layer the bounds are the
 scaled by availability and capped by the enzyme-capacity ceilings from the abundance
 head, so this is the GECKO construction with a learned enzyme pool. Round 15 (jobs 2304
 to 2306) runs it forced, forced with the second-law box, and gated, three seeds each
-(Table~\ref{tab:w26}, Figure~\ref{fig:w26}).
+(Table~\ref{tab:w26}, Figure~\ref{fig:w26}); Figure~\ref{fig:module-lp} draws the
+construction.
+
+\input{figures/module_lp}
 
 \input{tables/round_w26}
 
@@ -459,7 +505,9 @@ $k_{cat}$ tier multiplied by the abundance head's nominal abundances gives ceili
 to four orders below the fluxes growth needs. The alternating layer never noticed,
 because it never satisfied the box; the solve cannot proceed without it. That is the
 same fact as round 10's, read exactly: the enzyme-capacity box as parameterized contains
-no growing flux, and every arm built on it has been reading a flux off the polytope.
+no flux that meets the model's maintenance requirement, let alone one that grows
+(Section~\ref{sec:by-construction} puts the shortfall at 0.54 of 0.70), and every arm
+built on it has been reading a flux off the polytope.
 Round 15b runs the solve on the stoichiometry-only box, where round 13 showed the
 polytope holds growth. The capacity ceiling that admits growth is then calibrated the
 way GECKO calibrates its pool, by one scale on every ceiling
@@ -593,6 +641,47 @@ across seeds is the largest in the document. Across rounds 15c and 15d the force
 layer that solves has reached 0.84 and 0.83 on two of nine seeds, so the module can
 carry the whole prediction at the affine's level, and does so unreliably; the gated form
 is the reliable one, and it reads the affine's level on the GEM box.
+
+\subsection{Round 18: the elastic layer that solves, feasible by construction\secstatus{todo}}
+\label{sec:round18}
+
+Rounds 15b to 15d leave the forced layer that solves with one failure mode, the
+absorbing infeasible state, and one unmeasured question, whether the growth column
+alone is a seed-robust 0.83 ranker once that state cannot occur. Round 18 (jobs 2321
+to 2324) removes the state by construction rather than by slack in the ceilings: the
+elastic program of Section~\ref{sec:by-construction}, every forced flux priced at
+$M = 1$ per mmol/gDW/h of shortfall, so that the value the readout sees is growth
+where maintenance is met and a negative number where it is not, and the gradient on the
+ceilings that block maintenance is the dual of the elastic row, of magnitude $M$, in
+place of no gradient at all. The program is solved in micromole units, because HiGHS's
+presolve at its absolute tolerances reads ceilings of $10^{-6}$ as an empty box and
+reports the feasible program infeasible; in those units it solves at the hard program's
+cost. Four cells, three seeds each, all on the \texttt{nodiss} arm: the forced column at
+ceiling scale 100 and 1,000 (the two scales of rounds 15c and 15d), the forced column at
+100 with the protein pool held by construction, and the gated column at 100. The reads
+were fixed before launch: the forced cells pass if all three seeds are above the
+round-4 forced column and none is below 0.80, the level the hard program reached on two
+of nine seeds; the pool cell is read paired against the elastic cell without it; the
+gated cell passes if all three seeds are above the round-4 gated cell with a seed mean
+at or above the GEM box's 0.824. The infeasible fraction reading zero at every epoch is
+a check on the construction, not a result. Beside the score, every cell logs what the
+program did: the fraction of genotypes with unmet maintenance, the fraction on which a
+gene-owned bound carries a dual (the fraction on which the backbone receives any
+gradient through the solve), and the gradient norm of each part of the layer
+(Figure~\ref{fig:lpprobe}). Figure~\ref{fig:module-elastic} draws the construction.
+
+\input{figures/module_elastic}
+
+\tcfigfit[1.0]{figures/lp_probe_2026-09-17-13-46-18.pdf}{\textbf{The layer that solves,
+  probed per epoch.} Seed mean per arm on the cells whose flux is a linear program.
+  \textbf{a}, Validation AUROC. \textbf{b}, The fraction of genotypes whose program was
+  infeasible (solid) and, on the elastic program, the fraction with unmet maintenance
+  (dotted). \textbf{c}, The fraction of gene-owned reactions at their capacity ceiling.
+  \textbf{d}, The fraction of genotypes on which a gene-owned bound carries a dual, logged
+  from round 18. \textbf{e}, The flux layer's share of the summed per-module gradient norm
+  (solid) and the abundance head's share (dotted, round 18). \textbf{f}, The
+  preprocessor's gradient norm. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/lp\_probe\_readout.py}.}{fig:lpprobe}
 
 \subsection{Where the gradient goes\secstatus{todo}}
 

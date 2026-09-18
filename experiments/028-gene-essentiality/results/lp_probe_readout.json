@@ -1,0 +1,31 @@
+{
+  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/lp_probe_2026-09-17-13-46-18.svg",
+  "arms": [
+    {
+      "arm": "lpcapbio100",
+      "label": "growth column, the layer that solves, capacity x100",
+      "n_seeds": 3,
+      "infeasible_first_last": [
+        0.5215773815910021,
+        0.6458333333333334
+      ],
+      "slack_row_frac_last": 0.0,
+      "capacity_active_last": 0.02395607199675093,
+      "gene_dual_row_frac_last": 0.0,
+      "flux_share_last": 8.260706893830877e-05
+    },
+    {
+      "arm": "lpcapbio1000",
+      "label": "growth column, the layer that solves, capacity x1000",
+      "n_seeds": 3,
+      "infeasible_first_last": [
+        0.0,
+        0.0
+      ],
+      "slack_row_frac_last": 0.0,
+      "capacity_active_last": 0.026011014978090923,
+      "gene_dual_row_frac_last": 0.0,
+      "flux_share_last": 6.670136006099233e-14
+    }
+  ]
+}

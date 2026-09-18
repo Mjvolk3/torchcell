@@ -866,3 +866,7 @@ Job 2417 (31 min; `wave12_readout.py --round w54`): the round-33 cell over the P
 `store_stats.py` (results/store_stats.json, table `store_stats` in `sec:round36`): per genotype over the 1,121 labeled genes, the dual-simplex vertex carries a median total absolute flux of 39,129 mmol/gDW/h with 339 reactions at the +/-100 clamp on every genotype and on the wild type (913 carrying); pFBA 495 with none at the clamp (505 carrying); the interior point 2,463 and PDLP 1,973 with nine at the clamp (1,231 and 1,136 carrying). The growth is 0.5352 in all four. The vertex store is loops spinning at the bound; that this is why the head reads it worst (0.870 against 0.907 to 0.912) is the hypothesis, labeled as such in the document.
 
 Round 39 (job 2420, pack `w55_pathlogpdlpcv`): the PDLP store on the five folds, one seed. Round 40 (job 2421, pack `w56_pathlogstats`): the eight solve statistics beside the log1p vector, six seeds (round 31 read them only beside standardized columns). Pinned seeds 2700, 2702, 2703 (job 2413) and 2704, 2705 (job 2419) run.
+
+## 2026.09.18 - Round 39 read: the PDLP store under the reported protocol
+
+Job 2420 (27 min; `cv_ensemble_readout.py --prefix w55_pathlogpdlpcv`): folds 0.921, 0.859, 0.887, 0.878, 0.907 (mean 0.890), ensemble 0.909 [0.86, 0.95], the interior-point store's single-seed 0.909, against the pFBA store's 0.920; fold 1 selects late (epoch 187) and low on both first-order stores. Fold family 0.915 alone, 0.949 with the GO fold models. Written into `sec:round36` and the findings.

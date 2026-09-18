@@ -142,7 +142,12 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     the fitting transition within 200 epochs, and the miss is a chance event of the run
     and not of the seed: the unfit seed rerun under the same program fits at epoch 70
     and reads 0.889, the two runs diverging from their first epoch
-    (Sections~\ref{sec:round24}, \ref{sec:round25} and~\ref{sec:round29}). The form
+    (Sections~\ref{sec:round24}, \ref{sec:round25} and~\ref{sec:round29}). The chance
+    is the card's kernels: with cuDNN's autotuner off, deterministic kernels on and
+    cuBLAS's workspace fixed, two runs of that seed are identical to four decimals at
+    every epoch, both fit at epoch 86 and read 0.894, where two free runs of the same
+    seed read 0.920 and 0.782, at a five percent cost in wall time
+    (Section~\ref{sec:round32}). The form
     that scales, the program solved once per genotype with nothing learned in the
     layer and its flux read through a zero-initialized head, reads 0.897 to 0.917 on
     eight of nine runs over six seeds (pooled 0.917 [0.87, 0.96] on the six-seed

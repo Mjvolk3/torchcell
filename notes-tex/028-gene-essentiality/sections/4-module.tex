@@ -1140,6 +1140,44 @@ form of round 27 is not free of the chance: its rerun of the same seed fit in on
 attempt and not in the other (0.911 against 0.772), with the solve cached and nothing
 learned in the layer, so the layer's ceilings are not where the chance enters.
 
+\subsection{Round 32: the chance is the card's kernels\secstatus{todo}}
+\label{sec:round32}
+
+Round 29 left three places for the chance to enter a seeded run with no loader
+workers: the solve inside the forward, the sampler, and the card's kernels. Round 32
+pins the last of them and runs the round-27 cell on seed 2701, the seed that fit in
+one attempt and not in another, twice with cuDNN's autotuner off, its deterministic
+kernels on, torch's deterministic algorithms on (warning rather than failing on an
+operation without one) and cuBLAS's workspace fixed, and twice without, the four in
+one pack on one card (job 2405; Table~\ref{tab:w48}, Figure~\ref{fig:w48}). The read
+is per pair: whether the two pinned runs are one trajectory, and whether the two free
+runs are.
+
+\input{tables/round_w48}
+
+\tcfigfit[1.0]{figures/w48_readout_2026-09-18-13-39-13.pdf}{\textbf{Round 32, seed 2701
+  with the card's kernels pinned and free.} \textbf{a}, Validation AUROC per epoch for
+  the four runs. \textbf{b}, The median absolute epoch-to-epoch step per cell against
+  the validation size. \textbf{c}, Held-out AUROC per cell (points) and the gene
+  bootstrap (square with interval), beside FBA on four media, Flux Cone Learning and
+  the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w48}.}{fig:w48}
+
+The chance is the card's. The two pinned runs are identical to four decimals in
+training loss and validation AUROC at every one of the 200 epochs, cross the fitting
+transition at epoch 86, select epoch 91 and read 0.894 [0.84, 0.94] held out, the
+same 195 logits; the two free runs of the same seed differ from their first epoch
+(training loss 1.2827 against 1.2768) and end as a fit run and an unfit one, 0.920
+(transition at epoch 58, selected 52) against 0.782 (no transition, training loss
+1.08 at epoch 199). Nothing in the training path warned under the deterministic
+switch, so every operation the cell runs has a deterministic kernel; the one warning
+of the run is a median inside the post-training feasibility audit. Pinning cost
+about five percent of wall time (205 minutes per cell against 195 at four per card).
+With the run reproducible, whether a seed fits becomes a property of the seed, and
+the fit rate over seeds is round 32's second read (job 2413, pinned runs of seeds
+2700, 2702 and 2703, in flight at the time of writing).
+
 \subsection{Round 31: the layer-free form\secstatus{todo}}
 \label{sec:round31}
 

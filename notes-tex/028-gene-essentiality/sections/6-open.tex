@@ -58,10 +58,10 @@ weight, six encodings). What remains is attribution and the module.
     the run rather than of the seed (round 29: the same seed and program fit at epoch
     70 in one run and never in another, the two diverging from the first epoch, and
     the scalable form repeats it with the solve cached and nothing learned in the
-    layer), and whether pinning the sampler and the card's kernels makes the seed
-    reproducible (round 32, in flight: the unfit seed run twice with cuDNN's
-    autotuner off, its deterministic kernels on and cuBLAS's workspace pinned, and
-    twice without, job 2405);
+    layer); round 32 closed it: pinning the card's kernels makes two runs of the seed
+    one trajectory, so the chance was the kernels and with them pinned whether a seed
+    fits is a property of the seed, whose rate over seeds is the read in flight
+    (job 2413);
     the cache's hit rate and where the wall time goes when the solve is cached, since
     six cached cells on one card ran no faster per cell than three uncached; and the
     flux entering the cell representation as a token rather than the logit as a head,

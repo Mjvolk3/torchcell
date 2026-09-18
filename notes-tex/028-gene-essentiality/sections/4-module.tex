@@ -1185,6 +1185,43 @@ the six free runs of the same seeds fit five (0.882 mean with the miss, 0.917
 pooled). Pinned, the form's number is the seed's, at 141 to 157 minutes per cell at
 two or three per card.
 
+\subsection{Round 45: the layer-free cell under the pinned kernels\secstatus{todo}}
+\label{sec:round45}
+
+The same read on the cell the document ends with, the layer-free form of round 33
+(the $\log(1 + |v|)$ vector in the affine, no layer): seed 2700 twice with the kernels
+pinned and twice free, in one pack on one card (job 2430; Table~\ref{tab:w61},
+Figure~\ref{fig:w61}), and seeds 2701 to 2705 pinned once each (job 2431).
+
+\input{tables/round_w61}
+
+\tcfigfit[1.0]{figures/w61_readout_2026-09-18-16-56-23.pdf}{\textbf{Round 45, the
+  layer-free cell with the card's kernels pinned and free.} \textbf{a}, Validation
+  AUROC per epoch for the four runs of seed 2700, the pinned runs of seeds 2701 to
+  2705, and the six free round-33 cells. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points) and the gene bootstrap (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w61}.}{fig:w61}
+
+The pooled cell is not made reproducible by the switch that made the LP cell so. Its
+two pinned runs differ at every one of the 200 epochs, from the first training loss
+on (1.1625 against 1.1564), as the two free runs do (1.1552 against 1.1600), with the
+switch active in both processes (cuDNN's autotuner off, its deterministic kernels
+on, torch's deterministic algorithms on, cuBLAS's workspace fixed) and no operation
+warning that it lacks a deterministic implementation. All four runs fit (training loss
+under 0.6 at epochs 41 to 50) and read 0.911 and 0.911 pinned, 0.905 and 0.916 free,
+at 26 minutes per pinned cell against 22 free at four per card. So the divergence of
+two runs of this cell enters through something torch's deterministic mode does not
+cover, and what it is remains unmeasured (plausible, unverified: a path the LP form
+does not take, since that form's pinned pair was one trajectory); what the round
+settles is that the chance is harmless on this form: pinned once each, seeds 2701 to
+2705 fit at epochs 38 to 65 and read 0.906, 0.899, 0.900, 0.909 and 0.902 (mean
+0.903, sd 0.004; pooled 0.911 [0.86, 0.95]), the free six-seed run's 0.908 and 0.912,
+and every one of the twenty-seven $\log(1 + |v|)$ cells on the split file, pinned or
+free, fit within the budget.
+
 \subsection{Round 31: the layer-free form\secstatus{todo}}
 \label{sec:round31}
 

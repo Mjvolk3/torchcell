@@ -443,6 +443,19 @@ control that marks a gene as annotated to any pathway reads 0.774 on the MLP and
 0.832 on graph convolution, the ProtT5-with-ratios level, so the pathway block's gain
 is which pathway, not whether there is one.
 
+\subsection{Round 28: the GO cells with a wider cell\secstatus{todo}}
+\label{sec:round28}
+
+If the width-12 preprocessor is what keeps the transformer from reading 2,362 GO
+columns, a wider one reads them. Round 28 (job 2378) runs the two round-26 GO cells,
+GO beside ProtT5 and GO with the pathways beside ProtT5, at width 24 with a two-layer
+preprocessor (the round-8 cell's shape), three seeds each, against the width-12
+cells and the pathway cell (Table~\ref{tab:w44}). The read pairs each wide cell
+against its width-12 cell by seed: above on three of three and the preprocessor is
+the limit; level and it is not.
+
+\input{tables/round_w44}
+
 \subsection{Which genes the best cells misrank\secstatus{todo}}
 \label{sec:hard-genes}
 

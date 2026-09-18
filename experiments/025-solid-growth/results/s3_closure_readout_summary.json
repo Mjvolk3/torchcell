@@ -1,0 +1,180 @@
+{
+  "generated": "2026-09-18-08-25-20",
+  "project": "zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer",
+  "scoring_rule": "score = mean of val/gene_interaction/Pearson over the fixed epoch window ep10_29 (epochs 10-29), reported only when every epoch of the window is present; the S3 cell also reports the 100-129 window. The max over epochs is an upward-biased order statistic recorded for checkpoint selection, never the score.",
+  "excluded_run_ids": [
+    "0kaadgdu",
+    "bekoxpor",
+    "kj03xx8y",
+    "ztfcxu37"
+  ],
+  "arms": {
+    "s3_fit_031": {
+      "config": "cgt_s3_r_kl_fit_031",
+      "label": "S3 closure, joint fitness 1.0",
+      "graph_reg_lambda": null,
+      "budget_epochs": 130,
+      "n_seeds_present": 1,
+      "n_seeds_scored": 0,
+      "window": "ep10_29",
+      "window_mean_mean": null,
+      "window_mean_sd": null,
+      "last_epoch_mean": null,
+      "seeds": {
+        "1": {
+          "run_id": "yb4gjh51",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/yb4gjh51",
+          "state": "finished",
+          "epochs_logged": 1,
+          "val_epochs_logged": 0,
+          "partial": true,
+          "score": null,
+          "val_gi_pearson_last": null
+        }
+      },
+      "window_ep100_129_mean": null,
+      "n_seeds_scored_ep100_129": 0
+    },
+    "s0_fit_014": {
+      "config": "cgt_s0_r_kl_fit_014",
+      "label": "S0, joint fitness 1.0",
+      "graph_reg_lambda": null,
+      "budget_epochs": 30,
+      "n_seeds_present": 3,
+      "n_seeds_scored": 3,
+      "window": "ep10_29",
+      "window_mean_mean": 0.4392,
+      "window_mean_sd": 0.0032,
+      "last_epoch_mean": 0.4292,
+      "seeds": {
+        "1": {
+          "run_id": "b3n4ax4a",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/b3n4ax4a",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4428,
+          "val_gi_pearson_last": 0.4329
+        },
+        "2": {
+          "run_id": "4m5ry66x",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/4m5ry66x",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4383,
+          "val_gi_pearson_last": 0.4364
+        },
+        "3": {
+          "run_id": "0brtnr8x",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/0brtnr8x",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4366,
+          "val_gi_pearson_last": 0.4182
+        }
+      }
+    },
+    "s0_fit_015": {
+      "config": "cgt_s0_r_kl_fit_015",
+      "label": "S0, joint fitness 0.1",
+      "graph_reg_lambda": null,
+      "budget_epochs": 30,
+      "n_seeds_present": 1,
+      "n_seeds_scored": 0,
+      "window": "ep10_29",
+      "window_mean_mean": null,
+      "window_mean_sd": null,
+      "last_epoch_mean": 0.4467,
+      "seeds": {
+        "1": {
+          "run_id": "ejn7b4a3",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/ejn7b4a3",
+          "state": "failed",
+          "epochs_logged": 10,
+          "val_epochs_logged": 9,
+          "partial": true,
+          "score": null,
+          "val_gi_pearson_last": 0.4467
+        }
+      }
+    },
+    "s0_ctrl_013": {
+      "config": "cgt_s0_r_kl_ctrl_013",
+      "label": "S0 control, no fitness head",
+      "graph_reg_lambda": 0.001,
+      "budget_epochs": 30,
+      "n_seeds_present": 1,
+      "n_seeds_scored": 1,
+      "window": "ep10_29",
+      "window_mean_mean": 0.4381,
+      "window_mean_sd": null,
+      "last_epoch_mean": 0.4292,
+      "seeds": {
+        "1": {
+          "run_id": "6dvbzy8w",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/6dvbzy8w",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4381,
+          "val_gi_pearson_last": 0.4292
+        }
+      }
+    },
+    "s0_lambda0": {
+      "config": "cgt_s0_r_kl_ctrl_013",
+      "label": "S0 control, graph reg lambda 0",
+      "graph_reg_lambda": 0.0,
+      "budget_epochs": 30,
+      "n_seeds_present": 3,
+      "n_seeds_scored": 2,
+      "window": "ep10_29",
+      "window_mean_mean": 0.4352,
+      "window_mean_sd": 0.0037,
+      "last_epoch_mean": 0.4251,
+      "seeds": {
+        "1": {
+          "run_id": "776b7nc2",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/776b7nc2",
+          "state": "failed",
+          "epochs_logged": 0,
+          "val_epochs_logged": 0,
+          "partial": true,
+          "score": null,
+          "val_gi_pearson_last": null
+        },
+        "2": {
+          "run_id": "4vgeyw2i",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/4vgeyw2i",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4326,
+          "val_gi_pearson_last": 0.4248
+        },
+        "3": {
+          "run_id": "mmiydyws",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/mmiydyws",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4378,
+          "val_gi_pearson_last": 0.4253
+        }
+      }
+    }
+  },
+  "paired_s3_vs_fit_014": {
+    "window": "ep10_29",
+    "n_paired_seeds": 0,
+    "status": "not computable: no seed has a complete 10-29 window in both arms (S3 scored seeds [], fit_014 scored seeds [1, 2, 3])"
+  }
+}

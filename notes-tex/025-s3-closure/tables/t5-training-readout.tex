@@ -1,0 +1,14 @@
+%% SOURCE: experiments/025-solid-growth/scripts/s3_closure_readout.py (results/s3_closure_readout_summary.json) -- GENERATED, do not edit
+
+\begin{tabular}{lrrrr}
+\toprule
+arm & seeds scored/run & budget & window mean $\pm$ sd & last epoch \\
+\midrule
+S3 closure, joint fitness 1.0 & 0/1 & 130 & -- & -- \\
+S0, joint fitness 1.0 & 3/3 & 30 & \textbf{0.4392 $\pm$ 0.0032} & 0.4292 \\
+S0, joint fitness 0.1 & 0/1 & 30 & -- & 0.4467$^{\dagger}$ \\
+S0 control, no fitness head & 1/1 & 30 & 0.4381 & 0.4292 \\
+S0 control, graph reg lambda 0 & 2/3 & 30 & 0.4352 $\pm$ 0.0037 & 0.4251$^{\dagger}$ \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize $\dagger$ includes a partial run: the value is at the epoch reached, not at the budget.} \\
+\end{tabular}

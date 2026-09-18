@@ -16,6 +16,10 @@
    "last": 0.09473131597042084,
    "roll_max": 0.1150146096944809,
    "roll_max_epoch": 207,
+   "nmse_at_peak": 1.009633183479309,
+   "nmse_min": 0.9899203181266785,
+   "nmse_min_epoch": 133,
+   "nmse_last": 1.087081789970398,
    "test_at_best_val": null,
    "roll_max_matched": 0.1150146096944809
   },
@@ -30,6 +34,10 @@
    "last": 0.08656421303749084,
    "roll_max": 0.11322587579488755,
    "roll_max_epoch": 142,
+   "nmse_at_peak": 0.9936130046844482,
+   "nmse_min": 0.9894217848777771,
+   "nmse_min_epoch": 124,
+   "nmse_last": 1.0857971906661987,
    "test_at_best_val": null,
    "roll_max_matched": 0.11322587579488755
   },
@@ -44,6 +52,10 @@
    "last": 0.08623835444450378,
    "roll_max": 0.12064261138439178,
    "roll_max_epoch": 202,
+   "nmse_at_peak": 0.9952898025512695,
+   "nmse_min": 0.9911274313926697,
+   "nmse_min_epoch": 147,
+   "nmse_last": 1.0916246175765991,
    "test_at_best_val": null,
    "roll_max_matched": 0.12064261138439178
   },
@@ -58,6 +70,10 @@
    "last": 0.08727207779884338,
    "roll_max": 0.10865501612424851,
    "roll_max_epoch": 157,
+   "nmse_at_peak": 1.0131402015686035,
+   "nmse_min": 0.9940840601921082,
+   "nmse_min_epoch": 106,
+   "nmse_last": 1.1072487831115723,
    "test_at_best_val": null,
    "roll_max_matched": 0.10865501612424851
   },
@@ -72,6 +88,10 @@
    "last": 0.07032842934131622,
    "roll_max": 0.08569450527429581,
    "roll_max_epoch": 628,
+   "nmse_at_peak": 1.1383907794952393,
+   "nmse_min": 1.0003440380096436,
+   "nmse_min_epoch": 84,
+   "nmse_last": 1.1473302841186523,
    "test_at_best_val": null,
    "roll_max_matched": 0.08569450527429581
   },
@@ -86,6 +106,10 @@
    "last": 0.08212922513484955,
    "roll_max": 0.08325268477201461,
    "roll_max_epoch": 944,
+   "nmse_at_peak": 1.1125881671905518,
+   "nmse_min": 0.9997071027755737,
+   "nmse_min_epoch": 46,
+   "nmse_last": 1.1284987926483154,
    "test_at_best_val": null,
    "roll_max_matched": 0.07856678068637848
   },
@@ -100,6 +124,10 @@
    "last": 0.07982034236192703,
    "roll_max": 0.08825598508119584,
    "roll_max_epoch": 418,
+   "nmse_at_peak": 1.1018670797348022,
+   "nmse_min": 1.0006780624389648,
+   "nmse_min_epoch": 67,
+   "nmse_last": 1.1044296026229858,
    "test_at_best_val": null,
    "roll_max_matched": 0.08825598508119584
   },
@@ -114,6 +142,10 @@
    "last": 0.07176518440246582,
    "roll_max": 0.08283495604991913,
    "roll_max_epoch": 246,
+   "nmse_at_peak": 1.0625596046447754,
+   "nmse_min": 0.9980124831199646,
+   "nmse_min_epoch": 74,
+   "nmse_last": 1.1485414505004883,
    "test_at_best_val": null,
    "roll_max_matched": 0.08283495604991913
   },
@@ -128,6 +160,10 @@
    "last": 0.07591062039136887,
    "roll_max": 0.11072468757629395,
    "roll_max_epoch": 96,
+   "nmse_at_peak": 0.9939956068992615,
+   "nmse_min": 0.9907494187355042,
+   "nmse_min_epoch": 124,
+   "nmse_last": 1.1218849420547485,
    "test_at_best_val": null,
    "roll_max_matched": 0.11072468757629395
   },
@@ -142,6 +178,10 @@
    "last": 0.0961572676897049,
    "roll_max": 0.1103435680270195,
    "roll_max_epoch": 99,
+   "nmse_at_peak": 0.993904709815979,
+   "nmse_min": 0.9901790618896484,
+   "nmse_min_epoch": 93,
+   "nmse_last": 1.1014820337295532,
    "test_at_best_val": null,
    "roll_max_matched": 0.1103435680270195
   },
@@ -156,6 +196,10 @@
    "last": 0.09348952025175095,
    "roll_max": 0.11035925596952438,
    "roll_max_epoch": 124,
+   "nmse_at_peak": 0.9958709478378296,
+   "nmse_min": 0.9927757382392883,
+   "nmse_min_epoch": 114,
+   "nmse_last": 1.103916883468628,
    "test_at_best_val": null,
    "roll_max_matched": 0.11035925596952438
   },
@@ -170,6 +214,10 @@
    "last": 0.08198058605194092,
    "roll_max": 0.11781246662139892,
    "roll_max_epoch": 97,
+   "nmse_at_peak": 0.9935631155967712,
+   "nmse_min": 0.9878427386283875,
+   "nmse_min_epoch": 99,
+   "nmse_last": 1.1120452880859375,
    "test_at_best_val": null,
    "roll_max_matched": 0.11781246662139892
   },
@@ -184,6 +232,10 @@
    "last": 0.06119238957762718,
    "roll_max": 0.08496600389480591,
    "roll_max_epoch": 66,
+   "nmse_at_peak": 1.0014065504074097,
+   "nmse_min": 0.996554970741272,
+   "nmse_min_epoch": 64,
+   "nmse_last": 1.106760025024414,
    "test_at_best_val": null,
    "roll_max_matched": 0.08496600389480591
   },
@@ -198,6 +250,10 @@
    "last": 0.07929416745901108,
    "roll_max": 0.09198245108127594,
    "roll_max_epoch": 646,
+   "nmse_at_peak": 1.095523476600647,
+   "nmse_min": 0.9951176047325134,
+   "nmse_min_epoch": 100,
+   "nmse_last": 1.121168851852417,
    "test_at_best_val": null,
    "roll_max_matched": 0.09198245108127594
   },
@@ -212,6 +268,10 @@
    "last": 0.07047709822654724,
    "roll_max": 0.08061413913965225,
    "roll_max_epoch": 77,
+   "nmse_at_peak": 1.002850890159607,
+   "nmse_min": 0.9994024634361267,
+   "nmse_min_epoch": 79,
+   "nmse_last": 1.0896135568618774,
    "test_at_best_val": null,
    "roll_max_matched": 0.08061413913965225
   },
@@ -226,6 +286,10 @@
    "last": 0.04746485501527786,
    "roll_max": 0.0828398421406746,
    "roll_max_epoch": 74,
+   "nmse_at_peak": 0.9985596537590027,
+   "nmse_min": 0.9967356324195862,
+   "nmse_min_epoch": 85,
+   "nmse_last": 1.143383264541626,
    "test_at_best_val": null,
    "roll_max_matched": 0.0828398421406746
   }
@@ -235,22 +299,34 @@
    "s0": {
     "mean": 0.11438452824950217,
     "sd_within": 0.004957499095797849,
-    "n": 4
+    "n": 4,
+    "nmse_at_peak_mean": 1.0029190480709076,
+    "nmse_min_mean": 0.9911383986473083,
+    "nmse_last_mean": 1.092938095331192
    },
    "s1": {
     "mean": 0.08383805677294733,
     "sd_within": 0.004153594997764178,
-    "n": 4
+    "n": 4,
+    "nmse_at_peak_mean": 1.1038514077663422,
+    "nmse_min_mean": 0.9996854215860367,
+    "nmse_last_mean": 1.1322000324726105
    },
    "s2": {
     "mean": 0.1123099945485592,
     "sd_within": 0.003672538240193169,
-    "n": 4
+    "n": 4,
+    "nmse_at_peak_mean": 0.9943335950374603,
+    "nmse_min_mean": 0.9903867393732071,
+    "nmse_last_mean": 1.1098322868347168
    },
    "s3": {
     "mean": 0.08510060906410218,
     "sd_within": 0.004919937247770458,
-    "n": 4
+    "n": 4,
+    "nmse_at_peak_mean": 1.0245851427316666,
+    "nmse_min_mean": 0.9969526678323746,
+    "nmse_last_mean": 1.1152314245700836
    }
   },
   "sd_between_partitions": 0.016702131775189057,

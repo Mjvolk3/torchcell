@@ -92,6 +92,10 @@ ROUND = ROUNDS[_args.parse_args().round]
 PROJECT = ROUND["project"]
 KEY = f"val/{ROUND['phenotype']}/pearson_per_feature"
 TEST_KEY = f"test/{ROUND['phenotype']}/pearson_per_feature"
+# NMSE (per-feature squared error over that feature's variance, 1.0 = predict each gene's
+# mean) is carried beside the Pearson because the two separate ordering from magnitude:
+# the Pearson can rise while the NMSE passes 1.0 as the head commits to bolder predictions.
+NMSE_KEY = f"val/{ROUND['phenotype']}/nmse"
 SPLITS: list[str] = ROUND["splits"]
 REF, ALT = ROUND["ref"], ROUND["alt"]
 WINDOW = 5
@@ -114,12 +118,13 @@ def main() -> None:
         m = re.fullmatch(ROUND["arm_re"], arm)
         if m is None:
             raise ValueError(f"{r.id}: arm {arm} does not parse")
-        h = r.history(keys=["epoch", KEY], samples=20000, pandas=True)
-        h = h.dropna(subset=[KEY]).sort_values("epoch")
+        h = r.history(keys=["epoch", KEY, NMSE_KEY], samples=20000, pandas=True)
+        h = h.dropna(subset=[KEY]).sort_values("epoch").reset_index(drop=True)
         if h.empty:
             continue
         roll = h[KEY].rolling(WINDOW, center=True).mean()
         hist[r.id] = h
+        peak_i = int(roll.idxmax())
         rows.append(
             {
                 "id": r.id,
@@ -131,7 +136,11 @@ def main() -> None:
                 "epoch": int(h["epoch"].max()),
                 "last": float(h[KEY].iloc[-1]),
                 "roll_max": float(roll.max()),
-                "roll_max_epoch": int(h["epoch"].iloc[int(roll.idxmax())]),
+                "roll_max_epoch": int(h["epoch"].iloc[peak_i]),
+                "nmse_at_peak": float(h[NMSE_KEY].iloc[peak_i]),
+                "nmse_min": float(h[NMSE_KEY].min()),
+                "nmse_min_epoch": int(h["epoch"].iloc[int(h[NMSE_KEY].idxmin())]),
+                "nmse_last": float(h[NMSE_KEY].iloc[-1]),
                 "test_at_best_val": (
                     float(r.summary[TEST_KEY]) if TEST_KEY in r.summary else None
                 ),
@@ -162,6 +171,10 @@ def main() -> None:
                 "roll_max",
                 "roll_max_epoch",
                 "last",
+                "nmse_at_peak",
+                "nmse_min",
+                "nmse_min_epoch",
+                "nmse_last",
                 "test_at_best_val",
                 "id",
             ]
@@ -174,10 +187,14 @@ def main() -> None:
         sub = df[(df["split"] == s) & (df["roll_max_matched"] >= PLATEAU)][
             "roll_max_matched"
         ]
+        ok = df[(df["split"] == s) & (df["roll_max_matched"] >= PLATEAU)]
         per_split[s] = {
             "mean": float(sub.mean()),
             "sd_within": float(sub.std(ddof=1)),
             "n": int(len(sub)),
+            "nmse_at_peak_mean": float(ok["nmse_at_peak"].mean()),
+            "nmse_min_mean": float(ok["nmse_min"].mean()),
+            "nmse_last_mean": float(ok["nmse_last"].mean()),
         }
     means = np.array([per_split[s]["mean"] for s in per_split])
     within = np.array([per_split[s]["sd_within"] for s in per_split])
@@ -191,7 +208,11 @@ def main() -> None:
         "\n1. partition (mean over both readouts and seeds at the matched epoch, plateau runs excluded):"
     )
     for s, v in per_split.items():
-        print(f"   {s}: {v['mean']:.4f} (within sd {v['sd_within']:.4f}, n={v['n']})")
+        print(
+            f"   {s}: {v['mean']:.4f} (within sd {v['sd_within']:.4f}, n={v['n']})"
+            f"  nmse at peak {v['nmse_at_peak_mean']:.3f}, min {v['nmse_min_mean']:.3f},"
+            f" last {v['nmse_last_mean']:.3f}"
+        )
     print(
         f"   between-partition sd {out['partition']['sd_between_partitions']:.4f}, "
         f"range {out['partition']['range_between_partitions']:.4f}; "

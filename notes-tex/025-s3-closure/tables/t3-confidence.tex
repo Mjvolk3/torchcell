@@ -1,0 +1,16 @@
+%% SOURCE: experiments/025-solid-growth/scripts/s3_closure_recompute.py (results/s3_closure_recompute_summary.json) -- GENERATED, do not edit
+
+\begin{tabular}{lrrrr}
+\toprule
+comparison & $n$ & $\rho$ of $p$ & called stored & called other \\
+\midrule
+doubles, one screen: source $p$ vs $z$ from the double's sd & 41,394 & 0.984 & 0.015 & 0.036 \\
+doubles, one screen: source $p$ vs $z$ with the singles' sd propagated & 41,394 & 0.813 & 0.015 & 0.011 \\
+doubles, one screen: source call vs call on recomputed $\varepsilon$ & 41,394 & 0.984 & 0.015 & 0.331 \\
+doubles, merged: stored ($t$-test) vs $z$ from the double's sd & 697,825 & 0.686 & 0.005 & 0.017 \\
+doubles, merged: stored ($t$-test) vs median source $p$ & 697,825 & 0.053 & 0.005 & 0.008 \\
+triples, one screen: source $p$ vs $z$ from the triple's sd & 339,616 & 0.199 & 0.021 & 0.110 \\
+triples, one screen: source $p$ vs $z$ with every term propagated & 339,616 & 0.097 & 0.021 & 0.138 \\
+triples, merged: stored ($t$-test) vs source $p$ & 12,914 & -- & 0.067 & 0.057 \\
+\bottomrule
+\end{tabular}

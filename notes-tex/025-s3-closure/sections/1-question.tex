@@ -1,0 +1,62 @@
+%% notes-tex/025-s3-closure/sections/1-question.tex
+
+\section{The question\secstatus{todo}}
+
+A genetic interaction score is not a measurement. It is a difference between a
+measured fitness and a fitness expected from lower-order measurements, and the
+expectation is a product. For two deletions $a$ and $b$ with single-mutant fitness
+$f_a$ and $f_b$ and double-mutant fitness $f_{ab}$,
+\begin{equation}
+  \varepsilon_{ab} = f_{ab} - f_a f_b ,
+  \label{eq:eps}
+\end{equation}
+and for three, with the three doubles already scored,
+\begin{equation}
+  \tau_{abc} = f_{abc} - f_a f_b f_c - \varepsilon_{ab} f_c - \varepsilon_{ac} f_b
+             - \varepsilon_{bc} f_a .
+  \label{eq:tau}
+\end{equation}
+Both equations are stated verbatim in the supplementary text of Kuzmin 2018 and
+Kuzmin 2020 (mirror keys \texttt{kuzminSystematicAnalysisComplex2018},
+\texttt{kuzminExploringWholegenomeDuplicate2020}, \texttt{si/si1.md} lines 84 to 91
+and 64 to 67), and Eq.~\ref{eq:eps} in Costanzo 2016 and Baryshnikova 2010. Substituting
+Eq.~\ref{eq:eps} into Eq.~\ref{eq:tau} gives the form used here,
+$\tau_{abc} = f_{abc} - f_{ab} f_c - f_{ac} f_b - f_{bc} f_a + 2 f_a f_b f_c$.
+
+The S3 closure pool of the 025 build was assembled so that a model trained on it sees
+every term of Eq.~\ref{eq:tau} for every triple it is asked to score: all 5{,}694
+single-deletion records in the build, the 739{,}219 doubles whose gene pair lies
+inside some measured triple, and all 376{,}732 triples. The training arm
+(\texttt{cgt\_s3\_r\_kl\_fit\_031}, three seeds on IGB \texttt{mmli}) supervises
+fitness and interaction jointly, with the 010 random split pinned over the triples.
+That design carries an assumption worth testing before the runs finish: that the
+fitness values in the pool and the interaction values in the pool are consistent with
+each other under the equations that define the latter.
+
+Two questions follow, and the document answers both against the source tables the
+build was assembled from.
+
+\notesec{Strength}
+Does the fitness stored in the build reproduce the interaction stored in the build?
+Eq.~\ref{eq:eps} on every closure double and Eq.~\ref{eq:tau} on every triple, the
+recomputed score against the stored one, and the same recomputation on the raw source
+rows as a control for the formula.
+
+\notesec{Confidence}
+Does anything stored in the build reproduce the p-value stored in the build? Each
+interaction record carries a p-value from its source screen, or, when the build merged
+several screens of the same genotype, a p-value the build computed itself. The
+recomputation uses the stored standard deviations under the normal model the sources
+describe, and for merged records compares the stored p against the p-values the
+sources reported for the same genotype.
+
+Three earlier readings frame the answer. The recapitulation of 2026-09-04
+(\texttt{recapitulate\_tmi\_from\_fitness.py}) put the trigenic identity on the whole
+build at $r = 0.23$ and concluded that noise accumulation, not a sign or scale error,
+was the cause. The 025 loaders' provenance work established that the released
+combined-mutant standard deviation is a colony sample SD over four colonies and that a
+two-sided normal test on it ranks the reported p-values at $\rho = 0.985$. And the
+additive-baselines report established that a per-gene additive ridge reaches
+$r = 0.40$ on these labels without any fitness at all. What is new here is the
+decomposition: which step of the join costs what, measured on the pool a model is
+about to be trained on.

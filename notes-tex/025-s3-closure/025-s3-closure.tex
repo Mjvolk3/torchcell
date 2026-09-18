@@ -1,0 +1,80 @@
+%% notes-tex/025-s3-closure/025-s3-closure.tex
+%% [[experiments.025-solid-growth.s3-closure]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/025-s3-closure/025-s3-closure.tex
+%%
+%% Typeset counterpart of notes/experiments.025-solid-growth.s3-closure.md.
+%%
+%% Build:  make mermaid     -> figures/s3_closure_pipeline.pdf (figure a, from the dendron note)
+%%         make plots       -> figures/s3_closure_{strength,confidence,hazards}.pdf
+%%         make             -> 025-s3-closure.pdf   (draft: status chips)
+%%         make check       -> formatting / provenance / style gate
+%%
+%% Every number is produced by experiments/025-solid-growth/scripts/s3_closure_recompute.py
+%% and read back from experiments/025-solid-growth/results/s3_closure_recompute_summary.json;
+%% the tables under tables/ are written by the same script and never edited by hand.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}The S3 Closure Pool Against Its Own Definition\\
+  {\large Recomputing every interaction score and every p-value from the singles,
+   doubles and triples the 025 build joined}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+The S3 closure pool holds, for every one of its 376{,}732 measured triples, every
+term of the equation that defines the triple's interaction score: the three singles,
+the three doubles and the triple itself, 1{,}121{,}645 records in all. Inside any one
+source screen that equation is exact: recomputing the digenic score from the fitness
+columns of the same row reproduces the reported score at $r = 0.999$ in Costanzo 2016
+and $r = 1.000$ in Kuzmin 2018. Inside the build it is not. The build's own fitness
+reproduces its own digenic scores at $r = 0.445$ and its own trigenic scores at
+$r = 0.230$, and the loss is traceable to the join rather than to the formula. Four
+mechanisms account for it. SGD essentiality enters as a fitness of 0 and is averaged
+with the measured fitness of the same gene's allele, which pulls 907 singles down by a
+median of 0.16 and shifts every score built on them by 0.12; taking the 0 back out
+halves the digenic error on the 139{,}461 doubles those singles touch. Screens are
+averaged across their own controls, so a single that Costanzo measured against 350
+control screens is combined with the same gene's Kuzmin estimate and then used in an
+identity that was only ever true within one screen. Duplicate screens of the same
+genotype, 94 percent of the closure doubles, are merged into one record whose p-value
+is a $t$-test over the two or three duplicate scores with one or two degrees of
+freedom, which discards the source p-values entirely: the merged p correlates with the
+median source p at $\rho = 0.05$, and 1{,}754 doubles significant in every source are
+not significant in the build. And 99.6 percent of the Kuzmin 2020 digenic rows carry no
+query fitness, which the source scoring replaced by 1.0 before computing the score, a
+substitution that is recorded nowhere in the released table but is recovered here
+exactly. Where the build kept a single screen, its p-value is the source's and is
+reproducible from the double's own colony standard deviation at $\rho = 0.984$;
+the trigenic p-values are not reproducible from anything the build holds, because
+their null variance comes from control screens that were never released. The
+consequence for training on S3 is stated at the end: the fitness the model is asked
+to learn and the interaction it is asked to learn are not consistent with each other
+in this build, so the identity cannot be the mechanism by which fitness supervision
+helps, and every p-value in a merged record should be treated as unlabeled.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-setup}
+\input{sections/3-strength}
+\input{sections/4-confidence}
+\input{sections/5-hazards}
+\input{sections/6-consequences}
+\input{sections/7-limits}
+
+\end{document}

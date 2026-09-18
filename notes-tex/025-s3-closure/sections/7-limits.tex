@@ -1,0 +1,42 @@
+%% notes-tex/025-s3-closure/sections/7-limits.tex
+
+\section{Limits\secstatus{todo}}
+
+\notesec{The recomputed p-values are not the sources' p-values}
+Section~\ref{sec:confidence} is a ranking comparison. The normal test on the double's
+own colony SD orders the source p-values at $\rho = 0.984$ but calls 2.5 times as many
+interactions, because the source null pools an array-strain and a query-strain
+variance from control screens that were never released. No recomputation from the
+build or from the released tables can recover those; the statement is that the
+source p is reproducible in rank, not in value.
+
+\notesec{The measured-mean restoration assumes exactly one 0 in the mean}
+The $k/(k-1)$ correction in Section~\ref{sec:hazards} assumes a tainted single merged
+exactly one essentiality entry of value 0 with $k-1$ measured entries. The
+\texttt{num\_duplicates} field gives $k$ and the source list confirms one essentiality
+entry for every tainted single, but the individual measured values are gone after the
+merge, so the restored mean is exact only if the converter wrote exactly 0. It did
+(\texttt{CompositeFitnessConverter}), and the two checked cases (YER048W-A, stored
+0.452 from 0.904 and 0; YDR292C, stored 0.630 over $k = 7$) agree.
+
+\notesec{The within-screen control covers the digenic identity only}
+The raw Kuzmin tables carry the double-mutant query fitness and the triple fitness on
+a trigenic row, but the two digenic control-screen terms of Eq.~\ref{eq:tau} sit on
+other rows of the same table and are matched by strain identifier, which this
+document did not do. The trigenic identity is therefore checked in the build only,
+and its $r = 0.230$ has no within-screen counterpart here; the Kuzmin supplementary
+text reports replicate correlations of 0.74 to 0.81 for the adjusted trigenic score
+(\texttt{si/si1.md} line 171), which bounds what a within-screen check could reach.
+
+\notesec{Four colonies is a documented representative, not a per-record count}
+The null standard deviation $\sigma_{ab}/\sqrt{4}$ uses the colony count the loaders
+record (Costanzo 2016: ``4 replicate colonies per double mutant''; the Kuzmin loader
+back-solved $n = 4$ against the reported p-values). Only 41{,}370 of the closure
+doubles carry an explicit \texttt{n\_samples}; the rest use the same value. A
+different $n$ rescales every recomputed p monotonically and changes no ranking in
+Table~\ref{tab:confidence}.
+
+\notesec{Nothing here reads a training run}
+Every number is a property of the pool. The three S3 seeds
+(IGB \texttt{mmli} 2409033, 2409031, 2409032) were running or queued when this was
+written and are read out elsewhere.

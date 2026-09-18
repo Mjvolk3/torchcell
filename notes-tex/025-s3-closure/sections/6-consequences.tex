@@ -1,0 +1,43 @@
+%% notes-tex/025-s3-closure/sections/6-consequences.tex
+
+\section{What this means for training on S3\secstatus{todo}}
+\label{sec:consequences}
+
+\notesec{The identity cannot be the mechanism}
+The S3 arm supervises fitness and interaction jointly on the hypothesis, stated as
+untested in the training plan, that a representation shaped by fitness helps the
+interaction head. If the mechanism were the model reading Eq.~\ref{eq:tau} off its
+fitness predictions, its ceiling on this build would be the $r = 0.23$ that the
+equation itself reaches on the stored values, below the $r = 0.40$ of the additive
+ridge that sees no fitness at all. Whatever the S3 seeds show at readout, they are
+not showing that; a gain would have to come from the representation, and a null would
+not refute the identity, which is exact in every source.
+
+\notesec{Per-order fitness is now logged, and per-order interaction was always logged}
+The trainer reports fitness for singles, doubles and triples and interaction for
+doubles and triples separately, so the readout can ask whether the model fits the
+essentiality-tainted singles, which hold a value no strain has, and whether the
+doubles' fitness is learned better than their interaction, which this document
+predicts because the double fitness is a measurement and the double interaction is a
+cross-screen difference.
+
+\notesec{Every p-value in a merged record is unlabeled}
+Nothing in the training arm reads p-values, so no run is affected. Any analysis that
+does, a confidence-weighted loss, a filter to significant interactions, a
+precision-recall against called interactions, has to treat the 697{,}825 merged
+doubles and 12{,}914 merged triples as carrying no p-value, and can recover the
+sources' p-values only by joining back to the raw tables by gene pair, as this
+document did.
+
+\notesec{Changes the build would need}
+Three, each at the step in Figure~\ref{fig:pipeline} that introduces the hazard.
+The essentiality conversion should not produce a fitness that the deduplicator can
+average with a measured one: either the converted 0 is kept as its own record with a
+perturbation type the merge key distinguishes, or the conversion is dropped from
+pools that also carry measured alleles of the gene. The deduplicator should keep the
+source p-values beside the merged score, or combine them by a rule that reads them
+(Fisher's method on the source p-values, or a normal test on the merged score with
+the pooled source variance), rather than a $t$-test on two or three values. And a
+merged record should carry which screens went into it, so that a within-screen
+identity can be evaluated within a screen; the source tables carry the screen in the
+strain identifier, and the build drops it at the aggregation step.

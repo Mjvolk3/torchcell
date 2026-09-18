@@ -337,7 +337,11 @@ models of the 400-epoch convolution on GO alone score 0.910, 0.893, 0.918, 0.916
 reported ensemble (folds 0.860, 0.899, 0.889, 0.876, 0.884; 0.893 [0.84, 0.94]) the
 folds are above on four of five, the fold mean by 0.028 and the ensemble by 0.024,
 with the two intervals overlapping (Table~\ref{tab:ensembles}). The five folds take
-two minutes on one card. So the three architectures on the three inputs that were one
+two minutes on one card. With three seeds per fold, each fold's logit the mean of its
+seeds before the folds are averaged, the ensemble reads 0.917 [0.87, 0.95] at 400
+epochs and 0.915 [0.87, 0.95] at 800, the same numbers as one seed per fold (folds
+0.899 to 0.922, mean 0.910), so the ensemble is not sitting on a lucky seed. So the
+three architectures on the three inputs that were one
 number (0.886, 0.888, 0.893) now have a fourth point above them, and what moved it is
 the input and the graph together, not the architecture: the same convolution on the
 three inputs reads 0.888 as an ensemble, and the GO vector without the graph reads

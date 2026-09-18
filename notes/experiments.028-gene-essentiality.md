@@ -647,6 +647,11 @@ Round 20 READ, complete (23:33; `wave12_readout.py --round w36`, `results/w36_re
 
 The CPU relational baseline (GIN, GraphSAGE, RGCN, RGAT) printed no arm in 55 minutes at ten cores, so it goes to a card: job 2340 (`gh_graph_baselines.slurm`, `ARMS=relational`), queued behind round 21 and 22.
 
+Two failures at 23:36, both mine, both resubmitted:
+
+- Round 22 (2338, the 12-cell split pack) was submitted at the launcher's 36 GB default and Slurm killed it OUT_OF_MEMORY at 21 minutes with three cells done (protpropsfba s2700 0.816, s2702 0.809; pathfba s2700 0.773). Twelve pooled cells at ~4-5 GB each need ~60 GB; the pack comment said so and the submission did not pass ESS_MEM. The nine unfinished cells are `w38_split_rest.pack`, job 2346 at ESS_MEM=60g. Round 23's paired comparator (`w38_protpathfba`) is among them.
+- The relational baseline on the GPU (2340) ran GIN (0.647), GraphSAGE (0.783) and RGCN (0.836) on ProtT5 in under four minutes, then RGAT raised CUDA OOM: `RGATConv` gathers the raw input per edge before the per-relation weight, and 4,874,816 typed directed edges times 1,024 columns is 20 GB. Fix: a linear projection of the input to width 64 before the first RGAT layer (`Net.pre`, RGAT only), so the gather is 1.2 GB; caption and the RGAT entry in `2-comparators.tex` say so. Resubmitted as job 2345.
+
 The module diagram for round 21 is `notes/assets/drawio/028-module-gated-flux.drawio` (from `028-module.gen.py`), exported to `notes-tex/028-gene-essentiality/figures/module_gated_flux.pdf`:
 
 ![](./assets/drawio/028-module-gated-flux.svg)

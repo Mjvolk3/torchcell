@@ -368,7 +368,9 @@ def run_arm(
     return row
 
 
-def fold_ensembles(device: torch.device, which: str = "three") -> None:
+def fold_ensembles(
+    device: torch.device, which: str = "three", save_logits: bool = False
+) -> None:
     """Cheap architectures on the five folds, logits averaged on the held-out genes.
 
     The transformer's reported 0.893 is a five-fold ensemble; this gives the cheap
@@ -444,6 +446,12 @@ def fold_ensembles(device: torch.device, which: str = "three") -> None:
             "ensemble_ci": [float(lo), float(hi)],
             "n_genes": len(genes),
         }
+        if save_logits:
+            # The per-fold held-out logits, for family_ensembles.py --folds.
+            report["arms"][name]["genes"] = genes  # type: ignore[index]
+            report["arms"][name]["fold_logits"] = [  # type: ignore[index]
+                [float(f[g]) for g in genes] for f in per_fold
+            ]
         print(
             f"{name}: folds {[round(a, 3) for a in fold_aurocs]} mean "
             f"{np.mean(fold_aurocs):.3f}; ensemble {auroc:.4f} [{lo:.3f}, {hi:.3f}]",
@@ -492,7 +500,9 @@ def main() -> None:
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.arms in ("folds", "go_folds"):
-        fold_ensembles(device, "three" if args.arms == "folds" else "go")
+        fold_ensembles(
+            device, "three" if args.arms == "folds" else "go", args.save_logits
+        )
         return
     with gzip.open(SPLIT, "rt") as fh:
         split = json.load(fh)

@@ -151,7 +151,86 @@ def family_score(cells: list[dict[str, float]], genes: list[str]) -> np.ndarray:
     return np.mean(z, axis=0)
 
 
+#: The fold-protocol families: transformer fold stems and the GO fold arm.
+FOLD_TRANSFORMER_FAMILIES: dict[str, str] = {
+    "flux head, pathway + ProtT5, five folds (round 25)": "w41_pathfluxcv{k}_h12l1p1_e200_s2700.json",
+    "indicator + ProtT5 + affine, five folds (round 12)": "w23_chromprotcv{k}_h12l1p1_e200_s2700.json",
+}
+FOLD_GRAPH_FAMILY = ("GO convolution, five folds (400 epochs)", "GCN400")
+FOLD_COMBINATIONS: list[list[str]] = [
+    [FOLD_GRAPH_FAMILY[0]],
+    ["indicator + ProtT5 + affine, five folds (round 12)"],
+    ["flux head, pathway + ProtT5, five folds (round 25)"],
+    [FOLD_GRAPH_FAMILY[0], "indicator + ProtT5 + affine, five folds (round 12)"],
+    [FOLD_GRAPH_FAMILY[0], "flux head, pathway + ProtT5, five folds (round 25)"],
+    [
+        FOLD_GRAPH_FAMILY[0],
+        "indicator + ProtT5 + affine, five folds (round 12)",
+        "flux head, pathway + ProtT5, five folds (round 25)",
+    ],
+]
+
+
+def folds_main() -> None:
+    """The same averages under the reported protocol: fold models, one per fold."""
+    labels = labels_of_split()
+    families: dict[str, list[dict[str, float]]] = {}
+    for name, stem in FOLD_TRANSFORMER_FAMILIES.items():
+        families[name] = transformer_cells([stem.format(k=k) for k in range(5)])
+        assert len(families[name]) == 5, (name, len(families[name]))
+    with open(osp.join(RESULTS, "graph_baselines_go_folds.json")) as fh:
+        report = json.load(fh)
+    arm = report["arms"][FOLD_GRAPH_FAMILY[1]]
+    assert "fold_logits" in arm, (
+        "rerun graph_baselines.py --arms go_folds --save-logits"
+    )
+    families[FOLD_GRAPH_FAMILY[0]] = [
+        dict(zip(arm["genes"], map(float, logits), strict=True))
+        for logits in arm["fold_logits"]
+    ]
+    genes = sorted(set.intersection(*(set(c) for cs in families.values() for c in cs)))
+    y = np.array([labels[g] for g in genes])
+    scores = {name: family_score(cells, genes) for name, cells in families.items()}
+    rng = np.random.default_rng(0)
+    combos: list[Combination] = []
+    for names in FOLD_COMBINATIONS:
+        s = np.mean([scores[n] for n in names], axis=0)
+        auroc = float(roc_auc_score(y, s))
+        draws = []
+        for _ in range(2000):
+            idx = rng.integers(0, len(y), len(y))
+            if len(np.unique(y[idx])) == 2:
+                draws.append(float(roc_auc_score(y[idx], s[idx])))
+        lo, hi = np.percentile(draws, [2.5, 97.5])
+        combos.append(
+            Combination(
+                families=names,
+                n_cells=sum(len(families[n]) for n in names),
+                auroc=auroc,
+                ci_low=float(lo),
+                ci_high=float(hi),
+            )
+        )
+        print(f"{auroc:.4f} [{lo:.3f}, {hi:.3f}]  {' + '.join(names)}")
+    out = osp.join(RESULTS, "family_ensembles_folds.json")
+    with open(out, "w") as fh:
+        fh.write(
+            Report(
+                n_genes=len(genes),
+                n_essential=int(y.sum()),
+                families={n: len(c) for n, c in families.items()},
+                combinations=combos,
+            ).model_dump_json(indent=1)
+        )
+    print(out)
+
+
 def main() -> None:
+    import sys
+
+    if "--folds" in sys.argv:
+        folds_main()
+        return
     labels = labels_of_split()
     families: dict[str, list[dict[str, float]]] = {}
     for name, globs in TRANSFORMER_FAMILIES.items():

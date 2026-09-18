@@ -606,12 +606,11 @@ def main() -> None:
         go = embedding("go", gene_ids)
         fba = fba_ratios(gene_ids)
         ei = edges(graphs["union of nine"], index)
+        # run_arm appends "(N epochs)" itself when the budget is not the default.
         feats_long = {
-            f"GO ({n_epochs} epochs)": go,
-            f"GO+FBA ratios ({n_epochs} epochs)": np.concatenate([go, fba], axis=1),
-            f"ProtT5+GO+FBA ratios ({n_epochs} epochs)": np.concatenate(
-                [t5, go, fba], axis=1
-            ),
+            "GO": go,
+            "GO+FBA ratios": np.concatenate([go, fba], axis=1),
+            "ProtT5+GO+FBA ratios": np.concatenate([t5, go, fba], axis=1),
         }
         for inputs, x in feats_long.items():
             rows.append(
@@ -640,7 +639,7 @@ def main() -> None:
                 run_arm(
                     kind,
                     "nine typed",
-                    "GO (400 epochs)",
+                    "GO",
                     go,
                     ei_typed,
                     split,
@@ -654,7 +653,7 @@ def main() -> None:
             run_arm(
                 "GCN",
                 "union of nine",
-                "GO+pathways (400 epochs)",
+                "GO+pathways",
                 np.concatenate([go, pathways], axis=1),
                 ei,
                 split,
@@ -667,7 +666,7 @@ def main() -> None:
             run_arm(
                 "GraphSAGE",
                 "union of nine",
-                "GO (400 epochs)",
+                "GO",
                 go,
                 ei,
                 split,

@@ -91,10 +91,14 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     with the growth column's gate ending near zero. Over the 274 exchange fluxes alone it
     reads 0.835. On ProtT5 with the pathway multi-hot the same cell reads 0.897 and 0.903
     on two seeds, the two highest single cells in the document and above the affine on
-    that input (0.890), and 0.716 on a third seed whose training loss never fell. Which
-    part of the cell makes the vector informative, and what the cell reads under the
-    fold-ensemble protocol, are rounds 24 and 25 (Sections~\ref{sec:round24}
-    and~\ref{sec:round25}).
+    that input (0.890), and 0.716 on a third seed whose training loss never fell. The
+    vector carries it: with nothing learned in the layer the same head reads 0.852,
+    the ceilings add 0.01 to 0.02, and the gene-owned columns hold it (0.861 against
+    0.835 for the exchanges). Under the fold-ensemble protocol on the pathway input it
+    reads 0.897 [0.84, 0.95], one number with the reported 0.893, from three fold
+    models at 0.90 and two that never fit; a third of this form's cells miss the
+    fitting transition, and that, not the ceiling, is its open problem
+    (Sections~\ref{sec:round24} and~\ref{sec:round25}).
   \item[Where the gradient goes is not the problem.] On the alternating layer the
     gradient reaches the flux layer on every arm that lets it; the backbone's
     preprocessor, three quarters of the parameters, is where fitting continues after the

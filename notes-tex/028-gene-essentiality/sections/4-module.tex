@@ -1282,6 +1282,27 @@ seed did in the twenty-seven $\log(1 + |v|)$ cells run, so the early peak is rar
 under this encoding and, where it occurs, sits with one fold's validation fifth
 rather than with the seed.
 
+The eight wild-type solve statistics, which lifted the standardized vector from
+0.871 to 0.901 in round 31, cost the $\log(1 + |v|)$ vector 0.02 (round 40, job
+2421; Table~\ref{tab:w56}, Figure~\ref{fig:w56}): beside it they read 0.882, 0.890,
+0.897, 0.893, 0.892 and 0.879 (mean 0.889, sd 0.007; pooled 0.891 [0.83, 0.95]),
+under the vector alone on every seed, with every cell selecting after the transition
+(epochs 33 to 56). The statistics are standardized columns, and what they added to
+a standardized vector they take from an encoded one; the store the cell wants is the
+vector in the head's encoding and nothing beside it.
+
+\input{tables/round_w56}
+
+\tcfigfit[1.0]{figures/w56_readout_2026-09-18-14-32-16.pdf}{\textbf{Round 40, the solve
+  statistics beside the log1p vector.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w56}.}{fig:w56}
+
 \subsection{Round 35: the solve does not substitute for the annotation\secstatus{todo}}
 \label{sec:round35}
 

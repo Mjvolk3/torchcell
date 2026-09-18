@@ -362,6 +362,14 @@ ROUND_CAPTIONS = {
         "2,709 gene-owned fluxes, and the head over the flux of the GEM-box solve with "
         "no learned ceilings. Constraint scale 0, batch 32, class weight, 200 epochs.",
     ),
+    "w43": (
+        "Round 27, the scalable form on the pathway input",
+        "The pooled control on ProtT5 with the pathway multi-hot, the round-22 affine on "
+        "that input, and the round-23 flux head on the elastic solve (the comparators), "
+        "against the same head over the GEM-box solve with nothing learned in the layer "
+        "and the program cached per genotype, seeds 2700 to 2705. Constraint scale 0, "
+        "batch 32, class weight, 200 epochs.",
+    ),
     "w42": (
         "Round 26, the Gene Ontology multi-hot as a backbone input",
         "The round-5 affine on ProtT5, the round-9 indicator cell and the round-22 "
@@ -863,6 +871,7 @@ ENSEMBLE_LABELS = {
     "w23_chromprotcv": "round 12: chromosome-pathway indicator + ProtT5 + FBA affine (the reported number)",
     "w28_cspcv": "round 17: chromosome-pathway indicator + ProtT5 + the widened affine (ratios, statistics, pFBA vector)",
     "w41_pathfluxcv": "round 25: pathway multi-hot + ProtT5, gated elastic solve + the head over the solved flux",
+    "w43_pathoffcv": "round 27: pathway multi-hot + ProtT5, the head over the cached GEM-box solve (nothing learned in the layer)",
 }
 
 

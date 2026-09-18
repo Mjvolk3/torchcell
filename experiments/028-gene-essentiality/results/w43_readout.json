@@ -1,0 +1,323 @@
+{
+  "round": "w43",
+  "n_cells": 9,
+  "cells": [
+    {
+      "stem": "w39_pathpool_h12l1p1_e200_s2700",
+      "arm": "pathpool",
+      "seed": 2700,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 18637,
+      "n_val": 158,
+      "select_epoch": 36,
+      "select_val_auroc": 0.8204511278195489,
+      "test_auroc_pinned": 0.8585759244689221,
+      "test_auroc_ci_low": 0.791399528246292,
+      "test_auroc_ci_high": 0.9235326758711374,
+      "test_accuracy_pinned": 0.8,
+      "test_recall_essential_pinned": 0.8064516129032258,
+      "median_abs_step": 0.004210526315789442,
+      "val_curve_range": 0.18676691729323303,
+      "wall_time_min": 19.9468164006869,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/mwg0hqv4"
+    },
+    {
+      "stem": "w39_pathpool_h12l1p1_e200_s2701",
+      "arm": "pathpool",
+      "seed": 2701,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 18637,
+      "n_val": 158,
+      "select_epoch": 56,
+      "select_val_auroc": 0.826766917293233,
+      "test_auroc_pinned": 0.8589693154996066,
+      "test_auroc_ci_low": 0.7886093122717828,
+      "test_auroc_ci_high": 0.9235008380471891,
+      "test_accuracy_pinned": 0.8307692307692308,
+      "test_recall_essential_pinned": 0.6129032258064516,
+      "median_abs_step": 0.0033082706766917047,
+      "val_curve_range": 0.14917293233082707,
+      "wall_time_min": 19.965060389041902,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/h5p993rs"
+    },
+    {
+      "stem": "w39_pathpool_h12l1p1_e200_s2702",
+      "arm": "pathpool",
+      "seed": 2702,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 18637,
+      "n_val": 158,
+      "select_epoch": 46,
+      "select_val_auroc": 0.8258646616541353,
+      "test_auroc_pinned": 0.8623131392604249,
+      "test_auroc_ci_low": 0.7975957577969073,
+      "test_auroc_ci_high": 0.923683120055727,
+      "test_accuracy_pinned": 0.8461538461538461,
+      "test_recall_essential_pinned": 0.6129032258064516,
+      "median_abs_step": 0.004511278195488688,
+      "val_curve_range": 0.2505263157894736,
+      "wall_time_min": 19.985491037368774,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/8l9f7ce8"
+    },
+    {
+      "stem": "w38_protpathfba_h12l1p1_e200_s2700",
+      "arm": "protpathfba",
+      "seed": 2700,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 18642,
+      "n_val": 158,
+      "select_epoch": 31,
+      "select_val_auroc": 0.8562406015037594,
+      "test_auroc_pinned": 0.8886703383162864,
+      "test_auroc_ci_low": 0.8333291203235592,
+      "test_auroc_ci_high": 0.9389755519065863,
+      "test_accuracy_pinned": 0.7794871794871795,
+      "test_recall_essential_pinned": 0.8064516129032258,
+      "median_abs_step": 0.005714285714285783,
+      "val_curve_range": 0.1461654135338346,
+      "wall_time_min": 39.68029386997223,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/8e9qz9v0"
+    },
+    {
+      "stem": "w38_protpathfba_h12l1p1_e200_s2701",
+      "arm": "protpathfba",
+      "seed": 2701,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 18642,
+      "n_val": 158,
+      "select_epoch": 45,
+      "select_val_auroc": 0.8357894736842105,
+      "test_auroc_pinned": 0.8953579858379229,
+      "test_auroc_ci_low": 0.8406823682683072,
+      "test_auroc_ci_high": 0.9453831136348183,
+      "test_accuracy_pinned": 0.841025641025641,
+      "test_recall_essential_pinned": 0.7741935483870968,
+      "median_abs_step": 0.005413533834586426,
+      "val_curve_range": 0.5133834586466165,
+      "wall_time_min": 39.48634227514267,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/7b2x47sv"
+    },
+    {
+      "stem": "w38_protpathfba_h12l1p1_e200_s2702",
+      "arm": "protpathfba",
+      "seed": 2702,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 18642,
+      "n_val": 158,
+      "select_epoch": 55,
+      "select_val_auroc": 0.846015037593985,
+      "test_auroc_pinned": 0.8847364280094414,
+      "test_auroc_ci_low": 0.8267767857142857,
+      "test_auroc_ci_high": 0.9392873127511874,
+      "test_accuracy_pinned": 0.8205128205128205,
+      "test_recall_essential_pinned": 0.8064516129032258,
+      "median_abs_step": 0.00511278195488718,
+      "val_curve_range": 0.11759398496240603,
+      "wall_time_min": 39.62617100874583,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/qt3qgz6d"
+    },
+    {
+      "stem": "w39_pathlpelgateflux_h12l1p1_e200_s2700",
+      "arm": "pathlpelgateflux",
+      "seed": 2700,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22772,
+      "n_val": 158,
+      "select_epoch": 100,
+      "select_val_auroc": 0.8324812030075188,
+      "test_auroc_pinned": 0.8973249409913454,
+      "test_auroc_ci_low": 0.844497271772929,
+      "test_auroc_ci_high": 0.9449414526259196,
+      "test_accuracy_pinned": 0.8358974358974359,
+      "test_recall_essential_pinned": 0.7096774193548387,
+      "median_abs_step": 0.013834586466165422,
+      "val_curve_range": 0.248421052631579,
+      "wall_time_min": 89.10499623219172,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/4iu16p5d"
+    },
+    {
+      "stem": "w39_pathlpelgateflux_h12l1p1_e200_s2701",
+      "arm": "pathlpelgateflux",
+      "seed": 2701,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22772,
+      "n_val": 158,
+      "select_epoch": 150,
+      "select_val_auroc": 0.8303759398496241,
+      "test_auroc_pinned": 0.7157749803304485,
+      "test_auroc_ci_low": 0.5962323630666191,
+      "test_auroc_ci_high": 0.8223558507758932,
+      "test_accuracy_pinned": 0.8871794871794871,
+      "test_recall_essential_pinned": 0.41935483870967744,
+      "median_abs_step": 0.03909774436090219,
+      "val_curve_range": 0.24736842105263157,
+      "wall_time_min": 85.59903140068054,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/mpfeyqwx"
+    },
+    {
+      "stem": "w39_pathlpelgateflux_h12l1p1_e200_s2702",
+      "arm": "pathlpelgateflux",
+      "seed": 2702,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22772,
+      "n_val": 158,
+      "select_epoch": 81,
+      "select_val_auroc": 0.8403007518796992,
+      "test_auroc_pinned": 0.9028324154209284,
+      "test_auroc_ci_low": 0.8531352564323547,
+      "test_auroc_ci_high": 0.9469224344064054,
+      "test_accuracy_pinned": 0.8051282051282052,
+      "test_recall_essential_pinned": 0.8387096774193549,
+      "median_abs_step": 0.009323308270676733,
+      "val_curve_range": 0.21894736842105267,
+      "wall_time_min": 90.9225519657135,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/5rr2mzbz"
+    }
+  ],
+  "arms": [
+    {
+      "arm": "pathpool",
+      "label": "pathway multi-hot + ProtT5 backbone, no readout",
+      "n_seeds": 3,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "test_auroc_mean": 0.8599527930763179,
+      "test_auroc_sd": 0.002053561469101214,
+      "test_auroc_values": [
+        0.8585759244689221,
+        0.8589693154996066,
+        0.8623131392604249
+      ],
+      "pooled_auroc": 0.8605428796223447,
+      "pooled_ci_low": 0.7927054351279357,
+      "pooled_ci_high": 0.9248123472992444,
+      "median_abs_step_mean": 0.004010025062656612,
+      "n_val": 158,
+      "select_epochs": [
+        36,
+        56,
+        46
+      ]
+    },
+    {
+      "arm": "protpathfba",
+      "label": "pathway multi-hot + ProtT5 backbone + FBA ratios",
+      "n_seeds": 3,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "test_auroc_mean": 0.8895882507212169,
+      "test_auroc_sd": 0.0053699436741262195,
+      "test_auroc_values": [
+        0.8886703383162864,
+        0.8953579858379229,
+        0.8847364280094414
+      ],
+      "pooled_auroc": 0.8896538158929976,
+      "pooled_ci_low": 0.8336980920314254,
+      "pooled_ci_high": 0.9417855261240784,
+      "median_abs_step_mean": 0.005413533834586463,
+      "n_val": 158,
+      "select_epochs": [
+        31,
+        45,
+        55
+      ]
+    },
+    {
+      "arm": "pathlpelgateflux",
+      "label": "pathway multi-hot + ProtT5; gated + a head over the solved flux (all reactions)",
+      "n_seeds": 3,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "test_auroc_mean": 0.8386441122475742,
+      "test_auroc_sd": 0.10644341572966895,
+      "test_auroc_values": [
+        0.8973249409913454,
+        0.7157749803304485,
+        0.9028324154209284
+      ],
+      "pooled_auroc": 0.9065696302124312,
+      "pooled_ci_low": 0.8562412525987252,
+      "pooled_ci_high": 0.9516705077240477,
+      "median_abs_step_mean": 0.020751879699248115,
+      "n_val": 158,
+      "select_epochs": [
+        100,
+        150,
+        81
+      ]
+    }
+  ],
+  "comparators_on_195": {
+    "FBA shipped": {
+      "auroc": 0.6543076317859953,
+      "ci_low": 0.5617373633852306,
+      "ci_high": 0.747709049823633
+    },
+    "FBA SM": {
+      "auroc": 0.6655192761605035,
+      "ci_low": 0.5714285714285714,
+      "ci_high": 0.7591164975254618
+    },
+    "FBA SC": {
+      "auroc": 0.6657159716758458,
+      "ci_low": 0.5735277316161197,
+      "ci_high": 0.7586017602687547
+    },
+    "FBA YPD": {
+      "auroc": 0.6638473642800944,
+      "ci_low": 0.5718939393939394,
+      "ci_high": 0.7559709101382487
+    },
+    "FCL": {
+      "auroc": 0.74213217938631,
+      "ci_low": 0.634456337108014,
+      "ci_high": 0.8447953999582288
+    },
+    "FBA (released)": {
+      "auroc": 0.6400472069236822,
+      "ci_low": 0.5190704355381774,
+      "ci_high": 0.7546372814823831
+    }
+  },
+  "bootstrap": {
+    "n": 2000,
+    "seed": 0
+  }
+}

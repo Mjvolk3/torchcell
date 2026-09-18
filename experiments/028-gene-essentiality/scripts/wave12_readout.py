@@ -479,6 +479,18 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "protgopathfba",
         ],
     ),
+    # Round 27: the scalable form, the flux head over the cached GEM-box solve on the
+    # pathway input, six seeds, against the elastic form on that input, the control
+    # and the affine.
+    "w43": (
+        [
+            "w39_pathpool_h12l1p1_e200_s*.json",
+            "w38_protpathfba_h12l1p1_e200_s*.json",
+            "w39_pathlpelgateflux_h12l1p1_e200_s*.json",
+            "w43_pathlpoffgateflux_h12l1p1_e200_s*.json",
+        ],
+        ["pathpool", "protpathfba", "pathlpelgateflux", "pathlpoffgateflux"],
+    ),
     # Round 16: the round-9 backbone with the round-11 affine.
     "w27": (
         [
@@ -609,6 +621,7 @@ ARM_LABELS = {
     "protpropsfba": "seven gene properties + ProtT5 backbone + FBA ratios",
     "pathfba": "pathway multi-hot backbone + FBA ratios",
     "pathpool": "pathway multi-hot + ProtT5 backbone, no readout",
+    "pathlpoffgateflux": "pathway multi-hot + ProtT5; gated + a head over the GEM-box solve's flux (cached, nothing learned in the layer)",
     "protgofba": "GO multi-hot (propagated, 2,362) + ProtT5 backbone + FBA ratios",
     "protgobpfba": "GO biological process (1,580) + ProtT5 backbone + FBA ratios",
     "gofba": "GO multi-hot backbone + FBA ratios",

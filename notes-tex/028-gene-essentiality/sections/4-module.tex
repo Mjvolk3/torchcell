@@ -994,6 +994,23 @@ round-12 ensemble's 0.893 with its gene bootstrap, with no pass rule
 
 \input{tables/fold_ensembles}
 
+\subsection{Round 27: the scalable form\secstatus{todo}}
+\label{sec:round27}
+
+What the foundation-model setting can carry is a transform, not a layer. Round 24
+measured that the head over the GEM-box solve, with nothing learned in the layer,
+reads 0.852 on ProtT5, 0.01 to 0.02 under the elastic cell with its ceilings and 0.03
+above the affine; and with nothing learned the flux is a function of the genotype and
+the medium alone, so the program need only be solved once per genotype. Round 27 adds
+that cache to the solver (a solved program is reused whenever its bounds carry no
+gradient) and runs the cached GEM-box head on ProtT5 with the pathway multi-hot on six
+seeds (jobs 2368) and on the five folds (2369), the cells of rounds 23 and 25 with
+the learned ceilings removed (Table~\ref{tab:w43}, Figure~\ref{fig:w43};
+Table~\ref{tab:ensembles}). The read is round 23's, and the wall time per cell is
+reported beside the number, since that is what the form is for.
+
+\input{tables/round_w43}
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

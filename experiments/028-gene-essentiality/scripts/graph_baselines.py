@@ -42,7 +42,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from sklearn.metrics import roc_auc_score
 from torch import nn
-from torch_geometric.nn import GATv2Conv, GCNConv, GINConv, RGATConv, RGCNConv, SAGEConv
+from torch_geometric.nn import GATv2Conv, GCNConv, GINConv, RGCNConv, SAGEConv
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -127,16 +127,17 @@ class Net(nn.Module):
             self.c1 = RGCNConv(dim_in, WIDTH, num_relations=N_RELATIONS, num_bases=4)
             self.c2 = RGCNConv(WIDTH, WIDTH, num_relations=N_RELATIONS, num_bases=4)
         elif kind == "RGAT":
-            # RGATConv gathers the RAW input per edge before the per-relation weight, so
-            # on the 4.87M typed edges a 1,024-wide input is 20 GB (job 2340 OOM on a
-            # 44 GiB card); a linear projection to the width first keeps the gather at
-            # 1.2 GB.
-            self.pre = nn.Linear(dim_in, WIDTH)
-            self.c1 = RGATConv(
-                WIDTH, WIDTH // 4, num_relations=N_RELATIONS, heads=4, num_bases=4
+            # One GATv2 attention per relation, summed: alpha_ij^(r) and Theta_r per edge
+            # type, no basis sharing. PyG's RGATConv materializes a per-edge weight
+            # matrix (4.87M typed edges x in x heads*out: 20 GB at the raw input, 80 GB
+            # at width 64 behind a projection; jobs 2340 and 2345 OOM on a 44 GiB card),
+            # so the per-relation form is built from the same attention layer the GATv2
+            # arm uses, each on its own edge subset.
+            self.c1 = nn.ModuleList(
+                [GATv2Conv(dim_in, WIDTH // 4, heads=4) for _ in range(N_RELATIONS)]
             )
-            self.c2 = RGATConv(
-                WIDTH, WIDTH // 4, num_relations=N_RELATIONS, heads=4, num_bases=4
+            self.c2 = nn.ModuleList(
+                [GATv2Conv(WIDTH, WIDTH // 4, heads=4) for _ in range(N_RELATIONS)]
             )
         else:
             self.c1 = nn.Linear(dim_in, WIDTH)
@@ -153,10 +154,14 @@ class Net(nn.Module):
         if self.kind == "MLP":
             h = F.relu(self.c1(x))
             h = F.relu(self.c2(h))
-        elif self.kind in ("RGCN", "RGAT"):
+        elif self.kind == "RGAT":
             assert edge_type is not None, "relational kinds need edge_type"
-            if self.kind == "RGAT":
-                x = self.pre(x)
+            subsets = [edge_index[:, edge_type == r] for r in range(N_RELATIONS)]
+            h = F.relu(sum(c(x, e) for c, e in zip(self.c1, subsets)))
+            h = F.dropout(h, 0.2, self.training)
+            h = F.relu(sum(c(h, e) for c, e in zip(self.c2, subsets)))
+        elif self.kind == "RGCN":
+            assert edge_type is not None, "relational kinds need edge_type"
             h = F.relu(self.c1(x, edge_index, edge_type))
             h = F.dropout(h, 0.2, self.training)
             h = F.relu(self.c2(h, edge_index, edge_type))

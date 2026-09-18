@@ -142,4 +142,7 @@ git -C "$WT" rev-parse HEAD > "$SNAP/SNAPSHOT_GIT_HEAD"
 
 cd "$SNAP"
 echo "snapshot $SNAP"
-sbatch "$SCRIPT_REL" "$@"
+# ESS_MEM sizes the job's memory; the launcher's own #SBATCH line is the 36g default and
+# a command-line --mem overrides it. Until 2026-09-18 nothing passed it and every pack ran
+# at 36g (three packs died out of memory); confirm with `sacct -j <id> -o ReqMem`.
+sbatch --mem="${ESS_MEM:-36g}" "$SCRIPT_REL" "$@"

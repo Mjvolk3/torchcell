@@ -363,6 +363,24 @@ ROUND_CAPTIONS = {
         "2,709 gene-owned fluxes, and the head over the flux of the GEM-box solve with "
         "no learned ceilings. Constraint scale 0, batch 32, class weight, 200 epochs.",
     ),
+    "w48": (
+        "Round 32, the unfit seed with the card's kernels pinned",
+        "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "
+        "and ProtT5) on seed 2701 run twice with cuDNN's autotuner off, its "
+        "deterministic kernels on, torch's deterministic algorithms on and cuBLAS's "
+        "workspace pinned, and twice without, in one pack on one card. Batch 32, class "
+        "weight, 200 epochs; the read is per pair.",
+    ),
+    "w49": (
+        "Round 33, the layer-free form's encoding and initialization",
+        "The round-27 head over the cached solve (the comparator) and round 31's cell, "
+        "the deletion's pFBA vector standardized under the affine's default "
+        "initialization, against the same vector with the solve columns "
+        "zero-initialized, the vector as $\\log(1 + |v|)$ under the default "
+        "initialization, and as $\\log(1 + |v|)$ zero-initialized, the flux head's own "
+        "construction with no layer in the graph. Batch 32, class weight, 200 epochs, "
+        "seeds 2700 to 2705.",
+    ),
     "w47": (
         "Round 31, the layer-free form",
         "The round-22 affine on ProtT5 with the pathway multi-hot and the round-27 head "

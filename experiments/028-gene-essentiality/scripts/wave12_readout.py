@@ -521,6 +521,35 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["protpathfba", "pathlpoffgateflux", "pathfbapfba", "pathfbastatspfba"],
     ),
+    # Round 32: the round-27 cell on seed 2701 twice with the card's kernels pinned
+    # (ESS_DETERMINISTIC=1) and twice free; the read is per pair.
+    "w48": (
+        ["w48_pathlpoffgateflux*_h12l1p1_e200_s2701.json"],
+        [
+            "pathlpoffgatefluxdet1",
+            "pathlpoffgatefluxdet2",
+            "pathlpoffgatefluxfree1",
+            "pathlpoffgatefluxfree2",
+        ],
+    ),
+    # Round 33: the layer-free form's factorial of encoding and initialization, paired
+    # by seed against round 31's cell, with the cached-solve head as the comparator.
+    "w49": (
+        [
+            "w43_pathlpoffgateflux_h12l1p1_e200_s*.json",
+            "w47_pathfbapfba_h12l1p1_e200_s*.json",
+            "w49_pathfbapfbazero_h12l1p1_e200_s*.json",
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w49_pathfbapfbalog_h12l1p1_e200_s*.json",
+        ],
+        [
+            "pathlpoffgateflux",
+            "pathfbapfba",
+            "pathfbapfbazero",
+            "pathfbapfbalogfree",
+            "pathfbapfbalog",
+        ],
+    ),
     # Round 28: the round-26 GO cells with a wider cell (width 24, two-layer
     # preprocessor), against the round-26 cells, the pathway cell and the affine.
     "w44": (
@@ -674,6 +703,13 @@ ARM_LABELS = {
     "pathlpoffgateflux": "pathway multi-hot + ProtT5; gated + a head over the GEM-box solve's flux (cached, nothing learned in the layer)",
     "pathfbapfba": "pathway multi-hot + ProtT5; FBA affine + the deletion's pFBA vector as an input (no flux layer)",
     "pathfbastatspfba": "the same, with the eight wild-type solve statistics beside the pFBA vector",
+    "pathfbapfbazero": "the same vector, the affine's solve columns zero-initialized",
+    "pathfbapfbalogfree": "the vector as log(1 + |v|), default initialization",
+    "pathfbapfbalog": "the vector as log(1 + |v|), solve columns zero-initialized (the flux head's construction, no layer)",
+    "pathlpoffgatefluxdet1": "round-27 cell, seed 2701, the card's kernels pinned, first run",
+    "pathlpoffgatefluxdet2": "the same, pinned, second run",
+    "pathlpoffgatefluxfree1": "the same, kernels free, first run",
+    "pathlpoffgatefluxfree2": "the same, free, second run",
     "protgofba": "GO multi-hot (propagated, 2,362) + ProtT5 backbone + FBA ratios",
     "protgobpfba": "GO biological process (1,580) + ProtT5 backbone + FBA ratios",
     "gofba": "GO multi-hot backbone + FBA ratios",

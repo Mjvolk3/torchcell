@@ -868,6 +868,33 @@ def graph_baselines_go400_s6() -> str | None:
     )
 
 
+def graph_baselines_go400_genome() -> str | None:
+    """Graph convolution on GO trained on the genome-wide labels, read on the released 195."""
+    return graph_baselines_more(
+        "go400_genome",
+        "Graph convolution on GO trained on the genome-wide labels",
+        "The three rows of Table~\\ref{tab:graph-go400} trained on the genome-wide "
+        "labels (split \\texttt{ess\\_genome\\_val0.2\\_s0}: 4,368 train and 1,093 "
+        "validation genes, the released labels where the file has them and SGD or a "
+        "fitness record elsewhere) and read on the same 195 released held-out genes, "
+        "seeds 2700 to 2702.",
+        "tab:graph-go400-genome",
+    )
+
+
+def graph_baselines_extra_genome() -> str | None:
+    """The three-input cheap models trained on the genome-wide labels, read on the 195."""
+    return graph_baselines_more(
+        "extra_genome",
+        "Cheap models on the three inputs trained on the genome-wide labels",
+        "The MLP and graph convolution on the transformer's inputs "
+        "(Table~\\ref{tab:graph-baselines}) trained on the genome-wide labels "
+        "(split \\texttt{ess\\_genome\\_val0.2\\_s0}) and read on the same 195 released "
+        "held-out genes, seeds 2700 to 2702.",
+        "tab:graph-extra-genome",
+    )
+
+
 def graph_baselines_go800() -> str | None:
     """Graph convolution on GO at 800 epochs."""
     return graph_baselines_more(
@@ -1281,6 +1308,8 @@ def main() -> None:
         graph_baselines_go800(),
         graph_baselines_go_rel(),
         genome_heldout(),
+        graph_baselines_go400_genome(),
+        graph_baselines_extra_genome(),
         fold_ensembles(),
         gene_encodings(),
         hard_genes(),

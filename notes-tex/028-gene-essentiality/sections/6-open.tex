@@ -37,6 +37,15 @@ weight, six encodings). What remains is attribution and the module.
     on the ladder carries 0.11 to 0.13 more AUROC than the growth ratio and would take
     the biomass objective out of the readout; and the growth LP with an objective other
     than biomass, since the layer that solves accepts any objective column.
+  \item The layer that solves has the wrong shape for a training loop: the program runs
+    on the CPU inside the forward pass, the GPU waits on it (0 to 13 percent
+    utilization sampled during round 19, against a 1.6 hour cell where the alternating
+    layer takes 19 minutes), and the bytes moved are not the cost, the synchronization
+    is. Three constructions would remove it, in order of how much they change: a
+    per-genotype basis warm start of the simplex through HiGHS's own interface, which
+    keeps the exact solve and the exact duals; a batched first-order solve on the GPU;
+    a smooth interior-point solve at a fixed barrier, which changes what the layer
+    computes and belongs to its own rounds.
   \item The module's own hyperparameters have not been moved on this endpoint: the
     $k_{cat}$ tier (measured against predicted) and the thermodynamic source. Given
     round 15, the $k_{cat}$ tier is the one that sets whether the capacity box holds a

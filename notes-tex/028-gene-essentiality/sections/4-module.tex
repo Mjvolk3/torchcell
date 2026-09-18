@@ -743,6 +743,33 @@ stiffness directly, with the layer's parameters at ten times the learning rate a
 a two-layer abundance head, and reads the training loss at the selected epoch against
 round 18's 1.25 beside the score.
 
+\subsection{Why the ceilings cannot carry the ranking\secstatus{todo}}
+\label{sec:dual-overlap}
+
+The gradient the layer that solves hands the backbone is the dual of the bounds that
+bind at the optimum, so what the backbone can learn through the solve is bounded by
+which bounds those are and whether they differ between genotypes.
+\texttt{lp\_dual\_overlap.py} reads them off the elastic cell at initialization on 64
+held-out genotypes at three ceiling scales (\texttt{results/lp\_dual\_overlap.json}).
+At scale 100 the median genotype has six gene-owned reactions at their ceiling, of
+2,709 that carry a gene, and the median Jaccard overlap between two genotypes' binding
+sets is 1.0: the same six reactions bind whichever gene is deleted, with a union of 96
+over the 64 genotypes carried by one outlier genotype with 90 and by the lethal
+deletions, whose programs bind nothing. At scale 30 the median is eight reactions
+with a union of 22, at 1,000 two with a union of four, and the median dual is 0.005 to
+0.009 per mmol/gDW/h throughout. The deleted gene's own reactions never bind, because
+the deletion has already closed them: the gene's identity reaches the value through
+the shape of the polytope, which the head cannot move, and never through a bound the
+head owns. The abundance head can therefore raise or lower one growth level for every
+genotype at once, which the readout's intercept absorbs, and it cannot move one
+genotype's value relative to another's, which is what the labels ask for. That is the
+mechanism behind rounds 18 and 19: the elastic program removes the absorbing state and
+the gradient arrives on nine genotypes in ten, and it arrives on the same six
+ceilings for all of them. What the growth column carries is the solve's own ranking of
+the deletions, 0.73 at initialization, with a learned sign and threshold; the
+constructions that let the module reach the affine's level are the ones that put a
+learned head beside the column (the gated cells, 0.80 to 0.82) rather than behind it.
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

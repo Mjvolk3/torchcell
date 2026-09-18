@@ -591,3 +591,9 @@ Example runs (forced elastic x100 seed 2701; gated elastic x100 seed 2701):
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/qpaw0oai>
 
 <https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/kxjcktxy>
+
+## 2026.09.17 - The binding set is the same for every genotype: why the ceilings cannot carry the ranking
+
+`lp_dual_overlap.py` (CPU, elastic cell at init, 64 held-out genotypes; `results/lp_dual_overlap.json`): gene-owned reactions with a nonzero dual per genotype, median 8 / 6 / 2 at ceiling scale 30 / 100 / 1000 (of 2,709 gene-owned reactions); union over the 64 genotypes 22 / 96 / 4; median pairwise Jaccard 1.0 at every scale (identical binding sets; the union at x100 is one outlier genotype with 90 binding reactions plus the lethal ones with none); median dual 0.005-0.009 per mmol/gDW/h. The deleted gene's own reactions never bind (closed by the deletion), so the gene's identity enters the value only through the polytope's shape, never through a learnable bound. Consequence: the abundance head can shift one growth level for all genotypes (absorbed by the readout intercept) and cannot re-rank genotypes; the forced column is FBA's ranking (0.73 at init) with a learned sign, whatever the learning rate, head depth or slack. This is the mechanism behind rounds 18 and 19.
+
+Round 19 early read (4 of 12 cells): lr x10 0.629/0.697 (seeds 2701/2702), two-layer head 0.678 (2702), both 0.669 (2702); training loss 1.25 at the selected epoch in every cell. Round 20 (w36, jobs 2332-2335, submitted 21:00): gated elastic x100 and gated GEM-box seeds 2703-2705 (six seeds each for the reliable form); forced elastic at ceiling scale 30 with lr x10 (more binding reactions); forced at x100 with abundance reach e^6 and lr x10.

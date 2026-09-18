@@ -1,0 +1,50 @@
+{
+  "result": "w32_lpelbio100_h12l1p1_e200_s2700.json",
+  "rows": [
+    {
+      "capacity_scale": 30.0,
+      "n_genotypes": 64,
+      "n_gene_owned_reactions": 2709,
+      "binding_per_genotype_median": 8.0,
+      "binding_per_genotype_min": 0,
+      "binding_per_genotype_max": 11,
+      "binding_union": 22,
+      "binding_on_every_genotype": 0,
+      "jaccard_median": 1.0,
+      "jaccard_min": 0.0,
+      "jaccard_p05": 0.0,
+      "binding_specific": 14,
+      "dual_magnitude_median": 0.008979967160538347
+    },
+    {
+      "capacity_scale": 100.0,
+      "n_genotypes": 64,
+      "n_gene_owned_reactions": 2709,
+      "binding_per_genotype_median": 6.0,
+      "binding_per_genotype_min": 0,
+      "binding_per_genotype_max": 90,
+      "binding_union": 96,
+      "binding_on_every_genotype": 0,
+      "jaccard_median": 1.0,
+      "jaccard_min": 0.0,
+      "jaccard_p05": 0.0,
+      "binding_specific": 90,
+      "dual_magnitude_median": 0.004550614088087462
+    },
+    {
+      "capacity_scale": 1000.0,
+      "n_genotypes": 64,
+      "n_gene_owned_reactions": 2709,
+      "binding_per_genotype_median": 2.0,
+      "binding_per_genotype_min": 0,
+      "binding_per_genotype_max": 3,
+      "binding_union": 4,
+      "binding_on_every_genotype": 0,
+      "jaccard_median": 1.0,
+      "jaccard_min": 0.0,
+      "jaccard_p05": 0.0,
+      "binding_specific": 2,
+      "dual_magnitude_median": 0.006132144639453552
+    }
+  ]
+}

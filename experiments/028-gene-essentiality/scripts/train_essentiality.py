@@ -1105,6 +1105,15 @@ class BxCell(BaseModel):
             "(`FluxLayerConfig.abundance_head_layers`). Round 19."
         ),
     )
+    flux_abundance_log_range: float = Field(
+        default=3.0,
+        gt=0.0,
+        description=(
+            "The abundance head's reach r in E_g = E0_g exp(r tanh(.)), e^r either side "
+            "of the prior (`FluxLayerConfig.abundance_log_range`, read at call time); "
+            "3.0 is the shipped value. Round 20."
+        ),
+    )
     ess_solve_features: str = Field(
         default="none",
         description=(
@@ -2204,6 +2213,7 @@ def build_cell(
     flux_pool_by_construction: bool = False,
     flux_lr_mult: float = 1.0,
     flux_abundance_head_layers: int = 1,
+    flux_abundance_log_range: float = 3.0,
     node_embeddings: list[str] | None = None,
     pos_weight_balanced: bool = False,
 ) -> BxCell:
@@ -2306,6 +2316,7 @@ def build_cell(
         flux_pool_by_construction=flux_pool_by_construction,
         flux_lr_mult=flux_lr_mult,
         flux_abundance_head_layers=flux_abundance_head_layers,
+        flux_abundance_log_range=flux_abundance_log_range,
         node_embeddings=(
             list(node_embeddings) if node_embeddings else list(STRONG_NODE_EMBEDDINGS)
         ),
@@ -4481,6 +4492,7 @@ def build_model_for_cell(
         # So are the elastic program's price and the pool projection (round 18).
         flux_layer.config.lp_slack_penalty = cell.flux_lp_slack_penalty
         flux_layer.config.pool_by_construction = cell.flux_pool_by_construction
+        flux_layer.config.abundance_log_range = cell.flux_abundance_log_range
         # THE WARM-START GEOMETRY SWITCHES (wave 9). The fold is read off config at call
         # time. ORDER MATTERS for the two files: apply_log_c_init reads conc_lower_m and
         # conc_upper_m, assigned just above, and refuses a window that disagrees with the
@@ -6608,6 +6620,12 @@ def main() -> None:
         help="Depth of the abundance head: 1 linear (shipped), 2 with a hidden layer.",
     )
     parser.add_argument(
+        "--flux-abundance-log-range",
+        type=float,
+        default=3.0,
+        help="The abundance head's reach r (e^r either side of the prior); 3.0 shipped.",
+    )
+    parser.add_argument(
         "--flux-pool-by-construction",
         action="store_true",
         help=(
@@ -7106,6 +7124,7 @@ def main() -> None:
         flux_pool_by_construction=args.flux_pool_by_construction,
         flux_lr_mult=args.flux_lr_mult,
         flux_abundance_head_layers=args.flux_abundance_head_layers,
+        flux_abundance_log_range=args.flux_abundance_log_range,
         node_embeddings=args.node_embeddings,
         pos_weight_balanced=args.pos_weight_balanced,
     )

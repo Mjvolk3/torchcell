@@ -249,6 +249,19 @@ SOLVE_ENCODINGS_NPZ = osp.join(
 )
 ESS_SOLVE_FEATURES = ("none", "stats", "pfba", "stats_pfba")
 
+#: Round 32 (2026-09-18). The fitting transition of the flux-head cells is a chance event
+#: of the RUN and not of the seed (round 29: the same seed and program fit at epoch 70 in
+#: one run and never in another, the two diverging from the first epoch, with torch and
+#: numpy seeded and no loader workers). `ESS_DETERMINISTIC=1` pins what a seed leaves
+#: free on the card: cuDNN's autotuner (`benchmark`), its nondeterministic kernels, and
+#: every torch operation that has a deterministic implementation (`warn_only=True`, so an
+#: operation with none warns once and the run continues; the pack sets PYTHONWARNINGS so
+#: the warning reaches the log and names the kernel). cuBLAS needs
+#: `CUBLAS_WORKSPACE_CONFIG=:4096:8` in the environment before CUDA initializes, which is
+#: the pack line's job, not this script's. Recorded in every result and dump as
+#: `deterministic`.
+DETERMINISTIC = os.environ.get("ESS_DETERMINISTIC") == "1"
+
 #: WAVE 7 (2026-09-11). The two mechanistic amino-acid readouts, named so a result file says
 #: which one it ran rather than leaving it to be inferred from the arm.
 AA_READOUT_TURNOVER = "flux_metabolite"
@@ -5836,6 +5849,7 @@ def run_cell(
     )
     result: dict[str, Any] = {
         "cell": cell.model_dump(),
+        "deterministic": DETERMINISTIC,
         "select_epoch": sel_epoch,
         "select_rule": sel_rule,
         "select_val_pearson": val_curve[sel_epoch] if val_curve else float("nan"),
@@ -6116,6 +6130,7 @@ def run_cell(
             {
                 "experiment": "028-gene-essentiality",
                 "cell": cell.model_dump(),
+                "deterministic": DETERMINISTIC,
                 "head": main_head,
                 "select_epoch": sel_epoch,
                 "select_rule": sel_rule,
@@ -6632,6 +6647,7 @@ def _score_test(
                 {
                     "experiment": "028-gene-essentiality",
                     "cell": cell.model_dump(),
+                    "deterministic": DETERMINISTIC,
                     "head": head_name,
                     # WHICH SPACE the numbers below are in. The concentration readout
                     # predicts and is scored in log10 molar; every other arm reports the
@@ -7175,6 +7191,16 @@ def main() -> None:
         ),
     )
     args = parser.parse_args()
+
+    if DETERMINISTIC:
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+        torch.use_deterministic_algorithms(True, warn_only=True)
+        print(
+            "[deterministic] cudnn.benchmark False, cudnn.deterministic True, "
+            "use_deterministic_algorithms(True, warn_only=True); "
+            f"CUBLAS_WORKSPACE_CONFIG={os.environ.get('CUBLAS_WORKSPACE_CONFIG', 'unset')}"
+        )
 
     cfg = load_config()
     cell = build_cell(

@@ -26,11 +26,12 @@ weight, six encodings). What remains is attribution and the module.
     first question to put to it is whether the GO convolution's margin survives.
   \item The GO multi-hot is the ladder's strongest encoding and the cheap models take
     it (graph convolution 0.887), and the transformer does not (0.833 beside ProtT5,
-    a cost of 0.04 beside the pathway block, round 26). What separates 173 sparse
-    pathway columns from 2,362 dense GO columns inside a width-12 preprocessor is not
-    measured; a wider preprocessor, a per-block projection, or the GO vector entering
-    as its own token are the untested constructions, and the answer decides whether
-    annotation vectors scale as inputs to this backbone.
+    a cost of 0.04 beside the pathway block, round 26), and a cell 350 times wider
+    reads it the same (round 28), so capacity is not the reason. What separates 173
+    sparse pathway columns from 2,362 dense GO columns in this backbone is not
+    measured; a per-block projection, the GO vector entering as its own token, and
+    the pooled readout itself are the untested constructions, and the answer decides
+    whether annotation vectors scale as inputs to this backbone.
   \item The forced growth column is closed by the dual-overlap probe
     (Section~\ref{sec:dual-overlap}): the ceilings that bind are the same for every
     genotype, so no step size, head or reach trains it (rounds 18 to 20). A construction

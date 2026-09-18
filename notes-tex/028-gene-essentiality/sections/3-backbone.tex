@@ -567,6 +567,65 @@ different genes produce when averaged and what neither produces alone.
 
 \input{tables/family_ensembles_folds}
 
+\subsection{Round 30: the genome-wide labels as a larger held-out set\secstatus{todo}}
+\label{sec:round30}
+
+Every number above sits on 195 genes, and the open list's first question was whether
+the graph convolution's margin survives a larger held-out set. The genome-wide labels
+of round 1 give one: 4,674 genes the released file never labeled, 974 essential by SGD
+annotation and 3,700 nonessential by a deletion-collection fitness record. Round 30
+trains on the released labeled genes outside the released held-out set (the split
+\texttt{ess\_genome\_heldout\_val0.2\_s0}: 629 train, 158 validation, the 195 released
+held-out genes dropped so the read is not on them) and reads once on the 4,674
+(Table~\ref{tab:genome-heldout}). Two properties of the set bound what it can say.
+None of the 4,674 carries a yeast-GEM reaction, since the released file had labeled the
+GEM's genes, so the read is a transfer from metabolic to non-metabolic genes and FBA's
+knockout ratio is 1.0 on every one of them, an AUROC of exactly 0.5. And label origin
+coincides with class: every essential gene is an SGD annotation and every nonessential
+one a fitness record, so a model that can tell the two sources apart scores on this set
+without reading essentiality.
+
+\input{tables/genome_heldout}
+
+The inputs do not transfer and the graph does. The MLP on the transformer's three
+inputs reads 0.509 on the 4,674 genes (0.486 on ProtT5 with the ratios), chance, from
+0.870 on the released 195; the same inputs through two layers of graph convolution read
+0.744, ProtT5 alone through the graph 0.749 and with the ratios 0.759, and GO alone
+through the graph 0.702, under the three-input convolution here where on the 195 it
+was 0.02 above it. The graph convolution on GO does not keep its margin off the
+metabolic genes; the graph itself carries what transfers, and the ratios add 0.01 to a
+convolution on ProtT5 when every ratio in the test set is 1.0, which measures the
+training set and not the test set. Plausible mechanism, unverified: essential genes
+sit in denser neighborhoods of the physical and genetic graphs, a property the
+convolution reads from the graph and the MLP cannot, and one the label origin does not
+separate from essentiality on this set. The transformer does not transfer either: the
+round-22 recipe, the pathway multi-hot with ProtT5 and the FBA affine, trained on the
+same 629 genes reads 0.574 [0.55, 0.59] on the 4,674 (0.570 to 0.578 over three seeds,
+job 2396), 0.07 above chance and 0.17 under the graph convolution on ProtT5 alone,
+from 0.890 on the released 195. Its inputs are the MLP's, and in this recipe the gene
+graphs enter training only through the graph regularizer, not as a message-passing
+input, so the three models that read 0.87 to 0.89 on the metabolic genes without the
+graph as an input all fall to chance or near it off them, and the one that convolves
+over the graph does not. The scalable module form on the same split runs at the time
+of writing; its solved flux is the wild-type vector on every one of these genes, a
+constant the head cannot rank by, so what it can add over the backbone's 0.574 is
+nothing by construction.
+
+The other direction says the larger label set is not the missing training data for
+the metabolic genes (Tables~\ref{tab:graph-go400-genome}
+and~\ref{tab:graph-extra-genome}). Trained on the 4,368 genome-labeled genes and read
+on the released 195, the graph convolution on GO reads 0.913 on every seed (0.912,
+0.913, 0.913), the number it reads from 629 genes with the seed spread closed, and the
+cheap models on the transformer's three inputs lose to their 629-gene runs: the MLP
+0.837 from 0.870, the 400-epoch convolution 0.843 from 0.888. Seven times the labels,
+of a different origin for six sevenths of them, buy the GO convolution nothing and
+cost the three-input models 0.03 to 0.05, which is what round 1 measured on the
+transformer.
+
+\input{tables/graph_baselines_go400_genome}
+
+\input{tables/graph_baselines_extra_genome}
+
 \subsection{Round 16: the round-9 backbone with the round-11 affine\secstatus{todo}}
 
 Round 16 (jobs 2309 and 2310) puts the widened affine on the round-9 backbone: the

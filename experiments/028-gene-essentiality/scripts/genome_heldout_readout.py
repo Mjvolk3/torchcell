@@ -31,7 +31,7 @@ load_dotenv()
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 sys.path.insert(0, osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "scripts"))
 
-from wave12_readout import binary_auroc, bootstrap_ci, pinned_predictions  # noqa: E402
+from wave12_readout import PRED_DIR, binary_auroc, bootstrap_ci  # noqa: E402
 
 RESULTS = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
 SPLIT = osp.join(RESULTS, "splits", "ess_genome_heldout_val0.2_s0.json.gz")
@@ -96,22 +96,45 @@ def pooled(cells: list[dict[str, float]], labels: dict[str, int]) -> tuple[float
     return binary_auroc(score, y), bootstrap_ci(score, y), len(genes)
 
 
+def dump_predictions(path: str, labels: dict[str, int]) -> tuple[dict[str, float], int]:
+    """Every record of a transformer cell's test dump as ``gene -> logit``, and its seed.
+
+    The trainer pins the released 195 genes, and none of them is in this split's test
+    set, so the dump's ``pinned`` flag is False on every record and the read is over
+    all of them; the gene set is asserted against the split's test genes.
+    """
+    with open(path) as fh:
+        dump = json.load(fh)
+    recs = dump["predictions"]
+    assert not any(r["pinned"] for r in recs), path
+    cell = {r["genes"][0]: float(r["pred"]) for r in recs}
+    assert set(cell) == set(labels), (path, len(cell), len(labels))
+    for r in recs:
+        assert int(r["target"]) == labels[r["genes"][0]], (path, r["genes"][0])
+    return cell, int(dump["cell"]["seed"])
+
+
 def transformer_reads(labels: dict[str, int]) -> list[ArmRead]:
+    """The transformer cells through their dumps; the trainer's summary step died on
+    the empty pinned block (KeyError on ``accuracy``), after the dump was written.
+    """
     reads: list[ArmRead] = []
     for label, pattern in TRANSFORMER_ARMS.items():
-        paths = sorted(glob.glob(osp.join(RESULTS, pattern)))
+        paths = sorted(glob.glob(osp.join(PRED_DIR, pattern)))
         if not paths:
             continue
-        aurocs, cells, epochs, walls = [], [], [], []
+        aurocs, cells, seeds = [], [], []
         for path in paths:
-            with open(path) as fh:
-                result = json.load(fh)
-            aurocs.append(float(result["test"]["pinned"]["auroc"]))
-            epochs.append(int(result["select_epoch"]))
-            walls.append(float(result["wall_time_s"]) / 60.0)
-            pp = pinned_predictions(result)
-            assert pp is not None, f"no dump for {path}"
-            cells.append(dict(zip(pp[2], map(float, pp[0]), strict=True)))
+            cell, seed = dump_predictions(path, labels)
+            genes = sorted(cell)
+            aurocs.append(
+                binary_auroc(
+                    np.array([cell[g] for g in genes]),
+                    np.array([labels[g] for g in genes]),
+                )
+            )
+            cells.append(cell)
+            seeds.append(seed)
         auroc, ci, n = pooled(cells, labels)
         reads.append(
             ArmRead(
@@ -124,10 +147,11 @@ def transformer_reads(labels: dict[str, int]) -> list[ArmRead]:
                 pooled_auroc=auroc,
                 pooled_ci=ci,
                 n_genes=n,
-                select_epochs=epochs,
-                wall_minutes=float(np.mean(walls)),
+                select_epochs=[],
+                wall_minutes=None,
             )
         )
+        print(f"  {label}: seeds {seeds}")
     return reads
 
 

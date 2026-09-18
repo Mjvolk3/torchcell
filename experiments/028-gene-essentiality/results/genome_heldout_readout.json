@@ -4,6 +4,26 @@
   "n_test_essential": 974,
   "arms": [
     {
+      "label": "pathway multi-hot + ProtT5 + FBA affine (round 22 recipe)",
+      "kind": "transformer",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.5708226039180865,
+        0.5710576336089683,
+        0.5786684888173594
+      ],
+      "mean": 0.5735162421148048,
+      "sd": 0.0044635237539289805,
+      "pooled_auroc": 0.5721570286919363,
+      "pooled_ci": [
+        0.5519299355142101,
+        0.5923442467654539
+      ],
+      "n_genes": 4674,
+      "select_epochs": [],
+      "wall_minutes": null
+    },
+    {
       "label": "MLP on ProtT5 + FBA ratios",
       "kind": "MLP",
       "n_cells": 3,

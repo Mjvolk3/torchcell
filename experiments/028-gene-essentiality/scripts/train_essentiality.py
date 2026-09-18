@@ -6386,14 +6386,26 @@ def _masked_loss(
     return total / max(count, 1.0)
 
 
+#: The test records of an active split file, filled by ``main`` when ``--split-file``
+#: is given. Empty otherwise, and then essentiality pins the released FCL held-out
+#: genes. A split whose test block is not the released genes (the genome held-out
+#: split of round 30) scored an EMPTY pinned block before this existed, and the
+#: summary step died on it after the dump was written (jobs 2396 and 2397).
+SPLIT_TEST_RECORDS: set[int] = set()
+
+
 def held_out_mask(dm: Any, dataset: Any, head: str) -> np.ndarray:
     """The rows the reported number is computed on, per head.
 
     Betaxanthin, the amino acids and isobutanol are scored on Merzbacher's 639-gene
-    betaxanthin pin; essentiality is scored on the 223 genes the FCL essentiality split
-    held out, because those are the genes its published table was computed on.
+    betaxanthin pin; essentiality is scored on the test block of the split file when
+    one is active, else on the 223 genes the FCL essentiality split held out, because
+    those are the genes its published table was computed on.
     """
     if head == ESSENTIALITY_HEAD:
+        if SPLIT_TEST_RECORDS:
+            order = [int(i) for i in dm.test_dataset.indices]
+            return np.array([i in SPLIT_TEST_RECORDS for i in order], dtype=bool)
         return fcl_test_mask(dm, dataset)
     return pinned_test_mask(dm, dataset)
 
@@ -7241,14 +7253,18 @@ def main() -> None:
     print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)
     pinned_splits: dict[str, set[int]] | None = None
     if cell.head == ESSENTIALITY_HEAD and cell.split_file is not None:
-        # THE SPLIT FILE names every record's split; its test block is the released
-        # held-out genes' records (the builder asserts it), so the comparison set is the
-        # same one `resolve_fcl_test_indices` pins.
+        # THE SPLIT FILE names every record's split; its test block is the comparison
+        # set. For the fcl and genome splits that block is the released held-out genes'
+        # records, the same set `resolve_fcl_test_indices` pins; for the genome held-out
+        # split it is the 4,674 genes the released file never labeled, so the pinned
+        # mask must follow the file rather than the released list.
         split = load_split_file(cell.split_file)
         pinned_splits = {
             k: {int(i) for i in split[k]} for k in ("train", "val", "test")
         }
         pinned = set(pinned_splits["test"])
+        SPLIT_TEST_RECORDS.clear()
+        SPLIT_TEST_RECORDS.update(pinned)
         report = {"path": split["path"], **split["report"]}
         print(
             f"[split-file] {split['path']}: records train {len(pinned_splits['train'])} "

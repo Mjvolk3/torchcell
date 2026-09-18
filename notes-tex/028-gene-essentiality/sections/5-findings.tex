@@ -66,6 +66,16 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     0.897 alone: the maximum of the eleven and six post hoc averages tried, reported
     as such
     (Section~\ref{sec:family-ensembles}).
+  \item[Off the metabolic genes, only the graph transfers.] On the 4,674 genome-wide
+    genes the released split never labeled (974 essential by SGD, 3,700 nonessential by
+    a fitness record, none with a GEM reaction, so FBA reads exactly 0.5 and label
+    origin coincides with class), models trained on the 629 released genes read: the
+    MLP on the transformer's inputs 0.509, the transformer's reported recipe 0.574,
+    graph convolution on ProtT5 alone 0.749, on the three inputs 0.744, on GO alone
+    0.702. The GO convolution's margin is a property of the metabolic genes; the
+    graph as a message-passing input is what carries off them. The other way, the
+    genome-wide labels as training data leave the GO convolution at 0.913 on the 195
+    and cost the three-input models 0.03 to 0.05 (Section~\ref{sec:round30}).
   \item[Structure is not the signal.] The 1-WL test separates 1,118 of 1,121
     single-deletion graphs on the physical graph and all of them on the union, so
     expressivity does not bound a message-passing model here, and the WL kernel, all-ones

@@ -10,6 +10,7 @@
     \hline
     arm & cells & per cell & mean & sd & pooled [95\% CI] & selected epochs \\
     \hline
+    pathway multi-hot + ProtT5 + FBA affine (round 22 recipe) & 3 & 0.571, 0.571, 0.579 & 0.574 & 0.004 & 0.572 [0.55, 0.59] & -- \\
     MLP on ProtT5 + FBA ratios & 3 & 0.494, 0.476, 0.488 & 0.486 & 0.008 & 0.481 [0.46, 0.50] & 71, 197, 76 \\
     MLP on the three inputs & 3 & 0.511, 0.508, 0.507 & 0.509 & 0.002 & 0.509 [0.49, 0.53] & 55, 58, 55 \\
     graph convolution on ProtT5 alone, 400 epochs & 3 & 0.746, 0.753, 0.749 & 0.749 & 0.003 & 0.749 [0.73, 0.77] & 373, 380, 393 \\

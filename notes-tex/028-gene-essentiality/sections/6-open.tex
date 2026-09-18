@@ -20,10 +20,16 @@ weight, six encodings). What remains is attribution and the module.
     never touched, is what would separate them.
   \item The MLP, the graph convolution and the transformer on the same three inputs are
     one number as fold ensembles (0.886, 0.888, 0.893), and graph convolution on GO
-    alone is 0.917 above them with overlapping intervals. What separates architectures
-    on this endpoint is not measurable on 195 genes; the genome-wide labels on genes
-    the released split never touched are the larger held-out set that could, and the
-    first question to put to it is whether the GO convolution's margin survives.
+    alone is 0.917 above them with overlapping intervals. On the 4,674 genome-wide
+    genes the released split never touched (round 30) the architectures separate:
+    the graph convolution transfers at 0.75 and the GO margin does not survive
+    (0.70), while the MLP and the transformer's recipe read 0.51 and 0.57. Open on
+    that set: whether a model trained on the metabolic genes transfers because it
+    reads essentiality or because it reads what the graph encodes about SGD-annotated
+    against deletion-collection genes (label origin coincides with class there); a
+    read on a genome-wide set whose nonessential labels come from the same source as
+    the essential ones, or a permutation of labels within origin, would separate the
+    two.
   \item The GO multi-hot is the ladder's strongest encoding and the cheap models take
     it (graph convolution 0.887), and the transformer does not (0.833 beside ProtT5,
     a cost of 0.04 beside the pathway block, round 26), and a cell 350 times wider

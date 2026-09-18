@@ -524,12 +524,18 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
     # Round 32: the round-27 cell on seed 2701 twice with the card's kernels pinned
     # (ESS_DETERMINISTIC=1) and twice free; the read is per pair.
     "w48": (
-        ["w48_pathlpoffgateflux*_h12l1p1_e200_s2701.json"],
         [
+            "w43_pathlpoffgateflux_h12l1p1_e200_s*.json",
+            "w48_pathlpoffgateflux*_h12l1p1_e200_s2701.json",
+            "w48_pathlpoffgatefluxdet_h12l1p1_e200_s*.json",
+        ],
+        [
+            "pathlpoffgateflux",
             "pathlpoffgatefluxdet1",
             "pathlpoffgatefluxdet2",
             "pathlpoffgatefluxfree1",
             "pathlpoffgatefluxfree2",
+            "pathlpoffgatefluxdet",
         ],
     ),
     # Round 33: the layer-free form's factorial of encoding and initialization, paired
@@ -759,6 +765,7 @@ ARM_LABELS = {
     "pathlpoffgatefluxdet2": "the same, pinned, second run",
     "pathlpoffgatefluxfree1": "the same, kernels free, first run",
     "pathlpoffgatefluxfree2": "the same, free, second run",
+    "pathlpoffgatefluxdet": "round-27 cell, the card's kernels pinned, one run per seed (seeds 2700, 2702 to 2705)",
     "protgofba": "GO multi-hot (propagated, 2,362) + ProtT5 backbone + FBA ratios",
     "protgobpfba": "GO biological process (1,580) + ProtT5 backbone + FBA ratios",
     "gofba": "GO multi-hot backbone + FBA ratios",

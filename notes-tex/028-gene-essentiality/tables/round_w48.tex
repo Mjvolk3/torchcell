@@ -10,10 +10,12 @@
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
+    pathway multi-hot $+$ ProtT5; gated $+$ a head over the GEM-box solve's flux (cached, nothing learned in the layer) & 0.882 & 0.055 & 0.772 to 0.917 (6) & 0.917 [0.87, 0.96] & 42 to 61 & 0.0176 \\
     round-27 cell, seed 2701, the card's kernels pinned, first run & 0.894 & 0.000 & 0.894 & 0.894 [0.84, 0.94] & 91 & 0.0138 \\
     the same, pinned, second run & 0.894 & 0.000 & 0.894 & 0.894 [0.84, 0.94] & 91 & 0.0138 \\
     the same, kernels free, first run & 0.782 & 0.000 & 0.782 & 0.782 [0.68, 0.87] & 146 & 0.0313 \\
     the same, free, second run & \textbf{0.920} & 0.000 & 0.920 & \textbf{0.920} [0.88, 0.96] & 52 & 0.0129 \\
+    round-27 cell, the card's kernels pinned, one run per seed (seeds 2700, 2702 to 2705) & 0.902 & 0.005 & 0.897, 0.908, 0.901 & 0.911 [0.86, 0.95] & 41, 58, 60 & 0.0162 \\
     \hline
   \end{tabular}
 \end{table}

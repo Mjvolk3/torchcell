@@ -1155,9 +1155,10 @@ runs are.
 
 \input{tables/round_w48}
 
-\tcfigfit[1.0]{figures/w48_readout_2026-09-18-13-39-13.pdf}{\textbf{Round 32, seed 2701
-  with the card's kernels pinned and free.} \textbf{a}, Validation AUROC per epoch for
-  the four runs. \textbf{b}, The median absolute epoch-to-epoch step per cell against
+\tcfigfit[1.0]{figures/w48_readout_2026-09-18-14-33-34.pdf}{\textbf{Round 32, seed 2701
+  with the card's kernels pinned and free, and three more pinned seeds.} \textbf{a},
+  Validation AUROC per epoch for the four runs of seed 2701, the pinned runs of seeds
+  2700, 2702 and 2703, and the six free round-27 cells. \textbf{b}, The median absolute epoch-to-epoch step per cell against
   the validation size. \textbf{c}, Held-out AUROC per cell (points) and the gene
   bootstrap (square with interval), beside FBA on four media, Flux Cone Learning and
   the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
@@ -1175,8 +1176,12 @@ switch, so every operation the cell runs has a deterministic kernel; the one war
 of the run is a median inside the post-training feasibility audit. Pinning cost
 about five percent of wall time (205 minutes per cell against 195 at four per card).
 With the run reproducible, whether a seed fits becomes a property of the seed, and
-the fit rate over seeds is round 32's second read (job 2413, pinned runs of seeds
-2700, 2702 and 2703, in flight at the time of writing).
+the fit rate over seeds is round 32's second read: pinned once each, seeds 2700, 2702
+and 2703 fit at epochs 49, 65 and 65 and read 0.897, 0.908 and 0.901 (job 2413; mean
+0.902 over the three, pooled 0.911 [0.86, 0.95]), so with seed 2701's 0.894 four
+pinned seeds fit four times, at the level of the free runs of the same seeds (0.902,
+0.897, 0.917), at 157 minutes per cell at three per card; seeds 2704 and 2705 run at
+the time of writing (job 2419).
 
 \subsection{Round 31: the layer-free form\secstatus{todo}}
 \label{sec:round31}

@@ -860,3 +860,9 @@ Jobs 2414, 2416 and 2418 (fifteen cells: the first pack lost six to the card's m
 ## 2026.09.18 - Round 38 read: the PDLP store
 
 Job 2417 (31 min; `wave12_readout.py --round w54`): the round-33 cell over the PDLP store (`ess_solve_encodings_YPD_pdlp.npz`, HiGHS 1.15 PDLP without crossover at KKT 1e-4, written by `solve_tolerance_read.py`; 12 of 1,121 programs non-optimal kept as zero flux) reads 0.906, 0.901, 0.910, 0.899, 0.897, 0.908 (mean 0.903, sd 0.005; pooled 0.907 [0.86, 0.95]), every seed after the transition (epochs 41 to 85); the pFBA store 0.912 pooled, the interior point 0.911, the growth vertex 0.870. The cuOpt algorithm's own point is a store. Written into `sec:round36` (table `round_w54`, figure `w54_readout_2026-09-18-13-58-16`), findings and 6-open. Round 39 (pack `w55_pathlogpdlpcv`): the PDLP store on the five folds, one seed.
+
+## 2026.09.18 - What the four solve stores carry; rounds 39 and 40 launched
+
+`store_stats.py` (results/store_stats.json, table `store_stats` in `sec:round36`): per genotype over the 1,121 labeled genes, the dual-simplex vertex carries a median total absolute flux of 39,129 mmol/gDW/h with 339 reactions at the +/-100 clamp on every genotype and on the wild type (913 carrying); pFBA 495 with none at the clamp (505 carrying); the interior point 2,463 and PDLP 1,973 with nine at the clamp (1,231 and 1,136 carrying). The growth is 0.5352 in all four. The vertex store is loops spinning at the bound; that this is why the head reads it worst (0.870 against 0.907 to 0.912) is the hypothesis, labeled as such in the document.
+
+Round 39 (job 2420, pack `w55_pathlogpdlpcv`): the PDLP store on the five folds, one seed. Round 40 (job 2421, pack `w56_pathlogstats`): the eight solve statistics beside the log1p vector, six seeds (round 31 read them only beside standardized columns). Pinned seeds 2700, 2702, 2703 (job 2413) and 2704, 2705 (job 2419) run.

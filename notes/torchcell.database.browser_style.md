@@ -53,8 +53,14 @@ relationship type as caption.
 Loading: run a query that returns a graph, open the styling panel of the result, and
 click "Upload GraSS styles" (the file input accepts `.grass`, `.style`, `.txt`); "Reset
 styles to default" undoes it. The stylesheet lives in that browser's local storage, so
-each person loads it once per browser; `browser.post_connect_cmd` in `neo4j.conf` is the
-server-side alternative and was not wired (it would need the file at an allowed URL and a
-serving-container restart). `--check` fails when the committed file is behind the
+each person loads it once per browser. There is no server-side route in this Browser:
+`browser.post_connect_cmd` is honored (each semicolon-separated entry is dispatched as a
+colon command on connect, source `post-connect-cmd`), but its `:style` command parses only
+`reset` or nothing (`{type: "style", arg: "reset" | null}` in `command-thunks.*.js`); the
+`:style <url>` of the classic Browser, which fetched a file from an allowed host, does not
+exist here and 5.26 serves no classic Browser (`/browser/classic/` is 404). The file is on
+GitHub at
+`https://raw.githubusercontent.com/Mjvolk3/torchcell/main/database/conf/torchcell.grass`
+for anyone to download and upload. `--check` fails when the committed file is behind the
 generator, and `tests/torchcell/database/test_browser_style.py` covers lane assignment,
 rule order, the palette, and the committed file.

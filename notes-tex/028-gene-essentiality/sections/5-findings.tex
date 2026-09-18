@@ -22,6 +22,21 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     species-LM composite. A two-layer MLP on the same three inputs reads 0.870 per cell in
     six seconds and 0.886 as a fold ensemble; graph convolution over the nine gene graphs
     reads 0.888. Three architectures are one number at this resolution.
+  \item[The pathway multi-hot is the indicator.] Split into its blocks, the 197-column
+    encoding's gain is the 173 pathway columns: with ProtT5 and the ratios they read
+    0.880 on the MLP and 0.890 on the transformer, above the full encoding (0.870 and
+    0.871), while the chromosome one-hot (0.809, 0.822) and the seven properties
+    (0.798, 0.824) sit at the level of ProtT5 with the ratios. On the transformer the
+    pathway columns need the sequence embedding beside them (0.766 alone); on the MLP
+    they do not (0.828). The pooled transformer on ProtT5 with the pathway multi-hot and
+    no readout reads 0.860.
+  \item[Keeping the edge type is the one architectural choice that registers.] Of the
+    message-passing forms of MATH-490 and Gene\_Graph on the transformer's three inputs,
+    relational attention over the nine graphs as nine edge types reads 0.889, GraphSAGE
+    0.887, relational convolution 0.860, graph convolution over the untyped union 0.847
+    and the graph isomorphism network 0.705, against the MLP's 0.870. The 1-WL-expressive
+    aggregator is the weakest, and the typed-edge attention is level with the
+    transformer's best single cell.
   \item[Structure is not the signal.] The 1-WL test separates 1,118 of 1,121
     single-deletion graphs on the physical graph and all of them on the union, so
     expressivity does not bound a message-passing model here, and the WL kernel, all-ones
@@ -50,11 +65,29 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     0.73 before training, above FBA's 0.66; the gated module cell reaches the level of the
     solve appended as an input, 0.816 by warm start and 0.824 by the layer that solves,
     three of three seeds above the round-4 gated cell, with the growth column entering
-    through a positive gate. With the ceilings calibrated, the growth column alone reads
-    0.83 to 0.84 on two of nine seeds, the affine's level from the solve with no head and
-    no appended ratio, and 0.5 to 0.7 on the rest; the linear program's infeasible region
-    absorbs the forced cell unless the ceilings leave slack, and its gradient is the dual
-    of the binding bounds, zero when no gene-owned bound binds.
+    through a positive gate. On six seeds the two gated forms read 0.814 (GEM box) and
+    0.804 (elastic program, feasible by construction), twelve seeds of twelve above the
+    gated cell without the solve and 0.01 to 0.02 under the affine.
+  \item[The ceilings cannot carry the ranking, so the forced growth column cannot be
+    trained.] With the program elastic, feasible for every genotype and its gradient
+    arriving on nine genotypes in ten, the forced column still reads 0.70 to 0.74 and
+    its training loss never leaves 1.25, under ten times the learning rate, a deeper
+    head, a wider reach and two ceiling scales. The dual-overlap probe measures why: the
+    same six gene-owned ceilings bind whichever gene is deleted (median Jaccard 1.0), and
+    the deleted gene's own reactions never bind because the deletion has closed them, so
+    the head can move one growth level for every genotype and cannot move one genotype
+    against another.
+  \item[The solve's flux vector, read by a linear head, is the module's number.] The
+    gated elastic cell with a zero-initialized linear head over $\log(1 + |v^*|)$ of the
+    solved flux reads 0.883, 0.853 and 0.868 on the ProtT5 backbone, the first module
+    cell to pass a pre-registered read, 0.047 above the FBA affine on that backbone and
+    with the growth column's gate ending near zero. Over the 274 exchange fluxes alone it
+    reads 0.835. On ProtT5 with the pathway multi-hot the same cell reads 0.897 and 0.903
+    on two seeds, the two highest single cells in the document and above the affine on
+    that input (0.890), and 0.716 on a third seed whose training loss never fell. Which
+    part of the cell makes the vector informative, and what the cell reads under the
+    fold-ensemble protocol, are rounds 24 and 25 (Sections~\ref{sec:round24}
+    and~\ref{sec:round25}).
   \item[Where the gradient goes is not the problem.] On the alternating layer the
     gradient reaches the flux layer on every arm that lets it; the backbone's
     preprocessor, three quarters of the parameters, is where fitting continues after the

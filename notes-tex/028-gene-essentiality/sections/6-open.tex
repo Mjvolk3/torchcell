@@ -11,9 +11,9 @@ transformer side has been moved (width, depth, the preprocessor, the budget, the
 weight, six encodings). What remains is attribution and the module.
 
 \begin{itemize}
-  \item The pathway multi-hot carries the round-9 gain (round 14); which pathways, and
-    whether a pathway-level flux statistic from the solve would substitute for the
-    annotation, is not measured.
+  \item The pathway multi-hot carries the round-9 gain (rounds 14 and 22, and the split
+    on the cheap models); which pathways, and whether a pathway-level flux statistic from
+    the solve would substitute for the annotation, is not measured.
   \item The round-16 cell (the round-11 affine on the round-9 backbone) and the round-9
     cell are one cell to the resolution of 195 genes (rounds 16 and 17); a larger
     held-out set, such as the genome-wide labels scored on genes the released split
@@ -22,21 +22,19 @@ weight, six encodings). What remains is attribution and the module.
     one number as fold ensembles (0.886, 0.888, 0.893). What separates architectures on
     this endpoint is not measurable on 195 genes; the genome-wide labels on genes the
     released split never touched are the larger held-out set that could.
-  \item Round 13: the pFBA warm start on the stoichiometry-only layer. If its growth
-    column reads at the solve's level at initialization and keeps it, the projection
-    route carries the solve and the anchored constraint set was the loss; if not, the
-    alternations are.
-  \item The layer that solves is feasible on the GEM's box and, with the capacity
-    ceilings calibrated, on the anchored one (rounds 15b to 15d). What remains is
-    variance: the forced column reaches 0.83 to 0.84 on two of nine seeds and 0.5 to 0.7
-    on the rest, with the absorbing infeasible state removed by slack rather than by step
-    size. A seed-robust construction is untested: a barrier on the ceilings, the gated
-    form with the ceilings binding (0.80 at scale 100), or the solve on more genes than
-    the 629 the split trains on.
-  \item The solve's flux vector read through a head rather than its growth column, which
-    on the ladder carries 0.11 to 0.13 more AUROC than the growth ratio and would take
-    the biomass objective out of the readout; and the growth LP with an objective other
-    than biomass, since the layer that solves accepts any objective column.
+  \item The forced growth column is closed by the dual-overlap probe
+    (Section~\ref{sec:dual-overlap}): the ceilings that bind are the same for every
+    genotype, so no step size, head or reach trains it (rounds 18 to 20). A construction
+    that changes which bounds bind per genotype, such as ceilings the deleted gene's
+    neighbors own, or an objective other than biomass, since the layer that solves
+    accepts any objective column, is untested.
+  \item The head over the solved flux (rounds 21 and 23) is the module's number, and
+    three things about it are open. Which part of the cell makes the vector informative,
+    the deletion's closure of its reactions, the learned ceilings, or the head's reach
+    over the exchange columns, is round 24. Why one seed in three on the pathway input
+    never passes the fitting transition the other two pass near epoch 80 is not
+    measured; a longer budget on that seed is the direct test. And what the cell reads
+    under the fold-ensemble protocol beside the reported 0.893 is round 25.
   \item The layer that solves has the wrong shape for a training loop: the program runs
     on the CPU inside the forward pass, the GPU waits on it (0 to 13 percent
     utilization sampled during round 19, against a 1.6 hour cell where the alternating

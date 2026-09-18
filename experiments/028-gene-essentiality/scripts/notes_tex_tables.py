@@ -855,6 +855,20 @@ def graph_baselines_go800() -> str | None:
     )
 
 
+def graph_baselines_go_rel() -> str | None:
+    """The typed-edge models and GraphSAGE on GO alone; convolution on GO with pathways."""
+    return graph_baselines_more(
+        "go_rel",
+        "Other message passing on GO",
+        "Relational convolution and relational attention over the nine graphs as nine "
+        "edge types on the propagated GO multi-hot alone, GraphSAGE over the union on "
+        "it, and graph convolution over the union on GO with the pathway multi-hot, all "
+        "at 400 epochs, the protocol of Table~\\ref{tab:graph-baselines} otherwise; "
+        "seeds 2700 to 2702.",
+        "tab:graph-go-rel",
+    )
+
+
 def wl_test() -> str | None:
     """1-WL on the single-deletion graphs, and the WL kernel as a rung."""
     src = osp.join(RESULTS, "wl_knockout_test.json")
@@ -1138,6 +1152,7 @@ def main() -> None:
         graph_baselines_go(),
         graph_baselines_go400(),
         graph_baselines_go800(),
+        graph_baselines_go_rel(),
         fold_ensembles(),
         gene_encodings(),
         hard_genes(),

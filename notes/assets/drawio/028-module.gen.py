@@ -1,10 +1,12 @@
-"""Regenerate the three metabolic-module diagrams of notes-tex/028-gene-essentiality.
+"""Regenerate the four metabolic-module diagrams of notes-tex/028-gene-essentiality.
 
     python notes/assets/drawio/028-module.gen.py notes/assets/drawio
 
 writes 028-module-projection.drawio (the alternating layer, rounds 2 to 13),
-028-module-lp.drawio (the layer that solves, rounds 15 to 15d) and
-028-module-elastic.drawio (the elastic program with the pool by construction, round 18),
+028-module-lp.drawio (the layer that solves, rounds 15 to 15d),
+028-module-elastic.drawio (the elastic program with the pool by construction, round 18)
+and 028-module-gated-flux.drawio (the gated elastic cell with a head over the solved
+flux vector, round 21),
 each 717 units wide (182 mm), fonts on the ladder only (8.3 body, 9.7 titles), every
 formula as MathJax LaTeX (`$$...$$`, math="1" on the model), and the document's readout
 color key (figures/readout_key): white the input to the layer (tokens, context), orange a
@@ -245,14 +247,19 @@ def projection() -> Canvas:
 
 
 # ---------------------------------------------------------------- 2. lp / 3. elastic
-def solve_rows(c: Canvas, elastic: bool) -> None:
+def solve_rows(c: Canvas, elastic: bool, flux_head: bool = False) -> None:
     row_h = 88
     sw_new = 1.8 if elastic else 0.8
     gap = 11 if elastic else 13
-    if elastic:
+    if flux_head:
+        widths = [50, 96, 92, 62, 78, 112, 40, 110]
+    elif elastic:
         widths = [56, 100, 104, 66, 84, 120, 40, 70]
     else:
         widths = [66, 112, 80, 100, 130, 44, 107]
+    if flux_head:
+        # Round 21 changes the readout only; the elastic blocks keep the plain border.
+        sw_new = 0.8
     specs: list[tuple[str, str, tuple[str, str], float]] = [
         ("gene tokens", f"{H_G} from the backbone, perturbed graph", WHITE, 0.8),
         ("abundance head", m(r"E_g=\gamma_g E^0_g\,\cdot") + "<br>" + m(r"\exp(r\tanh(w^{\top}h_g))") + "<br>" + GAMMA_G + " hard (1 present, 0 deleted), no learned gate", ORANGE, 0.8),
@@ -277,10 +284,16 @@ def solve_rows(c: Canvas, elastic: bool) -> None:
             YELLOW,
             0.8,
         ))
-    specs += [
-        ("optimum", f"{VS}, {ZS}", YELLOW, 0.8),
-        ("readout", "forced: " + m(r"\ell=a\,z^*+b") + "<br>gated: " + m(r"\ell=\mathrm{head}(z)") + "<br>" + m(r"+\,g\,(a\,z^*+b)"), RED, 0.8),
-    ]
+    specs.append(("optimum", f"{VS}, {ZS}", YELLOW, 0.8))
+    if flux_head:
+        specs.append((
+            "readout",
+            m(r"\ell=\mathrm{head}(z)+g\,(a\,z^*+b)") + "<br>" + m(r"+\,w^{\top}\log(1+|v^*_{\mathcal{R}}|),\ w_0=0") + "<br>" + m(r"\mathcal{R}") + ": all 4,131 reactions, or the 274 exchanges",
+            RED,
+            1.8,
+        ))
+    else:
+        specs.append(("readout", "forced: " + m(r"\ell=a\,z^*+b") + "<br>gated: " + m(r"\ell=\mathrm{head}(z)") + "<br>" + m(r"+\,g\,(a\,z^*+b)"), RED, 0.8))
     top = chain(c, 0, row_h, specs, widths=widths, gap=gap)
     head_ix = 1
     lp_ix = 5 if elastic else 4
@@ -307,7 +320,18 @@ def solve_rows(c: Canvas, elastic: bool) -> None:
     )
     c.text(back_label, x_head + 10, yb + 4, x_lp - x_head - 20, 24)
     y3 = yb + 40
-    if elastic:
+    if flux_head:
+        exact = (
+            VS + " enters the head detached: the argmax is piecewise constant in the bounds, so the head reads it as a fixed feature of the current solve and no gradient flows through it<br>"
+            + "the growth column keeps its gated affine and " + m(r"w_0=0") + ", so the cell is the round-18 gated cell at initialization<br>"
+            + "the head's weight norm is logged each epoch (ess_flux_head_w_norm); " + m(r"Sv=0") + ", the ceilings and the pool hold exactly at " + VS + " as in round 18"
+        )
+        note = (
+            "round 11 measured the deletion's pFBA flux vector at 0.77 as an encoding against its growth ratio at 0.65, and the dual-overlap probe measured that the ceilings bind on the same six reactions for every genotype; "
+            "this reads what the solve returns instead of what it can move"
+        )
+        note_title = "measured (rounds 11 and 18)"
+    elif elastic:
         exact = (
             m(r"Sv=0") + " and every ceiling hold exactly at " + VS + "; the pool holds exactly on " + E_G + "<br>"
             + "feasible for every genotype by construction: the zero flux with full slack satisfies every row and bound<br>"
@@ -346,6 +370,17 @@ def elastic() -> Canvas:
     return c
 
 
-for name, fn in (("projection", projection), ("lp", lp), ("elastic", elastic)):
+def gated_flux() -> Canvas:
+    c = Canvas()
+    solve_rows(c, elastic=True, flux_head=True)
+    return c
+
+
+for name, fn in (
+    ("projection", projection),
+    ("lp", lp),
+    ("elastic", elastic),
+    ("gated-flux", gated_flux),
+):
     canvas = fn()
     canvas.write(osp.join(OUT_DIR, f"028-module-{name}.drawio"), f"module-{name}")

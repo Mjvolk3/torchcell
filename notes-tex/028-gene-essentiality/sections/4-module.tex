@@ -819,6 +819,42 @@ the deletions, 0.73 at initialization, with a learned sign and threshold; the
 constructions that let the module reach the affine's level are the ones that put a
 learned head beside the column (the gated cells, 0.80 to 0.82) rather than behind it.
 
+\subsection{Round 20: the gated forms on six seeds, and the last forced probes\secstatus{todo}}
+\label{sec:round20}
+
+Round 20 (jobs 2332 to 2335) does two things the dual-overlap probe asks for. It puts
+the two gated forms of the layer that solves, the GEM-box cell of round 15b and the
+elastic cell of round 18, on three more seeds (2703 to 2705) so the reliable form is
+read on six, and it runs the two probes of the forced column the probe leaves open:
+the elastic column at ceiling scale 30, where the median genotype has eight binding
+reactions rather than six, with the flux layer at ten times the learning rate, and the
+scale-100 column with the abundance head's reach raised from $e^{3}$ to $e^{6}$, so a
+head that wants to move a ceiling by a decade can (Table~\ref{tab:w36},
+Figure~\ref{fig:w36}). The gated read is round 18's, extended to six seeds: every seed
+above its paired gated cell without the solve (round 4, 0.771), and a seed mean at or
+above the GEM-box gated cell's 0.824. The forced read is unchanged.
+
+\input{tables/round_w36}
+
+\subsection{Round 21: the gated cell with a head over the solved flux\secstatus{todo}}
+\label{sec:round21}
+
+If the ceilings cannot move one genotype's growth against another's, the thing the
+solve does hold per genotype is the flux vector it returns: round 11 measured the
+deletion's own pFBA vector at 0.77 as an encoding, above its growth ratio at 0.65.
+Round 21 (jobs 2336 and 2337) reads that vector from inside the cell. The
+\texttt{gated\_flux} readout (Figure~\ref{fig:module-gated-flux}) is the round-18
+gated elastic cell plus a zero-initialized linear head over $\log(1 + |v^*_{\mathcal{R}}|)$,
+$v^*$ the optimum the elastic program returns, detached, over all 4,131 reactions or
+over the 274 exchange reactions (the uptake and secretion profile), constraint scale 0,
+three seeds (Table~\ref{tab:w37}, Figure~\ref{fig:w37}). The head's weight norm is
+logged each epoch. The read is paired against the round-18 gated elastic cell by seed,
+the pass being three of three above it and a seed mean at or above the affine's 0.821.
+
+\input{figures/module_gated_flux}
+
+\input{tables/round_w37}
+
 \subsection{Where the gradient goes\secstatus{todo}}
 
 Every cell logs a gradient norm per module each epoch, and read across the module arms

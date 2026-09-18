@@ -1,0 +1,12 @@
+%% notes-tex/028-gene-essentiality/figures/module_gated_flux.tex
+%% Generated figure source: notes/assets/drawio/028-module.gen.py -> 028-module-gated-flux.drawio
+\tcfigfit[1.0]{figures/module_gated_flux.pdf}{\textbf{The gated elastic cell with a head
+  over the solved flux, round 21.} One block changes against Figure~\ref{fig:module-elastic},
+  drawn with a heavier border: the readout adds a zero-initialized linear head over
+  $\log(1 + |v^*_{\mathcal{R}}|)$, the flux vector the solve returns restricted to a
+  reaction set $\mathcal{R}$ (all 4,131 reactions, or the 274 exchange reactions). The
+  vector enters detached, since the argmax is piecewise constant in the bounds, so the
+  head reads the solve's answer as a feature and the backbone keeps receiving the duals
+  through the growth column alone. The growth column keeps its gated affine, so the cell
+  is the round-18 gated cell at initialization. Colors as in Figure~\ref{fig:readout-key}.
+  Drawn in draw.io from \texttt{notes/assets/drawio/028-module.gen.py}.}{fig:module-gated-flux}

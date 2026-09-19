@@ -650,6 +650,18 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 64: the reported cell pinned on the fixed one-hot code, six seeds, beside
+    # its six free seeds on the fixed code (round 61) and the six pinned seeds on the
+    # permuted input (round 45).
+    "w80": (
+        [
+            "w77_pathlogfixed_h12l1p1_e200_s*.json",
+            "w61_pathlogdet_h12l1p1_e200_s*.json",
+            "w61_pathlogdet1_h12l1p1_e200_s2700.json",
+            "w80_pathlogdetfixed_h12l1p1_e200_s*.json",
+        ],
+        ["pathlogfixed", "pathlogdet", "pathlogdet1", "pathlogdetfixed"],
+    ),
     # Round 61: the round-33 cell on the fixed pathway one-hot code, six seeds, beside
     # the six free seeds of round 33 that served a permuted input.
     "w77": (
@@ -1043,6 +1055,7 @@ ARM_LABELS = {
     "pathgopfbaaff": "pathway + ProtT5 on the node; the log(1 + |v|) vector and the GO multi-hot as affine columns",
     "pathgopfbaaff400": "the same cell at 400 epochs",
     "pathlogfixed": "the round-33 cell on the fixed pathway one-hot code (sorted columns, no rebuild)",
+    "pathlogdetfixed": "the round-33 cell on the fixed one-hot code, the card's kernels pinned, one run per seed",
     "pathgopcaaff": "pathway + ProtT5 on the node; GO reduced to 64 principal components (positive and negative parts) as affine columns",
     "pathgopcapfbaaff": "the same with the log(1 + |v|) vector as affine columns too",
     "pathgopca16aff": "GO reduced to 16 principal components (positive and negative parts) as affine columns",

@@ -425,6 +425,13 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w80": (
+        "Round 64, the reported cell pinned on the fixed one-hot code",
+        "The round-33 cell on the fixed code, six free seeds (round 61) and the same "
+        "six seeds with the card's kernels pinned once each, beside the six seeds "
+        "pinned on the permuted input (round 45, seed 2700's first run and seeds 2701 "
+        "to 2705). Batch 32, class weight, 200 epochs.",
+    ),
     "w77": (
         "Round 61, the reference cell on the fixed one-hot code",
         "The round-33 cell (six free seeds, each having served the pathway one-hot in "

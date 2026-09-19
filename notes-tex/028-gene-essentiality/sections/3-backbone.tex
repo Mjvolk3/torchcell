@@ -678,6 +678,34 @@ columns need is fewer of them, or a read that cannot memorize 629 genes through
   epoch, seed mean. Written by
   \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w75}.}{fig:w75}
 
+Fewer columns stop the memorizing and read the solve-alone number (round 60, jobs
+2455 and 2458; Table~\ref{tab:w76}, Figure~\ref{fig:w76}). The GO multi-hot
+projected on its first 64 principal components fitted over the 1,121 labeled genes
+(80 percent of the variance), split into positive and negative parts so that the
+$\log(1 + |v|)$ encoding keeps the sign (128 columns), reads 0.886 on six seeds
+alone (sd 0.022; pooled 0.902 [0.85, 0.95]) and 0.905, 0.911, 0.919, 0.900, 0.900 and
+0.902 with the vector (mean 0.906, sd 0.008; pooled 0.913 [0.86, 0.96]), the
+vector-alone cell's 0.908 and 0.912, the cells crossing training loss 0.6 at epochs
+40 to 66 and selecting at 33 to 74 as the vector-alone cell does; under the fold
+protocol (round 62, job 2459) the same cell reads 0.914 [0.86, 0.96] on one seed,
+the solve-alone 0.919. The one model on this backbone is closed on the split file
+and the folds: GO on the node costs 0.04, GO on the logit costs nothing and adds
+nothing, in full it memorizes and reduced it reads the solve alone, so the
+annotation's 0.04 over the two families' average is not the transformer's to take
+through either path, and the two families stay two models.
+
+\input{tables/round_w76}
+
+\tcfigfit[1.0]{figures/w76_readout_2026-09-18-21-13-23.pdf}{\textbf{Round 60, the GO
+  multi-hot reduced before the affine.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w76}.}{fig:w76}
+
 \subsection{Round 30: the genome-wide labels as a larger held-out set\secstatus{todo}}
 \label{sec:round30}
 

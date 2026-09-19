@@ -1082,3 +1082,7 @@ Job 2467 (`wave12_readout.py --round w76`, six seeds): GO on 16 components alone
 ## 2026.09.18 - The 025 control arm resubmitted after a NCCL watchdog abort
 
 Job 2472 failed at 24 minutes before its first batch: rank 1's NCCL watchdog reported no progress for 480 s while rank 0 was still opening the 13.5 million record build and fitting the normalizer under a node load of 160 (the store workers, the 029 build, three packs), and aborted the rank. The launcher now exports `TORCH_NCCL_ENABLE_MONITORING=0` and `TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=3600` (commit 901d8d257 on the 025 branch); resubmitted as job 2475 (two cards, 125 GB, 24 h). The store build (job 2471) is at 80,000 of 469,474 keys after 25 minutes, about 140 s per 20,000, so it lands near 23:25.
+
+## 2026.09.18 - Round 66 complete: the reported fold ensemble reproduces exactly on the fixed input
+
+Jobs 2473 and 2474 (32 min each; `cv_ensemble_readout.py --prefix w82_pathlogfixedcv --seeds 2700 2701 2702`): the reported cell pinned on the fixed code with three seeds per fold reads 0.911, 0.909, 0.913, 0.894, 0.915 on the folds and 0.920 [0.87, 0.96] as the ensemble, the permuted input's 0.920 exactly. Written into `sec:round45`; label `w82_pathlogfixedcv_s3` in the fold-ensemble table. The store build (job 2471) is at 260,000 of 469,474 keys at 46 min; the 025 control (job 2475) is past the distributed setup at 20 min with no watchdog abort. Cards 0 and 1 wait for the store arm.

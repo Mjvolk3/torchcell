@@ -67,6 +67,14 @@ export TORCH_USE_CUDA_DSA=0
 export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS="ignore"  # Suppress SWIG DeprecationWarnings
 export WANDB__SERVICE_WAIT=600
+# The ranks reach their first collective minutes apart: each opens the 13.5 million
+# record build and fits the normalizer on the training split before training starts,
+# and under a loaded node one rank can lag the other by more than NCCL's 480 s
+# heartbeat, at which point the watchdog aborts the waiting rank (job 2472, 2026-09-18:
+# rank 1 "got stuck for 480 seconds", SIGABRT at 24 minutes, before the first batch).
+# The monitor thread is off and the heartbeat is an hour, so a slow setup waits.
+export TORCH_NCCL_ENABLE_MONITORING=0
+export TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=3600
 
 # No fd-sharing setting is needed here: CellDataModule sets file_system sharing in both
 # the parent and a worker_init_fn (f1bfa95b), which is where it has to happen since the

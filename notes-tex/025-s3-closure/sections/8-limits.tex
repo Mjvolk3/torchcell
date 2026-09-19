@@ -1,4 +1,4 @@
-%% notes-tex/025-s3-closure/sections/7-limits.tex
+%% notes-tex/025-s3-closure/sections/8-limits.tex
 
 \section{Limits\secstatus{todo}}
 
@@ -24,9 +24,12 @@ The raw Kuzmin tables carry the double-mutant query fitness and the triple fitne
 a trigenic row, but the two digenic control-screen terms of Eq.~\ref{eq:tau} sit on
 other rows of the same table and are matched by strain identifier, which this
 document did not do. The trigenic identity is therefore checked in the build only,
-and its $r = 0.230$ has no within-screen counterpart here; the Kuzmin supplementary
-text reports replicate correlations of 0.74 to 0.81 for the adjusted trigenic score
-(\texttt{si/si1.md} line 171), which bounds what a within-screen check could reach.
+and its $r = 0.230$ has no within-screen counterpart here; the closest is the
+Kuzmin-first policy on the 029 build, $r = 0.52$ for the 2018 screen
+(Section~\ref{sec:deletion-query}), which still reads the pair's own digenic screen for
+the double terms. The Kuzmin supplementary text reports replicate correlations of 0.74
+to 0.81 for the adjusted trigenic score (\texttt{si/si1.md} line 171), which bounds
+what a within-screen check could reach.
 
 \notesec{Four colonies is a documented representative, not a per-record count}
 The null standard deviation $\sigma_{ab}/\sqrt{4}$ uses the colony count the loaders
@@ -37,6 +40,6 @@ different $n$ rescales every recomputed p monotonically and changes no ranking i
 Table~\ref{tab:confidence}.
 
 \notesec{Nothing here reads a training run}
-Every number is a property of the pool. The three S3 seeds
+Every number is a property of a pool. The three S3 seeds
 (IGB \texttt{mmli} 2409033, 2409031, 2409032) were running or queued when this was
 written and are read out elsewhere.

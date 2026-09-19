@@ -1,0 +1,29 @@
+%% SOURCE: experiments/029-solid-growth-ko/scripts/closure_recompute.py (results/closure_recompute_summary.json) -- GENERATED, do not edit
+
+\begin{tabular}{llrrrrr}
+\toprule
+build, policy & stored score & $n$ & $r$ & $\rho$ & slope & rmse \\
+\midrule
+\multicolumn{7}{l}{\emph{digenic}} \\
+025, as built & merged record & 728,856 & 0.445 & 0.493 & 0.99 & 0.072 \\
+029, mean of every entry (the 025 join) & every stored entry & 1,526,362 & 0.435 & 0.399 & 0.48 & 0.050 \\
+029, measured entries; 0 only without a measurement & every stored entry & 1,526,362 & 0.453 & 0.406 & 0.47 & 0.047 \\
+029, Kuzmin first & every stored entry & 1,526,362 & 0.227 & 0.194 & 0.46 & 0.095 \\
+029, Costanzo first & every stored entry & 1,526,362 & \textbf{0.508} & 0.481 & 0.48 & 0.042 \\
+\midrule
+\multicolumn{7}{l}{\emph{trigenic}} \\
+025, as built & merged record & 352,505 & 0.230 & 0.224 & 0.63 & 0.171 \\
+029, mean of every entry (the 025 join) & every stored entry & 289,062 & 0.193 & 0.201 & 0.54 & 0.172 \\
+\quad by screen & Kuzmin 2018 & 57,451 & 0.362 & 0.282 & 0.71 & 0.101 \\
+\quad by screen & Kuzmin 2020 & 231,611 & 0.182 & 0.224 & 0.56 & 0.186 \\
+029, measured entries; 0 only without a measurement & every stored entry & 289,062 & 0.207 & 0.224 & 0.50 & 0.152 \\
+\quad by screen & Kuzmin 2018 & 57,451 & 0.441 & 0.299 & 0.78 & 0.087 \\
+\quad by screen & Kuzmin 2020 & 231,611 & 0.220 & 0.278 & 0.58 & 0.164 \\
+029, Kuzmin first & every stored entry & 289,062 & 0.245 & 0.253 & 0.71 & 0.187 \\
+\quad by screen & Kuzmin 2018 & 57,451 & \textbf{0.517} & 0.441 & 0.93 & 0.080 \\
+\quad by screen & Kuzmin 2020 & 231,611 & 0.287 & 0.337 & 0.91 & 0.206 \\
+029, Costanzo first & every stored entry & 289,062 & 0.137 & 0.120 & 0.34 & 0.160 \\
+\quad by screen & Kuzmin 2018 & 57,451 & 0.302 & 0.180 & 0.66 & 0.111 \\
+\quad by screen & Kuzmin 2020 & 231,611 & 0.127 & 0.132 & 0.35 & 0.170 \\
+\bottomrule
+\end{tabular}

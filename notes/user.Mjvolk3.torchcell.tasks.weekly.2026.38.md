@@ -46,7 +46,8 @@ created: 1789365911262
 ## 2026.09.19
 
 - [x] 029 build 001 COMPLETED (slurm 2400, 20 h 20 min, peak RSS 155 GB of 160 GB): 9,297,912 genotypes, 299,146 triple gene sets (025: 376,732), 5,665 singles; index stage 9 h 33 min; stage table in [[experiments.029-solid-growth-ko]]
-- [ ] Pinned 010 val/test triple survival count on 029 (deletion-only drops 21 percent of trigenic rows) before any cell
-- [ ] Archive 029 raw/conversion/aggregation to /bulk as tar.zst, then delete from /db (523 G free)
-- [ ] Rerun the S3 closure recompute on 029 (target r above 0.230 trigenic, 0.445 digenic)
+- [ ] Delete 029 raw/conversion/aggregation from /db once /bulk archive.log says ALL_DONE (523 G free now)
+- [x] S3 closure recompute rerun on 029 under four label policies ([[experiments.029-solid-growth-ko.scripts.closure_recompute]]): Kuzmin first 0.245 trigenic (0.517 on the 2018 screen) / 0.227 digenic; Costanzo first 0.508 digenic / 0.137 trigenic; each screen reproduces only itself. Section 7 + Fig 6 + Tables 5-6 added to `notes-tex/025-s3-closure` (12 pages, check clean); label-policy mermaid updated with the build numbers
+- [x] 029 intermediates archiving to /bulk (slurm 2480); processed LMDB mirroring to IGB scratch (slurm 2481)
+- [x] Pinned 010 triple survival on 029: train 239,663 / val 29,842 / test 29,641 of 301,386 / 37,673 / 37,673 (79 percent)
 - [ ] S3 seed 1 (IGB 2409033) at epoch 24/130, window ep10-23 val GI Pearson 0.474 vs fit_014 0.443/0.438/0.437; ends ~Mon 09-21 midday

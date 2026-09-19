@@ -12,7 +12,7 @@ Measured on `$DATA_ROOT/data/torchcell/experiments/025-solid-growth/001-full-bui
 counts by `lmdb.stat`, sizes by `du`). The served knowledge graph is NOT rebuilt by any of this; a
 build is one Cypher query over it followed by the three stages of
 `paper/nature-biotech/figures/neo4j_cell-conversion-deduplication-aggregation.pdf`. Left: the
-current pipeline, each stage a full LMDB copy. Right: the alternative discussed in
+current pipeline, each stage a full LMDB copy. Right, as built on 2026-09-19 (slurm 2400, [[experiments.029-solid-growth-ko]]): the 029 build, the alternative discussed in
 [[experiments.025-solid-growth.s3-closure]], which keeps the query, the conversion and the
 genotype aggregation and drops only the mean-merge, moving the choice of value to a versioned
 label policy applied at read time, the same way the S-subsets and the pinned splits are already
@@ -33,12 +33,12 @@ graph TD
     IDX["$$\begin{gathered}\text{index artifacts (already)}\\\ \text{S0 / S2 / S3 subsets, pinned R split,}\\\ \text{Q split: lists of record indices}\end{gathered}$$"]
   end
 
-  subgraph Alt["$$\text{Alternative: one query, no mean-merge, policy at read}$$"]
+  subgraph Alt["$$\text{029 build 001: deletions only, no mean-merge, policy at read}$$"]
     direction TB
-    R2["$$\begin{gathered}\texttt{raw/}\\\ \text{same query, or a narrower one}\\\ \text{(30 C, deletions only)}\end{gathered}$$"]
-    C2["$$\begin{gathered}\texttt{conversion/}\\\ \text{essential, lethal} \to \text{fitness } 0\\\ \text{kept as its OWN entry}\end{gathered}$$"]
-    A2["$$\begin{gathered}\texttt{aggregation/}\\\ \text{group by genotype}\\\ \text{every source entry kept:}\\\ \text{screen, temperature, allele, } \sigma, p\end{gathered}$$"]
-    POL["$$\begin{gathered}\text{LabelPolicy (pydantic, hashed)}\\\ \text{precedence: Kuzmin} \succ \text{Costanzo 30 C}\\\ \text{0 only if no measurement}\\\ p \text{ from the chosen entry}\end{gathered}$$"]
+    R2["$$\begin{gathered}\texttt{raw/}\\\ \text{deletion alleles only, both temperatures}\\\ 26{,}796{,}499 \text{ experiments}\\\ 615 \text{ GB}\end{gathered}$$"]
+    C2["$$\begin{gathered}\texttt{conversion/}\\\ \text{essential, lethal} \to \text{fitness } 0\\\ \text{kept as its OWN entry}\\\ 15{,}137 \text{ converted, rest passed through}\\\ 614 \text{ GB}\end{gathered}$$"]
+    A2["$$\begin{gathered}\texttt{aggregation/}\\\ \text{group by genotype}\\\ \text{every source entry kept:}\\\ \text{screen, temperature, marker, } \sigma, p\\\ 9{,}297{,}912 \text{ records}\\\ 547 \text{ GB}\end{gathered}$$"]
+    POL["$$\begin{gathered}\text{LabelPolicy (pydantic, hashed; to write)}\\\ \text{precedence: Kuzmin} \succ \text{Costanzo 30 C} \succ \text{26 C}\\\ \text{0 only if no measurement}\\\ p \text{ from the chosen entry}\end{gathered}$$"]
     LBL["$$\begin{gathered}\text{label artifact per policy}\\\ \text{one value per label per record}\\\ \text{+ subsets and splits as now}\end{gathered}$$"]
   end
 

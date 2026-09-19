@@ -144,3 +144,28 @@ as tar.zst like the 025 ones, then off /db.
 Next, in order: the read-time label policy, the pinned-split survival count, the S3 closure
 recompute rerun on this build (target r above 0.230 trigenic and 0.445 digenic), then the
 training cells.
+
+## 2026.09.19 - Closure recompute on build 001: the policy decides whose identity holds
+
+[[experiments.029-solid-growth-ko.scripts.closure_recompute]] reran the S3 closure recompute on
+the deletion-only build with every source entry kept, under four label policies. Replaying the
+025 join (mean of every entry) gives trigenic r 0.193 and digenic 0.435, within 0.04 of 025, so
+the allele filter alone was not the loss. Kuzmin first gives the best trigenic reproduction
+(0.245 overall, 0.517 with slope 0.93 on the Kuzmin 2018 screen) and the worst digenic (0.227);
+Costanzo first the best digenic (0.508; 0.90 and 0.75 on the Costanzo 26 C and 30 C screens)
+and the worst trigenic (0.137). Every screen reproduces itself and no other, so no single policy
+is consistent for both orders; a model trained on both under one policy holds two standards for
+the same gene. Kuzmin 2020 is capped at 0.41 / 0.29 under every policy by its unit query fitness.
+The remaining gap to 1 on Kuzmin 2018 (0.52) is the released tables' row structure: the digenic
+terms of a trigenic row come from the double-mutant query and its control queries, not from the
+pair's own digenic screen, and the array single fitness is Costanzo's.
+
+Consequences for the label policy: precedence Kuzmin (same year) > Kuzmin (other year) >
+Costanzo 30 C > 26 C > converted 0 is the consistent choice for the trigenic target and is what
+the source did; 1,116 of the 1,140 essential genes have no deletion measurement at all in this
+build, so the converted 0 is a label for a gene with no record rather than a taint on a mean;
+every interaction entry carries its source p (1,848,623 of 1,848,623). Pinned 010 splits transfer
+at 79 percent (val 29,842, test 29,641 of 37,673); a 029 arm is compared with 025 on those
+59,483 triples. Section 7 of `notes-tex/025-s3-closure` carries the figure and tables (12 pages,
+`make check` clean). Copies: intermediates archiving to /bulk (slurm 2480), processed LMDB
+mirroring to IGB scratch (slurm 2481, about 76 MB/s, 2 h).

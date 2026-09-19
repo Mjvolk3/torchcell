@@ -5,12 +5,13 @@
 %% Typeset counterpart of notes/experiments.025-solid-growth.s3-closure.md.
 %%
 %% Build:  make mermaid     -> figures/s3_closure_pipeline.pdf (figure a, from the dendron note)
-%%         make plots       -> figures/s3_closure_{strength,confidence,hazards}.pdf
+%%         make plots       -> figures/s3_closure_{strength,confidence,hazards}.pdf, figures/closure_query_comparison.pdf
 %%         make             -> 025-s3-closure.pdf   (draft: status chips)
 %%         make check       -> formatting / provenance / style gate
 %%
 %% Every number is produced by experiments/025-solid-growth/scripts/s3_closure_recompute.py
-%% and read back from experiments/025-solid-growth/results/s3_closure_recompute_summary.json;
+%% and read back from experiments/025-solid-growth/results/s3_closure_recompute_summary.json
+%% (Section 7: experiments/029-solid-growth-ko/scripts/closure_recompute.py and its summary);
 %% the tables under tables/ are written by the same script and never edited by hand.
 
 \documentclass[10pt,a4paper]{article}
@@ -23,7 +24,7 @@
 
 \title{\vspace{-1.5em}The S3 Closure Pool Against Its Own Definition\\
   {\large Recomputing every interaction score and every p-value from the singles,
-   doubles and triples the 025 build joined}}
+   doubles and triples the 025 build joined, and the same on the deletion-only 029 build}}
 \author{Michael Volk}
 \date{\today}
 
@@ -62,7 +63,14 @@ their null variance comes from control screens that were never released. The
 consequence for training on S3 is stated at the end: the fitness the model is asked
 to learn and the interaction it is asked to learn are not consistent with each other
 in this build, so the identity cannot be the mechanism by which fitness supervision
-helps, and every p-value in a merged record should be treated as unlabeled.
+helps, and every p-value in a merged record should be treated as unlabeled. A second
+build on the same graph, 029, keeps deletion alleles only and drops the merge, so the
+value a record carries becomes a label policy chosen at read time; under four such
+policies the identity reproduces each screen's own scores and no other's, Costanzo's
+digenic scores at $r = 0.90$ and $0.75$ under a Costanzo-first policy and Kuzmin's 2018
+trigenic scores at $r = 0.52$ under a Kuzmin-first one, while the policy that is best for
+one order is worst for the other. Which screen's standard a model learns is a decision
+the query and the policy make, and the cost of each choice is stated per screen.
 \end{abstract}
 
 \vspace{0.5em}
@@ -75,6 +83,7 @@ helps, and every p-value in a merged record should be treated as unlabeled.
 \input{sections/4-confidence}
 \input{sections/5-hazards}
 \input{sections/6-consequences}
-\input{sections/7-limits}
+\input{sections/7-deletion-query}
+\input{sections/8-limits}
 
 \end{document}

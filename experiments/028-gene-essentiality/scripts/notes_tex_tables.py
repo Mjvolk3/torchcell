@@ -1257,6 +1257,7 @@ ENSEMBLE_LABELS = {
     "w55_pathlogpdlpcv_s3": "round 39: the PDLP store, three seeds per fold",
     "w70_pathlogh48cv": "round 54: the layer-free cell at width 48, one seed per fold",
     "w70_pathlogh48cv_s3": "round 54: the width-48 cell, three seeds per fold",
+    "w74_pathgopfbaaffcv": "round 58: GO and the $\\log(1 + |v|)$ vector as affine columns, one seed per fold",
 }
 
 

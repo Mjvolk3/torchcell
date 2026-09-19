@@ -994,3 +994,7 @@ Job 2449 (18 min; `wave12_readout.py --round w72`): batch 64 reads 0.907, 0.892,
 ## 2026.09.18 - Round 55 read: 29 percent uncertified rows cost the cell 0.02
 
 Job 2448 (31 min; `wave12_readout.py --round w69`, with round 53): the layer-free cell over the PDLP 1e-8 store (320 zero rows) reads 0.884, 0.896, 0.875, 0.899, 0.890, 0.878 (mean 0.887, sd 0.010; pooled 0.892 [0.84, 0.94]; every seed fit at epochs 35 to 50) against the 1e-6 store's 0.905 (0.908) and the 1e-4 store's 0.903 (0.907). The uncertified fraction is the store's cost: 12 and 70 zero rows cost nothing, 320 cost 0.02. Whether the cost is the missing rows or the 1e-8 point is the next read: `pdlp_fill_store.py` writes the 1e-8 store with its uncertified rows filled from the 1e-6 and 1e-4 stores (the second pass a card solver would run), round 57 trains over it.
+
+## 2026.09.18 - Width-48 folds at two seeds; round 58 puts the GO + solve affine under the fold protocol
+
+Job 2450 (seed 2701 on the width-48 folds): two seeds per fold, ensemble 0.916 [0.87, 0.96] (fold mean 0.903), the one-seed 0.917; seed 2702 (job 2451) completes it. Round 58 launched on the freed card (job 2453, pack `w74_pathgopfbaaffcv`, 40 GB, five cells): the GO + pFBA affine cell (round 50) on the five folds, one seed, the one-model form under the reported protocol beside the solve-alone 0.920 and the post hoc family 0.953. Label `w74_pathgopfbaaffcv` added to the fold-ensemble table.

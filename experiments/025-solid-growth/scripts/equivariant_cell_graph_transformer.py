@@ -626,6 +626,25 @@ def main(cfg: DictConfig) -> None:
         ),
     ).to(device)
 
+    # The metabolic module's store read (028 rounds 27 to 57): the genotype's solved flux
+    # vector, looked up by its GEM gene subset, through an affine on the prediction.
+    store_cfg = wandb_cfg.get("store_affine") or {}
+    if store_cfg.get("path"):
+        from store_affine import StoreAffineReadout
+
+        model = StoreAffineReadout(
+            model,
+            store_path=str(store_cfg["path"]),
+            node_ids=[str(g) for g in cell_graph["gene"].node_ids],
+            n_outputs=len(phenotype_labels),
+            zero_init=bool(store_cfg.get("zero_init", False)),
+        ).to(device)
+        print(
+            f"[store-affine] {model.table.shape[0]} rows x {model.table.shape[1]} columns "
+            f"from {store_cfg['path']}; GEM genes on the node: "
+            f"{sum(g is not None for g in model.node_gene)}"
+        )
+
     # Log parameter counts
     param_counts = model.num_parameters
     print("Parameter counts:", param_counts)

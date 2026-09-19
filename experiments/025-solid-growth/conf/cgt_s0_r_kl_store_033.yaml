@@ -1,0 +1,31 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_store_033.yaml
+#
+# THE METABOLIC MODULE'S STORE READ on the constant-rate control (cgt_s0_r_kl_ctrl_013):
+# the same model, split, normalizer, rate and budget, plus an affine over the genotype's
+# solved flux vector added to the prediction (experiments/025-solid-growth/scripts/
+# store_affine.py). The 028 essentiality line settled this form (rounds 27 to 57): the
+# growth program solved once per distinct (GEM gene subset, medium) key offline, read as
+# log(1 + |v|) over the 4,131 reactions, no solver in training; it reads the in-loop
+# module's number on essentiality, fits on every seed and trains to one number over any
+# store from a solver that stops inside the optimal face.
+#
+# The store: solid_growth_store_SC_ipm.npz (experiments/028-gene-essentiality/scripts/
+# solid_growth_store.py), one interior-point solve per key of the 025 build on synthetic
+# complete medium, keyed by the sorted GEM genes the genotype deletes; a genotype
+# deleting no GEM gene reads the wild-type row. The table stays on the host; each batch
+# gathers its rows.
+#
+# THE READ: this arm against cgt_s0_r_kl_ctrl_013 at the fixed epoch and the best
+# validation epoch, the same protocol as every arm on that file. The question is the
+# proposal's: on gene interaction over the 010 replication subset, does the module at
+# least not hurt, and does it add. Nothing else differs.
+defaults:
+  - cgt_s0_r_kl_ctrl_013
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, learnable_embedding, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, store_affine, ipm_store_SC, gilahyper]
+
+store_affine:
+  path: ${oc.env:DATA_ROOT}/data/torchcell/reference_flux/solid_growth_store_SC_ipm.npz
+  zero_init: false

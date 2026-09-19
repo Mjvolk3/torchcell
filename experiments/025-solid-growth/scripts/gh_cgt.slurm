@@ -75,7 +75,13 @@ export WANDB__SERVICE_WAIT=600
 # num_workers from the SLURM CPU allocation (reserve 2 for overhead)
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK - 2))
 
-torchrun --nnodes=1 --nproc_per_node=4 \
+# One process per allocated card, so `sbatch --gres=gpu:2` runs the arm on two cards
+# (pass trainer.devices=2 as an override as well; the config's `devices: 4` is read
+# first). The literal 4 that stood here made a two-card submission (job 2470) start
+# four ranks over two visible devices and fail in Lightning's device check.
+NPROC="${SLURM_GPUS_ON_NODE:-4}"
+echo "torchrun nproc_per_node=$NPROC"
+torchrun --nnodes=1 --nproc_per_node="$NPROC" \
   --rdzv-backend=c10d --rdzv-endpoint=127.0.0.1:$MASTER_PORT \
   --rdzv-id=$SLURM_JOB_ID --local-addr=127.0.0.1 \
   "$PROJECT_ROOT/experiments/025-solid-growth/scripts/equivariant_cell_graph_transformer.py" \

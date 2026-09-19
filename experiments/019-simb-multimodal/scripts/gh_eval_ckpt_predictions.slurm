@@ -43,6 +43,22 @@ export WANDB_MODE=disabled
 CK=/scratch/projects/torchcell-scratch/models/checkpoints
 TASK="${SLURM_ARRAY_TASK_ID:?submit with --array}"
 
+# MANIFEST MODE (2026-09-19). With EVAL_MANIFEST set to a TSV written by
+# eval_ckpt_manifest.py (header: config arm seed run_id group best_epoch best_val ckpt),
+# array task k evaluates data row k. The whole v13 and v14 rounds (40 checkpoints pulled
+# after the arrays were cancelled at saturation) run this way:
+#   sbatch --array=0-23 --export=ALL,EVAL_MANIFEST=$PWD/experiments/019-simb-multimodal/results/eval_ckpt_manifest_v13.tsv \
+#       experiments/019-simb-multimodal/scripts/gh_eval_ckpt_predictions.slurm
+#   sbatch --array=0-15 --export=ALL,EVAL_MANIFEST=$PWD/experiments/019-simb-multimodal/results/eval_ckpt_manifest_v14.tsv \
+#       experiments/019-simb-multimodal/scripts/gh_eval_ckpt_predictions.slurm
+# Without EVAL_MANIFEST the six-entry case table below (the first test reads, 2026-09-17)
+# still applies.
+if [ -n "${EVAL_MANIFEST:-}" ]; then
+  ROW=$(tail -n +2 "$EVAL_MANIFEST" | sed -n "$((TASK + 1))p")
+  [ -n "$ROW" ] || { echo "no manifest row for task $TASK" >&2; exit 1; }
+  IFS=$'\t' read -r CFG ARM SEED RUN_ID GROUP BEST_EPOCH BEST_VAL CKPT <<< "$ROW"
+  echo "manifest row: run $RUN_ID best epoch $BEST_EPOCH val $BEST_VAL (the eval must reproduce it)"
+else
 # task: config, arm, seed, checkpoint (W&B run in the comment)
 case "$TASK" in
   0) CFG=cgt_expr_v13_split;    ARM=V_ref_s0;    SEED=0
@@ -59,6 +75,7 @@ case "$TASK" in
      CKPT="$CK/compute-3-3-2401108_e4609a5c2e63232a6035fab136b7875f37697ad44dfd33241d871e14adddd99b/best_metric.ckpt" ;;    # 25ok3tce
   *) echo "unknown task $TASK" >&2; exit 1 ;;
 esac
+fi
 [ -f "$CKPT" ] || { echo "FATAL: missing checkpoint $CKPT" >&2; exit 1; }
 echo "task $TASK: $CFG $ARM seed $SEED"
 echo "checkpoint: $CKPT"

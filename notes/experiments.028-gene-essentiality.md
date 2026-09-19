@@ -986,3 +986,7 @@ Job 2445 (31 min; `wave12_readout.py --round w69`): the layer-free cell over the
 ## 2026.09.18 - Round 54 read: the width-48 fold ensemble is the width-12 number
 
 Job 2447 (28 min; `cv_ensemble_readout.py --prefix w70_pathlogh48cv`): folds 0.881, 0.912, 0.927, 0.880, 0.908 (mean 0.902; epochs 34 to 55, every fold fit), ensemble 0.917 [0.87, 0.96] on one seed against the width-12 cell's 0.919 (one seed) and 0.920 (three). Written into the round-48 paragraph of `sec:round33`. Seed 2701 on the five folds launched on the freed card (job 2450, pack `w70_pathlogh48cv_s2701`, 36 GB).
+
+## 2026.09.18 - Round 56 read: the layer-free cell fits with a quarter of the updates
+
+Job 2449 (18 min; `wave12_readout.py --round w72`): batch 64 reads 0.907, 0.892, 0.907 (mean 0.902; pooled 0.909 [0.86, 0.95]; fits at epochs 45 to 52), batch 128 reads 0.903, 0.913, 0.904 (mean 0.907; pooled 0.908; fits at 60 to 72; training loss 0.13 to 0.27 at epoch 199 against batch 32's 0.08 to 0.13), the batch-32 cell's 0.908 / 0.912; 18 and 15 min a cell at six per card. Six of six fit with a quarter of the optimizer steps. Written into `sec:round33` (table `round_w72`, figure `w72_readout_2026-09-18-19-42-20`). Seed 2702 of the width-48 folds launched on the freed card (job 2451, pack `w70_pathlogh48cv_s2702`).

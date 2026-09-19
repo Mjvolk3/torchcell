@@ -1502,6 +1502,30 @@ ensemble on one seed, the width-12 cell's 0.919 on one seed and 0.920 on three
   epoch, seed mean. Written by
   \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w64}.}{fig:w64}
 
+The update budget is not what the form needs either (round 56, job 2449;
+Table~\ref{tab:w72}, Figure~\ref{fig:w72}). At batch 64, half the updates of batch
+32 at the same learning rate and epoch count, the cell reads 0.907, 0.892 and 0.907
+(mean 0.902; pooled 0.909 [0.86, 0.95]), fitting at epochs 45 to 52; at batch 128, a
+quarter of the updates, 0.903, 0.913 and 0.904 (mean 0.907; pooled 0.908 [0.86,
+0.95]), fitting at epochs 60 to 72, with the training loss still at 0.13 to 0.27
+at epoch 199 where batch 32 reaches 0.08 to 0.13. Six cells of six fit and read
+the batch-32 number with a quarter of the optimizer steps, which is the property a
+store-backed model over millions of records needs: the store's read is one gather
+per sample, and the cell's fit does not depend on the step count within a factor
+of four.
+
+\input{tables/round_w72}
+
+\tcfigfit[1.0]{figures/w72_readout_2026-09-18-19-42-20.pdf}{\textbf{Round 56, the
+  batch axis of the layer-free cell.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w72}.}{fig:w72}
+
 \subsection{Round 35: the solve does not substitute for the annotation\secstatus{todo}}
 \label{sec:round35}
 

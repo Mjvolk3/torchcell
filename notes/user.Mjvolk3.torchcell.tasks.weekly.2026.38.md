@@ -42,3 +42,11 @@ created: 1789365911262
 - [ ] 025 build intermediates archived to /bulk (tar.zst, in progress); delete from /db once verified
 - [ ] 029 essentiality-overlap arm: train S3 (pilot S2) minus every record containing a gene of the 028 `ess_fcl_val0.2_s0` val/test set (353 genes), trigenic splits unchanged, essentiality AUROC on the 195 test genes from predicted single-deletion fitness, 3 seeds x {table, composite}; plan in [[experiments.029-solid-growth-ko]]
 - [ ] Port the additive null to 029 (policy label table, log-additive fitness model, interaction ridge, recompute null)
+
+## 2026.09.19
+
+- [x] 029 build 001 COMPLETED (slurm 2400, 20 h 20 min, peak RSS 155 GB of 160 GB): 9,297,912 genotypes, 299,146 triple gene sets (025: 376,732), 5,665 singles; index stage 9 h 33 min; stage table in [[experiments.029-solid-growth-ko]]
+- [ ] Pinned 010 val/test triple survival count on 029 (deletion-only drops 21 percent of trigenic rows) before any cell
+- [ ] Archive 029 raw/conversion/aggregation to /bulk as tar.zst, then delete from /db (523 G free)
+- [ ] Rerun the S3 closure recompute on 029 (target r above 0.230 trigenic, 0.445 digenic)
+- [ ] S3 seed 1 (IGB 2409033) at epoch 24/130, window ep10-23 val GI Pearson 0.474 vs fit_014 0.443/0.438/0.437; ends ~Mon 09-21 midday

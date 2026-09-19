@@ -99,3 +99,48 @@ weight, so the linear essentiality baseline is a logistic model on gene features
 what 028 already reports. The physical null (tau recomputed from the policy's fitness values,
 the S3 closure recompute rerun on 029) sits beside both, and beating 025's r 0.230 there is
 the first thing 029 has to show.
+
+## 2026.09.19 - Build 001 complete (slurm 2400)
+
+Job 2400 finished at 05:10 CDT after 20 h 20 min, state COMPLETED, peak RSS 155 GB against
+the 160 GB request (`sacct -j 2400`), so the next build of this size asks for 200 GB. Stage
+wall times from the log and the stage directory mtimes, 025 beside them:
+
+| stage | 029 (deletions only) | 025 (all alleles) |
+|---|---|---|
+| raw fetch | 5 h 58 min, 26,796,499 records | 17 h 55 min, 43.8M |
+| conversion | 44 min, 15,137 converted, rest passthrough | 13 h 36 min |
+| deduplication | none | 10 h 52 min |
+| aggregation | 3 h 47 min, 9,297,912 genotypes | 3 h 43 min |
+| processed copy | 18 min | 16 min |
+| label table and indices | 9 h 33 min | 2 h 50 min |
+
+The index stage is the one that grew: with no merge a genotype carries every source entry, so
+the label table reads more entries per record. Counts written by the build:
+
+| index | value |
+|---|---|
+| records | 9,297,912 |
+| with a fitness label | 9,297,912 |
+| with an interaction label | 9,284,062 |
+| perturbation count 1 / 2 / 3 | 5,665 / 8,993,101 / 299,146 |
+| Costanzo 2016 smf / dmf | 4,528 / 8,946,423 |
+| Kuzmin 2018 smf / dmf / tmf | 1,170 / 280,827 / 57,883 |
+| Kuzmin 2020 smf / dmf / tmf | 235 / 501,066 / 241,671 |
+| SynthLethDB pairs | 13,990 |
+| SGD essentiality | 1,140 |
+
+Triples: 299,146 gene sets from 299,554 Kuzmin trigenic rows, against 376,732 in 025; the
+difference is the 21 percent of trigenic rows with a temperature-sensitive array allele or a
+non-deletion query, dropped by the deletion predicate. The 010 pinned val and test triples
+therefore need a survival count before any training cell: a pinned triple whose only
+measurement used a TS allele is absent from 029 and the split transfer by gene-set identity
+must report it rather than silently shrink. Singles: 5,665 against 5,694.
+
+Stage directories on /db: raw 615 G, conversion 614 G, aggregation 547 G, processed 547 G;
+/db at 93 percent with 523 G free. The three intermediates are regenerable and go to /bulk
+as tar.zst like the 025 ones, then off /db.
+
+Next, in order: the read-time label policy, the pinned-split survival count, the S3 closure
+recompute rerun on this build (target r above 0.230 trigenic and 0.445 digenic), then the
+training cells.

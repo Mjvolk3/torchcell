@@ -1967,6 +1967,39 @@ upper bound so far. The module helps, then, exactly when its flux is on the poly
 the solve optimizes over, and the constraint set that was meant to make it more than the
 solve is what kept it off until it was calibrated.
 
+\subsection{The capacity box under the two $k_{cat}$ tiers\secstatus{todo}}
+\label{sec:kcat-tier}
+
+The module's own parameter sources were fixed for every round: the turnover tier and the
+thermodynamic route were set once and never moved. Rounds 15 and 15c ran the predicted
+tier, 97 assayed catalytic units, 782 from homologs and 2,831 from the sequence
+predictors, 18 on the organism default. What the measured tier does instead is stop
+before the predictors: the same 97 assays, the same 782 homologs, and the remaining
+2,849 units on the default. Since the capacity ceiling of a reaction is its units'
+turnover times their abundance, the tier sets the ceiling vector, and round 15 found
+the anchored program infeasible under whichever ceilings it had. Running the round-15
+calibration on both tiers (Table~\ref{tab:kcat-tier-capacity}) measures which of the
+two boxes that was.
+
+\input{tables/kcat_tier_capacity}
+
+The measured tier is the looser box, and by more than the count of assays would
+suggest. Its median turnover is the organism default, 34,560 per hour against the
+predictors' median of 15,356, so the median nominal ceiling is 34.6 against 16.5
+mmol/gDW/h, and the program admits growth for 56 percent of the batch at a capacity
+scale of 3 where the predicted tier admits none. The two tiers separate further as the
+scale rises: at 1,000, the upper scale round 15c ran, the measured tier's median
+growth is 0.532 against the predicted tier's 0.203, where 0.535 is what both tiers
+reach at 10,000 and the ceilings no longer bind. So on the measured tier the
+capacity constraint is within 0.003 mmol/gDW/h of absent at the scale the module was
+run at, and the tier and the scale are one knob rather than two: a tier with fewer
+predictions is a looser box, which the calibration then scales less. What the
+calibration does not say is how a trained cell reads under the measured tier, since
+round 15c's result is a growth column that ranked the held-out genes at 0.84 on one
+seed of three with the ceilings binding at 3 to 8 percent of reactions, and a box that
+does not bind has no ceilings to bind. That comparison is a training round and has not
+been run.
+
 \subsection{The store at the database's scale\secstatus{todo}}
 \label{sec:store-scale}
 

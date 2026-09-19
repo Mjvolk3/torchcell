@@ -1617,6 +1617,85 @@ def store_stats() -> str | None:
     return write("store_stats", body, "results/store_stats.json")
 
 
+def kcat_tier_capacity() -> str | None:
+    """The capacity box under the two kcat tiers, at initialization."""
+    srcs = {
+        t: osp.join(RESULTS, f"capacity_calibration_{t}.json")
+        for t in ("measured", "predicted")
+    }
+    if not all(osp.isfile(p) for p in srcs.values()):
+        return None
+    data = {}
+    for tier, path in srcs.items():
+        with open(path) as fh:
+            data[tier] = json.load(fh)
+    scales = [r["capacity_scale"] for r in data["measured"]["rows"]]
+    par = {t: data[t]["parameters"] for t in data}
+    counts = {
+        t: par[t]["kcat_tier_counts"] for t in par
+    }
+    head = " & ".join(f"{s:,.0f}" for s in scales)
+    rows = []
+    for tier in ("measured", "predicted"):
+        c = counts[tier]
+        rows.append(
+            f"    {tier}, units measured / predicted / default & "
+            f"\\multicolumn{{{len(scales)}}}{{l}}{{{c['measured']:,} / "
+            f"{c['predicted']:,} / {c['default']:,} of {par[tier]['n_units']:,}}} \\\\"
+        )
+        q = par[tier]["kcat_per_h_quantiles"]
+        rows.append(
+            f"    {tier}, $k_{{cat}}$ per hour (median, 5th to 95th) & "
+            f"\\multicolumn{{{len(scales)}}}{{l}}{{{q['0.5']:,.0f} "
+            f"({q['0.05']:,.0f} to {q['0.95']:,.0f})}} \\\\"
+        )
+        q = par[tier]["nominal_ceiling_quantiles"]
+        rows.append(
+            f"    {tier}, nominal ceiling (median, 5th to 95th) & "
+            f"\\multicolumn{{{len(scales)}}}{{l}}{{{q['0.5']:,.1f} "
+            f"({q['0.05']:,.1f} to {q['0.95']:,.1f})}} \\\\"
+        )
+    rows.append("    \\hline")
+    for tier in ("measured", "predicted"):
+        by_scale = {r["capacity_scale"]: r for r in data[tier]["rows"]}
+        rows.append(
+            f"    {tier}, genotypes feasible & "
+            + " & ".join(f"{by_scale[s]['feasible_frac']:.2f}" for s in scales)
+            + " \\\\"
+        )
+        rows.append(
+            f"    {tier}, median growth & "
+            + " & ".join(f"{by_scale[s]['growth_median']:.3f}" for s in scales)
+            + " \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The capacity box under the two $k_{cat}$ tiers]{The anchored "
+        "layer's growth program at initialization under each $k_{cat}$ tier, over one "
+        "batch of 32 held-out genotypes and a geometric grid of capacity scales: the "
+        "share of genotypes whose program is feasible and the median growth, "
+        "mmol/gDW/h. The upper block is the parameter table each tier resolves, with "
+        "the nominal ceiling the box carries at scale 1 over the 2,709 reactions that "
+        "have a gene-protein-reaction rule; the coarse counts place the homolog tier "
+        "with the predictions, so the measured tier's 782 are homolog values and its "
+        "97 are assays. The measured tier leaves 2,849 of 3,728 catalytic units on the "
+        "organism default, which is larger than most predicted turnovers, so its box "
+        "is the looser of the two. Written by "
+        "\\texttt{capacity\\_calibration.py --kcat-tier \\{measured,predicted\\}} from "
+        "the round-15 cell.}\n"
+        "  \\label{tab:kcat-tier-capacity}\n"
+        f"  \\begin{{tabular}}{{@{{}}p{{54mm}}{'r' * len(scales)}@{{}}}}\n    \\hline\n"
+        f"    capacity scale & {head} \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "kcat_tier_capacity",
+        body,
+        "results/capacity_calibration_measured.json + results/capacity_calibration_predicted.json",
+    )
+
+
 def store_scale() -> str | None:
     """The store keyed over the whole solid-growth build: its count and its build."""
     keys_src = osp.join(RESULTS, "store_key_count.json")
@@ -1863,6 +1942,7 @@ def main() -> None:
         solve_tolerance(),
         store_stats(),
         store_scale(),
+        kcat_tier_capacity(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

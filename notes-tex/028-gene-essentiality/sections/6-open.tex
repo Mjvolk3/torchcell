@@ -154,8 +154,14 @@ weight, six encodings). What remains is attribution and the module.
     are filled from the looser solves (rounds 55 and 57), so the store's cost is its
     uncertified fraction and a second pass recovers it; what is open is why the dual
     simplex's vertex is the worst store of the four.
-  \item The module's own hyperparameters have not been moved on this endpoint: the
-    $k_{cat}$ tier (measured against predicted) and the thermodynamic source. Given
-    round 15, the $k_{cat}$ tier is the one that sets whether the capacity box holds a
-    growing flux at all.
+  \item Of the module's own parameter sources, the $k_{cat}$ tier is measured at
+    initialization and the thermodynamic source is not moved at all. The tier sets how
+    tight the capacity box is before any scaling: the measured tier leaves 2,849 of
+    3,728 catalytic units on the organism default, whose turnover is above the
+    predictors' median, so its median ceiling is twice the predicted tier's and its
+    program admits growth at a capacity scale of 3 where the predicted tier admits
+    none; at the scale round 15c ran, the measured tier's ceilings are within 0.003
+    mmol/gDW/h of not binding (Section~\ref{sec:kcat-tier}). What a trained cell reads
+    on the measured tier is not measured, and it is the comparison that would say
+    whether round 15c's 0.84 growth column needs ceilings that bind.
 \end{itemize}

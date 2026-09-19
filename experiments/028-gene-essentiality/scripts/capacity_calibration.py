@@ -77,6 +77,16 @@ def main() -> None:
     parser.add_argument("--result", default="w26_lpbio_h12l1p1_e200_s2700.json")
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument(
+        "--kcat-tier",
+        default=None,
+        choices=("measured", "predicted"),
+        help=(
+            "Override the result file's kcat tier, so the same calibration runs on the "
+            "tier that was never moved on this endpoint. The output file is suffixed "
+            "with the tier."
+        ),
+    )
+    parser.add_argument(
         "--lp-slack-penalty",
         type=float,
         default=0.0,
@@ -89,6 +99,8 @@ def main() -> None:
     with open(osp.join(RESULTS_DIR, args.result)) as fh:
         result = json.load(fh)
     cell = BxCell(**result["cell"])
+    if args.kcat_tier is not None:
+        cell = cell.model_copy(update={"kcat_tier": args.kcat_tier})
     assert cell.split_file is not None
     cfg = load_config()
     NODE_EMBEDDING_NAMES[:] = list(cell.node_embeddings)
@@ -124,6 +136,30 @@ def main() -> None:
         f"slack penalty {args.lp_slack_penalty}",
         flush=True,
     )
+    # What the tier changes is the ceiling vector itself, so it is measured here rather
+    # than inferred from the feasibility grid: the turnover per catalytic unit, and the
+    # nominal ceiling the box carries at scale 1 over the reactions that have a GPR.
+    kcat = layer.kcat_per_h.detach().cpu().numpy()
+    nominal = np.zeros(layer.n_reactions)
+    np.add.at(nominal, layer.unit_reaction.cpu().numpy(), kcat * 1.0e-3)
+    gpr_mask = layer.has_gpr.cpu().numpy().astype(bool)
+    quantiles = (0.05, 0.25, 0.5, 0.75, 0.95)
+    parameters = {
+        "kcat_tier": cell.kcat_tier,
+        "kcat_tier_counts": dict(layer.kcat_tier_counts),
+        "n_units": int(layer.n_units),
+        "n_gpr_reactions": int(gpr_mask.sum()),
+        "kcat_per_h_quantiles": {
+            str(q): float(v) for q, v in zip(quantiles, np.quantile(kcat, quantiles), strict=True)
+        },
+        "nominal_ceiling_quantiles": {
+            str(q): float(v)
+            for q, v in zip(
+                quantiles, np.quantile(nominal[gpr_mask], quantiles), strict=True
+            )
+        },
+    }
+    print(json.dumps(parameters), flush=True)
     for scale in SCALES:
         layer.config.capacity_scale = scale
         with torch.no_grad():
@@ -159,6 +195,7 @@ def main() -> None:
         "result": args.result,
         "lp_slack_penalty": args.lp_slack_penalty,
         "n_forced_bounds": forced,
+        "parameters": parameters,
         "reference_growth": REFERENCE_GROWTH,
         "rule": (
             "the smallest scale with at least 90 percent of the batch feasible (the "
@@ -169,6 +206,8 @@ def main() -> None:
         "rows": [r.model_dump() for r in rows],
     }
     suffix = "_elastic" if args.lp_slack_penalty > 0 else ""
+    if args.kcat_tier is not None:
+        suffix += f"_{args.kcat_tier}"
     path = osp.join(RESULTS_DIR, f"capacity_calibration{suffix}.json")
     with open(path, "w") as fh:
         json.dump(out, fh, indent=2)

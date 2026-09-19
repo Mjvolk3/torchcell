@@ -1,0 +1,143 @@
+{
+  "result": "w26_lpbio_h12l1p1_e200_s2700.json",
+  "lp_slack_penalty": 0.0,
+  "n_forced_bounds": 1,
+  "parameters": {
+    "kcat_tier": "predicted",
+    "kcat_tier_counts": {
+      "measured": 97,
+      "predicted": 3613,
+      "default": 18,
+      "unknown": 0
+    },
+    "n_units": 3728,
+    "n_gpr_reactions": 2709,
+    "kcat_per_h_quantiles": {
+      "0.05": 1895.7093505859375,
+      "0.25": 6330.25390625,
+      "0.5": 15356.04833984375,
+      "0.75": 30981.5546875,
+      "0.95": 435600.0
+    },
+    "nominal_ceiling_quantiles": {
+      "0.05": 1.964746356010437,
+      "0.25": 6.330254077911377,
+      "0.5": 16.523571014404297,
+      "0.75": 40.87263870239258,
+      "0.95": 422.0640258789045
+    }
+  },
+  "reference_growth": 0.185,
+  "rule": "the smallest scale with at least 90 percent of the batch feasible (the lethal deletions are infeasible by right) and a median growth of at least half the stoichiometry-only box's",
+  "chosen_scale": 100.0,
+  "rows": [
+    {
+      "capacity_scale": 1.0,
+      "n_genotypes": 32,
+      "feasible_frac": 0.0,
+      "growth_median": 0.0,
+      "growth_min": 0.0,
+      "growth_max": 0.0,
+      "value_median": 0.0,
+      "slack_row_frac": 0.0,
+      "slack_mean": 0.0,
+      "gene_dual_row_frac": 0.0
+    },
+    {
+      "capacity_scale": 3.0,
+      "n_genotypes": 32,
+      "feasible_frac": 0.0,
+      "growth_median": 0.0,
+      "growth_min": 0.0,
+      "growth_max": 0.0,
+      "value_median": 0.0,
+      "slack_row_frac": 0.0,
+      "slack_mean": 0.0,
+      "gene_dual_row_frac": 0.0
+    },
+    {
+      "capacity_scale": 10.0,
+      "n_genotypes": 32,
+      "feasible_frac": 1.0,
+      "growth_median": 0.009998326830606575,
+      "growth_min": -0.0,
+      "growth_max": 0.010968365576551568,
+      "value_median": 0.009998326830606575,
+      "slack_row_frac": 0.0,
+      "slack_mean": 0.0,
+      "gene_dual_row_frac": 0.96875
+    },
+    {
+      "capacity_scale": 30.0,
+      "n_genotypes": 32,
+      "feasible_frac": 1.0,
+      "growth_median": 0.04165616866430029,
+      "growth_min": -0.0,
+      "growth_max": 0.04392794243734485,
+      "value_median": 0.04165616866430029,
+      "slack_row_frac": 0.0,
+      "slack_mean": 0.0,
+      "gene_dual_row_frac": 0.96875
+    },
+    {
+      "capacity_scale": 100.0,
+      "n_genotypes": 32,
+      "feasible_frac": 1.0,
+      "growth_median": 0.1026174727318838,
+      "growth_min": -0.0,
+      "growth_max": 0.10322947449737442,
+      "value_median": 0.1026174727318838,
+      "slack_row_frac": 0.0,
+      "slack_mean": 0.0,
+      "gene_dual_row_frac": 0.96875
+    },
+    {
+      "capacity_scale": 300.0,
+      "n_genotypes": 32,
+      "feasible_frac": 1.0,
+      "growth_median": 0.1258300156009302,
+      "growth_min": -0.0,
+      "growth_max": 0.12756473623745682,
+      "value_median": 0.1258300156009302,
+      "slack_row_frac": 0.0,
+      "slack_mean": 0.0,
+      "gene_dual_row_frac": 0.96875
+    },
+    {
+      "capacity_scale": 1000.0,
+      "n_genotypes": 32,
+      "feasible_frac": 1.0,
+      "growth_median": 0.203364724160206,
+      "growth_min": -0.0,
+      "growth_max": 0.20884886628008537,
+      "value_median": 0.203364724160206,
+      "slack_row_frac": 0.0,
+      "slack_mean": 0.0,
+      "gene_dual_row_frac": 0.96875
+    },
+    {
+      "capacity_scale": 3000.0,
+      "n_genotypes": 32,
+      "feasible_frac": 1.0,
+      "growth_median": 0.3859190995619124,
+      "growth_min": -0.0,
+      "growth_max": 0.3960605262163115,
+      "value_median": 0.3859190995619124,
+      "slack_row_frac": 0.0,
+      "slack_mean": 0.0,
+      "gene_dual_row_frac": 0.96875
+    },
+    {
+      "capacity_scale": 10000.0,
+      "n_genotypes": 32,
+      "feasible_frac": 1.0,
+      "growth_median": 0.5352018792595272,
+      "growth_min": -0.0,
+      "growth_max": 0.5352018792600762,
+      "value_median": 0.5352018792595272,
+      "slack_row_frac": 0.0,
+      "slack_mean": 0.0,
+      "gene_dual_row_frac": 0.0
+    }
+  ]
+}

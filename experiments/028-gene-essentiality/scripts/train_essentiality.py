@@ -698,10 +698,14 @@ class BxCell(BaseModel):
     kcat_tier: str = Field(
         default="measured",
         description=(
-            "'measured' resolves kcat from the Open Enzyme Database and defaults the rest "
-            "(148 of 3,728 catalytic units measured, 3,580 default). 'predicted' inserts the "
-            "sequence-predictor tier between them (148 measured, 3,410 predicted, 170 "
-            "default) using the predictors the within-class study admits for yeast."
+            "'measured' resolves kcat from the Open Enzyme Database and from homologs and "
+            "defaults the rest (of 3,728 catalytic units: 97 assayed, 782 homolog, 2,849 "
+            "default). 'predicted' inserts the sequence-predictor tier between them (97 "
+            "assayed, 782 homolog, 2,831 predicted, 18 default) using the predictors the "
+            "within-class study admits for yeast. The counts are what the built layer "
+            "reports (capacity_calibration.py --kcat-tier); the tier sets the capacity "
+            "ceiling, and the measured tier's is the looser box, since the organism "
+            "default turnover is above the predictors' median."
         ),
     )
     thermo_source: str = Field(

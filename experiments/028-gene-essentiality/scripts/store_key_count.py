@@ -83,7 +83,7 @@ def _scan(args: tuple[int, int, frozenset[str]]) -> dict[str, Any]:
     media: Counter[bytes] = Counter()
     empty = 0
     subsets: set[frozenset[str]] = set()
-    keys: set[tuple[frozenset[str], bytes]] = set()
+    keys: Counter[tuple[frozenset[str], bytes]] = Counter()
     with env.begin(buffers=True) as txn:
         cur = txn.cursor()
         for i in range(start, stop):
@@ -102,7 +102,7 @@ def _scan(args: tuple[int, int, frozenset[str]]) -> dict[str, Any]:
             subsets.add(gem)
             for m in ms:
                 media[m] += 1
-                keys.add((gem, m))
+                keys[(gem, m)] += 1
     env.close()
     return {
         "n": n,
@@ -137,15 +137,29 @@ def main() -> None:
     media: Counter[bytes] = Counter()
     genotypes: set[int] = set()
     subsets: set[frozenset[str]] = set()
-    keys: set[tuple[frozenset[str], bytes]] = set()
+    keys: Counter[tuple[frozenset[str], bytes]] = Counter()
     empty = 0
     for p in parts:
         by_count.update(p["by_count"])
         media.update(p["media"])
         genotypes |= p["genotypes"]
         subsets |= p["subsets"]
-        keys |= p["keys"]
+        keys.update(p["keys"])
         empty += p["empty"]
+    # The keys themselves, with the number of records each serves, so the store can be
+    # built in order of records served and a partial store covers the most records.
+    import gzip
+
+    keys_path = osp.join(RESULTS_DIR, "store_keys.json.gz")
+    with gzip.open(keys_path, "wt") as fh:
+        json.dump(
+            [
+                {"gem_genes": sorted(g), "medium": m.decode(), "n_records": c}
+                for (g, m), c in keys.most_common()
+            ],
+            fh,
+        )
+    print(f"{len(keys)} keys written to {keys_path}")
     by_size: Counter[int] = Counter(len(s) for s in subsets)
     rows = len(keys)
     out = KeyCount(

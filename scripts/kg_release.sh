@@ -61,9 +61,9 @@ served_release() {
         "MATCH (r:KgRelease) RETURN r.release;" | tail -1 | tr -d '"'
 }
 
-release_json() {  # <release> -> the node's properties as JSON, from the store
-    "$PY" -m torchcell.knowledge_graphs.releases status --json \
-        | "$PY" -c "import json,sys; dbs=json.load(sys.stdin); [print(json.dumps(d['release'], indent=1)) for d in dbs if d['name']=='$NEO4J_DATABASE']"
+release_json() {  # the served database's KgRelease node as JSON (status --json is {host: [databases]})
+    PYTHONWARNINGS=ignore "$PY" -m torchcell.knowledge_graphs.releases status --json 2>/dev/null \
+        | "$PY" -c "import json,sys; hosts=json.load(sys.stdin); dbs=[d for v in hosts.values() for d in v]; [print(json.dumps(d['release'], indent=1)) for d in dbs if d['name']=='$NEO4J_DATABASE' and d['release']]"
 }
 
 cmd_backup() {
@@ -105,7 +105,9 @@ cmd_ship() {
     [[ -d "$ARCHIVE_ROOT/$release" ]] || { echo "no archived release at $ARCHIVE_ROOT/$release"; exit 1; }
     echo "shipping $release -> $TAIGA_HOST:$TAIGA_DEST/$release"
     ssh "$TAIGA_HOST" "mkdir -p $TAIGA_DEST/$release"
-    rsync -a --partial --info=progress2 "$ARCHIVE_ROOT/$release/" "$TAIGA_HOST:$TAIGA_DEST/$release/"
+    # -rlpt, not -a: Taiga's setgid group directories refuse chgrp, and -a's owner/group
+    # preservation would turn that refusal into rsync exit 23 after a complete copy
+    rsync -rlpt --partial --info=progress2 "$ARCHIVE_ROOT/$release/" "$TAIGA_HOST:$TAIGA_DEST/$release/"
     ssh "$TAIGA_HOST" "cd $TAIGA_DEST/$release && sha256sum -c SHA256SUMS"
     echo "shipped and verified $release"
 }

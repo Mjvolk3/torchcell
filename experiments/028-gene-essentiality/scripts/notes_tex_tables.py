@@ -1246,6 +1246,7 @@ ENSEMBLE_LABELS = {
     "w53_pathlogipmcv_s3": "round 37: the interior-point store, three seeds per fold",
     "w55_pathlogpdlpcv": "round 39: the same cell over the PDLP store (HiGHS PDLP, no crossover, KKT $10^{-4}$)",
     "w55_pathlogpdlpcv_s3": "round 39: the PDLP store, three seeds per fold",
+    "w70_pathlogh48cv": "round 54: the layer-free cell at width 48, one seed per fold",
 }
 
 

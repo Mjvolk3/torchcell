@@ -1050,3 +1050,7 @@ Jobs 2455 and 2458 (`wave12_readout.py --round w76`, six seeds): GO PCA-64 alone
 ## 2026.09.18 - Round 62 at two seeds; round 65 puts the layer-free cell on the genome-wide split
 
 Job 2460 (seed 2701 of the PCA-GO + pFBA folds): two seeds per fold, ensemble 0.916 [0.86, 0.96] (fold mean 0.889), the solve-alone 0.920; seed 2702 (job 2461) completes it. Round 65 launched on the freed card (job 2464, pack `w81_genomepathlog`, 36 GB, three cells): the layer-free cell under the round-30 protocol (trained on the labeled genes, read on the 4,674 genome-wide genes, where the solve vector is the wild-type one on every held-out gene), beside the affine cell's 0.57 and the scalable form's 0.54; the read goes through `genome_heldout_readout.py`, which needs an arm entry for the new dumps.
+
+## 2026.09.18 - Round 62 complete: the one arm above the solve alone is one number with it under the folds
+
+Job 2461 (seed 2702): three seeds per fold, folds 0.917, 0.878, 0.843, 0.901, 0.912, ensemble 0.917 [0.87, 0.96], the solve-alone 0.920. Written into the round-60 paragraph of 3-backbone and the fold-ensemble table (`w78_pathgopcapfbaaffcv_s3`). Round 66 launched on the freed card (job 2465, pack `w82_pathlogfixedcv`, 36 GB, five cells): the reported cell on the fixed one-hot code with the kernels pinned on the five folds, one seed, the fold-ensemble number under a reproducible run on the fixed input; label `w82_pathlogfixedcv`.

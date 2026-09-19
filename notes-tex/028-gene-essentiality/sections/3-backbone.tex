@@ -687,8 +687,10 @@ alone (sd 0.022; pooled 0.902 [0.85, 0.95]) and 0.905, 0.911, 0.919, 0.900, 0.90
 0.902 with the vector (mean 0.906, sd 0.008; pooled 0.913 [0.86, 0.96]), the
 vector-alone cell's 0.908 and 0.912, the cells crossing training loss 0.6 at epochs
 40 to 66 and selecting at 33 to 74 as the vector-alone cell does; under the fold
-protocol (round 62, job 2459) the same cell reads 0.914 [0.86, 0.96] on one seed,
-the solve-alone 0.919. The one model on this backbone is closed on the split file
+protocol (round 62, jobs 2459 to 2461) the same cell reads 0.914 [0.86, 0.96] on
+one seed and 0.917 [0.87, 0.96] on three (folds 0.917, 0.878, 0.843, 0.901 and
+0.912 as seed-mean logits), the solve-alone 0.919 and 0.920
+(Table~\ref{tab:ensembles}). The one model on this backbone is closed on the split file
 and the folds: GO on the node costs 0.04, GO on the logit costs nothing and adds
 nothing, in full it memorizes and reduced it reads the solve alone, so the
 annotation's 0.04 over the two families' average is not the transformer's to take

@@ -1292,6 +1292,8 @@ ENSEMBLE_LABELS = {
     "w74_pathgopfbaaffcv": "round 58: GO and the $\\log(1 + |v|)$ vector as affine columns, one seed per fold",
     "w74_pathgopfbaaffcv_s2": "round 58: the same, two seeds per fold",
     "w78_pathgopcapfbaaffcv": "round 62: GO reduced to 64 components and the vector as affine columns, one seed per fold",
+    "w78_pathgopcapfbaaffcv_s3": "round 62: the same, three seeds per fold",
+    "w82_pathlogfixedcv": "round 66: the round-33 cell on the fixed one-hot code, kernels pinned, one seed per fold",
 }
 
 

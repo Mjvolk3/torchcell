@@ -617,6 +617,42 @@ logit through the affine rather than on the node, is round 50's read.
   \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
   \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w63}.}{fig:w63}
 
+GO enters the transformer on the logit at no cost and adds nothing there either
+(round 50, jobs 2440, 2444 and 2446; Table~\ref{tab:w66}, Figure~\ref{fig:w66}). The
+affine reads any store written in the solve store's shape, so the propagated GO
+multi-hot was written as one (\texttt{go\_affine\_store.py}: 2,362 columns over the
+1,121 labeled genes, 1,120 with an annotation; the trainer's $\log(1 + |v|)$ maps a
+term to 0 or 0.693), alone and appended to the pFBA vector. GO alone as affine
+columns beside pathway and ProtT5 on the node reads 0.886 on six seeds (sd 0.012;
+pooled 0.892 [0.83, 0.94]) against 0.852 with GO on the node; GO with the
+$\log(1 + |v|)$ vector as affine columns reads 0.895, 0.901, 0.906, 0.900, 0.893 and
+0.911 (mean 0.901, sd 0.007; pooled 0.903 [0.85, 0.95]) against 0.866 with GO on the
+node beside the same vector and 0.908 and 0.912 with the vector alone; the same on
+ProtT5 alone 0.876 (pooled 0.880); and the GO-on-node cell run to 400 epochs 0.860
+(pooled 0.864), no better than at 200. So the logit path carries the annotation
+where the node path pays 0.04 for it, and the one model on the logit reads the
+solve-alone number, not the two-family average (0.948). What the GO columns do in
+the affine is visible in the training loss: with 2,362 binary columns over 629
+training genes the cell's training loss crosses 0.6 at epoch 14 to 21 and reaches
+0.01 to 0.04 by epoch 199, where the vector-alone cell crosses at epochs 33 to 58 and
+ends near 0.1, and the selected epochs run 79 to 197 (251 to 379 at 400 epochs, which
+reads 0.895); the affine memorizes the training genes through the GO columns and the
+held-out ranking drifts on a fit plateau. A regularized read of the GO columns, and
+the fold protocol on the form (round 58), are what remain of the one-model question
+on this backbone.
+
+\input{tables/round_w66}
+
+\tcfigfit[1.0]{figures/w66_readout_2026-09-18-20-08-28.pdf}{\textbf{Round 50, GO on
+  the logit instead of the node.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w66}.}{fig:w66}
+
 \subsection{Round 30: the genome-wide labels as a larger held-out set\secstatus{todo}}
 \label{sec:round30}
 

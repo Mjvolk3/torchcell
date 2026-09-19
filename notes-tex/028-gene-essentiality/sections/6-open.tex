@@ -93,10 +93,13 @@ weight, six encodings). What remains is attribution and the module.
     GO-alone number (0.909), so the average's gain is not the graph model's to take
     from those columns, and the transformer with GO on the node beside the solve in
     the affine reads 0.866, the round-26 cost with the solve as with the ratios
-    (round 47); GO on the logit through the affine, the path the solve takes, is
-    round 50's read, and a learned weighting of the two families' logits, or the
-    transformer's affine read of the solve beside a graph-convolved GO token, is
-    untested, and the average's number carries the selection of the best of eleven.
+    (round 47); GO on the logit through the affine, the path the solve takes, costs
+    nothing and adds nothing (0.901 with the vector, round 50), the affine
+    memorizing the training genes through 2,362 binary columns by epoch 20, so a
+    regularized read of those columns is the open construction on this backbone,
+    and a learned weighting of the two families' logits, or the transformer's affine
+    read of the solve beside a graph-convolved GO token, is untested, and the
+    average's number carries the selection of the best of eleven.
   \item The layer that solves has the wrong shape for a training loop: the program runs
     on the CPU inside the forward pass, the GPU waits on it (0 to 13 percent
     utilization sampled during round 19, against a 1.6 hour cell where the alternating

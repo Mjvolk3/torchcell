@@ -119,11 +119,15 @@ weight, six encodings). What remains is attribution and the module.
     reads 0.896 to 0.919 on twelve of twelve runs, 0.912 pooled, with nothing in the
     graph and 11 minutes a cell, and 0.920 as a fold ensemble. What remains open on
     the form is why standardized columns make the backbone peak before it fits (and
-    why one $\log(1 + |v|)$ fold cell in seventeen still did), and the count that
-    sizes the store, the distinct (genotype, medium) pairs across the database, which
-    is not measured; on this endpoint the store solved on synthetic complete medium
-    reads the YPD store's number (round 42), so whether the medium axis of the store
-    carries anything is a question for a phenotype scored across media.
+    why one $\log(1 + |v|)$ fold cell in seventeen still did). The count that sizes
+    the store is measured (Section~\ref{sec:store-scale}): over the 13.5 million
+    records of the solid-growth build, 469,474 distinct (GEM subset, medium) keys,
+    solved in 71 minutes on 20 cores, and read at the control's step rate by the
+    transformer trained over that build, whose number is not yet read. On this
+    endpoint the store solved on synthetic complete medium reads the YPD store's
+    number (round 42), and the build's selection media have no FBA recipe, so
+    whether the medium axis of the store carries anything is a question for a
+    phenotype scored across media with recipes.
     Where a solve must stay in the loop, the fine-tuning form with learned ceilings,
     three constructions would remove the synchronization, in order of how much they
     change: a batched first-order solve on the card, which NVIDIA's cuOpt offers as

@@ -1966,3 +1966,59 @@ held-out genes at 0.84 with no head and no appended ratio (round 15c), the modul
 upper bound so far. The module helps, then, exactly when its flux is on the polytope
 the solve optimizes over, and the constraint set that was meant to make it more than the
 solve is what kept it off until it was calibrated.
+
+\subsection{The store at the database's scale\secstatus{todo}}
+\label{sec:store-scale}
+
+The layer-free form (Section~\ref{sec:round33}) makes the module a data transform: the
+growth program solved once per genotype and medium, its flux stored as
+$\log(1 + |v^*|)$ and read through an affine at training time, with no solver in the
+loop. What sizes that transform for a model over the whole database is not the record
+count but the number of distinct programs, since the program depends on the genotype
+only through the GEM genes it deletes and on the environment only through the medium:
+a record whose deletions include no GEM gene reads the wild-type row, and two records
+deleting the same GEM genes on the same medium read one row. Table~\ref{tab:store-scale}
+measures that count over the 025 solid-growth build, the largest phenotype table in the
+database (13.5 million records, single to triple deletions on three media), by a cursor
+scan of its LMDB for each record's deleted genes and medium name (job 2469, 8 minutes
+on 20 processes), and then builds the store.
+
+\input{tables/store_scale}
+
+Two thirds of the records (8,986,762 of 13,525,071) delete no GEM gene and read the
+wild-type row; the rest map onto 459,098 distinct GEM subsets, almost all pairs, and
+469,474 (subset, medium) keys, 3.5 percent of the record count. Solved by the
+interior-point method at $10^{-4}$ with every GEM gene of the key deleted (the round-36
+store's solver, whose point trains to the pFBA store's number), the whole store took 71
+minutes on 20 CPU cores (job 2471; 23.4 CPU hours, 0.18 s per program) and is 8.0 GB
+as float32 over 4,131 reactions, with 62,905 keys lethal under the solve and 2,234
+uncertified, stored as the zero flux as in round 55, where the 320 uncertified rows of
+the $10^{-8}$ store cost 0.02 until they were filled from a looser solve. The build's
+SGA selection media have no FBA recipe (a synthetic dropout with drugs), so every key
+was solved on synthetic complete medium; on this endpoint the SC store reads the YPD
+store's number (round 42), and the store's medium axis is one medium in this build.
+
+At training time the store is a table on the host and the read is a gather: the 025
+transformer wrapped by \texttt{store\_affine.py} in that experiment (one card per arm,
+jobs 2476 to 2479, launched 2026-09-18) looks up each record's row from its deleted
+genes, moves the batch's rows to the card and adds a linear map of them to the logit.
+The arm with the store trains at the control's step rate, 0.37 iterations per second
+on both, so the transform costs nothing measurable per step. Its number is not read:
+the two arms on two seeds have reached epoch 15 of 30, and through that epoch the
+validation Pearson on gene interaction of the store arm is within 0.022 of the
+control's at every epoch, with the sign of the paired difference varying by epoch and
+by seed; the fixed-epoch and best-epoch reads, paired by seed, are written by
+\texttt{store\_affine\_readout.py} when the runs end.
+
+The solvers on the card were not run. Section~\ref{sec:solve-tolerance} settled that a
+first-order point is a store (PDLP, the algorithm NVIDIA's cuOpt batches on the card,
+trains to 0.907 against the interior point's 0.911 and pFBA's 0.912), so the store
+could be built on the card; but with the program count set by the keys and not the
+records, the store over the whole build is an hour of CPU, under two epochs of the
+transformer that reads it (58 minutes per epoch on one card), and a faster solve
+shortens a step that is not the cost. Where a solver on the card would matter is the
+case this endpoint did not need and did not measure: a program re-solved under bounds
+the model learns (the fine-tuning form with the capacity ceilings of round 15c), or a
+medium axis with many recipes, each of which multiplies the programs by the number of
+parameter settings or of media, and a program solved inside the loop rather than
+before it.

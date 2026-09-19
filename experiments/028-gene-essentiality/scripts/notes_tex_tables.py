@@ -1617,6 +1617,79 @@ def store_stats() -> str | None:
     return write("store_stats", body, "results/store_stats.json")
 
 
+def store_scale() -> str | None:
+    """The store keyed over the whole solid-growth build: its count and its build."""
+    keys_src = osp.join(RESULTS, "store_key_count.json")
+    build_src = osp.join(RESULTS, "solid_growth_store_SC_ipm.json")
+    if not (osp.isfile(keys_src) and osp.isfile(build_src)):
+        return None
+    with open(keys_src) as fh:
+        k = json.load(fh)
+    with open(build_src) as fh:
+        b = json.load(fh)
+    by_pert = k["records_by_perturbation_count"]
+    by_size = k["gem_subsets_by_size"]
+    build_min = b["seconds"] / 60
+    rows = [
+        ("records in the build", f"{k['n_records']:,}"),
+        (
+            "records by deletions (1 / 2 / 3)",
+            f"{by_pert['1']:,} / {by_pert['2']:,} / {by_pert['3']:,}",
+        ),
+        ("distinct media in the build", f"{k['n_distinct_media']}"),
+        ("records deleting no GEM gene (read the wild-type row)", f"{k['n_records_empty_gem_subset']:,}"),
+        ("GEM genes among the deleted", f"{k['n_gem_genes']:,}"),
+        (
+            "distinct GEM subsets by size (1 / 2 / 3)",
+            f"{by_size['1']:,} / {by_size['2']:,} / {by_size['3']:,}",
+        ),
+        ("distinct (GEM subset, medium) keys", f"{k['n_distinct_keys']:,}"),
+        ("store as float32 (GB, estimated)", f"{k['store_float32_gb']:.1f}"),
+        (
+            "CPU hours per core, estimated (interior point / pFBA)",
+            f"{k['cpu_hours_per_core']['interior_point_or_dual_simplex']:.0f} / "
+            f"{k['cpu_hours_per_core']['pfba']:.0f}",
+        ),
+        ("scan of the build (s)", f"{k['seconds']:.0f}"),
+        ("\\hline build", ""),
+        ("solver, medium", f"HiGHS {b['solver']} at $10^{{-4}}$, {b['medium']}"),
+        ("keys solved", f"{b['n_keys']:,}"),
+        ("records the keys serve", f"{b['n_records_served']:,}"),
+        ("wall (min) at 20 workers", f"{build_min:.0f}"),
+        ("lethal keys (growth 0 under the solve)", f"{b['n_lethal']:,}"),
+        ("uncertified keys stored as the zero flux", f"{b['n_uncertified_zero_flux']:,}"),
+        ("wild-type growth", f"{b['wild_type_growth']:.4f}"),
+    ]
+    lines = []
+    for name, value in rows:
+        if name.startswith("\\hline"):
+            lines.append(f"    \\hline\n    \\multicolumn{{2}}{{@{{}}l}}{{\\emph{{{name[7:]}}}}} \\\\")
+        else:
+            lines.append(f"    {name} & {value} \\\\")
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The store at the database's scale]{The solve store keyed by (GEM gene "
+        "subset, medium) over the 025 solid-growth build. The count (upper block) is a "
+        "cursor scan of the build's LMDB for each record's deleted genes and medium name, "
+        "written by \\texttt{store\\_key\\_count.py}; the build (lower block) solves the "
+        "round-27 growth program once per key with every GEM gene of the key deleted, "
+        "written by \\texttt{solid\\_growth\\_store.py} (job 2471). The build's selection "
+        "media have no FBA recipe, so every key is solved on synthetic complete medium and "
+        "keeps its own medium name; the store's medium axis is therefore one medium in "
+        "this build. The scan counts a record under every medium name it carries, so the "
+        "records served exceed the records in the build by the number of records that "
+        "name two media.}\n"
+        "  \\label{tab:store-scale}\n"
+        "  \\begin{tabular}{@{}p{95mm}l@{}}\n    \\hline\n"
+        "    quantity & value \\\\\n    \\hline\n"
+        + "\n".join(lines)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "store_scale", body, "results/store_key_count.json + results/solid_growth_store_SC_ipm.json"
+    )
+
+
 def solve_tolerance() -> str | None:
     """The round-27 program under five solvers: growth, the flux vector, and a probe."""
     src = osp.join(RESULTS, "solve_tolerance_read.json")
@@ -1789,6 +1862,7 @@ def main() -> None:
         solve_tolerance_transfer(),
         solve_tolerance(),
         store_stats(),
+        store_scale(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

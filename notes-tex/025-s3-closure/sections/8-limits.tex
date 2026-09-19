@@ -27,9 +27,37 @@ document did not do. The trigenic identity is therefore checked in the build onl
 and its $r = 0.230$ has no within-screen counterpart here; the closest is the
 Kuzmin-first policy on the 029 build, $r = 0.52$ for the 2018 screen
 (Section~\ref{sec:deletion-query}), which still reads the pair's own digenic screen for
-the double terms. The Kuzmin supplementary text reports replicate correlations of 0.74
-to 0.81 for the adjusted trigenic score (\texttt{si/si1.md} line 171), which bounds
-what a within-screen check could reach.
+the double terms. What a within-screen check could reach is bounded by how well the
+measurement reproduces itself, and that bound is the subject of the next paragraph.
+
+\notesec{The trigenic score reproduces itself at 0.59, and two published figures differ}
+Two numbers are in circulation for the replicate reproducibility of the adjusted
+trigenic score, both from the Kuzmin 2018 screens. The supplementary text reports
+correlations between independent replicates of 0.90 to 0.91 for double-mutant and raw
+triple-mutant scores and 0.74 to 0.81 for the adjusted trigenic score
+(\texttt{si/si1.md} line 171), but the panel those come from plots only interactions
+called significant at $p < 0.05$. That p-value is a normal test of the score against a
+variance propagated from the query and array fitness estimates, so conditioning on it
+keeps the scores that are large relative to their own measurement error and drops the
+rest, which raises a correlation computed within the subset. Over the whole
+distribution the number is lower: Dango (\texttt{zhangDANGOPredictingHigherorder2020})
+recomputed it on all 91{,}050 triples of the Kuzmin 2018 diagnostic-array screen and
+reports ``The Pearson correlation between the trigenic interaction scores of two
+individual replicates is around 0.59, which is much lower than the Pearson correlation
+between the digenic interaction score of two replicates from the same data source
+(0.88)''.
+
+The 0.59 is the honest figure for an unselected pool such as S3, and it is the right
+one to read the recompute against, with two qualifications. It is the correlation
+between two single replicates, so it is what a replicate oracle achieves rather than a
+mathematical ceiling; a model predicting the denoised value and scored against a noisy
+one is limited instead by the square root of the target's reliability, which for a
+score combining two replicates of individual reliability 0.59 is about 0.86. And it is
+measured on one screen's diagnostic array, not on the pooled S3 or 029 triples. With
+those held in mind, the Kuzmin-first policy's $r = 0.517$ on the 2018 screen
+(Section~\ref{sec:deletion-query}) sits just under the value two repetitions of the
+experiment attain against each other, so the identity recomputed from the database is
+close to as consistent with the released score as the measurement is with itself.
 
 \notesec{Four colonies is a documented representative, not a per-record count}
 The null standard deviation $\sigma_{ab}/\sqrt{4}$ uses the colony count the loaders

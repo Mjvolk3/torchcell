@@ -47,3 +47,47 @@ them, keep the screen identity on merged records).
 ![](./assets/images/025-solid-growth/s3_closure_confidence.svg)
 
 ![](./assets/images/025-solid-growth/s3_closure_hazards.svg)
+
+## 2026.09.19 - The reproducibility ceiling of the trigenic score: 0.59, not 0.74-0.81
+
+Two published numbers for how well the adjusted trigenic score reproduces itself, both from the
+Kuzmin 2018 screens, and they differ because they are computed on different sets.
+
+| source | set | replicate r, adjusted trigenic | digenic |
+|---|---|---|---|
+| Kuzmin 2018 SI, si1.md line 171 | significant scores only, p < 0.05 (Fig. S5B) | 0.74 to 0.81 | 0.90 to 0.91 (also raw triple) |
+| Dango, zhangDANGOPredictingHigherorder2020 | all 91,050 triples of the diagnostic-array screen | 0.59 | 0.88 |
+
+The Kuzmin p-value is a normal test of the score against a variance propagated from the query and
+array fitness estimates (the array variance from screening a wild-type control query against the
+diagnostic array, n = 91). Conditioning on p < 0.05 keeps scores large relative to their own
+error, which raises a correlation computed inside the subset. **0.59 is the number to use for an
+unselected pool like S3.** Dango calls it "an approximate upper bound of the performance that a
+computational framework could possibly achieve."
+
+Strictly it is the replicate-oracle value, not a ceiling: a model predicting the denoised value and
+scored against a noisy one is capped by sqrt(reliability of the target), which is sqrt(0.59) = 0.77
+against a single replicate and about 0.86 against a score combining two replicates of individual
+reliability 0.59. Comparability caveat: Dango's set is one screen's 1,400-gene diagnostic array,
+ours is the pooled S3 (376,732 triples) or 029 (299,146), and our val is the pinned 010 random
+split.
+
+Reference points on the same axis, all measured:
+
+| quantity | value |
+|---|---|
+| two replicates of the same triple, all scores (Dango) | 0.59 |
+| Dango's own model, random split (its Fig. 2b) | about 0.47 |
+| our Dango reimplementation, val ([[experiments.005-kuzmin2018-tmi.results]]) | 0.41 to 0.42 |
+| identity recomputed from 029 fitness, Kuzmin 2018 screen, Kuzmin-first policy | 0.517 |
+| identity recomputed from 025 build fitness, all triples | 0.230 |
+| S3 seed 1 (IGB 2409033), val triples, epoch 44, PARTIAL | 0.487 |
+| S3 seed 1, train triples, epoch 44, PARTIAL | 0.727 |
+
+Two readings. Validation at 0.487 sits in the same band as the identity recompute and the replicate
+oracle, so the model is near the label's noise floor rather than near a modeling limit. And train
+at 0.727 is above 0.59, so the model agrees with its training labels better than two independent
+measurements of the same triple agree with each other; everything above 0.59 on train is fit to the
+particular noise realization in the training copy. That is the overfit statement made quantitative,
+and it is consistent with the curve shape (val flat at 0.48 to 0.49 since epoch 15 while train
+triples climbed from 0.47 to 0.727). Recorded in section 8 of `notes-tex/025-s3-closure`.

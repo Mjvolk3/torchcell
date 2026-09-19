@@ -1317,9 +1317,12 @@ without the switch, and the switch is worth its 20 percent of wall time only on 
 LP form, whose free runs did diverge (round 32). Under the fold protocol on the fixed
 code (round 66, job 2465, one seed pinned) the cell reads 0.912, 0.911, 0.830, 0.886
 and 0.914 on the folds, the third selecting at epoch 6 before its transition, and
-0.917 [0.87, 0.96] as the ensemble, the permuted input's 0.919; so the fold numbers
-stand as well, and the early-selecting fold is the one place the form's selection
-rule, the validation maximum, still picks a pre-transition epoch.
+0.917 [0.87, 0.96] as the ensemble, the permuted input's 0.919; with three seeds per
+fold (jobs 2473 and 2474) the folds read 0.911, 0.909, 0.913, 0.894 and 0.915 as
+seed-mean logits and the ensemble 0.920 [0.87, 0.96], the permuted input's 0.920
+exactly. So the fold numbers stand as well, and the early-selecting fold is the one
+place the form's selection rule, the validation maximum, still picks a pre-transition
+epoch, which the seed mean absorbs.
 
 \input{tables/round_w80}
 

@@ -1,0 +1,29 @@
+{
+  "path": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/solid_growth_store_SC_ipm.npz",
+  "gem": "yeast-GEM-9.0.2",
+  "flux_scale": 100.0,
+  "method": "growth-maximizing LP (the round-27 program, split form in micromoles) by HiGHS 1.15.1 ipm_nocross_1e-4, every GEM gene of the key deleted through cobra.manipulation.knock_out_model_genes; written by solid_growth_store.py",
+  "solver": "ipm",
+  "medium": "SC",
+  "medium_report": {
+    "applied": true,
+    "media_name": "SC",
+    "recipe": "SC (synthetic complete): SM + 20 amino acids + uracil + adenine",
+    "state": "liquid",
+    "n_components": 47,
+    "n_resolved": 47,
+    "n_exchanges_opened": 47,
+    "excluded_by_role": [],
+    "wild_type_growth_before": 0.08584396972646902,
+    "wild_type_growth_after": 0.5427815290195271,
+    "provenance": "UNSOURCED: the recipe object carries no provenance and no concentrations; its composition is the standard Difco/Sigma formulation named in torchcell/datamodels/media.py and only the uptake magnitudes are Suthers'."
+  },
+  "keys_file": "/scratch/projects/torchcell-scratch/job-snapshots/20260918-220506-gh_solid_growth_store/experiments/028-gene-essentiality/results/store_keys.json.gz",
+  "n_keys": 469474,
+  "n_records_served": 13767895,
+  "wild_type_growth": 0.5427803058817223,
+  "n_uncertified_zero_flux": 2234,
+  "n_lethal": 62905,
+  "medium_note": "the build's SGA selection media (SD-MSG with dropouts and drugs) have no FBA recipe; every key is solved on the --medium recipe and its own medium name is kept in `media`",
+  "seconds": 4254.309756755829
+}

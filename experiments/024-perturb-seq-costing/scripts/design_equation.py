@@ -1,7 +1,7 @@
 # experiments/024-perturb-seq-costing/scripts/design_equation.py
 # [[experiments.024-perturb-seq-costing.scripts.design_equation]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/024-perturb-seq-costing/scripts/design_equation
-"""A single design equation for multiplexed perturb-seq, and its consequences.
+r"""A single design equation for multiplexed perturb-seq, and its consequences.
 
 Sections 4.3 and 4.5 currently carry three separate rules of thumb -- a shot-noise
 requirement, a 100-cell biological floor taken as an independent constraint, and a
@@ -120,14 +120,19 @@ import os
 import os.path as osp
 
 import matplotlib.pyplot as plt
+import method_data as MD
 import numpy as np
 import pandas as pd
-from figure_checks import assert_legible
 from dotenv import load_dotenv
+from figure_checks import assert_legible
 from matplotlib.ticker import LogLocator
 
-import method_data as MD
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
 load_dotenv()
 OUT_DIR = osp.join(os.environ["ASSET_IMAGES_DIR"], "024-perturb-seq-costing")
@@ -164,8 +169,7 @@ RHO = {1: 1.0, 2: 4.0}
 KAPPA = 1.0
 
 
-def power_coefficient(delta_log2: float, z: float = Z,
-                      kappa: float = KAPPA) -> float:
+def power_coefficient(delta_log2: float, z: float = Z, kappa: float = KAPPA) -> float:
     """A(Delta) in Eq. (1). Cells per unit of [1/(d p) + phi].
 
     With kappa = 1 this is exactly (z / (Delta ln 2))^2, i.e. the right-hand side
@@ -175,9 +179,9 @@ def power_coefficient(delta_log2: float, z: float = Z,
     return kappa * z**2 / (delta_log2 * math.log(2.0)) ** 2
 
 
-def cells_per_perturbation(depth: float, phi: float,
-                           delta_log2: float | None = None,
-                           p: float = P_TYPICAL) -> float:
+def cells_per_perturbation(
+    depth: float, phi: float, delta_log2: float | None = None, p: float = P_TYPICAL
+) -> float:
     """Eq. (1): n*, cells that must share a perturbation.
 
     ``delta_log2`` defaults to the MEASURED median response, not to a
@@ -199,20 +203,29 @@ def depth_sufficiency(phi: float, p: float = P_TYPICAL) -> float:
     return 1.0 / (phi * p)
 
 
-def total_cells(n_star: float, n_targets: int, plex: int, order: int = 1,
-                survival: float = 1.0, q: float = 1.0) -> float:
+def total_cells(
+    n_star: float,
+    n_targets: int,
+    plex: int,
+    order: int = 1,
+    survival: float = 1.0,
+    q: float = 1.0,
+) -> float:
     """Eq. (2): N*, total cells to sequence."""
     if plex < order:
         return math.inf
     return (
-        RHO[order] * n_star
-        * math.comb(n_targets, order) / math.comb(plex, order)
+        RHO[order]
+        * n_star
+        * math.comb(n_targets, order)
+        / math.comb(plex, order)
         / (survival * q**order)
     )
 
 
-def min_detectable_delta(n: float, depth: float, phi: float,
-                         p: float = P_TYPICAL, kappa: float = KAPPA) -> float:
+def min_detectable_delta(
+    n: float, depth: float, phi: float, p: float = P_TYPICAL, kappa: float = KAPPA
+) -> float:
     """Eq. (1) solved for Delta: the smallest log2 fold change n cells can resolve.
 
     Inverting the design equation is what makes it usable as a design tool rather
@@ -232,10 +245,8 @@ def min_detectable_delta(n: float, depth: float, phi: float,
 # throughput, not price per read; the figure makes that visible by plotting what
 # each scenario BUYS rather than what it costs.
 LANE_READ_PAIRS = 3.2e9
-SCENARIOS = [
-    ("1 lane", 1, 3380.0),
-    ("8 lanes (full flow cell)", 8, 3180.0),
-]
+SCENARIOS = [("1 lane", 1, 3380.0), ("8 lanes (full flow cell)", 8, 3180.0)]
+
 
 # Reads per USABLE cell, per platform, derived from the genome-scale budget the
 # cost model already produces (read pairs / cells surviving QC with a guide call).
@@ -260,6 +271,7 @@ PLATFORM_SHORT = {
     "SPLiT-seq + rRNA depletion": "SPLiT-seq + depl.",
     "10x Chromium X (GEM-X 3')": "10x Chromium X (and + scifi)",
 }
+
 
 # --- figure ------------------------------------------------------------------
 def style() -> None:
@@ -302,8 +314,16 @@ def place_panel_letters(fig, axes, letters) -> None:
         # Clamped: the layout reserves room for this offset, but a clamp means a
         # letter can never be cropped off the canvas entirely if it does not.
         y = min(bb.y1 + 0.020, 0.985)
-        fig.text(max(bb.x0 - 0.012, 0.002), y, letter, fontsize=8,
-                 fontweight="bold", ha="left", va="bottom", zorder=20)
+        fig.text(
+            max(bb.x0 - 0.012, 0.002),
+            y,
+            letter,
+            fontsize=8,
+            fontweight="bold",
+            ha="left",
+            va="bottom",
+            zorder=20,
+        )
 
 
 # phi is swept, not fixed, because it is the parameter we have not measured. The
@@ -343,9 +363,17 @@ def panel_a(ax) -> None:
     d = np.logspace(1, 4.3, 300)
     for i, phi in enumerate(PHI_SWEEP):
         n = [cells_per_perturbation(x, phi) for x in d]
-        ax.plot(d, n, lw=0.9, color=PLOT_PALETTE[i],
-                label=(f"$\\varphi={phi:g}$ (100-cell rule)" if i == 1
-                       else f"$\\varphi={phi:g}$"))
+        ax.plot(
+            d,
+            n,
+            lw=0.9,
+            color=PLOT_PALETTE[i],
+            label=(
+                f"$\\varphi={phi:g}$ (100-cell rule)"
+                if i == 1
+                else f"$\\varphi={phi:g}$"
+            ),
+        )
         floor = power_coefficient(DELTA_MEASURED) * phi
         ax.axhline(floor, color=PLOT_PALETTE[i], lw=0.4, ls=":", zorder=1)
         # Labelled at the LEFT edge: at this end of the axis every curve is far
@@ -353,21 +381,43 @@ def panel_a(ax) -> None:
         # Left edge: at d=10 every curve is ~2 decades above its own floor, so
         # this strip is empty. At the right edge the labels landed on the curve
         # endpoints they exist to distinguish.
-        ax.text(11.5, floor * 1.13, f"{floor:.0f} cells", fontsize=4.6,
-                color=PLOT_PALETTE[i], ha="left", va="bottom")
+        ax.text(
+            11.5,
+            floor * 1.13,
+            f"{floor:.0f} cells",
+            fontsize=4.6,
+            color=PLOT_PALETTE[i],
+            ha="left",
+            va="bottom",
+        )
         ds = depth_sufficiency(phi)
         if d[0] < ds < d[-1]:
-            ax.plot([ds], [cells_per_perturbation(ds, phi)], marker="o", ms=2.5,
-                    color=PLOT_PALETTE[i], markeredgecolor="black",
-                    markeredgewidth=0.4, zorder=5)
+            ax.plot(
+                [ds],
+                [cells_per_perturbation(ds, phi)],
+                marker="o",
+                ms=2.5,
+                color=PLOT_PALETTE[i],
+                markeredgecolor="black",
+                markeredgewidth=0.4,
+                zorder=5,
+            )
 
     # Where the two live platforms actually sit on this axis.
     for depth, name in ((410, "SPLiT-seq"), (2000, "10x v3")):
         # vlines, not axvline: a full-height rule runs straight through the
         # legend in the upper right.
         ax.vlines(depth, 30, 2.0e4, color="#666666", lw=0.4, ls="--")
-        ax.text(depth * 1.12, 38.0, name, fontsize=5, color="#666666",
-                rotation=90, va="bottom", ha="left")
+        ax.text(
+            depth * 1.12,
+            38.0,
+            name,
+            fontsize=5,
+            color="#666666",
+            rotation=90,
+            va="bottom",
+            ha="left",
+        )
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -380,8 +430,14 @@ def panel_a(ax) -> None:
     ax.set_xlabel("Sequencing depth (mRNA UMIs per cell)")
     ax.set_ylabel("Cells per perturbation, $n^{*}$")
     ax.set_title("Depth stops buying precision at $d^{*}$", loc="left", fontsize=6)
-    ax.legend(frameon=False, loc="upper right", fontsize=5, handlelength=1.2,
-              handletextpad=0.4, borderaxespad=0.2)
+    ax.legend(
+        frameon=False,
+        loc="upper right",
+        fontsize=5,
+        handlelength=1.2,
+        handletextpad=0.4,
+        borderaxespad=0.2,
+    )
     box(ax)
 
 
@@ -396,10 +452,17 @@ def panel_b(ax) -> None:
     # and a flat 100-cell floor.
     piecewise = [max(A / (x * P_TYPICAL), 100.0) for x in d]
 
-    ax.plot(d, piecewise, lw=0.9, ls="--", color=PLOT_PALETTE[1],
-            label="max(shot noise, 100-cell floor)")
-    ax.plot(d, smooth, lw=0.9, color=PLOT_PALETTE[0],
-            label=f"Eq. (1), $\\varphi={phi:g}$")
+    ax.plot(
+        d,
+        piecewise,
+        lw=0.9,
+        ls="--",
+        color=PLOT_PALETTE[1],
+        label="max(shot noise, 100-cell floor)",
+    )
+    ax.plot(
+        d, smooth, lw=0.9, color=PLOT_PALETTE[0], label=f"Eq. (1), $\\varphi={phi:g}$"
+    )
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -412,15 +475,23 @@ def panel_b(ax) -> None:
     ax.set_xlabel("Sequencing depth (mRNA UMIs per cell)")
     ax.set_ylabel("Cells per perturbation, $n^{*}$")
     ax.set_title("The two rules are one curve", loc="left", fontsize=6)
-    ax.legend(frameon=False, loc="lower left", fontsize=5, handlelength=1.4,
-              handletextpad=0.4, borderaxespad=0.2)
+    ax.legend(
+        frameon=False,
+        loc="lower left",
+        fontsize=5,
+        handlelength=1.4,
+        handletextpad=0.4,
+        borderaxespad=0.2,
+    )
     box(ax)
 
 
 def panel_c(ax) -> None:
     """Total cells against plex, for main effects and for pairs, by panel size."""
     ks = np.arange(1, 11)
-    n_star = cells_per_perturbation(410.0, PHI_IMPLIED_AT_MEASURED_DELTA)  # split-pool depth, phi = 3
+    n_star = cells_per_perturbation(
+        410.0, PHI_IMPLIED_AT_MEASURED_DELTA
+    )  # split-pool depth, phi = 3
 
     series = [
         # Colour by panel size, linestyle by interaction order. Four distinct
@@ -433,8 +504,18 @@ def panel_c(ax) -> None:
     ]
     for T, r, color, ls, lab in series:
         y = [total_cells(n_star, T, int(k), order=r) for k in ks]
-        ax.plot(ks, y, lw=0.9, ls=ls, color=color, marker="o", ms=2.2,
-                markeredgecolor="black", markeredgewidth=0.3, label=lab)
+        ax.plot(
+            ks,
+            y,
+            lw=0.9,
+            ls=ls,
+            color=color,
+            marker="o",
+            ms=2.2,
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            label=lab,
+        )
 
     # One split-pool run is ~480,000 cells; anything above a few runs is not a
     # budget question but a feasibility one.
@@ -442,20 +523,33 @@ def panel_c(ax) -> None:
     # Just above its rule, flush left: the yaxis transform takes x in axes
     # fraction and y in data coords, so the label hugs the left spine with a
     # small inset pad and a small multiplicative lift above the line.
-    ax.text(0.02, 4.8e5 * 1.1, "one protocol run", fontsize=5,
-            color="#666666", ha="left", va="bottom",
-            transform=ax.get_yaxis_transform())
+    ax.text(
+        0.02,
+        4.8e5 * 1.1,
+        "one protocol run",
+        fontsize=5,
+        color="#666666",
+        ha="left",
+        va="bottom",
+        transform=ax.get_yaxis_transform(),
+    )
     # The droplet unit of batch, for comparison on the same axis. Without it
     # this panel implicitly prices feasibility in split-pool runs only, and the
     # two units are a factor of three apart rather than the order of magnitude
     # the un-preindexed 20,000-cell channel would suggest.
-    ax.axhline(MD.SCIFI_RECOVERED_LARGE_RUN, color="#666666", lw=0.5, ls=":",
-               zorder=1)
+    ax.axhline(MD.SCIFI_RECOVERED_LARGE_RUN, color="#666666", lw=0.5, ls=":", zorder=1)
     # Just above its rule, flush right: the two rules are a factor of ~3
     # apart, so opposite ends keep the two labels clear of each other.
-    ax.text(0.98, MD.SCIFI_RECOVERED_LARGE_RUN * 1.1, "one preindexed channel",
-            fontsize=5, color="#666666", ha="right", va="bottom",
-            transform=ax.get_yaxis_transform())
+    ax.text(
+        0.98,
+        MD.SCIFI_RECOVERED_LARGE_RUN * 1.1,
+        "one preindexed channel",
+        fontsize=5,
+        color="#666666",
+        ha="right",
+        va="bottom",
+        transform=ax.get_yaxis_transform(),
+    )
 
     ax.set_yscale("log")
     ax.set_xticks(ks)
@@ -465,8 +559,15 @@ def panel_c(ax) -> None:
     ax.set_xlabel("Guides per cell, $k$")
     ax.set_ylabel("Total cells needed, $N^{*}$")
     ax.set_title("Panel size beats plex", loc="left", fontsize=6)
-    ax.legend(frameon=False, loc="upper right", fontsize=5, handlelength=1.4,
-              handletextpad=0.4, borderaxespad=0.2, labelspacing=0.3)
+    ax.legend(
+        frameon=False,
+        loc="upper right",
+        fontsize=5,
+        handlelength=1.4,
+        handletextpad=0.4,
+        borderaxespad=0.2,
+        labelspacing=0.3,
+    )
     box(ax)
 
 
@@ -486,8 +587,7 @@ def _delta_axis(ax, label_x: float | None = None) -> None:
     x = ax.get_xlim()[1] if label_x is None else label_x
     for dv, lab in DELTA_REFS:
         ax.axhline(dv, color="#666666", lw=0.4, ls=":", zorder=1)
-        ax.text(x, dv * 1.06, lab, fontsize=5, color="#666666",
-                ha="right", va="bottom")
+        ax.text(x, dv * 1.06, lab, fontsize=5, color="#666666", ha="right", va="bottom")
 
 
 def panel_d(ax) -> None:
@@ -512,8 +612,14 @@ def panel_d(ax) -> None:
     # both adjacent spaces and rendered as "|Delta 0g)".
     ax.set_ylabel("Smallest resolvable effect, $|\\Delta|$")
     ax.set_title("What a given cell count can see", loc="left", fontsize=6)
-    ax.legend(frameon=False, loc="lower left", fontsize=5, handlelength=1.2,
-              handletextpad=0.4, borderaxespad=0.2)
+    ax.legend(
+        frameon=False,
+        loc="lower left",
+        fontsize=5,
+        handlelength=1.2,
+        handletextpad=0.4,
+        borderaxespad=0.2,
+    )
     box(ax)
 
 
@@ -526,13 +632,19 @@ def panel_e(ax) -> None:
     for i, (name, lanes, _usd) in enumerate(SCENARIOS):
         cells = LANE_READ_PAIRS * lanes / rpc[plat]
         y = [min_detectable_delta(cells / t, PLATFORM_DEPTH[plat], phi) for t in T]
-        ax.plot(T, y, lw=0.9, color=PLOT_PALETTE[i],
-                label=f"{name.split(' (')[0]}, {cells/1e6:.2f}M cells")
+        ax.plot(
+            T,
+            y,
+            lw=0.9,
+            color=PLOT_PALETTE[i],
+            label=f"{name.split(' (')[0]}, {cells / 1e6:.2f}M cells",
+        )
     ax.axvline(6000, color="#666666", lw=0.4, ls="--", zorder=1)
     # Horizontal and at the top, not rotated at the right edge, where it
     # ran into the "1.25-fold" reference label.
-    ax.text(5600, 6.0, "genome scale", fontsize=5, color="#666666",
-            ha="right", va="center")
+    ax.text(
+        5600, 6.0, "genome scale", fontsize=5, color="#666666", ha="right", va="center"
+    )
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(20, 8e3)
@@ -542,10 +654,15 @@ def panel_e(ax) -> None:
     # Mathtext ONLY at the end of the string: two blocks mid-phrase lost
     # both adjacent spaces and rendered as "|Delta 0g)".
     ax.set_ylabel("Smallest resolvable effect, $|\\Delta|$")
-    ax.set_title("One lane is a panel; a flow cell is a genome",
-                 loc="left", fontsize=6)
-    ax.legend(frameon=False, loc="upper left", fontsize=5, handlelength=1.2,
-              handletextpad=0.4, borderaxespad=0.2)
+    ax.set_title("One lane is a panel; a flow cell is a genome", loc="left", fontsize=6)
+    ax.legend(
+        frameon=False,
+        loc="upper left",
+        fontsize=5,
+        handlelength=1.2,
+        handletextpad=0.4,
+        borderaxespad=0.2,
+    )
     box(ax)
 
 
@@ -557,10 +674,21 @@ def panel_f(ax) -> None:
     plat = "SPLiT-seq + rRNA depletion"
     for i, (name, lanes, _usd) in enumerate(SCENARIOS):
         cells = LANE_READ_PAIRS * lanes / rpc[plat]
-        y = [min_detectable_delta(cells * k / 6000, PLATFORM_DEPTH[plat], phi)
-             for k in ks]
-        ax.plot(ks, y, lw=0.9, color=PLOT_PALETTE[i], marker="o", ms=2.2,
-                markeredgecolor="black", markeredgewidth=0.3, label=name)
+        y = [
+            min_detectable_delta(cells * k / 6000, PLATFORM_DEPTH[plat], phi)
+            for k in ks
+        ]
+        ax.plot(
+            ks,
+            y,
+            lw=0.9,
+            color=PLOT_PALETTE[i],
+            marker="o",
+            ms=2.2,
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            label=name,
+        )
     ax.set_yscale("log")
     ax.set_xticks(ks)
     ax.set_xlim(0.5, 10.5)
@@ -571,8 +699,14 @@ def panel_f(ax) -> None:
     # both adjacent spaces and rendered as "|Delta 0g)".
     ax.set_ylabel("Smallest resolvable effect, $|\\Delta|$")
     ax.set_title("Plex at genome scale, $T=6{,}000$", loc="left", fontsize=6)
-    ax.legend(frameon=False, loc="lower left", fontsize=5, handlelength=1.2,
-              handletextpad=0.4, borderaxespad=0.2)
+    ax.legend(
+        frameon=False,
+        loc="lower left",
+        fontsize=5,
+        handlelength=1.2,
+        handletextpad=0.4,
+        borderaxespad=0.2,
+    )
     box(ax)
 
 
@@ -594,9 +728,15 @@ def main() -> None:
     # line in them is labelled by hand at a position that depends on the axis
     # limits, so a limit change is exactly what this catches.
     assert_legible(
-        fig, axes=list(flat),
-        exempt={"one protocol run", "one preindexed channel", "genome scale",
-                "2-fold", "1.25-fold"},
+        fig,
+        axes=list(flat),
+        exempt={
+            "one protocol run",
+            "one preindexed channel",
+            "genome scale",
+            "2-fold",
+            "1.25-fold",
+        },
     )
 
     out = osp.join(OUT_DIR, "design_equation.svg")
@@ -608,25 +748,39 @@ def main() -> None:
     print(f"p_typical           = {P_TYPICAL:.2e}")
     Am = power_coefficient(DELTA_MEASURED)
     for phi in PHI_SWEEP:
-        print(f"phi={phi:<5g} floor n = {Am*phi:6.0f}   "
-              f"d* = {depth_sufficiency(phi):8.0f}")
+        print(
+            f"phi={phi:<5g} floor n = {Am * phi:6.0f}   "
+            f"d* = {depth_sufficiency(phi):8.0f}"
+        )
     rpc = reads_per_usable_cell()
     print("\nusable cells per scenario (SPLiT-seq + rRNA depletion):")
     for name, lanes, usd in SCENARIOS:
         c = LANE_READ_PAIRS * lanes / rpc["SPLiT-seq + rRNA depletion"]
         d_gs = min_detectable_delta(c / 6000, 861.0, PHI_IMPLIED_AT_MEASURED_DELTA)
-        print(f"  {name:26s} {c:>10,.0f} cells  ${usd*lanes:>8,.0f}  "
-              f"genome-scale |Delta| = {d_gs:.2f} log2 ({2**d_gs:.1f}-fold)")
-    print(f"\nmeasured median |log2 FC| among responders: {DELTA_MEASURED:.3f} "
-          f"({2**DELTA_MEASURED:.2f}-fold)")
-    print(f"A at measured Delta                       : "
-          f"{power_coefficient(DELTA_MEASURED):.1f}  (vs {A:.1f} at two-fold)")
-    print(f"phi implied by 100-cell rule, two-fold    : "
-          f"{PHI_IMPLIED_BY_100_CELL_RULE:.2f}")
-    print(f"phi implied by 100-cell rule, measured    : "
-          f"{PHI_IMPLIED_AT_MEASURED_DELTA:.2f}")
-    print(f"shot-noise limit K = A = {A:.1f}  (Sec. 4.3 Eq. gives "
-          f"{(Z/math.log(2.0))**2:.1f})")
+        print(
+            f"  {name:26s} {c:>10,.0f} cells  ${usd * lanes:>8,.0f}  "
+            f"genome-scale |Delta| = {d_gs:.2f} log2 ({2**d_gs:.1f}-fold)"
+        )
+    print(
+        f"\nmeasured median |log2 FC| among responders: {DELTA_MEASURED:.3f} "
+        f"({2**DELTA_MEASURED:.2f}-fold)"
+    )
+    print(
+        f"A at measured Delta                       : "
+        f"{power_coefficient(DELTA_MEASURED):.1f}  (vs {A:.1f} at two-fold)"
+    )
+    print(
+        f"phi implied by 100-cell rule, two-fold    : "
+        f"{PHI_IMPLIED_BY_100_CELL_RULE:.2f}"
+    )
+    print(
+        f"phi implied by 100-cell rule, measured    : "
+        f"{PHI_IMPLIED_AT_MEASURED_DELTA:.2f}"
+    )
+    print(
+        f"shot-noise limit K = A = {A:.1f}  (Sec. 4.3 Eq. gives "
+        f"{(Z / math.log(2.0)) ** 2:.1f})"
+    )
 
 
 if __name__ == "__main__":

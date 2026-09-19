@@ -44,9 +44,7 @@ load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 
-RESULTS_DIR = osp.join(
-    EXPERIMENT_ROOT, "017-hoepfner-background-mutations", "results"
-)
+RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "017-hoepfner-background-mutations", "results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 RAW_DIR = osp.join(DATA_ROOT, "data/torchcell/env_chemgen_hoepfner2014/raw")
@@ -69,8 +67,22 @@ _COL_RE = re.compile(
 # FASTA header carries coordinates: '>YOR043W WHI2 SGDID:... Chr XV from 410870-412330, ...'
 _COORD_RE = re.compile(r"Chr (\S+) from (\d+)-(\d+)")
 _ROMAN = {
-    "I": 1, "II": 2, "III": 3, "IV": 4, "V": 5, "VI": 6, "VII": 7, "VIII": 8,
-    "IX": 9, "X": 10, "XI": 11, "XII": 12, "XIII": 13, "XIV": 14, "XV": 15, "XVI": 16,
+    "I": 1,
+    "II": 2,
+    "III": 3,
+    "IV": 4,
+    "V": 5,
+    "VI": 6,
+    "VII": 7,
+    "VIII": 8,
+    "IX": 9,
+    "X": 10,
+    "XI": 11,
+    "XII": 12,
+    "XIII": 13,
+    "XIV": 14,
+    "XV": 15,
+    "XVI": 16,
 }
 
 # Sensitivity score is a robust experiment-wise z (negative = hypersensitive). Multiple
@@ -80,7 +92,7 @@ HYPER_THRESHOLDS = (-3.0, -4.0, -5.0)
 RESIST_THRESHOLDS = (3.0, 4.0, 5.0)
 WHI2_ORF = "YOR043W"
 MIN_WHI2_OVERLAP = 100  # min shared non-NaN experiments to compute a whi2 profile corr
-SAMPLE_N = 2_000_000    # per-assay raw-score sample size for the global histogram
+SAMPLE_N = 2_000_000  # per-assay raw-score sample size for the global histogram
 
 
 def load_sgd_coords() -> dict[str, dict]:
@@ -102,14 +114,22 @@ def load_sgd_coords() -> dict[str, dict]:
                 m = _COORD_RE.search(head)
                 if m is None:
                     coords[orf] = dict(
-                        gene=gene, chrom=None, chrom_idx=np.nan,
-                        start=np.nan, end=np.nan, pos=np.nan,
+                        gene=gene,
+                        chrom=None,
+                        chrom_idx=np.nan,
+                        start=np.nan,
+                        end=np.nan,
+                        pos=np.nan,
                     )
                     continue
                 chrom, a, b = m.group(1), int(m.group(2)), int(m.group(3))
                 coords[orf] = dict(
-                    gene=gene, chrom=chrom, chrom_idx=_ROMAN.get(chrom, np.nan),
-                    start=a, end=b, pos=(a + b) / 2.0,
+                    gene=gene,
+                    chrom=chrom,
+                    chrom_idx=_ROMAN.get(chrom, np.nan),
+                    start=a,
+                    end=b,
+                    pos=(a + b) / 2.0,
                 )
     return coords
 
@@ -144,20 +164,27 @@ def load_matrix(path: str, assay: str, sgd: dict) -> tuple[np.ndarray, np.ndarra
     print(f"[{assay}] {len(sens_pos)} sensitivity experiments (columns)")
     usecols = [0] + sens_pos
     df = pd.read_csv(
-        path, sep="\t", header=0, usecols=usecols, quotechar='"',
-        na_values=[""], engine="c",
+        path,
+        sep="\t",
+        header=0,
+        usecols=usecols,
+        quotechar='"',
+        na_values=[""],
+        engine="c",
     )
     df.columns = ["orf"] + [f"e{i}" for i in range(len(sens_pos))]
     df["orf"] = df["orf"].astype(str).str.strip().str.strip('"')
     df = df.set_index("orf")
-    keep = df.index.isin(sgd)                       # match the loader's R64 drop
+    keep = df.index.isin(sgd)  # match the loader's R64 drop
     df = df[keep]
     orfs = df.index.to_numpy()
     M = df.to_numpy(dtype=float)
     return M, orfs, len(sens_pos)
 
 
-def strain_metrics(M: np.ndarray, orfs: np.ndarray, sgd: dict, assay: str) -> pd.DataFrame:
+def strain_metrics(
+    M: np.ndarray, orfs: np.ndarray, sgd: dict, assay: str
+) -> pd.DataFrame:
     """Per-strain risk metrics from the assay matrix."""
     n_exp = np.sum(~np.isnan(M), axis=1)
     with np.errstate(invalid="ignore", all="ignore"):
@@ -231,7 +258,9 @@ def main() -> None:
     offsets, extent = chrom_offsets(sgd)
     print(f"SGD universe: {len(sgd)} systematic names")
 
-    summary: dict = {"thresholds": {"hyper": HYPER_THRESHOLDS, "resist": RESIST_THRESHOLDS}}
+    summary: dict = {
+        "thresholds": {"hyper": HYPER_THRESHOLDS, "resist": RESIST_THRESHOLDS}
+    }
     frames = []
     samples = {}
     total_records = 0
@@ -242,8 +271,11 @@ def main() -> None:
         df = strain_metrics(M, orfs, sgd, assay)
         df = add_whi2_corr(df, M, orfs)
         df["cum_pos"] = df.apply(
-            lambda r: (offsets.get(int(r["chrom_idx"]), np.nan) + r["pos"])
-            if not pd.isna(r["chrom_idx"]) else np.nan,
+            lambda r: (
+                (offsets.get(int(r["chrom_idx"]), np.nan) + r["pos"])
+                if not pd.isna(r["chrom_idx"])
+                else np.nan
+            ),
             axis=1,
         )
         # drop strains with zero measured experiments (mito/blank rows -> 0 LMDB records)
@@ -252,14 +284,16 @@ def main() -> None:
         flat = M[~np.isnan(M)]
         rng = np.random.default_rng(0)
         samples[assay] = (
-            flat if flat.size <= SAMPLE_N
+            flat
+            if flat.size <= SAMPLE_N
             else rng.choice(flat, size=SAMPLE_N, replace=False)
         )
 
         records = int(df["n_exp"].sum())
         total_records += records
         base = {
-            f"neg_rate_{abs(int(t))}": float((flat <= t).mean()) for t in HYPER_THRESHOLDS
+            f"neg_rate_{abs(int(t))}": float((flat <= t).mean())
+            for t in HYPER_THRESHOLDS
         }
         summary[assay] = dict(
             n_experiments=int(n_cols),
@@ -299,9 +333,11 @@ def main() -> None:
 
     print("\n=== reconciliation ===")
     print(f"parsed total records = {total_records:,}")
-    print(f"LMDB expected        = 29,996,238")
+    print("LMDB expected        = 29,996,238")
     print(f"match                = {summary['reconciliation_match']}")
-    print(f"\nwrote summary_stats.json, {{hip,hop,all}}_strain_metrics.csv, score_samples.npz")
+    print(
+        "\nwrote summary_stats.json, {hip,hop,all}_strain_metrics.csv, score_samples.npz"
+    )
 
 
 if __name__ == "__main__":

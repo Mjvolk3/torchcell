@@ -43,14 +43,13 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
+import pickle
 
+import lmdb
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from tqdm import tqdm
-
-import lmdb
-import pickle
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -91,15 +90,18 @@ class LmdbRecords:
     """
 
     def __init__(self, root: str) -> None:
+        """Open the dataset's LMDB read-only and count its records."""
         self.path = osp.join(root, "processed", "lmdb")
         self.env = lmdb.open(self.path, readonly=True, lock=False, subdir=True)
         with self.env.begin() as tx:
             self.n = tx.stat()["entries"]
 
     def __len__(self) -> int:
+        """Return the number of records in the LMDB."""
         return self.n
 
     def __getitem__(self, i: int) -> dict:
+        """Unpickle record ``i``, raising KeyError when no such key exists."""
         with self.env.begin() as tx:
             raw = tx.get(str(i).encode())
         if raw is None:
@@ -168,7 +170,7 @@ def spectrum(mat: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     rather than a deviation from a per-gene mean.
     """
     sv = np.linalg.svd(mat, compute_uv=False)
-    energy = sv ** 2
+    energy = sv**2
     return sv, np.cumsum(energy) / energy.sum()
 
 
@@ -181,7 +183,7 @@ def effective_rank(sv: np.ndarray) -> float:
     because every variance cut is a choice and this one is not.
     """
     e = sv.astype(np.float64) ** 2
-    return float(e.sum() ** 2 / (e ** 2).sum())
+    return float(e.sum() ** 2 / (e**2).sum())
 
 
 def support_size(vec: np.ndarray, mass: float) -> int:
@@ -229,20 +231,24 @@ def additivity(
             continue
         p, o = pred[active], obs[active]
         denom = np.linalg.norm(p)
-        rows.append({
-            "genes": "|".join(genes),
-            "n_active": int(active.sum()),
-            "pearson_r": float(np.corrcoef(p, o)[0, 1]),
-            # Relative residual: how much of the additive prediction's magnitude
-            # is left unexplained. This is the quantity compressed recovery has
-            # to absorb, and it is more interpretable than a correlation because
-            # it is on the scale of the effect itself.
-            "relative_residual": float(np.linalg.norm(o - p) / denom) if denom else np.nan,
-            # Slope of observed on predicted through the origin. Below 1 means
-            # the double is QUIETER than additive, which is the buffering
-            # direction most yeast genetic interactions take.
-            "slope": float(p @ o / (p @ p)) if denom else np.nan,
-        })
+        rows.append(
+            {
+                "genes": "|".join(genes),
+                "n_active": int(active.sum()),
+                "pearson_r": float(np.corrcoef(p, o)[0, 1]),
+                # Relative residual: how much of the additive prediction's magnitude
+                # is left unexplained. This is the quantity compressed recovery has
+                # to absorb, and it is more interpretable than a correlation because
+                # it is on the scale of the effect itself.
+                "relative_residual": float(np.linalg.norm(o - p) / denom)
+                if denom
+                else np.nan,
+                # Slope of observed on predicted through the origin. Below 1 means
+                # the double is QUIETER than additive, which is the buffering
+                # direction most yeast genetic interactions take.
+                "slope": float(p @ o / (p @ p)) if denom else np.nan,
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -275,14 +281,18 @@ def main() -> None:
 
     # --- r: rank of the effect matrix ---------------------------------------
     sv, cum = spectrum(E)
-    ranks = {f"rank_{int(c*100)}pct": int(np.searchsorted(cum, c) + 1)
-             for c in VARIANCE_CUTS}
+    ranks = {
+        f"rank_{int(c * 100)}pct": int(np.searchsorted(cum, c) + 1)
+        for c in VARIANCE_CUTS
+    }
     eff_rank = effective_rank(sv)
-    pd.DataFrame({
-        "component": np.arange(1, sv.size + 1),
-        "singular_value": sv,
-        "cumulative_variance": cum,
-    }).to_csv(osp.join(RESULTS_DIR, "compression_spectrum.csv"), index=False)
+    pd.DataFrame(
+        {
+            "component": np.arange(1, sv.size + 1),
+            "singular_value": sv,
+            "cumulative_variance": cum,
+        }
+    ).to_csv(osp.join(RESULTS_DIR, "compression_spectrum.csv"), index=False)
 
     # --- q: non-zeros per module --------------------------------------------
     # Right singular vectors are the gene-space modules. Only the leading ones
@@ -295,15 +305,18 @@ def main() -> None:
     # No basis, no factorization, no choice of mass fraction -- and it is the
     # quantity a reader can check against Table 8 directly.
     row_nnz = (np.abs(E) > np.log2(RESPONDER_FOLD)).sum(axis=1)
-    pd.DataFrame({
-        "component": np.arange(1, top + 1),
-        **{f"genes_for_{int(m*100)}pct_mass": sup[m] for m in SUPPORT_MASSES},
-    }).to_csv(osp.join(RESULTS_DIR, "compression_sparsity.csv"), index=False)
+    pd.DataFrame(
+        {
+            "component": np.arange(1, top + 1),
+            **{f"genes_for_{int(m * 100)}pct_mass": sup[m] for m in SUPPORT_MASSES},
+        }
+    ).to_csv(osp.join(RESULTS_DIR, "compression_sparsity.csv"), index=False)
 
     # --- the additivity assumption, tested in yeast -------------------------
     sm_singles = {
         g[0]: to_matrix([p], columns)[0]
-        for g, p in zip(sm_perts, sm_prof) if len(g) == 1
+        for g, p in zip(sm_perts, sm_prof)
+        if len(g) == 1
     }
     dm_pairs = [(g, to_matrix([p], columns)[0]) for g, p in zip(dm_perts, dm_prof)]
     add = additivity(sm_singles, dm_pairs)
@@ -321,18 +334,18 @@ def main() -> None:
         "effective_rank_participation_ratio": eff_rank,
         "responder_fold": RESPONDER_FOLD,
         "q_median_genes_moved_per_perturbation": q_med,
-        "q_iqr": [float(np.percentile(row_nnz, 25)),
-                  float(np.percentile(row_nnz, 75))],
+        "q_iqr": [float(np.percentile(row_nnz, 25)), float(np.percentile(row_nnz, 75))],
         "svd_support_median_by_mass": {
             str(m): float(np.median(sup[m])) for m in SUPPORT_MASSES
         },
         "additivity_n_testable_doubles": int(len(add)),
         "additivity_median_pearson_r": (
-            float(add.pearson_r.median()) if len(add) else None),
+            float(add.pearson_r.median()) if len(add) else None
+        ),
         "additivity_median_relative_residual": (
-            float(add.relative_residual.median()) if len(add) else None),
-        "additivity_median_slope": (
-            float(add.slope.median()) if len(add) else None),
+            float(add.relative_residual.median()) if len(add) else None
+        ),
+        "additivity_median_slope": (float(add.slope.median()) if len(add) else None),
         "samples_needed_genome_scale": {
             str(n): samples_needed(q_med, r_used, n) for n in (200, 1000, 6000)
         },
@@ -342,26 +355,38 @@ def main() -> None:
 
     print("\n=== r: how many components carry the response ===")
     for c in VARIANCE_CUTS:
-        print(f"  {int(c*100):>3}% of variance: {ranks[f'rank_{int(c*100)}pct']:>4} components")
+        print(
+            f"  {int(c * 100):>3}% of variance: {ranks[f'rank_{int(c * 100)}pct']:>4} components"
+        )
     print(f"  participation ratio     : {eff_rank:.1f}")
     print(f"\n=== q: genes moved by one perturbation at {RESPONDER_FOLD}x ===")
-    print(f"  median {q_med:.0f}, IQR {summary['q_iqr'][0]:.0f}-{summary['q_iqr'][1]:.0f}"
-          f"  of {E.shape[1]} genes")
-    print(f"\n=== SVD module support, an UPPER bound (components are dense) ===")
+    print(
+        f"  median {q_med:.0f}, IQR {summary['q_iqr'][0]:.0f}-{summary['q_iqr'][1]:.0f}"
+        f"  of {E.shape[1]} genes"
+    )
+    print("\n=== SVD module support, an UPPER bound (components are dense) ===")
     for m in SUPPORT_MASSES:
-        print(f"  {int(m*100):>3}% of loading mass: median {np.median(sup[m]):>5.0f} genes")
+        print(
+            f"  {int(m * 100):>3}% of loading mass: median {np.median(sup[m]):>5.0f} genes"
+        )
     print("\n=== additivity of doubles, within Sameith ===")
     if len(add):
         print(f"  {len(add)} testable doubles")
-        print(f"  median Pearson r vs additive prediction : {add.pearson_r.median():.3f}")
-        print(f"  median relative residual               : {add.relative_residual.median():.3f}")
+        print(
+            f"  median Pearson r vs additive prediction : {add.pearson_r.median():.3f}"
+        )
+        print(
+            f"  median relative residual               : {add.relative_residual.median():.3f}"
+        )
         print(f"  median slope (observed on predicted)   : {add.slope.median():.3f}")
     else:
         print("  none testable: no double has both of its singles in this compendium")
     print("\n=== sample complexity, (q+r) log n with unit constant ===")
     for n, m in summary["samples_needed_genome_scale"].items():
-        print(f"  n = {int(n):>5} targets -> {m:>8.0f} composite samples "
-              f"({m/int(n):.2f} x n)")
+        print(
+            f"  n = {int(n):>5} targets -> {m:>8.0f} composite samples "
+            f"({m / int(n):.2f} x n)"
+        )
     print(f"\nwrote 4 files to {RESULTS_DIR}")
 
 

@@ -28,7 +28,9 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 PRICING_URL = "https://biotech.illinois.edu/dna-services-core/dna-services-pricing/"
-INSTRUMENTS_URL = "https://biotech.illinois.edu/dna-services-core/dna-services-instruments/"
+INSTRUMENTS_URL = (
+    "https://biotech.illinois.edu/dna-services-core/dna-services-instruments/"
+)
 TENX_URL = (
     "https://biotech.illinois.edu/dna-services-core/"
     "dna-10x-single-cell-submission-requirements-and-other-information/"
@@ -182,6 +184,8 @@ CHEAPEST_PRODUCTION = NOVASEQ_X[-1]  # Nova X 25B PE150, 8+ lanes
 
 
 class FlowCell(BaseModel):
+    """One flow cell configuration: read pairs per lane, lane count, and UIUC lane price."""
+
     instrument: str
     flow_cell: str
     read_pairs_per_lane: int
@@ -191,39 +195,103 @@ class FlowCell(BaseModel):
 
     @property
     def total_read_pairs(self) -> int:
+        """Read pairs across every lane of the flow cell."""
         return self.read_pairs_per_lane * self.lanes
 
 
 FLOW_CELLS: list[FlowCell] = [
     # --- available at UIUC, priced ---
-    FlowCell(instrument="MiSeq i100", flow_cell="5M", read_pairs_per_lane=5_000_000,
-             lanes=1, available_at_uiuc=True, usd_per_lane=661.0),
-    FlowCell(instrument="MiSeq i100", flow_cell="25M", read_pairs_per_lane=25_000_000,
-             lanes=1, available_at_uiuc=True, usd_per_lane=1450.0),
-    FlowCell(instrument="MiSeq i100", flow_cell="50M", read_pairs_per_lane=50_000_000,
-             lanes=1, available_at_uiuc=True, usd_per_lane=2050.0),
-    FlowCell(instrument="NovaSeq X Plus", flow_cell="1.5B",
-             read_pairs_per_lane=800_000_000, lanes=2, available_at_uiuc=True,
-             usd_per_lane=1580.0),
-    FlowCell(instrument="NovaSeq X Plus", flow_cell="10B",
-             read_pairs_per_lane=1_200_000_000, lanes=8, available_at_uiuc=True,
-             usd_per_lane=1710.0),
-    FlowCell(instrument="NovaSeq X Plus", flow_cell="25B",
-             read_pairs_per_lane=3_200_000_000, lanes=8, available_at_uiuc=True,
-             usd_per_lane=3180.0),
+    FlowCell(
+        instrument="MiSeq i100",
+        flow_cell="5M",
+        read_pairs_per_lane=5_000_000,
+        lanes=1,
+        available_at_uiuc=True,
+        usd_per_lane=661.0,
+    ),
+    FlowCell(
+        instrument="MiSeq i100",
+        flow_cell="25M",
+        read_pairs_per_lane=25_000_000,
+        lanes=1,
+        available_at_uiuc=True,
+        usd_per_lane=1450.0,
+    ),
+    FlowCell(
+        instrument="MiSeq i100",
+        flow_cell="50M",
+        read_pairs_per_lane=50_000_000,
+        lanes=1,
+        available_at_uiuc=True,
+        usd_per_lane=2050.0,
+    ),
+    FlowCell(
+        instrument="NovaSeq X Plus",
+        flow_cell="1.5B",
+        read_pairs_per_lane=800_000_000,
+        lanes=2,
+        available_at_uiuc=True,
+        usd_per_lane=1580.0,
+    ),
+    FlowCell(
+        instrument="NovaSeq X Plus",
+        flow_cell="10B",
+        read_pairs_per_lane=1_200_000_000,
+        lanes=8,
+        available_at_uiuc=True,
+        usd_per_lane=1710.0,
+    ),
+    FlowCell(
+        instrument="NovaSeq X Plus",
+        flow_cell="25B",
+        read_pairs_per_lane=3_200_000_000,
+        lanes=8,
+        available_at_uiuc=True,
+        usd_per_lane=3180.0,
+    ),
     # --- reference only: manufacturer specs, NOT at UIUC, unpriced ---
-    FlowCell(instrument="NovaSeq 6000", flow_cell="SP",
-             read_pairs_per_lane=400_000_000, lanes=2, available_at_uiuc=False),
-    FlowCell(instrument="NovaSeq 6000", flow_cell="S1",
-             read_pairs_per_lane=800_000_000, lanes=2, available_at_uiuc=False),
-    FlowCell(instrument="NovaSeq 6000", flow_cell="S2",
-             read_pairs_per_lane=2_050_000_000, lanes=2, available_at_uiuc=False),
-    FlowCell(instrument="NovaSeq 6000", flow_cell="S4",
-             read_pairs_per_lane=2_500_000_000, lanes=4, available_at_uiuc=False),
-    FlowCell(instrument="NextSeq 2000", flow_cell="P2",
-             read_pairs_per_lane=400_000_000, lanes=1, available_at_uiuc=False),
-    FlowCell(instrument="NextSeq 2000", flow_cell="P3",
-             read_pairs_per_lane=1_200_000_000, lanes=1, available_at_uiuc=False),
+    FlowCell(
+        instrument="NovaSeq 6000",
+        flow_cell="SP",
+        read_pairs_per_lane=400_000_000,
+        lanes=2,
+        available_at_uiuc=False,
+    ),
+    FlowCell(
+        instrument="NovaSeq 6000",
+        flow_cell="S1",
+        read_pairs_per_lane=800_000_000,
+        lanes=2,
+        available_at_uiuc=False,
+    ),
+    FlowCell(
+        instrument="NovaSeq 6000",
+        flow_cell="S2",
+        read_pairs_per_lane=2_050_000_000,
+        lanes=2,
+        available_at_uiuc=False,
+    ),
+    FlowCell(
+        instrument="NovaSeq 6000",
+        flow_cell="S4",
+        read_pairs_per_lane=2_500_000_000,
+        lanes=4,
+        available_at_uiuc=False,
+    ),
+    FlowCell(
+        instrument="NextSeq 2000",
+        flow_cell="P2",
+        read_pairs_per_lane=400_000_000,
+        lanes=1,
+        available_at_uiuc=False,
+    ),
+    FlowCell(
+        instrument="NextSeq 2000",
+        flow_cell="P3",
+        read_pairs_per_lane=1_200_000_000,
+        lanes=1,
+        available_at_uiuc=False,
+    ),
 ]
 
 # --- 10x Genomics at UIUC (Chromium X) ---------------------------------------
@@ -322,77 +390,77 @@ MEETING_CLAIMS: list[MeetingClaim] = [
         claim="Rely on the core for QC rather than doing it upstream.",
         status="confirmed",
         note="Consistent with the published page, which offers Qubit, Fragment "
-             "Analyzer and qPCR, and charges nothing for 10x test counts.",
+        "Analyzer and qPCR, and charges nothing for 10x test counts.",
     ),
     MeetingClaim(
         topic="10x kit",
         claim="The current kit is GEM-X Universal 5' Gene Expression.",
         status="confirmed",
         note="10x Genomics product, not Illumina. The rate card's depth "
-             "guidance names the 3' V3.1 GEM-X kit, so the core runs both "
-             "chemistries; which one a project uses is a per-project choice.",
+        "guidance names the 3' V3.1 GEM-X kit, so the core runs both "
+        "chemistries; which one a project uses is a per-project choice.",
     ),
     MeetingClaim(
         topic="cell wall",
         claim="About 1 uL of zymolyase can be added into the 10x system.",
         status="confirmed",
         note="This is the Jariani et al. in-droplet spheroplasting change "
-             "(Sec. 3.2), and the core volunteering it means the protocol does "
-             "not have to be argued for.",
+        "(Sec. 3.2), and the core volunteering it means the protocol does "
+        "not have to be argued for.",
     ),
     MeetingClaim(
         topic="chip loading",
         claim="The 10x chip takes three inputs per lane.",
         status="confirmed",
         note="Heard as 'oil, emulsion, master mix'. The three loaded rows are "
-             "the cell-containing master mix, the barcoded gel beads and the "
-             "partitioning oil; the emulsion is the product, not an input.",
+        "the cell-containing master mix, the barcoded gel beads and the "
+        "partitioning oil; the emulsion is the product, not an input.",
     ),
     MeetingClaim(
         topic="instrument purchase",
         claim="Buy a 10x Chromium eventually if 10x is used heavily, rather "
-              "than paying the core per run.",
+        "than paying the core per run.",
         status="unpriced",
         note="No instrument price was quoted. Sec. 5.5 shows library "
-             "preparation is 81% of the droplet budget, so this is the term it "
-             "would attack. Revisit after a first profiling run, not before.",
+        "preparation is 81% of the droplet budget, so this is the term it "
+        "would attack. Revisit after a first profiling run, not before.",
     ),
     MeetingClaim(
         topic="cell counting",
         claim="Getting the cell count right is the single most critical step; "
-              "use a dedicated cell counter.",
+        "use a dedicated cell counter.",
         status="confirmed",
         note="Heard as 'the Madigan lab's cell counter'; the exact instrument "
-             "was not written down and needs confirming. The published page "
-             "names the core's own counter as a Nexcelom Cellometer K2.",
+        "was not written down and needs confirming. The published page "
+        "names the core's own counter as a Nexcelom Cellometer K2.",
     ),
     MeetingClaim(
         topic="cell counting price",
         claim="Test counts are about $153, and a few are not charged.",
         status="conflicts-with-rate-card",
         note="The published page says test counts are free without "
-             "qualification: 'There is no charge to run test counts ... None.' "
-             "The $153 may be a different service. Not used in any budget.",
+        "qualification: 'There is no charge to run test counts ... None.' "
+        "The $153 may be a different service. Not used in any budget.",
     ),
     MeetingClaim(
         topic="sequencing yield",
         claim="A lane gives 3.82 billion.",
         status="conflicts-with-rate-card",
         note="The instruments page gives 3.2 billion READ PAIRS per NovaSeq X "
-             "25B lane, which is what every figure in this document is priced "
-             "on and what the 25B flow-cell naming implies (3.2B x 8 = 25.6B). "
-             "3.82 billion may be single reads, a different flow cell, or a "
-             "newer spec. The conservative 3.2B is retained.",
+        "25B lane, which is what every figure in this document is priced "
+        "on and what the 25B flow-cell naming implies (3.2B x 8 = 25.6B). "
+        "3.82 billion may be single reads, a different flow cell, or a "
+        "newer spec. The conservative 3.2B is retained.",
     ),
     MeetingClaim(
         topic="Ultima",
         claim="The core can run Ultima 'wafer' sequencing, which is not listed "
-              "on the public rate page.",
+        "on the public rate page.",
         status="unpriced",
         note="See ULTIMA_* below. Quoted at roughly $1,990 per lane, with a "
-             "figure of $3,310 mentioned for three lanes; the two cannot both "
-             "be per-lane rates and the discount structure was not written "
-             "down. No Ultima number is used in a budget.",
+        "figure of $3,310 mentioned for three lanes; the two cannot both "
+        "be per-lane rates and the discount structure was not written "
+        "down. No Ultima number is used in a budget.",
     ),
 ]
 

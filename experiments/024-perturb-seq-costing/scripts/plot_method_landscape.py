@@ -21,14 +21,19 @@ import os
 import os.path as osp
 
 import matplotlib.pyplot as plt
+import method_data as MD
 import numpy as np
+import uiuc_core_data as UC
 from dotenv import load_dotenv
+from figure_checks import assert_legible
 from matplotlib.lines import Line2D
 
-import method_data as MD
-import uiuc_core_data as UC
-from figure_checks import assert_legible
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
 load_dotenv()
 
@@ -90,9 +95,7 @@ def main() -> None:
     # Nature's 5 pt type floor, and the floor is not negotiable. Widening is the
     # only lever left: the same 5 pt text occupies half the fraction of the
     # panel, which is what the eye reads as "smaller labels".
-    fig, ax = plt.subplots(
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(88.0))
-    )
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(88.0)))
 
     # --- iso-lines of constant total mRNA UMIs -------------------------------
     # Axis limits are fixed FIRST, because each iso-line label is positioned as a
@@ -142,9 +145,7 @@ def main() -> None:
         # text beside it and the space between them is dropped by rsvg-convert on
         # the way to PDF -- this label was reaching the document as "10^6UMIs".
         # It renders correctly in the PNG, so it is only visible in the built PDF.
-        sup = str(exp).translate(str.maketrans("0123456789", "⁰¹²"
-                                               "³⁴⁵⁶⁷"
-                                               "⁸⁹"))
+        sup = str(exp).translate(str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹"))
         ax.text(
             label_x,
             total / label_x * 1.35,
@@ -255,8 +256,13 @@ def main() -> None:
             marks += "\\ddagger"
         label = m.study + (f"$^{{{marks}}}$" if marks else "")
         pt = (m.cells_profiled, m.mrna_umis_per_cell)
-        common = dict(xycoords="data", textcoords="offset points", ha=ha,
-                      fontsize=5, color="#333333")
+        common = dict(
+            xycoords="data",
+            textcoords="offset points",
+            ha=ha,
+            fontsize=5,
+            color="#333333",
+        )
         # Two annotations rather than one two-line string, because only the
         # second line is italic and matplotlib styles a Text object as a whole.
         # Mathtext (\it) would style within one string but does not survive
@@ -270,22 +276,40 @@ def main() -> None:
         # opens a gap of the FULL pitch. That is why the side-anchored labels
         # (Nadal-Ribelles, Jackson, Boocock, Brettner) read looser than the rest.
         # Work in the gap directly instead, and derive the pitch from it.
-        GAP = 0.8   # visible space between the two lines, pt
-        FS = 5.0    # font size, pt -- text height to a good approximation
+        GAP = 0.8  # visible space between the two lines, pt
+        FS = 5.0  # font size, pt -- text height to a good approximation
         PITCH = FS + GAP
         if va == "top":  # block grows downward: name first, organism beneath
             ax.annotate(label, pt, xytext=(dx, dy), va="top", **common)
-            ax.annotate(ORG.get(m.organism, m.organism), pt,
-                        xytext=(dx, dy - PITCH), va="top", style="italic", **common)
+            ax.annotate(
+                ORG.get(m.organism, m.organism),
+                pt,
+                xytext=(dx, dy - PITCH),
+                va="top",
+                style="italic",
+                **common,
+            )
         elif va == "bottom":  # grows upward: organism sits below the name
             ax.annotate(label, pt, xytext=(dx, dy + PITCH), va="bottom", **common)
-            ax.annotate(ORG.get(m.organism, m.organism), pt,
-                        xytext=(dx, dy), va="bottom", style="italic", **common)
+            ax.annotate(
+                ORG.get(m.organism, m.organism),
+                pt,
+                xytext=(dx, dy),
+                va="bottom",
+                style="italic",
+                **common,
+            )
         else:  # centered on the marker: split the pair about it by half the GAP,
-               # not half the pitch, so the two lines end up GAP apart as above
+            # not half the pitch, so the two lines end up GAP apart as above
             ax.annotate(label, pt, xytext=(dx, dy + GAP / 2), va="bottom", **common)
-            ax.annotate(ORG.get(m.organism, m.organism), pt,
-                        xytext=(dx, dy - GAP / 2), va="top", style="italic", **common)
+            ax.annotate(
+                ORG.get(m.organism, m.organism),
+                pt,
+                xytext=(dx, dy - GAP / 2),
+                va="top",
+                style="italic",
+                **common,
+            )
 
     # --- the preindexing move, drawn as a vector rather than a point ---------
     # scifi-RNA-seq has no place on the depth axis, and NOT because the depth
@@ -303,22 +327,33 @@ def main() -> None:
     # repeats it. A filled circle here would assert a depth we do not have.
     y_arrow = 4.6e4
     ax.annotate(
-        "", xy=(MD.SCIFI_RECOVERED_LARGE_RUN, y_arrow),
+        "",
+        xy=(MD.SCIFI_RECOVERED_LARGE_RUN, y_arrow),
         xytext=(UC_TENX_BASELINE, y_arrow),
-        arrowprops=dict(arrowstyle="-|>", lw=0.7, color="#666666",
-                        shrinkA=0, shrinkB=0, mutation_scale=6),
+        arrowprops=dict(
+            arrowstyle="-|>",
+            lw=0.7,
+            color="#666666",
+            shrinkA=0,
+            shrinkB=0,
+            mutation_scale=6,
+        ),
         zorder=4,
     )
     for x in (UC_TENX_BASELINE, MD.SCIFI_RECOVERED_LARGE_RUN):
-        ax.plot([x, x], [y_arrow / 1.35, y_arrow * 1.35], color="#666666",
-                lw=0.7, zorder=4)
+        ax.plot(
+            [x, x], [y_arrow / 1.35, y_arrow * 1.35], color="#666666", lw=0.7, zorder=4
+        )
     ax.annotate(
         # Plain words, not "$\\rightarrow$": 5 pt mathtext does not survive
         # Arial + svg.fonttype:none through rsvg-convert and renders as a
         # broken glyph. Same failure as the economics panel's superscript.
         "preindexing: 20k to 152k cells per channel",
         (np.sqrt(UC_TENX_BASELINE * MD.SCIFI_RECOVERED_LARGE_RUN), y_arrow * 1.6),
-        ha="center", va="bottom", fontsize=5, color="#333333",
+        ha="center",
+        va="bottom",
+        fontsize=5,
+        color="#333333",
     )
     ax.annotate(
         # "not retrieved", NOT "not published". The paper defers its performance
@@ -326,7 +361,11 @@ def main() -> None:
         # is not in the mirror -- so a depth value exists and we do not hold it.
         "Datlinger 2021, human/mouse; depth in an unretrieved supplement",
         (np.sqrt(UC_TENX_BASELINE * MD.SCIFI_RECOVERED_LARGE_RUN), y_arrow / 1.7),
-        ha="center", va="top", fontsize=5, color="#666666", style="italic",
+        ha="center",
+        va="top",
+        fontsize=5,
+        color="#666666",
+        style="italic",
     )
 
     ax.set_xlabel("Cells profiled in the published study")
@@ -368,8 +407,15 @@ def main() -> None:
     # (1.06e6, 1200) and the two remaining gaps are both crossed by an iso-line
     # or a label. Panel WIDTH is the quantity that has to stay fixed for panels
     # to tile; height is free, so the legend buys its space vertically.
-    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.16),
-              ncol=3, frameon=False, handletextpad=0.3, columnspacing=1.4)
+    ax.legend(
+        handles=handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.16),
+        ncol=3,
+        frameon=False,
+        handletextpad=0.3,
+        columnspacing=1.4,
+    )
 
     fig.tight_layout(pad=0.3)
 
@@ -397,19 +443,24 @@ def main() -> None:
     # the product spanned as little as a strict frontier implies, it would be
     # near zero decades. Recomputed on every run so a new row cannot leave a
     # stale span in the prose.
-    pts = [(m.study, m.cells_profiled, m.mrna_umis_per_cell)
-           for m in METHODS_PLOTTED]
+    pts = [(m.study, m.cells_profiled, m.mrna_umis_per_cell) for m in METHODS_PLOTTED]
     xs_, ys_ = [p[1] for p in pts], [p[2] for p in pts]
     prod = [x * y for _, x, y in pts]
+
     def span(v):
         return np.log10(max(v)) - np.log10(min(v))
+
     print(f"\n{len(pts)} plotted studies")
     print(f"  cells      {min(xs_):,} .. {max(xs_):,}      {span(xs_):.2f} decades")
-    print(f"  UMIs/cell  {min(ys_):,.0f} .. {max(ys_):,.0f}        {span(ys_):.2f} decades")
+    print(
+        f"  UMIs/cell  {min(ys_):,.0f} .. {max(ys_):,.0f}        {span(ys_):.2f} decades"
+    )
     print(f"  product    {min(prod):.2e} .. {max(prod):.2e}  {span(prod):.2f} decades")
     lo = min(pts, key=lambda p: p[1])
     hi = max(pts, key=lambda p: p[1])
-    print(f"  {lo[0]} -> {hi[0]}: cells x{hi[1]/lo[1]:,.0f}, depth /{lo[2]/hi[2]:.1f}")
+    print(
+        f"  {lo[0]} -> {hi[0]}: cells x{hi[1] / lo[1]:,.0f}, depth /{lo[2] / hi[2]:.1f}"
+    )
 
 
 if __name__ == "__main__":

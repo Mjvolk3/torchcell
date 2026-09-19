@@ -30,11 +30,10 @@ import os
 import os.path as osp
 import textwrap
 
-import pandas as pd
-from dotenv import load_dotenv
-
 import cost_data as CD
 import cost_model as CM
+import pandas as pd
+from dotenv import load_dotenv
 
 load_dotenv()
 RESULTS_DIR = osp.join(
@@ -98,8 +97,7 @@ def loaded_table(cells_per_gene: int = 250) -> pd.DataFrame:
                     b.recurring_usd / b.usable_cells, 4
                 ),
                 "hidden_multiplier": round(
-                    (b.recurring_usd / b.usable_cells)
-                    / (reagents / b.sequenced_cells),
+                    (b.recurring_usd / b.usable_cells) / (reagents / b.sequenced_cells),
                     1,
                 ),
                 "sequencing_share_pct": round(
@@ -162,10 +160,7 @@ def main() -> None:
             ]
         ].to_string(index=False)
     )
-    print(
-        "\nspread, cheapest to dearest: "
-        f"{CD.PER_CELL_SPREAD:,.0f}x\n"
-    )
+    print(f"\nspread, cheapest to dearest: {CD.PER_CELL_SPREAD:,.0f}x\n")
     print("=== End-to-end, per USABLE cell (6,000 genes, 250 cells/gene) ===")
     print(
         ld[

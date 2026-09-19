@@ -278,3 +278,32 @@ CI side (the part that actually validates the goal):
 4. Confirm with `gh api GET .../required_status_checks` that `contexts` is exactly
    `["ruff","mypy-check","pytest-coverage"]`, `strict:false`, and that a fresh PR now shows
    `pytest-coverage` as a **required** check that must pass to merge.
+
+## 2026.09.19 - Two months red, four causes
+
+`gh run list --branch main` showed the pytest workflow last green on 2026-07-15 and
+the lint workflow on 2026-07-14, with every run since red through 2026-09-19. Nobody
+noticed because pre-commit (mypy strict, ruff on staged files) and local pytest stayed
+green: the runner has no `.env`, no `DATA_ROOT`, no hand-installed packages. The causes,
+in the order they were found:
+
+1. `torchcell/graph/sgd.py` raised `ValueError` at import without `DATA_ROOT`, and
+   `torchcell.adapters` imports it through the SGD dataset, so 17 adapter test files
+   failed to collect. Fixed in PR #408: the data root is read when a locus is used.
+2. `tests/torchcell/verification/test_sourced.py` was not ruff-formatted (PR #408).
+3. `test_missing_kind_is_rejected` matched the pre-flux wording of the metabolism head
+   error; it failed locally as well (PR #408).
+4. `rdkit` was never declared: `torchcell/datamodels/compound_identity.py` imports it
+   (2026-09-13) and it had been pip-installed by hand on GilaHyper only, so 15 tests
+   failed on the runner with `ModuleNotFoundError`. `rdkit>=2026.3.6` is now in
+   `env/requirements.txt` (a cp313 manylinux wheel exists).
+5. The lint workflow's second step, ruff on experiments numbered 016 and up, found 76
+   findings and 53 unformatted files (the first red run on 2026-07-14 already showed
+   017). Safe fixes and the formatter applied, the rest by hand: raw docstrings where
+   backslashes appear, one-line docstrings, two unused locals, two `l` renames, one
+   lambda to def.
+
+Reproduce the runner locally: move `.env` aside, `env -u DATA_ROOT pytest tests/torchcell
+-m "not gpu"`. With `DATA_ROOT=""` (empty, not unset) the module-level guards in
+`test_s288c.py` and `test_gene_name_reconcile.py` do not skip and 20 errors appear that the
+runner never sees.

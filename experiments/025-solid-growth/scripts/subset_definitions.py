@@ -70,14 +70,17 @@ def load_triple_gene_sets() -> dict[int, tuple]:
         for line in f:
             v = line.rstrip("\n").split(",")
             out[int(v[col["idx_025"]])] = (
-                v[col["gene_a"]], v[col["gene_b"]], v[col["gene_c"]]
+                v[col["gene_a"]],
+                v[col["gene_b"]],
+                v[col["gene_c"]],
             )
     return out
 
 
 def scan_double_pairs(idx_double: list[int]) -> dict[int, frozenset]:
     """025 double index -> gene pair. Regex membership is exact: reference blocks carry
-    no perturbations, so gene names in raw bytes come only from experiment genotypes."""
+    no perturbations, so gene names in raw bytes come only from experiment genotypes.
+    """
     env = lmdb.open(osp.join(BUILD, "lmdb"), readonly=True, lock=False)
     out: dict[int, frozenset] = {}
     with env.begin() as txn:
@@ -141,7 +144,9 @@ def main() -> None:
     with open(osp.join(BUILD, "perturbation_count_index.json")) as f:
         count_index = json.load(f)
     idx_single, idx_double, idx_triple = (
-        count_index["1"], count_index["2"], count_index["3"]
+        count_index["1"],
+        count_index["2"],
+        count_index["3"],
     )
 
     triple_genes = load_triple_gene_sets()
@@ -173,9 +178,7 @@ def main() -> None:
         for k, s in q["pair_assignment"].items()
         if s in ("val", "test")
     }
-    q_excluded = sorted(
-        i for i in closure_doubles if double_pairs[i] in heldout_pairs
-    )
+    q_excluded = sorted(i for i in closure_doubles if double_pairs[i] in heldout_pairs)
     dump_gz(osp.join(RESULTS_DIR, "subset_Q_excluded_doubles.json.gz"), q_excluded)
 
     summary = {

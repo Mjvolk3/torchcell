@@ -29,7 +29,9 @@ from pydantic import BaseModel
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 RESULTS = REPO_ROOT / "experiments" / "025-solid-growth" / "results"
-TABLE_OUT = REPO_ROOT / "notes-tex" / "025-additive-baselines" / "tables" / "t5-wandb-runs.tex"
+TABLE_OUT = (
+    REPO_ROOT / "notes-tex" / "025-additive-baselines" / "tables" / "t5-wandb-runs.tex"
+)
 INDEX_OUT = RESULTS / "wandb_run_index_025.json"
 ENTITY = "zhao-group"
 P010 = "torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer"
@@ -54,6 +56,8 @@ class RunSpec(BaseModel):
 
 
 class RunRecord(RunSpec):
+    """A registry entry filled in with the W&B run's URL, state, and best validation score."""
+
     url: str
     state: str
     created: str
@@ -63,6 +67,8 @@ class RunRecord(RunSpec):
 
 
 class RunIndex(BaseModel):
+    """The resolved run registry written to disk: a count and the ordered records."""
+
     n_runs: int
     runs: list[RunRecord]
 
@@ -72,38 +78,110 @@ class RunIndex(BaseModel):
 # 1640 have no test evaluation; 1640's epoch 7 checkpoint was scored on CPU afterwards
 # (score_cgt_checkpoint_cpu.py); the IGB runs finished 30 epochs with no test evaluation.
 REGISTRY = [
-    RunSpec(label="CGT M01", arm="R (010 split)", project=P010, run_id="lzs9pcj3", job="IGB, 010",
-            config="equivariant_cell_graph_transformer_cabbi_002", gene_input="learnable table",
-            schedule="cosine, 30-epoch first cycle", readout="mean", graph_penalty="KL, layer 1, all nine heads",
-            scored_on_test="yes, 010 eval run"),
-    RunSpec(label="CGT M02", arm="R (010 split)", project=P010, run_id="yv4r30bi", job="IGB, 010",
-            config="equivariant_cell_graph_transformer_cabbi_002", gene_input="learnable table",
-            schedule="cosine, 30-epoch first cycle", readout="mean", graph_penalty="KL, layer 1, all nine heads",
-            scored_on_test="yes, 010 eval run"),
-    RunSpec(label="CGT M03", arm="R (010 split)", project=P010, run_id="c7671wgj", job="IGB, 010",
-            config="equivariant_cell_graph_transformer_cabbi_002", gene_input="learnable table",
-            schedule="cosine, longer first cycle", readout="mean", graph_penalty="KL, layer 1, all nine heads",
-            scored_on_test="yes, 010 eval run"),
-    RunSpec(label="GH 1598", arm="R", project=P025, run_id="0yw7moue", job="GilaHyper 1598",
-            config="cgt_s0_r_kl_000", gene_input="learnable table",
-            schedule="cosine, 010 schedule", readout="sum", graph_penalty="KL, corrected edge normalization",
-            scored_on_test="no"),
-    RunSpec(label="GH 1640", arm="Q", project=P025, run_id="327csnlk", job="GilaHyper 1640",
-            config="cgt_s0_q_kl_004", gene_input="learnable table",
-            schedule="cosine, 010 schedule", readout="sum", graph_penalty="KL, corrected edge normalization",
-            scored_on_test="epoch 7 checkpoint, CPU"),
-    RunSpec(label="IGB 2391132", arm="Q", project=P025, run_id="s1vx2zgw", job="IGB mmli 2391132",
-            config="cgt_s0_q_kl_emb_017", gene_input="four-region sequence composite",
-            schedule="constant 2.5e-4, 30 epochs", readout="perturbed CLS", graph_penalty="KL, corrected edge normalization",
-            scored_on_test="no"),
-    RunSpec(label="IGB 2391133", arm="Q", project=P025, run_id="8aa08xx0", job="IGB mmli 2391133",
-            config="cgt_s0_q_kl_calm_020", gene_input="CaLM codon embedding",
-            schedule="constant 2.5e-4, 30 epochs", readout="perturbed CLS", graph_penalty="KL, corrected edge normalization",
-            scored_on_test="no"),
-    RunSpec(label="IGB 2391134", arm="Q", project=P025, run_id="pmkzwwzw", job="IGB mmli 2391134",
-            config="cgt_s0_q_kl_prot_021", gene_input="ProtT5 protein embedding",
-            schedule="constant 2.5e-4, 30 epochs", readout="perturbed CLS", graph_penalty="KL, corrected edge normalization",
-            scored_on_test="no"),
+    RunSpec(
+        label="CGT M01",
+        arm="R (010 split)",
+        project=P010,
+        run_id="lzs9pcj3",
+        job="IGB, 010",
+        config="equivariant_cell_graph_transformer_cabbi_002",
+        gene_input="learnable table",
+        schedule="cosine, 30-epoch first cycle",
+        readout="mean",
+        graph_penalty="KL, layer 1, all nine heads",
+        scored_on_test="yes, 010 eval run",
+    ),
+    RunSpec(
+        label="CGT M02",
+        arm="R (010 split)",
+        project=P010,
+        run_id="yv4r30bi",
+        job="IGB, 010",
+        config="equivariant_cell_graph_transformer_cabbi_002",
+        gene_input="learnable table",
+        schedule="cosine, 30-epoch first cycle",
+        readout="mean",
+        graph_penalty="KL, layer 1, all nine heads",
+        scored_on_test="yes, 010 eval run",
+    ),
+    RunSpec(
+        label="CGT M03",
+        arm="R (010 split)",
+        project=P010,
+        run_id="c7671wgj",
+        job="IGB, 010",
+        config="equivariant_cell_graph_transformer_cabbi_002",
+        gene_input="learnable table",
+        schedule="cosine, longer first cycle",
+        readout="mean",
+        graph_penalty="KL, layer 1, all nine heads",
+        scored_on_test="yes, 010 eval run",
+    ),
+    RunSpec(
+        label="GH 1598",
+        arm="R",
+        project=P025,
+        run_id="0yw7moue",
+        job="GilaHyper 1598",
+        config="cgt_s0_r_kl_000",
+        gene_input="learnable table",
+        schedule="cosine, 010 schedule",
+        readout="sum",
+        graph_penalty="KL, corrected edge normalization",
+        scored_on_test="no",
+    ),
+    RunSpec(
+        label="GH 1640",
+        arm="Q",
+        project=P025,
+        run_id="327csnlk",
+        job="GilaHyper 1640",
+        config="cgt_s0_q_kl_004",
+        gene_input="learnable table",
+        schedule="cosine, 010 schedule",
+        readout="sum",
+        graph_penalty="KL, corrected edge normalization",
+        scored_on_test="epoch 7 checkpoint, CPU",
+    ),
+    RunSpec(
+        label="IGB 2391132",
+        arm="Q",
+        project=P025,
+        run_id="s1vx2zgw",
+        job="IGB mmli 2391132",
+        config="cgt_s0_q_kl_emb_017",
+        gene_input="four-region sequence composite",
+        schedule="constant 2.5e-4, 30 epochs",
+        readout="perturbed CLS",
+        graph_penalty="KL, corrected edge normalization",
+        scored_on_test="no",
+    ),
+    RunSpec(
+        label="IGB 2391133",
+        arm="Q",
+        project=P025,
+        run_id="8aa08xx0",
+        job="IGB mmli 2391133",
+        config="cgt_s0_q_kl_calm_020",
+        gene_input="CaLM codon embedding",
+        schedule="constant 2.5e-4, 30 epochs",
+        readout="perturbed CLS",
+        graph_penalty="KL, corrected edge normalization",
+        scored_on_test="no",
+    ),
+    RunSpec(
+        label="IGB 2391134",
+        arm="Q",
+        project=P025,
+        run_id="pmkzwwzw",
+        job="IGB mmli 2391134",
+        config="cgt_s0_q_kl_prot_021",
+        gene_input="ProtT5 protein embedding",
+        schedule="constant 2.5e-4, 30 epochs",
+        readout="perturbed CLS",
+        graph_penalty="KL, corrected edge normalization",
+        scored_on_test="no",
+    ),
 ]
 
 
@@ -115,7 +193,7 @@ def short_config(name: str) -> str:
     """The distinguishing tail of a config name; the full name is in the index json."""
     for prefix in ("equivariant_cell_graph_transformer_", "cgt_"):
         if name.startswith(prefix):
-            return name[len(prefix):]
+            return name[len(prefix) :]
     return name
 
 
@@ -165,7 +243,9 @@ def main() -> None:
     INDEX_OUT.write_text(json.dumps(index.model_dump(), indent=2))
     print(f"wrote {INDEX_OUT}")
     for r in runs:
-        print(f"{r.label:<12s} {r.run_id} {r.state:<9s} epochs {r.n_epochs_logged:>3d} best {r.val_pearson_best:.4f} @ {r.best_epoch}")
+        print(
+            f"{r.label:<12s} {r.run_id} {r.state:<9s} epochs {r.n_epochs_logged:>3d} best {r.val_pearson_best:.4f} @ {r.best_epoch}"
+        )
     write_table(index)
 
 

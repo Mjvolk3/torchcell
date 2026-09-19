@@ -38,18 +38,23 @@ from __future__ import annotations
 import os
 import os.path as osp
 
+import cost_model as CM
 import matplotlib.pyplot as plt
 import numpy as np
 from dotenv import load_dotenv
+from figure_checks import assert_legible
 from matplotlib.legend_handler import HandlerTuple
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from matplotlib.ticker import FuncFormatter
 
-import cost_model as CM
-from figure_checks import assert_legible
-from torchcell.utils import (PANEL_WIDTHS_MM, PLOT_PALETTE, PLOT_PALETTE_FILL,
-                            mm_to_in, savefig_true_size_svg)
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
 load_dotenv()
 OUT_DIR = osp.join(os.environ["ASSET_IMAGES_DIR"], "024-perturb-seq-costing")
@@ -154,8 +159,14 @@ def place_panel_letters(fig, axes, letters) -> None:
     for ax, letter in zip(axes, letters):
         bb = ax.get_tightbbox(r).transformed(inv)
         fig.text(
-            bb.x0 - 0.010, bb.y1 + 0.012, letter,
-            fontsize=8, fontweight="bold", ha="left", va="bottom", zorder=20,
+            bb.x0 - 0.010,
+            bb.y1 + 0.012,
+            letter,
+            fontsize=8,
+            fontweight="bold",
+            ha="left",
+            va="bottom",
+            zorder=20,
         )
 
 
@@ -179,7 +190,6 @@ def panel_a(ax) -> None:
     w = 0.38
 
     depth_req = [target / p.mrna_umis_per_cell for p in CM.PLATFORMS]
-    floor = [CM.CELLS_FLOOR] * len(CM.PLATFORMS)
 
     # ONE bar per platform, and the floor drawn ONCE as a rule.
     #
@@ -192,16 +202,30 @@ def panel_a(ax) -> None:
     # The reading also gets sharper: a bar above the rule is depth-limited, a
     # bar at it is floor-limited, and the two platforms whose bars sit exactly on
     # the rule are the ones where extra depth has stopped buying anything.
-    ax.bar(x, depth_req, w * 1.5,
-           color=[PLATFORM_COLOR[p.name] for p in CM.PLATFORMS],
-           edgecolor="black", linewidth=0.5)
+    ax.bar(
+        x,
+        depth_req,
+        w * 1.5,
+        color=[PLATFORM_COLOR[p.name] for p in CM.PLATFORMS],
+        edgecolor="black",
+        linewidth=0.5,
+    )
     ax.axhline(CM.CELLS_FLOOR, color="black", lw=0.7, ls=":")
-    ax.annotate("100-cell biological floor", (len(CM.PLATFORMS) - 0.55,
-                                              CM.CELLS_FLOOR * 1.12),
-                fontsize=4.5, ha="right", va="bottom")
-    ax.annotate("bars: cells to reach 200,000 pseudobulk UMIs",
-                (-0.45, 3200), fontsize=4.5, ha="left", va="top",
-                color=C_REF)
+    ax.annotate(
+        "100-cell biological floor",
+        (len(CM.PLATFORMS) - 0.55, CM.CELLS_FLOOR * 1.12),
+        fontsize=4.5,
+        ha="right",
+        va="bottom",
+    )
+    ax.annotate(
+        "bars: cells to reach 200,000 pseudobulk UMIs",
+        (-0.45, 3200),
+        fontsize=4.5,
+        ha="left",
+        va="top",
+        color=C_REF,
+    )
 
     ax.set_xticks(x)
     ax.set_xticklabels([PLATFORM_LABEL[p.name] for p in CM.PLATFORMS], fontsize=4.5)
@@ -221,7 +245,7 @@ def panel_a(ax) -> None:
 
 
 def panel_b(ax) -> None:
-    """Cost stack at the base design: reagents against sequencing.
+    r"""Cost stack at the base design: reagents against sequencing.
 
     TWO segments, separated by tone rather than by hatch, and both changes were
     forced by the same measurement. The stack used to carry three categories
@@ -268,10 +292,24 @@ def panel_b(ax) -> None:
     # something to be measured against the axis into something that states its
     # own decomposition.
     for xi, b, rg in zip(x, budgets, reagents):
-        ax.text(xi, b.recurring_usd / 1e3 + 10, f"${b.recurring_usd/1e3:.0f}k",
-                ha="center", va="bottom", fontsize=5, fontweight="bold")
-        ax.text(xi, rg + 6, f"${rg:.0f}k", ha="center", va="bottom",
-                fontsize=4.5, color=C_INK)
+        ax.text(
+            xi,
+            b.recurring_usd / 1e3 + 10,
+            f"${b.recurring_usd / 1e3:.0f}k",
+            ha="center",
+            va="bottom",
+            fontsize=5,
+            fontweight="bold",
+        )
+        ax.text(
+            xi,
+            rg + 6,
+            f"${rg:.0f}k",
+            ha="center",
+            va="bottom",
+            fontsize=4.5,
+            color=C_INK,
+        )
 
     ax.set_xticks(x)
     ax.set_xticklabels([PLATFORM_LABEL[b.platform] for b in budgets], fontsize=4.5)
@@ -287,16 +325,18 @@ def panel_b(ax) -> None:
             # wide enough to reach the third bar and be drawn across its top.
             # What each term contains belongs in the caption, which has room for
             # it; the legend only has to distinguish two things.
-            Patch(facecolor=KEY_DARK, edgecolor="black", lw=0.5,
-                  label="reagents"),
-            Patch(facecolor=KEY_PALE, edgecolor="black", lw=0.5,
-                  label="sequencing"),
+            Patch(facecolor=KEY_DARK, edgecolor="black", lw=0.5, label="reagents"),
+            Patch(facecolor=KEY_PALE, edgecolor="black", lw=0.5, label="sequencing"),
         ],
-        frameon=False, loc="upper left", fontsize=4.5, handlelength=1.0,
-        handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2,
+        frameon=False,
+        loc="upper left",
+        fontsize=4.5,
+        handlelength=1.0,
+        handletextpad=0.4,
+        labelspacing=0.3,
+        borderaxespad=0.2,
     )
-    ax.set_title(f"{BASE_CELLS_PER_GENE} cells per target gene", loc="left",
-                 fontsize=6)
+    ax.set_title(f"{BASE_CELLS_PER_GENE} cells per target gene", loc="left", fontsize=6)
     box(ax)
 
 
@@ -317,12 +357,22 @@ def panel_c(ax) -> None:
     """
     tiers = [50, 100, 250, 500, 1000]
     for p in CM.PLATFORMS:
-        ys = [CM.budget_for(CM.ScreenDesign(cells_per_gene=t), p).recurring_usd
-              for t in tiers]
-        ax.plot(tiers, ys, lw=0.9, color=PLATFORM_COLOR[p.name], marker="o",
-                ms=2.2, markeredgecolor="black", markeredgewidth=0.3,
-                ls=PROJECTED_LS if p.projected else "-",
-                label=PLATFORM_SHORT[p.name])
+        ys = [
+            CM.budget_for(CM.ScreenDesign(cells_per_gene=t), p).recurring_usd
+            for t in tiers
+        ]
+        ax.plot(
+            tiers,
+            ys,
+            lw=0.9,
+            color=PLATFORM_COLOR[p.name],
+            marker="o",
+            ms=2.2,
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            ls=PROJECTED_LS if p.projected else "-",
+            label=PLATFORM_SHORT[p.name],
+        )
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xticks(tiers)
@@ -331,14 +381,22 @@ def panel_c(ax) -> None:
     ax.set_ylim(8e3, 3e6)
     ax.set_xlabel("Cells per target gene")
     ax.set_ylabel("Recurring cost per screen")
-    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"${v/1e3:,.0f}k"))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"${v / 1e3:,.0f}k"))
     # The field-standard entry point, marked because it is the design the
     # recommendation in Sec. 5.5 actually names.
     ax.axvline(100, color=C_REF, lw=0.4, ls=":", zorder=1)
-    ax.text(104, 1.1e4, "field standard", fontsize=4.5, color=C_REF,
-            ha="left", va="bottom")
-    ax.legend(frameon=False, loc="upper left", fontsize=4.5, handlelength=1.3,
-              handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2)
+    ax.text(
+        104, 1.1e4, "field standard", fontsize=4.5, color=C_REF, ha="left", va="bottom"
+    )
+    ax.legend(
+        frameon=False,
+        loc="upper left",
+        fontsize=4.5,
+        handlelength=1.3,
+        handletextpad=0.4,
+        labelspacing=0.3,
+        borderaxespad=0.2,
+    )
     ax.set_title("Does the ordering survive the target?", loc="left", fontsize=6)
     box(ax)
 
@@ -384,11 +442,19 @@ def panel_d(ax) -> None:
         # same convention panel (e) uses, and here it does double duty: an open
         # marker lets the coincident purple show through at every stage, not
         # just in the gaps between dashes.
-        ax.plot(xs, y, lw=0.9, color=PLATFORM_COLOR[p.name], marker="o", ms=2.4,
-                markeredgecolor="black", markeredgewidth=0.3,
-                markerfacecolor="none" if p.projected else PLATFORM_COLOR[p.name],
-                ls=PROJECTED_LS if p.projected else "-")
-        finals.setdefault(f"{y[-1]*100:.1f}%", []).append((p, y[-1]))
+        ax.plot(
+            xs,
+            y,
+            lw=0.9,
+            color=PLATFORM_COLOR[p.name],
+            marker="o",
+            ms=2.4,
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            markerfacecolor="none" if p.projected else PLATFORM_COLOR[p.name],
+            ls=PROJECTED_LS if p.projected else "-",
+        )
+        finals.setdefault(f"{y[-1] * 100:.1f}%", []).append((p, y[-1]))
     # ONE label per distinct endpoint, not one per platform, and INSIDE the axes.
     # The 10x and scifi curves are not merely close, they are identical at every
     # stage: preindexing changes cells per priced channel and touches no term in
@@ -405,37 +471,60 @@ def panel_d(ax) -> None:
         # landed, printed along the lines they name. Below-left is clear on all
         # three, and the endpoints are far enough apart on a log axis that no
         # label reaches the curve beneath it.
-        ax.annotate(txt, (xs[-1], group[0][1]), xytext=(0, -6),
-                    textcoords="offset points", fontsize=4.5, ha="center",
-                    va="top", color=PLATFORM_COLOR[group[0][0].name])
+        ax.annotate(
+            txt,
+            (xs[-1], group[0][1]),
+            xytext=(0, -6),
+            textcoords="offset points",
+            fontsize=4.5,
+            ha="center",
+            va="top",
+            color=PLATFORM_COLOR[group[0][0].name],
+        )
 
     # Legend, because coincident curves cannot name themselves. The third entry
     # is a TUPLE handle -- purple solid and blue dashed drawn side by side under
     # one label -- which is the honest rendering of two platforms that share a
     # curve: neither is hidden, and the label says they are identical rather
     # than leaving a reader to wonder which color won.
-    coincident = [p for p in CM.PLATFORMS
-                  if p.name.startswith("10x")]
+    coincident = [p for p in CM.PLATFORMS if p.name.startswith("10x")]
     handles = [
-        Line2D([], [], color=PLATFORM_COLOR[p.name], lw=0.9,
-               label=PLATFORM_SHORT[p.name])
-        for p in CM.PLATFORMS if not p.name.startswith("10x")
+        Line2D(
+            [], [], color=PLATFORM_COLOR[p.name], lw=0.9, label=PLATFORM_SHORT[p.name]
+        )
+        for p in CM.PLATFORMS
+        if not p.name.startswith("10x")
     ]
     handles.append(
         tuple(
-            Line2D([], [], color=PLATFORM_COLOR[p.name], lw=0.9,
-                   ls=PROJECTED_LS if p.projected else "-", marker="o", ms=2.4,
-                   markeredgecolor="black", markeredgewidth=0.3,
-                   markerfacecolor="none" if p.projected
-                   else PLATFORM_COLOR[p.name])
+            Line2D(
+                [],
+                [],
+                color=PLATFORM_COLOR[p.name],
+                lw=0.9,
+                ls=PROJECTED_LS if p.projected else "-",
+                marker="o",
+                ms=2.4,
+                markeredgecolor="black",
+                markeredgewidth=0.3,
+                markerfacecolor="none" if p.projected else PLATFORM_COLOR[p.name],
+            )
             for p in coincident
         )
     )
     labels = [h.get_label() for h in handles[:-1]] + ["10x and 10x + scifi (identical)"]
-    ax.legend(handles, labels, frameon=False, loc="lower left", fontsize=4.5,
-              handlelength=1.8, handletextpad=0.4, labelspacing=0.3,
-              borderaxespad=0.2,
-              handler_map={tuple: HandlerTuple(ndivide=None, pad=0.0)})
+    ax.legend(
+        handles,
+        labels,
+        frameon=False,
+        loc="lower left",
+        fontsize=4.5,
+        handlelength=1.8,
+        handletextpad=0.4,
+        labelspacing=0.3,
+        borderaxespad=0.2,
+        handler_map={tuple: HandlerTuple(ndivide=None, pad=0.0)},
+    )
     ax.set_yscale("log")
     ax.set_xticks(xs)
     # Short forms, because five two-line category names do not fit across
@@ -447,15 +536,23 @@ def panel_d(ax) -> None:
     # categories rather than as one read passing through four successive
     # filters, which inverts the whole point of the panel: the curve is
     # CUMULATIVE, so each position is what is left, not what that stage costs.
-    ax.set_xticklabels(["1\nbought", "2\nnot PhiX", "3\nbarcode\nreads",
-                        "4\nmRNA\nnot rRNA", "5\ncell kept"], fontsize=4.5)
-    ax.set_xlabel("One read, through four successive tolls (cumulative)",
-                  fontsize=5)
+    ax.set_xticklabels(
+        [
+            "1\nbought",
+            "2\nnot PhiX",
+            "3\nbarcode\nreads",
+            "4\nmRNA\nnot rRNA",
+            "5\ncell kept",
+        ],
+        fontsize=4.5,
+    )
+    ax.set_xlabel("One read, through four successive tolls (cumulative)", fontsize=5)
     ax.set_xlim(-0.35, len(READ_STAGES) - 0.25)
     ax.set_ylim(3.5e-3, 2.0)
     ax.set_ylabel("Fraction of purchased reads surviving")
-    ax.set_title("What is left of a purchased read, toll by toll",
-                 loc="left", fontsize=6)
+    ax.set_title(
+        "What is left of a purchased read, toll by toll", loc="left", fontsize=6
+    )
     box(ax)
 
 
@@ -491,10 +588,17 @@ def panel_e(ax) -> None:
     # opposite of what is true. Curves are keyed on everything except
     # cells_per_batch; the operating points are drawn per platform afterwards.
     def signature(p):
-        return (p.mrna_umis_per_cell, p.mrna_read_fraction, p.usable_fraction,
-                p.reads_per_cell, p.cost_per_batch_usd, p.cells_per_sublibrary,
-                p.cost_per_sublibrary_usd, p.phix_fraction,
-                p.valid_barcode_fraction)
+        return (
+            p.mrna_umis_per_cell,
+            p.mrna_read_fraction,
+            p.usable_fraction,
+            p.reads_per_cell,
+            p.cost_per_batch_usd,
+            p.cells_per_sublibrary,
+            p.cost_per_sublibrary_usd,
+            p.phix_fraction,
+            p.valid_barcode_fraction,
+        )
 
     drawn: set = set()
     for p in CM.PLATFORMS:
@@ -514,39 +618,73 @@ def panel_e(ax) -> None:
     # parameter -- and so the two droplet points are visibly on one curve.
     for p in CM.PLATFORMS:
         b = CM.budget_for(design, p)
-        ax.plot([p.cells_per_batch], [b.recurring_usd], marker="o", ms=3.4,
-                color=PLATFORM_COLOR[p.name], markeredgecolor="black",
-                markeredgewidth=0.4, zorder=4,
-                fillstyle="none" if p.projected else "full")
+        ax.plot(
+            [p.cells_per_batch],
+            [b.recurring_usd],
+            marker="o",
+            ms=3.4,
+            color=PLATFORM_COLOR[p.name],
+            markeredgecolor="black",
+            markeredgewidth=0.4,
+            zorder=4,
+            fillstyle="none" if p.projected else "full",
+        )
     # Both notes go to the BOTTOM-LEFT, which is the only large empty region on
     # this panel: every curve enters at the top-left and falls to the right, so
     # the wedge under them at small x is clear. The coincidence note used to sit
     # at (2e4, 3.6e5), which is on the purple curve and beside its marker --
     # exactly where a note about a line must not be.
-    ax.annotate("10x and scifi are one curve;\npreindexing moves along it",
-                (5.2e3, 8.5e4), fontsize=4.5, color=C_REF,
-                ha="left", va="bottom")
+    ax.annotate(
+        "10x and scifi are one curve;\npreindexing moves along it",
+        (5.2e3, 8.5e4),
+        fontsize=4.5,
+        color=C_REF,
+        ha="left",
+        va="bottom",
+    )
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(4e3, 2e6)
     ax.set_ylim(3e4, 3e6)
     ax.set_xlabel("Cells per batch (run, or channel)")
     ax.set_ylabel("Recurring cost per screen")
-    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"${v/1e3:,.0f}k"))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"${v / 1e3:,.0f}k"))
     # A legend rather than a sentence: the marker convention is a key, and a key
     # drawn as its own marks is read at a glance where a sentence has to be
     # decoded. Grey swatches so it cannot be mistaken for a fifth platform.
     ax.legend(
         handles=[
-            Line2D([], [], marker="o", ls="", ms=3.4, color=KEY_DARK,
-                   markeredgecolor="black", markeredgewidth=0.4,
-                   label="published"),
-            Line2D([], [], marker="o", ls="", ms=3.4, markerfacecolor="none",
-                   color=KEY_DARK, markeredgecolor=KEY_DARK,
-                   markeredgewidth=0.8, label="projected"),
+            Line2D(
+                [],
+                [],
+                marker="o",
+                ls="",
+                ms=3.4,
+                color=KEY_DARK,
+                markeredgecolor="black",
+                markeredgewidth=0.4,
+                label="published",
+            ),
+            Line2D(
+                [],
+                [],
+                marker="o",
+                ls="",
+                ms=3.4,
+                markerfacecolor="none",
+                color=KEY_DARK,
+                markeredgecolor=KEY_DARK,
+                markeredgewidth=0.8,
+                label="projected",
+            ),
         ],
-        frameon=False, loc="lower left", fontsize=4.5, handlelength=1.0,
-        handletextpad=0.3, labelspacing=0.25, borderaxespad=0.2,
+        frameon=False,
+        loc="lower left",
+        fontsize=4.5,
+        handlelength=1.0,
+        handletextpad=0.3,
+        labelspacing=0.25,
+        borderaxespad=0.2,
     )
     ax.set_title("What is worth measuring next", loc="left", fontsize=6)
     box(ax)
@@ -560,14 +698,22 @@ def panel_e(ax) -> None:
 def panel_f(ax) -> None:
     """Multiplexing: main effects scale, named interactions do not."""
     plexes = list(range(1, 11))
-    cells = [CM.cells_for_main_effects_kplex(BASE_CELLS_PER_GENE, 6000, k)
-             for k in plexes]
-    pair_focus = [CM.cells_per_named_pair(n, 200, k)
-                  for n, k in zip(cells, plexes)]
+    cells = [
+        CM.cells_for_main_effects_kplex(BASE_CELLS_PER_GENE, 6000, k) for k in plexes
+    ]
+    pair_focus = [CM.cells_per_named_pair(n, 200, k) for n, k in zip(cells, plexes)]
 
-    ax.plot(plexes, np.array(cells) / 1e6, marker="o", ms=2.6, lw=0.8,
-            color=PLOT_PALETTE[0], markeredgecolor="black", markeredgewidth=0.4,
-            label="cells for main effects (left)")
+    ax.plot(
+        plexes,
+        np.array(cells) / 1e6,
+        marker="o",
+        ms=2.6,
+        lw=0.8,
+        color=PLOT_PALETTE[0],
+        markeredgecolor="black",
+        markeredgewidth=0.4,
+        label="cells for main effects (left)",
+    )
     ax.set_xlabel("Guides per cell, $k$")
     ax.set_ylabel("Total cells needed (millions)")
     ax.set_ylim(0, 1.7)
@@ -577,14 +723,29 @@ def panel_f(ax) -> None:
     box(ax)
 
     ax2 = ax.twinx()
-    ax2.plot(plexes, pair_focus, marker="s", ms=2.6, lw=0.8, ls="--",
-             color=PLOT_PALETTE[2], markeredgecolor="black", markeredgewidth=0.4,
-             label="cells per gene pair, 200-gene panel (right)")
+    ax2.plot(
+        plexes,
+        pair_focus,
+        marker="s",
+        ms=2.6,
+        lw=0.8,
+        ls="--",
+        color=PLOT_PALETTE[2],
+        markeredgecolor="black",
+        markeredgewidth=0.4,
+        label="cells per gene pair, 200-gene panel (right)",
+    )
     # The 100-cell floor is the minimum a perturbation needs to be callable at
     # all; a pair below it is not measurable however many cells the screen has.
     ax2.axhline(CM.CELLS_FLOOR, color=C_REF, lw=0.5, ls=":", zorder=1)
-    ax2.text(10.5, CM.CELLS_FLOOR * 1.12, "100-cell floor", fontsize=4.5,
-             color=C_REF, ha="right")
+    ax2.text(
+        10.5,
+        CM.CELLS_FLOOR * 1.12,
+        "100-cell floor",
+        fontsize=4.5,
+        color=C_REF,
+        ha="right",
+    )
     ax2.set_ylabel("Cells per gene pair")
     ax2.set_ylim(0, 400)
     ax2.spines["right"].set_visible(True)
@@ -592,10 +753,19 @@ def panel_f(ax) -> None:
 
     h1, l1 = ax.get_legend_handles_labels()
     h2, l2 = ax2.get_legend_handles_labels()
-    ax.legend(h1 + h2, l1 + l2, frameon=False, loc="upper right", fontsize=4.5,
-              handlelength=1.0, handletextpad=0.3, borderaxespad=0.2)
-    ax.set_title("Main effects get cheaper with plex; pairs do not",
-                 loc="left", fontsize=6)
+    ax.legend(
+        h1 + h2,
+        l1 + l2,
+        frameon=False,
+        loc="upper right",
+        fontsize=4.5,
+        handlelength=1.0,
+        handletextpad=0.3,
+        borderaxespad=0.2,
+    )
+    ax.set_title(
+        "Main effects get cheaper with plex; pairs do not", loc="left", fontsize=6
+    )
 
 
 def main() -> None:
@@ -639,10 +809,12 @@ def main() -> None:
         surv = 1.0
         for _, f in READ_STAGES:
             surv *= f(p)
-        print(f"  {PLATFORM_SHORT[p.name]:26s} ${b.recurring_usd:>9,.0f}  "
-              f"batches {b.n_batches:>4}  reagents "
-              f"{100*(b.protocol_usd+b.sublibrary_usd)/b.recurring_usd:4.0f}%  "
-              f"usable reads {100*surv:5.2f}%")
+        print(
+            f"  {PLATFORM_SHORT[p.name]:26s} ${b.recurring_usd:>9,.0f}  "
+            f"batches {b.n_batches:>4}  reagents "
+            f"{100 * (b.protocol_usd + b.sublibrary_usd) / b.recurring_usd:4.0f}%  "
+            f"usable reads {100 * surv:5.2f}%"
+        )
 
 
 if __name__ == "__main__":

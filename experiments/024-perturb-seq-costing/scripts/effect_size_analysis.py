@@ -56,14 +56,13 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
+import pickle
 
+import lmdb
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from tqdm import tqdm
-
-import lmdb
-import pickle
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -90,15 +89,18 @@ class LmdbRecords:
     """
 
     def __init__(self, root: str) -> None:
+        """Open the dataset's LMDB read-only and count its records."""
         self.path = osp.join(root, "processed", "lmdb")
         self.env = lmdb.open(self.path, readonly=True, lock=False, subdir=True)
         with self.env.begin() as tx:
             self.n = tx.stat()["entries"]
 
     def __len__(self) -> int:
+        """Return the number of records in the LMDB."""
         return self.n
 
     def __getitem__(self, i: int) -> dict:
+        """Unpickle record ``i``, raising KeyError when no such key exists."""
         with self.env.begin() as tx:
             raw = tx.get(str(i).encode())
         if raw is None:
@@ -148,8 +150,12 @@ def extract(dataset, name: str) -> list[dict]:
         # Distribution of the response among genes that respond at the 1.25x
         # level -- the population that actually enters the power calculation.
         resp = a[a > log2_thresh(1.25)]
-        rec["median_abs_log2fc_responders"] = float(np.median(resp)) if resp.size else np.nan
-        rec["p90_abs_log2fc_responders"] = float(np.percentile(resp, 90)) if resp.size else np.nan
+        rec["median_abs_log2fc_responders"] = (
+            float(np.median(resp)) if resp.size else np.nan
+        )
+        rec["p90_abs_log2fc_responders"] = (
+            float(np.percentile(resp, 90)) if resp.size else np.nan
+        )
         rec["max_abs_log2fc"] = float(a.max())
         out.append(rec)
         PER_GENE.setdefault(name, []).append(ratios)
@@ -186,10 +192,18 @@ def distributions(per_gene: dict[str, list], out_dir: str) -> None:
         a = np.concatenate(vals)
         counts, _ = np.histogram(a, bins=HIST_EDGES)
         for lo, hi, c in zip(HIST_EDGES[:-1], HIST_EDGES[1:], counts):
-            rows.append({"dataset": name, "lo": lo, "hi": hi, "count": int(c),
-                         "frac": float(c) / a.size})
+            rows.append(
+                {
+                    "dataset": name,
+                    "lo": lo,
+                    "hi": hi,
+                    "count": int(c),
+                    "frac": float(c) / a.size,
+                }
+            )
     pd.DataFrame(rows).to_csv(
-        osp.join(out_dir, "effect_size_histogram.csv"), index=False)
+        osp.join(out_dir, "effect_size_histogram.csv"), index=False
+    )
 
     rows = []
     for name, vals in per_gene.items():
@@ -207,19 +221,25 @@ def distributions(per_gene: dict[str, list], out_dir: str) -> None:
             # different definition of responding.
             pooled = np.concatenate([np.abs(v) for v in vals])
             resp = pooled[pooled > t]
-            rows.append({
-                "dataset": name, "fold": f,
-                "median_responders": float(np.median(per_strain)),
-                "q25_responders": float(np.percentile(per_strain, 25)),
-                "q75_responders": float(np.percentile(per_strain, 75)),
-                "median_abs_log2fc_responders": (
-                    float(np.median(resp)) if resp.size else np.nan),
-                "median_fold_responders": (
-                    float(2 ** np.median(resp)) if resp.size else np.nan),
-                "n_strains": n_strains,
-            })
+            rows.append(
+                {
+                    "dataset": name,
+                    "fold": f,
+                    "median_responders": float(np.median(per_strain)),
+                    "q25_responders": float(np.percentile(per_strain, 25)),
+                    "q75_responders": float(np.percentile(per_strain, 75)),
+                    "median_abs_log2fc_responders": (
+                        float(np.median(resp)) if resp.size else np.nan
+                    ),
+                    "median_fold_responders": (
+                        float(2 ** np.median(resp)) if resp.size else np.nan
+                    ),
+                    "n_strains": n_strains,
+                }
+            )
     pd.DataFrame(rows).to_csv(
-        osp.join(out_dir, "effect_size_threshold_ladder.csv"), index=False)
+        osp.join(out_dir, "effect_size_threshold_ladder.csv"), index=False
+    )
 
 
 # --- extrapolating to more perturbations --------------------------------------
@@ -246,8 +266,9 @@ UNION_DRAWS = 2000
 UNION_K = list(range(1, 11))
 
 
-def union_extrapolation(resp_sets: np.ndarray, rng: np.random.Generator,
-                        n_draws: int = UNION_DRAWS) -> pd.DataFrame:
+def union_extrapolation(
+    resp_sets: np.ndarray, rng: np.random.Generator, n_draws: int = UNION_DRAWS
+) -> pd.DataFrame:
     """Expected responders when k independent single-deletion sets are combined.
 
     ``resp_sets`` is a boolean strains x genes matrix of "did this gene respond".
@@ -261,12 +282,14 @@ def union_extrapolation(resp_sets: np.ndarray, rng: np.random.Generator,
         for j in range(n_draws):
             idx = rng.choice(n_strains, size=k, replace=False)
             sizes[j] = float(resp_sets[idx].any(axis=0).sum())
-        rows.append({
-            "k": k,
-            "median": float(np.median(sizes)),
-            "q25": float(np.percentile(sizes, 25)),
-            "q75": float(np.percentile(sizes, 75)),
-        })
+        rows.append(
+            {
+                "k": k,
+                "median": float(np.median(sizes)),
+                "q25": float(np.percentile(sizes, 25)),
+                "q75": float(np.percentile(sizes, 75)),
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -296,9 +319,11 @@ def fit_saturating(df: pd.DataFrame) -> dict:
             if best is None or sse < best[0]:
                 best = (sse, g_eff, pp)
     _, g_eff, p = best
-    return {"G_eff": float(g_eff), "p": float(p),
-            "predicted": {int(kk): float(g_eff * (1 - (1 - p) ** kk))
-                          for kk in UNION_K}}
+    return {
+        "G_eff": float(g_eff),
+        "p": float(p),
+        "predicted": {int(kk): float(g_eff * (1 - (1 - p) ** kk)) for kk in UNION_K},
+    }
 
 
 def require(path: str, what: str) -> str:
@@ -327,12 +352,9 @@ def main() -> None:
     )
 
     recs = []
-    recs += extract(LmdbRecords(kem_root),
-                    "kemmeren2014_single")
-    recs += extract(LmdbRecords(sm_root),
-                    "sameith2015_single")
-    recs += extract(LmdbRecords(dm_root),
-                    "sameith2015_double")
+    recs += extract(LmdbRecords(kem_root), "kemmeren2014_single")
+    recs += extract(LmdbRecords(sm_root), "sameith2015_single")
+    recs += extract(LmdbRecords(dm_root), "sameith2015_double")
 
     df = pd.DataFrame(recs)
     df.to_csv(osp.join(RESULTS_DIR, "effect_size_per_strain.csv"), index=False)
@@ -345,7 +367,8 @@ def main() -> None:
         unions[name] = union_extrapolation(np.vstack(rows), rng)
         unions[name]["dataset"] = name
     pd.concat(unions.values()).to_csv(
-        osp.join(RESULTS_DIR, "union_extrapolation.csv"), index=False)
+        osp.join(RESULTS_DIR, "union_extrapolation.csv"), index=False
+    )
 
     # Extrapolation curve from KEMMEREN: 1,484 singles, an unbiased draw from the
     # deletion collection, so it carries the best estimate of overlap structure.
@@ -369,10 +392,14 @@ def main() -> None:
     lin = union[union.k == 1]["median"].iloc[0]
     print("k   union   linear kR(1)   union/linear")
     for _, r in union.iterrows():
-        print(f"{int(r.k):<3} {r['median']:7.0f} {lin*r.k:12.0f} "
-              f"{r['median']/(lin*r.k):13.2f}")
-    print(f"\nWITHIN Sameith at k=2: null {fit['sameith_null_k2']:.0f} vs "
-          f"observed {obs2:.0f} -> ratio {fit['sameith_epistasis_ratio_k2']:.2f}")
+        print(
+            f"{int(r.k):<3} {r['median']:7.0f} {lin * r.k:12.0f} "
+            f"{r['median'] / (lin * r.k):13.2f}"
+        )
+    print(
+        f"\nWITHIN Sameith at k=2: null {fit['sameith_null_k2']:.0f} vs "
+        f"observed {obs2:.0f} -> ratio {fit['sameith_epistasis_ratio_k2']:.2f}"
+    )
 
     # --- Q1/Q2: responder counts and effect distribution, by dataset ----------
     agg = (

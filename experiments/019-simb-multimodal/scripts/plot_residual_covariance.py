@@ -82,6 +82,7 @@ RANK_GRID = [1, 2, 4, 8, 16, 32, 64, 128]
 CHOSEN_RANK = 32
 N_SPLITS = 20  # random splits, to give the split-half statistic an error bar
 
+
 def _apply_plot_style() -> None:
     """Apply the repo figure standards -- CALLED AT PLOT TIME, not at import.
 
@@ -197,12 +198,16 @@ def main() -> None:
         embedding_names=[EMBEDDING], data_root=data_root, genome=genome, graph=None
     )
     lookup = {
-        item.id: torch.cat([t.flatten() for t in item.embeddings.values()]).cpu().numpy()
+        item.id: torch.cat([t.flatten() for t in item.embeddings.values()])
+        .cpu()
+        .numpy()
         for item in built[EMBEDDING]
     }
     emb = np.stack([lookup[g] for g in genes])
 
-    R = Y - _knn_loo(emb, Y, KNN_K)  # the honest residual: a real conditional mean removed
+    R = Y - _knn_loo(
+        emb, Y, KNN_K
+    )  # the honest residual: a real conditional mean removed
     results: dict[str, Any] = {"n_strains": S, "n_genes": F, "knn_k": KNN_K}
 
     # ---- Panel A: random split-half agreement, repeated for an error bar ----
@@ -242,7 +247,9 @@ def main() -> None:
         np.linalg.norm(emb[ca].mean(axis=0) - emb[cb].mean(axis=0))
         / np.linalg.norm(emb.std(axis=0))
     )
-    print(f"conditional split (by perturbed-gene PC1): r={cond:.4f}  (separation {sep:.2f} sd)")
+    print(
+        f"conditional split (by perturbed-gene PC1): r={cond:.4f}  (separation {sep:.2f} sd)"
+    )
     results["conditional_split"] = {"agreement": cond, "embedding_separation_sd": sep}
 
     # ---- Panel B: eigenspectrum of the standardized residuals ----
@@ -279,7 +286,10 @@ def main() -> None:
     in_sample = cum
     k_max = min(256, held_out.size)
     results["cv_spectrum"] = {
-        str(k): {"in_sample": float(in_sample[k - 1]), "held_out": float(held_out[k - 1])}
+        str(k): {
+            "in_sample": float(in_sample[k - 1]),
+            "held_out": float(held_out[k - 1]),
+        }
         for k in RANK_GRID
         if k <= k_max
     }
@@ -287,8 +297,10 @@ def main() -> None:
     print(f"  {'k':>5} {'in-sample':>11} {'held-out':>10} {'random floor':>13}")
     for k in RANK_GRID:
         if k <= k_max:
-            print(f"  {k:>5} {100 * in_sample[k - 1]:>10.1f}% {100 * held_out[k - 1]:>9.1f}%"
-                  f" {100 * k / F:>12.2f}%")
+            print(
+                f"  {k:>5} {100 * in_sample[k - 1]:>10.1f}% {100 * held_out[k - 1]:>9.1f}%"
+                f" {100 * k / F:>12.2f}%"
+            )
 
     # ---------------- figure ----------------
     _apply_plot_style()
@@ -310,10 +322,14 @@ def main() -> None:
     gi = gene_order[np.linspace(0, F - 1, n_g).astype(int)]
     M = R[np.ix_(si, gi)]
     v = float(np.percentile(np.abs(M), 98))
-    im = axA.imshow(M, aspect="auto", cmap="RdBu_r", vmin=-v, vmax=v, interpolation="nearest")
+    im = axA.imshow(
+        M, aspect="auto", cmap="RdBu_r", vmin=-v, vmax=v, interpolation="nearest"
+    )
     axA.set_xlabel(f"reporter genes ({n_g} of {F})")
     axA.set_ylabel(f"strains ({n_s} of {S})")
-    axA.set_title("A  the residual matrix R, log2 ratio\n(1 deletion strain per row)", fontsize=6)
+    axA.set_title(
+        "A  the residual matrix R, log2 ratio\n(1 deletion strain per row)", fontsize=6
+    )
     cb = fig.colorbar(im, ax=axA, fraction=0.045, pad=0.03)
     cb.ax.tick_params(labelsize=5, width=0.4)
     cb.outline.set_linewidth(0.4)
@@ -321,7 +337,10 @@ def main() -> None:
     # --- B: individual perturbations -- what one ROW looks like ---
     for j, row in enumerate(si[:: max(1, n_s // 4)][:4]):
         axB.plot(
-            R[row, gi], lw=0.35, color=PLOT_PALETTE[j], alpha=0.85,
+            R[row, gi],
+            lw=0.35,
+            color=PLOT_PALETTE[j],
+            alpha=0.85,
             label=f"$\\Delta${genes[row]}",
         )
     axB.axhline(0, color="black", lw=0.4)
@@ -342,37 +361,54 @@ def main() -> None:
     # occupies this much of the plane".
     nr = float(np.percentile(np.abs(np.stack([na, nb])), 99))
     axC.add_patch(
-        plt.Circle((0, 0), nr, fill=False, ec=PLOT_PALETTE[5], lw=0.7, ls="--", zorder=5)
+        plt.Circle(
+            (0, 0), nr, fill=False, ec=PLOT_PALETTE[5], lw=0.7, ls="--", zorder=5
+        )
     )
     axC.plot([-1, 1], [-1, 1], color="black", lw=0.5, ls=(0, (4, 3)))
     axC.set_xlim(-1, 1)
     axC.set_ylim(-1, 1)
     axC.set_xlabel("gene-gene corr, half A")
     axC.set_ylabel("gene-gene corr, half B")
-    axC.set_title(f"C  floor check: structure exists\nr={obs:.3f} vs null {null:.4f}", fontsize=6)
+    axC.set_title(
+        f"C  floor check: structure exists\nr={obs:.3f} vs null {null:.4f}", fontsize=6
+    )
     axC.xaxis.set_major_locator(MultipleLocator(0.5))
     axC.yaxis.set_major_locator(MultipleLocator(0.5))
     axC.legend(
         handles=[
             Patch(facecolor=PLOT_PALETTE[0], label="observed pairs"),
-            Line2D([0], [0], color=PLOT_PALETTE[5], ls="--", lw=0.7, label="null (99%)"),
+            Line2D(
+                [0], [0], color=PLOT_PALETTE[5], ls="--", lw=0.7, label="null (99%)"
+            ),
             Line2D([0], [0], color="black", ls=(0, (4, 3)), lw=0.5, label="y = x"),
         ],
-        frameon=False, fontsize=5, loc="upper left", handlelength=1.4,
+        frameon=False,
+        fontsize=5,
+        loc="upper left",
+        handlelength=1.4,
     )
 
     # --- D: cross-validated spectrum ---
     ks = np.arange(1, k_max + 1)
-    axD.plot(ks, 100 * in_sample[:k_max], color=PLOT_PALETTE[0], lw=1.0, label="in-sample")
-    axD.plot(ks, 100 * held_out[:k_max], color=PLOT_PALETTE[1], lw=1.0, label="held-out")
-    axD.plot(ks, 100 * ks / F, color=PLOT_PALETTE[5], lw=0.7, ls=":", label="random floor")
+    axD.plot(
+        ks, 100 * in_sample[:k_max], color=PLOT_PALETTE[0], lw=1.0, label="in-sample"
+    )
+    axD.plot(
+        ks, 100 * held_out[:k_max], color=PLOT_PALETTE[1], lw=1.0, label="held-out"
+    )
+    axD.plot(
+        ks, 100 * ks / F, color=PLOT_PALETTE[5], lw=0.7, ls=":", label="random floor"
+    )
     axD.axvline(CHOSEN_RANK, color="black", lw=0.6, ls=(0, (4, 3)))
     axD.text(CHOSEN_RANK * 1.15, 4, f"k={CHOSEN_RANK}", fontsize=5)
     axD.set_xscale("log")
     axD.set_xlabel("rank k")
     axD.set_ylabel("cumulative variance (%)")
     axD.set_ylim(0, 100)
-    axD.set_title("D  which components GENERALIZE\n(fit half A, score half B)", fontsize=6)
+    axD.set_title(
+        "D  which components GENERALIZE\n(fit half A, score half B)", fontsize=6
+    )
     axD.yaxis.set_major_locator(MultipleLocator(20))
     axD.yaxis.set_minor_locator(MultipleLocator(10))
     axD.tick_params(which="minor", length=0)
@@ -385,8 +421,14 @@ def main() -> None:
     vals = [float(np.mean(reps)), cond, null]
     errs = [float(np.std(reps)), 0.0, 0.0]
     axE.bar(
-        range(3), vals, yerr=errs, color=[PLOT_PALETTE[0], PLOT_PALETTE[1], PLOT_PALETTE[5]],
-        edgecolor="black", linewidth=0.5, capsize=2, error_kw={"lw": 0.5},
+        range(3),
+        vals,
+        yerr=errs,
+        color=[PLOT_PALETTE[0], PLOT_PALETTE[1], PLOT_PALETTE[5]],
+        edgecolor="black",
+        linewidth=0.5,
+        capsize=2,
+        error_kw={"lw": 0.5},
     )
     for i, val in enumerate(vals):
         axE.text(i, val + 0.03, f"{val:.3f}", ha="center", fontsize=5)
@@ -399,7 +441,9 @@ def main() -> None:
     axE.tick_params(which="minor", length=0)
     axE.grid(axis="y", which="both", lw=0.3, color="0.9")
     axE.set_axisbelow(True)
-    axE.set_title("E  THE RESULT: not conditional\non which gene was deleted", fontsize=6)
+    axE.set_title(
+        "E  THE RESULT: not conditional\non which gene was deleted", fontsize=6
+    )
 
     # --- F: what the null actually does, drawn small so the control is legible ---
     axF.axis("off")
@@ -420,13 +464,16 @@ def main() -> None:
         for sp in a.spines.values():
             sp.set_linewidth(0.4)
     axF.text(
-        0.0, 0.40,
+        0.0,
+        0.40,
         "Each GENE COLUMN is permuted over strains\nINDEPENDENTLY. Every gene keeps its own\n"
         "values (same column histogram), but the\npairing between columns is destroyed -- so\n"
         "any gene-gene correlation is removed while\nper-gene properties are held fixed.\n\n"
         "This is a FLOOR, not the interesting test:\nit only asks whether cross-gene structure\n"
         "exists at all. Panel E is the real question.",
-        fontsize=5, va="top", linespacing=1.5,
+        fontsize=5,
+        va="top",
+        linespacing=1.5,
     )
 
     out_dir = asset_images_dir(__file__, "019-simb-multimodal")
@@ -447,12 +494,20 @@ def main() -> None:
     print(f"  random split         r = {np.mean(reps):.4f} +/- {np.std(reps):.4f}")
     print(f"  perturbed-gene split r = {cond:.4f}")
     d = (np.mean(reps) - cond) / max(np.std(reps), 1e-9)
-    print(f"  difference = {np.mean(reps) - cond:+.4f}  ({d:+.1f} sd of the random split)")
+    print(
+        f"  difference = {np.mean(reps) - cond:+.4f}  ({d:+.1f} sd of the random split)"
+    )
     if abs(d) < 2:
-        print("  -> covariance does NOT depend on which gene was perturbed: a single GLOBAL")
-        print("     Sigma is the right model, and there is no conditional structure to gain.")
+        print(
+            "  -> covariance does NOT depend on which gene was perturbed: a single GLOBAL"
+        )
+        print(
+            "     Sigma is the right model, and there is no conditional structure to gain."
+        )
     else:
-        print("  -> covariance DOES vary with the perturbation: a conditional Sigma could")
+        print(
+            "  -> covariance DOES vary with the perturbation: a conditional Sigma could"
+        )
         print("     capture structure a global V V^T cannot.")
 
 

@@ -150,9 +150,7 @@ def main() -> None:
         "best_val_betaxanthin": result["best"]["val_betaxanthin"],
         "fva_licensed_reactions_width_le_1": n_licensed,
         "n_model_interval_narrower_than_fva": narrower,
-        "frac_model_interval_narrower": (
-            narrower / n_licensed if n_licensed else None
-        ),
+        "frac_model_interval_narrower": (narrower / n_licensed if n_licensed else None),
         "median_model_width_licensed": float(np.median(model_width[licensed]))
         if n_licensed
         else None,
@@ -167,9 +165,7 @@ def main() -> None:
         # Feasibility of the SAMPLES, not of a mean. A sampler that is feasible only on
         # average is not a feasible sampler.
         "sample_feasibility": {
-            k: float(v)
-            for k, v in result["final"].items()
-            if k.startswith("feas_")
+            k: float(v) for k, v in result["final"].items() if k.startswith("feas_")
         },
         "note": (
             "Classical sampling targets a uniform distribution over the polytope; this "

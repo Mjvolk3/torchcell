@@ -174,7 +174,12 @@ DISJOINT_RUNS = [
     },
 ]
 RUN_COLORS = [PLOT_PALETTE[1], PLOT_PALETTE[2], PLOT_PALETTE[3], PLOT_PALETTE[4]]
-RUN_SHORT = ["GH 1640, table, cosine", "IGB 2391132, composite", "IGB 2391133, CaLM", "IGB 2391134, ProtT5"]
+RUN_SHORT = [
+    "GH 1640, table, cosine",
+    "IGB 2391132, composite",
+    "IGB 2391133, CaLM",
+    "IGB 2391134, ProtT5",
+]
 # Tick labels for the narrow dumbbell panel: the job number alone, the gene input under it.
 RUN_TICK = ["1640\ntable", "2391132\ncomposite", "2391133\nCaLM", "2391134\nProtT5"]
 
@@ -211,7 +216,9 @@ def fetch_disjoint_histories(arm_history: pd.DataFrame) -> pd.DataFrame:
     are fetched once and cached beside it. Delete the csv to refetch.
     """
     frames = [
-        arm_history[arm_history["arm"] == "Q"][["epoch", VAL_KEY]].assign(key="job_1640")
+        arm_history[arm_history["arm"] == "Q"][["epoch", VAL_KEY]].assign(
+            key="job_1640"
+        )
     ]
     path = osp.join(RESULTS_DIR, DISJOINT_HISTORY_CSV)
     wanted = [r for r in DISJOINT_RUNS if r["history"] == "wandb"]
@@ -233,7 +240,9 @@ def fetch_disjoint_histories(arm_history: pd.DataFrame) -> pd.DataFrame:
         print(f"wrote {path}")
     missing = {r["key"] for r in wanted} - set(cached["key"])
     if missing:
-        raise SystemExit(f"cache {path} lacks runs {sorted(missing)}; delete it to refetch")
+        raise SystemExit(
+            f"cache {path} lacks runs {sorted(missing)}; delete it to refetch"
+        )
     frames.append(cached[["epoch", VAL_KEY, "key"]])
     return pd.concat(frames, ignore_index=True)
 
@@ -280,7 +289,9 @@ def arm_q_gene_semantics() -> dict[str, object]:
     q = load_gz("query_pair_disjoint_splits_025.json.gz")
     pair_assignment: dict[str, str] = q["pair_assignment"]
     subset = np.array(sorted(load_gz("subset_S0_indices.json.gz")), dtype=np.int64)
-    recap = pd.read_csv(RECAP, usecols=["idx_025", "gene_a", "gene_b", "gene_c"]).set_index("idx_025")
+    recap = pd.read_csv(
+        RECAP, usecols=["idx_025", "gene_a", "gene_b", "gene_c"]
+    ).set_index("idx_025")
     genes = recap.loc[subset, ["gene_a", "gene_b", "gene_c"]].to_numpy()
 
     counts: Counter = Counter()
@@ -300,7 +311,10 @@ def arm_q_gene_semantics() -> dict[str, object]:
         (array_gene[i],) = set(trip) - set(best)
 
     row_of = {int(r): i for i, r in enumerate(subset)}
-    parts = {s: np.array([row_of[int(r)] for r in q["splits"][s]]) for s in ("train", "val", "test")}
+    parts = {
+        s: np.array([row_of[int(r)] for r in q["splits"][s]])
+        for s in ("train", "val", "test")
+    }
     train_genes = set(genes[parts["train"]].ravel())
     out: dict[str, object] = {
         "n_distinct_pairs": len(counts),
@@ -317,7 +331,9 @@ def arm_q_gene_semantics() -> dict[str, object]:
         out["parts"][s] = {
             "records": int(rows.size),
             "query_pairs": len(pairs),
-            "query_pairs_in_train": sum(1 for p in pairs if pair_assignment["+".join(p)] == "train"),
+            "query_pairs_in_train": sum(
+                1 for p in pairs if pair_assignment["+".join(p)] == "train"
+            ),
             "distinct_array_genes": len(arr),
             "array_genes_in_train": sum(1 for g in arr if g in train_genes),
             "query_pair_genes": len(qp_genes),
@@ -331,7 +347,9 @@ def arm_q_gene_semantics() -> dict[str, object]:
 def test_table(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
     test = df[df["split"] == "test"]
     return {
-        arm: test[test["arm"] == arm].groupby("model")["pearson"].agg(["mean", "std", "count"])
+        arm: test[test["arm"] == arm]
+        .groupby("model")["pearson"]
+        .agg(["mean", "std", "count"])
         for arm in ("R", "Q")
     }
 
@@ -344,7 +362,9 @@ def val_nulls(df: pd.DataFrame, arm: str) -> dict[str, float]:
 # --- figure 1: the ladder under both splits -----------------------------------------
 
 
-def ladder(ax, agg: pd.DataFrame, arm: str, extra: list[tuple[str, float, bool]], title: str):
+def ladder(
+    ax, agg: pd.DataFrame, arm: str, extra: list[tuple[str, float, bool]], title: str
+):
     """Bars for the six baselines then the transformer entries of one arm.
 
     ``extra`` is (tick label, value, is_validation) per transformer bar. Test scores
@@ -357,7 +377,13 @@ def ladder(ax, agg: pd.DataFrame, arm: str, extra: list[tuple[str, float, bool]]
     err = [0.0 if np.isnan(agg.loc[m, "std"]) else agg.loc[m, "std"] for m in MODELS]
     ax.bar(x[: len(MODELS)], vals, 0.7, yerr=err, error_kw=EKW, color=FILL[arm], **BAR)
     for k, (_, v, is_validation) in enumerate(extra):
-        ax.bar(x[len(MODELS) + k], v, 0.7, color=COLOR[arm] if is_validation else FILL[arm], **BAR)
+        ax.bar(
+            x[len(MODELS) + k],
+            v,
+            0.7,
+            color=COLOR[arm] if is_validation else FILL[arm],
+            **BAR,
+        )
     ax.set_xticks(x)
     ax.set_xticklabels(cats, rotation=45, ha="right", fontsize=5)
     ax.set_ylabel("Held-out Pearson r")
@@ -367,13 +393,25 @@ def ladder(ax, agg: pd.DataFrame, arm: str, extra: list[tuple[str, float, bool]]
         Patch(facecolor=FILL[arm], label=f"{title}, test score", **BAR),
         Patch(facecolor=COLOR[arm], label="validation max over epochs", **BAR),
     ]
-    ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2,
-              handlelength=1.4, borderpad=0.4, columnspacing=1.0)
+    ax.legend(
+        handles=handles,
+        loc="lower left",
+        bbox_to_anchor=(0, 1.02),
+        ncol=2,
+        handlelength=1.4,
+        borderpad=0.4,
+        columnspacing=1.0,
+    )
 
 
 def fold_spread(ax, cv: pd.DataFrame, agg_q: pd.DataFrame) -> dict[str, object]:
     """Five disjoint folds on the 010 build per model, with the arm Q single split marked."""
-    models = ["B3_hierarchical_mean", "B1_additive_gene", "B2_additive_plus_pair", "B5_gene_embedding_mlp"]
+    models = [
+        "B3_hierarchical_mean",
+        "B1_additive_gene",
+        "B2_additive_plus_pair",
+        "B5_gene_embedding_mlp",
+    ]
     # B5 has three seeds per fold; average them so each fold is one point.
     per_fold = cv.groupby(["model", "fold"])["pearson"].mean().reset_index()
     out = {}
@@ -381,12 +419,38 @@ def fold_spread(ax, cv: pd.DataFrame, agg_q: pd.DataFrame) -> dict[str, object]:
     rng = np.random.default_rng(0)
     for i, m in enumerate(models):
         pts = per_fold[per_fold["model"] == m].sort_values("fold")["pearson"].to_numpy()
-        ax.bar(i, pts.mean(), 0.7, yerr=pts.std(ddof=1), error_kw=EKW, color=PLOT_PALETTE[5], **BAR)
+        ax.bar(
+            i,
+            pts.mean(),
+            0.7,
+            yerr=pts.std(ddof=1),
+            error_kw=EKW,
+            color=PLOT_PALETTE[5],
+            **BAR,
+        )
         jitter = rng.uniform(-0.18, 0.18, size=pts.size)
-        ax.plot(i + jitter, pts, linestyle="none", marker="o", markersize=2.2,
-                markerfacecolor="white", markeredgecolor="black", markeredgewidth=0.5, zorder=3)
-        ax.plot(i, agg_q.loc[m, "mean"], linestyle="none", marker="D", markersize=3.2,
-                markerfacecolor=COLOR["Q"], markeredgecolor="black", markeredgewidth=0.5, zorder=4)
+        ax.plot(
+            i + jitter,
+            pts,
+            linestyle="none",
+            marker="o",
+            markersize=2.2,
+            markerfacecolor="white",
+            markeredgecolor="black",
+            markeredgewidth=0.5,
+            zorder=3,
+        )
+        ax.plot(
+            i,
+            agg_q.loc[m, "mean"],
+            linestyle="none",
+            marker="D",
+            markersize=3.2,
+            markerfacecolor=COLOR["Q"],
+            markeredgecolor="black",
+            markeredgewidth=0.5,
+            zorder=4,
+        )
         out[m] = {
             "fold_mean": float(pts.mean()),
             "fold_sd": float(pts.std(ddof=1)),
@@ -399,14 +463,43 @@ def fold_spread(ax, cv: pd.DataFrame, agg_q: pd.DataFrame) -> dict[str, object]:
     ax.set_ylabel("Test Pearson r, held-out screens")
     style_metric_axis(ax, 0.30)
     handles = [
-        Patch(facecolor=PLOT_PALETTE[5], label="5 disjoint folds, 010 build, mean ± sd", **BAR),
-        Line2D([], [], linestyle="none", marker="o", markersize=2.2, markerfacecolor="white",
-               markeredgecolor="black", markeredgewidth=0.5, label="one fold"),
-        Line2D([], [], linestyle="none", marker="D", markersize=3.2, markerfacecolor=COLOR["Q"],
-               markeredgecolor="black", markeredgewidth=0.5, label="arm Q split"),
+        Patch(
+            facecolor=PLOT_PALETTE[5],
+            label="5 disjoint folds, 010 build, mean ± sd",
+            **BAR,
+        ),
+        Line2D(
+            [],
+            [],
+            linestyle="none",
+            marker="o",
+            markersize=2.2,
+            markerfacecolor="white",
+            markeredgecolor="black",
+            markeredgewidth=0.5,
+            label="one fold",
+        ),
+        Line2D(
+            [],
+            [],
+            linestyle="none",
+            marker="D",
+            markersize=3.2,
+            markerfacecolor=COLOR["Q"],
+            markeredgecolor="black",
+            markeredgewidth=0.5,
+            label="arm Q split",
+        ),
     ]
-    ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(0, 1.02), ncol=3,
-              handlelength=1.4, borderpad=0.4, columnspacing=1.0)
+    ax.legend(
+        handles=handles,
+        loc="lower left",
+        bbox_to_anchor=(0, 1.02),
+        ncol=3,
+        handlelength=1.4,
+        borderpad=0.4,
+        columnspacing=1.0,
+    )
     return out
 
 
@@ -414,35 +507,73 @@ def val_curves(ax, df: pd.DataFrame, arm_history: pd.DataFrame, summary: dict) -
     jobs = {"R": "GH 1598", "Q": "GH 1640"}
     for arm in ("R", "Q"):
         h = arm_history[arm_history["arm"] == arm].sort_values("epoch")
-        ax.plot(h["epoch"], h[VAL_KEY], color=COLOR[arm], linewidth=0.9, label=f"CGT arm {arm}, {jobs[arm]}")
-        ax.axhline(val_nulls(df, arm)["B1_additive_gene"], color=COLOR[arm], linewidth=0.7,
-                   linestyle=(0, (4, 2)), label=f"B1 additive ridge, arm {arm} (val)")
+        ax.plot(
+            h["epoch"],
+            h[VAL_KEY],
+            color=COLOR[arm],
+            linewidth=0.9,
+            label=f"CGT arm {arm}, {jobs[arm]}",
+        )
+        ax.axhline(
+            val_nulls(df, arm)["B1_additive_gene"],
+            color=COLOR[arm],
+            linewidth=0.7,
+            linestyle=(0, (4, 2)),
+            label=f"B1 additive ridge, arm {arm} (val)",
+        )
         i = int(h[VAL_KEY].idxmax())
-        ax.plot(h.loc[i, "epoch"], h.loc[i, VAL_KEY], marker="o", markersize=2.5, markerfacecolor="white",
-                markeredgecolor=COLOR[arm], markeredgewidth=0.7, linestyle="none")
+        ax.plot(
+            h.loc[i, "epoch"],
+            h.loc[i, VAL_KEY],
+            marker="o",
+            markersize=2.5,
+            markerfacecolor="white",
+            markeredgecolor=COLOR[arm],
+            markeredgewidth=0.7,
+            linestyle="none",
+        )
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Validation Pearson r")
     ax.set_xlim(left=0)
     style_metric_axis(ax, 0.55)
-    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, handlelength=1.6,
-              borderpad=0.4, columnspacing=1.0)
+    ax.legend(
+        loc="lower left",
+        bbox_to_anchor=(0, 1.02),
+        ncol=2,
+        handlelength=1.6,
+        borderpad=0.4,
+        columnspacing=1.0,
+    )
 
 
 def figure_1(df, agg, summary, arm_history, cv, test_1640: float) -> dict[str, object]:
     apply_paper_style()
-    fig, axes = plt.subplots(2, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(134.0)))
+    fig, axes = plt.subplots(
+        2, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(134.0))
+    )
     (ax_a, ax_b), (ax_c, ax_d) = axes
 
     cgt010 = summary["transformer"]["R"]["010_checkpoints_test_pearson"]
     ref_r = summary["transformer"]["R"]["job_1598_replication"]
     ref_q = summary["transformer"]["Q"]["job_1640_disjoint"]
-    ladder(ax_a, agg["R"], "R",
-           [(CGT_010[k], cgt010[k], False) for k in CGT_010] + [("CGT GH 1598\n(val max)", ref_r["val_pearson_best_epoch"], True)],
-           "arm R, random over records")
-    ladder(ax_b, agg["Q"], "Q",
-           [("CGT GH 1640\n(val max)", ref_q["val_pearson_best_epoch"], True),
-            ("CGT GH 1640\n(epoch 7, test)", test_1640, False)],
-           "arm Q, query-pair disjoint")
+    ladder(
+        ax_a,
+        agg["R"],
+        "R",
+        [(CGT_010[k], cgt010[k], False) for k in CGT_010]
+        + [("CGT GH 1598\n(val max)", ref_r["val_pearson_best_epoch"], True)],
+        "arm R, random over records",
+    )
+    ladder(
+        ax_b,
+        agg["Q"],
+        "Q",
+        [
+            ("CGT GH 1640\n(val max)", ref_q["val_pearson_best_epoch"], True),
+            ("CGT GH 1640\n(epoch 7, test)", test_1640, False),
+        ],
+        "arm Q, query-pair disjoint",
+    )
     val_curves(ax_c, df, arm_history, summary)
     spread = fold_spread(ax_d, cv, agg["Q"])
 
@@ -462,12 +593,19 @@ def figure_1(df, agg, summary, arm_history, cv, test_1640: float) -> dict[str, o
 # --- figure 2: every transformer run on the disjoint split ---------------------------
 
 
-def figure_2(df, agg, history: pd.DataFrame, stats: dict[str, dict], test_1640: float) -> None:
+def figure_2(
+    df, agg, history: pd.DataFrame, stats: dict[str, dict], test_1640: float
+) -> None:
     apply_paper_style()
-    fig, (ax_a, ax_b, ax_c) = plt.subplots(1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(68.0)))
+    fig, (ax_a, ax_b, ax_c) = plt.subplots(
+        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(68.0))
+    )
     nulls_val = val_nulls(df, "Q")
     b1_val, b5_val = nulls_val["B1_additive_gene"], nulls_val["B5_gene_embedding_mlp"]
-    b1_test, b5_test = agg["Q"].loc["B1_additive_gene", "mean"], agg["Q"].loc["B5_gene_embedding_mlp", "mean"]
+    b1_test, b5_test = (
+        agg["Q"].loc["B1_additive_gene", "mean"],
+        agg["Q"].loc["B5_gene_embedding_mlp", "mean"],
+    )
     top = 0.10 + max(stats[r["key"]]["val_best"] for r in DISJOINT_RUNS)
     top = float(np.ceil(top * 10) / 10)
 
@@ -476,28 +614,74 @@ def figure_2(df, agg, history: pd.DataFrame, stats: dict[str, dict], test_1640: 
         h = history[history["key"] == r["key"]].sort_values("epoch")
         ax_a.plot(h["epoch"], h[VAL_KEY], color=c, linewidth=0.9, label=short)
         i = int(h[VAL_KEY].idxmax())
-        ax_a.plot(h.loc[i, "epoch"], h.loc[i, VAL_KEY], marker="o", markersize=2.5, markerfacecolor="white",
-                  markeredgecolor=c, markeredgewidth=0.7, linestyle="none")
-    ax_a.axhline(b1_val, color="black", linewidth=0.7, linestyle=(0, (4, 2)), label="B1 additive ridge (val)")
-    ax_a.axhline(b5_val, color=PLOT_PALETTE[5], linewidth=0.7, linestyle=(0, (1, 1.5)), label="B5 MLP, 3 seeds (val)")
+        ax_a.plot(
+            h.loc[i, "epoch"],
+            h.loc[i, VAL_KEY],
+            marker="o",
+            markersize=2.5,
+            markerfacecolor="white",
+            markeredgecolor=c,
+            markeredgewidth=0.7,
+            linestyle="none",
+        )
+    ax_a.axhline(
+        b1_val,
+        color="black",
+        linewidth=0.7,
+        linestyle=(0, (4, 2)),
+        label="B1 additive ridge (val)",
+    )
+    ax_a.axhline(
+        b5_val,
+        color=PLOT_PALETTE[5],
+        linewidth=0.7,
+        linestyle=(0, (1, 1.5)),
+        label="B5 MLP, 3 seeds (val)",
+    )
     ax_a.set_xlabel("Epoch")
     ax_a.set_ylabel("Validation Pearson r")
     ax_a.set_xlim(left=0)
     style_metric_axis(ax_a, top)
     ax_a.yaxis.set_major_locator(MultipleLocator(0.1))
     ax_a.yaxis.set_minor_locator(MultipleLocator(0.05))
-    ax_a.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, handlelength=1.6,
-                borderpad=0.4, columnspacing=0.8)
+    ax_a.legend(
+        loc="lower left",
+        bbox_to_anchor=(0, 1.02),
+        ncol=2,
+        handlelength=1.6,
+        borderpad=0.4,
+        columnspacing=0.8,
+    )
 
     # b) best and last epoch per run, as a dumbbell
     x = np.arange(len(DISJOINT_RUNS))
     for i, (r, c) in enumerate(zip(DISJOINT_RUNS, RUN_COLORS)):
         s = stats[r["key"]]
-        ax_b.plot([i, i], [s["val_last"], s["val_best"]], color=c, linewidth=1.2, zorder=2)
-        ax_b.plot(i, s["val_best"], marker="o", markersize=4, markerfacecolor="white", markeredgecolor=c,
-                  markeredgewidth=0.8, linestyle="none", zorder=3)
-        ax_b.plot(i, s["val_last"], marker="o", markersize=4, markerfacecolor=c, markeredgecolor="black",
-                  markeredgewidth=0.5, linestyle="none", zorder=3)
+        ax_b.plot(
+            [i, i], [s["val_last"], s["val_best"]], color=c, linewidth=1.2, zorder=2
+        )
+        ax_b.plot(
+            i,
+            s["val_best"],
+            marker="o",
+            markersize=4,
+            markerfacecolor="white",
+            markeredgecolor=c,
+            markeredgewidth=0.8,
+            linestyle="none",
+            zorder=3,
+        )
+        ax_b.plot(
+            i,
+            s["val_last"],
+            marker="o",
+            markersize=4,
+            markerfacecolor=c,
+            markeredgecolor="black",
+            markeredgewidth=0.5,
+            linestyle="none",
+            zorder=3,
+        )
     ax_b.axhline(b1_val, color="black", linewidth=0.7, linestyle=(0, (4, 2)))
     ax_b.axhline(b5_val, color=PLOT_PALETTE[5], linewidth=0.7, linestyle=(0, (1, 1.5)))
     ax_b.set_xticks(x)
@@ -508,19 +692,56 @@ def figure_2(df, agg, history: pd.DataFrame, stats: dict[str, dict], test_1640: 
     ax_b.yaxis.set_major_locator(MultipleLocator(0.1))
     ax_b.yaxis.set_minor_locator(MultipleLocator(0.05))
     handles = [
-        Line2D([], [], linestyle="none", marker="o", markersize=4, markerfacecolor="white", markeredgecolor="black",
-               markeredgewidth=0.8, label="best validation epoch"),
-        Line2D([], [], linestyle="none", marker="o", markersize=4, markerfacecolor="black", markeredgecolor="black",
-               markeredgewidth=0.5, label="last logged epoch"),
+        Line2D(
+            [],
+            [],
+            linestyle="none",
+            marker="o",
+            markersize=4,
+            markerfacecolor="white",
+            markeredgecolor="black",
+            markeredgewidth=0.8,
+            label="best validation epoch",
+        ),
+        Line2D(
+            [],
+            [],
+            linestyle="none",
+            marker="o",
+            markersize=4,
+            markerfacecolor="black",
+            markeredgecolor="black",
+            markeredgewidth=0.5,
+            label="last logged epoch",
+        ),
     ]
-    ax_b.legend(handles=handles, loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, handlelength=1.2,
-                borderpad=0.4, columnspacing=0.8)
+    ax_b.legend(
+        handles=handles,
+        loc="lower left",
+        bbox_to_anchor=(0, 1.02),
+        ncol=2,
+        handlelength=1.2,
+        borderpad=0.4,
+        columnspacing=0.8,
+    )
 
     # c) the test comparison: the one scored checkpoint, and the empty slots the replicates
     # will fill. The nulls are the arm Q test rows; the caption says what the slots are.
     ax_c.bar(0, test_1640, 0.7, color=FILL["Q"], **BAR)
-    ax_c.axhline(b1_test, color="black", linewidth=0.7, linestyle=(0, (4, 2)), label="B1 additive ridge (test)")
-    ax_c.axhline(b5_test, color=PLOT_PALETTE[5], linewidth=0.7, linestyle=(0, (1, 1.5)), label="B5 MLP, 3 seeds (test)")
+    ax_c.axhline(
+        b1_test,
+        color="black",
+        linewidth=0.7,
+        linestyle=(0, (4, 2)),
+        label="B1 additive ridge (test)",
+    )
+    ax_c.axhline(
+        b5_test,
+        color=PLOT_PALETTE[5],
+        linewidth=0.7,
+        linestyle=(0, (1, 1.5)),
+        label="B5 MLP, 3 seeds (test)",
+    )
     ax_c.set_xticks(np.arange(len(PLANNED_TEST_SLOTS)))
     ax_c.set_xticklabels(PLANNED_TEST_SLOTS, fontsize=5)
     ax_c.set_xlim(-0.6, len(PLANNED_TEST_SLOTS) - 0.4)
@@ -528,8 +749,13 @@ def figure_2(df, agg, history: pd.DataFrame, stats: dict[str, dict], test_1640: 
     style_metric_axis(ax_c, top)
     ax_c.yaxis.set_major_locator(MultipleLocator(0.1))
     ax_c.yaxis.set_minor_locator(MultipleLocator(0.05))
-    ax_c.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=1, handlelength=1.6,
-                borderpad=0.4)
+    ax_c.legend(
+        loc="lower left",
+        bbox_to_anchor=(0, 1.02),
+        ncol=1,
+        handlelength=1.6,
+        borderpad=0.4,
+    )
 
     fig.tight_layout(pad=0.4, w_pad=1.2, rect=(0, 0, 1, 0.93))
     for ax, letter in zip((ax_a, ax_b, ax_c), "abc"):
@@ -568,11 +794,26 @@ def table_arms(sizes: dict) -> None:
     r, q = sizes["R"], sizes["Q"]
     rows = [
         ("Held-out unit", "record", "query pair"),
-        ("Recurring query pairs", f"{r['n_recurring_pairs']}, shared by every part", f"{q['n_recurring_pairs']}, no pair in two parts"),
-        ("Query pairs, train / val / test", "", " / ".join(str(q["pairs"][s]) for s in ("train", "val", "test"))),
-        ("Records, train / val / test", " / ".join(fmt_int(r["records"][s]) for s in ("train", "val", "test")),
-         " / ".join(fmt_int(q["records"][s]) for s in ("train", "val", "test"))),
-        ("Split artifact", r"\file{pinned_splits_from_010_seed_42.json.gz}", r"\file{query_pair_disjoint_splits_025.json.gz}"),
+        (
+            "Recurring query pairs",
+            f"{r['n_recurring_pairs']}, shared by every part",
+            f"{q['n_recurring_pairs']}, no pair in two parts",
+        ),
+        (
+            "Query pairs, train / val / test",
+            "",
+            " / ".join(str(q["pairs"][s]) for s in ("train", "val", "test")),
+        ),
+        (
+            "Records, train / val / test",
+            " / ".join(fmt_int(r["records"][s]) for s in ("train", "val", "test")),
+            " / ".join(fmt_int(q["records"][s]) for s in ("train", "val", "test")),
+        ),
+        (
+            "Split artifact",
+            r"\file{pinned_splits_from_010_seed_42.json.gz}",
+            r"\file{query_pair_disjoint_splits_025.json.gz}",
+        ),
         ("Transformer run", "GH 1598", "GH 1640, and Table~\\ref{tab:disjointruns}"),
     ]
     body = ["\\begin{tabular}{lll}", "\\toprule", " & Arm R & Arm Q \\\\", "\\midrule"]
@@ -581,10 +822,20 @@ def table_arms(sizes: dict) -> None:
     write_table("t1-arms.tex", "\n".join(body))
 
 
-def table_heldout(agg: dict, cgt010: dict, ref_r: dict, ref_q: dict, d010: pd.DataFrame, scores: dict) -> None:
-    t010 = d010[d010["split"] == "test"].groupby("model")["pearson"].agg(["mean", "std"])
-    order = ["B0_train_mean", "B4_query_pair_only", "B3_hierarchical_mean", "B1_additive_gene",
-             "B2_additive_plus_pair", "B5_gene_embedding_mlp"]
+def table_heldout(
+    agg: dict, cgt010: dict, ref_r: dict, ref_q: dict, d010: pd.DataFrame, scores: dict
+) -> None:
+    t010 = (
+        d010[d010["split"] == "test"].groupby("model")["pearson"].agg(["mean", "std"])
+    )
+    order = [
+        "B0_train_mean",
+        "B4_query_pair_only",
+        "B3_hierarchical_mean",
+        "B1_additive_gene",
+        "B2_additive_plus_pair",
+        "B5_gene_embedding_mlp",
+    ]
 
     def cell(a: pd.DataFrame, m: str) -> str:
         if a.loc[m, "count"] > 1:
@@ -596,16 +847,28 @@ def table_heldout(agg: dict, cgt010: dict, ref_r: dict, ref_q: dict, d010: pd.Da
             return f"${fmt(t010.loc[m, 'mean'])} \\pm {fmt(t010.loc[m, 'std'])}$"
         return fmt(t010.loc[m, "mean"])
 
-    body = ["\\begin{tabular}{lrrr}", "\\toprule",
-            " & \\multicolumn{2}{c}{Arm R, random over records} & Arm Q, query-pair disjoint \\\\",
-            "Model & 010 build & 025 build & 025 build \\\\", "\\midrule"]
+    body = [
+        "\\begin{tabular}{lrrr}",
+        "\\toprule",
+        " & \\multicolumn{2}{c}{Arm R, random over records} & Arm Q, query-pair disjoint \\\\",
+        "Model & 010 build & 025 build & 025 build \\\\",
+        "\\midrule",
+    ]
     for m in order:
-        body.append(f"{SHORT[m]} & {cell010(m)} & {cell(agg['R'], m)} & {cell(agg['Q'], m)} \\\\")
+        body.append(
+            f"{SHORT[m]} & {cell010(m)} & {cell(agg['R'], m)} & {cell(agg['Q'], m)} \\\\"
+        )
     lo, hi = min(cgt010.values()), max(cgt010.values())
     body.append(f"CGT, three 010 checkpoints, test & {fmt(lo)} to {fmt(hi)} & & \\\\")
-    body.append(f"CGT GH 1598, val max, epoch {ref_r['best_epoch']} of {ref_r['n_epochs_logged']} & & {fmt(ref_r['val_pearson_best_epoch'])} & \\\\")
-    body.append(f"CGT GH 1640, val max, epoch {ref_q['best_epoch']} of {ref_q['n_epochs_logged']} & & & {fmt(ref_q['val_pearson_best_epoch'])} \\\\")
-    body.append(f"CGT GH 1640, epoch {scores['epoch']} checkpoint, test & & & {fmt(scores['parts']['test']['pearson'])} \\\\")
+    body.append(
+        f"CGT GH 1598, val max, epoch {ref_r['best_epoch']} of {ref_r['n_epochs_logged']} & & {fmt(ref_r['val_pearson_best_epoch'])} & \\\\"
+    )
+    body.append(
+        f"CGT GH 1640, val max, epoch {ref_q['best_epoch']} of {ref_q['n_epochs_logged']} & & & {fmt(ref_q['val_pearson_best_epoch'])} \\\\"
+    )
+    body.append(
+        f"CGT GH 1640, epoch {scores['epoch']} checkpoint, test & & & {fmt(scores['parts']['test']['pearson'])} \\\\"
+    )
     body += ["\\bottomrule", "\\end{tabular}", ""]
     write_table("t2-heldout.tex", "\n".join(body))
 
@@ -619,17 +882,38 @@ def table_armq_genes(sem: dict) -> None:
     rows = [
         ("Records", fmt_int(v["records"]), fmt_int(t["records"])),
         ("Query pairs held out", str(v["query_pairs"]), str(t["query_pairs"])),
-        ("Query pairs also in training", str(v["query_pairs_in_train"]), str(t["query_pairs_in_train"])),
-        ("Distinct array genes", fmt_int(v["distinct_array_genes"]), fmt_int(t["distinct_array_genes"])),
-        ("Array genes present in training", seen(v, "array_genes_in_train", "distinct_array_genes"),
-         seen(t, "array_genes_in_train", "distinct_array_genes")),
-        ("Query-pair genes present in training", seen(v, "query_pair_genes_in_train", "query_pair_genes"),
-         seen(t, "query_pair_genes_in_train", "query_pair_genes")),
-        ("Records with all three genes in training",
-         f"{100 * v['frac_records_all_three_genes_in_train']:.1f}\\%",
-         f"{100 * t['frac_records_all_three_genes_in_train']:.1f}\\%"),
+        (
+            "Query pairs also in training",
+            str(v["query_pairs_in_train"]),
+            str(t["query_pairs_in_train"]),
+        ),
+        (
+            "Distinct array genes",
+            fmt_int(v["distinct_array_genes"]),
+            fmt_int(t["distinct_array_genes"]),
+        ),
+        (
+            "Array genes present in training",
+            seen(v, "array_genes_in_train", "distinct_array_genes"),
+            seen(t, "array_genes_in_train", "distinct_array_genes"),
+        ),
+        (
+            "Query-pair genes present in training",
+            seen(v, "query_pair_genes_in_train", "query_pair_genes"),
+            seen(t, "query_pair_genes_in_train", "query_pair_genes"),
+        ),
+        (
+            "Records with all three genes in training",
+            f"{100 * v['frac_records_all_three_genes_in_train']:.1f}\\%",
+            f"{100 * t['frac_records_all_three_genes_in_train']:.1f}\\%",
+        ),
     ]
-    body = ["\\begin{tabular}{lrr}", "\\toprule", " & Validation & Test \\\\", "\\midrule"]
+    body = [
+        "\\begin{tabular}{lrr}",
+        "\\toprule",
+        " & Validation & Test \\\\",
+        "\\midrule",
+    ]
     body += [f"{a} & {b} & {c} \\\\" for a, b, c in rows]
     body += ["\\bottomrule", "\\end{tabular}", ""]
     write_table("t4-armq-genes.tex", "\n".join(body))
@@ -637,8 +921,12 @@ def table_armq_genes(sem: dict) -> None:
 
 def table_disjoint_runs(stats: dict) -> None:
     # Fixed widths on the two free-text columns, so the row fits the 182 mm text block.
-    body = ["\\begin{tabular}{ll>{\\raggedright\\arraybackslash}p{28mm}>{\\raggedright\\arraybackslash}p{38mm}rrr}", "\\toprule",
-            "Run & Config & Gene input & Schedule, readout & Epochs & Val max (epoch) & Val last \\\\", "\\midrule"]
+    body = [
+        "\\begin{tabular}{ll>{\\raggedright\\arraybackslash}p{28mm}>{\\raggedright\\arraybackslash}p{38mm}rrr}",
+        "\\toprule",
+        "Run & Config & Gene input & Schedule, readout & Epochs & Val max (epoch) & Val last \\\\",
+        "\\midrule",
+    ]
     for r in DISJOINT_RUNS:
         s = stats[r["key"]]
         config = r["config"].replace("_", "\\_")
@@ -688,8 +976,15 @@ def main() -> None:
         "arms": sizes,
         "arm_q_gene_semantics": sem,
         "test_pearson": {
-            arm: {m: {"mean": float(a.loc[m, "mean"]), "sd": (None if np.isnan(a.loc[m, "std"]) else float(a.loc[m, "std"]))}
-                  for m in MODELS}
+            arm: {
+                m: {
+                    "mean": float(a.loc[m, "mean"]),
+                    "sd": (
+                        None if np.isnan(a.loc[m, "std"]) else float(a.loc[m, "std"])
+                    ),
+                }
+                for m in MODELS
+            }
             for arm, a in agg.items()
         },
         "val_nulls": {arm: val_nulls(df, arm) for arm in ("R", "Q")},

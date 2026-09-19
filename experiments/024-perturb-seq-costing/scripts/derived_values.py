@@ -32,22 +32,22 @@ import math
 import os
 import os.path as osp
 
-from dotenv import load_dotenv
-from pydantic import BaseModel
-
 import cost_data as CD
 import cost_model as CM
 import design_equation as DE
 import method_data as MD
+from dotenv import load_dotenv
+from pydantic import BaseModel
 
 load_dotenv()
-RESULTS = osp.join(
-    os.environ["EXPERIMENT_ROOT"], "024-perturb-seq-costing", "results"
-)
+RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "024-perturb-seq-costing", "results")
 
 # Total mRNA per cell, the three candidate denominators of table 3.
-TRANSCRIPT_TOTALS = {"review (10,500)": 10_500, "Brettner (30,000)": 30_000,
-                     "Jackson (60,000)": 60_000}
+TRANSCRIPT_TOTALS = {
+    "review (10,500)": 10_500,
+    "Brettner (30,000)": 30_000,
+    "Jackson (60,000)": 60_000,
+}
 MOLECULES_PER_GENE = 3.5  # the review's per-gene figure, table 3
 SPLITPOOL_DEPTH = 410.0  # mRNA UMIs per cell, Brettner
 
@@ -71,6 +71,7 @@ class Pairing(BaseModel):
 
     @property
     def spread(self) -> float:
+        """Ratio of the largest to the smallest cells-per-perturbation value."""
         v = list(self.cells_per_perturbation.values())
         return max(v) / min(v)
 
@@ -82,9 +83,15 @@ def pairing(label: str, delta_log2: float) -> Pairing:
     for name, total in TRANSCRIPT_TOTALS.items():
         p_j = MOLECULES_PER_GENE / total
         cells[name] = A * (1.0 / (SPLITPOOL_DEPTH * p_j) + phi)
-    return Pairing(label=label, delta_log2=delta_log2, fold=2.0**delta_log2,
-                   A=A, phi=phi, floor_cells=A * phi,
-                   cells_per_perturbation=cells)
+    return Pairing(
+        label=label,
+        delta_log2=delta_log2,
+        fold=2.0**delta_log2,
+        A=A,
+        phi=phi,
+        floor_cells=A * phi,
+        cells_per_perturbation=cells,
+    )
 
 
 def transcript_sensitivity() -> dict:
@@ -93,8 +100,10 @@ def transcript_sensitivity() -> dict:
     nominal = pairing("nominal two-fold", 1.0)
     # The pairing the document used to print, kept so the correction is legible.
     A_two = DE.power_coefficient(1.0)
-    bad = {n: A_two * (1.0 / (SPLITPOOL_DEPTH * (MOLECULES_PER_GENE / t)) + measured.phi)
-           for n, t in TRANSCRIPT_TOTALS.items()}
+    bad = {
+        n: A_two * (1.0 / (SPLITPOOL_DEPTH * (MOLECULES_PER_GENE / t)) + measured.phi)
+        for n, t in TRANSCRIPT_TOTALS.items()
+    }
     return {
         "measured": measured.model_dump(),
         "nominal_two_fold": nominal.model_dump(),
@@ -102,7 +111,7 @@ def transcript_sensitivity() -> dict:
         "spread_nominal": nominal.spread,
         "superseded_incoherent_pairing": {
             "note": "A from the two-fold pair with phi from the measured pair; "
-                    "implied floor is only %.0f cells" % (A_two * measured.phi),
+            "implied floor is only %.0f cells" % (A_two * measured.phi),
             "values": bad,
         },
     }
@@ -125,8 +134,9 @@ def depletion_lever() -> dict:
     }
 
 
-def sublibrary_counts(cells_per_run: float = 480_000.0,
-                      collision_target: float = 0.01) -> dict:
+def sublibrary_counts(
+    cells_per_run: float = 480_000.0, collision_target: float = 0.01
+) -> dict:
     """Sec. 5.4: how many sublibraries a collision target forces, and its cost.
 
     Splitting into S sublibraries divides the cells drawing from one barcode
@@ -183,7 +193,7 @@ def fourth_plate() -> dict:
 
 
 def plate_set_lifetime(cells_per_run: float = 480_000.0) -> dict:
-    """Sec. 5.1: how much screening one $7,699 plate set actually buys.
+    r"""Sec. 5.1: how much screening one $7,699 plate set actually buys.
 
     Raised in review: the start-up cost is amortized over 215 protocol runs, but
     the plates are retired by freeze--thaw rather than by depletion, so if a plate
@@ -234,7 +244,6 @@ def sublibrary_item_reconciliation() -> dict:
     The gap is the leeway their sentence says it includes, so this is a quoted
     total against an itemized subtotal rather than a discrepancy.
     """
-    items = {i.name: i for i in CD.BRETTNER_ITEMS}
     itemized = sum(i.usd for i in CD.BRETTNER_ITEMS if i.scaling == "per_sublibrary")
     return {
         "itemized_usd": itemized,
@@ -251,47 +260,63 @@ def main() -> None:
     print("--- Sec. 4.1: transcript-content sensitivity -------------------")
     for key in ("measured", "nominal_two_fold"):
         p = ts[key]
-        print(f"  {p['label']:22s} A={p['A']:6.1f}  phi={p['phi']:.2f}  "
-              f"floor={p['floor_cells']:.0f} cells")
+        print(
+            f"  {p['label']:22s} A={p['A']:6.1f}  phi={p['phi']:.2f}  "
+            f"floor={p['floor_cells']:.0f} cells"
+        )
         for name, v in p["cells_per_perturbation"].items():
             print(f"      {name:20s} {v:8.0f} cells/perturbation")
     print(f"  spread, measured pairing: {ts['spread_measured']:.1f}x")
     bad = ts["superseded_incoherent_pairing"]
-    print(f"  SUPERSEDED (do not quote): "
-          f"{', '.join(f'{v:.0f}' for v in bad['values'].values())}  -- {bad['note']}")
+    print(
+        f"  SUPERSEDED (do not quote): "
+        f"{', '.join(f'{v:.0f}' for v in bad['values'].values())}  -- {bad['note']}"
+    )
 
     dl = depletion_lever()
     print("\n--- Sec. 3.5/5.5: value of rRNA depletion ----------------------")
-    print(f"  ${dl['splitpool_total_usd']:,.0f} undepleted less "
-          f"${dl['splitpool_depleted_total_usd']:,.0f} depleted = "
-          f"${dl['saving_usd']:,.0f}")
+    print(
+        f"  ${dl['splitpool_total_usd']:,.0f} undepleted less "
+        f"${dl['splitpool_depleted_total_usd']:,.0f} depleted = "
+        f"${dl['saving_usd']:,.0f}"
+    )
 
     sc = sublibrary_counts()
     print("\n--- Sec. 5.4: sublibraries forced by a 1% collision target ------")
     for k, v in sc.items():
-        print(f"  {k:26s} {v['sublibraries_needed']:>4d} sublibraries  "
-              f"${v['cost_usd']:,.0f} per run")
+        print(
+            f"  {k:26s} {v['sublibraries_needed']:>4d} sublibraries  "
+            f"${v['cost_usd']:,.0f} per run"
+        )
 
     fp = fourth_plate()
     print("\n--- Sec. 5.4: cost of a fourth barcode plate -------------------")
-    print(f"  one time ${fp['one_time_usd']:,.2f}; per run "
-          f"${fp['per_run_usd']:.2f} "
-          f"(oligo ${fp['per_run_oligo_usd']:.2f} + ligase "
-          f"${fp['per_run_ligase_usd']:.2f})")
+    print(
+        f"  one time ${fp['one_time_usd']:,.2f}; per run "
+        f"${fp['per_run_usd']:.2f} "
+        f"(oligo ${fp['per_run_oligo_usd']:.2f} + ligase "
+        f"${fp['per_run_ligase_usd']:.2f})"
+    )
 
     pl = plate_set_lifetime()
     print("\n--- Sec. 5.1: what one plate set buys, and freeze-thaw -----------")
-    print(f"  {pl['plate_uses']} runs x {pl['cells_per_run']:,.0f} cells = "
-          f"{pl['cells_over_plate_life']:,.0f} cells barcoded")
-    print(f"  {pl['runs_per_genome_screen_250']} runs per genome-scale screen at "
-          f"250 cells/gene -> {pl['genome_screens_per_plate_set']:.1f} screens")
+    print(
+        f"  {pl['plate_uses']} runs x {pl['cells_per_run']:,.0f} cells = "
+        f"{pl['cells_over_plate_life']:,.0f} cells barcoded"
+    )
+    print(
+        f"  {pl['runs_per_genome_screen_250']} runs per genome-scale screen at "
+        f"250 cells/gene -> {pl['genome_screens_per_plate_set']:.1f} screens"
+    )
     for k, v in pl["working_plates_needed"].items():
         print(f"  {k:24s} needs {v:>3d} working plates")
 
     si = sublibrary_item_reconciliation()
     print("\n--- Sec. 3.1: $55 per sublibrary vs the itemized lines ----------")
-    print(f"  itemized ${si['itemized_usd']:.0f}, quoted ${si['quoted_usd']:.0f}, "
-          f"leeway ${si['leeway_usd']:.0f}")
+    print(
+        f"  itemized ${si['itemized_usd']:.0f}, quoted ${si['quoted_usd']:.0f}, "
+        f"leeway ${si['leeway_usd']:.0f}"
+    )
 
     out = {
         "transcript_sensitivity": ts,

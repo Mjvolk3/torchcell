@@ -56,7 +56,9 @@ load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 
-BUILD_010 = osp.join(DATA_ROOT, "data/torchcell/experiments/010-kuzmin-tmi/001-small-build-schema-v2")
+BUILD_010 = osp.join(
+    DATA_ROOT, "data/torchcell/experiments/010-kuzmin-tmi/001-small-build-schema-v2"
+)
 RESULTS_010 = osp.join(EXPERIMENT_ROOT, "010-kuzmin-tmi", "results")
 RESULTS_025 = osp.join(EXPERIMENT_ROOT, "025-solid-growth", "results")
 N_RECORDS = 376_732
@@ -93,7 +95,12 @@ def read_010_gene_sets() -> dict[int, tuple[str, ...]]:
     entry's genotype carries the gene set. Sorting matters, because the pair-selection rule
     below enumerates ``combinations`` in gene order and arm Q enumerated a sorted tuple.
     """
-    env = lmdb.open(osp.join(BUILD_010, "processed/lmdb"), readonly=True, lock=False, readahead=False)
+    env = lmdb.open(
+        osp.join(BUILD_010, "processed/lmdb"),
+        readonly=True,
+        lock=False,
+        readahead=False,
+    )
     out: dict[int, tuple[str, ...]] = {}
     with env.begin() as txn:
         n = txn.stat()["entries"]
@@ -152,13 +159,22 @@ def main():
     print(f"arm Q sizes reproduced exactly: {arm_q_sizes}")
 
     write("subset_010build_all_indices.json.gz", list(range(N_RECORDS)))
-    write("pinned_splits_010build_seed_42.json.gz",
-          {"source": osp.join(BUILD_010, "data_module_cache/index_seed_42.json"),
-           "seed": 42, "pinned": random_split})
-    write("query_pair_disjoint_splits_010build_armq.json.gz",
-          {"source": osp.join(RESULTS_025, ARM_Q),
-           "carried_by": "query pair name, via pair_assignment",
-           "splits": disjoint_split})
+    write(
+        "pinned_splits_010build_seed_42.json.gz",
+        {
+            "source": osp.join(BUILD_010, "data_module_cache/index_seed_42.json"),
+            "seed": 42,
+            "pinned": random_split,
+        },
+    )
+    write(
+        "query_pair_disjoint_splits_010build_armq.json.gz",
+        {
+            "source": osp.join(RESULTS_025, ARM_Q),
+            "carried_by": "query pair name, via pair_assignment",
+            "splits": disjoint_split,
+        },
+    )
     for name, sp in (("random", random_split), ("disjoint", disjoint_split)):
         print(f"{name}: " + ", ".join(f"{k} {len(v):,}" for k, v in sp.items()))
 

@@ -74,7 +74,9 @@ load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 
-BUILD = osp.join(DATA_ROOT, "data/torchcell/experiments/025-solid-growth/001-full-build")
+BUILD = osp.join(
+    DATA_ROOT, "data/torchcell/experiments/025-solid-growth/001-full-build"
+)
 RECAP = osp.join(
     DATA_ROOT,
     "data/torchcell/experiments/025-solid-growth/recapitulation/recapitulation_per_triple.csv.gz",
@@ -136,11 +138,13 @@ def load_records() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     ).set_index("index")
     y = label_df.loc[subset, "gene_interaction"].to_numpy(dtype=np.float64)
     assert np.isfinite(y).all(), "a subset record carries no gene_interaction label"
-    recap = pd.read_csv(RECAP, usecols=["idx_025", "gene_a", "gene_b", "gene_c"]).set_index(
-        "idx_025"
-    )
+    recap = pd.read_csv(
+        RECAP, usecols=["idx_025", "gene_a", "gene_b", "gene_c"]
+    ).set_index("idx_025")
     missing = np.setdiff1d(subset, recap.index.to_numpy())
-    assert missing.size == 0, f"{missing.size} subset records absent from the recap table"
+    assert missing.size == 0, (
+        f"{missing.size} subset records absent from the recap table"
+    )
     genes = recap.loc[subset, ["gene_a", "gene_b", "gene_c"]].to_numpy()
     return subset, y, genes
 
@@ -180,7 +184,9 @@ def build_cell_graph():
     return to_cell_data(multigraph, incidence_graphs=None), embeddings
 
 
-def load_model(checkpoint: str, cell_graph, embeddings, pooling: str, device) -> CellGraphTransformer:
+def load_model(
+    checkpoint: str, cell_graph, embeddings, pooling: str, device
+) -> CellGraphTransformer:
     model = CellGraphTransformer(
         cell_graph=cell_graph,
         graph_regularization_config=GRAPH_REG_CONFIG,
@@ -191,7 +197,11 @@ def load_model(checkpoint: str, cell_graph, embeddings, pooling: str, device) ->
         **MODEL_KWARGS,
     ).to(device)
     ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
-    state = {k[len("model.") :]: v for k, v in ckpt["state_dict"].items() if k.startswith("model.")}
+    state = {
+        k[len("model.") :]: v
+        for k, v in ckpt["state_dict"].items()
+        if k.startswith("model.")
+    }
     incompatible = model.load_state_dict(state, strict=True)
     assert not incompatible.missing_keys and not incompatible.unexpected_keys
     n_rows = model.gene_embedding.weight.shape[0]
@@ -200,10 +210,19 @@ def load_model(checkpoint: str, cell_graph, embeddings, pooling: str, device) ->
         MODEL_KWARGS["gene_num"],
         int(cell_graph["gene"].num_nodes),
     )
-    for name in ("perturbation_propagation", "observed_label_encoder", "cross_gene_mixing", "post_perturbation_mixing"):
-        assert getattr(model, name) is None, f"{name} is set; this scorer covers the 010 configuration only"
+    for name in (
+        "perturbation_propagation",
+        "observed_label_encoder",
+        "cross_gene_mixing",
+        "post_perturbation_mixing",
+    ):
+        assert getattr(model, name) is None, (
+            f"{name} is set; this scorer covers the 010 configuration only"
+        )
     model.eval()
-    print(f"loaded {len(state)} tensors from epoch {ckpt['epoch']} of {osp.basename(checkpoint)}")
+    print(
+        f"loaded {len(state)} tensors from epoch {ckpt['epoch']} of {osp.basename(checkpoint)}"
+    )
     return model
 
 
@@ -225,7 +244,9 @@ def encode_once(model: CellGraphTransformer) -> tuple[torch.Tensor, torch.Tensor
 
 
 @torch.no_grad()
-def score(model, h_cls, H_genes, idx_triples: np.ndarray, batch_size: int, device) -> np.ndarray:
+def score(
+    model, h_cls, H_genes, idx_triples: np.ndarray, batch_size: int, device
+) -> np.ndarray:
     """Standardized predictions for [n, 3] index triples, through the transform and head."""
     out = np.empty(idx_triples.shape[0], dtype=np.float64)
     for start in range(0, idx_triples.shape[0], batch_size):
@@ -262,10 +283,20 @@ def main() -> None:
     ap.add_argument("--run-id", required=True)
     ap.add_argument("--arm", default="Q", choices=list(ARMS))
     ap.add_argument("--parts", default="val,test")
-    ap.add_argument("--limit", type=int, default=None, help="score only the first N records of each part")
+    ap.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="score only the first N records of each part",
+    )
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--batch-size", type=int, default=256)
-    ap.add_argument("--pooling", default="sum", choices=["sum", "mean"], help="readout pooling the checkpoint trained with")
+    ap.add_argument(
+        "--pooling",
+        default="sum",
+        choices=["sum", "mean"],
+        help="readout pooling the checkpoint trained with",
+    )
     args = ap.parse_args()
 
     n_threads = int(os.environ.get("SLURM_CPUS_PER_TASK", torch.get_num_threads()))
@@ -279,16 +310,24 @@ def main() -> None:
     node_to_idx = {g: i for i, g in enumerate(node_ids)}
     vocab = sorted(set(genes.ravel().tolist()))
     missing = [g for g in vocab if g not in node_to_idx]
-    assert not missing, f"{len(missing)} build genes absent from the cell graph, e.g. {missing[:5]}"
+    assert not missing, (
+        f"{len(missing)} build genes absent from the cell graph, e.g. {missing[:5]}"
+    )
     idx_triples = np.vectorize(node_to_idx.__getitem__)(genes).astype(np.int64)
-    print(f"cell graph {len(node_ids)} genes; S0 {record_ids.size} records over {len(vocab)} genes")
+    print(
+        f"cell graph {len(node_ids)} genes; S0 {record_ids.size} records over {len(vocab)} genes"
+    )
 
     with open(osp.join(RESULTS_DIR, "label_normalization_constants.json")) as f:
         norm = json.load(f)[f"train_{args.arm}"]
-    print(f"normalizer train_{args.arm}: mean {norm['mean']:.9f} sd {norm['sd']:.9f} over {norm['n']} records")
+    print(
+        f"normalizer train_{args.arm}: mean {norm['mean']:.9f} sd {norm['sd']:.9f} over {norm['n']} records"
+    )
 
     model = load_model(args.checkpoint, cell_graph, embeddings, args.pooling, device)
-    ckpt_epoch = int(torch.load(args.checkpoint, map_location="cpu", weights_only=False)["epoch"])
+    ckpt_epoch = int(
+        torch.load(args.checkpoint, map_location="cpu", weights_only=False)["epoch"]
+    )
     t0 = time.time()
     h_cls, H_genes = encode_once(model)
     print(f"encoder once: {time.time() - t0:.1f} s")
@@ -312,20 +351,42 @@ def main() -> None:
         if args.limit is not None:
             rows = rows[: args.limit]
         t0 = time.time()
-        p = score(model, h_cls, H_genes, idx_triples[rows], args.batch_size, device) * norm["sd"] + norm["mean"]
+        p = (
+            score(model, h_cls, H_genes, idx_triples[rows], args.batch_size, device)
+            * norm["sd"]
+            + norm["mean"]
+        )
         dt = time.time() - t0
         m = metrics(y[rows], p)
-        m |= {"n": int(rows.size), "seconds": round(dt, 1), "seconds_per_1000": round(1000 * dt / rows.size, 2)}
+        m |= {
+            "n": int(rows.size),
+            "seconds": round(dt, 1),
+            "seconds_per_1000": round(1000 * dt / rows.size, 2),
+        }
         if part == "val" and len(logged) == 1:
             m["logged_val_pearson_at_epoch"] = float(logged[VAL_KEY].iloc[0])
             m["pearson_minus_logged"] = m["pearson"] - m["logged_val_pearson_at_epoch"]
         out["parts"][part] = m
-        print(f"{part}: n {rows.size} pearson {m['pearson']:.6f} spearman {m['spearman']:.6f} mse {m['mse']:.6e} ({m['seconds_per_1000']} s per 1000)")
+        print(
+            f"{part}: n {rows.size} pearson {m['pearson']:.6f} spearman {m['spearman']:.6f} mse {m['mse']:.6e} ({m['seconds_per_1000']} s per 1000)"
+        )
         if "logged_val_pearson_at_epoch" in m:
-            print(f"  logged at epoch {ckpt_epoch}: {m['logged_val_pearson_at_epoch']:.6f}, difference {m['pearson_minus_logged']:+.6f}")
+            print(
+                f"  logged at epoch {ckpt_epoch}: {m['logged_val_pearson_at_epoch']:.6f}, difference {m['pearson_minus_logged']:+.6f}"
+            )
         suffix = "" if args.limit is None else f"_limit{args.limit}"
-        np.save(osp.join(RESULTS_DIR, f"cgt_checkpoint_pred_{args.run_id}_{part}{suffix}.npy"), p)
-        np.save(osp.join(RESULTS_DIR, f"cgt_checkpoint_pred_{args.run_id}_{part}{suffix}_ids.npy"), record_ids[rows])
+        np.save(
+            osp.join(
+                RESULTS_DIR, f"cgt_checkpoint_pred_{args.run_id}_{part}{suffix}.npy"
+            ),
+            p,
+        )
+        np.save(
+            osp.join(
+                RESULTS_DIR, f"cgt_checkpoint_pred_{args.run_id}_{part}{suffix}_ids.npy"
+            ),
+            record_ids[rows],
+        )
 
     suffix = "" if args.limit is None else f"_limit{args.limit}"
     path = osp.join(RESULTS_DIR, f"cgt_checkpoint_scores_{args.run_id}{suffix}.json")

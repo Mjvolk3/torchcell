@@ -1,7 +1,7 @@
 # experiments/024-perturb-seq-costing/scripts/glossary.py
 # [[experiments.024-perturb-seq-costing.scripts.glossary]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/024-perturb-seq-costing/scripts/glossary
-"""Controlled vocabulary for the perturb-seq method review.
+r"""Controlled vocabulary for the perturb-seq method review.
 
 The document leans on a lot of jargon that is used precisely and that overlaps
 confusingly with itself -- four different things are called a "barcode", two
@@ -53,7 +53,7 @@ the rule the rest of the experiment folder already follows.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class Term(BaseModel):
@@ -739,6 +739,7 @@ TERMS: list[Term] = [
     ),
 ]
 
+
 def rendered_definition(t: Term) -> str:
     """The definition as it goes into the table, with its source appended.
 
@@ -761,6 +762,7 @@ def alphabetical() -> list[Term]:
     it under "Unique molecular identifier", which is what the See column and the
     prose both call it.
     """
+
     def key(t: Term) -> str:
         return "".join(ch for ch in t.term.lower() if ch.isalnum())
 
@@ -772,5 +774,7 @@ if __name__ == "__main__":
         _ab = f" ({_t.abbrev})" if _t.abbrev else ""
         _src = f"  [{_t.citation_key}]" if _t.citation_key else ""
         print(f"  {_t.term}{_ab} -> {_t.where}{_src}")
-    print(f"\n{len(TERMS)} terms, "
-          f"{sum(1 for t in TERMS if t.citation_key)} carrying a citation")
+    print(
+        f"\n{len(TERMS)} terms, "
+        f"{sum(1 for t in TERMS if t.citation_key)} carrying a citation"
+    )

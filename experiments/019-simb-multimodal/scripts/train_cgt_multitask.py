@@ -3147,7 +3147,9 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     # exactly the compute available and lets the curve decide where the peak is.
     max_time_s = cfg.trainer.get("max_time_s")
     if max_time_s:
-        checkpoint_callbacks.append(Timer(duration=timedelta(seconds=float(max_time_s))))
+        checkpoint_callbacks.append(
+            Timer(duration=timedelta(seconds=float(max_time_s)))
+        )
         print(f"[max-time] stopping training after {float(max_time_s) / 3600:.2f} h")
 
     torch.set_float32_matmul_precision("medium")

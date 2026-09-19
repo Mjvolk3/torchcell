@@ -340,7 +340,7 @@ METHODS: list[Method] = [
                     "capture rate of approximately 3-5% of total transcripts from "
                     "each cell"
                 ),
-            ),
+            )
         ],
     ),
     Method(
@@ -498,9 +498,7 @@ METHODS: list[Method] = [
             Provenance(
                 citation_key="boocockSinglecellEQTLMapping2025",
                 line=32,
-                quote=(
-                    "applied it to over 100,000 single cells from three crosses"
-                ),
+                quote=("applied it to over 100,000 single cells from three crosses"),
             ),
             Provenance(
                 citation_key="boocockSinglecellEQTLMapping2025",
@@ -715,7 +713,7 @@ METHODS: list[Method] = [
                     "(approximately 10-20% of the total mRNA pool) corresponding "
                     "to a median of 241 genes per cell."
                 ),
-            ),
+            )
         ],
     ),
     Method(
@@ -747,7 +745,7 @@ METHODS: list[Method] = [
                     "the top 3,000 high-quality cells had an average of 127 mRNA "
                     "genes detected per cell"
                 ),
-            ),
+            )
         ],
     ),
     Method(
@@ -1037,9 +1035,7 @@ LIBRARY_CEILING_PROVENANCE = [
     ),
     Provenance(
         citation_key="lianMultifunctionalGenomewideCRISPR2019",
-        quote=(
-            "The Golden-Gate Assembly efficiency was estimated to be nearly 100%"
-        ),
+        quote=("The Golden-Gate Assembly efficiency was estimated to be nearly 100%"),
     ),
 ]
 

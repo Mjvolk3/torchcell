@@ -43,11 +43,11 @@ import os.path as osp
 
 import matplotlib.pyplot as plt
 import numpy as np
-from dotenv import load_dotenv
-
 from design_equation import box, place_panel_letters, style
+from dotenv import load_dotenv
 from figure_checks import assert_legible
 from scaling_analysis import lam_for_target_mean
+
 from torchcell.utils import PANEL_WIDTHS_MM, mm_to_in, savefig_true_size_svg
 
 load_dotenv()
@@ -78,7 +78,11 @@ ARROW = "\u2192"
 
 
 def pois(m, lam: float) -> np.ndarray:
-    return np.exp(-lam) * lam**m / np.array([math.factorial(int(i)) for i in np.atleast_1d(m)])
+    return (
+        np.exp(-lam)
+        * lam**m
+        / np.array([math.factorial(int(i)) for i in np.atleast_1d(m)])
+    )
 
 
 def panel_a(ax) -> None:
@@ -87,18 +91,39 @@ def panel_a(ax) -> None:
     colors = [LOST] + [KEEP] * (len(MS) - 1)
     ax.bar(MS, p, width=0.7, color=colors, edgecolor="black", lw=0.5)
     ax.axvline(LAM, color=ACTION, lw=0.8, ls="--", zorder=3)
-    ax.text(LAM + 0.2, 0.545, f"{LAMBDA} = {LAM:.2f}", fontsize=5,
-            color=ACTION, va="center", ha="left")
+    ax.text(
+        LAM + 0.2,
+        0.545,
+        f"{LAMBDA} = {LAM:.2f}",
+        fontsize=5,
+        color=ACTION,
+        va="center",
+        ha="left",
+    )
     # Label over the empty tail, elbow leader back to the zero bar. The elbow is
     # not decoration: the label is ~3.4 x-units wide at this panel width, so over
     # the zero bar it runs under the lambda rule, and any STRAIGHT leader from the
     # tail to a bar top of 0.204 passes below bar 1's top of 0.325. Going across
     # at 0.455 and then straight down the x=0 column is the only path that touches
     # nothing.
-    ax.plot([2.90, 0, 0], [0.455, 0.455, p[0] + 0.014], color=LOST, lw=0.5,
-            solid_joinstyle="miter", zorder=2)
-    ax.text(3.05, 0.455, "take up nothing,\ndie on selection", fontsize=4.6,
-            color=LOST, ha="left", va="center", linespacing=1.15)
+    ax.plot(
+        [2.90, 0, 0],
+        [0.455, 0.455, p[0] + 0.014],
+        color=LOST,
+        lw=0.5,
+        solid_joinstyle="miter",
+        zorder=2,
+    )
+    ax.text(
+        3.05,
+        0.455,
+        "take up nothing,\ndie on selection",
+        fontsize=4.6,
+        color=LOST,
+        ha="left",
+        va="center",
+        linespacing=1.15,
+    )
     ax.set_xlabel("Plasmids a cell takes up")
     ax.set_ylabel("Fraction of cells")
     ax.set_ylim(0, 0.58)
@@ -111,22 +136,45 @@ def panel_b(ax) -> None:
     """Selection deletes the zero class, which raises the mean of the rest."""
     p = pois(MS, LAM)
     trunc = np.where(MS == 0, 0.0, p / (1.0 - p[0]))
-    ax.bar(MS, p, width=0.7, color="none", edgecolor=GHOST, lw=0.5,
-           label="before selection")
-    ax.bar(MS, trunc, width=0.7, color=KEEP, edgecolor="black", lw=0.5,
-           label="after selection")
+    ax.bar(
+        MS,
+        p,
+        width=0.7,
+        color="none",
+        edgecolor=GHOST,
+        lw=0.5,
+        label="before selection",
+    )
+    ax.bar(
+        MS,
+        trunc,
+        width=0.7,
+        color=KEEP,
+        edgecolor="black",
+        lw=0.5,
+        label="after selection",
+    )
     # The two means, each labeled on its own rule. An arrow alone spanned only
     # 0.41 x-units on an axis running to 7.5 and rendered as a stray tick; the
     # arrow is kept for direction but the numbers carry the statement.
     ax.axvline(LAM, color=GHOST, lw=0.8, ls="--", zorder=3)
     ax.axvline(TARGET_MEAN, color=ACTION, lw=0.8, ls="--", zorder=3)
-    ax.annotate("", xy=(TARGET_MEAN, 0.485), xytext=(LAM, 0.485),
-                arrowprops=dict(arrowstyle="-|>", color=ACTION, lw=0.8,
-                                mutation_scale=6))
+    ax.annotate(
+        "",
+        xy=(TARGET_MEAN, 0.485),
+        xytext=(LAM, 0.485),
+        arrowprops=dict(arrowstyle="-|>", color=ACTION, lw=0.8, mutation_scale=6),
+    )
     # Plain text with a unicode arrow, per the note above the pois() helper.
-    ax.text(TARGET_MEAN + 0.35, 0.485,
-            f"mean {LAM:.2f} {ARROW} {TARGET_MEAN:.2f}",
-            fontsize=5, color=ACTION, va="center", ha="left")
+    ax.text(
+        TARGET_MEAN + 0.35,
+        0.485,
+        f"mean {LAM:.2f} {ARROW} {TARGET_MEAN:.2f}",
+        fontsize=5,
+        color=ACTION,
+        va="center",
+        ha="left",
+    )
     ax.set_xlabel("Plasmids a surviving cell carries")
     ax.set_ylabel("Fraction of cells")
     ax.set_ylim(0, 0.58)
@@ -134,9 +182,15 @@ def panel_b(ax) -> None:
     ax.set_title("Selection lifts the mean", loc="left", fontsize=6)
     # Lower right, not upper right: the top strip belongs to the mean
     # annotation, and the tail of the distribution leaves that corner empty.
-    ax.legend(frameon=False, fontsize=4.6, loc="center right", handlelength=1.2,
-              labelspacing=0.25, borderaxespad=0.3,
-              bbox_to_anchor=(1.0, 0.42))
+    ax.legend(
+        frameon=False,
+        fontsize=4.6,
+        loc="center right",
+        handlelength=1.2,
+        labelspacing=0.25,
+        borderaxespad=0.3,
+        bbox_to_anchor=(1.0, 0.42),
+    )
     box(ax)
 
 
@@ -147,16 +201,23 @@ def panel_c(ax) -> None:
     p1 = (np.exp(-lams) * lams) / denom
     ax.plot(lams, p1, color=KEEP, lw=1.1)
     ax.plot(lams, 1.0 - p1, color=ACTION, lw=1.1)
-    ax.text(5.8, 0.70, "2 or more\nguides", fontsize=5, color=ACTION,
-            ha="right", va="center")
-    ax.text(5.8, 0.22, "exactly 1", fontsize=5, color=KEEP, ha="right",
-            va="center")
-    for lam, lab in ((lam_for_target_mean(2.0), "2"),
-                     (lam_for_target_mean(3.0), "3"),
-                     (lam_for_target_mean(5.0), "5")):
+    ax.text(
+        5.8,
+        0.70,
+        "2 or more\nguides",
+        fontsize=5,
+        color=ACTION,
+        ha="right",
+        va="center",
+    )
+    ax.text(5.8, 0.22, "exactly 1", fontsize=5, color=KEEP, ha="right", va="center")
+    for lam, lab in (
+        (lam_for_target_mean(2.0), "2"),
+        (lam_for_target_mean(3.0), "3"),
+        (lam_for_target_mean(5.0), "5"),
+    ):
         ax.axvline(lam, color=GHOST, lw=0.5, zorder=0)
-        ax.text(lam, 0.035, lab, fontsize=4.6, color=MUTED, ha="center",
-                va="bottom")
+        ax.text(lam, 0.035, lab, fontsize=4.6, color=MUTED, ha="center", va="bottom")
     ax.set_xlabel(f"Uptake rate {LAMBDA}")
     ax.set_ylabel("Fraction of surviving cells")
     ax.set_ylim(0, 1.0)
@@ -180,8 +241,7 @@ def main() -> None:
     # and sets it va="bottom", so at 8 pt the glyph ran off the canvas and the
     # (c) letter was cropped. The clamp is a backstop, not a layout -- the
     # layout has to reserve the room.
-    fig.subplots_adjust(left=0.062, right=0.995, top=0.84, bottom=0.19,
-                        wspace=0.40)
+    fig.subplots_adjust(left=0.062, right=0.995, top=0.84, bottom=0.19, wspace=0.40)
     place_panel_letters(fig, axes, "abc")
 
     # The other script that had no legibility call. The cropped letter above was
@@ -194,10 +254,10 @@ def main() -> None:
 
     p = pois(MS, LAM)
     print(f"lambda = {LAM:.4f} gives a post-selection mean of {TARGET_MEAN}")
-    print(f"  cells taking up nothing: {p[0]*100:.1f}% (all die on selection)")
+    print(f"  cells taking up nothing: {p[0] * 100:.1f}% (all die on selection)")
     trunc = p[1:] / (1 - p[0])
     for m, v in zip(MS[1:], trunc):
-        print(f"  {m} plasmid(s): {v*100:5.1f}% of survivors")
+        print(f"  {m} plasmid(s): {v * 100:5.1f}% of survivors")
     print(f"wrote {OUT_DIR}/poisson_primer.svg")
 
 

@@ -46,13 +46,10 @@ from torchcell.utils import (
 
 load_dotenv()
 
-RESULTS_DIR = osp.join(
-    os.environ["EXPERIMENT_ROOT"], "026-metabolism-flux", "results"
-)
+RESULTS_DIR = osp.join(os.environ["EXPERIMENT_ROOT"], "026-metabolism-flux", "results")
 IMAGES_DIR = osp.join(os.environ["ASSET_IMAGES_DIR"], "026-metabolism-flux")
 OED_MIRROR = osp.join(
-    os.environ["DATA_ROOT"],
-    "data/enzyme_kinetics/open_enzyme_database/scerevisiae",
+    os.environ["DATA_ROOT"], "data/enzyme_kinetics/open_enzyme_database/scerevisiae"
 )
 
 
@@ -68,7 +65,9 @@ def _apply_style(ax: plt.Axes) -> None:
 
 def coverage_figure(audit: dict[str, Any], path_stem: str) -> None:
     """Stacked bars: how much of each parameter class is measured, predicted, defaulted."""
-    plt.rcParams.update({"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"})
+    plt.rcParams.update(
+        {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"}
+    )
     rows = [
         ("Stoichiometry $S$", 1.0, 0.0, 0.0),
         (
@@ -111,12 +110,33 @@ def coverage_figure(audit: dict[str, Any], path_stem: str) -> None:
         figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(52.0))
     )
     y = np.arange(len(rows))
-    ax.barh(y, measured, color=PLOT_PALETTE[4], edgecolor="black", linewidth=0.4,
-            label="measured")
-    ax.barh(y, predicted, left=measured, color=PLOT_PALETTE[0], edgecolor="black",
-            linewidth=0.4, label="predicted")
-    ax.barh(y, default, left=measured + predicted, color=PLOT_PALETTE[5],
-            edgecolor="black", linewidth=0.4, hatch="///", label="organism default")
+    ax.barh(
+        y,
+        measured,
+        color=PLOT_PALETTE[4],
+        edgecolor="black",
+        linewidth=0.4,
+        label="measured",
+    )
+    ax.barh(
+        y,
+        predicted,
+        left=measured,
+        color=PLOT_PALETTE[0],
+        edgecolor="black",
+        linewidth=0.4,
+        label="predicted",
+    )
+    ax.barh(
+        y,
+        default,
+        left=measured + predicted,
+        color=PLOT_PALETTE[5],
+        edgecolor="black",
+        linewidth=0.4,
+        hatch="///",
+        label="organism default",
+    )
     ax.set_yticks(y)
     ax.set_yticklabels(labels)
     ax.set_xlim(0, 1)
@@ -146,15 +166,16 @@ def coverage_figure(audit: dict[str, Any], path_stem: str) -> None:
 
 def delta_g_figure(recomputed: np.ndarray, shipped: np.ndarray, path_stem: str) -> None:
     """The two independent routes to a standard reaction energy, against each other."""
-    plt.rcParams.update({"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"})
+    plt.rcParams.update(
+        {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"}
+    )
     fig, axes = plt.subplots(
-        1,
-        2,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(48.0)),
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(48.0))
     )
     ax = axes[0]
-    ax.scatter(shipped, recomputed, s=1.5, color=PLOT_PALETTE[4], alpha=0.4,
-               edgecolors="none")
+    ax.scatter(
+        shipped, recomputed, s=1.5, color=PLOT_PALETTE[4], alpha=0.4, edgecolors="none"
+    )
     lim = [min(shipped.min(), recomputed.min()), max(shipped.max(), recomputed.max())]
     ax.plot(lim, lim, color="black", linewidth=0.5, linestyle="--")
     ax.set_xlabel(r"shipped $\Delta_r G'^\circ$ (kJ mol$^{-1}$)")

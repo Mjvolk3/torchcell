@@ -34,11 +34,11 @@ import os.path as osp
 
 import matplotlib.pyplot as plt
 import numpy as np
+from design_equation import box, place_panel_letters, style
 from dotenv import load_dotenv
+from figure_checks import assert_legible
 from matplotlib.patches import Patch
 
-from design_equation import box, place_panel_letters, style
-from figure_checks import assert_legible
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE_FILL,
@@ -56,8 +56,11 @@ TRANSFORMATION_LOW = 1e6
 TRANSFORMATION_HIGH = 1e7
 REDUNDANCY = 30
 
-PANELS = np.unique(np.concatenate([
-    np.logspace(math.log10(20), math.log10(6000), 160), [200.0, 6000.0]]))
+PANELS = np.unique(
+    np.concatenate(
+        [np.logspace(math.log10(20), math.log10(6000), 160), [200.0, 6000.0]]
+    )
+)
 PLEXES = [1, 2, 3, 4]
 
 # Palette slots 1..4, the document's order: orange, red, purple, yellow.
@@ -131,13 +134,15 @@ def panel_a(ax) -> None:
     for k in PLEXES:
         y = [clones_needed(t, k) for t in PANELS]
         ax.plot(PANELS, y, color=PLEX_COLOR[k], lw=1.0, label=f"$k={k}$")
-    ax.axhspan(TRANSFORMATION_LOW, TRANSFORMATION_HIGH, color="#666666",
-               alpha=0.13, lw=0)
+    ax.axhspan(
+        TRANSFORMATION_LOW, TRANSFORMATION_HIGH, color="#666666", alpha=0.13, lw=0
+    )
     ax.axhline(TRANSFORMATION_HIGH, color="#666666", lw=0.6, ls="--", zorder=1)
     for t, lab in ((200, "200-gene\npanel"), (6000, "genome")):
         ax.axvline(t, color="#CCCCCC", lw=0.5, zorder=0)
-        ax.text(t * 0.92, 3e12, lab, fontsize=4.5, color="#666666",
-                ha="right", va="top")
+        ax.text(
+            t * 0.92, 3e12, lab, fontsize=4.5, color="#666666", ha="right", va="top"
+        )
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("Genes in the panel, $T$")
@@ -147,23 +152,45 @@ def panel_a(ax) -> None:
     # Two legends: the plex key on the right, the band key on the left. One
     # combined legend would have to sit in the lower strip as a single block, and
     # a block that wide leaves the strip and meets the k = 1 curve.
-    ax.add_artist(ax.legend(
-        handles=[_band_handle()], frameon=False, fontsize=4.5, loc="lower left",
-        handlelength=1.6, handletextpad=0.4, borderaxespad=0.2))
-    ax.legend(frameon=False, fontsize=4.5, loc="lower right", handlelength=1.6,
-              labelspacing=0.25, borderaxespad=0.2)
+    ax.add_artist(
+        ax.legend(
+            handles=[_band_handle()],
+            frameon=False,
+            fontsize=4.5,
+            loc="lower left",
+            handlelength=1.6,
+            handletextpad=0.4,
+            borderaxespad=0.2,
+        )
+    )
+    ax.legend(
+        frameon=False,
+        fontsize=4.5,
+        loc="lower right",
+        handlelength=1.6,
+        labelspacing=0.25,
+        borderaxespad=0.2,
+    )
     box(ax)
 
 
 def panel_b(ax) -> None:
     """The same question for co-transformed singles: it does not grow with k."""
     y = [clones_needed(t, 1) for t in PANELS]
-    ax.plot(PANELS, y, color="#666666", lw=1.2,
-            label="co-transformed singles,\nany $k$")
-    ax.plot(PANELS, [clones_needed(t, 2) for t in PANELS],
-            color=PLEX_COLOR[2], lw=1.0, ls=":", label="cloned pairs, $k=2$")
-    ax.axhspan(TRANSFORMATION_LOW, TRANSFORMATION_HIGH, color="#666666",
-               alpha=0.13, lw=0)
+    ax.plot(
+        PANELS, y, color="#666666", lw=1.2, label="co-transformed singles,\nany $k$"
+    )
+    ax.plot(
+        PANELS,
+        [clones_needed(t, 2) for t in PANELS],
+        color=PLEX_COLOR[2],
+        lw=1.0,
+        ls=":",
+        label="cloned pairs, $k=2$",
+    )
+    ax.axhspan(
+        TRANSFORMATION_LOW, TRANSFORMATION_HIGH, color="#666666", alpha=0.13, lw=0
+    )
     ax.axhline(TRANSFORMATION_HIGH, color="#666666", lw=0.6, ls="--", zorder=1)
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -174,9 +201,15 @@ def panel_b(ax) -> None:
     # Only two curves here, so the band joins the existing key rather than
     # needing one of its own.
     h, _ = ax.get_legend_handles_labels()
-    ax.legend(handles=h + [_band_handle()], frameon=False, fontsize=4.5,
-              loc="upper left", handlelength=1.6, labelspacing=0.35,
-              borderaxespad=0.2)
+    ax.legend(
+        handles=h + [_band_handle()],
+        frameon=False,
+        fontsize=4.5,
+        loc="upper left",
+        handlelength=1.6,
+        labelspacing=0.35,
+        borderaxespad=0.2,
+    )
     box(ax)
 
 
@@ -185,15 +218,30 @@ def panel_c(ax) -> None:
     lo = [max_panel_for(k, TRANSFORMATION_LOW) for k in PLEXES]
     hi = [max_panel_for(k, TRANSFORMATION_HIGH) for k in PLEXES]
     xs = np.arange(len(PLEXES))
-    ax.bar(xs, hi, width=0.62, color=[PLEX_COLOR[k] for k in PLEXES],
-           edgecolor="black", lw=0.5, zorder=2)
-    ax.bar(xs, lo, width=0.62, color=[PLEX_FILL[k] for k in PLEXES],
-           edgecolor="black", lw=0.5, zorder=3)
-    for x, l, h in zip(xs, lo, hi):
+    ax.bar(
+        xs,
+        hi,
+        width=0.62,
+        color=[PLEX_COLOR[k] for k in PLEXES],
+        edgecolor="black",
+        lw=0.5,
+        zorder=2,
+    )
+    ax.bar(
+        xs,
+        lo,
+        width=0.62,
+        color=[PLEX_FILL[k] for k in PLEXES],
+        edgecolor="black",
+        lw=0.5,
+        zorder=3,
+    )
+    for x, low, h in zip(xs, lo, hi):
         ax.text(x, h * 1.25, f"{h:,.0f}", ha="center", fontsize=4.5, zorder=4)
     ax.axhline(6000, color="#666666", lw=0.6, ls="--", zorder=1)
-    ax.text(len(PLEXES) - 0.5, 6600, "genome", fontsize=4.5, color="#666666",
-            ha="right")
+    ax.text(
+        len(PLEXES) - 0.5, 6600, "genome", fontsize=4.5, color="#666666", ha="right"
+    )
     ax.set_yscale("log")
     ax.set_xticks(xs)
     ax.set_xticklabels([f"$k={k}$" for k in PLEXES])
@@ -206,13 +254,16 @@ def panel_c(ax) -> None:
     # label, and sits over the empty right-hand side where the bars are short.
     ax.legend(
         handles=[
-            Patch(facecolor=KEY_DARK, edgecolor="black", lw=0.5,
-                  label="10⁷ clones"),
-            Patch(facecolor=KEY_PALE, edgecolor="black", lw=0.5,
-                  label="10⁶ clones"),
+            Patch(facecolor=KEY_DARK, edgecolor="black", lw=0.5, label="10⁷ clones"),
+            Patch(facecolor=KEY_PALE, edgecolor="black", lw=0.5, label="10⁶ clones"),
         ],
-        frameon=False, loc="upper right", bbox_to_anchor=(1.0, 0.78),
-        fontsize=4.5, handlelength=1.0, handletextpad=0.4, labelspacing=0.3,
+        frameon=False,
+        loc="upper right",
+        bbox_to_anchor=(1.0, 0.78),
+        fontsize=4.5,
+        handlelength=1.0,
+        handletextpad=0.4,
+        labelspacing=0.3,
         borderaxespad=0.2,
     )
     box(ax)
@@ -228,8 +279,7 @@ def main() -> None:
     panel_c(axes[2])
     # top leaves room for the panel letters, which place_panel_letters puts
     # above each axes' tight bbox: at 0.90 they landed off the canvas.
-    fig.subplots_adjust(left=0.062, right=0.995, top=0.86, bottom=0.19,
-                        wspace=0.42)
+    fig.subplots_adjust(left=0.062, right=0.995, top=0.86, bottom=0.19, wspace=0.42)
     place_panel_letters(fig, axes, "abc")
 
     # This was the one plot script with no legibility call, and it is the one
@@ -242,10 +292,14 @@ def main() -> None:
 
     print("largest constructible panel, cloned combinations")
     for k in PLEXES:
-        print(f"  k={k}: {max_panel_for(k, TRANSFORMATION_LOW):>6,.0f} genes at "
-              f"1e6 clones, {max_panel_for(k, TRANSFORMATION_HIGH):>6,.0f} at 1e7")
-    print(f"\nco-transformed singles need {REDUNDANCY} x T clones at any k: "
-          f"{clones_needed(6000, 1):,.0f} for the whole genome")
+        print(
+            f"  k={k}: {max_panel_for(k, TRANSFORMATION_LOW):>6,.0f} genes at "
+            f"1e6 clones, {max_panel_for(k, TRANSFORMATION_HIGH):>6,.0f} at 1e7"
+        )
+    print(
+        f"\nco-transformed singles need {REDUNDANCY} x T clones at any k: "
+        f"{clones_needed(6000, 1):,.0f} for the whole genome"
+    )
     print(f"wrote {OUT_DIR}/library_ceiling.svg")
 
 

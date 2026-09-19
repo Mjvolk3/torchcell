@@ -49,11 +49,16 @@ import os.path as osp
 import matplotlib.pyplot as plt
 import numpy as np
 from dotenv import load_dotenv
+from figure_checks import assert_legible
 from matplotlib.patches import Rectangle
 from matplotlib.ticker import FuncFormatter
 
-from figure_checks import assert_legible
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
 load_dotenv()
 OUT_DIR = osp.join(os.environ["ASSET_IMAGES_DIR"], "024-perturb-seq-costing")
@@ -66,20 +71,29 @@ RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "024-perturb-seq-costing", "re
 # slot 0; named pairs take slot 4 rather than slot 3, because slots 0 and 3
 # (amber and wheat) are the pair plot_economics documented as inseparable at
 # line weight, and here they would share panel (a).
-C_ENV = PLOT_PALETTE[0]    # the environment axis, (a)
+C_ENV = PLOT_PALETTE[0]  # the environment axis, (a)
 C_PAIRS = PLOT_PALETTE[4]  # named gene pairs, (a)
 C_SPLIT = PLOT_PALETTE[1]  # SPLiT-seq + rRNA depletion, (b) and (c)
-C_DROP = PLOT_PALETTE[2]   # 10x Chromium X, (b) and (c)
-C_PI = PLOT_PALETTE[3]     # 10x + preindexing, (b) and (c)
+C_DROP = PLOT_PALETTE[2]  # 10x Chromium X, (b) and (c)
+C_PI = PLOT_PALETTE[3]  # 10x + preindexing, (b) and (c)
 
 
 def style() -> None:
-    plt.rcParams.update({
-        "font.family": "Arial", "font.size": 6, "axes.labelsize": 6,
-        "axes.titlesize": 6, "xtick.labelsize": 6, "ytick.labelsize": 6,
-        "legend.fontsize": 6, "axes.linewidth": 0.5, "xtick.major.width": 0.5,
-        "ytick.major.width": 0.5, "svg.fonttype": "none",
-    })
+    plt.rcParams.update(
+        {
+            "font.family": "Arial",
+            "font.size": 6,
+            "axes.labelsize": 6,
+            "axes.titlesize": 6,
+            "xtick.labelsize": 6,
+            "ytick.labelsize": 6,
+            "legend.fontsize": 6,
+            "axes.linewidth": 0.5,
+            "xtick.major.width": 0.5,
+            "ytick.major.width": 0.5,
+            "svg.fonttype": "none",
+        }
+    )
 
 
 def box(ax) -> None:
@@ -95,8 +109,16 @@ def place_panel_letters(fig, axes, letters) -> None:
     inv = fig.transFigure.inverted()
     for ax, letter in zip(axes, letters):
         bb = ax.get_tightbbox(r).transformed(inv)
-        fig.text(bb.x0 - 0.010, bb.y1 + 0.012, letter, fontsize=8,
-                 fontweight="bold", ha="left", va="bottom", zorder=20)
+        fig.text(
+            bb.x0 - 0.010,
+            bb.y1 + 0.012,
+            letter,
+            fontsize=8,
+            fontweight="bold",
+            ha="left",
+            va="bottom",
+            zorder=20,
+        )
 
 
 def load() -> dict:
@@ -126,39 +148,84 @@ def panel_a(ax, data) -> None:
     )["cells_for_all_pairs"]
 
     s = np.arange(1, 401, dtype=float)
-    ax.plot(s, per_cond * s, lw=1.0, color=C_ENV,
-            label=f"environments, {per_cond:,.0f} cells each")
+    ax.plot(
+        s,
+        per_cond * s,
+        lw=1.0,
+        color=C_ENV,
+        label=f"environments, {per_cond:,.0f} cells each",
+    )
     sp = np.arange(2, 401, dtype=float)
-    ax.plot(sp, cpp * sp * (sp - 1) / 2, lw=1.0, color=C_PAIRS,
-            label=f"named gene pairs, {cpp} cells per pair")
+    ax.plot(
+        sp,
+        cpp * sp * (sp - 1) / 2,
+        lw=1.0,
+        color=C_PAIRS,
+        label=f"named gene pairs, {cpp} cells per pair",
+    )
 
     for e in (4, 12):
         cells = data["environments"][str(e)]
-        ax.plot([e], [cells], marker="o", ms=2.6, color=C_ENV,
-                markeredgecolor="black", markeredgewidth=0.3, zorder=5)
+        ax.plot(
+            [e],
+            [cells],
+            marker="o",
+            ms=2.6,
+            color=C_ENV,
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            zorder=5,
+        )
     # The three anchors sit on opposite sides of their curves so no label box
     # can contain a curve segment. The 4-environment label hangs BELOW-RIGHT,
     # where a slope-1 line leaves open space (hanging left of x = 4 left the
     # frame on an axis that starts at 1). The 12-environment label sits
     # ABOVE-LEFT, where the line has not yet arrived -- below-right put it at
     # the same height as the pairs anchor, since both land near 7-8 million.
-    ax.annotate(f"4 environments:\n{data['environments']['4'] / 1e6:.1f} million cells",
-                (4, data["environments"]["4"]), xytext=(4, -2),
-                textcoords="offset points", fontsize=4.5, ha="left",
-                va="top", color=C_ENV)
-    ax.annotate(f"12: {data['environments']['12'] / 1e6:.1f} million",
-                (12, data["environments"]["12"]), xytext=(-3, 2),
-                textcoords="offset points", fontsize=4.5, ha="right",
-                va="bottom", color=C_ENV)
-    ax.plot([200], [pairs_200], marker="o", ms=2.6, color=C_PAIRS,
-            markeredgecolor="black", markeredgewidth=0.3, zorder=5)
+    ax.annotate(
+        f"4 environments:\n{data['environments']['4'] / 1e6:.1f} million cells",
+        (4, data["environments"]["4"]),
+        xytext=(4, -2),
+        textcoords="offset points",
+        fontsize=4.5,
+        ha="left",
+        va="top",
+        color=C_ENV,
+    )
+    ax.annotate(
+        f"12: {data['environments']['12'] / 1e6:.1f} million",
+        (12, data["environments"]["12"]),
+        xytext=(-3, 2),
+        textcoords="offset points",
+        fontsize=4.5,
+        ha="right",
+        va="bottom",
+        color=C_ENV,
+    )
+    ax.plot(
+        [200],
+        [pairs_200],
+        marker="o",
+        ms=2.6,
+        color=C_PAIRS,
+        markeredgecolor="black",
+        markeredgewidth=0.3,
+        zorder=5,
+    )
     # ABOVE-LEFT and kept narrow: the wedge between the two curves is the one
     # region neither crosses, but it closes leftward -- a line wider than about
     # twelve characters reaches back far enough for the environment line to run
     # through its top-left corner, which is exactly what the first draft shipped.
-    ax.annotate(f"200 targets:\n{pairs_200 / 1e6:.1f} million",
-                (200, pairs_200), xytext=(-4, 2), textcoords="offset points",
-                fontsize=4.5, ha="right", va="bottom", color=C_PAIRS)
+    ax.annotate(
+        f"200 targets:\n{pairs_200 / 1e6:.1f} million",
+        (200, pairs_200),
+        xytext=(-4, 2),
+        textcoords="offset points",
+        fontsize=4.5,
+        ha="right",
+        va="bottom",
+        color=C_PAIRS,
+    )
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -166,8 +233,15 @@ def panel_a(ax, data) -> None:
     ax.set_ylim(2e2, 4e8)
     ax.set_xlabel("Size of the axis: environments, or targets")
     ax.set_ylabel("Cells required")
-    ax.legend(frameon=False, loc="lower right", fontsize=4.5, handlelength=1.3,
-              handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2)
+    ax.legend(
+        frameon=False,
+        loc="lower right",
+        fontsize=4.5,
+        handlelength=1.3,
+        handletextpad=0.4,
+        labelspacing=0.3,
+        borderaxespad=0.2,
+    )
     ax.set_title("Environments are the linear axis", loc="left", fontsize=6)
     box(ax)
 
@@ -199,8 +273,17 @@ def _plate(ax, x0: float, y0: float, n_cols: int, n_rows: int, color: str) -> No
     round before it is anything else. What a single-condition screen leaves
     unused is the sample LABEL the well index also carries, not the well.
     """
-    ax.add_patch(Rectangle((x0, y0), PLATE_W, PLATE_H, facecolor=color,
-                           edgecolor="black", lw=0.5, zorder=3))
+    ax.add_patch(
+        Rectangle(
+            (x0, y0),
+            PLATE_W,
+            PLATE_H,
+            facecolor=color,
+            edgecolor="black",
+            lw=0.5,
+            zorder=3,
+        )
+    )
     lw = 0.35 if n_cols == 12 else 0.2
     for c in range(1, n_cols):
         x = x0 + c * PLATE_W / n_cols
@@ -255,31 +338,67 @@ def panel_b(ax) -> None:
     # weaker and true thing; what actually separates the two from droplet is
     # having a round-1 plate at all, and the reason 384 is not simply better is
     # in the caption.
-    for y, n, platform, color in ((y_sp, 96, "SPLiT-seq round 1", C_SPLIT),
-                                  (y_pi, 384, "scifi preindexing", C_PI)):
-        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.78, platform,
-                fontsize=5, ha="left", va="center")
-        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.48, f"{n}-well plate",
-                fontsize=5, ha="left", va="center")
-        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.18, f"{n} conditions",
-                fontsize=5, color=color, ha="left", va="center")
+    for y, n, platform, color in (
+        (y_sp, 96, "SPLiT-seq round 1", C_SPLIT),
+        (y_pi, 384, "scifi preindexing", C_PI),
+    ):
+        ax.text(
+            PLATE_W + 2.0,
+            y + PLATE_H * 0.78,
+            platform,
+            fontsize=5,
+            ha="left",
+            va="center",
+        )
+        ax.text(
+            PLATE_W + 2.0,
+            y + PLATE_H * 0.48,
+            f"{n}-well plate",
+            fontsize=5,
+            ha="left",
+            va="center",
+        )
+        ax.text(
+            PLATE_W + 2.0,
+            y + PLATE_H * 0.18,
+            f"{n} conditions",
+            fontsize=5,
+            color=color,
+            ha="left",
+            va="center",
+        )
 
     # The droplet glyph is one channel, drawn small and on its own row so it
     # cannot be read as a third plate.
-    ax.add_patch(Rectangle((0.0, y_ch), 6.0, 4.0, facecolor=C_DROP,
-                           edgecolor="black", lw=0.5, zorder=3))
-    ax.text(PLATE_W + 2.0, y_ch + 3.0, "10x channel, no round 1",
-            fontsize=5, ha="left", va="center")
-    ax.text(PLATE_W + 2.0, y_ch + 0.6, "1 condition", fontsize=5,
-            color=C_DROP, ha="left", va="center")
+    ax.add_patch(
+        Rectangle(
+            (0.0, y_ch), 6.0, 4.0, facecolor=C_DROP, edgecolor="black", lw=0.5, zorder=3
+        )
+    )
+    ax.text(
+        PLATE_W + 2.0,
+        y_ch + 3.0,
+        "10x channel, no round 1",
+        fontsize=5,
+        ha="left",
+        va="center",
+    )
+    ax.text(
+        PLATE_W + 2.0,
+        y_ch + 0.6,
+        "1 condition",
+        fontsize=5,
+        color=C_DROP,
+        ha="left",
+        va="center",
+    )
 
     ax.set_xlim(-2.0, 51.0)
     ax.set_ylim(-15.0, 31.0)
     ax.set_aspect("equal", adjustable="datalim")
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_title("A round-1 well is a free condition label",
-                 loc="left", fontsize=6)
+    ax.set_title("A round-1 well is a free condition label", loc="left", fontsize=6)
     box(ax)
 
 
@@ -323,28 +442,59 @@ def panel_c(ax, data) -> None:
     c_pi = summ["marginal_usd_per_usable_cell_droplet_preindexed"]
     c_sp = summ["marginal_usd_per_usable_cell_splitpool"]
 
-    ax.plot(e, dr, lw=1.0, color=C_DROP,
-            label=f"10x Chromium X, ${c_dr:.3f}/cell")
-    ax.plot(e, pi, lw=1.0, color=C_PI, ls=(0, (4, 1.5)),
-            label=f"10x + preindexing, ${c_pi:.3f}/cell")
-    ax.plot(e, sp, lw=1.0, color=C_SPLIT,
-            label=f"SPLiT-seq + rRNA depletion, ${c_sp:.3f}/cell")
+    ax.plot(e, dr, lw=1.0, color=C_DROP, label=f"10x Chromium X, ${c_dr:.3f}/cell")
+    ax.plot(
+        e,
+        pi,
+        lw=1.0,
+        color=C_PI,
+        ls=(0, (4, 1.5)),
+        label=f"10x + preindexing, ${c_pi:.3f}/cell",
+    )
+    ax.plot(
+        e,
+        sp,
+        lw=1.0,
+        color=C_SPLIT,
+        label=f"SPLiT-seq + rRNA depletion, ${c_sp:.3f}/cell",
+    )
 
     m_dr = summ["marginal_usd_per_env_droplet"]
     m_pi = summ["marginal_usd_per_env_droplet_preindexed"]
     m_sp = summ["marginal_usd_per_env_splitpool"]
     i60 = int(np.argmin(np.abs(e - 60)))
-    ax.annotate(f"${m_dr:,.0f} per added\nenvironment", (60, dr[i60]),
-                xytext=(-4, 3), textcoords="offset points", fontsize=4.5,
-                ha="right", va="bottom", color=C_DROP)
+    ax.annotate(
+        f"${m_dr:,.0f} per added\nenvironment",
+        (60, dr[i60]),
+        xytext=(-4, 3),
+        textcoords="offset points",
+        fontsize=4.5,
+        ha="right",
+        va="bottom",
+        color=C_DROP,
+    )
     # The two cheap curves run close together at the bottom of the panel, so
     # their labels go on opposite sides of the pair rather than both above.
-    ax.annotate(f"${m_pi:,.0f}", (84, pi[int(np.argmin(np.abs(e - 84)))]),
-                xytext=(0, 3), textcoords="offset points", fontsize=4.5,
-                ha="center", va="bottom", color=C_PI)
-    ax.annotate(f"${m_sp:,.0f} per added environment", (60, sp[i60]),
-                xytext=(0, -4), textcoords="offset points", fontsize=4.5,
-                ha="center", va="top", color=C_SPLIT)
+    ax.annotate(
+        f"${m_pi:,.0f}",
+        (84, pi[int(np.argmin(np.abs(e - 84)))]),
+        xytext=(0, 3),
+        textcoords="offset points",
+        fontsize=4.5,
+        ha="center",
+        va="bottom",
+        color=C_PI,
+    )
+    ax.annotate(
+        f"${m_sp:,.0f} per added environment",
+        (60, sp[i60]),
+        xytext=(0, -4),
+        textcoords="offset points",
+        fontsize=4.5,
+        ha="center",
+        va="top",
+        color=C_SPLIT,
+    )
 
     ax.set_xlim(0, 100)
     ax.set_ylim(0, dr[-1] * 1.08)
@@ -354,10 +504,16 @@ def panel_c(ax, data) -> None:
     )
     ax.set_xlabel("Environments")
     ax.set_ylabel("Recurring cost")
-    ax.legend(frameon=False, loc="upper left", fontsize=4.5, handlelength=1.3,
-              handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2)
-    ax.set_title("Unmodified droplet pays per condition", loc="left",
-                 fontsize=6)
+    ax.legend(
+        frameon=False,
+        loc="upper left",
+        fontsize=4.5,
+        handlelength=1.3,
+        handletextpad=0.4,
+        labelspacing=0.3,
+        borderaxespad=0.2,
+    )
+    ax.set_title("Unmodified droplet pays per condition", loc="left", fontsize=6)
     box(ax)
 
 
@@ -383,11 +539,13 @@ def main() -> None:
     print(f"wrote {out}")
 
     summ = data["environment_cost_summary"]
-    print(f"\nper added environment: split-pool "
-          f"${summ['marginal_usd_per_env_splitpool']:,.0f}, droplet "
-          f"${summ['marginal_usd_per_env_droplet']:,.0f} "
-          f"({summ['droplet_channels_per_condition']} channels at "
-          f"${summ['droplet_channel_usd']:,.0f})")
+    print(
+        f"\nper added environment: split-pool "
+        f"${summ['marginal_usd_per_env_splitpool']:,.0f}, droplet "
+        f"${summ['marginal_usd_per_env_droplet']:,.0f} "
+        f"({summ['droplet_channels_per_condition']} channels at "
+        f"${summ['droplet_channel_usd']:,.0f})"
+    )
 
 
 if __name__ == "__main__":

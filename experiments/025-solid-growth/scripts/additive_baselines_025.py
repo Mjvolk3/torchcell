@@ -334,7 +334,9 @@ def best_val(history: pd.DataFrame, arm: str) -> dict[str, object]:
     }
 
 
-def summarize(df: pd.DataFrame, refs: dict[str, dict[str, object]]) -> dict[str, object]:
+def summarize(
+    df: pd.DataFrame, refs: dict[str, dict[str, object]]
+) -> dict[str, object]:
     test = df[df["split"] == "test"]
     out: dict[str, object] = {"arms": {}, "transformer": {}}
     for arm in ARMS:

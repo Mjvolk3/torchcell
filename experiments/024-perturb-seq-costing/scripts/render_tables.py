@@ -1,7 +1,7 @@
 # experiments/024-perturb-seq-costing/scripts/render_tables.py
 # [[experiments.024-perturb-seq-costing.scripts.render_tables]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/024-perturb-seq-costing/scripts/render_tables
-"""Render every table from the perturb-seq costing review as a standalone doc.
+r"""Render every table from the perturb-seq costing review as a standalone doc.
 
 Purpose is presentation: one table per page-ish block, landscape, nothing but
 tables, so each can be screenshotted without cropping around prose.
@@ -20,13 +20,12 @@ from __future__ import annotations
 import os
 import os.path as osp
 
-import pandas as pd
-from dotenv import load_dotenv
-
 import cost_data as CD
 import cost_model as CM
 import method_data as MD
-from cost_per_cell_table import CITE, library_prep_table, loaded_table
+import pandas as pd
+from cost_per_cell_table import library_prep_table, loaded_table
+from dotenv import load_dotenv
 
 load_dotenv()
 NOTES_DIR = osp.join(os.environ["WORKSPACE_DIR"], "notes")
@@ -78,12 +77,7 @@ def t1_transcript_content() -> str:
             "0.7 -- 1 pg",
             "Nadal-Ribelles 2024 (`paper.md:49`)",
         ),
-        (
-            "*S. cerevisiae*",
-            "Protein-coding genes",
-            "~6,000",
-            "SGD / R64",
-        ),
+        ("*S. cerevisiae*", "Protein-coding genes", "~6,000", "SGD / R64"),
         (
             "*E. coli*",
             "Total mRNA per cell, **rich medium (LB)**",
@@ -108,12 +102,7 @@ def t1_transcript_content() -> str:
             "**>95%**",
             "Brandner 2025 (`paper.md:71`)",
         ),
-        (
-            "*E. coli*",
-            "Protein-coding genes",
-            "~4,400",
-            "K-12 MG1655 annotation",
-        ),
+        ("*E. coli*", "Protein-coding genes", "~4,400", "K-12 MG1655 annotation"),
         (
             "Mammalian",
             "Total mRNA molecules per cell",
@@ -165,7 +154,7 @@ def t2_method_landscape() -> str:
             if m.genes_low and m.genes_high:
                 gene = f"{m.genes_low:,.0f}--{m.genes_high:,.0f}"
         out.append(
-            f"| {m.label} | {m.platform} | {m.isolation.replace('_','-')} | "
+            f"| {m.label} | {m.platform} | {m.isolation.replace('_', '-')} | "
             f"{m.cells_profiled:,} | {umi} | {gene} | "
             f"{'yes' if m.has_perturbation_readout else '--'} |"
         )
@@ -290,9 +279,7 @@ def t6_barcode() -> str:
         for sub in (1, 24, 96):
             B = MD.barcode_space(rounds=rounds, sublibraries=sub)
             cells = [45_000, 480_000, 3_000_000, 12_000_000]
-            rates = " | ".join(
-                f"{100 * MD.collision_rate(c, B):.2f}%" for c in cells
-            )
+            rates = " | ".join(f"{100 * MD.collision_rate(c, B):.2f}%" for c in cells)
             bold = "**" if (rounds == 4 and sub == 24) else ""
             out.append(
                 f"| {bold}{rounds}{bold} | {bold}{sub}{bold} | {bold}{B:,}{bold} | {rates} |"
@@ -457,7 +444,7 @@ def main() -> None:
     print(f"wrote {path}")
     print("build the PDF with:")
     print(
-        '  bash notes/assets/publish/scripts/bib_tex_pdf_landscape.sh '
+        "  bash notes/assets/publish/scripts/bib_tex_pdf_landscape.sh "
         '"experiments.024-perturb-seq-costing.tables.md" "$PWD/notes" "experiments.024-perturb-seq-costing.tables"'
     )
 

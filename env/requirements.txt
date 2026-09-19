@@ -23,6 +23,9 @@
     umap-learn>=0.5.3
     # ? not sure which versoin
     hypernetx>=2.3.10
+    # chemistry: InChIKey from SMILES in torchcell/datamodels/compound_identity.py
+    # (was installed by hand on GilaHyper only; CI failed 15 tests without it)
+    rdkit>=2026.3.6
     
     # configuration
     hydra-core>=1.3.2

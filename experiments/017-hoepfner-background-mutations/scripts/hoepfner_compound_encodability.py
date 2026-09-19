@@ -68,8 +68,12 @@ def main() -> None:
 
     out = {
         "paper_quote": PAPER_QUOTE,
-        "paper_stated": {"proprietary": 1641, "reference": 135, "total": 1776,
-                         "headline_text": "nearly 1800 biologically active compounds"},
+        "paper_stated": {
+            "proprietary": 1641,
+            "reference": 135,
+            "total": 1776,
+            "headline_text": "nearly 1800 biologically active compounds",
+        },
         "measured_from_deposited_data": {
             "unique_compounds": n,
             "with_released_smiles_encodable": n_smiles,
@@ -80,7 +84,9 @@ def main() -> None:
             "pct_not_encodable": round((n - n_smiles) / n * 100, 1),
         },
         "experiment_columns": {
-            "HIP": cols["HIP"], "HOP": cols["HOP"], "total": tot_cols,
+            "HIP": cols["HIP"],
+            "HOP": cols["HOP"],
+            "total": tot_cols,
             "using_non_encodable_compound": tot_no_smiles,
             "pct_using_non_encodable": round(tot_no_smiles / tot_cols * 100, 1),
         },
@@ -90,11 +96,15 @@ def main() -> None:
         json.dump(out, fh, indent=2)
 
     print(f"unique compounds: {n}")
-    print(f"  encodable (released SMILES): {n_smiles} ({n_smiles/n*100:.1f}%)")
-    print(f"  NOT encodable (no SMILES):   {n - n_smiles} ({(n-n_smiles)/n*100:.1f}%)")
+    print(f"  encodable (released SMILES): {n_smiles} ({n_smiles / n * 100:.1f}%)")
+    print(
+        f"  NOT encodable (no SMILES):   {n - n_smiles} ({(n - n_smiles) / n * 100:.1f}%)"
+    )
     print(f"  fully proprietary (no name/SMILES): {n - n_encodable_or_named}")
-    print(f"experiment columns using a non-encodable compound: "
-          f"{tot_no_smiles}/{tot_cols} ({tot_no_smiles/tot_cols*100:.1f}%)")
+    print(
+        f"experiment columns using a non-encodable compound: "
+        f"{tot_no_smiles}/{tot_cols} ({tot_no_smiles / tot_cols * 100:.1f}%)"
+    )
     print(f"wrote {osp.join(RESULTS_DIR, 'compound_encodability.json')}")
 
 

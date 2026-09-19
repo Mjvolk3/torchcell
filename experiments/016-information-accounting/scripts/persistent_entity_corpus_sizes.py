@@ -64,6 +64,7 @@ NOT used -- port 873 is firewalled on many networks, and HTTPS gives the same si
 Run from the repo root:
   python experiments/016-information-accounting/scripts/persistent_entity_corpus_sizes.py --write-table
 """
+
 import argparse
 import json
 import os
@@ -73,7 +74,7 @@ import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 
@@ -188,7 +189,9 @@ def pubchem():
         total += n_bytes
         time.sleep(0.34)  # NCBI allows <=3 requests/s without an API key
         if i % 50 == 0 or i == len(files):
-            print(f"    pubchem {i}/{len(files)} blocks, {total / 1e9:.1f} GB", flush=True)
+            print(
+                f"    pubchem {i}/{len(files)} blocks, {total / 1e9:.1f} GB", flush=True
+            )
     cid_max = int(re.search(r"_(\d+)\.sdf\.gz$", files[-1]).group(1))
     return dict(
         _detail=detail,
@@ -196,7 +199,7 @@ def pubchem():
         corpus="PubChem Compound",
         artifact=f"{len(files)} SDF blocks, CID 1-{cid_max:,}",
         url=PUBCHEM,
-        release=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        release=datetime.now(UTC).strftime("%Y-%m-%d"),
         n_items=len(files),
         item_unit=f"SDF blocks, CID 1--{cid_max:,}",
         letters=None,
@@ -208,7 +211,7 @@ def pubchem():
 
 
 def wwpdb():
-    """wwPDB experimental structures. Sum every .cif.gz across the divided mmCIF tree.
+    """WwPDB experimental structures. Sum every .cif.gz across the divided mmCIF tree.
 
     files.rcsb.org sits behind CloudFront and returns no Content-Length, so per-file HEAD is
     unavailable; and 2.6e5 HEADs would be abusive anyway. The wwPDB directory index reports
@@ -222,18 +225,26 @@ def wwpdb():
     hash_dirs = sorted(set(re.findall(r'href="([0-9a-z]{2})/"', _text(WWPDB))))
 
     def scan(h):
-        return [(n, int(float(v) * unit[u])) for n, v, u in row.findall(_text(f"{WWPDB}{h}/"))]
+        return [
+            (n, int(float(v) * unit[u]))
+            for n, v, u in row.findall(_text(f"{WWPDB}{h}/"))
+        ]
 
-    with ThreadPoolExecutor(max_workers=6) as ex:  # 6, not 8: 8 bursts the local DNS resolver
+    with ThreadPoolExecutor(
+        max_workers=6
+    ) as ex:  # 6, not 8: 8 bursts the local DNS resolver
         sizes = [f for chunk in ex.map(scan, hash_dirs) for f in chunk]
-    print(f"    wwpdb {len(hash_dirs)} hash dirs, {len(sizes):,} .cif.gz files", flush=True)
+    print(
+        f"    wwpdb {len(hash_dirs)} hash dirs, {len(sizes):,} .cif.gz files",
+        flush=True,
+    )
     return dict(
         _detail=sizes,
         modality="Structure",
         corpus="wwPDB mmCIF",
         artifact="divided/mmCIF coordinate files (.cif.gz)",
         url=WWPDB,
-        release=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        release=datetime.now(UTC).strftime("%Y-%m-%d"),
         n_items=len(sizes),
         item_unit="structures",
         letters=None,
@@ -252,7 +263,10 @@ def measure():
     print("[3/5] NCBI nt + refseq_rna (nucleotide)", flush=True)
     nt = blast_db("DNA / nucleotide", "NCBI nt", "nt")
     rna = blast_db("RNA (transcripts)", "NCBI RefSeq RNA", "refseq_rna")
-    print("[4/5] PubChem Compound SDF (small molecule) -- ~3 min, rate-limited", flush=True)
+    print(
+        "[4/5] PubChem Compound SDF (small molecule) -- ~3 min, rate-limited",
+        flush=True,
+    )
     chem = pubchem()
     print("[5/5] wwPDB divided mmCIF (structure) -- ~1 min", flush=True)
     pdb = wwpdb()
@@ -269,13 +283,13 @@ def measure():
     df = pd.DataFrame(rows)
     df["compressed_bits"] = df["compressed_bytes"] * 8
     df["alphabet_floor_bits"] = df["letters"] * df["alphabet_bits"]
-    df["fetched_utc"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    df["fetched_utc"] = datetime.now(UTC).isoformat(timespec="seconds")
     df["snapshot_id"] = timestamp()
     return df, audit
 
 
 def _sci(x, sig=2):
-    """1.23e+11 -> $1.2\\times10^{11}$"""
+    r"""1.23e+11 -> $1.2\\times10^{11}$"""
     s = f"{x:.{sig - 1}e}"
     mant, exp = s.split("e")
     return f"${mant}\\times10^{{{int(exp)}}}$"
@@ -394,20 +408,26 @@ def main():
         with open(f"{stem}.json", "w") as f:
             json.dump(record, f, indent=2)
         audit.to_csv(f"{stem}.audit.csv.gz", index=False, compression="gzip")
-        print(f"\nsnapshot {snap}: {len(audit):,} per-file sizes archived (PubChem + wwPDB)")
+        print(
+            f"\nsnapshot {snap}: {len(audit):,} per-file sizes archived (PubChem + wwPDB)"
+        )
 
     print("\n" + "=" * 84)
     print(f"{'modality':<20}{'corpus':<24}{'GB':>10}{'bits':>14}{'floor(2b/base)':>16}")
     print("-" * 84)
     for _, r in df.iterrows():
-        floor = f"{r.alphabet_floor_bits:.3g}" if pd.notna(r.alphabet_floor_bits) else "--"
+        floor = (
+            f"{r.alphabet_floor_bits:.3g}" if pd.notna(r.alphabet_floor_bits) else "--"
+        )
         print(
             f"{r.modality:<20}{r.corpus:<24}{r.compressed_bytes / 1e9:>10,.1f}"
             f"{r.compressed_bits:>14.3g}{floor:>16}"
         )
     print("-" * 84)
     print(f"{'TOTAL (all rows)':<44}{total_all / 1e9:>10,.1f}{total_all * 8:>14.3g}")
-    print(f"{'TOTAL (non-overlapping)':<44}{total_cons / 1e9:>10,.1f}{total_cons * 8:>14.3g}")
+    print(
+        f"{'TOTAL (non-overlapping)':<44}{total_cons / 1e9:>10,.1f}{total_cons * 8:>14.3g}"
+    )
     print("=" * 84)
 
     # Cross-check: does gzip on a 2-bit-packed nucleotide archive recover the alphabet floor?
@@ -421,7 +441,9 @@ def main():
     if audit is not None:
         stem = osp.join(SNAP_DIR, f"persistent_entity_corpus_sizes_{snap}")
         print(f"wrote {stem}.csv\nwrote {stem}.json\nwrote {stem}.audit.csv.gz")
-    print(f"\nCITE THIS SNAPSHOT if the numbers are questioned: {snap} ({df.fetched_utc.iloc[0]})")
+    print(
+        f"\nCITE THIS SNAPSHOT if the numbers are questioned: {snap} ({df.fetched_utc.iloc[0]})"
+    )
 
     if args.write_table:
         with open(TEX_OUT, "w") as f:

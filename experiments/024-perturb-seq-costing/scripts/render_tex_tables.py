@@ -20,27 +20,24 @@ import math
 import os
 import os.path as osp
 
-import pandas as pd
-from dotenv import load_dotenv
-
 import cost_data as CD
 import cost_model as CM
 import design_equation as DE
 import figure_sources as FS
 import glossary as GL
 import method_data as MD
+import pandas as pd
 import read_structure as RS
 import scaling_analysis as SA
 import uiuc_core_data as UC
-from cost_per_cell_table import CITE, library_prep_table, loaded_table
+from cost_per_cell_table import library_prep_table, loaded_table
+from dotenv import load_dotenv
 
 load_dotenv()
 OUT = osp.join(
     os.environ["WORKSPACE_DIR"], "notes-tex", "microbe-perturb-seq", "tables"
 )
-RESULTS = osp.join(
-    os.environ["EXPERIMENT_ROOT"], "024-perturb-seq-costing", "results"
-)
+RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "024-perturb-seq-costing", "results")
 
 HEADER = (
     "%% GENERATED FILE -- do not hand-edit.\n"
@@ -59,9 +56,15 @@ def esc(s: str) -> str:
     writes the next quote containing a caret.
     """
     for a, b in (
-        ("&", r"\&"), ("%", r"\%"), ("_", r"\_"), ("#", r"\#"), ("$", r"\$"),
-        ("^", r"\textasciicircum{}"), ("~", r"\textasciitilde{}"),
-        ("<", r"\textless{}"), (">", r"\textgreater{}"),
+        ("&", r"\&"),
+        ("%", r"\%"),
+        ("_", r"\_"),
+        ("#", r"\#"),
+        ("$", r"\$"),
+        ("^", r"\textasciicircum{}"),
+        ("~", r"\textasciitilde{}"),
+        ("<", r"\textless{}"),
+        (">", r"\textgreater{}"),
     ):
         s = s.replace(a, b)
     return s
@@ -74,9 +77,16 @@ def emit(name: str, body: str) -> None:
     print(f"  {name}.tex")
 
 
-def table(spec: str, header: str, rows: list[str], caption: str,
-          label: str, size: str = r"\footnotesize", note: str = "") -> str:
-    """A booktabs table wrapped so it sits inline where it is \\input.
+def table(
+    spec: str,
+    header: str,
+    rows: list[str],
+    caption: str,
+    label: str,
+    size: str = r"\footnotesize",
+    note: str = "",
+) -> str:
+    r"""A booktabs table wrapped so it sits inline where it is \\input.
 
     Default size is \\footnotesize: at \\small these tables read visibly larger
     than the manuscript's, which is the house reference for how a table should
@@ -112,7 +122,7 @@ def table(spec: str, header: str, rows: list[str], caption: str,
 
 # --- t0 (glossary) -----------------------------------------------------------
 def t0() -> None:
-    """The vocabulary table, Sec. 2.1.
+    r"""The vocabulary table, Sec. 2.1.
 
     A ``longtable`` rather than the usual ``table``+``tabular`` float, because
     this one is a reference and must be allowed to break across pages: a 28-row
@@ -193,8 +203,7 @@ def t0() -> None:
         if t.abbrev:
             # Abbreviation is NOT escaped: some are math ($k$).
             name += rf"\newline {{\color{{tcgray}}({t.abbrev})}}"
-        lines.append(
-            rf"{name} & {GL.rendered_definition(t)} & \cref{{{t.where}}} \\")
+        lines.append(rf"{name} & {GL.rendered_definition(t)} & \cref{{{t.where}}} \\")
         lines.append(r"\addlinespace[5pt]")
     lines += [r"\end{longtable}", r"\endgroup"]
     emit("t0-glossary", "\n".join(lines))
@@ -203,43 +212,90 @@ def t0() -> None:
 # --- t1 ----------------------------------------------------------------------
 def t1() -> None:
     rows = [
-        (r"\org{S.\ cerevisiae}", "Total mRNA molecules per cell",
-         r"\textbf{20{,}000--60{,}000}", r"Jariani 2020 \texttt{(md:31)}"),
-        ("", "Working figure (Brettner)", r"$\sim$30{,}000",
-         r"Brettner 2024 \texttt{(md:70)}"),
-        ("", "Total mRNA molecules per cell", r"40{,}000--60{,}000",
-         r"Jackson 2020~\citep{jacksonGeneRegulatoryNetwork2020}"),
-        ("", "Implied by 3{,}000 genes $\\times$ 3.5 molecules", r"$\sim$10{,}500",
-         r"Nadal-Ribelles 2024 \texttt{(md:107)}"),
+        (
+            r"\org{S.\ cerevisiae}",
+            "Total mRNA molecules per cell",
+            r"\textbf{20{,}000--60{,}000}",
+            r"Jariani 2020 \texttt{(md:31)}",
+        ),
+        (
+            "",
+            "Working figure (Brettner)",
+            r"$\sim$30{,}000",
+            r"Brettner 2024 \texttt{(md:70)}",
+        ),
+        (
+            "",
+            "Total mRNA molecules per cell",
+            r"40{,}000--60{,}000",
+            r"Jackson 2020~\citep{jacksonGeneRegulatoryNetwork2020}",
+        ),
+        (
+            "",
+            "Implied by 3{,}000 genes $\\times$ 3.5 molecules",
+            r"$\sim$10{,}500",
+            r"Nadal-Ribelles 2024 \texttt{(md:107)}",
+        ),
         # The primary behind the row above, and it is a MEASUREMENT of the same
         # quantity the review rounds to 3.5 -- worth carrying separately because
         # it is also the second factor in Nadal-Ribelles' derived depth in
         # Table 4, and a reader should be able to find it without the review.
-        ("", "Mean UMIs per detected gene, per cell", "3.46",
-         r"Nadal-Ribelles 2019~\citep{nadal-ribellesSensitiveHighthroughputSinglecell2019}"),
-        ("", "Capture rate, 10x 3$'$ v2", r"3--5\%", r"Jackson 2020~\citep{jacksonGeneRegulatoryNetwork2020}"),
-        ("", "Total RNA per cell ($\\sim$85\\% rRNA)", "0.7--1 pg",
-         r"Nadal-Ribelles 2024 \texttt{(md:49)}"),
+        (
+            "",
+            "Mean UMIs per detected gene, per cell",
+            "3.46",
+            r"Nadal-Ribelles 2019~\citep{nadal-ribellesSensitiveHighthroughputSinglecell2019}",
+        ),
+        (
+            "",
+            "Capture rate, 10x 3$'$ v2",
+            r"3--5\%",
+            r"Jackson 2020~\citep{jacksonGeneRegulatoryNetwork2020}",
+        ),
+        (
+            "",
+            "Total RNA per cell ($\\sim$85\\% rRNA)",
+            "0.7--1 pg",
+            r"Nadal-Ribelles 2024 \texttt{(md:49)}",
+        ),
         ("", "Protein-coding genes", r"$\sim$6{,}000", "SGD / R64"),
         # External rows are marked with a superscript letter and resolved to a
         # URL in a note under the table. The point of the flag is that someone
         # will need to go and verify the number, so the link has to be there --
         # but inline URLs would blow the column width out, hence the note.
-        (r"\org{E.\ coli}", r"Total mRNA per cell, \textbf{rich (LB)}",
-         rf"\textbf{{$\sim${MD.ECOLI_MRNA_PER_CELL_RICH:,}}}".replace(",", "{,}"),
-         r"Bartholom\"aus 2016$^{a}$"),
-        ("", "Total mRNA per cell, minimal medium",
-         rf"$\sim${MD.ECOLI_MRNA_PER_CELL_MINIMAL:,}".replace(",", "{,}"),
-         r"Bartholom\"aus 2016$^{a}$"),
+        (
+            r"\org{E.\ coli}",
+            r"Total mRNA per cell, \textbf{rich (LB)}",
+            rf"\textbf{{$\sim${MD.ECOLI_MRNA_PER_CELL_RICH:,}}}".replace(",", "{,}"),
+            r"Bartholom\"aus 2016$^{a}$",
+        ),
+        (
+            "",
+            "Total mRNA per cell, minimal medium",
+            rf"$\sim${MD.ECOLI_MRNA_PER_CELL_MINIMAL:,}".replace(",", "{,}"),
+            r"Bartholom\"aus 2016$^{a}$",
+        ),
         # No longer flagged: Taniguchi is now in the mirror and the collection,
         # so it is an ordinary sourced row rather than an outside reference.
-        ("", "Total mRNA per cell, medium growth rate", r"$\sim$3{,}000",
-         r"Taniguchi 2010~\citep{taniguchiQuantifyingColiProteome2010}"),
-        ("", "rRNA share of all transcripts", r"\textbf{$>$95\%}",
-         r"Brandner 2025 \texttt{(md:71)}"),
+        (
+            "",
+            "Total mRNA per cell, medium growth rate",
+            r"$\sim$3{,}000",
+            r"Taniguchi 2010~\citep{taniguchiQuantifyingColiProteome2010}",
+        ),
+        (
+            "",
+            "rRNA share of all transcripts",
+            r"\textbf{$>$95\%}",
+            r"Brandner 2025 \texttt{(md:71)}",
+        ),
         ("", "Protein-coding genes", r"$\sim$4{,}400", "K-12 MG1655"),
-        ("Mammalian", "Total mRNA molecules per cell", "50{,}000--300{,}000",
-         r"Jariani 2020 \texttt{(md:31)}"),
+        (
+            "Mammalian",
+            "Total mRNA molecules per cell",
+            "50{,}000--300{,}000",
+            r"Jariani 2020 \texttt{(md:31)}",
+        ),
     ]
     note = (
         r"$^{a}$ BNID 112795, "
@@ -335,8 +391,11 @@ def t2() -> None:
                 [
                     esc(m.study)
                     + (r"$^{\dagger}$" if m.secondhand else "")
-                    + (r"$^{\ddagger}$"
-                       if m.spread_kind == "across_experiments" else ""),
+                    + (
+                        r"$^{\ddagger}$"
+                        if m.spread_kind == "across_experiments"
+                        else ""
+                    ),
                     SHORT_PLATFORM.get(m.platform, esc(m.platform)),
                     m.isolation.replace("_", "-"),
                     f"{m.cells_profiled:,}".replace(",", "{,}"),
@@ -345,9 +404,13 @@ def t2() -> None:
                     "yes" if m.has_perturbation_readout else "--",
                     # Basis column: a stated value and a value we derived must
                     # be distinguishable at a glance (same rule as t3/t4).
-                    {"reported": "rep.", "midpoint": "midpt.",
-                     "median_of": "med-of", "weighted": "wtd.",
-                     "derived": "deriv."}[m.value_basis],
+                    {
+                        "reported": "rep.",
+                        "midpoint": "midpt.",
+                        "median_of": "med-of",
+                        "weighted": "wtd.",
+                        "derived": "deriv.",
+                    }[m.value_basis],
                 ]
             )
         )
@@ -518,8 +581,12 @@ def t6() -> None:
             fmt = (lambda s: rf"\textbf{{{s}}}") if bold else (lambda s: s)
             rows.append(
                 " & ".join(
-                    [fmt(f"split-pool, {rounds} rounds"), fmt(str(sub)),
-                     fmt(f"{B:,}".replace(",", "{,}")), rate_cells(B)]
+                    [
+                        fmt(f"split-pool, {rounds} rounds"),
+                        fmt(str(sub)),
+                        fmt(f"{B:,}".replace(",", "{,}")),
+                        rate_cells(B),
+                    ]
                 )
             )
     # The preindexed-droplet scheme, for comparison on the same axis. Its space
@@ -530,8 +597,12 @@ def t6() -> None:
     B_scifi = MD.SCIFI_ROUND1_WELLS_USED * MD.SCIFI_ROUND2_BARCODES
     rows.append(
         " & ".join(
-            [r"scifi, $384\times$droplet", "--",
-             f"{B_scifi:,}".replace(",", "{,}"), rate_cells(B_scifi)]
+            [
+                r"scifi, $384\times$droplet",
+                "--",
+                f"{B_scifi:,}".replace(",", "{,}"),
+                rate_cells(B_scifi),
+            ]
         )
     )
     emit(
@@ -586,8 +657,10 @@ def t7() -> None:
         )
     header = (
         r"& & & & \multicolumn{5}{c}{Millions of cells for 6{,}000 genes, "
-        r"at $k$ guides per cell} \\" "\n"
-        r"\cmidrule(l){5-9}" "\n"
+        r"at $k$ guides per cell} \\"
+        "\n"
+        r"\cmidrule(l){5-9}"
+        "\n"
         r"Method & mRNA UMIs/cell & Cells/pert. & Binds on & "
         + " & ".join(f"$k={k}$" for k in plexes)
     )
@@ -720,7 +793,11 @@ def t10() -> None:
         n = CM.cells_for_main_effects_kplex(250, 6000, k)
         pairs_6000 = CM.cells_for_all_pairs(6000, k)
         pairs_200 = CM.cells_for_all_pairs(200, k)
-        fmt = lambda v: ("--" if math.isinf(v) else f"{v:,.0f}".replace(",", "{,}"))
+
+        def fmt(v: float) -> str:
+            """Format a cell count with LaTeX thousands separators, or a dash when infinite."""
+            return "--" if math.isinf(v) else f"{v:,.0f}".replace(",", "{,}")
+
         rows.append(
             " & ".join(
                 [
@@ -773,11 +850,11 @@ SHORT_READ = {
     "12 nt cell barcode + 8 nt UMI": "barcode + UMI",
 }
 SHORT_IDX = {
-    "6 nt single, or dual 8 nt -- the sublibrary index (barcode round 4)":
-        "6 or dual 8 nt (= BC round 4)",
+    "6 nt single, or dual 8 nt -- the sublibrary index (barcode round 4)": "6 or dual 8 nt (= BC round 4)",
     "dual 10 nt (i7 + i5), unique dual indices": "dual 10 nt",
     "single 8 nt": "single 8 nt",
 }
+
 
 def t11() -> None:
     rows = []
@@ -828,26 +905,59 @@ def t12() -> None:
     delta = DE.DELTA_MEASURED
     A = DE.power_coefficient(delta)
     rows = [
-        (r"$A(\Delta)$", "power coefficient, Eq.~(\\ref{eq:design})",
-         f"{A:.1f}", "derived",
-         r"at the measured $\Delta$; scales as $\Delta^{-2}$"),
-        (r"$\Delta$", "log$_2$ fold change to resolve", f"{delta:.2f}",
-         "measured", r"median responder at a 1.25$\times$ cut, "
-                     r"\cref{tab:effect-size}"),
-        (r"$p_j$", "transcriptome share of target gene",
-         f"{DE.P_TYPICAL:.1e}".replace("e-0", r"$\times10^{-") + r"}$",
-         "derived", r"3.5 molecules / 30{,}000 mRNA, \cref{tab:transcript-content}"),
-        (r"$\varphi_j$", "biological overdispersion between cells", "0.5--10",
-         r"\textbf{assumed}", "swept; sets the floor. Not yet measured"),
+        (
+            r"$A(\Delta)$",
+            "power coefficient, Eq.~(\\ref{eq:design})",
+            f"{A:.1f}",
+            "derived",
+            r"at the measured $\Delta$; scales as $\Delta^{-2}$",
+        ),
+        (
+            r"$\Delta$",
+            "log$_2$ fold change to resolve",
+            f"{delta:.2f}",
+            "measured",
+            r"median responder at a 1.25$\times$ cut, "
+            r"\cref{tab:effect-size}",
+        ),
+        (
+            r"$p_j$",
+            "transcriptome share of target gene",
+            f"{DE.P_TYPICAL:.1e}".replace("e-0", r"$\times10^{-") + r"}$",
+            "derived",
+            r"3.5 molecules / 30{,}000 mRNA, \cref{tab:transcript-content}",
+        ),
+        (
+            r"$\varphi_j$",
+            "biological overdispersion between cells",
+            "0.5--10",
+            r"\textbf{assumed}",
+            "swept; sets the floor. Not yet measured",
+        ),
         # Source cells are set in an `l` column, so they must fit on one line.
         # The preindexed caveat lives in the caption note instead; spelling it
         # out here pushed the table 92 pt past the text block.
-        (r"$d$", "sequencing depth, mRNA UMIs per cell", "410--2{,}000",
-         "measured", r"per platform, \cref{tab:landscape}"),
-        (r"$\rho_2$", "variance inflation, second order", "4",
-         "quoted", "Yao et al.; the 400-cells-per-pair constant"),
-        (r"$q$", "per-guide detection probability", "--",
-         r"\textbf{assumed}", r"needs the construct of \cref{sec:guide-capture}"),
+        (
+            r"$d$",
+            "sequencing depth, mRNA UMIs per cell",
+            "410--2{,}000",
+            "measured",
+            r"per platform, \cref{tab:landscape}",
+        ),
+        (
+            r"$\rho_2$",
+            "variance inflation, second order",
+            "4",
+            "quoted",
+            "Yao et al.; the 400-cells-per-pair constant",
+        ),
+        (
+            r"$q$",
+            "per-guide detection probability",
+            "--",
+            r"\textbf{assumed}",
+            r"needs the construct of \cref{sec:guide-capture}",
+        ),
     ]
     emit(
         "t12-design-parameters",
@@ -860,14 +970,14 @@ def t12() -> None:
             "predictor.",
             "tab:design-params",
             note=r"\textbf{Status}: \emph{measured} = from data we hold; "
-                 r"\emph{quoted} = stated by a source; \emph{derived} = computed "
-                 r"from measured values; \textbf{assumed} = a placeholder, and "
-                 r"every number downstream of it inherits that status. "
-                 r"One qualification on $d$: the 410--2{,}000 range is measured "
-                 r"per platform, but the preindexed droplet of \cref{sec:scifi} "
-                 r"has no published per-cell depth in any microbe and is held at "
-                 r"the 10x value throughout, so for that platform alone $d$ is "
-                 r"\textbf{assumed}.",
+            r"\emph{quoted} = stated by a source; \emph{derived} = computed "
+            r"from measured values; \textbf{assumed} = a placeholder, and "
+            r"every number downstream of it inherits that status. "
+            r"One qualification on $d$: the 410--2{,}000 range is measured "
+            r"per platform, but the preindexed droplet of \cref{sec:scifi} "
+            r"has no published per-cell depth in any microbe and is held at "
+            r"the 10x value throughout, so for that platform alone $d$ is "
+            r"\textbf{assumed}.",
         ),
     )
 
@@ -888,15 +998,19 @@ def t14() -> None:
     rows = []
     for _, r in df.sort_values(["n_perturbations", "dataset"]).iterrows():
         med = r["median_abs_log2fc_responders"]
-        rows.append(" & ".join([
-            label[r["dataset"]],
-            f"{int(r['n_strains']):,}".replace(",", "{,}"),
-            f"{r['median_n_resp_1.25x']:.0f}",
-            f"{r['median_n_resp_1.5x']:.0f}",
-            f"{r['median_n_resp_2.0x']:.0f}",
-            f"\\textbf{{{med:.2f}}}",
-            f"{2**med:.2f}$\\times$",
-        ]))
+        rows.append(
+            " & ".join(
+                [
+                    label[r["dataset"]],
+                    f"{int(r['n_strains']):,}".replace(",", "{,}"),
+                    f"{r['median_n_resp_1.25x']:.0f}",
+                    f"{r['median_n_resp_1.5x']:.0f}",
+                    f"{r['median_n_resp_2.0x']:.0f}",
+                    f"\\textbf{{{med:.2f}}}",
+                    f"{2**med:.2f}$\\times$",
+                ]
+            )
+        )
     emit(
         "t14-effect-size",
         table(
@@ -909,33 +1023,33 @@ def t14() -> None:
             "Measured response of the transcriptome to a gene deletion.",
             "tab:effect-size",
             note=r"\textbf{``Responding'' means $|\log_2$ FC$| > \log_2 1.25$}, "
-                 r"that is, a gene whose expression moved by more than 1.25-fold "
-                 r"in either direction relative to wild type, on the array "
-                 r"platform of the source compendium. There is no significance "
-                 r"test behind it and none is available per gene per strain: the "
-                 r"criterion is a magnitude cut on the reported log ratio, applied "
-                 r"identically to all three datasets. "
-                 r"A single deletion moves a few hundred genes by that criterion "
-                 r"but only $\sim$10--15 by 2$\times$, so designing at two-fold "
-                 r"targets a few percent of the response. "
-                 r"\textbf{The 1.34$\times$ in the last column is conditioned on "
-                 r"that cut and is not independent of it.} The $|\Delta|$ "
-                 r"distribution falls off monotonically (\cref{fig:effect-size}a), so "
-                 r"the median of whatever upper tail is selected sits just above "
-                 r"the cut that selected it: the same statistic is 1.16$\times$ at "
-                 r"a 1.1$\times$ cut, 1.36$\times$ at 1.25$\times$, 1.73$\times$ "
-                 r"at 1.5$\times$ and 2.57$\times$ at 2$\times$ "
-                 r"(\cref{fig:effect-size}c, right axis). What the column establishes "
-                 r"is therefore not a natural effect size but a consequence of "
-                 r"choosing 1.25$\times$, and the choice is what to argue with. "
-                 r"It matters because the power coefficient $A$ scales as "
-                 r"$|\Delta|^{-2}$, so at 1.34$\times$ every cell requirement is "
-                 r"$\sim$5.6 times the two-fold figure. "
-                 r"Doubling the perturbation count roughly doubles the responder "
-                 r"count at 1.25$\times$ and trebles it at 2$\times$, without "
-                 r"shifting the median response -- more perturbations make a cell "
-                 r"noisier, not its individual effects larger. Generated from "
-                 r"\file{experiments/024-perturb-seq-costing/scripts/effect_size_analysis.py}.",
+            r"that is, a gene whose expression moved by more than 1.25-fold "
+            r"in either direction relative to wild type, on the array "
+            r"platform of the source compendium. There is no significance "
+            r"test behind it and none is available per gene per strain: the "
+            r"criterion is a magnitude cut on the reported log ratio, applied "
+            r"identically to all three datasets. "
+            r"A single deletion moves a few hundred genes by that criterion "
+            r"but only $\sim$10--15 by 2$\times$, so designing at two-fold "
+            r"targets a few percent of the response. "
+            r"\textbf{The 1.34$\times$ in the last column is conditioned on "
+            r"that cut and is not independent of it.} The $|\Delta|$ "
+            r"distribution falls off monotonically (\cref{fig:effect-size}a), so "
+            r"the median of whatever upper tail is selected sits just above "
+            r"the cut that selected it: the same statistic is 1.16$\times$ at "
+            r"a 1.1$\times$ cut, 1.36$\times$ at 1.25$\times$, 1.73$\times$ "
+            r"at 1.5$\times$ and 2.57$\times$ at 2$\times$ "
+            r"(\cref{fig:effect-size}c, right axis). What the column establishes "
+            r"is therefore not a natural effect size but a consequence of "
+            r"choosing 1.25$\times$, and the choice is what to argue with. "
+            r"It matters because the power coefficient $A$ scales as "
+            r"$|\Delta|^{-2}$, so at 1.34$\times$ every cell requirement is "
+            r"$\sim$5.6 times the two-fold figure. "
+            r"Doubling the perturbation count roughly doubles the responder "
+            r"count at 1.25$\times$ and trebles it at 2$\times$, without "
+            r"shifting the median response -- more perturbations make a cell "
+            r"noisier, not its individual effects larger. Generated from "
+            r"\file{experiments/024-perturb-seq-costing/scripts/effect_size_analysis.py}.",
         ),
     )
 
@@ -945,7 +1059,6 @@ def t14() -> None:
 # Sec. 4.7, which is exactly the condition the table existed to make visible.
 # Do not restore it: a DOI table for works we hold would re-hide the citations
 # it was invented to expose.
-
 
 
 # --- t16 (compression parameters) --------------------------------------------
@@ -962,28 +1075,49 @@ def t16() -> None:
         c = json.load(fh)
     q_lo, q_hi = c["q_iqr"]
     rows = [
-        (r"$n$", "targets in the library", "200--6{,}000",
-         r"\textbf{a choice}",
-         r"the panel of \cref{sec:multiplex}, or the genome"),
+        (
+            r"$n$",
+            "targets in the library",
+            "200--6{,}000",
+            r"\textbf{a choice}",
+            r"the panel of \cref{sec:multiplex}, or the genome",
+        ),
         # nu, not q: q is the per-guide detection probability everywhere in this
         # document (Table 12 uses it that way). Yao et al. write this quantity as
         # q; the rename is recorded in the glossary entry and in the note below.
-        (r"$\nu$", "genes moved per perturbation",
-         f"{c['q_median_genes_moved_per_perturbation']:.0f}",
-         "measured",
-         rf"IQR {q_lo:.0f}--{q_hi:.0f} over {c['n_strains']:,} deletions"
-         .replace(",", "{,}")),
-        (r"$r$", "components in the effect matrix",
-         f"{c['rank_90pct']}", "measured",
-         rf"{c['rank_50pct']} at 50\% of variance, "
-         rf"{c['rank_95pct']} at 95\%; no knee"),
-        (r"$(\nu{+}r)\log n$", "composite samples, unit constant",
-         f"{(c['q_median_genes_moved_per_perturbation'] + c['rank_90pct']) * math.log(6000):,.0f}"
-         .replace(",", "{,}"),
-         "derived", r"at $n=6{,}000$; $0.65n$, so compression barely pays"),
-        ("slope", "observed / additive, double deletions",
-         f"{c['additivity_median_slope']:.2f}", "measured",
-         rf"median over {c['additivity_n_testable_doubles']} Sameith doubles"),
+        (
+            r"$\nu$",
+            "genes moved per perturbation",
+            f"{c['q_median_genes_moved_per_perturbation']:.0f}",
+            "measured",
+            rf"IQR {q_lo:.0f}--{q_hi:.0f} over {c['n_strains']:,} deletions".replace(
+                ",", "{,}"
+            ),
+        ),
+        (
+            r"$r$",
+            "components in the effect matrix",
+            f"{c['rank_90pct']}",
+            "measured",
+            rf"{c['rank_50pct']} at 50\% of variance, "
+            rf"{c['rank_95pct']} at 95\%; no knee",
+        ),
+        (
+            r"$(\nu{+}r)\log n$",
+            "composite samples, unit constant",
+            f"{(c['q_median_genes_moved_per_perturbation'] + c['rank_90pct']) * math.log(6000):,.0f}".replace(
+                ",", "{,}"
+            ),
+            "derived",
+            r"at $n=6{,}000$; $0.65n$, so compression barely pays",
+        ),
+        (
+            "slope",
+            "observed / additive, double deletions",
+            f"{c['additivity_median_slope']:.2f}",
+            "measured",
+            rf"median over {c['additivity_n_testable_doubles']} Sameith doubles",
+        ),
     ]
     emit(
         "t16-compression-parameters",
@@ -995,21 +1129,21 @@ def t16() -> None:
             "expression compendia.",
             "tab:compression-params",
             note=r"Yao et al.\ give the sample requirement as "
-                 r"$O((\nu+r)\log n)$ without a constant, writing $\nu$ as $q$; "
-                 r"it is renamed here because $q$ is the per-guide detection "
-                 r"probability throughout (\cref{tab:design-params}). The fourth row is a "
-                 r"\emph{shape} evaluated at unit constant and not a budget; what "
-                 r"survives the unknown constant is that the requirement is "
-                 r"nearly flat in $n$ while the conventional one is linear. "
-                 r"\textbf{The last row is the assumption, not a parameter.} "
-                 r"Guide-pooling requires effects to combine additively and "
-                 r"argues that interactions cancel; in yeast they do not cancel, "
-                 r"they buffer, and a double produces about 60\% of the sum of "
-                 r"its singles. Sameith et al.'s pairs were chosen because they "
-                 r"were expected to interact, so 0.62 is a lower bound on "
-                 r"additivity rather than an estimate of it "
-                 r"(\cref{sec:compression}). Generated from "
-                 r"\file{experiments/024-perturb-seq-costing/scripts/compression_analysis.py}.",
+            r"$O((\nu+r)\log n)$ without a constant, writing $\nu$ as $q$; "
+            r"it is renamed here because $q$ is the per-guide detection "
+            r"probability throughout (\cref{tab:design-params}). The fourth row is a "
+            r"\emph{shape} evaluated at unit constant and not a budget; what "
+            r"survives the unknown constant is that the requirement is "
+            r"nearly flat in $n$ while the conventional one is linear. "
+            r"\textbf{The last row is the assumption, not a parameter.} "
+            r"Guide-pooling requires effects to combine additively and "
+            r"argues that interactions cancel; in yeast they do not cancel, "
+            r"they buffer, and a double produces about 60\% of the sum of "
+            r"its singles. Sameith et al.'s pairs were chosen because they "
+            r"were expected to interact, so 0.62 is a lower bound on "
+            r"additivity rather than an estimate of it "
+            r"(\cref{sec:compression}). Generated from "
+            r"\file{experiments/024-perturb-seq-costing/scripts/compression_analysis.py}.",
         ),
     )
 
@@ -1096,9 +1230,7 @@ def _provenance_table(spec, recs: list) -> list[str]:
             src += r" \tcflagext"
         if r.note:
             src += rf" {{\color{{tcgray}}\emph{{Note:}} {esc(r.note)}}}"
-        lines.append(
-            rf"{esc(r.element)} & \texttt{{{esc(r.value)}}} & {src} \\"
-        )
+        lines.append(rf"{esc(r.element)} & \texttt{{{esc(r.value)}}} & {src} \\")
         lines.append(r"\addlinespace[2.5pt]")
     lines += [r"\end{longtable}", r"\endgroup", r"\vspace{0.6em}"]
     return lines
@@ -1116,41 +1248,53 @@ def t17() -> None:
     pts = SA.delivery_table(6000, targets)
     rows = []
     for t, p in zip(targets, pts):
-        rows.append(" & ".join([
-            f"{t:d}",
-            f"{p.lam:.2f}",
-            f"{p.mean_distinct:.3f}",
-            f"{100 * p.p_exactly_1:.1f}\\%",
-            f"{100 * p.p_at_least_2:.1f}\\%",
-        ]))
-    emit("t17-delivery", table(
-        spec="rrrrr",
-        header=(r"Plasmids per cell & Poisson & Distinct guides & Cells with & "
-                r"Cells with \\" "\n"
-                r"(target average) & $\lambda$ & per cell & 1 guide & $\ge 2$ guides"),
-        rows=rows,
-        caption=(
-            "Delivering several guides per cell by multiple plasmids rather than "
-            "by an array (route B of \\cref{sec:delivery}). Selection for the "
-            "marker conditions on carrying at least one plasmid, so the count per "
-            "surviving cell is a zero-truncated Poisson with mean "
-            "$\\bar m = \\lambda/(1-e^{-\\lambda})$."),
-        label="tab:delivery",
-        note=(
-            r"\textbf{Plasmids per cell} is the average number of plasmid "
-            r"molecules carried by a cell that survived selection, written "
-            r"$\bar m$ in the text. It is a copy number, not a count of genes or "
-            r"of library members, and it is the quantity a marker attenuation "
-            r"actually sets. $\lambda$ is the underlying uptake rate "
-            r"before selection, which is lower because selection discards the "
-            r"cells that took up nothing. \textbf{Distinct guides} is lower than $\bar m$ "
-            r"because two plasmids can carry the same guide, and the gap is "
-            r"negligible at this library size (6{,}000 guides). The last two "
-            r"columns are the reason $k$ cannot be treated as a constant: even at "
-            r"$\bar m = 3$ nearly a fifth of cells carry a single guide. "
-            r"Generated from "
-            r"\file{experiments/024-perturb-seq-costing/scripts/scaling\_analysis.py}."),
-    ))
+        rows.append(
+            " & ".join(
+                [
+                    f"{t:d}",
+                    f"{p.lam:.2f}",
+                    f"{p.mean_distinct:.3f}",
+                    f"{100 * p.p_exactly_1:.1f}\\%",
+                    f"{100 * p.p_at_least_2:.1f}\\%",
+                ]
+            )
+        )
+    emit(
+        "t17-delivery",
+        table(
+            spec="rrrrr",
+            header=(
+                r"Plasmids per cell & Poisson & Distinct guides & Cells with & "
+                r"Cells with \\"
+                "\n"
+                r"(target average) & $\lambda$ & per cell & 1 guide & $\ge 2$ guides"
+            ),
+            rows=rows,
+            caption=(
+                "Delivering several guides per cell by multiple plasmids rather than "
+                "by an array (route B of \\cref{sec:delivery}). Selection for the "
+                "marker conditions on carrying at least one plasmid, so the count per "
+                "surviving cell is a zero-truncated Poisson with mean "
+                "$\\bar m = \\lambda/(1-e^{-\\lambda})$."
+            ),
+            label="tab:delivery",
+            note=(
+                r"\textbf{Plasmids per cell} is the average number of plasmid "
+                r"molecules carried by a cell that survived selection, written "
+                r"$\bar m$ in the text. It is a copy number, not a count of genes or "
+                r"of library members, and it is the quantity a marker attenuation "
+                r"actually sets. $\lambda$ is the underlying uptake rate "
+                r"before selection, which is lower because selection discards the "
+                r"cells that took up nothing. \textbf{Distinct guides} is lower than $\bar m$ "
+                r"because two plasmids can carry the same guide, and the gap is "
+                r"negligible at this library size (6{,}000 guides). The last two "
+                r"columns are the reason $k$ cannot be treated as a constant: even at "
+                r"$\bar m = 3$ nearly a fifth of cells carry a single guide. "
+                r"Generated from "
+                r"\file{experiments/024-perturb-seq-costing/scripts/scaling\_analysis.py}."
+            ),
+        ),
+    )
 
 
 # --- t18 (combination recovery) ----------------------------------------------
@@ -1165,47 +1309,76 @@ def t18() -> None:
     for T in (200, 6000):
         for k in (2, 3, 5, 8):
             r = SA.recovery(T, k)
-            rows.append(" & ".join([
-                f"{T:,}".replace(",", "{,}"),
-                str(k),
-                f"{r.cells_for_main_effects:,.0f}".replace(",", "{,}"),
-                f"{r.cells_for_all_pairs:,.0f}".replace(",", "{,}"),
-                f"{r.expected_repeats_per_pair:.2f}",
-            ]))
-    emit("t18-recovery", table(
-        spec="rrrrr",
-        header=(r"Genes in & Guides per & Cells for & Cells for & Times a given \\"
+            rows.append(
+                " & ".join(
+                    [
+                        f"{T:,}".replace(",", "{,}"),
+                        str(k),
+                        f"{r.cells_for_main_effects:,.0f}".replace(",", "{,}"),
+                        f"{r.cells_for_all_pairs:,.0f}".replace(",", "{,}"),
+                        f"{r.expected_repeats_per_pair:.2f}",
+                    ]
+                )
+            )
+    emit(
+        "t18-recovery",
+        table(
+            spec="rrrrr",
+            header=(
+                r"Genes in & Guides per & Cells for & Cells for & Times a given \\"
                 "\n"
-                r"panel, $T$ & cell, $k$ & main effects & all pairs & pair is seen"),
-        rows=rows,
-        caption=(
-            "Main effects never require a combination to recur; a named "
-            "combination's joint transcriptome does. Both requirements evaluated "
-            "at the 100-cell first-order floor and Yao et al.'s 400 cells per "
-            "pair."),
-        label="tab:recovery",
-        note=(
-            r"\textbf{$k$ is guides per cell}, each against a different gene, so "
-            r"$k$ is also how many genes are knocked down in one cell. It is not "
-            r"the six guides per gene the library carries, and it is not a count "
-            r"of library members. \textbf{$T$} is how many genes the panel "
-            r"targets. \textbf{Cells for main effects} is $100\,T/k$, since a "
-            r"cell carrying $k$ guides informs $k$ genes. \textbf{Cells for all pairs} is "
-            r"Eq.~\ref{eq:pairs}. \textbf{Times a given pair is seen} is the last "
-            r"column of the first divided over the pair space, that is, how often "
-            r"one specific gene pair appears while running only the main-effect "
-            r"budget: below 1 means most pairs never appear at all. It falls by a "
-            r"factor of about 30 between the 200-gene panel and the genome, "
-            r"because the pair space grows quadratically in $T$ while the cell "
-            r"budget grows linearly. Generated from "
-            r"\file{experiments/024-perturb-seq-costing/scripts/scaling\_analysis.py}."),
-    ))
+                r"panel, $T$ & cell, $k$ & main effects & all pairs & pair is seen"
+            ),
+            rows=rows,
+            caption=(
+                "Main effects never require a combination to recur; a named "
+                "combination's joint transcriptome does. Both requirements evaluated "
+                "at the 100-cell first-order floor and Yao et al.'s 400 cells per "
+                "pair."
+            ),
+            label="tab:recovery",
+            note=(
+                r"\textbf{$k$ is guides per cell}, each against a different gene, so "
+                r"$k$ is also how many genes are knocked down in one cell. It is not "
+                r"the six guides per gene the library carries, and it is not a count "
+                r"of library members. \textbf{$T$} is how many genes the panel "
+                r"targets. \textbf{Cells for main effects} is $100\,T/k$, since a "
+                r"cell carrying $k$ guides informs $k$ genes. \textbf{Cells for all pairs} is "
+                r"Eq.~\ref{eq:pairs}. \textbf{Times a given pair is seen} is the last "
+                r"column of the first divided over the pair space, that is, how often "
+                r"one specific gene pair appears while running only the main-effect "
+                r"budget: below 1 means most pairs never appear at all. It falls by a "
+                r"factor of about 30 between the 200-gene panel and the genome, "
+                r"because the pair space grows quadratically in $T$ while the cell "
+                r"budget grows linearly. Generated from "
+                r"\file{experiments/024-perturb-seq-costing/scripts/scaling\_analysis.py}."
+            ),
+        ),
+    )
 
 
 def main() -> None:
     print(f"writing LaTeX tables -> {OUT}")
-    for fn in (t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t14,
-               t15, t16, t17, t18):
+    for fn in (
+        t0,
+        t1,
+        t2,
+        t3,
+        t4,
+        t5,
+        t6,
+        t7,
+        t8,
+        t9,
+        t10,
+        t11,
+        t12,
+        t14,
+        t15,
+        t16,
+        t17,
+        t18,
+    ):
         fn()
     print("done")
 

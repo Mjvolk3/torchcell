@@ -233,10 +233,14 @@ def main() -> None:
         json.dump(report, fh, indent=2)
 
     rows = report["all"]
-    print(f"\n{report['arm']}  ({report['n_analyzed']} runs with usable history "
-          f"of {report['n_runs']} in {project})\n")
-    hdr = (f"{'peak':>7} {'final':>7} {'pk_ep':>6} {'n_ep':>5} {'pk/n':>5} "
-           f"{'after':>6} {'cap':>4} {'val_slope':>11} {'trn_slope':>11}  verdict")
+    print(
+        f"\n{report['arm']}  ({report['n_analyzed']} runs with usable history "
+        f"of {report['n_runs']} in {project})\n"
+    )
+    hdr = (
+        f"{'peak':>7} {'final':>7} {'pk_ep':>6} {'n_ep':>5} {'pk/n':>5} "
+        f"{'after':>6} {'cap':>4} {'val_slope':>11} {'trn_slope':>11}  verdict"
+    )
     print(hdr)
     print("-" * len(hdr))
     for r in rows[:16]:
@@ -255,18 +259,26 @@ def main() -> None:
             counts[r["verdict"]] = counts.get(r["verdict"], 0) + 1
         for v, c in sorted(counts.items(), key=lambda kv: -kv[1]):
             print(f"    {c:3d}  {v}")
-        print(f"\n  epochs after peak: median={st.median([r['epochs_after_peak'] for r in top])}"
-              f"  (early-stopping patience is the floor)")
+        print(
+            f"\n  epochs after peak: median={st.median([r['epochs_after_peak'] for r in top])}"
+            f"  (early-stopping patience is the floor)"
+        )
         print(f"  hit max_epochs   : {sum(r['hit_cap'] for r in top)}/{len(top)}")
-        print(f"  longest peak_epoch: {max(r['peak_epoch'] for r in rows)} "
-              f"(cap is {rows[0].get('max_epochs') or 'max_epochs'})")
-        print("\n  patience probe -- would a SHORTER patience have truncated a run "
-              "before its peak?")
+        print(
+            f"  longest peak_epoch: {max(r['peak_epoch'] for r in rows)} "
+            f"(cap is {rows[0].get('max_epochs') or 'max_epochs'})"
+        )
+        print(
+            "\n  patience probe -- would a SHORTER patience have truncated a run "
+            "before its peak?"
+        )
         for p_ in (20, 25, 40):
             n = sum(r[f"truncated_at_patience_{p_}"] for r in rows)
-            print(f"      patience {p_:2d}: truncates {n}/{len(rows)} runs   "
-                  f"(max gap to peak, median={st.median([r['max_gap_to_peak'] for r in rows]):.0f} "
-                  f"max={max(r['max_gap_to_peak'] for r in rows)})")
+            print(
+                f"      patience {p_:2d}: truncates {n}/{len(rows)} runs   "
+                f"(max gap to peak, median={st.median([r['max_gap_to_peak'] for r in rows]):.0f} "
+                f"max={max(r['max_gap_to_peak'] for r in rows)})"
+            )
     print(f"\nwrote {out}")
 
 

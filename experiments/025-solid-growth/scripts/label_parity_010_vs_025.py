@@ -24,7 +24,8 @@ DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 
 LMDB_010 = osp.join(
-    DATA_ROOT, "data/torchcell/experiments/010-kuzmin-tmi/001-small-build/processed/lmdb"
+    DATA_ROOT,
+    "data/torchcell/experiments/010-kuzmin-tmi/001-small-build/processed/lmdb",
 )
 RECAP_TABLE = osp.join(
     DATA_ROOT,

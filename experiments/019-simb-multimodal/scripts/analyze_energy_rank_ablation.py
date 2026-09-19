@@ -60,8 +60,11 @@ from torchcell.utils.paths import experiment_results_dir  # noqa: E402
 PROJECT = "zhao-group/torchcell_019_expr_v7"
 PEARSON = "val/expression/pearson_per_feature"
 LOSS = "val/loss"
-CALIB = ["val/expression/calib/coverage_50", "val/expression/calib/coverage_80",
-         "val/expression/calib/pit_ks"]
+CALIB = [
+    "val/expression/calib/coverage_50",
+    "val/expression/calib/coverage_80",
+    "val/expression/calib/pit_ks",
+]
 
 
 def _fetch() -> list[dict[str, Any]]:
@@ -104,15 +107,21 @@ def _summarize(rows: list[dict[str, Any]], key: str, lower_is_better: bool) -> N
     if len(groups) < 2:
         print(f"  {key}: need both ranks; have {sorted(groups)}")
         return
-    print(f"\n  {key}  ({'LOWER is better' if lower_is_better else 'HIGHER is better'})")
-    print(f"    {'rank':>5} {'n':>3} {'mean':>10} {'median':>10} {'sd':>9} {'best':>10}")
+    print(
+        f"\n  {key}  ({'LOWER is better' if lower_is_better else 'HIGHER is better'})"
+    )
+    print(
+        f"    {'rank':>5} {'n':>3} {'mean':>10} {'median':>10} {'sd':>9} {'best':>10}"
+    )
     for k in sorted(groups):
         g = groups[k]
         sd = st.stdev(g) if len(g) > 1 else float("nan")
         best = min(g) if lower_is_better else max(g)
         label = "0 (diag)" if k == 0 else f"{k} (joint)"
-        print(f"    {label:>5} {len(g):>3} {st.mean(g):>10.4f} {st.median(g):>10.4f} "
-              f"{sd:>9.4f} {best:>10.4f}")
+        print(
+            f"    {label:>5} {len(g):>3} {st.mean(g):>10.4f} {st.median(g):>10.4f} "
+            f"{sd:>9.4f} {best:>10.4f}"
+        )
     a, b = groups.get(0, []), groups.get(32, [])
     if len(a) >= 3 and len(b) >= 3:
         u = stats.mannwhitneyu(a, b, alternative="two-sided")
@@ -128,7 +137,9 @@ def main() -> None:
     rows = _fetch()
     print(f"energy-arm runs with a recorded val/loss: {len(rows)}")
     if not rows:
-        print("none yet -- the sweep is still producing them, or the sync has not caught up")
+        print(
+            "none yet -- the sweep is still producing them, or the sync has not caught up"
+        )
         return
     by_rank: dict[Any, int] = {}
     for r in rows:
@@ -151,7 +162,9 @@ def main() -> None:
             if row.get(key) is not None:
                 row[f"|{key}-nominal|"] = abs(float(row[key]) - target)
     for k in ("coverage_50", "coverage_80"):
-        _summarize(rows, k, lower_is_better=False)  # raw value, for direction of the error
+        _summarize(
+            rows, k, lower_is_better=False
+        )  # raw value, for direction of the error
         _summarize(rows, f"|{k}-nominal|", lower_is_better=True)  # the actual verdict
     _summarize(rows, "pit_ks", lower_is_better=True)
 

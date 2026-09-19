@@ -29,13 +29,12 @@ import math
 import os
 import os.path as osp
 
-import pandas as pd
-from dotenv import load_dotenv
-from pydantic import BaseModel, Field
-
 import cost_data as CD
 import method_data as MD
+import pandas as pd
 import uiuc_core_data as UC
+from dotenv import load_dotenv
+from pydantic import BaseModel, Field
 
 load_dotenv()
 RESULTS_DIR = osp.join(
@@ -59,6 +58,7 @@ class ScreenDesign(BaseModel):
 
     @property
     def n_elements(self) -> int:
+        """Total library elements: targeting guides plus non-targeting controls."""
         return self.n_genes * self.guides_per_gene + self.n_controls
 
     @property
@@ -69,7 +69,8 @@ class ScreenDesign(BaseModel):
     @property
     def cells_per_guide(self) -> float:
         """Gene-level power pools all guides for a gene, so this is only the
-        per-guide QC/concordance budget -- it does not set the cell count."""
+        per-guide QC/concordance budget -- it does not set the cell count.
+        """
         return self.cells_per_gene / self.guides_per_gene
 
 
@@ -109,10 +110,12 @@ class Platform(BaseModel):
 
     @property
     def reads_per_mrna_umi(self) -> float:
+        """Sequencing reads spent per mRNA UMI recovered from a cell."""
         return self.reads_per_cell / self.mrna_umis_per_cell
 
     @property
     def usable_read_fraction(self) -> float:
+        """Fraction of purchased reads left after PhiX spike-in and barcode loss."""
         return (1.0 - self.phix_fraction) * self.valid_barcode_fraction
 
 
@@ -230,6 +233,8 @@ PLATFORMS = [SPLITSEQ_PUBLISHED, SPLITSEQ_DEPLETED, TENX, TENX_SCIFI_PROJECTED]
 
 
 class Budget(BaseModel):
+    """Costed screen for one platform: cell, batch, lane counts and the USD breakdown."""
+
     platform: str
     usable_cells: int
     sequenced_cells: int
@@ -321,9 +326,7 @@ def umis_needed_for_fold_change(log2_fc: float, z: float = Z_80_05) -> float:
 
 
 def cells_per_perturbation(
-    mrna_umis_per_cell: float,
-    target_pseudobulk_umis: float,
-    floor: int = CELLS_FLOOR,
+    mrna_umis_per_cell: float, target_pseudobulk_umis: float, floor: int = CELLS_FLOOR
 ) -> int:
     """Binding constraint of the two: biological floor vs depth requirement."""
     return max(floor, math.ceil(target_pseudobulk_umis / mrna_umis_per_cell))
@@ -398,7 +401,9 @@ def cells_per_named_pair(n_cells: int, n_genes: int, plex: int) -> float:
 CELLS_PER_PAIR_YAO = 400
 
 
-def cells_for_all_pairs(n_targets: int, plex: int, per_pair: int = CELLS_PER_PAIR_YAO) -> float:
+def cells_for_all_pairs(
+    n_targets: int, plex: int, per_pair: int = CELLS_PER_PAIR_YAO
+) -> float:
     """Cells to power every pairwise interaction among ``n_targets`` at k-plex."""
     if plex < 2:
         return math.inf
@@ -407,7 +412,9 @@ def cells_for_all_pairs(n_targets: int, plex: int, per_pair: int = CELLS_PER_PAI
     return per_pair * n_pairs / pairs_per_cell
 
 
-def max_targets_for_pairs(n_cells: int, plex: int, per_pair: int = CELLS_PER_PAIR_YAO) -> float:
+def max_targets_for_pairs(
+    n_cells: int, plex: int, per_pair: int = CELLS_PER_PAIR_YAO
+) -> float:
     """Inverse: how many targets can have ALL their pairs powered, given n cells.
 
     Reproduces Yao's worked cases -- 100,000 cells at k=3 gives ~39 targets;
@@ -457,9 +464,7 @@ def main() -> None:
                     "target_pseudobulk_umis": target,
                     "cells_per_perturbation": n,
                     "binding_constraint": (
-                        "biological floor"
-                        if n == CELLS_FLOOR
-                        else "sequencing depth"
+                        "biological floor" if n == CELLS_FLOOR else "sequencing depth"
                     ),
                     "cells_for_6000_genes": n * 6000,
                 }

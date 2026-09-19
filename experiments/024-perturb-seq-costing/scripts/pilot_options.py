@@ -54,7 +54,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from dotenv import load_dotenv  # noqa: E402
-from pydantic import BaseModel, Field  # noqa: E402
+from pydantic import BaseModel  # noqa: E402
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 
@@ -88,8 +88,17 @@ def place_panel_letters(fig, axes, letters) -> None:
         # horizontal-bar panels here) has a tight bounding box that already
         # starts at the figure edge, and the usual 0.010 offset then puts the
         # letter off the canvas, where check_inside_figure catches it.
-        fig.text(max(bb.x0 - 0.010, 0.002), min(bb.y1 + 0.012, 0.988), letter,
-                 fontsize=8, fontweight="bold", ha="left", va="bottom", zorder=20)
+        fig.text(
+            max(bb.x0 - 0.010, 0.002),
+            min(bb.y1 + 0.012, 0.988),
+            letter,
+            fontsize=8,
+            fontweight="bold",
+            ha="left",
+            va="bottom",
+            zorder=20,
+        )
+
 
 # --- published guide/genotype assignment rates -------------------------------
 # q, the per-cell probability that the perturbation carried is actually read out.
@@ -354,7 +363,12 @@ def condition_scaling(
     matched effort. The three routes differ only in whether a condition label
     exists: droplet buys a channel per condition, the two plate routes pool.
     """
-    out: dict[str, list[float]] = {"n": [], "droplet": [], "preindexed": [], "plate": []}
+    out: dict[str, list[float]] = {
+        "n": [],
+        "droplet": [],
+        "preindexed": [],
+        "plate": [],
+    }
     for e in n_conditions:
         out["n"].append(e)
         for name, p in (
@@ -376,8 +390,7 @@ def condition_scaling(
                     total_sequenced / (p.cells_per_sublibrary or total_sequenced)
                 )
                 reagents = (
-                    batches * p.cost_per_batch_usd
-                    + n_sub * p.cost_per_sublibrary_usd
+                    batches * p.cost_per_batch_usd + n_sub * p.cost_per_sublibrary_usd
                 )
             else:
                 reagents = tenx_channel_usd(batches, crispr_addon=False)
@@ -616,7 +629,9 @@ def main() -> None:
     ax.set_ylabel("recurring cost, USD")
     ax.set_xlim(1, 12)
     ax.set_ylim(0, 40_000)
-    ax.set_title("A medium is free on a plate and a channel in a droplet", fontsize=6, loc="left")
+    ax.set_title(
+        "A medium is free on a plate and a channel in a droplet", fontsize=6, loc="left"
+    )
     ax.legend(
         loc="upper left",
         frameon=True,
@@ -640,14 +655,22 @@ def main() -> None:
     ax.set_xscale("log")
     ax.set_xlim(5e3, 1e7)
     ax.set_xlabel("usable cells")
-    ax.set_title("What one run buys, against what a screen needs", fontsize=6, loc="left")
+    ax.set_title(
+        "What one run buys, against what a screen needs", fontsize=6, loc="left"
+    )
 
     # (d) what q does
     ax = axes[1][1]
     q = np.linspace(0.05, 1.0, 200)
     for k, style in ((1, "-"), (2, (0, (4, 1.5))), (3, (0, (1, 1.2)))):
-        ax.plot(q, q**k, color=C_GRAY if k == 1 else C_DROP, ls=style, lw=1.0,
-                label=f"{k} guide" + ("" if k == 1 else "s") + " per cell")
+        ax.plot(
+            q,
+            q**k,
+            color=C_GRAY if k == 1 else C_DROP,
+            ls=style,
+            lw=1.0,
+            label=f"{k} guide" + ("" if k == 1 else "s") + " per cell",
+        )
     ax.axvline(Q_BRANDNER, color=C_PLATE, lw=0.8, ls=(0, (2, 1.5)), zorder=1)
     ax.axvline(Q_NADAL, color=C_SC, lw=0.8, ls=(0, (2, 1.5)), zorder=1)
     ax.text(Q_BRANDNER + 0.02, 0.93, "E. coli\n0.21", fontsize=5.5, va="top")
@@ -656,7 +679,9 @@ def main() -> None:
     ax.set_ylabel("fraction of cells usable")
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    ax.set_title("q is linear at one guide and exponential past it", fontsize=6, loc="left")
+    ax.set_title(
+        "q is linear at one guide and exponential past it", fontsize=6, loc="left"
+    )
     # Lower right: the upper left is where the two published q values are
     # annotated, and a legend there hid the E. coli one entirely.
     ax.legend(

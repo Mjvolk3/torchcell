@@ -23,7 +23,7 @@ unpriced silently reads as priced.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class CostItem(BaseModel):
@@ -106,8 +106,7 @@ BRETTNER_ITEMS: list[CostItem] = [
         citation_key=_B,
         line=183,
         quote=(
-            "The New England Biolabs T4 DNA Ligase (M0202M) is currently listed "
-            "at $270"
+            "The New England Biolabs T4 DNA Ligase (M0202M) is currently listed at $270"
         ),
         note=(
             "Covers the two published ligation rounds. A third ligation round "
@@ -421,6 +420,8 @@ PER_CELL_SPREAD = 50.0 / 0.00251
 
 
 class QuoteNeeded(BaseModel):
+    """A cost item neither source paper prices, with its quote status and working value."""
+
     item: str
     why_it_matters: str
     status: str  # "needs_quote" | "list_price_found"

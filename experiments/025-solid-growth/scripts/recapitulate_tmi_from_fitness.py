@@ -32,7 +32,6 @@ import json
 import os
 import os.path as osp
 import re
-from collections import defaultdict
 from itertools import combinations
 
 import lmdb
@@ -47,7 +46,12 @@ from matplotlib.ticker import MultipleLocator
 from scipy import stats
 
 from torchcell.timestamp import timestamp
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -109,9 +113,7 @@ def scan() -> tuple[dict, dict, dict]:
         flush=True,
     )
 
-    env = lmdb.open(
-        osp.join(BUILD, "lmdb"), readonly=True, lock=False, max_readers=32
-    )
+    env = lmdb.open(osp.join(BUILD, "lmdb"), readonly=True, lock=False, max_readers=32)
     singles: dict[str, dict] = {}
     triples: dict[tuple, dict] = {}
     with env.begin() as txn:
@@ -185,7 +187,11 @@ def recompute(singles: dict, doubles: dict, triples: dict) -> dict:
             f_abc = tv[key]
             vals = [x[key] if x else None for x in s]
             dd = [x[key] if x else None for x in (d_ab, d_ac, d_bc)]
-            if f_abc is None or any(v is None for v in vals) or any(v is None for v in dd):
+            if (
+                f_abc is None
+                or any(v is None for v in vals)
+                or any(v is None for v in dd)
+            ):
                 continue
             fa, fb, fc = vals
             f_ab, f_ac, f_bc = dd
@@ -195,14 +201,14 @@ def recompute(singles: dict, doubles: dict, triples: dict) -> dict:
         f_abc = tv["fit"]
         vals = [x["fit"] if x else None for x in s]
         ee = [x["gi"] if x else None for x in (d_ab, d_ac, d_bc)]
-        if f_abc is not None and all(v is not None for v in vals) and all(
-            e is not None for e in ee
+        if (
+            f_abc is not None
+            and all(v is not None for v in vals)
+            and all(e is not None for e in ee)
         ):
             fa, fb, fc = vals
             e_ab, e_ac, e_bc = ee
-            row["tau_dmi"] = (
-                f_abc - e_ab * fc - e_ac * fb - e_bc * fa - fa * fb * fc
-            )
+            row["tau_dmi"] = f_abc - e_ab * fc - e_ac * fb - e_bc * fa - fa * fb * fc
         rows.append(row)
     return {"rows": rows}
 
@@ -268,12 +274,15 @@ def style_axis(ax):
 
 
 def hexbin_panel(x, y, xlabel, ylabel, title, stats_d, path_base, lim):
-    fig, ax = plt.subplots(
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(70))
-    )
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(70)))
     mask = np.isfinite(x) & np.isfinite(y)
     hb = ax.hexbin(
-        x[mask], y[mask], gridsize=80, bins="log", cmap=CMAP, extent=(*lim, *lim),
+        x[mask],
+        y[mask],
+        gridsize=80,
+        bins="log",
+        cmap=CMAP,
+        extent=(*lim, *lim),
         linewidths=0.0,
     )
     ax.plot(lim, lim, color="black", linewidth=0.5, linestyle="--")
@@ -311,10 +320,18 @@ def main() -> None:
     rows = recap["rows"]
     digenic = digenic_check(singles, doubles)
 
-    tmi = np.array([r["tmi_stored"] if r["tmi_stored"] is not None else np.nan for r in rows])
-    tau_a = np.array([r["tau_aggregate"] if r["tau_aggregate"] is not None else np.nan for r in rows])
-    tau_k = np.array([r["tau_kuzmin"] if r["tau_kuzmin"] is not None else np.nan for r in rows])
-    tau_d = np.array([r["tau_dmi"] if r["tau_dmi"] is not None else np.nan for r in rows])
+    tmi = np.array(
+        [r["tmi_stored"] if r["tmi_stored"] is not None else np.nan for r in rows]
+    )
+    tau_a = np.array(
+        [r["tau_aggregate"] if r["tau_aggregate"] is not None else np.nan for r in rows]
+    )
+    tau_k = np.array(
+        [r["tau_kuzmin"] if r["tau_kuzmin"] is not None else np.nan for r in rows]
+    )
+    tau_d = np.array(
+        [r["tau_dmi"] if r["tau_dmi"] is not None else np.nan for r in rows]
+    )
     no_ess = np.array([not r["any_ess_single"] for r in rows])
     dmi = np.array([r["dmi_stored"] for r in digenic])
     eps_a = np.array([r["eps_aggregate"] for r in digenic])
@@ -325,11 +342,13 @@ def main() -> None:
         "generated": TS,
         "n_triples": n_triples,
         "n_singles_in_build": len(singles),
-        "n_closure_pairs_needed": len({
-            frozenset(p)
-            for r in rows
-            for p in combinations((r["gene_a"], r["gene_b"], r["gene_c"]), 2)
-        }),
+        "n_closure_pairs_needed": len(
+            {
+                frozenset(p)
+                for r in rows
+                for p in combinations((r["gene_a"], r["gene_b"], r["gene_c"]), 2)
+            }
+        ),
         "n_closure_pairs_found": len(doubles),
         "n_triples_full_closure": closure_full,
         "frac_triples_full_closure": closure_full / n_triples,
@@ -341,16 +360,12 @@ def main() -> None:
         "trigenic_dmi": paired_stats(tmi, tau_d),
         "trigenic_dmi_no_ess": paired_stats(tmi[no_ess], tau_d[no_ess]),
         "digenic_aggregate": paired_stats(dmi, eps_a),
-        "positive_calls": [
-            call_confusion(tmi, tau_a, c) for c in (0.08, 0.16, 0.20)
-        ],
+        "positive_calls": [call_confusion(tmi, tau_a, c) for c in (0.08, 0.16, 0.20)],
         "negative_calls_below_-0.08": call_confusion(-tmi, -tau_a, 0.08),
     }
     print(json.dumps(summary, indent=2), flush=True)
 
-    with gzip.open(
-        osp.join(TABLE_DIR, "recapitulation_per_triple.csv.gz"), "wt"
-    ) as f:
+    with gzip.open(osp.join(TABLE_DIR, "recapitulation_per_triple.csv.gz"), "wt") as f:
         cols = list(rows[0].keys())
         f.write(",".join(cols) + "\n")
         for r in rows:
@@ -361,36 +376,44 @@ def main() -> None:
 
     lim_t = (-0.6, 0.6)
     hexbin_panel(
-        tmi, tau_a,
+        tmi,
+        tau_a,
         "stored tmi (mean over group entries)",
         "recomputed tau, aggregate fitness",
         "Trigenic recapitulation, aggregate",
         summary["trigenic_aggregate"],
-        osp.join(IMG_DIR, f"recapitulation_trigenic_aggregate_{TS}"), lim_t,
+        osp.join(IMG_DIR, f"recapitulation_trigenic_aggregate_{TS}"),
+        lim_t,
     )
     hexbin_panel(
-        tmi, tau_k,
+        tmi,
+        tau_k,
         "stored tmi (mean over group entries)",
         "recomputed tau, Kuzmin-sourced fitness",
         "Trigenic recapitulation, Kuzmin-only",
         summary["trigenic_kuzmin"],
-        osp.join(IMG_DIR, f"recapitulation_trigenic_kuzmin_{TS}"), lim_t,
+        osp.join(IMG_DIR, f"recapitulation_trigenic_kuzmin_{TS}"),
+        lim_t,
     )
     hexbin_panel(
-        tmi[no_ess], tau_d[no_ess],
+        tmi[no_ess],
+        tau_d[no_ess],
         "stored tmi (mean over group entries)",
         "recomputed tau from stored dmi + fitness",
         "Trigenic recapitulation, dmi-based, no essential single",
         summary["trigenic_dmi_no_ess"],
-        osp.join(IMG_DIR, f"recapitulation_trigenic_dmi_no_ess_{TS}"), lim_t,
+        osp.join(IMG_DIR, f"recapitulation_trigenic_dmi_no_ess_{TS}"),
+        lim_t,
     )
     hexbin_panel(
-        dmi, eps_a,
+        dmi,
+        eps_a,
         "stored dmi",
         "recomputed eps = f_ab - f_a f_b",
         "Digenic recapitulation, closure pairs",
         summary["digenic_aggregate"],
-        osp.join(IMG_DIR, f"recapitulation_digenic_aggregate_{TS}"), (-0.8, 0.8),
+        osp.join(IMG_DIR, f"recapitulation_digenic_aggregate_{TS}"),
+        (-0.8, 0.8),
     )
 
     # residual histogram, both variants
@@ -402,8 +425,13 @@ def main() -> None:
     ):
         mask = np.isfinite(arr) & np.isfinite(tmi)
         ax.hist(
-            (arr - tmi)[mask], bins=200, range=(-0.4, 0.4), histtype="step",
-            color=color, linewidth=0.8, label=f"{label} (n={mask.sum():,})",
+            (arr - tmi)[mask],
+            bins=200,
+            range=(-0.4, 0.4),
+            histtype="step",
+            color=color,
+            linewidth=0.8,
+            label=f"{label} (n={mask.sum():,})",
         )
     ax.set_yscale("log")
     ax.set_xlabel("recomputed tau - stored tmi", fontsize=6)

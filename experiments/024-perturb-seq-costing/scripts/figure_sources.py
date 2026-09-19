@@ -27,8 +27,12 @@ import os.path as osp
 import sys
 
 sys.path.insert(
-    0, osp.join(osp.dirname(osp.dirname(osp.dirname(osp.dirname(
-        osp.abspath(__file__))))), "notes-tex", "common")
+    0,
+    osp.join(
+        osp.dirname(osp.dirname(osp.dirname(osp.dirname(osp.abspath(__file__))))),
+        "notes-tex",
+        "common",
+    ),
 )
 
 from figure_provenance import FigureNumber, HandDrawnFigure, check  # noqa: E402
@@ -49,24 +53,32 @@ RRNA = "rrna-depletion-options"
 # NUMBER in both directions. Adding a figure means adding a row here and its
 # records below; render_tex_tables.t15 loops over this and needs no edit.
 FIGURES: list[HandDrawnFigure] = [
-    HandDrawnFigure(slug=TAXONOMY, tex_label="fig:methods-map",
-                    title="the yeast scRNA-seq method taxonomy"),
-    HandDrawnFigure(slug=SPLITSEQ, tex_label="fig:splitseq",
-                    title="split-pool barcoding"),
-    HandDrawnFigure(slug=DROPLET, tex_label="fig:droplet",
-                    title="droplet barcoding"),
-    HandDrawnFigure(slug=SCIFI, tex_label="fig:scifi",
-                    title="combinatorial fluidic indexing"),
-    HandDrawnFigure(slug=WORKFLOW, tex_label="fig:workflow",
-                    title="the end-to-end workflow"),
-    HandDrawnFigure(slug=RRNA, tex_label="fig:rrna",
-                    title="ribosomal RNA depletion options"),
+    HandDrawnFigure(
+        slug=TAXONOMY,
+        tex_label="fig:methods-map",
+        title="the yeast scRNA-seq method taxonomy",
+    ),
+    HandDrawnFigure(
+        slug=SPLITSEQ, tex_label="fig:splitseq", title="split-pool barcoding"
+    ),
+    HandDrawnFigure(slug=DROPLET, tex_label="fig:droplet", title="droplet barcoding"),
+    HandDrawnFigure(
+        slug=SCIFI, tex_label="fig:scifi", title="combinatorial fluidic indexing"
+    ),
+    HandDrawnFigure(
+        slug=WORKFLOW, tex_label="fig:workflow", title="the end-to-end workflow"
+    ),
+    HandDrawnFigure(
+        slug=RRNA, tex_label="fig:rrna", title="ribosomal RNA depletion options"
+    ),
 ]
 
 RECORDS: list[FigureNumber] = [
     # --- Fig. 1a, the throughput band ---------------------------------------
     FigureNumber(
-        figure=TAXONOMY, panel="a", element="Microfluidic chip (C1) throughput",
+        figure=TAXONOMY,
+        panel="a",
+        element="Microfluidic chip (C1) throughput",
         value="up to 96 per chip",
         citation_key="nadal-ribellesRiseSinglecellTranscriptomics2024",
         quote=(
@@ -80,13 +92,17 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=TAXONOMY, panel="a", element="FACS into plates throughput",
+        figure=TAXONOMY,
+        panel="a",
+        element="FACS into plates throughput",
         value="~285 cells",
         citation_key="nadal-ribellesSensitiveHighthroughputSinglecell2019",
         quote="we applied yscRNA-seq to 285 individual yeast cells",
     ),
     FigureNumber(
-        figure=TAXONOMY, panel="a", element="Microdissection throughput",
+        figure=TAXONOMY,
+        panel="a",
+        element="Microdissection throughput",
         value="~2,000 cells",
         quote=(
             "Microdissection coupled with imaging has been used to profile the "
@@ -102,7 +118,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=TAXONOMY, panel="a", element="Droplet throughput range",
+        figure=TAXONOMY,
+        panel="a",
+        element="Droplet throughput range",
         value="6,000-100,000",
         citation_key="boocockSinglecellEQTLMapping2025",
         quote=(
@@ -111,7 +129,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=TAXONOMY, panel="a", element="Microwell array throughput",
+        figure=TAXONOMY,
+        panel="a",
+        element="Microwell array throughput",
         value="up to 1,061,865",
         citation_key="nadal-ribellesSinglecellResolvedGenotypephenotype2025",
         quote=(
@@ -124,7 +144,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=TAXONOMY, panel="a", element="Combinatorial indexing throughput",
+        figure=TAXONOMY,
+        panel="a",
+        element="Combinatorial indexing throughput",
         value="25,000-240,000 per run",
         citation_key="brettnerUltraHighthroughputMassively2024",
         quote=(
@@ -135,14 +157,17 @@ RECORDS: list[FigureNumber] = [
         ),
         note=(
             "The upper bound was 1,000,000, which is Gaisser et al.'s protocol "
-            "capacity claim (\"enables ... up to 1 million\"), not a profiled "
+            'capacity claim ("enables ... up to 1 million"), not a profiled '
             "count. Same correction as Fig. 4."
         ),
     ),
     FigureNumber(
-        figure=TAXONOMY, panel="a", element="preindexed droplet throughput",
+        figure=TAXONOMY,
+        panel="a",
+        element="preindexed droplet throughput",
         value="152,000 preindexed (human; Fig. 5)",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=57,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=57,
         quote=(
             "we performed a large-scale scifi-RNA-seq experiment with 383,000 "
             "nuclei loaded into a single microfluidic channel of the Chromium "
@@ -161,7 +186,9 @@ RECORDS: list[FigureNumber] = [
     ),
     # --- Fig. 2, split-pool barcoding ---------------------------------------
     FigureNumber(
-        figure=SPLITSEQ, panel="1", element="round-1 wells and cells per well",
+        figure=SPLITSEQ,
+        panel="1",
+        element="round-1 wells and cells per well",
         value="48 wells, ~5,000 cells each",
         citation_key="brettnerUltraHighthroughputMassively2024",
         quote=(
@@ -171,7 +198,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=SPLITSEQ, panel="3", element="barcode space over three rounds",
+        figure=SPLITSEQ,
+        panel="3",
+        element="barcode space over three rounds",
         value="963 = 884,736",
         citation_key="brettnerUltraHighthroughputMassively2024",
         quote=(
@@ -184,7 +213,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=SPLITSEQ, panel="4", element="sublibrary size",
+        figure=SPLITSEQ,
+        panel="4",
+        element="sublibrary size",
         value="5,000-20,000 cells",
         citation_key="brettnerUltraHighthroughputMassively2024",
         quote=(
@@ -194,7 +225,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=SPLITSEQ, panel="1", element="rRNA fraction of recovered transcripts",
+        figure=SPLITSEQ,
+        panel="1",
+        element="rRNA fraction of recovered transcripts",
         value="93.7%",
         citation_key="brettnerUltraHighthroughputMassively2024",
         line=70,
@@ -205,7 +238,9 @@ RECORDS: list[FigureNumber] = [
     ),
     # --- Fig. 3, droplet barcoding ------------------------------------------
     FigureNumber(
-        figure=DROPLET, panel="a", element="doublet rate at 20,000 cells",
+        figure=DROPLET,
+        panel="a",
+        element="doublet rate at 20,000 cells",
         value="~8% at 20,000 recovered",
         citation_key="jarianiNewProtocolSinglecell2020",
         quote=(
@@ -218,7 +253,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=DROPLET, panel="b", element="digestion timing and cell-count drop",
+        figure=DROPLET,
+        panel="b",
+        element="digestion timing and cell-count drop",
         value="6 min hold, 200-fold drop within 20 min at 53 C",
         citation_key="jarianiNewProtocolSinglecell2020",
         quote=(
@@ -227,7 +264,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=DROPLET, panel="c", element="bead barcode and UMI lengths",
+        figure=DROPLET,
+        panel="c",
+        element="bead barcode and UMI lengths",
         value="16 nt CB, 12 nt UMI, 118 cycles",
         citation_key="jarianiNewProtocolSinglecell2020",
         quote=(
@@ -236,24 +275,29 @@ RECORDS: list[FigureNumber] = [
         ),
         note="Layout is the current GEM-X/v3.1 chemistry, not the v2 Jariani ran.",
     ),
-
     # --- Fig. 4 (scifi-RNA-seq), Datlinger et al. 2021 -----------------------
     # Panel a is the measured droplet-imaging series; panel b's barcode-space
     # figure is a MODELED bound and is labeled as such on the canvas, which is
     # the distinction the first review found missing elsewhere.
     FigureNumber(
-        figure=SCIFI, panel="a", element="maximum recommended load",
+        figure=SCIFI,
+        panel="a",
+        element="maximum recommended load",
         value="15,300 nuclei per channel",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=26,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=26,
         quote=(
             "We first assessed the maximum recommended loading concentration "
             "(15,300 nuclei per microfluidic channel)."
         ),
     ),
     FigureNumber(
-        figure=SCIFI, panel="a", element="occupancy at recommended load",
+        figure=SCIFI,
+        panel="a",
+        element="occupancy at recommended load",
         value="16.4% occupied; mean 0.2 nuclei per droplet",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=26,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=26,
         quote=(
             "Counting 609 droplet images, we found that only 16.4% of droplets "
             "contained one or more nuclei (mean number of nuclei per droplet: 0.2)."
@@ -261,9 +305,12 @@ RECORDS: list[FigureNumber] = [
         note="Measured by counting 609 droplet images, not inferred from Poisson.",
     ),
     FigureNumber(
-        figure=SCIFI, panel="a", element="overloaded condition",
+        figure=SCIFI,
+        panel="a",
+        element="overloaded condition",
         value="100x overloaded, 1.53 million nuclei per channel",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=26,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=26,
         quote=(
             "Remarkably, even 100-fold overloading (1.53 million nuclei per "
             "channel) resulted in a stable droplet emulsion and did not clog the "
@@ -271,9 +318,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=SCIFI, panel="a", element="occupancy when overloaded",
+        figure=SCIFI,
+        panel="a",
+        element="occupancy when overloaded",
         value="95.5% fill; mean 9.6 nuclei per droplet",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=26,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=26,
         quote=(
             "up to a droplet fill rate of 95.5% and an average of 9.6 nuclei per "
             "droplet (1.53 million nuclei per channel), with highly consistent "
@@ -285,9 +335,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=SCIFI, panel="b", element="round1 plate format",
+        figure=SCIFI,
+        panel="b",
+        element="round1 plate format",
         value="one 384-well plate",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=34,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=34,
         quote=(
             "permeabilized cells or nuclei are first preindexed with barcoded "
             "oligo-dT primers by reverse transcription on multiwell plates (we use "
@@ -295,18 +348,24 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=SCIFI, panel="b", element="round2 barcode space",
+        figure=SCIFI,
+        panel="b",
+        element="round2 barcode space",
         value="737,280 round2 barcodes",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=30,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=30,
         quote=(
             "Using the 737,280 distinct microfluidic (round2) barcodes provided by "
             "the Chromium ATAC reagents"
         ),
     ),
     FigureNumber(
-        figure=SCIFI, panel="b", element="resolvable transcriptomes at 96 round1 wells",
+        figure=SCIFI,
+        panel="b",
+        element="resolvable transcriptomes at 96 round1 wells",
         value="1 million from 96 round1 wells",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=30,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=30,
         quote=(
             "our analyses indicated that scifi-RNA-seq can resolve 1 million "
             "single-cell transcriptomes already with 96 round1 indices"
@@ -318,9 +377,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=SCIFI, panel="a", element="large-run yield, left caption",
+        figure=SCIFI,
+        panel="a",
+        element="large-run yield, left caption",
         value="383,000 loaded; 151,788 recovered",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=57,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=57,
         quote=(
             "we performed a large-scale scifi-RNA-seq experiment with 383,000 "
             "nuclei loaded into a single microfluidic channel of the Chromium "
@@ -335,7 +397,8 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=SCIFI, panel="bottom note",
+        figure=SCIFI,
+        panel="bottom note",
         element="channel saving carried into the budget",
         value="7.6x more cells, so 137 channels become 18",
         citation_key=None,
@@ -355,9 +418,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=SCIFI, panel="c", element="round2 attaches by ligation, not RT",
+        figure=SCIFI,
+        panel="c",
+        element="round2 attaches by ligation, not RT",
         value="round2 BC (ligated)",
-        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=34,
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=34,
         quote=(
             "oligonucleotides carrying the microfluidic (round2) barcode (delivered "
             "via Chromium gel beads) are ligated to the cDNA via the 5'-phosphate "
@@ -370,9 +436,12 @@ RECORDS: list[FigureNumber] = [
     # the funnel of panel c, and every one of them is already load-bearing
     # somewhere else in the document.
     FigureNumber(
-        figure=WORKFLOW, panel="c", element="cells recovered from those loaded",
+        figure=WORKFLOW,
+        panel="c",
+        element="cells recovered from those loaded",
         value="25-50% recovered",
-        citation_key="brettnerUltraHighthroughputMassively2024", line=68,
+        citation_key="brettnerUltraHighthroughputMassively2024",
+        line=68,
         quote=(
             "The two sequenced sublibraries returned ~5,500 and 10,000 barcoded "
             "cells that passed computational filtering. Given we started the "
@@ -386,7 +455,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=WORKFLOW, panel="c", element="sequenced cells discarded at QC",
+        figure=WORKFLOW,
+        panel="c",
+        element="sequenced cells discarded at QC",
         value="~75% of sequenced cells discarded",
         citation_key=None,
         quote=(
@@ -400,7 +471,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=WORKFLOW, panel="c", element="guide assignment rate q",
+        figure=WORKFLOW,
+        panel="c",
+        element="guide assignment rate q",
         value="21-25% in bacteria, >71% in yeast",
         citation_key="nadal-ribellesSinglecellResolvedGenotypephenotype2025",
         quote=(
@@ -416,7 +489,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=WORKFLOW, panel="c", element="reads surviving all four tolls",
+        figure=WORKFLOW,
+        panel="c",
+        element="reads surviving all four tolls",
         value="~1 read in 100; ~11 with depletion",
         citation_key=None,
         quote=(
@@ -430,7 +505,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=WORKFLOW, panel="c", element="reads lost to spike-in and barcode",
+        figure=WORKFLOW,
+        panel="c",
+        element="reads lost to spike-in and barcode",
         value="28 lost to the PhiX spike and to unresolved barcodes",
         citation_key=None,
         quote=(
@@ -446,9 +523,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=WORKFLOW, panel="c", element="ribosomal share of remaining reads",
+        figure=WORKFLOW,
+        panel="c",
+        element="ribosomal share of remaining reads",
         value="94 of the remainder are ribosomal",
-        citation_key="brettnerUltraHighthroughputMassively2024", line=70,
+        citation_key="brettnerUltraHighthroughputMassively2024",
+        line=70,
         quote=(
             "On average, the transcript proportions we recover are 93.7% rRNA, "
             "0.005% tRNA, 0.04% ncRNA, and 5.75% mRNA."
@@ -456,7 +536,9 @@ RECORDS: list[FigureNumber] = [
         note="Drawn rounded to 94 from the sourced 93.7%.",
     ),
     FigureNumber(
-        figure=WORKFLOW, panel="b", element="usable fragments, bulk vs single cell",
+        figure=WORKFLOW,
+        panel="b",
+        element="usable fragments, bulk vs single cell",
         value="6 and 2 usable in bulk; 1 and 1 in single cell",
         citation_key=None,
         quote=(
@@ -471,7 +553,9 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=WORKFLOW, panel="a", element="value of rRNA depletion, drawn on canvas",
+        figure=WORKFLOW,
+        panel="a",
+        element="value of rRNA depletion, drawn on canvas",
         value="worth ~$99k (Fig. 7)",
         citation_key=None,
         quote=(
@@ -484,10 +568,11 @@ RECORDS: list[FigureNumber] = [
             "on, so it is recorded here as well as in the text."
         ),
     ),
-
     # --- Fig. 6, rRNA depletion options -------------------------------------
     FigureNumber(
-        figure=RRNA, panel="a", element="workflow step numbers",
+        figure=RRNA,
+        panel="a",
+        element="workflow step numbers",
         value="fragment 134-139, ligate 152-154, index 156-157",
         citation_key="gaisserHighthroughputSinglecellTranscriptomics2024",
         line=82,
@@ -508,9 +593,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=RRNA, panel="b", element="Cas9 route, guide pool and conditions",
+        figure=RRNA,
+        panel="b",
+        element="Cas9 route, guide pool and conditions",
         value="253 sgRNAs",
-        citation_key="brandnerPooledSinglecellCRISPRa2025", line=151,
+        citation_key="brandnerPooledSinglecellCRISPRa2025",
+        line=151,
         quote=(
             "We designed 253 sgRNA spacer sequences to target the 5S, 16S, and "
             "23S rRNA sequences in E. coli and P. putida, weighted "
@@ -521,9 +609,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=RRNA, panel="b", element="Cas9 route, measured outcome",
+        figure=RRNA,
+        panel="b",
+        element="Cas9 route, measured outcome",
         value="4.6% -> 60.2%; 2.2% -> 10.4%",
-        citation_key="brandnerPooledSinglecellCRISPRa2025", line=71,
+        citation_key="brandnerPooledSinglecellCRISPRa2025",
+        line=71,
         quote=(
             "With rRNA depletion, the mRNA fraction increased from 4.6% to 60.2% "
             "(Fig. 2B) and median mRNA transcripts per cell more than doubled, "
@@ -538,9 +629,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=RRNA, panel="b", element="RNase H chosen over Cas9",
+        figure=RRNA,
+        panel="b",
+        element="RNase H chosen over Cas9",
         value="75-80% rRNA left by the Cas9 arm",
-        citation_key="wangSinglecellMassivelyparallelMultiplexed2023", line=23,
+        citation_key="wangSinglecellMassivelyparallelMultiplexed2023",
+        line=23,
         quote=(
             "after testing two approaches for depleting ribosomal sequences from "
             "bulk libraries (Extended Data Fig. 3a-c), we chose an RNase H-based "
@@ -554,12 +648,15 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=RRNA, panel="b", element="in-situ route, best published result",
+        figure=RRNA,
+        panel="b",
+        element="in-situ route, best published result",
         value="~2.5-fold, ~7% of total RNA",
-        citation_key="kuchinaMicrobialSinglecellRNA2021", line=36,
+        citation_key="kuchinaMicrobialSinglecellRNA2021",
+        line=36,
         quote=(
             "we then tested polyadenylation with E. coli poly(A) polymerase I "
-            "(PAP) ...; 5'-phosphate-dependent exonuclease (\"Terminator\", "
+            '(PAP) ...; 5\'-phosphate-dependent exonuclease ("Terminator", '
             "Epicentre); and RT with ribosomal RNA-specific probes followed by "
             "RNaseH mediated degradation ... We found that the treatment of "
             "fixed and permeabilized cells with PAP resulted in the highest "
@@ -567,18 +664,24 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=RRNA, panel="b", element="why M3-seq avoids in-situ depletion",
+        figure=RRNA,
+        panel="b",
+        element="why M3-seq avoids in-situ depletion",
         value="in situ can decrease mRNA capture",
-        citation_key="wangSinglecellMassivelyparallelMultiplexed2023", line=23,
+        citation_key="wangSinglecellMassivelyparallelMultiplexed2023",
+        line=23,
         quote=(
             "we noted that depletion of rRNA in situ can decrease mRNA capture "
             "efficiency and thus focused on depleting rRNAs after amplification"
         ),
     ),
     FigureNumber(
-        figure=RRNA, panel="b", element="undepleted yeast transcript proportions",
+        figure=RRNA,
+        panel="b",
+        element="undepleted yeast transcript proportions",
         value="93.7% rRNA, 5.75% mRNA",
-        citation_key="brettnerUltraHighthroughputMassively2024", line=70,
+        citation_key="brettnerUltraHighthroughputMassively2024",
+        line=70,
         quote=(
             "On average, the transcript proportions we recover are 93.7% rRNA, "
             "0.005% tRNA, 0.04% ncRNA, and 5.75% mRNA."
@@ -592,9 +695,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=RRNA, panel="a", element="reads spent on rRNA, drawn on canvas",
+        figure=RRNA,
+        panel="a",
+        element="reads spent on rRNA, drawn on canvas",
         value="roughly 94 of every 100 reads",
-        citation_key="brettnerUltraHighthroughputMassively2024", line=70,
+        citation_key="brettnerUltraHighthroughputMassively2024",
+        line=70,
         quote=(
             "On average, the transcript proportions we recover are 93.7% rRNA, "
             "0.005% tRNA, 0.04% ncRNA, and 5.75% mRNA."
@@ -602,9 +708,12 @@ RECORDS: list[FigureNumber] = [
         note="Drawn rounded to 94 from the sourced 93.7%.",
     ),
     FigureNumber(
-        figure=RRNA, panel="b", element="post-hoc against in-situ enrichment",
+        figure=RRNA,
+        panel="b",
+        element="post-hoc against in-situ enrichment",
         value="against 13-fold post hoc",
-        citation_key="brandnerPooledSinglecellCRISPRa2025", line=71,
+        citation_key="brandnerPooledSinglecellCRISPRa2025",
+        line=71,
         quote="the mRNA fraction increased from 4.6% to 60.2%",
         note=(
             "13-fold is 60.2/4.6, computed here rather than stated by the "
@@ -613,9 +722,12 @@ RECORDS: list[FigureNumber] = [
         ),
     ),
     FigureNumber(
-        figure=RRNA, panel="a", element="rRNA share of yeast RNA",
+        figure=RRNA,
+        panel="a",
+        element="rRNA share of yeast RNA",
         value="about 85%",
-        citation_key="nadal-ribellesRiseSinglecellTranscriptomics2024", line=49,
+        citation_key="nadal-ribellesRiseSinglecellTranscriptomics2024",
+        line=49,
         quote="Total RNA per cell (~85% rRNA) 0.7-1 pg",
     ),
 ]
@@ -625,8 +737,10 @@ def main() -> None:
     figures = [f"{f.slug}.pdf" for f in FIGURES]
     problems = check(RECORDS, figures, FIGURES)
     n_src = sum(1 for r in RECORDS if r.sourced)
-    print(f"{len(RECORDS)} drawn numbers, {n_src} tied to a mirrored source, "
-          f"{len(RECORDS) - n_src} flagged")
+    print(
+        f"{len(RECORDS)} drawn numbers, {n_src} tied to a mirrored source, "
+        f"{len(RECORDS) - n_src} flagged"
+    )
     for r in RECORDS:
         tag = r.citation_key or "UNSOURCED"
         print(f"  [{r.figure} {r.panel}] {r.element}: {r.value}   <- {tag}")

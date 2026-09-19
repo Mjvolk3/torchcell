@@ -35,16 +35,13 @@ import math
 import os
 import os.path as osp
 
+import cost_model as CM
+import uiuc_core_data as UC
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-import cost_model as CM
-import uiuc_core_data as UC
-
 load_dotenv()
-RESULTS = osp.join(
-    os.environ["EXPERIMENT_ROOT"], "024-perturb-seq-costing", "results"
-)
+RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "024-perturb-seq-costing", "results")
 
 # Whole numbers on purpose. The dial a marker attenuation actually sets is "how
 # many plasmid molecules does a surviving cell carry on average", and a reader
@@ -125,6 +122,8 @@ def delivery_table(n_library: int, targets: list[float]) -> list[DeliveryPoint]:
 
 # --- 2. Recovery: main effects vs a named combination ------------------------
 class RecoveryPoint(BaseModel):
+    """Cell budgets for main effects and for every pair at one (targets, plex) setting."""
+
     n_targets: int
     k: int
     cells_for_main_effects: float  # every gene at FIRST_ORDER_FLOOR
@@ -141,7 +140,9 @@ def recovery(n_targets: int, k: int, floor: int = FIRST_ORDER_FLOOR) -> Recovery
     # Main effects: each cell reports on k genes, so N*k/T cells inform each gene.
     cells_main = floor * n_targets / k
     p_pair = (
-        (k * (k - 1)) / (n_targets * (n_targets - 1)) if k >= 2 and n_targets >= 2 else 0.0
+        (k * (k - 1)) / (n_targets * (n_targets - 1))
+        if k >= 2 and n_targets >= 2
+        else 0.0
     )
     cells_pairs = (
         CELLS_PER_PAIR * n_pairs / (k * (k - 1) / 2) if k >= 2 else float("inf")
@@ -277,25 +278,33 @@ def main() -> None:
         pts = delivery_table(n_lib, TARGET_PLASMIDS_PER_CELL)
         delivery[str(n_lib)] = [p.model_dump() for p in pts]
         print(f"\n--- delivery, library of {n_lib} guides ---")
-        print(f"{'target m':>9} {'lambda':>8} {'E[m|m>=1]':>10} "
-              f"{'E[distinct]':>12} {'P(>=2)':>8}")
+        print(
+            f"{'target m':>9} {'lambda':>8} {'E[m|m>=1]':>10} "
+            f"{'E[distinct]':>12} {'P(>=2)':>8}"
+        )
         for t, p in zip(TARGET_PLASMIDS_PER_CELL, pts):
-            print(f"{t:>9.1f} {p.lam:>8.3f} {p.mean_plasmids:>10.3f} "
-                  f"{p.mean_distinct:>12.3f} {p.p_at_least_2:>8.3f}")
+            print(
+                f"{t:>9.1f} {p.lam:>8.3f} {p.mean_plasmids:>10.3f} "
+                f"{p.mean_distinct:>12.3f} {p.p_at_least_2:>8.3f}"
+            )
 
     # Recovery, main effects vs named pairs.
     rec = []
     print("\n--- recovery: main effects are cheap, named pairs are not ---")
-    print(f"{'T':>6} {'k':>3} {'cells(main)':>13} {'pairs':>12} "
-          f"{'P(pair)':>11} {'cells(all pairs)':>18} {'repeats/pair':>13}")
+    print(
+        f"{'T':>6} {'k':>3} {'cells(main)':>13} {'pairs':>12} "
+        f"{'P(pair)':>11} {'cells(all pairs)':>18} {'repeats/pair':>13}"
+    )
     for T in (200, 6000):
         for k in (1, 2, 3, 5, 8):
             r = recovery(T, k)
             rec.append(r.model_dump())
-            print(f"{T:>6} {k:>3} {r.cells_for_main_effects:>13,.0f} "
-                  f"{r.n_pairs:>12,} {r.p_specific_pair:>11.2e} "
-                  f"{r.cells_for_all_pairs:>18,.0f} "
-                  f"{r.expected_repeats_per_pair:>13.2e}")
+            print(
+                f"{T:>6} {k:>3} {r.cells_for_main_effects:>13,.0f} "
+                f"{r.n_pairs:>12,} {r.p_specific_pair:>11.2e} "
+                f"{r.cells_for_all_pairs:>18,.0f} "
+                f"{r.expected_repeats_per_pair:>13.2e}"
+            )
 
     ceilings = {str(k): max_panel_for_one_observation(k) for k in (2, 3, 4, 5, 8)}
     print("\n--- largest panel at which a named pair is still seen once ---")
@@ -310,16 +319,22 @@ def main() -> None:
     # Environment cost, every integer 1..96 so the plotted staircase is real.
     env_cost = environment_cost(list(range(1, 97)))
     by_env = {p.n_env: p for p in env_cost}
-    print("\n--- environment cost: split-pool vs droplet, Sec. 5 model at "
-          "600k usable cells per condition ---")
-    print(f"{'envs':>5} {'split-pool $':>13} {'runs':>5} {'sublibs':>8} "
-          f"{'droplet $':>12} {'channels':>9} {'preindexed $':>13} {'chan':>6}")
+    print(
+        "\n--- environment cost: split-pool vs droplet, Sec. 5 model at "
+        "600k usable cells per condition ---"
+    )
+    print(
+        f"{'envs':>5} {'split-pool $':>13} {'runs':>5} {'sublibs':>8} "
+        f"{'droplet $':>12} {'channels':>9} {'preindexed $':>13} {'chan':>6}"
+    )
     for e in (1, 4, 12, 24, 48, 96):
         p = by_env[e]
-        print(f"{e:>5} {p.splitpool_usd:>13,.0f} {p.splitpool_runs:>5} "
-              f"{p.splitpool_sublibraries:>8} {p.droplet_usd:>12,.0f} "
-              f"{p.droplet_channels:>9} {p.droplet_preindexed_usd:>13,.0f} "
-              f"{p.droplet_preindexed_channels:>6}")
+        print(
+            f"{e:>5} {p.splitpool_usd:>13,.0f} {p.splitpool_runs:>5} "
+            f"{p.splitpool_sublibraries:>8} {p.droplet_usd:>12,.0f} "
+            f"{p.droplet_channels:>9} {p.droplet_preindexed_usd:>13,.0f} "
+            f"{p.droplet_preindexed_channels:>6}"
+        )
     marginal_sp = (by_env[96].splitpool_usd - by_env[1].splitpool_usd) / 95
     marginal_dr = (by_env[96].droplet_usd - by_env[1].droplet_usd) / 95
     marginal_pi = (
@@ -332,18 +347,20 @@ def main() -> None:
     # is what a cell costs on it. These reproduce tab:cost-loaded's loaded
     # $/usable cell to the run rounding (that table is evaluated at 250 cells per
     # gene, this sweep at 100).
-    per_cell = CM.ScreenDesign(
-        cells_per_gene=100, n_environments=1
-    ).usable_cells_needed
+    per_cell = CM.ScreenDesign(cells_per_gene=100, n_environments=1).usable_cells_needed
     marginal_cell_sp = marginal_sp / per_cell
     marginal_cell_dr = marginal_dr / per_cell
     marginal_cell_pi = marginal_pi / per_cell
-    print(f"  marginal cost per added environment: split-pool "
-          f"${marginal_sp:,.0f}, droplet ${marginal_dr:,.0f}, "
-          f"preindexed droplet ${marginal_pi:,.0f}")
-    print(f"  the same per usable cell: split-pool ${marginal_cell_sp:.4f}, "
-          f"droplet ${marginal_cell_dr:.4f}, preindexed droplet "
-          f"${marginal_cell_pi:.4f}")
+    print(
+        f"  marginal cost per added environment: split-pool "
+        f"${marginal_sp:,.0f}, droplet ${marginal_dr:,.0f}, "
+        f"preindexed droplet ${marginal_pi:,.0f}"
+    )
+    print(
+        f"  the same per usable cell: split-pool ${marginal_cell_sp:.4f}, "
+        f"droplet ${marginal_cell_dr:.4f}, preindexed droplet "
+        f"${marginal_cell_pi:.4f}"
+    )
     env_cost_summary = {
         "cells_per_gene": 100,
         "usable_cells_per_condition": CM.ScreenDesign(

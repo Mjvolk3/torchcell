@@ -48,11 +48,11 @@ import os.path as osp
 
 import matplotlib.pyplot as plt
 import numpy as np
-from dotenv import load_dotenv
-
 from design_equation import box, place_panel_letters, style
+from dotenv import load_dotenv
 from figure_checks import assert_legible
 from scaling_analysis import max_panel_for_one_observation, recovery
+
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
@@ -75,11 +75,11 @@ RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "024-perturb-seq-costing", "re
 # a typed hex is a color that has left the palette: nothing updates it if the
 # palette moves, and nothing flags a near-miss.
 C_GENOME = PLOT_PALETTE[0]  # T = 6,000, the yeast genome
-C_PANEL = PLOT_PALETTE[1]   # T = 200, the focused panel
-C_K2 = PLOT_PALETTE[2]      # k = 2, the smallest plex that makes a pair
-C_K4 = PLOT_PALETTE[3]      # k = 4, the array-construction ceiling
-C_K8 = PLOT_PALETTE[4]      # k = 8, past what an array delivers
-C_REF = PLOT_PALETTE[5]     # reference lines, annotations, non-series marks
+C_PANEL = PLOT_PALETTE[1]  # T = 200, the focused panel
+C_K2 = PLOT_PALETTE[2]  # k = 2, the smallest plex that makes a pair
+C_K4 = PLOT_PALETTE[3]  # k = 4, the array-construction ceiling
+C_K8 = PLOT_PALETTE[4]  # k = 8, past what an array delivers
+C_REF = PLOT_PALETTE[5]  # reference lines, annotations, non-series marks
 
 N_PANEL = 200
 N_GENOME = 6000
@@ -93,9 +93,11 @@ PLEXES_PAIR = [2, 3, 5, 8]
 # than to fill the palette: 2 is the smallest plex that makes a pair, 4 is the
 # most an array reliably carries, and 8 is past it and drawn anyway so the
 # reader can see how little the extra plex buys.
-PLEXES_SWEEP = [(2, C_K2, "k = 2"),
-                (4, C_K4, "k = 4, array ceiling"),
-                (8, C_K8, "k = 8, past the ceiling")]
+PLEXES_SWEEP = [
+    (2, C_K2, "k = 2"),
+    (4, C_K4, "k = 4, array ceiling"),
+    (8, C_K8, "k = 8, past the ceiling"),
+]
 
 
 def load() -> dict[tuple[int, int], dict]:
@@ -122,21 +124,38 @@ def panel_a(ax, rec) -> None:
     between them, and a reader who meets T only in (c) has no sense of scale
     for it.
     """
-    for T, color, label in ((N_GENOME, C_GENOME, "genome, T = 6,000"),
-                            (N_PANEL, C_PANEL, "panel, T = 200")):
+    for T, color, label in (
+        (N_GENOME, C_GENOME, "genome, T = 6,000"),
+        (N_PANEL, C_PANEL, "panel, T = 200"),
+    ):
         y = [rec[(T, k)]["cells_for_main_effects"] for k in PLEXES]
-        ax.plot(PLEXES, y, lw=1.0, color=color, marker="o", ms=2.4,
-                markeredgecolor="black", markeredgewidth=0.3, label=label)
+        ax.plot(
+            PLEXES,
+            y,
+            lw=1.0,
+            color=color,
+            marker="o",
+            ms=2.4,
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            label=label,
+        )
 
     # The two numbers the section quotes, at the two ends of the genome curve.
     # Written with thousands separators rather than as powers of ten: Arial has
     # no superscript digits on this machine, and a tofu box on a print figure is
     # worse than four extra characters.
     for k, dx, dy, ha, va in ((1, 3, 3, "left", "bottom"), (8, -3, -3, "right", "top")):
-        ax.annotate(f"{rec[(N_GENOME, k)]['cells_for_main_effects']:,.0f}",
-                    (k, rec[(N_GENOME, k)]["cells_for_main_effects"]),
-                    xytext=(dx, dy), textcoords="offset points", fontsize=4.5,
-                    color=C_GENOME, ha=ha, va=va)
+        ax.annotate(
+            f"{rec[(N_GENOME, k)]['cells_for_main_effects']:,.0f}",
+            (k, rec[(N_GENOME, k)]["cells_for_main_effects"]),
+            xytext=(dx, dy),
+            textcoords="offset points",
+            fontsize=4.5,
+            color=C_GENOME,
+            ha=ha,
+            va=va,
+        )
 
     ax.set_yscale("log")
     ax.set_xlim(0.4, 8.6)
@@ -144,8 +163,15 @@ def panel_a(ax, rec) -> None:
     ax.set_xticks(PLEXES)
     ax.set_xlabel("Guides per cell, k")
     ax.set_ylabel("Cells for main effects")
-    ax.legend(frameon=False, loc="lower left", fontsize=4.5, handlelength=1.3,
-              handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2)
+    ax.legend(
+        frameon=False,
+        loc="lower left",
+        fontsize=4.5,
+        handlelength=1.3,
+        handletextpad=0.4,
+        labelspacing=0.3,
+        borderaxespad=0.2,
+    )
     ax.set_title("Plex divides the cell count", loc="left", fontsize=6)
     box(ax)
 
@@ -165,11 +191,22 @@ def panel_b(ax, rec) -> None:
     within a decade of it at any constructible plex, which is the section's
     answer.
     """
-    for T, color, label in ((N_GENOME, C_GENOME, "genome, T = 6,000"),
-                            (N_PANEL, C_PANEL, "panel, T = 200")):
+    for T, color, label in (
+        (N_GENOME, C_GENOME, "genome, T = 6,000"),
+        (N_PANEL, C_PANEL, "panel, T = 200"),
+    ):
         y = [rec[(T, k)]["expected_repeats_per_pair"] for k in PLEXES_PAIR]
-        ax.plot(PLEXES_PAIR, y, lw=1.0, color=color, marker="o", ms=2.4,
-                markeredgecolor="black", markeredgewidth=0.3, label=label)
+        ax.plot(
+            PLEXES_PAIR,
+            y,
+            lw=1.0,
+            color=color,
+            marker="o",
+            ms=2.4,
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            label=label,
+        )
 
     # zorder below the series: a reference rule is the backdrop a curve is read
     # against, so where the two cross it is the curve that has to survive. Drawn
@@ -179,18 +216,31 @@ def panel_b(ax, rec) -> None:
     ax.axhline(1.0, color=C_REF, lw=0.6, ls="--", zorder=1)
     # Right end and above the rule: the panel curve passes through 1.0 on the
     # left half, so a label anchored there would sit on the data it explains.
-    ax.annotate("seen once", (8.5, 1.0), xytext=(0, 2),
-                textcoords="offset points", fontsize=4.5, color=C_REF,
-                ha="right", va="bottom")
+    ax.annotate(
+        "seen once",
+        (8.5, 1.0),
+        xytext=(0, 2),
+        textcoords="offset points",
+        fontsize=4.5,
+        color=C_REF,
+        ha="right",
+        va="bottom",
+    )
 
     for T, k, color, dx, dy, ha, va in (
         (N_GENOME, 2, C_GENOME, 3, -1, "left", "top"),
         (N_PANEL, 8, C_PANEL, -3, 2, "right", "bottom"),
     ):
-        ax.annotate(f"{rec[(T, k)]['expected_repeats_per_pair']:.2g}",
-                    (k, rec[(T, k)]["expected_repeats_per_pair"]),
-                    xytext=(dx, dy), textcoords="offset points", fontsize=4.5,
-                    color=color, ha=ha, va=va)
+        ax.annotate(
+            f"{rec[(T, k)]['expected_repeats_per_pair']:.2g}",
+            (k, rec[(T, k)]["expected_repeats_per_pair"]),
+            xytext=(dx, dy),
+            textcoords="offset points",
+            fontsize=4.5,
+            color=color,
+            ha=ha,
+            va=va,
+        )
 
     ax.set_yscale("log")
     ax.set_xlim(1.4, 8.6)
@@ -198,8 +248,15 @@ def panel_b(ax, rec) -> None:
     ax.set_xticks(PLEXES_PAIR)
     ax.set_xlabel("Guides per cell, k")
     ax.set_ylabel("Observations per named pair")
-    ax.legend(frameon=False, loc="upper left", fontsize=4.5, handlelength=1.3,
-              handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2)
+    ax.legend(
+        frameon=False,
+        loc="upper left",
+        fontsize=4.5,
+        handlelength=1.3,
+        handletextpad=0.4,
+        labelspacing=0.3,
+        borderaxespad=0.2,
+    )
     ax.set_title("A named pair is usually absent", loc="left", fontsize=6)
     box(ax)
 
@@ -228,21 +285,45 @@ def panel_c(ax) -> None:
         ax.plot(targets, y, lw=1.0, color=color, label=label)
 
     ax.axhline(1.0, color=C_REF, lw=0.6, ls="--", zorder=1)
-    ax.annotate("seen once", (5800, 1.0), xytext=(0, 2),
-                textcoords="offset points", fontsize=4.5, color=C_REF,
-                ha="right", va="bottom")
+    ax.annotate(
+        "seen once",
+        (5800, 1.0),
+        xytext=(0, 2),
+        textcoords="offset points",
+        fontsize=4.5,
+        color=C_REF,
+        ha="right",
+        va="bottom",
+    )
 
     # Where each plex crosses the line, back-solved by scaling_analysis.py. The
     # three crossings are the panel's actual content: they span a factor of
     # seven while the axis spans a factor of sixty, and the constructible two of
     # them span a factor of three.
-    for (k, color, _), dy, va in zip(PLEXES_SWEEP, (5, -5, 5), ("bottom", "top", "bottom")):
+    for (k, color, _), dy, va in zip(
+        PLEXES_SWEEP, (5, -5, 5), ("bottom", "top", "bottom")
+    ):
         t_cross = max_panel_for_one_observation(k)
-        ax.plot([t_cross], [1.0], marker="o", ms=2.8, color=color,
-                markeredgecolor="black", markeredgewidth=0.3, zorder=5)
-        ax.annotate(f"{t_cross:,}", (t_cross, 1.0), xytext=(1, dy),
-                    textcoords="offset points", fontsize=4.5, color=color,
-                    ha="left", va=va)
+        ax.plot(
+            [t_cross],
+            [1.0],
+            marker="o",
+            ms=2.8,
+            color=color,
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            zorder=5,
+        )
+        ax.annotate(
+            f"{t_cross:,}",
+            (t_cross, 1.0),
+            xytext=(1, dy),
+            textcoords="offset points",
+            fontsize=4.5,
+            color=color,
+            ha="left",
+            va=va,
+        )
 
     # The two library sizes panels (a) and (b) are evaluated at, drawn as rules
     # on the x axis rather than as markers on a curve: they are properties of
@@ -250,9 +331,16 @@ def panel_c(ax) -> None:
     # though it belonged to that plex.
     for x, lab, ha in ((N_PANEL, "panel", "left"), (N_GENOME, "genome", "right")):
         ax.axvline(x, color=C_REF, lw=0.5, ls=":", zorder=1)
-        ax.annotate(lab, (x, 7e-3), xytext=(2 if ha == "left" else -2, 0),
-                    textcoords="offset points", fontsize=4.5, color=C_REF,
-                    ha=ha, va="bottom")
+        ax.annotate(
+            lab,
+            (x, 7e-3),
+            xytext=(2 if ha == "left" else -2, 0),
+            textcoords="offset points",
+            fontsize=4.5,
+            color=C_REF,
+            ha=ha,
+            va="bottom",
+        )
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -262,8 +350,15 @@ def panel_c(ax) -> None:
     ax.set_ylim(6e-3, 30)
     ax.set_xlabel("Genes in the panel, T")
     ax.set_ylabel("Observations per named pair")
-    ax.legend(frameon=False, loc="upper right", fontsize=4.5, handlelength=1.3,
-              handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2)
+    ax.legend(
+        frameon=False,
+        loc="upper right",
+        fontsize=4.5,
+        handlelength=1.3,
+        handletextpad=0.4,
+        labelspacing=0.3,
+        borderaxespad=0.2,
+    )
     ax.set_title("Panel size is the lever, not plex", loc="left", fontsize=6)
     box(ax)
 

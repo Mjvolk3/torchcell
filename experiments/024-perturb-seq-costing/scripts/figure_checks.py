@@ -90,7 +90,7 @@ def check_overlaps(
     for ax in axes or fig.axes:
         ts = _texts(ax, ticks=ticks)
         for i, a in enumerate(ts):
-            for b in ts[i + 1:]:
+            for b in ts[i + 1 :]:
                 key = frozenset({a.get_text(), b.get_text()})
                 if key in ignore:
                     continue
@@ -162,9 +162,7 @@ def check_inside_figure(fig: Figure, slack: float = 0.0) -> list[str]:
 
 
 def check_legend_clear(
-    fig: Figure,
-    axes: list[Axes] | None = None,
-    pad: float = 0.5,
+    fig: Figure, axes: list[Axes] | None = None, pad: float = 0.5
 ) -> list[str]:
     """Return legends that sit on top of a filled bar.
 
@@ -204,8 +202,13 @@ def check_legend_clear(
                 # these panels set titles with loc="left", and get_title()
                 # defaults to "center", so the obvious call returns "".
                 name = next(
-                    (t for t in (ax.get_title(loc=l)
-                                 for l in ("left", "center", "right")) if t),
+                    (
+                        t
+                        for t in (
+                            ax.get_title(loc=loc) for loc in ("left", "center", "right")
+                        )
+                        if t
+                    ),
                     "an untitled axes",
                 )
                 problems.append(f"legend overlaps a bar in {name!r}")

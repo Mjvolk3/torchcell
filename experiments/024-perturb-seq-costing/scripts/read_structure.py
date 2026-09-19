@@ -25,6 +25,8 @@ from pydantic import BaseModel
 
 
 class ReadConfig(BaseModel):
+    """Sequencing read layout of one method, with the source quotes that state it."""
+
     method: str
     read1_nt: int
     read1_content: str
@@ -75,8 +77,7 @@ READ_CONFIGS: list[ReadConfig] = [
         # sequencing-setup step above does not state. STARsolo positions are
         # 0-based, inclusive, as start_end pairs on the named read.
         quote_order=(
-            "--soloCBposition 0_10_0_17 0_48_0_55 0_78_0_85 "
-            "--soloUMIposition 0_0_0_9"
+            "--soloCBposition 0_10_0_17 0_48_0_55 0_78_0_85 --soloUMIposition 0_0_0_9"
         ),
         quote_order_line=1046,
         note=(

@@ -65,14 +65,10 @@ RESULTS = osp.join(EXPERIMENT_ROOT, "024-perturb-seq-costing", "results")
 # The workbook is a 1 MB binary that belongs in the sha256-pinned raw mirror, not
 # in git. DATA_ROOT is the machine-local large-file root; the mirror proper lives
 # on the tc-lit host, and depositing there is a separate step (see MIRROR_TODO).
-RAW_DIR = osp.join(
-    os.environ["DATA_ROOT"], "raw", "boocockSinglecellEQTLMapping2025"
-)
+RAW_DIR = osp.join(os.environ["DATA_ROOT"], "raw", "boocockSinglecellEQTLMapping2025")
 
 CITATION_KEY = "boocockSinglecellEQTLMapping2025"
-SOURCE_URL = (
-    "https://cdn.elifesciences.org/articles/95566/elife-95566-supp1-v1.xlsx"
-)
+SOURCE_URL = "https://cdn.elifesciences.org/articles/95566/elife-95566-supp1-v1.xlsx"
 FILENAME = "elife-95566-supp1-v1.xlsx"
 SHA256 = "7a0d8104d0534eaa4250fc7ec000abaa52c0ee13ba2492a95b261cf87ee1c555"
 SHEET = "Table S4. Dataset Summary"
@@ -156,8 +152,9 @@ def table_s4(path: str) -> list[DatasetRow]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--fetch", action="store_true",
-                    help="download the workbook before verifying it")
+    ap.add_argument(
+        "--fetch", action="store_true", help="download the workbook before verifying it"
+    )
     a = ap.parse_args()
 
     if a.fetch:

@@ -268,7 +268,9 @@ def _suggest_params(trial: optuna.Trial) -> dict[str, Any]:
     through the identical code path.
     """
     params = {
-        "node_embeddings": trial.suggest_categorical("node_embeddings", NODE_EMBEDDINGS),
+        "node_embeddings": trial.suggest_categorical(
+            "node_embeddings", NODE_EMBEDDINGS
+        ),
         "dist": trial.suggest_categorical("dist", DIST_CHOICES),
         "num_transformer_layers": trial.suggest_categorical(
             "num_transformer_layers", [2, 4]

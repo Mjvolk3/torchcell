@@ -41,7 +41,9 @@ _TRAINER_DIR = osp.join(_REPO_ROOT, "experiments", "019-simb-multimodal", "scrip
 if _TRAINER_DIR not in sys.path:
     sys.path.insert(0, _TRAINER_DIR)
 
-from train_cgt_multitask import run_training  # type: ignore[import-not-found]  # noqa: E402
+from train_cgt_multitask import (
+    run_training,  # type: ignore[import-not-found]  # noqa: E402
+)
 
 
 @hydra.main(
@@ -56,7 +58,9 @@ def main(cfg: DictConfig) -> None:
     print(f"020 metabolism arm: active_heads={heads}")
     print(f"  graphs        : {len(list(cfg.cell_dataset.graphs))}")
     print(f"  embeddings    : {list(cfg.cell_dataset.node_embeddings)}")
-    print(f"  select on     : {cfg.trainer.checkpoint.monitor} ({cfg.trainer.checkpoint.mode})")
+    print(
+        f"  select on     : {cfg.trainer.checkpoint.monitor} ({cfg.trainer.checkpoint.mode})"
+    )
     print(f"  dist          : {cfg.multitask.dist}")
     print("=" * 78)
     run_training(cfg)

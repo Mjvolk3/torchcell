@@ -425,6 +425,13 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w72": (
+        "Round 56, the batch axis of the layer-free cell",
+        "The round-33 cell at batch 32 (seeds 2700 to 2705) against the same cell at "
+        "batch 64 and at batch 128 (seeds 2700 to 2702), all at 200 epochs, so the "
+        "larger batches see a half and a quarter of the updates. Class weight, the "
+        "same learning rate.",
+    ),
     "w69": (
         "Rounds 53 and 55, the PDLP stores at KKT $10^{-6}$ and $10^{-8}$",
         "The round-33 cell over the pFBA store and over the PDLP store at KKT "

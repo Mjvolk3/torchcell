@@ -978,3 +978,7 @@ Jobs 2439, 2443 and 2444's three width-96 cells (`wave12_readout.py --round w64`
 ## 2026.09.18 - Round 55 launched: the PDLP 1e-8 store with 29 percent uncertified rows
 
 Job 2444 done (width 96 read above; its fourth cell, the round-50 GO-on-node 400-epoch seed 2702, landed for the w66 read). Round 55 on the freed card (job 2448, pack `w71_pathlogpdlp8`, 36 GB, six cells): the layer-free cell over the PDLP store at KKT 1e-8, where 320 of 1,121 programs are uncertified and kept as zero flux, the read of what a large uncertified fraction does to the cell beside the 1e-4 (12) and 1e-6 (70) stores; it joins the round-53 read (`--round w69`, caption now "Rounds 53 and 55").
+
+## 2026.09.18 - Round 53 read: the 1e-6 store trains to the 1e-4 store's number
+
+Job 2445 (31 min; `wave12_readout.py --round w69`): the layer-free cell over the PDLP 1e-6 store (70 zero rows) reads 0.905 mean (sd 0.007; pooled 0.908 [0.86, 0.95]; epochs 47 to 66, every seed fit) against the 1e-4 store's 0.903 (pooled 0.907) and the pFBA store's 0.908 (0.912). The document paragraph waits for round 55 (the 1e-8 store, job 2448). Round 56 launched on the freed card (job 2449, pack `w72_pathlogbatch`, 36 GB, six cells): the round-33 cell at batch 64 and 128, three seeds each, the update-budget question for a store-backed model over millions of records.

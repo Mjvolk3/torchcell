@@ -1018,3 +1018,7 @@ Job 2452 (31 min; `wave12_readout.py --round w69`): the PDLP 1e-8 store with its
 ## 2026.09.18 - Round 58 read: the one model on the logit is the solve-alone number under the fold protocol
 
 Job 2453 (27 min; `cv_ensemble_readout.py --prefix w74_pathgopfbaaffcv`): folds 0.911, 0.907, 0.896, 0.886, 0.884 (mean 0.897; epochs 42 to 195), ensemble 0.918 [0.86, 0.97] on one seed, the solve-alone 0.919 / 0.920 and 0.035 under the post hoc GO + solve family (0.953). Written into the round-50 paragraph of 3-backbone; label in the fold-ensemble table. Seed 2701 on the folds launched on the freed card (job 2457, pack `w74_pathgopfbaaffcv_s2701`).
+
+## 2026.09.18 - Round 59 read: weight decay is not the regularizer for the GO columns
+
+Job 2454 (31 min; `wave12_readout.py --round w75`): the GO + pFBA affine cell at decay 0.1 reads 0.890, 0.898, 0.891 (mean 0.893; pooled 0.892), still crossing training loss 0.6 at epochs 15 to 16 and ending at 0.03 to 0.05 with epochs 173 to 182 selected; at decay 1.0 it reads 0.849, 0.849, 0.845 (mean 0.848), selecting at epochs 8 to 11 with the training loss held at 0.36. Neither reaches the base 0.901 or the solve-alone 0.908. Written into 3-backbone after the round-50 paragraph (table `round_w75`, figure `w75_readout_2026-09-18-20-41-22`). Seeds 2703 to 2705 of the round-60 PCA arms launched on the freed card (job 2458, pack `w76_pathgopcaaff_seeds2`).

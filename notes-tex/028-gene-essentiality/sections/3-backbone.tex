@@ -656,6 +656,28 @@ read of the GO columns is what remains of the one-model question on this backbon
   epoch, seed mean. Written by
   \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w66}.}{fig:w66}
 
+Weight decay is not the regularizer (round 59, job 2454; Table~\ref{tab:w75},
+Figure~\ref{fig:w75}). The GO-and-vector affine cell with AdamW decay 0.1, a
+thousand times the base $10^{-4}$, still crosses training loss 0.6 at epochs 15 to
+16, ends at 0.03 to 0.05 and selects at epochs 173 to 182, reading 0.890, 0.898 and
+0.891 (mean 0.893; pooled 0.892 [0.83, 0.94]) against 0.901 at the base; at decay 1.0
+the cell selects at epochs 8 to 11 and reads 0.849, 0.849 and 0.845 (mean 0.848),
+the decay pulling the affine back faster than the training genes can be fit. What the
+columns need is fewer of them, or a read that cannot memorize 629 genes through
+2,362 indicators; the reduced form is round 60.
+
+\input{tables/round_w75}
+
+\tcfigfit[1.0]{figures/w75_readout_2026-09-18-20-41-22.pdf}{\textbf{Round 59, weight
+  decay on the GO affine columns.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w75}.}{fig:w75}
+
 \subsection{Round 30: the genome-wide labels as a larger held-out set\secstatus{todo}}
 \label{sec:round30}
 

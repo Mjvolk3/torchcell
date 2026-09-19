@@ -1034,3 +1034,7 @@ Job 2456 (31 min; `wave12_readout.py --round w77`): the round-33 cell on the fix
 ## 2026.09.18 - Round 58 at two seeds; round 62's third seed launched
 
 Job 2457 (seed 2701 of the GO + pFBA affine folds): two seeds per fold, ensemble 0.917 [0.86, 0.97] (fold mean 0.895), the one-seed 0.918 and the solve-alone 0.920; the full-GO one model stays one number with the solve alone. Seed 2702 of the round-62 PCA-GO folds launched on the freed card (job 2461, pack `w78_pathgopcapfbaaffcv_s2702`).
+
+## 2026.09.18 - Round 62 partial: the PCA-GO + solve cell under the folds, one seed
+
+Job 2459 (27 min; `cv_ensemble_readout.py --prefix w78_pathgopcapfbaaffcv`): folds 0.905, 0.880, 0.843, 0.873, 0.917 (mean 0.884; the third fold selects at epoch 29, the second at 197), ensemble 0.914 [0.86, 0.96] on one seed, under the solve-alone 0.919 and the full-GO affine 0.918; the +0.005 of the split file does not appear on one fold seed. Seeds 2701 and 2702 (jobs 2460, 2461) and the six-seed split-file read (job 2458) decide it.

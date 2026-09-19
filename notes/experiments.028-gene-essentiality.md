@@ -1030,3 +1030,7 @@ Job 2455 (31 min; `wave12_readout.py --round w76`, three seeds per arm; seeds 27
 ## 2026.09.18 - Round 61 read: the fix does not move the number
 
 Job 2456 (31 min; `wave12_readout.py --round w77`): the round-33 cell on the fixed pathway one-hot code, six free seeds, reads 0.904 mean (sd 0.010; pooled 0.911 [0.87, 0.95]; epochs 39 to 65) against 0.908 / 0.912 on the permuted input; every number in the document stands. Written into `sec:round45` (table `round_w77`, figure `w77_readout_2026-09-18-20-51-19`). Seed 2701 of the round-62 folds launched on the freed card (job 2460, pack `w78_pathgopcapfbaaffcv_s2701`).
+
+## 2026.09.18 - Round 58 at two seeds; round 62's third seed launched
+
+Job 2457 (seed 2701 of the GO + pFBA affine folds): two seeds per fold, ensemble 0.917 [0.86, 0.97] (fold mean 0.895), the one-seed 0.918 and the solve-alone 0.920; the full-GO one model stays one number with the solve alone. Seed 2702 of the round-62 PCA-GO folds launched on the freed card (job 2461, pack `w78_pathgopcapfbaaffcv_s2702`).

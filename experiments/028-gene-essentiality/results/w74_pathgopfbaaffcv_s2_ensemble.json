@@ -1,0 +1,59 @@
+{
+  "prefix": "w74_pathgopfbaaffcv",
+  "n_folds": 5,
+  "n_genes": 195,
+  "n_essential": 31,
+  "folds": [
+    {
+      "stem": "w74_pathgopfbaaffcv0 (seeds 2700, 2701)",
+      "split_file": "ess_fcl_fold0of5_s0.json.gz",
+      "select_epoch": -1,
+      "n_genes": 195,
+      "auroc": 0.9073564122738002,
+      "ci_low": 0.8502986262903641,
+      "ci_high": 0.9549196275621714
+    },
+    {
+      "stem": "w74_pathgopfbaaffcv1 (seeds 2700, 2701)",
+      "split_file": "ess_fcl_fold1of5_s0.json.gz",
+      "select_epoch": -1,
+      "n_genes": 195,
+      "auroc": 0.907159716758458,
+      "ci_low": 0.8430361140965746,
+      "ci_high": 0.9602934419381787
+    },
+    {
+      "stem": "w74_pathgopfbaaffcv2 (seeds 2700, 2701)",
+      "split_file": "ess_fcl_fold2of5_s0.json.gz",
+      "select_epoch": -1,
+      "n_genes": 195,
+      "auroc": 0.8937844217151849,
+      "ci_low": 0.8190714090805172,
+      "ci_high": 0.9550901080438704
+    },
+    {
+      "stem": "w74_pathgopfbaaffcv3 (seeds 2700, 2701)",
+      "split_file": "ess_fcl_fold3of5_s0.json.gz",
+      "select_epoch": -1,
+      "n_genes": 195,
+      "auroc": 0.8800157356412274,
+      "ci_low": 0.798337028046101,
+      "ci_high": 0.9429012843488651
+    },
+    {
+      "stem": "w74_pathgopfbaaffcv4 (seeds 2700, 2701)",
+      "split_file": "ess_fcl_fold4of5_s0.json.gz",
+      "select_epoch": -1,
+      "n_genes": 195,
+      "auroc": 0.8863099921321793,
+      "ci_low": 0.8060538378416063,
+      "ci_high": 0.9546823712507073
+    }
+  ],
+  "fold_mean_auroc": 0.8949252557041699,
+  "ensemble_auroc": 0.9171911880409127,
+  "ensemble_ci_low": 0.8582180127041743,
+  "ensemble_ci_high": 0.9664909678798568,
+  "seeds_per_fold": 2,
+  "note": "The ensemble is the per-gene mean of the fold models' logits on the released held-out genes, scored once; this is the protocol behind FCL's published test AUROC. The fold mean is the average of K single-model AUROCs and is the number to compare with a single-split cell. Each fold model is the mean logit over seeds [2700, 2701], and the fold AUROC scores that mean."
+}

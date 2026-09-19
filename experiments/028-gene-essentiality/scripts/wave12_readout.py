@@ -669,6 +669,8 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "w66_pathgopfbaaff_h12l1p1_e200_s*.json",
             "w76_pathgopcaaff_h12l1p1_e200_s*.json",
             "w76_pathgopcapfbaaff_h12l1p1_e200_s*.json",
+            "w79_pathgopca16aff_h12l1p1_e200_s*.json",
+            "w79_pathgopca16pfbaaff_h12l1p1_e200_s*.json",
         ],
         [
             "pathfbapfbalogfree",
@@ -676,6 +678,8 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathgopfbaaff",
             "pathgopcaaff",
             "pathgopcapfbaaff",
+            "pathgopca16aff",
+            "pathgopca16pfbaaff",
         ],
     ),
     # Round 59: the GO + pFBA affine cell with AdamW weight decay 0.1 and 1.0 against
@@ -1041,6 +1045,8 @@ ARM_LABELS = {
     "pathlogfixed": "the round-33 cell on the fixed pathway one-hot code (sorted columns, no rebuild)",
     "pathgopcaaff": "pathway + ProtT5 on the node; GO reduced to 64 principal components (positive and negative parts) as affine columns",
     "pathgopcapfbaaff": "the same with the log(1 + |v|) vector as affine columns too",
+    "pathgopca16aff": "GO reduced to 16 principal components (positive and negative parts) as affine columns",
+    "pathgopca16pfbaaff": "the same with the log(1 + |v|) vector as affine columns too",
     "pathgopfbaaffwd01": "the same cell with AdamW weight decay 0.1",
     "pathgopfbaaffwd1": "the same cell with AdamW weight decay 1.0",
     "protgopfbaaff": "ProtT5 alone on the node; the log(1 + |v|) vector and the GO multi-hot as affine columns",

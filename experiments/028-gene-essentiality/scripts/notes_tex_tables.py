@@ -433,14 +433,14 @@ ROUND_CAPTIONS = {
         "six free seeds. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
     "w76": (
-        "Round 60, the GO multi-hot reduced before the affine",
+        "Rounds 60 and 63, the GO multi-hot reduced before the affine",
         "The round-33 cell and the round-50 cells (the full GO multi-hot as affine "
         "columns, alone and with the vector) as the comparators, against the GO "
-        "multi-hot projected on its first 64 principal components fitted over the 1,121 "
-        "labeled genes and split into positive and negative parts (128 columns, so the "
-        "$\\log(1 + |v|)$ encoding keeps the sign), alone and with the vector. Batch 32, "
-        "class weight, 200 epochs; seeds 2700 to 2705 for the comparators, 2700 to 2702 "
-        "for the rest.",
+        "multi-hot projected on its first 64 and its first 16 principal components "
+        "fitted over the 1,121 labeled genes and split into positive and negative parts "
+        "(128 and 32 columns, so the $\\log(1 + |v|)$ encoding keeps the sign), alone "
+        "and with the vector. Batch 32, class weight, 200 epochs; seeds 2700 to 2705 "
+        "(2700 to 2702 at 16 components).",
     ),
     "w75": (
         "Round 59, weight decay on the GO affine columns",

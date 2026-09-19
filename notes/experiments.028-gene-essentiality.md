@@ -1038,3 +1038,7 @@ Job 2457 (seed 2701 of the GO + pFBA affine folds): two seeds per fold, ensemble
 ## 2026.09.18 - Round 62 partial: the PCA-GO + solve cell under the folds, one seed
 
 Job 2459 (27 min; `cv_ensemble_readout.py --prefix w78_pathgopcapfbaaffcv`): folds 0.905, 0.880, 0.843, 0.873, 0.917 (mean 0.884; the third fold selects at epoch 29, the second at 197), ensemble 0.914 [0.86, 0.96] on one seed, under the solve-alone 0.919 and the full-GO affine 0.918; the +0.005 of the split file does not appear on one fold seed. Seeds 2701 and 2702 (jobs 2460, 2461) and the six-seed split-file read (job 2458) decide it.
+
+## 2026.09.18 - Round 63 launched: GO reduced to 16 components before the affine
+
+Round 63 on the freed card (job 2462, pack `w79_pathgopca16aff`, 36 GB, six cells): `go_affine_store.py --pca 16` writes the GO multi-hot on 16 components split into positive and negative parts (32 columns), alone and with the pFBA vector, three seeds each, the second point on the reduction axis beside round 60's 64 components; reads with `--round w76` (caption now "Rounds 60 and 63").

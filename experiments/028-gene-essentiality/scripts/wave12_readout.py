@@ -667,8 +667,15 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "w54_pathlogpdlp_h12l1p1_e200_s*.json",
             "w69_pathlogpdlp6_h12l1p1_e200_s*.json",
             "w71_pathlogpdlp8_h12l1p1_e200_s*.json",
+            "w73_pathlogpdlp8fill_h12l1p1_e200_s*.json",
         ],
-        ["pathfbapfbalogfree", "pathlogpdlp", "pathlogpdlp6", "pathlogpdlp8"],
+        [
+            "pathfbapfbalogfree",
+            "pathlogpdlp",
+            "pathlogpdlp6",
+            "pathlogpdlp8",
+            "pathlogpdlp8fill",
+        ],
     ),
     # Rounds 51 and 52: the round-9 pooled cell and the round-33 layer-free cell, each
     # pinned twice, with the hash seed fixed on the old one-hot code (w67) and without
@@ -968,6 +975,7 @@ ARM_LABELS = {
     "protlogdet2": "the same, pinned, second run",
     "pathlogpdlp6": "the round-33 cell over the PDLP store at KKT 1e-6 (70 uncertified rows kept as zero flux)",
     "pathlogpdlp8": "the round-33 cell over the PDLP store at KKT 1e-8 (320 uncertified rows kept as zero flux)",
+    "pathlogpdlp8fill": "the round-33 cell over the PDLP 1e-8 store with its uncertified rows filled from the 1e-6 and 1e-4 stores",
     "pathlogb64": "the round-33 cell at batch 64",
     "pathlogb128": "the round-33 cell at batch 128",
     "pathpoolhash1": "round-9 pooled cell, kernels pinned, PYTHONHASHSEED=0, old one-hot code, first run",

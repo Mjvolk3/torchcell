@@ -990,3 +990,7 @@ Job 2447 (28 min; `cv_ensemble_readout.py --prefix w70_pathlogh48cv`): folds 0.8
 ## 2026.09.18 - Round 56 read: the layer-free cell fits with a quarter of the updates
 
 Job 2449 (18 min; `wave12_readout.py --round w72`): batch 64 reads 0.907, 0.892, 0.907 (mean 0.902; pooled 0.909 [0.86, 0.95]; fits at epochs 45 to 52), batch 128 reads 0.903, 0.913, 0.904 (mean 0.907; pooled 0.908; fits at 60 to 72; training loss 0.13 to 0.27 at epoch 199 against batch 32's 0.08 to 0.13), the batch-32 cell's 0.908 / 0.912; 18 and 15 min a cell at six per card. Six of six fit with a quarter of the optimizer steps. Written into `sec:round33` (table `round_w72`, figure `w72_readout_2026-09-18-19-42-20`). Seed 2702 of the width-48 folds launched on the freed card (job 2451, pack `w70_pathlogh48cv_s2702`).
+
+## 2026.09.18 - Round 55 read: 29 percent uncertified rows cost the cell 0.02
+
+Job 2448 (31 min; `wave12_readout.py --round w69`, with round 53): the layer-free cell over the PDLP 1e-8 store (320 zero rows) reads 0.884, 0.896, 0.875, 0.899, 0.890, 0.878 (mean 0.887, sd 0.010; pooled 0.892 [0.84, 0.94]; every seed fit at epochs 35 to 50) against the 1e-6 store's 0.905 (0.908) and the 1e-4 store's 0.903 (0.907). The uncertified fraction is the store's cost: 12 and 70 zero rows cost nothing, 320 cost 0.02. Whether the cost is the missing rows or the 1e-8 point is the next read: `pdlp_fill_store.py` writes the 1e-8 store with its uncertified rows filled from the 1e-6 and 1e-4 stores (the second pass a card solver would run), round 57 trains over it.

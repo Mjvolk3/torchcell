@@ -1,0 +1,10 @@
+{
+  "path": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_pdlp1e-8fill.npz",
+  "rows_by_source": {
+    "pdlp1e-8": 801,
+    "pdlp1e-6": 250,
+    "pdlp": 60,
+    "zero_in_every_store": 10
+  },
+  "n_genes": 1121
+}

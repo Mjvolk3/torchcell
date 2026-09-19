@@ -123,14 +123,16 @@ def pooled(cells: list[dict[str, float]], labels: dict[str, int]) -> tuple[float
 def dump_predictions(path: str, labels: dict[str, int]) -> tuple[dict[str, float], int]:
     """Every record of a transformer cell's test dump as ``gene -> logit``, and its seed.
 
-    The trainer pins the released 195 genes, and none of them is in this split's test
-    set, so the dump's ``pinned`` flag is False on every record and the read is over
-    all of them; the gene set is asserted against the split's test genes.
+    The read is over every record of the dump, and the gene set is asserted against
+    the split's test genes, which is what makes the read the genome-wide one: none of
+    the released 195 genes is in this split's test set. The dump's ``pinned`` flag is
+    not used: the round-30 dumps (job 2397's code) carry it False on every record and
+    the round-65 dumps (the current trainer) carry it True on every record, the flag
+    having come to mean the split's own test block rather than the released genes.
     """
     with open(path) as fh:
         dump = json.load(fh)
     recs = dump["predictions"]
-    assert not any(r["pinned"] for r in recs), path
     cell = {r["genes"][0]: float(r["pred"]) for r in recs}
     assert set(cell) == set(labels), (path, len(cell), len(labels))
     for r in recs:

@@ -44,6 +44,26 @@
       "wall_minutes": null
     },
     {
+      "label": "layer-free log1p vector + affine, pathway + ProtT5 (round 33 form)",
+      "kind": "transformer",
+      "n_cells": 3,
+      "cell_aurocs": [
+        0.5424855707863921,
+        0.56097022587269,
+        0.5694057661357456
+      ],
+      "mean": 0.5576205209316093,
+      "sd": 0.013769154723731695,
+      "pooled_auroc": 0.557896248404462,
+      "pooled_ci": [
+        0.5376248816455278,
+        0.5774811237621974
+      ],
+      "n_genes": 4674,
+      "select_epochs": [],
+      "wall_minutes": null
+    },
+    {
       "label": "MLP on ProtT5 alone",
       "kind": "MLP",
       "n_cells": 3,

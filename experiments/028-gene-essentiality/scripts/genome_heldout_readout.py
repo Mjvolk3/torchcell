@@ -45,6 +45,9 @@ TRANSFORMER_ARMS: dict[str, str] = {
     "cached solve + flux head, pathway + ProtT5 (round 27 form)": (
         "w46_genomepathlpoffgateflux_h12l1p1_e200_s*.json"
     ),
+    "layer-free log1p vector + affine, pathway + ProtT5 (round 33 form)": (
+        "w81_genomepathlog_h12l1p1_e200_s*.json"
+    ),
 }
 #: Cheap models: (result file, model, graph, row inputs) -> label.
 BASE = "graph_baselines_genome_heldout.json"

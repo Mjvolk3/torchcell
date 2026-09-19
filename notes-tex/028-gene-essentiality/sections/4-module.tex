@@ -1286,7 +1286,24 @@ epoch 0, epoch 33 selected, 0.865 in both) and the layer-free cell identical (1.
 epoch 39, 0.912 in both). The chance in the pooled cell was the pathway one-hot's
 column order, an input permuted between processes and not a kernel; with the dataset
 fixed and the card's kernels pinned, every cell in the document is one trajectory
-per seed.
+per seed. The fix does not move the number (round 61, job 2456;
+Table~\ref{tab:w77}, Figure~\ref{fig:w77}): the round-33 cell on the fixed code, six
+free seeds, reads 0.904 (sd 0.010; pooled 0.911 [0.87, 0.95]), fitting at epochs 39
+to 65, against 0.908 and 0.912 on the six seeds that each served the pathway columns
+in the previous launch's order, so the permutation was a per-run relabeling of an
+input the cell reads column by column, and every number in the document stands.
+
+\input{tables/round_w77}
+
+\tcfigfit[1.0]{figures/w77_readout_2026-09-18-20-51-19.pdf}{\textbf{Round 61, the
+  reference cell on the fixed one-hot code.} \textbf{a}, Validation AUROC per epoch,
+  one thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w77}.}{fig:w77}
 
 \input{tables/round_w67}
 

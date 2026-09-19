@@ -425,6 +425,14 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w75": (
+        "Round 59, weight decay on the GO affine columns",
+        "The round-33 cell (the vector alone in the affine) and the round-50 cell (GO "
+        "and the vector as affine columns, AdamW weight decay $10^{-4}$) as the "
+        "comparators, against the round-50 cell with weight decay 0.1 and 1.0. Batch "
+        "32, class weight, 200 epochs; seeds 2700 to 2705 for the comparators, 2700 to "
+        "2702 for the rest.",
+    ),
     "w72": (
         "Round 56, the batch axis of the layer-free cell",
         "The round-33 cell at batch 32 (seeds 2700 to 2705) against the same cell at "

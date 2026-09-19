@@ -1002,3 +1002,7 @@ Job 2450 (seed 2701 on the width-48 folds): two seeds per fold, ensemble 0.916 [
 ## 2026.09.18 - Round 50 complete: GO on the logit adds nothing, and the affine memorizes through it
 
 Jobs 2440, 2444 (one cell) and 2446 (63 min; `wave12_readout.py --round w66`): GO alone as affine columns 0.886 on six seeds (sd 0.012; pooled 0.892); GO + pFBA as affine columns 0.895, 0.901, 0.906, 0.900, 0.893, 0.911 (mean 0.901, sd 0.007; pooled 0.903 [0.85, 0.95]); the same at 400 epochs 0.892, 0.902, 0.890 (mean 0.895; epochs 251, 286, 379); ProtT5 alone with GO + pFBA 0.876; GO-on-node at 400 epochs 0.860 (three seeds). The GO affine cells cross training loss 0.6 at epochs 14 to 21 and end at 0.002 to 0.04 (the vector-alone cell crosses at 33 to 58 and ends near 0.1): the affine memorizes the 629 training genes through 2,362 binary columns and the selected epoch drifts late on a fit plateau. Written into the one-model paragraph of 3-backbone (table `round_w66`, figure `w66_readout_2026-09-18-20-08-28`), findings and 6-open (the open construction is a regularized read of the GO columns).
+
+## 2026.09.18 - Round 59 launched: weight decay on the GO affine columns
+
+Round 59 on the freed card (job 2454, pack `w75_pathgopfbaaffwd`, 40 GB, six cells): the GO + pFBA affine cell with AdamW weight decay 0.1 and 1.0 against the base 1e-4, three seeds each, the regularized read of the columns the affine memorizes through; round 2 found decay inert at 400 updates, this cell trains for 4,000. Hook `--round w75`, caption `w75`.

@@ -650,6 +650,17 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 59: the GO + pFBA affine cell with AdamW weight decay 0.1 and 1.0 against
+    # the base 1e-4 (round 50) and the vector-alone cell.
+    "w75": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w66_pathgopfbaaff_h12l1p1_e200_s*.json",
+            "w75_pathgopfbaaffwd01_h12l1p1_e200_s*.json",
+            "w75_pathgopfbaaffwd1_h12l1p1_e200_s*.json",
+        ],
+        ["pathfbapfbalogfree", "pathgopfbaaff", "pathgopfbaaffwd01", "pathgopfbaaffwd1"],
+    ),
     # Round 56: the batch axis of the layer-free cell, batch 64 and 128 against 32.
     "w72": (
         [
@@ -999,6 +1010,8 @@ ARM_LABELS = {
     "pathgoaff": "pathway + ProtT5 on the node; the GO multi-hot as affine columns (no solve)",
     "pathgopfbaaff": "pathway + ProtT5 on the node; the log(1 + |v|) vector and the GO multi-hot as affine columns",
     "pathgopfbaaff400": "the same cell at 400 epochs",
+    "pathgopfbaaffwd01": "the same cell with AdamW weight decay 0.1",
+    "pathgopfbaaffwd1": "the same cell with AdamW weight decay 1.0",
     "protgopfbaaff": "ProtT5 alone on the node; the log(1 + |v|) vector and the GO multi-hot as affine columns",
     "pathlogh24": "the round-33 cell at width 24",
     "pathlogh48": "the round-33 cell at width 48",

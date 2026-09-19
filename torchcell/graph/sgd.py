@@ -21,19 +21,31 @@ from attrs import define, field
 from dotenv import load_dotenv
 from tqdm import tqdm
 
+from torchcell.graph.validation.locus_related.locus import validate_data
+
 load_dotenv()
-_DATA_ROOT_ENV = os.getenv("DATA_ROOT")
-if not _DATA_ROOT_ENV:
-    raise ValueError(
-        "DATA_ROOT environment variable is not set. Please set it in your .env file."
-    )
-DATA_ROOT: str = _DATA_ROOT_ENV
-
-from torchcell.graph.validation.locus_related.locus import (  # noqa: E402  (import follows load_dotenv/DATA_ROOT check)
-    validate_data,
-)
-
 log = logging.getLogger(__name__)
+
+
+def data_root() -> str:
+    """``DATA_ROOT`` from the environment, resolved when a locus is fetched or cached.
+
+    Read at call time rather than import time: this module sits on the import path of
+    ``torchcell.adapters`` and ``torchcell.knowledge_graphs``, so an import-time check
+    made every test module that touches an adapter fail to collect on a runner with no
+    data root (CI was red from 2026-07-16 for that reason). The error is the same, it
+    just fires when the value is needed.
+    """
+    value = os.getenv("DATA_ROOT")
+    if not value:
+        raise ValueError(
+            "DATA_ROOT environment variable is not set. Please set it in your .env file."
+        )
+    return value
+
+
+def _default_gene_dir() -> str:
+    return osp.join(data_root(), "data/sgd/genome/genes")
 
 
 @define
@@ -44,7 +56,7 @@ class Gene:
     is_validated: bool = field(default=True, init=True, repr=False)
     sgd_url: str = "https://www.yeastgenome.org/backend/locus"
     headers: dict[str, str] = field(default={"accept": "application/json"})
-    base_data_dir: str = field(default=osp.join(DATA_ROOT, "data/sgd/genome/genes"))
+    base_data_dir: str = field(factory=_default_gene_dir)
     save_path: str = field(default=None, init=False, repr=True)
     _data: dict[str, dict[Any, Any] | list[Any]] = field(factory=dict, init=False)
     _data_task: Task[Any] | None = field(default=None, init=False, repr=False)
@@ -248,7 +260,7 @@ async def download_genes(
         tasks = []
         for id_ in locus_ids:
             # Check if the file for the gene already exists
-            file_path = osp.join(DATA_ROOT, f"data/sgd/genome/genes/{id_}.json")
+            file_path = osp.join(_default_gene_dir(), f"{id_}.json")
 
             if os.path.exists(file_path):
                 logging.info(f"Data for gene {id_} already exists. Skipping...")

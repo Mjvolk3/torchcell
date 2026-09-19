@@ -142,6 +142,8 @@ def test_pickles_bare_and_when_embedded_in_a_model_field():
     assert type(holder.provenance[0]).__qualname__ == "SourcedValue"
     restored = pickle.loads(pickle.dumps(holder))
     assert restored.provenance[0].value == sv.value
+
+
 # ProvenanceGap: the complement of SourcedValue (honest typed absence)
 # --------------------------------------------------------------------------- #
 def test_provenance_gap_requires_nonempty_field():

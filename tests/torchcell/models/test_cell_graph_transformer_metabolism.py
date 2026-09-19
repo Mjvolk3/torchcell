@@ -172,7 +172,7 @@ def test_scalar_head_rejects_wide_output_dim() -> None:
 
 def test_missing_kind_is_rejected() -> None:
     """A metabolism head spec without `kind` raises rather than guessing."""
-    with pytest.raises(ValueError, match="needs kind='scalar' or kind='vector'"):
+    with pytest.raises(ValueError, match=r"needs kind in \{'scalar','vector'"):
         _build(CellGraphTransformerMetabolism, {"mulleder19": {"output_dim": 19}})
 
 

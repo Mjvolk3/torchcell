@@ -51,3 +51,14 @@ Traceback (most recent call last):
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 TypeError: ClientResponseError.__init__() missing 1 required positional argument: 'history'
 ```
+
+## 2026.09.19 - DATA_ROOT is read when a locus is fetched, not when the module imports
+
+The module raised `ValueError` at import when `DATA_ROOT` was unset. Since
+`torchcell.datasets.scerevisiae.sgd` imports `main_get_all_genes` from here and
+`torchcell.adapters` imports that module, every test file that touches an adapter (17
+of them) failed to collect on the GitHub runner, where no `.env` exists; the pytest
+workflow has been red since 2026-07-16 and the lint workflow since 2026-07-14 (one
+unformatted test file). `data_root()` now reads the variable when a `Gene` is built or
+`download_genes` runs, raising the same error then; `Gene.base_data_dir` gets its default
+from a factory. No fallback: a missing data root still stops the first real use.

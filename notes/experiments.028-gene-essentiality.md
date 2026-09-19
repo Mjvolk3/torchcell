@@ -1058,3 +1058,7 @@ Job 2461 (seed 2702): three seeds per fold, folds 0.917, 0.878, 0.843, 0.901, 0.
 ## 2026.09.18 - Round 65 read: the layer-free cell does not transfer off the metabolic genes either
 
 Job 2464 (20 min; `genome_heldout_readout.py`, arm "layer-free log1p vector + affine, pathway + ProtT5 (round 33 form)"): on the 4,674 genome-wide genes the layer-free cell reads 0.542, 0.561, 0.569 (mean 0.558, sd 0.014; pooled 0.558 [0.54, 0.58]) against the affine cell's 0.572 and the scalable form's 0.542, where the graph convolution on degree and clustering reads 0.759. The readout's per-record `pinned` assertion was dropped: the round-30 dumps carry the flag False on every record and the current trainer's dumps carry it True on every record of the split's test block; the gene-set assertion against the split's test genes is what the read rests on. Seeds 2703 to 2705 launched on the freed card (job 2466, pack `w81_genomepathlog_seeds2`).
+
+## 2026.09.18 - Round 63 partial: GO on 16 components reads the 64-component pattern at three seeds
+
+Job 2462 (31 min; `wave12_readout.py --round w76`, three seeds): GO PCA-16 (32 columns, explained variance 0.522) alone as affine columns 0.876 (sd 0.017; pooled 0.887), with the pFBA vector 0.912 (0.905 to 0.919 by the readout's seeds 2700 to 2702; pooled 0.917 [0.87, 0.96]; selects at 38 to 77), the same three-seed reading 64 components gave before its six-seed 0.906. Seeds 2703 to 2705 launched on the freed card (job 2467, pack `w79_pathgopca16aff_seeds2`); the document paragraph takes the six-seed number.

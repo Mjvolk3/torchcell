@@ -1078,3 +1078,7 @@ Jobs 2468 and 2469 (`store_key_count.py`, 8 and 10 min at 20 workers; `results/s
 ## 2026.09.18 - Round 63 complete; the fixed-code folds get their second and third seeds
 
 Job 2467 (`wave12_readout.py --round w76`, six seeds): GO on 16 components alone as affine columns 0.874 (sd 0.029; pooled 0.893), with the pFBA vector 0.908 (sd 0.016; pooled 0.915 [0.86, 0.96]), the solve-alone 0.908 / 0.912; the reduction axis reads the same at 64 and 16 components. Written into the round-60 paragraph (figure `w76_readout_2026-09-18-22-17-30`). While the store builds (job 2471, 469,474 keys) and the 025 control trains (job 2472, two cards), the two free cards run seeds 2701 and 2702 of the pinned fixed-code folds (jobs 2473 and 2474, packs `w82_pathlogfixedcv_s2701`, `_s2702`), for the reported cell's three-seed fold ensemble under a reproducible run on the fixed input.
+
+## 2026.09.18 - The 025 control arm resubmitted after a NCCL watchdog abort
+
+Job 2472 failed at 24 minutes before its first batch: rank 1's NCCL watchdog reported no progress for 480 s while rank 0 was still opening the 13.5 million record build and fitting the normalizer under a node load of 160 (the store workers, the 029 build, three packs), and aborted the rank. The launcher now exports `TORCH_NCCL_ENABLE_MONITORING=0` and `TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=3600` (commit 901d8d257 on the 025 branch); resubmitted as job 2475 (two cards, 125 GB, 24 h). The store build (job 2471) is at 80,000 of 469,474 keys after 25 minutes, about 140 s per 20,000, so it lands near 23:25.

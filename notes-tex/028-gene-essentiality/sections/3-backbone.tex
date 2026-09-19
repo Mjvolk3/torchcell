@@ -690,16 +690,19 @@ vector-alone cell's 0.908 and 0.912, the cells crossing training loss 0.6 at epo
 protocol (round 62, jobs 2459 to 2461) the same cell reads 0.914 [0.86, 0.96] on
 one seed and 0.917 [0.87, 0.96] on three (folds 0.917, 0.878, 0.843, 0.901 and
 0.912 as seed-mean logits), the solve-alone 0.919 and 0.920
-(Table~\ref{tab:ensembles}). The one model on this backbone is closed on the split file
-and the folds: GO on the node costs 0.04, GO on the logit costs nothing and adds
-nothing, in full it memorizes and reduced it reads the solve alone, so the
-annotation's 0.04 over the two families' average is not the transformer's to take
-through either path, and the two families stay two models.
+(Table~\ref{tab:ensembles}). Sixteen components (round 63, jobs 2462 and 2467; 32
+columns, 52 percent of the variance) read the same: 0.874 alone (sd 0.029; pooled
+0.893) and 0.908 with the vector (sd 0.016; pooled 0.915 [0.86, 0.96]) on six seeds.
+The one model on this backbone is closed on the split file and the folds: GO on the
+node costs 0.04, GO on the logit costs nothing and adds nothing, in full it memorizes
+and reduced to 64 or 16 components it reads the solve alone, so the annotation's 0.04
+over the two families' average is not the transformer's to take through either path,
+and the two families stay two models.
 
 \input{tables/round_w76}
 
-\tcfigfit[1.0]{figures/w76_readout_2026-09-18-21-13-23.pdf}{\textbf{Round 60, the GO
-  multi-hot reduced before the affine.} \textbf{a}, Validation AUROC per epoch, one
+\tcfigfit[1.0]{figures/w76_readout_2026-09-18-22-17-30.pdf}{\textbf{Rounds 60 and 63,
+  the GO multi-hot reduced before the affine.} \textbf{a}, Validation AUROC per epoch, one
   thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
   epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
   per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits

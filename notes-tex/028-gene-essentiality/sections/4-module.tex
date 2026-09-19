@@ -1484,8 +1484,11 @@ six (pooled 0.912). At width 96 (371 thousand) the cell misses the fitting trans
 on two seeds of three (training loss 0.90 and 0.92 at epoch 199, reading 0.874 and
 0.804) and reads 0.892 on the one that fits, the first layer-free cell on the split
 file to miss. So from 25 to 125 thousand parameters the form reads one number, and
-the transition, not the capacity, is what a wider cell puts at risk; the width-48
-cell under the fold protocol is round 54.
+the transition, not the capacity, is what a wider cell puts at risk. Under the fold
+protocol (round 54, job 2447) the width-48 cell reads 0.881, 0.912, 0.927, 0.880 and
+0.908 on the folds, every fold fit at epochs 34 to 55, and 0.917 [0.87, 0.96] as the
+ensemble on one seed, the width-12 cell's 0.919 on one seed and 0.920 on three
+(Table~\ref{tab:ensembles}).
 
 \input{tables/round_w64}
 

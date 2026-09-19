@@ -982,3 +982,7 @@ Job 2444 done (width 96 read above; its fourth cell, the round-50 GO-on-node 400
 ## 2026.09.18 - Round 53 read: the 1e-6 store trains to the 1e-4 store's number
 
 Job 2445 (31 min; `wave12_readout.py --round w69`): the layer-free cell over the PDLP 1e-6 store (70 zero rows) reads 0.905 mean (sd 0.007; pooled 0.908 [0.86, 0.95]; epochs 47 to 66, every seed fit) against the 1e-4 store's 0.903 (pooled 0.907) and the pFBA store's 0.908 (0.912). The document paragraph waits for round 55 (the 1e-8 store, job 2448). Round 56 launched on the freed card (job 2449, pack `w72_pathlogbatch`, 36 GB, six cells): the round-33 cell at batch 64 and 128, three seeds each, the update-budget question for a store-backed model over millions of records.
+
+## 2026.09.18 - Round 54 read: the width-48 fold ensemble is the width-12 number
+
+Job 2447 (28 min; `cv_ensemble_readout.py --prefix w70_pathlogh48cv`): folds 0.881, 0.912, 0.927, 0.880, 0.908 (mean 0.902; epochs 34 to 55, every fold fit), ensemble 0.917 [0.87, 0.96] on one seed against the width-12 cell's 0.919 (one seed) and 0.920 (three). Written into the round-48 paragraph of `sec:round33`. Seed 2701 on the five folds launched on the freed card (job 2450, pack `w70_pathlogh48cv_s2701`, 36 GB).

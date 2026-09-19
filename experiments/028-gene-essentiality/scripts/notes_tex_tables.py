@@ -426,11 +426,12 @@ ROUND_CAPTIONS = {
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
     "w69": (
-        "Round 53, the PDLP store at KKT $10^{-6}$",
+        "Rounds 53 and 55, the PDLP stores at KKT $10^{-6}$ and $10^{-8}$",
         "The round-33 cell over the pFBA store and over the PDLP store at KKT "
-        "$10^{-4}$ (round 38) as the comparators, against the same cell over the PDLP "
-        "store at KKT $10^{-6}$ written by the transfer read (70 of 1,121 programs "
-        "uncertified within 120 s and kept as zero flux). Batch 32, class weight, 200 "
+        "$10^{-4}$ (round 38, 12 programs uncertified) as the comparators, against the "
+        "same cell over the PDLP stores at KKT $10^{-6}$ (70 of 1,121 programs "
+        "uncertified within 120 s and kept as zero flux) and $10^{-8}$ (320 "
+        "uncertified) written by the transfer read. Batch 32, class weight, 200 "
         "epochs, seeds 2700 to 2705.",
     ),
     "w67": (

@@ -1006,3 +1006,7 @@ Jobs 2440, 2444 (one cell) and 2446 (63 min; `wave12_readout.py --round w66`): G
 ## 2026.09.18 - Round 59 launched: weight decay on the GO affine columns
 
 Round 59 on the freed card (job 2454, pack `w75_pathgopfbaaffwd`, 40 GB, six cells): the GO + pFBA affine cell with AdamW weight decay 0.1 and 1.0 against the base 1e-4, three seeds each, the regularized read of the columns the affine memorizes through; round 2 found decay inert at 400 updates, this cell trains for 4,000. Hook `--round w75`, caption `w75`.
+
+## 2026.09.18 - Width-48 fold ensemble complete; round 60 reduces GO before the affine
+
+Job 2451 (seed 2702): the width-48 cell with three seeds per fold reads 0.917, 0.895, 0.919, 0.894, 0.916 on the folds and 0.920 [0.87, 0.96] as the ensemble, the width-12 cell's 0.920. Written into the round-48 paragraph. Round 60 on the freed card (job 2455, pack `w76_pathgopcaaff`, 36 GB, six cells): `go_affine_store.py --pca 64` writes the GO multi-hot projected on 64 principal components split into positive and negative parts (128 columns), alone (`_gopca64.npz`) and with the pFBA vector (`_gopca64pfba.npz`); the compact read beside round 59's weight decay. Hook `--round w76`, caption `w76`.

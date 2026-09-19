@@ -650,6 +650,25 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 60: the GO multi-hot reduced to 64 principal components (positive and
+    # negative parts) as affine columns, alone and with the pFBA vector, beside the
+    # full multi-hot stores of round 50 and the vector alone.
+    "w76": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w66_pathgoaff_h12l1p1_e200_s*.json",
+            "w66_pathgopfbaaff_h12l1p1_e200_s*.json",
+            "w76_pathgopcaaff_h12l1p1_e200_s*.json",
+            "w76_pathgopcapfbaaff_h12l1p1_e200_s*.json",
+        ],
+        [
+            "pathfbapfbalogfree",
+            "pathgoaff",
+            "pathgopfbaaff",
+            "pathgopcaaff",
+            "pathgopcapfbaaff",
+        ],
+    ),
     # Round 59: the GO + pFBA affine cell with AdamW weight decay 0.1 and 1.0 against
     # the base 1e-4 (round 50) and the vector-alone cell.
     "w75": (
@@ -1010,6 +1029,8 @@ ARM_LABELS = {
     "pathgoaff": "pathway + ProtT5 on the node; the GO multi-hot as affine columns (no solve)",
     "pathgopfbaaff": "pathway + ProtT5 on the node; the log(1 + |v|) vector and the GO multi-hot as affine columns",
     "pathgopfbaaff400": "the same cell at 400 epochs",
+    "pathgopcaaff": "pathway + ProtT5 on the node; GO reduced to 64 principal components (positive and negative parts) as affine columns",
+    "pathgopcapfbaaff": "the same with the log(1 + |v|) vector as affine columns too",
     "pathgopfbaaffwd01": "the same cell with AdamW weight decay 0.1",
     "pathgopfbaaffwd1": "the same cell with AdamW weight decay 1.0",
     "protgopfbaaff": "ProtT5 alone on the node; the log(1 + |v|) vector and the GO multi-hot as affine columns",

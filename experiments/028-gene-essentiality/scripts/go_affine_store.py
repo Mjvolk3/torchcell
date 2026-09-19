@@ -27,10 +27,19 @@ covers (every training and held-out sample is one of them):
 ``v_wild_type`` is the pFBA wild-type vector padded with zeros over the GO columns (no
 statistics block, so only the ``pfba`` feature kind reads the stores). Writes
 ``results/go_affine_store.json`` with the column counts and coverage.
+
+Round 50 read both stores: the affine carries GO at no cost where the node path pays
+0.04, and adds nothing to the vector, memorizing the 629 training genes through the
+2,362 binary columns by epoch 20. Two more stores reduce the columns before the affine
+sees them (``--pca 64``): the GO multi-hot projected on its first 64 principal
+components fitted over the 1,121 genes, split into positive and negative parts (128
+columns) so that the trainer's $\\log(1 + |v|)$, which folds the sign, keeps it; alone
+(``_gopca64.npz``) and appended to the pFBA vector (``_gopca64pfba.npz``).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import os.path as osp
@@ -52,6 +61,17 @@ PFBA_STORE = osp.join(TABLE_DIR, "ess_solve_encodings_YPD.npz")
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--pca",
+        type=int,
+        default=0,
+        help=(
+            "Write the PCA-reduced stores with this many components (split into positive "
+            "and negative parts) instead of the full multi-hot stores."
+        ),
+    )
+    args = parser.parse_args()
     pfba = np.load(PFBA_STORE, allow_pickle=False)
     genes = [str(g) for g in pfba["genes"]]
     v = pfba["v_deletion"].astype(np.float32)
@@ -69,11 +89,31 @@ def main() -> None:
     covered = int((go.sum(axis=1) > 0).sum())
     pfba_provenance = json.loads(str(pfba["provenance"]))
 
+    pca_note = ""
+    if args.pca:
+        from sklearn.decomposition import PCA
+
+        pca = PCA(n_components=args.pca, random_state=0)
+        scores = pca.fit_transform(go).astype(np.float32)
+        explained = float(pca.explained_variance_ratio_.sum())
+        go = np.concatenate([np.maximum(scores, 0), np.maximum(-scores, 0)], axis=1)
+        go_ids = [f"go_pc{i}_pos" for i in range(args.pca)] + [
+            f"go_pc{i}_neg" for i in range(args.pca)
+        ]
+        n_terms = go.shape[1]
+        pca_note = (
+            f", projected on its first {args.pca} principal components (fitted over the "
+            f"1,121 genes, explained variance {explained:.3f}) and split into positive "
+            "and negative parts"
+        )
+        print(f"PCA {args.pca}: explained variance {explained:.3f}")
+    tag = f"gopca{args.pca}" if args.pca else "go"
+
     out: dict[str, dict[str, object]] = {}
     for suffix, block, names, wt in (
-        ("go", go, go_ids, np.zeros(n_terms, dtype=np.float32)),
+        (tag, go, go_ids, np.zeros(n_terms, dtype=np.float32)),
         (
-            "gopfba",
+            f"{tag}pfba",
             np.concatenate([v, go], axis=1),
             rxn_ids + go_ids,
             np.concatenate([v_wt, np.zeros(n_terms, dtype=np.float32)]),
@@ -83,11 +123,12 @@ def main() -> None:
         provenance = {
             "method": (
                 "the propagated GO multi-hot (registry embedding `go`, SGD annotations "
-                "propagated over is_a and part_of, terms with >= 10 genes) as affine "
-                "columns over the 1,121 labeled genes"
+                "propagated over is_a and part_of, terms with >= 10 genes)"
+                + pca_note
+                + " as affine columns over the 1,121 labeled genes"
                 + (
                     "; appended to the pFBA deletion vector of ess_solve_encodings_YPD.npz"
-                    if suffix == "gopfba"
+                    if suffix.endswith("pfba")
                     else ""
                 )
                 + "; written by go_affine_store.py"
@@ -109,7 +150,9 @@ def main() -> None:
         )
         out[suffix] = {"path": path, **provenance}
         print(f"{path}: {block.shape}")
-    result = osp.join(RESULTS_DIR, "go_affine_store.json")
+    result = osp.join(
+        RESULTS_DIR, f"go_affine_store{'_pca' + str(args.pca) if args.pca else ''}.json"
+    )
     with open(result, "w") as fh:
         json.dump(out, fh, indent=2)
     print(result)

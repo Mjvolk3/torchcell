@@ -637,9 +637,12 @@ training genes the cell's training loss crosses 0.6 at epoch 14 to 21 and reache
 0.01 to 0.04 by epoch 199, where the vector-alone cell crosses at epochs 33 to 58 and
 ends near 0.1, and the selected epochs run 79 to 197 (251 to 379 at 400 epochs, which
 reads 0.895); the affine memorizes the training genes through the GO columns and the
-held-out ranking drifts on a fit plateau. A regularized read of the GO columns, and
-the fold protocol on the form (round 58), are what remain of the one-model question
-on this backbone.
+held-out ranking drifts on a fit plateau. Under the fold protocol (round 58, job
+2453) the form reads 0.911, 0.907, 0.896, 0.886 and 0.884 on the folds and 0.918
+[0.86, 0.97] as the ensemble on one seed, the solve-alone cell's 0.919 and 0.920
+(Table~\ref{tab:ensembles}), so the one model on the logit is one number with the
+solve alone on both protocols and 0.035 under the two-family average. A regularized
+read of the GO columns is what remains of the one-model question on this backbone.
 
 \input{tables/round_w66}
 

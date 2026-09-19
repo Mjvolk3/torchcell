@@ -1014,3 +1014,7 @@ Job 2451 (seed 2702): the width-48 cell with three seeds per fold reads 0.917, 0
 ## 2026.09.18 - Round 57 read: the uncertified rows were the cost, and a second pass recovers it
 
 Job 2452 (31 min; `wave12_readout.py --round w69`): the PDLP 1e-8 store with its 320 uncertified rows filled from the 1e-6 (250) and 1e-4 (60) stores reads 0.906 mean (sd 0.012; pooled 0.909 [0.86, 0.95]; epochs 49 to 68, every seed fit), the 1e-4 and 1e-6 stores' number, against the unfilled store's 0.887. A card solver can run at whatever tolerance certifies most programs and re-solve the rest looser. Written into `sec:round36` (figure `w69_readout_2026-09-18-20-19-22`), findings and 6-open. Round 61 launched on the freed card (job 2456, pack `w77_pathlogfixed`, 36 GB, six cells): the round-33 cell on the fixed pathway one-hot code, six seeds, the reference under the fixed input.
+
+## 2026.09.18 - Round 58 read: the one model on the logit is the solve-alone number under the fold protocol
+
+Job 2453 (27 min; `cv_ensemble_readout.py --prefix w74_pathgopfbaaffcv`): folds 0.911, 0.907, 0.896, 0.886, 0.884 (mean 0.897; epochs 42 to 195), ensemble 0.918 [0.86, 0.97] on one seed, the solve-alone 0.919 / 0.920 and 0.035 under the post hoc GO + solve family (0.953). Written into the round-50 paragraph of 3-backbone; label in the fold-ensemble table. Seed 2701 on the folds launched on the freed card (job 2457, pack `w74_pathgopfbaaffcv_s2701`).

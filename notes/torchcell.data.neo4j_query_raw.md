@@ -81,3 +81,15 @@ Traceback (most recent call last):
   File "<string>", line 1, in <module>
 TypeError: 'Neo4jQueryRaw' object does not support item assignment
 ```
+
+## 2026.09.19 - Which knowledge-graph version a query reads
+
+`Neo4jQueryRaw` no longer opens the session on a hardcoded `torchcell` database. It
+carries a `version` attribute (None means `Neo4jConnectionSettings.version`, i.e.
+`TORCHCELL_KG_VERSION`, default `latest`) and resolves it at fetch time with
+`torchcell.knowledge_graphs.releases.resolve_database`: `latest` and `pinned` are
+aliases on the served DBMS, a release id such as `2026.09.17-7715ee35` or a version
+such as `1.0` is looked up in the release nodes, and an unknown name raises. The
+resolved name is logged beside the version. Callers that pass uri/user/password are
+unchanged; pinning a query to a release is `version="2026.09.17-7715ee35"` or one line
+in `.env`.

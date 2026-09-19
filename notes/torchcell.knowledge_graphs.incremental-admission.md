@@ -188,3 +188,14 @@ changed/added/missing drift, the block and the acknowledgment round trip, the un
 surface reporting rather than blocking, and an old manifest JSON without the field loading);
 mypy and ruff clean on `kg_manifest.py`. The batch path threads `--ack-value-drift` the same
 way it threads `--ack-adapter-drift`.
+
+## 2026.09.19 - An admission is a minor release
+
+Stage 7 of `gilahyper_increment_kg-slurm_docker.slurm` now computes the admitted
+datasets' content hashes (`database/scripts/kg_content_hashes.sh` against the served
+container), stamps the manifest as an incremental release (minor version bump, release
+id `<today>-<this commit>`, untouched datasets keep their hashes because incremental
+import never touches existing nodes), rewrites the store's `KgRelease` node through the
+same `server.databases.writable` window the constraints use, and prints the release
+table. A served manifest without a version stops the runner: stamp the served release
+first. See [[torchcell.knowledge_graphs.releases]].

@@ -144,6 +144,10 @@ class Neo4jQueryRaw:
     env: Any = field(init=False, default=None)
     _gene_set: GeneSet | None = field(init=False, default=None)
     cypher_kwargs: dict[str, str | int | float | list[Any]] = field(factory=dict)
+    # The knowledge-graph version to query: ``latest`` (default, from
+    # TORCHCELL_KG_VERSION), ``pinned``, a release id, or a ``major.minor`` version;
+    # resolved to a database name at fetch time by ``releases.resolve_database``.
+    version: str | None = None
 
     def __attrs_post_init__(self) -> None:
         """Set up raw/LMDB paths, run the query on first use, and open the LMDB env."""
@@ -168,10 +172,17 @@ class Neo4jQueryRaw:
 
     def fetch_data(self) -> Iterator[Any]:
         """Open a Neo4j session, run the query, and yield each result record."""
-        log.info("Connecting to Neo4j and executing query...")
+        from torchcell.database.connection import neo4j_connection_settings
+        from torchcell.knowledge_graphs.releases import resolve_database
+
+        version = self.version or neo4j_connection_settings().version
+        database = resolve_database(version, self.uri, self.username, self.password)
+        log.info(
+            "Connecting to Neo4j (%s -> %s) and executing query...", version, database
+        )
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
         # 1000 is default
-        with driver.session(database="torchcell", fetch_size=1000) as session:
+        with driver.session(database=database, fetch_size=1000) as session:
             log.info("Running query...")
             result = session.run(self.query, **self.cypher_kwargs)
             log.info("Query executed, about to process results...")

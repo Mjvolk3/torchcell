@@ -49,7 +49,10 @@
 #             plus one neo4j start (minutes), and the old store stays on disk until
 #             someone deletes it: rollback is the reverse pair of mv.
 #   record    kg_manifest bootstrap from the live store (the old manifest is kept beside
-#             it), CSVs archived to /bulk.
+#             it), the release stamped (version, release id, per-dataset content
+#             hashes) into the manifest and the store's KgRelease node, the latest and
+#             pinned aliases created, CSVs archived to /bulk. The release artifact
+#             itself (an online backup) is scripts/kg_release.sh, run afterwards.
 #
 # RESOURCES. 24 CPUs and 256 G, measured. The generation container's anonymous memory
 # scales with the adapter worker count (SLURM_CPUS_PER_TASK sets it): job 1996 at 32
@@ -83,6 +86,12 @@ GEN_CONTAINER="${GEN_CONTAINER:-tc-neo4j-gen}"
 # The base image plus the Browser styling seed (database/docker/Dockerfile.tc-neo4j-browser).
 IMAGE="${IMAGE:-michaelvolk/tc-neo4j:5.26.28-browser.1}"
 ARCHIVE_ROOT="${ARCHIVE_ROOT:-/bulk/biocypher-out}"
+# Release artifacts (online backups + manifests, scripts/kg_release.sh) live here and
+# the serving container mounts it at /kg-releases, OUTSIDE NEO4J_HOME: the entrypoint
+# chmods every top-level directory under NEO4J_HOME to 700 at each start, which would
+# hide the archive from the host. Backups cannot stage on /db: a full backup holds the
+# whole store (680 G) in its work directory before compressing.
+RELEASE_ROOT="${RELEASE_ROOT:-/bulk/kg-releases}"
 KG_MANIFEST="${KG_MANIFEST:-$BUILD_ROOT/database/kg_manifest.json}"
 SERVE_CPUS="${SERVE_CPUS:-16}"
 SERVE_MEM="${SERVE_MEM:-200g}"
@@ -337,6 +346,11 @@ fi
 echo "import.report (first 20 lines):" | tee -a "$VALIDATION"
 docker exec "$BUILD_CONTAINER" bash -c "f=\$(ls $OUT_CONT/import.report /var/lib/neo4j/import.report /var/lib/neo4j/data/import.report 2>/dev/null | head -1); [ -n \"\$f\" ] && head -20 \"\$f\" || echo '(no import.report found)'" | tee -a "$VALIDATION"
 echo "total nodes: $NEW_COUNT (served before: $BEFORE)" | tee -a "$VALIDATION"
+# Per-dataset content hashes (sha256 of the sorted experiment ids), the byte identity a
+# release records per dataset; streamed through cypher-shell from the validated store.
+HASHES="$OUTDIR/${JOB}_content_hashes.json"
+bash "$TORCHCELL_SRC/database/scripts/kg_content_hashes.sh" "$BUILD_CONTAINER" "$NEO4J_DATABASE" "$HASHES"
+echo "content hashes: $HASHES" | tee -a "$VALIDATION"
 
 echo "---------------- 4 SWAP $(date)"
 docker stop "$BUILD_CONTAINER"
@@ -364,6 +378,7 @@ docker run \
     -v "$SERVE_ROOT/conf":/var/lib/neo4j/conf \
     -v "$SERVE_ROOT/logs":/logs \
     -v "$SERVE_ROOT/metrics":/metrics \
+    -v "$RELEASE_ROOT":/kg-releases \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_server_databases_default__to__read__only=true \
     "$IMAGE"
@@ -394,10 +409,31 @@ if [ -f "$KG_MANIFEST" ]; then
     mv "$KG_MANIFEST" "$KG_MANIFEST.superseded.$SWAP_TS"
     echo "previous manifest kept at $KG_MANIFEST.superseded.$SWAP_TS"
 fi
+BUILT_AT=$(date -Iseconds)
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
-    bootstrap --commit "$BUILD_COMMIT" --biocypher-out "$OUT_TS" --built-at "$(date -Iseconds)" \
+    bootstrap --commit "$BUILD_COMMIT" --biocypher-out "$OUT_TS" --built-at "$BUILT_AT" \
     --biocypher-version 0.15.2 --database "$NEO4J_DATABASE" --neo4j-uri bolt://localhost:7687
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" show
+# Release: a full build bumps the MAJOR version of the store it replaces (the superseded
+# manifest's version; none for the first stamped store), takes <build date>-<commit> as
+# its release id, records each dataset's content hash, and writes the KgRelease node the
+# store carries from now on (the served database is opened for writing for that one
+# statement through the dynamic server.databases.writable setting, as the increment
+# runner does). The latest and pinned aliases both point at the one physical database
+# a GilaHyper DBMS holds after a swap; a DBMS that keeps several releases retargets them.
+PREV_VERSION=""
+if [ -f "$KG_MANIFEST.superseded.$SWAP_TS" ]; then
+    PREV_VERSION=$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("version") or "")' "$KG_MANIFEST.superseded.$SWAP_TS")
+fi
+python -m torchcell.knowledge_graphs.releases stamp --manifest "$KG_MANIFEST" --kind full \
+    --built-at "$BUILT_AT" --hashes "$HASHES" ${PREV_VERSION:+--previous-version "$PREV_VERSION"}
+docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '$NEO4J_DATABASE');"
+python -m torchcell.knowledge_graphs.releases write-node --manifest "$KG_MANIFEST" --database "$NEO4J_DATABASE" \
+    --built-at "$BUILT_AT" --n-nodes "$SERVED"
+docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '');"
+docker exec "$NEO4J_CONTAINER" $CS -d system \
+    "CREATE ALIAS latest IF NOT EXISTS FOR DATABASE $NEO4J_DATABASE; CREATE ALIAS pinned IF NOT EXISTS FOR DATABASE $NEO4J_DATABASE;"
+python -m torchcell.knowledge_graphs.releases --repo "$TORCHCELL_SRC" status --label gilahyper
 docker run --rm --entrypoint bash --user 7474:7474 -v "$SERVE_ROOT/biocypher-out":/src:ro -v "$ARCHIVE_ROOT":/dst "$IMAGE" \
     -c "cp -a /src/$OUT_TS /dst/ && ls -ld /dst/$OUT_TS"
 df -h /db /scratch /bulk

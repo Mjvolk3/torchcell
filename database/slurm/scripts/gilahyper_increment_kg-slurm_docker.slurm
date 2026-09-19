@@ -321,6 +321,23 @@ cat "$OUT_HOST/incremental-import.report" 2>/dev/null | head -20 || true
 echo "---------------- 7 RECORD + ARCHIVE"
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
     record --report "$REPORT" --biocypher-out "$OUT_TS" "${N_EXPERIMENTS_ARGS[@]}"
+# Release: the admitted datasets get their content hashes (sha256 of sorted experiment
+# ids), the manifest's version bumps its minor and its release id becomes
+# <today>-<this commit>, and the store's KgRelease node is rewritten so `make ops` and
+# releases.datasets() describe what is served. Datasets already served keep the hash
+# they carry: incremental import never touches existing nodes.
+HASHES="$BUILD_ROOT/database/slurm/output/${JOB}_content_hashes_${TAG}.json"
+bash "$TORCHCELL_SRC/database/scripts/kg_content_hashes.sh" "$NEO4J_CONTAINER" "$NEO4J_DATABASE" "$HASHES" "${DATASET_ARRAY[@]}"
+PREV_VERSION=$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("version") or "")' "$KG_MANIFEST")
+[ -n "$PREV_VERSION" ] || { echo "served manifest carries no version; stamp the served release first (releases stamp --kind full)"; exit 1; }
+BUILT_AT=$(date -Iseconds)
+python -m torchcell.knowledge_graphs.releases stamp --manifest "$KG_MANIFEST" --kind incremental \
+    --built-at "$BUILT_AT" --hashes "$HASHES" --previous-version "$PREV_VERSION"
+docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '$NEO4J_DATABASE');"
+python -m torchcell.knowledge_graphs.releases write-node --manifest "$KG_MANIFEST" --database "$NEO4J_DATABASE" \
+    --built-at "$BUILT_AT" --n-nodes "$AFTER"
+docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '');"
+python -m torchcell.knowledge_graphs.releases --repo "$TORCHCELL_SRC" status --label gilahyper
 docker run --rm --entrypoint bash --user 7474:7474 -v "$SERVE_ROOT/biocypher-out":/src:ro -v "$ARCHIVE_ROOT":/dst "$IMAGE" \
     -c "cp -a /src/$OUT_TS /dst/ && ls -ld /dst/$OUT_TS"
 echo "DONE at $(date)"

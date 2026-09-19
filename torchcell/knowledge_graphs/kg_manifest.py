@@ -180,6 +180,10 @@ class KgDatasetEntry(BaseModel):
     import_mode: Literal["full", "incremental"]
     admitted_at: str
     torchcell_commit: str | None = None
+    # sha256 of the dataset's sorted experiment node ids (``releases.content_sha256``):
+    # equal across two releases means byte-identical serialized records. None for a
+    # manifest written before releases were stamped.
+    content_sha256: str | None = None
 
 
 class KgEvent(BaseModel):
@@ -204,6 +208,12 @@ class KgBuildManifest(BaseModel):
     neo4j_version: str
     biocypher_version: str
     torchcell_commit: str | None  # commit of the FULL build the store descends from
+    # Release identity (``torchcell.knowledge_graphs.releases``): ``version`` is
+    # <major>.<minor> (full build bumps major, admission bumps minor); ``release`` is
+    # <build date>-<commit[:8]>, the immutable id a dump or backup carries. None before
+    # the store was stamped.
+    version: str | None = None
+    release: str | None = None
     graph_schema: dict[str, GraphSchemaEntry]
     cell_adapter_methods: dict[str, str]  # CellAdapter function -> source fingerprint
     cell_adapter_table: dict[str, str]  # conf method name -> CellAdapter function

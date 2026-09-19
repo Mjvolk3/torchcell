@@ -167,3 +167,18 @@ Two additions after the swap, both applied by hand to the served store first:
   `http://localhost:7474/browser/` and fails if the page has no `torchcell-seed.js` tag,
   which would mean the serving container came up on an unseeded image. The serving
   container was relaunched on the new tag by hand (03:02:22 stop, online 03:03:03, 41 s).
+
+## 2026.09.19 - Releases: content hashes, the KgRelease node, aliases, the /kg-releases mount
+
+After validation the script streams every dataset's experiment ids through
+`database/scripts/kg_content_hashes.sh` against the build container and writes
+`<job>_content_hashes.json`. After the swap and the manifest bootstrap it stamps the
+manifest (`releases stamp --kind full`: major bumped from the superseded manifest's
+version, release id `<build date>-<commit>`, the hashes), opens the served database for
+one write through `server.databases.writable`, writes the `KgRelease` node, closes it
+again, creates the `latest` and `pinned` aliases, and prints the release table. The
+serving container now also mounts `RELEASE_ROOT` (`/bulk/kg-releases`) at
+`/kg-releases`, where `scripts/kg_release.sh backup` writes the online backup; on
+2026-09-19 the container was relaunched by hand with that mount (37 s) after the first
+backup, staged on /db, had to be killed for space. See [[torchcell.knowledge_graphs.releases]],
+[[scripts.kg_release]], [[plan.kg-releases.2026.09.19]].

@@ -14,6 +14,19 @@ tc-onto-expand:
 tc-onto-mermaid:
 	@python torchcell/ontology/mermaid_diagram.py
 
+# --- Ops: served knowledge-graph releases on every host + service health ---
+# `make ops` is the panel to glance at from GilaHyper: which release each host serves
+# (version, release id, commit index, datasets, nodes, aliases, faults), whether the
+# hosts are in sync and how far behind main they are, then health probes (Browser
+# seed, tc-lit, merge-queue loop, slurm, disks, Radiant). Read-only. See scripts/ops.sh.
+.PHONY: ops ops-health ops-releases
+ops:
+	@bash scripts/ops.sh status
+ops-health:
+	@bash scripts/ops.sh health
+ops-releases:
+	@bash scripts/ops.sh releases
+
 # --- Manuscript (paper/nature-biotech) passthrough targets ---
 .PHONY: paper paper-submission paper-editing paper-twocolumn paper-figproto paper-figlimits paper-figures paper-fig paper-flat paper-clean paper-sync paper-pull
 paper:
@@ -47,6 +60,8 @@ help:
 	@echo "  make tc-onto         - Show schema → Biolink mappings (compact)"
 	@echo "  make tc-onto-expand  - Show schema → Biolink mappings (detailed tree)"
 	@echo "  make tc-onto-mermaid - Generate Mermaid diagrams from schema"
+	@echo "  make ops             - Served KG releases on every host + service health"
+	@echo "  make ops-health      - Health probes only; make ops-releases - the table only"
 	@echo "  make paper           - Build submission + editing + twocolumn PDFs"
 	@echo "  make paper-submission/-editing/-twocolumn/-figproto - one PDF"
 	@echo "  make paper-fig       - Force re-render all figures from draw.io + size/scale check"

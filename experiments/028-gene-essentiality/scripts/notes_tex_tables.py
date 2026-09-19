@@ -1283,6 +1283,8 @@ ENSEMBLE_LABELS = {
     "w70_pathlogh48cv": "round 54: the layer-free cell at width 48, one seed per fold",
     "w70_pathlogh48cv_s3": "round 54: the width-48 cell, three seeds per fold",
     "w74_pathgopfbaaffcv": "round 58: GO and the $\\log(1 + |v|)$ vector as affine columns, one seed per fold",
+    "w74_pathgopfbaaffcv_s2": "round 58: the same, two seeds per fold",
+    "w78_pathgopcapfbaaffcv": "round 62: GO reduced to 64 components and the vector as affine columns, one seed per fold",
 }
 
 

@@ -85,6 +85,48 @@ ROUNDS: dict[str, dict[str, Any]] = {
         "baselines_dir": "expression_baselines_split",
         "out": "v15_wd_readout.json",
     },
+    # The joint round. Read 2 contrasts the joint arm with the proteome-only reference on
+    # the proteome metric; the EXPRESSION side of the same runs is read with
+    # `--round v16_expr`, where the reference is the expression-only arm, because v16's
+    # partition is not v13's (split_gene_overlap_audit.py: held-out overlap at chance).
+    "v16": {
+        "project": "zhao-group/torchcell_019_prot_v16",
+        "phenotype": "proteome",
+        "prefix": "J_",
+        "arm_re": r"J_(ref|joint|joint05)_(s\d+)",
+        "ref": "ref",
+        "alt": "joint",
+        "alt_extra": ["joint05"],
+        "splits": ["s0", "s1", "s2"],
+        "baselines_dir": "baselines_split_fig3_proteome",
+        "out": "v16_joint_readout.json",
+    },
+    "v16_expr": {
+        "project": "zhao-group/torchcell_019_prot_v16",
+        "phenotype": "expression",
+        "prefix": "J_",
+        "arm_re": r"J_(expr|joint|joint05)_(s\d+)",
+        "ref": "expr",
+        "alt": "joint",
+        "alt_extra": ["joint05"],
+        "splits": ["s0", "s1", "s2"],
+        "baselines_dir": "expression_baselines_split",
+        "out": "v16_joint_expr_readout.json",
+    },
+    # The perturbation-locality round. Two contrasts against the broadcast reference:
+    # L_self isolates "identify the deleted gene", L_prop2 adds "route along the graphs".
+    "v17": {
+        "project": "zhao-group/torchcell_019_expr_v17",
+        "phenotype": "expression",
+        "prefix": "L_",
+        "arm_re": r"L_(ref|self|prop2)_(s\d+)",
+        "ref": "ref",
+        "alt": "self",
+        "alt_extra": ["prop2"],
+        "splits": ["s0", "s1", "s2", "s3"],
+        "baselines_dir": "expression_baselines_split",
+        "out": "v17_locality_readout.json",
+    },
 }
 _args = argparse.ArgumentParser(description=__doc__)
 _args.add_argument("--round", choices=sorted(ROUNDS), default="v13")

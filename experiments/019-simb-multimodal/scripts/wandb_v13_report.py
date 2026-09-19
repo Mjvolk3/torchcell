@@ -129,6 +129,56 @@ ROUNDS: dict[str, Round] = {
         ),
         max_runs=12,
     ),
+    "v16": Round(
+        project="torchcell_019_prot_v16",
+        report_title="v16 joint round: the proteome head, the expression head and both on one trunk",
+        view_name="v16 joint round by arm",
+        view_id=None,
+        arm_re=r"J_(ref|expr|joint|joint05)_(s\d+)",
+        phenotype="proteome",
+        splits=["s0", "s1", "s2"],
+        split_label={"s0": "split 0", "s1": "split 1", "s2": "split 2"},
+        intro=(
+            "18 runs, three per RTX 6000 Ada card on cabbi, 500 epochs (job 2409261, "
+            "config cgt_expr_v16_joint): J_ref is the proteome head alone on "
+            "proteome-carrying genotypes (the v14 reference at this budget), J_expr the "
+            "expression head alone on the SAME fig3_proteome partition, and J_joint both "
+            "heads on one trunk. Each card holds the three arms of one split and seed, so "
+            "every contrast is paired within card. The proteome side is read against "
+            "J_ref and the expression side against J_expr; v13's partition is not "
+            "reproducible on this store. Grouped lines are the mean over seeds with the "
+            "min-max band. Nothing here is a result until the runs finish."
+        ),
+        max_runs=18,
+        label_key="protein_abundance",
+    ),
+    "v17": Round(
+        project="torchcell_019_expr_v17",
+        report_title="v17 perturbation-locality round: the self-indicator and 2-hop graph propagation",
+        view_name="v17 locality round by arm",
+        view_id=None,
+        arm_re=r"L_(ref|self|prop2)_(s\d+)",
+        phenotype="expression",
+        splits=["s0", "s1", "s2", "s3"],
+        split_label={
+            "s0": "split 0",
+            "s1": "split 1",
+            "s2": "split 2",
+            "s3": "split 3",
+        },
+        intro=(
+            "36 runs, three per A40 card on the IGB gpu partition, 1,200 epochs (job "
+            "2409262, config cgt_expr_v17_locality): L_ref is the v13 reference, where "
+            "the deletion is one vector added to every gene token; L_self adds the hop-0 "
+            "self-indicator (gate forced on) so a token knows it is the deleted gene; "
+            "L_prop2 adds 1-hop and 2-hop reachability of the deletion along each of the "
+            "nine gene-gene graphs. Each card holds the three arms of one split and seed. "
+            "Scored as the mean over epochs 1,000 to 1,200, not a max over epochs. "
+            "Grouped lines are the mean over seeds with the min-max band. Nothing here is "
+            "a result until the runs finish."
+        ),
+        max_runs=36,
+    ),
 }
 
 
@@ -207,11 +257,11 @@ def chart_sections(pheno: str) -> list[tuple[str, list[str | list[str]]]]:
                 ],
                 ["train/loss", "traineval/loss", "val/loss"],
                 [f"traineval/{pheno}/nmse", f"val/{pheno}/nmse"],
+                [f"traineval/{pheno}/pred_sd_ratio", f"val/{pheno}/pred_sd_ratio"],
                 [
-                    f"traineval/{pheno}/pred_sd_ratio",
-                    f"val/{pheno}/pred_sd_ratio",
+                    f"traineval/{pheno}/spearman_per_feature",
+                    f"val/{pheno}/spearman_per_feature",
                 ],
-                [f"traineval/{pheno}/spearman_per_feature", f"val/{pheno}/spearman_per_feature"],
             ],
         ),
         (
@@ -307,7 +357,9 @@ def line(title: str, y: str, groupby: str | None = "arm") -> wr.LinePlot:
 
 
 def runset(rnd: Round, name: str, filters: str | None = None) -> wr.Runset:
-    return wr.Runset(entity=ENTITY, project=rnd.project, name=name, filters=filters or "")
+    return wr.Runset(
+        entity=ENTITY, project=rnd.project, name=name, filters=filters or ""
+    )
 
 
 def build_report(rnd: Round) -> wr.Report:
@@ -330,7 +382,9 @@ def build_report(rnd: Round) -> wr.Report:
                 line("val pearson_per_feature by readout (all splits)", pf, "readout"),
             ],
         ),
-        wr.H2("Per split: the reference against the concat readout on the same partition"),
+        wr.H2(
+            "Per split: the reference against the concat readout on the same partition"
+        ),
     ]
     for split in rnd.splits:
         blocks.append(wr.H3(rnd.split_label[split]))

@@ -1716,15 +1716,21 @@ $10^{-6}$ store the cell reads 0.905 (sd 0.007; pooled 0.908 [0.86, 0.95]), the
 $10^{-4}$ store's 0.903 and 0.907, every seed fitting at epochs 47 to 66; over the
 $10^{-8}$ store 0.884, 0.896, 0.875, 0.899, 0.890 and 0.878 (mean 0.887, sd 0.010;
 pooled 0.892 [0.84, 0.94]), every seed fitting at epochs 35 to 50, 0.02 under the
-other two. Twelve and seventy zero rows cost nothing and 320 cost 0.02; whether the
-cost is the rows or the tighter point is round 57's read, the $10^{-8}$ store with
-its uncertified rows filled from the $10^{-6}$ store (250 rows) and the $10^{-4}$
-store (60), the second pass a batched solver on the card would run.
+other two. Twelve and seventy zero rows cost nothing and 320 cost 0.02, and the cost
+is the rows, not the tighter point (round 57, job 2452): the $10^{-8}$ store with its
+uncertified rows filled from the $10^{-6}$ store (250 rows) and the $10^{-4}$ store
+(60), ten rows zero in every store, the second pass a batched solver on the card
+would run, reads 0.906 (sd 0.012; pooled 0.909 [0.86, 0.95]), the $10^{-4}$ and
+$10^{-6}$ stores' number, every seed fitting at epochs 49 to 68. So a first-order
+solver on the card can run at whatever tolerance it certifies most programs at, and
+what it fails to certify it re-solves looser; the store's number does not depend on
+which pass a row came from.
 
 \input{tables/round_w69}
 
-\tcfigfit[1.0]{figures/w69_readout_2026-09-18-19-46-22.pdf}{\textbf{Rounds 53 and 55,
-  the PDLP stores at KKT $10^{-6}$ and $10^{-8}$.} \textbf{a}, Validation AUROC per
+\tcfigfit[1.0]{figures/w69_readout_2026-09-18-20-19-22.pdf}{\textbf{Rounds 53, 55 and
+  57, the PDLP stores at KKT $10^{-6}$ and $10^{-8}$, and the $10^{-8}$ store with its
+  uncertified rows filled.} \textbf{a}, Validation AUROC per
   epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
   absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
   Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled

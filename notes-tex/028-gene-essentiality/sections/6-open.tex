@@ -141,9 +141,11 @@ weight, six encodings). What remains is attribution and the module.
     the reactions against each other and a probe fitted on either scores the other
     at its own within-solver number (0.709 and 0.717 against 0.716 and 0.702), where
     across solvers the same probe loses 0.05 to 0.35 (Section~\ref{sec:solve-tolerance});
-    what is open is whether the cell trains to the same number over the $10^{-6}$
-    store (70 of 1,121 programs uncertified at 120 s against 12 at $10^{-4}$), and
-    why the dual simplex's vertex is the worst store of the four.
+    the cell trains to the same number over the $10^{-6}$ store (round 53), and the
+    $10^{-8}$ store with 320 programs uncertified reads 0.02 under it until those rows
+    are filled from the looser solves (rounds 55 and 57), so the store's cost is its
+    uncertified fraction and a second pass recovers it; what is open is why the dual
+    simplex's vertex is the worst store of the four.
   \item The module's own hyperparameters have not been moved on this endpoint: the
     $k_{cat}$ tier (measured against predicted) and the thermodynamic source. Given
     round 15, the $k_{cat}$ tier is the one that sets whether the capacity box holds a

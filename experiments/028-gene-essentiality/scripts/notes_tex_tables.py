@@ -425,6 +425,13 @@ ROUND_CAPTIONS = {
         "four-ratio affine, and the 64-component embedding with the full vector in the "
         "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
     ),
+    "w77": (
+        "Round 61, the reference cell on the fixed one-hot code",
+        "The round-33 cell (six free seeds, each having served the pathway one-hot in "
+        "the column order the previous launch wrote) against the same cell on the code "
+        "that enumerates the columns sorted and processes only when the file is absent, "
+        "six free seeds. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
     "w76": (
         "Round 60, the GO multi-hot reduced before the affine",
         "The round-33 cell and the round-50 cells (the full GO multi-hot as affine "

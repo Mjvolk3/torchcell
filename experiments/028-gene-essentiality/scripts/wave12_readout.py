@@ -650,6 +650,15 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "pathsolvepca64aff",
         ],
     ),
+    # Round 61: the round-33 cell on the fixed pathway one-hot code, six seeds, beside
+    # the six free seeds of round 33 that served a permuted input.
+    "w77": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
+            "w77_pathlogfixed_h12l1p1_e200_s*.json",
+        ],
+        ["pathfbapfbalogfree", "pathlogfixed"],
+    ),
     # Round 60: the GO multi-hot reduced to 64 principal components (positive and
     # negative parts) as affine columns, alone and with the pFBA vector, beside the
     # full multi-hot stores of round 50 and the vector alone.
@@ -1029,6 +1038,7 @@ ARM_LABELS = {
     "pathgoaff": "pathway + ProtT5 on the node; the GO multi-hot as affine columns (no solve)",
     "pathgopfbaaff": "pathway + ProtT5 on the node; the log(1 + |v|) vector and the GO multi-hot as affine columns",
     "pathgopfbaaff400": "the same cell at 400 epochs",
+    "pathlogfixed": "the round-33 cell on the fixed pathway one-hot code (sorted columns, no rebuild)",
     "pathgopcaaff": "pathway + ProtT5 on the node; GO reduced to 64 principal components (positive and negative parts) as affine columns",
     "pathgopcapfbaaff": "the same with the log(1 + |v|) vector as affine columns too",
     "pathgopfbaaffwd01": "the same cell with AdamW weight decay 0.1",

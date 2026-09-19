@@ -1010,3 +1010,7 @@ Round 59 on the freed card (job 2454, pack `w75_pathgopfbaaffwd`, 40 GB, six cel
 ## 2026.09.18 - Width-48 fold ensemble complete; round 60 reduces GO before the affine
 
 Job 2451 (seed 2702): the width-48 cell with three seeds per fold reads 0.917, 0.895, 0.919, 0.894, 0.916 on the folds and 0.920 [0.87, 0.96] as the ensemble, the width-12 cell's 0.920. Written into the round-48 paragraph. Round 60 on the freed card (job 2455, pack `w76_pathgopcaaff`, 36 GB, six cells): `go_affine_store.py --pca 64` writes the GO multi-hot projected on 64 principal components split into positive and negative parts (128 columns), alone (`_gopca64.npz`) and with the pFBA vector (`_gopca64pfba.npz`); the compact read beside round 59's weight decay. Hook `--round w76`, caption `w76`.
+
+## 2026.09.18 - Round 57 read: the uncertified rows were the cost, and a second pass recovers it
+
+Job 2452 (31 min; `wave12_readout.py --round w69`): the PDLP 1e-8 store with its 320 uncertified rows filled from the 1e-6 (250) and 1e-4 (60) stores reads 0.906 mean (sd 0.012; pooled 0.909 [0.86, 0.95]; epochs 49 to 68, every seed fit), the 1e-4 and 1e-6 stores' number, against the unfilled store's 0.887. A card solver can run at whatever tolerance certifies most programs and re-solve the rest looser. Written into `sec:round36` (figure `w69_readout_2026-09-18-20-19-22`), findings and 6-open. Round 61 launched on the freed card (job 2456, pack `w77_pathlogfixed`, 36 GB, six cells): the round-33 cell on the fixed pathway one-hot code, six seeds, the reference under the fixed input.

@@ -72,8 +72,10 @@ weight, six encodings). What remains is attribution and the module.
     trajectory); the pathway dataset was rebuilt at every launch and enumerated its
     173 columns from a Python set, so each process served a column permutation the
     previous one wrote, and with the enumeration sorted and the rebuild removed both
-    cells pinned are one trajectory (rounds 51 and 52), so the chance in the pooled
-    cell is closed and it was an input, not a kernel;
+    cells pinned are one trajectory (rounds 51 and 52) and the free run is the pinned
+    run on every seed (round 64), so the chance in the pooled cell is closed, it was
+    an input and not a kernel, and the pinned-kernel switch is needed only on the LP
+    form;
     the cache's hit rate and where the wall time goes when the solve is cached, since
     six cached cells on one card ran no faster per cell than three uncached; and the
     multi-phenotype form, the flux in the cell representation rather than on the

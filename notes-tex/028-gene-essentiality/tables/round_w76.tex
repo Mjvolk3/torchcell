@@ -10,11 +10,13 @@
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
-    the vector as log(1 $+$ |v|), default initialization & \textbf{0.908} & 0.008 & 0.896 to 0.919 (6) & 0.912 [0.87, 0.95] & 33 to 58 & 0.0043 \\
+    the vector as log(1 $+$ |v|), default initialization & 0.908 & 0.008 & 0.896 to 0.919 (6) & 0.912 [0.87, 0.95] & 33 to 58 & 0.0043 \\
     pathway $+$ ProtT5 on the node; the GO multi-hot as affine columns (no solve) & 0.886 & 0.012 & 0.870 to 0.897 (6) & 0.892 [0.83, 0.94] & 83 to 194 & 0.0017 \\
     pathway $+$ ProtT5 on the node; the log(1 $+$ |v|) vector and the GO multi-hot as affine columns & 0.901 & 0.007 & 0.893 to 0.911 (6) & 0.903 [0.85, 0.95] & 79 to 197 & 0.0021 \\
     pathway $+$ ProtT5 on the node; GO reduced to 64 principal components (positive and negative parts) as affine columns & 0.886 & 0.022 & 0.848 to 0.909 (6) & 0.902 [0.85, 0.95] & 33 to 74 & 0.0034 \\
-    the same with the log(1 $+$ |v|) vector as affine columns too & 0.906 & 0.008 & 0.896 to 0.919 (6) & \textbf{0.913} [0.86, 0.96] & 52 to 69 & 0.0028 \\
+    the same with the log(1 $+$ |v|) vector as affine columns too & 0.906 & 0.008 & 0.896 to 0.919 (6) & 0.913 [0.86, 0.96] & 52 to 69 & 0.0028 \\
+    GO reduced to 16 principal components (positive and negative parts) as affine columns & 0.876 & 0.017 & 0.876, 0.893, 0.859 & 0.887 [0.82, 0.95] & 48, 44, 108 & 0.0037 \\
+    the same with the log(1 $+$ |v|) vector as affine columns too & \textbf{0.912} & 0.005 & 0.909, 0.909, 0.918 & \textbf{0.917} [0.87, 0.96] & 46, 77, 38 & 0.0025 \\
     \hline
   \end{tabular}
 \end{table}

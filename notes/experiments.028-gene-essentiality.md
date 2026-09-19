@@ -1086,3 +1086,7 @@ Job 2472 failed at 24 minutes before its first batch: rank 1's NCCL watchdog rep
 ## 2026.09.18 - Round 66 complete: the reported fold ensemble reproduces exactly on the fixed input
 
 Jobs 2473 and 2474 (32 min each; `cv_ensemble_readout.py --prefix w82_pathlogfixedcv --seeds 2700 2701 2702`): the reported cell pinned on the fixed code with three seeds per fold reads 0.911, 0.909, 0.913, 0.894, 0.915 on the folds and 0.920 [0.87, 0.96] as the ensemble, the permuted input's 0.920 exactly. Written into `sec:round45`; label `w82_pathlogfixedcv_s3` in the fold-ensemble table. The store build (job 2471) is at 260,000 of 469,474 keys at 46 min; the 025 control (job 2475) is past the distributed setup at 20 min with no watchdog abort. Cards 0 and 1 wait for the store arm.
+
+## 2026.09.18 - The 025 arms run one card each without DDP
+
+Job 2475 failed at 32 minutes as job 2472 had, in the other direction: rank 0 waited at the DDP setup barrier for the 1,800 s collective timeout and rank 1 never arrived, both ranks at full CPU in their setup throughout. Two-card DDP on this node tonight is not something a 24-hour run can rest on, so each arm runs on one card with no process group (`trainer.devices=1 trainer.strategy=auto`, 80 GB, 24 h): the control as job 2476, the store arm on a second card once the store lands (job 2471 at 360,000 of 469,474 keys at 58 min). The two arms are read at the same fixed epoch and at their best validation epoch; the per-epoch time on one card is measured from the control's first epoch.

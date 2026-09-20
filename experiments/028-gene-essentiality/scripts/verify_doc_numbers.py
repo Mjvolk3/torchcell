@@ -24,7 +24,7 @@ import json
 import os
 import os.path as osp
 import sys
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 from dotenv import load_dotenv

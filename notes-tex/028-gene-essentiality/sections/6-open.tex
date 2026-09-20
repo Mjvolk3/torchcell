@@ -175,6 +175,13 @@ weight, six encodings). What remains is attribution and the module.
     gated cell gains $+0.012$, about its seed spread, and the forced growth column
     stops collapsing into the absorbing infeasible state, none of six against two of
     six, while no longer reaching above 0.76 where the tighter box reaches 0.84 and
-    0.80. What is open is whether the tighter box's bimodality can be removed without
-    removing its high end.
+    0.80. Round 72 closes that: the bimodality cannot be removed without the high end going
+    with it, by either construction that removes it. On twelve seeds the hard program
+    collapses on two and clears 0.80 on four (mean 0.699, spread 0.115), while the
+    looser tier and the elastic program each put six of six between 0.63 and 0.76
+    (means 0.707 and 0.715, spreads near 0.045). Three constructions share one mean and
+    differ only in spread, so the collapse buys a tail rather than accuracy. What is
+    open is a construction that changes which bounds bind per genotype, since every
+    arm here binds the same ceilings for every genotype
+    (Section~\ref{sec:dual-overlap}).
 \end{itemize}

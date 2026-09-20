@@ -662,6 +662,31 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["pathlogfixed", "pathlogdet", "pathlogdet1", "pathlogdetfixed"],
     ),
+    # Round 72: the forced growth column under every construction that has been tried on
+    # the capacity box at scale 100, the hard program on twelve seeds beside the two ways
+    # of removing its absorbing state, with the gated cells for reference.
+    "w89": (
+        [
+            "w30_lpcapbio100_h12l1p1_e200_s*.json",
+            "w88_lpcapbio100_h12l1p1_e200_s*.json",
+            "w89_lpcapbio100_h12l1p1_e200_s*.json",
+            "w83_lpcapbio100meas_h12l1p1_e200_s*.json",
+            "w88_lpcapbio100meas_h12l1p1_e200_s*.json",
+            "w32_lpelbio100_h12l1p1_e200_s*.json",
+            "w89_lpelbio100_h12l1p1_e200_s*.json",
+            "w30_lpcapgate100_h12l1p1_e200_s*.json",
+            "w88_lpcapgate100_h12l1p1_e200_s*.json",
+            "w32_lpelgate100_h12l1p1_e200_s*.json",
+            "w89_lpelgate100_h12l1p1_e200_s*.json",
+        ],
+        [
+            "lpcapbio100",
+            "lpcapbio100meas",
+            "lpelbio100",
+            "lpcapgate100",
+            "lpelgate100",
+        ],
+    ),
     # Round 68: the clamp-carrying columns dropped from the vertex store (429 of 4,131)
     # and from the pFBA store (1 of 4,131, the control), each against the store it was
     # cut from, on the same three seeds.

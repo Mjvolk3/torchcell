@@ -445,6 +445,15 @@ ROUND_CAPTIONS = {
         "\\texttt{--mode partial}). Batch 32, class weight, 200 epochs, seeds 2700 to "
         "2705.",
     ),
+    "w89": (
+        "Round 72, the forced growth column under every construction tried",
+        "The growth column of the layer that solves, read on the capacity box at scale "
+        "100 under the hard program (twelve seeds) and under the two constructions that "
+        "remove its absorbing infeasible state: the looser measured turnover tier and "
+        "the elastic program with unmet forced flux priced. The gated cells of the same "
+        "two programs are shown for reference. Constraint scale 0, batch 32, class "
+        "weight, 200 epochs.",
+    ),
     "w83": (
         "Round 67, the capacity ceilings from the measured turnover tier",
         "Round 15c's two cells at capacity scale 100, where both turnover tiers still "

@@ -2116,6 +2116,35 @@ of the scale, and it removes the high end with it. Round 15c's 0.84 is not a uni
 event, since a second seed of six reaches 0.80, but it belongs to the tighter box,
 which either collapses or ranks well.
 
+Round 72 asks whether the bimodality can be removed without the high end going with it,
+and the answer is that it cannot, at least by the two constructions that remove it
+(Table~\ref{tab:w89}, Figure~\ref{fig:w89}). The hard program on the tight box, now on
+twelve seeds, collapses on two and clears 0.80 on four, with a mean of 0.699 and a
+spread of 0.115. The two ways of stopping the collapse are the looser turnover tier and
+the elastic program, which prices unmet forced flux instead of refusing the genotype.
+Both work, and both land in the same place: no seed of six at chance, no seed of six
+above 0.80, means of 0.707 and 0.715, spreads of 0.044 and 0.049. Three constructions,
+one mean to within 0.016 and a spread that differs by a factor of two and a half. What
+the collapse buys is not accuracy on average but a tail, and the 0.84 lives in it.
+
+\input{tables/round_w89}
+
+\tcfigfit[1.0]{figures/w89_readout_2026-09-20-05-37-47.pdf}{\textbf{Round 72, the forced
+  growth column under every construction tried.} \textbf{a}, Validation AUROC per epoch,
+  one thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w89}.}{fig:w89}
+
+The gated cells do not show any of this. Across the same three programs they read 0.800
+and 0.812, with spreads near 0.015 and no seed at chance, so the gate is what makes the
+column safe to read and what caps it: the arm that never collapses never reaches 0.84
+either. On this endpoint the module's best single number and its worst failure are the
+same construction seen twice.
+
 Two details of the forced readout are worth keeping. Its seeds select epochs 2 to 174,
 so the collapse is visible as an epoch-2 selection rather than as a late failure. And
 three of the six measured-tier seeds read exactly 0.669, which is not a coincidence of

@@ -1216,3 +1216,21 @@ So the SCORE recovery is specific to the clamp columns, and round 68's reading s
 This is why the control was worth the twenty minutes: without it the two effects would have been reported as one mechanism.
 
 Readout: `ROUNDS["w84"]` carries w84, w85 and w86, so one table holds the store, both cuts and the pFBA pair. Figure `w84_readout_2026-09-20-01-05-24`. Clean.
+
+## 2026.09.20 - Round 70: the dose, and where the deficit actually sits
+
+Jobs 2530 to 2533, 19 minutes each, six seeds per dose. The cut is applied to the widest k of the vertex store's 429 clamp columns instead of all of them.
+
+| columns dropped | mean | sd | paired vs uncut | up |
+|---|---|---|---|---|
+| 0 (the store) | 0.8398 | 0.0506 | | |
+| 25 widest clamp | 0.8736 | 0.0129 | +0.0338 | 3/6 |
+| 100 widest clamp | 0.8956 | 0.0218 | +0.0558 | 5/6 |
+| all 429 clamp | 0.8883 | 0.0106 | +0.0485 | 6/6 |
+| 429 non-clamp (control) | 0.8464 | 0.0089 | +0.0067 | 2/6 |
+
+The gain saturates by 100 columns of 4,131. Twenty-five columns, 0.6 percent of the store, carry two thirds of it. Cutting the remaining 329 buys nothing measurable: all 429 lands at 0.888, below the 100-column cut and level with it inside a seed spread of 0.022, though it is up on six seeds of six against the 100's five.
+
+So the vertex store's deficit is not diffusely spread over its loops. A hundred columns carry it, and a quarter of it sits in twenty-five of them. Read together with round 69, the picture is: a few large loop columns cost 0.05 of ranking, and the store's wide columns in general (loop or not) cause the early validation peak and the seed disagreement.
+
+The full arc now in `sec:store-discriminability`: description (which readings fail), intervention (round 68), specificity control (round 69), dose (round 70). Table `tab:w84` carries all six arms; figure `w84_readout_2026-09-20-01-28-34`. Clean.

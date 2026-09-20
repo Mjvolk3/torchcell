@@ -1224,7 +1224,11 @@ def degree_by_class() -> str | None:
         reads = json.load(fh)["reads"]
     # One row per graph, the three gene sets as columns; the single graphs drop the
     # ``one:`` prefix and the physical graph appears once.
-    sets = ["genome held-out (4,674)", "released held-out (195)", "released train + val (787)"]
+    sets = [
+        "genome held-out (4,674)",
+        "released held-out (195)",
+        "released train + val (787)",
+    ]
     by_graph: dict[str, dict[str, dict[str, Any]]] = {}
     for r in reads:
         name = r["graph"].removeprefix("one:").replace("string12_0_", "STRING ")
@@ -1339,7 +1343,17 @@ def fold_ensembles() -> str | None:
         with open(src) as fh:
             e = json.load(fh)
         folds = ", ".join(f"{f['auroc']:.3f}" for f in e["folds"])
-        rows.append((label, e["n_folds"], folds, e["fold_mean_auroc"], e["ensemble_auroc"], e["ensemble_ci_low"], e["ensemble_ci_high"]))
+        rows.append(
+            (
+                label,
+                e["n_folds"],
+                folds,
+                e["fold_mean_auroc"],
+                e["ensemble_auroc"],
+                e["ensemble_ci_low"],
+                e["ensemble_ci_high"],
+            )
+        )
     # The cheap architectures' fold ensembles (graph_baselines.py --arms folds|go_folds)
     # are written in their own shape; they sit in the same table.
     cheap = {
@@ -1527,7 +1541,9 @@ def hard_genes() -> str | None:
         ("essential", report["hardest_essential"]),
         ("nonessential", report["hardest_nonessential"]),
     ):
-        rows.append(f"    \\multicolumn{{{4 + len(arms)}}}{{@{{}}l}}{{\\emph{{{label} genes}}}} \\\\")
+        rows.append(
+            f"    \\multicolumn{{{4 + len(arms)}}}{{@{{}}l}}{{\\emph{{{label} genes}}}} \\\\"
+        )
         for gene in genes:
             g = by_gene[gene]
             cells = " & ".join(f"{g['misrank'][a]:.2f}" for a in arms)
@@ -1692,9 +1708,7 @@ def store_discriminability() -> str | None:
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write(
-        "store_discriminability", body, "results/store_discriminability.json"
-    )
+    return write("store_discriminability", body, "results/store_discriminability.json")
 
 
 def misclass_enrichment() -> str | None:
@@ -1741,6 +1755,62 @@ def misclass_enrichment() -> str | None:
     return write("misclass_enrichment", body, "results/misclass_enrichment.json")
 
 
+def resplit_readout() -> str | None:
+    """Round 75: the finalists and the module's controls on ten repeated outer splits."""
+    src = osp.join(RESULTS, "resplit_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    cells = r["seed_mean_auroc_per_split"]
+    rows = []
+    for i, s in enumerate(r["splits"]):
+        best = max(s["layer_free"], s["go_convolution"], s["average"])
+        rows.append(
+            f"    {s['resplit']} & {fmt(s['layer_free'], best)} & "
+            f"{fmt(s['go_convolution'], best)} & {fmt(s['average'], best)} & "
+            f"{cells['layer_free'][i]:.3f} & {cells['fba_ratio_affine'][i]:.3f} & "
+            f"{cells['no_metabolism'][i]:.3f} \\\\"
+        )
+    m = r["mean_auroc"]
+    rows.append("    \\hline")
+    rows.append(
+        f"    mean & {m['layer_free']:.3f} & {m['go_convolution']:.3f} & "
+        f"{m['average']:.3f} & {sum(cells['layer_free']) / 10:.3f} & "
+        f"{sum(cells['fba_ratio_affine']) / 10:.3f} & "
+        f"{sum(cells['no_metabolism']) / 10:.3f} \\\\"
+    )
+    rows.append("    \\hline")
+    for d in r["differences"]:
+        rows.append(
+            f"    \\multicolumn{{4}}{{@{{}}l}}{{{d['name']}}} & "
+            f"\\multicolumn{{3}}{{l}}{{${d['mean']:+.3f}$ (sd {d['sd']:.3f}), positive on "
+            f"{d['n_positive']} of {d['n_splits']}}} \\\\"
+        )
+    n = r["splits"][0]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 75: ten repeated outer splits]{Round 75, the finalists on ten "
+        "repeated outer splits. Each test block is a class-stratified fifth of the released "
+        f"labeled genes ({n['n_test']} genes, {n['n_test_essential']} essential), validation "
+        "a stratified fifth of the rest. Left: the AUROC of the three-seed family score "
+        "(standardized logits averaged over seeds) of the transformer with the layer-free "
+        "solve, of graph convolution on GO at 400 epochs, and of their equal-weight "
+        "average, fixed before any cell finished; best of the three in bold. Right: the "
+        "seed-mean AUROC per cell of the layer-free cell and its two controls on the same "
+        "backbone. Below: the paired differences across the ten splits. The test blocks "
+        "overlap, so the differences are not independent and no $p$-value is given. "
+        "Written by \\texttt{resplit\\_readout.py}.}\n"
+        "  \\label{tab:resplit}\n"
+        "  \\begin{tabular}{@{}lrrrrrr@{}}\n    \\hline\n"
+        "    split & layer-free & GO conv. & average & layer-free, cells & FBA ratios, "
+        "cells & no metabolism, cells \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("resplit_readout", body, "results/resplit_readout.json")
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -1755,9 +1825,7 @@ def kcat_tier_capacity() -> str | None:
             data[tier] = json.load(fh)
     scales = [r["capacity_scale"] for r in data["measured"]["rows"]]
     par = {t: data[t]["parameters"] for t in data}
-    counts = {
-        t: par[t]["kcat_tier_counts"] for t in par
-    }
+    counts = {t: par[t]["kcat_tier_counts"] for t in par}
     head = " & ".join(f"{s:,.0f}" for s in scales)
     rows = []
     for tier in ("measured", "predicted"):
@@ -1840,7 +1908,10 @@ def store_scale() -> str | None:
             f"{by_pert['1']:,} / {by_pert['2']:,} / {by_pert['3']:,}",
         ),
         ("distinct media in the build", f"{k['n_distinct_media']}"),
-        ("records deleting no GEM gene (read the wild-type row)", f"{k['n_records_empty_gem_subset']:,}"),
+        (
+            "records deleting no GEM gene (read the wild-type row)",
+            f"{k['n_records_empty_gem_subset']:,}",
+        ),
         ("GEM genes among the deleted", f"{k['n_gem_genes']:,}"),
         (
             "distinct GEM subsets by size (1 / 2 / 3)",
@@ -1860,13 +1931,18 @@ def store_scale() -> str | None:
         ("records the keys serve", f"{b['n_records_served']:,}"),
         ("wall (min) at 20 workers", f"{build_min:.0f}"),
         ("lethal keys (growth 0 under the solve)", f"{b['n_lethal']:,}"),
-        ("uncertified keys stored as the zero flux", f"{b['n_uncertified_zero_flux']:,}"),
+        (
+            "uncertified keys stored as the zero flux",
+            f"{b['n_uncertified_zero_flux']:,}",
+        ),
         ("wild-type growth", f"{b['wild_type_growth']:.4f}"),
     ]
     lines = []
     for name, value in rows:
         if name.startswith("\\hline"):
-            lines.append(f"    \\hline\n    \\multicolumn{{2}}{{@{{}}l}}{{\\emph{{{name[7:]}}}}} \\\\")
+            lines.append(
+                f"    \\hline\n    \\multicolumn{{2}}{{@{{}}l}}{{\\emph{{{name[7:]}}}}} \\\\"
+            )
         else:
             lines.append(f"    {name} & {value} \\\\")
     body = (
@@ -1889,7 +1965,9 @@ def store_scale() -> str | None:
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
     return write(
-        "store_scale", body, "results/store_key_count.json + results/solid_growth_store_SC_ipm.json"
+        "store_scale",
+        body,
+        "results/store_key_count.json + results/solid_growth_store_SC_ipm.json",
     )
 
 
@@ -2069,6 +2147,7 @@ def main() -> None:
         kcat_tier_capacity(),
         store_discriminability(),
         misclass_enrichment(),
+        resplit_readout(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

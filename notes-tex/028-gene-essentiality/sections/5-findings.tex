@@ -60,8 +60,11 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     to 0.9, and the GO convolution fails elsewhere (0.15 to 0.4 with them), halving the
     misrank on
     FRQ1, AUR1, PGA3, LCB1 and LCB2 and repairing twelve of the misranked paralogs.
-    Isozyme redundancy, read the wrong way in both directions, is where the remaining
-    AUROC sits, and the two model families miss different halves of it
+    Of the 19 essential held-out genes the solve calls viable, four are covered by an
+    alternative gene set on every reaction and fifteen have a reaction of their own
+    that the growth program does not need, so what the solve misses is mostly a
+    requirement outside the biomass objective and only partly isozyme cover, and the
+    two model families miss different parts of it
     (Section~\ref{sec:hard-genes}). Averaging their existing predictions with equal
     weight and nothing fitted scores 0.948 [0.91, 0.98] on the split-file cells (the
     six-seed GO convolution with the six-seed layer-free form, from 0.905 and 0.910

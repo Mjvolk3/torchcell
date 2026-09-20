@@ -513,10 +513,17 @@ PYK2), LCB1 and LCB2 (serine palmitoyltransferase), IPP1, TPI1. The hardest
 nonessential genes are metabolic enzymes the models call essential: ERG4, HMG2, GSH2,
 the three glyceraldehyde-3-phosphate dehydrogenase isozymes TDH3, TDH2 and TDH1, ATP2,
 the two phosphofructokinase subunits PFK1 and PFK2, TRR2, ERG2 and FBP1, twelve of the
-fifteen with a ratio of 1.0 and most with 26 to 125 GO terms. Both failure sets are
-isozyme redundancy read the wrong way: an essential gene whose paralog covers it in the
-solve, and a nonessential paralog of an essential metabolic function that the
-annotation vectors make look essential. The arms agree on the genes they fail: the two
+fifteen with a ratio of 1.0 and most with 26 to 125 GO terms. Isozyme cover explains a
+minority of the missed essential genes. Of the 19 essential held-out genes the solve
+calls viable, the gene-protein-reaction rules (\texttt{isozyme\_affine\_store.py},
+rules in disjunctive normal form) give an alternative gene set for every reaction of
+only four, PET9, CDC19, PGA3 and YDR302W; the other fifteen, AUR1, NEO1, LCB1 and
+LCB2 among them, each have at least one reaction that only they catalyze, which their
+deletion closes and which the growth program does not need. So the larger failure is a
+reaction the biomass objective does not require, and the smaller one a paralog that
+covers the gene in the solve; among the nonessential genes it is the reverse case, a
+paralog of an essential metabolic function that the annotation vectors make look
+essential. The arms agree on the genes they fail: the two
 affine cells at a Spearman of 0.81, the flux head on ProtT5 with the affine on ProtT5
 at 0.88, the two flux heads on the pathway input with each other at 0.77, and those
 two least aligned with the rest (0.43 to 0.76), the arms whose means carry an unfit

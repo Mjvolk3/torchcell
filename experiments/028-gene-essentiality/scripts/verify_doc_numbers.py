@@ -138,6 +138,22 @@ def genome_arm(label_contains: str) -> Callable[[], float]:
     return run
 
 
+def resplit(*path: str | int) -> Callable[[], float]:
+    """A scalar of the round-75 repeated-outer-split read."""
+    return field("resplit_readout.json", *path)
+
+
+def resplit_go_seed_mean() -> float:
+    """Seed-mean AUROC of graph convolution on GO over the ten repeated outer splits."""
+    means = []
+    for r in range(10):
+        rows = json.load(
+            open(osp.join(RESULTS, f"graph_baselines_go400_fcl_resplit{r}.json"))
+        )["rows"]
+        means.append(next(x for x in rows if x["inputs"] == "GO (400 epochs)")["mean"])
+    return float(np.mean(means))
+
+
 CHECKS: list[Check] = [
     # sec:store-discriminability -- the stores and the two cuts.
     Check(
@@ -420,6 +436,94 @@ CHECKS: list[Check] = [
             "nonessential",
             "rRNA processing",
             "effect",
+        ),
+    ),
+    # sec:round75 -- ten repeated outer splits.
+    Check(
+        claim="round75: average, mean of ten",
+        stated=0.896,
+        recompute=resplit("mean_auroc", "average"),
+    ),
+    Check(
+        claim="round75: GO convolution, mean of ten",
+        stated=0.869,
+        recompute=resplit("mean_auroc", "go_convolution"),
+    ),
+    Check(
+        claim="round75: layer-free, mean of ten",
+        stated=0.848,
+        recompute=resplit("mean_auroc", "layer_free"),
+    ),
+    Check(
+        claim="round75: average minus layer-free",
+        stated=0.048,
+        recompute=resplit("differences", 0, "mean"),
+    ),
+    Check(
+        claim="round75: average minus GO convolution",
+        stated=0.026,
+        recompute=resplit("differences", 1, "mean"),
+    ),
+    Check(
+        claim="round75: layer-free minus GO convolution",
+        stated=-0.022,
+        recompute=resplit("differences", 2, "mean"),
+    ),
+    Check(
+        claim="round75: average minus the better single",
+        stated=0.023,
+        recompute=resplit("differences", 3, "mean"),
+    ),
+    Check(
+        claim="round75: better-single positive splits",
+        stated=9,
+        tolerance=0.5,
+        recompute=resplit("differences", 3, "n_positive"),
+    ),
+    Check(
+        claim="round75: layer-free minus FBA ratio affine",
+        stated=0.011,
+        recompute=resplit("differences", 4, "mean"),
+    ),
+    Check(
+        claim="round75: its positive splits",
+        stated=7,
+        tolerance=0.5,
+        recompute=resplit("differences", 4, "n_positive"),
+    ),
+    Check(
+        claim="round75: layer-free minus no metabolism",
+        stated=0.047,
+        recompute=resplit("differences", 5, "mean"),
+    ),
+    Check(
+        claim="round75: layer-free cells, seed mean over thirty",
+        stated=0.843,
+        recompute=seed_mean("w93_resplit*pathlogfree_h12l1p1_e200_s*.json"),
+    ),
+    Check(
+        claim="round75: GO convolution, seed mean over ten splits",
+        stated=0.868,
+        recompute=resplit_go_seed_mean,
+    ),
+    Check(
+        claim="hard-genes: FBA-viable essentials fully covered by alternatives",
+        stated=4,
+        tolerance=0.5,
+        recompute=field(
+            "isozyme_affine_store.json",
+            "held_out_essential_fba_viable",
+            "n_fully_covered_by_alternatives",
+        ),
+    ),
+    Check(
+        claim="hard-genes: FBA-viable essentials with a sole reaction",
+        stated=15,
+        tolerance=0.5,
+        recompute=field(
+            "isozyme_affine_store.json",
+            "held_out_essential_fba_viable",
+            "n_with_a_sole_reaction",
         ),
     ),
 ]

@@ -1319,3 +1319,29 @@ The ten-panel summary was a tour of the rounds and its labels collided. It is re
 - **Misranked genes (f, g), new analysis.** `misclass_enrichment.py` tests, within a class, the misrank of genes carrying an annotation against the rest (one-sided Mann-Whitney, effect = U as a probability, BH within family). Released 195, transformer: the 19 of 31 essential genes FBA calls viable have mean misrank 0.134 against 0.025 (effect 0.91, q 0.003); under the GO graph model the same feature reads 0.51. No GO term reaches q < 0.1 among the 31 essentials. Nonessentials ranked high: steroid biosynthesis under both models (0.85, 0.96), nucleoside triphosphate metabolism (0.88) for the transformer. Genome-wide, graph model: essentials of low physical degree (0.70), cytoskeleton (0.79), microtubule-based process (0.81) ranked low; nonessential ncRNA metabolism (0.90), rRNA processing (0.92), RNA modification (0.92), cytoplasmic translation (0.85) ranked high.
 
 Proposed, none run: ten repeated outer splits for the three finalists (about six card-hours); an isozyme-aware input from the GPR rules (hypothesis); the physical-graph degree or a graph-convolved embedding as an input to the solve-reading transformer; the 025 read of the store. `verify_doc_numbers.py` now carries 40 checks, all passing.
+
+## 2026.09.20 - Round 75: the finalists on ten repeated outer splits
+
+Jobs 2547 to 2567 (GilaHyper, main partition, one card each; graph convolution as one GPU job 2557 over all ten splits). `build_essentiality_splits.py --resplit R` draws the test block as a class-stratified fifth of the released labeled genes (627 train, 157 validation, 198 test with 32 essential). Models, the equal-weight average and the statistics were committed in `resplit_readout.py` before any cell finished.
+
+| quantity | mean of ten | sd | positive splits |
+|---|---|---|---|
+| transformer + layer-free solve (family score) | 0.848 | | |
+| graph convolution on GO | 0.869 | | |
+| equal-weight average | 0.896 | | |
+| average minus transformer | +0.048 | 0.017 | 10 of 10 |
+| average minus graph convolution | +0.026 | 0.021 | 9 of 10 |
+| average minus the better single model | +0.023 | 0.017 | 9 of 10 |
+| transformer minus graph convolution | -0.022 | 0.024 | 1 of 10 |
+| layer-free minus FBA ratio affine (cells) | +0.011 | 0.023 | 7 of 10 |
+| layer-free minus no metabolism (cells) | +0.047 | 0.034 | 10 of 10 |
+
+- The average is the best method and its margin is not a selection artifact.
+- The two single models are not tied off the released genes: graph convolution on GO leads on nine of ten.
+- Every model reads lower than on the released held-out genes (transformer cells 0.843 against 0.908, graph model 0.868 against 0.905 as seed means). Cause not measured.
+- The solve helps (+0.047, ten of ten); the flux vector over the four growth ratios alone does not separate from zero at this power (+0.011).
+- Test blocks overlap across splits, so no p-value.
+
+Correction made the same day: only 4 of the 19 held-out essential genes the solve calls viable are covered by an alternative gene set on every reaction (`isozyme_affine_store.py`); 15 hold a reaction of their own that the growth program does not need. The document's "isozyme redundancy in both directions" reading is replaced. Also corrected: the genome-wide layer-free arm read an all-zero row on held-out genes, not the wild-type vector.
+
+In flight: round 76 (w95, jobs 2568 to 2573, physical degree as affine columns; first three seeds genome-wide 0.564, 0.594, 0.588 against 0.570, partial) and round 77 (w96, jobs 2574 to 2585, six gene-protein-reaction redundancy columns; released split and the ten repeated splits paired against w93).

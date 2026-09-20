@@ -1290,3 +1290,19 @@ So the cut store lands with the three stores that never had the deficit rather t
 One fold of five still selects epoch 12 and reads 0.8076, against 51 to 90 for the others. So the early peak is reduced by the cut and not eliminated, which is consistent with round 69: the early peak belongs to wide columns generally, and the cut only removes the clamp-carrying ones.
 
 Committed as f9a4204c2. Document clean.
+
+## 2026.09.20 - Round 74: the genome-wide arms on six seeds, and an OOM that nearly poisoned the read
+
+Jobs 2544 (affine, 20 min), 2545 (cached solve, OOM at 1 h 59) and 2546 (the rerun of the lost seed, alone on a card, 1 h 34). All three genome-wide transformer arms now rest on six seeds rather than three, matching the layer-free arm.
+
+| arm | seeds | per-seed mean | sd | pooled |
+|---|---|---|---|---|
+| pathway + ProtT5 + FBA affine (round 22 recipe) | 6 | 0.5724 | 0.0033 | 0.5716 |
+| cached solve + flux head (round 27 form) | 6 | 0.5315 | 0.0333 | 0.5507 |
+| layer-free log1p + affine (round 33 form) | 6 | 0.5663 | 0.0189 | 0.5702 |
+
+The conclusion is unchanged: all three sit between 0.55 and 0.57 against the graph models' 0.75. What the extra seeds add is that the cached-solve arm is the unstable one, spanning 0.480 to 0.579 with one seed BELOW chance, a spread ten times the affine recipe's. Its pooled read moved 0.542 to 0.551. Document updated in `3-backbone.tex` and `5-findings.tex`.
+
+**The failure worth remembering.** Job 2545 ran three genome-wide flux cells on one card and was OOM-killed. Two seeds finished; seed 2704 was killed AFTER writing a complete, parseable prediction dump (4,674 rows) and BEFORE its evaluation, so it left no held-out score in its log and no result JSON. `genome_heldout_readout.py` globs the PREDICTION directory, not `results/`, so that orphan would have been scored as a finished cell and averaged into the arm with nothing to flag it. It was moved to the session scratchpad (`orphan-dumps/`) and the cell rerun alone.
+
+Rule: a dump is written before a cell is finished. After any pack that did not exit 0, cross-check the dumps against the `results/` stems before running any readout that globs dumps. Genome-wide flux cells need at most two to a card at 36 GB.

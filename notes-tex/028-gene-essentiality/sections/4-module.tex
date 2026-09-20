@@ -1967,6 +1967,45 @@ upper bound so far. The module helps, then, exactly when its flux is on the poly
 the solve optimizes over, and the constraint set that was meant to make it more than the
 solve is what kept it off until it was calibrated.
 
+\subsection{Why the vertex is the worst store\secstatus{todo}}
+\label{sec:store-discriminability}
+
+Four stores of the same optimal face trained the same cell to 0.912, 0.911, 0.907 and,
+for the growth program's own dual-simplex vertex, 0.840 (Section~\ref{sec:round36}).
+Two candidate readings fail on the numbers, and one survives
+(Table~\ref{tab:store-discriminability}).
+
+\input{tables/store_discriminability}
+
+The first candidate is smoothness: a store whose rows move with the deletion should be
+the one a head can read. It does not order the stores. The correlation between a
+deletion's distance from the wild-type row and its drop in growth is 0.70 for pFBA,
+0.57 for the vertex, 0.56 for the interior point and 0.31 for PDLP, while the trained
+reads put the vertex alone at the bottom and the other three within 0.005 of each
+other. The second candidate is motion at all on the genes that survive: three of the
+four stores return the wild-type row exactly for 59 to 60 percent of the viable
+deletions, and PDLP never does, yet PDLP reads 0.907, level with the stores whose rows
+for those genes carry nothing.
+
+What does separate the vertex is where its variance sits. Its ten widest columns are
+all at the $\pm100$ clamp, the bound at which a loop can spin, against none for pFBA,
+none for the interior point and one for PDLP; its lethal rows sit 36.2 from the
+wild-type row against 14.2, 27.7 and 14.0; and of its 1,548 varying columns only 298
+rank the labeled genes above 0.7 on their own, the fewest of the four, where the
+interior point has 836 of 2,743. So the vertex moves further and in more places than
+the interior point and gets less for it: an extreme point puts its flux on the loops
+the bounds allow, and those columns vary between genotypes without tracking
+essentiality. Stated as a hypothesis, since four stores are an association rather than
+a demonstration: what costs the vertex store 0.07 is loop-carrying columns at the
+clamp, not any failure of its rows to move. A store built from a first-order or
+interior point has no such columns by construction, which is the property to check on
+the next store rather than assume.
+
+No store has a column that does the job alone. The best single column reads 0.735 to
+0.755 across all four, against the 0.84 to 0.91 the trained cells reach, so the affine
+is combining columns in every case and the question is only how many of them carry
+anything.
+
 \subsection{The capacity box under the two $k_{cat}$ tiers\secstatus{todo}}
 \label{sec:kcat-tier}
 

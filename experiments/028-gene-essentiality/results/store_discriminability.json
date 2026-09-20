@@ -1,0 +1,71 @@
+{
+  "question": "why the growth program's dual-simplex vertex is the worst of the four stores (0.840 against 0.907 to 0.912, rounds 36 and 38)",
+  "encoding": "log1p(|v|), the affine's input",
+  "n_genes": 1121,
+  "split_file": "ess_fcl_val0.2_s0.json.gz",
+  "n_essential": 157,
+  "viable_rule": "growth drop below 1 percent of the wild type's",
+  "lethal_rule": "growth drop above 99 percent",
+  "stores": [
+    {
+      "store": "pFBA (two-stage, scipy HiGHS)",
+      "trained_auroc": 0.912,
+      "n_genes": 1121,
+      "spearman_distance_growth_drop": 0.7000288801940803,
+      "spearman_distance_growth_drop_viable": 0.358638140220731,
+      "median_distance_viable": 0.0,
+      "median_distance_lethal": 14.185502770749821,
+      "frac_viable_rows_identical_to_wild_type": 0.5911949685534591,
+      "n_columns_varying": 860,
+      "variance_share_top10": 0.42784173593024494,
+      "n_clamp_columns_in_top10": 0,
+      "best_single_column_auroc": 0.7375915109548854,
+      "n_columns_auroc_above_0_7": 463
+    },
+    {
+      "store": "dual simplex (vertex)",
+      "trained_auroc": 0.84,
+      "n_genes": 1121,
+      "spearman_distance_growth_drop": 0.5706529115611784,
+      "spearman_distance_growth_drop_viable": 0.23610278761361933,
+      "median_distance_viable": 0.0,
+      "median_distance_lethal": 36.235562206084694,
+      "frac_viable_rows_identical_to_wild_type": 0.5922431865828093,
+      "n_columns_varying": 1548,
+      "variance_share_top10": 0.12987434534410763,
+      "n_clamp_columns_in_top10": 10,
+      "best_single_column_auroc": 0.7350344900494226,
+      "n_columns_auroc_above_0_7": 298
+    },
+    {
+      "store": "interior point, no crossover",
+      "trained_auroc": 0.911,
+      "n_genes": 1121,
+      "spearman_distance_growth_drop": 0.5615992712544915,
+      "spearman_distance_growth_drop_viable": 0.23983314520423796,
+      "median_distance_viable": 0.0,
+      "median_distance_lethal": 27.688837083568046,
+      "frac_viable_rows_identical_to_wild_type": 0.5985324947589099,
+      "n_columns_varying": 2743,
+      "variance_share_top10": 0.08890566318297968,
+      "n_clamp_columns_in_top10": 0,
+      "best_single_column_auroc": 0.7548563575336311,
+      "n_columns_auroc_above_0_7": 836
+    },
+    {
+      "store": "PDLP, no crossover",
+      "trained_auroc": 0.907,
+      "n_genes": 1121,
+      "spearman_distance_growth_drop": 0.31491026569718333,
+      "spearman_distance_growth_drop_viable": -0.1984134937537347,
+      "median_distance_viable": 0.3986308615647091,
+      "median_distance_lethal": 13.957876449540498,
+      "frac_viable_rows_identical_to_wild_type": 0.0,
+      "n_columns_varying": 2744,
+      "variance_share_top10": 0.16490048535351973,
+      "n_clamp_columns_in_top10": 1,
+      "best_single_column_auroc": 0.7512124375611174,
+      "n_columns_auroc_above_0_7": 370
+    }
+  ]
+}

@@ -1625,6 +1625,55 @@ def store_stats() -> str | None:
     return write("store_stats", body, "results/store_stats.json")
 
 
+def store_discriminability() -> str | None:
+    """What a head can read off each store, beside what training it gave."""
+    src = osp.join(RESULTS, "store_discriminability.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    short = {
+        "pFBA (two-stage, scipy HiGHS)": "pFBA",
+        "dual simplex (vertex)": "dual simplex",
+        "interior point, no crossover": "interior point",
+        "PDLP, no crossover": "PDLP",
+    }
+    best = max(s["trained_auroc"] for s in r["stores"])
+    rows = [
+        f"    {short[s['store']]} & {fmt(s['trained_auroc'], best)} & "
+        f"{s['spearman_distance_growth_drop']:+.2f} & "
+        f"{s['frac_viable_rows_identical_to_wild_type'] * 100:.0f} & "
+        f"{s['median_distance_lethal']:.1f} & {s['n_columns_varying']:,} & "
+        f"{s['variance_share_top10'] * 100:.0f} & {s['n_clamp_columns_in_top10']} & "
+        f"{s['best_single_column_auroc']:.3f} & {s['n_columns_auroc_above_0_7']:,} \\\\"
+        for s in r["stores"]
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[What a head can read off each store]{The four stores of the same "
+        f"growth program's optimal face over the {r['n_genes']:,} labeled genes, in the "
+        "affine's encoding $\\log(1 + |v|)$, beside the AUROC the layer-free cell "
+        "reached over each (rounds 36 and 38, six seeds pooled). Columns: the Spearman "
+        "correlation between a deletion's distance from the wild-type row and its drop "
+        "in growth; the share of viable deletions whose row IS the wild-type row; the "
+        "median distance of a lethal deletion's row; the number of reactions whose "
+        "encoded column varies at all; the share of the total column variance in the "
+        "ten widest columns and how many of those touch the $\\pm100$ clamp, where a "
+        "loop can spin; and what one column can do, the best single-column AUROC and "
+        "the number of columns above 0.7. Written by "
+        "\\texttt{store\\_discriminability.py}.}\n"
+        "  \\label{tab:store-discriminability}\n"
+        "  \\begin{tabular}{@{}p{22mm}rrrrrrrrr@{}}\n    \\hline\n"
+        "    store & trained & $\\rho$ & wt rows (\\%) & lethal dist. & varying & "
+        "top 10 (\\%) & clamp & best col. & $>0.7$ \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "store_discriminability", body, "results/store_discriminability.json"
+    )
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -1951,6 +2000,7 @@ def main() -> None:
         store_stats(),
         store_scale(),
         kcat_tier_capacity(),
+        store_discriminability(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

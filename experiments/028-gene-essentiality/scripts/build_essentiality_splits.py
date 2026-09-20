@@ -215,6 +215,7 @@ def write_split(
     )
     stem = (
         f"ess_{args.labels}_"
+        + (f"resplit{args.resplit}_" if args.resplit is not None else "")
         + (
             f"fold{fold}of{args.folds}"
             if fold is not None
@@ -255,6 +256,18 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--val-fraction", type=float, default=0.2)
     parser.add_argument("--folds", type=int, default=None)
+    parser.add_argument(
+        "--resplit",
+        type=int,
+        default=None,
+        help=(
+            "Draw the TEST block too, as a class-stratified fifth of the released labeled "
+            "genes at generator seed 1000 + RESPLIT, instead of pinning the released "
+            "held-out genes. For the repeated-outer-split read of the finalists, where the "
+            "question is whether a difference seen on the 195 released genes holds on other "
+            "held-out fifths; never the reported number. --labels fcl only."
+        ),
+    )
     args = parser.parse_args()
 
     dataset = t.build_dataset(t.ESSENTIALITY_HEAD)
@@ -281,6 +294,18 @@ def main() -> None:
             (provenance[g] == "sgd") == bool(labels[g]) for g in test_genes
         ), "label origin no longer coincides with class on the genome test set"
         note = GENOME_HELDOUT_NOTE
+    if args.resplit is not None:
+        assert args.labels == "fcl" and not args.folds, "--resplit is for --labels fcl, no folds"
+        present = sorted(g for g in labels if gene_index.get(g))
+        test_genes = set(
+            stratified_partition(
+                present, labels, 5, np.random.default_rng(1000 + args.resplit)
+            )[0]
+        )
+        note = (
+            f"Repeated outer split {args.resplit}: the test block is a class-stratified "
+            "fifth of the released labeled genes, not the released held-out genes."
+        )
     pool = sorted(g for g in labels if g not in test_genes and gene_index.get(g))
     rng = np.random.default_rng(args.seed)
     paths: list[str] = []

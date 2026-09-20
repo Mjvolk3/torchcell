@@ -1,0 +1,198 @@
+# experiments/028-gene-essentiality/scripts/resplit_readout.py
+# [[experiments.028-gene-essentiality.scripts.resplit_readout]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/028-gene-essentiality/scripts/resplit_readout
+
+"""Round 75: the three finalists on ten repeated outer splits, read as paired differences.
+
+On the released 195 held-out genes (31 essential) the transformer with the layer-free
+solve, graph convolution on GO and their equal-weight average have overlapping intervals,
+and the average's 0.954 is the maximum of eleven post hoc choices. This read was fixed
+before any cell of the round finished:
+
+- ten test blocks, each a class-stratified fifth of the released labeled genes
+  (``build_essentiality_splits.py --resplit R``), validation a stratified fifth of the rest;
+- per split, three seeds of the round-33 layer-free cell (``w93_resplit{R}pathlogfree``)
+  and three seeds of graph convolution on GO at 400 epochs
+  (``graph_baselines.py --arms go400 --split ...``);
+- a family's score is the mean over its seeds of the per-cell standardized logits, as
+  ``family_ensembles.family_score``; the average is the mean of the two family scores
+  with equal weight, nothing fitted;
+- the statistics: the AUROC of each of the three per split, and across splits the mean,
+  standard deviation and sign count of three paired differences: average minus layer-free,
+  average minus GO convolution, layer-free minus GO convolution, plus average minus the
+  better single model of that split.
+
+The test blocks overlap across splits (each gene is in about two of ten), so the ten
+differences are not independent and no p-value is reported; the sign count and the spread
+are the read.
+
+    CUDA_VISIBLE_DEVICES="" PYTHONPATH=$PWD \
+        python experiments/028-gene-essentiality/scripts/resplit_readout.py
+"""
+
+from __future__ import annotations
+
+import glob
+import gzip
+import json
+import os
+import os.path as osp
+
+import numpy as np
+from dotenv import load_dotenv
+from pydantic import BaseModel
+from sklearn.metrics import roc_auc_score
+
+load_dotenv()
+DATA_ROOT = os.environ["DATA_ROOT"]
+EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
+RESULTS = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
+PRED_DIR = os.getenv("TC_TEST_PRED_DIR", osp.join(DATA_ROOT, "test-predictions-028"))
+N_SPLITS = 10
+GO_INPUTS = "GO (400 epochs)"
+
+
+class SplitRow(BaseModel):
+    """One outer split: the three AUROCs on its test block."""
+
+    resplit: int
+    n_test: int
+    n_test_essential: int
+    n_cells_layer_free: int
+    n_cells_go: int
+    layer_free: float
+    go_convolution: float
+    average: float
+
+
+class Difference(BaseModel):
+    """One paired difference across the splits."""
+
+    name: str
+    per_split: list[float]
+    mean: float
+    sd: float
+    n_positive: int
+    n_splits: int
+
+
+class Report(BaseModel):
+    """The whole read."""
+
+    splits: list[SplitRow]
+    differences: list[Difference]
+    mean_auroc: dict[str, float]
+    note: str
+
+
+def standardized_mean(cells: list[np.ndarray]) -> np.ndarray:
+    return np.mean([(x - x.mean()) / x.std() for x in cells], axis=0)
+
+
+def transformer_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
+    cells = []
+    pattern = f"w93_resplit{resplit}pathlogfree_h12l1p1_e200_s*.json"
+    for path in sorted(glob.glob(osp.join(RESULTS, pattern))):
+        with open(path) as fh:
+            dump_path = json.load(fh)["test"]["dump_path"]
+        if not osp.isfile(dump_path):
+            dump_path = osp.join(PRED_DIR, osp.basename(dump_path))
+        with open(dump_path) as fh:
+            preds = [p for p in json.load(fh)["predictions"] if p.get("pinned", True)]
+        by_gene = {p["genes"][0]: float(p["pred"]) for p in preds}
+        assert set(by_gene) == set(genes), (resplit, len(by_gene), len(genes))
+        cells.append(np.array([by_gene[g] for g in genes]))
+    return cells
+
+
+def go_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
+    path = osp.join(RESULTS, f"graph_baselines_go400_fcl_resplit{resplit}.json")
+    with open(path) as fh:
+        rows = [r for r in json.load(fh)["rows"] if r["inputs"] == GO_INPUTS]
+    assert len(rows) == 1
+    index = {g: i for i, g in enumerate(rows[0]["test_genes"])}
+    assert set(index) == set(genes), (resplit, len(index), len(genes))
+    order = [index[g] for g in genes]
+    return [np.array(logits, dtype=float)[order] for logits in rows[0]["test_logits"]]
+
+
+def main() -> None:
+    rows: list[SplitRow] = []
+    for r in range(N_SPLITS):
+        with gzip.open(
+            osp.join(RESULTS, "splits", f"ess_fcl_resplit{r}_val0.2_s0.json.gz"), "rt"
+        ) as fh:
+            split = json.load(fh)
+        genes = sorted(split["genes"]["test"])
+        y = np.array([int(split["labels"][g]) for g in genes])
+        t_cells, g_cells = transformer_cells(r, genes), go_cells(r, genes)
+        assert len(t_cells) == 3 and len(g_cells) == 3, (r, len(t_cells), len(g_cells))
+        t, g = standardized_mean(t_cells), standardized_mean(g_cells)
+        rows.append(
+            SplitRow(
+                resplit=r,
+                n_test=len(genes),
+                n_test_essential=int(y.sum()),
+                n_cells_layer_free=len(t_cells),
+                n_cells_go=len(g_cells),
+                layer_free=float(roc_auc_score(y, t)),
+                go_convolution=float(roc_auc_score(y, g)),
+                average=float(roc_auc_score(y, (t + g) / 2.0)),
+            )
+        )
+        print(
+            f"split {r}: layer-free {rows[-1].layer_free:.4f}  GO convolution "
+            f"{rows[-1].go_convolution:.4f}  average {rows[-1].average:.4f}"
+        )
+
+    def difference(name: str, values: list[float]) -> Difference:
+        v = np.array(values)
+        return Difference(
+            name=name,
+            per_split=values,
+            mean=float(v.mean()),
+            sd=float(v.std(ddof=1)),
+            n_positive=int((v > 0).sum()),
+            n_splits=len(values),
+        )
+
+    diffs = [
+        difference(
+            "average minus layer-free", [s.average - s.layer_free for s in rows]
+        ),
+        difference(
+            "average minus GO convolution", [s.average - s.go_convolution for s in rows]
+        ),
+        difference(
+            "layer-free minus GO convolution",
+            [s.layer_free - s.go_convolution for s in rows],
+        ),
+        difference(
+            "average minus the better single model",
+            [s.average - max(s.layer_free, s.go_convolution) for s in rows],
+        ),
+    ]
+    for d in diffs:
+        print(
+            f"{d.name:42s} mean {d.mean:+.4f} sd {d.sd:.4f} positive {d.n_positive}/{d.n_splits}"
+        )
+    report = Report(
+        splits=rows,
+        differences=diffs,
+        mean_auroc={
+            k: float(np.mean([getattr(s, k) for s in rows]))
+            for k in ("layer_free", "go_convolution", "average")
+        },
+        note=(
+            "Test blocks overlap across splits, so the differences are not independent; "
+            "the sign count and spread are the read, and no p-value is reported."
+        ),
+    )
+    out = osp.join(RESULTS, "resplit_readout.json")
+    with open(out, "w") as fh:
+        json.dump(report.model_dump(), fh, indent=2)
+    print(out)
+
+
+if __name__ == "__main__":
+    main()

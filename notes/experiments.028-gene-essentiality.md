@@ -1253,3 +1253,23 @@ The gated cell gains +0.012 from the looser tier on four seeds of six, which is 
 Two details of the forced readout, both now confirmed on six seeds: the collapse shows as an epoch-2 selection rather than a late failure (selected epochs span 2 to 174), and three measured-tier seeds read exactly 0.669 because the growth-column readout takes only 19 distinct values over 195 genes.
 
 Document: `sec:kcat-tier` rewritten to six seeds, table `tab:w83` and figure `w83_readout_2026-09-20-03-26-13`, open bullet now asks whether the bimodality can be removed without removing the high end. Clean.
+
+## 2026.09.20 - Round 72: the collapse buys a tail, not accuracy
+
+Jobs 2538 to 2541, about 1 h 35 to 1 h 51 each. The question from round 71 was whether the tight box's bimodality could be removed without losing its high end. It cannot, by either construction that removes it.
+
+| arm | n | mean | sd | at chance | above 0.80 | max |
+|---|---|---|---|---|---|---|
+| hard forced, tight box | 12 | 0.6994 | 0.1146 | 2/12 | 4/12 | 0.8425 |
+| hard forced, looser turnover tier | 6 | 0.7068 | 0.0441 | 0/6 | 0/6 | 0.7588 |
+| elastic forced (priced slack) | 6 | 0.7145 | 0.0488 | 0/6 | 0/6 | 0.7634 |
+| hard gated, tight box | 6 | 0.8001 | 0.0153 | 0/6 | 2/6 | 0.8198 |
+| elastic gated | 6 | 0.8115 | 0.0172 | 0/6 | 5/6 | 0.8363 |
+
+Three constructions of the forced column share one mean to within 0.016 and differ only in spread, by a factor of two and a half. The two that never collapse also never exceed 0.80. So what the absorbing infeasible state buys is not accuracy on average, it is a tail, and round 15c's 0.8425 lives in that tail. On twelve seeds the tight box collapses on two and clears 0.80 on four.
+
+The gated cells are the same story from the other side: across all three programs they sit at 0.800 to 0.812 with spreads near 0.015 and no seed at chance. The gate makes the column safe to read and caps it. The module's best single number and its worst failure are one construction seen twice.
+
+This also retires an idea worth naming: the elastic program was introduced (round 18) as the fix for infeasibility, and it is, but it does not recover the ranking the hard program reaches when the hard program happens to train.
+
+Document: round table `tab:w89` and figure `w89_readout_2026-09-20-05-37-47` in `sec:kcat-tier`; the open bullet now points at a construction that changes WHICH bounds bind per genotype, since every arm here binds the same ceilings for every genotype (the dual-overlap probe). Clean.

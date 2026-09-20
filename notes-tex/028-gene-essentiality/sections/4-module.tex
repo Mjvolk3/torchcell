@@ -2044,6 +2044,15 @@ the same problem: its widest columns, whatever they are, make the validation cur
 early and the seeds disagree, and its clamp columns, specifically, cost it 0.05 of
 AUROC. Only the second is about loops.
 
+Round 73 puts the cut store on the protocol the other stores are read with. Its five
+fold models, standardized logits averaged, read 0.901 [0.85, 0.95] with a fold mean of
+0.872, against the pFBA store's 0.920, the interior point's 0.909 and PDLP's 0.909
+(Table~\ref{tab:ensembles}). The uncut vertex store has no fold number, so this is not
+a paired read, but the cut store lands with the three that never had the deficit rather
+than 0.07 below them, and its residual 0.02 to the pFBA store is what the pooled seeds
+also showed. One of its five folds still selects epoch 12 and reads 0.808, so the early
+peak is reduced rather than gone.
+
 Round 70 places that 0.05 on a few columns rather than on the set. Dropping the 25
 widest clamp columns, 0.6 percent of the store's reactions, reads 0.874, two thirds of
 the way from the uncut store to the full cut; dropping the 100 widest reads 0.896,

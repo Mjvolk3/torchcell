@@ -1130,3 +1130,16 @@ The open list named two module parameter sources that had never been moved. The 
 The anchored arm carries `ThermoMode.ANCHORED` (026's `ARMS` registry, `train_flux.py:222`), which prices thermodynamics through loss terms rather than through the box, and the whole constraint total is multiplied by `constraint_scale`. Every module round ran `--constraint-scale 0`, and the sign constraint that would put a reaction's direction into the program (`thermo_box`) was never switched on. So the route should reach neither the program nor the loss. Measured rather than argued: `capacity_calibration.py --thermo-source shipped` against the same cell's `union_external`, both on the predicted turnover tier, gives identical feasibility and identical median growth at all nine capacity scales, maximum absolute difference 0.0 (`capacity_calibration_thermo_shipped.json`).
 
 So on these rounds the thermodynamic route is recorded provenance, not a hyperparameter, and moving it is a question for a cell that actually prices the constraint. The document says this at the end of `sec:kcat-tier` and the open bullet is rewritten from "not moved at all" to "moved and measured null". Clean rebuild.
+
+## 2026.09.19 - Why the dual simplex vertex is the worst store
+
+The open list asked why the growth program's own dual-simplex vertex trains to 0.840 when the other three points of the same optimal face train to 0.907, 0.911 and 0.912. `store_discriminability.py` reads each store as a feature table over the 1,121 labeled genes in the affine's encoding and writes `results/store_discriminability.json`; the document carries it as `sec:store-discriminability` with `tab:store-discriminability`.
+
+Two natural readings are refuted by the numbers.
+
+- **Smoothness does not order the stores.** Spearman between a deletion's distance from the wild-type row and its drop in growth: pFBA 0.70, dual simplex 0.57, interior point 0.56, PDLP 0.31. The trained reads are 0.912, 0.840, 0.911, 0.907, so the store with the weakest correlation trains second best.
+- **Motion on the viable genes is not it either.** pFBA, the vertex and the interior point all return the wild-type row exactly for 59 to 60 percent of the deletions the solve calls viable; PDLP never does (0 percent) and reads 0.907, level with them.
+
+What does separate the vertex: its ten widest columns are ALL at the plus or minus 100 clamp, where a loop can spin, against 0 for pFBA, 0 for the interior point and 1 for PDLP. Its lethal rows sit 36.2 from the wild-type row against 14.2, 27.7 and 14.0. And of its 1,548 varying columns only 298 rank the labeled genes above 0.7 on their own, the fewest of the four, where the interior point has 836 of 2,743. So the vertex moves further and in more places and gets less for it. Stated in the document as a hypothesis, since four stores are an association: what costs it 0.07 is loop-carrying columns at the clamp, and the test is a fifth store built to have none.
+
+Side observation worth keeping: no store has a column that does the job alone. The best single column is 0.735 to 0.755 across all four against the 0.84 to 0.91 the trained cells reach, so the affine is combining columns in every case.

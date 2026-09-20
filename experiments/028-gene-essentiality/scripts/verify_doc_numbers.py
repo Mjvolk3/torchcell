@@ -526,6 +526,15 @@ CHECKS: list[Check] = [
             "n_with_a_sole_reaction",
         ),
     ),
+    # sec:round76 -- the physical degree as affine columns.
+    Check(claim="round76: control, wild-type rows, seed mean", stated=0.566,
+          recompute=seed_mean("w95_genomepathlogwt_h12l1p1_e200_s*.json")),
+    Check(claim="round76: degree columns, genome-wide seed mean", stated=0.602,
+          recompute=seed_mean("w95_genomepathlogwtdeg_h12l1p1_e200_s*.json")),
+    Check(claim="round76: degree columns, genome-wide pooled", stated=0.593,
+          recompute=genome_arm("physical degree and clustering in the affine")),
+    Check(claim="round76: degree columns on the released split", stated=0.906,
+          recompute=seed_mean("w95_pathlogwtdeg_h12l1p1_e200_s*.json")),
 ]
 
 

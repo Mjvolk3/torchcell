@@ -73,6 +73,52 @@
       "wall_minutes": null
     },
     {
+      "label": "layer-free, store over every gene (wild-type rows; round 76 control)",
+      "kind": "transformer",
+      "n_cells": 6,
+      "cell_aurocs": [
+        0.5424855707863921,
+        0.5609700871302514,
+        0.5694057661357456,
+        0.5571312225983683,
+        0.5684151451245907,
+        0.5993577612520118
+      ],
+      "mean": 0.5662942588378934,
+      "sd": 0.018902573858747936,
+      "pooled_auroc": 0.5701541428492147,
+      "pooled_ci": [
+        0.5498436354263906,
+        0.5898430004379089
+      ],
+      "n_genes": 4674,
+      "select_epochs": [],
+      "wall_minutes": null
+    },
+    {
+      "label": "layer-free + physical degree and clustering in the affine (round 76)",
+      "kind": "transformer",
+      "n_cells": 6,
+      "cell_aurocs": [
+        0.5642854764415339,
+        0.5943401409623176,
+        0.5882936067484322,
+        0.6025320495033021,
+        0.6557410233642267,
+        0.606555857705755
+      ],
+      "mean": 0.6019580257875946,
+      "sd": 0.030259047840347678,
+      "pooled_auroc": 0.5932435207281204,
+      "pooled_ci": [
+        0.5728216259235465,
+        0.6132753450587946
+      ],
+      "n_genes": 4674,
+      "select_epochs": [],
+      "wall_minutes": null
+    },
+    {
       "label": "MLP on ProtT5 alone",
       "kind": "MLP",
       "n_cells": 3,

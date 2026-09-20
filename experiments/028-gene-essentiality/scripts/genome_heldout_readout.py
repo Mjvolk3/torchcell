@@ -48,6 +48,12 @@ TRANSFORMER_ARMS: dict[str, str] = {
     "layer-free log1p vector + affine, pathway + ProtT5 (round 33 form)": (
         "w81_genomepathlog_h12l1p1_e200_s*.json"
     ),
+    "layer-free, store over every gene (wild-type rows; round 76 control)": (
+        "w95_genomepathlogwt_h12l1p1_e200_s*.json"
+    ),
+    "layer-free + physical degree and clustering in the affine (round 76)": (
+        "w95_genomepathlogwtdeg_h12l1p1_e200_s*.json"
+    ),
 }
 #: Cheap models: (result file, model, graph, row inputs) -> label.
 BASE = "graph_baselines_genome_heldout.json"

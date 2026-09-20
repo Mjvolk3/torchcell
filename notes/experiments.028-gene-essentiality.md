@@ -1345,3 +1345,15 @@ Jobs 2547 to 2567 (GilaHyper, main partition, one card each; graph convolution a
 Correction made the same day: only 4 of the 19 held-out essential genes the solve calls viable are covered by an alternative gene set on every reaction (`isozyme_affine_store.py`); 15 hold a reaction of their own that the growth program does not need. The document's "isozyme redundancy in both directions" reading is replaced. Also corrected: the genome-wide layer-free arm read an all-zero row on held-out genes, not the wild-type vector.
 
 In flight: round 76 (w95, jobs 2568 to 2573, physical degree as affine columns; first three seeds genome-wide 0.564, 0.594, 0.588 against 0.570, partial) and round 77 (w96, jobs 2574 to 2585, six gene-protein-reaction redundancy columns; released split and the ten repeated splits paired against w93).
+
+## 2026.09.20 - Round 76: the physical degree as two affine columns
+
+Jobs 2568 to 2573 (GilaHyper, main, one card each), six seeds per arm. Stores from `degree_affine_store.py` over all 6,607 genes.
+
+| arm | set | seed mean | sd | pooled |
+|---|---|---|---|---|
+| layer-free, wild-type rows (control) | genome-wide 4,674 | 0.566 | 0.019 | 0.570 |
+| layer-free + degree and clustering | genome-wide 4,674 | 0.602 | 0.030 | 0.593 [0.57, 0.61] |
+| layer-free + degree and clustering | released 195 | 0.906 | 0.009 | |
+
+The control reproduces the zero-row arm to four decimals (a constant row changes nothing). Degree columns: +0.036 on six of six seeds, still 0.16 under the graph convolution's 0.755; costs nothing on the released split (0.906 against 0.908). Hypothesis, untested: the gap is that an affine fitted on metabolic genes learns a small slope on degree (0.59 among them), while the convolution reads the neighbors' degrees too.

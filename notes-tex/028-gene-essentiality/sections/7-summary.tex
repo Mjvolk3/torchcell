@@ -128,12 +128,37 @@ of ten), where the released split read $+0.018$ (0.908 against 0.890): the sign 
 and the difference does not separate from zero at ten splits of three seeds. So what the
 ten splits support is that the solve helps and that the ratios carry most of it.
 
+\subsection{Round 76: the physical graph's degree as an input to the transformer\secstatus{todo}}
+\label{sec:round76}
+
+Off the metabolic genes the raw degree in the physical graph ranks the 4,674 genome-wide
+genes at 0.740 with nothing trained, and the transformer with the layer-free solve read
+0.570. Round 76 (jobs 2568 to 2573, six seeds per arm; Table~\ref{tab:genome-heldout})
+gives the transformer that degree the cheapest way, as two more affine columns beside
+the flux vector, the gene's degree and clustering coefficient in the physical graph,
+over a store that covers all 6,607 genes (\texttt{degree\_affine\_store.py}; a gene
+with no deletion vector reads the wild-type vector instead of the all-zero row the
+earlier store gave it).
+
+The control changes nothing, as a constant row should: with wild-type rows and no degree
+the six cells read the earlier arm's numbers to four decimals (mean 0.566, pooled 0.570).
+With the two columns the cells read 0.564 to 0.656 (mean 0.602, sd 0.030; pooled 0.593
+[0.57, 0.61]), above the control on six of six seeds ($+0.036$), and 0.16 under the
+graph convolution's 0.755. On the released split the same store reads 0.906 (sd 0.009)
+against 0.908, so the columns cost nothing there. The degree enters, and an affine
+fitted on 629 metabolic genes takes a fraction of it: among the 787 released training
+and validation genes degree ranks essentiality at 0.59, so the slope the affine can learn from them is small. Hypothesis,
+untested: the gap to the convolution is the training set and not the path, and a
+convolution trained on the same metabolic genes reaches 0.755 because its two layers
+read the neighbors' degrees as well as the gene's own.
+
 \subsection{What is left to run\secstatus{todo}}
 \label{sec:left-to-run}
 
 Four experiments would change a conclusion above, in the order of what they decide per
 hour of compute. The first is run (Section~\ref{sec:round75}); the second and third are
-submitted as rounds 77 and 76 and unread.
+rounds 77 and 76; round 76 is read (Section~\ref{sec:round76}) and round 77 is
+running.
 
 \begin{description}
   \item[Repeated outer splits for the three finalists.] The released held-out set has 31

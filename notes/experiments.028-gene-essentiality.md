@@ -1179,3 +1179,22 @@ Paired by seed: the vertex store is up on SIX of six (+0.109, +0.006, +0.041, +0
 The epoch selection is the other half. The vertex store's two worst seeds selected epochs 12 and 22, the early-peak behavior noted back in round 36; the declamped cells select 44 to 72 with no early peak. So the clamp columns were not only diluting the signal, they were producing the early peak that made that store's seeds disagree.
 
 Readout note: `ROUNDS["w84"]` now globs the w85 stems alongside the w84 ones, so one round key carries both submissions. Document numbers updated from three seeds to six in `sec:store-discriminability` and the open bullet; figure `w84_readout_2026-09-20-00-05-46`. Clean.
+
+## 2026.09.20 - Round 67: the measured turnover tier, trained
+
+Jobs 2484 (gated) and 2485 (forced), 1 h 52 each, three seeds apiece. Round 15c's cells at capacity scale 100 with `--kcat-tier measured` and everything else held.
+
+| arm | tier | seeds (AUROC, selected epoch) | mean |
+|---|---|---|---|
+| gated | predicted | 0.8198@6, 0.7946@88, 0.7864@63 | 0.8003 |
+| gated | measured | 0.8082@6, 0.7868@68, 0.8153@75 | 0.8034 |
+| forced | predicted | 0.500@2, 0.8425@29, 0.500@2 | 0.6142 |
+| forced | measured | 0.669@174, 0.7588@47, 0.669@60 | 0.6989 |
+
+Gated is a null: paired +0.003, up on one seed of three. Forced changes which failure happens. Under the predicted tier two of three seeds enter the absorbing infeasible state and select epoch 2 at chance; under the measured tier none does, all three select between epochs 47 and 174, and the mean rises 0.614 to 0.699. But the 0.8425 seed is not reproduced, so round 15c's best result stays a single-seed event on the tighter box.
+
+So the tier does what the calibration said it would (a box that admits growth at a third of the scale stops the collapse) and nothing more. Feasibility, not ranking.
+
+The two seeds reading exactly 0.669 are not a rounding coincidence. The forced readout is the layer's growth column alone, and its test dump takes only 19 distinct values over 195 genes (verified on both cells), so the ranking is a partition into 19 blocks and two runs that partition the genes the same way score identically. Worth remembering when reading any forced-column arm: its AUROC is quantized.
+
+Document: `sec:kcat-tier` gains the round with `tab:w83` and `fig:w83`, the open bullet rewritten from "not measured" to the result. Clean.

@@ -1143,3 +1143,22 @@ Two natural readings are refuted by the numbers.
 What does separate the vertex: its ten widest columns are ALL at the plus or minus 100 clamp, where a loop can spin, against 0 for pFBA, 0 for the interior point and 1 for PDLP. Its lethal rows sit 36.2 from the wild-type row against 14.2, 27.7 and 14.0. And of its 1,548 varying columns only 298 rank the labeled genes above 0.7 on their own, the fewest of the four, where the interior point has 836 of 2,743. So the vertex moves further and in more places and gets less for it. Stated in the document as a hypothesis, since four stores are an association: what costs it 0.07 is loop-carrying columns at the clamp, and the test is a fifth store built to have none.
 
 Side observation worth keeping: no store has a column that does the job alone. The best single column is 0.735 to 0.755 across all four against the 0.84 to 0.91 the trained cells reach, so the affine is combining columns in every case.
+
+## 2026.09.19 - Round 68: the clamp columns carry the vertex store's deficit
+
+The hypothesis from two hours earlier is now an intervention. `declamp_store.py` zeroes every reaction that reaches the plus or minus 100 clamp on any genotype and writes the store back in the same shape, so `ESS_SOLVE_TABLE` reads it unchanged. The cut is asymmetric by construction: 429 of 4,131 columns leave the dual-simplex vertex store, exactly 1 leaves the pFBA store. Jobs 2524 (case) and 2525 (control), three seeds each, 20 minutes per pack on one card.
+
+Held-out AUROC, seeds 2700 to 2702, paired:
+
+| arm | seeds | mean | sd | pooled |
+|---|---|---|---|---|
+| pFBA store (w49) | 0.9103, 0.9194, 0.9109 | 0.9135 | 0.0051 | 0.9144 |
+| pFBA declamped (w84) | 0.9142, 0.9081, 0.9058 | 0.9094 | 0.0044 | 0.9138 |
+| simplex store (w52) | 0.7671, 0.8871, 0.8649 | 0.8397 | 0.0638 | 0.8653 |
+| simplex declamped (w84) | 0.8765, 0.8930, 0.9056 | 0.8917 | 0.0146 | 0.8940 |
+
+Paired differences: case +0.109, +0.041, +0.006 (three of three positive, mean +0.052); control +0.004, -0.011, -0.005 (mean -0.004, sign mixed). So dropping clamp columns is not itself a help, and what it removes from the vertex store is most of what that store was costing. The gap to the pFBA store falls from 0.072 to 0.021. The seed spread also collapses, 0.064 to 0.015, with the worst seed moving from 0.767 at selected epoch 22 to 0.877 at 72, which is the "two early peaks" note in the round-36 text.
+
+Reading: the vertex is a worse store because an extreme point spends its flux on the loops its bounds allow, and those columns vary between genotypes without tracking essentiality. Still open: the last 0.021, and whether a store solved so no column reaches the clamp beats one cut after the fact.
+
+Document: `sec:store-discriminability` extended with `tab:w84` and `fig:w84`, the open bullet rewritten from association to intervention. Clean.

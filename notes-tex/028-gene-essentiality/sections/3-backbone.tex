@@ -763,15 +763,17 @@ genome-wide essentiality signal that the metabolic genes barely vary in, which i
 no model in this document read it on the 195 and every graph model read it on the
 4,674. The transformer does not transfer either: the
 round-22 recipe, the pathway multi-hot with ProtT5 and the FBA affine, trained on the
-same 629 genes reads 0.574 [0.55, 0.59] on the 4,674 (0.570 to 0.578 over three seeds,
-job 2396), 0.07 above chance and 0.17 under the graph convolution on ProtT5 alone,
+same 629 genes reads 0.572 [0.55, 0.59] on the 4,674 (0.569 to 0.579 over six seeds,
+jobs 2396 and 2544), 0.07 above chance and 0.18 under the graph convolution on ProtT5
+alone,
 from 0.890 on the released 195. Its inputs are the MLP's, and in this recipe the gene
 graphs enter training only through the graph regularizer, not as a message-passing
 input, so the three models that read 0.87 to 0.89 on the metabolic genes without the
 graph as an input all fall to chance or near it off them, and the one that convolves
-over the graph does not. The scalable module form on the same split (job 2397, three
-seeds) reads 0.542 [0.52, 0.56] pooled (0.48 to 0.55 per seed), under the affine
-recipe: its solved flux is the wild-type vector on every one of these genes, a
+over the graph does not. The scalable module form on the same split (jobs 2397, 2545 and 2546, six
+seeds) reads 0.551 [0.53, 0.57] pooled, and is the one arm here whose seeds disagree:
+0.480 to 0.579, a spread of 0.033 against the affine recipe's 0.003, with one seed
+below chance. It sits under the affine recipe: its solved flux is the wild-type vector on every one of these genes, a
 constant the head cannot rank by, so what it adds over the backbone is nothing by
 construction, and what it reads is the backbone with a head that fit the metabolic
 genes' flux. The layer-free form (round 65, jobs 2464 and 2466, six seeds) reads

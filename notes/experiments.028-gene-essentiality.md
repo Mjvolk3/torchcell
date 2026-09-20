@@ -1198,3 +1198,21 @@ So the tier does what the calibration said it would (a box that admits growth at
 The two seeds reading exactly 0.669 are not a rounding coincidence. The forced readout is the layer's growth column alone, and its test dump takes only 19 distinct values over 195 genes (verified on both cells), so the ranking is a partition into 19 blocks and two runs that partition the genes the same way score identically. Worth remembering when reading any forced-column arm: its AUROC is quantized.
 
 Document: `sec:kcat-tier` gains the round with `tab:w83` and `fig:w83`, the open bullet rewritten from "not measured" to the result. Clean.
+
+## 2026.09.20 - Round 69: the specificity control, and a correction
+
+Jobs 2528 and 2529, 19 minutes each, six seeds. The control drops 429 columns from the same vertex store, taken as the widest that never reach the clamp, leaving 1,119 varying columns against the clamp cut's 1,123.
+
+| arm | seeds | mean | sd | selected epochs |
+|---|---|---|---|---|
+| vertex store | 6 | 0.8398 | 0.0506 | 22, 45, 53, 61, 12, 74 |
+| clamp columns cut | 6 | 0.8883 | 0.0106 | 72, 65, 59, 44, 53, 52 |
+| widest non-clamp cut | 6 | 0.8464 | 0.0089 | 86, 65, 63, 39, 64, 51 |
+
+Paired against the uncut store: clamp cut +0.0485 on six of six; non-clamp cut +0.0067 on two of six.
+
+So the SCORE recovery is specific to the clamp columns, and round 68's reading survives the control. But the control also corrects something I wrote after round 68. I attributed the collapse in seed spread and the disappearance of the early peaks to the clamp columns. It is not specific: dropping any 429 wide columns collapses the spread just as far (0.0089 against 0.0106) and removes the early peaks just as well (selected epochs 39 to 86). The document now says the vertex store has two problems that are not the same problem. Its widest columns, whatever they are, make the validation curve peak early and the seeds disagree. Its clamp columns, specifically, cost it 0.05 of AUROC. Only the second is about loops.
+
+This is why the control was worth the twenty minutes: without it the two effects would have been reported as one mechanism.
+
+Readout: `ROUNDS["w84"]` carries w84, w85 and w86, so one table holds the store, both cuts and the pFBA pair. Figure `w84_readout_2026-09-20-01-05-24`. Clean.

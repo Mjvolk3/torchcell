@@ -1234,3 +1234,22 @@ The gain saturates by 100 columns of 4,131. Twenty-five columns, 0.6 percent of 
 So the vertex store's deficit is not diffusely spread over its loops. A hundred columns carry it, and a quarter of it sits in twenty-five of them. Read together with round 69, the picture is: a few large loop columns cost 0.05 of ranking, and the store's wide columns in general (loop or not) cause the early validation peak and the seed disagreement.
 
 The full arc now in `sec:store-discriminability`: description (which readings fail), intervention (round 68), specificity control (round 69), dose (round 70). Table `tab:w84` carries all six arms; figure `w84_readout_2026-09-20-01-28-34`. Clean.
+
+## 2026.09.20 - Round 71: the tighter box is bimodal, the looser one is capped
+
+Jobs 2534 to 2537, about 1 h 50 each, took every arm of round 67 to six seeds. This answers what round 67 left open: whether the 0.8425 forced growth column was a one-seed accident.
+
+| arm | seeds | mean | sd | at chance | above 0.80 | max |
+|---|---|---|---|---|---|---|
+| forced, predicted tier | 0.500, 0.500, 0.691, 0.765, 0.802, 0.843 | 0.683 | 0.151 | 2/6 | 2/6 | 0.843 |
+| forced, measured tier | 0.669, 0.669, 0.669, 0.717, 0.758, 0.758 | 0.707 | 0.044 | 0/6 | 0/6 | 0.759 |
+| gated, predicted tier | 0.786 to 0.820 | 0.800 | 0.015 | 0/6 | 2/6 | 0.820 |
+| gated, measured tier | 0.787 to 0.827 | 0.812 | 0.014 | 0/6 | 5/6 | 0.827 |
+
+So the 0.84 is NOT unique: a second seed reaches 0.8017. But it belongs to the tighter box, which is bimodal, either collapsing into the absorbing infeasible state (epoch-2 selection, 0.500) or ranking well. The looser box removes the collapse and removes the high end with it, capping at 0.759. That is the trade, and it is a cleaner statement than round 67's three-seed version.
+
+The gated cell gains +0.012 from the looser tier on four seeds of six, which is about its own seed spread of 0.015, so still not a real effect.
+
+Two details of the forced readout, both now confirmed on six seeds: the collapse shows as an epoch-2 selection rather than a late failure (selected epochs span 2 to 174), and three measured-tier seeds read exactly 0.669 because the growth-column readout takes only 19 distinct values over 195 genes.
+
+Document: `sec:kcat-tier` rewritten to six seeds, table `tab:w83` and figure `w83_readout_2026-09-20-03-26-13`, open bullet now asks whether the bimodality can be removed without removing the high end. Clean.

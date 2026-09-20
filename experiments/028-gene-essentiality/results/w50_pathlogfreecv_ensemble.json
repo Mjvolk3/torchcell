@@ -54,5 +54,6 @@
   "ensemble_auroc": 0.9199449252557041,
   "ensemble_ci_low": 0.8719281374192782,
   "ensemble_ci_high": 0.9594416512822289,
+  "seeds_per_fold": 1,
   "note": "The ensemble is the per-gene mean of the fold models' logits on the released held-out genes, scored once; this is the protocol behind FCL's published test AUROC. The fold mean is the average of K single-model AUROCs and is the number to compare with a single-split cell."
 }

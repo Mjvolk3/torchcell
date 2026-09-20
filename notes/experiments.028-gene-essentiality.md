@@ -1162,3 +1162,20 @@ Paired differences: case +0.109, +0.041, +0.006 (three of three positive, mean +
 Reading: the vertex is a worse store because an extreme point spends its flux on the loops its bounds allow, and those columns vary between genotypes without tracking essentiality. Still open: the last 0.021, and whether a store solved so no column reaches the clamp beats one cut after the fact.
 
 Document: `sec:store-discriminability` extended with `tab:w84` and `fig:w84`, the open bullet rewritten from association to intervention. Clean.
+
+## 2026.09.20 - Round 68 on six seeds
+
+Jobs 2526 and 2527 (20 minutes each) added seeds 2703 to 2705 to both declamp arms, so the intervention is now read on the same six seeds as the stores it is compared against. The three-seed result holds and tightens.
+
+| arm | seeds | mean | sd | pooled |
+|---|---|---|---|---|
+| pFBA store (w49) | 6 | 0.9082 | 0.0078 | 0.9123 |
+| pFBA declamped (w84 + w85) | 6 | 0.9056 | 0.0078 | 0.9107 |
+| simplex store (w52) | 6 | 0.8398 | 0.0506 | 0.8700 |
+| simplex declamped (w84 + w85) | 6 | 0.8883 | 0.0106 | 0.8930 |
+
+Paired by seed: the vertex store is up on SIX of six (+0.109, +0.006, +0.041, +0.035, +0.093, +0.007, mean +0.0485); the pFBA control is up on two of six (mean -0.0027). The gap between the two stores falls from 0.068 to 0.020, and the vertex store's seed spread falls by a factor of five, 0.0506 to 0.0106.
+
+The epoch selection is the other half. The vertex store's two worst seeds selected epochs 12 and 22, the early-peak behavior noted back in round 36; the declamped cells select 44 to 72 with no early peak. So the clamp columns were not only diluting the signal, they were producing the early peak that made that store's seeds disagree.
+
+Readout note: `ROUNDS["w84"]` now globs the w85 stems alongside the w84 ones, so one round key carries both submissions. Document numbers updated from three seeds to six in `sec:store-discriminability` and the open bullet; figure `w84_readout_2026-09-20-00-05-46`. Clean.

@@ -22,6 +22,13 @@ before any cell of the round finished:
   average minus GO convolution, layer-free minus GO convolution, plus average minus the
   better single model of that split.
 
+A second read, fixed when its packs were submitted and before any of them finished
+(``w94``): the layer-free cell's two controls on the same ten splits, three seeds each,
+the FBA ratio affine alone (``protpathfba``) and no metabolism (``pathpool``). Statistic:
+the per-split seed-mean held-out AUROC of each arm, and across splits the mean, standard
+deviation and sign count of layer-free minus the ratio affine and of layer-free minus no
+metabolism.
+
 The test blocks overlap across splits (each gene is in about two of ten), so the ten
 differences are not independent and no p-value is reported; the sign count and the spread
 are the read.
@@ -82,6 +89,7 @@ class Report(BaseModel):
     splits: list[SplitRow]
     differences: list[Difference]
     mean_auroc: dict[str, float]
+    seed_mean_auroc_per_split: dict[str, list[float]]
     note: str
 
 
@@ -114,6 +122,15 @@ def go_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
     assert set(index) == set(genes), (resplit, len(index), len(genes))
     order = [index[g] for g in genes]
     return [np.array(logits, dtype=float)[order] for logits in rows[0]["test_logits"]]
+
+
+def seed_mean_auroc(pattern: str) -> float:
+    values = []
+    for path in sorted(glob.glob(osp.join(RESULTS, pattern))):
+        with open(path) as fh:
+            values.append(float(json.load(fh)["test"]["pinned"]["auroc"]))
+    assert len(values) == 3, (pattern, len(values))
+    return float(np.mean(values))
 
 
 def main() -> None:
@@ -172,6 +189,39 @@ def main() -> None:
             [s.average - max(s.layer_free, s.go_convolution) for s in rows],
         ),
     ]
+    arms = {
+        "layer_free": "w93_resplit{r}pathlogfree_h12l1p1_e200_s*.json",
+        "fba_ratio_affine": "w94_resplit{r}protpathfba_h12l1p1_e200_s*.json",
+        "no_metabolism": "w94_resplit{r}pathpool_h12l1p1_e200_s*.json",
+    }
+    cell_means = {
+        k: [seed_mean_auroc(pat.format(r=r)) for r in range(N_SPLITS)]
+        for k, pat in arms.items()
+    }
+    for k, v in cell_means.items():
+        print(f"seed-mean AUROC per split, {k}: " + " ".join(f"{x:.3f}" for x in v))
+    diffs += [
+        difference(
+            "layer-free minus FBA ratio affine (seed means)",
+            [
+                a - b
+                for a, b in zip(
+                    cell_means["layer_free"],
+                    cell_means["fba_ratio_affine"],
+                    strict=True,
+                )
+            ],
+        ),
+        difference(
+            "layer-free minus no metabolism (seed means)",
+            [
+                a - b
+                for a, b in zip(
+                    cell_means["layer_free"], cell_means["no_metabolism"], strict=True
+                )
+            ],
+        ),
+    ]
     for d in diffs:
         print(
             f"{d.name:42s} mean {d.mean:+.4f} sd {d.sd:.4f} positive {d.n_positive}/{d.n_splits}"
@@ -183,6 +233,7 @@ def main() -> None:
             k: float(np.mean([getattr(s, k) for s in rows]))
             for k in ("layer_free", "go_convolution", "average")
         },
+        seed_mean_auroc_per_split=cell_means,
         note=(
             "Test blocks overlap across splits, so the differences are not independent; "
             "the sign count and spread are the read, and no p-value is reported."

@@ -662,6 +662,17 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["pathlogfixed", "pathlogdet", "pathlogdet1", "pathlogdetfixed"],
     ),
+    # Round 67: round 15c's two cells on the measured kcat tier, against the same two
+    # cells on the predicted tier (round 15c), same seeds and same capacity scale.
+    "w83": (
+        [
+            "w30_lpcapbio100_h12l1p1_e200_s*.json",
+            "w30_lpcapgate100_h12l1p1_e200_s*.json",
+            "w83_lpcapbio100meas_h12l1p1_e200_s*.json",
+            "w83_lpcapgate100meas_h12l1p1_e200_s*.json",
+        ],
+        ["lpcapbio100", "lpcapgate100", "lpcapbio100meas", "lpcapgate100meas"],
+    ),
     # Round 61: the round-33 cell on the fixed pathway one-hot code, six seeds, beside
     # the six free seeds of round 33 that served a permuted input.
     "w77": (
@@ -984,6 +995,8 @@ ARM_LABELS = {
     "lpcapbio100": "growth column, the layer that solves, capacity x100",
     "lpcapgate100": "gated column + context, the layer that solves, capacity x100",
     "lpcapgate1000": "gated column + context, the layer that solves, capacity x1000",
+    "lpcapbio100meas": "growth column, capacity x100, measured $k_{cat}$ tier",
+    "lpcapgate100meas": "gated column + context, capacity x100, measured $k_{cat}$ tier",
     "lpcapbio1000": "growth column, the layer that solves, capacity x1000",
     "lpcapbio100lr": "growth column, the layer that solves, capacity x100, lr 3e-4",
     "lpelbio100": "growth column, the elastic layer that solves, capacity x100",

@@ -432,6 +432,14 @@ ROUND_CAPTIONS = {
         "pinned on the permuted input (round 45, seed 2700's first run and seeds 2701 "
         "to 2705). Batch 32, class weight, 200 epochs.",
     ),
+    "w83": (
+        "Round 67, the capacity ceilings from the measured turnover tier",
+        "Round 15c's two cells at capacity scale 100, where both turnover tiers still "
+        "bind, on the predicted tier they were run with and on the measured tier, which "
+        "leaves 2,849 of 3,728 catalytic units on the organism default and is the looser "
+        "box (Section~\\ref{sec:kcat-tier}). Forced and gated, constraint scale 0, batch "
+        "32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
     "w77": (
         "Round 61, the reference cell on the fixed one-hot code",
         "The round-33 cell (six free seeds, each having served the pathway one-hot in "

@@ -82,18 +82,60 @@ def write_topvar() -> dict[str, object]:
     }
 
 
+def write_partial(k: int) -> dict[str, object]:
+    """The vertex store with only its ``k`` widest clamp columns dropped.
+
+    Round 68 cut all 429 at once. If the gain is carried by a handful of large loops it
+    arrives early in ``k``; if it needs the whole set it arrives late.
+    """
+    p = np.load(osp.join(TABLE_DIR, CONTROL_SOURCE), allow_pickle=False)
+    arrays = {k_: p[k_] for k_ in p.files}
+    v = arrays["v_deletion"].astype(np.float64)
+    wt = arrays["v_wild_type"].astype(np.float64)
+    clamp = (np.abs(v) >= FLUX_SCALE - 1e-6).any(axis=0) | (
+        np.abs(wt) >= FLUX_SCALE - 1e-6
+    )
+    var = np.log1p(np.abs(v)).var(axis=0)
+    var[~clamp] = -1.0
+    drop = np.argsort(var)[::-1][:k]
+    v[:, drop] = 0.0
+    wt[drop] = 0.0
+    arrays["v_deletion"] = v.astype(arrays["v_deletion"].dtype)
+    arrays["v_wild_type"] = wt.astype(arrays["v_wild_type"].dtype)
+    dst = f"ess_solve_encodings_YPD_simplexdeclamp{k}.npz"
+    np.savez_compressed(osp.join(TABLE_DIR, dst), **arrays)
+    return {
+        "source": CONTROL_SOURCE,
+        "written": dst,
+        "rule": f"the {k} widest clamp columns",
+        "n_clamp_columns": int(clamp.sum()),
+        "n_columns_dropped": int(k),
+        "n_columns_varying_after": int((np.log1p(np.abs(v)).var(axis=0) > 1e-12).sum()),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--k", type=int, default=None, help="with --mode partial.")
     parser.add_argument(
         "--mode",
         default="clamp",
-        choices=("clamp", "topvar"),
+        choices=("clamp", "topvar", "partial"),
         help=(
             "'clamp' writes the case and its pFBA control; 'topvar' writes the "
             "specificity control, the same number of non-clamp columns dropped."
         ),
     )
     args = parser.parse_args()
+    if args.mode == "partial":
+        assert args.k is not None, "--mode partial needs --k"
+        row = write_partial(args.k)
+        print(json.dumps(row))
+        path = osp.join(RESULTS_DIR, f"declamp_store_partial{args.k}.json")
+        with open(path, "w") as fh:
+            json.dump({"flux_scale": FLUX_SCALE, "stores": [row]}, fh, indent=2)
+        print(path)
+        return
     if args.mode == "topvar":
         row = write_topvar()
         print(json.dumps(row))

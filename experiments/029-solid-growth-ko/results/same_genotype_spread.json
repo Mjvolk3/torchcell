@@ -1,0 +1,74 @@
+{
+  "order1_variance": {
+    "gene_sets_multi": 4516,
+    "total_sd": 0.014623453129025717,
+    "within_screen_sd": 0.012691290674904342,
+    "between_screen_share": 0.24679757903693011,
+    "entries_per_screen": {
+      "SmfCostanzo2016@30": 7675,
+      "SmfCostanzo2016@26": 7658,
+      "SmfKuzmin2018@26": 1293,
+      "SmfKuzmin2020@26": 472
+    }
+  },
+  "Costanzo 26 C vs 30 C, same gene": {
+    "n": 4515,
+    "r": 0.9999983144831418,
+    "mean_diff": 4.5736434108524305e-07,
+    "median_abs_diff": 0.0
+  },
+  "Costanzo 30 C vs Kuzmin 2018 query single": {
+    "n": 1158,
+    "r": 0.9842440373400554,
+    "mean_diff": 0.011662852619458838,
+    "median_abs_diff": 0.010699999999999932
+  },
+  "Costanzo 30 C vs Kuzmin 2020 query single": {
+    "n": 226,
+    "r": 0.6500616249366561,
+    "mean_diff": 0.03545340707964602,
+    "median_abs_diff": 0.04028999999999994
+  },
+  "order2_variance": {
+    "gene_sets_multi": 554697,
+    "total_sd": 0.04797875754855408,
+    "within_screen_sd": 0.021025137908066305,
+    "between_screen_share": 0.8079652999013713,
+    "entries_per_screen": {
+      "DmfCostanzo2016@30": 900547,
+      "DmfKuzmin2020@26": 503329,
+      "DmfKuzmin2018@26": 129356,
+      "DmfCostanzo2016@26": 6269
+    }
+  },
+  "Costanzo 30 C vs Kuzmin 2018, same pair": {
+    "n": 118280,
+    "r": 0.8574051091246223,
+    "mean_diff": 0.013189535706233796,
+    "median_abs_diff": 0.042149999999999854
+  },
+  "Costanzo 30 C vs Kuzmin 2020, same pair": {
+    "n": 441724,
+    "r": 0.7405777193044243,
+    "mean_diff": -0.009293148436580308,
+    "median_abs_diff": 0.04740000000000011
+  },
+  "Kuzmin 2018 vs 2020, same pair": {
+    "n": 13162,
+    "r": 0.6026910350872513,
+    "mean_diff": -0.036226918401458745,
+    "median_abs_diff": 0.047850000000000004
+  },
+  "Costanzo 30 C vs Kuzmin 2018": {
+    "n": 118280,
+    "r": 0.3182652670844917,
+    "mean_diff": -0.015247340247012738,
+    "median_abs_diff": 0.028484000000000006
+  },
+  "Costanzo 30 C vs Kuzmin 2020": {
+    "n": 441724,
+    "r": 0.17996682923928362,
+    "mean_diff": 0.00014209536422441768,
+    "median_abs_diff": 0.025834999999999997
+  }
+}

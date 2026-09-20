@@ -169,3 +169,40 @@ at 79 percent (val 29,842, test 29,641 of 37,673); a 029 arm is compared with 02
 59,483 triples. Section 7 of `notes-tex/025-s3-closure` carries the figure and tables (12 pages,
 `make check` clean). Copies: intermediates archiving to /bulk (slurm 2480), processed LMDB
 mirroring to IGB scratch (slurm 2481, about 76 MB/s, 2 h).
+
+## 2026.09.20 - Same genotype, several fitness values: noise or a hidden screen variable?
+
+`scripts/same_genotype_spread.py` on the 029 closure entries (results/same_genotype_spread.json).
+For every genotype with more than one fitness entry, the spread is split into the part within one
+screen and the part between screens, and same-genotype pairs across screens are correlated.
+
+| comparison, same genotype | n | r | mean diff | median abs diff |
+|---|---|---|---|---|
+| singles: Costanzo 26 C vs 30 C | 4,515 | 1.000 | 0.0000 | 0.0000 |
+| singles: Costanzo 30 C vs Kuzmin 2018 query single | 1,158 | 0.984 | +0.012 | 0.011 |
+| singles: Costanzo 30 C vs Kuzmin 2020 query single | 226 | 0.650 | +0.036 | 0.040 |
+| doubles: Costanzo 30 C, the two query/array orientations | 353,218 | 0.891 | | 0.031 |
+| doubles: Costanzo 30 C vs Kuzmin 2018 | 118,280 | 0.857 | +0.013 | 0.042 |
+| doubles: Costanzo 30 C vs Kuzmin 2020 | 441,724 | 0.741 | -0.009 | 0.047 |
+| doubles: Kuzmin 2018 vs 2020 | 13,162 | 0.603 | -0.036 | 0.048 |
+| digenic interaction: Costanzo 30 C, two orientations | 353,218 | 0.142 | | |
+| digenic interaction: Costanzo 30 C vs Kuzmin 2018 | 118,280 | 0.318 | -0.015 | 0.029 |
+
+Variance split: singles, total sd 0.015, within-screen sd 0.013, between-screen share 0.25 (the
+Costanzo 26 C and 30 C singles are one genome-wide standard stored twice, r 1.000). Doubles, total
+sd 0.048, within-screen sd 0.021, between-screen share 0.81; but the two ORIENTATIONS of one pair
+inside Costanzo, which are two independent strains, agree at r 0.891, the same level as Costanzo
+against Kuzmin 2018 (0.857), and the mean offsets between screens are 0.01. So for fitness the
+screen of origin is not a hidden variable: two screens disagree about a double as much as two
+strains of the same double disagree inside one screen, with no systematic shift. For the digenic
+interaction the same-pair agreement is near noise even within one lab (0.142 across orientations),
+because most scores are near zero and the score is a difference of noisy terms; a screen token
+would memorize that noise, not explain it.
+
+Consequence for the model: no dataset token. Several entries of one genotype are replicates of one
+quantity, so a loss over all of them, or a read-time mean with inverse-variance weight, learns the
+conditional mean; temperature, which the record carries, goes onto the input. The interaction is
+better derived from predicted fitness under the identity with a declared reference than learned as
+a per-screen quantity; the 030 recapitulation is the test of that. Revisit only if a target on 030
+shows a large between-screen share together with a large mean offset, which would be a
+calibration term marginalized to a reference at inference, not an input.

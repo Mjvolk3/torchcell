@@ -39,7 +39,10 @@ term of the equation that defines the triple's interaction score: the three sing
 the three doubles and the triple itself, 1{,}121{,}645 records in all. Inside any one
 source screen that equation is exact: recomputing the digenic score from the fitness
 columns of the same row reproduces the reported score at $r = 0.999$ in Costanzo 2016
-and $r = 1.000$ in Kuzmin 2018. Inside the build it is not. The build's own fitness
+and $r = 1.000$ in Kuzmin 2018, and recomputing the trigenic score from the trigenic
+row together with the two single-mutant control query rows of the same screen, matched
+by array strain, reproduces it at $r = 0.985$ on all 91{,}111 Kuzmin 2018 triples.
+Inside the build it is not. The build's own fitness
 reproduces its own digenic scores at $r = 0.445$ and its own trigenic scores at
 $r = 0.230$, and the loss is traceable to the join rather than to the formula. Four
 mechanisms account for it. SGD essentiality enters as a fitness of 0 and is averaged
@@ -70,7 +73,10 @@ policies the identity reproduces each screen's own scores and no other's, Costan
 digenic scores at $r = 0.90$ and $0.75$ under a Costanzo-first policy and Kuzmin's 2018
 trigenic scores at $r = 0.52$ under a Kuzmin-first one, while the policy that is best for
 one order is worst for the other. Which screen's standard a model learns is a decision
-the query and the policy make, and the cost of each choice is stated per screen.
+the query and the policy make, and the cost of each choice is stated per screen. What
+separates that 0.52 from the 0.985 of the within-screen control is a single term, the
+double-mutant query strain's fitness, which every trigenic row reports and no record in
+either build holds.
 \end{abstract}
 
 \vspace{0.5em}

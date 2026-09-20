@@ -49,5 +49,7 @@ created: 1789365911262
 - [ ] Delete 029 raw/conversion/aggregation from /db once /bulk archive.log says ALL_DONE (523 G free now)
 - [x] S3 closure recompute rerun on 029 under four label policies ([[experiments.029-solid-growth-ko.scripts.closure_recompute]]): Kuzmin first 0.245 trigenic (0.517 on the 2018 screen) / 0.227 digenic; Costanzo first 0.508 digenic / 0.137 trigenic; each screen reproduces only itself. Section 7 + Fig 6 + Tables 5-6 added to `notes-tex/025-s3-closure` (12 pages, check clean); label-policy mermaid updated with the build numbers
 - [x] 029 intermediates archiving to /bulk (slurm 2480); processed LMDB mirroring to IGB scratch (slurm 2481)
+- [x] Trigenic identity verified WITHIN a Kuzmin screen ([[experiments.025-solid-growth.s3-closure]]): r 0.985 (2018, n 91,111) and 0.976 (2020, n 301,706) matching control query rows by array strain. The formula is right; replacing only the double-mutant query fitness by the product of singles drops it to 0.538 / 0.419, and that measurement is not a record in either build
+- [ ] Ingest the Kuzmin query-strain fitness standard (Additional Data S4) as records with the query role; without it no label policy passes about 0.54 trigenic
 - [x] Pinned 010 triple survival on 029: train 239,663 / val 29,842 / test 29,641 of 301,386 / 37,673 / 37,673 (79 percent)
 - [ ] S3 seed 1 (IGB 2409033) at epoch 24/130, window ep10-23 val GI Pearson 0.474 vs fit_014 0.443/0.438/0.437; ends ~Mon 09-21 midday

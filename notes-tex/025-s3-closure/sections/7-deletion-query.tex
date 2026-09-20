@@ -43,7 +43,11 @@ Eq.~\ref{eq:tau} under four such choices:
 
 Each policy yields one fitness per gene set, and the recomputed score is compared with
 every stored interaction entry; a stored entry is one source row, so the comparison
-can also be read per screen.
+can also be read per screen. The 299{,}146 triple gene sets carry 309{,}122 stored
+trigenic entries, because a gene set reached by both Kuzmin screens keeps both, and
+289{,}062 of those have every term of Eq.~\ref{eq:tau} present under a policy:
+15{,}229 of the rest are missing one of the three doubles and 8{,}545 one of the three
+singles. The comparable count in the 025 build is 352{,}505 of its 376{,}732 triples.
 
 \begin{table}[H]
 \centering
@@ -76,15 +80,16 @@ trigenic scores at 0.52 with slope 0.93 under Kuzmin first, against 0.30. The Ku
 H5 of Section~\ref{sec:hazards}: their scores were computed with a query fitness of
 1.0 that no policy over measured entries can select.
 
-Two limits keep the Kuzmin-first trigenic $r$ at 0.52 rather than near 1 for the
-2018 screen. The digenic terms of Eq.~\ref{eq:tau} on a Kuzmin trigenic row come from
-the double-mutant query strain and its two single-mutant control queries screened in
-the same batch, while the double fitness a policy can select is the pair's own
-digenic screen, a different strain measured on a different day; and the array
-single-mutant fitness on a Kuzmin row is Costanzo's, so a Kuzmin-first policy over
-singles still reads Costanzo for two of the three genes. Both are properties of what
-the released tables carry per row, not of the build, and the 0.52 is the ceiling a
-closure from the database reaches without matching strain identifiers across rows.
+What keeps the Kuzmin-first trigenic $r$ at 0.52 rather than near 1 for the 2018
+screen is one missing measurement, and Section~\ref{sec:strength} isolates it. Inside
+the screen the identity reproduces the released score at $r = 0.985$; replacing only
+the double-mutant query fitness $f_{ij}$ by the product of the two control singles
+drops that to $r = 0.538$. A Kuzmin-first closure over the database gets the other two
+digenic terms right, because Kuzmin's own digenic records are those control query
+screens, and it is forced into a substitute for $f_{ij}$, because the double-mutant
+query strain's fitness is not a record anywhere in either build. Its 0.517 and the
+within-screen 0.538 differ by less than the difference between two substitutes for
+that one term, so the remaining gap on this screen is accounted for.
 
 The converted 0 changes character on this query. In 025, 907 of the 1{,}140 essential
 genes carried a measured fitness beside the 0, because the temperature-sensitive

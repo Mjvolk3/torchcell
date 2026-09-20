@@ -19,16 +19,16 @@ merge, so the restored mean is exact only if the converter wrote exactly 0. It d
 (\texttt{CompositeFitnessConverter}), and the two checked cases (YER048W-A, stored
 0.452 from 0.904 and 0; YDR292C, stored 0.630 over $k = 7$) agree.
 
-\notesec{The within-screen control covers the digenic identity only}
-The raw Kuzmin tables carry the double-mutant query fitness and the triple fitness on
-a trigenic row, but the two digenic control-screen terms of Eq.~\ref{eq:tau} sit on
-other rows of the same table and are matched by strain identifier, which this
-document did not do. The trigenic identity is therefore checked in the build only,
-and its $r = 0.230$ has no within-screen counterpart here; the closest is the
-Kuzmin-first policy on the 029 build, $r = 0.52$ for the 2018 screen
-(Section~\ref{sec:deletion-query}), which still reads the pair's own digenic screen for
-the double terms. What a within-screen check could reach is bounded by how well the
-measurement reproduces itself, and that bound is the subject of the next paragraph.
+\notesec{The within-screen trigenic control matches control queries by array strain, not by batch}
+Section~\ref{sec:strength} matches a trigenic row to its two single-mutant control
+query rows on the array strain identifier and the control gene. The supplementary
+methods say those controls were screened in the same batch as the double-mutant query,
+but the released tables carry no batch field, only the query strain identifier
+(\texttt{tm} number), which differs between a double-mutant query and its controls. A
+gene was screened against the same array strain more than once in 2.8 percent of the
+2018 matches and 7.6 percent of the 2020 matches, and those are averaged. The residual
+this leaves is small, $r = 0.985$ and a median absolute residual of 0.0016, so the
+matching is not what limits that control.
 
 \notesec{The trigenic score reproduces itself at 0.59, and two published figures differ}
 Two numbers are in circulation for the replicate reproducibility of the adjusted

@@ -1,0 +1,64 @@
+{
+  "kuzmin2018": {
+    "n_trigenic_rows": 91111,
+    "n_with_both_control_screens": 91111,
+    "frac_with_both_control_screens": 1.0,
+    "frac_query_double_fitness_nan": 0.05487811570501915,
+    "mean_control_screens_per_gene_array": 1.0278616193434382,
+    "tau_within_screen": {
+      "n": 91111,
+      "pearson": 0.9848996040969665,
+      "spearman": 0.9708174194455235,
+      "slope": 0.9754563005087264,
+      "rmse": 0.009421422081418515,
+      "median_abs_residual": 0.0016475970000000388
+    },
+    "tau_without_query_double_fitness": {
+      "n": 91111,
+      "pearson": 0.5376532732425001,
+      "spearman": 0.4329957966863794,
+      "slope": 1.0333234858302467,
+      "rmse": 0.08759209902740661,
+      "median_abs_residual": 0.04561665919999997
+    },
+    "raw_eps_column_vs_observed_minus_expected": {
+      "n": 91111,
+      "pearson": 0.9999999021440764,
+      "spearman": 0.9999996288585686,
+      "slope": 0.9999996635156635,
+      "rmse": 3.653089124348182e-05,
+      "median_abs_residual": 2.700000000003741e-05
+    }
+  },
+  "kuzmin2020": {
+    "n_trigenic_rows": 301798,
+    "n_with_both_control_screens": 301706,
+    "frac_with_both_control_screens": 0.9996951603390347,
+    "frac_query_double_fitness_nan": 0.14892742827984282,
+    "mean_control_screens_per_gene_array": 1.0758569951483337,
+    "tau_within_screen": {
+      "n": 301706,
+      "pearson": 0.9761844241248081,
+      "spearman": 0.9748145101863701,
+      "slope": 0.9691634165849686,
+      "rmse": 0.013774532483928346,
+      "median_abs_residual": 2.9000000000011655e-05
+    },
+    "tau_without_query_double_fitness": {
+      "n": 301706,
+      "pearson": 0.4190822270382086,
+      "spearman": 0.49006429839160504,
+      "slope": 0.9698048074306412,
+      "rmse": 0.15116593323909136,
+      "median_abs_residual": 0.04064099999999997
+    },
+    "raw_eps_column_vs_observed_minus_expected": {
+      "n": 301798,
+      "pearson": 0.996790960208824,
+      "spearman": 0.9981366182420842,
+      "slope": 1.0009506225952658,
+      "rmse": 0.00419784537067295,
+      "median_abs_residual": 2.6900000000039956e-05
+    }
+  }
+}

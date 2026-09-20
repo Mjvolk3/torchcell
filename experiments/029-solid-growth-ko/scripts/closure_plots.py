@@ -93,8 +93,11 @@ def _get(pol_stats: pd.DataFrame, policy: str, order: int, src: str = "all") -> 
 
 def make_figure(gd: pd.DataFrame, gt: pd.DataFrame, pol_stats: pd.DataFrame, summary: dict, img_dir: str) -> None:
     w = mm_to_in(PANEL_WIDTHS_MM["full"])
-    fig, axes = plt.subplots(1, 4, figsize=(w, mm_to_in(66)))
-    fig.subplots_adjust(left=0.06, right=0.99, bottom=0.32, top=0.91, wspace=0.55)
+    # two by two: at a quarter of the page width the bar panel's value labels collide
+    # with the bars, so each panel takes a half-width column instead.
+    fig, axgrid = plt.subplots(2, 2, figsize=(w, mm_to_in(140)))
+    fig.subplots_adjust(left=0.09, right=0.98, bottom=0.07, top=0.95, wspace=0.3, hspace=0.42)
+    axes = axgrid.ravel()
 
     # (a) r by policy, 025 beside 029
     ax = axes[0]
@@ -107,10 +110,10 @@ def make_figure(gd: pd.DataFrame, gt: pd.DataFrame, pol_stats: pd.DataFrame, sum
         h = "//" if is025 else None
         ax.bar(i - 0.2, rd, 0.38, color=RED, edgecolor="black", lw=0.5, hatch=h, label="digenic" if i == 1 else None)
         ax.bar(i + 0.2, rt, 0.38, color=ORANGE, edgecolor="black", lw=0.5, hatch=h, label="trigenic" if i == 1 else None)
-        ax.text(i - 0.2, rd + 0.02, f"{rd:.2f}", ha="center", va="bottom", fontsize=4.5)
-        ax.text(i + 0.2, rt + 0.02, f"{rt:.2f}", ha="center", va="bottom", fontsize=4.5)
+        ax.text(i - 0.2, rd + 0.015, f"{rd:.2f}", ha="center", va="bottom", fontsize=6)
+        ax.text(i + 0.2, rt + 0.015, f"{rt:.2f}", ha="center", va="bottom", fontsize=6)
     ax.set_xticks(xs)
-    ax.set_xticklabels([g[0] for g in groups], fontsize=5, rotation=45, ha="right", rotation_mode="anchor")
+    ax.set_xticklabels([g[0] for g in groups], fontsize=6)
     ax.set_ylim(0, 1.0)
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
@@ -129,12 +132,12 @@ def make_figure(gd: pd.DataFrame, gt: pd.DataFrame, pol_stats: pd.DataFrame, sum
     ax.imshow(mat, cmap=CMAP, vmin=0, vmax=1, aspect="auto")
     for i in range(mat.shape[0]):
         for j in range(mat.shape[1]):
-            ax.text(j, i, f"{mat[i, j]:.2f}", ha="center", va="center", fontsize=5,
+            ax.text(j, i, f"{mat[i, j]:.2f}", ha="center", va="center", fontsize=6,
                     color="white" if mat[i, j] > 0.6 else "black")
     ax.set_xticks(range(len(SCREEN_COLS)))
-    ax.set_xticklabels([c[2] for c in SCREEN_COLS], fontsize=5, rotation=45, ha="right", rotation_mode="anchor")
+    ax.set_xticklabels([c[2] for c in SCREEN_COLS], fontsize=6, rotation=30, ha="right", rotation_mode="anchor")
     ax.set_yticks(range(len(pols)))
-    ax.set_yticklabels([POLICY_LABEL[p] for p in pols], fontsize=5)
+    ax.set_yticklabels([POLICY_LABEL[p] for p in pols], fontsize=6)
     ax.set_title("r per stored screen, by policy")
     ax.tick_params(length=0)
     _box(ax)
@@ -147,7 +150,7 @@ def make_figure(gd: pd.DataFrame, gt: pd.DataFrame, pol_stats: pd.DataFrame, sum
          "stored tmi (source row)", "tau from build fitness, Kuzmin first",
          "trigenic, 029, Kuzmin-first policy", _get(pol_stats, "kuzmin_first", 3))
     for ax, letter in zip(axes, "abcd"):
-        ax.text(-0.3, 1.06, letter, transform=ax.transAxes, fontsize=8, fontweight="bold")
+        ax.text(-0.16, 1.04, letter, transform=ax.transAxes, fontsize=8, fontweight="bold")
     _save(fig, img_dir, "closure_query_comparison")
 
 

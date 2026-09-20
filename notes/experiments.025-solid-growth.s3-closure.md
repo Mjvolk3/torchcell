@@ -91,3 +91,46 @@ measurements of the same triple agree with each other; everything above 0.59 on 
 particular noise realization in the training copy. That is the overfit statement made quantitative,
 and it is consistent with the curve shape (val flat at 0.48 to 0.49 since epoch 15 while train
 triples climbed from 0.47 to 0.727). Recorded in section 8 of `notes-tex/025-s3-closure`.
+
+## 2026.09.19 - The trigenic identity is exact inside a screen; one missing record explains the rest
+
+`experiments/025-solid-growth/scripts/s3_closure_trigenic_within_screen.py`. The digenic
+within-screen control fits on one raw row; the trigenic one does not, because the Kuzmin methods
+put its terms in three measurements (si1.md line 191). On a trigenic row sit the double-mutant
+query fitness f_ij, the array single fitness f_k and the triple fitness f_ijk. The two digenic
+terms and the query singles come from the single-mutant control query strains, gene plus HO,
+screened against the same array strain. Matching by array strain identifier and recomputing
+
+    tau = f_ijk - f_ij f_k - eps_ik f_j - eps_jk f_i
+
+| screen | terms | n | r | median abs residual |
+|---|---|---|---|---|
+| Kuzmin 2018 | every term from the same screen | 91,111 | 0.985 | 0.0016 |
+| Kuzmin 2018 | f_ij replaced by f_i f_j | 91,111 | 0.538 | 0.046 |
+| Kuzmin 2020 | every term from the same screen | 301,706 | 0.976 | 0.00003 |
+| Kuzmin 2020 | f_ij replaced by f_i f_j | 301,706 | 0.419 | 0.041 |
+
+**The formula is right and implemented right.** Nothing in the published correction is missing.
+The whole loss is one term: the double-mutant query strain's fitness. Replacing only that term
+collapses the reconstruction.
+
+**That term is not a record.** Across the Kuzmin 2018 screen only 172 query pairs carry a released
+double-mutant query fitness; 129 appear as a double in the 029 build, and those are a different
+measurement of the same genotype (a Costanzo or Kuzmin array screen), agreeing with the query-strain
+value at r = 0.777 with median absolute difference 0.045. Multiplied by f_k about 1 that difference
+lands in tau, whose intermediate calling threshold is 0.08.
+
+**Consistency check.** The 029 Kuzmin-first closure reaches 0.517 on the Kuzmin 2018 screen; the
+within-screen reconstruction with only f_ij degraded reaches 0.538. A Kuzmin-first policy already
+gets the other two digenic terms right, because Kuzmin's digenic records ARE those control query
+screens. So the entire remaining gap is the one missing measurement.
+
+**Action for the data model.** Ingest the query-strain fitness standard (Kuzmin Additional Data S4,
+single and double mutant query fitness) as its own records carrying the query role, so a closure can
+select f_ij. Without it no label policy over the current records can pass about 0.54 on trigenic.
+Recorded in section 3 of `notes-tex/025-s3-closure` (Table 3, 13 pages, make check clean).
+
+Record counts, for reference: 029 holds 299,146 triple gene sets carrying 309,122 stored trigenic
+entries (a gene set reached by both Kuzmin screens keeps both); 289,062 have every term of the
+identity present, 15,229 of the rest miss one of the three doubles and 8,545 one of the three
+singles. The 025 comparable is 352,505 of 376,732.

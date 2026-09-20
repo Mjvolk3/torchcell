@@ -2,13 +2,14 @@
 # [[experiments.028-gene-essentiality.scripts.summary_figure]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/028-gene-essentiality/scripts/summary_figure
 
-"""The document's results on one page, nine panels, each from one committed result file.
+"""The document's results on one page, one panel per committed result file.
 
 Panels, in the order the document reaches them: the comparators computed rather than
 quoted, the reproduction of Flux Cone Learning's own numbers, the fold ensembles along
 the arc of rounds, the families and their post hoc averages, the genome-wide transfer,
 the solve's argmax across solvers as a probe-transfer matrix, what the four stores carry,
-the capacity box under the two turnover tiers, and the store at the database's scale.
+what their clamp columns cost, the capacity box under the two turnover tiers, and the
+store at the database's scale.
 
 Nothing is typed here: every number is read from ``results/``. Panels are added by
 appending to ``PANELS``, so the figure grows without the layout being rewritten.
@@ -35,6 +36,7 @@ from matplotlib.ticker import MultipleLocator  # noqa: E402
 
 from torchcell.timestamp import timestamp  # noqa: E402
 from torchcell.utils import (  # noqa: E402
+    MAX_HEIGHT_MM,
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     mm_to_in,
@@ -159,11 +161,9 @@ ENSEMBLE_ARC = [
     ("w41_pathfluxcv_ensemble.json", "+ flux layer"),
     ("w43_pathoffcv_ensemble.json", "cached solve, no layer"),
     ("w50_pathlogfreecv_ensemble.json", "layer-free log1p"),
-    ("w70_pathlogh48cv_ensemble.json", "layer-free, width 48"),
     ("w53_pathlogipmcv_ensemble.json", "interior-point store"),
     ("w55_pathlogpdlpcv_ensemble.json", "PDLP store"),
     ("w74_pathgopfbaaffcv_ensemble.json", "+ GO in the affine"),
-    ("w82_pathlogfixedcv_ensemble.json", "pinned kernels"),
 ]
 
 
@@ -280,7 +280,6 @@ def panel_transfer(ax: Axes) -> str:
     # wants a figure of this kind to be vector throughout.
     im = ax.pcolormesh(m, cmap="cividis", vmin=0.45, vmax=0.80, rasterized=False)
     ax.invert_yaxis()
-    ax.set_aspect("equal")
     ticks = np.arange(len(names)) + 0.5
     ax.set_xticks(ticks)
     ax.set_xticklabels([short.get(n, n) for n in names], rotation=45, ha="right")
@@ -293,7 +292,6 @@ def panel_transfer(ax: Axes) -> str:
                     j + 0.5, i + 0.5, f"{m[i, j]:.2f}", ha="center", va="center",
                     fontsize=4.6, color="white" if m[i, j] < 0.68 else "black",
                 )
-    ax.set_xlabel("scored on")
     ax.set_ylabel("fitted on")
     cax = ax.inset_axes((1.05, 0.0, 0.045, 1.0))
     cb = ax.figure.colorbar(im, cax=cax)
@@ -391,6 +389,57 @@ def panel_scale(ax: Axes) -> str:
     )
 
 
+def panel_clamp(ax: Axes) -> str:
+    """What the vertex store's clamp-carrying columns cost, by how many are cut."""
+    import glob
+
+    def mean_of(*pats: str) -> tuple[float, float]:
+        vals = []
+        for pat in pats:
+            for p in sorted(glob.glob(osp.join(RESULTS, pat))):
+                with open(p) as fh:
+                    vals.append(float(json.load(fh)["test"]["pinned"]["auroc"]))
+        return float(np.mean(vals)), float(np.std(vals, ddof=1))
+
+    doses = [
+        (0, "w52_pathlogsimplex_h12l1p1_e200_s*.json"),
+        (25, "w87_pathlogsimplexdeclamp25_h12l1p1_e200_s*.json"),
+        (100, "w87_pathlogsimplexdeclamp100_h12l1p1_e200_s*.json"),
+        (429, "w84_pathlogsimplexdeclamp_h12l1p1_e200_s*.json"),
+    ]
+    xs, ys, es = [], [], []
+    for k, pat in doses:
+        pats = (pat,) if k != 429 else (pat, "w85_pathlogsimplexdeclamp_h12l1p1_e200_s*.json")
+        m, sd = mean_of(*pats)
+        xs.append(k if k else 8)  # a log axis cannot show zero; the tick says "none"
+        ys.append(m)
+        es.append(sd)
+    ax.errorbar(
+        xs, ys, yerr=es, color=C[0], lw=0.9, marker="o", ms=2.4, capsize=1.5,
+        elinewidth=0.5, label="clamp columns cut"
+    )
+    m, sd = mean_of("w86_pathlogsimplextopvar_h12l1p1_e200_s*.json")
+    ax.errorbar(
+        [429], [m], yerr=[sd], color=C[2], lw=0, marker="s", ms=2.8, capsize=1.5,
+        elinewidth=0.5, label="429 non-clamp (control)"
+    )
+    m, _ = mean_of("w49_pathfbapfbalogfree_h12l1p1_e200_s*.json")
+    ax.axhline(m, color=C[5], lw=0.6, ls=(0, (3, 2)))
+    ax.set_xscale("log")
+    ax.set_xticks([8, 25, 100, 429])
+    ax.set_xticklabels(["none", "25", "100", "429"])
+    ax.set_xlabel("columns dropped, of 4,131")
+    ax.set_ylabel("AUROC, 195 genes")
+    ax.grid(lw=0.3, color="0.85", zorder=0)
+    ax.set_axisbelow(True)
+    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.16), ncol=1, frameon=False, handlelength=1.4)
+    return (
+        "The dashed line is the pFBA store, the best of the four. A hundred columns of "
+        "4,131 carry the vertex store's whole deficit and 25 carry two thirds; the same "
+        "count of non-clamp columns recovers almost nothing."
+    )
+
+
 #: Panel order, left to right and top to bottom. Append here to grow the figure.
 PANELS: list[tuple[str, Callable[[Axes], str]]] = [
     ("Comparators, four media", panel_fba),
@@ -400,6 +449,7 @@ PANELS: list[tuple[str, Callable[[Axes], str]]] = [
     ("Genome-wide transfer", panel_genome),
     ("The solve across solvers", panel_transfer),
     ("What the stores carry", panel_stores),
+    ("What the clamp columns cost", panel_clamp),
     ("The capacity box by tier", panel_kcat),
     ("The store at the build's scale", panel_scale),
 ]
@@ -411,10 +461,14 @@ def main() -> None:
     )
     ncol = 3
     nrow = (len(PANELS) + ncol - 1) // ncol
+    # Width is strict and height is loose, but 170 mm is the ceiling: past it the figure
+    # is scaled down in the document and the 6 pt type goes under Nature's 5 pt floor.
+    # So rows share the budget rather than each taking a fixed 52 mm.
+    row_mm = min(52.0, (MAX_HEIGHT_MM - 6.0) / nrow)
     fig, axes = plt.subplots(
         nrow,
         ncol,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(52.0 * nrow)),
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(row_mm * nrow)),
     )
     flat = np.atleast_1d(axes).ravel()
     captions: list[str] = []
@@ -436,7 +490,18 @@ def main() -> None:
             va="bottom",
             ha="right",
         )
-    fig.subplots_adjust(left=0.165, right=0.945, top=0.90, bottom=0.075, wspace=1.0, hspace=0.78)
+    # hspace and the margins are fractions of the AXIS height, so when rows shrink they
+    # must grow to keep the same millimetres between panels; a legend sits 1.16 axis
+    # heights above its panel and will land on the row above otherwise.
+    scale = 52.0 / row_mm
+    fig.subplots_adjust(
+        left=0.165,
+        right=0.945,
+        top=1.0 - 0.10 * scale * (row_mm * nrow) / (52.0 * 3),
+        bottom=0.075 * scale * (row_mm * nrow) / (52.0 * 3),
+        wspace=1.0,
+        hspace=0.78 * scale,
+    )
     os.makedirs(IMAGES, exist_ok=True)
     stem = osp.join(IMAGES, f"summary_{timestamp()}")
     savefig_true_size_svg(fig, stem + ".svg")

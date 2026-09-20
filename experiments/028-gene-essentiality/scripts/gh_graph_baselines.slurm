@@ -31,4 +31,14 @@ export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
 echo "host $(hostname) gpu ${CUDA_VISIBLE_DEVICES:-none}; arms ${ARMS:?set ARMS}"
 # EXTRA_ARGS: further flags, e.g. --save-logits.
-python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS" ${EXTRA_ARGS:-}
+# SPLITS: a space-separated list of split files under results/splits; the arm set then runs
+# once per split in this one job (one epilog instead of ten), e.g. the ten repeated outer
+# splits of round 75. Unset, the arm set runs once on the released split.
+if [ -n "${SPLITS:-}" ]; then
+    for split in $SPLITS; do
+        echo "=== split $split"
+        python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS" --split "$split" ${EXTRA_ARGS:-}
+    done
+else
+    python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS" ${EXTRA_ARGS:-}
+fi

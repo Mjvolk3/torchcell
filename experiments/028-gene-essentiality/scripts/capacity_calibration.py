@@ -77,6 +77,17 @@ def main() -> None:
     parser.add_argument("--result", default="w26_lpbio_h12l1p1_e200_s2700.json")
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument(
+        "--thermo-source",
+        default=None,
+        choices=("shipped", "equilibrator", "union", "union_external"),
+        help=(
+            "Override the result file's thermodynamic route. Under the module rounds' "
+            "settings every constraint weight is multiplied by a capacity scale of zero, "
+            "so this is the control that says whether the route reaches the program at "
+            "all. The output file is suffixed with the route."
+        ),
+    )
+    parser.add_argument(
         "--kcat-tier",
         default=None,
         choices=("measured", "predicted"),
@@ -101,6 +112,8 @@ def main() -> None:
     cell = BxCell(**result["cell"])
     if args.kcat_tier is not None:
         cell = cell.model_copy(update={"kcat_tier": args.kcat_tier})
+    if args.thermo_source is not None:
+        cell = cell.model_copy(update={"thermo_source": args.thermo_source})
     assert cell.split_file is not None
     cfg = load_config()
     NODE_EMBEDDING_NAMES[:] = list(cell.node_embeddings)
@@ -146,6 +159,8 @@ def main() -> None:
     quantiles = (0.05, 0.25, 0.5, 0.75, 0.95)
     parameters = {
         "kcat_tier": cell.kcat_tier,
+        "thermo_source": cell.thermo_source,
+        "constraint_final_scale": float(layer.config.constraint_final_scale),
         "kcat_tier_counts": dict(layer.kcat_tier_counts),
         "n_units": int(layer.n_units),
         "n_gpr_reactions": int(gpr_mask.sum()),
@@ -208,6 +223,8 @@ def main() -> None:
     suffix = "_elastic" if args.lp_slack_penalty > 0 else ""
     if args.kcat_tier is not None:
         suffix += f"_{args.kcat_tier}"
+    if args.thermo_source is not None:
+        suffix += f"_thermo_{args.thermo_source}"
     path = osp.join(RESULTS_DIR, f"capacity_calibration{suffix}.json")
     with open(path, "w") as fh:
         json.dump(out, fh, indent=2)

@@ -2065,8 +2065,38 @@ predictions is a looser box, which the calibration then scales less. What the
 calibration does not say is how a trained cell reads under the measured tier, since
 round 15c's result is a growth column that ranked the held-out genes at 0.84 on one
 seed of three with the ceilings binding at 3 to 8 percent of reactions, and a box that
-does not bind has no ceilings to bind. That comparison is a training round and has not
-been run.
+does not bind has no ceilings to bind.
+
+Round 67 trains it. Round 15c's two cells run again at capacity scale 100, where both
+tiers still bind, with the measured tier in place of the predicted one and everything
+else held, three seeds each (Table~\ref{tab:w83}, Figure~\ref{fig:w83}).
+
+\input{tables/round_w83}
+
+\tcfigfit[1.0]{figures/w83_readout_2026-09-20-01-00-42.pdf}{\textbf{Round 67, the
+  capacity ceilings from the measured turnover tier.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w83}.}{fig:w83}
+
+The looser box buys feasibility and not ranking. On the gated cell the tier does
+nothing: 0.800 against 0.803 as seed means, one seed of three up, a paired mean of
+$+0.003$ inside the spread. On the forced growth column it changes which failure
+happens. Under the predicted tier two of three seeds enter the absorbing infeasible
+state and select epoch 2 at 0.500, with the third reading 0.8425; under the measured
+tier no seed collapses, all three select between epochs 47 and 174, and they read
+0.669, 0.759 and 0.669, a seed mean of 0.699 against 0.614. So the tier removes the
+absorbing state, which is what the calibration predicted for a box that admits growth
+at a third of the scale, and it does not reproduce the 0.84 ranker: round 15c's best
+seed remains a single event on the tighter box. The two seeds reading exactly 0.669 are
+not a coincidence of rounding. The forced readout is the layer's growth column and
+nothing else, and it takes only 19 distinct values over the 195 held-out genes, so the
+ranking is a partition into 19 blocks and two runs that place the genes in the same
+blocks score identically.
 
 The other parameter source cannot matter here, and the same calibration is what says
 so. Thermodynamics enters the anchored layer as a loss term, every constraint weight is

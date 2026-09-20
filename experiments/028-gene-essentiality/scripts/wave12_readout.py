@@ -673,12 +673,14 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
             "w52_pathlogsimplex_h12l1p1_e200_s*.json",
             "w84_pathlogsimplexdeclamp_h12l1p1_e200_s*.json",
             "w85_pathlogsimplexdeclamp_h12l1p1_e200_s*.json",
+            "w86_pathlogsimplextopvar_h12l1p1_e200_s*.json",
         ],
         [
             "pathfbapfbalogfree",
             "pathlogdeclamp",
             "pathlogsimplex",
             "pathlogsimplexdeclamp",
+            "pathlogsimplextopvar",
         ],
     ),
     # Round 67: round 15c's two cells on the measured kcat tier, against the same two
@@ -1016,6 +1018,7 @@ ARM_LABELS = {
     "lpcapgate1000": "gated column + context, the layer that solves, capacity x1000",
     "pathlogdeclamp": "layer-free log1p, pFBA store, clamp columns dropped",
     "pathlogsimplexdeclamp": "layer-free log1p, vertex store, clamp columns dropped",
+    "pathlogsimplextopvar": "layer-free log1p, vertex store, as many non-clamp columns dropped",
     "lpcapbio100meas": "growth column, capacity x100, measured $k_{cat}$ tier",
     "lpcapgate100meas": "gated column + context, capacity x100, measured $k_{cat}$ tier",
     "lpcapbio1000": "growth column, the layer that solves, capacity x1000",

@@ -438,7 +438,10 @@ ROUND_CAPTIONS = {
         "program's dual-simplex vertex store, each beside the same store with every "
         "reaction that reaches the $\\pm100$ clamp on any genotype zeroed "
         "(\\texttt{declamp\\_store.py}: 1 of 4,131 columns from the pFBA store, 429 from "
-        "the vertex store). Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+        "the vertex store), and beside the specificity control, the vertex store with "
+        "the same 429 columns taken instead as the widest that never reach the clamp "
+        "(round 69, \\texttt{--mode topvar}). Batch 32, class weight, 200 epochs, seeds "
+        "2700 to 2705.",
     ),
     "w83": (
         "Round 67, the capacity ceilings from the measured turnover tier",

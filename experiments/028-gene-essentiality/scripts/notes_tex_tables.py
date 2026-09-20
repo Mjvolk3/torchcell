@@ -440,8 +440,10 @@ ROUND_CAPTIONS = {
         "(\\texttt{declamp\\_store.py}: 1 of 4,131 columns from the pFBA store, 429 from "
         "the vertex store), and beside the specificity control, the vertex store with "
         "the same 429 columns taken instead as the widest that never reach the clamp "
-        "(round 69, \\texttt{--mode topvar}). Batch 32, class weight, 200 epochs, seeds "
-        "2700 to 2705.",
+        "(round 69, \\texttt{--mode topvar}), and beside the dose, the 25 and the 100 "
+        "widest of those 429 clamp columns dropped instead of all of them (round 70, "
+        "\\texttt{--mode partial}). Batch 32, class weight, 200 epochs, seeds 2700 to "
+        "2705.",
     ),
     "w83": (
         "Round 67, the capacity ceilings from the measured turnover tier",

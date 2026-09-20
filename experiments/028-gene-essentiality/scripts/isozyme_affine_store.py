@@ -1,0 +1,198 @@
+# experiments/028-gene-essentiality/scripts/isozyme_affine_store.py
+# [[experiments.028-gene-essentiality.scripts.isozyme_affine_store]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/028-gene-essentiality/scripts/isozyme_affine_store
+
+r"""The gene-protein-reaction redundancy of each gene, as affine columns beside the solve.
+
+``misclass_enrichment.py`` measured which essential genes the transformer with the
+layer-free solve ranks low on the released 195: the 19 of 31 whose FBA knockout growth
+ratio is 1.0 (mean misrank 0.134 against 0.025, effect 0.91, $q$ 0.003). For those genes
+the solve reroutes, through an isozyme or around the reaction, so the deletion's flux
+vector is close to the wild type's and cannot mark them. What the vector does not carry is
+HOW the gene is dispensable to the program: whether another gene set catalyzes its
+reactions, and how many. This script reads that from yeast-GEM's gene-protein-reaction
+rules, expanded to disjunctive normal form (one term per alternative gene set).
+
+Per gene, over the reactions whose rule names it:
+
+* ``gpr_n_reactions``: how many reactions;
+* ``gpr_n_sole``: how many of them the gene's deletion alone disables (the rule evaluates
+  false with the gene knocked out);
+* ``gpr_n_covered``: how many stay enabled, so an alternative gene set covers them;
+* ``gpr_min_alternatives`` and ``gpr_mean_alternatives``: the number of alternative gene
+  sets (terms not containing the gene), minimum and mean over its reactions;
+* ``gpr_max_cosubunits``: the largest number of other genes in a term with it, its complex
+  membership.
+
+All are non-negative counts, so the trainer's $\log(1 + |v|)$ keeps their order. The store
+``ess_solve_encodings_YPD_pfbagpr.npz`` is the pFBA deletion vector with the six columns
+appended, in the solve store's shape, read through ``ESS_SOLVE_TABLE``. Writes
+``results/isozyme_affine_store.json`` with the counts and, for the released held-out
+essential genes, the columns beside the growth ratio.
+
+    CUDA_VISIBLE_DEVICES="" PYTHONPATH=$PWD \
+        python experiments/028-gene-essentiality/scripts/isozyme_affine_store.py
+"""
+
+from __future__ import annotations
+
+import ast
+import csv
+import gzip
+import itertools
+import json
+import os
+import os.path as osp
+
+import numpy as np
+from dotenv import load_dotenv
+
+from torchcell.metabolism.yeast_GEM import YeastGEM
+
+load_dotenv()
+DATA_ROOT = os.environ["DATA_ROOT"]
+EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
+RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
+TABLE_DIR = osp.join(DATA_ROOT, "data/torchcell/reference_flux")
+PFBA_STORE = osp.join(TABLE_DIR, "ess_solve_encodings_YPD.npz")
+COLUMNS = [
+    "gpr_n_reactions",
+    "gpr_n_sole",
+    "gpr_n_covered",
+    "gpr_min_alternatives",
+    "gpr_mean_alternatives",
+    "gpr_max_cosubunits",
+]
+#: A rule whose normal form passes this many terms is a modeling artifact worth seeing.
+MAX_TERMS = 20000
+
+
+def normal_form(node: ast.AST) -> list[frozenset[str]]:
+    """A rule's alternative gene sets: OR concatenates, AND takes the product."""
+    if isinstance(node, ast.Name):
+        return [frozenset([node.id])]
+    assert isinstance(node, ast.BoolOp), ast.dump(node)
+    parts = [normal_form(v) for v in node.values]
+    if isinstance(node.op, ast.Or):
+        return list(dict.fromkeys(t for p in parts for t in p))
+    n_terms = int(np.prod([len(p) for p in parts]))
+    assert n_terms <= MAX_TERMS, n_terms
+    return list(
+        dict.fromkeys(frozenset().union(*combo) for combo in itertools.product(*parts))
+    )
+
+
+def main() -> None:
+    model = YeastGEM().model
+    per_gene: dict[str, list[tuple[int, int, int]]] = {}
+    largest = 0
+    for rxn in model.reactions:
+        if rxn.gpr.body is None:
+            continue
+        terms = normal_form(rxn.gpr.body)
+        # A term that contains another is redundant: the smaller set already suffices.
+        terms = [t for t in terms if not any(o < t for o in terms)]
+        largest = max(largest, len(terms))
+        for gene in set().union(*terms):
+            with_gene = [t for t in terms if gene in t]
+            without = [t for t in terms if gene not in t]
+            per_gene.setdefault(gene, []).append(
+                (len(without), max(len(t) - 1 for t in with_gene), int(not without))
+            )
+
+    pfba = np.load(PFBA_STORE, allow_pickle=False)
+    genes = [str(g) for g in pfba["genes"]]
+    block = np.zeros((len(genes), len(COLUMNS)), dtype=np.float32)
+    for i, gene in enumerate(genes):
+        rows = per_gene.get(gene, [])
+        if not rows:
+            continue
+        alternatives = [r[0] for r in rows]
+        n_sole = sum(r[2] for r in rows)
+        block[i] = [
+            len(rows),
+            n_sole,
+            len(rows) - n_sole,
+            min(alternatives),
+            float(np.mean(alternatives)),
+            max(r[1] for r in rows),
+        ]
+
+    path = osp.join(TABLE_DIR, "ess_solve_encodings_YPD_pfbagpr.npz")
+    provenance = {
+        "method": (
+            "the pFBA deletion vector of ess_solve_encodings_YPD.npz with six columns of "
+            "gene-protein-reaction redundancy appended, from yeast-GEM's rules in "
+            "disjunctive normal form; written by isozyme_affine_store.py"
+        ),
+        "gem_version": YeastGEM().version,
+        "source_store": PFBA_STORE,
+        "source_store_provenance": json.loads(str(pfba["provenance"])),
+        "columns": COLUMNS,
+    }
+    np.savez_compressed(
+        path,
+        genes=np.array(genes),
+        v_deletion=np.concatenate(
+            [pfba["v_deletion"].astype(np.float32), block], axis=1
+        ),
+        v_wild_type=np.concatenate(
+            [
+                pfba["v_wild_type"].astype(np.float32),
+                np.zeros(len(COLUMNS), dtype=np.float32),
+            ]
+        ),
+        rxn_ids=np.array([str(r) for r in pfba["rxn_ids"]] + COLUMNS),
+        provenance=json.dumps(provenance),
+    )
+
+    # What the columns say about the genes the enrichment named: the released held-out
+    # essential genes, beside their YPD growth ratio.
+    with gzip.open(
+        osp.join(RESULTS_DIR, "splits", "ess_fcl_val0.2_s0.json.gz"), "rt"
+    ) as fh:
+        split = json.load(fh)
+    with open(osp.join(RESULTS_DIR, "fba_essentiality_per_gene.csv")) as fh:
+        ratio = {r["gene"]: float(r["YPD"]) for r in csv.DictReader(fh)}
+    row_of = {g: i for i, g in enumerate(genes)}
+    held_out_essential = [
+        {
+            "gene": g,
+            "ratio_ypd": ratio[g],
+            **dict(zip(COLUMNS, block[row_of[g]].tolist(), strict=True)),
+        }
+        for g in sorted(split["genes"]["test"])
+        if int(split["labels"][g]) == 1
+    ]
+    viable = [r for r in held_out_essential if r["ratio_ypd"] >= 0.999]
+    report = {
+        "store": path,
+        "shape": [len(genes), int(pfba["v_deletion"].shape[1]) + len(COLUMNS)],
+        "columns": COLUMNS,
+        "n_genes": len(genes),
+        "n_genes_with_a_rule": int((block[:, 0] > 0).sum()),
+        "n_genes_with_a_sole_reaction": int((block[:, 1] > 0).sum()),
+        "n_genes_fully_covered": int(((block[:, 0] > 0) & (block[:, 1] == 0)).sum()),
+        "largest_rule_terms": largest,
+        "held_out_essential": held_out_essential,
+        "held_out_essential_fba_viable": {
+            "n": len(viable),
+            "n_fully_covered_by_alternatives": sum(
+                r["gpr_n_sole"] == 0 for r in viable
+            ),
+            "n_with_a_sole_reaction": sum(r["gpr_n_sole"] > 0 for r in viable),
+        },
+    }
+    out = osp.join(RESULTS_DIR, "isozyme_affine_store.json")
+    with open(out, "w") as fh:
+        json.dump(report, fh, indent=2)
+    print(
+        json.dumps(
+            {k: v for k, v in report.items() if k != "held_out_essential"}, indent=2
+        )
+    )
+    print(out)
+
+
+if __name__ == "__main__":
+    main()

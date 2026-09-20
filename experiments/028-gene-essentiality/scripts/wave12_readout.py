@@ -667,10 +667,12 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
     # cut from, on the same three seeds.
     "w84": (
         [
-            "w49_pathfbapfbalogfree_h12l1p1_e200_s270[012].json",
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",
             "w84_pathlogdeclamp_h12l1p1_e200_s*.json",
-            "w52_pathlogsimplex_h12l1p1_e200_s270[012].json",
+            "w85_pathlogdeclamp_h12l1p1_e200_s*.json",
+            "w52_pathlogsimplex_h12l1p1_e200_s*.json",
             "w84_pathlogsimplexdeclamp_h12l1p1_e200_s*.json",
+            "w85_pathlogsimplexdeclamp_h12l1p1_e200_s*.json",
         ],
         [
             "pathfbapfbalogfree",

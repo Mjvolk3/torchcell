@@ -153,12 +153,13 @@ weight, six encodings). What remains is attribution and the module.
     $10^{-8}$ store with 320 programs uncertified reads 0.02 under it until those rows
     are filled from the looser solves (rounds 55 and 57), so the store's cost is its
     uncertified fraction and a second pass recovers it. Why the dual simplex's vertex is
-    the worst store of the four now has a candidate that the numbers do not refute
-    (Section~\ref{sec:store-discriminability}): not that its rows fail to move, since
-    two readings of that kind fail to order the stores, but that its ten widest columns
-    are all at the clamp where a loop can spin, and that it has the fewest columns which
-    rank genes on their own. Four stores make that an association; the test is a fifth
-    store built to have no such columns.
+    the worst store of the four is answered by an intervention rather than by an
+    association (Section~\ref{sec:store-discriminability}): zeroing every column that
+    reaches the clamp, where a loop can spin, lifts that store from 0.840 to 0.892 on
+    three of three seeds, while the same rule on the pFBA store, where it cuts one
+    column, moves it by $-0.004$. What stays open is the last 0.021 to the pFBA store,
+    and whether a store solved so that no column reaches the clamp beats one cut after
+    the fact.
   \item Of the module's own parameter sources, the $k_{cat}$ tier is measured at
     initialization and the thermodynamic route is measured to be inert: with the
     constraint scale at zero and the sign constraint off, swapping the route leaves the

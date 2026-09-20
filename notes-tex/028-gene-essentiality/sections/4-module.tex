@@ -2006,6 +2006,35 @@ No store has a column that does the job alone. The best single column reads 0.73
 is combining columns in every case and the question is only how many of them carry
 anything.
 
+Round 68 runs the intervention that hypothesis implies. Every reaction that reaches the
+clamp on any genotype is zeroed in a copy of the store, which removes 429 of the vertex
+store's 4,131 columns and exactly one of the pFBA store's, and the same cell is trained
+over each on the three seeds the stores were read with
+(Table~\ref{tab:w84}, Figure~\ref{fig:w84}).
+
+\input{tables/round_w84}
+
+\tcfigfit[1.0]{figures/w84_readout_2026-09-19-23-41-10.pdf}{\textbf{Round 68, the clamp
+  columns dropped.} \textbf{a}, Validation AUROC per epoch, one thin line per seed and
+  the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points), the seed
+  mean and the gene bootstrap of the pooled per-gene logits (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the
+  same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w84}.}{fig:w84}
+
+The cut recovers most of the vertex store's deficit and does nothing to the control.
+The vertex store goes from 0.840 to 0.892 as a seed mean, up on all three seeds by
+0.109, 0.041 and 0.006, and its spread across seeds falls from 0.064 to 0.015, the
+worst seed moving from 0.767 at a selected epoch of 22 to 0.877 at 72. The pFBA store,
+where the same rule cuts one column, goes from 0.914 to 0.909, down on two seeds and up
+on one, a paired mean of $-0.004$ inside its own seed spread. So dropping clamp columns
+is not itself a help, and what it removes from the vertex store is most of what that
+store was costing: the remaining gap to the pFBA store is 0.021 against 0.072 before
+the cut. The vertex is a worse store because an extreme point spends its flux on the
+loops its bounds allow, and those columns vary between genotypes without tracking
+essentiality. What the cut does not recover, and what is still open, is the last 0.02.
+
 \subsection{The capacity box under the two $k_{cat}$ tiers\secstatus{todo}}
 \label{sec:kcat-tier}
 

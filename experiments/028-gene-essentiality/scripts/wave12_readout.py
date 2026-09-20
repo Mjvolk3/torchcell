@@ -662,6 +662,23 @@ ROUNDS: dict[str, tuple[list[str], list[str]]] = {
         ],
         ["pathlogfixed", "pathlogdet", "pathlogdet1", "pathlogdetfixed"],
     ),
+    # Round 68: the clamp-carrying columns dropped from the vertex store (429 of 4,131)
+    # and from the pFBA store (1 of 4,131, the control), each against the store it was
+    # cut from, on the same three seeds.
+    "w84": (
+        [
+            "w49_pathfbapfbalogfree_h12l1p1_e200_s270[012].json",
+            "w84_pathlogdeclamp_h12l1p1_e200_s*.json",
+            "w52_pathlogsimplex_h12l1p1_e200_s270[012].json",
+            "w84_pathlogsimplexdeclamp_h12l1p1_e200_s*.json",
+        ],
+        [
+            "pathfbapfbalogfree",
+            "pathlogdeclamp",
+            "pathlogsimplex",
+            "pathlogsimplexdeclamp",
+        ],
+    ),
     # Round 67: round 15c's two cells on the measured kcat tier, against the same two
     # cells on the predicted tier (round 15c), same seeds and same capacity scale.
     "w83": (
@@ -995,6 +1012,8 @@ ARM_LABELS = {
     "lpcapbio100": "growth column, the layer that solves, capacity x100",
     "lpcapgate100": "gated column + context, the layer that solves, capacity x100",
     "lpcapgate1000": "gated column + context, the layer that solves, capacity x1000",
+    "pathlogdeclamp": "layer-free log1p, pFBA store, clamp columns dropped",
+    "pathlogsimplexdeclamp": "layer-free log1p, vertex store, clamp columns dropped",
     "lpcapbio100meas": "growth column, capacity x100, measured $k_{cat}$ tier",
     "lpcapgate100meas": "gated column + context, capacity x100, measured $k_{cat}$ tier",
     "lpcapbio1000": "growth column, the layer that solves, capacity x1000",

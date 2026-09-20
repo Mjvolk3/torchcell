@@ -4,7 +4,7 @@
 \begin{table}[H]
   \centering
   \footnotesize
-  \caption[The store at the database's scale]{The solve store keyed by (GEM gene subset, medium) over the 025 solid-growth build. The count (upper block) is a cursor scan of the build's LMDB for each record's deleted genes and medium name, written by \texttt{store\_key\_count.py}; the build (lower block) solves the round-27 growth program once per key with every GEM gene of the key deleted, written by \texttt{solid\_growth\_store.py} (job 2471). The build's selection media have no FBA recipe, so every key is solved on synthetic complete medium and keeps its own medium name; the store's medium axis is therefore one medium in this build. The records served exceed the records in the build because a key's row also serves the records whose deletions include it.}
+  \caption[The store at the database's scale]{The solve store keyed by (GEM gene subset, medium) over the 025 solid-growth build. The count (upper block) is a cursor scan of the build's LMDB for each record's deleted genes and medium name, written by \texttt{store\_key\_count.py}; the build (lower block) solves the round-27 growth program once per key with every GEM gene of the key deleted, written by \texttt{solid\_growth\_store.py} (job 2471). The build's selection media have no FBA recipe, so every key is solved on synthetic complete medium and keeps its own medium name; the store's medium axis is therefore one medium in this build. The scan counts a record under every medium name it carries, so the records served exceed the records in the build by the number of records that name two media.}
   \label{tab:store-scale}
   \begin{tabular}{@{}p{95mm}l@{}}
     \hline

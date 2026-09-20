@@ -1697,6 +1697,50 @@ def store_discriminability() -> str | None:
     )
 
 
+def misclass_enrichment() -> str | None:
+    """What the misranked genes of each held-out set share, per model and class."""
+    src = osp.join(RESULTS, "misclass_enrichment.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    rows = []
+    for f in r["families"]:
+        rows.append(
+            f"    \\multicolumn{{5}}{{@{{}}l}}{{\\textit{{{f['held_out_set']}; {f['model']}; "
+            f"{f['gene_class']} ({f['n_genes']:,} genes, {f['n_terms_tested']:,} terms, "
+            f"{f['n_terms_q_below_0_1']:,} at $q < 0.1$)}}}} \\\\"
+        )
+        for t in f["named_features"] + f["top_specific"][:4]:
+            q = f"{t['q']:.3f}" if t["q"] >= 0.001 else "$<$0.001"
+            rows.append(
+                f"    \\quad {t['name']} & {t['n_annotated']:,} & "
+                f"{t['mean_misrank_annotated']:.3f} & {t['mean_misrank_rest']:.3f} & "
+                f"{t['effect']:.2f} ({q}) \\\\"
+            )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[What the misranked genes share]{What the misranked genes of each "
+        "held-out set share, per model and class. A gene's misrank is the fraction of the "
+        "other class on the wrong side of it, averaged over the model's cells; a term is "
+        "tested within one class by a one-sided Mann-Whitney $U$ of the annotated genes' "
+        "misrank against the rest, and the effect is $U$ as a probability, the chance an "
+        "annotated gene is misranked worse than an unannotated one (0.5 is no association), "
+        "with the Benjamini-Hochberg $q$ within the family in parentheses. Rows per "
+        "family: the two named features where both sides hold five genes, then the four "
+        "best specific biological-process terms (at most 5 percent of the class or 12 "
+        "genes, near-duplicates removed). Written by "
+        "\\texttt{misclass\\_enrichment.py}.}\n"
+        "  \\label{tab:misclass-enrichment}\n"
+        "  \\begin{tabular}{@{}p{92mm}rrrr@{}}\n    \\hline\n"
+        "    term & genes & misrank, annotated & misrank, rest & effect ($q$) \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("misclass_enrichment", body, "results/misclass_enrichment.json")
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -2024,6 +2068,7 @@ def main() -> None:
         store_scale(),
         kcat_tier_capacity(),
         store_discriminability(),
+        misclass_enrichment(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

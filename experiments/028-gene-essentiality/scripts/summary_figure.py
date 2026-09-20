@@ -2,17 +2,26 @@
 # [[experiments.028-gene-essentiality.scripts.summary_figure]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/028-gene-essentiality/scripts/summary_figure
 
-"""The document's results on one page, one panel per committed result file.
+"""The study's conclusions on one page: which method, which module form, what scales,
+and which genes are still missed.
 
-Panels, in the order the document reaches them: the comparators computed rather than
-quoted, the reproduction of Flux Cone Learning's own numbers, the fold ensembles along
-the arc of rounds, the families and their post hoc averages, the genome-wide transfer,
-the solve's argmax across solvers as a probe-transfer matrix, what the four stores carry,
-what their clamp columns cost, the capacity box under the two turnover tiers, and the
-store at the database's scale.
+Seven panels, each answering one question from the committed result files:
 
-Nothing is typed here: every number is read from ``results/``. Panels are added by
-appending to ``PANELS``, so the figure grows without the layout being rewritten.
+- **a** what ranks the 195 released held-out genes best, every method on one axis;
+- **b**, **c** which form of the metabolic module helps, on one backbone, and what each
+  costs per cell;
+- **d** what transfers to the 4,674 genome-wide genes no model saw a label for;
+- **e** what the winning module form costs over the whole solid-growth build;
+- **f**, **g** what the misranked genes of each held-out set share
+  (``misclass_enrichment.py``), under the best model of each family.
+
+One color means one thing in every panel: gray a comparator with nothing of ours learned,
+yellow a learned model that reads no solve and no graph, orange the transformer reading
+the metabolic solve, red message passing over the gene graphs, purple an average of the
+two families. A hatch marks a linear program solved inside the training loop.
+
+Panels are placed in millimeters, so a label cannot drift onto its neighbor when a panel
+is added. Nothing is typed here: every number is read from ``results/``.
 
     CUDA_VISIBLE_DEVICES="" PYTHONPATH=$PWD \
         python experiments/028-gene-essentiality/scripts/summary_figure.py
@@ -20,18 +29,23 @@ appending to ``PANELS``, so the figure grows without the layout being rewritten.
 
 from __future__ import annotations
 
+import glob
 import json
 import os
 import os.path as osp
-from typing import Any, Callable
+from typing import Any
 
 import matplotlib
 import numpy as np
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.axes import Axes  # noqa: E402
+from matplotlib.figure import Figure  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
+from matplotlib.patches import Patch  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
 
 from torchcell.timestamp import timestamp  # noqa: E402
@@ -48,8 +62,29 @@ EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
 RESULTS = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
 IMAGES = osp.join(ASSET_IMAGES_DIR, "028-gene-essentiality")
-#: Orange, red, purple and yellow are the primaries and are spent before blue and gray.
-C = PLOT_PALETTE
+
+#: The figure's one color code, held across every panel.
+COMPARATOR = PLOT_PALETTE[5]
+NO_SOLVE = PLOT_PALETTE[3]
+SOLVE = PLOT_PALETTE[0]
+GRAPH = PLOT_PALETTE[1]
+AVERAGE = PLOT_PALETTE[2]
+
+WIDTH_MM = PANEL_WIDTHS_MM["full"]
+HEIGHT_MM = 169.0
+assert HEIGHT_MM <= MAX_HEIGHT_MM
+
+
+class Bar(BaseModel):
+    """One horizontal bar: what it is, its value, and how it is drawn."""
+
+    label: str
+    value: float
+    color: str
+    interval: tuple[float, float] | None = None
+    points: list[float] = []
+    hatched: bool = False
+    minutes: float | None = None
 
 
 def read(name: str) -> Any:
@@ -57,14 +92,32 @@ def read(name: str) -> Any:
         return json.load(fh)
 
 
-def box(ax: Axes) -> None:
+def place(fig: Figure, x: float, top: float, w: float, h: float) -> Axes:
+    """An axes whose box is given in millimeters from the figure's top-left corner."""
+    ax = fig.add_axes(
+        (x / WIDTH_MM, 1.0 - (top + h) / HEIGHT_MM, w / WIDTH_MM, h / HEIGHT_MM)
+    )
     for sp in ax.spines.values():
         sp.set_linewidth(0.5)
     ax.tick_params(width=0.5, length=2)
+    return ax
 
 
-def auroc_axis(ax: Axes, low: float = 0.4, high: float = 1.0) -> None:
-    """A 0-to-1 metric axis: a gridline every 0.1, a label every 0.2."""
+def letter(fig: Figure, x: float, top: float, text: str) -> None:
+    """A panel letter at the outer top-left of the panel's block, on the title line."""
+    fig.text(
+        x / WIDTH_MM,
+        1.0 - (top - 1.0) / HEIGHT_MM,
+        text,
+        fontsize=8,
+        fontweight="bold",
+        va="bottom",
+        ha="left",
+    )
+
+
+def auroc_axis(ax: Axes, low: float, high: float) -> None:
+    """A gridline every 0.1 and a label every 0.2."""
     ax.set_xlim(low, high)
     ax.xaxis.set_major_locator(MultipleLocator(0.2))
     ax.xaxis.set_minor_locator(MultipleLocator(0.1))
@@ -73,441 +126,616 @@ def auroc_axis(ax: Axes, low: float = 0.4, high: float = 1.0) -> None:
     ax.set_axisbelow(True)
 
 
-def hbars(
-    ax: Axes,
-    labels: list[str],
-    values: list[float],
-    colors: list[str],
-    err: list[tuple[float, float]] | None = None,
-) -> None:
-    y = np.arange(len(labels))[::-1]
-    xerr = None
-    if err is not None:
-        xerr = np.array(
-            [[v - lo for v, (lo, _) in zip(values, err, strict=True)],
-             [hi - v for v, (_, hi) in zip(values, err, strict=True)]]
-        )
-    ax.barh(y, values, height=0.68, color=colors, edgecolor="black", lw=0.4, zorder=3)
-    if xerr is not None:
-        ax.errorbar(
-            values, y, xerr=xerr, fmt="none", ecolor="black", elinewidth=0.5, capsize=1.2, zorder=4
-        )
-    ax.set_yticks(y)
-    ax.set_yticklabels(labels)
-    ax.set_ylim(-0.6, len(labels) - 0.4)
-
-
-# --------------------------------------------------------------------------- panels
-
-
-def panel_fba(ax: Axes) -> str:
-    """The comparator FBA runs on four media, over the 1,121 labeled genes."""
-    d = read("fba_essentiality_by_medium.json")
-    label = {
-        "shipped": "shipped bounds",
-        "SM": "synthetic minimal",
-        "SC": "synthetic complete",
-        "YPD": "YPD approximation",
-    }
-    rows = []
-    for r in d["rows"]:
-        s = next(x for x in r["scores"] if x["gene_set"] == "all_labeled")
-        rows.append((label[r["medium"]], s["auroc"], (s["auroc_ci_low"], s["auroc_ci_high"])))
-    hbars(
-        ax,
-        [r[0] for r in rows],
-        [r[1] for r in rows],
-        [C[i % 4] for i in range(len(rows))],
-        [r[2] for r in rows],
-    )
-    auroc_axis(ax, 0.4, 0.8)
-    ax.set_xlabel("AUROC, 1,121 labeled genes")
-    return "The growth ratio of a single-gene deletion, four media, gene bootstrap."
-
-
-def panel_fcl(ax: Axes) -> str:
-    """Flux Cone Learning's published numbers against our recomputation of them."""
-    d = read("fcl_comparison.json")
-    name = {
-        "fcl_cv_5fold_mean": "FCL, folds inside training",
-        "fcl_test_223": "FCL, 223 held out",
-        "fba_all_1121": "FBA, 1,121 labeled",
-    }
-    rows = [r for r in d["reproduction_check"] if r["name"] in name]
-    y = np.arange(len(rows))[::-1]
+def draw_bars(ax: Axes, bars: list[Bar], values: list[float] | None = None) -> None:
+    """Bars top to bottom in the order given; seed points and intervals where present."""
+    y = np.arange(len(bars))[::-1]
+    shown = values if values is not None else [b.value for b in bars]
     ax.barh(
-        y + 0.18, [r["published"] for r in rows], height=0.34, color=C[0],
-        edgecolor="black", lw=0.4, label="published", zorder=3
+        y,
+        shown,
+        height=0.7,
+        color=[b.color for b in bars],
+        edgecolor="black",
+        lw=0.4,
+        hatch=None,
+        zorder=3,
     )
-    ax.barh(
-        y - 0.18, [r["recomputed"] for r in rows], height=0.34, color=C[1],
-        edgecolor="black", lw=0.4, label="recomputed here", zorder=3
-    )
+    for yi, b, v in zip(y, bars, shown, strict=True):
+        if b.hatched:
+            ax.barh(
+                yi,
+                v,
+                height=0.7,
+                color="none",
+                edgecolor="black",
+                lw=0.4,
+                hatch="/////",
+                zorder=3.5,
+            )
+        if values is not None:
+            continue
+        if b.interval is not None:
+            ax.errorbar(
+                b.value,
+                yi,
+                xerr=[[b.value - b.interval[0]], [b.interval[1] - b.value]],
+                fmt="none",
+                ecolor="black",
+                elinewidth=0.5,
+                capsize=1.2,
+                zorder=5,
+            )
+        if b.points:
+            spread = (
+                np.linspace(-0.22, 0.22, len(b.points)) if len(b.points) > 1 else [0.0]
+            )
+            ax.scatter(
+                b.points, yi + np.array(spread), s=2.2, color="black", lw=0, zorder=6
+            )
     ax.set_yticks(y)
-    ax.set_yticklabels([name[r["name"]] for r in rows])
-    ax.set_ylim(-0.6, len(rows) - 0.4)
-    auroc_axis(ax, 0.4, 0.9)
-    ax.set_xlabel("AUROC")
-    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.16), ncol=2, frameon=False, handlelength=1.0)
-    return "Each published value reproduces to the third decimal on its own gene set."
+    ax.set_yticklabels([b.label for b in bars])
+    ax.set_ylim(-0.6, len(bars) - 0.4)
+    ax.tick_params(axis="y", length=0)
 
 
-#: The arc of fold ensembles, round by round, with the label the document uses.
-ENSEMBLE_ARC = [
-    ("w14_cv_ensemble.json", "indicator"),
-    ("w16_fbacv_ensemble.json", "+ FBA affine"),
-    ("w23_chromprotcv_ensemble.json", "+ chromosome, ProtT5"),
-    ("w28_cspcv_ensemble.json", "+ pathway"),
-    ("w41_pathfluxcv_ensemble.json", "+ flux layer"),
-    ("w43_pathoffcv_ensemble.json", "cached solve, no layer"),
-    ("w50_pathlogfreecv_ensemble.json", "layer-free log1p"),
-    ("w53_pathlogipmcv_ensemble.json", "interior-point store"),
-    ("w55_pathlogpdlpcv_ensemble.json", "PDLP store"),
-    ("w74_pathgopfbaaffcv_ensemble.json", "+ GO in the affine"),
+# --------------------------------------------------------------------------- data
+
+
+def fold_ensemble(name: str) -> tuple[float, tuple[float, float]]:
+    e = read(name)
+    return e["ensemble_auroc"], (e["ensemble_ci_low"], e["ensemble_ci_high"])
+
+
+def leaderboard() -> list[Bar]:
+    """Every method on the 195 released held-out genes, worst to best."""
+    fcl = {
+        s["method"]: s
+        for s in read("fcl_comparison.json")["scored"]
+        if s["gene_set"] == "ours_scored" and s["seed"] is None
+    }
+    ladder = max(read("logistic_baselines.json")["rows"], key=lambda r: r["val_auroc"])
+    cheap = read("graph_baselines_folds.json")["arms"]
+    go = read("graph_baselines_go_folds.json")["arms"]["GCN400"]
+    families = read("family_ensembles_folds.json")["combinations"]
+
+    def average(member: str) -> dict[str, Any]:
+        return next(
+            c
+            for c in families
+            if len(c["families"]) == 2
+            and any(member in f for f in c["families"])
+            and any("GO convolution" in f for f in c["families"])
+        )
+
+    bars = [
+        Bar(
+            label="FBA growth ratio, YPD",
+            value=fcl["FBA"]["auroc"],
+            color=COMPARATOR,
+            interval=(fcl["FBA"]["ci_low"], fcl["FBA"]["ci_high"]),
+        ),
+        Bar(
+            label="Flux Cone Learning, released",
+            value=fcl["FCL"]["auroc"],
+            color=COMPARATOR,
+            interval=(fcl["FCL"]["ci_low"], fcl["FCL"]["ci_high"]),
+        ),
+        Bar(
+            label=f"{ladder['model']} on GO + FBA ratios",
+            value=ladder["test_auroc"],
+            color=COMPARATOR,
+            interval=(ladder["test_ci_low"], ladder["test_ci_high"]),
+        ),
+        Bar(
+            label="MLP, three inputs",
+            value=cheap["MLP"]["ensemble_auroc"],
+            color=NO_SOLVE,
+            interval=tuple(cheap["MLP"]["ensemble_ci"]),
+        ),
+        Bar(
+            label="graph convolution, three inputs",
+            value=cheap["GCN"]["ensemble_auroc"],
+            color=GRAPH,
+            interval=tuple(cheap["GCN"]["ensemble_ci"]),
+        ),
+    ]
+    for name, label in [
+        ("w23_chromprotcv_ensemble.json", "transformer + FBA ratios (reported)"),
+        ("w41_pathfluxcv_ensemble.json", "transformer + learned-ceiling LP"),
+        ("w43_pathoffcv_ensemble.json", "transformer + cached solve head"),
+        ("w50_pathlogfreecv_ensemble.json", "transformer + layer-free solve"),
+    ]:
+        value, interval = fold_ensemble(name)
+        bars.append(
+            Bar(
+                label=label,
+                value=value,
+                color=SOLVE,
+                interval=interval,
+                hatched="LP" in label,
+            )
+        )
+    bars.append(
+        Bar(
+            label="graph convolution on GO",
+            value=go["ensemble_auroc"],
+            color=GRAPH,
+            interval=tuple(go["ensemble_ci"]),
+        )
+    )
+    for member, label in [
+        ("cached solve", "GO graph + cached solve head"),
+        ("layer-free log1p vector", "GO graph + layer-free solve"),
+    ]:
+        c = average(member)
+        bars.append(
+            Bar(
+                label=label,
+                value=c["auroc"],
+                color=AVERAGE,
+                interval=(c["ci_low"], c["ci_high"]),
+            )
+        )
+    return sorted(bars, key=lambda b: -b.value)
+
+
+def cells(*patterns: str) -> tuple[list[float], float]:
+    """Held-out AUROC per cell and the mean wall minutes, over every matching cell."""
+    aurocs, minutes = [], []
+    for pat in patterns:
+        for p in sorted(glob.glob(osp.join(RESULTS, pat))):
+            with open(p) as fh:
+                d = json.load(fh)
+            aurocs.append(float(d["test"]["pinned"]["auroc"]))
+            minutes.append(float(d["wall_time_s"]) / 60.0)
+    assert aurocs, patterns
+    return aurocs, float(np.mean(minutes))
+
+
+#: The module's forms on the pathway multi-hot with ProtT5 (the last on ProtT5 alone, the
+#: only backbone the forced column ran on): label, result globs, color, LP in the loop.
+MODULE_FORMS: list[tuple[str, tuple[str, ...], str, bool]] = [
+    ("no metabolism", ("w39_pathpool_h12l1p1_e200_s*.json",), NO_SOLVE, False),
+    (
+        "FBA growth ratios on the logit",
+        ("w38_protpathfba_h12l1p1_e200_s*.json",),
+        SOLVE,
+        False,
+    ),
+    (
+        "solve vector, layer-free, on the logit",
+        ("w49_pathfbapfbalogfree_h12l1p1_e200_s*.json",),
+        SOLVE,
+        False,
+    ),
+    (
+        "solve vector on the node",
+        ("w59_pathsolvenode_h12l1p1_e200_s*.json",),
+        SOLVE,
+        False,
+    ),
+    (
+        "cached solve, flux head",
+        ("w43_pathlpoffgateflux_h12l1p1_e200_s*.json",),
+        SOLVE,
+        True,
+    ),
+    (
+        "learned ceilings, flux head",
+        ("w39_pathlpelgateflux_h12l1p1_e200_s*.json",),
+        SOLVE,
+        True,
+    ),
+    (
+        "learned ceilings, gated growth",
+        ("w39_pathlpelgate100_h12l1p1_e200_s*.json",),
+        SOLVE,
+        True,
+    ),
+    (
+        "learned ceilings, forced growth",
+        (
+            "w30_lpcapbio100_h12l1p1_e200_s*.json",
+            "w88_lpcapbio100_h12l1p1_e200_s*.json",
+            "w89_lpcapbio100_h12l1p1_e200_s*.json",
+        ),
+        SOLVE,
+        True,
+    ),
 ]
 
 
-def panel_ensembles(ax: Axes) -> str:
-    """The five-fold ensemble of each form, in the order the rounds reached them."""
-    rows = []
-    for name, label in ENSEMBLE_ARC:
-        e = read(name)
-        rows.append((label, e["ensemble_auroc"], (e["ensemble_ci_low"], e["ensemble_ci_high"])))
-    hbars(
-        ax,
-        [r[0] for r in rows],
-        [r[1] for r in rows],
-        [C[0]] * len(rows),
-        [r[2] for r in rows],
-    )
-    auroc_axis(ax, 0.6, 1.0)
-    ax.set_xlabel("fold-ensemble AUROC, 195 genes")
-    return "Five fold models per form, their standardized logits averaged."
+def module_forms() -> list[Bar]:
+    bars = []
+    for label, patterns, color, in_loop in MODULE_FORMS:
+        aurocs, minutes = cells(*patterns)
+        bars.append(
+            Bar(
+                label=label,
+                value=float(np.mean(aurocs)),
+                color=color,
+                points=aurocs,
+                hatched=in_loop,
+                minutes=minutes,
+            )
+        )
+    return bars
 
 
-def panel_families(ax: Axes) -> str:
-    """Single families and the post hoc averages of them."""
-    d = read("family_ensembles.json")
-    singles = [c for c in d["combinations"] if len(c["families"]) == 1]
-    multi = [c for c in d["combinations"] if len(c["families"]) > 1]
-    singles = sorted(singles, key=lambda c: c["auroc"])[-4:]
-    multi = sorted(multi, key=lambda c: c["auroc"])[-3:]
-    short = {
-        "pathway + ProtT5 + affine (round 22, 3 seeds)": "affine",
-        "flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)": "flux head",
-        "flux head, ProtT5 (rounds 21 and 24, 6 seeds)": "flux head, ProtT5",
-        "layer-free log1p vector + affine, pathway + ProtT5 (round 33, 6 seeds)": "layer-free",
-        "layer-free log1p, interior-point store (round 36, 6 seeds)": "layer-free, ipm",
-        "cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)": "cached solve",
-        "GO convolution (400 epochs, 3 seeds)": "GO conv",
-        "GO convolution (400 epochs, 6 seeds)": "GO conv, 6 seeds",
-    }
-
-    def name(c: dict[str, Any]) -> str:
-        if len(c["families"]) == 1:
-            return short.get(c["families"][0], c["families"][0])
-        # In a combination the seed count is not what distinguishes the members, so the
-        # labels drop to their shortest form and the caption carries the rest.
-        parts = [short.get(f, f).replace("GO conv, 6 seeds", "GO").replace("GO conv", "GO")
-                 for f in c["families"]]
-        return " + ".join(parts)
-
-    rows = singles + multi
-    colors = [C[0]] * len(singles) + [C[2]] * len(multi)
-    hbars(
-        ax,
-        [name(c) for c in rows],
-        [c["auroc"] for c in rows],
-        colors,
-        [(c["ci_low"], c["ci_high"]) for c in rows],
-    )
-    auroc_axis(ax, 0.8, 1.0)
-    ax.set_xlabel("AUROC, 195 genes")
-    return (
-        "The four best single families in orange, the three best post hoc averages of "
-        "them in purple; an average over families is the document's highest number."
-    )
-
-
-def panel_genome(ax: Axes) -> str:
-    """The same forms scored on the genome-wide held-out set."""
-    d = read("genome_heldout_readout.json")
-    keep = {
-        "graph convolution, physical graph, degree and clustering": "graph, degree",
-        "graph convolution on ProtT5 + FBA ratios": "graph, ProtT5 + ratios",
-        "graph convolution, union of nine, ProtT5": "graph, union, ProtT5",
-        "graph convolution on GO alone, 400 epochs": "graph, GO",
-        "pathway multi-hot + ProtT5 + FBA affine (round 22 recipe)": "transformer, affine",
-        "layer-free log1p vector + affine, pathway + ProtT5 (round 33 form)": "transformer, layer-free",
-        "cached solve + flux head, pathway + ProtT5 (round 27 form)": "transformer, cached solve",
-        "MLP on ProtT5 alone": "MLP, ProtT5",
-    }
-    rows = [
-        (keep[a["label"]], a["pooled_auroc"])
-        for a in d["arms"]
-        if a["label"] in keep and a.get("pooled_auroc") is not None
+def genome_transfer() -> list[Bar]:
+    arms = {a["label"]: a for a in read("genome_heldout_readout.json")["arms"]}
+    keep = [
+        (
+            "graph convolution, physical graph, degree and clustering",
+            "graph convolution, degree only",
+            GRAPH,
+        ),
+        (
+            "graph convolution, union of nine, ProtT5",
+            "graph convolution, ProtT5",
+            GRAPH,
+        ),
+        (
+            "graph convolution on the three inputs, 400 epochs",
+            "graph convolution, three inputs",
+            GRAPH,
+        ),
+        ("graph convolution on GO alone, 400 epochs", "graph convolution on GO", GRAPH),
+        (
+            "pathway multi-hot + ProtT5 + FBA affine (round 22 recipe)",
+            "transformer + FBA ratios",
+            SOLVE,
+        ),
+        (
+            "layer-free log1p vector + affine, pathway + ProtT5 (round 33 form)",
+            "transformer + layer-free solve",
+            SOLVE,
+        ),
+        (
+            "cached solve + flux head, pathway + ProtT5 (round 27 form)",
+            "transformer + cached solve head",
+            SOLVE,
+        ),
+        ("MLP on the three inputs", "MLP, three inputs", NO_SOLVE),
     ]
-    rows.sort(key=lambda r: r[1])
-    colors = [C[5] if "MLP" in r[0] or "transformer" in r[0] else C[1] for r in rows]
-    hbars(ax, [r[0] for r in rows], [r[1] for r in rows], colors)
-    ax.axvline(0.5, color="black", lw=0.5, ls=(0, (2, 2)), zorder=5)
-    auroc_axis(ax, 0.4, 0.8)
-    ax.set_xlabel(f"AUROC, {d['n_test_genes']:,} held-out genes")
-    return (
-        "Red is message passing over a gene graph, gray is the transformer and the "
-        "multilayer perceptron; the dashed line is chance."
+    bars = [
+        Bar(
+            label=label,
+            value=arms[k]["pooled_auroc"],
+            color=color,
+            interval=tuple(arms[k]["pooled_ci"]),
+        )
+        for k, label, color in keep
+    ]
+    raw = next(
+        r
+        for r in read("degree_by_class.json")["reads"]
+        if r["graph"] == "physical" and r["n_genes"] == 4674
     )
-
-
-def panel_transfer(ax: Axes) -> str:
-    """A probe fitted on one solver's flux, scored on another's."""
-    d = read("solve_tolerance_transfer.json")
-    names = sorted({p["fit"] for p in d["pairs"]})
-    short = {
-        "simplex_exact": "simplex",
-        "simplex_exact2": "simplex 2",
-        "ipm_nocross_1e-4": "ipm 4",
-        "ipm_nocross_1e-6": "ipm 6",
-        "ipm_nocross_1e-8": "ipm 8",
-        "pdlp_1e-4": "PDLP 4",
-        "pdlp_1e-6": "PDLP 6",
-        "pdlp_1e-8": "PDLP 8",
-    }
-    m = np.full((len(names), len(names)), np.nan)
-    for p in d["pairs"]:
-        m[names.index(p["fit"]), names.index(p["score"])] = p["probe_auroc_test"]
-    # pcolormesh rather than imshow: an image is raster in the PDF, and `make check`
-    # wants a figure of this kind to be vector throughout.
-    im = ax.pcolormesh(m, cmap="cividis", vmin=0.45, vmax=0.80, rasterized=False)
-    ax.invert_yaxis()
-    ticks = np.arange(len(names)) + 0.5
-    ax.set_xticks(ticks)
-    ax.set_xticklabels([short.get(n, n) for n in names], rotation=45, ha="right")
-    ax.set_yticks(ticks)
-    ax.set_yticklabels([short.get(n, n) for n in names])
-    for i in range(len(names)):
-        for j in range(len(names)):
-            if not np.isnan(m[i, j]):
-                ax.text(
-                    j + 0.5, i + 0.5, f"{m[i, j]:.2f}", ha="center", va="center",
-                    fontsize=4.6, color="white" if m[i, j] < 0.68 else "black",
-                )
-    ax.set_ylabel("fitted on")
-    cax = ax.inset_axes((1.05, 0.0, 0.045, 1.0))
-    cb = ax.figure.colorbar(im, cax=cax)
-    cb.solids.set_rasterized(False)
-    cb.outline.set_linewidth(0.5)
-    cb.ax.tick_params(width=0.5, length=2)
-    cb.set_label("probe AUROC", labelpad=2)
-    return (
-        "One growth program, seven solves. The diagonal is the within-solver number; a "
-        "probe carried across solvers loses up to 0.35, and across tolerances of one "
-        "solver loses nothing."
+    bars.append(
+        Bar(
+            label="physical degree, nothing trained",
+            value=raw["auroc"],
+            color=COMPARATOR,
+            interval=tuple(raw["ci"]),
+        )
     )
+    return sorted(bars, key=lambda b: -b.value)
 
 
-def panel_stores(ax: Axes) -> str:
-    """How far each store's flux sits from the pFBA store's, in the head's encoding."""
-    d = read("store_stats.json")
-    short = {
-        "pFBA (two-stage, scipy HiGHS)": "pFBA",
-        "dual simplex (vertex)": "dual simplex",
-        "interior point, no crossover": "interior point",
-        "PDLP, no crossover": "PDLP",
-    }
-    rows = [s for s in d["stores"] if s["store"] != "pFBA (two-stage, scipy HiGHS)"]
-    y = np.arange(len(rows))[::-1]
-    ax.barh(
-        y + 0.18, [s["log1p_rel_l2_to_pfba_median"] for s in rows], height=0.34,
-        color=C[0], edgecolor="black", lw=0.4, label="relative $L_2$", zorder=3
-    )
-    ax.barh(
-        y - 0.18, [100 * s["frac_moved_gt_0_01_vs_pfba_mean"] for s in rows], height=0.34,
-        color=C[3], edgecolor="black", lw=0.4, label="reactions moved (%)", zorder=3
-    )
-    ax.set_yticks(y)
-    ax.set_yticklabels([short[s["store"]] for s in rows])
-    ax.set_ylim(-0.6, len(rows) - 0.4)
-    ax.set_xlabel("distance from the pFBA store")
-    ax.grid(axis="x", lw=0.3, color="0.85", zorder=0)
-    ax.set_axisbelow(True)
-    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.16), ncol=1, frameon=False, handlelength=1.0)
-    return (
-        "The same optimum, four points. Every store carries one growth value and a "
-        "different flux that attains it."
-    )
-
-
-def panel_kcat(ax: Axes) -> str:
-    """Median growth against the capacity scale, under each turnover tier."""
-    style = {"measured": (C[0], "-"), "predicted": (C[2], "--")}
-    for tier, (color, ls) in style.items():
-        d = read(f"capacity_calibration_{tier}.json")
-        scales = [r["capacity_scale"] for r in d["rows"]]
-        growth = [r["growth_median"] for r in d["rows"]]
-        ax.plot(scales, growth, ls, color=color, lw=0.9, marker="o", ms=2.0, label=f"{tier} tier")
-        first = next(r["capacity_scale"] for r in d["rows"] if r["feasible_frac"] >= 1.0)
-        ax.axvline(first, color=color, lw=0.5, ls=(0, (1, 2)))
-    ax.set_xscale("log")
-    ax.set_xlabel("capacity scale")
-    ax.set_ylabel("median growth, mmol/gDW/h")
-    ax.grid(lw=0.3, color="0.85", zorder=0)
-    ax.set_axisbelow(True)
-    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.16), ncol=2, frameon=False, handlelength=1.4)
-    return (
-        "The dotted rule on each curve is the smallest scale at which every genotype's "
-        "program is feasible; the measured tier is the looser box at every scale."
-    )
-
-
-def panel_scale(ax: Axes) -> str:
-    """What sizes the store over the whole solid-growth build."""
+def store_scale() -> list[Bar]:
     k = read("store_key_count.json")
     b = read("solid_growth_store_SC_ipm.json")
-    rows = [
-        ("records in the build", k["n_records"]),
-        ("read the wild-type row", k["n_records_empty_gem_subset"]),
-        ("distinct GEM subsets", k["n_distinct_gem_subsets"]),
-        ("programs solved (keys)", k["n_distinct_keys"]),
-        ("lethal under the solve", b["n_lethal"]),
-        ("uncertified, stored zero", b["n_uncertified_zero_flux"]),
+    return [
+        Bar(label="records in the build", value=k["n_records"], color=COMPARATOR),
+        Bar(
+            label="records reading the wild-type row",
+            value=k["n_records_empty_gem_subset"],
+            color=COMPARATOR,
+        ),
+        Bar(
+            label="programs solved, once each", value=k["n_distinct_keys"], color=SOLVE
+        ),
+        Bar(label="of them lethal under the solve", value=b["n_lethal"], color=SOLVE),
+        Bar(
+            label="of them uncertified, stored zero",
+            value=b["n_uncertified_zero_flux"],
+            color=SOLVE,
+        ),
     ]
-    colors = [C[5], C[5], C[0], C[0], C[1], C[3]]
-    y = np.arange(len(rows))[::-1]
-    ax.barh(y, [r[1] for r in rows], height=0.68, color=colors, edgecolor="black", lw=0.4, zorder=3)
-    ax.set_yticks(y)
-    ax.set_yticklabels([r[0] for r in rows])
-    ax.set_ylim(-0.6, len(rows) - 0.4)
-    ax.set_xscale("log")
-    ax.set_xlim(1e3, 5e7)
-    ax.set_xlabel("count")
-    ax.grid(axis="x", lw=0.3, color="0.85", zorder=0)
-    ax.set_axisbelow(True)
-    return (
-        "The transform's size is the program count, not the record count: 3.5 percent "
-        "of the records, an hour of processor time."
-    )
 
 
-def panel_clamp(ax: Axes) -> str:
-    """What the vertex store's clamp-carrying columns cost, by how many are cut."""
-    import glob
-
-    def mean_of(*pats: str) -> tuple[float, float]:
-        vals = []
-        for pat in pats:
-            for p in sorted(glob.glob(osp.join(RESULTS, pat))):
-                with open(p) as fh:
-                    vals.append(float(json.load(fh)["test"]["pinned"]["auroc"]))
-        return float(np.mean(vals)), float(np.std(vals, ddof=1))
-
-    doses = [
-        (0, "w52_pathlogsimplex_h12l1p1_e200_s*.json"),
-        (25, "w87_pathlogsimplexdeclamp25_h12l1p1_e200_s*.json"),
-        (100, "w87_pathlogsimplexdeclamp100_h12l1p1_e200_s*.json"),
-        (429, "w84_pathlogsimplexdeclamp_h12l1p1_e200_s*.json"),
-    ]
-    xs, ys, es = [], [], []
-    for k, pat in doses:
-        pats = (pat,) if k != 429 else (pat, "w85_pathlogsimplexdeclamp_h12l1p1_e200_s*.json")
-        m, sd = mean_of(*pats)
-        xs.append(k if k else 8)  # a log axis cannot show zero; the tick says "none"
-        ys.append(m)
-        es.append(sd)
-    ax.errorbar(
-        xs, ys, yerr=es, color=C[0], lw=0.9, marker="o", ms=2.4, capsize=1.5,
-        elinewidth=0.5, label="clamp columns cut"
-    )
-    m, sd = mean_of("w86_pathlogsimplextopvar_h12l1p1_e200_s*.json")
-    ax.errorbar(
-        [429], [m], yerr=[sd], color=C[2], lw=0, marker="s", ms=2.8, capsize=1.5,
-        elinewidth=0.5, label="429 non-clamp (control)"
-    )
-    m, _ = mean_of("w49_pathfbapfbalogfree_h12l1p1_e200_s*.json")
-    ax.axhline(m, color=C[5], lw=0.6, ls=(0, (3, 2)))
-    ax.set_xscale("log")
-    ax.set_xticks([8, 25, 100, 429])
-    ax.set_xticklabels(["none", "25", "100", "429"])
-    ax.set_xlabel("columns dropped, of 4,131")
-    ax.set_ylabel("AUROC, 195 genes")
-    ax.grid(lw=0.3, color="0.85", zorder=0)
-    ax.set_axisbelow(True)
-    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.16), ncol=1, frameon=False, handlelength=1.4)
-    return (
-        "The dashed line is the pFBA store, the best of the four. A hundred columns of "
-        "4,131 carry the vertex store's whole deficit and 25 carry two thirds; the same "
-        "count of non-clamp columns recovers almost nothing."
-    )
-
-
-#: Panel order, left to right and top to bottom. Append here to grow the figure.
-PANELS: list[tuple[str, Callable[[Axes], str]]] = [
-    ("Comparators, four media", panel_fba),
-    ("Published numbers reproduced", panel_fcl),
-    ("Fold ensembles along the rounds", panel_ensembles),
-    ("Families and their averages", panel_families),
-    ("Genome-wide transfer", panel_genome),
-    ("The solve across solvers", panel_transfer),
-    ("What the stores carry", panel_stores),
-    ("What the clamp columns cost", panel_clamp),
-    ("The capacity box by tier", panel_kcat),
-    ("The store at the build's scale", panel_scale),
+#: Per held-out set: the two models read, as (label in the report, color).
+ENRICH_SETS: list[tuple[str, str, list[tuple[str, str]]]] = [
+    (
+        "released 195 (metabolic genes)",
+        "Misranked genes, released 195",
+        [("transformer, layer-free solve", SOLVE), ("graph convolution on GO", GRAPH)],
+    ),
+    (
+        "genome-wide 4,674 (no GEM reaction)",
+        "Misranked genes, genome-wide 4,674",
+        [
+            ("transformer, layer-free solve", SOLVE),
+            ("graph convolution on ProtT5", GRAPH),
+        ],
+    ),
 ]
+CLASSES = ["essential, ranked low", "nonessential, ranked high"]
+#: Terms drawn per class: the named features that were tested, then each model's best.
+TERMS_PER_CLASS = 4
+
+
+def enrichment_rows(
+    set_label: str, models: list[tuple[str, str]]
+) -> list[dict[str, Any]]:
+    """Per class, the terms to draw and each model's (effect, q) on them."""
+    fams = {
+        (f["model"], f["gene_class"]): f
+        for f in read("misclass_enrichment.json")["families"]
+        if f["held_out_set"] == set_label
+    }
+    rows: list[dict[str, Any]] = []
+    for cls in CLASSES:
+        chosen: list[tuple[str, str]] = []
+        for model, _ in models:
+            for r in fams[(model, cls)]["named_features"]:
+                if (r["term"], r["name"]) not in chosen:
+                    chosen.append((r["term"], r["name"]))
+        rank = 0
+        while len(chosen) < TERMS_PER_CLASS + 1 and rank < 12:
+            for model, _ in models:
+                top = fams[(model, cls)]["top_specific"]
+                if (
+                    rank < len(top)
+                    and (top[rank]["term"], top[rank]["name"]) not in chosen
+                ):
+                    chosen.append((top[rank]["term"], top[rank]["name"]))
+            rank += 1
+        for term, name in chosen[: TERMS_PER_CLASS + 1]:
+            rows.append(
+                {
+                    "class": cls,
+                    "name": name,
+                    "by_model": {
+                        m: fams[(m, cls)]["all_terms"].get(term) for m, _ in models
+                    },
+                }
+            )
+    return rows
+
+
+def panel_enrichment(ax: Axes, set_label: str, models: list[tuple[str, str]]) -> None:
+    rows = enrichment_rows(set_label, models)
+    y = np.arange(len(rows))[::-1].astype(float)
+    # A gap between the two classes, so the group reads without a rule inside the axes.
+    first_second = next(i for i, r in enumerate(rows) if r["class"] == CLASSES[1])
+    y[:first_second] += 0.8
+    for yi, row in zip(y, rows, strict=True):
+        for k, (model, color) in enumerate(models):
+            got = row["by_model"][model]
+            if got is None:
+                continue
+            effect, q = got
+            ax.scatter(
+                effect,
+                yi + (0.16 if k == 0 else -0.16),
+                s=9,
+                marker="o" if k == 0 else "s",
+                facecolor=color if q < 0.1 else "white",
+                edgecolor=color,
+                lw=0.7,
+                zorder=4,
+            )
+    ax.axvline(0.5, color="black", lw=0.5, ls=(0, (2, 2)), zorder=2)
+    ax.set_yticks(y)
+    ax.set_yticklabels(
+        [r["name"] if len(r["name"]) <= 44 else r["name"][:42] + "..." for r in rows]
+    )
+    ax.set_ylim(-0.7, y.max() + 0.7)
+    ax.tick_params(axis="y", length=0)
+    ax.set_xlim(0.2, 1.0)
+    ax.xaxis.set_major_locator(MultipleLocator(0.2))
+    ax.xaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(axis="x", which="minor", length=0)
+    ax.grid(axis="x", which="both", lw=0.3, color="0.85", zorder=0)
+    ax.set_axisbelow(True)
+    ax.set_xlabel("P(annotated gene misranked worse)")
+    # The class names sit outside the axes, right of each group.
+    for cls, members in (
+        (CLASSES[0], y[:first_second]),
+        (CLASSES[1], y[first_second:]),
+    ):
+        ax.annotate(
+            cls.replace(", ", ",\n"),
+            xy=(1.03, float(np.mean(members))),
+            xycoords=("axes fraction", "data"),
+            va="center",
+            ha="left",
+            fontsize=6,
+        )
+
+
+# --------------------------------------------------------------------------- figure
 
 
 def main() -> None:
     plt.rcParams.update(
-        {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none", "axes.linewidth": 0.5}
+        {
+            "font.family": "Arial",
+            "font.size": 6,
+            "svg.fonttype": "none",
+            "axes.linewidth": 0.5,
+            "hatch.linewidth": 0.4,
+            "axes.titlesize": 6,
+        }
     )
-    ncol = 3
-    nrow = (len(PANELS) + ncol - 1) // ncol
-    # Width is strict and height is loose, but 170 mm is the ceiling: past it the figure
-    # is scaled down in the document and the 6 pt type goes under Nature's 5 pt floor.
-    # So rows share the budget rather than each taking a fixed 52 mm.
-    row_mm = min(52.0, (MAX_HEIGHT_MM - 6.0) / nrow)
-    fig, axes = plt.subplots(
-        nrow,
-        ncol,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(row_mm * nrow)),
+    fig = plt.figure(figsize=(mm_to_in(WIDTH_MM), mm_to_in(HEIGHT_MM)))
+
+    # One legend for the whole figure, on its own line above the first row.
+    handles = [
+        Patch(
+            facecolor=COMPARATOR,
+            edgecolor="black",
+            lw=0.4,
+            label="comparator, nothing learned here",
+        ),
+        Patch(
+            facecolor=NO_SOLVE,
+            edgecolor="black",
+            lw=0.4,
+            label="learned, no solve, no graph",
+        ),
+        Patch(
+            facecolor=SOLVE,
+            edgecolor="black",
+            lw=0.4,
+            label="transformer reading the solve",
+        ),
+        Patch(
+            facecolor=GRAPH,
+            edgecolor="black",
+            lw=0.4,
+            label="message passing on gene graphs",
+        ),
+        Patch(
+            facecolor=AVERAGE,
+            edgecolor="black",
+            lw=0.4,
+            label="average of the two families",
+        ),
+        Patch(
+            facecolor="white",
+            edgecolor="black",
+            lw=0.4,
+            hatch="/////",
+            label="LP solved inside training",
+        ),
+    ]
+    fig.legend(
+        handles=handles,
+        loc="upper left",
+        bbox_to_anchor=(0.0, 1.0),
+        ncol=3,
+        frameon=False,
+        handlelength=1.2,
+        handletextpad=0.4,
+        columnspacing=1.0,
+        borderaxespad=0.2,
     )
-    flat = np.atleast_1d(axes).ravel()
-    captions: list[str] = []
-    for ax, (title, fn) in zip(flat, PANELS, strict=False):
-        note = fn(ax)
-        box(ax)
-        ax.set_title(title, fontsize=6, pad=3)
-        captions.append(note)
-    for ax in flat[len(PANELS):]:
-        ax.set_visible(False)
-    for i, ax in enumerate(flat[: len(PANELS)]):
-        ax.text(
-            -0.02,
-            1.24 if ax.get_legend() else 1.08,
-            "abcdefghijklmnop"[i],
-            transform=ax.transAxes,
-            fontsize=8,
-            fontweight="bold",
-            va="bottom",
-            ha="right",
-        )
-    # hspace and the margins are fractions of the AXIS height, so when rows shrink they
-    # must grow to keep the same millimetres between panels; a legend sits 1.16 axis
-    # heights above its panel and will land on the row above otherwise.
-    scale = 52.0 / row_mm
-    fig.subplots_adjust(
-        left=0.165,
-        right=0.945,
-        top=1.0 - 0.10 * scale * (row_mm * nrow) / (52.0 * 3),
-        bottom=0.075 * scale * (row_mm * nrow) / (52.0 * 3),
-        wspace=1.0,
-        hspace=0.78 * scale,
+
+    left_label, right_block = 47.0, 92.0
+
+    # Row 1: what ranks best, and which module form.
+    top = 15.0
+    ax = place(fig, left_label, top, 40.0, 46.0)
+    draw_bars(ax, leaderboard())
+    auroc_axis(ax, 0.5, 1.0)
+    ax.set_xlabel("AUROC, 195 held-out genes, fold ensembles")
+    ax.set_title("Best method, released 195 genes", pad=3, loc="left")
+    letter(fig, 0.0, top, "a")
+
+    forms = module_forms()
+    ax = place(fig, right_block + 45.0, top, 23.0, 46.0)
+    draw_bars(ax, forms)
+    auroc_axis(ax, 0.4, 1.0)
+    ax.set_xlabel("AUROC per cell, seed mean")
+    ax.set_title("Which module form", pad=3, loc="left")
+    letter(fig, right_block, top, "b")
+    axc = place(fig, right_block + 45.0 + 23.0 + 6.0, top, 11.0, 46.0)
+    draw_bars(axc, forms, values=[b.minutes or 0.0 for b in forms])
+    axc.set_yticklabels([])
+    axc.set_xlim(0, 160)
+    axc.xaxis.set_major_locator(MultipleLocator(60))
+    axc.grid(axis="x", lw=0.3, color="0.85", zorder=0)
+    axc.set_axisbelow(True)
+    axc.set_xlabel("minutes")
+    axc.set_title("Cost per cell", pad=3, loc="left")
+    letter(fig, right_block + 45.0 + 23.0 + 2.5, top, "c")
+
+    # Row 2: what transfers, and what the winning form costs at database scale.
+    top = 79.0
+    ax = place(fig, left_label, top, 40.0, 34.0)
+    draw_bars(ax, genome_transfer())
+    ax.axvline(0.5, color="black", lw=0.5, ls=(0, (2, 2)), zorder=5)
+    auroc_axis(ax, 0.4, 0.8)
+    ax.set_xlabel("AUROC, 4,674 genome-wide held-out genes")
+    ax.set_title("What transfers off the metabolic genes", pad=3, loc="left")
+    letter(fig, 0.0, top, "d")
+
+    ax = place(fig, right_block + 45.0, top, 39.0, 24.0)
+    draw_bars(ax, store_scale())
+    ax.set_xscale("log")
+    ax.set_xlim(1e3, 5e7)
+    ax.grid(axis="x", lw=0.3, color="0.85", zorder=0)
+    ax.set_axisbelow(True)
+    ax.set_xlabel("count, 025 solid-growth build")
+    ax.set_title("The layer-free solve at database scale", pad=3, loc="left")
+    letter(fig, right_block, top, "e")
+
+    # Row 3: what the misranked genes share, on each held-out set.
+    top = 131.0
+    markers = [
+        Line2D(
+            [],
+            [],
+            marker="o",
+            ls="",
+            ms=3.2,
+            mfc=SOLVE,
+            mec=SOLVE,
+            mew=0.7,
+            label="transformer + layer-free solve",
+        ),
+        Line2D(
+            [],
+            [],
+            marker="s",
+            ls="",
+            ms=3.2,
+            mfc=GRAPH,
+            mec=GRAPH,
+            mew=0.7,
+            label="graph convolution (GO in f, ProtT5 in g)",
+        ),
+        Line2D(
+            [],
+            [],
+            marker="o",
+            ls="",
+            ms=3.2,
+            mfc="white",
+            mec="black",
+            mew=0.7,
+            label="hollow: q at or above 0.1",
+        ),
+    ]
+    fig.legend(
+        handles=markers,
+        loc="upper left",
+        bbox_to_anchor=(0.0, 1.0 - (top - 9.5) / HEIGHT_MM),
+        ncol=3,
+        frameon=False,
+        handletextpad=0.3,
+        columnspacing=1.2,
+        borderaxespad=0.2,
     )
+    for x_block, x_axes, (set_label, title, models), ch in zip(
+        (0.0, right_block),
+        (left_label, right_block + 45.0),
+        ENRICH_SETS,
+        "fg",
+        strict=True,
+    ):
+        ax = place(fig, x_axes, top, 24.0, 30.0)
+        panel_enrichment(ax, set_label, models)
+        ax.set_title(title, pad=3, loc="left")
+        letter(fig, x_block, top, ch)
+
     os.makedirs(IMAGES, exist_ok=True)
     stem = osp.join(IMAGES, f"summary_{timestamp()}")
     savefig_true_size_svg(fig, stem + ".svg")
     fig.savefig(stem + ".png", dpi=300)
-    for letter, (title, _), note in zip("abcdefghi", PANELS, captions, strict=False):
-        print(f"  \\textbf{{{letter}}}, {title}. {note}")
     print(stem + ".svg")
 
 

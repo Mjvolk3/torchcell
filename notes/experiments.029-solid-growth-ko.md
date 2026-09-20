@@ -206,3 +206,21 @@ better derived from predicted fitness under the identity with a declared referen
 a per-screen quantity; the 030 recapitulation is the test of that. Revisit only if a target on 030
 shows a large between-screen share together with a large mean offset, which would be a
 calibration term marginalized to a reference at inference, not an input.
+
+## 2026.09.20 - The identical Costanzo 26 C and 30 C singles: a source-level duplication the loader turned into two assertions
+
+Checked by an agent against the loader, the raw spreadsheet and the SI (issue
+<https://github.com/Mjvolk3/torchcell/issues/410>). Costanzo 2016 released ONE temperature-combined
+single-mutant fitness for deletion and DAmP strains, repeated in both the 26 C and 30 C columns:
+SI line 96, "Because we observed a close correlation between fitness measured at 26°C and 30°C for
+deletion mutants, we combined measurements from different temperatures in the average for each
+deletion mutant. Fitness associated with TS mutants was computed separately at either 26° or 30°."
+Raw columns: KanMX n 3,876 and NatMX n 3,845 and DAmP n 733 are 100 percent identical across the
+two columns; TS alleles n 1,753 are 0 percent identical, r 0.810. `SmfCostanzo2016Dataset.preprocess_raw`
+splits every strain class into a 26 C and a 30 C record, so 8,454 of the 20,484 built records
+(41 percent) are the twin of a deletion or DAmP record. The values are faithful; the temperature
+assertion is not. The double-mutant loader is clean (temperature from `Arraytype/Temp`).
+
+Consequence: for the 030 build the reader drops the twin (a deletion or DAmP SMF is one value with
+no temperature); the loader fix (one record, temperature unspecified or a range) is a served-dataset
+change and waits for the next full knowledge-graph rebuild. TS-allele singles stay per temperature.

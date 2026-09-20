@@ -1,0 +1,51 @@
+%% notes-tex/028-gene-essentiality/sections/7-summary.tex
+%% The document's results on one page. The figure is written by
+%% experiments/028-gene-essentiality/scripts/summary_figure.py, which reads the committed
+%% result files; panels are added by appending to its PANELS list.
+
+\section{The results on one page\secstatus{todo}}
+\label{sec:summary}
+
+\tcfigfit[1.0]{figures/summary_2026-09-19-19-46-42.pdf}{\textbf{Gene essentiality on
+  yeast-GEM: the comparators, the forms, the solve and the store.} Every value is read
+  from a committed result file; no number here is typed.
+  \textbf{a}, The growth ratio of a single-gene deletion under flux balance analysis on
+  four media, AUROC over the 1,121 labeled genes with a gene bootstrap. The medium moves
+  the ranking by less than the interval.
+  \textbf{b}, Flux Cone Learning's published numbers beside the recomputation of each on
+  the gene set the source used. Every one reproduces to the third decimal, which is what
+  licenses comparing against them.
+  \textbf{c}, The five-fold ensemble of each form, in the order the rounds reached them:
+  the indicator alone, then the FBA affine, the chromosome and ProtT5 blocks, the pathway
+  block, the flux layer, the cached solve with nothing learned, the layer-free $\log(1 +
+  |v|)$ vector, that form at width 48, the interior-point and PDLP stores, the Gene
+  Ontology multi-hot added to the affine, and the pinned-kernel rerun. Intervals are gene
+  bootstraps of the pooled per-gene logits.
+  \textbf{d}, The four best single families in orange and the three best post hoc averages
+  of them in purple, where a family is one form's fold models with their standardized
+  logits averaged. An average over two families is the highest number in the document, and
+  it carries the selection of the best combination.
+  \textbf{e}, The same forms scored on the genome-wide held-out set of 4,674 genes, red for
+  message passing over a gene graph and gray for the transformer and the multilayer
+  perceptron. The dashed line is chance. What ranks 195 metabolic genes and what ranks the
+  genome are not the same model.
+  \textbf{f}, One growth program solved seven ways: a probe fitted on the flux of one
+  solve, scored on another's. The diagonal is the within-solver number. A probe carried
+  across solvers loses up to 0.35 and reaches chance on the second exact vertex, while
+  across tolerances of one first-order solver it loses nothing, so the store and the head
+  must be built from one solver and the tolerance is free.
+  \textbf{g}, How far each store's flux sits from the pFBA store's in the head's encoding:
+  the median relative $L_2$ of $\log(1 + |v|)$ and the mean share of reactions that moved
+  by more than 0.01. The four stores agree on growth to $10^{-5}$ and disagree on the flux
+  that attains it.
+  \textbf{h}, The anchored layer's growth program at initialization under each turnover
+  tier, median growth over 32 held-out genotypes against the capacity scale. The dotted
+  rule is the smallest scale at which every genotype's program is feasible. The measured
+  tier is the looser box at every scale, since it leaves most catalytic units on the
+  organism default.
+  \textbf{i}, What sizes the store over the 025 solid-growth build, on a logarithmic axis:
+  the records, the records that read the wild-type row, the distinct gene subsets, the
+  programs actually solved, and the lethal and uncertified rows among them. The transform's
+  cost is set by the program count, 3.5 percent of the records.
+  Written by
+  \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py}.}{fig:summary}

@@ -1273,3 +1273,20 @@ The gated cells are the same story from the other side: across all three program
 This also retires an idea worth naming: the elastic program was introduced (round 18) as the fix for infeasibility, and it is, but it does not recover the ranking the hard program reaches when the hard program happens to train.
 
 Document: round table `tab:w89` and figure `w89_readout_2026-09-20-05-37-47` in `sec:kcat-tier`; the open bullet now points at a construction that changes WHICH bounds bind per genotype, since every arm here binds the same ceilings for every genotype (the dual-overlap probe). Clean.
+
+## 2026.09.20 - Round 73: the cut store on the fold protocol
+
+Jobs 2542 and 2543, about 20 minutes, five folds. The declamped vertex store now carries the document's canonical number.
+
+| store | fold mean | fold ensemble |
+|---|---|---|
+| pFBA | 0.8949 | 0.9199 [0.872, 0.959] |
+| interior point | 0.8876 | 0.9093 [0.860, 0.952] |
+| PDLP | 0.8903 | 0.9089 [0.860, 0.952] |
+| dual-simplex vertex, clamp columns dropped | 0.8715 | 0.9009 [0.852, 0.947] |
+
+So the cut store lands with the three stores that never had the deficit rather than 0.07 below them, and its residual gap to pFBA is 0.019, the same gap the pooled seeds showed (0.888 against 0.908). Caveat stated in the document: the UNCUT vertex store has no fold number, so this is not a paired read on this protocol.
+
+One fold of five still selects epoch 12 and reads 0.8076, against 51 to 90 for the others. So the early peak is reduced by the cut and not eliminated, which is consistent with round 69: the early peak belongs to wide columns generally, and the cut only removes the clamp-carrying ones.
+
+Committed as f9a4204c2. Document clean.

@@ -80,8 +80,9 @@ genes with a gene bootstrap, and every gain attributed by a paired, pre-register
     a fitness record, none with a GEM reaction, so FBA reads exactly 0.5 and label
     origin coincides with class), models trained on the 629 released genes read: the
     MLP on the transformer's inputs 0.509, the transformer's reported recipe 0.572,
-    the scalable module form 0.551 and the layer-free form 0.570 (their flux is the
-    wild type on every one of them, and the scalable form's six seeds span 0.480 to
+    the scalable module form 0.551 and the layer-free form 0.570 (the solve is one constant row on every one of them, the wild-type flux for the
+    scalable form and an all-zero row for the layer-free form, whose store covers the
+    labeled genes only, and the scalable form's six seeds span 0.480 to
     0.579),
     graph convolution on ProtT5 alone 0.749, on the three inputs 0.744, on GO alone
     0.702, degree and clustering alone through the physical graph 0.753, and the raw

@@ -778,7 +778,7 @@ constant the head cannot rank by, so what it adds over the backbone is nothing b
 construction, and what it reads is the backbone with a head that fit the metabolic
 genes' flux. The layer-free form (round 65, jobs 2464 and 2466, six seeds) reads
 0.566 (sd 0.019; pooled 0.570 [0.55, 0.59]) on the same split, between the two, for
-the same reason: its affine columns are the wild-type vector on every held-out gene.
+the same reason: the solve store covers the 1,121 labeled genes only, so the affine's solve columns read one all-zero row on every held-out gene (\texttt{n\_genes\_with\_solve} 1,121 in the result files), a constant that shifts every logit alike.
 
 The other direction says the larger label set is not the missing training data for
 the metabolic genes (Tables~\ref{tab:graph-go400-genome}

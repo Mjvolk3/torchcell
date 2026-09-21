@@ -63,6 +63,9 @@
 # WALLTIME RULE (2026-09-21): every submission to `-p cabbi` passes `--time` of at most
 # 5-00:00:00. The scheduler does not enforce it (it accepted a 10-day v15 job), so the
 # submit line must. The `gpu` partition has no such limit.
+# GPU PARTITION CAP (IGB HPC admin, 2026-09-21): the `gpu` partition has six A40s in total
+# and we may hold at most THREE at once. Every array to `-p gpu` is submitted
+# `--array=<range>%3`, and other gpu-partition jobs of ours count toward the three.
 #SBATCH --job-name=019-wave5-igb
 #SBATCH --signal=B:USR1@180
 #SBATCH --mail-user=mjvolk3@illinois.edu

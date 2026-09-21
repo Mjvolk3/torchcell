@@ -1,0 +1,22 @@
+{
+  "v16": {
+    "id": "jvc4d5ajdy1",
+    "name": "v16 joint round by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v16?nw=jvc4d5ajdy1"
+  },
+  "v16/J_expr": {
+    "id": "sdk4y5hshgn",
+    "name": "J_expr: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v16?nw=sdk4y5hshgn"
+  },
+  "v16/J_joint": {
+    "id": "7mptj7h4hbn",
+    "name": "J_joint: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v16?nw=7mptj7h4hbn"
+  },
+  "v16/J_ref": {
+    "id": "7fbuv63ti6c",
+    "name": "J_ref: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v16?nw=7fbuv63ti6c"
+  }
+}

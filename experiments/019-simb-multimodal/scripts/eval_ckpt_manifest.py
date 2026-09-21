@@ -21,6 +21,7 @@ import argparse
 import glob
 import os
 import os.path as osp
+import re
 
 import wandb
 from dotenv import load_dotenv
@@ -61,9 +62,23 @@ def main() -> None:
             seeds = [t for t in tags if t.startswith("seed") and t[4:].isdigit()]
             if len(arms) != 1 or len(seeds) != 1:
                 raise ValueError(f"{run.id}: arm tags {arms}, seed tags {seeds}")
-            # The checkpoint directory is the run NAME minus its `run_` prefix. It used to be
-            # read from `run.group`, which `wandb_regroup_by_arm.py` now rewrites to the arm.
-            group = str(run.name).removeprefix("run_")
+            # The checkpoint directory is the trainer's original group. `wandb_v13_report.py`
+            # overwrites group and name for the arm pages and keeps the directory in config
+            # `ckpt_group`; a sync of a live run puts the originals back. Take it from
+            # whichever field still holds it, and refuse a run where that is not unique.
+            held = [
+                run.config.get("ckpt_group"),
+                run.group,
+                str(run.name).removeprefix("run_"),
+            ]
+            dirs = {
+                h
+                for h in held
+                if isinstance(h, str) and re.fullmatch(r"[\w.-]+-\d+_[0-9a-f]{64}", h)
+            }
+            if len(dirs) != 1:
+                raise ValueError(f"{run.id}: checkpoint directory not unique in {held}")
+            group = dirs.pop()
             hist = run.history(
                 keys=["epoch", spec["metric"]], samples=20000, pandas=True
             )

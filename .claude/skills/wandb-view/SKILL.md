@@ -28,9 +28,16 @@ the task ids only when they matter.
 
 **2. Round-level links, each URL alone on its own line** (tmux, no wrap, click):
 
-- the saved Charts view: `https://wandb.ai/zhao-group/<project>?nw=<view_id>`
-- one group page per arm: `https://wandb.ai/zhao-group/<project>/groups/<arm>`
+- the round view (every run, lines grouped by arm): `https://wandb.ai/zhao-group/<project>?nw=<view_id>`
+- per arm, TWO lines: the populated arm view `https://wandb.ai/zhao-group/<project>?nw=<arm_view_id>`
+  (only that arm's runs, one line per split, mean over init seeds), then the group
+  workspace `https://wandb.ai/zhao-group/<project>/groups/<arm>/workspace`. Always give the
+  `/workspace` form of a group link, never the bare `/groups/<arm>`.
 - the report, if one exists
+
+The group workspace is a personal view and the API refuses to write it ("does not
+currently support user views"), so the arm view is where the panels live. Say that in one
+sentence when giving both links; do not claim the group page itself was populated.
 
 Do NOT list individual runs. An individual run link appears only as the example of a
 named phenomenon (a collapse, an early peak), and then as `<id> <arm> <what it shows>`
@@ -51,13 +58,20 @@ support user views"), so every round has a SAVED view maintained by a committed 
 ~/miniconda3/envs/torchcell/bin/python experiments/019-simb-multimodal/scripts/wandb_v13_report.py --round v14
 ```
 
-The script (one `Round` entry per round in `ROUNDS`) renames runs `<arm>_seed<k>`, writes
-config keys `arm/split/readout/partition` so the group page is the arm, overwrites the
+The script (one `Round` entry per round in `ROUNDS`) renames runs `<arm>_seed<k>`, sets the
+W&B group to the arm family (`J_joint`, not `J_joint_s1`), keeps the trainer's original
+group in config `ckpt_group` because it is the checkpoint directory
+(`eval_ckpt_manifest.py` reads it), writes config keys `arm/family/split/readout/partition`, overwrites the
 saved view with ranked sections (1 headline validation, 2 train side, 3 masked
 conditioning, 4 error and calibration, 5 optimization, 6 bookkeeping; x = epoch, grouped
 by arm), and updates the report in place by title. Rerun it after every sync. A new round
 starts with `view_id=None`; the first run calls `save_as_new_view()`, and the returned id
-is pinned into `ROUNDS` and committed. Verify the view through the API (panel counts per
+is recorded in `experiments/019-simb-multimodal/results/wandb_view_ids.json` under
+`<round>` and `<round>/<arm>`, which is committed; later runs overwrite those views in place.
+A round with more than one head (`extra_phenotypes`, the joint round) opens with a section
+that puts the heads side by side. Each view keeps only keys its own runs log, so no panel
+is an empty box. **A sync of a live run resets name and group, so rerun the script after
+every sync**; it is idempotent. Verify the view through the API (panel counts per
 section, every metric key present in a run summary) before saying it is populated.
 
 Offline IGB runs show `finished` once synced whatever their training state; take the

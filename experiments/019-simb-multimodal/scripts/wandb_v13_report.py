@@ -26,6 +26,8 @@ Run from the repo root:
 from __future__ import annotations
 
 import argparse
+import json
+import os.path as osp
 import re
 from dataclasses import dataclass, field
 
@@ -35,6 +37,11 @@ import wandb_workspaces.workspaces as ws
 
 ENTITY = "zhao-group"
 X = "epoch"
+# The trainer's per-run group, which is also the checkpoint directory name.
+VIEW_REGISTRY = osp.join(
+    osp.dirname(osp.dirname(osp.abspath(__file__))), "results", "wandb_view_ids.json"
+)
+CKPT_GROUP_RE = re.compile(r"[\w.-]+-\d+_[0-9a-f]{64}")
 
 
 @dataclass(frozen=True)
@@ -56,6 +63,9 @@ class Round:
     max_runs: int
     label_key: str = "expression_log2_ratio"
     partitions: dict[str, str] = field(default_factory=dict)
+    # Heads beyond `phenotype` that the round trains (the joint round has two). Each gets
+    # its own ranked sections after a first section that puts the heads side by side.
+    extra_phenotypes: tuple[str, ...] = ()
 
 
 ROUNDS: dict[str, Round] = {
@@ -139,7 +149,7 @@ ROUNDS: dict[str, Round] = {
         splits=["s0", "s1", "s2"],
         split_label={"s0": "split 0", "s1": "split 1", "s2": "split 2"},
         intro=(
-            "18 runs, three per RTX 6000 Ada card on cabbi, 500 epochs (job 2409261, "
+            "18 runs, three per A40 card on the IGB gpu partition, 500 epochs (job 2409562, "
             "config cgt_expr_v16_joint): J_ref is the proteome head alone on "
             "proteome-carrying genotypes (the v14 reference at this budget), J_expr the "
             "expression head alone on the SAME fig3_proteome partition, and J_joint both "
@@ -151,6 +161,7 @@ ROUNDS: dict[str, Round] = {
         ),
         max_runs=18,
         label_key="protein_abundance",
+        extra_phenotypes=("expression",),
     ),
     "v17": Round(
         project="torchcell_019_expr_v17",
@@ -311,6 +322,34 @@ def chart_sections(pheno: str) -> list[tuple[str, list[str | list[str]]]]:
     ]
 
 
+def round_sections(rnd: Round) -> list[tuple[str, list[str | list[str]]]]:
+    """`chart_sections` for a one-head round; for several heads, a side-by-side first.
+
+    The side-by-side section is what a joint round is read on: each head's validation
+    Pearson alone, the two overlaid on one panel, and the same for the train side.
+    """
+    heads = [rnd.phenotype, *rnd.extra_phenotypes]
+    if len(heads) == 1:
+        return chart_sections(rnd.phenotype)
+    first: list[str | list[str]] = [
+        *[f"val/{h}/pearson_per_feature" for h in heads],
+        [f"val/{h}/pearson_per_feature" for h in heads],
+        "val/mean/pearson_per_feature",
+        "val/loss",
+        *[f"traineval/{h}/pearson_per_feature" for h in heads],
+        [f"traineval/{h}/pearson_per_feature" for h in heads],
+        *[
+            [f"traineval/{h}/pearson_per_feature", f"val/{h}/pearson_per_feature"]
+            for h in heads
+        ],
+        *[f"val/{h}/pred_sd_ratio" for h in heads],
+    ]
+    out: list[tuple[str, list[str | list[str]]]] = [("0 heads side by side", first)]
+    for h in heads:
+        out += [(f"{h}: {name}", metrics) for name, metrics in chart_sections(h)]
+    return out
+
+
 def label_runs(api: wandb.Api, rnd: Round) -> int:
     n = 0
     prefix = rnd.arm_re.split("_")[0]
@@ -325,8 +364,27 @@ def label_runs(api: wandb.Api, rnd: Round) -> int:
         readout, split = m.group(1), m.group(2)
         seed = int(run.config["seed"])
         name = f"{arm}_seed{seed}"
-        changed = run.name != name or run.config.get("arm") != arm
+        family = f"{prefix}_{readout}"
+        # The trainer's group, `<host>-<jobid>_<sha256>`, is the run's CHECKPOINT DIRECTORY,
+        # and this function overwrites both fields that carry it (group becomes the arm so
+        # `/groups/<arm>` shows an arm across splits and seeds; name becomes arm_seed). A
+        # `wandb sync` of a live run replays the originals. So the directory is kept in
+        # config `ckpt_group`, taken from whichever field still holds it.
+        held = [
+            run.config.get("ckpt_group"),
+            run.group,
+            str(run.name).removeprefix("run_"),
+        ]
+        dirs = {h for h in held if isinstance(h, str) and CKPT_GROUP_RE.fullmatch(h)}
+        if len(dirs) != 1:
+            raise ValueError(f"{run.id}: checkpoint directory not unique in {held}")
+        changed = (
+            run.name != name or run.config.get("arm") != arm or run.group != family
+        )
         run.name = name
+        run.group = family
+        run.config["ckpt_group"] = dirs.pop()
+        run.config["family"] = family
         run.config["arm"] = arm
         run.config["split"] = split
         run.config["readout"] = readout
@@ -448,8 +506,36 @@ def build_report(rnd: Round) -> wr.Report:
     )
 
 
-def populate_view(rnd: Round) -> str:
-    """Overwrite (or create) the round's saved Charts view with the ranked sections."""
+def _view_registry() -> dict[str, dict[str, str]]:
+    with open(VIEW_REGISTRY) as f:
+        reg: dict[str, dict[str, str]] = json.load(f)
+    return reg
+
+
+def populate_view(
+    rnd: Round, key: str, present: set[str], family: str | None = None
+) -> str:
+    """Overwrite (or create) one saved Charts view with the ranked sections.
+
+    `family` None is the round view: every run, lines grouped by arm. A family (`J_joint`)
+    is that arm's view: only its runs, lines grouped by split, so each line is one
+    partition averaged over init seeds. View ids live in `results/wandb_view_ids.json`
+    under `<round>` and `<round>/<family>`; a `view_id` pinned in ROUNDS wins for the round
+    view. The API cannot write a group page's own workspace ("does not currently support
+    user views"), so the arm view is the populated stand-in for `/groups/<arm>/workspace`.
+    """
+    # Only keys the view's own runs log. Which masked and bookkeeping keys exist depends on
+    # the arm (the joint arm logs no `@k` sweep for its expression head), and a panel on a
+    # key nobody logs renders as an empty box.
+    kept: list[tuple[str, list[list[str]]]] = []
+    for sec_name, metrics in round_sections(rnd):
+        panels = [
+            [k for k in ([m] if isinstance(m, str) else m) if k in present]
+            for m in metrics
+        ]
+        panels = [ys for ys in panels if ys]
+        if panels:
+            kept.append((sec_name, panels))
     sections = [
         ws.Section(
             name=name,
@@ -459,15 +545,15 @@ def populate_view(rnd: Round) -> str:
             panels=[
                 wr.LinePlot(
                     x=X,
-                    y=[m] if isinstance(m, str) else m,
-                    title=m if isinstance(m, str) else " | ".join(m),
+                    y=ys,
+                    title=" | ".join(ys),
                     title_x="epoch",
                     layout=wr.Layout(w=8, h=6),
                 )
-                for m in metrics
+                for ys in panels
             ],
         )
-        for name, metrics in chart_sections(rnd.phenotype)
+        for name, panels in kept
     ]
     settings = ws.WorkspaceSettings(
         x_axis=X,
@@ -476,28 +562,35 @@ def populate_view(rnd: Round) -> str:
         sort_panels_alphabetically=False,
     )
     runset_settings = ws.RunsetSettings(
-        groupby=[ws.Config("arm")],
+        filters=[] if family is None else [ws.Config("family") == family],
+        groupby=[ws.Config("arm" if family is None else "split")],
         order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
     )
-    if rnd.view_id is None:
+    name = rnd.view_name if family is None else f"{family}: one line per split"
+    reg = _view_registry()
+    slot = key if family is None else f"{key}/{family}"
+    view_id = (rnd.view_id if family is None else None) or reg.get(slot, {}).get("id")
+    if view_id is None:
         view = ws.Workspace(
             entity=ENTITY,
             project=rnd.project,
-            name=rnd.view_name,
+            name=name,
             sections=sections,
             settings=settings,
             runset_settings=runset_settings,
         )
         view.save_as_new_view()
-        print(
-            f"NEW saved view created: {view.url}\n"
-            "  pin its `nw=` id into ROUNDS[...].view_id so later runs overwrite it"
-        )
+        new_id = re.search(r"[?&]nw=([\w-]+)", view.url)
+        if new_id is None:
+            raise ValueError(f"no view id in {view.url}")
+        reg[slot] = {"id": new_id.group(1), "url": view.url, "name": name}
+        with open(VIEW_REGISTRY, "w") as f:
+            json.dump(reg, f, indent=2, sort_keys=True)
         return view.url
     view = ws.Workspace.from_url(
-        f"https://wandb.ai/{ENTITY}/{rnd.project}?nw={rnd.view_id}"
+        f"https://wandb.ai/{ENTITY}/{rnd.project}?nw={view_id}"
     )
-    view.name = rnd.view_name
+    view.name = name
     view.sections = sections
     view.settings = settings
     view.runset_settings = runset_settings
@@ -530,7 +623,16 @@ def main() -> None:
     else:
         report.save()
         print(f"report created: {report.url}")
-    print(f"charts view: {populate_view(rnd)}")
+    keys: dict[str, set[str]] = {}
+    for r in api.runs(f"{ENTITY}/{rnd.project}"):
+        keys.setdefault(str(r.config["family"]), set()).update(r.summary.keys())
+    prefix = rnd.arm_re.split("_")[0]
+    assert all(f.startswith(prefix) for f in keys), sorted(keys)
+    print(f"round view\n{populate_view(rnd, args.round, set().union(*keys.values()))}")
+    for family in sorted(keys):
+        print(f"{family}: arm view, then the group page")
+        print(populate_view(rnd, args.round, keys[family], family))
+        print(f"https://wandb.ai/{ENTITY}/{rnd.project}/groups/{family}/workspace")
 
 
 if __name__ == "__main__":

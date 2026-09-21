@@ -6,14 +6,15 @@
 \section{The results on one page\secstatus{todo}}
 \label{sec:summary}
 
-\tcfigfit[1.0]{figures/summary_2026-09-20-19-59-07.pdf}{\textbf{Gene essentiality on
+\tcfigfit[1.0]{figures/summary_2026-09-20-21-24-16.pdf}{\textbf{Gene essentiality on
   yeast-GEM: the best method, the module form that helps, what scales, and the genes
   still missed.} One color means one thing in every panel: gray a comparator with
   nothing learned here, yellow a learned model reading no solve and no graph, orange the
   transformer reading the metabolic solve, red message passing over the gene graphs,
   purple an equal-weight average of the two families; a hatch marks a linear program
   solved inside the training loop.
-  \textbf{a}, Every method on the 195 released held-out genes, best first. Learned
+  \textbf{a}, Every method on the 195 released held-out genes, best first; the rule-count
+  rows are round 80. Learned
   models are five-fold ensembles, the random forest is one fit on the split file, and
   intervals are gene bootstraps.
   \textbf{b}, The forms of the metabolic module on one backbone, the pathway multi-hot
@@ -42,11 +43,12 @@
 \begin{description}
   \item[The best method is two models averaged, and the best single model is a tie.]
     Under the fold protocol on the released 195 genes the equal-weight average of graph
-    convolution on GO with the transformer reading the solve scores 0.954 with the
-    cached solve head and 0.953 with the layer-free solve, the maximum of eleven post
-    hoc averages. Alone, the transformer with the layer-free solve scores 0.920 and
-    graph convolution on GO 0.917, with overlapping intervals, against Flux Cone
-    Learning's 0.742 and FBA's 0.640 on the same genes
+    convolution on GO with the transformer reading the solve scores 0.955 with the solve
+    vector and the gene-rule counts beside it (Section~\ref{sec:round80}), 0.954 with
+    the cached solve head and 0.953 with the layer-free solve, the maximum of thirteen
+    post hoc averages. Alone, the rule-count cell scores 0.934, the layer-free form
+    0.920 and graph convolution on GO 0.917, with overlapping intervals, against Flux
+    Cone Learning's 0.742 and FBA's 0.640 on the same genes
     (Figure~\ref{fig:summary}\textbf{a}). On ten other held-out fifths of the labeled
     genes, with the average fixed in advance, the average beats the better single model
     on nine (mean $+0.023$) and graph convolution on GO beats the transformer on nine
@@ -219,6 +221,25 @@ them discards their arrangement; on single deletions it is a reparameterization 
 the head already reads.
 
 \input{tables/cls_readout}
+
+\subsection{Round 80: the rule counts under the reported protocol\secstatus{todo}}
+\label{sec:round80}
+
+Round 77 read the gene-rule columns on single cells. Round 80 (jobs 2601 and 2602) runs
+the same cell on the five folds, so the document's best module form has a number on the
+protocol the reported 0.893 was computed under, and so the two-family average can be
+formed from it.
+
+It is the highest single model in the document on both counts. The five fold models read
+0.9335 [0.890, 0.968] as an ensemble (fold mean 0.9133), against the layer-free form's
+0.920 and graph convolution on GO's 0.917, and 0.930 as a standardized family. Averaged
+with the GO convolution's fold models it reads 0.9550 [0.922, 0.982]
+(Table~\ref{tab:family-ensembles-folds}), a little above the 0.9538 of the cached-solve
+average and the 0.9532 of the layer-free one. That number is now the maximum of thirteen
+post hoc averages rather than eleven, and carries the selection that implies; the three
+best are within 0.002 of one another and their intervals are nearly identical, so what
+the folds establish is that the two families average above either alone, not an ordering
+among the three module forms.
 
 \subsection{What is left to run\secstatus{todo}}
 \label{sec:left-to-run}

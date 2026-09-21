@@ -318,11 +318,14 @@ CHECKS: list[Check] = [
     Check(
         claim="summary: GO graph + cached solve head, fold average",
         stated=0.954,
-        recompute=lambda: max(
+        recompute=lambda: next(
             c["auroc"]
             for c in json.load(open(osp.join(RESULTS, "family_ensembles_folds.json")))[
                 "combinations"
             ]
+            if len(c["families"]) == 2
+            and any("GO convolution" in f for f in c["families"])
+            and any("cached solve" in f for f in c["families"])
         ),
     ),
     Check(
@@ -682,6 +685,27 @@ CHECKS: list[Check] = [
         stated=0.0,
         tolerance=0.0006,
         recompute=cls_arm(0, "cls_strain_sd_without"),
+    ),
+    # sec:round80 -- the rule counts on the five folds.
+    Check(
+        claim="round80: rule-count fold ensemble",
+        stated=0.934,
+        recompute=field("w99_pathloggprcv_ensemble.json", "ensemble_auroc"),
+    ),
+    Check(
+        claim="round80: its fold mean",
+        stated=0.913,
+        recompute=field("w99_pathloggprcv_ensemble.json", "fold_mean_auroc"),
+    ),
+    Check(
+        claim="round80: GO convolution averaged with it",
+        stated=0.955,
+        recompute=lambda: max(
+            c["auroc"]
+            for c in json.load(open(osp.join(RESULTS, "family_ensembles_folds.json")))[
+                "combinations"
+            ]
+        ),
     ),
 ]
 

@@ -244,6 +244,7 @@ def leaderboard() -> list[Bar]:
         ("w41_pathfluxcv_ensemble.json", "transformer + learned-ceiling LP"),
         ("w43_pathoffcv_ensemble.json", "transformer + cached solve head"),
         ("w50_pathlogfreecv_ensemble.json", "transformer + layer-free solve"),
+        ("w99_pathloggprcv_ensemble.json", "transformer + solve + rule counts"),
     ]:
         value, interval = fold_ensemble(name)
         bars.append(
@@ -266,6 +267,7 @@ def leaderboard() -> list[Bar]:
     for member, label in [
         ("cached solve", "GO graph + cached solve head"),
         ("layer-free log1p vector", "GO graph + layer-free solve"),
+        ("GPR redundancy", "GO graph + solve + rule counts"),
     ]:
         c = average(member)
         bars.append(

@@ -1416,3 +1416,18 @@ The mechanism works: the class token's across-strain spread goes from exactly 0 
 Why, structurally: these strains delete ONE gene, so the class token's query attends over a single key and the perturbed token is a function of the wild-type token plus that gene's token, which the perturbed-gene pool already supplies. The flag can only add where a genotype perturbs several genes and the pool's mean discards their arrangement. That is the 025 fitness setting (doubles and triples), not this one.
 
 So the port stays (it is free and correct), the flag stays off for 028, and the honest expectation for multi-gene phenotypes is untested here.
+
+## 2026.09.20 - Round 80: the rule-count cell under the fold protocol is the best single model
+
+Jobs 2601 and 2602 (five folds, seed 2700), both exit 0.
+
+| model, fold protocol | ensemble | interval |
+|---|---|---|
+| solve vector + gene-rule counts (round 80) | **0.9335** | [0.890, 0.968] |
+| layer-free solve vector (round 34) | 0.9197 | [0.873, 0.957] |
+| cached solve + flux head (round 27) | 0.9215 | [0.877, 0.959] |
+| graph convolution on GO | 0.9172 | [0.870, 0.955] |
+
+Fold mean 0.9133. As a standardized family it is 0.930; averaged with the GO convolution's fold models it reads **0.9550** [0.922, 0.982], against 0.9538 (cached solve) and 0.9532 (layer-free). The best average is now the max of THIRTEEN post hoc choices, not eleven, and the top three are within 0.002 with near-identical intervals: what the folds establish is that the two families average above either alone, not an ordering among the module forms.
+
+Added to panel a of the summary figure (`summary_2026-09-20-21-24-16`). `verify_doc_numbers.py` carries 85 checks, all passing. One older check was rewritten: it took the max over combinations and so would have silently tracked whichever average happened to be best; it now names the cached-solve pair.

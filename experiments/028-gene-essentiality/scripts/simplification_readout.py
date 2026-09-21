@@ -100,11 +100,11 @@ LADDER: dict[str, tuple[str, int, bool, str, str | None]] = {
 RESPLIT: dict[str, tuple[tuple[str, ...], str]] = {
     "four_solve_counts": (("w96",), "pathloggpr"),
     "one_solve_counts": (("w104",), "ypdgpr"),
-    "four_solve": (("w93", "w97"), "pathlogfree"),
+    "four_solve": (("w93", "w97", "w120"), "pathlogfree"),
     "four_counts": (("w106",), "gpronly"),
     "two_counts": (("w117",), "twomedgpronly"),
     "one_counts": (("w114", "w118"), "ypdgpronly"),
-    "four_only": (("w94", "w97"), "protpathfba"),
+    "four_only": (("w94", "w97", "w120"), "protpathfba"),
 }
 
 #: (name, a, b): the difference read is a minus b.

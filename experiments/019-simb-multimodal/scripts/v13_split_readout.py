@@ -149,6 +149,17 @@ def roll_max_le(h: pd.DataFrame, epoch: int) -> float:
     return float(hh[KEY].rolling(WINDOW, center=True).mean().max())
 
 
+# THE FIXED-WINDOW SCORE, which is the statistic the round template registers (the
+# expression-fit review, 2026-09-17). A max over a rolling mean is an upward-biased order
+# statistic whose bias grows with the number of epochs run (+0.007 to +0.013 measured on
+# these runs), so it is reported beside, not instead of, the mean over a fixed epoch band.
+# `window` defaults to the last sixth of the round's budget; a round with no declared
+# budget scores the last 200 epochs before the matched epoch.
+def window_mean(h: pd.DataFrame, lo: int, hi: int) -> tuple[float, int]:
+    w = h[(h["epoch"] >= lo) & (h["epoch"] <= hi)]
+    return (float(w[KEY].mean()) if len(w) else float("nan")), len(w)
+
+
 def main() -> None:
     api = wandb.Api()
     rows: list[dict[str, Any]] = []
@@ -191,16 +202,27 @@ def main() -> None:
     df = pd.DataFrame(rows).sort_values(["split", "readout", "seed"])
     matched = int(df["epoch"].min())
     df["roll_max_matched"] = [roll_max_le(hist[i], matched) for i in df["id"]]
+    win_lo = max(1, matched - 200)
+    win = [window_mean(hist[i], win_lo, matched) for i in df["id"]]
+    df["window_mean"] = [w[0] for w in win]
+    df["window_n_epochs"] = [w[1] for w in win]
 
     out: dict[str, Any] = {
         "generated_by": "experiments/019-simb-multimodal/scripts/v13_split_readout.py",
         "project": PROJECT,
         "statistic": f"max of a centered {WINDOW}-epoch rolling mean of {KEY}",
+        "registered_statistic": (
+            f"mean of {KEY} over epochs {win_lo} to {matched} (the round template's "
+            "fixed-window score; the roll_max beside it is an upward-biased order statistic)"
+        ),
+        "window": [win_lo, matched],
         "matched_epoch": matched,
         "n_runs": int(len(df)),
         "runs": df.to_dict(orient="records"),
     }
-    print(f"{len(df)} runs; matched epoch {matched}")
+    print(
+        f"{len(df)} runs; matched epoch {matched}; fixed window {win_lo} to {matched}"
+    )
     pd.set_option("display.width", 220)
     print(
         df[
@@ -278,16 +300,19 @@ def main() -> None:
                             con.loc[seed, "roll_max_matched"]
                             - ref.loc[seed, "roll_max_matched"]
                         ),
+                        "ref_window": float(ref.loc[seed, "window_mean"]),
+                        "alt_window": float(con.loc[seed, "window_mean"]),
+                        "diff_window": float(
+                            con.loc[seed, "window_mean"] - ref.loc[seed, "window_mean"]
+                        ),
                     }
                 )
 
         # A run that never left the plateau (roll_max under PLATEAU) is a training failure,
         # not a readout measurement; the pair it sits in is reported and then set aside.
-        def _pair_stats(ps: list[dict[str, Any]]) -> dict[str, Any]:
-            d = np.array([p["diff"] for p in ps])
+        def _stats(d: np.ndarray) -> dict[str, Any]:
             return {
-                "pairs": ps,
-                "mean": float(d.mean()),
+                "mean": float(d.mean()) if len(d) else None,
                 "sd": float(d.std(ddof=1)) if len(d) > 1 else None,
                 "t": float(d.mean() / (d.std(ddof=1) / np.sqrt(len(d))))
                 if len(d) > 1
@@ -295,6 +320,12 @@ def main() -> None:
                 "n_positive": int((d > 0).sum()),
                 "n": int(len(d)),
             }
+
+        def _pair_stats(ps: list[dict[str, Any]]) -> dict[str, Any]:
+            s = _stats(np.array([p["diff"] for p in ps]))
+            s["pairs"] = ps
+            s["window"] = _stats(np.array([p["diff_window"] for p in ps]))
+            return s
 
         clean = [p for p in pairs if min(p["ref"], p["concat"]) >= PLATEAU]
         out[f"{key}_minus_ref"] = _pair_stats(pairs)
@@ -325,6 +356,13 @@ def main() -> None:
             t = f"{c['t']:+.2f}" if c["t"] is not None else "--"
             print(
                 f"   {label}: mean {c['mean']:+.4f}, sd {sd}, t {t}, {c['n_positive']}/{c['n']} positive"
+            )
+            w = c["window"]
+            wsd = f"{w['sd']:.4f}" if w["sd"] is not None else "--"
+            wt = f"{w['t']:+.2f}" if w["t"] is not None else "--"
+            print(
+                f"     fixed window (epochs {win_lo} to {matched}): mean {w['mean']:+.4f}, "
+                f"sd {wsd}, t {wt}, {w['n_positive']}/{w['n']} positive"
             )
 
     _section2(ALT, "concat")

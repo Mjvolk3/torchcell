@@ -42,13 +42,25 @@ nothing already served would change. Concretely, every blocker below is empty:
   working-tree schema (its ``build_manifest.json``), it must be in
   ``dataset_adapter_map``, and its adapter may only enable phenotype node methods the
   graph schema declares (BioCypher drops undeclared classes silently).
+- **a dataset that is already served** may be re-admitted only as a SUPERSET: every
+  experiment id the live store holds under its Dataset node must still be produced by
+  the dev-tree LMDB, and the LMDB must produce at least one id the store lacks. Node
+  ids are content-addressed, so this is exactly the condition under which the
+  incremental import matches every served node (``--skip-duplicate-nodes``) and adds
+  only the new records; a served id the LMDB no longer produces would be left behind
+  as a stale node beside its replacement, which is the full-rebuild case. The proof
+  reads the served ids from the live store (``admit --neo4j-uri``), never from the
+  manifest, and the dev ids through the adapter's own path (``transform_item`` then
+  ``experiment_node_id``). A loader fix that only emits rows it used to drop passes;
+  a loader fix that changes any existing record blocks.
 
 Several datasets can be admitted in ONE increment (``check_batch_admission``): each
 member is checked in isolation against the SERVED manifest and the batch is admissible
 only when every member is. Isolation is what makes the batch a plain extension rather
-than a second rule: no member is in the store, so nothing a member ADDS (a schema
-symbol, a graph class, an adapter method) can block another member, and a symbol two
-members both introduce is additive and only reported.
+than a second rule: a member is either absent from the store or a proven superset of
+what the store holds for it, so nothing a member ADDS (a schema symbol, a graph class,
+an adapter method, a record) can block another member, and a symbol two members both
+introduce is additive and only reported.
 
 The manifest lives beside the store (a machine-local file under the build tree), never
 in git: it describes one physical database.
@@ -66,7 +78,7 @@ import re
 import socket
 import subprocess
 import sys
-from collections.abc import Mapping
+from collections.abc import Callable, Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -96,8 +108,14 @@ __all__ = [
     "KgBuildManifest",
     "ServedDrift",
     "AdapterDrift",
+    "SupersetCheck",
+    "SupersetLineage",
     "AdmissionReport",
     "BatchAdmissionReport",
+    "experiment_node_id",
+    "dev_experiment_ids",
+    "live_experiment_ids",
+    "superset_check",
     "SCHEMA_CONFIG_RELPATH",
     "CELL_ADAPTER_RELPATH",
     "SURFACE_RELPATHS",
@@ -168,6 +186,20 @@ class GraphSchemaEntry(BaseModel):
         )
 
 
+class SupersetLineage(BaseModel):
+    """The entry a served dataset grew from when it was re-admitted as a superset.
+
+    The store then holds records from two imports: every record of the previous entry
+    (matched by id, untouched) plus ``n_added`` new ones from the increment.
+    """
+
+    biocypher_out: str
+    import_mode: Literal["full", "incremental"]
+    admitted_at: str
+    n_experiments: int | None
+    n_added: int
+
+
 class KgDatasetEntry(BaseModel):
     """A dataset as it exists in the served store."""
 
@@ -184,12 +216,17 @@ class KgDatasetEntry(BaseModel):
     # equal across two releases means byte-identical serialized records. None for a
     # manifest written before releases were stamped.
     content_sha256: str | None = None
+    # Set when this entry was admitted as a superset of an entry already served: the
+    # previous entry's identity and how many records the increment added to it.
+    superset_of: SupersetLineage | None = None
 
 
 class KgEvent(BaseModel):
     """One change to the served store."""
 
-    kind: Literal["bootstrap", "full_build", "incremental_admission"]
+    kind: Literal[
+        "bootstrap", "full_build", "incremental_admission", "superset_admission"
+    ]
     at: str
     torchcell_commit: str | None
     datasets: list[str]
@@ -259,6 +296,23 @@ class AdapterDrift(BaseModel):
         return "; ".join(parts)
 
 
+class SupersetCheck(BaseModel):
+    """Proof that a served dataset's records are all still produced by its dev LMDB.
+
+    ``n_missing`` must be 0 for the re-admission to be a superset, and ``n_added`` must
+    be positive for it to be worth an import.
+    """
+
+    n_served: int  # experiment ids under the Dataset node in the live store
+    n_dev: int  # experiment ids the dev-tree LMDB produces
+    n_missing: int  # served ids the dev LMDB no longer produces
+    n_added: int  # dev ids the store lacks: what the increment would add
+    missing_sample: list[str] = Field(
+        default_factory=list
+    )  # up to 5 of the missing ids
+    served_source: str  # where the served ids were read from (the bolt URI)
+
+
 class AdmissionReport(BaseModel):
     """Verdict on adding one dataset to the served store incrementally."""
 
@@ -289,6 +343,11 @@ class AdmissionReport(BaseModel):
     dev_lmdb_root: str
     in_adapter_map: bool
     undeclared_phenotype_methods: list[str]
+    # True when the dataset is already in the served store; the admission is then a
+    # superset re-admission and ``superset`` carries the proof (None when the proof
+    # could not be run, which is itself a blocker).
+    served: bool = False
+    superset: SupersetCheck | None = None
 
 
 class BatchAdmissionReport(BaseModel):
@@ -703,6 +762,74 @@ def _dev_lmdb_status(
     return ("stale" if result.is_stale else "fresh"), str(root)
 
 
+def experiment_node_id(experiment: Any) -> str:
+    """The content-addressed id ``CellAdapter._experiment_node`` gives an experiment.
+
+    Mirrors the adapter byte for byte (sha256 of the json-dumped ``model_dump``, dict
+    order as the model emits it) so a dev record can be matched against a served node
+    without running the adapter. The adapter-drift check guards the mirror: a change to
+    ``_experiment_node`` blocks every served dataset, and the test file pins the two.
+    """
+    return hashlib.sha256(
+        json.dumps(experiment.model_dump()).encode("utf-8")
+    ).hexdigest()
+
+
+def dev_experiment_ids(dataset_class: type, data_root: Path) -> list[str]:
+    """Experiment node ids the dev-tree LMDB of ``dataset_class`` produces, in order.
+
+    Walks the adapter's own path: the raw item from the store, ``transform_item`` into
+    the loader's experiment class, then ``experiment_node_id``.
+    """
+    dataset = dataset_class(root=str(data_root / _dataset_default_root(dataset_class)))
+    ids = [
+        experiment_node_id(dataset.transform_item(dataset[i])["experiment"])
+        for i in range(len(dataset))
+    ]
+    dataset.close_lmdb()
+    return ids
+
+
+def superset_check(
+    served_ids: Iterable[str], dev_ids: Iterable[str], served_source: str
+) -> SupersetCheck:
+    """Compare the ids a store holds for a dataset with the ids its dev LMDB produces."""
+    served = set(served_ids)
+    dev = set(dev_ids)
+    missing = sorted(served - dev)
+    return SupersetCheck(
+        n_served=len(served),
+        n_dev=len(dev),
+        n_missing=len(missing),
+        n_added=len(dev - served),
+        missing_sample=missing[:5],
+        served_source=served_source,
+    )
+
+
+def live_experiment_ids(
+    uri: str, user: str, password: str, database: str, dataset_class_name: str
+) -> list[str]:
+    """Experiment node ids under one Dataset node of a running store.
+
+    Reached through the Dataset node's ``ExperimentMemberOf`` edges, so it needs no
+    property index on ``Experiment.id`` (the served store carries none between
+    increments) and streams one dataset at a time, as ``kg_content_hashes.sh`` does.
+    """
+    from neo4j import GraphDatabase
+
+    driver = GraphDatabase.driver(uri, auth=(user, password))
+    with driver.session(database=database) as session:
+        result = session.run(
+            "MATCH (d:Dataset {id: $name})<-[:ExperimentMemberOf]-(e:Experiment) "
+            "RETURN e.id AS id",
+            name=dataset_class_name,
+        )
+        ids = [str(record["id"]) for record in result]
+    driver.close()
+    return ids
+
+
 def adapter_drift_against(
     manifest: KgBuildManifest, repo_root: Path
 ) -> tuple[AdapterDrift, list[str]]:
@@ -756,8 +883,16 @@ def check_admission(
     data_root: Path,
     ack_adapter_drift: str | None = None,
     ack_value_drift: str | None = None,
+    served_experiment_ids: Callable[[str], Iterable[str]] | None = None,
+    served_source: str = "live store",
 ) -> AdmissionReport:
-    """Decide whether ``dataset_class_name`` can be added to the store incrementally."""
+    """Decide whether ``dataset_class_name`` can be added to the store incrementally.
+
+    ``served_experiment_ids`` reads the experiment ids the live store holds under a
+    Dataset node (``live_experiment_ids`` bound to a connection in production, named by
+    ``served_source`` in the report). It is called only when the dataset is already
+    served, to run the superset proof; without it a served dataset blocks.
+    """
     from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 
     commit, dirty = _git_info(repo_root)
@@ -831,8 +966,7 @@ def check_admission(
     in_map = dataset_class in dataset_adapter_map
     if not in_map:
         reasons.append(f"{dataset_class_name} is not in dataset_adapter_map")
-    if dataset_class_name in manifest.datasets:
-        reasons.append(f"{dataset_class_name} is already in the served store")
+    served = dataset_class_name in manifest.datasets
     rel = loader_relpath(dataset_class, repo_root)
     new_closure = closure_in_worktree(repo_root, rel, surface)
     shared: dict[str, list[str]] = {}
@@ -860,6 +994,36 @@ def check_admission(
             f"(BioCypher would drop them silently): {', '.join(undeclared)}"
         )
 
+    # 6. already served: only a proven superset may be re-admitted
+    superset: SupersetCheck | None = None
+    if served and served_experiment_ids is None:
+        reasons.append(
+            f"{dataset_class_name} is already in the served store; re-admitting it needs "
+            "the superset proof, which reads the served experiment ids from the live "
+            "store (admit --neo4j-uri)"
+        )
+    elif served and lmdb_status == "fresh":
+        assert served_experiment_ids is not None
+        superset = superset_check(
+            served_experiment_ids(dataset_class_name),
+            dev_experiment_ids(dataset_class, data_root),
+            served_source,
+        )
+        if superset.n_missing:
+            reasons.append(
+                f"{dataset_class_name} is already in the served store and its dev LMDB "
+                f"no longer produces {superset.n_missing} of the {superset.n_served} "
+                "served experiment ids (full rebuild required: incremental import would "
+                "leave those nodes beside their replacements). First missing ids: "
+                + ", ".join(superset.missing_sample)
+            )
+        elif superset.n_added == 0:
+            reasons.append(
+                f"{dataset_class_name} is already in the served store and its dev LMDB "
+                f"produces exactly the {superset.n_served} served experiment ids; "
+                "nothing to add"
+            )
+
     return AdmissionReport(
         dataset_class=dataset_class_name,
         checked_at=_now(),
@@ -885,6 +1049,8 @@ def check_admission(
         dev_lmdb_root=lmdb_root,
         in_adapter_map=in_map,
         undeclared_phenotype_methods=undeclared,
+        served=served,
+        superset=superset,
     )
 
 
@@ -947,12 +1113,21 @@ def check_batch_admission(
     data_root: Path,
     ack_adapter_drift: str | None = None,
     ack_value_drift: str | None = None,
+    served_experiment_ids: Callable[[str], Iterable[str]] | None = None,
+    served_source: str = "live store",
 ) -> BatchAdmissionReport:
     """Decide whether every named dataset can be added in ONE incremental import."""
     return batch_report_from_members(
         [
             check_admission(
-                manifest, repo_root, name, data_root, ack_adapter_drift, ack_value_drift
+                manifest,
+                repo_root,
+                name,
+                data_root,
+                ack_adapter_drift,
+                ack_value_drift,
+                served_experiment_ids,
+                served_source,
             )
             for name in dataset_class_names
         ]
@@ -966,9 +1141,33 @@ def _dataset_entry(
     n_experiments: int | None,
     repo_root: Path,
     at: str,
+    previous: KgDatasetEntry | None,
 ) -> KgDatasetEntry:
-    """The manifest entry for one admitted dataset."""
+    """The manifest entry for one admitted dataset.
+
+    ``previous`` is the entry the store already held for it, present exactly when the
+    admission was a superset; the new entry records that lineage.
+    """
+    if report.served != (previous is not None):
+        raise ValueError(
+            f"{report.dataset_class}: report says served={report.served} but the "
+            f"manifest {'has' if previous else 'has no'} entry for it"
+        )
+    if previous is not None and report.superset is None:
+        raise ValueError(
+            f"{report.dataset_class} is served but the report carries no superset proof"
+        )
     dataset_class = _dataset_class(report.dataset_class)
+    lineage = None
+    if previous is not None:
+        assert report.superset is not None
+        lineage = SupersetLineage(
+            biocypher_out=previous.biocypher_out,
+            import_mode=previous.import_mode,
+            admitted_at=previous.admitted_at,
+            n_experiments=previous.n_experiments,
+            n_added=report.superset.n_added,
+        )
     return KgDatasetEntry(
         dataset_class=report.dataset_class,
         loader_relpath=loader_relpath(dataset_class, repo_root),
@@ -979,7 +1178,28 @@ def _dataset_entry(
         import_mode="incremental",
         admitted_at=at,
         torchcell_commit=report.torchcell_commit,
+        superset_of=lineage,
     )
+
+
+def _event_kind(
+    members: list[AdmissionReport],
+) -> Literal["incremental_admission", "superset_admission"]:
+    """A superset admission when any member re-admits a served dataset."""
+    if any(member.served for member in members):
+        return "superset_admission"
+    return "incremental_admission"
+
+
+def _superset_note(members: list[AdmissionReport]) -> str | None:
+    """``Dataset +N`` for every member that grew a served dataset."""
+    grown = [
+        f"{member.dataset_class} +{member.superset.n_added} "
+        f"(served {member.superset.n_served})"
+        for member in members
+        if member.superset is not None
+    ]
+    return "superset of served: " + "; ".join(grown) if grown else None
 
 
 def _adopt_current_surfaces(manifest: KgBuildManifest, repo_root: Path) -> None:
@@ -1038,15 +1258,17 @@ def record_admission(
         n_experiments=n_experiments,
         repo_root=repo_root,
         at=now,
+        previous=manifest.datasets.get(report.dataset_class),
     )
     _adopt_current_surfaces(manifest, repo_root)
     manifest.events.append(
         KgEvent(
-            kind="incremental_admission",
+            kind=_event_kind([report]),
             at=now,
             torchcell_commit=report.torchcell_commit,
             datasets=[report.dataset_class],
             biocypher_out=biocypher_out,
+            note=_superset_note([report]),
             acknowledged_adapter_drift=_acknowledged_drift(report),
             acknowledged_value_drift=_acknowledged_value_drift(report),
         )
@@ -1086,6 +1308,7 @@ def record_batch_admission(
             n_experiments=n_experiments[member.dataset_class],
             repo_root=repo_root,
             at=now,
+            previous=manifest.datasets.get(member.dataset_class),
         )
     _adopt_current_surfaces(manifest, repo_root)
     acknowledged: list[str] = []
@@ -1103,11 +1326,12 @@ def record_batch_admission(
         )
     manifest.events.append(
         KgEvent(
-            kind="incremental_admission",
+            kind=_event_kind(report.members),
             at=now,
             torchcell_commit=report.torchcell_commit,
             datasets=list(report.dataset_classes),
             biocypher_out=biocypher_out,
+            note=_superset_note(report.members),
             acknowledged_adapter_drift=acknowledged,
             acknowledged_value_drift=acknowledged_values,
         )
@@ -1192,10 +1416,25 @@ def format_report(report: AdmissionReport) -> str:
             else ""
         ),
         f"  value surface: {_format_value_surface(report)}",
+        f"  served: {_format_served(report)}",
     ]
     for reason in report.reasons:
         lines.append(f"  [BLOCK] {reason}")
     return "\n".join(lines)
+
+
+def _format_served(report: AdmissionReport) -> str:
+    """Whether the dataset is already served and, if so, the superset proof."""
+    if not report.served:
+        return "no (new dataset)"
+    if report.superset is None:
+        return "yes; superset proof not run"
+    s = report.superset
+    return (
+        f"yes; superset proof from {s.served_source}: {s.n_served} served ids, "
+        f"{s.n_dev} in the dev LMDB, {s.n_missing} served ids missing from it, "
+        f"{s.n_added} to add"
+    )
 
 
 def format_batch_report(report: BatchAdmissionReport) -> str:
@@ -1335,6 +1574,14 @@ def main(argv: list[str] | None = None) -> int:
         "served media/compound node ids unchanged; recorded in the manifest event",
     )
     p_admit.add_argument("--report", default=None, help="write the JSON report here")
+    p_admit.add_argument(
+        "--neo4j-uri",
+        default=None,
+        help="bolt URI of the served store (default: NEO4J_URI or the connection "
+        "default); read only when a named dataset is already served, to prove the "
+        "re-admission is a superset of what the store holds",
+    )
+    p_admit.add_argument("--database", default="torchcell")
 
     p_rec = sub.add_parser("record", help="record a completed incremental admission")
     p_rec.add_argument("--report", required=True, help="the admission report JSON")
@@ -1391,7 +1638,17 @@ def main(argv: list[str] | None = None) -> int:
             )
         return 0
     if args.command == "admit":
+        from torchcell.database.connection import neo4j_connection_settings
+
         names = split_dataset_args(args.dataset)
+        settings = neo4j_connection_settings()
+        uri = args.neo4j_uri or settings.uri
+
+        def served_ids(name: str) -> list[str]:
+            return live_experiment_ids(
+                uri, settings.username, settings.password, args.database, name
+            )
+
         if len(names) == 1:
             report = check_admission(
                 manifest,
@@ -1400,6 +1657,8 @@ def main(argv: list[str] | None = None) -> int:
                 Path(args.data_root),
                 args.ack_adapter_drift,
                 args.ack_value_drift,
+                served_ids,
+                uri,
             )
             print(format_report(report))
             if args.report:
@@ -1414,6 +1673,8 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.data_root),
             args.ack_adapter_drift,
             args.ack_value_drift,
+            served_ids,
+            uri,
         )
         print(format_batch_report(batch))
         if args.report:

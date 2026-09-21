@@ -1,24 +1,33 @@
 """Tests for the served knowledge-graph manifest and the admission rule."""
 
 from collections.abc import Sequence
+from pathlib import Path
 
 import pytest
+from pydantic import BaseModel
 
 from torchcell.knowledge_graphs.kg_manifest import (
     AdapterDrift,
     AdmissionReport,
     GraphSchemaEntry,
     KgBuildManifest,
+    KgDatasetEntry,
     KgEvent,
     ServedDrift,
+    SupersetCheck,
     _acknowledged_value_drift,
+    _dataset_entry,
     batch_report_from_members,
     cell_adapter_surface,
+    experiment_node_id,
     format_batch_report,
     format_report,
     graph_schema_from_yaml,
     parse_n_experiments,
+    record_admission,
+    record_batch_admission,
     split_dataset_args,
+    superset_check,
     value_surface_drift,
     value_surface_from_sources,
 )
@@ -392,3 +401,234 @@ def test_old_manifest_without_a_value_surface_still_loads() -> None:
         ).acknowledged_value_drift
         == []
     )
+
+
+# ------------------------------------------------------------------ superset admission
+
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+class _ToyExperiment(BaseModel):
+    """Stands in for an Experiment: only ``model_dump`` matters for the id."""
+
+    dataset_name: str
+    fitness: float
+    genes: list[str]
+
+
+def test_experiment_node_id_matches_the_adapter() -> None:
+    """The gate's id mirror and ``CellAdapter._experiment_node`` agree byte for byte.
+
+    The adapter method is called through ``__wrapped__`` (the chunking decorator keeps
+    the original), with no adapter instance: the id depends on the data alone.
+    """
+    from torchcell.adapters.cell_adapter import CellAdapter
+
+    experiment = _ToyExperiment(
+        dataset_name="ToyDataset", fitness=0.5, genes=["YAL001C"]
+    )
+    node = CellAdapter._experiment_node.__wrapped__(  # type: ignore[attr-defined]
+        None, {"experiment": experiment}, "experiment (chunked)"
+    )
+    assert node.get_id() == experiment_node_id(experiment)
+    # a one-field change moves the id
+    assert experiment_node_id(
+        experiment.model_copy(update={"fitness": 0.6})
+    ) != experiment_node_id(experiment)
+
+
+def test_superset_check_counts_added_and_names_the_missing() -> None:
+    proof = superset_check(["a", "b", "c"], ["a", "b", "c", "d", "e"], "bolt://x")
+    assert (proof.n_served, proof.n_dev, proof.n_missing, proof.n_added) == (3, 5, 0, 2)
+    assert proof.missing_sample == []
+    assert proof.served_source == "bolt://x"
+    # a served id the dev LMDB no longer produces is the full-rebuild case
+    broken = superset_check(["a", "b", "c"], ["a", "c", "d"], "bolt://x")
+    assert (broken.n_missing, broken.n_added) == (1, 1)
+    assert broken.missing_sample == ["b"]
+    # identical content: nothing to add
+    same = superset_check(["a", "b"], ["b", "a"], "bolt://x")
+    assert (same.n_missing, same.n_added) == (0, 0)
+
+
+def _served_entry(name: str, n: int) -> KgDatasetEntry:
+    return KgDatasetEntry(
+        dataset_class=name,
+        loader_relpath="torchcell/datasets/scerevisiae/kuzmin2018.py",
+        adapter_files=[],
+        closure={"Experiment": "f1"},
+        n_experiments=n,
+        biocypher_out="2026-09-16_00-44-53",
+        import_mode="full",
+        admitted_at="2026-09-17T20:36:32-05:00",
+        torchcell_commit="7715ee35",
+        content_sha256="0" * 64,
+    )
+
+
+def _superset_member(name: str, n_served: int, n_added: int) -> AdmissionReport:
+    member = _member(name)
+    member.served = True
+    member.superset = SupersetCheck(
+        n_served=n_served,
+        n_dev=n_served + n_added,
+        n_missing=0,
+        n_added=n_added,
+        served_source="bolt://localhost:7687",
+    )
+    return member
+
+
+def test_dataset_entry_carries_the_lineage_of_a_superset() -> None:
+    previous = _served_entry("DmfKuzmin2018Dataset", 410399)
+    entry = _dataset_entry(
+        _superset_member("DmfKuzmin2018Dataset", 410399, 172),
+        biocypher_out="2026-09-21_12-00-00",
+        n_experiments=410571,
+        repo_root=REPO_ROOT,
+        at="2026-09-21T12:00:00+00:00",
+        previous=previous,
+    )
+    assert entry.import_mode == "incremental"
+    assert entry.n_experiments == 410571
+    assert entry.superset_of is not None
+    assert entry.superset_of.biocypher_out == "2026-09-16_00-44-53"
+    assert entry.superset_of.import_mode == "full"
+    assert entry.superset_of.n_experiments == 410399
+    assert entry.superset_of.n_added == 172
+    # a new dataset carries no lineage
+    fresh = _dataset_entry(
+        _member("DmfKuzmin2018Dataset"),
+        biocypher_out="x",
+        n_experiments=1,
+        repo_root=REPO_ROOT,
+        at="t",
+        previous=None,
+    )
+    assert fresh.superset_of is None
+
+
+def test_dataset_entry_refuses_a_served_flag_that_disagrees_with_the_manifest() -> None:
+    with pytest.raises(ValueError, match="has no entry"):
+        _dataset_entry(
+            _superset_member("DmfKuzmin2018Dataset", 1, 1),
+            biocypher_out="x",
+            n_experiments=2,
+            repo_root=REPO_ROOT,
+            at="t",
+            previous=None,
+        )
+    with pytest.raises(ValueError, match="has entry"):
+        _dataset_entry(
+            _member("DmfKuzmin2018Dataset"),
+            biocypher_out="x",
+            n_experiments=2,
+            repo_root=REPO_ROOT,
+            at="t",
+            previous=_served_entry("DmfKuzmin2018Dataset", 1),
+        )
+    served_without_proof = _member("DmfKuzmin2018Dataset")
+    served_without_proof.served = True
+    with pytest.raises(ValueError, match="no superset proof"):
+        _dataset_entry(
+            served_without_proof,
+            biocypher_out="x",
+            n_experiments=2,
+            repo_root=REPO_ROOT,
+            at="t",
+            previous=_served_entry("DmfKuzmin2018Dataset", 1),
+        )
+
+
+def _manifest_with(entries: list[KgDatasetEntry]) -> KgBuildManifest:
+    return KgBuildManifest(
+        database="torchcell",
+        store_host="gilahyper",
+        neo4j_version="5.26.28",
+        biocypher_version="0.5.43",
+        torchcell_commit="7715ee35",
+        graph_schema={},
+        cell_adapter_methods={},
+        cell_adapter_table={},
+        adapter_files={},
+        datasets={e.dataset_class: e for e in entries},
+        events=[],
+        created_at="t0",
+        updated_at="t0",
+    )
+
+
+def test_record_batch_admission_of_supersets_writes_one_superset_event() -> None:
+    manifest = _manifest_with(
+        [
+            _served_entry("DmfKuzmin2018Dataset", 410399),
+            _served_entry("DmfKuzmin2020Dataset", 632797),
+        ]
+    )
+    batch = batch_report_from_members(
+        [
+            _superset_member("DmfKuzmin2018Dataset", 410399, 172),
+            _superset_member("DmfKuzmin2020Dataset", 632797, 201),
+        ]
+    )
+    assert batch.verdict == "admissible"
+    record_batch_admission(
+        manifest,
+        batch,
+        biocypher_out="2026-09-21_12-00-00",
+        n_experiments={"DmfKuzmin2018Dataset": 410571, "DmfKuzmin2020Dataset": 632998},
+        repo_root=REPO_ROOT,
+    )
+    event = manifest.events[-1]
+    assert event.kind == "superset_admission"
+    assert event.datasets == ["DmfKuzmin2018Dataset", "DmfKuzmin2020Dataset"]
+    assert event.note == (
+        "superset of served: DmfKuzmin2018Dataset +172 (served 410399); "
+        "DmfKuzmin2020Dataset +201 (served 632797)"
+    )
+    grown = manifest.datasets["DmfKuzmin2020Dataset"]
+    assert grown.n_experiments == 632998
+    assert grown.superset_of is not None and grown.superset_of.n_added == 201
+    # a plain (new-dataset) admission keeps its event kind
+    plain = _manifest_with([])
+    record_admission(
+        plain,
+        _member("DmfKuzmin2018Dataset"),
+        biocypher_out="x",
+        n_experiments=5,
+        repo_root=REPO_ROOT,
+    )
+    assert plain.events[-1].kind == "incremental_admission"
+    assert plain.events[-1].note is None
+    assert plain.datasets["DmfKuzmin2018Dataset"].superset_of is None
+
+
+def test_format_report_states_the_superset_proof() -> None:
+    assert "served: no (new dataset)" in format_report(_member("ADataset"))
+    served = _member("ADataset")
+    served.served = True
+    assert "served: yes; superset proof not run" in format_report(served)
+    text = format_report(_superset_member("ADataset", 410399, 172))
+    assert (
+        "served: yes; superset proof from bolt://localhost:7687: 410399 served ids, "
+        "410571 in the dev LMDB, 0 served ids missing from it, 172 to add"
+    ) in text
+
+
+def test_manifest_entry_without_superset_fields_still_loads() -> None:
+    """Back-compat: entries and events written before superset admission load unchanged."""
+    entry = KgDatasetEntry.model_validate(
+        {
+            "dataset_class": "X",
+            "loader_relpath": "x.py",
+            "adapter_files": [],
+            "closure": {},
+            "biocypher_out": "t",
+            "import_mode": "full",
+            "admitted_at": "t",
+        }
+    )
+    assert entry.superset_of is None
+    report = AdmissionReport.model_validate(_member("X").model_dump())
+    assert report.served is False and report.superset is None

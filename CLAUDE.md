@@ -766,6 +766,13 @@ fingerprints, the BioCypher graph schema, and the adapter code it was serialized
   `neo4j-admin database import incremental` into the live store. Adding NEW schema classes,
   graph node classes, or adapter methods is additive and admissible. Read
   [[torchcell.knowledge_graphs.incremental-admission]] before the first run on a machine.
+  A dataset that is ALREADY served can go through the same path when its loader now emits
+  records it used to drop (a **superset admission**): `admit --neo4j-uri <bolt>` reads the
+  experiment ids the store holds under that Dataset node and proves the dev LMDB still
+  produces every one of them plus at least one more; the increment then matches the served
+  nodes by content id and adds only the new records. A served id the LMDB no longer
+  produces blocks, because that is a changed record, which is the full-rebuild case.
+  Every step that touches the store runs under slurm, never as a shell process.
 - **Full rebuild (required, not optional) when the admission check BLOCKS**: a served
   dataset's schema closure changed (its stored records would serialize differently now), an
   existing graph node class changed its properties, or adapter code used by a served dataset

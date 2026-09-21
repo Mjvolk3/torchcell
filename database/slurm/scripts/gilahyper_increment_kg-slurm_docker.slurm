@@ -2,8 +2,8 @@
 #SBATCH --job-name=increment_kg
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
-#SBATCH --time=03:00:00
+#SBATCH --mem=64G
+#SBATCH --time=12:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
@@ -24,13 +24,25 @@
 #
 # A batch is ONE increment: one CSV set, one constraint step, one neo4j-admin call, one
 # manifest event. Members are admitted independently (nothing a member adds can block
-# another, since none of them is served yet), so the batch is the single-dataset run
-# with every per-dataset stage looped.
+# another, since each is either new to the store or a proven superset of what the store
+# holds for it), so the batch is the single-dataset run with every per-dataset stage
+# looped.
+#
+# A SERVED dataset may be named again when its loader now emits records it used to
+# drop: the admission proves the dev LMDB still produces every experiment id the store
+# holds under that Dataset node (read live over bolt) and adds at least one. The
+# increment then re-emits the whole dataset; the import matches every existing node by
+# id and adds only the new ones, and the existing-edge filter drops the relationship
+# rows the store already holds. That filter looks up every distinct (start, end) pair
+# of the increment, so a superset of a large dataset costs a lookup per served edge;
+# the 12 h limit and 64 G cover two datasets of 410k and 633k records (the first
+# superset run; its measured cost goes into the note).
 #
 # Stages (each one fails loudly; nothing is retried or worked around):
 #   1 ADMIT    kg_manifest admit: the served datasets' schema closures, the graph schema
 #              and the adapter code must be unchanged for everything already served, and
-#              each new dataset's dev-tree LMDB must be fresh. A block means FULL REBUILD
+#              each new dataset's dev-tree LMDB must be fresh. A dataset already served
+#              must pass the superset proof (--neo4j-uri). A block means FULL REBUILD
 #              (or, for adapter drift only, a reviewed ACK_ADAPTER_DRIFT reason). With
 #              more than one dataset the report is a BATCH report (blocked unless every
 #              member is admissible).
@@ -148,7 +160,8 @@ if [ -n "${ACK_ADAPTER_DRIFT:-}" ]; then ACK_ARGS=(--ack-adapter-drift "$ACK_ADA
 DATASET_ARGS=()
 for NAME in "${DATASET_ARRAY[@]}"; do DATASET_ARGS+=(--dataset "$NAME"); done
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
-    admit "${DATASET_ARGS[@]}" --data-root "$DEV_DATA_ROOT" --report "$REPORT" "${ACK_ARGS[@]}"
+    admit "${DATASET_ARGS[@]}" --data-root "$DEV_DATA_ROOT" --report "$REPORT" "${ACK_ARGS[@]}" \
+    --neo4j-uri "$NEO4J_BOLT_URI" --database "$NEO4J_DATABASE"
 
 echo "---------------- 2 STAGE dev LMDBs -> build tree (as uid 7474)"
 TS=$(date +%Y-%m-%d_%H-%M-%S)

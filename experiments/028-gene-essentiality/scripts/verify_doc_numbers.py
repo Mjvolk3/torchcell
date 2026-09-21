@@ -78,6 +78,29 @@ def field(name: str, *path: str | int) -> Callable[[], float]:
     return run
 
 
+def consensus(*keys: str | int) -> Callable[[], float]:
+    """One value of ``consensus_missed.json``, addressed by a key path."""
+
+    def run() -> float:
+        node = json.load(open(osp.join(RESULTS, "consensus_missed.json")))
+        for k in keys:
+            node = node[k]
+        return float(node)
+
+    return run
+
+
+def consensus_term(name: str, key: str) -> Callable[[], float]:
+    """One statistic of one enriched term among the essential genes."""
+
+    def run() -> float:
+        report = json.load(open(osp.join(RESULTS, "consensus_missed.json")))
+        top = report["classes"][0]["top"]
+        return float(next(t for t in top if t["name"] == name)[key])
+
+    return run
+
+
 def simplification(block: str, name: str, key: str) -> Callable[[], float]:
     """One statistic of one named row of the simplification readout."""
 
@@ -1034,6 +1057,203 @@ CHECKS: list[Check] = [
         recompute=simplification(
             "second_medium", "YPD and SM, against YPD and SC", "mean_difference"
         ),
+    ),
+    # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
+    Check(
+        claim="consensus: genes held out at least once",
+        stated=874,
+        recompute=consensus("n_held_out_at_least_once"),
+    ),
+    Check(
+        claim="consensus: labeled genes",
+        stated=1121,
+        recompute=consensus("n_labeled"),
+    ),
+    Check(
+        claim="consensus: essential genes held out",
+        stated=140,
+        recompute=consensus("classes", 0, "n_genes"),
+    ),
+    Check(
+        claim="consensus: essential mean misrank, module",
+        stated=0.133,
+        recompute=consensus("essential_mean_misrank", "transformer, single-experiment module"),
+    ),
+    Check(
+        claim="consensus: essential mean misrank, no metabolism",
+        stated=0.193,
+        recompute=consensus("essential_mean_misrank", "transformer, no metabolism"),
+    ),
+    Check(
+        claim="consensus: essential mean misrank, graph convolution",
+        stated=0.132,
+        recompute=consensus("essential_mean_misrank", "graph convolution on GO"),
+    ),
+    Check(
+        claim="consensus: essential mean misrank, DCell",
+        stated=0.19,
+        recompute=consensus("essential_mean_misrank", "DCell hierarchy, shared input"),
+    ),
+    Check(
+        claim="consensus: essential mean misrank, FBA",
+        stated=0.29,
+        recompute=consensus("essential_mean_misrank", "FBA growth ratio, YPD"),
+    ),
+    Check(
+        claim="consensus: fewest essential genes a learned predictor misses",
+        stated=7,
+        recompute=consensus("essential_n_missed", "graph convolution on GO"),
+    ),
+    Check(
+        claim="consensus: most essential genes a learned predictor misses",
+        stated=15,
+        recompute=consensus("essential_n_missed", "DCell hierarchy, shared input"),
+    ),
+    Check(
+        claim="consensus: missed by none",
+        stated=111,
+        recompute=consensus("essential_missed_by_k_learned", 0),
+    ),
+    Check(
+        claim="consensus: missed by one",
+        stated=16,
+        recompute=consensus("essential_missed_by_k_learned", 1),
+    ),
+    Check(
+        claim="consensus: missed by two",
+        stated=9,
+        recompute=consensus("essential_missed_by_k_learned", 2),
+    ),
+    Check(
+        claim="consensus: missed by three",
+        stated=4,
+        recompute=consensus("essential_missed_by_k_learned", 3),
+    ),
+    Check(
+        claim="consensus: missed by all four",
+        stated=0,
+        recompute=consensus("essential_missed_by_k_learned", 4),
+    ),
+    Check(
+        claim="consensus: mean consensus misrank",
+        stated=0.055,
+        recompute=consensus("classes", 0, "mean_consensus"),
+    ),
+    Check(
+        claim="consensus: agreement, the two transformers",
+        stated=0.78,
+        recompute=consensus("agreement_essential", "transformer, single-experiment module", "transformer, no metabolism"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="consensus: agreement, module and graph convolution",
+        stated=0.4,
+        recompute=consensus("agreement_essential", "transformer, single-experiment module", "graph convolution on GO"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="consensus: agreement, graph convolution and DCell",
+        stated=0.43,
+        recompute=consensus("agreement_essential", "graph convolution on GO", "DCell hierarchy, shared input"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="consensus: agreement, graph convolution and FBA",
+        stated=0.08,
+        recompute=consensus("agreement_essential", "graph convolution on GO", "FBA growth ratio, YPD"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="consensus: rho with GO term count",
+        stated=-0.002,
+        recompute=consensus("classes", 0, "spearman_consensus_vs_go_terms"),
+    ),
+    Check(
+        claim="consensus: rho with degree",
+        stated=-0.022,
+        recompute=consensus("classes", 0, "spearman_consensus_vs_degree"),
+    ),
+    Check(
+        claim="consensus: terms tested",
+        stated=179,
+        recompute=consensus("classes", 0, "n_terms_tested"),
+    ),
+    Check(
+        claim="consensus: terms under q 0.1",
+        stated=11,
+        recompute=consensus("classes", 0, "n_terms_q_below_0_1"),
+    ),
+    Check(
+        claim="consensus: FBA knockout growth ratio 1.0, n_annotated",
+        stated=70,
+        recompute=consensus_term("FBA knockout growth ratio 1.0", "n_annotated"),
+    ),
+    Check(
+        claim="consensus: FBA knockout growth ratio 1.0, mean_misrank_annotated",
+        stated=0.082,
+        recompute=consensus_term("FBA knockout growth ratio 1.0", "mean_misrank_annotated"),
+    ),
+    Check(
+        claim="consensus: FBA knockout growth ratio 1.0, mean_misrank_rest",
+        stated=0.028,
+        recompute=consensus_term("FBA knockout growth ratio 1.0", "mean_misrank_rest"),
+    ),
+    Check(
+        claim="consensus: FBA knockout growth ratio 1.0, effect",
+        stated=0.78,
+        recompute=consensus_term("FBA knockout growth ratio 1.0", "effect"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="consensus: organic substance transport, n_annotated",
+        stated=10,
+        recompute=consensus_term("organic substance transport", "n_annotated"),
+    ),
+    Check(
+        claim="consensus: organic substance transport, mean_misrank_annotated",
+        stated=0.19,
+        recompute=consensus_term("organic substance transport", "mean_misrank_annotated"),
+    ),
+    Check(
+        claim="consensus: organic substance transport, mean_misrank_rest",
+        stated=0.045,
+        recompute=consensus_term("organic substance transport", "mean_misrank_rest"),
+    ),
+    Check(
+        claim="consensus: organic substance transport, effect",
+        stated=0.83,
+        recompute=consensus_term("organic substance transport", "effect"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="consensus: cellular component organization, n_annotated",
+        stated=14,
+        recompute=consensus_term("cellular component organization", "n_annotated"),
+    ),
+    Check(
+        claim="consensus: cellular component organization, mean_misrank_annotated",
+        stated=0.12,
+        recompute=consensus_term("cellular component organization", "mean_misrank_annotated"),
+    ),
+    Check(
+        claim="consensus: cellular component organization, mean_misrank_rest",
+        stated=0.048,
+        recompute=consensus_term("cellular component organization", "mean_misrank_rest"),
+    ),
+    Check(
+        claim="consensus: monoatomic ion transport, n_annotated",
+        stated=5,
+        recompute=consensus_term("monoatomic ion transport", "n_annotated"),
+    ),
+    Check(
+        claim="consensus: monoatomic ion transport, mean_misrank_annotated",
+        stated=0.184,
+        recompute=consensus_term("monoatomic ion transport", "mean_misrank_annotated"),
+    ),
+    Check(
+        claim="consensus: monoatomic ion transport, mean_misrank_rest",
+        stated=0.05,
+        recompute=consensus_term("monoatomic ion transport", "mean_misrank_rest"),
     ),
     # sec:round108 -- DCell's hierarchy over these splits.
     Check(

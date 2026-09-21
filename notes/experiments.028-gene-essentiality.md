@@ -1537,3 +1537,13 @@ Job 2668, ten repeated outer splits, three seeds each, the solver-free recipe wi
 So the ladder without the stored flux vector is monotone in the number of media, 0.832 for one, 0.838 for two, 0.845 for four, and the second medium buys about a third of the gap. Round 101 (job 2670) had already shown that pairing YPD with the minimal medium instead of SC is not better: 0.892 per cell against 0.896, higher on 2 of 6 seeds.
 
 Round 104 (job 2674) takes the two-media and one-medium fold ensembles to three seeds per fold, the depth the other forms already have.
+
+## 2026.09.21 - The essential genes every predictor ranks low
+
+Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `results/consensus_missed.json`, chapter Section `sec:consensus-missed`.
+
+- Ten repeated outer splits hold out 874 of 1,121 labeled genes at least once, 140 essential. Predictors: module transformer (w104, 9 seeds), no-metabolism transformer (w94 + w121, 9), GO graph convolution (6), DCell shared input (3), FBA ratio.
+- No essential gene sits below the median nonessential gene under all four learned predictors. Counts by number of learned predictors that miss: 111, 16, 9, 4, 0.
+- Consensus misrank (minimum over the four learned predictors) averages 0.055. Its Spearman with the GO term count is -0.002, so thin annotation does not explain the residual.
+- Enriched among the residual: FBA ratio 1.0 (70 genes, 0.082 against 0.028), organic substance transport (10 genes, 0.190 against 0.045), cellular component organization, monoatomic ion transport.
+- Hypothesis, untested: the top genes (VHT1, HIP1, RIM2, THI80, NCE103) are essential only given the medium and the strain's auxotrophies, which no input encodes.

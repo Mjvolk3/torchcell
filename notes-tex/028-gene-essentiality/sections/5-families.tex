@@ -85,6 +85,55 @@ cell misranks by more than 0.3 (TDH1, ACS1, ATP2, FBP1, TRR2 among them) and bre
 the pathway cell had right. Two models that read the same genes wrong for different
 reasons are the case for averaging them.
 
+\subsection{The essential genes every predictor ranks low\secstatus{todo}}
+\label{sec:consensus-missed}
+
+If every predictor failed on the same essential genes, the shared failures would mark a
+branch of function that no input describes. The released split holds out 31 essential
+genes, too few to test that, so the intersection is taken on the ten repeated outer
+splits of Section~\ref{sec:round75}, which hold out 874 of the 1,121 labeled genes at
+least once, 140 of them essential. Five predictors are read there: the transformer with
+the single-experiment module, the same transformer with no metabolic column, graph
+convolution on GO, the DCell hierarchy with a shared input
+(Section~\ref{sec:round108}), and FBA alone as one minus the YPD growth ratio. A gene's
+misrank under one predictor is averaged over its seeds and over the splits that hold it
+out, and its consensus misrank is the lowest of the four learned predictors.
+
+The intersection is nearly empty. The mean misrank of the essential genes is 0.133 for
+the module transformer, 0.193 without metabolism, 0.132 for graph convolution, 0.190 for
+the DCell hierarchy and 0.290 for FBA, and each learned predictor ranks 7 to 15 essential
+genes below the median nonessential gene of their block. No essential gene is below that
+median under all four: 111 of the 140 are below it under none, 16 under one, 9 under two
+and 4 under three. The consensus misrank averages 0.055, under half of the best single
+predictor's mean, and only one gene reaches 0.5, the biotin transporter \textit{VHT1}
+(Table~\ref{tab:consensus-missed}). The predictors disagree on which genes are hard: the
+per-gene misrank of the essential genes correlates at a Spearman of 0.78 between the two
+transformers, 0.40 between the module transformer and graph convolution, 0.43 between
+graph convolution and the DCell hierarchy although both read the same GO multi-hot, and
+0.08 between graph convolution and FBA.
+
+What the residual shares is a function, and the depth of a gene's annotation does not
+explain it. Across the 140 essential genes the consensus misrank has a Spearman
+correlation of $-0.002$ with the count of propagated GO biological-process terms and
+$-0.022$ with physical degree, and a term count under the class median is not
+enriched. Of 179 terms and features tested by the Mann-Whitney rule of
+Section~\ref{sec:hard-genes}, 11 pass $q < 0.1$. The largest group is the 70 essential
+genes whose FBA growth ratio is 1.0, at a consensus misrank of 0.082 against 0.028 for
+the rest (effect 0.78). Among GO terms the strongest are organic substance transport (10
+genes, 0.190 against 0.045, effect 0.83), cellular component organization (14 genes,
+0.120 against 0.048) and monoatomic ion transport (5 genes, 0.184 against 0.050). Test
+blocks overlap across splits, so these $q$-values rank terms and are not calibrated error
+rates. The top of the table is transporters and cofactor supply: \textit{VHT1},
+\textit{HIP1}, \textit{RIM2}, \textit{THI80}, \textit{NCE103}. Hypothesis, untested:
+these are essential only given the medium and the strain's auxotrophies, a histidine
+permease in a \textit{his3} background or a biotin transporter where biotin is supplied
+and not made, so the knowledge that is missing is the experiment's context and a wider
+GO branch would not supply it. \textit{ILV3} and \textit{ILV5}, which FBA ranks
+correctly and the learned predictors do not, are the converse case of a label the
+network explains and the annotation vectors do not.
+
+\input{tables/consensus_missed}
+
 \subsection{Averaging the two families\secstatus{todo}}
 \label{sec:family-ensembles}
 

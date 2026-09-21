@@ -2524,6 +2524,58 @@ def dcell_style() -> str | None:
     return write("dcell_style", body, "results/dcell_style_*.json")
 
 
+def consensus_missed() -> str | None:
+    """The essential genes no predictor ranks well, on the ten repeated splits."""
+    src = osp.join(RESULTS, "consensus_missed.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    predictors = report["predictors"]
+    learned = predictors[:-1]
+    essential = sorted(
+        (g for g in report["genes"] if g["essential"] == 1),
+        key=lambda g: -g["consensus"],
+    )[:12]
+    rows = []
+    for g in essential:
+        low = min(g["misrank"][p] for p in learned)
+        cells = " & ".join(
+            f"\\textbf{{{g['misrank'][p]:.2f}}}"
+            if p in learned and g["misrank"][p] == low
+            else f"{g['misrank'][p]:.2f}"
+            for p in predictors
+        )
+        rows.append(
+            f"    \\textit{{{g['name']}}} & {g['gene']} & {g['n_splits_held_out']} & "
+            f"{cells} & {g['fba_ratio_ypd']:.2f} & {g['n_go_terms']} & "
+            f"{g['physical_degree']} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Essential genes every predictor ranks low]{The twelve essential "
+        "genes with the highest consensus misrank over the ten repeated outer splits. A "
+        "misrank is the share of the nonessential genes of the same test block that "
+        "score above the gene, averaged over seeds and over the splits that hold the gene "
+        "out (held), so 0 is a perfect rank and 0.5 the median nonessential gene. The "
+        "consensus is the lowest of the four learned predictors, in bold: the transformer "
+        "with the single-experiment module (nine seeds per split), the same transformer "
+        "with no metabolic column (nine), graph convolution on GO (six) and the DCell "
+        "hierarchy with a shared input (three). FBA scores one minus the YPD growth ratio "
+        "and is not part of the consensus. Ratio is the FBA knockout growth ratio on YPD, "
+        "GO the count of propagated biological-process terms, degree the physical "
+        "interaction degree. Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{consensus\\_missed.py}.}\n"
+        "  \\label{tab:consensus-missed}\n"
+        "  \\begin{tabular}{@{}llrrrrrrrrr@{}}\n    \\hline\n"
+        "    gene & systematic & held & module & no metab. & GO conv. & DCell & FBA & "
+        "ratio & GO & degree \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("consensus_missed", body, "results/consensus_missed.json")
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -2868,6 +2920,7 @@ def main() -> None:
         simplification_ladder(),
         simplification_paired(),
         dcell_style(),
+        consensus_missed(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

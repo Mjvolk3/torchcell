@@ -822,13 +822,14 @@ PORTABLE_FORMS: list[tuple[str, str, str | None]] = [
 
 def goal_two() -> None:
     """Goal 2: which module form helps, what it costs, and the portable forms."""
-    height = 124.0
+    height = 162.0
     fig = new_figure(height)
     top_legend(
         fig,
         [
             patch(NO_MODULE, "learned, no metabolic column"),
             patch(SOLVE, "transformer reading an FBA-derived column"),
+            patch(GRAPH, "graph convolution on GO reading the same columns"),
             patch(COMPARATOR, "count of records or programs"),
             patch("white", "LP solved inside training", hatch="/////"),
             Line2D(
@@ -840,7 +841,7 @@ def goal_two() -> None:
                 mfc="white",
                 mec="black",
                 mew=0.4,
-                label="one seed (a, d) or one split (e)",
+                label="one seed (a, d) or one split (e, g)",
             ),
             Line2D(
                 [],
@@ -988,6 +989,53 @@ def goal_two() -> None:
     ax.set_xlabel("share of split-and-seed pairs won")
     ax.set_title("How often the module helps", pad=3, loc="left")
     letter(fig, 144.0, top, "f")
+
+    # g: the same columns handed to the second family, graph convolution on GO, as node
+    # features (job 2684) and as the zero-initialized affine on the logit (job 2691).
+    top, h = 128.0, 22.0
+    graph_rows = [
+        ("node features: flux vector", "GCN, GO+solve log1p (400 epochs), minus"),
+        ("affine on the logit: YPD ratio", "GCN, GO | affine: YPD ratio (400 epochs), minus"),
+        (
+            "affine: YPD ratio, flux vector, rule counts",
+            "GCN, GO | affine: YPD ratio+vector+counts (400 epochs), minus",
+        ),
+        (
+            "affine: four ratios, flux vector, rule counts",
+            "GCN, GO | affine: four ratios+vector+counts (400 epochs), minus",
+        ),
+    ]
+    graph_module = {
+        d["name"]: d for d in read("resplit_readout.json")["graph_module"]
+    }
+    yg = np.arange(len(graph_rows))[::-1]
+    ax = place(fig, 98.0, top, 42.0, h)
+    for yi, (label, prefix) in zip(yg, graph_rows, strict=True):
+        d = next(v for k, v in graph_module.items() if k.startswith(prefix))
+        ax.barh(
+            yi, d["mean"], height=0.62, color=GRAPH, edgecolor="black", lw=0.4, zorder=2
+        )
+        ax.plot(
+            d["per_split"],
+            np.full(d["n_splits"], yi),
+            "o",
+            ms=2.2,
+            mfc="white",
+            mec="black",
+            mew=0.4,
+            zorder=3,
+        )
+    ax.axvline(0.0, color="black", lw=0.5, zorder=1)
+    ax.set_xlim(-0.03, 0.13)
+    ax.xaxis.set_major_locator(MultipleLocator(0.05))
+    ax.grid(axis="x", lw=0.3, color="0.85", zorder=0)
+    ax.set_axisbelow(True)
+    ax.set_yticks(yg)
+    ax.set_yticklabels([label for label, _ in graph_rows])
+    ax.set_ylim(-0.6, len(graph_rows) - 0.4)
+    ax.set_xlabel("AUROC minus graph convolution on GO alone, ten repeated splits")
+    ax.set_title("The same columns on the second family", pad=3, loc="left")
+    letter(fig, 0.0, top, "g")
     save(fig, "summary_goal2")
 
 

@@ -70,7 +70,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
   YPD, the feature panel \textbf{d} tests. Written by
   \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py}.}{fig:summary}
 
-\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-16-59-32.pdf}{\textbf{Goal 2: the form of
+\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-18-26-54.pdf}{\textbf{Goal 2: the form of
   the metabolic module that helps, what it costs, and what a record of one genotype in
   one medium can carry.} Orange is the transformer reading any FBA-derived column, blue
   the same cell with no metabolic column, gray a count; a hatch marks a linear program
@@ -90,9 +90,14 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
   \textbf{e}, Each form minus the same cell with no metabolism on the ten repeated outer
   splits: the bar is the mean over splits and each point one split.
   \textbf{f}, The share of split-and-seed pairs on which the form scores above the cell
-  with no metabolism; the dashed line is a module that helps on half the runs. Written by
+  with no metabolism; the dashed line is a module that helps on half the runs.
+  \textbf{g}, The same columns handed to the second family, graph convolution on GO, on
+  the ten repeated splits at three seeds: as node features (the flux vector, job 2684)
+  and as a zero-initialized affine on the node's logit (job 2691), each minus the same
+  convolution on GO alone. Written by
   \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py} from
-  \texttt{results/simplification\_readout.json}.}{fig:summary-module}
+  \texttt{results/simplification\_readout.json} and
+  \texttt{results/resplit\_readout.json}.}{fig:summary-module}
 
 \begin{description}
   \item[The best method is two models averaged, and the best single model is a tie.]
@@ -138,6 +143,17 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
     on six of ten). Without the flux vector the restriction is not free: one ratio with the
     rule counts reads 0.888 against 0.902 for four, and 0.030 under the full recipe on
     the ten fifths (Section~\ref{sec:round84-98}).
+  \item[The interface is an affine on the logit, and it carries across model families.]
+    The graph family reads the same columns. As node features the flux vector does not
+    help graph convolution on GO ($-0.009$ over the ten fifths, higher on one); as a
+    zero-initialized affine on the node's logit, the transformer's form, the YPD ratio
+    alone reads $+0.011$ (ten of ten), the single-experiment recipe $+0.018$ (nine of
+    ten) and the four-media recipe $+0.021$ (nine of ten)
+    (Figure~\ref{fig:summary-module}\textbf{g}, Section~\ref{sec:family-ensembles}). The
+    module is therefore a set of offline columns and one linear map added to whatever
+    logit a model produces. Handing both families the columns does not improve their
+    average (0.897 against 0.907 on the ten fifths), so the best method keeps the
+    module on one family and averages it with the plain graph convolution.
   \item[The layer-free form scales, and it covers only the genes with a reaction.] Over
     the 13.5 million records of the solid-growth build the transform is 469,474
     programs, solved once in 71 minutes on 20 cores and read as a gather in training
@@ -165,7 +181,13 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
     (Figure~\ref{fig:summary}\textbf{d} and \textbf{e},
     Table~\ref{tab:misclass-enrichment}). Hypothesis, untested: the graph model scores
     a gene by its neighborhood, and the nonessential members of the ribosome biogenesis
-    and translation machinery sit in neighborhoods made of essential genes.
+    and translation machinery sit in neighborhoods made of essential genes. No essential
+    gene is missed by every predictor: over the ten fifths, where 140 essential genes
+    are held out, none sits below the median nonessential gene under all four learned
+    predictors, and the residual they share is not thin annotation (its correlation with
+    the count of GO terms is $-0.002$) but transporters and cofactor supply that FBA
+    calls viable, which modeling the deletion collection's strain background does not
+    change (Section~\ref{sec:consensus-missed}).
 \end{description}
 
 \input{tables/misclass_enrichment}
@@ -173,7 +195,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
 \subsection{What was run from the closing list, and what is left out\secstatus{todo}}
 \label{sec:left-to-run}
 
-Four experiments were listed as able to change a conclusion above. Two are run, one is
+Six experiments were listed as able to change a conclusion above. Four are run, one is
 left as a design note, and one is out of scope.
 
 \begin{description}
@@ -195,6 +217,12 @@ left as a design note, and one is out of scope.
     inputs would duplicate them; testing the inputs properly means relaxing that
     regularizer at the same time, which is a change to the backbone and not to the
     module. The averaged model already recovers what the graph family knows.
+  \item[The module on a second model family: run.] Graph convolution on GO reads the
+    columns as an affine on its logit and gains on nine of ten fifths
+    (Section~\ref{sec:family-ensembles}); as node features it does not.
+  \item[DCell's hierarchy and the ontology of the trigenic runs: run.] The ontology's
+    own structure reads the GO multi-hot worse than message passing on either of the two
+    ontologies tried (Section~\ref{sec:round108}).
   \item[The store on a second phenotype: out of scope.] The endpoint here is
     essentiality. Panel \textbf{c} of Figure~\ref{fig:summary-module} shows the store is
     affordable over the solid-growth build; whether it helps there belongs to that

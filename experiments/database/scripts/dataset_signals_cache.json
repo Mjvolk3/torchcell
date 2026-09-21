@@ -80,8 +80,8 @@
     "n": 20705612
   },
   "data/torchcell/dmf_costanzo2016#instance": {
-    "bytes": 890909610,
-    "key": "1784191049:77821845504",
+    "bytes": 889931487,
+    "key": "1789381157:77821829120",
     "n": 20705612
   },
   "data/torchcell/dmf_kuzmin2018": {
@@ -110,8 +110,8 @@
     "n": 20705612
   },
   "data/torchcell/dmi_costanzo2016#instance": {
-    "bytes": 726859842,
-    "key": "1784190456:77586927616",
+    "bytes": 727157150,
+    "key": "1789385805:77586927616",
     "n": 20705612
   },
   "data/torchcell/dmi_kuzmin2018": {
@@ -160,9 +160,9 @@
     "n": 2921078
   },
   "data/torchcell/env_chemgen_hillenmeyer2008_het#instance": {
-    "bytes": 101666290,
-    "key": "1783803398:12032385024",
-    "n": 2921078
+    "bytes": 168920062,
+    "key": "1789319421:10305445888",
+    "n": 2698797
   },
   "data/torchcell/env_chemgen_hillenmeyer2008_hom": {
     "bytes": 19883160,
@@ -170,9 +170,9 @@
     "n": 1179520
   },
   "data/torchcell/env_chemgen_hillenmeyer2008_hom#instance": {
-    "bytes": 43005098,
-    "key": "1783803739:4622110720",
-    "n": 1179520
+    "bytes": 74286651,
+    "key": "1789318561:4215001088",
+    "n": 1088620
   },
   "data/torchcell/env_chemgen_hoepfner2014": {
     "bytes": 435045213,
@@ -180,9 +180,9 @@
     "n": 29996238
   },
   "data/torchcell/env_chemgen_hoepfner2014#instance": {
-    "bytes": 177372505,
-    "key": "1784095168:12903555072",
-    "n": 3112880
+    "bytes": 223472679,
+    "key": "1789319973:12581830656",
+    "n": 3124319
   },
   "data/torchcell/env_chemgen_mota2024": {
     "bytes": 4038,

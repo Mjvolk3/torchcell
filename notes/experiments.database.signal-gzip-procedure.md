@@ -247,3 +247,37 @@ available either: its cKDTree rejects the log-axis offsets as non-finite.
 Point labels remain at 5 pt — below the 6 pt Nature floor. That is deliberate and
 already documented in the script: this is a note/report panel, not a submission figure.
 Bump `LABEL_PT` back to 6 if it is ever submitted.
+
+## 2026.09.20 - Regenerated at 51 datasets, and five signals that were measured on superseded stores
+
+The scatter had not been redrawn since 2026.08.21 and still showed 49 points: Bloom 2019
+(the 50th dataset) and Cooper 2010 (the 51st) were missing, though the table had already
+been re-rendered for both. Both artifacts now come off one snapshot,
+`results/pre-build/2026-09-20/supported_datasets.json`, 51 of 51 built with a real signal
+for every one (none deferred).
+
+**Five cached signals were stale and were recomputed.** The serve-all-50 campaign rebuilt
+those LMDBs, which changed their fingerprints, so the cache entries no longer applied:
+both Costanzo stores, both Hillenmeyer stores, and Hoepfner. Hoepfner was the visible
+inconsistency, its published record count came from the new build while its signal came
+from the old one. Three published values move, the instance counts do not:
+
+| dataset | signal before | signal now |
+|---|---|---|
+| Hillenmeyer 2008 het (FitDb HIP) | 8.1×10⁸ | 1.4×10⁹ |
+| Hillenmeyer 2008 hom (FitDb HOP) | 3.4×10⁸ | 5.9×10⁸ |
+| Hoepfner 2014 (HIP/HOP atlas) | 1.4×10⁹ | 1.8×10⁹ |
+| **Total** | 2.6×10¹⁰ | 2.7×10¹⁰ |
+
+Costanzo dmf and dmi were recomputed too and land on the same two significant figures
+(7.1×10⁹ and 5.8×10⁹). The rescan cost 27.6 min of wall clock for 182 GB of LMDB at about
+27k to 34k records/s; the cache persists after each dataset, so an interrupted run resumes
+at the dataset boundary.
+
+**Two more labels needed more room, not more tuning.** At the old geometry the 51 labels
+came to rest with `da Silveira 2014` touching `Ozaydin 2013`, reading as one run of text.
+Widening the horizontal collision box (`expand` 1.3 to 1.45) separated that pair and
+immediately landed `Ohnuki 2018` on `Ohnuki 2022`, which is the usual way adjustText moves
+a collision rather than removing it. Raising the panel height from 152 mm to 163 mm, still
+under `MAX_HEIGHT_MM` (170), resolved both. Width stays at the strict 179 mm and the SVG
+still exports true-size (704.72 x 641.73 units at 100 units/inch).

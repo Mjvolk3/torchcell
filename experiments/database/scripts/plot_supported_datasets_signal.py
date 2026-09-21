@@ -50,15 +50,17 @@ BITS_PER_BYTE = 8
 
 INK = "#000000"
 GRID = "#4A4A4A"
-PANEL_W_MM = PANEL_WIDTHS_MM["full"]  # 179 mm -- 49 labeled points need the width
+PANEL_W_MM = PANEL_WIDTHS_MM["full"]  # 179 mm -- 51 labeled points need the width
 # Width is fixed by the standard, so height is the only axis left to buy label room on.
-# 152 mm stays under MAX_HEIGHT_MM (170) and is what actually de-collides the crowded
-# 10^5-10^6 band; tuning adjustText alone could not separate those on a 120 mm panel.
-PANEL_H_MM = 152.0
+# 152 mm de-collided 49 labels; the 50th and 51st (Bloom 2019, Cooper 2010) pushed the
+# crowded bands past what it holds, and tuning adjustText alone only moved the collision
+# around (widening the horizontal box separated da Silveira 2014 from Ozaydin 2013 but
+# then landed Ohnuki 2018 on Ohnuki 2022). 163 mm stays under MAX_HEIGHT_MM (170).
+PANEL_H_MM = 163.0
 # One marker per category, so the dark repeats (palette 7/8) never rest on color
 # alone. Index order matches the JSON's ``sections`` order.
 MARKERS = ["o", "s", "^", "D", "v", "P", "X", "h"]
-# Point annotations only. Axes/legend type stays at the 6 pt Nature minimum; the 49
+# Point annotations only. Axes/legend type stays at the 6 pt Nature minimum; the 51
 # dataset labels drop to 5 pt so they de-collide on this panel. Bump back to 6 if this
 # figure is ever submitted rather than kept as a note/report panel.
 LABEL_PT = 5
@@ -184,7 +186,7 @@ def main() -> None:
 
     # De-collide the labels with thin leader lines.
     #
-    # The defaults give up far too early for 49 labels: adjustText stops on its own
+    # The defaults give up far too early for 51 labels: adjustText stops on its own
     # time limit after a fraction of a second, leaving the dense 10^5-10^6 band
     # unresolved. So:
     #   iter_lim/time_lim -- run the solver to convergence rather than to a stopwatch;
@@ -201,7 +203,7 @@ def main() -> None:
     #                        Only the legend: handing adjustText the scatter
     #                        PathCollections instead makes its cKDTree reject the
     #                        log-axis offsets as non-finite.
-    # A tight white plate behind each label. With 49 labels the long leader lines must
+    # A tight white plate behind each label. With 51 labels the long leader lines must
     # cross other labels somewhere, and a bare line through a 5 pt word reads as a
     # strikethrough; the plate lets the line pass behind the text instead. It also
     # slightly inflates the collision box adjustText solves against, which helps.
@@ -231,7 +233,10 @@ def main() -> None:
         texts,
         ax=ax,
         objects=[leg],
-        expand=(1.3, 1.6),
+        # Horizontal padding raised from 1.3 when the 50th and 51st datasets (Bloom
+        # 2019, Cooper 2010) joined: at 1.3 the da Silveira 2014 and Ozaydin 2013
+        # labels came to rest touching, reading as one run of text.
+        expand=(1.45, 1.6),
         force_text=(0.5, 0.9),
         force_static=(0.2, 0.35),
         force_pull=(0.003, 0.003),

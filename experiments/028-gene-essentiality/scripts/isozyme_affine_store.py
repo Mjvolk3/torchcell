@@ -143,6 +143,42 @@ def main() -> None:
     )
     print(f"{alone}: {block.shape}")
 
+    # Which of the six carries it: the sole-reaction count alone, and the other five
+    # without it. Round 77 located the gain on the genes holding a reaction nothing else
+    # catalyzes, which is exactly what ``gpr_n_sole`` counts, so this is the test of
+    # whether one number per gene is the whole of it.
+    sole = COLUMNS.index("gpr_n_sole")
+    keep = [i for i in range(len(COLUMNS)) if i != sole]
+    for suffix, idx in (("pfbagprsole", [sole]), ("pfbagprnosole", keep)):
+        out_path = osp.join(TABLE_DIR, f"ess_solve_encodings_YPD_{suffix}.npz")
+        names = [COLUMNS[i] for i in idx]
+        np.savez_compressed(
+            out_path,
+            genes=np.array(genes),
+            v_deletion=np.concatenate(
+                [pfba["v_deletion"].astype(np.float32), block[:, idx]], axis=1
+            ),
+            v_wild_type=np.concatenate(
+                [
+                    pfba["v_wild_type"].astype(np.float32),
+                    np.zeros(len(idx), dtype=np.float32),
+                ]
+            ),
+            rxn_ids=np.array([str(r) for r in pfba["rxn_ids"]] + names),
+            provenance=json.dumps(
+                {
+                    "method": (
+                        "the pFBA deletion vector with a SUBSET of the "
+                        "gene-protein-reaction redundancy columns appended; written by "
+                        "isozyme_affine_store.py"
+                    ),
+                    "gem_version": YeastGEM().version,
+                    "columns": names,
+                }
+            ),
+        )
+        print(f"{out_path}: {len(names)} extra column(s) {names}")
+
     path = osp.join(TABLE_DIR, "ess_solve_encodings_YPD_pfbagpr.npz")
     provenance = {
         "method": (

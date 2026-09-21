@@ -101,3 +101,25 @@ values are genuinely different quantities the record already carries the disting
 (temperature; for interaction, the screen whose controls defined it). Fitness as f(genotype,
 environment) needs no dataset id at inference. A dataset token would absorb every between-screen
 offset and demand a screen name at inference, which is the limitation to avoid.
+
+## 2026.09.20 - Which 028 split the essentiality overlap uses: the FCL split
+
+Measured on the 025 S3 pool (1,121,645 records, 5,705 genes) with the three 028 split files
+(`feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/results/splits/`). Held out
+means every record containing a val or test gene leaves training.
+
+| split | held-out genes | test (essential) | singles lost | doubles lost | triples lost |
+|---|---|---|---|---|---|
+| `ess_fcl_val0.2_s0` | 353 | 195 (31) | 353 (6.2%) | 73,313 (9.9%) | 50,855 (13.5%) |
+| `ess_genome_val0.2_s0` | 1,288 | 195 (31) | 1,288 (22.6%) | 276,316 (37.4%) | 187,058 (49.7%) |
+| `ess_genome_heldout_val0.2_s0` | 4,832 | 4,674 (974) | 84.9% | 97.7% | 98.6% |
+
+Decision: the FCL split. Its 195 test genes are the published held-out set 028 reports 0.893 on,
+every one of them has a single-gene record in the pool so a predicted single-deletion fitness
+exists to rank, and the removal costs 13.5 percent of training triples, small enough that the arm's
+trigenic readout stays comparable to S3. The genome split halves the triple training set and
+changes the question; the genome-heldout split is the reverse direction (train on 629, test on
+4,674) and removes 98 percent of the pool, and on that set label origin coincides with class
+(028 note, round 30), so it is not a test of learning from fitness. Folds on the FCL split are the
+follow-up if the single split is promising. The 028 split files are gene lists, so on 030 the
+same file defines the subset by gene membership over the full-allele records.

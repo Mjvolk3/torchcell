@@ -1357,3 +1357,18 @@ Jobs 2568 to 2573 (GilaHyper, main, one card each), six seeds per arm. Stores fr
 | layer-free + degree and clustering | released 195 | 0.906 | 0.009 | |
 
 The control reproduces the zero-row arm to four decimals (a constant row changes nothing). Degree columns: +0.036 on six of six seeds, still 0.16 under the graph convolution's 0.755; costs nothing on the released split (0.906 against 0.908). Hypothesis, untested: the gap is that an affine fitted on metabolic genes learns a small slope on degree (0.59 among them), while the convolution reads the neighbors' degrees too.
+
+## 2026.09.20 - The perturbed class token, ported from the 025 branch
+
+User asked whether the perturbation operator had been applied to the CLS token and whether it was dangling in another worktree. It was. `CellGraphTransformer(perturb_cls=True)` is commit `9e2f59551` (2026-09-09) on `feat/025-fitness-joint-head`, PR #346 open and unlanded, absent from main and from every other worktree. So NO 028 run before today used a perturbed class token: the token was the encoding of the unperturbed graph, across-strain sd exactly 0, and the pooled head carried the genotype through the perturbed-gene pool alone.
+
+Ported as `708c7cf53`:
+
+- the model hunks applied with `git apply --3way`; two conflicts, both from this worktree's `perturbation_head_config={"enabled": False}` option, resolved by keeping both;
+- the two upstream tests come with it and pass here, with all 7 in the file green;
+- `CellGraphTransformerMetabolism.forward` hands `h_CLS_pert` to the metabolism heads when the parent returns one, and the two scalar/vector heads accept `[d]` or `[batch, d]`;
+- `train_essentiality.py --perturb-cls`, and the epoch row logs `cls_strain_sd`.
+
+MEASURED, two-epoch smoke of the round-33 cell on the released split: `cls_strain_sd` 0.1839 with the flag and exactly 0.0 without it, so the token is strain-specific here.
+
+Caveat carried from the 025 note: at one deleted gene the class-token query attends over ONE key, so the perturbed token is a function of the wild-type token and that gene's token. Whether it adds anything over the perturbed-gene pool on single-KO strains is round 79 (packs `w98`, jobs 2597 to 2600): the layer-free cell and the plain pooled cell with the flag, six seeds each on the released split, paired by seed against `w49` (0.908) and `w39_pathpool` (0.860).

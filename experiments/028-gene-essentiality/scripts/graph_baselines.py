@@ -96,9 +96,20 @@ N_RELATIONS = len(GRAPH_NAMES)
 class Net(nn.Module):
     """Two message-passing layers and a linear head, or an MLP when the graph is absent."""
 
-    def __init__(self, kind: str, dim_in: int) -> None:
-        """``kind`` is one of ``KINDS``; ``dim_in`` the node input width."""
+    def __init__(self, kind: str, dim_in: int, dim_affine: int = 0) -> None:
+        """``kind`` is one of ``KINDS``; ``dim_in`` the node input width.
+
+        ``dim_affine`` columns, when given, never enter the message passing: a linear map
+        over them, zero-initialized, is added to the node's logit, which is how the
+        transformer reads the metabolic module (``FbaAffine`` with
+        ``apply_solve_zero_init`` in ``train_essentiality.py``).
+        """
         super().__init__()
+        self.affine: nn.Linear | None = None
+        if dim_affine:
+            self.affine = nn.Linear(dim_affine, 1)
+            nn.init.zeros_(self.affine.weight)
+            nn.init.zeros_(self.affine.bias)
         assert kind in KINDS, kind
         self.kind = kind
         if kind == "GCN":
@@ -149,6 +160,7 @@ class Net(nn.Module):
         x: torch.Tensor,
         edge_index: torch.Tensor,
         edge_type: torch.Tensor | None = None,
+        affine: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """One logit per node; ``edge_type`` is read by the relational kinds only."""
         if self.kind == "MLP":
@@ -169,7 +181,11 @@ class Net(nn.Module):
             h = F.relu(self.c1(x, edge_index))
             h = F.dropout(h, 0.2, self.training)
             h = F.relu(self.c2(h, edge_index))
-        return self.head(h).squeeze(-1)
+        logit = self.head(h).squeeze(-1)
+        if self.affine is not None:
+            assert affine is not None
+            logit = logit + self.affine(affine).squeeze(-1)
+        return logit
 
 
 def gene_graphs() -> tuple[list[str], dict[str, nx.Graph]]:
@@ -333,6 +349,7 @@ def run_arm(
     epochs: int = EPOCHS,
     edge_type: torch.Tensor | None = None,
     seeds: tuple[int, ...] = SEEDS,
+    affine: np.ndarray | None = None,
 ) -> ArmRow:
     labels = {k: int(v) for k, v in split["labels"].items()}
     parts = {
@@ -346,6 +363,7 @@ def run_arm(
         for k in parts
     }
     xt = torch.from_numpy(x).to(device)
+    at = torch.from_numpy(affine).to(device) if affine is not None else None
     ei = edge_index.to(device)
     et = edge_type.to(device) if edge_type is not None else None
     pos = float(ys["train"].sum())
@@ -355,14 +373,14 @@ def run_arm(
     t0 = time.time()
     for seed in seeds:
         torch.manual_seed(seed)
-        net = Net(kind, x.shape[1]).to(device)
+        net = Net(kind, x.shape[1], 0 if affine is None else affine.shape[1]).to(device)
         n_params = sum(p.numel() for p in net.parameters())
         opt = torch.optim.Adam(net.parameters(), lr=LR)
         val_curve, test_curve, test_logits = [], [], []
         for _ in range(epochs):
             net.train()
             opt.zero_grad()
-            logit = net(xt, ei, et)
+            logit = net(xt, ei, et, at)
             loss = F.binary_cross_entropy_with_logits(
                 logit[parts["train"]], ys["train"].to(device), pos_weight=pos_weight
             )
@@ -370,7 +388,7 @@ def run_arm(
             opt.step()
             net.eval()
             with torch.no_grad():
-                logit = net(xt, ei, et).cpu()
+                logit = net(xt, ei, et, at).cpu()
             val_curve.append(
                 float(roc_auc_score(ys["val"].numpy(), logit[parts["val"]].numpy()))
             )
@@ -535,6 +553,7 @@ def main() -> None:
             "go_folds",
             "go_rel",
             "go_solve",
+            "go_affine",
         ),
         help=(
             "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
@@ -782,6 +801,52 @@ def main() -> None:
             )
         suffix = ("" if seeds == SEEDS else f"_s{len(seeds)}") + split_tag
         out = osp.join(RESULTS, f"graph_baselines_go_solve{suffix}.json")
+    elif args.arms == "go_affine":
+        # THE MODULE AS THE TRANSFORMER READS IT, ON THE GRAPH FAMILY. Job 2684 put the
+        # solve columns on the node, where they did not help; here they stay out of the
+        # message passing and enter as a zero-initialized affine on the node's logit.
+        # Rows: the single-experiment recipe (YPD ratio, vector, rule counts), the
+        # four-media recipe, the ratios with the counts, and the YPD ratio alone; GO
+        # alone at the same budget is the control, rerun here under the same code.
+        go = go_store(args.go_dir, gene_ids) if args.go_dir else embedding("go", gene_ids)
+        fba = fba_ratios(gene_ids)
+        ypd = fba[:, 3:4]
+        with_counts = solve_log1p(
+            gene_ids,
+            store=osp.join(
+                DATA_ROOT,
+                "data/torchcell/reference_flux/ess_solve_encodings_YPD_pfbagpr.npz",
+            ),
+        )
+        ei = edges(graphs["union of nine"], index)
+        affines: dict[str, np.ndarray | None] = {
+            "GO": None,
+            "GO | affine: YPD ratio": ypd,
+            "GO | affine: YPD ratio+vector+counts": np.concatenate(
+                [ypd, with_counts], axis=1
+            ),
+            "GO | affine: four ratios+vector+counts": np.concatenate(
+                [fba, with_counts], axis=1
+            ),
+        }
+        for inputs, a in affines.items():
+            rows.append(
+                run_arm(
+                    "GCN",
+                    "union of nine",
+                    inputs,
+                    go,
+                    ei,
+                    split,
+                    index,
+                    device,
+                    epochs=400,
+                    seeds=seeds,
+                    affine=a,
+                )
+            )
+        suffix = ("" if seeds == SEEDS else f"_s{len(seeds)}") + split_tag
+        out = osp.join(RESULTS, f"graph_baselines_go_affine{suffix}.json")
     elif args.arms == "go_rel":
         # The typed-edge models on GO alone at 400 epochs (RGAT beat convolution on the
         # three inputs), and convolution on GO with the pathway multi-hot.

@@ -104,12 +104,17 @@ def standardized_mean(cells: list[np.ndarray]) -> np.ndarray:
 #: check whether the round-75 margins are seed-limited. The three-seed read is the one
 #: the document reports and is never overwritten; this writes its own file.
 DEEP = False
+#: Read the single-experiment form (w104, YPD ratio + vector + counts) as the transformer
+#: family, at the same six seeds as --deep, so only the module's form changes.
+PORTABLE = False
 
 
 def transformer_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
     cells = []
     waves = ("w93", "w97") if DEEP else ("w93",)
     patterns = [f"{w}_resplit{resplit}pathlogfree_h12l1p1_e200_s*.json" for w in waves]
+    if PORTABLE:
+        patterns = [f"w104_resplit{resplit}ypdgpr_h12l1p1_e200_s270[0-5].json"]
     for path in sorted(
         p for pat in patterns for p in glob.glob(osp.join(RESULTS, pat))
     ):
@@ -148,7 +153,7 @@ def seed_mean_auroc(*patterns: str, expect: int = 3) -> float:
 
 
 def main() -> None:
-    global DEEP
+    global DEEP, PORTABLE
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--deep",
@@ -158,7 +163,17 @@ def main() -> None:
             "results/resplit_readout_s6.json, leaving the three-seed read in place"
         ),
     )
-    DEEP = parser.parse_args().deep
+    parser.add_argument(
+        "--portable",
+        action="store_true",
+        help=(
+            "as --deep, with the single-experiment module form (w104) as the transformer "
+            "family; writes results/resplit_readout_portable.json"
+        ),
+    )
+    args = parser.parse_args()
+    PORTABLE = args.portable
+    DEEP = args.deep or PORTABLE
     expect_cells = 6 if DEEP else 3
     rows: list[SplitRow] = []
     for r in range(N_SPLITS):
@@ -346,7 +361,12 @@ def main() -> None:
         ),
     )
     out = osp.join(
-        RESULTS, "resplit_readout_s6.json" if DEEP else "resplit_readout.json"
+        RESULTS,
+        "resplit_readout_portable.json"
+        if PORTABLE
+        else "resplit_readout_s6.json"
+        if DEEP
+        else "resplit_readout.json",
     )
     with open(out, "w") as fh:
         json.dump(report.model_dump(), fh, indent=2)

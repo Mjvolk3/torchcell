@@ -193,6 +193,7 @@ FOLD_TRANSFORMER_FAMILIES: dict[str, str] = {
     "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)": "w50_pathlogfreecv{k}_h12l1p1_e200_s2700.json",
     "+ GPR redundancy counts, pathway + ProtT5, five folds (round 80)": "w99_pathloggprcv{k}_h12l1p1_e200_s2700.json",
     "gene-rule counts, no solve, five folds (round 82)": "w101_pathgpronlycv{k}_h12l1p1_e200_s2700.json",
+    "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)": "w103_ypdgprcv{k}_h12l1p1_e200_s2700.json",
     "layer-free log1p, interior-point store, five folds (round 37)": "w53_pathlogipmcv{k}_h12l1p1_e200_s2700.json",
     "layer-free log1p, PDLP store, five folds (round 39)": "w55_pathlogpdlpcv{k}_h12l1p1_e200_s2700.json",
 }
@@ -211,6 +212,11 @@ FOLD_COMBINATIONS: list[list[str]] = [
     [
         FOLD_GRAPH_FAMILY[0],
         "+ GPR redundancy counts, pathway + ProtT5, five folds (round 80)",
+    ],
+    ["YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"],
+    [
+        FOLD_GRAPH_FAMILY[0],
+        "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",
     ],
     ["gene-rule counts, no solve, five folds (round 82)"],
     [FOLD_GRAPH_FAMILY[0], "gene-rule counts, no solve, five folds (round 82)"],

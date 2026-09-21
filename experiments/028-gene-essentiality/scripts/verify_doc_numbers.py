@@ -88,6 +88,39 @@ def graph_module(name: str, key: str) -> Callable[[], float]:
     return run
 
 
+def portable_average(block: str, name: str, key: str) -> Callable[[], float]:
+    """The family average with the single-experiment form as the transformer family."""
+
+    def run() -> float:
+        report = json.load(open(osp.join(RESULTS, "resplit_readout_portable.json")))
+        if block == "mean_auroc":
+            return float(report["mean_auroc"][name])
+        return float(next(d for d in report["differences"] if d["name"] == name)[key])
+
+    return run
+
+
+def background(medium: str, key: str) -> Callable[[], float]:
+    """One value of the BY4741 background probe for one medium."""
+
+    def run() -> float:
+        report = json.load(open(osp.join(RESULTS, "fba_background_probe.json")))
+        return float(next(m for m in report["media"] if m["medium"] == medium)[key])
+
+    return run
+
+
+def fold_average(families: tuple[str, ...], key: str) -> Callable[[], float]:
+    """One row of the fold-protocol family averages, addressed by its family names."""
+
+    def run() -> float:
+        rows = json.load(open(osp.join(RESULTS, "family_ensembles_folds.json")))
+        row = next(c for c in rows["combinations"] if tuple(c["families"]) == families)
+        return float(row[key])
+
+    return run
+
+
 def consensus(*keys: str | int) -> Callable[[], float]:
     """One value of ``consensus_missed.json``, addressed by a key path."""
 
@@ -1161,6 +1194,120 @@ CHECKS: list[Check] = [
         recompute=simplification(
             "ladder", "four ratios, flux vector, rule counts", "cell_mean"
         ),
+    ),
+    # sec:round75 -- the average with the single-experiment form.
+    Check(
+        claim="portable average: average",
+        stated=0.907,
+        recompute=portable_average("mean_auroc", "average", ""),
+    ),
+    Check(
+        claim="portable average: graph",
+        stated=0.871,
+        recompute=portable_average("mean_auroc", "go_convolution", ""),
+    ),
+    Check(
+        claim="portable average: transformer",
+        stated=0.869,
+        recompute=portable_average("mean_auroc", "layer_free", ""),
+    ),
+    Check(
+        claim="portable average: margin",
+        stated=0.029,
+        recompute=portable_average("differences", "average minus the better single model", "mean"),
+    ),
+    Check(
+        claim="portable average: margin sd",
+        stated=0.013,
+        recompute=portable_average("differences", "average minus the better single model", "sd"),
+    ),
+    Check(
+        claim="portable average: margin splits",
+        stated=10,
+        recompute=portable_average("differences", "average minus the better single model", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="portable average: single models",
+        stated=-0.003,
+        recompute=portable_average("differences", "layer-free minus GO convolution", "mean"),
+    ),
+    Check(
+        claim="portable average: transformer higher",
+        stated=4,
+        recompute=portable_average("differences", "layer-free minus GO convolution", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="portable average: released folds, alone",
+        stated=0.929,
+        recompute=fold_average(("YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",), "auroc"),
+    ),
+    Check(
+        claim="portable average: released folds, with the graph family",
+        stated=0.953,
+        recompute=fold_average(("GO convolution, five folds (400 epochs)", "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"), "auroc"),
+    ),
+    Check(
+        claim="portable average: released folds, interval low",
+        stated=0.92,
+        recompute=fold_average(("GO convolution, five folds (400 epochs)", "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"), "ci_low"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="portable average: released folds, interval high",
+        stated=0.98,
+        recompute=fold_average(("GO convolution, five folds (400 epochs)", "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"), "ci_high"),
+        tolerance=0.006,
+    ),
+    # sec:consensus-missed -- the BY4741 background probe.
+    Check(
+        claim="background probe: moved on YPD",
+        stated=63,
+        recompute=background("YPD", "n_moved"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="background probe: essential at ratio one, wild type",
+        stated=77,
+        recompute=background("YPD", "n_essential_ratio_one_wild_type"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="background probe: essential at ratio one, background",
+        stated=83,
+        recompute=background("YPD", "n_essential_ratio_one_background"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="background probe: YPD AUROC wild type",
+        stated=0.717,
+        recompute=background("YPD", "auroc_labeled_wild_type"),
+    ),
+    Check(
+        claim="background probe: YPD AUROC background",
+        stated=0.713,
+        recompute=background("YPD", "auroc_labeled_background"),
+    ),
+    Check(
+        claim="background probe: SC AUROC wild type",
+        stated=0.718,
+        recompute=background("SC", "auroc_labeled_wild_type"),
+    ),
+    Check(
+        claim="background probe: SC AUROC background",
+        stated=0.714,
+        recompute=background("SC", "auroc_labeled_background"),
+    ),
+    Check(
+        claim="background probe: YPD growth as defined",
+        stated=0.535,
+        recompute=background("YPD", "growth_as_defined"),
+    ),
+    Check(
+        claim="background probe: YPD growth as defined, ura3 deleted",
+        stated=0.0,
+        recompute=background("YPD", "growth_as_defined_ura3"),
     ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(

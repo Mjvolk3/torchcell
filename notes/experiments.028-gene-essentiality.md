@@ -1547,3 +1547,12 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 - Consensus misrank (minimum over the four learned predictors) averages 0.055. Its Spearman with the GO term count is -0.002, so thin annotation does not explain the residual.
 - Enriched among the residual: FBA ratio 1.0 (70 genes, 0.082 against 0.028), organic substance transport (10 genes, 0.190 against 0.045), cellular component organization, monoatomic ion transport.
 - Hypothesis, untested: the top genes (VHT1, HIP1, RIM2, THI80, NCE103) are essential only given the medium and the strain's auxotrophies, which no input encodes.
+
+## 2026.09.21 - Background-strain probe, the portable form in the average, and the resource cap
+
+- Resource cap from the user: 028 jobs stay within 64 CPUs and 256 GB in total. Packs run at `ESS_CPUS=8`, 36G.
+- `fba_background_probe.py`: deleting the four BY4741 marker genes before each knockout moves 63 ratios on YPD, none of them an essential gene toward lethal. FBA's AUROC over the 1,121 labeled genes reads 0.717 to 0.713 on YPD and 0.718 to 0.714 on SC. Ratios are rounded to six decimals, because tie order near 1.0 changed the AUROC by 0.017 between two identical unrounded runs.
+- Defect found: YPD in `torchcell/metabolism/media.py` opens no uracil uptake, so a ura3 deletion alone takes modeled YPD growth from 0.535 to zero. Not fixed here; the stored solves use the wild-type model.
+- `resplit_readout.py --portable`: with the single-experiment recipe (w104) as the transformer family, the fixed-in-advance average beats the better single model on ten of ten splits (+0.029, sd 0.013). Released-split fold average 0.953 against 0.955 for four media.
+- Round 107 (job 2683): on the released split at nine seeds the one-medium recipe reads 0.912 against 0.920 for four media, -0.009 paired by seed.
+- Job 2684: the solve columns as node features do not help graph convolution on GO on the ten splits (-0.009, one of ten). Job 2691 tests the zero-initialized affine on the graph model's logit.

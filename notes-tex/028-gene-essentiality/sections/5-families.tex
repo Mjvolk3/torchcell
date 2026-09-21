@@ -124,11 +124,27 @@ genes, 0.190 against 0.045, effect 0.83), cellular component organization (14 ge
 0.120 against 0.048) and monoatomic ion transport (5 genes, 0.184 against 0.050). Test
 blocks overlap across splits, so these $q$-values rank terms and are not calibrated error
 rates. The top of the table is transporters and cofactor supply: \textit{VHT1},
-\textit{HIP1}, \textit{RIM2}, \textit{THI80}, \textit{NCE103}. Hypothesis, untested:
-these are essential only given the medium and the strain's auxotrophies, a histidine
-permease in a \textit{his3} background or a biotin transporter where biotin is supplied
-and not made, so the knowledge that is missing is the experiment's context and a wider
-GO branch would not supply it. \textit{ILV3} and \textit{ILV5}, which FBA ranks
+\textit{HIP1}, \textit{RIM2}, \textit{THI80}, \textit{NCE103}. One reading is that these are essential only given the strain the deletion collection
+was made in, BY4741, which carries \textit{his3}, \textit{leu2}, \textit{met15} and
+\textit{ura3} deletions and lives on imported histidine, leucine, methionine and
+uracil, while every FBA column here deletes one gene from the wild-type model. A probe
+tested that (\texttt{fba\_background\_probe.py}): delete the four background genes,
+take that strain as the reference, and recompute the knockout growth ratio of the 1,121
+labeled genes. The background does not explain the residual at the resolution of the
+model. On YPD 63 ratios move by more than 0.01 and none of them is an essential gene
+moving toward lethal; the one gene that becomes lethal is the uracil permease
+\textit{FUR4}, labeled nonessential, and the count of essential genes at a ratio of 1.0
+goes from 77 to 83. FBA's AUROC over the labeled genes moves from 0.717 to 0.713 on YPD
+and from 0.718 to 0.714 on SC, with ratios rounded to six decimals because solver noise
+near a ratio of 1.0 reorders ties between identical runs. \textit{HIP1} and \textit{VHT1} stay at 1.0 because the
+model's rules let other permeases carry their substrates. Hypothesis, untested: those
+alternatives are repressed or too weak in rich medium, which is regulation and
+transporter affinity that neither the model nor GO encodes. The probe also found a
+defect in the modeled medium: YPD as defined here opens no uracil uptake, so a
+\textit{ura3} deletion alone takes the model's YPD growth from 0.535 to zero (SC, which lists uracil, is unaffected), while
+BY4741 grows on YPD. The probe opens uracil uptake in both of its arms; the stored
+solves of the module were computed on the wild-type model, where the missing uptake
+does not bind. \textit{ILV3} and \textit{ILV5}, which FBA ranks
 correctly and the learned predictors do not, are the converse case of a label the
 network explains and the annotation vectors do not.
 

@@ -1,0 +1,941 @@
+{
+  "background": {
+    "YOR202W": "HIS3",
+    "YCL018W": "LEU2",
+    "YLR303W": "MET15",
+    "YEL021W": "URA3"
+  },
+  "n_labeled": 1121,
+  "n_essential": 157,
+  "media": [
+    {
+      "medium": "YPD",
+      "growth_as_defined": 0.535201865634343,
+      "growth_as_defined_ura3": 0.0,
+      "uracil_uptake_opened": true,
+      "growth_wild_type": 0.5385139970424441,
+      "growth_background": 0.4846277650452626,
+      "background_genes_in_model": [
+        "YOR202W",
+        "YCL018W",
+        "YLR303W",
+        "YEL021W"
+      ],
+      "auroc_labeled_wild_type": 0.7170362343737612,
+      "auroc_labeled_background": 0.7126820308163967,
+      "auroc_released_wild_type": 0.6709284028324154,
+      "auroc_released_background": 0.6654209284028324,
+      "n_essential_ratio_one_wild_type": 77,
+      "n_essential_ratio_one_background": 83,
+      "n_moved": 63,
+      "moved": [
+        {
+          "gene": "YBR021W",
+          "name": "FUR4",
+          "essential": 0,
+          "ratio_wild_type": 0.993849,
+          "ratio_background": 0.0
+        },
+        {
+          "gene": "YKL085W",
+          "name": "MDH1",
+          "essential": 0,
+          "ratio_wild_type": 0.988054,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YGR244C",
+          "name": "LSC2",
+          "essential": 0,
+          "ratio_wild_type": 0.986808,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YOR142W",
+          "name": "LSC1",
+          "essential": 0,
+          "ratio_wild_type": 0.986808,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YDR148C",
+          "name": "KGD2",
+          "essential": 0,
+          "ratio_wild_type": 0.986807,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YIL125W",
+          "name": "KGD1",
+          "essential": 0,
+          "ratio_wild_type": 0.986807,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YMR267W",
+          "name": "PPA2",
+          "essential": 0,
+          "ratio_wild_type": 0.986411,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YKL029C",
+          "name": "MAE1",
+          "essential": 0,
+          "ratio_wild_type": 0.985392,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "Q0045",
+          "name": "COX1",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "Q0105",
+          "name": "COB",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "Q0250",
+          "name": "COX2",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "Q0275",
+          "name": "COX3",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YBL045C",
+          "name": "COR1",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YDL067C",
+          "name": "COX9",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YDR529C",
+          "name": "QCR7",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YEL024W",
+          "name": "RIP1",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YFR033C",
+          "name": "QCR6",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YGR183C",
+          "name": "QCR9",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YHR001W-A",
+          "name": "QCR10",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YJL166W",
+          "name": "QCR8",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YOR065W",
+          "name": "CYT1",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YPR191W",
+          "name": "QCR2",
+          "essential": 0,
+          "ratio_wild_type": 0.17457,
+          "ratio_background": 0.19398
+        },
+        {
+          "gene": "YEL047C",
+          "name": "FRD1",
+          "essential": 0,
+          "ratio_wild_type": 0.979847,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YHR037W",
+          "name": "PUT2",
+          "essential": 0,
+          "ratio_wild_type": 0.979847,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YLR142W",
+          "name": "PUT1",
+          "essential": 0,
+          "ratio_wild_type": 0.979847,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YCR012W",
+          "name": "PGK1",
+          "essential": 1,
+          "ratio_wild_type": 0.974751,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YBR221C",
+          "name": "PDB1",
+          "essential": 0,
+          "ratio_wild_type": 0.970653,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YER178W",
+          "name": "PDA1",
+          "essential": 0,
+          "ratio_wild_type": 0.970653,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YGR193C",
+          "name": "PDX1",
+          "essential": 0,
+          "ratio_wild_type": 0.970653,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YNL071W",
+          "name": "LAT1",
+          "essential": 0,
+          "ratio_wild_type": 0.970653,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YFL018C",
+          "name": "LPD1",
+          "essential": 0,
+          "ratio_wild_type": 0.964469,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "Q0080",
+          "name": "ATP8",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "Q0085",
+          "name": "ATP6",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "Q0130",
+          "name": "OLI1",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YBL099W",
+          "name": "ATP1",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YBR039W",
+          "name": "ATP3",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YDL004W",
+          "name": "ATP16",
+          "essential": 1,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YDR298C",
+          "name": "ATP5",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YDR322C-A",
+          "name": "TIM11",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YDR377W",
+          "name": "ATP17",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YJR121W",
+          "name": "ATP2",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YKL016C",
+          "name": "ATP7",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YLR295C",
+          "name": "ATP14",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YML081C-A",
+          "name": "ATP18",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YOL077W-A",
+          "name": "ATP19",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YPL078C",
+          "name": "ATP4",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YPL271W",
+          "name": "ATP15",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YPR020W",
+          "name": "ATP20",
+          "essential": 0,
+          "ratio_wild_type": 0.33932,
+          "ratio_background": 0.377049
+        },
+        {
+          "gene": "YGL186C",
+          "name": "TPN1",
+          "essential": 0,
+          "ratio_wild_type": 0.954289,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YJR016C",
+          "name": "ILV3",
+          "essential": 1,
+          "ratio_wild_type": 0.950948,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YLR355C",
+          "name": "ILV5",
+          "essential": 1,
+          "ratio_wild_type": 0.950948,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YMR108W",
+          "name": "ILV2",
+          "essential": 1,
+          "ratio_wild_type": 0.950948,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YKL141W",
+          "name": "SDH3",
+          "essential": 1,
+          "ratio_wild_type": 0.942819,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YLL041C",
+          "name": "SDH2",
+          "essential": 0,
+          "ratio_wild_type": 0.942819,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YPL262W",
+          "name": "FUM1",
+          "essential": 0,
+          "ratio_wild_type": 0.937041,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YBR115C",
+          "name": "LYS2",
+          "essential": 0,
+          "ratio_wild_type": 0.932009,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YDR234W",
+          "name": "LYS4",
+          "essential": 0,
+          "ratio_wild_type": 0.932009,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YGL154C",
+          "name": "LYS5",
+          "essential": 0,
+          "ratio_wild_type": 0.932009,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YIL094C",
+          "name": "LYS12",
+          "essential": 0,
+          "ratio_wild_type": 0.932009,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YIR034C",
+          "name": "LYS1",
+          "essential": 0,
+          "ratio_wild_type": 0.932009,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YNR050C",
+          "name": "LYS9",
+          "essential": 0,
+          "ratio_wild_type": 0.932009,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YGL009C",
+          "name": "LEU1",
+          "essential": 0,
+          "ratio_wild_type": 0.899935,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YJR148W",
+          "name": "BAT2",
+          "essential": 0,
+          "ratio_wild_type": 0.899935,
+          "ratio_background": 1.0
+        }
+      ]
+    },
+    {
+      "medium": "SC",
+      "growth_as_defined": 0.5427815290195271,
+      "growth_as_defined_ura3": 0.5427815290195303,
+      "uracil_uptake_opened": false,
+      "growth_wild_type": 0.5427815290195303,
+      "growth_background": 0.4846277650452626,
+      "background_genes_in_model": [
+        "YOR202W",
+        "YCL018W",
+        "YLR303W",
+        "YEL021W"
+      ],
+      "auroc_labeled_wild_type": 0.7179183074768084,
+      "auroc_labeled_background": 0.7135740148531861,
+      "auroc_released_wild_type": 0.6707317073170732,
+      "auroc_released_background": 0.6654209284028324,
+      "n_essential_ratio_one_wild_type": 78,
+      "n_essential_ratio_one_background": 84,
+      "n_moved": 63,
+      "moved": [
+        {
+          "gene": "YBR021W",
+          "name": "FUR4",
+          "essential": 0,
+          "ratio_wild_type": 0.993775,
+          "ratio_background": 0.0
+        },
+        {
+          "gene": "YKL085W",
+          "name": "MDH1",
+          "essential": 0,
+          "ratio_wild_type": 0.987736,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YDR148C",
+          "name": "KGD2",
+          "essential": 0,
+          "ratio_wild_type": 0.986337,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YGR244C",
+          "name": "LSC2",
+          "essential": 0,
+          "ratio_wild_type": 0.986337,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YIL125W",
+          "name": "KGD1",
+          "essential": 0,
+          "ratio_wild_type": 0.986337,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YOR142W",
+          "name": "LSC1",
+          "essential": 0,
+          "ratio_wild_type": 0.986337,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YMR267W",
+          "name": "PPA2",
+          "essential": 0,
+          "ratio_wild_type": 0.985731,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YKL029C",
+          "name": "MAE1",
+          "essential": 0,
+          "ratio_wild_type": 0.985525,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YEL047C",
+          "name": "FRD1",
+          "essential": 0,
+          "ratio_wild_type": 0.980003,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YHR037W",
+          "name": "PUT2",
+          "essential": 0,
+          "ratio_wild_type": 0.980003,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YLR142W",
+          "name": "PUT1",
+          "essential": 0,
+          "ratio_wild_type": 0.980003,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "Q0045",
+          "name": "COX1",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "Q0105",
+          "name": "COB",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "Q0250",
+          "name": "COX2",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "Q0275",
+          "name": "COX3",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YBL045C",
+          "name": "COR1",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YDL067C",
+          "name": "COX9",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YDR529C",
+          "name": "QCR7",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YEL024W",
+          "name": "RIP1",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YFR033C",
+          "name": "QCR6",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YGR183C",
+          "name": "QCR9",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YHR001W-A",
+          "name": "QCR10",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YJL166W",
+          "name": "QCR8",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YOR065W",
+          "name": "CYT1",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YPR191W",
+          "name": "QCR2",
+          "essential": 0,
+          "ratio_wild_type": 0.174458,
+          "ratio_background": 0.195392
+        },
+        {
+          "gene": "YCR012W",
+          "name": "PGK1",
+          "essential": 1,
+          "ratio_wild_type": 0.97437,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YBR221C",
+          "name": "PDB1",
+          "essential": 0,
+          "ratio_wild_type": 0.970336,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YER178W",
+          "name": "PDA1",
+          "essential": 0,
+          "ratio_wild_type": 0.970336,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YGR193C",
+          "name": "PDX1",
+          "essential": 0,
+          "ratio_wild_type": 0.970336,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YNL071W",
+          "name": "LAT1",
+          "essential": 0,
+          "ratio_wild_type": 0.970336,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YFL018C",
+          "name": "LPD1",
+          "essential": 0,
+          "ratio_wild_type": 0.966636,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "Q0080",
+          "name": "ATP8",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "Q0085",
+          "name": "ATP6",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "Q0130",
+          "name": "OLI1",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YBL099W",
+          "name": "ATP1",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YBR039W",
+          "name": "ATP3",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YDL004W",
+          "name": "ATP16",
+          "essential": 1,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YDR298C",
+          "name": "ATP5",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YDR322C-A",
+          "name": "TIM11",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YDR377W",
+          "name": "ATP17",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YJR121W",
+          "name": "ATP2",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YKL016C",
+          "name": "ATP7",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YLR295C",
+          "name": "ATP14",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YML081C-A",
+          "name": "ATP18",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YOL077W-A",
+          "name": "ATP19",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YPL078C",
+          "name": "ATP4",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YPL271W",
+          "name": "ATP15",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YPR020W",
+          "name": "ATP20",
+          "essential": 0,
+          "ratio_wild_type": 0.339414,
+          "ratio_background": 0.380143
+        },
+        {
+          "gene": "YGL186C",
+          "name": "TPN1",
+          "essential": 0,
+          "ratio_wild_type": 0.954492,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YPL262W",
+          "name": "FUM1",
+          "essential": 0,
+          "ratio_wild_type": 0.945043,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YJR016C",
+          "name": "ILV3",
+          "essential": 1,
+          "ratio_wild_type": 0.943471,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YLR355C",
+          "name": "ILV5",
+          "essential": 1,
+          "ratio_wild_type": 0.943471,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YMR108W",
+          "name": "ILV2",
+          "essential": 1,
+          "ratio_wild_type": 0.943471,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YKL141W",
+          "name": "SDH3",
+          "essential": 1,
+          "ratio_wild_type": 0.942953,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YLL041C",
+          "name": "SDH2",
+          "essential": 0,
+          "ratio_wild_type": 0.942953,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YBR115C",
+          "name": "LYS2",
+          "essential": 0,
+          "ratio_wild_type": 0.924681,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YDR234W",
+          "name": "LYS4",
+          "essential": 0,
+          "ratio_wild_type": 0.924681,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YGL154C",
+          "name": "LYS5",
+          "essential": 0,
+          "ratio_wild_type": 0.924681,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YIL094C",
+          "name": "LYS12",
+          "essential": 0,
+          "ratio_wild_type": 0.924681,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YIR034C",
+          "name": "LYS1",
+          "essential": 0,
+          "ratio_wild_type": 0.924681,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YNR050C",
+          "name": "LYS9",
+          "essential": 0,
+          "ratio_wild_type": 0.924681,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YGL009C",
+          "name": "LEU1",
+          "essential": 0,
+          "ratio_wild_type": 0.89286,
+          "ratio_background": 1.0
+        },
+        {
+          "gene": "YJR148W",
+          "name": "BAT2",
+          "essential": 0,
+          "ratio_wild_type": 0.89286,
+          "ratio_background": 1.0
+        }
+      ]
+    }
+  ],
+  "note": "Ratio is knockout growth over the reference strain's growth in the same medium; the background reference carries the four BY4741 deletions. A gene outside the model has ratio 1."
+}

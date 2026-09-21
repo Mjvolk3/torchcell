@@ -33,6 +33,16 @@ better of the two on nine ($+0.023$, sd 0.017). The two single models are not th
 released genes showed: graph convolution on GO is above the transformer on nine of ten
 ($-0.022$, sd 0.024 for the transformer minus the graph model).
 
+With the single-experiment form of Section~\ref{sec:round84-98} as the transformer family
+(the YPD ratio, the flux vector and the rule counts, six seeds per split, against graph
+convolution on GO at six), the same rule reads 0.907 for the average against 0.871 for
+the graph model and 0.869 for the transformer. The average is above the better of the two
+on ten of ten splits ($+0.029$, sd 0.013), and the two single models tie ($-0.003$, the
+transformer higher on four of ten). On the released genes its five-fold ensemble reads 0.929 alone and 0.953 [0.92, 0.98]
+averaged with the graph family's, against 0.955 for the four-media recipe; that is one
+more post hoc average on those genes and it is not the maximum. The form that goal 2 keeps is therefore also the
+better partner for goal 1.
+
 Every model reads lower on these fifths than on the released held-out genes, the
 transformer's cells 0.843 against 0.908 and the graph model's 0.868 against 0.905 as seed
 means, so the

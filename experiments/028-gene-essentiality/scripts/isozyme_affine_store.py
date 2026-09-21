@@ -118,6 +118,31 @@ def main() -> None:
             max(r[1] for r in rows),
         ]
 
+    # The counts WITHOUT the flux vector, so the affine can be given the rules alone.
+    # Round 78 measured the 4,131 flux columns at +0.010 over the four growth ratios and
+    # round 77 measured these six counts at +0.019 over the vector; the question this
+    # store answers is whether the solve is needed at all on this endpoint.
+    alone = osp.join(TABLE_DIR, "ess_solve_encodings_YPD_gpronly.npz")
+    np.savez_compressed(
+        alone,
+        genes=np.array(genes),
+        v_deletion=block,
+        v_wild_type=np.zeros(len(COLUMNS), dtype=np.float32),
+        rxn_ids=np.array(COLUMNS),
+        provenance=json.dumps(
+            {
+                "method": (
+                    "six columns of gene-protein-reaction redundancy from yeast-GEM's "
+                    "rules in disjunctive normal form, with NO flux vector; written by "
+                    "isozyme_affine_store.py"
+                ),
+                "gem_version": YeastGEM().version,
+                "columns": COLUMNS,
+            }
+        ),
+    )
+    print(f"{alone}: {block.shape}")
+
     path = osp.join(TABLE_DIR, "ess_solve_encodings_YPD_pfbagpr.npz")
     provenance = {
         "method": (

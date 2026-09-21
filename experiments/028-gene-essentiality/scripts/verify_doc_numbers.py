@@ -78,6 +78,16 @@ def field(name: str, *path: str | int) -> Callable[[], float]:
     return run
 
 
+def graph_module(name: str, key: str) -> Callable[[], float]:
+    """Job 2684: one paired difference of the graph family with the solve columns."""
+
+    def run() -> float:
+        rows = json.load(open(osp.join(RESULTS, "resplit_readout.json")))["graph_module"]
+        return float(next(r for r in rows if r["name"].startswith(name))[key])
+
+    return run
+
+
 def consensus(*keys: str | int) -> Callable[[], float]:
     """One value of ``consensus_missed.json``, addressed by a key path."""
 
@@ -1057,6 +1067,51 @@ CHECKS: list[Check] = [
         recompute=simplification(
             "second_medium", "YPD and SM, against YPD and SC", "mean_difference"
         ),
+    ),
+    # sec:family-ensembles -- job 2684, the solve columns on the graph family's nodes.
+    Check(
+        claim="job 2684: GCN, GO+solve log1p, mean",
+        stated=-0.009,
+        recompute=graph_module("GCN, GO+solve log1p", "mean"),
+    ),
+    Check(
+        claim="job 2684: GCN, GO+solve log1p, splits higher",
+        stated=1,
+        recompute=graph_module("GCN, GO+solve log1p", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2684: GCN, GO+FBA ratios+solve, mean",
+        stated=-0.01,
+        recompute=graph_module("GCN, GO+FBA ratios+solve", "mean"),
+    ),
+    Check(
+        claim="job 2684: GCN, GO+FBA ratios+solve, splits higher",
+        stated=1,
+        recompute=graph_module("GCN, GO+FBA ratios+solve", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2684: MLP, GO+solve, mean",
+        stated=-0.013,
+        recompute=graph_module("MLP, GO+solve", "mean"),
+    ),
+    Check(
+        claim="job 2684: MLP, GO+solve, splits higher",
+        stated=4,
+        recompute=graph_module("MLP, GO+solve", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2684: GCN, solve log1p, mean",
+        stated=-0.189,
+        recompute=graph_module("GCN, solve log1p", "mean"),
+    ),
+    Check(
+        claim="job 2684: GCN, solve log1p, splits higher",
+        stated=0,
+        recompute=graph_module("GCN, solve log1p", "n_positive"),
+        tolerance=0.5,
     ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(

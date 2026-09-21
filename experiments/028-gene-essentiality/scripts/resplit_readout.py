@@ -89,6 +89,8 @@ class Report(BaseModel):
 
     splits: list[SplitRow]
     differences: list[Difference]
+    #: Job 2684: the solve columns as node features of the graph family, against GO alone.
+    graph_module: list[Difference]
     mean_auroc: dict[str, float]
     seed_mean_auroc_per_split: dict[str, list[float]]
     note: str
@@ -295,9 +297,44 @@ def main() -> None:
         print(
             f"{d.name:42s} mean {d.mean:+.4f} sd {d.sd:.4f} positive {d.n_positive}/{d.n_splits}"
         )
+    # Job 2684: the module's columns as node features of the graph family, seeds 2700 to
+    # 2702, against graph convolution on GO alone at the same three seeds.
+    def graph_mean(stem: str, model: str, inputs: str, r: int) -> float:
+        with open(osp.join(RESULTS, f"{stem}_fcl_resplit{r}.json")) as fh:
+            found = [
+                x
+                for x in json.load(fh)["rows"]
+                if x["model"] == model and x["inputs"] == inputs
+            ]
+        assert len(found) == 1, (stem, model, inputs, r)
+        return float(found[0]["mean"])
+
+    go_alone = [
+        graph_mean("graph_baselines_go400", "GCN", GO_INPUTS, r)
+        for r in range(N_SPLITS)
+    ]
+    graph_module = [
+        difference(
+            f"{model}, {inputs}, minus graph convolution on GO",
+            [
+                graph_mean("graph_baselines_go_solve", model, inputs, r) - go_alone[r]
+                for r in range(N_SPLITS)
+            ],
+        )
+        for model, inputs in (
+            ("GCN", "GO+solve log1p (400 epochs)"),
+            ("GCN", "GO+FBA ratios+solve log1p (400 epochs)"),
+            ("MLP", "GO+solve log1p"),
+            ("GCN", "solve log1p (400 epochs)"),
+        )
+    ]
+    for d in graph_module:
+        print(f"{d.name}: {d.mean:+.4f} sd {d.sd:.4f} positive {d.n_positive}/10")
+
     report = Report(
         splits=rows,
         differences=diffs,
+        graph_module=graph_module,
         mean_auroc={
             k: float(np.mean([getattr(s, k) for s in rows]))
             for k in ("layer_free", "go_convolution", "average")

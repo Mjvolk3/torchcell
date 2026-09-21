@@ -60,6 +60,9 @@
 # line. `campaign_status.py` parses this and is the cross-cluster view; a job that predates
 # the convention can be renamed in place with
 # `scontrol update JobId=<id> JobName=019-v16w1-joint`.
+# WALLTIME RULE (2026-09-21): every submission to `-p cabbi` passes `--time` of at most
+# 5-00:00:00. The scheduler does not enforce it (it accepted a 10-day v15 job), so the
+# submit line must. The `gpu` partition has no such limit.
 #SBATCH --job-name=019-wave5-igb
 #SBATCH --signal=B:USR1@180
 #SBATCH --mail-user=mjvolk3@illinois.edu

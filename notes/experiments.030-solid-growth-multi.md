@@ -1,6 +1,6 @@
 ---
 id: f91m1ih5ek9k40dfulg82tt
-title: 030 Solid Growth Policy
+title: 030 Solid Growth Multi
 desc: ''
 updated: 1789932265479
 created: 1789932265479
@@ -102,24 +102,42 @@ values are genuinely different quantities the record already carries the disting
 environment) needs no dataset id at inference. A dataset token would absorb every between-screen
 offset and demand a screen name at inference, which is the limitation to avoid.
 
-## 2026.09.20 - Which 028 split the essentiality overlap uses: the FCL split
+## 2026.09.20 - Which 028 split the essentiality overlap uses, and what "held out" means
 
-Measured on the 025 S3 pool (1,121,645 records, 5,705 genes) with the three 028 split files
-(`feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/results/splits/`). Held out
-means every record containing a val or test gene leaves training.
+Corrected by the 028 session. The held-out set is the 195 released test genes, not 353. The
+released Merzbacher file marks 223 genes as test; 195 of them are in the build and carry 31
+essential. The 158 validation genes pick the epoch in 028 and are not scored, so they need not
+leave a fitness training pool. Two genome splits exist and differ: `ess_genome_val0.2_s0` changes
+only the training labels and keeps the same 195 test genes, while `ess_genome_heldout_val0.2_s0`
+trains on the released genes and tests on 4,674 genome-wide genes whose label origin coincides with
+class and none of which carries a metabolic-model reaction.
 
-| split | held-out genes | test (essential) | singles lost | doubles lost | triples lost |
-|---|---|---|---|---|---|
-| `ess_fcl_val0.2_s0` | 353 | 195 (31) | 353 (6.2%) | 73,313 (9.9%) | 50,855 (13.5%) |
-| `ess_genome_val0.2_s0` | 1,288 | 195 (31) | 1,288 (22.6%) | 276,316 (37.4%) | 187,058 (49.7%) |
-| `ess_genome_heldout_val0.2_s0` | 4,832 | 4,674 (974) | 84.9% | 97.7% | 98.6% |
+Measured on the 025 S3 pool (1,121,645 records), holding out every record that contains a held-out
+gene:
 
-Decision: the FCL split. Its 195 test genes are the published held-out set 028 reports 0.893 on,
-every one of them has a single-gene record in the pool so a predicted single-deletion fitness
-exists to rank, and the removal costs 13.5 percent of training triples, small enough that the arm's
-trigenic readout stays comparable to S3. The genome split halves the triple training set and
-changes the question; the genome-heldout split is the reverse direction (train on 629, test on
-4,674) and removes 98 percent of the pool, and on that set label origin coincides with class
-(028 note, round 30), so it is not a test of learning from fitness. Folds on the FCL split are the
-follow-up if the single split is promising. The 028 split files are gene lists, so on 030 the
-same file defines the subset by gene membership over the full-allele records.
+| held out | genes (essential) | records lost | triples lost |
+|---|---|---|---|
+| released test only | 195 (31) | 68,918 (6.1%) | 27,661 (7.3%) |
+| released test + validation | 353 (56) | 124,521 (11.1%) | 50,855 (13.5%) |
+| released test + the 10 resplit test sets | 896 (143) | 316,398 (28.2%) | 116,788 (31.0%) |
+| every labeled gene present in the pool | 991 (156) | 344,391 (30.7%) | 122,611 (32.5%) |
+
+The 028 session's caveat decides the design: the released 195 rank more easily than a random fifth
+of the labeled genes (layer-free transformer 0.908 on the released set against a mean 0.843 over
+ten re-splits), so any difference this arm shows must be confirmed on `ess_fcl_resplit{0..9}`. Each
+resplit has its own 198 test genes overlapping the released set by 26 to 42, so confirming by
+retraining is eleven cells.
+
+Design, two cells rather than eleven:
+
+- **Cell A, comparable**: hold out the 195 only, 6.1 percent of the pool. This is the number that
+  sits beside 028's 0.893 and Flux Cone Learning's 0.742 on the same genes.
+- **Cell B, confirmable**: hold out all 991 labeled genes present in the pool, 30.7 percent. One
+  trained model then scores the released 195, all ten re-splits and the five folds with no leakage
+  and no retraining, for 2.5 points more removal than the resplit union alone. Its caveat: the
+  labeled genes are the metabolic-model genes, so the removed block is functionally coherent rather
+  than a random sample, and it trains on a third less data than Cell A.
+
+Pilot both on S2 (about 12 min an epoch) before promoting either to S3 (about 36 min an epoch, 130
+epochs). The 028 split files are gene lists, so on 030 the same file defines the subset by gene
+membership over the full-allele records.

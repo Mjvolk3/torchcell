@@ -25,9 +25,15 @@
 #
 # DISK. Four stage copies. 029 took 615 + 614 + 547 + 547 GB for 26.8M records, so 030
 # needs about 3.7 TB. The preflight below refuses to start without it, because a build
-# that dies on ENOSPC at hour 20 has wasted the node and left a partial store. Freeing
-# it means deleting the 025 and 029 intermediates, both archived and verified under
-# /bulk/experiments/*-intermediates/; that deletion is the user's, never this script's.
+# that dies on ENOSPC at hour 20 has wasted the node and left a partial store. The 025
+# and 029 intermediates were archived and verified under /bulk/experiments/*-intermediates/
+# and then deleted by the user (2026-09-21), which took /db from 523 GB free to 4.9 TB.
+#
+# ARCHIVE AS WE GO. Once processed is written, the tail of this job archives the three
+# intermediate stages to /bulk with scripts/archive_build_intermediates.sh (tar + zstd,
+# tested by exit status, sha256 recorded). 025 and 029 compressed 4.81 TB to 27 GB, about
+# 180 to 1, at about 17 minutes per 600 GB stage. Deleting the stage directories from
+# /db after the archive reports ALL_DONE stays the user's action, never this script's.
 #
 # PRECONDITION, not checked here. DmfKuzmin2018Dataset and DmfKuzmin2020Dataset must be
 # re-served with the query-strain fitness records of main 4c4a4f950. Without them 030 is
@@ -74,5 +80,12 @@ mkdir -p "$DB_ROOT" "$(dirname "$LINK")"
 echo "dataset root: $LINK -> $(readlink -f "$LINK")"
 df -h /db | tail -1
 
-python experiments/030-solid-growth-multi/scripts/query.py
-echo "finished at $(date)"
+python experiments/030-solid-growth-multi/scripts/query.py || exit 1
+echo "build finished at $(date)"
+df -h /db | tail -1
+
+# --- archive as we go: the intermediates leave /db for /bulk once processed exists ---
+[ -d "$DB_ROOT/processed" ] || { echo "ABORT: no processed directory, nothing to archive behind" >&2; exit 1; }
+ARCHIVE_DEST="/bulk/experiments/$(basename "$DB_ROOT")-intermediates"
+ZSTD_THREADS=16 bash scripts/archive_build_intermediates.sh "$DB_ROOT" "$ARCHIVE_DEST" raw conversion aggregation
+echo "archive finished at $(date); stage directories under $DB_ROOT are yours to delete"

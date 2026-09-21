@@ -630,6 +630,21 @@ case "$ARM" in
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 
+# PERSISTENT WORKERS for the 1,200-epoch rounds (v17 locality, v18 hygiene), 2026-09-21.
+# With `persistent_workers: false` every worker is respawned each epoch, and each respawn
+# re-reads `processed/experiment_types.json` under an EXCLUSIVE file lock with a 60 s
+# timeout (neo4j_cell.py `_load_phenotype_info`). Four v15 runs on compute-3-3 died of that
+# timeout between 18:15 and 20:05 on 2026-09-20 (job 2401479: W_ref_s1_seed1,
+# W_ref_s2_seed0, W_wd1e1_s1_seed1, W_ref_s2_seed1); none of 76 other runs had. A
+# persistent worker takes the lock once per run. The per-epoch respawn exists for host RSS
+# growth that appeared only after 3.5 to 4.6 days, and these rounds finish in about 30 h
+# (v17 wave 1, job 2409262), so they do not need it. Every contrast in both rounds is
+# paired within a card, so the setting is identical across each pair. The 6,000-epoch
+# rounds keep the respawn.
+case "$ARM" in
+  L_*|Y_*) OVERRIDES+=(data_module.persistent_workers=true) ;;
+esac
+
 # PYTHONPATH pins the WORKTREE's torchcell: without it a script run from a worktree
 # silently imports the PRIMARY checkout's package, and none of the _008 model code exists
 # there -- the run would look like a baseline and quietly invalidate the comparison.

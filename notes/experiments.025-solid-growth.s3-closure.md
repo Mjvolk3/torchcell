@@ -134,3 +134,27 @@ Record counts, for reference: 029 holds 299,146 triple gene sets carrying 309,12
 entries (a gene set reached by both Kuzmin screens keeps both); 289,062 have every term of the
 identity present, 15,229 of the rest miss one of the three doubles and 8,545 one of the three
 singles. The 025 comparable is 352,505 of 376,732.
+
+## 2026.09.21 - S3 seed 1 read out to epoch 103: the plateau is flat for 88 epochs
+
+IGB mmli 2409033, cancelled by another session at 2026-09-20 23:05 after 2 d 20 h 32 min, epoch 103
+of 130. Rank-0 run `yb4gjh51`, synced. Validation interaction Pearson on the pinned 010 triples:
+
+| window | value |
+|---|---|
+| ep 10 to 29 | 0.478 |
+| ep 60 to 103 | 0.480 |
+| ep 10 to 103 | 0.482 |
+| max over epochs, upward-biased | 0.498 at ep 32 |
+| S0 fitness 1.0, three seeds, ep 10 to 29 | 0.443 / 0.438 / 0.437 |
+
+Validation is flat from epoch 15 to 103 while train interaction Pearson climbs from 0.47 to 0.768
+and validation fitness sits at 0.950 throughout. Eighty-eight epochs after the plateau bought
+nothing, so the 130-epoch budget was wrong and the replicates were correctly requeued at 50
+(2409578, 2409579). Train at 0.768 is well above the 0.59 at which two independent measurements of
+the same triple agree, so everything above that is fit to the training copy's particular noise.
+
+The S3 closure arm therefore beats the S0 arms by about 0.04 and stops there. Where the ceiling
+comes from is the subject of the recompute: the build's own fitness reproduces its own trigenic
+scores at r 0.230, and the identity is exact within a source screen, so the limit is the join
+rather than the model or the measurement.

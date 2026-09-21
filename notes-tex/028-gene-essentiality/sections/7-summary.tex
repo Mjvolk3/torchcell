@@ -131,8 +131,13 @@ The module's contribution splits in two on the same backbone. The solve as an in
 worth $+0.047$ over no metabolism, on ten of ten splits (sd 0.034). Within that, the
 deletion's flux vector over FBA's four growth ratios alone is $+0.011$ (sd 0.023, seven
 of ten), where the released split read $+0.018$ (0.908 against 0.890): the sign agrees
-and the difference does not separate from zero at ten splits of three seeds. So what the
-ten splits support is that the solve helps and that the ratios carry most of it.
+and the difference does not separate from zero. Doubling the seeds does not separate it
+either (round 78, jobs 2586 to 2595): at six seeds per arm per split the difference is
+$+0.010$ (sd 0.025, eight of ten), the same mean with the same spread, so the power was
+not what the three-seed read lacked. So what the ten splits support is that the solve
+helps and that the four ratios carry most of it, while the 4,131 flux columns add
+little beyond them; six counts of gene-protein-reaction redundancy, on the same splits,
+add about twice as much ($+0.019$, Section~\ref{sec:round77}).
 
 \subsection{Round 76: the physical graph's degree as an input to the transformer\secstatus{todo}}
 \label{sec:round76}

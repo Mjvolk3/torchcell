@@ -1388,3 +1388,16 @@ Jobs 2574 to 2585, all exit 0. Six counts from yeast-GEM's rules in disjunctive 
 The columns help, and the mechanism is the opposite of the hypothesis in `sec:hard-genes`. The useful signal is the count of reactions nothing else catalyzes: the 15 sole-reaction genes improve on 6 of 6 seeds. The 4 genes the rules say are covered get WORSE on 6 of 6, because the columns push the cell toward calling exactly those dispensable. So the paralog-aware-input hypothesis is refuted on this construction; it moves the other group.
 
 0.918 is the highest single-cell seed mean of the layer-free family in the document. Added to the summary figure's panel b. `verify_doc_numbers.py` now carries 71 checks, all passing.
+
+## 2026.09.20 - Round 78: six seeds do not separate the flux vector from the four growth ratios
+
+Jobs 2586 to 2595, all exit 0. Three more seeds of the layer-free cell and of its FBA-ratio control on each of the ten repeated outer splits, pooled with round 75's three.
+
+| read | mean | sd | positive |
+|---|---|---|---|
+| vector minus ratios, three seeds per split (round 75) | +0.0107 | 0.0233 | 7 of 10 |
+| vector minus ratios, six seeds per split (round 78) | +0.0104 | 0.0245 | 8 of 10 |
+
+Doubling the seeds leaves the mean and the spread unchanged, so the three-seed read was not underpowered: the difference is genuinely small relative to split-to-split variation. The honest statement is that the four growth ratios carry most of what the solve contributes, and the 4,131 flux columns add little beyond them.
+
+Sharp contrast worth keeping: on the same ten splits, six gene-protein-reaction redundancy counts add +0.019 over the vector (round 77), about twice what the whole flux vector adds over the ratios. The useful metabolic signal here is structural (which reactions have no alternative catalyst), not the flux values themselves.

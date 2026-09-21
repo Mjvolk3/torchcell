@@ -615,6 +615,24 @@ CHECKS: list[Check] = [
         stated=0.171,
         recompute=gpr("released_misrank_covered_by_alternatives", "mean_without"),
     ),
+    # sec:round75 -- round 78's six-seed repeat of the vector-against-ratios read.
+    Check(
+        claim="round78: vector minus ratios, six-seed means",
+        stated=0.010,
+        recompute=resplit("differences", 6, "mean"),
+    ),
+    Check(
+        claim="round78: its spread",
+        stated=0.025,
+        tolerance=0.0006,
+        recompute=resplit("differences", 6, "sd"),
+    ),
+    Check(
+        claim="round78: its positive splits",
+        stated=8,
+        tolerance=0.5,
+        recompute=resplit("differences", 6, "n_positive"),
+    ),
 ]
 
 

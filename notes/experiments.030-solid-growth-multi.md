@@ -218,3 +218,21 @@ the triple's own record; f_ij from the query-strain record matched by strain id;
 from the Kuzmin digenic records of the same study; and the query singles entering as 1, which
 becomes the `source_convention` switch. Departing from the last of these is what a `measured`
 convention would mean, and it is a different number from the published one by construction.
+
+## 2026.09.20 - What already existed on deriving the interaction from fitness
+
+Four prior passes, none of which tested the identity against the source tables.
+
+| when | where | what it did | result |
+|---|---|---|---|
+| 2025.01 to 2025.04 | `notes/phenotype.gene_interaction.md` | derives the symmetric form tau = f_ijk - f_ij f_k - f_ik f_j - f_jk f_i + 2 f_i f_j f_k and generalizes it to n-way by inclusion-exclusion | the formula the S3 closure recompute used |
+| 2025.04.18 | 003-fit-int, `hetero_cell_bipartite_bad_gi_analytic_v_direct.py` (commit 8aafe6e3c) | predicted digenic epsilon directly versus derived it from predicted fitness, n = 22,303 | direct Pearson 0.0714, derived 0.0171; read at the time as the derived route being worse |
+| 2025.10.21 | 007-kuzmin-tm FBA | the same formula on Yeast9 flux-balance fitness, after first implementing it without the digenic terms | r 0.0019 against experimental tau, plus a row-alignment bug found later |
+| 2026.09.01 | 010 additive baseline | writes the asymmetric form to argue triples of one query pair are not independent draws | structural, never measured |
+
+The 2025.04 comparison now has a data explanation it could not have had then. In the 025 build the
+stored fitness and the stored interaction are only consistent at r 0.445 digenic and 0.230
+trigenic, so a perfectly accurate fitness predictor could not have derived the stored score better
+than that. The derived route was not losing to the direct route because deriving is worse; it was
+losing because the two labels in the build disagree. Within one source screen the identity is
+exact, so the ceiling is a property of the join, not of the arithmetic.

@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{3pt}
   \caption[Round 19, the forced elastic column with a faster layer and a deeper head]{Round 19, the forced elastic column with a faster layer and a deeper head. The round-18 forced elastic cell at capacity scale 100 (the paired comparator), the round-4 forced column and the round-5 FBA affine, against the same elastic cell with the flux layer's parameters at ten times the learning rate, with a two-layer abundance head, and with both. Arm \texttt{flux\_projection\_anchored\_nodiss}, constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w34}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

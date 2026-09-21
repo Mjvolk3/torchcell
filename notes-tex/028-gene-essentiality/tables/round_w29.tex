@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 15b, the layer that solves on the stoichiometry-only box]{Round 15b, the layer that solves on the stoichiometry-only box. The pooled cell, the round-5 FBA affine and the round-13 warm-started columns on the stoichiometry-only layer, against the growth LP under that layer's box (the GEM's bounds scaled by availability, no capacity ceiling): the forced growth column and the gated column with the context head. Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w29}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{81.1mm}rrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
@@ -14,8 +15,8 @@
     context head $+$ FBA growth ratios (round-3 levers) & 0.821 & 0.020 & 0.814, 0.805, 0.844 $\uparrow$ & \textbf{0.838} [0.76, 0.91] & 28, 70, 61 & 0.0036 \\
     growth column, GEM box only, pFBA warm start, alpha 0.01 frozen & 0.664 & 0.058 & 0.654, 0.726, 0.612 $\downarrow$ & 0.676 [0.55, 0.79] & 53, 2, 23 & 0.0236 \\
     gated column $+$ context, GEM box only, pFBA warm start, alpha 0.01 frozen & 0.816 & 0.019 & 0.794, 0.829, 0.825 $\uparrow$ & 0.802 [0.72, 0.88] & 85, 5, 118 & 0.0042 \\
-    growth column, the layer that solves, GEM box & 0.613 & 0.098 & 0.500, 0.669, 0.669 $\downarrow$ & 0.669 [0.58, 0.76] & 11, 51, 2 & 0.0000 \\
-    gated column $+$ context, the layer that solves, GEM box & \textbf{0.824} & 0.021 & 0.800, 0.837, 0.835 $\uparrow$ & 0.837 [0.76, 0.91] & 2, 103, 4 & 0.0046 \\
+    growth column, GEM-box solve & 0.613 & 0.098 & 0.500, 0.669, 0.669 $\downarrow$ & 0.669 [0.58, 0.76] & 11, 51, 2 & 0.0000 \\
+    gated column $+$ context, GEM-box solve & \textbf{0.824} & 0.021 & 0.800, 0.837, 0.835 $\uparrow$ & 0.837 [0.76, 0.91] & 2, 103, 4 & 0.0046 \\
     \hline
   \end{tabular}
 \end{table}

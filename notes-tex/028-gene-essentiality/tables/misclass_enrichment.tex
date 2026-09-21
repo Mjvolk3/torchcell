@@ -6,7 +6,7 @@
   \scriptsize
   \caption[What the misranked genes share]{What the misranked genes of each held-out set share, per model and class. A gene's misrank is the fraction of the other class on the wrong side of it, averaged over the model's cells; a term is tested within one class by a one-sided Mann-Whitney $U$ of the annotated genes' misrank against the rest, and the effect is $U$ as a probability, the chance an annotated gene is misranked worse than an unannotated one (0.5 is no association), with the Benjamini-Hochberg $q$ within the family in parentheses. Rows per family: the two named features where both sides hold five genes, then the four best specific biological-process terms (at most 5 percent of the class or 12 genes, near-duplicates removed). Written by \texttt{misclass\_enrichment.py}.}
   \label{tab:misclass-enrichment}
-  \begin{tabular}{@{}p{92mm}rrrr@{}}
+  \begin{tabular}{@{}lrrrr@{}}
     \hline
     term & genes & misrank, annotated & misrank, rest & effect ($q$) \\
     \hline

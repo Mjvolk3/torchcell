@@ -3,10 +3,11 @@
 %% SOURCE: results/graph_baselines_go_solve.json
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
   \caption[One model over the annotation and the solve]{The deletion's pFBA flux vector as $\log(1 + |v|)$ (the round-33 encoding, 4,131 columns, zero for a gene the store does not cover) as a node input: alone, beside the GO multi-hot, and beside GO with the four FBA ratios, on the MLP (200 epochs) and on graph convolution over the union of the nine graphs (400 epochs, as Table~\ref{tab:graph-go400}). The protocol of Table~\ref{tab:graph-baselines} otherwise; seeds 2700 to 2702. Bold marks the highest value in a column.}
   \label{tab:graph-go-solve}
-  \begin{tabular}{@{}llp{30mm}rrrrll@{}}
+  \begin{tabular}{@{}lllrrrrll@{}}
     \hline
     model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\
     \hline

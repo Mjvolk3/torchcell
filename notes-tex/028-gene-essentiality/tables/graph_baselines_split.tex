@@ -3,10 +3,10 @@
 %% SOURCE: results/graph_baselines_split.json
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
   \caption[The indicator split, cheap models]{The chromosome-pathway indicator split into its three blocks (the 173-column pathway multi-hot, the 17-column chromosome one-hot, the seven scaled gene properties), each beside ProtT5 and the four FBA ratios, and the pathway block with the ratios and alone, on the MLP with no graph and on graph convolution over the union of the nine graphs, the protocol of Table~\ref{tab:graph-baselines}, seeds 2700 to 2702. Bold marks the highest value in a column.}
   \label{tab:graph-split}
-  \begin{tabular}{@{}llp{30mm}rrrrll@{}}
+  \begin{tabular}{@{}lllrrrrll@{}}
     \hline
     model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\
     \hline

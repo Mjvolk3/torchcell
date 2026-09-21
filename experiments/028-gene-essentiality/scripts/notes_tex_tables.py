@@ -62,6 +62,288 @@ def paired_mark(seeds: list[float], reference: list[float]) -> str:
     return ""
 
 
+#: Column fitting. A label column that wraps onto two or three lines reads as two or three
+#: rows, so every table with a paragraph (``p{..}``) column is laid out here from the
+#: widths of its own cells rather than from a width typed into the generator: the
+#: paragraph columns become one-line ``l`` columns whenever the table then fits the text
+#: block, first at the document's 4 pt column separation, then at 3 pt and 2.5 pt, and at
+#: \footnotesize before the generator's own \scriptsize. Only a table that fits at neither
+#: keeps paragraph columns, and those then take all the width the other columns leave,
+#: set ragged right with a hanging indent so a wrapped label still reads as one row.
+TEXT_WIDTH_MM = 182.0
+#: Kept free at the right margin: the glyph table ignores kerning and ligatures, which is
+#: an error of about one percent of a label, so a table estimated to fit also fits on
+#: the page.
+FIT_MARGIN_MM = 2.0
+#: A secondary paragraph column narrower than this is kept on one line.
+TWO_LINE_MIN_MM = 30.0
+PT_TO_MM = 0.35146
+TABCOLSEP_PT = (4.0, 3.0, 2.5)
+#: Latin Modern Roman advance widths in em, measured with \settowidth at \footnotesize in
+#: this document's preamble (lmr8). \scriptsize (lmr7) sets the same text 0.9384 as wide
+#: on average, which is 7.507 pt of this table.
+GLYPH_EM = {
+    " ": 0.354, "!": 0.295, '"': 0.403, "#": 0.885, "$": 0.531, "%": 0.885, "&": 0.826,
+    "'": 0.295, "(": 0.413, ")": 0.413, "*": 0.531, "+": 0.826, ",": 0.295, "-": 0.354,
+    ".": 0.295, "/": 0.531, "0": 0.531, "1": 0.531, "2": 0.531, "3": 0.531, "4": 0.531,
+    "5": 0.531, "6": 0.531, "7": 0.531, "8": 0.531, "9": 0.531, ":": 0.295, ";": 0.295,
+    "<": 0.826, "=": 0.826, ">": 0.826, "?": 0.502, "@": 0.826, "A": 0.796, "B": 0.752,
+    "C": 0.767, "D": 0.811, "E": 0.723, "F": 0.693, "G": 0.834, "H": 0.796, "I": 0.383,
+    "J": 0.545, "K": 0.825, "L": 0.664, "M": 0.973, "N": 0.796, "O": 0.826, "P": 0.723,
+    "Q": 0.826, "R": 0.782, "S": 0.590, "T": 0.767, "U": 0.796, "V": 0.796, "W": 1.091,
+    "X": 0.796, "Y": 0.796, "Z": 0.649, "[": 0.295, "]": 0.295, "^": 0.556, "_": 0.796,
+    "`": 0.295, "a": 0.531, "b": 0.590, "c": 0.472, "d": 0.590, "e": 0.472, "f": 0.325,
+    "g": 0.531, "h": 0.590, "i": 0.295, "j": 0.325, "k": 0.561, "l": 0.295, "m": 0.885,
+    "n": 0.590, "o": 0.531, "p": 0.590, "q": 0.561, "r": 0.414, "s": 0.419, "t": 0.413,
+    "u": 0.590, "v": 0.561, "w": 0.767, "x": 0.561, "y": 0.561, "z": 0.472, "|": 0.295,
+    "~": 0.556,
+}  # fmt: skip
+SIZE_PT = {"\\footnotesize": 8.0, "\\scriptsize": 7.507}
+#: Latin Modern Mono is one advance width per size, in em of SIZE_PT.
+TT_EM = {"\\footnotesize": 0.531, "\\scriptsize": 0.495}
+BOLD_FACTOR = 1.155
+#: The italic is 1.02 of the upright at \footnotesize and 1.05 at \scriptsize.
+ITALIC_FACTOR = 1.05
+#: Math symbols the tables use, in em; a relation or binary operator between two operands
+#: also takes its surrounding math space, added in ``_math_em``.
+MATH_SYMBOL_EM = {
+    "\\uparrow": 0.531, "\\downarrow": 0.531, "\\rho": 0.544, "\\sum": 1.111,
+    "\\log": 1.357, "\\pm": 0.826,
+}  # fmt: skip
+SCRIPT_FACTOR = 0.87
+HANG = ">{\\raggedright\\hangindent=1em\\hangafter=1\\arraybackslash}"
+
+
+def _group(text: str, start: int) -> tuple[str, int]:
+    """The brace group opening at ``text[start]`` and the index just past it."""
+    if text[start] != "{":
+        raise ValueError(f"expected a brace group at {start} in {text!r}")
+    depth = 0
+    for i in range(start, len(text)):
+        depth += {"{": 1, "}": -1}.get(text[i], 0)
+        if depth == 0:
+            return text[start + 1 : i], i + 1
+    raise ValueError(f"unbalanced braces in {text!r}")
+
+
+def _math_em(math: str) -> float:
+    """Width in em of an inline math span's contents."""
+    em, i, operand_before = 0.0, 0, False
+    math = math.replace(" ", "").replace("\\_", "_")
+    while i < len(math):
+        ch = math[i]
+        if ch == "\\":
+            j = i + 1
+            while j < len(math) and math[j].isalpha():
+                j += 1
+            em += MATH_SYMBOL_EM[math[i:j]]
+            i, operand_before = j, True
+        elif ch in "^_":
+            if math[i + 1] == "{":
+                script, i = _group(math, i + 1)
+            else:
+                script, i = math[i + 1], i + 2
+            em += SCRIPT_FACTOR * _math_em(script) + 0.06
+        elif ch in "{}":
+            i += 1
+        else:
+            em += GLYPH_EM[
+                "+" if ch == "-" else ch
+            ]  # a math minus is as wide as a plus
+            if ch in "+-<>=" and operand_before and i + 1 < len(math):
+                em += 2 * 0.25
+            operand_before = ch not in "+-<>="
+            i += 1
+    return em
+
+
+def _text_em(text: str, size: str) -> float:
+    """Natural width in em of one table cell's TeX source, on one line."""
+    em, i = 0.0, 0
+    while i < len(text):
+        ch = text[i]
+        if ch == "$":
+            j = text.index("$", i + 1)
+            em += _math_em(text[i + 1 : j])
+            i = j + 1
+        elif ch == "\\":
+            j = i + 1
+            while j < len(text) and text[j].isalpha():
+                j += 1
+            command = text[i:j]
+            if command == "\\":  # an escaped character such as \_ or \%
+                em += GLYPH_EM[text[j]]
+                i = j + 1
+            elif command in ("\\textbf", "\\texttt", "\\textit", "\\emph"):
+                inner, i = _group(text, j)
+                if command == "\\texttt":
+                    em += TT_EM[size] * len(inner.replace("\\", ""))
+                else:
+                    factor = BOLD_FACTOR if command == "\\textbf" else ITALIC_FACTOR
+                    em += factor * _text_em(inner, size)
+            elif command == "\\quad":
+                em += 1.0625
+                i = j
+                if i < len(text) and text[i] == " ":
+                    i += 1
+            else:
+                raise ValueError(f"no width rule for {command} in table cell {text!r}")
+        elif ch in "{}":
+            i += 1
+        else:
+            em += GLYPH_EM[ch]
+            i += 1
+    return em
+
+
+def _cell_mm(cell: str, size: str) -> float:
+    return _text_em(" ".join(cell.split()), size) * SIZE_PT[size] * PT_TO_MM
+
+
+def _parse_spec(spec: str) -> list[str]:
+    """Column tokens of a tabular preamble, without the ``@{}`` at either end."""
+    columns, i = [], 0
+    while i < len(spec):
+        if spec[i] == "@":
+            _, i = _group(spec, i + 1)
+        elif spec[i] == "p":
+            width, i = _group(spec, i + 1)
+            columns.append(f"p{{{width}}}")
+        elif spec[i] in "lrc":
+            columns.append(spec[i])
+            i += 1
+        else:
+            raise ValueError(f"no rule for column type {spec[i]!r} in {spec!r}")
+    return columns
+
+
+def _rows(block: str) -> list[list[tuple[int, str]]]:
+    """Each table row as ``(columns spanned, cell source)`` pairs."""
+    rows = []
+    for line in block.split("\\\\"):
+        line = " ".join(
+            part
+            for part in line.split("\n")
+            if not part.strip().startswith(("\\hline", "\\end", "\\caption", "\\label"))
+        ).strip()
+        if not line:
+            continue
+        cells = []
+        for cell in line.split(" & "):
+            cell = cell.strip()
+            if cell.startswith("\\multicolumn"):
+                n, k = _group(cell, len("\\multicolumn"))
+                _, k = _group(cell, k)
+                inner, _ = _group(cell, k)
+                cells.append((int(n), inner))
+            else:
+                cells.append((1, cell))
+        rows.append(cells)
+    return rows
+
+
+def _natural_mm(
+    rows: list[list[tuple[int, str]]], n_columns: int, size: str
+) -> list[float]:
+    """Natural one-line width of every column, spans pushed into their last column."""
+    widths = [0.0] * n_columns
+    spans = []
+    for row in rows:
+        j = 0
+        for n, cell in row:
+            if n == 1:
+                widths[j] = max(widths[j], _cell_mm(cell, size))
+            else:
+                spans.append((j, j + n, _cell_mm(cell, size)))
+            j += n
+        if j != n_columns:
+            raise ValueError(f"row has {j} columns, the preamble {n_columns}: {row}")
+    sep = 2 * TABCOLSEP_PT[0] * PT_TO_MM
+    for a, b, need in spans:
+        have = sum(widths[a:b]) + sep * (b - a - 1)
+        widths[b - 1] += max(0.0, need - have)
+    return widths
+
+
+def _fit_tabular(block: str, size: str) -> tuple[str, str, float] | None:
+    """Re-lay one tabular or longtable; ``(block, size, tabcolsep)`` or None if no p column."""
+    env = "longtable" if "\\begin{longtable}" in block else "tabular"
+    start = block.index(f"\\begin{{{env}}}") + len(f"\\begin{{{env}}}")
+    spec, after = _group(block, start)
+    columns = _parse_spec(spec)
+    flexible = [j for j, c in enumerate(columns) if c.startswith("p{")]
+    if not flexible:
+        return None
+    inner = block[after : block.index(f"\\end{{{env}}}")]
+    if env == "longtable":
+        # The caption and label are the longtable's first "row"; the head repeats after
+        # \endfirsthead, so the rows after it carry every width.
+        inner = inner[inner.index("\\endfirsthead") + len("\\endfirsthead") :]
+    rows = _rows(inner)
+    sizes = ["\\footnotesize", size] if size == "\\scriptsize" else [size]
+    available = TEXT_WIDTH_MM - FIT_MARGIN_MM
+    for try_size in sizes:
+        widths = _natural_mm(rows, len(columns), try_size)
+        for sep_pt in TABCOLSEP_PT:
+            seps = 2 * sep_pt * PT_TO_MM * (len(columns) - 1)
+            if sum(widths) + seps <= available:
+                fitted = ["l" if j in flexible else c for j, c in enumerate(columns)]
+                new_spec = "@{}" + "".join(fitted) + "@{}"
+                return (
+                    block[:start] + f"{{{new_spec}}}" + block[after:],
+                    try_size,
+                    sep_pt,
+                )
+    # No one-line layout fits, so the paragraph columns share what the fixed columns
+    # leave. The first of them is the row's label and is served first: it takes its
+    # natural width less what the others need to set in two lines (a short one in one
+    # line), and never less than an equal share. The others then split the remainder,
+    # each capped at its own natural width, the narrowest served first.
+    sep_pt = TABCOLSEP_PT[-1]
+    widths = _natural_mm(rows, len(columns), size)
+    seps = 2 * sep_pt * PT_TO_MM * (len(columns) - 1)
+    budget = (
+        available - seps - sum(w for j, w in enumerate(widths) if j not in flexible)
+    )
+    label, rest = flexible[0], flexible[1:]
+    floor = sum(
+        widths[j] + 1.0 if widths[j] <= TWO_LINE_MIN_MM else widths[j] / 2 + 2.0
+        for j in rest
+    )
+    granted = {
+        label: min(widths[label] + 1.0, max(budget - floor, budget / len(flexible)))
+    }
+    budget -= granted[label]
+    for k, j in enumerate(sorted(rest, key=lambda j: widths[j])):
+        granted[j] = min(widths[j] + 1.0, budget / (len(rest) - k))
+        budget -= granted[j]
+    fitted = [
+        f"{HANG}p{{{granted[j]:.1f}mm}}" if j in flexible else c
+        for j, c in enumerate(columns)
+    ]
+    new_spec = "@{}" + "".join(fitted) + "@{}"
+    return block[:start] + f"{{{new_spec}}}" + block[after:], size, sep_pt
+
+
+def fit_columns(body: str) -> str:
+    """Lay out every table of ``body`` that has a paragraph column; see ``TEXT_WIDTH_MM``."""
+    out = []
+    for block in body.split("\\begin{table}"):
+        if "p{" not in block:
+            out.append(block)
+            continue
+        size = "\\scriptsize" if "\\scriptsize\n" in block else "\\footnotesize"
+        fitted = _fit_tabular(block, size)
+        if fitted is None:
+            out.append(block)
+            continue
+        block, new_size, sep_pt = fitted
+        if sep_pt != TABCOLSEP_PT[0]:
+            new_size += f"\n  \\setlength{{\\tabcolsep}}{{{sep_pt:g}pt}}"
+        out.append(block.replace(f"{size}\n", f"{new_size}\n", 1))
+    return "\\begin{table}".join(out)
+
+
 def write(name: str, body: str, source: str) -> str:
     os.makedirs(TABLES, exist_ok=True)
     path = osp.join(TABLES, f"{name}.tex")
@@ -69,7 +351,7 @@ def write(name: str, body: str, source: str) -> str:
         fh.write(
             f"%% notes-tex/028-gene-essentiality/tables/{name}.tex\n"
             "%% GENERATED by experiments/028-gene-essentiality/scripts/notes_tex_tables.py\n"
-            f"%% SOURCE: {source}\n" + body
+            f"%% SOURCE: {source}\n" + fit_columns(body)
         )
     return path
 
@@ -650,6 +932,43 @@ ROUND_CAPTIONS = {
 }
 
 
+#: Shorter forms of phrases in the arm labels of the round readouts, applied by
+#: ``round_table`` tier by tier and only to a table whose labels would otherwise wrap.
+#: Every short form is one the readouts already use for the same thing in another arm.
+ROUND_LABEL_TIERS: tuple[tuple[tuple[str, str], ...], ...] = (
+    (
+        ("ProtT5 backbone", "ProtT5"),
+        ("the card's kernels pinned", "kernels pinned"),
+        ("the round-", "round-"),
+        ("a head over", "head over"),
+    ),
+    (
+        ("the elastic layer that solves, capacity x", "elastic solve, x"),
+        ("the layer that solves, GEM box", "GEM-box solve"),
+        ("GO multi-hot + pathway multi-hot + ProtT5", "GO + pathway + ProtT5"),
+        ("pathway multi-hot + ProtT5", "pathway + ProtT5"),
+        ("log(1 + |v|)", "log1p"),
+    ),
+    (
+        ("gated column + context + head over", "gated + head over"),
+        ("head over the solved flux (all reactions)", "head over all solved fluxes"),
+        ("elastic solve, capacity x", "elastic solve, x"),
+    ),
+)
+
+
+def round_label(label: str, depth: int) -> str:
+    """An arm label as TeX, shortened by the first ``depth`` tiers."""
+    for tier in ROUND_LABEL_TIERS[:depth]:
+        for long_form, short_form in tier:
+            label = label.replace(long_form, short_form)
+    # Inline math passes through; outside it an underscore is escaped and a plus is set
+    # as the binary operator.
+    parts = label.split("$")
+    parts[::2] = [p.replace("_", "\\_").replace("+", "$+$") for p in parts[::2]]
+    return "$".join(parts)
+
+
 def round_table(round_key: str) -> str | None:
     """One row per arm of a round's readout, from ``results/<round>_readout.json``."""
     src = osp.join(RESULTS, f"{round_key}_readout.json")
@@ -685,28 +1004,32 @@ def round_table(round_key: str) -> str | None:
             if len(values) <= 3
             else f"{min(a['select_epochs'])} to {max(a['select_epochs'])}"
         )
-        label = a["label"].replace("_", "\\_").replace("+", "$+$")
         rows.append(
-            f"    {label} & {fmt(a['test_auroc_mean'], best_mean)} & "
+            f"{fmt(a['test_auroc_mean'], best_mean)} & "
             f"{a['test_auroc_sd']:.3f} & {seeds} & {pooled} & {epochs} & "
             f"{a['median_abs_step_mean']:.4f} \\\\"
         )
     short, long = ROUND_CAPTIONS[round_key]
-    # The seven columns fit the 182 mm block at \footnotesize up to arm labels of about
-    # 50 characters; a round with longer labels (the warm-start arms) drops one size
-    # rather than run 5 mm past the text block, which `make check` flags.
-    longest = max(len(a["label"]) for a in report["arms"])
-    size = "\\scriptsize" if longest > 50 else "\\footnotesize"
-    body = (
-        f"\\begin{{table}}[H]\n  \\centering\n  {size}\n"
-        f"  \\caption[{short}]{{{short}. {long} {BEST_NOTE}{PAIRED_NOTE}}}\n"
-        f"  \\label{{tab:{round_key}}}\n"
-        "  \\begin{tabular}{@{}p{52mm}rrlllr@{}}\n    \\hline\n"
-        "    arm & mean & sd & seeds & pooled [95\\% CI] & selected epochs & val step \\\\\n"
-        "    \\hline\n"
-        + "\n".join(rows)
-        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
-    )
+    # \scriptsize is the floor, not the choice: ``fit_columns`` sets the table at
+    # \footnotesize whenever its arm labels then fit on one line in the 182 mm block.
+    # The arm labels are shortened one tier at a time, and only until every label of the
+    # table fits on one line; a table whose labels fit as written keeps them as written.
+    for depth in range(len(ROUND_LABEL_TIERS) + 1):
+        labels = [round_label(a["label"], depth) for a in arms]
+        body = (
+            "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+            f"  \\caption[{short}]{{{short}. {long} {BEST_NOTE}{PAIRED_NOTE}}}\n"
+            f"  \\label{{tab:{round_key}}}\n"
+            "  \\begin{tabular}{@{}p{52mm}rrlllr@{}}\n    \\hline\n"
+            "    arm & mean & sd & seeds & pooled [95\\% CI] & selected epochs & val step \\\\\n"
+            "    \\hline\n"
+            + "\n".join(
+                f"    {label} & {row}" for label, row in zip(labels, rows, strict=True)
+            )
+            + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+        )
+        if HANG not in fit_columns(body):
+            break
     return write(f"round_{round_key}", body, f"results/{round_key}_readout.json")
 
 
@@ -1193,6 +1516,10 @@ def genome_heldout() -> str | None:
             f"    {a['label']} & {a['n_cells']} & {cells} & {fmt(a['mean'], best)} & "
             f"{a['sd']:.3f} & {pooled} & {epochs} \\\\"
         )
+    # Six cells per row set on one line leave the arm labels too little of the text
+    # block, so past three cells the per-cell column wraps rather than the label.
+    wide = max(len(a["cell_aurocs"]) for a in arms) > 3
+    spec = "@{}p{58mm}rp{30mm}rrlp{22mm}@{}" if wide else "@{}p{58mm}rlrrlp{22mm}@{}"
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
         "  \\caption[Round 30, the genome-wide held-out genes]{Round 30, the genome-wide "
@@ -1206,7 +1533,7 @@ def genome_heldout() -> str | None:
         "is 1.0 on every one and the solve has no call. Cells are seeds 2700 to 2702; the "
         "pooled column scores the seed-mean logit with a 2,000-draw gene bootstrap. "
         f"{BEST_NOTE}}}\n  \\label{{tab:genome-heldout}}\n"
-        "  \\begin{tabular}{@{}p{58mm}rlrrlp{22mm}@{}}\n    \\hline\n"
+        f"  \\begin{{tabular}}{{{spec}}}\n    \\hline\n"
         "    arm & cells & per cell & mean & sd & pooled [95\\% CI] & selected epochs \\\\\n"
         "    \\hline\n"
         + "\n".join(rows)

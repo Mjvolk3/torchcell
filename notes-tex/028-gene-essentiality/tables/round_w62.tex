@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 46, bracketing the pooled cell's divergence]{Round 46, bracketing the pooled cell's divergence. Two pinned pairs on seed 2700: the round-22 affine cell (pathway multi-hot and ProtT5, the four ratios only, no solve columns) and the layer-free cell on ProtT5 alone (no pathway block), each run twice with the card's kernels pinned as in round 32. Batch 32, class weight, 200 epochs; the read is per pair. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w62}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{99.6mm}rrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

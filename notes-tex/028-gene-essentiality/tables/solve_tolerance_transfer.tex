@@ -3,10 +3,10 @@
 %% SOURCE: results/solve_tolerance_transfer.json
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
   \caption[The solve across tolerances]{The round-27 program for the 1,121 labeled genes under HiGHS 1.15.1's dual simplex, its interior point without crossover and its PDLP, the last two at KKT tolerances $10^{-4}$, $10^{-6}$ and $10^{-8}$, one thread each, 120 s per solve. ``Optimal'' counts the programs the solver certified; a program it did not certify keeps the zero flux. ``s'' and ``iterations'' are medians per solve; ``growth diff.'' is the largest absolute difference of the knockout-to-wild-type growth ratio from the simplex's, and ``growth AUROC'' scores $1 - $ that ratio on the 195 held-out genes. Written by \texttt{solve\_tolerance\_transfer.py}.}
   \label{tab:solve-tolerance-transfer-solvers}
-  \begin{tabular}{@{}p{40mm}rrrrr@{}}
+  \begin{tabular}{@{}lrrrrr@{}}
     \hline
     solver & optimal & s & iterations & growth diff. & growth AUROC \\
     \hline
@@ -23,10 +23,10 @@
 
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
   \caption[The probe across tolerances]{A logistic regression over $\log(1 + |v|)$ ($C = 0.01$, balanced, standardized on the fitting solver's training genes) fitted on the 629 training genes' vectors from the row's solver and scored on the 195 held-out genes' vectors from the column's, AUROC; the diagonal is the within-solver read, an off-diagonal cell within a family is the transfer across tolerance and across families the transfer across point. Settings that certified fewer than half the programs are omitted. Bold marks the highest within-solver probe. Written by \texttt{solve\_tolerance\_transfer.py}.}
   \label{tab:solve-tolerance-transfer}
-  \begin{tabular}{@{}p{34mm}rrrrr@{}}
+  \begin{tabular}{@{}lrrrrr@{}}
     \hline
     fitted on / scored on & simplex & ipm $10^{-4}$ & PDLP $10^{-4}$ & PDLP $10^{-6}$ & PDLP $10^{-8}$ \\
     \hline
@@ -41,10 +41,10 @@
 
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
   \caption[The vectors across tolerances]{The mean percentage of the 4,131 reactions whose $\log(1 + |v|)$ differs by more than 0.01 between the row's and the column's solver, over the 1,121 programs. Written by \texttt{solve\_tolerance\_transfer.py}.}
   \label{tab:solve-tolerance-transfer-moved}
-  \begin{tabular}{@{}p{34mm}rrrrr@{}}
+  \begin{tabular}{@{}lrrrrr@{}}
     \hline
     solver & simplex & ipm $10^{-4}$ & PDLP $10^{-4}$ & PDLP $10^{-6}$ & PDLP $10^{-8}$ \\
     \hline

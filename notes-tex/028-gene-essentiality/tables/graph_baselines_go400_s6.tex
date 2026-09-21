@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Graph convolution on GO, 400 epochs, six seeds]{The three rows of Table~\ref{tab:graph-go400} on seeds 2700 to 2705, so the graph convolution's count matches the six-seed module arms of Section~\ref{sec:round27}. The first three seeds are reruns of the Table~\ref{tab:graph-go400} cells and differ from them in the third decimal. Bold marks the highest value in a column.}
   \label{tab:graph-go400-s6}
-  \begin{tabular}{@{}llp{26mm}rrrrp{34mm}p{26mm}@{}}
+  \begin{tabular}{@{}ll>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{52.5mm}rrrr>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{30.4mm}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{30.4mm}@{}}
     \hline
     model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\
     \hline

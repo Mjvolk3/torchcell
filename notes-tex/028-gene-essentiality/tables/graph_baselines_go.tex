@@ -3,10 +3,10 @@
 %% SOURCE: results/graph_baselines_go.json
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
   \caption[The GO multi-hot, cheap models]{The Gene Ontology multi-hot on the MLP with no graph and on graph convolution over the union of the nine graphs, the protocol of Table~\ref{tab:graph-baselines}: the propagated vector (2,362 columns), the biological-process namespace (1,580) and the direct annotations (2,887), each beside ProtT5 and the four FBA ratios; the propagated vector with the ratios and alone; the propagated vector with the pathway multi-hot beside ProtT5 and the ratios; and, as the control for the pathway block, one column that marks a gene annotated to any pathway (517 of 6,607 genes) beside ProtT5 and the ratios. Seeds 2700 to 2702. Bold marks the highest value in a column.}
   \label{tab:graph-go}
-  \begin{tabular}{@{}llp{30mm}rrrrll@{}}
+  \begin{tabular}{@{}lllrrrrll@{}}
     \hline
     model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\
     \hline

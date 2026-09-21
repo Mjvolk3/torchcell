@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Gene starting vectors as datasets]{The per-gene starting vectors used in this document, each a dataset in the source tree registered under its name in \texttt{NodeEmbeddingBuilder} so any model opens it by name. Width is the column count of the built tensor; covered is the number of genes with a nonzero row over the genes the dataset holds. Written by \texttt{notes\_tex\_tables.py} from the built tensors.}
   \label{tab:gene-encodings}
-  \begin{tabular}{@{}lp{28mm}rrp{58mm}l@{}}
+  \begin{tabular}{@{}l>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{43.8mm}rr>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{44.3mm}l@{}}
     \hline
     name & what & width & covered & construction & module \\
     \hline

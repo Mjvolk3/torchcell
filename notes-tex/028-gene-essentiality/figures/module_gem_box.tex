@@ -1,0 +1,14 @@
+%% notes-tex/028-gene-essentiality/figures/module_gem_box.tex
+%% Generated figure source: notes/assets/drawio/028-module.gen.py -> 028-module-gem-box.drawio
+\tcfigfit[1.0]{figures/module_gem_box.pdf}{\textbf{The layer that solves on the GEM's own
+  box, rounds 15b, 24 and 27.} A learned availability gate, zero for a deleted gene, is
+  folded through the gene-protein-reaction rules into a reaction availability that scales
+  the GEM's own bounds; there is no abundance head, no $k_{cat}$ ceiling and no
+  thermodynamic term, and the flux is the growth optimum of the linear program over that
+  box. The dashed path is the backward pass, the dual of a gene-owned bound where one
+  binds. Round 15b reads the program's value through the forced or the gated readout, and
+  rounds 24 and 27 add a zero-initialized head over $\log(1 + |v^*|)$ of the detached
+  optimum; from round 27 the solver stores a solved program and reuses it when its bounds
+  carry no gradient. Thick borders mark the blocks that differ from
+  Figure~\ref{fig:module-lp}. Colors as in Figure~\ref{fig:readout-key}. Drawn in draw.io
+  from \texttt{notes/assets/drawio/028-module.gen.py}.}{fig:module-gem-box}

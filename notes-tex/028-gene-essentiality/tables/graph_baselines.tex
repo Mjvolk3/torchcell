@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{3pt}
   \caption[Graph-only baselines]{Graph-only baselines on the released split: transductive node classification on one gene graph with no genotype perturbed, two layers of width 64, class-weighted binary cross entropy, 200 epochs, the epoch selected by a five-epoch moving average of the validation AUROC, scored once on the 195 held-out genes at seeds 2700 to 2702. The graph is the physical interaction graph or the union of the nine gene graphs the transformer reads; the inputs are all ones (the Gene\_Graph design), log degree with the clustering coefficient, ProtT5, or ProtT5 with the chromosome-pathway indicator and the four FBA growth ratios as node features; two arms run 400 epochs. The MLP rows have no graph. Bold marks the highest value in a column.}
   \label{tab:graph-baselines}
-  \begin{tabular}{@{}llp{30mm}rrrrll@{}}
+  \begin{tabular}{@{}lllrrrrll@{}}
     \hline
     model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\
     \hline

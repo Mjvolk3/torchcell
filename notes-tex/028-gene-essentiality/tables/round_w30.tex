@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{3pt}
   \caption[Round 15c, the layer that solves with calibrated capacity ceilings]{Round 15c, the layer that solves with calibrated capacity ceilings. The pooled cell, the round-5 FBA affine and the round-15b cells on the GEM box, against the growth LP on the anchored box with the enzyme-capacity ceilings scaled by 100 and by 1,000 (capacity\_calibration.py: the program admits growth from a scale of 30 and the ceilings stop binding near 10,000), forced and gated. Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w30}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

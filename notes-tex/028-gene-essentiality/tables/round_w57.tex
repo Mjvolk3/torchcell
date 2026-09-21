@@ -4,15 +4,16 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{3pt}
   \caption[Round 41, a hidden layer in the affine over the log1p vector]{Round 41, a hidden layer in the affine over the log1p vector. Round 33's cell, the linear affine over the media ratios and the $\log(1 + |v|)$ vector (the comparator), against the same cell with one GELU hidden layer of width 64 or 256 between that input and the logit. Batch 32, class weight, 200 epochs, seeds 2700 to 2705. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w57}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
     the vector as log(1 $+$ |v|), default initialization & 0.908 & 0.008 & 0.896 to 0.919 (6) & 0.912 [0.87, 0.95] & 33 to 58 & 0.0043 \\
-    the round-33 cell with a GELU hidden layer of width 64 in the affine & \textbf{0.909} & 0.005 & 0.901 to 0.915 (6) & \textbf{0.915} [0.87, 0.95] & 49 to 67 & 0.0053 \\
-    the round-33 cell with a GELU hidden layer of width 256 in the affine & 0.905 & 0.007 & 0.895 to 0.911 (6) & 0.909 [0.86, 0.95] & 42 to 58 & 0.0049 \\
+    round-33 cell with a GELU hidden layer of width 64 in the affine & \textbf{0.909} & 0.005 & 0.901 to 0.915 (6) & \textbf{0.915} [0.87, 0.95] & 49 to 67 & 0.0053 \\
+    round-33 cell with a GELU hidden layer of width 256 in the affine & 0.905 & 0.007 & 0.895 to 0.911 (6) & 0.909 [0.86, 0.95] & 42 to 58 & 0.0049 \\
     \hline
   \end{tabular}
 \end{table}

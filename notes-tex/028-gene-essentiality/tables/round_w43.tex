@@ -4,17 +4,18 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 27, the scalable form on the pathway input]{Round 27, the scalable form on the pathway input. The pooled control on ProtT5 with the pathway multi-hot, the round-22 affine on that input, and the round-23 flux head on the elastic solve (the comparators), against the same head over the GEM-box solve with nothing learned in the layer and the program cached per genotype, seeds 2700 to 2705. Constraint scale 0, batch 32, class weight, 200 epochs. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w43}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{81.1mm}rrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
-    pathway multi-hot $+$ ProtT5 backbone, no readout & 0.860 & 0.002 & 0.859, 0.859, 0.862 & 0.861 [0.79, 0.92] & 36, 56, 46 & 0.0040 \\
-    pathway multi-hot $+$ ProtT5 backbone $+$ FBA ratios & 0.890 & 0.005 & 0.889, 0.895, 0.885 $\uparrow$ & 0.890 [0.83, 0.94] & 31, 45, 55 & 0.0054 \\
-    pathway multi-hot $+$ ProtT5; gated $+$ a head over the solved flux (all reactions) & 0.845 & 0.087 & 0.716 to 0.911 (6) & 0.910 [0.86, 0.95] & 11 to 150 & 0.0203 \\
+    pathway $+$ ProtT5, no readout & 0.860 & 0.002 & 0.859, 0.859, 0.862 & 0.861 [0.79, 0.92] & 36, 56, 46 & 0.0040 \\
+    pathway $+$ ProtT5 $+$ FBA ratios & 0.890 & 0.005 & 0.889, 0.895, 0.885 $\uparrow$ & 0.890 [0.83, 0.94] & 31, 45, 55 & 0.0054 \\
+    pathway $+$ ProtT5; gated $+$ head over all solved fluxes & 0.845 & 0.087 & 0.716 to 0.911 (6) & 0.910 [0.86, 0.95] & 11 to 150 & 0.0203 \\
     the same cell, first attempt (three survivors of the six-cell pack; per-gene dumps overwritten) & \textbf{0.905} & 0.005 & 0.911, 0.901, 0.903 $\uparrow$ & -- & 55, 76, 78 & 0.0174 \\
-    pathway multi-hot $+$ ProtT5; gated $+$ a head over the GEM-box solve's flux (cached, nothing learned in the layer) & 0.882 & 0.055 & 0.772 to 0.917 (6) & \textbf{0.917} [0.87, 0.96] & 42 to 61 & 0.0176 \\
+    pathway $+$ ProtT5; gated $+$ head over the GEM-box solve's flux (cached, nothing learned in the layer) & 0.882 & 0.055 & 0.772 to 0.917 (6) & \textbf{0.917} [0.87, 0.96] & 42 to 61 & 0.0176 \\
     \hline
   \end{tabular}
 \end{table}

@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Averages of the two model families]{Post hoc averages of existing predictions on the 195 held-out genes: each family's per-cell logits are standardized and averaged over its seeds, families are averaged with equal weight, and the mean is scored once with a 2,000-draw gene bootstrap. Nothing is fitted and every average tried is listed, so the best row is the maximum of seven post hoc choices, not a selected model. Written by \texttt{family\_ensembles.py}. Bold marks the highest value in a column.}
   \label{tab:family-ensembles}
-  \begin{tabular}{@{}p{118mm}rl@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{147.5mm}rl@{}}
     \hline
     average of & cells & AUROC [95\% CI] \\
     \hline

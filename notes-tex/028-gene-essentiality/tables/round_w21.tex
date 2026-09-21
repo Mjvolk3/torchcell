@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{3pt}
   \caption[Round 10, the flux layer warm-started from the deletion's own solve]{Round 10, the flux layer warm-started from the deletion's own solve. The pooled cell, the round-4 forced and gated growth columns, and the round-5 FBA affine, against the forced and gated growth columns whose layer proposes the deletion's own parsimonious FBA flux on YPD plus a null-space residual of relative size alpha, with alpha frozen at 0.01, learned, or frozen at 0.1. Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w21}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

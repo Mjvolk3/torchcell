@@ -3,15 +3,16 @@
 %% SOURCE: results/w28_readout.json
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 17, the round-16 cell on the five folds]{Round 17, the round-16 cell on the five folds. The round-9 and round-16 cells on the split file, the round-12 fold models of the round-9 cell, and the five fold models of the round-16 cell (chromosome-pathway indicator with ProtT5, the affine reading the four ratios, the eight statistics and the pFBA vector), whose logits are averaged on the held-out genes. Width 12, one block, batch 32, class weight, 200 epochs. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w28}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
-    chrom-pathway $+$ ProtT5 backbone $+$ FBA ratios & 0.871 & 0.015 & 0.860, 0.866, 0.888 & 0.868 [0.80, 0.93] & 53, 51, 38 & 0.0030 \\
-    chrom-pathway $+$ ProtT5 backbone $+$ ratios $+$ statistics $+$ pFBA & 0.880 & 0.018 & 0.863, 0.878, 0.898 $\uparrow$ & 0.889 [0.83, 0.94] & 60, 38, 42 & 0.0029 \\
+    chrom-pathway $+$ ProtT5 $+$ FBA ratios & 0.871 & 0.015 & 0.860, 0.866, 0.888 & 0.868 [0.80, 0.93] & 53, 51, 38 & 0.0030 \\
+    chrom-pathway $+$ ProtT5 $+$ ratios $+$ statistics $+$ pFBA & 0.880 & 0.018 & 0.863, 0.878, 0.898 $\uparrow$ & 0.889 [0.83, 0.94] & 60, 38, 42 & 0.0029 \\
     chrom-pathway $+$ ProtT5 $+$ FBA ratios, fold 0 & 0.860 & 0.000 & 0.860 & 0.860 [0.79, 0.92] & 53 & 0.0030 \\
     chrom-pathway $+$ ProtT5 $+$ FBA ratios, fold 1 & \textbf{0.899} & 0.000 & 0.899 & \textbf{0.899} [0.84, 0.95] & 32 & 0.0030 \\
     chrom-pathway $+$ ProtT5 $+$ FBA ratios, fold 2 & 0.889 & 0.000 & 0.889 & 0.889 [0.83, 0.94] & 25 & 0.0055 \\

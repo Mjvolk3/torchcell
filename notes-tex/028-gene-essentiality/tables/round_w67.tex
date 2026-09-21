@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 51, the hash seed fixed on the old one-hot code]{Round 51, the hash seed fixed on the old one-hot code. The round-9 pooled cell (pathway multi-hot and ProtT5, the plain pooled head) and the round-33 layer-free cell, each run twice on seed 2700 with the card's kernels pinned and Python's hash seed fixed, on the code that rebuilt the pathway one-hot from a set at every launch. Batch 32, class weight, 200 epochs; the read is per pair. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w67}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{99.6mm}rrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

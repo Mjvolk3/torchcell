@@ -3,10 +3,10 @@
 %% SOURCE: results/store_stats.json
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
   \caption[What the solve stores carry]{The four solve stores over the 1,121 labeled genes, one flux vector per single-gene deletion of the same growth-maximizing program (YPD, the GEM box clamped to $\pm100$ mmol/gDW/h): rows the solver reported non-optimal and stored as the zero flux; the median total absolute flux per genotype; the median number of reactions carrying flux above $10^{-6}$; the median number of reactions at the $\pm100$ clamp, and the share of genotypes with any; the median growth; and the vector's distance from the pFBA store's in the head's encoding (median relative $L_2$ of $\log(1 + |v|)$, and the mean share of reactions moved by more than 0.01). Written by \texttt{store\_stats.py}.}
   \label{tab:store-stats}
-  \begin{tabular}{@{}p{38mm}rrrrrrrr@{}}
+  \begin{tabular}{@{}lrrrrrrrr@{}}
     \hline
     store & zero rows & $\sum|v|$ & carrying & at clamp & any clamp (\%) & growth & rel. $L_2$ & moved (\%) \\
     \hline

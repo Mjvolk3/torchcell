@@ -3,10 +3,10 @@
 %% SOURCE: results/graph_baselines_go400.json
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
   \caption[Graph convolution on GO, 400 epochs]{Graph convolution over the union of the nine graphs on the propagated GO multi-hot at a 400-epoch budget, since every 200-epoch cell on it selected its epoch between 183 and 197: GO alone, GO with the four FBA ratios, and GO beside ProtT5 with the ratios. The protocol of Table~\ref{tab:graph-baselines} otherwise; seeds 2700 to 2702. Bold marks the highest value in a column.}
   \label{tab:graph-go400}
-  \begin{tabular}{@{}llp{30mm}rrrrll@{}}
+  \begin{tabular}{@{}lllrrrrll@{}}
     \hline
     model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\
     \hline

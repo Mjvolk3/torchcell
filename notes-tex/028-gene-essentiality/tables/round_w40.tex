@@ -6,17 +6,17 @@
   \scriptsize
   \caption[Round 24, what carries the head over the solved flux]{Round 24, what carries the head over the solved flux. The round-18 gated elastic cell, the round-5 affine on ProtT5 and the round-9 affine on the chromosome-pathway indicator with ProtT5 (the comparators), the round-21 cells (the head over all solved fluxes, on six seeds once seeds 2703 to 2705 land; the head over the 274 exchange fluxes), against the head over the 2,709 gene-owned fluxes, and the head over the flux of the GEM-box solve with no learned ceilings. Constraint scale 0, batch 32, class weight, 200 epochs. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w40}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
-    gated column $+$ context, the elastic layer that solves, capacity x100 & 0.803 & 0.018 & 0.816, 0.810, 0.783 & 0.800 [0.72, 0.88] & 6, 95, 63 & 0.0038 \\
+    gated column $+$ context, elastic solve, x100 & 0.803 & 0.018 & 0.816, 0.810, 0.783 & 0.800 [0.72, 0.88] & 6, 95, 63 & 0.0038 \\
     context head $+$ FBA growth ratios (round-3 levers) & 0.821 & 0.020 & 0.814, 0.805, 0.844 & 0.838 [0.76, 0.91] & 28, 70, 61 & 0.0036 \\
-    chrom-pathway $+$ ProtT5 backbone $+$ FBA ratios & \textbf{0.871} & 0.015 & 0.860, 0.866, 0.888 $\uparrow$ & \textbf{0.868} [0.80, 0.93] & 53, 51, 38 & 0.0030 \\
-    gated column $+$ context $+$ a head over the solved flux (all reactions) & 0.862 & 0.013 & 0.847 to 0.883 (6) & 0.866 [0.79, 0.93] & 66 to 135 & 0.0179 \\
-    gated column $+$ context $+$ a head over the solved exchange fluxes & 0.835 & 0.020 & 0.831, 0.856, 0.817 $\uparrow$ & 0.843 [0.76, 0.92] & 83, 197, 89 & 0.0045 \\
-    gated column $+$ context $+$ a head over the solved gene-owned fluxes & 0.861 & 0.009 & 0.871, 0.860, 0.853 $\uparrow$ & 0.861 [0.78, 0.93] & 93, 86, 75 & 0.0197 \\
-    gated column $+$ context $+$ a head over the GEM-box solve's flux (all reactions) & 0.852 & 0.019 & 0.873, 0.836, 0.847 $\uparrow$ & 0.860 [0.78, 0.93] & 68, 164, 49 & 0.0184 \\
+    chrom-pathway $+$ ProtT5 $+$ FBA ratios & \textbf{0.871} & 0.015 & 0.860, 0.866, 0.888 $\uparrow$ & \textbf{0.868} [0.80, 0.93] & 53, 51, 38 & 0.0030 \\
+    gated $+$ head over all solved fluxes & 0.862 & 0.013 & 0.847 to 0.883 (6) & 0.866 [0.79, 0.93] & 66 to 135 & 0.0179 \\
+    gated $+$ head over the solved exchange fluxes & 0.835 & 0.020 & 0.831, 0.856, 0.817 $\uparrow$ & 0.843 [0.76, 0.92] & 83, 197, 89 & 0.0045 \\
+    gated $+$ head over the solved gene-owned fluxes & 0.861 & 0.009 & 0.871, 0.860, 0.853 $\uparrow$ & 0.861 [0.78, 0.93] & 93, 86, 75 & 0.0197 \\
+    gated $+$ head over the GEM-box solve's flux (all reactions) & 0.852 & 0.019 & 0.873, 0.836, 0.847 $\uparrow$ & 0.860 [0.78, 0.93] & 68, 164, 49 & 0.0184 \\
     \hline
   \end{tabular}
 \end{table}

@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 29, the unfit seed under a 400-epoch budget]{Round 29, the unfit seed under a 400-epoch budget. The round-23 flux-head cell on ProtT5 with the pathway multi-hot, seed 2701, whose 200-epoch run never fit, beside the same program and seed run for 400 epochs. Batch 32, class weight, one seed; the two runs diverge from the first epoch, so the pair reads a chance event, not a delay. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w45}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

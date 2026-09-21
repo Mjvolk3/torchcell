@@ -18,9 +18,10 @@ gets wrong. The script writes
   count and GO term count;
 - the Spearman correlation of the per-gene misrank between arms (do the models fail on
   the same genes);
-- a figure: **a**, per-gene misrank, genes sorted by their mean over arms, one marker
-  per arm, essential and nonessential genes in two panels; **b**, the between-arm
-  agreement as a heat map.
+- a figure: **a**, per-gene misrank of the essential held-out genes, sorted by their
+  mean over arms, one marker per arm; **b**, the same for the nonessential genes;
+  **c**, the between-arm agreement as a heat map, its rows and columns labeled by the
+  arm codes (A, B, ...) that the key beside it spells out.
 
     python experiments/028-gene-essentiality/scripts/hard_genes.py
 """
@@ -39,11 +40,15 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from dotenv import load_dotenv  # noqa: E402
+from matplotlib.axes import Axes  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
+from matplotlib.ticker import MultipleLocator  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 from scipy.stats import spearmanr  # noqa: E402
 
 from torchcell.timestamp import timestamp  # noqa: E402
 from torchcell.utils import (  # noqa: E402
+    MAX_HEIGHT_MM,
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     apply_paper_style,
@@ -76,7 +81,7 @@ ARMS: dict[str, list[str]] = {
         "w43_pathlpoffgateflux_h12l1p1_e200_s*.json"
     ],
     "layer-free log1p vector + affine, pathway + ProtT5 (round 33)": [
-        "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json"
+        "w49_pathfbapfbalogfree_h12l1p1_e200_s270[0-5].json"
     ],
     "ProtT5 + affine (round 5)": ["w16_fba_h12l1p1_e200_s*.json"],
 }
@@ -218,29 +223,117 @@ def fba_ratios() -> dict[str, float]:
     return {str(g): float(r) for g, r in zip(df["gene"], df["YPD"])}
 
 
+#: Figure geometry, in millimeters from the figure's top-left corner. Two half-width
+#: blocks tile the full width; panel c takes the left block and its key the right one.
+WIDTH_MM = PANEL_WIDTHS_MM["full"]
+HALF_MM = PANEL_WIDTHS_MM["half"]
+RIGHT_BLOCK_MM = WIDTH_MM - HALF_MM
+CELL_MM = 7.0  # a heat-map cell wide enough for its value at 6 pt
+ROW1_TOP_MM, ROW1_H_MM = 11.0, 56.0
+ROW2_TOP_MM = 86.0
+CURVE_LEFT_MM = 11.0  # room for the y tick labels and the y label inside a block
+HEAT_LEFT_MM = 6.0
+
+
+def arm_style(j: int) -> tuple[str, str]:
+    """Color and marker of arm ``j``: the vivid tier as circles, the dark tier as squares."""
+    return PLOT_PALETTE[j], "o" if j < 6 else "s"
+
+
 def figure(
     rows: list[GeneRow], arms: list[str], agreement: dict[str, dict[str, float]]
 ) -> str:
     apply_paper_style()
-    fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(110)))
-    gs = fig.add_gridspec(1, 3, width_ratios=[2.2, 2.2, 1.3], wspace=0.35)
-    for k, (essential, title) in enumerate(((1, "essential"), (0, "nonessential"))):
-        ax = fig.add_subplot(gs[0, k])
+    assert len(arms) <= 12, "past the dark tier, distinguish arms by marker, not color"
+    codes = [chr(ord("A") + j) for j in range(len(arms))]
+    heat_mm = CELL_MM * len(arms)
+    height_mm = ROW2_TOP_MM + heat_mm + 7.0
+    assert height_mm <= MAX_HEIGHT_MM
+    fig = plt.figure(figsize=(mm_to_in(WIDTH_MM), mm_to_in(height_mm)))
+
+    def place(x: float, top: float, w: float, h: float) -> Axes:
+        """An axes whose box is given in millimeters from the figure's top-left corner."""
+        ax = fig.add_axes(
+            (x / WIDTH_MM, 1.0 - (top + h) / height_mm, w / WIDTH_MM, h / height_mm)
+        )
+        for sp in ax.spines.values():
+            sp.set_linewidth(0.5)
+        ax.tick_params(width=0.5, length=2)
+        return ax
+
+    def letter(x: float, top: float, text: str) -> None:
+        """A panel letter at the outer top-left of the panel's block, on the title line."""
+        fig.text(
+            x / WIDTH_MM,
+            1.0 - (top - 1.0) / height_mm,
+            text,
+            fontsize=8,
+            fontweight="bold",
+            va="bottom",
+            ha="left",
+        )
+
+    def handle(j: int, label: str) -> Line2D:
+        color, marker = arm_style(j)
+        return Line2D(
+            [], [], marker=marker, ls="", ms=3.0, mfc=color, mec=color, label=label
+        )
+
+    # One legend strip for panels a and b: the arm codes, spelled out in the key of row 2.
+    strip = [handle(j, code) for j, code in enumerate(codes)]
+    strip.append(Line2D([], [], color="black", lw=0.6, label="mean over arms"))
+    fig.legend(
+        handles=strip,
+        loc="upper left",
+        bbox_to_anchor=(0.0, 1.0),
+        ncol=len(strip),
+        fontsize=6,
+        frameon=False,
+        handlelength=1.2,
+        handletextpad=0.3,
+        columnspacing=1.4,
+        borderaxespad=0.2,
+    )
+
+    # Row 1: the per-gene misrank, essential and nonessential held-out genes.
+    for k, (essential, title) in enumerate(((1, "Essential"), (0, "Nonessential"))):
+        block = k * RIGHT_BLOCK_MM
+        ax = place(
+            block + CURVE_LEFT_MM, ROW1_TOP_MM, HALF_MM - CURVE_LEFT_MM, ROW1_H_MM
+        )
         sub = sorted(
             [r for r in rows if r.essential == essential], key=lambda r: -r.mean_misrank
         )
         x = np.arange(len(sub))
         for j, arm in enumerate(arms):
-            y = [r.misrank[arm] for r in sub]
-            ax.plot(x, y, "o", ms=2, color=PLOT_PALETTE[j], label=arm, alpha=0.8)
-        ax.plot(x, [r.mean_misrank for r in sub], "-", color="black", lw=0.6)
-        ax.set_xlabel(f"{title} held-out genes, sorted by mean misrank")
+            color, marker = arm_style(j)
+            ax.plot(
+                x,
+                [r.misrank[arm] for r in sub],
+                marker=marker,
+                ls="",
+                ms=1.8,
+                mfc=color,
+                mec=color,
+                mew=0.0,
+                zorder=3,
+            )
+        ax.plot(x, [r.mean_misrank for r in sub], "-", color="black", lw=0.6, zorder=4)
+        ax.set_xlabel(f"{title.lower()} held-out genes, sorted by mean misrank")
         ax.set_ylabel("misrank (fraction of the other class on the wrong side)")
-        ax.set_ylim(0, 1)
-        ax.set_title(chr(ord("a") + k), loc="left", fontweight="bold")
-        if k == 0:
-            ax.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, frameon=False)
-    ax = fig.add_subplot(gs[0, 2])
+        pad = 0.02 * len(sub)
+        ax.set_xlim(-pad, len(sub) - 1 + pad)
+        ax.set_ylim(-0.02, 1.0)
+        ax.yaxis.set_major_locator(MultipleLocator(0.2))
+        ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+        ax.tick_params(axis="y", which="minor", length=0)
+        ax.grid(axis="y", which="both", lw=0.3, color="0.85", zorder=0)
+        ax.set_axisbelow(True)
+        ax.set_title(f"{title} held-out genes", pad=3, loc="left")
+        letter(block, ROW1_TOP_MM, "ab"[k])
+
+    # Row 2: the between-arm agreement, cells labeled by arm code.
+    ax = place(HEAT_LEFT_MM, ROW2_TOP_MM, heat_mm, heat_mm)
     m = np.array([[agreement[a][b] for b in arms] for a in arms])
     # pcolormesh draws the cells as vector rectangles; imshow would rasterize them.
     im = ax.pcolormesh(
@@ -255,12 +348,11 @@ def figure(
     )
     ax.set_xlim(-0.5, len(arms) - 0.5)
     ax.set_ylim(len(arms) - 0.5, -0.5)
-    ax.set_aspect("equal")
-    short = [a.split(" (")[0] for a in arms]
     ax.set_xticks(range(len(arms)))
-    ax.set_xticklabels(short, rotation=90)
+    ax.set_xticklabels(codes)
     ax.set_yticks(range(len(arms)))
-    ax.set_yticklabels(short)
+    ax.set_yticklabels(codes)
+    ax.tick_params(length=0)
     for i in range(len(arms)):
         for j in range(len(arms)):
             ax.text(
@@ -272,12 +364,31 @@ def figure(
                 fontsize=6,
                 color="white" if m[i, j] > 0.6 else "black",
             )
-    ax.set_title("c", loc="left", fontweight="bold")
-    cb = fig.colorbar(
-        im, ax=ax, fraction=0.046, pad=0.04, label="Spearman of per-gene misrank"
-    )
+    ax.set_title("Agreement between arms", pad=3, loc="left")
+    letter(0.0, ROW2_TOP_MM, "c")
+    # The colorbar in its own strip, right of the heat map and inside the half block.
+    cax = place(HEAT_LEFT_MM + heat_mm + 3.0, ROW2_TOP_MM, 3.0, heat_mm)
+    cb = fig.colorbar(im, cax=cax, label="Spearman of per-gene misrank")
+    cb.outline.set_linewidth(0.5)
+    cb.ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    cb.ax.tick_params(width=0.5, length=2)
     # The colorbar's gradient is rasterized by default; the document wants vector.
     cb.solids.set_rasterized(False)
+
+    # The key of the whole figure in the right half block: marker, arm code, arm. Drawn
+    # on a frameless millimeter canvas so the codes and the names each share a left edge.
+    pitch = 4.5
+    key = place(RIGHT_BLOCK_MM, ROW2_TOP_MM, HALF_MM, pitch * len(arms))
+    key.set_axis_off()
+    key.set_xlim(0, HALF_MM)
+    key.set_ylim(pitch * len(arms), 0)
+    for j, (code, arm) in enumerate(zip(codes, arms)):
+        color, marker = arm_style(j)
+        y = pitch * (j + 0.5)
+        key.plot([1.5], [y], marker=marker, ls="", ms=3.0, mfc=color, mec=color)
+        key.text(4.0, y, code, va="center", ha="left")
+        key.text(7.5, y, arm, va="center", ha="left")
+
     os.makedirs(IMAGE_DIR, exist_ok=True)
     base = osp.join(IMAGE_DIR, f"hard_genes_{timestamp()}")
     savefig_true_size_svg(fig, base + ".svg")

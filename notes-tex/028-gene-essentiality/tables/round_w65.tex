@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 49, the second bracket of the pooled cell's divergence]{Round 49, the second bracket of the pooled cell's divergence. Three pinned pairs on seed 2700 in the pooled arm: the round-9 cell (pathway multi-hot and ProtT5, the plain pooled head, no affine readout), the affine cell on the pathway multi-hot alone, and the affine cell on the GO multi-hot and ProtT5, each run twice with the card's kernels pinned as in round 32. Batch 32, class weight, 200 epochs; the read is per pair. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w65}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{99.6mm}rrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

@@ -52,8 +52,8 @@ and they differ in what the backbone's gradient has to pass through.
   is the input; orange a learned part of the backbone (the context, the abundance head);
   yellow the flux layer and its capacity terms, dashed where the box is a fixed table
   (the $k_{cat}$ table); purple the fixed stoichiometry of the GEM; red the prediction and
-  the loss. The key holds for Figures~\ref{fig:readout-pooled}
-  to~\ref{fig:readout-gated}. Rendered from
+  the loss. The key holds for every readout diagram in this section,
+  Figures~\ref{fig:readout-pooled} to~\ref{fig:readout-one-experiment}. Rendered from
   \texttt{notes/experiments.028-gene-essentiality.mermaid.readouts.md}.}{fig:readout-key}
 
 \tcfigfit[1.0]{figures/readout_1.pdf}{\textbf{The pooled readout.} The backbone alone: one
@@ -254,6 +254,21 @@ dimensions, the encoding that reaches 0.82 with FBA on the ladder from a support
 classifier) and on the species-LM composite the expression line uses (the 5$'$ and 3$'$
 species language model, ProtT5 and CaLM, 3,332 dimensions), with and without the affine.
 
+Figure~\ref{fig:readout-fba} draws the round-5 affine and Figure~\ref{fig:readout-gated-fba}
+the gated readout with that affine beside it.
+
+\tcfigfit[0.9]{figures/readout_4.pdf}{\textbf{The FBA affine, round 5.} The pooled readout
+  (Figure~\ref{fig:readout-pooled}) plus an affine of the deleted gene's
+  knockout-to-wild-type growth ratio on four media, solved offline by FBA and read as a
+  fixed table. No flux layer is in the graph, and the five added parameters are the four
+  weights and the intercept. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-fba}
+
+\tcfigfit[1.0]{figures/readout_5.pdf}{\textbf{The gated readout beside the FBA affine, round 6.} The gated readout of
+  Figure~\ref{fig:readout-gated} with the affine of Figure~\ref{fig:readout-fba} added to
+  the same logit, so the alternating layer's growth column and the solve's growth ratios
+  reach the prediction side by side. The forced arm of the round drops the context head
+  $\ell_0$ and keeps the other two terms. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-gated-fba}
+
 \input{tables/round_w17}
 
 \tcfigfit[1.0]{figures/w17_readout_2026-09-16-19-00-53.pdf}{\textbf{Round 6.} \textbf{a},
@@ -330,6 +345,15 @@ all. Same cell otherwise, batch 32 with the class weight at 200 epochs, constrai
 (Table~\ref{tab:w18}, Figure~\ref{fig:w18}); the probe runs on every cell
 (Table~\ref{tab:growth-probe}).
 
+Figure~\ref{fig:readout-box} draws the box form.
+
+\tcfigfit[1.0]{figures/readout_6.pdf}{\textbf{The box form, round 7.} The forced readout of
+  Figure~\ref{fig:readout-biomass} with the alternating projections replaced by a sigmoid
+  that places every flux inside its bounds, so the box holds exactly and mass balance is
+  never imposed. The round's other arm keeps the alternations of
+  Figure~\ref{fig:readout-biomass} and ends them on the clip instead of on the balance
+  projection. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-box}
+
 \input{tables/round_w18}
 
 \tcfigfit[1.0]{figures/w18_readout_2026-09-16-19-40-51.pdf}{\textbf{Round 7, the growth
@@ -382,6 +406,16 @@ about 0.65 on the held-out genes, or the warm start did not reach the readout; a
 gated cell passes if it sits at the round-5 affine's 0.82 with three of three seeds above
 the round-4 gated cell.
 
+Figure~\ref{fig:readout-warm} draws the warm-started path.
+
+\tcfigfit[1.0]{figures/readout_7.pdf}{\textbf{The warm-started forced readout on the anchored layer, round 10.}
+  The forced readout of Figure~\ref{fig:readout-biomass} with the proposal changed: the
+  alternations start from the deletion's own parsimonious FBA flux $v_{\text{ref}}$, a
+  fixed table solved offline on YPD, plus a null-space step of relative size $\alpha$
+  whose direction the context sets. The box is still the GEM's bounds tightened by the
+  capacity ceilings. The gated arm of the round puts the same growth column behind the
+  gate of Figure~\ref{fig:readout-gated}. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-warm}
+
 \input{tables/round_w21}
 
 \tcfigfit[1.0]{figures/w21_readout_2026-09-16-23-52-33.pdf}{\textbf{Round 10, the layer
@@ -424,6 +458,15 @@ ceiling and no second-law direction, forced and gated, $\alpha$ frozen at 0.01, 
 seeds each (Table~\ref{tab:w24}, Figure~\ref{fig:w24}). The reads are round 10's: the
 probe at initialization at the solve's level, and the gated cell at the round-5
 affine's 0.82 with three of three seeds above the round-4 gated cell.
+
+Figure~\ref{fig:readout-warm-gem} draws the same warm start on this layer.
+
+\tcfigfit[1.0]{figures/readout_8.pdf}{\textbf{The warm-started gated readout on the stoichiometry-only layer,
+  round 13.} The proposal of Figure~\ref{fig:readout-warm} on a layer with no abundance
+  head, no $k_{cat}$ table and no capacity ceiling: a learned availability gate, zero for
+  the deleted gene, scales the GEM's own bounds. The growth column enters behind the
+  zero-initialized gate of Figure~\ref{fig:readout-gated}, and the forced arm reads it
+  alone. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-warm-gem}
 
 \input{tables/round_w24}
 
@@ -524,6 +567,9 @@ Round 15b (jobs 2314 and 2315) runs the same solve on the stoichiometry-only lay
 whose bounds are the GEM's scaled by the availability gate, forced and gated, three
 seeds each, beside the round-13 warm-started columns on the same box and the round-5
 affine (Table~\ref{tab:w29}, Figure~\ref{fig:w29}); the read is round 10's.
+Figure~\ref{fig:module-gem-box} draws the layer on this box.
+
+\input{figures/module_gem_box}
 
 \input{tables/round_w29}
 
@@ -984,6 +1030,16 @@ this size. The head over the 2,709 gene-owned reactions only says whether the
 exchange and transport columns matter. And the passing cell runs on seeds 2703 to
 2705, so its read stands on six (Table~\ref{tab:w40}, Figure~\ref{fig:w40}).
 
+Figure~\ref{fig:readout-gem-flux} draws the head over the GEM-box solve.
+
+\tcfigfit[1.0]{figures/readout_10.pdf}{\textbf{The solve on the GEM's own box with a flux head, rounds 24 and 27.}
+  The gated flux readout of Figure~\ref{fig:module-gated-flux} with the abundance head,
+  the $k_{cat}$ table and the capacity ceilings removed: the linear program runs on the
+  GEM's bounds scaled by the availability gate (Figure~\ref{fig:module-gem-box}), and a
+  zero-initialized linear head reads $\log(1 + |v^*|)$ of the detached optimum. From
+  round 27 the solver stores each solved program and reuses it when its bounds carry no
+  gradient. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-gem-flux}
+
 \input{tables/round_w40}
 
 \tcfigfit[1.0]{figures/w40_readout_2026-09-18-03-40-22.pdf}{\textbf{Round 24, what
@@ -1078,14 +1134,21 @@ the elastic form's 0.910 on the same six seeds), selected epochs 42 to 61, train
 losses 0.05 to 0.18 on the five that fit and 1.04 on seed 2701, which never fit. Seed
 2701 is the seed the elastic form never fit at 200 epochs (0.716); the scalable form
 fit it in the first attempt (0.911) and not in the second (0.772), which is round 29's
-finding again, on a form with nothing learned in the layer and the solve cached: the
+finding again, on a form with no learned ceilings in the layer: the
 miss is a chance event of the run and not of the seed or of the layer's ceilings. Over
 the nine runs of this form, eight fit and read 0.897 to 0.917; over the twelve runs of
 the elastic form on the same input (six seeds, five folds and the 400-epoch rerun),
 nine fit (Section~\ref{sec:round29}). The wall time
 was 139 minutes per cell at six cells on one card and 83 minutes at two, against 86
 for the uncached elastic form at three: at either packing the layer's own forward on
-the card, not the solve, is the cost, and the cache's hit rate was not logged. The
+the card, not the solve, is the cost. The cache's hit rate was not logged, and the
+epoch rows say it was probably never hit: the solver reuses a program only when its
+bounds carry no gradient, and this arm keeps a learned availability gate on the bounds
+whose gradient norm is nonzero in the epoch rows ($5 \times 10^{-4}$ at epoch 50 of seed
+2700, with a gene-owned bound carrying a dual on 85 percent of genotypes). The name
+``cached'' for this form in the tables and figures records the intent of the round, not a
+measured reuse; the form that does solve once per genotype is the layer-free one of
+round 33. The
 fold read of this form (job 2391, five cells at 120 GB, 144 minutes per cell at five
 per card) reads 0.912, 0.859, 0.918, 0.910 and 0.901 on the folds (mean 0.900) and
 0.912 [0.86, 0.95] as the fold ensemble, one number with the reported 0.893 and the
@@ -1389,6 +1452,16 @@ solve statistics beside it, six seeds each in two six-cell packs (jobs 2402 and 
 Table~\ref{tab:w47}, Figure~\ref{fig:w47}). The comparators are the affine and the
 cached-solve head on the same input, and the wall time is the read beside the number.
 
+Figure~\ref{fig:readout-affine-solve} draws the affine with the solve's columns, the form
+round 11 first ran on ProtT5.
+
+\tcfigfit[0.9]{figures/readout_9.pdf}{\textbf{The affine widened with solve features, rounds 11 and 31.} The FBA
+  affine of Figure~\ref{fig:readout-fba} with more columns from the same offline solves:
+  the deletion's parsimonious FBA flux vector over 4,131 reactions and eight statistics
+  of the wild-type solve on the gene's reactions, each column standardized over the
+  labeled genes, under a default-initialized weight. Round 11 ran it on ProtT5 and round
+  31 on ProtT5 with the pathway multi-hot. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-affine-solve}
+
 \input{tables/round_w47}
 
 \tcfigfit[1.0]{figures/w47_readout_2026-09-18-10-05-08.pdf}{\textbf{Round 31, the
@@ -1430,6 +1503,16 @@ round 33 crosses them: the same pFBA vector with the solve columns zero-initiali
 as $\log(1 + |v|)$ under the default initialization, and as $\log(1 + |v|)$
 zero-initialized, six seeds each paired against round 31's cell (jobs 2406, 2407 and
 2408; Table~\ref{tab:w49}, Figure~\ref{fig:w49}).
+
+Figure~\ref{fig:readout-layer-free} draws the form with both changes.
+
+\tcfigfit[0.9]{figures/readout_11.pdf}{\textbf{The layer-free form, round 33.} No flux layer is in the graph. One
+  parsimonious FBA solve per deletion on YPD is run offline, stored as $\log(1 + |v^*|)$
+  over the 4,131 reactions, and read beside the four growth ratios by an affine on the
+  logit whose weights on the stored columns start at zero, so at initialization the cell
+  is the FBA affine of Figure~\ref{fig:readout-fba}. Against
+  Figure~\ref{fig:readout-affine-solve} the encoding and the initialization changed;
+  against Figure~\ref{fig:readout-gem-flux} the solve left the forward pass. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-layer-free}
 
 \input{tables/round_w49}
 
@@ -1507,6 +1590,12 @@ the linear affine's 0.908 and 0.912, every one of the twelve selecting after the
 transition (epochs 42 to 67). At the resolution of 195 genes the linear read of
 $\log(1 + |v|)$ is the vector's ceiling, and what is left of the head-form question is
 the vector entering the cell's representation rather than its logit.
+
+Figure~\ref{fig:readout-affine-hidden} draws the round-41 read.
+
+\tcfigfit[0.9]{figures/readout_13.pdf}{\textbf{A hidden layer in the affine, round 41.} The path of
+  Figure~\ref{fig:readout-layer-free} with the linear read of the ratios and the stored
+  vector replaced by one GELU hidden layer of width 64 or 256. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-affine-hidden}
 
 \input{tables/round_w57}
 
@@ -1621,6 +1710,14 @@ multi-hot and ProtT5, with the four-ratio affine only, and beside it the same wi
 vector in the affine as well, six seeds each (jobs 2425 and 2426; Table~\ref{tab:w59},
 Figure~\ref{fig:w59}).
 
+Figure~\ref{fig:readout-node} draws the node path of this round and of round 44.
+
+\tcfigfit[1.0]{figures/readout_14.pdf}{\textbf{The solve on the node, rounds 43 and 44.} The stored vector enters
+  the representation instead of the logit: each gene's node carries its own deletion
+  vector as an embedding beside the pathway multi-hot and ProtT5, raw in round 43 and
+  reduced to 64 or 16 principal components in round 44. The affine on the logit keeps
+  the four ratios, and one arm of each round keeps the vector there as well. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-node}
+
 \input{tables/round_w59}
 
 \tcfigfit[1.0]{figures/w59_readout_2026-09-18-15-45-16.pdf}{\textbf{Round 43, the
@@ -1685,6 +1782,14 @@ first-order solve on the card returns (\texttt{ess\_reference\_flux\_table.py
 --solver}, 122 s a store; six of the 1,121 interior-point solves stopped short and
 keep the zero flux), and the round-33 cell was trained over each store, six seeds,
 paired against the pFBA store (job 2411; Table~\ref{tab:w52}, Figure~\ref{fig:w52}).
+
+Figure~\ref{fig:readout-store-solver} draws the form with the store swapped.
+
+\tcfigfit[0.9]{figures/readout_12.pdf}{\textbf{The layer-free form over another solver's point, rounds 36, 38 and
+  42.} The path of Figure~\ref{fig:readout-layer-free} with only the store changed: the
+  growth-maximizing program solved once per deletion by the dual simplex (a vertex), by
+  the interior point without crossover, or by PDLP, each stored in the same encoding,
+  and in round 42 the parsimonious solve on synthetic complete medium. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-store-solver}
 
 \input{tables/round_w52}
 
@@ -2012,6 +2117,15 @@ store's 4,131 columns and exactly one of the pFBA store's, and the same cell is 
 over each on the six seeds the stores were read with
 (Table~\ref{tab:w84}, Figure~\ref{fig:w84}).
 
+Figure~\ref{fig:readout-declamp} draws the cut.
+
+\tcfigfit[1.0]{figures/readout_15.pdf}{\textbf{The vertex store with its clamp columns dropped, rounds 68 to 70.}
+  The path of Figure~\ref{fig:readout-store-solver} over the dual-simplex vertex store,
+  with every column that reaches the $\pm 100$ flux clamp on any genotype set to zero
+  before the affine reads it, 429 of 4,131 columns. Round 69 drops instead the 429
+  widest columns that never reach the clamp, and round 70 the 25 or the 100 widest clamp
+  columns. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-declamp}
+
 \input{tables/round_w84}
 
 \tcfigfit[1.0]{figures/w84_readout_2026-09-20-01-28-34.pdf}{\textbf{Round 68, the clamp
@@ -2187,6 +2301,14 @@ database (13.5 million records, single to triple deletions on three media), by a
 scan of its LMDB for each record's deleted genes and medium name (job 2469, 8 minutes
 on 20 processes), and then builds the store.
 
+Figure~\ref{fig:readout-store-scale} draws the read at that scale.
+
+\tcfigfit[0.9]{figures/readout_16.pdf}{\textbf{The store at the database's scale.} The layer-free path on the 025
+  solid-growth transformer: a record's deleted GEM genes and its medium form a key, the
+  program is solved once per key offline by the interior point, and at training time
+  each record gathers its row from a table on the host and an affine of the row is added
+  to the transformer's prediction. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-store-scale}
+
 \input{tables/store_scale}
 
 Two thirds of the records (8,986,762 of 13,525,071) delete no GEM gene and read the
@@ -2226,3 +2348,40 @@ the model learns (the fine-tuning form with the capacity ceilings of round 15c),
 medium axis with many recipes, each of which multiplies the programs by the number of
 parameter settings or of media, and a program solved inside the loop rather than
 before it.
+
+\subsection{The forms tested after the layer-free result\secstatus{todo}}
+\label{sec:forms-after-layer-free}
+
+After the layer-free result the module changed only in what the affine reads and, once,
+in how the backbone forms its context: six gene-rule counts beside the stored vector
+(Section~\ref{sec:round77}, Figure~\ref{fig:readout-gpr}), the class token sent through
+the perturbation operator (Section~\ref{sec:round79}, Figure~\ref{fig:readout-cls}), the
+counts with no flux vector (Sections~\ref{sec:round82} and~\ref{sec:round84-98},
+Figure~\ref{fig:readout-counts-only}), and every column restricted to one medium
+(Section~\ref{sec:round83}, Figure~\ref{fig:readout-one-experiment}). Each is a small
+change to the path of Figure~\ref{fig:readout-layer-free}, and the cited sections hold
+the numbers.
+
+\tcfigfit[0.9]{figures/readout_17.pdf}{\textbf{The layer-free form with the gene-rule counts, round 77.} The path
+  of Figure~\ref{fig:readout-layer-free} with six columns appended to the store: counts
+  read off each gene's gene-protein-reaction rules in disjunctive normal form, which need
+  no solve and carry no medium. The affine reads them in the store's $\log(1 + \cdot)$
+  encoding under the same zero initialization. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-gpr}
+
+\tcfigfit[0.9]{figures/readout_18.pdf}{\textbf{The class token through the perturbation operator, round 79.} The
+  metabolic path is that of Figure~\ref{fig:readout-layer-free} and the change is in the
+  backbone: the class token, encoded once on the wild-type graph, joins the gene tokens
+  as one more query of the perturbation operator over the deleted-gene keys, so the head
+  reads a strain-specific token beside the pooled perturbed genes. No parameter is
+  added. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-cls}
+
+\tcfigfit[0.9]{figures/readout_19.pdf}{\textbf{The counts without the flux vector, rounds 82 to 98.} The path of
+  Figure~\ref{fig:readout-gpr} with the stored flux vector removed, so the affine reads
+  the growth ratios and the six rule counts only. Round 82 keeps all four media, and the
+  later recipes of Section~\ref{sec:round84-98} read the YPD and SC ratios or the YPD
+  ratio alone. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-counts-only}
+
+\tcfigfit[0.9]{figures/readout_20.pdf}{\textbf{Every column inside one experiment, round 83.} The path of
+  Figure~\ref{fig:readout-gpr} restricted to one medium: the YPD growth ratio, the flux
+  vector of the YPD solve and the rule counts, which carry no environment, so a record
+  is one genotype in one medium. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-one-experiment}

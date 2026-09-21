@@ -4,18 +4,19 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 45, the layer-free cell with the card's kernels pinned]{Round 45, the layer-free cell with the card's kernels pinned. The round-33 cell (the $\log(1 + |v|)$ vector in the affine, pathway multi-hot and ProtT5, no layer) on seed 2700 run twice with cuDNN's autotuner off, its deterministic kernels on, torch's deterministic algorithms on and cuBLAS's workspace pinned, and twice without, in one pack on one card. Batch 32, class weight, 200 epochs; the read is per pair. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w61}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{84.4mm}rrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline
-    the vector as log(1 $+$ |v|), default initialization & 0.908 & 0.008 & 0.896 to 0.919 (6) & 0.912 [0.87, 0.95] & 33 to 58 & 0.0043 \\
-    round-33 cell (log1p vector in the affine, no layer), seed 2700, the card's kernels pinned, first run & 0.911 & 0.000 & 0.911 & 0.911 [0.87, 0.95] & 39 & 0.0033 \\
+    the vector as log1p, default initialization & 0.908 & 0.008 & 0.896 to 0.919 (6) & 0.912 [0.87, 0.95] & 33 to 58 & 0.0043 \\
+    round-33 cell (log1p vector in the affine, no layer), seed 2700, kernels pinned, first run & 0.911 & 0.000 & 0.911 & 0.911 [0.87, 0.95] & 39 & 0.0033 \\
     the same, pinned, second run & 0.911 & 0.000 & 0.911 & 0.911 [0.87, 0.95] & 51 & 0.0042 \\
     the same, kernels free, first run & 0.905 & 0.000 & 0.905 & 0.905 [0.86, 0.95] & 43 & 0.0045 \\
     the same, free, second run & \textbf{0.916} & 0.000 & 0.916 & \textbf{0.916} [0.87, 0.96] & 41 & 0.0051 \\
-    the round-33 cell, the card's kernels pinned, one run per seed (seeds 2701 to 2705) & 0.903 & 0.004 & 0.899 to 0.909 (5) & 0.911 [0.86, 0.95] & 39 to 67 & 0.0049 \\
+    round-33 cell, kernels pinned, one run per seed (seeds 2701 to 2705) & 0.903 & 0.004 & 0.899 to 0.909 (5) & 0.911 [0.86, 0.95] & 39 to 67 & 0.0049 \\
     \hline
   \end{tabular}
 \end{table}

@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 18, the forced column of the elastic layer that solves]{Round 18, the forced column of the elastic layer that solves. The round-4 forced column of the alternating layer (the paired comparator), the round-5 FBA affine and the hard program's forced cells at capacity scale 100 and 1,000 (rounds 15c and 15d), against the elastic program (every forced flux priced at 1 per mmol/gDW/h of shortfall, feasible for every genotype by construction) at scale 100 and 1,000, and at 100 with the protein pool held by construction. Arm \texttt{flux\_projection\_anchored\_nodiss}, constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w32}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

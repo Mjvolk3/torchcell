@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 52, the fixed one-hot code without a hash seed]{Round 52, the fixed one-hot code without a hash seed. The same two cells run twice each on seed 2700 with the card's kernels pinned and no hash seed, on the code that enumerates the one-hot's columns sorted and processes only when the file is absent. Batch 32, class weight, 200 epochs; the read is per pair. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w68}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{99.6mm}rrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

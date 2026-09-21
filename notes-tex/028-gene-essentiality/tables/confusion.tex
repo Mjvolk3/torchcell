@@ -3,7 +3,8 @@
 %% SOURCE: results/essentiality_confusion.json
 \begingroup
 \scriptsize
-\begin{longtable}{@{}p{30mm}p{20mm}p{24mm}rrrrrrr@{}}
+  \setlength{\tabcolsep}{2.5pt}
+\begin{longtable}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{29.9mm}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{28.0mm}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{28.0mm}rrrrrrr@{}}
   \caption[Every scorer at yeast-GEM's rule]{Every scorer at the rule yeast-GEM reports its benchmark with: a deletion is called essential when the criterion in the rule column holds, and the call is scored against the label as a confusion matrix with essential as the positive class (TP/FN/FP/TN). Accuracy is followed by the majority class's share of the gene set in parentheses; precision and recall are for the essential class; balanced accuracy is the mean of recall and specificity. yeast-GEM 9.1.1's row is its own release file on its own labels (the Stanford deletion project's inviable list over the model's verified ORFs); those labels and the released split agree on 1102 of the 1,104 genes both name. Every other row is on the released labels. The transformer is the round-12 fold ensemble at the loss's decision boundary and at the threshold that calls as many genes essential as the labels hold. Bold marks the highest value in a column.}
   \label{tab:confusion}\\
     \hline

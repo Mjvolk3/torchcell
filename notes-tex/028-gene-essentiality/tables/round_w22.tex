@@ -3,10 +3,11 @@
 %% SOURCE: results/w22_readout.json
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
   \caption[Round 11, the affine widened with the solve]{Round 11, the affine widened with the solve. The round-5 cell (context head plus an affine of the four FBA growth ratios) against the same cell whose affine also reads the eight statistics of the deleted gene's reactions under the wild-type pFBA solve and its variability, the deletion's own pFBA flux vector (4,131 columns), or both; every column standardized over the labeled genes. Width 12, one block, batch 32, class weight, 200 epochs, seeds 2700 to 2702. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w22}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

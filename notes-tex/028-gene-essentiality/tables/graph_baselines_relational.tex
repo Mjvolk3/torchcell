@@ -3,10 +3,11 @@
 %% SOURCE: results/graph_baselines_relational.json
 \begin{table}[H]
   \centering
-  \scriptsize
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Message-passing architectures]{The message-passing architectures of the MATH-490 and Gene\_Graph projects on the released split, the protocol of Table~\ref{tab:graph-baselines}: GIN and GraphSAGE on the union of the nine graphs, and RGCN and RGAT with the nine graphs as nine edge types (RGCN with a basis decomposition of four bases; RGAT as one GATv2 attention per relation, summed, since the basis-shared form holds a weight matrix per edge), with ProtT5 alone and with the transformer's three inputs as node features, 200 epochs, seeds 2700 to 2702. Bold marks the highest value in a column.}
   \label{tab:graph-relational}
-  \begin{tabular}{@{}llp{30mm}rrrrll@{}}
+  \begin{tabular}{@{}lllrrrrll@{}}
     \hline
     model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\
     \hline

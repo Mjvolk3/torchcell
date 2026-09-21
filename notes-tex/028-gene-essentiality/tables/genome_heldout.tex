@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 30, the genome-wide held-out genes]{Round 30, the genome-wide labels as a larger held-out set. Every model is trained on the released labeled genes outside the released held-out set (629 train, 158 val, the split \texttt{ess\_genome\_heldout\_val0.2\_s0}) and read once on the 4,674 genes the released file never labeled, 974 of them essential by SGD annotation and the rest nonessential by a fitness record, so label origin coincides with class on this set. None of these genes carries a yeast-GEM reaction, so FBA's knockout ratio is 1.0 on every one and the solve has no call. Cells are seeds 2700 to 2702; the pooled column scores the seed-mean logit with a 2,000-draw gene bootstrap. Bold marks the highest value in a column.}
   \label{tab:genome-heldout}
-  \begin{tabular}{@{}p{58mm}rlrrlp{22mm}@{}}
+  \begin{tabular}{@{}>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{84.9mm}r>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{25.6mm}rrl>{\raggedright\hangindent=1em\hangafter=1\arraybackslash}p{19.6mm}@{}}
     \hline
     arm & cells & per cell & mean & sd & pooled [95\% CI] & selected epochs \\
     \hline

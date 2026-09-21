@@ -16,7 +16,7 @@
    "w43_pathlpoffgateflux_h12l1p1_e200_s*.json"
   ],
   "layer-free log1p vector + affine, pathway + ProtT5 (round 33)": [
-   "w49_pathfbapfbalogfree_h12l1p1_e200_s*.json"
+   "w49_pathfbapfbalogfree_h12l1p1_e200_s270[0-5].json"
   ],
   "ProtT5 + affine (round 5)": [
    "w16_fba_h12l1p1_e200_s*.json"
@@ -8156,5 +8156,5 @@
   "YGR106C",
   "YMR202W"
  ],
- "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/hard_genes_2026-09-18-16-45-03.svg"
+ "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/hard_genes_2026-09-21-10-23-58.svg"
 }

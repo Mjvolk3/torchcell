@@ -1,12 +1,13 @@
-"""Regenerate the four metabolic-module diagrams of notes-tex/028-gene-essentiality.
+"""Regenerate the five metabolic-module diagrams of notes-tex/028-gene-essentiality.
 
     python notes/assets/drawio/028-module.gen.py notes/assets/drawio
 
 writes 028-module-projection.drawio (the alternating layer, rounds 2 to 13),
 028-module-lp.drawio (the layer that solves, rounds 15 to 15d),
-028-module-elastic.drawio (the elastic program with the pool by construction, round 18)
-and 028-module-gated-flux.drawio (the gated elastic cell with a head over the solved
-flux vector, round 21),
+028-module-elastic.drawio (the elastic program with the pool by construction, round 18),
+028-module-gated-flux.drawio (the gated elastic cell with a head over the solved
+flux vector, round 21) and 028-module-gem-box.drawio (the solve on the GEM's own box,
+bounds scaled by the availability gate and no capacity ceiling, rounds 15b, 24 and 27),
 each 717 units wide (182 mm), fonts on the ladder only (8.3 body, 9.7 titles), every
 formula as MathJax LaTeX (`$$...$$`, math="1" on the model), and the document's readout
 color key (figures/readout_key): white the input to the layer (tokens, context), orange a
@@ -376,11 +377,63 @@ def gated_flux() -> Canvas:
     return c
 
 
+# ---------------------------------------------------------------- 5. GEM box
+def gem_box() -> Canvas:
+    """The layer that solves on the GEM's own box: rounds 15b, 24 and 27."""
+    c = Canvas()
+    row_h = 88
+    gap = 13
+    widths = [62, 96, 84, 96, 130, 44, 127]
+    specs: list[tuple[str, str, tuple[str, str], float]] = [
+        ("gene tokens", f"{H_G} from the backbone, perturbed graph", WHITE, 0.8),
+        ("availability gate", m(r"\gamma_g=\sigma(w^{\top}h_g)") + "; a deleted gene is set to 0 hard; no abundance head", ORANGE, 1.8),
+        ("GPR fold", f"reaction availability {C_J}: softmin over a complex's subunits, sum over isozymes", YELLOW, 0.8),
+        ("box", m(r"[\ell_j c_j,\ u_j c_j]") + ", the GEM's own bounds scaled by availability; no " + m(r"k_{\mathrm{cat}}") + " ceiling, no second law", YELLOW, 1.8),
+        ("growth LP", m(r"\max\ v_{\mathrm{growth}}") + " s.t. " + m(r"Sv=0,\ \ell c\le v\le uc") + "<br>HiGHS per genotype; from round 27 a solved program is stored and reused when its bounds carry no gradient", YELLOW, 0.8),
+        ("optimum", f"{VS}, {ZS}", YELLOW, 0.8),
+        ("readout", "round 15b, gated: " + m(r"\ell=\mathrm{head}(z)+g\,(a\,z^*+b)") + "<br>rounds 24 and 27: " + m(r"+\,w^{\top}\log(1+|v^*|),\ w_0=0"), RED, 0.8),
+    ]
+    top = chain(c, 0, row_h, specs, widths=widths, gap=gap)
+    gate_ix, lp_ix = 1, 4
+    yb = row_h + 26
+    x_lp = sum(widths[:lp_ix]) + gap * lp_ix + widths[lp_ix] / 2
+    x_gate = sum(widths[:gate_ix]) + gap * gate_ix + widths[gate_ix] / 2
+    c.arrow(
+        top[lp_ix],
+        top[gate_ix],
+        dashed=True,
+        exit_=(0.5, 1),
+        entry=(0.5, 1),
+        points=[(x_lp, yb), (x_gate, yb)],
+    )
+    c.text(
+        "backward: " + m(r"\partial z^*/\partial u_j") + " is the dual of the availability-scaled bound (envelope theorem), nonzero only where a gene-owned bound binds; through " + GAMMA_G + " to the backbone",
+        x_gate + 10,
+        yb + 4,
+        x_lp - x_gate - 20,
+        24,
+    )
+    y3 = yb + 40
+    exact = (
+        m(r"Sv=0") + " and " + m(r"\ell c\le v\le uc") + " hold exactly at " + VS + "; the box is the GEM's, so it contains growth for every viable deletion<br>"
+        + VS + " enters the flux head detached, as a fixed feature of the current solve; only " + ZS + " carries a gradient<br>"
+        + "arm flux_off under the lp parameterization: no abundance head, no capacity ceiling, no thermodynamic term"
+    )
+    note = (
+        "round 15b: feasible from the first forward pass, the growth column ranks the held-out genes at 0.734 before training, and the forced cell receives no gradient when only exchange bounds bind; "
+        "round 24: the flux head over this solve reads 0.852 on ProtT5; round 27: 0.882 on the pathway input, pooled 0.917"
+    )
+    c.box("by construction", exact, 0, y3, 440, 78, PURPLE, align="left")
+    c.box("measured (rounds 15b, 24 and 27)", note, 456, y3, 261, 78, GRAY, align="left")
+    return c
+
+
 for name, fn in (
     ("projection", projection),
     ("lp", lp),
     ("elastic", elastic),
     ("gated-flux", gated_flux),
+    ("gem-box", gem_box),
 ):
     canvas = fn()
     canvas.write(osp.join(OUT_DIR, f"028-module-{name}.drawio"), f"module-{name}")

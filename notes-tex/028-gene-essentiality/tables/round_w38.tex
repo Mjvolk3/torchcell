@@ -4,9 +4,10 @@
 \begin{table}[H]
   \centering
   \scriptsize
+  \setlength{\tabcolsep}{2.5pt}
   \caption[Round 22, the chromosome-pathway indicator split into its blocks]{Round 22, the chromosome-pathway indicator split into its blocks. The round-9 cell (the paired comparator: the 197-column indicator beside ProtT5 with the FBA affine), the round-5 affine on ProtT5 alone, and the round-14 cell (properties and chromosome, no pathways), against the same recipe with one block at a time: the 173-column pathway multi-hot, the 17-column chromosome one-hot, the seven scaled properties, and the pathway block alone without ProtT5. Batch 32, class weight, 200 epochs, seeds 2700 to 2702. Bold marks the highest value in a column. $\uparrow$ ($\downarrow$) marks an arm whose held-out AUROC is above (below) the first arm's on every one of the same three seeds.}
   \label{tab:w38}
-  \begin{tabular}{@{}p{52mm}rrlllr@{}}
+  \begin{tabular}{@{}lrrlllr@{}}
     \hline
     arm & mean & sd & seeds & pooled [95\% CI] & selected epochs & val step \\
     \hline

@@ -309,6 +309,12 @@ MODULE_FORMS: list[tuple[str, tuple[str, ...], str, bool]] = [
         False,
     ),
     (
+        "+ gene-rule redundancy columns",
+        ("w96_pathloggpr_h12l1p1_e200_s*.json",),
+        SOLVE,
+        False,
+    ),
+    (
         "solve vector on the node",
         ("w59_pathsolvenode_h12l1p1_e200_s*.json",),
         SOLVE,

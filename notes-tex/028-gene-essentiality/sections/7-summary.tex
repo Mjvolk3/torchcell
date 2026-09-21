@@ -6,7 +6,7 @@
 \section{The results on one page\secstatus{todo}}
 \label{sec:summary}
 
-\tcfigfit[1.0]{figures/summary_2026-09-20-14-40-38.pdf}{\textbf{Gene essentiality on
+\tcfigfit[1.0]{figures/summary_2026-09-20-19-59-07.pdf}{\textbf{Gene essentiality on
   yeast-GEM: the best method, the module form that helps, what scales, and the genes
   still missed.} One color means one thing in every panel: gray a comparator with
   nothing learned here, yellow a learned model reading no solve and no graph, orange the
@@ -18,7 +18,9 @@
   intervals are gene bootstraps.
   \textbf{b}, The forms of the metabolic module on one backbone, the pathway multi-hot
   with ProtT5: the bar is the seed mean of the held-out AUROC and each point one seed.
-  The forced growth column ran on ProtT5 alone, twelve seeds.
+  The gene-rule row adds six redundancy counts to the layer-free form's vector
+  (Section~\ref{sec:round77}); the forced growth column ran on ProtT5 alone, twelve
+  seeds.
   \textbf{c}, Wall minutes per cell for the forms of \textbf{b}, as run, with up to three
   cells sharing a card.
   \textbf{d}, The same models trained on the 629 released genes and read on the 4,674
@@ -49,7 +51,8 @@
     genes, with the average fixed in advance, the average beats the better single model
     on nine (mean $+0.023$) and graph convolution on GO beats the transformer on nine
     (Section~\ref{sec:round75}).
-  \item[The module form that helps is the one with no layer.] On one backbone the cell
+  \item[The module form that helps is the one with no layer, and the rules help beside
+    it.] On one backbone the cell
     with no metabolism reads 0.860, FBA's growth ratios on the logit 0.890, and the
     deletion's solved flux vector as $\log(1 + |v|)$ on the logit 0.908 on six seeds
     (sd 0.008, minimum 0.896). Every form that keeps a linear program in the training
@@ -61,7 +64,10 @@
     (Figure~\ref{fig:summary}\textbf{b} and \textbf{c}). On the ten other held-out
     fifths the vector's gain over no metabolism holds on ten of ten ($+0.047$) and its
     gain over the four growth ratios alone does not separate from zero ($+0.011$, sd
-    0.023, seven of ten; Section~\ref{sec:round75}).
+    0.023, seven of ten; Section~\ref{sec:round75}). Six counts of
+    gene-protein-reaction redundancy beside the vector read 0.918 on the released split
+    against 0.908, and 0.862 against 0.843 on the ten fifths, above on six of six seeds
+    and eight of ten splits (Section~\ref{sec:round77}).
   \item[The layer-free form scales, and it covers only the genes with a reaction.] Over
     the 13.5 million records of the solid-growth build the transform is 469,474
     programs, solved once in 71 minutes on 20 cores and read as a gather in training
@@ -152,13 +158,44 @@ untested: the gap to the convolution is the training set and not the path, and a
 convolution trained on the same metabolic genes reaches 0.755 because its two layers
 read the neighbors' degrees as well as the gene's own.
 
+\subsection{Round 77: the gene-protein-reaction rules as affine columns\secstatus{todo}}
+\label{sec:round77}
+
+Section~\ref{sec:hard-genes} named what the solve cannot mark: the 19 essential held-out
+genes whose knockout growth ratio is 1.0, four of them covered by an alternative gene set
+on every reaction and fifteen holding a reaction of their own that the biomass objective
+does not need. The flux vector is close to the wild type's on all nineteen either way, so
+round 77 (jobs 2574 to 2585; Table~\ref{tab:gpr-readout}) appends what the vector does not
+carry: six counts read off yeast-GEM's gene-protein-reaction rules in disjunctive normal
+form (\texttt{isozyme\_affine\_store.py}), the gene's reactions, how many its deletion
+alone disables, how many stay enabled, the minimum and mean number of alternative gene
+sets, and its largest complex. All are non-negative, so the affine's $\log(1 + |v|)$
+keeps their order and the columns cost six weights.
+
+They help, and by the smaller of the two mechanisms the section named. On the released
+split six seeds read 0.918 against 0.908 without them, above on six of six; on the ten
+repeated outer splits the seed-mean per split is 0.862 against 0.843, above on eight of
+ten ($+0.019$, sd 0.020). Over the 19 genes the mean misrank falls from 0.134 to 0.120.
+
+The split inside those 19 is where the columns say what they are doing. The fifteen genes
+holding a reaction of their own improve on six seeds of six, from 0.124 to 0.089, while
+the four an alternative gene set covers get worse on six of six, from 0.171 to 0.234. So
+the useful column is the count of reactions nothing else catalyzes, a statement the
+deletion's flux vector cannot make because the program routes around those reactions
+without needing them; and where the rules say a gene is covered the columns push the cell
+further toward calling it dispensable, which is the wrong call on exactly those four. The
+hypothesis Section~\ref{sec:hard-genes} raised, that a paralog-aware input would move the
+covered genes, is refuted on this construction: it moves the others.
+
+\input{tables/gpr_readout}
+
 \subsection{What is left to run\secstatus{todo}}
 \label{sec:left-to-run}
 
 Four experiments would change a conclusion above, in the order of what they decide per
 hour of compute. The first is run (Section~\ref{sec:round75}); the second and third are
-rounds 77 and 76; round 76 is read (Section~\ref{sec:round76}) and round 77 is
-running.
+rounds 76 and 77 and both are read (Sections~\ref{sec:round76}
+and~\ref{sec:round77}).
 
 \begin{description}
   \item[Repeated outer splits for the three finalists.] The released held-out set has 31
@@ -168,11 +205,9 @@ running.
     and their equal-weight average fixed in advance, three seeds each, give a paired
     difference per split. The read: the average minus the better single model, its sign
     on ten splits and its mean. About six card-hours.
-  \item[A rule-aware input for the essential genes the solve calls viable.] The
-    solve's vector cannot mark the 19 essential genes with a growth ratio of 1.0, four
-    of them covered by an alternative gene set on every reaction and fifteen holding a
-    reaction of their own that the program does not need
-    (Section~\ref{sec:hard-genes}). Hypothesis, untested: the number of alternative gene
+  \item[A rule-aware input for the essential genes the solve calls viable.] Run, and
+    it works on the fifteen and backfires on the four
+    (Section~\ref{sec:round77}). What it was: the number of alternative gene
     sets in the gene-protein-reaction rule of each reaction a gene catalyzes, and
     whether every one of its reactions has an alternative, as affine columns beside the
     vector, lowers their misrank. The read: the mean misrank of those 19 genes against

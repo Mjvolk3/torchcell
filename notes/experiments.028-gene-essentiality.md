@@ -1372,3 +1372,19 @@ Ported as `708c7cf53`:
 MEASURED, two-epoch smoke of the round-33 cell on the released split: `cls_strain_sd` 0.1839 with the flag and exactly 0.0 without it, so the token is strain-specific here.
 
 Caveat carried from the 025 note: at one deleted gene the class-token query attends over ONE key, so the perturbed token is a function of the wild-type token and that gene's token. Whether it adds anything over the perturbed-gene pool on single-KO strains is round 79 (packs `w98`, jobs 2597 to 2600): the layer-free cell and the plain pooled cell with the flag, six seeds each on the released split, paired by seed against `w49` (0.908) and `w39_pathpool` (0.860).
+
+## 2026.09.20 - Round 77: the gene-protein-reaction rules as affine columns
+
+Jobs 2574 to 2585, all exit 0. Six counts from yeast-GEM's rules in disjunctive normal form (`isozyme_affine_store.py`) appended to the deletion's flux vector in the affine: reactions, sole reactions, covered reactions, minimum and mean alternative gene sets, co-subunits. Read fixed in the packs before any cell finished (`gpr_readout.py`).
+
+| quantity | with | without | difference | sd | positive |
+|---|---|---|---|---|---|
+| released split, held-out AUROC (6 seeds) | 0.918 | 0.908 | +0.0102 | 0.0053 | 6 of 6 |
+| ten repeated outer splits, seed-mean AUROC | 0.862 | 0.843 | +0.0192 | 0.0198 | 8 of 10 |
+| misrank, the 19 essentials FBA calls viable | 0.120 | 0.134 | -0.0139 | 0.0111 | 1 of 6 worse |
+| of them, the 15 with a sole reaction | 0.089 | 0.124 | -0.0343 | 0.0133 | 0 of 6 worse |
+| of them, the 4 covered by an alternative | 0.234 | 0.171 | +0.0628 | 0.0288 | 6 of 6 worse |
+
+The columns help, and the mechanism is the opposite of the hypothesis in `sec:hard-genes`. The useful signal is the count of reactions nothing else catalyzes: the 15 sole-reaction genes improve on 6 of 6 seeds. The 4 genes the rules say are covered get WORSE on 6 of 6, because the columns push the cell toward calling exactly those dispensable. So the paralog-aware-input hypothesis is refuted on this construction; it moves the other group.
+
+0.918 is the highest single-cell seed mean of the layer-free family in the document. Added to the summary figure's panel b. `verify_doc_numbers.py` now carries 71 checks, all passing.

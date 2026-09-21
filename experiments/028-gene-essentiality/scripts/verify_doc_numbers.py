@@ -154,6 +154,11 @@ def resplit_go_seed_mean() -> float:
     return float(np.mean(means))
 
 
+def gpr(block: str, key: str) -> Callable[[], float]:
+    """One statistic of the round-77 gene-rule-column read."""
+    return field("gpr_readout.json", block, key)
+
+
 CHECKS: list[Check] = [
     # sec:store-discriminability -- the stores and the two cuts.
     Check(
@@ -527,14 +532,89 @@ CHECKS: list[Check] = [
         ),
     ),
     # sec:round76 -- the physical degree as affine columns.
-    Check(claim="round76: control, wild-type rows, seed mean", stated=0.566,
-          recompute=seed_mean("w95_genomepathlogwt_h12l1p1_e200_s*.json")),
-    Check(claim="round76: degree columns, genome-wide seed mean", stated=0.602,
-          recompute=seed_mean("w95_genomepathlogwtdeg_h12l1p1_e200_s*.json")),
-    Check(claim="round76: degree columns, genome-wide pooled", stated=0.593,
-          recompute=genome_arm("physical degree and clustering in the affine")),
-    Check(claim="round76: degree columns on the released split", stated=0.906,
-          recompute=seed_mean("w95_pathlogwtdeg_h12l1p1_e200_s*.json")),
+    Check(
+        claim="round76: control, wild-type rows, seed mean",
+        stated=0.566,
+        recompute=seed_mean("w95_genomepathlogwt_h12l1p1_e200_s*.json"),
+    ),
+    Check(
+        claim="round76: degree columns, genome-wide seed mean",
+        stated=0.602,
+        recompute=seed_mean("w95_genomepathlogwtdeg_h12l1p1_e200_s*.json"),
+    ),
+    Check(
+        claim="round76: degree columns, genome-wide pooled",
+        stated=0.593,
+        recompute=genome_arm("physical degree and clustering in the affine"),
+    ),
+    Check(
+        claim="round76: degree columns on the released split",
+        stated=0.906,
+        recompute=seed_mean("w95_pathlogwtdeg_h12l1p1_e200_s*.json"),
+    ),
+    # sec:round77 -- the gene-protein-reaction redundancy columns.
+    Check(
+        claim="round77: released split, with the columns",
+        stated=0.918,
+        recompute=gpr("released_auroc", "mean_with"),
+    ),
+    Check(
+        claim="round77: released split, without",
+        stated=0.908,
+        recompute=gpr("released_auroc", "mean_without"),
+    ),
+    Check(
+        claim="round77: released split, positive seeds",
+        stated=6,
+        tolerance=0.5,
+        recompute=gpr("released_auroc", "n_positive"),
+    ),
+    Check(
+        claim="round77: ten splits, with the columns",
+        stated=0.862,
+        recompute=gpr("resplit_auroc", "mean_with"),
+    ),
+    Check(
+        claim="round77: ten splits, without",
+        stated=0.843,
+        recompute=gpr("resplit_auroc", "mean_without"),
+    ),
+    Check(
+        claim="round77: ten splits, difference",
+        stated=0.019,
+        recompute=gpr("resplit_auroc", "mean_difference"),
+    ),
+    Check(
+        claim="round77: ten splits, positive",
+        stated=8,
+        tolerance=0.5,
+        recompute=gpr("resplit_auroc", "n_positive"),
+    ),
+    Check(
+        claim="round77: misrank of the 19, with",
+        stated=0.120,
+        recompute=gpr("released_misrank_fba_viable_essential", "mean_with"),
+    ),
+    Check(
+        claim="round77: misrank of the 15 sole-reaction genes, with",
+        stated=0.089,
+        recompute=gpr("released_misrank_sole_reaction", "mean_with"),
+    ),
+    Check(
+        claim="round77: the same, without",
+        stated=0.124,
+        recompute=gpr("released_misrank_sole_reaction", "mean_without"),
+    ),
+    Check(
+        claim="round77: misrank of the 4 covered genes, with",
+        stated=0.234,
+        recompute=gpr("released_misrank_covered_by_alternatives", "mean_with"),
+    ),
+    Check(
+        claim="round77: the same, without",
+        stated=0.171,
+        recompute=gpr("released_misrank_covered_by_alternatives", "mean_without"),
+    ),
 ]
 
 

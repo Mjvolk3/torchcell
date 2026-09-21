@@ -1811,6 +1811,66 @@ def resplit_readout() -> str | None:
     return write("resplit_readout", body, "results/resplit_readout.json")
 
 
+def gpr_readout() -> str | None:
+    """Round 77: the gene-protein-reaction redundancy columns beside the solve vector."""
+    src = osp.join(RESULTS, "gpr_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    order = [
+        ("released_auroc", "released split, held-out AUROC", True),
+        ("resplit_auroc", "ten repeated outer splits, AUROC", True),
+        (
+            "released_misrank_fba_viable_essential",
+            "misrank, the 19 essential genes FBA calls viable",
+            False,
+        ),
+        (
+            "released_misrank_sole_reaction",
+            "of them, the 15 holding a reaction of their own",
+            False,
+        ),
+        (
+            "released_misrank_covered_by_alternatives",
+            "of them, the 4 an alternative gene set covers",
+            False,
+        ),
+    ]
+    rows = []
+    for key, label, higher_is_better in order:
+        p = r[key]
+        best = (
+            max(p["mean_with"], p["mean_without"])
+            if higher_is_better
+            else min(p["mean_with"], p["mean_without"])
+        )
+        rows.append(
+            f"    {label} & {fmt(p['mean_with'], best)} & "
+            f"{fmt(p['mean_without'], best)} & {p['mean_difference']:+.4f} & "
+            f"{p['sd_difference']:.4f} & {p['n_positive']} of {p['n']} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 77: the gene-rule redundancy columns]{Round 77, six columns of "
+        "gene-protein-reaction redundancy appended to the deletion's flux vector in the "
+        "affine (\\texttt{isozyme\\_affine\\_store.py}: reactions, sole reactions, covered "
+        "reactions, minimum and mean alternative gene sets, co-subunits), against the same "
+        "cell without them. Rows one and two are held-out AUROC, six seeds on the released "
+        "split and ten split means of three seeds each; rows three to five are the mean "
+        "misrank of the essential held-out genes whose FBA knockout growth ratio is 1.0, "
+        "for which a LOWER value is better and the sign count therefore counts the seeds "
+        "made worse. Better of the two in bold. Written by "
+        "\\texttt{gpr\\_readout.py}.}\n"
+        "  \\label{tab:gpr-readout}\n"
+        "  \\begin{tabular}{@{}p{62mm}rrrrl@{}}\n    \\hline\n"
+        "    quantity & with & without & difference & sd & positive \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("gpr_readout", body, "results/gpr_readout.json")
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -2148,6 +2208,7 @@ def main() -> None:
         store_discriminability(),
         misclass_enrichment(),
         resplit_readout(),
+        gpr_readout(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

@@ -19,8 +19,13 @@
 #
 #   sbatch --export=ALL,DATASET_CLASS=NadalRibellesPerturbSeq2025Dataset \
 #       database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm
-#   sbatch --export=ALL,DATASET_CLASSES=Bloom2019Dataset,FooDataset,BarDataset \
+#   DATASET_CLASSES=Bloom2019Dataset,FooDataset,BarDataset sbatch --export=ALL \
 #       database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm
+#
+# A batch is set in the CALLER'S environment and propagated by --export=ALL, never
+# inside --export's own list: sbatch splits that list on commas, so
+# --export=ALL,DATASET_CLASSES=A,B hands the job DATASET_CLASSES=A and a stray B (job
+# 2677 admitted and imported only its first member that way).
 #
 # A batch is ONE increment: one CSV set, one constraint step, one neo4j-admin call, one
 # manifest event. Members are admitted independently (nothing a member adds can block

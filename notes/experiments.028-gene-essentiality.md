@@ -1464,3 +1464,19 @@ Paired on the three seeds all four arms share: counts over ratios +0.0116 (2/3),
 CORRECTION. After round 78 I said the rule counts "outperform the solved flux as an increment". That mixed conditionals: the counts' +0.019 was measured on top of the vector, the vector's +0.010 on top of the ratios. Against a single baseline the solve is worth about twice the counts on the released split (+0.024 vs +0.012), and on the ten repeated splits they sit within each other's spread. What survives both readings: each half is worth 0.01 to 0.02, they are complementary, and the pair is the best module form.
 
 Practical conclusion unchanged for the port: the counts need no solver, no medium and no per-genotype computation, and alone they carry about half of what the module contributes here.
+
+## 2026.09.20 - Round 83: every column inside one experiment costs nothing
+
+Jobs 2610 to 2615, all exit 0, six seeds per arm. The four FBA growth ratios are four different media, so a cell carrying all four reads four experiments at once, which a genotype-by-environment record cannot. This keeps the YPD ratio (the medium the solve store is built on) and drops the other three.
+
+| affine columns | four media | YPD only | change |
+|---|---|---|---|
+| growth ratio alone | 0.890 (3 seeds) | 0.877 (6) | -0.012 |
+| + solved flux vector | 0.911 (9) | 0.912 (6) | +0.001 |
+| + vector and rule counts | 0.918 (6) | 0.916 (6) | -0.002 |
+
+The restriction is free wherever the solve is present. About a hundredth of what the four ratios contributed was the model reading four environments at once, and the deletion's own flux vector supplies it from within one.
+
+This is the answer to the objection raised in conversation: nothing in the module as it stands needs more than one experiment per record, so the form carries to a database where the environment is part of the key rather than part of the feature vector.
+
+Also recorded from the same conversation: we have NOT sampled the flux cone, and we cannot reuse FCL's sampled vectors, because their mirrored release holds only splits, hyperparameter tables and figure CSVs. Their raw sampled matrix (124 samples/cone, thinning 5,000, 143,716 x 4,130, ~4.4 GB) is not in the mirror. MEASURED cost of sampling ourselves: 5 samples of ONE deletion at thinning 10 takes 147 s, so ~45 h single-process for the 1,121 labeled genes, about 2.5 h across 20 cores, and far more at their thinning. What we did instead was four solver points on the same optimal face plus three tolerances of one solver (rounds 36 to 57).

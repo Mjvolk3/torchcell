@@ -739,6 +739,22 @@ CHECKS: list[Check] = [
         stated=0.909,
         recompute=field("w101_pathgpronlycv_ensemble.json", "ensemble_auroc"),
     ),
+    # sec:round83 -- the single-experiment ablation.
+    Check(
+        claim="round83: YPD only, ratio + vector + counts",
+        stated=0.916,
+        recompute=seed_mean("w102_ypdgpr_h12l1p1_e200_s*.json"),
+    ),
+    Check(
+        claim="round83: YPD only, ratio + vector",
+        stated=0.912,
+        recompute=seed_mean("w102_ypdvec_h12l1p1_e200_s*.json"),
+    ),
+    Check(
+        claim="round83: YPD only, ratio alone",
+        stated=0.877,
+        recompute=seed_mean("w102_ypdonly_h12l1p1_e200_s*.json"),
+    ),
 ]
 
 

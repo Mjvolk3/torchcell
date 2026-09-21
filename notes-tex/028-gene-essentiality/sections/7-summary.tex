@@ -73,6 +73,12 @@
     and eight of ten splits (Section~\ref{sec:round77}). Against the four ratios alone
     the counts are worth $+0.012$ and the solve $+0.024$, so the two halves are
     complementary and the solve is the larger (Section~\ref{sec:round82}).
+  \item[Every metabolic column fits inside one experiment.] The four growth ratios are
+    four media, so they read four experiments at once; restricted to the one medium the
+    solve store is built on, the full recipe reads 0.916 against 0.918 and the solve-only
+    recipe 0.912 against 0.911, while the ratio alone falls from 0.890 to 0.877
+    (Section~\ref{sec:round83}). The solve supplies from within one environment what the
+    four media were carrying.
   \item[The layer-free form scales, and it covers only the genes with a reaction.] Over
     the 13.5 million records of the solid-growth build the transform is 469,474
     programs, solved once in 71 minutes on 20 cores and read as a gather in training
@@ -280,6 +286,29 @@ here; the solve carries the other half and needs one linear program per genotype
 medium, run once offline.
 
 \input{tables/module_factorial}
+
+\subsection{Round 83: every column inside one experiment\secstatus{todo}}
+\label{sec:round83}
+
+A record in the database is one genotype in one environment, and the four FBA growth
+ratios are four different media, so a cell carrying all four reads four experiments at
+once and cannot be written as one record. The other metabolic columns are already
+admissible: the solved flux vector is a function of genotype and medium and this store is
+YPD, and the gene-rule counts carry no environment at all. Round 83 (jobs 2610 to 2615,
+six seeds per arm) keeps the YPD ratio, drops the other three, and reads the same three
+recipes (Table~\ref{tab:single-experiment}).
+
+The restriction is free wherever the solve is present. The full recipe reads 0.916 against
+0.918, the vector without the counts 0.912 against 0.911, and only the arm with nothing
+else loses anything: the ratio alone reads 0.877 against 0.890. So about a hundredth of
+what the four ratios contributed was the model reading four environments, and the deletion's
+own flux vector supplies it from within one.
+
+That settles the question the endpoint could not answer on its own. Nothing in the module
+as it now stands needs more than one experiment per record, so the form carries to a
+database where the environment is part of the key rather than part of the feature vector.
+
+\input{tables/single_experiment}
 
 \subsection{What is left to run\secstatus{todo}}
 \label{sec:left-to-run}

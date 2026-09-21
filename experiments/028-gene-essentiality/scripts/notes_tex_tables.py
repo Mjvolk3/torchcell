@@ -1969,6 +1969,59 @@ def module_factorial() -> str | None:
     return write("module_factorial", body, "results/ (the cells named in the rows)")
 
 
+def single_experiment_ablation() -> str | None:
+    """Round 83: the same recipes with every column defined inside ONE experiment."""
+    import glob
+
+    import numpy as np
+
+    rows_spec = [
+        ("growth ratio alone", "w38_protpathfba", "w102_ypdonly"),
+        ("+ solved flux vector", "w49_pathfbapfbalogfree", "w102_ypdvec"),
+        ("+ vector and rule counts", "w96_pathloggpr", "w102_ypdgpr"),
+    ]
+
+    def cells(stem: str) -> np.ndarray:
+        return np.array(
+            [
+                json.load(open(p))["test"]["pinned"]["auroc"]
+                for p in sorted(
+                    glob.glob(osp.join(RESULTS, f"{stem}_h12l1p1_e200_s27*.json"))
+                )
+            ]
+        )
+
+    rows = []
+    for label, four_stem, one_stem in rows_spec:
+        four, one = cells(four_stem), cells(one_stem)
+        if not len(one):
+            return None
+        best = max(float(four.mean()), float(one.mean()))
+        rows.append(
+            f"    {label} & {len(four)} & {fmt(float(four.mean()), best)} & "
+            f"{len(one)} & {fmt(float(one.mean()), best)} & "
+            f"{one.mean() - four.mean():+.3f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 83: the single-experiment ablation]{Round 83, every affine "
+        "column restricted to what ONE experiment defines. The four FBA growth ratios are "
+        "four different media, so a cell carrying all four reads four experiments at once, "
+        "which a genotype-by-environment record cannot; the solved flux vector is already "
+        "one medium (YPD) and the gene-rule counts carry no environment at all. The right "
+        "block keeps the YPD ratio and drops the other three. Seed means of the held-out "
+        "AUROC, better of each row in bold. Written by \\texttt{notes\\_tex\\_tables.py} "
+        "from the cells' own result files.}\n"
+        "  \\label{tab:single-experiment}\n"
+        "  \\begin{tabular}{@{}p{52mm}rrrrr@{}}\n    \\hline\n"
+        "    affine columns & seeds & four media & seeds & YPD only & change \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("single_experiment", body, "results/ (the cells named in the rows)")
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -2309,6 +2362,7 @@ def main() -> None:
         gpr_readout(),
         cls_readout(),
         module_factorial(),
+        single_experiment_ablation(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

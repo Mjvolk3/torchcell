@@ -1,0 +1,47 @@
+{
+  "store_dir": "/scratch/projects/torchcell-scratch/data/scerevisiae/go_term_hot_dcell006/processed",
+  "current_store_dir": "/scratch/projects/torchcell-scratch/data/scerevisiae/go_term_hot/processed",
+  "annotation_source": "SCerevisiaeGraph.G_go (SGD go_details, direct terms)",
+  "filters": [
+    "filter_go_IGI",
+    "filter_redundant_terms",
+    "filter_by_contained_genes(n=4, gene_set=genome.gene_set)"
+  ],
+  "n_nodes_G_go": 5660,
+  "n_nodes_after_igi": 5541,
+  "n_nodes_after_redundant": 5435,
+  "n_nodes_after_containment": 2655,
+  "n_direct_annotations_before_igi": 66404,
+  "n_direct_annotations_after_igi": 64483,
+  "n_igi_annotations_removed": 1921,
+  "n_non_term_nodes_excluded": 4,
+  "non_term_nodes_excluded": [
+    "GO:0003674",
+    "GO:0005575",
+    "GO:0008150",
+    "GO:ROOT"
+  ],
+  "n_columns": 2651,
+  "n_columns_current": 2362,
+  "n_terms_shared_with_current": 1421,
+  "n_terms_only_006": 1230,
+  "n_terms_only_current": 941,
+  "n_columns_by_namespace": {
+    "biological_process": 1489,
+    "molecular_function": 673,
+    "cellular_component": 489
+  },
+  "obo_version": "/scratch/projects/torchcell-scratch/data/go/go.obo: fmt(1.2) rel(2024-01-17) 45,869 Terms; optional_attrs(relationship)",
+  "n_edges_G_go": 6674,
+  "n_edges_G_go_not_ancestry_in_obo": 66,
+  "n_columns_under_min_genes": 1,
+  "min_genes_per_column": 3,
+  "n_genes": 6607,
+  "n_genes_annotated": 5934,
+  "n_genes_annotated_current": 5501,
+  "n_labeled_genes": 1121,
+  "mean_columns_per_labeled_gene_006": 34.47992706298828,
+  "mean_columns_per_labeled_gene_current": 46.47279357910156,
+  "n_labeled_genes_without_a_column_006": 0,
+  "n_labeled_genes_without_a_column_current": 1
+}

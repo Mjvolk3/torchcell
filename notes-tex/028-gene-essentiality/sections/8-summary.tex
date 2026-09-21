@@ -25,7 +25,8 @@ gene-protein-reaction rules. On the ten repeated splits, nine seeds each, that
 single-medium form scores $+0.061$ over the same cell with no metabolism, higher on ten of
 ten splits and on 89 of 90 split-and-seed pairs
 (Figure~\ref{fig:summary-module}\textbf{e} and \textbf{f}), and it matches the four-media form
-($+0.002$, Section~\ref{sec:round84-98}). Every form that kept a linear program or a
+there ($+0.002$) and as a five-fold ensemble (0.932 against 0.933), while single cells on
+the released split read 0.912 against 0.920 at nine seeds (Section~\ref{sec:round84-98}). Every form that kept a linear program or a
 projection inside the training loop scored lower and less reliably than this one
 (Figure~\ref{fig:summary-module}\textbf{a}), so the layer is retired and the solve is kept as
 data. The store for the 13.5 million records of the solid-growth build is 469,474
@@ -69,7 +70,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
   YPD, the feature panel \textbf{d} tests. Written by
   \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py}.}{fig:summary}
 
-\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-16-34-08.pdf}{\textbf{Goal 2: the form of
+\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-16-59-32.pdf}{\textbf{Goal 2: the form of
   the metabolic module that helps, what it costs, and what a record of one genotype in
   one medium can carry.} Orange is the transformer reading any FBA-derived column, blue
   the same cell with no metabolic column, gray a count; a hatch marks a linear program
@@ -130,7 +131,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
     (Section~\ref{sec:round84-98}).
   \item[Every metabolic column fits inside one experiment.] The four growth ratios are
     four media, so they read four experiments at once; restricted to the one medium the
-    solve store is built on, the full recipe reads 0.916 against 0.918 and the solve-only
+    solve store is built on, the full recipe reads 0.916 against 0.918 at six seeds (0.912 against 0.920 at nine) and the solve-only
     recipe 0.912 against 0.911, while the ratio alone falls from 0.890 to 0.877
     (Section~\ref{sec:round83}). The solve supplies from within one environment what the
     four media were carrying, and the ten fifths agree ($+0.002$ for one medium, above

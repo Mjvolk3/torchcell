@@ -203,6 +203,7 @@ class Report(BaseModel):
     resplit: list[Paired]
     subsets: list[Paired]
     second_medium: list[Paired]
+    released_pairs: list[Paired]
     budget: list[Paired]
     missing: list[str]
     excluded_waves: list[str]
@@ -390,6 +391,17 @@ def main() -> None:
     second_medium = collect(
         [paired_by_seed(*s) for s in second_spec], [s[0] for s in second_spec]
     )
+    print("-- one medium for four on the released split, nine seeds (round 107)")
+    released_spec = [
+        (
+            "one medium for four, flux vector and counts kept, released split",
+            "w102_ypdgpr",
+            "w96_pathloggpr",
+        ),
+    ]
+    released_pairs = collect(
+        [paired_by_seed(*s) for s in released_spec], [s[0] for s in released_spec]
+    )
     print("-- 400 epochs against 200, released split")
     budget_spec = [
         ("flux vector and counts", "w115_gpr400", "w96_pathloggpr"),
@@ -415,6 +427,7 @@ def main() -> None:
                 resplit=resplit,
                 subsets=subsets,
                 second_medium=second_medium,
+                released_pairs=released_pairs,
                 budget=budget,
                 missing=missing,
                 excluded_waves=sorted(EXCLUDED_WAVES),

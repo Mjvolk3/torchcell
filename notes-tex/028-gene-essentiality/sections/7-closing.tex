@@ -202,7 +202,8 @@ six seeds per arm) keeps the YPD ratio, drops the other three, and reads the sam
 recipes (Table~\ref{tab:single-experiment}).
 
 The restriction is free wherever the solve is present. The full recipe reads 0.916 against
-0.918, the vector without the counts 0.912 against 0.911, and only the arm with nothing
+0.918 at the round's six seeds (the table's row carries the nine seeds of round 107,
+0.912 against 0.920, Section~\ref{sec:round84-98}), the vector without the counts 0.912 against 0.911, and only the arm with nothing
 else loses anything: the ratio alone reads 0.877 against 0.890. So about a hundredth of
 what the four ratios contributed was the model reading four environments, and the deletion's
 own flux vector supplies it from within one.
@@ -269,11 +270,16 @@ $+0.036$ and the one-medium counts recipe $+0.032$, each on nine of ten. Round 1
 the no-metabolism cell its fold ensemble at three seeds per fold, 0.878, against 0.932
 for the one-medium recipe under the same protocol.
 
-\paragraph{One medium is free while the flux vector is present.} With the flux vector and the
-counts kept, the YPD ratio alone against all four ratios reads $+0.002$ over the ten
-splits at nine seeds each, higher on six of ten, and 0.916 against 0.918 on the released
-split. The fold ensembles agree, 0.932 against 0.934 at one seed per fold and 0.932
-against 0.933 at three. Round 83's conclusion holds on ten other held-out fifths.
+\paragraph{One medium costs nothing on two protocols and about 0.01 on the third.} With
+the flux vector and the counts kept, the YPD ratio alone against all four ratios reads
+$+0.002$ over the ten splits at nine seeds each, higher on six of ten. The fold ensembles
+agree, 0.932 against 0.934 at one seed per fold and 0.932 against 0.933 at three. The
+cells of the released split do not: at round 83's six seeds they read 0.916 against
+0.918, and round 107 (job 2683) took both recipes to nine seeds, where they read 0.912
+against 0.920, $-0.009$ paired by seed with the one-medium cell higher on one of nine.
+Two of the three added one-medium seeds read under 0.90. So round 83's conclusion holds
+on ten other held-out fifths and as an ensemble, and on the released 195 genes the
+single-seed cost is at most a hundredth.
 
 \paragraph{The solve and the counts are complementary and about equal.} Over the four
 ratios alone the counts are worth $+0.013$ (six of ten) and the vector $+0.012$ (eight
@@ -294,7 +300,7 @@ YPD and SM ratios read 0.892 per cell and 0.907 as a one-seed fold ensemble, $-0
 against YPD and SC paired by seed (higher on two of six), so synthetic minimal medium
 is no better a partner than synthetic complete. The recipe that respects one experiment and stores no flux vector,
 one ratio with the six counts, reads 0.888 per cell and 0.902 as a fold ensemble against
-0.918 and 0.934 for the full recipe, and $-0.029$ on the repeated splits, lower on ten of
+0.920 and 0.934 for the full recipe, and $-0.029$ on the repeated splits, lower on ten of
 ten. The cheapest admissible recipe that keeps the full score is therefore the
 one-medium recipe with the vector. Its growth ratio already requires one linear program
 per genotype and medium, run once offline, and the parsimonious solve that yields the

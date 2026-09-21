@@ -33,12 +33,25 @@ echo "host $(hostname) gpu ${CUDA_VISIBLE_DEVICES:-none}; arms ${ARMS:?set ARMS}
 # EXTRA_ARGS: further flags, e.g. --save-logits.
 # SPLITS: a space-separated list of split files under results/splits; the arm set then runs
 # once per split in this one job (one epilog instead of ten), e.g. the ten repeated outer
-# splits of round 75. Unset, the arm set runs once on the released split.
+# splits of round 75. The token `released` in the list stands for the released split (no
+# --split, so the result file keeps its unsuffixed name). Unset, the arm set runs once on
+# the released split.
+# ESS_GO_DIR: a GO store directory for --arms go400/go800 (the experiment 006 GO written by
+# go006_store.py); passed as --go-dir, and the result files are then suffixed _go006.
+GO_ARGS=""
+if [ -n "${ESS_GO_DIR:-}" ]; then
+    GO_ARGS="--go-dir $ESS_GO_DIR"
+    echo "GO store $ESS_GO_DIR"
+fi
 if [ -n "${SPLITS:-}" ]; then
     for split in $SPLITS; do
         echo "=== split $split"
-        python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS" --split "$split" ${EXTRA_ARGS:-}
+        if [ "$split" = "released" ]; then
+            python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS" $GO_ARGS ${EXTRA_ARGS:-}
+        else
+            python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS" --split "$split" $GO_ARGS ${EXTRA_ARGS:-}
+        fi
     done
 else
-    python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS" ${EXTRA_ARGS:-}
+    python experiments/028-gene-essentiality/scripts/graph_baselines.py --arms "$ARMS" $GO_ARGS ${EXTRA_ARGS:-}
 fi

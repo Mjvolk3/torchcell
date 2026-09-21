@@ -805,7 +805,7 @@ CHECKS: list[Check] = [
     Check(
         claim="round83: YPD only, ratio + vector + counts",
         stated=0.916,
-        recompute=seed_mean("w102_ypdgpr_h12l1p1_e200_s*.json"),
+        recompute=seed_mean("w102_ypdgpr_h12l1p1_e200_s270[0-5].json"),
     ),
     Check(
         claim="round83: YPD only, ratio + vector",
@@ -1112,6 +1112,55 @@ CHECKS: list[Check] = [
         stated=0,
         recompute=graph_module("GCN, solve log1p", "n_positive"),
         tolerance=0.5,
+    ),
+    # sec:round84-98 -- round 107, the two full recipes at nine seeds on the released split.
+    Check(
+        claim="round107: one medium, nine seeds",
+        stated=0.912,
+        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "mean_a"),
+    ),
+    Check(
+        claim="round107: four media, nine seeds",
+        stated=0.92,
+        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "mean_b"),
+    ),
+    Check(
+        claim="round107: paired difference",
+        stated=-0.009,
+        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round107: seeds the one-medium cell wins",
+        stated=1,
+        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round107: seeds paired",
+        stated=9,
+        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "n"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round107: added one-medium seeds under 0.90",
+        stated=2,
+        recompute=lambda: float(
+            sum(
+                json.load(
+                    open(osp.join(RESULTS, f"w102_ypdgpr_h12l1p1_e200_s{s}.json"))
+                )["test"]["pinned"]["auroc"]
+                < 0.90
+                for s in (2706, 2707, 2708)
+            )
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round84-98: full recipe, cells at nine seeds",
+        stated=0.920,
+        recompute=simplification(
+            "ladder", "four ratios, flux vector, rule counts", "cell_mean"
+        ),
     ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(

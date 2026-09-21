@@ -250,6 +250,21 @@ def embedding(name: str, gene_ids: list[str]) -> np.ndarray:
     return np.stack([table.get(g, np.zeros(dim, dtype=np.float32)) for g in gene_ids])
 
 
+def go_store(go_dir: str, gene_ids: list[str]) -> np.ndarray:
+    """The GO multi-hot of one store directory (``go.pt`` in the form of go_term_hot,
+    such as the experiment 006 GO of ``go006_store.py``) per gene in cell-graph order;
+    zeros where absent.
+    """
+    data, _ = torch.load(osp.join(go_dir, "go.pt"), weights_only=False)
+    hot = data.embeddings["go"].numpy().astype(np.float32)
+    row = {g: i for i, g in enumerate(data.id)}
+    assert hot.shape[0] == len(row)
+    out = np.zeros((len(gene_ids), hot.shape[1]), dtype=np.float32)
+    present = [i for i, g in enumerate(gene_ids) if g in row]
+    out[present] = hot[[row[gene_ids[i]] for i in present]]
+    return out
+
+
 def fba_ratios(gene_ids: list[str]) -> np.ndarray:
     """The four FBA growth ratios per gene from the baseline's table; 1.0 where absent."""
     import csv
@@ -556,7 +571,19 @@ def main() -> None:
             "result file is then suffixed with the file's label source."
         ),
     )
+    parser.add_argument(
+        "--go-dir",
+        default=None,
+        help=(
+            "Under --arms go400 or go800, read the GO multi-hot from this store "
+            "directory's go.pt (the experiment 006 GO of go006_store.py) instead of the "
+            "registry embedding; the result file is then suffixed _go006."
+        ),
+    )
     args = parser.parse_args()
+    assert args.go_dir is None or args.arms in ("go400", "go800"), (
+        "--go-dir: go400/go800"
+    )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     seeds: tuple[int, ...] = tuple(args.seeds) if args.seeds else SEEDS
     split_path = SPLIT if args.split is None else osp.join(RESULTS, "splits", args.split)
@@ -685,7 +712,11 @@ def main() -> None:
         # the three GO rows that matter run to 400 (the round-8 table's 400-epoch rows
         # are the precedent), and, still selecting 382 to 397 there, to 800.
         n_epochs = 400 if args.arms == "go400" else 800
-        go = embedding("go", gene_ids)
+        if args.go_dir is None:
+            go = embedding("go", gene_ids)
+        else:
+            go = go_store(args.go_dir, gene_ids)
+            print(f"GO from {args.go_dir}: {go.shape[1]} columns", flush=True)
         fba = fba_ratios(gene_ids)
         ei = edges(graphs["union of nine"], index)
         # run_arm appends "(N epochs)" itself when the budget is not the default.
@@ -711,6 +742,7 @@ def main() -> None:
             )
         # A non-default seed list writes its own file, so the three-seed read stays.
         suffix = ("" if seeds == SEEDS else f"_s{len(seeds)}") + split_tag
+        suffix += "" if args.go_dir is None else "_go006"
         out = osp.join(RESULTS, f"graph_baselines_{args.arms}{suffix}.json")
     elif args.arms == "go_solve":
         # ONE MODEL THAT HOLDS BOTH (the open item of the family averages): the

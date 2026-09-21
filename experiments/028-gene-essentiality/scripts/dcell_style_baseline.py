@@ -76,6 +76,14 @@ validation mean is then passed to the three reads for every arm. The repeated ou
 redraw their test genes from all labeled genes, so some of their held-out genes sat in the
 released validation set that chose the configuration.
 
+``--go-dir`` reads another GO store of the same form, such as the experiment 006 GO that
+``go006_store.py`` writes (SGD annotations, IGI filtered, redundant terms dropped, four or
+more contained genes). Such a store is not closed under ancestry and the 2,362 count does
+not apply; the wiring rule is unchanged (nearest kept ancestors through ``is_a`` and
+``part_of``, a namespace root that is itself a column counted once). The result file then
+needs a ``--tag`` (``--tag _go006``), and ``--seeds`` sets the seeds of the released and
+resplits reads.
+
 Every read trains its (arm, split, seed) cells over a process pool (``--workers`` x
 ``--threads``, at most 16 threads in all); the cells are independent and seeded, so the
 pool changes wall time only.
@@ -249,6 +257,7 @@ class Report(BaseModel):
     protocol: str
     config: Config
     hierarchy: HierarchyStats
+    go_dir: str = GO_DIR
     rows: list[ArmRow] = []
     fold_ensembles: list[FoldEnsemble] = []
     paired: list[PairedSummary] = []
@@ -265,15 +274,23 @@ class Hierarchy:
     the root lit by any column.
     """
 
-    def __init__(self) -> None:
-        """Read the multi-hot, its sidecar and the OBO, and wire the kept terms."""
-        with open(osp.join(GO_DIR, "go.terms.json")) as fh:
+    def __init__(self, go_dir: str = GO_DIR) -> None:
+        """Read the multi-hot, its sidecar and the OBO, and wire the kept terms.
+
+        ``go_dir`` is a store in the form of ``go_term_hot`` (``go.pt`` and
+        ``go.terms.json``); another store (``go006_store.py``) need not be closed under
+        ancestry, and the nearest-kept-ancestor rule below wires it all the same.
+        """
+        with open(osp.join(go_dir, "go.terms.json")) as fh:
             meta = json.load(fh)
-        data, _ = torch.load(osp.join(GO_DIR, "go.pt"), weights_only=False)
+        data, _ = torch.load(osp.join(go_dir, "go.pt"), weights_only=False)
         self.gene_ids: list[str] = list(data.id)
         hot = data.embeddings["go"].numpy().astype(np.float32)
         kept = [t["term_id"] for t in meta["terms"]]
-        assert hot.shape == (len(self.gene_ids), len(kept)) and len(kept) == 2362
+        assert hot.shape == (len(self.gene_ids), len(kept))
+        if go_dir == GO_DIR:
+            assert len(kept) == 2362
+        self.n_kept = len(kept)
         namespace = {t["term_id"]: t["namespace"] for t in meta["terms"]}
         go_root = osp.join(DATA_ROOT, "data/go")
         dag = GODag(
@@ -283,8 +300,10 @@ class Hierarchy:
             cast(GOTerm, dag[t]).namespace: t
             for t in ("GO:0008150", "GO:0003674", "GO:0005575")
         }
+        # A namespace root that is itself a kept column is one node, not two.
         nodes = set(kept) | set(ns_root.values())
         memo: dict[str, set[str]] = {}
+        near_memo: dict[str, set[str]] = {}
 
         def parents(term_id: str) -> set[str]:
             term = cast(GOTerm, dag[term_id])
@@ -293,14 +312,18 @@ class Hierarchy:
             return out | {p.item_id for p in part_of}
 
         def nearest(term_id: str) -> set[str]:
-            out: set[str] = set()
-            for p in parents(term_id):
-                out |= {p} if p in nodes else nearest(p)
-            return out
+            if term_id not in near_memo:
+                out: set[str] = set()
+                for p in parents(term_id):
+                    out |= {p} if p in nodes else nearest(p)
+                near_memo[term_id] = out
+            return near_memo[term_id]
 
         edges: list[tuple[str, str]] = []
         n_redundant = 0
         for t in kept:
+            if t in ns_root.values():
+                continue
             near = nearest(t)
             assert near, t
             above = set().union(
@@ -359,7 +382,7 @@ class Hierarchy:
         n_strata = int(self.stratum.max()) + 1
         return HierarchyStats(
             n_terms=len(self.terms),
-            n_kept_terms=len(self.terms) - 4,
+            n_kept_terms=self.n_kept,
             n_edges=len(self.edge_child),
             n_redundant_edges_dropped=self.n_redundant,
             n_strata=n_strata,
@@ -585,16 +608,17 @@ class Task(BaseModel):
     seed: int
     config: Config
     score_test: bool = True
+    go_dir: str = GO_DIR
 
 
-_HIERARCHY: list[Hierarchy] = []
+_HIERARCHY: dict[str, Hierarchy] = {}
 
 
-def worker_hierarchy() -> Hierarchy:
-    """The process's hierarchy, built once per pool worker."""
-    if not _HIERARCHY:
-        _HIERARCHY.append(Hierarchy())
-    return _HIERARCHY[0]
+def worker_hierarchy(go_dir: str) -> Hierarchy:
+    """The process's hierarchy over one GO store, built once per pool worker."""
+    if go_dir not in _HIERARCHY:
+        _HIERARCHY[go_dir] = Hierarchy(go_dir)
+    return _HIERARCHY[go_dir]
 
 
 def set_threads(n: int) -> None:
@@ -605,7 +629,7 @@ def set_threads(n: int) -> None:
 def run_seed(task: Task) -> SeedRun:
     """Train one cell; select the epoch on validation, score the held-out genes once."""
     assert task.arm in ARMS, task.arm
-    hierarchy = worker_hierarchy()
+    hierarchy = worker_hierarchy(task.go_dir)
     config = task.config
     split = load_split(task.split_file)
     labels = {k: int(v) for k, v in split["labels"].items()}
@@ -856,7 +880,24 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--threads", type=int, default=2, help="Threads per worker.")
     parser.add_argument("--tag", default="", help="Suffix for the result file name.")
+    parser.add_argument(
+        "--go-dir",
+        default=GO_DIR,
+        help=(
+            "A GO store in the form of go_term_hot (go.pt and go.terms.json), such as "
+            "the one go006_store.py writes; a non-default store needs a --tag, so the "
+            "reads on the default store are not overwritten."
+        ),
+    )
+    parser.add_argument(
+        "--seeds",
+        type=int,
+        nargs="+",
+        default=None,
+        help="Seeds for the released and resplits reads (default: the read's own).",
+    )
     args = parser.parse_args()
+    assert args.go_dir == GO_DIR or args.tag, "a non-default --go-dir needs a --tag"
     config = Config(
         width=args.width,
         rule=args.rule,
@@ -865,7 +906,7 @@ def main() -> None:
         epochs=args.epochs,
     )
     t0 = time.time()
-    hierarchy = worker_hierarchy()
+    hierarchy = worker_hierarchy(args.go_dir)
     released = load_split(RELEASED)
     labeled = [g for g in released["labels"] if g in set(hierarchy.gene_ids)]
     gene_index = {g: i for i, g in enumerate(hierarchy.gene_ids)}
@@ -883,11 +924,12 @@ def main() -> None:
         ),
         config=config,
         hierarchy=stats,
+        go_dir=args.go_dir,
     )
 
     def cells(split_files: list[str], seeds: tuple[int, ...]) -> list[ArmRow]:
         tasks = [
-            Task(arm=a, split_file=f, seed=s, config=config)
+            Task(arm=a, split_file=f, seed=s, config=config, go_dir=args.go_dir)
             for a in args.arms
             for f in split_files
             for s in seeds
@@ -895,7 +937,9 @@ def main() -> None:
         return arm_rows(run_tasks(tasks, args.workers, args.threads))
 
     if args.read == "released":
-        report.rows = cells([RELEASED], tuple(range(2700, 2706)))
+        report.rows = cells(
+            [RELEASED], tuple(args.seeds) if args.seeds else tuple(range(2700, 2706))
+        )
     elif args.read == "folds":
         labels = {g: int(v) for g, v in released["labels"].items()}
         report.rows = cells(
@@ -914,7 +958,7 @@ def main() -> None:
     elif args.read == "resplits":
         report.rows = cells(
             [f"ess_fcl_resplit{r}_val0.2_s0.json.gz" for r in range(10)],
-            (2700, 2701, 2702),
+            tuple(args.seeds) if args.seeds else (2700, 2701, 2702),
         )
         for arm in args.arms:
             summary = paired_summary(arm, [r for r in report.rows if r.model == arm])
@@ -942,6 +986,7 @@ def main() -> None:
                 seed=s,
                 config=c,
                 score_test=False,
+                go_dir=args.go_dir,
             )
             for c in grid
             for s in seeds

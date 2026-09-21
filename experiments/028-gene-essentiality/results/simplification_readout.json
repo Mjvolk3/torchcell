@@ -90,7 +90,7 @@
       ],
       "cell_mean": 0.8956530291109362,
       "cell_sd": 0.012532298512462965,
-      "fold_ensemble_one_seed": null,
+      "fold_ensemble_one_seed": 0.9047993705743509,
       "fold_ensemble_three_seeds": null
     },
     {

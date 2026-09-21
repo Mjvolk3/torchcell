@@ -931,6 +931,13 @@ CHECKS: list[Check] = [
         stated=0.0,
         recompute=simplification("budget", "counts alone", "mean_difference"),
     ),
+    Check(
+        claim="round98: YPD and SC with counts, fold ensemble",
+        stated=0.905,
+        recompute=simplification(
+            "ladder", "YPD and SC ratios, rule counts", "fold_ensemble_one_seed"
+        ),
+    ),
 ]
 
 

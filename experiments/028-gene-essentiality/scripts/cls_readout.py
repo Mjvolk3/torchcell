@@ -51,7 +51,7 @@ ARMS: dict[str, tuple[str, str]] = {
         "w39_pathpool_h12l1p1_e200_s{s}",
     ),
 }
-SEEDS = (2700, 2701, 2702, 2703, 2704, 2705)
+SEEDS = (2700, 2701, 2702, 2703, 2704, 2705, 2706, 2707, 2708)
 
 
 class ArmRead(BaseModel):

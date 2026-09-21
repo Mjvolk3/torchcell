@@ -11,7 +11,6 @@ import zipfile
 from collections.abc import Callable
 from typing import Any
 
-import numpy as np
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
@@ -67,6 +66,20 @@ log = logging.getLogger(__name__)
 # (col 9, bootstrap), a DIFFERENT column whose std the loader does not store.
 N_SAMPLES_COMBINED_MUTANT = 4
 
+# Record kinds emitted by DmfKuzmin2018Dataset. Two physically different
+# double-mutant measurements live in one raw table:
+#  - digenic_array_cross: one row per digenic query x array cross ("Combined mutant
+#    fitness"), the records this loader has always produced.
+#  - double_mutant_query_strain: the double-mutant QUERY strain of a trigenic screen,
+#    measured on its own ("Query single/double mutant fitness"). The raw table repeats
+#    that value on every trigenic row the strain appears on (~500 rows), so the
+#    measurement is per query strain, not per row.
+# create_experiment branches on this column, NOT on "Combined mutant type": the
+# digenic records must stay byte-identical to what is already served, since their
+# content-addressed ids are what an incremental import matches on.
+RECORD_KIND_DIGENIC_ARRAY_CROSS = "digenic_array_cross"
+RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN = "double_mutant_query_strain"
+
 
 def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
     """Ontology fields for a combined-mutant-fitness sample SD over colonies.
@@ -82,6 +95,60 @@ def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
         "n_samples": N_SAMPLES_COMBINED_MUTANT,
         "sample_unit": SampleUnit.colony,
     }
+
+
+def _double_mutant_query_strain_rows(
+    df_trigenic: pd.DataFrame, columns: pd.Index
+) -> pd.DataFrame:
+    """One row per DISTINCT double-mutant query strain of the trigenic screens.
+
+    The trigenic rows cross a double-mutant QUERY strain against a single-mutant
+    array and report that query strain's own fitness in "Query single/double mutant
+    fitness", constant across all of the strain's rows -- so it is deduplicated to
+    one record per strain. Strains with no reported value are dropped. Columns are
+    reindexed to the digenic frame's so the two kinds concatenate cleanly; the
+    digenic-only columns (array perturbation type, the "no ho" query columns) are
+    absent for these rows and never read for them.
+    """
+    rows = (
+        df_trigenic[df_trigenic["Query single/double mutant fitness"].notna()]
+        .drop_duplicates(subset=["Query strain ID"])
+        .copy()
+    )
+    rows["query_perturbation_type_1"] = rows["Query allele name_1"].apply(
+        lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+    )
+    rows["query_perturbation_type_2"] = rows["Query allele name_2"].apply(
+        lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+    )
+    rows["record_kind"] = RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN
+    return rows.reindex(columns=columns)
+
+
+def _query_pair_perturbations(row: pd.Series) -> list[GenePerturbationType]:
+    """The two perturbations of a double-mutant query strain (no array gene).
+
+    Both carry the FULL query strain ID: the pair is one physical strain.
+    """
+    perturbations: list[GenePerturbationType] = []
+    for idx in ("1", "2"):
+        if row[f"query_perturbation_type_{idx}"] == "KanMX_deletion":
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row[f"Query systematic name_{idx}"],
+                    perturbed_gene_name=row[f"Query allele name_{idx}"],
+                    strain_id=row["Query strain ID"],
+                )
+            )
+        else:
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row[f"Query systematic name_{idx}"],
+                    perturbed_gene_name=row[f"Query allele name_{idx}"],
+                    strain_id=row["Query strain ID"],
+                )
+            )
+    return perturbations
 
 
 # Fitness
@@ -349,7 +416,12 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
 
 @register_dataset
 class DmfKuzmin2018Dataset(ExperimentDataset):
-    """Double-mutant fitness experiments from Kuzmin 2018."""
+    """Double-mutant fitness experiments from Kuzmin 2018.
+
+    Two record kinds (``record_kind``): the digenic query x array crosses, and the
+    double-mutant QUERY strains of the trigenic screens, which the raw table also
+    measures ("Query single/double mutant fitness"), one record per distinct strain.
+    """
 
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
@@ -438,6 +510,9 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         df["Array systematic name"] = df["Array strain ID"].str.split("_", expand=True)[
             0
         ]
+        # The trigenic rows' query strains are themselves double mutants, measured
+        # on their own -- kept aside before the digenic filter drops those rows.
+        df_trigenic = df[df["Combined mutant type"] == "trigenic"].copy()
         # Select doubles only
         df = df[df["Combined mutant type"] == "digenic"].copy()
 
@@ -469,9 +544,16 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
                 else "unknown"
             )
         )
+        # Reference noise stays the DIGENIC combined-mutant mean, as served.
         self.phenotype_reference_std = df[
             "Combined mutant fitness standard deviation"
         ].mean()
+        df["record_kind"] = RECORD_KIND_DIGENIC_ARRAY_CROSS
+        # Query-strain records go LAST so the digenic rows keep their positions
+        # (the LMDB key is the row index).
+        df = pd.concat(
+            [df, _double_mutant_query_strain_rows(df_trigenic, df.columns)], axis=0
+        )
         # replace delta symbol for neo4j import
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
@@ -489,41 +571,46 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         )
         # genotype
         perturbations: list[GenePerturbationType] = []
-        # Query...
-        if "KanMX_deletion" in row["query_perturbation_type_no_ho"]:
-            perturbations.append(
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=row["Query systematic name no ho"],
-                    perturbed_gene_name=row["Query allele name no ho"],
-                    strain_id=row["Query strain ID"],
+        if row["record_kind"] == RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN:
+            # The query PAIR is the genotype; the array gene of the trigenic row this
+            # value was read off is NOT part of this strain.
+            perturbations = _query_pair_perturbations(row)
+        else:
+            # Query...
+            if "KanMX_deletion" in row["query_perturbation_type_no_ho"]:
+                perturbations.append(
+                    SgaKanMxDeletionPerturbation(
+                        systematic_gene_name=row["Query systematic name no ho"],
+                        perturbed_gene_name=row["Query allele name no ho"],
+                        strain_id=row["Query strain ID"],
+                    )
                 )
-            )
-        elif "allele" in row["query_perturbation_type_no_ho"]:
-            perturbations.append(
-                SgaAllelePerturbation(
-                    systematic_gene_name=row["Query systematic name no ho"],
-                    perturbed_gene_name=row["Query allele name no ho"],
-                    strain_id=row["Query strain ID"],
+            elif "allele" in row["query_perturbation_type_no_ho"]:
+                perturbations.append(
+                    SgaAllelePerturbation(
+                        systematic_gene_name=row["Query systematic name no ho"],
+                        perturbed_gene_name=row["Query allele name no ho"],
+                        strain_id=row["Query strain ID"],
+                    )
                 )
-            )
 
-        # Array - only array has ts
-        if "temperature_sensitive" in row["array_perturbation_type"]:
-            perturbations.append(
-                SgaTsAllelePerturbation(
-                    systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"],
-                    strain_id=row["Array strain ID"],
+            # Array - only array has ts
+            if "temperature_sensitive" in row["array_perturbation_type"]:
+                perturbations.append(
+                    SgaTsAllelePerturbation(
+                        systematic_gene_name=row["Array systematic name"],
+                        perturbed_gene_name=row["Array allele name"],
+                        strain_id=row["Array strain ID"],
+                    )
                 )
-            )
-        elif "KanMX_deletion" in row["array_perturbation_type"]:
-            perturbations.append(
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"],
-                    strain_id=row["Array strain ID"],
+            elif "KanMX_deletion" in row["array_perturbation_type"]:
+                perturbations.append(
+                    SgaKanMxDeletionPerturbation(
+                        systematic_gene_name=row["Array systematic name"],
+                        perturbed_gene_name=row["Array allele name"],
+                        strain_id=row["Array strain ID"],
+                    )
                 )
-            )
         genotype = Genotype(perturbations=perturbations)
         assert len(genotype) == 2, "Genotype must have 2 perturbations."
         # genotype
@@ -532,18 +619,26 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
         # Phenotype
-        if row["Combined mutant type"] == "digenic":
-            dmf_key = "Combined mutant fitness"
-            dmf_std_key = "Combined mutant fitness standard deviation"
-            fitness_std = row[dmf_std_key]
-        elif row["Combined mutant type"] == "trigenic":
-            dmf_key = "Query single/double mutant fitness"
-            # std of these fitnesses not reported
-            fitness_std = np.nan
+        if row["record_kind"] == RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN:
+            # The SD of these query-strain fitnesses is released in "Data File
+            # S4_Fitness standard for single and double mutant query strains.xlsx",
+            # which is NOT among this loader's declared raw files (it declares only
+            # aao1729_data_s1.tsv out of the hosted zip). So no uncertainty is
+            # recorded, exactly as SmfKuzmin2018Dataset does for query single-mutant
+            # fitness. FOLLOW-UP: ingesting it requires adding Data File S4 to the
+            # raw mirror with a provenance record (source_url + retrieval_command +
+            # sha256); per the SI it is a bootstrap quantity over 12-24 colony
+            # measurements, not a sample SD (see kuzmin2020.py's
+            # N_SAMPLES_QUERY_STRAIN_FITNESS for the verbatim quote).
+            fitness = row["Query single/double mutant fitness"]
+            fitness_std = None
+            uncertainty: dict[str, Any] = {}
+        else:
+            fitness = row["Combined mutant fitness"]
+            fitness_std = row["Combined mutant fitness standard deviation"]
+            uncertainty = _combined_mutant_uncertainty(fitness_std)
         phenotype = FitnessPhenotype(
-            fitness=row[dmf_key],
-            fitness_std=fitness_std,
-            **_combined_mutant_uncertainty(fitness_std),
+            fitness=fitness, fitness_std=fitness_std, **uncertainty
         )
 
         phenotype_reference = FitnessPhenotype(

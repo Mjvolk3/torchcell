@@ -1,0 +1,39 @@
+# experiments/025-solid-growth/conf/cgt_s3_r_kl_embfit_034.yaml
+#
+# THE COMPOSITE ON THE CLOSURE ARM, RANDOM SPLIT. cgt_s3_r_kl_fit_031 (S3 = triples + every
+# single + the 739,219 pair-in-triple doubles, 1,121,645 records; joint fitness +
+# interaction; 010's random split pinned over the triples, everything else in train) with
+# ONE change: the learnable table is replaced by the full-gene composite of
+# cgt_s0_q_kl_emb_017 through the parameter-matched preprocessor (hidden width 339).
+#
+# THE BUDGET IS 50 EPOCHS. Seed 1 of _031 (run yb4gjh51, job 2409033) peaked in validation
+# Pearson at epoch 32 (0.498) and drifted to 0.478 by epoch 100 while train Pearson rose to
+# 0.768, so 130 epochs bought nothing after 32. 50 keeps an 18-epoch margin past that peak
+# and is what seeds 2 and 3 of _031 run at (trainer.max_epochs=50 override).
+#
+# Read against cgt_s3_r_kl_fit_031 (same records, table) and cgt_s0_r_kl_embfit_035 (same
+# representation, triples only).
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 025-s3r-emb-s1 \
+#       experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s3_r_kl_embfit_034 +seed=1
+defaults:
+  - cgt_s3_r_kl_fit_031
+  - _self_
+
+wandb:
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_50, igb_mmli]
+
+cell_dataset:
+  node_embeddings: [fudt_upstream, calm, prot_T5_all, fudt_downstream]
+
+model:
+  learnable_embedding:
+    enabled: false
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      hidden_dim: 339
+      dropout: 0.1
+
+trainer:
+  max_epochs: 50

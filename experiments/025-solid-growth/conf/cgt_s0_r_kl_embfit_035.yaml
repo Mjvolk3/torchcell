@@ -1,0 +1,35 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_embfit_035.yaml
+#
+# THE COMPOSITE ON THE RANDOM SPLIT, S0. cgt_s0_r_kl_fit_014 (triples only, 010's pinned
+# random split, joint fitness at weight 1.0, perturbed CLS, linear readout, constant rate,
+# 30 epochs) with ONE change: the 6,607 x 180 learnable table is replaced by the fixed
+# full-gene composite of cgt_s0_q_kl_emb_017 (promoter 768 + CaLM 768 + ProtT5 1,024 +
+# terminator 768 = 3,328 dims) through the 2-layer preprocessor at hidden width 339, so the
+# embedding side carries 1,190,769 parameters against the table's 1,189,260.
+#
+# WHAT IT ANSWERS. On the random split every gene is seen in training, so a table can
+# memorize per-gene behavior. If the composite reaches the table's score here (fit_014:
+# 0.4392, sd 0.0032, n = 3, window mean of validation Pearson over epochs 10 to 29), a
+# representation that transfers to unseen genes and other organisms costs nothing where the
+# table is at its best. Read against cgt_s0_r_kl_fit_014, same seeds.
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 025-r-emb-s1 \
+#       experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_r_kl_embfit_035 +seed=1
+defaults:
+  - cgt_s0_r_kl_fit_014
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, fitness_joint, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, igb_mmli]
+
+cell_dataset:
+  node_embeddings: [fudt_upstream, calm, prot_T5_all, fudt_downstream]
+
+model:
+  learnable_embedding:
+    enabled: false
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      hidden_dim: 339
+      dropout: 0.1

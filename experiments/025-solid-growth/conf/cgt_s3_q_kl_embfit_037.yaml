@@ -1,0 +1,32 @@
+# experiments/025-solid-growth/conf/cgt_s3_q_kl_embfit_037.yaml
+#
+# THE CLOSURE ARM ON THE QUERY-PAIR-DISJOINT SPLIT, full-gene composite.
+# cgt_s3_q_kl_fit_036 (strict closure subset, Q split, joint fitness, 50 epochs) with the
+# learnable table replaced by the composite of cgt_s0_q_kl_emb_017 through the
+# parameter-matched preprocessor (hidden width 339).
+#
+# Read against cgt_s0_q_kl_embfit_027 (same split and representation, triples only:
+# 0.206, n = 3) for what the added records buy on unseen query pairs, and against
+# cgt_s3_q_kl_fit_036 for whether the table closes on the composite once it has seen the
+# held-out triples' genes in doubles.
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 025-s3q-emb-s1 \
+#       experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s3_q_kl_embfit_037 +seed=1
+defaults:
+  - cgt_s3_q_kl_fit_036
+  - _self_
+
+wandb:
+  tags: [s3, s3_strict, split_Q, graph_reg_kl, query_pair_disjoint, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_50, igb_mmli]
+
+cell_dataset:
+  node_embeddings: [fudt_upstream, calm, prot_T5_all, fudt_downstream]
+
+model:
+  learnable_embedding:
+    enabled: false
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      hidden_dim: 339
+      dropout: 0.1

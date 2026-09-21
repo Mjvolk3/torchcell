@@ -1,0 +1,36 @@
+# experiments/025-solid-growth/conf/cgt_s3_q_kl_fit_036.yaml
+#
+# THE CLOSURE ARM ON THE QUERY-PAIR-DISJOINT SPLIT, learnable table. cgt_s3_r_kl_fit_031
+# with the split swapped to Q (query_pair_disjoint_splits_025.json.gz: 420 recurring query
+# pairs, 89 held out; train 301,236 / val 37,705 / test 37,791 triples) and the record pool
+# swapped to the STRICT closure subset.
+#
+# THE STRICT RULE. 85 closure doubles ARE a held-out query pair (85 of the 89 held-out
+# pairs have a measured double in the build; all 85 carry a fitness label, 83 an
+# interaction label). Left in, `unpinned_to_train` would train on the double-mutant fitness
+# of exactly the pairs the split withholds. subset_S3Q_indices.json.gz is S3 minus those 85
+# (subset_s3_query_strict.py, from subset_Q_excluded_doubles.json.gz): 1,121,560 records.
+# NOT removed: the 145,208 doubles whose pair occurs only inside held-out triples. Those
+# are (one query gene, the array gene) measurements from the digenic screens, available
+# for any new query pair before its trigenic screen is run, and they are what "closure"
+# means.
+#
+# Read against cgt_s0_q_kl_fit_038 (same split, table, joint fitness, triples only).
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 025-s3q-tab-s1 \
+#       experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s3_q_kl_fit_036 +seed=1
+defaults:
+  - cgt_s3_r_kl_fit_031
+  - _self_
+
+wandb:
+  tags: [s3, s3_strict, split_Q, graph_reg_kl, query_pair_disjoint, fitness_joint, closure_doubles, unpinned_to_train, learnable_embedding, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_50, igb_mmli]
+
+subset:
+  indices: subset_S3Q_indices.json.gz
+  split_file: query_pair_disjoint_splits_025.json.gz
+  split_key: splits
+  unpinned_to_train: true
+
+trainer:
+  max_epochs: 50

@@ -1,0 +1,19 @@
+# experiments/025-solid-growth/conf/cgt_s0_q_kl_fit_038.yaml
+#
+# THE ONE-CHANGE BASELINE OF THE DISJOINT CLOSURE ARM. cgt_s0_r_kl_fit_014 (triples only,
+# learnable table, joint fitness at 1.0, perturbed CLS, linear readout, 30 epochs) on the
+# query-pair-disjoint split. The Q table arm that exists, cgt_s0_q_kl_ctrl_016 (0.136,
+# n = 3), has no fitness head, so against it cgt_s3_q_kl_fit_036 would change two things.
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 025-q-tabfit-s1 \
+#       experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s0_q_kl_fit_038 +seed=1
+defaults:
+  - cgt_s0_r_kl_fit_014
+  - _self_
+
+wandb:
+  tags: [s0, split_Q, graph_reg_kl, query_pair_disjoint, learnable_embedding, fitness_joint, perturb_cls, cls_linear_readout, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, igb_mmli]
+
+subset:
+  split_file: query_pair_disjoint_splits_025.json.gz
+  split_key: splits

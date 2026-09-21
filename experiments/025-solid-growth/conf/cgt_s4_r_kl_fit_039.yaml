@@ -1,0 +1,25 @@
+# experiments/025-solid-growth/conf/cgt_s4_r_kl_fit_039.yaml
+#
+# THE SIZE-MATCHED CONTROL OF THE CLOSURE ARM. cgt_s3_r_kl_fit_031 with the 739,219 closure
+# doubles replaced by 739,219 random doubles whose gene pair lies inside NO triple (S4,
+# subset_definitions.py; zero overlap with the S3 doubles, same 382,426 triples + singles,
+# same 1,121,645 records). Same split, objective, normalization scope and 50-epoch budget.
+#
+# WHAT IT SEPARATES. S3 over S0 says more fitness records help. S3 over S4 says it matters
+# that the doubles are the triples' own pairs. The stored-value identity reaches only
+# r = 0.23 on the build (s3_closure_recompute.py), so S4 matching S3 is a live outcome.
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 025-s4r-tab-s1 \
+#       experiments/025-solid-growth/scripts/igb_mmli_cgt.slurm cgt_s4_r_kl_fit_039 +seed=1
+defaults:
+  - cgt_s3_r_kl_fit_031
+  - _self_
+
+wandb:
+  tags: [s4, split_R, graph_reg_kl, fitness_joint, random_nonclosure_doubles, size_matched_control, unpinned_to_train, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_50, igb_mmli]
+
+subset:
+  indices: subset_S4_indices.json.gz
+
+trainer:
+  max_epochs: 50

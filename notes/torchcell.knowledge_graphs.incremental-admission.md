@@ -199,3 +199,77 @@ import never touches existing nodes), rewrites the store's `KgRelease` node thro
 same `server.databases.writable` window the constraints use, and prints the release
 table. A served manifest without a version stops the runner: stamp the served release
 first. See [[torchcell.knowledge_graphs.releases]].
+
+## 2026.09.21 - Superset admission: re-serving a dataset whose loader now emits more records
+
+The gate blocked any dataset already in the served store with one line, and that line
+turned a loader fix into a full rebuild. The Kuzmin 2018 and 2020 dmf loaders (main
+4c4a4f950) now emit the double-mutant query strain fitness that every trigenic row
+reports, 172 and 201 records, and every record they emitted before is byte-identical:
+all four drift checks were clean and the only blocker was "already in the served store".
+The full rebuild that block asked for is 29 h of generation for 51 datasets (job 2032)
+plus a swap that failed three times on 2026-09-17.
+
+### The rule
+
+A served dataset may be re-admitted only as a superset: every experiment id the live
+store holds under its Dataset node must still be produced by the dev-tree LMDB, and the
+LMDB must produce at least one id the store lacks. Node ids are content-addressed, so this
+is exactly the condition under which the incremental import matches every served node
+(`--skip-duplicate-nodes`) and adds only the new ones. A served id the LMDB no longer
+produces means a record changed; incremental import cannot update the old node, which
+would stay beside its replacement, so that blocks with the full-rebuild message and the
+first missing ids. An identical re-admission blocks as nothing to add.
+
+The served ids come from the live store (`admit --neo4j-uri`), reached through the
+Dataset node's `ExperimentMemberOf` edges so no property index is needed (the served store
+carries none between increments; an id lookup outside an increment is a scan of 99.7 M
+nodes). The dev ids walk the adapter's own path: the raw item, `transform_item` into the
+loader's experiment class, then `experiment_node_id`, the sha256 of the json-dumped
+`model_dump` that `CellAdapter._experiment_node` computes; a test pins the two. The
+manifest entry records the lineage (`superset_of`: previous `biocypher_out`, mode, count,
+`n_added`), the event kind is `superset_admission`, and the release stamp gives the grown
+dataset its new content hash while the untouched ones keep theirs.
+
+The wrong baseline, for the record: `$DATA_ROOT/database/data/torchcell/<ds>` is NOT what
+the served store was built from. That tree dates from April 2025 and shares zero ids with
+either the served store or the dev tree; the 2026-09-17 rebuild read the dev-tree LMDBs
+of 2026-09-14, and the 09-14 copies deprecated before the loader rebuild reproduce the
+served ids exactly.
+
+### Measured (jobs 2673, 2675, 2677, 2678)
+
+| step | Kuzmin 2018 | Kuzmin 2020 |
+|---|---|---|
+| served ids, dev ids, missing, to add | 410,399, 410,571, 0, 172 | 632,797, 632,998, 0, 201 |
+| admission (batch dry run 2673, both) | 57 min, of which about 50 min the pydantic walk of a million records | |
+| generate CSVs (8 CPU, 64 G container) | 27 min | 30 min |
+| constraint + existing-edge filter | 9 min: 3,284,574 pairs checked, 3,283,198 dropped, 1,376 kept | 5 min: 5,018,524 checked, 5,016,916 dropped, 1,608 kept |
+| incremental import | 30 s, +449 nodes | 38 s, +1,004 nodes |
+| verify | 410,571 live = expected | 632,998 live = expected |
+| job wall | 68 min (2677) | 84 min (2678) |
+
+The kept rows are eight edges per new experiment in both screens, which is what the
+proof predicts. The filter dropped exactly the served counts per type (410,399 and
+632,797 for the per-experiment types, twice that for `PerturbationMemberOf`). Store:
+99,723,456 -> 99,724,909 nodes; release 1.0 -> 1.1 (`2026.09.21-1fbd6f88`) -> 1.2
+(`2026.09.21-ab6d8c5d`); CSVs archived under `/bulk/biocypher-out/2026-09-21_18-20-39`
+and `2026-09-21_19-35-04`.
+
+Two runner defects found on the way, both fixed in the scripts:
+
+- Job 2675 died at stage 3: the 09-17 rebuild's build container had mounted
+  `$BUILD_ROOT/database/conf` and `biocypher` under `NEO4J_HOME`, whose entrypoint chowns
+  them to 7474 and chmods them 700, so the host-side `directory_setup` could not rewrite
+  `neo4j.conf`. Both the increment and the rebuild scripts now hand the two directories
+  back to the invoking user through a root container before the refresh.
+- Job 2677 admitted and imported only Kuzmin 2018 although two datasets were named:
+  `sbatch --export=ALL,DATASET_CLASSES=A,B` is split on commas by sbatch itself, so the
+  job saw `DATASET_CLASSES=A`. A batch is set in the caller's environment and propagated
+  by `--export=ALL`; the header shows that form. The increment was correct for its one
+  member, and 2020 followed as its own increment.
+
+Left for later: the admission's dev-id walk is the slow step (a million pydantic
+constructions, single process); an increment re-admits in about 20 min per dataset, the
+dry run of both took 57. Staging leaves `*.superseded.2026-09-21_*` copies of both LMDBs
+in the uid-7474 build tree, as before.

@@ -103,6 +103,15 @@ LADDER: dict[str, tuple[str, int, bool, str, str | None]] = {
     "four_only": ("four ratios", 4, False, "w38_protpathfba", None),
     "one_only": ("YPD ratio", 1, False, "w102_ypdonly", None),
     "none": ("no metabolism", 0, False, "w39_pathpool", "w124_pathpoolcv"),
+    # Round 110 (w127): the backbone with no curated pathway annotation, ProtT5 alone.
+    "prot_one_solve_counts": (
+        "ProtT5 only: YPD ratio, flux vector, rule counts",
+        1,
+        True,
+        "w127_protgpr",
+        None,
+    ),
+    "prot_none": ("ProtT5 only: no metabolism", 0, False, "w127_protpool", None),
 }
 
 #: key -> (waves, arm) of a repeated-split recipe. Later seeds of one arm were sometimes
@@ -117,10 +126,28 @@ RESPLIT: dict[str, tuple[tuple[str, ...], str]] = {
     "one_counts": (("w114", "w118"), "ypdgpronly"),
     "four_only": (("w94", "w97", "w120"), "protpathfba"),
     "none": (("w94", "w121"), "pathpool"),
+    # Round 109 (w126): the same pair on the ProtT5-only backbone.
+    "prot_one_solve_counts": (("w126",), "protgpr"),
+    "prot_none": (("w126",), "protpool"),
 }
 
 #: (name, a, b): the difference read is a minus b.
 RESPLIT_PAIRS: list[tuple[str, str, str]] = [
+    (
+        "ProtT5 only: one medium, flux vector and counts, over no metabolism",
+        "prot_one_solve_counts",
+        "prot_none",
+    ),
+    (
+        "ProtT5 only against the pathway backbone, both with the module",
+        "prot_one_solve_counts",
+        "one_solve_counts",
+    ),
+    (
+        "ProtT5 only against the pathway backbone, neither with the module",
+        "prot_none",
+        "none",
+    ),
     (
         "one medium for four, flux vector and counts kept",
         "one_solve_counts",
@@ -397,6 +424,11 @@ def main() -> None:
             "one medium for four, flux vector and counts kept, released split",
             "w102_ypdgpr",
             "w96_pathloggpr",
+        ),
+        (
+            "ProtT5 only: the module over no metabolism, released split",
+            "w127_protgpr",
+            "w127_protpool",
         ),
     ]
     released_pairs = collect(

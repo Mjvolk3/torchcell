@@ -46,6 +46,19 @@ created: 1789365911262
 ## 2026.09.19
 
 - [x] 029 build 001 COMPLETED (slurm 2400, 20 h 20 min, peak RSS 155 GB of 160 GB): 9,297,912 genotypes, 299,146 triple gene sets (025: 376,732), 5,665 singles; index stage 9 h 33 min; stage table in [[experiments.029-solid-growth-ko]]
+
+## 2026.09.20 (overnight)
+
+- [x] Kuzmin dmf loader fix LANDED on main as 4c4a4f950 (PR #412): both Dmf classes emit the double-mutant query strain fitness they always had the code for, 172 and 201 records; digenic records byte-identical; 7 tests, mypy and ruff clean
+- [x] Three independent audits confirmed the trigenic finding and corrected it upward: the published score reproduces on 99.98 percent (2018) and 99.56 percent (2020) of rows, and the SI never states the query singles are 1 while the released 2018 values behave as if they are ([[experiments.025-solid-growth.s3-closure]])
+- [x] LabelPolicy + build_label_table LANDED on main as ae67e6738f (PR #413, parallel session)
+- [x] Dev LMDBs rebuilt: dmf_kuzmin2018 410,571 and dmf_kuzmin2020 632,998
+- [x] 030 query, build script and slurm launcher written and pushed on `feat/030-solid-growth-multi`; query validated on a 10-gene set ([[experiments.030-solid-growth-multi]])
+- [x] S3 seed 1 read out to epoch 103: validation flat from epoch 15, window 0.480, while train reached 0.768; replicates correctly requeued at 50 epochs
+- [ ] DECIDE: the graph stage is blocked only by the guard "already in the served store", every drift check clean. Either teach `kg_manifest` to admit a superset of a served dataset, or take the full rebuild (which also lands issue #410)
+- [ ] DELETE from /db: the 025 and 029 intermediates, 4.5 TB, both archived and verified on /bulk. The 030 build needs 3.7 TB and /db has 523 G, so nothing else unblocks it
+- [ ] Rerun the closure recompute on 029 with the ASYMMETRIC identity now that query/array roles are recoverable (delegated)
+
 - [ ] Delete 029 raw/conversion/aggregation from /db once /bulk archive.log says ALL_DONE (523 G free now)
 - [x] S3 closure recompute rerun on 029 under four label policies ([[experiments.029-solid-growth-ko.scripts.closure_recompute]]): Kuzmin first 0.245 trigenic (0.517 on the 2018 screen) / 0.227 digenic; Costanzo first 0.508 digenic / 0.137 trigenic; each screen reproduces only itself. Section 7 + Fig 6 + Tables 5-6 added to `notes-tex/025-s3-closure` (12 pages, check clean); label-policy mermaid updated with the build numbers
 - [x] 029 intermediates archiving to /bulk (slurm 2480); processed LMDB mirroring to IGB scratch (slurm 2481)

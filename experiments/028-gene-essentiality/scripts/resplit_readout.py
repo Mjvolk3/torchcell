@@ -107,6 +107,10 @@ DEEP = False
 #: Read the single-experiment form (w104, YPD ratio + vector + counts) as the transformer
 #: family, at the same six seeds as --deep, so only the module's form changes.
 PORTABLE = False
+#: With --portable: read the graph family WITH the module as a zero-initialized affine on
+#: its logit (job 2691, three seeds), so both families carry the single-experiment module.
+GRAPH_AFFINE = False
+AFFINE_INPUTS = "GO | affine: YPD ratio+vector+counts (400 epochs)"
 
 
 def transformer_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
@@ -132,9 +136,12 @@ def transformer_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
 
 def go_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
     stem = "graph_baselines_go400_s6" if DEEP else "graph_baselines_go400"
+    inputs = GO_INPUTS
+    if GRAPH_AFFINE:
+        stem, inputs = "graph_baselines_go_affine", AFFINE_INPUTS
     path = osp.join(RESULTS, f"{stem}_fcl_resplit{resplit}.json")
     with open(path) as fh:
-        rows = [r for r in json.load(fh)["rows"] if r["inputs"] == GO_INPUTS]
+        rows = [r for r in json.load(fh)["rows"] if r["inputs"] == inputs]
     assert len(rows) == 1
     index = {g: i for i, g in enumerate(rows[0]["test_genes"])}
     assert set(index) == set(genes), (resplit, len(index), len(genes))
@@ -153,7 +160,7 @@ def seed_mean_auroc(*patterns: str, expect: int = 3) -> float:
 
 
 def main() -> None:
-    global DEEP, PORTABLE
+    global DEEP, PORTABLE, GRAPH_AFFINE
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--deep",
@@ -171,8 +178,18 @@ def main() -> None:
             "family; writes results/resplit_readout_portable.json"
         ),
     )
+    parser.add_argument(
+        "--graph-affine",
+        action="store_true",
+        help=(
+            "with --portable, the graph family reads the module as an affine on its logit "
+            "(three seeds); writes results/resplit_readout_portable_affine.json"
+        ),
+    )
     args = parser.parse_args()
     PORTABLE = args.portable
+    GRAPH_AFFINE = args.graph_affine
+    assert not GRAPH_AFFINE or PORTABLE
     DEEP = args.deep or PORTABLE
     expect_cells = 6 if DEEP else 3
     rows: list[SplitRow] = []
@@ -184,7 +201,9 @@ def main() -> None:
         genes = sorted(split["genes"]["test"])
         y = np.array([int(split["labels"][g]) for g in genes])
         t_cells, g_cells = transformer_cells(r, genes), go_cells(r, genes)
-        assert len(t_cells) == expect_cells and len(g_cells) == expect_cells, (
+        assert len(t_cells) == expect_cells and len(g_cells) == (
+            3 if GRAPH_AFFINE else expect_cells
+        ), (
             r,
             len(t_cells),
             len(g_cells),
@@ -343,6 +362,25 @@ def main() -> None:
             ("GCN", "solve log1p (400 epochs)"),
         )
     ]
+    affine_control = [
+        graph_mean("graph_baselines_go_affine", "GCN", GO_INPUTS, r)
+        for r in range(N_SPLITS)
+    ]
+    graph_module += [
+        difference(
+            f"GCN, {inputs}, minus graph convolution on GO",
+            [
+                graph_mean("graph_baselines_go_affine", "GCN", inputs, r)
+                - affine_control[r]
+                for r in range(N_SPLITS)
+            ],
+        )
+        for inputs in (
+            "GO | affine: YPD ratio (400 epochs)",
+            AFFINE_INPUTS,
+            "GO | affine: four ratios+vector+counts (400 epochs)",
+        )
+    ]
     for d in graph_module:
         print(f"{d.name}: {d.mean:+.4f} sd {d.sd:.4f} positive {d.n_positive}/10")
 
@@ -362,7 +400,9 @@ def main() -> None:
     )
     out = osp.join(
         RESULTS,
-        "resplit_readout_portable.json"
+        "resplit_readout_portable_affine.json"
+        if GRAPH_AFFINE
+        else "resplit_readout_portable.json"
         if PORTABLE
         else "resplit_readout_s6.json"
         if DEEP

@@ -1101,6 +1101,110 @@ CHECKS: list[Check] = [
             "second_medium", "YPD and SM, against YPD and SC", "mean_difference"
         ),
     ),
+    # sec:family-ensembles -- job 2691, the module as an affine on the graph family's logit.
+    Check(
+        claim="job 2691: GCN, GO | affine: YPD ratio (400, mean",
+        stated=0.011,
+        recompute=graph_module("GCN, GO | affine: YPD ratio (400", "mean"),
+    ),
+    Check(
+        claim="job 2691: GCN, GO | affine: YPD ratio (400, splits higher",
+        stated=10,
+        recompute=graph_module("GCN, GO | affine: YPD ratio (400", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2691: GCN, GO | affine: YPD ratio+vector+counts, mean",
+        stated=0.018,
+        recompute=graph_module("GCN, GO | affine: YPD ratio+vector+counts", "mean"),
+    ),
+    Check(
+        claim="job 2691: GCN, GO | affine: YPD ratio+vector+counts, splits higher",
+        stated=9,
+        recompute=graph_module("GCN, GO | affine: YPD ratio+vector+counts", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2691: GCN, GO | affine: four ratios+vector+counts, mean",
+        stated=0.021,
+        recompute=graph_module("GCN, GO | affine: four ratios+vector+counts", "mean"),
+    ),
+    Check(
+        claim="job 2691: GCN, GO | affine: four ratios+vector+counts, splits higher",
+        stated=9,
+        recompute=graph_module("GCN, GO | affine: four ratios+vector+counts", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2691: both families with the module, average",
+        stated=0.897,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "resplit_readout_portable_affine.json")))[
+                "mean_auroc"
+            ]["average"]
+        ),
+    ),
+    Check(
+        claim="job 2691: graph family with the module, alone",
+        stated=0.887,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "resplit_readout_portable_affine.json")))[
+                "mean_auroc"
+            ]["go_convolution"]
+        ),
+    ),
+    Check(
+        claim="job 2691: released split, GO | affine: YPD ratio (400 epochs)",
+        stated=0.914,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(
+                    open(osp.join(RESULTS, "graph_baselines_go_affine.json"))
+                )["rows"]
+                if r["inputs"] == "GO | affine: YPD ratio (400 epochs)"
+            )["mean"]
+        ),
+    ),
+    Check(
+        claim="job 2691: released split, GO | affine: YPD ratio+vector+counts (40",
+        stated=0.911,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(
+                    open(osp.join(RESULTS, "graph_baselines_go_affine.json"))
+                )["rows"]
+                if r["inputs"] == "GO | affine: YPD ratio+vector+counts (400 epochs)"
+            )["mean"]
+        ),
+    ),
+    Check(
+        claim="job 2691: released split, GO | affine: four ratios+vector+counts (",
+        stated=0.91,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(
+                    open(osp.join(RESULTS, "graph_baselines_go_affine.json"))
+                )["rows"]
+                if r["inputs"] == "GO | affine: four ratios+vector+counts (400 epochs)"
+            )["mean"]
+        ),
+    ),
+    Check(
+        claim="job 2691: released split, GO (400 epochs)",
+        stated=0.908,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(
+                    open(osp.join(RESULTS, "graph_baselines_go_affine.json"))
+                )["rows"]
+                if r["inputs"] == "GO (400 epochs)"
+            )["mean"]
+        ),
+    ),
     # sec:family-ensembles -- job 2684, the solve columns on the graph family's nodes.
     Check(
         claim="job 2684: GCN, GO+solve log1p, mean",

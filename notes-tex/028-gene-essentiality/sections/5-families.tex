@@ -204,10 +204,24 @@ The ten repeated splits agree (job 2684, three seeds per split). Against graph
 convolution on GO alone, the same convolution with the solve columns on the node reads
 $-0.009$ (higher on one of ten splits), with the four ratios beside them $-0.010$ (one
 of ten), the MLP on GO and the solve columns $-0.013$ (four of ten), and the solve
-columns alone through the graph $-0.189$ (none of ten). The module's gain is therefore
-specific to how the transformer reads it, a zero-initialized affine on the logit, and
-does not carry to the graph family as node features. The affine form on the graph
-family's logit was not run.
+columns alone through the graph $-0.189$ (none of ten). As node features the module does not carry to the graph family.
+
+As an affine on the logit it does (job 2691, three seeds per split). The columns stay out
+of the message passing and a zero-initialized linear map over them is added to each
+node's logit, the form the transformer uses. Against the same convolution on GO alone,
+rerun in the same job, the YPD ratio alone reads $+0.011$ over the ten splits (higher on
+ten of ten), the single-experiment recipe of ratio, vector and counts $+0.018$ (nine of
+ten) and the four-media recipe $+0.021$ (nine of ten); on the released split the three
+read 0.914, 0.911 and 0.910 against 0.908. The interface that carries the module across
+model families is therefore the affine on the logit, with the solve computed offline, and
+it needs nothing from the architecture it is added to.
+
+Giving both families the module does not improve their average. With the
+single-experiment transformer of Section~\ref{sec:round75} and the graph family carrying
+the same recipe as an affine, the fixed-in-advance average reads 0.897 over the ten
+splits against 0.907 with the plain GO convolution as the partner, although the graph
+family alone rises from 0.871 to 0.887. The average gains from the two families failing
+on different genes, and handing them the same columns makes them fail more alike.
 
 \input{tables/graph_baselines_go_solve}
 

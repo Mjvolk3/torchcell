@@ -127,6 +127,22 @@ ROUNDS: dict[str, dict[str, Any]] = {
         "baselines_dir": "expression_baselines_split",
         "out": "v17_locality_readout.json",
     },
+    # The hygiene and readout round. Y_k0 is the no-mask control the strand never had;
+    # Y_ctx is the per-gene affine row over the strain context. The mask arm is also to be
+    # judged at matched WALL CLOCK, which this script does not do: it scores at matched
+    # epochs, where the mask arm is expected to tie while costing 24% less card time.
+    "v18": {
+        "project": "zhao-group/torchcell_019_expr_v18",
+        "phenotype": "expression",
+        "prefix": "Y_",
+        "arm_re": r"Y_(ref|k0|ctx)_(s\d+)",
+        "ref": "ref",
+        "alt": "k0",
+        "alt_extra": ["ctx"],
+        "splits": ["s0", "s1", "s2", "s3"],
+        "baselines_dir": "expression_baselines_split",
+        "out": "v18_hygiene_readout.json",
+    },
 }
 _args = argparse.ArgumentParser(description=__doc__)
 _args.add_argument("--round", choices=sorted(ROUNDS), default="v13")

@@ -124,12 +124,13 @@ def go_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
     return [np.array(logits, dtype=float)[order] for logits in rows[0]["test_logits"]]
 
 
-def seed_mean_auroc(pattern: str) -> float:
+def seed_mean_auroc(*patterns: str, expect: int = 3) -> float:
     values = []
-    for path in sorted(glob.glob(osp.join(RESULTS, pattern))):
-        with open(path) as fh:
-            values.append(float(json.load(fh)["test"]["pinned"]["auroc"]))
-    assert len(values) == 3, (pattern, len(values))
+    for pattern in patterns:
+        for path in sorted(glob.glob(osp.join(RESULTS, pattern))):
+            with open(path) as fh:
+                values.append(float(json.load(fh)["test"]["pinned"]["auroc"]))
+    assert len(values) == expect, (patterns, len(values))
     return float(np.mean(values))
 
 
@@ -198,6 +199,33 @@ def main() -> None:
         k: [seed_mean_auroc(pat.format(r=r)) for r in range(N_SPLITS)]
         for k, pat in arms.items()
     }
+    # Round 78 adds seeds 2703 to 2705 of the vector and of the ratio control on every
+    # split, under the w97 stems. At three seeds the vector's gain over the ratios alone
+    # was +0.011 (sd 0.023, seven of ten), which does not separate from zero; the six-seed
+    # means are the read fixed when those packs were submitted.
+    six = {
+        "layer_free": (
+            "w93_resplit{r}pathlogfree_h12l1p1_e200_s*.json",
+            "w97_resplit{r}pathlogfree_h12l1p1_e200_s*.json",
+        ),
+        "fba_ratio_affine": (
+            "w94_resplit{r}protpathfba_h12l1p1_e200_s*.json",
+            "w97_resplit{r}protpathfba_h12l1p1_e200_s*.json",
+        ),
+    }
+    six_means: dict[str, list[float]] = {}
+    for key, pats in six.items():
+        try:
+            six_means[key] = [
+                seed_mean_auroc(*(p.format(r=r) for p in pats), expect=6)
+                for r in range(N_SPLITS)
+            ]
+        except AssertionError as exc:
+            print(f"six-seed means not ready for {key}: {exc}")
+            six_means = {}
+            break
+    if six_means:
+        cell_means.update({f"{k}_six_seeds": v for k, v in six_means.items()})
     for k, v in cell_means.items():
         print(f"seed-mean AUROC per split, {k}: " + " ".join(f"{x:.3f}" for x in v))
     diffs += [
@@ -222,6 +250,20 @@ def main() -> None:
             ],
         ),
     ]
+    if six_means:
+        diffs.append(
+            difference(
+                "layer-free minus FBA ratio affine (six-seed means)",
+                [
+                    a - b
+                    for a, b in zip(
+                        six_means["layer_free"],
+                        six_means["fba_ratio_affine"],
+                        strict=True,
+                    )
+                ],
+            )
+        )
     for d in diffs:
         print(
             f"{d.name:42s} mean {d.mean:+.4f} sd {d.sd:.4f} positive {d.n_positive}/{d.n_splits}"

@@ -183,6 +183,13 @@ for SLUG in "${SLUGS[@]}"; do
 done
 
 echo "---------------- 3 REFRESH build-tree biocypher config + env from $TORCHCELL_SRC"
+# The full rebuild mounts $BUILD_ROOT/database/conf and biocypher under NEO4J_HOME of its
+# build container, whose entrypoint chowns them to 7474 and chmods them 700 at start.
+# directory_setup runs on the host as this user and rewrites both, so hand them back
+# first (job 2675 died here after the 2026-09-17 rebuild). The generating container
+# runs as root and reads them regardless of owner.
+docker run --rm --entrypoint bash -v "$BUILD_ROOT/database":/bt "$IMAGE" -c \
+    "chown -R $(id -u):$(id -g) /bt/conf /bt/biocypher && chmod -R u+rwX,go+rX /bt/conf /bt/biocypher"
 DATA_ROOT="$BUILD_ROOT" python -m torchcell.database.directory_setup --env-file "$DATABASE_ENV_FILE"
 cmp "$TORCHCELL_SRC/biocypher/config/torchcell_schema_config.yaml" \
     "$BUILD_ROOT/database/biocypher/config/torchcell_schema_config.yaml"

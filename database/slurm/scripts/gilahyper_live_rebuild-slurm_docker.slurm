@@ -187,7 +187,12 @@ docker run --rm --entrypoint bash -v "$NEXT_PARENT":/parent "$IMAGE" -c \
      && chown -R 7474:7474 /parent/$NEXT_NAME && ls -la /parent/$NEXT_NAME"
 docker run --rm --entrypoint bash -v "$SERVE_ROOT":/serve "$IMAGE" -c \
     'mkdir -p /serve/biocypher-out && chown 7474:7474 /serve/biocypher-out && chmod 755 /serve/biocypher-out'
-# build-tree biocypher config + container env come from the checkout (schema must match)
+# build-tree biocypher config + container env come from the checkout (schema must match).
+# The previous rebuild's container chowned $BUILD_ROOT/database/conf and biocypher to
+# 7474 and chmodded them 700 (its entrypoint does that to everything under NEO4J_HOME),
+# and directory_setup rewrites both as this user, so hand them back first.
+docker run --rm --entrypoint bash -v "$BUILD_ROOT/database":/bt "$IMAGE" -c \
+    "chown -R $(id -u):$(id -g) /bt/conf /bt/biocypher && chmod -R u+rwX,go+rX /bt/conf /bt/biocypher"
 DATA_ROOT="$BUILD_ROOT" python -m torchcell.database.directory_setup --env-file "$DATABASE_ENV_FILE"
 cmp "$TORCHCELL_SRC/biocypher/config/torchcell_schema_config.yaml" \
     "$BUILD_ROOT/database/biocypher/config/torchcell_schema_config.yaml"

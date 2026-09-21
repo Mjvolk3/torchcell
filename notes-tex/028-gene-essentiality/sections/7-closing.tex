@@ -252,7 +252,24 @@ $\max(20, 0.3 n)$ genes per term, whose uncapped form would give a widest subsys
 the GO signal on this endpoint, and the same annotations read through the gene graphs
 carry it further.
 
+\paragraph{The ontology of the trigenic DCell runs.} The DCell runs of experiments 005
+and 006 read a different Gene Ontology from the 2,362-term multi-hot above: SGD's
+annotations with those inferred from genetic interaction removed, redundant terms
+collapsed, and terms kept at four or more genes, which leaves 2,655 subsystems. Built
+here as a second store (\texttt{go006\_store.py}, jobs 2688 and 2689), it keeps 2,651
+terms as columns, of which 1,421 are among the current 2,362; a labeled gene lights
+34.5 of its columns on average against 46.5 in the current store, and the hierarchy is
+flatter, 14 strata with a widest fan-in of 106 children against 15 and 24. Graph
+convolution does not care which: on the ten repeated splits at three seeds it reads
+$-0.002$ on the trigenic runs' ontology (higher on four of ten) and 0.905 against 0.909
+on the released split. The hierarchy does: the shared-input DCell reads 0.714 against
+0.841 on the released split over the same three seeds and $-0.020$ over the ten splits
+(higher on two of ten, sd 0.041). The current store is therefore the better of the two for
+the hierarchy, and neither ontology brings it to the graph's level.
+
 \input{tables/dcell_style}
+
+\input{tables/go006_comparison}
 
 \subsection{Rounds 84 to 98: what each simplification costs\secstatus{todo}}
 \label{sec:round84-98}

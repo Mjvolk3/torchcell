@@ -121,6 +121,24 @@ def fold_average(families: tuple[str, ...], key: str) -> Callable[[], float]:
     return run
 
 
+def go006(model: str, inputs: str, block: str, key: str) -> Callable[[], float]:
+    """One value of the trigenic-ontology comparison for one model."""
+
+    def run() -> float:
+        models = json.load(open(osp.join(RESULTS, "go006_comparison.json")))["models"]
+        row = next(m for m in models if m["model"] == model and m["inputs"] == inputs)
+        return float(row[block][key])
+
+    return run
+
+
+def go006_store(key: str) -> Callable[[], float]:
+    def run() -> float:
+        return float(json.load(open(osp.join(RESULTS, "go006_store.json")))[key])
+
+    return run
+
+
 def consensus(*keys: str | int) -> Callable[[], float]:
     """One value of ``consensus_missed.json``, addressed by a key path."""
 
@@ -1412,6 +1430,84 @@ CHECKS: list[Check] = [
         claim="background probe: YPD growth as defined, ura3 deleted",
         stated=0.0,
         recompute=background("YPD", "growth_as_defined_ura3"),
+    ),
+    # sec:round108 -- the trigenic DCell runs' ontology.
+    Check(
+        claim="go006 store: subsystems after containment",
+        stated=2655,
+        recompute=go006_store("n_nodes_after_containment"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="go006 store: columns",
+        stated=2651,
+        recompute=go006_store("n_columns"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="go006 store: shared terms",
+        stated=1421,
+        recompute=go006_store("n_terms_shared_with_current"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="go006 store: columns per labeled gene, trigenic",
+        stated=34.5,
+        recompute=go006_store("mean_columns_per_labeled_gene_006"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="go006 store: columns per labeled gene, current",
+        stated=46.5,
+        recompute=go006_store("mean_columns_per_labeled_gene_current"),
+        tolerance=0.06,
+    ),
+    Check(
+        claim="go006: graph, ten splits",
+        stated=-0.002,
+        recompute=go006("GCN, union of nine", "GO (400 epochs)", "resplits", "difference_mean"),
+    ),
+    Check(
+        claim="go006: graph, splits higher",
+        stated=4,
+        recompute=go006("GCN, union of nine", "GO (400 epochs)", "resplits", "n_006_higher"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="go006: graph, released trigenic",
+        stated=0.905,
+        recompute=go006("GCN, union of nine", "GO (400 epochs)", "released", "mean_006"),
+    ),
+    Check(
+        claim="go006: graph, released current",
+        stated=0.909,
+        recompute=go006("GCN, union of nine", "GO (400 epochs)", "released", "mean_current_shared_seeds"),
+    ),
+    Check(
+        claim="go006: dcell, released trigenic",
+        stated=0.714,
+        recompute=go006("dcell_style_shared", "GO", "released", "mean_006"),
+    ),
+    Check(
+        claim="go006: dcell, released current, shared seeds",
+        stated=0.841,
+        recompute=go006("dcell_style_shared", "GO", "released", "mean_current_shared_seeds"),
+    ),
+    Check(
+        claim="go006: dcell, ten splits",
+        stated=-0.02,
+        recompute=go006("dcell_style_shared", "GO", "resplits", "difference_mean"),
+    ),
+    Check(
+        claim="go006: dcell, splits higher",
+        stated=2,
+        recompute=go006("dcell_style_shared", "GO", "resplits", "n_006_higher"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="go006: dcell, sd over splits",
+        stated=0.041,
+        recompute=go006("dcell_style_shared", "GO", "resplits", "difference_sd"),
     ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(

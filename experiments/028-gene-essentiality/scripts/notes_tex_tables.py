@@ -2576,6 +2576,57 @@ def consensus_missed() -> str | None:
     return write("consensus_missed", body, "results/consensus_missed.json")
 
 
+def go006_comparison() -> str | None:
+    """The trigenic DCell runs' ontology against the current store, both GO models."""
+    src = osp.join(RESULTS, "go006_comparison.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        models = json.load(fh)["models"]
+    labels = {
+        ("GCN, union of nine", "GO (400 epochs)"): "graph convolution on GO",
+        (
+            "GCN, union of nine",
+            "GO+FBA ratios (400 epochs)",
+        ): "graph convolution on GO and the four ratios",
+        (
+            "GCN, union of nine",
+            "ProtT5+GO+FBA ratios (400 epochs)",
+        ): "graph convolution on ProtT5, GO and the ratios",
+        ("dcell_style_shared", "GO"): "DCell hierarchy, shared input",
+    }
+    rows = []
+    for m in models:
+        rel, res = m["released"], m["resplits"]
+        rows.append(
+            f"    {labels[(m['model'], m['inputs'])]} & {rel['mean_006']:.3f} & "
+            f"{rel['mean_current_shared_seeds']:.3f} & {res['mean_006']:.3f} & "
+            f"{res['mean_current']:.3f} & ${res['difference_mean']:+.3f}$ "
+            f"({res['difference_sd']:.3f}) & {res['n_006_higher']}/{res['n_splits']} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The trigenic DCell runs' ontology against the current store]{The two "
+        "GO-reading models on the ontology the trigenic DCell runs of experiments 005 and "
+        "006 used (2,651 columns: SGD annotations without those inferred from genetic "
+        "interaction, redundant terms collapsed, four or more genes per term) and on the "
+        "current store (2,362 columns: propagated annotations, ten or more genes per term). "
+        "Three seeds per cell throughout, the current store's released value over the same "
+        "three seeds. Columns: the released split, the mean over the ten repeated outer "
+        "splits, the paired difference of the trigenic runs' ontology minus the current one "
+        "with its spread over splits, and the splits it is higher on. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from \\texttt{go006\\_compare.py}.}\n"
+        "  \\label{tab:go006-comparison}\n"
+        "  \\begin{tabular}{@{}p{58mm}rrrrlr@{}}\n    \\hline\n"
+        "    model & \\multicolumn{2}{c}{released} & \\multicolumn{2}{c}{ten splits} & "
+        "difference & higher \\\\\n"
+        "     & trigenic & current & trigenic & current & & \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("go006_comparison", body, "results/go006_comparison.json")
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -2921,6 +2972,7 @@ def main() -> None:
         simplification_paired(),
         dcell_style(),
         consensus_missed(),
+        go006_comparison(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

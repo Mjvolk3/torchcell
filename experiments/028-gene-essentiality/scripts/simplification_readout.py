@@ -106,7 +106,7 @@ RESPLIT: dict[str, tuple[tuple[str, ...], str]] = {
     "one_solve_counts": (("w104",), "ypdgpr"),
     "four_solve": (("w93", "w97", "w120"), "pathlogfree"),
     "four_counts": (("w106",), "gpronly"),
-    "two_counts": (("w117",), "twomedgpronly"),
+    "two_counts": (("w117", "w123"), "twomedgpronly"),
     "one_counts": (("w114", "w118"), "ypdgpronly"),
     "four_only": (("w94", "w97", "w120"), "protpathfba"),
     "none": (("w94", "w121"), "pathpool"),

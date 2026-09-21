@@ -1,0 +1,58 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v18_hygiene.yaml
+# [[experiments.019-simb-multimodal.conf.cgt_expr_v18_hygiene]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/conf/cgt_expr_v18_hygiene
+#
+# HYGIENE AND READOUT ROUND (2026-09-20), project v18. The v13 reference against the two
+# levers that need no code change and have never been tested at this trunk: the masked
+# objective switched OFF, and a per-gene affine row over the strain context.
+#
+# WHY THE MASK ARM. Every run from v10 through v17, 166 of them, carries
+# `mask_schedule: [0, 10, 100, 1000]`, and no no-mask control exists at this trunk. The
+# expression-fit review measured what it buys and what it costs. On the TRAINING set the
+# k3-minus-k0 gap is +0.245 at epoch 100, +0.034 at 500, +0.002 at 1,000 and 0.000 after,
+# so the objective is inert over the band this round scores. On validation, where nothing
+# is revealed, the imputation capability peaks at 0.48 around epoch 1,200 and decays to
+# 0.32 by the selected checkpoint. The cost is measured: `M_off` and `M_sched` sat
+# co-resident for 9,999 epochs at 222,666 s against 276,815 s, +24% wall. `[0]` removes
+# the objective and leaves the plumbing (the probe forward, the label encoder's constant
+# offset, the k-sweep at validation) untouched, so the arms stay comparable and the
+# contrast is the objective alone.
+#
+# WHY THE READOUT ARM. `context_readout` gives every gene its own affine row over the
+# strain context, w_u . c_b + b_u, added to the shared head's output. This is the form
+# both State's gene reconstruction head and the Ahlmann-Eltze benchmark's decoder use:
+# each gene is read off a strain vector through a gene-specific row, never off its own
+# token. The row is ZERO-GATED, so at step 0 the head is exactly the shared MLP and the
+# arm is a clean ablation. The v12 head round tested the GEARS-style row (`H_pergene`,
+# which reads phi(h_u, c_b)) and found -0.0085 at 1,399 epochs but +0.032 at 500, i.e. a
+# SPEED lever rather than a ceiling lever; this is the sibling form that reads the strain
+# only, and it has never run. Cost is num_genes * (hidden_dim + 1) + 1 parameters.
+#
+# THE ARMS (gh_expr_008_arm.sh, Y_* arms). Everything else is v13's trunk, objective,
+# optimizer and E_full input.
+#   Y_ref_s<k>   the v13 reference at this budget, and the shared control for both levers.
+#   Y_k0_s<k>    `multitask.mask_schedule=[0]`, the no-mask control the strand never had.
+#   Y_ctx_s<k>   `multitask.context_readout=true`.
+# Split seeds 0 to 3, init seeds 0 to 2, the three arms co-resident on one card per
+# (split, seed), so every contrast is paired within card, split and seed. 36 runs as
+# twelve tasks of three.
+#
+# BUDGET 1,200 epochs, scored as the MEAN validation Pearson over the fixed window before
+# the matched epoch (`v13_split_readout.py`), with the best-by-metric checkpoint read on
+# test at the end. Adopt only above +0.02 with the 12-pair CI excluding 0, 3 of 4
+# partitions positive and the test sign agreeing. The mask arm is judged on TWO axes: the
+# score at matched epochs, and the score at matched WALL CLOCK, where it should reach
+# about 24% more epochs for the same card time.
+defaults:
+  - cgt_expr_v13_split
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v18
+  tags: [hygiene-round, v18]
+
+trainer:
+  max_epochs: 1200
+  checkpoint:
+    # Keep the loss-minimum model too; v13 and v14 saved none.
+    save_loss_min: true

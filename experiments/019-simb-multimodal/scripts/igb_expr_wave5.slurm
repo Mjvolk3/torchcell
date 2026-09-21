@@ -481,6 +481,35 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_v17_locality
           EXTRA_OV="" ;;
+  # ------------------------------------------------------ HYGIENE AND READOUT ROUND (2026.09.20)
+  # The v13 reference against the masked objective switched off and against a per-gene
+  # affine row over the strain context, split seeds 0 to 3, init seeds 0 to 2, 1,200
+  # epochs (conf/cgt_expr_v18_hygiene.yaml). 36 runs as twelve tasks of three, the three
+  # arms of one (split, seed) per card. Tasks are split-major, so any subset can go to
+  # whichever partition has cards.
+  #
+  #   H=$(git rev-parse HEAD); D=$(git diff HEAD | sha256sum | cut -d" " -f1)
+  #   sbatch -J 019-v18w1-hygiene -p cabbi --gres=gpu:1 --cpus-per-task=12 --mem=120g \
+  #       --time=2-00:00:00 --array=0-11 --export=ALL,W5_STAGE=hygiene,\
+  #   TORCHCELL_SOURCE_GIT_HASH=$H,TORCHCELL_SOURCE_DIFF_SHA256=$D \
+  #       experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  hygiene) JOBS=(
+            Y_ref_s0:0 Y_k0_s0:0 Y_ctx_s0:0
+            Y_ref_s0:1 Y_k0_s0:1 Y_ctx_s0:1
+            Y_ref_s0:2 Y_k0_s0:2 Y_ctx_s0:2
+            Y_ref_s1:0 Y_k0_s1:0 Y_ctx_s1:0
+            Y_ref_s1:1 Y_k0_s1:1 Y_ctx_s1:1
+            Y_ref_s1:2 Y_k0_s1:2 Y_ctx_s1:2
+            Y_ref_s2:0 Y_k0_s2:0 Y_ctx_s2:0
+            Y_ref_s2:1 Y_k0_s2:1 Y_ctx_s2:1
+            Y_ref_s2:2 Y_k0_s2:2 Y_ctx_s2:2
+            Y_ref_s3:0 Y_k0_s3:0 Y_ctx_s3:0
+            Y_ref_s3:1 Y_k0_s3:1 Y_ctx_s3:1
+            Y_ref_s3:2 Y_k0_s3:2 Y_ctx_s3:2
+          )
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_v18_hygiene
+          EXTRA_OV="" ;;
   # CANARY -- one fast_dev_run to prove container + conda + PYTHONPATH + LMDB path before a
   # wave is committed to the queue. Exits in minutes.
   canary) ARMS=(X_mix); SEEDS=(0)
@@ -493,7 +522,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head|split|proteome|wd|joint|locality)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|canary_pearson|canary_listmle|canary_pergene_rep|h2|probe|long|wave6|launch|pearson|pearson_b64|listmle|listmle_b64|resume|resume_many|mech|pergene_rep|head|split|proteome|wd|joint|locality|hygiene)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

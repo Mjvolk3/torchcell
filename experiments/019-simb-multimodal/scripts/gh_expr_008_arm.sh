@@ -614,6 +614,19 @@ case "$ARM" in
                                 model.perturbation_propagation.gate_mode=on
                                 data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(pert-prop-hop2 "split${ARM##*_s}" stage-locality round-locality) ;;
+  # ========================= HYGIENE AND READOUT ROUND (2026.09.20, v18) ==================
+  # The two levers that need no code change and have never run at this trunk
+  # (conf/cgt_expr_v18_hygiene.yaml). Y_k0 switches the masked objective off, which the
+  # review measured to be inert on train after epoch 1,000 and to cost +24% wall; Y_ctx
+  # gives every gene an affine row over the strain context, the form State's gene
+  # reconstruction head and the Ahlmann-Eltze decoder both use, zero-gated so step 0 is
+  # exactly the shared MLP.
+  Y_ref_s[0-9])      OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(mask-sched readout-shared-mlp "split${ARM##*_s}" stage-hygiene round-hygiene) ;;
+  Y_k0_s[0-9])       OVERRIDES=("multitask.mask_schedule=[0]" data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(mask-off readout-shared-mlp "split${ARM##*_s}" stage-hygiene round-hygiene) ;;
+  Y_ctx_s[0-9])      OVERRIDES=(multitask.context_readout=true data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(mask-sched readout-context-row "split${ARM##*_s}" stage-hygiene round-hygiene) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

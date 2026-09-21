@@ -1,120 +1,16 @@
-%% notes-tex/028-gene-essentiality/sections/7-summary.tex
-%% The study's conclusions on one page. The figure is written by
-%% experiments/028-gene-essentiality/scripts/summary_figure.py and the enrichment behind
-%% panels f and g by misclass_enrichment.py; both read the committed result files.
+%% notes-tex/028-gene-essentiality/sections/7-closing.tex
+%% [[experiments.028-gene-essentiality]]
+%% The rounds run after the first summary was drawn: each fixes its read in the pack file
+%% before its cells finish, and each table is generated from the cells' result files.
 
-\section{The results on one page\secstatus{todo}}
-\label{sec:summary}
+\section{The closing rounds: repeated splits, the rules, and what each simplification costs\secstatus{todo}}
+\label{sec:closing}
 
-\tcfigfit[1.0]{figures/summary_2026-09-20-21-42-51.pdf}{\textbf{Gene essentiality on
-  yeast-GEM: the best method, the module form that helps, what scales, and the genes
-  still missed.} One color means one thing in every panel: gray a comparator with
-  nothing learned here, yellow a learned model reading no solve and no graph, orange the
-  transformer reading the metabolic solve, red message passing over the gene graphs,
-  purple an equal-weight average of the two families; a hatch marks a linear program
-  solved inside the training loop.
-  \textbf{a}, Every method on the 195 released held-out genes, best first; the rule-count
-  rows are round 80. Learned
-  models are five-fold ensembles, the random forest is one fit on the split file, and
-  intervals are gene bootstraps.
-  \textbf{b}, The forms of the metabolic module on one backbone, the pathway multi-hot
-  with ProtT5: the bar is the seed mean of the held-out AUROC and each point one seed.
-  The gene-rule row adds six redundancy counts to the layer-free form's vector
-  (Section~\ref{sec:round77}); the forced growth column ran on ProtT5 alone, twelve
-  seeds.
-  \textbf{c}, Wall minutes per cell for the forms of \textbf{b}, as run, with up to three
-  cells sharing a card.
-  \textbf{d}, The same models trained on the 629 released genes and read on the 4,674
-  genome-wide genes that carry no GEM reaction, pooled over seeds with a gene bootstrap;
-  the dashed line is chance.
-  \textbf{e}, What the layer-free solve costs over the 025 solid-growth build,
-  logarithmic: the records, those whose deletion touches no GEM gene and read the
-  wild-type row, the distinct programs solved once each, and the lethal and uncertified
-  ones among them.
-  \textbf{f}, What the misranked genes of the released 195 share, per class: the chance
-  that a gene carrying the annotation is misranked worse than one without it, 0.5
-  (dashed) being no association, for the transformer with the layer-free solve (circles)
-  and graph convolution on GO (squares), filled where the Benjamini-Hochberg $q$ within
-  the family is under 0.1.
-  \textbf{g}, The same on the genome-wide set, the squares being graph convolution on
-  ProtT5 over the union graph. Written by
-  \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py}.}{fig:summary}
-
-\begin{description}
-  \item[The best method is two models averaged, and the best single model is a tie.]
-    Under the fold protocol on the released 195 genes the equal-weight average of graph
-    convolution on GO with the transformer reading the solve scores 0.955 with the solve
-    vector and the gene-rule counts beside it (Section~\ref{sec:round80}), 0.954 with
-    the cached solve head and 0.953 with the layer-free solve, the maximum of thirteen
-    post hoc averages. Alone, the rule-count cell scores 0.934, the layer-free form
-    0.920 and graph convolution on GO 0.917, with overlapping intervals, against Flux
-    Cone Learning's 0.742 and FBA's 0.640 on the same genes
-    (Figure~\ref{fig:summary}\textbf{a}). On ten other held-out fifths of the labeled
-    genes, with the average fixed in advance, the average beats the better single model
-    on nine (mean $+0.023$) and graph convolution on GO beats the transformer on nine
-    (Section~\ref{sec:round75}).
-  \item[The module form that helps is the one with no layer, and the rules help beside
-    it.] On one backbone the cell
-    with no metabolism reads 0.858 on six seeds, FBA's growth ratios on the logit 0.890,
-    and the deletion's solved flux vector as $\log(1 + |v|)$ on the logit 0.911 on nine
-    (sd 0.007, minimum 0.896; the three extra seeds of each are round 81's controls,
-    which is why the paired reads below quote the six they share with their partner). Every form that keeps a linear program in the training
-    loop reads lower and less reliably: the cached solve with a flux head 0.882 with one
-    seed at 0.772, learned ceilings with a flux head 0.845 with two seeds unfit, the
-    gated growth column 0.867, and the forced growth column 0.699 on twelve seeds. The
-    layer-free form costs 30 minutes per cell with three cells on a card against 83 to
-    100 for the forms that solve in the loop
-    (Figure~\ref{fig:summary}\textbf{b} and \textbf{c}). On the ten other held-out
-    fifths the vector's gain over no metabolism holds on ten of ten ($+0.047$) and its
-    gain over the four growth ratios alone does not separate from zero ($+0.011$, sd
-    0.023, seven of ten; Section~\ref{sec:round75}). Six counts of
-    gene-protein-reaction redundancy beside the vector read 0.918 on the released split
-    against 0.908, and 0.862 against 0.843 on the ten fifths, above on six of six seeds
-    and eight of ten splits (Section~\ref{sec:round77}). Against the four ratios alone
-    the counts are worth $+0.012$ and the solve $+0.024$ on the released split
-    (Section~\ref{sec:round82}) and $+0.010$ and $+0.010$ on the ten fifths, so the two
-    halves are complementary and neither is reliably the larger
-    (Section~\ref{sec:round84-98}).
-  \item[Every metabolic column fits inside one experiment.] The four growth ratios are
-    four media, so they read four experiments at once; restricted to the one medium the
-    solve store is built on, the full recipe reads 0.916 against 0.918 and the solve-only
-    recipe 0.912 against 0.911, while the ratio alone falls from 0.890 to 0.877
-    (Section~\ref{sec:round83}). The solve supplies from within one environment what the
-    four media were carrying, and the ten fifths agree ($+0.002$ for one medium, above
-    on six of ten). Without the solve the restriction is not free: one ratio with the
-    rule counts reads 0.888 against 0.902 for four, and 0.030 under the full recipe on
-    the ten fifths (Section~\ref{sec:round84-98}).
-  \item[The layer-free form scales, and it covers only the genes with a reaction.] Over
-    the 13.5 million records of the solid-growth build the transform is 469,474
-    programs, solved once in 71 minutes on 20 cores and read as a gather in training
-    (Figure~\ref{fig:summary}\textbf{e}). Off the metabolic genes every deletion reads
-    one constant row, and the transformer with the layer-free solve scores 0.570 on
-    the 4,674 genome-wide genes where graph convolution on ProtT5 scores 0.755 and the
-    raw degree in the physical graph 0.740 (Figure~\ref{fig:summary}\textbf{d}). A
-    model over the whole database therefore needs both inputs: the solve store for the
-    genes with a GEM reaction, and the gene graphs as a message-passing input for the
-    rest.
-  \item[The two families miss different genes, and the annotations say which.] On the
-    released 195 the essential genes the transformer ranks low are the ones FBA calls
-    viable: the 19 of 31 with a knockout growth ratio of 1.0 have a mean misrank of
-    0.134 against 0.025 for the rest (effect 0.91, $q$ 0.003), and under graph
-    convolution on GO the same feature has no effect (0.51). No biological-process term
-    reaches $q < 0.1$ among the 31 essential genes under either model. The nonessential
-    genes both models rank high sit in steroid biosynthesis (effect 0.85 for the
-    transformer and 0.96 for the graph model) and, for the transformer, in nucleoside
-    triphosphate metabolism (0.88) and monosaccharide biosynthesis (0.83). On the
-    genome-wide set the graph model ranks essential genes low when their degree in the
-    physical graph is under the class median (effect 0.70) and when they act in
-    cytoskeleton organization (0.79) or a microtubule-based process (0.81), and ranks
-    nonessential genes high in ncRNA metabolism (0.90), rRNA processing (0.92), RNA
-    modification (0.92) and cytoplasmic translation (0.85)
-    (Figure~\ref{fig:summary}\textbf{f} and \textbf{g},
-    Table~\ref{tab:misclass-enrichment}). Hypothesis, untested: the graph model scores
-    a gene by its neighborhood, and the nonessential members of the ribosome biogenesis
-    and translation machinery sit in neighborhoods made of essential genes.
-\end{description}
-
-\input{tables/misclass_enrichment}
+The released held-out set has 31 essential genes, so every conclusion drawn on it alone
+is a conclusion about 31 genes. The rounds in this section reread the finalists and the
+module's controls on ten other held-out fifths of the labeled genes, add the
+gene-protein-reaction rules beside the solve, and price each way of making the module
+cheaper or of fitting it inside one experiment per record.
 
 \subsection{Round 75: the finalists on ten repeated outer splits\secstatus{todo}}
 \label{sec:round75}
@@ -375,38 +271,3 @@ the counts without the vector, each within 0.001 of its one-seed value.
 
 \input{tables/simplification_ladder}
 \input{tables/simplification_paired}
-
-\subsection{What is left to run\secstatus{todo}}
-\label{sec:left-to-run}
-
-Four experiments would change a conclusion above, in the order of what they decide per
-hour of compute. The first is run (Section~\ref{sec:round75}); the second and third are
-rounds 76 and 77 and both are read (Sections~\ref{sec:round76}
-and~\ref{sec:round77}).
-
-\begin{description}
-  \item[Repeated outer splits for the three finalists.] The released held-out set has 31
-    essential genes, the finalists' intervals overlap, and 0.954 is the maximum of
-    eleven averages chosen on those genes. Ten stratified re-splits of the 1,121 labeled
-    genes at the released proportions, with the layer-free cell, graph convolution on GO
-    and their equal-weight average fixed in advance, three seeds each, give a paired
-    difference per split. The read: the average minus the better single model, its sign
-    on ten splits and its mean. About six card-hours.
-  \item[A rule-aware input for the essential genes the solve calls viable.] Run, and
-    it works on the fifteen and backfires on the four
-    (Section~\ref{sec:round77}). What it was: the number of alternative gene
-    sets in the gene-protein-reaction rule of each reaction a gene catalyzes, and
-    whether every one of its reactions has an alternative, as affine columns beside the
-    vector, lowers their misrank. The read: the mean misrank of those 19 genes against
-    0.134, and the six-seed AUROC against 0.908.
-  \item[The gene graph as an input to the transformer that reads the solve.] Degree
-    and clustering in the physical graph as affine columns is the cheapest form, and a
-    graph-convolved ProtT5 embedding on the node the next. The read: the genome-wide
-    AUROC against 0.570 and 0.755, with the released 195 held at 0.908.
-  \item[The store on a second phenotype.] The transformer trained over the solid-growth
-    build with the store as an input is the direct test of panel \textbf{e}, and its
-    number is not yet read.
-\end{description}
-
-The construction in which the binding ceilings differ per genotype
-(Section~\ref{sec:open}) stays a design question and is not on this list.

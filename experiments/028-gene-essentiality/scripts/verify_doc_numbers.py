@@ -89,6 +89,41 @@ def simplification(block: str, name: str, key: str) -> Callable[[], float]:
     return run
 
 
+def module_over_none(statistic: str) -> Callable[[], float]:
+    """The single-medium module (w104) minus no metabolism (w94), seeds 2700 to 2702."""
+
+    def run() -> float:
+        seeds = (2700, 2701, 2702)
+        per_split, pairs = [], []
+        for r in range(10):
+            d = []
+            for s in seeds:
+                a = json.load(
+                    open(
+                        osp.join(
+                            RESULTS, f"w104_resplit{r}ypdgpr_h12l1p1_e200_s{s}.json"
+                        )
+                    )
+                )
+                b = json.load(
+                    open(
+                        osp.join(
+                            RESULTS, f"w94_resplit{r}pathpool_h12l1p1_e200_s{s}.json"
+                        )
+                    )
+                )
+                d.append(a["test"]["pinned"]["auroc"] - b["test"]["pinned"]["auroc"])
+            per_split.append(float(np.mean(d)))
+            pairs.extend(d)
+        return {
+            "mean": float(np.mean(per_split)),
+            "splits_higher": float(sum(v > 0 for v in per_split)),
+            "pairs_higher": float(sum(v > 0 for v in pairs)),
+        }[statistic]
+
+    return run
+
+
 def calibration_growth(tier: str, scale: float) -> Callable[[], float]:
     """Median growth at one capacity scale under one turnover tier."""
 
@@ -937,6 +972,22 @@ CHECKS: list[Check] = [
         recompute=simplification(
             "ladder", "YPD and SC ratios, rule counts", "fold_ensemble_one_seed"
         ),
+    ),
+    # sec:summary -- goal 2, the single-medium module against no metabolism.
+    Check(
+        claim="summary: single-medium module minus no metabolism",
+        stated=0.066,
+        recompute=module_over_none("mean"),
+    ),
+    Check(
+        claim="summary: ... splits higher",
+        stated=10,
+        recompute=module_over_none("splits_higher"),
+    ),
+    Check(
+        claim="summary: ... split-and-seed pairs higher",
+        stated=29,
+        recompute=module_over_none("pairs_higher"),
     ),
 ]
 

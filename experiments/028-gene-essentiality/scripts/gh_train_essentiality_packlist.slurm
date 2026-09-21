@@ -55,7 +55,8 @@ echo "host $(hostname) gpu ${CUDA_VISIBLE_DEVICES:-none}; DATA_ROOT=$DATA_ROOT; 
 echo "snapshot head: $(cat SNAPSHOT_GIT_HEAD 2>/dev/null || echo unfrozen)"
 
 run_pack() {
-    PACK="$1"[ -f "$PACK" ] || { echo "no such pack file: $PACK" >&2; exit 2; }
+    PACK="$1"
+    [ -f "$PACK" ] || { echo "no such pack file: $PACK" >&2; return 2; }
     LOG_DIR="${ESS_PACK_LOG_DIR:-$PROJECT_ROOT/experiments/028-gene-essentiality/slurm/output}"
     JOB="${SLURM_JOB_ID:-local}"
     CELL_SH=experiments/028-gene-essentiality/scripts/ess_cell.sh

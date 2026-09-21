@@ -1525,3 +1525,15 @@ Job 2670, six seeds and five folds. YPD with SM and the rule counts, no solver: 
 Goals restated: (1) best score against FCL and FBA; (2) a module that carries to other datasets with one record = one genotype in one medium. Headline for goal 2, ten splits, three seeds: single-medium module minus no metabolism +0.066, 10/10 splits, 29/30 split-and-seed pairs; round 103 (job 2672) takes the control to nine seeds.
 
 Document work: summary moved to the end as Section 8 (done, 8e7d49930); closing list rewritten (done); tables widened without wrapping, Figure 14 redrawn to the plotting standards, a diagram per module modification (three background agents, in progress); rounds 87 and 99 to 103 written in when they land; a second summary figure for goal 2; final `make check` and publish.
+
+## 2026.09.21 - Round 99: two media do not recover four once the flux vector is gone
+
+Job 2668, ten repeated outer splits, three seeds each, the solver-free recipe with YPD and SC growth ratios plus the six gene-rule counts. Paired by split:
+
+- two media minus four media: -0.0069 (sd 0.0060), higher on 1 of 10.
+- two media minus one medium: +0.0052 (sd 0.0144), higher on 7 of 10.
+- two media minus no metabolism: +0.0412 (sd 0.0341), higher on 10 of 10.
+
+So the ladder without the stored flux vector is monotone in the number of media, 0.832 for one, 0.838 for two, 0.845 for four, and the second medium buys about a third of the gap. Round 101 (job 2670) had already shown that pairing YPD with the minimal medium instead of SC is not better: 0.892 per cell against 0.896, higher on 2 of 6 seeds.
+
+Round 104 (job 2674) takes the two-media and one-medium fold ensembles to three seeds per fold, the depth the other forms already have.

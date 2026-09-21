@@ -4,14 +4,14 @@
 \begin{table}[H]
   \centering
   \scriptsize
-  \caption[What the misranked genes share]{What the misranked genes of each held-out set share, per model and class. A gene's misrank is the fraction of the other class on the wrong side of it, averaged over the model's cells; a term is tested within one class by a one-sided Mann-Whitney $U$ of the annotated genes' misrank against the rest, and the effect is $U$ as a probability, the chance an annotated gene is misranked worse than an unannotated one (0.5 is no association), with the Benjamini-Hochberg $q$ within the family in parentheses. Rows per family: the two named features where both sides hold five genes, then the four best specific biological-process terms (at most 5 percent of the class or 12 genes, near-duplicates removed). Written by \texttt{misclass\_enrichment.py}.}
+  \caption[What the misranked genes share]{What the misranked genes of each held-out set share, per model and class. A gene's misrank is the fraction of the other class on the wrong side of it, averaged over the model's cells; a term is tested within one class by a one-sided Mann-Whitney $U$ of the annotated genes' misrank against the rest, and the effect is $U$ as a probability, the chance an annotated gene is misranked worse than an unannotated one (0.5 is no association), with the Benjamini-Hochberg $q$ within the family in parentheses. Rows per family: the two named features where both sides hold five genes, then the four best specific biological-process terms (at most 5 percent of the class or 12 genes, near-duplicates removed). Rows in bold hold at $q < 0.1$, and $\uparrow$ marks their annotated genes as the ones misranked worse; every other row is shown for comparison and is not an association. Written by \texttt{misclass\_enrichment.py}.}
   \label{tab:misclass-enrichment}
   \begin{tabular}{@{}lrrrr@{}}
     \hline
     term & genes & misrank, annotated & misrank, rest & effect ($q$) \\
     \hline
     \multicolumn{5}{@{}l}{\textit{released 195 (metabolic genes); transformer, layer-free solve; essential, ranked low (31 genes, 44 terms, 1 at $q < 0.1$)}} \\
-    \quad FBA knockout growth ratio 1.0 & 19 & 0.134 & 0.025 & 0.91 (0.003) \\
+    \quad \textbf{FBA knockout growth ratio 1.0} & 19 & \textbf{0.134} $\uparrow$ & 0.025 & \textbf{0.91 (0.003)} \\
     \quad physical degree under the class median & 15 & 0.103 & 0.082 & 0.56 (0.944) \\
     \quad membrane lipid metabolic process & 6 & 0.119 & 0.085 & 0.68 (0.944) \\
     \quad organonitrogen compound biosynthetic process & 8 & 0.116 & 0.083 & 0.65 (0.944) \\
@@ -20,10 +20,10 @@
     \multicolumn{5}{@{}l}{\textit{released 195 (metabolic genes); transformer, layer-free solve; nonessential, ranked high (164 genes, 211 terms, 70 at $q < 0.1$)}} \\
     \quad FBA knockout growth ratio 1.0 & 152 & 0.082 & 0.214 & 0.44 (0.892) \\
     \quad physical degree under the class median & 81 & 0.058 & 0.124 & 0.40 (0.988) \\
-    \quad purine ribonucleoside triphosphate metabolic process & 7 & 0.528 & 0.072 & 0.88 (0.006) \\
-    \quad steroid biosynthetic process & 5 & 0.324 & 0.084 & 0.85 (0.025) \\
-    \quad monosaccharide biosynthetic process & 5 & 0.472 & 0.080 & 0.83 (0.026) \\
-    \quad macromolecule modification & 9 & 0.140 & 0.089 & 0.72 (0.043) \\
+    \quad \textbf{purine ribonucleoside triphosphate metabolic process} & 7 & \textbf{0.528} $\uparrow$ & 0.072 & \textbf{0.88 (0.006)} \\
+    \quad \textbf{steroid biosynthetic process} & 5 & \textbf{0.324} $\uparrow$ & 0.084 & \textbf{0.85 (0.025)} \\
+    \quad \textbf{monosaccharide biosynthetic process} & 5 & \textbf{0.472} $\uparrow$ & 0.080 & \textbf{0.83 (0.026)} \\
+    \quad \textbf{macromolecule modification} & 9 & \textbf{0.140} $\uparrow$ & 0.089 & \textbf{0.72 (0.043)} \\
     \multicolumn{5}{@{}l}{\textit{released 195 (metabolic genes); graph convolution on GO; essential, ranked low (31 genes, 44 terms, 0 at $q < 0.1$)}} \\
     \quad FBA knockout growth ratio 1.0 & 19 & 0.111 & 0.071 & 0.51 (0.990) \\
     \quad physical degree under the class median & 15 & 0.052 & 0.136 & 0.32 (1.000) \\
@@ -34,34 +34,34 @@
     \multicolumn{5}{@{}l}{\textit{released 195 (metabolic genes); graph convolution on GO; nonessential, ranked high (164 genes, 211 terms, 57 at $q < 0.1$)}} \\
     \quad FBA knockout growth ratio 1.0 & 152 & 0.095 & 0.099 & 0.52 (0.598) \\
     \quad physical degree under the class median & 81 & 0.070 & 0.120 & 0.46 (0.940) \\
-    \quad steroid biosynthetic process & 5 & 0.554 & 0.081 & 0.96 (0.004) \\
-    \quad lipid biosynthetic process & 12 & 0.329 & 0.077 & 0.83 (0.004) \\
-    \quad macromolecule modification & 9 & 0.191 & 0.090 & 0.75 (0.052) \\
-    \quad pyruvate metabolic process & 7 & 0.220 & 0.090 & 0.77 (0.059) \\
+    \quad \textbf{steroid biosynthetic process} & 5 & \textbf{0.554} $\uparrow$ & 0.081 & \textbf{0.96 (0.004)} \\
+    \quad \textbf{lipid biosynthetic process} & 12 & \textbf{0.329} $\uparrow$ & 0.077 & \textbf{0.83 (0.004)} \\
+    \quad \textbf{macromolecule modification} & 9 & \textbf{0.191} $\uparrow$ & 0.090 & \textbf{0.75 (0.052)} \\
+    \quad \textbf{pyruvate metabolic process} & 7 & \textbf{0.220} $\uparrow$ & 0.090 & \textbf{0.77 (0.059)} \\
     \multicolumn{5}{@{}l}{\textit{genome-wide 4,674 (no GEM reaction); transformer, layer-free solve; essential, ranked low (974 genes, 731 terms, 61 at $q < 0.1$)}} \\
     \quad physical degree under the class median & 476 & 0.404 & 0.462 & 0.43 (1.000) \\
-    \quad establishment of protein localization to mitochondrion & 25 & 0.651 & 0.428 & 0.74 (0.004) \\
-    \quad inner mitochondrial membrane organization & 5 & 0.869 & 0.431 & 0.95 (0.012) \\
-    \quad nucleosome organization & 17 & 0.640 & 0.430 & 0.74 (0.016) \\
-    \quad localization within membrane & 42 & 0.562 & 0.428 & 0.65 (0.024) \\
+    \quad \textbf{establishment of protein localization to mitochondrion} & 25 & \textbf{0.651} $\uparrow$ & 0.428 & \textbf{0.74 (0.004)} \\
+    \quad \textbf{inner mitochondrial membrane organization} & 5 & \textbf{0.869} $\uparrow$ & 0.431 & \textbf{0.95 (0.012)} \\
+    \quad \textbf{nucleosome organization} & 17 & \textbf{0.640} $\uparrow$ & 0.430 & \textbf{0.74 (0.016)} \\
+    \quad \textbf{localization within membrane} & 42 & \textbf{0.562} $\uparrow$ & 0.428 & \textbf{0.65 (0.024)} \\
     \multicolumn{5}{@{}l}{\textit{genome-wide 4,674 (no GEM reaction); transformer, layer-free solve; nonessential, ranked high (3,700 genes, 1,427 terms, 59 at $q < 0.1$)}} \\
-    \quad physical degree under the class median & 1,810 & 0.495 & 0.375 & 0.61 ($<$0.001) \\
-    \quad DNA recombination & 113 & 0.592 & 0.429 & 0.65 ($<$0.001) \\
-    \quad homologous recombination & 47 & 0.675 & 0.431 & 0.73 ($<$0.001) \\
-    \quad RNA modification & 65 & 0.630 & 0.430 & 0.69 ($<$0.001) \\
-    \quad DNA repair & 135 & 0.563 & 0.429 & 0.63 ($<$0.001) \\
+    \quad \textbf{physical degree under the class median} & 1,810 & \textbf{0.495} $\uparrow$ & 0.375 & \textbf{0.61 ($<$0.001)} \\
+    \quad \textbf{DNA recombination} & 113 & \textbf{0.592} $\uparrow$ & 0.429 & \textbf{0.65 ($<$0.001)} \\
+    \quad \textbf{homologous recombination} & 47 & \textbf{0.675} $\uparrow$ & 0.431 & \textbf{0.73 ($<$0.001)} \\
+    \quad \textbf{RNA modification} & 65 & \textbf{0.630} $\uparrow$ & 0.430 & \textbf{0.69 ($<$0.001)} \\
+    \quad \textbf{DNA repair} & 135 & \textbf{0.563} $\uparrow$ & 0.429 & \textbf{0.63 ($<$0.001)} \\
     \multicolumn{5}{@{}l}{\textit{genome-wide 4,674 (no GEM reaction); graph convolution on ProtT5; essential, ranked low (974 genes, 731 terms, 252 at $q < 0.1$)}} \\
-    \quad physical degree under the class median & 476 & 0.337 & 0.158 & 0.70 ($<$0.001) \\
-    \quad cytoskeleton organization & 43 & 0.438 & 0.236 & 0.79 ($<$0.001) \\
-    \quad microtubule-based process & 36 & 0.459 & 0.237 & 0.81 ($<$0.001) \\
-    \quad mitochondrion organization & 37 & 0.379 & 0.240 & 0.74 ($<$0.001) \\
-    \quad attachment of spindle microtubules to kinetochore & 20 & 0.488 & 0.240 & 0.81 ($<$0.001) \\
+    \quad \textbf{physical degree under the class median} & 476 & \textbf{0.337} $\uparrow$ & 0.158 & \textbf{0.70 ($<$0.001)} \\
+    \quad \textbf{cytoskeleton organization} & 43 & \textbf{0.438} $\uparrow$ & 0.236 & \textbf{0.79 ($<$0.001)} \\
+    \quad \textbf{microtubule-based process} & 36 & \textbf{0.459} $\uparrow$ & 0.237 & \textbf{0.81 ($<$0.001)} \\
+    \quad \textbf{mitochondrion organization} & 37 & \textbf{0.379} $\uparrow$ & 0.240 & \textbf{0.74 ($<$0.001)} \\
+    \quad \textbf{attachment of spindle microtubules to kinetochore} & 20 & \textbf{0.488} $\uparrow$ & 0.240 & \textbf{0.81 ($<$0.001)} \\
     \multicolumn{5}{@{}l}{\textit{genome-wide 4,674 (no GEM reaction); graph convolution on ProtT5; nonessential, ranked high (3,700 genes, 1,427 terms, 599 at $q < 0.1$)}} \\
     \quad physical degree under the class median & 1,810 & 0.166 & 0.321 & 0.26 (1.000) \\
-    \quad ncRNA metabolic process & 173 & 0.635 & 0.226 & 0.90 ($<$0.001) \\
-    \quad rRNA processing & 85 & 0.648 & 0.236 & 0.92 ($<$0.001) \\
-    \quad cytoplasmic translation & 98 & 0.551 & 0.237 & 0.85 ($<$0.001) \\
-    \quad RNA modification & 65 & 0.717 & 0.237 & 0.92 ($<$0.001) \\
+    \quad \textbf{ncRNA metabolic process} & 173 & \textbf{0.635} $\uparrow$ & 0.226 & \textbf{0.90 ($<$0.001)} \\
+    \quad \textbf{rRNA processing} & 85 & \textbf{0.648} $\uparrow$ & 0.236 & \textbf{0.92 ($<$0.001)} \\
+    \quad \textbf{cytoplasmic translation} & 98 & \textbf{0.551} $\uparrow$ & 0.237 & \textbf{0.85 ($<$0.001)} \\
+    \quad \textbf{RNA modification} & 65 & \textbf{0.717} $\uparrow$ & 0.237 & \textbf{0.92 ($<$0.001)} \\
     \hline
   \end{tabular}
 \end{table}

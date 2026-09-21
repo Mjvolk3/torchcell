@@ -4,11 +4,11 @@
 \begin{table}[H]
   \centering
   \footnotesize
-  \caption[Rounds 83 to 98: media and solver on the released split]{What the affine columns cost and what they score, on the same backbone (pathway multi-hot with ProtT5). Media is the number of FBA growth ratios on the logit, each a different environment; solver says whether the recipe needs one linear program per genotype, run once offline. Columns: seeds, their mean held-out AUROC and its spread, and the five-fold ensemble at one seed per fold and at three. Best of each column in bold. Written by \texttt{notes\_tex\_tables.py} from \texttt{results/simplification\_readout.json}.}
+  \caption[Rounds 83 to 98: media and flux vector on the released split]{What the affine columns cost and what they score, on the same backbone (pathway multi-hot with ProtT5). Media is the number of FBA growth ratios on the logit, each a different environment; vector says whether the recipe also reads the stored flux vector of the parsimonious solve. Every ratio is itself one FBA program per genotype and medium, run once offline. Columns: seeds, their mean held-out AUROC and its spread, and the five-fold ensemble at one seed per fold and at three. Best of each column in bold. Written by \texttt{notes\_tex\_tables.py} from \texttt{results/simplification\_readout.json}.}
   \label{tab:simplification-ladder}
   \begin{tabular}{@{}lrlrrrrr@{}}
     \hline
-    affine columns & media & solver & seeds & cell mean & sd & folds, 1 seed & folds, 3 seeds \\
+    affine columns & media & vector & seeds & cell mean & sd & folds, 1 seed & folds, 3 seeds \\
     \hline
     four ratios, flux vector, rule counts & 4 & yes & 6 & \textbf{0.918} & 0.006 & \textbf{0.934} & \textbf{0.933} \\
     YPD ratio, flux vector, rule counts & 1 & yes & 6 & 0.916 & 0.003 & 0.932 & 0.932 \\
@@ -18,6 +18,7 @@
     YPD ratio, rule counts & 1 & no & 6 & 0.888 & 0.013 & 0.902 & \multicolumn{1}{c}{--} \\
     four ratios & 4 & no & 3 & 0.890 & 0.005 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
     YPD ratio & 1 & no & 6 & 0.877 & 0.011 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
+    no metabolism & 0 & no & 6 & 0.858 & 0.004 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
     \hline
   \end{tabular}
 \end{table}

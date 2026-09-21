@@ -2054,10 +2054,18 @@ def misclass_enrichment() -> str | None:
         )
         for t in f["named_features"] + f["top_specific"][:4]:
             q = f"{t['q']:.3f}" if t["q"] >= 0.001 else "$<$0.001"
+            # The rows to read: the association holds within its family at q < 0.1. The
+            # test is one-sided (annotated genes misranked WORSE), so the arrow is up.
+            hit = t["q"] < 0.1
+            name = f"\\textbf{{{t['name']}}}" if hit else t["name"]
+            annotated = f"{t['mean_misrank_annotated']:.3f}"
+            effect = f"{t['effect']:.2f} ({q})"
+            if hit:
+                annotated = f"\\textbf{{{annotated}}} $\\uparrow$"
+                effect = f"\\textbf{{{effect}}}"
             rows.append(
-                f"    \\quad {t['name']} & {t['n_annotated']:,} & "
-                f"{t['mean_misrank_annotated']:.3f} & {t['mean_misrank_rest']:.3f} & "
-                f"{t['effect']:.2f} ({q}) \\\\"
+                f"    \\quad {name} & {t['n_annotated']:,} & "
+                f"{annotated} & {t['mean_misrank_rest']:.3f} & {effect} \\\\"
             )
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
@@ -2070,7 +2078,9 @@ def misclass_enrichment() -> str | None:
         "with the Benjamini-Hochberg $q$ within the family in parentheses. Rows per "
         "family: the two named features where both sides hold five genes, then the four "
         "best specific biological-process terms (at most 5 percent of the class or 12 "
-        "genes, near-duplicates removed). Written by "
+        "genes, near-duplicates removed). Rows in bold hold at $q < 0.1$, and $\\uparrow$ "
+        "marks their annotated genes as the ones misranked worse; every other row is "
+        "shown for comparison and is not an association. Written by "
         "\\texttt{misclass\\_enrichment.py}.}\n"
         "  \\label{tab:misclass-enrichment}\n"
         "  \\begin{tabular}{@{}p{92mm}rrrr@{}}\n    \\hline\n"
@@ -2350,7 +2360,7 @@ def single_experiment_ablation() -> str | None:
 
 
 def simplification_ladder() -> str | None:
-    """Rounds 83 to 98: media and solver, each recipe on the released split."""
+    """Rounds 83 to 98: media and flux vector, each recipe on the released split."""
     src = osp.join(RESULTS, "simplification_readout.json")
     if not osp.isfile(src):
         return None
@@ -2373,17 +2383,18 @@ def simplification_ladder() -> str | None:
         )
     body = (
         "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
-        "  \\caption[Rounds 83 to 98: media and solver on the released split]{What the "
+        "  \\caption[Rounds 83 to 98: media and flux vector on the released split]{What the "
         "affine columns cost and what they score, on the same backbone (pathway multi-hot "
         "with ProtT5). Media is the number of FBA growth ratios on the logit, each a "
-        "different environment; solver says whether the recipe needs one linear program "
-        "per genotype, run once offline. Columns: seeds, their mean held-out AUROC and "
+        "different environment; vector says whether the recipe also reads the stored flux "
+        "vector of the parsimonious solve. Every ratio is itself one FBA program per "
+        "genotype and medium, run once offline. Columns: seeds, their mean held-out AUROC and "
         "its spread, and the five-fold ensemble at one seed per fold and at three. Best "
         "of each column in bold. Written by \\texttt{notes\\_tex\\_tables.py} from "
         "\\texttt{results/simplification\\_readout.json}.}\n"
         "  \\label{tab:simplification-ladder}\n"
         "  \\begin{tabular}{@{}p{58mm}rlrrrrr@{}}\n    \\hline\n"
-        "    affine columns & media & solver & seeds & cell mean & sd & folds, 1 seed & "
+        "    affine columns & media & vector & seeds & cell mean & sd & folds, 1 seed & "
         "folds, 3 seeds \\\\\n    \\hline\n"
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"

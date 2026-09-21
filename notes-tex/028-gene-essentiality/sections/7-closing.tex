@@ -218,15 +218,17 @@ database where the environment is part of the key rather than part of the featur
 
 Three simplifications make the module cheaper or easier to carry to another dataset:
 reading one medium instead of four, so that a record stays one genotype in one
-environment; dropping the solved flux vector, so that no linear program is needed; and
-dropping rule-count columns. Rounds 84 to 98 (jobs 2616 to 2667, job 2622 aside) measure each against the
+environment; dropping the stored flux vector, so that a record carries one growth ratio
+per medium and no 4,131-column row; and dropping rule-count columns. A growth ratio is
+itself one FBA program per genotype and medium, so dropping the vector saves the second
+program of the parsimonious solve and the storage, not the solver. Rounds 84 to 98 (jobs 2616 to 2667, job 2622 aside) measure each against the
 same baselines on the released split (Table~\ref{tab:simplification-ladder}) and, paired
 by split, on the ten repeated outer splits of Section~\ref{sec:round75}
 (Table~\ref{tab:simplification-paired}). The repeated-split arms that carry the solve were
 extended to nine seeds per split (rounds 89 to 93), the vector and the ratios alone stand
-at six (round 78), and the two recipes with neither a solve nor four media at three.
+at six (round 78), and the two recipes with neither the vector nor four media at three.
 
-\paragraph{One medium is free while the solve is present.} With the flux vector and the
+\paragraph{One medium is free while the flux vector is present.} With the flux vector and the
 counts kept, the YPD ratio alone against all four ratios reads $+0.002$ over the ten
 splits at nine seeds each, higher on six of ten, and 0.916 against 0.918 on the released
 split. The fold ensembles agree, 0.932 against 0.934 at one seed per fold and 0.932
@@ -241,15 +243,17 @@ ensembles, 0.920 against 0.909. Across the three protocols neither half is relia
 larger, and the pair is reliably above either.
 
 \paragraph{The simplifications do not stack.} Once the vector is gone the other media
-carry signal the counts do not replace. With the counts and no solve, four ratios read
+carry signal the counts do not replace. With the counts and no flux vector, four ratios read
 0.902 on the released split, the YPD and SC ratios 0.896, and the YPD ratio alone 0.888
 (fold ensembles 0.909, 0.905 and 0.902),
-and on the repeated splits one medium for four costs $-0.012$ (higher on two of ten). The recipe that respects one experiment and needs no solver,
+and on the repeated splits one medium for four costs $-0.012$ (higher on two of ten). The recipe that respects one experiment and stores no flux vector,
 one ratio with the six counts, reads 0.888 per cell and 0.902 as a fold ensemble against
 0.918 and 0.934 for the full recipe, and $-0.030$ on the repeated splits, lower on ten of
 ten. The cheapest admissible recipe that keeps the full score is therefore the
-one-medium recipe with the solve, which costs one linear program per genotype and medium,
-run once offline.
+one-medium recipe with the vector. Its growth ratio already requires one linear program
+per genotype and medium, run once offline, and the parsimonious solve that yields the
+vector adds a second program on the same model, so the vector is nearly free once the
+ratio is computed.
 
 \paragraph{The six counts are redundant among themselves.} Round 77's misrank pattern
 pointed at the sole-reaction count as the one useful column. Round 84 tested that: beside the vector, that count alone

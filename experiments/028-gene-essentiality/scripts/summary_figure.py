@@ -71,8 +71,6 @@ GRAPH = PLOT_PALETTE[1]
 AVERAGE = PLOT_PALETTE[2]
 
 WIDTH_MM = PANEL_WIDTHS_MM["full"]
-HEIGHT_MM = 169.0
-assert HEIGHT_MM <= MAX_HEIGHT_MM
 
 
 class Bar(BaseModel):
@@ -94,8 +92,9 @@ def read(name: str) -> Any:
 
 def place(fig: Figure, x: float, top: float, w: float, h: float) -> Axes:
     """An axes whose box is given in millimeters from the figure's top-left corner."""
+    height_mm = fig.get_size_inches()[1] * 25.4
     ax = fig.add_axes(
-        (x / WIDTH_MM, 1.0 - (top + h) / HEIGHT_MM, w / WIDTH_MM, h / HEIGHT_MM)
+        (x / WIDTH_MM, 1.0 - (top + h) / height_mm, w / WIDTH_MM, h / height_mm)
     )
     for sp in ax.spines.values():
         sp.set_linewidth(0.5)
@@ -107,7 +106,7 @@ def letter(fig: Figure, x: float, top: float, text: str) -> None:
     """A panel letter at the outer top-left of the panel's block, on the title line."""
     fig.text(
         x / WIDTH_MM,
-        1.0 - (top - 1.0) / HEIGHT_MM,
+        1.0 - (top - 1.0) / (fig.get_size_inches()[1] * 25.4),
         text,
         fontsize=8,
         fontweight="bold",
@@ -537,9 +536,8 @@ def panel_enrichment(ax: Axes, set_label: str, models: list[tuple[str, str]]) ->
             )
     ax.axvline(0.5, color="black", lw=0.5, ls=(0, (2, 2)), zorder=2)
     ax.set_yticks(y)
-    ax.set_yticklabels(
-        [r["name"] if len(r["name"]) <= 44 else r["name"][:42] + "..." for r in rows]
-    )
+    # Full term names: a truncated GO term cannot be looked up.
+    ax.set_yticklabels([r["name"] for r in rows])
     ax.set_ylim(-0.7, y.max() + 0.7)
     ax.tick_params(axis="y", length=0)
     ax.set_xlim(0.2, 1.0)
@@ -567,64 +565,29 @@ def panel_enrichment(ax: Axes, set_label: str, models: list[tuple[str, str]]) ->
 # --------------------------------------------------------------------------- figure
 
 
-def main() -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "svg.fonttype": "none",
-            "axes.linewidth": 0.5,
-            "hatch.linewidth": 0.4,
-            "axes.titlesize": 6,
-        }
-    )
-    fig = plt.figure(figsize=(mm_to_in(WIDTH_MM), mm_to_in(HEIGHT_MM)))
+def new_figure(height_mm: float) -> Figure:
+    assert height_mm <= MAX_HEIGHT_MM
+    return plt.figure(figsize=(mm_to_in(WIDTH_MM), mm_to_in(height_mm)))
 
-    # One legend for the whole figure, on its own line above the first row.
-    handles = [
-        Patch(
-            facecolor=COMPARATOR,
-            edgecolor="black",
-            lw=0.4,
-            label="comparator, nothing learned here",
-        ),
-        Patch(
-            facecolor=NO_SOLVE,
-            edgecolor="black",
-            lw=0.4,
-            label="learned, no solve, no graph",
-        ),
-        Patch(
-            facecolor=SOLVE,
-            edgecolor="black",
-            lw=0.4,
-            label="transformer reading the solve",
-        ),
-        Patch(
-            facecolor=GRAPH,
-            edgecolor="black",
-            lw=0.4,
-            label="message passing on gene graphs",
-        ),
-        Patch(
-            facecolor=AVERAGE,
-            edgecolor="black",
-            lw=0.4,
-            label="average of the two families",
-        ),
-        Patch(
-            facecolor="white",
-            edgecolor="black",
-            lw=0.4,
-            hatch="/////",
-            label="LP solved inside training",
-        ),
-    ]
+
+def save(fig: Figure, name: str) -> None:
+    os.makedirs(IMAGES, exist_ok=True)
+    stem = osp.join(IMAGES, f"{name}_{timestamp()}")
+    savefig_true_size_svg(fig, stem + ".svg")
+    fig.savefig(stem + ".png", dpi=300)
+    print(stem + ".svg")
+
+
+def patch(color: str, label: str, hatch: str | None = None) -> Patch:
+    return Patch(facecolor=color, edgecolor="black", lw=0.4, hatch=hatch, label=label)
+
+
+def top_legend(fig: Figure, handles: list[Any], ncol: int) -> None:
     fig.legend(
         handles=handles,
         loc="upper left",
         bbox_to_anchor=(0.0, 1.0),
-        ncol=3,
+        ncol=ncol,
         frameon=False,
         handlelength=1.2,
         handletextpad=0.4,
@@ -632,38 +595,71 @@ def main() -> None:
         borderaxespad=0.2,
     )
 
+
+def goal_one() -> None:
+    """Goal 1, panels b to e; panel a is the draw.io explainer placed above in LaTeX."""
+    height = 120.0
+    fig = new_figure(height)
+    top_legend(
+        fig,
+        [
+            patch(COMPARATOR, "comparator, nothing learned here"),
+            patch(NO_SOLVE, "learned, no solve, no graph"),
+            patch(SOLVE, "family 1: transformer reading the solve"),
+            patch(GRAPH, "family 2: message passing on gene graphs"),
+            patch(AVERAGE, "equal-weight average of families 1 and 2"),
+            patch("white", "LP solved inside training", hatch="/////"),
+        ],
+        ncol=3,
+    )
     left_label, right_block = 47.0, 92.0
 
-    # Row 1: what ranks best, and which module form.
     top = 15.0
     ax = place(fig, left_label, top, 40.0, 46.0)
     draw_bars(ax, leaderboard())
     auroc_axis(ax, 0.5, 1.0)
     ax.set_xlabel("AUROC, 195 held-out genes, fold ensembles")
     ax.set_title("Best method, released 195 genes", pad=3, loc="left")
-    letter(fig, 0.0, top, "a")
+    letter(fig, 0.0, top, "b")
 
-    forms = module_forms()
-    ax = place(fig, right_block + 45.0, top, 23.0, 46.0)
-    draw_bars(ax, forms)
-    auroc_axis(ax, 0.4, 1.0)
-    ax.set_xlabel("AUROC per cell, seed mean")
-    ax.set_title("Which module form", pad=3, loc="left")
-    letter(fig, right_block, top, "b")
-    axc = place(fig, right_block + 45.0 + 23.0 + 6.0, top, 11.0, 46.0)
-    draw_bars(axc, forms, values=[b.minutes or 0.0 for b in forms])
-    axc.set_yticklabels([])
-    axc.set_xlim(0, 160)
-    axc.xaxis.set_major_locator(MultipleLocator(60))
-    axc.grid(axis="x", lw=0.3, color="0.85", zorder=0)
-    axc.set_axisbelow(True)
-    axc.set_xlabel("minutes")
-    axc.set_title("Cost per cell", pad=3, loc="left")
-    letter(fig, right_block + 45.0 + 23.0 + 2.5, top, "c")
+    # c: the finalists on the ten repeated outer splits, fixed in advance (round 75).
+    resplit = read("resplit_readout.json")["splits"]
+    order = sorted(range(len(resplit)), key=lambda i: resplit[i]["average"])
+    ax = place(fig, right_block + 12.0, top, 72.0, 46.0)
+    for key, color, marker in (
+        ("layer_free", SOLVE, "o"),
+        ("go_convolution", GRAPH, "s"),
+        ("average", AVERAGE, "D"),
+    ):
+        ax.plot(
+            range(len(order)),
+            [resplit[i][key] for i in order],
+            ls="-",
+            lw=0.5,
+            marker=marker,
+            ms=3.0,
+            color=color,
+            mec="black",
+            mew=0.4,
+            zorder=3,
+        )
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels([str(resplit[i]["resplit"]) for i in order])
+    ax.set_ylim(0.7, 1.0)
+    ax.yaxis.set_major_locator(MultipleLocator(0.1))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.05))
+    ax.tick_params(axis="y", which="minor", length=0)
+    ax.grid(axis="y", which="both", lw=0.3, color="0.85", zorder=0)
+    ax.set_axisbelow(True)
+    ax.set_xlabel("repeated outer split, sorted by the average's AUROC")
+    ax.set_ylabel("held-out AUROC")
+    ax.set_title(
+        "Ten other held-out fifths, models fixed in advance", pad=3, loc="left"
+    )
+    letter(fig, right_block, top, "c")
 
-    # Row 2: what transfers, and what the winning form costs at database scale.
-    top = 79.0
-    ax = place(fig, left_label, top, 40.0, 34.0)
+    top = 78.0
+    ax = place(fig, left_label, top, 40.0, 30.0)
     draw_bars(ax, genome_transfer())
     ax.axvline(0.5, color="black", lw=0.5, ls=(0, (2, 2)), zorder=5)
     auroc_axis(ax, 0.4, 0.8)
@@ -671,18 +667,7 @@ def main() -> None:
     ax.set_title("What transfers off the metabolic genes", pad=3, loc="left")
     letter(fig, 0.0, top, "d")
 
-    ax = place(fig, right_block + 45.0, top, 39.0, 24.0)
-    draw_bars(ax, store_scale())
-    ax.set_xscale("log")
-    ax.set_xlim(1e3, 5e7)
-    ax.grid(axis="x", lw=0.3, color="0.85", zorder=0)
-    ax.set_axisbelow(True)
-    ax.set_xlabel("count, 025 solid-growth build")
-    ax.set_title("The layer-free solve at database scale", pad=3, loc="left")
-    letter(fig, right_block, top, "e")
-
-    # Row 3: what the misranked genes share, on each held-out set.
-    top = 131.0
+    set_label, title, models = ENRICH_SETS[0]
     markers = [
         Line2D(
             [],
@@ -693,7 +678,7 @@ def main() -> None:
             mfc=SOLVE,
             mec=SOLVE,
             mew=0.7,
-            label="transformer + layer-free solve",
+            label="family 1",
         ),
         Line2D(
             [],
@@ -704,7 +689,7 @@ def main() -> None:
             mfc=GRAPH,
             mec=GRAPH,
             mew=0.7,
-            label="graph convolution (GO in f, ProtT5 in g)",
+            label="family 2",
         ),
         Line2D(
             [],
@@ -721,30 +706,241 @@ def main() -> None:
     fig.legend(
         handles=markers,
         loc="upper left",
-        bbox_to_anchor=(0.0, 1.0 - (top - 9.5) / HEIGHT_MM),
+        bbox_to_anchor=(right_block / WIDTH_MM, 1.0 - (top - 9.0) / height),
         ncol=3,
         frameon=False,
         handletextpad=0.3,
         columnspacing=1.2,
         borderaxespad=0.2,
     )
-    for x_block, x_axes, (set_label, title, models), ch in zip(
-        (0.0, right_block),
-        (left_label, right_block + 45.0),
-        ENRICH_SETS,
-        "fg",
-        strict=True,
-    ):
-        ax = place(fig, x_axes, top, 24.0, 30.0)
-        panel_enrichment(ax, set_label, models)
-        ax.set_title(title, pad=3, loc="left")
-        letter(fig, x_block, top, ch)
+    ax = place(fig, right_block + 50.0, top, 20.0, 30.0)
+    panel_enrichment(ax, set_label, models)
+    ax.set_title(title, pad=3, loc="left")
+    letter(fig, right_block, top, "e")
+    save(fig, "summary_goal1")
 
-    os.makedirs(IMAGES, exist_ok=True)
-    stem = osp.join(IMAGES, f"summary_{timestamp()}")
-    savefig_true_size_svg(fig, stem + ".svg")
-    fig.savefig(stem + ".png", dpi=300)
-    print(stem + ".svg")
+
+#: Row label -> (ladder key, repeated-split pair against no metabolism), for goal 2.
+PORTABLE_FORMS: list[tuple[str, str, str | None]] = [
+    (
+        "1 medium: ratio, flux vector, rule counts",
+        "one_solve_counts",
+        "one medium, flux vector and counts, over no metabolism",
+    ),
+    (
+        "4 media: ratios, flux vector, rule counts",
+        "four_solve_counts",
+        "four media, flux vector and counts, over no metabolism",
+    ),
+    (
+        "4 media: ratios, flux vector",
+        "four_solve",
+        "four media and the flux vector, over no metabolism",
+    ),
+    (
+        "4 media: ratios, rule counts",
+        "four_counts",
+        "four media and the counts, over no metabolism",
+    ),
+    (
+        "2 media: ratios, rule counts",
+        "two_counts",
+        "two media and the counts, over no metabolism",
+    ),
+    (
+        "1 medium: ratio, rule counts",
+        "one_counts",
+        "one medium and the counts, over no metabolism",
+    ),
+    ("4 media: ratios alone", "four_only", "four ratios alone, over no metabolism"),
+    ("no metabolism", "none", None),
+]
+
+
+def goal_two() -> None:
+    """Goal 2: which module form helps, what it costs, and the portable forms."""
+    height = 124.0
+    fig = new_figure(height)
+    top_legend(
+        fig,
+        [
+            patch(NO_SOLVE, "learned, no metabolic column"),
+            patch(SOLVE, "transformer reading an FBA-derived column"),
+            patch(COMPARATOR, "count of records or programs"),
+            patch("white", "LP solved inside training", hatch="/////"),
+            Line2D(
+                [],
+                [],
+                marker="o",
+                ls="",
+                ms=2.2,
+                mfc="white",
+                mec="black",
+                mew=0.4,
+                label="one seed (a, d) or one split (e)",
+            ),
+            Line2D(
+                [],
+                [],
+                marker="D",
+                ls="",
+                ms=2.8,
+                mfc="black",
+                mec="black",
+                label="five-fold ensemble",
+            ),
+        ],
+        ncol=3,
+    )
+    left_label, right_block = 47.0, 96.0
+
+    top = 15.0
+    forms = module_forms()
+    ax = place(fig, left_label, top, 26.0, 46.0)
+    draw_bars(ax, forms)
+    auroc_axis(ax, 0.4, 1.0)
+    ax.set_xlabel("AUROC per cell, seed mean")
+    ax.set_title("Which module form", pad=3, loc="left")
+    letter(fig, 0.0, top, "a")
+    axb = place(fig, left_label + 26.0 + 7.0, top, 12.0, 46.0)
+    draw_bars(axb, forms, values=[b.minutes or 0.0 for b in forms])
+    axb.set_yticklabels([])
+    axb.set_xlim(0, 160)
+    axb.xaxis.set_major_locator(MultipleLocator(60))
+    axb.grid(axis="x", lw=0.3, color="0.85", zorder=0)
+    axb.set_axisbelow(True)
+    axb.set_xlabel("minutes")
+    axb.set_title("Cost per cell", pad=3, loc="left")
+    letter(fig, left_label + 26.0 + 3.0, top, "b")
+
+    ax = place(fig, right_block + 40.0, top, 38.0, 24.0)
+    draw_bars(ax, store_scale())
+    ax.set_xscale("log")
+    ax.set_xlim(1e3, 5e7)
+    ax.grid(axis="x", lw=0.3, color="0.85", zorder=0)
+    ax.set_axisbelow(True)
+    ax.set_xlabel("count, 025 solid-growth build")
+    ax.set_title("The layer-free solve at database scale", pad=3, loc="left")
+    letter(fig, right_block, top, "c")
+
+    # Row 2: the forms a record of one genotype in one medium can carry.
+    report = read("simplification_readout.json")
+    ladder = {r["key"]: r for r in report["ladder"]}
+    pairs = {r["name"]: r for r in report["resplit"]}
+    y = np.arange(len(PORTABLE_FORMS))[::-1]
+    colors = [NO_SOLVE if k == "none" else SOLVE for _, k, _ in PORTABLE_FORMS]
+    top, h = 80.0, 36.0
+
+    ax = place(fig, 50.0, top, 40.0, h)
+    for yi, color, (_, key, _) in zip(y, colors, PORTABLE_FORMS, strict=True):
+        row = ladder[key]
+        ax.barh(
+            yi,
+            row["cell_mean"],
+            height=0.62,
+            color=color,
+            edgecolor="black",
+            lw=0.4,
+            zorder=2,
+        )
+        ax.plot(
+            row["cell_values"],
+            np.full(len(row["cell_values"]), yi),
+            "o",
+            ms=2.2,
+            mfc="white",
+            mec="black",
+            mew=0.4,
+            zorder=3,
+        )
+        fold = row["fold_ensemble_three_seeds"] or row["fold_ensemble_one_seed"]
+        if fold is not None:
+            ax.plot(fold, yi, "D", ms=2.8, color="black", zorder=4)
+    ax.set_xlim(0.8, 0.96)
+    ax.xaxis.set_major_locator(MultipleLocator(0.05))
+    ax.grid(axis="x", lw=0.3, color="0.85", zorder=0)
+    ax.set_axisbelow(True)
+    ax.set_yticks(y)
+    ax.set_yticklabels([label for label, _, _ in PORTABLE_FORMS])
+    ax.set_ylim(-0.6, len(PORTABLE_FORMS) - 0.4)
+    ax.set_xlabel("held-out AUROC, released split")
+    ax.set_title("Released 195 genes", pad=3, loc="left")
+    letter(fig, 0.0, top, "d")
+
+    ax = place(fig, 98.0, top, 42.0, h)
+    for yi, color, (_, _, name) in zip(y, colors, PORTABLE_FORMS, strict=True):
+        if name is None or name not in pairs:
+            continue
+        row = pairs[name]
+        ax.barh(
+            yi,
+            row["mean_difference"],
+            height=0.62,
+            color=color,
+            edgecolor="black",
+            lw=0.4,
+            zorder=2,
+        )
+        ax.plot(
+            row["per_unit_difference"],
+            np.full(row["n"], yi),
+            "o",
+            ms=2.2,
+            mfc="white",
+            mec="black",
+            mew=0.4,
+            zorder=3,
+        )
+    ax.axvline(0.0, color="black", lw=0.5, zorder=1)
+    ax.set_xlim(-0.03, 0.13)
+    ax.xaxis.set_major_locator(MultipleLocator(0.05))
+    ax.grid(axis="x", lw=0.3, color="0.85", zorder=0)
+    ax.set_axisbelow(True)
+    ax.set_yticks(y)
+    ax.set_yticklabels([])
+    ax.set_ylim(-0.6, len(PORTABLE_FORMS) - 0.4)
+    ax.set_xlabel("AUROC minus no metabolism, ten repeated splits")
+    ax.set_title("Gain over the same cell with no metabolism", pad=3, loc="left")
+    letter(fig, 94.0, top, "e")
+
+    ax = place(fig, 148.0, top, 27.0, h)
+    for yi, color, (_, _, name) in zip(y, colors, PORTABLE_FORMS, strict=True):
+        if name is None or name not in pairs:
+            continue
+        row = pairs[name]
+        ax.barh(
+            yi,
+            row["n_pairs_positive"] / row["n_pairs"],
+            height=0.62,
+            color=color,
+            edgecolor="black",
+            lw=0.4,
+            zorder=2,
+        )
+    ax.axvline(0.5, color="black", lw=0.5, ls=(0, (2, 2)), zorder=1)
+    auroc_axis(ax, 0.0, 1.0)
+    ax.set_yticks(y)
+    ax.set_yticklabels([])
+    ax.set_ylim(-0.6, len(PORTABLE_FORMS) - 0.4)
+    ax.set_xlabel("share of split-and-seed pairs won")
+    ax.set_title("How often the module helps", pad=3, loc="left")
+    letter(fig, 144.0, top, "f")
+    save(fig, "summary_goal2")
+
+
+def main() -> None:
+    plt.rcParams.update(
+        {
+            "font.family": "Arial",
+            "font.size": 6,
+            "svg.fonttype": "none",
+            "axes.linewidth": 0.5,
+            "hatch.linewidth": 0.4,
+            "axes.titlesize": 6,
+        }
+    )
+    goal_one()
+    goal_two()
 
 
 if __name__ == "__main__":

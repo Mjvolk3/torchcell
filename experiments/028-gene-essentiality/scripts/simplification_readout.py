@@ -6,7 +6,7 @@
 
 Three simplifications were measured after round 83, each of which makes the module
 cheaper or more portable: dropping the three media that are not the labels' own (one
-experiment per record), dropping the solved flux vector (no linear program at all), and
+experiment per record), dropping the stored flux vector (the growth ratios are FBA programs too, so this saves the parsimonious solve and the storage, not the solver), and
 dropping rule-count columns. This reads them together so that no two are compared across
 different baselines.
 
@@ -31,6 +31,7 @@ An arm with no result file yet is skipped and listed under ``missing``.
 
 from __future__ import annotations
 
+import argparse
 import glob
 import json
 import os
@@ -45,6 +46,8 @@ load_dotenv()
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 RESULTS = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
 N_SPLITS = 10
+#: Waves still running are left out by name so a read is never taken at mixed depth.
+EXCLUDED_WAVES: set[str] = set()
 
 #: key -> (label, media, solver, cell stem, fold-ensemble prefix)
 LADDER: dict[str, tuple[str, int, bool, str, str | None]] = {
@@ -112,7 +115,7 @@ RESPLIT: dict[str, tuple[tuple[str, ...], str]] = {
 #: (name, a, b): the difference read is a minus b.
 RESPLIT_PAIRS: list[tuple[str, str, str]] = [
     (
-        "one medium for four, solve and counts kept",
+        "one medium for four, flux vector and counts kept",
         "one_solve_counts",
         "four_solve_counts",
     ),
@@ -120,19 +123,27 @@ RESPLIT_PAIRS: list[tuple[str, str, str]] = [
     ("counts over the four ratios alone", "four_counts", "four_only"),
     ("flux vector over the four ratios alone", "four_solve", "four_only"),
     ("counts added to the flux vector, four media", "four_solve_counts", "four_solve"),
-    ("no solve, counts kept, four media", "four_counts", "four_solve_counts"),
-    ("one medium for four, no solve", "one_counts", "four_counts"),
-    ("two media for four, no solve", "two_counts", "four_counts"),
-    ("two media for one, no solve", "two_counts", "one_counts"),
+    ("no flux vector, counts kept, four media", "four_counts", "four_solve_counts"),
+    ("one medium for four, no flux vector", "one_counts", "four_counts"),
+    ("two media for four, no flux vector", "two_counts", "four_counts"),
+    ("two media for one, no flux vector", "two_counts", "one_counts"),
     (
-        "no solve and one medium, against the full recipe",
+        "no flux vector and one medium, against the full recipe",
         "one_counts",
         "four_solve_counts",
     ),
     # Goal 2: every form against the same cell with no metabolism on the logit.
-    ("one medium, solve and counts, over no metabolism", "one_solve_counts", "none"),
-    ("four media, solve and counts, over no metabolism", "four_solve_counts", "none"),
-    ("four media and the solve, over no metabolism", "four_solve", "none"),
+    (
+        "one medium, flux vector and counts, over no metabolism",
+        "one_solve_counts",
+        "none",
+    ),
+    (
+        "four media, flux vector and counts, over no metabolism",
+        "four_solve_counts",
+        "none",
+    ),
+    ("four media and the flux vector, over no metabolism", "four_solve", "none"),
     ("four media and the counts, over no metabolism", "four_counts", "none"),
     ("two media and the counts, over no metabolism", "two_counts", "none"),
     ("one medium and the counts, over no metabolism", "one_counts", "none"),
@@ -186,6 +197,7 @@ class Report(BaseModel):
     subsets: list[Paired]
     budget: list[Paired]
     missing: list[str]
+    excluded_waves: list[str]
     note: str
 
 
@@ -245,6 +257,8 @@ def paired_by_split(name: str, a: str, b: str) -> Paired | None:
         waves, arm = RESPLIT[key]
         out: dict[int, float] = {}
         for wave in waves:
+            if wave in EXCLUDED_WAVES:
+                continue
             cells = by_seed(f"{wave}_resplit{r}{arm}")
             assert not set(cells) & set(out), (key, r, wave)
             out.update(cells)
@@ -282,6 +296,14 @@ def paired_by_split(name: str, a: str, b: str) -> Paired | None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--exclude-waves",
+        nargs="*",
+        default=[],
+        help="repeated-split waves still running, left out so no arm is read half done",
+    )
+    EXCLUDED_WAVES.update(parser.parse_args().exclude_waves)
     missing: list[str] = []
     ladder = []
     for key, (label, media, solver, stem, cv) in LADDER.items():
@@ -378,6 +400,7 @@ def main() -> None:
                 subsets=subsets,
                 budget=budget,
                 missing=missing,
+                excluded_waves=sorted(EXCLUDED_WAVES),
                 note=(
                     "Every difference is a minus b. Repeated-split units are splits, each "
                     "the mean over the seeds both arms ran (seeds_per_unit); their test "

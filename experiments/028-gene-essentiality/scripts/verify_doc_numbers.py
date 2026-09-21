@@ -806,14 +806,16 @@ CHECKS: list[Check] = [
         claim="round84-98: one medium for four, solve and cou / mean_difference",
         stated=0.002,
         recompute=simplification(
-            "resplit", "one medium for four, solve and counts kept", "mean_difference"
+            "resplit",
+            "one medium for four, flux vector and counts kept",
+            "mean_difference",
         ),
     ),
     Check(
         claim="round84-98: one medium for four, solve and cou / n_positive",
         stated=6,
         recompute=simplification(
-            "resplit", "one medium for four, solve and counts kept", "n_positive"
+            "resplit", "one medium for four, flux vector and counts kept", "n_positive"
         ),
     ),
     Check(
@@ -838,24 +840,24 @@ CHECKS: list[Check] = [
         ),
     ),
     Check(
-        claim="round84-98: no solve, counts kept, four media / mean_difference",
+        claim="round84-98: no flux vector, counts kept, four media / mean_difference",
         stated=-0.018,
         recompute=simplification(
-            "resplit", "no solve, counts kept, four media", "mean_difference"
+            "resplit", "no flux vector, counts kept, four media", "mean_difference"
         ),
     ),
     Check(
-        claim="round84-98: no solve, counts kept, four media / n_positive",
+        claim="round84-98: no flux vector, counts kept, four media / n_positive",
         stated=1,
         recompute=simplification(
-            "resplit", "no solve, counts kept, four media", "n_positive"
+            "resplit", "no flux vector, counts kept, four media", "n_positive"
         ),
     ),
     Check(
-        claim="round84-98: one medium for four, no solve / mean_difference",
+        claim="round84-98: one medium for four, no flux vector / mean_difference",
         stated=-0.012,
         recompute=simplification(
-            "resplit", "one medium for four, no solve", "mean_difference"
+            "resplit", "one medium for four, no flux vector", "mean_difference"
         ),
     ),
     Check(
@@ -863,7 +865,7 @@ CHECKS: list[Check] = [
         stated=-0.03,
         recompute=simplification(
             "resplit",
-            "no solve and one medium, against the full recipe",
+            "no flux vector and one medium, against the full recipe",
             "mean_difference",
         ),
     ),
@@ -871,7 +873,9 @@ CHECKS: list[Check] = [
         claim="round84-98: no solve and one medium, against t / n_positive",
         stated=0,
         recompute=simplification(
-            "resplit", "no solve and one medium, against the full recipe", "n_positive"
+            "resplit",
+            "no flux vector and one medium, against the full recipe",
+            "n_positive",
         ),
     ),
     Check(

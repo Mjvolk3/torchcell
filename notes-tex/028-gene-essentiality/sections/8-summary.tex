@@ -11,7 +11,7 @@ The study had two goals, and this section answers them in that order.
 \paragraph{Goal 1: the best held-out score, against Flux Cone Learning and FBA.} On the
 195 released held-out genes the best model scores 0.955 and the best single model 0.934,
 against 0.742 for Flux Cone Learning and 0.640 for FBA on the same genes
-(Figure~\ref{fig:summary}\textbf{a}). The margin of the averaged model over the better
+(Figure~\ref{fig:summary}\textbf{b}). The margin of the averaged model over the better
 single model was fixed in advance and holds on nine of ten other held-out fifths
 (Section~\ref{sec:round75}).
 
@@ -23,46 +23,71 @@ medium, run once offline and cached, read as $\log(1 + |v|)$ by a zero-initializ
 on the logit, beside that medium's growth ratio and six counts read off the
 gene-protein-reaction rules. On the ten repeated splits, three seeds each, that
 single-medium form scores $+0.066$ over the same cell with no metabolism, higher on ten of
-ten splits and on 29 of 30 split-and-seed pairs, and it matches the four-media form
+ten splits and on 29 of 30 split-and-seed pairs
+(Figure~\ref{fig:summary-module}\textbf{e} and \textbf{f}), and it matches the four-media form
 ($+0.002$, Section~\ref{sec:round84-98}). Every form that kept a linear program or a
 projection inside the training loop scored lower and less reliably than this one
-(Figure~\ref{fig:summary}\textbf{b}), so the layer is retired and the solve is kept as
+(Figure~\ref{fig:summary-module}\textbf{a}), so the layer is retired and the solve is kept as
 data. The store for the 13.5 million records of the solid-growth build is 469,474
-programs and 71 minutes on 20 cores (Figure~\ref{fig:summary}\textbf{e}).
+programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
 
-\tcfigfit[1.0]{figures/summary_2026-09-20-21-42-51.pdf}{\textbf{Gene essentiality on
-  yeast-GEM: the best method, the module form that helps, what scales, and the genes
-  still missed.} One color means one thing in every panel: gray a comparator with
-  nothing learned here, yellow a learned model reading no solve and no graph, orange the
-  transformer reading the metabolic solve, red message passing over the gene graphs,
-  purple an equal-weight average of the two families; a hatch marks a linear program
+\begin{figure}[htbp]\centering
+  \includegraphics[width=1.0\textwidth]{figures/families_explainer.pdf}\par\vspace{4pt}
+  \includegraphics[width=1.0\textwidth]{figures/summary_goal1_2026-09-21-11-04-16.pdf}\par\vspace{2pt}
+  \caption[]{\textbf{Goal 1: the best method on gene essentiality, against Flux Cone
+  Learning and FBA.} One color means one thing in every panel: gray a comparator with
+  nothing learned here, yellow a learned model reading no metabolic column and no graph,
+  orange family 1, red family 2, purple their average; a hatch marks a linear program
   solved inside the training loop.
-  \textbf{a}, Every method on the 195 released held-out genes, best first; the rule-count
-  rows are round 80. Learned
+  \textbf{a}, The two model families and their average. Family 1 is the cell graph
+  transformer: gene tokens from the pathway multi-hot and ProtT5, attention regularized
+  toward nine gene graphs, the deleted gene's token pooled to a logit, and a
+  zero-initialized affine that adds the metabolic columns computed offline from
+  yeast-GEM. Family 2 is a two-layer graph convolution over the union of nine gene-gene
+  graphs on the propagated GO multi-hot. Each family is a five-fold ensemble, and the
+  average standardizes each model's logits and weights them equally with nothing fitted.
+  \textbf{b}, Every method on the 195 released held-out genes, best first; the first
+  three rows are averages of family 2 (the GO graph) with a form of family 1. Learned
   models are five-fold ensembles, the random forest is one fit on the split file, and
   intervals are gene bootstraps.
-  \textbf{b}, The forms of the metabolic module on one backbone, the pathway multi-hot
-  with ProtT5: the bar is the seed mean of the held-out AUROC and each point one seed.
-  The gene-rule row adds six redundancy counts to the layer-free form's vector
-  (Section~\ref{sec:round77}); the forced growth column ran on ProtT5 alone, twelve
-  seeds.
-  \textbf{c}, Wall minutes per cell for the forms of \textbf{b}, as run, with up to three
-  cells sharing a card.
+  \textbf{c}, The layer-free form of family 1 (circles), graph convolution on GO
+  (squares) and their average (diamonds), fixed in advance, on ten other held-out fifths
+  of the labeled genes, three seeds per split, sorted by the average's AUROC.
   \textbf{d}, The same models trained on the 629 released genes and read on the 4,674
   genome-wide genes that carry no GEM reaction, pooled over seeds with a gene bootstrap;
   the dashed line is chance.
-  \textbf{e}, What the layer-free solve costs over the 025 solid-growth build,
-  logarithmic: the records, those whose deletion touches no GEM gene and read the
-  wild-type row, the distinct programs solved once each, and the lethal and uncertified
-  ones among them.
-  \textbf{f}, What the misranked genes of the released 195 share, per class: the chance
+  \textbf{e}, What the misranked genes of the released 195 share, per class: the chance
   that a gene carrying the annotation is misranked worse than one without it, 0.5
-  (dashed) being no association, for the transformer with the layer-free solve (circles)
-  and graph convolution on GO (squares), filled where the Benjamini-Hochberg $q$ within
-  the family is under 0.1.
-  \textbf{g}, The same on the genome-wide set, the squares being graph convolution on
-  ProtT5 over the union graph. Written by
-  \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py}.}{fig:summary}
+  (dashed) being no association, for family 1 with the layer-free solve (circles) and
+  family 2 on GO (squares), filled where the Benjamini-Hochberg $q$ within the family is
+  under 0.1; the genome-wide set is in Table~\ref{tab:misclass-enrichment}. Panel
+  \textbf{a} is drawn by \texttt{notes/assets/drawio/028-families.gen.py} and the rest by
+  \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py}.}\label{fig:summary}
+\end{figure}
+
+\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-11-04-17.pdf}{\textbf{Goal 2: the form of
+  the metabolic module that helps, what it costs, and what a record of one genotype in
+  one medium can carry.} Orange is the transformer reading any FBA-derived column, yellow
+  the same cell with no metabolic column, gray a count; a hatch marks a linear program
+  solved inside the training loop.
+  \textbf{a}, The forms of the module on one backbone, the pathway multi-hot with ProtT5:
+  the bar is the seed mean of the held-out AUROC and each point one seed; the forced
+  growth column ran on ProtT5 alone, twelve seeds.
+  \textbf{b}, Wall minutes per cell for the forms of \textbf{a}, as run, with up to three
+  cells sharing a card.
+  \textbf{c}, What the layer-free solve costs over the 025 solid-growth build, logarithmic:
+  the records, those whose deletion touches no GEM gene and read the wild-type row, the
+  distinct programs solved once each, and the lethal and uncertified ones among them.
+  \textbf{d}, The layer-free forms by the number of media whose growth ratio they read
+  and by whether they also read the stored flux vector and the six gene-rule counts, on
+  the released split: the bar is the seed mean, each point one seed, the diamond the
+  five-fold ensemble.
+  \textbf{e}, Each form minus the same cell with no metabolism on the ten repeated outer
+  splits: the bar is the mean over splits and each point one split.
+  \textbf{f}, The share of split-and-seed pairs on which the form scores above the cell
+  with no metabolism; the dashed line is a module that helps on half the runs. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py} from
+  \texttt{results/simplification\_readout.json}.}{fig:summary-module}
 
 \begin{description}
   \item[The best method is two models averaged, and the best single model is a tie.]
@@ -73,7 +98,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary}\textbf{e}).
     post hoc averages. Alone, the rule-count cell scores 0.934, the layer-free form
     0.920 and graph convolution on GO 0.917, with overlapping intervals, against Flux
     Cone Learning's 0.742 and FBA's 0.640 on the same genes
-    (Figure~\ref{fig:summary}\textbf{a}). On ten other held-out fifths of the labeled
+    (Figure~\ref{fig:summary}\textbf{b} and \textbf{c}). On ten other held-out fifths of the labeled
     genes, with the average fixed in advance, the average beats the better single model
     on nine (mean $+0.023$) and graph convolution on GO beats the transformer on nine
     (Section~\ref{sec:round75}).
@@ -88,7 +113,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary}\textbf{e}).
     gated growth column 0.867, and the forced growth column 0.699 on twelve seeds. The
     layer-free form costs 30 minutes per cell with three cells on a card against 83 to
     100 for the forms that solve in the loop
-    (Figure~\ref{fig:summary}\textbf{b} and \textbf{c}). On the ten other held-out
+    (Figure~\ref{fig:summary-module}\textbf{a} and \textbf{b}). On the ten other held-out
     fifths the vector's gain over no metabolism holds on ten of ten ($+0.047$) and its
     gain over the four growth ratios alone does not separate from zero ($+0.011$, sd
     0.023, seven of ten; Section~\ref{sec:round75}). Six counts of
@@ -105,13 +130,13 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary}\textbf{e}).
     recipe 0.912 against 0.911, while the ratio alone falls from 0.890 to 0.877
     (Section~\ref{sec:round83}). The solve supplies from within one environment what the
     four media were carrying, and the ten fifths agree ($+0.002$ for one medium, above
-    on six of ten). Without the solve the restriction is not free: one ratio with the
+    on six of ten). Without the flux vector the restriction is not free: one ratio with the
     rule counts reads 0.888 against 0.902 for four, and 0.030 under the full recipe on
     the ten fifths (Section~\ref{sec:round84-98}).
   \item[The layer-free form scales, and it covers only the genes with a reaction.] Over
     the 13.5 million records of the solid-growth build the transform is 469,474
     programs, solved once in 71 minutes on 20 cores and read as a gather in training
-    (Figure~\ref{fig:summary}\textbf{e}). Off the metabolic genes every deletion reads
+    (Figure~\ref{fig:summary-module}\textbf{c}). Off the metabolic genes every deletion reads
     one constant row, and the transformer with the layer-free solve scores 0.570 on
     the 4,674 genome-wide genes where graph convolution on ProtT5 scores 0.755 and the
     raw degree in the physical graph 0.740 (Figure~\ref{fig:summary}\textbf{d}). A
@@ -132,7 +157,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary}\textbf{e}).
     cytoskeleton organization (0.79) or a microtubule-based process (0.81), and ranks
     nonessential genes high in ncRNA metabolism (0.90), rRNA processing (0.92), RNA
     modification (0.92) and cytoplasmic translation (0.85)
-    (Figure~\ref{fig:summary}\textbf{f} and \textbf{g},
+    (Figure~\ref{fig:summary}\textbf{e},
     Table~\ref{tab:misclass-enrichment}). Hypothesis, untested: the graph model scores
     a gene by its neighborhood, and the nonessential members of the ribosome biogenesis
     and translation machinery sit in neighborhoods made of essential genes.
@@ -160,13 +185,13 @@ left as a design note, and one is out of scope.
   \item[The gene graphs as an input to the transformer that reads the solve: not run.]
     Round 76 tried the cheapest form, degree and clustering in the physical graph as
     affine columns (Section~\ref{sec:round76}). A faithful version would have to take
-    all nine gene graphs, and the transformer already receives those graphs through its
-    attention masks and the graph regularization on its attention, so graph-derived node
-    inputs would duplicate them; testing the inputs properly means relaxing the masks and
-    the regularizer at the same time, which is a change to the backbone and not to the
+    all nine gene graphs, and the transformer already receives those graphs through the
+    regularization of its attention toward them (these cells run with no hard mask), so graph-derived node
+    inputs would duplicate them; testing the inputs properly means relaxing that
+    regularizer at the same time, which is a change to the backbone and not to the
     module. The averaged model already recovers what the graph family knows.
   \item[The store on a second phenotype: out of scope.] The endpoint here is
-    essentiality. Panel \textbf{e} of Figure~\ref{fig:summary} shows the store is
+    essentiality. Panel \textbf{c} of Figure~\ref{fig:summary-module} shows the store is
     affordable over the solid-growth build; whether it helps there belongs to that
     experiment.
 \end{description}

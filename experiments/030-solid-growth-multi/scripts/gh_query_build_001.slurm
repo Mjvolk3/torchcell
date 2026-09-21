@@ -1,27 +1,32 @@
 #!/bin/bash
 #SBATCH --job-name=030-query-build
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=80
-#SBATCH --mem=320G
-#SBATCH --time=3-00:00:00
+#SBATCH --cpus-per-task=63
+#SBATCH --mem=256G
+#SBATCH --time=2-00:00:00
 #SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/030-build/experiments/030-solid-growth-multi/slurm/output/%j_%x.out
 #SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/030-build/experiments/030-solid-growth-multi/slurm/output/%j_%x.out
 #SBATCH --no-requeue
 
-# Build the 030 all-allele, multi-measurement solid-growth dataset from the served graph.
+# Phase 2 of the 030 build: conversion -> aggregation -> processed + indices + label
+# table, from a raw store that scripts/gh_query_build_001_raw.slurm has already written
+# and marked complete. The build is two jobs because the query is light and long and the
+# aggregation is heavy and shorter; one job sized for the aggregation held 80 CPUs and
+# 320 GB through a 19 h query (job 2681, cancelled at 47 min with 1.7 GB resident) and
+# kept GPU training off the node.
 #
 # MEMORY. 029 peaked at 155 GB of resident memory for 26.8M records (sacct -j 2400),
-# and 030 returns about 43.8M, so a linear scaling says about 255 GB. 320 GB leaves
-# headroom on a 513 GB node and, at the 4.1 GB MaxMemPerCPU cap, implies an 80-CPU
-# floor. What holds memory is aggregation pass 1, one key per record. Nothing else
-# large may run beside this; the served Neo4j container is capped at 200 GB but idles
-# near 7 GB and grows only through its page cache during the query.
+# and 030 returns about 43.8M, so a linear scaling says about 255 GB. 256 GB is half the
+# 513 GB node, the ceiling the machine's GPU training needs kept free, and at the 4.1 GB
+# MaxMemPerCPU cap it implies 63 CPUs. The projection sits at that ceiling, so an OOM in
+# aggregation pass 1 (one key per record) is possible; MEM_GB / CPUS below let a resubmit
+# raise it (320 GB needs 80 CPUs) for the hours this job runs when the node is free.
 #
-# TIME, projected from the measured 029 rates scaled to 43.8M records: raw about 10 h,
-# conversion about 1 h 15, aggregation about 6 h 30, processed copy 30 min, label table
-# and indices 15 to 20 h. About 33 to 38 h total. The index stage is the least certain:
-# it grew fivefold from 025 to 029 because without the merge every record carries all
-# its entries, and 030 has both more records and more entries per record than 029.
+# TIME, projected from the measured 029 rates scaled to 43.8M records: conversion about
+# 1 h 15, aggregation about 6 h 30, processed copy 30 min, label table and indices 15 to
+# 20 h. The index stage is the least certain: it grew fivefold from 025 to 029 because
+# without the merge every record carries all its entries, and 030 has both more records
+# and more entries per record than 029.
 #
 # DISK. Four stage copies. 029 took 615 + 614 + 547 + 547 GB for 26.8M records, so 030
 # needs about 3.7 TB. The preflight below refuses to start without it, because a build
@@ -35,9 +40,11 @@
 # 180 to 1, at about 17 minutes per 600 GB stage. Deleting the stage directories from
 # /db after the archive reports ALL_DONE stays the user's action, never this script's.
 #
-# PRECONDITION, not checked here. DmfKuzmin2018Dataset and DmfKuzmin2020Dataset must be
-# re-served with the query-strain fitness records of main 4c4a4f950. Without them 030 is
-# 025 without the merge, and the trigenic reconstruction stays capped near 0.54.
+# PRECONDITIONS. raw/STAGE_COMPLETE must exist (checked below): the raw stage is the
+# phase-1 job, and a partial raw store is refused, not resumed. DmfKuzmin2018Dataset and
+# DmfKuzmin2020Dataset were re-served with the query-strain fitness records of main
+# 4c4a4f950 on 2026-09-21 (release 1.2, increments 2677 and 2678), which is what makes
+# the trigenic reconstruction recoverable past 0.54.
 #
 # The job reads its code from a DETACHED worktree pinned at the build commit, so the
 # branch worktree can keep moving while the build runs:
@@ -79,6 +86,11 @@ mkdir -p "$DB_ROOT" "$(dirname "$LINK")"
 [[ -e "$LINK" ]] || ln -s "$DB_ROOT" "$LINK"
 echo "dataset root: $LINK -> $(readlink -f "$LINK")"
 df -h /db | tail -1
+if [ ! -e "$DB_ROOT/raw/STAGE_COMPLETE" ]; then
+  echo "ABORT: $DB_ROOT/raw/STAGE_COMPLETE is missing; run scripts/gh_query_build_001_raw.slurm first." >&2
+  exit 1
+fi
+echo "raw stage complete: $(du -sh "$DB_ROOT/raw" | cut -f1)"
 
 python experiments/030-solid-growth-multi/scripts/query.py || exit 1
 echo "build finished at $(date)"

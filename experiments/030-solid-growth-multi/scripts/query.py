@@ -1,7 +1,7 @@
 # experiments/030-solid-growth-multi/scripts/query.py
 # [[experiments.030-solid-growth-multi.scripts.query]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/030-solid-growth-multi/scripts/query
-"""Build the all-allele, multi-measurement solid-growth dataset from the served graph.
+r"""Build the all-allele, multi-measurement solid-growth dataset from the served graph.
 
 030 is the 025 query with the 029 build. The query decides what the dataset IS: the gene
 universe, the phenotypes, the medium, the record shape. It does not decide which
@@ -31,8 +31,19 @@ Stages: raw query -> conversion (essentiality and synthetic lethality to fitness
 other record copied byte for byte) -> aggregation -> processed, then the phenotype,
 perturbation-count and dataset-name indices and the label table.
 
-Run from the repo root under slurm (scripts/gh_query_build_001.slurm):
+The build runs as TWO slurm jobs because its stages want opposite resources. The raw
+query streams records from Neo4j single-threaded at about 630 records per second and
+holds under 2 GB, so it runs for most of a day on 8 CPUs and 32 GB without taking the
+node away from GPU training. Aggregation pass 1 holds one key per record and is the
+memory peak, so that job asks for the memory and, through the 4.1 GB MaxMemPerCPU cap,
+the CPUs that go with it, for a few hours. A completion marker (raw/STAGE_COMPLETE,
+written by Neo4jQueryRaw) is what makes the split safe: the second job refuses to
+start on a partial raw store.
 
+    # phase 1, the query only (scripts/gh_query_build_001_raw.slurm)
+    python experiments/030-solid-growth-multi/scripts/query.py --stage raw
+    # phase 2, conversion -> aggregation -> processed + indices + label table
+    # (scripts/gh_query_build_001.slurm)
     python experiments/030-solid-growth-multi/scripts/query.py
 
 A smoke build against the live graph on a handful of genes:
@@ -75,6 +86,13 @@ def main() -> None:
         help="comma-separated systematic gene names for a smoke build "
         "(default: the S288C genome gene set)",
     )
+    parser.add_argument(
+        "--stage",
+        choices=["raw", "all"],
+        default="all",
+        help="'raw' runs only the Neo4j query into raw/lmdb and writes its completion "
+        "marker; 'all' runs every stage, skipping a raw stage already marked complete",
+    )
     args = parser.parse_args()
 
     load_dotenv()
@@ -98,6 +116,19 @@ def main() -> None:
     dataset_root = args.root or osp.join(
         data_root, f"data/torchcell/experiments/{EXPERIMENT}/{BUILD_NAME}"
     )
+    if args.stage == "raw":
+        raw = Neo4jCellDataset.load_raw(
+            uri=os.environ["NEO4J_URI"],
+            username=os.environ["NEO4J_USER"],
+            password=os.environ["NEO4J_PASSWORD"],
+            root_dir=dataset_root,
+            query=query,
+            gene_set=gene_set,
+        )
+        print(f"raw records: {len(raw)}", flush=True)
+        raw.close_lmdb()
+        print("raw stage finished", flush=True)
+        return
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,

@@ -156,10 +156,25 @@ class Neo4jQueryRaw:
         os.makedirs(self.raw_dir, exist_ok=True)
         os.makedirs(self.lmdb_dir, exist_ok=True)
 
-        if not os.path.exists(osp.join(self.lmdb_dir, "data.mdb")):
+        # Resume marker, as the later stages have (neo4j_cell.py): the raw LMDB is
+        # created before the first record is written, so a build killed mid-query leaves
+        # a partial store whose existence alone must never count as completion. The
+        # 030 build (slurm 2681) was cancelled 1.5M records into a 44M-record query; had
+        # it been restarted on the old rule, the dataset would have been silently
+        # truncated to those 1.5M.
+        marker = osp.join(self.raw_dir, "STAGE_COMPLETE")
+        if not osp.exists(marker):
+            if osp.exists(osp.join(self.lmdb_dir, "data.mdb")):
+                raise RuntimeError(
+                    f"{self.lmdb_dir} holds a raw LMDB but {marker} is absent: the query "
+                    "that wrote it did not finish (or predates the marker). Move the raw "
+                    "directory aside and rebuild; a partial raw store is not resumable."
+                )
             self._init_lmdb(readonly=False)
             self.process()
             self.close_lmdb()
+            with open(marker, "w") as f:
+                f.write("")
 
         # Initialize LMDB environment
         self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12), readonly=True)

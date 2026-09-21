@@ -27,11 +27,10 @@ conda activate torchcell
 set -a; . "$PROJECT_ROOT/.env"; set +a
 export EXPERIMENT_ROOT="$PROJECT_ROOT/experiments"
 cd "$PROJECT_ROOT" || exit 1
-: "${TC_HIGHSPY_PATH:?set TC_HIGHSPY_PATH to the directory holding the standalone highspy}"
-export PYTHONPATH="$TC_HIGHSPY_PATH:$PROJECT_ROOT:$PYTHONPATH"
+# No standalone highspy here: the sampler is cobra's OptGPSampler on the packaged solver.
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
 export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
-export TC_LP_WORKERS="${TC_LP_WORKERS:-$SLURM_CPUS_PER_TASK}"
-echo "host $(hostname); workers $TC_LP_WORKERS; args ${STORE_ARGS:-}"
+echo "host $(hostname); processes $SLURM_CPUS_PER_TASK; args ${STORE_ARGS:-}"
 python experiments/028-gene-essentiality/scripts/ess_sampled_flux_store.py \
     --processes "$SLURM_CPUS_PER_TASK" ${STORE_ARGS:-}

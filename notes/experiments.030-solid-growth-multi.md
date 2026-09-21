@@ -274,3 +274,43 @@ agree at r 0.777 with a median absolute difference of 0.045. They are different 
 different experiments, distinguished by `strain_id`. A no-merge build keeps both, which is what the
 identity needs. The 025 merge would average them into one value that is neither, which is a further
 reason the deduplication stage does not return.
+
+## 2026.09.20 - Three independent audits, and a correction upward
+
+Three agents re-derived the claims from the raw tables and the supplementary text without using
+our scripts. All three CONFIRMED. Two numbers of mine were wrong and both move in the right
+direction.
+
+**The reproduction is 99.98 and 99.56 percent, not 95 and 92.** My matching paired a trigenic row
+to its control screens by gene name and averaged where a gene had more than one. Five 2018 genes
+carry two control strains, and 99 percent of my failures sat on those five. Pairing through the
+released query-strain list (Data File S3) instead gives 99.98 percent on 91,111 Kuzmin 2018 rows
+and 99.56 percent on 301,798 Kuzmin 2020 rows, median absolute residual 2.7e-05, which is the
+rounding floor of the four-decimal fitness columns rather than model error.
+
+**Written on the released columns it is an exact identity.** The trigenic row's own RAW score is
+eps_ij,k = f_ijk - f_ij f_k, so tau = raw_eps - eps_ik - eps_jk, the row's raw score minus the two
+control queries' adjusted scores at the same array. Median residual 6.5e-19 on 2018 and exactly 0
+on 2020. Two routes therefore reconstruct the published score: through the query strain's fitness,
+or through the row's raw score. The build stores neither column; the raw interaction score is
+ingested by no loader (every Dmi/Tmi class takes only "Adjusted genetic interaction score").
+The fitness route is the one worth having, because f_ij is a genotype's measured fitness and
+enriches the label space, while the raw score is a derived quantity.
+
+**The SI does not say the query singles are 1, and for 2018 the released values disagree with the
+method as described.** Both papers write the model with the control scores weighted by f_i and f_j,
+and the 2018 text says these "are single mutant fitness estimates available from a previous study"
+(si1.md line 135). For 2020 this reconciles: 0.4 percent of control rows carry a query fitness and
+the methods say every missing fitness was set to 1.0 during scoring. For 2018 it does not: 99.2
+percent of control rows carry the measurement and the released standard carries it for 165 of 182
+query strains, yet using either reproduces 4.3 and 5.5 percent of rows against 99.98 percent for
+unit weights. The released 2018 scores were computed with weights the methods do not describe.
+State it that way in anything outward-facing: it is a reproducibility observation about the source,
+evidenced, not an accusation.
+
+**Loader defects: both confirmed exactly.** 2018 built 410,399 records, the digenic row count, so
+no trigenic row reached it; Data File S4 holds 182 double-mutant query strains, 165 with a fitness
+and a standard deviation, agreeing with the raw column at r 1.000000. 2020 built 632,797 records,
+its digenic row count, and the Table S5 merge matched 0 rows. A third suspected defect was flagged
+and left alone: `SmfKuzmin2020Dataset` labels S5's bootstrap standard deviation as a sample sd over
+four colonies, where the SI describes bootstrapped means over 12 to 24 colony measurements.

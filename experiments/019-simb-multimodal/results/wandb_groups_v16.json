@@ -1,0 +1,35 @@
+{
+  "J_expr": {
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v16/groups/J_expr",
+    "run_ids": [
+      "c1n1jmp3",
+      "hyasw3nx",
+      "hzca60i6",
+      "m13meldl",
+      "o3zk5y0i",
+      "vbwd3w6f"
+    ]
+  },
+  "J_joint": {
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v16/groups/J_joint",
+    "run_ids": [
+      "6lvb41q9",
+      "c6lkw30w",
+      "jpac6vp7",
+      "k7rzebp0",
+      "qbpt86xb",
+      "x24scvgd"
+    ]
+  },
+  "J_ref": {
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v16/groups/J_ref",
+    "run_ids": [
+      "2pyzsr5m",
+      "c12uf4w3",
+      "dnjggnwl",
+      "f7fz2juj",
+      "nrjiq4az",
+      "rh9wgkoo"
+    ]
+  }
+}

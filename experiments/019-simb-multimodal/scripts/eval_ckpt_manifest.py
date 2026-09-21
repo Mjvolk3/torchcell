@@ -61,7 +61,9 @@ def main() -> None:
             seeds = [t for t in tags if t.startswith("seed") and t[4:].isdigit()]
             if len(arms) != 1 or len(seeds) != 1:
                 raise ValueError(f"{run.id}: arm tags {arms}, seed tags {seeds}")
-            group = str(run.group)
+            # The checkpoint directory is the run NAME minus its `run_` prefix. It used to be
+            # read from `run.group`, which `wandb_regroup_by_arm.py` now rewrites to the arm.
+            group = str(run.name).removeprefix("run_")
             hist = run.history(
                 keys=["epoch", spec["metric"]], samples=20000, pandas=True
             )

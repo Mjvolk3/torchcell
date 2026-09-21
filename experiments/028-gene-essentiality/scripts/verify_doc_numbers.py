@@ -665,10 +665,7 @@ CHECKS: list[Check] = [
         recompute=cls_arm(0, "n_positive"),
     ),
     Check(
-        claim="round79: its pairs",
-        stated=9,
-        tolerance=0.5,
-        recompute=cls_arm(0, "n"),
+        claim="round79: its pairs", stated=9, tolerance=0.5, recompute=cls_arm(0, "n")
     ),
     Check(
         claim="round79: pooled cell with the flag",
@@ -692,10 +689,7 @@ CHECKS: list[Check] = [
         recompute=cls_arm(1, "n_positive"),
     ),
     Check(
-        claim="round79: its pairs",
-        stated=6,
-        tolerance=0.5,
-        recompute=cls_arm(1, "n"),
+        claim="round79: its pairs", stated=6, tolerance=0.5, recompute=cls_arm(1, "n")
     ),
     Check(
         claim="round79: class-token spread with the flag",
@@ -728,6 +722,22 @@ CHECKS: list[Check] = [
                 "combinations"
             ]
         ),
+    ),
+    # sec:round82 -- the factorial of the solve and the rules.
+    Check(
+        claim="round82: ratios only",
+        stated=0.890,
+        recompute=seed_mean("w38_protpathfba_h12l1p1_e200_s*.json"),
+    ),
+    Check(
+        claim="round82: rule counts alone",
+        stated=0.902,
+        recompute=seed_mean("w101_pathgpronly_h12l1p1_e200_s*.json"),
+    ),
+    Check(
+        claim="round82: rule counts alone, fold ensemble",
+        stated=0.909,
+        recompute=field("w101_pathgpronlycv_ensemble.json", "ensemble_auroc"),
     ),
 ]
 

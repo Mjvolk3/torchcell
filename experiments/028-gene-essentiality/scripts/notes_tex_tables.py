@@ -1907,6 +1907,68 @@ def cls_readout() -> str | None:
     return write("cls_readout", body, "results/cls_readout.json")
 
 
+def module_factorial() -> str | None:
+    """Round 82: the solve vector and the rule counts, each alone and together."""
+    import glob
+
+    import numpy as np
+
+    arms = [
+        ("four growth ratios only", "w38_protpathfba", None),
+        ("+ gene-rule counts, no solve", "w101_pathgpronly", "w101_pathgpronlycv"),
+        (
+            "+ solved flux vector, no counts",
+            "w49_pathfbapfbalogfree",
+            "w50_pathlogfreecv",
+        ),
+        ("+ both", "w96_pathloggpr", "w99_pathloggprcv"),
+    ]
+
+    def cells(stem: str) -> list[float]:
+        return [
+            json.load(open(p))["test"]["pinned"]["auroc"]
+            for p in sorted(
+                glob.glob(osp.join(RESULTS, f"{stem}_h12l1p1_e200_s27*.json"))
+            )
+        ]
+
+    values = {stem: cells(stem) for _, stem, _ in arms}
+    best_cell = max(float(np.mean(v)) for v in values.values())
+    folds: dict[str, float] = {}
+    for _, stem, cv in arms:
+        if cv and osp.isfile(osp.join(RESULTS, f"{cv}_ensemble.json")):
+            with open(osp.join(RESULTS, f"{cv}_ensemble.json")) as fh:
+                folds[stem] = float(json.load(fh)["ensemble_auroc"])
+    best_fold = max(folds.values()) if folds else 0.0
+    rows = []
+    for label, stem, _ in arms:
+        v = np.array(values[stem])
+        fold = (
+            fmt(folds[stem], best_fold) if stem in folds else "\\multicolumn{1}{c}{--}"
+        )
+        rows.append(
+            f"    {label} & {len(v)} & {fmt(float(v.mean()), best_cell)} & "
+            f"{v.std(ddof=1):.3f} & {fold} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 82: the solve and the rules, each alone]{Round 82, what each "
+        "half of the module is worth on the same backbone, the pathway multi-hot with "
+        "ProtT5 and the four FBA growth ratios on the logit. The solved flux vector is "
+        "4,131 columns from one linear program per genotype; the gene-rule counts are six "
+        "columns read off yeast-GEM's rules with no solver. Columns: the number of seeds, "
+        "their mean held-out AUROC and its spread, and the five-fold ensemble where one "
+        "was run. Best of each column in bold. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from the cells' own result files.}\n"
+        "  \\label{tab:module-factorial}\n"
+        "  \\begin{tabular}{@{}p{62mm}rrrr@{}}\n    \\hline\n"
+        "    affine columns & seeds & cell mean & sd & fold ensemble \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("module_factorial", body, "results/ (the cells named in the rows)")
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -2246,6 +2308,7 @@ def main() -> None:
         resplit_readout(),
         gpr_readout(),
         cls_readout(),
+        module_factorial(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

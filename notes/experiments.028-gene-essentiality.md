@@ -1447,3 +1447,20 @@ CORRECTION to what I said at nine pairs ("no established cost"): at fifteen pair
 Decision: the flag stays OFF for 028. The port stays, because the 025 setting (doubles and triples) is where it can add something.
 
 Side effect worth recording: round 81's three extra control seeds moved two arm-level means, w49 from 0.908 (6 seeds) to 0.911 (9) and w39_pathpool from 0.860 (3) to 0.858 (6). Section 7 and the summary figure now quote the all-seed values; round-specific claims in sections 3 and 4 keep their own seed sets, and their checks are seed-scoped so they cannot silently drift.
+
+## 2026.09.20 - Round 82: the factorial, and a correction to how I compared the two halves
+
+Jobs 2606 to 2609, all exit 0. The six gene-rule counts with NO flux vector, six seeds plus the five folds.
+
+| affine columns | seeds | cell mean | sd | fold ensemble |
+|---|---|---|---|---|
+| four growth ratios only | 3 | 0.890 | 0.005 | — |
+| + gene-rule counts, no solve | 6 | 0.902 | 0.005 | 0.909 |
+| + solved flux vector, no counts | 9 | 0.911 | 0.007 | 0.920 |
+| + both | 6 | **0.918** | 0.006 | **0.934** |
+
+Paired on the three seeds all four arms share: counts over ratios +0.0116 (2/3), vector over ratios +0.0239 (3/3), both over vector +0.0078 (3/3), both over counts +0.0201 (3/3).
+
+CORRECTION. After round 78 I said the rule counts "outperform the solved flux as an increment". That mixed conditionals: the counts' +0.019 was measured on top of the vector, the vector's +0.010 on top of the ratios. Against a single baseline the solve is worth about twice the counts on the released split (+0.024 vs +0.012), and on the ten repeated splits they sit within each other's spread. What survives both readings: each half is worth 0.01 to 0.02, they are complementary, and the pair is the best module form.
+
+Practical conclusion unchanged for the port: the counts need no solver, no medium and no per-genotype computation, and alone they carry about half of what the module contributes here.

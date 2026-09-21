@@ -70,7 +70,9 @@
     0.023, seven of ten; Section~\ref{sec:round75}). Six counts of
     gene-protein-reaction redundancy beside the vector read 0.918 on the released split
     against 0.908, and 0.862 against 0.843 on the ten fifths, above on six of six seeds
-    and eight of ten splits (Section~\ref{sec:round77}).
+    and eight of ten splits (Section~\ref{sec:round77}). Against the four ratios alone
+    the counts are worth $+0.012$ and the solve $+0.024$, so the two halves are
+    complementary and the solve is the larger (Section~\ref{sec:round82}).
   \item[The layer-free form scales, and it covers only the genes with a reaction.] Over
     the 13.5 million records of the solid-growth build the transform is 469,474
     programs, solved once in 71 minutes on 20 cores and read as a gather in training
@@ -247,6 +249,37 @@ post hoc averages rather than eleven, and carries the selection that implies; th
 best are within 0.002 of one another and their intervals are nearly identical, so what
 the folds establish is that the two families average above either alone, not an ordering
 among the three module forms.
+
+\subsection{Round 82: what each half of the module is worth\secstatus{todo}}
+\label{sec:round82}
+
+Round 77 added six gene-rule counts beside the 4,131-column flux vector and round 78 found
+the vector itself worth little over the four growth ratios, so the two halves have never
+been measured against the same baseline. Round 82 (jobs 2606 to 2609) runs the counts with
+NO flux vector, six seeds and the five folds, completing the factorial
+(Table~\ref{tab:module-factorial}).
+
+Both halves help and the solve is the larger of the two. Against the four growth ratios
+alone the counts are worth $+0.012$ and the vector $+0.024$, paired on the three seeds all
+four arms share, and together they reach 0.918. The fold ensembles order the same way:
+0.909 for the counts alone, 0.920 for the vector alone, 0.934 for both. The counts are
+worth more once the vector is already there than the vector is worth once the counts are
+($+0.020$ against $+0.008$), which is what two partly overlapping signals look like.
+
+This corrects a comparison made in passing after round 78. The counts' $+0.019$ there was
+measured ON TOP of the vector while the vector's $+0.010$ was measured on top of the
+ratios, so the two are different conditionals and cannot be read as a ranking. Against
+one baseline the solve is worth about twice the counts on the released split, and the ten
+repeated splits put them within each other's spread. What survives both readings is that
+each half is worth about a hundredth to two hundredths of AUROC, that they are
+complementary, and that the pair is the best form of the module.
+
+Neither reading changes the practical conclusion. The counts cost no solver, no medium
+and no per-genotype computation, and alone they carry half of what the module contributes
+here; the solve carries the other half and needs one linear program per genotype and
+medium, run once offline.
+
+\input{tables/module_factorial}
 
 \subsection{What is left to run\secstatus{todo}}
 \label{sec:left-to-run}

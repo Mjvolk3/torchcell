@@ -10,9 +10,14 @@ sits on that row. The trigenic identity does not fit on one row:
 
     tau_ijk = f_ijk - f_i f_j f_k - eps_ij f_k - eps_ik f_j - eps_jk f_i
             = f_ijk - f_ij f_k - eps_ik f_j - eps_jk f_i
+            = f_ijk - f_ij f_k - eps_ik - eps_jk          (as published: f_i = f_j = 1)
 
 (the first three terms collapse because eps_ij = f_ij - f_i f_j, with f_ij the DOUBLE
-MUTANT QUERY fitness). The Kuzmin supplementary methods say where each term is measured
+MUTANT QUERY fitness). The third line is what the released scores were actually computed
+from, verified here: the single-mutant query fitness enters as 1.0 even in Kuzmin 2018,
+where 99.2 percent of the control rows carry a measured value. Using those measured
+values instead raises the median residual from 2.9e-05, which is the rounding of the
+published five-decimal score, to 1.6e-03. The Kuzmin supplementary methods say where each term is measured
 (kuzminSystematicAnalysisComplex2018/si/si1.md line 191): "Digenic interactions between
 Q_i-A_k or Q_j-A_k were measured using our single mutant control queries. Query pair
 interactions (Q_i-Q_j) were measured using the single and double mutant fitness standard
@@ -108,15 +113,17 @@ def reconstruct(k: pd.DataFrame, source: str) -> tuple[pd.DataFrame, dict]:
         m = ctrl.rename(columns={"gene": f"g{side}", "eps": f"eps_{side}k", "f_single": f"f_{side}", "n_ctrl": f"n_ctrl_{side}"})
         t = t.merge(m, on=[f"g{side}", "a"], how="left")
     t["f_ij"] = t["f_q"].fillna(1.0)
-    t["tau_rec"] = (
+    # The PUBLISHED score sets the single-mutant query fitness to 1.0: with f_i = f_j = 1
+    # the two control terms enter unscaled. Verified below against the alternative of
+    # reading the control rows' own released query fitness.
+    t["tau_rec"] = t["f_qa"] - t["f_ij"] * t["f_a"] - t["eps_ik"] - t["eps_jk"]
+    t["tau_fi_from_control_rows"] = (
         t["f_qa"] - t["f_ij"] * t["f_a"] - t["eps_ik"] * t["f_j"] - t["eps_jk"] * t["f_i"]
     )
     # the same identity written from single-mutant fitness only, which is what a closure
     # over the database computes: it needs eps_ij, unavailable here, so f_ij is dropped
     # in favor of the product of the two control singles
-    t["tau_no_query_double"] = (
-        t["f_qa"] - t["f_i"] * t["f_j"] * t["f_a"] - t["eps_ik"] * t["f_j"] - t["eps_jk"] * t["f_i"]
-    )
+    t["tau_no_query_double"] = t["f_qa"] - t["f_a"] - t["eps_ik"] - t["eps_jk"]
     both = t["eps_ik"].notna() & t["eps_jk"].notna()
     info = {
         "n_trigenic_rows": int(n_raw),
@@ -126,7 +133,17 @@ def reconstruct(k: pd.DataFrame, source: str) -> tuple[pd.DataFrame, dict]:
         "mean_control_screens_per_gene_array": float(
             pd.concat([t["n_ctrl_i"], t["n_ctrl_j"]]).mean()
         ),
-        "tau_within_screen": _stats(t["score"].to_numpy(), t["tau_rec"].to_numpy()),
+        "tau_within_screen": _stats(t["score"].to_numpy(), t["tau_rec"].to_numpy())
+        | {
+            "frac_exact_1e-4": float((np.abs(t["score"] - t["tau_rec"]) < 1e-4).mean()),
+            "frac_exact_1e-4_where_query_double_fitness_released": float(
+                (np.abs(t.loc[t["f_q"].notna(), "score"] - t.loc[t["f_q"].notna(), "tau_rec"]) < 1e-4).mean()
+            ),
+        },
+        "tau_with_control_query_fitness_instead_of_one": _stats(
+            t["score"].to_numpy(), t["tau_fi_from_control_rows"].to_numpy()
+        ),
+        "frac_control_rows_with_released_query_fitness": float(d["f_q"].notna().mean()),
         "tau_without_query_double_fitness": _stats(
             t["score"].to_numpy(), t["tau_no_query_double"].to_numpy()
         ),
@@ -163,7 +180,7 @@ def write_table(summary: dict) -> None:
     rows = []
     for src, info in summary.items():
         rows.append((label[src], "every term from the same screen", info["tau_within_screen"]))
-        rows.append((r"\quad", "the query double fitness replaced by $f_i f_j$",
+        rows.append((r"\quad", "the query double fitness dropped",
                      info["tau_without_query_double_fitness"]))
     best = max(v["pearson"] for _, _, v in rows if "pearson" in v)
     for name, terms, v in rows:

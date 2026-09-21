@@ -181,3 +181,40 @@ identity reproduces the published score at 0.985, and replacing this one term dr
 
 So the work is ingestion only: two loader classes reading local files, provenance sourced from the
 SI, a dev build, the admission check and an incremental import. No data chase.
+
+## 2026.09.20 - Exactly how the published trigenic score is computed, and what that means to ingest
+
+Verified against the raw tables for both years
+(`experiments/025-solid-growth/scripts/s3_closure_trigenic_within_screen.py`,
+results/s3_closure_trigenic_within_screen.json). The released score is
+
+    tau_ijk = f_ijk - f_ij * f_k - eps_ik - eps_jk
+
+that is, the tau-SGA model with the single-mutant query fitness set to 1.
+
+| variant | Kuzmin 2018 r | median residual | Kuzmin 2020 r | median residual |
+|---|---|---|---|---|
+| as published, f_i = f_j = 1 | 0.990 | 2.9e-05 | 0.976 | 2.9e-05 |
+| f_i, f_j read from the control rows' own released fitness | 0.985 | 1.6e-03 | 0.976 | 2.9e-05 |
+| f_ij dropped | 0.495 | 7.4e-02 | 0.420 | 4.1e-02 |
+
+Exact to within 1e-4, the rounding of the published five-decimal value, on 95.0 percent of
+the 91,111 2018 rows and 92.0 percent of the 301,798 2020 rows.
+
+**The single-mutant control query strains' FITNESS is not used.** 2020 releases it on 0.4 percent
+of control rows and the SI says every missing fitness was set to 1.0 during scoring. 2018 releases
+it on 99.2 percent and still did not use it: substituting those measured values makes the
+reproduction fifty times worse. What a control screen contributes to a trigenic score is its
+INTERACTION, eps_ik and eps_jk, and those are already in the graph as the Kuzmin digenic records.
+
+**So the ingestion list is one item, not two.** The double-mutant query strain fitness f_ij is the
+only term missing. The single-mutant query fitness standard is not needed to reproduce published
+scores; it is optional and would only support a recomputation that departs from the source, which
+is a policy question and not a prerequisite. Recommend ingesting the double-mutant query strains
+only: 364 rows in the 2018 standard and 240 in the 2020 one, each with a standard deviation.
+
+**What the label policy must do for the trigenic target**, now fully determined: f_ijk and f_k from
+the triple's own record; f_ij from the query-strain record matched by strain id; eps_ik and eps_jk
+from the Kuzmin digenic records of the same study; and the query singles entering as 1, which
+becomes the `source_convention` switch. Departing from the last of these is what a `measured`
+convention would mean, and it is a different number from the published one by construction.

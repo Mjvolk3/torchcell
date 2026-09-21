@@ -7,19 +7,30 @@
     "mean_control_screens_per_gene_array": 1.0278616193434382,
     "tau_within_screen": {
       "n": 91111,
+      "pearson": 0.990172862351426,
+      "spearman": 0.9823972423138,
+      "slope": 0.9914963851794952,
+      "rmse": 0.007521810142073312,
+      "median_abs_residual": 2.8640000000065835e-05,
+      "frac_exact_1e-4": 0.9502145734324067,
+      "frac_exact_1e-4_where_query_double_fitness_released": 0.9473238029984555
+    },
+    "tau_with_control_query_fitness_instead_of_one": {
+      "n": 91111,
       "pearson": 0.9848996040969665,
       "spearman": 0.9708174194455235,
       "slope": 0.9754563005087264,
       "rmse": 0.009421422081418515,
       "median_abs_residual": 0.0016475970000000388
     },
+    "frac_control_rows_with_released_query_fitness": 0.9918299021196445,
     "tau_without_query_double_fitness": {
       "n": 91111,
-      "pearson": 0.5376532732425001,
-      "spearman": 0.4329957966863794,
-      "slope": 1.0333234858302467,
-      "rmse": 0.08759209902740661,
-      "median_abs_residual": 0.04561665919999997
+      "pearson": 0.4949703735601444,
+      "spearman": 0.42228682807206874,
+      "slope": 1.0482868517132506,
+      "rmse": 0.13775768505644068,
+      "median_abs_residual": 0.07376999999999997
     },
     "raw_eps_column_vs_observed_minus_expected": {
       "n": 91111,
@@ -38,19 +49,30 @@
     "mean_control_screens_per_gene_array": 1.0758569951483337,
     "tau_within_screen": {
       "n": 301706,
+      "pearson": 0.976092341376514,
+      "spearman": 0.974778096507467,
+      "slope": 0.9690872723689671,
+      "rmse": 0.013801179871036155,
+      "median_abs_residual": 2.9000000000011655e-05,
+      "frac_exact_1e-4": 0.9201485761999748,
+      "frac_exact_1e-4_where_query_double_fitness_released": 0.9177152601498139
+    },
+    "tau_with_control_query_fitness_instead_of_one": {
+      "n": 301706,
       "pearson": 0.9761844241248081,
       "spearman": 0.9748145101863701,
       "slope": 0.9691634165849686,
       "rmse": 0.013774532483928346,
       "median_abs_residual": 2.9000000000011655e-05
     },
+    "frac_control_rows_with_released_query_fitness": 0.0035319383625396455,
     "tau_without_query_double_fitness": {
       "n": 301706,
-      "pearson": 0.4190822270382086,
-      "spearman": 0.49006429839160504,
-      "slope": 0.9698048074306412,
-      "rmse": 0.15116593323909136,
-      "median_abs_residual": 0.04064099999999997
+      "pearson": 0.41966680036601883,
+      "spearman": 0.4905939650194557,
+      "slope": 0.9703667543798271,
+      "rmse": 0.151145217795496,
+      "median_abs_residual": 0.04057500000000004
     },
     "raw_eps_column_vs_observed_minus_expected": {
       "n": 301798,

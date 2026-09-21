@@ -1,0 +1,239 @@
+{
+ "read_at": "2026-09-21-11-28-48",
+ "chain": [
+  {
+   "job_id": "2409034",
+   "name": "025-q-calm-s1",
+   "state": "RUNNING",
+   "after": null,
+   "elapsed": "5:27:46",
+   "config": "cgt_s0_q_kl_calm_020",
+   "seed": 1
+  },
+  {
+   "job_id": "2409672",
+   "name": "025-s3-fit2-e50",
+   "state": "PENDING",
+   "after": "2409034",
+   "elapsed": "0:00",
+   "config": "cgt_s3_r_kl_fit_031",
+   "seed": 2
+  },
+  {
+   "job_id": "2409673",
+   "name": "025-s3-fit3-e50",
+   "state": "PENDING",
+   "after": "2409672",
+   "elapsed": "0:00",
+   "config": "cgt_s3_r_kl_fit_031",
+   "seed": 3
+  },
+  {
+   "job_id": "2409705",
+   "name": "025-r-emb-s1",
+   "state": "PENDING",
+   "after": "2409673",
+   "elapsed": "0:00",
+   "config": "cgt_s0_r_kl_embfit_035",
+   "seed": 1
+  },
+  {
+   "job_id": "2409706",
+   "name": "025-r-emb-s2",
+   "state": "PENDING",
+   "after": "2409705",
+   "elapsed": "0:00",
+   "config": "cgt_s0_r_kl_embfit_035",
+   "seed": 2
+  },
+  {
+   "job_id": "2409707",
+   "name": "025-r-emb-s3",
+   "state": "PENDING",
+   "after": "2409706",
+   "elapsed": "0:00",
+   "config": "cgt_s0_r_kl_embfit_035",
+   "seed": 3
+  },
+  {
+   "job_id": "2409708",
+   "name": "025-s3r-emb-s1",
+   "state": "PENDING",
+   "after": "2409707",
+   "elapsed": "0:00",
+   "config": "cgt_s3_r_kl_embfit_034",
+   "seed": 1
+  },
+  {
+   "job_id": "2409709",
+   "name": "025-s3r-emb-s2",
+   "state": "PENDING",
+   "after": "2409708",
+   "elapsed": "0:00",
+   "config": "cgt_s3_r_kl_embfit_034",
+   "seed": 2
+  },
+  {
+   "job_id": "2409710",
+   "name": "025-s3r-emb-s3",
+   "state": "PENDING",
+   "after": "2409709",
+   "elapsed": "0:00",
+   "config": "cgt_s3_r_kl_embfit_034",
+   "seed": 3
+  },
+  {
+   "job_id": "2409035",
+   "name": "025-q-prot-s1",
+   "state": "PENDING",
+   "after": "2409710",
+   "elapsed": "0:00",
+   "config": "cgt_s0_q_kl_prot_021",
+   "seed": 1
+  },
+  {
+   "job_id": "2409036",
+   "name": "025-q-fudt-s1",
+   "state": "PENDING",
+   "after": "2409035",
+   "elapsed": "0:00",
+   "config": "cgt_s0_q_kl_fudt_032",
+   "seed": 1
+  },
+  {
+   "job_id": "2409037",
+   "name": "025-q-calm-s2",
+   "state": "PENDING",
+   "after": "2409036",
+   "elapsed": "0:00",
+   "config": "cgt_s0_q_kl_calm_020",
+   "seed": 2
+  },
+  {
+   "job_id": "2409038",
+   "name": "025-q-prot-s2",
+   "state": "PENDING",
+   "after": "2409037",
+   "elapsed": "0:00",
+   "config": "cgt_s0_q_kl_prot_021",
+   "seed": 2
+  },
+  {
+   "job_id": "2409039",
+   "name": "025-q-fudt-s2",
+   "state": "PENDING",
+   "after": "2409038",
+   "elapsed": "0:00",
+   "config": "cgt_s0_q_kl_fudt_032",
+   "seed": 2
+  },
+  {
+   "job_id": "2409711",
+   "name": "025-s4r-tab-s1",
+   "state": "PENDING",
+   "after": "2409039",
+   "elapsed": "0:00",
+   "config": "cgt_s4_r_kl_fit_039",
+   "seed": 1
+  },
+  {
+   "job_id": "2409712",
+   "name": "025-q-tabfit-s1",
+   "state": "PENDING",
+   "after": "2409711",
+   "elapsed": "0:00",
+   "config": "cgt_s0_q_kl_fit_038",
+   "seed": 1
+  },
+  {
+   "job_id": "2409713",
+   "name": "025-q-tabfit-s2",
+   "state": "PENDING",
+   "after": "2409712",
+   "elapsed": "0:00",
+   "config": "cgt_s0_q_kl_fit_038",
+   "seed": 2
+  },
+  {
+   "job_id": "2409714",
+   "name": "025-q-tabfit-s3",
+   "state": "PENDING",
+   "after": "2409713",
+   "elapsed": "0:00",
+   "config": "cgt_s0_q_kl_fit_038",
+   "seed": 3
+  },
+  {
+   "job_id": "2409715",
+   "name": "025-s3q-emb-s1",
+   "state": "PENDING",
+   "after": "2409714",
+   "elapsed": "0:00",
+   "config": "cgt_s3_q_kl_embfit_037",
+   "seed": 1
+  },
+  {
+   "job_id": "2409716",
+   "name": "025-s3q-tab-s1",
+   "state": "PENDING",
+   "after": "2409715",
+   "elapsed": "0:00",
+   "config": "cgt_s3_q_kl_fit_036",
+   "seed": 1
+  },
+  {
+   "job_id": "2409717",
+   "name": "025-s3q-emb-s2",
+   "state": "PENDING",
+   "after": "2409716",
+   "elapsed": "0:00",
+   "config": "cgt_s3_q_kl_embfit_037",
+   "seed": 2
+  },
+  {
+   "job_id": "2409718",
+   "name": "025-s3q-tab-s2",
+   "state": "PENDING",
+   "after": "2409717",
+   "elapsed": "0:00",
+   "config": "cgt_s3_q_kl_fit_036",
+   "seed": 2
+  },
+  {
+   "job_id": "2409719",
+   "name": "025-s3q-emb-s3",
+   "state": "PENDING",
+   "after": "2409718",
+   "elapsed": "0:00",
+   "config": "cgt_s3_q_kl_embfit_037",
+   "seed": 3
+  },
+  {
+   "job_id": "2409720",
+   "name": "025-s3q-tab-s3",
+   "state": "PENDING",
+   "after": "2409719",
+   "elapsed": "0:00",
+   "config": "cgt_s3_q_kl_fit_036",
+   "seed": 3
+  },
+  {
+   "job_id": "2409721",
+   "name": "025-s4r-tab-s2",
+   "state": "PENDING",
+   "after": "2409720",
+   "elapsed": "0:00",
+   "config": "cgt_s4_r_kl_fit_039",
+   "seed": 2
+  },
+  {
+   "job_id": "2409722",
+   "name": "025-s4r-tab-s3",
+   "state": "PENDING",
+   "after": "2409721",
+   "elapsed": "0:00",
+   "config": "cgt_s4_r_kl_fit_039",
+   "seed": 3
+  }
+ ]
+}

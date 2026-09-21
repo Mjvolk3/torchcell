@@ -1,0 +1,734 @@
+{
+ "generated": "2026-09-21-11-29-20",
+ "queue_read_at": "2026-09-21-11-28-48",
+ "scoring_rule": "mean of val/gene_interaction/Pearson over epochs 10-29, complete windows only",
+ "cells": [
+  {
+   "block": "A. Random split (010's pinned split, 37,673 validation triples)",
+   "key": "r_s0_tab_nofit",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "records": "S0",
+   "split": "R",
+   "genes": "table",
+   "fitness": false,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 3,
+   "mean": 0.4385775446891785,
+   "sd": 0.002451291303699912,
+   "mean_ep30_49": null,
+   "comparator": null,
+   "delta_vs_comparator": null,
+   "question": "",
+   "seed_entries": [
+    "0.438",
+    "0.436",
+    "0.441"
+   ],
+   "seed_labels": [
+    1,
+    2,
+    3
+   ],
+   "runs": {
+    "1": {
+     "run_id": "6dvbzy8w",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/6dvbzy8w",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.4380957081913948,
+     "score_late": null,
+     "max_biased": 0.4497808516025543,
+     "max_epoch": 16
+    },
+    "2": {
+     "run_id": "ppm9kl4w",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/ppm9kl4w",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.4364029496908188,
+     "score_late": null,
+     "max_biased": 0.44706273078918457,
+     "max_epoch": 12
+    },
+    "3": {
+     "run_id": "22u65gax",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/22u65gax",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.4412339761853218,
+     "score_late": null,
+     "max_biased": 0.45481038093566895,
+     "max_epoch": 14
+    }
+   }
+  },
+  {
+   "block": "A. Random split (010's pinned split, 37,673 validation triples)",
+   "key": "r_s0_tab",
+   "config": "cgt_s0_r_kl_fit_014",
+   "records": "S0",
+   "split": "R",
+   "genes": "table",
+   "fitness": true,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 3,
+   "mean": 0.4392362847924232,
+   "sd": 0.003163260997016843,
+   "mean_ep30_49": null,
+   "comparator": "r_s0_tab_nofit",
+   "delta_vs_comparator": 0.0006587401032447371,
+   "question": "",
+   "seed_entries": [
+    "0.443",
+    "0.438",
+    "0.437"
+   ],
+   "seed_labels": [
+    1,
+    2,
+    3
+   ],
+   "runs": {
+    "1": {
+     "run_id": "b3n4ax4a",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/b3n4ax4a",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.44275783449411393,
+     "score_late": null,
+     "max_biased": 0.45233362913131714,
+     "max_epoch": 18
+    },
+    "2": {
+     "run_id": "4m5ry66x",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/4m5ry66x",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.43831529319286344,
+     "score_late": null,
+     "max_biased": 0.4476052224636078,
+     "max_epoch": 15
+    },
+    "3": {
+     "run_id": "0brtnr8x",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/0brtnr8x",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.4366357266902924,
+     "score_late": null,
+     "max_biased": 0.452160507440567,
+     "max_epoch": 14
+    }
+   }
+  },
+  {
+   "block": "A. Random split (010's pinned split, 37,673 validation triples)",
+   "key": "r_s3_tab",
+   "config": "cgt_s3_r_kl_fit_031",
+   "records": "S3",
+   "split": "R",
+   "genes": "table",
+   "fitness": true,
+   "budget_epochs": 50,
+   "seeds_planned": 3,
+   "seeds_scored": 1,
+   "mean": 0.477656851708889,
+   "sd": null,
+   "mean_ep30_49": 0.487374921143055,
+   "comparator": "r_s0_tab",
+   "delta_vs_comparator": 0.03842056691646578,
+   "question": "do more fitness records improve trigenic prediction",
+   "seed_entries": [
+    "0.478",
+    "\\textit{q1}",
+    "\\textit{q2}"
+   ],
+   "seed_labels": [
+    1,
+    2,
+    3
+   ],
+   "runs": {
+    "1": {
+     "run_id": "yb4gjh51",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/yb4gjh51",
+     "state": "finished",
+     "val_epochs": 104,
+     "last_epoch": 103,
+     "score": 0.477656851708889,
+     "score_late": 0.487374921143055,
+     "max_biased": 0.4981687366962433,
+     "max_epoch": 32
+    }
+   }
+  },
+  {
+   "block": "A. Random split (010's pinned split, 37,673 validation triples)",
+   "key": "r_s0_emb",
+   "config": "cgt_s0_r_kl_embfit_035",
+   "records": "S0",
+   "split": "R",
+   "genes": "composite",
+   "fitness": true,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 0,
+   "mean": null,
+   "sd": null,
+   "mean_ep30_49": null,
+   "comparator": "r_s0_tab",
+   "delta_vs_comparator": null,
+   "question": "does a transferable representation match the table where the table is at its best",
+   "seed_entries": [
+    "\\textit{q3}",
+    "\\textit{q4}",
+    "\\textit{q5}"
+   ],
+   "seed_labels": [
+    1,
+    2,
+    3
+   ],
+   "runs": {}
+  },
+  {
+   "block": "A. Random split (010's pinned split, 37,673 validation triples)",
+   "key": "r_s3_emb",
+   "config": "cgt_s3_r_kl_embfit_034",
+   "records": "S3",
+   "split": "R",
+   "genes": "composite",
+   "fitness": true,
+   "budget_epochs": 50,
+   "seeds_planned": 3,
+   "seeds_scored": 0,
+   "mean": null,
+   "sd": null,
+   "mean_ep30_49": null,
+   "comparator": "r_s3_tab",
+   "delta_vs_comparator": null,
+   "question": "does the composite keep the closure gain",
+   "seed_entries": [
+    "\\textit{q6}",
+    "\\textit{q7}",
+    "\\textit{q8}"
+   ],
+   "seed_labels": [
+    1,
+    2,
+    3
+   ],
+   "runs": {}
+  },
+  {
+   "block": "A. Random split (010's pinned split, 37,673 validation triples)",
+   "key": "r_s4_tab",
+   "config": "cgt_s4_r_kl_fit_039",
+   "records": "S4",
+   "split": "R",
+   "genes": "table",
+   "fitness": true,
+   "budget_epochs": 50,
+   "seeds_planned": 3,
+   "seeds_scored": 0,
+   "mean": null,
+   "sd": null,
+   "mean_ep30_49": null,
+   "comparator": "r_s3_tab",
+   "delta_vs_comparator": null,
+   "question": "is the gain from the triples' own pairs or from any doubles",
+   "seed_entries": [
+    "\\textit{q14}",
+    "\\textit{q24}",
+    "\\textit{q25}"
+   ],
+   "seed_labels": [
+    1,
+    2,
+    3
+   ],
+   "runs": {}
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s0_tab_nofit",
+   "config": "cgt_s0_q_kl_ctrl_016",
+   "records": "S0",
+   "split": "Q",
+   "genes": "table",
+   "fitness": false,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 3,
+   "mean": 0.1362369292726119,
+   "sd": 0.010106485101685176,
+   "mean_ep30_49": null,
+   "comparator": null,
+   "delta_vs_comparator": null,
+   "question": "",
+   "seed_entries": [
+    "0.140",
+    "0.144",
+    "0.125"
+   ],
+   "seed_labels": [
+    42,
+    1,
+    2
+   ],
+   "runs": {
+    "42": {
+     "run_id": "czh65w7z",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/czh65w7z",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.13986965753138064,
+     "score_late": null,
+     "max_biased": 0.19463467597961426,
+     "max_epoch": 2
+    },
+    "1": {
+     "run_id": "3tqzb1qu",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/3tqzb1qu",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.14402491338551043,
+     "score_late": null,
+     "max_biased": 0.22597704827785492,
+     "max_epoch": 3
+    },
+    "2": {
+     "run_id": "ko5paoaq",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/ko5paoaq",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.12481621690094472,
+     "score_late": null,
+     "max_biased": 0.16294795274734497,
+     "max_epoch": 7
+    }
+   }
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s0_rand",
+   "config": "cgt_s0_q_kl_rand_018",
+   "records": "S0",
+   "split": "Q",
+   "genes": "random vector",
+   "fitness": false,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 3,
+   "mean": 0.15171024141212305,
+   "sd": 0.005826867135013256,
+   "mean_ep30_49": null,
+   "comparator": "q_s0_tab_nofit",
+   "delta_vs_comparator": 0.015473312139511142,
+   "question": "",
+   "seed_entries": [
+    "0.151",
+    "0.146",
+    "0.158"
+   ],
+   "seed_labels": [
+    42,
+    1,
+    2
+   ],
+   "runs": {
+    "42": {
+     "run_id": "cjhqicvn",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/cjhqicvn",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.15125756487250328,
+     "score_late": null,
+     "max_biased": 0.1869279444217682,
+     "max_epoch": 13
+    },
+    "1": {
+     "run_id": "w07b5h6v",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/w07b5h6v",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.14612291529774665,
+     "score_late": null,
+     "max_biased": 0.17306774854660034,
+     "max_epoch": 19
+    },
+    "2": {
+     "run_id": "sfkbxzfj",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/sfkbxzfj",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.1577502440661192,
+     "score_late": null,
+     "max_biased": 0.19574566185474396,
+     "max_epoch": 10
+    }
+   }
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s0_emb_nofit",
+   "config": "cgt_s0_q_kl_emb_017",
+   "records": "S0",
+   "split": "Q",
+   "genes": "composite",
+   "fitness": false,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 3,
+   "mean": 0.21768074159820874,
+   "sd": 0.016096623938200473,
+   "mean_ep30_49": null,
+   "comparator": "q_s0_tab_nofit",
+   "delta_vs_comparator": 0.08144381232559683,
+   "question": "",
+   "seed_entries": [
+    "0.215",
+    "0.235",
+    "0.203"
+   ],
+   "seed_labels": [
+    42,
+    1,
+    2
+   ],
+   "runs": {
+    "42": {
+     "run_id": "s1vx2zgw",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/s1vx2zgw",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.21495625898241996,
+     "score_late": null,
+     "max_biased": 0.2624843120574951,
+     "max_epoch": 2
+    },
+    "1": {
+     "run_id": "if1gdrya",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/if1gdrya",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.23496574014425278,
+     "score_late": null,
+     "max_biased": 0.274832159280777,
+     "max_epoch": 15
+    },
+    "2": {
+     "run_id": "e9gpr997",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/e9gpr997",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.20312022566795349,
+     "score_late": null,
+     "max_biased": 0.27029886841773987,
+     "max_epoch": 2
+    }
+   }
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s0_calm",
+   "config": "cgt_s0_q_kl_calm_020",
+   "records": "S0",
+   "split": "Q",
+   "genes": "CaLM alone",
+   "fitness": false,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 1,
+   "mean": 0.20354543924331664,
+   "sd": null,
+   "mean_ep30_49": null,
+   "comparator": "q_s0_emb_nofit",
+   "delta_vs_comparator": -0.014135302354892104,
+   "question": "which region carries the composite",
+   "seed_entries": [
+    "0.204",
+    "\\textit{run, ep 17}",
+    "\\textit{q11}"
+   ],
+   "seed_labels": [
+    42,
+    1,
+    2
+   ],
+   "runs": {
+    "42": {
+     "run_id": "8aa08xx0",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/8aa08xx0",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.20354543924331664,
+     "score_late": null,
+     "max_biased": 0.25193077325820923,
+     "max_epoch": 7
+    },
+    "1": {
+     "run_id": "gcgjebdf",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/gcgjebdf",
+     "state": "finished",
+     "val_epochs": 18,
+     "last_epoch": 17,
+     "score": null,
+     "score_late": null,
+     "max_biased": 0.2600933015346527,
+     "max_epoch": 14
+    }
+   }
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s0_prot",
+   "config": "cgt_s0_q_kl_prot_021",
+   "records": "S0",
+   "split": "Q",
+   "genes": "ProtT5 alone",
+   "fitness": false,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 1,
+   "mean": 0.16230071261525153,
+   "sd": null,
+   "mean_ep30_49": null,
+   "comparator": "q_s0_emb_nofit",
+   "delta_vs_comparator": -0.05538002898295721,
+   "question": "",
+   "seed_entries": [
+    "0.162",
+    "\\textit{q9}",
+    "\\textit{q12}"
+   ],
+   "seed_labels": [
+    42,
+    1,
+    2
+   ],
+   "runs": {
+    "42": {
+     "run_id": "pmkzwwzw",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/pmkzwwzw",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.16230071261525153,
+     "score_late": null,
+     "max_biased": 0.2698822617530823,
+     "max_epoch": 3
+    }
+   }
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s0_fudt",
+   "config": "cgt_s0_q_kl_fudt_032",
+   "records": "S0",
+   "split": "Q",
+   "genes": "flanks alone",
+   "fitness": false,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 1,
+   "mean": 0.1643930748105049,
+   "sd": null,
+   "mean_ep30_49": 0.1543995976448059,
+   "comparator": "q_s0_emb_nofit",
+   "delta_vs_comparator": -0.05328766678770383,
+   "question": "",
+   "seed_entries": [
+    "0.164",
+    "\\textit{q10}",
+    "\\textit{q13}"
+   ],
+   "seed_labels": [
+    42,
+    1,
+    2
+   ],
+   "runs": {
+    "42": {
+     "run_id": "hfpqd2r8",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/hfpqd2r8",
+     "state": "finished",
+     "val_epochs": 100,
+     "last_epoch": 99,
+     "score": 0.1643930748105049,
+     "score_late": 0.1543995976448059,
+     "max_biased": 0.20757579803466797,
+     "max_epoch": 20
+    }
+   }
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s0_tab",
+   "config": "cgt_s0_q_kl_fit_038",
+   "records": "S0",
+   "split": "Q",
+   "genes": "table",
+   "fitness": true,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 0,
+   "mean": null,
+   "sd": null,
+   "mean_ep30_49": null,
+   "comparator": "q_s0_tab_nofit",
+   "delta_vs_comparator": null,
+   "question": "",
+   "seed_entries": [
+    "\\textit{q15}",
+    "\\textit{q16}",
+    "\\textit{q17}"
+   ],
+   "seed_labels": [
+    1,
+    2,
+    3
+   ],
+   "runs": {}
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s0_emb",
+   "config": "cgt_s0_q_kl_embfit_027",
+   "records": "S0",
+   "split": "Q",
+   "genes": "composite",
+   "fitness": true,
+   "budget_epochs": 30,
+   "seeds_planned": 3,
+   "seeds_scored": 3,
+   "mean": 0.20600447170436384,
+   "sd": 0.033011664556796744,
+   "mean_ep30_49": null,
+   "comparator": "q_s0_emb_nofit",
+   "delta_vs_comparator": -0.011676269893844904,
+   "question": "",
+   "seed_entries": [
+    "0.209",
+    "0.237",
+    "0.171"
+   ],
+   "seed_labels": [
+    42,
+    1,
+    2
+   ],
+   "runs": {
+    "42": {
+     "run_id": "s4buqxee",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/s4buqxee",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.20930494070053102,
+     "score_late": null,
+     "max_biased": 0.2538217604160309,
+     "max_epoch": 2
+    },
+    "1": {
+     "run_id": "wpr18i1o",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/wpr18i1o",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.2372419275343418,
+     "score_late": null,
+     "max_biased": 0.2783673405647278,
+     "max_epoch": 25
+    },
+    "2": {
+     "run_id": "baozg4ou",
+     "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/baozg4ou",
+     "state": "finished",
+     "val_epochs": 30,
+     "last_epoch": 29,
+     "score": 0.17146654687821866,
+     "score_late": null,
+     "max_biased": 0.2428976595401764,
+     "max_epoch": 2
+    }
+   }
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s3_tab",
+   "config": "cgt_s3_q_kl_fit_036",
+   "records": "S3 strict",
+   "split": "Q",
+   "genes": "table",
+   "fitness": true,
+   "budget_epochs": 50,
+   "seeds_planned": 3,
+   "seeds_scored": 0,
+   "mean": null,
+   "sd": null,
+   "mean_ep30_49": null,
+   "comparator": "q_s0_tab",
+   "delta_vs_comparator": null,
+   "question": "do more fitness records help on unseen query pairs",
+   "seed_entries": [
+    "\\textit{q19}",
+    "\\textit{q21}",
+    "\\textit{q23}"
+   ],
+   "seed_labels": [
+    1,
+    2,
+    3
+   ],
+   "runs": {}
+  },
+  {
+   "block": "B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",
+   "key": "q_s3_emb",
+   "config": "cgt_s3_q_kl_embfit_037",
+   "records": "S3 strict",
+   "split": "Q",
+   "genes": "composite",
+   "fitness": true,
+   "budget_epochs": 50,
+   "seeds_planned": 3,
+   "seeds_scored": 0,
+   "mean": null,
+   "sd": null,
+   "mean_ep30_49": null,
+   "comparator": "q_s0_emb",
+   "delta_vs_comparator": null,
+   "question": "",
+   "seed_entries": [
+    "\\textit{q18}",
+    "\\textit{q20}",
+    "\\textit{q22}"
+   ],
+   "seed_labels": [
+    1,
+    2,
+    3
+   ],
+   "runs": {}
+  }
+ ]
+}

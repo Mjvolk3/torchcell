@@ -1,0 +1,29 @@
+%% SOURCE: experiments/025-solid-growth/scripts/mmli_campaign_plan.py (results/mmli_campaign_plan.json) -- GENERATED, do not edit
+
+\begin{tabular}{llllrrrrrrr}
+\toprule
+records & genes & fit. & config & seed a & seed b & seed c & $n$ & mean & sd & $\Delta$ \\
+\midrule
+\multicolumn{11}{l}{\textbf{A. Random split (010's pinned split, 37,673 validation triples)}} \\
+\midrule
+S0 & table & no & \texttt{s0\_r\_kl\_ctrl\_013} & 0.438 & 0.436 & 0.441 & 3/3 & 0.439 & 0.002 &  \\
+S0 & table & yes & \texttt{s0\_r\_kl\_fit\_014} & 0.443 & 0.438 & 0.437 & 3/3 & 0.439 & 0.003 & +0.001 \\
+S3 & table & yes & \texttt{s3\_r\_kl\_fit\_031} & 0.478 & \textit{q1} & \textit{q2} & 1/3 & \textbf{0.478} &  & +0.038 \\
+S0 & composite & yes & \texttt{s0\_r\_kl\_embfit\_035} & \textit{q3} & \textit{q4} & \textit{q5} & 0/3 &  &  &  \\
+S3 & composite & yes & \texttt{s3\_r\_kl\_embfit\_034} & \textit{q6} & \textit{q7} & \textit{q8} & 0/3 &  &  &  \\
+S4 & table & yes & \texttt{s4\_r\_kl\_fit\_039} & \textit{q14} & \textit{q24} & \textit{q25} & 0/3 &  &  &  \\
+\midrule
+\multicolumn{11}{l}{\textbf{B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)}} \\
+\midrule
+S0 & table & no & \texttt{s0\_q\_kl\_ctrl\_016} & 0.140 & 0.144 & 0.125 & 3/3 & 0.136 & 0.010 &  \\
+S0 & random vector & no & \texttt{s0\_q\_kl\_rand\_018} & 0.151 & 0.146 & 0.158 & 3/3 & 0.152 & 0.006 & +0.015 \\
+S0 & composite & no & \texttt{s0\_q\_kl\_emb\_017} & 0.215 & 0.235 & 0.203 & 3/3 & \textbf{0.218} & 0.016 & +0.081 \\
+S0 & CaLM alone & no & \texttt{s0\_q\_kl\_calm\_020} & 0.204 & \textit{run, ep 17} & \textit{q11} & 1/3 & 0.204 &  & -0.014 \\
+S0 & ProtT5 alone & no & \texttt{s0\_q\_kl\_prot\_021} & 0.162 & \textit{q9} & \textit{q12} & 1/3 & 0.162 &  & -0.055 \\
+S0 & flanks alone & no & \texttt{s0\_q\_kl\_fudt\_032} & 0.164 & \textit{q10} & \textit{q13} & 1/3 & 0.164 &  & -0.053 \\
+S0 & table & yes & \texttt{s0\_q\_kl\_fit\_038} & \textit{q15} & \textit{q16} & \textit{q17} & 0/3 &  &  &  \\
+S0 & composite & yes & \texttt{s0\_q\_kl\_embfit\_027} & 0.209 & 0.237 & 0.171 & 3/3 & 0.206 & 0.033 & -0.012 \\
+S3 strict & table & yes & \texttt{s3\_q\_kl\_fit\_036} & \textit{q19} & \textit{q21} & \textit{q23} & 0/3 &  &  &  \\
+S3 strict & composite & yes & \texttt{s3\_q\_kl\_embfit\_037} & \textit{q18} & \textit{q20} & \textit{q22} & 0/3 &  &  &  \\
+\bottomrule
+\end{tabular}

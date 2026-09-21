@@ -1,0 +1,51 @@
+%% notes-tex/025-mmli-campaign/sections/1-design.tex
+\section{Design\secstatus{todo}}
+\label{sec:design}
+
+\notesec{Vocabulary}
+Every arm is the equivariant cell graph transformer of experiment 010 trained on a subset
+of the 025 build (13.5 million records) and scored on trigenic interaction alone.
+
+\begin{description}
+\item[composite] A fixed per-gene vector of 3{,}328 dimensions: promoter (768), open
+  reading frame as codons under CaLM (768), open reading frame as protein under ProtT5
+  (1{,}024) and terminator (768), entered through a two-layer preprocessor whose width
+  (339) matches the table's parameter count to 0.13 percent.
+\item[fit.] Joint fitness supervision: the model predicts fitness and interaction, both
+  at loss weight 1.0, with a perturbed classification token and a linear readout.
+\item[Q] The query-pair-disjoint split. A trigenic screen crosses one double-mutant query
+  strain against an array of single mutants; 420 query pairs recur, 89 are held out, and
+  every triple of a held-out pair is in validation or test (37{,}705 and 37{,}791).
+\item[R] The random split of experiment 010, carried onto the 025 build by genotype
+  identity: 376{,}732 of 376{,}732 triples matched, 301{,}386 train, 37{,}673 validation,
+  37{,}673 test.
+\item[S0] The 376{,}732 triples.
+\item[S3] S0, the 5{,}694 singles, and the 739{,}219 closure doubles, those whose gene pair
+  lies inside some triple: 1{,}121{,}645 records. Every record outside the pinned split
+  trains.
+\item[S3 strict] S3 without the 85 doubles that are themselves a held-out query pair of
+  Q: 1{,}121{,}560 records. The 145{,}208 doubles pairing one held-out query gene with an
+  array gene stay, since digenic screens supply them before any trigenic screen is run.
+\item[S4] S0, the singles, and 739{,}219 random doubles whose pair lies inside no triple.
+  Size-matched to S3 and sharing none of its doubles.
+\item[score] The mean of validation Pearson on trigenic interaction over epochs 10 to 29,
+  reported only when all 20 epochs are logged. The maximum over epochs is an upward-biased
+  order statistic and is never the score.
+\item[table] A learned $6{,}607 \times 180$ gene embedding, 1{,}189{,}260 parameters.
+\end{description}
+
+\notesec{Reads declared before the runs}
+Each planned cell differs from its comparator in one factor, and the $\Delta$ column of
+Table~\ref{tab:campaign} is that difference.
+S3 against S0 on R with the table tests whether added fitness records help; three seeds
+all above the S0 range is the criterion, and the S0 seed spread is 0.003.
+S4 against S3 separates the triples' own pairs from doubles in general. The stored-value
+identity linking a triple's score to its doubles reaches only $r = 0.23$ on this build, so
+S4 matching S3 is a live outcome and would restate the claim as one about data volume.
+The composite against the table on R, at S0 and at S3, tests whether the transferable
+representation matches the table when every gene is seen in training.
+S3 strict against S0 on Q asks the same data question where query pairs are unseen, under
+both representations, and whether the table closes on the composite once the held-out
+triples' genes appear in training doubles.
+The single-region arms on Q rank CaLM, ProtT5 and the flanks; one seed each cannot, since
+seeds of one arm spread by 0.015 to 0.033.

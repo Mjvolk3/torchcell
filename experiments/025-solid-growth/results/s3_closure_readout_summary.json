@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-18-08-25-20",
+  "generated": "2026-09-21-11-29-45",
   "project": "zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer",
   "scoring_rule": "score = mean of val/gene_interaction/Pearson over the fixed epoch window ep10_29 (epochs 10-29), reported only when every epoch of the window is present; the S3 cell also reports the 100-129 window. The max over epochs is an upward-biased order statistic recorded for checkpoint selection, never the score.",
   "excluded_run_ids": [
@@ -15,21 +15,21 @@
       "graph_reg_lambda": null,
       "budget_epochs": 130,
       "n_seeds_present": 1,
-      "n_seeds_scored": 0,
+      "n_seeds_scored": 1,
       "window": "ep10_29",
-      "window_mean_mean": null,
+      "window_mean_mean": 0.4777,
       "window_mean_sd": null,
-      "last_epoch_mean": null,
+      "last_epoch_mean": 0.4799,
       "seeds": {
         "1": {
           "run_id": "yb4gjh51",
           "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/yb4gjh51",
           "state": "finished",
-          "epochs_logged": 1,
-          "val_epochs_logged": 0,
+          "epochs_logged": 105,
+          "val_epochs_logged": 104,
           "partial": true,
-          "score": null,
-          "val_gi_pearson_last": null
+          "score": 0.4777,
+          "val_gi_pearson_last": 0.4799
         }
       },
       "window_ep100_129_mean": null,
@@ -84,22 +84,42 @@
       "label": "S0, joint fitness 0.1",
       "graph_reg_lambda": null,
       "budget_epochs": 30,
-      "n_seeds_present": 1,
-      "n_seeds_scored": 0,
+      "n_seeds_present": 3,
+      "n_seeds_scored": 3,
       "window": "ep10_29",
-      "window_mean_mean": null,
-      "window_mean_sd": null,
-      "last_epoch_mean": 0.4467,
+      "window_mean_mean": 0.4366,
+      "window_mean_sd": 0.0049,
+      "last_epoch_mean": 0.4299,
       "seeds": {
         "1": {
-          "run_id": "ejn7b4a3",
-          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/ejn7b4a3",
-          "state": "failed",
-          "epochs_logged": 10,
-          "val_epochs_logged": 9,
-          "partial": true,
-          "score": null,
-          "val_gi_pearson_last": 0.4467
+          "run_id": "46h2sdcs",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/46h2sdcs",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4385,
+          "val_gi_pearson_last": 0.4307
+        },
+        "2": {
+          "run_id": "3365kdbb",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/3365kdbb",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4311,
+          "val_gi_pearson_last": 0.4235
+        },
+        "3": {
+          "run_id": "sc24xxnx",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/sc24xxnx",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4403,
+          "val_gi_pearson_last": 0.4356
         }
       }
     },
@@ -108,12 +128,12 @@
       "label": "S0 control, no fitness head",
       "graph_reg_lambda": 0.001,
       "budget_epochs": 30,
-      "n_seeds_present": 1,
-      "n_seeds_scored": 1,
+      "n_seeds_present": 5,
+      "n_seeds_scored": 3,
       "window": "ep10_29",
-      "window_mean_mean": 0.4381,
-      "window_mean_sd": null,
-      "last_epoch_mean": 0.4292,
+      "window_mean_mean": 0.4386,
+      "window_mean_sd": 0.0024,
+      "last_epoch_mean": 0.4357,
       "seeds": {
         "1": {
           "run_id": "6dvbzy8w",
@@ -124,6 +144,46 @@
           "partial": false,
           "score": 0.4381,
           "val_gi_pearson_last": 0.4292
+        },
+        "2": {
+          "run_id": "ppm9kl4w",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/ppm9kl4w",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4364,
+          "val_gi_pearson_last": 0.4378
+        },
+        "3": {
+          "run_id": "22u65gax",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/22u65gax",
+          "state": "finished",
+          "epochs_logged": 30,
+          "val_epochs_logged": 30,
+          "partial": false,
+          "score": 0.4412,
+          "val_gi_pearson_last": 0.4304
+        },
+        "42": {
+          "run_id": "98yvinas",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/98yvinas",
+          "state": "crashed",
+          "epochs_logged": 26,
+          "val_epochs_logged": 25,
+          "partial": true,
+          "score": null,
+          "val_gi_pearson_last": 0.4384
+        },
+        "43": {
+          "run_id": "d0dubbdn",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/d0dubbdn",
+          "state": "crashed",
+          "epochs_logged": 25,
+          "val_epochs_logged": 24,
+          "partial": true,
+          "score": null,
+          "val_gi_pearson_last": 0.4428
         }
       }
     },
@@ -174,7 +234,20 @@
   },
   "paired_s3_vs_fit_014": {
     "window": "ep10_29",
-    "n_paired_seeds": 0,
-    "status": "not computable: no seed has a complete 10-29 window in both arms (S3 scored seeds [], fit_014 scored seeds [1, 2, 3])"
+    "n_paired_seeds": 1,
+    "seeds": [
+      1
+    ],
+    "s3": {
+      "1": 0.4777
+    },
+    "fit_014": {
+      "1": 0.4428
+    },
+    "paired_diff": [
+      0.0349
+    ],
+    "paired_diff_mean": 0.0349,
+    "paired_diff_sd": null
   }
 }

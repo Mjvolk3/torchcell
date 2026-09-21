@@ -149,18 +149,22 @@ SERIES = [RED, ORANGE, PURPLE, YELLOW, BLUE, GRAY]
 
 
 def per_epoch(run) -> dict[str, dict[int, float]]:
-    """Every logged key by epoch. `scan_history` is the unsampled history."""
+    """Every logged key by epoch, one `run.history(keys=...)` read per key.
+
+    `scan_history` is not usable on a long run. On the 104-epoch S3 seed 1 (yb4gjh51,
+    12,083 steps) the unkeyed scan returns 188 rows covering 3 epochs, and the keyed scan
+    returns 104 rows of `{"_step": 0, "epoch": None}` with no metric in them, while
+    `history` with the same keys returns the 104 real rows. `history` samples only above
+    `samples` rows, and no key here is logged more than once per epoch. The keys cannot
+    share one read: a keyed read returns only rows carrying every key, and these are
+    logged on different steps.
+    """
     out: dict[str, dict[int, float]] = {k: {} for k in KEYS}
     epochs: set[int] = set()
-    for row in run.scan_history():
-        e = row.get("epoch")
-        if e is None:
-            continue
-        epochs.add(int(e))
-        for k in KEYS:
-            v = row.get(k)
-            if v is not None:
-                out[k][int(e)] = float(v)
+    for k in KEYS:
+        for row in run.history(keys=["epoch", k], samples=10_000, pandas=False):
+            out[k][int(row["epoch"])] = float(row[k])
+        epochs |= set(out[k])
     out["_epochs"] = {e: 1.0 for e in epochs}
     return out
 

@@ -1,0 +1,50 @@
+%% notes-tex/025-mmli-campaign/025-mmli-campaign.tex
+%% [[experiments.025-solid-growth.mmli-campaign]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/025-mmli-campaign/025-mmli-campaign.tex
+%%
+%% Build:  make refresh   -> refill tables/ from W&B and the live mmli queue, then build
+%%         make           -> 025-mmli-campaign.pdf
+%%         make check     -> formatting / provenance / style gate
+%%
+%% Both tables are written by experiments/025-solid-growth/scripts/mmli_campaign_plan.py
+%% (results/mmli_campaign_plan.json, results/mmli_queue_snapshot.json) and never edited by hand.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}The 025 Campaign on the mmli Node\\
+  {\large Records, split and gene representation crossed over trigenic interaction
+   prediction: measured cells filled, planned cells empty}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Two claims rest on this campaign. Training on fitness records merged across datasets
+improves prediction of trigenic interactions that the added records do not contain, and a
+fixed sequence-derived gene representation, which transfers to genes and organisms a
+learned table has never seen, costs nothing where the table is at its best. One seed of the
+first claim is measured: adding 739{,}219 double-mutant records to the 376{,}732 triples
+raises validation Pearson from 0.439 (three seeds, sd 0.003) to 0.478. The second claim
+has no measurement on the random split. Table~\ref{tab:campaign} holds every cell of the
+design and Table~\ref{tab:queue} the order in which the single four-GPU node runs the 26
+jobs that fill it, about 23 days end to end.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-design}
+\input{sections/2-table}
+\input{sections/3-queue}
+
+\end{document}

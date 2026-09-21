@@ -1,0 +1,17 @@
+block,key,config,records,split,genes,fitness,budget_epochs,seeds_planned,seeds_scored,mean,sd,mean_ep30_49,comparator,delta_vs_comparator,question
+"A. Random split (010's pinned split, 37,673 validation triples)",r_s0_tab_nofit,cgt_s0_r_kl_ctrl_013,S0,R,table,False,30,3,3,0.4385775446891785,0.002451291303699912,,,,
+"A. Random split (010's pinned split, 37,673 validation triples)",r_s0_tab,cgt_s0_r_kl_fit_014,S0,R,table,True,30,3,3,0.4392362847924232,0.003163260997016843,,r_s0_tab_nofit,0.0006587401032447371,
+"A. Random split (010's pinned split, 37,673 validation triples)",r_s3_tab,cgt_s3_r_kl_fit_031,S3,R,table,True,50,3,1,0.477656851708889,,0.487374921143055,r_s0_tab,0.03842056691646578,do more fitness records improve trigenic prediction
+"A. Random split (010's pinned split, 37,673 validation triples)",r_s0_emb,cgt_s0_r_kl_embfit_035,S0,R,composite,True,30,3,0,,,,r_s0_tab,,does a transferable representation match the table where the table is at its best
+"A. Random split (010's pinned split, 37,673 validation triples)",r_s3_emb,cgt_s3_r_kl_embfit_034,S3,R,composite,True,50,3,0,,,,r_s3_tab,,does the composite keep the closure gain
+"A. Random split (010's pinned split, 37,673 validation triples)",r_s4_tab,cgt_s4_r_kl_fit_039,S4,R,table,True,50,3,0,,,,r_s3_tab,,is the gain from the triples' own pairs or from any doubles
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s0_tab_nofit,cgt_s0_q_kl_ctrl_016,S0,Q,table,False,30,3,3,0.1362369292726119,0.010106485101685176,,,,
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s0_rand,cgt_s0_q_kl_rand_018,S0,Q,random vector,False,30,3,3,0.15171024141212305,0.005826867135013256,,q_s0_tab_nofit,0.015473312139511142,
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s0_emb_nofit,cgt_s0_q_kl_emb_017,S0,Q,composite,False,30,3,3,0.21768074159820874,0.016096623938200473,,q_s0_tab_nofit,0.08144381232559683,
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s0_calm,cgt_s0_q_kl_calm_020,S0,Q,CaLM alone,False,30,3,1,0.20354543924331664,,,q_s0_emb_nofit,-0.014135302354892104,which region carries the composite
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s0_prot,cgt_s0_q_kl_prot_021,S0,Q,ProtT5 alone,False,30,3,1,0.16230071261525153,,,q_s0_emb_nofit,-0.05538002898295721,
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s0_fudt,cgt_s0_q_kl_fudt_032,S0,Q,flanks alone,False,30,3,1,0.1643930748105049,,0.1543995976448059,q_s0_emb_nofit,-0.05328766678770383,
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s0_tab,cgt_s0_q_kl_fit_038,S0,Q,table,True,30,3,0,,,,q_s0_tab_nofit,,
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s0_emb,cgt_s0_q_kl_embfit_027,S0,Q,composite,True,30,3,3,0.20600447170436384,0.033011664556796744,,q_s0_emb_nofit,-0.011676269893844904,
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s3_tab,cgt_s3_q_kl_fit_036,S3 strict,Q,table,True,50,3,0,,,,q_s0_tab,,do more fitness records help on unseen query pairs
+"B. Query-pair-disjoint split (89 of 420 query pairs held out, 37,705 validation triples)",q_s3_emb,cgt_s3_q_kl_embfit_037,S3 strict,Q,composite,True,50,3,0,,,,q_s0_emb,,

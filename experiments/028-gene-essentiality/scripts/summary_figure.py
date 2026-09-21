@@ -65,7 +65,10 @@ IMAGES = osp.join(ASSET_IMAGES_DIR, "028-gene-essentiality")
 
 #: The figure's one color code, held across every panel.
 COMPARATOR = PLOT_PALETTE[5]
-NO_SOLVE = PLOT_PALETTE[3]
+# The cell with no metabolic column takes the palette's fifth slot rather than its
+# fourth: the yellow sits beside the orange of the forms that do read one and the two
+# are hard to tell apart on a bar chart.
+NO_MODULE = PLOT_PALETTE[4]
 SOLVE = PLOT_PALETTE[0]
 GRAPH = PLOT_PALETTE[1]
 AVERAGE = PLOT_PALETTE[2]
@@ -228,7 +231,7 @@ def leaderboard() -> list[Bar]:
         Bar(
             label="MLP, three inputs",
             value=cheap["MLP"]["ensemble_auroc"],
-            color=NO_SOLVE,
+            color=NO_MODULE,
             interval=tuple(cheap["MLP"]["ensemble_ci"]),
         ),
         Bar(
@@ -296,7 +299,7 @@ def cells(*patterns: str) -> tuple[list[float], float]:
 #: The module's forms on the pathway multi-hot with ProtT5 (the last on ProtT5 alone, the
 #: only backbone the forced column ran on): label, result globs, color, LP in the loop.
 MODULE_FORMS: list[tuple[str, tuple[str, ...], str, bool]] = [
-    ("no metabolism", ("w39_pathpool_h12l1p1_e200_s*.json",), NO_SOLVE, False),
+    ("no metabolism", ("w39_pathpool_h12l1p1_e200_s*.json",), NO_MODULE, False),
     (
         "FBA growth ratios on the logit",
         ("w38_protpathfba_h12l1p1_e200_s*.json",),
@@ -403,7 +406,7 @@ def genome_transfer() -> list[Bar]:
             "transformer + cached solve head",
             SOLVE,
         ),
-        ("MLP on the three inputs", "MLP, three inputs", NO_SOLVE),
+        ("MLP on the three inputs", "MLP, three inputs", NO_MODULE),
     ]
     bars = [
         Bar(
@@ -596,15 +599,22 @@ def top_legend(fig: Figure, handles: list[Any], ncol: int) -> None:
     )
 
 
+#: The two families as they are named in ``hard_genes.json``: arm, color, marker.
+HARD_ARMS: list[tuple[str, str, str]] = [
+    ("layer-free log1p vector + affine, pathway + ProtT5 (round 33)", SOLVE, "o"),
+    ("GO convolution, 400 epochs, six seeds", GRAPH, "s"),
+]
+
+
 def goal_one() -> None:
-    """Goal 1, panels b to e; panel a is the draw.io explainer placed above in LaTeX."""
-    height = 120.0
+    """Goal 1: what ranks the held-out genes best, and which genes are still missed."""
+    height = 166.0
     fig = new_figure(height)
     top_legend(
         fig,
         [
             patch(COMPARATOR, "comparator, nothing learned here"),
-            patch(NO_SOLVE, "learned, no solve, no graph"),
+            patch(NO_MODULE, "learned, no metabolic column, no graph"),
             patch(SOLVE, "family 1: transformer reading the solve"),
             patch(GRAPH, "family 2: message passing on gene graphs"),
             patch(AVERAGE, "equal-weight average of families 1 and 2"),
@@ -615,17 +625,17 @@ def goal_one() -> None:
     left_label, right_block = 47.0, 92.0
 
     top = 15.0
-    ax = place(fig, left_label, top, 40.0, 46.0)
+    ax = place(fig, left_label, top, 40.0, 44.0)
     draw_bars(ax, leaderboard())
     auroc_axis(ax, 0.5, 1.0)
     ax.set_xlabel("AUROC, 195 held-out genes, fold ensembles")
     ax.set_title("Best method, released 195 genes", pad=3, loc="left")
-    letter(fig, 0.0, top, "b")
+    letter(fig, 0.0, top, "a")
 
     # c: the finalists on the ten repeated outer splits, fixed in advance (round 75).
     resplit = read("resplit_readout.json")["splits"]
     order = sorted(range(len(resplit)), key=lambda i: resplit[i]["average"])
-    ax = place(fig, right_block + 12.0, top, 72.0, 46.0)
+    ax = place(fig, right_block + 12.0, top, 72.0, 44.0)
     for key, color, marker in (
         ("layer_free", SOLVE, "o"),
         ("go_convolution", GRAPH, "s"),
@@ -656,16 +666,16 @@ def goal_one() -> None:
     ax.set_title(
         "Ten other held-out fifths, models fixed in advance", pad=3, loc="left"
     )
-    letter(fig, right_block, top, "c")
+    letter(fig, right_block, top, "b")
 
-    top = 78.0
-    ax = place(fig, left_label, top, 40.0, 30.0)
+    top = 76.0
+    ax = place(fig, left_label, top, 40.0, 28.0)
     draw_bars(ax, genome_transfer())
     ax.axvline(0.5, color="black", lw=0.5, ls=(0, (2, 2)), zorder=5)
     auroc_axis(ax, 0.4, 0.8)
     ax.set_xlabel("AUROC, 4,674 genome-wide held-out genes")
     ax.set_title("What transfers off the metabolic genes", pad=3, loc="left")
-    letter(fig, 0.0, top, "d")
+    letter(fig, 0.0, top, "c")
 
     set_label, title, models = ENRICH_SETS[0]
     markers = [
@@ -713,10 +723,50 @@ def goal_one() -> None:
         columnspacing=1.2,
         borderaxespad=0.2,
     )
-    ax = place(fig, right_block + 50.0, top, 20.0, 30.0)
+    ax = place(fig, right_block + 50.0, top, 20.0, 28.0)
     panel_enrichment(ax, set_label, models)
     ax.set_title(title, pad=3, loc="left")
-    letter(fig, right_block, top, "e")
+    letter(fig, right_block, top, "d")
+
+    # f: every essential held-out gene, named, and how far each family misranks it.
+    top = 118.0
+    genes = sorted(
+        (r for r in read("hard_genes.json")["genes"] if r["essential"] == 1),
+        key=lambda r: -(r["misrank"][HARD_ARMS[0][0]] + r["misrank"][HARD_ARMS[1][0]]),
+    )
+    ax = place(fig, 14.0, top, 161.0, 24.0)
+    x = np.arange(len(genes))
+    for arm, color, marker in HARD_ARMS:
+        ax.plot(
+            x,
+            [r["misrank"][arm] for r in genes],
+            ls="",
+            marker=marker,
+            ms=3.2,
+            mfc=color,
+            mec=color,
+            zorder=3,
+        )
+    ax.set_xticks(x)
+    ax.set_xticklabels([r["name"] for r in genes], rotation=90, ha="center", va="top")
+    for tick, row in zip(ax.get_xticklabels(), genes, strict=True):
+        if row["fba_ratio_ypd"] is not None and row["fba_ratio_ypd"] >= 0.999:
+            tick.set_fontweight("bold")
+    ax.set_xlim(-0.8, len(genes) - 0.2)
+    ax.set_ylim(0.0, 0.8)
+    ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(axis="y", which="minor", length=0)
+    ax.grid(axis="y", which="both", lw=0.3, color="0.85", zorder=0)
+    ax.set_axisbelow(True)
+    ax.set_ylabel("misrank")
+    ax.set_title(
+        "Every essential held-out gene, worst first; bold where FBA calls the deletion "
+        "viable",
+        pad=3,
+        loc="left",
+    )
+    letter(fig, 0.0, top, "e")
     save(fig, "summary_goal1")
 
 
@@ -764,7 +814,7 @@ def goal_two() -> None:
     top_legend(
         fig,
         [
-            patch(NO_SOLVE, "learned, no metabolic column"),
+            patch(NO_MODULE, "learned, no metabolic column"),
             patch(SOLVE, "transformer reading an FBA-derived column"),
             patch(COMPARATOR, "count of records or programs"),
             patch("white", "LP solved inside training", hatch="/////"),
@@ -828,7 +878,7 @@ def goal_two() -> None:
     ladder = {r["key"]: r for r in report["ladder"]}
     pairs = {r["name"]: r for r in report["resplit"]}
     y = np.arange(len(PORTABLE_FORMS))[::-1]
-    colors = [NO_SOLVE if k == "none" else SOLVE for _, k, _ in PORTABLE_FORMS]
+    colors = [NO_MODULE if k == "none" else SOLVE for _, k, _ in PORTABLE_FORMS]
     top, h = 80.0, 36.0
 
     ax = place(fig, 50.0, top, 40.0, h)

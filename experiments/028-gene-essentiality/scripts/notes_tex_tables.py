@@ -2054,9 +2054,12 @@ def misclass_enrichment() -> str | None:
         )
         for t in f["named_features"] + f["top_specific"][:4]:
             q = f"{t['q']:.3f}" if t["q"] >= 0.001 else "$<$0.001"
-            # The rows to read: the association holds within its family at q < 0.1. The
-            # test is one-sided (annotated genes misranked WORSE), so the arrow is up.
-            hit = t["q"] < 0.1
+            # The rows to read. On the genome-wide set 4,674 genes put q below 0.1 for
+            # nearly every term, so significance alone marks almost everything; the mark
+            # is significance AND a substantive effect, three annotated genes in four
+            # misranked worse than an unannotated one. The test is one-sided, so the
+            # arrow is up.
+            hit = t["q"] < 0.1 and t["effect"] >= 0.75
             name = f"\\textbf{{{t['name']}}}" if hit else t["name"]
             annotated = f"{t['mean_misrank_annotated']:.3f}"
             effect = f"{t['effect']:.2f} ({q})"
@@ -2078,9 +2081,10 @@ def misclass_enrichment() -> str | None:
         "with the Benjamini-Hochberg $q$ within the family in parentheses. Rows per "
         "family: the two named features where both sides hold five genes, then the four "
         "best specific biological-process terms (at most 5 percent of the class or 12 "
-        "genes, near-duplicates removed). Rows in bold hold at $q < 0.1$, and $\\uparrow$ "
-        "marks their annotated genes as the ones misranked worse; every other row is "
-        "shown for comparison and is not an association. Written by "
+        "genes, near-duplicates removed). A row is bold with $\\uparrow$ where the "
+        "association is both established and substantive, $q < 0.1$ and an effect of "
+        "0.75 or more; on the genome-wide set almost every term clears $q$ alone, so "
+        "the effect is what separates them. Written by "
         "\\texttt{misclass\\_enrichment.py}.}\n"
         "  \\label{tab:misclass-enrichment}\n"
         "  \\begin{tabular}{@{}p{92mm}rrrr@{}}\n    \\hline\n"

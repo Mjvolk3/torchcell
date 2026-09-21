@@ -132,6 +132,8 @@ class GeneRow(BaseModel):
     """One held-out gene's misrank per arm and what the gene is."""
 
     gene: str
+    #: The standard (common) gene name where SGD gives one, else the systematic name.
+    name: str
     essential: int
     misrank: dict[str, float]
     misrank_sd: dict[str, float]
@@ -211,6 +213,23 @@ def gene_annotations() -> tuple[dict[str, int], dict[str, int]]:
         ids = list(data.id)
         counts.append({g: int(emb[i].sum()) for i, g in enumerate(ids)})
     return counts[0], counts[1]
+
+
+def common_names(genes: list[str]) -> dict[str, str]:
+    """Systematic name -> the standard name SGD's annotation carries, where it has one."""
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,
+    )
+    out = {}
+    for gene in genes:
+        attributes = genome.db[gene].attributes
+        named = attributes.get("gene") if "gene" in attributes else None
+        out[gene] = str(named[0]) if named else gene
+    return out
 
 
 def fba_ratios() -> dict[str, float]:
@@ -425,6 +444,7 @@ def main() -> None:
     genes = sorted(labels_all)
     n_path, n_go = gene_annotations()
     ratios = fba_ratios()
+    names = common_names(genes)
     rows: list[GeneRow] = []
     for g in genes:
         mr = {a: float(np.mean([c[g] for c in cells])) for a, cells in per_arm.items()}
@@ -432,6 +452,7 @@ def main() -> None:
         rows.append(
             GeneRow(
                 gene=g,
+                name=names[g],
                 essential=labels_all[g],
                 misrank=mr,
                 misrank_sd=sd,

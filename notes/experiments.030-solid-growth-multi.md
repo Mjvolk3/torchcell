@@ -141,3 +141,30 @@ Design, two cells rather than eleven:
 Pilot both on S2 (about 12 min an epoch) before promoting either to S3 (about 36 min an epoch, 130
 epochs). The 028 split files are gene lists, so on 030 the same file defines the subset by gene
 membership over the full-allele records.
+
+## 2026.09.20 - The query-strain fitness is already on disk: a released standard, not a reference
+
+Checked whether the double-mutant query fitness the trigenic identity needs is a reference to a
+record we already hold. It is not a reference, and we do have the file.
+
+Both Kuzmin papers released a fitness standard for their query strains, and both are already
+mirrored:
+
+| year | file | rows | covers the trigenic query strains | agreement with the trigenic table's query fitness |
+|---|---|---|---|---|
+| 2018 | `torchcell-library/kuzminSystematicAnalysisComplex2018/si/si_data/Data File S4_Fitness standard for single and double mutant query strains.xlsx` | 546 | 182 of 182 | r 1.000000, max diff 5e-5 (rounding) |
+| 2020 | `data/torchcell/dmf_kuzmin2020/raw/aaz5667-Table-S5.xlsx` | 720 (480 single, 240 double) | 240 of 240 | r 0.993, max diff 0.168 |
+
+Both carry a standard deviation the trigenic table's column does not, both include the
+single-mutant control query strains as well as the doubles, and the 2018 file covers the 10 query
+strains whose trigenic rows carry no fitness at all. The 2020 file is already in the raw mirror
+the digenic loader reads, so no retrieval is needed for either.
+
+It is a distinct measurement, not a duplicate of a record we hold. Of the 172 Kuzmin 2018 query
+pairs with a released value, 129 also exist as a double in the 029 build from an array screen, and
+those two measurements of the same genotype agree at r 0.777 with a median absolute difference of
+0.045. Substituting the array-screen value is what costs the reconstruction: within a screen the
+identity reproduces the published score at 0.985, and replacing this one term drops it to 0.538.
+
+So the work is ingestion only: two loader classes reading local files, provenance sourced from the
+SI, a dev build, the admission check and an incremental import. No data chase.

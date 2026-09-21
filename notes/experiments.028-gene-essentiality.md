@@ -1511,3 +1511,17 @@ Round 97: 400 epochs change nothing, exactly. Validation selects epoch 30 to 76 
 Rounds 92 and 94: three seeds per fold leave every fold ensemble within 0.001 of its one-seed value.
 
 Still running: round 87 (sampled store, eight packs behind job 2623), round 98's folds (2667), round 99 (w117, job 2668: two media with the counts on the ten splits).
+
+## 2026.09.21 - Round 92 overwrote ten round-34 fold cells; reruns are not bit-identical
+
+Round 92's packs for the layer-free form reused the stems `w50_pathlogfreecv{0..4}_..._s2701` and `_s2702`, which round 34 had already run and committed (b7ab0be89). The reruns replaced them on disk. They differ from the first runs by up to 0.066 on one cell (fold 2, seed 2702: 0.841 then, 0.907 now); the three-seed fold ensemble moves from 0.919 to 0.921. The first runs stay recoverable from commit b7ab0be89. Consequence for round 97: "400 epochs reproduce 200 exactly" holds within one code version on one card (12 of 12 cells), and is not a general determinism claim. Rule restated: check `results/` for a stem before generating a pack that writes it.
+
+## 2026.09.21 - Round 101: the minimal medium as the second medium does not beat SC
+
+Job 2670, six seeds and five folds. YPD with SM and the rule counts, no solver: 0.892 per cell (sd 0.008), 0.907 fold ensemble. Paired by seed: -0.004 against YPD with SC (2/6), +0.004 against YPD alone (4/6), -0.010 against four media (2/6). The hypothesis that the most different medium recovers the most is not supported.
+
+## 2026.09.21 - Completion plan agreed with the review of the PDF
+
+Goals restated: (1) best score against FCL and FBA; (2) a module that carries to other datasets with one record = one genotype in one medium. Headline for goal 2, ten splits, three seeds: single-medium module minus no metabolism +0.066, 10/10 splits, 29/30 split-and-seed pairs; round 103 (job 2672) takes the control to nine seeds.
+
+Document work: summary moved to the end as Section 8 (done, 8e7d49930); closing list rewritten (done); tables widened without wrapping, Figure 14 redrawn to the plotting standards, a diagram per module modification (three background agents, in progress); rounds 87 and 99 to 103 written in when they land; a second summary figure for goal 2; final `make check` and publish.

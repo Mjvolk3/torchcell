@@ -260,9 +260,13 @@ column carries it.
 
 \paragraph{The training budget is not a limit.} Round 97 reran the full recipe and the
 counts-alone recipe at 400 epochs. Validation selects the scored epoch, which falls
-between 30 and 76 in all twelve cells, and a cell is deterministic given its seed, so the
-400-epoch cells select the same epochs and return the same held-out AUROC to the last
-digit. Nothing after epoch 76 is ever scored under this selection rule.
+between 30 and 76 in all twelve cells, and each 400-epoch cell reproduced its 200-epoch
+partner's trajectory, selected the same epoch and returned the same held-out AUROC to the
+last digit. Nothing after epoch 76 is scored under this selection rule. That
+reproducibility held within one code version on one card; ten fold cells of the
+layer-free form rerun in round 92 under a later code version differ from their first runs
+by up to 0.066 on a single cell, while the three-seed fold ensemble reads 0.921 against
+0.919 on the first runs (round 34).
 
 \paragraph{Three seeds per fold do not move the fold ensembles.} Rounds 92 and 94 took
 each fold model from one seed to the mean logit of three. The ensembles read 0.933 for

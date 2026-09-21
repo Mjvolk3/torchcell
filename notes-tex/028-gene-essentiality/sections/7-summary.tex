@@ -6,7 +6,7 @@
 \section{The results on one page\secstatus{todo}}
 \label{sec:summary}
 
-\tcfigfit[1.0]{figures/summary_2026-09-20-21-24-16.pdf}{\textbf{Gene essentiality on
+\tcfigfit[1.0]{figures/summary_2026-09-20-21-42-51.pdf}{\textbf{Gene essentiality on
   yeast-GEM: the best method, the module form that helps, what scales, and the genes
   still missed.} One color means one thing in every panel: gray a comparator with
   nothing learned here, yellow a learned model reading no solve and no graph, orange the
@@ -55,9 +55,10 @@
     (Section~\ref{sec:round75}).
   \item[The module form that helps is the one with no layer, and the rules help beside
     it.] On one backbone the cell
-    with no metabolism reads 0.860, FBA's growth ratios on the logit 0.890, and the
-    deletion's solved flux vector as $\log(1 + |v|)$ on the logit 0.908 on six seeds
-    (sd 0.008, minimum 0.896). Every form that keeps a linear program in the training
+    with no metabolism reads 0.858 on six seeds, FBA's growth ratios on the logit 0.890,
+    and the deletion's solved flux vector as $\log(1 + |v|)$ on the logit 0.911 on nine
+    (sd 0.007, minimum 0.896; the three extra seeds of each are round 81's controls,
+    which is why the paired reads below quote the six they share with their partner). Every form that keeps a linear program in the training
     loop reads lower and less reliably: the cached solve with a flux head 0.882 with one
     seed at 0.772, learned ceilings with a flux head 0.845 with two seeds unfit, the
     gated growth column 0.867, and the forced growth column 0.699 on twelve seeds. The
@@ -207,18 +208,24 @@ existed on another branch, unlanded and absent from this worktree until it was p
 2026-09-20; it adds no parameters and leaves the gene rows bit-identical. Round 79 (jobs
 2597 to 2600; Table~\ref{tab:cls-readout}) is the paired read on the released split.
 
-The token becomes strain-specific and the ranking does not improve. Its across-strain
-spread ends at 0.54 against exactly 0 without the flag, so the mechanism is doing what it
-claims; the layer-free cell reads 0.904 against 0.908 on six seeds, above on two, and the
-pooled cell with no solve and no affine reads 0.858 against 0.860 on the three seeds both
-arms ran, above on none. Neither difference leaves the seed spread, and both point down.
+The token becomes strain-specific and the ranking gets slightly worse. Its across-strain
+spread ends at 0.52 against exactly 0 without the flag, so the mechanism is doing what it
+claims. On the seeds of round 79 alone neither arm separated from zero; round 81 (jobs
+2603 to 2605) completed the pooled arm's pairing and took the layer-free arm to nine
+pairs, and at fifteen pairs the cost is established: the layer-free cell reads 0.905
+against 0.911, a paired difference of $-0.0054$ (95 percent interval $-0.0100$ to
+$-0.0009$, two of nine above), the pooled cell 0.855 against 0.858 ($-0.0028$, one of
+six above), and the two together $-0.0044$ (interval $-0.0075$ to $-0.0012$, twelve of
+fifteen below). It is a small cost, about a third of this cell's seed spread, and it is
+consistent.
 
-The construction explains the null. A strain here deletes ONE gene, so the class token's
-query attends over exactly one key and the perturbed token is a function of the wild-type
-token and that gene's token, which the perturbed-gene pool already carries. The flag has
-something to add only where a genotype perturbs several genes and the pool's mean over
-them discards their arrangement; on single deletions it is a reparameterization of what
-the head already reads.
+The construction explains it. A strain here deletes ONE gene, so the class token's query
+attends over exactly one key and the perturbed token is a function of the wild-type token
+and that gene's token, which the perturbed-gene pool already carries. The flag adds no
+information on a single deletion and widens the head's input, which is the shape of a
+small consistent cost rather than a gain. It has something to add only where a genotype
+perturbs several genes and the pool's mean over them discards their arrangement, which is
+the setting it was written for and not this one. Here it stays off.
 
 \input{tables/cls_readout}
 

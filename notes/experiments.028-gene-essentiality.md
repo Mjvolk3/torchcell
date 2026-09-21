@@ -1431,3 +1431,19 @@ Jobs 2601 and 2602 (five folds, seed 2700), both exit 0.
 Fold mean 0.9133. As a standardized family it is 0.930; averaged with the GO convolution's fold models it reads **0.9550** [0.922, 0.982], against 0.9538 (cached solve) and 0.9532 (layer-free). The best average is now the max of THIRTEEN post hoc choices, not eleven, and the top three are within 0.002 with near-identical intervals: what the folds establish is that the two families average above either alone, not an ordering among the module forms.
 
 Added to panel a of the summary figure (`summary_2026-09-20-21-24-16`). `verify_doc_numbers.py` carries 85 checks, all passing. One older check was rewritten: it took the max over combinations and so would have silently tracked whichever average happened to be best; it now names the cached-solve pair.
+
+## 2026.09.20 - Round 81: at fifteen pairs the perturbed class token DOES cost a little
+
+Jobs 2603 to 2605, all exit 0. Completed the pooled arm's pairing at six seeds and took the layer-free arm to nine.
+
+| arm | pairs | with | without | difference | 95% CI | positive |
+|---|---|---|---|---|---|---|
+| layer-free solve vector | 9 | 0.905 | 0.911 | -0.0054 | [-0.0100, -0.0009] | 2 of 9 |
+| pooled, no solve | 6 | 0.855 | 0.858 | -0.0028 | [-0.0084, +0.0028] | 1 of 6 |
+| both | 15 | | | **-0.0044** | [-0.0075, -0.0012] | 3 of 15 |
+
+CORRECTION to what I said at nine pairs ("no established cost"): at fifteen pairs the cost IS established, p = 0.010, 12 of 15 seeds below their control. It is small, about a third of this cell's seed spread, and consistent. Parameter count is identical (22,773), so it is not capacity; on a single deletion the token's query sees one key, so it adds no information and only widens the head's input.
+
+Decision: the flag stays OFF for 028. The port stays, because the 025 setting (doubles and triples) is where it can add something.
+
+Side effect worth recording: round 81's three extra control seeds moved two arm-level means, w49 from 0.908 (6 seeds) to 0.911 (9) and w39_pathpool from 0.860 (3) to 0.858 (6). Section 7 and the summary figure now quote the all-seed values; round-specific claims in sections 3 and 4 keep their own seed sets, and their checks are seed-scoped so they cannot silently drift.

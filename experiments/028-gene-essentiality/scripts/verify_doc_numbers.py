@@ -187,7 +187,8 @@ CHECKS: list[Check] = [
     Check(
         claim="store-discriminability: pFBA store",
         stated=0.908,
-        recompute=seed_mean("w49_pathfbapfbalogfree_h12l1p1_e200_s*.json"),
+        # Round 68's own six seeds; round 81 added three more of this arm as controls.
+        recompute=seed_mean("w49_pathfbapfbalogfree_h12l1p1_e200_s270[0-5].json"),
     ),
     Check(
         claim="store-discriminability: dose, 25 columns",
@@ -342,7 +343,7 @@ CHECKS: list[Check] = [
     ),
     Check(
         claim="summary: no metabolism",
-        stated=0.860,
+        stated=0.858,
         recompute=seed_mean("w39_pathpool_h12l1p1_e200_s*.json"),
     ),
     Check(
@@ -352,7 +353,7 @@ CHECKS: list[Check] = [
     ),
     Check(
         claim="summary: solve vector on the logit",
-        stated=0.908,
+        stated=0.911,
         recompute=seed_mean("w49_pathfbapfbalogfree_h12l1p1_e200_s*.json"),
     ),
     Check(
@@ -641,16 +642,21 @@ CHECKS: list[Check] = [
         tolerance=0.5,
         recompute=resplit("differences", 6, "n_positive"),
     ),
-    # sec:round79 -- the perturbed class token.
+    # sec:round79 and sec:round81 -- the perturbed class token, fifteen pairs.
     Check(
         claim="round79: layer-free with the flag",
-        stated=0.904,
+        stated=0.905,
         recompute=cls_arm(0, "mean_with"),
     ),
     Check(
         claim="round79: layer-free without",
-        stated=0.908,
+        stated=0.911,
         recompute=cls_arm(0, "mean_without"),
+    ),
+    Check(
+        claim="round79: layer-free paired difference",
+        stated=-0.0054,
+        recompute=cls_arm(0, "mean_difference"),
     ),
     Check(
         claim="round79: its positive seeds",
@@ -659,24 +665,41 @@ CHECKS: list[Check] = [
         recompute=cls_arm(0, "n_positive"),
     ),
     Check(
+        claim="round79: its pairs",
+        stated=9,
+        tolerance=0.5,
+        recompute=cls_arm(0, "n"),
+    ),
+    Check(
         claim="round79: pooled cell with the flag",
-        stated=0.858,
+        stated=0.855,
         recompute=cls_arm(1, "mean_with"),
     ),
     Check(
         claim="round79: pooled cell without",
-        stated=0.860,
+        stated=0.858,
         recompute=cls_arm(1, "mean_without"),
     ),
     Check(
+        claim="round79: its paired difference",
+        stated=-0.0028,
+        recompute=cls_arm(1, "mean_difference"),
+    ),
+    Check(
         claim="round79: its positive seeds",
-        stated=0,
+        stated=1,
         tolerance=0.5,
         recompute=cls_arm(1, "n_positive"),
     ),
     Check(
+        claim="round79: its pairs",
+        stated=6,
+        tolerance=0.5,
+        recompute=cls_arm(1, "n"),
+    ),
+    Check(
         claim="round79: class-token spread with the flag",
-        stated=0.54,
+        stated=0.52,
         tolerance=0.006,
         recompute=cls_arm(0, "cls_strain_sd_with"),
     ),
@@ -686,7 +709,6 @@ CHECKS: list[Check] = [
         tolerance=0.0006,
         recompute=cls_arm(0, "cls_strain_sd_without"),
     ),
-    # sec:round80 -- the rule counts on the five folds.
     Check(
         claim="round80: rule-count fold ensemble",
         stated=0.934,

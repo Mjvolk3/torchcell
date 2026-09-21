@@ -1223,6 +1223,39 @@ CHECKS: list[Check] = [
             )["mean"]
         ),
     ),
+    Check(
+        claim="job 2693: GCN, GO | affine: YPD ratio (400 epochs), mean",
+        stated=0.009,
+        recompute=graph_module("GCN, GO | affine: YPD ratio (400 epochs), minus graph convolution on GO, six", "mean"),
+    ),
+    Check(
+        claim="job 2693: GCN, GO | affine: YPD ratio (400 epochs), splits higher",
+        stated=10,
+        recompute=graph_module("GCN, GO | affine: YPD ratio (400 epochs), minus graph convolution on GO, six", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2693: GCN, GO | affine: YPD ratio+vector+count, mean",
+        stated=0.017,
+        recompute=graph_module("GCN, GO | affine: YPD ratio+vector+counts (400 epochs), minus graph convolution on GO, six", "mean"),
+    ),
+    Check(
+        claim="job 2693: GCN, GO | affine: YPD ratio+vector+count, splits higher",
+        stated=7,
+        recompute=graph_module("GCN, GO | affine: YPD ratio+vector+counts (400 epochs), minus graph convolution on GO, six", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2693: GCN, GO | affine: four ratios+vector+cou, mean",
+        stated=0.019,
+        recompute=graph_module("GCN, GO | affine: four ratios+vector+counts (400 epochs), minus graph convolution on GO, six", "mean"),
+    ),
+    Check(
+        claim="job 2693: GCN, GO | affine: four ratios+vector+cou, splits higher",
+        stated=7,
+        recompute=graph_module("GCN, GO | affine: four ratios+vector+counts (400 epochs), minus graph convolution on GO, six", "n_positive"),
+        tolerance=0.5,
+    ),
     # sec:family-ensembles -- job 2684, the solve columns on the graph family's nodes.
     Check(
         claim="job 2684: GCN, GO+solve log1p, mean",

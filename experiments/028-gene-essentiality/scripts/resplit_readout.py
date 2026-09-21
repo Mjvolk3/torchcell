@@ -362,25 +362,29 @@ def main() -> None:
             ("GCN", "solve log1p (400 epochs)"),
         )
     ]
-    affine_control = [
-        graph_mean("graph_baselines_go_affine", "GCN", GO_INPUTS, r)
-        for r in range(N_SPLITS)
-    ]
-    graph_module += [
-        difference(
-            f"GCN, {inputs}, minus graph convolution on GO",
-            [
-                graph_mean("graph_baselines_go_affine", "GCN", inputs, r)
-                - affine_control[r]
-                for r in range(N_SPLITS)
-            ],
-        )
-        for inputs in (
-            "GO | affine: YPD ratio (400 epochs)",
-            AFFINE_INPUTS,
-            "GO | affine: four ratios+vector+counts (400 epochs)",
-        )
-    ]
+    # Job 2691 at three seeds and job 2693 at six, each against the GO-alone control rerun
+    # in the same job.
+    for stem, tag in (
+        ("graph_baselines_go_affine", ""),
+        ("graph_baselines_go_affine_s6", ", six seeds"),
+    ):
+        affine_control = [
+            graph_mean(stem, "GCN", GO_INPUTS, r) for r in range(N_SPLITS)
+        ]
+        graph_module += [
+            difference(
+                f"GCN, {inputs}, minus graph convolution on GO{tag}",
+                [
+                    graph_mean(stem, "GCN", inputs, r) - affine_control[r]
+                    for r in range(N_SPLITS)
+                ],
+            )
+            for inputs in (
+                "GO | affine: YPD ratio (400 epochs)",
+                AFFINE_INPUTS,
+                "GO | affine: four ratios+vector+counts (400 epochs)",
+            )
+        ]
     for d in graph_module:
         print(f"{d.name}: {d.mean:+.4f} sd {d.sd:.4f} positive {d.n_positive}/10")
 

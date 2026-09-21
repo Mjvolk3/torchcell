@@ -457,12 +457,35 @@ def fold_ensembles(
         arms = {"MLP": ("MLP", no_edges, EPOCHS), "GCN": ("GCN", ei, 400)}
         inputs_label = "ProtT5+chrom-pathway+FBA ratios"
         out_name = "graph_baselines_folds.json"
-    else:
-        assert which == "go", which
+    elif which == "go":
         x = embedding("go", gene_ids)
         arms = {"GCN400": ("GCN", ei, 400), "GCN800": ("GCN", ei, 800)}
         inputs_label = "GO"
         out_name = "graph_baselines_go_folds.json"
+    else:
+        # The module as a zero-initialized affine on the convolution's logit (job 2691),
+        # under the fold protocol: GO alone as the control and the single-experiment
+        # recipe beside it, so family_ensembles.py --folds can average the module-bearing
+        # graph family with the transformer's fold models.
+        assert which == "go_affine", which
+        x = embedding("go", gene_ids)
+        fba = fba_ratios(gene_ids)
+        with_counts = solve_log1p(
+            gene_ids,
+            store=osp.join(
+                DATA_ROOT,
+                "data/torchcell/reference_flux/ess_solve_encodings_YPD_pfbagpr.npz",
+            ),
+        )
+        affines = {
+            "GCN400": None,
+            "GCN400_affine_ypd_vector_counts": np.concatenate(
+                [fba[:, 3:4], with_counts], axis=1
+            ),
+        }
+        arms = {name: ("GCN", ei, 400) for name in affines}
+        inputs_label = "GO | affine: YPD ratio+vector+counts"
+        out_name = "graph_baselines_go_affine_folds.json"
     if len(seeds) > 1:
         out_name = out_name.replace(".json", f"_s{len(seeds)}.json")
     report: dict[str, object] = {
@@ -491,6 +514,7 @@ def fold_ensembles(
                 device,
                 epochs=epochs,
                 seeds=seeds,
+                affine=affines[name] if which == "go_affine" else None,
             )
             # The fold's logit is the mean over its seeds (one seed by default).
             fold_logit = np.mean(np.array(row.test_logits, dtype=float), axis=0)
@@ -551,6 +575,7 @@ def main() -> None:
             "go400",
             "go800",
             "go_folds",
+            "go_affine_folds",
             "go_rel",
             "go_solve",
             "go_affine",
@@ -609,10 +634,12 @@ def main() -> None:
     split_tag = ""
     if args.split is not None:
         split_tag = "_" + args.split.split("_val")[0].removeprefix("ess_")
-    if args.arms in ("folds", "go_folds"):
+    if args.arms in ("folds", "go_folds", "go_affine_folds"):
         fold_ensembles(
             device,
-            "three" if args.arms == "folds" else "go",
+            {"folds": "three", "go_folds": "go", "go_affine_folds": "go_affine"}[
+                args.arms
+            ],
             args.save_logits,
             seeds=(SEEDS[0],) if args.seeds is None else seeds,
         )

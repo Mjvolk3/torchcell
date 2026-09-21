@@ -94,15 +94,17 @@ LADDER: dict[str, tuple[str, int, bool, str, str | None]] = {
     "one_only": ("YPD ratio", 1, False, "w102_ypdonly", None),
 }
 
-#: key -> (wave, arm) of a repeated-split recipe.
-RESPLIT: dict[str, tuple[str, str]] = {
-    "four_solve_counts": ("w96", "pathloggpr"),
-    "one_solve_counts": ("w104", "ypdgpr"),
-    "four_solve": ("w93", "pathlogfree"),
-    "four_counts": ("w106", "gpronly"),
-    "two_counts": ("w117", "twomedgpronly"),
-    "one_counts": ("w114", "ypdgpronly"),
-    "four_only": ("w94", "protpathfba"),
+#: key -> (waves, arm) of a repeated-split recipe. Later seeds of one arm were sometimes
+#: written under a later wave prefix (round 78's w97 extends w93 and w94), so an arm pools
+#: every wave listed; the seeds never overlap between waves.
+RESPLIT: dict[str, tuple[tuple[str, ...], str]] = {
+    "four_solve_counts": (("w96",), "pathloggpr"),
+    "one_solve_counts": (("w104",), "ypdgpr"),
+    "four_solve": (("w93", "w97"), "pathlogfree"),
+    "four_counts": (("w106",), "gpronly"),
+    "two_counts": (("w117",), "twomedgpronly"),
+    "one_counts": (("w114", "w118"), "ypdgpronly"),
+    "four_only": (("w94", "w97"), "protpathfba"),
 }
 
 #: (name, a, b): the difference read is a minus b.
@@ -223,11 +225,18 @@ def paired_by_seed(
 
 
 def paired_by_split(name: str, a: str, b: str) -> Paired | None:
-    (wa, arm_a), (wb, arm_b) = RESPLIT[a], RESPLIT[b]
+    def pooled(key: str, r: int) -> dict[int, float]:
+        waves, arm = RESPLIT[key]
+        out: dict[int, float] = {}
+        for wave in waves:
+            cells = by_seed(f"{wave}_resplit{r}{arm}")
+            assert not set(cells) & set(out), (key, r, wave)
+            out.update(cells)
+        return out
+
     xs, ys, depth = [], [], []
     for r in range(N_SPLITS):
-        va = by_seed(f"{wa}_resplit{r}{arm_a}")
-        vb = by_seed(f"{wb}_resplit{r}{arm_b}")
+        va, vb = pooled(a, r), pooled(b, r)
         seeds = sorted(set(va) & set(vb))
         if not seeds:
             continue

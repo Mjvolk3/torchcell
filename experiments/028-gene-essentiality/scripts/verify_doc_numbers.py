@@ -783,21 +783,21 @@ CHECKS: list[Check] = [
     ),
     Check(
         claim="round84-98: counts over the four ratios alone / mean_difference",
-        stated=0.012,
+        stated=0.010,
         recompute=simplification(
             "resplit", "counts over the four ratios alone", "mean_difference"
         ),
     ),
     Check(
         claim="round84-98: flux vector over the four ratios a / mean_difference",
-        stated=0.011,
+        stated=0.010,
         recompute=simplification(
             "resplit", "flux vector over the four ratios alone", "mean_difference"
         ),
     ),
     Check(
         claim="round84-98: counts added to the flux vector, f / mean_difference",
-        stated=0.019,
+        stated=0.018,
         recompute=simplification(
             "resplit", "counts added to the flux vector, four media", "mean_difference"
         ),
@@ -818,7 +818,7 @@ CHECKS: list[Check] = [
     ),
     Check(
         claim="round84-98: one medium for four, no solve / mean_difference",
-        stated=-0.011,
+        stated=-0.012,
         recompute=simplification(
             "resplit", "one medium for four, no solve", "mean_difference"
         ),

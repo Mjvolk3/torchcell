@@ -72,7 +72,7 @@
     against 0.908, and 0.862 against 0.843 on the ten fifths, above on six of six seeds
     and eight of ten splits (Section~\ref{sec:round77}). Against the four ratios alone
     the counts are worth $+0.012$ and the solve $+0.024$ on the released split
-    (Section~\ref{sec:round82}) and $+0.012$ and $+0.011$ on the ten fifths, so the two
+    (Section~\ref{sec:round82}) and $+0.010$ and $+0.010$ on the ten fifths, so the two
     halves are complementary and neither is reliably the larger
     (Section~\ref{sec:round84-98}).
   \item[Every metabolic column fits inside one experiment.] The four growth ratios are
@@ -327,7 +327,8 @@ dropping rule-count columns. Rounds 84 to 98 (jobs 2616 to 2667, job 2622 aside)
 same baselines on the released split (Table~\ref{tab:simplification-ladder}) and, paired
 by split, on the ten repeated outer splits of Section~\ref{sec:round75}
 (Table~\ref{tab:simplification-paired}). The repeated-split arms that carry the solve were
-extended to nine seeds per split (rounds 89 to 93); the others stand at three.
+extended to nine seeds per split (rounds 89 to 93), the vector and the ratios alone stand
+at six (round 78), and the two recipes with neither a solve nor four media at three.
 
 \paragraph{One medium is free while the solve is present.} With the flux vector and the
 counts kept, the YPD ratio alone against all four ratios reads $+0.002$ over the ten
@@ -336,9 +337,9 @@ split. The fold ensembles agree, 0.932 against 0.934 at one seed per fold and 0.
 against 0.933 at three. Round 83's conclusion holds on ten other held-out fifths.
 
 \paragraph{The solve and the counts are complementary and about equal.} Over the four
-ratios alone the counts are worth $+0.012$ and the vector $+0.011$ on the repeated splits,
-each higher on seven of ten. Added to the other, the counts are worth $+0.019$ (eight of
-ten) and the vector $+0.018$ (nine of ten). The released split orders them the other way,
+ratios alone the counts are worth $+0.010$ (seven of ten) and the vector $+0.010$ (eight
+of ten) on the repeated splits. Added to the other, the counts are worth $+0.018$ (eight
+of ten) and the vector $+0.018$ (nine of ten). The released split orders them the other way,
 0.911 for the vector over nine seeds against 0.902 for the counts over six, and so do the fold
 ensembles, 0.920 against 0.909. Across the three protocols neither half is reliably the
 larger, and the pair is reliably above either.
@@ -346,11 +347,10 @@ larger, and the pair is reliably above either.
 \paragraph{The simplifications do not stack.} Once the vector is gone the other media
 carry signal the counts do not replace. With the counts and no solve, four ratios read
 0.902 on the released split, the YPD and SC ratios 0.896, and the YPD ratio alone 0.888,
-and on the repeated splits one medium for four costs $-0.011$ (higher on two of nine, the
-tenth split still running). The recipe that respects one experiment and needs no solver,
+and on the repeated splits one medium for four costs $-0.012$ (higher on two of ten). The recipe that respects one experiment and needs no solver,
 one ratio with the six counts, reads 0.888 per cell and 0.902 as a fold ensemble against
-0.918 and 0.934 for the full recipe, and $-0.030$ on the repeated splits, lower on nine of
-nine. The cheapest admissible recipe that keeps the full score is therefore the
+0.918 and 0.934 for the full recipe, and $-0.030$ on the repeated splits, lower on ten of
+ten. The cheapest admissible recipe that keeps the full score is therefore the
 one-medium recipe with the solve, which costs one linear program per genotype and medium,
 run once offline.
 

@@ -2054,121 +2054,6 @@ z
    </g>
    <g id="text_19">
     <g id="patch_7">
-     <path d="M 220.167295 129.086475 
-L 278.88917 129.086475 
-L 278.88917 123.194288 
-L 220.167295 123.194288 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="220.767295" y="127.434132" transform="rotate(-0 220.767295 127.434132)">Messner 2023 (proteome)</text>
-   </g>
-   <g id="text_20">
-    <g id="patch_8">
-     <path d="M 281.489787 196.702078 
-L 320.20463 196.702078 
-L 320.20463 190.929422 
-L 281.489787 190.929422 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="282.089787" y="195.108328" transform="rotate(-0 282.089787 195.108328)">Kuzmin 2018 tmf</text>
-   </g>
-   <g id="text_21">
-    <g id="patch_9">
-     <path d="M 322.151278 170.541456 
-L 361.979403 170.541456 
-L 361.979403 164.7688 
-L 322.151278 164.7688 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="322.751278" y="168.947706" transform="rotate(-0 322.751278 168.947706)">Kuzmin 2020 dmi</text>
-   </g>
-   <g id="text_22">
-    <g id="patch_10">
-     <path d="M 94.031516 379.863295 
-L 177.197922 379.863295 
-L 177.197922 373.971107 
-L 94.031516 373.971107 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="94.631516" y="378.210951" transform="rotate(-0 94.631516 378.210951)">Mormino 2022 (CRISPRi acetic-acid)</text>
-   </g>
-   <g id="text_23">
-    <g id="patch_11">
-     <path d="M 395.331101 83.922665 
-L 439.887351 83.922665 
-L 439.887351 78.150008 
-L 395.331101 78.150008 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="395.931101" y="82.328915" transform="rotate(-0 395.931101 82.328915)">Costanzo 2016 dmf</text>
-   </g>
-   <g id="text_24">
-    <g id="patch_12">
-     <path d="M 334.412165 142.126415 
-L 414.52154 142.126415 
-L 414.52154 136.231102 
-L 334.412165 136.231102 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="335.012165" y="140.474071" transform="rotate(-0 335.012165 140.474071)">Hillenmeyer 2008 hom (FitDb HOP)</text>
-   </g>
-   <g id="text_25">
-    <g id="patch_13">
-     <path d="M 189.930574 196.752967 
-L 261.986043 196.752967 
-L 261.986043 190.857654 
-L 189.930574 190.857654 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="190.530574" y="195.100623" transform="rotate(-0 190.530574 195.100623)">Ohnuki 2018 (SCMD CalMorph)</text>
-   </g>
-   <g id="text_26">
-    <g id="patch_14">
-     <path d="M 225.942404 113.331989 
-L 303.006466 113.331989 
-L 303.006466 107.439802 
-L 225.942404 107.439802 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="226.542404" y="111.679646" transform="rotate(-0 226.542404 111.679646)">Nadal-Ribelles 2025 (Perturb-seq)</text>
-   </g>
-   <g id="patch_15">
-    <path d="M 315.332861 179.105017 
-Q 310.455725 177.712135 305.578589 176.319253 
-" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
-   </g>
-   <g id="text_27">
-    <g id="patch_16">
-     <path d="M 308.738889 185.596796 
-L 347.175608 185.596796 
-L 347.175608 179.82414 
-L 308.738889 179.82414 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="309.338889" y="184.003046" transform="rotate(-0 309.338889 184.003046)">Kuzmin 2020 tmi</text>
-   </g>
-   <g id="text_28">
-    <g id="patch_17">
-     <path d="M 315.445032 175.48571 
-L 355.273157 175.48571 
-L 355.273157 169.713054 
-L 315.445032 169.713054 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="316.045032" y="173.89196" transform="rotate(-0 316.045032 173.89196)">Kuzmin 2018 dmi</text>
-   </g>
-   <g id="text_29">
-    <g id="patch_18">
      <path d="M 66.178158 305.753709 
 L 133.518001 305.753709 
 L 133.518001 299.861522 
@@ -2178,249 +2063,41 @@ z
     </g>
     <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="132.918001" y="304.101365" transform="rotate(-0 132.918001 304.101365)">Zelezniak 2018 (metabolome)</text>
    </g>
-   <g id="patch_19">
-    <path d="M 305.096249 183.479996 
-Q 305.096249 180.093275 305.096249 176.706554 
-" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
-   </g>
-   <g id="text_30">
-    <g id="patch_20">
-     <path d="M 285.738827 191.878395 
-L 324.45367 191.878395 
-L 324.45367 186.105739 
-L 285.738827 186.105739 
+   <g id="text_20">
+    <g id="patch_8">
+     <path d="M 171.951711 332.089973 
+L 215.10718 332.089973 
+L 215.10718 326.197786 
+L 171.951711 326.197786 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="305.096249" y="190.284645" transform="rotate(-0 305.096249 190.284645)">Kuzmin 2020 tmf</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="172.551711" y="330.437629" transform="rotate(-0 172.551711 330.437629)">Kuzmin 2020 (smf)</text>
    </g>
-   <g id="text_31">
-    <g id="patch_21">
-     <path d="M 353.460163 124.348364 
-L 428.293757 124.348364 
-L 428.293757 118.456176 
-L 353.460163 118.456176 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="354.060163" y="122.69602" transform="rotate(-0 354.060163 122.69602)">Hillenmeyer 2008 het (FitDb HIP)</text>
-   </g>
-   <g id="text_32">
-    <g id="patch_22">
-     <path d="M 218.631011 285.842611 
-L 307.656011 285.842611 
-L 307.656011 279.950424 
-L 218.631011 279.950424 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="219.231011" y="284.190267" transform="rotate(-0 219.231011 284.190267)">Lopez 2024 (isobutanol screen, private)</text>
-   </g>
-   <g id="text_33">
-    <g id="patch_23">
-     <path d="M 68.832003 317.33434 
-L 146.45466 317.33434 
-L 146.45466 311.442152 
-L 68.832003 311.442152 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="145.85466" y="315.681996" transform="rotate(-0 145.85466 315.681996)">Xue 2025 (free fatty acids, private)</text>
-   </g>
-   <g id="patch_24">
-    <path d="M 239.752297 275.585076 
-Q 233.113183 275.585076 226.474068 275.585076 
-" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
-   </g>
-   <g id="text_34">
-    <g id="patch_25">
-     <path d="M 242.372812 278.53117 
-L 288.59 278.53117 
-L 288.59 272.638983 
-L 242.372812 272.638983 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="242.972812" y="276.878826" transform="rotate(-0 242.972812 276.878826)">SynLethDB (rescue)</text>
-   </g>
-   <g id="text_35">
-    <g id="patch_26">
-     <path d="M 395.331101 97.109122 
-L 439.609226 97.109122 
-L 439.609226 91.336466 
-L 395.331101 91.336466 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="395.931101" y="95.515372" transform="rotate(-0 395.931101 95.515372)">Costanzo 2016 dmi</text>
-   </g>
-   <g id="text_36">
-    <g id="patch_27">
-     <path d="M 174.184429 310.209706 
-L 249.026617 310.209706 
-L 249.026617 304.317518 
-L 174.184429 304.317518 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="174.784429" y="308.557362" transform="rotate(-0 174.784429 308.557362)">Auesukaree 2009 (stress screen)</text>
-   </g>
-   <g id="text_37">
-    <g id="patch_28">
-     <path d="M 138.755109 219.573133 
-L 218.591046 219.573133 
-L 218.591046 213.680946 
-L 138.755109 213.680946 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="139.355109" y="217.920789" transform="rotate(-0 139.355109 217.920789)">Zelezniak 2018 (SWATH proteome)</text>
-   </g>
-   <g id="text_38">
-    <g id="patch_29">
-     <path d="M 195.985115 105.82149 
-L 234.147615 105.82149 
-L 234.147615 100.048834 
-L 195.985115 100.048834 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="196.585115" y="104.22774" transform="rotate(-0 196.585115 104.22774)">Kemmeren 2014</text>
-   </g>
-   <g id="text_39">
-    <g id="patch_30">
-     <path d="M 125.168863 183.513774 
-L 197.224332 183.513774 
-L 197.224332 177.618462 
-L 125.168863 177.618462 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="196.624332" y="181.861431" transform="rotate(-0 196.624332 181.861431)">Ohnuki 2022 (SCMD CalMorph)</text>
-   </g>
-   <g id="text_40">
-    <g id="patch_31">
-     <path d="M 319.496646 155.66081 
-L 408.516959 155.66081 
-L 408.516959 149.768623 
-L 319.496646 149.768623 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="320.096646" y="154.008466" transform="rotate(-0 320.096646 154.008466)">Bloom 2019 (16-cross segregant panel)</text>
-   </g>
-   <g id="text_41">
-    <g id="patch_32">
-     <path d="M 281.489787 209.382726 
-L 319.926505 209.382726 
-L 319.926505 203.610069 
-L 281.489787 203.610069 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="282.089787" y="207.788976" transform="rotate(-0 282.089787 207.788976)">Kuzmin 2018 tmi</text>
-   </g>
-   <g id="text_42">
-    <g id="patch_33">
-     <path d="M 220.073322 235.042337 
-L 311.031916 235.042337 
-L 311.031916 229.15015 
-L 220.073322 229.15015 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="220.673322" y="233.389994" transform="rotate(-0 220.673322 233.389994)">Mülleder 2016 (amino-acid metabolome)</text>
-   </g>
-   <g id="text_43">
-    <g id="patch_34">
-     <path d="M 155.435654 340.251393 
-L 249.467686 340.251393 
-L 249.467686 334.359205 
-L 155.435654 334.359205 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="156.035654" y="338.599049" transform="rotate(-0 156.035654 338.599049)">Lopez 2024 (isobutanol validated, private)</text>
-   </g>
-   <g id="text_44">
-    <g id="patch_35">
-     <path d="M 196.748628 303.076915 
-L 236.574409 303.076915 
-L 236.574409 297.304259 
-L 196.748628 297.304259 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="197.348628" y="301.483165" transform="rotate(-0 197.348628 301.483165)">Kuzmin 2018 smf</text>
-   </g>
-   <g id="text_45">
-    <g id="patch_36">
-     <path d="M 356.531907 118.293899 
-L 427.950657 118.293899 
-L 427.950657 112.398587 
-L 356.531907 112.398587 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="357.131907" y="116.641556" transform="rotate(-0 357.131907 116.641556)">Hoepfner 2014 (HIP/HOP atlas)</text>
-   </g>
-   <g id="text_46">
-    <g id="patch_37">
-     <path d="M 191.83928 294.994056 
-L 260.287718 294.994056 
-L 260.287718 289.101868 
-L 191.83928 289.101868 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="192.43928" y="293.341712" transform="rotate(-0 192.43928 293.341712)">Mota 2024 (weak-acid screen)</text>
-   </g>
-   <g id="text_47">
-    <g id="patch_38">
-     <path d="M 324.536621 162.289514 
-L 364.642871 162.289514 
-L 364.642871 156.516857 
-L 324.536621 156.516857 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="325.136621" y="160.695764" transform="rotate(-0 325.136621 160.695764)">Kuzmin 2020 dmf</text>
-   </g>
-   <g id="text_48">
-    <g id="patch_39">
-     <path d="M 135.230576 167.34887 
-L 175.336826 167.34887 
-L 175.336826 161.576214 
-L 135.230576 161.576214 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="135.830576" y="165.75512" transform="rotate(-0 135.830576 165.75512)">Sameith 2015 sm</text>
-   </g>
-   <g id="text_49">
-    <g id="patch_40">
-     <path d="M 131.623331 173.526905 
-L 172.01005 173.526905 
-L 172.01005 167.754248 
+   <g id="text_21">
+    <g id="patch_9">
+     <path d="M 131.623331 173.646436 
+L 175.339737 173.646436 
+L 175.339737 167.754248 
 L 131.623331 167.754248 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="132.223331" y="171.933155" transform="rotate(-0 132.223331 171.933155)">Sameith 2015 dm</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="132.223331" y="171.994092" transform="rotate(-0 132.223331 171.994092)">Sameith 2015 (dm)</text>
    </g>
-   <g id="text_50">
-    <g id="patch_41">
-     <path d="M 186.471973 121.864901 
-L 261.037598 121.864901 
-L 261.037598 115.972714 
-L 186.471973 115.972714 
+   <g id="text_22">
+    <g id="patch_10">
+     <path d="M 195.985115 105.881255 
+L 286.392147 105.881255 
+L 286.392147 99.989068 
+L 195.985115 99.989068 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="187.071973" y="120.212558" transform="rotate(-0 187.071973 120.212558)">Caudal 2024 (pan-transcriptome)</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="196.585115" y="104.228912" transform="rotate(-0 196.585115 104.228912)">Kemmeren 2014 (deletion compendium)</text>
    </g>
-   <g id="text_51">
-    <g id="patch_42">
+   <g id="text_23">
+    <g id="patch_11">
      <path d="M 226.39753 170.509278 
 L 300.949874 170.509278 
 L 300.949874 164.617091 
@@ -2430,84 +2107,85 @@ z
     </g>
     <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="300.349874" y="168.856935" transform="rotate(-0 300.349874 168.856935)">Lian 2019 (MAGIC CRISPR-AID)</text>
    </g>
-   <g id="text_52">
-    <g id="patch_43">
-     <path d="M 171.951711 332.030208 
-L 211.777492 332.030208 
-L 211.777492 326.257551 
-L 171.951711 326.257551 
+   <g id="text_24">
+    <g id="patch_12">
+     <path d="M 68.832003 317.33434 
+L 146.45466 317.33434 
+L 146.45466 311.442152 
+L 68.832003 311.442152 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="172.551711" y="330.436458" transform="rotate(-0 172.551711 330.436458)">Kuzmin 2020 smf</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="145.85466" y="315.681996" transform="rotate(-0 145.85466 315.681996)">Xue 2025 (free fatty acids, private)</text>
    </g>
-   <g id="text_53">
-    <g id="patch_44">
-     <path d="M 193.670677 322.158208 
-L 231.827708 322.158208 
-L 231.827708 316.26602 
-L 193.670677 316.26602 
+   <g id="text_25">
+    <g id="patch_13">
+     <path d="M 281.489787 209.502257 
+L 323.256193 209.502257 
+L 323.256193 203.610069 
+L 281.489787 203.610069 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="194.270677" y="320.505864" transform="rotate(-0 194.270677 320.505864)">SGD essentiality</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="282.089787" y="207.849913" transform="rotate(-0 282.089787 207.849913)">Kuzmin 2018 (tmi)</text>
    </g>
-   <g id="text_54">
-    <g id="patch_45">
-     <path d="M 183.769925 177.083599 
-L 251.933987 177.083599 
-L 251.933987 171.188286 
-L 183.769925 171.188286 
+   <g id="text_26">
+    <g id="patch_14">
+     <path d="M 186.471973 121.864901 
+L 261.037598 121.864901 
+L 261.037598 115.972714 
+L 186.471973 115.972714 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="217.851956" y="175.431255" transform="rotate(-0 217.851956 175.431255)">Ohya 2005 (SCMD CalMorph)</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="187.071973" y="120.212558" transform="rotate(-0 187.071973 120.212558)">Caudal 2024 (pan-transcriptome)</text>
    </g>
-   <g id="patch_46">
-    <path d="M 244.415391 183.866589 
-Q 257.812113 180.802493 271.208835 177.738398 
-" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
-   </g>
-   <g id="text_55">
-    <g id="patch_47">
-     <path d="M 193.084727 190.343231 
-L 264.87379 190.343231 
-L 264.87379 184.451044 
-L 193.084727 184.451044 
+   <g id="text_27">
+    <g id="patch_15">
+     <path d="M 135.230576 167.408635 
+L 178.666514 167.408635 
+L 178.666514 161.516448 
+L 135.230576 161.516448 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="264.27379" y="188.690887" transform="rotate(-0 264.27379 188.690887)">Costanzo 2021 (condition-SGA)</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="135.830576" y="165.756292" transform="rotate(-0 135.830576 165.756292)">Sameith 2015 (sm)</text>
    </g>
-   <g id="text_56">
-    <g id="patch_48">
-     <path d="M 251.056607 243.484829 
-L 295.332388 243.484829 
-L 295.332388 237.712173 
-L 251.056607 237.712173 
+   <g id="text_28">
+    <g id="patch_16">
+     <path d="M 395.331101 97.228654 
+L 442.938914 97.228654 
+L 442.938914 91.336466 
+L 395.331101 91.336466 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="251.656607" y="241.891079" transform="rotate(-0 251.656607 241.891079)">Costanzo 2016 smf</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="395.931101" y="95.57631" transform="rotate(-0 395.931101 95.57631)">Costanzo 2016 (dmi)</text>
    </g>
-   <g id="patch_49">
-    <path d="M 263.665884 264.431832 
-Q 251.42748 267.46822 239.189075 270.504607 
-" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
-   </g>
-   <g id="text_57">
-    <g id="patch_50">
-     <path d="M 245.529218 263.800187 
-L 310.643281 263.800187 
-L 310.643281 257.907999 
-L 245.529218 257.907999 
+   <g id="text_29">
+    <g id="patch_17">
+     <path d="M 356.531907 118.293899 
+L 427.950657 118.293899 
+L 427.950657 112.398587 
+L 356.531907 112.398587 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="246.129218" y="262.147843" transform="rotate(-0 246.129218 262.147843)">Smith 2006 (chemogenomic)</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="357.131907" y="116.641556" transform="rotate(-0 357.131907 116.641556)">Hoepfner 2014 (HIP/HOP atlas)</text>
    </g>
-   <g id="text_58">
-    <g id="patch_51">
+   <g id="text_30">
+    <g id="patch_18">
+     <path d="M 155.435654 340.251393 
+L 249.467686 340.251393 
+L 249.467686 334.359205 
+L 155.435654 334.359205 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="156.035654" y="338.599049" transform="rotate(-0 156.035654 338.599049)">Lopez 2024 (isobutanol validated, private)</text>
+   </g>
+   <g id="text_31">
+    <g id="patch_19">
      <path d="M 102.217806 372.627428 
 L 167.717806 372.627428 
 L 167.717806 366.73524 
@@ -2517,19 +2195,63 @@ z
     </g>
     <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="102.817806" y="370.975084" transform="rotate(-0 102.817806 370.975084)">Yoshida 2012 (organic acids)</text>
    </g>
-   <g id="text_59">
-    <g id="patch_52">
-     <path d="M 141.434167 265.481111 
-L 188.600573 265.481111 
-L 188.600573 259.585799 
-L 141.434167 259.585799 
+   <g id="text_32">
+    <g id="patch_20">
+     <path d="M 193.670677 322.158208 
+L 235.157396 322.158208 
+L 235.157396 316.26602 
+L 193.670677 316.26602 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="188.000573" y="263.828767" transform="rotate(-0 188.000573 263.828767)">O'Duibhir 2014 (smf)</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="194.270677" y="320.505864" transform="rotate(-0 194.270677 320.505864)">SGD (essentiality)</text>
    </g>
-   <g id="text_60">
-    <g id="patch_53">
+   <g id="text_33">
+    <g id="patch_21">
+     <path d="M 220.073322 235.042337 
+L 311.031916 235.042337 
+L 311.031916 229.15015 
+L 220.073322 229.15015 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="220.673322" y="233.389994" transform="rotate(-0 220.673322 233.389994)">Mülleder 2016 (amino-acid metabolome)</text>
+   </g>
+   <g id="text_34">
+    <g id="patch_22">
+     <path d="M 395.331101 83.922665 
+L 443.217039 83.922665 
+L 443.217039 78.030477 
+L 395.331101 78.030477 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="395.931101" y="82.270321" transform="rotate(-0 395.931101 82.270321)">Costanzo 2016 (dmf)</text>
+   </g>
+   <g id="text_35">
+    <g id="patch_23">
+     <path d="M 235.7875 160.894312 
+L 310.914844 160.894312 
+L 310.914844 155.002125 
+L 235.7875 155.002125 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="310.314844" y="159.241969" transform="rotate(-0 310.314844 159.241969)">Wildenhain 2015 (drug tolerance)</text>
+   </g>
+   <g id="text_36">
+    <g id="patch_24">
+     <path d="M 322.157941 157.881865 
+L 365.593878 157.881865 
+L 365.593878 151.989678 
+L 322.157941 151.989678 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="322.757941" y="156.229521" transform="rotate(-0 322.757941 156.229521)">Kuzmin 2020 (dmf)</text>
+   </g>
+   <g id="text_37">
+    <g id="patch_25">
      <path d="M 108.162689 244.938576 
 L 213.568939 244.938576 
 L 213.568939 239.046388 
@@ -2539,83 +2261,111 @@ z
     </g>
     <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="212.968939" y="243.286232" transform="rotate(-0 212.968939 243.286232)">Cooper 2010 (CE-LIF amino-acid metabolome)</text>
    </g>
-   <g id="text_61">
-    <g id="patch_54">
-     <path d="M 243.253728 257.966873 
-L 286.41701 257.966873 
-L 286.41701 252.074686 
-L 243.253728 252.074686 
+   <g id="text_38">
+    <g id="patch_26">
+     <path d="M 174.184429 310.209706 
+L 249.026617 310.209706 
+L 249.026617 304.317518 
+L 174.184429 304.317518 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="243.853728" y="256.314529" transform="rotate(-0 243.853728 256.314529)">SynLethDB (lethal)</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="174.784429" y="308.557362" transform="rotate(-0 174.784429 308.557362)">Auesukaree 2009 (stress screen)</text>
    </g>
-   <g id="patch_55">
-    <path d="M 294.002387 158.322473 
-Q 302.561712 163.45358 311.121036 168.584687 
+   <g id="text_39">
+    <g id="patch_27">
+     <path d="M 183.769925 177.083599 
+L 251.933987 177.083599 
+L 251.933987 171.188286 
+L 183.769925 171.188286 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="217.851956" y="175.431255" transform="rotate(-0 217.851956 175.431255)">Ohya 2005 (SCMD CalMorph)</text>
+   </g>
+   <g id="text_40">
+    <g id="patch_28">
+     <path d="M 243.071748 263.494947 
+L 286.235029 263.494947 
+L 286.235029 257.60276 
+L 243.071748 257.60276 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="243.671748" y="261.842604" transform="rotate(-0 243.671748 261.842604)">SynLethDB (lethal)</text>
+   </g>
+   <g id="patch_29">
+    <path d="M 316.914666 153.463475 
+Q 316.914666 155.603432 316.914666 157.743389 
 " style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
    </g>
-   <g id="text_62">
-    <g id="patch_56">
-     <path d="M 266.881347 156.971758 
-L 306.987597 156.971758 
-L 306.987597 151.199102 
-L 266.881347 151.199102 
+   <g id="text_41">
+    <g id="patch_30">
+     <path d="M 272.404509 150.842791 
+L 361.424822 150.842791 
+L 361.424822 144.950603 
+L 272.404509 144.950603 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="306.387597" y="155.378008" transform="rotate(-0 306.387597 155.378008)">Kuzmin 2018 dmf</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="316.914666" y="149.190447" transform="rotate(-0 316.914666 149.190447)">Bloom 2019 (16-cross segregant panel)</text>
    </g>
-   <g id="patch_57">
-    <path d="M 312.436164 152.137476 
-Q 312.436164 157.026877 312.436164 161.916279 
+   <g id="text_42">
+    <g id="patch_31">
+     <path d="M 189.930574 196.752967 
+L 261.986043 196.752967 
+L 261.986043 190.857654 
+L 189.930574 190.857654 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="190.530574" y="195.100623" transform="rotate(-0 190.530574 195.100623)">Ohnuki 2018 (SCMD CalMorph)</text>
+   </g>
+   <g id="text_43">
+    <g id="patch_32">
+     <path d="M 138.755109 219.573133 
+L 218.591046 219.573133 
+L 218.591046 213.680946 
+L 138.755109 213.680946 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="139.355109" y="217.920789" transform="rotate(-0 139.355109 217.920789)">Zelezniak 2018 (SWATH proteome)</text>
+   </g>
+   <g id="patch_33">
+    <path d="M 316.198926 179.171596 
+Q 310.890188 177.753473 305.581449 176.33535 
 " style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
    </g>
-   <g id="text_63">
-    <g id="patch_58">
-     <path d="M 274.872493 149.515633 
-L 349.999836 149.515633 
-L 349.999836 143.623445 
-L 274.872493 143.623445 
+   <g id="text_44">
+    <g id="patch_34">
+     <path d="M 308.738889 185.740567 
+L 350.783421 185.740567 
+L 350.783421 179.848379 
+L 308.738889 179.848379 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="312.436164" y="147.863289" transform="rotate(-0 312.436164 147.863289)">Wildenhain 2015 (drug tolerance)</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="309.338889" y="184.088223" transform="rotate(-0 309.338889 184.088223)">Kuzmin 2020 (tmf)</text>
    </g>
-   <g id="patch_59">
-    <path d="M 256.904243 207.940242 
-Q 272.989223 194.460403 289.074203 180.980565 
+   <g id="patch_35">
+    <path d="M 244.415391 183.866589 
+Q 257.812113 180.802493 271.208835 177.738398 
 " style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
    </g>
-   <g id="text_64">
-    <g id="patch_60">
-     <path d="M 225.003993 215.469439 
-L 277.811805 215.469439 
-L 277.811805 209.623345 
-L 225.003993 209.623345 
+   <g id="text_45">
+    <g id="patch_36">
+     <path d="M 193.084727 190.343231 
+L 264.87379 190.343231 
+L 264.87379 184.451044 
+L 193.084727 184.451044 
 z
 " style="fill: #ffffff; opacity: 0.55"/>
     </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="277.211805" y="213.817095" transform="rotate(-0 277.211805 213.817095)">Vanacloig-Pedros 2022</text>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="264.27379" y="188.690887" transform="rotate(-0 264.27379 188.690887)">Costanzo 2021 (condition-SGA)</text>
    </g>
-   <g id="patch_61">
-    <path d="M 226.287502 253.958058 
-Q 226.287502 257.345586 226.287502 260.733115 
-" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
-   </g>
-   <g id="text_65">
-    <g id="patch_62">
-     <path d="M 184.98008 251.33405 
-L 267.594924 251.33405 
-L 267.594924 245.441863 
-L 184.98008 245.441863 
-z
-" style="fill: #ffffff; opacity: 0.55"/>
-    </g>
-    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="226.287502" y="249.681707" transform="rotate(-0 226.287502 249.681707)">Smith 2016 (CRISPRi chem-genetic)</text>
-   </g>
-   <g id="text_66">
-    <g id="patch_63">
+   <g id="text_46">
+    <g id="patch_37">
      <path d="M 132.128832 258.56818 
 L 216.335082 258.56818 
 L 216.335082 252.675992 
@@ -2625,7 +2375,251 @@ z
     </g>
     <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="215.735082" y="256.915836" transform="rotate(-0 215.735082 256.915836)">Cachera 2023 (CRI-SPA betaxanthin)</text>
    </g>
-   <g id="text_67">
+   <g id="text_47">
+    <g id="patch_38">
+     <path d="M 353.460163 124.348364 
+L 429.03907 124.348364 
+L 429.03907 118.456176 
+L 353.460163 118.456176 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="354.060163" y="122.69602" transform="rotate(-0 354.060163 122.69602)">Hillenmeyer 2008 (FitDb HIP, het)</text>
+   </g>
+   <g id="text_48">
+    <g id="patch_39">
+     <path d="M 251.056607 243.544595 
+L 298.662076 243.544595 
+L 298.662076 237.652407 
+L 251.056607 237.652407 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="251.656607" y="241.892251" transform="rotate(-0 251.656607 241.892251)">Costanzo 2016 (smf)</text>
+   </g>
+   <g id="patch_40">
+    <path d="M 336.775259 195.005416 
+Q 313.35473 187.904547 289.934201 180.803678 
+" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
+   </g>
+   <g id="text_49">
+    <g id="patch_41">
+     <path d="M 295.363293 201.65734 
+L 402.632825 201.65734 
+L 402.632825 195.765152 
+L 295.363293 195.765152 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="295.963293" y="200.004996" transform="rotate(-0 295.963293 200.004996)">Vanacloig-Pedros 2022 (chemogenomic fitness)</text>
+   </g>
+   <g id="text_50">
+    <g id="patch_42">
+     <path d="M 94.031516 379.863295 
+L 177.197922 379.863295 
+L 177.197922 373.971107 
+L 94.031516 373.971107 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="94.631516" y="378.210951" transform="rotate(-0 94.631516 378.210951)">Mormino 2022 (CRISPRi acetic-acid)</text>
+   </g>
+   <g id="text_51">
+    <g id="patch_43">
+     <path d="M 225.942404 113.331989 
+L 303.006466 113.331989 
+L 303.006466 107.439802 
+L 225.942404 107.439802 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="226.542404" y="111.679646" transform="rotate(-0 226.542404 111.679646)">Nadal-Ribelles 2025 (Perturb-seq)</text>
+   </g>
+   <g id="text_52">
+    <g id="patch_44">
+     <path d="M 220.167295 129.086475 
+L 278.88917 129.086475 
+L 278.88917 123.194288 
+L 220.167295 123.194288 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="220.767295" y="127.434132" transform="rotate(-0 220.767295 127.434132)">Messner 2023 (proteome)</text>
+   </g>
+   <g id="patch_45">
+    <path d="M 268.865788 201.189256 
+Q 274.174527 199.771133 279.483266 198.35301 
+" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
+   </g>
+   <g id="text_53">
+    <g id="patch_46">
+     <path d="M 234.281294 207.758226 
+L 276.325826 207.758226 
+L 276.325826 201.866039 
+L 234.281294 201.866039 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="275.725826" y="206.105883" transform="rotate(-0 275.725826 206.105883)">Kuzmin 2018 (tmf)</text>
+   </g>
+   <g id="text_54">
+    <g id="patch_47">
+     <path d="M 334.412165 142.126415 
+L 415.266852 142.126415 
+L 415.266852 136.231102 
+L 334.412165 136.231102 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="335.012165" y="140.474071" transform="rotate(-0 335.012165 140.474071)">Hillenmeyer 2008 (FitDb HOP, hom)</text>
+   </g>
+   <g id="text_55">
+    <g id="patch_48">
+     <path d="M 196.748628 303.136681 
+L 239.904096 303.136681 
+L 239.904096 297.244493 
+L 196.748628 297.244493 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="197.348628" y="301.484337" transform="rotate(-0 197.348628 301.484337)">Kuzmin 2018 (smf)</text>
+   </g>
+   <g id="text_56">
+    <g id="patch_49">
+     <path d="M 141.434167 265.481111 
+L 188.600573 265.481111 
+L 188.600573 259.585799 
+L 141.434167 259.585799 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="188.000573" y="263.828767" transform="rotate(-0 188.000573 263.828767)">O'Duibhir 2014 (smf)</text>
+   </g>
+   <g id="patch_50">
+    <path d="M 370.326492 172.599382 
+Q 341.18511 172.599382 312.043727 172.599382 
+" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
+   </g>
+   <g id="text_57">
+    <g id="patch_51">
+     <path d="M 372.945032 175.545476 
+L 416.102845 175.545476 
+L 416.102845 169.653288 
+L 372.945032 169.653288 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="373.545032" y="173.893132" transform="rotate(-0 373.545032 173.893132)">Kuzmin 2018 (dmi)</text>
+   </g>
+   <g id="text_58">
+    <g id="patch_52">
+     <path d="M 125.168863 183.513774 
+L 197.224332 183.513774 
+L 197.224332 177.618462 
+L 125.168863 177.618462 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="196.624332" y="181.861431" transform="rotate(-0 196.624332 181.861431)">Ohnuki 2022 (SCMD CalMorph)</text>
+   </g>
+   <g id="patch_53">
+    <path d="M 315.375786 176.1815 
+Q 310.485728 176.1815 305.595669 176.1815 
+" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
+   </g>
+   <g id="text_59">
+    <g id="patch_54">
+     <path d="M 317.996249 179.127593 
+L 359.762655 179.127593 
+L 359.762655 173.235406 
+L 317.996249 173.235406 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="318.596249" y="177.47525" transform="rotate(-0 318.596249 177.47525)">Kuzmin 2020 (tmi)</text>
+   </g>
+   <g id="patch_55">
+    <path d="M 321.831515 168.844132 
+Q 316.942335 168.844132 312.053155 168.844132 
+" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
+   </g>
+   <g id="text_60">
+    <g id="patch_56">
+     <path d="M 324.453823 171.790226 
+L 367.889761 171.790226 
+L 367.889761 165.898038 
+L 324.453823 165.898038 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="325.053823" y="170.137882" transform="rotate(-0 325.053823 170.137882)">Kuzmin 2018 (dmf)</text>
+   </g>
+   <g id="text_61">
+    <g id="patch_57">
+     <path d="M 324.529958 166.193573 
+L 367.68777 166.193573 
+L 367.68777 160.301386 
+L 324.529958 160.301386 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="325.129958" y="164.541229" transform="rotate(-0 325.129958 164.541229)">Kuzmin 2020 (dmi)</text>
+   </g>
+   <g id="text_62">
+    <g id="patch_58">
+     <path d="M 191.83928 294.994056 
+L 260.287718 294.994056 
+L 260.287718 289.101868 
+L 191.83928 289.101868 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="192.43928" y="293.341712" transform="rotate(-0 192.43928 293.341712)">Mota 2024 (weak-acid screen)</text>
+   </g>
+   <g id="text_63">
+    <g id="patch_59">
+     <path d="M 218.631011 285.842611 
+L 307.656011 285.842611 
+L 307.656011 279.950424 
+L 218.631011 279.950424 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="219.231011" y="284.190267" transform="rotate(-0 219.231011 284.190267)">Lopez 2024 (isobutanol screen, private)</text>
+   </g>
+   <g id="patch_60">
+    <path d="M 226.287502 253.958058 
+Q 226.287502 257.345586 226.287502 260.733115 
+" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
+   </g>
+   <g id="text_64">
+    <g id="patch_61">
+     <path d="M 184.98008 251.33405 
+L 267.594924 251.33405 
+L 267.594924 245.441863 
+L 184.98008 245.441863 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: middle" x="226.287502" y="249.681707" transform="rotate(-0 226.287502 249.681707)">Smith 2016 (CRISPRi chem-genetic)</text>
+   </g>
+   <g id="patch_62">
+    <path d="M 239.752297 275.585076 
+Q 233.113183 275.585076 226.474068 275.585076 
+" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
+   </g>
+   <g id="text_65">
+    <g id="patch_63">
+     <path d="M 242.372812 278.53117 
+L 288.59 278.53117 
+L 288.59 272.638983 
+L 242.372812 272.638983 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="242.972812" y="276.878826" transform="rotate(-0 242.972812 276.878826)">SynLethDB (rescue)</text>
+   </g>
+   <g id="text_66">
     <g id="patch_64">
      <path d="M 164.85242 272.709827 
 L 221.349295 272.709827 
@@ -2637,12 +2631,28 @@ z
     <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="220.749295" y="271.057483" transform="rotate(-0 220.749295 271.057483)">Baryshnikova 2010 (smf)</text>
    </g>
    <g id="patch_65">
+    <path d="M 297.483497 270.624808 
+Q 268.343384 270.624808 239.203271 270.624808 
+" style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
+   </g>
+   <g id="text_67">
+    <g id="patch_66">
+     <path d="M 300.104597 273.570902 
+L 365.21866 273.570902 
+L 365.21866 267.678714 
+L 300.104597 267.678714 
+z
+" style="fill: #ffffff; opacity: 0.55"/>
+    </g>
+    <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: start" x="300.704597" y="271.918558" transform="rotate(-0 300.704597 271.918558)">Smith 2006 (chemogenomic)</text>
+   </g>
+   <g id="patch_67">
     <path d="M 156.859394 290.635726 
 Q 186.555587 283.639352 216.251779 276.642977 
 " style="fill: none; stroke: #4a4a4a; stroke-width: 0.3; stroke-linecap: round"/>
    </g>
    <g id="text_68">
-    <g id="patch_66">
+    <g id="patch_68">
      <path d="M 103.21939 297.131109 
 L 180.382671 297.131109 
 L 180.382671 291.235796 
@@ -2653,7 +2663,7 @@ z
     <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="179.782671" y="295.478765" transform="rotate(-0 179.782671 295.478765)">Ozaydin 2013 (β-carotene screen)</text>
    </g>
    <g id="text_69">
-    <g id="patch_67">
+    <g id="patch_69">
      <path d="M 75.885385 280.29224 
 L 139.608823 280.29224 
 L 139.608823 274.400053 
@@ -2664,7 +2674,7 @@ z
     <text style="font-size: 5px; font-family: 'Arial', 'Liberation Sans', 'Helvetica', 'DejaVu Sans', sans-serif; text-anchor: end" x="139.008823" y="278.639897" transform="rotate(-0 139.008823 278.639897)">da Silveira 2014 (lipidomics)</text>
    </g>
    <g id="legend_1">
-    <g id="patch_68">
+    <g id="patch_70">
      <path d="M 370.13173 408.722047 
 L 453.161417 408.722047 
 Q 454.161417 408.722047 454.161417 407.722047 

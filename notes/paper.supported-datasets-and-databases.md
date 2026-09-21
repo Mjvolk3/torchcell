@@ -33,19 +33,19 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Costanzo 2016 smf | 20,484 | 2 | 20,484 | single-mutant fitness | scalar | global | 5.5×10⁶ |
-| Costanzo 2016 dmf | 20.7M | 2 | 20,705,612 | double-mutant fitness | scalar | global | 7.1×10⁹ |
-| Costanzo 2016 dmi | 20.7M | 2 | 20,705,612 | digenic interaction | scalar | edge | 5.8×10⁹ |
-| Kuzmin 2018 smf | 1,539 | 1 | 1,539 | single-mutant fitness | scalar | global | 3.5×10⁵ |
-| Kuzmin 2018 dmf | 410,399 | 1 | 410,571 | double-mutant fitness | scalar | global | 1.5×10⁸ |
-| Kuzmin 2018 tmf | 91,111 | 1 | 91,111 | triple-mutant fitness | scalar | global | 3.9×10⁷ |
-| Kuzmin 2018 dmi | 410,399 | 1 | 410,399 | digenic interaction | scalar | edge | 1.3×10⁸ |
-| Kuzmin 2018 tmi | 91,111 | 1 | 91,111 | trigenic interaction | scalar | hyperedge | 3.2×10⁷ |
-| Kuzmin 2020 smf | 472 | 1 | 472 | single-mutant fitness | scalar | global | 9.2×10⁴ |
-| Kuzmin 2020 dmf | 632,797 | 1 | 632,998 | double-mutant fitness | scalar | global | 2.3×10⁸ |
-| Kuzmin 2020 tmf | 301,798 | 1 | 301,798 | triple-mutant fitness | scalar | global | 1.1×10⁸ |
-| Kuzmin 2020 dmi | 632,797 | 1 | 632,797 | digenic interaction | scalar | edge | 2.0×10⁸ |
-| Kuzmin 2020 tmi | 301,798 | 1 | 301,798 | trigenic interaction | scalar | hyperedge | 1.1×10⁸ |
+| Costanzo 2016 (smf) | 20,484 | 2 | 20,484 | single-mutant fitness | scalar | global | 5.5×10⁶ |
+| Costanzo 2016 (dmf) | 20.7M | 2 | 20,705,612 | double-mutant fitness | scalar | global | 7.1×10⁹ |
+| Costanzo 2016 (dmi) | 20.7M | 2 | 20,705,612 | digenic interaction | scalar | edge | 5.8×10⁹ |
+| Kuzmin 2018 (smf) | 1,539 | 1 | 1,539 | single-mutant fitness | scalar | global | 3.5×10⁵ |
+| Kuzmin 2018 (dmf) | 410,399 | 1 | 410,571 | double-mutant fitness | scalar | global | 1.5×10⁸ |
+| Kuzmin 2018 (tmf) | 91,111 | 1 | 91,111 | triple-mutant fitness | scalar | global | 3.9×10⁷ |
+| Kuzmin 2018 (dmi) | 410,399 | 1 | 410,399 | digenic interaction | scalar | edge | 1.3×10⁸ |
+| Kuzmin 2018 (tmi) | 91,111 | 1 | 91,111 | trigenic interaction | scalar | hyperedge | 3.2×10⁷ |
+| Kuzmin 2020 (smf) | 472 | 1 | 472 | single-mutant fitness | scalar | global | 9.2×10⁴ |
+| Kuzmin 2020 (dmf) | 632,797 | 1 | 632,998 | double-mutant fitness | scalar | global | 2.3×10⁸ |
+| Kuzmin 2020 (tmf) | 301,798 | 1 | 301,798 | triple-mutant fitness | scalar | global | 1.1×10⁸ |
+| Kuzmin 2020 (dmi) | 632,797 | 1 | 632,797 | digenic interaction | scalar | edge | 2.0×10⁸ |
+| Kuzmin 2020 (tmi) | 301,798 | 1 | 301,798 | trigenic interaction | scalar | hyperedge | 1.1×10⁸ |
 | Baryshnikova 2010 (smf) | 5,993 | 1 | 5,993 | single-mutant fitness | scalar | global | 1.7×10⁶ |
 | O'Duibhir 2014 (smf) | 1,312 | 1 | 1,312 | single-mutant fitness | scalar | global | 2.0×10⁶ |
 
@@ -55,10 +55,10 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
 | Auesukaree 2009 (stress screen) | 333 | 6 | 525 | stress sensitivity (categorical: sensitive/no_change) | scalar | global | 2.5×10⁵ |
 | Mota 2024 (weak-acid screen) | 601 | 3 | 1,270 | weak-acid susceptibility (ordinal: 0/1/2 grades) | scalar | global | 6.2×10⁵ |
-| Vanacloig-Pedros 2022 | 3,647 | 41 | 143,218 | chemogenomic fitness (log2-ratio) | scalar | global | 8.7×10⁷ |
+| Vanacloig-Pedros 2022 (chemogenomic fitness) | 3,647 | 41 | 143,218 | chemogenomic fitness (log2-ratio) | scalar | global | 8.7×10⁷ |
 | Costanzo 2021 (condition-SGA) | 4,399 | 14 | 61,430 | differential mutant fitness | scalar | global | 1.0×10⁸ |
-| Hillenmeyer 2008 het (FitDb HIP) | 5,814 | 514 | 2,698,797 | HIP fitness-defect log2-ratio | scalar | global | 1.4×10⁹ |
-| Hillenmeyer 2008 hom (FitDb HOP) | 4,667 | 279 | 1,088,620 | HOP fitness-defect z-score | scalar | global | 5.9×10⁸ |
+| Hillenmeyer 2008 (FitDb HIP, het) | 5,814 | 514 | 2,698,797 | HIP fitness-defect log2-ratio | scalar | global | 1.4×10⁹ |
+| Hillenmeyer 2008 (FitDb HOP, hom) | 4,667 | 279 | 1,088,620 | HOP fitness-defect z-score | scalar | global | 5.9×10⁸ |
 | Wildenhain 2015 (drug tolerance) | 256 | 5,168 | 428,206 | growth-inhibition z-score | scalar | global | 2.0×10⁸ |
 | Hoepfner 2014 (HIP/HOP atlas) | 10,779 | 563 | 3,124,319 | HIP/HOP sensitivity score | scalar | global | 1.8×10⁹ |
 | Smith 2006 (chemogenomic) | 4,721 | 3 | 12,747 | chemogenomic sensitivity (clear-zone ordinal) | scalar | global | 1.4×10⁶ |
@@ -71,7 +71,7 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| SGD essentiality | 1,329 | 1 | 1,329 | gene essentiality | scalar | node | 1.4×10⁵ |
+| SGD (essentiality) | 1,329 | 1 | 1,329 | gene essentiality | scalar | node | 1.4×10⁵ |
 | SynLethDB (lethal) | 14,000 | 1 | 14,000 | synthetic lethality | scalar | edge | 2.2×10⁶ |
 | SynLethDB (rescue) | 6,948 | 1 | 6,948 | synthetic rescue | scalar | edge | 1.1×10⁶ |
 
@@ -87,9 +87,9 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Kemmeren 2014 | 1,484 | 1 | 1,484 | mRNA log2(mut/wt) | vector (6169) | node | 3.2×10⁹ |
-| Sameith 2015 sm | 82 | 1 | 82 | mRNA log2(mut/ref) | vector (6169) | node | 1.8×10⁸ |
-| Sameith 2015 dm | 72 | 1 | 72 | mRNA log2(mut/ref) | vector (6169) | node | 1.7×10⁸ |
+| Kemmeren 2014 (deletion compendium) | 1,484 | 1 | 1,484 | mRNA log2(mut/wt) | vector (6169) | node | 3.2×10⁹ |
+| Sameith 2015 (sm) | 82 | 1 | 82 | mRNA log2(mut/ref) | vector (6169) | node | 1.8×10⁸ |
+| Sameith 2015 (dm) | 72 | 1 | 72 | mRNA log2(mut/ref) | vector (6169) | node | 1.7×10⁸ |
 
 ### Expression (RNA-seq)
 

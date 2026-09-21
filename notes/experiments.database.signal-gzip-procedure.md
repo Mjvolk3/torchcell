@@ -327,3 +327,35 @@ came from the cache and two were recomputed because the superset admissions of K
 to 632,998 records. The table and SI caption were re-rendered off the same snapshot
 (`results/pre-build/2026-09-21/supported_datasets.json`); the total is 52,743,236 and no
 signal changes at two significant figures.
+
+## 2026.09.21 - One name pattern for every dataset: Author Year (descriptor)
+
+The labels mixed two conventions: the original fitness sets were written `Costanzo 2016
+dmf` and `Kuzmin 2020 tmi` while everything added later was `O'Duibhir 2014 (smf)` or
+`Hoepfner 2014 (HIP/HOP atlas)`, and a few carried no descriptor at all (`Kemmeren 2014`,
+`Vanacloig-Pedros 2022`) or put it half outside the parentheses (`Hillenmeyer 2008 het
+(FitDb HIP)`). Every name in `CURATED` now matches `Author Year (descriptor)`, and the
+build script asserts nothing else; the descriptor tokens stay what they were (`smf`,
+`dmf`, `tmf`, `dmi`, `tmi`, `sm`, `dm`) so the names still read as before.
+
+| before | after |
+|---|---|
+| Costanzo 2016 smf / dmf / dmi | Costanzo 2016 (smf) / (dmf) / (dmi) |
+| Kuzmin 2018 and 2020 smf / dmf / tmf / dmi / tmi | Kuzmin 2018 and 2020 (smf) / (dmf) / (tmf) / (dmi) / (tmi) |
+| Vanacloig-Pedros 2022 | Vanacloig-Pedros 2022 (chemogenomic fitness) |
+| Hillenmeyer 2008 het (FitDb HIP) | Hillenmeyer 2008 (FitDb HIP, het) |
+| Hillenmeyer 2008 hom (FitDb HOP) | Hillenmeyer 2008 (FitDb HOP, hom) |
+| SGD essentiality | SGD (essentiality) |
+| Kemmeren 2014 | Kemmeren 2014 (deletion compendium) |
+| Sameith 2015 sm / dm | Sameith 2015 (sm) / (dm) |
+
+The same names are the "supported" partner names in
+`experiments/database/scripts/build_candidate_datasets_table.py` (`SUPPORTED_PARTNERS` and
+the synergy rows), so those moved with them and the `database-expansion-100` synergies
+table and PDF were regenerated; its Bloom 2019 partner entry, which still said
+`(16-parent cross)` from before Bloom was built, now matches the supported name. Figure,
+SI table, note table and the candidate tables all come off the 2026-09-21 snapshot.
+
+The longer labels cost the scatter some layout room: the best of 80 placement orders is
+440 pt of total offset against 353 pt before the rename, with `Kuzmin 2018 (dmi)` on a
+long horizontal leader. Still no crossings.

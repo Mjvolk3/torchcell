@@ -4038,7 +4038,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "which is the replication neither has on its own.",
         ),
         _syn(
-            "Bloom 2019 (16-parent cross)",
+            "Bloom 2019 (16-cross segregant panel)",
             "supported",
             "segregant genotype class, 16 founders against 2",
             "Whether an expression effect measured in a two-parent cross holds "
@@ -4061,7 +4061,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "Whether a knockdown effect is a property of the gene or of the guide.",
         ),
         _syn(
-            "Bloom 2019 (16-parent cross)",
+            "Bloom 2019 (16-cross segregant panel)",
             "supported",
             "segregant genotype class, growth traits",
             "Knockdown effect against natural allele effect on comparable panels.",
@@ -4069,7 +4069,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Jackson 2020 (TF-deletion single-cell atlas)": [
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "single deletions of the same transcription factors, bulk against "
             "single cell",
@@ -4101,14 +4101,14 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Hackett 2020 (IDEA inducible-TF transcriptome time series)": [
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "the same transcription factors, induction against deletion",
             "Whether a regulator's targets are the same set whether it is removed "
             "or over-induced.",
         ),
         _syn(
-            "Sameith 2015 dm",
+            "Sameith 2015 (dm)",
             "supported",
             "transcription-factor pairs",
             "Induction dynamics for the single factors whose double deletions "
@@ -4156,7 +4156,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "The paired half of the library-transfer test.",
         ),
         _syn(
-            "SGD essentiality",
+            "SGD (essentiality)",
             "supported",
             "essential genes, knockdown against deletion",
             "A graded phenotype where a deletion collection records only absence.",
@@ -4195,7 +4195,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Guo 2018 (CRISPR-Cas9 tiling of essential genes)": [
         _syn(
-            "SGD essentiality",
+            "SGD (essentiality)",
             "supported",
             "essential genes",
             "A graded allelic series where the built record is binary.",
@@ -4203,7 +4203,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Jaffe 2019 (multiplexed CRISPR interference epistasis)": [
         _syn(
-            "Costanzo 2016 dmi",
+            "Costanzo 2016 (dmi)",
             "supported",
             "gene pairs, knockdown against deletion",
             "Whether digenic interaction measured between two nulls is recovered "
@@ -4211,7 +4211,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "can supervise a knockdown campaign.",
         ),
         _syn(
-            "Kuzmin 2018 tmi",
+            "Kuzmin 2018 (tmi)",
             "supported",
             "higher-order gene combinations",
             "The knockdown analog of trigenic interaction.",
@@ -4252,7 +4252,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Sun 2013 (mRNA synthesis and decay rates across deletion strains)": [
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "single deletion strains, gene by gene",
             "A steady-state transcript level beside the synthesis and decay rates "
@@ -4269,7 +4269,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Hughes 2000 (compendium of expression profiles)": [
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "deletion strains, gene by gene, fourteen years and two array "
             "platforms apart",
@@ -4287,7 +4287,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Hu 2007 (TF deletion expression compendium)": [
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "single deletions with a bulk expression readout",
             "Two independently produced deletion expression compendia over "
@@ -4304,14 +4304,14 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Lenstra 2011 (chromatin regulator deletion expression)": [
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "single deletions with a bulk expression readout, different gene class",
             "Chromatin regulators beside sequence-specific factors on one "
             "expression readout.",
         ),
         _syn(
-            "Sameith 2015 dm",
+            "Sameith 2015 (dm)",
             "supported",
             "regulator deletions, single against double",
             "Whether chromatin-regulator effects combine the way "
@@ -4412,7 +4412,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Puddu 2019 (WGS of the deletion collection)": [
         _syn(
-            "Costanzo 2016 dmf",
+            "Costanzo 2016 (dmf)",
             "supported",
             "the same deletion collection",
             "Converts the sequence basis of every S288C-KO row from an assumption "
@@ -4520,7 +4520,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "cannot make.",
         ),
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "gene identity, protein half-life against transcript response",
             "Whether a transcript change reaches the protein layer at all, which "
@@ -4593,7 +4593,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "available test of whether a model learned biology or a batch effect.",
         ),
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "the same deletion collection",
             "Amino-acid pools paired with the expression profile of the same knockout.",
@@ -4607,7 +4607,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "Two orthogonal metabolic panels on one genotype axis.",
         ),
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "the same deletion collection",
             "Element levels against the transcriptional response of the same knockout.",
@@ -4615,7 +4615,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Blank 2005 (13C metabolic flux)": [
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "deletion strains present in both",
             "Flux against expression for the same knockout, which is the only "
@@ -4636,7 +4636,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "A second lipidome on a signaling-focused genotype set.",
         ),
         _syn(
-            "Kemmeren 2014",
+            "Kemmeren 2014 (deletion compendium)",
             "supported",
             "kinase and phosphatase deletions",
             "Lipid composition against the transcriptional response of the same "
@@ -4827,7 +4827,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "compound overlap to measure cross-screen reproducibility directly.",
         ),
         _syn(
-            "Hillenmeyer 2008 het (FitDb HIP)",
+            "Hillenmeyer 2008 (FitDb HIP, het)",
             "supported",
             "the same collections and readout",
             "A third independent screen of the same design.",
@@ -4835,7 +4835,7 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Nguyen Ba 2022 (barcoded bulk QTL, 100k segregants)": [
         _syn(
-            "Bloom 2019 (16-parent cross)",
+            "Bloom 2019 (16-cross segregant panel)",
             "supported",
             "segregant genotype class, panel size",
             "One cross at 100,000 progeny against sixteen founders at 14,000, "
@@ -5008,45 +5008,45 @@ def _apply_curation() -> None:
 # spelled out. Checked rather than trusted: a partner that is not actually built
 # would make the synergy table promise a join that cannot be run.
 SUPPORTED_PARTNERS: set[str] = {
-    "Costanzo 2016 smf",
-    "Costanzo 2016 dmf",
-    "Costanzo 2016 dmi",
-    "Kuzmin 2018 smf",
-    "Kuzmin 2018 dmf",
-    "Kuzmin 2018 tmf",
-    "Kuzmin 2018 dmi",
-    "Kuzmin 2018 tmi",
-    "Kuzmin 2020 smf",
-    "Kuzmin 2020 dmf",
-    "Kuzmin 2020 tmf",
-    "Kuzmin 2020 dmi",
-    "Kuzmin 2020 tmi",
+    "Costanzo 2016 (smf)",
+    "Costanzo 2016 (dmf)",
+    "Costanzo 2016 (dmi)",
+    "Kuzmin 2018 (smf)",
+    "Kuzmin 2018 (dmf)",
+    "Kuzmin 2018 (tmf)",
+    "Kuzmin 2018 (dmi)",
+    "Kuzmin 2018 (tmi)",
+    "Kuzmin 2020 (smf)",
+    "Kuzmin 2020 (dmf)",
+    "Kuzmin 2020 (tmf)",
+    "Kuzmin 2020 (dmi)",
+    "Kuzmin 2020 (tmi)",
     "Baryshnikova 2010 (smf)",
     "O'Duibhir 2014 (smf)",
     "Auesukaree 2009 (stress screen)",
     "Mota 2024 (weak-acid screen)",
-    "Vanacloig-Pedros 2022",
+    "Vanacloig-Pedros 2022 (chemogenomic fitness)",
     "Costanzo 2021 (condition-SGA)",
-    "Hillenmeyer 2008 het (FitDb HIP)",
-    "Hillenmeyer 2008 hom (FitDb HOP)",
+    "Hillenmeyer 2008 (FitDb HIP, het)",
+    "Hillenmeyer 2008 (FitDb HOP, hom)",
     "Wildenhain 2015 (drug tolerance)",
     "Hoepfner 2014 (HIP/HOP atlas)",
     "Smith 2006 (chemogenomic)",
     "Lian 2019 (MAGIC CRISPR-AID)",
     "Mormino 2022 (CRISPRi acetic-acid)",
     "Smith 2016 (CRISPRi chem-genetic)",
-    "SGD essentiality",
+    "SGD (essentiality)",
     "SynLethDB (lethal)",
     "SynLethDB (rescue)",
     "Ohya 2005 (SCMD CalMorph)",
     "Ohnuki 2018 (SCMD CalMorph)",
     "Ohnuki 2022 (SCMD CalMorph)",
-    "Kemmeren 2014",
-    "Sameith 2015 sm",
-    "Sameith 2015 dm",
+    "Kemmeren 2014 (deletion compendium)",
+    "Sameith 2015 (sm)",
+    "Sameith 2015 (dm)",
     "Caudal 2024 (pan-transcriptome)",
     "Nadal-Ribelles 2025 (Perturb-seq)",
-    "Bloom 2019 (16-parent cross)",
+    "Bloom 2019 (16-cross segregant panel)",
     "Cachera 2023 (CRI-SPA betaxanthin)",
     "Mulleder 2016 (amino-acid metabolome)",
     "Zelezniak 2018 (metabolome)",

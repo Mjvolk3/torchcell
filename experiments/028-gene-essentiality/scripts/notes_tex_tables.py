@@ -2454,6 +2454,76 @@ def simplification_paired() -> str | None:
     )
 
 
+def dcell_style() -> str | None:
+    """Round 108: DCell's hierarchy over these splits, in two input forms."""
+    src = osp.join(RESULTS, "dcell_style_folds.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        folds = {e["arm"]: e for e in json.load(fh)["fold_ensembles"]}
+    with open(osp.join(RESULTS, "dcell_style_released.json")) as fh:
+        released = {r["model"]: r for r in json.load(fh)["rows"]}
+    with open(osp.join(RESULTS, "dcell_style_resplits.json")) as fh:
+        resplits = {p["arm"]: p for p in json.load(fh)["paired"]}
+    published = osp.join(RESULTS, "dcell_style_resplits_published.json")
+    if osp.isfile(published):
+        with open(published) as fh:
+            resplits.update({p["arm"]: p for p in json.load(fh)["paired"]})
+    rows_spec = [
+        ("DCell hierarchy, GO membership on each term", "dcell_style_shared"),
+        ("the same, no auxiliary term losses", "dcell_style_shared_noaux"),
+        ("DCell's published per-gene input", "dcell_published_input"),
+    ]
+    best_cell = max(released[k]["mean"] for _, k in rows_spec)
+    best_fold = max(folds[k]["ensemble_auroc"] for _, k in rows_spec)
+    dash = "\\multicolumn{1}{c}{--}"
+    rows = []
+    for label, key in rows_spec:
+        cell, fold = released[key], folds[key]
+        pair = resplits.get(key)
+        against = (
+            f"${pair['difference_mean']:+.3f}$ ({pair['difference_sd']:.3f}), "
+            f"{pair['n_arm_above']}/{pair['n_splits']}"
+            if pair
+            else dash
+        )
+        rows.append(
+            f"    {label} & {len(cell['test_auroc'])} & "
+            f"{fmt(cell['mean'], best_cell)} & {cell['sd']:.3f} & "
+            f"{fmt(fold['ensemble_auroc'], best_fold)} & {against} \\\\"
+        )
+    gcn = resplits["dcell_style_shared"]
+    rows.append("    \\hline")
+    rows.append(
+        f"    graph convolution on the same GO & 6 & 0.905 & 0.005 & 0.918 & "
+        f"{gcn['gcn_mean']:.3f} over ten splits \\\\"
+    )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 108: DCell over these splits]{Round 108, DCell's ontology "
+        "hierarchy on this endpoint. Every term of the Gene Ontology gets a small "
+        "subsystem whose state is a function of its children's states and its own gene "
+        "input, wired along the same 2,362-term multi-hot the graph baselines read, with "
+        "DCell's auxiliary per-term heads at weight 0.3. The published input gives each "
+        "gene its own weight into each term, which a held-out gene's deletion never "
+        "trains, so the first two rows replace it with one shared weight on whether the "
+        "deleted gene carries the term. Columns: seeds on the released split, their mean "
+        "held-out AUROC and its spread, the five-fold ensemble on the same 195 genes, and "
+        "the paired difference against graph convolution on the same annotations over ten "
+        "repeated outer splits with the count of splits the row wins. Test blocks overlap "
+        "across splits, so no p-value. Width and normalization were chosen on validation "
+        "over ten configurations. Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{dcell\\_style\\_baseline.py}.}\n"
+        "  \\label{tab:dcell-style}\n"
+        "  \\begin{tabular}{@{}p{62mm}rrrrl@{}}\n    \\hline\n"
+        "    model & seeds & cell mean & sd & fold ensemble & "
+        "against the graph, ten splits \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("dcell_style", body, "results/dcell_style_*.json")
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -2797,6 +2867,7 @@ def main() -> None:
         single_experiment_ablation(),
         simplification_ladder(),
         simplification_paired(),
+        dcell_style(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

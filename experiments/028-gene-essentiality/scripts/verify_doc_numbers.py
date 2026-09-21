@@ -124,6 +124,24 @@ def module_over_none(statistic: str) -> Callable[[], float]:
     return run
 
 
+def dcell(read_name: str, arm: str, key: str) -> Callable[[], float]:
+    """One statistic of one DCell arm from its own result files."""
+
+    def run() -> float:
+        with open(osp.join(RESULTS, f"dcell_style_{read_name}.json")) as fh:
+            payload = json.load(fh)
+        block = {
+            "released": lambda: next(r for r in payload["rows"] if r["model"] == arm),
+            "folds": lambda: next(
+                e for e in payload["fold_ensembles"] if e["arm"] == arm
+            ),
+            "resplits": lambda: next(p for p in payload["paired"] if p["arm"] == arm),
+        }[read_name]()
+        return float(block[key])
+
+    return run
+
+
 def calibration_growth(tier: str, scale: float) -> Callable[[], float]:
     """Median growth at one capacity scale under one turnover tier."""
 
@@ -820,21 +838,21 @@ CHECKS: list[Check] = [
     ),
     Check(
         claim="round84-98: counts over the four ratios alone / mean_difference",
-        stated=0.010,
+        stated=0.013,
         recompute=simplification(
             "resplit", "counts over the four ratios alone", "mean_difference"
         ),
     ),
     Check(
         claim="round84-98: flux vector over the four ratios a / mean_difference",
-        stated=0.010,
+        stated=0.012,
         recompute=simplification(
             "resplit", "flux vector over the four ratios alone", "mean_difference"
         ),
     ),
     Check(
         claim="round84-98: counts added to the flux vector, f / mean_difference",
-        stated=0.018,
+        stated=0.019,
         recompute=simplification(
             "resplit", "counts added to the flux vector, four media", "mean_difference"
         ),
@@ -855,14 +873,14 @@ CHECKS: list[Check] = [
     ),
     Check(
         claim="round84-98: one medium for four, no flux vector / mean_difference",
-        stated=-0.012,
+        stated=-0.011,
         recompute=simplification(
             "resplit", "one medium for four, no flux vector", "mean_difference"
         ),
     ),
     Check(
         claim="round84-98: no solve and one medium, against t / mean_difference",
-        stated=-0.03,
+        stated=-0.029,
         recompute=simplification(
             "resplit",
             "no flux vector and one medium, against the full recipe",
@@ -992,6 +1010,37 @@ CHECKS: list[Check] = [
         claim="summary: ... split-and-seed pairs higher",
         stated=29,
         recompute=module_over_none("pairs_higher"),
+    ),
+    # sec:round108 -- DCell's hierarchy over these splits.
+    Check(
+        claim="round108: shared input, released split",
+        stated=0.825,
+        recompute=dcell("released", "dcell_style_shared", "mean"),
+    ),
+    Check(
+        claim="round108: shared input, fold ensemble",
+        stated=0.848,
+        recompute=dcell("folds", "dcell_style_shared", "ensemble_auroc"),
+    ),
+    Check(
+        claim="round108: published per-gene input, released split",
+        stated=0.578,
+        recompute=dcell("released", "dcell_published_input", "mean"),
+    ),
+    Check(
+        claim="round108: published per-gene input, fold ensemble",
+        stated=0.651,
+        recompute=dcell("folds", "dcell_published_input", "ensemble_auroc"),
+    ),
+    Check(
+        claim="round108: shared input minus the graph, ten splits",
+        stated=-0.067,
+        recompute=dcell("resplits", "dcell_style_shared", "difference_mean"),
+    ),
+    Check(
+        claim="round108: ... splits the hierarchy wins",
+        stated=0,
+        recompute=dcell("resplits", "dcell_style_shared", "n_arm_above"),
     ),
 ]
 

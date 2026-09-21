@@ -39,6 +39,7 @@ are the read.
 
 from __future__ import annotations
 
+import argparse
 import glob
 import gzip
 import json
@@ -97,10 +98,19 @@ def standardized_mean(cells: list[np.ndarray]) -> np.ndarray:
     return np.mean([(x - x.mean()) / x.std() for x in cells], axis=0)
 
 
+#: Set by ``--deep``: read both families at six seeds per split instead of three, to
+#: check whether the round-75 margins are seed-limited. The three-seed read is the one
+#: the document reports and is never overwritten; this writes its own file.
+DEEP = False
+
+
 def transformer_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
     cells = []
-    pattern = f"w93_resplit{resplit}pathlogfree_h12l1p1_e200_s*.json"
-    for path in sorted(glob.glob(osp.join(RESULTS, pattern))):
+    waves = ("w93", "w97") if DEEP else ("w93",)
+    patterns = [f"{w}_resplit{resplit}pathlogfree_h12l1p1_e200_s*.json" for w in waves]
+    for path in sorted(
+        p for pat in patterns for p in glob.glob(osp.join(RESULTS, pat))
+    ):
         with open(path) as fh:
             dump_path = json.load(fh)["test"]["dump_path"]
         if not osp.isfile(dump_path):
@@ -114,7 +124,8 @@ def transformer_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
 
 
 def go_cells(resplit: int, genes: list[str]) -> list[np.ndarray]:
-    path = osp.join(RESULTS, f"graph_baselines_go400_fcl_resplit{resplit}.json")
+    stem = "graph_baselines_go400_s6" if DEEP else "graph_baselines_go400"
+    path = osp.join(RESULTS, f"{stem}_fcl_resplit{resplit}.json")
     with open(path) as fh:
         rows = [r for r in json.load(fh)["rows"] if r["inputs"] == GO_INPUTS]
     assert len(rows) == 1
@@ -135,6 +146,18 @@ def seed_mean_auroc(*patterns: str, expect: int = 3) -> float:
 
 
 def main() -> None:
+    global DEEP
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--deep",
+        action="store_true",
+        help=(
+            "read both families at six seeds per split and write "
+            "results/resplit_readout_s6.json, leaving the three-seed read in place"
+        ),
+    )
+    DEEP = parser.parse_args().deep
+    expect_cells = 6 if DEEP else 3
     rows: list[SplitRow] = []
     for r in range(N_SPLITS):
         with gzip.open(
@@ -144,7 +167,11 @@ def main() -> None:
         genes = sorted(split["genes"]["test"])
         y = np.array([int(split["labels"][g]) for g in genes])
         t_cells, g_cells = transformer_cells(r, genes), go_cells(r, genes)
-        assert len(t_cells) == 3 and len(g_cells) == 3, (r, len(t_cells), len(g_cells))
+        assert len(t_cells) == expect_cells and len(g_cells) == expect_cells, (
+            r,
+            len(t_cells),
+            len(g_cells),
+        )
         t, g = standardized_mean(t_cells), standardized_mean(g_cells)
         rows.append(
             SplitRow(
@@ -281,7 +308,9 @@ def main() -> None:
             "the sign count and spread are the read, and no p-value is reported."
         ),
     )
-    out = osp.join(RESULTS, "resplit_readout.json")
+    out = osp.join(
+        RESULTS, "resplit_readout_s6.json" if DEEP else "resplit_readout.json"
+    )
     with open(out, "w") as fh:
         json.dump(report.model_dump(), fh, indent=2)
     print(out)

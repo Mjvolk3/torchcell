@@ -199,6 +199,7 @@ def leaderboard() -> list[Bar]:
     cheap = read("graph_baselines_folds.json")["arms"]
     go = read("graph_baselines_go_folds.json")["arms"]["GCN400"]
     families = read("family_ensembles_folds.json")["combinations"]
+    dcell = {e["arm"]: e for e in read("dcell_style_folds.json")["fold_ensembles"]}
 
     def average(member: str) -> dict[str, Any]:
         return next(
@@ -221,6 +222,18 @@ def leaderboard() -> list[Bar]:
             value=fcl["FCL"]["auroc"],
             color=COMPARATOR,
             interval=(fcl["FCL"]["ci_low"], fcl["FCL"]["ci_high"]),
+        ),
+        Bar(
+            label="DCell, published gene input",
+            value=dcell["dcell_published_input"]["ensemble_auroc"],
+            color=COMPARATOR,
+            interval=tuple(dcell["dcell_published_input"]["ensemble_ci"]),
+        ),
+        Bar(
+            label="DCell hierarchy, GO membership input",
+            value=dcell["dcell_style_shared"]["ensemble_auroc"],
+            color=GRAPH,
+            interval=tuple(dcell["dcell_style_shared"]["ensemble_ci"]),
         ),
         Bar(
             label=f"{ladder['model']} on GO + FBA ratios",

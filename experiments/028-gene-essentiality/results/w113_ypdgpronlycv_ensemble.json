@@ -1,0 +1,59 @@
+{
+  "prefix": "w113_ypdgpronlycv",
+  "n_folds": 5,
+  "n_genes": 195,
+  "n_essential": 31,
+  "folds": [
+    {
+      "stem": "w113_ypdgpronlycv0_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold0of5_s0.json.gz",
+      "select_epoch": 36,
+      "n_genes": 195,
+      "auroc": 0.8806058221872541,
+      "ci_low": 0.8157388523446318,
+      "ci_high": 0.9391648255672411
+    },
+    {
+      "stem": "w113_ypdgpronlycv1_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold1of5_s0.json.gz",
+      "select_epoch": 28,
+      "n_genes": 195,
+      "auroc": 0.8941778127458695,
+      "ci_low": 0.8363070316794871,
+      "ci_high": 0.9452541782895835
+    },
+    {
+      "stem": "w113_ypdgpronlycv2_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold2of5_s0.json.gz",
+      "select_epoch": 9,
+      "n_genes": 195,
+      "auroc": 0.7098741148701809,
+      "ci_low": 0.5919423149285268,
+      "ci_high": 0.8204446452457062
+    },
+    {
+      "stem": "w113_ypdgpronlycv3_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold3of5_s0.json.gz",
+      "select_epoch": 193,
+      "n_genes": 195,
+      "auroc": 0.8638867033831628,
+      "ci_low": 0.8044265517535065,
+      "ci_high": 0.9266707317073172
+    },
+    {
+      "stem": "w113_ypdgpronlycv4_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold4of5_s0.json.gz",
+      "select_epoch": 48,
+      "n_genes": 195,
+      "auroc": 0.9083398898505114,
+      "ci_low": 0.862694409500327,
+      "ci_high": 0.9508188144718964
+    }
+  ],
+  "fold_mean_auroc": 0.8513768686073957,
+  "ensemble_auroc": 0.9024390243902439,
+  "ensemble_ci_low": 0.8534048877049781,
+  "ensemble_ci_high": 0.9482387575011658,
+  "seeds_per_fold": 1,
+  "note": "The ensemble is the per-gene mean of the fold models' logits on the released held-out genes, scored once; this is the protocol behind FCL's published test AUROC. The fold mean is the average of K single-model AUROCs and is the number to compare with a single-split cell."
+}

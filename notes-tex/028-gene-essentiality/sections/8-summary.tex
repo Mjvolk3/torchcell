@@ -41,16 +41,16 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
   them equally with nothing fitted. The two comparators score the same 195 genes. Drawn
   by \texttt{notes/assets/drawio/028-families.gen.py}.}{fig:families}
 
-\tcfigfit[1.0]{figures/summary_goal1_2026-09-21-11-23-57.pdf}{\textbf{Goal 1: the best
+\tcfigfit[1.0]{figures/summary_goal1_2026-09-21-16-02-21.pdf}{\textbf{Goal 1: the best
   method on gene essentiality, against Flux Cone Learning and FBA.} The families are
   drawn in Figure~\ref{fig:families}. One color means one thing in every panel: gray a
   comparator with nothing learned here, blue a learned model reading no metabolic column
   and no graph, orange family 1, red family 2, purple their average; a hatch marks a
   linear program solved inside the training loop.
   \textbf{a}, Every method on the 195 released held-out genes, best first; the first
-  three rows are averages of family 2 with a form of family 1. Learned models are
-  five-fold ensembles, the random forest is one fit on the split file, and intervals are
-  gene bootstraps.
+  three rows are averages of family 2 with a form of family 1, and the two DCell rows are
+  round 108. Learned models are five-fold ensembles, the random forest is one fit on the
+  split file, and intervals are gene bootstraps.
   \textbf{b}, The layer-free form of family 1 (circles), graph convolution on the Gene
   Ontology multi-hot (squares) and their average (diamonds), fixed in advance, on ten
   other held-out fifths of the labeled genes, three seeds per split, sorted by the
@@ -69,7 +69,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
   YPD, the feature panel \textbf{d} tests. Written by
   \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py}.}{fig:summary}
 
-\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-11-22-01.pdf}{\textbf{Goal 2: the form of
+\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-16-02-22.pdf}{\textbf{Goal 2: the form of
   the metabolic module that helps, what it costs, and what a record of one genotype in
   one medium can carry.} Orange is the transformer reading any FBA-derived column, blue
   the same cell with no metabolic column, gray a count; a hatch marks a linear program

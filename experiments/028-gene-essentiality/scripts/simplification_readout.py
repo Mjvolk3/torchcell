@@ -92,6 +92,7 @@ LADDER: dict[str, tuple[str, int, bool, str, str | None]] = {
     ),
     "four_only": ("four ratios", 4, False, "w38_protpathfba", None),
     "one_only": ("YPD ratio", 1, False, "w102_ypdonly", None),
+    "none": ("no metabolism", 0, False, "w39_pathpool", None),
 }
 
 #: key -> (waves, arm) of a repeated-split recipe. Later seeds of one arm were sometimes
@@ -105,6 +106,7 @@ RESPLIT: dict[str, tuple[tuple[str, ...], str]] = {
     "two_counts": (("w117",), "twomedgpronly"),
     "one_counts": (("w114", "w118"), "ypdgpronly"),
     "four_only": (("w94", "w97", "w120"), "protpathfba"),
+    "none": (("w94", "w121"), "pathpool"),
 }
 
 #: (name, a, b): the difference read is a minus b.
@@ -127,6 +129,14 @@ RESPLIT_PAIRS: list[tuple[str, str, str]] = [
         "one_counts",
         "four_solve_counts",
     ),
+    # Goal 2: every form against the same cell with no metabolism on the logit.
+    ("one medium, solve and counts, over no metabolism", "one_solve_counts", "none"),
+    ("four media, solve and counts, over no metabolism", "four_solve_counts", "none"),
+    ("four media and the solve, over no metabolism", "four_solve", "none"),
+    ("four media and the counts, over no metabolism", "four_counts", "none"),
+    ("two media and the counts, over no metabolism", "two_counts", "none"),
+    ("one medium and the counts, over no metabolism", "one_counts", "none"),
+    ("four ratios alone, over no metabolism", "four_only", "none"),
 ]
 
 
@@ -138,6 +148,7 @@ class LadderRow(BaseModel):
     media: int
     solver: bool
     seeds: list[int]
+    cell_values: list[float]
     cell_mean: float
     cell_sd: float
     fold_ensemble_one_seed: float | None
@@ -157,6 +168,11 @@ class Paired(BaseModel):
     mean_difference: float
     sd_difference: float
     n_positive: int
+    #: Repeated-split rows only: the difference per split, and over every (split, seed)
+    #: pair both arms ran, how many the first recipe won.
+    per_unit_difference: list[float] | None = None
+    n_pairs: int | None = None
+    n_pairs_positive: int | None = None
     #: Budget rows only: the validation-selected epoch per seed, in both arms.
     select_epochs_a: list[int] | None = None
     select_epochs_b: list[int] | None = None
@@ -235,6 +251,7 @@ def paired_by_split(name: str, a: str, b: str) -> Paired | None:
         return out
 
     xs, ys, depth = [], [], []
+    pair_differences: list[float] = []
     for r in range(N_SPLITS):
         va, vb = pooled(a, r), pooled(b, r)
         seeds = sorted(set(va) & set(vb))
@@ -243,6 +260,7 @@ def paired_by_split(name: str, a: str, b: str) -> Paired | None:
         xs.append(float(np.mean([va[s] for s in seeds])))
         ys.append(float(np.mean([vb[s] for s in seeds])))
         depth.append(len(seeds))
+        pair_differences.extend(va[s] - vb[s] for s in seeds)
     if len(xs) < 2:
         return None
     d = np.array(xs) - np.array(ys)
@@ -257,6 +275,9 @@ def paired_by_split(name: str, a: str, b: str) -> Paired | None:
         mean_difference=float(d.mean()),
         sd_difference=float(d.std(ddof=1)),
         n_positive=int((d > 0).sum()),
+        per_unit_difference=[float(v) for v in d],
+        n_pairs=len(pair_differences),
+        n_pairs_positive=int(sum(v > 0 for v in pair_differences)),
     )
 
 
@@ -276,6 +297,7 @@ def main() -> None:
                 media=media,
                 solver=solver,
                 seeds=sorted(values),
+                cell_values=[float(x) for x in v],
                 cell_mean=float(v.mean()),
                 cell_sd=float(v.std(ddof=1)),
                 fold_ensemble_one_seed=ensemble(cv, ""),

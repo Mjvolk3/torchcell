@@ -1,0 +1,62 @@
+[
+  {
+    "screen": "kuzmin2018",
+    "form": "asymmetric (published)",
+    "n": 57451,
+    "pearson": 0.5111949069218444,
+    "spearman": 0.42380221775479643,
+    "slope": 0.9181128654437888,
+    "rmse": 0.07883588726035347,
+    "median_abs_residual": 0.04168660000000006
+  },
+  {
+    "screen": "kuzmin2018",
+    "form": "symmetric",
+    "n": 57451,
+    "pearson": 0.5040951687532931,
+    "spearman": 0.4277874830825946,
+    "slope": 0.9073042417354376,
+    "rmse": 0.07946920360509016,
+    "median_abs_residual": 0.04173753654706467
+  },
+  {
+    "screen": "kuzmin2018",
+    "form": "asymmetric, array single set to 1",
+    "n": 57451,
+    "pearson": 0.4268770546318755,
+    "spearman": 0.3463272065231957,
+    "slope": 1.2287359184766111,
+    "rmse": 0.1460382037723683,
+    "median_abs_residual": 0.07322188236379036
+  },
+  {
+    "screen": "kuzmin2020",
+    "form": "asymmetric (published)",
+    "n": 236225,
+    "pearson": 0.32524698573120603,
+    "spearman": 0.3843368988271323,
+    "slope": 0.9257093518332553,
+    "rmse": 0.16450430679089997,
+    "median_abs_residual": 0.06692220000000008
+  },
+  {
+    "screen": "kuzmin2020",
+    "form": "symmetric",
+    "n": 231611,
+    "pearson": 0.277928691086974,
+    "spearman": 0.3373890278457906,
+    "slope": 0.9047973214822332,
+    "rmse": 0.21168278579446098,
+    "median_abs_residual": 0.08956579417600002
+  },
+  {
+    "screen": "kuzmin2020",
+    "form": "asymmetric, array single set to 1",
+    "n": 236442,
+    "pearson": 0.272761261191232,
+    "spearman": 0.2868665170680333,
+    "slope": 0.8905775642549398,
+    "rmse": 0.21248888684526077,
+    "median_abs_residual": 0.0904605
+  }
+]

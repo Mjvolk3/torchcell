@@ -158,3 +158,36 @@ The S3 closure arm therefore beats the S0 arms by about 0.04 and stops there. Wh
 comes from is the subject of the recompute: the build's own fitness reproduces its own trigenic
 scores at r 0.230, and the identity is exact within a source screen, so the limit is the join
 rather than the model or the measurement.
+
+## 2026.09.21 - The published asymmetric form run directly: the shape is excluded
+
+Roles turn out to be recoverable from the 029 build, which the closure recompute had assumed they
+were not: on a triple exactly one perturbation carries an array strain identifier and the other two
+carry the query token, resolving the array gene, the query pair and the query strain on all 299,146
+triples. That makes the published asymmetric identity evaluable on the build, not only the
+symmetric form. Measured by `experiments/029-solid-growth-ko/scripts/closure_recompute_asymmetric.py`
+(results in that experiment's results/), same records and the same Kuzmin-first policy:
+
+| screen | form | n | r | slope | rmse |
+|---|---|---|---|---|---|
+| Kuzmin 2018 | asymmetric, as published | 57,451 | 0.511 | 0.92 | 0.079 |
+| Kuzmin 2018 | symmetric | 57,451 | 0.504 | 0.91 | 0.079 |
+| Kuzmin 2018 | array single forced to 1 (control) | 57,451 | 0.427 | 1.23 | 0.146 |
+| Kuzmin 2020 | asymmetric, as published | 236,225 | 0.325 | 0.93 | 0.165 |
+| Kuzmin 2020 | symmetric | 231,611 | 0.278 | 0.90 | 0.212 |
+| Kuzmin 2020 | array single forced to 1 (control) | 236,442 | 0.273 | 0.89 | 0.212 |
+
+Three readings. On 2018 the shape costs 0.007, so it is excluded and the entire remaining gap is
+the substitute the closure must use for the double-mutant query fitness. On 2020 the shape is worth
+0.047 and the error drops from 0.212 to 0.165, and the reason is the convention: 2020 released a
+query fitness on 0.4 percent of its control rows and scored with 1.0, so the published form asks
+the build for exactly what the source used while the symmetric form reconstructs values the source
+never had. The screen where the source substituted 1.0 is the screen where the source's own form
+pays, which strengthens the H5 paragraph. And the identity is not insensitive to its inputs:
+forcing the array single to 1 costs 0.084 and 0.052 and drives the 2018 slope to 1.23, so the query
+double is specifically the missing term rather than any term being interchangeable.
+
+The asymmetric form is also computable on more records, 236,225 against 231,611 on 2020, because it
+needs one double and one single where the symmetric form needs three of each. Section 7 of
+`notes-tex/025-s3-closure` carries this as Table 7; the open test is whether 0.511 moves toward the
+within-screen figure once the query-strain records are in a build.

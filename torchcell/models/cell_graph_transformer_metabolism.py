@@ -289,7 +289,9 @@ class ProductScalarHead(nn.Module):
     ) -> torch.Tensor:
         """Return ``[batch, 1]`` (point) or ``[batch, 1, param_dim]`` (distributional)."""
         batch_size = H_genes_pert.shape[0]
-        h = h_CLS.unsqueeze(0).expand(batch_size, -1)
+        # [d] is the shared wild-type token; [batch, d] is the PERTURBED one, which the
+        # parent returns under `perturb_cls` and this model's forward passes here.
+        h = h_CLS if h_CLS.dim() == 2 else h_CLS.unsqueeze(0).expand(batch_size, -1)
         if self.use_gene_pool:
             h = torch.cat([h, H_genes_pert.mean(dim=1)], dim=-1)
         if self.use_pert_pool:
@@ -461,7 +463,9 @@ class MetabolomeVectorHead(nn.Module):
     ) -> torch.Tensor:
         """Return ``[batch, F]`` (point) or ``[batch, F, param_dim]``."""
         batch_size = H_genes_pert.shape[0]
-        h = h_CLS.unsqueeze(0).expand(batch_size, -1)
+        # [d] is the shared wild-type token; [batch, d] is the PERTURBED one, which the
+        # parent returns under `perturb_cls` and this model's forward passes here.
+        h = h_CLS if h_CLS.dim() == 2 else h_CLS.unsqueeze(0).expand(batch_size, -1)
         if self.use_gene_pool:
             h = torch.cat([h, H_genes_pert.mean(dim=1)], dim=-1)
         if self.use_pert_pool:
@@ -613,7 +617,11 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
         mypy accepts as a Liskov-compatible override.)
         """
         predictions, reps = super().forward(cell_graph, batch, *args, **kwargs)
-        h_CLS = reps["h_CLS"]
+        # Under `perturb_cls` the class token went through the perturbation operator and
+        # is strain-specific; the heads read it in place of the wild-type token, which
+        # carries no across-strain variance at all. `h_CLS` stays in `reps` either way.
+        h_CLS_pert = reps.get("h_CLS_pert")
+        h_CLS = reps["h_CLS"] if h_CLS_pert is None else h_CLS_pert
         H_genes_pert = reps["H_genes_pert"]
         head_outputs = cast(dict[str, torch.Tensor], reps["head_outputs"])
         pert_pool = perturbed_gene_pool(

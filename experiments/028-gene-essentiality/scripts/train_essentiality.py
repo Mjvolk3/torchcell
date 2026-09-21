@@ -1174,6 +1174,20 @@ class BxCell(BaseModel):
             "'log1p' (log(1 + |v|), the flux head's encoding; round 33)."
         ),
     )
+    perturb_cls: bool = Field(
+        default=False,
+        description=(
+            "Send the class token through the perturbation operator, as query row 0 over "
+            "the same deleted-gene keys, so the head reads a STRAIN-SPECIFIC cell token "
+            "instead of the wild-type one. Without it the class token is the encoding of "
+            "the unperturbed graph and its across-strain variance is exactly zero, so "
+            "every pooled readout in this document carried the genotype through the "
+            "perturbed-gene pool alone. No parameters are added and the gene rows are "
+            "bit-identical either way (CellGraphTransformer.perturb_cls, ported from the "
+            "025 fitness branch). At one deleted gene the class token attends over one "
+            "key, so what it adds over the pool is the wild-type token beside it."
+        ),
+    )
     ess_solve_zero_init: bool = Field(
         default=False,
         description=(
@@ -2278,6 +2292,7 @@ def build_cell(
     ess_solve_encoding: str = "standardized",
     ess_solve_zero_init: bool = False,
     ess_solve_head_hidden: int = 0,
+    perturb_cls: bool = False,
     flux_capacity_scale: float = 1.0,
     flux_lp_slack_penalty: float = 0.0,
     flux_pool_by_construction: bool = False,
@@ -2385,6 +2400,7 @@ def build_cell(
         ess_solve_encoding=ess_solve_encoding,
         ess_solve_zero_init=ess_solve_zero_init,
         ess_solve_head_hidden=ess_solve_head_hidden,
+        perturb_cls=perturb_cls,
         flux_capacity_scale=flux_capacity_scale,
         flux_lp_slack_penalty=flux_lp_slack_penalty,
         flux_pool_by_construction=flux_pool_by_construction,
@@ -5101,6 +5117,7 @@ def build_model_for_cell(
         # embeddings; without this it looks for a learnable table that is now disabled and
         # raises "No gene embeddings available".
         node_embeddings=_NODE_EMBEDDINGS,
+        perturb_cls=cell.perturb_cls,
         flux_layer=flux_layer,
         **graph_reg_kwargs,
     ).to(device)
@@ -5885,6 +5902,14 @@ def run_cell(
             "val_pred_sd_ratio": pred_sd_ratio,
             "n_val": int(np.isfinite(trues).sum()),
             "graph_reg_loss": float(reps["graph_reg_loss"]),
+            # The across-strain spread of the class token on the last training batch,
+            # per coordinate. Exactly 0 without `--perturb-cls`, because the token is
+            # then the encoding of the unperturbed graph and the same for every strain.
+            "cls_strain_sd": (
+                float(reps["h_CLS_pert"].detach().std(dim=0).mean())
+                if reps.get("h_CLS_pert") is not None
+                else 0.0
+            ),
             # The two numbers the warmup experiment is read on, logged BESIDE the spread
             # ratio so the epoch at which the physics binds and the epoch at which the head
             # leaves the plateau are on the same axis.
@@ -6891,6 +6916,14 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--perturb-cls",
+        action="store_true",
+        help=(
+            "Run the class token through the perturbation operator so the pooled head "
+            "reads a strain-specific cell token rather than the wild-type one."
+        ),
+    )
+    parser.add_argument(
         "--ess-solve-zero-init",
         action="store_true",
         help=(
@@ -7396,6 +7429,7 @@ def main() -> None:
         ess_solve_encoding=args.ess_solve_encoding,
         ess_solve_zero_init=args.ess_solve_zero_init,
         ess_solve_head_hidden=args.ess_solve_head_hidden,
+        perturb_cls=args.perturb_cls,
         flux_capacity_scale=args.flux_capacity_scale,
         flux_lp_slack_penalty=args.flux_lp_slack_penalty,
         flux_pool_by_construction=args.flux_pool_by_construction,

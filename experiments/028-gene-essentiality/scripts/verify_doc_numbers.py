@@ -159,6 +159,11 @@ def gpr(block: str, key: str) -> Callable[[], float]:
     return field("gpr_readout.json", block, key)
 
 
+def cls_arm(index: int, key: str) -> Callable[[], float]:
+    """One statistic of one arm of the round-79 perturbed-class-token read."""
+    return field("cls_readout.json", "arms", index, key)
+
+
 CHECKS: list[Check] = [
     # sec:store-discriminability -- the stores and the two cuts.
     Check(
@@ -632,6 +637,51 @@ CHECKS: list[Check] = [
         stated=8,
         tolerance=0.5,
         recompute=resplit("differences", 6, "n_positive"),
+    ),
+    # sec:round79 -- the perturbed class token.
+    Check(
+        claim="round79: layer-free with the flag",
+        stated=0.904,
+        recompute=cls_arm(0, "mean_with"),
+    ),
+    Check(
+        claim="round79: layer-free without",
+        stated=0.908,
+        recompute=cls_arm(0, "mean_without"),
+    ),
+    Check(
+        claim="round79: its positive seeds",
+        stated=2,
+        tolerance=0.5,
+        recompute=cls_arm(0, "n_positive"),
+    ),
+    Check(
+        claim="round79: pooled cell with the flag",
+        stated=0.858,
+        recompute=cls_arm(1, "mean_with"),
+    ),
+    Check(
+        claim="round79: pooled cell without",
+        stated=0.860,
+        recompute=cls_arm(1, "mean_without"),
+    ),
+    Check(
+        claim="round79: its positive seeds",
+        stated=0,
+        tolerance=0.5,
+        recompute=cls_arm(1, "n_positive"),
+    ),
+    Check(
+        claim="round79: class-token spread with the flag",
+        stated=0.54,
+        tolerance=0.006,
+        recompute=cls_arm(0, "cls_strain_sd_with"),
+    ),
+    Check(
+        claim="round79: class-token spread without",
+        stated=0.0,
+        tolerance=0.0006,
+        recompute=cls_arm(0, "cls_strain_sd_without"),
     ),
 ]
 

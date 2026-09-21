@@ -1401,3 +1401,18 @@ Jobs 2586 to 2595, all exit 0. Three more seeds of the layer-free cell and of it
 Doubling the seeds leaves the mean and the spread unchanged, so the three-seed read was not underpowered: the difference is genuinely small relative to split-to-split variation. The honest statement is that the four growth ratios carry most of what the solve contributes, and the 4,131 flux columns add little beyond them.
 
 Sharp contrast worth keeping: on the same ten splits, six gene-protein-reaction redundancy counts add +0.019 over the vector (round 77), about twice what the whole flux vector adds over the ratios. The useful metabolic signal here is structural (which reactions have no alternative catalyst), not the flux values themselves.
+
+## 2026.09.20 - Round 79: the perturbed class token is a null on single deletions
+
+Jobs 2597 to 2600. The ported `--perturb-cls` against the identical cell without it, paired by seed on the released split.
+
+| arm | seeds | with | without | difference | positive | token sd |
+|---|---|---|---|---|---|---|
+| layer-free solve vector in the affine | 6 | 0.904 | 0.908 | -0.0040 | 2 of 6 | 0.54 vs 0.00 |
+| pooled cell, no solve, no affine | 3 | 0.858 | 0.860 | -0.0016 | 0 of 3 | 0.55 vs 0.00 |
+
+The mechanism works: the class token's across-strain spread goes from exactly 0 to about 0.54. The ranking does not improve, and both arms point slightly down within the seed spread.
+
+Why, structurally: these strains delete ONE gene, so the class token's query attends over a single key and the perturbed token is a function of the wild-type token plus that gene's token, which the perturbed-gene pool already supplies. The flag can only add where a genotype perturbs several genes and the pool's mean discards their arrangement. That is the 025 fitness setting (doubles and triples), not this one.
+
+So the port stays (it is free and correct), the flag stays off for 028, and the honest expectation for multi-gene phenotypes is untested here.

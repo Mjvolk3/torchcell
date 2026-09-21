@@ -1871,6 +1871,42 @@ def gpr_readout() -> str | None:
     return write("gpr_readout", body, "results/gpr_readout.json")
 
 
+def cls_readout() -> str | None:
+    """Round 79: the class token through the perturbation operator, paired by seed."""
+    src = osp.join(RESULTS, "cls_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    rows = []
+    for a in r["arms"]:
+        best = max(a["mean_with"], a["mean_without"])
+        rows.append(
+            f"    {a['arm']} & {a['n']} & {fmt(a['mean_with'], best)} & "
+            f"{fmt(a['mean_without'], best)} & {a['mean_difference']:+.4f} & "
+            f"{a['sd_difference']:.4f} & {a['n_positive']} of {a['n']} & "
+            f"{a['cls_strain_sd_with']:.2f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 79: the perturbed class token]{Round 79, the class token sent "
+        "through the perturbation operator as query row 0 over the same deleted-gene keys "
+        "(\\texttt{perturb\\_cls}, ported from the 025 branch), against the identical cell "
+        "without it, paired by seed on the released split. No parameters are added and the "
+        "gene rows are unchanged. The last column is the across-strain spread of the class "
+        "token at the final epoch, which is exactly 0 without the flag because the token is "
+        "then the encoding of the unperturbed graph. Written by "
+        "\\texttt{cls\\_readout.py}.}\n"
+        "  \\label{tab:cls-readout}\n"
+        "  \\begin{tabular}{@{}p{52mm}rrrrrlr@{}}\n    \\hline\n"
+        "    arm & seeds & with & without & difference & sd & positive & token sd \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("cls_readout", body, "results/cls_readout.json")
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -2209,6 +2245,7 @@ def main() -> None:
         misclass_enrichment(),
         resplit_readout(),
         gpr_readout(),
+        cls_readout(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

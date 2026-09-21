@@ -236,3 +236,41 @@ trigenic, so a perfectly accurate fitness predictor could not have derived the s
 than that. The derived route was not losing to the direct route because deriving is worse; it was
 losing because the two labels in the build disagree. Within one source screen the identity is
 exact, so the ceiling is a property of the join, not of the arithmetic.
+
+## 2026.09.20 - It is dmf, and both loaders were written to include it
+
+Not a new dataset. The double-mutant query strain's fitness is double-mutant fitness, and both
+`DmfKuzmin` loaders already contain the code to ingest it. Neither runs it.
+
+**`DmfKuzmin2018Dataset`.** `preprocess_raw` (kuzmin2018.py line 442) filters the frame to
+`Combined mutant type == "digenic"`. `create_experiment` (lines 539 to 542) then branches on
+`elif row["Combined mutant type"] == "trigenic": dmf_key = "Query single/double mutant fitness"`,
+which the filter has made unreachable. The comment beside it, "std of these fitnesses not
+reported", is also wrong now: Data File S4 reports it for 339 of the 364 double-mutant query
+strains, and the loader never opens that file.
+
+**`DmfKuzmin2020Dataset`.** `preprocess_raw` (kuzmin2020.py lines 306 to 324) does open Table S5,
+filters it to `Mutant type == "Double mutant"`, and merges it onto the digenic frame with
+`left_on="Query strain ID"` against `right_on="Query Strain ID"`. The left key is the full strain
+string (`YAL015C+YDL227C_tm461`) and the right key is the bare tm number (`tm461`), so the merge
+matches **0 of 537,911 digenic rows** and the `fillna` fallback silently uses the S1/S3 columns
+every time. The mismatch warning below it can never fire. Two defects in one block: the join key,
+and the row set, since an S5 double-mutant entry describes a TRIGENIC row's query strain, not a
+digenic one. Joined correctly, trigenic rows on the tm number, it matches 215,617 of 256,861 rows.
+
+So the intent was right in both places and the execution is dead code in both. Nothing belongs in
+`dmi`: a trigenic row carries no interaction score for its query pair.
+
+**Consequence for the graph.** The manifest fingerprints each served dataset's loader closure
+(`loader_relpath`, `loader_closure_from_source` in `kg_manifest.py`), so editing `preprocess_raw`
+of a served dataset is served schema drift and the admission gate blocks: FULL REBUILD, not an
+incremental import. That is the honest cost of modeling it correctly, and it is the right moment to
+land issue #410 as well, the Costanzo single-mutant fitness stamped at two temperatures, which is
+also rebuild-only. One rebuild, two verified defects.
+
+**A consequence for the build, not the loader.** After the fix a gene pair can carry two
+double-mutant fitness records: its array-screen measurement and its query-strain measurement, which
+agree at r 0.777 with a median absolute difference of 0.045. They are different strains and
+different experiments, distinguished by `strain_id`. A no-merge build keeps both, which is what the
+identity needs. The 025 merge would average them into one value that is neither, which is a further
+reason the deduplication stage does not return.

@@ -89,41 +89,6 @@ def simplification(block: str, name: str, key: str) -> Callable[[], float]:
     return run
 
 
-def module_over_none(statistic: str) -> Callable[[], float]:
-    """The single-medium module (w104) minus no metabolism (w94), seeds 2700 to 2702."""
-
-    def run() -> float:
-        seeds = (2700, 2701, 2702)
-        per_split, pairs = [], []
-        for r in range(10):
-            d = []
-            for s in seeds:
-                a = json.load(
-                    open(
-                        osp.join(
-                            RESULTS, f"w104_resplit{r}ypdgpr_h12l1p1_e200_s{s}.json"
-                        )
-                    )
-                )
-                b = json.load(
-                    open(
-                        osp.join(
-                            RESULTS, f"w94_resplit{r}pathpool_h12l1p1_e200_s{s}.json"
-                        )
-                    )
-                )
-                d.append(a["test"]["pinned"]["auroc"] - b["test"]["pinned"]["auroc"])
-            per_split.append(float(np.mean(d)))
-            pairs.extend(d)
-        return {
-            "mean": float(np.mean(per_split)),
-            "splits_higher": float(sum(v > 0 for v in per_split)),
-            "pairs_higher": float(sum(v > 0 for v in pairs)),
-        }[statistic]
-
-    return run
-
-
 def dcell(read_name: str, arm: str, key: str) -> Callable[[], float]:
     """One statistic of one DCell arm from its own result files."""
 
@@ -995,21 +960,80 @@ CHECKS: list[Check] = [
             "ladder", "YPD and SC ratios, rule counts", "fold_ensemble_one_seed"
         ),
     ),
-    # sec:summary -- goal 2, the single-medium module against no metabolism.
+    # sec:summary and sec:round84-98 -- the module against no metabolism, nine seeds.
     Check(
         claim="summary: single-medium module minus no metabolism",
-        stated=0.066,
-        recompute=module_over_none("mean"),
+        stated=0.061,
+        recompute=simplification("resplit", "one medium, flux vector and counts, over no metabolism", "mean_difference"),
     ),
     Check(
         claim="summary: ... splits higher",
         stated=10,
-        recompute=module_over_none("splits_higher"),
+        recompute=simplification("resplit", "one medium, flux vector and counts, over no metabolism", "n_positive"),
     ),
     Check(
         claim="summary: ... split-and-seed pairs higher",
-        stated=29,
-        recompute=module_over_none("pairs_higher"),
+        stated=89,
+        recompute=simplification("resplit", "one medium, flux vector and counts, over no metabolism", "n_pairs_positive"),
+    ),
+    Check(
+        claim="round84-98: four media, flux vector and counts, over no metabolism, mean_difference",
+        stated=0.059,
+        recompute=simplification("resplit", "four media, flux vector and counts, over no metabolism", "mean_difference"),
+    ),
+    Check(
+        claim="round84-98: four media, flux vector and counts, over no metabolism, n_pairs_positive",
+        stated=88,
+        recompute=simplification("resplit", "four media, flux vector and counts, over no metabolism", "n_pairs_positive"),
+    ),
+    Check(
+        claim="round84-98: four media and the flux vector, over no metabolism, mean_difference",
+        stated=0.04,
+        recompute=simplification("resplit", "four media and the flux vector, over no metabolism", "mean_difference"),
+    ),
+    Check(
+        claim="round84-98: four media and the counts, over no metabolism, mean_difference",
+        stated=0.041,
+        recompute=simplification("resplit", "four media and the counts, over no metabolism", "mean_difference"),
+    ),
+    Check(
+        claim="round84-98: four ratios alone, over no metabolism, mean_difference",
+        stated=0.028,
+        recompute=simplification("resplit", "four ratios alone, over no metabolism", "mean_difference"),
+    ),
+    Check(
+        claim="round84-98: two media and the counts, over no metabolism, mean_difference",
+        stated=0.036,
+        recompute=simplification("resplit", "two media and the counts, over no metabolism", "mean_difference"),
+    ),
+    Check(
+        claim="round84-98: one medium and the counts, over no metabolism, mean_difference",
+        stated=0.032,
+        recompute=simplification("resplit", "one medium and the counts, over no metabolism", "mean_difference"),
+    ),
+    Check(
+        claim="round106: no metabolism, fold ensemble at three seeds per fold",
+        stated=0.878,
+        recompute=simplification("ladder", "no metabolism", "fold_ensemble_three_seeds"),
+    ),
+    Check(
+        claim="round101: YPD and SM with counts, cells",
+        stated=0.892,
+        recompute=simplification("ladder", "YPD and SM ratios, rule counts", "cell_mean"),
+    ),
+    Check(
+        claim="round101: YPD and SM with counts, fold ensemble",
+        stated=0.907,
+        recompute=simplification(
+            "ladder", "YPD and SM ratios, rule counts", "fold_ensemble_one_seed"
+        ),
+    ),
+    Check(
+        claim="round101: YPD and SM against YPD and SC, by seed",
+        stated=-0.004,
+        recompute=simplification(
+            "second_medium", "YPD and SM, against YPD and SC", "mean_difference"
+        ),
     ),
     # sec:round108 -- DCell's hierarchy over these splits.
     Check(

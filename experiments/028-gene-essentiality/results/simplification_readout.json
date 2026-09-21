@@ -137,6 +137,32 @@
       "fold_ensemble_three_seeds": 0.9091266719118803
     },
     {
+      "key": "two_counts_sm",
+      "label": "YPD and SM ratios, rule counts",
+      "media": 2,
+      "solver": false,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_values": [
+        0.8835562549173879,
+        0.9018489378442172,
+        0.8815892997639654,
+        0.8910306845003934,
+        0.9004720692368214,
+        0.8916207710464201
+      ],
+      "cell_mean": 0.8916863362182009,
+      "cell_sd": 0.008354042393552866,
+      "fold_ensemble_one_seed": 0.9067663257277735,
+      "fold_ensemble_three_seeds": null
+    },
+    {
       "key": "one_counts",
       "label": "YPD ratio, rule counts",
       "media": 1,
@@ -232,7 +258,7 @@
       "cell_mean": 0.8579530553370049,
       "cell_sd": 0.003924884742054949,
       "fold_ensemble_one_seed": null,
-      "fold_ensemble_three_seeds": null
+      "fold_ensemble_three_seeds": 0.8774586939417781
     }
   ],
   "resplit": [
@@ -991,6 +1017,56 @@
       "mean_difference": 0.009244689221085753,
       "sd_difference": 0.006810324805469795,
       "n_positive": 5,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    }
+  ],
+  "second_medium": [
+    {
+      "name": "YPD and SM, against YPD and SC",
+      "a": "w119_ypdsm",
+      "b": "w116_twomed",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.8916863362182009,
+      "mean_b": 0.8956530291109362,
+      "mean_difference": -0.0039666928927353795,
+      "sd_difference": 0.008298981385258489,
+      "n_positive": 2,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "YPD and SM, against YPD alone",
+      "a": "w119_ypdsm",
+      "b": "w113_ypdgpronly",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.8916863362182009,
+      "mean_b": 0.8876212955677945,
+      "mean_difference": 0.004065040650406508,
+      "sd_difference": 0.01162646321288214,
+      "n_positive": 4,
       "per_unit_difference": null,
       "n_pairs": null,
       "n_pairs_positive": null,

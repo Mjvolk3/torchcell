@@ -86,6 +86,13 @@ LADDER: dict[str, tuple[str, int, bool, str, str | None]] = {
         "w116_twomed",
         "w116_twomedcv",
     ),
+    "two_counts_sm": (
+        "YPD and SM ratios, rule counts",
+        2,
+        False,
+        "w119_ypdsm",
+        "w119_ypdsmcv",
+    ),
     "one_counts": (
         "YPD ratio, rule counts",
         1,
@@ -95,7 +102,7 @@ LADDER: dict[str, tuple[str, int, bool, str, str | None]] = {
     ),
     "four_only": ("four ratios", 4, False, "w38_protpathfba", None),
     "one_only": ("YPD ratio", 1, False, "w102_ypdonly", None),
-    "none": ("no metabolism", 0, False, "w39_pathpool", None),
+    "none": ("no metabolism", 0, False, "w39_pathpool", "w124_pathpoolcv"),
 }
 
 #: key -> (waves, arm) of a repeated-split recipe. Later seeds of one arm were sometimes
@@ -195,6 +202,7 @@ class Report(BaseModel):
     ladder: list[LadderRow]
     resplit: list[Paired]
     subsets: list[Paired]
+    second_medium: list[Paired]
     budget: list[Paired]
     missing: list[str]
     excluded_waves: list[str]
@@ -374,6 +382,14 @@ def main() -> None:
     subsets = collect(
         [paired_by_seed(*s) for s in subset_spec], [s[0] for s in subset_spec]
     )
+    print("-- which second medium, released split (round 101)")
+    second_spec = [
+        ("YPD and SM, against YPD and SC", "w119_ypdsm", "w116_twomed"),
+        ("YPD and SM, against YPD alone", "w119_ypdsm", "w113_ypdgpronly"),
+    ]
+    second_medium = collect(
+        [paired_by_seed(*s) for s in second_spec], [s[0] for s in second_spec]
+    )
     print("-- 400 epochs against 200, released split")
     budget_spec = [
         ("flux vector and counts", "w115_gpr400", "w96_pathloggpr"),
@@ -398,6 +414,7 @@ def main() -> None:
                 ladder=ladder,
                 resplit=resplit,
                 subsets=subsets,
+                second_medium=second_medium,
                 budget=budget,
                 missing=missing,
                 excluded_waves=sorted(EXCLUDED_WAVES),

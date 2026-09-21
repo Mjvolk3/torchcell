@@ -21,9 +21,9 @@ only, and it may not solve a program inside the training loop at database scale.
 form that meets both is an input and no layer: one parsimonious FBA solve per genotype and
 medium, run once offline and cached, read as $\log(1 + |v|)$ by a zero-initialized affine
 on the logit, beside that medium's growth ratio and six counts read off the
-gene-protein-reaction rules. On the ten repeated splits, three seeds each, that
-single-medium form scores $+0.066$ over the same cell with no metabolism, higher on ten of
-ten splits and on 29 of 30 split-and-seed pairs
+gene-protein-reaction rules. On the ten repeated splits, nine seeds each, that
+single-medium form scores $+0.061$ over the same cell with no metabolism, higher on ten of
+ten splits and on 89 of 90 split-and-seed pairs
 (Figure~\ref{fig:summary-module}\textbf{e} and \textbf{f}), and it matches the four-media form
 ($+0.002$, Section~\ref{sec:round84-98}). Every form that kept a linear program or a
 projection inside the training loop scored lower and less reliably than this one
@@ -69,7 +69,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
   YPD, the feature panel \textbf{d} tests. Written by
   \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py}.}{fig:summary}
 
-\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-16-02-22.pdf}{\textbf{Goal 2: the form of
+\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-16-34-08.pdf}{\textbf{Goal 2: the form of
   the metabolic module that helps, what it costs, and what a record of one genotype in
   one medium can carry.} Orange is the transformer reading any FBA-derived column, blue
   the same cell with no metabolic column, gray a count; a hatch marks a linear program

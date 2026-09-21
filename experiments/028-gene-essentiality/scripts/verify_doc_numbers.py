@@ -78,6 +78,17 @@ def field(name: str, *path: str | int) -> Callable[[], float]:
     return run
 
 
+def simplification(block: str, name: str, key: str) -> Callable[[], float]:
+    """One statistic of one named row of the simplification readout."""
+
+    def run() -> float:
+        rows = json.load(open(osp.join(RESULTS, "simplification_readout.json")))[block]
+        tag = "label" if block == "ladder" else "name"
+        return float(next(r for r in rows if r[tag] == name)[key])
+
+    return run
+
+
 def calibration_growth(tier: str, scale: float) -> Callable[[], float]:
     """Median growth at one capacity scale under one turnover tier."""
 
@@ -754,6 +765,171 @@ CHECKS: list[Check] = [
         claim="round83: YPD only, ratio alone",
         stated=0.877,
         recompute=seed_mean("w102_ypdonly_h12l1p1_e200_s*.json"),
+    ),
+    # sec:round84-98 -- what each simplification costs.
+    Check(
+        claim="round84-98: one medium for four, solve and cou / mean_difference",
+        stated=0.002,
+        recompute=simplification(
+            "resplit", "one medium for four, solve and counts kept", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="round84-98: one medium for four, solve and cou / n_positive",
+        stated=6,
+        recompute=simplification(
+            "resplit", "one medium for four, solve and counts kept", "n_positive"
+        ),
+    ),
+    Check(
+        claim="round84-98: counts over the four ratios alone / mean_difference",
+        stated=0.012,
+        recompute=simplification(
+            "resplit", "counts over the four ratios alone", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="round84-98: flux vector over the four ratios a / mean_difference",
+        stated=0.011,
+        recompute=simplification(
+            "resplit", "flux vector over the four ratios alone", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="round84-98: counts added to the flux vector, f / mean_difference",
+        stated=0.019,
+        recompute=simplification(
+            "resplit", "counts added to the flux vector, four media", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="round84-98: no solve, counts kept, four media / mean_difference",
+        stated=-0.018,
+        recompute=simplification(
+            "resplit", "no solve, counts kept, four media", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="round84-98: no solve, counts kept, four media / n_positive",
+        stated=1,
+        recompute=simplification(
+            "resplit", "no solve, counts kept, four media", "n_positive"
+        ),
+    ),
+    Check(
+        claim="round84-98: one medium for four, no solve / mean_difference",
+        stated=-0.011,
+        recompute=simplification(
+            "resplit", "one medium for four, no solve", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="round84-98: no solve and one medium, against t / mean_difference",
+        stated=-0.03,
+        recompute=simplification(
+            "resplit",
+            "no solve and one medium, against the full recipe",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="round84-98: no solve and one medium, against t / n_positive",
+        stated=0,
+        recompute=simplification(
+            "resplit", "no solve and one medium, against the full recipe", "n_positive"
+        ),
+    ),
+    Check(
+        claim="round84-98: YPD and SC ratios, rule counts / cell_mean",
+        stated=0.896,
+        recompute=simplification(
+            "ladder", "YPD and SC ratios, rule counts", "cell_mean"
+        ),
+    ),
+    Check(
+        claim="round84-98: YPD ratio, rule counts / cell_mean",
+        stated=0.888,
+        recompute=simplification("ladder", "YPD ratio, rule counts", "cell_mean"),
+    ),
+    Check(
+        claim="round84-98: YPD ratio, rule counts / fold_ensemble_one_seed",
+        stated=0.902,
+        recompute=simplification(
+            "ladder", "YPD ratio, rule counts", "fold_ensemble_one_seed"
+        ),
+    ),
+    Check(
+        claim="round84-98: four ratios, rule counts / cell_mean",
+        stated=0.902,
+        recompute=simplification("ladder", "four ratios, rule counts", "cell_mean"),
+    ),
+    Check(
+        claim="round84-98: four ratios, flux vector, rule cou / fold_ensemble_three_seeds",
+        stated=0.933,
+        recompute=simplification(
+            "ladder",
+            "four ratios, flux vector, rule counts",
+            "fold_ensemble_three_seeds",
+        ),
+    ),
+    Check(
+        claim="round84-98: YPD ratio, flux vector, rule count / fold_ensemble_three_seeds",
+        stated=0.932,
+        recompute=simplification(
+            "ladder", "YPD ratio, flux vector, rule counts", "fold_ensemble_three_seeds"
+        ),
+    ),
+    Check(
+        claim="round84-98: four ratios, flux vector / fold_ensemble_three_seeds",
+        stated=0.921,
+        recompute=simplification(
+            "ladder", "four ratios, flux vector", "fold_ensemble_three_seeds"
+        ),
+    ),
+    Check(
+        claim="round84-98: four ratios, rule counts / fold_ensemble_three_seeds",
+        stated=0.909,
+        recompute=simplification(
+            "ladder", "four ratios, rule counts", "fold_ensemble_three_seeds"
+        ),
+    ),
+    Check(
+        claim="round84-98: sole-reaction count alone, against / mean_a",
+        stated=0.914,
+        recompute=simplification(
+            "subsets", "sole-reaction count alone, against all six", "mean_a"
+        ),
+    ),
+    Check(
+        claim="round84-98: five without it, against all six / mean_a",
+        stated=0.918,
+        recompute=simplification(
+            "subsets", "five without it, against all six", "mean_a"
+        ),
+    ),
+    Check(
+        claim="round84-98: five without it, against all six / mean_difference",
+        stated=-0.001,
+        recompute=simplification(
+            "subsets", "five without it, against all six", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="round84-98: sole-reaction count alone, against / mean_difference",
+        stated=0.006,
+        recompute=simplification(
+            "subsets", "sole-reaction count alone, against none", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="round84-98: flux vector and counts / mean_difference",
+        stated=0.0,
+        recompute=simplification("budget", "flux vector and counts", "mean_difference"),
+    ),
+    Check(
+        claim="round84-98: counts alone / mean_difference",
+        stated=0.0,
+        recompute=simplification("budget", "counts alone", "mean_difference"),
     ),
 ]
 

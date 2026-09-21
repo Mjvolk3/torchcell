@@ -1480,3 +1480,34 @@ The restriction is free wherever the solve is present. About a hundredth of what
 This is the answer to the objection raised in conversation: nothing in the module as it stands needs more than one experiment per record, so the form carries to a database where the environment is part of the key rather than part of the feature vector.
 
 Also recorded from the same conversation: we have NOT sampled the flux cone, and we cannot reuse FCL's sampled vectors, because their mirrored release holds only splits, hyperparameter tables and figure CSVs. Their raw sampled matrix (124 samples/cone, thinning 5,000, 143,716 x 4,130, ~4.4 GB) is not in the mirror. MEASURED cost of sampling ourselves: 5 samples of ONE deletion at thinning 10 takes 147 s, so ~45 h single-process for the 1,121 labeled genes, about 2.5 h across 20 cores, and far more at their thinning. What we did instead was four solver points on the same optimal face plus three tolerances of one solver (rounds 36 to 57).
+
+## 2026.09.21 - Rounds 84 to 98: what each simplification of the module costs
+
+Overnight, jobs 2616 to 2667, none failed after the sampling launcher fix (2622). Read by `experiments/028-gene-essentiality/scripts/simplification_readout.py` into `results/simplification_readout.json`; tables `simplification_ladder` and `simplification_paired` in the chapter's new Section 7.8; `verify_doc_numbers.py` now holds 119 checks, all passing.
+
+Released split, same backbone (pathway multi-hot with ProtT5), seed-mean held-out AUROC and five-fold ensemble:
+
+| affine columns | media | solver | seeds | cell mean | folds, 1 seed | folds, 3 seeds |
+|---|---|---|---|---|---|---|
+| four ratios, flux vector, rule counts | 4 | yes | 6 | **0.918** | **0.934** | **0.933** |
+| YPD ratio, flux vector, rule counts | 1 | yes | 6 | 0.916 | 0.932 | 0.932 |
+| four ratios, flux vector | 4 | yes | 9 | 0.911 | 0.920 | 0.921 |
+| four ratios, rule counts | 4 | no | 6 | 0.902 | 0.909 | 0.909 |
+| YPD and SC ratios, rule counts | 2 | no | 6 | 0.896 | running | |
+| YPD ratio, rule counts | 1 | no | 6 | 0.888 | 0.902 | |
+
+Ten repeated outer splits, paired by split (first minus second):
+
+- one medium for four, solve and counts kept: +0.0021 (sd 0.0071), 6/10, nine seeds per split. Round 83 holds.
+- counts over ratios +0.0122 (7/10); vector over ratios +0.0107 (7/10); counts added to the vector +0.0192 (8/10); vector added to the counts +0.0175 (9/10). Complementary, about equal, three seeds per split except the last.
+- one medium for four with NO solve: -0.0114 (2/9, tenth split running). No solve and one medium against the full recipe: -0.0297 (0/9).
+
+So the simplifications do not stack. The cheapest recipe that keeps the full score and respects one experiment per record is the YPD ratio with the flux vector and the counts, which needs one linear program per genotype and medium, offline.
+
+Round 84: the six counts are redundant among themselves. Beside the vector the sole-reaction count alone reads 0.914, the other five 0.918, all six 0.918. The round 77 text that called the sole-reaction count "the useful column" is corrected in the chapter.
+
+Round 97: 400 epochs change nothing, exactly. Validation selects epoch 30 to 76 in all twelve cells, cells are bit-reproducible given the seed, so the 400-epoch cells return the identical held-out AUROC. CORRECTION to a status message of 08:40: "0.921 over 3 seeds against 0.918" was the first three seeds of the same cells, not a gain.
+
+Rounds 92 and 94: three seeds per fold leave every fold ensemble within 0.001 of its one-seed value.
+
+Still running: round 87 (sampled store, eight packs behind job 2623), round 98's folds (2667), round 99 (w117, job 2668: two media with the counts on the ten splits).

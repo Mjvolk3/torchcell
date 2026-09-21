@@ -2022,6 +2022,96 @@ def single_experiment_ablation() -> str | None:
     return write("single_experiment", body, "results/ (the cells named in the rows)")
 
 
+def simplification_ladder() -> str | None:
+    """Rounds 83 to 98: media and solver, each recipe on the released split."""
+    src = osp.join(RESULTS, "simplification_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        ladder = json.load(fh)["ladder"]
+    best_cell = max(r["cell_mean"] for r in ladder)
+    ones = [r["fold_ensemble_one_seed"] for r in ladder]
+    threes = [r["fold_ensemble_three_seeds"] for r in ladder]
+    best_one = max(v for v in ones if v is not None)
+    best_three = max(v for v in threes if v is not None)
+    dash = "\\multicolumn{1}{c}{--}"
+    rows = []
+    for r in ladder:
+        one, three = r["fold_ensemble_one_seed"], r["fold_ensemble_three_seeds"]
+        rows.append(
+            f"    {r['label']} & {r['media']} & {'yes' if r['solver'] else 'no'} & "
+            f"{len(r['seeds'])} & {fmt(r['cell_mean'], best_cell)} & {r['cell_sd']:.3f} & "
+            f"{fmt(one, best_one) if one is not None else dash} & "
+            f"{fmt(three, best_three) if three is not None else dash} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Rounds 83 to 98: media and solver on the released split]{What the "
+        "affine columns cost and what they score, on the same backbone (pathway multi-hot "
+        "with ProtT5). Media is the number of FBA growth ratios on the logit, each a "
+        "different environment; solver says whether the recipe needs one linear program "
+        "per genotype, run once offline. Columns: seeds, their mean held-out AUROC and "
+        "its spread, and the five-fold ensemble at one seed per fold and at three. Best "
+        "of each column in bold. Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/simplification\\_readout.json}.}\n"
+        "  \\label{tab:simplification-ladder}\n"
+        "  \\begin{tabular}{@{}p{58mm}rlrrrrr@{}}\n    \\hline\n"
+        "    affine columns & media & solver & seeds & cell mean & sd & folds, 1 seed & "
+        "folds, 3 seeds \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "simplification_ladder", body, "results/simplification_readout.json (ladder)"
+    )
+
+
+def simplification_paired() -> str | None:
+    """Rounds 84 to 99: every paired difference the simplification rounds fixed."""
+    src = osp.join(RESULTS, "simplification_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    blocks = [
+        ("ten repeated outer splits, unit = split", report["resplit"]),
+        ("rule-count subsets on the released split, unit = seed", report["subsets"]),
+        ("400 epochs against 200 on the released split, unit = seed", report["budget"]),
+    ]
+    rows = []
+    for title, items in blocks:
+        rows.append(f"    \\multicolumn{{7}}{{@{{}}l}}{{\\textit{{{title}}}}} \\\\")
+        for p in items:
+            lo, hi = min(p["seeds_per_unit"]), max(p["seeds_per_unit"])
+            depth = f"{lo}" if lo == hi else f"{lo} to {hi}"
+            rows.append(
+                f"    {p['name']} & {p['n']} & {depth} & {p['mean_a']:.3f} & "
+                f"{p['mean_b']:.3f} & ${p['mean_difference']:+.4f}$ ({p['sd_difference']:.4f}) & "
+                f"{p['n_positive']}/{p['n']} \\\\"
+            )
+        rows.append("    \\hline")
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Rounds 84 to 99: the paired differences]{Every paired difference "
+        "the simplification rounds fixed in advance, first recipe minus second. On the "
+        "repeated splits the unit is a split, scored as the mean over the seeds both arms "
+        "ran; the test blocks overlap, so no p-value is given. Columns: units, seeds per "
+        "unit, the two means, the mean difference with its standard deviation over units, "
+        "and the units on which the first recipe scored higher. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/simplification\\_readout.json}.}\n"
+        "  \\label{tab:simplification-paired}\n"
+        "  \\begin{tabular}{@{}p{66mm}rlrrrr@{}}\n    \\hline\n"
+        "    first minus second & units & seeds & first & second & difference (sd) & "
+        "higher \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "simplification_paired", body, "results/simplification_readout.json (paired)"
+    )
+
+
 def kcat_tier_capacity() -> str | None:
     """The capacity box under the two kcat tiers, at initialization."""
     srcs = {
@@ -2363,6 +2453,8 @@ def main() -> None:
         cls_readout(),
         module_factorial(),
         single_experiment_ablation(),
+        simplification_ladder(),
+        simplification_paired(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

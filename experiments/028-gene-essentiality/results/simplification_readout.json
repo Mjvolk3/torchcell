@@ -1,0 +1,511 @@
+{
+  "ladder": [
+    {
+      "key": "four_solve_counts",
+      "label": "four ratios, flux vector, rule counts",
+      "media": 4,
+      "solver": true,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_mean": 0.9184369263047469,
+      "cell_sd": 0.005711174335209065,
+      "fold_ensemble_one_seed": 0.9335169158143194,
+      "fold_ensemble_three_seeds": 0.9325334382376081
+    },
+    {
+      "key": "one_solve_counts",
+      "label": "YPD ratio, flux vector, rule counts",
+      "media": 1,
+      "solver": true,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_mean": 0.9159454497770784,
+      "cell_sd": 0.0032693295656433144,
+      "fold_ensemble_one_seed": 0.932336742722266,
+      "fold_ensemble_three_seeds": 0.9315499606608969
+    },
+    {
+      "key": "four_solve",
+      "label": "four ratios, flux vector",
+      "media": 4,
+      "solver": true,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705,
+        2706,
+        2707,
+        2708
+      ],
+      "cell_mean": 0.9106346708628377,
+      "cell_sd": 0.00719889463388871,
+      "fold_ensemble_one_seed": 0.9199449252557041,
+      "fold_ensemble_three_seeds": 0.920535011801731
+    },
+    {
+      "key": "four_counts",
+      "label": "four ratios, rule counts",
+      "media": 4,
+      "solver": false,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_mean": 0.9016194597429846,
+      "cell_sd": 0.005055368120792558,
+      "fold_ensemble_one_seed": 0.908733280881196,
+      "fold_ensemble_three_seeds": 0.9087332808811959
+    },
+    {
+      "key": "two_counts",
+      "label": "YPD and SC ratios, rule counts",
+      "media": 2,
+      "solver": false,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_mean": 0.8956530291109362,
+      "cell_sd": 0.012532298512462965,
+      "fold_ensemble_one_seed": null,
+      "fold_ensemble_three_seeds": null
+    },
+    {
+      "key": "one_counts",
+      "label": "YPD ratio, rule counts",
+      "media": 1,
+      "solver": false,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_mean": 0.8876212955677945,
+      "cell_sd": 0.01312574783642519,
+      "fold_ensemble_one_seed": 0.9024390243902439,
+      "fold_ensemble_three_seeds": null
+    },
+    {
+      "key": "four_only",
+      "label": "four ratios",
+      "media": 4,
+      "solver": false,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "cell_mean": 0.8895882507212169,
+      "cell_sd": 0.0053699436741262195,
+      "fold_ensemble_one_seed": null,
+      "fold_ensemble_three_seeds": null
+    },
+    {
+      "key": "one_only",
+      "label": "YPD ratio",
+      "media": 1,
+      "solver": false,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_mean": 0.877360346184107,
+      "cell_sd": 0.011391200940735853,
+      "fold_ensemble_one_seed": null,
+      "fold_ensemble_three_seeds": null
+    }
+  ],
+  "resplit": [
+    {
+      "name": "one medium for four, solve and counts kept",
+      "a": "one_solve_counts",
+      "b": "four_solve_counts",
+      "n": 10,
+      "seeds_per_unit": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "mean_a": 0.8629664491298529,
+      "mean_b": 0.8608831157965195,
+      "mean_difference": 0.0020833333333332925,
+      "sd_difference": 0.007110667528916539,
+      "n_positive": 6,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "counts for the flux vector, four media",
+      "a": "four_counts",
+      "b": "four_solve",
+      "n": 10,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "mean_a": 0.8445281124497992,
+      "mean_b": 0.8430597389558233,
+      "mean_difference": 0.0014683734939759496,
+      "sd_difference": 0.024625808738776313,
+      "n_positive": 5,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "counts over the four ratios alone",
+      "a": "four_counts",
+      "b": "four_only",
+      "n": 10,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "mean_a": 0.8445281124497992,
+      "mean_b": 0.8323544176706829,
+      "mean_difference": 0.01217369477911654,
+      "sd_difference": 0.020437890583112735,
+      "n_positive": 7,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "flux vector over the four ratios alone",
+      "a": "four_solve",
+      "b": "four_only",
+      "n": 10,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "mean_a": 0.8430597389558233,
+      "mean_b": 0.8323544176706829,
+      "mean_difference": 0.01070532128514059,
+      "sd_difference": 0.023320143314009043,
+      "n_positive": 7,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "counts added to the flux vector, four media",
+      "a": "four_solve_counts",
+      "b": "four_solve",
+      "n": 10,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "mean_a": 0.8622552710843372,
+      "mean_b": 0.8430597389558233,
+      "mean_difference": 0.019195532128514083,
+      "sd_difference": 0.01976760544749296,
+      "n_positive": 8,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "no solve, counts kept, four media",
+      "a": "four_counts",
+      "b": "four_solve_counts",
+      "n": 10,
+      "seeds_per_unit": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        6,
+        6,
+        6
+      ],
+      "mean_a": 0.8435397841365463,
+      "mean_b": 0.8609908383534137,
+      "mean_difference": -0.01745105421686747,
+      "sd_difference": 0.015427833116712607,
+      "n_positive": 1,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "one medium for four, no solve",
+      "a": "one_counts",
+      "b": "four_counts",
+      "n": 9,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "mean_a": 0.8319458389112004,
+      "mean_b": 0.8433665216421241,
+      "mean_difference": -0.011420682730923695,
+      "sd_difference": 0.012301637751076394,
+      "n_positive": 2,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "no solve and one medium, against the full recipe",
+      "a": "one_counts",
+      "b": "four_solve_counts",
+      "n": 9,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "mean_a": 0.8319458389112004,
+      "mean_b": 0.8616898148148148,
+      "mean_difference": -0.029743975903614453,
+      "sd_difference": 0.016248542190208444,
+      "n_positive": 0,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    }
+  ],
+  "subsets": [
+    {
+      "name": "sole-reaction count alone, against all six",
+      "a": "w103_pathlogsole",
+      "b": "w96_pathloggpr",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9138473642800945,
+      "mean_b": 0.9184369263047469,
+      "mean_difference": -0.004589562024652512,
+      "sd_difference": 0.008794438109441763,
+      "n_positive": 2,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "five without it, against all six",
+      "a": "w103_pathlognosole",
+      "b": "w96_pathloggpr",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.917486231313926,
+      "mean_b": 0.9184369263047469,
+      "mean_difference": -0.0009506949908208995,
+      "sd_difference": 0.007577671859427791,
+      "n_positive": 3,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "sole-reaction count alone, against none",
+      "a": "w103_pathlogsole",
+      "b": "w49_pathfbapfbalogfree",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9138473642800945,
+      "mean_b": 0.9082415420928402,
+      "mean_difference": 0.005605822187254139,
+      "sd_difference": 0.011435945601137398,
+      "n_positive": 5,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "five without it, against none",
+      "a": "w103_pathlognosole",
+      "b": "w49_pathfbapfbalogfree",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.917486231313926,
+      "mean_b": 0.9082415420928402,
+      "mean_difference": 0.009244689221085753,
+      "sd_difference": 0.006810324805469795,
+      "n_positive": 5,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    }
+  ],
+  "budget": [
+    {
+      "name": "flux vector and counts",
+      "a": "w115_gpr400",
+      "b": "w96_pathloggpr",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9184369263047469,
+      "mean_b": 0.9184369263047469,
+      "mean_difference": 0.0,
+      "sd_difference": 0.0,
+      "n_positive": 0,
+      "select_epochs_a": [
+        40,
+        44,
+        50,
+        62,
+        76,
+        43
+      ],
+      "select_epochs_b": [
+        40,
+        44,
+        50,
+        62,
+        76,
+        43
+      ]
+    },
+    {
+      "name": "counts alone",
+      "a": "w115_gpronly400",
+      "b": "w101_pathgpronly",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9016194597429846,
+      "mean_b": 0.9016194597429846,
+      "mean_difference": 0.0,
+      "sd_difference": 0.0,
+      "n_positive": 0,
+      "select_epochs_a": [
+        50,
+        59,
+        62,
+        37,
+        30,
+        31
+      ],
+      "select_epochs_b": [
+        50,
+        59,
+        62,
+        37,
+        30,
+        31
+      ]
+    }
+  ],
+  "missing": [
+    "two media for four, no solve",
+    "two media for one, no solve"
+  ],
+  "note": "Every difference is a minus b. Repeated-split units are splits, each the mean over the seeds both arms ran (seeds_per_unit); their test blocks overlap, so no p-value. Released-split units are seeds."
+}

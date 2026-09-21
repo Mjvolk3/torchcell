@@ -1556,3 +1556,11 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 - `resplit_readout.py --portable`: with the single-experiment recipe (w104) as the transformer family, the fixed-in-advance average beats the better single model on ten of ten splits (+0.029, sd 0.013). Released-split fold average 0.953 against 0.955 for four media.
 - Round 107 (job 2683): on the released split at nine seeds the one-medium recipe reads 0.912 against 0.920 for four media, -0.009 paired by seed.
 - Job 2684: the solve columns as node features do not help graph convolution on GO on the ten splits (-0.009, one of ten). Job 2691 tests the zero-initialized affine on the graph model's logit.
+
+## 2026.09.21 - The interface carries across families; the trigenic ontology; rounds 109 and 110 in flight
+
+- Job 2691 (`graph_baselines.py --arms go_affine`): the module as a zero-initialized affine on graph convolution's logit, ten splits, three seeds. YPD ratio +0.011 (10/10), one-medium recipe +0.018 (9/10), four-media recipe +0.021 (9/10) over GO alone. Released split 0.914 / 0.911 / 0.910 against 0.908. Job 2693 takes the arm to six seeds.
+- Both families with the module (`resplit_readout.py --portable --graph-affine`): average 0.897 against 0.907 with the plain graph family, though the graph family alone rises 0.871 to 0.887.
+- Trigenic DCell runs' ontology (`go006_store.py`, jobs 2688 and 2689): 2,651 columns, 1,421 shared with the current 2,362. Graph convolution -0.002 (4/10); DCell hierarchy 0.714 against 0.841 released, -0.020 (2/10). Job 2694 tunes the hierarchy on that store.
+- Goal 2 summary figure gained panel g (the second family). Closing list now reads six items, four run.
+- Round 109 (w126, ten splits) and round 110 (w127, released split) test the module on ProtT5 alone; reads fixed in `simplification_readout.py` before completion.

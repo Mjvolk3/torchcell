@@ -81,5 +81,10 @@ echo "task $TASK: $CFG $ARM seed $SEED"
 echo "checkpoint: $CKPT"
 
 export TORCHCELL_CONFIG="$CFG"
-export TORCHCELL_EXTRA_OVERRIDES="trainer.eval_ckpt_path=$CKPT trainer.run_test=false data_module.num_workers=4"
+# The path is SINGLE-QUOTED for Hydra: Lightning names checkpoints `...-epoch=4803.ckpt`,
+# and a bare `=` inside an override value is a grammar error ("mismatched input '='",
+# which failed all 40 tasks of arrays 2482/2483 in seven seconds each). The first six evals
+# went through a `best_metric.ckpt` symlink and never met it. The arm script word-splits
+# this string without evaluating quotes, so the quote characters reach Hydra intact.
+export TORCHCELL_EXTRA_OVERRIDES="trainer.eval_ckpt_path='$CKPT' trainer.run_test=false data_module.num_workers=4"
 bash "$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/gh_expr_008_arm.sh" "$ARM" "$SEED"

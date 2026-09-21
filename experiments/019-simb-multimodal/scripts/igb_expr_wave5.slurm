@@ -47,6 +47,19 @@
 #
 #SBATCH -N 1
 #SBATCH --ntasks=1
+# NAME EVERY SUBMISSION `019-<round>w<N>-<stage>` (2026-09-20). This default is a
+# placeholder: `squeue` showed five concurrent 019 arrays all reading `019-wave5-igb`, so
+# nothing but the job id said which round or which half of a round a card was holding, and
+# the log file names (`%x_%A_%a.out`) inherited the same ambiguity. Override it at submit:
+#
+#   sbatch -J 019-v17w2-locality -p gpu ... --array=6-11 --export=ALL,W5_STAGE=locality ...
+#
+# `<round>` is the config version (v16, v17), `<N>` counts SUBMISSIONS of that round on one
+# cluster (a round split across partitions or resubmitted after a cancellation gets w1, w2,
+# ...), and `<stage>` repeats W5_STAGE so the name survives being read without the launch
+# line. `campaign_status.py` parses this and is the cross-cluster view; a job that predates
+# the convention can be renamed in place with
+# `scontrol update JobId=<id> JobName=019-v16w1-joint`.
 #SBATCH --job-name=019-wave5-igb
 #SBATCH --signal=B:USR1@180
 #SBATCH --mail-user=mjvolk3@illinois.edu

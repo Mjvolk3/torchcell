@@ -37,12 +37,12 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 | Costanzo 2016 dmf | 20.7M | 2 | 20,705,612 | double-mutant fitness | scalar | global | 7.1×10⁹ |
 | Costanzo 2016 dmi | 20.7M | 2 | 20,705,612 | digenic interaction | scalar | edge | 5.8×10⁹ |
 | Kuzmin 2018 smf | 1,539 | 1 | 1,539 | single-mutant fitness | scalar | global | 3.5×10⁵ |
-| Kuzmin 2018 dmf | 410,399 | 1 | 410,399 | double-mutant fitness | scalar | global | 1.5×10⁸ |
+| Kuzmin 2018 dmf | 410,399 | 1 | 410,571 | double-mutant fitness | scalar | global | 1.5×10⁸ |
 | Kuzmin 2018 tmf | 91,111 | 1 | 91,111 | triple-mutant fitness | scalar | global | 3.9×10⁷ |
 | Kuzmin 2018 dmi | 410,399 | 1 | 410,399 | digenic interaction | scalar | edge | 1.3×10⁸ |
 | Kuzmin 2018 tmi | 91,111 | 1 | 91,111 | trigenic interaction | scalar | hyperedge | 3.2×10⁷ |
 | Kuzmin 2020 smf | 472 | 1 | 472 | single-mutant fitness | scalar | global | 9.2×10⁴ |
-| Kuzmin 2020 dmf | 632,797 | 1 | 632,797 | double-mutant fitness | scalar | global | 2.3×10⁸ |
+| Kuzmin 2020 dmf | 632,797 | 1 | 632,998 | double-mutant fitness | scalar | global | 2.3×10⁸ |
 | Kuzmin 2020 tmf | 301,798 | 1 | 301,798 | triple-mutant fitness | scalar | global | 1.1×10⁸ |
 | Kuzmin 2020 dmi | 632,797 | 1 | 632,797 | digenic interaction | scalar | edge | 2.0×10⁸ |
 | Kuzmin 2020 tmi | 301,798 | 1 | 301,798 | trigenic interaction | scalar | hyperedge | 1.1×10⁸ |
@@ -124,7 +124,7 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| **Total (51 datasets)** |  |  | **52,742,863** |  |  |  | **2.7×10¹⁰** |
+| **Total (51 datasets)** |  |  | **52,743,236** |  |  |  | **2.7×10¹⁰** |
 
 ### In progress (not yet built/verified)
 

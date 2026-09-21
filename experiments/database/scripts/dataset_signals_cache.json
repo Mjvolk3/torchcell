@@ -90,9 +90,9 @@
     "n": 410399
   },
   "data/torchcell/dmf_kuzmin2018#instance": {
-    "bytes": 18849812,
-    "key": "1789376845:1541210112",
-    "n": 410399
+    "bytes": 18859617,
+    "key": "1789963050:1541849088",
+    "n": 410571
   },
   "data/torchcell/dmf_kuzmin2020": {
     "bytes": 4013153,
@@ -100,9 +100,9 @@
     "n": 632797
   },
   "data/torchcell/dmf_kuzmin2020#instance": {
-    "bytes": 29163559,
-    "key": "1789376523:2376458240",
-    "n": 632797
+    "bytes": 29174990,
+    "key": "1789963537:2377216000",
+    "n": 632998
   },
   "data/torchcell/dmi_costanzo2016": {
     "bytes": 154618483,

@@ -281,3 +281,49 @@ immediately landed `Ohnuki 2018` on `Ohnuki 2022`, which is the usual way adjust
 a collision rather than removing it. Raising the panel height from 152 mm to 163 mm, still
 under `MAX_HEIGHT_MM` (170), resolved both. Width stays at the strict 179 mm and the SVG
 still exports true-size (704.72 x 641.73 units at 100 units/inch).
+
+## 2026.09.21 - Labels placed beside their own markers; adjustText retired
+
+The 2026.09.20 figure had no label-on-label collisions but the labels were not attached
+to their points: adjustText's force solver, tuned with a weak pull back to the marker and
+a 90 pt travel allowance, let labels drift across the panel with leader lines crossing
+half of it (`Kuzmin 2020 tmi` sat 60 mm right of its marker, `Lian 2019` and `Costanzo
+2021` crossed the whole Kuzmin cluster), so a reader could not tell which label belonged
+to which point. Tuning the forces trades one failure for the other. adjustText is gone
+from the script; `place_labels` replaces it.
+
+**The placer.** Deterministic slot search in display space. Each label tries the compass
+slots around its own marker at increasing radii (3 to 62 pt; finer angles from 13.5 pt
+out), right-hand slots first, and takes the first slot that is inside the axes and clear
+of every marker, the legend, every placed label, and every placed leader line; a slot
+whose own leader would cross a marker, a label, or another leader is rejected too. A
+label resting within 6 pt of its marker draws no leader. Crowded points are placed first.
+
+Two things a plain greedy could not do, both found on this data:
+
+- **Repair by ejection.** The eleventh label of the Kuzmin cluster was walled in by the
+  ten placed before it (the long `Lian 2019` label had taken the space below with a 40 pt
+  leader), and no single placement order of 40 tried escaped that. The placer now takes,
+  when nothing is clear, the slot with the fewest blocking labels, ejects exactly those
+  and re-queues them (min-conflicts). A label that comes back may not eject the label
+  that ejected it; without that tabu rule `Vanacloig-Pedros 2022` and `Lian 2019` traded
+  one 3 pt slot forever.
+- **Coincident markers.** `Kuzmin 2020 tmi` and `tmf` are drawn on top of each other, as
+  are `Lian 2019` and `Kuzmin 2018 dmi`. A leader from one starts inside the other's
+  marker box, and two leaders from one point share an endpoint; both read as crossings
+  under the plain tests. Markers overlapping the label's own marker are exempt from the
+  leader test, and the leader-vs-leader test skips each leader's first marker radius.
+
+80 placement orders are tried (seeded, crowded-first then shuffles) and the cheapest
+collision-free layout kept: 25 of 80 orders succeed on this data, best total offset
+353 pt; 40 orders gave 388 pt and 160 gave nothing better. About 25 s. The placer raises
+if no order succeeds, naming the label and why every slot was rejected; the response is
+to raise `PANEL_H_MM`, never to accept an overlap.
+
+**Snapshot regenerated, two counts move.** The 2026.09.20 snapshot was gitignored and left
+with its worktree, so it was rebuilt from the committed signal cache; 49 of 51 signals
+came from the cache and two were recomputed because the superset admissions of Kuzmin
+2018 dmf and Kuzmin 2020 dmf (PR #416) grew those LMDBs: 410,399 to 410,571 and 632,797
+to 632,998 records. The table and SI caption were re-rendered off the same snapshot
+(`results/pre-build/2026-09-21/supported_datasets.json`); the total is 52,743,236 and no
+signal changes at two significant figures.

@@ -150,15 +150,28 @@ record we already hold. It is not a reference, and we do have the file.
 Both Kuzmin papers released a fitness standard for their query strains, and both are already
 mirrored:
 
-| year | file | rows | covers the trigenic query strains | agreement with the trigenic table's query fitness |
-|---|---|---|---|---|
-| 2018 | `torchcell-library/kuzminSystematicAnalysisComplex2018/si/si_data/Data File S4_Fitness standard for single and double mutant query strains.xlsx` | 546 | 182 of 182 | r 1.000000, max diff 5e-5 (rounding) |
-| 2020 | `data/torchcell/dmf_kuzmin2020/raw/aaz5667-Table-S5.xlsx` | 720 (480 single, 240 double) | 240 of 240 | r 0.993, max diff 0.168 |
+| year | file | rows | rows with fitness (all of which carry a sd) |
+|---|---|---|---|
+| 2018 | `torchcell-library/kuzminSystematicAnalysisComplex2018/si/si_data/Data File S4_Fitness standard for single and double mutant query strains.xlsx` | 546 (364 double, 182 gene+HO single) | 507 |
+| 2020 | `data/torchcell/dmf_kuzmin2020/raw/aaz5667-Table-S5.xlsx` | 720 (240 double, 480 single) | 673 |
 
-Both carry a standard deviation the trigenic table's column does not, both include the
-single-mutant control query strains as well as the doubles, and the 2018 file covers the 10 query
-strains whose trigenic rows carry no fitness at all. The 2020 file is already in the raw mirror
-the digenic loader reads, so no retrieval is needed for either.
+Every value carries a standard deviation: 507 of 507 in 2018 and 673 of 673 in 2020, median 0.013
+and 0.005. The trigenic table's own query-fitness column has none, which is why the 2018 loader
+records `fitness_std = np.nan` for it. Both files also list the single-mutant control query
+strains, the other term of the identity. The 2020 file is already in the raw mirror the digenic
+loader reads, so no retrieval is needed for either.
+
+Coverage of the double-mutant query strains the trigenic rows use, and agreement where both exist:
+
+| year | strains | in both sources | standard only | trigenic column only | neither | union of rows covered | rows with a sd |
+|---|---|---|---|---|---|---|---|
+| 2018 | 182 | 165 (r 1.000000, max diff 5e-5) | 0 | 7 | 10 | 86,111 of 91,111 (94.5%) | 82,460 (90.5%) |
+| 2020 | 240 | 201 (r 0.993, max diff 0.168) | 0 | 0 | 39 | 256,852 of 301,798 (85.1%) | 256,852 (85.1%) |
+
+So the standard adds the uncertainty rather than the coverage: it never has a value the trigenic
+column lacks, and in 2018 the column has 7 strains it does not. Ingesting both and preferring the
+standard for its sd, falling back to the column, covers 94.5 percent of the 2018 trigenic rows and
+85.1 percent of the 2020 rows.
 
 It is a distinct measurement, not a duplicate of a record we hold. Of the 172 Kuzmin 2018 query
 pairs with a released value, 129 also exist as a double in the 029 build from an array screen, and

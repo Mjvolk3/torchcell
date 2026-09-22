@@ -109,9 +109,15 @@ LADDER: dict[str, tuple[str, int, bool, str, str | None]] = {
         1,
         True,
         "w127_protgpr",
-        None,
+        "w128_protgprcv",
     ),
-    "prot_none": ("ProtT5 only: no metabolism", 0, False, "w127_protpool", None),
+    "prot_none": (
+        "ProtT5 only: no metabolism",
+        0,
+        False,
+        "w127_protpool",
+        "w128_protpoolcv",
+    ),
 }
 
 #: key -> (waves, arm) of a repeated-split recipe. Later seeds of one arm were sometimes

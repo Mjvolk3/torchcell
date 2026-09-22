@@ -1767,6 +1767,18 @@ CHECKS: list[Check] = [
             )["rows"][0]["mean"]
         ),
     ),
+    Check(
+        claim="round111: ProtT5 with the module, fold ensemble",
+        stated=0.892,
+        recompute=simplification(
+            "ladder", "ProtT5 only: YPD ratio, flux vector, rule counts", "fold_ensemble_one_seed"
+        ),
+    ),
+    Check(
+        claim="round111: ProtT5 without, fold ensemble",
+        stated=0.795,
+        recompute=simplification("ladder", "ProtT5 only: no metabolism", "fold_ensemble_one_seed"),
+    ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(
         claim="consensus: genes held out at least once",

@@ -295,7 +295,7 @@
       ],
       "cell_mean": 0.8829989509572514,
       "cell_sd": 0.0029528358077992862,
-      "fold_ensemble_one_seed": null,
+      "fold_ensemble_one_seed": 0.8918174665617624,
       "fold_ensemble_three_seeds": null
     },
     {
@@ -321,7 +321,7 @@
       ],
       "cell_mean": 0.77098085496984,
       "cell_sd": 0.011037872814991023,
-      "fold_ensemble_one_seed": null,
+      "fold_ensemble_one_seed": 0.7952399685287175,
       "fold_ensemble_three_seeds": null
     }
   ],
@@ -330,7 +330,7 @@
       "name": "ProtT5 only: one medium, flux vector and counts, over no metabolism",
       "a": "prot_one_solve_counts",
       "b": "prot_none",
-      "n": 7,
+      "n": 9,
       "seeds_per_unit": [
         3,
         3,
@@ -338,24 +338,28 @@
         3,
         3,
         3,
-        1
+        3,
+        3,
+        3
       ],
-      "mean_a": 0.837385255306942,
-      "mean_b": 0.7253747131382673,
-      "mean_difference": 0.11201054216867469,
-      "sd_difference": 0.03654531773620542,
-      "n_positive": 7,
+      "mean_a": 0.8361152945113788,
+      "mean_b": 0.7264544288264168,
+      "mean_difference": 0.10966086568496207,
+      "sd_difference": 0.03206599500767954,
+      "n_positive": 9,
       "per_unit_difference": [
         0.10529618473895586,
         0.11583835341365445,
         0.09262048192771088,
+        0.11150853413654616,
         0.11797188755020072,
         0.057354417670682833,
         0.1794051204819277,
-        0.11558734939759041
+        0.11150853413654627,
+        0.09544427710843373
       ],
-      "n_pairs": 19,
-      "n_pairs_positive": 19,
+      "n_pairs": 27,
+      "n_pairs_positive": 27,
       "select_epochs_a": null,
       "select_epochs_b": null
     },
@@ -363,7 +367,7 @@
       "name": "ProtT5 only against the pathway backbone, both with the module",
       "a": "prot_one_solve_counts",
       "b": "one_solve_counts",
-      "n": 7,
+      "n": 9,
       "seeds_per_unit": [
         3,
         3,
@@ -371,24 +375,28 @@
         3,
         3,
         3,
-        2
+        3,
+        3,
+        3
       ],
-      "mean_a": 0.8363767570281124,
-      "mean_b": 0.8610961703958692,
-      "mean_difference": -0.02471941336775677,
-      "sd_difference": 0.025448584567519947,
+      "mean_a": 0.8361152945113788,
+      "mean_b": 0.8627426372155288,
+      "mean_difference": -0.026627342704149966,
+      "sd_difference": 0.0218122255275291,
       "n_positive": 1,
       "per_unit_difference": [
         -0.008973393574297273,
         -0.022904116465863544,
         -0.04618473895582331,
+        -0.020205823293172664,
         -0.06300200803212863,
         -0.0374623493975903,
         -0.0015687751004015427,
-        0.0070594879518072196
+        0.001443273092369468,
+        -0.040788152610441886
       ],
-      "n_pairs": 20,
-      "n_pairs_positive": 3,
+      "n_pairs": 27,
+      "n_pairs_positive": 4,
       "select_epochs_a": null,
       "select_epochs_b": null
     },
@@ -396,7 +404,7 @@
       "name": "ProtT5 only against the pathway backbone, neither with the module",
       "a": "prot_none",
       "b": "none",
-      "n": 7,
+      "n": 9,
       "seeds_per_unit": [
         3,
         3,
@@ -404,23 +412,27 @@
         3,
         3,
         3,
-        1
+        3,
+        3,
+        3
       ],
-      "mean_a": 0.7253747131382673,
-      "mean_b": 0.8015454675846242,
-      "mean_difference": -0.0761707544463569,
-      "sd_difference": 0.016200960697372747,
+      "mean_a": 0.7264544288264168,
+      "mean_b": 0.7991619254796967,
+      "mean_difference": -0.07270749665327984,
+      "sd_difference": 0.019930557579554795,
       "n_positive": 0,
       "per_unit_difference": [
         -0.084964859437751,
         -0.07197540160642579,
         -0.09469126506024106,
+        -0.04241967871485941,
         -0.06155873493975905,
         -0.0687751004016065,
         -0.09644829317269077,
-        -0.05478162650602414
+        -0.04612198795180733,
+        -0.08741214859437763
       ],
-      "n_pairs": 19,
+      "n_pairs": 27,
       "n_pairs_positive": 0,
       "select_epochs_a": null,
       "select_epochs_b": null

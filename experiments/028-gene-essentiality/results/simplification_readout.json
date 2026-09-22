@@ -1553,6 +1553,48 @@
       "select_epochs_b": null
     },
     {
+      "name": "pool-fill term, forced growth column, against the pool by construction",
+      "a": "w132_lpelpoolfillbio100",
+      "b": "w32_lpelpoolbio100",
+      "n": 3,
+      "seeds_per_unit": [
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.767571466037241,
+      "mean_b": 0.7058418568056649,
+      "mean_difference": 0.06172960923157619,
+      "sd_difference": 0.03836071065835318,
+      "n_positive": 3,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "pool-fill term, gated readout, against the gated elastic cell",
+      "a": "w132_lpelpoolfillgate100",
+      "b": "w32_lpelgate100",
+      "n": 3,
+      "seeds_per_unit": [
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.8134015211119853,
+      "mean_b": 0.8029766587988459,
+      "mean_difference": 0.01042486231313929,
+      "sd_difference": 0.04601708291482255,
+      "n_positive": 2,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
       "name": "plain FBA, no parsimony against the plain store, released split",
       "a": "w131_geckoplainfba",
       "b": "w129_ypdgprnuc",

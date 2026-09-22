@@ -549,7 +549,20 @@ def main() -> None:
             "MOMA store against the plain store, released split",
             "w130_kcatmoma",
             "w129_ypdgprnuc",
-        ),        # Round 114 (w131): the objective ladder and the GECKO pool stores, no proteome.
+        ),        # Round 115 (w132): the abundance head under the pool with the pool-fill term,
+        # against round 19's cells (pool by construction without the term, and the gated
+        # elastic cell), paired by seed.
+        (
+            "pool-fill term, forced growth column, against the pool by construction",
+            "w132_lpelpoolfillbio100",
+            "w32_lpelpoolbio100",
+        ),
+        (
+            "pool-fill term, gated readout, against the gated elastic cell",
+            "w132_lpelpoolfillgate100",
+            "w32_lpelgate100",
+        ),
+        # Round 114 (w131): the objective ladder and the GECKO pool stores, no proteome.
         (
             "plain FBA, no parsimony against the plain store, released split",
             "w131_geckoplainfba",

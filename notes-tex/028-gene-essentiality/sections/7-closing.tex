@@ -425,6 +425,35 @@ program on a table with many yeast measurements would rank differently.
 
 \input{tables/store_ladder}
 
+\subsection{Round 115: the learned allocation, with the pool made to bind\secstatus{todo}}
+\label{sec:round115}
+
+The offline pool of round 114 lets the program allocate the enzymes; the construction
+this document was built around lets the backbone allocate them, through the abundance
+head, with the pool held by construction (round 19). That cell measured its projection
+never engaging: the head never asked for the whole budget, so the pool never bound and
+the head's allocation was never a constraint on the flux. Round 115 (jobs 2728 to 2732)
+adds the one term that construction lacked and GECKO's growth objective supplies: outside
+the constraint ramp, the shortfall of the head's protein mass below the pool, so the head
+must spend the budget and can only choose where (\texttt{--flux-pool-fill-weight 1.0},
+everything else as round 19, the elastic program at capacity scale 100, no proteome).
+The term does what it is for: at initialization the pool binds on 95 percent of the
+batch and after one step on all of it, and at the selected epoch the projection factor
+is 0.11 to 0.69 on every cell, where round 19 logged 1.0.
+
+The score follows, within the family of forms that solve in the loop. The forced growth
+column reads 0.766, 0.766 and 0.770 against round 19's 0.704, 0.743 and 0.670, $+0.062$
+paired by seed and above on three of three, with its training loss still on the 1.2
+plateau; the gated readout reads 0.839, 0.770 and 0.832 against the gated elastic
+cell's 0.816, 0.810 and 0.783, $+0.010$ and above on two of three (sd 0.046). So a
+binding pool is what lets the abundance head move the growth column at all, which is
+the mechanism the dual probe named, and it moves it by about a twentieth. Both readouts
+remain well under the layer-free store's 0.911 and under the affine forms that read the
+solve as data, so the ranking of forms in Section~\ref{sec:round84-98} stands. One
+measurement of cost: a cell of this form peaks at 40 GB, so the three-cell packs at 36
+GB died after two hours forty and the lost seeds ran one per job.
+
+
 \subsection{Rounds 84 to 98: what each simplification costs\secstatus{todo}}
 \label{sec:round84-98}
 

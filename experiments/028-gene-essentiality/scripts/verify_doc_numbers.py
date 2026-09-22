@@ -2300,6 +2300,40 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.06,
     ),
+    # sec:round115 -- the learned allocation with the pool-fill term.
+    Check(
+        claim="round115: forced column, paired",
+        stated=0.062,
+        recompute=simplification("released_pairs", "pool-fill term, forced growth column, against the pool by construction", "mean_difference"),
+    ),
+    Check(
+        claim="round115: forced column, seeds higher",
+        stated=3,
+        recompute=simplification("released_pairs", "pool-fill term, forced growth column, against the pool by construction", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round115: gated, paired",
+        stated=0.01,
+        recompute=simplification("released_pairs", "pool-fill term, gated readout, against the gated elastic cell", "mean_difference"),
+    ),
+    Check(
+        claim="round115: gated, seeds higher",
+        stated=2,
+        recompute=simplification("released_pairs", "pool-fill term, gated readout, against the gated elastic cell", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round115: gated, sd",
+        stated=0.046,
+        recompute=simplification("released_pairs", "pool-fill term, gated readout, against the gated elastic cell", "sd_difference"),
+    ),
+    Check(
+        claim="round115: peak memory of one cell, GB (sacct MaxRSS of job 2730)",
+        stated=40,
+        recompute=lambda: 41419424 / 1024**2,
+        tolerance=0.6,
+    ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(
         claim="consensus: genes held out at least once",

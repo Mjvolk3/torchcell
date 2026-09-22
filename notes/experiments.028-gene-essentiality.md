@@ -1571,3 +1571,13 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 - Jobs 2697 and 2702: the affine on graph convolution over ProtT5 reads 0.891 against 0.859 (released) and 0.766 against 0.751 (genome-wide), six of six each; on GO over the genome-wide set 0.768 against 0.698.
 - Job 2700: the hierarchy on the trigenic ontology at its tuned configuration reads 0.709, no better than 0.714.
 - Still running: round 109 (splits 3 and 4), the DCell hierarchy with the affine over ten splits (job 2698), the tuned hierarchy on the trigenic store over ten splits (job 2701). Reads are fixed in the scripts; rerun the readouts and republish when they land.
+
+## 2026.09.22 - The store ladder: fundamentals and heuristics as offline stores (rounds 112 to 114)
+
+- Round 112 (w129, jobs 2707 to 2710): the module on the corrected YPD store (uracil and adenine in the medium; `media.py` keeps Suthers' recipe as `YPD_SUTHERS_FBA`; bound vectors written as hash-named artifacts under `$DATA_ROOT/data/torchcell/media_bounds/`; store provenance now `StoreProvenance` / `DerivedStoreProvenance`). Released split 0.913 against 0.916 (-0.003, 3/6); ten splits -0.007 (2/10); over no metabolism +0.059 (10/10). 182 to 189 of 195 held-out genes change rank.
+- Round 113 (w130, `ess_kcat_bounded_store.py`, jobs 2711 to 2715): kcat ceilings from a measured proteome (point, two sigma, sampled) and linear MOMA. None separates from the plain store (+0.000 to +0.003, at most 3/6). The proteome is the one measurement in the module and is retired; user rule: no proteome data in the module.
+- Round 114 (w131, `ess_gecko_store.py`, jobs 2716 to 2726): GECKO pool stores with usages as program variables and no proteome (pool 0.125 -0.011, 0.25 -0.004, sigma1 -0.005, min-enzyme -0.010), plain FBA -0.010, parsimony in the objective -0.004. Gibbs direction constraints infeasible (111 / 81 conflicts). Table `tab:store-ladder`.
+- Gibbs dissipation is a fitted diagnostic and never a constraint; a dissipation variant was proposed and dropped.
+- Sampler job 2623 timed out; round 87 cancelled, listed as not measured.
+- Table generator had failed silently after the trigenic table's two-row header; fixed, two stale tables regenerated.
+- Published v4 at f383933a1, 339 checks.

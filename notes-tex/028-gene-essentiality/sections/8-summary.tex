@@ -153,7 +153,9 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
     module is therefore a set of offline columns and one linear map added to whatever
     logit a model produces. Handing both families the columns does not improve their
     average (0.897 against 0.907 on the ten fifths), so the best method keeps the
-    module on one family and averages it with the plain graph convolution.
+    module on one family and averages it with the plain graph convolution. Where every
+    held-out record reads the constant row, the genome-wide 4,674 genes, the affine still
+    does not hurt: graph convolution on GO reads 0.767 with it against 0.702 without.
   \item[The layer-free form scales, and it covers only the genes with a reaction.] Over
     the 13.5 million records of the solid-growth build the transform is 469,474
     programs, solved once in 71 minutes on 20 cores and read as a gather in training

@@ -229,6 +229,20 @@ graph family with the affine reads 0.930 [0.88, 0.97] as a five-fold ensemble ag
 0.917 without, and averaged with the transformer's single-experiment fold models it
 reads 0.941 against 0.953 for the plain graph family with the same partner.
 
+The worst case for a module carried to the whole database is a record whose deletion
+touches no reaction, which reads the constant wild-type row. The genome-wide held-out set
+of Section~\ref{sec:round30} is entirely that case: none of its 4,674 genes is in the
+solve store and every one has a growth ratio of 1.0, so the affine adds the same constant
+to every held-out logit and cannot reorder them by itself. It still does not hurt (job
+2696, three seeds, the same training and validation genes as the released split): graph
+convolution on GO reads 0.702 alone and 0.767 with the single-experiment recipe on its
+logit, higher on three of three seeds, and 0.704 with the YPD ratio alone. Since the
+held-out logits differ only by the convolution's weights, the gain is in what the
+convolution learned. Hypothesis, untested: the affine explains the metabolic genes'
+labels during training, so the convolution's weights and its validation-selected epoch
+(87 to 93 against 382 to 397 without the affine) fit the remaining genes rather than
+the metabolic ones.
+
 \input{tables/graph_baselines_go_solve}
 
 The transformer side of the same question is round 47 (jobs 2434 and 2438;

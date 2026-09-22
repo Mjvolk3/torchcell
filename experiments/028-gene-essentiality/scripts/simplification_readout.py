@@ -430,6 +430,11 @@ def main() -> None:
             "w127_protgpr",
             "w127_protpool",
         ),
+        (
+            "pathway backbone: the module over no metabolism, released split",
+            "w102_ypdgpr",
+            "w39_pathpool",
+        ),
     ]
     released_pairs = collect(
         [paired_by_seed(*s) for s in released_spec], [s[0] for s in released_spec]

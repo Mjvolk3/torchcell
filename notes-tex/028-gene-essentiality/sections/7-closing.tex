@@ -271,6 +271,24 @@ the hierarchy, and neither ontology brings it to the graph's level.
 
 \input{tables/go006_comparison}
 
+\subsection{Rounds 109 and 110: the module on a backbone with no pathway annotation\secstatus{todo}}
+\label{sec:round109}
+
+Every transformer cell from round 75 onward reads the curated pathway multi-hot beside
+ProtT5, and a dataset outside yeast may carry no such annotation. Rounds 109 and 110 (jobs
+2685, 2686 and 2692) drop it: ProtT5 alone with the single-experiment module, the YPD
+growth ratio, the YPD flux vector and the six gene-rule counts as the affine, against
+ProtT5 alone with nothing on the logit. On the released split at six seeds the module
+takes the cell from 0.771 to 0.883, $+0.112$ paired by seed and higher on six of six,
+the largest gain of any pair in this document; the same pair on the pathway backbone reads
+$+0.058$ (0.858 to 0.916). With the module the annotation-free backbone sits 0.033 under
+the pathway backbone, without it 0.087 under, so the module recovers about two thirds of
+what the pathway annotation supplies. The ten repeated splits (round 109) read the same
+pair at three seeds per split; the read is fixed in the readout as the per-split seed-mean
+difference and is reported in Table~\ref{tab:simplification-paired} as the cells complete;
+a row of that table with fewer than ten splits or fewer than three seeds on every split is
+partial.
+
 \subsection{Rounds 84 to 98: what each simplification costs\secstatus{todo}}
 \label{sec:round84-98}
 

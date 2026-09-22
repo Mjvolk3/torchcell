@@ -1612,6 +1612,37 @@ CHECKS: list[Check] = [
         stated=0.041,
         recompute=go006("dcell_style_shared", "GO", "resplits", "difference_sd"),
     ),
+    # sec:round109 -- the module on ProtT5 alone, released split.
+    Check(
+        claim="round110: ProtT5 with the module",
+        stated=0.883,
+        recompute=simplification("released_pairs", "ProtT5 only: the module over no metabolism, released split", "mean_a"),
+    ),
+    Check(
+        claim="round110: ProtT5 without",
+        stated=0.771,
+        recompute=simplification("released_pairs", "ProtT5 only: the module over no metabolism, released split", "mean_b"),
+    ),
+    Check(
+        claim="round110: paired gain",
+        stated=0.112,
+        recompute=simplification("released_pairs", "ProtT5 only: the module over no metabolism, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round110: seeds higher",
+        stated=6,
+        recompute=simplification("released_pairs", "ProtT5 only: the module over no metabolism, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round110: the same pair on the pathway backbone",
+        stated=0.058,
+        recompute=simplification(
+            "released_pairs",
+            "pathway backbone: the module over no metabolism, released split",
+            "mean_difference",
+        ),
+    ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(
         claim="consensus: genes held out at least once",

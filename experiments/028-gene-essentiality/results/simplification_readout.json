@@ -271,9 +271,160 @@
       "cell_sd": 0.003924884742054949,
       "fold_ensemble_one_seed": null,
       "fold_ensemble_three_seeds": 0.8774586939417781
+    },
+    {
+      "key": "prot_one_solve_counts",
+      "label": "ProtT5 only: YPD ratio, flux vector, rule counts",
+      "media": 1,
+      "solver": true,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_values": [
+        0.8813926042486231,
+        0.8839496459480723,
+        0.8837529504327302,
+        0.8780487804878049,
+        0.8841463414634146,
+        0.8867033831628639
+      ],
+      "cell_mean": 0.8829989509572514,
+      "cell_sd": 0.0029528358077992862,
+      "fold_ensemble_one_seed": null,
+      "fold_ensemble_three_seeds": null
+    },
+    {
+      "key": "prot_none",
+      "label": "ProtT5 only: no metabolism",
+      "media": 0,
+      "solver": false,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_values": [
+        0.7800944138473643,
+        0.7686860739575138,
+        0.7732100708103855,
+        0.7724232887490166,
+        0.7808811959087333,
+        0.7505900865460268
+      ],
+      "cell_mean": 0.77098085496984,
+      "cell_sd": 0.011037872814991023,
+      "fold_ensemble_one_seed": null,
+      "fold_ensemble_three_seeds": null
     }
   ],
   "resplit": [
+    {
+      "name": "ProtT5 only: one medium, flux vector and counts, over no metabolism",
+      "a": "prot_one_solve_counts",
+      "b": "prot_none",
+      "n": 7,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        1
+      ],
+      "mean_a": 0.837385255306942,
+      "mean_b": 0.7253747131382673,
+      "mean_difference": 0.11201054216867469,
+      "sd_difference": 0.03654531773620542,
+      "n_positive": 7,
+      "per_unit_difference": [
+        0.10529618473895586,
+        0.11583835341365445,
+        0.09262048192771088,
+        0.11797188755020072,
+        0.057354417670682833,
+        0.1794051204819277,
+        0.11558734939759041
+      ],
+      "n_pairs": 19,
+      "n_pairs_positive": 19,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "ProtT5 only against the pathway backbone, both with the module",
+      "a": "prot_one_solve_counts",
+      "b": "one_solve_counts",
+      "n": 7,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2
+      ],
+      "mean_a": 0.8363767570281124,
+      "mean_b": 0.8610961703958692,
+      "mean_difference": -0.02471941336775677,
+      "sd_difference": 0.025448584567519947,
+      "n_positive": 1,
+      "per_unit_difference": [
+        -0.008973393574297273,
+        -0.022904116465863544,
+        -0.04618473895582331,
+        -0.06300200803212863,
+        -0.0374623493975903,
+        -0.0015687751004015427,
+        0.0070594879518072196
+      ],
+      "n_pairs": 20,
+      "n_pairs_positive": 3,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "ProtT5 only against the pathway backbone, neither with the module",
+      "a": "prot_none",
+      "b": "none",
+      "n": 7,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        1
+      ],
+      "mean_a": 0.7253747131382673,
+      "mean_b": 0.8015454675846242,
+      "mean_difference": -0.0761707544463569,
+      "sd_difference": 0.016200960697372747,
+      "n_positive": 0,
+      "per_unit_difference": [
+        -0.084964859437751,
+        -0.07197540160642579,
+        -0.09469126506024106,
+        -0.06155873493975905,
+        -0.0687751004016065,
+        -0.09644829317269077,
+        -0.05478162650602414
+      ],
+      "n_pairs": 19,
+      "n_pairs_positive": 0,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
     {
       "name": "one medium for four, flux vector and counts kept",
       "a": "one_solve_counts",
@@ -1108,6 +1259,54 @@
       "mean_difference": -0.008523472331497528,
       "sd_difference": 0.01004736788309256,
       "n_positive": 1,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "ProtT5 only: the module over no metabolism, released split",
+      "a": "w127_protgpr",
+      "b": "w127_protpool",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.8829989509572514,
+      "mean_b": 0.77098085496984,
+      "mean_difference": 0.11201809598741147,
+      "sd_difference": 0.012850556231668827,
+      "n_positive": 6,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "pathway backbone: the module over no metabolism, released split",
+      "a": "w102_ypdgpr",
+      "b": "w39_pathpool",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9159454497770784,
+      "mean_b": 0.8579530553370049,
+      "mean_difference": 0.057992394440073425,
+      "sd_difference": 0.004937671254118765,
+      "n_positive": 6,
       "per_unit_difference": null,
       "n_pairs": null,
       "n_pairs_positive": null,

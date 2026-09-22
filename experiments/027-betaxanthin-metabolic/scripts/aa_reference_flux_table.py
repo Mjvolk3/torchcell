@@ -123,6 +123,11 @@ _W: dict[str, Any] = {}
 def build_strain_model() -> tuple[Any, dict[str, str], dict[str, Any]]:
     """yeast-GEM on the synthetic minimal medium with one zero-flux demand per amino acid."""
     model = YeastGEM().model
+    # GLPK rebuilds its basis every solve under presolve. Without it the warm start
+    # carried from one knockout's demand program to the next made the simplex cycle
+    # without end on the COQ1 knockout's alanine program (job 2751, no progress in
+    # thirty minutes), while the same program on a fresh copy solved in 0.3 s.
+    model.solver.configuration.presolve = True
     media = media_report(model, MEDIUM)
     growth_before = float(model.slim_optimize())
     demands: dict[str, str] = {}
@@ -149,6 +154,8 @@ def solve_gene(
     try:
         grown = pfba(model)
     except Exception:
+        # An infeasible growth program is a lethal knockout, the zero row, as in the
+        # betaxanthin store.
         return np.zeros(n, np.float32), 0.0, zero
     mu = float(grown.fluxes[growth_rxn.id])
     if mu < LETHAL_GROWTH:
@@ -160,7 +167,12 @@ def solve_gene(
         for key, rid in demands.items():
             model.objective = {model.reactions.get_by_id(rid): 1.0}
             value = model.slim_optimize(error_value=float("nan"))
-            maxima[key] = 0.0 if not np.isfinite(value) else float(value)
+            if not np.isfinite(value):
+                raise RuntimeError(
+                    f"{key} demand program not optimal ({model.solver.status}) with "
+                    f"growth floor {PRODUCTION_GROWTH_FRACTION * mu:.4f}"
+                )
+            maxima[key] = float(value)
     return v_growth, mu, maxima
 
 

@@ -92,31 +92,67 @@ def comparators() -> dict[str, dict[str, float]]:
     }
 
 
-#: (label, head, arm stem, control stem); stems take ``_h12l1p1_e200_s<seed>.json``.
+#: (label, head, arm stem, control stem); a stem takes ``_s<seed>.json``.
 PAIRS = [
     (
         "betaxanthin: whole-vector store affine against the control",
         "betaxanthin",
-        "w134_bxstore",
-        "w134_bxctx",
+        "w134_bxstore_h12l1p1_e200",
+        "w134_bxctx_h12l1p1_e200",
     ),
     (
         "betaxanthin: two summary columns against the control",
         "betaxanthin",
-        "w136_bxratio",
-        "w134_bxctx",
+        "w136_bxratio_h12l1p1_e200",
+        "w134_bxctx_h12l1p1_e200",
     ),
     (
         "betaxanthin: whole vector, affine decayed and slowed, against the control",
         "betaxanthin",
-        "w136_bxstorewd",
-        "w134_bxctx",
+        "w136_bxstorewd_h12l1p1_e200",
+        "w134_bxctx_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: deletion-only cell graphs against the control",
+        "betaxanthin",
+        "w137_bxdel_h12l1p1_e200",
+        "w134_bxctx_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: six rule-count columns against the control",
+        "betaxanthin",
+        "w137_bxgpr_h12l1p1_e200",
+        "w134_bxctx_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: width 48, two layers, against the width-12 control",
+        "betaxanthin",
+        "w139_bxwide_h48l2p1_e200",
+        "w134_bxctx_h12l1p1_e200",
     ),
     (
         "amino acids: whole-vector store affine against the control",
         "mulleder19",
-        "w135_aastore",
-        "w135_aactx",
+        "w135_aastore_h12l1p1_e200",
+        "w135_aactx_h12l1p1_e200",
+    ),
+    (
+        "amino acids: 19 synthesis ratios and the growth ratio against the control",
+        "mulleder19",
+        "w138_aaprodstat_h12l1p1_e200",
+        "w135_aactx_h12l1p1_e200",
+    ),
+    (
+        "amino acids: growth vector with all 42 summaries against the control",
+        "mulleder19",
+        "w138_aaprodfull_h12l1p1_e200",
+        "w135_aactx_h12l1p1_e200",
+    ),
+    (
+        "amino acids: width 48, two layers, against the width-12 control",
+        "mulleder19",
+        "w139_aawide_h48l2p1_e200",
+        "w135_aactx_h12l1p1_e200",
     ),
 ]
 
@@ -166,7 +202,7 @@ class Report(BaseModel):
 
 
 def read_cell(stem: str, seed: int, head: str) -> Cell | None:
-    path = osp.join(RESULTS, f"{stem}_h12l1p1_e200_s{seed}.json")
+    path = osp.join(RESULTS, f"{stem}_s{seed}.json")
     if not osp.exists(path):
         return None
     with open(path) as fh:

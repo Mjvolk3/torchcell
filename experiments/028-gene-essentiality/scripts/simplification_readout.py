@@ -111,6 +111,15 @@ LADDER: dict[str, tuple[str, int, bool, str, str | None]] = {
         "w127_protgpr",
         "w128_protgprcv",
     ),
+    # Round 112 (w129): the single-experiment recipe on the CORRECTED YPD store (uracil
+    # and adenine in the medium; ratio table and solve store rebuilt, tag nuc).
+    "one_solve_counts_nuc": (
+        "YPD ratio, flux vector, rule counts; corrected YPD",
+        1,
+        True,
+        "w129_ypdgprnuc",
+        None,
+    ),
     "prot_none": (
         "ProtT5 only: no metabolism",
         0,
@@ -135,10 +144,21 @@ RESPLIT: dict[str, tuple[tuple[str, ...], str]] = {
     # Round 109 (w126): the same pair on the ProtT5-only backbone.
     "prot_one_solve_counts": (("w126",), "protgpr"),
     "prot_none": (("w126",), "protpool"),
+    "one_solve_counts_nuc": (("w129",), "ypdgprnuc"),
 }
 
 #: (name, a, b): the difference read is a minus b.
 RESPLIT_PAIRS: list[tuple[str, str, str]] = [
+    (
+        "corrected YPD store against the Suthers store, one medium, vector and counts",
+        "one_solve_counts_nuc",
+        "one_solve_counts",
+    ),
+    (
+        "corrected YPD store: one medium, flux vector and counts, over no metabolism",
+        "one_solve_counts_nuc",
+        "none",
+    ),
     (
         "ProtT5 only: one medium, flux vector and counts, over no metabolism",
         "prot_one_solve_counts",
@@ -229,6 +249,66 @@ class Paired(BaseModel):
     select_epochs_b: list[int] | None = None
 
 
+class RankShift(BaseModel):
+    """How two stores reorder the same held-out genes, per seed (round 112)."""
+
+    name: str
+    a: str
+    b: str
+    seeds: list[int]
+    n_genes: int
+    n_essential: int
+    #: Per seed: held-out genes whose rank differs between the two cells.
+    n_rank_changed: list[int]
+    median_abs_shift: list[float]
+    max_abs_shift: list[int]
+    max_abs_shift_essential: list[int]
+
+
+PRED_DIR = os.getenv(
+    "TC_TEST_PRED_DIR", osp.join(os.environ["DATA_ROOT"], "test-predictions-028")
+)
+
+
+def held_out_scores(stem: str, seed: int) -> dict[str, tuple[float, int]]:
+    """Gene -> (logit, label) from a cell's prediction dump."""
+    with open(osp.join(RESULTS, f"{stem}_h12l1p1_e200_s{seed}.json")) as fh:
+        dump_path = json.load(fh)["test"]["dump_path"]
+    if not osp.isfile(dump_path):
+        dump_path = osp.join(PRED_DIR, osp.basename(dump_path))
+    with open(dump_path) as fh:
+        preds = [p for p in json.load(fh)["predictions"] if p.get("pinned", True)]
+    return {
+        p["genes"][0]: (float(p["pred"]), int(round(float(p["target"]))))
+        for p in preds
+    }
+
+
+def rank_shift(name: str, a: str, b: str) -> RankShift | None:
+    seeds = sorted(set(by_seed(a)) & set(by_seed(b)))
+    if not seeds:
+        return None
+    out = RankShift(
+        name=name, a=a, b=b, seeds=seeds, n_genes=0, n_essential=0,
+        n_rank_changed=[], median_abs_shift=[], max_abs_shift=[],
+        max_abs_shift_essential=[],
+    )
+    for seed in seeds:
+        pa, pb = held_out_scores(a, seed), held_out_scores(b, seed)
+        genes = sorted(pa)
+        assert set(genes) == set(pb)
+        ra = np.argsort(np.argsort([-pa[g][0] for g in genes]))
+        rb = np.argsort(np.argsort([-pb[g][0] for g in genes]))
+        ess = np.array([pa[g][1] == 1 for g in genes])
+        shift = np.abs(ra - rb)
+        out.n_genes, out.n_essential = len(genes), int(ess.sum())
+        out.n_rank_changed.append(int((shift > 0).sum()))
+        out.median_abs_shift.append(float(np.median(shift)))
+        out.max_abs_shift.append(int(shift.max()))
+        out.max_abs_shift_essential.append(int(shift[ess].max()))
+    return out
+
+
 class Report(BaseModel):
     """Everything the simplification rounds measured."""
 
@@ -237,6 +317,7 @@ class Report(BaseModel):
     subsets: list[Paired]
     second_medium: list[Paired]
     released_pairs: list[Paired]
+    rank_shifts: list[RankShift]
     budget: list[Paired]
     missing: list[str]
     excluded_waves: list[str]
@@ -441,10 +522,33 @@ def main() -> None:
             "w102_ypdgpr",
             "w39_pathpool",
         ),
+        (
+            "corrected YPD store against the Suthers store, released split",
+            "w129_ypdgprnuc",
+            "w102_ypdgpr",
+        ),
     ]
     released_pairs = collect(
         [paired_by_seed(*s) for s in released_spec], [s[0] for s in released_spec]
     )
+    print("-- how the corrected store reorders the released genes (round 112)")
+    rank_shifts = [
+        r
+        for r in [
+            rank_shift(
+                "corrected YPD store against the Suthers store, released split",
+                "w129_ypdgprnuc",
+                "w102_ypdgpr",
+            )
+        ]
+        if r is not None
+    ]
+    for r in rank_shifts:
+        print(
+            f"{r.name}: changed {r.n_rank_changed} of {r.n_genes}; median shift "
+            f"{r.median_abs_shift}; max {r.max_abs_shift}; max essential "
+            f"{r.max_abs_shift_essential}"
+        )
     print("-- 400 epochs against 200, released split")
     budget_spec = [
         ("flux vector and counts", "w115_gpr400", "w96_pathloggpr"),
@@ -471,6 +575,7 @@ def main() -> None:
                 subsets=subsets,
                 second_medium=second_medium,
                 released_pairs=released_pairs,
+                rank_shifts=rank_shifts,
                 budget=budget,
                 missing=missing,
                 excluded_waves=sorted(EXCLUDED_WAVES),

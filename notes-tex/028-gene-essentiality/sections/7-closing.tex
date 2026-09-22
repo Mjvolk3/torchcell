@@ -296,6 +296,38 @@ and on 30 of 30 split-and-seed pairs, against $+0.061$ for the same pair on the 
 backbone; with the module the annotation-free backbone sits $-0.027$ under the pathway
 backbone (higher on one of ten), without it $-0.063$ (one of ten).
 
+\subsection{Round 112: the medium corrected, and the store rebuilt on it\secstatus{todo}}
+\label{sec:round112}
+
+Every YPD store in this document was built on Suthers' substitution for YPD, yeast
+nitrogen base with twenty amino acids and glucose, which carries no nucleobases. The
+background probe of Section~\ref{sec:consensus-missed} found what that costs on
+yeast-GEM: a \textit{ura3} deletion alone takes the modeled YPD growth to zero, and 13
+of the 1,121 labeled genes, 12 of them nonessential, read a growth ratio of 0.0 on that
+medium against 1.0 on SC, which differs from it only by uracil and adenine. They are the
+purine and pyrimidine synthesis genes, all in the training set. The recipe is corrected
+(\texttt{torchcell/metabolism/media.py}: YPD-approx now carries the two nucleobases, and
+Suthers' recipe is kept under its own name), every applied bound vector is now written
+under the data root as a hash-named record that each store's provenance cites, and the
+YPD ratio table, the solve store and its rule-count companion were rebuilt on the
+corrected recipe beside the old ones. The rebuild changes the ratio of 78 labeled genes
+and the flux vector of 1,062: the parsimonious solve imports the nucleobases instead of
+making them, so nearly every deletion's vector moves.
+
+Round 112 (jobs 2707 to 2710) reruns the single-experiment recipe on the corrected store
+with nothing else changed. The score does not move and the ranking does. On the released
+split at six seeds the corrected store reads 0.913 against 0.916, $-0.003$ paired by
+seed and higher on three of six, while 182 to 189 of the 195 held-out genes change rank
+on every seed, by a median of 6 to 13 places and up to 97, and among the 31 essential
+genes by up to 46. On the ten repeated splits the corrected store reads $-0.007$ against
+the old one (sd 0.009, higher on two of ten), and its gain over no metabolism is
+$+0.059$ on ten of ten, against $+0.061$ for the old store. So the correction is right on
+provenance and changes which genes the module gets wrong without changing how many.
+Hypothesis, untested: with the nucleobases imported, the parsimonious solve carries less
+flux through the purine and pyrimidine pathways, and the small loss is the information
+those pathway columns held about their own genes. The stores of the earlier rounds are
+left as built, with their provenance naming Suthers' recipe.
+
 \subsection{Rounds 84 to 98: what each simplification costs\secstatus{todo}}
 \label{sec:round84-98}
 

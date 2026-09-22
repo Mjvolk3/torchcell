@@ -299,6 +299,32 @@
       "fold_ensemble_three_seeds": null
     },
     {
+      "key": "one_solve_counts_nuc",
+      "label": "YPD ratio, flux vector, rule counts; corrected YPD",
+      "media": 1,
+      "solver": true,
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "cell_values": [
+        0.8996852871754524,
+        0.9244689221085759,
+        0.9152242328874902,
+        0.9140440597954367,
+        0.9079464988198269,
+        0.9175845790715972
+      ],
+      "cell_mean": 0.9131589299763966,
+      "cell_sd": 0.008500114255047958,
+      "fold_ensemble_one_seed": null,
+      "fold_ensemble_three_seeds": null
+    },
+    {
       "key": "prot_none",
       "label": "ProtT5 only: no metabolism",
       "media": 0,
@@ -326,6 +352,84 @@
     }
   ],
   "resplit": [
+    {
+      "name": "corrected YPD store against the Suthers store, one medium, vector and counts",
+      "a": "one_solve_counts_nuc",
+      "b": "one_solve_counts",
+      "n": 10,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "mean_a": 0.8555722891566264,
+      "mean_b": 0.8621423192771083,
+      "mean_difference": -0.006570030120481962,
+      "sd_difference": 0.008765249382445153,
+      "n_positive": 2,
+      "per_unit_difference": [
+        -0.008596887550201049,
+        0.0030747991967872146,
+        -0.012110943775100469,
+        -0.005082831325301296,
+        0.009098895582329236,
+        -0.022464859437751006,
+        -0.010855923694779168,
+        -0.0030120481927708997,
+        -0.01167168674698793,
+        -0.004078815261044255
+      ],
+      "n_pairs": 30,
+      "n_pairs_positive": 10,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "corrected YPD store: one medium, flux vector and counts, over no metabolism",
+      "a": "one_solve_counts_nuc",
+      "b": "none",
+      "n": 10,
+      "seeds_per_unit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "mean_a": 0.8555722891566264,
+      "mean_b": 0.7964984939759037,
+      "mean_difference": 0.05907379518072283,
+      "sd_difference": 0.030259682482131844,
+      "n_positive": 10,
+      "per_unit_difference": [
+        0.020707831325301074,
+        0.06984186746987942,
+        0.03200301204819267,
+        0.08421184738955811,
+        0.09331074297188746,
+        0.09695030120481929,
+        0.015185742971887461,
+        0.08151355421686757,
+        0.05227158634538154,
+        0.04474146586345373
+      ],
+      "n_pairs": 30,
+      "n_pairs_positive": 30,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
     {
       "name": "ProtT5 only: one medium, flux vector and counts, over no metabolism",
       "a": "prot_one_solve_counts",
@@ -1330,6 +1434,79 @@
       "n_pairs_positive": null,
       "select_epochs_a": null,
       "select_epochs_b": null
+    },
+    {
+      "name": "corrected YPD store against the Suthers store, released split",
+      "a": "w129_ypdgprnuc",
+      "b": "w102_ypdgpr",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9131589299763966,
+      "mean_b": 0.9159454497770784,
+      "mean_difference": -0.00278651980068186,
+      "sd_difference": 0.008071149875328318,
+      "n_positive": 3,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    }
+  ],
+  "rank_shifts": [
+    {
+      "name": "corrected YPD store against the Suthers store, released split",
+      "a": "w129_ypdgprnuc",
+      "b": "w102_ypdgpr",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "n_genes": 195,
+      "n_essential": 31,
+      "n_rank_changed": [
+        182,
+        189,
+        184,
+        183,
+        187,
+        185
+      ],
+      "median_abs_shift": [
+        7.0,
+        13.0,
+        6.0,
+        9.0,
+        12.0,
+        9.0
+      ],
+      "max_abs_shift": [
+        82,
+        88,
+        97,
+        88,
+        74,
+        70
+      ],
+      "max_abs_shift_essential": [
+        46,
+        25,
+        24,
+        33,
+        43,
+        32
+      ]
     }
   ],
   "budget": [

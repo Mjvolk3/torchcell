@@ -19,6 +19,7 @@ claim nobody can rebuild. Exits non-zero on any mismatch.
 
 from __future__ import annotations
 
+import csv
 import glob
 import json
 import os
@@ -1806,6 +1807,118 @@ CHECKS: list[Check] = [
         claim="round109: against the pathway backbone, neither",
         stated=-0.063,
         recompute=simplification("resplit", "ProtT5 only against the pathway backbone, neither with the module", "mean_difference"),
+    ),
+    # sec:round112 -- the corrected medium.
+    Check(
+        claim="round112: released, corrected",
+        stated=0.913,
+        recompute=simplification("released_pairs", "corrected YPD store against the Suthers store, released split", "mean_a"),
+    ),
+    Check(
+        claim="round112: released, old",
+        stated=0.916,
+        recompute=simplification("released_pairs", "corrected YPD store against the Suthers store, released split", "mean_b"),
+    ),
+    Check(
+        claim="round112: released, paired",
+        stated=-0.003,
+        recompute=simplification("released_pairs", "corrected YPD store against the Suthers store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round112: released, seeds higher",
+        stated=3,
+        recompute=simplification("released_pairs", "corrected YPD store against the Suthers store, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round112: ten splits, paired",
+        stated=-0.007,
+        recompute=simplification("resplit", "corrected YPD store against the Suthers store, one medium, vector and counts", "mean_difference"),
+    ),
+    Check(
+        claim="round112: ten splits, sd",
+        stated=0.009,
+        recompute=simplification("resplit", "corrected YPD store against the Suthers store, one medium, vector and counts", "sd_difference"),
+    ),
+    Check(
+        claim="round112: ten splits, higher",
+        stated=2,
+        recompute=simplification("resplit", "corrected YPD store against the Suthers store, one medium, vector and counts", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round112: ten splits, over none",
+        stated=0.059,
+        recompute=simplification("resplit", "corrected YPD store: one medium, flux vector and counts, over no metabolism", "mean_difference"),
+    ),
+    Check(
+        claim="round112: ten splits, over none, higher",
+        stated=10,
+        recompute=simplification("resplit", "corrected YPD store: one medium, flux vector and counts, over no metabolism", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round112: fewest genes changing rank",
+        stated=182,
+        recompute=lambda: float(
+            min(
+                json.load(open(osp.join(RESULTS, "simplification_readout.json")))[
+                    "rank_shifts"
+                ][0]["n_rank_changed"]
+            )
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round112: most genes changing rank",
+        stated=189,
+        recompute=lambda: float(
+            max(
+                json.load(open(osp.join(RESULTS, "simplification_readout.json")))[
+                    "rank_shifts"
+                ][0]["n_rank_changed"]
+            )
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round112: largest shift",
+        stated=97,
+        recompute=lambda: float(
+            max(
+                json.load(open(osp.join(RESULTS, "simplification_readout.json")))[
+                    "rank_shifts"
+                ][0]["max_abs_shift"]
+            )
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round112: largest shift among the essential genes",
+        stated=46,
+        recompute=lambda: float(
+            max(
+                json.load(open(osp.join(RESULTS, "simplification_readout.json")))[
+                    "rank_shifts"
+                ][0]["max_abs_shift_essential"]
+            )
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round112: labeled genes whose YPD ratio changed",
+        stated=78,
+        recompute=lambda: float(
+            sum(
+                abs(float(a["YPD"]) - float(b["YPD"])) > 1e-6
+                for a, b in zip(
+                    list(csv.DictReader(open(osp.join(RESULTS, "fba_essentiality_per_gene.csv")))),
+                    list(csv.DictReader(open(osp.join(RESULTS, "fba_essentiality_per_gene_nuc.csv")))),
+                    strict=True,
+                )
+            )
+        ),
+        tolerance=0.5,
     ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(

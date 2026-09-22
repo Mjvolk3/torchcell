@@ -154,6 +154,22 @@ def dcell_affine(statistic: str) -> Callable[[], float]:
     return run
 
 
+def go006_tuned(statistic: str) -> Callable[[], float]:
+    """Job 2701: the tuned hierarchy on the trigenic store minus the current store."""
+
+    def run() -> float:
+        t = json.load(open(osp.join(RESULTS, "dcell_style_resplits_go006tuned.json")))
+        c = json.load(open(osp.join(RESULTS, "dcell_style_resplits.json")))
+        g = lambda d: {r["split_file"]: r["mean"] for r in d["rows"] if r["model"] == "dcell_style_shared"}  # noqa: E731
+        rt, rc = g(t), g(c)
+        d = np.array([rt[k] - rc[k] for k in sorted(rc)])
+        if statistic == "vs_gcn":
+            return float(t["paired"][0]["difference_mean"])
+        return {"mean": float(d.mean()), "sd": float(d.std(ddof=1)), "n_positive": float((d > 0).sum())}[statistic]
+
+    return run
+
+
 def consensus(*keys: str | int) -> Callable[[], float]:
     """One value of ``consensus_missed.json``, addressed by a key path."""
 
@@ -1967,6 +1983,27 @@ CHECKS: list[Check] = [
                 "paired"
             ][0]["difference_mean"]
         ),
+    ),
+    Check(
+        claim="job 2701: tuned hierarchy on the trigenic store, ten splits",
+        stated=-0.012,
+        recompute=go006_tuned("mean"),
+    ),
+    Check(
+        claim="job 2701: ... splits higher",
+        stated=5,
+        recompute=go006_tuned("n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2701: ... sd",
+        stated=0.038,
+        recompute=go006_tuned("sd"),
+    ),
+    Check(
+        claim="job 2701: ... against the graph",
+        stated=-0.079,
+        recompute=go006_tuned("vs_gcn"),
     ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(

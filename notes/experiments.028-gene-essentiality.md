@@ -1581,3 +1581,10 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 - Sampler job 2623 timed out; round 87 cancelled, listed as not measured.
 - Table generator had failed silently after the trigenic table's two-row header; fixed, two stale tables regenerated.
 - Published v4 at f383933a1, 339 checks.
+
+## 2026.09.22 - Round 115: the learned allocation with the pool made to bind
+
+- `--flux-pool-fill-weight` (new, `flux_layer.py` `pool_fill_weight`, outside the constraint ramp): the shortfall of the abundance head's protein mass below GECKO's pool. With `--flux-pool-by-construction` the pool now binds on every genotype (projection factor 0.11 to 0.69 at the selected epoch; round 19 logged 1.0).
+- Forced growth column 0.766 / 0.766 / 0.770 against round 19's 0.704 / 0.743 / 0.670 (+0.062, 3/3); gated 0.839 / 0.770 / 0.832 against 0.816 / 0.810 / 0.783 (+0.010, 2/3). Both under the layer-free store (0.911).
+- A cell of this form peaks at 40 GB (sacct MaxRSS, job 2730); three-cell packs at 36 GB died at 2 h 40 (jobs 2728, 2729); reruns one per job at 80 GB (2730 to 2732).
+- Published v5 at ea783f7ec, 345 checks.

@@ -197,8 +197,8 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
 \subsection{What was run from the closing list, and what is left out\secstatus{todo}}
 \label{sec:left-to-run}
 
-Six experiments were listed as able to change a conclusion above. Four are run, one is
-left as a design note, and one is out of scope.
+Seven experiments were listed as able to change a conclusion above. Four are run, one is
+left as a design note, one is out of scope, and one did not complete.
 
 \begin{description}
   \item[Repeated outer splits for the finalists: run.] Ten stratified re-splits of the
@@ -225,6 +225,13 @@ left as a design note, and one is out of scope.
   \item[DCell's hierarchy and the ontology of the trigenic runs: run.] The ontology's
     own structure reads the GO multi-hot worse than message passing on either of the two
     ontologies tried (Section~\ref{sec:round108}).
+  \item[A store sampled around the optimum instead of one point: not measured.] Flux
+    Cone Learning scores a gene by the mean over 124 samples of its cone, and this
+    document's stores are all one point per deletion. \texttt{ess\_sampled\_flux\_store.py}
+    draws ten points per deletion with hit-and-run at thinning ten; measured at 147
+    seconds for five draws of one deletion in one process, it was submitted at sixteen
+    processes on a 24-hour limit (job 2623) and timed out without writing, so the cost
+    under contention is well above that estimate and the question is open.
   \item[The store on a second phenotype: out of scope.] The endpoint here is
     essentiality. Panel \textbf{c} of Figure~\ref{fig:summary-module} shows the store is
     affordable over the solid-growth build; whether it helps there belongs to that

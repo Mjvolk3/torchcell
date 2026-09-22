@@ -1779,6 +1779,34 @@ CHECKS: list[Check] = [
         stated=0.795,
         recompute=simplification("ladder", "ProtT5 only: no metabolism", "fold_ensemble_one_seed"),
     ),
+    # sec:round109 -- the ten splits.
+    Check(
+        claim="round109: module over none, ten splits",
+        stated=0.102,
+        recompute=simplification("resplit", "ProtT5 only: one medium, flux vector and counts, over no metabolism", "mean_difference"),
+    ),
+    Check(
+        claim="round109: splits higher",
+        stated=10,
+        recompute=simplification("resplit", "ProtT5 only: one medium, flux vector and counts, over no metabolism", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round109: pairs higher",
+        stated=30,
+        recompute=simplification("resplit", "ProtT5 only: one medium, flux vector and counts, over no metabolism", "n_pairs_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round109: against the pathway backbone, both with the module",
+        stated=-0.027,
+        recompute=simplification("resplit", "ProtT5 only against the pathway backbone, both with the module", "mean_difference"),
+    ),
+    Check(
+        claim="round109: against the pathway backbone, neither",
+        stated=-0.063,
+        recompute=simplification("resplit", "ProtT5 only against the pathway backbone, neither with the module", "mean_difference"),
+    ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(
         claim="consensus: genes held out at least once",

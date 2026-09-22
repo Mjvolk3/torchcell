@@ -1758,6 +1758,15 @@ CHECKS: list[Check] = [
             ]
         ),
     ),
+    Check(
+        claim="job 2700: hierarchy on the trigenic store at its tuned configuration",
+        stated=0.709,
+        recompute=lambda: float(
+            json.load(
+                open(osp.join(RESULTS, "dcell_style_released_go006tuned.json"))
+            )["rows"][0]["mean"]
+        ),
+    ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(
         claim="consensus: genes held out at least once",

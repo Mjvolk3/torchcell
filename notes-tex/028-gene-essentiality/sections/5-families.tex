@@ -241,7 +241,11 @@ held-out logits differ only by the convolution's weights, the gain is in what th
 convolution learned. Hypothesis, untested: the affine explains the metabolic genes'
 labels during training, so the convolution's weights and its validation-selected epoch
 (87 to 93 against 382 to 397 without the affine) fit the remaining genes rather than
-the metabolic ones.
+the metabolic ones. The graph family's best genome-wide input, ProtT5 on the node
+(Section~\ref{sec:round30}), reads the same way (job 2697, six seeds): on the released
+split the single-experiment affine takes it from 0.859 to 0.891, higher on six of six
+seeds, and on the 4,674 genome-wide genes from 0.751 to 0.766, six of six, with the YPD
+ratio alone worth $+0.014$ and $+0.004$.
 
 \input{tables/graph_baselines_go_solve}
 

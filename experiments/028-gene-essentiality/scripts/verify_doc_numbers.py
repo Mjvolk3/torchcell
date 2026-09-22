@@ -1307,6 +1307,50 @@ CHECKS: list[Check] = [
             )["mean"]
         ),
     ),
+    Check(
+        claim="job 2697: released, ProtT5",
+        stated=0.859,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(open(osp.join(RESULTS, "graph_baselines_prot_affine_s6.json")))["rows"]
+                if r["inputs"] == "ProtT5 (400 epochs)"
+            )["mean"]
+        ),
+    ),
+    Check(
+        claim="job 2697: released, with the affine",
+        stated=0.891,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(open(osp.join(RESULTS, "graph_baselines_prot_affine_s6.json")))["rows"]
+                if r["inputs"] == "ProtT5 | affine: YPD ratio+vector+counts (400 epochs)"
+            )["mean"]
+        ),
+    ),
+    Check(
+        claim="job 2697: genome-wide, ProtT5",
+        stated=0.751,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(open(osp.join(RESULTS, "graph_baselines_prot_affine_s6_genome_heldout.json")))["rows"]
+                if r["inputs"] == "ProtT5 (400 epochs)"
+            )["mean"]
+        ),
+    ),
+    Check(
+        claim="job 2697: genome-wide, with the affine",
+        stated=0.766,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(open(osp.join(RESULTS, "graph_baselines_prot_affine_s6_genome_heldout.json")))["rows"]
+                if r["inputs"] == "ProtT5 | affine: YPD ratio+vector+counts (400 epochs)"
+            )["mean"]
+        ),
+    ),
     # sec:family-ensembles -- job 2684, the solve columns on the graph family's nodes.
     Check(
         claim="job 2684: GCN, GO+solve log1p, mean",

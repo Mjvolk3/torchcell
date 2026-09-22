@@ -1351,6 +1351,57 @@ CHECKS: list[Check] = [
             )["mean"]
         ),
     ),
+    Check(
+        claim="job 2702: genome-wide six seeds, GO",
+        stated=0.698,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(
+                    open(
+                        osp.join(
+                            RESULTS, "graph_baselines_go_affine_s6_genome_heldout.json"
+                        )
+                    )
+                )["rows"]
+                if r["inputs"] == "GO (400 epochs)"
+            )["mean"]
+        ),
+    ),
+    Check(
+        claim="job 2702: genome-wide six seeds, with the affine",
+        stated=0.768,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(
+                    open(
+                        osp.join(
+                            RESULTS, "graph_baselines_go_affine_s6_genome_heldout.json"
+                        )
+                    )
+                )["rows"]
+                if r["inputs"] == "GO | affine: YPD ratio+vector+counts (400 epochs)"
+            )["mean"]
+        ),
+    ),
+    Check(
+        claim="job 2702: genome-wide six seeds, ratio alone",
+        stated=0.696,
+        recompute=lambda: float(
+            next(
+                r
+                for r in json.load(
+                    open(
+                        osp.join(
+                            RESULTS, "graph_baselines_go_affine_s6_genome_heldout.json"
+                        )
+                    )
+                )["rows"]
+                if r["inputs"] == "GO | affine: YPD ratio (400 epochs)"
+            )["mean"]
+        ),
+    ),
     # sec:family-ensembles -- job 2684, the solve columns on the graph family's nodes.
     Check(
         claim="job 2684: GCN, GO+solve log1p, mean",

@@ -236,7 +236,8 @@ solve store and every one has a growth ratio of 1.0, so the affine adds the same
 to every held-out logit and cannot reorder them by itself. It still does not hurt (job
 2696, three seeds, the same training and validation genes as the released split): graph
 convolution on GO reads 0.702 alone and 0.767 with the single-experiment recipe on its
-logit, higher on three of three seeds, and 0.704 with the YPD ratio alone. Since the
+logit, higher on three of three seeds, and 0.704 with the YPD ratio alone; at six seeds
+(job 2702) the three read 0.698, 0.768 (six of six) and 0.696. Since the
 held-out logits differ only by the convolution's weights, the gain is in what the
 convolution learned. Hypothesis, untested: the affine explains the metabolic genes'
 labels during training, so the convolution's weights and its validation-selected epoch

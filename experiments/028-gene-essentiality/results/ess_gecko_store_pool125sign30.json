@@ -1,0 +1,625 @@
+{
+  "store": null,
+  "variant": "pool125sign30",
+  "spec": {
+    "name": "pool125sign30",
+    "p_avail": 0.125,
+    "sigma_k": 0.0,
+    "sign_threshold_kj_per_mol": 30.0,
+    "stage2": "flux",
+    "lambda_parsimony": null,
+    "solver": "highs"
+  },
+  "wild_type_infeasible": true,
+  "message": "the wild-type program of variant pool125sign30 did not solve; the direction rule at 30.0 kJ/mol fixed 1976 reactions, of which 81 conflict with the plain pFBA wild-type flux (listed under thermo.conflicts_with_plain_wild_type_flux)",
+  "n_variables": 11972,
+  "n_equality_rows": 2806,
+  "n_inequality_rows_stage1": 2696,
+  "wild_type_growth_unconstrained": 0.5427815429458276,
+  "thermo": {
+    "source": "union_external",
+    "source_paths": {
+      "met": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_metDeltaG.csv",
+      "rxn": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_rxnDeltaG.csv",
+      "dgpredictor_rows": "/scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/dgpredictor_reaction_rows.json",
+      "equilibrator_met": "/scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/metabolite_dgf_prime_with_external.parquet",
+      "shipped_reaction_unit_correction": "/scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/dgpredictor_reaction_rows.json",
+      "equilibrator_sigma": "/scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/formation_sigma.npz"
+    },
+    "sha256": {
+      "met": "179a5aac4221ded673a5bba798870ca4cac9b9d19e955de6a0f25de65a3cee8f",
+      "rxn": "7a66ef5d7892bd65229e908e5eff4cd95e741d6c493ee8645d480a53e2da5796",
+      "dgpredictor_rows": "6a2de44497653d771c01f46f3fc80a2417f50ff9bdf898e14741a1aba5e529d5",
+      "equilibrator_met": "f9b564844e5b3b0946de179672ae7f6b78f2560821a2e3423059ff16400e8871",
+      "shipped_reaction_unit_correction": "6a2de44497653d771c01f46f3fc80a2417f50ff9bdf898e14741a1aba5e529d5",
+      "equilibrator_sigma": "c7f2ff7367a0599a207d86f04e15f817617c2c0c266af025c7a1dc883a6fc4be"
+    },
+    "counts": {
+      "none": 352,
+      "equilibrator": 3777,
+      "shipped_reaction_column": 2,
+      "known": 3779,
+      "n_reactions": 4131,
+      "sigma_known": 1755,
+      "shipped_reaction_rows_unit_corrected": 33,
+      "shipped_reaction_rows_unit_corrected_and_used": 1
+    },
+    "n_reactions_with_energy": 3779,
+    "threshold_kj_per_mol": 30.0,
+    "n_fixed_forward": 1071,
+    "n_fixed_reverse": 905,
+    "n_bound_conflicts": 0,
+    "bound_conflicts": [],
+    "n_conflicts_with_plain_wild_type_flux": 81,
+    "conflicts_with_plain_wild_type_flux": [
+      {
+        "reaction": "r_0144",
+        "delta_r_g0_kj_per_mol": 36.6348762512207,
+        "plain_wild_type_flux": 0.12009996175765991,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_0226",
+        "delta_r_g0_kj_per_mol": 32.08121109008789,
+        "plain_wild_type_flux": 33.00638198852539,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_0361",
+        "delta_r_g0_kj_per_mol": 211.3631591796875,
+        "plain_wild_type_flux": 0.3810543715953827,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_0470",
+        "delta_r_g0_kj_per_mol": 34.33681106567383,
+        "plain_wild_type_flux": 0.5632583498954773,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_0988",
+        "delta_r_g0_kj_per_mol": 34.51958084106445,
+        "plain_wild_type_flux": 0.013439951464533806,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1108",
+        "delta_r_g0_kj_per_mol": 63.792850494384766,
+        "plain_wild_type_flux": 0.05503971129655838,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1166",
+        "delta_r_g0_kj_per_mol": 153.13572692871094,
+        "plain_wild_type_flux": 3.299999952316284,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1173",
+        "delta_r_g0_kj_per_mol": 63.73991394042969,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1177",
+        "delta_r_g0_kj_per_mol": 153.13626098632812,
+        "plain_wild_type_flux": 0.004636158235371113,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1183",
+        "delta_r_g0_kj_per_mol": 89.30005645751953,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1184",
+        "delta_r_g0_kj_per_mol": 191.38951110839844,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1186",
+        "delta_r_g0_kj_per_mol": 102.05848693847656,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1190",
+        "delta_r_g0_kj_per_mol": 77.60018157958984,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1192",
+        "delta_r_g0_kj_per_mol": 89.23947143554688,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1196",
+        "delta_r_g0_kj_per_mol": 102.22615051269531,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1199",
+        "delta_r_g0_kj_per_mol": 127.58397674560547,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1201",
+        "delta_r_g0_kj_per_mol": 120.91175842285156,
+        "plain_wild_type_flux": 0.041336722671985626,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1205",
+        "delta_r_g0_kj_per_mol": 165.88172912597656,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1211",
+        "delta_r_g0_kj_per_mol": 165.87844848632812,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1213",
+        "delta_r_g0_kj_per_mol": 191.4236602783203,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1214",
+        "delta_r_g0_kj_per_mol": 140.3480987548828,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1215",
+        "delta_r_g0_kj_per_mol": 140.34170532226562,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1216",
+        "delta_r_g0_kj_per_mol": 114.85371398925781,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1217",
+        "delta_r_g0_kj_per_mol": 89.20850372314453,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1218",
+        "delta_r_g0_kj_per_mol": 114.75020599365234,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1219",
+        "delta_r_g0_kj_per_mol": 153.09780883789062,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1223",
+        "delta_r_g0_kj_per_mol": 140.30453491210938,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1224",
+        "delta_r_g0_kj_per_mol": 140.35916137695312,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1241",
+        "delta_r_g0_kj_per_mol": 205.3961944580078,
+        "plain_wild_type_flux": 0.00010312849917681888,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1253",
+        "delta_r_g0_kj_per_mol": 143.82354736328125,
+        "plain_wild_type_flux": 0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1270",
+        "delta_r_g0_kj_per_mol": 217.26100158691406,
+        "plain_wild_type_flux": 6.513378707495576e-07,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1272",
+        "delta_r_g0_kj_per_mol": 51.04525375366211,
+        "plain_wild_type_flux": 0.05822327360510826,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1596",
+        "delta_r_g0_kj_per_mol": 31.323516845703125,
+        "plain_wild_type_flux": 0.37230274081230164,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1605",
+        "delta_r_g0_kj_per_mol": -77.1365966796875,
+        "plain_wild_type_flux": -3.4412350942147896e-05,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1639",
+        "delta_r_g0_kj_per_mol": -457.0927429199219,
+        "plain_wild_type_flux": -0.05503971129655838,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1672",
+        "delta_r_g0_kj_per_mol": 386.0,
+        "plain_wild_type_flux": 13.916622161865234,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1684",
+        "delta_r_g0_kj_per_mol": 178.65904235839844,
+        "plain_wild_type_flux": 0.014230472035706043,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1738",
+        "delta_r_g0_kj_per_mol": 45.244850158691406,
+        "plain_wild_type_flux": 3.4412350942147896e-05,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1766",
+        "delta_r_g0_kj_per_mol": 87.30448150634766,
+        "plain_wild_type_flux": 5.427815494840615e-07,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1814",
+        "delta_r_g0_kj_per_mol": 173.96559143066406,
+        "plain_wild_type_flux": 3.4412350942147896e-05,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1879",
+        "delta_r_g0_kj_per_mol": -152.9512176513672,
+        "plain_wild_type_flux": -0.16500000655651093,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1893",
+        "delta_r_g0_kj_per_mol": -85.66317749023438,
+        "plain_wild_type_flux": -0.041336722671985626,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1897",
+        "delta_r_g0_kj_per_mol": -43.95723342895508,
+        "plain_wild_type_flux": -0.16500000655651093,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1899",
+        "delta_r_g0_kj_per_mol": -38.98736572265625,
+        "plain_wild_type_flux": -0.16500000655651093,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1900",
+        "delta_r_g0_kj_per_mol": -86.26603698730469,
+        "plain_wild_type_flux": -0.16500000655651093,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1903",
+        "delta_r_g0_kj_per_mol": -121.09037780761719,
+        "plain_wild_type_flux": -0.16500000655651093,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1905",
+        "delta_r_g0_kj_per_mol": 31.32168960571289,
+        "plain_wild_type_flux": 0.12711964547634125,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_1912",
+        "delta_r_g0_kj_per_mol": -245.50784301757812,
+        "plain_wild_type_flux": -0.16500000655651093,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2022",
+        "delta_r_g0_kj_per_mol": 132.25534057617188,
+        "plain_wild_type_flux": 5.427815494840615e-07,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2038",
+        "delta_r_g0_kj_per_mol": -86.10667419433594,
+        "plain_wild_type_flux": -0.0005427815485745668,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2040",
+        "delta_r_g0_kj_per_mol": 242.75633239746094,
+        "plain_wild_type_flux": 0.0005427815485745668,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2067",
+        "delta_r_g0_kj_per_mol": -685.2316284179688,
+        "plain_wild_type_flux": -6.513378707495576e-07,
+        "gem_lb": -0.16500000655651093,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2091",
+        "delta_r_g0_kj_per_mol": 83.4447250366211,
+        "plain_wild_type_flux": 0.06480678170919418,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2093",
+        "delta_r_g0_kj_per_mol": 38.203060150146484,
+        "plain_wild_type_flux": 2.7195686925551854e-05,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2100",
+        "delta_r_g0_kj_per_mol": 178.4697265625,
+        "plain_wild_type_flux": 15.410592079162598,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2432",
+        "delta_r_g0_kj_per_mol": 35.44801330566406,
+        "plain_wild_type_flux": 0.013030387461185455,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2434",
+        "delta_r_g0_kj_per_mol": 31.282817840576172,
+        "plain_wild_type_flux": 0.014230472035706043,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2438",
+        "delta_r_g0_kj_per_mol": 40.08850860595703,
+        "plain_wild_type_flux": 0.004324040841311216,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2446",
+        "delta_r_g0_kj_per_mol": 172.04412841796875,
+        "plain_wild_type_flux": 0.008394229225814342,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2447",
+        "delta_r_g0_kj_per_mol": 216.71607971191406,
+        "plain_wild_type_flux": 0.009755697101354599,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2448",
+        "delta_r_g0_kj_per_mol": 176.20932006835938,
+        "plain_wild_type_flux": 0.014230472035706043,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2449",
+        "delta_r_g0_kj_per_mol": 177.71932983398438,
+        "plain_wild_type_flux": 0.0009807938477024436,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2450",
+        "delta_r_g0_kj_per_mol": 216.71607971191406,
+        "plain_wild_type_flux": 0.0040848650969564915,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2452",
+        "delta_r_g0_kj_per_mol": 167.40362548828125,
+        "plain_wild_type_flux": 0.004324040841311216,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2453",
+        "delta_r_g0_kj_per_mol": 216.71607971191406,
+        "plain_wild_type_flux": 0.0008765457896515727,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2454",
+        "delta_r_g0_kj_per_mol": 180.218017578125,
+        "plain_wild_type_flux": 0.004636158235371113,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2472",
+        "delta_r_g0_kj_per_mol": 229.2852325439453,
+        "plain_wild_type_flux": 0.008394229225814342,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2474",
+        "delta_r_g0_kj_per_mol": 243.20672607421875,
+        "plain_wild_type_flux": 0.014230472035706043,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2484",
+        "delta_r_g0_kj_per_mol": 417.21197509765625,
+        "plain_wild_type_flux": 0.0040848650969564915,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_2491",
+        "delta_r_g0_kj_per_mol": 50.16325378417969,
+        "plain_wild_type_flux": 0.0009807938477024436,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_3562",
+        "delta_r_g0_kj_per_mol": -44.084678649902344,
+        "plain_wild_type_flux": -0.004636158235371113,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_3766",
+        "delta_r_g0_kj_per_mol": 279.9085388183594,
+        "plain_wild_type_flux": 0.009755697101354599,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_3771",
+        "delta_r_g0_kj_per_mol": 320.5128479003906,
+        "plain_wild_type_flux": 0.00023582400172017515,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_3772",
+        "delta_r_g0_kj_per_mol": 312.3919982910156,
+        "plain_wild_type_flux": 0.0008765457896515727,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_3856",
+        "delta_r_g0_kj_per_mol": 386.3134460449219,
+        "plain_wild_type_flux": 0.0009807938477024436,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_3905",
+        "delta_r_g0_kj_per_mol": 844.7595825195312,
+        "plain_wild_type_flux": 0.014230472035706043,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_4212",
+        "delta_r_g0_kj_per_mol": -308.3642272949219,
+        "plain_wild_type_flux": -0.16500000655651093,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_4484",
+        "delta_r_g0_kj_per_mol": -54.68922424316406,
+        "plain_wild_type_flux": -0.27410510182380676,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_4527",
+        "delta_r_g0_kj_per_mol": 1950.73974609375,
+        "plain_wild_type_flux": 0.1575559675693512,
+        "gem_lb": 0.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_4594",
+        "delta_r_g0_kj_per_mol": -61.720890045166016,
+        "plain_wild_type_flux": -0.0003576930321287364,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      },
+      {
+        "reaction": "r_4681",
+        "delta_r_g0_kj_per_mol": 167.07562255859375,
+        "plain_wild_type_flux": 0.12009996175765991,
+        "gem_lb": -100.0,
+        "gem_ub": 100.0
+      }
+    ]
+  },
+  "seconds": 10.49350380897522
+}

@@ -434,10 +434,17 @@ def media_report(model: Any, media_name: str | None) -> dict[str, Any]:
     bounds = media_to_bounds(media, model)
     bounds.apply(model)
     growth_after = float(model.slim_optimize())
+    # The bound vector is data: written once under DATA_ROOT, hash-named, so every
+    # store and cell that ran on it can name the exact file rather than a code constant.
+    artifact = bounds.write_artifact(
+        osp.join(os.environ["DATA_ROOT"], "data/torchcell/media_bounds")
+    )
     return {
         "applied": True,
         "media_name": media_name,
         "recipe": media.name,
+        "bounds_artifact": artifact,
+        "bounds_sha256": bounds.sha256(),
         "state": media.state,
         "n_components": bounds.n_components,
         "n_resolved": bounds.n_resolved,

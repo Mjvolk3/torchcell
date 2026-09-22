@@ -70,7 +70,7 @@ OUR_GENES_DUMP = osp.join(
 )
 #: The released column carries 1.0 for a NONESSENTIAL gene (a viability flag).
 FCL_ESSENTIAL_VALUE = 0.0
-MEDIA = ("shipped", "SM", "SC", "YPD")
+MEDIA = ("shipped", "SM", "SC", "YPD", "YPD-suthers")
 CUTOFFS = (0.01, 0.05, 0.5)
 N_BOOTSTRAP = 2000
 BOOTSTRAP_SEED = 0
@@ -224,6 +224,19 @@ def score_gene_set(
 
 
 def main() -> None:
+    global OUT_JSON, OUT_CSV
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--out-tag",
+        default="",
+        help="suffix for the two output files, so a rebuild lands beside the old read",
+    )
+    tag = parser.parse_args().out_tag
+    if tag:
+        OUT_JSON = OUT_JSON.replace(".json", f"_{tag}.json")
+        OUT_CSV = OUT_CSV.replace(".csv", f"_{tag}.csv")
     labels, held_out = read_labels()
     ours = read_our_genes(labels)
     gene_sets = {

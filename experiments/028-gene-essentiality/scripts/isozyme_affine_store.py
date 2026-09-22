@@ -55,6 +55,15 @@ EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
 TABLE_DIR = osp.join(DATA_ROOT, "data/torchcell/reference_flux")
 PFBA_STORE = osp.join(TABLE_DIR, "ess_solve_encodings_YPD.npz")
+#: ``--store-tag nuc`` reads ``ess_solve_encodings_YPD_nuc.npz`` (the store rebuilt on the
+#: corrected YPD) and writes ``..._YPD_nuc_<suffix>.npz`` beside the untagged stores.
+STORE_TAG = ""
+
+
+def stem(name: str) -> str:
+    """``ess_solve_encodings_YPD<_tag><_name>.npz`` under the table directory."""
+    tag = f"_{STORE_TAG}" if STORE_TAG else ""
+    return osp.join(TABLE_DIR, f"ess_solve_encodings_YPD{tag}{name}.npz")
 COLUMNS = [
     "gpr_n_reactions",
     "gpr_n_sole",
@@ -83,6 +92,12 @@ def normal_form(node: ast.AST) -> list[frozenset[str]]:
 
 
 def main() -> None:
+    global STORE_TAG
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--store-tag", default="")
+    STORE_TAG = parser.parse_args().store_tag
     model = YeastGEM().model
     per_gene: dict[str, list[tuple[int, int, int]]] = {}
     largest = 0
@@ -100,7 +115,8 @@ def main() -> None:
                 (len(without), max(len(t) - 1 for t in with_gene), int(not without))
             )
 
-    pfba = np.load(PFBA_STORE, allow_pickle=False)
+    source = stem("")
+    pfba = np.load(source, allow_pickle=False)
     genes = [str(g) for g in pfba["genes"]]
     block = np.zeros((len(genes), len(COLUMNS)), dtype=np.float32)
     for i, gene in enumerate(genes):
@@ -122,7 +138,7 @@ def main() -> None:
     # Round 78 measured the 4,131 flux columns at +0.010 over the four growth ratios and
     # round 77 measured these six counts at +0.019 over the vector; the question this
     # store answers is whether the solve is needed at all on this endpoint.
-    alone = osp.join(TABLE_DIR, "ess_solve_encodings_YPD_gpronly.npz")
+    alone = stem("_gpronly")
     np.savez_compressed(
         alone,
         genes=np.array(genes),
@@ -150,7 +166,7 @@ def main() -> None:
     sole = COLUMNS.index("gpr_n_sole")
     keep = [i for i in range(len(COLUMNS)) if i != sole]
     for suffix, idx in (("pfbagprsole", [sole]), ("pfbagprnosole", keep)):
-        out_path = osp.join(TABLE_DIR, f"ess_solve_encodings_YPD_{suffix}.npz")
+        out_path = stem(f"_{suffix}")
         names = [COLUMNS[i] for i in idx]
         np.savez_compressed(
             out_path,
@@ -179,7 +195,7 @@ def main() -> None:
         )
         print(f"{out_path}: {len(names)} extra column(s) {names}")
 
-    path = osp.join(TABLE_DIR, "ess_solve_encodings_YPD_pfbagpr.npz")
+    path = stem("_pfbagpr")
     provenance = {
         "method": (
             "the pFBA deletion vector of ess_solve_encodings_YPD.npz with six columns of "
@@ -187,7 +203,7 @@ def main() -> None:
             "disjunctive normal form; written by isozyme_affine_store.py"
         ),
         "gem_version": YeastGEM().version,
-        "source_store": PFBA_STORE,
+        "source_store": source,
         "source_store_provenance": json.loads(str(pfba["provenance"])),
         "columns": COLUMNS,
     }

@@ -237,7 +237,11 @@ ESS_READOUTS_WITH_FBA = (
 )
 #: The per-gene FBA table (`fba_essentiality_baseline.py`) and its medium columns, in the
 #: order the ladder uses them.
-FBA_PER_GENE_CSV = osp.join(RESULTS_DIR, "fba_essentiality_per_gene.csv")
+#: ``ESS_FBA_CSV`` names another table, such as the one rebuilt on the corrected YPD
+#: recipe (round 112, ``fba_essentiality_per_gene_nuc.csv``); the cell records the path.
+FBA_PER_GENE_CSV = os.environ.get(
+    "ESS_FBA_CSV", osp.join(RESULTS_DIR, "fba_essentiality_per_gene.csv")
+)
 FBA_MEDIA = ("shipped", "SM", "SC", "YPD")
 #: Per-gene solve-derived features from `ess_reference_flux_table.py`, appended to the
 #: affine's table under `--ess-solve-features`: the eight statistics of the wild-type pFBA

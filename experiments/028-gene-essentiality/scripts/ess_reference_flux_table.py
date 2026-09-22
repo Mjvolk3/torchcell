@@ -203,10 +203,20 @@ def main() -> None:
             "first-order solve on the card returns."
         ),
     )
+    parser.add_argument(
+        "--out-tag",
+        default="",
+        help=(
+            "Appended to the output stems, so a rebuilt store (a corrected medium, for "
+            "one) lands beside the store it replaces instead of overwriting it."
+        ),
+    )
     args = parser.parse_args()
     if os.environ.get("PYTHONHASHSEED") != "0":
         raise SystemExit("PYTHONHASHSEED must be 0, as for the 026 reference table.")
-    suffix = "" if args.solver == "pfba" else f"_{args.solver}"
+    suffix = ("" if args.solver == "pfba" else f"_{args.solver}") + (
+        f"_{args.out_tag}" if args.out_tag else ""
+    )
 
     started = time.time()
     os.makedirs(TABLE_DIR, exist_ok=True)

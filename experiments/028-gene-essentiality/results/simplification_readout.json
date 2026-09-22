@@ -1458,6 +1458,99 @@
       "n_pairs_positive": null,
       "select_epochs_a": null,
       "select_epochs_b": null
+    },
+    {
+      "name": "kcat point ceilings against the plain store, released split",
+      "a": "w130_kcatpoint",
+      "b": "w129_ypdgprnuc",
+      "n": 3,
+      "seeds_per_unit": [
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9095200629425649,
+      "mean_b": 0.9131261473905061,
+      "mean_difference": -0.0036060844479412304,
+      "sd_difference": 0.0044216405192990735,
+      "n_positive": 1,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "kcat two-sigma ceilings against the plain store, released split",
+      "a": "w130_kcatsigma2",
+      "b": "w129_ypdgprnuc",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9134867558353004,
+      "mean_b": 0.9131589299763966,
+      "mean_difference": 0.0003278258589037482,
+      "sd_difference": 0.007214910191183332,
+      "n_positive": 3,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "kcat-sampled store against the plain store, released split",
+      "a": "w130_kcatsampled",
+      "b": "w129_ypdgprnuc",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9165027537372147,
+      "mean_b": 0.9131589299763966,
+      "mean_difference": 0.0033438237608182098,
+      "sd_difference": 0.013909585906107053,
+      "n_positive": 2,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "MOMA store against the plain store, released split",
+      "a": "w130_kcatmoma",
+      "b": "w129_ypdgprnuc",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9115853658536585,
+      "mean_b": 0.9131589299763966,
+      "mean_difference": -0.0015735641227380137,
+      "sd_difference": 0.006274556109323977,
+      "n_positive": 2,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
     }
   ],
   "rank_shifts": [

@@ -527,6 +527,29 @@ def main() -> None:
             "w129_ypdgprnuc",
             "w102_ypdgpr",
         ),
+        # Round 113 (w130): stores with enzyme ceilings from kcat and a measured proteome,
+        # a kcat-sampled store, and a linear MOMA store, each against the plain corrected
+        # store on the same seeds.
+        (
+            "kcat point ceilings against the plain store, released split",
+            "w130_kcatpoint",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "kcat two-sigma ceilings against the plain store, released split",
+            "w130_kcatsigma2",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "kcat-sampled store against the plain store, released split",
+            "w130_kcatsampled",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "MOMA store against the plain store, released split",
+            "w130_kcatmoma",
+            "w129_ypdgprnuc",
+        ),
     ]
     released_pairs = collect(
         [paired_by_seed(*s) for s in released_spec], [s[0] for s in released_spec]

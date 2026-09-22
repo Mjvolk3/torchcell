@@ -2005,6 +2005,130 @@ CHECKS: list[Check] = [
         stated=-0.079,
         recompute=go006_tuned("vs_gcn"),
     ),
+    # sec:round113 -- offline enzyme-constrained stores.
+    Check(
+        claim="round113: two-sigma, paired",
+        stated=0.0,
+        recompute=simplification("released_pairs", "kcat two-sigma ceilings against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round113: two-sigma, seeds higher",
+        stated=3,
+        recompute=simplification("released_pairs", "kcat two-sigma ceilings against the plain store, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113: sampled, paired",
+        stated=0.003,
+        recompute=simplification("released_pairs", "kcat-sampled store against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round113: sampled, seeds higher",
+        stated=2,
+        recompute=simplification("released_pairs", "kcat-sampled store against the plain store, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113: sampled, sd",
+        stated=0.014,
+        recompute=simplification("released_pairs", "kcat-sampled store against the plain store, released split", "sd_difference"),
+    ),
+    Check(
+        claim="round113: moma, paired",
+        stated=-0.002,
+        recompute=simplification("released_pairs", "MOMA store against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round113: moma, seeds higher",
+        stated=2,
+        recompute=simplification("released_pairs", "MOMA store against the plain store, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113: point, paired",
+        stated=-0.004,
+        recompute=simplification("released_pairs", "kcat point ceilings against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round113 store point: capacity_scale",
+        stated=3000,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))["capacity_scale"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113 store point: n_ceilings_binding_wild_type",
+        stated=0,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))["n_ceilings_binding_wild_type"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113 store sigma1: capacity_scale",
+        stated=1000,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma1.json")))["capacity_scale"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113 store sigma2: capacity_scale",
+        stated=100,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma2.json")))["capacity_scale"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113 store sigma2: n_ceilings_binding_wild_type",
+        stated=2,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma2.json")))["n_ceilings_binding_wild_type"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113 store sigma2: median_relative_l2_log1p_to_plain",
+        stated=0.07,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma2.json")))["median_relative_l2_log1p_to_plain"]
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round113 store moma: n_lethal",
+        stated=105,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_moma.json")))["n_lethal"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113 store moma: n_lethal_plain",
+        stated=91,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_moma.json")))["n_lethal_plain"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113 store point: n_units_with_abundance",
+        stated=1400,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))["n_units_with_abundance"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round113 store point: n_reactions_with_ceiling",
+        stated=995,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))["n_reactions_with_ceiling"]
+        ),
+        tolerance=0.5,
+    ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(
         claim="consensus: genes held out at least once",

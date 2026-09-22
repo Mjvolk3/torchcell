@@ -336,6 +336,44 @@ flux through the purine and pyrimidine pathways, and the small loss is the infor
 those pathway columns held about their own genes. The stores of the earlier rounds are
 left as built, with their provenance naming Suthers' recipe.
 
+\subsection{Round 113: enzyme ceilings, sampled turnover and metabolic adjustment as offline stores\secstatus{todo}}
+\label{sec:round113}
+
+Every kcat and reaction-energy result of Section~\ref{sec:module} was measured inside a
+training loop, through a learned abundance head, where the shuffled kcat table read the
+same as the real one. This round asks the question the layer-free form makes cheap:
+solved offline with nothing learned, does an enzyme-constrained program yield a store
+that helps as columns? \texttt{ess\_kcat\_bounded\_store.py} (job 2711, 32 processes,
+eight minutes for five stores) forms per-reaction capacity ceilings from the predicted
+kcat tier times a measured proteome and solves the same two-stage parsimonious program
+under them, on the corrected YPD medium. The proteome is the one measurement in the
+document's module and is not the design: the design is a latent abundance under a pool,
+and the offline test was run first because it is the cheaper question. Abundance is the
+mean of the 388 wild-type columns of Messner 2023, converted from relative intensity to
+mmol/gDW by mass fraction among the detected proteins times GECKO 3's total protein
+pool; it covers 1,400 of 3,728 catalytic units and 995 of 2,709 gene-carrying reactions,
+and every other reaction keeps the GEM bound. The capacity scale is the smallest on the
+calibration grid at which the wild type keeps 90 percent of its growth, which is the
+round-15 finding again: at the point ceilings that scale is 3,000, no ceiling binds at
+the wild type, and the deletion vectors sit within one percent of the plain store's; at
+one sigma above the point it is 1,000, again with none binding; at two sigma it is 100
+with two binding and a median distance of 0.07. Two further stores change the objective
+rather than the box: ten draws of each unit's turnover from its tier's width, the
+deletion vector stored as the mean and the spread over draws (8,268 columns), and the
+linear minimization of metabolic adjustment, the feasible flux nearest the parsimonious
+wild type with no growth term, which calls 105 genes lethal where the parsimonious
+program calls 91.
+
+None of them separates from the plain store (jobs 2712 to 2715, paired by seed against
+the round-112 cells on the same seeds): the two-sigma ceilings read $+0.000$ over six
+seeds (three of six), the sampled store $+0.003$ (two of six, sd 0.014), the adjustment
+store $-0.002$ (two of six), and the point ceilings $-0.004$ over their three seeds. The
+ceilings are either absent or harmless, the sampled spread carries no ranking the point
+did not, and the adjustment principle's fourteen extra lethal calls do not line up with
+the essential genes any better than parsimony's. So on this endpoint the parsimonious
+solve on the GEM's own box is as good a store as any enzyme-constrained one built from
+these parameters, and the measured proteome is retired from the module with the rest.
+
 \subsection{Rounds 84 to 98: what each simplification costs\secstatus{todo}}
 \label{sec:round84-98}
 

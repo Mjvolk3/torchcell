@@ -1,5 +1,5 @@
 {
-  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_pfbagpr.npz",
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_nuc_pfbagpr.npz",
   "shape": [
     1121,
     4137

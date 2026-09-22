@@ -43,11 +43,18 @@ import itertools
 import json
 import os
 import os.path as osp
+import sys
 
 import numpy as np
 from dotenv import load_dotenv
 
 from torchcell.metabolism.yeast_GEM import YeastGEM
+
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from ess_reference_flux_table import (  # noqa: E402
+    DerivedStoreProvenance,
+    StoreProvenance,
+)
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -117,6 +124,7 @@ def main() -> None:
 
     source = stem("")
     pfba = np.load(source, allow_pickle=False)
+    source_provenance = StoreProvenance.model_validate_json(str(pfba["provenance"]))
     genes = [str(g) for g in pfba["genes"]]
     block = np.zeros((len(genes), len(COLUMNS)), dtype=np.float32)
     for i, gene in enumerate(genes):
@@ -145,17 +153,15 @@ def main() -> None:
         v_deletion=block,
         v_wild_type=np.zeros(len(COLUMNS), dtype=np.float32),
         rxn_ids=np.array(COLUMNS),
-        provenance=json.dumps(
-            {
-                "method": (
-                    "six columns of gene-protein-reaction redundancy from yeast-GEM's "
-                    "rules in disjunctive normal form, with NO flux vector; written by "
-                    "isozyme_affine_store.py"
-                ),
-                "gem_version": YeastGEM().version,
-                "columns": COLUMNS,
-            }
-        ),
+        provenance=DerivedStoreProvenance(
+            method=(
+                "six columns of gene-protein-reaction redundancy from yeast-GEM's "
+                "rules in disjunctive normal form, with NO flux vector; written by "
+                "isozyme_affine_store.py"
+            ),
+            gem_version=YeastGEM().version,
+            columns=COLUMNS,
+        ).model_dump_json(),
     )
     print(f"{alone}: {block.shape}")
 
@@ -181,32 +187,32 @@ def main() -> None:
                 ]
             ),
             rxn_ids=np.array([str(r) for r in pfba["rxn_ids"]] + names),
-            provenance=json.dumps(
-                {
-                    "method": (
-                        "the pFBA deletion vector with a SUBSET of the "
-                        "gene-protein-reaction redundancy columns appended; written by "
-                        "isozyme_affine_store.py"
-                    ),
-                    "gem_version": YeastGEM().version,
-                    "columns": names,
-                }
-            ),
+            provenance=DerivedStoreProvenance(
+                method=(
+                    "the pFBA deletion vector with a SUBSET of the "
+                    "gene-protein-reaction redundancy columns appended; written by "
+                    "isozyme_affine_store.py"
+                ),
+                gem_version=YeastGEM().version,
+                columns=names,
+                source_store=source,
+                source_store_provenance=source_provenance,
+            ).model_dump_json(),
         )
         print(f"{out_path}: {len(names)} extra column(s) {names}")
 
     path = stem("_pfbagpr")
-    provenance = {
-        "method": (
-            "the pFBA deletion vector of ess_solve_encodings_YPD.npz with six columns of "
+    provenance = DerivedStoreProvenance(
+        method=(
+            "the pFBA deletion vector of the source store with six columns of "
             "gene-protein-reaction redundancy appended, from yeast-GEM's rules in "
             "disjunctive normal form; written by isozyme_affine_store.py"
         ),
-        "gem_version": YeastGEM().version,
-        "source_store": source,
-        "source_store_provenance": json.loads(str(pfba["provenance"])),
-        "columns": COLUMNS,
-    }
+        gem_version=YeastGEM().version,
+        source_store=source,
+        source_store_provenance=source_provenance,
+        columns=COLUMNS,
+    )
     np.savez_compressed(
         path,
         genes=np.array(genes),
@@ -220,7 +226,7 @@ def main() -> None:
             ]
         ),
         rxn_ids=np.array([str(r) for r in pfba["rxn_ids"]] + COLUMNS),
-        provenance=json.dumps(provenance),
+        provenance=provenance.model_dump_json(),
     )
 
     # What the columns say about the genes the enrichment named: the released held-out

@@ -96,6 +96,77 @@ STAT_NAMES = (
 SOLVER_KEYS = {"pfba": None, "simplex": "simplex_exact", "ipm": "ipm_nocross_1e-4"}
 
 
+class MediaApplied(BaseModel):
+    """What ``media_report`` recorded when the medium was applied to the model.
+
+    The bound vector itself is the artifact at ``bounds_artifact`` (a ``MediaBounds``
+    record under DATA_ROOT, hash-named); ``bounds_sha256`` is its identity.
+    """
+
+    model_config = {"extra": "forbid"}
+
+    applied: bool
+    media_name: str | None = None
+    recipe: str | None = None
+    bounds_artifact: str | None = None
+    bounds_sha256: str | None = None
+    state: str | None = None
+    n_components: int | None = None
+    n_resolved: int | None = None
+    n_exchanges_opened: int | None = None
+    unresolved: list[str] = []
+    excluded_by_role: list[str] = []
+    wild_type_growth_before: float | None = None
+    wild_type_growth_after: float | None = None
+    provenance: str | None = None
+    note: str | None = None
+
+
+class StoreProvenance(BaseModel):
+    """Where a reference flux store came from, written into the npz beside the fluxes.
+
+    Read back with ``StoreProvenance.model_validate_json(str(payload["provenance"]))``.
+    """
+
+    model_config = {"extra": "forbid"}
+
+    gem: str
+    growth_fraction: float
+    flux_scale: float
+    method: str
+    #: Absent from stores written before the round-36 solver arms (the pFBA stores of
+    #: rounds 31 to 35 and the 026 table); ``None`` there means pFBA.
+    solver: str | None = None
+    n_nonoptimal_zero_flux: int | None = None
+    medium: str
+    media_report: MediaApplied
+    split_file: str
+    wild_type_growth: float
+    wild_type_key: str
+    n_sets: int
+    n_lethal_zero_flux: int
+    n_genes_outside_the_gem: int
+    background_genes: list[str]
+    python_hash_seed: str | None
+    flux_sha256: str
+
+
+class DerivedStoreProvenance(BaseModel):
+    """A store derived from a solver store (``isozyme_affine_store.py`` and kin).
+
+    ``source_store_provenance`` is the solver store's own record when the derived store
+    carries its flux vector, and ``None`` for a store of derived columns alone.
+    """
+
+    model_config = {"extra": "forbid"}
+
+    method: str
+    gem_version: str
+    columns: list[str]
+    source_store: str | None = None
+    source_store_provenance: StoreProvenance | None = None
+
+
 class GrowthSolve(BaseModel):
     """One growth-maximizing solve by a named HiGHS solver: the flux and whether it solved."""
 
@@ -338,11 +409,11 @@ def main() -> None:
             print(f"  {count}/{len(genes)} genes, {time.time() - started:.0f}s")
 
     matrix = np.vstack(fluxes).astype(np.float32)
-    provenance = {
-        "gem": osp.basename(source.model_dir),
-        "growth_fraction": args.growth_fraction,
-        "flux_scale": FLUX_SCALE,
-        "method": (
+    provenance = StoreProvenance(
+        gem=osp.basename(source.model_dir),
+        growth_fraction=args.growth_fraction,
+        flux_scale=FLUX_SCALE,
+        method=(
             "pFBA (parsimonious_reference_flux, two scipy HiGHS LPs) with the gene "
             "deleted through cobra.manipulation.knock_out_model_genes"
             if solver_key is None
@@ -352,20 +423,20 @@ def main() -> None:
                 "deleted through cobra.manipulation.knock_out_model_genes"
             )
         ),
-        "solver": args.solver,
-        "n_nonoptimal_zero_flux": n_nonoptimal,
-        "medium": args.medium,
-        "media_report": media,
-        "split_file": args.split_file,
-        "wild_type_growth": wild_growth,
-        "wild_type_key": keys[0],
-        "n_sets": len(keys),
-        "n_lethal_zero_flux": n_lethal,
-        "n_genes_outside_the_gem": sum(1 for r in rows if not r.in_gem),
-        "background_genes": [],
-        "python_hash_seed": os.environ.get("PYTHONHASHSEED"),
-        "flux_sha256": hashlib.sha256(matrix.tobytes()).hexdigest(),
-    }
+        solver=args.solver,
+        n_nonoptimal_zero_flux=n_nonoptimal,
+        medium=args.medium,
+        media_report=MediaApplied.model_validate(media),
+        split_file=args.split_file,
+        wild_type_growth=wild_growth,
+        wild_type_key=keys[0],
+        n_sets=len(keys),
+        n_lethal_zero_flux=n_lethal,
+        n_genes_outside_the_gem=sum(1 for r in rows if not r.in_gem),
+        background_genes=[],
+        python_hash_seed=os.environ.get("PYTHONHASHSEED"),
+        flux_sha256=hashlib.sha256(matrix.tobytes()).hexdigest(),
+    )
     table_path = osp.join(
         TABLE_DIR, f"ess_reference_flux_table_{args.medium}{suffix}.npz"
     )
@@ -374,7 +445,7 @@ def main() -> None:
         v=matrix,
         keys=np.array(keys),
         rxn_ids=np.array(rxn_ids),
-        provenance=np.array(json.dumps(provenance)),
+        provenance=np.array(provenance.model_dump_json()),
     )
     enc_path = osp.join(TABLE_DIR, f"ess_solve_encodings_{args.medium}{suffix}.npz")
     np.savez(
@@ -385,12 +456,12 @@ def main() -> None:
         gene_flux_stats=np.vstack(stats).astype(np.float32),
         stat_names=np.array(STAT_NAMES),
         rxn_ids=np.array(rxn_ids),
-        provenance=np.array(json.dumps(provenance)),
+        provenance=np.array(provenance.model_dump_json()),
     )
     summary = {
         "table_path": table_path,
         "encodings_path": enc_path,
-        "provenance": provenance,
+        "provenance": provenance.model_dump(),
         "seconds": time.time() - started,
         "rows": [r.model_dump() for r in rows],
     }
@@ -399,7 +470,7 @@ def main() -> None:
         json.dump(summary, fh, indent=2)
     print(
         f"{len(keys)} rows, {n_lethal} lethal, "
-        f"{provenance['n_genes_outside_the_gem']} outside the GEM; "
+        f"{provenance.n_genes_outside_the_gem} outside the GEM; "
         f"{time.time() - started:.0f}s\n{table_path}\n{enc_path}\n{out}"
     )
 

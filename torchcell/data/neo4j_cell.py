@@ -39,6 +39,7 @@ from torchcell.datamodels import (
     PhenotypeType,
 )
 from torchcell.graph import GeneGraph, GeneMultiGraph
+from torchcell.lmdb_map_size import BUILD_LMDB_MAP_SIZE
 from torchcell.profiling.timing import time_method
 from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -517,7 +518,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         """Copy an LMDB database from the source path to the destination path."""
         os.makedirs(os.path.dirname(dst_path), exist_ok=True)
         env_src = lmdb.open(src_path, readonly=True)
-        env_dst = lmdb.open(dst_path, map_size=int(1e12))
+        env_dst = lmdb.open(dst_path, map_size=BUILD_LMDB_MAP_SIZE)
 
         with env_src.begin() as txn_src, env_dst.begin(write=True) as txn_dst:
             cursor = txn_src.cursor()

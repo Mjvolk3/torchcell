@@ -16,6 +16,7 @@ from torchcell.datamodels import (
     ModelStrict,
     Phenotype,
 )
+from torchcell.lmdb_map_size import BUILD_LMDB_MAP_SIZE
 
 
 class ExperimentInfo(ModelStrict):
@@ -100,7 +101,7 @@ class Aggregator(ABC):
         if not readonly or os.path.exists(self.lmdb_dir):
             self.env = lmdb.open(
                 self.lmdb_dir,
-                map_size=int(1e12),
+                map_size=BUILD_LMDB_MAP_SIZE,
                 readonly=readonly,
                 create=not readonly,
                 lock=not readonly,

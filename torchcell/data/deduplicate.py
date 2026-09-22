@@ -18,6 +18,7 @@ from torchcell.datamodels.schema import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
     EXPERIMENT_TYPE_MAP,
 )
+from torchcell.lmdb_map_size import BUILD_LMDB_MAP_SIZE
 
 log = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class Deduplicator(ABC):
         if not readonly or osp.exists(self.lmdb_dir):
             self.env = lmdb.open(
                 self.lmdb_dir,
-                map_size=int(1e12),
+                map_size=BUILD_LMDB_MAP_SIZE,
                 readonly=readonly,
                 create=not readonly,
                 lock=not readonly,

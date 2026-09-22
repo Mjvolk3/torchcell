@@ -68,9 +68,11 @@ export NEO4J_USER="neo4j"
 export NEO4J_PASSWORD="torchcell"
 
 # --- preflight: refuse to start without room for the four stage copies ---
-NEED_GB="${NEED_GB:-3800}"
+# raw is already on disk when this job starts; the three remaining copies are about
+# 2.8 TB (029: 614 + 547 + 547 GB for 26.8M records, scaled to 43.8M)
+NEED_GB="${NEED_GB:-2900}"
 FREE_GB=$(df -BG --output=avail /db | tail -1 | tr -dc '0-9')
-echo "/db free ${FREE_GB} GB; this build needs about ${NEED_GB} GB"
+echo "/db free ${FREE_GB} GB; the remaining stages need about ${NEED_GB} GB"
 if [ "$FREE_GB" -lt "$NEED_GB" ]; then
   echo "ABORT: not enough space on /db." >&2
   echo "  The 025 and 029 build intermediates are archived under /bulk:" >&2

@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=030-query-raw
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
+#SBATCH --cpus-per-task=12
+#SBATCH --mem=48G
 #SBATCH --time=2-00:00:00
 #SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/030-build/experiments/030-solid-growth-multi/slurm/output/%j_%x.out
 #SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/030-build/experiments/030-solid-growth-multi/slurm/output/%j_%x.out
@@ -10,11 +10,14 @@
 
 # Phase 1 of the 030 build: the Neo4j query into raw/lmdb, and nothing else.
 #
-# The query is single-threaded and light (job 2681 measured 630 records/s at 1.7 GB
-# resident after 47 min) but long: about 43.8M records, so roughly 19 h. It gets the
-# smallest useful allocation so GPU training keeps the rest of the node; the
-# memory-heavy stages run afterwards in scripts/gh_query_build_001.slurm, which refuses
-# to start until raw/STAGE_COMPLETE exists.
+# The query is light: job 2687 measured 700 records/s at 1.8 GB resident with the
+# driver thread at half a core, most of it waiting on one LMDB commit per record, and
+# it died at 40.6M of about 43.8M records after 18 h on the old 1 TB map size. The raw
+# stage now validates records in 10 worker processes and commits 2,000 rows per
+# transaction (Neo4jQueryRaw.process), and every build stage opens its store at
+# torchcell.lmdb_map_size.BUILD_LMDB_MAP_SIZE. 12 CPUs cover the driver thread and the
+# workers; the memory-heavy stages run afterwards in scripts/gh_query_build_001.slurm,
+# which refuses to start until raw/STAGE_COMPLETE exists.
 #
 # The job reads its code from the DETACHED worktree pinned at the build commit:
 #

@@ -190,6 +190,32 @@ ROUNDS: dict[str, Round] = {
         ),
         max_runs=36,
     ),
+    "v18": Round(
+        project="torchcell_019_expr_v18",
+        report_title="v18 hygiene round: the masked objective off and a per-gene context row",
+        view_name="v18 hygiene round by arm",
+        view_id=None,
+        arm_re=r"Y_(ref|k0|ctx)_(s\d+)",
+        phenotype="expression",
+        splits=["s0", "s1", "s2", "s3"],
+        split_label={
+            "s0": "split 0",
+            "s1": "split 1",
+            "s2": "split 2",
+            "s3": "split 3",
+        },
+        intro=(
+            "36 runs, three per RTX 6000 Ada card on cabbi, 1,200 epochs (job 2409571, "
+            "config cgt_expr_v18_hygiene): Y_ref is the v13 reference; Y_k0 switches the "
+            "masked objective off (mask_schedule [0]) with the plumbing left in place; "
+            "Y_ctx gives every gene an affine row over the strain context, zero-gated so "
+            "step 0 is exactly the shared MLP. Each card holds the three arms of one split "
+            "and seed. Scored as the mean over epochs 1,000 to 1,200, not a max over "
+            "epochs. Grouped lines are the mean over seeds with the min-max band. Nothing "
+            "here is a result until the runs finish."
+        ),
+        max_runs=36,
+    ),
 }
 
 

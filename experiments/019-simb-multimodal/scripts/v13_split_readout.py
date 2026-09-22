@@ -94,6 +94,8 @@ ROUNDS: dict[str, dict[str, Any]] = {
         "phenotype": "proteome",
         "prefix": "J_",
         "arm_re": r"J_(ref|joint|joint05)_(s\d+)",
+        # The expression-only arm shares the project but never logs val/proteome.
+        "skip_re": r"J_expr_s\d+",
         "ref": "ref",
         "alt": "joint",
         "alt_extra": ["joint05"],
@@ -106,6 +108,8 @@ ROUNDS: dict[str, dict[str, Any]] = {
         "phenotype": "expression",
         "prefix": "J_",
         "arm_re": r"J_(expr|joint|joint05)_(s\d+)",
+        # The proteome-only arm shares the project but never logs val/expression.
+        "skip_re": r"J_ref_s\d+",
         "ref": "expr",
         "alt": "joint",
         "alt_extra": ["joint05"],
@@ -184,6 +188,8 @@ def main() -> None:
         arm = r.config.get("arm") or next(
             t for t in r.tags if t.startswith(ROUND["prefix"])
         )
+        if "skip_re" in ROUND and re.fullmatch(ROUND["skip_re"], arm):
+            continue
         m = re.fullmatch(ROUND["arm_re"], arm)
         if m is None:
             raise ValueError(f"{r.id}: arm {arm} does not parse")

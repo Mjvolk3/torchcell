@@ -18,5 +18,45 @@
     "id": "7fbuv63ti6c",
     "name": "J_ref: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v16?nw=7fbuv63ti6c"
+  },
+  "v17": {
+    "id": "y1ha18awo4o",
+    "name": "v17 locality round by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v17?nw=y1ha18awo4o"
+  },
+  "v17/L_prop2": {
+    "id": "htr0bui6fub",
+    "name": "L_prop2: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v17?nw=htr0bui6fub"
+  },
+  "v17/L_ref": {
+    "id": "8wwq5zl8i71",
+    "name": "L_ref: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v17?nw=8wwq5zl8i71"
+  },
+  "v17/L_self": {
+    "id": "z9851sig84v",
+    "name": "L_self: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v17?nw=z9851sig84v"
+  },
+  "v18": {
+    "id": "a1zmxr4uls5",
+    "name": "v18 hygiene round by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v18?nw=a1zmxr4uls5"
+  },
+  "v18/Y_ctx": {
+    "id": "yoxb73rfq6x",
+    "name": "Y_ctx: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v18?nw=yoxb73rfq6x"
+  },
+  "v18/Y_k0": {
+    "id": "zt1zd1f206m",
+    "name": "Y_k0: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v18?nw=zt1zd1f206m"
+  },
+  "v18/Y_ref": {
+    "id": "b65nolbjhid",
+    "name": "Y_ref: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v18?nw=b65nolbjhid"
   }
 }

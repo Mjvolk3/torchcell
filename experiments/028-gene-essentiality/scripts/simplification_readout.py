@@ -598,6 +598,29 @@ def main() -> None:
             "w131_geckopool125minenz",
             "w129_ypdgprnuc",
         ),
+        # Round 116 (w133): is the kcat table what limits the pool? The pool125 program on
+        # the all-EZKinetics table and on the shuffled table, against the tiered-table pool
+        # and against the plain store.
+        (
+            "GECKO pool 0.125, all units EZKinetics against the tiered-table pool, released split",
+            "w133_geckopool125ezk",
+            "w131_geckopool125",
+        ),
+        (
+            "GECKO pool 0.125, shuffled table against the tiered-table pool, released split",
+            "w133_geckopool125shuf",
+            "w131_geckopool125",
+        ),
+        (
+            "GECKO pool 0.125, all units EZKinetics against the plain store, released split",
+            "w133_geckopool125ezk",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "GECKO pool 0.125, shuffled table against the plain store, released split",
+            "w133_geckopool125shuf",
+            "w129_ypdgprnuc",
+        ),
     ]
     released_pairs = collect(
         [paired_by_seed(*s) for s in released_spec], [s[0] for s in released_spec]

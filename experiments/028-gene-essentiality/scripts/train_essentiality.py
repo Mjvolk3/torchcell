@@ -3948,21 +3948,37 @@ class FbaAffine(nn.Module):
     fba_known: torch.Tensor
 
     def __init__(
-        self, fba_table: torch.Tensor, fba_known: torch.Tensor, media: tuple[str, ...]
+        self,
+        fba_table: torch.Tensor,
+        fba_known: torch.Tensor,
+        media: tuple[str, ...],
+        out_features: int = 1,
     ) -> None:
-        """Hold the ``[n_genes, m]`` table and one weight per medium."""
+        """Hold the ``[n_genes, m]`` table and one weight per column and target.
+
+        ``out_features`` is the number of targets the head predicts: 1 for a logit or a
+        scalar, 19 for the amino-acid vector (round 117), so one affine of the same
+        columns lands on every target's mean.
+        """
         super().__init__()
         assert fba_table.shape[1] == len(media), (fba_table.shape, media)
         self.register_buffer("fba_table", fba_table)
         self.register_buffer("fba_known", fba_known)
         self.media = tuple(media)
-        self.linear = nn.Linear(len(media), 1)
+        self.out_features = int(out_features)
+        self.linear = nn.Linear(len(media), self.out_features)
 
     def forward(self, batch: Any, like: torch.Tensor) -> torch.Tensor:
-        """The affine's logit, in the shape of ``like``."""
+        """The affine's output, in the shape of ``like``.
+
+        ``like`` is the head's POINT output: ``[B]``/``[B, 1]`` for a logit or a scalar,
+        ``[B, F]`` for a vector head; the caller hands the mean channel of a
+        distributional head, never the (mu, log_sigma) pair.
+        """
         ratios = deleted_gene_ratios(batch, self.fba_table)
-        assert like.numel() == ratios.shape[0], (like.shape, ratios.shape)
-        return cast(torch.Tensor, self.linear(ratios).reshape(like.shape))
+        out = self.linear(ratios)
+        assert like.numel() == out.numel(), (like.shape, out.shape, self.out_features)
+        return cast(torch.Tensor, out.reshape(like.shape))
 
     def weights(self) -> dict[str, float]:
         """``ess_fba_w_<column>`` -> weight, for the epoch row.
@@ -3975,7 +3991,12 @@ class FbaAffine(nn.Module):
             # whole head stands in.
             params = [p.detach().reshape(-1) for p in self.linear.parameters()]
             return {"ess_fba_w_norm": float(torch.cat(params).norm())}
-        w = self.linear.weight.detach().reshape(-1)
+        w = self.linear.weight.detach()
+        if self.out_features > 1:
+            # A vector head: one weight per column and target; the per-column norm over
+            # targets is what can be named.
+            w = w.norm(dim=0)
+        w = w.reshape(-1)
         out = {
             f"ess_fba_w_{m}": float(v)
             for m, v in zip(self.media[:16], w[:16].tolist(), strict=True)
@@ -4018,9 +4039,9 @@ def apply_solve_head(cell: BxCell, affine: FbaAffine) -> None:
         return
     m = affine.linear.in_features
     h = cell.ess_solve_head_hidden
-    affine.linear = nn.Sequential(nn.Linear(m, h), nn.GELU(), nn.Linear(h, 1)).to(
-        affine.fba_table.device
-    )
+    affine.linear = nn.Sequential(
+        nn.Linear(m, h), nn.GELU(), nn.Linear(h, affine.out_features)
+    ).to(affine.fba_table.device)
     print(
         f"[solve-head] affine over {m} columns replaced by Linear({m}, {h}) -> GELU -> Linear({h}, 1)"
     )
@@ -4059,6 +4080,7 @@ class FbaContextReadout(nn.Module):
         fba_known: torch.Tensor,
         media: tuple[str, ...] = FBA_MEDIA,
         head_name: str = ESSENTIALITY_HEAD,
+        out_features: int = 1,
     ) -> None:
         """Bind the readout to the per-gene ratio table, in cell-graph gene order."""
         super().__init__()
@@ -4068,7 +4090,7 @@ class FbaContextReadout(nn.Module):
         )
         self.model = model
         self.head_name = head_name
-        self.fba_readout = FbaAffine(fba_table, fba_known, media)
+        self.fba_readout = FbaAffine(fba_table, fba_known, media, out_features)
 
     @property
     def flux_layer(self) -> Any:
@@ -4094,9 +4116,19 @@ class FbaContextReadout(nn.Module):
         assert self.head_name in reps["head_outputs"], (
             "the context head was not built; `fba` needs it in heads_config."
         )
-        context_logit = reps["head_outputs"][self.head_name]
-        fba_logit = self.fba_readout(batch, context_logit)
-        reps["head_outputs"][self.head_name] = context_logit + fba_logit
+        context = reps["head_outputs"][self.head_name]
+        if context.dim() == 3:
+            # A distributional head, ``[B, F, 2]``: the affine lands on the mean channel
+            # and the log-sigma channel is untouched (round 117, the betaxanthin and
+            # amino-acid heads under CRPS).
+            mu = context[..., 0] + self.fba_readout(batch, context[..., 0])
+            reps["head_outputs"][self.head_name] = torch.cat(
+                [mu.unsqueeze(-1), context[..., 1:]], dim=-1
+            )
+        else:
+            reps["head_outputs"][self.head_name] = context + self.fba_readout(
+                batch, context
+            )
         return predictions, reps
 
 
@@ -5220,27 +5252,38 @@ def build_model_for_cell(
         )
         return wrapped_ess, head_specs, main_head, flux_meta
 
-    if main_head == ESSENTIALITY_HEAD and cell.ess_readout == ESS_READOUT_FBA:
+    if (
+        main_head in (ESSENTIALITY_HEAD, HEAD, AUX_HEAD)
+        and cell.ess_readout == ESS_READOUT_FBA
+    ):
         assert not arm["flux"]
         fba_table, fba_known, fba_media, fba_meta = affine_table(cell, gene_ids)
-        flux_meta["essentiality"] = {
+        out_features = len(AA_KEYS) if main_head == AUX_HEAD else 1
+        flux_meta[main_head] = {
             "readout": cell.ess_readout,
             "fba": fba_meta,
+            "out_features": out_features,
             "note": (
-                "essentiality is the pooled arm's context logit plus an affine of FBA's "
-                "knockout-to-wild-type growth ratios for the deleted gene on four media, "
-                "the feature the classical ladder appends to every encoding."
+                f"{main_head} is the pooled arm's context head plus an affine of the "
+                "deleted gene's solve columns (the growth ratio per medium, then any "
+                "solve features), one output per target, on the mean channel when the "
+                "head is distributional."
             ),
         }
-        wrapped_fba = FbaContextReadout(model, fba_table, fba_known, fba_media).to(
-            device
-        )
+        wrapped_fba = FbaContextReadout(
+            model,
+            fba_table,
+            fba_known,
+            fba_media,
+            head_name=main_head,
+            out_features=out_features,
+        ).to(device)
         apply_solve_zero_init(cell, wrapped_fba.fba_readout)
         apply_solve_head(cell, wrapped_fba.fba_readout)
         print(
-            f"[fba-readout] essentiality from the context head plus an affine of "
-            f"{len(fba_media)} columns ({', '.join(fba_media[:4])}, ...) for "
-            f"{fba_meta['n_genes_with_fba']} of {len(gene_ids)} genes",
+            f"[fba-readout] {main_head} from the context head plus an affine of "
+            f"{len(fba_media)} columns ({', '.join(fba_media[:4])}, ...) x {out_features} "
+            f"targets for {fba_meta['n_genes_with_fba']} of {len(gene_ids)} genes",
             flush=True,
         )
         return wrapped_fba, head_specs, main_head, flux_meta
@@ -7077,7 +7120,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--head",
-        choices=(ESSENTIALITY_HEAD,),
+        # Round 117 (2026-09-22): the betaxanthin and amino-acid heads re-admitted so the
+        # layer-free store (an offline pFBA solve per genotype and medium, read as a
+        # zero-initialized affine on the output) can be carried to those targets on the
+        # 028 backbone. Their protocol (pinned Merzbacher test, CRPS, validation-selected
+        # epoch) is the trainer's own, unchanged from 027.
+        choices=(ESSENTIALITY_HEAD, HEAD, AUX_HEAD),
         default=ESSENTIALITY_HEAD,
         help=(
             "Which phenotype the cell trains, selects and scores on. 'betaxanthin' is the "

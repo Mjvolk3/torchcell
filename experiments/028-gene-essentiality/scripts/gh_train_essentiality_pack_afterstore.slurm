@@ -33,7 +33,7 @@
 # Waits for the store build named by TC_STORE_JOB. freeze_and_submit.sh passes extra
 # arguments to the SCRIPT rather than to sbatch, so a dependency cannot be given on the
 # command line; this copy carries it as a directive, and the id is edited per round.
-#SBATCH --dependency=afterok:2623
+#SBATCH --dependency=afterok:2733
 #SBATCH --time=08:00:00
 #SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/slurm/output/%x_%j.out
 #SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/slurm/output/%x_%j.out

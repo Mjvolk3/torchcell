@@ -33,7 +33,7 @@ ARGS=()
 echo "cell $OUT: arm $ARM h$HIDDEN l$LAYERS p$PREPROC seed $SEED epochs $EPOCHS tag $TAG"
 # shellcheck disable=SC2086
 python experiments/028-gene-essentiality/scripts/train_essentiality.py \
-    --arm "$ARM" --head essentiality \
+    --arm "$ARM" --head "${ESS_HEAD:-essentiality}" \
     --seed "$SEED" --epochs "$EPOCHS" \
     --hidden "$HIDDEN" --attention-heads "$HEADS" --layers "$LAYERS" \
     --preprocessor-layers "$PREPROC" \

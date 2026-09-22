@@ -193,6 +193,16 @@ def consensus_term(name: str, key: str) -> Callable[[], float]:
     return run
 
 
+def agreement_pair(a: str, b: str, key: str) -> float:
+    """One statistic of one tier pair from results/kcat_tier_agreement.json."""
+    with open(osp.join(RESULTS, "kcat_tier_agreement.json")) as fh:
+        pairs = json.load(fh)["pairs"]
+    for p in pairs:
+        if {p["a"], p["b"]} == {a, b}:
+            return float(p[key])
+    raise KeyError((a, b))
+
+
 def simplification(block: str, name: str, key: str) -> Callable[[], float]:
     """One statistic of one named row of the simplification readout."""
 
@@ -2181,6 +2191,77 @@ CHECKS: list[Check] = [
         claim="round114: pool 0.125 min enzyme",
         stated=-0.01,
         recompute=simplification("released_pairs", "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split", "mean_difference"),
+    ),
+    # sec:round116 -- the all-predicted and shuffled tables under the pool.
+    Check(
+        claim="round116: EZKinetics table against the tiered pool",
+        stated=0.004,
+        recompute=simplification("released_pairs", "GECKO pool 0.125, all units EZKinetics against the tiered-table pool, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round116: EZKinetics table, seeds above the tiered pool",
+        stated=4,
+        recompute=simplification("released_pairs", "GECKO pool 0.125, all units EZKinetics against the tiered-table pool, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round116: shuffled table against the tiered pool",
+        stated=0.002,
+        recompute=simplification("released_pairs", "GECKO pool 0.125, shuffled table against the tiered-table pool, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round116: shuffled table, seeds above the tiered pool",
+        stated=3,
+        recompute=simplification("released_pairs", "GECKO pool 0.125, shuffled table against the tiered-table pool, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round116: EZKinetics table against the plain store",
+        stated=-0.007,
+        recompute=simplification("released_pairs", "GECKO pool 0.125, all units EZKinetics against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round116: shuffled table against the plain store",
+        stated=-0.009,
+        recompute=simplification("released_pairs", "GECKO pool 0.125, shuffled table against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round116 agreement: measured vs EZKinetics Spearman",
+        stated=0.79,
+        recompute=lambda: agreement_pair("measured", "ezkinetics", "spearman"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round116 agreement: measured vs EZKinetics median decades",
+        stated=0.34,
+        recompute=lambda: agreement_pair("measured", "ezkinetics", "median_abs_decades"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round116 agreement: measured vs homolog Spearman",
+        stated=0.40,
+        recompute=lambda: agreement_pair("measured", "homolog", "spearman"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round116 agreement: measured vs homolog median decades",
+        stated=0.57,
+        recompute=lambda: agreement_pair("measured", "homolog", "median_abs_decades"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round116 agreement: homolog vs predicted median decades",
+        stated=0.75,
+        recompute=lambda: agreement_pair("homolog", "ezkinetics", "median_abs_decades"),
+        tolerance=0.05,
+    ),
+    Check(
+        claim="round116 store ezk: wild-type growth fraction",
+        stated=0.16,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125ezk.json")))["gecko_provenance"]["wild_type_growth_fraction"]
+        ),
+        tolerance=0.005,
     ),
     Check(
         claim="round114 store pool125: n_variables",

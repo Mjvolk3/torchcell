@@ -32,7 +32,7 @@ echo "worktree $SLURM_SUBMIT_DIR, job $SLURM_JOB_ID, $(date)"
 for variant in ${GECKO_VARIANTS:-pool125 pool250 pool125s1 pool125minenz plainfba pfbalambda3 pfbalambda4 pool125sign pool125sign30}; do
     echo "===== variant $variant, $(date)"
     $PY experiments/028-gene-essentiality/scripts/ess_gecko_store.py \
-        --variant "$variant" --processes 24
+        --variant "$variant" --processes "$SLURM_CPUS_PER_TASK"
     store="$DATA_ROOT/data/torchcell/reference_flux/ess_solve_encodings_YPD_gecko$variant.npz"
     if [ -f "$store" ]; then
         echo "===== derived store gecko$variant, $(date)"

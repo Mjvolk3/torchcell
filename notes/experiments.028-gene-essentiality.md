@@ -1588,3 +1588,19 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 - Forced growth column 0.766 / 0.766 / 0.770 against round 19's 0.704 / 0.743 / 0.670 (+0.062, 3/3); gated 0.839 / 0.770 / 0.832 against 0.816 / 0.810 / 0.783 (+0.010, 2/3). Both under the layer-free store (0.911).
 - A cell of this form peaks at 40 GB (sacct MaxRSS, job 2730); three-cell packs at 36 GB died at 2 h 40 (jobs 2728, 2729); reruns one per job at 80 GB (2730 to 2732).
 - Published v5 at ea783f7ec, 345 checks.
+
+## 2026.09.22 - Round 116: is the kcat table what limits the pool?
+
+- User direction: use the predictors; test the GECKO pool once more with the shipped tiered table against a table in which every enzyme is predicted by the best predictor, and answer whether kcat is the bottleneck.
+- `kcat_tier_agreement.py` (`results/kcat_tier_agreement.json`): each tier evaluated on every unit it reaches, no fall-through, cross-organism homologs with the yeast rows excluded. On the 96 units with a yeast assay, EZKinetics agrees with it at Spearman 0.79 and a median gap of 0.34 decades (82 percent within a decade); the cross-organism EC homologs agree at 0.40 and 0.57 decades on 77 units (65 percent). Homologs against predictors on 845 units: Spearman about 0.4, median gap 0.75 decades, homologs 0.2 decades higher. Caveat, unverified: the predictors may have trained on the same yeast assays.
+- `parameters.py`: `load_predicted_unit_table(restrict_to=)` keeps one admitted predictor; `resolve_kcat_table(database_tiers=False)` skips the measured and homolog tiers (default becomes the median of the predictions).
+- `ess_gecko_store.py` variants `pool125ezk` (every unit EZKinetics alone; wild type 0.163 of unconstrained growth, 91 lethal) and `pool125shuf` (tiered table permuted over units, seed 0; 0.116, 91 lethal). Store job 2733; packs 2734 to 2737 (w133, six seeds each, 8 CPUs and 36 GB per pack), paired against w131_geckopool125 and w129. Reads wired in `simplification_readout.py` and the store ladder table.
+- `isozyme_affine_store.py` now writes `isozyme_affine_store_<tag>.json` for a tagged store; the untagged summary had been overwritten by every tagged build.
+
+## 2026.09.22 - Rounds 117 and 118: the layer-free module carried to betaxanthin and the amino acids
+
+- User direction: improve on the previous best betaxanthin (0.131 pinned Spearman, flux precursor readout, three seeds; module-off control 0.115; kNN over ProtT5 0.145; FCL 0.039) and amino acids (0.068, three seeds; pooled 0.048), same Merzbacher pinned splits, the strain properly represented.
+- `train_essentiality.py`: `--head betaxanthin|mulleder19` re-admitted; `FbaAffine` takes `out_features` (19 for the amino acids) and the readout adds the affine to the mean channel of a distributional head only. `ess_cell.sh` reads `ESS_HEAD`.
+- Betaxanthin store (`experiments/027-betaxanthin-metabolic/scripts/bx_reference_flux_table.py`, job 2740, four minutes): yeast-GEM plus the Cachera cassette (46 reactions, 20 demands), the four BY4741 markers deleted as background, corrected YPD; per GEM gene two pfba vectors (growth; betaxanthin at 90 percent of own growth) plus the total demand, 8,355 columns; 1,155 genes, 93 lethal, 180 move the production potential. ARO4-K229L and ARO7-G141S have no representation in a stoichiometric model (no feedback inhibition to relieve) and are recorded as background.
+- Amino-acid store: `ess_reference_flux_table.py --genes gem --medium SM --out-tag gem` (job 2739), every GEM gene on the dataset's medium; writes `results/fba_ratio_SM_gem.csv` for the medium column.
+- Packs w134 (betaxanthin) and w135 (amino acids): store against the same backbone without the affine, CRPS, 200 epochs, seeds 2700 to 2705, six cells per pack, two packs per target. Rule-count columns left out in this first round.

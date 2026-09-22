@@ -2684,6 +2684,12 @@ def store_ladder() -> str | None:
         ("GECKO pool 0.125, parsimony on enzyme mass", "growth, then least enzyme", "usages under the pool",
          "ess_gecko_store_pool125minenz.json",
          "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split"),
+        ("GECKO pool 0.125, every unit EZKinetics", "growth, then least flux",
+         "usages under the pool", "ess_gecko_store_pool125ezk.json",
+         "GECKO pool 0.125, all units EZKinetics against the plain store, released split"),
+        ("GECKO pool 0.125, shuffled kcat table", "growth, then least flux",
+         "usages under the pool", "ess_gecko_store_pool125shuf.json",
+         "GECKO pool 0.125, shuffled table against the plain store, released split"),
     ]
     dash = "\\multicolumn{1}{c}{--}"
     rows = [

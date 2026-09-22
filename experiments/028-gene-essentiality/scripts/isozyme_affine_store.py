@@ -71,6 +71,8 @@ def stem(name: str) -> str:
     """``ess_solve_encodings_YPD<_tag><_name>.npz`` under the table directory."""
     tag = f"_{STORE_TAG}" if STORE_TAG else ""
     return osp.join(TABLE_DIR, f"ess_solve_encodings_YPD{tag}{name}.npz")
+
+
 COLUMNS = [
     "gpr_n_reactions",
     "gpr_n_sole",
@@ -266,7 +268,11 @@ def main() -> None:
             "n_with_a_sole_reaction": sum(r["gpr_n_sole"] > 0 for r in viable),
         },
     }
-    out = osp.join(RESULTS_DIR, "isozyme_affine_store.json")
+    # A tagged store writes a tagged summary; the untagged name belongs to the plain store
+    # and was overwritten by every tagged build before this.
+    out = osp.join(
+        RESULTS_DIR, f"isozyme_affine_store{'_' + STORE_TAG if STORE_TAG else ''}.json"
+    )
     with open(out, "w") as fh:
         json.dump(report, fh, indent=2)
     print(

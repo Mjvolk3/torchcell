@@ -1761,6 +1761,102 @@
       "n_pairs_positive": null,
       "select_epochs_a": null,
       "select_epochs_b": null
+    },
+    {
+      "name": "GECKO pool 0.125, all units EZKinetics against the tiered-table pool, released split",
+      "a": "w133_geckopool125ezk",
+      "b": "w131_geckopool125",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9060123262522947,
+      "mean_b": 0.9022095462890113,
+      "mean_difference": 0.0038027799632835055,
+      "sd_difference": 0.012066699430426387,
+      "n_positive": 4,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "GECKO pool 0.125, shuffled table against the tiered-table pool, released split",
+      "a": "w133_geckopool125shuf",
+      "b": "w131_geckopool125",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9039142407553107,
+      "mean_b": 0.9022095462890113,
+      "mean_difference": 0.0017046944662995056,
+      "sd_difference": 0.0063720442436582475,
+      "n_positive": 3,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "GECKO pool 0.125, all units EZKinetics against the plain store, released split",
+      "a": "w133_geckopool125ezk",
+      "b": "w129_ypdgprnuc",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9060123262522947,
+      "mean_b": 0.9131589299763966,
+      "mean_difference": -0.00714660372410177,
+      "sd_difference": 0.005738207498269506,
+      "n_positive": 1,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
+    },
+    {
+      "name": "GECKO pool 0.125, shuffled table against the plain store, released split",
+      "a": "w133_geckopool125shuf",
+      "b": "w129_ypdgprnuc",
+      "n": 6,
+      "seeds_per_unit": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "mean_a": 0.9039142407553107,
+      "mean_b": 0.9131589299763966,
+      "mean_difference": -0.00924468922108577,
+      "sd_difference": 0.00833951871863971,
+      "n_positive": 1,
+      "per_unit_difference": null,
+      "n_pairs": null,
+      "n_pairs_positive": null,
+      "select_epochs_a": null,
+      "select_epochs_b": null
     }
   ],
   "rank_shifts": [

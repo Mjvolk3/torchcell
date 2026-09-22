@@ -42,6 +42,11 @@ recorded for the wild type only and never compared across genotypes.
 VARIANTS (``--variant``; the enzyme program always runs on the predicted kcat tier):
 
 * ``pool125``: P_avail 0.125 g/gDW (``GECKO3_YEAST_PROTEIN_POOL``), kcat point values.
+* ``pool125ezk``: ``pool125`` on the "all enzymes predicted" table: the database tiers
+  skipped and every unit EZKinetics covers (the best-ranked admitted predictor, own-class
+  fraction 0.830) takes its value; the rest the median of those. Round 116.
+* ``pool125shuf``: ``pool125`` on the tiered table with its values permuted over units at
+  ``KCAT_SHUFFLE_SEED``: the shuffled-table control. Round 116.
 * ``pool250``: 0.25, the f P_tot product before saturation (``PROTEIN_POOL_SETTINGS[0.25]``).
 * ``pool125s1``: 0.125, every kcat widened to its 1-sigma upper edge
   (``kcat_ceiling_sigma_k=1``).
@@ -108,7 +113,10 @@ RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
 TABLE_DIR = osp.join(DATA_ROOT, "data/torchcell/reference_flux")
 PLAIN_STORE = osp.join(TABLE_DIR, "ess_solve_encodings_YPD_nuc.npz")
 #: See the note at the first solve.
-HIGHS_OPTIONS = {"primal_feasibility_tolerance": 1e-9, "dual_feasibility_tolerance": 1e-9}
+HIGHS_OPTIONS = {
+    "primal_feasibility_tolerance": 1e-9,
+    "dual_feasibility_tolerance": 1e-9,
+}
 OED_SCEREVISIAE = osp.join(
     DATA_ROOT, "data/enzyme_kinetics/open_enzyme_database/scerevisiae"
 )
@@ -149,6 +157,8 @@ from torchcell.metabolism.yeast_GEM import YeastGEM  # noqa: E402
 
 Variant = Literal[
     "pool125",
+    "pool125ezk",
+    "pool125shuf",
     "pool250",
     "pool125s1",
     "pool125sign",
@@ -160,6 +170,14 @@ Variant = Literal[
 ]
 Stage2 = Literal["flux", "enzyme_mass"]
 Solver = Literal["highs", "highs-ds"]
+#: Which kcat table the pool reads. ``tiered`` is the shipped four-tier table (measured,
+#: homolog, predicted median, default). ``ezkinetics`` skips the database tiers and takes
+#: the best-ranked admitted predictor for every unit it covers, the "all enzymes predicted"
+#: table. ``shuffled`` is the tiered table with its values permuted over units at a fixed
+#: seed: the same numbers on the wrong enzymes, the control that says whether the pool
+#: program reads the table at all.
+KcatTable = Literal["tiered", "ezkinetics", "shuffled"]
+KCAT_SHUFFLE_SEED = 0
 
 
 class VariantSpec(BaseModel):
@@ -174,10 +192,17 @@ class VariantSpec(BaseModel):
     stage2: Stage2 | None = "flux"
     lambda_parsimony: float | None = None
     solver: Solver = "highs"
+    kcat_table: KcatTable = "tiered"
 
 
 VARIANT_SPECS: dict[str, VariantSpec] = {
     "pool125": VariantSpec(name="pool125", p_avail=0.125),
+    "pool125ezk": VariantSpec(
+        name="pool125ezk", p_avail=0.125, kcat_table="ezkinetics"
+    ),
+    "pool125shuf": VariantSpec(
+        name="pool125shuf", p_avail=0.125, kcat_table="shuffled"
+    ),
     "pool250": VariantSpec(name="pool250", p_avail=0.25),
     "pool125s1": VariantSpec(name="pool125s1", p_avail=0.125, sigma_k=1.0),
     "pool125sign": VariantSpec(
@@ -186,8 +211,12 @@ VARIANT_SPECS: dict[str, VariantSpec] = {
     "pool125sign30": VariantSpec(
         name="pool125sign30", p_avail=0.125, sign_threshold_kj_per_mol=30.0
     ),
-    "pool125minenz": VariantSpec(name="pool125minenz", p_avail=0.125, stage2="enzyme_mass"),
-    "plainfba": VariantSpec(name="plainfba", p_avail=None, stage2=None, solver="highs-ds"),
+    "pool125minenz": VariantSpec(
+        name="pool125minenz", p_avail=0.125, stage2="enzyme_mass"
+    ),
+    "plainfba": VariantSpec(
+        name="plainfba", p_avail=None, stage2=None, solver="highs-ds"
+    ),
     "pfbalambda3": VariantSpec(
         name="pfbalambda3", p_avail=None, stage2=None, lambda_parsimony=1e-3
     ),
@@ -276,6 +305,8 @@ class GeckoStoreProvenance(StoreProvenance):
 
 
 class GeneRow(BaseModel):
+    """One gene's row of the store summary."""
+
     gene: str
     growth: float
     growth_ratio: float
@@ -317,6 +348,8 @@ class Program(BaseModel):
 
 
 class Solve(BaseModel):
+    """One program's solution: the flux, growth, usages and duals."""
+
     model_config = {"arbitrary_types_allowed": True}
 
     v: np.ndarray
@@ -336,7 +369,9 @@ _KNOCKED_E: dict[str, np.ndarray] = {}
 _E_WT: np.ndarray | None = None
 
 
-def split_box(lb: np.ndarray, ub: np.ndarray) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
+def split_box(
+    lb: np.ndarray, ub: np.ndarray
+) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
     """The split box, exactly equal to the original one (``parsimonious_reference_flux``)."""
     p_bounds: list[tuple[float, float]] = []
     n_bounds: list[tuple[float, float]] = []
@@ -367,8 +402,10 @@ def build_program(
     m, r = s_dense.shape
     n_e = int(e_unit.size)
     s = csr_matrix(s_dense)
-    a_eq = hstack([s, -s, csr_matrix((m, n_e))], format="csr") if n_e else hstack(
-        [s, -s], format="csr"
+    a_eq = (
+        hstack([s, -s, csr_matrix((m, n_e))], format="csr")
+        if n_e
+        else hstack([s, -s], format="csr")
     )
     constrained = np.unique(e_reaction)
     if n_e:
@@ -439,7 +476,8 @@ def solve_program(
     prog: Program, knocked_rxn: np.ndarray, knocked_e: np.ndarray
 ) -> Solve:
     """Stage 1 (max growth, optionally minus lambda x total flux) then the stage 2 the
-    variant asks for (min total flux or min enzyme mass at that growth), one genotype."""
+    variant asks for (min total flux or min enzyme mass at that growth), one genotype.
+    """
     r, n_e = prog.n_rxn, prog.n_e
     p_b = list(prog.p_bounds)
     n_b = list(prog.n_bounds)
@@ -495,7 +533,9 @@ def solve_program(
     growth_row[prog.biomass] = -1.0
     growth_row[r + prog.biomass] = 1.0
     growth_ub = csr_matrix(growth_row.reshape(1, -1))
-    a_ub2 = growth_ub if prog.a_ub is None else vstack([prog.a_ub, growth_ub], format="csr")
+    a_ub2 = (
+        growth_ub if prog.a_ub is None else vstack([prog.a_ub, growth_ub], format="csr")
+    )
     b_ub2 = np.concatenate([prog.b_ub, [-STAGE2_GROWTH_FRACTION * z_star]])
     c2 = np.zeros(2 * r + n_e)
     if prog.stage2 == "flux":
@@ -555,7 +595,8 @@ def usage_of(
     prog: Program, solve: Solve, knocked_e: np.ndarray
 ) -> tuple[float, int, np.ndarray]:
     """Enzyme mass (g/gDW), the number of units in use and the usage vector, by the
-    variant's rule (the LP's own for enzyme_mass, the minimum allocation otherwise)."""
+    variant's rule (the LP's own for enzyme_mass, the minimum allocation otherwise).
+    """
     if prog.n_e == 0:
         return float("nan"), 0, np.zeros(0)
     if prog.stage2 == "enzyme_mass":
@@ -567,7 +608,8 @@ def usage_of(
 
 def allocation_change(prog: Program, e: np.ndarray) -> tuple[int, float]:
     """How the usage differs from the wild type's: units whose usage moved, and the mass
-    moved (sum |MW (e - e_wt)|) as a fraction of the pool."""
+    moved (sum |MW (e - e_wt)|) as a fraction of the pool.
+    """
     assert _E_WT is not None
     if prog.n_e == 0:
         return 0, float("nan")
@@ -703,7 +745,9 @@ def main() -> None:
     assert media["bounds_sha256"] == plain_provenance.media_report.bounds_sha256
     gem = build_gem_tensors(model, source.model_dir)
     rxn_ids = list(gem.rxn_ids)
-    assert rxn_ids == [str(r) for r in plain["rxn_ids"]], "rxn_ids differ from the plain store"
+    assert rxn_ids == [str(r) for r in plain["rxn_ids"]], (
+        "rxn_ids differ from the plain store"
+    )
     n_rxn = len(rxn_ids)
     biomass = int(gem.biomass_index)
     s_dense = (gem.s.to_dense() if gem.s.is_sparse else gem.s).double().numpy()
@@ -713,7 +757,10 @@ def main() -> None:
     assert all(g in gem_genes for g in genes)
 
     unconstrained = parsimonious_reference_flux(
-        gem.s, torch.from_numpy(base_lb).float(), torch.from_numpy(base_ub).float(), biomass
+        gem.s,
+        torch.from_numpy(base_lb).float(),
+        torch.from_numpy(base_ub).float(),
+        biomass,
     ).objective_value
     assert abs(unconstrained - plain_provenance.wild_type_growth) < 1e-6, (
         unconstrained,
@@ -725,12 +772,21 @@ def main() -> None:
     lb, ub = base_lb, base_ub
     if spec.sign_threshold_kj_per_mol is not None:
         table = resolve_reaction_delta_g(
-            gem, osp.join(DATA_ROOT, THERMO_EQUILIBRATOR_MIRROR), ThermoSource.UNION_EXTERNAL
+            gem,
+            osp.join(DATA_ROOT, THERMO_EQUILIBRATOR_MIRROR),
+            ThermoSource.UNION_EXTERNAL,
         )
         delta = table.delta_r_g0.numpy().astype(np.float64)
         mask = table.mask.numpy().astype(bool)
         lb, ub, thermo = apply_sign_rule(
-            base_lb, base_ub, delta, mask, spec.sign_threshold_kj_per_mol, rxn_ids, plain_wt, table
+            base_lb,
+            base_ub,
+            delta,
+            mask,
+            spec.sign_threshold_kj_per_mol,
+            rxn_ids,
+            plain_wt,
+            table,
         )
         print(
             f"thermo {thermo.source}: {thermo.n_reactions_with_energy}/{n_rxn} reactions priced "
@@ -749,6 +805,7 @@ def main() -> None:
     gene_of = units.unit_gene_index[1].numpy()
     pool: ProteinPoolProvenance | None = None
     tier_counts: dict[str, int] = {}
+    kcat_table_note = "no kcat table (no pool)"
     has_kcat = np.zeros(units.n_units, dtype=bool)
     has_mw = np.zeros(units.n_units, dtype=bool)
     usable = np.zeros(units.n_units, dtype=bool)
@@ -767,7 +824,11 @@ def main() -> None:
             osp.join(kinetics_dir, VERIFIED_PAIRS_FEATURE)
         )
         predicted = load_predicted_unit_table(
-            "k_cat", units.n_units, kinetics_dir, osp.join(EXPERIMENT_ROOT, PLAUSIBILITY_RESULT)
+            "k_cat",
+            units.n_units,
+            kinetics_dir,
+            osp.join(EXPERIMENT_ROOT, PLAUSIBILITY_RESULT),
+            restrict_to="ezkinetics" if spec.kcat_table == "ezkinetics" else None,
         )
         table_kcat = resolve_kcat_table(
             units,
@@ -777,10 +838,23 @@ def main() -> None:
             substrates=substrates,
             homolog_mirror_dir=OED_ALL,
             kcat_ceiling_sigma_k=spec.sigma_k,
+            database_tiers=spec.kcat_table != "ezkinetics",
         )
         tier_counts = table_kcat.tier_counts()
         kcat_per_s = table_kcat.values.numpy().astype(np.float64)
         has_kcat = table_kcat.known_mask.numpy().astype(bool)
+        kcat_table_note = table_kcat.notes
+        if spec.kcat_table == "shuffled":
+            # The same values on other units; the known mask travels with the value so
+            # a unit that had a default keeps a default. Permutation over all units.
+            perm = np.random.default_rng(KCAT_SHUFFLE_SEED).permutation(units.n_units)
+            kcat_per_s = kcat_per_s[perm]
+            has_kcat = has_kcat[perm]
+            kcat_table_note = (
+                f"{table_kcat.notes} THEN the values and known mask were permuted over all "
+                f"{units.n_units} units with numpy default_rng({KCAT_SHUFFLE_SEED}): the "
+                "shuffled-table control."
+            )
         mw = molecular_weight_table(source.model_dir, units.gene_ids)
         gene_mw = mw.values.numpy().astype(np.float64)
         gene_has_mw = np.array(
@@ -907,7 +981,10 @@ def main() -> None:
         gene_units = unit_of[gene_of == gene_index[gene]]
         program_units = unit_index_in_program[gene_units]
         _KNOCKED_E[gene] = np.unique(program_units[program_units >= 0])
-    print(f"{len(genes)} genes, knockouts indexed, {time.time() - started:.0f}s", flush=True)
+    print(
+        f"{len(genes)} genes, knockouts indexed, {time.time() - started:.0f}s",
+        flush=True,
+    )
 
     with Pool(args.processes) as pool_:
         results = pool_.map(solve_gene, genes, chunksize=4)
@@ -951,8 +1028,12 @@ def main() -> None:
             pool_usage_fraction=float(pool_usage[i]) if has_pool else None,
             enzyme_mass_g_per_gdw=float(mass[i]) if has_pool else None,
             n_units_nonzero_usage=int(n_used[i]) if has_pool else None,
-            n_units_usage_changed_vs_wild_type=int(n_units_changed[i]) if has_pool else None,
-            allocation_mass_moved_fraction_of_pool=float(mass_moved[i]) if has_pool else None,
+            n_units_usage_changed_vs_wild_type=int(n_units_changed[i])
+            if has_pool
+            else None,
+            allocation_mass_moved_fraction_of_pool=float(mass_moved[i])
+            if has_pool
+            else None,
             pool_dual=float(pool_dual[i]) if has_pool else None,
             n_enzyme_rows_binding=int(n_binding[i]) if has_pool else None,
             relative_l2_log1p_to_plain=float(rel[i]),
@@ -1060,9 +1141,9 @@ def main() -> None:
             "every member gene has a SwissProt MW, nothing defaulted"
         ),
         kcat_rule=(
-            "resolve_kcat_table (measured, homolog, predicted-median tiers; a complex takes "
-            "the min over its subunits); a unit resolved to the organism default has NO kcat "
-            f"here; kcat_ceiling_sigma_k {spec.sigma_k}"
+            f"resolve_kcat_table, kcat_table {spec.kcat_table}: {kcat_table_note} A unit "
+            "resolved to the organism default has NO kcat here; kcat_ceiling_sigma_k "
+            f"{spec.sigma_k}"
         ),
         program=(
             "variables [p, n, e] >= 0, v = p - n with the GEM box split exactly as "
@@ -1136,8 +1217,12 @@ def main() -> None:
         "wild_type_pool_usage_fraction_stage2_lp": wt_pool_fraction_lp,
         "wild_type_enzyme_mass_g_per_gdw": wt_mass if has_pool else None,
         "wild_type_pool_dual_per_hour_per_g_gdw": wt.pool_dual if has_pool else None,
-        "wild_type_pool_binding": bool(abs(wt.pool_dual) > DUAL_TOL) if has_pool else None,
-        "n_enzyme_rows_binding_wild_type": wt.n_enzyme_rows_binding if has_pool else None,
+        "wild_type_pool_binding": bool(abs(wt.pool_dual) > DUAL_TOL)
+        if has_pool
+        else None,
+        "n_enzyme_rows_binding_wild_type": wt.n_enzyme_rows_binding
+        if has_pool
+        else None,
         "n_units_nonzero_usage_wild_type": wt_n_used if has_pool else None,
         "n_units_nonzero_usage_wild_type_stage2_lp": int((wt.e > 1e-12).sum())
         if has_pool
@@ -1175,20 +1260,25 @@ def main() -> None:
         else None,
         "allocation_mass_moved_fraction_quantiles_viable": {
             str(q): float(v)
-            for q, v in zip(quantile_grid, np.quantile(mass_moved[~lethal], quantile_grid))
+            for q, v in zip(
+                quantile_grid, np.quantile(mass_moved[~lethal], quantile_grid)
+            )
         }
         if has_pool and (~lethal).any()
         else None,
         "pool_usage_fraction_quantiles_viable": {
             str(q): float(v)
-            for q, v in zip(quantile_grid, np.quantile(pool_usage[~lethal], quantile_grid))
+            for q, v in zip(
+                quantile_grid, np.quantile(pool_usage[~lethal], quantile_grid)
+            )
         }
         if has_pool and (~lethal).any()
         else None,
         "growth_minus_plain_growth_quantiles_viable": {
             str(q): float(v)
             for q, v in zip(
-                quantile_grid, np.quantile((growth - plain_growth)[~lethal], quantile_grid)
+                quantile_grid,
+                np.quantile((growth - plain_growth)[~lethal], quantile_grid),
             )
         }
         if (~lethal).any()

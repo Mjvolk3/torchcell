@@ -755,6 +755,7 @@ def load_predicted_unit_table(
     plausibility_json: str,
     version: str = KINETICS_VERSION,
     complex_aggregation: ComplexAggregation = "min",
+    restrict_to: str | None = None,
 ) -> PredictedUnitTable:
     """Median prediction per catalytic unit over the predictors the study admits.
 
@@ -773,6 +774,10 @@ def load_predicted_unit_table(
         version: Version subdirectory of each predictor's mirror.
         complex_aggregation: How a complex's per-subunit predictions become one value.
             ``"min"`` is the shipped convention and reproduces every existing table.
+        restrict_to: Keep ONE of the admitted predictors and drop the rest, so the table
+            is that predictor's value alone rather than a median. The name must be in the
+            study's admitted set; a rejected predictor cannot be reached this way. The
+            restriction is recorded on the selection's ``statistic`` so the table says so.
     """
     selection = PredictorSelection.from_study(parameter, plausibility_json)
     if not selection.selected:
@@ -780,6 +785,18 @@ def load_predicted_unit_table(
             f"the within-class study admits no predictor for {parameter}: none of "
             f"{[r[0] for r in selection.ranked]} beats the EC-median lookup "
             f"({selection.baseline_fraction:.3f}) on its Wilson lower bound."
+        )
+    if restrict_to is not None:
+        if restrict_to not in selection.selected:
+            raise ValueError(
+                f"{restrict_to} is not among the predictors the study admits for "
+                f"{parameter}: {selection.selected}"
+            )
+        selection = selection.model_copy(
+            update={
+                "selected": [restrict_to],
+                "statistic": f"{selection.statistic}; restricted to {restrict_to}",
+            }
         )
     stacked: list[np.ndarray] = []
     paths: dict[str, str] = {}
@@ -1139,8 +1156,15 @@ def resolve_kcat_table(
     target_temperature_c: float = 30.0,
     complex_aggregation: ComplexAggregation = "min",
     kcat_ceiling_sigma_k: float = 0.0,
+    database_tiers: bool = True,
 ) -> ParameterTable:
     r"""One :math:`k_{cat}` per catalytic unit, database-first and substrate-matched.
+
+    ``database_tiers=False`` skips the measured and homolog tiers, so every unit takes the
+    predicted value where one exists and the default elsewhere. The default is then the
+    median of the predicted values rather than of the database's, since the database placed
+    none. This is the "all enzymes predicted" table a sensitivity test compares against the
+    four-tier one; it is not the shipped table and is never chosen silently.
 
     FOUR TIERS, IN ORDER
     --------------------
@@ -1189,15 +1213,18 @@ def resolve_kcat_table(
             complex's subunits.
         kcat_ceiling_sigma_k: Widen every value to :math:`10^{\mu_u+k\sigma_u}`. ``0.0``
             leaves the table exactly as it was and attaches no widening record.
+        database_tiers: ``False`` skips the measured and homolog tiers (see above).
 
     Returns:
         A :class:`ParameterTable` of length ``units.n_units``, in units of 1/s. It carries
         ``log10_sigma`` from the tier ladder whether or not the ceiling was widened, and a
         :class:`KcatCeilingWidening` record when it was.
     """
-    records = load_mirrored_records(oed_mirror_dir)
+    records = load_mirrored_records(oed_mirror_dir) if database_tiers else []
     homolog_records = (
-        load_mirrored_records(homolog_mirror_dir) if homolog_mirror_dir else []
+        load_mirrored_records(homolog_mirror_dir)
+        if homolog_mirror_dir and database_tiers
+        else []
     )
     # The substrate map comes from THIS argument and nowhere else. Taking it from
     # ``predicted`` when the caller omits it would make the measured tier depend on whether
@@ -1216,6 +1243,14 @@ def resolve_kcat_table(
         target_temperature_c,
         complex_aggregation,
     )
+    predicted_only: PredictedUnitTable | None = None
+    if not database_tiers:
+        assert not database
+        if predicted is None:
+            raise ValueError(
+                "database_tiers=False needs a predicted table to fill from"
+            )
+        predicted_only = predicted
 
     # A registered in-process predictor is a different mechanism from the parquet tier and
     # is kept for the protocol's sake; it fills only units the database leaves.
@@ -1230,9 +1265,24 @@ def resolve_kcat_table(
     ):
         unit_genes.setdefault(u, []).append(units.gene_ids[g])
 
-    default, default_note = _organism_default(
-        [v for v, _, _ in database.values()], FALLBACK_KCAT_PER_S, "1/s"
+    default_from = (
+        [v for v, _, _ in database.values()]
+        if predicted_only is None
+        else [
+            float(v)
+            for v, m in zip(
+                predicted_only.values.tolist(),
+                predicted_only.mask.tolist(),
+                strict=True,
+            )
+            if m
+        ]
     )
+    default, default_note = _organism_default(default_from, FALLBACK_KCAT_PER_S, "1/s")
+    if not database_tiers:
+        default_note = (
+            f"{default_note} (database tiers skipped: median of the predicted values)"
+        )
 
     values: list[float] = []
     provenance: list[ParameterProvenance] = []
@@ -1328,10 +1378,17 @@ def resolve_kcat_table(
         provenance,
         unit="1/s",
         notes=(
-            f"Open Enzyme Database first ({len(records)} organism rows, substrate-matched "
-            f"against {len(match.keys)} units), then the EC homolog tier "
-            f"({len(homolog_records)} rows, any organism), then {predicted_note}, then "
-            f"{default_note}. {aggregation_note}{ceiling_note}"
+            (
+                f"Open Enzyme Database first ({len(records)} organism rows, substrate-matched "
+                f"against {len(match.keys)} units), then the EC homolog tier "
+                f"({len(homolog_records)} rows, any organism), then {predicted_note}, then "
+                f"{default_note}. {aggregation_note}{ceiling_note}"
+            )
+            if database_tiers
+            else (
+                f"Database tiers skipped by the caller: {predicted_note} for every unit "
+                f"with a prediction, then {default_note}. {aggregation_note}{ceiling_note}"
+            )
         ),
         log10_sigma=sigma,
         ceiling=ceiling,

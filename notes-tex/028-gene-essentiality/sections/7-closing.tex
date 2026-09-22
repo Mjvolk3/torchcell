@@ -419,11 +419,45 @@ and the loosest pool is nearest it. So on this endpoint the turnover table and t
 add nothing to the parsimonious solve that the module can read, and neither does the
 choice of parsimony form; what the module reads is the parsimonious deletion vector on
 the GEM's own box, and the fundamentals as they are parameterized today move that
-vector without informing it. Hypothesis, untested: the kcat table is the limiting
-ingredient, three quarters of it predicted with a spread of half a decade, and a pool
-program on a table with many yeast measurements would rank differently.
+vector without informing it. The hypothesis that the table is the limiting ingredient is
+tested in Section~\ref{sec:round116}.
 
 \input{tables/store_ladder}
+
+\subsection{Round 116: is the turnover table what limits the pool?\secstatus{todo}}
+\label{sec:round116}
+
+The shipped table fills each catalytic unit from the first tier that has a value: a
+yeast assay on a matching substrate (97 units), a cross-organism assay of the same EC
+number (782), the median over the three admitted sequence predictors (2,831), an
+organism constant (18). Whether those tiers would agree on the same unit the table never
+says, so \texttt{kcat\_tier\_agreement.py} evaluates every tier on every unit it reaches
+(the homolog tier with the yeast rows removed). On the 96 units with a yeast assay, the
+best-ranked predictor EZKinetics agrees with it at Spearman 0.79 and a median gap of
+0.34 decades, 82 percent within a decade; the cross-organism homologs agree with the same
+assays at 0.40 and 0.57 decades on 77 units, 65 percent within a decade. Against the
+predictors the homolog tier reads Spearman 0.4 on 845 units with a median gap of 0.75
+decades, and sits 0.2 decades above them. So the tier that overrides the predictions on a
+fifth of the units is the one furthest from the yeast assays where both can be checked
+(caveat: the predictors may have trained on those assays, which would flatter the
+comparison).
+
+Round 116 (jobs 2733 to 2737, w133) then solves the pool program of round 114 on two
+other tables: every unit taken from EZKinetics alone with the database tiers skipped, the
+all-predicted table (wild type at 0.16 of its unconstrained growth), and the tiered
+table with its values permuted over units at a fixed seed, the control that keeps the
+numbers and loses which enzyme they belong to (0.12). Both stores differ from the tiered
+pool store: the median relative distance between their $\log(1+|v|)$ vectors and the
+tiered store's is 0.16 for the predicted table and 0.41 for the shuffled one, so the
+program reads the table. Read as columns on six seeds, paired against the tiered pool,
+the predicted table reads $+0.004$ (sd 0.012, four of six) and the shuffled table
+$+0.002$ (sd 0.006, three of six); against the plain store they read $-0.007$ (one of
+six) and $-0.009$ (one of six), the tiered pool's $-0.011$
+(Table~\ref{tab:store-ladder}). A table with the enzymes on the wrong reactions moves
+the vector by two fifths of its norm and the score by nothing, so what the module reads
+of the pool program does not depend on which enzyme carries which number. The turnover
+table is not the limiting ingredient; the hypothesis of Section~\ref{sec:round114} is
+retracted.
 
 \subsection{Round 115: the learned allocation, with the pool made to bind\secstatus{todo}}
 \label{sec:round115}

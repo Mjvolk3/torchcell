@@ -214,7 +214,7 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
 \subsection{What was run from the closing list, and what is left out\secstatus{todo}}
 \label{sec:left-to-run}
 
-Eight experiments were listed as able to change a conclusion above. Five are run, one is
+Nine experiments were listed as able to change a conclusion above. Six are run, one is
 left as a design note, one is out of scope, and one did not complete.
 
 \begin{description}
@@ -254,6 +254,11 @@ left as a design note, one is out of scope, and one did not complete.
     forced growth column gains $+0.062$ over round 19 on three of three seeds, the gated
     readout $+0.010$ on two of three; both stay under the layer-free store
     (Section~\ref{sec:round115}).
+  \item[A turnover table that is all predictions, and one shuffled: run.] The pool
+    program on the best-ranked predictor alone and on the tiered table permuted over
+    units read the same as the tiered pool ($+0.004$ and $+0.002$, six seeds), while the
+    shuffled table moves the stored vector by two fifths of its norm; the table is not
+    what limits the pool (Section~\ref{sec:round116}).
   \item[The store on a second phenotype: out of scope.] The endpoint here is
     essentiality. Panel \textbf{c} of Figure~\ref{fig:summary-module} shows the store is
     affordable over the solid-growth build; whether it helps there belongs to that

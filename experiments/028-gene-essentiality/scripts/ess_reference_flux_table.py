@@ -259,6 +259,16 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--medium", default="YPD", choices=sorted(FBA_MEDIA) + ["none"])
     parser.add_argument("--split-file", default="ess_fcl_val0.2_s0.json.gz")
+    parser.add_argument(
+        "--genes",
+        default="split",
+        choices=("split", "gem"),
+        help=(
+            "split (default): the labeled genes of --split-file. gem: EVERY gene of the "
+            "GEM, so the store covers any single-deletion dataset on this medium; a gene "
+            "outside the GEM reads the wild-type row at training time. The portable form."
+        ),
+    )
     parser.add_argument("--growth-fraction", type=float, default=1.0)
     parser.add_argument(
         "--solver",
@@ -303,9 +313,10 @@ def main() -> None:
     ub = gem.ub.clamp(-FLUX_SCALE, FLUX_SCALE)
     biomass = int(gem.biomass_index)
 
-    genes = labeled_genes(args.split_file)
+    genes = sorted(gem_genes) if args.genes == "gem" else labeled_genes(args.split_file)
     print(
-        f"{len(genes)} labeled genes, {sum(g in gem_genes for g in genes)} in the GEM"
+        f"{len(genes)} {'GEM' if args.genes == 'gem' else 'labeled'} genes, "
+        f"{sum(g in gem_genes for g in genes)} in the GEM"
     )
 
     solver_key = SOLVER_KEYS[args.solver]
@@ -427,7 +438,9 @@ def main() -> None:
         n_nonoptimal_zero_flux=n_nonoptimal,
         medium=args.medium,
         media_report=MediaApplied.model_validate(media),
-        split_file=args.split_file,
+        split_file=args.split_file
+        if args.genes == "split"
+        else "every GEM gene (--genes gem)",
         wild_type_growth=wild_growth,
         wild_type_key=keys[0],
         n_sets=len(keys),
@@ -447,6 +460,15 @@ def main() -> None:
         rxn_ids=np.array(rxn_ids),
         provenance=np.array(provenance.model_dump_json()),
     )
+    # The per-gene growth ratio on this medium as the CSV the trainer's media-ratio
+    # column reads (ESS_FBA_CSV, --ess-fba-media <medium>), so a store over every GEM gene
+    # carries its own ratio table for the targets the 1,121-gene CSV does not cover.
+    ratio_csv = osp.join(RESULTS_DIR, f"fba_ratio_{args.medium}{suffix}.csv")
+    with open(ratio_csv, "w") as fh:
+        fh.write(f"gene,{args.medium}\n")
+        for row in rows:
+            fh.write(f"{row.gene},{row.growth_ratio:.6f}\n")
+    print(ratio_csv)
     enc_path = osp.join(TABLE_DIR, f"ess_solve_encodings_{args.medium}{suffix}.npz")
     np.savez(
         enc_path,

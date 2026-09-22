@@ -1,0 +1,194 @@
+{
+  "n_units": 3728,
+  "tiers": [
+    {
+      "name": "measured",
+      "n_units": 97,
+      "median_log10": 1.0492180226701815
+    },
+    {
+      "name": "homolog",
+      "n_units": 846,
+      "median_log10": 0.9822712330395684
+    },
+    {
+      "name": "ezkinetics",
+      "n_units": 3709,
+      "median_log10": 0.6546207717441622
+    },
+    {
+      "name": "eitlem",
+      "n_units": 3709,
+      "median_log10": 0.5806429447519885
+    },
+    {
+      "name": "unikp",
+      "n_units": 3709,
+      "median_log10": 0.5955500465872345
+    },
+    {
+      "name": "predicted_median",
+      "n_units": 3709,
+      "median_log10": 0.616323663730226
+    }
+  ],
+  "pairs": [
+    {
+      "a": "measured",
+      "b": "homolog",
+      "n": 77,
+      "spearman": 0.39786694208107615,
+      "pearson_log10": 0.5542277387388117,
+      "median_abs_decades": 0.5740312677277188,
+      "frac_within_one_decade": 0.6493506493506493,
+      "median_signed_decades": 0.16562582537751624
+    },
+    {
+      "a": "measured",
+      "b": "ezkinetics",
+      "n": 96,
+      "spearman": 0.7851163996083419,
+      "pearson_log10": 0.832531203877768,
+      "median_abs_decades": 0.3389151064435899,
+      "frac_within_one_decade": 0.8229166666666666,
+      "median_signed_decades": -0.12903365226411523
+    },
+    {
+      "a": "measured",
+      "b": "eitlem",
+      "n": 96,
+      "spearman": 0.6455268177606902,
+      "pearson_log10": 0.7650244569709286,
+      "median_abs_decades": 0.23698353446063009,
+      "frac_within_one_decade": 0.8020833333333334,
+      "median_signed_decades": 0.06125946497843382
+    },
+    {
+      "a": "measured",
+      "b": "unikp",
+      "n": 96,
+      "spearman": 0.7033763506134275,
+      "pearson_log10": 0.7601413983950502,
+      "median_abs_decades": 0.40694919032417426,
+      "frac_within_one_decade": 0.78125,
+      "median_signed_decades": -0.15300494939908632
+    },
+    {
+      "a": "measured",
+      "b": "predicted_median",
+      "n": 96,
+      "spearman": 0.8008214462322817,
+      "pearson_log10": 0.839055532212515,
+      "median_abs_decades": 0.303834124837437,
+      "frac_within_one_decade": 0.8333333333333334,
+      "median_signed_decades": -0.04016439258430232
+    },
+    {
+      "a": "homolog",
+      "b": "ezkinetics",
+      "n": 845,
+      "spearman": 0.37569993649017247,
+      "pearson_log10": 0.3727962979226992,
+      "median_abs_decades": 0.7895887064056,
+      "frac_within_one_decade": 0.5988165680473373,
+      "median_signed_decades": -0.20798749908782366
+    },
+    {
+      "a": "homolog",
+      "b": "eitlem",
+      "n": 845,
+      "spearman": 0.4041338621257563,
+      "pearson_log10": 0.37236900784864424,
+      "median_abs_decades": 0.7508620670741681,
+      "frac_within_one_decade": 0.6272189349112426,
+      "median_signed_decades": -0.2128966325978342
+    },
+    {
+      "a": "homolog",
+      "b": "unikp",
+      "n": 845,
+      "spearman": 0.31712310061285837,
+      "pearson_log10": 0.29572231250620445,
+      "median_abs_decades": 0.7634091460801828,
+      "frac_within_one_decade": 0.6011834319526628,
+      "median_signed_decades": -0.2536974049454521
+    },
+    {
+      "a": "homolog",
+      "b": "predicted_median",
+      "n": 845,
+      "spearman": 0.42039714145319834,
+      "pearson_log10": 0.39023004539677353,
+      "median_abs_decades": 0.7106194039346587,
+      "frac_within_one_decade": 0.6236686390532544,
+      "median_signed_decades": -0.24365329243657635
+    },
+    {
+      "a": "ezkinetics",
+      "b": "eitlem",
+      "n": 3709,
+      "spearman": 0.47657523769103194,
+      "pearson_log10": 0.5097479355780221,
+      "median_abs_decades": 0.5457644832082209,
+      "frac_within_one_decade": 0.7535723914801833,
+      "median_signed_decades": -0.14884485017789945
+    },
+    {
+      "a": "ezkinetics",
+      "b": "unikp",
+      "n": 3709,
+      "spearman": 0.4905417353139693,
+      "pearson_log10": 0.5531198487405006,
+      "median_abs_decades": 0.2849913797689135,
+      "frac_within_one_decade": 0.9792396872472364,
+      "median_signed_decades": -0.12895551508759362
+    },
+    {
+      "a": "ezkinetics",
+      "b": "predicted_median",
+      "n": 3709,
+      "spearman": 0.7326087607284022,
+      "pearson_log10": 0.742594278175066,
+      "median_abs_decades": 0.10205648143784218,
+      "frac_within_one_decade": 0.9937988676193044,
+      "median_signed_decades": 0.0
+    },
+    {
+      "a": "eitlem",
+      "b": "unikp",
+      "n": 3709,
+      "spearman": 0.5713380923653946,
+      "pearson_log10": 0.6236639308739461,
+      "median_abs_decades": 0.4890275100879753,
+      "frac_within_one_decade": 0.8301428956592073,
+      "median_signed_decades": 0.06554143487051711
+    },
+    {
+      "a": "eitlem",
+      "b": "predicted_median",
+      "n": 3709,
+      "spearman": 0.8039442490382954,
+      "pearson_log10": 0.8015919886154987,
+      "median_abs_decades": 0.33225295028979296,
+      "frac_within_one_decade": 0.8724723645187382,
+      "median_signed_decades": 0.0
+    },
+    {
+      "a": "unikp",
+      "b": "predicted_median",
+      "n": 3709,
+      "spearman": 0.8179818013888218,
+      "pearson_log10": 0.872428200463371,
+      "median_abs_decades": 0.01958433811746868,
+      "frac_within_one_decade": 0.9975734699379887,
+      "median_signed_decades": 0.0
+    }
+  ],
+  "admitted_predictors": [
+    "ezkinetics",
+    "eitlem",
+    "unikp"
+  ],
+  "best_predictor": "ezkinetics",
+  "note": "Each tier evaluated on every unit it reaches, without the table's fall-through; the homolog tier here excludes Saccharomyces cerevisiae rows; values in 1/s under the shipped conventions (substrate-matched rows, min over a complex's subunits, assay nearest 30 C). Decades are log10 differences."
+}

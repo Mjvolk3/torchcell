@@ -1564,3 +1564,10 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 - Trigenic DCell runs' ontology (`go006_store.py`, jobs 2688 and 2689): 2,651 columns, 1,421 shared with the current 2,362. Graph convolution -0.002 (4/10); DCell hierarchy 0.714 against 0.841 released, -0.020 (2/10). Job 2694 tunes the hierarchy on that store.
 - Goal 2 summary figure gained panel g (the second family). Closing list now reads six items, four run.
 - Round 109 (w126, ten splits) and round 110 (w127, released split) test the module on ProtT5 alone; reads fixed in `simplification_readout.py` before completion.
+
+## 2026.09.21 - End of the four-hour window: published, three reads still in flight
+
+- Published to Zotero at commit 2bee12b92 (269 checks). Rounds 110 and 111: the ProtT5-only backbone with the module reads 0.883 against 0.771 on the released split (six of six seeds) and 0.892 against 0.795 as fold ensembles.
+- Jobs 2697 and 2702: the affine on graph convolution over ProtT5 reads 0.891 against 0.859 (released) and 0.766 against 0.751 (genome-wide), six of six each; on GO over the genome-wide set 0.768 against 0.698.
+- Job 2700: the hierarchy on the trigenic ontology at its tuned configuration reads 0.709, no better than 0.714.
+- Still running: round 109 (splits 3 and 4), the DCell hierarchy with the affine over ten splits (job 2698), the tuned hierarchy on the trigenic store over ten splits (job 2701). Reads are fixed in the scripts; rerun the readouts and republish when they land.

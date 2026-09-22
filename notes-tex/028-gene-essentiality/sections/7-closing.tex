@@ -374,6 +374,55 @@ the essential genes any better than parsimony's. So on this endpoint the parsimo
 solve on the GEM's own box is as good a store as any enzyme-constrained one built from
 these parameters, and the measured proteome is retired from the module with the rest.
 
+
+\subsection{Round 114: the objective ladder, and enzyme allocation with no proteome\secstatus{todo}}
+\label{sec:round114}
+
+The question the measured proteome could not answer fairly is whether a fundamental
+constraint, turnover or reaction energy, adds anything to the parsimonious store once
+the heuristic that carries it is the program's own. GECKO's form is that: one usage
+variable per catalytic unit, each reaction's flux capped by its turnover times its
+units' usage, and one row that keeps the mass-weighted usages inside a total pool, with
+the growth objective pushing usage to the pool's edge. Nothing is measured beyond the
+kcat table, the molecular weights and GECKO 3's three pool constants (total protein 0.5
+g/gDW, metabolic fraction 0.5, saturation 0.5). \texttt{ess\_gecko\_store.py} (jobs 2716
+to 2719) builds that program on the corrected YPD medium, 11,972 variables with 3,710
+units and 2,695 enzyme-constrained reactions, and solves it per deletion with the same
+two-stage parsimony, at the sourced pool of 0.125 g/gDW, at 0.25, with the turnover
+table at its one-sigma upper edge, and with the second stage minimizing enzyme mass
+rather than flux. Beside it sit three rungs that change only the objective: plain FBA
+with no parsimony (the solver's vertex), and parsimony folded into a single objective as
+growth minus a weight times total flux, at weights of 0.001 and 0.0001 per unit growth.
+
+The pool does what it is meant to. It binds at the wild type and for 1,030 of the 1,121
+deletions, the growth objective fills it, and at the sourced constants the wild type
+grows at 0.12 of its unconstrained rate (0.18 at the doubled pool, 0.28 with the wider
+turnover table), the same three-quarters cost the 026 calibration measured for GECKO's
+pool here. The allocation does change per genotype, by little mass: 302 viable
+deletions move some unit's usage and 28 move more than a hundredth of the pool (82 and
+89 under the other two pools). The direction constraints from the reaction energies do
+not survive: fixing every reaction whose energy is beyond 10 kJ/mol leaves 111
+directions in conflict with the wild-type flux and the program infeasible, and 81 at 30
+kJ/mol, most of them transport and exchange reactions, so that rung has no store.
+
+Read as columns (jobs 2720 to 2726, six seeds each, paired by seed against the
+parsimonious store's cells), no rung is above the baseline (Table~\ref{tab:store-ladder}).
+Plain FBA without parsimony reads $-0.010$ (higher on two of six, sd 0.021), the vertex
+being a far less stable object than the parsimonious point (a median distance of 6.1
+against the store, where every other rung is under 1.2). Parsimony inside the
+objective reads $-0.004$ at both weights (two and three of six), so the two-stage form
+loses nothing to the single-objective one. The GECKO rungs read $-0.011$ at the sourced
+pool (one of six), $-0.004$ at the doubled pool (one of six), $-0.005$ with the wider
+turnover table (one of six) and $-0.010$ with parsimony on enzyme mass (two of six). The
+sign is the same on every pool: the tighter the pool, the further below the baseline,
+and the loosest pool is nearest it. So on this endpoint the turnover table and the pool
+add nothing to the parsimonious solve that the module can read, and neither does the
+choice of parsimony form; what the module reads is the parsimonious deletion vector on
+the GEM's own box, and the fundamentals as they are parameterized today move that
+vector without informing it. Hypothesis, untested: the kcat table is the limiting
+ingredient, three quarters of it predicted with a spread of half a decade, and a pool
+program on a table with many yeast measurements would rank differently.
+
 \input{tables/store_ladder}
 
 \subsection{Rounds 84 to 98: what each simplification costs\secstatus{todo}}

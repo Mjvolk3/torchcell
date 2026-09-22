@@ -2129,6 +2129,177 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.5,
     ),
+    # sec:round114 -- the objective ladder and the GECKO pool stores.
+    Check(
+        claim="round114: plain FBA, paired",
+        stated=-0.01,
+        recompute=simplification("released_pairs", "plain FBA, no parsimony against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round114: plain FBA, seeds higher",
+        stated=2,
+        recompute=simplification("released_pairs", "plain FBA, no parsimony against the plain store, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114: plain FBA, sd",
+        stated=0.021,
+        recompute=simplification("released_pairs", "plain FBA, no parsimony against the plain store, released split", "sd_difference"),
+    ),
+    Check(
+        claim="round114: lambda 1e-3",
+        stated=-0.004,
+        recompute=simplification("released_pairs", "parsimony in the objective, lambda 1e-3 against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round114: lambda 1e-4",
+        stated=-0.004,
+        recompute=simplification("released_pairs", "parsimony in the objective, lambda 1e-4 against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round114: pool 0.125",
+        stated=-0.011,
+        recompute=simplification("released_pairs", "GECKO pool 0.125 against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round114: pool 0.125, seeds higher",
+        stated=1,
+        recompute=simplification("released_pairs", "GECKO pool 0.125 against the plain store, released split", "n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114: pool 0.25",
+        stated=-0.004,
+        recompute=simplification("released_pairs", "GECKO pool 0.25 against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round114: pool 0.125 sigma1",
+        stated=-0.005,
+        recompute=simplification("released_pairs", "GECKO pool 0.125, kcat one sigma up against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round114: pool 0.125 min enzyme",
+        stated=-0.01,
+        recompute=simplification("released_pairs", "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split", "mean_difference"),
+    ),
+    Check(
+        claim="round114 store pool125: n_variables",
+        stated=11972,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_variables"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114 store pool125: n_units_in_program",
+        stated=3710,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_units_in_program"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114 store pool125: n_reactions_enzyme_constrained",
+        stated=2695,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_reactions_enzyme_constrained"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114 store pool125: wild_type_growth_fraction",
+        stated=0.12,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["wild_type_growth_fraction"]
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round114 store pool250: wild_type_growth_fraction",
+        stated=0.18,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool250.json")))["wild_type_growth_fraction"]
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round114 store pool125s1: wild_type_growth_fraction",
+        stated=0.28,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125s1.json")))["wild_type_growth_fraction"]
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="round114 store pool125: n_genes_pool_binding",
+        stated=1030,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_genes_pool_binding"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114 store pool125: n_genes_any_unit_usage_changed_viable",
+        stated=302,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_genes_any_unit_usage_changed_viable"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114 store pool125: n_genes_allocation_moved_gt_0.01_of_pool_viable",
+        stated=28,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_genes_allocation_moved_gt_0.01_of_pool_viable"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114 store pool250: n_genes_allocation_moved_gt_0.01_of_pool_viable",
+        stated=82,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool250.json")))["n_genes_allocation_moved_gt_0.01_of_pool_viable"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114 store pool125s1: n_genes_allocation_moved_gt_0.01_of_pool_viable",
+        stated=89,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125s1.json")))["n_genes_allocation_moved_gt_0.01_of_pool_viable"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114: sign conflicts at 10 kJ/mol",
+        stated=111,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125sign.json")))[
+                "thermo"
+            ]["n_conflicts_with_plain_wild_type_flux"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114: sign conflicts at 30 kJ/mol",
+        stated=81,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125sign30.json")))[
+                "thermo"
+            ]["n_conflicts_with_plain_wild_type_flux"]
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="round114: plain FBA distance to the store",
+        stated=6.1,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_plainfba.json")))[
+                "median_relative_l2_log1p_to_plain"
+            ]
+        ),
+        tolerance=0.06,
+    ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(
         claim="consensus: genes held out at least once",

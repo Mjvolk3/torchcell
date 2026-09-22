@@ -12,17 +12,17 @@
     store & objective & enzyme constraint & growth & lethal & distance & difference & higher \\
     \hline
     parsimonious FBA (the kept form) & growth, then least flux & none & 1.00 & 91 & \multicolumn{1}{c}{0} & \multicolumn{1}{c}{baseline} & \multicolumn{1}{c}{--} \\
-    plain FBA, growth only & growth & none & 1.00 & 91 & 6.09 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
-    parsimony in the objective, weight 0.001 & growth minus 0.001 total flux & none & 0.95 & 91 & 0.09 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
-    parsimony in the objective, weight 0.0001 & growth minus 0.0001 total flux & none & 1.00 & 91 & 0.02 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
+    plain FBA, growth only & growth & none & 1.00 & 91 & 6.09 & $-0.010$ (0.021) & 2/6 \\
+    parsimony in the objective, weight 0.001 & growth minus 0.001 total flux & none & 0.95 & 91 & 0.09 & $-0.004$ (0.011) & 3/6 \\
+    parsimony in the objective, weight 0.0001 & growth minus 0.0001 total flux & none & 1.00 & 91 & 0.02 & $-0.004$ (0.008) & 2/6 \\
     minimization of metabolic adjustment & nearest to wild type & none & 1.00 & 105 & 0.00 & $-0.002$ (0.006) & 2/6 \\
     kcat ceilings, measured proteome, point & growth, then least flux & fixed ceilings & 1.00 & 91 & 0.01 & $-0.004$ (0.004) & 1/3 \\
     kcat ceilings, measured proteome, two sigma up & growth, then least flux & fixed ceilings & 1.00 & 91 & 0.07 & $+0.000$ (0.007) & 3/6 \\
     kcat sampled, mean and spread & growth, then least flux & fixed ceilings, ten draws & 0.82 & 91 & 0.35 & $+0.003$ (0.014) & 2/6 \\
-    GECKO pool 0.125 & growth, then least flux & usages under the pool & 0.12 & 91 & 0.92 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
-    GECKO pool 0.25 & growth, then least flux & usages under the pool & 0.18 & 91 & 0.86 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
-    GECKO pool 0.125, kcat one sigma up & growth, then least flux & usages under the pool & 0.28 & 91 & 0.66 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
-    GECKO pool 0.125, parsimony on enzyme mass & growth, then least enzyme & usages under the pool & 0.12 & 91 & 1.19 & \multicolumn{1}{c}{--} & \multicolumn{1}{c}{--} \\
+    GECKO pool 0.125 & growth, then least flux & usages under the pool & 0.12 & 91 & 0.92 & $-0.011$ (0.012) & 1/6 \\
+    GECKO pool 0.25 & growth, then least flux & usages under the pool & 0.18 & 91 & 0.86 & $-0.004$ (0.005) & 1/6 \\
+    GECKO pool 0.125, kcat one sigma up & growth, then least flux & usages under the pool & 0.28 & 91 & 0.66 & $-0.005$ (0.010) & 1/6 \\
+    GECKO pool 0.125, parsimony on enzyme mass & growth, then least enzyme & usages under the pool & 0.12 & 91 & 1.19 & $-0.010$ (0.011) & 2/6 \\
     \hline
   \end{tabular}
 \end{table}

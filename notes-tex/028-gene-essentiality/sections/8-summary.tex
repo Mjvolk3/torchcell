@@ -156,6 +156,17 @@ programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
     module on one family and averages it with the plain graph convolution. Where every
     held-out record reads the constant row, the genome-wide 4,674 genes, the affine still
     does not hurt: graph convolution on GO reads 0.767 with it against 0.702 without.
+  \item[No fundamental or heuristic added to the parsimonious solve improves its
+    columns.] Solved offline on the corrected medium and read through the same affine,
+    every rung of an eleven-store ladder sits at or below the two-stage parsimonious
+    solve on the GEM's own box: plain FBA without parsimony $-0.010$, parsimony inside
+    the objective $-0.004$, metabolic adjustment $-0.002$, turnover ceilings from a
+    measured proteome $+0.000$ to $-0.004$, a turnover-sampled store $+0.003$ on two of
+    six seeds, and GECKO's pool with the usages as program variables and no proteome
+    $-0.011$ at the sourced pool to $-0.004$ at twice it (Sections~\ref{sec:round113}
+    and \ref{sec:round114}, Table~\ref{tab:store-ladder}). Direction constraints from
+    the reaction energies make the wild type infeasible. The pool binds and reallocates
+    per genotype as designed, and the module cannot read a ranking out of it.
   \item[The medium is data, and correcting it moves the ranking but not the score.] The
     YPD the stores were built on carried no nucleobases and called thirteen labeled
     genes lethal that grow; rebuilt with uracil and adenine, and with every bound vector

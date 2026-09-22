@@ -131,6 +131,24 @@ PAIRS = [
         "w134_bxctx_h12l1p1_e200",
     ),
     (
+        "betaxanthin: width 48 with the store affine against the width-48 control",
+        "betaxanthin",
+        "w140_bxwidestore_h48l2p1_e200",
+        "w139_bxwide_h48l2p1_e200",
+    ),
+    (
+        "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+        "betaxanthin",
+        "w140_bxdelstore_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: deletion-only graphs with the store affine against the store affine",
+        "betaxanthin",
+        "w140_bxdelstore_h12l1p1_e200",
+        "w134_bxstore_h12l1p1_e200",
+    ),
+    (
         "amino acids: whole-vector store affine against the control",
         "mulleder19",
         "w135_aastore_h12l1p1_e200",

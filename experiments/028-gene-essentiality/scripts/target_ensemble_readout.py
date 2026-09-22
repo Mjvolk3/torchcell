@@ -51,6 +51,7 @@ ARMS = [
     ("w135_aastore_h12l1p1_e200", "mulleder19"),
     ("w138_aaprodstat_h12l1p1_e200", "mulleder19"),
     ("w138_aaprodfull_h12l1p1_e200", "mulleder19"),
+    ("w141_aadel_h12l1p1_e200", "mulleder19"),
     ("w139_aawide_h48l2p1_e200", "mulleder19"),
 ]
 TOP_K = 50

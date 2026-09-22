@@ -155,6 +155,12 @@ PAIRS = [
         "w135_aactx_h12l1p1_e200",
     ),
     (
+        "amino acids: deletion-only cell graphs against the control",
+        "mulleder19",
+        "w141_aadel_h12l1p1_e200",
+        "w135_aactx_h12l1p1_e200",
+    ),
+    (
         "amino acids: 19 synthesis ratios and the growth ratio against the control",
         "mulleder19",
         "w138_aaprodstat_h12l1p1_e200",

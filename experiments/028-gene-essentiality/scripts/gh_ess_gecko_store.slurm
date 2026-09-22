@@ -29,7 +29,7 @@ PY=~/miniconda3/envs/torchcell/bin/python
 DATA_ROOT=$($PY -c "from dotenv import load_dotenv; load_dotenv(); import os; print(os.environ['DATA_ROOT'])")
 
 echo "worktree $SLURM_SUBMIT_DIR, job $SLURM_JOB_ID, $(date)"
-for variant in pool125 pool250 pool125s1 pool125minenz plainfba pfbalambda3 pfbalambda4 pool125sign pool125sign30; do
+for variant in ${GECKO_VARIANTS:-pool125 pool250 pool125s1 pool125minenz plainfba pfbalambda3 pfbalambda4 pool125sign pool125sign30}; do
     echo "===== variant $variant, $(date)"
     $PY experiments/028-gene-essentiality/scripts/ess_gecko_store.py \
         --variant "$variant" --processes 24

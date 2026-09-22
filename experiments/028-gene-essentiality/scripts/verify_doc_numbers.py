@@ -1687,6 +1687,26 @@ CHECKS: list[Check] = [
             "mean_difference",
         ),
     ),
+    Check(
+        claim="go006 tune: best validation on the trigenic store",
+        stated=0.876,
+        recompute=lambda: max(
+            t["val_mean"]
+            for t in json.load(
+                open(osp.join(RESULTS, "dcell_style_tune_go006.json"))
+            )["tune"]
+        ),
+    ),
+    Check(
+        claim="go006 tune: best validation on the current store",
+        stated=0.873,
+        recompute=lambda: max(
+            t["val_mean"]
+            for t in json.load(open(osp.join(RESULTS, "dcell_style_tune.json")))[
+                "tune"
+            ]
+        ),
+    ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(
         claim="consensus: genes held out at least once",

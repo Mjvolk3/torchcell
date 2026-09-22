@@ -1415,6 +1415,25 @@ CHECKS: list[Check] = [
         recompute=fold_average(("GO convolution, five folds (400 epochs)", "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"), "ci_high"),
         tolerance=0.006,
     ),
+    Check(
+        claim="job 2695: graph family with the affine, fold ensemble",
+        stated=0.930,
+        recompute=fold_average(("GO convolution with the module as an affine, five folds (job 2695)",), "auroc"),
+    ),
+    Check(
+        claim="job 2695: graph family with the affine, averaged with the transformer",
+        stated=0.941,
+        recompute=fold_average(("GO convolution with the module as an affine, five folds (job 2695)", "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"), "auroc"),
+    ),
+    Check(
+        claim="job 2695: graph family without the affine, fold ensemble (same job)",
+        stated=0.917,
+        recompute=lambda: float(
+            json.load(
+                open(osp.join(RESULTS, "graph_baselines_go_affine_folds_s3.json"))
+            )["arms"]["GCN400"]["ensemble_auroc"]
+        ),
+    ),
     # sec:consensus-missed -- the BY4741 background probe.
     Check(
         claim="background probe: moved on YPD",

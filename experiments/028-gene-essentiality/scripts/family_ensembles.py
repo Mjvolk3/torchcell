@@ -198,6 +198,12 @@ FOLD_TRANSFORMER_FAMILIES: dict[str, str] = {
     "layer-free log1p, PDLP store, five folds (round 39)": "w55_pathlogpdlpcv{k}_h12l1p1_e200_s2700.json",
 }
 FOLD_GRAPH_FAMILY = ("GO convolution, five folds (400 epochs)", "GCN400")
+#: The graph family carrying the single-experiment module as a zero-initialized affine on
+#: its logit (job 2695, three seeds per fold), read from its own fold file.
+FOLD_GRAPH_AFFINE_FAMILY = (
+    "GO convolution with the module as an affine, five folds (job 2695)",
+    "GCN400_affine_ypd_vector_counts",
+)
 FOLD_COMBINATIONS: list[list[str]] = [
     [FOLD_GRAPH_FAMILY[0]],
     ["indicator + ProtT5 + affine, five folds (round 12)"],
@@ -216,6 +222,11 @@ FOLD_COMBINATIONS: list[list[str]] = [
     ["YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"],
     [
         FOLD_GRAPH_FAMILY[0],
+        "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",
+    ],
+    [FOLD_GRAPH_AFFINE_FAMILY[0]],
+    [
+        FOLD_GRAPH_AFFINE_FAMILY[0],
         "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",
     ],
     ["gene-rule counts, no solve, five folds (round 82)"],
@@ -260,6 +271,12 @@ def folds_main() -> None:
         "rerun graph_baselines.py --arms go_folds --save-logits"
     )
     families[FOLD_GRAPH_FAMILY[0]] = [
+        dict(zip(arm["genes"], map(float, logits), strict=True))
+        for logits in arm["fold_logits"]
+    ]
+    with open(osp.join(RESULTS, "graph_baselines_go_affine_folds_s3.json")) as fh:
+        arm = json.load(fh)["arms"][FOLD_GRAPH_AFFINE_FAMILY[1]]
+    families[FOLD_GRAPH_AFFINE_FAMILY[0]] = [
         dict(zip(arm["genes"], map(float, logits), strict=True))
         for logits in arm["fold_logits"]
     ]

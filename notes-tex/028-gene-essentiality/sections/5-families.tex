@@ -223,7 +223,11 @@ single-experiment transformer of Section~\ref{sec:round75} and the graph family 
 the same recipe as an affine, the fixed-in-advance average reads 0.897 over the ten
 splits against 0.907 with the plain GO convolution as the partner, although the graph
 family alone rises from 0.871 to 0.887. The average gains from the two families failing
-on different genes, and handing them the same columns makes them fail more alike.
+on different genes, and handing them the same columns makes them fail more alike. The
+fold protocol on the released genes says the same (job 2695, three seeds per fold): the
+graph family with the affine reads 0.930 [0.88, 0.97] as a five-fold ensemble against
+0.917 without, and averaged with the transformer's single-experiment fold models it
+reads 0.941 against 0.953 for the plain graph family with the same partner.
 
 \input{tables/graph_baselines_go_solve}
 

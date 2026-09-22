@@ -11,7 +11,8 @@
   "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)": 5,
   "layer-free log1p, interior-point store, five folds (round 37)": 5,
   "layer-free log1p, PDLP store, five folds (round 39)": 5,
-  "GO convolution, five folds (400 epochs)": 5
+  "GO convolution, five folds (400 epochs)": 5,
+  "GO convolution with the module as an affine, five folds (job 2695)": 5
  },
  "combinations": [
   {
@@ -109,12 +110,31 @@
   },
   {
    "families": [
+    "GO convolution with the module as an affine, five folds (job 2695)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9299763965381589,
+   "ci_low": 0.876704751849297,
+   "ci_high": 0.9691325181441336
+  },
+  {
+   "families": [
+    "GO convolution with the module as an affine, five folds (job 2695)",
+    "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9407946498819827,
+   "ci_low": 0.8937512976227551,
+   "ci_high": 0.9758102802215706
+  },
+  {
+   "families": [
     "gene-rule counts, no solve, five folds (round 82)"
    ],
    "n_cells": 5,
    "auroc": 0.9091266719118805,
-   "ci_low": 0.8567024561187159,
-   "ci_high": 0.9512491755579696
+   "ci_low": 0.8582053289918175,
+   "ci_high": 0.9543759699019659
   },
   {
    "families": [
@@ -123,8 +143,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9476789929189614,
-   "ci_low": 0.9068532196969696,
-   "ci_high": 0.9783369825452164
+   "ci_low": 0.9083584205591463,
+   "ci_high": 0.9787187907370573
   },
   {
    "families": [
@@ -132,8 +152,8 @@
    ],
    "n_cells": 5,
    "auroc": 0.9130605822187254,
-   "ci_low": 0.8672295245340311,
-   "ci_high": 0.9538085643838374
+   "ci_low": 0.8677048915425066,
+   "ci_high": 0.9532356033275874
   },
   {
    "families": [
@@ -142,8 +162,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9508261211644373,
-   "ci_low": 0.9150179768689239,
-   "ci_high": 0.9784496183853177
+   "ci_low": 0.915822791646145,
+   "ci_high": 0.9781525899314361
   },
   {
    "families": [
@@ -151,8 +171,8 @@
    ],
    "n_cells": 5,
    "auroc": 0.9154209284028324,
-   "ci_low": 0.8676834875840269,
-   "ci_high": 0.9550296292133428
+   "ci_low": 0.8699938271604938,
+   "ci_high": 0.9537122998355646
   },
   {
    "families": [
@@ -161,8 +181,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9486624704956726,
-   "ci_low": 0.9133549697038241,
-   "ci_high": 0.9769984983899435
+   "ci_low": 0.9123343593323902,
+   "ci_high": 0.9775822861657228
   },
   {
    "families": [
@@ -171,8 +191,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9435483870967742,
-   "ci_low": 0.9020288019632984,
-   "ci_high": 0.9757172797262617
+   "ci_low": 0.9028514797223237,
+   "ci_high": 0.9749839678193537
   },
   {
    "families": [
@@ -181,8 +201,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9494492525570417,
-   "ci_low": 0.9140191197691198,
-   "ci_high": 0.9777732770161105
+   "ci_low": 0.912239824924475,
+   "ci_high": 0.9771896297696191
   },
   {
    "families": [
@@ -191,8 +211,8 @@
    ],
    "n_cells": 10,
    "auroc": 0.9537765538945713,
-   "ci_low": 0.9206244771332961,
-   "ci_high": 0.9796117223825558
+   "ci_low": 0.921271292064811,
+   "ci_high": 0.977577540106952
   },
   {
    "families": [
@@ -202,8 +222,8 @@
    ],
    "n_cells": 15,
    "auroc": 0.9445318646734855,
-   "ci_low": 0.9065987781483433,
-   "ci_high": 0.9725748299427879
+   "ci_low": 0.906664705882353,
+   "ci_high": 0.9738365078433237
   },
   {
    "families": [
@@ -213,8 +233,8 @@
    ],
    "n_cells": 15,
    "auroc": 0.9468922108575925,
-   "ci_low": 0.9131703983337673,
-   "ci_high": 0.973964490900088
+   "ci_low": 0.9124621056233047,
+   "ci_high": 0.9757516712606533
   }
  ]
 }

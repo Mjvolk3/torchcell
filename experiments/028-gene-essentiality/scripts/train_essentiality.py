@@ -51,6 +51,7 @@ import json
 import math
 import os
 import os.path as osp
+import re
 import socket
 import sys
 import time
@@ -1188,6 +1189,25 @@ class BxCell(BaseModel):
             "'log1p' (log(1 + |v|), the flux head's encoding; round 33)."
         ),
     )
+    ess_solve_columns: str = Field(
+        default="",
+        description=(
+            "Round 119: a regular expression over the solve-feature column names "
+            "(`stat_<name>`, `pfba_<reaction>`); only matching columns enter the affine. "
+            "Empty keeps every column."
+        ),
+    )
+    ess_affine_weight_decay: float | None = Field(
+        default=None,
+        description=(
+            "Round 119: AdamW weight decay for the store affine's parameters alone; None "
+            "leaves them in the cell's single group at `weight_decay`."
+        ),
+    )
+    ess_affine_lr_mult: float = Field(
+        default=1.0,
+        description="Round 119: learning-rate multiplier for the store affine's parameters.",
+    )
     perturb_cls: bool = Field(
         default=False,
         description=(
@@ -2307,6 +2327,9 @@ def build_cell(
     ess_solve_encoding: str = "standardized",
     ess_solve_zero_init: bool = False,
     ess_solve_head_hidden: int = 0,
+    ess_solve_columns: str = "",
+    ess_affine_weight_decay: float | None = None,
+    ess_affine_lr_mult: float = 1.0,
     perturb_cls: bool = False,
     flux_capacity_scale: float = 1.0,
     flux_lp_slack_penalty: float = 0.0,
@@ -2415,6 +2438,9 @@ def build_cell(
         ess_solve_encoding=ess_solve_encoding,
         ess_solve_zero_init=ess_solve_zero_init,
         ess_solve_head_hidden=ess_solve_head_hidden,
+        ess_solve_columns=ess_solve_columns,
+        ess_affine_weight_decay=ess_affine_weight_decay,
+        ess_affine_lr_mult=ess_affine_lr_mult,
         perturb_cls=perturb_cls,
         flux_capacity_scale=flux_capacity_scale,
         flux_lp_slack_penalty=flux_lp_slack_penalty,
@@ -3912,6 +3938,14 @@ def affine_table(
         s_table, s_known, s_names, s_meta = solve_feature_table(
             gene_ids, cell.ess_solve_features, cell.ess_solve_encoding
         )
+        if cell.ess_solve_columns:
+            pattern = re.compile(cell.ess_solve_columns)
+            keep = [i for i, name in enumerate(s_names) if pattern.search(name)]
+            assert keep, f"--ess-solve-columns {cell.ess_solve_columns!r} matches no column"
+            s_table = s_table[:, keep]
+            s_names = tuple(s_names[i] for i in keep)
+            s_meta = {**s_meta, "columns_pattern": cell.ess_solve_columns, "n_columns_kept": len(keep)}
+            print(f"[solve-columns] {len(keep)} columns match {cell.ess_solve_columns!r}: {list(s_names)[:8]}")
         table = torch.cat([table, s_table], dim=1)
         known = known & s_known
         columns = media + s_names
@@ -5626,12 +5660,43 @@ def run_cell(
         p for n, p in model.named_parameters() if _module_path(n) == "flux_layer"
     ]
     flux_ids = {id(p) for p in flux_params}
-    other_params = [p for p in model.parameters() if id(p) not in flux_ids]
-    if cell.flux_lr_mult != 1.0 and flux_params:
-        groups: list[dict[str, Any]] = [
-            {"params": other_params},
-            {"params": flux_params, "lr": cell.lr * cell.flux_lr_mult},
-        ]
+    # THE STORE AFFINE'S OWN GROUP (round 119): its weight decay and rate can differ from
+    # the backbone's, because thousands of columns at the backbone's rate fit train noise
+    # on a target the vector does not carry (round 117, betaxanthin).
+    affine_params = [
+        p for n, p in model.named_parameters() if n.split(".")[0] == "fba_readout"
+    ]
+    affine_ids = {id(p) for p in affine_params}
+    affine_own_group = bool(affine_params) and (
+        cell.ess_affine_weight_decay is not None or cell.ess_affine_lr_mult != 1.0
+    )
+    other_params = [
+        p
+        for p in model.parameters()
+        if id(p) not in flux_ids and (not affine_own_group or id(p) not in affine_ids)
+    ]
+    if (cell.flux_lr_mult != 1.0 and flux_params) or affine_own_group:
+        groups: list[dict[str, Any]] = [{"params": other_params}]
+        if cell.flux_lr_mult != 1.0 and flux_params:
+            groups.append({"params": flux_params, "lr": cell.lr * cell.flux_lr_mult})
+        elif flux_params:
+            other_params.extend(flux_params)
+        if affine_own_group:
+            groups.append(
+                {
+                    "params": affine_params,
+                    "lr": cell.lr * cell.ess_affine_lr_mult,
+                    "weight_decay": (
+                        cell.weight_decay
+                        if cell.ess_affine_weight_decay is None
+                        else cell.ess_affine_weight_decay
+                    ),
+                }
+            )
+            print(
+                f"[affine-group] {sum(p.numel() for p in affine_params)} affine parameters "
+                f"at lr x{cell.ess_affine_lr_mult}, weight decay {groups[-1]['weight_decay']}"
+            )
         optimizer = torch.optim.AdamW(
             groups, lr=cell.lr, weight_decay=cell.weight_decay
         )
@@ -6976,6 +7041,23 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--ess-solve-columns",
+        default="",
+        help="Regular expression over solve-feature column names; only matches enter.",
+    )
+    parser.add_argument(
+        "--ess-affine-weight-decay",
+        type=float,
+        default=None,
+        help="AdamW weight decay on the store affine's parameters alone.",
+    )
+    parser.add_argument(
+        "--ess-affine-lr-mult",
+        type=float,
+        default=1.0,
+        help="Learning-rate multiplier on the store affine's parameters.",
+    )
+    parser.add_argument(
         "--perturb-cls",
         action="store_true",
         help=(
@@ -7503,6 +7585,9 @@ def main() -> None:
         ess_fba_media=args.ess_fba_media,
         ess_solve_features=args.ess_solve_features,
         ess_solve_encoding=args.ess_solve_encoding,
+        ess_solve_columns=args.ess_solve_columns,
+        ess_affine_weight_decay=args.ess_affine_weight_decay,
+        ess_affine_lr_mult=args.ess_affine_lr_mult,
         ess_solve_zero_init=args.ess_solve_zero_init,
         ess_solve_head_hidden=args.ess_solve_head_hidden,
         perturb_cls=args.perturb_cls,

@@ -21,17 +21,19 @@
     GO convolution, five folds (400 epochs) $+$ + GPR redundancy counts, pathway + ProtT5, five folds (round 80) & 10 & \textbf{0.955} [0.92, 0.98] \\
     YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98) & 5 & 0.929 [0.88, 0.97] \\
     GO convolution, five folds (400 epochs) $+$ YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98) & 10 & 0.953 [0.92, 0.98] \\
+    GO convolution with the module as an affine, five folds (job 2695) & 5 & 0.930 [0.88, 0.97] \\
+    GO convolution with the module as an affine, five folds (job 2695) $+$ YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98) & 10 & 0.941 [0.89, 0.98] \\
     gene-rule counts, no solve, five folds (round 82) & 5 & 0.909 [0.86, 0.95] \\
     GO convolution, five folds (400 epochs) $+$ gene-rule counts, no solve, five folds (round 82) & 10 & 0.948 [0.91, 0.98] \\
     layer-free log1p, interior-point store, five folds (round 37) & 5 & 0.913 [0.87, 0.95] \\
     GO convolution, five folds (400 epochs) $+$ layer-free log1p, interior-point store, five folds (round 37) & 10 & 0.951 [0.92, 0.98] \\
-    layer-free log1p, PDLP store, five folds (round 39) & 5 & 0.915 [0.87, 0.96] \\
+    layer-free log1p, PDLP store, five folds (round 39) & 5 & 0.915 [0.87, 0.95] \\
     GO convolution, five folds (400 epochs) $+$ layer-free log1p, PDLP store, five folds (round 39) & 10 & 0.949 [0.91, 0.98] \\
-    GO convolution, five folds (400 epochs) $+$ indicator + ProtT5 + affine, five folds (round 12) & 10 & 0.944 [0.90, 0.98] \\
+    GO convolution, five folds (400 epochs) $+$ indicator + ProtT5 + affine, five folds (round 12) & 10 & 0.944 [0.90, 0.97] \\
     GO convolution, five folds (400 epochs) $+$ flux head, pathway + ProtT5, five folds (round 25) & 10 & 0.949 [0.91, 0.98] \\
     GO convolution, five folds (400 epochs) $+$ cached solve + flux head, pathway + ProtT5, five folds (round 27) & 10 & 0.954 [0.92, 0.98] \\
     GO convolution, five folds (400 epochs) $+$ indicator + ProtT5 + affine, five folds (round 12) $+$ flux head, pathway + ProtT5, five folds (round 25) & 15 & 0.945 [0.91, 0.97] \\
-    GO convolution, five folds (400 epochs) $+$ indicator + ProtT5 + affine, five folds (round 12) $+$ cached solve + flux head, pathway + ProtT5, five folds (round 27) & 15 & 0.947 [0.91, 0.97] \\
+    GO convolution, five folds (400 epochs) $+$ indicator + ProtT5 + affine, five folds (round 12) $+$ cached solve + flux head, pathway + ProtT5, five folds (round 27) & 15 & 0.947 [0.91, 0.98] \\
     \hline
   \end{tabular}
 \end{table}

@@ -2627,13 +2627,114 @@ def go006_comparison() -> str | None:
         "\\texttt{notes\\_tex\\_tables.py} from \\texttt{go006\\_compare.py}.}\n"
         "  \\label{tab:go006-comparison}\n"
         "  \\begin{tabular}{@{}p{58mm}rrrrlr@{}}\n    \\hline\n"
-        "    model & \\multicolumn{2}{c}{released} & \\multicolumn{2}{c}{ten splits} & "
-        "difference & higher \\\\\n"
-        "     & trigenic & current & trigenic & current & & \\\\\n    \\hline\n"
+        "    model & released, trigenic & released, current & ten splits, trigenic & "
+        "ten splits, current & difference & higher \\\\\n    \\hline\n"
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
     return write("go006_comparison", body, "results/go006_comparison.json")
+
+
+def store_ladder() -> str | None:
+    """Rounds 112 to 114: the offline stores as the module's columns, one baseline."""
+    src = osp.join(RESULTS, "simplification_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        pairs = {r["name"]: r for r in json.load(fh)["released_pairs"]}
+
+    def summary(name: str) -> dict:
+        path = osp.join(RESULTS, name)
+        if not osp.isfile(path):
+            return {}
+        with open(path) as fh:
+            return json.load(fh)
+
+    #: (row label, objective, enzyme constraint, summary file, released pair name)
+    rungs = [
+        ("plain FBA, growth only", "growth", "none", "ess_gecko_store_plainfba.json",
+         "plain FBA, no parsimony against the plain store, released split"),
+        ("parsimony in the objective, weight 0.001", "growth minus 0.001 total flux", "none",
+         "ess_gecko_store_pfbalambda3.json",
+         "parsimony in the objective, lambda 1e-3 against the plain store, released split"),
+        ("parsimony in the objective, weight 0.0001", "growth minus 0.0001 total flux", "none",
+         "ess_gecko_store_pfbalambda4.json",
+         "parsimony in the objective, lambda 1e-4 against the plain store, released split"),
+        ("minimization of metabolic adjustment", "nearest to wild type", "none",
+         "ess_kcat_bounded_store_moma.json",
+         "MOMA store against the plain store, released split"),
+        ("kcat ceilings, measured proteome, point", "growth, then least flux", "fixed ceilings",
+         "ess_kcat_bounded_store_point.json",
+         "kcat point ceilings against the plain store, released split"),
+        ("kcat ceilings, measured proteome, two sigma up", "growth, then least flux", "fixed ceilings",
+         "ess_kcat_bounded_store_sigma2.json",
+         "kcat two-sigma ceilings against the plain store, released split"),
+        ("kcat sampled, mean and spread", "growth, then least flux", "fixed ceilings, ten draws",
+         "ess_kcat_bounded_store_sampled.json",
+         "kcat-sampled store against the plain store, released split"),
+        ("GECKO pool 0.125", "growth, then least flux", "usages under the pool",
+         "ess_gecko_store_pool125.json",
+         "GECKO pool 0.125 against the plain store, released split"),
+        ("GECKO pool 0.25", "growth, then least flux", "usages under the pool",
+         "ess_gecko_store_pool250.json",
+         "GECKO pool 0.25 against the plain store, released split"),
+        ("GECKO pool 0.125, kcat one sigma up", "growth, then least flux", "usages under the pool",
+         "ess_gecko_store_pool125s1.json",
+         "GECKO pool 0.125, kcat one sigma up against the plain store, released split"),
+        ("GECKO pool 0.125, parsimony on enzyme mass", "growth, then least enzyme", "usages under the pool",
+         "ess_gecko_store_pool125minenz.json",
+         "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split"),
+    ]
+    dash = "\\multicolumn{1}{c}{--}"
+    rows = [
+        "    parsimonious FBA (the kept form) & growth, then least flux & none & 1.00 & 91 & "
+        "\\multicolumn{1}{c}{0} & \\multicolumn{1}{c}{baseline} & \\multicolumn{1}{c}{--} \\\\"
+    ]
+    for label, objective, enzyme, summ, pair_name in rungs:
+        m = summary(summ)
+        if not m:
+            continue
+        growth = m.get("wild_type_growth_fraction")
+        if growth is None:
+            wt = m.get("wild_type_growth")
+            growth = wt / 0.5428 if wt else None
+        pair = pairs.get(pair_name)
+        against = (
+            f"${pair['mean_difference']:+.3f}$ ({pair['sd_difference']:.3f}) & "
+            f"{pair['n_positive']}/{pair['n']}"
+            if pair
+            else f"{dash} & {dash}"
+        )
+        rows.append(
+            f"    {label} & {objective} & {enzyme} & "
+            f"{growth:.2f} & {m['n_lethal']} & "
+            f"{m['median_relative_l2_log1p_to_plain']:.2f} & {against} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Rounds 113 and 114: the offline stores as the module's columns]{The "
+        "objective and enzyme-constraint ladder, every rung an offline program per "
+        "deletion on the corrected YPD medium, stored and read as the kept form reads the "
+        "parsimonious solve (the YPD ratio, the vector as $\\log(1+|v|)$, the six rule "
+        "counts, a zero-initialized affine on the logit, pathway multi-hot with ProtT5). "
+        "Growth is the wild type's under the program as a fraction of the unconstrained "
+        "value; lethal the deletions with no growth; distance the median relative "
+        "$\\ell_2$ between a deletion's $\\log(1+|v|)$ and the parsimonious store's over the "
+        "1,121 labeled genes. Difference is the held-out AUROC on the released split "
+        "minus the parsimonious store's cell on the same seed, mean and spread over "
+        "seeds, and the seeds on which the rung is higher. The GECKO rungs allocate one "
+        "usage per catalytic unit under GECKO 3's yeast pool with no proteome; the kcat "
+        "ceiling rungs use a measured proteome and are not the design. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from \\texttt{ess\\_gecko\\_store.py}, "
+        "\\texttt{ess\\_kcat\\_bounded\\_store.py} and \\texttt{simplification\\_readout.py}.}\n"
+        "  \\label{tab:store-ladder}\n"
+        "  \\begin{tabular}{@{}p{50mm}p{26mm}p{24mm}rrrlr@{}}\n    \\hline\n"
+        "    store & objective & enzyme constraint & growth & lethal & distance & "
+        "difference & higher \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("store_ladder", body, "results/ess_gecko_store_*.json, results/ess_kcat_bounded_store_*.json")
 
 
 def kcat_tier_capacity() -> str | None:
@@ -2982,6 +3083,7 @@ def main() -> None:
         dcell_style(),
         consensus_missed(),
         go006_comparison(),
+        store_ladder(),
         graph_baselines(),
         graph_baselines_relational(),
         graph_baselines_split(),

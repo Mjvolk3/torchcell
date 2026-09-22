@@ -549,6 +549,41 @@ def main() -> None:
             "MOMA store against the plain store, released split",
             "w130_kcatmoma",
             "w129_ypdgprnuc",
+        ),        # Round 114 (w131): the objective ladder and the GECKO pool stores, no proteome.
+        (
+            "plain FBA, no parsimony against the plain store, released split",
+            "w131_geckoplainfba",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "parsimony in the objective, lambda 1e-3 against the plain store, released split",
+            "w131_geckopfbalambda3",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "parsimony in the objective, lambda 1e-4 against the plain store, released split",
+            "w131_geckopfbalambda4",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "GECKO pool 0.125 against the plain store, released split",
+            "w131_geckopool125",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "GECKO pool 0.25 against the plain store, released split",
+            "w131_geckopool250",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "GECKO pool 0.125, kcat one sigma up against the plain store, released split",
+            "w131_geckopool125s1",
+            "w129_ypdgprnuc",
+        ),
+        (
+            "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split",
+            "w131_geckopool125minenz",
+            "w129_ypdgprnuc",
         ),
     ]
     released_pairs = collect(

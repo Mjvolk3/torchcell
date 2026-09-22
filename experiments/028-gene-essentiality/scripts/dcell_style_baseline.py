@@ -128,7 +128,37 @@ LR = 1e-3
 ALPHA = 0.3
 BN_EPS = 1e-5
 N_BOOTSTRAP = 2000
-ARMS = ("dcell_style_shared", "dcell_published_input", "dcell_style_shared_noaux")
+ARMS = (
+    "dcell_style_shared",
+    "dcell_published_input",
+    "dcell_style_shared_noaux",
+    # The shared arm with the single-experiment module (YPD growth ratio, YPD flux vector,
+    # six gene-rule counts) as a zero-initialized affine on the ROOT logit, the interface
+    # of the transformer (round 33) and of graph convolution (job 2691).
+    "dcell_style_shared_affine",
+)
+AFFINE_STORE = osp.join(
+    DATA_ROOT, "data/torchcell/reference_flux/ess_solve_encodings_YPD_pfbagpr.npz"
+)
+AFFINE_RATIOS = osp.join(RESULTS, "fba_essentiality_per_gene.csv")
+
+
+def affine_columns(genes: list[str]) -> np.ndarray:
+    """Per gene: the YPD growth ratio and log(1 + |v|) over the store's columns."""
+    import csv
+
+    with open(AFFINE_RATIOS, newline="") as fh:
+        ratio = {r["gene"]: float(r["YPD"]) for r in csv.DictReader(fh)}
+    payload = np.load(AFFINE_STORE, allow_pickle=False)
+    rows = {str(g): i for i, g in enumerate(payload["genes"])}
+    v = np.log1p(np.abs(payload["v_deletion"].astype(np.float32)))
+    out = np.zeros((len(genes), 1 + v.shape[1]), dtype=np.float32)
+    for i, g in enumerate(genes):
+        out[i, 0] = ratio.get(g, 1.0)
+        if g in rows:
+            out[i, 1:] = v[rows[g]]
+    return out
+
 GCN_ROW = "GO (400 epochs)"
 TUNE_WIDTHS = (8, 20)
 TUNE_ORDERS = ("tanh_bn", "bn_tanh")
@@ -655,6 +685,10 @@ def run_seed(task: Task) -> SeedRun:
     pos = float(y_train.sum())
     pos_weight = torch.tensor((len(y_train) - pos) / pos)
     alpha = 0.0 if task.arm.endswith("noaux") else ALPHA
+    affine: torch.Tensor | None = None
+    affine_map: nn.Linear | None = None
+    if task.arm.endswith("affine"):
+        affine = torch.from_numpy(affine_columns(order))
     marks = sorted({0, 9, 49, 99, 199, config.epochs - 1})
     loss_at: dict[str, float] = {}
     t0 = time.time()
@@ -666,9 +700,13 @@ def run_seed(task: Task) -> SeedRun:
         config.order,
         shared=task.arm != "dcell_published_input",
     )
-    opt = torch.optim.Adam(
-        net.parameters(), lr=config.lr, weight_decay=config.weight_decay
-    )
+    params = list(net.parameters())
+    if affine is not None:
+        affine_map = nn.Linear(int(affine.shape[1]), 1)
+        nn.init.zeros_(affine_map.weight)
+        nn.init.zeros_(affine_map.bias)
+        params += list(affine_map.parameters())
+    opt = torch.optim.Adam(params, lr=config.lr, weight_decay=config.weight_decay)
     val_curve: list[float] = []
     test_curve: list[float] = []
     test_logits: list[np.ndarray] = []
@@ -677,6 +715,11 @@ def run_seed(task: Task) -> SeedRun:
     # scoring pass after epoch e's step (as graph_baselines.py scores).
     for epoch in range(config.epochs + 1):
         out = net(rows["train"])
+        if affine_map is not None:
+            assert affine is not None
+            out = torch.cat(
+                [out[:, :-1], out[:, -1:] + affine_map(affine)], dim=1
+            )
         if epoch > 0:
             logit = out[:, -1].detach()
             val_curve.append(
@@ -710,7 +753,7 @@ def run_seed(task: Task) -> SeedRun:
         seed=task.seed,
         config=config,
         dim_in=int(x.shape[1]),
-        n_parameters=sum(p.numel() for p in net.parameters()),
+        n_parameters=sum(p.numel() for p in params),
         n_effective_parameters=net.n_effective_parameters,
         n_columns_with_train_support=int(support.sum()),
         select_epoch=e,

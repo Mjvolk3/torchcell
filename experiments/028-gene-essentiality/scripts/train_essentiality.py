@@ -938,6 +938,16 @@ class BxCell(BaseModel):
             "holds that ramp at 0.0, so parsimony has never actually been applied."
         ),
     )
+    flux_pool_fill_weight: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Weight on the flux layer's pool-fill term, outside the constraint scale: the "
+            "abundance head's protein mass is pushed up to the GECKO pool, so that with "
+            "`--flux-pool-by-construction` the pool binds and the head allocates it "
+            "(round 115). 0.0 is off."
+        ),
+    )
     flux_thermo_exempt_path: str | None = Field(
         default=None,
         description=(
@@ -2270,6 +2280,7 @@ def build_cell(
     flux_density_weight: float = 0.0,
     flux_balance_active_weight: float = 0.0,
     flux_parsimony_weight: float = 0.0,
+    flux_pool_fill_weight: float = 0.0,
     flux_thermo_exempt_path: str | None = None,
     flux_log_c_init_path: str | None = None,
     flux_availability_fold: str = "softmin",
@@ -2455,6 +2466,7 @@ def build_cell(
         flux_density_weight=flux_density_weight,
         flux_balance_active_weight=flux_balance_active_weight,
         flux_parsimony_weight=flux_parsimony_weight,
+        flux_pool_fill_weight=flux_pool_fill_weight,
         flux_thermo_exempt_path=flux_thermo_exempt_path,
         flux_log_c_init_path=flux_log_c_init_path,
         flux_availability_fold=flux_availability_fold,
@@ -4689,6 +4701,7 @@ def build_model_for_cell(
         flux_layer.config.density_weight = cell.flux_density_weight
         flux_layer.config.balance_active_weight = cell.flux_balance_active_weight
         flux_layer.config.parsimony_outside_ramp_weight = cell.flux_parsimony_weight
+        flux_layer.config.pool_fill_weight = cell.flux_pool_fill_weight
         # The layer validates this at construction, and it is assigned after, so the
         # check is repeated here rather than letting a typo pass as 'dynamic'.
         assert cell.flux_balance_active_row_set in {"dynamic", "frozen"}, (
@@ -7232,6 +7245,16 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--flux-pool-fill-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Weight on the pool-fill term, outside the constraint scale: pushes the "
+            "abundance head's protein mass up to the GECKO pool so that, with "
+            "--flux-pool-by-construction, the pool binds and the head allocates it."
+        ),
+    )
+    parser.add_argument(
         "--flux-parsimony-weight",
         type=float,
         default=0.0,
@@ -7403,6 +7426,7 @@ def main() -> None:
         flux_density_weight=args.flux_density_weight,
         flux_balance_active_weight=args.flux_balance_active_weight,
         flux_parsimony_weight=args.flux_parsimony_weight,
+        flux_pool_fill_weight=args.flux_pool_fill_weight,
         flux_thermo_exempt_path=args.flux_thermo_exempt_path,
         flux_log_c_init_path=args.flux_log_c_init_path,
         flux_availability_fold=args.flux_availability_fold,

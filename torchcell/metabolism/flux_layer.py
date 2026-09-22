@@ -900,6 +900,21 @@ class FluxLayerConfig(BaseModel):
             "density term prices, so the two are meant to run together."
         ),
     )
+    pool_fill_weight: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Weight on `c_pool_fill` = mean over the batch of relu(1 - protein / p_avail), "
+            "the shortfall of the abundance head's protein mass below the pool, added "
+            "OUTSIDE the constraint ramp beside the density term. 0.0 is off and is what "
+            "every cell to date ran. With `pool_by_construction` the projection keeps the "
+            "mass at or under the pool, so this term is what makes the pool BIND: the head "
+            "is pushed to spend the whole budget and can only choose where. That is the "
+            "objective GECKO's growth maximization supplies and a learned head lacks; the "
+            "round-19 pool cell measured the projection never engaging (factor 1 on every "
+            "batch), which this term is built to change."
+        ),
+    )
     parsimony_outside_ramp_weight: float = Field(
         default=0.0,
         ge=0.0,
@@ -3158,6 +3173,7 @@ class FluxLayer(nn.Module):
         e_g: torch.Tensor | None = None
         e_u: torch.Tensor | None = None
         pool_scale: torch.Tensor | None = None
+        pool_fill: torch.Tensor | None = None
         if cfg.use_abundance_head:
             e_g = self.gene_abundance(h_genes, gamma)
             if cfg.pool_by_construction:
@@ -3170,6 +3186,9 @@ class FluxLayer(nn.Module):
                 pool_scale = torch.clamp(
                     cfg.p_avail / protein_total.clamp(min=1e-30), max=1.0
                 )
+                # The shortfall BEFORE the projection, for `pool_fill_weight`: zero once
+                # the head's mass reaches the pool, which is where the projection binds.
+                pool_fill = torch.relu(1.0 - protein_total / cfg.p_avail).mean()
                 e_g = e_g * pool_scale.unsqueeze(1)
             e_u = self.unit_abundance(e_g)
         lb, ub, capacity = self.dynamic_box(c_j, e_u)
@@ -3384,6 +3403,9 @@ class FluxLayer(nn.Module):
             }
             if pool_scale is not None:
                 warm_stats["feas_pool_scale_mean"] = pool_scale.detach().mean()
+                warm_stats["feas_pool_fill_shortfall"] = (
+                    pool_fill.detach() if pool_fill is not None else v.new_zeros(())
+                )
                 warm_stats["feas_pool_active_frac"] = (
                     (pool_scale.detach() < 1.0).float().mean()
                 )
@@ -3485,6 +3507,7 @@ class FluxLayer(nn.Module):
         # flux up. It is reported for every arm and weighted only when asked.
         active_turnover = cfg.density_turnover_threshold * cfg.flux_scale
         out["c_density"] = torch.relu(1.0 - omega / active_turnover).mean()
+        out["c_pool_fill"] = pool_fill if pool_fill is not None else v.new_zeros(())
         out["feas_active_row_frac"] = (omega > active_turnover).float().mean()
         out["feas_flux_active_frac"] = (
             (v.abs() > 1.0e-6 * cfg.flux_scale).float().mean()
@@ -3909,7 +3932,18 @@ class FluxLayer(nn.Module):
             w.get("parsimony_outside_ramp", self.config.parsimony_outside_ramp_weight)
             * out["c_parsimony"]
         )
-        return total * self.constraint_scale + density + active_balance + parsimony
+        # THE POOL-FILL TERM IS OUTSIDE THE RAMP for the same reason as the three above,
+        # and zero at its default weight.
+        pool_fill_term = (
+            w.get("pool_fill", self.config.pool_fill_weight) * out["c_pool_fill"]
+        )
+        return (
+            total * self.constraint_scale
+            + density
+            + active_balance
+            + parsimony
+            + pool_fill_term
+        )
 
     def coverage_report(self) -> dict[str, Any]:
         """What fraction of the layer rests on data rather than on a default.

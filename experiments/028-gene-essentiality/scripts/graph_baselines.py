@@ -579,6 +579,7 @@ def main() -> None:
             "go_rel",
             "go_solve",
             "go_affine",
+            "prot_affine",
         ),
         help=(
             "base: the Gene_Graph designs (ones, structure, ProtT5) on both graphs with "
@@ -828,14 +829,23 @@ def main() -> None:
             )
         suffix = ("" if seeds == SEEDS else f"_s{len(seeds)}") + split_tag
         out = osp.join(RESULTS, f"graph_baselines_go_solve{suffix}.json")
-    elif args.arms == "go_affine":
+    elif args.arms in ("go_affine", "prot_affine"):
         # THE MODULE AS THE TRANSFORMER READS IT, ON THE GRAPH FAMILY. Job 2684 put the
         # solve columns on the node, where they did not help; here they stay out of the
         # message passing and enter as a zero-initialized affine on the node's logit.
         # Rows: the single-experiment recipe (YPD ratio, vector, rule counts), the
         # four-media recipe, the ratios with the counts, and the YPD ratio alone; GO
         # alone at the same budget is the control, rerun here under the same code.
-        go = go_store(args.go_dir, gene_ids) if args.go_dir else embedding("go", gene_ids)
+        # prot_affine: the same affines on the ProtT5 node input, the graph family's best
+        # input on the genome-wide set (round 30).
+        base = "ProtT5" if args.arms == "prot_affine" else "GO"
+        go = (
+            t5
+            if args.arms == "prot_affine"
+            else go_store(args.go_dir, gene_ids)
+            if args.go_dir
+            else embedding("go", gene_ids)
+        )
         fba = fba_ratios(gene_ids)
         ypd = fba[:, 3:4]
         with_counts = solve_log1p(
@@ -847,12 +857,12 @@ def main() -> None:
         )
         ei = edges(graphs["union of nine"], index)
         affines: dict[str, np.ndarray | None] = {
-            "GO": None,
-            "GO | affine: YPD ratio": ypd,
-            "GO | affine: YPD ratio+vector+counts": np.concatenate(
+            base: None,
+            f"{base} | affine: YPD ratio": ypd,
+            f"{base} | affine: YPD ratio+vector+counts": np.concatenate(
                 [ypd, with_counts], axis=1
             ),
-            "GO | affine: four ratios+vector+counts": np.concatenate(
+            f"{base} | affine: four ratios+vector+counts": np.concatenate(
                 [fba, with_counts], axis=1
             ),
         }
@@ -873,7 +883,7 @@ def main() -> None:
                 )
             )
         suffix = ("" if seeds == SEEDS else f"_s{len(seeds)}") + split_tag
-        out = osp.join(RESULTS, f"graph_baselines_go_affine{suffix}.json")
+        out = osp.join(RESULTS, f"graph_baselines_{args.arms}{suffix}.json")
     elif args.arms == "go_rel":
         # The typed-edge models on GO alone at 400 epochs (RGAT beat convolution on the
         # three inputs), and convolution on GO with the pathway multi-hot.

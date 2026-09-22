@@ -12,11 +12,13 @@ shares its backbone and has no affine. The betaxanthin statistic is the pinned-t
 Spearman and the top-50 enrichment of high producers; the amino-acid statistic is the
 mean per-column Spearman over the 19 amino acids on the pinned genotypes.
 
-The comparators are the numbers 027 recorded: betaxanthin 0.131 (flux precursor
-readout, three seeds), its module-off control 0.115, the kNN over ProtT5 0.145, FCL's
-RandomForest 0.039; amino acids 0.068 (the best arm), its layer-free control 0.061, the
-pooled arm 0.048. They are copied here from the 027 notes as constants and are not
-recomputed.
+The comparators are read from 027's own result files, on the same pinned split and the
+same statistic: the betaxanthin precursor readout (wave 8, three seeds) and its
+context-only control (wave 9), the cosine kNN over ProtT5 and the FCL RandomForest
+(the linear-baseline and Merzbacher comparison files); for the amino acids the
+concentration readout without constraints (wave 7), the context-only concentration
+control (wave 8), the pooled arm (wave 7) and the bilinear ridge that the linear ladder
+selected on validation. Nothing is typed in from prose.
 
 Writes ``results/target_transfer_readout.json``. Run from the repo root::
 
@@ -31,27 +33,65 @@ import os
 import os.path as osp
 
 import numpy as np
+import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
 load_dotenv()
-RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "028-gene-essentiality", "results")
+EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
+RESULTS = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
+RESULTS_027 = osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "results")
+BASE_027 = osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "conf", "base.yaml")
 SEEDS = (2700, 2701, 2702, 2703, 2704, 2705)
-#: From notes/experiments.027-betaxanthin-metabolic.*.md (2026-09-14): pinned Spearman.
-COMPARATORS = {
-    "betaxanthin": {
-        "027 flux precursor readout, three seeds": 0.1313,
-        "027 module-off context control, three seeds": 0.1152,
-        "kNN over ProtT5 of the deleted gene (k 25)": 0.1446,
-        "FCL RandomForest (Merzbacher 2025)": 0.0391,
-    },
-    "mulleder19": {
-        "027 best arm (conc_nocstr), three seeds": 0.0677,
-        "027 layer-free control (ctxconc), three seeds": 0.0605,
-        "027 pooled arm, three seeds": 0.0479,
-        "kNN over ProtT5 (job 1911)": 0.0450,
-    },
-}
+SEEDS_027 = (2700, 2701, 2702)
+
+
+def comparators() -> dict[str, dict[str, float]]:
+    """The 027 numbers, each the mean of its seeds' pinned-test statistic."""
+
+    def arm(stem: str, key: str) -> float:
+        vals = []
+        for s in SEEDS_027:
+            with open(osp.join(RESULTS_027, f"{stem}_s{s}.json")) as fh:
+                vals.append(float(json.load(fh)["test"]["pinned"][key]))
+        return float(np.mean(vals))
+
+    def ladder(target: str, block: str) -> float:
+        with open(osp.join(RESULTS_027, f"linear_baselines_{target}.json")) as fh:
+            return float(json.load(fh)[block]["headline_test_pinned"]["mean_spearman"])
+
+    with open(BASE_027) as fh:
+        fcl = float(yaml.safe_load(fh)["baselines"]["fcl_rf_test_spearman"])
+    return {
+        "betaxanthin": {
+            "027 flux precursor readout (wave 8), three seeds": arm(
+                "wave8_bxprec_e200", "spearman"
+            ),
+            "027 context-only control of the precursor readout (wave 9), three seeds": arm(
+                "wave9_bxctxprec_e200", "spearman"
+            ),
+            "cosine kNN over ProtT5 of the deleted gene (k 25, job 1909)": ladder(
+                "betaxanthin", "B3_neighbor_average"
+            ),
+            "FCL RandomForest (Merzbacher 2025)": fcl,
+        },
+        "mulleder19": {
+            "027 concentration readout without constraints (wave 7), three seeds": arm(
+                "wave7_aa_conc_nocstr_e200", "mean_spearman"
+            ),
+            "027 context-only concentration control (wave 8), three seeds": arm(
+                "wave8_aa_ctxconc_e200", "mean_spearman"
+            ),
+            "027 pooled arm (wave 7), three seeds": arm(
+                "wave7_aa_pooled_e200", "mean_spearman"
+            ),
+            "bilinear ridge, validation-selected embedding (job 1911)": ladder(
+                "amino_acids", "B2_bilinear"
+            ),
+        },
+    }
+
+
 #: (label, head, arm stem, control stem); stems take ``_h12l1p1_e200_s<seed>.json``.
 PAIRS = [
     (
@@ -213,13 +253,13 @@ def main() -> None:
                 )
             )
     report = Report(
-        comparators=COMPARATORS,
+        comparators=comparators(),
         pairs=pairs,
         note=(
             "Pinned-test Spearman at the validation-selected epoch (centered five-epoch "
             "moving average of validation Pearson), paired by seed; the amino-acid "
             "statistic is the mean per-column Spearman over the 19 amino acids. Comparators "
-            "are constants copied from the 027 notes."
+            "are read from 027's result files on the same split and statistic."
         ),
     )
     out = osp.join(RESULTS, "target_transfer_readout.json")

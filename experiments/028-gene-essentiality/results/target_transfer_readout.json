@@ -1,0 +1,18 @@
+{
+  "comparators": {
+    "betaxanthin": {
+      "027 flux precursor readout (wave 8), three seeds": 0.13134790196465684,
+      "027 context-only control of the precursor readout (wave 9), three seeds": 0.11517249604760847,
+      "cosine kNN over ProtT5 of the deleted gene (k 25, job 1909)": 0.14456366646475607,
+      "FCL RandomForest (Merzbacher 2025)": 0.039064257838781265
+    },
+    "mulleder19": {
+      "027 concentration readout without constraints (wave 7), three seeds": 0.06765705524156351,
+      "027 context-only concentration control (wave 8), three seeds": 0.06054924502343104,
+      "027 pooled arm (wave 7), three seeds": 0.047887814103966996,
+      "bilinear ridge, validation-selected embedding (job 1911)": 0.0450006494348438
+    }
+  },
+  "pairs": [],
+  "note": "Pinned-test Spearman at the validation-selected epoch (centered five-epoch moving average of validation Pearson), paired by seed; the amino-acid statistic is the mean per-column Spearman over the 19 amino acids. Comparators are read from 027's result files on the same split and statistic."
+}

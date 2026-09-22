@@ -2465,7 +2465,10 @@ def dcell_style() -> str | None:
         released = {r["model"]: r for r in json.load(fh)["rows"]}
     with open(osp.join(RESULTS, "dcell_style_resplits.json")) as fh:
         resplits = {p["arm"]: p for p in json.load(fh)["paired"]}
-    for extra in ("dcell_style_resplits_published.json", "dcell_style_resplits_affine.json"):
+    for extra in (
+        "dcell_style_resplits_published.json",
+        "dcell_style_resplits_affine.json",
+    ):
         path = osp.join(RESULTS, extra)
         if osp.isfile(path):
             with open(path) as fh:
@@ -2481,7 +2484,11 @@ def dcell_style() -> str | None:
     ]
     if "dcell_style_shared_affine" in released:
         rows_spec.insert(
-            1, ("the same, the module as an affine on the root", "dcell_style_shared_affine")
+            1,
+            (
+                "the same, the module as an affine on the root",
+                "dcell_style_shared_affine",
+            ),
         )
     best_cell = max(released[k]["mean"] for _, k in rows_spec)
     best_fold = max(folds[k]["ensemble_auroc"] for _, k in rows_spec if k in folds)
@@ -2652,44 +2659,97 @@ def store_ladder() -> str | None:
 
     #: (row label, objective, enzyme constraint, summary file, released pair name)
     rungs = [
-        ("plain FBA, growth only", "growth", "none", "ess_gecko_store_plainfba.json",
-         "plain FBA, no parsimony against the plain store, released split"),
-        ("parsimony in the objective, weight 0.001", "growth minus 0.001 total flux", "none",
-         "ess_gecko_store_pfbalambda3.json",
-         "parsimony in the objective, lambda 1e-3 against the plain store, released split"),
-        ("parsimony in the objective, weight 0.0001", "growth minus 0.0001 total flux", "none",
-         "ess_gecko_store_pfbalambda4.json",
-         "parsimony in the objective, lambda 1e-4 against the plain store, released split"),
-        ("minimization of metabolic adjustment", "nearest to wild type", "none",
-         "ess_kcat_bounded_store_moma.json",
-         "MOMA store against the plain store, released split"),
-        ("kcat ceilings, measured proteome, point", "growth, then least flux", "fixed ceilings",
-         "ess_kcat_bounded_store_point.json",
-         "kcat point ceilings against the plain store, released split"),
-        ("kcat ceilings, measured proteome, two sigma up", "growth, then least flux", "fixed ceilings",
-         "ess_kcat_bounded_store_sigma2.json",
-         "kcat two-sigma ceilings against the plain store, released split"),
-        ("kcat sampled, mean and spread", "growth, then least flux", "fixed ceilings, ten draws",
-         "ess_kcat_bounded_store_sampled.json",
-         "kcat-sampled store against the plain store, released split"),
-        ("GECKO pool 0.125", "growth, then least flux", "usages under the pool",
-         "ess_gecko_store_pool125.json",
-         "GECKO pool 0.125 against the plain store, released split"),
-        ("GECKO pool 0.25", "growth, then least flux", "usages under the pool",
-         "ess_gecko_store_pool250.json",
-         "GECKO pool 0.25 against the plain store, released split"),
-        ("GECKO pool 0.125, kcat one sigma up", "growth, then least flux", "usages under the pool",
-         "ess_gecko_store_pool125s1.json",
-         "GECKO pool 0.125, kcat one sigma up against the plain store, released split"),
-        ("GECKO pool 0.125, parsimony on enzyme mass", "growth, then least enzyme", "usages under the pool",
-         "ess_gecko_store_pool125minenz.json",
-         "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split"),
-        ("GECKO pool 0.125, every unit EZKinetics", "growth, then least flux",
-         "usages under the pool", "ess_gecko_store_pool125ezk.json",
-         "GECKO pool 0.125, all units EZKinetics against the plain store, released split"),
-        ("GECKO pool 0.125, shuffled kcat table", "growth, then least flux",
-         "usages under the pool", "ess_gecko_store_pool125shuf.json",
-         "GECKO pool 0.125, shuffled table against the plain store, released split"),
+        (
+            "plain FBA, growth only",
+            "growth",
+            "none",
+            "ess_gecko_store_plainfba.json",
+            "plain FBA, no parsimony against the plain store, released split",
+        ),
+        (
+            "parsimony in the objective, weight 0.001",
+            "growth minus 0.001 total flux",
+            "none",
+            "ess_gecko_store_pfbalambda3.json",
+            "parsimony in the objective, lambda 1e-3 against the plain store, released split",
+        ),
+        (
+            "parsimony in the objective, weight 0.0001",
+            "growth minus 0.0001 total flux",
+            "none",
+            "ess_gecko_store_pfbalambda4.json",
+            "parsimony in the objective, lambda 1e-4 against the plain store, released split",
+        ),
+        (
+            "minimization of metabolic adjustment",
+            "nearest to wild type",
+            "none",
+            "ess_kcat_bounded_store_moma.json",
+            "MOMA store against the plain store, released split",
+        ),
+        (
+            "kcat ceilings, measured proteome, point",
+            "growth, then least flux",
+            "fixed ceilings",
+            "ess_kcat_bounded_store_point.json",
+            "kcat point ceilings against the plain store, released split",
+        ),
+        (
+            "kcat ceilings, measured proteome, two sigma up",
+            "growth, then least flux",
+            "fixed ceilings",
+            "ess_kcat_bounded_store_sigma2.json",
+            "kcat two-sigma ceilings against the plain store, released split",
+        ),
+        (
+            "kcat sampled, mean and spread",
+            "growth, then least flux",
+            "fixed ceilings, ten draws",
+            "ess_kcat_bounded_store_sampled.json",
+            "kcat-sampled store against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool125.json",
+            "GECKO pool 0.125 against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.25",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool250.json",
+            "GECKO pool 0.25 against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125, kcat one sigma up",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool125s1.json",
+            "GECKO pool 0.125, kcat one sigma up against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125, parsimony on enzyme mass",
+            "growth, then least enzyme",
+            "usages under the pool",
+            "ess_gecko_store_pool125minenz.json",
+            "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125, every unit EZKinetics",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool125ezk.json",
+            "GECKO pool 0.125, all units EZKinetics against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125, shuffled kcat table",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool125shuf.json",
+            "GECKO pool 0.125, shuffled table against the plain store, released split",
+        ),
     ]
     dash = "\\multicolumn{1}{c}{--}"
     rows = [
@@ -2740,7 +2800,11 @@ def store_ladder() -> str | None:
         + "\n".join(rows)
         + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
     )
-    return write("store_ladder", body, "results/ess_gecko_store_*.json, results/ess_kcat_bounded_store_*.json")
+    return write(
+        "store_ladder",
+        body,
+        "results/ess_gecko_store_*.json, results/ess_kcat_bounded_store_*.json",
+    )
 
 
 def kcat_tier_capacity() -> str | None:
@@ -3069,8 +3133,71 @@ def solve_tolerance_transfer() -> str | None:
     )
 
 
+def target_transfer() -> str | None:
+    """Rounds 117 to 119: the module carried to betaxanthin and the amino acids."""
+    src = osp.join(RESULTS, "target_transfer_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    rows = []
+    for p in report["pairs"]:
+        a, c = p["arm"], p["control"]
+        enrich = (
+            f"{a['mean_top50_enrichment']:.2f} / {c['mean_top50_enrichment']:.2f}"
+            if a.get("mean_top50_enrichment") is not None
+            and c.get("mean_top50_enrichment") is not None
+            else "--"
+        )
+        rows.append(
+            f"    {p['name']} & {p['n']} & {a['mean_spearman']:.4f} ({a['sd_spearman']:.4f}) & "
+            f"{c['mean_spearman']:.4f} ({c['sd_spearman']:.4f}) & "
+            f"${p['mean_difference']:+.4f}$ ({p['sd_difference']:.4f}) & "
+            f"{p['n_positive']}/{p['n']} & {enrich} \\\\"
+        )
+    comp_rows = []
+    for head, items in report["comparators"].items():
+        comp_rows.append(f"    \\multicolumn{{2}}{{@{{}}l}}{{\\textit{{{head}}}}} \\\\")
+        comp_rows.extend(
+            f"    {name} & {value:.4f} \\\\" for name, value in items.items()
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Rounds 117 to 119: the module on betaxanthin and the amino acids]{"
+        "The 028 backbone (pathway multi-hot with ProtT5, width 12, CRPS, 200 epochs) "
+        "trained on the Cachera betaxanthin screen and on the 19 amino acids under the "
+        "027 protocol, Merzbacher's 639 genes pinned to test, with the store affine "
+        "against the same backbone without it, paired by seed. The statistic is the "
+        "pinned-test Spearman at the epoch selected on validation Pearson (centered "
+        "five-epoch moving average); for the amino acids the mean per-column Spearman. "
+        "Columns: seeds paired, the arm and control means with their standard "
+        "deviations over seeds, the mean paired difference with its standard deviation, "
+        "the seeds on which the arm scored higher, and for betaxanthin the top-50 "
+        "enrichment of high producers (arm / control). Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/target\\_transfer\\_readout.json}.}\n"
+        "  \\label{tab:target-transfer}\n"
+        "  \\begin{tabular}{@{}p{58mm}rrrrrr@{}}\n    \\hline\n"
+        "    arm against control & seeds & arm (sd) & control (sd) & difference (sd) & "
+        "higher & top-50 \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n\n"
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The 027 comparators]{The pinned-test Spearman the 027 rounds "
+        "recorded on the same splits, copied as constants into "
+        "\\texttt{target\\_transfer\\_readout.py} and not recomputed.}\n"
+        "  \\label{tab:target-transfer-comparators}\n"
+        "  \\begin{tabular}{@{}p{90mm}r@{}}\n    \\hline\n"
+        "    comparator & Spearman \\\\\n    \\hline\n"
+        + "\n".join(comp_rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("target_transfer", body, "results/target_transfer_readout.json")
+
+
 def main() -> None:
     paths = [
+        target_transfer(),
         wl_test(),
         solve_tolerance_transfer(),
         solve_tolerance(),

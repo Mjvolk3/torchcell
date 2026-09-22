@@ -106,7 +106,19 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--store-tag", default="")
-    STORE_TAG = parser.parse_args().store_tag
+    parser.add_argument(
+        "--genes",
+        choices=["store", "gem"],
+        default="store",
+        help=(
+            "store: the source store's genes, and every derived store beside it; gem: "
+            "every yeast-GEM gene from the model alone, writing only the rules-only "
+            "store as ess_solve_encodings_GEM_gpronly.npz (round 120, the betaxanthin "
+            "and amino-acid targets, whose stores cover every GEM gene)."
+        ),
+    )
+    args = parser.parse_args()
+    STORE_TAG = args.store_tag
     model = YeastGEM().model
     per_gene: dict[str, list[tuple[int, int, int]]] = {}
     largest = 0
@@ -124,10 +136,13 @@ def main() -> None:
                 (len(without), max(len(t) - 1 for t in with_gene), int(not without))
             )
 
-    source = stem("")
-    pfba = np.load(source, allow_pickle=False)
-    source_provenance = StoreProvenance.model_validate_json(str(pfba["provenance"]))
-    genes = [str(g) for g in pfba["genes"]]
+    if args.genes == "gem":
+        genes = sorted(g.id for g in model.genes)
+    else:
+        source = stem("")
+        pfba = np.load(source, allow_pickle=False)
+        source_provenance = StoreProvenance.model_validate_json(str(pfba["provenance"]))
+        genes = [str(g) for g in pfba["genes"]]
     block = np.zeros((len(genes), len(COLUMNS)), dtype=np.float32)
     for i, gene in enumerate(genes):
         rows = per_gene.get(gene, [])
@@ -148,7 +163,11 @@ def main() -> None:
     # Round 78 measured the 4,131 flux columns at +0.010 over the four growth ratios and
     # round 77 measured these six counts at +0.019 over the vector; the question this
     # store answers is whether the solve is needed at all on this endpoint.
-    alone = stem("_gpronly")
+    alone = (
+        osp.join(TABLE_DIR, "ess_solve_encodings_GEM_gpronly.npz")
+        if args.genes == "gem"
+        else stem("_gpronly")
+    )
     np.savez_compressed(
         alone,
         genes=np.array(genes),
@@ -160,12 +179,19 @@ def main() -> None:
                 "six columns of gene-protein-reaction redundancy from yeast-GEM's "
                 "rules in disjunctive normal form, with NO flux vector; written by "
                 "isozyme_affine_store.py"
+                + (" over every yeast-GEM gene" if args.genes == "gem" else "")
             ),
             gem_version=YeastGEM().version,
             columns=COLUMNS,
         ).model_dump_json(),
     )
     print(f"{alone}: {block.shape}")
+    if args.genes == "gem":
+        print(
+            f"{len(genes)} GEM genes: {int((block[:, 0] > 0).sum())} with a rule, "
+            f"{int((block[:, 1] > 0).sum())} with a sole reaction"
+        )
+        return
 
     # Which of the six carries it: the sole-reaction count alone, and the other five
     # without it. Round 77 located the gain on the genes holding a reaction nothing else

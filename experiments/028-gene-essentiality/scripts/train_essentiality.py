@@ -444,7 +444,7 @@ NODE_EMBEDDING_NAMES: list[str] = list(STRONG_NODE_EMBEDDINGS)
 _NODE_EMBEDDINGS: dict[str, Any] = {}
 
 
-def build_dataset(head: str = HEAD) -> "Neo4jCellDataset":
+def build_dataset(head: str = HEAD, deletion_only: bool = False) -> "Neo4jCellDataset":
     """Open the head's dataset with the nine-graph, prot_T5 backbone. Never rebuilds.
 
     The default is the pigment build every wave-1 to wave-8 cell and every audit script
@@ -491,7 +491,7 @@ def build_dataset(head: str = HEAD) -> "Neo4jCellDataset":
         converter=None,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=DeletionKeyedGenotypeAggregator,
-        graph_processor=Perturbation(),
+        graph_processor=Perturbation(deletion_only=deletion_only),
     )
 
 
@@ -1207,6 +1207,16 @@ class BxCell(BaseModel):
     ess_affine_lr_mult: float = Field(
         default=1.0,
         description="Round 119: learning-rate multiplier for the store affine's parameters.",
+    )
+    deletion_only_graph: bool = Field(
+        default=False,
+        description=(
+            "Round 120: the graph processor removes and pools only the DELETED genes, so "
+            "the Cachera cassette's ARO4^K229L and ARO7^G141S alleles stay in every cell "
+            "graph as the strain carries them, and a single deletion is the whole of the "
+            "pooled perturbed-gene set instead of a third of it. Off, every earlier cell "
+            "removed the two allele nodes from every Cachera graph."
+        ),
     )
     perturb_cls: bool = Field(
         default=False,
@@ -2330,6 +2340,7 @@ def build_cell(
     ess_solve_columns: str = "",
     ess_affine_weight_decay: float | None = None,
     ess_affine_lr_mult: float = 1.0,
+    deletion_only_graph: bool = False,
     perturb_cls: bool = False,
     flux_capacity_scale: float = 1.0,
     flux_lp_slack_penalty: float = 0.0,
@@ -2441,6 +2452,7 @@ def build_cell(
         ess_solve_columns=ess_solve_columns,
         ess_affine_weight_decay=ess_affine_weight_decay,
         ess_affine_lr_mult=ess_affine_lr_mult,
+        deletion_only_graph=deletion_only_graph,
         perturb_cls=perturb_cls,
         flux_capacity_scale=flux_capacity_scale,
         flux_lp_slack_penalty=flux_lp_slack_penalty,
@@ -3941,11 +3953,19 @@ def affine_table(
         if cell.ess_solve_columns:
             pattern = re.compile(cell.ess_solve_columns)
             keep = [i for i, name in enumerate(s_names) if pattern.search(name)]
-            assert keep, f"--ess-solve-columns {cell.ess_solve_columns!r} matches no column"
+            assert keep, (
+                f"--ess-solve-columns {cell.ess_solve_columns!r} matches no column"
+            )
             s_table = s_table[:, keep]
             s_names = tuple(s_names[i] for i in keep)
-            s_meta = {**s_meta, "columns_pattern": cell.ess_solve_columns, "n_columns_kept": len(keep)}
-            print(f"[solve-columns] {len(keep)} columns match {cell.ess_solve_columns!r}: {list(s_names)[:8]}")
+            s_meta = {
+                **s_meta,
+                "columns_pattern": cell.ess_solve_columns,
+                "n_columns_kept": len(keep),
+            }
+            print(
+                f"[solve-columns] {len(keep)} columns match {cell.ess_solve_columns!r}: {list(s_names)[:8]}"
+            )
         table = torch.cat([table, s_table], dim=1)
         known = known & s_known
         columns = media + s_names
@@ -7058,6 +7078,14 @@ def main() -> None:
         help="Learning-rate multiplier on the store affine's parameters.",
     )
     parser.add_argument(
+        "--deletion-only-graph",
+        action="store_true",
+        help=(
+            "Remove and pool only the deleted genes in each cell graph; an added or "
+            "altered allele (the Cachera cassette's ARO4 and ARO7) stays in the graph."
+        ),
+    )
+    parser.add_argument(
         "--perturb-cls",
         action="store_true",
         help=(
@@ -7588,6 +7616,7 @@ def main() -> None:
         ess_solve_columns=args.ess_solve_columns,
         ess_affine_weight_decay=args.ess_affine_weight_decay,
         ess_affine_lr_mult=args.ess_affine_lr_mult,
+        deletion_only_graph=args.deletion_only_graph,
         ess_solve_zero_init=args.ess_solve_zero_init,
         ess_solve_head_hidden=args.ess_solve_head_hidden,
         perturb_cls=args.perturb_cls,
@@ -7602,8 +7631,12 @@ def main() -> None:
         pos_weight_balanced=args.pos_weight_balanced,
     )
     NODE_EMBEDDING_NAMES[:] = list(cell.node_embeddings)
-    dataset = build_dataset(cell.head)
-    print(f"dataset: {len(dataset)} aggregated genotypes", flush=True)
+    dataset = build_dataset(cell.head, deletion_only=cell.deletion_only_graph)
+    print(
+        f"dataset: {len(dataset)} aggregated genotypes"
+        + (" (deletion-only graphs)" if cell.deletion_only_graph else ""),
+        flush=True,
+    )
     pinned_splits: dict[str, set[int]] | None = None
     if cell.head == ESSENTIALITY_HEAD and cell.split_file is not None:
         # THE SPLIT FILE names every record's split; its test block is the comparison

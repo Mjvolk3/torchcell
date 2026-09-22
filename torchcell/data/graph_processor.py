@@ -2035,11 +2035,21 @@ class Perturbation(GraphProcessor):
     Uses COO format for phenotypes and does not copy the base graph structure.
     """
 
-    def __init__(self) -> None:
-        """Initialize the CPU device used for tensor construction."""
+    def __init__(self, deletion_only: bool = False) -> None:
+        """Initialize the CPU device used for tensor construction.
+
+        Args:
+            deletion_only: When True, ``perturbation_indices`` and the masks carry only
+                the genes whose perturbation type ends with "deletion", so a gene the
+                strain carries as an added or altered allele (the Cachera cassette's
+                ARO4^K229L and ARO7^G141S) stays in the graph and out of the pooled
+                perturbed-gene set. The default keeps every perturbation's gene, which
+                is what every earlier run consumed.
+        """
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device = torch.device("cpu")
+        self.deletion_only = deletion_only
 
     def process(
         self,
@@ -2068,6 +2078,7 @@ class Perturbation(GraphProcessor):
             p.systematic_gene_name
             for item in data
             for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            if not self.deletion_only or str(p.perturbation_type).endswith("deletion")
         }
         node_ids = cell_graph["gene"].node_ids
         perturbed_indices = [

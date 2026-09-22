@@ -459,6 +459,50 @@ of the pool program does not depend on which enzyme carries which number. The tu
 table is not the limiting ingredient; the hypothesis of Section~\ref{sec:round114} is
 retracted.
 
+\subsection{Rounds 117 to 121: the module carried to betaxanthin and the amino acids\secstatus{todo}}
+\label{sec:target-transfer}
+
+The second goal was a module that travels, and the first place it must travel is the
+pair of targets the flux layer was built for: Cachera's betaxanthin screen, 4,930
+deletion strains of BY4741 carrying the pigment cassette on YPD, and M\"ulleder's 19
+intracellular amino acids on the prototrophic deletion collection on synthetic minimal
+medium. Both are scored under the 027 protocol, Merzbacher's 639 test genes pinned to
+test, the epoch selected on validation Pearson (centered five-epoch moving average), the
+pinned-test Spearman reported, and for the amino acids the mean per-column Spearman over
+the 19; the comparators are the 027 rounds' own numbers on the same split, read from
+their result files (Table~\ref{tab:target-transfer-comparators}). The backbone is the
+essentiality one (pathway multi-hot with ProtT5, width 12, one layer, the graph
+regularizer, CRPS on the head, 200 epochs), which is a fifth of the width 027 trained,
+and every arm is paired by seed over six seeds against the same backbone with no affine.
+
+The stores represent the strains, not the wild type. For betaxanthin
+(\texttt{bx\_reference\_flux\_table.py}, job 2740) the model is yeast-GEM with the
+cassette's 46 reactions and 20 demands, the four BY4741 markers deleted through the
+rules, on the corrected YPD; per GEM gene two parsimonious solves, growth and
+betaxanthin at 90 percent of the knockout's own growth, 8,355 columns with the total
+demand last; 1,155 genes, 93 lethal, 180 that move the production potential. ARO4-K229L
+and ARO7-G141S relieve feedback inhibition a stoichiometric model does not carry, so
+they change no bound. For the amino acids (\texttt{aa\_reference\_flux\_table.py}, job
+2751) the model is the unmodified prototroph on the dataset's medium; per GEM gene one
+parsimonious growth solve and 19 linear programs, each amino acid's synthesis maximum at
+90 percent of own growth, kept as summary columns beside the growth vector rather than
+as 19 further vectors. On the graph side the processor had removed the two allele genes
+from every Cachera cell graph, since the cassette records them as perturbations, and
+pooled them with the deletion; round 120's \texttt{--deletion-only-graph} keeps them in
+the graph and out of the pooled set, which is what the strain carries.
+
+Round 117 (jobs 2741 and 2742, w134) reads the whole betaxanthin vector through the
+zero-initialized affine; round 118 (jobs 2743 and 2744, w135) the essentiality store's
+growth vector on the amino-acid medium into the 19-output affine on the mean channel.
+Round 119 (jobs 2749 and 2750, w136) reads two summary columns only, the growth ratio
+and the production ratio, and separately the whole vector with the affine in its own
+optimizer group at weight decay 0.1 and a tenth of the rate. Round 120 (w137) is the
+deletion-only graph, and the six rule-count columns of round 77 over every GEM gene.
+Round 121 (w138) is the amino-acid production store, its 19 ratios and the growth ratio
+alone, and the whole vector with all 42 summary statistics.
+
+\input{tables/target_transfer}
+
 \subsection{Round 115: the learned allocation, with the pool made to bind\secstatus{todo}}
 \label{sec:round115}
 

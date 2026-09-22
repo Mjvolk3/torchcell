@@ -501,6 +501,36 @@ deletion-only graph, and the six rule-count columns of round 77 over every GEM g
 Round 121 (w138) is the amino-acid production store, its 19 ratios and the growth ratio
 alone, and the whole vector with all 42 summary statistics.
 
+Round 117 is read (Table~\ref{tab:target-transfer}). On betaxanthin the whole-vector
+affine reads a pinned Spearman of 0.121 (sd 0.011 over six seeds) against the control's
+0.079 (sd 0.056): $+0.043$ paired by seed (sd 0.049), above on five of six. What the
+seeds show is a change of character more than of level: the control's score depends on
+whether its seed leaves the plateau (0.024 to 0.174), the store arm's does not (0.102 to
+0.133). Three store seeds were selected on the plateau, at validation Pearson $-0.02$
+and epochs 127 to 181, and still read 0.12 to 0.13 on test, so the affine's linear read
+of the strain's flux vector carries that rank on its own, on a test set that is 636 of
+639 GEM genes. The selection rule cannot see it: the pool the validation set is drawn
+from holds 275 GEM genes in 4,082, and the affine reads a constant row on every other
+gene, so validation Pearson is nearly blind to the one term that scores on the pinned
+test. Averaged over the six seeds the store arm reads 0.135 (the two seed triples 0.146
+and 0.133) and the control 0.076, against 027's precursor readout at 0.131 over three
+seeds at width 90, its context-only control at 0.115, and the cosine kNN at 0.145. On
+the metric the task is about, the top-50 enrichment of the highest producers, the order
+reverses: 3.49 for the store arm against 4.06 for the control on single seeds, 4.39
+against 4.59 ensembled (a 10 percent base rate, so 35 to 46 percent precision). The
+vector lifts the rank correlation of a small backbone to where 027's larger one sat and
+does not lift its top-50 call.
+
+Round 118 is read. On the amino acids the whole-vector affine into the 19-output mean
+reads 0.025 (sd 0.015) against the control's 0.034 (sd 0.025): $-0.009$ (sd 0.018),
+above on two of six, and both sit under every 027 arm on the same split (0.068, 0.061,
+0.048 at width 90). Two seeds of each arm stayed near a constant predictor (validation
+Pearson 0.01 to 0.02 at selection; one control selected at epoch 2 and scores 0), so the
+width-12 backbone that the essentiality endpoint tuned is under-sized or unstable for
+19 targets at once, and the width arm of round 122 is the test that has to be read
+before any amino-acid affine is. Averaged over seeds the control reads 0.058 and the
+store arm 0.035, so the affine costs a little on this target rather than adding to it.
+
 \input{tables/target_transfer}
 
 \subsection{Round 115: the learned allocation, with the pool made to bind\secstatus{todo}}

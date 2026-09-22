@@ -72,6 +72,7 @@ class ArmEnsemble(BaseModel):
     seeds: list[int]
     single: list[Score]
     mean_single_spearman: float
+    n_constant: int = 0
     triples: list[Score]
     mean_triple_spearman: float | None
     all_seeds: Score | None
@@ -170,7 +171,10 @@ def main() -> None:
             head=head,
             seeds=sorted(dumps),
             single=single,
-            mean_single_spearman=float(np.mean([s.spearman for s in single])),
+            # A seed whose selected epoch is a constant predictor scores NaN; it is
+            # counted in n_constant and left out of the mean.
+            mean_single_spearman=float(np.nanmean([s.spearman for s in single])),
+            n_constant=int(sum(np.isnan(s.spearman) for s in single)),
             triples=triples,
             mean_triple_spearman=(
                 float(np.mean([t.spearman for t in triples])) if triples else None

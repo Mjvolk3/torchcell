@@ -1,4 +1,297 @@
 {
-  "arms": [],
+  "arms": [
+    {
+      "stem": "w134_bxctx_h12l1p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.10653976805256654,
+          "top50_enrichment": 5.191746031746032,
+          "top50_hits": 26.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.05836015660959012,
+          "top50_enrichment": 4.792380952380952,
+          "top50_hits": 24.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.17383455226959413,
+          "top50_enrichment": 4.992063492063492,
+          "top50_hits": 25.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.023765858578079155,
+          "top50_enrichment": 3.194920634920635,
+          "top50_hits": 16.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.07943828877428763,
+          "top50_enrichment": 1.5974603174603175,
+          "top50_hits": 8.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.029180138580240097,
+          "top50_enrichment": 4.592698412698413,
+          "top50_hits": 23.0
+        }
+      ],
+      "mean_single_spearman": 0.07851979381072628,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.08365891818185775,
+          "top50_enrichment": 5.3914285714285715,
+          "top50_hits": 27.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.03547255750003203,
+          "top50_enrichment": 3.594285714285714,
+          "top50_hits": 18.0
+        }
+      ],
+      "mean_triple_spearman": 0.05956573784094489,
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.07560047694271947,
+        "top50_enrichment": 4.592698412698413,
+        "top50_hits": 23.0
+      }
+    },
+    {
+      "stem": "w134_bxstore_h12l1p1_e200",
+      "head": "betaxanthin",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 629,
+          "spearman": 0.12411491315189313,
+          "top50_enrichment": 2.595873015873016,
+          "top50_hits": 13.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.12014562380430678,
+          "top50_enrichment": 2.595873015873016,
+          "top50_hits": 13.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.1297016951012421,
+          "top50_enrichment": 4.592698412698413,
+          "top50_hits": 23.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.10157912020032663,
+          "top50_enrichment": 4.193333333333333,
+          "top50_hits": 21.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.13287424828906075,
+          "top50_enrichment": 2.595873015873016,
+          "top50_hits": 13.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.11740899498654622,
+          "top50_enrichment": 4.393015873015873,
+          "top50_hits": 22.0
+        }
+      ],
+      "mean_single_spearman": 0.12097076592222927,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 629,
+          "spearman": 0.1459353076710505,
+          "top50_enrichment": 4.193333333333333,
+          "top50_hits": 21.0
+        },
+        {
+          "n": 629,
+          "spearman": 0.1330331134002921,
+          "top50_enrichment": 4.393015873015873,
+          "top50_hits": 22.0
+        }
+      ],
+      "mean_triple_spearman": 0.1394842105356713,
+      "all_seeds": {
+        "n": 629,
+        "spearman": 0.13535010147973806,
+        "top50_enrichment": 4.393015873015873,
+        "top50_hits": 22.0
+      }
+    },
+    {
+      "stem": "w135_aactx_h12l1p1_e200",
+      "head": "mulleder19",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 639,
+          "spearman": 0.06510476160153654,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03504297557321539,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.042424126954285275,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": null,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.009677600987819756,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.053161223408682096,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_single_spearman": 0.04108213770510781,
+      "n_constant": 1,
+      "triples": [
+        {
+          "n": 639,
+          "spearman": 0.056173641621027635,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.05324038689196705,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_triple_spearman": 0.05470701425649734,
+      "all_seeds": {
+        "n": 639,
+        "spearman": 0.05832923357173236,
+        "top50_enrichment": null,
+        "top50_hits": null
+      }
+    },
+    {
+      "stem": "w135_aastore_h12l1p1_e200",
+      "head": "mulleder19",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 639,
+          "spearman": 0.02772240479056235,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.04075913435219918,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03463187185239175,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.012182656907605038,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.001568137893215558,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03198111877649424,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_single_spearman": 0.02480755409541135,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 639,
+          "spearman": 0.03501325810818682,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.024792254940021123,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_triple_spearman": 0.02990275652410397,
+      "all_seeds": {
+        "n": 639,
+        "spearman": 0.03494994695820463,
+        "top50_enrichment": null,
+        "top50_hits": null
+      }
+    }
+  ],
   "note": "Mean prediction over seeds on the pinned records, scored as the cells are; every dump resolved through its result file and checked against it."
 }

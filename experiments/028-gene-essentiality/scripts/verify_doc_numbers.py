@@ -83,7 +83,9 @@ def graph_module(name: str, key: str) -> Callable[[], float]:
     """Job 2684: one paired difference of the graph family with the solve columns."""
 
     def run() -> float:
-        rows = json.load(open(osp.join(RESULTS, "resplit_readout.json")))["graph_module"]
+        rows = json.load(open(osp.join(RESULTS, "resplit_readout.json")))[
+            "graph_module"
+        ]
         return float(next(r for r in rows if r["name"].startswith(name))[key])
 
     return run
@@ -146,10 +148,22 @@ def dcell_affine(statistic: str) -> Callable[[], float]:
     def run() -> float:
         a = json.load(open(osp.join(RESULTS, "dcell_style_resplits_affine.json")))
         b = json.load(open(osp.join(RESULTS, "dcell_style_resplits.json")))
-        ra = {r["split_file"]: r["mean"] for r in a["rows"] if r["model"] == "dcell_style_shared_affine"}
-        rb = {r["split_file"]: r["mean"] for r in b["rows"] if r["model"] == "dcell_style_shared"}
+        ra = {
+            r["split_file"]: r["mean"]
+            for r in a["rows"]
+            if r["model"] == "dcell_style_shared_affine"
+        }
+        rb = {
+            r["split_file"]: r["mean"]
+            for r in b["rows"]
+            if r["model"] == "dcell_style_shared"
+        }
         d = np.array([ra[k] - rb[k] for k in sorted(rb)])
-        return {"mean": float(d.mean()), "sd": float(d.std(ddof=1)), "n_positive": float((d > 0).sum())}[statistic]
+        return {
+            "mean": float(d.mean()),
+            "sd": float(d.std(ddof=1)),
+            "n_positive": float((d > 0).sum()),
+        }[statistic]
 
     return run
 
@@ -160,12 +174,20 @@ def go006_tuned(statistic: str) -> Callable[[], float]:
     def run() -> float:
         t = json.load(open(osp.join(RESULTS, "dcell_style_resplits_go006tuned.json")))
         c = json.load(open(osp.join(RESULTS, "dcell_style_resplits.json")))
-        g = lambda d: {r["split_file"]: r["mean"] for r in d["rows"] if r["model"] == "dcell_style_shared"}  # noqa: E731
+        g = lambda d: {
+            r["split_file"]: r["mean"]
+            for r in d["rows"]
+            if r["model"] == "dcell_style_shared"
+        }  # noqa: E731
         rt, rc = g(t), g(c)
         d = np.array([rt[k] - rc[k] for k in sorted(rc)])
         if statistic == "vs_gcn":
             return float(t["paired"][0]["difference_mean"])
-        return {"mean": float(d.mean()), "sd": float(d.std(ddof=1)), "n_positive": float((d > 0).sum())}[statistic]
+        return {
+            "mean": float(d.mean()),
+            "sd": float(d.std(ddof=1)),
+            "n_positive": float((d > 0).sum()),
+        }[statistic]
 
     return run
 
@@ -201,6 +223,48 @@ def agreement_pair(a: str, b: str, key: str) -> float:
         if {p["a"], p["b"]} == {a, b}:
             return float(p[key])
     raise KeyError((a, b))
+
+
+def transfer(pair: str, key: str, side: str | None = None) -> Callable[[], float]:
+    """One statistic of one pair (or of its arm/control) of the target-transfer readout."""
+
+    def run() -> float:
+        pairs = json.load(open(osp.join(RESULTS, "target_transfer_readout.json")))[
+            "pairs"
+        ]
+        p = next(q for q in pairs if q["name"] == pair)
+        return float(p[side][key] if side else p[key])
+
+    return run
+
+
+def transfer_comparator(head: str, prefix: str) -> Callable[[], float]:
+    """The 027 comparator whose label starts with ``prefix``."""
+
+    def run() -> float:
+        comps = json.load(open(osp.join(RESULTS, "target_transfer_readout.json")))[
+            "comparators"
+        ][head]
+        return float(next(v for k, v in comps.items() if k.startswith(prefix)))
+
+    return run
+
+
+def ensemble(stem: str, key: str, which: str = "all_seeds") -> Callable[[], float]:
+    """One statistic of one arm of the seed-ensemble readout."""
+
+    def run() -> float:
+        arms = json.load(open(osp.join(RESULTS, "target_ensemble_readout.json")))[
+            "arms"
+        ]
+        a = next(q for q in arms if q["stem"] == stem)
+        if which == "all_seeds":
+            return float(a["all_seeds"][key])
+        if which.startswith("triple"):
+            return float(a["triples"][int(which[-1])][key])
+        return float(a[key])
+
+    return run
 
 
 def simplification(block: str, name: str, key: str) -> Callable[[], float]:
@@ -1089,62 +1153,102 @@ CHECKS: list[Check] = [
     Check(
         claim="summary: single-medium module minus no metabolism",
         stated=0.061,
-        recompute=simplification("resplit", "one medium, flux vector and counts, over no metabolism", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "one medium, flux vector and counts, over no metabolism",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="summary: ... splits higher",
         stated=10,
-        recompute=simplification("resplit", "one medium, flux vector and counts, over no metabolism", "n_positive"),
+        recompute=simplification(
+            "resplit",
+            "one medium, flux vector and counts, over no metabolism",
+            "n_positive",
+        ),
     ),
     Check(
         claim="summary: ... split-and-seed pairs higher",
         stated=89,
-        recompute=simplification("resplit", "one medium, flux vector and counts, over no metabolism", "n_pairs_positive"),
+        recompute=simplification(
+            "resplit",
+            "one medium, flux vector and counts, over no metabolism",
+            "n_pairs_positive",
+        ),
     ),
     Check(
         claim="round84-98: four media, flux vector and counts, over no metabolism, mean_difference",
         stated=0.059,
-        recompute=simplification("resplit", "four media, flux vector and counts, over no metabolism", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "four media, flux vector and counts, over no metabolism",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round84-98: four media, flux vector and counts, over no metabolism, n_pairs_positive",
         stated=88,
-        recompute=simplification("resplit", "four media, flux vector and counts, over no metabolism", "n_pairs_positive"),
+        recompute=simplification(
+            "resplit",
+            "four media, flux vector and counts, over no metabolism",
+            "n_pairs_positive",
+        ),
     ),
     Check(
         claim="round84-98: four media and the flux vector, over no metabolism, mean_difference",
         stated=0.04,
-        recompute=simplification("resplit", "four media and the flux vector, over no metabolism", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "four media and the flux vector, over no metabolism",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round84-98: four media and the counts, over no metabolism, mean_difference",
         stated=0.041,
-        recompute=simplification("resplit", "four media and the counts, over no metabolism", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "four media and the counts, over no metabolism",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round84-98: four ratios alone, over no metabolism, mean_difference",
         stated=0.028,
-        recompute=simplification("resplit", "four ratios alone, over no metabolism", "mean_difference"),
+        recompute=simplification(
+            "resplit", "four ratios alone, over no metabolism", "mean_difference"
+        ),
     ),
     Check(
         claim="round84-98: two media and the counts, over no metabolism, mean_difference",
         stated=0.036,
-        recompute=simplification("resplit", "two media and the counts, over no metabolism", "mean_difference"),
+        recompute=simplification(
+            "resplit", "two media and the counts, over no metabolism", "mean_difference"
+        ),
     ),
     Check(
         claim="round84-98: one medium and the counts, over no metabolism, mean_difference",
         stated=0.032,
-        recompute=simplification("resplit", "one medium and the counts, over no metabolism", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "one medium and the counts, over no metabolism",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round106: no metabolism, fold ensemble at three seeds per fold",
         stated=0.878,
-        recompute=simplification("ladder", "no metabolism", "fold_ensemble_three_seeds"),
+        recompute=simplification(
+            "ladder", "no metabolism", "fold_ensemble_three_seeds"
+        ),
     ),
     Check(
         claim="round101: YPD and SM with counts, cells",
         stated=0.892,
-        recompute=simplification("ladder", "YPD and SM ratios, rule counts", "cell_mean"),
+        recompute=simplification(
+            "ladder", "YPD and SM ratios, rule counts", "cell_mean"
+        ),
     ),
     Check(
         claim="round101: YPD and SM with counts, fold ensemble",
@@ -1180,7 +1284,9 @@ CHECKS: list[Check] = [
     Check(
         claim="job 2691: GCN, GO | affine: YPD ratio+vector+counts, splits higher",
         stated=9,
-        recompute=graph_module("GCN, GO | affine: YPD ratio+vector+counts", "n_positive"),
+        recompute=graph_module(
+            "GCN, GO | affine: YPD ratio+vector+counts", "n_positive"
+        ),
         tolerance=0.5,
     ),
     Check(
@@ -1191,7 +1297,9 @@ CHECKS: list[Check] = [
     Check(
         claim="job 2691: GCN, GO | affine: four ratios+vector+counts, splits higher",
         stated=9,
-        recompute=graph_module("GCN, GO | affine: four ratios+vector+counts", "n_positive"),
+        recompute=graph_module(
+            "GCN, GO | affine: four ratios+vector+counts", "n_positive"
+        ),
         tolerance=0.5,
     ),
     Check(
@@ -1267,34 +1375,52 @@ CHECKS: list[Check] = [
     Check(
         claim="job 2693: GCN, GO | affine: YPD ratio (400 epochs), mean",
         stated=0.009,
-        recompute=graph_module("GCN, GO | affine: YPD ratio (400 epochs), minus graph convolution on GO, six", "mean"),
+        recompute=graph_module(
+            "GCN, GO | affine: YPD ratio (400 epochs), minus graph convolution on GO, six",
+            "mean",
+        ),
     ),
     Check(
         claim="job 2693: GCN, GO | affine: YPD ratio (400 epochs), splits higher",
         stated=10,
-        recompute=graph_module("GCN, GO | affine: YPD ratio (400 epochs), minus graph convolution on GO, six", "n_positive"),
+        recompute=graph_module(
+            "GCN, GO | affine: YPD ratio (400 epochs), minus graph convolution on GO, six",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="job 2693: GCN, GO | affine: YPD ratio+vector+count, mean",
         stated=0.017,
-        recompute=graph_module("GCN, GO | affine: YPD ratio+vector+counts (400 epochs), minus graph convolution on GO, six", "mean"),
+        recompute=graph_module(
+            "GCN, GO | affine: YPD ratio+vector+counts (400 epochs), minus graph convolution on GO, six",
+            "mean",
+        ),
     ),
     Check(
         claim="job 2693: GCN, GO | affine: YPD ratio+vector+count, splits higher",
         stated=7,
-        recompute=graph_module("GCN, GO | affine: YPD ratio+vector+counts (400 epochs), minus graph convolution on GO, six", "n_positive"),
+        recompute=graph_module(
+            "GCN, GO | affine: YPD ratio+vector+counts (400 epochs), minus graph convolution on GO, six",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="job 2693: GCN, GO | affine: four ratios+vector+cou, mean",
         stated=0.019,
-        recompute=graph_module("GCN, GO | affine: four ratios+vector+counts (400 epochs), minus graph convolution on GO, six", "mean"),
+        recompute=graph_module(
+            "GCN, GO | affine: four ratios+vector+counts (400 epochs), minus graph convolution on GO, six",
+            "mean",
+        ),
     ),
     Check(
         claim="job 2693: GCN, GO | affine: four ratios+vector+cou, splits higher",
         stated=7,
-        recompute=graph_module("GCN, GO | affine: four ratios+vector+counts (400 epochs), minus graph convolution on GO, six", "n_positive"),
+        recompute=graph_module(
+            "GCN, GO | affine: four ratios+vector+counts (400 epochs), minus graph convolution on GO, six",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
@@ -1354,7 +1480,9 @@ CHECKS: list[Check] = [
         recompute=lambda: float(
             next(
                 r
-                for r in json.load(open(osp.join(RESULTS, "graph_baselines_prot_affine_s6.json")))["rows"]
+                for r in json.load(
+                    open(osp.join(RESULTS, "graph_baselines_prot_affine_s6.json"))
+                )["rows"]
                 if r["inputs"] == "ProtT5 (400 epochs)"
             )["mean"]
         ),
@@ -1365,8 +1493,11 @@ CHECKS: list[Check] = [
         recompute=lambda: float(
             next(
                 r
-                for r in json.load(open(osp.join(RESULTS, "graph_baselines_prot_affine_s6.json")))["rows"]
-                if r["inputs"] == "ProtT5 | affine: YPD ratio+vector+counts (400 epochs)"
+                for r in json.load(
+                    open(osp.join(RESULTS, "graph_baselines_prot_affine_s6.json"))
+                )["rows"]
+                if r["inputs"]
+                == "ProtT5 | affine: YPD ratio+vector+counts (400 epochs)"
             )["mean"]
         ),
     ),
@@ -1376,7 +1507,14 @@ CHECKS: list[Check] = [
         recompute=lambda: float(
             next(
                 r
-                for r in json.load(open(osp.join(RESULTS, "graph_baselines_prot_affine_s6_genome_heldout.json")))["rows"]
+                for r in json.load(
+                    open(
+                        osp.join(
+                            RESULTS,
+                            "graph_baselines_prot_affine_s6_genome_heldout.json",
+                        )
+                    )
+                )["rows"]
                 if r["inputs"] == "ProtT5 (400 epochs)"
             )["mean"]
         ),
@@ -1387,8 +1525,16 @@ CHECKS: list[Check] = [
         recompute=lambda: float(
             next(
                 r
-                for r in json.load(open(osp.join(RESULTS, "graph_baselines_prot_affine_s6_genome_heldout.json")))["rows"]
-                if r["inputs"] == "ProtT5 | affine: YPD ratio+vector+counts (400 epochs)"
+                for r in json.load(
+                    open(
+                        osp.join(
+                            RESULTS,
+                            "graph_baselines_prot_affine_s6_genome_heldout.json",
+                        )
+                    )
+                )["rows"]
+                if r["inputs"]
+                == "ProtT5 | affine: YPD ratio+vector+counts (400 epochs)"
             )["mean"]
         ),
     ),
@@ -1492,28 +1638,48 @@ CHECKS: list[Check] = [
     Check(
         claim="round107: one medium, nine seeds",
         stated=0.912,
-        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "mean_a"),
+        recompute=simplification(
+            "released_pairs",
+            "one medium for four, flux vector and counts kept, released split",
+            "mean_a",
+        ),
     ),
     Check(
         claim="round107: four media, nine seeds",
         stated=0.92,
-        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "mean_b"),
+        recompute=simplification(
+            "released_pairs",
+            "one medium for four, flux vector and counts kept, released split",
+            "mean_b",
+        ),
     ),
     Check(
         claim="round107: paired difference",
         stated=-0.009,
-        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "one medium for four, flux vector and counts kept, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round107: seeds the one-medium cell wins",
         stated=1,
-        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "one medium for four, flux vector and counts kept, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round107: seeds paired",
         stated=9,
-        recompute=simplification("released_pairs", "one medium for four, flux vector and counts kept, released split", "n"),
+        recompute=simplification(
+            "released_pairs",
+            "one medium for four, flux vector and counts kept, released split",
+            "n",
+        ),
         tolerance=0.5,
     ),
     Check(
@@ -1556,61 +1722,103 @@ CHECKS: list[Check] = [
     Check(
         claim="portable average: margin",
         stated=0.029,
-        recompute=portable_average("differences", "average minus the better single model", "mean"),
+        recompute=portable_average(
+            "differences", "average minus the better single model", "mean"
+        ),
     ),
     Check(
         claim="portable average: margin sd",
         stated=0.013,
-        recompute=portable_average("differences", "average minus the better single model", "sd"),
+        recompute=portable_average(
+            "differences", "average minus the better single model", "sd"
+        ),
     ),
     Check(
         claim="portable average: margin splits",
         stated=10,
-        recompute=portable_average("differences", "average minus the better single model", "n_positive"),
+        recompute=portable_average(
+            "differences", "average minus the better single model", "n_positive"
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="portable average: single models",
         stated=-0.003,
-        recompute=portable_average("differences", "layer-free minus GO convolution", "mean"),
+        recompute=portable_average(
+            "differences", "layer-free minus GO convolution", "mean"
+        ),
     ),
     Check(
         claim="portable average: transformer higher",
         stated=4,
-        recompute=portable_average("differences", "layer-free minus GO convolution", "n_positive"),
+        recompute=portable_average(
+            "differences", "layer-free minus GO convolution", "n_positive"
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="portable average: released folds, alone",
         stated=0.929,
-        recompute=fold_average(("YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",), "auroc"),
+        recompute=fold_average(
+            (
+                "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",
+            ),
+            "auroc",
+        ),
     ),
     Check(
         claim="portable average: released folds, with the graph family",
         stated=0.953,
-        recompute=fold_average(("GO convolution, five folds (400 epochs)", "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"), "auroc"),
+        recompute=fold_average(
+            (
+                "GO convolution, five folds (400 epochs)",
+                "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",
+            ),
+            "auroc",
+        ),
     ),
     Check(
         claim="portable average: released folds, interval low",
         stated=0.92,
-        recompute=fold_average(("GO convolution, five folds (400 epochs)", "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"), "ci_low"),
+        recompute=fold_average(
+            (
+                "GO convolution, five folds (400 epochs)",
+                "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",
+            ),
+            "ci_low",
+        ),
         tolerance=0.006,
     ),
     Check(
         claim="portable average: released folds, interval high",
         stated=0.98,
-        recompute=fold_average(("GO convolution, five folds (400 epochs)", "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"), "ci_high"),
+        recompute=fold_average(
+            (
+                "GO convolution, five folds (400 epochs)",
+                "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",
+            ),
+            "ci_high",
+        ),
         tolerance=0.006,
     ),
     Check(
         claim="job 2695: graph family with the affine, fold ensemble",
         stated=0.930,
-        recompute=fold_average(("GO convolution with the module as an affine, five folds (job 2695)",), "auroc"),
+        recompute=fold_average(
+            ("GO convolution with the module as an affine, five folds (job 2695)",),
+            "auroc",
+        ),
     ),
     Check(
         claim="job 2695: graph family with the affine, averaged with the transformer",
         stated=0.941,
-        recompute=fold_average(("GO convolution with the module as an affine, five folds (job 2695)", "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"), "auroc"),
+        recompute=fold_average(
+            (
+                "GO convolution with the module as an affine, five folds (job 2695)",
+                "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)",
+            ),
+            "auroc",
+        ),
     ),
     Check(
         claim="job 2695: graph family without the affine, fold ensemble (same job)",
@@ -1704,23 +1912,34 @@ CHECKS: list[Check] = [
     Check(
         claim="go006: graph, ten splits",
         stated=-0.002,
-        recompute=go006("GCN, union of nine", "GO (400 epochs)", "resplits", "difference_mean"),
+        recompute=go006(
+            "GCN, union of nine", "GO (400 epochs)", "resplits", "difference_mean"
+        ),
     ),
     Check(
         claim="go006: graph, splits higher",
         stated=4,
-        recompute=go006("GCN, union of nine", "GO (400 epochs)", "resplits", "n_006_higher"),
+        recompute=go006(
+            "GCN, union of nine", "GO (400 epochs)", "resplits", "n_006_higher"
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="go006: graph, released trigenic",
         stated=0.905,
-        recompute=go006("GCN, union of nine", "GO (400 epochs)", "released", "mean_006"),
+        recompute=go006(
+            "GCN, union of nine", "GO (400 epochs)", "released", "mean_006"
+        ),
     ),
     Check(
         claim="go006: graph, released current",
         stated=0.909,
-        recompute=go006("GCN, union of nine", "GO (400 epochs)", "released", "mean_current_shared_seeds"),
+        recompute=go006(
+            "GCN, union of nine",
+            "GO (400 epochs)",
+            "released",
+            "mean_current_shared_seeds",
+        ),
     ),
     Check(
         claim="go006: dcell, released trigenic",
@@ -1730,7 +1949,9 @@ CHECKS: list[Check] = [
     Check(
         claim="go006: dcell, released current, shared seeds",
         stated=0.841,
-        recompute=go006("dcell_style_shared", "GO", "released", "mean_current_shared_seeds"),
+        recompute=go006(
+            "dcell_style_shared", "GO", "released", "mean_current_shared_seeds"
+        ),
     ),
     Check(
         claim="go006: dcell, ten splits",
@@ -1752,22 +1973,38 @@ CHECKS: list[Check] = [
     Check(
         claim="round110: ProtT5 with the module",
         stated=0.883,
-        recompute=simplification("released_pairs", "ProtT5 only: the module over no metabolism, released split", "mean_a"),
+        recompute=simplification(
+            "released_pairs",
+            "ProtT5 only: the module over no metabolism, released split",
+            "mean_a",
+        ),
     ),
     Check(
         claim="round110: ProtT5 without",
         stated=0.771,
-        recompute=simplification("released_pairs", "ProtT5 only: the module over no metabolism, released split", "mean_b"),
+        recompute=simplification(
+            "released_pairs",
+            "ProtT5 only: the module over no metabolism, released split",
+            "mean_b",
+        ),
     ),
     Check(
         claim="round110: paired gain",
         stated=0.112,
-        recompute=simplification("released_pairs", "ProtT5 only: the module over no metabolism, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "ProtT5 only: the module over no metabolism, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round110: seeds higher",
         stated=6,
-        recompute=simplification("released_pairs", "ProtT5 only: the module over no metabolism, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "ProtT5 only: the module over no metabolism, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
@@ -1784,9 +2021,9 @@ CHECKS: list[Check] = [
         stated=0.876,
         recompute=lambda: max(
             t["val_mean"]
-            for t in json.load(
-                open(osp.join(RESULTS, "dcell_style_tune_go006.json"))
-            )["tune"]
+            for t in json.load(open(osp.join(RESULTS, "dcell_style_tune_go006.json")))[
+                "tune"
+            ]
         ),
     ),
     Check(
@@ -1794,107 +2031,165 @@ CHECKS: list[Check] = [
         stated=0.873,
         recompute=lambda: max(
             t["val_mean"]
-            for t in json.load(open(osp.join(RESULTS, "dcell_style_tune.json")))[
-                "tune"
-            ]
+            for t in json.load(open(osp.join(RESULTS, "dcell_style_tune.json")))["tune"]
         ),
     ),
     Check(
         claim="job 2700: hierarchy on the trigenic store at its tuned configuration",
         stated=0.709,
         recompute=lambda: float(
-            json.load(
-                open(osp.join(RESULTS, "dcell_style_released_go006tuned.json"))
-            )["rows"][0]["mean"]
+            json.load(open(osp.join(RESULTS, "dcell_style_released_go006tuned.json")))[
+                "rows"
+            ][0]["mean"]
         ),
     ),
     Check(
         claim="round111: ProtT5 with the module, fold ensemble",
         stated=0.892,
         recompute=simplification(
-            "ladder", "ProtT5 only: YPD ratio, flux vector, rule counts", "fold_ensemble_one_seed"
+            "ladder",
+            "ProtT5 only: YPD ratio, flux vector, rule counts",
+            "fold_ensemble_one_seed",
         ),
     ),
     Check(
         claim="round111: ProtT5 without, fold ensemble",
         stated=0.795,
-        recompute=simplification("ladder", "ProtT5 only: no metabolism", "fold_ensemble_one_seed"),
+        recompute=simplification(
+            "ladder", "ProtT5 only: no metabolism", "fold_ensemble_one_seed"
+        ),
     ),
     # sec:round109 -- the ten splits.
     Check(
         claim="round109: module over none, ten splits",
         stated=0.102,
-        recompute=simplification("resplit", "ProtT5 only: one medium, flux vector and counts, over no metabolism", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "ProtT5 only: one medium, flux vector and counts, over no metabolism",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round109: splits higher",
         stated=10,
-        recompute=simplification("resplit", "ProtT5 only: one medium, flux vector and counts, over no metabolism", "n_positive"),
+        recompute=simplification(
+            "resplit",
+            "ProtT5 only: one medium, flux vector and counts, over no metabolism",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round109: pairs higher",
         stated=30,
-        recompute=simplification("resplit", "ProtT5 only: one medium, flux vector and counts, over no metabolism", "n_pairs_positive"),
+        recompute=simplification(
+            "resplit",
+            "ProtT5 only: one medium, flux vector and counts, over no metabolism",
+            "n_pairs_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round109: against the pathway backbone, both with the module",
         stated=-0.027,
-        recompute=simplification("resplit", "ProtT5 only against the pathway backbone, both with the module", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "ProtT5 only against the pathway backbone, both with the module",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round109: against the pathway backbone, neither",
         stated=-0.063,
-        recompute=simplification("resplit", "ProtT5 only against the pathway backbone, neither with the module", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "ProtT5 only against the pathway backbone, neither with the module",
+            "mean_difference",
+        ),
     ),
     # sec:round112 -- the corrected medium.
     Check(
         claim="round112: released, corrected",
         stated=0.913,
-        recompute=simplification("released_pairs", "corrected YPD store against the Suthers store, released split", "mean_a"),
+        recompute=simplification(
+            "released_pairs",
+            "corrected YPD store against the Suthers store, released split",
+            "mean_a",
+        ),
     ),
     Check(
         claim="round112: released, old",
         stated=0.916,
-        recompute=simplification("released_pairs", "corrected YPD store against the Suthers store, released split", "mean_b"),
+        recompute=simplification(
+            "released_pairs",
+            "corrected YPD store against the Suthers store, released split",
+            "mean_b",
+        ),
     ),
     Check(
         claim="round112: released, paired",
         stated=-0.003,
-        recompute=simplification("released_pairs", "corrected YPD store against the Suthers store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "corrected YPD store against the Suthers store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round112: released, seeds higher",
         stated=3,
-        recompute=simplification("released_pairs", "corrected YPD store against the Suthers store, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "corrected YPD store against the Suthers store, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round112: ten splits, paired",
         stated=-0.007,
-        recompute=simplification("resplit", "corrected YPD store against the Suthers store, one medium, vector and counts", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "corrected YPD store against the Suthers store, one medium, vector and counts",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round112: ten splits, sd",
         stated=0.009,
-        recompute=simplification("resplit", "corrected YPD store against the Suthers store, one medium, vector and counts", "sd_difference"),
+        recompute=simplification(
+            "resplit",
+            "corrected YPD store against the Suthers store, one medium, vector and counts",
+            "sd_difference",
+        ),
     ),
     Check(
         claim="round112: ten splits, higher",
         stated=2,
-        recompute=simplification("resplit", "corrected YPD store against the Suthers store, one medium, vector and counts", "n_positive"),
+        recompute=simplification(
+            "resplit",
+            "corrected YPD store against the Suthers store, one medium, vector and counts",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round112: ten splits, over none",
         stated=0.059,
-        recompute=simplification("resplit", "corrected YPD store: one medium, flux vector and counts, over no metabolism", "mean_difference"),
+        recompute=simplification(
+            "resplit",
+            "corrected YPD store: one medium, flux vector and counts, over no metabolism",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round112: ten splits, over none, higher",
         stated=10,
-        recompute=simplification("resplit", "corrected YPD store: one medium, flux vector and counts, over no metabolism", "n_positive"),
+        recompute=simplification(
+            "resplit",
+            "corrected YPD store: one medium, flux vector and counts, over no metabolism",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
@@ -1952,8 +2247,16 @@ CHECKS: list[Check] = [
             sum(
                 abs(float(a["YPD"]) - float(b["YPD"])) > 1e-6
                 for a, b in zip(
-                    list(csv.DictReader(open(osp.join(RESULTS, "fba_essentiality_per_gene.csv")))),
-                    list(csv.DictReader(open(osp.join(RESULTS, "fba_essentiality_per_gene_nuc.csv")))),
+                    list(
+                        csv.DictReader(
+                            open(osp.join(RESULTS, "fba_essentiality_per_gene.csv"))
+                        )
+                    ),
+                    list(
+                        csv.DictReader(
+                            open(osp.join(RESULTS, "fba_essentiality_per_gene_nuc.csv"))
+                        )
+                    ),
                     strict=True,
                 )
             )
@@ -1965,11 +2268,7 @@ CHECKS: list[Check] = [
         stated=0.036,
         recompute=dcell_affine("mean"),
     ),
-    Check(
-        claim="job 2698: ... sd",
-        stated=0.013,
-        recompute=dcell_affine("sd"),
-    ),
+    Check(claim="job 2698: ... sd", stated=0.013, recompute=dcell_affine("sd")),
     Check(
         claim="job 2698: ... splits higher",
         stated=10,
@@ -2005,11 +2304,7 @@ CHECKS: list[Check] = [
         recompute=go006_tuned("n_positive"),
         tolerance=0.5,
     ),
-    Check(
-        claim="job 2701: ... sd",
-        stated=0.038,
-        recompute=go006_tuned("sd"),
-    ),
+    Check(claim="job 2701: ... sd", stated=0.038, recompute=go006_tuned("sd")),
     Check(
         claim="job 2701: ... against the graph",
         stated=-0.079,
@@ -2019,51 +2314,85 @@ CHECKS: list[Check] = [
     Check(
         claim="round113: two-sigma, paired",
         stated=0.0,
-        recompute=simplification("released_pairs", "kcat two-sigma ceilings against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "kcat two-sigma ceilings against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round113: two-sigma, seeds higher",
         stated=3,
-        recompute=simplification("released_pairs", "kcat two-sigma ceilings against the plain store, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "kcat two-sigma ceilings against the plain store, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round113: sampled, paired",
         stated=0.003,
-        recompute=simplification("released_pairs", "kcat-sampled store against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "kcat-sampled store against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round113: sampled, seeds higher",
         stated=2,
-        recompute=simplification("released_pairs", "kcat-sampled store against the plain store, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "kcat-sampled store against the plain store, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round113: sampled, sd",
         stated=0.014,
-        recompute=simplification("released_pairs", "kcat-sampled store against the plain store, released split", "sd_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "kcat-sampled store against the plain store, released split",
+            "sd_difference",
+        ),
     ),
     Check(
         claim="round113: moma, paired",
         stated=-0.002,
-        recompute=simplification("released_pairs", "MOMA store against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "MOMA store against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round113: moma, seeds higher",
         stated=2,
-        recompute=simplification("released_pairs", "MOMA store against the plain store, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "MOMA store against the plain store, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round113: point, paired",
         stated=-0.004,
-        recompute=simplification("released_pairs", "kcat point ceilings against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "kcat point ceilings against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round113 store point: capacity_scale",
         stated=3000,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))["capacity_scale"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))[
+                "capacity_scale"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2071,7 +2400,9 @@ CHECKS: list[Check] = [
         claim="round113 store point: n_ceilings_binding_wild_type",
         stated=0,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))["n_ceilings_binding_wild_type"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))[
+                "n_ceilings_binding_wild_type"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2079,7 +2410,9 @@ CHECKS: list[Check] = [
         claim="round113 store sigma1: capacity_scale",
         stated=1000,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma1.json")))["capacity_scale"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma1.json")))[
+                "capacity_scale"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2087,7 +2420,9 @@ CHECKS: list[Check] = [
         claim="round113 store sigma2: capacity_scale",
         stated=100,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma2.json")))["capacity_scale"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma2.json")))[
+                "capacity_scale"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2095,7 +2430,9 @@ CHECKS: list[Check] = [
         claim="round113 store sigma2: n_ceilings_binding_wild_type",
         stated=2,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma2.json")))["n_ceilings_binding_wild_type"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma2.json")))[
+                "n_ceilings_binding_wild_type"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2103,7 +2440,9 @@ CHECKS: list[Check] = [
         claim="round113 store sigma2: median_relative_l2_log1p_to_plain",
         stated=0.07,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma2.json")))["median_relative_l2_log1p_to_plain"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_sigma2.json")))[
+                "median_relative_l2_log1p_to_plain"
+            ]
         ),
         tolerance=0.006,
     ),
@@ -2111,7 +2450,9 @@ CHECKS: list[Check] = [
         claim="round113 store moma: n_lethal",
         stated=105,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_moma.json")))["n_lethal"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_moma.json")))[
+                "n_lethal"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2119,7 +2460,9 @@ CHECKS: list[Check] = [
         claim="round113 store moma: n_lethal_plain",
         stated=91,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_moma.json")))["n_lethal_plain"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_moma.json")))[
+                "n_lethal_plain"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2127,7 +2470,9 @@ CHECKS: list[Check] = [
         claim="round113 store point: n_units_with_abundance",
         stated=1400,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))["n_units_with_abundance"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))[
+                "n_units_with_abundance"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2135,7 +2480,9 @@ CHECKS: list[Check] = [
         claim="round113 store point: n_reactions_with_ceiling",
         stated=995,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))["n_reactions_with_ceiling"]
+            json.load(open(osp.join(RESULTS, "ess_kcat_bounded_store_point.json")))[
+                "n_reactions_with_ceiling"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2143,87 +2490,364 @@ CHECKS: list[Check] = [
     Check(
         claim="round114: plain FBA, paired",
         stated=-0.01,
-        recompute=simplification("released_pairs", "plain FBA, no parsimony against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "plain FBA, no parsimony against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round114: plain FBA, seeds higher",
         stated=2,
-        recompute=simplification("released_pairs", "plain FBA, no parsimony against the plain store, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "plain FBA, no parsimony against the plain store, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round114: plain FBA, sd",
         stated=0.021,
-        recompute=simplification("released_pairs", "plain FBA, no parsimony against the plain store, released split", "sd_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "plain FBA, no parsimony against the plain store, released split",
+            "sd_difference",
+        ),
     ),
     Check(
         claim="round114: lambda 1e-3",
         stated=-0.004,
-        recompute=simplification("released_pairs", "parsimony in the objective, lambda 1e-3 against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "parsimony in the objective, lambda 1e-3 against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round114: lambda 1e-4",
         stated=-0.004,
-        recompute=simplification("released_pairs", "parsimony in the objective, lambda 1e-4 against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "parsimony in the objective, lambda 1e-4 against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round114: pool 0.125",
         stated=-0.011,
-        recompute=simplification("released_pairs", "GECKO pool 0.125 against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125 against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round114: pool 0.125, seeds higher",
         stated=1,
-        recompute=simplification("released_pairs", "GECKO pool 0.125 against the plain store, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125 against the plain store, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round114: pool 0.25",
         stated=-0.004,
-        recompute=simplification("released_pairs", "GECKO pool 0.25 against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.25 against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round114: pool 0.125 sigma1",
         stated=-0.005,
-        recompute=simplification("released_pairs", "GECKO pool 0.125, kcat one sigma up against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125, kcat one sigma up against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round114: pool 0.125 min enzyme",
         stated=-0.01,
-        recompute=simplification("released_pairs", "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split",
+            "mean_difference",
+        ),
+    ),
+    # sec:target-transfer -- rounds 117 and 118.
+    Check(
+        claim="target-transfer: betaxanthin store arm mean",
+        stated=0.121,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store arm sd",
+        stated=0.011,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control mean",
+        stated=0.079,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_spearman",
+            "control",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control sd",
+        stated=0.056,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "sd_spearman",
+            "control",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin paired difference",
+        stated=0.043,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin paired sd",
+        stated=0.049,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin seeds above",
+        stated=5,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store top-50 enrichment",
+        stated=3.49,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control top-50 enrichment",
+        stated=4.06,
+        recompute=transfer(
+            "betaxanthin: whole-vector store affine against the control",
+            "mean_top50_enrichment",
+            "control",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store six-seed ensemble",
+        stated=0.135,
+        recompute=ensemble("w134_bxstore_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store triple 0",
+        stated=0.146,
+        recompute=ensemble("w134_bxstore_h12l1p1_e200", "spearman", "triple0"),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store triple 1",
+        stated=0.133,
+        recompute=ensemble("w134_bxstore_h12l1p1_e200", "spearman", "triple1"),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control six-seed ensemble",
+        stated=0.076,
+        recompute=ensemble("w134_bxctx_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: betaxanthin store ensemble top-50",
+        stated=4.39,
+        recompute=ensemble("w134_bxstore_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: betaxanthin control ensemble top-50",
+        stated=4.59,
+        recompute=ensemble("w134_bxctx_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: 027 precursor comparator",
+        stated=0.131,
+        recompute=transfer_comparator("betaxanthin", "027 flux precursor"),
+    ),
+    Check(
+        claim="target-transfer: 027 context comparator",
+        stated=0.115,
+        recompute=transfer_comparator("betaxanthin", "027 context-only"),
+    ),
+    Check(
+        claim="target-transfer: kNN comparator",
+        stated=0.145,
+        recompute=transfer_comparator("betaxanthin", "cosine kNN"),
+    ),
+    Check(
+        claim="target-transfer: amino-acid store arm mean",
+        stated=0.025,
+        recompute=transfer(
+            "amino acids: whole-vector store affine against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid store arm sd",
+        stated=0.015,
+        recompute=transfer(
+            "amino acids: whole-vector store affine against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid control mean",
+        stated=0.034,
+        recompute=transfer(
+            "amino acids: whole-vector store affine against the control",
+            "mean_spearman",
+            "control",
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid control sd",
+        stated=0.025,
+        recompute=transfer(
+            "amino acids: whole-vector store affine against the control",
+            "sd_spearman",
+            "control",
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid paired difference",
+        stated=-0.009,
+        recompute=transfer(
+            "amino acids: whole-vector store affine against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid paired sd",
+        stated=0.018,
+        recompute=transfer(
+            "amino acids: whole-vector store affine against the control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid seeds above",
+        stated=2,
+        recompute=transfer(
+            "amino acids: whole-vector store affine against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: amino-acid control six-seed ensemble",
+        stated=0.058,
+        recompute=ensemble("w135_aactx_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: amino-acid store six-seed ensemble",
+        stated=0.035,
+        recompute=ensemble("w135_aastore_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: 027 amino-acid best comparator",
+        stated=0.068,
+        recompute=transfer_comparator("mulleder19", "027 concentration readout"),
+    ),
+    Check(
+        claim="target-transfer: 027 amino-acid context comparator",
+        stated=0.061,
+        recompute=transfer_comparator("mulleder19", "027 context-only"),
+    ),
+    Check(
+        claim="target-transfer: 027 amino-acid pooled comparator",
+        stated=0.048,
+        recompute=transfer_comparator("mulleder19", "027 pooled"),
     ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",
         stated=0.004,
-        recompute=simplification("released_pairs", "GECKO pool 0.125, all units EZKinetics against the tiered-table pool, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125, all units EZKinetics against the tiered-table pool, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round116: EZKinetics table, seeds above the tiered pool",
         stated=4,
-        recompute=simplification("released_pairs", "GECKO pool 0.125, all units EZKinetics against the tiered-table pool, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125, all units EZKinetics against the tiered-table pool, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round116: shuffled table against the tiered pool",
         stated=0.002,
-        recompute=simplification("released_pairs", "GECKO pool 0.125, shuffled table against the tiered-table pool, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125, shuffled table against the tiered-table pool, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round116: shuffled table, seeds above the tiered pool",
         stated=3,
-        recompute=simplification("released_pairs", "GECKO pool 0.125, shuffled table against the tiered-table pool, released split", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125, shuffled table against the tiered-table pool, released split",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round116: EZKinetics table against the plain store",
         stated=-0.007,
-        recompute=simplification("released_pairs", "GECKO pool 0.125, all units EZKinetics against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125, all units EZKinetics against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round116: shuffled table against the plain store",
         stated=-0.009,
-        recompute=simplification("released_pairs", "GECKO pool 0.125, shuffled table against the plain store, released split", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "GECKO pool 0.125, shuffled table against the plain store, released split",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round116 agreement: measured vs EZKinetics Spearman",
@@ -2234,7 +2858,9 @@ CHECKS: list[Check] = [
     Check(
         claim="round116 agreement: measured vs EZKinetics median decades",
         stated=0.34,
-        recompute=lambda: agreement_pair("measured", "ezkinetics", "median_abs_decades"),
+        recompute=lambda: agreement_pair(
+            "measured", "ezkinetics", "median_abs_decades"
+        ),
         tolerance=0.006,
     ),
     Check(
@@ -2259,7 +2885,9 @@ CHECKS: list[Check] = [
         claim="round116 store ezk: wild-type growth fraction",
         stated=0.16,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125ezk.json")))["gecko_provenance"]["wild_type_growth_fraction"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125ezk.json")))[
+                "gecko_provenance"
+            ]["wild_type_growth_fraction"]
         ),
         tolerance=0.005,
     ),
@@ -2267,7 +2895,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool125: n_variables",
         stated=11972,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_variables"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))[
+                "n_variables"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2275,7 +2905,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool125: n_units_in_program",
         stated=3710,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_units_in_program"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))[
+                "n_units_in_program"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2283,7 +2915,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool125: n_reactions_enzyme_constrained",
         stated=2695,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_reactions_enzyme_constrained"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))[
+                "n_reactions_enzyme_constrained"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2291,7 +2925,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool125: wild_type_growth_fraction",
         stated=0.12,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["wild_type_growth_fraction"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))[
+                "wild_type_growth_fraction"
+            ]
         ),
         tolerance=0.006,
     ),
@@ -2299,7 +2935,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool250: wild_type_growth_fraction",
         stated=0.18,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool250.json")))["wild_type_growth_fraction"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool250.json")))[
+                "wild_type_growth_fraction"
+            ]
         ),
         tolerance=0.006,
     ),
@@ -2307,7 +2945,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool125s1: wild_type_growth_fraction",
         stated=0.28,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125s1.json")))["wild_type_growth_fraction"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125s1.json")))[
+                "wild_type_growth_fraction"
+            ]
         ),
         tolerance=0.006,
     ),
@@ -2315,7 +2955,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool125: n_genes_pool_binding",
         stated=1030,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_genes_pool_binding"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))[
+                "n_genes_pool_binding"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2323,7 +2965,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool125: n_genes_any_unit_usage_changed_viable",
         stated=302,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_genes_any_unit_usage_changed_viable"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))[
+                "n_genes_any_unit_usage_changed_viable"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2331,7 +2975,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool125: n_genes_allocation_moved_gt_0.01_of_pool_viable",
         stated=28,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))["n_genes_allocation_moved_gt_0.01_of_pool_viable"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125.json")))[
+                "n_genes_allocation_moved_gt_0.01_of_pool_viable"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2339,7 +2985,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool250: n_genes_allocation_moved_gt_0.01_of_pool_viable",
         stated=82,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool250.json")))["n_genes_allocation_moved_gt_0.01_of_pool_viable"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool250.json")))[
+                "n_genes_allocation_moved_gt_0.01_of_pool_viable"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2347,7 +2995,9 @@ CHECKS: list[Check] = [
         claim="round114 store pool125s1: n_genes_allocation_moved_gt_0.01_of_pool_viable",
         stated=89,
         recompute=lambda: float(
-            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125s1.json")))["n_genes_allocation_moved_gt_0.01_of_pool_viable"]
+            json.load(open(osp.join(RESULTS, "ess_gecko_store_pool125s1.json")))[
+                "n_genes_allocation_moved_gt_0.01_of_pool_viable"
+            ]
         ),
         tolerance=0.5,
     ),
@@ -2385,29 +3035,49 @@ CHECKS: list[Check] = [
     Check(
         claim="round115: forced column, paired",
         stated=0.062,
-        recompute=simplification("released_pairs", "pool-fill term, forced growth column, against the pool by construction", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "pool-fill term, forced growth column, against the pool by construction",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round115: forced column, seeds higher",
         stated=3,
-        recompute=simplification("released_pairs", "pool-fill term, forced growth column, against the pool by construction", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "pool-fill term, forced growth column, against the pool by construction",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round115: gated, paired",
         stated=0.01,
-        recompute=simplification("released_pairs", "pool-fill term, gated readout, against the gated elastic cell", "mean_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "pool-fill term, gated readout, against the gated elastic cell",
+            "mean_difference",
+        ),
     ),
     Check(
         claim="round115: gated, seeds higher",
         stated=2,
-        recompute=simplification("released_pairs", "pool-fill term, gated readout, against the gated elastic cell", "n_positive"),
+        recompute=simplification(
+            "released_pairs",
+            "pool-fill term, gated readout, against the gated elastic cell",
+            "n_positive",
+        ),
         tolerance=0.5,
     ),
     Check(
         claim="round115: gated, sd",
         stated=0.046,
-        recompute=simplification("released_pairs", "pool-fill term, gated readout, against the gated elastic cell", "sd_difference"),
+        recompute=simplification(
+            "released_pairs",
+            "pool-fill term, gated readout, against the gated elastic cell",
+            "sd_difference",
+        ),
     ),
     Check(
         claim="round115: peak memory of one cell, GB (sacct MaxRSS of job 2730)",
@@ -2422,9 +3092,7 @@ CHECKS: list[Check] = [
         recompute=consensus("n_held_out_at_least_once"),
     ),
     Check(
-        claim="consensus: labeled genes",
-        stated=1121,
-        recompute=consensus("n_labeled"),
+        claim="consensus: labeled genes", stated=1121, recompute=consensus("n_labeled")
     ),
     Check(
         claim="consensus: essential genes held out",
@@ -2434,7 +3102,9 @@ CHECKS: list[Check] = [
     Check(
         claim="consensus: essential mean misrank, module",
         stated=0.133,
-        recompute=consensus("essential_mean_misrank", "transformer, single-experiment module"),
+        recompute=consensus(
+            "essential_mean_misrank", "transformer, single-experiment module"
+        ),
     ),
     Check(
         claim="consensus: essential mean misrank, no metabolism",
@@ -2499,25 +3169,39 @@ CHECKS: list[Check] = [
     Check(
         claim="consensus: agreement, the two transformers",
         stated=0.78,
-        recompute=consensus("agreement_essential", "transformer, single-experiment module", "transformer, no metabolism"),
+        recompute=consensus(
+            "agreement_essential",
+            "transformer, single-experiment module",
+            "transformer, no metabolism",
+        ),
         tolerance=0.006,
     ),
     Check(
         claim="consensus: agreement, module and graph convolution",
         stated=0.4,
-        recompute=consensus("agreement_essential", "transformer, single-experiment module", "graph convolution on GO"),
+        recompute=consensus(
+            "agreement_essential",
+            "transformer, single-experiment module",
+            "graph convolution on GO",
+        ),
         tolerance=0.006,
     ),
     Check(
         claim="consensus: agreement, graph convolution and DCell",
         stated=0.43,
-        recompute=consensus("agreement_essential", "graph convolution on GO", "DCell hierarchy, shared input"),
+        recompute=consensus(
+            "agreement_essential",
+            "graph convolution on GO",
+            "DCell hierarchy, shared input",
+        ),
         tolerance=0.006,
     ),
     Check(
         claim="consensus: agreement, graph convolution and FBA",
         stated=0.08,
-        recompute=consensus("agreement_essential", "graph convolution on GO", "FBA growth ratio, YPD"),
+        recompute=consensus(
+            "agreement_essential", "graph convolution on GO", "FBA growth ratio, YPD"
+        ),
         tolerance=0.006,
     ),
     Check(
@@ -2548,7 +3232,9 @@ CHECKS: list[Check] = [
     Check(
         claim="consensus: FBA knockout growth ratio 1.0, mean_misrank_annotated",
         stated=0.082,
-        recompute=consensus_term("FBA knockout growth ratio 1.0", "mean_misrank_annotated"),
+        recompute=consensus_term(
+            "FBA knockout growth ratio 1.0", "mean_misrank_annotated"
+        ),
     ),
     Check(
         claim="consensus: FBA knockout growth ratio 1.0, mean_misrank_rest",
@@ -2569,7 +3255,9 @@ CHECKS: list[Check] = [
     Check(
         claim="consensus: organic substance transport, mean_misrank_annotated",
         stated=0.19,
-        recompute=consensus_term("organic substance transport", "mean_misrank_annotated"),
+        recompute=consensus_term(
+            "organic substance transport", "mean_misrank_annotated"
+        ),
     ),
     Check(
         claim="consensus: organic substance transport, mean_misrank_rest",
@@ -2590,12 +3278,16 @@ CHECKS: list[Check] = [
     Check(
         claim="consensus: cellular component organization, mean_misrank_annotated",
         stated=0.12,
-        recompute=consensus_term("cellular component organization", "mean_misrank_annotated"),
+        recompute=consensus_term(
+            "cellular component organization", "mean_misrank_annotated"
+        ),
     ),
     Check(
         claim="consensus: cellular component organization, mean_misrank_rest",
         stated=0.048,
-        recompute=consensus_term("cellular component organization", "mean_misrank_rest"),
+        recompute=consensus_term(
+            "cellular component organization", "mean_misrank_rest"
+        ),
     ),
     Check(
         claim="consensus: monoatomic ion transport, n_annotated",

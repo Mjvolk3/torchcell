@@ -2465,21 +2465,30 @@ def dcell_style() -> str | None:
         released = {r["model"]: r for r in json.load(fh)["rows"]}
     with open(osp.join(RESULTS, "dcell_style_resplits.json")) as fh:
         resplits = {p["arm"]: p for p in json.load(fh)["paired"]}
-    published = osp.join(RESULTS, "dcell_style_resplits_published.json")
-    if osp.isfile(published):
-        with open(published) as fh:
-            resplits.update({p["arm"]: p for p in json.load(fh)["paired"]})
+    for extra in ("dcell_style_resplits_published.json", "dcell_style_resplits_affine.json"):
+        path = osp.join(RESULTS, extra)
+        if osp.isfile(path):
+            with open(path) as fh:
+                resplits.update({p["arm"]: p for p in json.load(fh)["paired"]})
+    affine_released = osp.join(RESULTS, "dcell_style_released_affine.json")
+    if osp.isfile(affine_released):
+        with open(affine_released) as fh:
+            released.update({r["model"]: r for r in json.load(fh)["rows"]})
     rows_spec = [
         ("DCell hierarchy, GO membership on each term", "dcell_style_shared"),
         ("the same, no auxiliary term losses", "dcell_style_shared_noaux"),
         ("DCell's published per-gene input", "dcell_published_input"),
     ]
+    if "dcell_style_shared_affine" in released:
+        rows_spec.insert(
+            1, ("the same, the module as an affine on the root", "dcell_style_shared_affine")
+        )
     best_cell = max(released[k]["mean"] for _, k in rows_spec)
-    best_fold = max(folds[k]["ensemble_auroc"] for _, k in rows_spec)
+    best_fold = max(folds[k]["ensemble_auroc"] for _, k in rows_spec if k in folds)
     dash = "\\multicolumn{1}{c}{--}"
     rows = []
     for label, key in rows_spec:
-        cell, fold = released[key], folds[key]
+        cell, fold = released[key], folds.get(key)
         pair = resplits.get(key)
         against = (
             f"${pair['difference_mean']:+.3f}$ ({pair['difference_sd']:.3f}), "
@@ -2490,7 +2499,7 @@ def dcell_style() -> str | None:
         rows.append(
             f"    {label} & {len(cell['test_auroc'])} & "
             f"{fmt(cell['mean'], best_cell)} & {cell['sd']:.3f} & "
-            f"{fmt(fold['ensemble_auroc'], best_fold)} & {against} \\\\"
+            f"{fmt(fold['ensemble_auroc'], best_fold) if fold else dash} & {against} \\\\"
         )
     gcn = resplits["dcell_style_shared"]
     rows.append("    \\hline")

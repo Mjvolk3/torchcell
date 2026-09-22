@@ -140,6 +140,20 @@ def go006_store(key: str) -> Callable[[], float]:
     return run
 
 
+def dcell_affine(statistic: str) -> Callable[[], float]:
+    """The hierarchy with the affine (job 2698) minus the plain hierarchy, ten splits."""
+
+    def run() -> float:
+        a = json.load(open(osp.join(RESULTS, "dcell_style_resplits_affine.json")))
+        b = json.load(open(osp.join(RESULTS, "dcell_style_resplits.json")))
+        ra = {r["split_file"]: r["mean"] for r in a["rows"] if r["model"] == "dcell_style_shared_affine"}
+        rb = {r["split_file"]: r["mean"] for r in b["rows"] if r["model"] == "dcell_style_shared"}
+        d = np.array([ra[k] - rb[k] for k in sorted(rb)])
+        return {"mean": float(d.mean()), "sd": float(d.std(ddof=1)), "n_positive": float((d > 0).sum())}[statistic]
+
+    return run
+
+
 def consensus(*keys: str | int) -> Callable[[], float]:
     """One value of ``consensus_missed.json``, addressed by a key path."""
 
@@ -1919,6 +1933,40 @@ CHECKS: list[Check] = [
             )
         ),
         tolerance=0.5,
+    ),
+    Check(
+        claim="job 2698: hierarchy with the affine, ten splits",
+        stated=0.036,
+        recompute=dcell_affine("mean"),
+    ),
+    Check(
+        claim="job 2698: ... sd",
+        stated=0.013,
+        recompute=dcell_affine("sd"),
+    ),
+    Check(
+        claim="job 2698: ... splits higher",
+        stated=10,
+        recompute=dcell_affine("n_positive"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="job 2698: hierarchy with the affine, released",
+        stated=0.846,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "dcell_style_released_affine.json")))[
+                "rows"
+            ][0]["mean"]
+        ),
+    ),
+    Check(
+        claim="job 2698: ... against the graph",
+        stated=-0.032,
+        recompute=lambda: float(
+            json.load(open(osp.join(RESULTS, "dcell_style_resplits_affine.json")))[
+                "paired"
+            ][0]["difference_mean"]
+        ),
     ),
     # sec:consensus-missed -- the intersection of the predictors on the repeated splits.
     Check(

@@ -252,6 +252,13 @@ $\max(20, 0.3 n)$ genes per term, whose uncapped form would give a widest subsys
 the GO signal on this endpoint, and the same annotations read through the gene graphs
 carry it further.
 
+\paragraph{The hierarchy reads the module the same way.} Given the single-experiment
+module as a zero-initialized affine on its root logit (job 2698, three seeds), the
+shared-input hierarchy reads 0.846 against 0.841 on the released split over the same
+seeds and $+0.036$ over the ten repeated splits, higher on ten of ten (sd 0.013). It
+still loses to the plain graph convolution by 0.032, but the interface has now carried
+to a third family, and the hierarchy is the one that gains most from it.
+
 \paragraph{The ontology of the trigenic DCell runs.} The DCell runs of experiments 005
 and 006 read a different Gene Ontology from the 2,362-term multi-hot above: SGD's
 annotations with those inferred from genetic interaction removed, redundant terms

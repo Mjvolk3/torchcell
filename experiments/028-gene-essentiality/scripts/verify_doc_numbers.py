@@ -250,16 +250,21 @@ def transfer_comparator(head: str, prefix: str) -> Callable[[], float]:
     return run
 
 
-def ensemble(stem: str, key: str, which: str = "all_seeds") -> Callable[[], float]:
-    """One statistic of one arm of the seed-ensemble readout."""
+def ensemble(stem: str, key: str, which: str = "first_six") -> Callable[[], float]:
+    """One statistic of one arm of the seed-ensemble readout.
+
+    ``first_six`` is the ensemble of seeds 2700 to 2705, the depth every arm has and
+    the one the chapter's six-seed numbers are; ``all_seeds`` is every seed the arm has
+    (twelve for the round-127 extension of w140_bxdelstore).
+    """
 
     def run() -> float:
         arms = json.load(open(osp.join(RESULTS, "target_ensemble_readout.json")))[
             "arms"
         ]
         a = next(q for q in arms if q["stem"] == stem)
-        if which == "all_seeds":
-            return float(a["all_seeds"][key])
+        if which in ("all_seeds", "first_six"):
+            return float(a[which][key])
         if which.startswith("triple"):
             return float(a["triples"][int(which[-1])][key])
         return float(a[key])

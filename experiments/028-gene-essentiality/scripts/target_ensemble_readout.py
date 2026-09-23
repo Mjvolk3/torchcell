@@ -34,7 +34,11 @@ from scipy.stats import spearmanr
 
 load_dotenv()
 RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "028-gene-essentiality", "results")
-SEEDS = (2700, 2701, 2702, 2703, 2704, 2705)
+#: Every seed an arm may have; round 127 (w144) adds 2706 to 2711 to the best betaxanthin
+#: arm under its round-123 stem, so that arm ensembles twelve.
+SEEDS = tuple(range(2700, 2712))
+#: The six seeds every arm has; ``first_six`` scores them alone so arms stay comparable.
+SIX = (2700, 2701, 2702, 2703, 2704, 2705)
 TRIPLES = ((2700, 2701, 2702), (2703, 2704, 2705))
 #: (arm stem, head); a stem takes ``_s<seed>.json``.
 ARMS = [
@@ -84,7 +88,11 @@ class ArmEnsemble(BaseModel):
     n_constant: int = 0
     triples: list[Score]
     mean_triple_spearman: float | None
+    #: The ensemble of seeds 2700 to 2705, the depth every arm has.
+    first_six: Score | None
+    #: The ensemble of every seed the arm has (six, or twelve for w140_bxdelstore).
     all_seeds: Score | None
+    n_seeds: int
 
 
 class Report(BaseModel):
@@ -174,7 +182,8 @@ def main() -> None:
         single = [ensemble(dumps, (s,), head) for s in sorted(dumps)]
         single = [s for s in single if s is not None]
         triples = [t for tr in TRIPLES if (t := ensemble(dumps, tr, head)) is not None]
-        full = ensemble(dumps, SEEDS, head)
+        six = ensemble(dumps, SIX, head)
+        full = ensemble(dumps, tuple(sorted(dumps)), head)
         arm = ArmEnsemble(
             stem=stem,
             head=head,
@@ -188,7 +197,9 @@ def main() -> None:
             mean_triple_spearman=(
                 float(np.mean([t.spearman for t in triples])) if triples else None
             ),
+            first_six=six,
             all_seeds=full,
+            n_seeds=len(dumps),
         )
         arms.append(arm)
         line = (
@@ -196,13 +207,17 @@ def main() -> None:
         )
         if triples:
             line += f"; triples {', '.join(f'{t.spearman:+.4f}' for t in triples)}"
-        if full is not None:
-            line += f"; all six {full.spearman:+.4f}"
-            if full.top50_enrichment is not None:
+        if six is not None:
+            line += f"; first six {six.spearman:+.4f}"
+            if six.top50_enrichment is not None:
                 line += (
-                    f" (top-50 enrichment {full.top50_enrichment:.2f}, single mean "
+                    f" (top-50 enrichment {six.top50_enrichment:.2f}, single mean "
                     f"{np.mean([s.top50_enrichment for s in single]):.2f})"
                 )
+        if full is not None and len(dumps) > len(SIX):
+            line += f"; all {len(dumps)} {full.spearman:+.4f}"
+            if full.top50_enrichment is not None:
+                line += f" (top-50 enrichment {full.top50_enrichment:.2f})"
         print(line)
     report = Report(
         arms=arms,

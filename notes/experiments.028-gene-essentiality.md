@@ -1699,3 +1699,8 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 
 - w143 `aadelstore` (job 2770, 3 h 40 min): 0.040 (sd 0.005) vs the corrected-graph control `w141_aadel` 0.049 (sd 0.007), -0.009 paired (sd 0.011), 1/6; ensemble 0.043 vs 0.062. Against the old-graph affine `w135_aastore` 0.025: +0.015 (sd 0.014), 6/6, the size of the graph correction round 124 measured on the control.
 - Four forms of the amino-acid store read against two controls; none above its control. The module has no gain to report on the amino acids at width 12. Round 122's wide control (jobs 2774/2775, running/pending) says whether width changes that; the 300-epoch check (2776) whether length does.
+
+## 2026.09.23 - Round 127 read: the ensemble of the best arm saturates at six seeds
+
+- w144 (job 2771, 3 h 40 min): seeds 2706 to 2711 of `w140_bxdelstore`. New six: 0.058 to 0.138 (mean 0.111), all selected off the plateau (validation Pearson 0.15 to 0.22, epochs 27 to 85). Twelve seeds: single mean 0.116 (sd 0.027, se 0.008), top-50 4.86. Ensemble of twelve 0.129 / 5.39 vs first six 0.131 / 5.59. Doubling the ensemble adds nothing; the one-draw ensemble numbers are within ~0.02 / 0.2 of saturation.
+- `target_ensemble_readout.py` now reports `first_six` (seeds 2700 to 2705, comparable across arms) and `all_seeds` with `n_seeds`; the verifier's `ensemble()` defaults to `first_six`.

@@ -3608,6 +3608,31 @@ CHECKS: list[Check] = [
         stated=0.043,
         recompute=ensemble("w143_aadelstore_h12l1p1_e200", "spearman"),
     ),
+    # sec:target-transfer -- round 127, twelve seeds of the deletion-only store.
+    Check(
+        claim="target-transfer: deletion-only store twelve-seed single mean",
+        stated=0.116,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "mean_single_spearman", "arm"),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store twelve-seed count",
+        stated=12,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "n_seeds", "arm"),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store twelve-seed ensemble",
+        stated=0.129,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "spearman", "all_seeds"),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store twelve-seed ensemble top-50",
+        stated=5.39,
+        recompute=ensemble(
+            "w140_bxdelstore_h12l1p1_e200", "top50_enrichment", "all_seeds"
+        ),
+        tolerance=0.006,
+    ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",

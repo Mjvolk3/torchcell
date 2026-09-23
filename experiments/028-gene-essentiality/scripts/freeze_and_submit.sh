@@ -148,4 +148,10 @@ echo "snapshot $SNAP"
 # ESS_CPUS sizes the job's cores the same way (the launcher's #SBATCH line is 24); pooled
 # cells with no loader workers and no LP workers need far fewer, and a 24-core request
 # pends behind a CPU-heavy job on the node while a card sits idle (2403 on 2026-09-18).
-sbatch --mem="${ESS_MEM:-36g}" --cpus-per-task="${ESS_CPUS:-24}" "$SCRIPT_REL" "$@"
+# ESS_TIME sizes the wall-clock limit the same way (the launcher's #SBATCH line is 8 h).
+# A three-cell pack at hidden 90 with two blocks runs about 2.3 min per epoch, 7.6 to
+# 7.9 h for 200 epochs, and the result file is written only at the end, so an 8 h limit
+# loses the whole pack; a running job's limit cannot be raised (scontrol refuses it for
+# a non-admin), only a pending one's, so pass it at submission.
+sbatch --mem="${ESS_MEM:-36g}" --cpus-per-task="${ESS_CPUS:-24}" \
+    --time="${ESS_TIME:-08:00:00}" "$SCRIPT_REL" "$@"

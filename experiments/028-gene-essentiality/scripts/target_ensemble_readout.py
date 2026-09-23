@@ -49,6 +49,7 @@ ARMS = [
     ("w139_bxwide_h90l2p1_e200", "betaxanthin"),
     ("w140_bxwidestore_h90l2p1_e200", "betaxanthin"),
     ("w140_bxdelstore_h12l1p1_e200", "betaxanthin"),
+    ("w145_bxwidedelstore_h90l2p1_e200", "betaxanthin"),
     ("w135_aactx_h12l1p1_e200", "mulleder19"),
     ("w135_aastore_h12l1p1_e200", "mulleder19"),
     ("w138_aaprodstat_h12l1p1_e200", "mulleder19"),

@@ -161,6 +161,18 @@ PAIRS = [
         "w139_bxwide_h90l2p1_e200",
     ),
     (
+        "betaxanthin: width 90 with the store affine on deletion-only graphs against the width-90 control",
+        "betaxanthin",
+        "w145_bxwidedelstore_h90l2p1_e200",
+        "w139_bxwide_h90l2p1_e200",
+    ),
+    (
+        "betaxanthin: width 90 with the store affine on deletion-only graphs against the width-12 one",
+        "betaxanthin",
+        "w145_bxwidedelstore_h90l2p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
         "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
         "betaxanthin",
         "w140_bxdelstore_h12l1p1_e200",

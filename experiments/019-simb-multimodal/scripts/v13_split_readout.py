@@ -150,7 +150,13 @@ ROUNDS: dict[str, dict[str, Any]] = {
 }
 _args = argparse.ArgumentParser(description=__doc__)
 _args.add_argument("--round", choices=sorted(ROUNDS), default="v13")
-ROUND = ROUNDS[_args.parse_args().round]
+# Runs below this epoch are left out of the read, so a task that started minutes ago
+# does not set the matched epoch for a round whose other runs are finished. The
+# excluded runs are listed; the read is then partial over runs, not over epochs.
+_args.add_argument("--min-epoch", type=int, default=0)
+_parsed = _args.parse_args()
+ROUND = ROUNDS[_parsed.round]
+MIN_EPOCH = _parsed.min_epoch
 PROJECT = ROUND["project"]
 KEY = f"val/{ROUND['phenotype']}/pearson_per_feature"
 TEST_KEY = f"test/{ROUND['phenotype']}/pearson_per_feature"
@@ -197,6 +203,9 @@ def main() -> None:
         h = h.dropna(subset=[KEY]).sort_values("epoch").reset_index(drop=True)
         if h.empty:
             continue
+        if int(h["epoch"].max()) < MIN_EPOCH:
+            print(f"excluded below --min-epoch {MIN_EPOCH}: {r.id} {arm} at epoch {int(h['epoch'].max())}")
+            continue
         roll = h[KEY].rolling(WINDOW, center=True).mean()
         hist[r.id] = h
         peak_i = int(roll.idxmax())
@@ -239,6 +248,7 @@ def main() -> None:
         ),
         "window": [win_lo, matched],
         "matched_epoch": matched,
+        "min_epoch": MIN_EPOCH,
         "n_runs": int(len(df)),
         "runs": df.to_dict(orient="records"),
     }

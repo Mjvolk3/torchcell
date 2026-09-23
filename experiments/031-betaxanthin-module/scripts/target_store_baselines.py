@@ -86,12 +86,22 @@ REPRESENTATIONS: dict[str, dict[str, Any]] = {
         "moma": {"store": "YPD_bx_moma", "block": "v_deletion", "flux": True},
         "gpr_counts": {"store": "YPD_bx_gpronly", "block": "v_deletion", "flux": True},
         "flux_stats": {"store": "YPD_bx", "block": "gene_flux_stats", "flux": False},
+        # The metabolite side (target_driving_force_store.py): concentrations in mM of
+        # the max-min driving-force solution, with the second law over every priced
+        # reaction (mdf) or over those under 100 kJ/mol (mdfcap100); and the sampled cone
+        # (target_sampled_flux_store.py), the mean over draws.
+        "mdf_conc": {"store": "YPD_bx_mdf", "block": "v_deletion", "flux": True},
+        "mdfcap100_conc": {"store": "YPD_bx_mdfcap100", "block": "v_deletion", "flux": True},
+        "sampled_mean": {"store": "YPD_bx_sampledmean", "block": "v_deletion", "flux": True},
     },
     "amino_acids": {
         "pfba_highs": {"store": "SM_gem", "block": "v_deletion", "flux": True},
         "moma": {"store": "SM_gem_moma", "block": "v_deletion", "flux": True},
         "gpr_counts": {"store": "SM_gem_gpronly", "block": "v_deletion", "flux": True},
         "flux_stats": {"store": "SM_gem", "block": "gene_flux_stats", "flux": False},
+        "mdf_conc": {"store": "SM_gem_mdf", "block": "v_deletion", "flux": True},
+        "mdfcap100_conc": {"store": "SM_gem_mdfcap100", "block": "v_deletion", "flux": True},
+        "sampled_mean": {"store": "SM_gem_sampledmean", "block": "v_deletion", "flux": True},
     },
 }
 PRIMARY_STORE = {"betaxanthin": "pfba_glpk_full", "amino_acids": "pfba_highs"}
@@ -283,7 +293,13 @@ def main() -> None:
 
     # ---- representations --------------------------------------------------------------
     reps: dict[str, dict[str, Any]] = {}
+    not_built: list[str] = []
     for rep_name, rep_spec in REPRESENTATIONS[args.target].items():
+        if not osp.isfile(osp.join(TABLE_DIR, f"ess_solve_encodings_{rep_spec['store']}.npz")):
+            # A store that has not been built yet is reported as such, not filled.
+            not_built.append(rep_name)
+            print(f"  {rep_name}: store {rep_spec['store']} not built; skipped", flush=True)
+            continue
         rows, wild, dim = load_store(rep_spec)
         p: dict[str, np.ndarray] = {}
         filled: dict[str, int] = {}
@@ -343,6 +359,7 @@ def main() -> None:
             "enrichment of true top-10-percent producers among the 50 highest predictions"
         ),
         "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+        "not_built": not_built,
         "representations": {},
     }
 

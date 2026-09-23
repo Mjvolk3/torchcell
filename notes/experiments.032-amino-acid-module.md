@@ -58,3 +58,12 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | HiGHS store with ProtT5 | 5155 | +0.033 | +0.050 | +0.058 |
 
 - The second screen: Cooper 2010 does not corroborate Mulleder 2016 at the strain level (matched-pair Spearman -0.006 to +0.059 over 4,051 shared strains, Cooper's own duplicate strains at 0.06); full read in [[experiments.032-amino-acid-module.scripts.amino_acid_dataset_concordance]]. Together with Mulleder's retest at 0.20 Spearman, the amino-acid endpoint's strain-level rank is close to its noise floor, which is where every model above sits.
+
+## 2026.09.23 - Round A11: the driving-force concentration store on the prototroph
+
+- Same construction as 031's B17 (see [[experiments.031-betaxanthin-module]]): `target_driving_force_store.py --target amino_acids --max-abs-dg0 100`, 1,161 genes in 44 s. The wild type's max-min driving force on SM is -1.16 kJ/mol over 249 constrained carried reactions with 59 binding (phosphoglycerate dehydrogenase, glutamate 5-kinase, sulfate adenylyltransferase, triose-phosphate isomerase among them); 1,000 of 1,000 viable deletions negative, 200 move the optimum by more than 0.1 kJ/mol, 405 change the concentration vector. Uncapped the wild type sits at -325. Results `results/target_driving_force_store_amino_acids_mdfcap100.json`, `_mdf.json`; stores `ess_solve_encodings_SM_gem_mdfcap100.npz`, `_mdf.npz`.
+- A11 (w158, job 2796): the `mdfcap100` store in the affine slot, six seeds, paired against A3 (w141_aadel) and A4 (w143_aadelstore). Pack `conf/packs/w158_p0.pack`.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| A11 | 141 | w158 | max-min driving-force concentration store (cap 100 kJ/mol) | pending (2796) |

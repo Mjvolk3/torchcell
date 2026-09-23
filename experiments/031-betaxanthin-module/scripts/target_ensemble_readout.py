@@ -79,6 +79,8 @@ ARMS = [
     ("w154_bxdelmoma_h12l1p1_e200", "betaxanthin"),
     ("w155_aadelmoma_h12l1p1_e200", "mulleder19"),
     ("w156_bxdelpfba_h12l1p1_e200", "betaxanthin"),
+    ("w157_bxdelmdf_h12l1p1_e200", "betaxanthin"),
+    ("w158_aadelmdf_h12l1p1_e200", "mulleder19"),
 ]
 TOP_K = 50
 TOP_FRAC = 0.1

@@ -351,6 +351,30 @@ PAIRS = [
         "w156_bxdelpfba_h12l1p1_e200",
         "w140_bxdelstore_h12l1p1_e200",
     ),
+    (
+        "betaxanthin: driving-force concentration store on deletion-only graphs against deletion-only graphs",
+        "betaxanthin",
+        "w157_bxdelmdf_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: driving-force concentration store on deletion-only graphs against the GLPK store there",
+        "betaxanthin",
+        "w157_bxdelmdf_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "amino acids: driving-force concentration store on deletion-only graphs against deletion-only graphs",
+        "mulleder19",
+        "w158_aadelmdf_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
+        "amino acids: driving-force concentration store on deletion-only graphs against the parsimonious store there",
+        "mulleder19",
+        "w158_aadelmdf_h12l1p1_e200",
+        "w143_aadelstore_h12l1p1_e200",
+    ),
 ]
 
 

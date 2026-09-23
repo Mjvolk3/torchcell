@@ -610,6 +610,22 @@ the amino-acid affine has now been tried three ways on the old graph (the growth
 20 summaries, the vector with 42 summaries) without a gain. Round 126 is the same
 whole-vector affine on the corrected graph, against round 124's control.
 
+The betaxanthin half of round 122 is read (jobs 2762 and 2763, 7 h 11 min and 7 h 23
+min for three cells each at a 16.5 GB peak): the affine-free control on 027's backbone,
+width 90, nine heads, two blocks, on the old graph. It reads 0.109 (sd 0.053) against
+the width-12 control's 0.079, $+0.030$ paired (sd 0.079), above on four of six, with a
+top-50 enrichment of 4.73 against 4.06; ensembled over six seeds 0.134 and 5.59, where
+027's own three-seed cell of this form read 0.115. Every wide seed leaves the plateau,
+selected at epochs 9 to 107 with validation Pearson 0.16 to 0.36, where the width-12
+arms lose a third of their seeds to it; the validation loss bottoms at a median epoch of
+42 and then rises by 0.01 to 0.11 to epoch 199, and two seeds fall back to a constant
+predictor by the end. So width buys the escape and the early peak, and 200 epochs is
+four times what these cells use. Against the width-12 store affine on the corrected
+graph (0.121, 4.93, ensembled 0.131 and 5.59), the seven-times-wider backbone without
+the store reads the same on every measure, which is the size of the store's
+contribution at width 12. Whether the two add is round 128 (w145), the store on the
+corrected graph at width 90.
+
 \input{tables/target_transfer}
 
 \subsection{Round 115: the learned allocation, with the pool made to bind\secstatus{todo}}

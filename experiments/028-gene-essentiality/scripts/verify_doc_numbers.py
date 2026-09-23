@@ -3238,6 +3238,71 @@ CHECKS: list[Check] = [
         stated=0.026,
         recompute=ensemble("w138_aaprodfull_h12l1p1_e200", "spearman"),
     ),
+    # sec:target-transfer -- round 122, the width-90 betaxanthin control.
+    Check(
+        claim="target-transfer: width-90 control arm mean",
+        stated=0.109,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: width-90 control arm sd",
+        stated=0.053,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: width-90 control paired difference",
+        stated=0.030,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: width-90 control paired sd",
+        stated=0.079,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: width-90 control seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: width-90 control single-seed top-50",
+        stated=4.73,
+        recompute=transfer(
+            "betaxanthin: width 90, two blocks, against the width-12 control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: width-90 control six-seed ensemble",
+        stated=0.134,
+        recompute=ensemble("w139_bxwide_h90l2p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: width-90 control ensemble top-50",
+        stated=5.59,
+        recompute=ensemble("w139_bxwide_h90l2p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",

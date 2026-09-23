@@ -519,7 +519,9 @@ the affine's parameters frozen (\texttt{--ess-affine-start-epoch}) until epoch 4
 separately until the trailing five-epoch mean of validation Pearson reaches 0.15
 (\texttt{--ess-affine-start-val-pearson}), so the backbone escapes before the affine can
 carry the target. A zero-initialized affine without gradient contributes exactly 0, so
-each cell is its control until the start epoch, which the result records.
+each cell is its control until the start epoch, which the result records. Round 132
+(w149) is the wide control on the deletion-only graph without the store, which
+completes the width-90 two-by-two of graph against store with rounds 122, 123 and 128.
 
 Round 117 is read (Table~\ref{tab:target-transfer}). On betaxanthin the whole-vector
 affine reads a pinned Spearman of 0.121 (sd 0.011 over six seeds) against the control's

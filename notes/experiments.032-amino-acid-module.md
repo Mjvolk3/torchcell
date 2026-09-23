@@ -67,3 +67,5 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 | round | 028 | pack | arm | status |
 |---|---|---|---|---|
 | A11 | 141 | w158 | max-min driving-force concentration store (cap 100 kJ/mol) | pending (2796) |
+
+- MEASURED, the ladder rerun with the concentration stores (`results/store_baselines_amino_acids.json`, 22 min): the driving-force concentrations read 0.013 to 0.019 under every model (capped 0.016 ridge, 0.016 kNN, 0.017 forest), inside the same 0.01 to 0.06 band as every other representation on this target.

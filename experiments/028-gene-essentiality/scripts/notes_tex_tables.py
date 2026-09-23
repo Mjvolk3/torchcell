@@ -3229,6 +3229,9 @@ def store_baselines() -> str | None:
         "prot_T5_all": "ProtT5 (027's ladder)",
         "pfba_glpk_full+prot_T5_all": "GLPK store with ProtT5",
         "pfba_highs+prot_T5_all": "HiGHS store with ProtT5",
+        "mdf_conc": "driving-force concentrations, every priced reaction",
+        "mdfcap100_conc": "driving-force concentrations, cap 100 kJ/mol",
+        "sampled_mean": "sampled cone, mean over draws",
     }
     rows = []
     for target, path in present.items():

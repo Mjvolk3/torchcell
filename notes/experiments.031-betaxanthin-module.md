@@ -86,3 +86,5 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | status |
 |---|---|---|---|---|
 | B17 | 140 | w157 | max-min driving-force concentration store (cap 100 kJ/mol) | pending (2795) |
+
+- MEASURED, the ladder rerun with the concentration stores (`results/store_baselines_betaxanthin.json`, 9 min): the capped driving-force concentrations read 0.151 by ridge (top-50 3.39), 0.082 by kNN and 0.098 by forest on the 629 pinned genes; the uncapped ones 0.082 / 0.089 / 0.063. So the metabolite side carries the rank linearly, second only to the HiGHS flux store under kNN (0.178) and above every transformer single arm (best 0.121), from 2,834 columns of which 451 rows differ from the wild type's. B17 is the transformer read of the same store.

@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=030-query-raw
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=12
-#SBATCH --mem=48G
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=96G
 #SBATCH --time=2-00:00:00
 #SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/030-build/experiments/030-solid-growth-multi/slurm/output/%j_%x.out
 #SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/030-build/experiments/030-solid-growth-multi/slurm/output/%j_%x.out
@@ -15,9 +15,16 @@
 # it died at 40.6M of about 43.8M records after 18 h on the old 1 TB map size. The raw
 # stage now validates records in 10 worker processes and commits 2,000 rows per
 # transaction (Neo4jQueryRaw.process), and every build stage opens its store at
-# torchcell.lmdb_map_size.BUILD_LMDB_MAP_SIZE. 12 CPUs cover the driver thread and the
-# workers; the memory-heavy stages run afterwards in scripts/gh_query_build_001.slurm,
-# which refuses to start until raw/STAGE_COMPLETE exists.
+# torchcell.lmdb_map_size.BUILD_LMDB_MAP_SIZE.
+#
+# MEASURED (slurm 2747, 2026-09-22): 43,820,352 records; the query in 2 h 48 min at
+# 4,360 records/s; then the two index passes over the finished 1,006 GB store (reference
+# index, then gene set) took another 7 h at 3,100 to 4,300 records/s, and the job
+# peaked at 47.3 GB resident against a 48 GB limit because those passes map the whole
+# store. 96 GB (24 CPUs at the 4.1 GB cap) is the margin that peak needs; the passes
+# themselves are the next thing to speed up in this stage. The memory-heavy stages run
+# afterwards in scripts/gh_query_build_001.slurm, which refuses to start until
+# raw/STAGE_COMPLETE exists.
 #
 # The job reads its code from the DETACHED worktree pinned at the build commit:
 #

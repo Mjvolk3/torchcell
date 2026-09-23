@@ -708,6 +708,23 @@ six seeds add nothing to the rank or the call, and the ensemble numbers of the t
 arms, one draw each, are read as sitting within about 0.02 and 0.2 of where more seeds
 would put them.
 
+Round 128 is read (jobs 2772 and 2773, 7 h 04 min and 7 h 31 min for three cells each):
+the store affine on 027's backbone, width 90, on the deletion-only graph, the fourth cell
+of the width-90 two-by-two. It reads 0.120 (sd 0.024) against the wide control on the old
+graph at 0.109, $+0.011$ paired (sd 0.067), above on three of six, and against the
+width-12 store on the same graph at 0.121, $-0.001$ paired (sd 0.035), above on three
+of six; top-50 enrichment 4.43 against 4.73 and 4.93. Ensembled over six seeds it reads
+0.147 and 4.99, under the old-graph wide store's 0.153 and the width-12 corrected-graph
+store's 5.59. What the graph correction changes at width 90 is the plateau, as it did at
+width 12: every seed is selected off it, at epochs 21 to 50 with validation Pearson 0.22
+to 0.28, where the old-graph wide store had four plateau seeds of six. The rank does not
+follow. Width buys the escape (round 122), the store buys the rank at width 12 (round
+123), and put together on the strain as built they read what either reads alone, so the
+two contributions do not add, and the seed spread (sd 0.024) is the smallest of the four
+wide cells. The validation loss bottoms at epochs 8 to 42 and rises 0.09 to 0.15 by epoch
+199 on every seed, the round-122 pattern, so these seven-hour cells spend six hours past
+their minimum. Round 132 (w149), the wide control on this graph, completes the square.
+
 \input{tables/target_transfer}
 
 \subsection{Physically constrained stores on the targets, the store read without the backbone, and the second amino-acid screen\secstatus{todo}}

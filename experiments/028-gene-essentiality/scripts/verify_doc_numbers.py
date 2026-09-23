@@ -3529,6 +3529,80 @@ CHECKS: list[Check] = [
         stated=0.112,
         recompute=ensemble("w142_bxprod_h12l1p1_e200", "spearman"),
     ),
+    # sec:target-transfer -- round 126, the amino-acid store on the corrected graph.
+    Check(
+        claim="target-transfer: aa corrected-graph store arm mean",
+        stated=0.040,
+        recompute=transfer(
+            "amino acids: deletion-only graphs with the store affine against deletion-only graphs",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa corrected-graph store arm sd",
+        stated=0.005,
+        recompute=transfer(
+            "amino acids: deletion-only graphs with the store affine against deletion-only graphs",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa corrected-graph store vs corrected control",
+        stated=-0.009,
+        recompute=transfer(
+            "amino acids: deletion-only graphs with the store affine against deletion-only graphs",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa corrected-graph store vs corrected control sd",
+        stated=0.011,
+        recompute=transfer(
+            "amino acids: deletion-only graphs with the store affine against deletion-only graphs",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa corrected-graph store vs corrected control seeds above",
+        stated=1,
+        recompute=transfer(
+            "amino acids: deletion-only graphs with the store affine against deletion-only graphs",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: aa corrected-graph store vs old-graph store",
+        stated=0.015,
+        recompute=transfer(
+            "amino acids: deletion-only graphs with the store affine against the store affine",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa corrected-graph store vs old-graph store sd",
+        stated=0.014,
+        recompute=transfer(
+            "amino acids: deletion-only graphs with the store affine against the store affine",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa corrected-graph store vs old-graph store seeds above",
+        stated=6,
+        recompute=transfer(
+            "amino acids: deletion-only graphs with the store affine against the store affine",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: aa corrected-graph store six-seed ensemble",
+        stated=0.043,
+        recompute=ensemble("w143_aadelstore_h12l1p1_e200", "spearman"),
+    ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",

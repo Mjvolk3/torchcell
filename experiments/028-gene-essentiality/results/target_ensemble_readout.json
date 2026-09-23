@@ -1167,6 +1167,79 @@
         "top50_enrichment": null,
         "top50_hits": null
       }
+    },
+    {
+      "stem": "w143_aadelstore_h12l1p1_e200",
+      "head": "mulleder19",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "single": [
+        {
+          "n": 639,
+          "spearman": 0.03874148836376571,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.050041687576018144,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03681063702000857,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.04006438357442472,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.039712959336125,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.0359380508374111,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_single_spearman": 0.040218201117958874,
+      "n_constant": 0,
+      "triples": [
+        {
+          "n": 639,
+          "spearman": 0.04355579365347856,
+          "top50_enrichment": null,
+          "top50_hits": null
+        },
+        {
+          "n": 639,
+          "spearman": 0.03834843312093765,
+          "top50_enrichment": null,
+          "top50_hits": null
+        }
+      ],
+      "mean_triple_spearman": 0.040952113387208104,
+      "all_seeds": {
+        "n": 639,
+        "spearman": 0.04304770627121674,
+        "top50_enrichment": null,
+        "top50_hits": null
+      }
     }
   ],
   "note": "Mean prediction over seeds on the pinned records, scored as the cells are; every dump resolved through its result file and checked against it."

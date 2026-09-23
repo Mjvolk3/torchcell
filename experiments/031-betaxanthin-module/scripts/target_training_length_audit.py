@@ -1,6 +1,6 @@
-# experiments/028-gene-essentiality/scripts/target_training_length_audit.py
-# [[experiments.028-gene-essentiality.scripts.target_training_length_audit]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/028-gene-essentiality/scripts/target_training_length_audit
+# experiments/031-betaxanthin-module/scripts/target_training_length_audit.py
+# [[experiments.031-betaxanthin-module.scripts.target_training_length_audit]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/031-betaxanthin-module/scripts/target_training_length_audit
 
 r"""Are the transfer cells trained long enough? The validation curves, per arm and seed.
 
@@ -20,11 +20,11 @@ script reads both curves for every landed transfer arm and reports, per cell:
 
 Cells still running are read from their per-cell slurm logs and marked partial, with the
 epoch reached; they have no result and get no verdict. The figure overlays the seed
-curves per arm. Writes ``results/target_training_length_audit.json`` and the figure to
-``ASSET_IMAGES_DIR/028-gene-essentiality/``. Run from the repo root::
+curves per arm. Writes ``training_length_audit.json`` and a figure per study (031 betaxanthin, 032 amino acids), the figure to
+``ASSET_IMAGES_DIR/<study>/``. Run from the repo root::
 
     PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
-        experiments/028-gene-essentiality/scripts/target_training_length_audit.py
+        experiments/031-betaxanthin-module/scripts/target_training_length_audit.py
 """
 
 from __future__ import annotations
@@ -47,9 +47,20 @@ from torchcell.timestamp import timestamp
 from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
 
 load_dotenv()
-RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "028-gene-essentiality", "results")
-LOGS = osp.join(os.environ["EXPERIMENT_ROOT"], "028-gene-essentiality", "slurm", "output")
-IMAGES = osp.join(os.environ["ASSET_IMAGES_DIR"], "028-gene-essentiality")
+#: Each target is its own study (2026-09-23): betaxanthin is 031, the amino acids 032.
+STUDY_BY_HEAD = {"betaxanthin": "031-betaxanthin-module", "mulleder19": "032-amino-acid-module"}
+RESULTS_BY_HEAD = {
+    h: osp.join(os.environ["EXPERIMENT_ROOT"], s, "results") for h, s in STUDY_BY_HEAD.items()
+}
+#: Running cells log under their study; cells launched before the split (jobs up to
+#: 2775) log under 028, so both trees are searched.
+LOG_DIRS = [
+    osp.join(os.environ["EXPERIMENT_ROOT"], s, "slurm", "output")
+    for s in (*STUDY_BY_HEAD.values(), "028-gene-essentiality")
+]
+IMAGES_BY_HEAD = {
+    h: osp.join(os.environ["ASSET_IMAGES_DIR"], s) for h, s in STUDY_BY_HEAD.items()
+}
 SEEDS = tuple(range(2700, 2712))
 TAIL = 20
 MA = 5
@@ -147,7 +158,12 @@ def curves_from_log(stem: str, seed: int) -> tuple[np.ndarray, np.ndarray] | Non
     # The newest log by modification time: a cancelled pack leaves an older log for the
     # same cell beside the running one.
     paths = sorted(
-        glob.glob(osp.join(LOGS, f"028-pack_*_{stem}_s{seed}.out")), key=osp.getmtime
+        (
+            p
+            for d in LOG_DIRS
+            for p in glob.glob(osp.join(d, f"*-pack_*_{stem}_s{seed}.out"))
+        ),
+        key=osp.getmtime,
     )
     if not paths:
         return None
@@ -195,13 +211,14 @@ def audit(
 
 
 def main() -> None:
-    os.makedirs(IMAGES, exist_ok=True)
+    for d in IMAGES_BY_HEAD.values():
+        os.makedirs(d, exist_ok=True)
     arms: list[ArmAudit] = []
     curves: dict[str, list[tuple[int, np.ndarray, np.ndarray, bool]]] = {}
     for stem, head, label in ARMS:
         cells: list[CellAudit] = []
         for seed in SEEDS:
-            path = osp.join(RESULTS, f"{stem}_s{seed}.json")
+            path = osp.join(RESULTS_BY_HEAD[head], f"{stem}_s{seed}.json")
             if osp.exists(path):
                 loss, pear, select = curves_from_result(path)
                 cells.append(audit(stem, seed, loss, pear, select, partial=False))
@@ -255,66 +272,61 @@ def main() -> None:
             f"epoch {a.median_max_val_pearson_ma_epoch}"
         )
 
-    report = Report(
-        tail_epochs=TAIL,
-        moving_average=MA,
-        arms=arms,
-        note=(
-            "Per cell, from the result file's per-epoch history (or the slurm log for a "
-            "running cell, marked partial): the epoch of minimum validation loss (raw and "
-            f"{MA}-epoch centered moving average), the loss at the end, the slope of the "
-            f"moving-average loss over the last {TAIL} epochs, and the epoch of maximum "
-            "moving-average validation Pearson beside the selected epoch. A minimum or "
-            f"maximum inside the last {TAIL} epochs means the curve had not settled."
-        ),
+    note = (
+        "Per cell, from the result file's per-epoch history (or the slurm log for a "
+        "running cell, marked partial): the epoch of minimum validation loss (raw and "
+        f"{MA}-epoch centered moving average), the loss at the end, the slope of the "
+        f"moving-average loss over the last {TAIL} epochs, and the epoch of maximum "
+        "moving-average validation Pearson beside the selected epoch. A minimum or "
+        f"maximum inside the last {TAIL} epochs means the curve had not settled."
     )
-    out = osp.join(RESULTS, "target_training_length_audit.json")
-    with open(out, "w") as fh:
-        fh.write(report.model_dump_json(indent=2))
-    print(out)
-
-    # Figure: one row per head, validation loss and moving-average Pearson, one color per
-    # arm, seeds as thin lines, partial cells dashed. Legend outside the axes.
     plt.rcParams.update(
         {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none",
          "axes.linewidth": 0.5}
     )
-    heads = ["betaxanthin", "mulleder19"]
-    fig, axes = plt.subplots(
-        2, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(110)), squeeze=False
-    )
-    for row, head in enumerate(heads):
+    stamp = timestamp()
+    # One report and one figure per study: validation loss and moving-average Pearson,
+    # one color per arm, seeds as thin lines, partial cells dashed, legend outside.
+    for head, results in RESULTS_BY_HEAD.items():
         head_arms = [a for a in arms if a.head == head]
+        report = Report(tail_epochs=TAIL, moving_average=MA, arms=head_arms, note=note)
+        out = osp.join(results, "training_length_audit.json")
+        with open(out, "w") as fh:
+            fh.write(report.model_dump_json(indent=2))
+        print(out)
+        fig, axes = plt.subplots(
+            1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62)), squeeze=False
+        )
         for j, a in enumerate(head_arms):
             color = PLOT_PALETTE[j % len(PLOT_PALETTE)]
             for k, (seed, loss, pear, partial) in enumerate(curves[a.stem]):
                 style = "--" if partial else "-"
-                axes[row][0].plot(
+                axes[0][0].plot(
                     np.arange(loss.size), moving_average(loss, MA), style, color=color,
                     lw=0.6, label=a.label if k == 0 else None,
                 )
-                axes[row][1].plot(
+                axes[0][1].plot(
                     np.arange(pear.size), moving_average(np.nan_to_num(pear), MA), style,
                     color=color, lw=0.6,
                 )
-        for ax, ylabel in zip(axes[row], ["validation loss (CRPS), 5-epoch MA",
-                                          "validation Pearson, 5-epoch MA"]):
+        for ax, ylabel in zip(axes[0], ["validation loss (CRPS), 5-epoch MA",
+                                        "validation Pearson, 5-epoch MA"]):
             ax.set_xlabel("epoch")
             ax.set_ylabel(ylabel)
-            ax.set_title(head, fontsize=6)
             ax.tick_params(labelsize=6, width=0.5)
             for s in ax.spines.values():
                 s.set_linewidth(0.5)
                 s.set_visible(True)
             ax.set_xlim(0, 200)
-        axes[row][0].legend(
-            loc="lower left", bbox_to_anchor=(0, 1.08), ncol=4, fontsize=6, frameon=False
+        axes[0][0].legend(
+            loc="lower left", bbox_to_anchor=(0, 1.04), ncol=4, fontsize=6, frameon=False
         )
-    fig.subplots_adjust(left=0.08, right=0.99, top=0.86, bottom=0.08, hspace=0.75, wspace=0.3)
-    stem = f"target_training_length_audit_{timestamp()}"
-    fig.savefig(osp.join(IMAGES, f"{stem}.png"), dpi=300)
-    savefig_true_size_svg(fig, osp.join(IMAGES, f"{stem}.svg"))
-    print(osp.join(IMAGES, f"{stem}.svg"))
+        fig.subplots_adjust(left=0.08, right=0.99, top=0.78, bottom=0.14, wspace=0.3)
+        stem = f"training_length_audit_{stamp}"
+        fig.savefig(osp.join(IMAGES_BY_HEAD[head], f"{stem}.png"), dpi=300)
+        savefig_true_size_svg(fig, osp.join(IMAGES_BY_HEAD[head], f"{stem}.svg"))
+        print(osp.join(IMAGES_BY_HEAD[head], f"{stem}.svg"))
+        plt.close(fig)
 
 
 if __name__ == "__main__":

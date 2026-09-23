@@ -65,12 +65,16 @@ PFBA_STORE = osp.join(TABLE_DIR, "ess_solve_encodings_YPD.npz")
 #: ``--store-tag nuc`` reads ``ess_solve_encodings_YPD_nuc.npz`` (the store rebuilt on the
 #: corrected YPD) and writes ``..._YPD_nuc_<suffix>.npz`` beside the untagged stores.
 STORE_TAG = ""
+#: ``--medium SM`` names the stores of the amino-acid target (``ess_solve_encodings_SM_gem``),
+#: which is the 031/032 candidate screen's use (2026-09-23): the rule columns beside the
+#: betaxanthin vector (``YPD_bx_pfbagpr``) and beside the prototroph's (``SM_gem_pfbagpr``).
+MEDIUM = "YPD"
 
 
 def stem(name: str) -> str:
-    """``ess_solve_encodings_YPD<_tag><_name>.npz`` under the table directory."""
+    """``ess_solve_encodings_<medium><_tag><_name>.npz`` under the table directory."""
     tag = f"_{STORE_TAG}" if STORE_TAG else ""
-    return osp.join(TABLE_DIR, f"ess_solve_encodings_YPD{tag}{name}.npz")
+    return osp.join(TABLE_DIR, f"ess_solve_encodings_{MEDIUM}{tag}{name}.npz")
 
 
 COLUMNS = [
@@ -101,11 +105,17 @@ def normal_form(node: ast.AST) -> list[frozenset[str]]:
 
 
 def main() -> None:
-    global STORE_TAG
+    global STORE_TAG, MEDIUM
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--store-tag", default="")
+    parser.add_argument(
+        "--medium",
+        default="YPD",
+        help="The medium in the source store's name (YPD for the essentiality and "
+        "betaxanthin stores, SM for the amino-acid ones).",
+    )
     parser.add_argument(
         "--genes",
         choices=["store", "gem"],
@@ -119,6 +129,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     STORE_TAG = args.store_tag
+    MEDIUM = args.medium
     model = YeastGEM().model
     per_gene: dict[str, list[tuple[int, int, int]]] = {}
     largest = 0

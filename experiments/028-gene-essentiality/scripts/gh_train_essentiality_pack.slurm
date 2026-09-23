@@ -44,19 +44,28 @@ export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
-export WANDB_DIR=/scratch/projects/torchcell-scratch/experiments/028-gene-essentiality/wandb
-export WANDB_PROJECT=torchcell_028_gene_essentiality
+# ESS_STUDY names the experiment a pack belongs to (2026-09-23): 028 is the essentiality
+# study; the betaxanthin (031) and amino-acid (032) module studies pass their own, and
+# every project-scoped location below follows it. ESS_OUT_DIR is where the trainer
+# writes the result file.
+STUDY="${ESS_STUDY:-028-gene-essentiality}"
+STUDY_NUM="${STUDY%%-*}"
+export WANDB_DIR=/scratch/projects/torchcell-scratch/experiments/$STUDY/wandb
+export WANDB_PROJECT="${ESS_WANDB_PROJECT:-torchcell_028_gene_essentiality}"
+export ESS_WANDB_GROUP="${ESS_WANDB_GROUP:-gh_028_ess}"
+export ESS_OUT_DIR="${ESS_OUT_DIR:-$PROJECT_ROOT/experiments/$STUDY/results}"
 export NUM_WORKERS="${ESS_WORKERS:-0}"
 export COLLAPSE_PATIENCE_EPOCHS=200
-export TC_TEST_PRED_DIR=$DATA_ROOT/test-predictions-028
-export TC_CHECKPOINT_DIR=$DATA_ROOT/checkpoints-028
+export TC_TEST_PRED_DIR=$DATA_ROOT/test-predictions-$STUDY_NUM
+export TC_CHECKPOINT_DIR=$DATA_ROOT/checkpoints-$STUDY_NUM
 mkdir -p "$WANDB_DIR" "$TC_TEST_PRED_DIR" "$TC_CHECKPOINT_DIR"
 echo "host $(hostname) gpu ${CUDA_VISIBLE_DEVICES:-none}; DATA_ROOT=$DATA_ROOT; EXPERIMENT_ROOT=$EXPERIMENT_ROOT"
 echo "snapshot head: $(cat SNAPSHOT_GIT_HEAD 2>/dev/null || echo unfrozen)"
 
 PACK="${ESS_PACK:?set ESS_PACK to a pack file relative to the worktree}"
 [ -f "$PACK" ] || { echo "no such pack file: $PACK" >&2; exit 2; }
-LOG_DIR="${ESS_PACK_LOG_DIR:-$PROJECT_ROOT/experiments/028-gene-essentiality/slurm/output}"
+LOG_DIR="${ESS_PACK_LOG_DIR:-$PROJECT_ROOT/experiments/$STUDY/slurm/output}"
+mkdir -p "$LOG_DIR"
 JOB="${SLURM_JOB_ID:-local}"
 CELL_SH=experiments/028-gene-essentiality/scripts/ess_cell.sh
 
@@ -67,7 +76,7 @@ while IFS= read -r line || [ -n "$line" ]; do
     # The stem names the log; it is read from the line the same way the cell reads it.
     stem="$(eval "export $line"; echo "${ESS_OUT:-unnamed_cell}")"
     echo "launch $stem"
-    ( eval "export $line"; exec bash "$CELL_SH" ) > "$LOG_DIR/028-pack_${JOB}_${stem}.out" 2>&1 &
+    ( eval "export $line"; exec bash "$CELL_SH" ) > "$LOG_DIR/${STUDY_NUM}-pack_${JOB}_${stem}.out" 2>&1 &
     pids+=($!)
     names+=("$stem")
     # STAGGER THE LAUNCHES. Twelve or more cells started at once read the same

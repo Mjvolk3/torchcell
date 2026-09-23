@@ -38,5 +38,5 @@ python experiments/028-gene-essentiality/scripts/train_essentiality.py \
     --hidden "$HIDDEN" --attention-heads "$HEADS" --layers "$LAYERS" \
     --preprocessor-layers "$PREPROC" \
     "${ARGS[@]}" ${ESS_EXTRA:-} \
-    --wandb-group gh_028_ess --tag "$TAG" \
+    --wandb-group "${ESS_WANDB_GROUP:-gh_028_ess}" --tag "$TAG" \
     --out "${OUT}.json"

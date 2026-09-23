@@ -7850,8 +7850,12 @@ def main() -> None:
         result["wandb_url"] = run.url
         run.finish()
 
-    os.makedirs(RESULTS_DIR, exist_ok=True)
-    path = osp.join(RESULTS_DIR, out)
+    # ESS_OUT_DIR (2026-09-23): the betaxanthin and amino-acid module studies are their
+    # own experiments (031, 032) with their own results trees and W&B projects
+    # (WANDB_PROJECT); the splits and the FBA csv this script reads stay 028's.
+    out_dir = os.getenv("ESS_OUT_DIR", RESULTS_DIR)
+    os.makedirs(out_dir, exist_ok=True)
+    path = osp.join(out_dir, out)
     with open(path, "w") as fh:
         json.dump(result, fh, indent=2, default=str)
     pinned_block = result["test"]["pinned"]

@@ -3135,11 +3135,20 @@ def solve_tolerance_transfer() -> str | None:
 
 def target_transfer() -> str | None:
     """Rounds 117 to 119: the module carried to betaxanthin and the amino acids."""
-    src = osp.join(RESULTS, "target_transfer_readout.json")
-    if not osp.isfile(src):
+    # Each target is its own study since 2026-09-23 (031 betaxanthin, 032 amino acids);
+    # the readout writes one file per study and this table shows both.
+    srcs = [
+        osp.join(EXPERIMENT_ROOT, "031-betaxanthin-module", "results", "transfer_readout.json"),
+        osp.join(EXPERIMENT_ROOT, "032-amino-acid-module", "results", "transfer_readout.json"),
+    ]
+    if not all(osp.isfile(s) for s in srcs):
         return None
-    with open(src) as fh:
-        report = json.load(fh)
+    report: dict = {"pairs": [], "comparators": {}}
+    for s in srcs:
+        with open(s) as fh:
+            part = json.load(fh)
+        report["pairs"].extend(part["pairs"])
+        report["comparators"].update(part["comparators"])
     rows = []
     for p in report["pairs"]:
         a, c = p["arm"], p["control"]

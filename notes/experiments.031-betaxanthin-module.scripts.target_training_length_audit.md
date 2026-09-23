@@ -6,11 +6,11 @@ updated: 1790143076207
 created: 1790143076207
 ---
 
-Script: `experiments/028-gene-essentiality/scripts/target_training_length_audit.py`. Output: `experiments/028-gene-essentiality/results/target_training_length_audit.json` and the figure below. Asked by the user on 2026.09.23: are the transfer cells (rounds 117 onward, 200 epochs) trained long enough, i.e. does the validation loss reach a minimum inside the budget?
+Script: `experiments/031-betaxanthin-module/scripts/target_training_length_audit.py`. Output: `experiments/031-betaxanthin-module/results/training_length_audit.json` (betaxanthin) and `experiments/032-amino-acid-module/results/training_length_audit.json` (amino acids) and the figure below. Asked by the user on 2026.09.23: are the transfer cells (rounds 117 onward, 200 epochs) trained long enough, i.e. does the validation loss reach a minimum inside the budget?
 
 ## 2026.09.23 - Validation curves of every transfer arm
 
-![](./assets/images/028-gene-essentiality/target_training_length_audit_2026-09-23-11-28-45.svg)
+![](./assets/images/031-betaxanthin-module/training_length_audit_2026-09-23-12-34-18.svg)
 
 Per cell the script reads the result file's per-epoch `val_loss` (CRPS on the validation pool) and `val_pearson`, reports the epoch of the minimum loss (raw and 5-epoch centered moving average, the trainer's selection smoothing), the loss at epoch 199 minus the minimum, the slope of the moving-average loss over the last 20 epochs, the epoch of the maximum moving-average Pearson beside the selected epoch, and whether either extremum lies in the last 20 epochs. Running cells are parsed from their per-cell slurm log (newest by mtime) and marked partial.
 

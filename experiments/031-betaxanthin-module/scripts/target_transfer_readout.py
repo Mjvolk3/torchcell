@@ -1,6 +1,6 @@
-# experiments/028-gene-essentiality/scripts/target_transfer_readout.py
-# [[experiments.028-gene-essentiality.scripts.target_transfer_readout]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/028-gene-essentiality/scripts/target_transfer_readout
+# experiments/031-betaxanthin-module/scripts/target_transfer_readout.py
+# [[experiments.031-betaxanthin-module.scripts.target_transfer_readout]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/031-betaxanthin-module/scripts/target_transfer_readout
 
 r"""The layer-free module carried to betaxanthin and the amino acids: paired reads.
 
@@ -20,10 +20,10 @@ concentration readout without constraints (wave 7), the context-only concentrati
 control (wave 8), the pooled arm (wave 7) and the bilinear ridge that the linear ladder
 selected on validation. Nothing is typed in from prose.
 
-Writes ``results/target_transfer_readout.json``. Run from the repo root::
+Writes ``transfer_readout.json`` into each study's results tree (031 betaxanthin, 032 amino acids). Run from the repo root::
 
     PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
-        experiments/028-gene-essentiality/scripts/target_transfer_readout.py
+        experiments/031-betaxanthin-module/scripts/target_transfer_readout.py
 """
 
 from __future__ import annotations
@@ -39,7 +39,11 @@ from pydantic import BaseModel
 
 load_dotenv()
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
-RESULTS = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
+#: Each target is its own study (2026-09-23): betaxanthin is 031, the amino acids 032.
+RESULTS_BY_HEAD = {
+    "betaxanthin": osp.join(EXPERIMENT_ROOT, "031-betaxanthin-module", "results"),
+    "mulleder19": osp.join(EXPERIMENT_ROOT, "032-amino-acid-module", "results"),
+}
 RESULTS_027 = osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "results")
 BASE_027 = osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "conf", "base.yaml")
 SEEDS = (2700, 2701, 2702, 2703, 2704, 2705)
@@ -310,7 +314,7 @@ class Report(BaseModel):
 
 
 def read_cell(stem: str, seed: int, head: str) -> Cell | None:
-    path = osp.join(RESULTS, f"{stem}_s{seed}.json")
+    path = osp.join(RESULTS_BY_HEAD[head], f"{stem}_s{seed}.json")
     if not osp.exists(path):
         return None
     with open(path) as fh:
@@ -396,20 +400,24 @@ def main() -> None:
                     else ""
                 )
             )
-    report = Report(
-        comparators=comparators(),
-        pairs=pairs,
-        note=(
-            "Pinned-test Spearman at the validation-selected epoch (centered five-epoch "
-            "moving average of validation Pearson), paired by seed; the amino-acid "
-            "statistic is the mean per-column Spearman over the 19 amino acids. Comparators "
-            "are read from 027's result files on the same split and statistic."
-        ),
-    )
-    out = osp.join(RESULTS, "target_transfer_readout.json")
-    with open(out, "w") as fh:
-        fh.write(report.model_dump_json(indent=2))
-    print(out)
+    comps = comparators()
+    # One report per study, in that study's results tree.
+    for head, results in RESULTS_BY_HEAD.items():
+        report = Report(
+            comparators={head: comps[head]},
+            pairs=[p for p in pairs if p.head == head],
+            note=(
+                "Pinned-test Spearman at the validation-selected epoch (centered five-epoch "
+                "moving average of validation Pearson), paired by seed; the amino-acid "
+                "statistic is the mean per-column Spearman over the 19 amino acids. "
+                "Comparators are read from 027's result files on the same split and "
+                "statistic."
+            ),
+        )
+        out = osp.join(results, "transfer_readout.json")
+        with open(out, "w") as fh:
+            fh.write(report.model_dump_json(indent=2))
+        print(out)
 
 
 if __name__ == "__main__":

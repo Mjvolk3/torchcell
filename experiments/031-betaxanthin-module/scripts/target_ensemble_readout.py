@@ -1,6 +1,6 @@
-# experiments/028-gene-essentiality/scripts/target_ensemble_readout.py
-# [[experiments.028-gene-essentiality.scripts.target_ensemble_readout]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/028-gene-essentiality/scripts/target_ensemble_readout
+# experiments/031-betaxanthin-module/scripts/target_ensemble_readout.py
+# [[experiments.031-betaxanthin-module.scripts.target_ensemble_readout]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/031-betaxanthin-module/scripts/target_ensemble_readout
 
 r"""Seed ensembles of the betaxanthin and amino-acid arms, from the dumped predictions.
 
@@ -18,7 +18,7 @@ checked against the result's, as the trainer's dump note requires. Writes
 ``results/target_ensemble_readout.json``. Run from the repo root::
 
     PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
-        experiments/028-gene-essentiality/scripts/target_ensemble_readout.py
+        experiments/031-betaxanthin-module/scripts/target_ensemble_readout.py
 """
 
 from __future__ import annotations
@@ -33,7 +33,15 @@ from pydantic import BaseModel
 from scipy.stats import spearmanr
 
 load_dotenv()
-RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "028-gene-essentiality", "results")
+#: Each target is its own study (2026-09-23): betaxanthin is 031, the amino acids 032.
+RESULTS_BY_HEAD = {
+    "betaxanthin": osp.join(
+        os.environ["EXPERIMENT_ROOT"], "031-betaxanthin-module", "results"
+    ),
+    "mulleder19": osp.join(
+        os.environ["EXPERIMENT_ROOT"], "032-amino-acid-module", "results"
+    ),
+}
 #: Every seed an arm may have; round 127 (w144) adds 2706 to 2711 to the best betaxanthin
 #: arm under its round-123 stem, so that arm ensembles twelve.
 SEEDS = tuple(range(2700, 2712))
@@ -103,8 +111,8 @@ class Report(BaseModel):
     note: str
 
 
-def load_dump(stem: str, seed: int) -> dict | None:
-    result_path = osp.join(RESULTS, f"{stem}_s{seed}.json")
+def load_dump(stem: str, seed: int, head: str) -> dict | None:
+    result_path = osp.join(RESULTS_BY_HEAD[head], f"{stem}_s{seed}.json")
     if not osp.exists(result_path):
         return None
     with open(result_path) as fh:
@@ -176,7 +184,7 @@ def ensemble(dumps: dict[int, dict], seeds: tuple[int, ...], head: str) -> Score
 def main() -> None:
     arms: list[ArmEnsemble] = []
     for stem, head in ARMS:
-        dumps = {s: d for s in SEEDS if (d := load_dump(stem, s)) is not None}
+        dumps = {s: d for s in SEEDS if (d := load_dump(stem, s, head)) is not None}
         if not dumps:
             print(f"{stem}: no cells yet")
             continue
@@ -220,17 +228,19 @@ def main() -> None:
             if full.top50_enrichment is not None:
                 line += f" (top-50 enrichment {full.top50_enrichment:.2f})"
         print(line)
-    report = Report(
-        arms=arms,
-        note=(
-            "Mean prediction over seeds on the pinned records, scored as the cells are; "
-            "every dump resolved through its result file and checked against it."
-        ),
-    )
-    out = osp.join(RESULTS, "target_ensemble_readout.json")
-    with open(out, "w") as fh:
-        fh.write(report.model_dump_json(indent=2))
-    print(out)
+    # One report per study, in that study's results tree.
+    for head, results in RESULTS_BY_HEAD.items():
+        report = Report(
+            arms=[a for a in arms if a.head == head],
+            note=(
+                "Mean prediction over seeds on the pinned records, scored as the cells "
+                "are; every dump resolved through its result file and checked against it."
+            ),
+        )
+        out = osp.join(results, "ensemble_readout.json")
+        with open(out, "w") as fh:
+            fh.write(report.model_dump_json(indent=2))
+        print(out)
 
 
 if __name__ == "__main__":

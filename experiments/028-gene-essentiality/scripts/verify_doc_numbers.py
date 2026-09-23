@@ -225,13 +225,27 @@ def agreement_pair(a: str, b: str, key: str) -> float:
     raise KeyError((a, b))
 
 
+#: The module studies (2026-09-23): each target's readouts live in its own experiment.
+STUDY_RESULTS = {
+    "betaxanthin": osp.join(EXPERIMENT_ROOT, "031-betaxanthin-module", "results"),
+    "mulleder19": osp.join(EXPERIMENT_ROOT, "032-amino-acid-module", "results"),
+}
+
+
+def _study_of_pair(pair: str) -> str:
+    return "betaxanthin" if pair.startswith("betaxanthin:") else "mulleder19"
+
+
+def _study_of_stem(stem: str) -> str:
+    return "betaxanthin" if "_bx" in stem else "mulleder19"
+
+
 def transfer(pair: str, key: str, side: str | None = None) -> Callable[[], float]:
     """One statistic of one pair (or of its arm/control) of the target-transfer readout."""
 
     def run() -> float:
-        pairs = json.load(open(osp.join(RESULTS, "target_transfer_readout.json")))[
-            "pairs"
-        ]
+        path = osp.join(STUDY_RESULTS[_study_of_pair(pair)], "transfer_readout.json")
+        pairs = json.load(open(path))["pairs"]
         p = next(q for q in pairs if q["name"] == pair)
         return float(p[side][key] if side else p[key])
 
@@ -242,9 +256,8 @@ def transfer_comparator(head: str, prefix: str) -> Callable[[], float]:
     """The 027 comparator whose label starts with ``prefix``."""
 
     def run() -> float:
-        comps = json.load(open(osp.join(RESULTS, "target_transfer_readout.json")))[
-            "comparators"
-        ][head]
+        path = osp.join(STUDY_RESULTS[head], "transfer_readout.json")
+        comps = json.load(open(path))["comparators"][head]
         return float(next(v for k, v in comps.items() if k.startswith(prefix)))
 
     return run
@@ -259,9 +272,8 @@ def ensemble(stem: str, key: str, which: str = "first_six") -> Callable[[], floa
     """
 
     def run() -> float:
-        arms = json.load(open(osp.join(RESULTS, "target_ensemble_readout.json")))[
-            "arms"
-        ]
+        path = osp.join(STUDY_RESULTS[_study_of_stem(stem)], "ensemble_readout.json")
+        arms = json.load(open(path))["arms"]
         a = next(q for q in arms if q["stem"] == stem)
         if which in ("all_seeds", "first_six"):
             return float(a[which][key])

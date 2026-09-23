@@ -56,3 +56,21 @@ Best cell at the split: B5's store on the corrected graph at width 12 (0.121 sin
 | round | 028 | pack | arm | status |
 |---|---|---|---|---|
 | B15 | 139 | w156 | HiGHS parsimonious store in the affine slot | pending (2794) |
+
+## 2026.09.23 - CPU baselines over the store representations (user: run CPU-only baselines beside the packs)
+
+- Script `experiments/031-betaxanthin-module/scripts/target_store_baselines.py` (results `results/store_baselines_betaxanthin.json`, 8 min on 8 threads): each deleted gene represented by a store row (log1p of the flux columns, standardized on train), the 027 ladder's ridge and cosine kNN plus a 300-tree random forest (the Flux Cone Learning form on one point), selected on validation per-feature Pearson, scored on the 629 pinned test genes. A gene the store does not cover reads the wild-type row: that is 3,255 of 3,494 training genotypes (the screen is genome-wide, the stores cover the 1,155 GEM genes), so every store baseline learns from about 240 in-model training deletions while the pinned test set is inside the model (628 of 629).
+
+| representation | columns | ridge (rho / top-50) | kNN | forest |
+|---|---|---|---|---|
+| GLPK parsimonious store, the B5 vector (growth, production, total) | 8355 | -0.005 / 1.80 | +0.108 / 3.19 | +0.027 / 3.19 |
+| GLPK growth block alone | 4177 | -0.007 / 1.00 | -0.004 / 0.60 | +0.009 / 2.40 |
+| HiGHS parsimonious rebuild (B15's store) | 4177 | +0.098 / 2.00 | **+0.178 / 3.39** | +0.116 / 1.00 |
+| linear MOMA (B14's store) | 4177 | +0.134 / 2.20 | +0.091 / 1.00 | +0.072 / 1.00 |
+| six gene-rule counts | 6 | +0.059 / 2.00 | +0.035 / 1.40 | +0.056 / 1.40 |
+| six flux statistics of the parsimonious build | 6 | +0.107 / 1.80 | +0.146 / 2.40 | +0.102 / 0.80 |
+| ProtT5 (027's ladder, reproduced: kNN 0.1446) | 1024 | +0.082 / 3.00 | +0.145 / 4.59 | +0.143 / 4.39 |
+| GLPK store and ProtT5 concatenated | 9379 | +0.044 / 2.00 | +0.068 / 2.00 | +0.121 / 4.99 |
+
+- Reading. The GLPK growth block carries nothing on its own (three models within 0.01 of zero); the same program rebuilt with HiGHS carries 0.178 by kNN, the highest single number on this split so far (the best transformer single arm is 0.121, the best six-seed ensemble 0.153, and 027's kNN over ProtT5 0.145). Hypothesis (untested): the vertex noise measured this afternoon (1,025 of 1,031 no-effect deletions differ from the wild type in the GLPK store) is what erases the growth block's signal, and B5's gain came from the production block and the total demand, which the GLPK store alone carries at 0.108 by kNN. The forest is not the best model on any flux representation here, so the Flux Cone Learning form does not rescue the point representation. Rank and call separate again: ProtT5 gives the best top-50 (4.6 to 5.0 with the store concatenated), the clean flux store the best rank.
+- Consequence for the module: B15 (job 2794) is the transformer read of the same HiGHS store; if it beats B5 the affine was reading through the noise, and the store should be rebuilt on one solver path for every target from now on.

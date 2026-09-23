@@ -1654,3 +1654,4 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 
 - w141 `aadel` (job 2761, 3 h 38 min, 32.5 GB peak): the amino-acid control on deletion-only graphs (no ARO4/ARO7 alleles, no BTS1 copy). 0.049 (sd 0.007) vs the old-graph control 0.034 (sd 0.025), +0.015 paired (sd 0.026), 5/6. Every seed escapes the constant predictor (0.042 to 0.059) where two old-graph seeds sat at 0.000 and 0.010, so part of round 118's collapse was the graph, not only the width-12 backbone. Ensemble 0.062 vs 0.058; 027's best 0.068, its context-only 0.061, both at width 90.
 - `w141_aadel` is now the control for any further amino-acid affine; rounds 118 and 121 (aa affines) are paired against the old graph and stay valid as paired tests only.
+- Round 126 (w143_p0, job 2770, 48 GB, 8 CPUs): `aadelstore`, the amino-acid store affine on the deletion-only graph, six seeds; paired against `w141_aadel` and `w135_aastore`. Commit 70bc407da.

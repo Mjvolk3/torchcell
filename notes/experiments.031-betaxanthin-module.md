@@ -27,3 +27,8 @@ Betaxanthin rounds, renumbered B1 onward (028 round in parentheses; every result
 | B11 | 132 | w149 | width-90 control on the deletion-only graph | pending (2779, 2780) |
 
 Best cell at the split: B5's store on the corrected graph at width 12 (0.121 single-seed, 4.93 top-50; 0.131 / 5.59 ensembled). Best rank: B5's store at width 90 (0.153 ensembled) with a worse call. Comparators (027, same split): precursor readout 0.131, context-only 0.115, cosine kNN 0.145, FCL random forest 0.039.
+
+## 2026.09.23 - Jobs resubmitted under 031; the essentiality finalists screened here
+
+- User direction: the best module from the essentiality study need not be the best here, so the finalists are screened on each target rather than assumed. Screened at width 12 on the corrected graph, six seeds, paired against B3's deletion-only control and B5's store affine: B12 (w152) the flux vector with the six gene-rule columns beside it (028's best single model, 0.934 vs 0.920 for the vector alone), store `ess_solve_encodings_YPD_bx_pfbagpr.npz`; B13 (w153) the cached solve head, a hidden-256 MLP over the store in place of the affine (028 round 57 form). Not portable yet: the graph-convolution-on-GO family (`dcell_style_baseline.py` has no betaxanthin or amino-acid head) and the two-family average that depends on it.
+- Pending packs cancelled and resubmitted under this study (W&B project `torchcell_031_betaxanthin_module`, logs in `slurm/output/031-pack_<job>.out`): B9 w147 -> job 2782, B10 w148 -> 2783, B11 w149_p0/p1 -> 2784/2785. B8 (w145, jobs 2772/2773) was already running under 028 and lands there; its result files move here when it finishes.

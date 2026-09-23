@@ -266,6 +266,55 @@ PAIRS = [
         "w143_aadelstore_h12l1p1_e200",
         "w135_aastore_h12l1p1_e200",
     ),
+    # The essentiality finalists screened on each target (2026-09-23).
+    (
+        "amino acids: vector with rule counts on deletion-only graphs against deletion-only graphs",
+        "mulleder19",
+        "w150_aadelgpr_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
+        "amino acids: vector with rule counts on deletion-only graphs against the store affine there",
+        "mulleder19",
+        "w150_aadelgpr_h12l1p1_e200",
+        "w143_aadelstore_h12l1p1_e200",
+    ),
+    (
+        "amino acids: solve head (hidden 256) on deletion-only graphs against deletion-only graphs",
+        "mulleder19",
+        "w151_aadelhead256_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
+        "amino acids: solve head (hidden 256) on deletion-only graphs against the store affine there",
+        "mulleder19",
+        "w151_aadelhead256_h12l1p1_e200",
+        "w143_aadelstore_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: vector with rule counts on deletion-only graphs against deletion-only graphs",
+        "betaxanthin",
+        "w152_bxdelgpr_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: vector with rule counts on deletion-only graphs against the store affine there",
+        "betaxanthin",
+        "w152_bxdelgpr_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: solve head (hidden 256) on deletion-only graphs against deletion-only graphs",
+        "betaxanthin",
+        "w153_bxdelhead256_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: solve head (hidden 256) on deletion-only graphs against the store affine there",
+        "betaxanthin",
+        "w153_bxdelhead256_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
 ]
 
 

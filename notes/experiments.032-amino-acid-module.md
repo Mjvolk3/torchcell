@@ -26,3 +26,8 @@ State at the split: no form of the flux store beats its control (four forms, two
 Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_audit.py` (the module readouts serve both studies; findings in [[experiments.031-betaxanthin-module.scripts.target_training_length_audit]]).
 
 ![](./assets/images/032-amino-acid-module/training_length_audit_2026-09-23-12-34-18.svg)
+
+## 2026.09.23 - Jobs resubmitted under 032; the essentiality finalists screened here
+
+- A6 (w146, 300 epochs) resubmitted as job 2781 under this study (W&B project `torchcell_032_amino_acid_module`). A5 (w139_p2/p3, jobs 2774/2775) was already running under 028 and lands there; its result files move here.
+- The essentiality finalists screened on the corrected graph, six seeds, paired against A3's control and A4's store affine: A7 (w150, job 2786) the flux vector with the six gene-rule columns beside it, store `ess_solve_encodings_SM_gem_pfbagpr.npz` (built 2026-09-23 with `isozyme_affine_store.py --medium SM --store-tag gem`); A8 (w151, job 2787) the cached solve head, hidden 256, over the SM_gem store.

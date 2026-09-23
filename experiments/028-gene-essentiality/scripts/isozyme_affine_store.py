@@ -56,6 +56,18 @@ from ess_reference_flux_table import (  # noqa: E402
     StoreProvenance,
 )
 
+
+class SourceStoreProvenance(StoreProvenance):
+    """The source store's record, whatever subclass wrote it.
+
+    The betaxanthin store (``bx_reference_flux_table.py``) and the amino-acid store
+    carry fields of their own (the cassette counts, the allele note, the demand list)
+    on top of the essentiality record; they are kept, not rejected, so the derived
+    store's copy of its source's provenance is complete.
+    """
+
+    model_config = {"extra": "allow"}
+
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
@@ -152,7 +164,9 @@ def main() -> None:
     else:
         source = stem("")
         pfba = np.load(source, allow_pickle=False)
-        source_provenance = StoreProvenance.model_validate_json(str(pfba["provenance"]))
+        source_provenance = SourceStoreProvenance.model_validate_json(
+            str(pfba["provenance"])
+        )
         genes = [str(g) for g in pfba["genes"]]
     block = np.zeros((len(genes), len(COLUMNS)), dtype=np.float32)
     for i, gene in enumerate(genes):

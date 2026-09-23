@@ -642,7 +642,10 @@ esac
 # paired within a card, so the setting is identical across each pair. The 6,000-epoch
 # rounds keep the respawn.
 case "$ARM" in
-  L_*|Y_*) OVERRIDES+=(data_module.persistent_workers=true) ;;
+  # J_* added 2026.09.23 for the v16 continuation (epochs 500 to 1,200, three per card);
+  # the first segment ran 500 epochs with the respawn and lost nothing, and the setting
+  # touches the loader only, not the model or the batches it sees.
+  L_*|Y_*|J_*) OVERRIDES+=(data_module.persistent_workers=true) ;;
 esac
 
 # PYTHONPATH pins the WORKTREE's torchcell: without it a script run from a worktree

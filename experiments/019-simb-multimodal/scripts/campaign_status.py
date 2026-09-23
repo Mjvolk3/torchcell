@@ -59,7 +59,8 @@ STAGES: dict[str, tuple[str, str, int]] = {
     "split": ("v13 split", "cgt_expr_v13_split", 6000),
     "proteome": ("v14 proteome", "cgt_expr_v14_proteome", 2000),
     "wd": ("v15 weight decay", "cgt_expr_v15_wd", 6000),
-    "joint": ("v16 joint", "cgt_expr_v16_joint", 500),
+    # 500 in wave 1; wave 2 continues every run from its epoch-499 checkpoint to 1,200.
+    "joint": ("v16 joint", "cgt_expr_v16_joint", 1200),
     "locality": ("v17 locality", "cgt_expr_v17_locality", 1200),
     "hygiene": ("v18 hygiene", "cgt_expr_v18_hygiene", 1200),
 }

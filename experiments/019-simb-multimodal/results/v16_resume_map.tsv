@@ -1,0 +1,29 @@
+# v16 joint round continued from epoch 499 to 1,200 (2026.09.23). Columns: arm seed
+# last.ckpt W&B run id. Three lines share one card, in the ORIGINAL card grouping (the raw
+# job id in the checkpoint directory), so every contrast stays paired within card. Read
+# by igb_expr_wave5.slurm stage resume_many with W5_RESUME_PACK=3 and
+# W5_RESUME_CONFIG=cgt_expr_v16_joint. Paths are on the IGB cluster.
+# card 0: split 0 seed 0 (was 2409565)
+J_ref_s0 0 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-2-2409565_2f3b4c53214200d3753c90755cf0bcb5f26112e90e1995677a8ef4dc8ee9ff02/last.ckpt rh9wgkoo
+J_expr_s0 0 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-2-2409565_67af0d095035ce529c87532e9ffb82fae8b9566a3f68e2e965523d7f43c3d279/last.ckpt hyasw3nx
+J_joint_s0 0 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-2-2409565_2d239a4749af4ab94ee394e587a8c8f894afc59ab5425acd8e2f83a04d6a61fa/last.ckpt k7rzebp0
+# card 1: split 0 seed 1 (was 2409566)
+J_ref_s0 1 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-0-2409566_ce85a774ccb4a7ede36fde65146090d3117968e37c1589b157f9726e72f67c6b/last.ckpt dnjggnwl
+J_expr_s0 1 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-0-2409566_b0fa1c5f515832daac24eacf83c58f53d53420cf107827d7ee62cb00bfad68de/last.ckpt hzca60i6
+J_joint_s0 1 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-0-2409566_dac8c1e3eb54de87763255719eb4105889e70afc059e0d96e3f3fe4d7025a7c3/last.ckpt qbpt86xb
+# card 2: split 1 seed 0 (was 2409567)
+J_ref_s1 0 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-1-2409567_ccb851a2913327df7da890e361ac0a9c1bafa5636e45c9eaaad8736907658257/last.ckpt 2pyzsr5m
+J_expr_s1 0 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-1-2409567_14618199f0e77996df5fae591a25ec11fb8a24d6226ff46bf7f52e62acd3e85d/last.ckpt m13meldl
+J_joint_s1 0 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-1-2409567_b5b18d57f78b79cb105c5003e509e3a7c2c325548eb5f265ec539fec30e0b10f/last.ckpt jpac6vp7
+# card 3: split 1 seed 1 (was 2409568)
+J_ref_s1 1 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-2-2409568_30aba520bdc481317a7e8de3565fba3c78e8a172fb0303561b8705bf0d4cb923/last.ckpt f7fz2juj
+J_expr_s1 1 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-2-2409568_64a3a6fa2179097672929096f1e8368953c6cdcf340fafa3d4dbbe2e1c5e71bc/last.ckpt c1n1jmp3
+J_joint_s1 1 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-2-2409568_a7ec3cb817e163de140f7c4747e62d564f100f743e3bd4508fd82f9b65c47a7a/last.ckpt x24scvgd
+# card 4: split 2 seed 0 (was 2409570)
+J_ref_s2 0 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-0-2409570_a10ca94ea128cb5468f7b37b1a9f6a8d65155d66c185e3bca59278b86ee53a4b/last.ckpt nrjiq4az
+J_expr_s2 0 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-0-2409570_8f0f0f6a9ba1c30144b34282e792d34c5f4483ae64bb38c2f35c5c6375d2889f/last.ckpt vbwd3w6f
+J_joint_s2 0 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-0-2409570_e40dcded6b7e41a3b524c9eead18648f523bee06fab00a666b01abf69e3072b9/last.ckpt c6lkw30w
+# card 5: split 2 seed 1 (was 2409562)
+J_ref_s2 1 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-1-2409562_994be449c0da5ad0e04abdd83129092d400d807708731250f872d922021bfe29/last.ckpt c12uf4w3
+J_expr_s2 1 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-1-2409562_60e811789320f60f1aa91d112dd08a94a4481b73ceaf71dcd0b2ad9f9b747c1e/last.ckpt o3zk5y0i
+J_joint_s2 1 /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-0-1-2409562_9f9c194f40378d2b276c29fdec03d6f065e0ec32ce6361023bc4929e2b240d7c/last.ckpt 6lvb41q9

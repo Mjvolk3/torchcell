@@ -297,19 +297,28 @@ case "$STAGE" in
   #   sbatch -p mmli --gres=gpu:1 --cpus-per-task=16 --mem=100g --time=5-00:00:00 \
   #     --array=0-3 --export=ALL,W5_STAGE=resume_many,W5_RESUME_MAP=/abs/map.tsv,\
   # W5_RESUME_EPOCHS=9900,... igb_expr_wave5.slurm
+  #
+  # CONTINUING A FINISHED ROUND (2026.09.23, the joint round v16). The map may carry a FOURTH
+  # column, the W&B id of the run the checkpoint came from; it is written into the new run's
+  # config as `wandb.resumed_from`, so the two segments of one trajectory can be stitched by
+  # the readout. The continuation is a NEW W&B run on purpose: the train script can also
+  # continue the SAME run id (`wandb.resume_id`), but that path has never been exercised in
+  # offline mode, where `wandb sync` of a second segment with the same id could overwrite the
+  # first segment's history rather than append to it. `W5_RESUME_CONFIG` names the round's
+  # config, since the arm's overrides and the round's epoch budget both compose from it.
   resume_many)
           MAP="${W5_RESUME_MAP:?set W5_RESUME_MAP=/abs/path/to/map.tsv for resume_many}"
           [[ -r "$MAP" ]] || { echo "W5_RESUME_MAP is not readable: $MAP" >&2; exit 1; }
-          RESUME_JOBS=(); RESUME_CKPTS=()
-          while read -r _arm _seed _ck _rest; do
+          RESUME_JOBS=(); RESUME_CKPTS=(); RESUME_FROM=()
+          while read -r _arm _seed _ck _from _rest; do
             [[ -z "${_arm:-}" || "${_arm:0:1}" == "#" ]] && continue
             [[ -n "${_seed:-}" && -n "${_ck:-}" ]] || {
               echo "malformed W5_RESUME_MAP line for arm '$_arm'" >&2; exit 1; }
-            RESUME_JOBS+=("$_arm:$_seed"); RESUME_CKPTS+=("$_ck")
+            RESUME_JOBS+=("$_arm:$_seed"); RESUME_CKPTS+=("$_ck"); RESUME_FROM+=("${_from:-}")
           done < "$MAP"
           [[ "${#RESUME_JOBS[@]}" -gt 0 ]] || { echo "W5_RESUME_MAP has no records" >&2; exit 1; }
           ARMS=(); SEEDS=()
-          RUNS_PER_GPU="${W5_RESUME_PACK:-2}"; STAGE_CONFIG=cgt_expr_v9_mask
+          RUNS_PER_GPU="${W5_RESUME_PACK:-2}"; STAGE_CONFIG="${W5_RESUME_CONFIG:-cgt_expr_v9_mask}"
           EXTRA_OV="trainer.max_epochs=${W5_RESUME_EPOCHS:-9900} trainer.train_eval_every=10" ;;
   # ---------------------------------------------------------------- MECHANISM (2026.09.01)
   # Pair-term and READOUT mechanisms, replicated, on the four cabbi cards the objective
@@ -647,7 +656,8 @@ for k in $(seq 0 $((RUNS_PER_GPU - 1))); do
   RUN_OV=""
   if [[ "$STAGE" == "resume_many" ]]; then
     RUN_OV=" trainer.resume_ckpt_path=${RESUME_CKPTS[$IDX]}"
-    echo "  resuming $ARM seed=$SEED from ${RESUME_CKPTS[$IDX]}"
+    [[ -n "${RESUME_FROM[$IDX]}" ]] && RUN_OV="$RUN_OV +wandb.resumed_from=${RESUME_FROM[$IDX]}"
+    echo "  resuming $ARM seed=$SEED from ${RESUME_CKPTS[$IDX]} (W&B run ${RESUME_FROM[$IDX]:-none})"
   fi
   echo "  launching $ARM seed=$SEED -> $LOG"
   # STAGGERED START. Four runs constructing the dataset in the same second raced on the

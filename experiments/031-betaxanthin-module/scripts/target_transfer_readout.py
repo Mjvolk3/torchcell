@@ -315,6 +315,30 @@ PAIRS = [
         "w153_bxdelhead256_h12l1p1_e200",
         "w140_bxdelstore_h12l1p1_e200",
     ),
+    (
+        "betaxanthin: linear MOMA store on deletion-only graphs against deletion-only graphs",
+        "betaxanthin",
+        "w154_bxdelmoma_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: linear MOMA store on deletion-only graphs against the parsimonious store there",
+        "betaxanthin",
+        "w154_bxdelmoma_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "amino acids: linear MOMA store on deletion-only graphs against deletion-only graphs",
+        "mulleder19",
+        "w155_aadelmoma_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
+        "amino acids: linear MOMA store on deletion-only graphs against the parsimonious store there",
+        "mulleder19",
+        "w155_aadelmoma_h12l1p1_e200",
+        "w143_aadelstore_h12l1p1_e200",
+    ),
 ]
 
 

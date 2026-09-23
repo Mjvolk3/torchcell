@@ -31,3 +31,15 @@ Produced by `experiments/031-betaxanthin-module/scripts/target_training_length_a
 
 - A6 (w146, 300 epochs) resubmitted as job 2781 under this study (W&B project `torchcell_032_amino_acid_module`). A5 (w139_p2/p3, jobs 2774/2775) was already running under 028 and lands there; its result files move here.
 - The essentiality finalists screened on the corrected graph, six seeds, paired against A3's control and A4's store affine: A7 (w150, job 2786) the flux vector with the six gene-rule columns beside it, store `ess_solve_encodings_SM_gem_pfbagpr.npz` (built 2026-09-23 with `isozyme_affine_store.py --medium SM --store-tag gem`); A8 (w151, job 2787) the cached solve head, hidden 256, over the SM_gem store.
+
+## 2026.09.23 - Round A9: the MOMA store on the prototroph
+
+- Same design as 031's B14 (see [[experiments.031-betaxanthin-module]] for the script and the direction-rule finding). Store `ess_solve_encodings_SM_gem_moma.npz` built by `experiments/031-betaxanthin-module/scripts/target_physics_store.py --target amino_acids --variant moma`: 1,161 genes in 29 s, 175 lethal against 161 in the parsimonious store, 63 growth ratios moved by more than 0.01, the log1p vector moved for 567 genes with a median relative distance of 0.0 (the SM parsimonious store is not degenerate, so MOMA and pFBA agree wherever the deletion does not force rerouting). Results `results/target_physics_store_amino_acids_moma.json`.
+- The direction rule (sign10, sign30) leaves the prototroph infeasible on SM (84 and 44 fixed directions run against the parsimonious wild-type flux); `results/target_physics_store_amino_acids_sign10.json`, `_sign30.json`; no store written.
+- A9 (w155, job 2793): A3's arm with the MOMA store in the affine slot, six seeds, paired against A3 (w141_aadel) and A4 (w143_aadelstore). Pack `conf/packs/w155_p0.pack`.
+
+| round | 028 | pack | arm | status |
+|---|---|---|---|---|
+| A7 | 136 | w150 | flux vector with the six gene-rule columns | pending (2786) |
+| A8 | 137 | w151 | cached solve head, hidden 256 | pending (2787) |
+| A9 | 138 | w155 | linear MOMA store in the affine slot | pending (2793) |

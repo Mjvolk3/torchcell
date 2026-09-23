@@ -10,7 +10,7 @@ Script: `experiments/028-gene-essentiality/scripts/target_training_length_audit.
 
 ## 2026.09.23 - Validation curves of every transfer arm
 
-![](./assets/images/028-gene-essentiality/target_training_length_audit_2026-09-23-07-48-40.svg)
+![](./assets/images/028-gene-essentiality/target_training_length_audit_2026-09-23-10-57-41.svg)
 
 Per cell the script reads the result file's per-epoch `val_loss` (CRPS on the validation pool) and `val_pearson`, reports the epoch of the minimum loss (raw and 5-epoch centered moving average, the trainer's selection smoothing), the loss at epoch 199 minus the minimum, the slope of the moving-average loss over the last 20 epochs, the epoch of the maximum moving-average Pearson beside the selected epoch, and whether either extremum lies in the last 20 epochs. Running cells are parsed from their per-cell slurm log (newest by mtime) and marked partial.
 

@@ -3368,6 +3368,167 @@ CHECKS: list[Check] = [
         recompute=ensemble("w140_bxwidestore_h90l2p1_e200", "top50_enrichment"),
         tolerance=0.006,
     ),
+    # sec:target-transfer -- round 125, the growth and production blocks alone.
+    Check(
+        claim="target-transfer: growth block arm mean",
+        stated=0.033,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block arm sd",
+        stated=0.021,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs whole vector",
+        stated=-0.088,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs whole vector sd",
+        stated=0.029,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs whole vector seeds above",
+        stated=0,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the whole vector", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: growth block vs control",
+        stated=-0.046,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the control", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs control sd",
+        stated=0.064,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the control", "sd_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: growth block vs control seeds above",
+        stated=1,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: growth block single-seed top-50",
+        stated=3.06,
+        recompute=transfer(
+            "betaxanthin: the growth block alone against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: growth block six-seed ensemble",
+        stated=0.059,
+        recompute=ensemble("w142_bxgrowth_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: production block arm mean",
+        stated=0.091,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block arm sd",
+        stated=0.040,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs whole vector",
+        stated=-0.030,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs whole vector sd",
+        stated=0.034,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs whole vector seeds above",
+        stated=1,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the whole vector",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: production block vs control",
+        stated=0.013,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs control sd",
+        stated=0.021,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the control", "sd_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: production block vs control seeds above",
+        stated=5,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: production block single-seed top-50",
+        stated=3.63,
+        recompute=transfer(
+            "betaxanthin: the production block alone against the control",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: production block six-seed ensemble",
+        stated=0.112,
+        recompute=ensemble("w142_bxprod_h12l1p1_e200", "spearman"),
+    ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",

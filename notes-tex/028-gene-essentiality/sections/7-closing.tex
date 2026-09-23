@@ -641,6 +641,22 @@ follows the escape rate. On the old graph the width-12 store had three plateau s
 six and the corrected graph one; round 128 puts the store on the corrected graph at
 width 90.
 
+Round 125 is read (jobs 2768 and 2769, 4 h 29 min and 4 h 38 min): the whole vector's
+two blocks read alone, at width 12 on the old graph, each paired against the whole
+vector of round 117 and against the control. The growth block alone, 4,178 columns,
+reads 0.033 (sd 0.021): $-0.088$ paired against the whole vector (sd 0.029), above on
+no seed, and $-0.046$ against the control (sd 0.064), above on one of six, with a top-50
+enrichment of 3.06; ensembled 0.059. The production block alone, 4,177 columns, reads
+0.091 (sd 0.040): $-0.030$ against the whole vector (sd 0.034), above on one of six, and
+$+0.013$ against the control (sd 0.021), above on five of six, top-50 3.63; ensembled
+0.112. So the rank the affine carries lives in the production half, the parsimonious
+solve at 90 percent of the knockout's own growth with the betaxanthin demand as the
+objective, and the growth half carries none of it on its own and costs the control
+0.046 when read alone; yet the whole vector beats the production half by 0.030 on five
+of six seeds, so the growth columns add to the production columns what they subtract
+from the backbone. Three seeds of each half were selected on the plateau, as with the
+whole vector, and the validation loss bottoms at a median epoch of 53 on both.
+
 \input{tables/target_transfer}
 
 \subsection{Round 115: the learned allocation, with the pool made to bind\secstatus{todo}}

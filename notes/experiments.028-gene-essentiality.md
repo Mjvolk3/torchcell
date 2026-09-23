@@ -1683,3 +1683,8 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 
 - w140_p0/p2 `bxwidestore` (jobs 2766, 2767; 7 h 25 min and 7 h 20 min; 16.7 GB peak): store affine on 027's backbone, old graph. 0.134 (sd 0.020) vs the wide control 0.109: +0.025 paired (sd 0.051), 4/6. Ensemble 0.153, the highest rank of any cell on this split (027 precursor 0.131, kNN 0.145). Top-50: 4.09 vs 4.73 single-seed, 5.19 vs 5.59 ensembled.
 - Four of six seeds selected on the plateau (validation Pearson -0.06 to 0.06); the wide control had none. Same pattern as round 117: the affine carries the rank while the backbone stays constant, and the top-50 call follows the escape rate. Round 128 (w145, jobs 2772/2773) puts the store on the corrected graph at width 90, where the width-12 store had one plateau seed of six.
+
+## 2026.09.23 - Round 125 read: the rank lives in the production block, but the whole vector still wins
+
+- w142 (jobs 2768, 2769; 4 h 29 min, 4 h 38 min; seeds 2700 to 2702 of both arms in p0, 2703 to 2705 in p1). Growth block alone (`^pfba_(?!.*__btx)`, 4,178 columns): 0.033 (sd 0.021); -0.088 vs the whole vector (0/6), -0.046 vs the control (1/6); top-50 3.06; ensemble 0.059. Production block alone (`__btx$`, 4,177 columns): 0.091 (sd 0.040); -0.030 vs the whole vector (1/6), +0.013 vs the control (5/6); top-50 3.63; ensemble 0.112.
+- The three-seed partial at 10:21 had the production block level with the whole vector (-0.007); at six seeds it is -0.030 with 1/6 above. The gain is in the production half; the growth half alone is below the control; together they beat either half. Three plateau seeds per arm, loss minimum at median epoch 53.

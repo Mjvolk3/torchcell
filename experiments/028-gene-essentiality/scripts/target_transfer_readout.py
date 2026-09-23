@@ -202,6 +202,18 @@ PAIRS = [
         "w139_aawide_h90l2p1_e200",
         "w135_aactx_h12l1p1_e200",
     ),
+    (
+        "amino acids: deletion-only graphs with the store affine against deletion-only graphs",
+        "mulleder19",
+        "w143_aadelstore_h12l1p1_e200",
+        "w141_aadel_h12l1p1_e200",
+    ),
+    (
+        "amino acids: deletion-only graphs with the store affine against the store affine",
+        "mulleder19",
+        "w143_aadelstore_h12l1p1_e200",
+        "w135_aastore_h12l1p1_e200",
+    ),
 ]
 
 

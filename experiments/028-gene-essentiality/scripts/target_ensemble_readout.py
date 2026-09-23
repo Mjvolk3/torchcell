@@ -55,6 +55,7 @@ ARMS = [
     ("w138_aaprodfull_h12l1p1_e200", "mulleder19"),
     ("w141_aadel_h12l1p1_e200", "mulleder19"),
     ("w139_aawide_h90l2p1_e200", "mulleder19"),
+    ("w143_aadelstore_h12l1p1_e200", "mulleder19"),
 ]
 TOP_K = 50
 TOP_FRAC = 0.1

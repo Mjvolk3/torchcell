@@ -6,10 +6,13 @@
 # Test file: tests/torchcell/datamodels/test_conversion.py
 import hashlib
 import json
+import multiprocessing as mp
 import os
 import os.path as osp
 from abc import ABC, abstractmethod
+from collections import deque
 from collections.abc import Callable
+from concurrent.futures import Future, ProcessPoolExecutor
 from typing import TYPE_CHECKING, Any, cast
 
 import lmdb
@@ -32,6 +35,32 @@ if TYPE_CHECKING:
 import logging
 
 log = logging.getLogger(__name__)
+
+CONVERSION_BATCH_RECORDS = 2000
+"""Records per worker task and per LMDB write transaction in the conversion stage."""
+
+_WORKER_CONVERTER: "Converter | None" = None
+"""The converter a forked worker uses; set by ``Converter.process`` before the pool."""
+
+
+def _convert_batch(
+    batch: list[tuple[bytes, bytes]],
+) -> tuple[list[tuple[bytes, bytes]], int, int]:
+    """Worker: convert a batch of stored rows; ``(rows, n_changed, n_skipped)``."""
+    converter = _WORKER_CONVERTER
+    if converter is None:
+        raise RuntimeError("_convert_batch called outside Converter.process")
+    rows: list[tuple[bytes, bytes]] = []
+    changed = 0
+    skipped = 0
+    for key, value in batch:
+        row, was_changed = converter._convert_record(key, value)
+        if row is None:
+            skipped += 1
+            continue
+        rows.append(row)
+        changed += int(was_changed)
+    return rows, changed, skipped
 
 
 class ConversionEntry(ModelStrict):
@@ -143,86 +172,124 @@ class Converter(ABC):
         """Compute a SHA256 hash of the input data."""
         return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
-    def process(self, input_path: str, output_path: str) -> None:
-        """Convert every record from the input LMDB and write results to output."""
+    def _convert_record(
+        self, key: bytes, value: bytes
+    ) -> tuple[tuple[bytes, bytes] | None, bool]:
+        """Convert ONE stored record; ``(row, changed)``, or ``(None, False)`` if skipped.
+
+        Skipping on a decode or conversion error is the behavior the single-threaded
+        loop had; it is logged, never silent.
+        """
+        try:
+            data_dict = json.loads(value.decode("utf-8"))
+            experiment_class = EXPERIMENT_TYPE_MAP[
+                data_dict["experiment"]["experiment_type"]
+            ]
+            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                data_dict["experiment_reference"]["experiment_reference_type"]
+            ]
+            data = {
+                "experiment": experiment_class(**data_dict["experiment"]),
+                "experiment_reference": experiment_reference_class(
+                    **data_dict["experiment_reference"]
+                ),
+            }
+            converted = self.convert(data)
+            # convert() never yields None values; the Optional in its return type is
+            # conservative, so model_dump() is safe here.
+            out = {
+                "experiment": converted["experiment"].model_dump(),  # type: ignore[union-attr]
+                "experiment_reference": converted["experiment_reference"].model_dump(),  # type: ignore[union-attr]
+            }
+            changed = self._compute_hash(data_dict) != self._compute_hash(out)
+            return (key, json.dumps(out).encode()), changed
+        except json.JSONDecodeError:
+            log.error(f"Error decoding JSON for entry {key!r}. Skipping this entry.")
+        except Exception as e:
+            log.error(f"Error processing entry {key!r}: {e}. Skipping this entry.")
+        return None, False
+
+    def process(
+        self,
+        input_path: str,
+        output_path: str,
+        *,
+        batch_records: int = CONVERSION_BATCH_RECORDS,
+        num_workers: int | None = None,
+        limit: int | None = None,
+    ) -> None:
+        """Convert every record from the input LMDB and write results to output.
+
+        The input cursor runs on this thread; batches of ``batch_records`` stored rows
+        go to ``num_workers`` forked processes (default: the CPUs this process may run
+        on, minus two, at most 16), which rebuild the models, convert, and return the
+        output rows; each returned batch is committed in ONE write transaction, in
+        input order. The previous loop did all of it on one thread inside one
+        transaction over the whole store, and on the 030 build (43.8M records, 1 TB
+        input) ran at 900 falling to 290 records/s as the input's page cache and the
+        transaction's dirty pages fought over the job's memory (slurm 2748, cancelled
+        at 43 percent after 15.6 h at 266 GB resident). ``limit`` converts only the
+        first ``limit`` records, for tuning ``batch_records`` on a real store.
+        """
+        global _WORKER_CONVERTER
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        self._init_lmdb(readonly=False)  # Initialize LMDB for writing
-
-        env_input = lmdb.open(input_path, readonly=True)
+        if num_workers is None:
+            num_workers = max(1, min(16, len(os.sched_getaffinity(0)) - 2))
+        # The workers are forked from this process and inherit the converter through
+        # the module global; the output env is opened AFTER the pool exists so no
+        # child holds a write handle.
+        _WORKER_CONVERTER = self
         converted_count = 0
+        skipped_count = 0
         total_count = 0
+        pending: deque[Future[tuple[list[tuple[bytes, bytes]], int, int]]] = deque()
+        max_in_flight = 2 * num_workers
+        progress = tqdm(
+            desc="Converting and writing to LMDB", unit="rec", unit_scale=True
+        )
 
-        with (
-            env_input.begin() as txn_input,
-            self.env.begin(  # type: ignore[union-attr]  # _init_lmdb(readonly=False) above always opens self.env
-                write=True
-            ) as txn_output,
-        ):
-            cursor = txn_input.cursor()
-            for idx, (key, value) in enumerate(
-                tqdm(cursor, desc="Converting and writing to LMDB")
-            ):
-                try:
-                    data_dict = json.loads(value.decode("utf-8"))
+        def drain_one() -> None:
+            nonlocal converted_count, skipped_count, total_count
+            rows, changed, skipped = pending.popleft().result()
+            with self.env.begin(write=True) as txn_output:  # type: ignore[union-attr]
+                for key, out in rows:
+                    txn_output.put(key, out)
+            converted_count += changed
+            skipped_count += skipped
+            total_count += len(rows)
+            progress.update(len(rows) + skipped)
 
-                    # Reconstruct Pydantic objects
-                    experiment_class = EXPERIMENT_TYPE_MAP[
-                        data_dict["experiment"]["experiment_type"]
-                    ]
-                    experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
-                        data_dict["experiment_reference"]["experiment_reference_type"]
-                    ]
-
-                    data = {
-                        "experiment": experiment_class(**data_dict["experiment"]),
-                        "experiment_reference": experiment_reference_class(
-                            **data_dict["experiment_reference"]
-                        ),
-                    }
-
-                    original_hash = self._compute_hash(data_dict)
-
-                    converted_data = self.convert(data)
-                    # convert() never yields None values; the Optional in its
-                    # return type is conservative, so model_dump() is safe here.
-                    converted_hash = self._compute_hash(
-                        {
-                            "experiment": converted_data["experiment"].model_dump(),  # type: ignore[union-attr]
-                            "experiment_reference": converted_data[
-                                "experiment_reference"
-                            ].model_dump(),  # type: ignore[union-attr]
-                        }
-                    )
-
-                    if original_hash != converted_hash:
-                        converted_count += 1
-
-                    txn_output.put(
-                        key,
-                        json.dumps(
-                            {
-                                "experiment": converted_data["experiment"].model_dump(),  # type: ignore[union-attr]
-                                "experiment_reference": converted_data[
-                                    "experiment_reference"
-                                ].model_dump(),  # type: ignore[union-attr]
-                            }
-                        ).encode(),
-                    )
-                    total_count += 1
-                except json.JSONDecodeError:
-                    log.error(
-                        f"Error decoding JSON for entry {idx}. Skipping this entry."
-                    )
-                except Exception as e:
-                    log.error(
-                        f"Error processing entry {idx}: {str(e)}. Skipping this entry."
-                    )
+        with ProcessPoolExecutor(
+            max_workers=num_workers, mp_context=mp.get_context("fork")
+        ) as pool:
+            self._init_lmdb(readonly=False)
+            env_input = lmdb.open(input_path, readonly=True, readahead=False)
+            with env_input.begin() as txn_input:
+                batch: list[tuple[bytes, bytes]] = []
+                for n, (key, value) in enumerate(txn_input.cursor()):
+                    if limit is not None and n >= limit:
+                        break
+                    batch.append((bytes(key), bytes(value)))
+                    if len(batch) == batch_records:
+                        pending.append(pool.submit(_convert_batch, batch))
+                        batch = []
+                        if len(pending) >= max_in_flight:
+                            drain_one()
+                if batch:
+                    pending.append(pool.submit(_convert_batch, batch))
+                while pending:
+                    drain_one()
+        progress.close()
+        _WORKER_CONVERTER = None
+        if skipped_count:
+            log.error(f"Skipped {skipped_count} records that failed to convert")
 
         env_input.close()
         self.close_lmdb()
 
         log.info(f"Conversion complete. LMDB database written to {output_path}")
         log.info(f"Number of instances converted: {converted_count}")
+        log.info(f"Total number of instances written: {total_count}")
         log.info(f"Total number of instances processed: {total_count}")
 
     def __getitem__(

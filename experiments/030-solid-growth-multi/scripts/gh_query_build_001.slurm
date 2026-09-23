@@ -22,11 +22,22 @@
 # aggregation pass 1 (one key per record) is possible; MEM_GB / CPUS below let a resubmit
 # raise it (320 GB needs 80 CPUs) for the hours this job runs when the node is free.
 #
-# TIME, projected from the measured 029 rates scaled to 43.8M records: conversion about
-# 1 h 15, aggregation about 6 h 30, processed copy 30 min, label table and indices 15 to
-# 20 h. The index stage is the least certain: it grew fivefold from 025 to 029 because
-# without the merge every record carries all its entries, and 030 has both more records
-# and more entries per record than 029.
+# TIME. Conversion MEASURED on the first attempt (slurm 2748, cancelled): the
+# single-threaded, one-transaction converter ran 900 falling to 290 records/s over a 1 TB
+# input, 43 percent done after 15.6 h at 266 GB resident, the input's page cache and the
+# transaction's dirty pages sharing the job's memory. Converter.process now forks
+# workers and commits in batches (torchcell/datamodels/conversion.py); its rate on this
+# store is in the note. The rest is projected from 029 scaled to 43.8M records:
+# aggregation about 6 h 30, processed copy 30 min, label table and indices 15 to 20 h.
+# The index stage is the least certain: it grew fivefold from 025 to 029 because without
+# the merge every record carries all its entries, and 030 has both more records and more
+# entries per record than 029.
+#
+# PAGE CACHE. Every stage reads its 0.5 to 1 TB input through LMDB's memory map, and
+# the cgroup charges those pages to the job, so resident memory climbs to the request
+# and stays there: the kernel reclaims clean file pages rather than killing the job.
+# That number is cache, not need; an OOM comes only from anonymous memory (aggregation
+# pass 1's key table) exceeding the request.
 #
 # DISK. Four stage copies. 029 took 615 + 614 + 547 + 547 GB for 26.8M records, so 030
 # needs about 3.7 TB. The preflight below refuses to start without it, because a build

@@ -109,3 +109,10 @@ restoration) not yet modeled as a GeneAddition -- ReferenceGenome strain="BY4741
 - [x] loader + build + L0-L4 verify + registration
 - [ ] target_metabolite_ids (amino acid -> Yeast9 s_NNNN) follow-up
 - [ ] prototrophy-restoring marker as GeneAddition (ties to plasmid-sequence store)
+
+## 2026.09.22 - Genotype issues found in the 028 transfer rounds
+
+- Two representation defects hit this dataset when it is trained as a target, both found and measured on 2026.09.22 ([[experiments.028-gene-essentiality#20260922---every-record-inherits-every-other-strains-added-genes]]):
+  1. **Cross-screen inheritance in the shared build.** `mulleder19` and `betaxanthin` open the same dataset build (`dataset_paths`), and `DeletionKeyedGenotypeAggregator` keys a record by its deletion gene set, so a Mulleder strain is merged with the Cachera and Ozaydin records of the same deletion and its perturbation set becomes the union of their added genes. Of the 564 amino-acid-scored pinned records, 556 carried ARO4-K229L, 556 ARO7-G141S and 499 the BTS1 extra copy; the prototrophic collection carries none of them.
+  2. **The graph processor removed every perturbed gene**, so those three inherited genes were masked out of the cell graph as if deleted. `Perturbation(deletion_only=True)` (`--deletion-only-graph`) applies only perturbations whose type ends in `deletion`; round 124 (w141) on the corrected graph reads 0.049 vs 0.034 on the old one, +0.015 paired over six seeds, with no seed collapsing to a constant.
+- Still open, unchanged since 2026.07: the prototrophy restoration (pHLUM-like episomal HIS3/LEU2/URA3/MET15) is not a `GeneAdditionPerturbation` on the record; the BY4741 marker deletions live only in the strain reference. The 027/028 amino-acid flux store uses the unmodified prototroph yeast-GEM by hand rather than by reading the record.

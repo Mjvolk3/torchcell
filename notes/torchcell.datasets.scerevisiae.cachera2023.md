@@ -179,3 +179,9 @@ Outcome: **4647 -> 4719 usable ORFs**; unresolved drops fell 85 -> 11 (only the 
 the malformed `YLR287-A`, genuinely AMBIGUOUS common names FEN1/PPA1, and a few retired
 dubious ORFs). Removed the local `_SYSTEMATIC_RE` regex path. The heterologous Btx-cassette
 (CYP76AD1/DOD + ARO4/ARO7 variants) is unaffected (separate fixed constant).
+
+## 2026.09.22 - Genotype issues found in the 028 transfer rounds
+
+- **The graph processor deleted the cassette's native alleles from every cell graph.** `Perturbation.process` removed every perturbed gene, so ARO4 (YBR249C) and ARO7 (YPR060C), recorded as `GeneAdditionPerturbation`s, were masked out of each betaxanthin cell graph as if deleted, beside the actual deletion; CYP76AD1 and DOD have no node (not yeast ORFs). `Perturbation(deletion_only=True)` (`--deletion-only-graph`, 028 round 120) keeps them in the graph and out of the pooled perturbation set. On the corrected graph the flux-store affine is the first cell that lifts both the pinned rank and the top-50 call (028 round 123: top-50 enrichment 4.93 single-seed, 5.59 ensembled, vs 4.06 / 4.59 for the control). Details: [[experiments.028-gene-essentiality]].
+- **Cross-screen inheritance.** The shared build's `DeletionKeyedGenotypeAggregator` merges a Cachera record with the Ozaydin record of the same deletion, so 547 of the 629 pinned betaxanthin records also carried Ozaydin's BTS1 extra copy (YPL069C), which this strain never had; the mulleder19 records inherited ARO4/ARO7 the same way.
+- **The metabolic layer is hand-wired, not derived from the record.** `bx_reference_flux_table.py` adds the cassette through `torchcell.metabolism.pathway` and knocks the BY4741 markers out through the rules by name; nothing reads the record's `GeneAdditionPerturbation`s into the model. ARO4-K229L / ARO7-G141S (feedback relief) change no stoichiometric bound and are recorded as a documented no-op in the store provenance.

@@ -169,3 +169,7 @@ the plasmid-sequence store lands (Ozaydin plasmid is physical-only, reconstruct-
 Added `_SI_SHA256` pin + verification to `download()` (the stored SI is canonical, not the
 Elsevier URL). The on-disk canonical LMDB predated the required `Media.is_synthetic` field
 and failed schema round-trip; rebuilt in place under `$DATA_ROOT` as part of this cleanup.
+
+## 2026.09.22 - Genotype issues found in the 028 transfer rounds
+
+- **The BTS1 extra copy leaked into other screens' records.** In the shared build, `DeletionKeyedGenotypeAggregator` keys records by deletion gene set across datasets, so Ozaydin's YB/I/BTS1 plasmid genes (the native extra copy BTS1, YPL069C, is the one with a node) were merged into the Cachera betaxanthin records (547 of 629 pinned) and the Mulleder amino-acid records (499 of 564), and the graph processor then masked BTS1 out of those strains' cell graphs as if deleted. Fixed on the graph side by `Perturbation(deletion_only=True)`; the aggregation across screens is unchanged. Details: [[experiments.028-gene-essentiality#20260922---every-record-inherits-every-other-strains-added-genes]].

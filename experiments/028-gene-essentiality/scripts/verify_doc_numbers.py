@@ -3141,6 +3141,103 @@ CHECKS: list[Check] = [
         stated=0.062,
         recompute=ensemble("w141_aadel_h12l1p1_e200", "spearman"),
     ),
+    # sec:target-transfer -- round 121, the amino-acid production store.
+    Check(
+        claim="target-transfer: aa 20-column arm mean",
+        stated=0.031,
+        recompute=transfer(
+            "amino acids: 19 synthesis ratios and the growth ratio against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa 20-column arm sd",
+        stated=0.004,
+        recompute=transfer(
+            "amino acids: 19 synthesis ratios and the growth ratio against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa 20-column paired difference",
+        stated=-0.003,
+        recompute=transfer(
+            "amino acids: 19 synthesis ratios and the growth ratio against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa 20-column paired sd",
+        stated=0.025,
+        recompute=transfer(
+            "amino acids: 19 synthesis ratios and the growth ratio against the control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa 20-column seeds above",
+        stated=2,
+        recompute=transfer(
+            "amino acids: 19 synthesis ratios and the growth ratio against the control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: aa 42-summary arm mean",
+        stated=0.023,
+        recompute=transfer(
+            "amino acids: growth vector with all 42 summaries against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa 42-summary arm sd",
+        stated=0.009,
+        recompute=transfer(
+            "amino acids: growth vector with all 42 summaries against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa 42-summary paired difference",
+        stated=-0.011,
+        recompute=transfer(
+            "amino acids: growth vector with all 42 summaries against the control",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa 42-summary paired sd",
+        stated=0.027,
+        recompute=transfer(
+            "amino acids: growth vector with all 42 summaries against the control",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: aa 42-summary seeds above",
+        stated=2,
+        recompute=transfer(
+            "amino acids: growth vector with all 42 summaries against the control",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: aa 20-column six-seed ensemble",
+        stated=0.030,
+        recompute=ensemble("w138_aaprodstat_h12l1p1_e200", "spearman"),
+    ),
+    Check(
+        claim="target-transfer: aa 42-summary six-seed ensemble",
+        stated=0.026,
+        recompute=ensemble("w138_aaprodfull_h12l1p1_e200", "spearman"),
+    ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",

@@ -471,8 +471,12 @@ test, the epoch selected on validation Pearson (centered five-epoch moving avera
 pinned-test Spearman reported, and for the amino acids the mean per-column Spearman over
 the 19; the comparators are the 027 rounds' own numbers on the same split, read from
 their result files (Table~\ref{tab:target-transfer-comparators}). The backbone is the
-essentiality one (pathway multi-hot with ProtT5, width 12, one layer, the graph
-regularizer, CRPS on the head, 200 epochs), which is a fifth of the width 027 trained,
+essentiality one (pathway multi-hot with ProtT5, width 12, one block, four attention
+heads, CRPS on the head, 200 epochs), which is a fifth of the width 027 trained. The
+graph regularizer is requested on every cell and, as in Section~\ref{sec:backbone-knobs},
+never evaluated: it is pinned to the second block, and these cells have one, so
+\texttt{graph\_reg\_loss} is 0 at all 200 epochs. It is inert in the control and in the
+arm alike, so the pairing is unaffected,
 and every arm is paired by seed over six seeds against the same backbone with no affine.
 
 The stores represent the strains, not the wild type. For betaxanthin

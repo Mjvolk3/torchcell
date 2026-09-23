@@ -47,6 +47,7 @@ optimization: batch 32, four times the steps per epoch, lifts the seeds by 0.020
 lifts them by 0.019, 0.051 and 0.033. Round 3 combines the two and raises the epoch budget.
 
 \subsection{Weight decay and graph regularization do nothing here\secstatus{todo}}
+\label{sec:backbone-knobs}
 
 Weight decay at 0, $10^{-2}$ and $10^{-1}$ reproduces the base cell to the third decimal on
 every seed, and so does removing graph regularization. At 400 updates with learning rate

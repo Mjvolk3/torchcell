@@ -44,15 +44,17 @@ ARMS = [
     ("w136_bxstorewd_h12l1p1_e200", "betaxanthin"),
     ("w137_bxdel_h12l1p1_e200", "betaxanthin"),
     ("w137_bxgpr_h12l1p1_e200", "betaxanthin"),
-    ("w139_bxwide_h48l2p1_e200", "betaxanthin"),
-    ("w140_bxwidestore_h48l2p1_e200", "betaxanthin"),
+    ("w142_bxgrowth_h12l1p1_e200", "betaxanthin"),
+    ("w142_bxprod_h12l1p1_e200", "betaxanthin"),
+    ("w139_bxwide_h90l2p1_e200", "betaxanthin"),
+    ("w140_bxwidestore_h90l2p1_e200", "betaxanthin"),
     ("w140_bxdelstore_h12l1p1_e200", "betaxanthin"),
     ("w135_aactx_h12l1p1_e200", "mulleder19"),
     ("w135_aastore_h12l1p1_e200", "mulleder19"),
     ("w138_aaprodstat_h12l1p1_e200", "mulleder19"),
     ("w138_aaprodfull_h12l1p1_e200", "mulleder19"),
     ("w141_aadel_h12l1p1_e200", "mulleder19"),
-    ("w139_aawide_h48l2p1_e200", "mulleder19"),
+    ("w139_aawide_h90l2p1_e200", "mulleder19"),
 ]
 TOP_K = 50
 TOP_FRAC = 0.1

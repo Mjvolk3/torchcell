@@ -173,6 +173,30 @@ PAIRS = [
         "w140_bxdelstore_h12l1p1_e200",
     ),
     (
+        "betaxanthin: deletion-only store, affine frozen to epoch 40, against the deletion-only store",
+        "betaxanthin",
+        "w147_bxdelstore40_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: deletion-only store, affine frozen to epoch 40, against deletion-only graphs",
+        "betaxanthin",
+        "w147_bxdelstore40_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: deletion-only store, affine from escape, against the deletion-only store",
+        "betaxanthin",
+        "w148_bxdelstorer15_h12l1p1_e200",
+        "w140_bxdelstore_h12l1p1_e200",
+    ),
+    (
+        "betaxanthin: deletion-only store, affine from escape, against deletion-only graphs",
+        "betaxanthin",
+        "w148_bxdelstorer15_h12l1p1_e200",
+        "w137_bxdel_h12l1p1_e200",
+    ),
+    (
         "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
         "betaxanthin",
         "w140_bxdelstore_h12l1p1_e200",

@@ -1208,6 +1208,26 @@ class BxCell(BaseModel):
         default=1.0,
         description="Round 119: learning-rate multiplier for the store affine's parameters.",
     )
+    ess_affine_start_epoch: int = Field(
+        default=0,
+        description=(
+            "Round 130: the store affine's parameters are frozen (no gradient, so a "
+            "zero-initialized affine contributes exactly 0) before this epoch. Rounds 117, "
+            "123 and 125 measured the affine keeping the backbone on the constant-predictor "
+            "plateau (3 of 6 seeds at width 12, 4 of 6 at width 90, against 0 of 6 for the "
+            "wide control), which carries the rank and loses the top-50 call; delaying the "
+            "affine lets the backbone escape first."
+        ),
+    )
+    ess_affine_start_val_pearson: float = Field(
+        default=0.0,
+        description=(
+            "Round 130: with a positive value the affine also waits until the trailing "
+            "five-epoch mean of validation Pearson reaches it (the backbone has escaped). "
+            "Both conditions must hold; the epoch the affine actually started is recorded "
+            "in the result as `affine_start_epoch_actual`."
+        ),
+    )
     deletion_only_graph: bool = Field(
         default=False,
         description=(
@@ -2340,6 +2360,8 @@ def build_cell(
     ess_solve_columns: str = "",
     ess_affine_weight_decay: float | None = None,
     ess_affine_lr_mult: float = 1.0,
+    ess_affine_start_epoch: int = 0,
+    ess_affine_start_val_pearson: float = 0.0,
     deletion_only_graph: bool = False,
     perturb_cls: bool = False,
     flux_capacity_scale: float = 1.0,
@@ -2452,6 +2474,8 @@ def build_cell(
         ess_solve_columns=ess_solve_columns,
         ess_affine_weight_decay=ess_affine_weight_decay,
         ess_affine_lr_mult=ess_affine_lr_mult,
+        ess_affine_start_epoch=ess_affine_start_epoch,
+        ess_affine_start_val_pearson=ess_affine_start_val_pearson,
         deletion_only_graph=deletion_only_graph,
         perturb_cls=perturb_cls,
         flux_capacity_scale=flux_capacity_scale,
@@ -5859,9 +5883,32 @@ def run_cell(
     best_snap: dict[str, torch.Tensor] | None = None
     best_epoch = -1
     t0 = time.time()
+    # THE DELAYED AFFINE (round 130). The store affine's parameters take no gradient until
+    # both start conditions hold; zero-initialized, it then contributes exactly 0 and the
+    # cell is the control until it starts. `affine_start_epoch_actual` records the epoch.
+    affine_delayed = bool(affine_params) and (
+        cell.ess_affine_start_epoch > 0 or cell.ess_affine_start_val_pearson > 0.0
+    )
+    affine_start_epoch_actual: int | None = None if affine_delayed else 0
 
     for epoch in range(cell.epochs):
         model.train()
+        if affine_delayed and affine_start_epoch_actual is None:
+            recent = [h["val_pearson"] for h in history[-5:]]
+            recent_ma = float(np.nanmean(recent)) if recent else float("-inf")
+            escaped = (
+                cell.ess_affine_start_val_pearson <= 0.0
+                or recent_ma >= cell.ess_affine_start_val_pearson
+            )
+            if epoch >= cell.ess_affine_start_epoch and escaped:
+                affine_start_epoch_actual = epoch
+                print(
+                    f"[affine-start] epoch {epoch}: store affine unfrozen (trailing "
+                    f"validation Pearson {recent_ma:+.3f})"
+                )
+        if affine_delayed:
+            for p in affine_params:
+                p.requires_grad_(affine_start_epoch_actual is not None)
         train_loss, train_data_loss, n_batches = 0.0, 0.0, 0
         # THE CONSTRAINT RAMP, set once per epoch before any batch. Epoch 0 carries no
         # physics at all when a warmup is configured, so the data term is the only thing
@@ -6126,6 +6173,7 @@ def run_cell(
         "select_epoch": sel_epoch,
         "select_rule": sel_rule,
         "select_val_pearson": val_curve[sel_epoch] if val_curve else float("nan"),
+        "affine_start_epoch_actual": affine_start_epoch_actual,
         "test": test,
         "history": history,
         "flux_meta": {k: v for k, v in flux_meta.items() if k != "met_index"}
@@ -7078,6 +7126,21 @@ def main() -> None:
         help="Learning-rate multiplier on the store affine's parameters.",
     )
     parser.add_argument(
+        "--ess-affine-start-epoch",
+        type=int,
+        default=0,
+        help="Freeze the store affine (exactly 0 when zero-initialized) before this epoch.",
+    )
+    parser.add_argument(
+        "--ess-affine-start-val-pearson",
+        type=float,
+        default=0.0,
+        help=(
+            "Also wait until the trailing five-epoch mean validation Pearson reaches this "
+            "value before unfreezing the store affine (0 disables the condition)."
+        ),
+    )
+    parser.add_argument(
         "--deletion-only-graph",
         action="store_true",
         help=(
@@ -7616,6 +7679,8 @@ def main() -> None:
         ess_solve_columns=args.ess_solve_columns,
         ess_affine_weight_decay=args.ess_affine_weight_decay,
         ess_affine_lr_mult=args.ess_affine_lr_mult,
+        ess_affine_start_epoch=args.ess_affine_start_epoch,
+        ess_affine_start_val_pearson=args.ess_affine_start_val_pearson,
         deletion_only_graph=args.deletion_only_graph,
         ess_solve_zero_init=args.ess_solve_zero_init,
         ess_solve_head_hidden=args.ess_solve_head_hidden,

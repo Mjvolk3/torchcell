@@ -1688,3 +1688,9 @@ Script `experiments/028-gene-essentiality/scripts/consensus_missed.py`, result `
 
 - w142 (jobs 2768, 2769; 4 h 29 min, 4 h 38 min; seeds 2700 to 2702 of both arms in p0, 2703 to 2705 in p1). Growth block alone (`^pfba_(?!.*__btx)`, 4,178 columns): 0.033 (sd 0.021); -0.088 vs the whole vector (0/6), -0.046 vs the control (1/6); top-50 3.06; ensemble 0.059. Production block alone (`__btx$`, 4,177 columns): 0.091 (sd 0.040); -0.030 vs the whole vector (1/6), +0.013 vs the control (5/6); top-50 3.63; ensemble 0.112.
 - The three-seed partial at 10:21 had the production block level with the whole vector (-0.007); at six seeds it is -0.030 with 1/6 above. The gain is in the production half; the growth half alone is below the control; together they beat either half. Three plateau seeds per arm, loss minimum at median epoch 53.
+
+## 2026.09.23 - Rounds 130 and 131: the affine delayed until the backbone escapes
+
+- Mechanism measured across rounds 117, 123, 125: with the store affine present, seeds stay on the constant-predictor plateau (3/6 at width 12 on the old graph, 4/6 at width 90; the wide control 0/6, the corrected-graph store 1/6), the affine carries the rank on its own and the top-50 call, which the escaped backbone supplies, follows the escape rate. Hypothesis (untested): delaying the affine until the backbone has escaped keeps the call and adds the rank.
+- `train_essentiality.py` gains `--ess-affine-start-epoch N` and `--ess-affine-start-val-pearson X`: the affine's parameters take no gradient until epoch >= N and (X <= 0 or the trailing five-epoch mean validation Pearson >= X); zero-initialized, it contributes exactly 0 until then. `affine_start_epoch_actual` is written to the result. Smoke test on CPU (three epochs, start at 2) before submission.
+- Packs: w147_p0 (`bxdelstore40`, start epoch 40) and w148_p0 (`bxdelstorer15`, start epoch 5 and Pearson 0.15), six seeds each, paired against `w140_bxdelstore` and `w137_bxdel`.

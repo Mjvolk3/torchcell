@@ -459,7 +459,7 @@ of the pool program does not depend on which enzyme carries which number. The tu
 table is not the limiting ingredient; the hypothesis of Section~\ref{sec:round114} is
 retracted.
 
-\subsection{Rounds 117 to 121: the module carried to betaxanthin and the amino acids\secstatus{todo}}
+\subsection{Rounds 117 to 125: the module carried to betaxanthin and the amino acids\secstatus{todo}}
 \label{sec:target-transfer}
 
 The second goal was a module that travels, and the first place it must travel is the
@@ -564,6 +564,24 @@ ensemble's top-50 enrichment is 4.8 to 5.2 for every arm of rounds 119 and 120 a
 the task is about, averaging seeds is worth more than any of these representations, as
 it was on the essentiality endpoint (Section~\ref{sec:family-ensembles}). Each ensemble is one
 number with no spread, so that ordering among the arms is not a measurement.
+
+The deletion-only half of round 123 is read (job 2760, 3 h 34 min for six cells at a
+32.6 GB peak): the store affine on the graph that carries the two alleles, the strain as
+built. Against the deletion-only graph without the affine it reads 0.121 (sd 0.025)
+against 0.058, $+0.063$ paired (sd 0.065), above on six of six; against the round-117
+store arm on the old graph it reads $-0.000$ paired (sd 0.017), above on four of six, so
+the rank the affine carries is the same on either graph. What changes is where the
+seeds are selected and what the call is worth. Five of six were selected off the
+plateau, at validation Pearson 0.20 to 0.27 and epochs 46 to 105, where round 117's
+seeds sat on it at $-0.02$; the sixth (seed 2704) was selected on the plateau at epoch
+149 and its pinned predictions are rank-identical to round 117's seed 2704 (Spearman 1.0
+between the two arms, largest difference 0.004), which is what a plateau cell is: the
+affine's read of the store and nothing from the graph. The top-50 enrichment is 4.93 on
+single seeds against 3.49 for the store on the old graph, 3.39 for the deletion-only
+graph alone and 4.06 for the control, and 5.59 ensembled over six seeds, the highest of
+any arm; the six-seed rank is 0.131. So the strain represented as built is the first
+cell where the store lifts both the rank and the call, and it is the arm the width and
+block rounds are now measured against.
 
 \input{tables/target_transfer}
 

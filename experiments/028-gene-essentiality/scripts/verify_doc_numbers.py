@@ -3005,6 +3005,96 @@ CHECKS: list[Check] = [
         ),
         tolerance=0.006,
     ),
+    # sec:target-transfer -- round 123, the deletion-only graph with the store affine.
+    Check(
+        claim="target-transfer: deletion-only store arm mean",
+        stated=0.121,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store arm sd",
+        stated=0.025,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs deletion-only graph, paired",
+        stated=0.063,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs deletion-only graph, paired sd",
+        stated=0.065,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs deletion-only graph, seeds above",
+        stated=6,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against deletion-only graphs",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs old-graph store, paired",
+        stated=0.000,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against the store affine",
+            "mean_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs old-graph store, paired sd",
+        stated=0.017,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against the store affine",
+            "sd_difference",
+        ),
+    ),
+    Check(
+        claim="target-transfer: deletion-only store vs old-graph store, seeds above",
+        stated=4,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against the store affine",
+            "n_positive",
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store single-seed top-50",
+        stated=4.93,
+        recompute=transfer(
+            "betaxanthin: deletion-only graphs with the store affine against the store affine",
+            "mean_top50_enrichment",
+            "arm",
+        ),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store ensemble top-50",
+        stated=5.59,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "top50_enrichment"),
+        tolerance=0.006,
+    ),
+    Check(
+        claim="target-transfer: deletion-only store six-seed ensemble",
+        stated=0.131,
+        recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "spearman"),
+    ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",

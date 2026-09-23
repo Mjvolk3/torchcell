@@ -117,3 +117,11 @@ Table S1.
 | YMR199W+YPL256C_tm1604 | cln1Δ+cln2Δ       | YLR337C_dma3380 | vrp1Δ             | trigenic             | -0.355614                               | -0.355614                                           | 5.81E-03  |                                    | 0.53                        | -0.0156                      | 0.0901                                          |
 | YDR483W+YDL227C_tm704  | kre2Δ+hoΔ         | YGR121C_dma1881 | mep1Δ             | digenic              | -1.024336                               | -1.024336                                           | 0.00E+00  |                                    | 1.01                        | -0.0143                      | 0.0209                                          |
 | YAL056W+YDL227C_tm1888 | gpb2Δ+hoΔ         | YHR081W_dma2126 | lrp1Δ             | digenic              | -0.499073                               | -0.499073                                           | 3.99E-09  |                                    | 0.49                        | -0.0091                      | 0.2276                                          |
+
+## 2026.09.20 - Ingest the double-mutant query strain fitness
+
+The published trigenic score needs the double-mutant query strain's own fitness, and the loader's attempt to bring it in from Table S5 never matched a row: it joined the full strain string against the bare tm number, matched 0 of 632,797 rows, and the `fillna` fallback silently used the S1/S3 columns, so the mismatch warning could never fire. The row set was also wrong, because an S5 double-mutant entry describes a trigenic row's query strain, not a digenic pair.
+
+- One record per distinct double-mutant query strain, 201 of them, with the query pair as the genotype and the query strain id on both perturbations (main `4c4a4f950`).
+- The released S5 standard deviation is stored as a bootstrap SE over the conservative lower end of the 12 to 24 colony measurements the SI describes.
+- Digenic records serialize byte-identically, which is what lets the served graph take the additions as a superset admission [[torchcell.knowledge_graphs.incremental-admission]].

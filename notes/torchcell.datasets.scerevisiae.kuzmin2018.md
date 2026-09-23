@@ -183,3 +183,12 @@ Not sure where to put this note but I noticed that child classes of `ExperimentD
 ## 2024.09.10 - Kuzmin2018 Alternative Download Source
 
 Can download dataset from here too. [kuzmin2018 dataset](https://boonelab.ccbr.utoronto.ca/supplement/kuzmin2018/supplement.html). Might be more stable than science source.
+
+## 2026.09.20 - Ingest the double-mutant query strain fitness
+
+The published trigenic score subtracts the double-mutant query strain's own fitness, and every trigenic row reports it in `Query single/double mutant fitness`, yet the loader never emitted it: `preprocess_raw` filtered the frame to digenic rows, so the trigenic branch of `create_experiment` was unreachable (and would have paired the concatenated query name with the array gene). Without that term a reconstruction of the published score falls from 99.98 percent of rows to r = 0.499, so the loader now keeps it.
+
+- One record per distinct double-mutant query strain, 172 of them, with the query pair as the genotype and the query strain id on both perturbations (main `4c4a4f950`).
+- Digenic records keep their positions and serialize byte-identically (410,399 before), so the served graph takes the new records as a superset admission without moving any content-addressed id [[torchcell.knowledge_graphs.incremental-admission]].
+- No SD: Data File S4 carries it, but S4 is not among this loader's raw files.
+- Consumed at read time by [[torchcell.data.label_policy]], which joins a triple to its query strain on the tm token.

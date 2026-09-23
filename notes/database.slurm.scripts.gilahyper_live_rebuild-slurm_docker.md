@@ -182,3 +182,7 @@ serving container now also mounts `RELEASE_ROOT` (`/bulk/kg-releases`) at
 2026-09-19 the container was relaunched by hand with that mount (37 s) after the first
 backup, staged on /db, had to be killed for space. See [[torchcell.knowledge_graphs.releases]],
 [[scripts.kg_release]], [[plan.kg-releases.2026.09.19]].
+
+## 2026.09.21 - Hand the build-tree conf and biocypher dirs back before directory_setup
+
+A full rebuild leaves `$BUILD_ROOT/database/conf` and `biocypher` owned by 7474 at mode 700, because the build container mounts them under `NEO4J_HOME` and the image entrypoint chowns and chmods them at start. The next job's host-side `directory_setup`, running as the dev user, then cannot rewrite `neo4j.conf`; increment job 2675 died at stage 3 that way after the 2026-09-17 rebuild. This script and [[database.slurm.scripts.gilahyper_increment_kg-slurm_docker]] now chown both directories back to the invoking user through a root container before the refresh (main `1fbd6f883`).

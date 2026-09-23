@@ -278,3 +278,9 @@ notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*.png
 notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*.svg
 !notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*_Total_Titer_fdr_within.png
 !notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*_Total_Titer_fdr_within.svg
+
+# 025 data kept on disk, not versioned: split/index snapshots read by the 025 scripts, and
+# the W&B history frozen by graph_regularization_how_not_what.py (re-pull without --from-csv)
+experiments/025-solid-growth/results/dataset_index_summary.json
+experiments/025-solid-growth/results/pinned_splits_from_010_seed_42.json
+experiments/025-solid-growth/results/graph_regularization_how_not_what/

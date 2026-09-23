@@ -21,6 +21,18 @@
             "path": "../iBioFoundry-AI"
         },
         {
+            "name": "Parameter_Estimation",
+            "path": "../Parameter_Estimation"
+        },
+        {
+            "name": "Gene_Graph",
+            "path": "../Gene_Graph"
+        },
+        {
+            "name": "MATH-490-Project",
+            "path": "../MATH-490-Project"
+        },
+        {
             "name":"torchcell_hosted_data",
             "path": "/Users/michaelvolk/Library/CloudStorage/Box-Box/torchcell"
         },

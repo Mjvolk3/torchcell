@@ -3095,6 +3095,52 @@ CHECKS: list[Check] = [
         stated=0.131,
         recompute=ensemble("w140_bxdelstore_h12l1p1_e200", "spearman"),
     ),
+    # sec:target-transfer -- round 124, the amino-acid deletion-only graph.
+    Check(
+        claim="target-transfer: amino-acid deletion-only arm mean",
+        stated=0.049,
+        recompute=transfer(
+            "amino acids: deletion-only cell graphs against the control",
+            "mean_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid deletion-only arm sd",
+        stated=0.007,
+        recompute=transfer(
+            "amino acids: deletion-only cell graphs against the control",
+            "sd_spearman",
+            "arm",
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid deletion-only paired difference",
+        stated=0.015,
+        recompute=transfer(
+            "amino acids: deletion-only cell graphs against the control", "mean_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid deletion-only paired sd",
+        stated=0.026,
+        recompute=transfer(
+            "amino acids: deletion-only cell graphs against the control", "sd_difference"
+        ),
+    ),
+    Check(
+        claim="target-transfer: amino-acid deletion-only seeds above",
+        stated=5,
+        recompute=transfer(
+            "amino acids: deletion-only cell graphs against the control", "n_positive"
+        ),
+        tolerance=0.5,
+    ),
+    Check(
+        claim="target-transfer: amino-acid deletion-only six-seed ensemble",
+        stated=0.062,
+        recompute=ensemble("w141_aadel_h12l1p1_e200", "spearman"),
+    ),
     # sec:round116 -- the all-predicted and shuffled tables under the pool.
     Check(
         claim="round116: EZKinetics table against the tiered pool",
